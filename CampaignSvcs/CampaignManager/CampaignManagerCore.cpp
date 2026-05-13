@@ -2973,17 +2973,6 @@ namespace AdServer
           "ADS-IMPL-174");
         throw Exception(ostr);
       }
-      catch(const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": CORBA::SystemException caught: " << ex;
-
-        logger_->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::CAMPAIGN_MANAGER,
-          "ADS-IMPL-175");
-        throw Exception(ostr);
-      }
     }
 
     std::string

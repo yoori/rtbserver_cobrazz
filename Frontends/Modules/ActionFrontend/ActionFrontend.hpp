@@ -165,21 +165,21 @@ namespace AdServer::Action
     write_html(FCGI::HttpResponse& response)
       /*throw(eh::Exception)*/;
 
-    struct AdvertiserRequestState;
+    class ActionRequestState;
 
     void
     process_advertiser_request_(
-      const std::shared_ptr<AdvertiserRequestState>& state)
+      const std::shared_ptr<ActionRequestState>& state)
       noexcept;
 
     void
     resolve_utm_user_id_(
-      const std::shared_ptr<AdvertiserRequestState>& state)
+      const std::shared_ptr<ActionRequestState>& state)
       noexcept;
 
     void
     finish_advertiser_request_(
-      const std::shared_ptr<AdvertiserRequestState>& state)
+      const std::shared_ptr<ActionRequestState>& state)
       noexcept;
 
     int

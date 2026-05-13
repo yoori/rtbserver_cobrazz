@@ -385,39 +385,16 @@ namespace Passback
               }
             });
         }
-        catch (const AdServer::UserInfoSvcs::
-               UserInfoMatcher::ImplementationException& e)
+        catch(const eh::Exception& e)
         {
           Stream::Error ostr;
-          ostr << FUN <<
-            ": UserInfoMatcher::ImplementationException caught: " <<
-            e.description;
+          ostr << FUN << ": confirm_user_freq_caps preparation failed: " <<
+            e.what();
 
           logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
             Aspect::PASS_FRONTEND,
             "ADS-IMPL-123");
-        }
-        catch (const AdServer::UserInfoSvcs::
-               UserInfoMatcher::NotReady& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": UserInfoMatcher::NotReady caught: " <<
-            e.description;
-
-          logger()->log(ostr.str(),
-            Logging::Logger::WARNING,
-            Aspect::PASS_FRONTEND);
-        }
-        catch (const CORBA::SystemException& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": CORBA::Exception caught: " << e;
-
-          logger()->log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::PASS_FRONTEND,
-            "ADS-ICON-2");
         }
       }
     }

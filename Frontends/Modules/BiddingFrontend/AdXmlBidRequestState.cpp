@@ -2,7 +2,7 @@
 #include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
-#include "AdJsonBidRequestTask.hpp"
+#include "AdXmlBidRequestState.hpp"
 
 namespace AdServer
 {
@@ -26,34 +26,19 @@ namespace Bidding
       {
         const String::SubString TEXT_XML("text/xml");
       }
-
-      namespace AdJson
-      {
-        const String::SubString CRID("creative_id");
-        const String::SubString TTL_CLICK("ttl_click");
-        const String::SubString MODE("mode");
-        const String::SubString COST("cost");
-        const String::SubString TITLE("title");
-        const String::SubString TEXT("text");
-        const String::SubString NURL("nurl");
-        const String::SubString CLICK_URL("link");
-        const String::SubString ICON("icon");
-        const String::SubString IMP_TRACKERS("pixels");
-        const String::SubString IMAGE("image");
-      }
     } // namespace Response
 
-    const String::SubString ADJSON_CLIENT("adjson");
-    const String::SubString ADJSON_SIZE("492x328");
+    const String::SubString ADXML_CLIENT("adxml");
+    const String::SubString ADXML_SIZE("300x300");
   }
 
-  AdJsonBidRequestTask::AdJsonBidRequestTask(
+  AdXmlBidRequestState::AdXmlBidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
-    : BidRequestTask(
+    : BidRequestState(
         bid_frontend,
         std::move(request_holder),
         std::move(response_writer),
@@ -62,9 +47,9 @@ namespace Bidding
   {}
 
   bool
-  AdJsonBidRequestTask::read_request() noexcept
+  AdXmlBidRequestState::read_request() noexcept
   {
-    static const char* FUN = "AdJsonBidRequestTask::read_request()";
+    static const char* FUN = "AdXmlBidRequestState::read_request()";
 
     std::string bid_request;
 
@@ -77,9 +62,9 @@ namespace Bidding
         request_info_,
         keywords_,
         request,
-        true, // require icon
-        ADJSON_CLIENT,
-        ADJSON_SIZE);
+        false,
+        ADXML_CLIENT,
+        ADXML_SIZE);
 
       return true;
     }
@@ -101,12 +86,12 @@ namespace Bidding
   }
 
   bool
-  AdJsonBidRequestTask::write_response(
+  AdXmlBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
-    //static const char* FUN = "AdJsonBidRequestTask::write_response()";
+    //static const char* FUN = "AdXmlBidRequestState::write_response()";
 
     AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
@@ -140,7 +125,7 @@ namespace Bidding
   }
 
   void
-  AdJsonBidRequestTask::write_empty_response(unsigned int code)
+  AdXmlBidRequestState::write_empty_response(unsigned int code)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -157,110 +142,47 @@ namespace Bidding
   }
 
   void
-  AdJsonBidRequestTask::clear() noexcept
+  AdXmlBidRequestState::clear() noexcept
   {
-    BidRequestTask::clear();
+    BidRequestState::clear();
     uri_.clear();
   }
 
   void
-  AdJsonBidRequestTask::print_request(std::ostream& /*out*/) const noexcept
+  AdXmlBidRequestState::print_request(std::ostream& /*out*/) const noexcept
   {
     //out << bid_request_;
   }
 
   void
-  AdJsonBidRequestTask::fill_response_(
+  AdXmlBidRequestState::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
-    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    const AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
     const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
-    static const char* FUN = "AdJsonBidRequestTask::fill_response_()";
+    static const char* FUN = "AdXmlBidRequestState::fill_response_()";
 
     try
     {
-      //Generics::Time now = Generics::Time::get_time_of_day();
+      Generics::Time now = Generics::Time::get_time_of_day();
 
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      response_ostr << "<xml version=\"11.5.2.8\">\n"
+        "<result requesttime=\"" <<
+        (now - start_processing_time()).get_gm_time().format("%s.%q") << "\">\n";
 
-      assert(campaign_match_result.ad_slots.length() > 0);
-
-      const AdServer::Bidding::CampaignManager::
-        AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[0];
-
-      CampaignSvcs::RevenueDecimal sum_pub_ecpm = CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-        ad_slot_result.selected_creatives[0].pub_ecpm);
-
-      bid_frontend_->limit_max_cpm_(
-        sum_pub_ecpm, request_params.publisher_account_ids);
-
-      root_json.add_string(
-        Response::AdJson::CRID,
-        String::SubString(ad_slot_result.selected_creatives[0].creative_version_id));
-      root_json.add_number(Response::AdJson::TTL_CLICK, 172800);
-      root_json.add_string(Response::AdJson::MODE, String::SubString("cpm"));
-
-      // result price in USD/1000, ecpm is in 0.01/1000
-      CampaignSvcs::RevenueDecimal adjson_price = CampaignSvcs::RevenueDecimal::div(
-        sum_pub_ecpm,
-        CampaignSvcs::RevenueDecimal(false, 100, 0));
-      root_json.add_number(Response::AdJson::COST, adjson_price);
-
-      if(ad_slot_result.native_data_tokens.length() >= 1)
+      for(CORBA::ULong slot_i = 0;
+        slot_i < campaign_match_result.ad_slots.length(); ++slot_i)
       {
-        // NDTE_TITLE
-        const AdServer::Bidding::CampaignManager::TokenInfo& token =
-          ad_slot_result.native_data_tokens[0];
-        // title
-        root_json.add_escaped_string(
-          Response::AdJson::TITLE,
-          String::SubString(token.value));
-        // text
-        root_json.add_escaped_string(
-          Response::AdJson::TEXT,
-          String::SubString(token.value));
+        fill_response_adslot_(
+          response_ostr,
+          campaign_match_result.ad_slots[slot_i]);
       }
 
-      // nurl
-      if(ad_slot_result.notice_url[0])
-      {
-        root_json.add_escaped_string(
-          Response::AdJson::NURL,
-          String::SubString(ad_slot_result.notice_url));
-      }
-
-      // link
-      root_json.add_string(
-        Response::AdJson::CLICK_URL,
-        String::SubString(ad_slot_result.selected_creatives[0].click_url));
-
-      // icon
-      if(ad_slot_result.native_image_tokens.length() > 1)
-      {
-        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
-          ad_slot_result.native_image_tokens[1];
-        root_json.add_escaped_string(
-          Response::AdJson::ICON,
-          String::SubString(token.value));
-      }
-
-      // pixels
-      {
-        AdServer::Commons::JsonObject imp_trackers_obj(
-          root_json.add_array(Response::AdJson::IMP_TRACKERS));
-      }
-
-      // image
-      if(ad_slot_result.native_image_tokens.length() > 0)
-      {
-        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
-          ad_slot_result.native_image_tokens[0];
-        root_json.add_escaped_string(
-          Response::AdJson::IMAGE, String::SubString(token.value));
-      }
+      response_ostr << "</result>\n"
+        "</xml>";
     }
     catch(const eh::Exception& ex)
     {
@@ -272,7 +194,7 @@ namespace Bidding
   }
 
   void
-  AdJsonBidRequestTask::fill_response_adslot_(
+  AdXmlBidRequestState::fill_response_adslot_(
     std::ostream& response_ostr,
     const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
@@ -324,7 +246,7 @@ namespace Bidding
   }
 
   void
-  AdJsonBidRequestTask::add_xml_escaped_string_(
+  AdXmlBidRequestState::add_xml_escaped_string_(
     std::ostream& response_ostr,
     const char* str)
     noexcept

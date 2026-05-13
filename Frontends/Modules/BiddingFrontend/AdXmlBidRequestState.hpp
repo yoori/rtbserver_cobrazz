@@ -1,19 +1,19 @@
 #pragma once
 
 #include <iostream>
-#include "BidRequestTask.hpp"
+#include "BidRequestState.hpp"
 
 namespace AdServer
 {
 namespace Bidding
 {
   //
-  // AdJsonBidRequestTask
+  // AdXmlBidRequestState
   //
-  class AdJsonBidRequestTask: public BidRequestTask
+  class AdXmlBidRequestState: public BidRequestState
   {
   public:
-    AdJsonBidRequestTask(
+    AdXmlBidRequestState(
       Frontend* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
@@ -54,10 +54,10 @@ namespace Bidding
 
   protected:
     virtual
-    ~AdJsonBidRequestTask() noexcept = default;
+    ~AdXmlBidRequestState() noexcept = default;
 
     void
-    fill_by_adjson_request_(
+    fill_by_adxml_request_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,

@@ -2,7 +2,7 @@
 
 #include <Commons/CorbaAlgs.hpp>
 
-#include "OpenRtbBidRequestTask.hpp"
+#include "OpenRtbBidRequestState.hpp"
 
 namespace AdServer
 {
@@ -249,13 +249,13 @@ namespace Bidding
     }
   }
 
-  OpenRtbBidRequestTask::OpenRtbBidRequestTask(
+  OpenRtbBidRequestState::OpenRtbBidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
-    : BidRequestTask(
+    : BidRequestState(
         bid_frontend,
         std::move(request_holder),
         std::move(response_writer),
@@ -265,7 +265,7 @@ namespace Bidding
 
   /*
   void
-  OpenRtbBidRequestTask::execute_impl_() noexcept
+  OpenRtbBidRequestState::execute_impl_() noexcept
   {
     bool bad_request_val = false;
 
@@ -285,9 +285,9 @@ namespace Bidding
   */
 
   bool
-  OpenRtbBidRequestTask::read_request() noexcept
+  OpenRtbBidRequestState::read_request() noexcept
   {
-    static const char* FUN = "OpenRtbBidRequestTask::read_request()";
+    static const char* FUN = "OpenRtbBidRequestState::read_request()";
 
     std::string bid_request;
 
@@ -340,7 +340,7 @@ namespace Bidding
         {
           // decompression error
           return false;
-          //throw BidRequestTask::Invalid("can make unzip");
+          //throw BidRequestState::Invalid("can make unzip");
         }
 
         res.resize(res.size() - zs.avail_out);
@@ -384,12 +384,12 @@ namespace Bidding
   }
 
   bool
-  OpenRtbBidRequestTask::write_response(
+  OpenRtbBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
-    //static const char* FUN = "OpenRtbBidRequestTask::write_response()";
+    //static const char* FUN = "OpenRtbBidRequestState::write_response()";
 
     AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
@@ -450,7 +450,7 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::write_empty_response(unsigned int code)
+  OpenRtbBidRequestState::write_empty_response(unsigned int code)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -480,21 +480,21 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::clear() noexcept
+  OpenRtbBidRequestState::clear() noexcept
   {
-    BidRequestTask::clear();
+    BidRequestState::clear();
     uri_.clear();
     context_ = JsonProcessingContext();
   }
 
   void
-  OpenRtbBidRequestTask::print_request(std::ostream& /*out*/) const noexcept
+  OpenRtbBidRequestState::print_request(std::ostream& /*out*/) const noexcept
   {
     //out << bid_request_;
   }
 
   void
-  OpenRtbBidRequestTask::add_response_notice_(
+  OpenRtbBidRequestState::add_response_notice_(
     AdServer::Commons::JsonObject& bid_object,
     const String::SubString& url,
     SourceTraits::NoticeInstantiateType notice_instantiate_type)
@@ -514,7 +514,7 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::fill_ext0_nroa_(
+  OpenRtbBidRequestState::fill_ext0_nroa_(
     AdServer::Commons::JsonObject& nroa_obj,
     const RequestInfo& /*request_info*/,
     const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
@@ -554,7 +554,7 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::fill_buzsape_nroa_contract_(
+  OpenRtbBidRequestState::fill_buzsape_nroa_contract_(
     AdServer::Commons::JsonObject& contract_obj,
     const AdServer::Bidding::CampaignManager::ExtContractInfo& ext_contract_info)
     noexcept
@@ -589,7 +589,7 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::fill_buzsape_nroa_(
+  OpenRtbBidRequestState::fill_buzsape_nroa_(
     AdServer::Commons::JsonObject& nroa_obj,
     const RequestInfo& /*request_info*/,
     const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
@@ -652,7 +652,7 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::fill_openrtb_response_(
+  OpenRtbBidRequestState::fill_openrtb_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
     const AdServer::Bidding::CampaignManager::RequestParams& request_params,
@@ -661,7 +661,7 @@ namespace Bidding
     bool fill_yandex_attributes)
     noexcept
   {
-    static const char* FUN = "OpenRtbBidRequestTask::fill_openrtb_response_()";
+    static const char* FUN = "OpenRtbBidRequestState::fill_openrtb_response_()";
 
     try
     {
@@ -1113,7 +1113,7 @@ namespace Bidding
   }
 
   void
-  OpenRtbBidRequestTask::fill_yandex_response_(
+  OpenRtbBidRequestState::fill_yandex_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
     const AdServer::Bidding::CampaignManager::
@@ -1123,7 +1123,7 @@ namespace Bidding
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
-    static const char* FUN = "OpenRtbBidRequestTask::fill_yandex_response_()";
+    static const char* FUN = "OpenRtbBidRequestState::fill_yandex_response_()";
 
     try
     {
@@ -1358,7 +1358,7 @@ namespace Bidding
 
   // ADSC-10918 Native ads
   void
-  OpenRtbBidRequestTask::fill_native_response_(
+  OpenRtbBidRequestState::fill_native_response_(
     AdServer::Commons::JsonObject* root_json,
     const JsonAdSlotProcessingContext::Native& native_context,
     const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result,
@@ -1366,7 +1366,7 @@ namespace Bidding
     bool add_root_native,
     SourceTraits::NativeAdsInstantiateType instantiate_type)
   {
-    static const char* FUN = "OpenRtbBidRequestTask::fill_native_response_()";
+    static const char* FUN = "OpenRtbBidRequestState::fill_native_response_()";
 
     try
     {

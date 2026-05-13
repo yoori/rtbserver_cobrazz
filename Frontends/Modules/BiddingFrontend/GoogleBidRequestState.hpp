@@ -1,18 +1,18 @@
 #pragma once
 
-#include "BidRequestTask.hpp"
+#include "BidRequestState.hpp"
 
 namespace AdServer
 {
 namespace Bidding
 {
   //
-  // GoogleBidRequestTask
+  // GoogleBidRequestState
   //
-  class GoogleBidRequestTask: public BidRequestTask
+  class GoogleBidRequestState: public BidRequestState
   {
   public:
-    GoogleBidRequestTask(
+    GoogleBidRequestState(
       Frontend* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
@@ -50,7 +50,7 @@ namespace Bidding
 
   protected:
     virtual
-    ~GoogleBidRequestTask() noexcept = default;
+    ~GoogleBidRequestState() noexcept = default;
 
   private:
     Google::BidRequest bid_request_;

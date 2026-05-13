@@ -1,4 +1,4 @@
-#include "GoogleBidRequestTask.hpp"
+#include "GoogleBidRequestState.hpp"
 
 #include <Commons/CorbaAlgs.hpp>
 
@@ -156,13 +156,13 @@ namespace Bidding
     }
   }
 
-  GoogleBidRequestTask::GoogleBidRequestTask(
+  GoogleBidRequestState::GoogleBidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
-    : BidRequestTask(
+    : BidRequestState(
         bid_frontend,
         std::move(request_holder),
         std::move(response_writer),
@@ -170,9 +170,9 @@ namespace Bidding
   {}
 
   bool
-  GoogleBidRequestTask::read_request() noexcept
+  GoogleBidRequestState::read_request() noexcept
   {
-    static const char* FUN = "GoogleBidRequestTask::GoogleBidRequestTask()";
+    static const char* FUN = "GoogleBidRequestState::GoogleBidRequestState()";
 
     try
     {
@@ -234,7 +234,7 @@ namespace Bidding
   }
 
   bool
-  GoogleBidRequestTask::write_response(
+  GoogleBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
@@ -413,7 +413,7 @@ namespace Bidding
   }
 
   void
-  GoogleBidRequestTask::write_empty_response(unsigned int code)
+  GoogleBidRequestState::write_empty_response(unsigned int code)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -437,15 +437,15 @@ namespace Bidding
   }
 
   void
-  GoogleBidRequestTask::print_request(std::ostream& /*out*/) const noexcept
+  GoogleBidRequestState::print_request(std::ostream& /*out*/) const noexcept
   {
     //out << bid_request__.DebugString();
   }
 
   void
-  GoogleBidRequestTask::clear() noexcept
+  GoogleBidRequestState::clear() noexcept
   {
-    BidRequestTask::clear();
+    BidRequestState::clear();
     ad_slots_context_.clear();
   }
 }

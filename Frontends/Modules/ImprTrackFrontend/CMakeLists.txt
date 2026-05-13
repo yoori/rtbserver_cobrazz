@@ -1,4 +1,6 @@
 add_library(ImprTrackFrontend SHARED
+  ImprTrackMatchRequestState.cpp
+  ImprTrackRequestState.cpp
   ImprTrackFrontend.cpp
   RequestInfoFiller.cpp
 )

@@ -41,6 +41,9 @@
 
 namespace AdServer::ImprTrack
 {
+  class ImprTrackRequestState;
+  class ImprTrackMatchRequestState;
+
   namespace Configuration
   {
     using namespace xsd::AdServer::Configuration;
@@ -54,6 +57,8 @@ namespace AdServer::ImprTrack
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
+    friend class ImprTrackRequestState;
+    friend class ImprTrackMatchRequestState;
 
   public:
     Frontend(
@@ -135,7 +140,6 @@ namespace AdServer::ImprTrack
 
   private:
     struct MatchScheduleState;
-    struct MatchTaskState;
 
     virtual ~Frontend() noexcept;
 
@@ -172,27 +176,27 @@ namespace AdServer::ImprTrack
 
     void
     start_match_channels_(
-      const std::shared_ptr<MatchTaskState>& state)
+      const std::shared_ptr<ImprTrackMatchRequestState>& state)
       noexcept;
 
     void
     start_history_match_(
-      const std::shared_ptr<MatchTaskState>& state)
+      const std::shared_ptr<ImprTrackMatchRequestState>& state)
       noexcept;
 
     void
     process_match_request_(
-      const std::shared_ptr<MatchTaskState>& state)
+      const std::shared_ptr<ImprTrackMatchRequestState>& state)
       noexcept;
 
     void
-    finish_match_channels_task_()
+    finish_match_channels_request_()
       noexcept;
 
     void
     fill_match_request_info_(
       adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
-      const MatchTaskState& state)
+      const ImprTrackMatchRequestState& state)
       const noexcept;
 
     RequestInfoFiller::EncryptionKeys_var

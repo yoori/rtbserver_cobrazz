@@ -35,12 +35,12 @@
 
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
-#include "OpenRtbBidRequestTask.hpp"
-#include "GoogleBidRequestTask.hpp"
-#include "AdXmlBidRequestTask.hpp"
-#include "ClickStarBidRequestTask.hpp"
-#include "AdJsonBidRequestTask.hpp"
-#include "DAOBidRequestTask.hpp"
+#include "OpenRtbBidRequestState.hpp"
+#include "GoogleBidRequestState.hpp"
+#include "AdXmlBidRequestState.hpp"
+#include "ClickStarBidRequestState.hpp"
+#include "AdJsonBidRequestState.hpp"
+#include "DAOBidRequestState.hpp"
 #include "RequestMetricsProvider.hpp"
 #include "Utils.hpp"
 
@@ -1153,7 +1153,7 @@ namespace AdServer::Bidding
     // and push goal for timeout control
     //
     Generics::Time start_process_time = Generics::Time::get_time_of_day();
-    BidRequestTask_var request_task;
+    BidRequestState_var request_task;
 
     try
     {
@@ -1167,7 +1167,7 @@ namespace AdServer::Bidding
         config_->GoogleUriList().Uri(), request.uri(), found_uri))
       {
         // Google request
-        request_task = new GoogleBidRequestTask(
+        request_task = new GoogleBidRequestState(
           this,
           request_holder,
           response_writer,
@@ -1177,7 +1177,7 @@ namespace AdServer::Bidding
         FrontendCommons::find_uri(
           config_->AdXmlUriList()->Uri(), request.uri(), found_uri))
       {
-        request_task = new AdXmlBidRequestTask(
+        request_task = new AdXmlBidRequestState(
           this,
           request_holder,
           response_writer,
@@ -1187,7 +1187,7 @@ namespace AdServer::Bidding
         FrontendCommons::find_uri(
           config_->ClickStarUriList()->Uri(), request.uri(), found_uri))
       {
-        request_task = new ClickStarBidRequestTask(
+        request_task = new ClickStarBidRequestState(
           this,
           request_holder,
           response_writer,
@@ -1197,7 +1197,7 @@ namespace AdServer::Bidding
         FrontendCommons::find_uri(
           config_->DAOUriList()->Uri(), request.uri(), found_uri))
       {
-        request_task = new AdJsonBidRequestTask(
+        request_task = new AdJsonBidRequestState(
           this,
           request_holder,
           response_writer,
@@ -1206,7 +1206,7 @@ namespace AdServer::Bidding
       else
       {
         // OpenRTB request
-        request_task = new OpenRtbBidRequestTask(
+        request_task = new OpenRtbBidRequestState(
           this,
           request_holder,
           response_writer,
@@ -1214,6 +1214,7 @@ namespace AdServer::Bidding
       }
 
       unsigned long cur_task_count = bid_task_count_.exchange_and_add(1) + 1;
+      request_task->init_debug_info();
 
       if(cur_task_count > config_->max_pending_tasks() + config_->threads())
       {
@@ -1250,7 +1251,7 @@ namespace AdServer::Bidding
           });
       }
     }
-    catch(const BidRequestTask::Invalid& e)
+    catch(const BidRequestState::Invalid& e)
     {
       // HTTP_BAD_REQUEST
       if(request_task)
@@ -1265,7 +1266,7 @@ namespace AdServer::Bidding
       }
 
       Stream::Error ostr;
-      ostr << FUN << ": BidRequestTask::Invalid caught: " << e.what();
+      ostr << FUN << ": BidRequestState::Invalid caught: " << e.what();
       logger()->log(ostr.str(),
         Logging::Logger::INFO,
         Aspect::BIDDING_FRONTEND);
@@ -1295,7 +1296,7 @@ namespace AdServer::Bidding
 
   void
   Frontend::resolve_user_id_async_(
-    BidRequestTask_var request_task,
+    BidRequestState_var request_task,
     std::function<void(DebugSink::UserResolvingDebugInfo)> callback)
     noexcept
   {
@@ -1382,7 +1383,7 @@ namespace AdServer::Bidding
 
     struct State
     {
-      BidRequestTask_var request_task;
+      BidRequestState_var request_task;
       std::vector<std::string> external_user_ids;
       std::size_t get_index = 0;
       std::size_t add_index = 0;
@@ -1790,36 +1791,16 @@ namespace AdServer::Bidding
 
         result = true;
       }
-      catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
+      catch(const eh::Exception& e)
       {
         Stream::Error ostr;
         ostr << FUN <<
-          ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
-          e.description;
+          ": post match failed: " << e.what();
 
         logger()->log(ostr.str(),
           Logging::Logger::EMERGENCY,
           Aspect::BIDDING_FRONTEND,
           "ADS-IMPL-112");
-      }
-      catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-      {
-        logger()->log(
-          String::SubString("UserInfoManager not ready for post match."),
-          TraceLevel::MIDDLE,
-          Aspect::BIDDING_FRONTEND);
-      }
-      catch(const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN <<
-          ": Can't do post match. Caught CORBA::SystemException: " <<
-          ex;
-
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::BIDDING_FRONTEND,
-          "ADS-ICON-2");
       }
     }
 
@@ -1839,7 +1820,7 @@ namespace AdServer::Bidding
 
   void
   Frontend::trigger_match_async_(
-    BidRequestTask_var request_task,
+    BidRequestState_var request_task,
     const AdServer::Commons::UserId& user_id,
     std::function<void(
       std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>,
@@ -2022,7 +2003,7 @@ namespace AdServer::Bidding
 
   void
   Frontend::history_match_async_(
-    BidRequestTask_var request_task,
+    BidRequestState_var request_task,
     std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
       trigger_match_result,
     bool trigger_match_result_present,
@@ -2255,7 +2236,7 @@ namespace AdServer::Bidding
 
   void
   Frontend::get_ccg_keywords_async_(
-    BidRequestTask_var request_task,
+    BidRequestState_var request_task,
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
       history_match_result,
     std::function<void(
@@ -2338,7 +2319,7 @@ namespace AdServer::Bidding
   Frontend::select_campaign_async_(
     std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
       campaign_match_result,
-    BidRequestTask_var request_task,
+    BidRequestState_var request_task,
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
       history_match_result,
     std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
@@ -2442,21 +2423,15 @@ namespace AdServer::Bidding
     const char* fn,
     std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
       campaign_match_result,
-    BidRequestTask_var request_task,
+    BidRequestState_var request_task,
     const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
     bool interrupted,
     std::function<void(bool)> callback)
     noexcept
   {
-    auto& request_info = request_task->request_info_;
-    auto& request_params = *request_task->request_params();
     auto& request_time_metering = request_task->request_time_metering_;
 
-    request_task->debug_sink_.print_request_debug_info(
-      request_info,
-      request_params,
-      request_task->resolved_user_id_,
-      request_task->keywords_);
+    request_task->print_available_request_debug_info_();
     request_task->debug_sink_.print_user_resolving_debug_info(
       user_resolving_debug_info);
 
@@ -2621,7 +2596,7 @@ namespace AdServer::Bidding
 
   void
   Frontend::process_bid_request_async_(
-    BidRequestTask_var request_task)
+    BidRequestState_var request_task)
     noexcept
   {
     auto campaign_match_result =
@@ -2657,7 +2632,7 @@ namespace AdServer::Bidding
 
   void
   Frontend::interrupted_select_campaign_(
-    BidRequestTask* request_task) noexcept
+    BidRequestState* request_task) noexcept
   {
     static const char* FUN = "Bidding::Frontend::interrupted_select_campaign_()";
 
@@ -3181,7 +3156,7 @@ namespace AdServer::Bidding
   Frontend::interrupt_(
     const char* fun,
     const Stage stage,
-    const BidRequestTask* request_task)
+    const BidRequestState* request_task)
     noexcept
   {
     Generics::Time timeout = Generics::Time::get_time_of_day() - request_task->start_processing_time();
@@ -3223,7 +3198,7 @@ namespace AdServer::Bidding
   Frontend::check_interrupt_(
     const char* fun,
     const Stage stage,
-    BidRequestTask* request_task)
+    BidRequestState* request_task)
     noexcept
   {
     if(request_task->interrupted())

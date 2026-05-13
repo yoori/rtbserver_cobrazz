@@ -22,6 +22,8 @@
 #include <unistd.h>
 
 #include "ImprTrackFrontend.hpp"
+#include "ImprTrackRequestState.hpp"
+#include "ImprTrackMatchRequestState.hpp"
 
 namespace
 {
@@ -91,20 +93,6 @@ namespace AdServer::ImprTrack
     bool scheduled = false;
     adserver::campaign_svcs::campaign_manager::ImpressionResultInfo
       impression_result_info;
-  };
-
-  struct Frontend::MatchTaskState
-  {
-    RequestInfo request_info;
-    AdServer::Commons::UserId user_id;
-    AdServer::Commons::UserId cookie_user_id;
-    AdServer::Commons::UserId resolved_cookie_user_id;
-    std::vector<CORBA::ULong> campaign_ids;
-    std::vector<CORBA::ULong> advertiser_ids;
-    adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
-    adserver::user_info_svcs::user_info_manager::MatchResponse
-      history_match_response;
-    bool history_match_present = false;
   };
 
   Frontend::Frontend(
@@ -815,39 +803,16 @@ namespace AdServer::ImprTrack
               }
             });
         }
-        catch (const AdServer::UserInfoSvcs::
-               UserInfoMatcher::ImplementationException& e)
+        catch(const eh::Exception& e)
         {
           Stream::Error ostr;
-          ostr << FUN <<
-            ": UserInfoMatcher::ImplementationException caught: " <<
-            e.description;
+          ostr << FUN << ": confirm_user_freq_caps preparation failed: " <<
+            e.what();
 
           logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
             Aspect::IMPR_TRACK_FRONTEND,
             "ADS-IMPL-123");
-        }
-        catch (const AdServer::UserInfoSvcs::
-               UserInfoMatcher::NotReady& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": UserInfoMatcher::NotReady caught: " <<
-            e.description;
-
-          logger()->log(ostr.str(),
-            Logging::Logger::WARNING,
-            Aspect::IMPR_TRACK_FRONTEND);
-        }
-        catch (const CORBA::SystemException& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": CORBA::Exception caught: " << e;
-
-          logger()->log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::IMPR_TRACK_FRONTEND,
-            "ADS-ICON-2");
         }
       }
 
@@ -1046,234 +1011,11 @@ namespace AdServer::ImprTrack
       bool invalid_bind_operation)> finish)
     noexcept
   {
-    static const char* FUN = "ImprTrack::Frontend::resolve_user_bind_()";
-
-    struct State
-    {
-      RequestInfo request_info;
-      AdServer::Commons::UserId result_user_id;
-      bool invalid_bind_operation = false;
-      std::function<void(
-        const AdServer::Commons::UserId& result_user_id,
-        bool invalid_bind_operation)> finish;
-    };
-
-    auto state = std::make_shared<State>();
-    state->request_info = request_info;
-    state->result_user_id = input_user_id;
-    state->finish = std::move(finish);
-
-    auto complete = [state]()
-    {
-      state->finish(
-        state->result_user_id,
-        state->invalid_bind_operation);
-    };
-
-    if(state->request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT)
-    {
-      state->result_user_id = AdServer::Commons::UserId();
-      complete();
-      return;
-    }
-
-    if(!user_bind_client_)
-    {
-      complete();
-      return;
-    }
-
-    auto log_rebind_error =
-      [this](const grpc::Status& status)
-      {
-        try
-        {
-          AdServer::UserInfoSvcs::throw_user_bind_exception(status);
-        }
-        catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught UserBindServer::NotReady";
-          logger()->log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::IMPR_TRACK_FRONTEND,
-            "ADS-IMPL-109");
-        }
-        catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound&)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught UserBindClient::ChunkNotFound";
-          logger()->log(ostr.str(),
-            Logging::Logger::ERROR,
-            Aspect::IMPR_TRACK_FRONTEND,
-            "ADS-IMPL-109");
-        }
-        catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
-            ex.what();
-          logger()->log(ostr.str(),
-            Logging::Logger::ERROR,
-            Aspect::IMPR_TRACK_FRONTEND,
-            "ADS-IMPL-109");
-        }
-      };
-
-    auto rebind_external = std::make_shared<std::function<void()>>();
-    *rebind_external = [this, state, complete, log_rebind_error]()
-    {
-      if(state->request_info.current_user_id == state->result_user_id ||
-        state->request_info.external_user_id.empty())
-      {
-        complete();
-        return;
-      }
-
-      const std::string external_user_id =
-        state->request_info.external_user_id;
-
-      if(!state->result_user_id.is_null())
-      {
-        auto add_user_request = std::make_shared<
-          adserver::user_info_svcs::user_bind::AddUserIdRequest>();
-        add_user_request->set_id(external_user_id);
-        add_user_request->set_user_id(
-          GrpcAlgs::pack_user_id(state->result_user_id));
-        add_user_request->set_timestamp(
-          GrpcAlgs::pack_time(state->request_info.time));
-
-        user_bind_client_->add_user_id(
-          *add_user_request,
-          [this, state, complete, add_user_request, log_rebind_error](
-            const grpc::Status& status,
-            const adserver::user_info_svcs::user_bind::AddUserIdResponse&
-              response)
-          {
-            workers_->post(
-              [this, state, complete, status, response, log_rebind_error]()
-              {
-                if(!status.ok())
-                {
-                  log_rebind_error(status);
-                  complete();
-                  return;
-                }
-
-                if(response.invalid_operation())
-                {
-                  state->invalid_bind_operation = true;
-                  report_bad_user_(state->request_info);
-                }
-
-                complete();
-              });
-          });
-      }
-      else
-      {
-        auto get_request = std::make_shared<
-          adserver::user_info_svcs::user_bind::GetUserIdRequest>();
-        get_request->set_id(external_user_id);
-        get_request->set_timestamp(
-          GrpcAlgs::pack_time(state->request_info.time));
-        get_request->set_silent(true);
-        get_request->set_generate_user_id(false);
-        get_request->set_for_set_cookie(state->request_info.set_cookie);
-        get_request->set_create_timestamp(
-          GrpcAlgs::pack_time(Generics::Time::ZERO));
-
-        user_bind_client_->get_user_id(
-          *get_request,
-          [this, state, complete, get_request, log_rebind_error](
-            const grpc::Status& status,
-            const adserver::user_info_svcs::user_bind::GetUserIdResponse&
-              response)
-          {
-            workers_->post(
-              [this, state, complete, status, response, log_rebind_error]()
-              {
-                if(!status.ok())
-                {
-                  log_rebind_error(status);
-                  complete();
-                  return;
-                }
-
-                if(response.invalid_operation())
-                {
-                  state->invalid_bind_operation = true;
-                  report_bad_user_(state->request_info);
-                }
-                else
-                {
-                  const AdServer::Commons::UserId resolved_user_id =
-                    GrpcAlgs::unpack_user_id(response.user_id());
-                  if(!resolved_user_id.is_null())
-                  {
-                    state->result_user_id = resolved_user_id;
-                    common_module_->user_id_controller()->null_blacklisted(
-                      state->result_user_id);
-                  }
-                }
-
-                complete();
-              });
-          });
-      }
-    };
-
-    if(state->result_user_id.is_null())
-    {
-      (*rebind_external)();
-      return;
-    }
-
-    auto get_request = std::make_shared<
-      adserver::user_info_svcs::user_bind::GetUserIdRequest>();
-    get_request->set_id(std::string("c/") + state->result_user_id.to_string());
-    get_request->set_timestamp(GrpcAlgs::pack_time(state->request_info.time));
-    get_request->set_silent(true);
-    get_request->set_generate_user_id(false);
-    get_request->set_for_set_cookie(state->request_info.set_cookie);
-    get_request->set_create_timestamp(
-      GrpcAlgs::pack_time(Generics::Time::ZERO));
-    get_request->set_current_user_id(
-      GrpcAlgs::pack_user_id(state->result_user_id));
-
-    user_bind_client_->get_user_id(
-      *get_request,
-      [this, state, complete, rebind_external, get_request](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
-      {
-        workers_->post(
-          [this, state, complete, rebind_external, status, response]()
-          {
-            if(!status.ok())
-            {
-              complete();
-              return;
-            }
-
-            if(response.invalid_operation())
-            {
-              state->invalid_bind_operation = true;
-              report_bad_user_(state->request_info);
-              complete();
-              return;
-            }
-
-            const AdServer::Commons::UserId resolved_user_id =
-              GrpcAlgs::unpack_user_id(response.user_id());
-            if(!resolved_user_id.is_null())
-            {
-              state->result_user_id = resolved_user_id;
-            }
-
-            (*rebind_external)();
-          });
-      });
+    std::make_shared<ImprTrackRequestState>(
+      this,
+      request_info,
+      input_user_id,
+      std::move(finish))->start();
   }
 
   void
@@ -1336,7 +1078,7 @@ namespace AdServer::ImprTrack
     }
 
     state->scheduled = true;
-    auto task_state = std::make_shared<MatchTaskState>();
+    auto task_state = std::make_shared<ImprTrackMatchRequestState>(this);
     task_state->request_info = state->request_info;
     task_state->user_id = match_user_id;
     task_state->cookie_user_id = state->request_info.current_user_id;
@@ -1357,15 +1099,15 @@ namespace AdServer::ImprTrack
     }
 
     match_workers_->post(
-      [this, task_state]()
+      [task_state]()
       {
-        start_match_channels_(task_state);
+        task_state->start_match_channels_stage();
       });
   }
 
   void
   Frontend::start_match_channels_(
-    const std::shared_ptr<MatchTaskState>& state)
+    const std::shared_ptr<ImprTrackMatchRequestState>& state)
     noexcept
   {
     auto channel_request = std::make_shared<
@@ -1410,7 +1152,7 @@ namespace AdServer::ImprTrack
                 Logging::Logger::EMERGENCY,
                 Aspect::IMPR_TRACK_FRONTEND,
                 "ADS-IMPL-117");
-              finish_match_channels_task_();
+              finish_match_channels_request_();
               return;
             }
 
@@ -1453,33 +1195,33 @@ namespace AdServer::ImprTrack
                         }
                       }
 
-                      start_history_match_(state);
+                      state->start_history_match_stage();
                     });
                 });
               return;
             }
 
-            start_history_match_(state);
+            state->start_history_match_stage();
           });
       });
   }
 
   void
   Frontend::start_history_match_(
-    const std::shared_ptr<MatchTaskState>& state)
+    const std::shared_ptr<ImprTrackMatchRequestState>& state)
     noexcept
   {
     const auto& matched_channels =
       state->trigger_match_result.matched_channels();
     if(matched_channels.page_channels_size() == 0)
     {
-      finish_match_channels_task_();
+      finish_match_channels_request_();
       return;
     }
 
     if(!user_info_client_)
     {
-      process_match_request_(state);
+      state->process_match_request_stage();
       return;
     }
 
@@ -1533,7 +1275,7 @@ namespace AdServer::ImprTrack
       if(state->user_id == state->resolved_cookie_user_id ||
         state->resolved_cookie_user_id.is_null())
       {
-        process_match_request_(state);
+        state->process_match_request_stage();
         return;
       }
 
@@ -1548,7 +1290,7 @@ namespace AdServer::ImprTrack
           match_workers_->post(
             [this, state]()
             {
-              process_match_request_(state);
+              state->process_match_request_stage();
             });
         });
     };
@@ -1598,7 +1340,7 @@ namespace AdServer::ImprTrack
 
   void
   Frontend::process_match_request_(
-    const std::shared_ptr<MatchTaskState>& state)
+    const std::shared_ptr<ImprTrackMatchRequestState>& state)
     noexcept
   {
     auto request = std::make_shared<
@@ -1630,7 +1372,7 @@ namespace AdServer::ImprTrack
                 "ADS-ICON-4");
             }
 
-            finish_match_channels_task_();
+            finish_match_channels_request_();
           });
       });
   }
@@ -1638,7 +1380,7 @@ namespace AdServer::ImprTrack
   void
   Frontend::fill_match_request_info_(
     adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
-    const MatchTaskState& state)
+    const ImprTrackMatchRequestState& state)
     const noexcept
   {
     auto* match_info = mri.mutable_match_info();
@@ -1693,7 +1435,7 @@ namespace AdServer::ImprTrack
   }
 
   void
-  Frontend::finish_match_channels_task_()
+  Frontend::finish_match_channels_request_()
     noexcept
   {
     match_tasks_count_.fetch_sub(1, std::memory_order_relaxed);

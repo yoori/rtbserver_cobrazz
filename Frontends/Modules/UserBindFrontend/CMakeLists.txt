@@ -1,4 +1,6 @@
 add_library(UserBindFrontend SHARED
+  BindRequestState.cpp
+  UserBindMatchRequestState.cpp
   UserBindFrontend.cpp
   RequestInfoFiller.cpp
 )

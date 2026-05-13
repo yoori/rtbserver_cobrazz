@@ -1,10 +1,10 @@
-#include "BidRequestTask.hpp"
+#include "BidRequestState.hpp"
 
 namespace AdServer
 {
 namespace Bidding
 {
-  BidRequestTask::BidRequestTask(
+  BidRequestState::BidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
@@ -22,7 +22,7 @@ namespace Bidding
   {}
 
   void
-  BidRequestTask::execute() noexcept
+  BidRequestState::execute() noexcept
   {
     if(!parse_request_())
     {
@@ -31,11 +31,30 @@ namespace Bidding
     }
 
     bid_frontend_->process_bid_request_async_(
-      BidRequestTask_var(ReferenceCounting::add_ref(this)));
+      BidRequestState_var(ReferenceCounting::add_ref(this)));
+  }
+
+  void
+  BidRequestState::init_debug_info() noexcept
+  {
+    try
+    {
+      if(request_info_.require_debug_info.empty() && request_holder_.in())
+      {
+        bid_frontend_->request_info_filler_->fill(
+          request_info_,
+          request_holder_->request(),
+          start_processing_time_);
+      }
+
+      debug_sink_.set(String::SubString(request_info_.require_debug_info));
+    }
+    catch(...)
+    {}
   }
 
   bool
-  BidRequestTask::parse_request_() noexcept
+  BidRequestState::parse_request_() noexcept
   {
     set_current_stage(Stage::RequestParsing);
 
@@ -65,7 +84,7 @@ namespace Bidding
   }
 
   void
-  BidRequestTask::complete_request_(
+  BidRequestState::complete_request_(
     bool not_interrupted,
     AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
@@ -140,7 +159,7 @@ namespace Bidding
   }
 
   void
-  BidRequestTask::finish_(bool write_empty_response) noexcept
+  BidRequestState::finish_(bool write_empty_response) noexcept
   {
     if(write_empty_response)
     {
@@ -153,11 +172,12 @@ namespace Bidding
   }
 
   void
-  BidRequestTask::interrupt() noexcept
+  BidRequestState::interrupt() noexcept
   {
     timeout_interrupted_.store(true, std::memory_order_relaxed);
     request_time_metering_.total_time =
       Generics::Time::get_time_of_day() - start_processing_time_;
+    print_available_request_debug_info_();
     debug_sink_.print_interrupt_debug_info(
       convert_stage_to_string(get_current_stage()));
     debug_sink_.print_time_metering_debug_info(request_time_metering_);
@@ -165,14 +185,14 @@ namespace Bidding
   }
 
   bool
-  BidRequestTask::check_interrupt_(const Stage stage)
+  BidRequestState::check_interrupt_(const Stage stage)
     noexcept
   {
     return bid_frontend_->check_interrupt_("", stage, this);
   }
 
   void
-  BidRequestTask::write_response_(
+  BidRequestState::write_response_(
     int code,
     FCGI::HttpResponse_var response)
     noexcept
@@ -185,12 +205,28 @@ namespace Bidding
       debug_sink_.write_response(response, code, resolved_user_id_);
       response_writer_->write(code, response);
       response_writer_ = FCGI::BaseHttpResponseWriter_var();
-      response_sent_ = true;
+    response_sent_ = true;
     }
   }
 
   void
-  BidRequestTask::clear() noexcept
+  BidRequestState::print_available_request_debug_info_() noexcept
+  {
+    if(!request_debug_info_printed_ &&
+       get_current_stage() != Stage::Initial &&
+       request_params_.in())
+    {
+      debug_sink_.print_request_debug_info(
+        request_info_,
+        *request_params_,
+        resolved_user_id_,
+        keywords_);
+      request_debug_info_printed_ = true;
+    }
+  }
+
+  void
+  BidRequestState::clear() noexcept
   {
     request_holder_ = FCGI::HttpRequestHolder_var();
     request_info_ = RequestInfo();

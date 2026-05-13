@@ -31,9 +31,9 @@ namespace Bidding
     ConstRequestParamsHolder_var;
 
   //
-  // BidRequestTask
+  // BidRequestState
   //
-  class BidRequestTask:
+  class BidRequestState:
     public ReferenceCounting::AtomicImpl
   {
     friend class Frontend;
@@ -43,7 +43,7 @@ namespace Bidding
     DECLARE_EXCEPTION(Invalid, Exception);
 
   public:
-    BidRequestTask(
+    BidRequestState(
       Frontend* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
@@ -56,6 +56,9 @@ namespace Bidding
 
     void
     interrupt() noexcept;
+
+    void
+    init_debug_info() noexcept;
 
     bool
     interrupted() const noexcept;
@@ -112,7 +115,7 @@ namespace Bidding
 
   protected:
     virtual
-    ~BidRequestTask() noexcept
+    ~BidRequestState() noexcept
     {
       assert(to_interrupt_ > 0);
       assert(response_sent_);
@@ -140,6 +143,9 @@ namespace Bidding
       FCGI::HttpResponse_var response)
       noexcept;
 
+    void
+    print_available_request_debug_info_() noexcept;
+
   protected:
     Frontend* bid_frontend_;
     FCGI::HttpRequestHolder_var request_holder_;
@@ -164,10 +170,11 @@ namespace Bidding
   private:
     FCGI::BaseHttpResponseWriter_var response_writer_;
     bool response_sent_;
+    bool request_debug_info_printed_ = false;
   };
 
-  typedef ReferenceCounting::SmartPtr<BidRequestTask>
-    BidRequestTask_var;
+  typedef ReferenceCounting::SmartPtr<BidRequestState>
+    BidRequestState_var;
 }
 }
 
@@ -177,34 +184,34 @@ namespace Bidding
 {
   inline
   const Generics::Time&
-  BidRequestTask::start_processing_time() const noexcept
+  BidRequestState::start_processing_time() const noexcept
   {
     return start_processing_time_;
   }
 
   inline
   const RequestInfo&
-  BidRequestTask::request_info() const noexcept
+  BidRequestState::request_info() const noexcept
   {
     return request_info_;
   }
 
   inline
   RequestParamsHolder_var&
-  BidRequestTask::request_params() noexcept
+  BidRequestState::request_params() noexcept
   {
     return request_params_;
   }
 
   inline
   const std::string&
-  BidRequestTask::hostname() const noexcept
+  BidRequestState::hostname() const noexcept
   {
     return hostname_;
   }
 
   inline
-  void BidRequestTask::set_current_stage(
+  void BidRequestState::set_current_stage(
     const Stage stage) noexcept
   {
     try
@@ -219,7 +226,7 @@ namespace Bidding
 
   inline
   Stage
-  BidRequestTask::get_current_stage()
+  BidRequestState::get_current_stage()
   {
     std::lock_guard lock(mutex_current_stage_);
     return current_stage_;
@@ -227,7 +234,7 @@ namespace Bidding
 
   inline
   bool
-  BidRequestTask::interrupted() const noexcept
+  BidRequestState::interrupted() const noexcept
   {
     return to_interrupt_ != 0 ||
       timeout_interrupted_.load(std::memory_order_relaxed);

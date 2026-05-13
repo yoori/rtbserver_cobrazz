@@ -6,13 +6,13 @@ add_library(BiddingFrontend SHARED
   AdXmlRequestInfoFiller.cpp
   BiddingFrontend.cpp
   BiddingFrontendStat.cpp
-  BidRequestTask.cpp
-  OpenRtbBidRequestTask.cpp
-  GoogleBidRequestTask.cpp
-  AdXmlBidRequestTask.cpp
-  AdJsonBidRequestTask.cpp
-  ClickStarBidRequestTask.cpp
-  DAOBidRequestTask.cpp
+  BidRequestState.cpp
+  OpenRtbBidRequestState.cpp
+  GoogleBidRequestState.cpp
+  AdXmlBidRequestState.cpp
+  AdJsonBidRequestState.cpp
+  ClickStarBidRequestState.cpp
+  DAOBidRequestState.cpp
   KeywordFormatter.cpp
   RequestMetricsProvider.cpp
   Utils.cpp

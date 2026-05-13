@@ -1588,16 +1588,14 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerCore::UserInfoContainerAccessor
   UserInfoManagerCore::get_user_info_container_(
   bool throw_not_ready)
-  /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady)*/
+  /*throw(NotReady)*/
   {
   if(throw_not_ready)
   {
     SyncPolicy::ReadGuard lock(lock_);
     if(!campaignserver_ready_)
     {
-      AdServer::UserInfoSvcs::UserInfoManager::NotReady exc;
-      exc.description = "UserInfoContainer is not ready";
-      throw exc;
+      throw NotReady("UserInfoContainer is not ready");
     }
   }
 
@@ -1606,9 +1604,7 @@ namespace AdServer::UserInfoSvcs
 
   if(throw_not_ready && !accessor.get().in())
   {
-    AdServer::UserInfoSvcs::UserInfoManager::NotReady exc;
-    exc.description = "UserInfoContainer is not ready";
-    throw exc;
+    throw NotReady("UserInfoContainer is not ready");
   }
 
   return accessor;
@@ -1617,16 +1613,14 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerCore::UserOperationProcessorAccessor
   UserInfoManagerCore::get_user_operation_processor_(
   bool throw_not_ready)
-  /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady)*/
+  /*throw(NotReady)*/
   {
   UserOperationProcessorAccessor accessor =
     user_operation_processor_->get_accessor();
 
   if(throw_not_ready && !accessor.get().in())
   {
-    AdServer::UserInfoSvcs::UserInfoManager::NotReady exc;
-    exc.description = "UserInfoProcessor is not ready";
-    throw exc;
+    throw NotReady("UserInfoProcessor is not ready");
   }
 
   return accessor;
@@ -2686,7 +2680,7 @@ namespace AdServer::UserInfoSvcs
 
   UserStat
   UserInfoManagerCore::get_stats()
-  /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady, eh::Exception)*/
+  /*throw(NotReady, eh::Exception)*/
   {
   UserStat user_stat;
 

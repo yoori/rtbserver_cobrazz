@@ -2,7 +2,7 @@
 #include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
-#include "DAOBidRequestTask.hpp"
+#include "DAOBidRequestState.hpp"
 
 namespace AdServer
 {
@@ -42,13 +42,13 @@ namespace Bidding
     const String::SubString ADJSON_SIZE("492x328");
   }
 
-  DAOBidRequestTask::DAOBidRequestTask(
+  DAOBidRequestState::DAOBidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
-    : OpenRtbBidRequestTask(
+    : OpenRtbBidRequestState(
         bid_frontend,
         std::move(request_holder),
         std::move(response_writer),
@@ -57,12 +57,12 @@ namespace Bidding
   {}
 
   bool
-  DAOBidRequestTask::write_response(
+  DAOBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
-    //static const char* FUN = "DAOBidRequestTask::write_response()";
+    //static const char* FUN = "DAOBidRequestState::write_response()";
 
     AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
@@ -96,7 +96,7 @@ namespace Bidding
   }
 
   void
-  DAOBidRequestTask::write_empty_response(unsigned int code)
+  DAOBidRequestState::write_empty_response(unsigned int code)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -113,20 +113,20 @@ namespace Bidding
   }
 
   void
-  DAOBidRequestTask::clear() noexcept
+  DAOBidRequestState::clear() noexcept
   {
-    BidRequestTask::clear();
+    BidRequestState::clear();
     uri_.clear();
   }
 
   void
-  DAOBidRequestTask::print_request(std::ostream& /*out*/) const noexcept
+  DAOBidRequestState::print_request(std::ostream& /*out*/) const noexcept
   {
     //out << bid_request_;
   }
 
   void
-  DAOBidRequestTask::fill_response_(
+  DAOBidRequestState::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
     const AdServer::Bidding::CampaignManager::RequestParams& request_params,
@@ -134,7 +134,7 @@ namespace Bidding
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
-    static const char* FUN = "DAOBidRequestTask::fill_response_()";
+    static const char* FUN = "DAOBidRequestState::fill_response_()";
 
     try
     {

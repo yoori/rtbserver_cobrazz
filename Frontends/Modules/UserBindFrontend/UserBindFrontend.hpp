@@ -27,6 +27,7 @@
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
+#include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
@@ -46,6 +47,7 @@ namespace AdServer
   }
 
   class UserBindFrontend;
+  class UserBindMatchRequestState;
 
   typedef ReferenceCounting::SmartPtr<UserBindFrontend> UserBindFrontend_var;
 
@@ -58,6 +60,7 @@ namespace AdServer
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);
+    friend class UserBindMatchRequestState;
 
   public:
     typedef Configuration::FeConfig::CommonFeConfiguration_type
@@ -91,9 +94,20 @@ namespace AdServer
     shutdown() noexcept;
 
   protected:
-    class BindProcessingState;
+    class BindRequestState;
 
-    struct BindResult;
+    struct BindResult
+    {
+      BindResult() = default;
+
+      explicit BindResult(const AdServer::Commons::UserId& result_user_id_val)
+        : result_user_id(result_user_id_val)
+      {}
+
+      // Used for init redirect template.
+      AdServer::Commons::UserId ssp_user_id;
+      AdServer::Commons::UserId result_user_id;
+    };
 
   protected:
     virtual ~UserBindFrontend() noexcept;
@@ -160,6 +174,15 @@ namespace AdServer
     parse_configs_() /*throw(Exception)*/;
 
     using ProcessRequestCallback = std::function<void(int, BindResult)>;
+    using GetUserIdCallback = std::function<void(
+      const grpc::Status&,
+      const adserver::user_info_svcs::user_bind::GetUserIdResponse&)>;
+    using AddUserIdCallback = std::function<void(
+      const grpc::Status&,
+      const adserver::user_info_svcs::user_bind::AddUserIdResponse&)>;
+    using AddBindRequestCallback = std::function<void(
+      const grpc::Status&,
+      const adserver::user_info_svcs::user_bind::AddBindRequestResponse&)>;
 
     void
     process_request_async_(
@@ -167,6 +190,30 @@ namespace AdServer
       std::string dns_bind_request_id,
       ProcessRequestCallback callback)
       noexcept;
+
+    bool
+    has_user_bind_client_() const noexcept;
+
+    void
+    get_user_id_(
+      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
+      GetUserIdCallback callback)
+      noexcept;
+
+    void
+    add_user_id_(
+      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
+      AddUserIdCallback callback)
+      noexcept;
+
+    void
+    add_bind_request_(
+      const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
+      AddBindRequestCallback callback)
+      noexcept;
+
+    void
+    post_request_stage_(std::function<void()> callback) noexcept;
 
     uint32_t
     calc_yandex_sign_(

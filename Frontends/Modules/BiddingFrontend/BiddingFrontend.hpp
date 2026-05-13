@@ -51,11 +51,11 @@
 
 namespace AdServer::Bidding
 {
-  class BidRequestTask;
-  typedef ReferenceCounting::SmartPtr<BidRequestTask>
-    BidRequestTask_var;
-  class OpenRtbBidRequestTask;
-  class GoogleBidRequestTask;
+  class BidRequestState;
+  typedef ReferenceCounting::SmartPtr<BidRequestState>
+    BidRequestState_var;
+  class OpenRtbBidRequestState;
+  class GoogleBidRequestState;
 
   class Frontend:
     private FrontendCommons::HTTPExceptions,
@@ -66,9 +66,9 @@ namespace AdServer::Bidding
   {
     using GroupLogger::logger;
 
-    friend class BidRequestTask;
-    friend class OpenRtbBidRequestTask;
-    friend class GoogleBidRequestTask;
+    friend class BidRequestState;
+    friend class OpenRtbBidRequestState;
+    friend class GoogleBidRequestState;
 
   public:
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -168,14 +168,14 @@ namespace AdServer::Bidding
     bool
     process_openrtb_request_(
       bool& bad_request,
-      OpenRtbBidRequestTask* request_task,
+      OpenRtbBidRequestState* request_task,
       RequestInfo& request_info,
       const char* bid_request)
       noexcept;
 
     bool
     process_google_request_(
-      GoogleBidRequestTask* request_task,
+      GoogleBidRequestState* request_task,
       RequestInfo& request_info,
       const Google::BidRequest& bid_request)
       noexcept;
@@ -187,7 +187,7 @@ namespace AdServer::Bidding
 
     void
     resolve_user_id_async_(
-      BidRequestTask_var request_task,
+      BidRequestState_var request_task,
       std::function<void(DebugSink::UserResolvingDebugInfo)> callback)
       noexcept;
 
@@ -196,7 +196,7 @@ namespace AdServer::Bidding
       const char* fn,
       std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
         campaign_match_result,
-      BidRequestTask_var request_task,
+      BidRequestState_var request_task,
       const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
       bool interrupted,
       std::function<void(bool)> callback)
@@ -204,7 +204,7 @@ namespace AdServer::Bidding
 
     void
     trigger_match_async_(
-      BidRequestTask_var request_task,
+      BidRequestState_var request_task,
       const AdServer::Commons::UserId& user_id,
       std::function<void(
         std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>,
@@ -213,7 +213,7 @@ namespace AdServer::Bidding
 
     void
     history_match_async_(
-      BidRequestTask_var request_task,
+      BidRequestState_var request_task,
       std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
         trigger_match_result,
       bool trigger_match_result_present,
@@ -224,7 +224,7 @@ namespace AdServer::Bidding
 
     void
     get_ccg_keywords_async_(
-      BidRequestTask_var request_task,
+      BidRequestState_var request_task,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
         history_match_result,
       std::function<void(
@@ -235,7 +235,7 @@ namespace AdServer::Bidding
     select_campaign_async_(
       std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
         campaign_match_result,
-      BidRequestTask_var request_task,
+      BidRequestState_var request_task,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
         history_match_result,
       std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
@@ -249,12 +249,12 @@ namespace AdServer::Bidding
 
     void
     process_bid_request_async_(
-      BidRequestTask_var request_task)
+      BidRequestState_var request_task)
       noexcept;
 
     void
     interrupted_select_campaign_(
-      BidRequestTask* request_task) noexcept;
+      BidRequestState* request_task) noexcept;
 
     void
     select_campaign_(
@@ -345,14 +345,14 @@ namespace AdServer::Bidding
     check_interrupt_(
       const char* fun,
       const Stage stage,
-      BidRequestTask* task)
+      BidRequestState* task)
       noexcept;
 
     void
     interrupt_(
       const char* fun,
       const Stage stage,
-      const BidRequestTask* task)
+      const BidRequestState* task)
       noexcept;
 
     Generics::Time

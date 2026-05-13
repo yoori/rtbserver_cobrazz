@@ -1,0 +1,499 @@
+#include "UserBindMatchRequestState.hpp"
+
+#include <algorithm>
+#include <set>
+
+#include <Commons/GrpcAlgs.hpp>
+#include <Stream/MemoryStream.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
+
+#include "UserBindFrontend.hpp"
+
+namespace
+{
+  const char FUN[] = "UserBindMatchRequestState";
+  const char USER_BIND_FRONTEND_ASPECT[] = "UserBindFrontend";
+
+  struct ChannelMatch
+  {
+    ChannelMatch(
+      unsigned long channel_id_val,
+      unsigned long channel_trigger_id_val)
+      : channel_id(channel_id_val),
+        channel_trigger_id(channel_trigger_id_val)
+    {}
+
+    bool
+    operator<(const ChannelMatch& right) const
+    {
+      return
+        channel_id < right.channel_id ||
+        (channel_id == right.channel_id &&
+          channel_trigger_id < right.channel_trigger_id);
+    }
+
+    unsigned long channel_id;
+    unsigned long channel_trigger_id;
+  };
+
+  struct GetChannelTriggerId
+  {
+    ChannelMatch
+    operator()(
+      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+      const noexcept
+    {
+      return ChannelMatch(atom.id(), atom.trigger_channel_id());
+    }
+  };
+}
+
+namespace AdServer
+{
+  UserBindMatchRequestState::UserBindMatchRequestState(
+    UserBindFrontend* frontend,
+    const Commons::UserId& result_user_id,
+    const Commons::UserId& merge_user_id,
+    bool create_user_profile,
+    const String::SubString& keywords,
+    const String::SubString& cohort,
+    const String::SubString& referer,
+    unsigned long colo_id,
+    const FrontendCommons::Location* location,
+    const String::SubString& source)
+    : frontend_(frontend),
+      result_user_id_(result_user_id),
+      merge_user_id_(merge_user_id),
+      create_user_profile_(create_user_profile),
+      keywords_(keywords.str()),
+      cohort_(cohort.str()),
+      referer_(referer.str()),
+      colo_id_(colo_id),
+      location_(ReferenceCounting::add_ref(
+        const_cast<FrontendCommons::Location*>(location))),
+      source_(source.str()),
+      trigger_match_result_present_(false)
+  {}
+
+  void
+  UserBindMatchRequestState::start()
+  {
+    now_ = Generics::Time::get_time_of_day();
+
+    if((!referer_.empty() || !keywords_.empty()) &&
+      !result_user_id_.is_null())
+    {
+      channel_match_stage_();
+    }
+    else
+    {
+      history_stage_();
+    }
+  }
+
+  void
+  UserBindMatchRequestState::channel_match_stage_()
+  {
+    adserver::channel_svcs::channel_server::MatchRequest channel_request;
+    channel_request.set_non_strict_word_match(false);
+    channel_request.set_non_strict_url_match(false);
+    channel_request.set_return_negative(false);
+    channel_request.set_simplify_page(false);
+    channel_request.set_fill_content(false);
+    channel_request.set_statuses("A", 2);
+    channel_request.set_pwords(keywords_);
+    channel_request.set_first_url(referer_);
+
+    auto self = shared_from_this();
+    frontend_->channel_client_->match(
+      channel_request,
+      [self](
+        const grpc::Status& status,
+        const adserver::channel_svcs::channel_server::MatchResponse& response)
+      {
+        self->frontend_->workers_->post(
+          [self, status, response]()
+          {
+            self->channel_match_done_stage_(status, response);
+          });
+      });
+  }
+
+  void
+  UserBindMatchRequestState::channel_match_done_stage_(
+    const grpc::Status& status,
+    const adserver::channel_svcs::channel_server::MatchResponse& response)
+  {
+    if(status.ok())
+    {
+      trigger_match_result_ = response;
+      trigger_match_result_present_ = true;
+    }
+    else
+    {
+      log_channel_error_(status);
+    }
+
+    history_stage_();
+  }
+
+  void
+  UserBindMatchRequestState::history_stage_()
+  {
+    if(!need_history_() || !frontend_->user_info_client_)
+    {
+      campaign_stage_();
+      return;
+    }
+
+    auto history_match_request = std::make_shared<
+      adserver::user_info_svcs::user_info_manager::MatchRequest>();
+    fill_history_match_request_(*history_match_request);
+
+    if(!merge_user_id_.is_null())
+    {
+      adserver::user_info_svcs::user_info_manager::GetUserProfileRequest
+        get_profile_request;
+      get_profile_request.set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
+      get_profile_request.set_temporary(false);
+      auto* profile_request = get_profile_request.mutable_profile_request();
+      profile_request->set_base_profile(true);
+      profile_request->set_add_profile(true);
+      profile_request->set_history_profile(true);
+      profile_request->set_freq_cap_profile(true);
+      profile_request->set_pref_profile(false);
+
+      auto self = shared_from_this();
+      frontend_->user_info_client_->get_user_profile(
+        get_profile_request,
+        [self, history_match_request](
+          const grpc::Status& status,
+          const adserver::user_info_svcs::user_info_manager::
+            GetUserProfileResponse& response)
+        {
+          self->frontend_->workers_->post(
+            [self, history_match_request, status, response]()
+            {
+              self->get_merge_profile_done_stage_(
+                history_match_request,
+                status,
+                response);
+            });
+        });
+    }
+    else
+    {
+      match_stage_(history_match_request);
+    }
+  }
+
+  void
+  UserBindMatchRequestState::get_merge_profile_done_stage_(
+    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
+      history_match_request,
+    const grpc::Status& status,
+    const adserver::user_info_svcs::user_info_manager::
+      GetUserProfileResponse& response)
+  {
+    if(!status.ok())
+    {
+      log_user_info_error_("UserInfoManager::get_user_profile()", status);
+      campaign_stage_();
+      return;
+    }
+
+    if(response.found())
+    {
+      merge_stage_(history_match_request, response);
+    }
+    else
+    {
+      match_stage_(history_match_request);
+    }
+  }
+
+  void
+  UserBindMatchRequestState::merge_stage_(
+    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
+      history_match_request,
+    const adserver::user_info_svcs::user_info_manager::
+      GetUserProfileResponse& get_profile_response)
+  {
+    adserver::user_info_svcs::user_info_manager::MergeRequest merge_request;
+    *merge_request.mutable_user_info() = history_match_request->user_info();
+    *merge_request.mutable_match_params() =
+      history_match_request->match_params();
+    *merge_request.mutable_merge_user_profile() =
+      get_profile_response.user_profile();
+
+    auto self = shared_from_this();
+    frontend_->user_info_client_->merge(
+      merge_request,
+      [self](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_info_manager::MergeResponse&)
+      {
+        self->frontend_->workers_->post(
+          [self, status]()
+          {
+            self->merge_done_stage_(status);
+          });
+      });
+  }
+
+  void
+  UserBindMatchRequestState::merge_done_stage_(const grpc::Status& status)
+  {
+    if(!status.ok())
+    {
+      log_user_info_error_("UserInfoManager::merge()", status);
+      campaign_stage_();
+      return;
+    }
+
+    remove_merged_profile_stage_();
+  }
+
+  void
+  UserBindMatchRequestState::remove_merged_profile_stage_()
+  {
+    adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest
+      remove_request;
+    remove_request.set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
+
+    auto self = shared_from_this();
+    frontend_->user_info_client_->remove_user_profile(
+      remove_request,
+      [self](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_info_manager::
+          RemoveUserProfileResponse&)
+      {
+        self->frontend_->workers_->post(
+          [self, status]()
+          {
+            self->remove_merged_profile_done_stage_(status);
+          });
+      });
+  }
+
+  void
+  UserBindMatchRequestState::remove_merged_profile_done_stage_(
+    const grpc::Status& status)
+  {
+    if(!status.ok())
+    {
+      log_user_info_error_("UserInfoManager::remove_user_profile()", status);
+    }
+
+    campaign_stage_();
+  }
+
+  void
+  UserBindMatchRequestState::match_stage_(
+    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
+      history_match_request)
+  {
+    auto self = shared_from_this();
+    frontend_->user_info_client_->match(
+      *history_match_request,
+      [self](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_info_manager::MatchResponse&
+          response)
+      {
+        self->frontend_->workers_->post(
+          [self, status, response]()
+          {
+            self->match_done_stage_(status, response);
+          });
+      });
+  }
+
+  void
+  UserBindMatchRequestState::match_done_stage_(
+    const grpc::Status& status,
+    const adserver::user_info_svcs::user_info_manager::MatchResponse& response)
+  {
+    if(status.ok())
+    {
+      history_match_result_ =
+        AdServer::UserInfoSvcs::GrpcAlgs::make_history_match_result(response);
+    }
+    else
+    {
+      log_user_info_error_("UserInfoManager::match()", status);
+    }
+
+    campaign_stage_();
+  }
+
+  void
+  UserBindMatchRequestState::campaign_stage_()
+  {
+    adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
+      process_match_request;
+    frontend_->fill_match_request_info_(
+      *process_match_request.mutable_match_request_info(),
+      result_user_id_,
+      now_,
+      trigger_match_result_present_ ? &trigger_match_result_ : nullptr,
+      history_match_result_,
+      location_,
+      referer_,
+      source_);
+
+    auto self = shared_from_this();
+    frontend_->campaign_manager_->process_match_request(
+      process_match_request,
+      [self](
+        const grpc::Status& status,
+        const adserver::campaign_svcs::campaign_manager::
+          ProcessMatchRequestResponse&)
+      {
+        self->frontend_->workers_->post(
+          [self, status]()
+          {
+            self->campaign_done_stage_(status);
+          });
+      });
+  }
+
+  void
+  UserBindMatchRequestState::campaign_done_stage_(const grpc::Status& status)
+  {
+    if(!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't process match request. "
+        "Possible problem with Campaignmanager. "
+        "gRPC call failed: code=" << static_cast<int>(status.error_code()) <<
+        ", message=" << status.error_message();
+      frontend_->logger()->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        USER_BIND_FRONTEND_ASPECT,
+        "ADS-ICON-4");
+    }
+  }
+
+  void
+  UserBindMatchRequestState::fill_history_match_request_(
+    adserver::user_info_svcs::user_info_manager::MatchRequest&
+      history_match_request) const
+  {
+    auto* grpc_match_params = history_match_request.mutable_match_params();
+
+    if(trigger_match_result_present_)
+    {
+      const auto& matched_channels = trigger_match_result_.matched_channels();
+      typedef std::set<ChannelMatch> ChannelMatchSet;
+
+      ChannelMatchSet page_channels;
+      std::transform(
+        matched_channels.page_channels().begin(),
+        matched_channels.page_channels().end(),
+        std::inserter(page_channels, page_channels.end()),
+        GetChannelTriggerId());
+      for(const auto& channel : page_channels)
+      {
+        auto* channel_match = grpc_match_params->add_page_channel_ids();
+        channel_match->set_channel_id(channel.channel_id);
+        channel_match->set_channel_trigger_id(channel.channel_trigger_id);
+      }
+
+      ChannelMatchSet url_channels;
+      std::transform(
+        matched_channels.url_channels().begin(),
+        matched_channels.url_channels().end(),
+        std::inserter(url_channels, url_channels.end()),
+        GetChannelTriggerId());
+      for(const auto& channel : url_channels)
+      {
+        auto* channel_match = grpc_match_params->add_url_channel_ids();
+        channel_match->set_channel_id(channel.channel_id);
+        channel_match->set_channel_trigger_id(channel.channel_trigger_id);
+      }
+
+      ChannelMatchSet url_keyword_channels;
+      std::transform(
+        matched_channels.url_keyword_channels().begin(),
+        matched_channels.url_keyword_channels().end(),
+        std::inserter(url_keyword_channels, url_keyword_channels.end()),
+        GetChannelTriggerId());
+      for(const auto& channel : url_keyword_channels)
+      {
+        auto* channel_match = grpc_match_params->add_url_keyword_channel_ids();
+        channel_match->set_channel_id(channel.channel_id);
+        channel_match->set_channel_trigger_id(channel.channel_trigger_id);
+      }
+    }
+
+    grpc_match_params->set_use_empty_profile(false);
+    grpc_match_params->set_silent_match(false);
+    grpc_match_params->set_no_match(false);
+    grpc_match_params->set_no_result(true);
+    grpc_match_params->set_ret_freq_caps(false);
+    grpc_match_params->set_provide_channel_count(false);
+    grpc_match_params->set_provide_persistent_channels(false);
+    grpc_match_params->set_change_last_request(false);
+    grpc_match_params->set_filter_contextual_triggers(false);
+    grpc_match_params->set_publishers_optin_timeout(
+      GrpcAlgs::pack_time(Generics::Time::ZERO));
+    grpc_match_params->set_cohort(cohort_);
+
+    auto* grpc_user_info = history_match_request.mutable_user_info();
+    grpc_user_info->set_user_id(GrpcAlgs::pack_user_id(result_user_id_));
+    grpc_user_info->set_last_colo_id(colo_id_);
+    grpc_user_info->set_request_colo_id(colo_id_);
+    grpc_user_info->set_current_colo_id(-1);
+    grpc_user_info->set_temporary(false);
+    grpc_user_info->set_time(now_.tv_sec);
+  }
+
+  bool
+  UserBindMatchRequestState::need_history_() const
+  {
+    return !merge_user_id_.is_null() ||
+      create_user_profile_ ||
+      !cohort_.empty() ||
+      !keywords_.empty() ||
+      (!result_user_id_.is_null() && trigger_match_result_present_ && (
+        trigger_match_result_.matched_channels().page_channels_size() > 0 ||
+        trigger_match_result_.matched_channels().url_channels_size() > 0 ||
+        trigger_match_result_.matched_channels().url_keyword_channels_size() > 0));
+  }
+
+  void
+  UserBindMatchRequestState::log_channel_error_(
+    const grpc::Status& status) const
+  {
+    Stream::Error ostr;
+    ostr << FUN << ": caught ChannelServerGrpcAsyncClient error: code=" <<
+      static_cast<int>(status.error_code()) <<
+      ", message=" << status.error_message();
+    frontend_->logger()->log(
+      ostr.str(),
+      Logging::Logger::EMERGENCY,
+      USER_BIND_FRONTEND_ASPECT,
+      "ADS-IMPL-117");
+  }
+
+  void
+  UserBindMatchRequestState::log_user_info_error_(
+    const char* operation,
+    const grpc::Status& status) const
+  {
+    Stream::Error ostr;
+    ostr << FUN << ": " << operation << " gRPC call failed: user_id = '" <<
+      result_user_id_.to_string() << "'; code=" <<
+      static_cast<int>(status.error_code()) <<
+      ", message=" << status.error_message();
+    frontend_->logger()->log(
+      ostr.str(),
+      Logging::Logger::EMERGENCY,
+      USER_BIND_FRONTEND_ASPECT,
+      status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+        "ADS-IMPL-7804" : "ADS-IMPL-7803");
+  }
+}

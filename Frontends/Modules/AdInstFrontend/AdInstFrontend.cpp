@@ -53,27 +53,6 @@ namespace
     throw GrpcCallException(ostr);
   }
 
-  void
-  throw_user_info_exception_(
-    const char* name,
-    const grpc::Status& status)
-  {
-    Stream::Error ostr;
-    ostr << name << ": gRPC call failed: code=" <<
-      static_cast<int>(status.error_code()) <<
-      ", message=" << status.error_message();
-    const std::string message = ostr.str().str();
-
-    if(status.error_code() == grpc::StatusCode::UNAVAILABLE)
-    {
-      throw AdServer::UserInfoSvcs::UserInfoMatcher::NotReady(
-        message.c_str());
-    }
-
-    throw AdServer::UserInfoSvcs::UserInfoMatcher::ImplementationException(
-      message.c_str());
-  }
-
 }
 
 namespace Aspect
@@ -673,7 +652,7 @@ namespace Instantiate
           {
             if(!status.ok())
             {
-              throw_user_info_exception_(
+              throw_grpc_exception_(
                 "UserInfoManager::get_user_profile()",
                 status);
             }
@@ -719,32 +698,20 @@ namespace Instantiate
                     {
                       if(!remove_status.ok())
                       {
-                        throw_user_info_exception_(
-                          "UserInfoManager::remove_user_profile()",
-                          remove_status);
+                          throw_grpc_exception_(
+                            "UserInfoManager::remove_user_profile()",
+                            remove_status);
                       }
 
                       callback(true, std::string());
                     }
-                    catch(const UserInfoSvcs::UserInfoMatcher::NotReady&)
-                    {
-                      logger()->log(
-                        String::SubString(
-                          "UserInfoManager not ready for merging."),
-                        TraceLevel::MIDDLE,
-                        Aspect::AD_INST_FRONTEND);
-
-                      callback(false, MergeMessage::SOURCE_NOT_READY);
-                    }
-                    catch(const UserInfoSvcs::UserInfoMatcher::
-                      ImplementationException& ex)
+                    catch(const eh::Exception& ex)
                     {
                       Stream::Error ostr;
                       ostr << FUN << ": Can't remove user profile for "
-                        "merging. Caught UserInfoMatcher::"
-                        "ImplementationException: " << ex.description;
-
-                      logger()->log(ostr.str(),
+                        "merging: " << ex.what();
+                      logger()->log(
+                        ostr.str(),
                         Logging::Logger::NOTICE,
                         Aspect::AD_INST_FRONTEND,
                         "ADS-IMPL-111");
@@ -754,23 +721,13 @@ namespace Instantiate
                   });
               });
           }
-          catch(const UserInfoSvcs::UserInfoMatcher::NotReady&)
-          {
-            logger()->log(
-              String::SubString("UserInfoManager not ready for merging."),
-              TraceLevel::MIDDLE,
-              Aspect::AD_INST_FRONTEND);
-
-            callback(false, MergeMessage::SOURCE_NOT_READY);
-          }
-          catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& ex)
+          catch(const eh::Exception& ex)
           {
             Stream::Error ostr;
-            ostr << FUN << ": Can't get user profile for merging. "
-              "Caught UserInfoMatcher::ImplementationException: " <<
-              ex.description;
-
-            logger()->log(ostr.str(),
+            ostr << FUN << ": Can't get user profile for merging: " <<
+              ex.what();
+            logger()->log(
+              ostr.str(),
               Logging::Logger::NOTICE,
               Aspect::AD_INST_FRONTEND,
               "ADS-IMPL-111");

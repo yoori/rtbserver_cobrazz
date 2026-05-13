@@ -37,6 +37,8 @@
 
 namespace AdServer
 {
+  class ClickRequestState;
+
   namespace Configuration
   {
     using namespace xsd::AdServer::Configuration;
@@ -51,6 +53,7 @@ namespace AdServer
   {
   public:
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
+    friend class ClickRequestState;
 
   public:
     ClickFrontend(

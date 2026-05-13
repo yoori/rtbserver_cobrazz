@@ -1,0 +1,47 @@
+#pragma once
+
+#include <memory>
+#include <vector>
+
+#include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/UserInfoManip.hpp>
+#include <ChannelServerGrpc.pb.h>
+#include <UserInfoManagerGrpc.pb.h>
+
+#include "RequestInfoFiller.hpp"
+
+namespace AdServer::ImprTrack
+{
+  class Frontend;
+
+  class ImprTrackMatchRequestState final:
+    public std::enable_shared_from_this<ImprTrackMatchRequestState>
+  {
+  public:
+    explicit ImprTrackMatchRequestState(Frontend* frontend) noexcept;
+
+    void
+    start_match_channels_stage() noexcept;
+
+    void
+    start_history_match_stage() noexcept;
+
+    void
+    process_match_request_stage() noexcept;
+
+  public:
+    RequestInfo request_info;
+    AdServer::Commons::UserId user_id;
+    AdServer::Commons::UserId cookie_user_id;
+    AdServer::Commons::UserId resolved_cookie_user_id;
+    std::vector<CORBA::ULong> campaign_ids;
+    std::vector<CORBA::ULong> advertiser_ids;
+    adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
+    adserver::user_info_svcs::user_info_manager::MatchResponse
+      history_match_response;
+    bool history_match_present = false;
+
+  private:
+    Frontend* frontend_;
+  };
+}

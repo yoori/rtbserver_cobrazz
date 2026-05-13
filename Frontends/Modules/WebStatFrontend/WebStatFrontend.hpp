@@ -88,7 +88,7 @@ namespace WebStat
 
     void parse_config_() /*throw(Exception)*/;
 
-    struct WebOperationState;
+    class WebStatRequestState;
 
     void
     process_request_(
@@ -99,13 +99,13 @@ namespace WebStat
 
     void
     consider_web_operation_(
-      const std::shared_ptr<WebOperationState>& state,
+      const std::shared_ptr<WebStatRequestState>& state,
       std::size_t index)
       noexcept;
 
     void
     finish_request_(
-      const std::shared_ptr<WebOperationState>& state,
+      const std::shared_ptr<WebStatRequestState>& state,
       int http_result)
       noexcept;
 

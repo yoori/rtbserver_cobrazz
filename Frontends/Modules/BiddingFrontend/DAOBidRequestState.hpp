@@ -1,19 +1,20 @@
 #pragma once
 
 #include <iostream>
-#include "BidRequestTask.hpp"
+#include "BidRequestState.hpp"
+#include "OpenRtbBidRequestState.hpp"
 
 namespace AdServer
 {
 namespace Bidding
 {
   //
-  // ClickStarBidRequestTask
+  // DAOBidRequestState
   //
-  class ClickStarBidRequestTask: public BidRequestTask
+  class DAOBidRequestState: public OpenRtbBidRequestState
   {
   public:
-    ClickStarBidRequestTask(
+    DAOBidRequestState(
       Frontend* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
@@ -23,14 +24,7 @@ namespace Bidding
     virtual void
     print_request(std::ostream& out) const noexcept;
 
-    virtual bool
-    read_request() noexcept;
-
-    /*
-    virtual bool
-    fill_request_info(std::string& keywords)
-      noexcept;
-    */
+    // read_request used from OpenRtbBidRequestState
 
     virtual bool
     write_response(
@@ -54,7 +48,15 @@ namespace Bidding
 
   protected:
     virtual
-    ~ClickStarBidRequestTask() noexcept = default;
+    ~DAOBidRequestState() noexcept = default;
+
+    void
+    fill_by_adjson_request_(
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
+      RequestInfo& request_info,
+      std::string& keywords,
+      const FCGI::HttpRequest& request)
+      noexcept;
 
     void
     fill_response_(
@@ -63,18 +65,6 @@ namespace Bidding
       const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
-      noexcept;
-
-    void
-    fill_response_adslot_(
-      std::ostream& response_ostr,
-      const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
-      noexcept;
-
-    void
-    add_xml_escaped_string_(
-      std::ostream& response_ostr,
-      const char* str)
       noexcept;
 
   private:

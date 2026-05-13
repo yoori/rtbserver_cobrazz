@@ -2,7 +2,7 @@
 #include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
-#include "AdFoxBidRequestTask.hpp"
+#include "AdFoxBidRequestState.hpp"
 
 namespace AdServer
 {
@@ -46,13 +46,13 @@ namespace Bidding
     const String::SubString ADFOX_CLIENT("adfox");
   }
 
-  AdFoxBidRequestTask::AdFoxBidRequestTask(
+  AdFoxBidRequestState::AdFoxBidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
-    : OpenRtbBidRequestTask(
+    : OpenRtbBidRequestState(
         bid_frontend,
         std::move(request_holder),
         std::move(response_writer),
@@ -61,12 +61,12 @@ namespace Bidding
   {}
 
   bool
-  AdFoxBidRequestTask::write_response(
+  AdFoxBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
-    //static const char* FUN = "AdFoxBidRequestTask::write_response()";
+    //static const char* FUN = "AdFoxBidRequestState::write_response()";
 
     AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
@@ -100,7 +100,7 @@ namespace Bidding
   }
 
   void
-  AdFoxBidRequestTask::write_empty_response(unsigned int code)
+  AdFoxBidRequestState::write_empty_response(unsigned int code)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -117,20 +117,20 @@ namespace Bidding
   }
 
   void
-  AdFoxBidRequestTask::clear() noexcept
+  AdFoxBidRequestState::clear() noexcept
   {
-    BidRequestTask::clear();
+    BidRequestState::clear();
     uri_.clear();
   }
 
   void
-  AdFoxBidRequestTask::print_request(std::ostream& /*out*/) const noexcept
+  AdFoxBidRequestState::print_request(std::ostream& /*out*/) const noexcept
   {
     //out << bid_request_;
   }
 
   void
-  AdFoxBidRequestTask::fill_response_(
+  AdFoxBidRequestState::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
     const AdServer::Bidding::CampaignManager::RequestParams& request_params,
@@ -138,7 +138,7 @@ namespace Bidding
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
-    static const char* FUN = "AdFoxBidRequestTask::fill_response_()";
+    static const char* FUN = "AdFoxBidRequestState::fill_response_()";
 
     try
     {

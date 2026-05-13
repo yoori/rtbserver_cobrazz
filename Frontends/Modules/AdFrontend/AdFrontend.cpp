@@ -1390,36 +1390,16 @@ namespace AdServer
         } // ad_slot_result.selected_creatives_size() > 0
       }
     }
-    catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
+    catch(const eh::Exception& e)
     {
       Stream::Error ostr;
       ostr << FUN <<
-        ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
-        e.description;
+        ": post match failed: " << e.what();
 
       logger()->log(ostr.str(),
         Logging::Logger::EMERGENCY,
         Aspect::AD_FRONTEND,
         "ADS-IMPL-112");
-    }
-    catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-    {
-      logger()->log(
-        String::SubString("UserInfoManager not ready for post match."),
-        TraceLevel::MIDDLE,
-        Aspect::AD_FRONTEND);
-    }
-    catch(const CORBA::SystemException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't do post match. Caught CORBA::SystemException: " <<
-        ex;
-
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-ICON-2");
     }
 
     timer.stop();

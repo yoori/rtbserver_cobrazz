@@ -1,19 +1,19 @@
 #pragma once
 
 #include <iostream>
-#include "BidRequestTask.hpp"
+#include "BidRequestState.hpp"
 
 namespace AdServer
 {
 namespace Bidding
 {
   //
-  // OpenRtbBidRequestTask
+  // OpenRtbBidRequestState
   //
-  class OpenRtbBidRequestTask: public BidRequestTask
+  class OpenRtbBidRequestState: public BidRequestState
   {
   public:
-    OpenRtbBidRequestTask(
+    OpenRtbBidRequestState(
       Frontend* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
@@ -51,7 +51,7 @@ namespace Bidding
 
   protected:
     virtual
-    ~OpenRtbBidRequestTask() noexcept = default;
+    ~OpenRtbBidRequestState() noexcept = default;
 
     void
     fill_openrtb_response_(

@@ -2,7 +2,7 @@
 #include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
-#include "ClickStarBidRequestTask.hpp"
+#include "ClickStarBidRequestState.hpp"
 
 namespace AdServer
 {
@@ -45,13 +45,13 @@ namespace Bidding
     const CampaignSvcs::RevenueDecimal EXPECTED_CTR("0.002");
   }
 
-  ClickStarBidRequestTask::ClickStarBidRequestTask(
+  ClickStarBidRequestState::ClickStarBidRequestState(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
-    : BidRequestTask(
+    : BidRequestState(
         bid_frontend,
         std::move(request_holder),
         std::move(response_writer),
@@ -60,9 +60,9 @@ namespace Bidding
   {}
 
   bool
-  ClickStarBidRequestTask::read_request() noexcept
+  ClickStarBidRequestState::read_request() noexcept
   {
-    static const char* FUN = "ClickStarBidRequestTask::read_request()";
+    static const char* FUN = "ClickStarBidRequestState::read_request()";
 
     std::string bid_request;
 
@@ -99,12 +99,12 @@ namespace Bidding
   }
 
   bool
-  ClickStarBidRequestTask::write_response(
+  ClickStarBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
-    //static const char* FUN = "ClickStarBidRequestTask::write_response()";
+    //static const char* FUN = "ClickStarBidRequestState::write_response()";
 
     AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
@@ -138,7 +138,7 @@ namespace Bidding
   }
 
   void
-  ClickStarBidRequestTask::write_empty_response(unsigned int code)
+  ClickStarBidRequestState::write_empty_response(unsigned int code)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -155,20 +155,20 @@ namespace Bidding
   }
 
   void
-  ClickStarBidRequestTask::clear() noexcept
+  ClickStarBidRequestState::clear() noexcept
   {
-    BidRequestTask::clear();
+    BidRequestState::clear();
     uri_.clear();
   }
 
   void
-  ClickStarBidRequestTask::print_request(std::ostream& /*out*/) const noexcept
+  ClickStarBidRequestState::print_request(std::ostream& /*out*/) const noexcept
   {
     //out << bid_request_;
   }
 
   void
-  ClickStarBidRequestTask::fill_response_(
+  ClickStarBidRequestState::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
     const AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
@@ -176,7 +176,7 @@ namespace Bidding
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
-    static const char* FUN = "ClickStarBidRequestTask::fill_response_()";
+    static const char* FUN = "ClickStarBidRequestState::fill_response_()";
 
     try
     {
@@ -207,7 +207,7 @@ namespace Bidding
   }
 
   void
-  ClickStarBidRequestTask::fill_response_adslot_(
+  ClickStarBidRequestState::fill_response_adslot_(
     std::ostream& response_ostr,
     const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
@@ -271,7 +271,7 @@ namespace Bidding
   }
 
   void
-  ClickStarBidRequestTask::add_xml_escaped_string_(
+  ClickStarBidRequestState::add_xml_escaped_string_(
     std::ostream& response_ostr,
     const char* str)
     noexcept

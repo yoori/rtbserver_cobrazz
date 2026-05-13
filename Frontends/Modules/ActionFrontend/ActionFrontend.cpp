@@ -20,6 +20,7 @@
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
 #include "ActionFrontend.hpp"
+#include "ActionRequestState.hpp"
 
 namespace
 {
@@ -117,17 +118,6 @@ namespace Request
 
 namespace AdServer::Action
 {
-  struct Frontend::AdvertiserRequestState
-  {
-    FCGI::HttpRequestHolder_var request_holder;
-    FCGI::BaseHttpResponseWriter_var response_writer;
-    FCGI::HttpResponse_var response;
-    RequestInfo request_info;
-    bool return_html = false;
-    Commons::UserId cookie_resolved_user_id;
-    Commons::UserId utm_cookie_resolved_user_id;
-  };
-
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
@@ -404,7 +394,7 @@ namespace AdServer::Action
 
   void
   Frontend::process_advertiser_request_(
-    const std::shared_ptr<AdvertiserRequestState>& state)
+    const std::shared_ptr<ActionRequestState>& state)
     noexcept
   {
     state->cookie_resolved_user_id = state->request_info.user_id;
@@ -429,18 +419,18 @@ namespace AdServer::Action
             state->cookie_resolved_user_id = resolved_user_id;
           }
 
-          resolve_utm_user_id_(state);
+          state->resolve_utm_user_id_stage();
         });
     }
     else
     {
-      resolve_utm_user_id_(state);
+      state->resolve_utm_user_id_stage();
     }
   }
 
   void
   Frontend::resolve_utm_user_id_(
-    const std::shared_ptr<AdvertiserRequestState>& state)
+    const std::shared_ptr<ActionRequestState>& state)
     noexcept
   {
     if(state->request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
@@ -463,18 +453,18 @@ namespace AdServer::Action
                 state->request_info.utm_cookie_user_id;
           }
 
-          finish_advertiser_request_(state);
+          state->finish_advertiser_request_stage();
         });
     }
     else
     {
-      finish_advertiser_request_(state);
+      state->finish_advertiser_request_stage();
     }
   }
 
   void
   Frontend::finish_advertiser_request_(
-    const std::shared_ptr<AdvertiserRequestState>& state)
+    const std::shared_ptr<ActionRequestState>& state)
     noexcept
   {
     static const char* FUN = "Action::Frontend::finish_advertiser_request_()";
@@ -1011,14 +1001,15 @@ namespace AdServer::Action
           String::SubString(request.uri().begin(), request.uri().begin() + found_uri.length()) :
           String::SubString());
 
-      auto state = std::make_shared<AdvertiserRequestState>();
-      state->request_holder = request_holder;
-      state->response_writer = response_writer;
-      state->response = response_ptr;
-      state->request_info = request_info;
-      state->return_html = return_html;
+      auto state = std::make_shared<ActionRequestState>(
+        this,
+        std::move(request_holder),
+        std::move(response_writer),
+        std::move(response_ptr),
+        std::move(request_info),
+        return_html);
       response_deferred = true;
-      process_advertiser_request_(state);
+      state->start();
     }
     catch (const ForbiddenException& ex)
     {
@@ -1115,42 +1106,15 @@ namespace AdServer::Action
                 }
               });
           }
-          catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
+          catch(const eh::Exception& ex)
           {
             Stream::Error ostr;
-            ostr << FUN << ": caught UserBindServer::NotReady";
-            logger()->log(ostr.str(),
-              Logging::Logger::EMERGENCY,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindClient::ChunkNotFound";
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+            ostr << FUN << ": UserBindServer::add_user_id() scheduling failed: " <<
               ex.what();
             logger()->log(ostr.str(),
               Logging::Logger::ERROR,
               Aspect::ACTION_FRONTEND,
               "ADS-IMPL-109");
-          }
-          catch(const CORBA::SystemException& e)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught CORBA::SystemException: " << e;
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-ICON-6");
           }
           catch(...)
           {
@@ -1196,42 +1160,15 @@ namespace AdServer::Action
             }
           });
       }
-      catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
+      catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught UserBindServer::NotReady";
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindClient::ChunkNotFound";
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+        ostr << FUN << ": UserBindServer::add_user_id() scheduling failed: " <<
           ex.what();
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::ACTION_FRONTEND,
           "ADS-IMPL-109");
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << e;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-ICON-6");
       }
       catch(...)
       {
@@ -1540,42 +1477,15 @@ namespace AdServer::Action
           });
         return;
       }
-      catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
+      catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught UserBindServer::NotReady";
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindClient::ChunkNotFound";
-          logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+        ostr << FUN << ": UserBindServer::get_user_id() scheduling failed: " <<
           ex.what();
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::ACTION_FRONTEND,
           "ADS-IMPL-109");
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << e;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-ICON-6");
       }
       catch(...)
       {

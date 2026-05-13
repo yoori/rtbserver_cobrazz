@@ -9,22 +9,12 @@
 #include <Commons/ErrorHandler.hpp>
 
 #include "WebStatFrontend.hpp"
+#include "WebStatRequestState.hpp"
 
 namespace AdServer
 {
 namespace WebStat
 {
-  struct Frontend::WebOperationState
-  {
-    FCGI::BaseHttpResponseWriter_var response_writer;
-    FCGI::HttpResponse_var response;
-    FCGI::HttpRequest::Method request_method;
-    std::string origin;
-    std::vector<std::shared_ptr<
-      adserver::campaign_svcs::campaign_manager::
-        ConsiderWebOperationRequest>> requests;
-  };
-
   namespace
   {
     struct FrontendConstrainTraits
@@ -215,14 +205,13 @@ namespace WebStat
           bid_request.c_str());
       }
 
-      auto state = std::make_shared<WebOperationState>();
-      state->response_writer = response_writer;
-      state->response = response;
-      state->request_method = request.method();
-      if(!request_info_list.empty())
-      {
-        state->origin = request_info_list.begin()->origin;
-      }
+      auto state = std::make_shared<WebStatRequestState>(
+        this,
+        std::move(response_writer),
+        std::move(response),
+        request.method(),
+        !request_info_list.empty() ?
+          request_info_list.begin()->origin : std::string());
 
       for(const auto& request_info : request_info_list)
       {
@@ -261,7 +250,7 @@ namespace WebStat
         state->requests.emplace_back(std::move(web_op_info));
       }
 
-      consider_web_operation_(state, 0);
+      state->start();
       return;
     }
     catch (const ForbiddenException& ex)
@@ -288,13 +277,13 @@ namespace WebStat
 
   void
   Frontend::consider_web_operation_(
-    const std::shared_ptr<WebOperationState>& state,
+    const std::shared_ptr<WebStatRequestState>& state,
     std::size_t index)
     noexcept
   {
     if(index >= state->requests.size())
     {
-      finish_request_(state, 0);
+      state->finish_request_stage(0);
       return;
     }
 
@@ -310,7 +299,7 @@ namespace WebStat
         {
           if(status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
           {
-            finish_request_(state, 400);
+            state->finish_request_stage(400);
             return;
           }
 
@@ -322,17 +311,17 @@ namespace WebStat
             "gRPC call failed: code=" <<
             static_cast<int>(status.error_code()) <<
             ", message=" << status.error_message();
-          finish_request_(state, 500);
+          state->finish_request_stage(500);
           return;
         }
 
-        consider_web_operation_(state, index + 1);
+        state->consider_web_operation_stage(index + 1);
       });
   }
 
   void
   Frontend::finish_request_(
-    const std::shared_ptr<WebOperationState>& state,
+    const std::shared_ptr<WebStatRequestState>& state,
     int http_result)
     noexcept
   {

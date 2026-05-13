@@ -26,6 +26,8 @@
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
 #include "UserBindFrontend.hpp"
+#include "BindRequestState.hpp"
+#include "UserBindMatchRequestState.hpp"
 
 namespace Config
 {
@@ -75,7 +77,6 @@ namespace
 {
   const String::SubString HTTP_PREFIX("http:");
   const String::SubString HTTPS_PREFIX("https:");
-  const String::SubString IDFA_KNOWN_KEYWORD("rtbidfaknown");
 
   const String::SubString GOOGLE_ERRORS[] = {
     String::SubString(
@@ -99,38 +100,6 @@ namespace
       "Matching Service request. Your redirect must set "
       "google_push to the same value passed to you in "
       "the initial pixel request")
-  };
-
-  struct ChannelMatch
-  {
-    ChannelMatch(unsigned long channel_id_val,
-                 unsigned long channel_trigger_id_val)
-      :
-      channel_id(channel_id_val),
-      channel_trigger_id(channel_trigger_id_val)
-    {}
-
-    bool operator<(const ChannelMatch& right) const
-    {
-      return
-        (channel_id < right.channel_id ||
-         (channel_id == right.channel_id &&
-          channel_trigger_id < right.channel_trigger_id));
-    }
-
-    unsigned long channel_id;
-    unsigned long channel_trigger_id;
-  };
-
-  struct GetChannelTriggerId
-  {
-    ChannelMatch
-    operator() (
-      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
-      noexcept
-    {
-      return ChannelMatch(atom.id(), atom.trigger_channel_id());
-    }
   };
 
   /*
@@ -162,14 +131,6 @@ namespace
 
 namespace AdServer
 {
-  enum ResultUserIdType
-  {
-    RUIT_COOKIE,
-    RUIT_CRESOLVE,
-    RUIT_EXTIDRESOLVE,
-    RUIT_EXTIDRESOLVE_NOCOOKIE
-  };
-
   class KeyArgsCallback: public String::TextTemplate::ArgsCallback
   {
     virtual bool
@@ -181,503 +142,6 @@ namespace AdServer
     }
   };
 
-  struct UserBindFrontend::BindResult
-  {
-    BindResult() {}
-
-    BindResult(const AdServer::Commons::UserId& result_user_id_val)
-      : result_user_id(result_user_id_val)
-    {}
-
-    AdServer::Commons::UserId ssp_user_id; // will be used for init redirect template
-    AdServer::Commons::UserId result_user_id;
-  };
-
-  class UserBindFrontend::BindProcessingState:
-    public std::enable_shared_from_this<BindProcessingState>
-  {
-  public:
-    BindProcessingState(
-      UserBindFrontend* frontend_val,
-      UserBind::RequestInfo_var request_info_val,
-      std::string dns_bind_request_id_val,
-      ProcessRequestCallback callback_val)
-      : frontend(frontend_val),
-        request_info(std::move(request_info_val)),
-        dns_bind_request_id(std::move(dns_bind_request_id_val)),
-        callback(std::move(callback_val)),
-        http_status(200),
-        result_user_id(request_info->user_id),
-        result_user_id_type(RUIT_COOKIE),
-        app_request(request_info->external_id.compare(0, 4, "ifa/") == 0),
-        opted_out(request_info->user_status == AdServer::CampaignSvcs::US_OPTOUT),
-        cresolve_failed(false),
-        create_user_profile(false),
-        resolved_ext_user_i(0)
-    {
-      if(app_request)
-      {
-        result_user_id = AdServer::Commons::UserId();
-      }
-    }
-
-    void start() noexcept
-    {
-      if(request_info->delete_op)
-      {
-        run_delete();
-        return;
-      }
-
-      FrontendCommons::CountryFilter_var country_filter =
-        frontend->common_module_->country_filter();
-      if(country_filter.in() && (
-          request_info->location.in() == 0 ||
-          !country_filter->enabled(request_info->location->country)))
-      {
-        finish_result();
-        return;
-      }
-
-      if(!result_user_id.is_null() && frontend->user_bind_client_)
-      {
-        const std::string cookie_external_id_str =
-          std::string("c/") + result_user_id.to_string();
-
-        adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-        get_request.set_id(cookie_external_id_str);
-        get_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-        get_request.set_silent(true);
-        get_request.set_generate_user_id(false);
-        get_request.set_for_set_cookie(true);
-        get_request.set_create_timestamp(
-          GrpcAlgs::pack_time(Generics::Time::ZERO));
-        get_request.set_current_user_id(
-          GrpcAlgs::pack_user_id(result_user_id));
-
-        auto self = shared_from_this();
-        frontend->user_bind_client_->get_user_id(
-          get_request,
-          [self](
-            const grpc::Status& status,
-            const adserver::user_info_svcs::user_bind::GetUserIdResponse&
-              response)
-          {
-            self->frontend->workers_->post(
-              [self, status, response]()
-              {
-                if(status.ok())
-                {
-                  if(response.invalid_operation())
-                  {
-                    self->cresolve_failed = true;
-                  }
-                  else
-                  {
-                    Commons::UserId cresolved_user_id =
-                      GrpcAlgs::unpack_user_id(response.user_id());
-                    if(!cresolved_user_id.is_null())
-                    {
-                      self->result_user_id = cresolved_user_id;
-                      self->result_user_id_type = RUIT_CRESOLVE;
-                    }
-                  }
-                }
-                else
-                {
-                  self->cresolve_failed = true;
-                  self->http_status = 500;
-                }
-                self->after_cookie_resolve();
-              });
-          });
-      }
-      else
-      {
-        if(!result_user_id.is_null() && !frontend->user_bind_client_)
-        {
-          cresolve_failed = true;
-        }
-        after_cookie_resolve();
-      }
-    }
-
-  private:
-    struct ExternalId
-    {
-      std::string id;
-      bool set_uid;
-      bool can_be_in_cookie;
-    };
-
-    void run_delete() noexcept
-    {
-      if(request_info->external_id.empty() || !frontend->user_bind_client_)
-      {
-        finish(BindResult(request_info->user_id));
-        return;
-      }
-
-      adserver::user_info_svcs::user_bind::AddUserIdRequest add_user_request;
-      add_user_request.set_id(request_info->external_id);
-      add_user_request.set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
-      add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-
-      auto self = shared_from_this();
-      frontend->user_bind_client_->add_user_id(
-        add_user_request,
-        [self](
-          const grpc::Status& status,
-          const adserver::user_info_svcs::user_bind::AddUserIdResponse&)
-        {
-          self->frontend->workers_->post(
-            [self, status]()
-            {
-              self->finish(BindResult(self->request_info->user_id),
-                status.ok() ? 204 : 500);
-            });
-        });
-    }
-
-    void after_cookie_resolve() noexcept
-    {
-      if(cresolve_failed)
-      {
-        finish_result();
-        return;
-      }
-
-      if(frontend->user_bind_client_)
-      {
-        external_ids = {
-          ExternalId{request_info->ga_user_id, false, true},
-          ExternalId{request_info->gclu_user_id, false, true},
-          ExternalId{request_info->ym_user_id, false, true},
-          ExternalId{request_info->external_id, frontend->config_->set_uid(), !app_request}
-        };
-
-        resolved_ext_user_i = external_ids.size();
-        if(result_user_id.is_null())
-        {
-          resolve_external_id(0);
-          return;
-        }
-      }
-
-      add_external_id(0);
-    }
-
-    void resolve_external_id(std::size_t index) noexcept
-    {
-      for(; index < external_ids.size(); ++index)
-      {
-        if(!external_ids[index].id.empty())
-        {
-          break;
-        }
-      }
-
-      if(index >= external_ids.size())
-      {
-        add_external_id(0);
-        return;
-      }
-
-      adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-      get_request.set_id(external_ids[index].id);
-      get_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-      get_request.set_silent(true);
-      get_request.set_generate_user_id(external_ids[index].set_uid);
-      get_request.set_for_set_cookie(!app_request);
-      get_request.set_create_timestamp(
-        GrpcAlgs::pack_time(Generics::Time::ZERO));
-
-      auto self = shared_from_this();
-      frontend->user_bind_client_->get_user_id(
-        get_request,
-        [self, index](
-          const grpc::Status& status,
-          const adserver::user_info_svcs::user_bind::GetUserIdResponse&
-            response)
-        {
-          self->frontend->workers_->post(
-            [self, index, status, response]()
-            {
-              if(status.ok())
-              {
-                if(response.invalid_operation())
-                {
-                  self->resolve_failed_external_ids.insert(
-                    self->external_ids[index].id);
-                  self->frontend->report_bad_user_(*self->request_info);
-                }
-                else
-                {
-                  AdServer::Commons::UserId resolved_user_id =
-                    GrpcAlgs::unpack_user_id(response.user_id());
-                  if(!resolved_user_id.is_null())
-                  {
-                    self->result_user_id = resolved_user_id;
-                    self->result_user_id_type =
-                      self->external_ids[index].can_be_in_cookie ?
-                        RUIT_EXTIDRESOLVE : RUIT_EXTIDRESOLVE_NOCOOKIE;
-                    self->frontend->common_module_->user_id_controller()->
-                      null_blacklisted(self->result_user_id);
-
-                    if(self->frontend->config_->create_profile())
-                    {
-                      self->create_user_profile = response.created();
-                    }
-                  }
-                }
-              }
-              else
-              {
-                self->http_status = 500;
-              }
-
-              if(!self->result_user_id.is_null())
-              {
-                self->resolved_ext_user_i = index;
-                self->add_external_id(0);
-              }
-              else
-              {
-                self->resolve_external_id(index + 1);
-              }
-            });
-        });
-    }
-
-    void add_external_id(std::size_t index) noexcept
-    {
-      if(!frontend->user_bind_client_ ||
-        (!opted_out && result_user_id.is_null()))
-      {
-        finish_user_id();
-        return;
-      }
-
-      for(; index < external_ids.size(); ++index)
-      {
-        const auto& external_id = external_ids[index].id;
-        if(!external_id.empty() &&
-          index != resolved_ext_user_i &&
-          resolve_failed_external_ids.find(external_id) ==
-            resolve_failed_external_ids.end())
-        {
-          break;
-        }
-      }
-
-      if(index >= external_ids.size())
-      {
-        finish_user_id();
-        return;
-      }
-
-      adserver::user_info_svcs::user_bind::AddUserIdRequest add_user_request;
-      add_user_request.set_id(external_ids[index].id);
-      add_user_request.set_user_id(GrpcAlgs::pack_user_id(
-        !opted_out ? result_user_id : Commons::UserId()));
-      add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-
-      auto self = shared_from_this();
-      frontend->user_bind_client_->add_user_id(
-        add_user_request,
-        [self, index](
-          const grpc::Status& status,
-          const adserver::user_info_svcs::user_bind::AddUserIdResponse&
-            response)
-        {
-          self->frontend->workers_->post(
-            [self, index, status, response]()
-            {
-              if(status.ok())
-              {
-                if(response.invalid_operation())
-                {
-                  self->frontend->report_bad_user_(*self->request_info);
-                }
-              }
-              else
-              {
-                self->http_status = 500;
-              }
-              self->add_external_id(index + 1);
-            });
-        });
-    }
-
-    void finish_user_id() noexcept
-    {
-      if(!opted_out &&
-        !app_request && (
-          !result_user_id.is_null() || resolve_failed_external_ids.empty()))
-      {
-        Generics::Uuid generated_user_id = result_user_id.is_null() ?
-          Generics::Uuid::create_random_based() :
-          result_user_id;
-
-        if(request_info->generate_external_id)
-        {
-          result_ssp_user_id =
-            frontend->common_module_->user_id_controller()->ssp_uuid(
-              generated_user_id,
-              request_info->source_id);
-        }
-
-        if(frontend->config_->set_uid())
-        {
-          result_user_id = generated_user_id;
-          result_user_id_type = RUIT_COOKIE;
-        }
-      }
-
-      finish_result();
-    }
-
-    void finish_result() noexcept
-    {
-      BindResult bind_result;
-      bind_result.result_user_id = result_user_id;
-      if(!result_ssp_user_id.is_null())
-      {
-        bind_result.ssp_user_id = result_ssp_user_id;
-      }
-      else if(!app_request && !result_user_id.is_null())
-      {
-        bind_result.ssp_user_id =
-          frontend->common_module_->user_id_controller()->ssp_uuid(
-            result_user_id,
-            request_info->source_id);
-      }
-
-      schedule_user_match();
-      add_bind_request_or_finish(bind_result);
-    }
-
-    void schedule_user_match() noexcept
-    {
-      std::string ifa_str;
-      if(request_info->external_id.compare(0, 4, "ifa/") == 0)
-      {
-        ifa_str = request_info->external_id.substr(4);
-        String::AsciiStringManip::to_lower(ifa_str);
-      }
-
-      frontend->schedule_user_match_(
-        result_user_id,
-        merge_user_id,
-        create_user_profile,
-        !ifa_str.empty() ? IDFA_KNOWN_KEYWORD : String::SubString(),
-        ifa_str,
-        request_info->referer,
-        request_info->colo_id,
-        request_info->location,
-        request_info->source_id);
-    }
-
-    void add_bind_request_or_finish(const BindResult& bind_result) noexcept
-    {
-      if(dns_bind_request_id.empty() || !frontend->user_bind_client_)
-      {
-        finish(bind_result);
-        return;
-      }
-
-      AdServer::Commons::ExternalUserIdArray user_ids;
-      if(!result_user_id.is_null())
-      {
-        if(result_user_id_type == RUIT_CRESOLVE ||
-          result_user_id_type == RUIT_EXTIDRESOLVE_NOCOOKIE)
-        {
-          user_ids.push_back(std::string("/") + result_user_id.to_string());
-        }
-        else
-        {
-          user_ids.push_back(std::string("c/") + result_user_id.to_string());
-        }
-      }
-
-      if(!app_request &&
-        !request_info->user_id.is_null() &&
-        !(request_info->user_id == result_user_id))
-      {
-        user_ids.push_back(std::string("c/") + request_info->user_id.to_string());
-      }
-
-      if(!request_info->ga_user_id.empty())
-      {
-        user_ids.push_back(request_info->ga_user_id);
-      }
-
-      if(!request_info->ym_user_id.empty())
-      {
-        user_ids.push_back(request_info->ym_user_id);
-      }
-
-      if(!request_info->external_id.empty())
-      {
-        user_ids.push_back(request_info->external_id);
-      }
-
-      if(!request_info->add_user_id.is_null() &&
-        request_info->add_user_id != result_user_id &&
-        request_info->add_user_id != request_info->user_id)
-      {
-        user_ids.push_back(std::string("/") +
-          request_info->add_user_id.to_string());
-      }
-
-      adserver::user_info_svcs::user_bind::AddBindRequestRequest bind_request;
-      bind_request.set_request_id(dns_bind_request_id);
-      bind_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-      for(const auto& user_id : user_ids)
-      {
-        bind_request.add_bind_user_ids(user_id);
-      }
-
-      auto self = shared_from_this();
-      frontend->user_bind_client_->add_bind_request(
-        bind_request,
-        [self, bind_result](
-          const grpc::Status&,
-          const adserver::user_info_svcs::user_bind::AddBindRequestResponse&)
-        {
-          self->frontend->workers_->post(
-            [self, bind_result]()
-            {
-              self->finish(bind_result);
-            });
-        });
-    }
-
-    void finish(const BindResult& bind_result, int status = -1) noexcept
-    {
-      callback(status >= 0 ? status : http_status, bind_result);
-    }
-
-  private:
-    UserBindFrontend* frontend;
-    UserBind::RequestInfo_var request_info;
-    std::string dns_bind_request_id;
-    ProcessRequestCallback callback;
-
-    int http_status;
-    AdServer::Commons::UserId result_user_id;
-    AdServer::Commons::UserId result_ssp_user_id;
-    ResultUserIdType result_user_id_type;
-    AdServer::Commons::UserId merge_user_id;
-    bool app_request;
-    bool opted_out;
-    bool cresolve_failed;
-    bool create_user_profile;
-    std::vector<ExternalId> external_ids;
-    std::set<std::string> resolve_failed_external_ids;
-    std::size_t resolved_ext_user_i;
-  };
-
   void
   UserBindFrontend::process_request_async_(
     UserBind::RequestInfo_var request_info,
@@ -685,11 +149,87 @@ namespace AdServer
     ProcessRequestCallback callback)
     noexcept
   {
-    std::make_shared<BindProcessingState>(
+    std::make_shared<BindRequestState>(
       this,
       std::move(request_info),
       std::move(dns_bind_request_id),
       std::move(callback))->start();
+  }
+
+  bool
+  UserBindFrontend::has_user_bind_client_() const noexcept
+  {
+    return static_cast<bool>(user_bind_client_);
+  }
+
+  void
+  UserBindFrontend::get_user_id_(
+    const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
+    GetUserIdCallback callback)
+    noexcept
+  {
+    user_bind_client_->get_user_id(
+      request,
+      [this, callback = std::move(callback)](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
+        mutable
+      {
+        post_request_stage_(
+          [callback = std::move(callback), status, response]() mutable
+          {
+            callback(status, response);
+          });
+      });
+  }
+
+  void
+  UserBindFrontend::add_user_id_(
+    const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
+    AddUserIdCallback callback)
+    noexcept
+  {
+    user_bind_client_->add_user_id(
+      request,
+      [this, callback = std::move(callback)](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_bind::AddUserIdResponse& response)
+        mutable
+      {
+        post_request_stage_(
+          [callback = std::move(callback), status, response]() mutable
+          {
+            callback(status, response);
+          });
+      });
+  }
+
+  void
+  UserBindFrontend::add_bind_request_(
+    const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
+    AddBindRequestCallback callback)
+    noexcept
+  {
+    user_bind_client_->add_bind_request(
+      request,
+      [this, callback = std::move(callback)](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_bind::AddBindRequestResponse&
+          response)
+        mutable
+      {
+        post_request_stage_(
+          [callback = std::move(callback), status, response]() mutable
+          {
+            callback(status, response);
+          });
+      });
+  }
+
+  void
+  UserBindFrontend::post_request_stage_(std::function<void()> callback) noexcept
+  {
+    workers_->post(std::move(callback));
   }
 
   void
@@ -1617,401 +1157,17 @@ namespace AdServer
     const String::SubString& source)
     noexcept
   {
-    static const char* FUN = "UserBindFrontend::user_match_()";
-
-    struct MatchState final: public std::enable_shared_from_this<MatchState>
-    {
-      UserBindFrontend* frontend;
-      Commons::UserId result_user_id;
-      Commons::UserId merge_user_id;
-      bool create_user_profile;
-      std::string keywords;
-      std::string cohort;
-      std::string referer;
-      unsigned long colo_id;
-      FrontendCommons::Location_var location;
-      std::string source;
-      Generics::Time now;
-      adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
-      bool trigger_match_result_present = false;
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
-
-      void log_channel_error(const grpc::Status& status)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught ChannelServerGrpcAsyncClient error: "
-          "code=" << static_cast<int>(status.error_code()) <<
-          ", message=" << status.error_message();
-        frontend->logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::USER_BIND_FRONTEND,
-          "ADS-IMPL-117");
-      }
-
-      void log_user_info_error(
-        const char* operation,
-        const grpc::Status& status)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": " << operation << " gRPC call failed: user_id = '" <<
-          result_user_id.to_string() << "'; code=" <<
-          static_cast<int>(status.error_code()) <<
-          ", message=" << status.error_message();
-        frontend->logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::USER_BIND_FRONTEND,
-          status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-            "ADS-IMPL-7804" : "ADS-IMPL-7803");
-      }
-
-      void start()
-      {
-        now = Generics::Time::get_time_of_day();
-
-        if((!referer.empty() || !keywords.empty()) &&
-          !result_user_id.is_null())
-        {
-          adserver::channel_svcs::channel_server::MatchRequest channel_request;
-          channel_request.set_non_strict_word_match(false);
-          channel_request.set_non_strict_url_match(false);
-          channel_request.set_return_negative(false);
-          channel_request.set_simplify_page(false);
-          channel_request.set_fill_content(false);
-          channel_request.set_statuses("A", 2);
-          channel_request.set_pwords(keywords);
-          channel_request.set_first_url(referer);
-
-          auto self = shared_from_this();
-          frontend->channel_client_->match(
-            channel_request,
-            [self](
-              const grpc::Status& status,
-              const adserver::channel_svcs::channel_server::MatchResponse& response)
-            {
-              self->frontend->workers_->post(
-                [self, status, response]()
-                {
-                  if(status.ok())
-                  {
-                    self->trigger_match_result = response;
-                    self->trigger_match_result_present = true;
-                  }
-                  else
-                  {
-                    self->log_channel_error(status);
-                  }
-                  self->run_history();
-                });
-            });
-        }
-        else
-        {
-          run_history();
-        }
-      }
-
-      void fill_history_match_request(
-        adserver::user_info_svcs::user_info_manager::MatchRequest&
-          history_match_request)
-      {
-        auto* grpc_match_params = history_match_request.mutable_match_params();
-
-        if(trigger_match_result_present)
-        {
-          const auto& matched_channels =
-            trigger_match_result.matched_channels();
-          typedef std::set<ChannelMatch> ChannelMatchSet;
-
-          ChannelMatchSet page_channels;
-          std::transform(
-            matched_channels.page_channels().begin(),
-            matched_channels.page_channels().end(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
-          for(const auto& channel : page_channels)
-          {
-            auto* channel_match = grpc_match_params->add_page_channel_ids();
-            channel_match->set_channel_id(channel.channel_id);
-            channel_match->set_channel_trigger_id(channel.channel_trigger_id);
-          }
-
-          ChannelMatchSet url_channels;
-          std::transform(
-            matched_channels.url_channels().begin(),
-            matched_channels.url_channels().end(),
-            std::inserter(url_channels, url_channels.end()),
-            GetChannelTriggerId());
-          for(const auto& channel : url_channels)
-          {
-            auto* channel_match = grpc_match_params->add_url_channel_ids();
-            channel_match->set_channel_id(channel.channel_id);
-            channel_match->set_channel_trigger_id(channel.channel_trigger_id);
-          }
-
-          ChannelMatchSet url_keyword_channels;
-          std::transform(
-            matched_channels.url_keyword_channels().begin(),
-            matched_channels.url_keyword_channels().end(),
-            std::inserter(url_keyword_channels, url_keyword_channels.end()),
-            GetChannelTriggerId());
-          for(const auto& channel : url_keyword_channels)
-          {
-            auto* channel_match =
-              grpc_match_params->add_url_keyword_channel_ids();
-            channel_match->set_channel_id(channel.channel_id);
-            channel_match->set_channel_trigger_id(channel.channel_trigger_id);
-          }
-        }
-
-        grpc_match_params->set_use_empty_profile(false);
-        grpc_match_params->set_silent_match(false);
-        grpc_match_params->set_no_match(false);
-        grpc_match_params->set_no_result(true);
-        grpc_match_params->set_ret_freq_caps(false);
-        grpc_match_params->set_provide_channel_count(false);
-        grpc_match_params->set_provide_persistent_channels(false);
-        grpc_match_params->set_change_last_request(false);
-        grpc_match_params->set_filter_contextual_triggers(false);
-        grpc_match_params->set_publishers_optin_timeout(
-          GrpcAlgs::pack_time(Generics::Time::ZERO));
-        grpc_match_params->set_cohort(cohort);
-
-        auto* grpc_user_info = history_match_request.mutable_user_info();
-        grpc_user_info->set_user_id(GrpcAlgs::pack_user_id(result_user_id));
-        grpc_user_info->set_last_colo_id(colo_id);
-        grpc_user_info->set_request_colo_id(colo_id);
-        grpc_user_info->set_current_colo_id(-1);
-        grpc_user_info->set_temporary(false);
-        grpc_user_info->set_time(now.tv_sec);
-      }
-
-      bool need_history() const
-      {
-        return !merge_user_id.is_null() ||
-          create_user_profile ||
-          !cohort.empty() ||
-          !keywords.empty() ||
-          (!result_user_id.is_null() && trigger_match_result_present && (
-            trigger_match_result.matched_channels().page_channels_size() > 0 ||
-            trigger_match_result.matched_channels().url_channels_size() > 0 ||
-            trigger_match_result.matched_channels().url_keyword_channels_size() > 0));
-      }
-
-      void run_history()
-      {
-        if(!need_history() || !frontend->user_info_client_)
-        {
-          run_campaign();
-          return;
-        }
-
-        auto history_match_request = std::make_shared<
-          adserver::user_info_svcs::user_info_manager::MatchRequest>();
-        fill_history_match_request(*history_match_request);
-
-        if(!merge_user_id.is_null())
-        {
-          adserver::user_info_svcs::user_info_manager::GetUserProfileRequest
-            get_profile_request;
-          get_profile_request.set_user_id(GrpcAlgs::pack_user_id(merge_user_id));
-          get_profile_request.set_temporary(false);
-          auto* profile_request =
-            get_profile_request.mutable_profile_request();
-          profile_request->set_base_profile(true);
-          profile_request->set_add_profile(true);
-          profile_request->set_history_profile(true);
-          profile_request->set_freq_cap_profile(true);
-          profile_request->set_pref_profile(false);
-
-          auto self = shared_from_this();
-          frontend->user_info_client_->get_user_profile(
-            get_profile_request,
-            [self, history_match_request](
-              const grpc::Status& status,
-              const adserver::user_info_svcs::user_info_manager::
-                GetUserProfileResponse& response)
-            {
-              self->frontend->workers_->post(
-                [self, history_match_request, status, response]()
-                {
-                  if(!status.ok())
-                  {
-                    self->log_user_info_error(
-                      "UserInfoManager::get_user_profile()",
-                      status);
-                    self->run_campaign();
-                    return;
-                  }
-
-                  if(response.found())
-                  {
-                    self->run_merge(history_match_request, response);
-                  }
-                  else
-                  {
-                    self->run_match(history_match_request);
-                  }
-                });
-            });
-        }
-        else
-        {
-          run_match(history_match_request);
-        }
-      }
-
-      void run_merge(
-        std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-          history_match_request,
-        const adserver::user_info_svcs::user_info_manager::
-          GetUserProfileResponse& get_profile_response)
-      {
-        adserver::user_info_svcs::user_info_manager::MergeRequest merge_request;
-        *merge_request.mutable_user_info() = history_match_request->user_info();
-        *merge_request.mutable_match_params() =
-          history_match_request->match_params();
-        *merge_request.mutable_merge_user_profile() =
-          get_profile_response.user_profile();
-
-        auto self = shared_from_this();
-        frontend->user_info_client_->merge(
-          merge_request,
-          [self](
-            const grpc::Status& status,
-            const adserver::user_info_svcs::user_info_manager::MergeResponse&)
-          {
-            self->frontend->workers_->post(
-              [self, status]()
-              {
-                if(!status.ok())
-                {
-                  self->log_user_info_error(
-                    "UserInfoManager::merge()",
-                    status);
-                  self->run_campaign();
-                  return;
-                }
-                self->run_remove_merged_profile();
-              });
-          });
-      }
-
-      void run_remove_merged_profile()
-      {
-        adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest
-          remove_request;
-        remove_request.set_user_id(GrpcAlgs::pack_user_id(merge_user_id));
-
-        auto self = shared_from_this();
-        frontend->user_info_client_->remove_user_profile(
-          remove_request,
-          [self](
-            const grpc::Status& status,
-            const adserver::user_info_svcs::user_info_manager::
-              RemoveUserProfileResponse&)
-          {
-            self->frontend->workers_->post(
-              [self, status]()
-              {
-                if(!status.ok())
-                {
-                  self->log_user_info_error(
-                    "UserInfoManager::remove_user_profile()",
-                    status);
-                }
-                self->run_campaign();
-              });
-          });
-      }
-
-      void run_match(
-        std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-          history_match_request)
-      {
-        auto self = shared_from_this();
-        frontend->user_info_client_->match(
-          *history_match_request,
-          [self](
-            const grpc::Status& status,
-            const adserver::user_info_svcs::user_info_manager::MatchResponse&
-              response)
-          {
-            self->frontend->workers_->post(
-              [self, status, response]()
-              {
-                if(status.ok())
-                {
-                  self->history_match_result =
-                    AdServer::UserInfoSvcs::GrpcAlgs::
-                      make_history_match_result(response);
-                }
-                else
-                {
-                  self->log_user_info_error(
-                    "UserInfoManager::match()",
-                    status);
-                }
-                self->run_campaign();
-              });
-          });
-      }
-
-      void run_campaign()
-      {
-        adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
-          process_match_request;
-        frontend->fill_match_request_info_(
-          *process_match_request.mutable_match_request_info(),
-          result_user_id,
-          now,
-          trigger_match_result_present ? &trigger_match_result : nullptr,
-          history_match_result,
-          location,
-          referer,
-          source);
-
-        auto self = shared_from_this();
-        frontend->campaign_manager_->process_match_request(
-          process_match_request,
-          [self](
-            const grpc::Status& status,
-            const adserver::campaign_svcs::campaign_manager::
-              ProcessMatchRequestResponse&)
-          {
-            self->frontend->workers_->post(
-              [self, status]()
-              {
-                if(!status.ok())
-                {
-                  Stream::Error ostr;
-                  ostr << FUN << ": Can't process match request. "
-                    "Possible problem with Campaignmanager. "
-                    "gRPC call failed: code=" <<
-                    static_cast<int>(status.error_code()) <<
-                    ", message=" << status.error_message();
-                  self->frontend->logger()->log(ostr.str(),
-                    Logging::Logger::EMERGENCY,
-                    Aspect::USER_BIND_FRONTEND,
-                    "ADS-ICON-4");
-                }
-              });
-          });
-      }
-    };
-
-    auto state = std::make_shared<MatchState>();
-    state->frontend = this;
-    state->result_user_id = result_user_id;
-    state->merge_user_id = merge_user_id;
-    state->create_user_profile = create_user_profile;
-    state->keywords = keywords.str();
-    state->cohort = cohort.str();
-    state->referer = referer.str();
-    state->colo_id = colo_id;
-    state->location = ReferenceCounting::add_ref(
-      const_cast<FrontendCommons::Location*>(location));
-    state->source = source.str();
-    state->start();
+    std::make_shared<UserBindMatchRequestState>(
+      this,
+      result_user_id,
+      merge_user_id,
+      create_user_profile,
+      keywords,
+      cohort,
+      referer,
+      colo_id,
+      location,
+      source)->start();
   }
 
   void
