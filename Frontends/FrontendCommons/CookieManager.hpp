@@ -262,8 +262,6 @@ namespace FrontendCommons
   {
     static const char* FUN = "CookieManager::set()";
 
-    std::cout << "XXX CookieManager::set" << std::endl;
-
     try
     {
       typename CookieParamsMap::const_iterator it = set_cookies_.find(name);
@@ -290,7 +288,6 @@ namespace FrontendCommons
         header += SAME_SITE_NONE;
       }
       CookieHeadersWriter guard(response, response_headers_);
-      std::cout << "XXX response.add_cookie: " << header << std::endl;
       response.add_cookie(header.c_str());
     }
     catch(const eh::Exception& ex)

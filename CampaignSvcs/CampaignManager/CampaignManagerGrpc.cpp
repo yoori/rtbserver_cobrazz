@@ -1656,7 +1656,6 @@ namespace AdServer::CampaignSvcs
   {
     try
     {
-      std::cout << "XXX CampaignManagerGrpc::ServiceImpl::get_campaign_creative()" << std::endl;
 
       const auto result = core_->get_campaign_creative(
         unpack_request_params(request.request_params()));

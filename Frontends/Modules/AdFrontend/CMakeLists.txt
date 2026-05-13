@@ -1,6 +1,7 @@
 add_library(AdFrontend SHARED
   RequestInfoFiller.cpp
   AdFrontend.cpp
+  AdFrontendWorkers.cpp
   AdFrontendStat.cpp
   DebugSink.cpp
 )

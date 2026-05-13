@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
@@ -769,7 +770,6 @@ namespace Frontends
     // create stub for new connection
     Connection_var new_connection(
       new Connection(*io_service_, logger_, frontend_, state_));
-
     acceptor_->async_accept(
       new_connection->socket(),
       [this, new_connection](const boost::system::error_code& error)

@@ -94,7 +94,6 @@ namespace AdServer
       {
         common_module_->set_config_file(config_->path().c_str());
         common_module_->init();
-
         config_->read();
 
         typedef Configuration::FeConfig Config;
@@ -237,4 +236,3 @@ namespace AdServer
     }
   }
 }
-

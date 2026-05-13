@@ -778,7 +778,7 @@
       type="xsd:string"
       use="required"/>
     <xsd:attribute name="match_threads"
-      type="xsd:positiveInteger"
+      type="xsd:nonNegativeInteger"
       use="required"/>
     <xsd:attribute name="threads"
       type="xsd:positiveInteger"

@@ -101,7 +101,6 @@ namespace AdServer::Grpc
       }
     }
     coalesce_threads_.clear();
-
     wait_streams_();
     Generics::CompositeActiveObject::wait_object_();
     clear_streams_();

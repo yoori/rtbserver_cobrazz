@@ -12,6 +12,7 @@
 #include <Logger/DistributorLogger.hpp>
 
 #include <Generics/ActiveObject.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Statistics.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
@@ -37,10 +38,10 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
+#include "AdFrontendWorkers.hpp"
 #include "AdFrontendStat.hpp"
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
@@ -55,7 +56,8 @@ namespace AdServer
   class AdFrontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -93,7 +95,13 @@ namespace AdServer
      * @param response The object to write the HTTP response body.
      * @return HTTP status code.
      */
-    virtual void
+    void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
+
+    void
     handle_request_(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer) noexcept;
@@ -147,6 +155,8 @@ namespace AdServer
     typedef Sync::Policy::PosixThreadRW SyncPolicy;
 
   private:
+    struct RequestContext;
+
     void parse_configs_() /*throw(Exception)*/;
 
     void sign_client_id(
@@ -163,18 +173,16 @@ namespace AdServer
       const RequestInfo& request_info)
       noexcept;
 
-    int
-    acquire_ad(
-      HttpResponse& response,
-      const FCGI::HttpRequest& request,
-      const RequestInfo& request_info,
-      const Generics::SubStringHashAdapter& instantiate_creative_type,
-      std::string& str_response,
-      PassbackInfo& passback_info,
-      bool& log_as_test,
-      DebugSink* debug_sink,
-      RequestTimeMetering& request_time_metering)
-      /*throw(Exception)*/;
+    void
+    acquire_ad_async_(
+      const std::shared_ptr<RequestContext>& context,
+      std::function<void(bool)> callback)
+      noexcept;
+
+    void
+    finish_request_(
+      const std::shared_ptr<RequestContext>& context)
+      noexcept;
 
     void
     request_campaign_manager_(
@@ -192,8 +200,30 @@ namespace AdServer
       bool profiling_available,
       const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq*
         ccg_keywords,
-      DebugSink* debug_sink)
+      DebugSink* debug_sink,
+      adserver::campaign_svcs::campaign_manager::RequestParams*
+        request_params_out)
       /*throw(Exception)*/;
+
+    void
+    request_campaign_manager_async_(
+      PassbackInfo& passback_info,
+      bool& log_as_test,
+      adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
+        campaign_matching_result,
+      RequestTimeMetering& request_time_metering,
+      const RequestInfo& request_info,
+      const Generics::SubStringHashAdapter& instantiate_type,
+      const adserver::channel_svcs::channel_server::MatchResponse*
+        trigger_matched_channels,
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const Generics::Time& merged_last_request,
+      bool profiling_available,
+      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq*
+        ccg_keywords,
+      DebugSink* debug_sink,
+      std::function<void(bool)> callback)
+      noexcept;
 
     void
     convert_ccg_keywords_(
@@ -204,32 +234,30 @@ namespace AdServer
       noexcept;
 
     void
-    merge_users(
-      RequestTimeMetering& time_metering,
-      bool& merge_success,
-      Generics::Time& last_request,
-      std::string& merge_error_message,
-      const RequestInfo& request_info)
+    merge_users_async_(
+      const std::shared_ptr<RequestContext>& context,
+      std::function<void(bool, Generics::Time, std::string)> callback)
       noexcept;
 
     void
-    match_triggers_(
-      RequestTimeMetering& request_time_metering,
-      adserver::channel_svcs::channel_server::MatchRequest& request,
-      adserver::channel_svcs::channel_server::MatchResponse&
-        trigger_matched_channels,
-      bool& trigger_matched_channels_present,
-      const RequestInfo& request_info)
-      /*throw(Exception)*/;
+    match_triggers_async_(
+      const std::shared_ptr<RequestContext>& context,
+      const std::shared_ptr<
+        adserver::channel_svcs::channel_server::MatchRequest>& request,
+      std::shared_ptr<
+        adserver::channel_svcs::channel_server::MatchResponse> response,
+      std::function<void(bool)> callback)
+      noexcept;
 
     void
-    acquire_user_info_matcher(
-      const RequestInfo& request_info,
-      const adserver::channel_svcs::channel_server::MatchResponse*
-        trigger_matching_result,
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out match_result_out,
-      bool& profiling_available,
-      RequestTimeMetering& request_time_metering)
+    acquire_user_info_matcher_async_(
+      const std::shared_ptr<RequestContext>& context,
+      std::shared_ptr<
+        adserver::channel_svcs::channel_server::MatchResponse> trigger_matching_result,
+      bool trigger_matching_result_present,
+      std::function<void(
+        AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var,
+        bool)> callback)
       noexcept;
 
     void
@@ -299,6 +327,7 @@ namespace AdServer
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
 
+    AdFrontendWorkers_var workers_;
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>

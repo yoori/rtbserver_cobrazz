@@ -181,45 +181,9 @@
 
 <xsl:variable name="fcgi-trackserver1-log-path" select="'/log/FCGITrackServer1/FCGITrackServer1'"/>
 <xsl:variable name="fcgi-trackserver2-log-path" select="'/log/FCGITrackServer2/FCGITrackServer2'"/>
-<xsl:variable name="fcgi-trackserver3-log-path" select="'/log/FCGITrackServer3/FCGITrackServer3'"/>
-<xsl:variable name="fcgi-trackserver4-log-path" select="'/log/FCGITrackServer4/FCGITrackServer4'"/>
-<xsl:variable name="fcgi-trackserver5-log-path" select="'/log/FCGITrackServer5/FCGITrackServer5'"/>
-<xsl:variable name="fcgi-trackserver6-log-path" select="'/log/FCGITrackServer6/FCGITrackServer6'"/>
-<xsl:variable name="fcgi-trackserver7-log-path" select="'/log/FCGITrackServer7/FCGITrackServer7'"/>
-<xsl:variable name="fcgi-trackserver8-log-path" select="'/log/FCGITrackServer8/FCGITrackServer8'"/>
 
 <xsl:variable name="fcgi-rtbserver1-log-path" select="'/log/FCGIRtbServer1/FCGIRtbServer1'"/>
 <xsl:variable name="fcgi-rtbserver2-log-path" select="'/log/FCGIRtbServer2/FCGIRtbServer2'"/>
-<xsl:variable name="fcgi-rtbserver3-log-path" select="'/log/FCGIRtbServer3/FCGIRtbServer3'"/>
-<xsl:variable name="fcgi-rtbserver4-log-path" select="'/log/FCGIRtbServer4/FCGIRtbServer4'"/>
-<xsl:variable name="fcgi-rtbserver5-log-path" select="'/log/FCGIRtbServer5/FCGIRtbServer5'"/>
-<xsl:variable name="fcgi-rtbserver6-log-path" select="'/log/FCGIRtbServer6/FCGIRtbServer6'"/>
-<xsl:variable name="fcgi-rtbserver7-log-path" select="'/log/FCGIRtbServer7/FCGIRtbServer7'"/>
-<xsl:variable name="fcgi-rtbserver8-log-path" select="'/log/FCGIRtbServer8/FCGIRtbServer8'"/>
-<xsl:variable name="fcgi-rtbserver9-log-path" select="'/log/FCGIRtbServer9/FCGIRtbServer9'"/>
-<xsl:variable name="fcgi-rtbserver10-log-path" select="'/log/FCGIRtbServer10/FCGIRtbServer10'"/>
-<xsl:variable name="fcgi-rtbserver11-log-path" select="'/log/FCGIRtbServer11/FCGIRtbServer11'"/>
-<xsl:variable name="fcgi-rtbserver12-log-path" select="'/log/FCGIRtbServer12/FCGIRtbServer12'"/>
-<xsl:variable name="fcgi-rtbserver13-log-path" select="'/log/FCGIRtbServer13/FCGIRtbServer13'"/>
-<xsl:variable name="fcgi-rtbserver14-log-path" select="'/log/FCGIRtbServer14/FCGIRtbServer14'"/>
-<xsl:variable name="fcgi-rtbserver15-log-path" select="'/log/FCGIRtbServer15/FCGIRtbServer15'"/>
-<xsl:variable name="fcgi-rtbserver16-log-path" select="'/log/FCGIRtbServer16/FCGIRtbServer16'"/>
-<xsl:variable name="fcgi-rtbserver17-log-path" select="'/log/FCGIRtbServer17/FCGIRtbServer17'"/>
-<xsl:variable name="fcgi-rtbserver18-log-path" select="'/log/FCGIRtbServer18/FCGIRtbServer18'"/>
-<xsl:variable name="fcgi-rtbserver19-log-path" select="'/log/FCGIRtbServer19/FCGIRtbServer19'"/>
-<xsl:variable name="fcgi-rtbserver20-log-path" select="'/log/FCGIRtbServer20/FCGIRtbServer20'"/>
-<xsl:variable name="fcgi-rtbserver21-log-path" select="'/log/FCGIRtbServer21/FCGIRtbServer21'"/>
-<xsl:variable name="fcgi-rtbserver22-log-path" select="'/log/FCGIRtbServer22/FCGIRtbServer22'"/>
-<xsl:variable name="fcgi-rtbserver23-log-path" select="'/log/FCGIRtbServer23/FCGIRtbServer23'"/>
-<xsl:variable name="fcgi-rtbserver24-log-path" select="'/log/FCGIRtbServer24/FCGIRtbServer24'"/>
-<xsl:variable name="fcgi-rtbserver25-log-path" select="'/log/FCGIRtbServer25/FCGIRtbServer25'"/>
-<xsl:variable name="fcgi-rtbserver26-log-path" select="'/log/FCGIRtbServer26/FCGIRtbServer26'"/>
-<xsl:variable name="fcgi-rtbserver27-log-path" select="'/log/FCGIRtbServer27/FCGIRtbServer27'"/>
-<xsl:variable name="fcgi-rtbserver28-log-path" select="'/log/FCGIRtbServer28/FCGIRtbServer28'"/>
-<xsl:variable name="fcgi-rtbserver29-log-path" select="'/log/FCGIRtbServer29/FCGIRtbServer29'"/>
-<xsl:variable name="fcgi-rtbserver30-log-path" select="'/log/FCGIRtbServer30/FCGIRtbServer30'"/>
-<xsl:variable name="fcgi-rtbserver31-log-path" select="'/log/FCGIRtbServer31/FCGIRtbServer31'"/>
-<xsl:variable name="fcgi-rtbserver32-log-path" select="'/log/FCGIRtbServer32/FCGIRtbServer32'"/>
 
 <xsl:variable name="fcgi-userbindserver1-log-path" select="'/log/FCGIUserBindServer1/FCGIUserBindServer1'"/>
 <xsl:variable name="fcgi-userbindserver2-log-path" select="'/log/FCGIUserBindServer2/FCGIUserBindServer2'"/>
@@ -338,7 +302,10 @@
 <xsl:variable name="def-request-session-timeout" select="'30'"/>
 <xsl:variable name="def-request-update-period" select="'60'"/>
 
+<xsl:variable name="def-ad-module-threads" select="'128'"/>
 <xsl:variable name="def-bidding-module-threads" select="'128'"/>
+<xsl:variable name="def-impression-module-threads" select="'128'"/>
+<xsl:variable name="def-impression-module-match-threads" select="'64'"/>
 
 <xsl:variable name="def-userbind-module-threads" select="'1000'"/>
 <xsl:variable name="def-userbind-module-match-threads" select="'100'"/>
@@ -449,66 +416,6 @@
 <xsl:variable name="def-fcgi-rtbserver1-mon-port" select="$def-range-start + 177"/>
 <xsl:variable name="def-fcgi-rtbserver2-port" select="$def-range-start + 96"/>
 <xsl:variable name="def-fcgi-rtbserver2-mon-port" select="$def-range-start + 196"/>
-<xsl:variable name="def-fcgi-rtbserver3-port" select="$def-range-start + 97"/>
-<xsl:variable name="def-fcgi-rtbserver3-mon-port" select="$def-range-start + 197"/>
-<xsl:variable name="def-fcgi-rtbserver4-port" select="$def-range-start + 98"/>
-<xsl:variable name="def-fcgi-rtbserver4-mon-port" select="$def-range-start + 198"/>
-<xsl:variable name="def-fcgi-rtbserver5-port" select="$def-range-start + 100"/>
-<xsl:variable name="def-fcgi-rtbserver5-mon-port" select="$def-range-start + 200"/>
-<xsl:variable name="def-fcgi-rtbserver6-port" select="$def-range-start + 101"/>
-<xsl:variable name="def-fcgi-rtbserver6-mon-port" select="$def-range-start + 201"/>
-<xsl:variable name="def-fcgi-rtbserver7-port" select="$def-range-start + 102"/>
-<xsl:variable name="def-fcgi-rtbserver7-mon-port" select="$def-range-start + 202"/>
-<xsl:variable name="def-fcgi-rtbserver8-port" select="$def-range-start + 103"/>
-<xsl:variable name="def-fcgi-rtbserver8-mon-port" select="$def-range-start + 203"/>
-<xsl:variable name="def-fcgi-rtbserver9-port" select="$def-range-start + 104"/>
-<xsl:variable name="def-fcgi-rtbserver9-mon-port" select="$def-range-start + 204"/>
-<xsl:variable name="def-fcgi-rtbserver10-port" select="$def-range-start + 105"/>
-<xsl:variable name="def-fcgi-rtbserver10-mon-port" select="$def-range-start + 205"/>
-<xsl:variable name="def-fcgi-rtbserver11-port" select="$def-range-start + 106"/>
-<xsl:variable name="def-fcgi-rtbserver11-mon-port" select="$def-range-start + 206"/>
-<xsl:variable name="def-fcgi-rtbserver12-port" select="$def-range-start + 107"/>
-<xsl:variable name="def-fcgi-rtbserver12-mon-port" select="$def-range-start + 207"/>
-<xsl:variable name="def-fcgi-rtbserver13-port" select="$def-range-start + 108"/>
-<xsl:variable name="def-fcgi-rtbserver13-mon-port" select="$def-range-start + 208"/>
-<xsl:variable name="def-fcgi-rtbserver14-port" select="$def-range-start + 109"/>
-<xsl:variable name="def-fcgi-rtbserver14-mon-port" select="$def-range-start + 209"/>
-<xsl:variable name="def-fcgi-rtbserver15-port" select="$def-range-start + 110"/>
-<xsl:variable name="def-fcgi-rtbserver15-mon-port" select="$def-range-start + 210"/>
-<xsl:variable name="def-fcgi-rtbserver16-port" select="$def-range-start + 111"/>
-<xsl:variable name="def-fcgi-rtbserver16-mon-port" select="$def-range-start + 211"/>
-<xsl:variable name="def-fcgi-rtbserver17-port" select="$def-range-start + 112"/>
-<xsl:variable name="def-fcgi-rtbserver17-mon-port" select="$def-range-start + 212"/>
-<xsl:variable name="def-fcgi-rtbserver18-port" select="$def-range-start + 113"/>
-<xsl:variable name="def-fcgi-rtbserver18-mon-port" select="$def-range-start + 213"/>
-<xsl:variable name="def-fcgi-rtbserver19-port" select="$def-range-start + 114"/>
-<xsl:variable name="def-fcgi-rtbserver19-mon-port" select="$def-range-start + 214"/>
-<xsl:variable name="def-fcgi-rtbserver20-port" select="$def-range-start + 115"/>
-<xsl:variable name="def-fcgi-rtbserver20-mon-port" select="$def-range-start + 215"/>
-<xsl:variable name="def-fcgi-rtbserver21-port" select="$def-range-start + 116"/>
-<xsl:variable name="def-fcgi-rtbserver21-mon-port" select="$def-range-start + 216"/>
-<xsl:variable name="def-fcgi-rtbserver22-port" select="$def-range-start + 117"/>
-<xsl:variable name="def-fcgi-rtbserver22-mon-port" select="$def-range-start + 217"/>
-<xsl:variable name="def-fcgi-rtbserver23-port" select="$def-range-start + 118"/>
-<xsl:variable name="def-fcgi-rtbserver23-mon-port" select="$def-range-start + 218"/>
-<xsl:variable name="def-fcgi-rtbserver24-port" select="$def-range-start + 119"/>
-<xsl:variable name="def-fcgi-rtbserver24-mon-port" select="$def-range-start + 219"/>
-<xsl:variable name="def-fcgi-rtbserver25-port" select="$def-range-start + 120"/>
-<xsl:variable name="def-fcgi-rtbserver25-mon-port" select="$def-range-start + 220"/>
-<xsl:variable name="def-fcgi-rtbserver26-port" select="$def-range-start + 121"/>
-<xsl:variable name="def-fcgi-rtbserver26-mon-port" select="$def-range-start + 221"/>
-<xsl:variable name="def-fcgi-rtbserver27-port" select="$def-range-start + 122"/>
-<xsl:variable name="def-fcgi-rtbserver27-mon-port" select="$def-range-start + 222"/>
-<xsl:variable name="def-fcgi-rtbserver28-port" select="$def-range-start + 123"/>
-<xsl:variable name="def-fcgi-rtbserver28-mon-port" select="$def-range-start + 223"/>
-<xsl:variable name="def-fcgi-rtbserver29-port" select="$def-range-start + 124"/>
-<xsl:variable name="def-fcgi-rtbserver29-mon-port" select="$def-range-start + 224"/>
-<xsl:variable name="def-fcgi-rtbserver30-port" select="$def-range-start + 125"/>
-<xsl:variable name="def-fcgi-rtbserver30-mon-port" select="$def-range-start + 225"/>
-<xsl:variable name="def-fcgi-rtbserver31-port" select="$def-range-start + 126"/>
-<xsl:variable name="def-fcgi-rtbserver31-mon-port" select="$def-range-start + 226"/>
-<xsl:variable name="def-fcgi-rtbserver32-port" select="$def-range-start + 127"/>
-<xsl:variable name="def-fcgi-rtbserver32-mon-port" select="$def-range-start + 227"/>
 
 <xsl:variable name="def-fcgi-userbindserver1-port" select="$def-range-start + 78"/>
 <xsl:variable name="def-fcgi-userbindserver1-mon-port" select="$def-range-start + 178"/>
@@ -524,18 +431,6 @@
 <xsl:variable name="def-fcgi-trackserver1-mon-port" select="$def-range-start + 195"/>
 <xsl:variable name="def-fcgi-trackserver2-port" select="$def-range-start + 99"/>
 <xsl:variable name="def-fcgi-trackserver2-mon-port" select="$def-range-start + 199"/>
-<xsl:variable name="def-fcgi-trackserver3-port" select="$def-range-start + 130"/>
-<xsl:variable name="def-fcgi-trackserver3-mon-port" select="$def-range-start + 130"/>
-<xsl:variable name="def-fcgi-trackserver4-port" select="$def-range-start + 131"/>
-<xsl:variable name="def-fcgi-trackserver4-mon-port" select="$def-range-start + 131"/>
-<xsl:variable name="def-fcgi-trackserver5-port" select="$def-range-start + 132"/>
-<xsl:variable name="def-fcgi-trackserver5-mon-port" select="$def-range-start + 132"/>
-<xsl:variable name="def-fcgi-trackserver6-port" select="$def-range-start + 133"/>
-<xsl:variable name="def-fcgi-trackserver6-mon-port" select="$def-range-start + 133"/>
-<xsl:variable name="def-fcgi-trackserver7-port" select="$def-range-start + 134"/>
-<xsl:variable name="def-fcgi-trackserver7-mon-port" select="$def-range-start + 134"/>
-<xsl:variable name="def-fcgi-trackserver8-port" select="$def-range-start + 135"/>
-<xsl:variable name="def-fcgi-trackserver8-mon-port" select="$def-range-start + 135"/>
 
 <xsl:variable name="def-storage-rw-buffer-size" select="10485760"/>
 <xsl:variable name="def-storage-rwlevel-max-size" select="104857600"/>

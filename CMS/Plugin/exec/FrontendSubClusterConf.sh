@@ -351,7 +351,7 @@ then
   let "EXIT_CODE|=$?"
 
   # FCGI Track server
-  for TRACK_INDEX in $(seq 1 8)
+  for TRACK_INDEX in $(seq 1 2)
   do
     $EXEC/ServiceConf.sh \
       --macro "{FCGITRACKSERVER_INDEX}" "$TRACK_INDEX" \
@@ -378,7 +378,7 @@ then
   done
 
   # RTB FCGI server
-  for RTB_INDEX in $(seq 1 32)
+  for RTB_INDEX in $(seq 1 2)
   do
     $EXEC/ServiceConf.sh \
       --macro "{FCGIRTBSERVER_INDEX}" "$RTB_INDEX" \

@@ -1413,6 +1413,21 @@ namespace AdServer::UserInfoSvcs
         throw_user_info_exception_);
     }
 
+    void make_confirm_user_freq_caps_request(
+      pb::ConfirmUserFreqCapsRequest& request,
+      const CORBACommons::UserIdInfo& user_id,
+      const CORBACommons::TimestampInfo& time,
+      const CORBACommons::RequestIdInfo& request_id,
+      const CORBACommons::IdSeq& exclude_pubpixel_accounts)
+    {
+      request.set_user_id(oct_seq_to_bytes_(user_id));
+      request.set_time(oct_seq_to_bytes_(time));
+      request.set_request_id(oct_seq_to_bytes_(request_id));
+      id_seq_to_repeated_(
+        exclude_pubpixel_accounts,
+        request.mutable_exclude_pubpixel_accounts());
+    }
+
     void confirm_user_freq_caps(
       UserInfoManagerGrpcAsyncClient& client,
       const CORBACommons::UserIdInfo& user_id,
@@ -1421,12 +1436,12 @@ namespace AdServer::UserInfoSvcs
       const CORBACommons::IdSeq& exclude_pubpixel_accounts)
     {
       pb::ConfirmUserFreqCapsRequest request;
-      request.set_user_id(oct_seq_to_bytes_(user_id));
-      request.set_time(oct_seq_to_bytes_(time));
-      request.set_request_id(oct_seq_to_bytes_(request_id));
-      id_seq_to_repeated_(
-        exclude_pubpixel_accounts,
-        request.mutable_exclude_pubpixel_accounts());
+      make_confirm_user_freq_caps_request(
+        request,
+        user_id,
+        time,
+        request_id,
+        exclude_pubpixel_accounts);
       AdServer::Grpc::sync_call<pb::ConfirmUserFreqCapsResponse>(
         [&](auto callback)
         {

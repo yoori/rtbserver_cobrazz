@@ -2,6 +2,8 @@
 #pragma once
 
 #include <memory>
+#include <functional>
+#include <atomic>
 #include <string>
 #include <set>
 
@@ -11,6 +13,7 @@
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
 #include <Generics/FileCache.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <Commons/UserInfoManip.hpp>
@@ -32,8 +35,8 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include "ImprTrackFrontendWorkers.hpp"
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer::ImprTrack
@@ -46,7 +49,8 @@ namespace AdServer::ImprTrack
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -60,6 +64,12 @@ namespace AdServer::ImprTrack
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
+
+    void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
 
     void
     handle_request_(
@@ -123,9 +133,10 @@ namespace AdServer::ImprTrack
     typedef std::vector<Commons::TextTemplate_var>
       TextTemplateArray;
 
-    class MatchChannelsTask;
-
   private:
+    struct MatchScheduleState;
+    struct MatchTaskState;
+
     virtual ~Frontend() noexcept;
 
     void
@@ -133,8 +144,56 @@ namespace AdServer::ImprTrack
 
     int
     handle_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer,
+      FCGI::HttpResponse_var response_ptr) noexcept;
+
+    int
+    finish_request_(
       const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response) noexcept;
+      FCGI::HttpResponse& response,
+      const RequestInfo& request_info,
+      const AdServer::Commons::UserId& result_user_id,
+      bool invalid_bind_operation) noexcept;
+
+    void
+    resolve_user_bind_(
+      const RequestInfo& request_info,
+      const AdServer::Commons::UserId& input_user_id,
+      std::function<void(
+        const AdServer::Commons::UserId& result_user_id,
+        bool invalid_bind_operation)> finish)
+      noexcept;
+
+    void
+    try_schedule_match_channels_(
+      const std::shared_ptr<MatchScheduleState>& state)
+      noexcept;
+
+    void
+    start_match_channels_(
+      const std::shared_ptr<MatchTaskState>& state)
+      noexcept;
+
+    void
+    start_history_match_(
+      const std::shared_ptr<MatchTaskState>& state)
+      noexcept;
+
+    void
+    process_match_request_(
+      const std::shared_ptr<MatchTaskState>& state)
+      noexcept;
+
+    void
+    finish_match_channels_task_()
+      noexcept;
+
+    void
+    fill_match_request_info_(
+      adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
+      const MatchTaskState& state)
+      const noexcept;
 
     RequestInfoFiller::EncryptionKeys_var
     read_keys_(
@@ -144,27 +203,6 @@ namespace AdServer::ImprTrack
     void
     report_bad_user_(const RequestInfo& request_info)
       noexcept;
-
-    void
-    match_channels_(
-      const AdServer::Commons::UserId& user_id,
-      const AdServer::Commons::UserId& cookie_user_id,
-      const Generics::Time& now,
-      const std::vector<CORBA::ULong>& campaign_ids,
-      const std::vector<CORBA::ULong>& advertiser_ids,
-      const String::SubString& peer_ip,
-      const std::list<std::string>& markers)
-      noexcept;
-
-    void
-    fill_match_request_info_(
-      adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
-      const AdServer::Commons::UserId& user_id,
-      const Generics::Time& now,
-      const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
-      const String::SubString& peer_ip_val)
-      const noexcept;
 
   private:
     // configuration
@@ -197,7 +235,9 @@ namespace AdServer::ImprTrack
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
 
-    Generics::TaskRunner_var task_runner_;
+    ImprTrackFrontendWorkers_var workers_;
+    ImprTrackFrontendWorkers_var match_workers_;
+    std::atomic<unsigned long> match_tasks_count_{0};
 
     Generics::StringHashAdapter track_template_file_;
     Commons::TextTemplateCache_var template_files_;

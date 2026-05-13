@@ -932,7 +932,7 @@
   </xsl:variable>
 
   <xsl:if test="not(count($request-module) = 0)">
-    <cfg:AdFeConfiguration threads="1000" max_pending_tasks="100">
+    <cfg:AdFeConfiguration threads="{$def-ad-module-threads}" max_pending_tasks="100">
       <xsl:attribute name="ad_request_profiling">
         <xsl:choose>
           <xsl:when test="$colo-config/cfg:coloParams/@ad_request_profiling =
@@ -1061,11 +1061,14 @@
 
   <xsl:variable name="impression-matching-threads"><xsl:value-of
     select="$impression-module/@threads"/><xsl:if
-      test="count($impression-module/@threads) = 0"><xsl:call-template name="GetAttr">
-    <xsl:with-param name="node" select="$frontend-config/cfg:webServerParams"/>
-      <xsl:with-param name="name" select="'max_clients'"/>
-      <xsl:with-param name="type" select="$xsd-webserver-params-type"/>
-    </xsl:call-template></xsl:if>
+      test="count($impression-module/@threads) = 0"><xsl:value-of
+        select="$def-impression-module-threads"/></xsl:if>
+  </xsl:variable>
+
+  <xsl:variable name="impression-match-threads"><xsl:value-of
+    select="$impression-module/@match_threads"/><xsl:if
+      test="count($impression-module/@match_threads) = 0"><xsl:value-of
+        select="$def-impression-module-match-threads"/></xsl:if>
   </xsl:variable>
 
   <xsl:variable name="impression-match-task-limit"><xsl:value-of
@@ -1074,8 +1077,8 @@
         select="$impression-matching-threads * 2"/></xsl:if>
   </xsl:variable>
 
-  <cfg:ImprTrackFeConfiguration threads="400"
-    match_threads="20"
+  <cfg:ImprTrackFeConfiguration threads="{$impression-matching-threads}"
+    match_threads="{$impression-match-threads}"
     match_task_limit="{$impression-match-task-limit}"
     >
     <xsl:attribute name="track_pixel_path"><xsl:value-of select="concat($data-root, '/aux/pt.png')"/></xsl:attribute>

@@ -12,7 +12,7 @@ sub start
 
   my $command =
     "mkdir -p \${log_root}/FCGITrackServer && ".
-    "ulimit -n 64000 && " .
+    "ulimit -n 256000 && " .
     "ulimit -s 100000 && " .
     "export MALLOC_ARENA_MAX=4 && " .
     #"{ valgrind --tool=memcheck --leak-check=full --leak-resolution=high --trace-children=yes FCGIServer " .

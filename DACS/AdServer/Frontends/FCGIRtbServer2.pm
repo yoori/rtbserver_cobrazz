@@ -12,7 +12,7 @@ sub start
 
   my $command =
     "mkdir -p \${log_root}/FCGIRtbServer2 && ".
-    "ulimit -n 64000 && " .
+    "ulimit -n 256000 && " .
     "ulimit -s 100000 && " .
     "export MALLOC_ARENA_MAX=4 && " .
     "{ FCGIServer " .

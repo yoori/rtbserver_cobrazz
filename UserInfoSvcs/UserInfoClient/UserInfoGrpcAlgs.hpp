@@ -36,6 +36,13 @@ namespace AdServer::UserInfoSvcs::GrpcAlgs
     const CampaignIdSeq& campaign_ids,
     const CampaignIdSeq& uc_campaign_ids);
 
+  void make_confirm_user_freq_caps_request(
+    adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest& request,
+    const CORBACommons::UserIdInfo& user_id,
+    const CORBACommons::TimestampInfo& time,
+    const CORBACommons::RequestIdInfo& request_id,
+    const CORBACommons::IdSeq& exclude_pubpixel_accounts);
+
   bool merge(
     UserInfoManagerGrpcAsyncClient& client,
     const UserInfo& user_info,

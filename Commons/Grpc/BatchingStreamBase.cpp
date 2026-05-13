@@ -501,7 +501,6 @@ namespace AdServer::Grpc
       }
       release_grpc_resources_i_();
     }
-
     stop_processing_completion_tags_();
     finish_with_error_(grpc::StatusCode::UNAVAILABLE, "inactive");
   }

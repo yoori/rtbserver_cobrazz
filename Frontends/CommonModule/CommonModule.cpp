@@ -1,4 +1,5 @@
 #include <Logger/StreamLogger.hpp>
+#include <iostream>
 #include <Language/GenericSegmentor/Polyglot.hpp>
 //#include <Language/ChineeseSegmentor/NLPIR.hpp>
 #include <Language/SegmentorManager/SegmentorManager.hpp>
@@ -6,6 +7,8 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
+
+#include <unistd.h>
 
 #include "CommonModule.hpp"
 
@@ -143,18 +146,14 @@ namespace AdServer
     try
     {
       parse_config_(common_config, domain_config);
-
       corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
       task_runner_ = new Generics::TaskRunner(callback(), 2);
       add_child_object(task_runner_);
-
       scheduler_ = new Generics::Planner(callback());
       add_child_object(scheduler_);
 
       const CommonFeConfiguration::UserIdConfig_type&
         user_id_config = common_config->UserIdConfig();
-
       Commons::UserIdBlackList uid_blacklist;
       uid_blacklist.load(user_id_config, logger(), Aspect::COMMON_MODULE);
 
@@ -170,12 +169,10 @@ namespace AdServer
         user_id_config.temp_cache_size(),
         user_id_config.ssp_cache_size(),
         uid_blacklist);
-
       domain_parser_ = new CampaignSvcs::DomainParser(*domain_config);
 
       // initialize campaign servers pool
       CORBACommons::CorbaObjectRefList campaign_server_refs;
-
       Config::CorbaConfigReader::read_multi_corba_ref(
         common_config->CampaignServerCorbaRef(),
         campaign_server_refs);
@@ -187,7 +184,6 @@ namespace AdServer
         campaign_server_refs.begin(),
         campaign_server_refs.end(),
         std::back_inserter(pool_config.iors_list));
-
       campaign_servers_.reset(new CampaignServerPool(
         pool_config,
         CORBACommons::ChoosePolicyType::PT_PERSISTENT));
@@ -199,7 +195,6 @@ namespace AdServer
         Generics::Time(common_config->update_period()),
         common_config->service_index(),
         logger());
-
       msg->execute(); // Complete task before init done and
 
       // init IPMatcher
