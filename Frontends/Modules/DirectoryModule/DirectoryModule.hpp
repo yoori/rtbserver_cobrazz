@@ -6,6 +6,7 @@
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/ActiveObject.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
@@ -15,7 +16,7 @@
 #include <FrontendCommons/BoundedCache.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 namespace AdServer
 {
@@ -28,7 +29,8 @@ namespace AdServer
   class DirectoryModule:
     private Logging::LoggerCallbackHolder,
     private FrontendCommons::HTTPExceptions,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -40,6 +42,12 @@ namespace AdServer
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
+
+    void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
 
     virtual void
     handle_request_(
@@ -189,5 +197,6 @@ namespace AdServer
     DirAliasMap directories_;
     ConfigPtr config_;
     Configuration_var frontend_config_;
+    FrontendCommons::FrontendWorkers_var workers_;
   };
 }

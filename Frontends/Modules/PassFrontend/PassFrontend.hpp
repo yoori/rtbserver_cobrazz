@@ -4,6 +4,7 @@
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
 #include <HTTP/Http.hpp>
@@ -16,7 +17,7 @@
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -32,7 +33,8 @@ namespace Passback
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -46,6 +48,12 @@ namespace Passback
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
+
+    void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
 
     void
     handle_request_(
@@ -113,6 +121,7 @@ namespace Passback
       campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
+    FrontendCommons::FrontendWorkers_var workers_;
   };
 }
 }

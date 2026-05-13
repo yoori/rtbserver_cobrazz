@@ -17,6 +17,7 @@
 #include <String/TextTemplate.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
+#include <Commons/AtomicInt.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -234,8 +235,6 @@ namespace AdServer::Action
       const adserver::channel_svcs::channel_server::MatchResponse& trigger_match_result) const
       noexcept;
 
-    class MatchActionChannelsTask;
-
     typedef std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> >
       CookieManagerPtr;
@@ -263,7 +262,8 @@ namespace AdServer::Action
     AcFrontendStat_var stats_;
     RedirectRuleArray redirect_rules_;
 
-    Generics::TaskRunner_var task_runner_;
+    FrontendCommons::FrontendWorkers_var match_workers_;
+    Algs::AtomicInt match_task_count_;
 
     /* external services */
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>

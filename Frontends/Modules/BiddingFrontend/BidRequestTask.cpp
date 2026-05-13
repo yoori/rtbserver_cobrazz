@@ -35,13 +35,6 @@ namespace Bidding
   }
 
   bool
-  BidRequestTask::execute_() noexcept
-  {
-    execute();
-    return true;
-  }
-
-  bool
   BidRequestTask::parse_request_() noexcept
   {
     set_current_stage(Stage::RequestParsing);

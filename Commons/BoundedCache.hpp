@@ -1,5 +1,8 @@
 #pragma once
 
+#include <functional>
+#include <string>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/BoundedMap.hpp>
@@ -36,6 +39,15 @@ namespace Commons
     ValueType
     get(const KeyType& key, const char* service_index = 0)
       /*throw(typename ConfigurationType::Exception)*/;
+
+    typedef std::function<void(ValueType)> GetCallback;
+
+    void
+    get_async(
+      const KeyType& key,
+      const char* service_index,
+      GetCallback callback)
+      noexcept;
 
   private:
     typedef typename ConfigurationType::Holder Holder;
@@ -80,6 +92,14 @@ namespace Commons
       const KeyType& key,
       const char* service_index)
       /*throw(typename ConfigurationType::Exception)*/;
+
+    void
+    update_async_(
+      typename ElementMap::iterator& it,
+      const KeyType& key,
+      const char* service_index,
+      GetCallback callback)
+      noexcept;
 
   private:
     ConfigurationType configuration_;
@@ -139,6 +159,37 @@ namespace Commons
     typename ValueType,
     typename ConfigurationType,
     template <typename, typename> class MapType>
+  void
+  BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
+  get_async(
+    const KeyType& key,
+    const char* service_index,
+    GetCallback callback)
+    noexcept
+  {
+    try
+    {
+      typename ElementMap::iterator it = map_.find(key);
+      if(it != map_.end() &&
+        !configuration_.update_required(it->first, it->second))
+      {
+        callback(configuration_.adapt(it->second));
+        return;
+      }
+
+      update_async_(it, key, service_index, std::move(callback));
+    }
+    catch(...)
+    {
+      callback(ValueType());
+    }
+  }
+
+  template<
+    typename KeyType,
+    typename ValueType,
+    typename ConfigurationType,
+    template <typename, typename> class MapType>
   typename BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
     ElementMap::iterator
   BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
@@ -156,6 +207,58 @@ namespace Commons
 
     Holder h(configuration_.update(key, it != map_.end() ? &it->second: 0, service_index));
     return map_.insert(typename ElementMap::value_type(key, h)).first;
+  }
+
+  template<
+    typename KeyType,
+    typename ValueType,
+    typename ConfigurationType,
+    template <typename, typename> class MapType>
+  void
+  BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
+  update_async_(
+    typename ElementMap::iterator& it,
+    const KeyType& key,
+    const char* service_index,
+    GetCallback callback)
+    noexcept
+  {
+    Holder old_holder;
+
+    {
+      typename KeyLockMap::WriteGuard lock = update_lock_map_.write_lock(key);
+      if(it != map_.end())
+      {
+        old_holder = it->second;
+        map_.erase(it);
+      }
+    }
+
+    configuration_.update_async(
+      key,
+      old_holder,
+      service_index ? std::string(service_index) : std::string(),
+      [this, key, callback = std::move(callback)](Holder holder) mutable
+      {
+        try
+        {
+          if(!holder)
+          {
+            callback(ValueType());
+            return;
+          }
+
+          typename KeyLockMap::WriteGuard lock =
+            update_lock_map_.write_lock(key);
+          typename ElementMap::iterator inserted =
+            map_.insert(typename ElementMap::value_type(key, holder)).first;
+          callback(configuration_.adapt(inserted->second));
+        }
+        catch(...)
+        {
+          callback(ValueType());
+        }
+      });
   }
 }
 }

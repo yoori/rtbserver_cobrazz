@@ -560,7 +560,6 @@ namespace
       {
         parse_config_();
 
-        corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
         workers_ = new FrontendCommons::FrontendWorkers(
           callback(),
           config_->threads());

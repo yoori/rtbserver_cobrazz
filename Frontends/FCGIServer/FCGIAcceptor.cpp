@@ -715,23 +715,15 @@ namespace Frontends
         logger,
         callback)),
       state_(new FCGIAcceptor::State(logger, frontend, worker_stats_object_.in())),
-      io_service_(std::make_shared<boost::asio::io_service>())
+      io_service_(std::make_shared<boost::asio::io_service>()),
+      bind_address_(bind_address.str()),
+      backlog_(backlog)
   {
-    ::unlink(bind_address.str().c_str());
-
-    acceptor_ = std::make_shared<AcceptorType>(*io_service_);
-    acceptor_->open(boost::asio::local::stream_protocol());
-    acceptor_->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-    acceptor_->bind(boost::asio::local::stream_protocol::endpoint(bind_address.str()));
-    acceptor_->listen(backlog);
-
     add_child_object(Generics::ActiveObject_var(
       new BoostAsioContextRunActiveObject(
         callback,
         io_service_,
         process_threads)));
-
-    create_accept_stub_();
   }
 
   FCGIAcceptor::~FCGIAcceptor() noexcept
@@ -741,6 +733,16 @@ namespace Frontends
   FCGIAcceptor::activate_object()
     /*throw(Exception, eh::Exception)*/
   {
+    ::unlink(bind_address_.c_str());
+
+    acceptor_ = std::make_shared<AcceptorType>(*io_service_);
+    acceptor_->open(boost::asio::local::stream_protocol());
+    acceptor_->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+    acceptor_->bind(boost::asio::local::stream_protocol::endpoint(bind_address_));
+    acceptor_->listen(backlog_);
+
+    create_accept_stub_();
+
     Generics::CompositeActiveObject::activate_object();
 
     worker_stats_object_->activate_object();
@@ -750,6 +752,13 @@ namespace Frontends
   FCGIAcceptor::deactivate_object()
     /*throw(Exception, eh::Exception)*/
   {
+    if(acceptor_)
+    {
+      boost::system::error_code ec;
+      acceptor_->cancel(ec);
+      acceptor_->close(ec);
+    }
+
     Generics::CompositeActiveObject::deactivate_object();
   }
 
@@ -767,6 +776,11 @@ namespace Frontends
   void
   FCGIAcceptor::create_accept_stub_()
   {
+    if(!acceptor_ || !acceptor_->is_open())
+    {
+      return;
+    }
+
     // create stub for new connection
     Connection_var new_connection(
       new Connection(*io_service_, logger_, frontend_, state_));
@@ -794,7 +808,10 @@ namespace Frontends
       std::cerr << "Can't accept connection: " << error << std::endl;
     }
 
-    create_accept_stub_();
+    if(acceptor_ && acceptor_->is_open())
+    {
+      create_accept_stub_();
+    }
   }
 
   FrontendCommons::FrontendInterface*

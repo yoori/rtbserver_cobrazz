@@ -17,8 +17,7 @@
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-
-#include "ContentFrontendWorkers.hpp"
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 namespace AdServer
 {
@@ -112,7 +111,6 @@ namespace AdServer
       using ConfigType = Commons::TextTemplateCacheConfiguration<
         Commons::TextTemplate>;
       using Holder = ConfigType::Holder;
-      using Exception = ConfigType::Exception;
 
       ~CreativesUpdater() noexcept override;
 
@@ -125,18 +123,33 @@ namespace AdServer
           campaign_manager)
         noexcept;
 
-      Holder
-      far_update(const char* file, const char* service_index)
-        override /*throw(Exception)*/;
+      void
+      far_update_async(
+        const char* file,
+        const char* service_index,
+        ConfigType::UpdateCallback callback)
+        noexcept override;
     };
 
     ~ContentFrontend() noexcept override = default;
 
-    int
-    handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    void
+    process_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::HttpResponse_var response,
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
+
+    int
+    fill_response_(
+      FCGI::HttpResponse& response,
+      Commons::TextTemplate* templ,
+      const Generics::SubStringHashAdapter& instantiate_type,
+      const std::string& click_url0,
+      const std::string& pub_preclick_url,
+      const std::string& resource_url_suffix,
+      const std::string& random_str)
+      const /*throw(eh::Exception)*/;
 
     void
     handle_request_noparams_(
@@ -166,7 +179,7 @@ namespace AdServer
 
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
-    ContentFrontendWorkers_var workers_;
+    FrontendCommons::FrontendWorkers_var workers_;
     Commons::TextTemplateCache_var template_files_;
   };
 

@@ -186,7 +186,8 @@ namespace AdServer
         Aspect::CLICK_FRONTEND,
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module))
+      common_module_(ReferenceCounting::add_ref(common_module)),
+      match_task_count_(0)
   {}
 
   bool
@@ -424,9 +425,10 @@ namespace AdServer
             "ADS-IMPL-102");
         }
 
-        task_runner_ = new Generics::TaskRunner(
-          callback(), config_->threads(), 0, config_->match_task_limit());
-        add_child_object(task_runner_);
+        match_workers_ = new FrontendCommons::FrontendWorkers(
+          callback(),
+          config_->threads());
+        add_child_object(match_workers_);
 
         set_uid_controller_ = new SetUidController(
           common_module_->user_id_controller(),
@@ -592,61 +594,6 @@ namespace AdServer
       }
     }
   }
-
-  class ClickFrontend::MatchClickChannelsTask:
-    public Generics::Task,
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    MatchClickChannelsTask(
-      ClickFrontend* click_frontend,
-      const AdServer::Commons::UserId& user_id,
-      const AdServer::Commons::UserId& cookie_user_id,
-      const Generics::Time& now,
-      unsigned long campaign_id,
-      unsigned long advertiser_id,
-      const String::SubString& peer_ip,
-      const std::list<std::string>& markers)
-      noexcept
-      : click_frontend_(click_frontend),
-        user_id_(user_id),
-        cookie_user_id_(cookie_user_id),
-        now_(now),
-        campaign_id_(campaign_id),
-        advertiser_id_(advertiser_id),
-        peer_ip_(peer_ip.str()),
-        markers_(markers)
-    {}
-
-    virtual
-    void
-    execute() noexcept
-    {
-      click_frontend_->match_click_channels_(
-        user_id_,
-        cookie_user_id_,
-        now_,
-        campaign_id_,
-        advertiser_id_,
-        peer_ip_,
-        markers_);
-    }
-
-  protected:
-    virtual
-    ~MatchClickChannelsTask() noexcept
-    {}
-
-  private:
-    ClickFrontend* click_frontend_;
-    AdServer::Commons::UserId user_id_;
-    AdServer::Commons::UserId cookie_user_id_;
-    Generics::Time now_;
-    ::CORBA::ULong campaign_id_;
-    ::CORBA::ULong advertiser_id_;
-    const std::string peer_ip_;
-    const std::list<std::string> markers_;
-  };
 
   void
   ClickFrontend::handle_request_(
@@ -840,28 +787,45 @@ namespace AdServer
                   AdServer::Commons::PROBE_USER_ID)) ||
               set_uid))
             {
-              try
+              const unsigned long current_task_count =
+                match_task_count_.exchange_and_add(1) + 1;
+
+              if(config_->match_task_limit() == 0 ||
+                current_task_count <=
+                  config_->match_task_limit() + config_->threads())
               {
-                task_runner_->enqueue_task(new MatchClickChannelsTask(
-                  this,
-                  set_uid ?
+                match_workers_->post(
+                  [this,
+                    user_id = set_uid ?
                     set_uid->client_id.uuid() :
                     request_info.match_user_id,
-                  request_info.cookie_user_id,
-                  GrpcAlgs::unpack_time(click_info.time()),
-                  click_result_info.campaign_id(),
-                  click_result_info.advertiser_id(),
-                  request_info.peer_ip,
-                  request_info.markers));
+                    cookie_user_id = request_info.cookie_user_id,
+                    now = GrpcAlgs::unpack_time(click_info.time()),
+                    campaign_id = click_result_info.campaign_id(),
+                    advertiser_id = click_result_info.advertiser_id(),
+                    peer_ip = request_info.peer_ip,
+                    markers = request_info.markers]()
+                  {
+                    match_click_channels_(
+                      user_id,
+                      cookie_user_id,
+                      now,
+                      campaign_id,
+                      advertiser_id,
+                      peer_ip,
+                      markers);
+                    match_task_count_ += -1;
+                  });
               }
-              catch (const Generics::TaskRunner::Overflow& ex)
+              else
               {
+                match_task_count_ += -1;
                 logger()->sstream(
                   Logging::Logger::ERROR,
                   Aspect::CLICK_FRONTEND,
                   "ADS-IMPL-198") << FUN <<
                   ": the limit of simultaneous matching tasks has been "
-                  "reached: " << ex.what();
+                  "reached";
               }
             }
 

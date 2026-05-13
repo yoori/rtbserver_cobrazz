@@ -41,7 +41,7 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-#include "AdFrontendWorkers.hpp"
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 #include "AdFrontendStat.hpp"
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
@@ -327,7 +327,7 @@ namespace AdServer
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
 
-    AdFrontendWorkers_var workers_;
+    FrontendCommons::FrontendWorkers_var workers_;
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>

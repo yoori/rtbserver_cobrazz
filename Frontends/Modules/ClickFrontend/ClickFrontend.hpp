@@ -16,6 +16,7 @@
 #include <HTTP/Http.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
+#include <Commons/AtomicInt.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -111,7 +112,6 @@ namespace AdServer
     log_level() noexcept;
 
   private:
-    class MatchClickChannelsTask;
     typedef Configuration::FeConfig::CommonFeConfiguration_type
       CommonFeConfiguration;
 
@@ -208,7 +208,8 @@ namespace AdServer
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
 
-    Generics::TaskRunner_var task_runner_;
+    FrontendCommons::FrontendWorkers_var match_workers_;
+    Algs::AtomicInt match_task_count_;
 
     std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;

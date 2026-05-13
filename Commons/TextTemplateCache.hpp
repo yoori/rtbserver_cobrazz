@@ -1,5 +1,8 @@
 #pragma once
 
+#include <functional>
+#include <string>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/Time.hpp>
@@ -91,6 +94,7 @@ namespace Commons
     typedef ReferenceCounting::SmartPtr<TextTemplateHolder>
       TextTemplateHolder_var;
     typedef TextTemplateHolder_var Holder;
+    typedef std::function<void(Holder)> UpdateCallback;
 
     class FarUpdater :
       public ReferenceCounting::DefaultImpl<>
@@ -104,6 +108,23 @@ namespace Commons
             " failed to stat file '", file, "'");
         return Holder();
       }
+
+      virtual void
+      far_update_async(
+        const char* file,
+        const char* service_id,
+        UpdateCallback callback) noexcept
+      {
+        try
+        {
+          callback(far_update(file, service_id));
+        }
+        catch(...)
+        {
+          callback(Holder());
+        }
+      }
+
     protected:
       virtual ~FarUpdater() noexcept {}
     };
@@ -128,6 +149,14 @@ namespace Commons
       const TextTemplateHolder_var* val,
       const char* service_id)
       const /*throw(Exception)*/;
+
+    void
+    update_async(
+      const Generics::StringHashAdapter& path,
+      TextTemplateHolder_var val,
+      std::string service_id,
+      UpdateCallback callback)
+      const noexcept;
 
     unsigned long
     size(const TextTemplateHolder* val) const noexcept;
@@ -286,6 +315,75 @@ namespace Commons
       now,
       new_mod_time,
       (*val)->size);
+  }
+
+  template <typename Text>
+  inline
+  void
+  TextTemplateCacheConfiguration<Text>::update_async(
+    const Generics::StringHashAdapter& path,
+    TextTemplateHolder_var val,
+    std::string service_id,
+    UpdateCallback callback)
+    const noexcept
+  {
+    try
+    {
+      Generics::Time now = Generics::Time::get_time_of_day();
+
+      struct stat fs;
+
+      if(::stat(path.text().c_str(), &fs) < 0)
+      {
+        updater_->far_update_async(
+          path.text().data() + path.text().rfind('/') + 1,
+          service_id.empty() ? 0 : service_id.c_str(),
+          std::move(callback));
+        return;
+      }
+
+      Generics::Time new_mod_time(fs.st_mtime);
+
+      if(!val || new_mod_time != val->mod_time)
+      {
+        int fd = ::open(path.text().c_str(), O_RDONLY);
+
+        if(fd < 0)
+        {
+          callback(Holder());
+          return;
+        }
+
+        try
+        {
+          Generics::MMap mapped_file(fd);
+
+          callback(new TextTemplateHolder(
+            Text_var(new Text(String::SubString(
+              static_cast<const char*>(mapped_file.memory()),
+              mapped_file.length()))),
+            now,
+            new_mod_time,
+            mapped_file.length()));
+        }
+        catch(const eh::Exception&)
+        {
+          callback(Holder());
+        }
+
+        return;
+      }
+
+      callback(new TextTemplateHolder(
+        val->templ,
+        now,
+        new_mod_time,
+        val->size));
+    }
+    catch(...)
+    {
+      callback(Holder());
+    }
   }
 
 }

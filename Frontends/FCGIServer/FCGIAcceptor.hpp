@@ -2,6 +2,7 @@
 
 #include <list>
 #include <pthread.h>
+#include <string>
 
 #include <boost/asio.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
@@ -90,5 +91,7 @@ namespace AdServer::Frontends
     //std::shared_ptr<boost::asio::io_service> accept_io_service_;
     std::shared_ptr<boost::asio::io_service> io_service_;
     std::shared_ptr<AcceptorType> acceptor_;
+    std::string bind_address_;
+    unsigned long backlog_;
   };
 } // namespace AdServer::Frontends

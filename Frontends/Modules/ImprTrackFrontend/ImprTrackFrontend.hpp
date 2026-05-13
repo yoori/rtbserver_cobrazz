@@ -36,7 +36,7 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
-#include "ImprTrackFrontendWorkers.hpp"
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer::ImprTrack
@@ -235,8 +235,8 @@ namespace AdServer::ImprTrack
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
 
-    ImprTrackFrontendWorkers_var workers_;
-    ImprTrackFrontendWorkers_var match_workers_;
+    FrontendCommons::FrontendWorkers_var workers_;
+    FrontendCommons::FrontendWorkers_var match_workers_;
     std::atomic<unsigned long> match_tasks_count_{0};
 
     Generics::StringHashAdapter track_template_file_;

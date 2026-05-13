@@ -377,7 +377,7 @@ namespace AdServer
           callback(), task_runner_);
         add_child_object(task_scheduler_.in());
 
-        workers_ = new AdFrontendWorkers(callback(), config_->threads());
+        workers_ = new FrontendCommons::FrontendWorkers(callback(), config_->threads());
         add_child_object(workers_);
 
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(

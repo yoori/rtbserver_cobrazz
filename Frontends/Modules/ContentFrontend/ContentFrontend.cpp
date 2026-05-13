@@ -1,6 +1,3 @@
-#include <condition_variable>
-#include <mutex>
-
 #include <Generics/Time.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -113,73 +110,57 @@ namespace AdServer
 
   ContentFrontend::CreativesUpdater::~CreativesUpdater() noexcept = default;
 
-  ContentFrontend::CreativesUpdater::Holder
-  ContentFrontend::CreativesUpdater::far_update(
+  void
+  ContentFrontend::CreativesUpdater::far_update_async(
     const char* file,
-    const char* service_index)
-    /*throw(Exception)*/
+    const char* service_index,
+    ConfigType::UpdateCallback callback)
+    noexcept
   {
     try
     {
-      adserver::campaign_svcs::campaign_manager::GetFileRequest request;
-      request.set_file_name(file);
+      auto request = std::make_shared<
+        adserver::campaign_svcs::campaign_manager::GetFileRequest>();
+      request->set_file_name(file);
       if(service_index)
       {
-        request.set_service_index(service_index);
+        request->set_service_index(service_index);
       }
-
-      std::mutex mutex;
-      std::condition_variable condition;
-      bool done = false;
-      grpc::Status result_status;
-      adserver::campaign_svcs::campaign_manager::GetFileResponse response;
 
       campaign_manager_->get_file(
-        request,
-        [&mutex, &condition, &done, &result_status, &response](
+        *request,
+        [request, callback = std::move(callback)](
           const grpc::Status& status,
           const adserver::campaign_svcs::campaign_manager::
-            GetFileResponse& get_file_response)
+            GetFileResponse& response) mutable
         {
+          try
           {
-            std::lock_guard<std::mutex> lock(mutex);
-            result_status = status;
-            response = get_file_response;
-            done = true;
+            if(!status.ok())
+            {
+              callback(Holder());
+              return;
+            }
+
+            String::SubString file_body(
+              response.file().data(),
+              response.file().size());
+            Generics::Time now = Generics::Time::get_time_of_day();
+            callback(new ConfigType::TextTemplateHolder(
+              Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
+              now,
+              now,
+              file_body.size()));
           }
-          condition.notify_one();
+          catch(...)
+          {
+            callback(Holder());
+          }
         });
-
-      {
-        std::unique_lock<std::mutex> lock(mutex);
-        condition.wait(lock, [&done]() { return done; });
-      }
-
-      if(!result_status.ok())
-      {
-        Stream::Error ostr;
-        ostr << "CampaignManager get_file failed: code=" <<
-          static_cast<int>(result_status.error_code()) <<
-          ", message=" << result_status.error_message();
-        throw Exception(ostr);
-      }
-
-      String::SubString file_body(
-        response.file().data(),
-        response.file().size());
-      Generics::Time now = Generics::Time::get_time_of_day();
-      return new ConfigType::TextTemplateHolder(
-        Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
-        now,
-        now,
-        file_body.size());
     }
-    catch (const eh::Exception& e)
+    catch(...)
     {
-      Stream::Error ostr;
-      ostr << "CreativesUpdater::far_update(): caugth eh::Exception: "
-        << e.what();
-      throw Exception(ostr);
+      callback(Holder());
     }
   }
 
@@ -272,7 +253,9 @@ namespace AdServer
       campaign_manager_ = campaign_manager;
       add_child_object(campaign_manager);
 
-      workers_ = new ContentFrontendWorkers(callback(), config_->threads());
+      workers_ = new FrontendCommons::FrontendWorkers(
+        callback(),
+        config_->threads());
       add_child_object(workers_);
 
       template_files_ = new Commons::TextTemplateCache(
@@ -463,18 +446,18 @@ namespace AdServer
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    const FCGI::HttpRequest& request = request_holder->request();
-
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
-    response_writer->write(http_status, response_ptr);
+    process_request_(
+      std::move(request_holder),
+      std::move(response_ptr),
+      std::move(response_writer));
   }
 
-  int
-  ContentFrontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+  void
+  ContentFrontend::process_request_(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::HttpResponse_var response,
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     static const char* FUN = "ContentFrontend::handle_request()";
@@ -483,6 +466,8 @@ namespace AdServer
 
     try
     {
+      const FCGI::HttpRequest& request = request_holder->request();
+
       ContentFrontendHTTPConstrain::apply(request);
 
       bool secure;
@@ -564,81 +549,70 @@ namespace AdServer
       // check file
       if(!AdServer::PathManip::normalize_path(file))
       {
-        return 403; // HTTP_FORBIDDEN
+        response_writer->write(403, response);
+        return;
       }
-
-      Commons::TextTemplate_var templ;
 
       file = config_->TemplateCache().root() + file;
 
-      try
-      {
-        templ = template_files_->get(file, campaign_manager_index.c_str());
-      }
-      catch(const eh::Exception&)
-      {
-        return 404; // HTTP_NOT_FOUND
-      }
-
-      typedef std::map<String::SubString, std::string> ArgMap;
-      ArgMap args_cont;
-
-      TemplateRuleMap::const_iterator rule_it = template_rules_.find(instantiate_type);
-
-      if(rule_it != template_rules_.end())
-      {
-        for(TokenValueMap::const_iterator it = rule_it->second.tokens.begin();
-            it != rule_it->second.tokens.end(); ++it)
+      template_files_->get_async(
+        file,
+        campaign_manager_index.c_str(),
+        [this,
+          response,
+          response_writer = std::move(response_writer),
+          instantiate_type,
+          click_url0 = std::move(click_url0),
+          pub_preclick_url = std::move(pub_preclick_url),
+          resource_url_suffix = std::move(resource_url_suffix),
+          random_str = std::move(random_str)](
+            Commons::TextTemplate_var templ) mutable
         {
-          args_cont[it->first] = it->second;
-        }
+          workers_->post(
+            [this,
+              response,
+              response_writer = std::move(response_writer),
+              templ = std::move(templ),
+              instantiate_type,
+              click_url0 = std::move(click_url0),
+              pub_preclick_url = std::move(pub_preclick_url),
+              resource_url_suffix = std::move(resource_url_suffix),
+              random_str = std::move(random_str)]() mutable
+            {
+              int status = 0;
+              if(!templ)
+              {
+                status = 404;
+              }
+              else
+              {
+                try
+                {
+                  status = fill_response_(
+                    *response,
+                    templ,
+                    instantiate_type,
+                    click_url0,
+                    pub_preclick_url,
+                    resource_url_suffix,
+                    random_str);
+                }
+                catch(const eh::Exception& e)
+                {
+                  status = 500;
+                  Stream::Error ostr;
+                  ostr << "ContentFrontend::handle_request(): "
+                    "eh::Exception has been caught: " << e.what();
+                  logger()->log(ostr.str(), Logging::Logger::EMERGENCY,
+                    Aspect::CONTENT_FRONTEND, "ADS-IMPL-191");
+                }
+              }
 
-        args_cont[Tokens::CRVBASE] = args_cont[Tokens::ADIMAGE_PATH] =
-          rule_it->second.resource_url_prefix + resource_url_suffix;
-      }
+              response_writer->write(status, response);
+            });
+        });
 
-      std::string mime_pub_preclick_url;
-      String::StringManip::mime_url_encode(
-        pub_preclick_url,
-        mime_pub_preclick_url);
-
-      const bool click_url0_contains_args = click_url0.find('?') != std::string::npos;
-      const char* LOCAL_AMP = click_url0_contains_args ? "&" : "*amp*";
-      const char* LOCAL_EQL = click_url0_contains_args ? "=" : "*eql*";
-      const std::string f_marker = std::string(LOCAL_AMP) + "m" + LOCAL_EQL + "f";
-      const std::string relocate_suffix = std::string(LOCAL_AMP) + "relocate" + LOCAL_EQL;
-      const std::string pub_preclick_param = !pub_preclick_url.empty() ?
-        std::string(LOCAL_AMP) + "preclick" + LOCAL_EQL + mime_pub_preclick_url :
-        std::string();
-
-      // init click tokens without pub preclick
-      const std::string click_url0_f = click_url0 + f_marker;
-      args_cont[Tokens::CLICK0] = click_url0;
-      args_cont[Tokens::PRECLICK0] = click_url0 + relocate_suffix;
-      args_cont[Tokens::CLICKF0] = click_url0_f;
-      args_cont[Tokens::PRECLICKF0] = click_url0_f + relocate_suffix;
-
-      // init click tokens with pub preclick
-      const std::string click_url = click_url0 + pub_preclick_param;
-      const std::string click_url_f = click_url + f_marker;
-      args_cont[Tokens::CLICK] = click_url;
-      args_cont[Tokens::PRECLICK] = click_url + relocate_suffix;
-      args_cont[Tokens::CLICKF] = click_url_f;
-      args_cont[Tokens::PRECLICKF] = click_url_f + relocate_suffix;
-      args_cont[Tokens::RANDOM] = random_str;
-
-      String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
-      String::TextTemplate::DefaultValue default_cont(&args);
-      String::TextTemplate::ArgsEncoder encoder(&default_cont);
-      std::string response_content = templ->instantiate(encoder);
-
-      response.set_content_type_nocopy(Response::Type::TEXT_HTML);
-
-      response.get_output_stream().write(
-        response_content.data(),
-        response_content.size());
-
-      return 0; // OK
+      return;
     }
     catch (const ForbiddenException& ex)
     {
@@ -661,7 +635,80 @@ namespace AdServer
         Aspect::CONTENT_FRONTEND, "ADS-IMPL-191");
     }
 
-    return http_status;
+    response_writer->write(http_status, response);
+  }
+
+  int
+  ContentFrontend::fill_response_(
+    FCGI::HttpResponse& response,
+    Commons::TextTemplate* templ,
+    const Generics::SubStringHashAdapter& instantiate_type,
+    const std::string& click_url0,
+    const std::string& pub_preclick_url,
+    const std::string& resource_url_suffix,
+    const std::string& random_str)
+    const /*throw(eh::Exception)*/
+  {
+    typedef std::map<String::SubString, std::string> ArgMap;
+    ArgMap args_cont;
+
+    TemplateRuleMap::const_iterator rule_it = template_rules_.find(instantiate_type);
+
+    if(rule_it != template_rules_.end())
+    {
+      for(TokenValueMap::const_iterator it = rule_it->second.tokens.begin();
+          it != rule_it->second.tokens.end(); ++it)
+      {
+        args_cont[it->first] = it->second;
+      }
+
+      args_cont[Tokens::CRVBASE] = args_cont[Tokens::ADIMAGE_PATH] =
+        rule_it->second.resource_url_prefix + resource_url_suffix;
+    }
+
+    std::string mime_pub_preclick_url;
+    String::StringManip::mime_url_encode(
+      pub_preclick_url,
+      mime_pub_preclick_url);
+
+    const bool click_url0_contains_args =
+      click_url0.find('?') != std::string::npos;
+    const char* LOCAL_AMP = click_url0_contains_args ? "&" : "*amp*";
+    const char* LOCAL_EQL = click_url0_contains_args ? "=" : "*eql*";
+    const std::string f_marker =
+      std::string(LOCAL_AMP) + "m" + LOCAL_EQL + "f";
+    const std::string relocate_suffix =
+      std::string(LOCAL_AMP) + "relocate" + LOCAL_EQL;
+    const std::string pub_preclick_param = !pub_preclick_url.empty() ?
+      std::string(LOCAL_AMP) + "preclick" + LOCAL_EQL + mime_pub_preclick_url :
+      std::string();
+
+    const std::string click_url0_f = click_url0 + f_marker;
+    args_cont[Tokens::CLICK0] = click_url0;
+    args_cont[Tokens::PRECLICK0] = click_url0 + relocate_suffix;
+    args_cont[Tokens::CLICKF0] = click_url0_f;
+    args_cont[Tokens::PRECLICKF0] = click_url0_f + relocate_suffix;
+
+    const std::string click_url = click_url0 + pub_preclick_param;
+    const std::string click_url_f = click_url + f_marker;
+    args_cont[Tokens::CLICK] = click_url;
+    args_cont[Tokens::PRECLICK] = click_url + relocate_suffix;
+    args_cont[Tokens::CLICKF] = click_url_f;
+    args_cont[Tokens::PRECLICKF] = click_url_f + relocate_suffix;
+    args_cont[Tokens::RANDOM] = random_str;
+
+    String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
+    String::TextTemplate::DefaultValue default_cont(&args);
+    String::TextTemplate::ArgsEncoder encoder(&default_cont);
+    std::string response_content = templ->instantiate(encoder);
+
+    response.set_content_type_nocopy(Response::Type::TEXT_HTML);
+
+    response.get_output_stream().write(
+      response_content.data(),
+      response_content.size());
+
+    return 0;
   }
 
   bool

@@ -6,7 +6,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Time.hpp>
-#include <Generics/TaskRunner.hpp>
 
 #include "BiddingFrontend.hpp"
 #include "Stage.hpp"
@@ -35,7 +34,6 @@ namespace Bidding
   // BidRequestTask
   //
   class BidRequestTask:
-    public Generics::Task,
     public ReferenceCounting::AtomicImpl
   {
     friend class Frontend;
@@ -53,7 +51,7 @@ namespace Bidding
       /*throw(Invalid)*/;
 
     // delegate self to Bidding::Frontend
-    virtual void
+    void
     execute() noexcept;
 
     void
@@ -119,10 +117,6 @@ namespace Bidding
       assert(to_interrupt_ > 0);
       assert(response_sent_);
     }
-
-    // return true if response sent
-    bool
-    execute_() noexcept;
 
     bool
     parse_request_() noexcept;

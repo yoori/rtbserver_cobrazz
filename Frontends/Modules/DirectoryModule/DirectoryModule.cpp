@@ -233,10 +233,6 @@ namespace AdServer
         0,
         Aspect::DIRECTORY_MODULE,
         0),
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().ContentFeConfiguration()->threads(),
-        0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config))
   {}
 
@@ -312,6 +308,23 @@ namespace AdServer
     }
 
     return handle_it;
+  }
+
+  void
+  DirectoryModule::handle_request(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void
@@ -463,12 +476,20 @@ namespace AdServer
        directories_[it->path()] = new_directory;
     }
 
+    workers_ = new FrontendCommons::FrontendWorkers(
+      callback(),
+      config_->threads());
+    add_child_object(workers_);
+
     activate_object();
   }
 
   void
   DirectoryModule::shutdown() noexcept
   {
+    deactivate_object();
+    wait_object();
+
     logger()->log(String::SubString(
         "DirectoryModule::shutdown: frontend terminated"),
       Logging::Logger::INFO, Aspect::DIRECTORY_MODULE);

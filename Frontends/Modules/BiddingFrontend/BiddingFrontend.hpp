@@ -43,7 +43,7 @@
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
-#include "BiddingFrontendWorkers.hpp"
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 #include "JsonFormatter.hpp"
 //#include "UServerUtils/MetricsHTTPProvider.hpp"
 #include "RequestMetricsProvider.hpp"
@@ -135,7 +135,6 @@ namespace AdServer::Bidding
 
     class UpdateConfigTask;
     class FlushStateTask;
-    class InterruptPassbackTask;
 
     struct ExtConfig: public ReferenceCounting::AtomicImpl
     {
@@ -187,54 +186,9 @@ namespace AdServer::Bidding
     parse_configs_() /*throw(Exception)*/;
 
     void
-    resolve_user_id_(
-      AdServer::Commons::UserId& match_user_id,
-      AdServer::Bidding::CampaignManager::CommonAdRequestInfo& common_info,
-      RequestInfo& request_info,
-      DebugSink::UserResolvingDebugInfo* user_resolving_debug_info)
-      noexcept;
-
-    void
     resolve_user_id_async_(
       BidRequestTask_var request_task,
       std::function<void(DebugSink::UserResolvingDebugInfo)> callback)
-      noexcept;
-
-    adserver::user_info_svcs::user_bind::GetUserIdResponse
-    get_user_id_(
-      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request);
-
-    adserver::user_info_svcs::user_bind::AddUserIdResponse
-    add_user_id_(
-      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request);
-
-    void
-    trigger_match_(
-      adserver::channel_svcs::channel_server::MatchResponse& trigger_matched_channels,
-      bool& trigger_matched_channels_present,
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const RequestInfo& request_info,
-      const AdServer::Commons::UserId& user_id,
-      std::string& hostname,
-      const char* keywords = 0)
-      noexcept;
-
-    void
-    history_match_(
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out history_match_result,
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const RequestInfo& request_info,
-      const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
-      const AdServer::Commons::UserId& user_id,
-      const Generics::Time& time,
-      std::string& hostname)
-      noexcept;
-
-    void
-    get_ccg_keywords_(
-      AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var& ccg_keywords,
-      const RequestInfo& request_info,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
       noexcept;
 
     void
@@ -293,30 +247,6 @@ namespace AdServer::Bidding
       std::function<void()> callback)
       noexcept;
 
-    bool
-    process_bid_request_(
-      const char* fn,
-      AdServer::Bidding::CampaignManager::RequestCreativeResult&
-        campaign_match_result,
-      AdServer::Commons::UserId& user_id,
-      BidRequestTask* request_task,
-      RequestInfo& request_info,
-      const std::string& keywords)
-      noexcept;
-
-    bool
-    process_bid_request_after_user_resolved_(
-      const char* fn,
-      AdServer::Bidding::CampaignManager::RequestCreativeResult&
-        campaign_match_result,
-      AdServer::Commons::UserId& user_id,
-      BidRequestTask* request_task,
-      RequestInfo& request_info,
-      const std::string& keywords,
-      const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
-      bool interrupted)
-      noexcept;
-
     void
     process_bid_request_async_(
       BidRequestTask_var request_task)
@@ -339,8 +269,7 @@ namespace AdServer::Bidding
       const AdServer::Commons::UserId& user_id,
       bool passback,
       std::string& hostname,
-      bool interrupted,
-      bool call_campaign_manager = true)
+      bool interrupted)
       noexcept;
 
     bool
@@ -464,7 +393,7 @@ namespace AdServer::Bidding
   protected:
     // ADSC-10554
     // Interrupted requests queue
-    Generics::TaskExecutor_var passback_task_runner_;
+    FrontendCommons::FrontendWorkers_var passback_workers_;
 
     // configuration
     CommonConfigPtr common_config_;
@@ -491,7 +420,7 @@ namespace AdServer::Bidding
       channel_client_;
 
     Generics::Planner_var planner_;
-    BiddingFrontendWorkers_var bid_workers_;
+    FrontendCommons::FrontendWorkers_var bid_workers_;
     Generics::TaskRunner_var control_task_runner_;
     StatHolder_var stats_;
 

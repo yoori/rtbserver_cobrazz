@@ -211,14 +211,14 @@ namespace AdServer::ImprTrack
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
             FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
-        workers_ = new ImprTrackFrontendWorkers(
+        workers_ = new FrontendCommons::FrontendWorkers(
           callback(),
           config_->threads());
         add_child_object(workers_);
 
         if(config_->match_threads() > 0)
         {
-          match_workers_ = new ImprTrackFrontendWorkers(
+          match_workers_ = new FrontendCommons::FrontendWorkers(
             callback(),
             config_->match_threads());
           add_child_object(match_workers_);

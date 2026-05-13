@@ -67,10 +67,6 @@ namespace PassbackPixel
         0,
         Aspect::PASS_PIXEL_FRONTEND,
         0),
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().PassPixelFeConfiguration()->threads(),
-        0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module))
   {}
@@ -134,6 +130,23 @@ namespace PassbackPixel
     }
 
     return result;
+  }
+
+  void
+  Frontend::handle_request(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void
@@ -280,6 +293,11 @@ namespace PassbackPixel
       {
         parse_config_();
 
+        workers_ = new FrontendCommons::FrontendWorkers(
+          callback(),
+          config_->threads());
+        add_child_object(workers_);
+
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
@@ -310,6 +328,8 @@ namespace PassbackPixel
   void
   Frontend::shutdown() noexcept
   {
+    deactivate_object();
+    wait_object();
     campaign_manager_.reset();
 
     logger()->log(String::SubString(

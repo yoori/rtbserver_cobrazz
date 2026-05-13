@@ -15,8 +15,6 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <CORBA/CORBACommons/CorbaAdapters.hpp>
-
 #include <Commons/CorbaConfig.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
@@ -152,7 +150,6 @@ namespace AdServer
     CookieManagerPtr cookie_manager_;
     OptOutFrontendStat_var stats_;
 
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;

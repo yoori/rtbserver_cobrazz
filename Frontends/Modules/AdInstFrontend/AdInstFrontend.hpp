@@ -14,7 +14,6 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Statistics.hpp>
 #include <Generics/Scheduler.hpp>
-#include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
 

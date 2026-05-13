@@ -128,47 +128,6 @@ namespace AdServer::Action
     Commons::UserId utm_cookie_resolved_user_id;
   };
 
-  class Frontend::MatchActionChannelsTask : public Generics::Task,
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    MatchActionChannelsTask(
-      Frontend* action_frontend,
-      const Generics::Time& now,
-      const AdServer::Commons::UserId& user_id,
-      unsigned long conv_id,
-      const String::SubString& referer)
-      noexcept
-      : user_id_(user_id),
-        now_(now),
-        conv_id_(conv_id),
-        referer_(referer.str()),
-        action_frontend_(action_frontend)
-    {}
-
-    virtual
-    void
-    execute() noexcept
-    {
-      action_frontend_->trigger_match_(
-        conv_id_,
-        now_,
-        user_id_,
-        referer_);
-    }
-
-  protected:
-    virtual
-    ~MatchActionChannelsTask() noexcept {};
-
-  private:
-    const AdServer::Commons::UserId user_id_;
-    const Generics::Time now_;
-    const unsigned long conv_id_;
-    const std::string referer_;
-    Frontend* action_frontend_;
-  };
-
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
@@ -184,7 +143,8 @@ namespace AdServer::Action
         Aspect::ACTION_FRONTEND,
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module))
+      common_module_(ReferenceCounting::add_ref(common_module)),
+      match_task_count_(0)
   {}
 
   void
@@ -353,9 +313,10 @@ namespace AdServer::Action
           add_child_object(stats_.in());
         }
 
-        task_runner_ = new Generics::TaskRunner(
-          callback(), config_->threads(), 0, config_->match_task_limit());
-        add_child_object(task_runner_.in());
+        match_workers_ = new FrontendCommons::FrontendWorkers(
+          callback(),
+          config_->threads());
+        add_child_object(match_workers_);
 
         derived_config_.use_referrer = Commons::LogReferrer::read_log_referrer_settings(
           config_->use_referrer_action_stats());
@@ -408,7 +369,6 @@ namespace AdServer::Action
   {
     try
     {
-      task_runner_->wait_for_queue_exhausting();
       deactivate_object();
       wait_object();
 
@@ -1304,18 +1264,28 @@ namespace AdServer::Action
         match_user_id != AdServer::Commons::PROBE_USER_ID &&
         processed_user_ids.find(match_user_id) == processed_user_ids.end())
       {
-        try
+        const unsigned long current_task_count =
+          match_task_count_.exchange_and_add(1) + 1;
+
+        if(config_->match_task_limit() == 0 ||
+          current_task_count <= config_->match_task_limit() + config_->threads())
         {
-          // delay match click channels
-          task_runner_->enqueue_task(new MatchActionChannelsTask(
-            this,
-            request_info.time,
-            match_user_id,
-            (request_info.action_id.present() ? *request_info.action_id : 0),
-              request_info.referer));
+          match_workers_->post(
+            [this,
+              now = request_info.time,
+              user_id = match_user_id,
+              conv_id = request_info.action_id.present() ?
+                *request_info.action_id : 0,
+              referer = request_info.referer]()
+            {
+              trigger_match_(conv_id, now, user_id, referer);
+              match_task_count_ += -1;
+            });
         }
-        catch (const Generics::TaskRunner::Overflow&)
-        {}
+        else
+        {
+          match_task_count_ += -1;
+        }
 
         processed_user_ids.insert(match_user_id);
       }

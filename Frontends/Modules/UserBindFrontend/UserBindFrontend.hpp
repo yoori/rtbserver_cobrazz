@@ -91,7 +91,6 @@ namespace AdServer
     shutdown() noexcept;
 
   protected:
-    class UserMatchTask;
     class BindProcessingState;
 
     struct BindResult;
@@ -277,7 +276,7 @@ namespace AdServer
     std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
 
-    Generics::TaskExecutor_var match_task_runner_;
+    FrontendCommons::FrontendWorkers_var match_workers_;
 
     Algs::AtomicInt match_task_count_;
   };

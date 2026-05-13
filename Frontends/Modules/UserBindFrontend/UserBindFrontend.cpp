@@ -3,7 +3,6 @@
 
 #include <utility>
 #include <Generics/Uuid.hpp>
-#include <Generics/TaskPool.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
@@ -679,72 +678,6 @@ namespace AdServer
     std::size_t resolved_ext_user_i;
   };
 
-  class UserBindFrontend::UserMatchTask:
-    public Generics::Task,
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    UserMatchTask(
-      UserBindFrontend* user_bind_frontend,
-      const Commons::UserId& result_user_id,
-      const Commons::UserId& merge_user_id,
-      bool create_user_profile,
-      const String::SubString& keywords,
-      const String::SubString& cohort,
-      const String::SubString& referer,
-      unsigned long colo_id,
-      FrontendCommons::Location* location,
-      const String::SubString& source
-      )
-      noexcept
-      : user_bind_frontend_(user_bind_frontend),
-        result_user_id_(result_user_id),
-        merge_user_id_(merge_user_id),
-        create_user_profile_(create_user_profile),
-        keywords_(keywords.str()),
-        cohort_(cohort.str()),
-        referer_(referer.str()),
-        colo_id_(colo_id),
-        location_(ReferenceCounting::add_ref(location)),
-        source_(source.str())
-    {}
-
-    virtual
-    void
-    execute() noexcept
-    {
-      user_bind_frontend_->match_task_count_ += -1;
-
-      user_bind_frontend_->user_match_(
-        result_user_id_,
-        merge_user_id_,
-        create_user_profile_,
-        keywords_,
-        cohort_,
-        referer_,
-        colo_id_,
-        location_,
-        source_);
-    }
-
-  protected:
-    virtual
-    ~UserMatchTask() noexcept
-    {}
-
-  private:
-    UserBindFrontend* user_bind_frontend_;
-    const AdServer::Commons::UserId result_user_id_;
-    const AdServer::Commons::UserId merge_user_id_;
-    const bool create_user_profile_;
-    const std::string keywords_;
-    const std::string cohort_;
-    const std::string referer_;
-    const unsigned long colo_id_;
-    const FrontendCommons::Location_var location_;
-    const std::string source_;
-  };
-
   void
   UserBindFrontend::process_request_async_(
     UserBind::RequestInfo_var request_info,
@@ -773,6 +706,7 @@ namespace AdServer
     noexcept
   {
     if(!config_->enable_profiling() ||
+      !match_workers_ ||
       result_user_id.is_null() ||
       (referer.empty() &&
         cohort.empty() &&
@@ -792,24 +726,34 @@ namespace AdServer
       return;
     }
 
-    try
-    {
-      match_task_runner_->enqueue_task(new UserMatchTask(
-        this,
+    FrontendCommons::Location_var location_holder(
+      ReferenceCounting::add_ref(
+        const_cast<FrontendCommons::Location*>(location)));
+
+    match_workers_->post(
+      [this,
         result_user_id,
         merge_user_id,
         create_user_profile,
-        keywords,
-        cohort,
-        referer,
+        keywords = keywords.str(),
+        cohort = cohort.str(),
+        referer = referer.str(),
         colo_id,
-        const_cast<FrontendCommons::Location*>(location),
-        source));
-    }
-    catch(const Generics::TaskRunner::Overflow&)
-    {
-      match_task_count_ += -1;
-    }
+        location = location_holder,
+        source = source.str()]()
+      {
+        match_task_count_ += -1;
+        user_match_(
+          result_user_id,
+          merge_user_id,
+          create_user_profile,
+          keywords,
+          cohort,
+          referer,
+          colo_id,
+          location,
+          source);
+      });
   }
 
   //
@@ -1079,11 +1023,13 @@ namespace AdServer
 
         pixel_content_type_ = config_->pixel_content_type();
 
-        match_task_runner_ = new Generics::TaskRunner(
-          callback(),
-          config_->match_threads(),
-          800*1024);
-        add_child_object(match_task_runner_);
+        if(config_->match_threads() > 0)
+        {
+          match_workers_ = new FrontendCommons::FrontendWorkers(
+            callback(),
+            config_->match_threads());
+          add_child_object(match_workers_);
+        }
 
         activate_object();
       }
