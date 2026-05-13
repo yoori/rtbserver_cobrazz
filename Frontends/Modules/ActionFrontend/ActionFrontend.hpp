@@ -155,12 +155,31 @@ namespace AdServer::Action
     write_html(FCGI::HttpResponse& response)
       /*throw(eh::Exception)*/;
 
+    struct AdvertiserRequestState;
+
+    void
+    process_advertiser_request_(
+      const std::shared_ptr<AdvertiserRequestState>& state)
+      noexcept;
+
+    void
+    resolve_utm_user_id_(
+      const std::shared_ptr<AdvertiserRequestState>& state)
+      noexcept;
+
+    void
+    finish_advertiser_request_(
+      const std::shared_ptr<AdvertiserRequestState>& state)
+      noexcept;
+
     int
-    process_advertiser_request(
+    fill_advertiser_response_(
       FCGI::HttpResponse& response,
       const FCGI::HttpRequest& request,
       const RequestInfo& request_info,
-      bool return_html)
+      bool return_html,
+      const Commons::UserId& cookie_resolved_user_id,
+      const Commons::UserId& utm_cookie_resolved_user_id)
       /*throw(Exception, eh::Exception)*/;
 
     void
@@ -184,20 +203,18 @@ namespace AdServer::Action
 
     void
     trigger_match_(
-      adserver::channel_svcs::channel_server::MatchResponse& trigger_match_result,
-      bool& trigger_match_result_present,
       unsigned long conv_id,
       const Generics::Time& now,
       const AdServer::Commons::UserId& user_id,
       const String::SubString& referer)
       noexcept;
 
-    bool
+    void
     resolve_user_id_(
-      Commons::UserId& result_user_id,
       const String::SubString& external_user_id,
       const Commons::UserId& current_user_id,
-      const Generics::Time& time)
+      const Generics::Time& time,
+      std::function<void(bool, Commons::UserId)> callback)
       noexcept;
 
     void

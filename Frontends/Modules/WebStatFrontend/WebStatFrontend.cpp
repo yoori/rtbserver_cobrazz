@@ -14,6 +14,17 @@ namespace AdServer
 {
 namespace WebStat
 {
+  struct Frontend::WebOperationState
+  {
+    FCGI::BaseHttpResponseWriter_var response_writer;
+    FCGI::HttpResponse_var response;
+    FCGI::HttpRequest::Method request_method;
+    std::string origin;
+    std::vector<std::shared_ptr<
+      adserver::campaign_svcs::campaign_manager::
+        ConsiderWebOperationRequest>> requests;
+  };
+
   namespace
   {
     struct FrontendConstrainTraits
@@ -136,21 +147,22 @@ namespace WebStat
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    const FCGI::HttpRequest& request = request_holder->request();
-
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
-    response_writer->write(http_status, response_ptr);
+    process_request_(
+      std::move(request_holder),
+      std::move(response_writer),
+      std::move(response_ptr));
   }
 
-  int
-  Frontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+  void
+  Frontend::process_request_(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer,
+    FCGI::HttpResponse_var response)
     noexcept
   {
     static const char* FUN = "WebStat::Frontend::handle_request_()";
+    const FCGI::HttpRequest& request = request_holder->request();
 
     int http_result = 0;
 
@@ -190,92 +202,54 @@ namespace WebStat
           bid_request.c_str());
       }
 
-      for(auto req_it = request_info_list.begin(); req_it != request_info_list.end(); ++req_it)
+      auto state = std::make_shared<WebOperationState>();
+      state->response_writer = response_writer;
+      state->response = response;
+      state->request_method = request.method();
+      if(!request_info_list.empty())
       {
-        const RequestInfo& request_info = *req_it;
+        state->origin = request_info_list.begin()->origin;
+      }
 
-        adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
-          web_op_info;
-        //web_op_info.check_args = true;
-        web_op_info.set_time(pack_time(request_info.time));
-        web_op_info.set_colo_id(request_info.colo_id);
-        web_op_info.set_tag_id(request_info.tag_id);
-        web_op_info.set_cc_id(request_info.cc_id);
-        web_op_info.set_ct(request_info.ct);
-        web_op_info.set_curct(request_info.curct);
-        web_op_info.set_browser(request_info.browser);
-        web_op_info.set_os(request_info.os);
-        web_op_info.set_app(request_info.application);
-        web_op_info.set_source(request_info.source);
-        web_op_info.set_operation(request_info.operation);
-        web_op_info.set_result(request_info.result);
-        web_op_info.set_user_status(request_info.user_status);
-        web_op_info.set_test_request(request_info.test_request);
-        web_op_info.set_referer(request_info.referer);
-        web_op_info.set_ip_address(request_info.peer_ip);
-        web_op_info.set_external_user_id(request_info.external_user_id);
-        web_op_info.set_user_agent(request_info.user_agent);
-        if (!request_info.request_ids.empty())
+      for(const auto& request_info : request_info_list)
+      {
+        auto web_op_info = std::make_shared<
+          adserver::campaign_svcs::campaign_manager::
+            ConsiderWebOperationRequest>();
+        web_op_info->set_time(pack_time(request_info.time));
+        web_op_info->set_colo_id(request_info.colo_id);
+        web_op_info->set_tag_id(request_info.tag_id);
+        web_op_info->set_cc_id(request_info.cc_id);
+        web_op_info->set_ct(request_info.ct);
+        web_op_info->set_curct(request_info.curct);
+        web_op_info->set_browser(request_info.browser);
+        web_op_info->set_os(request_info.os);
+        web_op_info->set_app(request_info.application);
+        web_op_info->set_source(request_info.source);
+        web_op_info->set_operation(request_info.operation);
+        web_op_info->set_result(request_info.result);
+        web_op_info->set_user_status(request_info.user_status);
+        web_op_info->set_test_request(request_info.test_request);
+        web_op_info->set_referer(request_info.referer);
+        web_op_info->set_ip_address(request_info.peer_ip);
+        web_op_info->set_external_user_id(request_info.external_user_id);
+        web_op_info->set_user_agent(request_info.user_agent);
+        for(RequestIdSet::const_iterator rit = request_info.request_ids.begin();
+          rit != request_info.request_ids.end(); ++rit)
         {
-          for(RequestIdSet::const_iterator rit = request_info.request_ids.begin();
-              rit != request_info.request_ids.end(); ++rit)
-          {
-            web_op_info.add_request_ids(
-              rit->is_null() ? std::string() : pack_request_id(*rit));
-          }
+          web_op_info->add_request_ids(
+            rit->is_null() ? std::string() : pack_request_id(*rit));
         }
-        if (!request_info.global_request_id.is_null())
+        if(!request_info.global_request_id.is_null())
         {
-          web_op_info.set_global_request_id(
+          web_op_info->set_global_request_id(
             pack_request_id(request_info.global_request_id));
         }
-
-        AdServer::Grpc::sync_call<
-          adserver::campaign_svcs::campaign_manager::ConsiderWebOperationResponse>(
-            [this, &web_op_info](auto callback)
-            {
-              campaign_manager_->consider_web_operation(
-                web_op_info,
-                std::move(callback));
-            },
-            [](const grpc::Status& status)
-            {
-              if(status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
-              {
-                throw FrontendCommons::HTTPExceptions::InvalidParamException(
-                  "incorrect argument");
-              }
-
-              AdServer::Grpc::throw_grpc_error(status);
-            });
+        state->requests.emplace_back(std::move(web_op_info));
       }
 
-      if(!request_info_list.empty() && !request_info_list.begin()->origin.empty())
-      {
-        response.add_header_nocopy_name(
-          String::SubString("Access-Control-Allow-Origin"),
-          request_info_list.begin()->origin);
-
-        response.add_header_nocopy(
-          String::SubString("Access-Control-Allow-Credentials"),
-          String::SubString("true"));
-      }
-
-      // additional response headers
-      if(common_config_->ResponseHeaders().present())
-      {
-        FrontendCommons::add_headers(
-          *(common_config_->ResponseHeaders()),
-          response);
-      }
-
-      if(request.method() == FCGI::HttpRequest::RM_GET)
-      {
-        response.set_content_type_nocopy(String::SubString("image/gif"));
-
-        FileCache::BufferHolder_var buffer = pixel_->get();
-        response.get_output_stream().write((*buffer)->data(), (*buffer)->size());
-      }
+      consider_web_operation_(state, 0);
+      return;
     }
     catch (const ForbiddenException& ex)
     {
@@ -296,7 +270,105 @@ namespace WebStat
         "ADS-IMPL-139") << FUN << ": eh::Exception has been caught: " << e.what();
     }
 
-    return http_result;
+    response_writer->write(http_result, response);
+  }
+
+  void
+  Frontend::consider_web_operation_(
+    const std::shared_ptr<WebOperationState>& state,
+    std::size_t index)
+    noexcept
+  {
+    if(index >= state->requests.size())
+    {
+      finish_request_(state, 0);
+      return;
+    }
+
+    const auto& request = state->requests[index];
+    campaign_manager_->consider_web_operation(
+      *request,
+      [this, state, request, index](
+        const grpc::Status& status,
+        const adserver::campaign_svcs::campaign_manager::
+          ConsiderWebOperationResponse&)
+      {
+        if(!status.ok())
+        {
+          if(status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
+          {
+            finish_request_(state, 400);
+            return;
+          }
+
+          logger()->sstream(
+            Logging::Logger::EMERGENCY,
+            Aspect::WEBSTAT_FRONTEND,
+            "ADS-IMPL-139") <<
+            "CampaignManager::consider_web_operation(): "
+            "gRPC call failed: code=" <<
+            static_cast<int>(status.error_code()) <<
+            ", message=" << status.error_message();
+          finish_request_(state, 500);
+          return;
+        }
+
+        consider_web_operation_(state, index + 1);
+      });
+  }
+
+  void
+  Frontend::finish_request_(
+    const std::shared_ptr<WebOperationState>& state,
+    int http_result)
+    noexcept
+  {
+    try
+    {
+      if(http_result == 0)
+      {
+        if(!state->origin.empty())
+        {
+          state->response->add_header_nocopy_name(
+            String::SubString("Access-Control-Allow-Origin"),
+            state->origin);
+
+          state->response->add_header_nocopy(
+            String::SubString("Access-Control-Allow-Credentials"),
+            String::SubString("true"));
+        }
+
+        if(common_config_->ResponseHeaders().present())
+        {
+          FrontendCommons::add_headers(
+            *(common_config_->ResponseHeaders()),
+            *state->response);
+        }
+
+        if(state->request_method == FCGI::HttpRequest::RM_GET)
+        {
+          state->response->set_content_type_nocopy(
+            String::SubString("image/gif"));
+
+          FileCache::BufferHolder_var buffer = pixel_->get();
+          state->response->get_output_stream().write(
+            (*buffer)->data(),
+            (*buffer)->size());
+        }
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      http_result = 500;
+      logger()->sstream(
+        Logging::Logger::EMERGENCY,
+        Aspect::WEBSTAT_FRONTEND,
+        "ADS-IMPL-139") <<
+        "WebStat::Frontend::finish_request_(): "
+        "eh::Exception has been caught: " << e.what();
+    }
+
+    state->response_writer->write(http_result, state->response);
   }
 
   void
@@ -313,9 +385,15 @@ namespace WebStat
         pixel_ = FileCachePtr(
           new FileCache(config_->pixel_path().c_str()));
 
+        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+          common_config_->grpc_executor_threads());
+        add_child_object(grpc_executor_);
+
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
         campaign_manager_ = campaign_manager;
         add_child_object(campaign_manager);
 

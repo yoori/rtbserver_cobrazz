@@ -236,19 +236,35 @@ namespace PassbackPixel
         Aspect::PASS_PIXEL_FRONTEND, "ADS-IMPL-194");
     }
 
-    adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackRequest
-      info;
-    info.set_time(pack_time(passback_track_info.time));
-    info.set_country(passback_track_info.country);
-    info.set_colo_id(passback_track_info.colo_id);
-    info.set_tag_id(passback_track_info.tag_id);
-    info.set_user_status(passback_track_info.user_status);
-    AdServer::Grpc::sync_call<
-      adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackResponse>(
-        [this, &info](auto callback)
+    auto info = std::make_shared<
+      adserver::campaign_svcs::campaign_manager::
+        ConsiderPassbackTrackRequest>();
+    info->set_time(pack_time(passback_track_info.time));
+    info->set_country(passback_track_info.country);
+    info->set_colo_id(passback_track_info.colo_id);
+    info->set_tag_id(passback_track_info.tag_id);
+    info->set_user_status(passback_track_info.user_status);
+    campaign_manager_->consider_passback_track(
+      *info,
+      [this, info](
+        const grpc::Status& status,
+        const adserver::campaign_svcs::campaign_manager::
+          ConsiderPassbackTrackResponse&)
+      {
+        if(!status.ok())
         {
-          campaign_manager_->consider_passback_track(info, std::move(callback));
-        });
+          Stream::Error ostr;
+          ostr << FUN << ": CampaignManager::consider_passback_track(): "
+            "gRPC call failed: code=" <<
+            static_cast<int>(status.error_code()) <<
+            ", message=" << status.error_message();
+          logger()->log(
+            ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::PASS_PIXEL_FRONTEND,
+            "ADS-IMPL-194");
+        }
+      });
 
     return http_status;
   }
@@ -264,9 +280,15 @@ namespace PassbackPixel
       {
         parse_config_();
 
+        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+          common_config_->grpc_executor_threads());
+        add_child_object(grpc_executor_);
+
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
         campaign_manager_ = campaign_manager;
         add_child_object(campaign_manager);
 

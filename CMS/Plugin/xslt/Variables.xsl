@@ -185,10 +185,7 @@
 <xsl:variable name="fcgi-rtbserver1-log-path" select="'/log/FCGIRtbServer1/FCGIRtbServer1'"/>
 <xsl:variable name="fcgi-rtbserver2-log-path" select="'/log/FCGIRtbServer2/FCGIRtbServer2'"/>
 
-<xsl:variable name="fcgi-userbindserver1-log-path" select="'/log/FCGIUserBindServer1/FCGIUserBindServer1'"/>
-<xsl:variable name="fcgi-userbindserver2-log-path" select="'/log/FCGIUserBindServer2/FCGIUserBindServer2'"/>
-<xsl:variable name="fcgi-userbindintserver-log-path" select="'/log/FCGIUserBindIntServer/FCGIUserBindIntServer'"/>
-<xsl:variable name="fcgi-userbindaddserver-log-path" select="'/log/FCGIUserBindAddServer/FCGIUserBindAddServer'"/>
+<xsl:variable name="fcgi-userbindserver-log-path" select="'/log/FCGIUserBindServer/FCGIUserBindServer'"/>
 
 <xsl:variable name="request-module-log-level" select="$default-log-level"/>
 <xsl:variable name="adinst-module-log-level" select="$default-log-level"/>
@@ -417,15 +414,9 @@
 <xsl:variable name="def-fcgi-rtbserver2-port" select="$def-range-start + 96"/>
 <xsl:variable name="def-fcgi-rtbserver2-mon-port" select="$def-range-start + 196"/>
 
-<xsl:variable name="def-fcgi-userbindserver1-port" select="$def-range-start + 78"/>
-<xsl:variable name="def-fcgi-userbindserver1-mon-port" select="$def-range-start + 178"/>
-<xsl:variable name="def-fcgi-userbindserver2-port" select="$def-range-start + 94"/>
-<xsl:variable name="def-fcgi-userbindserver2-mon-port" select="$def-range-start + 194"/>
+<xsl:variable name="def-fcgi-userbindserver-port" select="$def-range-start + 78"/>
+<xsl:variable name="def-fcgi-userbindserver-mon-port" select="$def-range-start + 178"/>
 
-<xsl:variable name="def-fcgi-userbindintserver-port" select="$def-range-start + 79"/>
-<xsl:variable name="def-fcgi-userbindintserver-mon-port" select="$def-range-start + 179"/>
-<xsl:variable name="def-fcgi-userbindaddserver-port" select="$def-range-start + 93"/>
-<xsl:variable name="def-fcgi-userbindaddserver-mon-port" select="$def-range-start + 193"/>
 
 <xsl:variable name="def-fcgi-trackserver1-port" select="$def-range-start + 95"/>
 <xsl:variable name="def-fcgi-trackserver1-mon-port" select="$def-range-start + 195"/>

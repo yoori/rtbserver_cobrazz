@@ -11,7 +11,7 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -113,6 +113,7 @@ namespace PassbackPixel
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     FileCachePtr track_pixel_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
   };

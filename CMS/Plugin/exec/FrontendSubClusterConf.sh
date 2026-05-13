@@ -406,24 +406,10 @@ then
 
   # UserBind FCGI server
   $EXEC/ServiceConf.sh \
-    --macro "{FCGIUSERBINDSERVER_INDEX}" 1 \
     --services-xpath "$HTTP_FRONTEND_XPATH" \
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Frontend/FCGIUserBindServer.xsl \
-    --out-file FCGIUserBindServer1Config.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
-
-  let "EXIT_CODE|=$?"
-
-  # UserBind FCGI server
-  $EXEC/ServiceConf.sh \
-    --macro "{FCGIUSERBINDSERVER_INDEX}" 2 \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/FCGIUserBindServer.xsl \
-    --out-file FCGIUserBindServer2Config.xml \
+    --out-file FCGIUserBindServerConfig.xml \
     --out-dir-suffix "$OUT_DIR_SUFFIX" \
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
@@ -431,67 +417,10 @@ then
   let "EXIT_CODE|=$?"
 
   $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_userbindserver1" \
+    --service-name "fcgi_userbindserver" \
     --plugin-root "$PLUGIN_ROOT" \
     --app-xml $APP_XML \
     --relative-port-xpath "configuration/cfg:frontend/cfg:userBindFCGI1NetworkParams/@port" \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/$DACS_FE_NAME
-
-  let "EXIT_CODE|=$?"
-
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_userbindserver2" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --relative-port-xpath "configuration/cfg:frontend/cfg:userBindFCGI2NetworkParams/@port" \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/$DACS_FE_NAME
-
-  let "EXIT_CODE|=$?"
-
-  # UserBindInt FCGI server
-  $EXEC/ServiceConf.sh \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/FCGIUserBindIntServer.xsl \
-    --out-file FCGIUserBindIntServerConfig.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
-
-  let "EXIT_CODE|=$?"
-
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_userbindintserver" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --relative-port-xpath "configuration/cfg:frontend/cfg:userBindIntFCGINetworkParams/@port" \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/$DACS_FE_NAME
-
-  let "EXIT_CODE|=$?"
-
-  # UserBindAdd FCGI server
-  $EXEC/ServiceConf.sh \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/FCGIUserBindAddServer.xsl \
-    --out-file FCGIUserBindAddServerConfig.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
-
-  let "EXIT_CODE|=$?"
-
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_userbindaddserver" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --relative-port-xpath "configuration/cfg:frontend/cfg:userBindAddFCGINetworkParams/@port" \
     --services-xpath "$HTTP_FRONTEND_XPATH" \
     --out-dir $OUT_DIR \
     --out-file CurrentEnv/$DACS_FE_NAME

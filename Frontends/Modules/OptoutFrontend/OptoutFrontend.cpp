@@ -334,26 +334,40 @@ namespace
             (request_info.old_oo_type == OO_OUT ? 4 : 5));
         }
 
-        pb::VerifyOptOperationRequest verify_opt_operation_request;
-        verify_opt_operation_request.set_time(request_info.debug_time.tv_sec);
-        verify_opt_operation_request.set_colo_id(request_info.colo_id);
-        verify_opt_operation_request.set_referer(verify_referer);
-        verify_opt_operation_request.set_operation(ver_operation);
-        verify_opt_operation_request.set_status(status);
-        verify_opt_operation_request.set_user_status(request_info.user_status);
-        verify_opt_operation_request.set_log_as_test(request_info.log_as_test);
-        verify_opt_operation_request.set_browser(request_info.browser);
-        verify_opt_operation_request.set_os(request_info.os);
-        verify_opt_operation_request.set_ct(request_info.ct);
-        verify_opt_operation_request.set_curct(request_info.curct);
-        verify_opt_operation_request.set_user_id(pack_user_id(new_user_id));
+        auto verify_opt_operation_request =
+          std::make_shared<pb::VerifyOptOperationRequest>();
+        verify_opt_operation_request->set_time(request_info.debug_time.tv_sec);
+        verify_opt_operation_request->set_colo_id(request_info.colo_id);
+        verify_opt_operation_request->set_referer(verify_referer);
+        verify_opt_operation_request->set_operation(ver_operation);
+        verify_opt_operation_request->set_status(status);
+        verify_opt_operation_request->set_user_status(request_info.user_status);
+        verify_opt_operation_request->set_log_as_test(request_info.log_as_test);
+        verify_opt_operation_request->set_browser(request_info.browser);
+        verify_opt_operation_request->set_os(request_info.os);
+        verify_opt_operation_request->set_ct(request_info.ct);
+        verify_opt_operation_request->set_curct(request_info.curct);
+        verify_opt_operation_request->set_user_id(pack_user_id(new_user_id));
 
-        AdServer::Grpc::sync_call<pb::VerifyOptOperationResponse>(
-          [this, &verify_opt_operation_request](auto callback)
+        campaign_manager_->verify_opt_operation(
+          *verify_opt_operation_request,
+          [this, verify_opt_operation_request](
+            const grpc::Status& status,
+            const pb::VerifyOptOperationResponse&)
           {
-            campaign_manager_->verify_opt_operation(
-              verify_opt_operation_request,
-              std::move(callback));
+            if(!status.ok())
+            {
+              Stream::Error ostr;
+              ostr << "CampaignManager::verify_opt_operation(): "
+                "gRPC call failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
+              logger()->log(
+                ostr.str(),
+                Logging::Logger::EMERGENCY,
+                Aspect::OPTOUT_FRONTEND,
+                "ADS-ICON-4");
+            }
           });
 
         if(stats_)
@@ -448,26 +462,40 @@ namespace
             verify_referer << LOG_DELIMITER <<
             "0"/*failure*/;
 
-          pb::VerifyOptOperationRequest verify_opt_operation_request;
-          verify_opt_operation_request.set_time(request_info.debug_time.tv_sec);
-          verify_opt_operation_request.set_colo_id(request_info.colo_id);
-          verify_opt_operation_request.set_referer(verify_referer);
-          verify_opt_operation_request.set_operation(ver_operation);
-          verify_opt_operation_request.set_status(0);
-          verify_opt_operation_request.set_user_status(request_info.user_status);
-          verify_opt_operation_request.set_log_as_test(
+          auto verify_opt_operation_request =
+            std::make_shared<pb::VerifyOptOperationRequest>();
+          verify_opt_operation_request->set_time(request_info.debug_time.tv_sec);
+          verify_opt_operation_request->set_colo_id(request_info.colo_id);
+          verify_opt_operation_request->set_referer(verify_referer);
+          verify_opt_operation_request->set_operation(ver_operation);
+          verify_opt_operation_request->set_status(0);
+          verify_opt_operation_request->set_user_status(request_info.user_status);
+          verify_opt_operation_request->set_log_as_test(
             request_info.log_as_test);
-          verify_opt_operation_request.set_browser(request_info.browser);
-          verify_opt_operation_request.set_os(request_info.os);
-          verify_opt_operation_request.set_ct(request_info.ct);
-          verify_opt_operation_request.set_curct(request_info.curct);
+          verify_opt_operation_request->set_browser(request_info.browser);
+          verify_opt_operation_request->set_os(request_info.os);
+          verify_opt_operation_request->set_ct(request_info.ct);
+          verify_opt_operation_request->set_curct(request_info.curct);
 
-          AdServer::Grpc::sync_call<pb::VerifyOptOperationResponse>(
-            [this, &verify_opt_operation_request](auto callback)
+          campaign_manager_->verify_opt_operation(
+            *verify_opt_operation_request,
+            [this, verify_opt_operation_request](
+              const grpc::Status& status,
+              const pb::VerifyOptOperationResponse&)
             {
-              campaign_manager_->verify_opt_operation(
-                verify_opt_operation_request,
-                std::move(callback));
+              if(!status.ok())
+              {
+                Stream::Error ostr;
+                ostr << "CampaignManager::verify_opt_operation(): "
+                  "gRPC call failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                logger()->log(
+                  ostr.str(),
+                  Logging::Logger::EMERGENCY,
+                  Aspect::OPTOUT_FRONTEND,
+                  "ADS-ICON-4");
+              }
             });
 
           logger()->log(
@@ -520,9 +548,15 @@ namespace
         parse_config_();
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
+        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+          common_config_->grpc_executor_threads());
+        add_child_object(grpc_executor_);
+
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
         campaign_manager_ = campaign_manager;
         add_child_object(campaign_manager);
 

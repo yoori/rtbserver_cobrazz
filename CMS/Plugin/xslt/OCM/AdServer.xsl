@@ -544,29 +544,8 @@
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"
             select="./service[@descriptor = $http-frontend-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIUserBindServer1')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIUserBindServer1'"/>
-        </xsl:call-template>
-
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $http-frontend-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIUserBindServer2')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIUserBindServer2'"/>
-        </xsl:call-template>
-
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $http-frontend-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIUserBindIntServer')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIUserBindIntServer'"/>
-        </xsl:call-template>
-
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $http-frontend-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIUserBindAddServer')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIUserBindAddServer'"/>
+          <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIUserBindServer')"/>
+          <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIUserBindServer'"/>
         </xsl:call-template>
       </xsl:if>
 
@@ -1944,10 +1923,7 @@
         name="fe-cluster-path"
         select="$adcluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]"/>
       <xsl:variable name="fcgi-dep"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
-          AdServer::Frontends::FCGIUserBindServer1
-          AdServer::Frontends::FCGIUserBindServer2
-          AdServer::Frontends::FCGIUserBindIntServer
-          AdServer::Frontends::FCGIUserBindAddServer '"/>
+          AdServer::Frontends::FCGIUserBindServer '"/>
           <xsl:for-each
           select="exsl:node-set($fcgi_rtb_server_indexes)/i">AdServer::Frontends::FCGIRtbServer<xsl:value-of select="concat(., ' ')"/>
         </xsl:for-each>
@@ -2130,10 +2106,7 @@
           </xsl:if>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
-              AdServer::Frontends::FCGIUserBindServer1
-              AdServer::Frontends::FCGIUserBindServer2
-              AdServer::Frontends::FCGIUserBindIntServer
-              AdServer::Frontends::FCGIUserBindAddServer '"/>
+              AdServer::Frontends::FCGIUserBindServer '"/>
               <xsl:for-each
                 select="exsl:node-set($fcgi_rtb_server_indexes)/i">AdServer::Frontends::FCGIRtbServer<xsl:value-of select="concat(., ' ')"/>
               </xsl:for-each>

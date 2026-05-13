@@ -15,7 +15,7 @@
 //#include <Apache/Adapters.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
-#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -79,10 +79,25 @@ namespace WebStat
 
     void parse_config_() /*throw(Exception)*/;
 
-    int
-    handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    struct WebOperationState;
+
+    void
+    process_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer,
+      FCGI::HttpResponse_var response)
+      noexcept;
+
+    void
+    consider_web_operation_(
+      const std::shared_ptr<WebOperationState>& state,
+      std::size_t index)
+      noexcept;
+
+    void
+    finish_request_(
+      const std::shared_ptr<WebOperationState>& state,
+      int http_result)
       noexcept;
 
   private:
@@ -95,6 +110,7 @@ namespace WebStat
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
 
     FileCachePtr pixel_;
   };

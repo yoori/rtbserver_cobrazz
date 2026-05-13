@@ -12,7 +12,7 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>

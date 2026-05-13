@@ -256,30 +256,12 @@ http {
       <xsl:variable name="userbindbackend_socket_arr">
         <i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i>
       </xsl:variable>
-      <xsl:for-each select="exsl:node-set($adbackend_socket_arr)/i">
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindserver1_',
-         ., '.sock')"/> max_fails=0;
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindserver2_',
+      <xsl:for-each select="exsl:node-set($userbindbackend_socket_arr)/i">
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindserver_',
          ., '.sock')"/> max_fails=0;
       </xsl:for-each>
-      keepalive <xsl:value-of select="$frontend-config/cfg:userBindFCGINetworkParams/@keep_connections"/><xsl:if
-        test="count($frontend-config/cfg:userBindFCGINetworkParams/@keep_connections) = 0">800</xsl:if>;
-      keepalive_requests 100000;
-      keepalive_timeout 300s;
-    }
-
-    upstream fastcgi_userbindintbackend {
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindintserver.sock')"/> max_fails=0;
-      keepalive <xsl:value-of select="$frontend-config/cfg:userBindIntFCGINetworkParams/@keep_connections"/><xsl:if
-        test="count($frontend-config/cfg:userBindIntFCGINetworkParams/@keep_connections) = 0">800</xsl:if>;
-      keepalive_requests 100000;
-      keepalive_timeout 300s;
-    }
-
-    upstream fastcgi_userbindaddbackend {
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindaddserver.sock')"/> max_fails=0;
-      keepalive <xsl:value-of select="$frontend-config/cfg:userBindAddFCGINetworkParams/@keep_connections"/><xsl:if
-        test="count($frontend-config/cfg:userBindAddFCGINetworkParams/@keep_connections) = 0">800</xsl:if>;
+      keepalive <xsl:value-of select="$frontend-config/cfg:userBindFCGI1NetworkParams/@keep_connections"/><xsl:if
+        test="count($frontend-config/cfg:userBindFCGI1NetworkParams/@keep_connections) = 0">800</xsl:if>;
       keepalive_requests 100000;
       keepalive_timeout 300s;
     }
@@ -428,7 +410,7 @@ http {
       }
 
       location @rootbind {
-        fastcgi_pass fastcgi_userbindaddbackend;
+        fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=
@@ -481,7 +463,7 @@ http {
       location ~ ^/(userbindint|userbindint[.]gif|userbindint[.]png)$ {
        #  return 301 https://$host$request_uri;
 
-        fastcgi_pass fastcgi_userbindintbackend;
+        fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=
@@ -493,13 +475,13 @@ http {
       location ~ ^/(userbindadd|userbindadd[.]gif|userbindadd[.]png)$ {
       #  return 301 https://$host$request_uri;
 
-        fastcgi_pass fastcgi_userbindaddbackend;
+        fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=
           'true' or @proxy_protocol = '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
           >$remote_addr;</xsl:otherwise></xsl:choose>
-        #include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
+        include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }
 
       # Ad
@@ -626,7 +608,7 @@ http {
       }
 
       location @rootbind {
-        fastcgi_pass fastcgi_userbindaddbackend;
+        fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=
@@ -686,7 +668,7 @@ http {
       }
 
       location ~ ^/(userbindint|userbindint[.]gif|userbindint[.]png)$ {
-        fastcgi_pass fastcgi_userbindintbackend;
+        fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=
@@ -696,7 +678,7 @@ http {
       }
 
       location ~ ^/(userbindadd|userbindadd[.]gif|userbindadd[.]png)$ {
-        fastcgi_pass fastcgi_userbindaddbackend;
+        fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=

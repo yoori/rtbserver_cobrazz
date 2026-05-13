@@ -124,9 +124,15 @@ namespace PubPixel
         common_config_->GeoIP().present() ?
         common_config_->GeoIP()->path().c_str() : 0));
 
+      grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+        common_config_->grpc_executor_threads());
+      add_child_object(grpc_executor_);
+
       auto campaign_manager = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-          FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+          FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+          AdServer::Grpc::BatchingOptions(),
+          grpc_executor_);
       campaign_manager_ = campaign_manager;
       add_child_object(campaign_manager);
 
@@ -167,21 +173,22 @@ namespace PubPixel
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    const FCGI::HttpRequest& request = request_holder->request();
-
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
-    response_writer->write(http_status, response_ptr);
+    process_request_(
+      std::move(request_holder),
+      std::move(response_writer),
+      std::move(response_ptr));
   }
 
-  int
-  Frontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+  void
+  Frontend::process_request_(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer,
+    FCGI::HttpResponse_var response)
     noexcept
   {
     static const char* FUN = "Frontend::handle_request_()";
+    const FCGI::HttpRequest& request = request_holder->request();
 
     log(String::SubString("Frontend::handle_request: entered"),
       TraceLevel::MIDDLE,
@@ -196,7 +203,8 @@ namespace PubPixel
       if(!FrontendCommons::find_uri(
            config_->UriList().Uri(), request.uri(), found_uri))
       {
-        return 403; // HTTP_FORBIDDEN
+        response_writer->write(403, response);
+        return;
       }
 
       RequestInfo request_info;
@@ -209,61 +217,78 @@ namespace PubPixel
       }
       else
       {
-        adserver::campaign_svcs::campaign_manager::GetPubPixelsRequest
-          pub_pixels_request;
-        pub_pixels_request.set_country(
+        auto pub_pixels_request = std::make_shared<
+          adserver::campaign_svcs::campaign_manager::GetPubPixelsRequest>();
+        pub_pixels_request->set_country(
           request_info.country.present() ? *request_info.country : "");
-        pub_pixels_request.set_user_status(request_info.user_status);
+        pub_pixels_request->set_user_status(request_info.user_status);
         for(const auto publisher_account_id :
           request_info.publisher_account_ids)
         {
-          pub_pixels_request.add_publisher_account_ids(publisher_account_id);
+          pub_pixels_request->add_publisher_account_ids(publisher_account_id);
         }
 
-        const auto pub_pixels = AdServer::Grpc::sync_call<
-          adserver::campaign_svcs::campaign_manager::GetPubPixelsResponse>(
-            [this, &pub_pixels_request](auto callback)
+        campaign_manager_->get_pub_pixels(
+          *pub_pixels_request,
+          [
+            this,
+            response_writer,
+            response,
+            pub_pixels_request
+          ](
+            const grpc::Status& status,
+            const adserver::campaign_svcs::campaign_manager::
+              GetPubPixelsResponse& pub_pixels)
+          {
+            int http_status = 0;
+            if(!status.ok())
             {
-              campaign_manager_->get_pub_pixels(
-                pub_pixels_request,
-                std::move(callback));
-            },
-            [](const grpc::Status& status)
-            {
-              Stream::Error ostr;
-              ostr << "CampaignManager get_pub_pixels failed: code=" <<
+              http_status = 500;
+              Stream::Error error;
+              error << "CampaignManager get_pub_pixels failed: code=" <<
                 static_cast<int>(status.error_code()) <<
                 ", message=" << status.error_message();
-              throw Exception(ostr);
-            });
+              log(
+                error.str(),
+                Logging::Logger::EMERGENCY,
+                Aspect::PUBPIXEL_FRONTEND);
+            }
+            else
+            {
+              response->set_content_type_nocopy(
+                FrontendCommons::ContentType::TEXT_HTML);
+              if(common_config_->ResponseHeaders().present())
+              {
+                FrontendCommons::add_headers(
+                  *(common_config_->ResponseHeaders()),
+                  *response);
+              }
 
-        response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
-        if(common_config_->ResponseHeaders().present())
-        {
-          FrontendCommons::add_headers(
-            *(common_config_->ResponseHeaders()),
-            response);
-        }
+              if(pub_pixels.pixels_size())
+              {
+                static const char HEAD[] =
+                  "<!DOCTYPE html><html><head><title></title></head><body>";
+                response->get_output_stream().write(HEAD, sizeof(HEAD) - 1);
 
-        if (pub_pixels.pixels_size())
-        {
-          static const char HEAD[] = "<!DOCTYPE html><html><head><title></title></head><body>";
-          response.get_output_stream().write(HEAD, sizeof(HEAD) - 1);
+                for(const auto& pixel : pub_pixels.pixels())
+                {
+                  response->get_output_stream().write(
+                    pixel.data(),
+                    pixel.size());
+                }
 
-          for(const auto& pixel : pub_pixels.pixels())
-          {
-            response.get_output_stream().write(
-              pixel.data(),
-              pixel.size());
-          }
+                static const char TAIL[] = "</body></html>";
+                response->get_output_stream().write(TAIL, sizeof(TAIL) - 1);
+              }
+              else
+              {
+                http_status = 204; // HTTP_NO_CONTENT
+              }
+            }
 
-          static const char TAIL[] = "</body></html>";
-          response.get_output_stream().write(TAIL, sizeof(TAIL) - 1);
-        }
-        else
-        {
-          http_status = 204; // HTTP_NO_CONTENT
-        }
+            response_writer->write(http_status, response);
+          });
+        return;
       }
     }
     catch (const ForbiddenException& ex)
@@ -289,7 +314,7 @@ namespace PubPixel
         Aspect::PUBPIXEL_FRONTEND);
     }
 
-    return http_status;
+    response_writer->write(http_status, response);
   }
 
   bool

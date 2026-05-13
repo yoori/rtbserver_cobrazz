@@ -44,31 +44,31 @@
     <xsl:for-each select="exsl:node-set($socket_arr)/i">
       <cfg:BindSocket>
         <xsl:attribute name="backlog">
-          <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@backlog"/>
-          <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@backlog) = 0">1000</xsl:if>
+          <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@backlog"/>
+          <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@backlog) = 0">1000</xsl:if>
         </xsl:attribute>
         <xsl:attribute name="accept_threads">
-          <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@accept_threads"/>
-          <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@accept_threads) = 0">10</xsl:if>
+          <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@accept_threads"/>
+          <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@accept_threads) = 0">10</xsl:if>
         </xsl:attribute>
         <xsl:attribute name="bind">
-          <xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindserver{FCGIUSERBINDSERVER_INDEX}', '_', ., '.sock')"/>
+          <xsl:value-of select="concat($workspace-root,'/run/fcgi_userbindserver_', ., '.sock')"/>
         </xsl:attribute>
       </cfg:BindSocket>
     </xsl:for-each>
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
-    <xsl:variable name="def-fcgi-userbindserver{FCGIUSERBINDSERVER_INDEX}-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@port) = 0">
-        <xsl:value-of select="$def-fcgi-userbindserver{FCGIUSERBINDSERVER_INDEX}-port"/>
+    <xsl:variable name="def-fcgi-userbindserver-port">
+      <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@port) = 0">
+        <xsl:value-of select="$def-fcgi-userbindserver-port"/>
       </xsl:if>
     </xsl:variable>
 
-    <exsl:document href="FCGIUserBindServer{FCGIUSERBINDSERVER_INDEX}.port"
+    <exsl:document href="FCGIUserBindServer.port"
       method="text" omit-xml-declaration="yes"
-      >  ['FCGIServer', <xsl:copy-of select="$def-fcgi-userbindserver{FCGIUSERBINDSERVER_INDEX}-port"/>],</exsl:document>
+      >  ['FCGIServer', <xsl:copy-of select="$def-fcgi-userbindserver-port"/>],</exsl:document>
 
     <xsl:variable name="fcgi-adserver-logging" select="$fcgi-adserver-config/cfg:logging"/>
 
@@ -81,7 +81,7 @@
       </xsl:attribute>
 
       <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$def-fcgi-userbindserver{FCGIUSERBINDSERVER_INDEX}-port"/></xsl:attribute>
+        <xsl:attribute name="port"><xsl:value-of select="$def-fcgi-userbindserver-port"/></xsl:attribute>
         <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="FCGIServerStats" name="FCGIServerStats"/>
       </cfg:Endpoint>
@@ -89,14 +89,14 @@
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$fcgi-adserver-logging"/>
-      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-userbindserver{FCGIUSERBINDSERVER_INDEX}-log-path)"/>
+      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-userbindserver-log-path)"/>
       <xsl:with-param name="default-log-level" select="$default-fcgiserver-log-level"/>
     </xsl:call-template>
 
     <xsl:variable name="fcgi-userbindserver-mon-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@monitoring_port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI{FCGIUSERBINDSERVER_INDEX}NetworkParams/@monitoring_port) = 0">
-        <xsl:value-of select="$def-fcgi-userbindserver{FCGIUSERBINDSERVER_INDEX}-mon-port"/>
+      <xsl:value-of select="$fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@monitoring_port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:userBindFCGI1NetworkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$def-fcgi-userbindserver-mon-port"/>
       </xsl:if>
     </xsl:variable>
 

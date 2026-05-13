@@ -19,7 +19,7 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -146,6 +146,7 @@ namespace AdServer
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
 
     std::unique_ptr<OptOut::RequestInfoFiller> request_info_filler_;
   };

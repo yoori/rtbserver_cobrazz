@@ -12,6 +12,7 @@
 #include <Frontends/CommonModule/CommonModule.hpp>
 
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include "PassFrontend.hpp"
 
@@ -287,22 +288,38 @@ namespace Passback
 
     if(!passback_info.test_request)
     {
-      adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest info;
-      info.set_request_id(pack_request_id(passback_info.request_id));
-      info.set_time(pack_time(passback_info.time));
+      auto info = std::make_shared<
+        adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest>();
+      info->set_request_id(pack_request_id(passback_info.request_id));
+      info->set_time(pack_time(passback_info.time));
       if(passback_info.user_id_hash_mod.present())
       {
-        auto* user_id_hash_mod = info.mutable_user_id_hash_mod();
+        auto* user_id_hash_mod = info->mutable_user_id_hash_mod();
         user_id_hash_mod->set_defined(true);
         user_id_hash_mod->set_value(*passback_info.user_id_hash_mod);
       }
 
-      AdServer::Grpc::sync_call<
-        adserver::campaign_svcs::campaign_manager::ConsiderPassbackResponse>(
-          [this, &info](auto callback)
+      campaign_manager_->consider_passback(
+        *info,
+        [this, info](
+          const grpc::Status& status,
+          const adserver::campaign_svcs::campaign_manager::
+            ConsiderPassbackResponse&)
+        {
+          if(!status.ok())
           {
-            campaign_manager_->consider_passback(info, std::move(callback));
-          });
+            Stream::Error ostr;
+            ostr << FUN << ": CampaignManager::consider_passback(): "
+              "gRPC call failed: code=" <<
+              static_cast<int>(status.error_code()) <<
+              ", message=" << status.error_message();
+            logger()->log(
+              ostr.str(),
+              Logging::Logger::ERROR,
+              Aspect::PASS_FRONTEND,
+              "ADS-IMPL-194");
+          }
+        });
     }
 
     if(!passback_info.pubpixel_accounts.empty() &&
@@ -319,11 +336,41 @@ namespace Passback
             passback_info.pubpixel_accounts.end(),
             pubpixel_accounts);
 
-          AdServer::UserInfoSvcs::GrpcAlgs::confirm_user_freq_caps(*user_info_client_,
-            CorbaAlgs::pack_user_id(passback_info.current_user_id),
-            CorbaAlgs::pack_time(passback_info.time),
-            CorbaAlgs::pack_request_id(Commons::RequestId()),
-            pubpixel_accounts);
+          auto confirm_request = std::make_shared<
+            adserver::user_info_svcs::user_info_manager::
+              ConfirmUserFreqCapsRequest>();
+          AdServer::UserInfoSvcs::GrpcAlgs::
+            make_confirm_user_freq_caps_request(
+              *confirm_request,
+              CorbaAlgs::pack_user_id(passback_info.current_user_id),
+              CorbaAlgs::pack_time(passback_info.time),
+              CorbaAlgs::pack_request_id(Commons::RequestId()),
+              pubpixel_accounts);
+
+          user_info_client_->confirm_user_freq_caps(
+            *confirm_request,
+            [this, confirm_request](
+              const grpc::Status& status,
+              const adserver::user_info_svcs::user_info_manager::
+                ConfirmUserFreqCapsResponse&)
+            {
+              if(!status.ok())
+              {
+                Stream::Error ostr;
+                ostr << "UserInfoMatcher::confirm_user_freq_caps(): "
+                  "gRPC call failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                logger()->log(
+                  ostr.str(),
+                  status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+                    Logging::Logger::WARNING :
+                    Logging::Logger::EMERGENCY,
+                  Aspect::PASS_FRONTEND,
+                  status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+                    "" : "ADS-IMPL-123");
+              }
+            });
         }
         catch (const AdServer::UserInfoSvcs::
                UserInfoMatcher::ImplementationException& e)
