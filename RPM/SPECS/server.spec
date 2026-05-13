@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv470%{?dist}
+Release: ssv471%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -147,8 +147,7 @@ Requires: zeromq = %__zeromq_ver_req
 Requires: librdkafka1 = %__librdkafka_ver_req
 Requires: vanga = %__vanga_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
-Requires: gflags = 2.1.2
-#Requires: userver = 1.0.29
+Requires: gflags = 1:2.1.2-8.el8
 Requires: cryptopp libatomic libev
 Requires: protobuf = 25.9
 Requires: grpc = 1.80.0-ssv4.el8
