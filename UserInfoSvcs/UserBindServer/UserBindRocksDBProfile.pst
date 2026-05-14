@@ -1,0 +1,21 @@
+namespace AdServer
+{
+namespace UserInfoSvcs
+{
+  /* rocksdb user bind record */
+  struct UserBindRocksDBRecordDescriptor
+  {
+    uint version;
+    uint type;
+    uint first_seen_time;
+    uint update_time;
+    string user_id;
+    uint flags;
+    uint bad_event_count;
+    uint last_bad_event_day;
+  };
+
+  autoreader UserBindRocksDBRecordReader<UserBindRocksDBRecordDescriptor>;
+  autowriter UserBindRocksDBRecordWriter<UserBindRocksDBRecordDescriptor>;
+}
+}

@@ -1,4 +1,7 @@
 #include <iostream>
+#include <cerrno>
+#include <cstring>
+#include <sys/stat.h>
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 #include <Generics/DirSelector.hpp>
@@ -16,10 +19,23 @@ namespace Aspect
   const char USER_BIND_CONTAINER[] = "UserBindContainer";
 }
 
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-namespace UserInfoSvcs
-{
+  namespace
+  {
+    void
+    make_dir_if_required(const std::string& path)
+    {
+      if(::mkdir(path.c_str(), 0755) == -1 && errno != EEXIST)
+      {
+        eh::throw_errno_exception<UserBindProcessor::Exception>(
+          "can't create directory '",
+          path.c_str(),
+          "'");
+      }
+    }
+  }
+
   // UserBindContainer
   UserBindContainer::UserBindContainer(
     Logging::Logger* logger,
@@ -47,7 +63,7 @@ namespace UserInfoSvcs
     for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
         chunk_it != chunk_folders.end(); ++chunk_it)
     {
-      chunks_[chunk_it->first] = new UserBindChunk(
+      const UserBindChunk_var legacy_chunk = new UserBindChunk(
         logger,
         chunk_it->second.c_str(),
         file_prefix,
@@ -62,6 +78,26 @@ namespace UserInfoSvcs
         partition_index,
         partitions_number,
         chunk_folders.size());
+
+      const std::string user_seen_path =
+        chunk_it->second + "/UserSeen.rocksdb";
+      const std::string user_bind_path =
+        chunk_it->second + "/UserBind.rocksdb";
+      make_dir_if_required(user_seen_path);
+      make_dir_if_required(user_bind_path);
+
+      UserBindRocksDBChunk_var rocksdb_chunk = new UserBindRocksDBChunk(
+        user_seen_path.c_str(),
+        user_bind_path.c_str(),
+        extend_time_period * 4,
+        bound_extend_time_period * 4,
+        min_age,
+        bind_at_min_age,
+        max_bad_event);
+
+      chunks_[chunk_it->first] = new MigratingUserBindChunk(
+        rocksdb_chunk,
+        legacy_chunk);
     }
   }
 
@@ -133,12 +169,12 @@ namespace UserInfoSvcs
     }
   }
 
-  UserBindChunk_var
+  UserBindProcessor_var
   UserBindContainer::get_chunk_(
     const String::SubString& external_id) const
     /*throw(ChunkNotFound)*/
   {
-    UserBindChunk_var res = chunks_[
+    UserBindProcessor_var res = chunks_[
       AdServer::Commons::external_id_distribution_hash(
         external_id) % common_chunks_number_];
 
@@ -149,5 +185,4 @@ namespace UserInfoSvcs
 
     return res;
   }
-} /* namespace UserInfoSvcs */
-} /* namespace AdServer */
+} /* namespace AdServer::UserInfoSvcs */

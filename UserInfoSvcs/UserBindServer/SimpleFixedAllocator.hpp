@@ -1,10 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <list>
 
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/Singleton.hpp>
 
 namespace AdServer::UserInfoSvcs
@@ -24,8 +24,6 @@ namespace AdServer::UserInfoSvcs
     typedef std::vector<unsigned char> Buf;
     typedef std::list<Buf> BufList;
 
-    typedef Sync::Policy::PosixSpinThread SyncPolicy;
-
   protected:
     void
     alloc_new_buf_(Buf& new_buf) noexcept;
@@ -35,7 +33,7 @@ namespace AdServer::UserInfoSvcs
     const unsigned long buf_size_;
     const unsigned long last_element_offset_in_buf_;
 
-    mutable SyncPolicy::Mutex lock_;
+    mutable std::mutex lock_;
     BufList buffers_;
     void* first_free_;
   };

@@ -114,8 +114,10 @@ namespace AdServer::UserInfoSvcs
 
     task_runner_->enqueue_task(Generics::Task_var(new LoadUserBindTask(task_runner_, this)));
     task_runner_->enqueue_task(Generics::Task_var(new LoadBindRequestTask(task_runner_, this)));
-    task_runner_->enqueue_task(Generics::Task_var(new ClearUserBindExpiredTask(task_runner_, this, true)));
-    task_runner_->enqueue_task(Generics::Task_var(new ClearBindRequestExpiredTask(task_runner_, this, true)));
+    task_runner_->enqueue_task(Generics::Task_var(
+      new ClearUserBindExpiredTask(task_runner_, this, true)));
+    task_runner_->enqueue_task(Generics::Task_var(
+      new ClearBindRequestExpiredTask(task_runner_, this, true)));
   }
 
   UserBindServerCore::~UserBindServerCore()

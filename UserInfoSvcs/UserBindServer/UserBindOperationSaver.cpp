@@ -1,9 +1,7 @@
 #include "UserBindOperationSaver.hpp"
 #include "UserBindOperationProfile.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   UserBindOperationSaver::UserBindOperationSaver(
     Logging::Logger* logger,
@@ -137,5 +135,4 @@ namespace UserInfoSvcs
 
     next_processor_->dump();
   }
-}
 }

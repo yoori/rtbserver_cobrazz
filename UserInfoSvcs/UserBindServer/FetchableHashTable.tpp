@@ -25,8 +25,7 @@ namespace AdServer::UserInfoSvcs
     unsigned long local_pos = 0;
     unsigned long local_full_pos = 0;
 
-    FetchableHashTable<KeyType, ValueType, HashSetType>::
-      SyncPolicy::WriteGuard lock(owner_.lock_);
+    ::std::lock_guard<::std::mutex> lock(owner_.lock_);
     auto el_it = owner_.all_elements_.begin() + position_;
     auto actual_it = owner_.actual_elements_.begin() + position_;
 
@@ -79,7 +78,7 @@ namespace AdServer::UserInfoSvcs
         HashElementHashOp(*this),
         HashElementEqualOp(*this))
   {
-    SyncPolicy::WriteGuard lock(init.lock_);
+    ::std::lock_guard<::std::mutex> lock(init.lock_);
     actual_elements_.swap(init.actual_elements_);
     all_elements_.swap(init.all_elements_);
     element_map_.swap(init.element_map_);
@@ -95,7 +94,7 @@ namespace AdServer::UserInfoSvcs
   {
     KeyType del_key;
 
-    SyncPolicy::WriteGuard lock(lock_);
+    ::std::lock_guard<::std::mutex> lock(lock_);
     del_key = std::move(all_elements_.begin()->key);
     all_elements_.begin()->key = std::move(key);
 
@@ -120,7 +119,7 @@ namespace AdServer::UserInfoSvcs
   {
     KeyType del_key;
 
-    SyncPolicy::WriteGuard lock(lock_);
+    ::std::lock_guard<::std::mutex> lock(lock_);
     del_key = std::move(all_elements_.begin()->key);
     all_elements_.begin()->key = std::move(key);
 
@@ -159,7 +158,7 @@ namespace AdServer::UserInfoSvcs
     KeyType del_key;
     HashElement del_hash_element;
 
-    SyncPolicy::WriteGuard lock(lock_);
+    ::std::lock_guard<::std::mutex> lock(lock_);
     del_key = std::move(all_elements_.begin()->key);
     all_elements_.begin()->key = std::move(key);
 

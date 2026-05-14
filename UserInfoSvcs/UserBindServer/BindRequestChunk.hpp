@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 
 #include <eh/Exception.hpp>
@@ -8,7 +10,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Logger/Logger.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -57,9 +58,22 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/;
 
   protected:
-    typedef Sync::Policy::PosixThreadRW SyncPolicy;
-    typedef Sync::Policy::PosixThread FlushSyncPolicy;
-    typedef Sync::Policy::PosixThread ExtendSyncPolicy;
+    typedef std::shared_mutex SyncMutex;
+    typedef std::shared_lock<SyncMutex> SyncReadGuard;
+    typedef std::unique_lock<SyncMutex> SyncWriteGuard;
+
+    typedef std::mutex FlushMutex;
+    typedef std::lock_guard<FlushMutex> FlushWriteGuard;
+
+    typedef std::mutex ExtendMutex;
+    typedef std::lock_guard<ExtendMutex> ExtendWriteGuard;
+
+    struct UserLockPolicy
+    {
+      typedef std::mutex Mutex;
+      typedef std::lock_guard<Mutex> ReadGuard;
+      typedef std::lock_guard<Mutex> WriteGuard;
+    };
 
     class BindRequestHolder
     {
@@ -119,7 +133,7 @@ namespace AdServer::UserInfoSvcs
         const Generics::Time min_time;
         const Generics::Time max_time;
 
-        mutable SyncPolicy::Mutex lock;
+        mutable SyncMutex lock;
         HolderMap holders;
 
       protected:
@@ -149,7 +163,7 @@ namespace AdServer::UserInfoSvcs
         HolderContainer_var;
 
     public:
-      mutable ExtendSyncPolicy::Mutex extend_lock;
+      mutable ExtendMutex extend_lock;
 
     public:
       HolderContainerGuard() noexcept;
@@ -162,7 +176,7 @@ namespace AdServer::UserInfoSvcs
         noexcept;
 
     protected:
-      mutable SyncPolicy::Mutex holder_container_lock_;
+      mutable SyncMutex holder_container_lock_;
       HolderContainer_var holder_container_;
     };
 
@@ -175,7 +189,7 @@ namespace AdServer::UserInfoSvcs
 
     typedef AdServer::Commons::NoAllocLockMap<
       HashHashAdapter,
-      Sync::Policy::PosixThread>
+      UserLockPolicy>
       UserLockMap;
 
     struct Portion: public ReferenceCounting::AtomicImpl
@@ -294,7 +308,7 @@ namespace AdServer::UserInfoSvcs
     PortionArray portions_;
 
     // serialize saving to files
-    mutable FlushSyncPolicy::Mutex flush_lock_;
+    mutable FlushMutex flush_lock_;
   };
 
   typedef ReferenceCounting::SmartPtr<BindRequestChunk>

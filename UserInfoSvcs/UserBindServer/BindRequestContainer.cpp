@@ -24,9 +24,7 @@ namespace
   const char LOG_TIME_FORMAT[] = "%Y%m%d.%H%M%S";
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct BaseChunkSelector
   {
@@ -251,5 +249,4 @@ namespace UserInfoSvcs
 
     return res;
   }
-} /* namespace UserInfoSvcs */
-} /* namespace AdServer */
+} /* namespace AdServer::UserInfoSvcs */

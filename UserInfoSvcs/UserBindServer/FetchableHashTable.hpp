@@ -2,8 +2,8 @@
 
 #include <deque>
 #include <bitset>
+#include <mutex>
 #include <Generics/GnuHashTable.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Commons/tsl/sparse_set.h>
 
 namespace AdServer::UserInfoSvcs
@@ -545,8 +545,6 @@ namespace AdServer::UserInfoSvcs
       HashElementEqualOp>
       HashElementSet;
 
-    typedef Sync::Policy::PosixThread SyncPolicy;
-
   protected:
     HashElement&
     get_hash_element_(unsigned long index)
@@ -561,7 +559,7 @@ namespace AdServer::UserInfoSvcs
     }
 
   protected:
-    mutable SyncPolicy::Mutex lock_;
+    mutable std::mutex lock_;
     bit_deque actual_elements_;
     HashElementArray all_elements_;
     HashElementSet element_map_;
