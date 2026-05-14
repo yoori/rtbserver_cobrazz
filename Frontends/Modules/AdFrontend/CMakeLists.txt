@@ -9,10 +9,8 @@ target_link_libraries(AdFrontend
   Stream
   HTTP
   Geoip
-  CORBACommons
   Commons
   ChannelClient
-  UserInfoManagerControllerCall
   UserInfoManagerGrpcClient
   CookieManager
   RequestMatchers

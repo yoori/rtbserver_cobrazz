@@ -133,7 +133,7 @@ namespace Bidding
       // check that any campaign selected (in any slot)
       bool ad_selected = false;
 
-      for(CORBA::ULong ad_slot_i = 0;
+      for(std::size_t ad_slot_i = 0;
           ad_slot_i < campaign_match_result.ad_slots.length();
           ++ad_slot_i)
       {

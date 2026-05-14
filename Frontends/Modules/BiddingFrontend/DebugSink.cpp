@@ -7,7 +7,7 @@
 
 #include <String/AsciiStringManip.hpp>
 #include <Commons/Algs.hpp>
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -107,7 +107,7 @@ namespace Bidding
     }
 
     const char*
-    user_status_to_string(CORBA::ULong user_status) noexcept
+    user_status_to_string(std::size_t user_status) noexcept
     {
       switch(user_status)
       {
@@ -127,7 +127,7 @@ namespace Bidding
     }
 
     const char*
-    auction_type_to_string(CORBA::ULong auction_type) noexcept
+    auction_type_to_string(std::size_t auction_type) noexcept
     {
       if(auction_type == CampaignSvcs::AT_RANDOM)
       {
@@ -213,7 +213,7 @@ namespace Bidding
       "user_status = " <<
         user_status_to_string(request_params.common_info.user_status) << sep_ <<
       "source_id = " << request_info.source_id << sep_ <<
-      "request_id = " << CorbaAlgs::unpack_request_id(
+      "request_id = " << CampaignManager::unpack_request_id(
         request_params.common_info.request_id) << sep_ <<
       "bid_request_id = " << request_info.bid_request_id << sep_ <<
       "bid_site_id = " << request_info.bid_site_id << sep_ <<
@@ -339,7 +339,7 @@ namespace Bidding
     bool ad_selected = false;
     const AdServer::Bidding::CampaignManager::AdSlotDebugInfo*
       expected_debug_info = nullptr;
-    for(CORBA::ULong i = 0; i < campaign_match_result.ad_slots.length(); ++i)
+    for(std::size_t i = 0; i < campaign_match_result.ad_slots.length(); ++i)
     {
       const auto& ad_slot_result = campaign_match_result.ad_slots[i];
       if(!expected_debug_info && ad_slot_result.debug_info.trace_ccg[0] != 0)
@@ -459,7 +459,7 @@ namespace Bidding
 
   void
   DebugSink::print_history_matching_debug_info(
-    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
+    const adserver::user_info_svcs::user_info_manager::MatchResult&
       match_result) noexcept
   {
     if(!require_debug_info())
@@ -479,12 +479,12 @@ namespace Bidding
     debug_info_str_ << "last_request_time = ";
     try
     {
-      debug_info_str_ << CorbaAlgs::unpack_time(
-        match_result.last_request_time).gm_ft() << sep_ <<
-        "create_time = " << CorbaAlgs::unpack_time(
-          match_result.create_time).gm_ft() << sep_ <<
-        "session_start = " << CorbaAlgs::unpack_time(
-          match_result.session_start).gm_ft();
+      debug_info_str_ << GrpcAlgs::unpack_time(
+        match_result.last_request_time()).gm_ft() << sep_ <<
+        "create_time = " << GrpcAlgs::unpack_time(
+          match_result.create_time()).gm_ft() << sep_ <<
+        "session_start = " << GrpcAlgs::unpack_time(
+          match_result.session_start()).gm_ft();
     }
     catch(...)
     {
@@ -494,10 +494,14 @@ namespace Bidding
     debug_info_str_ << sep_ <<
       "history_channels = ";
 
-    CorbaAlgs::print_sequence_field(
-      debug_info_str_,
-      match_result.channels,
-      &UserInfoSvcs::UserInfoMatcher::ChannelWeight::channel_id);
+    for(int i = 0; i < match_result.channels_size(); ++i)
+    {
+      if(i != 0)
+      {
+        debug_info_str_ << ",";
+      }
+      debug_info_str_ << match_result.channels(i).channel_id();
+    }
 
     debug_info_str_ << sep_;
   }
@@ -707,15 +711,15 @@ namespace Bidding
     CampaignSvcs::RevenueDecimal action_revenue(
       CampaignSvcs::RevenueDecimal::ZERO);
 
-    for(CORBA::ULong i = 0; i < debug_selected_creatives.length(); ++i)
+    for(std::size_t i = 0; i < debug_selected_creatives.length(); ++i)
     {
-      imp_revenue += CorbaAlgs::unpack_decimal<
+      imp_revenue += CampaignManager::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
           debug_selected_creatives[i].imp_revenue);
-      click_revenue += CorbaAlgs::unpack_decimal<
+      click_revenue += CampaignManager::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
           debug_selected_creatives[i].click_revenue);
-      action_revenue += CorbaAlgs::unpack_decimal<
+      action_revenue += CampaignManager::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
           debug_selected_creatives[i].action_revenue);
     }
@@ -740,14 +744,14 @@ namespace Bidding
       "notice_url = " << ad_slot_result.notice_url << sep_ <<
       "track_pixel_url = " << debug_info.track_pixel_url << sep_ <<
       "cpm_threshold = " <<
-        CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+        CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
           debug_info.cpm_threshold) << sep_ <<
       "walled_garden = " << debug_info.walled_garden << sep_ <<
       "auction_type = " << auction_type_to_string(debug_info.auction_type) <<
       sep_ << "selected_creatives = ";
 
-    const CORBA::ULong debug_count = debug_selected_creatives.length();
-    for(CORBA::ULong i = 0; i < selected_creatives.length(); ++i)
+    const std::size_t debug_count = debug_selected_creatives.length();
+    for(std::size_t i = 0; i < selected_creatives.length(); ++i)
     {
       const auto& creative = selected_creatives[i];
       const auto* debug_creative = i < debug_count ?
@@ -758,7 +762,7 @@ namespace Bidding
       const char* creative_end_sep = require_debug_info_ == DI_BODY ? "" : ") ";
 
       debug_info_str_ << creative_start_sep <<
-        offset << "request_id = " << CorbaAlgs::unpack_request_id(
+        offset << "request_id = " << CampaignManager::unpack_request_id(
           creative.request_id) << sep_ <<
         offset << "ccid = " << creative.ccid << sep_ <<
         offset << "cmp_id = " << creative.cmp_id << sep_ <<
@@ -771,12 +775,12 @@ namespace Bidding
         offset << "creative_size = " << creative.creative_size << sep_ <<
         offset << "triggered_expression = " <<
           (debug_creative ? debug_creative->triggered_expression.in() : "") << sep_ <<
-        offset << "ecpm = " << CorbaAlgs::unpack_decimal<
+        offset << "ecpm = " << CampaignManager::unpack_decimal<
           CampaignSvcs::RevenueDecimal>(creative.ecpm) << sep_ <<
-        offset << "pub_ecpm = " << CorbaAlgs::unpack_decimal<
+        offset << "pub_ecpm = " << CampaignManager::unpack_decimal<
           CampaignSvcs::RevenueDecimal>(creative.pub_ecpm) << sep_ <<
         offset << "ecpm_bid = " <<
-          (debug_creative ? CorbaAlgs::unpack_decimal<
+          (debug_creative ? CampaignManager::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->ecpm_bid).str() : "") << sep_ <<
         offset << "click_url = " << creative.click_url << sep_ <<
         offset << "destination_url = " << creative.destination_url << sep_ <<
@@ -785,16 +789,16 @@ namespace Bidding
         offset << "action_adv_url = " <<
           (debug_creative ? debug_creative->action_adv_url.in() : "") << sep_ <<
         offset << "revenue = " <<
-          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+          CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             creative.revenue) << sep_ <<
         offset << "imp_revenue = " <<
-          (debug_creative ? CorbaAlgs::unpack_decimal<
+          (debug_creative ? CampaignManager::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->imp_revenue).str() : "") << sep_ <<
         offset << "click_revenue = " <<
-          (debug_creative ? CorbaAlgs::unpack_decimal<
+          (debug_creative ? CampaignManager::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->click_revenue).str() : "") << sep_ <<
         offset << "action_revenue = " <<
-          (debug_creative ? CorbaAlgs::unpack_decimal<
+          (debug_creative ? CampaignManager::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->action_revenue).str() : "");
       debug_info_str_ << creative_end_sep;
     }

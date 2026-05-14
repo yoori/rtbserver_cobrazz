@@ -14,7 +14,6 @@ namespace
 {
   const char ASPECT[] = "FCGIServer";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
-  const char FCGI_SERVER_STATS_OBJ_KEY[] = "FCGIServerStats";
 }
 
 namespace AdServer
@@ -153,14 +152,6 @@ namespace Frontends
         new CORBACommons::CorbaServerAdapter(corba_config_);
       shutdowner_ = corba_server_adapter_->shutdowner();
       corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-
-      AdServer::BiddingFrontendStatsImpl_var
-        bidding_frontend_stats_impl =
-        new AdServer::BiddingFrontendStatsImpl(
-          stats_);
-
-      corba_server_adapter_->add_binding(
-        FCGI_SERVER_STATS_OBJ_KEY, bidding_frontend_stats_impl.in());
     }
     catch(const eh::Exception& ex)
     {

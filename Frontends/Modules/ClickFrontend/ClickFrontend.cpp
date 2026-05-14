@@ -9,13 +9,9 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include <Frontends/FrontendCommons/Cookies.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -419,7 +415,8 @@ namespace AdServer
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
     const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
-    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+    const adserver::user_info_svcs::user_info_manager::MatchResponse*
+      history_match_result,
     const String::SubString& peer_ip_val)
     const noexcept
   {
@@ -449,11 +446,11 @@ namespace AdServer
 
     if(history_match_result)
     {
-      CORBA::ULong result_len =
-        history_match_result->channels.length();
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      const int result_len = history_match_result->match_result().channels_size();
+      for(int i = 0; i < result_len; ++i)
       {
-        match_info->add_channels(history_match_result->channels[i].channel_id);
+        match_info->add_channels(
+          history_match_result->match_result().channels(i).channel_id());
       }
     }
 
@@ -691,8 +688,7 @@ namespace AdServer
           response_writer,
           response_ptr,
           click_info,
-          request_info,
-          FUN](
+          request_info](
             bool got_click_url,
             const adserver::campaign_svcs::campaign_manager::ClickResultInfo&
               click_result_info) mutable
@@ -880,8 +876,7 @@ namespace AdServer
         campaign_manager_->get_click_url(
           click_url_request,
           [this,
-            finish_response = std::move(finish_response),
-            FUN](
+            finish_response = std::move(finish_response)](
               const grpc::Status& status,
               const adserver::campaign_svcs::campaign_manager::
                 GetClickUrlResponse& click_url_response) mutable
@@ -890,8 +885,7 @@ namespace AdServer
               [this,
                 status,
                 click_url_response,
-                finish_response = std::move(finish_response),
-                FUN]() mutable
+                finish_response = std::move(finish_response)]() mutable
               {
                 try
                 {
@@ -964,8 +958,8 @@ namespace AdServer
     const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::UserId& cookie_user_id,
     const Generics::Time& now,
-    ::CORBA::ULong campaign_id,
-    ::CORBA::ULong advertiser_id,
+    unsigned long campaign_id,
+    unsigned long advertiser_id,
     const String::SubString& peer_ip,
     const std::list<std::string>& markers)
     noexcept

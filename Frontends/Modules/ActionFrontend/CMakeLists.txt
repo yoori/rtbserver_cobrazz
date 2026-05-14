@@ -9,7 +9,6 @@ target_link_libraries(ActionFrontend
   Generics
   Geoip
   Commons
-  CORBACommons
   CommonModule
   CampaignManagerGrpcDistributedClient
   FeConfigXSD

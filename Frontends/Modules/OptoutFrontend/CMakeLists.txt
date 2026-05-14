@@ -6,7 +6,6 @@ add_library(OptoutFrontend SHARED
 
 target_link_libraries(OptoutFrontend
   Stream
-  CORBACommons
   Commons
   PrivacyFilter
   RequestMatchers

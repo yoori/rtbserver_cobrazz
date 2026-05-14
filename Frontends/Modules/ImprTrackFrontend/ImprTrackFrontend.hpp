@@ -14,13 +14,10 @@
 #include <Logger/DistributorLogger.hpp>
 #include <Generics/FileCache.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/TextTemplateCache.hpp>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
-#include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -112,14 +109,6 @@ namespace AdServer::ImprTrack
 
     typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
     typedef std::unique_ptr<ImprTrackFeConfiguration> ConfigPtr;
-
-    typedef CORBACommons::ObjectPoolRefConfiguration
-      UserBindServerPoolConfig;
-    typedef CORBACommons::ObjectPool<
-      AdServer::UserInfoSvcs::UserBindServer, UserBindServerPoolConfig>
-      UserBindServerPool;
-    typedef std::unique_ptr<UserBindServerPool> UserBindServerPoolPtr;
-    typedef UserBindServerPool::ObjectHandlerType UserBindServerHandler;
 
     struct BindURLRule: public ReferenceCounting::AtomicImpl
     {

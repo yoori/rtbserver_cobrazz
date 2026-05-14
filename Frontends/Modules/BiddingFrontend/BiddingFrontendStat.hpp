@@ -4,7 +4,6 @@
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Controlling/StatsDumper/StatsDumper.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 #include "CampaignManagerTypes.hpp"
 
 
@@ -69,26 +68,4 @@ namespace AdServer
 
   typedef ReferenceCounting::SmartPtr<StatHolder>
     StatHolder_var;
-
-  class BiddingFrontendStatsImpl:
-    public CORBACommons::ReferenceCounting::ServantImpl<
-      POA_CORBACommons::ProcessStatsControl>,
-      public Generics::CompositeActiveObject
-  {
-  public:
-    BiddingFrontendStatsImpl(
-      StatHolder* stat_holder)
-      noexcept;
-
-    virtual CORBACommons::StatsValueSeq*
-    get_stats()
-      /*throw(CORBA::Exception,
-        CORBACommons::ProcessStatsControl::ImplementationException)*/;
-
-  private:
-    StatHolder_var stat_holder_;
-  };
-
-  typedef ReferenceCounting::SmartPtr<BiddingFrontendStatsImpl>
-  BiddingFrontendStatsImpl_var;
 }

@@ -8,8 +8,6 @@
 #include <Logger/DistributorLogger.hpp>
 
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
@@ -287,11 +285,11 @@ namespace AdServer::Action
 
         if(common_config_->StatsDumper().present())
         {
-          CORBACommons::CorbaObjectRef dumper_ref;
+          FrontendStat::StatsCollectorRef dumper_ref;
 
-          Config::CorbaConfigReader::read_corba_ref(
-            common_config_->StatsDumper().get().StatsDumperRef(),
-            dumper_ref);
+          FrontendStat::read_stats_collector_ref(
+            dumper_ref,
+            common_config_->StatsDumper().get().StatsDumperRef());
 
           stats_ = new AcFrontendStat(
             logger(),
@@ -733,7 +731,6 @@ namespace AdServer::Action
   {
     try
     {
-      //CORBA::String_var hostname;
       auto channel_request = std::make_shared<
         adserver::channel_svcs::channel_server::MatchRequest>();
       channel_request->set_non_strict_word_match(false);

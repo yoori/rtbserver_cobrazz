@@ -1,5 +1,4 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "DAOBidRequestState.hpp"
@@ -147,7 +146,7 @@ namespace Bidding
       const AdServer::Bidding::CampaignManager::
         AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[0];
 
-      CampaignSvcs::RevenueDecimal sum_pub_ecpm = CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm);
 
       bid_frontend_->limit_max_cpm_(

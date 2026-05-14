@@ -20,10 +20,6 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
-
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>

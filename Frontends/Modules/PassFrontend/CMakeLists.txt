@@ -5,7 +5,6 @@ add_library(PassFrontend SHARED
 
 target_link_libraries(PassFrontend
   Stream
-  CORBACommons
   Commons
   RequestMatchers
   CommonModule

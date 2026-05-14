@@ -2,15 +2,61 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <ostream>
 #include <string>
 #include <vector>
 
-#include <Commons/CorbaTypes.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <String/SubString.hpp>
 
 namespace AdServer::Bidding::CampaignManager
 {
+  struct ByteField
+  {
+    std::string value;
+
+    std::size_t length() const noexcept
+    {
+      return value.size();
+    }
+
+    void length(std::size_t size)
+    {
+      value.resize(size);
+    }
+
+    unsigned char* get_buffer() noexcept
+    {
+      return reinterpret_cast<unsigned char*>(value.data());
+    }
+
+    const unsigned char* get_buffer() const noexcept
+    {
+      return reinterpret_cast<const unsigned char*>(value.data());
+    }
+
+    bool empty() const noexcept
+    {
+      return value.empty();
+    }
+
+    ByteField& operator=(const std::string& source)
+    {
+      value = source;
+      return *this;
+    }
+
+    template<typename OctSeq>
+    ByteField& operator=(const OctSeq& source)
+    {
+      value.assign(
+        reinterpret_cast<const char*>(source.get_buffer()),
+        reinterpret_cast<const char*>(source.get_buffer()) + source.length());
+      return *this;
+    }
+  };
+
   struct StringField
   {
     std::string str;
@@ -94,12 +140,12 @@ namespace AdServer::Bidding::CampaignManager
     using iterator = typename std::vector<T>::iterator;
     using const_iterator = typename std::vector<T>::const_iterator;
 
-    CORBA::ULong length() const noexcept
+    std::size_t length() const noexcept
     {
-      return static_cast<CORBA::ULong>(items_.size());
+      return items_.size();
     }
 
-    void length(CORBA::ULong size)
+    void length(std::size_t size)
     {
       items_.resize(size);
     }
@@ -133,7 +179,7 @@ namespace AdServer::Bidding::CampaignManager
     void assign_from(const SourceSeq& source)
     {
       length(source.length());
-      for(CORBA::ULong i = 0; i < source.length(); ++i)
+      for(std::size_t i = 0; i < source.length(); ++i)
       {
         items_[i] = source[i];
       }
@@ -153,10 +199,10 @@ namespace AdServer::Bidding::CampaignManager
   using IdSeq = Sequence<unsigned long>;
   using StringSeq = Sequence<StringField>;
   using ExternalCreativeCategoryIdSeq = StringSeq;
-  using TimestampInfo = CORBACommons::TimestampInfo;
-  using RequestIdInfo = CORBACommons::RequestIdInfo;
-  using UserIdInfo = CORBACommons::UserIdInfo;
-  using DecimalInfo = CORBACommons::DecimalInfo;
+  using TimestampInfo = ByteField;
+  using RequestIdInfo = ByteField;
+  using UserIdInfo = ByteField;
+  using DecimalInfo = ByteField;
 
   struct ChannelTriggerMatchInfo
   {
@@ -539,4 +585,81 @@ namespace AdServer::Bidding::CampaignManager
     TimestampInfo process_time;
     AdRequestDebugInfo debug_info;
   };
+
+  inline TimestampInfo
+  pack_time(const Generics::Time& time)
+  {
+    return TimestampInfo{GrpcAlgs::pack_time(time)};
+  }
+
+  inline Generics::Time
+  unpack_time(const TimestampInfo& time)
+  {
+    return GrpcAlgs::unpack_time(time.value);
+  }
+
+  inline UserIdInfo
+  pack_user_id(const AdServer::Commons::UserId& user_id)
+  {
+    return UserIdInfo{GrpcAlgs::pack_user_id(user_id)};
+  }
+
+  inline AdServer::Commons::UserId
+  unpack_user_id(const UserIdInfo& user_id)
+  {
+    return GrpcAlgs::unpack_user_id(user_id.value);
+  }
+
+  inline RequestIdInfo
+  pack_request_id(const AdServer::Commons::RequestId& request_id)
+  {
+    return RequestIdInfo{GrpcAlgs::pack_request_id(request_id)};
+  }
+
+  inline AdServer::Commons::RequestId
+  unpack_request_id(const RequestIdInfo& request_id)
+  {
+    return GrpcAlgs::unpack_user_id(request_id.value);
+  }
+
+  template<typename DecimalType>
+  DecimalInfo
+  pack_decimal(const DecimalType& decimal)
+  {
+    return DecimalInfo{GrpcAlgs::pack_decimal(decimal)};
+  }
+
+  template<typename DecimalType>
+  DecimalType
+  unpack_decimal(const DecimalInfo& decimal)
+  {
+    return GrpcAlgs::unpack_decimal<DecimalType>(decimal.value);
+  }
+
+  template<typename TargetSeq, typename SourceIteratorType>
+  void fill_sequence(
+    const SourceIteratorType& begin,
+    const SourceIteratorType& end,
+    TargetSeq& target,
+    bool add = false)
+  {
+    const auto old_size = add ? target.length() : 0;
+    target.length(old_size + std::distance(begin, end));
+
+    std::size_t pos = old_size;
+    for(auto it = begin; it != end; ++it, ++pos)
+    {
+      target[pos] = *it;
+    }
+  }
+
+  template<typename SourceSeq, typename TargetSeq>
+  void copy_sequence(const SourceSeq& source, TargetSeq& target)
+  {
+    target.length(source.length());
+    for(std::size_t i = 0; i < source.length(); ++i)
+    {
+      target[i] = source[i];
+    }
+  }
 }

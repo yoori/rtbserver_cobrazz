@@ -8,7 +8,6 @@ add_library(UserBindFrontend SHARED
 target_link_libraries(UserBindFrontend
   Stream
   Geoip
-  CORBACommons
   Commons
   UserIdController
   CommonModule

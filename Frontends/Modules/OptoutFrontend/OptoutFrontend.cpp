@@ -579,11 +579,11 @@ namespace
 
         if(common_config_->StatsDumper().present())
         {
-          CORBACommons::CorbaObjectRef dumper_ref;
+          FrontendStat::StatsCollectorRef dumper_ref;
 
-          Config::CorbaConfigReader::read_corba_ref(
-            common_config_->StatsDumper().get().StatsDumperRef(),
-            dumper_ref);
+          FrontendStat::read_stats_collector_ref(
+            dumper_ref,
+            common_config_->StatsDumper().get().StatsDumperRef());
 
           stats_ = new OptOutFrontendStat(
             logger(),

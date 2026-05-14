@@ -1,6 +1,5 @@
 #include "GoogleBidRequestState.hpp"
 
-#include <Commons/CorbaAlgs.hpp>
 
 namespace AdServer
 {
@@ -110,7 +109,7 @@ namespace Bidding
         ExternalCreativeCategoryIdSeq& categories,
       AddRepeatedFn fn)
     {
-      for(CORBA::ULong cat_i = 0; cat_i < categories.length(); ++cat_i)
+      for(std::size_t cat_i = 0; cat_i < categories.length(); ++cat_i)
       {
         int32_t cat_id = 0;
         if(String::StringManip::str_to_int(
@@ -126,7 +125,7 @@ namespace Bidding
     void
     fill_google_expanding_attributes(
       Google::BidResponse_Ad* ad,
-      const CORBA::Octet& expanding)
+      unsigned char expanding)
     {
       if (expanding > 15)
       {
@@ -249,7 +248,7 @@ namespace Bidding
       assert(
         campaign_match_result.ad_slots.length() == ad_slots_context_.size());
 
-      for(CORBA::ULong ad_slot_i = 0;
+      for(std::size_t ad_slot_i = 0;
           ad_slot_i < campaign_match_result.ad_slots.length();
           ++ad_slot_i)
       {
@@ -265,11 +264,11 @@ namespace Bidding
 
           Google::BidResponse_Ad* ad = bid_response.add_ad();
 
-          for(CORBA::ULong creative_i = 0;
+          for(std::size_t creative_i = 0;
               creative_i < ad_slot_result.selected_creatives.length();
               ++creative_i)
           {
-            sum_pub_ecpm += CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
               ad_slot_result.selected_creatives[creative_i].pub_ecpm);
 
             ad->add_click_through_url(

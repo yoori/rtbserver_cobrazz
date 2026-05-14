@@ -7,10 +7,9 @@
 
 #include <CampaignManagerGrpc.grpc.pb.h>
 #include <ChannelServerGrpc.grpc.pb.h>
-#include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
+#include <UserInfoManagerGrpc.grpc.pb.h>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 #include "AdFrontendStat.hpp"
 #include "RequestInfo.hpp"
@@ -97,8 +96,10 @@ namespace AdServer
       const RequestInfo& request_info,
       const adserver::channel_svcs::channel_server::MatchResponse*
         trigger_matched_channels,
-      const ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var ccg_keywords,
-      const UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
+      const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
+        ccg_keywords,
+      const adserver::user_info_svcs::user_info_manager::MatchResult&
+        history_match_result)
       noexcept;
 
     void
@@ -118,7 +119,8 @@ namespace AdServer
     void
     print_trigger_matching_debug_info(
       const adserver::channel_svcs::channel_server::MatchResponse& match_result,
-      const ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
+      const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
+        ccg_keywords,
       const char* prefix = "")
       noexcept;
 
@@ -145,7 +147,7 @@ namespace AdServer
 
     void
     print_history_matching_debug_info_(
-      const UserInfoSvcs::UserInfoMatcher::MatchResult&
+      const adserver::user_info_svcs::user_info_manager::MatchResult&
         history_match_result)
       noexcept;
 

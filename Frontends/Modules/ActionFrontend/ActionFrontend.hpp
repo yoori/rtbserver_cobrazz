@@ -15,7 +15,6 @@
 #include <Generics/Uuid.hpp>
 #include <GeoIP/IPMap.hpp>
 #include <String/TextTemplate.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
 #include <Commons/AtomicInt.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>

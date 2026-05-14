@@ -651,8 +651,7 @@ namespace AdServer::UserInfoSvcs
 
           for (auto& chunk_ref : chunk_refs)
           {
-            auto pool = std::make_shared<Pool>();
-            pool->set_refs(chunk_ref.second);
+            auto pool = std::make_shared<Pool>(std::move(chunk_ref.second));
             pool->activate_object();
             fill_partition->chunks_ref_pool_map.emplace(
               chunk_ref.first,

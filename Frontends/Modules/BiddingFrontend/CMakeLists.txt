@@ -21,10 +21,8 @@ add_library(BiddingFrontend SHARED
 target_link_libraries(BiddingFrontend
   Stream
   Geoip
-  CORBACommons
   Commons
   ChannelClient
-  UserInfoManagerControllerCall
   UserInfoManagerGrpcClient
   UserBindClient
   RequestMatchers

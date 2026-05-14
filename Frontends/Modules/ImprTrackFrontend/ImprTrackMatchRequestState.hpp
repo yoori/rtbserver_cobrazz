@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <ChannelServerGrpc.pb.h>
 #include <UserInfoManagerGrpc.pb.h>
@@ -34,8 +33,8 @@ namespace AdServer::ImprTrack
     AdServer::Commons::UserId user_id;
     AdServer::Commons::UserId cookie_user_id;
     AdServer::Commons::UserId resolved_cookie_user_id;
-    std::vector<CORBA::ULong> campaign_ids;
-    std::vector<CORBA::ULong> advertiser_ids;
+    std::vector<unsigned long> campaign_ids;
+    std::vector<unsigned long> advertiser_ids;
     adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
     adserver::user_info_svcs::user_info_manager::MatchResponse
       history_match_response;

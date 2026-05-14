@@ -8,12 +8,9 @@ add_library(ImprTrackFrontend SHARED
 target_link_libraries(ImprTrackFrontend
   Stream
   Geoip
-  CORBACommons
   Commons
   ChannelClient
-  UserInfoManagerControllerCall
   UserInfoManagerGrpcClient
-  UserBindServerIDL
   UserBindClient
   RequestMatchers
   UserIdController

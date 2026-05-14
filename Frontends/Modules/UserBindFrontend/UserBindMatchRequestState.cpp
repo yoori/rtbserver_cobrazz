@@ -5,7 +5,6 @@
 
 #include <Commons/GrpcAlgs.hpp>
 #include <Stream/MemoryStream.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include "UserBindFrontend.hpp"
 
@@ -317,8 +316,8 @@ namespace AdServer
   {
     if(status.ok())
     {
-      history_match_result_ =
-        AdServer::UserInfoSvcs::GrpcAlgs::make_history_match_result(response);
+      history_match_result_ = std::make_shared<
+        adserver::user_info_svcs::user_info_manager::MatchResponse>(response);
     }
     else
     {
@@ -338,7 +337,7 @@ namespace AdServer
       result_user_id_,
       now_,
       trigger_match_result_present_ ? &trigger_match_result_ : nullptr,
-      history_match_result_,
+      history_match_result_.get(),
       location_,
       referer_,
       source_);

@@ -19,7 +19,6 @@
 
 #include <String/TextTemplate.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/AtomicInt.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -27,7 +26,6 @@
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
-#include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
@@ -281,7 +279,8 @@ namespace AdServer
       const Generics::Time& now,
       const adserver::channel_svcs::channel_server::MatchResponse*
         trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const adserver::user_info_svcs::user_info_manager::MatchResponse*
+        history_match_result,
       const FrontendCommons::Location* location,
       const String::SubString& referer,
       const String::SubString& source)

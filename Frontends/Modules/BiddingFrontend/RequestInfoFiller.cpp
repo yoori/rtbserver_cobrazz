@@ -14,7 +14,6 @@
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/JsonParamProcessor.hpp>
 #include <LogCommons/CsvUtils.hpp>
 #include <Language/SegmentorManager/SegmentorManager.hpp>
@@ -3246,7 +3245,7 @@ namespace Bidding
       request_params,
       ip_str.str());
 
-    request_params.common_info.user_status = static_cast<CORBA::ULong>(
+    request_params.common_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
 
     bool application = false;
@@ -3482,7 +3481,7 @@ namespace Bidding
         adslot.excluded_product_category_size() +
         flash_exclude_size + 2);
 
-      CORBA::ULong res_cat_i = 0;
+      std::size_t res_cat_i = 0;
 
       if(slot_is_video && !video_passback)
       {
@@ -3722,7 +3721,7 @@ namespace Bidding
             Google::BIDFLOOR_MULTIPLIER,
             Generics::DMR_ROUND));
 
-        ad_slot_request.min_ecpm = CorbaAlgs::pack_decimal(min_ecpm);
+        ad_slot_request.min_ecpm = CampaignManager::pack_decimal(min_ecpm);
       }
       catch (const Generics::DecimalException& e)
       {
@@ -3739,7 +3738,7 @@ namespace Bidding
         }
 
         ad_slot_request.min_ecpm =
-          CorbaAlgs::pack_decimal(CampaignSvcs::RevenueDecimal::ZERO);
+          CampaignManager::pack_decimal(CampaignSvcs::RevenueDecimal::ZERO);
 
         ad_slot_request.passback = true;
       }
@@ -4007,7 +4006,7 @@ namespace Bidding
     request_params.context_info.client << OPENRTB_APPLICATION;
     request_params.context_info.client_version << OPENRTB_APPLICATION_VERSION;
     request_params.common_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
-    request_params.common_info.user_status = static_cast<CORBA::ULong>(
+    request_params.common_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
 
     init_request_param(request_params, request_info);
@@ -4385,7 +4384,7 @@ namespace Bidding
     request_params.common_info.log_as_test = context.test;
 
     request_params.ad_slots.length(context.ad_slots.size());
-    CORBA::ULong slot_i = 0;
+    std::size_t slot_i = 0;
     for(JsonAdSlotProcessingContextList::iterator slot_it =
           context.ad_slots.begin();
         slot_it != context.ad_slots.end(); )
@@ -4605,7 +4604,7 @@ namespace Bidding
         ad_slot_request.video_width = 0;
         ad_slot_request.video_height = 0;
 
-        CorbaAlgs::fill_sequence(
+        CampaignManager::fill_sequence(
           context.exclude_categories.begin(),
           context.exclude_categories.end(),
           ad_slot_request.exclude_categories);
@@ -4661,13 +4660,13 @@ namespace Bidding
               }
             }
 
-            CorbaAlgs::fill_sequence(
+            CampaignManager::fill_sequence(
               excluded_api_categories.begin(),
               excluded_api_categories.end(),
               ad_slot_request.exclude_categories,
               true);
 
-            CorbaAlgs::fill_sequence(
+            CampaignManager::fill_sequence(
               slot_it->video_exclude_categories.begin(),
               slot_it->video_exclude_categories.end(),
               ad_slot_request.exclude_categories,
@@ -4677,7 +4676,7 @@ namespace Bidding
           ad_slot_request.passback = request_info.filter_request || !serve_video;
           if(slot_it->video_max_duration.present())
           {
-            ad_slot_request.video_max_duration = static_cast<CORBA::Long>(
+            ad_slot_request.video_max_duration = static_cast<long>(
               *slot_it->video_max_duration);
             ad_slot_request.video_skippable_max_duration =
               ad_slot_request.video_max_duration;
@@ -4743,7 +4742,7 @@ namespace Bidding
 
               if (video.max_duration.present())
               {
-                ad_slot_request.video_max_duration = static_cast<CORBA::Long>(
+                ad_slot_request.video_max_duration = static_cast<long>(
                   *video.max_duration);
                 ad_slot_request.video_skippable_max_duration =
                   ad_slot_request.video_max_duration;
@@ -4839,7 +4838,7 @@ namespace Bidding
           }
 
           ad_slot_request.sizes.length(banner_format_count);
-          CORBA::ULong size_i = 0;
+          std::size_t size_i = 0;
 
           for(auto banner_it = slot_it->banners.rbegin();
               banner_it != slot_it->banners.rend(); ++banner_it)
@@ -4847,7 +4846,7 @@ namespace Bidding
             const JsonAdSlotProcessingContext::Banner& banner = **banner_it;
 
             // union exclude categories from all banner objects
-            CorbaAlgs::fill_sequence(
+            CampaignManager::fill_sequence(
               banner.exclude_categories.begin(),
               banner.exclude_categories.end(),
               ad_slot_request.exclude_categories,
@@ -4975,7 +4974,7 @@ namespace Bidding
 
         try
         {
-          ad_slot_request.min_ecpm = CorbaAlgs::pack_decimal(
+          ad_slot_request.min_ecpm = CampaignManager::pack_decimal(
             AdServer::CampaignSvcs::RevenueDecimal::mul(
               slot_it->min_cpm_price,
               min_ecpm_multiplier,
@@ -4983,7 +4982,7 @@ namespace Bidding
         }
         catch(const AdServer::CampaignSvcs::RevenueDecimal::Overflow&)
         {
-          ad_slot_request.min_ecpm = CorbaAlgs::pack_decimal(
+          ad_slot_request.min_ecpm = CampaignManager::pack_decimal(
             AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
         }
 
@@ -5004,7 +5003,7 @@ namespace Bidding
 
         if(!context.currencies.empty())
         {
-          CorbaAlgs::fill_sequence(
+          CampaignManager::fill_sequence(
             context.currencies.begin(),
             context.currencies.end(),
             ad_slot_request.currency_codes);
@@ -5298,7 +5297,7 @@ namespace Bidding
 
       request_params.context_info.platform << platform;
       request_params.context_info.full_platform << full_platform;
-      CorbaAlgs::fill_sequence(
+      CampaignManager::fill_sequence(
         platform_ids.begin(),
         platform_ids.end(),
         request_params.context_info.platform_ids);
@@ -5357,7 +5356,7 @@ namespace Bidding
       {
         std::string normalized_add_url =
           FrontendCommons::normalize_abs_url(add_url);
-        CORBA::ULong pos = request_params.common_info.urls.length();
+        std::size_t pos = request_params.common_info.urls.length();
         request_params.common_info.urls.length(pos + 1);
         request_params.common_info.urls[pos] << normalized_add_url;
 
@@ -5529,23 +5528,23 @@ namespace Bidding
         {
           // for google: keep undefined state.
           // Set it in in case openrtb.
-          request_params.common_info.user_status = static_cast<CORBA::ULong>(
+          request_params.common_info.user_status = static_cast<std::size_t>(
             AdServer::CampaignSvcs::US_UNDEFINED);
           return;
         }
 
-        request_params.common_info.user_id = CorbaAlgs::pack_user_id(uid);
+        request_params.common_info.user_id = CampaignManager::pack_user_id(uid);
         request_params.common_info.track_user_id =
           request_params.common_info.user_id;
 
         if(AdServer::Commons::PROBE_USER_ID.to_string() == signed_user_id)
         {
-          request_params.common_info.user_status = static_cast<CORBA::ULong>(
+          request_params.common_info.user_status = static_cast<std::size_t>(
             AdServer::CampaignSvcs::US_PROBE);
           return;
         }
 
-        request_params.common_info.user_status = static_cast<CORBA::ULong>(
+        request_params.common_info.user_status = static_cast<std::size_t>(
           AdServer::CampaignSvcs::US_OPTIN);
       }
       catch(...)
@@ -5741,7 +5740,7 @@ namespace Bidding
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info) const noexcept
   {
-    CorbaAlgs::fill_sequence(
+    CampaignManager::fill_sequence(
       request_info.publisher_account_ids.begin(),
       request_info.publisher_account_ids.end(),
       request_params.publisher_account_ids);
@@ -5749,7 +5748,7 @@ namespace Bidding
     request_params.publisher_site_id = request_info.publisher_site_id;
 
     request_params.common_info.source_id << request_info.source_id;
-    request_params.common_info.time = CorbaAlgs::pack_time(request_info.current_time);
+    request_params.common_info.time = CampaignManager::pack_time(request_info.current_time);
 
     request_params.context_info.profile_referer = true;
     request_params.context_info.full_referer_hash = 0;
@@ -5759,7 +5758,7 @@ namespace Bidding
     request_params.fill_track_pixel = false;
     request_params.fill_iurl = request_info.flag & 0x01;
 
-    request_params.common_info.request_id = CorbaAlgs::pack_request_id(
+    request_params.common_info.request_id = CampaignManager::pack_request_id(
       AdServer::Commons::RequestId::create_random_based());
 
     request_params.common_info.colo_id = colo_id_;

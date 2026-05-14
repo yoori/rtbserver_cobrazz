@@ -15,7 +15,6 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 

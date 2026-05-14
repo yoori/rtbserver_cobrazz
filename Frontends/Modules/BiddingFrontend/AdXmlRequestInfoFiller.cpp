@@ -1,4 +1,3 @@
-#include <Commons/CorbaAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 
 #include "KeywordFormatter.hpp"
@@ -115,7 +114,7 @@ namespace Bidding
     request_params.context_info.client << client;
     //request_params.context_info.client_version;
     request_params.common_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
-    request_params.common_info.user_status = static_cast<CORBA::ULong>(
+    request_params.common_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
     request_params.common_info.hpos = 0;
 
@@ -197,7 +196,7 @@ namespace Bidding
     ad_slot_request.passback = request_info.filter_request;
     ad_slot_request.tag_visibility = 100;
     ad_slot_request.tag_predicted_viewability = 100;
-    ad_slot_request.min_ecpm = CorbaAlgs::pack_decimal(AdServer::CampaignSvcs::RevenueDecimal::ZERO);
+    ad_slot_request.min_ecpm = CampaignManager::pack_decimal(AdServer::CampaignSvcs::RevenueDecimal::ZERO);
     ad_slot_request.currency_codes.length(1);
     ad_slot_request.currency_codes[0] << DEFAULT_BIDFLOORCUR_CURRENCY;
     ad_slot_request.min_ecpm_currency_code << DEFAULT_BIDFLOORCUR_CURRENCY;

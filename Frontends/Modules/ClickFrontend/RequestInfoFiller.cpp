@@ -1,5 +1,4 @@
 #include "RequestInfoFiller.hpp"
-#include <Commons/CorbaAlgs.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
 namespace

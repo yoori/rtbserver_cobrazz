@@ -1,6 +1,5 @@
 #include "DebugSink.hpp"
 
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 
 namespace AdServer
@@ -260,7 +259,8 @@ namespace AdServer
   void
   DebugSink::print_trigger_matching_debug_info(
     const adserver::channel_svcs::channel_server::MatchResponse& match_result,
-    const ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
+    const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
+      ccg_keywords,
     const char* prefix)
     noexcept
   {
@@ -378,17 +378,19 @@ namespace AdServer
       if(ccg_keywords && allow_show_history_profile_)
       {
         debug_info_str_ << prefix << "ccg_keywords =";
-        for(CORBA::ULong i = 0; i < ccg_keywords->length(); ++i)
+        for(const auto& ccg_keyword : ccg_keywords->ccg_keywords())
         {
           debug_info_str_ << field_begin_ <<
-            "'" << (*ccg_keywords)[i].original_keyword << "'" <<
-            " :: ccgk_id = " << (*ccg_keywords)[i].ccg_keyword_id <<
-            " :: ch_id = " << (*ccg_keywords)[i].channel_id <<
-            " :: ccg_id = " << (*ccg_keywords)[i].ccg_id <<
-            " :: max_cpc = " << CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-              (*ccg_keywords)[i].max_cpc) <<
-            " :: ctr = " << CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-              (*ccg_keywords)[i].ctr) << field_end_;
+            "'" << ccg_keyword.original_keyword() << "'" <<
+            " :: ccgk_id = " << ccg_keyword.ccg_keyword_id() <<
+            " :: ch_id = " << ccg_keyword.channel_id() <<
+            " :: ccg_id = " << ccg_keyword.ccg_id() <<
+            " :: max_cpc = " <<
+              GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+                ccg_keyword.max_cpc()) <<
+            " :: ctr = " <<
+              GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+                ccg_keyword.ctr()) << field_end_;
         }
 
         debug_info_str_ << sep_;
@@ -398,7 +400,7 @@ namespace AdServer
 
   void
   DebugSink::print_history_matching_debug_info_(
-    const UserInfoSvcs::UserInfoMatcher::MatchResult&
+    const adserver::user_info_svcs::user_info_manager::MatchResult&
       history_match_result)
     noexcept
   {
@@ -414,14 +416,12 @@ namespace AdServer
     debug_info_str_ << "last_request_time = ";
     try
     {
-      debug_info_str_ << CorbaAlgs::unpack_time(
-          history_match_result.last_request_time).gm_ft() <<
-        //sep_ << "last_ad_request_time = " << CorbaAlgs::unpack_time(
-        //  history_match_result.last_ad_request) <<
-        sep_ << "create_time = " << CorbaAlgs::unpack_time(
-          history_match_result.create_time).gm_ft() <<
-        sep_ << "session_start = " << CorbaAlgs::unpack_time(
-          history_match_result.session_start).gm_ft();
+      debug_info_str_ << GrpcAlgs::unpack_time(
+          history_match_result.last_request_time()).gm_ft() <<
+        sep_ << "create_time = " << GrpcAlgs::unpack_time(
+          history_match_result.create_time()).gm_ft() <<
+        sep_ << "session_start = " << GrpcAlgs::unpack_time(
+          history_match_result.session_start()).gm_ft();
     }
     catch (...)
     {
@@ -431,20 +431,29 @@ namespace AdServer
     if(allow_show_history_profile_)
     {
       debug_info_str_ << sep_ << "history_channels = ";
-
-      CorbaAlgs::print_sequence_field(
-        debug_info_str_,
-        history_match_result.channels,
-        &UserInfoSvcs::UserInfoMatcher::ChannelWeight::channel_id);
+      for(int i = 0; i < history_match_result.channels_size(); ++i)
+      {
+        if(i != 0)
+        {
+          debug_info_str_ << ",";
+        }
+        debug_info_str_ << history_match_result.channels(i).channel_id();
+      }
     }
 
     debug_info_str_ << sep_ << "full_freq_caps = ";
-    CorbaAlgs::print_sequence(
-      debug_info_str_, history_match_result.full_freq_caps);
+    for(int i = 0; i < history_match_result.full_freq_caps_size(); ++i)
+    {
+      if(i != 0)
+      {
+        debug_info_str_ << ",";
+      }
+      debug_info_str_ << history_match_result.full_freq_caps(i);
+    }
 
     debug_info_str_ << sep_ << "fraud_request = ";
 
-    if (history_match_result.fraud_request)
+    if (history_match_result.fraud_request())
     {
       debug_info_str_ << "true";
     }
@@ -678,8 +687,10 @@ namespace AdServer
     const RequestInfo& request_info,
     const adserver::channel_svcs::channel_server::MatchResponse*
       trigger_matched_channels,
-    const ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var ccg_keywords,
-    const UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
+    const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
+      ccg_keywords,
+    const adserver::user_info_svcs::user_info_manager::MatchResult&
+      history_match_result)
     noexcept
   {
     if(require_debug_info())
@@ -690,7 +701,7 @@ namespace AdServer
       {
         print_trigger_matching_debug_info(
           *trigger_matched_channels,
-          &ccg_keywords.in());
+          ccg_keywords);
       }
 
       print_history_matching_debug_info_(

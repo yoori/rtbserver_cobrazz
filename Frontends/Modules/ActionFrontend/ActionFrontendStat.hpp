@@ -3,7 +3,6 @@
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Frontends/FrontendCommons/FrontendStatistic.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -26,7 +25,7 @@ namespace AdServer
 
     AcFrontendStat(
       Logging::Logger* logger,
-      const CORBACommons::CorbaObjectRef& stats_collector_ref,
+      const FrontendStat::StatsCollectorRef& stats_collector_ref,
       Generics::Planner* shep_ptr,
       const Generics::Time& dump_period,
       Generics::ActiveObjectCallback* callback,

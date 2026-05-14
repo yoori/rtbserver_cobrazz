@@ -211,40 +211,4 @@ namespace AdServer
     return v;
   }
 
-  // BiddingFrontendStatsImpl
-
-  BiddingFrontendStatsImpl::BiddingFrontendStatsImpl(
-    StatHolder* stat_holder)
-    noexcept :
-    stat_holder_(ReferenceCounting::add_ref(stat_holder))
-  { }
-
-
-  CORBACommons::StatsValueSeq*
-  BiddingFrontendStatsImpl::get_stats()
-    /*throw(CORBA::Exception,
-      CORBACommons::ProcessStatsControl::ImplementationException)*/
-  {
-    static const char* FUN = "BiddingFrontendStatsImpl::get_stats()";
-
-    CORBACommons::StatsValueSeq_var res;
-    try
-    {
-      Generics::Values_var stat = stat_holder_->dump_stats();
-
-      res =
-        CORBACommons::ValuesConverter::get_stats(*stat);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << e.what();
-
-      CORBACommons::throw_desc<
-        CORBACommons::ProcessStatsControl::ImplementationException>(
-          ostr.str());
-    }
-    return res._retn();
-  }
-
 }

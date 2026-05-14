@@ -5,11 +5,11 @@
 
 #include "CampaignManagerTypes.hpp"
 #include <ChannelServerGrpc.grpc.pb.h>
+#include <UserInfoManagerGrpc.grpc.pb.h>
 #include <Generics/Time.hpp>
 #include <String/SubString.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 namespace AdServer
 {
@@ -90,7 +90,7 @@ namespace Bidding
 
     void
     print_history_matching_debug_info(
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
+      const adserver::user_info_svcs::user_info_manager::MatchResult&
         match_result) noexcept;
 
     void

@@ -1,5 +1,4 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "ClickStarBidRequestState.hpp"
@@ -182,7 +181,7 @@ namespace Bidding
     {
       response_ostr << "[";
 
-      for(CORBA::ULong slot_i = 0;
+      for(std::size_t slot_i = 0;
         slot_i < campaign_match_result.ad_slots.length(); ++slot_i)
       {
         if(slot_i > 0)
@@ -218,7 +217,7 @@ namespace Bidding
     CampaignSvcs::RevenueDecimal cpc_price =
       CampaignSvcs::RevenueDecimal::div(
         CampaignSvcs::RevenueDecimal::div(
-          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+          CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             ad_slot_result.selected_creatives[0].pub_ecpm),
           EXPECTED_CTR),
         CampaignSvcs::RevenueDecimal(false, 100000, 0));

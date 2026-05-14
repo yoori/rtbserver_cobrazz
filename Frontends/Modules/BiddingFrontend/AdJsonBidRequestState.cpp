@@ -1,5 +1,4 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "AdJsonBidRequestState.hpp"
@@ -191,7 +190,7 @@ namespace Bidding
       const AdServer::Bidding::CampaignManager::
         AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[0];
 
-      CampaignSvcs::RevenueDecimal sum_pub_ecpm = CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm);
 
       bid_frontend_->limit_max_cpm_(
@@ -304,7 +303,7 @@ namespace Bidding
 
     // result price in USD/1000, ecpm is in 0.01/1000
     CampaignSvcs::RevenueDecimal adxml_price = CampaignSvcs::RevenueDecimal::div(
-      CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm),
       CampaignSvcs::RevenueDecimal(false, 100, 0));
 

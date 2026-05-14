@@ -66,65 +66,107 @@ namespace AdServer::Grpc
   }
 
   template<typename T>
-  RefPool<T>::Ref::Ref(std::shared_ptr<RefHolder> ref_holder)
-    : ref_holder_(std::move(ref_holder))
+  RefPool<T>::Ref::ProbeGuard::ProbeGuard(
+    std::shared_ptr<RefHolder> ref_holder_val)
+    : ref_holder(std::move(ref_holder_val))
   {}
 
   template<typename T>
-  RefPool<T>::RefPool() = default;
-
-  template<typename T>
-  RefPool<T>::~RefPool() noexcept
+  RefPool<T>::Ref::ProbeGuard::~ProbeGuard() noexcept
   {
-    try
+    if (ref_holder)
     {
-      deactivate_object();
-      wait_object();
-    }
-    catch (...)
-    {
+      if (auto pool = ref_holder->pool.lock())
+      {
+        pool->finish_probe_(ref_holder);
+      }
     }
   }
 
   template<typename T>
-  void
-  RefPool<T>::set_refs(const std::vector<std::shared_ptr<T>>& refs)
+  RefPool<T>::Ref::Ref(
+    std::shared_ptr<RefHolder> ref_holder,
+    const bool probe_ref)
+    : ref_holder_(std::move(ref_holder)),
+      probe_guard_(probe_ref ?
+        std::make_shared<ProbeGuard>(ref_holder_) :
+        nullptr)
+  {}
+
+  template<typename T>
+  RefPool<T>::RefPool(std::vector<std::shared_ptr<T>> refs)
+    : refs_(std::move(refs))
   {
+    if (refs_.empty())
     {
-      std::unique_lock<std::shared_mutex> lock(lock_);
-      available_ref_holders_.clear();
-      bad_ref_holders_.clear();
-      available_ref_holders_.reserve(refs.size());
-      for (const auto& ref : refs)
-      {
-        available_ref_holders_.push_back(
-          std::make_shared<RefHolder>(ref, this->weak_from_this()));
-      }
+      throw InvalidArgument("RefPool refs list is empty");
+    }
+  }
+
+  template<typename T>
+  RefPool<T>::~RefPool() noexcept
+  {}
+
+  template<typename T>
+  void
+  RefPool<T>::init_refs_()
+  {
+    std::unique_lock<std::shared_mutex> lock(lock_);
+    if (refs_.empty())
+    {
+      return;
     }
 
-    cond_.notify_one();
+    const auto pool = this->weak_from_this();
+    available_ref_holders_.reserve(refs_.size());
+    for (const auto& ref : refs_)
+    {
+      available_ref_holders_.emplace_back(
+        std::make_shared<RefHolder>(ref, pool));
+    }
+    refs_.clear();
+    refs_.shrink_to_fit();
   }
 
   template<typename T>
   std::optional<typename RefPool<T>::Ref>
   RefPool<T>::get_object()
   {
+    // optimization using double-checked locking to reduce lock contention.
+    if (try_ref_count_.load(std::memory_order_acquire) != 0)
+    {
+      std::unique_lock<std::shared_mutex> lock(lock_);
+      if (!try_ref_holders_.empty())
+      {
+        auto ref_holder = std::move(try_ref_holders_.back());
+        try_ref_holders_.pop_back();
+        try_ref_count_.store(
+          try_ref_holders_.size(),
+          std::memory_order_release);
+        ref_holder->probing = true;
+        return Ref(ref_holder, true);
+      }
+    }
+
+    const auto ref_index =
+      next_ref_index_.fetch_add(1, std::memory_order_relaxed);
+
     std::shared_lock<std::shared_mutex> lock(lock_);
     if (available_ref_holders_.empty())
     {
       return std::nullopt;
     }
 
-    const auto index =
-      next_ref_index_.fetch_add(1, std::memory_order_relaxed) %
-      available_ref_holders_.size();
-    return Ref(available_ref_holders_[index]);
+    return Ref(
+      available_ref_holders_[ref_index % available_ref_holders_.size()],
+      false);
   }
 
   template<typename T>
   void
   RefPool<T>::activate_object_()
   {
+    init_refs_();
     thread_.emplace([this]() {
       move_bad_refs_loop_();
     });
@@ -158,10 +200,12 @@ namespace AdServer::Grpc
 
     {
       std::unique_lock<std::shared_mutex> lock(lock_);
-      const auto previous_first_bad_time = bad_ref_holders_.empty() ?
-        std::optional<Generics::Time>() :
-        std::optional<Generics::Time>(
-          bad_ref_holders_.begin()->first.bad_before_time);
+      std::optional<Generics::Time> previous_first_bad_time;
+      if (!bad_ref_holders_.empty())
+      {
+        previous_first_bad_time =
+          bad_ref_holders_.begin()->first.bad_before_time;
+      }
 
       auto available_it = std::find(
         available_ref_holders_.begin(),
@@ -177,12 +221,27 @@ namespace AdServer::Grpc
           *ref_holder->bad_before_time,
           ref_holder.get()});
       }
+      else if (!ref_holder->probing)
+      {
+        auto try_it = std::find(
+          try_ref_holders_.begin(),
+          try_ref_holders_.end(),
+          ref_holder);
+        if (try_it != try_ref_holders_.end())
+        {
+          try_ref_holders_.erase(try_it);
+          try_ref_count_.store(
+            try_ref_holders_.size(),
+            std::memory_order_release);
+        }
+      }
 
       const auto new_bad_before_time = ref_holder->bad_before_time ?
         std::max(*ref_holder->bad_before_time, bad_before_time) :
         bad_before_time;
 
       ref_holder->bad_before_time = new_bad_before_time;
+      ref_holder->probing = false;
       ref_holder->bad.store(true, std::memory_order_release);
       bad_ref_holders_.emplace(
         BadRefKey{new_bad_before_time, ref_holder.get()},
@@ -197,6 +256,28 @@ namespace AdServer::Grpc
     {
       cond_.notify_one();
     }
+  }
+
+  template<typename T>
+  void
+  RefPool<T>::finish_probe_(
+    const std::shared_ptr<RefHolder>& ref_holder) noexcept
+  {
+    {
+      std::unique_lock<std::shared_mutex> lock(lock_);
+      if (!ref_holder->probing ||
+        ref_holder->bad.load(std::memory_order_acquire))
+      {
+        return;
+      }
+
+      ref_holder->probing = false;
+      ref_holder->bad_before_time.reset();
+      ref_holder->bad.store(false, std::memory_order_release);
+      available_ref_holders_.emplace_back(ref_holder);
+    }
+
+    cond_.notify_one();
   }
 
   template<typename T>
@@ -243,9 +324,13 @@ namespace AdServer::Grpc
       for (auto& ref_holder : ready_refs)
       {
         ref_holder->bad_before_time.reset();
+        ref_holder->probing = false;
         ref_holder->bad.store(false, std::memory_order_release);
-        available_ref_holders_.emplace_back(std::move(ref_holder));
+        try_ref_holders_.emplace_back(std::move(ref_holder));
       }
+      try_ref_count_.store(
+        try_ref_holders_.size(),
+        std::memory_order_release);
     }
   }
 }

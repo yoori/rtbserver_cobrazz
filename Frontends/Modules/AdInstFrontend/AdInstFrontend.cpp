@@ -11,16 +11,12 @@
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
 
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 

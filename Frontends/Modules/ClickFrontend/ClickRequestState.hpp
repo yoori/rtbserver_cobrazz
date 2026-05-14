@@ -11,7 +11,6 @@
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserBindServerGrpc.pb.h>
 #include <UserInfoManagerGrpc.pb.h>
-#include <UserInfoManagerController.hpp>
 
 namespace AdServer
 {
@@ -26,8 +25,8 @@ namespace AdServer
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::UserId& cookie_user_id,
       const Generics::Time& now,
-      ::CORBA::ULong campaign_id,
-      ::CORBA::ULong advertiser_id,
+      unsigned long campaign_id,
+      unsigned long advertiser_id,
       const String::SubString& peer_ip,
       const std::list<std::string>& markers);
 
@@ -84,14 +83,14 @@ namespace AdServer
     AdServer::Commons::UserId cookie_user_id_;
     AdServer::Commons::UserId resolved_cookie_user_id_;
     Generics::Time now_;
-    ::CORBA::ULong campaign_id_;
-    ::CORBA::ULong advertiser_id_;
+    unsigned long campaign_id_;
+    unsigned long advertiser_id_;
     std::string peer_ip_;
     std::list<std::string> markers_;
     adserver::channel_svcs::channel_server::MatchResponse
       trigger_match_result_;
     bool trigger_match_result_present_;
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
+    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchResponse>
       history_match_result_;
   };
 }

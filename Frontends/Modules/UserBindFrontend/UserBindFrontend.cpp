@@ -4,19 +4,15 @@
 #include <utility>
 #include <Generics/Uuid.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
 
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/Base32.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/JsonFormatter.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -1177,7 +1173,8 @@ namespace AdServer
     const Generics::Time& now,
     const adserver::channel_svcs::channel_server::MatchResponse*
       trigger_match_result,
-    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+    const adserver::user_info_svcs::user_info_manager::MatchResponse*
+      history_match_result,
     const FrontendCommons::Location* location,
     const String::SubString& referer,
     const String::SubString& source)
@@ -1210,11 +1207,11 @@ namespace AdServer
 
     if(history_match_result)
     {
-      CORBA::ULong result_len =
-        history_match_result->channels.length();
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      const int result_len = history_match_result->match_result().channels_size();
+      for(int i = 0; i < result_len; ++i)
       {
-        match_info->add_channels(history_match_result->channels[i].channel_id);
+        match_info->add_channels(
+          history_match_result->match_result().channels(i).channel_id());
       }
     }
 
@@ -1424,25 +1421,19 @@ namespace AdServer
               return;
             }
 
-            auto history_match_result =
-              AdServer::UserInfoSvcs::GrpcAlgs::make_history_match_result(
-                history_match_response);
-
-            AdServer::UserInfoSvcs::UserInfoMatcher::ChannelWeightSeq&
-              history_matched_channels = history_match_result->channels;
             std::vector<unsigned long> return_channel_ids;
 
-            for(CORBA::ULong i = 0;
-              i < history_matched_channels.length();
-              ++i)
+            const auto& history_matched_channels =
+              history_match_response.match_result().channels();
+            for(const auto& history_matched_channel : history_matched_channels)
             {
               if(request_info->channels_wl.empty() ||
                 request_info->channels_wl.find(
-                  history_matched_channels[i].channel_id) !=
+                  history_matched_channel.channel_id()) !=
                   request_info->channels_wl.end())
               {
                 return_channel_ids.emplace_back(
-                  history_matched_channels[i].channel_id);
+                  history_matched_channel.channel_id());
               }
             }
 

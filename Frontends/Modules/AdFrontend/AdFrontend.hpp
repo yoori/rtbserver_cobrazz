@@ -22,10 +22,7 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
 #include <ChannelServerGrpc.grpc.pb.h>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
 
@@ -126,7 +123,8 @@ namespace AdServer
     static adserver::channel_svcs::channel_server::MatchRequest
     get_empty_matching_request();
 
-    static AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
+    static std::shared_ptr<
+      adserver::user_info_svcs::user_info_manager::MatchResponse>
     get_empty_history_matching()
       /*throw(eh::Exception)*/;
 
@@ -195,10 +193,11 @@ namespace AdServer
       const Generics::SubStringHashAdapter& instantiate_type,
       const adserver::channel_svcs::channel_server::MatchResponse*
         trigger_matched_channels,
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const adserver::user_info_svcs::user_info_manager::MatchResponse*
+        history_match_result,
       const Generics::Time& merged_last_request,
       bool profiling_available,
-      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq*
+      const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
         ccg_keywords,
       DebugSink* debug_sink,
       adserver::campaign_svcs::campaign_manager::RequestParams*
@@ -216,10 +215,11 @@ namespace AdServer
       const Generics::SubStringHashAdapter& instantiate_type,
       const adserver::channel_svcs::channel_server::MatchResponse*
         trigger_matched_channels,
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const adserver::user_info_svcs::user_info_manager::MatchResponse*
+        history_match_result,
       const Generics::Time& merged_last_request,
       bool profiling_available,
-      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq*
+      const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
         ccg_keywords,
       DebugSink* debug_sink,
       std::function<void(bool)> callback)
@@ -230,7 +230,8 @@ namespace AdServer
       google::protobuf::RepeatedPtrField<
         adserver::campaign_svcs::campaign_manager::CcgKeywordInfo>&
           ccg_keywords,
-      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords)
+      const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
+        src_ccg_keywords)
       noexcept;
 
     void
@@ -256,7 +257,8 @@ namespace AdServer
         adserver::channel_svcs::channel_server::MatchResponse> trigger_matching_result,
       bool trigger_matching_result_present,
       std::function<void(
-        AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var,
+        std::shared_ptr<
+          adserver::user_info_svcs::user_info_manager::MatchResponse>,
         bool)> callback)
       noexcept;
 

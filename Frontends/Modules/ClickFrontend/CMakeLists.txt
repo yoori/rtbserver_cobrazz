@@ -7,7 +7,6 @@ add_library(ClickFrontend SHARED
 target_link_libraries(ClickFrontend
   Stream
   Geoip
-  CORBACommons
   Commons
   ChannelClient
   UserInfoManagerGrpcClient

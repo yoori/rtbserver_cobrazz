@@ -1,5 +1,4 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "AdXmlBidRequestState.hpp"
@@ -173,7 +172,7 @@ namespace Bidding
         "<result requesttime=\"" <<
         (now - start_processing_time()).get_gm_time().format("%s.%q") << "\">\n";
 
-      for(CORBA::ULong slot_i = 0;
+      for(std::size_t slot_i = 0;
         slot_i < campaign_match_result.ad_slots.length(); ++slot_i)
       {
         fill_response_adslot_(
@@ -226,7 +225,7 @@ namespace Bidding
 
     // result price in USD/1000, ecpm is in 0.01/1000
     CampaignSvcs::RevenueDecimal adxml_price = CampaignSvcs::RevenueDecimal::div(
-      CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm),
       CampaignSvcs::RevenueDecimal(false, 100, 0));
 

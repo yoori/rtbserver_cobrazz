@@ -27,7 +27,7 @@ namespace AdServer
 
   AcFrontendStat::AcFrontendStat(
     Logging::Logger* logger,
-    const CORBACommons::CorbaObjectRef& stats_collector_ref,
+    const FrontendStat::StatsCollectorRef& stats_collector_ref,
     Generics::Planner* scheduler_ptr,
     const Generics::Time& dump_period,
     Generics::ActiveObjectCallback* callback,

@@ -1,6 +1,5 @@
 #include <zlib.h>
 
-#include <Commons/CorbaAlgs.hpp>
 
 #include "OpenRtbBidRequestState.hpp"
 
@@ -237,7 +236,7 @@ namespace Bidding
         ExternalCreativeCategoryIdSeq& categories)
     {
       AdServer::Commons::JsonObject array(parent.add_array(seq_name));
-      for(CORBA::ULong cat_i = 0; cat_i < categories.length(); ++cat_i)
+      for(std::size_t cat_i = 0; cat_i < categories.length(); ++cat_i)
       {
         int cat_id = 0;
         if(String::StringManip::str_to_int(
@@ -527,7 +526,7 @@ namespace Bidding
     {
       AdServer::Commons::JsonObject contracts_array(nroa_obj.add_array(Response::OpenRtb::NROA_CONTRACTS));
 
-      for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+      for(std::size_t contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
       {
         const AdServer::Bidding::CampaignManager::ExtContractInfo& contract = ad_slot_result.contracts[contract_i];
         AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
@@ -642,7 +641,7 @@ namespace Bidding
       if(ad_slot_result.contracts.length() > 1)
       {
         AdServer::Commons::JsonObject parent_contracts_array(nroa_obj.add_array(Response::OpenRtb::BuzSapeNroa::PARENTCONTRACTS));
-        for(CORBA::ULong contract_i = 1; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+        for(std::size_t contract_i = 1; contract_i < ad_slot_result.contracts.length(); ++contract_i)
         {
           AdServer::Commons::JsonObject contract_obj(parent_contracts_array.add_object());
           fill_buzsape_nroa_contract_(contract_obj, ad_slot_result.contracts[contract_i]);
@@ -708,7 +707,7 @@ namespace Bidding
         JsonAdSlotProcessingContextList::const_iterator slot_it =
           context.ad_slots.begin();
 
-        for(CORBA::ULong ad_slot_i = 0;
+        for(std::size_t ad_slot_i = 0;
             ad_slot_i < campaign_match_result.ad_slots.length();
             ++ad_slot_i, ++slot_it)
         {
@@ -725,11 +724,11 @@ namespace Bidding
           {
             // campaigns selected
             CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
-            for(CORBA::ULong creative_i = 0;
+            for(std::size_t creative_i = 0;
                 creative_i < ad_slot_result.selected_creatives.length();
                 ++creative_i)
             {
-              sum_pub_ecpm += CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+              sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
                 ad_slot_result.selected_creatives[creative_i].pub_ecpm);
             }
 
@@ -780,7 +779,7 @@ namespace Bidding
               AdServer::Commons::JsonObject adomain_obj(bid_object.add_array(Response::OpenRtb::ADOMAIN));
 
               // standard OpenRTB, Allyes, OpenX
-              for(CORBA::ULong creative_i = 0;
+              for(std::size_t creative_i = 0;
                   creative_i < ad_slot_result.selected_creatives.length();
                   ++creative_i)
               {
@@ -985,7 +984,7 @@ namespace Bidding
 
                   if(ad_slot_result.ext_tokens.length() > 0)
                   {
-                    for(CORBA::ULong token_i = 0;
+                    for(std::size_t token_i = 0;
                       token_i < ad_slot_result.ext_tokens.length(); ++token_i)
                     {
                       if(ad_slot_result.ext_tokens[token_i].name[0])
@@ -1088,7 +1087,7 @@ namespace Bidding
               Response::OpenRtb::CID,
               ad_slot_result.selected_creatives[0].campaign_group_id);
           } // if(ad_slot_result.selected_creatives.length() > 0)
-        } // for(CORBA::ULong ad_slot_i = 0, ...
+        } // for(std::size_t ad_slot_i = 0, ...
       }
       root_json.add_string(Response::OpenRtb::CUR, pub_currency_code);
     }
@@ -1102,12 +1101,6 @@ namespace Bidding
     {
       Stream::Error ostr;
       ostr << FUN << ": Error on writing open rtb response: '" << ex.what() << "'";
-      bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
-    }
-    catch(const CORBA::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Error on writing open rtb response: '" << ex << "'";
       bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
     }
   }
@@ -1144,7 +1137,7 @@ namespace Bidding
       bool some_campaign_selected = false;
 
       {
-        for(CORBA::ULong ad_slot_i = 0;
+        for(std::size_t ad_slot_i = 0;
           ad_slot_i < campaign_match_result.ad_slots.length();
           ++ad_slot_i)
         {
@@ -1154,7 +1147,7 @@ namespace Bidding
       }
 
       {
-        AdServer::Commons::UserId user_id = CorbaAlgs::unpack_user_id(
+        AdServer::Commons::UserId user_id = CampaignManager::unpack_user_id(
           request_params.common_info.user_id);
 
         if(!user_id.is_null())
@@ -1198,7 +1191,7 @@ namespace Bidding
         JsonAdSlotProcessingContextList::const_iterator slot_it =
           context.ad_slots.begin();
 
-        for(CORBA::ULong ad_slot_i = 0;
+        for(std::size_t ad_slot_i = 0;
             ad_slot_i < campaign_match_result.ad_slots.length();
             ++ad_slot_i, ++slot_it)
         {
@@ -1215,11 +1208,11 @@ namespace Bidding
           {
             // campaigns selected
             CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
-            for(CORBA::ULong creative_i = 0;
+            for(std::size_t creative_i = 0;
                 creative_i < ad_slot_result.selected_creatives.length();
                 ++creative_i)
             {
-              sum_pub_ecpm += CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+              sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
                 ad_slot_result.selected_creatives[creative_i].pub_ecpm);
             }
 
@@ -1268,7 +1261,7 @@ namespace Bidding
               AdServer::Commons::JsonObject track_pixel_urls(
                 bid_object.add_array(Response::Yandex::VIEW_NOTICES));
 
-              for(CORBA::ULong i = 0;
+              for(std::size_t i = 0;
                 i < ad_slot_result.track_pixel_urls.length(); ++i)
               {
                 track_pixel_urls.add_escaped_string(
@@ -1334,7 +1327,7 @@ namespace Bidding
             }
 
             // fill adm, token, properties
-            for(CORBA::ULong token_i = 0; token_i < ad_slot_result.tokens.length(); ++token_i)
+            for(std::size_t token_i = 0; token_i < ad_slot_result.tokens.length(); ++token_i)
             {
               std::string escaped_name = String::StringManip::json_escape(
                 String::SubString(ad_slot_result.tokens[token_i].name));
@@ -1344,7 +1337,7 @@ namespace Bidding
             }
             //} //
           } // if(ad_slot_result.selected_creatives.length() > 0)
-        } // for(CORBA::ULong ad_slot_i = 0, ...
+        } // for(std::size_t ad_slot_i = 0, ...
       } // close bidset oject and array
       root_json.add_string(Response::Yandex::CUR, pub_currency_code);
     }
@@ -1434,7 +1427,7 @@ namespace Bidding
             AdServer::Commons::JsonObject event_trackers_obj(
               native_obj.add_array(Response::OpenRtb::NATIVE_EVENT_TRACKERS));
 
-            for(CORBA::ULong i = 0;
+            for(std::size_t i = 0;
               i < ad_slot_result.track_pixel_urls.length(); ++i)
             {
               AdServer::Commons::JsonObject event_obj(event_trackers_obj.add_object());
@@ -1450,7 +1443,7 @@ namespace Bidding
             AdServer::Commons::JsonObject imp_trackers_obj(
               native_obj.add_array(Response::OpenRtb::NATIVE_IMP_TRACKERS));
 
-            for(CORBA::ULong i = 0;
+            for(std::size_t i = 0;
               i < ad_slot_result.track_pixel_urls.length(); ++i)
             {
               imp_trackers_obj.add_opt_escaped_string(
@@ -1575,12 +1568,14 @@ namespace Bidding
         }
       }
     }
-    catch(const CORBA::Exception& ex)
+    catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Error on writing open rtb response: '" << ex << "'";
-      bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
-
+      ostr << FUN << ": error on writing native response: " << ex.what();
+      bid_frontend_->logger()->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::BIDDING_FRONTEND);
       throw;
     }
   }

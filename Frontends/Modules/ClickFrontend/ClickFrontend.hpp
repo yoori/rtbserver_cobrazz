@@ -14,7 +14,6 @@
 #include <Logger/DistributorLogger.hpp>
 
 #include <HTTP/Http.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
 #include <Commons/AtomicInt.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
@@ -167,8 +166,8 @@ namespace AdServer
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::UserId& cookie_user_id,
       const Generics::Time& now,
-      ::CORBA::ULong campaign_id,
-      ::CORBA::ULong advertiser_id,
+      unsigned long campaign_id,
+      unsigned long advertiser_id,
       const String::SubString& peer_ip,
       const std::list<std::string>& markers)
       noexcept;
@@ -179,7 +178,8 @@ namespace AdServer
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
       const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const adserver::user_info_svcs::user_info_manager::MatchResponse*
+        history_match_result,
       const String::SubString& peer_ip_val) const
       noexcept;
 

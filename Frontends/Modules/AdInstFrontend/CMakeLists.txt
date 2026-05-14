@@ -7,9 +7,7 @@ target_link_libraries(AdInstFrontend
   Stream
   HTTP
   Geoip
-  CORBACommons
   Commons
-  UserInfoManagerControllerCall
   UserInfoManagerGrpcClient
   CookieManager
   RequestMatchers

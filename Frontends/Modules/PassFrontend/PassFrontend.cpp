@@ -5,14 +5,12 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/Containers.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include "PassFrontend.hpp"
 
@@ -343,22 +341,18 @@ namespace Passback
       {
         try
         {
-          CORBACommons::IdSeq pubpixel_accounts;
-          CorbaAlgs::fill_sequence(
-            passback_info.pubpixel_accounts.begin(),
-            passback_info.pubpixel_accounts.end(),
-            pubpixel_accounts);
-
           auto confirm_request = std::make_shared<
             adserver::user_info_svcs::user_info_manager::
               ConfirmUserFreqCapsRequest>();
-          AdServer::UserInfoSvcs::GrpcAlgs::
-            make_confirm_user_freq_caps_request(
-              *confirm_request,
-              CorbaAlgs::pack_user_id(passback_info.current_user_id),
-              CorbaAlgs::pack_time(passback_info.time),
-              CorbaAlgs::pack_request_id(Commons::RequestId()),
-              pubpixel_accounts);
+          confirm_request->set_user_id(GrpcAlgs::pack_user_id(
+            passback_info.current_user_id));
+          confirm_request->set_time(GrpcAlgs::pack_time(passback_info.time));
+          confirm_request->set_request_id(GrpcAlgs::pack_request_id(
+            Commons::RequestId()));
+          for(const auto account_id : passback_info.pubpixel_accounts)
+          {
+            confirm_request->add_exclude_pubpixel_accounts(account_id);
+          }
 
           user_info_client_->confirm_user_freq_caps(
             *confirm_request,
@@ -370,7 +364,7 @@ namespace Passback
               if(!status.ok())
               {
                 Stream::Error ostr;
-                ostr << "UserInfoMatcher::confirm_user_freq_caps(): "
+                ostr << "UserInfoManagerGrpc::confirm_user_freq_caps(): "
                   "gRPC call failed: code=" <<
                   static_cast<int>(status.error_code()) <<
                   ", message=" << status.error_message();

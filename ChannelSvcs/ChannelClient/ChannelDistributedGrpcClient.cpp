@@ -403,8 +403,7 @@ namespace AdServer::ChannelSvcs
           return false;
         }
 
-        new_pool = std::make_shared<Pool>();
-        new_pool->set_refs(refs);
+        new_pool = std::make_shared<Pool>(std::move(refs));
         new_pool->activate_object();
 
         old_pool = std::move(pool_);

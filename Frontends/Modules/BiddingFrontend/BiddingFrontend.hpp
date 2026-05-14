@@ -24,11 +24,8 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/AtomicInt.hpp>
 #include <Commons/Interval.hpp>
-
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
@@ -219,16 +216,21 @@ namespace AdServer::Bidding
       bool trigger_match_result_present,
       const AdServer::Commons::UserId& user_id,
       std::function<void(
-        AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var)> callback)
+        std::shared_ptr<
+          adserver::user_info_svcs::user_info_manager::MatchResponse>)>
+            callback)
       noexcept;
 
     void
     get_ccg_keywords_async_(
       BidRequestState_var request_task,
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
-        history_match_result,
+      std::shared_ptr<
+        adserver::user_info_svcs::user_info_manager::MatchResponse>
+          history_match_result,
       std::function<void(
-        AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var)> callback)
+        std::shared_ptr<
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>)>
+            callback)
       noexcept;
 
     void
@@ -236,12 +238,15 @@ namespace AdServer::Bidding
       std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
         campaign_match_result,
       BidRequestState_var request_task,
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
-        history_match_result,
+      std::shared_ptr<
+        adserver::user_info_svcs::user_info_manager::MatchResponse>
+          history_match_result,
       std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
         trigger_match_result,
       bool trigger_match_result_present,
-      AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var ccg_keywords,
+      std::shared_ptr<
+        adserver::channel_svcs::channel_server::GetCcgTraitsResponse>
+          ccg_keywords,
       const AdServer::Commons::UserId& user_id,
       bool interrupted,
       std::function<void()> callback)
@@ -260,10 +265,11 @@ namespace AdServer::Bidding
     select_campaign_(
       AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result,
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
+      const adserver::user_info_svcs::user_info_manager::MatchResponse*
         history_match_result,
       const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
-      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
+      const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
+        ccg_keywords,
       const RequestInfo& request_info,
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Commons::UserId& user_id,
@@ -316,10 +322,6 @@ namespace AdServer::Bidding
       const noexcept;
 
   private:
-    static AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
-    get_empty_history_matching_()
-      /*throw(eh::Exception)*/;
-
     /*
     static void
     protobuf_log_handler_(

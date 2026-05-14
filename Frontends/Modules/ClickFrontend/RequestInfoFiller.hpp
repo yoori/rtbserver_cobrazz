@@ -6,7 +6,6 @@
 #include <Logger/Logger.hpp>
 #include <Generics/Time.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
-#include <Commons/CorbaTypes.hpp>
 
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>

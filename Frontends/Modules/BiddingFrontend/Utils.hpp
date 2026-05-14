@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <CORBACommons/CorbaAdapters.hpp>
 #include "CampaignManagerTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 

@@ -9,7 +9,6 @@
 #include <Frontends/FrontendCommons/Location.hpp>
 #include <ChannelServerGrpc.pb.h>
 #include <UserInfoManagerGrpc.pb.h>
-#include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 
 namespace AdServer
 {
@@ -117,7 +116,7 @@ namespace AdServer
     adserver::channel_svcs::channel_server::MatchResponse
       trigger_match_result_;
     bool trigger_match_result_present_;
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
+    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchResponse>
       history_match_result_;
   };
 }

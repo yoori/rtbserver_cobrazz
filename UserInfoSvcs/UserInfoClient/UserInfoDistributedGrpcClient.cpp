@@ -580,15 +580,13 @@ namespace AdServer::UserInfoSvcs
     std::vector<PoolPtr> new_pools;
     for (auto& chunk_ref : chunk_refs)
     {
-      auto pool = std::make_shared<Pool>();
-      pool->set_refs(chunk_ref.second);
+      auto pool = std::make_shared<Pool>(std::move(chunk_ref.second));
       pool->activate_object();
       new_chunk_pools.emplace(chunk_ref.first, pool);
       new_pools.emplace_back(pool);
     }
 
-    auto new_any_pool = std::make_shared<Pool>();
-    new_any_pool->set_refs(any_refs);
+    auto new_any_pool = std::make_shared<Pool>(std::move(any_refs));
     new_any_pool->activate_object();
 
     std::vector<PoolPtr> old_pools;

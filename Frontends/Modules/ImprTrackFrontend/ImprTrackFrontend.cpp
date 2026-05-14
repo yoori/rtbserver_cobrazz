@@ -7,16 +7,12 @@
 #include <HTTP/UrlAddress.hpp>
 
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
-#include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
-
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
 #include <unistd.h>
@@ -761,22 +757,18 @@ namespace AdServer::ImprTrack
       {
         try
         {
-          CORBACommons::IdSeq pubpixel_accounts;
-          CorbaAlgs::fill_sequence(
-            request_info.pubpixel_accounts.begin(),
-            request_info.pubpixel_accounts.end(),
-            pubpixel_accounts);
-
           auto confirm_request = std::make_shared<
             adserver::user_info_svcs::user_info_manager::
               ConfirmUserFreqCapsRequest>();
-          AdServer::UserInfoSvcs::GrpcAlgs::
-            make_confirm_user_freq_caps_request(
-              *confirm_request,
-              CorbaAlgs::pack_user_id(freq_cap_user_id),
-              CorbaAlgs::pack_time(request_info.time),
-              CorbaAlgs::pack_request_id(request_info.common_request_id),
-              pubpixel_accounts);
+          confirm_request->set_user_id(GrpcAlgs::pack_user_id(
+            freq_cap_user_id));
+          confirm_request->set_time(GrpcAlgs::pack_time(request_info.time));
+          confirm_request->set_request_id(GrpcAlgs::pack_request_id(
+            request_info.common_request_id));
+          for(const auto account_id : request_info.pubpixel_accounts)
+          {
+            confirm_request->add_exclude_pubpixel_accounts(account_id);
+          }
 
           user_info_client_->confirm_user_freq_caps(
             *confirm_request,
@@ -788,7 +780,7 @@ namespace AdServer::ImprTrack
               if(!status.ok())
               {
                 Stream::Error ostr;
-                ostr << "UserInfoMatcher::confirm_user_freq_caps(): "
+                ostr << "UserInfoManagerGrpc::confirm_user_freq_caps(): "
                   "gRPC call failed: code=" <<
                   static_cast<int>(status.error_code()) <<
                   ", message=" << status.error_message();

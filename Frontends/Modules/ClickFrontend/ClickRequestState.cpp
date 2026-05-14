@@ -8,7 +8,6 @@
 #include <Stream/MemoryStream.hpp>
 
 #include <Commons/GrpcAlgs.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include "ClickFrontend.hpp"
 
@@ -90,8 +89,8 @@ namespace AdServer
     const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::UserId& cookie_user_id,
     const Generics::Time& now,
-    ::CORBA::ULong campaign_id,
-    ::CORBA::ULong advertiser_id,
+    unsigned long campaign_id,
+    unsigned long advertiser_id,
     const String::SubString& peer_ip,
     const std::list<std::string>& markers)
     : frontend_(frontend),
@@ -280,8 +279,8 @@ namespace AdServer
       {
         throw_grpc_exception_("UserInfoManager::match()", status);
       }
-      history_match_result_ =
-        AdServer::UserInfoSvcs::GrpcAlgs::make_history_match_result(response);
+      history_match_result_ = std::make_shared<
+        adserver::user_info_svcs::user_info_manager::MatchResponse>(response);
     }
     catch(const eh::Exception& e)
     {
@@ -359,7 +358,7 @@ namespace AdServer
       user_id_,
       now_,
       &trigger_match_result_,
-      history_match_result_,
+      history_match_result_.get(),
       peer_ip_);
 
     auto self = shared_from_this();
