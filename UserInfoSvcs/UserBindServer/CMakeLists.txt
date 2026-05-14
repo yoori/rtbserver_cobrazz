@@ -11,8 +11,10 @@ target_link_libraries(UserBindServerIDL
 add_library(UserBindContainer STATIC
   ExternalIdHashAdapter.cpp
   ChunkUtils.cpp
+  MigratingUserBindChunk.cpp
   UserBindContainer.cpp
   UserBindChunk.cpp
+  UserBindRocksDBChunk.cpp
   BindRequestContainer.cpp
   BindRequestChunk.cpp
 )
@@ -52,6 +54,7 @@ target_link_libraries(UserBindContainer
   Commons
   LogCommons
   ProfileMap
+  ProfileMapRocksDB
 )
 
 # UserBindOperationProfilePST
@@ -60,6 +63,15 @@ add_pst(
   UserBindOperationProfile.pst
   ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer
 )
+
+# UserBindRocksDBProfilePST
+add_pst(
+  UserBindRocksDBProfilePST
+  UserBindRocksDBProfile.pst
+  ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer
+)
+
+target_link_libraries(UserBindContainer UserBindRocksDBProfilePST)
 
 # UserBindServer
 add_executable(UserBindServer
@@ -76,6 +88,7 @@ target_link_libraries(UserBindServer
   ProcessControlVars
   Commons
   ProfileMap
+  ProfileMapRocksDB
   MessageSaver
   LogCommons
   UserBindContainer

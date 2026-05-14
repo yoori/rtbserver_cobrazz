@@ -10,7 +10,6 @@
 #include <Logger/Logger.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
 
 #include <CORBACommons/ServantImpl.hpp>

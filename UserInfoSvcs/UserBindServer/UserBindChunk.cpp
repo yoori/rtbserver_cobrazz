@@ -27,9 +27,7 @@ namespace
   const String::AsciiStringManip::SepBar BAR_CHAR_CATEGORY;
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct UserBindChunk::PortionLoad
   {
@@ -279,7 +277,7 @@ namespace UserInfoSvcs
   UserBindChunk::HolderContainerGuard<HolderContainerType>::
   holder_container() const noexcept
   {
-    SyncPolicy::ReadGuard lock(holder_container_lock_);
+    SyncReadGuard lock(holder_container_lock_);
     return holder_container_;
   }
 
@@ -289,7 +287,7 @@ namespace UserInfoSvcs
   swap_holder_container(HolderContainer_var& new_holder_container)
     noexcept
   {
-    SyncPolicy::WriteGuard lock(holder_container_lock_);
+    SyncWriteGuard lock(holder_container_lock_);
     holder_container_.swap(new_holder_container);
   }
 
@@ -441,8 +439,6 @@ namespace UserInfoSvcs
           bound_user_holder_container_guard->holder_container().in(),
           now,
           bound_extend_time_period_);
-
-      //SyncPolicy::WriteGuard lock(time_holder->lock);
       time_holder->users.set(
         external_id_suffix_hash, bound_user_info_holder);
 
@@ -514,7 +510,6 @@ namespace UserInfoSvcs
         bool erase = false;
 
         {
-          //SyncPolicy::ReadGuard lock(time_period_holder.lock);
 
           BoundUserInfoHolder prev_user_info;
           found_user = time_period_holder.users.get(
@@ -551,7 +546,6 @@ namespace UserInfoSvcs
 
         if(erase)
         {
-          //SyncPolicy::WriteGuard lock(time_period_holder.lock);
           time_period_holder.users.erase(external_id_suffix_hash);
           break;
         }
@@ -576,12 +570,43 @@ namespace UserInfoSvcs
         bound_user_holder_container.in(),
         now,
         bound_extend_time_period_);
-
-    //SyncPolicy::WriteGuard lock(time_holder->lock);
     time_holder->users.set(
       external_id_suffix_hash, found_user_info);
 
     return res_user_info;
+  }
+
+  void
+  UserBindChunk::remove_user_id(
+    const String::SubString& external_id)
+    noexcept
+  {
+    String::SubString external_id_prefix;
+    String::SubString external_id_suffix;
+    div_external_id_(external_id_prefix, external_id_suffix, external_id);
+
+    unsigned long portion_i = 0;
+    StringDefHashAdapter external_id_hash(
+      get_external_id_hash_(portion_i, external_id));
+
+    ExternalIdHashAdapter external_id_suffix_hash(
+      get_bound_external_id_hash_(external_id_suffix));
+
+    Portion_var portion = portions_[portion_i];
+
+    UserLockMap::WriteGuard user_lock(
+      portion->users_lock.write_lock(external_id_hash));
+
+    erase_user_id_(
+      portion->holder_container_guard,
+      external_id_hash);
+
+    Portion::BoundUserHolderContainerGuard_var bound_user_holder_container_guard =
+      get_bound_user_holder_container_guard_(portion, external_id_prefix);
+
+    erase_user_id_(
+      *bound_user_holder_container_guard,
+      external_id_suffix_hash);
   }
 
   void
@@ -599,7 +624,7 @@ namespace UserInfoSvcs
       Portion::BoundUserHolderSourceMap source_map_copy;
 
       {
-        Portion::SourceSyncPolicy::ReadGuard lock((*portion_it)->source_lock);
+        Portion::SourceReadGuard lock((*portion_it)->source_lock);
         source_map_copy = (*portion_it)->source_to_bound_user_holder_container_guards;
       }
 
@@ -889,7 +914,7 @@ namespace UserInfoSvcs
 
     if(!file_root_.empty())
     {
-      FlushSyncPolicy::WriteGuard flush_lock(flush_lock_);
+      FlushWriteGuard flush_lock(flush_lock_);
 
       // collect old files
       ChunkSelector::ChunkFileDescriptionMap old_chunk_files;
@@ -960,7 +985,7 @@ namespace UserInfoSvcs
         for(PortionArray::const_iterator portion_it = portions_.begin();
           portion_it != portions_.end(); ++portion_it)
         {
-          Portion::SourceSyncPolicy::ReadGuard lock((*portion_it)->source_lock);
+          Portion::SourceReadGuard lock((*portion_it)->source_lock);
 
           for(auto source_it = (*portion_it)->source_to_bound_user_holder_container_guards.begin();
             source_it != (*portion_it)->source_to_bound_user_holder_container_guards.end();
@@ -1033,11 +1058,11 @@ namespace UserInfoSvcs
       bound_extend_time_period_);
   }
 
-  template<typename HolderContainerType>
+  template<typename HolderContainerType, typename KeyType>
   void
   UserBindChunk::erase_user_id_(
     HolderContainerGuard<HolderContainerType>& holder_container_guard,
-    const StringDefHashAdapter& external_id_hash)
+    const KeyType& external_id_hash)
     noexcept
   {
     typename HolderContainerGuard<HolderContainerType>::
@@ -1053,7 +1078,6 @@ namespace UserInfoSvcs
         time_period_holder = **time_holder_it;
 
       {
-        //SyncPolicy::ReadGuard lock(time_period_holder.lock);
 
         if(time_period_holder.users.erase(external_id_hash))
         {
@@ -1107,7 +1131,6 @@ namespace UserInfoSvcs
         time_period_holder = **time_holder_it;
 
       {
-        //SyncPolicy::ReadGuard lock(time_period_holder.lock);
 
         bool user_found = time_period_holder.users.get(
           res_user_info, external_id_hash);
@@ -1142,7 +1165,6 @@ namespace UserInfoSvcs
 
       if(erase)
       {
-        //SyncPolicy::WriteGuard lock(time_period_holder.lock);
         time_period_holder.users.erase(external_id_hash);
         break;
       }
@@ -1185,8 +1207,6 @@ namespace UserInfoSvcs
     {
       inserted = true;
     }
-
-    //SyncPolicy::WriteGuard lock(time_holder->lock);
 
     time_holder->users.set(external_id_hash, res_user_info);
 
@@ -1234,7 +1254,6 @@ namespace UserInfoSvcs
         ++time_period_holder_it)
       {
         const TimePeriodHolderType* time_period_holder = time_period_holder_it->time_holder.in();
-        //SyncPolicy::ReadGuard lock(time_period_holder->lock);
         const Generics::Time& min_time = time_period_holder->min_time;
         const auto& users = time_period_holder->users;
 
@@ -1593,20 +1612,6 @@ namespace UserInfoSvcs
                 {
                   enc_stats[external_id_suffix_hash.encoder_id()] = 1;
                 }
-
-                /*
-                auto& mm = source_enc_stats[external_id_prefix.str()];
-
-                auto mm_enc_stat_it = mm.find(external_id_suffix_hash.encoder_id());
-                if(mm_enc_stat_it != mm.end())
-                {
-                  ++mm_enc_stat_it->second;
-                }
-                else
-                {
-                  mm[external_id_suffix_hash.encoder_id()] = 1;
-                }
-                */
               }
 
               // correct cur_time_holder if required and insert record to it
@@ -1652,25 +1657,6 @@ namespace UserInfoSvcs
       }
     }
 
-    /*
-    std::cerr << "enc stats:" << std::endl;
-    for(auto it = enc_stats.begin(); it != enc_stats.end(); ++it)
-    {
-      std::cerr << static_cast<int>(it->first) << ": " << it->second << std::endl;
-    }
-
-    std::cerr << "source enc stats:" << std::endl;
-    for(auto it = source_enc_stats.begin(); it != source_enc_stats.end(); ++it)
-    {
-      std::cerr << it->first << ":";
-      for(auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-      {
-        std::cerr << " " << static_cast<int>(it2->first) << "=>" << it2->second;
-      }
-      std::cerr << std::endl;
-    }
-    */
-
     // convert load container to main container
     unsigned long portion_i = 0;
     for(auto portition_load_it = portion_loads.begin(); portition_load_it != portion_loads.end();
@@ -1712,7 +1698,7 @@ namespace UserInfoSvcs
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       new_holder_container = new HolderContainerType();
 
-    ExtendSyncPolicy::WriteGuard extend_lock(holder_container_guard.extend_lock);
+    ExtendWriteGuard extend_lock(holder_container_guard.extend_lock);
 
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       holder_container = holder_container_guard.holder_container();
@@ -1811,17 +1797,12 @@ namespace UserInfoSvcs
     Generics::Time min_time = extend_time_period * (
       now.tv_sec / extend_time_period.tv_sec);
 
-    /*
-    std::cerr << "create TimePeriodHolder(" << min_time.gm_ft() << ", " <<
-      (min_time + extend_time_period_).gm_ft() << ")" << std::endl;
-    */
-
     typename HolderContainerType::TimePeriodHolder_var new_time_holder =
       new typename HolderContainerType::TimePeriodHolder(
         min_time, min_time + extend_time_period);
 
     // serialize new holders creation
-    ExtendSyncPolicy::WriteGuard extend_lock(holder_container_guard.extend_lock);
+    ExtendWriteGuard extend_lock(holder_container_guard.extend_lock);
 
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       actual_holder_container = holder_container_guard.holder_container();
@@ -2006,7 +1987,7 @@ namespace UserInfoSvcs
     Portion::BoundUserHolderContainerGuard_var bound_user_holder_container_guard;
 
     {
-      Portion::SourceSyncPolicy::ReadGuard lock(portion->source_lock);
+      Portion::SourceReadGuard lock(portion->source_lock);
       auto source_it = portion->source_to_bound_user_holder_container_guards.find(
         external_id_prefix_hash_adapter);
       if(source_it != portion->source_to_bound_user_holder_container_guards.end())
@@ -2020,9 +2001,11 @@ namespace UserInfoSvcs
       Portion::BoundUserHolderContainerGuard_var ins_bound_user_holder_container_guard =
         new Portion::BoundUserHolderContainerGuard();
 
-      Portion::SourceSyncPolicy::WriteGuard lock(portion->source_lock);
+      Portion::SourceWriteGuard lock(portion->source_lock);
       auto source_it = portion->source_to_bound_user_holder_container_guards.insert(
-        std::make_pair(external_id_prefix_hash_adapter, ins_bound_user_holder_container_guard)).first;
+        std::make_pair(
+          external_id_prefix_hash_adapter,
+          ins_bound_user_holder_container_guard)).first;
       bound_user_holder_container_guard = source_it->second;
     }
 
@@ -2041,5 +2024,4 @@ namespace UserInfoSvcs
     return (AdServer::Commons::external_id_distribution_hash(
       id) >> 8) % partitions_number_ == partition_index_;
   }
-} /* namespace UserInfoSvcs */
-} /* namespace AdServer */
+} /* namespace AdServer::UserInfoSvcs */

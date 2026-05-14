@@ -8,7 +8,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Logger/Logger.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -20,9 +19,7 @@
 
 #include "BindRequestChunk.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class BindRequestContainer:
     public BindRequestProcessor,
@@ -82,5 +79,4 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<BindRequestContainer>
     BindRequestContainer_var;
 
-} /* UserInfoSvcs */
-} /* AdServer */
+} /* namespace AdServer::UserInfoSvcs */

@@ -22,9 +22,7 @@ namespace
   const char TMP_SAVE_DIR_SUFFIX[] = ".BindRequest~";
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   namespace
   {
@@ -188,7 +186,7 @@ namespace UserInfoSvcs
   BindRequestChunk::HolderContainerGuard<HolderContainerType>::
   holder_container() const noexcept
   {
-    SyncPolicy::ReadGuard lock(holder_container_lock_);
+    SyncReadGuard lock(holder_container_lock_);
     return holder_container_;
   }
 
@@ -198,7 +196,7 @@ namespace UserInfoSvcs
   swap_holder_container(HolderContainer_var& new_holder_container)
     noexcept
   {
-    SyncPolicy::WriteGuard lock(holder_container_lock_);
+    SyncWriteGuard lock(holder_container_lock_);
     holder_container_.swap(new_holder_container);
   }
 
@@ -265,7 +263,7 @@ namespace UserInfoSvcs
       BindRequestHolderContainer::TimePeriodHolder&
         time_period_holder = **time_holder_it;
 
-      SyncPolicy::ReadGuard lock(time_period_holder.lock);
+      SyncReadGuard lock(time_period_holder.lock);
 
       auto req_it = time_period_holder.holders.find(
         external_id_hash);
@@ -310,7 +308,7 @@ namespace UserInfoSvcs
         now,
         extend_time_period_);
 
-    SyncPolicy::WriteGuard lock(time_holder->lock);
+    SyncWriteGuard lock(time_holder->lock);
     time_holder->holders[external_id_hash] = bind_request_holder;
   }
 
@@ -367,7 +365,7 @@ namespace UserInfoSvcs
 
     if(!file_root_.empty())
     {
-      FlushSyncPolicy::WriteGuard flush_lock(flush_lock_);
+      FlushWriteGuard flush_lock(flush_lock_);
 
       // collect old files
       ChunkSelector::ChunkFileDescriptionMap old_chunk_files;
@@ -500,7 +498,7 @@ namespace UserInfoSvcs
           time_period_holder_it != max_time_it->second.end();
           ++time_period_holder_it)
       {
-        SyncPolicy::ReadGuard lock((*time_period_holder_it)->lock);
+        SyncReadGuard lock((*time_period_holder_it)->lock);
         const typename HolderContainerType::HolderMap&
           holders = (*time_period_holder_it)->holders;
 
@@ -733,7 +731,7 @@ namespace UserInfoSvcs
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       new_holder_container = new HolderContainerType();
 
-    ExtendSyncPolicy::WriteGuard extend_lock(holder_container_guard.extend_lock);
+    ExtendWriteGuard extend_lock(holder_container_guard.extend_lock);
 
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       holder_container = holder_container_guard.holder_container();
@@ -842,7 +840,7 @@ namespace UserInfoSvcs
         min_time, min_time + extend_time_period);
 
     // serialize new holders creation
-    ExtendSyncPolicy::WriteGuard extend_lock(holder_container_guard.extend_lock);
+    ExtendWriteGuard extend_lock(holder_container_guard.extend_lock);
 
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       actual_holder_container = holder_container_guard.holder_container();
@@ -921,5 +919,4 @@ namespace UserInfoSvcs
       in.setstate(std::ios_base::failbit);
     }
   }
-} /* namespace UserInfoSvcs */
-} /* namespace AdServer */
+} /* namespace AdServer::UserInfoSvcs */

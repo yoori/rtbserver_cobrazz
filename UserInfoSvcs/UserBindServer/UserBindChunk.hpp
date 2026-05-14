@@ -1,5 +1,8 @@
 #pragma once
 
+#include <list>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <set>
 
@@ -9,7 +12,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Logger/Logger.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -68,6 +70,11 @@ namespace AdServer::UserInfoSvcs
       noexcept;
 
     void
+    remove_user_id(
+      const String::SubString& external_id)
+      noexcept;
+
+    void
     add_bind_request(
       const Commons::RequestId& request_id,
       const String::SubString& bind_str,
@@ -89,9 +96,22 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/;
 
   protected:
-    typedef Sync::Policy::PosixThreadRW SyncPolicy;
-    typedef Sync::Policy::PosixThread FlushSyncPolicy;
-    typedef Sync::Policy::PosixThread ExtendSyncPolicy;
+    typedef std::shared_mutex SyncMutex;
+    typedef std::shared_lock<SyncMutex> SyncReadGuard;
+    typedef std::unique_lock<SyncMutex> SyncWriteGuard;
+
+    typedef std::mutex FlushMutex;
+    typedef std::lock_guard<FlushMutex> FlushWriteGuard;
+
+    typedef std::mutex ExtendMutex;
+    typedef std::lock_guard<ExtendMutex> ExtendWriteGuard;
+
+    struct UserLockPolicy
+    {
+      typedef std::mutex Mutex;
+      typedef std::lock_guard<Mutex> ReadGuard;
+      typedef std::lock_guard<Mutex> WriteGuard;
+    };
 
     class UserInfoHolder
     {
@@ -215,29 +235,6 @@ namespace AdServer::UserInfoSvcs
       size_t hash_;
     };
 
-    /*
-    struct DefaultIteratorValueAdapter
-    {
-      template<typename IteratorType>
-      typename IteratorType::value_type::second_type&
-      operator()(IteratorType& it)
-      {
-        return it->second;
-      }
-    };
-
-    template<typename ValueType>
-    struct SparseMapIteratorValueAdapter
-    {
-      template<typename IteratorType>
-      ValueType&
-      operator()(IteratorType& it)
-      {
-        return it.value();
-      }
-    };
-    */
-
     template<
       typename HashAdapterType,
       typename UserInfoHolderType,
@@ -265,8 +262,6 @@ namespace AdServer::UserInfoSvcs
 
         const Generics::Time min_time;
         const Generics::Time max_time;
-
-        //mutable SyncPolicy::Mutex lock;
         UserIdMap users;
 
       protected:
@@ -296,7 +291,7 @@ namespace AdServer::UserInfoSvcs
         HolderContainer_var;
 
     public:
-      mutable ExtendSyncPolicy::Mutex extend_lock;
+      mutable ExtendMutex extend_lock;
 
     public:
       HolderContainerGuard() noexcept;
@@ -309,7 +304,7 @@ namespace AdServer::UserInfoSvcs
         noexcept;
 
     protected:
-      mutable SyncPolicy::Mutex holder_container_lock_;
+      mutable SyncMutex holder_container_lock_;
       HolderContainer_var holder_container_;
     };
 
@@ -343,7 +338,7 @@ namespace AdServer::UserInfoSvcs
 
     typedef AdServer::Commons::LockMap<
       StringDefHashAdapter,
-      Sync::Policy::PosixThread>
+      UserLockPolicy>
       UserLockMap;
 
     struct Portion: public ReferenceCounting::AtomicImpl
@@ -362,7 +357,9 @@ namespace AdServer::UserInfoSvcs
         BoundUserHolderContainerGuard_var>
         BoundUserHolderSourceMap;
 
-      typedef Sync::Policy::PosixThreadRW SourceSyncPolicy;
+      typedef std::shared_mutex SourceMutex;
+      typedef std::shared_lock<SourceMutex> SourceReadGuard;
+      typedef std::unique_lock<SourceMutex> SourceWriteGuard;
 
     public:
       Portion(unsigned long up_user_divisions)
@@ -374,7 +371,7 @@ namespace AdServer::UserInfoSvcs
 
       HolderContainerGuard<SeenUserHolderContainer> holder_container_guard;
 
-      SourceSyncPolicy::Mutex source_lock;
+      SourceMutex source_lock;
       BoundUserHolderSourceMap source_to_bound_user_holder_container_guards;
 
       //HolderContainerGuard<BoundUserHolderContainer> bound_user_holder_container_guard;
@@ -449,11 +446,11 @@ namespace AdServer::UserInfoSvcs
     get_external_id_portion_(unsigned long full_hash) const
       noexcept;
 
-    template<typename HolderContainerType>
+    template<typename HolderContainerType, typename KeyType>
     void
     erase_user_id_(
       HolderContainerGuard<HolderContainerType>& holder_container_guard,
-      const StringDefHashAdapter& external_id_hash)
+      const KeyType& external_id_hash)
       noexcept;
 
     template<typename HolderContainerType, typename KeyType>
@@ -677,7 +674,7 @@ namespace AdServer::UserInfoSvcs
     PortionArray portions_;
 
     // serialize saving to files
-    mutable FlushSyncPolicy::Mutex flush_lock_;
+    mutable FlushMutex flush_lock_;
   };
 
   typedef ReferenceCounting::SmartPtr<UserBindChunk>

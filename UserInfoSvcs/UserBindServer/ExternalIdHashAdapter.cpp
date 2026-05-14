@@ -829,7 +829,10 @@ namespace AdServer::UserInfoSvcs
       decode(const void* buf) const
       {
         char res_str[std::numeric_limits<uint32_t>::digits10 + 3];
-        if(!String::StringManip::int_to_str(*static_cast<const uint32_t*>(buf), res_str, sizeof(res_str)))
+        if(!String::StringManip::int_to_str(
+             *static_cast<const uint32_t*>(buf),
+             res_str,
+             sizeof(res_str)))
         {
           assert(0);
         }

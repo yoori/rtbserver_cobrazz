@@ -8,9 +8,7 @@ namespace
   const char LOG_TIME_FORMAT[] = "%Y%m%d.%H%M%S";
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // BaseChunkSelector
   BaseChunkSelector::BaseChunkSelector(const String::SubString& prefix)
@@ -109,5 +107,4 @@ namespace UserInfoSvcs
 
     return false;
   }
-}
 }

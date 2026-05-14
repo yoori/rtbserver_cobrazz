@@ -22,9 +22,7 @@ namespace
   const unsigned long FETCH_FILES_LIMIT = 50000;
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class InterrupterImpl:
     public Generics::RefCountableSimpleActiveObject
@@ -380,5 +378,4 @@ namespace UserInfoSvcs
   UserBindOperationLoader::~UserBindOperationLoader() noexcept
   {}
 
-}
 }

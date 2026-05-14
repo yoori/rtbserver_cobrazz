@@ -77,7 +77,8 @@ namespace AdServer::UserInfoSvcs
     : min_age_reached(false),
       user_id_generated(false),
       created(false),
-      invalid_operation(false)
+      invalid_operation(false),
+      user_found(false)
   {}
 
   inline

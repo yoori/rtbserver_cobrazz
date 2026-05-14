@@ -8,7 +8,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Logger/Logger.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -18,7 +17,7 @@
 #include <Commons/LockMap.hpp>
 #include <Commons/Containers.hpp>
 
-#include "UserBindChunk.hpp"
+#include "MigratingUserBindChunk.hpp"
 
 namespace AdServer::UserInfoSvcs
 {
@@ -84,12 +83,12 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/;
 
   protected:
-    typedef std::vector<UserBindChunk_var> UserBindChunkArray;
+    typedef std::vector<UserBindProcessor_var> UserBindChunkArray;
 
   protected:
     virtual ~UserBindContainer() noexcept;
 
-    UserBindChunk_var
+    UserBindProcessor_var
     get_chunk_(const String::SubString& external_id)
       const /*throw(ChunkNotFound)*/;
 

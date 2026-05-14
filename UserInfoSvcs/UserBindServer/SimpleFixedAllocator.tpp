@@ -13,7 +13,7 @@ namespace AdServer::UserInfoSvcs
     noexcept
   {
     {
-      SyncPolicy::WriteGuard lock(lock_);
+      ::std::lock_guard<::std::mutex> lock(lock_);
       if(first_free_)
       {
         void* ret = first_free_;
@@ -28,7 +28,7 @@ namespace AdServer::UserInfoSvcs
     BufList ins_list;
     ins_list.emplace_back(std::move(new_buf));
 
-    SyncPolicy::WriteGuard lock(lock_);
+    ::std::lock_guard<::std::mutex> lock(lock_);
     buffers_.splice(buffers_.end(), ins_list);
     Buf& back_buf = buffers_.back();
     *reinterpret_cast<void**>(&(back_buf[
@@ -41,7 +41,7 @@ namespace AdServer::UserInfoSvcs
   SimpleFixedAllocator::dealloc(void* buf)
     noexcept
   {
-    SyncPolicy::WriteGuard lock(lock_);
+    ::std::lock_guard<::std::mutex> lock(lock_);
     *static_cast<void**>(buf) = first_free_;
     first_free_ = buf;
   }
