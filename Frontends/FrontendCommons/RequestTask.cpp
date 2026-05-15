@@ -48,11 +48,11 @@ namespace FrontendCommons
     return !handle_ || handle_.done();
   }
 
-  void
+  std::coroutine_handle<>
   RequestTask::await_suspend(std::coroutine_handle<> continuation) noexcept
   {
     handle_.promise().continuation = continuation;
-    handle_.resume();
+    return handle_;
   }
 
   RequestResult
@@ -110,32 +110,30 @@ namespace FrontendCommons
   RequestTask::promise_type::FinalAwaiter::await_suspend(Handle handle) noexcept
   {
     auto& promise = handle.promise();
-    std::coroutine_handle<> continuation = std::noop_coroutine();
-    if(promise.continuation)
-    {
-      continuation = promise.continuation;
-    }
-
     if(promise.detached)
     {
+      auto response_writer = std::move(promise.response_writer);
+      auto result = std::move(promise.result);
+      auto exception = std::move(promise.exception);
+
       try
       {
-        if(!promise.result.already_written && promise.response_writer)
+        if(!result.already_written && response_writer)
         {
-          if(promise.exception)
+          if(exception)
           {
             FCGI::HttpResponse_var response(new FCGI::HttpResponse());
-            promise.response_writer->write(500, response);
+            response_writer->write(500, response);
           }
           else
           {
-            FCGI::HttpResponse_var response = promise.result.response;
+            FCGI::HttpResponse_var response = result.response;
             if(!response)
             {
               response = new FCGI::HttpResponse();
             }
 
-            promise.response_writer->write(promise.result.status, response);
+            response_writer->write(result.status, response);
           }
         }
       }
@@ -146,13 +144,18 @@ namespace FrontendCommons
       return std::noop_coroutine();
     }
 
-    return continuation;
+    if(promise.continuation)
+    {
+      return promise.continuation;
+    }
+
+    return std::noop_coroutine();
   }
 
   RequestTask::promise_type::FinalAwaiter
   RequestTask::promise_type::final_suspend() noexcept
   {
-    return {};
+    return FinalAwaiter{this};
   }
 
   void

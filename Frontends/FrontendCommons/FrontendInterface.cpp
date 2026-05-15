@@ -12,6 +12,43 @@ namespace FrontendCommons
 
     const String::AsciiStringManip::Caseless FORMURL(
       "application/x-www-form-urlencoded");
+
+    RequestTask
+    write_response_task(
+      RequestTask request_task,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept
+    {
+      try
+      {
+        auto result = co_await std::move(request_task);
+        if(!result.already_written && response_writer)
+        {
+          FCGI::HttpResponse_var response = result.response;
+          if(!response)
+          {
+            response = new FCGI::HttpResponse();
+          }
+
+          response_writer->write(result.status, response);
+        }
+      }
+      catch(...)
+      {
+        try
+        {
+          if(response_writer)
+          {
+            FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+            response_writer->write(500, response);
+          }
+        }
+        catch(...)
+        {}
+      }
+
+      co_return RequestResult::written();
+    }
   }
 
   // FrontendInterface::Configuration
@@ -145,9 +182,11 @@ namespace FrontendCommons
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    handle_request_coro(
-      std::move(request),
-      response_writer).start_detached(std::move(response_writer));
+    write_response_task(
+      handle_request_coro(
+        std::move(request),
+        response_writer),
+      std::move(response_writer)).start_detached({});
   }
 
   void
@@ -156,9 +195,19 @@ namespace FrontendCommons
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    handle_request_noparams_coro(
-      std::move(request_holder),
-      response_writer).start_detached(std::move(response_writer));
+    if(parse_args_(request_holder))
+    {
+      write_response_task(
+        handle_request_coro(
+          std::move(request_holder),
+          response_writer),
+        std::move(response_writer)).start_detached({});
+    }
+    else
+    {
+      FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+      response_writer->write(400, response);
+    }
   }
 
   NoCoroFrontendAdapter::NoCoroFrontendAdapter(FrontendInterface* frontend)

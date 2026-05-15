@@ -33,7 +33,7 @@ namespace AdServer::Grpc
     std::optional<std::size_t> max_inflight{12000};
     bool error_on_inflight_reaching = false;
     std::optional<std::size_t> max_outstanding_requests;
-    std::size_t workers_number = 16;
+    std::size_t workers_number = 4;
     std::size_t hot_buckets_count = 1;
     std::optional<std::chrono::microseconds> max_batch_delay{std::chrono::microseconds{3000}};
     bool enable_grpc_compression = true;

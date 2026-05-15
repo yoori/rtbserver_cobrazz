@@ -115,8 +115,12 @@ namespace AdServer
       template <class Frontend, typename Config, typename ...T>
       void
       init_frontend(
+        const char* name,
         const Config& cfg,
         T&&... params);
+
+      void
+      init_frontends_();
 
     private:
       Configuration_var config_;
@@ -128,6 +132,7 @@ namespace AdServer
 
       CommonModule_var common_module_;
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers_;
+      std::vector<std::string> frontend_names_;
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };
   }

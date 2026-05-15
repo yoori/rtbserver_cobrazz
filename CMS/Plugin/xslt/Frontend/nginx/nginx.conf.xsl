@@ -485,7 +485,7 @@ http {
       }
 
       # Ad
-      location ~ ^/get$ {
+      location ~ ^/(get|services/nslookup)$ {
         fastcgi_pass fastcgi_adbackend;
         fastcgi_keep_conn on;
 
@@ -494,7 +494,6 @@ http {
           >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }
-
       location @return_204 {
         return  204;
       }
@@ -688,7 +687,7 @@ http {
       }
 
       # Ad
-      location ~ ^/get$ {
+      location ~ ^/(get|services/nslookup)$ {
         fastcgi_pass fastcgi_adbackend;
         fastcgi_keep_conn on;
 
@@ -696,8 +695,7 @@ http {
           'true' or @proxy_protocol = '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
           >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
-      }
-      
+      }      
       location ~ ^/(conv|conv.html|pubpixels)$ {                                                                                                                                      
         fastcgi_pass fastcgi_trackbackend;                                                                                                                                     
         fastcgi_keep_conn on;

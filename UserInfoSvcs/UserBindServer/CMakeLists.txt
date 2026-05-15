@@ -102,3 +102,47 @@ else()
 endif()
 
 target_link_libraries(UserBindServer gRPC::grpc++)
+
+# Temporary test binary for gRPC batching lifecycle checks. It keeps the same
+# process/bootstrap code as UserBindServer, but short-circuits get_user_id.
+add_executable(MockUserBindServer
+  UserBindServerMain.cpp
+  UserBindServerImpl.cpp
+  UserBindServerCore.cpp
+  UserBindOperationSaver.cpp
+  UserBindOperationLoader.cpp
+  UserBindServerGrpc.cpp
+)
+
+target_link_libraries(MockUserBindServer
+  CORBACommons
+  PrivacyFilter
+  ProcessControlVars
+  Commons
+  ProfileMap
+  MessageSaver
+  LogCommons
+  UserBindContainer
+  UserBindServerConfigXSD
+  UserBindServerIDL
+  UserBindServerGrpc
+  HttpServer
+)
+
+target_include_directories(MockUserBindServer PRIVATE
+  ${Protobuf_INCLUDE_DIRS}
+)
+
+target_compile_definitions(MockUserBindServer PRIVATE
+  MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+)
+
+if(TARGET Protobuf::libprotobuf)
+  target_link_libraries(MockUserBindServer Protobuf::libprotobuf)
+elseif(TARGET protobuf::libprotobuf)
+  target_link_libraries(MockUserBindServer protobuf::libprotobuf)
+else()
+  target_link_libraries(MockUserBindServer ${Protobuf_LIBRARIES})
+endif()
+
+target_link_libraries(MockUserBindServer gRPC::grpc++)

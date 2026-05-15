@@ -38,7 +38,7 @@ namespace FrontendCommons
     bool
     await_ready() const noexcept;
 
-    void
+    std::coroutine_handle<>
     await_suspend(std::coroutine_handle<> continuation) noexcept;
 
     RequestResult
@@ -51,6 +51,8 @@ namespace FrontendCommons
     {
       struct FinalAwaiter
       {
+        promise_type* promise;
+
         bool
         await_ready() noexcept;
 

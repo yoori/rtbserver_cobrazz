@@ -182,6 +182,16 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
     ::grpc::Status& result_status) const
   {
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    response.set_user_id(request.current_user_id());
+    response.set_min_age_reached(true);
+    response.set_created(false);
+    response.set_invalid_operation(false);
+    response.set_user_found(false);
+    result_status = ::grpc::Status::OK;
+    return;
+#endif
+
     try
     {
       UserBindServerCore::GetUserRequestInfo req_info;

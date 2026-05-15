@@ -1703,12 +1703,10 @@ namespace AdServer::Bidding
 
               if(creative.order_set_id)
               {
-
                 auto& seq_order = seq_orders[result_seq_order_i];
                 seq_order.set_ccg_id(creative.cmp_id);
                 seq_order.set_set_id(creative.order_set_id);
                 seq_order.set_imps(1);
-		////qwerty
 		BidStatisticsPrometheusInc(composite_metrics_provider_, seq_order.ccg_id());
                 ++result_seq_order_i;
               }

@@ -1,4 +1,7 @@
 
+#include <chrono>
+#include <iostream>
+
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -14,6 +17,20 @@ namespace
 {
   const char ASPECT[] = "FCGIServer";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
+
+  const auto STARTUP_STARTED_AT = std::chrono::steady_clock::now();
+
+  void
+  trace_startup(const char* label)
+  {
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+      now - STARTUP_STARTED_AT);
+    std::cerr << "FCGI_STARTUP "
+      << (elapsed.count() / 1000) << "."
+      << (elapsed.count() % 1000) << " "
+      << label << std::endl;
+  }
 }
 
 namespace AdServer
@@ -166,6 +183,7 @@ namespace Frontends
   FCGIServer::init_fcgi_() /*throw(Exception)*/
   {
     static const char* FUN = "FCGIServer::init_fcgi_()";
+    trace_startup("init_fcgi begin");
 
     try
     {
@@ -243,16 +261,19 @@ namespace Frontends
       }
 
       // pass CompositeMetricsProvider here
+      trace_startup("create FrontendsPool begin");
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
         config_->fe_config().data(),
         modules,
         logger(),
         stats_,
         composite_metrics_provider_);
+      trace_startup("create FrontendsPool end");
 
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)
       {
+        trace_startup("create FCGIAcceptor begin");
         add_child_object(
           Generics::ActiveObject_var(
             new FCGIAcceptor(
@@ -262,12 +283,14 @@ namespace Frontends
               bind_it->bind(), // bind_it->bind().data(),
               bind_it->backlog(),
               bind_it->accept_threads())));
+        trace_startup("create FCGIAcceptor end");
       }
 
       if(config_->Http2Endpoint().present())
       {
         const auto& http2_endpoint = config_->Http2Endpoint().get();
 
+        trace_startup("create Http2Acceptor begin");
         add_child_object(
           Generics::ActiveObject_var(
             new Http2Acceptor(
@@ -278,10 +301,13 @@ namespace Frontends
               http2_endpoint.threads(),
               http2_endpoint.max_concurrent_streams(),
               http2_endpoint.read_buffer_size())));
+        trace_startup("create Http2Acceptor end");
       }
 
       frontend_pool_ = frontend_pool;
+      trace_startup("FrontendsPool init begin");
       frontend_pool_->init();
+      trace_startup("FrontendsPool init end");
     }
     catch(const eh::Exception& ex)
     {
@@ -298,7 +324,9 @@ namespace Frontends
 
     try
     {
+      trace_startup("XMLUtility initialize begin");
       XMLUtility::initialize();
+      trace_startup("XMLUtility initialize end");
     }
     catch(const eh::Exception& ex)
     {
@@ -321,7 +349,9 @@ namespace Frontends
 
       try
       {
+        trace_startup("read_config begin");
         read_config_(argv[1], argv[0]);
+        trace_startup("read_config end");
       }
       catch(const eh::Exception& ex)
       {
@@ -337,11 +367,18 @@ namespace Frontends
         throw Exception(ostr);
       }
 
+      trace_startup("register_vars_controller begin");
       register_vars_controller();
+      trace_startup("register_vars_controller end");
+      trace_startup("init_corba begin");
       init_corba_();
+      trace_startup("init_corba end");
       init_fcgi_();
+      trace_startup("activate_object begin");
       activate_object();
+      trace_startup("activate_object end");
       logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
+      trace_startup("service started");
       corba_server_adapter_->run();
 
       wait();
