@@ -52,23 +52,29 @@ namespace AdServer::Grpc
       std::shared_ptr<AdServer::Grpc::BatchingStreamBase>;
     using BatchingQueuePtr =
       std::shared_ptr<AdServer::Grpc::BatchingQueue>;
+    struct StreamHolder;
+    using StreamHolderPtr = std::shared_ptr<StreamHolder>;
 
     void activate_object_() override;
     void deactivate_object_() override;
     void wait_object_() override;
 
-    BatchingStreamPtr make_stream_();
+    StreamHolderPtr make_stream_();
     BatchingStreamBase* acquire_stream_();
     void release_stream_(BatchingStreamBase* stream) noexcept;
     void coalesce_loop_();
     void handle_stream_ready_(BatchingStreamBase* stream);
     void handle_stream_closed_(BatchingStreamBase* stream) noexcept;
+    void handle_stream_drained_(
+      BatchingStreamBase* stream,
+      const StreamHolderPtr& stream_holder) noexcept;
     bool fail_pending_if_no_streams_() noexcept;
     void update_max_streams_(std::size_t streams_count) noexcept;
     void release_stream_() noexcept;
     void deactivate_streams_() noexcept;
     void wait_streams_() noexcept;
     void clear_streams_() noexcept;
+    void clear_deferred_streams_() noexcept;
 
   private:
     const std::string endpoint_;
@@ -77,7 +83,9 @@ namespace AdServer::Grpc
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<grpc::Channel> channel_;
     BatchingQueuePtr batching_queue_;
-    std::unordered_map<BatchingStreamBase*, BatchingStreamPtr> streams_;
+    std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams_;
+    std::vector<StreamHolderPtr> draining_streams_;
+    std::vector<BatchingStreamPtr> deferred_streams_;
     mutable std::mutex streams_registry_lock_;
     std::deque<BatchingStreamBase*> available_streams_;
     mutable std::mutex streams_lock_;

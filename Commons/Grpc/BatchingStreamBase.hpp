@@ -33,6 +33,7 @@ namespace AdServer::Grpc
     using PendingBatch = std::vector<std::shared_ptr<PendingRequest>>;
     using ReadyCallback = std::function<void(BatchingStreamBase*)>;
     using ClosedCallback = std::function<void(BatchingStreamBase*)>;
+    using DrainedCallback = std::function<void(BatchingStreamBase*)>;
 
     explicit BatchingStreamBase(
       std::shared_ptr<grpc::Channel> channel,
@@ -42,6 +43,7 @@ namespace AdServer::Grpc
       AdServer::Grpc::Client* stats_owner,
       ReadyCallback ready_callback,
       ClosedCallback closed_callback,
+      DrainedCallback drained_callback,
       AdServer::Grpc::BatchingOptions options = {});
 
     ~BatchingStreamBase() override;

@@ -47,6 +47,7 @@ namespace AdServer::Grpc
     using PendingBatch = BatchingStreamBase::PendingBatch;
     using ReadyCallback = BatchingStreamBase::ReadyCallback;
     using ClosedCallback = BatchingStreamBase::ClosedCallback;
+    using DrainedCallback = BatchingStreamBase::DrainedCallback;
 
     Impl(
       BatchingStreamBase& owner,
@@ -56,6 +57,7 @@ namespace AdServer::Grpc
       unsigned int queue_index,
       ReadyCallback ready_callback,
       ClosedCallback closed_callback,
+      DrainedCallback drained_callback,
       AdServer::Grpc::BatchingOptions options);
 
     ~Impl();
@@ -115,6 +117,7 @@ namespace AdServer::Grpc
     void handle_executor_shutdown_i_() noexcept;
     void complete_shutdown_i_() noexcept;
     void release_grpc_resources_i_() noexcept;
+    void notify_drained_i_() noexcept;
     bool accepts_requests_i_() const noexcept;
     void stop_processing_completion_tags_() noexcept;
     void notify_completion_tags_drained_() noexcept;
@@ -131,6 +134,8 @@ namespace AdServer::Grpc
     std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue_;
     ReadyCallback ready_callback_;
     ClosedCallback closed_callback_;
+    DrainedCallback drained_callback_;
+    bool drained_notified_ = false;
 
     std::atomic<std::size_t> pending_completion_tags_{0};
     std::atomic_bool process_completion_tags_{true};
@@ -298,6 +303,7 @@ namespace AdServer::Grpc
     unsigned int queue_index,
     ReadyCallback ready_callback,
     ClosedCallback closed_callback,
+    DrainedCallback drained_callback,
     AdServer::Grpc::BatchingOptions options)
     : owner_(owner),
       options_(options),
@@ -308,6 +314,7 @@ namespace AdServer::Grpc
       batching_queue_(std::move(batching_queue)),
       ready_callback_(std::move(ready_callback)),
       closed_callback_(std::move(closed_callback)),
+      drained_callback_(std::move(drained_callback)),
       grpc_executor_(std::move(grpc_executor)),
       queue_index_(queue_index)
   {
@@ -340,6 +347,7 @@ namespace AdServer::Grpc
     AdServer::Grpc::Client* stats_owner,
     ReadyCallback ready_callback,
     ClosedCallback closed_callback,
+    DrainedCallback drained_callback,
     AdServer::Grpc::BatchingOptions options)
     : AdServer::Grpc::Client(stats_owner)
   {
@@ -351,6 +359,7 @@ namespace AdServer::Grpc
       queue_index,
       std::move(ready_callback),
       std::move(closed_callback),
+      std::move(drained_callback),
       std::move(options));
   }
 
@@ -508,6 +517,8 @@ namespace AdServer::Grpc
   bool
   BatchingStreamBase::Impl::start_stream_()
   {
+    std::unique_ptr<StartTag> start_tag;
+
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       if (!active())
@@ -524,10 +535,10 @@ namespace AdServer::Grpc
       finish_in_flight_ = false;
       write_in_flight_.store(false);
       stream_state_.store(StreamState::Starting);
+      start_tag = std::make_unique<StartTag>(shared_from_this());
     }
 
-    if (!grpc_queue_->execute([this]() {
-      auto start_tag = std::make_unique<StartTag>(shared_from_this());
+    if (!grpc_queue_->execute([this, start_tag = std::move(start_tag)]() mutable {
       stream_ = batch_stub_->Call(
         stream_context_.get(),
         batch_stream_full_method_,
@@ -1028,6 +1039,7 @@ namespace AdServer::Grpc
     if (pending_completion_tags_.load(std::memory_order_acquire) == 0)
     {
       release_grpc_resources_i_();
+      notify_drained_i_();
     }
   }
 
@@ -1037,6 +1049,19 @@ namespace AdServer::Grpc
     stream_ = nullptr;
     stream_context_.reset();
     grpc_queue_.reset();
+  }
+
+  void
+  BatchingStreamBase::Impl::notify_drained_i_() noexcept
+  {
+    if (!drained_notified_)
+    {
+      drained_notified_ = true;
+      if (drained_callback_)
+      {
+        drained_callback_(&owner_);
+      }
+    }
   }
 
   bool
@@ -1062,6 +1087,7 @@ namespace AdServer::Grpc
       if (stream_state_.load() == StreamState::Finished)
       {
         release_grpc_resources_i_();
+        notify_drained_i_();
       }
     }
     shutdown_cv_.notify_all();
