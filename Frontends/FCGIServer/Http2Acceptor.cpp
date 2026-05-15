@@ -591,10 +591,7 @@ namespace AdServer::Frontends
 
       preface_received_ += take;
 
-      if(bytes_transferred > take)
-      {
-        process_http2_data_(read_buf_.data() + take, bytes_transferred - take);
-      }
+      process_http2_data_(read_buf_.data(), bytes_transferred);
     }
     else
     {
