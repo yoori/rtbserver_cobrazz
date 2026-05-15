@@ -57,8 +57,7 @@ namespace FrontendCommons
   // FrontendInterface
   bool
   FrontendInterface::parse_args_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     /*throw(eh::Exception)*/
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -99,8 +98,6 @@ namespace FrontendCommons
     }
     catch(const String::StringManip::InvalidFormatException&)
     {
-      FCGI::HttpResponse_var response(new FCGI::HttpResponse(1));
-      response_writer->write(400, response);
       return false;
     }
 
@@ -113,10 +110,100 @@ namespace FrontendCommons
     FCGI::BaseHttpResponseWriter_var response_writer)
     /*throw(eh::Exception)*/
   {
-    if(parse_args_(request_holder, response_writer))
+    if(parse_args_(request_holder))
     {
       handle_request(std::move(request_holder), std::move(response_writer));
     }
+    else
+    {
+      FCGI::HttpResponse_var response(new FCGI::HttpResponse(1));
+      response_writer->write(400, response);
+    }
+  }
+
+  RequestTask
+  CoroFrontendInterface::handle_request_noparams_coro(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    if(parse_args_(request_holder))
+    {
+      auto result = co_await handle_request_coro(
+        std::move(request_holder),
+        std::move(response_writer));
+      co_return std::move(result);
+    }
+
+    FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+    co_return RequestResult{400, response};
+  }
+
+  void
+  CoroFrontendInterface::handle_request(
+    FCGI::HttpRequestHolder_var request,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    handle_request_coro(
+      std::move(request),
+      response_writer).start_detached(std::move(response_writer));
+  }
+
+  void
+  CoroFrontendInterface::handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    handle_request_noparams_coro(
+      std::move(request_holder),
+      response_writer).start_detached(std::move(response_writer));
+  }
+
+  NoCoroFrontendAdapter::NoCoroFrontendAdapter(FrontendInterface* frontend)
+    : frontend_(ReferenceCounting::add_ref(frontend))
+  {}
+
+  bool
+  NoCoroFrontendAdapter::will_handle(const String::SubString& uri) noexcept
+  {
+    return frontend_->will_handle(uri);
+  }
+
+  RequestTask
+  NoCoroFrontendAdapter::handle_request_coro(
+    FCGI::HttpRequestHolder_var request,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    frontend_->handle_request(
+      std::move(request),
+      std::move(response_writer));
+    co_return RequestResult::written();
+  }
+
+  RequestTask
+  NoCoroFrontendAdapter::handle_request_noparams_coro(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    frontend_->handle_request_noparams(
+      std::move(request_holder),
+      std::move(response_writer));
+    co_return RequestResult::written();
+  }
+
+  void
+  NoCoroFrontendAdapter::init()
+  {
+    frontend_->init();
+  }
+
+  void
+  NoCoroFrontendAdapter::shutdown() noexcept
+  {
+    frontend_->shutdown();
   }
 }
-

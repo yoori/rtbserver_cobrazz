@@ -31,6 +31,7 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(UserInfoManagerGrpcClient
   PUBLIC
+  Commons
   GrpcBatch
   UserInfoManagerGrpc
   gRPC::grpc++)

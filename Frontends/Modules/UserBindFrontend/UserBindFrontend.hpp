@@ -20,6 +20,7 @@
 #include <String/TextTemplate.hpp>
 
 #include <Commons/AtomicInt.hpp>
+#include <Commons/ExecutorPool.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
@@ -52,7 +53,7 @@ namespace AdServer
   class UserBindFrontend:
     private FrontendCommons::HTTPExceptions,
     public Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -71,14 +72,15 @@ namespace AdServer
     UserBindFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
 
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
@@ -110,10 +112,9 @@ namespace AdServer
   protected:
     virtual ~UserBindFrontend() noexcept;
 
-    void
+    FrontendCommons::RequestTask
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
   private:
@@ -314,7 +315,7 @@ namespace AdServer
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>

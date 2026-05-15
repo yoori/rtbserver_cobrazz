@@ -2,9 +2,11 @@
 
 #include <vector>
 #include <Logger/Logger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/CompositeMetricsProvider.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 // TO FIX !!! :
 #include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
@@ -120,10 +122,12 @@ namespace AdServer
       Configuration_var config_;
       ModuleIdArray modules_;
       Logging::Logger_var logger_;
+      Logging::ActiveObjectCallbackImpl_var callback_;
       StatHolder_var stats_;
       Generics::CompositeMetricsProvider_var composite_metrics_provider_;
 
       CommonModule_var common_module_;
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers_;
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };
   }

@@ -11,20 +11,20 @@
 
 #include <Generics/CompositeActiveObject.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 namespace AdServer
 {
   class ContentFrontend:
     public FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
@@ -40,7 +40,8 @@ namespace AdServer
   public:
     ContentFrontend(
       Configuration* frontend_config,
-      Logging::Logger* logger)
+      Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
       /*throw(eh::Exception)*/;
 
     void
@@ -50,14 +51,14 @@ namespace AdServer
     will_handle(
       const String::SubString& uri) noexcept override;
 
-    void
-    handle_request_noparams(
+    FrontendCommons::RequestTask
+    handle_request_noparams_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
 
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
@@ -133,11 +134,10 @@ namespace AdServer
 
     ~ContentFrontend() noexcept override = default;
 
-    void
+    FrontendCommons::RequestTask
     process_request_(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponse_var response,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpResponse_var response)
       noexcept;
 
     int
@@ -151,16 +151,14 @@ namespace AdServer
       const std::string& random_str)
       const /*throw(eh::Exception)*/;
 
-    void
+    FrontendCommons::RequestTask
     handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
-    void
+    FrontendCommons::RequestTask
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     void parse_configs_() /*throw(Exception)*/;
@@ -179,7 +177,7 @@ namespace AdServer
 
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     Commons::TextTemplateCache_var template_files_;
   };
 

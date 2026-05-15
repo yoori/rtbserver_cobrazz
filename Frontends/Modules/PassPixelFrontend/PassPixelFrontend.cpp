@@ -56,6 +56,7 @@ namespace PassbackPixel
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -68,7 +69,8 @@ namespace PassbackPixel
         Aspect::PASS_PIXEL_FRONTEND,
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module))
+      common_module_(ReferenceCounting::add_ref(common_module)),
+      workers_(std::move(request_workers))
   {}
 
   void
@@ -132,35 +134,24 @@ namespace PassbackPixel
     return result;
   }
 
-  void
-  Frontend::handle_request(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
-  }
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
-  void
-  Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
     int http_status = handle_request_(request, response);
-    response_writer->write(http_status, response_ptr);
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response_ptr,
+      false};
   }
 
   int
@@ -292,11 +283,6 @@ namespace PassbackPixel
       try
       {
         parse_config_();
-
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
 
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());

@@ -9,7 +9,6 @@
 #include <Commons/ErrorHandler.hpp>
 
 #include "WebStatFrontend.hpp"
-#include "WebStatRequestState.hpp"
 
 namespace AdServer
 {
@@ -66,6 +65,7 @@ namespace WebStat
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -78,7 +78,8 @@ namespace WebStat
         Aspect::WEBSTAT_FRONTEND,
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module))
+      common_module_(ReferenceCounting::add_ref(common_module)),
+      workers_(std::move(request_workers))
   {}
 
   void
@@ -127,40 +128,25 @@ namespace WebStat
     return result;
   }
 
-  void
-  Frontend::handle_request(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
-  }
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
-  void
-  Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    process_request_(
+    auto result = co_await process_request_(
       std::move(request_holder),
-      std::move(response_writer),
       std::move(response_ptr));
+    co_return std::move(result);
   }
 
-  void
+  FrontendCommons::RequestTask
   Frontend::process_request_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer,
     FCGI::HttpResponse_var response)
     noexcept
   {
@@ -168,13 +154,13 @@ namespace WebStat
     const FCGI::HttpRequest& request = request_holder->request();
 
     int http_result = 0;
+    std::vector<RequestInfo> request_info_list;
 
     try
     {
       //FrontendHTTPConstrain::apply(request);
 
       std::string found_uri;
-      std::vector<RequestInfo> request_info_list;
 
       if(FrontendCommons::find_uri(
         config_->UriList().Uri(), request.uri(), found_uri))
@@ -205,13 +191,9 @@ namespace WebStat
           bid_request.c_str());
       }
 
-      auto state = std::make_shared<WebStatRequestState>(
-        this,
-        std::move(response_writer),
-        std::move(response),
-        request.method(),
-        !request_info_list.empty() ?
-          request_info_list.begin()->origin : std::string());
+      std::vector<std::shared_ptr<
+        adserver::campaign_svcs::campaign_manager::
+          ConsiderWebOperationRequest>> requests;
 
       for(const auto& request_info : request_info_list)
       {
@@ -247,11 +229,33 @@ namespace WebStat
           web_op_info->set_global_request_id(
             pack_request_id(request_info.global_request_id));
         }
-        state->requests.emplace_back(std::move(web_op_info));
+        requests.emplace_back(std::move(web_op_info));
       }
 
-      state->start();
-      return;
+      for(auto& web_op_info : requests)
+      {
+        auto result = co_await campaign_manager_coro_->consider_web_operation(
+          std::move(*web_op_info));
+        if(!result.status.ok())
+        {
+          if(result.status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
+          {
+            http_result = 400;
+            break;
+          }
+
+          logger()->sstream(
+            Logging::Logger::EMERGENCY,
+            Aspect::WEBSTAT_FRONTEND,
+            "ADS-IMPL-139") <<
+            "CampaignManager::consider_web_operation(): "
+            "gRPC call failed: code=" <<
+            static_cast<int>(result.status.error_code()) <<
+            ", message=" << result.status.error_message();
+          http_result = 500;
+          break;
+        }
+      }
     }
     catch (const ForbiddenException& ex)
     {
@@ -272,56 +276,23 @@ namespace WebStat
         "ADS-IMPL-139") << FUN << ": eh::Exception has been caught: " << e.what();
     }
 
-    response_writer->write(http_result, response);
+    http_result = finish_request_(
+      *response,
+      request.method(),
+      !request_info_list.empty() ?
+        request_info_list.begin()->origin : std::string(),
+      http_result);
+    co_return FrontendCommons::RequestResult{
+      http_result,
+      response,
+      false};
   }
 
-  void
-  Frontend::consider_web_operation_(
-    const std::shared_ptr<WebStatRequestState>& state,
-    std::size_t index)
-    noexcept
-  {
-    if(index >= state->requests.size())
-    {
-      state->finish_request_stage(0);
-      return;
-    }
-
-    const auto& request = state->requests[index];
-    campaign_manager_->consider_web_operation(
-      *request,
-      [this, state, request, index](
-        const grpc::Status& status,
-        const adserver::campaign_svcs::campaign_manager::
-          ConsiderWebOperationResponse&)
-      {
-        if(!status.ok())
-        {
-          if(status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
-          {
-            state->finish_request_stage(400);
-            return;
-          }
-
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::WEBSTAT_FRONTEND,
-            "ADS-IMPL-139") <<
-            "CampaignManager::consider_web_operation(): "
-            "gRPC call failed: code=" <<
-            static_cast<int>(status.error_code()) <<
-            ", message=" << status.error_message();
-          state->finish_request_stage(500);
-          return;
-        }
-
-        state->consider_web_operation_stage(index + 1);
-      });
-  }
-
-  void
+  int
   Frontend::finish_request_(
-    const std::shared_ptr<WebStatRequestState>& state,
+    FCGI::HttpResponse& response,
+    FCGI::HttpRequest::Method request_method,
+    const std::string& origin,
     int http_result)
     noexcept
   {
@@ -329,13 +300,13 @@ namespace WebStat
     {
       if(http_result == 0)
       {
-        if(!state->origin.empty())
+        if(!origin.empty())
         {
-          state->response->add_header_nocopy_name(
+          response.add_header_nocopy_name(
             String::SubString("Access-Control-Allow-Origin"),
-            state->origin);
+            origin);
 
-          state->response->add_header_nocopy(
+          response.add_header_nocopy(
             String::SubString("Access-Control-Allow-Credentials"),
             String::SubString("true"));
         }
@@ -344,16 +315,16 @@ namespace WebStat
         {
           FrontendCommons::add_headers(
             *(common_config_->ResponseHeaders()),
-            *state->response);
+            response);
         }
 
-        if(state->request_method == FCGI::HttpRequest::RM_GET)
+        if(request_method == FCGI::HttpRequest::RM_GET)
         {
-          state->response->set_content_type_nocopy(
+          response.set_content_type_nocopy(
             String::SubString("image/gif"));
 
           FileCache::BufferHolder_var buffer = pixel_->get();
-          state->response->get_output_stream().write(
+          response.get_output_stream().write(
             (*buffer)->data(),
             (*buffer)->size());
         }
@@ -370,7 +341,7 @@ namespace WebStat
         "eh::Exception has been caught: " << e.what();
     }
 
-    state->response_writer->write(http_result, state->response);
+    return http_result;
   }
 
   void
@@ -387,11 +358,6 @@ namespace WebStat
         pixel_ = FileCachePtr(
           new FileCache(config_->pixel_path().c_str()));
 
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
-
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
@@ -402,6 +368,10 @@ namespace WebStat
             AdServer::Grpc::BatchingOptions(),
             grpc_executor_);
         campaign_manager_ = campaign_manager;
+        campaign_manager_coro_ = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager_,
+            workers_);
         add_child_object(campaign_manager);
 
         request_info_filler_.reset(new RequestInfoFiller(

@@ -37,6 +37,7 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(ChannelServerGrpcClient
   PUBLIC
+  Commons
   GrpcBatch
   ChannelServerGrpc
   gRPC::grpc++)

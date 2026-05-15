@@ -17,6 +17,7 @@
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/TextTemplateCache.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
@@ -32,8 +33,8 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
-
 #include <Frontends/FrontendCommons/FrontendWorkers.hpp>
+
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer::ImprTrack
@@ -49,7 +50,7 @@ namespace AdServer::ImprTrack
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -61,23 +62,18 @@ namespace AdServer::ImprTrack
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
 
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
-
-    void
-    handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -86,6 +82,12 @@ namespace AdServer::ImprTrack
     /** Performs shutdown for the module child process. */
     virtual void
     shutdown() noexcept;
+
+  protected:
+    FrontendCommons::RequestTask
+    handle_request_(
+      FCGI::HttpRequestHolder_var request_holder)
+      noexcept;
 
   private:
     struct TraceLevel
@@ -134,12 +136,6 @@ namespace AdServer::ImprTrack
 
     void
     parse_config_() /*throw(Exception)*/;
-
-    int
-    handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer,
-      FCGI::HttpResponse_var response_ptr) noexcept;
 
     int
     finish_request_(
@@ -228,7 +224,7 @@ namespace AdServer::ImprTrack
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
 
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     FrontendCommons::FrontendWorkers_var match_workers_;
     std::atomic<unsigned long> match_tasks_count_{0};
 

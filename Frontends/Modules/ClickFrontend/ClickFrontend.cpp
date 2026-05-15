@@ -101,6 +101,7 @@ namespace AdServer
   ClickFrontend::ClickFrontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -114,6 +115,7 @@ namespace AdServer
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
+      workers_(std::move(request_workers)),
       match_task_count_(0)
   {}
 
@@ -182,29 +184,14 @@ namespace AdServer
     }
   }
 
-  void
-  ClickFrontend::handle_request_noparams(
+  FrontendCommons::RequestTask
+  ClickFrontend::handle_request_noparams_coro(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_noparams_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
-  }
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
-  void
-  ClickFrontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
     FCGI::HttpRequest& request = request_holder->request();
 
     HTTP::ParamList params;
@@ -263,7 +250,8 @@ namespace AdServer
     }
 
     request.set_params(std::move(params));
-    handle_request_(std::move(request_holder), std::move(response_writer));
+    auto result = co_await process_request_(std::move(request_holder));
+    co_return std::move(result);
   }
 
   void
@@ -287,17 +275,16 @@ namespace AdServer
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
 
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
-
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
             grpc_executor_);
         campaign_manager_ = campaign_manager;
+        campaign_manager_coro_ = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager_,
+            workers_);
         add_child_object(campaign_manager);
 
         auto user_bind_objects =
@@ -373,21 +360,15 @@ namespace AdServer
     }
   }
 
-  void
-  ClickFrontend::handle_request(
+  FrontendCommons::RequestTask
+  ClickFrontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+    auto result = co_await process_request_(std::move(request_holder));
+    co_return std::move(result);
   }
 
   void
@@ -523,13 +504,11 @@ namespace AdServer
     }
   }
 
-  void
-  ClickFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
+  FrontendCommons::RequestTask
+  ClickFrontend::process_request_(
+    FCGI::HttpRequestHolder_var request_holder)
   {
-    static const char* FUN = "ClickFrontend::handle_request()";
+    static const char* FUN = "ClickFrontend::process_request_()";
 
     const FCGI::HttpRequest& request = request_holder->request();
 
@@ -682,246 +661,197 @@ namespace AdServer
 
       adserver::campaign_svcs::campaign_manager::ClickResultInfo
         click_result_info;
-      auto finish_response =
-        [this,
-          request_holder,
-          response_writer,
-          response_ptr,
-          click_info,
-          request_info](
-            bool got_click_url,
-            const adserver::campaign_svcs::campaign_manager::ClickResultInfo&
-              click_result_info) mutable
-        {
-          int http_status = 200;
-          FCGI::HttpResponse& response = *response_ptr;
-          const FCGI::HttpRequest& request = request_holder->request();
-
-          try
-          {
-            AdServer::SetUidController::SetUidPtr set_uid =
-              set_uid_controller_->generate_if_allowed(
-                request_info.user_status,
-                request_info.cookie_user_id,
-                false);
-
-            if(got_click_url && (
-              (!request_info.match_user_id.is_null() && !(
-                request_info.match_user_id ==
-                  AdServer::Commons::PROBE_USER_ID)) ||
-              (!request_info.cookie_user_id.is_null() && !(
-                request_info.cookie_user_id ==
-                  AdServer::Commons::PROBE_USER_ID)) ||
-              set_uid))
-            {
-              const unsigned long current_task_count =
-                match_task_count_.exchange_and_add(1) + 1;
-
-              if(config_->match_task_limit() == 0 ||
-                current_task_count <=
-                  config_->match_task_limit() + config_->threads())
-              {
-                match_workers_->post(
-                  [this,
-                    user_id = set_uid ?
-                    set_uid->client_id.uuid() :
-                    request_info.match_user_id,
-                    cookie_user_id = request_info.cookie_user_id,
-                    now = GrpcAlgs::unpack_time(click_info.time()),
-                    campaign_id = click_result_info.campaign_id(),
-                    advertiser_id = click_result_info.advertiser_id(),
-                    peer_ip = request_info.peer_ip,
-                    markers = request_info.markers]()
-                  {
-                    match_click_channels_(
-                      user_id,
-                      cookie_user_id,
-                      now,
-                      campaign_id,
-                      advertiser_id,
-                      peer_ip,
-                      markers);
-                    match_task_count_ += -1;
-                  });
-              }
-              else
-              {
-                match_task_count_ += -1;
-                logger()->sstream(
-                  Logging::Logger::ERROR,
-                  Aspect::CLICK_FRONTEND,
-                  "ADS-IMPL-198") << FUN <<
-                  ": the limit of simultaneous matching tasks has been "
-                  "reached";
-              }
-            }
-
-            if(set_uid)
-            {
-              FrontendCommons::add_UID_cookie(
-                response,
-                request,
-                *cookie_manager_,
-                set_uid->client_id.str());
-            }
-
-            if(common_config_->ResponseHeaders().present())
-            {
-              FrontendCommons::add_headers(
-                *(common_config_->ResponseHeaders()),
-                response);
-            }
-
-            FrontendCommons::CORS::set_headers(request, response);
-
-            bool instantiated = false;
-
-            if(request_info.use_click_template)
-            {
-              try
-              {
-                Commons::TextTemplate_var templ =
-                  template_files_->get(click_template_file_);
-
-                typedef std::map<String::SubString, std::string> ArgMap;
-                ArgMap args_cont;
-                if(!request_info.preclick_url.empty())
-                {
-                  args_cont[Tokens::PRECLICK] = request_info.preclick_url;
-                }
-
-                if(got_click_url)
-                {
-                  args_cont[Tokens::CLICK_URL] = request_info.click_prefix +
-                    click_result_info.url();
-                }
-
-                String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
-                String::TextTemplate::DefaultValue args_with_default(&args);
-                String::TextTemplate::ArgsEncoder args_with_encoding(
-                  &args_with_default);
-                std::string response_content = templ->instantiate(
-                  args_with_encoding);
-
-                response.set_content_type_nocopy(
-                  FrontendCommons::ContentType::TEXT_HTML);
-                response.get_output_stream().write(
-                  response_content.data(),
-                  response_content.size());
-                http_status = 200;
-
-                instantiated = true;
-              }
-              catch(const eh::Exception& ex)
-              {
-                logger()->sstream(
-                  Logging::Logger::EMERGENCY,
-                  Aspect::CLICK_FRONTEND,
-                  "ADS-IMPL-?") <<
-                  FUN << ": eh::Exception has been caught: " << ex.what();
-              }
-            }
-
-            if(!instantiated)
-            {
-              if(got_click_url)
-              {
-                http_status = 302;
-                response.add_header_nocopy_name(
-                  Response::Header::LOCATION,
-                  request_info.click_prefix + click_result_info.url());
-
-                if(log_level() >= TraceLevel::MIDDLE)
-                {
-                  Stream::Error ostr;
-                  ostr << FUN << ": redirecting to " <<
-                    click_result_info.url();
-
-                  log(ostr.str(),
-                    TraceLevel::MIDDLE,
-                    Aspect::CLICK_FRONTEND);
-                }
-              }
-              else
-              {
-                log(String::SubString("DO NOT redirecting !"),
-                  TraceLevel::MIDDLE,
-                  Aspect::CLICK_FRONTEND);
-
-                http_status = 204;
-              }
-            }
-          }
-          catch(const eh::Exception& e)
-          {
-            http_status = 500;
-            Stream::Error ostr;
-            ostr << FUN << ": eh::Exception caught:" << e.what();
-
-            log(ostr.str(),
-              Logging::Logger::EMERGENCY,
-              Aspect::CLICK_FRONTEND);
-          }
-
-          response_writer->write(http_status, response_ptr);
-        };
+      bool got_click_url = false;
 
       if(click_info.ccid() != 0 || click_info.creative_id() != 0)
       {
         adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
           click_url_request;
         *click_url_request.mutable_click_info() = click_info;
-        click_url_request.set_service_index(request_info.campaign_manager_index);
+        click_url_request.set_service_index(
+          request_info.campaign_manager_index);
 
-        campaign_manager_->get_click_url(
-          click_url_request,
-          [this,
-            finish_response = std::move(finish_response)](
-              const grpc::Status& status,
-              const adserver::campaign_svcs::campaign_manager::
-                GetClickUrlResponse& click_url_response) mutable
+        try
+        {
+          const auto click_url_response = co_await
+            campaign_manager_coro_->get_click_url(std::move(click_url_request));
+
+          if(!click_url_response.status.ok())
           {
-            workers_->post(
-              [this,
-                status,
-                click_url_response,
-                finish_response = std::move(finish_response)]() mutable
-              {
-                try
-                {
-                  if(!status.ok())
-                  {
-                    throw_grpc_exception_(
-                      "CampaignManager::get_click_url()",
-                      status);
-                  }
+            throw_grpc_exception_(
+              "CampaignManager::get_click_url()",
+              click_url_response.status);
+          }
 
-                  finish_response(
-                    click_url_response.found(),
-                    click_url_response.click_result_info());
-                }
-                catch(const eh::Exception& e)
-                {
-                  Stream::Error ostr;
-                  ostr << FUN << ": eh::Exception caught:" << e.what();
+          got_click_url = click_url_response.response.found();
+          click_result_info = click_url_response.response.click_result_info();
+        }
+        catch(const eh::Exception& e)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": eh::Exception caught: " << e.what();
 
-                  log(ostr.str(),
-                    Logging::Logger::EMERGENCY,
-                    Aspect::CLICK_FRONTEND);
-
-                  adserver::campaign_svcs::campaign_manager::ClickResultInfo
-                    empty_click_result;
-                  finish_response(false, empty_click_result);
-                }
-              });
-          });
+          log(ostr.str(),
+            Logging::Logger::EMERGENCY,
+            Aspect::CLICK_FRONTEND);
+        }
       }
-      else
+
+      FCGI::HttpResponse& response = *response_ptr;
+
+      AdServer::SetUidController::SetUidPtr set_uid =
+        set_uid_controller_->generate_if_allowed(
+          request_info.user_status,
+          request_info.cookie_user_id,
+          false);
+
+      if(got_click_url && (
+        (!request_info.match_user_id.is_null() && !(
+          request_info.match_user_id ==
+            AdServer::Commons::PROBE_USER_ID)) ||
+        (!request_info.cookie_user_id.is_null() && !(
+          request_info.cookie_user_id ==
+            AdServer::Commons::PROBE_USER_ID)) ||
+        set_uid))
       {
-        finish_response(false, click_result_info);
+        const unsigned long current_task_count =
+          match_task_count_.exchange_and_add(1) + 1;
+
+        if(config_->match_task_limit() == 0 ||
+          current_task_count <=
+            config_->match_task_limit() + config_->threads())
+        {
+          match_workers_->post(
+            [this,
+              user_id = set_uid ?
+                set_uid->client_id.uuid() :
+                request_info.match_user_id,
+              cookie_user_id = request_info.cookie_user_id,
+              now = GrpcAlgs::unpack_time(click_info.time()),
+              campaign_id = click_result_info.campaign_id(),
+              advertiser_id = click_result_info.advertiser_id(),
+              peer_ip = request_info.peer_ip,
+              markers = request_info.markers]()
+            {
+              match_click_channels_(
+                user_id,
+                cookie_user_id,
+                now,
+                campaign_id,
+                advertiser_id,
+                peer_ip,
+                markers);
+              match_task_count_ += -1;
+            });
+        }
+        else
+        {
+          match_task_count_ += -1;
+          logger()->sstream(
+            Logging::Logger::ERROR,
+            Aspect::CLICK_FRONTEND,
+            "ADS-IMPL-198") << FUN <<
+            ": the limit of simultaneous matching tasks has been "
+            "reached";
+        }
       }
 
-      return;
+      if(set_uid)
+      {
+        FrontendCommons::add_UID_cookie(
+          response,
+          request,
+          *cookie_manager_,
+          set_uid->client_id.str());
+      }
+
+      if(common_config_->ResponseHeaders().present())
+      {
+        FrontendCommons::add_headers(
+          *(common_config_->ResponseHeaders()),
+          response);
+      }
+
+      FrontendCommons::CORS::set_headers(request, response);
+
+      bool instantiated = false;
+
+      if(request_info.use_click_template)
+      {
+        try
+        {
+          Commons::TextTemplate_var templ =
+            template_files_->get(click_template_file_);
+
+          typedef std::map<String::SubString, std::string> ArgMap;
+          ArgMap args_cont;
+          if(!request_info.preclick_url.empty())
+          {
+            args_cont[Tokens::PRECLICK] = request_info.preclick_url;
+          }
+
+          if(got_click_url)
+          {
+            args_cont[Tokens::CLICK_URL] = request_info.click_prefix +
+              click_result_info.url();
+          }
+
+          String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
+          String::TextTemplate::DefaultValue args_with_default(&args);
+          String::TextTemplate::ArgsEncoder args_with_encoding(
+            &args_with_default);
+          std::string response_content = templ->instantiate(
+            args_with_encoding);
+
+          response.set_content_type_nocopy(
+            FrontendCommons::ContentType::TEXT_HTML);
+          response.get_output_stream().write(
+            response_content.data(),
+            response_content.size());
+          http_status = 200;
+
+          instantiated = true;
+        }
+        catch(const eh::Exception& ex)
+        {
+          logger()->sstream(
+            Logging::Logger::EMERGENCY,
+            Aspect::CLICK_FRONTEND,
+            "ADS-IMPL-?") <<
+            FUN << ": eh::Exception has been caught: " << ex.what();
+        }
+      }
+
+      if(!instantiated)
+      {
+        if(got_click_url)
+        {
+          http_status = 302;
+          response.add_header_nocopy_name(
+            Response::Header::LOCATION,
+            request_info.click_prefix + click_result_info.url());
+
+          if(log_level() >= TraceLevel::MIDDLE)
+          {
+            Stream::Error ostr;
+            ostr << FUN << ": redirecting to " << click_result_info.url();
+
+            log(ostr.str(),
+              TraceLevel::MIDDLE,
+              Aspect::CLICK_FRONTEND);
+          }
+        }
+        else
+        {
+          log(String::SubString("DO NOT redirecting !"),
+            TraceLevel::MIDDLE,
+            Aspect::CLICK_FRONTEND);
+
+          http_status = 204;
+        }
+      }
+
+      co_return FrontendCommons::RequestResult{http_status, response_ptr};
     }
     catch (const ForbiddenException& ex)
     {
@@ -943,14 +873,14 @@ namespace AdServer
     {
       http_status = 500;
       Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught:" << e.what();
+      ostr << FUN << ": eh::Exception caught: " << e.what();
 
       log(ostr.str(),
         Logging::Logger::EMERGENCY,
         Aspect::CLICK_FRONTEND);
     }
 
-    response_writer->write(http_status, response_ptr);
+    co_return FrontendCommons::RequestResult{http_status, response_ptr};
   }
 
   void

@@ -13,6 +13,7 @@ add_library(FCGI SHARED
   HttpResponse.cpp
   HttpRequest.cpp
   FrontendInterface.cpp
+  RequestTask.cpp
   FrontendWorkers.cpp
 )
 

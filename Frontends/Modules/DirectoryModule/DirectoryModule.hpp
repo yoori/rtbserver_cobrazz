@@ -13,10 +13,10 @@
 #include <Generics/MMap.hpp>
 #include <HTTP/Http.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <FrontendCommons/BoundedCache.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 namespace AdServer
 {
@@ -29,7 +29,7 @@ namespace AdServer
   class DirectoryModule:
     private Logging::LoggerCallbackHolder,
     private FrontendCommons::HTTPExceptions,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -37,22 +37,22 @@ namespace AdServer
   public:
     DirectoryModule(
       Configuration* frontend_config_,
-      Logging::Logger* logger)
+      Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
       /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
 
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
 
-    virtual void
+    virtual FrontendCommons::RequestTask
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -197,6 +197,6 @@ namespace AdServer
     DirAliasMap directories_;
     ConfigPtr config_;
     Configuration_var frontend_config_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
 }

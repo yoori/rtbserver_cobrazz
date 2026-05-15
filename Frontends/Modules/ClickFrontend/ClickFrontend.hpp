@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <coroutine>
+#include <exception>
 #include <memory>
 #include <string>
 
@@ -16,6 +18,7 @@
 #include <HTTP/Http.hpp>
 
 #include <Commons/AtomicInt.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -46,7 +49,7 @@ namespace AdServer
   class ClickFrontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -58,6 +61,7 @@ namespace AdServer
     ClickFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
@@ -83,14 +87,14 @@ namespace AdServer
      *
      * @return HTTP status code.
      */
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
 
-    void
-    handle_request_noparams(
+    FrontendCommons::RequestTask
+    handle_request_noparams_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
@@ -137,17 +141,9 @@ namespace AdServer
     virtual
     ~ClickFrontend() noexcept;
 
-    void
-    handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
-
-    void
-    handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+    FrontendCommons::RequestTask
+    process_request_(
+      FCGI::HttpRequestHolder_var request_holder);
 
     void
     parse_config_() /*throw(Exception)*/;
@@ -196,6 +192,8 @@ namespace AdServer
     std::unique_ptr<ClickFE::RequestInfoFiller> request_info_filler_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
@@ -203,7 +201,7 @@ namespace AdServer
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
 
     Generics::StringHashAdapter click_template_file_;
     Commons::TextTemplateCache_var template_files_;

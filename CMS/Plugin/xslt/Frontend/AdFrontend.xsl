@@ -981,7 +981,7 @@
     </cfg:AdFeConfiguration>
  </xsl:if>
 
-  <cfg:AdInstFeConfiguration threads="1000">
+  <cfg:AdInstFeConfiguration threads="32">
     <cfg:UriList>
       <cfg:Uri path="/services/inst"/>
       <cfg:Uri path="/inst"/>
@@ -992,7 +992,7 @@
     </xsl:call-template>
   </cfg:AdInstFeConfiguration>
 
-  <cfg:ContentFeConfiguration threads="400">
+  <cfg:ContentFeConfiguration threads="32">
     <cfg:UriList>
       <cfg:Uri path="/services/dcreative"/>
       <cfg:Uri path="/dcreative"/>
@@ -1016,11 +1016,7 @@
 
   <xsl:variable name="click-matching-threads"><xsl:value-of
     select="$click-module/@threads"/><xsl:if
-      test="count($click-module/@threads) = 0"><xsl:call-template name="GetAttr">
-    <xsl:with-param name="node" select="$frontend-config/cfg:webServerParams"/>
-      <xsl:with-param name="name" select="'max_clients'"/>
-      <xsl:with-param name="type" select="$xsd-webserver-params-type"/>
-    </xsl:call-template></xsl:if>
+      test="count($click-module/@threads) = 0">32</xsl:if>
   </xsl:variable>
 
   <xsl:variable name="match-task-limit"><xsl:value-of
@@ -1112,11 +1108,7 @@
 
   <xsl:variable name="action-matching-threads"><xsl:value-of
     select="$action-module/@threads"/><xsl:if
-      test="count($action-module/@threads) = 0"><xsl:call-template name="GetAttr">
-    <xsl:with-param name="node" select="$frontend-config/cfg:webServerParams"/>
-      <xsl:with-param name="name" select="'max_clients'"/>
-      <xsl:with-param name="type" select="$xsd-webserver-params-type"/>
-    </xsl:call-template></xsl:if>
+      test="count($action-module/@threads) = 0">32</xsl:if>
   </xsl:variable>
 
   <xsl:variable name="action-match-task-limit"><xsl:value-of
@@ -1152,7 +1144,7 @@
     </xsl:for-each>
   </cfg:ActionFeConfiguration>
 
-  <cfg:PassFeConfiguration threads="200">
+  <cfg:PassFeConfiguration threads="32">
     <xsl:attribute name="domain">http://<xsl:value-of select="$backend-content-domain"/></xsl:attribute>
     <xsl:if test="$adfrontend-https-enabled = 'true'">
       <xsl:attribute name="secure_domain">https://<xsl:value-of select="$secure-backend-content-domain"/></xsl:attribute>
@@ -1167,7 +1159,7 @@
     </xsl:call-template>
   </cfg:PassFeConfiguration>
 
-  <cfg:PassPixelFeConfiguration threads="200">
+  <cfg:PassPixelFeConfiguration threads="32">
     <xsl:attribute name="track_pixel_path"><xsl:value-of select="concat($data-root, '/aux/pt.gif')"/></xsl:attribute>
     <cfg:UriList>
       <cfg:Uri path="/services/passback.gif"/>
@@ -1179,7 +1171,7 @@
     </xsl:call-template>
   </cfg:PassPixelFeConfiguration>
   
-  <cfg:WebStatFeConfiguration threads="400">
+  <cfg:WebStatFeConfiguration threads="32">
     <xsl:attribute name="pixel_path"><xsl:value-of select="concat($data-root, '/aux/pt.gif')"/></xsl:attribute>
     <xsl:attribute name="rid_public_key"><xsl:value-of select="concat($config-root, '/rid_public_key.der')"/></xsl:attribute>
     <cfg:UriList>
@@ -1195,7 +1187,7 @@
     </xsl:call-template>
   </cfg:WebStatFeConfiguration>
 
-  <cfg:PubPixelFeConfiguration threads="400">
+  <cfg:PubPixelFeConfiguration threads="32">
     <cfg:UriList>
       <cfg:Uri path="/pubpixels"/>
     </cfg:UriList>
@@ -1481,7 +1473,7 @@
         <xsl:otherwise>false</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <cfg:OptOutFeConfiguration threads="100">
+    <cfg:OptOutFeConfiguration threads="32">
       <xsl:attribute name="log_ip"><xsl:value-of select="$optout-log-ip"/></xsl:attribute>
       <cfg:UriList>
         <cfg:Uri path="/services/OO"/>

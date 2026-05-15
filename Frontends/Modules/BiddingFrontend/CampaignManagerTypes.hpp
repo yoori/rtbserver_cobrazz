@@ -619,7 +619,7 @@ namespace AdServer::Bidding::CampaignManager
   inline AdServer::Commons::RequestId
   unpack_request_id(const RequestIdInfo& request_id)
   {
-    return GrpcAlgs::unpack_user_id(request_id.value);
+    return GrpcAlgs::unpack_request_id(request_id.value);
   }
 
   template<typename DecimalType>

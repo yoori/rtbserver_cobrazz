@@ -40,6 +40,7 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(UserBindServerGrpcClient
   PUBLIC
+  Commons
   GrpcBatch
   UserBindServerGrpc
   gRPC::grpc++)

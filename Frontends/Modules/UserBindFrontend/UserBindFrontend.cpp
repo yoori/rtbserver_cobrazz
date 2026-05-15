@@ -298,6 +298,7 @@ namespace AdServer
   UserBindFrontend::UserBindFrontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -311,6 +312,7 @@ namespace AdServer
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
+      workers_(std::move(request_workers)),
       match_task_count_(0)
   {}
 
@@ -339,21 +341,14 @@ namespace AdServer
     return result;
   }
 
-  void
-  UserBindFrontend::handle_request(
+  FrontendCommons::RequestTask
+  UserBindFrontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    return handle_request_(std::move(request_holder));
   }
 
   void
@@ -405,11 +400,6 @@ namespace AdServer
       try
       {
         parse_configs_();
-
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
 
         /*
         callback_holder_.reset(new Logging::LoggerCallbackHolder(
@@ -640,13 +630,14 @@ namespace AdServer
     return Generics::CRC::reversed(0, res.data(), res.size());
   }
 
-  void
+  FrontendCommons::RequestTask
   UserBindFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "UserBindFrontend::handle_request_()";
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
@@ -655,7 +646,6 @@ namespace AdServer
     auto finish_response =
       [this,
         request_holder,
-        response_writer,
         response_ptr](int http_status) mutable
       {
         const FCGI::HttpRequest& request = request_holder->request();
@@ -675,8 +665,85 @@ namespace AdServer
           response.get_output_stream().write((*buffer)->data(), (*buffer)->size());
         }
 
-        response_writer->write(http_status, response_ptr);
+        return http_status;
       };
+
+    struct ProcessRequestResult
+    {
+      int status = 500;
+      BindResult bind_result;
+    };
+
+    struct ProcessRequestAwaiter
+    {
+      UserBindFrontend* frontend;
+      UserBind::RequestInfo_var request_info;
+      std::string dns_bind_request_id;
+      std::coroutine_handle<> handle{};
+      ProcessRequestResult result{};
+
+      bool await_ready() const noexcept
+      {
+        return false;
+      }
+
+      void await_suspend(std::coroutine_handle<> h) noexcept
+      {
+        handle = h;
+        frontend->process_request_async_(
+          request_info,
+          std::move(dns_bind_request_id),
+          [this](int status, BindResult bind_result) mutable
+          {
+            result.status = status;
+            result.bind_result = std::move(bind_result);
+            frontend->workers_->post([this]() mutable
+            {
+              handle.resume();
+            });
+          });
+      }
+
+      ProcessRequestResult await_resume() noexcept
+      {
+        return std::move(result);
+      }
+    };
+
+    struct UserChannelsAwaiter
+    {
+      UserBindFrontend* frontend;
+      UserBind::RequestInfo_var request_info;
+      FCGI::HttpResponse_var response;
+      std::coroutine_handle<> handle{};
+      int status = 500;
+
+      bool await_ready() const noexcept
+      {
+        return false;
+      }
+
+      void await_suspend(std::coroutine_handle<> h) noexcept
+      {
+        handle = h;
+        frontend->handle_user_channels_request_async_(
+          request_info,
+          response,
+          [this](int result_status) mutable
+          {
+            status = result_status;
+            frontend->workers_->post([this]() mutable
+            {
+              handle.resume();
+            });
+          });
+      }
+
+      int await_resume() const noexcept
+      {
+        return status;
+      }
+    };
 
     try
     {
@@ -719,8 +786,11 @@ namespace AdServer
 
         response.set_content_type_nocopy(Response::Type::JSON);
         response.write(stream.str());
-        finish_response(200);
-        return;
+        const int http_status = finish_response(200);
+        co_return FrontendCommons::RequestResult{
+          http_status,
+          response_ptr,
+          false};
       }
 
       if (request.uri().substr(0, UrlPath::kGetSegments.size()) ==
@@ -729,11 +799,15 @@ namespace AdServer
           (request.uri().size() > UrlPath::kGetSegments.size()
           && request.uri()[UrlPath::kGetSegments.size()] == '?')))
       {
-        handle_user_channels_request_async_(
+        const int channels_status = co_await UserChannelsAwaiter{
+          this,
           request_info_holder,
+          response_ptr};
+        const int http_status = finish_response(channels_status);
+        co_return FrontendCommons::RequestResult{
+          http_status,
           response_ptr,
-          std::move(finish_response));
-        return;
+          false};
       }
 
       if(!request.secure() &&
@@ -742,14 +816,21 @@ namespace AdServer
          !request_info.disable_secure_redirect)
       {
         std::string result_url = *(config_->nosecure_redirect()) + request.uri();
-        finish_response(FrontendCommons::redirect(result_url, response));
-        return;
+        const int http_status = finish_response(
+          FrontendCommons::redirect(result_url, response));
+        co_return FrontendCommons::RequestResult{
+          http_status,
+          response_ptr,
+          false};
       }
 
       if(request_info.google_error != 0)
       {
-        finish_response(204);
-        return;
+        const int http_status = finish_response(204);
+        co_return FrontendCommons::RequestResult{
+          http_status,
+          response_ptr,
+          false};
       }
 
       const bool opted_out =
@@ -761,8 +842,11 @@ namespace AdServer
           throw InvalidParamException("");
         }
 
-        finish_response(204);
-        return;
+        const int http_status = finish_response(204);
+        co_return FrontendCommons::RequestResult{
+          http_status,
+          response_ptr,
+          false};
       }
 
       if(request_info.external_id.empty() &&
@@ -862,23 +946,18 @@ namespace AdServer
         dns_bind_request_id = std::string("r") + dns_bind_request_id;
       }
 
-      process_request_async_(
+      ProcessRequestResult process_result = co_await ProcessRequestAwaiter{
+        this,
         request_info_holder,
-        dns_bind_request_id,
-        [this,
-          request_holder,
-          response_ptr,
-          finish_response = std::move(finish_response),
-          request_info_holder,
-          redirect_rule,
-          dns_bind_request_id](
-            int process_status,
-            BindResult bind_result) mutable
-        {
+        dns_bind_request_id};
+
+      {
           const FCGI::HttpRequest& request = request_holder->request();
           FCGI::HttpResponse& response = *response_ptr;
           const UserBind::RequestInfo& request_info = *request_info_holder;
-          int http_status = process_status == 200 ? 204 : process_status;
+          BindResult& bind_result = process_result.bind_result;
+          int http_status =
+            process_result.status == 200 ? 204 : process_result.status;
           std::string redirect_url;
 
           try
@@ -1052,15 +1131,23 @@ namespace AdServer
               response);
           }
 
-          finish_response(http_status);
-        });
+          http_status = finish_response(http_status);
+          co_return FrontendCommons::RequestResult{
+            http_status,
+            response_ptr,
+            false};
+      }
     }
     catch(const InvalidParamException&)
     {
       response.add_header_nocopy(
         String::SubString("X-Status"),
         String::SubString("Bad request"));
-      finish_response(204);
+      const int http_status = finish_response(204);
+      co_return FrontendCommons::RequestResult{
+        http_status,
+        response_ptr,
+        false};
     }
     catch(const eh::Exception& e)
     {
@@ -1070,7 +1157,11 @@ namespace AdServer
         Logging::Logger::EMERGENCY,
         Aspect::USER_BIND_FRONTEND,
         "ADS-IMPL-109");
-      finish_response(500);
+      const int http_status = finish_response(500);
+      co_return FrontendCommons::RequestResult{
+        http_status,
+        response_ptr,
+        false};
     }
   }
 

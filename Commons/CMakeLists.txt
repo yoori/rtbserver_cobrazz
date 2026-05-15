@@ -21,6 +21,7 @@ add_library(Commons  SHARED
   Algs.cpp
   CsvReader.cpp
   ExternalUserIdUtils.cpp
+  ExecutorPool.cpp
   ZmqSocketHolder.cpp
   SecToken.cpp
 

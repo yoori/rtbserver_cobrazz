@@ -47,6 +47,21 @@ namespace GrpcAlgs
   }
 
   inline
+  AdServer::Commons::RequestId
+  unpack_request_id(const std::string& request_id_str)
+  {
+    if(request_id_str.empty())
+    {
+      return AdServer::Commons::RequestId();
+    }
+
+    return AdServer::Commons::RequestId(
+      reinterpret_cast<const unsigned char*>(request_id_str.data()),
+      reinterpret_cast<const unsigned char*>(request_id_str.data()) +
+        request_id_str.size());
+  }
+
+  inline
   AdServer::Commons::UserId
   unpack_user_id(const std::string& user_id_str)
   {

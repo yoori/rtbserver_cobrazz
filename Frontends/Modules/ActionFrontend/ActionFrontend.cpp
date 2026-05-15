@@ -18,7 +18,6 @@
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
 #include "ActionFrontend.hpp"
-#include "ActionRequestState.hpp"
 
 namespace
 {
@@ -119,6 +118,7 @@ namespace AdServer::Action
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -132,7 +132,8 @@ namespace AdServer::Action
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
-      match_task_count_(0)
+      match_task_count_(0),
+      workers_(std::move(request_workers))
   {}
 
   void
@@ -220,11 +221,6 @@ namespace AdServer::Action
             }
           }
         }
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
-
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
@@ -390,93 +386,113 @@ namespace AdServer::Action
     response.get_output_stream().write((*buffer)->data(), (*buffer)->size());
   }
 
-  void
+  FrontendCommons::RequestTask
   Frontend::process_advertiser_request_(
-    const std::shared_ptr<ActionRequestState>& state)
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::HttpResponse_var response,
+    RequestInfo request_info,
+    bool return_html)
     noexcept
   {
-    state->cookie_resolved_user_id = state->request_info.user_id;
+    struct ResolveUserIdResult
+    {
+      bool success = false;
+      Commons::UserId user_id;
+    };
 
-    if(state->request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
-      (!state->request_info.external_user_id.empty() ||
-        !state->cookie_resolved_user_id.is_null()))
+    struct ResolveUserIdAwaiter
+    {
+      Frontend* frontend;
+      std::string external_user_id;
+      Commons::UserId current_user_id;
+      Generics::Time time;
+      std::coroutine_handle<> handle{};
+      ResolveUserIdResult result{};
+
+      bool await_ready() const noexcept
+      {
+        return false;
+      }
+
+      void await_suspend(std::coroutine_handle<> h) noexcept
+      {
+        handle = h;
+        frontend->resolve_user_id_(
+          external_user_id,
+          current_user_id,
+          time,
+          [this](bool success, Commons::UserId user_id) mutable
+          {
+            result.success = success;
+            result.user_id = user_id;
+            frontend->workers_->post([this]() mutable
+            {
+              handle.resume();
+            });
+          });
+      }
+
+      ResolveUserIdResult await_resume() noexcept
+      {
+        return result;
+      }
+    };
+
+    Commons::UserId cookie_resolved_user_id = request_info.user_id;
+
+    if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
+      (!request_info.external_user_id.empty() ||
+        !cookie_resolved_user_id.is_null()))
     {
       const std::string external_id_str =
-        !state->request_info.external_user_id.empty() ?
-          state->request_info.external_user_id :
-          std::string("c/") + state->cookie_resolved_user_id.to_string();
+        !request_info.external_user_id.empty() ?
+          request_info.external_user_id :
+          std::string("c/") + cookie_resolved_user_id.to_string();
 
-      resolve_user_id_(
+      const ResolveUserIdResult resolve_result = co_await ResolveUserIdAwaiter{
+        this,
         external_id_str,
-        state->cookie_resolved_user_id,
-        state->request_info.time,
-        [this, state](bool resolve_res, Commons::UserId resolved_user_id)
-        {
-          if(resolve_res && !resolved_user_id.is_null())
-          {
-            state->cookie_resolved_user_id = resolved_user_id;
-          }
-
-          state->resolve_utm_user_id_stage();
-        });
+        cookie_resolved_user_id,
+        request_info.time};
+      if(resolve_result.success && !resolve_result.user_id.is_null())
+      {
+        cookie_resolved_user_id = resolve_result.user_id;
+      }
     }
-    else
-    {
-      state->resolve_utm_user_id_stage();
-    }
-  }
 
-  void
-  Frontend::resolve_utm_user_id_(
-    const std::shared_ptr<ActionRequestState>& state)
-    noexcept
-  {
-    if(state->request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
-      !state->request_info.utm_cookie_user_id.is_null())
+    Commons::UserId utm_cookie_resolved_user_id;
+    if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
+      !request_info.utm_cookie_user_id.is_null())
     {
       const std::string external_id_str =
-        std::string("c/") + state->request_info.utm_cookie_user_id.to_string();
+        std::string("c/") + request_info.utm_cookie_user_id.to_string();
 
-      resolve_user_id_(
+      const ResolveUserIdResult resolve_result = co_await ResolveUserIdAwaiter{
+        this,
         external_id_str,
-        state->cookie_resolved_user_id,
-        state->request_info.time,
-        [this, state](bool resolve_res, Commons::UserId resolved_user_id)
-        {
-          if(resolve_res)
-          {
-            state->utm_cookie_resolved_user_id =
-              !resolved_user_id.is_null() ?
-                resolved_user_id :
-                state->request_info.utm_cookie_user_id;
-          }
-
-          state->finish_advertiser_request_stage();
-        });
+        cookie_resolved_user_id,
+        request_info.time};
+      if(resolve_result.success)
+      {
+        utm_cookie_resolved_user_id =
+          !resolve_result.user_id.is_null() ?
+            resolve_result.user_id :
+            request_info.utm_cookie_user_id;
+      }
     }
-    else
-    {
-      state->finish_advertiser_request_stage();
-    }
-  }
 
-  void
-  Frontend::finish_advertiser_request_(
-    const std::shared_ptr<ActionRequestState>& state)
-    noexcept
-  {
     static const char* FUN = "Action::Frontend::finish_advertiser_request_()";
 
     int http_status = 500;
     try
     {
       http_status = fill_advertiser_response_(
-        *state->response,
-        state->request_holder->request(),
-        state->request_info,
-        state->return_html,
-        state->cookie_resolved_user_id,
-        state->utm_cookie_resolved_user_id);
+        *response,
+        request_holder->request(),
+        request_info,
+        return_html,
+        cookie_resolved_user_id,
+        utm_cookie_resolved_user_id);
     }
     catch(const eh::Exception& e)
     {
@@ -490,7 +506,10 @@ namespace AdServer::Action
         "ADS-IMPL-128");
     }
 
-    state->response_writer->write(http_status, state->response);
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response,
+      false};
   }
 
   int
@@ -923,30 +942,24 @@ namespace AdServer::Action
     }
   }
 
-  void
-  Frontend::handle_request(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    return handle_request_(std::move(request_holder));
   }
 
-  void
+  FrontendCommons::RequestTask
   Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "Action::Frontend::handle_request()";
+
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     const FCGI::HttpRequest& request = request_holder->request();
 
@@ -955,10 +968,9 @@ namespace AdServer::Action
     logger()->log(String::SubString(
         "Action::Frontend::handle_request(): entered"),
       TraceLevel::MIDDLE,
-      Aspect::ACTION_FRONTEND);
+    Aspect::ACTION_FRONTEND);
     int http_status = 500;
     bool return_html = false;
-    bool response_deferred = false;
 
     try
     {
@@ -998,15 +1010,12 @@ namespace AdServer::Action
           String::SubString(request.uri().begin(), request.uri().begin() + found_uri.length()) :
           String::SubString());
 
-      auto state = std::make_shared<ActionRequestState>(
-        this,
+      auto result = co_await process_advertiser_request_(
         std::move(request_holder),
-        std::move(response_writer),
         std::move(response_ptr),
         std::move(request_info),
         return_html);
-      response_deferred = true;
-      state->start();
+      co_return std::move(result);
     }
     catch (const ForbiddenException& ex)
     {
@@ -1031,10 +1040,10 @@ namespace AdServer::Action
         "ADS-IMPL-128");
     }
 
-    if(!response_deferred)
-    {
-      response_writer->write(http_status, response_ptr);
-    }
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response_ptr,
+      false};
   }
 
   void

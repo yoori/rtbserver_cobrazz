@@ -17,12 +17,12 @@
 //#include <Apache/Adapters.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -33,7 +33,7 @@ namespace WebStat
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
@@ -44,23 +44,18 @@ namespace WebStat
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
 
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
-
-    void
-    handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -88,24 +83,17 @@ namespace WebStat
 
     void parse_config_() /*throw(Exception)*/;
 
-    class WebStatRequestState;
-
-    void
+    FrontendCommons::RequestTask
     process_request_(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer,
       FCGI::HttpResponse_var response)
       noexcept;
 
-    void
-    consider_web_operation_(
-      const std::shared_ptr<WebStatRequestState>& state,
-      std::size_t index)
-      noexcept;
-
-    void
+    int
     finish_request_(
-      const std::shared_ptr<WebStatRequestState>& state,
+      FCGI::HttpResponse& response,
+      FCGI::HttpRequest::Method request_method,
+      const std::string& origin,
       int http_result)
       noexcept;
 
@@ -119,8 +107,10 @@ namespace WebStat
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
 
     FileCachePtr pixel_;
   };

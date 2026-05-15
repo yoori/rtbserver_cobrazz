@@ -301,11 +301,11 @@
 
 <xsl:variable name="def-ad-module-threads" select="'128'"/>
 <xsl:variable name="def-bidding-module-threads" select="'128'"/>
-<xsl:variable name="def-impression-module-threads" select="'128'"/>
-<xsl:variable name="def-impression-module-match-threads" select="'64'"/>
+<xsl:variable name="def-impression-module-threads" select="'32'"/>
+<xsl:variable name="def-impression-module-match-threads" select="'32'"/>
 
-<xsl:variable name="def-userbind-module-threads" select="'1000'"/>
-<xsl:variable name="def-userbind-module-match-threads" select="'100'"/>
+<xsl:variable name="def-userbind-module-threads" select="'32'"/>
+<xsl:variable name="def-userbind-module-match-threads" select="'32'"/>
 <xsl:variable name="def-userbind-module-match-task-limit" select="'1000'"/>
 <xsl:variable name="def-userbind-module-bind-task-limit" select="'1000'"/>
 

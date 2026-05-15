@@ -22,6 +22,7 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
@@ -38,7 +39,6 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 #include "AdFrontendStat.hpp"
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
@@ -53,7 +53,7 @@ namespace AdServer
   class AdFrontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -74,6 +74,7 @@ namespace AdServer
     AdFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
@@ -92,16 +93,16 @@ namespace AdServer
      * @param response The object to write the HTTP response body.
      * @return HTTP status code.
      */
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
 
-    void
+    FrontendCommons::RequestTask
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer) noexcept;
+      FCGI::HttpRequestHolder_var request_holder)
+      noexcept;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -177,7 +178,7 @@ namespace AdServer
       std::function<void(bool)> callback)
       noexcept;
 
-    void
+    FrontendCommons::RequestResult
     finish_request_(
       const std::shared_ptr<RequestContext>& context)
       noexcept;
@@ -329,7 +330,7 @@ namespace AdServer
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
 
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>

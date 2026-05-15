@@ -169,7 +169,8 @@ namespace AdServer
    */
   ContentFrontend::ContentFrontend(
     Configuration* frontend_config,
-    Logging::Logger* logger) /*throw(eh::Exception)*/
+    Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers) /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
@@ -178,7 +179,8 @@ namespace AdServer
             frontend_config->get().ContentFeConfiguration()->Logger().log_level())),
         "ContentFrontend",
         Aspect::CONTENT_FRONTEND, 0),
-      frontend_config_(ReferenceCounting::add_ref(frontend_config))
+      frontend_config_(ReferenceCounting::add_ref(frontend_config)),
+      workers_(std::move(request_workers))
   {}
 
   void ContentFrontend::parse_configs_() /*throw(Exception)*/
@@ -252,11 +254,6 @@ namespace AdServer
           FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
       campaign_manager_ = campaign_manager;
       add_child_object(campaign_manager);
-
-      workers_ = new FrontendCommons::FrontendWorkers(
-        callback(),
-        config_->threads());
-      add_child_object(workers_);
 
       template_files_ = new Commons::TextTemplateCache(
         config_->TemplateCache().size(),
@@ -337,27 +334,21 @@ namespace AdServer
     }
   }
 
-  void
-  ContentFrontend::handle_request_noparams(
+  FrontendCommons::RequestTask
+  ContentFrontend::handle_request_noparams_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_noparams_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+    auto result = co_await handle_request_noparams_(std::move(request_holder));
+    co_return std::move(result);
   }
 
-  void
+  FrontendCommons::RequestTask
   ContentFrontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -420,44 +411,38 @@ namespace AdServer
 
     request.set_params(std::move(params));
 
-    handle_request_(std::move(request_holder), std::move(response_writer));
+    auto result = co_await handle_request_(std::move(request_holder));
+    co_return std::move(result);
   }
 
-  void
-  ContentFrontend::handle_request(
+  FrontendCommons::RequestTask
+  ContentFrontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+    auto result = co_await handle_request_(std::move(request_holder));
+    co_return std::move(result);
   }
 
-  void
+  FrontendCommons::RequestTask
   ContentFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    process_request_(
+    auto result = co_await process_request_(
       std::move(request_holder),
-      std::move(response_ptr),
-      std::move(response_writer));
+      std::move(response_ptr));
+    co_return std::move(result);
   }
 
-  void
+  FrontendCommons::RequestTask
   ContentFrontend::process_request_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponse_var response,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpResponse_var response)
     noexcept
   {
     static const char* FUN = "ContentFrontend::handle_request()";
@@ -549,70 +534,81 @@ namespace AdServer
       // check file
       if(!AdServer::PathManip::normalize_path(file))
       {
-        response_writer->write(403, response);
-        return;
+        co_return FrontendCommons::RequestResult{
+          403,
+          response,
+          false};
       }
 
       file = config_->TemplateCache().root() + file;
 
-      template_files_->get_async(
-        file,
-        campaign_manager_index.c_str(),
-        [this,
-          response,
-          response_writer = std::move(response_writer),
-          instantiate_type,
-          click_url0 = std::move(click_url0),
-          pub_preclick_url = std::move(pub_preclick_url),
-          resource_url_suffix = std::move(resource_url_suffix),
-          random_str = std::move(random_str)](
-            Commons::TextTemplate_var templ) mutable
+      struct TemplateAwaiter
+      {
+        ContentFrontend* frontend;
+        std::string file;
+        std::string campaign_manager_index;
+        std::coroutine_handle<> handle{};
+        Commons::TextTemplate_var templ{};
+
+        bool await_ready() const noexcept
         {
-          workers_->post(
-            [this,
-              response,
-              response_writer = std::move(response_writer),
-              templ = std::move(templ),
-              instantiate_type,
-              click_url0 = std::move(click_url0),
-              pub_preclick_url = std::move(pub_preclick_url),
-              resource_url_suffix = std::move(resource_url_suffix),
-              random_str = std::move(random_str)]() mutable
+          return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> h) noexcept
+        {
+          handle = h;
+          frontend->template_files_->get_async(
+            file,
+            campaign_manager_index.c_str(),
+            [this](Commons::TextTemplate_var result) mutable
             {
-              int status = 0;
-              if(!templ)
+              templ = std::move(result);
+              frontend->workers_->post([this]() mutable
               {
-                status = 404;
-              }
-              else
-              {
-                try
-                {
-                  status = fill_response_(
-                    *response,
-                    templ,
-                    instantiate_type,
-                    click_url0,
-                    pub_preclick_url,
-                    resource_url_suffix,
-                    random_str);
-                }
-                catch(const eh::Exception& e)
-                {
-                  status = 500;
-                  Stream::Error ostr;
-                  ostr << "ContentFrontend::handle_request(): "
-                    "eh::Exception has been caught: " << e.what();
-                  logger()->log(ostr.str(), Logging::Logger::EMERGENCY,
-                    Aspect::CONTENT_FRONTEND, "ADS-IMPL-191");
-                }
-              }
-
-              response_writer->write(status, response);
+                handle.resume();
+              });
             });
-        });
+        }
 
-      return;
+        Commons::TextTemplate_var await_resume() noexcept
+        {
+          return std::move(templ);
+        }
+      };
+
+      Commons::TextTemplate_var templ = co_await TemplateAwaiter{
+        this,
+        file,
+        campaign_manager_index};
+
+      if(!templ)
+      {
+        http_status = 404;
+      }
+      else
+      {
+        try
+        {
+          http_status = fill_response_(
+            *response,
+            templ,
+            instantiate_type,
+            click_url0,
+            pub_preclick_url,
+            resource_url_suffix,
+            random_str);
+        }
+        catch(const eh::Exception& e)
+        {
+          http_status = 500;
+          Stream::Error ostr;
+          ostr << "ContentFrontend::handle_request(): "
+            "eh::Exception has been caught: " << e.what();
+          logger()->log(ostr.str(), Logging::Logger::EMERGENCY,
+            Aspect::CONTENT_FRONTEND, "ADS-IMPL-191");
+        }
+      }
     }
     catch (const ForbiddenException& ex)
     {
@@ -635,7 +631,10 @@ namespace AdServer
         Aspect::CONTENT_FRONTEND, "ADS-IMPL-191");
     }
 
-    response_writer->write(http_status, response);
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response,
+      false};
   }
 
   int

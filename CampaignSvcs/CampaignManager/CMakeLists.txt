@@ -34,6 +34,7 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(CampaignManagerGrpcClient
   PUBLIC
+  Commons
   GrpcBatch
   CampaignManagerGrpc
   gRPC::grpc++)

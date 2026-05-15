@@ -35,7 +35,8 @@ namespace PubPixel
 
   Frontend::Frontend(
     Configuration* frontend_config,
-    Logging::Logger* logger)
+    Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
@@ -45,7 +46,8 @@ namespace PubPixel
             frontend_config->get().PubPixelFeConfiguration()->Logger().log_level())),
         "PubPixelFrontend",
         Aspect::PUBPIXEL_FRONTEND, 0),
-      frontend_config_(ReferenceCounting::add_ref(frontend_config))
+      frontend_config_(ReferenceCounting::add_ref(frontend_config)),
+      workers_(std::move(request_workers))
   {}
 
   bool
@@ -121,11 +123,6 @@ namespace PubPixel
         common_config_->GeoIP().present() ?
         common_config_->GeoIP()->path().c_str() : 0));
 
-      workers_ = new FrontendCommons::FrontendWorkers(
-        callback(),
-        config_->threads());
-      add_child_object(workers_);
-
       grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
         common_config_->grpc_executor_threads());
       add_child_object(grpc_executor_);
@@ -136,6 +133,10 @@ namespace PubPixel
           AdServer::Grpc::BatchingOptions(),
           grpc_executor_);
       campaign_manager_ = campaign_manager;
+      campaign_manager_coro_ = std::make_shared<
+        AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+          campaign_manager_,
+          workers_);
       add_child_object(campaign_manager);
 
       activate_object();
@@ -171,40 +172,25 @@ namespace PubPixel
     {}
   }
 
-  void
-  Frontend::handle_request(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
-  }
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
-  void
-  Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    process_request_(
+    auto result = co_await process_request_(
       std::move(request_holder),
-      std::move(response_writer),
       std::move(response_ptr));
+    co_return std::move(result);
   }
 
-  void
+  FrontendCommons::RequestTask
   Frontend::process_request_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer,
     FCGI::HttpResponse_var response)
     noexcept
   {
@@ -224,8 +210,10 @@ namespace PubPixel
       if(!FrontendCommons::find_uri(
            config_->UriList().Uri(), request.uri(), found_uri))
       {
-        response_writer->write(403, response);
-        return;
+        co_return FrontendCommons::RequestResult{
+          403,
+          response,
+          false};
       }
 
       RequestInfo request_info;
@@ -249,67 +237,52 @@ namespace PubPixel
           pub_pixels_request->add_publisher_account_ids(publisher_account_id);
         }
 
-        campaign_manager_->get_pub_pixels(
-          *pub_pixels_request,
-          [
-            this,
-            response_writer,
-            response,
-            pub_pixels_request
-          ](
-            const grpc::Status& status,
-            const adserver::campaign_svcs::campaign_manager::
-              GetPubPixelsResponse& pub_pixels)
+        auto pub_pixels_result = co_await campaign_manager_coro_->get_pub_pixels(
+          std::move(*pub_pixels_request));
+        if(!pub_pixels_result.status.ok())
+        {
+          http_status = 500;
+          Stream::Error error;
+          error << "CampaignManager get_pub_pixels failed: code=" <<
+            static_cast<int>(pub_pixels_result.status.error_code()) <<
+            ", message=" << pub_pixels_result.status.error_message();
+          log(
+            error.str(),
+            Logging::Logger::EMERGENCY,
+            Aspect::PUBPIXEL_FRONTEND);
+        }
+        else
+        {
+          response->set_content_type_nocopy(
+            FrontendCommons::ContentType::TEXT_HTML);
+          if(common_config_->ResponseHeaders().present())
           {
-            int http_status = 0;
-            if(!status.ok())
+            FrontendCommons::add_headers(
+              *(common_config_->ResponseHeaders()),
+              *response);
+          }
+
+          if(pub_pixels_result.response.pixels_size())
+          {
+            static const char HEAD[] =
+              "<!DOCTYPE html><html><head><title></title></head><body>";
+            response->get_output_stream().write(HEAD, sizeof(HEAD) - 1);
+
+            for(const auto& pixel : pub_pixels_result.response.pixels())
             {
-              http_status = 500;
-              Stream::Error error;
-              error << "CampaignManager get_pub_pixels failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              log(
-                error.str(),
-                Logging::Logger::EMERGENCY,
-                Aspect::PUBPIXEL_FRONTEND);
-            }
-            else
-            {
-              response->set_content_type_nocopy(
-                FrontendCommons::ContentType::TEXT_HTML);
-              if(common_config_->ResponseHeaders().present())
-              {
-                FrontendCommons::add_headers(
-                  *(common_config_->ResponseHeaders()),
-                  *response);
-              }
-
-              if(pub_pixels.pixels_size())
-              {
-                static const char HEAD[] =
-                  "<!DOCTYPE html><html><head><title></title></head><body>";
-                response->get_output_stream().write(HEAD, sizeof(HEAD) - 1);
-
-                for(const auto& pixel : pub_pixels.pixels())
-                {
-                  response->get_output_stream().write(
-                    pixel.data(),
-                    pixel.size());
-                }
-
-                static const char TAIL[] = "</body></html>";
-                response->get_output_stream().write(TAIL, sizeof(TAIL) - 1);
-              }
-              else
-              {
-                http_status = 204; // HTTP_NO_CONTENT
-              }
+              response->get_output_stream().write(
+                pixel.data(),
+                pixel.size());
             }
 
-            response_writer->write(http_status, response);
-          });
-        return;
+            static const char TAIL[] = "</body></html>";
+            response->get_output_stream().write(TAIL, sizeof(TAIL) - 1);
+          }
+          else
+          {
+            http_status = 204; // HTTP_NO_CONTENT
+          }
+        }
       }
     }
     catch (const ForbiddenException& ex)
@@ -328,14 +301,17 @@ namespace PubPixel
     {
       http_status = 500; // HTTP_INTERNAL_SERVER_ERROR
       Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught:" << e.what();
+      ostr << FUN << ": eh::Exception caught: " << e.what();
 
       log(ostr.str(),
         Logging::Logger::EMERGENCY,
         Aspect::PUBPIXEL_FRONTEND);
     }
 
-    response_writer->write(http_status, response);
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response,
+      false};
   }
 
   bool

@@ -1,4 +1,5 @@
 
+#include <atomic>
 #include <sstream>
 #include <algorithm>
 #include <set>
@@ -196,7 +197,6 @@ namespace AdServer
   struct AdFrontend::RequestContext
   {
     FCGI::HttpRequestHolder_var request_holder;
-    FCGI::BaseHttpResponseWriter_var response_writer;
     FCGI::HttpResponse_var response_ptr;
     RequestInfo request_info;
     PassbackInfo passback_info;
@@ -217,6 +217,7 @@ namespace AdServer
   AdFrontend::AdFrontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -231,7 +232,8 @@ namespace AdServer
       fe_config_path_(frontend_config->path()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_manager_()
+      campaign_manager_(),
+      workers_(std::move(request_workers))
   {}
 
   bool
@@ -325,9 +327,6 @@ namespace AdServer
         task_scheduler_ = new FrontendCommons::TaskScheduler(
           callback(), task_runner_);
         add_child_object(task_scheduler_.in());
-
-        workers_ = new FrontendCommons::FrontendWorkers(callback(), config_->threads());
-        add_child_object(workers_);
 
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
@@ -521,29 +520,53 @@ namespace AdServer
   }
 
   /** AdFrontend::handle_request */
-  void
+  FrontendCommons::RequestResult
   AdFrontend::finish_request_(
     const std::shared_ptr<RequestContext>& context)
     noexcept
   {
+    FCGI::HttpResponse_var response_ptr = context->response_ptr;
+    if(!response_ptr)
+    {
+      response_ptr = new FCGI::HttpResponse();
+      context->response_ptr = response_ptr;
+    }
+
     try
     {
-      const FCGI::HttpRequest& request = context->request_holder->request();
-      FCGI::HttpResponse& response = *context->response_ptr;
-
-      HTTP::CookieList cookies;
-      cookies.load_from_headers(request.headers());
-
-      cookie_manager_->remove(
-        response, request, cookies, remove_cookies_);
-
-      if(context->request_info.do_opt_out)
+      FCGI::HttpResponse& response = *response_ptr;
+      if(context->request_holder)
       {
-        opt_out_client_(
-          cookies,
-          response,
-          request,
-          context->request_info);
+        const FCGI::HttpRequest& request = context->request_holder->request();
+
+        HTTP::CookieList cookies;
+        cookies.load_from_headers(request.headers());
+
+        cookie_manager_->remove(
+          response, request, cookies, remove_cookies_);
+
+        if(context->request_info.do_opt_out)
+        {
+          opt_out_client_(
+            cookies,
+            response,
+            request,
+            context->request_info);
+        }
+
+        if(context->request_info.have_uid_cookie)
+        {
+          FrontendCommons::add_UID_cookie(
+            response,
+            request,
+            *cookie_manager_,
+            context->request_info.signed_client_id);
+        }
+
+        if(context->request_info.format == "vast")
+        {
+          FrontendCommons::CORS::set_headers(request, response);
+        }
       }
 
       context->debug_sink.write_response(
@@ -570,20 +593,6 @@ namespace AdServer
           Aspect::AD_FRONTEND);
       }
 
-      if(context->request_info.have_uid_cookie)
-      {
-        FrontendCommons::add_UID_cookie(
-          response,
-          request,
-          *cookie_manager_,
-          context->request_info.signed_client_id);
-      }
-
-      if(context->request_info.format == "vast")
-      {
-        FrontendCommons::CORS::set_headers(request, response);
-      }
-
       if(context->http_status != 204)
       {
         response.get_output_stream().write(
@@ -602,8 +611,13 @@ namespace AdServer
         Logging::Logger::EMERGENCY,
         Aspect::AD_FRONTEND,
         "ADS-IMPL-109");
+      if(!response_ptr)
+      {
+        response_ptr = new FCGI::HttpResponse();
+        context->response_ptr = response_ptr;
+      }
       context->debug_sink.fill_debug_body(
-        *context->response_ptr,
+        *response_ptr,
         context->http_status,
         ostr);
     }
@@ -623,54 +637,93 @@ namespace AdServer
         {
           context->http_status = FrontendCommons::redirect(
             context->request_info.original_url,
-            *context->response_ptr);
+            *response_ptr);
         }
         else if(!context->passback_info.url.empty())
         {
           context->http_status = FrontendCommons::redirect(
             context->passback_info.url,
-            *context->response_ptr);
+            *response_ptr);
         }
       }
       catch(...)
       {}
     }
 
-    context->response_writer->write(
+    return FrontendCommons::RequestResult{
       context->http_status,
-      context->response_ptr);
+      response_ptr,
+      false};
   }
 
-  void
-  AdFrontend::handle_request(
+  FrontendCommons::RequestTask
+  AdFrontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    return handle_request_(std::move(request_holder));
   }
 
-  void
+  FrontendCommons::RequestTask
   AdFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "AdFrontend::handle_request()";
 
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+
     auto context = std::make_shared<RequestContext>(
       common_config_->DebugInfo().show_history_matching());
     context->request_holder = std::move(request_holder);
-    context->response_writer = std::move(response_writer);
     const FCGI::HttpRequest& request = context->request_holder->request();
+
+    struct AcquireAdAwaiter
+    {
+      struct State
+      {
+        std::coroutine_handle<> handle{};
+        bool success = false;
+        std::atomic<bool> completed{false};
+      };
+
+      AdFrontend* frontend;
+      std::shared_ptr<RequestContext> context;
+      std::shared_ptr<State> state = std::make_shared<State>();
+
+      bool await_ready() const noexcept
+      {
+        return false;
+      }
+
+      void await_suspend(std::coroutine_handle<> h) noexcept
+      {
+        state->handle = h;
+        frontend->acquire_ad_async_(
+          context,
+          [frontend = frontend, state = state](bool acquire_success) mutable
+          {
+            if(state->completed.exchange(true, std::memory_order_acq_rel))
+            {
+              return;
+            }
+
+            state->success = acquire_success;
+            frontend->workers_->post(
+              [state]() mutable
+              {
+                state->handle.resume();
+              });
+          });
+      }
+
+      bool await_resume() const noexcept
+      {
+        return state->success;
+      }
+    };
 
     if(logger()->log_level() >= TraceLevel::MIDDLE)
     {
@@ -693,17 +746,13 @@ namespace AdServer
       context->request_time_metering.request_fill_time =
         request_fill_time_metering.consider();
 
-      acquire_ad_async_(
-        context,
-        [this, context](bool success)
-        {
-          if(!success)
-          {
-            context->http_status = 500;
-          }
+      const bool success = co_await AcquireAdAwaiter{this, context};
+      if(!success)
+      {
+        context->http_status = 500;
+      }
 
-          finish_request_(context);
-        });
+      co_return finish_request_(context);
     }
     catch(const ForbiddenException& ex)
     {
@@ -724,7 +773,7 @@ namespace AdServer
           context->http_status,
           ostr);
       }
-      finish_request_(context);
+      co_return finish_request_(context);
     }
     catch(const InvalidParamException& e)
     {
@@ -745,7 +794,7 @@ namespace AdServer
           context->http_status,
           ostr);
       }
-      finish_request_(context);
+      co_return finish_request_(context);
     }
     catch(const HTTP::CookieList::Exception& e)
     {
@@ -760,7 +809,7 @@ namespace AdServer
         *context->response_ptr,
         context->http_status,
         ostr);
-      finish_request_(context);
+      co_return finish_request_(context);
     }
     catch(const eh::Exception& e)
     {
@@ -776,7 +825,7 @@ namespace AdServer
         *context->response_ptr,
         context->http_status,
         ostr);
-      finish_request_(context);
+      co_return finish_request_(context);
     }
 
   }
@@ -1269,8 +1318,29 @@ namespace AdServer
             request_info.client_id));
           update_request->set_time(GrpcAlgs::pack_time(
             request_info.current_time));
-          update_request->set_request_id(GrpcAlgs::pack_request_id(
-            Commons::RequestId(ad_slot_result.request_id())));
+          Commons::RequestId request_id;
+          try
+          {
+            request_id = GrpcAlgs::unpack_request_id(
+              ad_slot_result.request_id());
+          }
+          catch(const std::exception& ex)
+          {
+            Stream::Error ostr;
+            ostr << FUN << ": skip post match for ad slot #" << ad_slot_i <<
+              ": invalid request_id size=" <<
+              ad_slot_result.request_id().size() <<
+              ": " << ex.what();
+
+            logger()->log(
+              ostr.str(),
+              Logging::Logger::EMERGENCY,
+              Aspect::AD_FRONTEND,
+              "ADS-IMPL-112");
+            continue;
+          }
+
+          update_request->set_request_id(GrpcAlgs::pack_request_id(request_id));
           for(const auto freq_cap : ad_slot_result.freq_caps())
           {
             update_request->add_freq_caps(freq_cap);

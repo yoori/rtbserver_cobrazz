@@ -222,7 +222,8 @@ namespace AdServer
   /* DirectoryModule */
   DirectoryModule::DirectoryModule(
     Configuration* frontend_config,
-    Logging::Logger* logger)
+    Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
@@ -233,7 +234,8 @@ namespace AdServer
         0,
         Aspect::DIRECTORY_MODULE,
         0),
-      frontend_config_(ReferenceCounting::add_ref(frontend_config))
+      frontend_config_(ReferenceCounting::add_ref(frontend_config)),
+      workers_(std::move(request_workers))
   {}
 
   void DirectoryModule::parse_configs_() /*throw(Exception)*/
@@ -310,35 +312,32 @@ namespace AdServer
     return handle_it;
   }
 
-  void
-  DirectoryModule::handle_request(
+  FrontendCommons::RequestTask
+  DirectoryModule::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    return handle_request_(std::move(request_holder));
   }
 
-  void
+  FrontendCommons::RequestTask
   DirectoryModule::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
     int http_status = handle_request_(request, response);
-    response_writer->write(http_status, response_ptr);
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response_ptr,
+      false};
   }
 
   int
@@ -475,11 +474,6 @@ namespace AdServer
          VersionedFileCacheConfiguration(Generics::Time(2)));
        directories_[it->path()] = new_directory;
     }
-
-    workers_ = new FrontendCommons::FrontendWorkers(
-      callback(),
-      config_->threads());
-    add_child_object(workers_);
 
     activate_object();
   }

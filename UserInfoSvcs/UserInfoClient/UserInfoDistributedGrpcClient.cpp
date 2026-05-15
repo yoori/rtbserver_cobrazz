@@ -1,15 +1,15 @@
 #include "UserInfoDistributedGrpcClient.hpp"
 
-#include <algorithm>
 #include <chrono>
-#include <set>
+#include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include <grpcpp/grpcpp.h>
 
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <Logger/ActiveObjectCallback.hpp>
 #include <UserInfoSvcs/UserInfoController2/UserInfoControllerGrpc.grpc.pb.h>
 
 namespace AdServer::UserInfoSvcs
@@ -34,194 +34,34 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  struct UserInfoDistributedGrpcClient::ClientHolder
-  {
-    ClientHolder(
-      std::string endpoint_val,
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
-      AdServer::Grpc::BatchingOptions batching_options)
-      : endpoint(std::move(endpoint_val)),
-        client(std::make_shared<Client>(
-          endpoint,
-          std::move(grpc_executor),
-          std::move(batching_options)))
-    {
-      client->activate_object();
-    }
-
-    ~ClientHolder() noexcept
-    {
-      try
-      {
-        if (client->active())
-        {
-          client->deactivate_object();
-          client->wait_object();
-        }
-      }
-      catch (...)
-      {
-      }
-    }
-
-    const std::string endpoint;
-    ClientPtr client;
-  };
-
-  struct UserInfoDistributedGrpcClient::RefHolder
-  {
-    explicit RefHolder(ClientHolderPtr client_holder_val)
-      : client_holder(std::move(client_holder_val))
-    {}
-
-    AdServer::Grpc::Stats stats() const noexcept
-    {
-      return static_cast<UserInfoManagerGrpcAsyncClient*>(
-        client_holder->client.get())->stats();
-    }
-
-    ClientHolderPtr client_holder;
-  };
-
-  class UserInfoDistributedGrpcClient::ResolveRefsTask:
-    public Generics::Task,
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    explicit ResolveRefsTask(UserInfoDistributedGrpcClient* client) noexcept
-      : client_(client)
-    {}
-
-    void execute() noexcept override
-    {
-      while (!client_->deactivated_.load(std::memory_order_acquire))
-      {
-        client_->resolve_refs_();
-        client_->wait_next_resolve_();
-      }
-    }
-
-  private:
-    ~ResolveRefsTask() noexcept override = default;
-
-    UserInfoDistributedGrpcClient* client_;
-  };
-
   UserInfoDistributedGrpcClient::UserInfoDistributedGrpcClient(
     const UserInfoControllerRefs& user_info_controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     Logging::Logger* logger)
-    : user_info_controller_refs_(user_info_controller_refs),
-      batching_options_(std::move(batching_options)),
-      grpc_executor_(std::move(grpc_executor)),
-      pool_timeout_(DEFAULT_POOL_TIMEOUT),
-      resolve_period_(DEFAULT_RESOLVE_PERIOD),
-      callback_(new Logging::ActiveObjectCallbackImpl(
-        logger,
-        "UserInfoDistributedGrpcClient",
-        "UserInfo")),
-      task_runner_(new Generics::TaskRunner(callback_, 1)),
-      logger_(ReferenceCounting::add_ref(logger))
   {
-    if (user_info_controller_refs_.empty())
-    {
-      throw Exception("UserInfoDistributedGrpcClient: empty UserInfoController2 refs");
-    }
-
-    add_child_object(task_runner_);
+    pool_ = std::make_shared<Pool>(
+      "UserInfoDistributedGrpcClient",
+      "UserInfo",
+      user_info_controller_refs,
+      std::move(batching_options),
+      std::move(grpc_executor),
+      logger,
+      &resolve_partition_,
+      &partition_index_,
+      &chunk_index_,
+      DEFAULT_POOL_TIMEOUT,
+      DEFAULT_RESOLVE_PERIOD);
+    add_child_object(pool_);
   }
 
   UserInfoDistributedGrpcClient::~UserInfoDistributedGrpcClient() noexcept =
     default;
 
-  void
-  UserInfoDistributedGrpcClient::activate_object_()
-  {
-    deactivated_.store(false, std::memory_order_release);
-    Generics::CompositeActiveObject::activate_object_();
-    resolve_refs_();
-    task_runner_->enqueue_task(Generics::Task_var(new ResolveRefsTask(this)));
-  }
-
-  void
-  UserInfoDistributedGrpcClient::deactivate_object_()
-  {
-    deactivated_.store(true, std::memory_order_release);
-    resolve_cond_.notify_all();
-
-    Generics::CompositeActiveObject::deactivate_object_();
-
-    std::vector<PoolPtr> old_pools;
-    std::vector<ClientHolderPtr> client_holders;
-    {
-      std::unique_lock<std::shared_mutex> lock(pool_lock_);
-      for (auto& chunk_pool : chunk_pools_)
-      {
-        old_pools.emplace_back(std::move(chunk_pool.second));
-      }
-      if (any_pool_)
-      {
-        old_pools.emplace_back(std::move(any_pool_));
-      }
-      chunk_pools_.clear();
-      chunks_number_ = 0;
-      refs_state_.clear();
-      client_holders = std::move(current_client_holders_);
-      client_holders_.clear();
-    }
-
-    std::set<ClientHolder*> seen_clients;
-    for (const auto& client_holder : client_holders)
-    {
-      if (seen_clients.insert(client_holder.get()).second)
-      {
-        client_holder->client->deactivate_object();
-      }
-    }
-
-    std::set<Pool*> seen_pools;
-    for (auto& pool : old_pools)
-    {
-      if (pool && seen_pools.insert(pool.get()).second)
-      {
-        pool->deactivate_object();
-        pool->wait_object();
-      }
-    }
-
-    seen_clients.clear();
-    for (const auto& client_holder : client_holders)
-    {
-      if (seen_clients.insert(client_holder.get()).second)
-      {
-        client_holder->client->wait_object();
-      }
-    }
-  }
-
   AdServer::Grpc::Stats
   UserInfoDistributedGrpcClient::stats() const noexcept
   {
-    std::vector<ClientHolderPtr> client_holders;
-    {
-      std::shared_lock<std::shared_mutex> lock(pool_lock_);
-      client_holders = current_client_holders_;
-    }
-
-    AdServer::Grpc::Stats result;
-    std::set<const ClientHolder*> seen_clients;
-    for (const auto& client_holder : client_holders)
-    {
-      if (client_holder && seen_clients.insert(client_holder.get()).second)
-      {
-        merge_stats_(
-          result,
-          static_cast<UserInfoManagerGrpcAsyncClient*>(
-            client_holder->client.get())->stats());
-      }
-    }
-    return result;
+    return pool_->stats();
   }
 
 #define USER_INFO_ROUTE_USER(method_name, request_type, response_type, callback_type, user_expr) \
@@ -246,18 +86,17 @@ namespace AdServer::UserInfoSvcs
       return; \
     } \
     auto pool_ref = std::move(*ref); \
-    pool_ref->client_holder->client->method_name( \
+    pool_ref->client->method_name( \
       request, \
       [ \
         pool_ref = std::move(pool_ref), \
-        callback = std::move(callback), \
-        pool_timeout = pool_timeout_ \
+        callback = std::move(callback) \
       ](const grpc::Status& status, const response_type& response) mutable \
       { \
         if (!status.ok()) \
         { \
           pool_ref.mark_as_bad( \
-            Generics::Time::get_time_of_day() + pool_timeout); \
+            Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
         } \
         callback(status, response); \
       }); \
@@ -285,18 +124,17 @@ namespace AdServer::UserInfoSvcs
       return; \
     } \
     auto pool_ref = std::move(*ref); \
-    pool_ref->client_holder->client->method_name( \
+    pool_ref->client->method_name( \
       request, \
       [ \
         pool_ref = std::move(pool_ref), \
-        callback = std::move(callback), \
-        pool_timeout = pool_timeout_ \
+        callback = std::move(callback) \
       ](const grpc::Status& status, const response_type& response) mutable \
       { \
         if (!status.ok()) \
         { \
           pool_ref.mark_as_bad( \
-            Generics::Time::get_time_of_day() + pool_timeout); \
+            Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
         } \
         callback(status, response); \
       }); \
@@ -392,267 +230,57 @@ namespace AdServer::UserInfoSvcs
 #undef USER_INFO_ROUTE_ANY
 
   std::optional<UserInfoDistributedGrpcClient::Pool::Ref>
-  UserInfoDistributedGrpcClient::get_ref_(const std::string& user_id) const noexcept
+  UserInfoDistributedGrpcClient::get_ref_(const std::string& user_id) noexcept
   {
-    try
-    {
-      if (user_id.empty())
-      {
-        return get_any_ref_();
-      }
-
-      std::shared_lock<std::shared_mutex> lock(pool_lock_);
-      if (!chunks_number_)
-      {
-        return std::nullopt;
-      }
-
-      const auto chunk_id = chunk_index_(user_id, chunks_number_);
-      const auto it = chunk_pools_.find(chunk_id);
-      if (it == chunk_pools_.end() || !it->second)
-      {
-        return std::nullopt;
-      }
-
-      return it->second->get_object();
-    }
-    catch (...)
-    {
-      return std::nullopt;
-    }
+    return pool_->get_ref(user_id);
   }
 
   std::optional<UserInfoDistributedGrpcClient::Pool::Ref>
-  UserInfoDistributedGrpcClient::get_any_ref_() const noexcept
+  UserInfoDistributedGrpcClient::get_any_ref_() noexcept
   {
-    std::shared_lock<std::shared_mutex> lock(pool_lock_);
-    return any_pool_ ? any_pool_->get_object() : std::nullopt;
+    return pool_->get_any_ref();
   }
 
-  void
-  UserInfoDistributedGrpcClient::resolve_refs_() noexcept
+  std::optional<UserInfoDistributedGrpcClient::Pool::EndpointChunksList>
+  UserInfoDistributedGrpcClient::resolve_partition_(const std::string& endpoint)
   {
-    ControllerRefsState refs_state;
-    if (fill_refs_state_(refs_state))
+    auto stub = adserver::user_info_svcs::user_info_controller::
+      UserInfoControllerGrpc::NewStub(
+        grpc::CreateChannel(
+          endpoint,
+          grpc::InsecureChannelCredentials()));
+
+    grpc::ClientContext context;
+    set_deadline_(context);
+    adserver::user_info_svcs::user_info_controller::
+      GetSessionDescriptionRequest request;
+    adserver::user_info_svcs::user_info_controller::
+      GetSessionDescriptionResponse response;
+
+    const auto status = stub->get_session_description(
+      &context,
+      request,
+      &response);
+
+    if (!status.ok())
     {
-      update_pools_if_changed_(std::move(refs_state));
-    }
-  }
-
-  bool
-  UserInfoDistributedGrpcClient::fill_refs_state_(
-    ControllerRefsState& refs_state) noexcept
-  {
-    bool ok = false;
-
-    for (const auto& controller_ref : user_info_controller_refs_)
-    {
-      std::vector<std::string> endpoints;
-      try
-      {
-        auto stub = adserver::user_info_svcs::user_info_controller::
-          UserInfoControllerGrpc::NewStub(
-            grpc::CreateChannel(
-              controller_ref,
-              grpc::InsecureChannelCredentials()));
-
-        grpc::ClientContext context;
-        set_deadline_(context);
-        adserver::user_info_svcs::user_info_controller::
-          GetSessionDescriptionRequest request;
-        adserver::user_info_svcs::user_info_controller::
-          GetSessionDescriptionResponse response;
-
-        const auto status = stub->get_session_description(
-          &context,
-          request,
-          &response);
-
-        if (!status.ok())
-        {
-          Stream::Error ostr;
-          ostr << "get_session_description failed: " <<
-            status.error_message();
-          throw Exception(ostr);
-        }
-
-        for (const auto& manager : response.user_info_managers())
-        {
-          endpoints.emplace_back(manager.user_info_manager_endpoint());
-        }
-        std::sort(endpoints.begin(), endpoints.end());
-        endpoints.erase(
-          std::unique(endpoints.begin(), endpoints.end()),
-          endpoints.end());
-        ok = true;
-      }
-      catch (const eh::Exception& ex)
-      {
-        if (logger_)
-        {
-          logger_->sstream(
-            Logging::Logger::ERROR,
-            "UserInfoDistributedGrpcClient",
-            "ADS-IMPL-72") <<
-            "Can't resolve UserInfoController2 '" << controller_ref <<
-            "': " << ex.what();
-        }
-      }
-
-      refs_state.emplace_back(controller_ref, std::move(endpoints));
+      return std::nullopt;
     }
 
-    return ok;
-  }
-
-  bool
-  UserInfoDistributedGrpcClient::update_pools_if_changed_(
-    ControllerRefsState refs_state) noexcept
-  {
+    Pool::EndpointChunksList refs;
+    refs.reserve(response.user_info_managers_size());
+    for (const auto& manager : response.user_info_managers())
     {
-      std::shared_lock<std::shared_mutex> lock(pool_lock_);
-      if (refs_state == refs_state_)
+      Pool::EndpointChunks endpoint_chunks;
+      endpoint_chunks.endpoint = manager.user_info_manager_endpoint();
+      endpoint_chunks.chunk_ids.reserve(manager.chunk_ids_size());
+      for (const auto chunk_id : manager.chunk_ids())
       {
-        return false;
+        endpoint_chunks.chunk_ids.emplace_back(chunk_id);
       }
+      refs.emplace_back(std::move(endpoint_chunks));
     }
-
-    std::map<unsigned long, std::vector<std::shared_ptr<RefHolder>>> chunk_refs;
-    std::vector<std::shared_ptr<RefHolder>> any_refs;
-    std::vector<ClientHolderPtr> client_holders;
-    unsigned long chunks_number = 0;
-
-    for (const auto& controller_ref : user_info_controller_refs_)
-    {
-      try
-      {
-        auto stub = adserver::user_info_svcs::user_info_controller::
-          UserInfoControllerGrpc::NewStub(
-            grpc::CreateChannel(
-              controller_ref,
-              grpc::InsecureChannelCredentials()));
-
-        grpc::ClientContext context;
-        set_deadline_(context);
-        adserver::user_info_svcs::user_info_controller::
-          GetSessionDescriptionRequest request;
-        adserver::user_info_svcs::user_info_controller::
-          GetSessionDescriptionResponse response;
-
-        const auto status = stub->get_session_description(
-          &context,
-          request,
-          &response);
-
-        if (!status.ok())
-        {
-          continue;
-        }
-
-        for (const auto& manager : response.user_info_managers())
-        {
-          auto client_holder =
-            get_or_create_client_holder_(manager.user_info_manager_endpoint());
-          client_holders.emplace_back(client_holder);
-          auto ref_holder = std::make_shared<RefHolder>(client_holder);
-          any_refs.emplace_back(ref_holder);
-
-          for (const auto chunk_id : manager.chunk_ids())
-          {
-            chunk_refs[chunk_id].emplace_back(ref_holder);
-            chunks_number = std::max<unsigned long>(
-              chunks_number,
-              static_cast<unsigned long>(chunk_id) + 1);
-          }
-        }
-      }
-      catch (...)
-      {
-      }
-    }
-
-    if (chunk_refs.empty() || chunks_number == 0)
-    {
-      return false;
-    }
-
-    std::map<unsigned long, PoolPtr> new_chunk_pools;
-    std::vector<PoolPtr> new_pools;
-    for (auto& chunk_ref : chunk_refs)
-    {
-      auto pool = std::make_shared<Pool>(std::move(chunk_ref.second));
-      pool->activate_object();
-      new_chunk_pools.emplace(chunk_ref.first, pool);
-      new_pools.emplace_back(pool);
-    }
-
-    auto new_any_pool = std::make_shared<Pool>(std::move(any_refs));
-    new_any_pool->activate_object();
-
-    std::vector<PoolPtr> old_pools;
-    {
-      std::unique_lock<std::shared_mutex> lock(pool_lock_);
-      for (auto& chunk_pool : chunk_pools_)
-      {
-        old_pools.emplace_back(std::move(chunk_pool.second));
-      }
-      if (any_pool_)
-      {
-        old_pools.emplace_back(std::move(any_pool_));
-      }
-
-      chunk_pools_.swap(new_chunk_pools);
-      any_pool_.swap(new_any_pool);
-      chunks_number_ = chunks_number;
-      refs_state_ = std::move(refs_state);
-      current_client_holders_ = std::move(client_holders);
-    }
-
-    std::set<Pool*> seen_pools;
-    for (auto& pool : old_pools)
-    {
-      if (pool && seen_pools.insert(pool.get()).second)
-      {
-        pool->deactivate_object();
-        pool->wait_object();
-      }
-    }
-
-    return true;
-  }
-
-  UserInfoDistributedGrpcClient::ClientHolderPtr
-  UserInfoDistributedGrpcClient::get_or_create_client_holder_(
-    const std::string& endpoint)
-  {
-    auto it = client_holders_.find(endpoint);
-    if (it != client_holders_.end())
-    {
-      if (auto client_holder = it->second.lock())
-      {
-        return client_holder;
-      }
-    }
-
-    auto client_holder = std::make_shared<ClientHolder>(
-      endpoint,
-      grpc_executor_,
-      batching_options_);
-    client_holders_[endpoint] = client_holder;
-    return client_holder;
-  }
-
-  void
-  UserInfoDistributedGrpcClient::wait_next_resolve_() noexcept
-  {
-    std::unique_lock<std::mutex> lock(resolve_lock_);
-    resolve_cond_.wait_for(
-      lock,
-      std::chrono::microseconds(resolve_period_.microseconds()),
-      [this]() noexcept
-      {
-        return deactivated_.load(std::memory_order_acquire);
-      });
+    return refs;
   }
 
   unsigned long
@@ -664,33 +292,12 @@ namespace AdServer::UserInfoSvcs
       GrpcAlgs::unpack_user_id(user_id)) % chunks_number;
   }
 
-  void
-  UserInfoDistributedGrpcClient::merge_stats_(
-    AdServer::Grpc::Stats& result,
-    const AdServer::Grpc::Stats& source) noexcept
+  unsigned long
+  UserInfoDistributedGrpcClient::partition_index_(
+    const std::string& user_id,
+    unsigned long partitions_number)
   {
-    result.write_batches += source.write_batches;
-    result.write_items += source.write_items;
-    result.queue_wait_count += source.queue_wait_count;
-    result.queue_wait_sum_us += source.queue_wait_sum_us;
-    result.queue_wait_max_us =
-      std::max(result.queue_wait_max_us, source.queue_wait_max_us);
-    result.response_wait_count += source.response_wait_count;
-    result.response_wait_sum_us += source.response_wait_sum_us;
-    result.response_wait_max_us =
-      std::max(result.response_wait_max_us, source.response_wait_max_us);
-    result.max_streams = std::max(result.max_streams, source.max_streams);
-    if (source.consumer_stream_write.has_value())
-    {
-      if (!result.consumer_stream_write.has_value())
-      {
-        result.consumer_stream_write = AdServer::Grpc::Stats::ConsumerStreamWrite();
-      }
-      result.consumer_stream_write->count += source.consumer_stream_write->count;
-      result.consumer_stream_write->sum_us += source.consumer_stream_write->sum_us;
-      result.consumer_stream_write->max_us = std::max(
-        result.consumer_stream_write->max_us,
-        source.consumer_stream_write->max_us);
-    }
+    return (GrpcAlgs::unpack_user_id(user_id).hash() >> 8) %
+      partitions_number;
   }
 }

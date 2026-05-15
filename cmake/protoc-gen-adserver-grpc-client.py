@@ -29,6 +29,18 @@ def callback_name(method_name):
   return "".join(part[:1].upper() + part[1:] for part in method_name.split("_")) + "Callback"
 
 
+def method_cpp_name(method_name):
+  return "".join(part[:1].upper() + part[1:] for part in method_name.split("_"))
+
+
+def result_name(method_name):
+  return method_cpp_name(method_name) + "Result"
+
+
+def awaiter_name(method_name):
+  return method_cpp_name(method_name) + "Awaiter"
+
+
 def proto_include(proto_name):
   return proto_name[:-len(".proto")] + ".grpc.pb.h"
 
@@ -58,12 +70,15 @@ def generate_hpp(file_desc, namespace):
   lines = [
     "#pragma once",
     "",
+    "#include <coroutine>",
+    "#include <exception>",
     "#include <functional>",
     "#include <memory>",
     "#include <string>",
     "",
     "#include <grpcpp/support/status.h>",
     "",
+    "#include <Commons/ExecutorPool.hpp>",
     "#include <Commons/Grpc/AsyncBatchingClientBase.hpp>",
     "#include <Commons/Grpc/GrpcClient.hpp>",
     "#include <Commons/Grpc/GrpcExecutor.hpp>",
@@ -109,6 +124,69 @@ def generate_hpp(file_desc, namespace):
     if methods:
       lines.pop()
     lines.extend([
+      "  };",
+      "",
+    ])
+
+    coro_client = "{}CoroClient".format(service_name)
+    lines.extend([
+      "  class {} final".format(coro_client),
+      "  {",
+      "  public:",
+      "    {}(".format(coro_client),
+      "      std::shared_ptr<{}> client,".format(async_client),
+      "      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool);",
+      "",
+    ])
+    for method in methods:
+      response_type = cpp_type(method.output_type)
+      request_type = cpp_type(method.input_type)
+      res_name = result_name(method.name)
+      aw_name = awaiter_name(method.name)
+      lines.extend([
+        "    struct {}".format(res_name),
+        "    {",
+        "      grpc::Status status;",
+        "      {} response;".format(response_type),
+        "    };",
+        "",
+        "    class {}".format(aw_name),
+        "    {",
+        "    public:",
+        "      {}(".format(aw_name),
+        "        std::shared_ptr<{}> client,".format(async_client),
+        "        std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,",
+        "        {} request);".format(request_type),
+        "",
+        "      bool",
+        "      await_ready() const noexcept;",
+        "",
+        "      void",
+        "      await_suspend(std::coroutine_handle<> handle) noexcept;",
+        "",
+        "      {}".format(res_name),
+        "      await_resume();",
+        "",
+        "    private:",
+        "      std::shared_ptr<{}> client_;".format(async_client),
+        "      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;",
+        "      {} request_;".format(request_type),
+        "      grpc::Status status_;",
+        "      {} response_;".format(response_type),
+        "      std::exception_ptr exception_;",
+        "    };",
+        "",
+        "    {}".format(aw_name),
+        "    {}({} request);".format(method.name, request_type),
+        "",
+      ])
+    if methods:
+      lines.pop()
+    lines.extend([
+      "",
+      "  private:",
+      "    std::shared_ptr<{}> client_;".format(async_client),
+      "    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;",
       "  };",
       "",
       "  class {} final".format(batching_client),
@@ -183,7 +261,16 @@ def generate_cpp(file_desc, namespace):
       continue
 
     batching_client = "{}AsyncBatchingClient".format(service.name)
+    async_client = "{}AsyncClient".format(service.name)
+    coro_client = "{}CoroClient".format(service.name)
     lines.extend([
+      "  {}::{}(".format(coro_client, coro_client),
+      "    std::shared_ptr<{}> client,".format(async_client),
+      "    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool)",
+      "    : client_(std::move(client)),",
+      "      executor_pool_(std::move(executor_pool))",
+      "  {}",
+      "",
       "  {}::~{}() = default;".format(batching_client, batching_client),
       "",
       "  {}::{}(".format(batching_client, batching_client),
@@ -212,11 +299,71 @@ def generate_cpp(file_desc, namespace):
     for method in unary_methods(service):
       response_type = cpp_type(method.output_type)
       request_type = cpp_type(method.input_type)
+      res_name = result_name(method.name)
+      aw_name = awaiter_name(method.name)
+      cb = callback_name(method.name)
+      lines.extend([
+        "  {}::{}::{}(".format(coro_client, aw_name, aw_name),
+        "    std::shared_ptr<{}> client,".format(async_client),
+        "    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,",
+        "    {} request)".format(request_type),
+        "    : client_(std::move(client)),",
+        "      executor_pool_(std::move(executor_pool)),",
+        "      request_(std::move(request))",
+        "  {}",
+        "",
+        "  bool",
+        "  {}::{}::await_ready() const noexcept".format(coro_client, aw_name),
+        "  {",
+        "    return false;",
+        "  }",
+        "",
+        "  void",
+        "  {}::{}::await_suspend(std::coroutine_handle<> handle) noexcept".format(coro_client, aw_name),
+        "  {",
+        "    try",
+        "    {",
+        "      client_->{}(".format(method.name),
+        "        request_,",
+        "        [this, handle](",
+        "          const grpc::Status& status,",
+        "          const {}& response)".format(response_type),
+        "        {",
+        "          status_ = status;",
+        "          response_ = response;",
+        "          executor_pool_->post([handle]() mutable { handle.resume(); });",
+        "        });",
+        "    }",
+        "    catch(...)",
+        "    {",
+        "      exception_ = std::current_exception();",
+        "      executor_pool_->post([handle]() mutable { handle.resume(); });",
+        "    }",
+        "  }",
+        "",
+        "  {}::{}".format(coro_client, res_name),
+        "  {}::{}::await_resume()".format(coro_client, aw_name),
+        "  {",
+        "    if(exception_)",
+        "    {",
+        "      std::rethrow_exception(exception_);",
+        "    }",
+        "",
+        "    return {std::move(status_), std::move(response_)};",
+        "  }",
+        "",
+        "  {}::{}".format(coro_client, aw_name),
+        "  {}::{}({} request)".format(coro_client, method.name, request_type),
+        "  {",
+        "    return {}(client_, executor_pool_, std::move(request));".format(aw_name),
+        "  }",
+        "",
+      ])
       lines.extend([
         "  void",
         "  {}::{}(".format(batching_client, method.name),
         "    const {}& request,".format(request_type),
-        "    {} callback)".format(callback_name(method.name)),
+        "    {} callback)".format(cb),
         "  {",
         "    enqueue_request_<{}, {}>(".format(request_type, response_type),
         "      {}_full_method,".format(method.name),

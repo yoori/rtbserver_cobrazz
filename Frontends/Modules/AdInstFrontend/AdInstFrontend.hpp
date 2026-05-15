@@ -20,6 +20,7 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
@@ -28,7 +29,6 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -46,7 +46,7 @@ namespace Instantiate
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -64,6 +64,7 @@ namespace Instantiate
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
@@ -82,14 +83,14 @@ namespace Instantiate
      * @param response The object to write the HTTP response body.
      * @return HTTP status code.
      */
-    void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
 
-    void
-    handle_request_noparams(
+    FrontendCommons::RequestTask
+    handle_request_noparams_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
@@ -123,16 +124,14 @@ namespace Instantiate
       CookieManagerPtr;
 
   private:
-    void
+    FrontendCommons::RequestTask
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
-    void
+    FrontendCommons::RequestTask
     handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     void
@@ -191,7 +190,7 @@ namespace Instantiate
       campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
 }
 }

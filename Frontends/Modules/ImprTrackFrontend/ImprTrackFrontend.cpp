@@ -1,4 +1,5 @@
 
+#include <coroutine>
 #include <sstream>
 
 #include <Logger/StreamLogger.hpp>
@@ -94,6 +95,7 @@ namespace AdServer::ImprTrack
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -106,7 +108,8 @@ namespace AdServer::ImprTrack
         Aspect::IMPR_TRACK_FRONTEND,
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module))
+      common_module_(ReferenceCounting::add_ref(common_module)),
+      workers_(std::move(request_workers))
   {
   }
 
@@ -195,11 +198,6 @@ namespace AdServer::ImprTrack
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
             FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
-
         if(config_->match_threads() > 0)
         {
           match_workers_ = new FrontendCommons::FrontendWorkers(
@@ -340,49 +338,26 @@ namespace AdServer::ImprTrack
     }
   }
 
-  void
-  Frontend::handle_request(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    return handle_request_(std::move(request_holder));
   }
 
-  void
+  FrontendCommons::RequestTask
   Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    const int http_status = handle_request_(
-      request_holder,
-      response_writer,
-      response_ptr);
-    if(http_status >= 0)
-    {
-      response_writer->write(http_status, response_ptr);
-    }
-  }
-
-  int
-  Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer,
-    FCGI::HttpResponse_var response_ptr)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "ImprTrack::Frontend::handle_request()";
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+
     const FCGI::HttpRequest& request = request_holder->request();
+    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
 
     logger()->log(String::SubString(
@@ -428,6 +403,51 @@ namespace AdServer::ImprTrack
       AdServer::Commons::UserId result_user_id = request_info.actual_user_id;
       auto match_schedule_state = std::make_shared<MatchScheduleState>();
       match_schedule_state->request_info = request_info;
+
+      struct ResolveUserBindResult
+      {
+        AdServer::Commons::UserId user_id;
+        bool invalid_bind_operation = false;
+      };
+
+      struct ResolveUserBindAwaiter
+      {
+        Frontend* frontend;
+        const RequestInfo& request_info;
+        AdServer::Commons::UserId input_user_id;
+        std::coroutine_handle<> handle{};
+        ResolveUserBindResult result{};
+
+        bool await_ready() const noexcept
+        {
+          return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> h) noexcept
+        {
+          handle = h;
+          frontend->resolve_user_bind_(
+            request_info,
+            input_user_id,
+            [this](
+              const AdServer::Commons::UserId& resolved_user_id,
+              bool invalid_bind_operation) mutable
+            {
+              result.user_id = resolved_user_id;
+              result.invalid_bind_operation = invalid_bind_operation;
+              frontend->workers_->post(
+                [this]() mutable
+                {
+                  handle.resume();
+                });
+            });
+        }
+
+        ResolveUserBindResult await_resume() noexcept
+        {
+          return result;
+        }
+      };
 
       if (!request_info.skip)
       {
@@ -536,27 +556,27 @@ namespace AdServer::ImprTrack
         {
           match_schedule_state->verify_finished = true;
         }
-        resolve_user_bind_(
-          request_info,
-          result_user_id,
-          [this, request_holder, response_writer, response_ptr, request_info,
-            match_schedule_state](
-            const AdServer::Commons::UserId& resolved_user_id,
-            bool invalid_bind_operation)
-          {
-            const int http_status = finish_request_(
-              request_holder->request(),
-              *response_ptr,
-              request_info,
-              resolved_user_id,
-              invalid_bind_operation);
-            response_writer->write(http_status, response_ptr);
+        const ResolveUserBindResult bind_result =
+          co_await ResolveUserBindAwaiter{
+            this,
+            request_info,
+            result_user_id};
 
-            match_schedule_state->result_user_id = resolved_user_id;
-            match_schedule_state->request_finished = true;
-            try_schedule_match_channels_(match_schedule_state);
-          });
-        return -1;
+        http_status = finish_request_(
+          request,
+          response,
+          request_info,
+          bind_result.user_id,
+          bind_result.invalid_bind_operation);
+
+        match_schedule_state->result_user_id = bind_result.user_id;
+        match_schedule_state->request_finished = true;
+        try_schedule_match_channels_(match_schedule_state);
+
+        co_return FrontendCommons::RequestResult{
+          http_status,
+          response_ptr,
+          false};
       } // request_info.skip
 
       FrontendCommons::CORS::set_headers(request, response);
@@ -726,7 +746,10 @@ namespace AdServer::ImprTrack
         Aspect::IMPR_TRACK_FRONTEND,
         "ADS-IMPL-134");
     }
-    return http_status;
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response_ptr,
+      false};
   }
 
   int

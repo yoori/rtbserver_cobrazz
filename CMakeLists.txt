@@ -5,6 +5,10 @@ set(CMAKE_C_COMPILER /opt/rh/gcc-toolset-10/root/usr/bin/gcc)
 
 project(rtbserver)
 
+add_library(project_cxx_std INTERFACE)
+target_compile_features(project_cxx_std INTERFACE cxx_std_20)
+link_libraries(project_cxx_std)
+
 include(cmake/SetupEnvironment.cmake)
 include(cmake/SetupGRPC.cmake)
 

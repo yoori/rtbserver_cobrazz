@@ -643,7 +643,7 @@ namespace AdServer
 
       debug_info_str_ << creative_start_sep_ <<
         OFFSET << "request_id = " <<
-          AdServer::Commons::RequestId(creative.request_id()) << sep_ <<
+          GrpcAlgs::unpack_request_id(creative.request_id()) << sep_ <<
         OFFSET << "ccid = " << creative.ccid() << sep_ <<
         OFFSET << "cmp_id = " << creative.cmp_id() << sep_ <<
         OFFSET << "order_set_id = " << creative.order_set_id() << sep_ <<

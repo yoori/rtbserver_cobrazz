@@ -1,6 +1,5 @@
 add_library(WebStatFrontend SHARED
   RequestInfoFiller.cpp
-  WebStatRequestState.cpp
   WebStatFrontend.cpp
 )
 

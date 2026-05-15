@@ -17,6 +17,7 @@
 #include <String/TextTemplate.hpp>
 
 #include <Commons/AtomicInt.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -44,7 +45,7 @@ namespace AdServer::Action
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public virtual FrontendCommons::FrontendInterface,
+    public virtual FrontendCommons::CoroFrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -57,6 +58,7 @@ namespace AdServer::Action
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
       CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
@@ -82,16 +84,15 @@ namespace AdServer::Action
      *
      * @return HTTP status code.
      */
-    virtual void
-    handle_request(
+    FrontendCommons::RequestTask
+    handle_request_coro(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept override;
 
-    virtual void
+    FrontendCommons::RequestTask
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -164,21 +165,12 @@ namespace AdServer::Action
     write_html(FCGI::HttpResponse& response)
       /*throw(eh::Exception)*/;
 
-    class ActionRequestState;
-
-    void
+    FrontendCommons::RequestTask
     process_advertiser_request_(
-      const std::shared_ptr<ActionRequestState>& state)
-      noexcept;
-
-    void
-    resolve_utm_user_id_(
-      const std::shared_ptr<ActionRequestState>& state)
-      noexcept;
-
-    void
-    finish_advertiser_request_(
-      const std::shared_ptr<ActionRequestState>& state)
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::HttpResponse_var response,
+      RequestInfo request_info,
+      bool return_html)
       noexcept;
 
     int
@@ -270,7 +262,7 @@ namespace AdServer::Action
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    FrontendCommons::FrontendWorkers_var workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
 }
 

@@ -111,7 +111,8 @@ main(int argc, char** argv)
       *opt_bind,
       *opt_port,
       2,      // threads
-      256    // max_concurrent_streams
+      256,    // max_concurrent_streams
+      0       // read_buffer_size
       ));
 
   acceptor->activate_object();

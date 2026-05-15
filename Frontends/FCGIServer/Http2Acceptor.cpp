@@ -9,6 +9,7 @@
 
 #include <nghttp2/nghttp2.h>
 
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Stream/MemoryStream.hpp>
 
 #include "BoostAsioContextRunActiveObject.hpp"
@@ -787,7 +788,8 @@ namespace AdServer::Frontends
 
     io_runner_.reset(
       new BoostAsioContextRunActiveObject(
-        nullptr,
+        Generics::ActiveObjectCallback_var(
+          new Logging::ActiveObjectCallbackImpl(logger_, ASPECT, ASPECT)),
         io_service_,
         threads_));
     io_runner_->activate_object();

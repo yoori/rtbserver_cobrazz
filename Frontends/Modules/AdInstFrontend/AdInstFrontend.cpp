@@ -1,5 +1,6 @@
 #include <sstream>
 #include <algorithm>
+#include <coroutine>
 #include <set>
 
 #include <Logger/StreamLogger.hpp>
@@ -49,6 +50,12 @@ namespace
     throw GrpcCallException(ostr);
   }
 
+  struct MergeUsersResult
+  {
+    bool success = true;
+    std::string error_message;
+  };
+
 }
 
 namespace Aspect
@@ -89,6 +96,7 @@ namespace Instantiate
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
     CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
@@ -101,7 +109,8 @@ namespace Instantiate
         Aspect::AD_INST_FRONTEND,
         0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module))
+      common_module_(ReferenceCounting::add_ref(common_module)),
+      workers_(std::move(request_workers))
   {}
 
   /** Frontend::will_handle */
@@ -175,11 +184,6 @@ namespace Instantiate
       try
       {
         parse_configs_();
-        workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(workers_);
-
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
@@ -225,38 +229,28 @@ namespace Instantiate
     }
   }
 
-  void
-  Frontend::handle_request(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+    auto result = co_await handle_request_(std::move(request_holder));
+    co_return std::move(result);
   }
 
-  void
-  Frontend::handle_request_noparams(
+  FrontendCommons::RequestTask
+  Frontend::handle_request_noparams_coro(
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    workers_->post(
-      [this,
-        request_holder = std::move(request_holder),
-        response_writer = std::move(response_writer)]() mutable
-      {
-        handle_request_noparams_(
-          std::move(request_holder),
-          std::move(response_writer));
-      });
+    (void)response_writer;
+    co_await AdServer::Commons::ExecutorPool::yield(workers_);
+    auto result = co_await handle_request_noparams_(std::move(request_holder));
+    co_return std::move(result);
   }
 
   /** Frontend::shutdown */
@@ -318,10 +312,9 @@ namespace Instantiate
     }
   }
 
-  void
+  FrontendCommons::RequestTask
   Frontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -382,14 +375,14 @@ namespace Instantiate
     }
 
     request.set_params(std::move(params));
-    handle_request_(request_holder, std::move(response_writer));
+    auto result = co_await handle_request_(std::move(request_holder));
+    co_return std::move(result);
   }
 
   /** Frontend::handle_request */
-  void
+  FrontendCommons::RequestTask
   Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "Frontend::handle_request()";
@@ -417,10 +410,80 @@ namespace Instantiate
       Generics::SubStringHashAdapter instantiate_type =
         FrontendCommons::deduce_instantiate_type(&request_info.secure, request);
 
+      struct MergeUsersAwaiter
+      {
+        Frontend* frontend;
+        const RequestInfo& request_info;
+        std::coroutine_handle<> handle{};
+        MergeUsersResult result{};
+
+        bool await_ready() const noexcept
+        {
+          return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> h) noexcept
+        {
+          handle = h;
+          frontend->merge_users_async_(
+            request_info,
+            [this](bool success, std::string error_message) mutable
+            {
+              result.success = success;
+              result.error_message = std::move(error_message);
+              frontend->workers_->post([this]() mutable
+              {
+                handle.resume();
+              });
+            });
+        }
+
+        MergeUsersResult await_resume() noexcept
+        {
+          return std::move(result);
+        }
+      };
+
+      struct InstantiateAdAwaiter
+      {
+        Frontend* frontend;
+        FCGI::HttpResponse_var response;
+        const RequestInfo& request_info;
+        const Generics::SubStringHashAdapter& instantiate_type;
+        std::coroutine_handle<> handle{};
+        int status = 500;
+
+        bool await_ready() const noexcept
+        {
+          return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> h) noexcept
+        {
+          handle = h;
+          frontend->instantiate_ad_async_(
+            response,
+            request_info,
+            instantiate_type,
+            [this](int instantiate_status) mutable
+            {
+              status = instantiate_status;
+              frontend->workers_->post([this]() mutable
+              {
+                handle.resume();
+              });
+            });
+        }
+
+        int await_resume() const noexcept
+        {
+          return status;
+        }
+      };
+
       auto finish_response =
         [this,
           request_holder,
-          response_writer,
           response_ptr,
           request_info](
             int status,
@@ -490,45 +553,23 @@ namespace Instantiate
               "ADS-IMPL-109");
           }
 
-          response_writer->write(status, response_ptr);
+          return status;
         };
 
-      merge_users_async_(
+      const MergeUsersResult merge_result = co_await MergeUsersAwaiter{
+        this,
+        request_info};
+
+      http_status = co_await InstantiateAdAwaiter{
+        this,
+        response_ptr,
         request_info,
-        [this,
-          response_ptr,
-          request_info,
-          instantiate_type,
-          finish_response = std::move(finish_response)](
-            bool merge_success,
-            std::string merge_error_message) mutable
-        {
-          workers_->post(
-            [this,
-              response_ptr,
-              request_info,
-              instantiate_type,
-              merge_success,
-              merge_error_message = std::move(merge_error_message),
-              finish_response = std::move(finish_response)]() mutable
-            {
-              instantiate_ad_async_(
-                response_ptr,
-                request_info,
-                instantiate_type,
-                [merge_success,
-                  merge_error_message = std::move(merge_error_message),
-                  finish_response = std::move(finish_response)](
-                    int instantiate_status) mutable
-                {
-                  finish_response(
-                    instantiate_status,
-                    merge_success,
-                    merge_error_message);
-                });
-            });
-        });
-      return;
+        instantiate_type};
+
+      http_status = finish_response(
+        http_status,
+        merge_result.success,
+        merge_result.error_message);
     }
     catch (const ForbiddenException &ex)
     {
@@ -587,7 +628,10 @@ namespace Instantiate
         "ADS-IMPL-109");
     }
 
-    response_writer->write(http_status, response_ptr);
+    co_return FrontendCommons::RequestResult{
+      http_status,
+      response_ptr,
+      false};
   }
 
   void
@@ -631,7 +675,7 @@ namespace Instantiate
 
     user_info_client_->get_user_profile(
       get_profile_request,
-      [this, request_info, callback = std::move(callback), FUN](
+      [this, request_info, callback = std::move(callback)](
         const grpc::Status& status,
         const adserver::user_info_svcs::user_info_manager::
           GetUserProfileResponse& get_profile_response) mutable
@@ -641,8 +685,7 @@ namespace Instantiate
             request_info,
             status,
             get_profile_response,
-            callback = std::move(callback),
-            FUN]() mutable
+            callback = std::move(callback)]() mutable
         {
           try
           {
@@ -681,13 +724,13 @@ namespace Instantiate
               GrpcAlgs::pack_user_id(request_info.temp_user_id));
             user_info_client_->remove_user_profile(
               remove_request,
-              [this, callback = std::move(callback), FUN](
+              [this, callback = std::move(callback)](
                 const grpc::Status& remove_status,
                 const adserver::user_info_svcs::user_info_manager::
                   RemoveUserProfileResponse&) mutable
               {
                 workers_->post(
-                  [this, remove_status, callback = std::move(callback), FUN]()
+                  [this, remove_status, callback = std::move(callback)]()
                     mutable
                   {
                     try
@@ -809,8 +852,7 @@ namespace Instantiate
         [this,
           response,
           request_info,
-          callback = std::move(callback),
-          FUN](
+          callback = std::move(callback)](
             const grpc::Status& status,
             const adserver::campaign_svcs::campaign_manager::
               GetClickUrlResponse& click_url_response) mutable
@@ -821,8 +863,7 @@ namespace Instantiate
               request_info,
               status,
               click_url_response,
-              callback = std::move(callback),
-              FUN]() mutable
+              callback = std::move(callback)]() mutable
             {
               try
               {
@@ -1054,8 +1095,7 @@ namespace Instantiate
         [this,
           response,
           request_info,
-          callback = std::move(callback),
-          FUN](
+          callback = std::move(callback)](
             const grpc::Status& status,
             const adserver::campaign_svcs::campaign_manager::
               InstantiateAdResponse& instantiate_ad_response) mutable
@@ -1066,8 +1106,7 @@ namespace Instantiate
               request_info,
               status,
               instantiate_ad_response,
-              callback = std::move(callback),
-              FUN]() mutable
+              callback = std::move(callback)]() mutable
             {
               try
               {
