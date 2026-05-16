@@ -35,7 +35,10 @@ namespace AdServer::Grpc
     std::optional<std::size_t> max_outstanding_requests;
     std::size_t workers_number = 4;
     std::size_t hot_buckets_count = 1;
-    std::optional<std::chrono::microseconds> max_batch_delay{std::chrono::microseconds{3000}};
+    std::optional<Generics::Time> max_batch_delay{
+      Generics::Time(0, 3000)};
+    std::optional<Generics::Time> max_queue_wait;
+    std::optional<Generics::Time> stream_start_timeout;
     bool enable_grpc_compression = true;
     bool use_local_subchannel_pool = true;
     std::string batch_stream_full_method;
@@ -56,6 +59,7 @@ namespace AdServer::Grpc
     std::uint64_t queue_wait_count = 0;
     std::uint64_t queue_wait_sum_us = 0;
     std::uint64_t queue_wait_max_us = 0;
+    std::uint64_t queue_timeout_count = 0;
     std::uint64_t response_wait_count = 0;
     std::uint64_t response_wait_sum_us = 0;
     std::uint64_t response_wait_max_us = 0;
@@ -77,6 +81,8 @@ namespace AdServer::Grpc
 
     void add_queue_wait_stats(std::uint64_t wait_us) noexcept;
 
+    void add_queue_timeout_stats() noexcept;
+
     void add_response_wait_stats(std::uint64_t wait_us) noexcept;
 
     void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
@@ -93,6 +99,7 @@ namespace AdServer::Grpc
     std::atomic<std::uint64_t> queue_wait_count_{0};
     std::atomic<std::uint64_t> queue_wait_sum_us_{0};
     std::atomic<std::uint64_t> queue_wait_max_us_{0};
+    std::atomic<std::uint64_t> queue_timeout_count_{0};
     std::atomic<std::uint64_t> response_wait_count_{0};
     std::atomic<std::uint64_t> response_wait_sum_us_{0};
     std::atomic<std::uint64_t> response_wait_max_us_{0};
@@ -127,6 +134,25 @@ namespace AdServer::Grpc
     : reconnect_period(Generics::Time::ONE_SECOND)
   {}
 
+  inline constexpr const char QUEUE_WAIT_TIMEOUT_STATUS[] =
+    "queue wait timeout";
+
+  inline bool
+  is_queue_wait_timeout(const grpc::Status& status)
+  {
+    return status.error_code() == grpc::StatusCode::RESOURCE_EXHAUSTED &&
+      status.error_message().compare(
+        0,
+        sizeof(QUEUE_WAIT_TIMEOUT_STATUS) - 1,
+        QUEUE_WAIT_TIMEOUT_STATUS) == 0;
+  }
+
+  inline bool
+  is_transport_timeout(const grpc::Status& status)
+  {
+    return status.error_code() == grpc::StatusCode::DEADLINE_EXCEEDED;
+  }
+
   inline
   Client::Client(Client* stats_owner) noexcept
     : stats_owner_(stats_owner ? stats_owner : this)
@@ -156,6 +182,12 @@ namespace AdServer::Grpc
   }
 
   inline void
+  Client::add_queue_timeout_stats() noexcept
+  {
+    stats_owner_->queue_timeout_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  inline void
   Client::add_response_wait_stats(std::uint64_t wait_us) noexcept
   {
     stats_owner_->response_wait_count_.fetch_add(1, std::memory_order_relaxed);
@@ -181,6 +213,7 @@ namespace AdServer::Grpc
     stats.queue_wait_count = queue_wait_count_.load(std::memory_order_relaxed);
     stats.queue_wait_sum_us = queue_wait_sum_us_.load(std::memory_order_relaxed);
     stats.queue_wait_max_us = queue_wait_max_us_.load(std::memory_order_relaxed);
+    stats.queue_timeout_count = queue_timeout_count_.load(std::memory_order_relaxed);
     stats.response_wait_count = response_wait_count_.load(std::memory_order_relaxed);
     stats.response_wait_sum_us = response_wait_sum_us_.load(std::memory_order_relaxed);
     stats.response_wait_max_us = response_wait_max_us_.load(std::memory_order_relaxed);

@@ -1,11 +1,11 @@
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <utility>
 
@@ -26,14 +26,13 @@ namespace AdServer::Grpc
     constexpr const char* default_batch_stream_full_method =
       "/adserver.grpc.BatchTransport/stream_batches";
 
-    std::uint64_t
-    duration_us(
-      const std::chrono::steady_clock::time_point& from,
-      const std::chrono::steady_clock::time_point& to)
+    Generics::Time
+    duration_time(const Generics::Time& from, const Generics::Time& to)
     {
-      return static_cast<std::uint64_t>(
-        std::chrono::duration_cast<std::chrono::microseconds>(to - from).count());
+      const auto result = to - from;
+      return result < Generics::Time::ZERO ? Generics::Time::ZERO : result;
     }
+
   } // namespace
 
   struct BatchingStreamBase::Impl
@@ -124,6 +123,7 @@ namespace AdServer::Grpc
 
     void add_write_stats(std::uint64_t batches, std::uint64_t items) noexcept;
     void add_queue_wait_stats(std::uint64_t wait_us) noexcept;
+    void add_queue_timeout_stats() noexcept;
     void add_response_wait_stats(std::uint64_t wait_us) noexcept;
     void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
 
@@ -437,6 +437,12 @@ namespace AdServer::Grpc
   }
 
   void
+  BatchingStreamBase::Impl::add_queue_timeout_stats() noexcept
+  {
+    owner_.add_queue_timeout_stats();
+  }
+
+  void
   BatchingStreamBase::Impl::add_response_wait_stats(
     std::uint64_t wait_us) noexcept
   {
@@ -598,27 +604,85 @@ namespace AdServer::Grpc
     auto write_requests =
       std::make_shared<std::vector<std::shared_ptr<PendingRequest>>>();
     write_requests->reserve(pending_batch.size());
-    const auto write_time = std::chrono::steady_clock::now();
+    std::vector<std::pair<std::shared_ptr<PendingRequest>, Generics::Time>>
+      timed_out_requests;
+    timed_out_requests.reserve(pending_batch.size());
+    const auto write_time = Generics::Time::get_time_of_day();
 
     {
       std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
       for (auto& pending : pending_batch)
       {
+        const auto wait_time = duration_time(pending->enqueue_time, write_time);
+        const auto wait_us = wait_time.microseconds();
+        add_queue_wait_stats(wait_us);
+        if (options_.max_queue_wait && wait_time > *options_.max_queue_wait)
+        {
+          add_queue_timeout_stats();
+          timed_out_requests.emplace_back(
+            std::move(pending),
+            wait_time);
+          continue;
+        }
+
         auto* item = write_batch->add_items();
         item->set_request_id(pending->request_id);
         item->set_full_method(pending->full_method);
         item->set_payload(pending->payload);
         pending->write_time = write_time;
 
-        const auto wait_us = duration_us(pending->enqueue_time, write_time);
-        add_queue_wait_stats(wait_us);
-
         inflight_.emplace(pending->request_id, pending);
         write_requests->emplace_back(std::move(pending));
       }
     }
 
+    for (auto& [request, wait_time] : timed_out_requests)
+    {
+      if (!request->callback)
+      {
+        continue;
+      }
+
+      const auto status_message =
+        std::string(QUEUE_WAIT_TIMEOUT_STATUS) +
+          ": wait_us=" + std::to_string(wait_time.microseconds()) +
+          ", limit_us=" +
+            std::to_string(options_.max_queue_wait->microseconds());
+      BatchResponseItem item;
+      item.set_request_id(request->request_id);
+      item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
+      item.set_status_message(status_message);
+      request->callback(item);
+    }
+
     const auto batch_size = write_batch->items_size();
+    if (batch_size == 0)
+    {
+      write_arena_.Reset();
+
+      bool ready = false;
+      {
+        std::lock_guard<std::mutex> lock(state_lock_);
+        write_in_flight_.store(false);
+        ready = stream_state_.load() == StreamState::Open;
+        if (stream_state_.load() != StreamState::Open)
+        {
+          maybe_start_shutdown_i_();
+        }
+      }
+
+      if (ready)
+      {
+        callback_cv_.notify_one();
+        if (ready_callback_)
+        {
+          ready_callback_(&owner_);
+        }
+      }
+
+      return true;
+    }
+
     const bool write_scheduled = grpc_queue_->execute(
       [
         this,
@@ -630,12 +694,13 @@ namespace AdServer::Grpc
           shared_from_this(),
           std::move(*write_requests));
         auto* write_tag_ptr = write_tag.get();
-        const auto start = std::chrono::steady_clock::now();
+        const auto start = Generics::Time::get_time_of_day();
         stream_->Write(*write_batch, write_tag_ptr);
         write_tag.release();
         if (measure_consumer_stream_write)
         {
-          const auto wait_us = duration_us(start, std::chrono::steady_clock::now());
+          const auto wait_us =
+            duration_time(start, Generics::Time::get_time_of_day()).microseconds();
           add_consumer_stream_write_stats(wait_us);
         }
       });
@@ -818,7 +883,7 @@ namespace AdServer::Grpc
       completed_items.reserve(response->items_size());
 
       std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
-      const auto response_time = std::chrono::steady_clock::now();
+      const auto response_time = Generics::Time::get_time_of_day();
       for (int i = 0; i < response->items_size(); ++i)
       {
         const auto& item = response->items(i);
@@ -830,9 +895,9 @@ namespace AdServer::Grpc
 
         completed_requests.emplace_back(std::move(it->second));
         completed_items.emplace_back(item);
-        const auto wait_us = duration_us(
+        const auto wait_us = duration_time(
           completed_requests.back()->write_time,
-          response_time);
+          response_time).microseconds();
         add_response_wait_stats(wait_us);
         inflight_.erase(it);
       }

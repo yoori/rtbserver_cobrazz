@@ -224,6 +224,8 @@ namespace
       << "  --max-outstanding-requests <N> maximum async-batch accepted but unfinished requests, 0 disables limit (default: 0)\n"
       << "  --max-batch-size <N>  maximum batch size for async-batch mode (default: 1024)\n"
       << "  --max-batch-delay-us <N> maximum time to wait for filling async-batch request, 0 disables delay flush (default: 3000)\n"
+      << "  --max-queue-wait-us <N> maximum queue wait before local request timeout, 0 disables (default: 0)\n"
+      << "  --stream-start-timeout-us <N> maximum stream start wait before cancelling stream, 0 disables (default: 0)\n"
       << "  --local-subchannel-pool <0|1> use local subchannel pool per channel (default: 1)\n"
       << "  --grpc-compression <0|1> use grpc compression (default: 1)\n"
       << "  --user-id <id>        fixed id for GetUserIdRequest::id\n";
@@ -249,6 +251,8 @@ main(int argc, char** argv)
     Generics::AppUtils::Option<unsigned long> opt_max_outstanding_requests(0);
     Generics::AppUtils::Option<unsigned long> opt_max_batch_size(1024);
     Generics::AppUtils::Option<unsigned long> opt_max_batch_delay_us(3000);
+    Generics::AppUtils::Option<unsigned long> opt_max_queue_wait_us(0);
+    Generics::AppUtils::Option<unsigned long> opt_stream_start_timeout_us(0);
     Generics::AppUtils::Option<unsigned long> opt_hot_buckets_count(1);
     Generics::AppUtils::Option<unsigned int> opt_local_subchannel_pool(1);
     Generics::AppUtils::Option<unsigned int> opt_grpc_compression(1);
@@ -269,6 +273,8 @@ main(int argc, char** argv)
     args.add(equal_name("max-outstanding-requests"), opt_max_outstanding_requests);
     args.add(equal_name("max-batch-size"), opt_max_batch_size);
     args.add(equal_name("max-batch-delay-us"), opt_max_batch_delay_us);
+    args.add(equal_name("max-queue-wait-us"), opt_max_queue_wait_us);
+    args.add(equal_name("stream-start-timeout-us"), opt_stream_start_timeout_us);
     args.add(equal_name("hot-buckets-count"), opt_hot_buckets_count);
     args.add(equal_name("local-subchannel-pool"), opt_local_subchannel_pool);
     args.add(equal_name("grpc-compression"), opt_grpc_compression);
@@ -332,6 +338,18 @@ main(int argc, char** argv)
         *opt_max_inflight > 0 ?
           *opt_max_inflight :
           default_max_inflight)};
+    const auto make_time_option =
+      [](unsigned long microseconds) -> std::optional<Generics::Time>
+      {
+        if (microseconds == 0)
+        {
+          return std::nullopt;
+        }
+
+        return Generics::Time(
+          microseconds / Generics::Time::USEC_MAX,
+          microseconds % Generics::Time::USEC_MAX);
+      };
 
     std::atomic<std::uint64_t> sent_count{0};
     std::atomic<std::uint64_t> done_count{0};
@@ -360,10 +378,10 @@ main(int argc, char** argv)
       }
       options.workers_number = client_threads;
       options.hot_buckets_count = *opt_hot_buckets_count;
-      options.max_batch_delay = *opt_max_batch_delay_us > 0 ?
-        std::optional<std::chrono::microseconds>(
-          std::chrono::microseconds(*opt_max_batch_delay_us)) :
-        std::nullopt;
+      options.max_batch_delay = make_time_option(*opt_max_batch_delay_us);
+      options.max_queue_wait = make_time_option(*opt_max_queue_wait_us);
+      options.stream_start_timeout =
+        make_time_option(*opt_stream_start_timeout_us);
       options.enable_grpc_compression = *opt_grpc_compression != 0;
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
@@ -390,10 +408,10 @@ main(int argc, char** argv)
       }
       options.workers_number = client_threads;
       options.hot_buckets_count = *opt_hot_buckets_count;
-      options.max_batch_delay = *opt_max_batch_delay_us > 0 ?
-        std::optional<std::chrono::microseconds>(
-          std::chrono::microseconds(*opt_max_batch_delay_us)) :
-        std::nullopt;
+      options.max_batch_delay = make_time_option(*opt_max_batch_delay_us);
+      options.max_queue_wait = make_time_option(*opt_max_queue_wait_us);
+      options.stream_start_timeout =
+        make_time_option(*opt_stream_start_timeout_us);
       options.enable_grpc_compression = *opt_grpc_compression != 0;
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
 
@@ -421,6 +439,7 @@ main(int argc, char** argv)
       std::uint64_t prev_write_items = 0;
       std::uint64_t prev_queue_wait_count = 0;
       std::uint64_t prev_queue_wait_sum_us = 0;
+      std::uint64_t prev_queue_timeout_count = 0;
       std::uint64_t prev_response_wait_count = 0;
       std::uint64_t prev_response_wait_sum_us = 0;
       std::uint64_t prev_consumer_stream_write_count = 0;
@@ -469,10 +488,13 @@ main(int argc, char** argv)
           stats.response_wait_count - prev_response_wait_count;
         const auto response_wait_sum_us =
           stats.response_wait_sum_us - prev_response_wait_sum_us;
+        const auto queue_timeout_count =
+          stats.queue_timeout_count - prev_queue_timeout_count;
         prev_write_batches = stats.write_batches;
         prev_write_items = stats.write_items;
         prev_queue_wait_count = stats.queue_wait_count;
         prev_queue_wait_sum_us = stats.queue_wait_sum_us;
+        prev_queue_timeout_count = stats.queue_timeout_count;
         prev_response_wait_count = stats.response_wait_count;
         prev_response_wait_sum_us = stats.response_wait_sum_us;
 
@@ -498,6 +520,11 @@ main(int argc, char** argv)
               static_cast<double>(queue_wait_sum_us) /
                 static_cast<double>(queue_wait_count)) <<
             "us, max_queue_wait=" << stats.queue_wait_max_us << "us";
+        }
+        if (queue_timeout_count != 0)
+        {
+          std::cout << ", queue_timeouts=" << queue_timeout_count <<
+            ", total_queue_timeouts=" << stats.queue_timeout_count;
         }
         if (response_wait_count != 0)
         {
@@ -668,6 +695,10 @@ main(int argc, char** argv)
           static_cast<double>(stats.queue_wait_sum_us) /
             static_cast<double>(stats.queue_wait_count)) <<
         "us, max_queue_wait: " << stats.queue_wait_max_us << "us";
+    }
+    if (stats.queue_timeout_count != 0)
+    {
+      std::cout << ", queue_timeouts: " << stats.queue_timeout_count;
     }
     if (stats.response_wait_count != 0)
     {

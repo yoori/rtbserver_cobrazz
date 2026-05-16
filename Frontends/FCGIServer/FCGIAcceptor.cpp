@@ -8,7 +8,7 @@
 
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
-#include "BoostAsioContextRunActiveObject.hpp"
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 
 #include "FCGIAcceptor.hpp"
 
@@ -720,7 +720,7 @@ namespace Frontends
       backlog_(backlog)
   {
     add_child_object(Generics::ActiveObject_var(
-      new BoostAsioContextRunActiveObject(
+      new AdServer::Commons::BoostAsioContextRunActiveObject(
         callback,
         io_service_,
         process_threads)));

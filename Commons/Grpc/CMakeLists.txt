@@ -20,6 +20,7 @@ target_sources(GrpcBatch PRIVATE
 )
 
 target_link_libraries(GrpcBatch
+  Commons
   Generics
   gRPC::grpc++
 )

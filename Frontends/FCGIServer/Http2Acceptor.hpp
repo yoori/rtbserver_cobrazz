@@ -16,6 +16,7 @@
 #include <String/SubString.hpp>
 #include <Logger/Logger.hpp>
 
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
@@ -23,8 +24,6 @@ namespace AdServer
 {
 namespace Frontends
 {
-  class BoostAsioContextRunActiveObject;
-
   class Http2Response;
 
   class Http2Acceptor final:
@@ -84,7 +83,8 @@ namespace Frontends
     std::shared_ptr<boost::asio::io_service> io_service_;
     std::unique_ptr<boost::asio::io_service::work> io_work_;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-    std::unique_ptr<BoostAsioContextRunActiveObject> io_runner_;
+    std::unique_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      io_runner_;
 
     std::mutex connections_lock_;
     std::unordered_map<Connection*, Connection_var> connections_;

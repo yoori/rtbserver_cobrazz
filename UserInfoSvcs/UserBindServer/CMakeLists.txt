@@ -106,27 +106,13 @@ target_link_libraries(UserBindServer gRPC::grpc++)
 # Temporary test binary for gRPC batching lifecycle checks. It keeps the same
 # process/bootstrap code as UserBindServer, but short-circuits get_user_id.
 add_executable(MockUserBindServer
-  UserBindServerMain.cpp
-  UserBindServerImpl.cpp
-  UserBindServerCore.cpp
-  UserBindOperationSaver.cpp
-  UserBindOperationLoader.cpp
+  MockUserBindServerMain.cpp
   UserBindServerGrpc.cpp
 )
 
 target_link_libraries(MockUserBindServer
-  CORBACommons
-  PrivacyFilter
-  ProcessControlVars
   Commons
-  ProfileMap
-  MessageSaver
-  LogCommons
-  UserBindContainer
-  UserBindServerConfigXSD
-  UserBindServerIDL
   UserBindServerGrpc
-  HttpServer
 )
 
 target_include_directories(MockUserBindServer PRIVATE

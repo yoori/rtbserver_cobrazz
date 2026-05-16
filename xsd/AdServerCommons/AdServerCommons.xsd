@@ -210,6 +210,8 @@
     <xsd:attribute name="workers_number" type="xsd:positiveInteger" default="4"/>
     <xsd:attribute name="hot_buckets_count" type="xsd:positiveInteger" default="1"/>
     <xsd:attribute name="max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="max_queue_wait_us" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="stream_start_timeout_us" type="xsd:nonNegativeInteger" use="optional"/>
     <xsd:attribute name="enable_grpc_compression" type="xsd:boolean" default="true"/>
     <xsd:attribute name="use_local_subchannel_pool" type="xsd:boolean" default="true"/>
     <xsd:attribute name="reconnect_period" type="xsd:nonNegativeInteger" default="1"/>

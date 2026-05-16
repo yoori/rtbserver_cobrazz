@@ -101,6 +101,11 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    result_status = ::grpc::Status::OK;
+    return;
+#endif
+
     try
     {
       const auto result = core_->get_bind_request(
@@ -140,6 +145,11 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::AddBindRequestResponse&,
     ::grpc::Status& result_status) const
   {
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    result_status = ::grpc::Status::OK;
+    return;
+#endif
+
     try
     {
       UserBindServerCore::BindRequestInfo bind_request;
@@ -239,6 +249,13 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
     ::grpc::Status& result_status) const
   {
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    response.set_merge_user_id(request.user_id());
+    response.set_invalid_operation(false);
+    result_status = ::grpc::Status::OK;
+    return;
+#endif
+
     try
     {
       UserBindServerCore::AddUserRequestInfo req_info;
@@ -280,6 +297,13 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::GetSourceResponse& response,
     ::grpc::Status& result_status) const
   {
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    response.set_chunks_number(1);
+    response.add_chunks(0);
+    result_status = ::grpc::Status::OK;
+    return;
+#endif
+
     try
     {
       const auto result = core_->get_source();

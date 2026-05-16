@@ -180,10 +180,33 @@ namespace Config
     if (config.max_batch_delay_us().present())
     {
       options.max_batch_delay = *config.max_batch_delay_us() > 0 ?
-        std::optional<std::chrono::microseconds>(
-          std::chrono::microseconds(*config.max_batch_delay_us())) :
+        std::optional<Generics::Time>(
+          Generics::Time(
+            *config.max_batch_delay_us() / Generics::Time::USEC_MAX,
+            *config.max_batch_delay_us() % Generics::Time::USEC_MAX)) :
         std::nullopt;
     }
+
+    if (config.max_queue_wait_us().present())
+    {
+      options.max_queue_wait = *config.max_queue_wait_us() > 0 ?
+        std::optional<Generics::Time>(
+          Generics::Time(
+            *config.max_queue_wait_us() / Generics::Time::USEC_MAX,
+            *config.max_queue_wait_us() % Generics::Time::USEC_MAX)) :
+        std::nullopt;
+    }
+
+    if (config.stream_start_timeout_us().present())
+    {
+      options.stream_start_timeout = *config.stream_start_timeout_us() > 0 ?
+        std::optional<Generics::Time>(
+          Generics::Time(
+            *config.stream_start_timeout_us() / Generics::Time::USEC_MAX,
+            *config.stream_start_timeout_us() % Generics::Time::USEC_MAX)) :
+        std::nullopt;
+    }
+
     options.enable_grpc_compression = config.enable_grpc_compression();
     options.use_local_subchannel_pool = config.use_local_subchannel_pool();
     options.reconnect_period = Generics::Time(config.reconnect_period());

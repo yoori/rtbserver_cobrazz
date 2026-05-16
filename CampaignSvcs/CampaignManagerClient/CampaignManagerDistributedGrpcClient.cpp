@@ -41,6 +41,11 @@ namespace AdServer::CampaignSvcs
       return ostr.str();
     }
 
+    bool should_mark_as_bad(const grpc::Status& status)
+    {
+      return !AdServer::Grpc::is_transport_timeout(status);
+    }
+
   }
 
   struct CampaignManagerDistributedGrpcClient::ClientHolder
@@ -285,9 +290,12 @@ namespace AdServer::CampaignSvcs
       {
         if (!status.ok())
         {
-          ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout,
-            status_description(status));
+          if (should_mark_as_bad(status))
+          {
+            ref.mark_as_bad(
+              Generics::Time::get_time_of_day() + pool_timeout,
+              status_description(status));
+          }
         }
         callback(status, response);
       });
@@ -368,17 +376,23 @@ namespace AdServer::CampaignSvcs
         {
           if (!status.ok())
           {
-            ref.mark_as_bad(
-              Generics::Time::get_time_of_day() + pool_timeout,
-              status_description(status));
+            if (should_mark_as_bad(status))
+            {
+              ref.mark_as_bad(
+                Generics::Time::get_time_of_day() + pool_timeout,
+                status_description(status));
+            }
           }
           callback(status, response);
           return;
         }
 
-        ref.mark_as_bad(
-          Generics::Time::get_time_of_day() + pool_timeout,
-          status_description(status));
+        if (should_mark_as_bad(status))
+        {
+          ref.mark_as_bad(
+            Generics::Time::get_time_of_day() + pool_timeout,
+            status_description(status));
+        }
 
         pb::GetFileRequest fallback_request(request);
         fallback_request.clear_service_index();
@@ -395,9 +409,12 @@ namespace AdServer::CampaignSvcs
           {
             if (!fallback_status.ok())
             {
-              fallback_ref.mark_as_bad(
-                Generics::Time::get_time_of_day() + pool_timeout,
-                status_description(fallback_status));
+              if (should_mark_as_bad(fallback_status))
+              {
+                fallback_ref.mark_as_bad(
+                  Generics::Time::get_time_of_day() + pool_timeout,
+                  status_description(fallback_status));
+              }
             }
             callback(fallback_status, fallback_response);
           });

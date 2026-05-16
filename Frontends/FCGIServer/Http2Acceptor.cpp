@@ -12,7 +12,7 @@
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Stream/MemoryStream.hpp>
 
-#include "BoostAsioContextRunActiveObject.hpp"
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 
 #include "Http2Acceptor.hpp"
 
@@ -784,7 +784,7 @@ namespace AdServer::Frontends
     create_accept_stub_();
 
     io_runner_.reset(
-      new BoostAsioContextRunActiveObject(
+      new AdServer::Commons::BoostAsioContextRunActiveObject(
         Generics::ActiveObjectCallback_var(
           new Logging::ActiveObjectCallbackImpl(logger_, ASPECT, ASPECT)),
         io_service_,

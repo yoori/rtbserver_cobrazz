@@ -1,10 +1,19 @@
 #include <Commons/Grpc/BatchingQueue.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 namespace AdServer::Grpc
 {
+  namespace
+  {
+    std::chrono::microseconds to_wait_duration(const Generics::Time& time)
+    {
+      return std::chrono::microseconds(std::max<long long>(0, time.microseconds()));
+    }
+  }
+
   BatchingQueue::BatchingQueue(BatchingOptions options)
     : options_(std::move(options))
   {
@@ -42,7 +51,7 @@ namespace AdServer::Grpc
     request->request_id = next_request_id_.fetch_add(
       1,
       std::memory_order_relaxed);
-    request->enqueue_time = std::chrono::steady_clock::now();
+    request->enqueue_time = Generics::Time::get_time_of_day();
     request->full_method = full_method;
     request->payload = std::move(payload);
     request->callback = std::move(callback);
@@ -92,7 +101,6 @@ namespace AdServer::Grpc
           "inactive");
         return false;
       }
-
       {
         std::lock_guard<std::mutex> lock(ready_lock_);
         ready_batches_.emplace_back(std::move(ready_batch));
@@ -129,9 +137,10 @@ namespace AdServer::Grpc
 
       auto deadline = hot_deadline_();
       std::unique_lock<std::mutex> lock(hot_cv_lock_);
-      if (deadline.has_value())
+      if (deadline)
       {
-        hot_cv_.wait_until(lock, *deadline, [this]() {
+        const auto now = Generics::Time::get_time_of_day();
+        hot_cv_.wait_for(lock, to_wait_duration(*deadline - now), [this]() {
           return !active() ||
             has_ready_batch_() ||
             has_due_hot_batch_();
@@ -148,6 +157,28 @@ namespace AdServer::Grpc
     }
 
     return false;
+  }
+
+  bool
+  BatchingQueue::try_pop_batch(Batch& batch)
+  {
+    if (!active())
+    {
+      return false;
+    }
+
+    {
+      std::lock_guard<std::mutex> lock(ready_lock_);
+      if (!ready_batches_.empty())
+      {
+        batch = std::move(ready_batches_.front());
+        ready_batches_.pop_front();
+        return true;
+      }
+    }
+
+    return flush_hot_batch_if_full_(batch) ||
+      flush_hot_batch_if_due_(batch);
   }
 
   void
@@ -187,6 +218,12 @@ namespace AdServer::Grpc
   {
     std::lock_guard<std::mutex> lock(hot_cv_lock_);
     hot_cv_.notify_all();
+  }
+
+  std::optional<Generics::Time>
+  BatchingQueue::next_deadline()
+  {
+    return hot_deadline_();
   }
 
   void
@@ -281,7 +318,7 @@ namespace AdServer::Grpc
     }
 
     std::size_t oldest_bucket_index = 0;
-    std::optional<std::chrono::steady_clock::time_point> oldest_enqueue_time;
+    std::optional<Generics::Time> oldest_enqueue_time;
     for (std::size_t i = 0; i < hot_buckets_.size(); ++i)
     {
       auto& bucket = *hot_buckets_[i];
@@ -305,8 +342,8 @@ namespace AdServer::Grpc
       return false;
     }
 
-    if (options_.max_batch_delay.has_value() &&
-      std::chrono::steady_clock::now() <
+    if (options_.max_batch_delay &&
+      Generics::Time::get_time_of_day() <
         *oldest_enqueue_time + *options_.max_batch_delay)
     {
       return false;
@@ -341,14 +378,15 @@ namespace AdServer::Grpc
       return false;
     }
 
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = Generics::Time::get_time_of_day();
     for (auto& bucket_ptr : hot_buckets_)
     {
       auto& bucket = *bucket_ptr;
       std::lock_guard<std::mutex> lock(bucket.lock);
       if (!bucket.queue.empty() &&
-        (!options_.max_batch_delay.has_value() ||
-          now >= bucket.queue.front()->enqueue_time + *options_.max_batch_delay))
+        (!options_.max_batch_delay ||
+          now >= bucket.queue.front()->enqueue_time +
+            *options_.max_batch_delay))
       {
         return true;
       }
@@ -357,11 +395,11 @@ namespace AdServer::Grpc
     return false;
   }
 
-  std::optional<std::chrono::steady_clock::time_point>
+  std::optional<Generics::Time>
   BatchingQueue::hot_deadline_()
   {
-    std::optional<std::chrono::steady_clock::time_point> deadline;
-    if (!options_.max_batch_delay.has_value())
+    std::optional<Generics::Time> deadline;
+    if (!options_.max_batch_delay)
     {
       return deadline;
     }

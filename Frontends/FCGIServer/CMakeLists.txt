@@ -2,7 +2,6 @@ add_library(FrontendServerCommons
   FCGIAcceptor.cpp
   Http2Acceptor.cpp
   WorkerStatsObject.cpp
-  BoostAsioContextRunActiveObject.cpp
   Http2Acceptor.cpp
 )
 

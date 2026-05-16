@@ -2,7 +2,6 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <functional>
@@ -15,6 +14,7 @@
 #include <grpcpp/support/status.h>
 
 #include <Generics/ActiveObject.hpp>
+#include <Generics/Time.hpp>
 
 #include <Commons/Grpc/Batch.grpc.pb.h>
 #include <Commons/Grpc/GrpcClient.hpp>
@@ -24,8 +24,8 @@ namespace AdServer::Grpc
   struct BatchingPendingRequest
   {
     std::uint64_t request_id = 0;
-    std::chrono::steady_clock::time_point enqueue_time;
-    std::chrono::steady_clock::time_point write_time;
+    Generics::Time enqueue_time;
+    Generics::Time write_time;
     const char* full_method = nullptr;
     std::string payload;
     std::function<void(const adserver::grpc::BatchResponseItem&)> callback;
@@ -51,6 +51,8 @@ namespace AdServer::Grpc
 
     bool pop_batch(Batch& batch);
 
+    bool try_pop_batch(Batch& batch);
+
     void return_batch_to_front(Batch&& batch);
 
     void fail_all_with_error(
@@ -58,6 +60,8 @@ namespace AdServer::Grpc
       const char* status_message);
 
     void notify_all();
+
+    std::optional<Generics::Time> next_deadline();
 
   private:
     struct HotBucket
@@ -76,7 +80,7 @@ namespace AdServer::Grpc
     bool flush_hot_batch_if_full_(Batch& batch);
     bool flush_hot_batch_if_due_(Batch& batch);
     bool has_due_hot_batch_();
-    std::optional<std::chrono::steady_clock::time_point> hot_deadline_();
+    std::optional<Generics::Time> hot_deadline_();
     bool has_ready_batch_();
 
     void finish_batch_with_error_(
