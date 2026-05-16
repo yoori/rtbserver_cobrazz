@@ -28,6 +28,7 @@ namespace
   const uint8_t HTTP2_PREFACE[] = {
     'P','R','I',' ','*',' ','H','T','T','P','/','2','.','0','\r','\n','\r','\n','S','M','\r','\n','\r','\n'
   };
+  const int HTTP2_LISTEN_BACKLOG = 8192;
 }
 
 namespace AdServer::Frontends
@@ -115,11 +116,20 @@ namespace AdServer::Frontends
     void order_write_();
     void handle_write_(const boost::system::error_code& error);
 
-    void close_();
+    void close_(
+      const char* reason = nullptr,
+      const boost::system::error_code* error = nullptr,
+      ssize_t nghttp2_error = 0);
+
+    void log_connection_error_(
+      const char* reason,
+      const boost::system::error_code* error,
+      ssize_t nghttp2_error);
 
   private:
     Http2Acceptor* owner_;
     boost::asio::io_service& io_service_;
+    boost::asio::io_service::strand strand_;
     SocketType socket_;
     nghttp2_session* session_;
     std::vector<char> read_buf_;
@@ -128,6 +138,8 @@ namespace AdServer::Frontends
     bool write_active_;
     bool close_started_;
     std::mutex close_lock_;
+    std::string local_endpoint_;
+    std::string remote_endpoint_;
     const unsigned long max_concurrent_streams_;
     std::unordered_map<int32_t, std::shared_ptr<StreamData>> streams_;
   };
@@ -186,6 +198,7 @@ namespace AdServer::Frontends
     unsigned long read_buffer_size)
     : owner_(owner),
       io_service_(io_service),
+      strand_(io_service_),
       socket_(io_service_),
       session_(nullptr),
       read_buf_(read_buffer_size ? read_buffer_size : 64 * 1024),
@@ -214,9 +227,27 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::Connection::activate()
   {
+    boost::system::error_code endpoint_ec;
+    const auto local = socket_.local_endpoint(endpoint_ec);
+    if(!endpoint_ec)
+    {
+      Stream::Error ostr;
+      ostr << local.address().to_string() << ':' << local.port();
+      local_endpoint_ = ostr.str().str();
+    }
+
+    endpoint_ec.clear();
+    const auto remote = socket_.remote_endpoint(endpoint_ec);
+    if(!endpoint_ec)
+    {
+      Stream::Error ostr;
+      ostr << remote.address().to_string() << ':' << remote.port();
+      remote_endpoint_ = ostr.str().str();
+    }
+
     if(!init_http2_())
     {
-      close_();
+      close_("init_http2_failed");
       return;
     }
 
@@ -229,9 +260,9 @@ namespace AdServer::Frontends
   Http2Acceptor::Connection::deactivate()
   {
     auto self = shared_from_this();
-    io_service_.post([self]()
+    strand_.post([self]()
     {
-      self->close_();
+      self->close_("deactivate");
     });
   }
 
@@ -319,10 +350,19 @@ namespace AdServer::Frontends
     nghttp2_data_source* source,
     void* /*user_data*/)
   {
-    const auto* body = static_cast<const std::string*>(source->ptr);
-    const size_t to_copy = std::min(length, body->size());
-    std::memcpy(buf, body->data(), to_copy);
+    const auto* body = static_cast<const std::shared_ptr<std::string>*>(source->ptr);
+    if(!body || !*body)
+    {
+      *data_flags = NGHTTP2_DATA_FLAG_EOF;
+      return 0;
+    }
+
+    const auto& body_ref = **body;
+    const size_t to_copy = std::min(length, body_ref.size());
+    std::memcpy(buf, body_ref.data(), to_copy);
     *data_flags = NGHTTP2_DATA_FLAG_EOF;
+    delete body;
+    source->ptr = nullptr;
     return static_cast<ssize_t>(to_copy);
   }
 
@@ -494,7 +534,9 @@ namespace AdServer::Frontends
     }};
 
     nghttp2_data_provider provider;
-    provider.source.ptr = const_cast<std::string*>(&response.body);
+    auto response_body = std::make_unique<std::shared_ptr<std::string>>(
+      std::make_shared<std::string>(response.body));
+    provider.source.ptr = response_body.get();
     provider.read_callback = data_source_read_callback_;
 
     const int res = nghttp2_submit_response(
@@ -509,7 +551,10 @@ namespace AdServer::Frontends
       Stream::Error ostr;
       ostr << "Can't submit HTTP/2 response: " << nghttp2_strerror(res);
       owner_->logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
+      return;
     }
+
+    response_body.release();
   }
 
   void
@@ -518,7 +563,7 @@ namespace AdServer::Frontends
     FCGI::HttpResponse_var response)
   {
     auto self = shared_from_this();
-    io_service_.post(
+    strand_.post(
       [self, stream_id, response]()
       {
         auto it = self->streams_.find(stream_id);
@@ -554,10 +599,11 @@ namespace AdServer::Frontends
     auto self = shared_from_this();
     socket_.async_read_some(
       boost::asio::buffer(read_buf_.data(), read_buf_.size()),
-      [self](const boost::system::error_code& error, size_t bytes_transferred)
-      {
-        self->handle_read_(error, bytes_transferred);
-      });
+      strand_.wrap(
+        [self](const boost::system::error_code& error, size_t bytes_transferred)
+        {
+          self->handle_read_(error, bytes_transferred);
+        }));
   }
 
   void
@@ -567,7 +613,7 @@ namespace AdServer::Frontends
   {
     if(error)
     {
-      close_();
+      close_("read_error", &error);
       return;
     }
 
@@ -585,7 +631,7 @@ namespace AdServer::Frontends
           INVALID_HTTP2_PREFACE,
           Logging::Logger::ERROR,
           ASPECT);
-        close_();
+        close_("invalid_preface");
         return;
       }
 
@@ -617,10 +663,7 @@ namespace AdServer::Frontends
 
     if(rv < 0)
     {
-      Stream::Error ostr;
-      ostr << "HTTP/2 frame parse error: " << nghttp2_strerror(static_cast<int>(rv));
-      owner_->logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
-      close_();
+      close_("nghttp2_recv_error", nullptr, rv);
       return;
     }
   }
@@ -636,10 +679,7 @@ namespace AdServer::Frontends
     const int rv = nghttp2_session_send(session_);
     if(rv != 0)
     {
-      Stream::Error ostr;
-      ostr << "HTTP/2 send error: " << nghttp2_strerror(rv);
-      owner_->logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
-      close_();
+      close_("nghttp2_send_error", nullptr, rv);
       return;
     }
 
@@ -663,10 +703,11 @@ namespace AdServer::Frontends
     boost::asio::async_write(
       socket_,
       boost::asio::buffer(send_queue_.front()),
-      [self](const boost::system::error_code& error, size_t /*bytes_transferred*/)
-      {
-        self->handle_write_(error);
-      });
+      strand_.wrap(
+        [self](const boost::system::error_code& error, size_t /*bytes_transferred*/)
+        {
+          self->handle_write_(error);
+        }));
   }
 
   void
@@ -674,7 +715,7 @@ namespace AdServer::Frontends
   {
     if(error)
     {
-      close_();
+      close_("write_error", &error);
       return;
     }
 
@@ -693,7 +734,48 @@ namespace AdServer::Frontends
   }
 
   void
-  Http2Acceptor::Connection::close_()
+  Http2Acceptor::Connection::log_connection_error_(
+    const char* reason,
+    const boost::system::error_code* error,
+    ssize_t nghttp2_error)
+  {
+    Stream::Error ostr;
+    ostr << "HTTP/2 connection close";
+
+    if(reason)
+    {
+      ostr << ": reason=" << reason;
+    }
+
+    if(!local_endpoint_.empty())
+    {
+      ostr << " local=" << local_endpoint_;
+    }
+
+    if(!remote_endpoint_.empty())
+    {
+      ostr << " remote=" << remote_endpoint_;
+    }
+
+    if(error)
+    {
+      ostr << " asio_error=" << error->message() << '(' << error->value() << ')';
+    }
+
+    if(nghttp2_error != 0)
+    {
+      ostr << " nghttp2_error=" << nghttp2_strerror(static_cast<int>(nghttp2_error))
+        << '(' << nghttp2_error << ')';
+    }
+
+    owner_->logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
+  }
+
+  void
+  Http2Acceptor::Connection::close_(
+    const char* reason,
+    const boost::system::error_code* error,
+    ssize_t nghttp2_error)
   {
     std::lock_guard<std::mutex> lock(close_lock_);
 
@@ -703,6 +785,10 @@ namespace AdServer::Frontends
     }
 
     close_started_ = true;
+    if(reason && std::strcmp(reason, "deactivate") != 0)
+    {
+      log_connection_error_(reason, error, nghttp2_error);
+    }
 
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
@@ -779,7 +865,7 @@ namespace AdServer::Frontends
     acceptor_->open(endpoint.protocol());
     acceptor_->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
     acceptor_->bind(endpoint);
-    acceptor_->listen();
+    acceptor_->listen(HTTP2_LISTEN_BACKLOG);
 
     create_accept_stub_();
 

@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <Generics/AppUtils.hpp>
+#include <Logger/StreamLogger.hpp>
 
 #include <Frontends/FCGIServer/Http2Acceptor.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
@@ -101,7 +102,8 @@ main(int argc, char** argv)
   std::signal(SIGINT, signal_handler);
   std::signal(SIGTERM, signal_handler);
 
-  Logging::Logger_var logger(new Logging::Null::Logger());
+  Logging::Logger_var logger(
+    new Logging::OStream::Logger(Logging::OStream::Config(std::cerr)));
   FrontendCommons::Frontend_var frontend(new AdServer::Utils::EchoFrontendImpl());
 
   ReferenceCounting::SmartPtr<AdServer::Frontends::Http2Acceptor> acceptor(
