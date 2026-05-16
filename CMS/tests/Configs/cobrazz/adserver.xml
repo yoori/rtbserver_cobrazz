@@ -1339,7 +1339,6 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
               <configuration:trackFCGI2NetworkParams port="10199" monitoring_port="10399" backlog="6000" accept_threads="15" keep_connections="300"/>
 
               <configuration:userBindFCGI1NetworkParams port="10178" backlog="6000" accept_threads="15" keep_connections="300"/>
-              <configuration:userBindFCGI2NetworkParams port="10194" backlog="6000" accept_threads="15" keep_connections="300"/>
 
               <configuration:webServerParams timeout="3" server_limit="16" start_servers="1" max_clients="256000"/>
               <configuration:debugInfo use_acl="false" acl="" colocations="" show_history_profile="true"/>
@@ -1454,7 +1453,6 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
               <configuration:rtbFCGI1NetworkParams port="10177" backlog="3000" accept_threads="10" keep_connections="300"/>
               <configuration:rtbFCGI2NetworkParams port="10196" backlog="3000" accept_threads="10" keep_connections="300"/>
               <configuration:userBindFCGI1NetworkParams port="10178" backlog="6000" accept_threads="10" keep_connections="300"/>
-              <configuration:userBindFCGI2NetworkParams port="10194" backlog="6000" accept_threads="10" keep_connections="300"/>
               <configuration:webServerParams timeout="3" server_limit="16" start_servers="1" max_clients="256000"/>
               <configuration:debugInfo use_acl="false" acl="" colocations="" show_history_profile="true"/>
               <configuration:requestModule set_uid="never" probe_uid="false" p3p_header="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;">
