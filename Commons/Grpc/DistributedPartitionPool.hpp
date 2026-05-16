@@ -66,6 +66,7 @@ namespace AdServer::Grpc
       AdServer::Grpc::Stats stats() const noexcept;
 
       const std::string endpoint;
+      const std::string name;
       ClientPtr client;
     };
 

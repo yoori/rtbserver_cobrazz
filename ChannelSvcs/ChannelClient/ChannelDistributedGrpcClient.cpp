@@ -84,6 +84,11 @@ namespace AdServer::ChannelSvcs
         client_holder->client.get())->stats();
     }
 
+    const std::string& name() const noexcept
+    {
+      return client_holder->endpoint;
+    }
+
     ClientHolderPtr client_holder;
   };
 

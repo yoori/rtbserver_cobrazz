@@ -52,9 +52,21 @@ namespace AdServer::Grpc
   void
   RefPool<T>::Ref::mark_as_bad(const Generics::Time& bad_before_time)
   {
+    mark_as_bad(bad_before_time, std::string());
+  }
+
+  template<typename T>
+  void
+  RefPool<T>::Ref::mark_as_bad(
+    const Generics::Time& bad_before_time,
+    std::string unavailable_error)
+  {
     if (auto pool = ref_holder_->pool.lock())
     {
-      pool->mark_as_bad_(ref_holder_, bad_before_time);
+      pool->mark_as_bad_(
+        ref_holder_,
+        bad_before_time,
+        std::move(unavailable_error));
     }
   }
 
@@ -119,10 +131,12 @@ namespace AdServer::Grpc
 
     const auto pool = this->weak_from_this();
     available_ref_holders_.reserve(refs_.size());
+    ref_holders_.reserve(refs_.size());
     for (const auto& ref : refs_)
     {
-      available_ref_holders_.emplace_back(
-        std::make_shared<RefHolder>(ref, pool));
+      auto ref_holder = std::make_shared<RefHolder>(ref, pool);
+      available_ref_holders_.emplace_back(ref_holder);
+      ref_holders_.emplace_back(std::move(ref_holder));
     }
     refs_.clear();
     refs_.shrink_to_fit();
@@ -163,6 +177,57 @@ namespace AdServer::Grpc
   }
 
   template<typename T>
+  std::string
+  RefPool<T>::unavailable_description() const
+  {
+    std::string description;
+    for (const auto& ref_holder : ref_holders_)
+    {
+      if (!ref_holder)
+      {
+        continue;
+      }
+
+      std::string error;
+      Generics::Time error_time = Generics::Time::ZERO;
+      {
+        std::lock_guard<std::mutex> lock(ref_holder->unavailable_error_lock);
+        error = ref_holder->unavailable_error;
+        error_time = ref_holder->unavailable_error_time;
+      }
+
+      if (error.empty())
+      {
+        continue;
+      }
+
+      if (!description.empty())
+      {
+        description += ", ";
+      }
+      if constexpr (requires { ref_holder->object->name; })
+      {
+        description += ref_holder->object->name;
+      }
+      else if constexpr (requires { ref_holder->object->name(); })
+      {
+        description += ref_holder->object->name();
+      }
+      else
+      {
+        description += "<unknown endpoint>";
+      }
+      description += " => ";
+      description += "[";
+      description += error_time.get_gm_time().format(
+        "%Y-%m-%d %H:%M:%S");
+      description += "] ";
+      description += error;
+    }
+    return description;
+  }
+
+  template<typename T>
   void
   RefPool<T>::activate_object_()
   {
@@ -194,7 +259,8 @@ namespace AdServer::Grpc
   void
   RefPool<T>::mark_as_bad_(
     const std::shared_ptr<RefHolder>& ref_holder,
-    const Generics::Time& bad_before_time)
+    const Generics::Time& bad_before_time,
+    std::string unavailable_error)
   {
     bool wake_worker = false;
 
@@ -240,6 +306,16 @@ namespace AdServer::Grpc
         std::max(*ref_holder->bad_before_time, bad_before_time) :
         bad_before_time;
 
+      {
+        std::lock_guard<std::mutex> error_lock(
+          ref_holder->unavailable_error_lock);
+        ref_holder->unavailable_error_time =
+          Generics::Time::get_time_of_day();
+        ref_holder->unavailable_error = unavailable_error.empty() ?
+          std::string() :
+          std::move(unavailable_error);
+      }
+      ref_holder->available = false;
       ref_holder->bad_before_time = new_bad_before_time;
       ref_holder->probing = false;
       ref_holder->bad.store(true, std::memory_order_release);
@@ -273,6 +349,7 @@ namespace AdServer::Grpc
 
       ref_holder->probing = false;
       ref_holder->bad_before_time.reset();
+      ref_holder->available = true;
       ref_holder->bad.store(false, std::memory_order_release);
       available_ref_holders_.emplace_back(ref_holder);
     }

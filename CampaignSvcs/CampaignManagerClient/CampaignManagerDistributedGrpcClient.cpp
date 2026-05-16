@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <set>
+#include <sstream>
 #include <utility>
 
 namespace AdServer::CampaignSvcs
@@ -11,6 +12,8 @@ namespace AdServer::CampaignSvcs
     namespace pb = adserver::campaign_svcs::campaign_manager;
 
     const Generics::Time DEFAULT_POOL_TIMEOUT = Generics::Time::ONE_SECOND;
+    const char NO_AVAILABLE_DESCRIPTION[] =
+      "no available CampaignManager grpc client";
 
     grpc::Status unavailable_status(const char* description)
     {
@@ -18,6 +21,26 @@ namespace AdServer::CampaignSvcs
         grpc::StatusCode::UNAVAILABLE,
         description ? description : "");
     }
+
+    grpc::Status unavailable_status(const std::string& description)
+    {
+      return grpc::Status(
+        grpc::StatusCode::UNAVAILABLE,
+        description);
+    }
+
+    std::string status_description(const grpc::Status& status)
+    {
+      std::ostringstream ostr;
+      ostr << "code=" << static_cast<int>(status.error_code()) <<
+        ", message=" << status.error_message();
+      if (!status.error_details().empty())
+      {
+        ostr << ", details=" << status.error_details();
+      }
+      return ostr.str();
+    }
+
   }
 
   struct CampaignManagerDistributedGrpcClient::ClientHolder
@@ -27,6 +50,7 @@ namespace AdServer::CampaignSvcs
       AdServer::Grpc::BatchingOptions batching_options,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
       : endpoint(std::move(endpoint_val)),
+        name(endpoint),
         client(std::make_shared<Client>(
           endpoint,
           std::move(grpc_executor),
@@ -51,6 +75,7 @@ namespace AdServer::CampaignSvcs
     }
 
     const std::string endpoint;
+    const std::string name;
     ClientPtr client;
   };
 
@@ -177,8 +202,8 @@ namespace AdServer::CampaignSvcs
     return result;
   }
 
-  std::optional<CampaignManagerDistributedGrpcClient::Pool::Ref>
-  CampaignManagerDistributedGrpcClient::get_ref_(
+  CampaignManagerDistributedGrpcClient::PoolPtr
+  CampaignManagerDistributedGrpcClient::get_pool_(
     const std::string& service_index) const
   {
     if (!service_index.empty())
@@ -186,11 +211,37 @@ namespace AdServer::CampaignSvcs
       const auto it = service_index_pools_.find(service_index);
       if (it != service_index_pools_.end())
       {
-        return it->second->get_object();
+        return it->second;
       }
     }
 
-    return default_pool_->get_object();
+    return default_pool_;
+  }
+
+  std::optional<CampaignManagerDistributedGrpcClient::Pool::Ref>
+  CampaignManagerDistributedGrpcClient::get_ref_(
+    const std::string& service_index) const
+  {
+    auto pool = get_pool_(service_index);
+    return pool ? pool->get_object() : std::nullopt;
+  }
+
+  std::string
+  CampaignManagerDistributedGrpcClient::unavailable_description_(
+    const PoolPtr& pool)
+  {
+    if (!pool)
+    {
+      return NO_AVAILABLE_DESCRIPTION;
+    }
+
+    const auto details = pool->unavailable_description();
+    if (details.empty())
+    {
+      return NO_AVAILABLE_DESCRIPTION;
+    }
+
+    return std::string(NO_AVAILABLE_DESCRIPTION) + ": " + details;
   }
 
   template<typename Request, typename Response, typename Callback, typename Call>
@@ -199,7 +250,6 @@ namespace AdServer::CampaignSvcs
     const Request& request,
     Callback callback,
     Call call,
-    const char* unavailable_description,
     const std::string& service_index)
   {
     if (!active())
@@ -208,10 +258,13 @@ namespace AdServer::CampaignSvcs
       return;
     }
 
-    auto ref = get_ref_(service_index);
+    auto pool = get_pool_(service_index);
+    auto ref = pool ? pool->get_object() : std::nullopt;
     if (!ref)
     {
-      callback(unavailable_status(unavailable_description), Response());
+      callback(
+        unavailable_status(unavailable_description_(pool)),
+        Response());
       return;
     }
 
@@ -233,7 +286,8 @@ namespace AdServer::CampaignSvcs
         if (!status.ok())
         {
           ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout);
+            Generics::Time::get_time_of_day() + pool_timeout,
+            status_description(status));
         }
         callback(status, response);
       });
@@ -249,8 +303,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->ready(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -263,8 +316,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->progress_comment(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -277,8 +329,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->match_geo_channels(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -286,11 +337,12 @@ namespace AdServer::CampaignSvcs
     const pb::GetFileRequest& request,
     GetFileCallback callback)
   {
-    auto ref = get_ref_(request.service_index());
+    auto pool = get_pool_(request.service_index());
+    auto ref = pool ? pool->get_object() : std::nullopt;
     if (!ref)
     {
       callback(
-        unavailable_status("no available CampaignManager grpc client"),
+        unavailable_status(unavailable_description_(pool)),
         pb::GetFileResponse());
       return;
     }
@@ -317,14 +369,16 @@ namespace AdServer::CampaignSvcs
           if (!status.ok())
           {
             ref.mark_as_bad(
-              Generics::Time::get_time_of_day() + pool_timeout);
+              Generics::Time::get_time_of_day() + pool_timeout,
+              status_description(status));
           }
           callback(status, response);
           return;
         }
 
         ref.mark_as_bad(
-          Generics::Time::get_time_of_day() + pool_timeout);
+          Generics::Time::get_time_of_day() + pool_timeout,
+          status_description(status));
 
         pb::GetFileRequest fallback_request(request);
         fallback_request.clear_service_index();
@@ -342,7 +396,8 @@ namespace AdServer::CampaignSvcs
             if (!fallback_status.ok())
             {
               fallback_ref.mark_as_bad(
-                Generics::Time::get_time_of_day() + pool_timeout);
+                Generics::Time::get_time_of_day() + pool_timeout,
+                status_description(fallback_status));
             }
             callback(fallback_status, fallback_response);
           });
@@ -359,8 +414,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_campaign_creative(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -373,8 +427,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->process_match_request(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -389,8 +442,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->process_anonymous_request(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -404,7 +456,6 @@ namespace AdServer::CampaignSvcs
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->instantiate_ad(request, std::move(callback));
       },
-      "no available CampaignManager grpc client",
       request.service_index());
   }
 
@@ -420,8 +471,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->trace_campaign_selection_index(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -436,8 +486,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->trace_campaign_selection(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -452,8 +501,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_campaign_creative_by_ccid(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -466,8 +514,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_channel_links(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -480,8 +527,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_discover_channels(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -494,8 +540,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_category_channels(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -508,8 +553,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_colocation_flags(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -522,8 +566,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_pub_pixels(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -536,8 +579,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->consider_passback(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -552,8 +594,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->consider_passback_track(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -567,7 +608,6 @@ namespace AdServer::CampaignSvcs
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_click_url(request, std::move(callback));
       },
-      "no available CampaignManager grpc client",
       request.service_index());
   }
 
@@ -581,8 +621,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->verify_impression(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -595,8 +634,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->action_taken(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -609,8 +647,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->verify_opt_operation(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -623,8 +660,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->consider_web_operation(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void
@@ -637,8 +673,7 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_config(request, std::move(callback));
-      },
-      "no available CampaignManager grpc client");
+      });
   }
 
   void

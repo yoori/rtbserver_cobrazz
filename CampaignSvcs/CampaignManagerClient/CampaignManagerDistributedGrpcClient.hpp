@@ -156,15 +156,20 @@ namespace AdServer::CampaignSvcs
     void activate_object_() override;
     void deactivate_object_() override;
 
+    PoolPtr get_pool_(
+      const std::string& service_index = std::string()) const;
+
     std::optional<Pool::Ref> get_ref_(
       const std::string& service_index = std::string()) const;
+
+    static std::string unavailable_description_(
+      const PoolPtr& pool);
 
     template<typename Request, typename Response, typename Callback, typename Call>
     void call_(
       const Request& request,
       Callback callback,
       Call call,
-      const char* unavailable_description,
       const std::string& service_index = std::string());
 
     static void merge_stats_(

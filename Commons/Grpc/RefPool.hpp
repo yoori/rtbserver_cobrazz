@@ -6,8 +6,10 @@
 #include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <shared_mutex>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -37,8 +39,12 @@ namespace AdServer::Grpc
       std::shared_ptr<T> object;
       std::weak_ptr<RefPool> pool;
       std::atomic_bool bad{false};
+      bool available = true;
       bool probing = false;
       std::optional<Generics::Time> bad_before_time;
+      mutable std::mutex unavailable_error_lock;
+      Generics::Time unavailable_error_time = Generics::Time::ZERO;
+      std::string unavailable_error;
     };
 
     class Ref
@@ -51,6 +57,9 @@ namespace AdServer::Grpc
       const T& operator*() const noexcept;
 
       void mark_as_bad(const Generics::Time& bad_before_time);
+      void mark_as_bad(
+        const Generics::Time& bad_before_time,
+        std::string unavailable_error);
       bool is_bad() const noexcept;
 
     private:
@@ -77,6 +86,7 @@ namespace AdServer::Grpc
     ~RefPool() noexcept;
 
     std::optional<Ref> get_object();
+    std::string unavailable_description() const;
 
   protected:
     struct BadRefKey
@@ -91,7 +101,7 @@ namespace AdServer::Grpc
     void deactivate_object_() override;
     void wait_object_() override;
 
-    std::shared_mutex lock_;
+    mutable std::shared_mutex lock_;
     std::condition_variable_any cond_;
     std::vector<std::shared_ptr<RefHolder>> available_ref_holders_;
     std::vector<std::shared_ptr<RefHolder>> try_ref_holders_;
@@ -99,10 +109,10 @@ namespace AdServer::Grpc
 
   private:
     void init_refs_();
-
     void mark_as_bad_(
       const std::shared_ptr<RefHolder>& ref_holder,
-      const Generics::Time& bad_before_time);
+      const Generics::Time& bad_before_time,
+      std::string unavailable_error);
 
     void finish_probe_(
       const std::shared_ptr<RefHolder>& ref_holder) noexcept;
@@ -111,6 +121,7 @@ namespace AdServer::Grpc
 
   private:
     std::vector<std::shared_ptr<T>> refs_;
+    std::vector<std::shared_ptr<RefHolder>> ref_holders_;
     std::atomic<std::size_t> next_ref_index_{0};
     std::atomic<std::size_t> try_ref_count_{0};
     std::optional<std::thread> thread_;

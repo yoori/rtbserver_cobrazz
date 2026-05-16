@@ -3068,6 +3068,10 @@ namespace AdServer::Bidding
       }
 
       // Fill user history data
+      request_params.client_create_time =
+        CampaignManager::pack_time(Generics::Time::ZERO);
+      request_params.session_start =
+        CampaignManager::pack_time(Generics::Time::ZERO);
       if(history_result)
       {
         request_params.client_create_time = history_result->create_time();

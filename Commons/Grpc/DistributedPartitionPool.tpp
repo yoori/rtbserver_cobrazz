@@ -8,6 +8,7 @@ namespace AdServer::Grpc
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     AdServer::Grpc::BatchingOptions batching_options)
     : endpoint(std::move(endpoint_val)),
+      name(endpoint),
       client(std::make_shared<Client>(
         endpoint,
         std::move(grpc_executor),
