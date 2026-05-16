@@ -109,11 +109,11 @@ namespace Bidding
         ExternalCreativeCategoryIdSeq& categories,
       AddRepeatedFn fn)
     {
-      for(std::size_t cat_i = 0; cat_i < categories.length(); ++cat_i)
+      for(std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)
       {
         int32_t cat_id = 0;
         if(String::StringManip::str_to_int(
-             String::SubString(categories[cat_i].in()),
+             String::SubString(categories[cat_i]),
              cat_id))
         {
           fn(cat_id);
@@ -246,10 +246,10 @@ namespace Bidding
       Google::BidResponse bid_response;
 
       assert(
-        campaign_match_result.ad_slots.length() == ad_slots_context_.size());
+        campaign_match_result.ad_slots.size() == ad_slots_context_.size());
 
       for(std::size_t ad_slot_i = 0;
-          ad_slot_i < campaign_match_result.ad_slots.length();
+          ad_slot_i < campaign_match_result.ad_slots.size();
           ++ad_slot_i)
       {
         const AdServer::Bidding::CampaignManager::
@@ -257,7 +257,7 @@ namespace Bidding
 
         const Google::BidRequest_AdSlot& adslot = bid_request_.adslot(ad_slot_i);
 
-        if(ad_slot_result.selected_creatives.length() > 0)
+        if(ad_slot_result.selected_creatives.size() > 0)
         {
           // campaigns selected
           CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
@@ -265,14 +265,14 @@ namespace Bidding
           Google::BidResponse_Ad* ad = bid_response.add_ad();
 
           for(std::size_t creative_i = 0;
-              creative_i < ad_slot_result.selected_creatives.length();
+              creative_i < ad_slot_result.selected_creatives.size();
               ++creative_i)
           {
             sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
               ad_slot_result.selected_creatives[creative_i].pub_ecpm);
 
             ad->add_click_through_url(
-              ad_slot_result.selected_creatives[creative_i].destination_url.in());
+              ad_slot_result.selected_creatives[creative_i].destination_url);
           }
 
           categories_to_repeated(
@@ -362,7 +362,7 @@ namespace Bidding
 
             std::ostringstream creative_version_ostr;
 
-            creative_version_ostr << creative.creative_version_id.in() << "-" <<
+            creative_version_ostr << creative.creative_version_id << "-" <<
               creative.creative_size << "S";
 
             ad->set_buyer_creative_id(creative_version_ostr.str());
@@ -381,14 +381,14 @@ namespace Bidding
 
           // Video
           if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL &&
-             ad_slot_result.creative_url[0])
+             !ad_slot_result.creative_url.empty())
           {
             ad->set_video_url(ad_slot_result.creative_url);
           }
           // Banner
           else
           {
-            ad->set_html_snippet(ad_slot_result.creative_body.in());
+            ad->set_html_snippet(ad_slot_result.creative_body);
           }
         }
       }

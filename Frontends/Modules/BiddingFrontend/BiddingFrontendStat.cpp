@@ -136,7 +136,7 @@ namespace AdServer
     const Generics::Time& processing_time)
     noexcept
   {
-    bool bid = campaign_match_result && campaign_match_result->ad_slots.length();
+    bool bid = campaign_match_result && campaign_match_result->ad_slots.size();
     bool google = request_params.common_info.request_type == AR_GOOGLE;
     bool openrtb = request_params.common_info.request_type == AR_OPENRTB ||
                    request_params.common_info.request_type == AR_OPENRTB_WITH_CLICKURL;

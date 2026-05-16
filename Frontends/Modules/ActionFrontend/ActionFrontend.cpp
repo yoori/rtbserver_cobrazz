@@ -449,11 +449,13 @@ namespace AdServer::Action
           request_info.external_user_id :
           std::string("c/") + cookie_resolved_user_id.to_string();
 
-      const ResolveUserIdResult resolve_result = co_await ResolveUserIdAwaiter{
+      ResolveUserIdAwaiter resolve_user_id_awaiter{
         this,
         external_id_str,
         cookie_resolved_user_id,
         request_info.time};
+      const ResolveUserIdResult resolve_result =
+        co_await std::move(resolve_user_id_awaiter);
       if(resolve_result.success && !resolve_result.user_id.is_null())
       {
         cookie_resolved_user_id = resolve_result.user_id;
@@ -467,11 +469,13 @@ namespace AdServer::Action
       const std::string external_id_str =
         std::string("c/") + request_info.utm_cookie_user_id.to_string();
 
-      const ResolveUserIdResult resolve_result = co_await ResolveUserIdAwaiter{
+      ResolveUserIdAwaiter resolve_user_id_awaiter{
         this,
         external_id_str,
         cookie_resolved_user_id,
         request_info.time};
+      const ResolveUserIdResult resolve_result =
+        co_await std::move(resolve_user_id_awaiter);
       if(resolve_result.success)
       {
         utm_cookie_resolved_user_id =

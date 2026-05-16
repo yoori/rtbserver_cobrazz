@@ -37,7 +37,6 @@ namespace AdServer
     struct ColoFlags
     {
       unsigned long flags;
-      bool hid_profile;
     };
 
     class ColoFlagsMap:
@@ -80,7 +79,6 @@ namespace AdServer
       const String::SubString& in,
       RequestInfo& request_info,
       bool persistent,
-      bool household,
       bool merged_persistent,
       bool rewrite_persistent) const
       /*throw(InvalidParamException)*/;

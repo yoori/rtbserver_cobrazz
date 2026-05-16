@@ -141,7 +141,7 @@ namespace Bidding
 
       AdServer::Commons::JsonFormatter root_json(response_ostr);
 
-      assert(campaign_match_result.ad_slots.length() > 0);
+      assert(campaign_match_result.ad_slots.size() > 0);
 
       const AdServer::Bidding::CampaignManager::
         AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[0];
@@ -158,7 +158,7 @@ namespace Bidding
         CampaignSvcs::RevenueDecimal(false, 100000, 0));
       root_json.add_number(Response::AdJson::COST, adjson_price);
 
-      if(ad_slot_result.native_data_tokens.length() >= 1)
+      if(ad_slot_result.native_data_tokens.size() >= 1)
       {
         // NDTE_TITLE
         const AdServer::Bidding::CampaignManager::TokenInfo& token =
@@ -179,7 +179,7 @@ namespace Bidding
         String::SubString(ad_slot_result.selected_creatives[0].click_url));
 
       // icon
-      if(ad_slot_result.native_image_tokens.length() > 1)
+      if(ad_slot_result.native_image_tokens.size() > 1)
       {
         const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
@@ -189,7 +189,7 @@ namespace Bidding
       }
 
       // image
-      if(ad_slot_result.native_image_tokens.length() > 0)
+      if(ad_slot_result.native_image_tokens.size() > 0)
       {
         const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];

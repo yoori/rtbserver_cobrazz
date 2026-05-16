@@ -102,7 +102,7 @@ namespace Bidding
       return;
     }
 
-    if(campaign_match_result.ad_slots.length())
+    if(campaign_match_result.ad_slots.size())
     {
       set_current_stage(Stage::CampaignSelectionConsidering);
 
@@ -128,19 +128,19 @@ namespace Bidding
       return;
     }
 
-    if(campaign_match_result.ad_slots.length())
+    if(campaign_match_result.ad_slots.size())
     {
       // check that any campaign selected (in any slot)
       bool ad_selected = false;
 
       for(std::size_t ad_slot_i = 0;
-          ad_slot_i < campaign_match_result.ad_slots.length();
+          ad_slot_i < campaign_match_result.ad_slots.size();
           ++ad_slot_i)
       {
         const AdServer::Bidding::CampaignManager::
           AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
-        if(ad_slot_result.selected_creatives.length() > 0)
+        if(ad_slot_result.selected_creatives.size() > 0)
         {
           ad_selected = true;
           break;

@@ -5,6 +5,8 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <Commons/GrpcAlgs.hpp>
@@ -12,197 +14,33 @@
 
 namespace AdServer::Bidding::CampaignManager
 {
-  struct ByteField
-  {
-    std::string value;
-
-    std::size_t length() const noexcept
-    {
-      return value.size();
-    }
-
-    void length(std::size_t size)
-    {
-      value.resize(size);
-    }
-
-    unsigned char* get_buffer() noexcept
-    {
-      return reinterpret_cast<unsigned char*>(value.data());
-    }
-
-    const unsigned char* get_buffer() const noexcept
-    {
-      return reinterpret_cast<const unsigned char*>(value.data());
-    }
-
-    bool empty() const noexcept
-    {
-      return value.empty();
-    }
-
-    ByteField& operator=(const std::string& source)
-    {
-      value = source;
-      return *this;
-    }
-
-    template<typename OctSeq>
-    ByteField& operator=(const OctSeq& source)
-    {
-      value.assign(
-        reinterpret_cast<const char*>(source.get_buffer()),
-        reinterpret_cast<const char*>(source.get_buffer()) + source.length());
-      return *this;
-    }
-  };
-
-  struct StringField
-  {
-    std::string str;
-
-    StringField() = default;
-    StringField(const char* value) : str(value ? value : "") {}
-    StringField(const std::string& value) : str(value) {}
-
-    const char* in() const noexcept
-    {
-      return str.c_str();
-    }
-
-    char operator[](std::size_t index) const noexcept
-    {
-      return index < str.size() ? str[index] : '\0';
-    }
-
-    StringField& operator=(const char* value)
-    {
-      str = value ? value : "";
-      return *this;
-    }
-
-    StringField& operator=(const std::string& value)
-    {
-      str = value;
-      return *this;
-    }
-
-    operator const char*() const noexcept
-    {
-      return str.c_str();
-    }
-
-    bool empty() const noexcept
-    {
-      return str.empty();
-    }
-  };
-
-  inline std::ostream&
-  operator<<(std::ostream& out, const StringField& value)
-  {
-    return out << value.str;
-  }
-
-  inline std::string&
-  operator+=(std::string& target, const StringField& value)
-  {
-    target += value.str;
-    return target;
-  }
-
-  inline StringField&
-  operator<<(StringField& target, const String::SubString& value)
-  {
-    target.str.assign(value.data(), value.size());
-    return target;
-  }
-
-  inline StringField&
-  operator<<(StringField& target, const char* value)
-  {
-    target = value;
-    return target;
-  }
-
-  inline StringField&
-  operator<<(StringField& target, const std::string& value)
-  {
-    target = value;
-    return target;
-  }
-
-  template<typename T>
-  class Sequence
-  {
-  public:
-    using value_type = T;
-    using iterator = typename std::vector<T>::iterator;
-    using const_iterator = typename std::vector<T>::const_iterator;
-
-    std::size_t length() const noexcept
-    {
-      return items_.size();
-    }
-
-    void length(std::size_t size)
-    {
-      items_.resize(size);
-    }
-
-    T* get_buffer() noexcept
-    {
-      return items_.data();
-    }
-
-    const T* get_buffer() const noexcept
-    {
-      return items_.data();
-    }
-
-    T& operator[](std::size_t index) noexcept
-    {
-      return items_[index];
-    }
-
-    const T& operator[](std::size_t index) const noexcept
-    {
-      return items_[index];
-    }
-
-    iterator begin() noexcept { return items_.begin(); }
-    iterator end() noexcept { return items_.end(); }
-    const_iterator begin() const noexcept { return items_.begin(); }
-    const_iterator end() const noexcept { return items_.end(); }
-
-    template<typename SourceSeq>
-    void assign_from(const SourceSeq& source)
-    {
-      length(source.length());
-      for(std::size_t i = 0; i < source.length(); ++i)
-      {
-        items_[i] = source[i];
-      }
-    }
-
-    template<typename SourceSeq>
-    void swap(SourceSeq& source)
-    {
-      assign_from(source);
-      source.length(0);
-    }
-
-  private:
-    std::vector<T> items_;
-  };
-
-  using IdSeq = Sequence<unsigned long>;
-  using StringSeq = Sequence<StringField>;
+  using IdSeq = std::vector<unsigned long>;
+  using StringSeq = std::vector<std::string>;
   using ExternalCreativeCategoryIdSeq = StringSeq;
-  using TimestampInfo = ByteField;
-  using RequestIdInfo = ByteField;
-  using UserIdInfo = ByteField;
-  using DecimalInfo = ByteField;
+  using TimestampInfo = std::string;
+  using RequestIdInfo = std::string;
+  using UserIdInfo = std::string;
+  using DecimalInfo = std::string;
+
+  inline void assign_string(std::string& target, std::string_view value)
+  {
+    target.assign(value.data(), value.size());
+  }
+
+  inline void assign_string(std::string& target, const std::string& value)
+  {
+    target = value;
+  }
+
+  inline void assign_string(std::string& target, std::string&& value)
+  {
+    target = std::move(value);
+  }
+
+  inline void assign_string(std::string& target, const String::SubString& value)
+  {
+    target.assign(value.data(), value.size());
+  }
 
   struct ChannelTriggerMatchInfo
   {
@@ -210,7 +48,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long channel_id = 0;
   };
 
-  using ChannelTriggerMatchSeq = Sequence<ChannelTriggerMatchInfo>;
+  using ChannelTriggerMatchSeq = std::vector<ChannelTriggerMatchInfo>;
 
   struct TriggerMatchResult
   {
@@ -228,40 +66,40 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long channel_id = 0;
     DecimalInfo max_cpc;
     DecimalInfo ctr;
-    StringField click_url;
-    StringField original_keyword;
+    std::string click_url;
+    std::string original_keyword;
   };
 
-  using CCGKeywordSeq = Sequence<CCGKeywordInfo>;
+  using CCGKeywordSeq = std::vector<CCGKeywordInfo>;
   using FreqCapIdSeq = IdSeq;
   using PublisherAccountIdSeq = IdSeq;
 
   struct TokenInfo
   {
-    StringField name;
-    StringField value;
+    std::string name;
+    std::string value;
   };
 
-  using TokenSeq = Sequence<TokenInfo>;
+  using TokenSeq = std::vector<TokenInfo>;
 
   struct TokenImageInfo
   {
-    StringField name;
-    StringField value;
+    std::string name;
+    std::string value;
     unsigned long width = 0;
     unsigned long height = 0;
   };
 
-  using TokenImageSeq = Sequence<TokenImageInfo>;
+  using TokenImageSeq = std::vector<TokenImageInfo>;
 
   struct GeoInfo
   {
-    StringField country;
-    StringField region;
-    StringField city;
+    std::string country;
+    std::string region;
+    std::string city;
   };
 
-  using GeoInfoSeq = Sequence<GeoInfo>;
+  using GeoInfoSeq = std::vector<GeoInfo>;
 
   struct GeoCoordInfo
   {
@@ -270,7 +108,7 @@ namespace AdServer::Bidding::CampaignManager
     DecimalInfo accuracy;
   };
 
-  using GeoCoordInfoSeq = Sequence<GeoCoordInfo>;
+  using GeoCoordInfoSeq = std::vector<GeoCoordInfo>;
 
   struct SeqOrderInfo
   {
@@ -279,7 +117,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long imps = 0;
   };
 
-  using SeqOrderSeq = Sequence<SeqOrderInfo>;
+  using SeqOrderSeq = std::vector<SeqOrderInfo>;
 
   struct CampaignFreq
   {
@@ -295,35 +133,35 @@ namespace AdServer::Bidding::CampaignManager
     }
   };
 
-  using CampaignFreqSeq = Sequence<CampaignFreq>;
+  using CampaignFreqSeq = std::vector<CampaignFreq>;
 
   struct NativeDataToken
   {
-    StringField name;
+    std::string name;
     bool required = false;
   };
 
-  using NativeDataTokens = Sequence<NativeDataToken>;
+  using NativeDataTokens = std::vector<NativeDataToken>;
 
   struct NativeImageToken
   {
-    StringField name;
+    std::string name;
     bool required = false;
     unsigned long width = 0;
     unsigned long height = 0;
   };
 
-  using NativeImageTokens = Sequence<NativeImageToken>;
+  using NativeImageTokens = std::vector<NativeImageToken>;
 
   struct AdSlotInfo
   {
     unsigned long ad_slot_id = 0;
-    StringField format;
+    std::string format;
     unsigned long tag_id = 0;
     StringSeq sizes;
-    StringField ext_tag_id;
+    std::string ext_tag_id;
     DecimalInfo min_ecpm;
-    StringField min_ecpm_currency_code;
+    std::string min_ecpm_currency_code;
     StringSeq currency_codes;
     bool passback = false;
     long up_expand_space = -1;
@@ -350,57 +188,56 @@ namespace AdServer::Bidding::CampaignManager
     TokenSeq tokens;
   };
 
-  using AdSlotSeq = Sequence<AdSlotInfo>;
+  using AdSlotSeq = std::vector<AdSlotInfo>;
 
   struct CommonAdRequestInfo
   {
     TimestampInfo time;
     RequestIdInfo request_id;
-    StringField creative_instantiate_type;
+    std::string creative_instantiate_type;
     unsigned long request_type = 0;
     unsigned long random = 0;
     bool test_request = false;
     bool log_as_test = false;
     unsigned long colo_id = 0;
-    StringField external_user_id;
-    StringField source_id;
+    std::string external_user_id;
+    std::string source_id;
     GeoInfoSeq location;
     GeoCoordInfoSeq coord_location;
-    StringField full_referer;
-    StringField referer;
+    std::string full_referer;
+    std::string referer;
     StringSeq urls;
-    StringField security_token;
-    StringField pub_impr_track_url;
-    StringField pub_param;
-    StringField preclick_url;
-    StringField click_prefix_url;
-    StringField original_url;
+    std::string security_token;
+    std::string pub_impr_track_url;
+    std::string pub_param;
+    std::string preclick_url;
+    std::string click_prefix_url;
+    std::string original_url;
     UserIdInfo track_user_id;
     UserIdInfo user_id;
     unsigned long user_status = 0;
-    StringField signed_user_id;
-    StringField peer_ip;
-    StringField user_agent;
-    StringField cohort;
+    std::string peer_ip;
+    std::string user_agent;
+    std::string cohort;
     unsigned long hpos = 0;
-    StringField ext_track_params;
+    std::string ext_track_params;
     TokenSeq tokens;
     bool set_cookie = false;
-    StringField passback_type;
-    StringField passback_url;
+    std::string passback_type;
+    std::string passback_url;
   };
 
   struct ContextAdRequestInfo
   {
     bool enabled_notice = false;
-    StringField client;
-    StringField client_version;
+    std::string client;
+    std::string client_version;
     IdSeq platform_ids;
     IdSeq geo_channels;
-    StringField platform;
-    StringField full_platform;
-    StringField web_browser;
-    StringField ip_hash;
+    std::string platform;
+    std::string full_platform;
+    std::string web_browser;
+    std::string ip_hash;
     bool profile_referer = false;
     unsigned long page_load_id = 0;
     unsigned long full_referer_hash = 0;
@@ -420,17 +257,14 @@ namespace AdServer::Bidding::CampaignManager
     FreqCapIdSeq full_freq_caps;
     SeqOrderSeq seq_orders;
     CampaignFreqSeq campaign_freqs;
-    UserIdInfo household_id;
     UserIdInfo merged_user_id;
     unsigned long search_engine_id = 0;
-    StringField search_words;
+    std::string search_words;
     bool page_keywords_present = false;
     bool profiling_available = false;
     bool fraud = false;
     IdSeq channels;
-    IdSeq hid_channels;
     CCGKeywordSeq ccg_keywords;
-    CCGKeywordSeq hid_ccg_keywords;
     TriggerMatchResult trigger_match_result;
     TimestampInfo client_create_time;
     TimestampInfo session_start;
@@ -443,10 +277,10 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long profiling_type = 0;
     bool disable_fraud_detection = false;
     bool need_debug_info = false;
-    StringField page_keywords;
-    StringField url_keywords;
-    StringField ssp_location;
-    StringField additional_info;
+    std::string page_keywords;
+    std::string url_keywords;
+    std::string ssp_location;
+    std::string additional_info;
   };
 
   struct CreativeSelectResult
@@ -457,20 +291,20 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long campaign_group_id = 0;
     unsigned long order_set_id = 0;
     unsigned long advertiser_id = 0;
-    StringField advertiser_name;
-    StringField creative_size;
+    std::string advertiser_name;
+    std::string creative_size;
     DecimalInfo revenue;
     DecimalInfo ecpm;
     DecimalInfo pub_ecpm;
-    StringField click_url;
-    StringField destination_url;
-    StringField creative_version_id;
+    std::string click_url;
+    std::string destination_url;
+    std::string creative_version_id;
     unsigned long creative_id = 0;
     bool https_safe_flag = false;
     unsigned char expanding = 0;
   };
 
-  using CreativeSelectResultSeq = Sequence<CreativeSelectResult>;
+  using CreativeSelectResultSeq = std::vector<CreativeSelectResult>;
 
   struct CreativeSelectDebugInfo
   {
@@ -478,13 +312,13 @@ namespace AdServer::Bidding::CampaignManager
     DecimalInfo click_revenue;
     DecimalInfo action_revenue;
     DecimalInfo ecpm_bid;
-    StringField action_adv_url;
-    StringField html_url;
-    StringField triggered_expression;
-    StringField full_expression;
+    std::string action_adv_url;
+    std::string html_url;
+    std::string triggered_expression;
+    std::string full_expression;
   };
 
-  using CreativeSelectDebugInfoSeq = Sequence<CreativeSelectDebugInfo>;
+  using CreativeSelectDebugInfoSeq = std::vector<CreativeSelectDebugInfo>;
 
   struct AdSlotDebugInfo
   {
@@ -495,80 +329,80 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long min_no_adv_ecpm = 0;
     unsigned long min_text_ecpm = 0;
     unsigned long auction_type = 0;
-    StringField track_pixel_url;
+    std::string track_pixel_url;
     DecimalInfo cpm_threshold;
     bool walled_garden = false;
     CreativeSelectDebugInfoSeq selected_creatives;
-    StringField trace_ccg;
+    std::string trace_ccg;
   };
 
   struct ContractInfo
   {
     unsigned long contract_id = 0;
-    StringField number;
-    StringField date;
-    StringField type;
+    std::string number;
+    std::string date;
+    std::string type;
     bool vat_included = false;
-    StringField ord_contract_id;
-    StringField ord_ado_id;
-    StringField subject_type;
-    StringField action_type;
+    std::string ord_contract_id;
+    std::string ord_ado_id;
+    std::string subject_type;
+    std::string action_type;
     bool agent_acting_for_publisher = false;
     unsigned long parent_contract_id = 0;
-    StringField client_id;
-    StringField client_name;
-    StringField client_legal_form;
-    StringField contractor_id;
-    StringField contractor_name;
-    StringField contractor_legal_form;
+    std::string client_id;
+    std::string client_name;
+    std::string client_legal_form;
+    std::string contractor_id;
+    std::string contractor_name;
+    std::string contractor_legal_form;
     TimestampInfo timestamp;
   };
 
   struct ExtContractInfo
   {
     ContractInfo contract_info;
-    StringField parent_contract_id;
+    std::string parent_contract_id;
   };
 
-  using ExtContractInfoSeq = Sequence<ExtContractInfo>;
+  using ExtContractInfoSeq = std::vector<ExtContractInfo>;
 
   struct AdSlotResult
   {
     unsigned long ad_slot_id = 0;
     RequestIdInfo request_id;
     bool passback = false;
-    StringField passback_url;
-    StringField creative_body;
-    StringField notice_url;
+    std::string passback_url;
+    std::string creative_body;
+    std::string notice_url;
     StringSeq track_pixel_urls;
-    StringField yandex_track_params;
-    StringField creative_url;
-    StringField track_pixel_params;
-    StringField click_params;
-    StringField mime_format;
-    StringField iurl;
+    std::string yandex_track_params;
+    std::string creative_url;
+    std::string track_pixel_params;
+    std::string click_params;
+    std::string mime_format;
+    std::string iurl;
     bool test_request = false;
     CreativeSelectResultSeq selected_creatives;
     StringSeq external_visual_categories;
     StringSeq external_content_categories;
-    StringField pub_currency_code;
+    std::string pub_currency_code;
     unsigned long overlay_width = 0;
     unsigned long overlay_height = 0;
     TokenSeq tokens;
     TokenSeq ext_tokens;
     bool track_impr = false;
-    StringField tag_size;
+    std::string tag_size;
     FreqCapIdSeq freq_caps;
     FreqCapIdSeq uc_freq_caps;
     AdSlotDebugInfo debug_info;
     TokenSeq native_data_tokens;
     TokenImageSeq native_image_tokens;
-    StringField track_html_body;
-    StringField erid;
+    std::string track_html_body;
+    std::string erid;
     ExtContractInfoSeq contracts;
   };
 
-  using AdSlotResultSeq = Sequence<AdSlotResult>;
+  using AdSlotResultSeq = std::vector<AdSlotResult>;
 
   struct AdRequestDebugInfo
   {
@@ -595,7 +429,7 @@ namespace AdServer::Bidding::CampaignManager
   inline Generics::Time
   unpack_time(const TimestampInfo& time)
   {
-    return GrpcAlgs::unpack_time(time.value);
+    return GrpcAlgs::unpack_time(time);
   }
 
   inline UserIdInfo
@@ -607,7 +441,7 @@ namespace AdServer::Bidding::CampaignManager
   inline AdServer::Commons::UserId
   unpack_user_id(const UserIdInfo& user_id)
   {
-    return GrpcAlgs::unpack_user_id(user_id.value);
+    return GrpcAlgs::unpack_user_id(user_id);
   }
 
   inline RequestIdInfo
@@ -619,7 +453,7 @@ namespace AdServer::Bidding::CampaignManager
   inline AdServer::Commons::RequestId
   unpack_request_id(const RequestIdInfo& request_id)
   {
-    return GrpcAlgs::unpack_request_id(request_id.value);
+    return GrpcAlgs::unpack_request_id(request_id);
   }
 
   template<typename DecimalType>
@@ -633,7 +467,7 @@ namespace AdServer::Bidding::CampaignManager
   DecimalType
   unpack_decimal(const DecimalInfo& decimal)
   {
-    return GrpcAlgs::unpack_decimal<DecimalType>(decimal.value);
+    return GrpcAlgs::unpack_decimal<DecimalType>(decimal);
   }
 
   template<typename TargetSeq, typename SourceIteratorType>
@@ -643,8 +477,8 @@ namespace AdServer::Bidding::CampaignManager
     TargetSeq& target,
     bool add = false)
   {
-    const auto old_size = add ? target.length() : 0;
-    target.length(old_size + std::distance(begin, end));
+    const auto old_size = add ? target.size() : 0;
+    target.resize(old_size + std::distance(begin, end));
 
     std::size_t pos = old_size;
     for(auto it = begin; it != end; ++it, ++pos)
@@ -656,8 +490,8 @@ namespace AdServer::Bidding::CampaignManager
   template<typename SourceSeq, typename TargetSeq>
   void copy_sequence(const SourceSeq& source, TargetSeq& target)
   {
-    target.length(source.length());
-    for(std::size_t i = 0; i < source.length(); ++i)
+    target.resize(source.size());
+    for(std::size_t i = 0; i < source.size(); ++i)
     {
       target[i] = source[i];
     }

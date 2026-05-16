@@ -9,9 +9,9 @@ namespace Bidding
     const char* token_name,
     const std::string& token_value)
   {
-    tokens.length(tokens.length() + 1);
-    tokens[tokens.length() - 1].name = token_name;
-    tokens[tokens.length() - 1].value << token_value;
+    tokens.resize(tokens.size() + 1);
+    tokens[tokens.size() - 1].name = token_name;
+    tokens[tokens.size() - 1].value = token_value;
   }
 }
 }

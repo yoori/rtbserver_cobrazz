@@ -173,7 +173,7 @@ namespace Bidding
         (now - start_processing_time()).get_gm_time().format("%s.%q") << "\">\n";
 
       for(std::size_t slot_i = 0;
-        slot_i < campaign_match_result.ad_slots.length(); ++slot_i)
+        slot_i < campaign_match_result.ad_slots.size(); ++slot_i)
       {
         fill_response_adslot_(
           response_ostr,
@@ -201,26 +201,26 @@ namespace Bidding
     // find title & image
     response_ostr << "<ad>\n";
     response_ostr << "<title>";
-    if(ad_slot_result.native_data_tokens.length() >= 1)
+    if(ad_slot_result.native_data_tokens.size() >= 1)
     {
       // NDTE_TITLE
       const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[0];
-      add_xml_escaped_string_(response_ostr, token.value);
+      add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
     response_ostr << "</title>\n";
     response_ostr << "<desc>";
-    if(ad_slot_result.native_data_tokens.length() >= 2)
+    if(ad_slot_result.native_data_tokens.size() >= 2)
     {
       // NDTE_DESC
       const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[1];
-      add_xml_escaped_string_(response_ostr, token.value);
+      add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
     response_ostr << "</desc>\n";
     response_ostr << "<url/>\n";
     response_ostr << "<clickurl>";
-    add_xml_escaped_string_(response_ostr, ad_slot_result.selected_creatives[0].click_url);
+    add_xml_escaped_string_(response_ostr, ad_slot_result.selected_creatives[0].click_url.c_str());
     response_ostr << "</clickurl>\n";
 
     // result price in USD/1000, ecpm is in 0.01/1000
@@ -231,12 +231,12 @@ namespace Bidding
 
     response_ostr << "<bid>" << adxml_price.str() << "</bid>\n";
     response_ostr << "<image>";
-    if(ad_slot_result.native_image_tokens.length() > 0)
+    if(ad_slot_result.native_image_tokens.size() > 0)
     {
       // NITE_MAIN
       const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
-      add_xml_escaped_string_(response_ostr, token.value);
+      add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
     response_ostr << "</image>\n";
     response_ostr << "<crid>" << ad_slot_result.selected_creatives[0].creative_version_id <<

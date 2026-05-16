@@ -111,7 +111,7 @@ namespace Bidding
     //
     keywords.swap(context.keywords);
 
-    request_params.context_info.client << client;
+    request_params.context_info.client = client.str();
     //request_params.context_info.client_version;
     request_params.common_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
     request_params.common_info.user_status = static_cast<std::size_t>(
@@ -126,7 +126,7 @@ namespace Bidding
 
     if(!context.external_user_id.empty())
     {
-      request_params.common_info.external_user_id << (
+      request_params.common_info.external_user_id = (
         !request_info.source_id.empty() ?
           request_info.source_id + "/" + context.external_user_id :
           context.external_user_id);
@@ -134,7 +134,7 @@ namespace Bidding
 
     KeywordFormatter kw_fmt(request_info.source_id);
 
-    if(request_params.common_info.external_user_id[0] == 0)
+    if(request_params.common_info.external_user_id.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NO_ID);
 
@@ -161,8 +161,9 @@ namespace Bidding
       request_info.filter_request,
       false);
 
-    request_params.common_info.creative_instantiate_type <<
-      FrontendCommons::SECURE_INSTANTIATE_TYPE;
+    CampaignManager::assign_string(
+      request_params.common_info.creative_instantiate_type,
+      FrontendCommons::SECURE_INSTANTIATE_TYPE);
 
     request_info_filler_->fill_by_referer(
       request_params,
@@ -174,32 +175,33 @@ namespace Bidding
 
     request_params.context_info.profile_referer = true;
 
-    if(request_params.common_info.referer[0] == 0)
+    if(request_params.common_info.referer.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
 
-    request_params.ad_slots.length(1);
+    request_params.ad_slots.resize(1);
 
     AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
       request_params.ad_slots[0];
 
     RequestInfoFiller::init_adslot(ad_slot_request);
-    ad_slot_request.format << NATIVE_APP_FORMAT;
+    ad_slot_request.format = NATIVE_APP_FORMAT.str();
     ad_slot_request.ad_slot_id = 0;
     ad_slot_request.tag_id = 0;
     ad_slot_request.fill_track_html = false;
     request_params.fill_track_pixel = true;
     ad_slot_request.native_ads_impression_tracker_type = AdServer::CampaignSvcs::NAITT_RESOURCES;
-    ad_slot_request.sizes.length(1);
-    ad_slot_request.sizes[0] << size;
+    ad_slot_request.sizes.resize(1);
+    ad_slot_request.sizes[0] = size.str();
     ad_slot_request.passback = request_info.filter_request;
     ad_slot_request.tag_visibility = 100;
     ad_slot_request.tag_predicted_viewability = 100;
     ad_slot_request.min_ecpm = CampaignManager::pack_decimal(AdServer::CampaignSvcs::RevenueDecimal::ZERO);
-    ad_slot_request.currency_codes.length(1);
-    ad_slot_request.currency_codes[0] << DEFAULT_BIDFLOORCUR_CURRENCY;
-    ad_slot_request.min_ecpm_currency_code << DEFAULT_BIDFLOORCUR_CURRENCY;
+    ad_slot_request.currency_codes.resize(1);
+    ad_slot_request.currency_codes[0] = DEFAULT_BIDFLOORCUR_CURRENCY.str();
+    ad_slot_request.min_ecpm_currency_code =
+      DEFAULT_BIDFLOORCUR_CURRENCY.str();
 
     ad_slot_request.up_expand_space = -1;
     ad_slot_request.right_expand_space = -1;
@@ -209,19 +211,19 @@ namespace Bidding
     //ad_slot_request.ext_tag_id = "";
 
     // fill data asset
-    ad_slot_request.native_data_tokens.length(2);
-    ad_slot_request.native_data_tokens[0].name << Tokens::TITLE;
+    ad_slot_request.native_data_tokens.resize(2);
+    ad_slot_request.native_data_tokens[0].name = Tokens::TITLE.str();
     ad_slot_request.native_data_tokens[0].required = false;
-    ad_slot_request.native_data_tokens[1].name << Tokens::DESCRIPTION;
+    ad_slot_request.native_data_tokens[1].name = Tokens::DESCRIPTION.str();
     ad_slot_request.native_data_tokens[1].required = false;
 
     // fill image asset
-    ad_slot_request.native_image_tokens.length(require_icon ? 2 : 1);
-    ad_slot_request.native_image_tokens[0].name << Tokens::IMAGE;
+    ad_slot_request.native_image_tokens.resize(require_icon ? 2 : 1);
+    ad_slot_request.native_image_tokens[0].name = Tokens::IMAGE.str();
     ad_slot_request.native_image_tokens[0].required = true;
     if(require_icon)
     {
-      ad_slot_request.native_image_tokens[1].name << Tokens::ICON;
+      ad_slot_request.native_image_tokens[1].name = Tokens::ICON.str();
       ad_slot_request.native_image_tokens[1].required = true;
     }
 

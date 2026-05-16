@@ -556,11 +556,12 @@ namespace AdServer::ImprTrack
         {
           match_schedule_state->verify_finished = true;
         }
+        ResolveUserBindAwaiter resolve_user_bind_awaiter{
+          this,
+          request_info,
+          result_user_id};
         const ResolveUserBindResult bind_result =
-          co_await ResolveUserBindAwaiter{
-            this,
-            request_info,
-            result_user_id};
+          co_await std::move(resolve_user_bind_awaiter);
 
         http_status = finish_request_(
           request,

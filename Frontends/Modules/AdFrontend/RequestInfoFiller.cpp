@@ -47,7 +47,6 @@ namespace Request
     const String::SubString MERGE_CLIENT_ID("muid");
     const String::SubString TEMPORARY_CLIENT_ID("tuid");
     const String::SubString REMOVE_MERGED_CLIENT_ID("rm-muid");
-    const String::SubString HOUSEHOLD_CLIENT_ID("hid");
 
     const String::SubString TAG_ID("tid");
     const String::SubString LOCATION_NAME("loc.name");
@@ -366,12 +365,10 @@ namespace AdServer
       UuidParamProcessor(
         const RequestInfoFiller* filler,
         bool persistent,
-        bool household,
         bool merged_persistent,
         bool rewrite_persistent)
         : filler_(filler),
           persistent_(persistent),
-          household_(household),
           merged_persistent_(merged_persistent),
           rewrite_persistent_(rewrite_persistent)
       {}
@@ -387,7 +384,6 @@ namespace AdServer
             value,
             request_info,
             persistent_,
-            household_,
             merged_persistent_,
             rewrite_persistent_);
         }
@@ -403,7 +399,6 @@ namespace AdServer
     private:
       const RequestInfoFiller* filler_;
       bool persistent_;
-      bool household_;
       bool merged_persistent_;
       bool rewrite_persistent_;
     };
@@ -492,20 +487,17 @@ namespace AdServer
 
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID,
-      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, false, false, true))));
+      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, false, true))));
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID2,
-      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, false, false, false))));
+      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, false, false))));
 
     cookie_processors_.insert(std::make_pair(
       Request::Context::TEMPORARY_CLIENT_ID,
-      RequestInfoParamProcessor_var(new UuidParamProcessor(this, false, false, false, false))));
+      RequestInfoParamProcessor_var(new UuidParamProcessor(this, false, false, false))));
     cookie_processors_.insert(std::make_pair(
       Request::Context::MERGE_CLIENT_ID,
-      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, false, true, false))));
-    cookie_processors_.insert(std::make_pair(
-      Request::Context::HOUSEHOLD_CLIENT_ID,
-      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, true, false, false))));
+      RequestInfoParamProcessor_var(new UuidParamProcessor(this, true, true, false))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookie::LAST_COLOCATION_ID,
       RequestInfoParamProcessor_var(
@@ -537,15 +529,13 @@ namespace AdServer
         new TestRequestParamProcessor())));
 
     add_processor_(true, true, FrontendCommons::Cookies::CLIENT_ID,
-      new UuidParamProcessor(this, true, false, false, true));
+      new UuidParamProcessor(this, true, false, true));
     add_processor_(true, true, Request::Context::CLID_ID,
-      new UuidParamProcessor(this, true, false, false, false));
+      new UuidParamProcessor(this, true, false, false));
     add_processor_(true, true, Request::Context::TEMPORARY_CLIENT_ID,
-      new UuidParamProcessor(this, false, false, false, false));
+      new UuidParamProcessor(this, false, false, false));
     add_processor_(true, true, Request::Context::MERGE_CLIENT_ID,
-      new UuidParamProcessor(this, true, false, true, false));
-    add_processor_(true, true, Request::Context::HOUSEHOLD_CLIENT_ID,
-      new UuidParamProcessor(this, true, true, false, false));
+      new UuidParamProcessor(this, true, true, false));
 
     add_processor_(true, true, Request::Context::ORIGINAL_USER_AGENT,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
@@ -1022,13 +1012,11 @@ namespace AdServer
         }
       }
 
-      ColoFlagsMap_var colocations = get_colocations_();
-
       if(filter_request_by_country)
       {
         request_info.passback_by_colocation = true;
       }
-      else if(colocations.in())
+      else if(ColoFlagsMap_var colocations = get_colocations_())
       {
         ColoFlagsMap::const_iterator colo_it =
           colocations->find(request_info.colo_id);
@@ -1215,7 +1203,6 @@ namespace AdServer
     const String::SubString& in,
     RequestInfo& request_info,
     bool persistent,
-    bool household,
     bool merged_persistent,
     bool rewrite_persistent)
     const
@@ -1233,15 +1220,14 @@ namespace AdServer
             request_info.merge_persistent_client_id = uid.uuid();
           }
         }
-        else if(!household &&
+        else if(
           in == AdServer::Commons::PROBE_USER_ID.to_string())
         {
           request_info.client_id = AdServer::Commons::PROBE_USER_ID;
           request_info.signed_client_id = AdServer::Commons::PROBE_USER_ID.to_string();
           request_info.have_uid_cookie = rewrite_persistent;
         }
-        else if(!household && (
-          request_info.signed_client_id.empty() || rewrite_persistent))
+        else if(request_info.signed_client_id.empty() || rewrite_persistent)
         {
           Generics::SignedUuid uid = common_module_->user_id_controller()->verify(in);
           if (!uid.uuid().is_null())

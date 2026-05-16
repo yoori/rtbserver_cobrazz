@@ -799,10 +799,11 @@ namespace AdServer
           (request.uri().size() > UrlPath::kGetSegments.size()
           && request.uri()[UrlPath::kGetSegments.size()] == '?')))
       {
-        const int channels_status = co_await UserChannelsAwaiter{
+        UserChannelsAwaiter user_channels_awaiter{
           this,
           request_info_holder,
           response_ptr};
+        const int channels_status = co_await std::move(user_channels_awaiter);
         const int http_status = finish_response(channels_status);
         co_return FrontendCommons::RequestResult{
           http_status,
@@ -946,10 +947,11 @@ namespace AdServer
         dns_bind_request_id = std::string("r") + dns_bind_request_id;
       }
 
-      ProcessRequestResult process_result = co_await ProcessRequestAwaiter{
+      ProcessRequestAwaiter process_request_awaiter{
         this,
         request_info_holder,
         dns_bind_request_id};
+      ProcessRequestResult process_result = co_await std::move(process_request_awaiter);
 
       {
           const FCGI::HttpRequest& request = request_holder->request();
@@ -1469,8 +1471,6 @@ namespace AdServer
       GrpcAlgs::pack_time(Generics::Time::ZERO));
     auto* user_info = history_match_request.mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(request_info->user_id));
-    user_info->set_huser_id(GrpcAlgs::pack_user_id(
-      AdServer::Commons::UserId{}));
     user_info->set_last_colo_id(request_info->colo_id);
     user_info->set_request_colo_id(request_info->colo_id);
     user_info->set_current_colo_id(-1);

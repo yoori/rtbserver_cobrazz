@@ -577,10 +577,11 @@ namespace AdServer
         }
       };
 
-      Commons::TextTemplate_var templ = co_await TemplateAwaiter{
+      TemplateAwaiter template_awaiter{
         this,
         file,
         campaign_manager_index};
+      Commons::TextTemplate_var templ = co_await std::move(template_awaiter);
 
       if(!templ)
       {

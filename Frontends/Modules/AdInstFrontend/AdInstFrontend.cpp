@@ -556,15 +556,17 @@ namespace Instantiate
           return status;
         };
 
-      const MergeUsersResult merge_result = co_await MergeUsersAwaiter{
+      MergeUsersAwaiter merge_users_awaiter{
         this,
         request_info};
+      const MergeUsersResult merge_result = co_await std::move(merge_users_awaiter);
 
-      http_status = co_await InstantiateAdAwaiter{
+      InstantiateAdAwaiter instantiate_ad_awaiter{
         this,
         response_ptr,
         request_info,
         instantiate_type};
+      http_status = co_await std::move(instantiate_ad_awaiter);
 
       http_status = finish_response(
         http_status,

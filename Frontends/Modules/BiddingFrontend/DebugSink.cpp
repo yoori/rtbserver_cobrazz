@@ -264,11 +264,11 @@ namespace Bidding
       "platform_ids = ";
     Algs::print(
       debug_info_str_,
-      request_params.context_info.platform_ids.get_buffer(),
-      request_params.context_info.platform_ids.get_buffer() +
-        request_params.context_info.platform_ids.length());
+      request_params.context_info.platform_ids.data(),
+      request_params.context_info.platform_ids.data() +
+        request_params.context_info.platform_ids.size());
     debug_info_str_ << sep_ << "ad_slots = " <<
-      request_params.ad_slots.length() << sep_;
+      request_params.ad_slots.size() << sep_;
   }
 
   void
@@ -339,7 +339,7 @@ namespace Bidding
     bool ad_selected = false;
     const AdServer::Bidding::CampaignManager::AdSlotDebugInfo*
       expected_debug_info = nullptr;
-    for(std::size_t i = 0; i < campaign_match_result.ad_slots.length(); ++i)
+    for(std::size_t i = 0; i < campaign_match_result.ad_slots.size(); ++i)
     {
       const auto& ad_slot_result = campaign_match_result.ad_slots[i];
       if(!expected_debug_info && ad_slot_result.debug_info.trace_ccg[0] != 0)
@@ -347,7 +347,7 @@ namespace Bidding
         expected_debug_info = &ad_slot_result.debug_info;
       }
 
-      if(ad_slot_result.selected_creatives.length() > 0)
+      if(ad_slot_result.selected_creatives.size() > 0)
       {
         ad_selected = true;
         print_creative_selection_debug_info_(ad_slot_result);
@@ -698,7 +698,7 @@ namespace Bidding
 
     unsigned long first_ccid = 0;
     unsigned long first_cmp_id = 0;
-    if(selected_creatives.length() != 0)
+    if(selected_creatives.size() != 0)
     {
       first_ccid = selected_creatives[0].ccid;
       first_cmp_id = selected_creatives[0].cmp_id;
@@ -711,7 +711,7 @@ namespace Bidding
     CampaignSvcs::RevenueDecimal action_revenue(
       CampaignSvcs::RevenueDecimal::ZERO);
 
-    for(std::size_t i = 0; i < debug_selected_creatives.length(); ++i)
+    for(std::size_t i = 0; i < debug_selected_creatives.size(); ++i)
     {
       imp_revenue += CampaignManager::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
@@ -750,8 +750,8 @@ namespace Bidding
       "auction_type = " << auction_type_to_string(debug_info.auction_type) <<
       sep_ << "selected_creatives = ";
 
-    const std::size_t debug_count = debug_selected_creatives.length();
-    for(std::size_t i = 0; i < selected_creatives.length(); ++i)
+    const std::size_t debug_count = debug_selected_creatives.size();
+    for(std::size_t i = 0; i < selected_creatives.size(); ++i)
     {
       const auto& creative = selected_creatives[i];
       const auto* debug_creative = i < debug_count ?
@@ -774,7 +774,7 @@ namespace Bidding
         offset << "creative_version_id = " << creative.creative_version_id << sep_ <<
         offset << "creative_size = " << creative.creative_size << sep_ <<
         offset << "triggered_expression = " <<
-          (debug_creative ? debug_creative->triggered_expression.in() : "") << sep_ <<
+          (debug_creative ? debug_creative->triggered_expression : "") << sep_ <<
         offset << "ecpm = " << CampaignManager::unpack_decimal<
           CampaignSvcs::RevenueDecimal>(creative.ecpm) << sep_ <<
         offset << "pub_ecpm = " << CampaignManager::unpack_decimal<
@@ -785,9 +785,9 @@ namespace Bidding
         offset << "click_url = " << creative.click_url << sep_ <<
         offset << "destination_url = " << creative.destination_url << sep_ <<
         offset << "html_url = " <<
-          (debug_creative ? debug_creative->html_url.in() : "") << sep_ <<
+          (debug_creative ? debug_creative->html_url : "") << sep_ <<
         offset << "action_adv_url = " <<
-          (debug_creative ? debug_creative->action_adv_url.in() : "") << sep_ <<
+          (debug_creative ? debug_creative->action_adv_url : "") << sep_ <<
         offset << "revenue = " <<
           CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             creative.revenue) << sep_ <<

@@ -189,17 +189,6 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    process_bid_request_after_user_resolved_async_(
-      const char* fn,
-      std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
-        campaign_match_result,
-      BidRequestState_var request_task,
-      const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
-      bool interrupted,
-      std::function<void(bool)> callback)
-      noexcept;
-
-    void
     trigger_match_async_(
       BidRequestState_var request_task,
       const AdServer::Commons::UserId& user_id,
@@ -254,6 +243,11 @@ namespace AdServer::Bidding
 
     void
     process_bid_request_async_(
+      BidRequestState_var request_task)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    process_bid_request_coro_(
       BidRequestState_var request_task)
       noexcept;
 

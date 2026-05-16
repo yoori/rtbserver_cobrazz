@@ -145,11 +145,11 @@ namespace Bidding
 
       AdServer::Commons::JsonFormatter root_json(response_ostr);
 
-      assert(campaign_match_result.ad_slots.length() > 0);
+      assert(campaign_match_result.ad_slots.size() > 0);
 
       AdServer::Commons::JsonObject bid_array(root_json.add_array(Response::AdJson::BIDS));
 
-      for(unsigned long ad_slot_i = 0; ad_slot_i < campaign_match_result.ad_slots.length(); ++ad_slot_i)
+      for(unsigned long ad_slot_i = 0; ad_slot_i < campaign_match_result.ad_slots.size(); ++ad_slot_i)
       {
         const AdServer::Bidding::CampaignManager::
           AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
@@ -175,7 +175,7 @@ namespace Bidding
         String::SubString(ad_slot_result.selected_creatives[0].click_url));
 
       // icon
-      if(ad_slot_result.native_image_tokens.length() > 1)
+      if(ad_slot_result.native_image_tokens.size() > 1)
       {
         const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
@@ -185,7 +185,7 @@ namespace Bidding
       }
 
       // image
-      if(ad_slot_result.native_image_tokens.length() > 0)
+      if(ad_slot_result.native_image_tokens.size() > 0)
       {
         const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];

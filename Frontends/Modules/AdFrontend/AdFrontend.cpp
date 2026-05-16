@@ -746,7 +746,8 @@ namespace AdServer
       context->request_time_metering.request_fill_time =
         request_fill_time_metering.consider();
 
-      const bool success = co_await AcquireAdAwaiter{this, context};
+      AcquireAdAwaiter acquire_ad_awaiter{this, context};
+      const bool success = co_await std::move(acquire_ad_awaiter);
       if(!success)
       {
         context->http_status = 500;
@@ -966,8 +967,6 @@ namespace AdServer
             auto* user_info = merge_request->mutable_user_info();
             user_info->set_user_id(
               GrpcAlgs::pack_user_id(context->request_info.client_id));
-            user_info->set_huser_id(
-              GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
             user_info->set_last_colo_id(context->request_info.last_colo_id);
             user_info->set_request_colo_id(context->request_info.colo_id);
             user_info->set_current_colo_id(-1);
@@ -1161,8 +1160,6 @@ namespace AdServer
       adserver::user_info_svcs::user_info_manager::MatchRequest>();
     auto* user_info = history_match_request->mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(request_info.client_id));
-    user_info->set_huser_id(
-      GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
     user_info->set_last_colo_id(request_info.last_colo_id);
     user_info->set_request_colo_id(
       request_info.user_status != AdServer::CampaignSvcs::US_TEMPORARY ?
@@ -2398,7 +2395,6 @@ namespace AdServer
             {
               RequestInfoFiller::ColoFlags colo_flags;
               colo_flags.flags = colocation.flags();
-              colo_flags.hid_profile = colocation.hid_profile();
               new_colo_flags->insert(
                 RequestInfoFiller::ColoFlagsMap::value_type(
                   colocation.colo_id(),

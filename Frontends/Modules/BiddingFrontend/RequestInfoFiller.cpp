@@ -665,7 +665,7 @@ namespace Bidding
       long AssetSeq::value_type::* type_field,
       const char* /*token_prefix*/)
     {
-      res_seq.length(assets.size());
+      res_seq.resize(assets.size());
       size_t i = 0;
       for (auto it = assets.begin(); it != assets.end(); ++it)
       {
@@ -690,7 +690,7 @@ namespace Bidding
           }
           else
           {
-            res_seq[i].name << dict[asset_type];
+            CampaignManager::assign_string(res_seq[i].name, dict[asset_type]);
             res_seq[i].required = it->required;
             fill_token(res_seq[i], *it);
             i++;
@@ -698,7 +698,7 @@ namespace Bidding
         }
       }
 
-      res_seq.length(i);
+      res_seq.resize(i);
 
       return true;
     }
@@ -3141,7 +3141,7 @@ namespace Bidding
     noexcept
   {
     const String::SubString::SizeType adslot_length =
-      Request::Debug::AD_SLOT.length();
+      Request::Debug::AD_SLOT.size();
     if (name.compare(0, adslot_length, Request::Debug::AD_SLOT) != 0)
     {
       return false;
@@ -3163,7 +3163,7 @@ namespace Bidding
     const String::SubString param_name(name.substr(dot_pos + 1));
 
     if(name.compare(dot_pos + 1,
-        Request::Debug::AdSlot::SIZE.length(),
+        Request::Debug::AdSlot::SIZE.size(),
         Request::Debug::AdSlot::SIZE) == 0)
     {
       debug_sizes.insert(std::make_pair(--si, value));
@@ -3221,8 +3221,8 @@ namespace Bidding
   {
     static const char* FUN = "RequestInfoFiller::fill_by_google_request()";
 
-    request_params.context_info.client << Google::APPLICATION;
-    request_params.context_info.client_version << Google::APPLICATION_VERSION;
+    CampaignManager::assign_string(request_params.context_info.client, Google::APPLICATION);
+    CampaignManager::assign_string(request_params.context_info.client_version, Google::APPLICATION_VERSION);
     request_params.common_info.request_type = AdServer::CampaignSvcs::AR_GOOGLE;
 
     // Common data
@@ -3361,12 +3361,12 @@ namespace Bidding
       fill_by_referer(request_params, request_info.search_words, url);
     }
 
-    if(request_params.common_info.referer[0] == 0)
+    if(request_params.common_info.referer.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
 
-    request_params.search_words << request_info.search_words;
+    CampaignManager::assign_string(request_params.search_words, request_info.search_words);
 
     // Test data
     request_params.common_info.log_as_test =
@@ -3393,10 +3393,10 @@ namespace Bidding
     }
     else if(!external_user_id.empty() && use_external_user_id_(external_user_id))
     {
-      request_params.common_info.external_user_id << (
+      CampaignManager::assign_string(request_params.common_info.external_user_id, (
         !request_info.source_id.empty() ?
           request_info.source_id + "/" + external_user_id :
-        external_user_id);
+        external_user_id));
     }
 
     bool is_video = false;
@@ -3422,7 +3422,7 @@ namespace Bidding
     }
 
     as_slots_context.resize(bid_request.adslot_size());
-    request_params.ad_slots.length(bid_request.adslot_size());
+    request_params.ad_slots.resize(bid_request.adslot_size());
     for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
     {
       AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
@@ -3476,7 +3476,7 @@ namespace Bidding
           excluded_attributes,
             Google::CREATIVETYPE_FLASH)? 1: 0;
 
-      ad_slot_request.exclude_categories.length(
+      ad_slot_request.exclude_categories.resize(
         adslot.excluded_sensitive_category_size() +
         adslot.excluded_product_category_size() +
         flash_exclude_size + 2);
@@ -3495,20 +3495,20 @@ namespace Bidding
               video.allowed_video_formats(),
               ::Google::BidRequest_Video_VideoFormat_VPAID_JS)))
           {
-            ad_slot_request.exclude_categories[res_cat_i++] << CreativeCategory::VPAID1;
-            ad_slot_request.exclude_categories[res_cat_i++] << CreativeCategory::VPAID2;
+            CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID1);
+            CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID2);
           }
         }
         else
         {
-          ad_slot_request.exclude_categories[res_cat_i++] << CreativeCategory::VPAID1;
-          ad_slot_request.exclude_categories[res_cat_i++] << CreativeCategory::VPAID2;
+          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID1);
+          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID2);
         }
       }
 
       if (flash_exclude_size)
       {
-        ad_slot_request.exclude_categories[res_cat_i++] << Google::CREATIVETYPE_FLASH_STR;
+        CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], Google::CREATIVETYPE_FLASH_STR);
       }
 
       for(int cat_i = 0;
@@ -3519,7 +3519,7 @@ namespace Bidding
           adslot.excluded_sensitive_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          ad_slot_request.exclude_categories[res_cat_i] << String::SubString(cat_str, len);
+          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i], String::SubString(cat_str, len));
           ++res_cat_i;
         }
       }
@@ -3532,19 +3532,19 @@ namespace Bidding
           adslot.excluded_product_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          ad_slot_request.exclude_categories[res_cat_i] << String::SubString(cat_str, len);
+          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i], String::SubString(cat_str, len));
           ++res_cat_i;
         }
       }
 
-      ad_slot_request.exclude_categories.length(res_cat_i);
+      ad_slot_request.exclude_categories.resize(res_cat_i);
 
       // Video
       if(slot_is_video)
       {
-        ad_slot_request.format << OPENRTB_VAST_APP_FORMAT;
-        ad_slot_request.sizes.length(1);
-        ad_slot_request.sizes[0] << VAST_PROTOCOL_SIZE;
+        CampaignManager::assign_string(ad_slot_request.format, OPENRTB_VAST_APP_FORMAT);
+        ad_slot_request.sizes.resize(1);
+        CampaignManager::assign_string(ad_slot_request.sizes[0], VAST_PROTOCOL_SIZE);
 
         int video_max_duration = 0;
         int video_skippable_max_duration = 0;
@@ -3606,7 +3606,7 @@ namespace Bidding
       // Banners
       else
       {
-        ad_slot_request.format << Google::APP_FORMAT;
+        CampaignManager::assign_string(ad_slot_request.format, Google::APP_FORMAT);
 
         ad_slot_request.video_min_duration = 0;
         ad_slot_request.video_max_duration = -1;
@@ -3618,13 +3618,13 @@ namespace Bidding
         const auto size_it = debug_sizes.find(slot_i);
         if (size_it != debug_sizes.end())
         {
-          ad_slot_request.sizes.length(1);
-          ad_slot_request.sizes[0] << size_it->second;
+          ad_slot_request.sizes.resize(1);
+          CampaignManager::assign_string(ad_slot_request.sizes[0], size_it->second);
         }
         else if (!request_info.default_debug_size.empty())
         {
-          ad_slot_request.sizes.length(1);
-          ad_slot_request.sizes[0] << request_info.default_debug_size;
+          ad_slot_request.sizes.resize(1);
+          CampaignManager::assign_string(ad_slot_request.sizes[0], request_info.default_debug_size);
         }
         else if (adslot.width_size())
         {
@@ -3663,8 +3663,8 @@ namespace Bidding
             Stream::Stack<1024> oss;
             oss << ad_slot_context.width << 'x' << ad_slot_context.height;
 
-            ad_slot_request.sizes.length(1);
-            ad_slot_request.sizes[0] << oss.str();
+            ad_slot_request.sizes.resize(1);
+            CampaignManager::assign_string(ad_slot_request.sizes[0], oss.str());
           }
         }
       }
@@ -3790,7 +3790,7 @@ namespace Bidding
       Stream::Stack<EXT_TAG_ID_MAX_LENGTH> oss;
       oss << seller_id << '-' <<
         (anonymous_id.empty()? "0": anonymous_id.c_str());
-      ad_slot_request.ext_tag_id << normalize_ext_tag_id_(oss.str());
+      CampaignManager::assign_string(ad_slot_request.ext_tag_id, normalize_ext_tag_id_(oss.str()));
 
       ad_slot_request.debug_ccg = 0;
 
@@ -3798,8 +3798,7 @@ namespace Bidding
       if(test_value_in_set(excluded_attributes, Google::NON_SECURE) &&
            request_params.common_info.creative_instantiate_type[0] == '\0')
       {
-        request_params.common_info.creative_instantiate_type <<
-          FrontendCommons::SECURE_INSTANTIATE_TYPE;
+        CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
       }
 
       if(adslot.has_viewability())
@@ -3857,8 +3856,7 @@ namespace Bidding
     // fill creative_instantiate_type if was not filled by fill_by_referer_
     if(request_params.common_info.creative_instantiate_type[0] == '\0')
     {
-      request_params.common_info.creative_instantiate_type <<
-        FrontendCommons::UNSECURE_INSTANTIATE_TYPE;
+      CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::UNSECURE_INSTANTIATE_TYPE);
     }
 
     if(!request_info.idfa.empty() || !request_info.advertising_id.empty())
@@ -3926,7 +3924,7 @@ namespace Bidding
     {
       if (request_info.publisher_account_ids.empty())
       {
-        request_params.publisher_account_ids.length(1);
+        request_params.publisher_account_ids.resize(1);
         request_params.publisher_account_ids[0] = *(source_it->second.default_account_id);
       }
 
@@ -4003,8 +4001,8 @@ namespace Bidding
   {
     static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
 
-    request_params.context_info.client << OPENRTB_APPLICATION;
-    request_params.context_info.client_version << OPENRTB_APPLICATION_VERSION;
+    CampaignManager::assign_string(request_params.context_info.client, OPENRTB_APPLICATION);
+    CampaignManager::assign_string(request_params.context_info.client_version, OPENRTB_APPLICATION_VERSION);
     request_params.common_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
     request_params.common_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
@@ -4158,7 +4156,7 @@ namespace Bidding
       request_info.additional_info.viewability.has_value() ||
       request_info.additional_info.vtr.has_value())
     {
-      request_params.additional_info << make_additional_info_json_(request_info.additional_info);
+      CampaignManager::assign_string(request_params.additional_info, make_additional_info_json_(request_info.additional_info));
     }
 
     if(context.site_content || context.app_content)
@@ -4216,13 +4214,13 @@ namespace Bidding
     if(!context.external_user_id.empty() &&
       use_external_user_id_(context.external_user_id))
     {
-      request_params.common_info.external_user_id << (
+      CampaignManager::assign_string(request_params.common_info.external_user_id, (
         !request_info.source_id.empty() ?
           request_info.source_id + "/" + context.external_user_id :
-          context.external_user_id);
+          context.external_user_id));
     }
 
-    if(request_params.common_info.external_user_id[0] == 0 &&
+    if(request_params.common_info.external_user_id.empty() &&
        context.user_id.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NO_ID);
@@ -4285,8 +4283,7 @@ namespace Bidding
         context.site_referer.secure() ||
         context.site_rereferer.secure())
       {
-        request_params.common_info.creative_instantiate_type <<
-          FrontendCommons::SECURE_INSTANTIATE_TYPE;
+        CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
       }
 
       select_referer_(request_params, context, selected_referer);
@@ -4321,7 +4318,7 @@ namespace Bidding
 
       if(!app_bundle_url.empty())
       {
-        request_params.common_info.referer << app_bundle_url;
+        CampaignManager::assign_string(request_params.common_info.referer, app_bundle_url);
       }
       else
       {
@@ -4332,14 +4329,14 @@ namespace Bidding
             )
           )
         {
-          request_params.common_info.referer <<
-            FrontendCommons::normalize_abs_url(context.app_domain);
+          CampaignManager::assign_string(request_params.common_info.referer, FrontendCommons::normalize_abs_url(context.app_domain));
         }
         else if(!context.app_store_url.url().empty())
         {
-          request_params.common_info.referer <<
+          CampaignManager::assign_string(
+            request_params.common_info.referer,
             adapt_app_store_url_(
-              FrontendCommons::normalize_abs_url(context.app_store_url));
+              FrontendCommons::normalize_abs_url(context.app_store_url)));
         }
       }
     }
@@ -4364,7 +4361,7 @@ namespace Bidding
       {}
     }
 
-    if(request_params.common_info.referer[0] == 0)
+    if(request_params.common_info.referer.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
@@ -4379,11 +4376,11 @@ namespace Bidding
       request_info.search_words += context.site_search;
     }
 
-    request_params.search_words << request_info.search_words;
+    CampaignManager::assign_string(request_params.search_words, request_info.search_words);
 
     request_params.common_info.log_as_test = context.test;
 
-    request_params.ad_slots.length(context.ad_slots.size());
+    request_params.ad_slots.resize(context.ad_slots.size());
     std::size_t slot_i = 0;
     for(JsonAdSlotProcessingContextList::iterator slot_it =
           context.ad_slots.begin();
@@ -4613,28 +4610,28 @@ namespace Bidding
           !context.required_category.empty() &&
           context.required_category != "0")
         {
-          ad_slot_request.required_categories.length(1);
-          ad_slot_request.required_categories[0] << context.required_category;
+          ad_slot_request.required_categories.resize(1);
+          CampaignManager::assign_string(ad_slot_request.required_categories[0], context.required_category);
         }
 
         unsigned long pos = 0;
 
         if(!request_info.format.empty())
         {
-          ad_slot_request.format << request_info.format;
+          CampaignManager::assign_string(ad_slot_request.format, request_info.format);
         }
 
         if(serve_video || (!slot_it->native && slot_it->banners.empty() &&
             debug_sizes.empty() && default_debug_size.empty()))
         {
           // push skipped vast into stats if banner can't be shown
-          if(ad_slot_request.format[0] == 0)
+          if(ad_slot_request.format.empty())
           {
-            ad_slot_request.format << OPENRTB_VAST_APP_FORMAT;
+            CampaignManager::assign_string(ad_slot_request.format, OPENRTB_VAST_APP_FORMAT);
           }
 
-          ad_slot_request.sizes.length(1);
-          ad_slot_request.sizes[0] << VAST_PROTOCOL_SIZE;
+          ad_slot_request.sizes.resize(1);
+          CampaignManager::assign_string(ad_slot_request.sizes[0], VAST_PROTOCOL_SIZE);
 
           if(serve_video)
           {
@@ -4710,9 +4707,9 @@ namespace Bidding
               slot_it->native->placement.present() ?
                 *slot_it->native->placement: 0), false);
 
-          if(ad_slot_request.format[0] == 0)
+          if(ad_slot_request.format.empty())
           {
-            ad_slot_request.format << OPENRTB_NATIVE_APP_FORMAT;
+            CampaignManager::assign_string(ad_slot_request.format, OPENRTB_NATIVE_APP_FORMAT);
           }
 
           request_params.fill_track_pixel = true;
@@ -4737,8 +4734,8 @@ namespace Bidding
 
             if (serve_native)
             {
-              ad_slot_request.sizes.length(1);
-              ad_slot_request.sizes[0] << VAST_PROTOCOL_SIZE;
+              ad_slot_request.sizes.resize(1);
+              CampaignManager::assign_string(ad_slot_request.sizes[0], VAST_PROTOCOL_SIZE);
 
               if (video.max_duration.present())
               {
@@ -4759,24 +4756,24 @@ namespace Bidding
             NativeImage main_image;
             bool main_image_found = find_main_image(slot_it->native->image_assets, main_image);
 
-            ad_slot_request.sizes.length(1);
+            ad_slot_request.sizes.resize(1);
             const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
             const auto size_it = debug_sizes.find(slot_i);
             if (size_it != debug_sizes.end() || !request_info.default_debug_size.empty())
             {
-              ad_slot_request.sizes[0] << (
+              CampaignManager::assign_string(ad_slot_request.sizes[0], (
                 size_it != debug_sizes.end() ?
-                size_it->second : request_info.default_debug_size);
+                size_it->second : request_info.default_debug_size));
             }
             else if(main_image_found)
             {
               Stream::Stack<1024> oss;
               oss << main_image.width << 'x' << main_image.height;
-              ad_slot_request.sizes[0] << oss.str();
+              CampaignManager::assign_string(ad_slot_request.sizes[0], oss.str());
             }
             else
             {
-              ad_slot_request.sizes[0] << NATIVE_TEXT_SIZE;
+              CampaignManager::assign_string(ad_slot_request.sizes[0], NATIVE_TEXT_SIZE);
             }
           }
 
@@ -4811,9 +4808,9 @@ namespace Bidding
         }
         else // banners not empty here
         {
-          if(ad_slot_request.format[0] == 0)
+          if(ad_slot_request.format.empty())
           {
-            ad_slot_request.format << OPENRTB_APP_FORMAT;
+            CampaignManager::assign_string(ad_slot_request.format, OPENRTB_APP_FORMAT);
           }
 
           ad_slot_request.passback = request_info.filter_request;
@@ -4837,7 +4834,7 @@ namespace Bidding
             banner_format_count += (*banner_it)->formats.size();
           }
 
-          ad_slot_request.sizes.length(banner_format_count);
+          ad_slot_request.sizes.resize(banner_format_count);
           std::size_t size_i = 0;
 
           for(auto banner_it = slot_it->banners.rbegin();
@@ -4863,28 +4860,28 @@ namespace Bidding
                 if((banner_format.width == "2" && banner_format.height == "2") ||
                   banner_format.ext_type == "20")
                 {
-                  ad_slot_request.sizes[size_i++] << RM_SIZE;
+                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
                     RM_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(*banner_it, *banner_format_it)));
                 }
                 else if (banner_format.ext_format == "popup")
                 {
-                  ad_slot_request.sizes[size_i++] << POPUP_SIZE;
+                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], POPUP_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
                     POPUP_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(*banner_it, *banner_format_it)));
                 }
                 else if (banner_format.ext_format == "overlay")
                 {
-                  ad_slot_request.sizes[size_i++] << RM_DTO_SIZE;
+                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_DTO_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
                     RM_DTO_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(*banner_it, *banner_format_it)));
                 }
                 else if (banner_format.ext_format == "rich")
                 {
-                  ad_slot_request.sizes[size_i++] << RM_RICH_SIZE;
+                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_RICH_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
                     RM_RICH_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(*banner_it, *banner_format_it)));
@@ -4897,7 +4894,7 @@ namespace Bidding
                     request_info.default_debug_size.empty() ?
                     banner_format.width + "x" + banner_format.height :
                     request_info.default_debug_size) );
-                  ad_slot_request.sizes[size_i++] << res_size;
+                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], res_size);
                   slot_it->size_banner.insert(std::make_pair(
                     res_size,
                     JsonAdSlotProcessingContext::BannerFormatHolder(*banner_it, *banner_format_it)));
@@ -4906,7 +4903,7 @@ namespace Bidding
             }
           }
 
-          ad_slot_request.sizes.length(size_i);
+          ad_slot_request.sizes.resize(size_i);
         }
 
         if(pos == 1) // above the fold
@@ -5010,17 +5007,17 @@ namespace Bidding
         }
         else if(!slot_it->min_cpm_price_currency_code.empty())
         {
-          ad_slot_request.currency_codes.length(1);
-          ad_slot_request.currency_codes[0] << slot_it->min_cpm_price_currency_code;
+          ad_slot_request.currency_codes.resize(1);
+          CampaignManager::assign_string(ad_slot_request.currency_codes[0], slot_it->min_cpm_price_currency_code);
         }
 
         if(!slot_it->min_cpm_price_currency_code.empty())
         {
-          ad_slot_request.min_ecpm_currency_code << slot_it->min_cpm_price_currency_code;
+          CampaignManager::assign_string(ad_slot_request.min_ecpm_currency_code, slot_it->min_cpm_price_currency_code);
         }
         else
         {
-          ad_slot_request.min_ecpm_currency_code << Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY;
+          CampaignManager::assign_string(ad_slot_request.min_ecpm_currency_code, Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY);
         }
 
         ad_slot_request.up_expand_space = -1;
@@ -5030,7 +5027,7 @@ namespace Bidding
 
         ad_slot_request.debug_ccg = 0;
 
-        ad_slot_request.ext_tag_id << ext_tag_id;
+        CampaignManager::assign_string(ad_slot_request.ext_tag_id, ext_tag_id);
 
         // add deal id's as keywords
         for(auto deal_it = slot_it->deals.begin(); deal_it != slot_it->deals.end(); ++deal_it)
@@ -5054,20 +5051,18 @@ namespace Bidding
       }
     }
 
-    request_params.ad_slots.length(slot_i);
+    request_params.ad_slots.resize(slot_i);
 
     if((!context.ad_slots.empty() &&
          context.ad_slots.front().secure) ||
        context.secure)
     {
-      request_params.common_info.creative_instantiate_type <<
-        FrontendCommons::SECURE_INSTANTIATE_TYPE;
+      CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
     }
-    else if(request_params.common_info.creative_instantiate_type[0] == 0)
+    else if(request_params.common_info.creative_instantiate_type.empty())
     {
       // was not filled by fill_by_referer_ and later
-      request_params.common_info.creative_instantiate_type <<
-        FrontendCommons::UNSECURE_INSTANTIATE_TYPE;
+      CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::UNSECURE_INSTANTIATE_TYPE);
     }
 
     // fill idfa or advertising_id by ifa depends on device
@@ -5112,7 +5107,7 @@ namespace Bidding
         ext_track_params += mimed_puid2;
       }
 
-      request_params.common_info.ext_track_params << ext_track_params;
+      CampaignManager::assign_string(request_params.common_info.ext_track_params, ext_track_params);
     }
 
     if(!request_info.idfa.empty() || !request_info.advertising_id.empty())
@@ -5125,9 +5120,9 @@ namespace Bidding
 
     add_special_keywords_(keywords, request_info, &context, context.app_id);
 
-    request_params.ssp_location << (
+    CampaignManager::assign_string(request_params.ssp_location, (
       context.ssp_country + '/' + context.ssp_region +
-      '/' + context.ssp_city);
+      '/' + context.ssp_city));
 
     // push eids to request_info
     for(auto it = context.user_eids.begin(); it != context.user_eids.end(); ++it)
@@ -5258,8 +5253,8 @@ namespace Bidding
         }
       }
 
-      request_params.common_info.user_agent << user_agent;
-      request_params.context_info.web_browser << web_browser;
+      CampaignManager::assign_string(request_params.common_info.user_agent, user_agent);
+      CampaignManager::assign_string(request_params.context_info.web_browser, web_browser);
     }
 
     if (!user_agent.empty() || application)
@@ -5295,8 +5290,8 @@ namespace Bidding
         }
       }
 
-      request_params.context_info.platform << platform;
-      request_params.context_info.full_platform << full_platform;
+      CampaignManager::assign_string(request_params.context_info.platform, platform);
+      CampaignManager::assign_string(request_params.context_info.full_platform, full_platform);
       CampaignManager::fill_sequence(
         platform_ids.begin(),
         platform_ids.end(),
@@ -5320,13 +5315,12 @@ namespace Bidding
       {
         if(fill_instantiate_type && referer.secure())
         {
-          request_params.common_info.creative_instantiate_type <<
-            FrontendCommons::SECURE_INSTANTIATE_TYPE;
+          CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
         }
 
         std::string normalized_referer =
           FrontendCommons::normalize_abs_url(referer);
-        request_params.common_info.referer << normalized_referer;
+        CampaignManager::assign_string(request_params.common_info.referer, normalized_referer);
         request_params.context_info.full_referer_hash =
            FrontendCommons::referer_hash(normalized_referer);
         request_params.context_info.short_referer_hash =
@@ -5356,9 +5350,9 @@ namespace Bidding
       {
         std::string normalized_add_url =
           FrontendCommons::normalize_abs_url(add_url);
-        std::size_t pos = request_params.common_info.urls.length();
-        request_params.common_info.urls.length(pos + 1);
-        request_params.common_info.urls[pos] << normalized_add_url;
+        std::size_t pos = request_params.common_info.urls.size();
+        request_params.common_info.urls.resize(pos + 1);
+        CampaignManager::assign_string(request_params.common_info.urls[pos], normalized_add_url);
 
         fill_search_words_(request_params, search_words, add_url);
       }
@@ -5423,10 +5417,10 @@ namespace Bidding
   {
     if(request_info.location.in())
     {
-      request_params.common_info.location.length(1);
-      request_params.common_info.location[0].country << request_info.location->country;
-      request_params.common_info.location[0].region << request_info.location->region;
-      request_params.common_info.location[0].city << request_info.location->city;
+      request_params.common_info.location.resize(1);
+      CampaignManager::assign_string(request_params.common_info.location[0].country, request_info.location->country);
+      CampaignManager::assign_string(request_params.common_info.location[0].region, request_info.location->region);
+      CampaignManager::assign_string(request_params.common_info.location[0].city, request_info.location->city);
     }
     else
     {
@@ -5434,13 +5428,13 @@ namespace Bidding
 
       if(!ip.empty())
       {
-        request_params.common_info.peer_ip << ip;
+        CampaignManager::assign_string(request_params.common_info.peer_ip, ip);
 
         if(ip_logging_enabled_)
         {
           std::string ip_hash;
           FrontendCommons::ip_hash(ip_hash, ip, ip_salt_);
-          request_params.context_info.ip_hash << ip_hash;
+          CampaignManager::assign_string(request_params.context_info.ip_hash, ip_hash);
         }
 
         if(ip_map_.get())
@@ -5452,10 +5446,10 @@ namespace Bidding
                  geo_location,
                  false))
             {
-              request_params.common_info.location.length(1);
-              request_params.common_info.location[0].country << geo_location.country_code;
-              request_params.common_info.location[0].region << geo_location.region;
-              request_params.common_info.location[0].city << geo_location.city;
+              request_params.common_info.location.resize(1);
+              CampaignManager::assign_string(request_params.common_info.location[0].country, geo_location.country_code);
+              CampaignManager::assign_string(request_params.common_info.location[0].region, geo_location.region);
+              CampaignManager::assign_string(request_params.common_info.location[0].city, geo_location.city);
             }
           }
           catch(const eh::Exception&)
@@ -5502,8 +5496,8 @@ namespace Bidding
       {
         Generics::Uuid ssp_uid;
         uint8_t ssp_uid_marker;
-        if (signed_user_id.length() == UNSIGNED_SSP_USER_ID_LEN ||
-          signed_user_id.length() == UNSIGNED_ALIGNED_SSP_USER_ID_LEN)
+        if (signed_user_id.size() == UNSIGNED_SSP_USER_ID_LEN ||
+          signed_user_id.size() == UNSIGNED_ALIGNED_SSP_USER_ID_LEN)
         {
           std::string ssp_id_buf;
           String::StringManip::base64mod_decode(
@@ -5747,7 +5741,7 @@ namespace Bidding
 
     request_params.publisher_site_id = request_info.publisher_site_id;
 
-    request_params.common_info.source_id << request_info.source_id;
+    CampaignManager::assign_string(request_params.common_info.source_id, request_info.source_id);
     request_params.common_info.time = CampaignManager::pack_time(request_info.current_time);
 
     request_params.context_info.profile_referer = true;

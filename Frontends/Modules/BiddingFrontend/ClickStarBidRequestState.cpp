@@ -182,7 +182,7 @@ namespace Bidding
       response_ostr << "[";
 
       for(std::size_t slot_i = 0;
-        slot_i < campaign_match_result.ad_slots.length(); ++slot_i)
+        slot_i < campaign_match_result.ad_slots.size(); ++slot_i)
       {
         if(slot_i > 0)
         {
@@ -224,7 +224,7 @@ namespace Bidding
 
     root_json.add_number(Response::Json::CPC_PRICE, cpc_price);
 
-    if(ad_slot_result.native_data_tokens.length() >= 1)
+    if(ad_slot_result.native_data_tokens.size() >= 1)
     {
       const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[0];
@@ -233,7 +233,7 @@ namespace Bidding
         String::SubString(token.value));
     }
 
-    if(ad_slot_result.native_data_tokens.length() >= 2)
+    if(ad_slot_result.native_data_tokens.size() >= 2)
     {
       const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[1];
@@ -242,7 +242,7 @@ namespace Bidding
         String::SubString(token.value));
     }
 
-    if(ad_slot_result.native_image_tokens.length() >= 1)
+    if(ad_slot_result.native_image_tokens.size() >= 1)
     {
       // NITE_MAIN
       const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
@@ -252,7 +252,7 @@ namespace Bidding
         String::SubString(token.value));
     }
 
-    if(ad_slot_result.native_image_tokens.length() >= 2)
+    if(ad_slot_result.native_image_tokens.size() >= 2)
     {
       // NITE_ICON
       const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
