@@ -3,7 +3,7 @@
 #include <string>
 
 #include <String/SubString.hpp>
-#include <ReferenceCounting/DefaultImpl.hpp>
+#include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -22,7 +22,7 @@ namespace FrontendCommons
     CountrySepCategory COUNTRY_SEP_SYMBOLS;
   }
 
-  struct Location: public ReferenceCounting::DefaultImpl<>
+  struct Location: public ReferenceCounting::AtomicImpl
   {
     static ReferenceCounting::SmartPtr<Location>
     parse(const String::SubString& value) noexcept;
@@ -49,7 +49,7 @@ namespace FrontendCommons
 
   typedef ReferenceCounting::SmartPtr<Location> Location_var;
 
-  struct CoordLocation: public ReferenceCounting::DefaultImpl<>
+  struct CoordLocation: public ReferenceCounting::AtomicImpl
   {
     static ReferenceCounting::SmartPtr<CoordLocation>
     parse(const String::SubString& value) noexcept;

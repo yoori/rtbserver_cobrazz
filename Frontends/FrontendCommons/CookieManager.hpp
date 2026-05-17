@@ -202,9 +202,9 @@ namespace FrontendCommons
         default_cookies_.expires;
 
       cookie_names_holder_.push_back(cookie_it->name());
-      set_cookies_.insert(std::make_pair(
+      set_cookies_.emplace(
         Generics::SubStringHashAdapter(cookie_names_holder_.back()),
-        cookie_params));
+        cookie_params);
     }
 
     for(xsd::AdServer::Configuration::CookiesType::RemoveCookie_sequence::const_iterator
