@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv482%{?dist}
+Release: ssv483%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
