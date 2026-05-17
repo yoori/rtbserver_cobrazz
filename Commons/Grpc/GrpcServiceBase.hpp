@@ -663,8 +663,7 @@ namespace AdServer::Grpc
         {
           if (!ok)
           {
-            state_ = State::Finish;
-            responder_.Finish(::grpc::Status::OK, this);
+            delete this;
             return;
           }
 
