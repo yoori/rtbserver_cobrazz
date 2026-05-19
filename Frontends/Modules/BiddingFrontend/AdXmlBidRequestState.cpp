@@ -3,9 +3,7 @@
 #include "KeywordFormatter.hpp"
 #include "AdXmlBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -14,18 +12,15 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString CONTENT_TYPE("Content-Type");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString TEXT_XML("text/xml");
       }
-    } // namespace Response
 
     const String::SubString ADXML_CLIENT("adxml");
     const String::SubString ADXML_SIZE("300x300");
@@ -257,5 +252,4 @@ namespace Bidding
       String::StringManip::XU_TEXT | String::StringManip::XU_PRESERVE_UTF8);
     response_ostr << escaped_str;
   }
-}
 }

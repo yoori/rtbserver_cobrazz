@@ -17,9 +17,7 @@
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
-namespace AdServer
-{
-namespace Instantiate
+namespace AdServer::Instantiate
 {
   struct RequestInfo
   {
@@ -206,11 +204,8 @@ namespace Instantiate
     Commons::IPCrypter_var ip_crypter_;
   };
 } // Instantiate
-} // AdServer
 
-namespace AdServer
-{
-namespace Instantiate
+namespace AdServer::Instantiate
 {
   inline
   const Logging::Logger_var&
@@ -218,5 +213,4 @@ namespace Instantiate
   {
     return logger_;
   }
-}
 }

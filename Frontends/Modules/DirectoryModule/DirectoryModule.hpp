@@ -45,15 +45,9 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept override;
-
-    virtual FrontendCommons::RequestTask
-    handle_request_(
+    co_handle_request(
       FCGI::HttpRequestHolder_var request_holder)
-      noexcept;
+      noexcept override;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -188,7 +182,7 @@ namespace AdServer
     parse_configs_() /*throw(Exception)*/;
 
     int
-    handle_request_(
+    process_request_(
       const FCGI::HttpRequest& request,
       FCGI::HttpResponse& response)
       noexcept;

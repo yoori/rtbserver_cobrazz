@@ -7,10 +7,8 @@
 #include <eh/Exception.hpp>
 #include <Commons/MessagePacker.hpp>
 
-namespace AdServer
+namespace AdServer::Bidding
 {
-  namespace Bidding
-  {
     // Policies for log errors pool
     class CellsKey;
 
@@ -163,13 +161,10 @@ namespace AdServer
 
     typedef ReferenceCounting::SmartPtr<GroupLogger> GroupLogger_var;
   }
-}
 
 // Inlines implementation
-namespace AdServer
+namespace AdServer::Bidding
 {
-  namespace Bidding
-  {
     inline void
     MessageOut::log(
       Logging::Logger* logger,
@@ -309,4 +304,3 @@ namespace AdServer
     }
 
   }
-}

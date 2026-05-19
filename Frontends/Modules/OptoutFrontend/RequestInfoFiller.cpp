@@ -69,9 +69,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace OptOut
+namespace AdServer::OptOut
 {
 
   namespace
@@ -485,4 +483,3 @@ namespace OptOut
     }
   }
 } // OptOut
-} /*AdServer*/

@@ -1,8 +1,6 @@
 #include "BidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   BidRequestState::BidRequestState(
     Frontend* bid_frontend,
@@ -30,8 +28,8 @@ namespace Bidding
       return;
     }
 
-    bid_frontend_->process_bid_request_async_(
-      BidRequestState_var(ReferenceCounting::add_ref(this)));
+    bid_frontend_->co_process_bid_request_(
+      BidRequestState_var(ReferenceCounting::add_ref(this))).start_detached(nullptr);
   }
 
   void
@@ -174,12 +172,19 @@ namespace Bidding
   void
   BidRequestState::interrupt() noexcept
   {
+    write_interrupted_empty_response(
+      convert_stage_to_string(get_current_stage()));
+  }
+
+  void
+  BidRequestState::write_interrupted_empty_response(
+    const String::SubString& interrupted_step) noexcept
+  {
     timeout_interrupted_.store(true, std::memory_order_relaxed);
     request_time_metering_.total_time =
       Generics::Time::get_time_of_day() - start_processing_time_;
     print_available_request_debug_info_();
-    debug_sink_.print_interrupt_debug_info(
-      convert_stage_to_string(get_current_stage()));
+    debug_sink_.print_interrupt_debug_info(interrupted_step);
     debug_sink_.print_time_metering_debug_info(request_time_metering_);
     write_empty_response(0);
   }
@@ -234,5 +239,4 @@ namespace Bidding
     request_params_ = RequestParamsHolder_var();
     keywords_.clear();
   }
-}
 }

@@ -23,9 +23,7 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace PubPixel
+namespace AdServer::PubPixel
 {
   class Frontend:
     private FrontendCommons::HTTPExceptions,
@@ -63,9 +61,8 @@ namespace PubPixel
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -124,22 +121,17 @@ namespace PubPixel
     ConfigPtr config_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
       campaign_manager_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
-} // namespace PubPixel
-} // namespace AdServer
+} // namespace AdServer::PubPixel
 
 //
 // Inlines
 //
-namespace AdServer
-{
-namespace PubPixel
+namespace AdServer::PubPixel
 {
   inline
   Frontend::~Frontend() noexcept
@@ -156,5 +148,4 @@ namespace PubPixel
 
     return config_->Logger().log_level();
   }
-} // namespace PubPixel
-} // namespace AdServer
+} // namespace AdServer::PubPixel

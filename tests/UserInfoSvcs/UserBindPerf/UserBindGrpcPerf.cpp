@@ -27,6 +27,7 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 
@@ -38,6 +39,22 @@
 namespace
 {
   using BatchClient = AdServer::UserInfoSvcs::UserBindServerGrpcAsyncBatchingClient;
+
+  class NullActiveObjectCallback final:
+    public virtual Generics::ActiveObjectCallback,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    void
+    report_error(
+      Severity,
+      const String::SubString&,
+      const char* = nullptr) throw () override
+    {}
+
+  protected:
+    ~NullActiveObjectCallback() throw () override = default;
+  };
 
   enum class Mode
   {
@@ -386,11 +403,18 @@ main(int argc, char** argv)
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
         std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
+      auto coalesce_runner =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          Generics::ActiveObjectCallback_var(new NullActiveObjectCallback()),
+          std::make_shared<boost::asio::io_service>(),
+          client_threads);
       batch_client = std::make_shared<BatchClient>(
           *opt_user_bind_grpc_endpoint,
           grpc_executor,
+          coalesce_runner,
           options);
       async_batch_active_objects->add_child_object(grpc_executor);
+      async_batch_active_objects->add_child_object(coalesce_runner);
       async_batch_active_objects->add_child_object(batch_client);
       client = batch_client.get();
     }
@@ -417,13 +441,20 @@ main(int argc, char** argv)
 
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
         std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
+      auto coalesce_runner =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          Generics::ActiveObjectCallback_var(new NullActiveObjectCallback()),
+          std::make_shared<boost::asio::io_service>(),
+          client_threads);
       distributed_client =
         std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
           std::vector<std::string>{*opt_user_bind_controller_grpc_endpoint},
           options,
           grpc_executor,
-          nullptr);
+          nullptr,
+          coalesce_runner);
       async_batch_active_objects->add_child_object(grpc_executor);
+      async_batch_active_objects->add_child_object(coalesce_runner);
       async_batch_active_objects->add_child_object(distributed_client);
       client = distributed_client.get();
     }

@@ -10,9 +10,7 @@
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
-namespace AdServer
-{
-namespace UserBind
+namespace AdServer::UserBind
 {
   struct RequestInfo: public ReferenceCounting::AtomicImpl
   {
@@ -156,5 +154,4 @@ namespace UserBind
       const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
   };
-}
 }

@@ -12,9 +12,7 @@
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
-namespace AdServer
-{
-namespace ClickFE
+namespace AdServer::ClickFE
 {
   struct RequestInfo
   {
@@ -118,11 +116,8 @@ namespace ClickFE
     ParamProcessorMap param_processors_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace ClickFE
+namespace AdServer::ClickFE
 {
   inline
   const Logging::Logger_var&
@@ -130,5 +125,4 @@ namespace ClickFE
   {
     return logger_;
   }
-}
 }

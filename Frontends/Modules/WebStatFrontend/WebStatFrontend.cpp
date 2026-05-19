@@ -10,9 +10,7 @@
 
 #include "WebStatFrontend.hpp"
 
-namespace AdServer
-{
-namespace WebStat
+namespace AdServer::WebStat
 {
   namespace
   {
@@ -129,12 +127,10 @@ namespace WebStat
   }
 
   FrontendCommons::RequestTask
-  Frontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  Frontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
@@ -150,7 +146,7 @@ namespace WebStat
     FCGI::HttpResponse_var response)
     noexcept
   {
-    static const char* FUN = "WebStat::Frontend::handle_request_()";
+    static const char* FUN = "WebStat::Frontend::process_request_()";
     const FCGI::HttpRequest& request = request_holder->request();
 
     int http_result = 0;
@@ -366,11 +362,11 @@ namespace WebStat
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
-        campaign_manager_ = campaign_manager;
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager_,
+            campaign_manager,
             workers_);
         add_child_object(campaign_manager);
 
@@ -399,7 +395,6 @@ namespace WebStat
   {
     deactivate_object();
     wait_object();
-    campaign_manager_.reset();
 
     logger()->log(String::SubString(
       "WebStat::Frontend::shutdown(): frontend terminated"),
@@ -407,4 +402,3 @@ namespace WebStat
       Aspect::WEBSTAT_FRONTEND);
   }
 } /*WebStat*/
-} /*AdServer*/

@@ -20,9 +20,7 @@
 #include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 
-namespace AdServer
-{
-namespace PubPixel
+namespace AdServer::PubPixel
 {
   struct RequestInfo
   {
@@ -82,4 +80,3 @@ namespace PubPixel
     RequestParamProcessorMap header_processors_;
   };
 } /*PubPixel*/
-} /*AdServer*/

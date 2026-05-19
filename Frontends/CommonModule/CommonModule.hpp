@@ -13,6 +13,7 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
 
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/DomainParser.hpp>
@@ -70,6 +71,9 @@ namespace AdServer
     CampaignSvcs::DomainParser_var
     domain_parser() const noexcept;
 
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+    grpc_coalesce_runner() const noexcept;
+
     AdServer::CampaignSvcs::ColocationFlagsSeq_var
     get_colocation_flags(unsigned service_index) /*throw(Exception)*/;
 
@@ -113,6 +117,8 @@ namespace AdServer
     Generics::TaskRunner_var task_runner_;
     Generics::Planner_var scheduler_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      grpc_coalesce_runner_;
 
     UserIdController_var user_id_controller_;
 
@@ -159,5 +165,12 @@ namespace AdServer
   CommonModule::domain_parser() const noexcept
   {
     return domain_parser_;
+  }
+
+  inline
+  std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+  CommonModule::grpc_coalesce_runner() const noexcept
+  {
+    return grpc_coalesce_runner_;
   }
 } // namespace AdServer

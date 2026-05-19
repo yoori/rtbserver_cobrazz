@@ -21,10 +21,8 @@ namespace Aspect
   const char AD_FRONTEND[] = "AdFrontend";
 }
 
-namespace Request
+namespace Request::Cookie
 {
-  namespace Cookie
-  {
     const String::SubString OPT_IN_TRIAL("trialoptin");
     const String::SubString LAST_COLOCATION_ID("lc");
     const String::SubString COHORT("ct");
@@ -32,7 +30,7 @@ namespace Request
     const String::SubString TEST("test");
   }
 
-  namespace Header
+namespace Request::Header
   {
     const String::SubString REM_HOST(".remotehost");
     const String::SubString USER_AGENT("user-agent");
@@ -40,7 +38,7 @@ namespace Request
     const String::AsciiStringManip::Caseless REFERER("referer");
   }
 
-  namespace Context
+namespace Request::Context
   {
     const String::SubString REFERER_TRIGGERS("referer-tr");
     const String::SubString CLID_ID("clid");
@@ -114,8 +112,10 @@ namespace Request
     const String::SubString CHANNELS("ch");
   }
 
-  typedef const String::AsciiStringManip::Char2Category<',', ' '>
-    ListParameterSepCategory;
+namespace Request
+{
+    typedef const String::AsciiStringManip::Char2Category<',', ' '>
+      ListParameterSepCategory;
 }
 
 namespace AdServer
@@ -930,7 +930,7 @@ namespace AdServer
         throw ForbiddenException(ostr);
       }
 
-      if (!request_info.location.in() &&
+      if (!request_info.location &&
           !request_info.peer_ip.empty() &&
           ip_map_.get())
       {
@@ -943,7 +943,8 @@ namespace AdServer
                geo_location,
                false))
           {
-            request_info.location = new FrontendCommons::Location();
+            request_info.location =
+              std::make_shared<FrontendCommons::Location>();
             request_info.location->country = geo_location.country_code.str();
             geo_location.region.assign_to(request_info.location->region);
             request_info.location->city = geo_location.city.str();
@@ -960,7 +961,7 @@ namespace AdServer
         common_module_->country_filter();
 
       if(country_filter.in() && (
-          request_info.location.in() == 0 ||
+          !request_info.location ||
           !country_filter->enabled(request_info.location->country)))
       {
         filter_request_by_country = true;

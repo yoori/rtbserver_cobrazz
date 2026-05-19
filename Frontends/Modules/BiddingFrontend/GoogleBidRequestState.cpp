@@ -1,9 +1,7 @@
 #include "GoogleBidRequestState.hpp"
 
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -12,15 +10,13 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Type
     {
-      namespace Type
-      {
         const String::SubString OCTET_STREAM("application/octet-stream");
       };
 
       // https://storage.googleapis.com/adx-rtb-dictionaries/buyer-declarable-creative-attributes.txt
-      namespace Google
+      namespace Response::Google
       {
         const ::google::protobuf::int32 CREATIVE_ATTR[] =
         {
@@ -93,7 +89,6 @@ namespace Bidding
           CREATIVE_EXPAND_ANY_DIAGONAL,
         };
       }
-    }
 
     template <typename T, size_t Size, typename Function>
     void for_range(
@@ -447,5 +442,4 @@ namespace Bidding
     BidRequestState::clear();
     ad_slots_context_.clear();
   }
-}
 }

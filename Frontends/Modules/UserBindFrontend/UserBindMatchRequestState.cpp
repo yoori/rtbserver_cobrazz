@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <set>
+#include <utility>
 
 #include <Commons/GrpcAlgs.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -58,7 +59,7 @@ namespace AdServer
     const String::SubString& cohort,
     const String::SubString& referer,
     unsigned long colo_id,
-    const FrontendCommons::Location* location,
+    FrontendCommons::Location_var location,
     const String::SubString& source)
     : frontend_(frontend),
       result_user_id_(result_user_id),
@@ -68,8 +69,7 @@ namespace AdServer
       cohort_(cohort.str()),
       referer_(referer.str()),
       colo_id_(colo_id),
-      location_(ReferenceCounting::add_ref(
-        const_cast<FrontendCommons::Location*>(location))),
+      location_(std::move(location)),
       source_(source.str()),
       trigger_match_result_present_(false)
   {}
@@ -77,77 +77,69 @@ namespace AdServer
   void
   UserBindMatchRequestState::start()
   {
-    now_ = Generics::Time::get_time_of_day();
+    auto self = shared_from_this();
+    co_process_(std::move(self)).start_detached(nullptr);
+  }
 
+  FrontendCommons::RequestTask
+  UserBindMatchRequestState::co_process_(
+    std::shared_ptr<UserBindMatchRequestState> self)
+    noexcept
+  {
+    (void)self;
+    now_ = Generics::Time::get_time_of_day();
     if((!referer_.empty() || !keywords_.empty()) &&
       !result_user_id_.is_null())
     {
-      channel_match_stage_();
+      co_await co_channel_match_();
     }
-    else
-    {
-      history_stage_();
-    }
+    co_await co_history_();
+    co_await co_campaign_();
+    co_return FrontendCommons::RequestResult{};
   }
 
-  void
-  UserBindMatchRequestState::channel_match_stage_()
+  FrontendCommons::RequestTask
+  UserBindMatchRequestState::co_channel_match_() noexcept
   {
-    adserver::channel_svcs::channel_server::MatchRequest channel_request;
-    channel_request.set_non_strict_word_match(false);
-    channel_request.set_non_strict_url_match(false);
-    channel_request.set_return_negative(false);
-    channel_request.set_simplify_page(false);
-    channel_request.set_fill_content(false);
-    channel_request.set_statuses("A", 2);
-    channel_request.set_pwords(keywords_);
-    channel_request.set_first_url(referer_);
+    if(frontend_->channel_client_coro_)
+    {
+      adserver::channel_svcs::channel_server::MatchRequest channel_request;
+      channel_request.set_non_strict_word_match(false);
+      channel_request.set_non_strict_url_match(false);
+      channel_request.set_return_negative(false);
+      channel_request.set_simplify_page(false);
+      channel_request.set_fill_content(false);
+      channel_request.set_statuses("A", 2);
+      channel_request.set_pwords(keywords_);
+      channel_request.set_first_url(referer_);
 
-    auto self = shared_from_this();
-    frontend_->channel_client_->match(
-      channel_request,
-      [self](
-        const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::MatchResponse& response)
+      auto match_result = co_await frontend_->channel_client_coro_->match(
+        std::move(channel_request));
+      if(match_result.status.ok())
       {
-        self->frontend_->workers_->post(
-          [self, status, response]()
-          {
-            self->channel_match_done_stage_(status, response);
-          });
-      });
+        trigger_match_result_ = std::move(match_result.response);
+        trigger_match_result_present_ = true;
+      }
+      else
+      {
+        log_channel_error_(match_result.status);
+      }
+    }
+
+    co_return FrontendCommons::RequestResult{};
   }
 
-  void
-  UserBindMatchRequestState::channel_match_done_stage_(
-    const grpc::Status& status,
-    const adserver::channel_svcs::channel_server::MatchResponse& response)
+  FrontendCommons::RequestTask
+  UserBindMatchRequestState::co_history_() noexcept
   {
-    if(status.ok())
+    if(!need_history_() || !frontend_->user_info_client_coro_)
     {
-      trigger_match_result_ = response;
-      trigger_match_result_present_ = true;
-    }
-    else
-    {
-      log_channel_error_(status);
+      co_return FrontendCommons::RequestResult{};
     }
 
-    history_stage_();
-  }
-
-  void
-  UserBindMatchRequestState::history_stage_()
-  {
-    if(!need_history_() || !frontend_->user_info_client_)
-    {
-      campaign_stage_();
-      return;
-    }
-
-    auto history_match_request = std::make_shared<
-      adserver::user_info_svcs::user_info_manager::MatchRequest>();
-    fill_history_match_request_(*history_match_request);
+    adserver::user_info_svcs::user_info_manager::MatchRequest
+      history_match_request;
+    fill_history_match_request_(history_match_request);
 
     if(!merge_user_id_.is_null())
     {
@@ -162,173 +154,70 @@ namespace AdServer
       profile_request->set_freq_cap_profile(true);
       profile_request->set_pref_profile(false);
 
-      auto self = shared_from_this();
-      frontend_->user_info_client_->get_user_profile(
-        get_profile_request,
-        [self, history_match_request](
-          const grpc::Status& status,
-          const adserver::user_info_svcs::user_info_manager::
-            GetUserProfileResponse& response)
+      auto get_profile_result =
+        co_await frontend_->user_info_client_coro_->get_user_profile(
+          std::move(get_profile_request));
+      if(!get_profile_result.status.ok())
+      {
+        log_user_info_error_(
+          "UserInfoManager::get_user_profile()",
+          get_profile_result.status);
+        co_return FrontendCommons::RequestResult{};
+      }
+
+      if(get_profile_result.response.found())
+      {
+        adserver::user_info_svcs::user_info_manager::MergeRequest
+          merge_request;
+        *merge_request.mutable_user_info() = history_match_request.user_info();
+        *merge_request.mutable_match_params() =
+          history_match_request.match_params();
+        *merge_request.mutable_merge_user_profile() =
+          get_profile_result.response.user_profile();
+
+        auto merge_result = co_await frontend_->user_info_client_coro_->merge(
+          std::move(merge_request));
+        if(!merge_result.status.ok())
         {
-          self->frontend_->workers_->post(
-            [self, history_match_request, status, response]()
-            {
-              self->get_merge_profile_done_stage_(
-                history_match_request,
-                status,
-                response);
-            });
-        });
-    }
-    else
-    {
-      match_stage_(history_match_request);
-    }
-  }
+          log_user_info_error_("UserInfoManager::merge()", merge_result.status);
+          co_return FrontendCommons::RequestResult{};
+        }
 
-  void
-  UserBindMatchRequestState::get_merge_profile_done_stage_(
-    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-      history_match_request,
-    const grpc::Status& status,
-    const adserver::user_info_svcs::user_info_manager::
-      GetUserProfileResponse& response)
-  {
-    if(!status.ok())
-    {
-      log_user_info_error_("UserInfoManager::get_user_profile()", status);
-      campaign_stage_();
-      return;
+        adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest
+          remove_request;
+        remove_request.set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
+        auto remove_result =
+          co_await frontend_->user_info_client_coro_->remove_user_profile(
+            std::move(remove_request));
+        if(!remove_result.status.ok())
+        {
+          log_user_info_error_(
+            "UserInfoManager::remove_user_profile()",
+            remove_result.status);
+        }
+
+        co_return FrontendCommons::RequestResult{};
+      }
     }
 
-    if(response.found())
-    {
-      merge_stage_(history_match_request, response);
-    }
-    else
-    {
-      match_stage_(history_match_request);
-    }
-  }
-
-  void
-  UserBindMatchRequestState::merge_stage_(
-    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-      history_match_request,
-    const adserver::user_info_svcs::user_info_manager::
-      GetUserProfileResponse& get_profile_response)
-  {
-    adserver::user_info_svcs::user_info_manager::MergeRequest merge_request;
-    *merge_request.mutable_user_info() = history_match_request->user_info();
-    *merge_request.mutable_match_params() =
-      history_match_request->match_params();
-    *merge_request.mutable_merge_user_profile() =
-      get_profile_response.user_profile();
-
-    auto self = shared_from_this();
-    frontend_->user_info_client_->merge(
-      merge_request,
-      [self](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_info_manager::MergeResponse&)
-      {
-        self->frontend_->workers_->post(
-          [self, status]()
-          {
-            self->merge_done_stage_(status);
-          });
-      });
-  }
-
-  void
-  UserBindMatchRequestState::merge_done_stage_(const grpc::Status& status)
-  {
-    if(!status.ok())
-    {
-      log_user_info_error_("UserInfoManager::merge()", status);
-      campaign_stage_();
-      return;
-    }
-
-    remove_merged_profile_stage_();
-  }
-
-  void
-  UserBindMatchRequestState::remove_merged_profile_stage_()
-  {
-    adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest
-      remove_request;
-    remove_request.set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
-
-    auto self = shared_from_this();
-    frontend_->user_info_client_->remove_user_profile(
-      remove_request,
-      [self](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_info_manager::
-          RemoveUserProfileResponse&)
-      {
-        self->frontend_->workers_->post(
-          [self, status]()
-          {
-            self->remove_merged_profile_done_stage_(status);
-          });
-      });
-  }
-
-  void
-  UserBindMatchRequestState::remove_merged_profile_done_stage_(
-    const grpc::Status& status)
-  {
-    if(!status.ok())
-    {
-      log_user_info_error_("UserInfoManager::remove_user_profile()", status);
-    }
-
-    campaign_stage_();
-  }
-
-  void
-  UserBindMatchRequestState::match_stage_(
-    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-      history_match_request)
-  {
-    auto self = shared_from_this();
-    frontend_->user_info_client_->match(
-      *history_match_request,
-      [self](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_info_manager::MatchResponse&
-          response)
-      {
-        self->frontend_->workers_->post(
-          [self, status, response]()
-          {
-            self->match_done_stage_(status, response);
-          });
-      });
-  }
-
-  void
-  UserBindMatchRequestState::match_done_stage_(
-    const grpc::Status& status,
-    const adserver::user_info_svcs::user_info_manager::MatchResponse& response)
-  {
-    if(status.ok())
+    auto match_result = co_await frontend_->user_info_client_coro_->match(
+      std::move(history_match_request));
+    if(match_result.status.ok())
     {
       history_match_result_ = std::make_shared<
-        adserver::user_info_svcs::user_info_manager::MatchResponse>(response);
+        adserver::user_info_svcs::user_info_manager::MatchResponse>(
+          std::move(match_result.response));
     }
     else
     {
-      log_user_info_error_("UserInfoManager::match()", status);
+      log_user_info_error_("UserInfoManager::match()", match_result.status);
     }
 
-    campaign_stage_();
+    co_return FrontendCommons::RequestResult{};
   }
 
-  void
-  UserBindMatchRequestState::campaign_stage_()
+  FrontendCommons::RequestTask
+  UserBindMatchRequestState::co_campaign_() noexcept
   {
     adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
       process_match_request;
@@ -338,42 +227,32 @@ namespace AdServer
       now_,
       trigger_match_result_present_ ? &trigger_match_result_ : nullptr,
       history_match_result_.get(),
-      location_,
+      location_.get(),
       referer_,
       source_);
 
-    auto self = shared_from_this();
-    frontend_->campaign_manager_->process_match_request(
-      process_match_request,
-      [self](
-        const grpc::Status& status,
-        const adserver::campaign_svcs::campaign_manager::
-          ProcessMatchRequestResponse&)
-      {
-        self->frontend_->workers_->post(
-          [self, status]()
-          {
-            self->campaign_done_stage_(status);
-          });
-      });
-  }
-
-  void
-  UserBindMatchRequestState::campaign_done_stage_(const grpc::Status& status)
-  {
-    if(!status.ok())
+    if(frontend_->campaign_manager_coro_)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't process match request. "
-        "Possible problem with Campaignmanager. "
-        "gRPC call failed: code=" << static_cast<int>(status.error_code()) <<
-        ", message=" << status.error_message();
-      frontend_->logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        USER_BIND_FRONTEND_ASPECT,
-        "ADS-ICON-4");
+      auto campaign_result =
+        co_await frontend_->campaign_manager_coro_->process_match_request(
+          std::move(process_match_request));
+      if(!campaign_result.status.ok())
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Can't process match request. "
+          "Possible problem with Campaignmanager. "
+          "gRPC call failed: code=" <<
+          static_cast<int>(campaign_result.status.error_code()) <<
+          ", message=" << campaign_result.status.error_message();
+        frontend_->logger()->log(
+          ostr.str(),
+          Logging::Logger::EMERGENCY,
+          USER_BIND_FRONTEND_ASPECT,
+          "ADS-ICON-4");
+      }
     }
+
+    co_return FrontendCommons::RequestResult{};
   }
 
   void

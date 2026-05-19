@@ -28,9 +28,7 @@
 
 #include "AdXmlRequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   struct SourceTraits
   {
@@ -476,12 +474,8 @@ namespace Bidding
       openrtb_video_placement_mapping_;
   };
 }
-}
 
-namespace Request
+namespace Request::Context
 {
-  namespace Context
-  {
     extern const String::SubString SOURCE_ID;
   }
-}

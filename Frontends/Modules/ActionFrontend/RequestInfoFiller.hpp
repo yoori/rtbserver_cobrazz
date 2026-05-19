@@ -17,9 +17,7 @@
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Commons/LogReferrerUtils.hpp>
 
-namespace AdServer
-{
-namespace Action
+namespace AdServer::Action
 {
   struct RequestInfo
   {
@@ -133,11 +131,8 @@ namespace Action
     ParamProcessorMap cookie_processors_;
   };
 } // Action
-} // AdServer
 
-namespace AdServer
-{
-namespace Action
+namespace AdServer::Action
 {
   inline
   const Logging::Logger_var&
@@ -145,5 +140,4 @@ namespace Action
   {
     return logger_;
   }
-}
 }

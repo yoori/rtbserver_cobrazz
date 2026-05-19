@@ -12,25 +12,21 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Action
+namespace AdServer::Action
 {
   namespace Aspect
   {
     const char ACTION_FRONTEND[] = "ActionFrontend";
   }
 
-  namespace Request
+  namespace Request::Cookie
   {
-    namespace Cookie
-    {
       const String::AsciiStringManip::Caseless OPTOUT("OPTED_OUT");
       const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
       //const String::AsciiStringManip::Caseless USER_ID("uid");
     }
 
-    namespace Header
+  namespace Request::Header
     {
       const String::SubString REM_HOST(".remotehost");
       const String::SubString USER_AGENT("user-agent");
@@ -39,7 +35,7 @@ namespace Action
       const String::SubString SECURE("secure");
     }
 
-    namespace Context
+  namespace Request::Context
     {
       const String::SubString CLID_ID("clid");
       const String::SubString CAMPAIGN_ID("cid");
@@ -56,7 +52,6 @@ namespace Action
       const String::SubString IP_ADDRESS("debug.ip");
       const String::SubString DEBUG_CURRENT_TIME("debug-time");
     }
-  }
 
   class UuidParamProcessor: public RequestInfoParamProcessor
   {
@@ -693,4 +688,3 @@ namespace Action
     }
   }
 } // Action
-} // AdServer

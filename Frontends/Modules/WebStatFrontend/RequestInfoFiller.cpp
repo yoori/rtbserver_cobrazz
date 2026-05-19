@@ -75,9 +75,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace WebStat
+namespace AdServer::WebStat
 {
   namespace
   {
@@ -662,4 +660,3 @@ namespace WebStat
     return std::string("unknown");
   }
 } /*WebStat*/
-} /*AdServer*/

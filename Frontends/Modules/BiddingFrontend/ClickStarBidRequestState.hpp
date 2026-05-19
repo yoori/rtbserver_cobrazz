@@ -3,9 +3,7 @@
 #include <iostream>
 #include "BidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   //
   // ClickStarBidRequestState
@@ -80,5 +78,4 @@ namespace Bidding
   private:
     std::string uri_;
   };
-}
 }

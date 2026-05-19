@@ -1198,7 +1198,7 @@
   </cfg:PubPixelFeConfiguration>
 
   <xsl:if test="$conf-type = 'nginx'">
-    <cfg:BidFeConfiguration max_pending_tasks="10">
+    <cfg:BidFeConfiguration max_pending_tasks="10000">
       <xsl:attribute name="threads"><xsl:value-of select="$bidding-module/@threads"/>
         <xsl:if test="count($bidding-module/@threads) = 0">
           <xsl:value-of select="$def-bidding-module-threads"/>

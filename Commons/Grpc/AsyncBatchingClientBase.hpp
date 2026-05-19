@@ -1,12 +1,13 @@
 #pragma once
 
 #include <atomic>
-#include <condition_variable>
 #include <cstddef>
 #include <deque>
+#include <functional>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -14,8 +15,12 @@
 #include <grpcpp/channel.h>
 #include <grpcpp/support/status.h>
 
+#include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 
+#include <Commons/ActivityGate.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/BatchingQueue.hpp>
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
@@ -31,9 +36,13 @@ namespace AdServer::Grpc
       public virtual AdServer::Grpc::Client
   {
   protected:
+    DECLARE_EXCEPTION(InvalidParam, eh::DescriptiveException);
+
     AsyncBatchingClientBase(
       const std::string& endpoint,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner,
       AdServer::Grpc::BatchingOptions options = {});
 
     ~AsyncBatchingClientBase() override;
@@ -53,16 +62,40 @@ namespace AdServer::Grpc
     using BatchingQueuePtr =
       std::shared_ptr<AdServer::Grpc::BatchingQueue>;
     struct StreamHolder;
+    class DetachedBatchStorage;
+    struct DetachedBatchOwner;
     using StreamHolderPtr = std::shared_ptr<StreamHolder>;
+    using ActivityGatePtr = std::shared_ptr<AdServer::Commons::ActivityGate>;
+    using DetachedBatchStoragePtr = std::shared_ptr<DetachedBatchStorage>;
+    using DetachedBatchOwnerPtr = std::shared_ptr<DetachedBatchOwner>;
+    using BatchResponseCallback =
+      std::function<void(const adserver::grpc::BatchResponseItem&)>;
 
     void activate_object_() override;
     void deactivate_object_() override;
     void wait_object_() override;
 
+    void enqueue_serialized_request_(
+      const char* full_method,
+      std::string payload,
+      BatchResponseCallback callback);
     StreamHolderPtr make_stream_();
-    BatchingStreamBase* acquire_stream_();
+    BatchingStreamBase* try_acquire_stream_();
     void release_stream_(BatchingStreamBase* stream) noexcept;
-    void coalesce_loop_();
+    bool dispatch_batch_(
+      BatchingStreamBase::PendingBatch&& batch,
+      BatchingStreamBase* stream) noexcept;
+    void schedule_timing_coalesce_() noexcept;
+    void run_timing_coalesce_(Generics::Time deadline) noexcept;
+    bool coalesce_timed_batch_() noexcept;
+    bool dispatch_ready_batch_() noexcept;
+    void dispatch_deferred_batches_() noexcept;
+    void defer_dispatch_batch_(
+      BatchingStreamBase::PendingBatch&& batch) noexcept;
+    bool try_pop_deferred_dispatch_batch_(
+      BatchingStreamBase::PendingBatch& batch) noexcept;
+    std::vector<BatchingStreamBase::PendingBatch>
+      drain_deferred_dispatch_batches_() noexcept;
     void handle_stream_ready_(BatchingStreamBase* stream);
     void handle_stream_closed_(BatchingStreamBase* stream) noexcept;
     void handle_stream_drained_(
@@ -70,7 +103,7 @@ namespace AdServer::Grpc
       const StreamHolderPtr& stream_holder) noexcept;
     bool fail_pending_if_no_streams_() noexcept;
     void update_max_streams_(std::size_t streams_count) noexcept;
-    void release_stream_() noexcept;
+    void release_request_() noexcept;
     void deactivate_streams_() noexcept;
     void wait_streams_() noexcept;
     void clear_streams_() noexcept;
@@ -82,16 +115,23 @@ namespace AdServer::Grpc
     const std::size_t max_streams_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<grpc::Channel> channel_;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner_;
     BatchingQueuePtr batching_queue_;
+    DetachedBatchStoragePtr detached_batch_storage_;
     std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams_;
     std::vector<StreamHolderPtr> draining_streams_;
     std::vector<BatchingStreamPtr> deferred_streams_;
     mutable std::mutex streams_registry_lock_;
     std::deque<BatchingStreamBase*> available_streams_;
     mutable std::mutex streams_lock_;
-    std::condition_variable streams_cv_;
-    std::vector<std::thread> coalesce_threads_;
     AdServer::Grpc::InflightLimiter inflight_limiter_;
+    std::mutex coalesce_timer_lock_;
+    std::optional<Generics::Time> coalesce_timer_deadline_;
+    std::mutex deferred_dispatch_lock_;
+    std::deque<BatchingStreamBase::PendingBatch> deferred_dispatch_batches_;
+    ActivityGatePtr submission_gate_;
+    ActivityGatePtr timing_coalesce_gate_;
     std::atomic<std::size_t> outstanding_requests_{0};
     std::atomic<unsigned int> next_queue_index_{0};
     std::atomic<std::size_t> up_streams_{0};
@@ -107,73 +147,11 @@ namespace AdServer::Grpc
     Callback callback,
     const char* parse_error_message)
   {
-    if (!active())
-    {
-      if (callback)
-      {
-        callback(
-          NO_ACTIVE_BATCHING_STREAMS_STATUS,
-          {});
-      }
-      return;
-    }
-
-    if (options_.error_on_inflight_reaching)
-    {
-      if (!inflight_limiter_.try_acquire())
-      {
-        if (callback)
-        {
-          callback(
-            grpc::Status(
-              grpc::StatusCode::RESOURCE_EXHAUSTED,
-              "inflight limit reached"),
-            {});
-        }
-        return;
-      }
-    }
-    else
-    {
-      inflight_limiter_.acquire();
-    }
-
-    if (options_.max_outstanding_requests.has_value())
-    {
-      auto outstanding_requests =
-        outstanding_requests_.load(std::memory_order_acquire);
-      while (outstanding_requests < *options_.max_outstanding_requests)
-      {
-        if (outstanding_requests_.compare_exchange_strong(
-              outstanding_requests,
-              outstanding_requests + 1,
-              std::memory_order_acq_rel,
-              std::memory_order_acquire))
-        {
-          break;
-        }
-      }
-
-      if (outstanding_requests >= *options_.max_outstanding_requests)
-      {
-        inflight_limiter_.release();
-        if (callback)
-        {
-          callback(
-            grpc::Status(
-              grpc::StatusCode::UNAVAILABLE,
-              "max outstanding requests reached"),
-            {});
-        }
-        return;
-      }
-    }
-
-    const bool enqueued = batching_queue_->enqueue_request(
+    auto payload = request.SerializeAsString();
+    enqueue_serialized_request_(
       full_method,
-      request.SerializeAsString(),
+      std::move(payload),
       [
-        this,
         callback = std::move(callback),
         parse_error_message
       ](const auto& batch_response) mutable
@@ -191,7 +169,6 @@ namespace AdServer::Grpc
               grpc::Status(grpc::StatusCode::INTERNAL, parse_error_message),
               {});
           }
-          release_stream_();
           return;
         }
 
@@ -199,11 +176,6 @@ namespace AdServer::Grpc
         {
           callback(status, response);
         }
-        release_stream_();
       });
-    if (enqueued)
-    {
-      streams_cv_.notify_one();
-    }
   }
 }

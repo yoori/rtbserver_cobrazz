@@ -2,7 +2,6 @@
 #pragma once
 
 #include <memory>
-#include <functional>
 #include <atomic>
 #include <string>
 #include <set>
@@ -24,10 +23,12 @@
 
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Frontends/FrontendCommons/ValueTask.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
-#include <ChannelServerGrpc.grpc.pb.h>
+#include <ChannelServerGrpc.grpc-client.hpp>
+#include <UserBindServerGrpc.grpc-client.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
@@ -70,9 +71,8 @@ namespace AdServer::ImprTrack
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -84,11 +84,6 @@ namespace AdServer::ImprTrack
     shutdown() noexcept;
 
   protected:
-    FrontendCommons::RequestTask
-    handle_request_(
-      FCGI::HttpRequestHolder_var request_holder)
-      noexcept;
-
   private:
     struct TraceLevel
     {
@@ -129,6 +124,15 @@ namespace AdServer::ImprTrack
     typedef std::vector<Commons::TextTemplate_var>
       TextTemplateArray;
 
+    struct ResolveUserBindResult
+    {
+      AdServer::Commons::UserId user_id;
+      bool invalid_bind_operation = false;
+    };
+
+    using ResolveUserBindTask =
+      FrontendCommons::ValueTask<ResolveUserBindResult>;
+
   private:
     struct MatchScheduleState;
 
@@ -145,13 +149,10 @@ namespace AdServer::ImprTrack
       const AdServer::Commons::UserId& result_user_id,
       bool invalid_bind_operation) noexcept;
 
-    void
-    resolve_user_bind_(
+    ResolveUserBindTask
+    co_resolve_user_bind_(
       const RequestInfo& request_info,
-      const AdServer::Commons::UserId& input_user_id,
-      std::function<void(
-        const AdServer::Commons::UserId& result_user_id,
-        bool invalid_bind_operation)> finish)
+      const AdServer::Commons::UserId& input_user_id)
       noexcept;
 
     void
@@ -159,19 +160,28 @@ namespace AdServer::ImprTrack
       const std::shared_ptr<MatchScheduleState>& state)
       noexcept;
 
-    void
-    start_match_channels_(
+    FrontendCommons::RequestTask
+    co_match_request_(
       const std::shared_ptr<ImprTrackMatchRequestState>& state)
       noexcept;
 
-    void
-    start_history_match_(
-      const std::shared_ptr<ImprTrackMatchRequestState>& state)
+    FrontendCommons::RequestTask
+    co_verify_impression_(
+      adserver::campaign_svcs::campaign_manager::VerifyImpressionRequest
+        request,
+      std::shared_ptr<MatchScheduleState> match_schedule_state)
       noexcept;
 
-    void
-    process_match_request_(
-      const std::shared_ptr<ImprTrackMatchRequestState>& state)
+    FrontendCommons::RequestTask
+    co_confirm_user_freq_caps_(
+      adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest
+        request)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_consider_web_operation_(
+      adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+        request)
       noexcept;
 
     void
@@ -214,15 +224,15 @@ namespace AdServer::ImprTrack
     IPMapPtr ip_map_;
 
     // external services
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
-    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
-      channel_client_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
-      user_bind_client_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>
+      channel_client_coro_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
+      user_bind_client_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     FrontendCommons::FrontendWorkers_var match_workers_;

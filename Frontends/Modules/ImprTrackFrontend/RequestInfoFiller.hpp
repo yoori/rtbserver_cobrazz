@@ -11,9 +11,7 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-namespace AdServer
-{
-namespace ImprTrack
+namespace AdServer::ImprTrack
 {
   typedef std::list<AdServer::Commons::RequestId> RequestIdList;
 
@@ -199,11 +197,8 @@ namespace ImprTrack
     ParamProcessorMap cookie_processors_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace ImprTrack
+namespace AdServer::ImprTrack
 {
   inline
   const Logging::Logger_var&
@@ -211,5 +206,4 @@ namespace ImprTrack
   {
     return logger_;
   }
-}
 }

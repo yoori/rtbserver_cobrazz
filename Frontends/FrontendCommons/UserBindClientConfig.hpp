@@ -6,11 +6,13 @@
 
 namespace AdServer::UserInfoSvcs
 {
-  inline DistributedUserBindClientObjects
+  inline std::shared_ptr<UserBindDistributedGrpcClient>
   create_distributed_user_bind_client(
     const xsd::AdServer::Configuration::CommonFeConfigurationType&
       common_config,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner,
     Logging::Logger* logger)
   {
     AdServer::Grpc::BatchingOptions batching_options;
@@ -39,6 +41,7 @@ namespace AdServer::UserInfoSvcs
       user_bind_controller_refs,
       batching_options,
       std::move(grpc_executor),
+      std::move(coalesce_runner),
       logger);
   }
 }

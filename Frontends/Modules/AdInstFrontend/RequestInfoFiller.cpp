@@ -12,9 +12,7 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Instantiate
+namespace AdServer::Instantiate
 {
   typedef const String::AsciiStringManip::Char2Category<',', ' '>
     ListParameterSepCategory;
@@ -27,15 +25,13 @@ namespace Instantiate
     const char AD_INST_FRONTEND[] = "Instantiate::Frontend";
   }
 
-  namespace Request
+  namespace Request::Cookie
   {
-    namespace Cookie
-    {
       const String::SubString OPTIN("OPTED_IN");
       const String::SubString COHORT("ct");
     }
 
-    namespace Header
+  namespace Request::Header
     {
       const String::SubString REM_HOST(".remotehost");
       const String::SubString USER_AGENT("user-agent");
@@ -43,7 +39,7 @@ namespace Instantiate
       const String::AsciiStringManip::Caseless REFERER("referer");
     }
 
-    namespace Context
+  namespace Request::Context
     {
       const String::SubString GLOBAL_REQUEST_ID("rid");
       const String::SubString TEMPORARY_CLIENT_ID("tuid");
@@ -102,7 +98,6 @@ namespace Instantiate
       const String::SubString IP_ADDRESS("debug.ip");
       const String::AsciiStringManip::Caseless SECURE("secure");
     }
-  }
 
   class TestRequestParamProcessor: public RequestInfoParamProcessor
   {
@@ -631,7 +626,7 @@ namespace Instantiate
         {}
       }
 
-      if (!request_info.location.in() &&
+      if (!request_info.location &&
           !request_info.peer_ip.empty() &&
           ip_map_.get())
       {
@@ -644,7 +639,7 @@ namespace Instantiate
                geo_location,
                false))
           {
-            request_info.location = new FrontendCommons::Location();
+            request_info.location = std::make_shared<FrontendCommons::Location>();
             request_info.location->country = geo_location.country_code.str();
             geo_location.region.assign_to(request_info.location->region);
             request_info.location->city = geo_location.city.str();
@@ -755,4 +750,3 @@ namespace Instantiate
     }
   }
 } // Instantiate
-} // AdServer

@@ -9,10 +9,8 @@ namespace
     const char PASSBACK_FRONTEND[] = "Passback::Frontend";
   }
 
-  namespace Request
+  namespace Request::Parameters
   {
-    namespace Parameters
-    {
       const String::SubString DATA_PASSBACK_URL("dp");
       const String::SubString PASSBACK_URL("passback");
       const String::SubString PASSBACK_URL2("redir");
@@ -26,7 +24,6 @@ namespace
       /* debug params */
       const String::SubString DEBUG_TIME("debug-time");
     }
-  }
 
   namespace Tokens
   {
@@ -36,9 +33,7 @@ namespace
   const std::string TOKEN_SUBS_PREFIX("##");
 }
 
-namespace AdServer
-{
-namespace Passback
+namespace AdServer::Passback
 {
   namespace
   {
@@ -402,4 +397,3 @@ namespace Passback
     }
   }
 } /*Passback*/
-} /*AdServer*/

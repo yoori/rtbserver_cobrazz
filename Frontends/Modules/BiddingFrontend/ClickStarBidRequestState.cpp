@@ -3,9 +3,7 @@
 #include "KeywordFormatter.hpp"
 #include "ClickStarBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -14,19 +12,17 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString CONTENT_TYPE("Content-Type");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString JSON("application/json");
       }
 
-      namespace Json
+    namespace Response::Json
       {
         const String::SubString CPC_PRICE("bid");
         const String::SubString TITLE("title");
@@ -37,7 +33,6 @@ namespace Bidding
         const String::SubString TTL("ttl");
         const unsigned long TTL_VALUE = 86400;
       }
-    } // namespace Response
 
     const String::SubString CLICKSTAR_CLIENT("directnative");
     const String::SubString CLICKSTAR_SIZE("492x328");
@@ -282,5 +277,4 @@ namespace Bidding
       String::StringManip::XU_TEXT | String::StringManip::XU_PRESERVE_UTF8);
     response_ostr << escaped_str;
   }
-}
 }

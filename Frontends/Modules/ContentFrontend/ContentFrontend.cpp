@@ -3,6 +3,7 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <Commons/PathManip.hpp>
+#include <Frontends/FrontendCommons/TextTemplateTask.hpp>
 
 #include "ContentFrontend.hpp"
 
@@ -45,10 +46,8 @@ namespace Aspect
   const char CONTENT_FRONTEND[] = "ContentFrontend";
 }
 
-namespace Request
+namespace Request::Parameters
 {
-  namespace Parameters
-  {
     const String::AsciiStringManip::Caseless FILE("file");
     const String::AsciiStringManip::Caseless CLICK_URL("c");
     const String::AsciiStringManip::Caseless PRECLICK_URL("prck");
@@ -57,29 +56,28 @@ namespace Request
     const String::AsciiStringManip::Caseless CAMPAIGN_MANAGER_INDEX("cmi");
   }
 
-  namespace Header
+namespace Request::Header
   {
     const String::AsciiStringManip::Caseless SECURE("secure");
   }
 
-  const String::AsciiStringManip::CharCategory
-    RESOURCE_URL_SUFFIX_CATEGORY(
-      String::AsciiStringManip::ALPHA_NUM,
-      String::AsciiStringManip::CharCategory("/"));
+namespace Request
+{
+    const String::AsciiStringManip::CharCategory
+      RESOURCE_URL_SUFFIX_CATEGORY(
+        String::AsciiStringManip::ALPHA_NUM,
+        String::AsciiStringManip::CharCategory("/"));
 }
 
-namespace Response
+namespace Response::Header
 {
-  namespace Header
-  {
     const String::SubString CONTENT_TYPE("Content-Type");
   }
 
-  namespace Type
+namespace Response::Type
   {
     const String::SubString TEXT_HTML("text/html");
   }
-}
 
 namespace Tokens
 {
@@ -102,10 +100,10 @@ namespace Tokens
 namespace AdServer
 {
   ContentFrontend::CreativesUpdater::CreativesUpdater(
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager)
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro)
     noexcept
-    : campaign_manager_(std::move(campaign_manager))
+    : campaign_manager_coro_(std::move(campaign_manager_coro))
   {}
 
   ContentFrontend::CreativesUpdater::~CreativesUpdater() noexcept = default;
@@ -119,49 +117,55 @@ namespace AdServer
   {
     try
     {
-      auto request = std::make_shared<
-        adserver::campaign_svcs::campaign_manager::GetFileRequest>();
-      request->set_file_name(file);
+      adserver::campaign_svcs::campaign_manager::GetFileRequest request;
+      request.set_file_name(file);
       if(service_index)
       {
-        request->set_service_index(service_index);
+        request.set_service_index(service_index);
       }
 
-      campaign_manager_->get_file(
-        *request,
-        [request, callback = std::move(callback)](
-          const grpc::Status& status,
-          const adserver::campaign_svcs::campaign_manager::
-            GetFileResponse& response) mutable
-        {
-          try
-          {
-            if(!status.ok())
-            {
-              callback(Holder());
-              return;
-            }
-
-            String::SubString file_body(
-              response.file().data(),
-              response.file().size());
-            Generics::Time now = Generics::Time::get_time_of_day();
-            callback(new ConfigType::TextTemplateHolder(
-              Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
-              now,
-              now,
-              file_body.size()));
-          }
-          catch(...)
-          {
-            callback(Holder());
-          }
-        });
+      co_far_update_(
+        std::move(request),
+        std::move(callback)).start_detached(nullptr);
     }
     catch(...)
     {
       callback(Holder());
     }
+  }
+
+  FrontendCommons::RequestTask
+  ContentFrontend::CreativesUpdater::co_far_update_(
+    adserver::campaign_svcs::campaign_manager::GetFileRequest request,
+    ConfigType::UpdateCallback callback)
+    noexcept
+  {
+    try
+    {
+      auto result = co_await campaign_manager_coro_->get_file(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        callback(Holder());
+        co_return FrontendCommons::RequestResult::written();
+      }
+
+      String::SubString file_body(
+        result.response.file().data(),
+        result.response.file().size());
+      Generics::Time now = Generics::Time::get_time_of_day();
+      callback(new ConfigType::TextTemplateHolder(
+        Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
+        now,
+        now,
+        file_body.size()));
+    }
+    catch(...)
+    {
+      callback(Holder());
+    }
+
+    co_return FrontendCommons::RequestResult::written();
   }
 
   /**
@@ -252,15 +256,18 @@ namespace AdServer
       auto campaign_manager = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
           FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
-      campaign_manager_ = campaign_manager;
+      campaign_manager_coro_ = std::make_shared<
+        AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+          campaign_manager,
+          workers_);
       add_child_object(campaign_manager);
 
       template_files_ = new Commons::TextTemplateCache(
         config_->TemplateCache().size(),
         Generics::Time(config_->TemplateCache().timeout()),
-        Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-          Generics::Time::ONE_SECOND,
-          new CreativesUpdater(campaign_manager_)));
+          Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
+            Generics::Time::ONE_SECOND,
+            new CreativesUpdater(campaign_manager_coro_)));
 
       activate_object();
     }
@@ -279,7 +286,7 @@ namespace AdServer
     {
       deactivate_object();
       wait_object();
-      campaign_manager_.reset();
+      campaign_manager_coro_.reset();
 
       log(String::SubString(
           "ContentFrontend::shutdown: frontend terminated"),
@@ -335,12 +342,10 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::handle_request_noparams_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  ContentFrontend::co_handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
     auto result = co_await handle_request_noparams_(std::move(request_holder));
     co_return std::move(result);
@@ -411,24 +416,22 @@ namespace AdServer
 
     request.set_params(std::move(params));
 
-    auto result = co_await handle_request_(std::move(request_holder));
+    auto result = co_await co_process_request_(std::move(request_holder));
     co_return std::move(result);
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  ContentFrontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
-    auto result = co_await handle_request_(std::move(request_holder));
+    auto result = co_await co_process_request_(std::move(request_holder));
     co_return std::move(result);
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::handle_request_(
+  ContentFrontend::co_process_request_(
     FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
@@ -542,46 +545,12 @@ namespace AdServer
 
       file = config_->TemplateCache().root() + file;
 
-      struct TemplateAwaiter
-      {
-        ContentFrontend* frontend;
-        std::string file;
-        std::string campaign_manager_index;
-        std::coroutine_handle<> handle{};
-        Commons::TextTemplate_var templ{};
-
-        bool await_ready() const noexcept
-        {
-          return false;
-        }
-
-        void await_suspend(std::coroutine_handle<> h) noexcept
-        {
-          handle = h;
-          frontend->template_files_->get_async(
-            file,
-            campaign_manager_index.c_str(),
-            [this](Commons::TextTemplate_var result) mutable
-            {
-              templ = std::move(result);
-              frontend->workers_->post([this]() mutable
-              {
-                handle.resume();
-              });
-            });
-        }
-
-        Commons::TextTemplate_var await_resume() noexcept
-        {
-          return std::move(templ);
-        }
-      };
-
-      TemplateAwaiter template_awaiter{
-        this,
-        file,
-        campaign_manager_index};
-      Commons::TextTemplate_var templ = co_await std::move(template_awaiter);
+      Commons::TextTemplate_var templ =
+        co_await FrontendCommons::co_get_text_template(
+          template_files_,
+          workers_,
+          std::move(file),
+          std::move(campaign_manager_index));
 
       if(!templ)
       {

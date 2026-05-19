@@ -23,15 +23,17 @@
 #include <HTTP/HTTPCookie.hpp>
 
 #include <Commons/ExecutorPool.hpp>
-#include <ChannelServerGrpc.grpc.pb.h>
+#include <ChannelServerGrpc.grpc-client.hpp>
+#include <CampaignManagerGrpc.grpc-client.hpp>
+#include <UserBindServerGrpc.grpc-client.hpp>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
+#include <Frontends/FrontendCommons/ValueTask.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <CampaignManagerGrpc.grpc.pb.h>
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
-#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -43,13 +45,13 @@
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class AdFrontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -94,15 +96,9 @@ namespace AdServer
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept override;
-
-    FrontendCommons::RequestTask
-    handle_request_(
+    co_handle_request(
       FCGI::HttpRequestHolder_var request_holder)
-      noexcept;
+      noexcept override;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -172,10 +168,31 @@ namespace AdServer
       const RequestInfo& request_info)
       noexcept;
 
-    void
-    acquire_ad_async_(
-      const std::shared_ptr<RequestContext>& context,
-      std::function<void(bool)> callback)
+    using BoolTask = FrontendCommons::ValueTask<bool>;
+
+    struct MergeUsersResult
+    {
+      bool success = true;
+      Generics::Time merged_last_request = Generics::Time::ZERO;
+      std::string error_message;
+    };
+
+    using MergeUsersTask = FrontendCommons::ValueTask<MergeUsersResult>;
+
+    struct UserInfoMatcherResult
+    {
+      std::shared_ptr<
+        adserver::user_info_svcs::user_info_manager::MatchResponse>
+          history_match_result;
+      bool profiling_available = false;
+    };
+
+    using UserInfoMatcherTask =
+      FrontendCommons::ValueTask<UserInfoMatcherResult>;
+
+    BoolTask
+    co_acquire_ad_(
+      const std::shared_ptr<RequestContext>& context)
       noexcept;
 
     FrontendCommons::RequestResult
@@ -205,8 +222,8 @@ namespace AdServer
         request_params_out)
       /*throw(Exception)*/;
 
-    void
-    request_campaign_manager_async_(
+    BoolTask
+    co_request_campaign_manager_(
       PassbackInfo& passback_info,
       bool& log_as_test,
       adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
@@ -222,8 +239,7 @@ namespace AdServer
       bool profiling_available,
       const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
         ccg_keywords,
-      DebugSink* debug_sink,
-      std::function<void(bool)> callback)
+      DebugSink* debug_sink)
       noexcept;
 
     void
@@ -235,32 +251,25 @@ namespace AdServer
         src_ccg_keywords)
       noexcept;
 
-    void
-    merge_users_async_(
-      const std::shared_ptr<RequestContext>& context,
-      std::function<void(bool, Generics::Time, std::string)> callback)
+    MergeUsersTask
+    co_merge_users_(
+      const std::shared_ptr<RequestContext>& context)
       noexcept;
 
-    void
-    match_triggers_async_(
+    BoolTask
+    co_match_triggers_(
       const std::shared_ptr<RequestContext>& context,
-      const std::shared_ptr<
-        adserver::channel_svcs::channel_server::MatchRequest>& request,
+      adserver::channel_svcs::channel_server::MatchRequest request,
       std::shared_ptr<
-        adserver::channel_svcs::channel_server::MatchResponse> response,
-      std::function<void(bool)> callback)
+        adserver::channel_svcs::channel_server::MatchResponse> response)
       noexcept;
 
-    void
-    acquire_user_info_matcher_async_(
+    UserInfoMatcherTask
+    co_acquire_user_info_matcher_(
       const std::shared_ptr<RequestContext>& context,
       std::shared_ptr<
         adserver::channel_svcs::channel_server::MatchResponse> trigger_matching_result,
-      bool trigger_matching_result_present,
-      std::function<void(
-        std::shared_ptr<
-          adserver::user_info_svcs::user_info_manager::MatchResponse>,
-        bool)> callback)
+      bool trigger_matching_result_present)
       noexcept;
 
     void
@@ -269,6 +278,22 @@ namespace AdServer
       const RequestInfo& request_info,
       const adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
         campaign_select_result)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_user_info_post_match_(
+      adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest
+        request)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_verify_opt_operation_(
+      adserver::campaign_svcs::campaign_manager::VerifyOptOperationRequest
+        request)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_update_colocation_flags_()
       noexcept;
 
     void
@@ -325,19 +350,19 @@ namespace AdServer
     FrontendCommons::CookieNameSet remove_cookies_;
 
     /* external services */
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
-    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
-      channel_client_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>
+      channel_client_coro_;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
-      user_bind_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
+      user_bind_client_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
 
     AdFrontendStat_var stats_;
   };

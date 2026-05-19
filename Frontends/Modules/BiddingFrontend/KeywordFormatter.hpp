@@ -7,9 +7,7 @@
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace MatchKeywords
   {
@@ -316,5 +314,4 @@ namespace Bidding
     const static std::string CUSTOM_KEYWORD_SEPARATOR;
     const static std::string RTB_PREFIX;
   };
-}
 }

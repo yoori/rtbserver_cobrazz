@@ -24,9 +24,11 @@
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
+#include <Frontends/FrontendCommons/ValueTask.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
-#include <ChannelServerGrpc.grpc.pb.h>
+#include <ChannelServerGrpc.grpc-client.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
+#include <UserBindServerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
@@ -38,13 +40,13 @@
 
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class UserBindFrontend;
   class UserBindMatchRequestState;
 
@@ -80,9 +82,8 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -109,13 +110,17 @@ namespace AdServer
       AdServer::Commons::UserId result_user_id;
     };
 
+    struct ProcessRequestResult
+    {
+      int status = 500;
+      BindResult bind_result;
+    };
+
+    using ProcessRequestTask =
+      FrontendCommons::ValueTask<ProcessRequestResult>;
+
   protected:
     virtual ~UserBindFrontend() noexcept;
-
-    FrontendCommons::RequestTask
-    handle_request_(
-      FCGI::HttpRequestHolder_var request_holder)
-      noexcept;
 
   private:
     struct TraceLevel
@@ -172,47 +177,14 @@ namespace AdServer
     void
     parse_configs_() /*throw(Exception)*/;
 
-    using ProcessRequestCallback = std::function<void(int, BindResult)>;
-    using GetUserIdCallback = std::function<void(
-      const grpc::Status&,
-      const adserver::user_info_svcs::user_bind::GetUserIdResponse&)>;
-    using AddUserIdCallback = std::function<void(
-      const grpc::Status&,
-      const adserver::user_info_svcs::user_bind::AddUserIdResponse&)>;
-    using AddBindRequestCallback = std::function<void(
-      const grpc::Status&,
-      const adserver::user_info_svcs::user_bind::AddBindRequestResponse&)>;
-
-    void
-    process_request_async_(
+    ProcessRequestTask
+    co_process_request_(
       UserBind::RequestInfo_var request_info,
-      std::string dns_bind_request_id,
-      ProcessRequestCallback callback)
+      std::string dns_bind_request_id)
       noexcept;
 
     bool
     has_user_bind_client_() const noexcept;
-
-    void
-    get_user_id_(
-      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
-      GetUserIdCallback callback)
-      noexcept;
-
-    void
-    add_user_id_(
-      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
-      AddUserIdCallback callback)
-      noexcept;
-
-    void
-    add_bind_request_(
-      const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
-      AddBindRequestCallback callback)
-      noexcept;
-
-    void
-    post_request_stage_(std::function<void()> callback) noexcept;
 
     uint32_t
     calc_yandex_sign_(
@@ -256,7 +228,7 @@ namespace AdServer
       const String::SubString& cohort,
       const String::SubString& referer,
       unsigned long colo_id,
-      const FrontendCommons::Location* location,
+      FrontendCommons::Location_var location,
       const String::SubString& source)
       noexcept;
 
@@ -269,7 +241,7 @@ namespace AdServer
       const String::SubString& cohort,
       const String::SubString& referer,
       unsigned long colo_id,
-      const FrontendCommons::Location* location,
+      FrontendCommons::Location_var location,
       const String::SubString& source)
       noexcept;
 
@@ -287,10 +259,16 @@ namespace AdServer
       const String::SubString& source)
       const noexcept;
 
-    void handle_user_channels_request_async_(
+    FrontendCommons::RequestTask
+    co_handle_user_channels_request_(
       UserBind::RequestInfo_var request_info,
-      FCGI::HttpResponse_var response,
-      std::function<void(int)> callback)
+      FCGI::HttpResponse_var response)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_consider_web_operation_(
+      adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+        request)
       noexcept;
 
   private:
@@ -310,16 +288,16 @@ namespace AdServer
 
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
-      user_bind_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
+      user_bind_client_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
-    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
-      channel_client_;
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>
+      channel_client_coro_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
 

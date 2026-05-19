@@ -2,9 +2,7 @@
 
 #include "BidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   //
   // GoogleBidRequestState
@@ -57,5 +55,4 @@ namespace Bidding
     //Google::BidResponse bid_response_;
     GoogleAdSlotContextArray ad_slots_context_;
   };
-}
 }

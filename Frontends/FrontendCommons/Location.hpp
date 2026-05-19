@@ -1,10 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include <String/SubString.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
-#include <ReferenceCounting/SmartPtr.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
@@ -22,9 +21,9 @@ namespace FrontendCommons
     CountrySepCategory COUNTRY_SEP_SYMBOLS;
   }
 
-  struct Location: public ReferenceCounting::AtomicImpl
+  struct Location
   {
-    static ReferenceCounting::SmartPtr<Location>
+    static std::shared_ptr<Location>
     parse(const String::SubString& value) noexcept;
 
     static bool
@@ -41,17 +40,13 @@ namespace FrontendCommons
     std::string country;
     std::string region;
     std::string city;
-
-  protected:
-    virtual
-    ~Location() noexcept {}
   };
 
-  typedef ReferenceCounting::SmartPtr<Location> Location_var;
+  typedef std::shared_ptr<Location> Location_var;
 
-  struct CoordLocation: public ReferenceCounting::AtomicImpl
+  struct CoordLocation
   {
-    static ReferenceCounting::SmartPtr<CoordLocation>
+    static std::shared_ptr<CoordLocation>
     parse(const String::SubString& value) noexcept;
 
     AdServer::CampaignSvcs::CoordDecimal longitude;
@@ -59,7 +54,7 @@ namespace FrontendCommons
     AdServer::CampaignSvcs::AccuracyDecimal accuracy;
   };
 
-  typedef ReferenceCounting::SmartPtr<CoordLocation> CoordLocation_var;
+  typedef std::shared_ptr<CoordLocation> CoordLocation_var;
 }
 
 namespace FrontendCommons
@@ -127,7 +122,7 @@ namespace FrontendCommons
         }
       }
 
-      Location_var location = new Location();
+      Location_var location = std::make_shared<Location>();
       location->country.swap(country);
       location->region.swap(region);
       location->city.swap(city);
@@ -159,7 +154,7 @@ namespace FrontendCommons
     {
       try
       {
-        CoordLocation_var coord_location = new CoordLocation();
+        CoordLocation_var coord_location = std::make_shared<CoordLocation>();
 
         String::SubString::SizeType longitude_end = value.find('/', latitude_end + 1);
         coord_location->latitude = AdServer::Commons::extract_decimal<

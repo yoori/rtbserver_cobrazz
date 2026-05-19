@@ -22,11 +22,13 @@
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
+#include <Frontends/FrontendCommons/ValueTask.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
-#include <ChannelServerGrpc.grpc.pb.h>
+#include <ChannelServerGrpc.grpc-client.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
+#include <UserBindServerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
@@ -85,15 +87,9 @@ namespace AdServer::Action
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept override;
-
-    FrontendCommons::RequestTask
-    handle_request_(
+    co_handle_request(
       FCGI::HttpRequestHolder_var request_holder)
-      noexcept;
+      noexcept override;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -210,12 +206,40 @@ namespace AdServer::Action
       const String::SubString& referer)
       noexcept;
 
-    void
-    resolve_user_id_(
-      const String::SubString& external_user_id,
-      const Commons::UserId& current_user_id,
-      const Generics::Time& time,
-      std::function<void(bool, Commons::UserId)> callback)
+    struct ResolveUserIdResult
+    {
+      bool success = false;
+      Commons::UserId user_id;
+    };
+
+    using ResolveUserIdTask =
+      FrontendCommons::ValueTask<ResolveUserIdResult>;
+
+    ResolveUserIdTask
+    co_resolve_user_id_(
+      std::string external_user_id,
+      Commons::UserId current_user_id,
+      Generics::Time time)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_trigger_match_(
+      unsigned long conv_id,
+      Generics::Time now,
+      AdServer::Commons::UserId user_id,
+      std::string referer)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_add_user_id_(
+      std::string external_user_id,
+      Commons::UserId user_id,
+      Generics::Time time)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_action_taken_(
+      adserver::campaign_svcs::campaign_manager::ActionTakenRequest request)
       noexcept;
 
     void
@@ -241,10 +265,10 @@ namespace AdServer::Action
     CommonModule_var common_module_;
 
     std::unique_ptr<AdServer::Action::RequestInfoFiller> request_info_filler_;
-    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
-      channel_client_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_client_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>
+      channel_client_coro_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
     CookieManagerPtr cookie_manager_;
 
     IPMapPtr ip_map_;
@@ -257,10 +281,10 @@ namespace AdServer::Action
     Algs::AtomicInt match_task_count_;
 
     /* external services */
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
-      user_bind_client_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
+      user_bind_client_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };

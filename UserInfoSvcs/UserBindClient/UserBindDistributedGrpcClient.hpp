@@ -10,6 +10,7 @@
 
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <UserBindServerGrpc.grpc-client.hpp>
 
 namespace AdServer::UserInfoSvcs
@@ -27,7 +28,9 @@ namespace AdServer::UserInfoSvcs
       const UserBindControllerRefs& user_bind_controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
-      Logging::Logger* logger);
+      Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner = {});
 
     ~UserBindDistributedGrpcClient() noexcept override;
 

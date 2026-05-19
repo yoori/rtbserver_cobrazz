@@ -31,13 +31,13 @@
 #include "OptoutFrontendStat.hpp"
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class OptoutFrontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -62,9 +62,8 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -109,7 +108,7 @@ namespace AdServer
     parse_config_() /*throw(Exception)*/;
 
     int
-    handle_request_(
+    process_request_(
       const FCGI::HttpRequest& request,
       HttpResponse& response)
       noexcept;
@@ -133,6 +132,12 @@ namespace AdServer
       const std::string& oo_status_undef_redirect_url,
       HttpResponse& response) noexcept;
 
+    FrontendCommons::RequestTask
+    co_verify_opt_operation_(
+      adserver::campaign_svcs::campaign_manager::VerifyOptOperationRequest
+        request)
+      noexcept;
+
   private:
     /* configuration */
     std::string config_file_;
@@ -144,9 +149,8 @@ namespace AdServer
 
     CookieManagerPtr cookie_manager_;
     OptOutFrontendStat_var stats_;
-
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
 

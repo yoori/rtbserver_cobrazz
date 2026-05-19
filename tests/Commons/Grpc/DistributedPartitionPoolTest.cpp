@@ -104,6 +104,7 @@ namespace
     TestRef(
       const std::string& endpoint,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor>,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>,
       AdServer::Grpc::BatchingOptions)
       : object_(current_controller->object(endpoint))
     {
@@ -145,6 +146,7 @@ namespace
       std::vector<std::string>{"controller-0", "controller-1"},
       AdServer::Grpc::BatchingOptions(),
       std::shared_ptr<AdServer::Grpc::GrpcExecutor>(),
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>(),
       nullptr,
       [controller](const std::string& url)
         -> std::optional<Pool::EndpointChunksList>

@@ -29,11 +29,14 @@ namespace AdServer::ChannelSvcs
     ClientHolder(
       std::string endpoint_val,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner,
       AdServer::Grpc::BatchingOptions batching_options)
       : endpoint(std::move(endpoint_val)),
         client(std::make_shared<Client>(
           endpoint,
           std::move(grpc_executor),
+          std::move(coalesce_runner),
           std::move(batching_options)))
     {
       client->activate_object();
@@ -119,10 +122,13 @@ namespace AdServer::ChannelSvcs
   ChannelDistributedGrpcClient::ChannelDistributedGrpcClient(
     const ChannelControllerRefs& channel_controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner)
     : channel_controller_refs_(channel_controller_refs),
       batching_options_(std::move(batching_options)),
       grpc_executor_(std::move(grpc_executor)),
+      coalesce_runner_(std::move(coalesce_runner)),
       pool_timeout_(DEFAULT_POOL_TIMEOUT),
       resolve_period_(DEFAULT_RESOLVE_PERIOD),
       callback_(new Logging::ActiveObjectCallbackImpl(
@@ -135,6 +141,16 @@ namespace AdServer::ChannelSvcs
     {
       throw Exception(
         "ChannelDistributedGrpcClient: empty ChannelController2 refs");
+    }
+
+    if (!coalesce_runner_)
+    {
+      coalesce_runner_ =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          callback_,
+          std::make_shared<boost::asio::io_service>(),
+          std::max<unsigned long>(1, batching_options_.workers_number));
+      add_child_object(coalesce_runner_);
     }
 
     add_child_object(task_runner_);
@@ -447,6 +463,7 @@ namespace AdServer::ChannelSvcs
       client_holder = std::make_shared<ClientHolder>(
         endpoint,
         grpc_executor_,
+        coalesce_runner_,
         batching_options_);
       weak_client_holder = client_holder;
     }

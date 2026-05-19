@@ -11,24 +11,19 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString DEBUG_INFO("Debug-Info");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString TEXT_PLAIN("text/plain");
       }
-    }
 
     namespace Debug
     {
@@ -230,7 +225,7 @@ namespace Bidding
       "log_as_test = " << request_params.common_info.log_as_test << sep_ <<
       "location = ";
 
-    if(request_info.location.in())
+    if(request_info.location)
     {
       debug_info_str_ << request_info.location->country << "/" <<
         request_info.location->region << "/" <<
@@ -805,5 +800,4 @@ namespace Bidding
 
     debug_info_str_ << sep_;
   }
-}
 }

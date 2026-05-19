@@ -2,21 +2,18 @@
 
 namespace AdServer::ChannelSvcs
 {
-  DistributedChannelClientObjects
+  std::shared_ptr<ChannelDistributedGrpcClient>
   create_distributed_channel_client(
     const ChannelDistributedGrpcClient::ChannelControllerRefs&
       channel_controller_refs,
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner)
   {
-    DistributedChannelClientObjects result;
-    auto client = std::make_shared<ChannelDistributedGrpcClient>(
+    return std::make_shared<ChannelDistributedGrpcClient>(
       channel_controller_refs,
       AdServer::Grpc::BatchingOptions(),
-      std::move(grpc_executor));
-
-    result.client = client;
-    result.active_object = client;
-
-    return result;
+      std::move(grpc_executor),
+      std::move(coalesce_runner));
   }
 }

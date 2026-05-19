@@ -11,9 +11,7 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   struct RequestInfo;
 
@@ -135,5 +133,4 @@ namespace Bidding
     DebugInfo require_debug_info_ = DI_NONE;
     std::ostringstream debug_info_str_;
   };
-}
 }

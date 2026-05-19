@@ -24,9 +24,7 @@
 
 #include "OptoutFrontendStat.hpp"
 
-namespace AdServer
-{
-namespace OptOut
+namespace AdServer::OptOut
 {
   struct RequestInfo
   {
@@ -109,4 +107,3 @@ namespace OptOut
     ParamProcessorMap cookie_processors_;
   };
 } // OptOut
-} /*AdServer*/

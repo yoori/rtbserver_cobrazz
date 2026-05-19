@@ -129,15 +129,13 @@ namespace FrontendCommons
   {
   public:
     virtual RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request)
       noexcept = 0;
 
     virtual RequestTask
-    handle_request_noparams_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request_noparams(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     void
@@ -154,40 +152,6 @@ namespace FrontendCommons
 
   protected:
     ~CoroFrontendInterface() noexcept override = default;
-  };
-
-  class NoCoroFrontendAdapter final :
-    public virtual CoroFrontendInterface,
-    public virtual ReferenceCounting::AtomicImpl
-  {
-  public:
-    explicit NoCoroFrontendAdapter(FrontendInterface* frontend);
-
-    bool
-    will_handle(const String::SubString& uri) noexcept override;
-
-    RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept override;
-
-    RequestTask
-    handle_request_noparams_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept override;
-
-    void
-    init() override;
-
-    void
-    shutdown() noexcept override;
-
-  private:
-    ~NoCoroFrontendAdapter() noexcept override = default;
-
-    Frontend_var frontend_;
   };
 
   typedef ReferenceCounting::SmartPtr<CoroFrontendInterface> CoroFrontend_var;

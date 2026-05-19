@@ -6,12 +6,15 @@ namespace AdServer::Grpc
   DistributedPartitionPool<ClientType>::RefHolder::RefHolder(
     std::string endpoint_val,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner,
     AdServer::Grpc::BatchingOptions batching_options)
     : endpoint(std::move(endpoint_val)),
       name(endpoint),
       client(std::make_shared<Client>(
         endpoint,
         std::move(grpc_executor),
+        std::move(coalesce_runner),
         std::move(batching_options)))
   {
     client->activate_object();
@@ -93,6 +96,8 @@ namespace AdServer::Grpc
     ControllerRefList controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner,
     Logging::Logger* logger,
     ResolvePartition resolve_partition,
     PartitionIndex partition_index,
@@ -107,6 +112,7 @@ namespace AdServer::Grpc
         name_)),
       batching_options_(std::move(batching_options)),
       grpc_executor_(std::move(grpc_executor)),
+      coalesce_runner_(std::move(coalesce_runner)),
       resolver_(std::move(resolve_partition)),
       partition_index_(std::move(partition_index)),
       chunk_index_(std::move(chunk_index)),
@@ -119,6 +125,16 @@ namespace AdServer::Grpc
         controller_refs_.size() + 1)),
       logger_(ReferenceCounting::add_ref(logger))
   {
+    if (!coalesce_runner_)
+    {
+      coalesce_runner_ =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          callback_,
+          std::make_shared<boost::asio::io_service>(),
+          std::max<unsigned long>(1, batching_options_.workers_number));
+      add_child_object(coalesce_runner_);
+    }
+
     add_child_object(task_runner_);
     partition_holders_.reserve(controller_refs_.size());
     for (std::size_t i = 0; i < controller_refs_.size(); ++i)
@@ -569,6 +585,7 @@ namespace AdServer::Grpc
       ref_holder = std::make_shared<RefHolder>(
         endpoint,
         grpc_executor_,
+        coalesce_runner_,
         batching_options_);
       weak_ref_holder = ref_holder;
     }

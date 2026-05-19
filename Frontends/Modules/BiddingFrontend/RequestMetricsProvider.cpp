@@ -1,8 +1,6 @@
 #include "RequestMetricsProvider.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
 
 RequestMetricsProvider::RequestMetricsProvider()
@@ -78,5 +76,4 @@ void RequestMetricsProvider::add_channel_server_request() noexcept
   counters_[static_cast<std::size_t>(RequestType::ChannelServer)].fetch_add(1l, std::memory_order_relaxed);
 }
 
-} // namespace Bidding
-} // namespace AdServer
+} // namespace AdServer::Bidding

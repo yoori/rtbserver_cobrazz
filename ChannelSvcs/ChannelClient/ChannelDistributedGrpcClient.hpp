@@ -17,6 +17,7 @@
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/RefPool.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <ChannelServerGrpc.grpc-client.hpp>
 
 namespace AdServer::ChannelSvcs
@@ -33,7 +34,9 @@ namespace AdServer::ChannelSvcs
     ChannelDistributedGrpcClient(
       const ChannelControllerRefs& channel_controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor);
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner = {});
 
     ~ChannelDistributedGrpcClient() noexcept override = default;
 
@@ -80,6 +83,8 @@ namespace AdServer::ChannelSvcs
     const ChannelControllerRefs channel_controller_refs_;
     const AdServer::Grpc::BatchingOptions batching_options_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner_;
     const Generics::Time pool_timeout_;
     const Generics::Time resolve_period_;
 

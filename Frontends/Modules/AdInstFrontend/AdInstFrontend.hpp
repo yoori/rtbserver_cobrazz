@@ -29,14 +29,13 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/ValueTask.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Instantiate
+namespace AdServer::Instantiate
 {
   namespace Configuration
   {
@@ -84,15 +83,13 @@ namespace Instantiate
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     FrontendCommons::RequestTask
-    handle_request_noparams_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request_noparams(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -125,7 +122,7 @@ namespace Instantiate
 
   private:
     FrontendCommons::RequestTask
-    handle_request_(
+    co_process_request_(
       FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
@@ -137,33 +134,33 @@ namespace Instantiate
     void
     parse_configs_() /*throw(Exception)*/;
 
-    using MergeUsersCallback =
-      std::function<void(bool, std::string)>;
+    struct MergeUsersResult
+    {
+      bool success = true;
+      std::string error_message;
+    };
 
-    using InstantiateCallback =
-      std::function<void(int)>;
+    using MergeUsersTask = FrontendCommons::ValueTask<MergeUsersResult>;
+    using InstantiateTask = FrontendCommons::ValueTask<int>;
 
-    void
-    merge_users_async_(
-      const RequestInfo& request_info,
-      MergeUsersCallback callback)
+    MergeUsersTask
+    co_merge_users_(
+      const RequestInfo& request_info)
       noexcept;
 
-    void
-    instantiate_click_async_(
+    InstantiateTask
+    co_instantiate_click_(
       FCGI::HttpResponse_var response,
       const RequestInfo& request_info,
       const adserver::campaign_svcs::campaign_manager::InstantiateAdResult&
-        inst_ad_result,
-      InstantiateCallback callback)
+        inst_ad_result)
       noexcept;
 
-    void
-    instantiate_ad_async_(
+    InstantiateTask
+    co_instantiate_ad_(
       FCGI::HttpResponse_var response,
       const RequestInfo& request_info,
-      const Generics::SubStringHashAdapter& instantiate_creative_type,
-      InstantiateCallback callback)
+      const Generics::SubStringHashAdapter& instantiate_creative_type)
       noexcept;
 
     void
@@ -186,22 +183,18 @@ namespace Instantiate
 
     /* external services */
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_client_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
 }
-}
 
 // Inlines
-namespace AdServer
-{
-namespace Instantiate
+namespace AdServer::Instantiate
 {
   inline
   Frontend::~Frontend() noexcept
   {}
-}
 }

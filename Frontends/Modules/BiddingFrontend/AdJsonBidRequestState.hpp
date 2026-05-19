@@ -3,9 +3,7 @@
 #include <iostream>
 #include "BidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   //
   // AdJsonBidRequestState
@@ -88,5 +86,4 @@ namespace Bidding
   private:
     std::string uri_;
   };
-}
 }

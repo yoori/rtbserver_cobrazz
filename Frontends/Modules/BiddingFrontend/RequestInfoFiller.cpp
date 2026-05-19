@@ -31,10 +31,8 @@ namespace Aspect
   const char BIDDING_FRONTEND[] = "BiddingFrontend";
 }
 
-namespace Request
+namespace Request::Context
 {
-  namespace Context
-  {
     const String::SubString PUBLISHER_ACCOUNT_ID("aid");
     const String::SubString PUBLISHER_SITE_ID("sid");
     const String::SubString SOURCE_ID("src");
@@ -45,7 +43,7 @@ namespace Request
     const String::SubString REQUIRE_DEBUG_INFO("require-debug-info");
   }
 
-  namespace Debug
+namespace Request::Debug
   {
     const String::SubString EXPECTED_CCG("debug.ccg");
     const String::SubString CURRENT_TIME("debug.time");
@@ -58,7 +56,7 @@ namespace Request
     }
   }
 
-  namespace OpenRtb
+namespace Request::OpenRtb
   {
     const std::string STABLE_SOURCE("stable");
 
@@ -362,7 +360,6 @@ namespace Request
     };
   }
 
-}
 
 namespace CreativeCategory
 {
@@ -382,10 +379,7 @@ namespace AppStore
   const String::SubString STORE_HOST("itunes.apple.com");
 }
 
-namespace AdServer
-{
-
-namespace Commons
+namespace AdServer::Commons
 {
   std::ostream&
   operator <<(std::ostream& os, const Optional<long>& ov)
@@ -395,7 +389,7 @@ namespace Commons
   }
 }
 
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace Google
   {
@@ -5415,7 +5409,7 @@ namespace Bidding
     const
     noexcept
   {
-    if(request_info.location.in())
+    if(request_info.location)
     {
       request_params.common_info.location.resize(1);
       CampaignManager::assign_string(request_params.common_info.location[0].country, request_info.location->country);
@@ -5963,5 +5957,4 @@ namespace Bidding
 
     return std::string();
   }
-}
 }

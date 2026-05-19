@@ -151,6 +151,12 @@ namespace AdServer
       add_child_object(task_runner_);
       scheduler_ = new Generics::Planner(callback());
       add_child_object(scheduler_);
+      grpc_coalesce_runner_ =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          callback(),
+          std::make_shared<boost::asio::io_service>(),
+          common_config->grpc_executor_threads());
+      add_child_object(grpc_coalesce_runner_);
 
       const CommonFeConfiguration::UserIdConfig_type&
         user_id_config = common_config->UserIdConfig();

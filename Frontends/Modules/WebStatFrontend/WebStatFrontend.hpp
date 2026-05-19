@@ -26,9 +26,7 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace WebStat
+namespace AdServer::WebStat
 {
   class Frontend:
     private FrontendCommons::HTTPExceptions,
@@ -52,9 +50,8 @@ namespace WebStat
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -105,8 +102,6 @@ namespace WebStat
     CommonModule_var common_module_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
       campaign_manager_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
@@ -115,18 +110,14 @@ namespace WebStat
     FileCachePtr pixel_;
   };
 } /*WebStat*/
-} /*AdServer*/
 
 //
 // Inlines
 //
-namespace AdServer
-{
-namespace WebStat
+namespace AdServer::WebStat
 {
   inline
   Frontend::~Frontend() noexcept
   {
   }
 }
-} /* AdServer */

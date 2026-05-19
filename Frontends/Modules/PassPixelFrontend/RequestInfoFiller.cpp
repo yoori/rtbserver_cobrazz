@@ -8,15 +8,13 @@ namespace
     const char PASS_PIXEL_FRONTEND[] = "PassbackPixel::Frontend";
   }
 
-  namespace Request
+  namespace Request::Cookies
   {
-    namespace Cookies
-    {
       const String::SubString OPTOUT("OPTED_OUT");
       const String::SubString OPTOUT_TRUE_VALUE("YES");
     }
 
-    namespace Parameters
+  namespace Request::Parameters
     {
       const String::SubString COLO_ID("colo");
       const String::SubString TAG_ID("tid");
@@ -28,16 +26,13 @@ namespace
       const String::SubString IP_ADDRESS("debug.ip");
     }
 
-    namespace Headers
+  namespace Request::Headers
     {
       const String::SubString IP_ADDRESS(".remotehost");
     }
-  }
 }
 
-namespace AdServer
-{
-namespace PassbackPixel
+namespace AdServer::PassbackPixel
 {
   namespace
   {
@@ -248,4 +243,3 @@ namespace PassbackPixel
     }
   }
 } /*PassbackPixel*/
-} /*AdServer*/

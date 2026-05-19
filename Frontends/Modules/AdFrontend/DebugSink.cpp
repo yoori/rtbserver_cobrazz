@@ -172,6 +172,7 @@ namespace AdServer
         case CampaignSvcs::US_OPTOUT: user_status_str = "optout"; break;
         case CampaignSvcs::US_PROBE: user_status_str = "probe"; break;
         case CampaignSvcs::US_TEMPORARY: user_status_str = "temporary"; break;
+        case CampaignSvcs::US_FOREIGN: user_status_str = "foreign"; break;
         default: break;
       };
 
@@ -195,7 +196,7 @@ namespace AdServer
         "log_as_test = " << request_info.log_as_test << sep_ <<
         "location = ";
 
-      if(request_info.location.in())
+      if(request_info.location)
       {
         debug_info_str_ << request_info.location->country << "/" <<
           request_info.location->region << "/" <<

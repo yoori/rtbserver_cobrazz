@@ -24,6 +24,7 @@
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/RefPool.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 
 namespace AdServer::Grpc
@@ -57,9 +58,11 @@ namespace AdServer::Grpc
     struct RefHolder
     {
       RefHolder(
-        std::string endpoint_val,
-        std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
-        AdServer::Grpc::BatchingOptions batching_options);
+      std::string endpoint_val,
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner,
+      AdServer::Grpc::BatchingOptions batching_options);
 
       ~RefHolder() noexcept;
 
@@ -81,6 +84,8 @@ namespace AdServer::Grpc
       ControllerRefList controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner,
       Logging::Logger* logger,
       ResolvePartition resolve_partition,
       PartitionIndex partition_index,
@@ -155,6 +160,8 @@ namespace AdServer::Grpc
     const ControllerRefList controller_refs_;
     const AdServer::Grpc::BatchingOptions batching_options_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner_;
     const ResolvePartition resolver_;
     const PartitionIndex partition_index_;
     const ChunkIndex chunk_index_;

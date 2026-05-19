@@ -46,9 +46,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace PassbackPixel
+namespace AdServer::PassbackPixel
 {
   /**
    * PassbackPixel::Frontend implementation
@@ -135,19 +133,17 @@ namespace PassbackPixel
   }
 
   FrontendCommons::RequestTask
-  Frontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  Frontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
+    int http_status = process_request_(request, response);
     co_return FrontendCommons::RequestResult{
       http_status,
       response_ptr,
@@ -155,11 +151,11 @@ namespace PassbackPixel
   }
 
   int
-  Frontend::handle_request_(
+  Frontend::process_request_(
     const FCGI::HttpRequest& request,
     FCGI::HttpResponse& response) noexcept
   {
-    static const char* FUN = "Frontend::handle_request_()";
+    static const char* FUN = "Frontend::process_request_()";
 
     try
     {
@@ -240,37 +236,53 @@ namespace PassbackPixel
         Aspect::PASS_PIXEL_FRONTEND, "ADS-IMPL-194");
     }
 
-    auto info = std::make_shared<
-      adserver::campaign_svcs::campaign_manager::
-        ConsiderPassbackTrackRequest>();
-    info->set_time(pack_time(passback_track_info.time));
-    info->set_country(passback_track_info.country);
-    info->set_colo_id(passback_track_info.colo_id);
-    info->set_tag_id(passback_track_info.tag_id);
-    info->set_user_status(passback_track_info.user_status);
-    campaign_manager_->consider_passback_track(
-      *info,
-      [this, info](
-        const grpc::Status& status,
-        const adserver::campaign_svcs::campaign_manager::
-          ConsiderPassbackTrackResponse&)
-      {
-        if(!status.ok())
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": CampaignManager::consider_passback_track(): "
-            "gRPC call failed: code=" <<
-            static_cast<int>(status.error_code()) <<
-            ", message=" << status.error_message();
-          logger()->log(
-            ostr.str(),
-            Logging::Logger::ERROR,
-            Aspect::PASS_PIXEL_FRONTEND,
-            "ADS-IMPL-194");
-        }
-      });
+    adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackRequest
+      info;
+    info.set_time(pack_time(passback_track_info.time));
+    info.set_country(passback_track_info.country);
+    info.set_colo_id(passback_track_info.colo_id);
+    info.set_tag_id(passback_track_info.tag_id);
+    info.set_user_status(passback_track_info.user_status);
+    co_consider_passback_track_(std::move(info)).start_detached(nullptr);
 
     return http_status;
+  }
+
+  FrontendCommons::RequestTask
+  Frontend::co_consider_passback_track_(
+    adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackRequest
+      request)
+    noexcept
+  {
+    static const char* FUN = "Frontend::co_consider_passback_track_()";
+
+    try
+    {
+      auto result = co_await campaign_manager_coro_->consider_passback_track(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        logger()->sstream(
+          Logging::Logger::ERROR,
+          Aspect::PASS_PIXEL_FRONTEND,
+          "ADS-IMPL-194") <<
+          FUN << ": CampaignManager::consider_passback_track(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      logger()->sstream(
+        Logging::Logger::ERROR,
+        Aspect::PASS_PIXEL_FRONTEND,
+        "ADS-IMPL-194") <<
+        FUN << ": CampaignManager::consider_passback_track(): " <<
+        e.what();
+    }
+
+    co_return FrontendCommons::RequestResult::written();
   }
 
   void
@@ -292,8 +304,12 @@ namespace PassbackPixel
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
-        campaign_manager_ = campaign_manager;
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        campaign_manager_coro_ = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager,
+            workers_);
         add_child_object(campaign_manager);
 
         activate_object();
@@ -316,11 +332,10 @@ namespace PassbackPixel
   {
     deactivate_object();
     wait_object();
-    campaign_manager_.reset();
+    campaign_manager_coro_.reset();
 
     logger()->log(String::SubString(
         "Frontend::shutdown(): frontend terminated"),
       Logging::Logger::INFO, Aspect::PASS_PIXEL_FRONTEND);
   }
 } /*PassbackPixel*/
-} /*AdServer*/

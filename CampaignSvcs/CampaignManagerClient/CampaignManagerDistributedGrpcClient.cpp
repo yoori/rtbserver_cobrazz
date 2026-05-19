@@ -46,6 +46,21 @@ namespace AdServer::CampaignSvcs
       return !AdServer::Grpc::is_transport_timeout(status);
     }
 
+    class NullActiveObjectCallback final:
+      public virtual Generics::ActiveObjectCallback,
+      public virtual ReferenceCounting::AtomicImpl
+    {
+    public:
+      void
+      report_error(
+        Severity,
+        const String::SubString&,
+        const char* = nullptr) throw () override
+      {}
+
+    protected:
+      ~NullActiveObjectCallback() throw () override = default;
+    };
   }
 
   struct CampaignManagerDistributedGrpcClient::ClientHolder
@@ -53,12 +68,15 @@ namespace AdServer::CampaignSvcs
     ClientHolder(
       std::string endpoint_val,
       AdServer::Grpc::BatchingOptions batching_options,
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner)
       : endpoint(std::move(endpoint_val)),
         name(endpoint),
         client(std::make_shared<Client>(
           endpoint,
           std::move(grpc_executor),
+          std::move(coalesce_runner),
           std::move(batching_options)))
     {
       client->activate_object();
@@ -87,7 +105,9 @@ namespace AdServer::CampaignSvcs
   CampaignManagerDistributedGrpcClient::CampaignManagerDistributedGrpcClient(
     const CampaignManagerRefs& campaign_manager_refs,
     const AdServer::Grpc::BatchingOptions& batching_options,
-    const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor)
+    const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner)
     : pool_timeout_(DEFAULT_POOL_TIMEOUT)
   {
     if (campaign_manager_refs.empty())
@@ -103,6 +123,16 @@ namespace AdServer::CampaignSvcs
       add_child_object(effective_grpc_executor);
     }
 
+    if (!coalesce_runner)
+    {
+      coalesce_runner =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          Generics::ActiveObjectCallback_var(new NullActiveObjectCallback()),
+          std::make_shared<boost::asio::io_service>(),
+          std::max<unsigned long>(1, batching_options.workers_number));
+      add_child_object(coalesce_runner);
+    }
+
     std::vector<ClientHolderPtr> default_refs;
     default_refs.reserve(campaign_manager_refs.size());
 
@@ -111,7 +141,8 @@ namespace AdServer::CampaignSvcs
       auto client_holder = std::make_shared<ClientHolder>(
         ref.object_ref,
         batching_options,
-        effective_grpc_executor);
+        effective_grpc_executor,
+        coalesce_runner);
 
       default_refs.emplace_back(client_holder);
       if (!ref.service_index.empty())
@@ -129,7 +160,9 @@ namespace AdServer::CampaignSvcs
   CampaignManagerDistributedGrpcClient::CampaignManagerDistributedGrpcClient(
     const CampaignManagerObjectRefs& campaign_manager_refs,
     const AdServer::Grpc::BatchingOptions& batching_options,
-    const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor)
+    const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner)
     : CampaignManagerDistributedGrpcClient(
         [&campaign_manager_refs]()
         {
@@ -142,7 +175,8 @@ namespace AdServer::CampaignSvcs
           return result;
         }(),
         batching_options,
-        grpc_executor)
+        grpc_executor,
+        std::move(coalesce_runner))
   {}
 
   CampaignManagerDistributedGrpcClient::~CampaignManagerDistributedGrpcClient()

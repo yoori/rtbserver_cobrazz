@@ -8,10 +8,8 @@ namespace
     const char PUBPIXEL_FRONTEND[] = "PubPixel::Frontend";
   }
 
-  namespace Request
+  namespace Request::Parameters
   {
-    namespace Parameters
-    {
       const String::SubString COUNTRY("country");
       const String::SubString USER_STATUS("us");
       const String::SubString IP_ADDRESS("debug.ip");
@@ -19,17 +17,14 @@ namespace
       const String::SubString PUBLISHER_ACCOUNT_IDS("aid");
     }
 
-    namespace Headers
+  namespace Request::Headers
     {
       const String::SubString IP_ADDRESS(".remotehost");
       const String::SubString PUBLISHER_ACCOUNT_IDS("aid");
     }
-  }
 }
 
-namespace AdServer
-{
-namespace PubPixel
+namespace AdServer::PubPixel
 {
   namespace
   {
@@ -216,4 +211,3 @@ namespace PubPixel
     }
   }
 } /*PubPixel*/
-} /*AdServer*/

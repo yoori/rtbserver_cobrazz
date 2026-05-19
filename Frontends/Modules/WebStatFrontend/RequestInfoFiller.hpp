@@ -25,9 +25,7 @@
 
 #include "YandexNotificationRequest.hpp"
 
-namespace AdServer
-{
-namespace WebStat
+namespace AdServer::WebStat
 {
   typedef std::set<AdServer::Commons::RequestId> RequestIdSet;
 
@@ -131,4 +129,3 @@ namespace WebStat
     std::unordered_map<int, std::string> yn_reasons_;
   };
 } /*WebStat*/
-} /*AdServer*/

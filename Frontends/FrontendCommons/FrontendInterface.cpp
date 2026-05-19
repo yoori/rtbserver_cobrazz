@@ -159,16 +159,13 @@ namespace FrontendCommons
   }
 
   RequestTask
-  CoroFrontendInterface::handle_request_noparams_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  CoroFrontendInterface::co_handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     if(parse_args_(request_holder))
     {
-      auto result = co_await handle_request_coro(
-        std::move(request_holder),
-        std::move(response_writer));
+      auto result = co_await co_handle_request(std::move(request_holder));
       co_return std::move(result);
     }
 
@@ -183,9 +180,7 @@ namespace FrontendCommons
     noexcept
   {
     write_response_task(
-      handle_request_coro(
-        std::move(request),
-        response_writer),
+      co_handle_request(std::move(request)),
       std::move(response_writer)).start_detached({});
   }
 
@@ -198,9 +193,7 @@ namespace FrontendCommons
     if(parse_args_(request_holder))
     {
       write_response_task(
-        handle_request_coro(
-          std::move(request_holder),
-          response_writer),
+        co_handle_request(std::move(request_holder)),
         std::move(response_writer)).start_detached({});
     }
     else
@@ -210,49 +203,4 @@ namespace FrontendCommons
     }
   }
 
-  NoCoroFrontendAdapter::NoCoroFrontendAdapter(FrontendInterface* frontend)
-    : frontend_(ReferenceCounting::add_ref(frontend))
-  {}
-
-  bool
-  NoCoroFrontendAdapter::will_handle(const String::SubString& uri) noexcept
-  {
-    return frontend_->will_handle(uri);
-  }
-
-  RequestTask
-  NoCoroFrontendAdapter::handle_request_coro(
-    FCGI::HttpRequestHolder_var request,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
-    frontend_->handle_request(
-      std::move(request),
-      std::move(response_writer));
-    co_return RequestResult::written();
-  }
-
-  RequestTask
-  NoCoroFrontendAdapter::handle_request_noparams_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
-    frontend_->handle_request_noparams(
-      std::move(request_holder),
-      std::move(response_writer));
-    co_return RequestResult::written();
-  }
-
-  void
-  NoCoroFrontendAdapter::init()
-  {
-    frontend_->init();
-  }
-
-  void
-  NoCoroFrontendAdapter::shutdown() noexcept
-  {
-    frontend_->shutdown();
-  }
 }

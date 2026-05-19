@@ -8,9 +8,7 @@
 #include <Commons/Gason.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   typedef std::list<std::string> StringList;
   typedef std::set<unsigned long> ULongSet;
@@ -1168,5 +1166,4 @@ namespace Bidding
     ~JsonContextStringArrayParamProcessor() noexcept
     {}
   };
-}
 }

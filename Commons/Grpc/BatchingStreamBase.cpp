@@ -87,6 +87,17 @@ namespace AdServer::Grpc
     struct WriteTag;
     struct WritesDoneTag;
     struct FinishTag;
+    struct WriteRequest
+    {
+      std::uint64_t request_id = 0;
+      std::shared_ptr<PendingRequest> pending;
+    };
+    struct InflightRequest
+    {
+      Generics::Time write_time;
+      std::shared_ptr<AdServer::Grpc::BatchingPendingRequest> request;
+    };
+    using WriteRequests = std::vector<WriteRequest>;
 
     bool active() const noexcept;
     bool start_write_(
@@ -99,7 +110,7 @@ namespace AdServer::Grpc
     void process_read_completion_(bool ok, std::unique_ptr<BatchResponse> response);
     void process_write_completion_(
       bool ok,
-      std::vector<std::shared_ptr<PendingRequest>>&& write_requests);
+      WriteRequests&& write_requests);
     void process_start_completion_(bool ok);
     void process_writes_done_completion_(bool ok);
     void process_finish_completion_(bool ok);
@@ -141,7 +152,8 @@ namespace AdServer::Grpc
     std::atomic_bool process_completion_tags_{true};
 
     std::mutex inflight_lock_;
-    std::unordered_map<std::uint64_t, std::shared_ptr<PendingRequest>> inflight_;
+    std::unordered_map<std::uint64_t, std::shared_ptr<InflightRequest>> inflight_;
+    std::atomic<std::uint64_t> next_request_id_{1};
 
     std::mutex state_lock_;
     std::condition_variable shutdown_cv_;
@@ -248,7 +260,7 @@ namespace AdServer::Grpc
   {
     WriteTag(
       std::shared_ptr<Impl> impl,
-      std::vector<std::shared_ptr<PendingRequest>> write_requests)
+      WriteRequests write_requests)
       : CompletionTag(std::move(impl)),
         write_requests_(std::move(write_requests))
     {}
@@ -262,7 +274,7 @@ namespace AdServer::Grpc
     }
 
   private:
-    std::vector<std::shared_ptr<PendingRequest>> write_requests_;
+    WriteRequests write_requests_;
   };
 
   struct BatchingStreamBase::Impl::WritesDoneTag final : CompletionTag
@@ -473,7 +485,6 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::deactivate_object_()
   {
     callback_cv_.notify_all();
-    batching_queue_->notify_all();
 
     {
       std::lock_guard<std::mutex> lock(state_lock_);
@@ -556,7 +567,6 @@ namespace AdServer::Grpc
       std::lock_guard<std::mutex> lock(state_lock_);
       stream_state_.store(StreamState::Broken);
       callback_cv_.notify_one();
-      batching_queue_->notify_all();
       maybe_start_shutdown_i_();
       return false;
     }
@@ -602,7 +612,7 @@ namespace AdServer::Grpc
     auto* write_batch =
       google::protobuf::Arena::CreateMessage<BatchRequest>(&write_arena_);
     auto write_requests =
-      std::make_shared<std::vector<std::shared_ptr<PendingRequest>>>();
+      std::make_shared<WriteRequests>();
     write_requests->reserve(pending_batch.size());
     std::vector<std::pair<std::shared_ptr<PendingRequest>, Generics::Time>>
       timed_out_requests;
@@ -626,19 +636,26 @@ namespace AdServer::Grpc
         }
 
         auto* item = write_batch->add_items();
-        item->set_request_id(pending->request_id);
-        item->set_full_method(pending->full_method);
-        item->set_payload(pending->payload);
-        pending->write_time = write_time;
+        const auto request_id = next_request_id_.fetch_add(
+          1,
+          std::memory_order_relaxed);
+        item->set_request_id(request_id);
+        item->set_full_method(pending->request->full_method);
+        item->set_payload(pending->request->payload);
 
-        inflight_.emplace(pending->request_id, pending);
-        write_requests->emplace_back(std::move(pending));
+        auto inflight_request = std::make_shared<InflightRequest>();
+        inflight_request->write_time = write_time;
+        inflight_request->request = pending->request;
+        inflight_.emplace(request_id, std::move(inflight_request));
+        write_requests->push_back(WriteRequest{
+          request_id,
+          std::move(pending)});
       }
     }
 
     for (auto& [request, wait_time] : timed_out_requests)
     {
-      if (!request->callback)
+      if (!request->request || !request->request->callback)
       {
         continue;
       }
@@ -649,10 +666,9 @@ namespace AdServer::Grpc
           ", limit_us=" +
             std::to_string(options_.max_queue_wait->microseconds());
       BatchResponseItem item;
-      item.set_request_id(request->request_id);
       item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
       item.set_status_message(status_message);
-      request->callback(item);
+      request->request->callback(item);
     }
 
     const auto batch_size = write_batch->items_size();
@@ -715,15 +731,19 @@ namespace AdServer::Grpc
 
       {
         std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
-        for (const auto& pending : *write_requests)
+        for (const auto& request : *write_requests)
         {
-          inflight_.erase(pending->request_id);
+          inflight_.erase(request.request_id);
         }
       }
 
       if (failed_batch)
       {
-        *failed_batch = std::move(*write_requests);
+        failed_batch->reserve(failed_batch->size() + write_requests->size());
+        for (auto& request : *write_requests)
+        {
+          failed_batch->emplace_back(std::move(request.pending));
+        }
       }
 
       write_arena_.Reset();
@@ -854,7 +874,6 @@ namespace AdServer::Grpc
       else
       {
         callback_cv_.notify_one();
-        batching_queue_->notify_all();
         maybe_start_shutdown_i_();
       }
     }
@@ -874,7 +893,7 @@ namespace AdServer::Grpc
     bool ok,
     std::unique_ptr<BatchResponse> response)
   {
-    std::vector<std::shared_ptr<PendingRequest>> completed_requests;
+    std::vector<std::shared_ptr<InflightRequest>> completed_requests;
     std::vector<BatchResponseItem> completed_items;
 
     if (ok)
@@ -914,7 +933,6 @@ namespace AdServer::Grpc
       {
         stream_state_.store(StreamState::Broken);
         callback_cv_.notify_one();
-        batching_queue_->notify_all();
       }
 
       if (stream_state_.load() != StreamState::Open)
@@ -926,9 +944,9 @@ namespace AdServer::Grpc
     for (std::size_t i = 0; i < completed_requests.size(); ++i)
     {
       auto& request = completed_requests[i];
-      if (request && request->callback)
+      if (request && request->request && request->request->callback)
       {
-        request->callback(completed_items[i]);
+        request->request->callback(completed_items[i]);
       }
     }
 
@@ -941,7 +959,7 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::process_write_completion_(
     bool ok,
-    std::vector<std::shared_ptr<PendingRequest>>&& write_requests)
+    WriteRequests&& write_requests)
   {
     write_arena_.Reset();
 
@@ -958,7 +976,6 @@ namespace AdServer::Grpc
       {
         stream_state_.store(StreamState::Broken);
         callback_cv_.notify_one();
-        batching_queue_->notify_all();
       }
 
       if (stream_state_.load() != StreamState::Open)
@@ -981,11 +998,11 @@ namespace AdServer::Grpc
       std::vector<std::shared_ptr<PendingRequest>> failed_write_requests;
       {
         std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
-        for (const auto& pending : write_requests)
+        for (auto& request : write_requests)
         {
-          if (inflight_.erase(pending->request_id) > 0)
+          if (inflight_.erase(request.request_id) > 0)
           {
-            failed_write_requests.emplace_back(pending);
+            failed_write_requests.emplace_back(std::move(request.pending));
           }
         }
       }
@@ -1022,12 +1039,11 @@ namespace AdServer::Grpc
     for (auto& request : requests)
     {
       BatchResponseItem item;
-      item.set_request_id(request->request_id);
       item.set_status_code(status_code);
       item.set_status_message(status_message);
-      if (request->callback)
+      if (request->request && request->request->callback)
       {
-        request->callback(item);
+        request->request->callback(item);
       }
     }
     requests.clear();
@@ -1045,7 +1061,12 @@ namespace AdServer::Grpc
       inflight_requests.reserve(inflight_.size());
       for (auto& [_, request] : inflight_)
       {
-        inflight_requests.emplace_back(std::move(request));
+        if (request)
+        {
+          auto pending = std::make_shared<PendingRequest>();
+          pending->request = std::move(request->request);
+          inflight_requests.emplace_back(std::move(pending));
+        }
       }
       inflight_.clear();
     }
@@ -1065,7 +1086,12 @@ namespace AdServer::Grpc
       requests.reserve(requests.size() + inflight_.size());
       for (auto& [_, request] : inflight_)
       {
-        requests.emplace_back(std::move(request));
+        if (request)
+        {
+          auto pending = std::make_shared<PendingRequest>();
+          pending->request = std::move(request->request);
+          requests.emplace_back(std::move(pending));
+        }
       }
       inflight_.clear();
     }
@@ -1078,7 +1104,6 @@ namespace AdServer::Grpc
   {
     stream_state_.store(StreamState::Broken);
     callback_cv_.notify_one();
-    batching_queue_->notify_all();
 
     if (!read_in_flight_ && !write_in_flight_.load() &&
       !writes_done_in_flight_ && !finish_in_flight_)
@@ -1095,7 +1120,6 @@ namespace AdServer::Grpc
     stream_state_.store(StreamState::Finished);
     shutdown_cv_.notify_all();
     callback_cv_.notify_all();
-    batching_queue_->notify_all();
     owner_.mark_finished_();
     if (!already_finished && closed_callback_)
     {

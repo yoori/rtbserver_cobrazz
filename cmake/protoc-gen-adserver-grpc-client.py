@@ -205,6 +205,8 @@ def generate_hpp(file_desc, namespace):
       "    {}(".format(batching_client),
       "      const std::string& endpoint,",
       "      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,",
+      "      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>",
+      "        coalesce_runner,",
       "      AdServer::Grpc::BatchingOptions options = {});",
       "",
     ])
@@ -276,10 +278,13 @@ def generate_cpp(file_desc, namespace):
       "  {}::{}(".format(batching_client, batching_client),
       "    const std::string& endpoint,",
       "    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,",
+      "    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>",
+      "      coalesce_runner,",
       "    AdServer::Grpc::BatchingOptions options)",
       "    : AdServer::Grpc::AsyncBatchingClientBase(",
       "        endpoint,",
       "        std::move(grpc_executor),",
+      "        std::move(coalesce_runner),",
       "        [] (AdServer::Grpc::BatchingOptions options) {",
     ])
     if batch_method:

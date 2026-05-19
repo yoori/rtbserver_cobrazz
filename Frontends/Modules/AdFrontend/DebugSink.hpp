@@ -14,22 +14,19 @@
 #include "AdFrontendStat.hpp"
 #include "RequestInfo.hpp"
 
+namespace AdServer::Response::Header
+{
+  const String::SubString MERGE_FAILED("x-Merge-Failed");
+  const String::SubString DEBUG_INFO("Debug-Info");
+}
+
+namespace AdServer::Response::Type
+{
+  const String::SubString TEXT_HTML("text/html");
+}
+
 namespace AdServer
 {
-  namespace Response
-  {
-    namespace Header
-    {
-      const String::SubString MERGE_FAILED("x-Merge-Failed");
-      const String::SubString DEBUG_INFO("Debug-Info");
-    }
-
-    namespace Type
-    {
-      const String::SubString TEXT_HTML("text/html");
-    }
-  }
-
   enum DebugInfo
   {
     DI_NONE,

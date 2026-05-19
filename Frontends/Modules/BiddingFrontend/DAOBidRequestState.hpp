@@ -4,9 +4,7 @@
 #include "BidRequestState.hpp"
 #include "OpenRtbBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   //
   // DAOBidRequestState
@@ -70,5 +68,4 @@ namespace Bidding
   private:
     std::string uri_;
   };
-}
 }

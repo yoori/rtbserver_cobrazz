@@ -66,13 +66,10 @@ namespace Aspect
 
 namespace AdServer::ImprTrack
 {
-  namespace Request
+  namespace Request::Cookie
   {
-    namespace Cookie
-    {
       const Generics::SubStringHashAdapter USER_ID(String::SubString("uid"));
     }
-  }
 
   namespace WebStats
   {
@@ -212,31 +209,48 @@ namespace AdServer::ImprTrack
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
-        campaign_manager_ = campaign_manager;
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        campaign_manager_coro_ =
+          std::make_shared<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager,
+            workers_);
         add_child_object(campaign_manager);
-        auto user_bind_objects =
+        auto user_bind_client =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
             *common_config_,
             grpc_executor_,
+            common_module_->grpc_coalesce_runner(),
             logger());
-        user_bind_client_ = user_bind_objects.client;
-        if(user_bind_client_)
+        user_bind_client_coro_ =
+          std::make_shared<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
+            user_bind_client,
+            workers_);
+        if(user_bind_client)
         {
-          add_child_object(user_bind_objects.active_object);
+          add_child_object(user_bind_client);
         }
-        user_info_client_ =
+        auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
             *common_config_,
             grpc_executor_,
-            logger(),
-            this);
-        auto channel_client_objects =
+            common_module_->grpc_coalesce_runner(),
+            logger());
+        user_info_client_coro_ =
+          std::make_shared<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
+            user_info_client,
+            workers_);
+        add_child_object(user_info_client);
+        auto channel_client =
           AdServer::ChannelSvcs::create_distributed_channel_client(
             *common_config_,
-            grpc_executor_);
-        channel_client_ = channel_client_objects.client;
-        add_child_object(channel_client_objects.active_object);
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        channel_client_coro_ =
+          std::make_shared<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
+            channel_client,
+            workers_);
+        add_child_object(channel_client);
         track_pixel_ = FileCachePtr(
           new FileCache(config_->track_pixel_path().c_str()));
         track_pixel_content_type_ = config_->track_pixel_content_type();
@@ -339,17 +353,7 @@ namespace AdServer::ImprTrack
   }
 
   FrontendCommons::RequestTask
-  Frontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
-    (void)response_writer;
-    return handle_request_(std::move(request_holder));
-  }
-
-  FrontendCommons::RequestTask
-  Frontend::handle_request_(
+  Frontend::co_handle_request(
     FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
@@ -403,51 +407,6 @@ namespace AdServer::ImprTrack
       AdServer::Commons::UserId result_user_id = request_info.actual_user_id;
       auto match_schedule_state = std::make_shared<MatchScheduleState>();
       match_schedule_state->request_info = request_info;
-
-      struct ResolveUserBindResult
-      {
-        AdServer::Commons::UserId user_id;
-        bool invalid_bind_operation = false;
-      };
-
-      struct ResolveUserBindAwaiter
-      {
-        Frontend* frontend;
-        const RequestInfo& request_info;
-        AdServer::Commons::UserId input_user_id;
-        std::coroutine_handle<> handle{};
-        ResolveUserBindResult result{};
-
-        bool await_ready() const noexcept
-        {
-          return false;
-        }
-
-        void await_suspend(std::coroutine_handle<> h) noexcept
-        {
-          handle = h;
-          frontend->resolve_user_bind_(
-            request_info,
-            input_user_id,
-            [this](
-              const AdServer::Commons::UserId& resolved_user_id,
-              bool invalid_bind_operation) mutable
-            {
-              result.user_id = resolved_user_id;
-              result.invalid_bind_operation = invalid_bind_operation;
-              frontend->workers_->post(
-                [this]() mutable
-                {
-                  handle.resume();
-                });
-            });
-        }
-
-        ResolveUserBindResult await_resume() noexcept
-        {
-          return result;
-        }
-      };
 
       if (!request_info.skip)
       {
@@ -514,54 +473,20 @@ namespace AdServer::ImprTrack
             }
           }
 
-          auto verify_impression_request = std::make_shared<
-            adserver::campaign_svcs::campaign_manager::VerifyImpressionRequest>();
-          *verify_impression_request->mutable_impression_info() =
+          adserver::campaign_svcs::campaign_manager::VerifyImpressionRequest
+            verify_impression_request;
+          *verify_impression_request.mutable_impression_info() =
             verify_impression_info;
-          campaign_manager_->verify_impression(
-            *verify_impression_request,
-            [this, verify_impression_request, match_schedule_state](
-              const grpc::Status& status,
-              const adserver::campaign_svcs::campaign_manager::
-                VerifyImpressionResponse& response)
-            {
-              workers_->post(
-                [this, status, response, match_schedule_state]()
-                {
-                  if(!status.ok())
-                  {
-                    Stream::Error ostr;
-                    ostr << "CampaignManager::verify_impression(): "
-                      "gRPC call failed: code=" <<
-                      static_cast<int>(status.error_code()) <<
-                      ", message=" << status.error_message();
-                    logger()->log(
-                      ostr.str(),
-                      Logging::Logger::ERROR,
-                      Aspect::IMPR_TRACK_FRONTEND,
-                      "ADS-IMPL-134");
-                    match_schedule_state->verify_finished = true;
-                    try_schedule_match_channels_(match_schedule_state);
-                    return;
-                  }
-
-                  match_schedule_state->impression_result_info =
-                    response.impression_result_info();
-                  match_schedule_state->verify_finished = true;
-                  try_schedule_match_channels_(match_schedule_state);
-                });
-            });
+          co_verify_impression_(
+            std::move(verify_impression_request),
+            match_schedule_state).start_detached(nullptr);
         }
         else
         {
           match_schedule_state->verify_finished = true;
         }
-        ResolveUserBindAwaiter resolve_user_bind_awaiter{
-          this,
-          request_info,
-          result_user_id};
         const ResolveUserBindResult bind_result =
-          co_await std::move(resolve_user_bind_awaiter);
+          co_await co_resolve_user_bind_(request_info, result_user_id);
 
         http_status = finish_request_(
           request,
@@ -777,47 +702,24 @@ namespace AdServer::ImprTrack
       if((!request_info.common_request_id.is_null() ||
           !request_info.pubpixel_accounts.empty()) &&
          !freq_cap_user_id.is_null() &&
-         user_info_client_)
+         user_info_client_coro_)
       {
         try
         {
-          auto confirm_request = std::make_shared<
-            adserver::user_info_svcs::user_info_manager::
-              ConfirmUserFreqCapsRequest>();
-          confirm_request->set_user_id(GrpcAlgs::pack_user_id(
+          adserver::user_info_svcs::user_info_manager::
+            ConfirmUserFreqCapsRequest confirm_request;
+          confirm_request.set_user_id(GrpcAlgs::pack_user_id(
             freq_cap_user_id));
-          confirm_request->set_time(GrpcAlgs::pack_time(request_info.time));
-          confirm_request->set_request_id(GrpcAlgs::pack_request_id(
+          confirm_request.set_time(GrpcAlgs::pack_time(request_info.time));
+          confirm_request.set_request_id(GrpcAlgs::pack_request_id(
             request_info.common_request_id));
           for(const auto account_id : request_info.pubpixel_accounts)
           {
-            confirm_request->add_exclude_pubpixel_accounts(account_id);
+            confirm_request.add_exclude_pubpixel_accounts(account_id);
           }
 
-          user_info_client_->confirm_user_freq_caps(
-            *confirm_request,
-            [this, confirm_request](
-              const grpc::Status& status,
-              const adserver::user_info_svcs::user_info_manager::
-                ConfirmUserFreqCapsResponse&)
-            {
-              if(!status.ok())
-              {
-                Stream::Error ostr;
-                ostr << "UserInfoManagerGrpc::confirm_user_freq_caps(): "
-                  "gRPC call failed: code=" <<
-                  static_cast<int>(status.error_code()) <<
-                  ", message=" << status.error_message();
-                logger()->log(
-                  ostr.str(),
-                  status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                    Logging::Logger::WARNING :
-                    Logging::Logger::EMERGENCY,
-                  Aspect::IMPR_TRACK_FRONTEND,
-                  status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                    "" : "ADS-IMPL-123");
-              }
-            });
+          co_confirm_user_freq_caps_(std::move(confirm_request)).
+            start_detached(nullptr);
         }
         catch(const eh::Exception& e)
         {
@@ -844,7 +746,6 @@ namespace AdServer::ImprTrack
           *cookie_manager_,
           signed_uid.str());
       }
-
       FrontendCommons::CORS::set_headers(request, response);
 
       if(!request_info.redirect_url.empty())
@@ -1018,20 +919,218 @@ namespace AdServer::ImprTrack
     return http_status;
   }
 
-  void
-  Frontend::resolve_user_bind_(
+  Frontend::ResolveUserBindTask
+  Frontend::co_resolve_user_bind_(
     const RequestInfo& request_info,
-    const AdServer::Commons::UserId& input_user_id,
-    std::function<void(
-      const AdServer::Commons::UserId& result_user_id,
-      bool invalid_bind_operation)> finish)
+    const AdServer::Commons::UserId& input_user_id)
     noexcept
   {
-    std::make_shared<ImprTrackRequestState>(
-      this,
-      request_info,
-      input_user_id,
-      std::move(finish))->start();
+    ResolveUserBindResult result;
+    result.user_id = input_user_id;
+
+    if(request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT)
+    {
+      result.user_id = AdServer::Commons::UserId();
+      co_return result;
+    }
+
+    if(!user_bind_client_coro_)
+    {
+      co_return result;
+    }
+
+    if(!result.user_id.is_null())
+    {
+      adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
+      get_request.set_id(std::string("c/") + result.user_id.to_string());
+      get_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
+      get_request.set_silent(true);
+      get_request.set_generate_user_id(false);
+      get_request.set_for_set_cookie(request_info.set_cookie);
+      get_request.set_create_timestamp(
+        GrpcAlgs::pack_time(Generics::Time::ZERO));
+      get_request.set_current_user_id(GrpcAlgs::pack_user_id(result.user_id));
+
+      auto get_result = co_await user_bind_client_coro_->get_user_id(
+        std::move(get_request));
+      if(get_result.status.ok())
+      {
+        if(get_result.response.invalid_operation())
+        {
+          result.invalid_bind_operation = true;
+          report_bad_user_(request_info);
+          co_return result;
+        }
+
+        const AdServer::Commons::UserId resolved_user_id =
+          GrpcAlgs::unpack_user_id(get_result.response.user_id());
+        if(!resolved_user_id.is_null())
+        {
+          result.user_id = resolved_user_id;
+        }
+      }
+
+      if(request_info.current_user_id == result.user_id ||
+        request_info.external_user_id.empty())
+      {
+        co_return result;
+      }
+    }
+    else if(request_info.external_user_id.empty())
+    {
+      co_return result;
+    }
+
+    if(!result.user_id.is_null())
+    {
+      adserver::user_info_svcs::user_bind::AddUserIdRequest add_user_request;
+      add_user_request.set_id(request_info.external_user_id);
+      add_user_request.set_user_id(GrpcAlgs::pack_user_id(result.user_id));
+      add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
+
+      auto add_result = co_await user_bind_client_coro_->add_user_id(
+        std::move(add_user_request));
+      if(!add_result.status.ok())
+      {
+        co_return result;
+      }
+
+      if(add_result.response.invalid_operation())
+      {
+        result.invalid_bind_operation = true;
+        report_bad_user_(request_info);
+      }
+
+      co_return result;
+    }
+
+    adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
+    get_request.set_id(request_info.external_user_id);
+    get_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
+    get_request.set_silent(true);
+    get_request.set_generate_user_id(false);
+    get_request.set_for_set_cookie(request_info.set_cookie);
+    get_request.set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
+
+    auto get_result = co_await user_bind_client_coro_->get_user_id(
+      std::move(get_request));
+    if(!get_result.status.ok())
+    {
+      co_return result;
+    }
+
+    if(get_result.response.invalid_operation())
+    {
+      result.invalid_bind_operation = true;
+      report_bad_user_(request_info);
+    }
+    else
+    {
+      const AdServer::Commons::UserId resolved_user_id =
+        GrpcAlgs::unpack_user_id(get_result.response.user_id());
+      if(!resolved_user_id.is_null())
+      {
+        result.user_id = resolved_user_id;
+        common_module_->user_id_controller()->null_blacklisted(result.user_id);
+      }
+    }
+
+    co_return result;
+  }
+
+  FrontendCommons::RequestTask
+  Frontend::co_verify_impression_(
+    adserver::campaign_svcs::campaign_manager::VerifyImpressionRequest request,
+    std::shared_ptr<MatchScheduleState> match_schedule_state)
+    noexcept
+  {
+    if(campaign_manager_coro_)
+    {
+      auto result = co_await campaign_manager_coro_->verify_impression(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        Stream::Error ostr;
+        ostr << "CampaignManager::verify_impression(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+        logger()->log(
+          ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-IMPL-134");
+      }
+      else
+      {
+        match_schedule_state->impression_result_info =
+          std::move(result.response.impression_result_info());
+      }
+    }
+
+    match_schedule_state->verify_finished = true;
+    try_schedule_match_channels_(match_schedule_state);
+    co_return FrontendCommons::RequestResult{};
+  }
+
+  FrontendCommons::RequestTask
+  Frontend::co_confirm_user_freq_caps_(
+    adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest
+      request)
+    noexcept
+  {
+    if(user_info_client_coro_)
+    {
+      auto result = co_await user_info_client_coro_->confirm_user_freq_caps(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        Stream::Error ostr;
+        ostr << "UserInfoManagerGrpc::confirm_user_freq_caps(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+        logger()->log(
+          ostr.str(),
+          result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+            Logging::Logger::WARNING :
+            Logging::Logger::EMERGENCY,
+          Aspect::IMPR_TRACK_FRONTEND,
+          result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+            "" : "ADS-IMPL-123");
+      }
+    }
+
+    co_return FrontendCommons::RequestResult{};
+  }
+
+  FrontendCommons::RequestTask
+  Frontend::co_consider_web_operation_(
+    adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+      request)
+    noexcept
+  {
+    if(campaign_manager_coro_)
+    {
+      auto result = co_await campaign_manager_coro_->consider_web_operation(
+        std::move(request));
+      if(!result.status.ok() &&
+        result.status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
+      {
+        Stream::Error ostr;
+        ostr << "CampaignManager::consider_web_operation(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+        logger()->log(
+          ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-IMPL-134");
+      }
+    }
+
+    co_return FrontendCommons::RequestResult{};
   }
 
   void
@@ -1061,8 +1160,8 @@ namespace AdServer::ImprTrack
 
     if(match_user_id.is_null() ||
       match_user_id == AdServer::Commons::PROBE_USER_ID ||
-      !channel_client_ ||
-      !campaign_manager_)
+      !channel_client_coro_ ||
+      !campaign_manager_coro_)
     {
       state->scheduled = true;
       return;
@@ -1114,26 +1213,21 @@ namespace AdServer::ImprTrack
       }
     }
 
-    match_workers_->post(
-      [task_state]()
-      {
-        task_state->start_match_channels_stage();
-      });
+    co_match_request_(task_state).start_detached(nullptr);
   }
 
-  void
-  Frontend::start_match_channels_(
+  FrontendCommons::RequestTask
+  Frontend::co_match_request_(
     const std::shared_ptr<ImprTrackMatchRequestState>& state)
     noexcept
   {
-    auto channel_request = std::make_shared<
-      adserver::channel_svcs::channel_server::MatchRequest>();
-    channel_request->set_non_strict_word_match(false);
-    channel_request->set_non_strict_url_match(false);
-    channel_request->set_return_negative(false);
-    channel_request->set_simplify_page(false);
-    channel_request->set_fill_content(false);
-    channel_request->set_statuses("A", 2);
+    adserver::channel_svcs::channel_server::MatchRequest channel_request;
+    channel_request.set_non_strict_word_match(false);
+    channel_request.set_non_strict_url_match(false);
+    channel_request.set_return_negative(false);
+    channel_request.set_simplify_page(false);
+    channel_request.set_fill_content(false);
+    channel_request.set_statuses("A", 2);
 
     std::ostringstream keywords_ostr;
     keywords_ostr << "poadimp";
@@ -1147,114 +1241,75 @@ namespace AdServer::ImprTrack
       keywords_ostr << " poadimpa" << advertiser_id;
     }
 
-    channel_request->set_pwords(keywords_ostr.str());
-    channel_client_->match(
-      *channel_request,
-      [this, state, channel_request](
-        const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::MatchResponse& response)
+    channel_request.set_pwords(keywords_ostr.str());
+
+    auto channel_result = co_await channel_client_coro_->match(
+      std::move(channel_request));
+    if(!channel_result.status.ok())
+    {
+      Stream::Error ostr;
+      ostr << "ChannelServer::match(): gRPC call failed: code=" <<
+        static_cast<int>(channel_result.status.error_code()) <<
+        ", message=" << channel_result.status.error_message();
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::IMPR_TRACK_FRONTEND,
+        "ADS-IMPL-117");
+      finish_match_channels_request_();
+      co_return FrontendCommons::RequestResult{};
+    }
+
+    state->trigger_match_result = std::move(channel_result.response);
+
+    if(user_bind_client_coro_ &&
+      !state->cookie_user_id.is_null() &&
+      state->user_id != state->cookie_user_id)
+    {
+      adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
+      get_request.set_id(std::string("c/") + state->cookie_user_id.to_string());
+      get_request.set_timestamp(GrpcAlgs::pack_time(state->request_info.time));
+      get_request.set_silent(true);
+      get_request.set_generate_user_id(false);
+      get_request.set_for_set_cookie(false);
+      get_request.set_create_timestamp(
+        GrpcAlgs::pack_time(Generics::Time::ZERO));
+      get_request.set_current_user_id(
+        GrpcAlgs::pack_user_id(state->cookie_user_id));
+
+      auto get_result = co_await user_bind_client_coro_->get_user_id(
+        std::move(get_request));
+      if(get_result.status.ok() && !get_result.response.invalid_operation())
       {
-        match_workers_->post(
-          [this, state, status, response]()
-          {
-            if(!status.ok())
-            {
-              Stream::Error ostr;
-              ostr << "ChannelServer::match(): gRPC call failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              logger()->log(
-                ostr.str(),
-                Logging::Logger::EMERGENCY,
-                Aspect::IMPR_TRACK_FRONTEND,
-                "ADS-IMPL-117");
-              finish_match_channels_request_();
-              return;
-            }
+        const AdServer::Commons::UserId resolved_user_id =
+          GrpcAlgs::unpack_user_id(get_result.response.user_id());
+        if(!resolved_user_id.is_null())
+        {
+          state->resolved_cookie_user_id = resolved_user_id;
+        }
+      }
+    }
 
-            state->trigger_match_result = response;
-
-            if(user_bind_client_ &&
-              !state->cookie_user_id.is_null() &&
-              state->user_id != state->cookie_user_id)
-            {
-              auto get_request = std::make_shared<
-                adserver::user_info_svcs::user_bind::GetUserIdRequest>();
-              get_request->set_id(
-                std::string("c/") + state->cookie_user_id.to_string());
-              get_request->set_timestamp(
-                GrpcAlgs::pack_time(state->request_info.time));
-              get_request->set_silent(true);
-              get_request->set_generate_user_id(false);
-              get_request->set_for_set_cookie(false);
-              get_request->set_create_timestamp(
-                GrpcAlgs::pack_time(Generics::Time::ZERO));
-              get_request->set_current_user_id(
-                GrpcAlgs::pack_user_id(state->cookie_user_id));
-              user_bind_client_->get_user_id(
-                *get_request,
-                [this, state, get_request](
-                  const grpc::Status& status,
-                  const adserver::user_info_svcs::user_bind::
-                    GetUserIdResponse& response)
-                {
-                  match_workers_->post(
-                    [this, state, status, response]()
-                    {
-                      if(status.ok() && !response.invalid_operation())
-                      {
-                        const AdServer::Commons::UserId resolved_user_id =
-                          GrpcAlgs::unpack_user_id(response.user_id());
-                        if(!resolved_user_id.is_null())
-                        {
-                          state->resolved_cookie_user_id = resolved_user_id;
-                        }
-                      }
-
-                      state->start_history_match_stage();
-                    });
-                });
-              return;
-            }
-
-            state->start_history_match_stage();
-          });
-      });
-  }
-
-  void
-  Frontend::start_history_match_(
-    const std::shared_ptr<ImprTrackMatchRequestState>& state)
-    noexcept
-  {
     const auto& matched_channels =
       state->trigger_match_result.matched_channels();
     if(matched_channels.page_channels_size() == 0)
     {
       finish_match_channels_request_();
-      return;
-    }
-
-    if(!user_info_client_)
-    {
-      state->process_match_request_stage();
-      return;
+      co_return FrontendCommons::RequestResult{};
     }
 
     using ChannelMatch = std::pair<unsigned long, unsigned long>;
-    auto page_channels = std::make_shared<std::set<ChannelMatch>>();
+    std::set<ChannelMatch> page_channels;
     for(const auto& channel : matched_channels.page_channels())
     {
-      page_channels->emplace(channel.id(), channel.trigger_channel_id());
+      page_channels.emplace(channel.id(), channel.trigger_channel_id());
     }
 
-    auto build_history_match_request =
-      [this, page_channels, state](
-        const AdServer::Commons::UserId& match_user_id)
+    auto build_history_match_request = [this, &page_channels, state](
+      const AdServer::Commons::UserId& match_user_id)
     {
-      auto request = std::make_shared<
-        adserver::user_info_svcs::user_info_manager::MatchRequest>();
-      auto* match_params = request->mutable_match_params();
+      adserver::user_info_svcs::user_info_manager::MatchRequest request;
+      auto* match_params = request.mutable_match_params();
       match_params->set_use_empty_profile(false);
       match_params->set_silent_match(false);
       match_params->set_no_match(false);
@@ -1268,14 +1323,14 @@ namespace AdServer::ImprTrack
         GrpcAlgs::pack_time(Generics::Time::ZERO));
 
       auto* page_channel_ids = match_params->mutable_page_channel_ids();
-      for(const auto& channel : *page_channels)
+      for(const auto& channel : page_channels)
       {
         auto* result = page_channel_ids->Add();
         result->set_channel_id(channel.first);
         result->set_channel_trigger_id(channel.second);
       }
 
-      auto* user_info = request->mutable_user_info();
+      auto* user_info = request.mutable_user_info();
       user_info->set_user_id(GrpcAlgs::pack_user_id(match_user_id));
       user_info->set_last_colo_id(-1);
       user_info->set_request_colo_id(common_config_->colo_id());
@@ -1285,112 +1340,66 @@ namespace AdServer::ImprTrack
       return request;
     };
 
-    auto match_cookie = std::make_shared<std::function<void()>>();
-    *match_cookie = [this, state, build_history_match_request]()
+    if(user_info_client_coro_)
     {
-      if(state->user_id == state->resolved_cookie_user_id ||
-        state->resolved_cookie_user_id.is_null())
+      if(state->user_id != AdServer::Commons::PROBE_USER_ID)
       {
-        state->process_match_request_stage();
-        return;
+        auto history_match_request = build_history_match_request(state->user_id);
+        auto match_result = co_await user_info_client_coro_->match(
+          std::move(history_match_request));
+        if(match_result.status.ok())
+        {
+          state->history_match_response = std::move(match_result.response);
+          state->history_match_present = state->history_match_response.matched();
+        }
+        else
+        {
+          Stream::Error ostr;
+          ostr << "UserInfoManager::match(): gRPC call failed: code=" <<
+            static_cast<int>(match_result.status.error_code()) <<
+            ", message=" << match_result.status.error_message();
+          logger()->log(
+            ostr.str(),
+            match_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+              Logging::Logger::WARNING :
+              Logging::Logger::EMERGENCY,
+            Aspect::IMPR_TRACK_FRONTEND,
+            match_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+              "" : "ADS-IMPL-112");
+        }
       }
 
-      auto history_match_request = build_history_match_request(
-        state->resolved_cookie_user_id);
-      user_info_client_->match(
-        *history_match_request,
-        [this, state, history_match_request](
-          const grpc::Status&,
-          const adserver::user_info_svcs::user_info_manager::MatchResponse&)
-        {
-          match_workers_->post(
-            [this, state]()
-            {
-              state->process_match_request_stage();
-            });
-        });
-    };
-
-    if(state->user_id == AdServer::Commons::PROBE_USER_ID)
-    {
-      (*match_cookie)();
-      return;
+      if(state->user_id != state->resolved_cookie_user_id &&
+        !state->resolved_cookie_user_id.is_null())
+      {
+        auto cookie_match_request = build_history_match_request(
+          state->resolved_cookie_user_id);
+        co_await user_info_client_coro_->match(std::move(cookie_match_request));
+      }
     }
 
-    auto history_match_request = build_history_match_request(state->user_id);
-    user_info_client_->match(
-      *history_match_request,
-      [this, state, history_match_request, match_cookie](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_info_manager::MatchResponse&
-          response)
-      {
-        match_workers_->post(
-          [this, state, status, response, match_cookie]()
-          {
-            if(status.ok())
-            {
-              state->history_match_response = response;
-              state->history_match_present = response.matched();
-            }
-            else
-            {
-              Stream::Error ostr;
-              ostr << "UserInfoManager::match(): gRPC call failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              logger()->log(
-                ostr.str(),
-                status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                  Logging::Logger::WARNING :
-                  Logging::Logger::EMERGENCY,
-                Aspect::IMPR_TRACK_FRONTEND,
-                status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                  "" : "ADS-IMPL-112");
-            }
-
-            (*match_cookie)();
-          });
-      });
-  }
-
-  void
-  Frontend::process_match_request_(
-    const std::shared_ptr<ImprTrackMatchRequestState>& state)
-    noexcept
-  {
-    auto request = std::make_shared<
-      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>();
+    adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest request;
     fill_match_request_info_(
-      *request->mutable_match_request_info(),
+      *request.mutable_match_request_info(),
       *state);
-    campaign_manager_->process_match_request(
-      *request,
-      [this, state, request](
-        const grpc::Status& status,
-        const adserver::campaign_svcs::campaign_manager::
-          ProcessMatchRequestResponse&)
-      {
-        match_workers_->post(
-          [this, state, status]()
-          {
-            if(!status.ok())
-            {
-              Stream::Error ostr;
-              ostr << "CampaignManager::process_match_request(): "
-                "gRPC call failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              logger()->log(
-                ostr.str(),
-                Logging::Logger::EMERGENCY,
-                Aspect::IMPR_TRACK_FRONTEND,
-                "ADS-ICON-4");
-            }
+    auto process_result = co_await campaign_manager_coro_->process_match_request(
+      std::move(request));
+    if(!process_result.status.ok())
+    {
+      Stream::Error ostr;
+      ostr << "CampaignManager::process_match_request(): "
+        "gRPC call failed: code=" <<
+        static_cast<int>(process_result.status.error_code()) <<
+        ", message=" << process_result.status.error_message();
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::IMPR_TRACK_FRONTEND,
+        "ADS-ICON-4");
+    }
 
-            finish_match_channels_request_();
-          });
-      });
+    finish_match_channels_request_();
+    co_return FrontendCommons::RequestResult{};
   }
 
   void
@@ -1433,7 +1442,7 @@ namespace AdServer::ImprTrack
              false))
         {
           FrontendCommons::Location_var location =
-            new FrontendCommons::Location();
+            std::make_shared<FrontendCommons::Location>();
           location->country = geo_location.country_code.str();
           geo_location.region.assign_to(location->region);
           location->city = geo_location.city.str();
@@ -1498,43 +1507,22 @@ namespace AdServer::ImprTrack
   {
     try
     {
-      auto web_op = std::make_shared<
-        adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest>();
-      web_op->set_time(GrpcAlgs::pack_time(request_info.time));
-      web_op->set_colo_id(request_info.colo_id);
-      web_op->set_tag_id(0);
-      web_op->set_cc_id(0);
-      web_op->set_curct(request_info.external_user_id);
-      web_op->set_app(WebStats::APPLICATION.str());
-      web_op->set_source(WebStats::SOURCE.str());
-      web_op->set_operation(WebStats::INVALID_MAPPING_OPERATION.str());
-      web_op->set_user_bind_src(request_info.source_id);
-      web_op->set_result('F');
-      web_op->set_user_status(static_cast<unsigned long>(request_info.user_status));
-      web_op->set_test_request(false);
+      adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+        web_op;
+      web_op.set_time(GrpcAlgs::pack_time(request_info.time));
+      web_op.set_colo_id(request_info.colo_id);
+      web_op.set_tag_id(0);
+      web_op.set_cc_id(0);
+      web_op.set_curct(request_info.external_user_id);
+      web_op.set_app(WebStats::APPLICATION.str());
+      web_op.set_source(WebStats::SOURCE.str());
+      web_op.set_operation(WebStats::INVALID_MAPPING_OPERATION.str());
+      web_op.set_user_bind_src(request_info.source_id);
+      web_op.set_result('F');
+      web_op.set_user_status(static_cast<unsigned long>(request_info.user_status));
+      web_op.set_test_request(false);
 
-      campaign_manager_->consider_web_operation(
-        *web_op,
-        [this, web_op](
-          const grpc::Status& status,
-          const adserver::campaign_svcs::campaign_manager::
-            ConsiderWebOperationResponse&)
-        {
-          if(!status.ok() &&
-            status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
-          {
-            Stream::Error ostr;
-            ostr << "CampaignManager::consider_web_operation(): "
-              "gRPC call failed: code=" <<
-              static_cast<int>(status.error_code()) <<
-              ", message=" << status.error_message();
-            logger()->log(
-              ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::IMPR_TRACK_FRONTEND,
-              "ADS-IMPL-134");
-          }
-        });
+      co_consider_web_operation_(std::move(web_op)).start_detached(nullptr);
     }
     catch(const eh::Exception&)
     {}

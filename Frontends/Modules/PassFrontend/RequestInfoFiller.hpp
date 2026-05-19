@@ -22,9 +22,7 @@
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
-namespace AdServer
-{
-namespace Passback
+namespace AdServer::Passback
 {
   struct PassbackInfo
   {
@@ -97,4 +95,3 @@ namespace Passback
       /*throw(InvalidParamException, Exception)*/;
   };
 } /*Passback*/
-} /*AdServer*/

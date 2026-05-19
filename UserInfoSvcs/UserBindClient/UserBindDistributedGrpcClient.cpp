@@ -42,13 +42,16 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger,
       ControllerRefList controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner)
       : pool_(std::make_shared<Pool>(
           "UserBindDistributedGrpcClient",
           "UserInfo",
           std::move(controller_refs),
           std::move(batching_options),
           std::move(grpc_executor),
+          std::move(coalesce_runner),
           logger,
           &resolve_partition_,
           &partition_index_,
@@ -246,13 +249,16 @@ namespace AdServer::UserInfoSvcs
     const UserBindControllerRefs& user_bind_controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
-    Logging::Logger* logger)
+    Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner)
   {
     auto distributor = std::make_shared<Distributor>(
       logger,
       user_bind_controller_refs,
       std::move(batching_options),
-      std::move(grpc_executor));
+      std::move(grpc_executor),
+      std::move(coalesce_runner));
     user_bind_mapper_ = distributor;
     add_child_object(distributor);
   }

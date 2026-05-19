@@ -21,9 +21,7 @@
 #include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 
-namespace AdServer
-{
-namespace PassbackPixel
+namespace AdServer::PassbackPixel
 {
   struct PassbackTrackInfo
   {
@@ -91,4 +89,3 @@ namespace PassbackPixel
     PassbackTrackProcessorMap track_cookie_processors_;
   };
 } /*Passback*/
-} /*AdServer*/

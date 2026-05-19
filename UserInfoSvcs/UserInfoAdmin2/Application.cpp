@@ -15,6 +15,7 @@
 #include <Generics/AppUtils.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Uuid.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <String/StringManip.hpp>
 
@@ -22,6 +23,7 @@
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
@@ -163,6 +165,8 @@ namespace
   struct UserInfoClientHolder
   {
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner;
     std::shared_ptr<Generics::ActiveObject> active_object;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       client;
@@ -173,17 +177,24 @@ namespace
     UserInfoClientHolder result;
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
+    Logging::Logger_var logger =
+      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    result.coalesce_runner =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        new Logging::ActiveObjectCallbackImpl(logger, "UserInfoAdmin2", "gRPC"),
+        std::make_shared<boost::asio::io_service>(),
+        1);
+    result.coalesce_runner->activate_object();
 
     if (is_user_info_controller_(reference))
     {
-      Logging::Logger_var logger =
-        new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
       auto client =
         std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
           std::vector<std::string>{reference},
           AdServer::Grpc::BatchingOptions(),
           result.grpc_executor,
-          logger);
+          logger,
+          result.coalesce_runner);
       result.client = client;
       result.active_object = client;
     }
@@ -193,6 +204,7 @@ namespace
         AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncBatchingClient>(
           reference,
           result.grpc_executor,
+          result.coalesce_runner,
           AdServer::Grpc::BatchingOptions());
       result.client = client;
       result.active_object = client;
@@ -215,6 +227,11 @@ namespace
       {
         holder.grpc_executor->deactivate_object();
         holder.grpc_executor->wait_object();
+      }
+      if (holder.coalesce_runner)
+      {
+        holder.coalesce_runner->deactivate_object();
+        holder.coalesce_runner->wait_object();
       }
     }
     catch (...)

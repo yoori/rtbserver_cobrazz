@@ -9,12 +9,8 @@ namespace
   }
 }
 
-namespace AdServer
+namespace AdServer::Request::Param
 {
-  namespace Request
-  {
-    namespace Param
-    {
       const String::SubString COLOCATION_ID("colo");
       const String::SubString TAG_ID("tid");
       const String::SubString TAG_SIZE_ID("tsid");
@@ -40,14 +36,15 @@ namespace AdServer
       const String::SubString DEBUG_IP_ADDRESS("debug-ip");
     }
 
-    namespace Headers
+namespace AdServer::Request::Headers
     {
       const String::AsciiStringManip::Caseless REM_HOST(".remotehost");
       const String::AsciiStringManip::Caseless REM_HOST_TEST("remote_addr");
       const String::AsciiStringManip::Caseless REFERER("referer");
     }
-  }
 
+namespace AdServer
+{
   template <typename RequestInfoType>
   class CreativeIdParamProcessor:
     public FrontendCommons::RequestParamProcessor<RequestInfoType>

@@ -13,6 +13,7 @@
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/RefPool.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 
 namespace AdServer::CampaignSvcs
@@ -36,12 +37,16 @@ namespace AdServer::CampaignSvcs
     explicit CampaignManagerDistributedGrpcClient(
       const CampaignManagerRefs& campaign_manager_refs,
       const AdServer::Grpc::BatchingOptions& batching_options = {},
-      const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor = {});
+      const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor = {},
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner = {});
 
     explicit CampaignManagerDistributedGrpcClient(
       const CampaignManagerObjectRefs& campaign_manager_refs,
       const AdServer::Grpc::BatchingOptions& batching_options = {},
-      const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor = {});
+      const std::shared_ptr<AdServer::Grpc::GrpcExecutor>& grpc_executor = {},
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        coalesce_runner = {});
 
     ~CampaignManagerDistributedGrpcClient() noexcept override;
 

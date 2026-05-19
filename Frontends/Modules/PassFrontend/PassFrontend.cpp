@@ -41,14 +41,11 @@ namespace Aspect
   const char PASS_FRONTEND[] = "PassbackFrontend";
 }
 
-namespace Request
+namespace Request::Params
 {
-  namespace Params
-  {
     const char PASSBACK[] = "passback";
     const char REQUEST_ID[] = "requestid";
   }
-}
 
 namespace
 {
@@ -71,9 +68,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace Passback
+namespace AdServer::Passback
 {
   /**
    * Passback::Frontend implementation
@@ -157,19 +152,17 @@ namespace Passback
   }
 
   FrontendCommons::RequestTask
-  Frontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  Frontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
+    int http_status = process_request_(request, response);
     co_return FrontendCommons::RequestResult{
       http_status,
       response_ptr,
@@ -177,11 +170,11 @@ namespace Passback
   }
 
   int
-  Frontend::handle_request_(
+  Frontend::process_request_(
     const FCGI::HttpRequest& request,
     FCGI::HttpResponse& response) noexcept
   {
-    static const char* FUN = "Frontend::handle_request_()";
+    static const char* FUN = "Frontend::process_request_()";
 
     try
     {
@@ -290,85 +283,41 @@ namespace Passback
 
     if(!passback_info.test_request)
     {
-      auto info = std::make_shared<
-        adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest>();
-      info->set_request_id(pack_request_id(passback_info.request_id));
-      info->set_time(pack_time(passback_info.time));
+      adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest info;
+      info.set_request_id(pack_request_id(passback_info.request_id));
+      info.set_time(pack_time(passback_info.time));
       if(passback_info.user_id_hash_mod.present())
       {
-        auto* user_id_hash_mod = info->mutable_user_id_hash_mod();
+        auto* user_id_hash_mod = info.mutable_user_id_hash_mod();
         user_id_hash_mod->set_defined(true);
         user_id_hash_mod->set_value(*passback_info.user_id_hash_mod);
       }
 
-      campaign_manager_->consider_passback(
-        *info,
-        [this, info](
-          const grpc::Status& status,
-          const adserver::campaign_svcs::campaign_manager::
-            ConsiderPassbackResponse&)
-        {
-          if(!status.ok())
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": CampaignManager::consider_passback(): "
-              "gRPC call failed: code=" <<
-              static_cast<int>(status.error_code()) <<
-              ", message=" << status.error_message();
-            logger()->log(
-              ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::PASS_FRONTEND,
-              "ADS-IMPL-194");
-          }
-        });
+      co_consider_passback_(std::move(info)).start_detached(nullptr);
     }
 
     if(!passback_info.pubpixel_accounts.empty() &&
        !passback_info.current_user_id.is_null())
     {
       // save freq caps
-      if(user_info_client_)
+      if(user_info_client_coro_)
       {
         try
         {
-          auto confirm_request = std::make_shared<
-            adserver::user_info_svcs::user_info_manager::
-              ConfirmUserFreqCapsRequest>();
-          confirm_request->set_user_id(GrpcAlgs::pack_user_id(
+          adserver::user_info_svcs::user_info_manager::
+            ConfirmUserFreqCapsRequest confirm_request;
+          confirm_request.set_user_id(GrpcAlgs::pack_user_id(
             passback_info.current_user_id));
-          confirm_request->set_time(GrpcAlgs::pack_time(passback_info.time));
-          confirm_request->set_request_id(GrpcAlgs::pack_request_id(
+          confirm_request.set_time(GrpcAlgs::pack_time(passback_info.time));
+          confirm_request.set_request_id(GrpcAlgs::pack_request_id(
             Commons::RequestId()));
           for(const auto account_id : passback_info.pubpixel_accounts)
           {
-            confirm_request->add_exclude_pubpixel_accounts(account_id);
+            confirm_request.add_exclude_pubpixel_accounts(account_id);
           }
 
-          user_info_client_->confirm_user_freq_caps(
-            *confirm_request,
-            [this, confirm_request](
-              const grpc::Status& status,
-              const adserver::user_info_svcs::user_info_manager::
-                ConfirmUserFreqCapsResponse&)
-            {
-              if(!status.ok())
-              {
-                Stream::Error ostr;
-                ostr << "UserInfoManagerGrpc::confirm_user_freq_caps(): "
-                  "gRPC call failed: code=" <<
-                  static_cast<int>(status.error_code()) <<
-                  ", message=" << status.error_message();
-                logger()->log(
-                  ostr.str(),
-                  status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                    Logging::Logger::WARNING :
-                    Logging::Logger::EMERGENCY,
-                  Aspect::PASS_FRONTEND,
-                  status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                    "" : "ADS-IMPL-123");
-              }
-            });
+          co_confirm_user_freq_caps_(
+            std::move(confirm_request)).start_detached(nullptr);
         }
         catch(const eh::Exception& e)
         {
@@ -385,6 +334,78 @@ namespace Passback
     }
 
     return http_status;
+  }
+
+  FrontendCommons::RequestTask
+  Frontend::co_consider_passback_(
+    adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest request)
+    noexcept
+  {
+    static const char* FUN = "Frontend::co_consider_passback_()";
+
+    try
+    {
+      auto result = co_await campaign_manager_coro_->consider_passback(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        logger()->sstream(
+          Logging::Logger::ERROR,
+          Aspect::PASS_FRONTEND,
+          "ADS-IMPL-194") <<
+          FUN << ": CampaignManager::consider_passback(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      logger()->sstream(
+        Logging::Logger::ERROR,
+        Aspect::PASS_FRONTEND,
+        "ADS-IMPL-194") <<
+        FUN << ": CampaignManager::consider_passback(): " << e.what();
+    }
+
+    co_return FrontendCommons::RequestResult::written();
+  }
+
+  FrontendCommons::RequestTask
+  Frontend::co_confirm_user_freq_caps_(
+    adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest
+      request)
+    noexcept
+  {
+    try
+    {
+      auto result = co_await user_info_client_coro_->confirm_user_freq_caps(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        logger()->sstream(
+          result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+            Logging::Logger::WARNING :
+            Logging::Logger::EMERGENCY,
+          Aspect::PASS_FRONTEND,
+          result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+            "" : "ADS-IMPL-123") <<
+          "UserInfoManagerGrpc::confirm_user_freq_caps(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      logger()->sstream(
+        Logging::Logger::EMERGENCY,
+        Aspect::PASS_FRONTEND,
+        "ADS-IMPL-123") <<
+        "UserInfoManagerGrpc::confirm_user_freq_caps(): " << e.what();
+    }
+
+    co_return FrontendCommons::RequestResult::written();
   }
 
   void
@@ -406,16 +427,25 @@ namespace Passback
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
-        campaign_manager_ = campaign_manager;
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        campaign_manager_coro_ = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager,
+            workers_);
         add_child_object(campaign_manager);
 
-        user_info_client_ =
+        auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
             *common_config_,
             grpc_executor_,
-            logger(),
-            this);
+            common_module_->grpc_coalesce_runner(),
+            logger());
+        user_info_client_coro_ = std::make_shared<
+          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
+            user_info_client,
+            workers_);
+        add_child_object(user_info_client);
 
         activate_object();
       }
@@ -437,8 +467,8 @@ namespace Passback
   {
     deactivate_object();
     wait_object();
-    campaign_manager_.reset();
-    user_info_client_.reset();
+    campaign_manager_coro_.reset();
+    user_info_client_coro_.reset();
 
     logger()->log(String::SubString(
         "Frontend::shutdown(): frontend terminated"),
@@ -446,4 +476,3 @@ namespace Passback
   }
 
 } /*Passback*/
-} /*AdServer*/

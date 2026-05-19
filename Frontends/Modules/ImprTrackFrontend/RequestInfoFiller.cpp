@@ -4,9 +4,7 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace ImprTrack
+namespace AdServer::ImprTrack
 {
   namespace
   {
@@ -963,5 +961,4 @@ namespace ImprTrack
       }
     }
   }
-}
 }

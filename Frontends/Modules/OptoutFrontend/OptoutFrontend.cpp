@@ -50,19 +50,16 @@ namespace Aspect
   const char STATUS[] = "Status";
 }
 
-namespace Request
+namespace Request::Cookie
 {
-  namespace Cookie
-  {
     const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
     const Generics::SubStringHashAdapter OPTOUT(String::SubString("OPTED_OUT"));
   }
 
-  namespace Context
+namespace Request::Context
   {
     const Generics::SubStringHashAdapter CLIENT_ID(String::SubString("uid"));
   }
-}
 
 namespace AdServer
 {
@@ -172,19 +169,17 @@ namespace
   }
 
   FrontendCommons::RequestTask
-  OptoutFrontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  OptoutFrontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
+    int http_status = process_request_(request, response);
     co_return FrontendCommons::RequestResult{
       http_status,
       response_ptr,
@@ -192,12 +187,12 @@ namespace
   }
 
   int
-  OptoutFrontend::handle_request_(
+  OptoutFrontend::process_request_(
     const FCGI::HttpRequest& request,
     HttpResponse& response)
     noexcept
   {
-    static const char* FUN = "OptoutFrontend::handle_request_()";
+    static const char* FUN = "OptoutFrontend::process_request_()";
     int http_result = 200;
 
     OptOut::RequestInfo request_info;
@@ -338,41 +333,21 @@ namespace
             (request_info.old_oo_type == OO_OUT ? 4 : 5));
         }
 
-        auto verify_opt_operation_request =
-          std::make_shared<pb::VerifyOptOperationRequest>();
-        verify_opt_operation_request->set_time(request_info.debug_time.tv_sec);
-        verify_opt_operation_request->set_colo_id(request_info.colo_id);
-        verify_opt_operation_request->set_referer(verify_referer);
-        verify_opt_operation_request->set_operation(ver_operation);
-        verify_opt_operation_request->set_status(status);
-        verify_opt_operation_request->set_user_status(request_info.user_status);
-        verify_opt_operation_request->set_log_as_test(request_info.log_as_test);
-        verify_opt_operation_request->set_browser(request_info.browser);
-        verify_opt_operation_request->set_os(request_info.os);
-        verify_opt_operation_request->set_ct(request_info.ct);
-        verify_opt_operation_request->set_curct(request_info.curct);
-        verify_opt_operation_request->set_user_id(pack_user_id(new_user_id));
-
-        campaign_manager_->verify_opt_operation(
-          *verify_opt_operation_request,
-          [this, verify_opt_operation_request](
-            const grpc::Status& status,
-            const pb::VerifyOptOperationResponse&)
-          {
-            if(!status.ok())
-            {
-              Stream::Error ostr;
-              ostr << "CampaignManager::verify_opt_operation(): "
-                "gRPC call failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              logger()->log(
-                ostr.str(),
-                Logging::Logger::EMERGENCY,
-                Aspect::OPTOUT_FRONTEND,
-                "ADS-ICON-4");
-            }
-          });
+        pb::VerifyOptOperationRequest verify_opt_operation_request;
+        verify_opt_operation_request.set_time(request_info.debug_time.tv_sec);
+        verify_opt_operation_request.set_colo_id(request_info.colo_id);
+        verify_opt_operation_request.set_referer(verify_referer);
+        verify_opt_operation_request.set_operation(ver_operation);
+        verify_opt_operation_request.set_status(status);
+        verify_opt_operation_request.set_user_status(request_info.user_status);
+        verify_opt_operation_request.set_log_as_test(request_info.log_as_test);
+        verify_opt_operation_request.set_browser(request_info.browser);
+        verify_opt_operation_request.set_os(request_info.os);
+        verify_opt_operation_request.set_ct(request_info.ct);
+        verify_opt_operation_request.set_curct(request_info.curct);
+        verify_opt_operation_request.set_user_id(pack_user_id(new_user_id));
+        co_verify_opt_operation_(
+          std::move(verify_opt_operation_request)).start_detached(nullptr);
 
         if(stats_)
         {
@@ -466,41 +441,21 @@ namespace
             verify_referer << LOG_DELIMITER <<
             "0"/*failure*/;
 
-          auto verify_opt_operation_request =
-            std::make_shared<pb::VerifyOptOperationRequest>();
-          verify_opt_operation_request->set_time(request_info.debug_time.tv_sec);
-          verify_opt_operation_request->set_colo_id(request_info.colo_id);
-          verify_opt_operation_request->set_referer(verify_referer);
-          verify_opt_operation_request->set_operation(ver_operation);
-          verify_opt_operation_request->set_status(0);
-          verify_opt_operation_request->set_user_status(request_info.user_status);
-          verify_opt_operation_request->set_log_as_test(
+          pb::VerifyOptOperationRequest verify_opt_operation_request;
+          verify_opt_operation_request.set_time(request_info.debug_time.tv_sec);
+          verify_opt_operation_request.set_colo_id(request_info.colo_id);
+          verify_opt_operation_request.set_referer(verify_referer);
+          verify_opt_operation_request.set_operation(ver_operation);
+          verify_opt_operation_request.set_status(0);
+          verify_opt_operation_request.set_user_status(request_info.user_status);
+          verify_opt_operation_request.set_log_as_test(
             request_info.log_as_test);
-          verify_opt_operation_request->set_browser(request_info.browser);
-          verify_opt_operation_request->set_os(request_info.os);
-          verify_opt_operation_request->set_ct(request_info.ct);
-          verify_opt_operation_request->set_curct(request_info.curct);
-
-          campaign_manager_->verify_opt_operation(
-            *verify_opt_operation_request,
-            [this, verify_opt_operation_request](
-              const grpc::Status& status,
-              const pb::VerifyOptOperationResponse&)
-            {
-              if(!status.ok())
-              {
-                Stream::Error ostr;
-                ostr << "CampaignManager::verify_opt_operation(): "
-                  "gRPC call failed: code=" <<
-                  static_cast<int>(status.error_code()) <<
-                  ", message=" << status.error_message();
-                logger()->log(
-                  ostr.str(),
-                  Logging::Logger::EMERGENCY,
-                  Aspect::OPTOUT_FRONTEND,
-                  "ADS-ICON-4");
-              }
-            });
+          verify_opt_operation_request.set_browser(request_info.browser);
+          verify_opt_operation_request.set_os(request_info.os);
+          verify_opt_operation_request.set_ct(request_info.ct);
+          verify_opt_operation_request.set_curct(request_info.curct);
+          co_verify_opt_operation_(
+            std::move(verify_opt_operation_request)).start_detached(nullptr);
 
           logger()->log(
             ostr.str(),
@@ -540,6 +495,39 @@ namespace
     return http_result;
   }
 
+  FrontendCommons::RequestTask
+  OptoutFrontend::co_verify_opt_operation_(
+    pb::VerifyOptOperationRequest request)
+    noexcept
+  {
+    try
+    {
+      auto result = co_await campaign_manager_coro_->verify_opt_operation(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        logger()->sstream(
+          Logging::Logger::EMERGENCY,
+          Aspect::OPTOUT_FRONTEND,
+          "ADS-ICON-4") <<
+          "CampaignManager::verify_opt_operation(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      logger()->sstream(
+        Logging::Logger::EMERGENCY,
+        Aspect::OPTOUT_FRONTEND,
+        "ADS-ICON-4") <<
+        "CampaignManager::verify_opt_operation(): " << e.what();
+    }
+
+    co_return FrontendCommons::RequestResult::written();
+  }
+
   void
   OptoutFrontend::init() /*throw(eh::Exception)*/
   {
@@ -559,8 +547,12 @@ namespace
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
-        campaign_manager_ = campaign_manager;
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        campaign_manager_coro_ = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager,
+            workers_);
         add_child_object(campaign_manager);
 
         if(common_config_->StatsDumper().present())
@@ -607,7 +599,7 @@ namespace
     {
       deactivate_object();
       wait_object();
-      campaign_manager_.reset();
+      campaign_manager_coro_.reset();
 
       logger()->log(String::SubString(
             "OptoutFrontend::shutdown: frontend terminated"),

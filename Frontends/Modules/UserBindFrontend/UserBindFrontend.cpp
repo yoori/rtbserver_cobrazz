@@ -43,13 +43,10 @@ namespace UrlPath
   const String::SubString kGetSegments("/segments");
 }
 
-namespace Response
+namespace Response::Type
 {
-  namespace Type
-  {
     const String::SubString JSON("application/json");
   }
-}
 
 namespace TemplateParams
 {
@@ -138,94 +135,24 @@ namespace AdServer
     }
   };
 
-  void
-  UserBindFrontend::process_request_async_(
+  UserBindFrontend::ProcessRequestTask
+  UserBindFrontend::co_process_request_(
     UserBind::RequestInfo_var request_info,
-    std::string dns_bind_request_id,
-    ProcessRequestCallback callback)
+    std::string dns_bind_request_id)
     noexcept
   {
-    std::make_shared<BindRequestState>(
+    auto state = std::make_shared<BindRequestState>(
       this,
       std::move(request_info),
-      std::move(dns_bind_request_id),
-      std::move(callback))->start();
+      std::move(dns_bind_request_id));
+    auto result = co_await state->co_process_();
+    co_return result;
   }
 
   bool
   UserBindFrontend::has_user_bind_client_() const noexcept
   {
-    return static_cast<bool>(user_bind_client_);
-  }
-
-  void
-  UserBindFrontend::get_user_id_(
-    const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
-    GetUserIdCallback callback)
-    noexcept
-  {
-    user_bind_client_->get_user_id(
-      request,
-      [this, callback = std::move(callback)](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
-        mutable
-      {
-        post_request_stage_(
-          [callback = std::move(callback), status, response]() mutable
-          {
-            callback(status, response);
-          });
-      });
-  }
-
-  void
-  UserBindFrontend::add_user_id_(
-    const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
-    AddUserIdCallback callback)
-    noexcept
-  {
-    user_bind_client_->add_user_id(
-      request,
-      [this, callback = std::move(callback)](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_bind::AddUserIdResponse& response)
-        mutable
-      {
-        post_request_stage_(
-          [callback = std::move(callback), status, response]() mutable
-          {
-            callback(status, response);
-          });
-      });
-  }
-
-  void
-  UserBindFrontend::add_bind_request_(
-    const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
-    AddBindRequestCallback callback)
-    noexcept
-  {
-    user_bind_client_->add_bind_request(
-      request,
-      [this, callback = std::move(callback)](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_bind::AddBindRequestResponse&
-          response)
-        mutable
-      {
-        post_request_stage_(
-          [callback = std::move(callback), status, response]() mutable
-          {
-            callback(status, response);
-          });
-      });
-  }
-
-  void
-  UserBindFrontend::post_request_stage_(std::function<void()> callback) noexcept
-  {
-    workers_->post(std::move(callback));
+    return static_cast<bool>(user_bind_client_coro_);
   }
 
   void
@@ -237,7 +164,7 @@ namespace AdServer
     const String::SubString& cohort,
     const String::SubString& referer,
     unsigned long colo_id,
-    const FrontendCommons::Location* location,
+    FrontendCommons::Location_var location,
     const String::SubString& source)
     noexcept
   {
@@ -262,10 +189,6 @@ namespace AdServer
       return;
     }
 
-    FrontendCommons::Location_var location_holder(
-      ReferenceCounting::add_ref(
-        const_cast<FrontendCommons::Location*>(location)));
-
     match_workers_->post(
       [this,
         result_user_id,
@@ -275,7 +198,7 @@ namespace AdServer
         cohort = cohort.str(),
         referer = referer.str(),
         colo_id,
-        location = location_holder,
+        location = std::move(location),
         source = source.str()]()
       {
         match_task_count_ += -1;
@@ -341,16 +264,6 @@ namespace AdServer
     return result;
   }
 
-  FrontendCommons::RequestTask
-  UserBindFrontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
-    (void)response_writer;
-    return handle_request_(std::move(request_holder));
-  }
-
   void
   UserBindFrontend::parse_configs_() /*throw(Exception)*/
   {
@@ -401,52 +314,58 @@ namespace AdServer
       {
         parse_configs_();
 
-        /*
-        callback_holder_.reset(new Logging::LoggerCallbackHolder(
-          Logging::Logger_var(
-            new Logging::SeveritySelectorLogger(
-              logger,
-              0,
-              config_->Logger().log_level())),
-            "UserBindFrontend",
-          Aspect::USER_BIND_FRONTEND,
-          0));
-        */
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
 
-        auto user_bind_objects =
+        auto user_bind_client =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
             *common_config_,
             grpc_executor_,
+            common_module_->grpc_coalesce_runner(),
             logger());
-        if(user_bind_objects.client)
+        if(user_bind_client)
         {
-          user_bind_client_ = user_bind_objects.client;
-          add_child_object(user_bind_objects.active_object);
+          user_bind_client_coro_ = std::make_shared<
+            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
+              user_bind_client,
+              workers_);
+          add_child_object(user_bind_client);
         }
 
-        user_info_client_ =
+        auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
             *common_config_,
             grpc_executor_,
-            logger(),
-            this);
+            common_module_->grpc_coalesce_runner(),
+            logger());
+        user_info_client_coro_ = std::make_shared<
+          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
+            user_info_client,
+            workers_);
+        add_child_object(user_info_client);
 
-        auto channel_client_objects =
+        auto channel_client =
           AdServer::ChannelSvcs::create_distributed_channel_client(
             *common_config_,
-            grpc_executor_);
-        channel_client_ = channel_client_objects.client;
-        add_child_object(channel_client_objects.active_object);
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        channel_client_coro_ = std::make_shared<
+          AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
+            channel_client,
+            workers_);
+        add_child_object(channel_client);
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
-        campaign_manager_ = campaign_manager;
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        campaign_manager_coro_ = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
+            campaign_manager,
+            workers_);
         add_child_object(campaign_manager);
 
         cookie_manager_.reset(
@@ -631,11 +550,11 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  UserBindFrontend::handle_request_(
+  UserBindFrontend::co_handle_request(
     FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    static const char* FUN = "UserBindFrontend::handle_request_()";
+    static const char* FUN = "UserBindFrontend::co_handle_request()";
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     const FCGI::HttpRequest& request = request_holder->request();
@@ -667,83 +586,6 @@ namespace AdServer
 
         return http_status;
       };
-
-    struct ProcessRequestResult
-    {
-      int status = 500;
-      BindResult bind_result;
-    };
-
-    struct ProcessRequestAwaiter
-    {
-      UserBindFrontend* frontend;
-      UserBind::RequestInfo_var request_info;
-      std::string dns_bind_request_id;
-      std::coroutine_handle<> handle{};
-      ProcessRequestResult result{};
-
-      bool await_ready() const noexcept
-      {
-        return false;
-      }
-
-      void await_suspend(std::coroutine_handle<> h) noexcept
-      {
-        handle = h;
-        frontend->process_request_async_(
-          request_info,
-          std::move(dns_bind_request_id),
-          [this](int status, BindResult bind_result) mutable
-          {
-            result.status = status;
-            result.bind_result = std::move(bind_result);
-            frontend->workers_->post([this]() mutable
-            {
-              handle.resume();
-            });
-          });
-      }
-
-      ProcessRequestResult await_resume() noexcept
-      {
-        return std::move(result);
-      }
-    };
-
-    struct UserChannelsAwaiter
-    {
-      UserBindFrontend* frontend;
-      UserBind::RequestInfo_var request_info;
-      FCGI::HttpResponse_var response;
-      std::coroutine_handle<> handle{};
-      int status = 500;
-
-      bool await_ready() const noexcept
-      {
-        return false;
-      }
-
-      void await_suspend(std::coroutine_handle<> h) noexcept
-      {
-        handle = h;
-        frontend->handle_user_channels_request_async_(
-          request_info,
-          response,
-          [this](int result_status) mutable
-          {
-            status = result_status;
-            frontend->workers_->post([this]() mutable
-            {
-              handle.resume();
-            });
-          });
-      }
-
-      int await_resume() const noexcept
-      {
-        return status;
-      }
-    };
 
     try
     {
@@ -799,11 +641,10 @@ namespace AdServer
           (request.uri().size() > UrlPath::kGetSegments.size()
           && request.uri()[UrlPath::kGetSegments.size()] == '?')))
       {
-        UserChannelsAwaiter user_channels_awaiter{
-          this,
+        auto channels_result = co_await co_handle_user_channels_request_(
           request_info_holder,
-          response_ptr};
-        const int channels_status = co_await std::move(user_channels_awaiter);
+          response_ptr);
+        const int channels_status = channels_result.status;
         const int http_status = finish_response(channels_status);
         co_return FrontendCommons::RequestResult{
           http_status,
@@ -947,11 +788,9 @@ namespace AdServer
         dns_bind_request_id = std::string("r") + dns_bind_request_id;
       }
 
-      ProcessRequestAwaiter process_request_awaiter{
-        this,
+      ProcessRequestResult process_result = co_await co_process_request_(
         request_info_holder,
-        dns_bind_request_id};
-      ProcessRequestResult process_result = co_await std::move(process_request_awaiter);
+        dns_bind_request_id);
 
       {
           const FCGI::HttpRequest& request = request_holder->request();
@@ -1186,9 +1025,7 @@ namespace AdServer
     const UserBind::RequestInfo& request_info)
     noexcept
   {
-    static const char* FUN = "UserBindFrontend::log_cookie_mapping_()";
-
-    if (config_->cookie_mapping_log())
+    if(config_->cookie_mapping_log() && campaign_manager_coro_)
     {
       adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
         web_op_info;
@@ -1205,32 +1042,45 @@ namespace AdServer
       web_op_info.set_test_request(false);
       web_op_info.set_user_bind_src(request_info.source_id);
 
-      campaign_manager_->consider_web_operation(
-        web_op_info,
-        [this](
-          const grpc::Status& status,
-          const adserver::campaign_svcs::campaign_manager::
-            ConsiderWebOperationResponse&)
-        {
-          workers_->post(
-            [this, status]()
-            {
-              if(!status.ok() &&
-                status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
-              {
-                Stream::Error ostr;
-                ostr << FUN << ": CampaignManager::consider_web_operation() "
-                  "gRPC call failed: code=" <<
-                  static_cast<int>(status.error_code()) <<
-                  ", message=" << status.error_message();
-                logger()->log(ostr.str(),
-                  Logging::Logger::ERROR,
-                  Aspect::USER_BIND_FRONTEND,
-                  "ADS-IMPL-7805");
-              }
-            });
-        });
+      co_consider_web_operation_(std::move(web_op_info)).start_detached(nullptr);
     }
+  }
+
+  FrontendCommons::RequestTask
+  UserBindFrontend::co_consider_web_operation_(
+    adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+      request)
+    noexcept
+  {
+    static const char* FUN = "UserBindFrontend::co_consider_web_operation_()";
+
+    try
+    {
+      auto result = co_await campaign_manager_coro_->consider_web_operation(
+        std::move(request));
+      if(!result.status.ok() &&
+        result.status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
+      {
+        logger()->sstream(
+          Logging::Logger::ERROR,
+          Aspect::USER_BIND_FRONTEND,
+          "ADS-IMPL-7805") <<
+          FUN << ": CampaignManager::consider_web_operation() "
+          "gRPC call failed: code=" <<
+          static_cast<int>(result.status.error_code()) <<
+          ", message=" << result.status.error_message();
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      logger()->sstream(
+        Logging::Logger::ERROR,
+        Aspect::USER_BIND_FRONTEND,
+        "ADS-IMPL-7805") <<
+        FUN << ": CampaignManager::consider_web_operation(): " << ex.what();
+    }
+
+    co_return FrontendCommons::RequestResult::written();
   }
 
   void
@@ -1242,7 +1092,7 @@ namespace AdServer
     const String::SubString& cohort,
     const String::SubString& referer,
     unsigned long colo_id,
-    const FrontendCommons::Location* location,
+    FrontendCommons::Location_var location,
     const String::SubString& source)
     noexcept
   {
@@ -1255,7 +1105,7 @@ namespace AdServer
       cohort,
       referer,
       colo_id,
-      location,
+      std::move(location),
       source)->start();
   }
 
@@ -1437,23 +1287,21 @@ namespace AdServer
     }
   }
 
-  void UserBindFrontend::handle_user_channels_request_async_(
+  FrontendCommons::RequestTask
+  UserBindFrontend::co_handle_user_channels_request_(
     UserBind::RequestInfo_var request_info,
-    FCGI::HttpResponse_var response,
-    std::function<void(int)> callback)
+    FCGI::HttpResponse_var response)
     noexcept
   {
     static const char* FUN = "UserBindFrontend::handle_user_channels_request_()";
 
     if (request_info->user_id.is_null())
     {
-      callback(400);
-      return;
+      co_return FrontendCommons::RequestResult{400, response, false};
     }
-    if (!user_info_client_)
+    if (!user_info_client_coro_)
     {
-      callback(500);
-      return;
+      co_return FrontendCommons::RequestResult{500, response, false};
     }
 
     adserver::user_info_svcs::user_info_manager::MatchRequest
@@ -1477,82 +1325,65 @@ namespace AdServer
     user_info->set_temporary(false);
     user_info->set_time(Generics::Time::get_time_of_day().tv_sec);
 
-    user_info_client_->match(
-      history_match_request,
-      [this, request_info, response, callback = std::move(callback)](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_info_manager::MatchResponse&
-          history_match_response) mutable
+    auto match_result = co_await user_info_client_coro_->match(
+      std::move(history_match_request));
+
+    static const String::SubString JSON_SESSION_ID_NAME("session_id");
+    static const String::SubString JSON_CL_ID_NAME("cl_id");
+    static const String::SubString JSON_SEGMENTS_NAME("segments");
+
+    if(!match_result.status.ok())
+    {
+      logger()->sstream(
+        Logging::Logger::EMERGENCY,
+        Aspect::USER_BIND_FRONTEND,
+        match_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+          "ADS-IMPL-7804" : "ADS-IMPL-7803") <<
+        FUN << ": UserInfoManager::match() gRPC call failed: "
+        "user_id = '" << request_info->user_id.to_string() <<
+        "'; code=" << static_cast<int>(match_result.status.error_code()) <<
+        ", message=" << match_result.status.error_message();
+      co_return FrontendCommons::RequestResult{500, response, false};
+    }
+
+    std::vector<unsigned long> return_channel_ids;
+
+    const auto& history_matched_channels =
+      match_result.response.match_result().channels();
+    for(const auto& history_matched_channel : history_matched_channels)
+    {
+      if(request_info->channels_wl.empty() ||
+        request_info->channels_wl.find(
+          history_matched_channel.channel_id()) !=
+          request_info->channels_wl.end())
       {
-        workers_->post(
-          [this,
-            request_info,
-            response,
-            callback = std::move(callback),
-            status,
-            history_match_response]() mutable
-          {
-            static const String::SubString JSON_SESSION_ID_NAME("session_id");
-            static const String::SubString JSON_CL_ID_NAME("cl_id");
-            static const String::SubString JSON_SEGMENTS_NAME("segments");
+        return_channel_ids.emplace_back(history_matched_channel.channel_id());
+      }
+    }
 
-            if(!status.ok())
-            {
-              Stream::Error ostr;
-              ostr << FUN << ": UserInfoManager::match() gRPC call failed: "
-                "user_id = '" << request_info->user_id.to_string() <<
-                "'; code=" << static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              logger()->log(ostr.str(),
-                Logging::Logger::EMERGENCY,
-                Aspect::USER_BIND_FRONTEND,
-                status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-                  "ADS-IMPL-7804" : "ADS-IMPL-7803");
-              callback(500);
-              return;
-            }
+    std::ostringstream response_string;
+    {
+      AdServer::Commons::JsonFormatter root_json(response_string);
+      if(!request_info->session_id.empty())
+      {
+        root_json.add(JSON_SESSION_ID_NAME, request_info->session_id);
+      }
 
-            std::vector<unsigned long> return_channel_ids;
+      if(!request_info->cl_id.empty())
+      {
+        root_json.add(JSON_CL_ID_NAME, request_info->cl_id);
+      }
 
-            const auto& history_matched_channels =
-              history_match_response.match_result().channels();
-            for(const auto& history_matched_channel : history_matched_channels)
-            {
-              if(request_info->channels_wl.empty() ||
-                request_info->channels_wl.find(
-                  history_matched_channel.channel_id()) !=
-                  request_info->channels_wl.end())
-              {
-                return_channel_ids.emplace_back(
-                  history_matched_channel.channel_id());
-              }
-            }
+      AdServer::Commons::JsonObject segment_array(
+        root_json.add_array(JSON_SEGMENTS_NAME));
+      for(const auto& user_channel : return_channel_ids)
+      {
+        segment_array.add_number(user_channel);
+      }
+    }
 
-            std::ostringstream response_string;
-            {
-              AdServer::Commons::JsonFormatter root_json(response_string);
-              if(!request_info->session_id.empty())
-              {
-                root_json.add(JSON_SESSION_ID_NAME, request_info->session_id);
-              }
-
-              if(!request_info->cl_id.empty())
-              {
-                root_json.add(JSON_CL_ID_NAME, request_info->cl_id);
-              }
-
-              AdServer::Commons::JsonObject segment_array(
-                root_json.add_array(JSON_SEGMENTS_NAME));
-              for(const auto& user_channel : return_channel_ids)
-              {
-                segment_array.add_number(user_channel);
-              }
-            }
-
-            response->set_content_type_nocopy(Response::Type::JSON);
-            response->write(response_string.str());
-            callback(200);
-          });
-      });
+    response->set_content_type_nocopy(Response::Type::JSON);
+    response->write(response_string.str());
+    co_return FrontendCommons::RequestResult{200, response, false};
   }
 }

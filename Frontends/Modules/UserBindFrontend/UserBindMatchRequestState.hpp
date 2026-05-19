@@ -7,6 +7,7 @@
 
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/Location.hpp>
+#include <Frontends/FrontendCommons/RequestTask.hpp>
 #include <ChannelServerGrpc.pb.h>
 #include <UserInfoManagerGrpc.pb.h>
 
@@ -27,63 +28,24 @@ namespace AdServer
       const String::SubString& cohort,
       const String::SubString& referer,
       unsigned long colo_id,
-      const FrontendCommons::Location* location,
+      FrontendCommons::Location_var location,
       const String::SubString& source);
 
     void
     start();
 
   private:
-    void
-    channel_match_stage_();
+    FrontendCommons::RequestTask
+    co_process_(std::shared_ptr<UserBindMatchRequestState> self) noexcept;
 
-    void
-    channel_match_done_stage_(
-      const grpc::Status& status,
-      const adserver::channel_svcs::channel_server::MatchResponse& response);
+    FrontendCommons::RequestTask
+    co_channel_match_() noexcept;
 
-    void
-    history_stage_();
+    FrontendCommons::RequestTask
+    co_history_() noexcept;
 
-    void
-    get_merge_profile_done_stage_(
-      std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-        history_match_request,
-      const grpc::Status& status,
-      const adserver::user_info_svcs::user_info_manager::
-        GetUserProfileResponse& response);
-
-    void
-    merge_stage_(
-      std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-        history_match_request,
-      const adserver::user_info_svcs::user_info_manager::
-        GetUserProfileResponse& get_profile_response);
-
-    void
-    merge_done_stage_(const grpc::Status& status);
-
-    void
-    remove_merged_profile_stage_();
-
-    void
-    remove_merged_profile_done_stage_(const grpc::Status& status);
-
-    void
-    match_stage_(
-      std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchRequest>
-        history_match_request);
-
-    void
-    match_done_stage_(
-      const grpc::Status& status,
-      const adserver::user_info_svcs::user_info_manager::MatchResponse& response);
-
-    void
-    campaign_stage_();
-
-    void
-    campaign_done_stage_(const grpc::Status& status);
+    FrontendCommons::RequestTask
+    co_campaign_() noexcept;
 
     void
     fill_history_match_request_(

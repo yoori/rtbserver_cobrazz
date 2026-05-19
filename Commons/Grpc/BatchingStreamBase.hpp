@@ -9,9 +9,9 @@
 #include <grpcpp/generic/generic_stub.h>
 
 #include <Generics/ActiveObject.hpp>
+#include <Generics/Time.hpp>
 
 #include <Commons/Grpc/Batch.grpc.pb.h>
-#include <Commons/Grpc/BatchingQueue.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 
@@ -19,6 +19,19 @@ namespace AdServer::Grpc
 {
   class BatchingQueue;
   class GrpcExecutor;
+
+  struct BatchingPendingRequest
+  {
+    const char* full_method = nullptr;
+    std::string payload;
+    std::function<void(const adserver::grpc::BatchResponseItem&)> callback;
+  };
+
+  struct BatchingPendingOperation
+  {
+    Generics::Time enqueue_time;
+    std::shared_ptr<BatchingPendingRequest> request;
+  };
 
   class BatchingStreamBase
     : public Generics::SimpleActiveObject,
@@ -29,7 +42,7 @@ namespace AdServer::Grpc
     using BatchRequest = adserver::grpc::BatchRequest;
     using BatchResponse = adserver::grpc::BatchResponse;
     using BatchTransport = grpc::TemplatedGenericStub<BatchRequest, BatchResponse>;
-    using PendingRequest = AdServer::Grpc::BatchingPendingRequest;
+    using PendingRequest = AdServer::Grpc::BatchingPendingOperation;
     using PendingBatch = std::vector<std::shared_ptr<PendingRequest>>;
     using ReadyCallback = std::function<void(BatchingStreamBase*)>;
     using ClosedCallback = std::function<void(BatchingStreamBase*)>;

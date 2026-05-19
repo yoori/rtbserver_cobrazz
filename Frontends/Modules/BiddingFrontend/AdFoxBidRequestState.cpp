@@ -3,9 +3,7 @@
 #include "KeywordFormatter.hpp"
 #include "AdFoxBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -14,19 +12,17 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString CONTENT_TYPE("Content-Type");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString TEXT_XML("text/xml");
       }
 
-      namespace AdJson
+    namespace Response::AdJson
       {
         const String::SubString BIDS("bids");
 
@@ -40,7 +36,6 @@ namespace Bidding
         const String::SubString WIDTH("width");
         const String::SubString HEIGHT("height");
       }
-    } // namespace Response
 
     const String::SubString ADFOX_CLIENT("adfox");
   }
@@ -201,5 +196,4 @@ namespace Bidding
         ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
     }
   }
-}
 }

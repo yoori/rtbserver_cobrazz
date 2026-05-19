@@ -4,9 +4,7 @@
 #include <vector>
 #include <Commons/JsonParamProcessor.hpp>
 
-namespace AdServer
-{
-namespace WebStat
+namespace AdServer::WebStat
 {
   struct YandexNotificationProcessingElementContext
   {
@@ -28,5 +26,4 @@ namespace WebStat
 
   typedef ReferenceCounting::SmartPtr<JsonYNParamProcessor>
     JsonYNParamProcessor_var;
-}
 }

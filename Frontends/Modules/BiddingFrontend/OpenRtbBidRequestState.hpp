@@ -3,9 +3,7 @@
 #include <iostream>
 #include "BidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   //
   // OpenRtbBidRequestState
@@ -113,5 +111,4 @@ namespace Bidding
     std::string uri_;
     JsonProcessingContext context_;
   };
-}
 }

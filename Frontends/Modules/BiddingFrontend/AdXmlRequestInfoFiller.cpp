@@ -4,9 +4,7 @@
 #include "AdXmlRequestInfoFiller.hpp"
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -241,5 +239,4 @@ namespace Bidding
       name,
       RequestParamProcessor_var(processor)));
   }
-}
 }

@@ -3,9 +3,7 @@
 #include "KeywordFormatter.hpp"
 #include "AdJsonBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -14,19 +12,17 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString CONTENT_TYPE("Content-Type");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString TEXT_XML("text/xml");
       }
 
-      namespace AdJson
+    namespace Response::AdJson
       {
         const String::SubString CRID("creative_id");
         const String::SubString TTL_CLICK("ttl_click");
@@ -40,7 +36,6 @@ namespace Bidding
         const String::SubString IMP_TRACKERS("pixels");
         const String::SubString IMAGE("image");
       }
-    } // namespace Response
 
     const String::SubString ADJSON_CLIENT("adjson");
     const String::SubString ADJSON_SIZE("492x328");
@@ -335,5 +330,4 @@ namespace Bidding
       String::StringManip::XU_TEXT | String::StringManip::XU_PRESERVE_UTF8);
     response_ostr << escaped_str;
   }
-}
 }

@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <eh/Exception.hpp>
-#include <Generics/ActiveObject.hpp>
 #include <grpcpp/support/status.h>
 
 #include <Commons/Grpc/GrpcExecutor.hpp>
@@ -22,12 +21,6 @@ namespace AdServer::UserInfoSvcs
     DECLARE_EXCEPTION(ChunkNotFound, Exception);
     DECLARE_EXCEPTION(ImplementationException, Exception);
   }
-
-  struct DistributedUserBindClientObjects
-  {
-    std::shared_ptr<UserBindServerGrpcAsyncClient> client;
-    std::shared_ptr<Generics::ActiveObject> active_object;
-  };
 
   inline void
   throw_user_bind_exception(const grpc::Status& status)
@@ -82,26 +75,26 @@ namespace AdServer::UserInfoSvcs
         });
   }
 
-  inline DistributedUserBindClientObjects
+  inline std::shared_ptr<UserBindDistributedGrpcClient>
   create_distributed_user_bind_client(
     const UserBindDistributedGrpcClient::UserBindControllerRefs&
       user_bind_controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner,
     Logging::Logger* logger)
   {
-    DistributedUserBindClientObjects result;
     if(!user_bind_controller_refs.empty())
     {
-      auto client = std::make_shared<UserBindDistributedGrpcClient>(
+      return std::make_shared<UserBindDistributedGrpcClient>(
         user_bind_controller_refs,
         batching_options,
         std::move(grpc_executor),
-        logger);
-      result.client = client;
-      result.active_object = client;
+        logger,
+        std::move(coalesce_runner));
     }
 
-    return result;
+    return {};
   }
 }

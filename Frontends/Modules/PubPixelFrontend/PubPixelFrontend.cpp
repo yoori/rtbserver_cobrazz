@@ -22,9 +22,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace PubPixel
+namespace AdServer::PubPixel
 {
   struct FrontendConstrainTraits
   {
@@ -132,10 +130,9 @@ namespace PubPixel
           FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
           AdServer::Grpc::BatchingOptions(),
           grpc_executor_);
-      campaign_manager_ = campaign_manager;
       campaign_manager_coro_ = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-          campaign_manager_,
+          campaign_manager,
           workers_);
       add_child_object(campaign_manager);
 
@@ -161,7 +158,6 @@ namespace PubPixel
     {
       deactivate_object();
       wait_object();
-      campaign_manager_.reset();
 
       log(String::SubString(
           "PubPixel::Frontend::shutdown: frontend terminated"),
@@ -173,12 +169,10 @@ namespace PubPixel
   }
 
   FrontendCommons::RequestTask
-  Frontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
+  Frontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    (void)response_writer;
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
@@ -194,7 +188,7 @@ namespace PubPixel
     FCGI::HttpResponse_var response)
     noexcept
   {
-    static const char* FUN = "Frontend::handle_request_()";
+    static const char* FUN = "Frontend::process_request_()";
     const FCGI::HttpRequest& request = request_holder->request();
 
     log(String::SubString("Frontend::handle_request: entered"),
@@ -340,4 +334,3 @@ namespace PubPixel
     }
   }
 } /* PubPixel */
-} /* AdServer */

@@ -1,8 +1,6 @@
 #include "Utils.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   void add_token(
     AdServer::Bidding::CampaignManager::TokenSeq& tokens,
@@ -13,5 +11,4 @@ namespace Bidding
     tokens[tokens.size() - 1].name = token_name;
     tokens[tokens.size() - 1].value = token_value;
   }
-}
 }

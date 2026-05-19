@@ -7,13 +7,14 @@
 
 namespace AdServer::UserInfoSvcs
 {
-  inline std::shared_ptr<UserInfoManagerGrpcAsyncClient>
+  inline std::shared_ptr<UserInfoDistributedGrpcClient>
   create_distributed_user_info_client(
     const xsd::AdServer::Configuration::CommonFeConfigurationType&
       common_config,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
-    Logging::Logger* logger,
-    Generics::CompositeActiveObject* owner)
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner,
+    Logging::Logger* logger)
   {
     AdServer::Grpc::BatchingOptions batching_options;
     UserInfoDistributedGrpcClient::UserInfoControllerRefs
@@ -37,12 +38,11 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    auto client = std::make_shared<UserInfoDistributedGrpcClient>(
+    return std::make_shared<UserInfoDistributedGrpcClient>(
       user_info_controller_refs,
       batching_options,
       std::move(grpc_executor),
-      logger);
-    owner->add_child_object(client);
-    return client;
+      logger,
+      std::move(coalesce_runner));
   }
 }

@@ -69,21 +69,15 @@ namespace
     const char CLICK_FRONTEND[] = "ClickFrontend";
   }
 
-  namespace Request
+  namespace Request::Param
   {
-    namespace Param
-    {
       const char RELOCATE[] = "relocate";
     }
-  }
 
-  namespace Response
+  namespace Response::Header
   {
-    namespace Header
-    {
       const String::SubString LOCATION("Location");
     }
-  }
 
 }
 
@@ -185,9 +179,8 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ClickFrontend::handle_request_noparams_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var)
+  ClickFrontend::co_handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -279,7 +272,8 @@ namespace AdServer
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
             AdServer::Grpc::BatchingOptions(),
-            grpc_executor_);
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
         campaign_manager_ = campaign_manager;
         campaign_manager_coro_ = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
@@ -287,30 +281,34 @@ namespace AdServer
             workers_);
         add_child_object(campaign_manager);
 
-        auto user_bind_objects =
+        auto user_bind_client =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
             *common_config_,
             grpc_executor_,
+            common_module_->grpc_coalesce_runner(),
             logger());
-        user_bind_client_ = user_bind_objects.client;
+        user_bind_client_ = user_bind_client;
         if(user_bind_client_)
         {
-          add_child_object(user_bind_objects.active_object);
+          add_child_object(user_bind_client);
         }
 
-        user_info_client_ =
+        auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
             *common_config_,
             grpc_executor_,
-            logger(),
-            this);
+            common_module_->grpc_coalesce_runner(),
+            logger());
+        user_info_client_ = user_info_client;
+        add_child_object(user_info_client);
 
-        auto channel_client_objects =
+        auto channel_client =
           AdServer::ChannelSvcs::create_distributed_channel_client(
             *common_config_,
-            grpc_executor_);
-        channel_client_ = channel_client_objects.client;
-        add_child_object(channel_client_objects.active_object);
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
+        channel_client_ = channel_client;
+        add_child_object(channel_client);
 
         template_files_ = new Commons::TextTemplateCache(
           static_cast<unsigned long>(-1),
@@ -361,9 +359,8 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ClickFrontend::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var)
+  ClickFrontend::co_handle_request(
+    FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -446,7 +443,8 @@ namespace AdServer
              geo_location,
              false))
         {
-          FrontendCommons::Location_var location = new FrontendCommons::Location();
+          FrontendCommons::Location_var location =
+            std::make_shared<FrontendCommons::Location>();
           location->country = geo_location.country_code.str();
           geo_location.region.assign_to(location->region);
           location->city = geo_location.city.str();
@@ -633,31 +631,6 @@ namespace AdServer
           token->set_value(it->second);
         }
       }
-
-      /*
-      {
-        logger()->sstream(Logging::Logger::CRITICAL, Aspect::CLICK_FRONTEND) <<
-          FUN << ": click_info: " <<
-          "colo_id: " << click_info.colo_id <<
-          ", tag_id: " << click_info.tag_id <<
-          ", tag_size_id: " << click_info.tag_size_id <<
-          ", ccid: " << click_info.ccid <<
-          ", creative_id: " << click_info.creative_id <<
-          ", ccg_keyword_id: " << click_info.ccg_keyword_id <<
-          ", user_id_hash_mod.defined: " << click_info.user_id_hash_mod.defined <<
-          ", user_id_hash_mod.value: " << click_info.user_id_hash_mod.value <<
-          ", relocate: " << click_info.relocate <<
-          ", time (before packing): " << request_info.request_time <<
-          ", request_id (before packing): " << request_info.request_id <<
-          ", referer: " << click_info.referer <<
-          ". request_info: " <<
-          "relocate: " << request_info.relocate <<
-          ", preclick_url: " << request_info.preclick_url <<
-          ", click_prefix: " << request_info.click_prefix <<
-          ", campaign_manager_index: " << request_info.campaign_manager_index <<
-          ", use_click_template: " << request_info.use_click_template;
-      }
-      */
 
       adserver::campaign_svcs::campaign_manager::ClickResultInfo
         click_result_info;

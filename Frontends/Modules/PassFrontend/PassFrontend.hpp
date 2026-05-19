@@ -16,15 +16,14 @@
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Passback
+namespace AdServer::Passback
 {
   namespace Configuration
   {
@@ -52,9 +51,8 @@ namespace Passback
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     virtual int
@@ -97,9 +95,21 @@ namespace Passback
     void parse_config_() /*throw(Exception)*/;
 
     virtual int
-    handle_request_(
+    process_request_(
       const FCGI::HttpRequest& request,
       FCGI::HttpResponse& response)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_consider_passback_(
+      adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest
+        request)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_confirm_user_freq_caps_(
+      adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest
+        request)
       noexcept;
 
   private:
@@ -113,24 +123,20 @@ namespace Passback
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_client_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
-}
 }
 
 //
 // Inlines
 //
-namespace AdServer
-{
-namespace Passback
+namespace AdServer::Passback
 {
   inline
   Frontend::~Frontend() noexcept
   {}
-}
 }

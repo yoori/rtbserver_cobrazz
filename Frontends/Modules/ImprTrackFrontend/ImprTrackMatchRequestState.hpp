@@ -19,15 +19,6 @@ namespace AdServer::ImprTrack
   public:
     explicit ImprTrackMatchRequestState(Frontend* frontend) noexcept;
 
-    void
-    start_match_channels_stage() noexcept;
-
-    void
-    start_history_match_stage() noexcept;
-
-    void
-    process_match_request_stage() noexcept;
-
   public:
     RequestInfo request_info;
     AdServer::Commons::UserId user_id;

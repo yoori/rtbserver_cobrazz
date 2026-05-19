@@ -8,9 +8,7 @@
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   struct RequestInfo;
   class RequestInfoFiller;
@@ -55,5 +53,4 @@ namespace Bidding
     RequestInfoFiller* request_info_filler_;
     ParamProcessorMap param_processors_;
   };
-}
 }

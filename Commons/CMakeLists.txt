@@ -14,6 +14,7 @@ add_library(Commons  SHARED
   CorbaConfig.cpp
   HostDistribution.cpp
   PathManip.cpp
+  ActivityGate.cpp
   CountActiveObject.cpp
   ZmqConfig.cpp
   IPCrypter.cpp

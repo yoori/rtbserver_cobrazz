@@ -2,26 +2,22 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace UserBind
+namespace AdServer::UserBind
 {
   namespace Aspect
   {
     const char USER_BIND_FRONTEND[] = "UserBindFrontend";
   }
 
-  namespace Request
+  namespace Request::Cookies
   {
-    namespace Cookies
-    {
       const String::SubString COHORT("ct");
       const String::SubString GA_USER_ID("_ga");
       const String::SubString GCLU_USER_ID("_gcl_au");
       const String::SubString YM_USER_ID("_ym_uid");
     }
 
-    namespace Context
+  namespace Request::Context
     {
       const String::SubString AMP("*amp*");
       const String::SubString EQL("*eql*");
@@ -62,7 +58,7 @@ namespace UserBind
       const String::SubString GOOGLE_ERROR("google_error");
     }
 
-    namespace Header
+  namespace Request::Header
     {
       const String::SubString REM_HOST(".remotehost");
       const String::AsciiStringManip::Caseless X_FORWARDED_FOR("x-forwarded-for");
@@ -73,7 +69,6 @@ namespace UserBind
       const String::SubString SECURE("secure");
       const String::SubString HOST("host");
     }
-  }
 
   namespace
   {
@@ -352,7 +347,7 @@ namespace UserBind
       request_info.peer_ip = request_info.x_peer_ip;
     }
 
-    if(!request_info.location.in() &&
+    if(!request_info.location &&
        !request_info.peer_ip.empty() &&
        ip_map_.get())
     {
@@ -365,7 +360,7 @@ namespace UserBind
              geo_location,
              false))
         {
-          request_info.location = new FrontendCommons::Location();
+          request_info.location = std::make_shared<FrontendCommons::Location>();
           request_info.location->country = geo_location.country_code.str();
           geo_location.region.assign_to(request_info.location->region);
           request_info.location->city = geo_location.city.str();
@@ -655,5 +650,4 @@ namespace UserBind
       }
     }
   }
-}
 }

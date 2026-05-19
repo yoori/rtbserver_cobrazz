@@ -3,9 +3,7 @@
 
 #include "OpenRtbBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -17,10 +15,8 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString CONTENT_TYPE("Content-Type");
         const String::SubString OPENRTB_VERSION("x-openrtb-version");
         const String::SubString OPENRTB_VERSION_VALUE("2.3");
@@ -31,14 +27,14 @@ namespace Bidding
         const String::AsciiStringManip::Caseless GZIP("gzip");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString TEXT_HTML("text/html");
         const String::SubString JSON("application/json");
         const String::SubString OCTET_STREAM("application/octet-stream");
       }
 
-      namespace OpenRtb
+    namespace Response::OpenRtb
       {
         const String::SubString ID("id");
         const String::SubString DEAL_ID("dealid");
@@ -142,13 +138,13 @@ namespace Bidding
         }
       }
 
-      namespace OpenX
+    namespace Response::OpenX
       {
         const String::SubString AD_OX_CATS("ad_ox_cats");
         const String::SubString MATCHING_AD_ID("matching_ad_id");
       }
 
-      namespace Yandex
+    namespace Response::Yandex
       {
         const String::SubString ID("id");
         const String::SubString SETUSERDATA("setuserdata");
@@ -195,7 +191,6 @@ namespace Bidding
           String::SubString("url_param15")
         };
       } // namespace Yandex
-    } // namespace Response
 
     struct YandexIdFormatter
     {
@@ -1580,5 +1575,4 @@ namespace Bidding
     }
   }
 
-}
 }

@@ -30,8 +30,10 @@
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
-#include <ChannelServerGrpc.grpc.pb.h>
+#include <CampaignManagerGrpc.grpc-client.hpp>
+#include <ChannelServerGrpc.grpc-client.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
+#include <UserBindServerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 
@@ -182,78 +184,19 @@ namespace AdServer::Bidding
     void
     parse_configs_() /*throw(Exception)*/;
 
-    void
-    resolve_user_id_async_(
-      BidRequestState_var request_task,
-      std::function<void(DebugSink::UserResolvingDebugInfo)> callback)
-      noexcept;
-
-    void
-    trigger_match_async_(
-      BidRequestState_var request_task,
-      const AdServer::Commons::UserId& user_id,
-      std::function<void(
-        std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>,
-        bool)> callback)
-      noexcept;
-
-    void
-    history_match_async_(
-      BidRequestState_var request_task,
-      std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
-        trigger_match_result,
-      bool trigger_match_result_present,
-      const AdServer::Commons::UserId& user_id,
-      std::function<void(
-        std::shared_ptr<
-          adserver::user_info_svcs::user_info_manager::MatchResponse>)>
-            callback)
-      noexcept;
-
-    void
-    get_ccg_keywords_async_(
-      BidRequestState_var request_task,
-      std::shared_ptr<
-        adserver::user_info_svcs::user_info_manager::MatchResponse>
-          history_match_result,
-      std::function<void(
-        std::shared_ptr<
-          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>)>
-            callback)
-      noexcept;
-
-    void
-    select_campaign_async_(
-      std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
-        campaign_match_result,
-      BidRequestState_var request_task,
-      std::shared_ptr<
-        adserver::user_info_svcs::user_info_manager::MatchResponse>
-          history_match_result,
-      std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
-        trigger_match_result,
-      bool trigger_match_result_present,
-      std::shared_ptr<
-        adserver::channel_svcs::channel_server::GetCcgTraitsResponse>
-          ccg_keywords,
-      const AdServer::Commons::UserId& user_id,
-      bool interrupted,
-      std::function<void()> callback)
-      noexcept;
-
-    void
-    process_bid_request_async_(
-      BidRequestState_var request_task)
-      noexcept;
-
     FrontendCommons::RequestTask
-    process_bid_request_coro_(
+    co_process_bid_request_(
       BidRequestState_var request_task)
       noexcept;
 
     void
     interrupted_select_campaign_(
       BidRequestState* request_task) noexcept;
+
+    FrontendCommons::RequestTask
+    co_interrupted_select_campaign_(
+      AdServer::Bidding::CampaignManager::RequestParams request_params)
+      noexcept;
 
     void
     select_campaign_(
@@ -279,6 +222,16 @@ namespace AdServer::Bidding
       const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result,
       std::string& hostname)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_consider_campaign_selection_(
+      AdServer::Commons::UserId user_id,
+      Generics::Time time,
+      std::shared_ptr<
+        const AdServer::Bidding::CampaignManager::RequestCreativeResult>
+          campaign_match_result,
+      std::string hostname)
       noexcept;
 
     /*
@@ -327,6 +280,9 @@ namespace AdServer::Bidding
 
     void
     update_config_() noexcept;
+
+    FrontendCommons::RequestTask
+    co_update_config_() noexcept;
 
     void
     flush_state_() noexcept;
@@ -389,7 +345,7 @@ namespace AdServer::Bidding
   protected:
     // ADSC-10554
     // Interrupted requests queue
-    FrontendCommons::FrontendWorkers_var passback_workers_;
+    std::shared_ptr<FrontendCommons::FrontendWorkers> passback_workers_;
 
     // configuration
     CommonConfigPtr common_config_;
@@ -407,16 +363,24 @@ namespace AdServer::Bidding
     // external services
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
+      user_bind_client_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>
+      user_info_client_coro_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>
+      channel_client_coro_;
 
     Generics::Planner_var planner_;
-    FrontendCommons::FrontendWorkers_var bid_workers_;
+    std::shared_ptr<FrontendCommons::FrontendWorkers> bid_workers_;
     Generics::TaskRunner_var control_task_runner_;
     StatHolder_var stats_;
 

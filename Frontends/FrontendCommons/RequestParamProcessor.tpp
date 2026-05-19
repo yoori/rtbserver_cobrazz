@@ -381,7 +381,7 @@ namespace FrontendCommons
     const String::SubString& value) const
   {
     Location_var location = Location::parse(value);
-    if(location.in())
+    if(location)
     {
       request_info.*field_ = location;
     }
@@ -410,7 +410,7 @@ namespace FrontendCommons
   {
     CoordLocation_var coord_location = CoordLocation::parse(value);
 
-    if(coord_location.in())
+    if(coord_location)
     {
       request_info.*field_ = coord_location;
     }

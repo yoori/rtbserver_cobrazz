@@ -3,9 +3,7 @@
 #include "KeywordFormatter.hpp"
 #include "DAOBidRequestState.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   namespace
   {
@@ -14,19 +12,17 @@ namespace Bidding
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
     }
 
-    namespace Response
+    namespace Response::Header
     {
-      namespace Header
-      {
         const String::SubString CONTENT_TYPE("Content-Type");
       }
 
-      namespace Type
+    namespace Response::Type
       {
         const String::SubString TEXT_XML("text/xml");
       }
 
-      namespace AdJson
+    namespace Response::AdJson
       {
         const String::SubString COST("bid");
         const String::SubString CLICK_URL("link");
@@ -35,7 +31,6 @@ namespace Bidding
         const String::SubString IMAGE("image");
         const String::SubString ICON("icon");
       }
-    } // namespace Response
 
     const String::SubString ADJSON_CLIENT("dao");
     const String::SubString ADJSON_SIZE("492x328");
@@ -205,5 +200,4 @@ namespace Bidding
         ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
     }
   }
-}
 }

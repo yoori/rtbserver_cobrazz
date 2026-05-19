@@ -313,17 +313,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  DirectoryModule::handle_request_coro(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::BaseHttpResponseWriter_var response_writer)
-    noexcept
-  {
-    (void)response_writer;
-    return handle_request_(std::move(request_holder));
-  }
-
-  FrontendCommons::RequestTask
-  DirectoryModule::handle_request_(
+  DirectoryModule::co_handle_request(
     FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
@@ -333,7 +323,7 @@ namespace AdServer
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
     FCGI::HttpResponse& response = *response_ptr;
-    int http_status = handle_request_(request, response);
+    int http_status = process_request_(request, response);
     co_return FrontendCommons::RequestResult{
       http_status,
       response_ptr,
@@ -341,7 +331,7 @@ namespace AdServer
   }
 
   int
-  DirectoryModule::handle_request_(
+  DirectoryModule::process_request_(
     const FCGI::HttpRequest& request,
     FCGI::HttpResponse& response)
     noexcept

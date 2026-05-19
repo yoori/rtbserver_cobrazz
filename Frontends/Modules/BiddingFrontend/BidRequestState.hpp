@@ -10,9 +10,7 @@
 #include "BiddingFrontend.hpp"
 #include "Stage.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   // RequestParamsHolder
   class RequestParamsHolder:
@@ -56,6 +54,10 @@ namespace Bidding
 
     void
     interrupt() noexcept;
+
+    void
+    write_interrupted_empty_response(
+      const String::SubString& interrupted_step) noexcept;
 
     void
     init_debug_info() noexcept;
@@ -176,11 +178,8 @@ namespace Bidding
   typedef ReferenceCounting::SmartPtr<BidRequestState>
     BidRequestState_var;
 }
-}
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   inline
   const Generics::Time&
@@ -239,5 +238,4 @@ namespace Bidding
     return to_interrupt_ != 0 ||
       timeout_interrupted_.load(std::memory_order_relaxed);
   }
-}
 }

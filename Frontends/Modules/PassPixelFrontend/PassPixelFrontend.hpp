@@ -23,9 +23,7 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace PassbackPixel
+namespace AdServer::PassbackPixel
 {
   namespace Configuration
   {
@@ -54,9 +52,8 @@ namespace PassbackPixel
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -101,9 +98,15 @@ namespace PassbackPixel
     void parse_config_() /*throw(Exception)*/;
 
     virtual int
-    handle_request_(
+    process_request_(
       const FCGI::HttpRequest& request,
       FCGI::HttpResponse& response)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_consider_passback_track_(
+      adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackRequest
+        request)
       noexcept;
 
   private:
@@ -118,22 +121,18 @@ namespace PassbackPixel
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     FileCachePtr track_pixel_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
   };
-}
 }
 
 //
 // Inlines
 //
-namespace AdServer
-{
-namespace PassbackPixel
+namespace AdServer::PassbackPixel
 {
   inline
   Frontend::~Frontend() noexcept
   {}
-}
 }

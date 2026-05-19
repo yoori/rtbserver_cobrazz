@@ -52,15 +52,13 @@ namespace AdServer
       const String::SubString& uri) noexcept override;
 
     FrontendCommons::RequestTask
-    handle_request_noparams_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request_noparams(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     FrontendCommons::RequestTask
-    handle_request_coro(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    co_handle_request(
+      FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs shutdown for the module child process. */
@@ -115,13 +113,20 @@ namespace AdServer
 
       ~CreativesUpdater() noexcept override;
 
-      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-        campaign_manager_;
+      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+        campaign_manager_coro_;
+
+      FrontendCommons::RequestTask
+      co_far_update_(
+        adserver::campaign_svcs::campaign_manager::GetFileRequest request,
+        ConfigType::UpdateCallback callback)
+        noexcept;
+
     public:
 
       CreativesUpdater(
-        std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-          campaign_manager)
+        std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+          campaign_manager_coro)
         noexcept;
 
       void
@@ -157,7 +162,7 @@ namespace AdServer
       noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_(
+    co_process_request_(
       FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
@@ -174,9 +179,8 @@ namespace AdServer
 
     StringList strings_; // string's holder for SubString using
     TemplateRuleMap template_rules_;
-
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
-      campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     Commons::TextTemplateCache_var template_files_;
   };
