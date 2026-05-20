@@ -55,10 +55,6 @@ namespace AdServer::Grpc
     {
       flush_hot_batch_if_full_(result.ready_batch);
     }
-    if (result.ready_batch.empty())
-    {
-      flush_hot_batch_if_due_(result.ready_batch);
-    }
 
     result.was_empty_before_push = was_empty_before_push;
     return result;
@@ -67,12 +63,7 @@ namespace AdServer::Grpc
   bool
   BatchingQueue::try_pop_ready_batch(Batch& batch)
   {
-    if (flush_hot_batch_if_full_(batch))
-    {
-      return true;
-    }
-
-    return flush_hot_batch_if_due_(batch);
+    return flush_hot_batch_if_full_(batch);
   }
 
   bool
