@@ -71,11 +71,16 @@
   <xsl:param name="stats-collector-path"/>
   <xsl:param name="stats-collector-config"/>
 
+  <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
+    <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
+  </xsl:variable>
+
   <cfg:UserInfoManagerConfig
     host="{$HOST}"
     max_base_profile_waiters="8"
     max_temp_profile_waiters="8"
     max_freqcap_profile_waiters="8"
+    pid_file="{concat($workspace-root, '/run/UserInfoManager.pid')}"
     service_index="{$SERVICE_ID}">
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
@@ -86,10 +91,6 @@
 
     <xsl:variable name="config-root"><xsl:value-of select="$env-config/@config_root[1]"/>
       <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-config-root"/></xsl:if>
-    </xsl:variable>
-
-    <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
-      <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>
 
     <xsl:variable name="user-info-manager-port">
@@ -164,7 +165,6 @@
 
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-port"/></xsl:attribute>
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="UserInfoManager" name="UserInfoManager"/>
         <cfg:Object servant="UserInfoManagerControl" name="UserInfoManagerControl"/>
         <cfg:Object servant="UserInfoManagerStats" name="UserInfoManagerStats"/>

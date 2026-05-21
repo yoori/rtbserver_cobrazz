@@ -106,12 +106,21 @@ namespace AdServer::Grpc
   {}
 
   template<typename T>
-  RefPool<T>::RefPool(std::vector<std::shared_ptr<T>> refs)
-    : refs_(std::move(refs))
+  RefPool<T>::RefPool(
+    std::vector<std::shared_ptr<T>> refs,
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      scheduler)
+    : refs_(std::move(refs)),
+      scheduler_(std::move(scheduler)),
+      gate_(std::make_shared<AdServer::Commons::ActivityGate>())
   {
     if (refs_.empty())
     {
       throw InvalidArgument("RefPool refs list is empty");
+    }
+    if (!scheduler_)
+    {
+      throw InvalidArgument("RefPool scheduler is null");
     }
   }
 
@@ -232,27 +241,21 @@ namespace AdServer::Grpc
   RefPool<T>::activate_object_()
   {
     init_refs_();
-    thread_.emplace([this]() {
-      move_bad_refs_loop_();
-    });
+    gate_->activate_object();
   }
 
   template<typename T>
   void
   RefPool<T>::deactivate_object_()
   {
-    cond_.notify_one();
+    gate_->deactivate_object();
   }
 
   template<typename T>
   void
   RefPool<T>::wait_object_()
   {
-    if (thread_)
-    {
-      thread_->join();
-      thread_.reset();
-    }
+    gate_->wait_object();
   }
 
   template<typename T>
@@ -263,6 +266,7 @@ namespace AdServer::Grpc
     std::string unavailable_error)
   {
     bool wake_worker = false;
+    std::optional<Generics::Time> time_to_schedule;
 
     {
       std::unique_lock<std::shared_mutex> lock(lock_);
@@ -326,11 +330,16 @@ namespace AdServer::Grpc
       wake_worker =
         !previous_first_bad_time ||
         new_bad_before_time < *previous_first_bad_time;
+      if (wake_worker)
+      {
+        scheduled_bad_time_ = new_bad_before_time;
+        time_to_schedule = new_bad_before_time;
+      }
     }
 
-    if (wake_worker)
+    if (time_to_schedule)
     {
-      cond_.notify_one();
+      schedule_bad_refs_move_(*time_to_schedule);
     }
   }
 
@@ -353,61 +362,106 @@ namespace AdServer::Grpc
       ref_holder->bad.store(false, std::memory_order_release);
       available_ref_holders_.emplace_back(ref_holder);
     }
-
-    cond_.notify_one();
   }
 
   template<typename T>
   void
-  RefPool<T>::move_bad_refs_loop_()
+  RefPool<T>::schedule_bad_refs_move_(const Generics::Time& bad_time) noexcept
   {
-    std::unique_lock<std::shared_mutex> lock(lock_);
-    while (active())
+    try
     {
+      auto weak_this = this->weak_from_this();
+      const auto now = Generics::Time::get_time_of_day();
+      const auto delay = bad_time > now ?
+        bad_time - now :
+        Generics::Time::ZERO;
+      scheduler_->schedule(
+        delay,
+        [weak_this, gate = gate_, bad_time]() mutable
+        {
+          auto guard = gate->enter();
+          if (!guard)
+          {
+            return;
+          }
+
+          if (auto pool = weak_this.lock())
+          {
+            pool->move_ready_bad_refs_(bad_time);
+          }
+        });
+    }
+    catch (...)
+    {
+    }
+  }
+
+  template<typename T>
+  void
+  RefPool<T>::move_ready_bad_refs_(
+    const Generics::Time& expected_bad_time) noexcept
+  {
+    std::optional<Generics::Time> next_bad_time;
+
+    try
+    {
+      const auto now = Generics::Time::get_time_of_day();
+      std::unique_lock<std::shared_mutex> lock(lock_);
+
+      if (!scheduled_bad_time_ || *scheduled_bad_time_ != expected_bad_time)
+      {
+        return;
+      }
+      scheduled_bad_time_.reset();
+
       if (bad_ref_holders_.empty())
       {
-        cond_.wait(lock, [this]() {
-          return !active() || !bad_ref_holders_.empty();
-        });
-        continue;
+        return;
       }
 
-      const auto now = Generics::Time::get_time_of_day();
       const auto first_bad_time =
         bad_ref_holders_.begin()->first.bad_before_time;
       if (first_bad_time > now)
       {
-        const auto timeout = first_bad_time - now;
-        cond_.wait_for(
-          lock,
-          std::chrono::microseconds(timeout.microseconds()),
-          [this, first_bad_time]() {
-            return
-              !active() ||
-              bad_ref_holders_.empty() ||
-              bad_ref_holders_.begin()->first.bad_before_time < first_bad_time;
-          });
-        continue;
+        scheduled_bad_time_ = first_bad_time;
+        next_bad_time = first_bad_time;
       }
-
-      std::vector<std::shared_ptr<RefHolder>> ready_refs;
-      for (auto it = bad_ref_holders_.begin();
-        it != bad_ref_holders_.end() && it->first.bad_before_time <= now;)
+      else
       {
-        ready_refs.emplace_back(std::move(it->second));
-        it = bad_ref_holders_.erase(it);
-      }
+        std::vector<std::shared_ptr<RefHolder>> ready_refs;
+        for (auto it = bad_ref_holders_.begin();
+          it != bad_ref_holders_.end() && it->first.bad_before_time <= now;)
+        {
+          ready_refs.emplace_back(std::move(it->second));
+          it = bad_ref_holders_.erase(it);
+        }
 
-      for (auto& ref_holder : ready_refs)
-      {
-        ref_holder->bad_before_time.reset();
-        ref_holder->probing = false;
-        ref_holder->bad.store(false, std::memory_order_release);
-        try_ref_holders_.emplace_back(std::move(ref_holder));
+        for (auto& ref_holder : ready_refs)
+        {
+          ref_holder->bad_before_time.reset();
+          ref_holder->probing = false;
+          ref_holder->bad.store(false, std::memory_order_release);
+          try_ref_holders_.emplace_back(std::move(ref_holder));
+        }
+        try_ref_count_.store(
+          try_ref_holders_.size(),
+          std::memory_order_release);
+
+        if (!bad_ref_holders_.empty())
+        {
+          next_bad_time = bad_ref_holders_.begin()->first.bad_before_time;
+          scheduled_bad_time_ = next_bad_time;
+        }
       }
-      try_ref_count_.store(
-        try_ref_holders_.size(),
-        std::memory_order_release);
+    }
+    catch (...)
+    {
+      return;
+    }
+
+    if (next_bad_time)
+    {
+      schedule_bad_refs_move_(*next_bad_time);
     }
   }
 }

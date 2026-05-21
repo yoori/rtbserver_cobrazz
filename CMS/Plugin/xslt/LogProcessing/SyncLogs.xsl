@@ -257,14 +257,6 @@
         </xsl:call-template>
       </xsl:variable>
 
-      <xsl:variable name="user-operation-generator-hosts">
-        <xsl:call-template name="HostsStringGenerator">
-          <xsl:with-param name="service-path"
-            select="$be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]"/>
-          <xsl:with-param name="error-prefix" select="'UserOperationGenerator hosts resolving'"/>
-        </xsl:call-template>
-      </xsl:variable>
-
       <!-- Predictor sync log server -->
       <xsl:variable name="predictor-path"
           select="$be-cluster-path/service[@descriptor = $predictor-descriptor]"/>
@@ -632,19 +624,6 @@
           <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
           <xsl:with-param name="dirs" select="$user-info-manager-route"/>
         </xsl:call-template>
-
-        <cfg:Route type="DefiniteHash">
-          <cfg:files pattern="UserOp(?:\.\d+){{5}}\.##HASH##">
-            <xsl:attribute name="source">UserOperationGenerator/Out/UserOp/UserOp.*</xsl:attribute>
-            <xsl:attribute name="destination">/UserInfoManager/In/ExternalUserOp/</xsl:attribute>
-          </cfg:files>
-
-          <cfg:hosts>
-            <xsl:attribute name="source"><xsl:value-of select="$user-operation-generator-hosts"/></xsl:attribute>
-            <xsl:attribute name="destination"><xsl:value-of
-              select="$workspace-root"/>/run/UserInfoDistribution.1.xml</xsl:attribute>
-          </cfg:hosts>
-        </cfg:Route>
 
         <cfg:Route type="DefiniteHash">
           <cfg:files pattern="UserOp(?:\.\d+){{5}}\.##HASH##">
@@ -1220,15 +1199,6 @@
             select="$source-ref/@port"/><![CDATA[/channels##SRC_PATH## ##DST_PATH##]]></xsl:variable>
           <xsl:attribute name="remote_copy_command"><xsl:value-of select="$copy_command"/></xsl:attribute>
           <xsl:attribute name="local_copy_command"><xsl:value-of select="$copy_command"/></xsl:attribute>
-          <cfg:Route type="RoundRobin">
-            <cfg:files>
-              <xsl:attribute name="source">/</xsl:attribute>
-              <xsl:attribute name="destination">UserOperationGenerator/In/Snapshot</xsl:attribute>
-            </cfg:files>
-            <cfg:hosts destination="-non-used-hostname">
-              <xsl:attribute name="source"><xsl:value-of select="$user-operation-generator-hosts"/></xsl:attribute>
-            </cfg:hosts>
-          </cfg:Route>
         </cfg:FeedRouteGroup>
       </xsl:if>
     </cfg:ClusterConfig>

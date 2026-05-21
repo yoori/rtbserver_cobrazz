@@ -301,7 +301,8 @@ namespace Frontends
               http2_endpoint.port(),
               http2_endpoint.threads(),
               http2_endpoint.max_concurrent_streams(),
-              http2_endpoint.read_buffer_size())));
+              http2_endpoint.read_buffer_size(),
+              http2_endpoint.max_request_size())));
         trace_startup("create Http2Acceptor end");
       }
 

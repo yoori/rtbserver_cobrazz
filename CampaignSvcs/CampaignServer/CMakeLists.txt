@@ -62,7 +62,6 @@ target_link_libraries(CampaignServer
   LogGeneralizerLib
   LogGeneralizerIDL
   BillStatServerSource
-  ProcessControlVars
 
   ExpressionChannel
   CampaignConfigModifier

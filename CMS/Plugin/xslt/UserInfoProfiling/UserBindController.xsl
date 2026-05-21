@@ -18,7 +18,6 @@
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 
-<!-- UserBindController config generate function -->
 <xsl:template name="UserBindControllerConfigGenerator">
   <xsl:param name="env-config"/>
   <xsl:param name="colo-config"/>
@@ -30,18 +29,16 @@
       <xsl:if test="count($env-config/@workspace_root) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>
 
-    <xsl:variable name="user-bind-controller-port">
-      <xsl:value-of select="$user-bind-controller-config/cfg:networkParams/@port"/>
-      <xsl:if test="count($user-bind-controller-config/cfg:networkParams/@port) = 0">
-        <xsl:value-of select="$def-user-bind-controller-port"/>
-      </xsl:if>
+    <xsl:variable name="user-bind-controller-grpc-port">
+      <xsl:choose>
+        <xsl:when test="count($user-bind-controller-config/cfg:networkParams/@grpc_port) > 0">
+          <xsl:value-of select="$user-bind-controller-config/cfg:networkParams/@grpc_port"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$def-user-bind-controller-grpc-port"/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:variable>
-
-    <exsl:document href="userBindController.port"
-      method="text" omit-xml-declaration="yes"
-      >  ['userBindController', <xsl:copy-of select="$user-bind-controller-port"/>],</exsl:document>
-
-    <xsl:variable name="root-dir" select="concat($workspace-root, '/log/UserBindController/Out/')"/>
 
     <xsl:variable name="status-check-period"><xsl:value-of select="$user-bind-controller-config/cfg:controlParams/@status_check_period"/>
       <xsl:if test="count($user-bind-controller-config/cfg:controlParams/@status_check_period) = 0">
@@ -49,23 +46,14 @@
       </xsl:if>
     </xsl:variable>
 
-    <!-- start config generation -->
     <xsl:attribute name="status_check_period"><xsl:value-of select="$status-check-period"/></xsl:attribute>
+    <xsl:attribute name="pid_file"><xsl:value-of select="concat($workspace-root, '/run/UserBindController.pid')"/></xsl:attribute>
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$user-bind-controller-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($user-bind-controller-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-user-bind-controller-threads"/>
-        </xsl:if>
-      </xsl:attribute>
-
+    <cfg:GrpcConfig>
       <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$user-bind-controller-port"/></xsl:attribute>
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-        <cfg:Object servant="UserBindController" name="UserBindController"/>
-        <cfg:Object servant="UserBindClusterControl" name="UserBindClusterControl"/>
+        <xsl:attribute name="port"><xsl:value-of select="$user-bind-controller-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>
-    </cfg:CorbaConfig>
+    </cfg:GrpcConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$user-bind-controller-config/cfg:logging"/>
@@ -83,6 +71,13 @@
         </xsl:if>
       </xsl:variable>
 
+      <xsl:variable name="user-bind-server-grpc-port">
+        <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_port"/>
+        <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) = 0">
+          <xsl:value-of select="$user-bind-server-port + 500"/>
+        </xsl:if>
+      </xsl:variable>
+
       <xsl:variable name="user-bind-server-hosts">
         <xsl:call-template name="GetHosts">
           <xsl:with-param name="hosts" select="@host"/>
@@ -90,33 +85,18 @@
       </xsl:variable>
 
       <xsl:for-each select="exsl:node-set($user-bind-server-hosts)//host">
-        <xsl:variable
-          name="corba_ref_prefix"
-          select="concat('corbaloc:iiop:', ., ':', $user-bind-server-port)"/>
         <cfg:UserBindServerHost>
-          <cfg:UserBindServerRef>
-            <xsl:attribute name="name">
-              <xsl:value-of select="."/>
-            </xsl:attribute>
-            <xsl:attribute name="ref">
-              <xsl:value-of select="concat($corba_ref_prefix, '/', $current-user-bind-server-obj)"/>
-            </xsl:attribute>
-          </cfg:UserBindServerRef>
-          <cfg:UserBindServerControlRef name="UserBindServerControl">
-            <xsl:attribute name="ref">
-              <xsl:value-of select="concat($corba_ref_prefix, '/ProcessControl')"/>
-            </xsl:attribute>
-          </cfg:UserBindServerControlRef>
+          <cfg:UserBindServerGrpcRef>
+            <xsl:attribute name="host"><xsl:value-of select="."/></xsl:attribute>
+            <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
+          </cfg:UserBindServerGrpcRef>
         </cfg:UserBindServerHost>
-      </xsl:for-each> <!-- hosts loop -->
-    </xsl:for-each> <!-- user bind servers loop -->
+      </xsl:for-each>
+    </xsl:for-each>
   </cfg:UserBindControllerConfig>
-
 </xsl:template>
 
-<!-- -->
 <xsl:template match="/">
-  <!-- find pathes -->
   <xsl:variable
     name="full-cluster-path"
     select="$xpath/../.."/>
@@ -130,7 +110,6 @@
     select="$full-cluster-path/serviceGroup[@descriptor = $be-cluster-descriptor]"/>
 
   <xsl:choose>
-    <!-- check pathes -->
     <xsl:when test="count($xpath) = 0">
        <xsl:message terminate="yes"> UserBindController: Can't find XPATH element </xsl:message>
     </xsl:when>
@@ -148,7 +127,6 @@
     </xsl:when>
   </xsl:choose>
 
-  <!-- find config sections -->
   <xsl:variable
     name="colo-config"
     select="$full-cluster-path/configuration/cfg:cluster"/>
@@ -174,7 +152,6 @@
       <xsl:with-param name="user-bind-controller-config" select="$user-bind-controller-config"/>
     </xsl:call-template>
   </cfg:AdConfiguration>
-
 </xsl:template>
 
 </xsl:stylesheet>

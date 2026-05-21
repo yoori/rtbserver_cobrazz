@@ -9,6 +9,22 @@
 
 namespace
 {
+  class NullActiveObjectCallback final:
+    public virtual Generics::ActiveObjectCallback,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    void
+    report_error(
+      Severity,
+      const String::SubString&,
+      const char* = nullptr) throw () override
+    {}
+
+  protected:
+    ~NullActiveObjectCallback() throw () override = default;
+  };
+
   struct MockClient
   {
     explicit MockClient(int id_val)
@@ -19,6 +35,18 @@ namespace
   };
 
   using Pool = AdServer::Grpc::RefPool<MockClient>;
+
+  std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+  make_scheduler()
+  {
+    auto scheduler =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        Generics::ActiveObjectCallback_var(new NullActiveObjectCallback()),
+        std::make_shared<boost::asio::io_service>(),
+        1);
+    scheduler->activate_object();
+    return scheduler;
+  }
 
   Generics::Time
   now_plus_msec(const suseconds_t msec)
@@ -55,9 +83,11 @@ namespace
   void
   test_bad_ref_is_issued_as_single_probe()
   {
+    auto scheduler = make_scheduler();
     auto pool = std::make_shared<Pool>(
       std::vector<std::shared_ptr<MockClient>>{
-        std::make_shared<MockClient>(1)});
+        std::make_shared<MockClient>(1)},
+      scheduler);
     pool->activate_object();
 
     {
@@ -83,14 +113,18 @@ namespace
 
     pool->deactivate_object();
     pool->wait_object();
+    scheduler->deactivate_object();
+    scheduler->wait_object();
   }
 
   void
   test_failed_probe_returns_to_bad_list()
   {
+    auto scheduler = make_scheduler();
     auto pool = std::make_shared<Pool>(
       std::vector<std::shared_ptr<MockClient>>{
-        std::make_shared<MockClient>(2)});
+        std::make_shared<MockClient>(2)},
+      scheduler);
     pool->activate_object();
 
     {
@@ -114,6 +148,8 @@ namespace
 
     pool->deactivate_object();
     pool->wait_object();
+    scheduler->deactivate_object();
+    scheduler->wait_object();
   }
 }
 

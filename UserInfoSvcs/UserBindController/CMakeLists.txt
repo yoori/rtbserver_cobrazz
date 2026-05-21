@@ -1,38 +1,26 @@
-add_idl(UserBindControllerIDL UserBindController.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserBindController)
+set(USER_BIND_CONTROLLER_GRPC_PROTO_DIR ${PB_DIRECTORY}/UserInfoSvcs/UserBindController)
+set(USER_BIND_CONTROLLER_GRPC_PROTO UserBindControllerGrpc.proto)
 
-target_link_libraries(UserBindControllerIDL
-  Commons
-  CORBACommons
-  CorbaTypesIDL
-  UserBindServerIDL
-)
+add_grpc_sources(
+  UserBindControllerGrpc
+  ${USER_BIND_CONTROLLER_GRPC_PROTO}
+  ${USER_BIND_CONTROLLER_GRPC_PROTO_DIR})
 
-add_library(UserBindControllerStubs SHARED
-  UserBindOperationDistributor.cpp
-)
-
-target_link_libraries(UserBindControllerStubs
-  CORBACommons
-  Commons
-  CorbaTypesIDL
-  UserBindServerIDL
-  UserBindControllerIDL
-)
+target_link_libraries(UserBindControllerGrpc protobuf::libprotobuf)
 
 add_executable(UserBindController
   UserBindControllerMain.cpp
   UserBindControllerImpl.cpp
-)
+  UserBindControllerGrpc.cpp)
 
 target_link_libraries(UserBindController
-  UserBindControllerIDL
-  CORBACommons
-  Commons
-  CorbaTypesIDL
-  UserBindServerIDL
-  UserBindControllerStubs
+  UserBindControllerGrpc
+  UserBindServerGrpc
   UserBindControllerConfigXSD
-  ProcessControlVars
-)
+  Commons
+  Generics
+  gRPC::grpc++)
 
-#install(TARGETS UserBindControllerIDL UserBindControllerStubs UserBindController DESTINATION ${INSTALL_DIR})
+target_include_directories(UserBindController PRIVATE
+  ${USER_BIND_CONTROLLER_GRPC_PROTO_DIR}
+  ${PB_DIRECTORY}/UserInfoSvcs/UserBindServer)

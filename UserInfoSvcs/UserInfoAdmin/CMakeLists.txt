@@ -5,12 +5,17 @@ add_executable(UserInfoAdmin
 target_link_libraries(UserInfoAdmin
   Generics
   CORBACommons
-
   UtilCommons
   ChannelMatcher
   UserFreqCapProfile
+  UserInfoClient
+  UserInfoManagerGrpc
+  UserInfoManagerGrpcClient
+  UserInfoControllerGrpc
+  gRPC::grpc++
+)
 
-  UserInfoManagerIDL
-  UserInfoManagerControlIDL
-  UserInfoManagerControllerCall
+target_include_directories(UserInfoAdmin PRIVATE
+  ${PB_DIRECTORY}/UserInfoSvcs/UserInfoManager
+  ${PB_DIRECTORY}/UserInfoSvcs/UserInfoController
 )

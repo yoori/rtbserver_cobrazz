@@ -11,7 +11,7 @@
 #include <Commons/Grpc/DistributedPartitionPool.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <String/StringManip.hpp>
-#include <UserInfoSvcs/UserBindController2/UserBindControllerGrpc.grpc.pb.h>
+#include <UserInfoSvcs/UserBindController/UserBindControllerGrpc.grpc.pb.h>
 
 namespace AdServer::UserInfoSvcs
 {

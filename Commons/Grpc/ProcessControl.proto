@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package adserver.grpc.process_control;
+
+service ProcessControl {
+  rpc get_status(GetStatusRequest) returns (GetStatusResponse);
+  rpc get_db_state(GetDbStateRequest) returns (GetDbStateResponse);
+  rpc set_db_state(SetDbStateRequest) returns (SetDbStateResponse);
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  bool ready = 1;
+  string description = 2;
+}
+
+message GetDbStateRequest {}
+
+message GetDbStateResponse {
+  bool enabled = 1;
+}
+
+message SetDbStateRequest {
+  bool enabled = 1;
+}
+
+message SetDbStateResponse {}

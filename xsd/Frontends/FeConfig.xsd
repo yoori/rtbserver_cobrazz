@@ -88,11 +88,6 @@
         minOccurs="0"
         maxOccurs="2"/>
 
-      <xsd:element name="UserBindControllerGroup"
-        type="MultiCorbaObjectRefType"
-        minOccurs="0"
-        maxOccurs="2"/>
-
       <xsd:element name="UserBind"
         type="UserBindType"
         minOccurs="0"
@@ -203,7 +198,7 @@
         type="GrpcBatchingOptionsType"
         minOccurs="0"
         maxOccurs="1"/>
-      <xsd:element name="UserBindController2Group"
+      <xsd:element name="UserBindControllerGroup"
         type="UserBindControllerGrpcGroupType"
         minOccurs="0"
         maxOccurs="2"/>
@@ -217,7 +212,7 @@
         type="GrpcBatchingOptionsType"
         minOccurs="0"
         maxOccurs="1"/>
-      <xsd:element name="UserInfoController2Group"
+      <xsd:element name="UserInfoControllerGroup"
         type="UserInfoControllerGrpcGroupType"
         minOccurs="0"
         maxOccurs="2"/>

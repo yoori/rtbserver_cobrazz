@@ -1,11 +1,16 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Logger/StreamLogger.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
@@ -13,7 +18,8 @@
 #include "RequestInfoManagerImpl.hpp"
 
 class RequestInfoManagerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl
+  : private Logging::LoggerCallbackHolder,
+    public virtual ReferenceCounting::AtomicImpl
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -24,15 +30,10 @@ public:
 
   void main(int& argc, char** argv) noexcept;
 
-protected:
-  /** ProcessControl interface */
-  virtual void shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
-
 private:
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
+
   virtual ~RequestInfoManagerApp_() noexcept{};
 
   const AdServer::RequestInfoSvcs::RequestInfoManagerImpl::RequestInfoManagerConfig&
@@ -48,13 +49,9 @@ private:
 
   AdServer::RequestInfoSvcs::RequestInfoManagerImpl_var
     request_info_manager_impl_;
+  std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
 
   ConfigPtr configuration_;
-
-  typedef Sync::PosixMutex ShutdownMutex;
-  typedef Sync::PosixGuard ShutdownGuard;
-
-  ShutdownMutex shutdown_lock_;
 };
 
 typedef ReferenceCounting::SmartPtr<RequestInfoManagerApp_>

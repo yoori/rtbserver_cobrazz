@@ -4,14 +4,16 @@
 #include <limits.h>
 
 #include <eh/Exception.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Singleton.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <SNMPAgent/SNMPAgentX.hpp>
 
 #include <CORBACommons/StatsImpl.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/CorbaConfig.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
 #include <CampaignSvcs/CampaignServerConfig.hpp>
 
 #include "CampaignServerLogger.hpp"
@@ -23,7 +25,8 @@
  * Responsible for general configuration, logging and error handling.
  */
 class CampaignServerApp_ :
-  public AdServer::Commons::ProcessControlVarsLoggerImpl
+  private Logging::LoggerCallbackHolder,
+  public virtual ReferenceCounting::AtomicImpl
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -37,18 +40,6 @@ public:
    * creates corba objects, initialize.
    */
   void main(int& argc, char** argv) noexcept;
-
-  //
-  // IDL:CORBACommons/IProcessControl/shutdown:1.0
-  //
-  virtual void shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  //
-  // IDL:CORBACommons/IProcessControl/is_alive:1.0
-  //
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
 
 private:
   struct Configuration
@@ -71,6 +62,7 @@ private:
     unsigned long ecpm_update_period;
     Generics::Time bill_stat_update_period;
     std::string log_root;
+    std::string pid_file;
     Generics::Time audience_expiration_time;
     Generics::Time pending_expire_time;
     bool enable_delivery_thresholds;
@@ -129,6 +121,9 @@ private:
 private:
   virtual ~CampaignServerApp_() noexcept {}
 
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
+
   // Reads configration from config XML tree.
   void read_config(const char* filename, const char* argv0)
     /*throw(Exception, eh::Exception)*/;
@@ -136,7 +131,9 @@ private:
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   Configuration configuration_;
-  AdServer::CampaignSvcs::CampaignServerBaseImpl_var campaign_server_impl_;
+  std::shared_ptr<AdServer::CampaignSvcs::CampaignServerBaseImpl>
+    campaign_server_impl_;
+  std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
   CORBACommons::CorbaConfig corba_config_;
   AdServer::CampaignSvcs::ProcStatImpl_var proc_stat_impl_;
   CORBACommons::POA_ProcessStatsControl_var proc_stat_ctrl_;
@@ -146,11 +143,6 @@ private:
   typedef ReferenceCounting::SmartPtr<SNMPProcStatsImpl>
     SNMPProcStatsImpl_var;
   SNMPProcStatsImpl_var snmp_stat_impl_;
-
-  typedef Sync::PosixMutex ShutdownMutex;
-  typedef Sync::PosixGuard ShutdownGuard;
-
-  ShutdownMutex shutdown_lock_;
 };
 
 typedef ReferenceCounting::SmartPtr<CampaignServerApp_>

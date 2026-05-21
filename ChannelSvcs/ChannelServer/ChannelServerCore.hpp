@@ -19,6 +19,7 @@
 #include <Generics/Time.hpp>
 #include <Language/SegmentorCommons/SegmentorInterface.hpp>
 
+#include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>

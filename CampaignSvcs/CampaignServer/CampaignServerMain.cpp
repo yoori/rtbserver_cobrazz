@@ -3,59 +3,56 @@
 
 #include <eh/Exception.hpp>
 
+#include <memory>
+
+#include <Logger/StreamLogger.hpp>
+
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PathManip.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include "CampaignServerMain.hpp"
 
 #include "Compatibility/CampaignServerImpl_v350.hpp"
 
-//#include <Commons/HeapController.hpp>
-
 namespace
 {
   const char* ASPECT  = "CampaignServer";
-  const char* PROCESS_CONTROL_OBJ_KEY = "ProcessControl";
   const char* CAMPAIGN_SERVER_V350_OBJ_KEY = "CampaignServer_v350";
 
   const char* CAMPAIGN_SERVER_OBJ_KEY = "CampaignServer_v360";
 
   const char PROCESS_STATS_CONTROL_OBJ_KEY[] = "ProcessStatsControl";
+
+  template<typename T>
+  std::shared_ptr<T>
+  to_shared(ReferenceCounting::SmartPtr<T> ptr)
+  {
+    T* raw_ptr = ptr.in();
+    return std::shared_ptr<T>(
+      raw_ptr,
+      [ptr = std::move(ptr)](T*) mutable
+      {
+        ptr.reset();
+      });
+  }
 }
 
 CampaignServerApp_::CampaignServerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "CampaignServerApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "CampaignServerApp_", ASPECT, 0)
 {
-}
-
-void
-CampaignServerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownGuard guard(shutdown_lock_);
-
-  if(campaign_server_impl_.in() != 0)
-  {
-    campaign_server_impl_->deactivate_object();
-    campaign_server_impl_->wait_object();
-  }
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-CampaignServerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
 }
 
 void
 CampaignServerApp_::main(int& argc, char** argv) noexcept
 {
-//AdServer::Commons::HeapController::instance().initialize();
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
   try
   {
@@ -98,7 +95,7 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
     // Creating campaign server servant
     if(configuration_.server_mode == Configuration::SM_SERVER)
     {
-      campaign_server_impl_ =
+      campaign_server_impl_ = to_shared<AdServer::CampaignSvcs::CampaignServerBaseImpl>(
         new AdServer::CampaignSvcs::CampaignServerImpl(
           callback(),
           logger(),
@@ -117,11 +114,11 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
           configuration_.stat_provider_refs,
           configuration_.audience_expiration_time,
           configuration_.pending_expire_time,
-          configuration_.enable_delivery_thresholds);
+          configuration_.enable_delivery_thresholds));
     }
     else if(configuration_.server_mode == Configuration::SM_PROXY)
     {
-      campaign_server_impl_ =
+      campaign_server_impl_ = to_shared<AdServer::CampaignSvcs::CampaignServerBaseImpl>(
         new AdServer::CampaignSvcs::CampaignServerProxyImpl(
           callback(),
           logger(),
@@ -137,16 +134,8 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
           configuration_.campaign_server_refs,
           configuration_.campaign_statuses.c_str(),
           configuration_.country.c_str(),
-          configuration_.only_tags);
+          configuration_.only_tags));
     }
-    {
-      using namespace AdServer::Commons;
-      register_vars_controller();
-      add_var_processor(DbStateProcessor::VAR_NAME,
-        new DbStateProcessor(
-          new_simple_db_state_changer(campaign_server_impl_)));
-    }
-
     if (configuration_.snmp_config)
     {
       try
@@ -175,37 +164,43 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
       }
     }
 
-    shutdowner_ = corba_server_adapter_->shutdowner();
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      configuration_.pid_file);
 
     {
       AdServer::CampaignSvcs::CampaignServerImpl_v350_var
         campaign_server_impl_v350 =
           new AdServer::CampaignSvcs::CampaignServerImpl_v350(
             logger(),
-            campaign_server_impl_);
+            campaign_server_impl_.get());
 
       corba_server_adapter_->add_binding(
         CAMPAIGN_SERVER_V350_OBJ_KEY, campaign_server_impl_v350.in());
     }
 
     corba_server_adapter_->add_binding(
-      CAMPAIGN_SERVER_OBJ_KEY, campaign_server_impl_.in());
-
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
+      CAMPAIGN_SERVER_OBJ_KEY, campaign_server_impl_.get());
 
     corba_server_adapter_->add_binding(PROCESS_STATS_CONTROL_OBJ_KEY,
       proc_stat_ctrl_.in());
 
-    campaign_server_impl_->activate_object();
+    active_objects_ =
+      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_->add_child_object(
+      std::static_pointer_cast<Generics::ActiveObject>(
+        campaign_server_impl_));
+    active_objects_->add_child_object(corba_server_adapter_.in());
+
+    AdServer::Commons::SignalActiveObject signal_active_object;
+    active_objects_->activate_object();
 
     // Running orb loop
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) <<
       "service started.";
 
-    corba_server_adapter_->run();
-
-    wait();
+    signal_active_object.wait_object();
+    active_objects_->deactivate_object();
+    active_objects_->wait_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) <<
       "service stopped.";
@@ -308,6 +303,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
     }
 
     configuration_.log_root = configuration->log_root();
+    configuration_.pid_file = configuration->pid_file();
     configuration_.colo_update_flush_traits.period = 60;
 
     if(configuration->Logging().present())

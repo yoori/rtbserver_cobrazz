@@ -46,6 +46,7 @@
   serviceGroup[@descriptor = $fe-cluster-descriptor]/service[
     @descriptor = $channel-server-descriptor or
     @descriptor = $channel-controller-descriptor or
+    @descriptor = $channel-controller2-descriptor or
     @descriptor = $http-frontend-descriptor]"/>
 
 <xsl:variable name="tr-hosts">
@@ -347,13 +348,6 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
-          select="$be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]"/>
-        <xsl:with-param name="service-name" select="'be-UserOperationGenerator'"/>
-        <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserOperationGenerator'"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
           select="$be-cluster-path/service[@descriptor = $stats-collector-descriptor]"/>
         <xsl:with-param name="service-name" select="'be-StatsCollector'"/>
         <xsl:with-param name="service-type" select="'AdServer::Controlling::StatsCollector'"/>
@@ -431,26 +425,20 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
-          select="./service[@descriptor = $user-info-manager-controller-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat($ui-comp, '-UserInfoManagerController')"/>
-        <xsl:with-param name="service-type"
-          select="'AdServer::UserInfoSvcs::UserInfoManagerController'"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $user-info-controller2-descriptor]"/>
+          select="./service[@descriptor = $user-info-controller-descriptor]"/>
         <xsl:with-param name="service-name" select="concat('fe', $pos,
-          '-UserInfoController2')"/>
-        <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserInfoController2'"/>
+          '-UserInfoController')"/>
+        <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserInfoController'"/>
       </xsl:call-template>
 
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $channel-controller-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController')"/>
-        <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController'"/>
-      </xsl:call-template>
+      <xsl:if test="count(./service[@descriptor = $channel-controller2-descriptor]) = 0">
+        <xsl:call-template name="AddService">
+          <xsl:with-param name="service-path"
+            select="./service[@descriptor = $channel-controller-descriptor]"/>
+          <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController')"/>
+          <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController'"/>
+        </xsl:call-template>
+      </xsl:if>
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
@@ -475,14 +463,6 @@
         <xsl:with-param name="service-name" select="concat('fe', $pos,
           '-UserBindController')"/>
         <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserBindController'"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $user-bind-controller2-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('fe', $pos,
-          '-UserBindController2')"/>
-        <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserBindController2'"/>
       </xsl:call-template>
 
       <xsl:call-template name="AddService">
@@ -1099,6 +1079,33 @@
   </xsl:for-each>
 </xsl:template>
 
+<xsl:template name="GeneratePreStartGrpcRefList">
+  <xsl:param name="services"/>
+  <xsl:param name="service-config"/>
+  <xsl:param name="def-port"/>
+  <xsl:param name="services-name"/>
+
+  <xsl:for-each select="$services">
+    <xsl:variable name="config" select="dyn:evaluate($service-config)"/>
+    <xsl:variable name="port">
+      <xsl:value-of select="$config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$def-port"/>
+      </xsl:if>
+    </xsl:variable>
+    <xsl:variable name="resolved-hosts">
+      <xsl:call-template name="GetHosts">
+        <xsl:with-param name="hosts" select="./@host"/>
+        <xsl:with-param name="error-prefix">OCM Config: <xsl:value-of
+          select="$services-name"/> grpc hosts resolving</xsl:with-param>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:for-each select="exsl:node-set($resolved-hosts)//host">
+      <xsl:value-of select="."/>#grpc://localhost:<xsl:value-of
+        select="$port"/>,</xsl:for-each>
+  </xsl:for-each>
+</xsl:template>
+
 <xsl:template name="GeneratePreStartCommand">
   <xsl:param name="fe-cluster"/>
   <xsl:param name="config-root"/>
@@ -1112,38 +1119,35 @@
       $server-mgr-bin-root, '/PreStartChecker.pl')"/></xsl:variable>
 
   <xsl:variable name="user-info-manager-arg">
-    <xsl:call-template name="GeneratePreStartRefList">
+    <xsl:call-template name="GeneratePreStartGrpcRefList">
       <xsl:with-param name="services"
-        select="$fe-cluster/service[@descriptor = $user-info-manager-controller-descriptor]"/>
+        select="$fe-cluster/service[@descriptor = $user-info-manager-descriptor]"/>
       <xsl:with-param name="service-config"
-        select="'./configuration/cfg:userInfoManagerController'"/>
-      <xsl:with-param name="def-port" select="$def-user-info-manager-controller-port"/>
-      <xsl:with-param name="obj-name" select="'UserInfoClusterControl'"/>
-      <xsl:with-param name="services-name" select="'UserInfoController'"/>
+        select="'./configuration/cfg:userInfoManager'"/>
+      <xsl:with-param name="def-port" select="$def-user-info-manager-port + 500"/>
+      <xsl:with-param name="services-name" select="'UserInfoManager'"/>
     </xsl:call-template>
   </xsl:variable>
 
   <xsl:variable name="campaign-manager-arg">
-    <xsl:call-template name="GeneratePreStartRefList">
+    <xsl:call-template name="GeneratePreStartGrpcRefList">
       <xsl:with-param name="services"
         select="$fe-cluster/service[@descriptor = $campaign-manager-descriptor]"/>
       <xsl:with-param name="service-config"
         select="'./configuration/cfg:campaignManager'"/>
-      <xsl:with-param name="def-port" select="$def-campaign-manager-port"/>
-      <xsl:with-param name="obj-name" select="'ProcessControl'"/>
+      <xsl:with-param name="def-port" select="$def-campaign-manager-port + 500"/>
       <xsl:with-param name="services-name" select="'CampaignManager'"/>
     </xsl:call-template>
   </xsl:variable>
 
   <xsl:variable name="channel-server-arg">
-    <xsl:call-template name="GeneratePreStartRefList">
+    <xsl:call-template name="GeneratePreStartGrpcRefList">
       <xsl:with-param name="services"
-        select="$fe-cluster/service[@descriptor = $channel-controller-descriptor]"/>
+        select="$fe-cluster/service[@descriptor = $channel-server-descriptor]"/>
       <xsl:with-param name="service-config"
-        select="'./configuration/cfg:channelController'"/>
-      <xsl:with-param name="def-port" select="$def-channel-controller-port"/>
-      <xsl:with-param name="obj-name" select="'ChannelClusterControl'"/>
-      <xsl:with-param name="services-name" select="'ChannelController'"/>
+        select="'./configuration/cfg:channelServer'"/>
+      <xsl:with-param name="def-port" select="$def-channel-server-port + 500"/>
+      <xsl:with-param name="services-name" select="'ChannelServer'"/>
     </xsl:call-template>
   </xsl:variable>
 
@@ -1275,7 +1279,7 @@
       @descriptor = $campaign-manager-descriptor or
       @descriptor = $channel-search-service-descriptor or
       @descriptor = $user-info-manager-descriptor or
-      @descriptor = $user-info-manager-controller-descriptor]"/>
+      @descriptor = $user-info-controller-descriptor]"/>
 
   <xsl:variable name="fe2-services" select="$xpath/
     serviceGroup[@descriptor = $ad-cluster-descriptor]/
@@ -1283,7 +1287,7 @@
       @descriptor = $campaign-manager-descriptor or
       @descriptor = $channel-search-service-descriptor or
       @descriptor = $user-info-manager-descriptor or
-      @descriptor = $user-info-manager-controller-descriptor]"/>
+      @descriptor = $user-info-controller-descriptor]"/>
 
   <xsl:variable name="be-services" select="$xpath/
     serviceGroup[@descriptor = $ad-cluster-descriptor]/
@@ -1943,6 +1947,16 @@
           <xsl:value-of select="'AdServer::CampaignSvcs::CampaignManager '"/>
         </xsl:if>
       </xsl:variable>
+      <xsl:variable name="channel-controller-dep">
+        <xsl:choose>
+          <xsl:when test="count($fe-cluster-path/service[@descriptor = $channel-controller2-descriptor]) > 0">
+            <xsl:value-of select="'AdServer::ChannelSvcs::ChannelController2'"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="'AdServer::ChannelSvcs::ChannelController'"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
       <xsl:variable name="conv-server-dep">
         <xsl:if test="count($fe-cluster-path/service[@descriptor = $conv-server-descriptor]) > 0">
           <xsl:value-of select="'AdServer::Frontends::ConvServer '"/>
@@ -1985,7 +1999,7 @@
             <xsl:with-param name="slaves" select="$campaign-manager-dep"/>
           </xsl:call-template>
           <xsl:call-template name="AddDependence">
-            <xsl:with-param name="slaves" select="'AdServer::ChannelSvcs::ChannelController'"/>
+            <xsl:with-param name="slaves" select="$channel-controller-dep"/>
             <xsl:with-param name="masters" select="'AdServer::CampaignSvcs::CampaignServer
               AdServer::ChannelSvcs::ChannelServer'"/>
           </xsl:call-template>
@@ -1994,7 +2008,7 @@
             <xsl:call-template name="AddDependence">
               <xsl:with-param name="slaves" select="'AdServer::ChannelSearchSvcs::ChannelSearchService'"/>
               <xsl:with-param name="masters" select=
-                "concat($campaign-manager-dep, 'AdServer::ChannelSvcs::ChannelController')"/>
+                "concat($campaign-manager-dep, $channel-controller-dep)"/>
             </xsl:call-template>
           </xsl:if>
           <xsl:if test="count($be-cluster-path/service[@descriptor = $dictionary-provider-descriptor]) > 0">
@@ -2009,7 +2023,7 @@
           </xsl:call-template>
           <xsl:if test="count($localproxy-path) > 0">
             <xsl:call-template name="AddDependence">
-              <xsl:with-param name="slaves" select="'AdServer::ChannelSvcs::ChannelController'"/>
+              <xsl:with-param name="slaves" select="$channel-controller-dep"/>
               <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::ChannelProxy'"/>
             </xsl:call-template>
           </xsl:if>
@@ -2050,11 +2064,11 @@
           </xsl:if>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
-            <xsl:with-param name="slaves" select="concat('AdServer::UserInfoSvcs::UserInfoManagerController',
+            <xsl:with-param name="slaves" select="concat('AdServer::UserInfoSvcs::UserInfoController',
               $prestart-dep)"/>
           </xsl:call-template>
           <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoManagerController
+            <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoController
               AdServer::UserInfoSvcs::UserBindController 
               AdServer::LogProcessing::ExpressionMatcherChecker'"/>
             <xsl:with-param name="slaves" select= "concat('AdServer::LogProcessing::ExpressionMatcher
@@ -2069,7 +2083,7 @@
             <xsl:with-param name="slaves" select= "$conv-server-dep"/>
           </xsl:call-template>
           <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="concat('AdServer::ChannelSvcs::ChannelController ',
+            <xsl:with-param name="masters" select="concat($channel-controller-dep, ' ',
               $campaign-manager-dep,
               $conv-server-dep)"/>
             <xsl:with-param name="slaves" select= "concat($fe-services, $prestart-dep)"/>
@@ -2096,12 +2110,6 @@
             <xsl:call-template name="AddDependence">
               <xsl:with-param name="masters" select="'AdServer::Predictor::Merger'"/>
               <xsl:with-param name="slaves" select= "'AdServer::Predictor::SVMGenerator'"/>
-            </xsl:call-template>
-          </xsl:if>
-          <xsl:if test="count($be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]) > 0">
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoChecker'"/>
-              <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserOperationGenerator'"/>
             </xsl:call-template>
           </xsl:if>
           <xsl:call-template name="AddDependence">
@@ -2162,10 +2170,10 @@
         </xsl:if>
         <xsl:call-template name="AddDependence">
           <xsl:with-param name="masters" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
-          <xsl:with-param name="slaves" select="'AdServer::UserInfoSvcs::UserInfoManagerController'"/>
+          <xsl:with-param name="slaves" select="'AdServer::UserInfoSvcs::UserInfoController'"/>
         </xsl:call-template>
         <xsl:call-template name="AddDependence">
-          <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoManagerController
+          <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoController
             AdServer::LogProcessing::ExpressionMatcherChecker'"/>
           <xsl:with-param name="slaves" select= "'AdServer::LogProcessing::ExpressionMatcher AdServer::RequestInfoSvcs::RequestInfoManager'"/>
         </xsl:call-template>
@@ -2187,12 +2195,6 @@
             <xsl:with-param name="slaves" select= "'AdServer::Predictor::SVMGenerator'"/>
           </xsl:call-template>
         </xsl:if>
-        <xsl:if test="count($be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]) > 0">
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoChecker'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserOperationGenerator'"/>
-          </xsl:call-template>
-        </xsl:if>
       </xsl:if>
       <xsl:call-template name="PhormZoneCommonDependencies">
         <xsl:with-param name="proxycluster-path" select="$proxycluster-path"/>
@@ -2206,7 +2208,7 @@
       <xsl:if test="count($adcluster-path) > 0">
 
         <xsl:call-template name="AddDependence">
-          <xsl:with-param name="slaves" select="'AdServer::ChannelSvcs::ChannelController'"/>
+          <xsl:with-param name="slaves" select="$channel-controller-dep"/>
           <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::ChannelServer'"/>
         </xsl:call-template>
         <xsl:call-template name="AddDependence">
@@ -2215,11 +2217,11 @@
           <xsl:with-param name="slaves" select= "'AdServer::DBAccess'"/>
         </xsl:call-template>
         <xsl:call-template name="AddDependence">
-          <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::ChannelController'"/>
+          <xsl:with-param name="masters" select="$channel-controller-dep"/>
           <xsl:with-param name="slaves" select= "$prestart-dep"/>
         </xsl:call-template>
         <xsl:call-template name="AddDependence">
-          <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::ChannelController'"/>
+          <xsl:with-param name="masters" select="$channel-controller-dep"/>
           <xsl:with-param name="slaves" select= "$fe-services"/>
         </xsl:call-template>
         <xsl:call-template name="AddDependence">

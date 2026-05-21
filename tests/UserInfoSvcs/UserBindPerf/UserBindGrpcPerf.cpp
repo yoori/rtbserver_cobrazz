@@ -235,7 +235,7 @@ namespace
       << "  --client-threads <N>  client worker/CQ threads (default: 4)\n"
       << "  --max-streams <N>     maximum async-batch grpc streams (default: --client-threads)\n"
       << "  --mode <name>         async-batch | distributed-grpc (default: async-batch)\n"
-      << "  --user-bind-controller-grpc-endpoint <host:port> UserBindController2 grpc endpoint for distributed-grpc mode\n"
+      << "  --user-bind-controller-grpc-endpoint <host:port> UserBindController grpc endpoint for distributed-grpc mode\n"
       << "  --max-inflight <N>    soft max in-flight requests, 0 disables limit (default: 0)\n"
       << "  --error-on-inflight-reaching <0|1> fail request instead of waiting on max-inflight (default: 0)\n"
       << "  --max-batch-size <N>  maximum batch size for async-batch mode (default: 1024)\n"

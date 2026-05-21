@@ -32,11 +32,6 @@
         type="MultiCorbaObjectRefType"
         minOccurs="0"/>
 
-      <xsd:element name="UserBindControllerGroup"
-        type="MultiCorbaObjectRefType"
-        minOccurs="0"
-        maxOccurs="2"/>
-
       <xsd:element name="UserInfoManagerControllerGroup"
         type="MultiCorbaObjectRefType"
         minOccurs="1"

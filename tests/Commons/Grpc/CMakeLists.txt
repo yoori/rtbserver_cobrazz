@@ -8,6 +8,7 @@ add_executable(DistributedPartitionPoolTest
 
 target_link_libraries(RefPoolTest
   PRIVATE
+  Commons
   Generics
 )
 

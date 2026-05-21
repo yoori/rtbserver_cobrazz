@@ -122,14 +122,6 @@
         maxHostOccurs="unbounded"/>
 
       <service
-        type="UserOperationGenerator"
-        configSchema="xsd/UserInfoProfiling/UserOperationGeneratorApp.xsd"
-        minOccurs="0"
-        maxOccurs="1"
-        minHostOccurs="0"
-        maxHostOccurs="1"/>
-
-      <service
         type="Predictor"
         configSchema="xsd/Predictor/PredictorApp.xsd"
         minOccurs="0"
@@ -152,19 +144,12 @@
         maxHostOccurs="unbounded"
         configSchema="xsd/UserInfoProfiling/UserInfoManagerApp.xsd"/>
 
-      <service type="UserInfoManagerController"
+      <service type="UserInfoController"
         minOccurs="1"
         maxOccurs="unbounded"
         minHostOccurs="1"
         maxHostOccurs="unbounded"
-        configSchema="xsd/UserInfoProfiling/UserInfoManagerControllerApp.xsd"/>
-
-      <service type="UserInfoController2"
-        minOccurs="1"
-        maxOccurs="unbounded"
-        minHostOccurs="1"
-        maxHostOccurs="unbounded"
-        configSchema="xsd/UserInfoProfiling/UserInfoController2App.xsd"/>
+        configSchema="xsd/UserInfoProfiling/UserInfoControllerApp.xsd"/>
 
       <service
         type="ChannelServer"
@@ -208,14 +193,6 @@
       <service
         type="UserBindController"
         configSchema="xsd/UserInfoProfiling/UserBindControllerApp.xsd"
-        minOccurs="0"
-        maxOccurs="unbounded"
-        minHostOccurs="0"
-        maxHostOccurs="unbounded"/>
-
-      <service
-        type="UserBindController2"
-        configSchema="xsd/UserInfoProfiling/UserBindController2App.xsd"
         minOccurs="1"
         maxOccurs="unbounded"
         minHostOccurs="1"

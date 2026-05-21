@@ -1,41 +1,37 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Singleton.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Logger/StreamLogger.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/ChannelSvcs/DictionaryProviderConfig.hpp>
 #include "DictionaryProviderImpl.hpp"
 
 
 class DictionaryProviderApp_ :
-  public AdServer::Commons::ProcessControlVarsLoggerImpl
+  private Logging::LoggerCallbackHolder,
+  public virtual ReferenceCounting::AtomicImpl
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  DECLARE_EXCEPTION(InvalidArgument, Exception);
 
   DictionaryProviderApp_() /*throw(eh::Exception)*/;
   virtual ~DictionaryProviderApp_() noexcept{};
 
   void main(int& argc, char** argv) noexcept;
 
-protected:
-  //
-  // IDL:CORBACommons/IProcessControl/shutdown:1.0
-  //
-  virtual void shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  //
-  // IDL:CORBACommons/IProcessControl/is_alive:1.0
-  //
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
-
 private:
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
 
   typedef std::unique_ptr<xsd::AdServer::Configuration::
     DictionaryProviderConfigType> ConfigPtr;
@@ -47,18 +43,13 @@ private:
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   CORBACommons::CorbaConfig corba_config_;
-  AdServer::ChannelSvcs::DictionaryProviderImpl_var server_impl_;
+  std::shared_ptr<AdServer::ChannelSvcs::DictionaryProviderImpl> server_impl_;
+  std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
 
   ConfigPtr configuration_;
-
-  typedef Sync::PosixMutex ShutdownMutex;
-  typedef Sync::PosixGuard ShutdownGuard;
-
-  ShutdownMutex shutdown_lock_;
 };
 
 typedef ReferenceCounting::SmartPtr<DictionaryProviderApp_> DictionaryProviderApp_var;
 
 typedef Generics::Singleton<DictionaryProviderApp_, DictionaryProviderApp_var>
   DictionaryProviderApp;
-

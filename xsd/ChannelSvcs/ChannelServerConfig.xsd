@@ -101,6 +101,7 @@
     <xsd:attribute name="country" type="xsd:string" use="required"/>
     -->
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="count_chunks" type="xsd:positiveInteger" use="required">
       <xsd:annotation>
         <xsd:documentation>

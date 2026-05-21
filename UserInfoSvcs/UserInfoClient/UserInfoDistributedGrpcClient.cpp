@@ -10,7 +10,7 @@
 
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <UserInfoSvcs/UserInfoController2/UserInfoControllerGrpc.grpc.pb.h>
+#include <UserInfoSvcs/UserInfoController/UserInfoControllerGrpc.grpc.pb.h>
 
 namespace AdServer::UserInfoSvcs
 {

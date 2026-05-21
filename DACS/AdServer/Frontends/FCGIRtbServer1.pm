@@ -19,7 +19,7 @@ sub start
     #"{ scl enable devtoolset-8 -- valgrind --tool=callgrind FCGIServer " .
     "{ FCGIServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServer1Config.xml " .
-      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer1.out 2>&1 & }";
+      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer1.out 2>&1 < /dev/null & }";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }

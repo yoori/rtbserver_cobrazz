@@ -8,6 +8,7 @@
 #include <Generics/Singleton.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/PidFileGuard.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
@@ -70,6 +71,7 @@ private:
   AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter_;
 
   ConfigPtr configuration_;
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard_;
 
   typedef Sync::PosixMutex ShutdownMutex;
   typedef Sync::PosixGuard ShutdownGuard;

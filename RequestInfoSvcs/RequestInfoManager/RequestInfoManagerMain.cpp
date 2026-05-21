@@ -3,11 +3,12 @@
 #include <CORBACommons/StatsImpl.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include "RequestInfoManagerMain.hpp"
 #include "RequestInfoManagerStats.hpp"
@@ -17,35 +18,15 @@ namespace
 {
   const char ASPECT[] = "RequestInfoManager";
   const char REQUEST_INFO_MANAGER_OBJ_KEY[] = "RequestInfoManager";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
   const char PROCESS_STATS_CONTROL_OBJ_KEY[] = "ProcessStatsControl";
 }
 
 RequestInfoManagerApp_::RequestInfoManagerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "RequestInfoManagerApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "RequestInfoManagerApp_", ASPECT, 0)
 {
-}
-
-void
-RequestInfoManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownGuard guard(shutdown_lock_);
-
-  if(request_info_manager_impl_.in() != 0)
-  {
-    request_info_manager_impl_->deactivate_object();
-    request_info_manager_impl_->wait_object();
-  }
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-RequestInfoManagerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
 }
 
 void
@@ -53,6 +34,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
   noexcept
 {
   const char FUN[] = "RequestInfoManagerApp_::main()";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
   AdServer::RequestInfoSvcs::SNMPStatsImpl_var snmp_stat_provider;
   try
   {
@@ -150,6 +132,9 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(configuration_->pid_file()));
+
     AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl_var rim_stats_impl;
     if (configuration_->SNMPConfig().present())
     {
@@ -194,26 +179,25 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     CORBACommons::POA_ProcessStatsControl_var proc_stat_ctrl =
       new ProcessStatsImpl(rim_stats_impl);
 
-    register_vars_controller();
-
     corba_server_adapter_->add_binding(
       REQUEST_INFO_MANAGER_OBJ_KEY, request_info_manager_impl_.in());
 
     corba_server_adapter_->add_binding(
       PROCESS_STATS_CONTROL_OBJ_KEY, proc_stat_ctrl.in());
 
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
+    active_objects_ =
+      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_->add_child_object(request_info_manager_impl_.in());
+    active_objects_->add_child_object(corba_server_adapter_.in());
 
-    shutdowner_ = corba_server_adapter_->shutdowner();
-
-    request_info_manager_impl_->activate_object();
+    AdServer::Commons::SignalActiveObject signal_active_object;
+    active_objects_->activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running orb loop
-    corba_server_adapter_->run();
+    signal_active_object.wait_object();
+    active_objects_->deactivate_object();
+    active_objects_->wait_object();
 
-    wait();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
   catch (const Exception& e)
@@ -311,4 +295,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

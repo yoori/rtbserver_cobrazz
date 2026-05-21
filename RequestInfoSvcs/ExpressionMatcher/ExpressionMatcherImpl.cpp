@@ -6,11 +6,13 @@
 #include <string>
 
 #include <Commons/Algs.hpp>
+#include <Commons/ConfigUtils.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Commons/GrpcAlgs.hpp>
 
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/CampaignConfigSource.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -136,6 +138,8 @@ namespace RequestInfoSvcs
       callback_(new Logging::ActiveObjectCallbackImpl(init_logger,
         "AdServer::CampaignSvcs::ExpressionMatcherImpl",
         Aspect::EXPRESSION_MATCHER, "ADS-IMPL-4016")),
+      grpc_executor_(std::make_shared<AdServer::Grpc::GrpcExecutor>(
+        expression_matcher_config.UserInfo().grpc_executor_threads())),
       task_runner_(new Generics::TaskRunner(callback_, 3)),
       daily_processing_task_runner_(new Generics::TaskRunner(callback_,
         expression_matcher_config_.DailyProcessing().thread_pool_size())),
@@ -162,6 +166,7 @@ namespace RequestInfoSvcs
       add_child_object(task_runner_.in());
       add_child_object(daily_processing_task_runner_.in());
       add_child_object(scheduler_.in());
+      add_child_object(grpc_executor_);
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
@@ -732,44 +737,53 @@ namespace RequestInfoSvcs
 
   bool ExpressionMatcherImpl::resolve_user_info_manager_session_() noexcept
   {
-//  static const char* FUN = "ExpressionMatcherImpl::resolve_user_info_manager_session_()";
+    static const char* FUN = "ExpressionMatcherImpl::resolve_user_info_manager_session_()";
 
-    typedef xsd::AdServer::Configuration::
-      ExpressionMatcherConfigType::UserInfoManagerControllerGroup_sequence
-      UserInfoManagerControllerGroupSeq;
-
-    AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
-      controller_groups;
-
-    for(UserInfoManagerControllerGroupSeq::const_iterator cg_it =
-          expression_matcher_config_.UserInfoManagerControllerGroup().begin();
-        cg_it != expression_matcher_config_.UserInfoManagerControllerGroup().end();
-        ++cg_it)
+    try
     {
-      AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
-        controller_ref_group;
+      AdServer::Grpc::BatchingOptions batching_options;
+      AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient::UserInfoControllerRefs
+        user_info_controller_refs;
 
-      Config::CorbaConfigReader::read_multi_corba_ref(
-        *cg_it,
-        controller_ref_group);
+      const auto& user_info_config = expression_matcher_config_.UserInfo();
+      if(user_info_config.BatchingOptions().present())
+      {
+        batching_options =
+          Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
+      }
 
-      controller_groups.push_back(controller_ref_group);
+      for(const auto& group : user_info_config.UserInfoControllerGroup())
+      {
+        for(const auto& endpoint : group.Endpoint())
+        {
+          user_info_controller_refs.emplace_back(endpoint);
+        }
+      }
+
+      auto client =
+        std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
+          user_info_controller_refs,
+          batching_options,
+          grpc_executor_,
+          callback_->logger());
+
+      user_info_manager_session_ = client;
+      add_child_object(client);
+
+      try_start_daily_processing_loop_();
+
+      return true;
+    }
+    catch(const eh::Exception& ex)
+    {
+      logger()->sstream(Logging::Logger::EMERGENCY,
+        Aspect::EXPRESSION_MATCHER,
+        "ADS-IMPL-4007") << FUN <<
+        ": Can't create UserInfoManager grpc client. Caught eh::Exception: " <<
+        ex.what();
     }
 
-    auto client =
-      std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
-        callback_->logger(),
-        controller_groups,
-        corba_client_adapter_.in(),
-        Generics::Time::ZERO // pool timeout
-      );
-
-    user_info_manager_session_ = client;
-    add_child_object(client);
-
-    try_start_daily_processing_loop_();
-
-    return true;
+    return false;
   }
 
   void

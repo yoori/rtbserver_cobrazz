@@ -37,14 +37,12 @@
 
 <xsl:variable name="current-campaign-server-obj" select="'/CampaignServer_v360'"/>
 <xsl:variable name="current-channel-proxy-obj" select="'/ChannelProxy_v33'"/>
-<xsl:variable name="current-user-bind-controller-obj" select="'/UserBindController'"/>
 
 <!-- these services used in tr zone and must have unique version for all changes -->
 <xsl:variable name="app-version-num" select="translate($app-version, '0123456789.', '0123456789')"/>
 <xsl:variable name="current-campaign-manager-obj" select="concat('CampaignManager_v', $app-version-num)"/>
 <xsl:variable name="current-conv-server-obj" select="concat('ConvServer_v', $app-version-num)"/>
 <xsl:variable name="current-user-info-manager-obj" select="'UserInfoManager_v351'"/>
-<xsl:variable name="current-user-info-manager-controller-obj" select="'UserInfoManagerController_v351'"/>
 <xsl:variable name="current-user-bind-server-obj" select="concat('UserBindServer_v', $app-version-num)"/>
 <xsl:variable name="current-billing-server-obj" select="'BillingServer_v355'"/>
 
@@ -71,14 +69,8 @@
 <xsl:variable name="user-info-manager-descriptor"
   select="'AdCluster/FrontendSubCluster/UserInfoManager'"/>
 
-<xsl:variable name="user-info-manager-controller-descriptor"
-  select="'AdCluster/FrontendSubCluster/UserInfoManagerController'"/>
-
 <xsl:variable name="dictionary-provider-descriptor"
   select="'AdCluster/BackendSubCluster/DictionaryProvider'"/>
-
-<xsl:variable name="user-operation-generator-descriptor"
-  select="'AdCluster/BackendSubCluster/UserOperationGenerator'"/>
 
 <xsl:variable name="user-bind-server-descriptor"
   select="'AdCluster/FrontendSubCluster/UserBindServer'"/>
@@ -86,11 +78,8 @@
 <xsl:variable name="user-bind-controller-descriptor"
   select="'AdCluster/FrontendSubCluster/UserBindController'"/>
 
-<xsl:variable name="user-bind-controller2-descriptor"
-  select="'AdCluster/FrontendSubCluster/UserBindController2'"/>
-
-<xsl:variable name="user-info-controller2-descriptor"
-  select="'AdCluster/FrontendSubCluster/UserInfoController2'"/>
+<xsl:variable name="user-info-controller-descriptor"
+  select="'AdCluster/FrontendSubCluster/UserInfoController'"/>
 
 <xsl:variable name="billing-server-descriptor"
   select="'AdCluster/FrontendSubCluster/BillingServer'"/>
@@ -148,10 +137,7 @@
 <xsl:variable name="user-bind-server-log-path" select="'/log/UserBindServer/UserBindServer'"/>
 <xsl:variable name="user-bind-server-log-level" select="$default-log-level"/>
 <xsl:variable name="user-bind-controller-log-path" select="'/log/UserBindController/UserBindController'"/>
-<xsl:variable name="user-bind-controller2-log-path" select="'/log/UserBindController2/UserBindController2'"/>
 <xsl:variable name="user-bind-controller-log-level" select="$default-log-level"/>
-<xsl:variable name="user-operation-generator-log-path" select="'/log/UserOperationGenerator/UserOperationGenerator'"/>
-
 <xsl:variable name="channel-proxy-log-level" select="$default-log-level"/>
 <xsl:variable name="channel-proxy-log-path" select="'/log/ChannelProxy/ChannelProxy'"/>
 <xsl:variable name="channel-server-log-level" select="$default-log-level"/>
@@ -173,9 +159,7 @@
 <xsl:variable name="clickhouse-uploader-log-path" select="'/log/ClickhouseUploader/ClickhouseUploader'"/>
 <xsl:variable name="user-info-manager-log-level" select="$default-log-level"/>
 <xsl:variable name="user-info-manager-log-path" select="'/log/UserInfoManager/UserInfoManager'"/>
-<xsl:variable name="user-info-manager-controller-log-level" select="$default-log-level"/>
-<xsl:variable name="user-info-manager-controller-log-path" select="'/log/UserInfoManagerController/UserInfoManagerController'"/>
-<xsl:variable name="user-info-controller2-log-path" select="'/log/UserInfoController2/UserInfoController2'"/>
+<xsl:variable name="user-info-controller-log-path" select="'/log/UserInfoController/UserInfoController'"/>
 <xsl:variable name="stats-collector-log-path" select="'/log/StatsCollector/StatsCollector'"/>
 <xsl:variable name="fcgi-adserver-log-path" select="'/log/FCGIAdServer/FCGIAdServer'"/>
 
@@ -222,7 +206,6 @@
 <xsl:variable name="def-dictionary-provider-threads" select="'10'"/>
 <xsl:variable name="def-user-bind-server-threads" select="'40'"/>
 <xsl:variable name="def-user-bind-controller-threads" select="'40'"/>
-<xsl:variable name="def-user-bind-controller2-threads" select="'40'"/>
 <xsl:variable name="def-channel-search-threads" select="'10'"/>
 <xsl:variable name="def-channel-server-threads" select="'40'"/>
 
@@ -342,8 +325,8 @@
 </xsl:variable>
 <xsl:variable name="def-user-info-manager-port" select="$def-range-start + 1"/>
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
-<xsl:variable name="def-user-info-controller2-port" select="$def-range-start + 36"/>
-<xsl:variable name="def-user-info-controller2-grpc-port" select="$def-range-start + 431"/>
+<xsl:variable name="def-user-info-controller-port" select="$def-range-start + 36"/>
+<xsl:variable name="def-user-info-controller-grpc-port" select="$def-range-start + 431"/>
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
 <xsl:variable name="def-channel-controller-port" select="$def-range-start + 4"/>
 <xsl:variable name="def-channel-controller2-port" select="$def-range-start + 430"/>
@@ -354,10 +337,8 @@
 <xsl:variable name="def-channel-search-service-port" select="$def-range-start + 9"/>
 <xsl:variable name="def-dictionary-provider-port" select="$def-range-start + 10"/>
 <xsl:variable name="def-user-bind-server-port" select="$def-range-start + 28"/>
-<xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 29"/>
-<xsl:variable name="def-user-bind-controller2-port" select="$def-range-start + 35"/>
-<xsl:variable name="def-user-bind-controller2-grpc-port" select="$def-range-start + 429"/>
-<xsl:variable name="def-user-operation-generator-port" select="$def-range-start + 30"/>
+<xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 35"/>
+<xsl:variable name="def-user-bind-controller-grpc-port" select="$def-range-start + 429"/>
 <xsl:variable name="def-billing-server-port" select="$def-range-start + 31"/>
 <xsl:variable name="def-log-generalizer-port" select="$def-range-start + 11"/>
 <!--xsl:variable name="def-log-delivering-port" select="concat($def-range-start, '112')"/-->

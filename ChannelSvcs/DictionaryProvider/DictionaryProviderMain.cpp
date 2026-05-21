@@ -1,12 +1,15 @@
 
 #include <eh/Exception.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <memory>
+
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include <xsd/ChannelSvcs/DictionaryProviderConfig.hpp>
 
@@ -17,33 +20,28 @@ namespace
 {
   char ASPECT[] = "DictionaryProvider";
   char DICTIONARY_PROVIDER[] = "DictionaryProvider";
-  char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
+
+  template<typename T>
+  std::shared_ptr<T>
+  to_shared(ReferenceCounting::SmartPtr<T> ptr)
+  {
+    T* raw_ptr = ptr.in();
+    return std::shared_ptr<T>(
+      raw_ptr,
+      [ptr = std::move(ptr)](T*) mutable
+      {
+        ptr.reset();
+      });
+  }
 }
 
 DictionaryProviderApp_::DictionaryProviderApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "DictionaryProviderApp_", ASPECT),
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "DictionaryProviderApp_", ASPECT, 0),
     server_impl_()
 {
-}
-
-void DictionaryProviderApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownGuard guard(shutdown_lock_);
-  if(server_impl_)
-  {
-    server_impl_->deactivate_object();
-    server_impl_->wait_object();
-    server_impl_.reset();
-  }
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-DictionaryProviderApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
 }
 
 void DictionaryProviderApp_::load_config_(const char* name) /*throw(Exception)*/
@@ -126,19 +124,19 @@ void DictionaryProviderApp_::init_corba_() /*throw(Exception, CORBA::SystemExcep
     corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(
       corba_config_);
 
-    shutdowner_ = corba_server_adapter_->shutdowner();
-
-    server_impl_ =
+    server_impl_ = to_shared<AdServer::ChannelSvcs::DictionaryProviderImpl>(
       new AdServer::ChannelSvcs::DictionaryProviderImpl(
-        logger(), configuration_.get());
+        logger(), configuration_.get()));
 
     corba_server_adapter_->add_binding(
         DICTIONARY_PROVIDER,
-        server_impl_.in());
+        server_impl_.get());
 
-    corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-
-    server_impl_->activate_object();
+    active_objects_ =
+      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_->add_child_object(
+      std::static_pointer_cast<Generics::ActiveObject>(server_impl_));
+    active_objects_->add_child_object(corba_server_adapter_.in());
   }
   catch(const eh::Exception& e)
   {
@@ -154,6 +152,8 @@ void DictionaryProviderApp_::init_corba_() /*throw(Exception, CORBA::SystemExcep
 void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
 {
   const char FUN[] = "DictionaryProviderApp_::main()";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
+
   try
   {
 
@@ -182,14 +182,20 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
       throw Exception(ostr.str());
     }
 
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(configuration_->pid_file()));
+
     //Initialization CORBA
     init_corba_();
 
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running orb loop
-    corba_server_adapter_->run();
+    AdServer::Commons::SignalActiveObject signal_active_object;
+    active_objects_->activate_object();
 
-    wait();
+    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
+    signal_active_object.wait_object();
+    active_objects_->deactivate_object();
+    active_objects_->wait_object();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
 
   }
@@ -267,7 +273,6 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
   try
   {
     corba_server_adapter_.reset();
-    shutdowner_.reset();
   }
   catch(const CORBA::Exception& ex)
   {
@@ -309,4 +314,3 @@ int main(int argc, char** argv)
   app->main(argc, argv);
   return 0;
 }
-

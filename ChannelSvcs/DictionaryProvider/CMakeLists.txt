@@ -25,7 +25,6 @@ target_link_libraries(DictionaryProvider
   xerces-c
   XMLUtility
   CORBACommons
-  ProcessControlVars
   AdServerCommonsXSD
   DictionaryProviderConfigXSD
   Commons

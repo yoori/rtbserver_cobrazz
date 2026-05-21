@@ -2020,7 +2020,7 @@ namespace AdServer::UserInfoSvcs
       return true;
     }
 
-    // code equal to distribution in UserBindOperationDistributor class
+    // Keep chunk distribution compatible with the legacy controller algorithm.
     return (AdServer::Commons::external_id_distribution_hash(
       id) >> 8) % partitions_number_ == partition_index_;
   }

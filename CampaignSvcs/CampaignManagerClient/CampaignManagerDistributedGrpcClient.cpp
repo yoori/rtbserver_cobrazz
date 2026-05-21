@@ -148,13 +148,16 @@ namespace AdServer::CampaignSvcs
       if (!ref.service_index.empty())
       {
         auto pool = std::make_shared<Pool>(
-          std::vector<ClientHolderPtr>{client_holder});
+          std::vector<ClientHolderPtr>{client_holder},
+          coalesce_runner);
         service_index_pools_.emplace(ref.service_index, std::move(pool));
       }
       client_holders_.emplace_back(std::move(client_holder));
     }
 
-    default_pool_ = std::make_shared<Pool>(std::move(default_refs));
+    default_pool_ = std::make_shared<Pool>(
+      std::move(default_refs),
+      coalesce_runner);
   }
 
   CampaignManagerDistributedGrpcClient::CampaignManagerDistributedGrpcClient(

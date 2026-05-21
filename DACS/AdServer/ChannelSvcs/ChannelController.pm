@@ -15,7 +15,7 @@ sub start
        "{ ".
          "\${VALGRIND_PREFIX} ChannelController " .
            "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelController.xml > " .
-           "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ChannelController.out 2>&1 & ".
+           "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ChannelController.out 2>&1 < /dev/null & ".
        "}";
 
   return AdServer::Functions::execute_command($host, $descr, $command);

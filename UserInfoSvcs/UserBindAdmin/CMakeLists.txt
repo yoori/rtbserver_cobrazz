@@ -2,25 +2,9 @@ add_executable(UserBindAdmin
   Application.cpp
 )
 
-add_executable(UserBindAdmin2
-  UserBindAdmin2.cpp
-)
+target_link_options(UserBindAdmin PRIVATE -Wl,--as-needed)
 
 target_link_libraries(UserBindAdmin
-  gRPC::grpc++
-
-  Generics
-  CORBACommons
-
-  Commons
-
-  UserBindControllerStubs
-  UserBindServerIDL
-  UserBindControllerIDL
-  UserBindServerGrpc
-)
-
-target_link_libraries(UserBindAdmin2
   gRPC::grpc++
 
   Generics
@@ -31,7 +15,7 @@ target_link_libraries(UserBindAdmin2
   UserBindControllerGrpc
 )
 
-target_include_directories(UserBindAdmin2 PRIVATE
+target_include_directories(UserBindAdmin PRIVATE
   ${PB_DIRECTORY}/UserInfoSvcs/UserBindServer
-  ${PB_DIRECTORY}/UserInfoSvcs/UserBindController2
+  ${PB_DIRECTORY}/UserInfoSvcs/UserBindController
 )

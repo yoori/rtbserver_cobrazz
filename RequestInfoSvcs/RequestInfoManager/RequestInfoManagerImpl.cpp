@@ -4,11 +4,13 @@
 #include <PrivacyFilter/Filter.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/ConfigUtils.hpp>
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
 #include <RequestInfoSvcs/ExpressionMatcher/ExpressionMatcher.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include <Commons/LogReferrerUtils.hpp>
 
@@ -120,8 +122,8 @@ namespace RequestInfoSvcs{
 
     UserFraudDeactivator(
       Logging::Logger* logger,
-      const AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList&
-        controller_groups)
+      const xsd::AdServer::Configuration::RequestInfoManagerUserInfoType&
+        user_info_config)
       /*throw(Exception)*/;
 
     virtual void
@@ -135,7 +137,7 @@ namespace RequestInfoSvcs{
 
   protected:
     Logging::Logger_var logger_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_matcher_;
   };
@@ -170,9 +172,6 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 
-    typedef xsd::AdServer::Configuration::
-      RequestInfoManagerConfigType::UserInfoManagerControllerGroup_sequence
-      UserInfoManagerControllerGroupSeq;
     const char* stage = "init CorbaClientAdapter";
 
     try
@@ -203,27 +202,9 @@ namespace RequestInfoSvcs{
     try
     {
       // init fraud user processor: notify UIM's
-      AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
-        controller_groups;
-
-      for(UserInfoManagerControllerGroupSeq::const_iterator cg_it =
-            request_info_manager_config_.UserInfoManagerControllerGroup().begin();
-          cg_it != request_info_manager_config_.
-            UserInfoManagerControllerGroup().end();
-          ++cg_it)
-      {
-        AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
-          controller_ref_group;
-
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          *cg_it,
-          controller_ref_group);
-
-        controller_groups.push_back(controller_ref_group);
-      }
-
       user_fraud_deactivator_ = new UserFraudDeactivator(
-        logger_, controller_groups);
+        logger_,
+        request_info_manager_config_.UserInfo());
       add_child_object(user_fraud_deactivator_.in());
     }
     catch(const eh::Exception& ex)
@@ -1665,22 +1646,44 @@ namespace RequestInfoSvcs{
   /* UserFraudDeactivator implementation */
   UserFraudDeactivator::UserFraudDeactivator(
     Logging::Logger* logger,
-    const AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList&
-      controller_groups)
+    const xsd::AdServer::Configuration::RequestInfoManagerUserInfoType&
+      user_info_config)
     /*throw(Exception)*/
-    : logger_(ReferenceCounting::add_ref(logger))
+    : logger_(ReferenceCounting::add_ref(logger)),
+      grpc_executor_(std::make_shared<AdServer::Grpc::GrpcExecutor>(
+        user_info_config.grpc_executor_threads()))
   {
     static const char* FUN = "UserFraudDeactivator::UserFraudDeactivator()";
 
     try
     {
-      corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
+      AdServer::Grpc::BatchingOptions batching_options;
+      AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient::UserInfoControllerRefs
+        user_info_controller_refs;
+
+      if(user_info_config.BatchingOptions().present())
+      {
+        batching_options =
+          Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
+      }
+
+      for(const auto& group : user_info_config.UserInfoControllerGroup())
+      {
+        for(const auto& endpoint : group.Endpoint())
+        {
+          user_info_controller_refs.emplace_back(endpoint);
+        }
+      }
+
+      add_child_object(grpc_executor_);
 
       auto client =
-        std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
+        std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
+          user_info_controller_refs,
+          batching_options,
+          grpc_executor_,
           logger_,
-          controller_groups,
-          corba_client_adapter_.in());
+          std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>());
       user_info_matcher_ = client;
       add_child_object(client);
     }
@@ -1688,7 +1691,7 @@ namespace RequestInfoSvcs{
     {
       Stream::Error ostr;
       ostr << FUN <<
-        ": Can't init CorbaClientAdapter. eh::Exception caught: " <<
+        ": Can't init UserInfoManager grpc client. eh::Exception caught: " <<
         ex.what();
       throw Exception(ostr, "ADS-IMPL-3024");
     }

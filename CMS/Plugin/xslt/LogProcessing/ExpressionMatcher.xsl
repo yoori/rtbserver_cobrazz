@@ -135,6 +135,7 @@
 
   <cfg:ExpressionMatcherConfig
     log_root="{concat($workspace-root, '/log/ExpressionMatcher')}"
+    pid_file="{concat($workspace-root, '/run/ExpressionMatcher.pid')}"
     update_period="{$update-period}"
     inventory_users_percentage="{$inventory-users-percentage-value}"
     colo_id="{$colo-id}"
@@ -150,7 +151,6 @@
       </xsl:attribute>
 
       <cfg:Endpoint host="*" port="{$expression-matcher-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="ExpressionMatcher" name="ExpressionMatcher"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>
@@ -196,34 +196,11 @@
       </xsl:for-each>
     </cfg:ExpressionMatcherGroup>
 
-    <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
-      <cfg:UserInfoManagerControllerGroup name="UserInfoManagerControllers">
-        <xsl:for-each select="./service[@descriptor = $user-info-manager-controller-descriptor]">
-          <xsl:variable
-            name="user-info-manager-controller-config"
-            select="./configuration/cfg:userInfoManagerController"/>
-
-          <xsl:variable name="hosts">
-            <xsl:call-template name="GetHosts">
-              <xsl:with-param name="hosts" select="@host"/>
-              <xsl:with-param name="error-prefix"  select="'AdFrontend:UserInfoManagerController'"/>
-            </xsl:call-template>
-          </xsl:variable>
-
-          <xsl:variable name="user-info-manager-controller-port">
-            <xsl:value-of select="$user-info-manager-controller-config/cfg:networkParams/@port"/>
-            <xsl:if test="count($user-info-manager-controller-config/cfg:networkParams/@port) = 0">
-              <xsl:value-of select="$def-user-info-manager-controller-port"/>
-            </xsl:if>
-          </xsl:variable>
-
-          <xsl:for-each select="exsl:node-set($hosts)/host">
-            <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':',
-              $user-info-manager-controller-port, '/', $current-user-info-manager-controller-obj)}"/>
-          </xsl:for-each>
-        </xsl:for-each>
-      </cfg:UserInfoManagerControllerGroup>
-    </xsl:for-each>
+    <xsl:call-template name="AddUserInfoManagerControllerGroups">
+      <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
+      <xsl:with-param name="error-prefix" select="'ExpressionMatcher'"/>
+      <xsl:with-param name="add-user-info-grpc" select="'true'"/>
+    </xsl:call-template>
 
     <xsl:variable name="inventory_days_to_keep">
       <xsl:choose>

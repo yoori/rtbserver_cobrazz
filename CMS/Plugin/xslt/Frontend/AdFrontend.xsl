@@ -546,7 +546,6 @@
     <xsl:call-template name="AddUserBindControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
-      <xsl:with-param name="user-bind-call-mode" select="'grpc'"/>
     </xsl:call-template>
 
     <cfg:Cookies>

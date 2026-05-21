@@ -48,7 +48,6 @@ target_link_libraries(BidRateProvider
   CORBACommons
   CorbaTypesIDL
   CampaignManagerIDL
-  ProcessControlIDL
   pthread
   pcre
   HTTP
@@ -182,8 +181,6 @@ target_link_libraries(CampaignManager
   CampaignServerIDL
   CampaignManagerIDL
   CampaignTypes
-
-  ProcessControlVars
 
   ExpressionChannelIndex
   ExpressionChannel

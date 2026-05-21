@@ -4,13 +4,14 @@ use Utils::Functions;
 use AdServer::Functions;
 use AdServer::Path;
 
-my $campaign_manager_port = "campaign_manager_port";
+my $pid_file = "\${workspace_root}/run/CampaignManager.pid";
 
 sub start
 {
   my ($host, $descr) = @_;
 
   my $command =
+    "mkdir -p \${workspace_root}/run && ".
     "mkdir -p \${log_root}/CampaignManager/Out/RequestBasicChannels && ".
     "mkdir -p \${log_root}/CampaignManager/Out/RequestBasicChannels_ && ".
     "mkdir -p \${log_root}/CampaignManager/Out/OptOutStat && ".
@@ -75,33 +76,50 @@ sub start
     "mkdir -p \${log_root}/CampaignManager/In/CapturedConvRateConfig && " .
     "mkdir -p \${log_root}/CampaignManager/In/BidCostConfig && " .
     "mkdir -p \${log_root}/CampaignManager/In/CapturedBidCostConfig && " .
+    "if test -e $pid_file; then " .
+      "pid=`cat $pid_file`; " .
+      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
+    "fi && " .
     "ulimit -n 4096 && " .
-    "{ CampaignManager " .
+    "CampaignManager " .
     #"{ scl enable devtoolset-8 -- valgrind --tool=callgrind CampaignManager " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CampaignManagerConfig.xml " .
-      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}CampaignManager.out 2>&1 & }";
+      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}CampaignManager.out 2>&1 < /dev/null &";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }
 
 sub stop
 {
-  my ($host) = @_;
+  my ($host, $verbose) = @_;
 
-  return AdServer::Functions::process_control_stop(
-    $host,
-    $campaign_manager_port,
-    $verbose);
+  my $command =
+    "test -e $pid_file || exit 0 && " .
+    "pid=`cat $pid_file` && " .
+    "{ kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 0; }; } && " .
+    "kill -TERM \$pid 2>/dev/null || true; " .
+    "for i in `seq 1 60`; do " .
+      "test -e $pid_file || exit 0; " .
+      "kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 0; }; " .
+      "sleep 1; " .
+    "done; " .
+    "kill -9 \$pid 2>/dev/null || true; " .
+    "test -e $pid_file && rm -f $pid_file || true";
+
+  return AdServer::Functions::execute_command($host, $verbose, $command);
 }
 
 sub is_alive
 {
   my ($host, $verbose) = @_;
 
-  return AdServer::Functions::process_control_is_alive(
-    $host,
-    $campaign_manager_port,
-    $verbose);
+  my $command =
+    "test -e $pid_file || exit 1 && " .
+    "pid=`cat $pid_file` && " .
+    "kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 1; } && " .
+    "exit 0";
+
+  return AdServer::Functions::execute_command($host, $verbose, $command);
 }
 
 1;

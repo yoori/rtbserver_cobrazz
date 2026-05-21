@@ -22,7 +22,6 @@
 
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <LogCommons/RequestBasicChannels.hpp>
 
 #include "ExpressionMatcher_s.hpp"
@@ -38,6 +37,11 @@
 namespace AdServer::UserInfoSvcs
 {
   class UserInfoManagerGrpcAsyncClient;
+}
+
+namespace AdServer::Grpc
+{
+  class GrpcExecutor;
 }
 
 namespace AdServer
@@ -400,8 +404,6 @@ namespace AdServer
 
       AdServer::CampaignSvcs::CampaignServerPoolPtr campaign_pool_;
 
-      AdServer::UserInfoSvcs::UserInfoManagerController_var
-        user_info_manager_controller_;
       std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
         user_info_manager_session_;
 
@@ -426,6 +428,7 @@ namespace AdServer
       ExpressionMatcherOutLogger_var expression_matcher_out_logger_;
 
       Logging::ActiveObjectCallbackImpl_var callback_;
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
       Generics::TaskRunner_var task_runner_;
       Generics::TaskRunner_var daily_processing_task_runner_;
       Generics::Planner_var scheduler_;

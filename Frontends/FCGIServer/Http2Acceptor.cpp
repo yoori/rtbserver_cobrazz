@@ -20,6 +20,7 @@ namespace
 {
   const char ASPECT[] = "Http2Acceptor";
   const char RESPONSE_BODY[] = "FCGIServer HTTP/2 endpoint is enabled\n";
+  const char BAD_REQUEST_BODY[] = "Bad Request\n";
   const char HOST_HEADER[] = "HOST";
   const char CONTENT_TYPE_HEADER[] = "Content-Type";
   const char TEXT_PLAIN[] = "text/plain";
@@ -29,6 +30,7 @@ namespace
     'P','R','I',' ','*',' ','H','T','T','P','/','2','.','0','\r','\n','\r','\n','S','M','\r','\n','\r','\n'
   };
   const int HTTP2_LISTEN_BACKLOG = 8192;
+  const unsigned long DEFAULT_MAX_REQUEST_SIZE = 128 * 1024;
 }
 
 namespace AdServer::Frontends
@@ -43,7 +45,8 @@ namespace AdServer::Frontends
       Http2Acceptor* owner,
       boost::asio::io_service& io_service,
       unsigned long max_concurrent_streams,
-      unsigned long read_buffer_size);
+      unsigned long read_buffer_size,
+      unsigned long max_request_size);
 
     ~Connection() noexcept;
 
@@ -89,6 +92,14 @@ namespace AdServer::Frontends
       nghttp2_data_source* source,
       void* user_data);
 
+    static int on_data_chunk_recv_callback_(
+      nghttp2_session* session,
+      uint8_t flags,
+      int32_t stream_id,
+      const uint8_t* data,
+      size_t len,
+      void* user_data);
+
     static int on_frame_recv_callback_(
       nghttp2_session* session,
       const nghttp2_frame* frame,
@@ -104,6 +115,7 @@ namespace AdServer::Frontends
     void submit_settings_();
     void process_request_(int32_t stream_id, StreamData& stream_data);
     void submit_response_(int32_t stream_id, const Http2Response& response);
+    void reject_stream_(int32_t stream_id, StreamData& stream_data);
 
     void order_read_();
     void handle_read_(
@@ -141,6 +153,7 @@ namespace AdServer::Frontends
     std::string local_endpoint_;
     std::string remote_endpoint_;
     const unsigned long max_concurrent_streams_;
+    const unsigned long max_request_size_;
     std::unordered_map<int32_t, std::shared_ptr<StreamData>> streams_;
   };
 
@@ -157,9 +170,52 @@ namespace AdServer::Frontends
     std::string method;
     std::string path;
     std::string authority;
+    std::string body;
     bool response_sent = false;
+    bool request_rejected = false;
 
     Http2Response response;
+  };
+
+  class Http2RequestHolder final: public FCGI::HttpRequestHolder
+  {
+  public:
+    Http2RequestHolder(
+      FCGI::HttpRequest::Method method,
+      std::string uri,
+      std::string query,
+      std::string authority,
+      std::string body)
+      : uri_(std::move(uri)),
+        query_(std::move(query)),
+        authority_(std::move(authority)),
+        body_(std::move(body))
+    {
+      auto& request = this->request();
+      request.set_method(method);
+      request.set_uri(String::SubString(uri_));
+      request.set_args(String::SubString(query_));
+      request.set_body(String::SubString(body_));
+
+      HTTP::SubHeaderList headers;
+      if(!authority_.empty())
+      {
+        headers.push_back(
+          HTTP::SubHeader(
+            String::SubString(HOST_HEADER),
+            String::SubString(authority_)));
+      }
+      request.set_headers(std::move(headers));
+    }
+
+  protected:
+    ~Http2RequestHolder() noexcept override = default;
+
+  private:
+    std::string uri_;
+    std::string query_;
+    std::string authority_;
+    std::string body_;
   };
 
   class Http2Acceptor::Http2ResponseWriter final: public FCGI::BaseHttpResponseWriter
@@ -195,7 +251,8 @@ namespace AdServer::Frontends
     Http2Acceptor* owner,
     boost::asio::io_service& io_service,
     unsigned long max_concurrent_streams,
-    unsigned long read_buffer_size)
+    unsigned long read_buffer_size,
+    unsigned long max_request_size)
     : owner_(owner),
       io_service_(io_service),
       strand_(io_service_),
@@ -205,7 +262,8 @@ namespace AdServer::Frontends
       preface_received_(0),
       write_active_(false),
       close_started_(false),
-      max_concurrent_streams_(max_concurrent_streams)
+      max_concurrent_streams_(max_concurrent_streams),
+      max_request_size_(max_request_size ? max_request_size : DEFAULT_MAX_REQUEST_SIZE)
   {
     std::memset(read_buf_.data(), 0, read_buf_.size());
   }
@@ -367,6 +425,40 @@ namespace AdServer::Frontends
   }
 
   int
+  Http2Acceptor::Connection::on_data_chunk_recv_callback_(
+    nghttp2_session* session,
+    uint8_t /*flags*/,
+    int32_t stream_id,
+    const uint8_t* data,
+    size_t len,
+    void* user_data)
+  {
+    auto* self = static_cast<Connection*>(user_data);
+    if(!self || len == 0)
+    {
+      return 0;
+    }
+
+    auto* stream_data = static_cast<StreamData*>(
+      nghttp2_session_get_stream_user_data(session, stream_id));
+
+    if(!stream_data || stream_data->request_rejected)
+    {
+      return 0;
+    }
+
+    if(stream_data->body.size() > self->max_request_size_ ||
+      len > self->max_request_size_ - stream_data->body.size())
+    {
+      self->reject_stream_(stream_id, *stream_data);
+      return 0;
+    }
+
+    stream_data->body.append(reinterpret_cast<const char*>(data), len);
+    return 0;
+  }
+
+  int
   Http2Acceptor::Connection::on_frame_recv_callback_(
     nghttp2_session* session,
     const nghttp2_frame* frame,
@@ -423,6 +515,7 @@ namespace AdServer::Frontends
     nghttp2_session_callbacks_set_send_callback(callbacks, send_callback_);
     nghttp2_session_callbacks_set_on_begin_headers_callback(callbacks, on_begin_headers_callback_);
     nghttp2_session_callbacks_set_on_header_callback(callbacks, on_header_callback_);
+    nghttp2_session_callbacks_set_on_data_chunk_recv_callback(callbacks, on_data_chunk_recv_callback_);
     nghttp2_session_callbacks_set_on_frame_recv_callback(callbacks, on_frame_recv_callback_);
     nghttp2_session_callbacks_set_on_stream_close_callback(callbacks, on_stream_close_callback_);
 
@@ -475,26 +568,15 @@ namespace AdServer::Frontends
       uri.resize(pos);
     }
 
-    FCGI::HttpRequestHolder_var request_holder(new FCGI::HttpRequestHolder());
-    auto& request = request_holder->request();
-
-    request.set_method(
-      stream_data.method == "POST" ?
+    FCGI::HttpRequestHolder_var request_holder(
+      new Http2RequestHolder(
+        stream_data.method == "POST" ?
         FCGI::HttpRequest::RM_POST :
-        FCGI::HttpRequest::RM_GET);
-
-    request.set_uri(String::SubString(uri));
-    request.set_args(String::SubString(query));
-
-    HTTP::SubHeaderList headers;
-    if(!stream_data.authority.empty())
-    {
-      headers.push_back(
-        HTTP::SubHeader(
-          String::SubString(HOST_HEADER),
-          String::SubString(stream_data.authority)));
-    }
-    request.set_headers(std::move(headers));
+        FCGI::HttpRequest::RM_GET,
+        std::move(uri),
+        std::move(query),
+        stream_data.authority,
+        stream_data.body));
 
     FCGI::BaseHttpResponseWriter_var response_writer(
       new Http2ResponseWriter(shared_from_this(), stream_id));
@@ -507,6 +589,37 @@ namespace AdServer::Frontends
     {
       Stream::Error ostr;
       ostr << "HTTP/2 delegated request failed: " << ex.what();
+      owner_->logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
+    }
+  }
+
+  void
+  Http2Acceptor::Connection::reject_stream_(int32_t stream_id, StreamData& stream_data)
+  {
+    if(stream_data.response_sent)
+    {
+      return;
+    }
+
+    stream_data.request_rejected = true;
+    stream_data.response_sent = true;
+    stream_data.body.clear();
+    stream_data.response.status = 400;
+    stream_data.response.content_type = TEXT_PLAIN;
+    stream_data.response.body = BAD_REQUEST_BODY;
+
+    submit_response_(stream_id, stream_data.response);
+
+    const int res = nghttp2_submit_rst_stream(
+      session_,
+      NGHTTP2_FLAG_NONE,
+      stream_id,
+      NGHTTP2_CANCEL);
+
+    if(res != 0)
+    {
+      Stream::Error ostr;
+      ostr << "Can't submit HTTP/2 stream reset: " << nghttp2_strerror(res);
       owner_->logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
     }
   }
@@ -803,7 +916,8 @@ namespace AdServer::Frontends
     unsigned long port,
     unsigned long threads,
     unsigned long max_concurrent_streams,
-    unsigned long read_buffer_size)
+    unsigned long read_buffer_size,
+    unsigned long max_request_size)
     : logger_(ReferenceCounting::add_ref(logger)),
       frontend_(ReferenceCounting::add_ref(frontend)),
       bind_address_(bind_address.str()),
@@ -811,6 +925,7 @@ namespace AdServer::Frontends
       threads_(threads ? threads : 1),
       max_concurrent_streams_(max_concurrent_streams ? max_concurrent_streams : 100),
       read_buffer_size_(read_buffer_size ? read_buffer_size : 64 * 1024),
+      max_request_size_(max_request_size ? max_request_size : DEFAULT_MAX_REQUEST_SIZE),
       use_unix_socket_(false),
       io_service_(std::make_shared<boost::asio::io_service>()),
       io_work_(new boost::asio::io_service::work(*io_service_)),
@@ -823,7 +938,8 @@ namespace AdServer::Frontends
     const String::SubString& unix_socket_path,
     unsigned long threads,
     unsigned long max_concurrent_streams,
-    unsigned long read_buffer_size)
+    unsigned long read_buffer_size,
+    unsigned long max_request_size)
     : logger_(ReferenceCounting::add_ref(logger)),
       frontend_(ReferenceCounting::add_ref(frontend)),
       bind_address_(unix_socket_path.str()),
@@ -831,6 +947,7 @@ namespace AdServer::Frontends
       threads_(threads ? threads : 1),
       max_concurrent_streams_(max_concurrent_streams ? max_concurrent_streams : 100),
       read_buffer_size_(read_buffer_size ? read_buffer_size : 64 * 1024),
+      max_request_size_(max_request_size ? max_request_size : DEFAULT_MAX_REQUEST_SIZE),
       use_unix_socket_(true),
       io_service_(std::make_shared<boost::asio::io_service>()),
       io_work_(new boost::asio::io_service::work(*io_service_)),
@@ -918,7 +1035,8 @@ namespace AdServer::Frontends
       this,
       *io_service_,
       max_concurrent_streams_,
-      read_buffer_size_);
+      read_buffer_size_,
+      max_request_size_);
 
     acceptor_->async_accept(
       connection->socket(),

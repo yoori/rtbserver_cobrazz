@@ -131,6 +131,7 @@
 
   <cfg:CampaignServer
     log_root="{concat($workspace-root, '/log/CampaignServer/Out')}"
+    pid_file="{concat($workspace-root, '/run/CampaignServer.pid')}"
     config_update_period="{$config-update-period}"
     ecpm_update_period="{$ecpm-update-period}"
     server_id="{$server-id}">
@@ -194,7 +195,6 @@
       </xsl:attribute>
 
       <cfg:Endpoint host="*" port="{$campaign-server-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
         <cfg:Object servant="CampaignServer_v350" name="CampaignServer_v350"/>
         <cfg:Object servant="CampaignServer_v360" name="CampaignServer_v360"/>

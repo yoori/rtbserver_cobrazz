@@ -39,7 +39,8 @@ namespace Frontends
       unsigned long port,
       unsigned long threads,
       unsigned long max_concurrent_streams,
-      unsigned long read_buffer_size);
+      unsigned long read_buffer_size,
+      unsigned long max_request_size);
 
     Http2Acceptor(
       Logging::Logger* logger,
@@ -47,7 +48,8 @@ namespace Frontends
       const String::SubString& unix_socket_path,
       unsigned long threads,
       unsigned long max_concurrent_streams,
-      unsigned long read_buffer_size);
+      unsigned long read_buffer_size,
+      unsigned long max_request_size);
 
   protected:
     ~Http2Acceptor() noexcept override;
@@ -78,6 +80,7 @@ namespace Frontends
     const unsigned long threads_;
     const unsigned long max_concurrent_streams_;
     const unsigned long read_buffer_size_;
+    const unsigned long max_request_size_;
     const bool use_unix_socket_;
 
     std::shared_ptr<boost::asio::io_service> io_service_;

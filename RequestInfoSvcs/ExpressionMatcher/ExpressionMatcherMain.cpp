@@ -6,11 +6,11 @@
 #include <eh/Exception.hpp>
 #include <XMLUtility/Utility.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
-
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include "ExpressionMatcherStats.hpp"
 
@@ -18,42 +18,23 @@ namespace
 {
   const char ASPECT[] = "ExpressionMatcher";
   const char EXPRESSION_MATCHER_OBJ_KEY[] = "ExpressionMatcher";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
 ExpressionMatcherApp_::ExpressionMatcherApp_()
   /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "ExpressionMatcherApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "ExpressionMatcherApp_", ASPECT, 0)
 {
-}
-
-/** ProcessControl interface implementation */
-void
-ExpressionMatcherApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownGuard guard(shutdown_lock_);
-
-  if(expression_matcher_impl_.in() != 0)
-  {
-    expression_matcher_impl_->deactivate_object();
-    expression_matcher_impl_->wait_object();
-  }
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-ExpressionMatcherApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
 }
 
 /* main start point */
 void
 ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
 {
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
+
   try
   {
     const char* usage = "usage: ExpressionMatcher <config_file>";
@@ -137,6 +118,9 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
       Logging::Logger::TRACE,
       ASPECT);
 
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(configuration_->pid_file()));
+
     /* fill corba_config */
     try
     {
@@ -157,8 +141,6 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
       /* init CORBA Server */
       corba_server_adapter_ =
         new CORBACommons::CorbaServerAdapter(corba_config_);
-
-      shutdowner_ = corba_server_adapter_->shutdowner();
     }
     catch(const eh::Exception& e)
     {
@@ -206,21 +188,22 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
         logger(),
         config(),
         proc_stat_impl);
-    register_vars_controller();
 
     corba_server_adapter_->add_binding(
       EXPRESSION_MATCHER_OBJ_KEY, expression_matcher_impl_.in());
 
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
+    active_objects_ =
+      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_->add_child_object(expression_matcher_impl_.in());
+    active_objects_->add_child_object(corba_server_adapter_.in());
 
-    expression_matcher_impl_->activate_object();
+    AdServer::Commons::SignalActiveObject signal_active_object;
+    active_objects_->activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    /* Running orb loop */
-    corba_server_adapter_->run();
-
-    wait();
+    signal_active_object.wait_object();
+    active_objects_->deactivate_object();
+    active_objects_->wait_object();
 
     expression_matcher_impl_.reset();
 
@@ -287,4 +270,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

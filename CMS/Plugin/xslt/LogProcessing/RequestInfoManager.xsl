@@ -135,6 +135,7 @@
 
   <cfg:RequestInfoManagerConfig
     colo_id="{$colo-id}"
+    pid_file="{concat($workspace-root, '/run/RequestInfoManager.pid')}"
     service_index="{count(exsl:node-set(
       $request-info-manager-host-port-sorted-set)/host[. = $HOST]/preceding-sibling::host)}"
     services_count="{count(exsl:node-set(
@@ -151,7 +152,6 @@
       </xsl:attribute>
 
       <cfg:Endpoint host="*" port="{$request-info-manager-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
         <cfg:Object servant="RequestInfoManager" name="RequestInfoManager"/>
       </cfg:Endpoint>
@@ -372,7 +372,8 @@
 
     <xsl:call-template name="AddUserInfoManagerControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
-      <xsl:with-param name="error-prefix" select="AdFrontend"/>
+      <xsl:with-param name="error-prefix" select="'RequestInfoManager'"/>
+      <xsl:with-param name="add-user-info-grpc" select="'true'"/>
     </xsl:call-template>
 
   </cfg:RequestInfoManagerConfig>
@@ -408,7 +409,7 @@
 
   <xsl:variable
     name="user-info-manager-controllers-path"
-    select="$fe-cluster-path/service[@descriptor = $user-info-manager-controller-descriptor]"/>
+    select="$fe-cluster-path/service[@descriptor = $user-info-controller-descriptor]"/>
 
   <xsl:choose>
     <!-- check pathes -->

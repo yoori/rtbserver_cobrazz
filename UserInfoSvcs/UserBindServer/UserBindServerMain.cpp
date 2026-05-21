@@ -1,9 +1,13 @@
+#include <csignal>
+#include <iostream>
+#include <pthread.h>
 #include <eh/Exception.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
-
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/ConfigUtils.hpp>
+#include <Generics/DirSelector.hpp>
+#include <Logger/DistributorLogger.hpp>
+#include <Logger/FileLogger.hpp>
+#include <Logger/SimpleLogger.hpp>
+#include <Logger/Syslog.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
 
@@ -12,31 +16,128 @@
 namespace
 {
   const char ASPECT[] = "UserBindServer";
-  const char USER_BIND_SERVER_OBJ_KEY[] = "UserBindServer";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
-}
 
-UserBindServerApp_::UserBindServerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "UserBindServerApp_", ASPECT)
-{}
+  void fill_shutdown_signals_(sigset_t& signals)
+  {
+    sigemptyset(&signals);
+    sigaddset(&signals, SIGINT);
+    sigaddset(&signals, SIGTERM);
+  }
 
-UserBindServerApp_::~UserBindServerApp_() noexcept
-{}
+  void block_shutdown_signals_()
+  {
+    sigset_t signals;
+    fill_shutdown_signals_(signals);
+    pthread_sigmask(SIG_BLOCK, &signals, nullptr);
+  }
 
-void
-UserBindServerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  std::unique_lock<std::mutex> guard(shutdown_lock_);
+  void wait_for_shutdown_signal_()
+  {
+    sigset_t signals;
+    fill_shutdown_signals_(signals);
+    int signal_number = 0;
+    sigwait(&signals, &signal_number);
+  }
 
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
+  Logging::Logger_var create_logger_(
+    const xsd::AdServer::Configuration::ErrorLoggerType& xml_logger_config,
+    const char* argv0)
+  {
+    static const char SYSLOG_PREFIX[] = "FOROS.";
 
-CORBACommons::IProcessControl::ALIVE_STATUS
-UserBindServerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
+    if (xml_logger_config.filename().empty())
+    {
+      throw UserBindServerApp_::Exception(
+        "create_logger_(): empty file name");
+    }
+
+    const std::string& filename = xml_logger_config.filename();
+
+    try
+    {
+      ReferenceCounting::Deque<Logging::QLogger_var> loggers;
+      for (xsd::AdServer::Configuration::ErrorLoggerType::Suffix_sequence::
+        const_iterator it = xml_logger_config.Suffix().begin();
+        it != xml_logger_config.Suffix().end(); ++it)
+      {
+        Logging::File::Policies::PolicyList log_policies;
+
+        std::string log_file_name = filename + it->name();
+        if (it->size_span().present())
+        {
+          log_policies.push_back(
+            new Logging::File::Policies::SizeSpanPolicy(
+              it->size_span().get()));
+        }
+
+        if (it->time_span().present())
+        {
+          log_policies.push_back(
+            new Logging::File::Policies::TimeSpanPolicy(
+              Generics::Time(it->time_span().get())));
+        }
+
+        Logging::File::Config config(
+          log_file_name.c_str(),
+          log_policies,
+          xml_logger_config.log_level() > it->max_log_level() ?
+            it->max_log_level() : xml_logger_config.log_level());
+
+        Logging::QLogger_var file_logger(
+          new Logging::File::Logger(std::move(config)));
+
+        if (it->min_log_level().present())
+        {
+          loggers.push_back(Logging::QLogger_var(
+            new Logging::SeveritySelectorLogger(
+              file_logger,
+              it->min_log_level().get())));
+        }
+        else
+        {
+          loggers.push_back(Logging::QLogger_var(
+            new Logging::SeveritySelectorLogger(
+              it->max_log_level(),
+              file_logger)));
+        }
+      }
+
+      if (xml_logger_config.SysLog().present())
+      {
+        Logging::Logger_var sys_logger(
+          new Logging::Syslog::Logger(Logging::Syslog::Config(
+            xml_logger_config.SysLog().get().log_level(),
+            argv0 ? (std::string(SYSLOG_PREFIX) +
+              Generics::DirSelect::file_name(argv0)).c_str() : "")));
+
+        if (loggers.empty())
+        {
+          return sys_logger;
+        }
+
+        loggers.push_back(Logging::QLogger_var(
+          new Logging::SeveritySelectorLogger(
+            sys_logger,
+            Logging::Logger::EMERGENCY,
+            Logging::Logger::NOTICE)));
+      }
+
+      if (loggers.size() == 1)
+      {
+        return loggers[0];
+      }
+
+      return Logging::Logger_var(
+        new Logging::DistributorLogger(loggers.begin(), loggers.end()));
+    }
+    catch (const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << "create_logger_(): Can't init logger. "
+        "Caught eh::Exception. : " << ex.what();
+      throw UserBindServerApp_::Exception(ostr);
+    }
+  }
 }
 
 void
@@ -100,51 +201,24 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
     // Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
+      logger_ = create_logger_(config().Logger(), argv[0]);
     }
-    catch (const Config::LoggerConfigReader::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << "got LoggerConfigReader::Exception: " << e.what();
+      ostr << FUN << "got logger init exception: " << e.what();
       throw Exception(ostr);
     }
 
-    // Fill corba_config
-    CORBACommons::CorbaConfig corba_config;
-
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        config().CorbaConfig(),
-        corba_config);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't read Corba Config: " << e.what();
-      throw Exception(ostr);
-    }
+    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(config().pid_file()));
+    block_shutdown_signals_();
 
     AdServer::UserInfoSvcs::UserBindServerCore_var user_bind_server_core =
       new AdServer::UserInfoSvcs::UserBindServerCore(
         config(),
         logger());
     add_child_object(user_bind_server_core);
-
-    // Creating user info manager servant
-    user_bind_server_impl_ = new AdServer::UserInfoSvcs::UserBindServerImpl(
-      callback(),
-      logger(),
-      user_bind_server_core);
-
-    CORBACommons::CorbaServerAdapter_var corba_server_adapter =
-      new CORBACommons::CorbaServerAdapter(corba_config);
-
-    corba_server_adapter->add_binding(
-      USER_BIND_SERVER_OBJ_KEY, user_bind_server_impl_.in());
-
-    corba_server_adapter->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
 
     if(config().GrpcConfig().present())
     {
@@ -187,66 +261,54 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
       add_child_object(http_server_);
     }
 
-    shutdowner_ = corba_server_adapter->shutdowner();
-
     activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
-    // Running orb loop
-    corba_server_adapter->run();
+    wait_for_shutdown_signal_();
 
     deactivate_object();
     wait_object();
 
-    wait();
+    pid_file_guard_.reset();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
   catch (const Exception& e)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-      ASPECT,
-      "ADS-IMPL-58") << FUN <<
-      ": Got UserBindServerApp_::Exception: " << e.what();
-  }
-  catch (const CORBA::SystemException& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
-      ": Got CORBA::SystemException: " << e;
+    if (logger())
+    {
+      logger()->sstream(Logging::Logger::CRITICAL,
+        ASPECT,
+        "ADS-IMPL-58") << FUN <<
+        ": Got UserBindServerApp_::Exception: " << e.what();
+    }
+    else
+    {
+      std::cerr << FUN << ": Got UserBindServerApp_::Exception: " <<
+        e.what() << std::endl;
+    }
   }
   catch (const eh::Exception& e)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
-      ": Got eh::Exception: " << e.what();
+    if (logger())
+    {
+      logger()->sstream(Logging::Logger::EMERGENCY,
+        ASPECT,
+        "ADS-IMPL-59") << FUN <<
+        ": Got eh::Exception: " << e.what();
+    }
+    else
+    {
+      std::cerr << FUN << ": Got eh::Exception: " << e.what() << std::endl;
+    }
   }
 }
 
 int
 main(int argc, char** argv)
 {
-  UserBindServerApp_* app = 0;
-
-  try
-  {
-    app = &UserBindServerApp::instance();
-  }
-  catch (...)
-  {
-    std::cerr << "main(): Critical: Got exception while "
-      "creating application object.\n";
-    return -1;
-  }
-
-  if (app == 0)
-  {
-    std::cerr << "main(): Critical: got NULL application object.\n";
-    return -1;
-  }
-
-  app->main(argc, argv);
+  UserBindServerApp_ app;
+  app.main(argc, argv);
+  return 0;
 }

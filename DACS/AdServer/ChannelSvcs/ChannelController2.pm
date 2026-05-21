@@ -16,7 +16,7 @@ sub start
    "{ ".
      "\${VALGRIND_PREFIX} ChannelController2 " .
        "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelController2.xml > " .
-       "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ChannelController2.out 2>&1 & " .
+       "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ChannelController2.out 2>&1 < /dev/null & " .
      "echo \$! > $pid_file; ".
    "}";
 

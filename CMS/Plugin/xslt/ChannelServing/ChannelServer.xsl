@@ -108,6 +108,7 @@
     merge_size="{$memory-size}"
     update_period="{$update-channels-period}"
     log_root="{concat($workspace-root, '/log/ChannelServer/Out')}"
+    pid_file="{concat($workspace-root, '/run/ChannelServer.pid')}"
     service_index="{$SERVICE_ID}">
 
     <cfg:CorbaConfig>
@@ -119,7 +120,6 @@
 
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$channel-server-port"/></xsl:attribute>
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="ChannelServerControl" name="ChannelServerControl"/>
         <cfg:Object servant="ChannelServer" name="ChannelServer"/>
         <cfg:Object servant="ChannelUpdate" name="ChannelUpdate"/>

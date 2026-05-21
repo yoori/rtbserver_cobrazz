@@ -374,6 +374,33 @@
   </xsl:for-each>
 </xsl:template>
 
+<xsl:template name="GeneratePreStartGrpcRefList">
+  <xsl:param name="services"/>
+  <xsl:param name="service-config"/>
+  <xsl:param name="def-port"/>
+  <xsl:param name="services-name"/>
+
+  <xsl:for-each select="$services">
+    <xsl:variable name="config" select="dyn:evaluate($service-config)"/>
+    <xsl:variable name="port">
+      <xsl:value-of select="$config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$def-port"/>
+      </xsl:if>
+    </xsl:variable>
+    <xsl:variable name="resolved-hosts">
+      <xsl:call-template name="GetHosts">
+        <xsl:with-param name="hosts" select="./@host"/>
+        <xsl:with-param name="error-prefix">OCM Config: <xsl:value-of
+          select="$services-name"/> grpc hosts resolving</xsl:with-param>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:for-each select="exsl:node-set($resolved-hosts)//host">
+      <xsl:value-of select="."/>#grpc://localhost:<xsl:value-of
+        select="$port"/>,</xsl:for-each>
+  </xsl:for-each>
+</xsl:template>
+
 <xsl:template name="GeneratePreStartCommand">
   <xsl:param name="fe-cluster"/>
   <xsl:param name="config-root"/>
@@ -386,26 +413,24 @@
       $server-mgr-bin-root, '/PreStartChecker.pl')"/></xsl:variable>
 
   <xsl:variable name="campaign-manager-arg">
-    <xsl:call-template name="GeneratePreStartRefList">
+    <xsl:call-template name="GeneratePreStartGrpcRefList">
       <xsl:with-param name="services"
         select="$fe-cluster/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/CampaignManager']"/>
       <xsl:with-param name="service-config"
         select="'./configuration/cfg:campaignManager'"/>
-      <xsl:with-param name="def-port" select="$def-campaign-manager-port"/>
-      <xsl:with-param name="obj-name" select="'ProcessControl'"/>
+      <xsl:with-param name="def-port" select="$def-campaign-manager-port + 500"/>
       <xsl:with-param name="services-name" select="'CampaignManager'"/>
     </xsl:call-template>
   </xsl:variable>
 
   <xsl:variable name="channel-server-arg">
-    <xsl:call-template name="GeneratePreStartRefList">
+    <xsl:call-template name="GeneratePreStartGrpcRefList">
       <xsl:with-param name="services"
-        select="$fe-cluster/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/ChannelController']"/>
+        select="$fe-cluster/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/ChannelServer']"/>
       <xsl:with-param name="service-config"
-        select="'./configuration/cfg:channelController'"/>
-      <xsl:with-param name="def-port" select="$def-channel-controller-port"/>
-      <xsl:with-param name="obj-name" select="'ChannelClusterControl'"/>
-      <xsl:with-param name="services-name" select="'ChannelController'"/>
+        select="'./configuration/cfg:channelServer'"/>
+      <xsl:with-param name="def-port" select="$def-channel-server-port + 500"/>
+      <xsl:with-param name="services-name" select="'ChannelServer'"/>
     </xsl:call-template>
   </xsl:variable>
 

@@ -53,6 +53,7 @@
     <xsd:attribute name="threads" type="xsd:positiveInteger" default="4"/>
     <xsd:attribute name="max_concurrent_streams" type="xsd:positiveInteger" default="100"/>
     <xsd:attribute name="read_buffer_size" type="xsd:positiveInteger" default="65536"/>
+    <xsd:attribute name="max_request_size" type="xsd:positiveInteger" default="131072"/>
   </xsd:complexType>
 
   <xsd:complexType name="ModuleType">

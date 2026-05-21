@@ -1,0 +1,77 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      User Info Controller2 Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="UserInfoControllerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept CORBA ProcessControl connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept UserInfoController gRPC requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoControllerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoControllerControlParamsType">
+    <xsd:attribute name="status_check_period" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>Period of checking UserInfoManagers.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoControllerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="UserInfoControllerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="UserInfoControllerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="controlParams" type="UserInfoControllerControlParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Control parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>

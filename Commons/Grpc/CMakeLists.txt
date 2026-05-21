@@ -3,6 +3,11 @@ add_grpc_sources(
   Batch.proto
   ${PB_DIRECTORY}/Commons/Grpc)
 
+add_grpc_sources(
+  GrpcBatch
+  ProcessControl.proto
+  ${PB_DIRECTORY}/Commons/Grpc)
+
 target_link_libraries(GrpcBatch protobuf::libprotobuf)
 
 target_sources(GrpcBatch PRIVATE

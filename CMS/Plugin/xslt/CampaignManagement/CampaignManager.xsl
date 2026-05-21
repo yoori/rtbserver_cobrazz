@@ -263,6 +263,7 @@
   <cfg:CampaignManager
     host="{$HOST}"
     log_root="{$log-root}"
+    pid_file="{concat($workspace-root, '/run/CampaignManager.pid')}"
     config_update_period="{$update-period}"
     campaigns_update_timeout="{$campaigns-update-timeout}"
     ecpm_update_period="{$ecpm-update-period}"
@@ -288,7 +289,6 @@
       </xsl:attribute>
 
       <cfg:Endpoint host="*" port="{$campaign-manager-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <!-- this object can be used only in utils -->
         <cfg:Object servant="CampaignManager" name="CampaignManager"/>
         <cfg:Object servant="CampaignManager" name="{$current-campaign-manager-obj}"/>

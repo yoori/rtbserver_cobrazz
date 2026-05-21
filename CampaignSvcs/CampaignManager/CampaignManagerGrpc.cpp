@@ -7,6 +7,7 @@
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
+#include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
 #include <CampaignSvcs/CampaignManager/CampaignManagerGrpc.grpc.pb.h>
 #include <CampaignSvcs/CampaignManager/CampaignManagerImpl.hpp>
@@ -19,6 +20,7 @@ namespace AdServer::CampaignSvcs
       "CampaignManagerGrpc";
 
     namespace pb = adserver::campaign_svcs::campaign_manager;
+    namespace pc = adserver::grpc::process_control;
 
     CORBACommons::OctSeq
     unpack_oct_seq(const std::string& source)
@@ -1523,12 +1525,68 @@ namespace AdServer::CampaignSvcs
       ::grpc::Status& result_status) const;
 
   private:
+    class ProcessControlService final:
+      public pc::ProcessControl::Service
+    {
+    public:
+      explicit ProcessControlService(const ServiceImpl& owner);
+
+      ::grpc::Status get_status(
+        ::grpc::ServerContext* context,
+        const pc::GetStatusRequest* request,
+        pc::GetStatusResponse* response) override;
+
+    private:
+      const ServiceImpl& owner_;
+    };
+
+    void get_status_(pc::GetStatusResponse& response) const;
+
+  private:
+    ProcessControlService process_control_service_;
     CampaignManagerCore_var core_;
   };
 
-  CampaignManagerGrpc::ServiceImpl::ServiceImpl(CampaignManagerCore* core)
-    : core_(ReferenceCounting::add_ref(core))
+  CampaignManagerGrpc::ServiceImpl::ProcessControlService::
+  ProcessControlService(const ServiceImpl& owner)
+    : owner_(owner)
   {}
+
+  ::grpc::Status
+  CampaignManagerGrpc::ServiceImpl::ProcessControlService::get_status(
+    ::grpc::ServerContext*,
+    const pc::GetStatusRequest*,
+    pc::GetStatusResponse* response)
+  {
+    owner_.get_status_(*response);
+    return ::grpc::Status::OK;
+  }
+
+  CampaignManagerGrpc::ServiceImpl::ServiceImpl(CampaignManagerCore* core)
+    : process_control_service_(*this),
+      core_(ReferenceCounting::add_ref(core))
+  {
+    add_grpc_service(&process_control_service_);
+  }
+
+  void
+  CampaignManagerGrpc::ServiceImpl::get_status_(
+    pc::GetStatusResponse& response) const
+  {
+    try
+    {
+      const bool ready = core_->ready();
+      response.set_ready(ready);
+      std::string comment;
+      core_->progress_comment(comment);
+      response.set_description(std::move(comment));
+    }
+    catch(const eh::Exception& ex)
+    {
+      response.set_ready(false);
+      response.set_description(ex.what());
+    }
+  }
 
   void
   CampaignManagerGrpc::ServiceImpl::ready(

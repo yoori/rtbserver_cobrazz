@@ -19,10 +19,7 @@ target_link_libraries(FCGIServer
   RequestMatchers
   CreativeTemplateArgs
 
-  UserInfoManagerControllerCall
   CampaignManagerIDL
-  UserInfoClusterControlIDL
-  UserInfoManagerControllerIDL
   CampaignServerIDL
 
   AdServerCommonsXSD

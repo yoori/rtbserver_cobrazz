@@ -1,16 +1,18 @@
 
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 
-#include <Generics/Singleton.hpp>
-
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
+#include <ReferenceCounting/SmartPtr.hpp>
 
 #include <LogCommons/LogHolder.hpp>
 
 #include <Commons/CorbaConfig.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Commons/PidFileGuard.hpp>
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <CampaignSvcs/DomainConfig.hpp>
 
@@ -23,7 +25,7 @@
  * Responsible for general configuration, logging and error handling.
  */
 class CampaignManagerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl
+  : private Logging::LoggerCallbackHolder
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -31,29 +33,13 @@ public:
 
 public:
   CampaignManagerApp_() /*throw(eh::Exception)*/;
+  virtual ~CampaignManagerApp_() noexcept;
 
   /**
    * Parses command line, opens config file,
    * creates corba objects, initialize.
    */
   void main(int& argc, char** argv) noexcept;
-
-  //
-  // IDL:CORBACommons/IProcessControl/shutdown:1.0
-  //
-  virtual void shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  //
-  // IDL:CORBACommons/IProcessControl/is_alive:1.0
-  //
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
-
-  virtual bool is_ready_() noexcept;
-
-  virtual char* comment()
-    /*throw(CORBACommons::OutOfMemory)*/;
 
 private:
   struct Configuration
@@ -62,6 +48,7 @@ private:
 
     std::string log_root;
     std::string out_logs_dir;
+    std::string pid_file;
 
     AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate
       creative_instantiate;
@@ -79,7 +66,7 @@ private:
   read_config(const char* filename, const char* argv0)
     /*throw(Exception, eh::Exception)*/;
 
-  virtual ~CampaignManagerApp_() noexcept;
+  void stop_() noexcept;
 
   void read_creative_config(
     AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate&
@@ -113,6 +100,9 @@ private:
     /*throw(eh::Exception)*/;
 
 private:
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
+
   typedef std::unique_ptr<
     AdServer::CampaignSvcs::CampaignManagerCore::CampaignManagerConfig>
     ConfigPtr;
@@ -131,6 +121,7 @@ private:
   AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core_;
   AdServer::CampaignSvcs::CampaignManagerImpl_var campaign_manager_impl_;
   AdServer::CampaignSvcs::CampaignManagerGrpc_var grpc_adapter_;
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard_;
 
   typedef Sync::Policy::PosixThread SyncPolicy;
   typedef SyncPolicy::Mutex ShutdownMutex;
@@ -139,12 +130,6 @@ private:
 
   ShutdownMutex shutdown_lock_;
 };
-
-typedef ReferenceCounting::SmartPtr<CampaignManagerApp_>
-  CampaignManagerApp_var;
-
-typedef Generics::Singleton<CampaignManagerApp_, CampaignManagerApp_var>
-  CampaignManagerApp;
 
 //////////////////////////////////////////////////////////////////////////////
 // Inlines

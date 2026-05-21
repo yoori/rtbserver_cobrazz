@@ -470,7 +470,9 @@ namespace AdServer::Grpc
     new_partition->ref_holders = std::move(ref_holders);
     for (auto& chunk_ref : chunk_refs)
     {
-      auto pool = std::make_shared<Pool>(std::move(chunk_ref.second));
+      auto pool = std::make_shared<Pool>(
+        std::move(chunk_ref.second),
+        coalesce_runner_);
       pool->activate_object();
       new_partition->chunk_pools.emplace(chunk_ref.first, std::move(pool));
     }

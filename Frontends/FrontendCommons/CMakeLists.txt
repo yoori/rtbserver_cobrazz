@@ -56,11 +56,6 @@ target_link_libraries(RequestMatchers
   CORBACommons
 
   UserInfoClient
-  UserInfoManagerControllerCall
-  UserInfoClusterControlIDL
-  UserInfoManagerControllerIDL
-  UserBindControllerIDL
-  UserBindControllerStubs
   UserBindControllerGrpc
   UserBindServerGrpc
   UserBindServerGrpcClient

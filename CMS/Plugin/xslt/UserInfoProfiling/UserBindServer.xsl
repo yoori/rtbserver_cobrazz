@@ -41,28 +41,18 @@
       <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-cache-root"/></xsl:if>
     </xsl:variable>
 
-    <xsl:variable name="user-bind-server-port">
-      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@port"/>
-      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@port) = 0">
-        <xsl:value-of select="$def-user-bind-server-port"/>
-      </xsl:if>
-    </xsl:variable>
     <xsl:variable name="user-bind-server-grpc-port">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_port"/>
       <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) = 0">
-        <xsl:value-of select="$user-bind-server-port + 500"/>
+        <xsl:value-of select="$def-user-bind-server-port + 500"/>
       </xsl:if>
     </xsl:variable>
     <xsl:variable name="user-bind-server-monitoring-port">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>
       <xsl:if test="count($user-bind-server-config/cfg:networkParams/@monitoring_port) = 0">
-        <xsl:value-of select="$user-bind-server-port + 600"/>
+        <xsl:value-of select="$def-user-bind-server-port + 600"/>
       </xsl:if>
     </xsl:variable>
-
-    <exsl:document href="userBindServer.port"
-      method="text" omit-xml-declaration="yes"
-      >  ['userBindServer', <xsl:copy-of select="$user-bind-server-port"/>],</exsl:document>
 
     <xsl:variable name="root-dir" select="concat($workspace-root, '/log/UserBindServer/Out/')"/>
 
@@ -83,21 +73,9 @@
         select="$colo-config/cfg:coloParams/@max_bad_SSPID_events"/>
     </xsl:attribute>
 
-    <!-- start config generation -->
-    <!-- check that defined all needed parameters -->
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$user-bind-server-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($user-bind-server-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-user-bind-server-threads"/>
-        </xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-port"/></xsl:attribute>
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-        <cfg:Object servant="UserBindServer" name="{$current-user-bind-server-obj}"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
+    <xsl:attribute name="pid_file">
+      <xsl:value-of select="concat($workspace-root, '/run/UserBindServer.pid')"/>
+    </xsl:attribute>
 
     <cfg:GrpcConfig>
       <cfg:Endpoint host="*">

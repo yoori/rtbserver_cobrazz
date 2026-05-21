@@ -14,11 +14,6 @@
   <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
 
   <xsd:complexType name="UserBindServerNetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
-      <xsd:annotation>
-        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
     <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Monitoring port to accept connections.</xsd:documentation>
@@ -27,14 +22,6 @@
     <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-  </xsd:complexType>
-
-  <xsd:complexType name="UserBindServerThreadParamsType">
-    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
-      <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -52,13 +39,6 @@
         <xsd:annotation>
           <xsd:documentation>
             Logging parameters.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-      <xsd:element name="threadParams" type="UserBindServerThreadParamsType" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            CORBA thread pool.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

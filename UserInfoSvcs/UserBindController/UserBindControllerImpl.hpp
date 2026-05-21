@@ -1,283 +1,146 @@
 #pragma once
 
-#include <ReferenceCounting/ReferenceCounting.hpp>
+#include <set>
+#include <string>
+#include <vector>
 
 #include <eh/Exception.hpp>
 
-#include <Logger/Logger.hpp>
-#include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
-#include <Generics/Time.hpp>
+#include <Logger/Logger.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Sync/SyncPolicy.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
-#include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/UserInfoSvcs/UserBindControllerConfig.hpp>
 
-#include <Commons/CorbaObject.hpp>
-#include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
+#include "UserBindControllerGrpc.pb.h"
 
-#include <UserInfoSvcs/UserBindController/UserBindController_s.hpp>
-
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-namespace UserInfoSvcs
-{
-  // UserBindControllerImpl
   class UserBindControllerImpl:
-    public CORBACommons::ReferenceCounting::CorbaRefCountImpl<
-      POA_AdServer::UserInfoSvcs::UserBindController>,
-    public Generics::CompositeActiveObject
+    public Generics::CompositeActiveObject,
+    public virtual ReferenceCounting::AtomicImpl
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(NotReady, Exception);
 
-    typedef xsd::AdServer::Configuration::UserBindControllerConfigType
-      UserBindControllerConfig;
+    using UserBindControllerConfig =
+      xsd::AdServer::Configuration::UserBindControllerConfigType;
+    using SessionDescription =
+      adserver::user_info_svcs::user_bind_controller::GetSessionDescriptionResponse;
 
     UserBindControllerImpl(
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
-      const UserBindControllerConfig& user_bind_controller_config)
-      /*throw(Exception)*/;
+      const UserBindControllerConfig& config);
 
-    virtual AdServer::UserInfoSvcs::UserBindDescriptionSeq*
-    get_session_description()
-      /*throw(AdServer::UserInfoSvcs::UserBindController::ImplementationException,
-        AdServer::UserInfoSvcs::UserBindController::NotReady)*/;
-
-    virtual CORBACommons::IProcessControl::ALIVE_STATUS
-    get_status() noexcept;
-
-    virtual char*
-    get_comment() /*throw(CORBACommons::OutOfMemory)*/;
+    void fill_session_description(SessionDescription& response) const;
 
   protected:
-    typedef Generics::TaskGoal TaskBase;
-    typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
+    ~UserBindControllerImpl() noexcept override;
 
-    class InitUserBindSourceTask: public TaskBase
-    {
-    public:
-      InitUserBindSourceTask(
-        UserBindControllerImpl* user_bind_controller_impl,
-        Generics::TaskRunner* task_runner)
-        noexcept;
+  private:
+    using TaskBase = Generics::TaskGoal;
+    using Task_var = ReferenceCounting::SmartPtr<TaskBase>;
+    using ChunkIdSet = std::set<unsigned long>;
+    using SyncPolicy = Sync::Policy::PosixThreadRW;
 
-      virtual void
-      execute() noexcept;
-
-    protected:
-      virtual
-      ~InitUserBindSourceTask() noexcept
-      {}
-
-    protected:
-      UserBindControllerImpl* user_bind_controller_impl_;
-    };
-
-    class CheckUserBindServerStateTask: public TaskBase
-    {
-    public:
-      CheckUserBindServerStateTask(
-        UserBindControllerImpl* user_info_manager_controller_impl,
-        Generics::TaskRunner* task_runner)
-        noexcept;
-
-      virtual void
-      execute() noexcept;
-
-    protected:
-      virtual
-      ~CheckUserBindServerStateTask() noexcept
-      {}
-
-    protected:
-      UserBindControllerImpl* user_bind_controller_impl_;
-    };
-
-  protected:
-    struct TraceLevel
-    {
-      enum
-      {
-        LOW = Logging::Logger::TRACE,
-        MIDDLE,
-        HIGH
-      };
-    };
-
-    typedef std::set<unsigned long> ChunkIdSet;
+    class InitUserBindSourceTask;
+    class CheckUserBindServerStateTask;
 
     struct UserBindServerRef
     {
-      AdServer::Commons::CorbaObject<
-        AdServer::UserInfoSvcs::UserBindServer> user_bind_server;
-      AdServer::Commons::CorbaObject<
-        CORBACommons::IProcessControl> process_control;
-      std::string host_name;
+      std::string endpoint;
       ChunkIdSet chunks;
-      bool ready;
+      bool ready = false;
     };
 
-    typedef std::vector<UserBindServerRef> UserBindServerRefArray;
+    using UserBindServerRefArray = std::vector<UserBindServerRef>;
 
     class UserBindConfig: public ReferenceCounting::AtomicCopyImpl
     {
     public:
-      UserBindConfig() noexcept
-        : all_ready(false),
-          first_all_ready(false),
-          common_chunks_number(0)
-      {}
-
-      bool all_ready;
-      bool first_all_ready;
-      unsigned long common_chunks_number;
+      bool all_ready = false;
+      bool first_all_ready = false;
+      unsigned long common_chunks_number = 0;
       UserBindServerRefArray user_bind_servers;
 
     private:
-      virtual
-      ~UserBindConfig() noexcept
-      {}
+      ~UserBindConfig() noexcept override = default;
     };
 
-    typedef ReferenceCounting::SmartPtr<UserBindConfig>
-      UserBindConfig_var;
+    using UserBindConfig_var = ReferenceCounting::SmartPtr<UserBindConfig>;
 
-    typedef Sync::Policy::PosixThreadRW SyncPolicy;
+    void fill_refs_();
 
-  protected:
-    virtual
-    ~UserBindControllerImpl() noexcept;
+    bool get_user_bind_server_sources_(UserBindConfig* user_bind_config);
 
-    bool
-    get_user_bind_server_sources_(
-      UserBindConfig* user_bind_config)
-      /*throw(Exception)*/;
+    void init_user_bind_state_() noexcept;
 
-    void
-    admit_user_info_managers_() /*throw(Exception)*/;
+    void check_user_bind_state_() noexcept;
 
-    // task functions implementation
-    void
-    init_user_bind_state_() noexcept;
+    void check_source_consistency_(UserBindConfig* user_bind_config) const;
 
-    void
-    check_user_bind_state_() noexcept;
-
-    void
-    fill_refs_() /*throw(Exception)*/;
-
-    void
-    check_source_consistency_(
-      UserBindConfig* user_bind_config)
-      /*throw(Exception)*/;
-
-    /*
-    UserInfoClusterControlImpl_var
-    get_user_info_cluster_control_() noexcept;
-    */
-
-    void
-    fill_user_bind_server_descr_seq_(
-      AdServer::UserInfoSvcs::UserBindDescriptionSeq& user_bind_server_descr_seq)
-      /*throw(AdServer::UserInfoSvcs::UserBindController::ImplementationException,
-        AdServer::UserInfoSvcs::UserBindController::NotReady)*/;
-
-  protected:
+  private:
     Generics::ActiveObjectCallback_var callback_;
     Logging::Logger_var logger_;
-
     mutable SyncPolicy::Mutex lock_;
-
     Generics::Planner_var scheduler_;
     Generics::TaskRunner_var task_runner_;
-
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    UserBindControllerConfig user_bind_controller_config_;
-
+    const UserBindControllerConfig config_;
     UserBindConfig_var user_bind_config_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindControllerImpl>
-    UserBindControllerImpl_var;
+  using UserBindControllerImpl_var =
+    ReferenceCounting::SmartPtr<UserBindControllerImpl>;
+}
 
-  // UserBindClusterControlImpl
-  class UserBindClusterControlImpl:
-    public CORBACommons::ProcessControlDefault<
-      POA_AdServer::UserInfoSvcs::UserBindClusterControl>
+namespace AdServer::UserInfoSvcs
+{
+  class UserBindControllerImpl::InitUserBindSourceTask: public TaskBase
   {
   public:
-    UserBindClusterControlImpl(
-      UserBindControllerImpl* controller)
-      noexcept;
+    InitUserBindSourceTask(
+      UserBindControllerImpl* controller,
+      Generics::TaskRunner* task_runner)
+      noexcept
+      : TaskBase(task_runner),
+        controller_(controller)
+    {}
 
-    virtual CORBACommons::IProcessControl::ALIVE_STATUS
-    is_alive() noexcept;
+    void execute() noexcept override
+    {
+      controller_->init_user_bind_state_();
+    }
 
-    virtual char*
-    comment() /*throw(CORBACommons::OutOfMemory)*/;
+  private:
+    ~InitUserBindSourceTask() noexcept override = default;
 
-  protected:
-    virtual
-    ~UserBindClusterControlImpl() noexcept;
-
-    UserBindControllerImpl_var user_bind_controller_;
+    UserBindControllerImpl* controller_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindClusterControlImpl>
-    UserBindClusterControlImpl_var;
-}
-}
-
-namespace AdServer
-{
-  namespace UserInfoSvcs
+  class UserBindControllerImpl::CheckUserBindServerStateTask: public TaskBase
   {
-    // UserBindControllerImpl::CheckUserBindServerStateTask
-    inline
-    UserBindControllerImpl::
-    CheckUserBindServerStateTask::CheckUserBindServerStateTask(
-      UserBindControllerImpl* user_info_manager_controller_impl,
+  public:
+    CheckUserBindServerStateTask(
+      UserBindControllerImpl* controller,
       Generics::TaskRunner* task_runner)
       noexcept
       : TaskBase(task_runner),
-        user_bind_controller_impl_(
-          user_info_manager_controller_impl)
+        controller_(controller)
     {}
 
-    inline
-    void
-    UserBindControllerImpl::
-    CheckUserBindServerStateTask::execute()
-      noexcept
+    void execute() noexcept override
     {
-      user_bind_controller_impl_->check_user_bind_state_();
+      controller_->check_user_bind_state_();
     }
 
-    // UserBindControllerImpl::InitUserBindSourceTask
-    inline
-    UserBindControllerImpl::
-    InitUserBindSourceTask::InitUserBindSourceTask(
-      UserBindControllerImpl* user_info_manager_controller_impl,
-      Generics::TaskRunner* task_runner)
-      noexcept
-      : TaskBase(task_runner),
-        user_bind_controller_impl_(
-          user_info_manager_controller_impl)
-    {}
+  private:
+    ~CheckUserBindServerStateTask() noexcept override = default;
 
-    inline
-    void
-    UserBindControllerImpl::
-    InitUserBindSourceTask::execute()
-      noexcept
-    {
-      user_bind_controller_impl_->init_user_bind_state_();
-    }
-  }
+    UserBindControllerImpl* controller_;
+  };
 }

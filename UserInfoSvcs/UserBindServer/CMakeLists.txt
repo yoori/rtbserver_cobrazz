@@ -1,13 +1,3 @@
-add_idl(UserBindServerIDL UserBindServer.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserBindServer)
-
-# UserBindServerIDL
-target_link_libraries(UserBindServerIDL
-  Commons
-  CORBACommons
-  CorbaTypesIDL
-  UserBindOperationProfilePST
-)
-
 add_library(UserBindContainer STATIC
   ExternalIdHashAdapter.cpp
   ChunkUtils.cpp
@@ -76,16 +66,15 @@ target_link_libraries(UserBindContainer UserBindRocksDBProfilePST)
 # UserBindServer
 add_executable(UserBindServer
   UserBindServerMain.cpp
-  UserBindServerImpl.cpp
   UserBindServerCore.cpp
   UserBindOperationSaver.cpp
   UserBindOperationLoader.cpp
 )
 
+target_link_options(UserBindServer PRIVATE -Wl,--as-needed)
+
 target_link_libraries(UserBindServer
-  CORBACommons
   PrivacyFilter
-  ProcessControlVars
   Commons
   ProfileMap
   ProfileMapRocksDB
@@ -93,7 +82,6 @@ target_link_libraries(UserBindServer
   LogCommons
   UserBindContainer
   UserBindServerConfigXSD
-  UserBindServerIDL
   UserBindServerGrpc
   HttpServer
 )

@@ -57,7 +57,6 @@ target_link_libraries(ChannelServer
   HttpServer
   XMLUtility
   CORBACommons
-  ProcessControlVars
   AdServerCommonsXSD
   Postgres
   ChannelServerConfigXSD
@@ -70,7 +69,6 @@ target_link_libraries(ChannelServer
   ChannelSessionFactory
   CampaignServerStubs_v350
   CampaignServer_v350IDL
-  ProcessControlIDL
   BLogic
   LogCommons
   Polyglot

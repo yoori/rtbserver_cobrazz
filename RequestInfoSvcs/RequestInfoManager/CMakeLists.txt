@@ -58,7 +58,6 @@ add_executable(RequestInfoManager
 target_link_libraries(RequestInfoManager
   pcre
   CORBACommons
-  ProcessControlVars
   PrivacyFilter
   SNMPAgent
   RequestInfoManagerIDL
@@ -71,7 +70,6 @@ target_link_libraries(RequestInfoManager
   RequestInfoContainer
   ExpressionMatcherIDL
   UserInfoClient
-  UserInfoManagerControllerCall
   CampaignServerIDL
   LogCommons
 

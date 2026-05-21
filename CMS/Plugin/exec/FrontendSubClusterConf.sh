@@ -27,8 +27,7 @@ WORKSPACE_OUT_DIR=$BUILD_ROOT/u01/foros/server/var
 FRONTEND_CLUSTER_DESCR=AdCluster/FrontendSubCluster
 
 USER_INFO_MANAGER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoManager
-USER_INFO_MANAGER_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoManagerController
-USER_INFO_CONTROLLER2_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoController2
+USER_INFO_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoController
 
 CHANNEL_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelServer
 CHANNEL_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController
@@ -37,7 +36,6 @@ CHANNEL_SEARCH_SERVICE_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelSearchService
 
 USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
 USER_BIND_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController
-USER_BIND_CONTROLLER2_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController2
 
 BILLING_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/BillingServer
 
@@ -93,40 +91,15 @@ $EXEC/ProcessHostFiles.sh \
 
 let "EXIT_CODE|=$?"
 
-## configure UserInfoManagerController
-USER_INFO_MANAGER_CONTROLLER_XPATH="$CLUSTER_XPATH/service[
-  @descriptor = '$USER_INFO_MANAGER_CONTROLLER_DESCR']"
+## configure UserInfoController
+USER_INFO_CONTROLLER_XPATH="$CLUSTER_XPATH/service[
+  @descriptor = '$USER_INFO_CONTROLLER_DESCR']"
 
 $EXEC/ServiceConf.sh \
-  --services-xpath "$USER_INFO_MANAGER_CONTROLLER_XPATH" \
+  --services-xpath "$USER_INFO_CONTROLLER_XPATH" \
   --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/UserInfoProfiling/UserInfoManagerController.xsl \
-  --out-file UserInfoManagerControllerConfig.xml \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT
-
-let "EXIT_CODE|=$?"
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "user_info_manager_controller" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:userInfoManagerController" \
-  --services-xpath "$USER_INFO_MANAGER_CONTROLLER_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/fe.sh
-
-let "EXIT_CODE|=$?"
-
-## configure UserInfoController2
-USER_INFO_CONTROLLER2_XPATH="$CLUSTER_XPATH/service[
-  @descriptor = '$USER_INFO_CONTROLLER2_DESCR']"
-
-$EXEC/ServiceConf.sh \
-  --services-xpath "$USER_INFO_CONTROLLER2_XPATH" \
-  --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/UserInfoProfiling/UserInfoController2.xsl \
-  --out-file UserInfoController2.xml \
+  --xsl $XSLT_ROOT/UserInfoProfiling/UserInfoController.xsl \
+  --out-file UserInfoController.xml \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT
 
@@ -209,20 +182,6 @@ $EXEC/ServiceConf.sh \
  --app-xml $APP_XML \
  --xsl $XSLT_ROOT/UserInfoProfiling/UserBindController.xsl \
  --out-file UserBindController.xml \
- --out-dir-suffix "$OUT_DIR_SUFFIX" \
- --out-dir $OUT_DIR \
- --plugin-root $PLUGIN_ROOT
-
-let "EXIT_CODE|=$?"
-
-### UserBindController2
-USER_BIND_CONTROLLER2_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$USER_BIND_CONTROLLER2_DESCR']"
-
-$EXEC/ServiceConf.sh \
- --services-xpath "$USER_BIND_CONTROLLER2_SERVICE_XPATH" \
- --app-xml $APP_XML \
- --xsl $XSLT_ROOT/UserInfoProfiling/UserBindController2.xsl \
- --out-file UserBindController2.xml \
  --out-dir-suffix "$OUT_DIR_SUFFIX" \
  --out-dir $OUT_DIR \
  --plugin-root $PLUGIN_ROOT

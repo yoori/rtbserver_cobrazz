@@ -4,10 +4,14 @@
 #include <eh/Errno.hpp>
 #include <eh/Exception.hpp>
 
+#include <Logger/StreamLogger.hpp>
+
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PathManip.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include <LogCommons/ActionRequest.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -37,7 +41,6 @@ namespace
 {
   const char* ASPECT  = "CampaignManager";
   const char* CAMPAIGN_MANAGER_OBJ_KEY = "CampaignManager";
-  const char* PROCESS_CONTROL_OBJ_KEY = "ProcessControl";
 
   const char* OUT_LOGS_DIR_NAME = "Out";
 }
@@ -60,17 +63,26 @@ namespace
     }
     return first;
   }
+
+  std::shared_ptr<Generics::ActiveObject>
+  non_owning_active_object(Generics::ActiveObject* object)
+  {
+    return std::shared_ptr<Generics::ActiveObject>(
+      object,
+      [](Generics::ActiveObject*) {});
+  }
 }
 
 CampaignManagerApp_::CampaignManagerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "CampaignManagerApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "CampaignManagerApp_", ASPECT, 0)
 {
 }
 
 void
-CampaignManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
+CampaignManagerApp_::stop_() noexcept
 {
   ShutdownWriteGuard guard(shutdown_lock_);
 
@@ -87,62 +99,6 @@ CampaignManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
     campaign_manager_core_->wait_object();
   }
 
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-CampaignManagerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
-}
-
-bool
-CampaignManagerApp_::is_ready_() noexcept
-{
-  bool status = false;
-
-  try
-  {
-    if (campaign_manager_core_.in() &&
-        campaign_manager_core_->ready())
-    {
-      status = true;
-    }
-  }
-  catch(const eh::Exception& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                      ASPECT,
-                      "ADS-IMPL-167")
-      << "CampaignManagerCore::ready(): "
-      << "Got eh:Exception. : "
-      << e.what();
-  }
-
-  return status;
-}
-
-char* CampaignManagerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
-{
-  try
-  {
-    std::string res;
-    if (campaign_manager_core_.in())
-    {
-      campaign_manager_core_->progress_comment(res);
-    }
-    CORBA::String_var r;
-    r << res;
-    return r._retn();
-  }
-  catch(const CORBA::Exception&)
-  {
-    throw CORBACommons::OutOfMemory();
-  }
-  catch(const eh::Exception& e)
-  {
-    throw CORBACommons::OutOfMemory();
-  }
 }
 
 void
@@ -178,8 +134,6 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       // init CORBA Server
       corba_server_adapter_ =
         new CORBACommons::CorbaServerAdapter(corba_config_);
-
-      shutdowner_ = corba_server_adapter_->shutdowner();
     }
     catch(const eh::Exception& e)
     {
@@ -211,21 +165,17 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       new AdServer::CampaignSvcs::CampaignManagerImpl(
         campaign_manager_core_.in());
 
-    register_vars_controller();
-
     stage = "Initializing CORBA bindings";
     corba_server_adapter_->add_binding(
       CAMPAIGN_MANAGER_OBJ_KEY, campaign_manager_impl_.in());
 
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
-
-    stage = "activating CampaignManagerCore active object";
-    campaign_manager_core_->activate_object();
+    auto active_objects =
+      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects->add_child_object(campaign_manager_core_.in());
 
     if(campaign_manager_config_->GrpcConfig().present())
     {
-      stage = "activating CampaignManagerGrpc";
+      stage = "creating CampaignManagerGrpc";
       grpc_adapter_ = new AdServer::CampaignSvcs::CampaignManagerGrpc(
         campaign_manager_core_.in(),
         logger(),
@@ -234,31 +184,35 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           *campaign_manager_config_->GrpcConfig()->Endpoint().host() :
           "0.0.0.0",
         campaign_manager_config_->GrpcConfig()->Endpoint().port());
-      grpc_adapter_->activate_object();
+      active_objects->add_child_object(non_owning_active_object(
+        grpc_adapter_.in()));
     }
+    active_objects->add_child_object(corba_server_adapter_.in());
 
-    stage = "running orb loop";
+    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+      configuration_.pid_file);
+
+    AdServer::Commons::SignalActiveObject signal_active_object;
+
+    stage = "activating active objects";
+    active_objects->activate_object();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service started.";
-    corba_server_adapter_->run();
 
-    stage =
-      "waiting while CORBACommons::ProcessControlImpl completes it's tasks";
+    signal_active_object.wait_object();
 
-    wait();
+    stage = "stopping active objects";
+    active_objects->deactivate_object();
+    active_objects->wait_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service stopped.";
 
-    if(grpc_adapter_.in() != 0)
-    {
-      grpc_adapter_->deactivate_object();
-      grpc_adapter_->wait_object();
-      grpc_adapter_.reset();
-    }
-
     campaign_manager_impl_.reset();
     campaign_manager_core_.reset();
+    grpc_adapter_.reset();
+    pid_file_guard_.reset();
   }
   catch (const Exception& e)
   {
@@ -288,6 +242,9 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
                   ASPECT,
                   "ADS-IMPL-168");
   }
+
+  stop_();
+  pid_file_guard_.reset();
 }
 
 void
@@ -704,6 +661,7 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
     CampaignManagerType* configuration = campaign_manager_config_.get();
 
     configuration_.log_root = configuration->log_root();
+    configuration_.pid_file = configuration->pid_file();
     if (configuration_.log_root[0] != '/')
     {
       Stream::Error ostr;
@@ -808,11 +766,16 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
 int
 main(int argc, char** argv)
 {
-  CampaignManagerApp_* app = 0;
-
   try
   {
-    app = &CampaignManagerApp::instance();
+    CampaignManagerApp_ app;
+    app.main(argc, argv);
+  }
+  catch (const eh::Exception& ex)
+  {
+    std::cerr << "main(): Critical: Got exception while "
+      "creating application object: " << ex.what() << "\n";
+    return -1;
   }
   catch (...)
   {
@@ -820,12 +783,4 @@ main(int argc, char** argv)
       "creating application object.\n";
     return -1;
   }
-
-  if (app == 0)
-  {
-    std::cerr << "main(): Critical: got NULL application object.\n";
-    return -1;
-  }
-
-  app->main(argc, argv);
 }

@@ -44,6 +44,9 @@
 
     <!-- start config generation -->
     <xsl:attribute name="threads"><xsl:value-of select="$threads"/></xsl:attribute>
+    <xsl:attribute name="pid_file">
+      <xsl:value-of select="concat($workspace-root, '/run/DictionaryProvider.pid')"/>
+    </xsl:attribute>
 
     <cfg:CorbaConfig>
       <xsl:attribute name="threading-pool"><xsl:value-of select="$service-config/cfg:threadParams/@min"/>
@@ -54,7 +57,6 @@
 
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$service-port"/></xsl:attribute>
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="DictionaryProvider" name="DictionaryProvider"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>

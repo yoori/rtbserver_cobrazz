@@ -1,870 +1,586 @@
-#include <list>
-#include <vector>
-#include <iterator>
+#include <iomanip>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include <grpcpp/grpcpp.h>
+
+#include <Generics/ActiveObject.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/AppUtils.hpp>
+#include <Generics/Time.hpp>
 #include <Generics/Uuid.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Logger/StreamLogger.hpp>
+#include <String/StringManip.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
-
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/UserInfoManip.hpp>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
 #include <UserInfoSvcs/UserInfoCommons/ChannelMatcher.hpp>
 #include <UserInfoSvcs/UserInfoCommons/UserFreqCapProfile.hpp>
-
-#include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerSessionFactory.hpp>
-
-#include "Application.hpp"
+#include <UserInfoSvcs/UserInfoManager/UserInfoManagerGrpc.grpc.pb.h>
+#include <UserInfoSvcs/UserInfoController/UserInfoControllerGrpc.grpc.pb.h>
 
 namespace
 {
+  namespace uim = adserver::user_info_svcs::user_info_manager;
+  namespace uic = adserver::user_info_svcs::user_info_controller;
+
   const char TIME_FORMAT[] = "%d-%m-%Y:%H-%M-%S.%q";
-  const char DAY_TIME_FORMAT[] = "%H-%M-%S.%q";
-}
 
-namespace
-{
   const char USAGE[] =
     "\nUsage: \nUserInfoAdmin <command> <command arguments>\n\n"
-    "Synopsis 1:\n"
-    "UserInfoAdmin match --uid=<user id in base64 format> "
-      "--page-channels=<channel ids separated by ','> "
-      "-r[--reference=]<user_info_manager_corba_ref>|"
-      "<user_info_manager_controller_corba_ref> "
-      "--time=<DD-MM-YYYY:HH-MM-SS> \n\n"
-    "Synopsis 2:\n"
+    "UserInfoAdmin match --uid=<user id> --page-channels=<ids> "
+      "-r[--reference=]<user_info_controller_grpc_endpoint>|"
+      "<user_info_manager_grpc_endpoint> --time=<DD-MM-YYYY:HH-MM-SS>\n\n"
     "UserInfoAdmin [print|print-freq-cap|print-base|print-add|print-history] "
-    "user_id=<user id in base64 format> "
-      "[--expand | -e] [--align | -a] [--plain | -p] "
-      "-r[--reference=]<user_info_manager_corba_ref>|<user_info_manager_controller_corba_ref> \n\n"
-    "UserInfoAdmin delete-old-profiles "
-      "(-r[--reference=]<user_info_manager_corba_ref>|"
-      "<user_info_manager_controller_corba_ref>) "
-      "--sync --time=<DD-MM-YYYY:HH-MM-SS> --portion=<number>\n\n"
-    "UserInfoAdmin generate "
-      "--keys-dir=<path to key directory> --persistent\n\n"
-    "UserInfoAdmin get-config-timestamp "
-    "(-r[--reference=]<user_info_manager_corba_ref>) \n\n";
+      "--uid=<user id> [-e|--expand] [-a|--align] [-p|--plain] "
+      "-r[--reference=]<grpc endpoint>\n\n"
+    "UserInfoAdmin remove --uid=<user id> -r[--reference=]<grpc endpoint>\n\n"
+    "UserInfoAdmin delete-old-profiles -r[--reference=]<grpc endpoint> "
+      "--sync --time=<HH-MM> --portion=<number>\n\n"
+    "UserInfoAdmin get-config-timestamp -r[--reference=]<grpc endpoint>\n\n"
+    "UserInfoAdmin generate --keys-dir=<path to key directory> --persistent\n";
 
   const unsigned long PRINT_BASE = 0x01;
   const unsigned long PRINT_ADD = 0x02;
   const unsigned long PRINT_HISTORY = 0x04;
-  const unsigned long PRINT_ALL = -1;
-}
+  const unsigned long PRINT_ALL = static_cast<unsigned long>(-1);
+  const std::chrono::seconds RPC_TIMEOUT(10);
 
-Application_::Application_()
-  noexcept
-{}
-
-Application_::~Application_() noexcept
-{}
-
-void
-Application_::get_profile_(
-  AdServer::UserInfoSvcs::UserInfoMatcher* user_info_matcher,
-  const AdServer::Commons::UserId& user_id,
-  const AdServer::Commons::UserId& temp_user_id,
-  bool print_plain,
-  bool print_expand,
-  bool print_align,
-  unsigned long print_kind)
-  noexcept
-{
-  try
+  struct ChannelMatch
   {
-    AdServer::UserInfoSvcs::ProfilesRequestInfo profiles_request;
-    profiles_request.base_profile = (print_kind & PRINT_BASE) != 0;
-    profiles_request.add_profile = (print_kind & PRINT_ADD) != 0;
-    profiles_request.history_profile = (print_kind & PRINT_HISTORY) != 0;
-    profiles_request.freq_cap_profile = false;
+    unsigned long channel_id;
+    unsigned long channel_trigger_id;
+  };
 
-    AdServer::UserInfoSvcs::UserProfiles_var user_profile;
+  bool operator<(const ChannelMatch& left, const ChannelMatch& right) noexcept
+  {
+    return left.channel_id < right.channel_id ||
+      (left.channel_id == right.channel_id &&
+        left.channel_trigger_id < right.channel_trigger_id);
+  }
 
-    user_info_matcher->get_user_profile(
-      CorbaAlgs::pack_user_id(!user_id.is_null() ? user_id : temp_user_id),
-      user_id.is_null(),
-      profiles_request,
-      user_profile.out());
+  std::string bytes_from_user_id_(const AdServer::Commons::UserId& user_id)
+  {
+    return GrpcAlgs::pack_user_id(user_id);
+  }
 
-    if (profiles_request.base_profile)
+  std::string bytes_from_time_(const Generics::Time& time)
+  {
+    return GrpcAlgs::pack_time(time);
+  }
+
+  Generics::Time time_from_bytes_(const std::string& bytes)
+  {
+    return GrpcAlgs::unpack_time(bytes);
+  }
+
+  void print_plain_(
+    std::ostream& ostr,
+    const void* buf,
+    unsigned long size,
+    const char* prefix)
+    noexcept
+  {
+    ostr << prefix;
+    for (unsigned long i = 0; i < size; ++i)
     {
-      const CORBACommons::OctSeq& base_profile = user_profile->base_user_profile;
-
-      std::cout << "Base profile:" << std::endl;
-
-      if(print_plain)
+      ostr << "0x" << std::hex << std::setfill('0') << std::setw(2)
+        << static_cast<int>(*(static_cast<const unsigned char*>(buf) + i)) <<
+        " ";
+      if (i && (i + 1) % 16 == 0)
       {
-        print_plain_(
-          std::cout,
-          base_profile.get_buffer(),
-          base_profile.length(),
-          " ");
+        ostr << std::endl << prefix;
       }
-
-      ChannelsMatcher::print(
-        base_profile.get_buffer(),
-        base_profile.length(),
-        std::cout,
-        print_expand,
-        print_align);
     }
+    ostr << std::endl << std::dec << std::setw(0);
+  }
 
-    if (profiles_request.add_profile)
+  template<typename T>
+  void tokenize_channels_(
+    std::set<T>& matched_channel_ids,
+    const String::SubString& matched_channels)
+  {
+    String::StringManip::Splitter<
+      const String::AsciiStringManip::Char2Category<',', ' '> >
+      tokenizer(matched_channels);
+
+    String::SubString channel;
+    while (tokenizer.get_token(channel))
     {
-      const CORBACommons::OctSeq& add_profile = user_profile->add_user_profile;
-
-      std::cout << "Additional profile:" << std::endl;
-
-      if (print_plain)
-      {
-        print_plain_(
-          std::cout,
-          add_profile.get_buffer(),
-          add_profile.length(),
-          " ");
-      }
-
-      ChannelsMatcher::print(
-        add_profile.get_buffer(),
-        add_profile.length(),
-        std::cout,
-        print_expand,
-        print_align);
+      int value = 0;
+      String::StringManip::str_to_int(channel, value);
+      matched_channel_ids.insert(static_cast<unsigned long>(value));
     }
+  }
 
-    if (profiles_request.history_profile)
+  void tokenize_channels_(
+    std::set<ChannelMatch>& matched_channel_ids,
+    const String::SubString& matched_channels)
+  {
+    String::StringManip::Splitter<
+      const String::AsciiStringManip::Char2Category<',', ' '> >
+      tokenizer(matched_channels);
+
+    String::SubString channel;
+    while (tokenizer.get_token(channel))
     {
-      const CORBACommons::OctSeq& history_profile = user_profile->history_user_profile;
-
-      std::cout << "History profile:" << std::endl;
-
-      if (print_plain)
-      {
-        print_plain_(
-          std::cout,
-          history_profile.get_buffer(),
-          history_profile.length(),
-          " ");
-      }
-
-      ChannelsMatcher::history_print(
-        history_profile.get_buffer(),
-        history_profile.length(),
-        std::cout,
-        print_align);
-    }
-
-    std::cout << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::ImplementationException& e)
-  {
-    std::cerr << "Caught UserInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::NotReady& e)
-  {
-    std::cerr << "Caught UserInfoMatcher::NotReady. :" <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
-  {
-    std::cerr << "Caught UserInfoManager::ChunkNotFound: " <<
-      e.description << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
-  catch(const eh::Exception& ex)
-  {
-    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
-  }
-}
-
-void
-Application_::print_freq_cap_profile_(
-  AdServer::UserInfoSvcs::UserInfoMatcher* user_info_matcher,
-  const AdServer::Commons::UserId& user_id,
-  bool print_plain)
-  noexcept
-{
-  try
-  {
-    AdServer::UserInfoSvcs::ProfilesRequestInfo profiles_request;
-    profiles_request.base_profile = false;
-    profiles_request.add_profile = false;
-    profiles_request.history_profile = false;
-    profiles_request.freq_cap_profile = true;
-
-    AdServer::UserInfoSvcs::UserProfiles_var user_profile;
-
-    user_info_matcher->get_user_profile(
-      CorbaAlgs::pack_user_id(user_id),
-      false,
-      profiles_request,
-      user_profile.out());
-
-    const CORBACommons::OctSeq& fc_profile = user_profile->freq_cap;
-
-    if(print_plain)
-    {
-      print_plain_(
-        std::cout,
-        fc_profile.get_buffer(),
-        fc_profile.length(),
-        " ");
-    }
-
-    Generics::ConstSmartMemBuf_var mb(
-      new Generics::ConstSmartMemBuf(fc_profile.get_buffer(), fc_profile.length()));
-    UserFreqCapProfile freq_cap_profile(mb);
-    freq_cap_profile.print(std::cout, 0);
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::ImplementationException& e)
-  {
-    std::cerr << "Caught UserInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::NotReady& e)
-  {
-    std::cerr << "Caught UserInfoMatcher::NotReady. :" <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
-  {
-    std::cerr << "Caught UserInfoManager::ChunkNotFound: " <<
-      e.description << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
-  catch(const eh::Exception& ex)
-  {
-    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
-  }
-}
-
-void Application_::tokenize_channels(
-  std::set<unsigned long>& matched_channel_ids,
-  const String::SubString& matched_channels)
-  /*throw(eh::Exception)*/
-{
-  String::StringManip::Splitter<
-    const String::AsciiStringManip::Char2Category<',', ' '> >
-    input_channels_tokenizer(matched_channels);
-
-  String::SubString channel;
-  while (input_channels_tokenizer.get_token(channel))
-  {
-    int value;
-    if (!String::StringManip::str_to_int(channel, value))
-    {
-      value = 0;
-    }
-    matched_channel_ids.insert(value);
-  }
-}
-
-void Application_::tokenize_channels(
-  std::set<ChannelMatch>& matched_channel_ids,
-  const String::SubString& matched_channels)
-  /*throw(eh::Exception)*/
-{
-  String::StringManip::Splitter<
-    const String::AsciiStringManip::Char2Category<',', ' '> >
-    input_channels_tokenizer(matched_channels);
-
-  String::SubString channel;
-  while (input_channels_tokenizer.get_token(channel))
-  {
-    int value;
-    if (!String::StringManip::str_to_int(channel, value))
-    {
-      value = 0;
-    }
-    matched_channel_ids.insert(
-      ChannelMatch(
+      int value = 0;
+      String::StringManip::str_to_int(channel, value);
+      matched_channel_ids.insert(ChannelMatch{
         static_cast<unsigned long>(value),
-        static_cast<unsigned long>(value)));
+        static_cast<unsigned long>(value)});
+    }
   }
-}
 
-void
-Application_::match_(
-  AdServer::UserInfoSvcs::UserInfoMatcher* user_info_matcher,
-  const AdServer::Commons::UserId& user_id,
-  const AdServer::Commons::UserId& temp_user_id,
-  const String::SubString& opt_time,
-  const String::SubString& matched_page_channels,
-  const String::SubString& matched_search_channels,
-  const String::SubString& matched_url_channels,
-  const String::SubString& matched_persistent_channels)
-  noexcept
-{
-  try
+  bool is_user_info_controller_(const std::string& reference)
   {
-    /* fill match params */
-    AdServer::UserInfoSvcs::UserInfo user_info;
-    user_info.user_id = CorbaAlgs::pack_user_id(
-      !user_id.is_null() ? user_id : temp_user_id);
-    user_info.temporary = user_id.is_null();
-    user_info.last_colo_id = -1;
-    user_info.current_colo_id = 1;
+    auto stub = uic::UserInfoControllerGrpc::NewStub(
+      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
 
-    user_info.time = Generics::Time(opt_time,
-      "%d-%m-%Y:%H-%M-%S").tv_sec;
+    grpc::ClientContext context;
+    context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
+    uic::GetSessionDescriptionRequest request;
+    uic::GetSessionDescriptionResponse response;
+    const auto status = stub->get_session_description(
+      &context,
+      request,
+      &response);
 
-    std::set<ChannelMatch> matched_page_channel_ids;
-    std::set<ChannelMatch> matched_search_channel_ids;
-    std::set<ChannelMatch> matched_url_channel_ids;
-    std::set<unsigned long> matched_persistent_channel_ids;
-    tokenize_channels(matched_page_channel_ids, matched_page_channels);
-    tokenize_channels(matched_search_channel_ids, matched_search_channels);
-    tokenize_channels(matched_url_channel_ids, matched_url_channels);
-    tokenize_channels(matched_persistent_channel_ids, matched_persistent_channels);
+    return status.ok() && !response.user_info_managers().empty();
+  }
 
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
-    match_params.silent_match = false;
-    match_params.no_match = false;
-    match_params.no_result = false;
-    match_params.publishers_optin_timeout =
-      CorbaAlgs::pack_time(Generics::Time::ZERO);
+  struct UserInfoClientHolder
+  {
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner;
+    std::shared_ptr<Generics::ActiveObject> active_object;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      client;
+  };
 
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
+  UserInfoClientHolder create_user_info_client_(const std::string& reference)
+  {
+    UserInfoClientHolder result;
+    result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    result.grpc_executor->activate_object();
+    Logging::Logger_var logger =
+      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    result.coalesce_runner =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        new Logging::ActiveObjectCallbackImpl(logger, "UserInfoAdmin", "gRPC"),
+        std::make_shared<boost::asio::io_service>(),
+        1);
+    result.coalesce_runner->activate_object();
 
-    unsigned long i = 0;
-    match_params.page_channel_ids.length(matched_page_channel_ids.size());
-    for (std::set<ChannelMatch>::const_iterator it = matched_page_channel_ids.begin();
-         it != matched_page_channel_ids.end(); ++it)
+    if (is_user_info_controller_(reference))
     {
-      match_params.page_channel_ids[i].channel_id = it->channel_id;
-      match_params.page_channel_ids[i].channel_trigger_id = it->channel_trigger_id;
-
-      ++i;
+      auto client =
+        std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
+          std::vector<std::string>{reference},
+          AdServer::Grpc::BatchingOptions(),
+          result.grpc_executor,
+          logger,
+          result.coalesce_runner);
+      result.client = client;
+      result.active_object = client;
+    }
+    else
+    {
+      auto client = std::make_shared<
+        AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncBatchingClient>(
+          reference,
+          result.grpc_executor,
+          result.coalesce_runner,
+          AdServer::Grpc::BatchingOptions());
+      result.client = client;
+      result.active_object = client;
     }
 
-/*
-    CorbaAlgs::fill_sequence(
-      matched_page_channel_ids.begin(),
-      matched_page_channel_ids.end(),
-      match_params.page_channel_ids);
+    result.active_object->activate_object();
+    return result;
+  }
 
-    CorbaAlgs::fill_sequence(
-      matched_search_channel_ids.begin(),
-      matched_search_channel_ids.end(),
-      match_params.search_channel_ids);
+  void shutdown_user_info_client_(UserInfoClientHolder& holder) noexcept
+  {
+    try
+    {
+      if (holder.active_object)
+      {
+        holder.active_object->deactivate_object();
+        holder.active_object->wait_object();
+      }
+      if (holder.grpc_executor)
+      {
+        holder.grpc_executor->deactivate_object();
+        holder.grpc_executor->wait_object();
+      }
+      if (holder.coalesce_runner)
+      {
+        holder.coalesce_runner->deactivate_object();
+        holder.coalesce_runner->wait_object();
+      }
+    }
+    catch (...)
+    {}
+  }
 
-    CorbaAlgs::fill_sequence(
-      matched_url_channel_ids.begin(),
-      matched_url_channel_ids.end(),
-      match_params.url_channel_ids);
-*/
-    CorbaAlgs::fill_sequence(
-      matched_persistent_channel_ids.begin(),
-      matched_persistent_channel_ids.end(),
-      match_params.persistent_channel_ids);
+  void print_profile_(
+    AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient* client,
+    const AdServer::Commons::UserId& user_id,
+    bool print_plain,
+    bool print_expand,
+    bool print_align,
+    unsigned long print_kind)
+  {
+    uim::GetUserProfileRequest request;
+    request.set_user_id(bytes_from_user_id_(user_id));
+    request.set_temporary(false);
+    request.mutable_profile_request()->set_base_profile(
+      (print_kind & PRINT_BASE) != 0);
+    request.mutable_profile_request()->set_add_profile(
+      (print_kind & PRINT_ADD) != 0);
+    request.mutable_profile_request()->set_history_profile(
+      (print_kind & PRINT_HISTORY) != 0);
+    request.mutable_profile_request()->set_freq_cap_profile(
+      print_kind == 0);
 
-    std::cout << "matching for user_id='" << user_id << "'" << std::endl <<
-      "Input Channels: " << std::endl << "  Page: ";
-    CorbaAlgs::print_sequence_fields(
-      std::cout,
-      match_params.page_channel_ids,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_id,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id);
-    std::cout << std::endl << "  Search: ";
-    CorbaAlgs::print_sequence_fields(
-      std::cout,
-      match_params.search_channel_ids,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_id,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id);
-    std::cout << std::endl << "  Url: ";
-    CorbaAlgs::print_sequence_fields(
-      std::cout,
-      match_params.url_channel_ids,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_id,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id);
-    std::cout << std::endl << "  Persistent: ";
-    CorbaAlgs::print_sequence(std::cout, match_params.persistent_channel_ids);
-    std::cout << std::endl;;
+    const auto response =
+      AdServer::Grpc::sync_call<uim::GetUserProfileResponse>(
+        [&](auto callback)
+        {
+          client->get_user_profile(request, std::move(callback));
+        });
 
-    user_info_matcher->match(user_info, match_params, match_result);
+    if ((print_kind & PRINT_BASE) != 0)
+    {
+      const auto& profile = response.user_profile().base_user_profile();
+      std::cout << "Base profile:" << std::endl;
+      if (print_plain)
+      {
+        print_plain_(std::cout, profile.data(), profile.size(), " ");
+      }
+      AdServer::UserInfoSvcs::ChannelsMatcher::print(
+        profile.data(),
+        profile.size(),
+        std::cout,
+        print_expand,
+        print_align);
+    }
+
+    if ((print_kind & PRINT_ADD) != 0)
+    {
+      const auto& profile = response.user_profile().add_user_profile();
+      std::cout << "Additional profile:" << std::endl;
+      if (print_plain)
+      {
+        print_plain_(std::cout, profile.data(), profile.size(), " ");
+      }
+      AdServer::UserInfoSvcs::ChannelsMatcher::print(
+        profile.data(),
+        profile.size(),
+        std::cout,
+        print_expand,
+        print_align);
+    }
+
+    if ((print_kind & PRINT_HISTORY) != 0)
+    {
+      const auto& profile = response.user_profile().history_user_profile();
+      std::cout << "History profile:" << std::endl;
+      if (print_plain)
+      {
+        print_plain_(std::cout, profile.data(), profile.size(), " ");
+      }
+      AdServer::UserInfoSvcs::ChannelsMatcher::history_print(
+        profile.data(),
+        profile.size(),
+        std::cout,
+        print_align);
+    }
+
+    if (print_kind == 0)
+    {
+      const auto& profile = response.user_profile().freq_cap();
+      std::cout << "FreqCap profile:" << std::endl;
+      if (print_plain)
+      {
+        print_plain_(std::cout, profile.data(), profile.size(), " ");
+      }
+      Generics::ConstSmartMemBuf_var mb(
+        new Generics::ConstSmartMemBuf(profile.data(), profile.size()));
+      AdServer::UserInfoSvcs::UserFreqCapProfile freq_cap_profile(mb);
+      freq_cap_profile.print(std::cout, 0);
+    }
+  }
+
+  void match_(
+    AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient* client,
+    const AdServer::Commons::UserId& user_id,
+    const String::SubString& opt_time,
+    const String::SubString& matched_page_channels,
+    const String::SubString& matched_search_channels,
+    const String::SubString& matched_url_channels,
+    const String::SubString& matched_persistent_channels)
+  {
+    uim::MatchRequest request;
+    request.mutable_user_info()->set_user_id(bytes_from_user_id_(user_id));
+    request.mutable_user_info()->set_temporary(false);
+    request.mutable_user_info()->set_last_colo_id(-1);
+    request.mutable_user_info()->set_current_colo_id(1);
+    request.mutable_user_info()->set_time(
+      Generics::Time(opt_time, "%d-%m-%Y:%H-%M-%S").tv_sec);
+
+    std::set<ChannelMatch> page_channels;
+    std::set<ChannelMatch> search_channels;
+    std::set<ChannelMatch> url_channels;
+    std::set<unsigned long> persistent_channels;
+    tokenize_channels_(page_channels, matched_page_channels);
+    tokenize_channels_(search_channels, matched_search_channels);
+    tokenize_channels_(url_channels, matched_url_channels);
+    tokenize_channels_(persistent_channels, matched_persistent_channels);
+
+    for (const auto& channel : page_channels)
+    {
+      auto* out = request.mutable_match_params()->add_page_channel_ids();
+      out->set_channel_id(channel.channel_id);
+      out->set_channel_trigger_id(channel.channel_trigger_id);
+    }
+    for (const auto& channel : search_channels)
+    {
+      auto* out = request.mutable_match_params()->add_search_channel_ids();
+      out->set_channel_id(channel.channel_id);
+      out->set_channel_trigger_id(channel.channel_trigger_id);
+    }
+    for (const auto& channel : url_channels)
+    {
+      auto* out = request.mutable_match_params()->add_url_channel_ids();
+      out->set_channel_id(channel.channel_id);
+      out->set_channel_trigger_id(channel.channel_trigger_id);
+    }
+    for (const auto channel_id : persistent_channels)
+    {
+      request.mutable_match_params()->add_persistent_channel_ids(channel_id);
+    }
+    request.mutable_match_params()->set_publishers_optin_timeout(
+      bytes_from_time_(Generics::Time::ZERO));
+
+    const auto response =
+      AdServer::Grpc::sync_call<uim::MatchResponse>(
+        [&](auto callback)
+        {
+          client->match(request, std::move(callback));
+        });
 
     std::cout << "Output Channels: ";
-    const AdServer::UserInfoSvcs::UserInfoMatcher::ChannelWeightSeq&
-      output_channels = match_result->channels;
-
-    for(CORBA::ULong i = 0; i < output_channels.length(); ++i)
+    for (int i = 0; i < response.match_result().channels_size(); ++i)
     {
-      std::cout << (i != 0 ? "," : "") << output_channels[i].channel_id;
+      std::cout << (i ? "," : "") <<
+        response.match_result().channels(i).channel_id();
     }
-
     std::cout << std::endl;
   }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::ImplementationException& e)
-  {
-    std::cerr << "Caught UserInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::NotReady& e)
-  {
-    std::cerr << "Caught UserInfoMatcher::NotReady. ";
-  }
-  catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
-  {
-    std::cerr << "Caught UserInfoManager::ChunkNotFound: " <<
-      e.description << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
-  catch(const eh::Exception& ex)
-  {
-    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
-  }
 }
 
-void
-Application_::remove_user_profile_(
-  AdServer::UserInfoSvcs::UserInfoMatcher* user_info_matcher,
-  const AdServer::Commons::UserId& user_id)
-  noexcept
-{
-  try
-  {
-    CORBACommons::UserIdInfo user_id_info = CorbaAlgs::pack_user_id(user_id);
-    user_info_matcher->remove_user_profile(user_id_info);
-  }
-  catch(const AdServer::UserInfoSvcs::
-    UserInfoMatcher::ImplementationException& e)
-  {
-    std::cerr << "Caught UserInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::UserInfoMatcher::NotReady& e)
-  {
-    std::cerr << "Caught UserInfoMatcher::NotReady. ";
-  }
-  catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
-  {
-    std::cerr << "Caught UserInfoManager::ChunkNotFound: " <<
-      e.description << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
-  catch(const eh::Exception& ex)
-  {
-    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
-  }
-}
-
-void Application_::delete_old_profiles_(
-  AdServer::UserInfoSvcs::UserInfoMatcher* user_info_matcher,
-  bool sync,
-  const Generics::Time& cleanup_time,
-  long portion)
-  noexcept
-{
-  try
-  {
-    user_info_matcher->clear_expired(
-      sync,
-      CorbaAlgs::pack_time(cleanup_time),
-      portion);
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::ImplementationException& e)
-  {
-    std::cerr << "Caught UserInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::UserInfoSvcs::
-        UserInfoMatcher::NotReady& e)
-  {
-    std::cerr << "Caught UserInfoMatcher::NotReady. ";
-  }
-  catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
-  {
-    std::cerr << "Caught UserInfoManager::ChunkNotFound: " <<
-      e.description << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
-}
-
-void
-Application_::main(int& argc, char** argv)
-  /*throw(eh::Exception)*/
+int main(int argc, char** argv)
 {
   Generics::AppUtils::CheckOption opt_help;
   Generics::AppUtils::CheckOption opt_plain;
   Generics::AppUtils::CheckOption opt_expand;
   Generics::AppUtils::CheckOption opt_align;
-
-  Generics::AppUtils::Option<std::string> opt_user_id;
-  Generics::AppUtils::Option<std::string> opt_temp_user_id;
-  Generics::AppUtils::Option<std::string> opt_user_info_manager_ref;
-
-  // match options
-  Generics::AppUtils::Option<std::string> opt_matched_page_channels("");
-  Generics::AppUtils::Option<std::string> opt_matched_search_channels("");
-  Generics::AppUtils::Option<std::string> opt_matched_url_channels("");
-  Generics::AppUtils::Option<std::string> opt_matched_persistent_channels("");
-
-  Generics::AppUtils::Option<std::string> opt_keys_directory;
   Generics::AppUtils::CheckOption opt_persistent;
   Generics::AppUtils::CheckOption opt_sync;
-
+  Generics::AppUtils::Option<std::string> opt_user_id;
+  Generics::AppUtils::Option<std::string> opt_reference;
+  Generics::AppUtils::Option<std::string> opt_page_channels("");
+  Generics::AppUtils::Option<std::string> opt_search_channels("");
+  Generics::AppUtils::Option<std::string> opt_url_channels("");
+  Generics::AppUtils::Option<std::string> opt_persistent_channels("");
+  Generics::AppUtils::Option<std::string> opt_keys_directory;
   Generics::AppUtils::Option<std::string> opt_time;
+  Generics::AppUtils::Option<unsigned long> opt_portion;
   Generics::AppUtils::Args args(-1);
 
-  Generics::AppUtils::Option<unsigned long> opt_portion;
-
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
-
-  args.add(
-    Generics::AppUtils::equal_name("plain") ||
-    Generics::AppUtils::short_name("p"),
-    opt_plain);
-
-  args.add(
-    Generics::AppUtils::equal_name("expand") ||
-    Generics::AppUtils::short_name("e"),
-    opt_expand);
-
-  args.add(
-    Generics::AppUtils::equal_name("align") ||
-    Generics::AppUtils::short_name("a"),
-    opt_align);
-
-  args.add(
-    Generics::AppUtils::equal_name("user-id") ||
+  args.add(Generics::AppUtils::equal_name("help") ||
+    Generics::AppUtils::short_name("h"), opt_help);
+  args.add(Generics::AppUtils::equal_name("plain") ||
+    Generics::AppUtils::short_name("p"), opt_plain);
+  args.add(Generics::AppUtils::equal_name("expand") ||
+    Generics::AppUtils::short_name("e"), opt_expand);
+  args.add(Generics::AppUtils::equal_name("align") ||
+    Generics::AppUtils::short_name("a"), opt_align);
+  args.add(Generics::AppUtils::equal_name("user-id") ||
     Generics::AppUtils::equal_name("uid") ||
-    Generics::AppUtils::short_name("u"),
-    opt_user_id);
-
-  args.add(
-    Generics::AppUtils::equal_name("temp-user-id") ||
-    Generics::AppUtils::equal_name("tuid") ||
-    Generics::AppUtils::short_name("t"),
-    opt_temp_user_id);
-
-  args.add(
-    Generics::AppUtils::equal_name("reference") ||
-    Generics::AppUtils::short_name("r"),
-    opt_user_info_manager_ref);
-
-  args.add(Generics::AppUtils::equal_name("page-channels"),
-    opt_matched_page_channels);
-  args.add(Generics::AppUtils::equal_name("search-channels"),
-    opt_matched_search_channels);
-  args.add(Generics::AppUtils::equal_name("url-channels"),
-    opt_matched_url_channels);
+    Generics::AppUtils::short_name("u"), opt_user_id);
+  args.add(Generics::AppUtils::equal_name("reference") ||
+    Generics::AppUtils::short_name("r"), opt_reference);
+  args.add(Generics::AppUtils::equal_name("page-channels"), opt_page_channels);
+  args.add(Generics::AppUtils::equal_name("search-channels"), opt_search_channels);
+  args.add(Generics::AppUtils::equal_name("url-channels"), opt_url_channels);
   args.add(Generics::AppUtils::equal_name("persistent-channels"),
-    opt_matched_persistent_channels);
+    opt_persistent_channels);
   args.add(Generics::AppUtils::equal_name("keys-dir"), opt_keys_directory);
   args.add(Generics::AppUtils::equal_name("persistent"), opt_persistent);
   args.add(Generics::AppUtils::equal_name("time"), opt_time);
   args.add(Generics::AppUtils::equal_name("sync"), opt_sync);
   args.add(Generics::AppUtils::equal_name("portion"), opt_portion);
 
-  args.parse(argc - 1, argv + 1);
-
-  const Generics::AppUtils::Args::CommandList& commands = args.commands();
-
-  if(commands.empty() || opt_help.enabled() || *commands.begin() == "help")
+  try
   {
-    std::cout << USAGE << std::endl;
-    return;
-  }
-
-  std::string command = *commands.begin();
-
-  if(command == "generate" || command == "sign")
-  {
-    std::string keys_dir;
-
-    if(opt_keys_directory.installed())
+    args.parse(argc - 1, argv + 1);
+    const auto& commands = args.commands();
+    if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
     {
-      keys_dir = opt_keys_directory->c_str();
-    }
-    else
-    {
-      const char* unix_commons_env = getenv("unix_commons_root");
-      keys_dir = unix_commons_env ? unix_commons_env : "/opt/foros/server";
-      keys_dir += "/share/uuid_keys";
+      std::cout << USAGE << std::endl;
+      return 0;
     }
 
-    keys_dir += opt_persistent.enabled() ? "/private.der" : "/private_temp.der";
-
-    Generics::SignedUuidGenerator generator(keys_dir.c_str());
-
-    if(command == "generate")
+    const std::string command = *commands.begin();
+    if (command == "generate" || command == "sign")
     {
-      Generics::SignedUuid id = generator.generate();
-      std::cout << "'" << id.str() << "'" << std::endl;
-    }
-    else
-    {
-      Generics::SignedUuid id = generator.sign(
-        AdServer::Commons::UserId(opt_user_id->c_str()));
-      std::cout << "'" << id.str() << "'" << std::endl;
-    }
-
-    return;
-  }
-
-  if(!opt_user_info_manager_ref.installed())
-  {
-    Stream::Error ostr;
-    ostr << "Not defined parameters: reference to the manager or controller must be specifed.";
-    throw Exception(ostr);
-  }
-
-  CORBACommons::CorbaClientAdapter_var corba_client_adapter(
-    new CORBACommons::CorbaClientAdapter());
-
-  if(command == "print" ||
-     command == "print-freq-cap" ||
-     command == "print-base" ||
-     command == "print-add" ||
-     command == "print-history" ||
-     command == "match" ||
-     command == "remove" ||
-     command == "delete-old-profiles" ||
-     command == "get-config-timestamp")
-  {
-    AdServer::UserInfoSvcs::UserInfoMatcher_var user_info_matcher;
-
-    bool success = false;
-    try
-    {
-      AdServer::UserInfoSvcs::
-        UserInfoManagerSessionFactory::init(*corba_client_adapter);
-
-      CORBACommons::CorbaObjectRef corba_object_ref(
-        opt_user_info_manager_ref->c_str());
-
-      AdServer::UserInfoSvcs::UserInfoManagerController_var
-        user_info_manager_controller =
-          corba_client_adapter->resolve_object<
-            AdServer::UserInfoSvcs::UserInfoManagerController>(corba_object_ref);
-
-      user_info_matcher =
-        user_info_manager_controller->get_session();
-      success = true;
-    }
-    catch(const CORBACommons::CorbaClientAdapter::Exception&)
-    {}
-    catch(const CORBA::SystemException&)
-    {}
-
-    if(!success)
-    {
-      try
+      std::string keys_dir;
+      if (opt_keys_directory.installed())
       {
-        CORBA::Object_var user_info_matcher_obj =
-          corba_client_adapter->resolve_object(
-            CORBACommons::CorbaObjectRef(opt_user_info_manager_ref->c_str()));
+        keys_dir = opt_keys_directory->c_str();
+      }
+      else
+      {
+        const char* unix_commons_env = getenv("unix_commons_root");
+        keys_dir = unix_commons_env ? unix_commons_env : "/opt/foros/server";
+        keys_dir += "/share/uuid_keys";
+      }
+      keys_dir += opt_persistent.enabled() ? "/private.der" : "/private_temp.der";
 
-        user_info_matcher = AdServer::UserInfoSvcs::UserInfoManager::_narrow(
-          user_info_matcher_obj);
+      Generics::SignedUuidGenerator generator(keys_dir.c_str());
+      if (command == "generate")
+      {
+        std::cout << "'" << generator.generate().str() << "'" << std::endl;
+      }
+      else
+      {
+        std::cout << "'" << generator.sign(
+          AdServer::Commons::UserId(opt_user_id->c_str())).str() << "'" <<
+          std::endl;
+      }
+      return 0;
+    }
 
-        if(CORBA::is_nil(user_info_matcher.in()))
+    if (!opt_reference.installed())
+    {
+      throw std::runtime_error("reference to gRPC manager or controller is required");
+    }
+
+    UserInfoClientHolder client_holder = create_user_info_client_(*opt_reference);
+    auto client_guard = std::unique_ptr<
+      UserInfoClientHolder,
+      void(*)(UserInfoClientHolder*)>(
+        &client_holder,
+        [](UserInfoClientHolder* holder)
         {
-          throw Exception("_narrow for user_info_manager return nil reference.");
-        }
-      }
-      catch(const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << "Caught CORBA::SystemException: " << ex;
-        throw Exception(ostr);
-      }
+          shutdown_user_info_client_(*holder);
+        });
+    auto* client = client_holder.client.get();
+
+    if (command == "get-config-timestamp")
+    {
+      uim::GetMasterStampRequest request;
+      const auto response =
+        AdServer::Grpc::sync_call<uim::GetMasterStampResponse>(
+          [&](auto callback)
+          {
+            client->get_master_stamp(request, std::move(callback));
+          });
+      std::cout << "Config timestamp : " <<
+        time_from_bytes_(response.master_stamp()).get_gm_time().format(TIME_FORMAT) <<
+        std::endl;
+      return 0;
     }
 
-    if(command != "delete-old-profiles" &&
-       command != "get-config-timestamp" &&
-       !opt_user_id.installed() && !opt_temp_user_id.installed())
+    if (command == "delete-old-profiles")
     {
-      Stream::Error ostr;
-      ostr << "Not defined parameter user-id or temp-user-id.";
-      throw Exception(ostr);
+      uim::ClearExpiredRequest request;
+      request.set_sync(opt_sync.enabled());
+      request.set_cleanup_time(bytes_from_time_(
+        opt_time.installed() ? Generics::Time(*opt_time, "%H-%M") :
+          Generics::Time(-1)));
+      request.set_portion(opt_portion.installed() ? *opt_portion : -1);
+      AdServer::Grpc::sync_call<uim::ClearExpiredResponse>(
+        [&](auto callback)
+        {
+          client->clear_expired(request, std::move(callback));
+        });
+      return 0;
     }
 
-    AdServer::Commons::UserId user_id =
-      !opt_user_id->empty() ? AdServer::Commons::UserId(opt_user_id->c_str()) :
-      AdServer::Commons::UserId();
-    AdServer::Commons::UserId temp_user_id =
-      !opt_temp_user_id->empty() ? AdServer::Commons::UserId(opt_temp_user_id->c_str()) :
-      AdServer::Commons::UserId();
-
-    if(command == "print")
+    if (!opt_user_id.installed())
     {
-      get_profile_(
-        user_info_matcher,
-        user_id,
-        temp_user_id,
-        opt_plain.enabled(),
-        opt_expand.enabled(),
-        opt_align.enabled(),
-        PRINT_ALL);
+      throw std::runtime_error("user-id is required");
     }
-    if(command == "print-freq-cap")
+
+    const AdServer::Commons::UserId user_id(opt_user_id->c_str());
+    if (command == "print")
     {
-      print_freq_cap_profile_(
-        user_info_matcher,
-        user_id,
-        opt_plain.enabled());
+      print_profile_(client, user_id, opt_plain.enabled(), opt_expand.enabled(),
+        opt_align.enabled(), PRINT_ALL);
     }
     else if (command == "print-base")
     {
-      get_profile_(
-        user_info_matcher,
-        user_id,
-        temp_user_id,
-        opt_plain.enabled(),
-        opt_expand.enabled(),
-        opt_align.enabled(),
-        PRINT_BASE);
+      print_profile_(client, user_id, opt_plain.enabled(), opt_expand.enabled(),
+        opt_align.enabled(), PRINT_BASE);
     }
     else if (command == "print-add")
     {
-      get_profile_(
-        user_info_matcher,
-        user_id,
-        temp_user_id,
-        opt_plain.enabled(),
-        opt_expand.enabled(),
-        opt_align.enabled(),
-        PRINT_ADD);
+      print_profile_(client, user_id, opt_plain.enabled(), opt_expand.enabled(),
+        opt_align.enabled(), PRINT_ADD);
     }
     else if (command == "print-history")
     {
-      get_profile_(
-        user_info_matcher,
-        user_id,
-        temp_user_id,
-        opt_plain.enabled(),
-        opt_expand.enabled(),
-        opt_align.enabled(),
-        PRINT_HISTORY);
+      print_profile_(client, user_id, opt_plain.enabled(), opt_expand.enabled(),
+        opt_align.enabled(), PRINT_HISTORY);
     }
-    else if(command == "match")
+    else if (command == "print-freq-cap")
     {
-      match_(
-        user_info_matcher,
-        user_id,
-        temp_user_id,
-        *opt_time,
-        *opt_matched_page_channels,
-        *opt_matched_search_channels,
-        *opt_matched_url_channels,
-        *opt_matched_persistent_channels);
+      print_profile_(client, user_id, opt_plain.enabled(), false, false, 0);
     }
-    else if(command == "remove")
+    else if (command == "match")
     {
-      remove_user_profile_(
-        user_info_matcher,
-        user_id);
+      match_(client, user_id, *opt_time, *opt_page_channels,
+        *opt_search_channels, *opt_url_channels, *opt_persistent_channels);
     }
-    else if (command == "get-config-timestamp")
+    else if (command == "remove")
     {
-      CORBACommons::TimestampInfo_var master_stamp;
-      user_info_matcher->get_master_stamp(master_stamp);
-
-      Generics::Time timestamp = CorbaAlgs::unpack_time(master_stamp);
-      std::cout << "Config timestamp : "
-                << timestamp.get_gm_time().format(TIME_FORMAT)
-                << std::endl;
+      uim::RemoveUserProfileRequest request;
+      request.set_user_id(bytes_from_user_id_(user_id));
+      AdServer::Grpc::sync_call<uim::RemoveUserProfileResponse>(
+        [&](auto callback)
+        {
+          client->remove_user_profile(request, std::move(callback));
+        });
     }
-    else if(command == "delete-old-profiles")
+    else
     {
-      delete_old_profiles_(
-        user_info_matcher,
-        opt_sync.enabled(),
-        opt_time.installed() ?
-          Generics::Time(*opt_time, "%H-%M") :
-          Generics::Time(-1),
-        opt_portion.installed() ? *opt_portion : -1);
+      std::cerr << "Unknown command '" << command << "'. See help for more info." <<
+        std::endl;
+      return 1;
     }
   }
-  else
+  catch (const std::exception& ex)
   {
-    std::cerr << "Unknown command '" << command << "'. "
-      "See help for more info." << std::endl;
-  }
-}
-
-void
-Application_::print_plain_(
-  std::ostream& ostr,
-  const void* buf,
-  unsigned long size,
-  const char* prefix)
-  noexcept
-{
-  ostr << prefix;
-
-  for(unsigned long i = 0; i < size; ++i)
-  {
-    ostr << "0x" << std::hex << std::setfill('0') << std::setw(2)
-         << (int)*((const unsigned char*)buf + i) << " ";
-    if(i && (i + 1) % 16 == 0)
-    {
-      ostr << std::endl << prefix;
-    }
-  }
-
-  ostr << std::endl << std::dec << std::setw(0);
-}
-
-int main(int argc, char** argv)
-{
-  Application_* app = 0;
-
-  try
-  {
-    app = &Application::instance();
-  }
-  catch (...)
-  {
-    std::cerr << "main(): Critical: Got exception while "
-      "creating application object.\n";
-    return -1;
-  }
-
-  if (app == 0)
-  {
-    std::cerr << "main(): Critical: got NULL application object.\n";
-    return -1;
-  }
-
-  try
-  {
-    app->main(argc, argv);
-  }
-  catch(const eh::Exception& ex)
-  {
-    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
-    return -1;
+    std::cerr << "Caught std::exception: " << ex.what() << std::endl;
+    return 1;
   }
 
   return 0;

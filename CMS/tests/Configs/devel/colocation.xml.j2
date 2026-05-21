@@ -360,18 +360,6 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
       </service>
 
       <service
-        descriptor="AdCluster/BackendSubCluster/UserOperationGenerator"
-        name="UserOperationGeneratorDevel"
-        host="{{host}}">
-        <configuration>
-          <userOperationGenerator xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{{port_base + 30 }}"/>
-            <logging log_level="7" sys_log="{{sys_log}}"/>
-          </userOperationGenerator>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdCluster/BackendSubCluster/Predictor"
         name="Predictor"
         host="{{host}}">
@@ -491,7 +479,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{{host}}">
         <configuration>
           <userBindController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{{port_base + 29 }}"/>
+            <networkParams grpc_port="{{port_base + 429 }}"/>
             <logging log_level="{{log_level}}" sys_log="{{sys_log}}"/>
           </userBindController>
         </configuration>

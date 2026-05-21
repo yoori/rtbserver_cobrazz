@@ -123,6 +123,7 @@
     </xsd:sequence>
 
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="config_update_period"
       type="xsd:positiveInteger"
       use="required">

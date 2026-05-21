@@ -1301,13 +1301,10 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
             </configuration:userBindServer></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/UserBindController" name="UserBindController" host="adfe101">
-          <configuration><configuration:userBindController/></configuration>
-        </service>
-        <service descriptor="AdCluster/FrontendSubCluster/UserBindController2" name="UserBindController2" host="adfe101">
-          <configuration><configuration:userBindController2>
+          <configuration><configuration:userBindController>
               <configuration:networkParams grpc_port="10529"/>
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
-            </configuration:userBindController2></configuration>
+            </configuration:userBindController></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/BillingServer" name="BillingServer" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
           <configuration><configuration:billingServer>
@@ -1434,13 +1431,10 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
             </configuration:userBindServer></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/UserBindController" name="UserBindController" host="adfe201">
-          <configuration><configuration:userBindController/></configuration>
-        </service>
-        <service descriptor="AdCluster/FrontendSubCluster/UserBindController2" name="UserBindController2" host="adfe201">
-          <configuration><configuration:userBindController2>
+          <configuration><configuration:userBindController>
               <configuration:networkParams grpc_port="10529"/>
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
-            </configuration:userBindController2></configuration>
+            </configuration:userBindController></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/BillingServer" name="BillingServer" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
           <configuration><configuration:billingServer>
@@ -1547,11 +1541,6 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
           <configuration><configuration:dictionaryProvider threads="1">
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
             </configuration:dictionaryProvider></configuration>
-        </service>
-        <service descriptor="AdCluster/BackendSubCluster/UserOperationGenerator" name="UserOperationGenerator" host="adbe01">
-          <configuration><configuration:userOperationGenerator load_period="30" refresh_period="604800">
-              <configuration:logging log_level="17" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
-            </configuration:userOperationGenerator></configuration>
         </service>
         <service descriptor="AdCluster/BackendSubCluster/CampaignServer" name="CampaignServer" host="adbe00">
           <configuration><configuration:campaignServer>

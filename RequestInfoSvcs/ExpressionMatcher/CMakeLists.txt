@@ -54,7 +54,6 @@ target_link_libraries(ExpressionMatcher
 
   ExpressionMatcherIDL
   CampaignServerIDL
-  ProcessControlIDL
   CORBACommons
 
   ConsiderMessagesPST
@@ -64,13 +63,11 @@ target_link_libraries(ExpressionMatcher
 
   ExpressionMatcherCompatibility
   UserInfoClient
-  UserInfoManagerControllerCall
 
   AdServerCommonsXSD
   ExpressionMatcherConfigXSD
 
   LogCommons
-  ProcessControlVars
   Commons
   PlainStorage3
   SNMPAgent

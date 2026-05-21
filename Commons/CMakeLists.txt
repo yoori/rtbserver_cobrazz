@@ -12,8 +12,10 @@ target_link_libraries(FreqCapInfoIDL CorbaTypesIDL)
 
 add_library(Commons  SHARED
   CorbaConfig.cpp
+  SignalActiveObject.cpp
   HostDistribution.cpp
   PathManip.cpp
+  PidFileGuard.cpp
   ActivityGate.cpp
   CountActiveObject.cpp
   ZmqConfig.cpp

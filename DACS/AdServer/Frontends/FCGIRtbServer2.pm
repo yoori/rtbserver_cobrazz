@@ -17,7 +17,7 @@ sub start
     "export MALLOC_ARENA_MAX=4 && " .
     "{ FCGIServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServer2Config.xml " .
-      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer2.out 2>&1 & }";
+      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer2.out 2>&1 < /dev/null & }";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }

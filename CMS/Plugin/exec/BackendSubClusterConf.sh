@@ -28,7 +28,6 @@ REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
 CLICKHOUSE_UPLOADER_DESCR=$BACKEND_CLUSTER/ClickhouseUploader
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
 STATS_COLLECTOR_DESCR=$BACKEND_CLUSTER/StatsCollector
-USER_OPERATION_GENERATOR_DESCR=$BACKEND_CLUSTER/UserOperationGenerator
 
 LOCAL_PROXY_DESCR=AdCluster/BackendSubCluster/LocalProxy
 STUNNEL_CLIENT_DESCR=$LOCAL_PROXY_DESCR/STunnelClient
@@ -371,29 +370,6 @@ $EXEC/CurrentEnvGen.sh \
   --app-xml $APP_XML \
   --search-xpath "configuration/cfg:dictionaryProvider" \
   --services-xpath "$DICTIONARY_PROVIDER_SERVICE_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/be.sh
-
-let "EXIT_CODE|=$?"
-
-### UserOperationGenerator
-USER_OPERATION_GENERATOR_XPATH="$CLUSTER_XPATH/service[@descriptor = '$USER_OPERATION_GENERATOR_DESCR']"
-
-$EXEC/ServiceConf.sh \
- --services-xpath "$USER_OPERATION_GENERATOR_XPATH" \
- --app-xml $APP_XML \
- --xsl $XSLT_ROOT/UserInfoProfiling/UserOperationGenerator.xsl \
- --out-file UserOperationGenerator.xml \
- --out-dir-suffix "$OUT_DIR_SUFFIX" \
- --out-dir $OUT_DIR \
- --plugin-root $PLUGIN_ROOT
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "user_operation_generator" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:userOperationGenerator" \
-  --services-xpath "$USER_OPERATION_GENERATOR_XPATH" \
   --out-dir $OUT_DIR \
   --out-file CurrentEnv/be.sh
 

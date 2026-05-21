@@ -1,15 +1,18 @@
 #include <eh/Exception.hpp>
 
+#include <memory>
+
 #include <Generics/ActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include "ChannelServerMain.hpp"
 #include "ChannelServerCore.hpp"
@@ -23,7 +26,19 @@ namespace
   const char CHANNEL_SERVER_OBJ_KEY[] = "ChannelServer";
   const char CHANNEL_SERVER_CONTROL_OBJ_KEY[] = "ChannelServerControl";
   const char CHANNEL_UPDATE_OBJ_KEY[] = "ChannelUpdate";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
+
+  template<typename T>
+  std::shared_ptr<T>
+  to_shared(ReferenceCounting::SmartPtr<T> ptr)
+  {
+    T* raw_ptr = ptr.in();
+    return std::shared_ptr<T>(
+      raw_ptr,
+      [ptr = std::move(ptr)](T*) mutable
+      {
+        ptr.reset();
+      });
+  }
 
   std::string
   json_escape_(const std::string& value)
@@ -59,23 +74,11 @@ namespace
 }
 
 ChannelServerApp_::ChannelServerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "ChannelServerApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "ChannelServerApp_", ASPECT, 0)
 {
-}
-
-void ChannelServerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownGuard guard(shutdown_lock_);
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-ChannelServerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
 }
 
 void ChannelServerApp_::load_config_(const char* name) /*throw(Exception)*/
@@ -159,7 +162,6 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
-    shutdowner_ = corba_server_adapter_->shutdowner();
   }
   catch(const eh::Exception& e)
   {
@@ -175,13 +177,6 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
       logger(), configuration_.get());
     server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(
       server_core_);
-    {
-      using namespace AdServer::Commons;
-      register_vars_controller();
-      add_var_processor(DbStateProcessor::VAR_NAME,
-        new DbStateProcessor(
-          new_simple_db_state_changer(server_core_)));
-    }
 
     AdServer::ChannelSvcs::ChannelServerControlImpl_var server_control_impl(
       new AdServer::ChannelSvcs::ChannelServerControlImpl(server_core_));
@@ -198,21 +193,17 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
     corba_server_adapter_->add_binding(
       CHANNEL_SERVER_CONTROL_OBJ_KEY, server_control_impl.in());
 
-    corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-
-    server_core_->activate_object();
-
     if(configuration_->GrpcConfig().present())
     {
-      grpc_adapter_ = new AdServer::ChannelSvcs::ChannelServerGrpc(
-        server_core_,
-        logger(),
-        configuration_->GrpcConfig()->Endpoint().host().present() &&
-          *(configuration_->GrpcConfig()->Endpoint().host()) != "*" ?
-          *configuration_->GrpcConfig()->Endpoint().host() :
-          "0.0.0.0",
-        configuration_->GrpcConfig()->Endpoint().port());
-      grpc_adapter_->activate_object();
+      grpc_adapter_ = to_shared<AdServer::ChannelSvcs::ChannelServerGrpc>(
+        new AdServer::ChannelSvcs::ChannelServerGrpc(
+          server_core_,
+          logger(),
+          configuration_->GrpcConfig()->Endpoint().host().present() &&
+            *(configuration_->GrpcConfig()->Endpoint().host()) != "*" ?
+            *configuration_->GrpcConfig()->Endpoint().host() :
+            "0.0.0.0",
+          configuration_->GrpcConfig()->Endpoint().port()));
     }
 
     if(configuration_->HttpConfig().present())
@@ -258,8 +249,21 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             std::move(body)
           };
         });
-      http_server_->activate_object();
     }
+
+    active_objects_ =
+      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_->add_child_object(server_core_);
+    if(grpc_adapter_)
+    {
+      active_objects_->add_child_object(
+        std::static_pointer_cast<Generics::ActiveObject>(grpc_adapter_));
+    }
+    if(http_server_.in() != 0)
+    {
+      active_objects_->add_child_object(http_server_.in());
+    }
+    active_objects_->add_child_object(corba_server_adapter_.in());
   }
   catch(const AdServer::ChannelSvcs::ChannelServerCore::Exception& e)
   {
@@ -279,45 +283,10 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   }
 }
 
-void ChannelServerApp_::stop_() noexcept
-{
-  if(http_server_.in() != 0)
-  {
-    http_server_->deactivate_object();
-  }
-
-  if(grpc_adapter_.in() != 0)
-  {
-    grpc_adapter_->deactivate_object();
-  }
-
-  if(server_core_)
-  {
-    server_core_->deactivate_object();
-  }
-
-  if(http_server_.in() != 0)
-  {
-    http_server_->wait_object();
-    http_server_.reset();
-  }
-
-  if(grpc_adapter_.in() != 0)
-  {
-    grpc_adapter_->wait_object();
-    grpc_adapter_.reset();
-  }
-
-  if(server_core_)
-  {
-    server_core_->wait_object();
-    server_core_.reset();
-  }
-}
-
 void ChannelServerApp_::main(int& argc, char** argv) noexcept
 {
   const char FUN[] = "ChannelServerApp_::main(): ";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
   try
   {
@@ -347,16 +316,20 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
       throw Exception(ostr);
     }
 
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(configuration_->pid_file()));
+
     //Initialization CORBA
     init_corba_();
 
+    AdServer::Commons::SignalActiveObject signal_active_object;
+    active_objects_->activate_object();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running orb loop
-    corba_server_adapter_->run();
+    signal_active_object.wait_object();
+    active_objects_->deactivate_object();
+    active_objects_->wait_object();
 
-    stop_();
-
-    wait();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
 
   }
@@ -434,7 +407,6 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
   try
   {
     corba_server_adapter_.reset();
-    shutdowner_.reset();
   }
   catch(const CORBA::Exception& ex)
   {

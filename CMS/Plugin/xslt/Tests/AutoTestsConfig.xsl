@@ -298,7 +298,7 @@
 
   <xsl:variable
     name="user-info-controller-path"
-    select="$fe-cluster-path//service[@descriptor = $user-info-manager-controller-descriptor][1]"/>
+    select="$fe-cluster-path//service[@descriptor = $user-info-controller-descriptor][1]"/>
 
   <!-- check pathes -->
   <xsl:choose>
@@ -403,7 +403,7 @@
 
   <xsl:variable
     name="user-info-controller-config"
-    select="$user-info-controller-path/configuration/cfg:userInfoManagerController"/>
+    select="$user-info-controller-path/configuration/cfg:userInfoController"/>
 
   <xsl:variable
     name="auto-test-config"

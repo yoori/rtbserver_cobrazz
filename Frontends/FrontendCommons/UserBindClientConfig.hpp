@@ -28,7 +28,7 @@ namespace AdServer::UserInfoSvcs
           Config::read_xsd_grpc_options(*user_bind_config.BatchingOptions());
       }
 
-      for(const auto& group : user_bind_config.UserBindController2Group())
+      for(const auto& group : user_bind_config.UserBindControllerGroup())
       {
         for(const auto& endpoint : group.Endpoint())
         {

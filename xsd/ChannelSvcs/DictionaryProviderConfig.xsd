@@ -50,6 +50,7 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
+    <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="threads" type="xsd:positiveInteger" default="1"/>
     
   </xsd:complexType>

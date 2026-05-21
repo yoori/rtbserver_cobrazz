@@ -10,6 +10,7 @@
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
+#include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
 #include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <UserInfoSvcs/UserInfoManager/UserInfoManagerGrpc.grpc.pb.h>
@@ -20,6 +21,7 @@ namespace AdServer::UserInfoSvcs
   {
     constexpr const char user_info_manager_grpc_aspect[] =
       "UserInfoManagerGrpc";
+    namespace pc = adserver::grpc::process_control;
 
     template<typename CorbaSeq>
     void bytes_to_oct_seq_(const std::string& src, CorbaSeq& dst)
@@ -519,8 +521,11 @@ namespace AdServer::UserInfoSvcs
 
   public:
     explicit ServiceImpl(UserInfoManagerCorePtr user_info_manager)
-      : user_info_manager_(std::move(user_info_manager))
-    {}
+      : process_control_service_(*this),
+        user_info_manager_(std::move(user_info_manager))
+    {
+      add_grpc_service(&process_control_service_);
+    }
 
     static auto grpc_calls()
     {
@@ -607,8 +612,62 @@ namespace AdServer::UserInfoSvcs
       grpc::Status& result_status) const;
 
   private:
+    class ProcessControlService final:
+      public pc::ProcessControl::Service
+    {
+    public:
+      explicit ProcessControlService(const ServiceImpl& owner);
+
+      grpc::Status get_status(
+        grpc::ServerContext* context,
+        const pc::GetStatusRequest* request,
+        pc::GetStatusResponse* response) override;
+
+    private:
+      const ServiceImpl& owner_;
+    };
+
+    void get_status_(pc::GetStatusResponse& response) const;
+
+  private:
+    ProcessControlService process_control_service_;
     UserInfoManagerCorePtr user_info_manager_;
   };
+
+  UserInfoManagerGrpc::ServiceImpl::ProcessControlService::
+  ProcessControlService(const ServiceImpl& owner)
+    : owner_(owner)
+  {}
+
+  grpc::Status
+  UserInfoManagerGrpc::ServiceImpl::ProcessControlService::get_status(
+    grpc::ServerContext*,
+    const pc::GetStatusRequest*,
+    pc::GetStatusResponse* response)
+  {
+    owner_.get_status_(*response);
+    return grpc::Status::OK;
+  }
+
+  void
+  UserInfoManagerGrpc::ServiceImpl::get_status_(
+    pc::GetStatusResponse& response) const
+  {
+    try
+    {
+      const bool ready = user_info_manager_->uim_ready();
+      response.set_ready(ready);
+      if (!ready)
+      {
+        response.set_description(user_info_manager_->get_progress());
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      response.set_ready(false);
+      response.set_description(ex.what());
+    }
+  }
 
   void UserInfoManagerGrpc::ServiceImpl::get_source(
     const adserver::user_info_svcs::user_info_manager::GetSourceRequest&,

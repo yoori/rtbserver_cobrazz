@@ -2,7 +2,9 @@
 
 #include <memory>
 
+#include <Commons/PidFileGuard.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -15,7 +17,6 @@ namespace
   const char ASPECT[] = "UserInfoManager";
   const char USER_INFO_MANAGER_OBJ_KEY[] = "UserInfoManager";
   const char USER_INFO_MANAGER_CONTROL_OBJ_KEY[] = "UserInfoManagerControl";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
@@ -190,9 +191,6 @@ UserInfoManagerApp_::main(int& argc, char** argv)
     corba_server_adapter_->add_binding(
       USER_INFO_MANAGER_CONTROL_OBJ_KEY, user_info_manager_control_impl_.in());
 
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
-
     if(config().GrpcConfig().present())
     {
       grpc_adapter_ = new AdServer::UserInfoSvcs::UserInfoManagerGrpc(
@@ -206,16 +204,21 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       add_child_object(grpc_adapter_);
     }
 
-    shutdowner_ = corba_server_adapter_->shutdowner();
+    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(config().pid_file()));
+
+    add_child_object(corba_server_adapter_.in());
+    AdServer::Commons::SignalActiveObject signal_active_object;
 
     activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
-    // Running orb loop
-    corba_server_adapter_->run();
+    signal_active_object.wait_object();
 
+    deactivate_object();
     wait();
+    pid_file_guard_.reset();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
@@ -240,6 +243,10 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       "ADS-IMPL-59") << FUN <<
       ": Got eh::Exception: " << e.what();
   }
+
+  deactivate_object();
+  wait_object();
+  pid_file_guard_.reset();
 }
 
 int

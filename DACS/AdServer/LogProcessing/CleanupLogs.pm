@@ -14,7 +14,7 @@ sub start
     ."date  +'%a %d %m %Y %H:%M:%S:%N : start logs cleanup' "
     .">> \${workspace_root}/log/CleanupLogs/CleanupLogs.log && "
     ."{ CleanupLogs.pl -conf \${config_root}/${AdServer::Path::XML_FILE_BASE}$host/conf/cleanup_logs.conf "
-    .">> \${workspace_root}/log/CleanupLogs/CleanupLogs.log 2>&1 &}";
+    .">> \${workspace_root}/log/CleanupLogs/CleanupLogs.log 2>&1 < /dev/null &}";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }

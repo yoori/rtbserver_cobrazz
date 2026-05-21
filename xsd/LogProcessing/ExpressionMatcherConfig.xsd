@@ -64,10 +64,7 @@
 
       <xsd:element name="ExpressionMatcherGroup" type="MultiCorbaObjectRefType"/>
 
-      <xsd:element name="UserInfoManagerControllerGroup"
-        type="MultiCorbaObjectRefType"
-        minOccurs="1"
-        maxOccurs="2"/>
+      <xsd:element name="UserInfo" type="ExpressionMatcherUserInfoType"/>
 
       <xsd:element name="ChunksDistribution" type="ChunksDistributionType">
         <xsd:annotation>
@@ -134,6 +131,8 @@
       </xsd:annotation>
     </xsd:attribute>
 
+    <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
+
     <xsd:attribute name="log_root" type="xsd:string" use="required">
       <xsd:annotation>
         <xsd:documentation>
@@ -156,6 +155,29 @@
     <xsd:attribute name="enable_channel_overlap_stats" type="xsd:boolean" use="optional" default="true"/>
     <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="service_host_name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherUserInfoType">
+    <xsd:sequence>
+      <xsd:element name="BatchingOptions"
+        type="GrpcBatchingOptionsType"
+        minOccurs="0"
+        maxOccurs="1"/>
+      <xsd:element name="UserInfoControllerGroup"
+        type="ExpressionMatcherUserInfoControllerGrpcGroupType"
+        minOccurs="1"
+        maxOccurs="2"/>
+    </xsd:sequence>
+    <xsd:attribute name="grpc_executor_threads" type="xsd:positiveInteger" default="16"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherUserInfoControllerGrpcGroupType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint"
+        type="xsd:string"
+        minOccurs="1"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
   <!--

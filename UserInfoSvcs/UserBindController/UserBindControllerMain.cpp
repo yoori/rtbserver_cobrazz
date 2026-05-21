@@ -1,58 +1,59 @@
-#include <eh/Exception.hpp>
-
-#include <Commons/ProcessControlVarsImpl.hpp>
-
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/ErrorHandler.hpp>
-#include <Commons/ConfigUtils.hpp>
-
 #include "UserBindControllerMain.hpp"
+
+#include <csignal>
+#include <iostream>
+#include <pthread.h>
+
+#include <Commons/ConfigUtils.hpp>
+#include <Commons/ErrorHandler.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 
 namespace
 {
   const char ASPECT[] = "UserBindController";
-  const char USER_BIND_CONTROLLER_OBJ_KEY[] = "UserBindController";
-  const char USER_BIND_CLUSTER_OBJ_KEY[] = "UserBindClusterControl";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
+
+  void
+  wait_for_shutdown_signal_()
+  {
+    sigset_t signals;
+    sigemptyset(&signals);
+    sigaddset(&signals, SIGINT);
+    sigaddset(&signals, SIGTERM);
+    sigaddset(&signals, SIGQUIT);
+
+    int signal_number = 0;
+    sigwait(&signals, &signal_number);
+  }
 }
 
-UserBindControllerApp_::UserBindControllerApp_()
-  /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "UserBindControllerApp_", ASPECT)
-{}
-
 void
-UserBindControllerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
+UserBindControllerApp_::stop_() noexcept
 {
-  ShutdownGuard guard(shutdown_lock_);
-
-  if(user_bind_controller_impl_.in() != 0)
+  if (grpc_adapter_.in())
   {
-    user_bind_controller_impl_->deactivate_object();
-    user_bind_controller_impl_->wait_object();
+    grpc_adapter_->deactivate_object();
+    grpc_adapter_->wait_object();
+    grpc_adapter_.reset();
   }
 
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
+  if (controller_.in())
+  {
+    controller_->deactivate_object();
+    controller_->wait_object();
+    controller_.reset();
+  }
 
-CORBACommons::IProcessControl::ALIVE_STATUS
-UserBindControllerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
+  pid_file_guard_.reset();
 }
 
 void
-UserBindControllerApp_::main(int& argc, char** argv)
-  noexcept
+UserBindControllerApp_::main(int& argc, char** argv) noexcept
 {
   static const char* FUN = "UserBindControllerApp_::main()";
 
   try
   {
     const char* usage = "usage: UserBindController <config_file>";
-
     if (argc < 2)
     {
       Stream::Error ostr;
@@ -61,172 +62,117 @@ UserBindControllerApp_::main(int& argc, char** argv)
     }
 
     Config::ErrorHandler error_handler;
-
     try
     {
-      /* using xsd namespace */
       using namespace xsd::AdServer::Configuration;
 
-      std::string file_name(argv[1]);
-
-      std::unique_ptr<AdConfigurationType>
-        ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
-
-      if(error_handler.has_errors())
+      std::unique_ptr<AdConfigurationType> ad_configuration =
+        AdConfiguration(argv[1], error_handler);
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
 
-      configuration_ =
-        ConfigPtr(new UserBindControllerConfigType(
+      configuration_.reset(
+        new UserBindControllerConfigType(
           ad_configuration->UserBindControllerConfig()));
     }
-    catch(const xml_schema::parsing& e)
+    catch (const xml_schema::parsing& ex)
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << argv[1] << "': ";
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
       }
-
+      else
+      {
+        ostr << ex;
+      }
       throw Exception(ostr);
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "Can't parse config file '" << argv[1] << "': " << e.what();
-      throw Exception(ostr);
-    }
-    catch(...)
-    {
-      Stream::Error ostr;
-      ostr << "Unknown Exception at parsing of config.";
+      ostr << "Can't parse config file '" << argv[1] << "': " << ex.what();
       throw Exception(ostr);
     }
 
-    // Initializing logger
-    try
-    {
-      logger_ = Config::LoggerConfigReader::create(
-        config().Logger(), argv[0]);
-    }
-    catch (const Config::LoggerConfigReader::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << "got LoggerConfigReader::Exception: " << e.what();
-      throw Exception(ostr);
-    }
+    logger_ = Config::LoggerConfigReader::create(config().Logger(), argv[0]);
+    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(config().pid_file()));
 
-    // fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        config().CorbaConfig(),
-        corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't read Corba Config: " << e.what();
-      throw Exception(ostr);
-    }
-
-    try
-    {
-      // init CORBA Server
-      corba_server_adapter_ =
-        new CORBACommons::CorbaServerAdapter(corba_config_);
-
-      shutdowner_ = corba_server_adapter_->shutdowner();
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't init CorbaServerAdapter: " << e.what();
-      throw Exception(ostr);
-    }
-
-    // Creating user info manager servant
-    user_bind_controller_impl_ =
-      new AdServer::UserInfoSvcs::UserBindControllerImpl(
-        callback(),
+    Logging::ActiveObjectCallbackImpl_var callback(
+      new Logging::ActiveObjectCallbackImpl(
         logger(),
-        config());
+        "UserBindControllerApp",
+        ASPECT));
 
-    register_vars_controller();
+    controller_ = new AdServer::UserInfoSvcs::UserBindControllerImpl(
+      callback,
+      logger(),
+      config());
 
-    AdServer::UserInfoSvcs::UserBindClusterControlImpl_var cluster_control =
-      new AdServer::UserInfoSvcs::UserBindClusterControlImpl(
-        user_bind_controller_impl_.in());
+    grpc_adapter_ = new AdServer::UserInfoSvcs::UserBindControllerGrpc(
+      controller_,
+      logger(),
+      config().GrpcConfig().Endpoint().host().present() &&
+        *config().GrpcConfig().Endpoint().host() != "*" ?
+        *config().GrpcConfig().Endpoint().host() :
+        "0.0.0.0",
+      config().GrpcConfig().Endpoint().port());
 
-    corba_server_adapter_->add_binding(
-      USER_BIND_CONTROLLER_OBJ_KEY,
-      user_bind_controller_impl_.in());
-
-    corba_server_adapter_->add_binding(
-      USER_BIND_CLUSTER_OBJ_KEY,
-      cluster_control.in());
-
-    user_bind_controller_impl_->activate_object();
-
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
+    controller_->activate_object();
+    grpc_adapter_->activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running orb loop
-    corba_server_adapter_->run();
 
-    wait();
+    wait_for_shutdown_signal_();
+    stop_();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
-  catch (const Exception& e)
+  catch (const Exception& ex)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-      ASPECT,
-      "ADS-IMPL-73") <<
-      FUN << ": caught UserBindControllerApp_::Exception: " << e.what();
+    if (logger())
+    {
+      logger()->sstream(Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-73") <<
+        FUN << ": caught UserBindControllerApp_::Exception: " << ex.what();
+    }
+    else
+    {
+      std::cerr << FUN << ": caught UserBindControllerApp_::Exception: " <<
+        ex.what() << '\n';
+    }
   }
-  catch (const CORBA::SystemException& e)
+  catch (const eh::Exception& ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-73") <<
-      FUN << ": caught CORBA::SystemException: " << e;
+    if (logger())
+    {
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-73") <<
+        FUN << ": caught eh::Exception: " << ex.what();
+    }
+    else
+    {
+      std::cerr << FUN << ": caught eh::Exception: " << ex.what() << '\n';
+    }
   }
-  catch (const eh::Exception& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-73") <<
-      FUN << ": caught eh::Exception: " << e.what();
-  }
+
+  stop_();
 }
 
 int
 main(int argc, char** argv)
 {
-  UserBindControllerApp_* app = 0;
+  sigset_t signals;
+  sigemptyset(&signals);
+  sigaddset(&signals, SIGINT);
+  sigaddset(&signals, SIGTERM);
+  sigaddset(&signals, SIGQUIT);
+  pthread_sigmask(SIG_BLOCK, &signals, nullptr);
 
-  try
-  {
-    app = &UserBindControllerApp::instance();
-  }
-  catch (...)
-  {
-    std::cerr << "main(): Critical: Got exception while "
-      "creating application object.\n";
-    return -1;
-  }
-
-  if (app == 0)
-  {
-    std::cerr << "main(): Critical: got NULL application object.\n";
-    return -1;
-  }
-
-  app->main(argc, argv);
+  UserBindControllerApp_ app;
+  app.main(argc, argv);
 }
-

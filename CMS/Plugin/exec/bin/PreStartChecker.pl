@@ -10,7 +10,7 @@ sub print_list;
 sub system_for_output;
 
 my $usage =
-  "Usage: $0 --serv-<service name>=<host name>#<corba ref>,.. --ssh-identity=<> --env=<> [options]\n" .
+  "Usage: $0 --serv-<service name>=<host name>#<corba ref|grpc://host:port>,.. --ssh-identity=<> --env=<> [options]\n" .
   "  'serv' encoded location of service to be checked\n" .
   "  'ssh-identity' identity file\n" .
   "  'env' environment arguments\n" .
@@ -194,13 +194,24 @@ sub print_list
 sub check_service
 {
   my ($host, $reference, $status, $args) = @_;
-  my $probe_util = "ProbeObj";
+
+  my $probe_command;
+  if ($reference =~ m|^grpc://(.+)$|)
+  {
+    $probe_command = "GrpcProbeObj $1";
+  }
+  else
+  {
+    my $probe_util = "ProbeObj";
+    $probe_command =
+      "$probe_util -status $status $reference || " .
+      "{ $probe_util -comment $reference 2>/dev/null ; exit 1 ; }";
+  }
 
   my $command =
-      "ssh -i " . $args->{'ssh-identity'} . " $host '" .
+    "ssh -i " . $args->{'ssh-identity'} . " $host '" .
     "source " . $args->{'env'} . " && " .
-    "$probe_util -status $status $reference || " .
-    "{ $probe_util -comment $reference 2>/dev/null ; exit 1 ; }'";
+    "$probe_command'";
 
   my @res = system_for_output($command);
   return @res;

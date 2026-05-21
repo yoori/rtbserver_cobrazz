@@ -31,7 +31,6 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/PathManip.hpp>
 #include <Commons/CorbaConfig.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateStatLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
@@ -1462,7 +1461,7 @@ namespace AdServer::ChannelSvcs
       {
         return variant_server->get_db_state();
       }
-      catch(const ChannelServerVariantBase::NotSupported& e)
+      catch(const ChannelServerVariantBase::NotSupported&)
       {
         throw Commons::DbStateChanger::NotSupported("");
       }

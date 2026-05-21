@@ -3,17 +3,17 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 
+#include <Commons/ActivityGate.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/Time.hpp>
 
@@ -82,7 +82,10 @@ namespace AdServer::Grpc
     };
 
   public:
-    explicit RefPool(std::vector<std::shared_ptr<T>> refs);
+    RefPool(
+      std::vector<std::shared_ptr<T>> refs,
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        scheduler);
     ~RefPool() noexcept;
 
     std::optional<Ref> get_object();
@@ -102,10 +105,10 @@ namespace AdServer::Grpc
     void wait_object_() override;
 
     mutable std::shared_mutex lock_;
-    std::condition_variable_any cond_;
     std::vector<std::shared_ptr<RefHolder>> available_ref_holders_;
     std::vector<std::shared_ptr<RefHolder>> try_ref_holders_;
     std::map<BadRefKey, std::shared_ptr<RefHolder>> bad_ref_holders_;
+    std::optional<Generics::Time> scheduled_bad_time_;
 
   private:
     void init_refs_();
@@ -117,14 +120,17 @@ namespace AdServer::Grpc
     void finish_probe_(
       const std::shared_ptr<RefHolder>& ref_holder) noexcept;
 
-    void move_bad_refs_loop_();
+    void schedule_bad_refs_move_(const Generics::Time& bad_time) noexcept;
+    void move_ready_bad_refs_(const Generics::Time& expected_bad_time) noexcept;
 
   private:
     std::vector<std::shared_ptr<T>> refs_;
     std::vector<std::shared_ptr<RefHolder>> ref_holders_;
     std::atomic<std::size_t> next_ref_index_{0};
     std::atomic<std::size_t> try_ref_count_{0};
-    std::optional<std::thread> thread_;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      scheduler_;
+    std::shared_ptr<AdServer::Commons::ActivityGate> gate_;
   };
 }
 

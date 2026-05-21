@@ -9,6 +9,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
+#include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
 
@@ -17,6 +18,7 @@ namespace AdServer::ChannelSvcs
   namespace
   {
     constexpr const char channel_server_grpc_aspect[] = "ChannelServerGrpc";
+    namespace pc = adserver::grpc::process_control;
 
     template<typename CorbaOctSeq>
     std::string
@@ -138,13 +140,152 @@ namespace AdServer::ChannelSvcs
       ::grpc::Status& result_status) const;
 
   private:
+    class ProcessControlService final:
+      public pc::ProcessControl::Service
+    {
+    public:
+      explicit ProcessControlService(const ServiceImpl& owner);
+
+      ::grpc::Status get_status(
+        ::grpc::ServerContext* context,
+        const pc::GetStatusRequest* request,
+        pc::GetStatusResponse* response) override;
+
+      ::grpc::Status get_db_state(
+        ::grpc::ServerContext* context,
+        const pc::GetDbStateRequest* request,
+        pc::GetDbStateResponse* response) override;
+
+      ::grpc::Status set_db_state(
+        ::grpc::ServerContext* context,
+        const pc::SetDbStateRequest* request,
+        pc::SetDbStateResponse* response) override;
+
+    private:
+      const ServiceImpl& owner_;
+    };
+
+    void get_status_(pc::GetStatusResponse& response) const;
+    ::grpc::Status get_db_state_(pc::GetDbStateResponse& response) const;
+    ::grpc::Status set_db_state_(const pc::SetDbStateRequest& request) const;
+
+  private:
+    ProcessControlService process_control_service_;
     ChannelServerCorePtr core_;
   };
 
+  ChannelServerGrpc::ServiceImpl::ProcessControlService::
+  ProcessControlService(const ServiceImpl& owner)
+    : owner_(owner)
+  {}
+
+  ::grpc::Status
+  ChannelServerGrpc::ServiceImpl::ProcessControlService::get_status(
+    ::grpc::ServerContext*,
+    const pc::GetStatusRequest*,
+    pc::GetStatusResponse* response)
+  {
+    owner_.get_status_(*response);
+    return ::grpc::Status::OK;
+  }
+
+  ::grpc::Status
+  ChannelServerGrpc::ServiceImpl::ProcessControlService::get_db_state(
+    ::grpc::ServerContext*,
+    const pc::GetDbStateRequest*,
+    pc::GetDbStateResponse* response)
+  {
+    return owner_.get_db_state_(*response);
+  }
+
+  ::grpc::Status
+  ChannelServerGrpc::ServiceImpl::ProcessControlService::set_db_state(
+    ::grpc::ServerContext*,
+    const pc::SetDbStateRequest* request,
+    pc::SetDbStateResponse*)
+  {
+    return owner_.set_db_state_(*request);
+  }
+
   ChannelServerGrpc::ServiceImpl::ServiceImpl(
     ChannelServerCorePtr core)
-    : core_(std::move(core))
-  {}
+    : process_control_service_(*this),
+      core_(std::move(core))
+  {
+    add_grpc_service(&process_control_service_);
+  }
+
+  void
+  ChannelServerGrpc::ServiceImpl::get_status_(
+    pc::GetStatusResponse& response) const
+  {
+    try
+    {
+      const bool ready = core_->ready();
+      response.set_ready(ready);
+      if (!ready)
+      {
+        response.set_description(core_->comment());
+      }
+    }
+    catch (const eh::Exception& ex)
+    {
+      response.set_ready(false);
+      response.set_description(ex.what());
+    }
+  }
+
+  ::grpc::Status
+  ChannelServerGrpc::ServiceImpl::get_db_state_(
+    pc::GetDbStateResponse& response) const
+  {
+    try
+    {
+      response.set_enabled(core_->get_db_state());
+      return ::grpc::Status::OK;
+    }
+    catch (const Commons::DbStateChanger::NotSupported& ex)
+    {
+      return AdServer::Grpc::error_status(
+        ::grpc::StatusCode::UNIMPLEMENTED,
+        ex.what());
+    }
+    catch (const ChannelServerCore::Exception& ex)
+    {
+      return AdServer::Grpc::error_status(
+        ::grpc::StatusCode::FAILED_PRECONDITION,
+        ex.what());
+    }
+    catch (const eh::Exception& ex)
+    {
+      return AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        ex.what());
+    }
+  }
+
+  ::grpc::Status
+  ChannelServerGrpc::ServiceImpl::set_db_state_(
+    const pc::SetDbStateRequest& request) const
+  {
+    try
+    {
+      core_->change_db_state(request.enabled());
+      return ::grpc::Status::OK;
+    }
+    catch (const ChannelServerCore::Exception& ex)
+    {
+      return AdServer::Grpc::error_status(
+        ::grpc::StatusCode::FAILED_PRECONDITION,
+        ex.what());
+    }
+    catch (const eh::Exception& ex)
+    {
+      return AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        ex.what());
+    }
+  }
 
   void
   ChannelServerGrpc::ServiceImpl::match(
