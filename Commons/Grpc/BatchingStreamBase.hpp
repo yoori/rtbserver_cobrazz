@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <string>
@@ -25,6 +26,20 @@ namespace AdServer::Grpc
     const char* full_method = nullptr;
     std::string payload;
     std::function<void(const adserver::grpc::BatchResponseItem&)> callback;
+    AdServer::Grpc::InflightLimiter* inflight_limiter = nullptr;
+
+    void complete(const adserver::grpc::BatchResponseItem& item)
+    {
+      if (callback)
+      {
+        callback(item);
+      }
+
+      if (inflight_limiter)
+      {
+        inflight_limiter->release();
+      }
+    }
   };
 
   struct BatchingPendingOperation

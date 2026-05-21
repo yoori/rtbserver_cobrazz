@@ -169,12 +169,6 @@ namespace Config
         std::nullopt;
     }
     options.error_on_inflight_reaching = config.error_on_inflight_reaching();
-    if (config.max_outstanding_requests().present())
-    {
-      options.max_outstanding_requests = *config.max_outstanding_requests() > 0 ?
-        std::optional<std::size_t>(*config.max_outstanding_requests()) :
-        std::nullopt;
-    }
     options.workers_number = config.workers_number();
     options.hot_buckets_count = config.hot_buckets_count();
     if (config.max_batch_delay_us().present())

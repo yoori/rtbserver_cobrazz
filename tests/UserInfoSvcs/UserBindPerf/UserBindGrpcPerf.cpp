@@ -236,9 +236,8 @@ namespace
       << "  --max-streams <N>     maximum async-batch grpc streams (default: --client-threads)\n"
       << "  --mode <name>         async-batch | distributed-grpc (default: async-batch)\n"
       << "  --user-bind-controller-grpc-endpoint <host:port> UserBindController2 grpc endpoint for distributed-grpc mode\n"
-      << "  --max-inflight <N>    soft max in-flight requests (default: 12000)\n"
+      << "  --max-inflight <N>    soft max in-flight requests, 0 disables limit (default: 0)\n"
       << "  --error-on-inflight-reaching <0|1> fail request instead of waiting on max-inflight (default: 0)\n"
-      << "  --max-outstanding-requests <N> maximum async-batch accepted but unfinished requests, 0 disables limit (default: 0)\n"
       << "  --max-batch-size <N>  maximum batch size for async-batch mode (default: 1024)\n"
       << "  --max-batch-delay-us <N> maximum time to wait for filling async-batch request, 0 disables delay flush (default: 3000)\n"
       << "  --max-queue-wait-us <N> maximum queue wait before local request timeout, 0 disables (default: 0)\n"
@@ -263,9 +262,8 @@ main(int argc, char** argv)
     Generics::AppUtils::Option<unsigned int> opt_client_threads(4);
     Generics::AppUtils::Option<unsigned int> opt_max_streams(0);
     StringOption opt_mode("async-batch");
-    Generics::AppUtils::Option<unsigned long> opt_max_inflight(12000);
+    Generics::AppUtils::Option<unsigned long> opt_max_inflight(0);
     Generics::AppUtils::Option<unsigned int> opt_error_on_inflight_reaching(0);
-    Generics::AppUtils::Option<unsigned long> opt_max_outstanding_requests(0);
     Generics::AppUtils::Option<unsigned long> opt_max_batch_size(1024);
     Generics::AppUtils::Option<unsigned long> opt_max_batch_delay_us(3000);
     Generics::AppUtils::Option<unsigned long> opt_max_queue_wait_us(0);
@@ -287,7 +285,6 @@ main(int argc, char** argv)
     args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("max-inflight"), opt_max_inflight);
     args.add(equal_name("error-on-inflight-reaching"), opt_error_on_inflight_reaching);
-    args.add(equal_name("max-outstanding-requests"), opt_max_outstanding_requests);
     args.add(equal_name("max-batch-size"), opt_max_batch_size);
     args.add(equal_name("max-batch-delay-us"), opt_max_batch_delay_us);
     args.add(equal_name("max-queue-wait-us"), opt_max_queue_wait_us);
@@ -342,19 +339,10 @@ main(int argc, char** argv)
     const auto client_threads = *opt_client_threads;
     const auto max_streams =
       *opt_max_streams == 0 ? client_threads : *opt_max_streams;
-    const auto default_max_inflight =
-      (*mode == Mode::AsyncBatch || *mode == Mode::DistributedGrpc) ?
-        std::max(
-          1UL,
-          static_cast<unsigned long>(max_streams) *
-            static_cast<unsigned long>(*opt_max_batch_size) *
-            32UL) :
-        std::max(1UL, static_cast<unsigned long>(client_threads) * 64UL);
-    const std::optional<std::size_t> max_inflight{
-      static_cast<std::size_t>(
-        *opt_max_inflight > 0 ?
-          *opt_max_inflight :
-          default_max_inflight)};
+    const auto max_inflight =
+      *opt_max_inflight > 0 ?
+        std::make_optional<std::size_t>(*opt_max_inflight) :
+        std::nullopt;
     const auto make_time_option =
       [](unsigned long microseconds) -> std::optional<Generics::Time>
       {
@@ -389,10 +377,6 @@ main(int argc, char** argv)
       options.max_inflight = max_inflight;
       options.error_on_inflight_reaching =
         *opt_error_on_inflight_reaching != 0;
-      if (*opt_max_outstanding_requests > 0)
-      {
-        options.max_outstanding_requests = *opt_max_outstanding_requests;
-      }
       options.workers_number = client_threads;
       options.hot_buckets_count = *opt_hot_buckets_count;
       options.max_batch_delay = make_time_option(*opt_max_batch_delay_us);
@@ -426,10 +410,6 @@ main(int argc, char** argv)
       options.max_inflight = max_inflight;
       options.error_on_inflight_reaching =
         *opt_error_on_inflight_reaching != 0;
-      if (*opt_max_outstanding_requests > 0)
-      {
-        options.max_outstanding_requests = *opt_max_outstanding_requests;
-      }
       options.workers_number = client_threads;
       options.hot_buckets_count = *opt_hot_buckets_count;
       options.max_batch_delay = make_time_option(*opt_max_batch_delay_us);

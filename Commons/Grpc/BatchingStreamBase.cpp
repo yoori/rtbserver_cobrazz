@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -152,7 +153,7 @@ namespace AdServer::Grpc
     std::atomic_bool process_completion_tags_{true};
 
     std::mutex inflight_lock_;
-    std::unordered_map<std::uint64_t, std::shared_ptr<InflightRequest>> inflight_;
+    std::unordered_map<std::uint64_t, InflightRequest> inflight_;
     std::atomic<std::uint64_t> next_request_id_{1};
 
     std::mutex state_lock_;
@@ -614,60 +615,70 @@ namespace AdServer::Grpc
     auto write_requests =
       std::make_shared<WriteRequests>();
     write_requests->reserve(pending_batch.size());
-    std::vector<std::pair<PendingRequest, Generics::Time>> timed_out_requests;
-    timed_out_requests.reserve(pending_batch.size());
+    std::optional<std::vector<std::pair<PendingRequest, Generics::Time>>>
+      timed_out_requests;
     const auto write_time = Generics::Time::get_time_of_day();
+    auto request_id = next_request_id_.fetch_add(
+      pending_batch.size(),
+      std::memory_order_relaxed);
 
+    for (auto& pending : pending_batch)
     {
-      std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
-      for (auto& pending : pending_batch)
+      const auto current_request_id = request_id++;
+      const auto wait_time = duration_time(pending.enqueue_time, write_time);
+      const auto wait_us = wait_time.microseconds();
+      add_queue_wait_stats(wait_us);
+      if (options_.max_queue_wait && wait_time > *options_.max_queue_wait)
       {
-        const auto wait_time = duration_time(pending.enqueue_time, write_time);
-        const auto wait_us = wait_time.microseconds();
-        add_queue_wait_stats(wait_us);
-        if (options_.max_queue_wait && wait_time > *options_.max_queue_wait)
+        add_queue_timeout_stats();
+        if (!timed_out_requests.has_value())
         {
-          add_queue_timeout_stats();
-          timed_out_requests.emplace_back(
-            std::move(pending),
-            wait_time);
-          continue;
+          timed_out_requests.emplace();
         }
-
-        auto* item = write_batch->add_items();
-        const auto request_id = next_request_id_.fetch_add(
-          1,
-          std::memory_order_relaxed);
-        item->set_request_id(request_id);
-        item->set_full_method(pending.request->full_method);
-        item->set_payload(pending.request->payload);
-
-        auto inflight_request = std::make_shared<InflightRequest>();
-        inflight_request->write_time = write_time;
-        inflight_request->request = pending.request;
-        inflight_.emplace(request_id, std::move(inflight_request));
-        write_requests->push_back(WriteRequest{
-          request_id,
-          std::move(pending)});
-      }
-    }
-
-    for (auto& [request, wait_time] : timed_out_requests)
-    {
-      if (!request.request || !request.request->callback)
-      {
+        timed_out_requests->emplace_back(std::move(pending), wait_time);
         continue;
       }
 
-      const auto status_message =
-        std::string(QUEUE_WAIT_TIMEOUT_STATUS) +
-          ": wait_us=" + std::to_string(wait_time.microseconds()) +
-          ", limit_us=" +
-            std::to_string(options_.max_queue_wait->microseconds());
-      BatchResponseItem item;
-      item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
-      item.set_status_message(status_message);
-      request.request->callback(item);
+      auto* item = write_batch->add_items();
+      item->set_request_id(current_request_id);
+      item->set_full_method(pending.request->full_method);
+      item->set_payload(pending.request->payload);
+
+      write_requests->push_back(WriteRequest{
+        current_request_id,
+        std::move(pending)});
+    }
+
+    if (!write_requests->empty())
+    {
+      std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
+      for (auto& request : *write_requests)
+      {
+        inflight_.emplace(request.request_id, InflightRequest{
+          write_time,
+          request.pending.request});
+      }
+    }
+
+    if (timed_out_requests.has_value())
+    {
+      for (auto& [request, wait_time] : *timed_out_requests)
+      {
+        if (!request.request)
+        {
+          continue;
+        }
+
+        const auto status_message =
+          std::string(QUEUE_WAIT_TIMEOUT_STATUS) +
+            ": wait_us=" + std::to_string(wait_time.microseconds()) +
+            ", limit_us=" +
+              std::to_string(options_.max_queue_wait->microseconds());
+        BatchResponseItem item;
+        item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
+        item.set_status_message(status_message);
+        request.request->complete(item);
+      }
     }
 
     const auto batch_size = write_batch->items_size();
@@ -892,7 +903,7 @@ namespace AdServer::Grpc
     bool ok,
     std::unique_ptr<BatchResponse> response)
   {
-    std::vector<std::shared_ptr<InflightRequest>> completed_requests;
+    std::vector<InflightRequest> completed_requests;
     std::vector<BatchResponseItem> completed_items;
 
     if (ok)
@@ -914,7 +925,7 @@ namespace AdServer::Grpc
         completed_requests.emplace_back(std::move(it->second));
         completed_items.emplace_back(item);
         const auto wait_us = duration_time(
-          completed_requests.back()->write_time,
+          completed_requests.back().write_time,
           response_time).microseconds();
         add_response_wait_stats(wait_us);
         inflight_.erase(it);
@@ -943,9 +954,9 @@ namespace AdServer::Grpc
     for (std::size_t i = 0; i < completed_requests.size(); ++i)
     {
       auto& request = completed_requests[i];
-      if (request && request->request && request->request->callback)
+      if (request.request)
       {
-        request->request->callback(completed_items[i]);
+        request.request->complete(completed_items[i]);
       }
     }
 
@@ -1040,9 +1051,9 @@ namespace AdServer::Grpc
       BatchResponseItem item;
       item.set_status_code(status_code);
       item.set_status_message(status_message);
-      if (request.request && request.request->callback)
+      if (request.request)
       {
-        request.request->callback(item);
+        request.request->complete(item);
       }
     }
     requests.clear();
@@ -1060,11 +1071,11 @@ namespace AdServer::Grpc
       inflight_requests.reserve(inflight_.size());
       for (auto& [_, request] : inflight_)
       {
-        if (request)
+        if (request.request)
         {
           inflight_requests.emplace_back(PendingRequest{
             Generics::Time::ZERO,
-            std::move(request->request)});
+            std::move(request.request)});
         }
       }
       inflight_.clear();
@@ -1085,11 +1096,11 @@ namespace AdServer::Grpc
       requests.reserve(requests.size() + inflight_.size());
       for (auto& [_, request] : inflight_)
       {
-        if (request)
+        if (request.request)
         {
           requests.emplace_back(PendingRequest{
             Generics::Time::ZERO,
-            std::move(request->request)});
+            std::move(request.request)});
         }
       }
       inflight_.clear();

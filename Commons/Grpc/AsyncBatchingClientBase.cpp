@@ -30,9 +30,9 @@ namespace AdServer::Grpc
         adserver::grpc::BatchResponseItem item;
         item.set_status_code(status_code);
         item.set_status_message(status_message);
-        if (request.request && request.request->callback)
+        if (request.request)
         {
-          request.request->callback(item);
+          request.request->complete(item);
         }
       }
       batch.clear();
@@ -53,8 +53,7 @@ namespace AdServer::Grpc
 
   // This helper guarantees callback delivery when a batch owner is lost inside
   // the asio executor processing stack before the callback path is reached.
-  class AsyncBatchingClientBase::DetachedBatchStorage final:
-    public std::enable_shared_from_this<DetachedBatchStorage>
+  class AsyncBatchingClientBase::DetachedBatchStorage final
   {
   public:
     struct BatchGuard
@@ -83,17 +82,15 @@ namespace AdServer::Grpc
       BatchingStreamBase::PendingBatch batch;
     };
 
-    DetachedBatchOwnerPtr register_batch(
-      BatchingStreamBase::PendingBatch&& batch);
+    using BatchGuardPtr = std::shared_ptr<BatchGuard>;
+
+    BatchGuardPtr register_batch(BatchingStreamBase::PendingBatch&& batch);
 
     void unregister_batch(std::uint64_t id);
 
     void close();
 
     std::vector<BatchingStreamBase::PendingBatch> drain_all();
-
-  private:
-    using BatchGuardPtr = std::shared_ptr<BatchGuard>;
 
   private:
     std::mutex lock_;
@@ -104,17 +101,17 @@ namespace AdServer::Grpc
 
   struct AsyncBatchingClientBase::DetachedBatchOwner
   {
-    DetachedBatchOwner(
-      std::weak_ptr<DetachedBatchStorage> holder_val,
-      std::shared_ptr<DetachedBatchStorage::BatchGuard> guard_val)
-      : holder(std::move(holder_val)),
-        guard(std::move(guard_val))
+    explicit DetachedBatchOwner(
+      DetachedBatchStorage::BatchGuardPtr guard_val)
+      : guard(std::move(guard_val))
     {}
 
     ~DetachedBatchOwner() = default;
 
     DetachedBatchOwner(const DetachedBatchOwner&) = delete;
     DetachedBatchOwner& operator=(const DetachedBatchOwner&) = delete;
+    DetachedBatchOwner(DetachedBatchOwner&&) noexcept = default;
+    DetachedBatchOwner& operator=(DetachedBatchOwner&&) noexcept = default;
 
     BatchingStreamBase::PendingBatch claim_payload()
     {
@@ -122,25 +119,32 @@ namespace AdServer::Grpc
       return guard->claim_payload();
     }
 
-    std::weak_ptr<DetachedBatchStorage> holder;
-    std::shared_ptr<DetachedBatchStorage::BatchGuard> guard;
+    std::uint64_t id() const noexcept
+    {
+      assert(guard);
+      return guard->id;
+    }
+
+    DetachedBatchStorage::BatchGuardPtr guard;
   };
 
-  AsyncBatchingClientBase::DetachedBatchOwnerPtr
+  AsyncBatchingClientBase::DetachedBatchStorage::BatchGuardPtr
   AsyncBatchingClientBase::DetachedBatchStorage::register_batch(
     BatchingStreamBase::PendingBatch&& batch)
   {
     assert(!batch.empty());
 
-    std::lock_guard<std::mutex> lock(lock_);
-    assert(!closed_);
-
     const auto id = next_id_.fetch_add(1, std::memory_order_relaxed);
     auto batch_guard = std::make_shared<BatchGuard>(id, std::move(batch));
-    batches_.emplace(id, batch_guard);
-    return std::make_shared<DetachedBatchOwner>(
-      shared_from_this(),
-      std::move(batch_guard));
+    auto registered_batch_guard = batch_guard;
+
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      assert(!closed_);
+      batches_.emplace(id, std::move(registered_batch_guard));
+    }
+
+    return batch_guard;
   }
 
   void
@@ -306,16 +310,6 @@ namespace AdServer::Grpc
     stream_shrink_gate_.reset();
   }
 
-  void
-  AsyncBatchingClientBase::release_request_() noexcept
-  {
-    if (options_.max_outstanding_requests.has_value())
-    {
-      outstanding_requests_.fetch_sub(1, std::memory_order_acq_rel);
-    }
-    inflight_limiter_.release();
-  }
-
   AdServer::Grpc::Stats
   AsyncBatchingClientBase::stats() const noexcept
   {
@@ -343,71 +337,10 @@ namespace AdServer::Grpc
       return;
     }
 
-    // Increase and check inflight limits.
-    if (options_.error_on_inflight_reaching)
-    {
-      if (!inflight_limiter_.try_acquire())
-      {
-        if (callback)
-        {
-          adserver::grpc::BatchResponseItem item;
-          item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
-          item.set_status_message("inflight limit reached");
-          callback(item);
-        }
-        return;
-      }
-    }
-    else
-    {
-      inflight_limiter_.acquire();
-    }
-
-    if (options_.max_outstanding_requests.has_value())
-    {
-      auto outstanding_requests =
-        outstanding_requests_.load(std::memory_order_acquire);
-      while (outstanding_requests < *options_.max_outstanding_requests)
-      {
-        if (outstanding_requests_.compare_exchange_strong(
-              outstanding_requests,
-              outstanding_requests + 1,
-              std::memory_order_acq_rel,
-              std::memory_order_acquire))
-        {
-          break;
-        }
-      }
-
-      if (outstanding_requests >= *options_.max_outstanding_requests)
-      {
-        inflight_limiter_.release();
-        if (callback)
-        {
-          adserver::grpc::BatchResponseItem item;
-          item.set_status_code(grpc::StatusCode::UNAVAILABLE);
-          item.set_status_message("max outstanding requests reached");
-          callback(item);
-        }
-        return;
-      }
-    }
-
     auto pending_request = std::make_shared<BatchingQueue::PendingRequest>();
     pending_request->full_method = full_method;
     pending_request->payload = std::move(payload);
-    pending_request->callback =
-      [
-        this,
-        callback = std::move(callback)
-      ](const auto& batch_response) mutable
-      {
-        if (callback)
-        {
-          callback(batch_response);
-        }
-        release_request_();
-      };
+    pending_request->callback = std::move(callback);
 
     const auto now = Generics::Time::get_time_of_day();
     auto enqueue_result = batching_queue_->enqueue(
@@ -423,7 +356,12 @@ namespace AdServer::Grpc
 
     if (!enqueue_result.ready_batch.empty())
     {
-      process_batch_(std::move(enqueue_result.ready_batch), now);
+      if (acquire_batch_inflight_(
+            enqueue_result.ready_batch,
+            options_.error_on_inflight_reaching))
+      {
+        process_batch_(std::move(enqueue_result.ready_batch), now);
+      }
     }
   }
 
@@ -457,8 +395,7 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::process_batch_(
     BatchingStreamBase::PendingBatch&& batch,
-    const Generics::Time& now)
-    noexcept
+    const Generics::Time& now) noexcept
   {
     assert(!batch.empty());
 
@@ -520,6 +457,45 @@ namespace AdServer::Grpc
     {
       start_connect_();
     }
+  }
+
+  bool
+  AsyncBatchingClientBase::acquire_batch_inflight_(
+    BatchingStreamBase::PendingBatch& batch,
+    bool allow_limit_error) noexcept
+  {
+    assert(!batch.empty());
+
+    if (!options_.max_inflight)
+    {
+      return true;
+    }
+
+    if (allow_limit_error)
+    {
+      if (!inflight_limiter_.try_acquire(batch.size()))
+      {
+        finish_batch_with_error(
+          batch,
+          grpc::StatusCode::RESOURCE_EXHAUSTED,
+          "inflight limit reached");
+        return false;
+      }
+    }
+    else
+    {
+      inflight_limiter_.acquire(batch.size());
+    }
+
+    for (auto& request : batch)
+    {
+      if (request.request)
+      {
+        request.request->inflight_limiter = &inflight_limiter_;
+      }
+    }
+
+    return true;
   }
 
   bool
@@ -679,9 +655,9 @@ namespace AdServer::Grpc
     assert(stream_holder);
     assert(stream_holder->stream);
 
-    auto owner = detached_batch_storage_->register_batch(std::move(batch));
-    assert(owner);
-    auto owned_batch = owner->claim_payload();
+    DetachedBatchOwner owner(
+      detached_batch_storage_->register_batch(std::move(batch)));
+    auto owned_batch = owner.claim_payload();
     assert(!owned_batch.empty());
 
     BatchingStreamBase::PendingBatch failed_batch;
@@ -698,7 +674,7 @@ namespace AdServer::Grpc
       failed_batch = std::move(owned_batch);
     }
 
-    detached_batch_storage_->unregister_batch(owner->guard->id);
+    detached_batch_storage_->unregister_batch(owner.id());
     if (write_started)
     {
       return true;

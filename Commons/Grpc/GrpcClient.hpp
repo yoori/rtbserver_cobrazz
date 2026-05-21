@@ -30,9 +30,13 @@ namespace AdServer::Grpc
 
     std::size_t channels_number = 1;
     std::size_t max_batch_size = 1024;
-    std::optional<std::size_t> max_inflight{12000};
+    // Limits requests that have left BatchingQueue through full-batch flushes.
+    // Queued requests are not counted. Accounting is reserved and released per
+    // batch, not per request. Concurrent full-batch flushes can overshoot the
+    // limit; the timing flush path bypasses the limiter and can add one more
+    // batch of overshoot.
+    std::optional<std::size_t> max_inflight;
     bool error_on_inflight_reaching = false;
-    std::optional<std::size_t> max_outstanding_requests;
     std::size_t workers_number = 4;
     std::size_t hot_buckets_count = 1;
     std::optional<Generics::Time> max_batch_delay{
@@ -122,10 +126,13 @@ namespace AdServer::Grpc
     explicit InflightLimiter(std::optional<std::size_t> max_inflight = std::nullopt);
 
     bool try_acquire() noexcept;
+    bool try_acquire(std::size_t count) noexcept;
 
     void acquire();
+    void acquire(std::size_t count);
 
     void release() noexcept;
+    void release(std::size_t count) noexcept;
 
   private:
     std::mutex lock_;
@@ -268,6 +275,12 @@ namespace AdServer::Grpc
   inline bool
   InflightLimiter::try_acquire() noexcept
   {
+    return try_acquire(1);
+  }
+
+  inline bool
+  InflightLimiter::try_acquire(std::size_t count) noexcept
+  {
     if (!max_inflight_)
     {
       return true;
@@ -278,7 +291,7 @@ namespace AdServer::Grpc
     {
       if (inflight_count_.compare_exchange_weak(
             inflight_count,
-            inflight_count + 1,
+            inflight_count + count,
             std::memory_order_acq_rel,
             std::memory_order_acquire))
       {
@@ -292,34 +305,46 @@ namespace AdServer::Grpc
   inline void
   InflightLimiter::acquire()
   {
-    if (!max_inflight_)
-    {
-      return;
-    }
-
-    if (try_acquire())
-    {
-      return;
-    }
-
-    std::unique_lock lock(lock_);
-    waiters_count_.fetch_add(1, std::memory_order_acq_rel);
-    cv_.wait(lock, [this] { return try_acquire(); });
-    waiters_count_.fetch_sub(1, std::memory_order_acq_rel);
+    acquire(1);
   }
 
   inline void
-  InflightLimiter::release() noexcept
+  InflightLimiter::acquire(std::size_t count)
   {
     if (!max_inflight_)
     {
       return;
     }
 
-    inflight_count_.fetch_sub(1, std::memory_order_acq_rel);
+    if (try_acquire(count))
+    {
+      return;
+    }
+
+    std::unique_lock lock(lock_);
+    waiters_count_.fetch_add(1, std::memory_order_acq_rel);
+    cv_.wait(lock, [this, count] { return try_acquire(count); });
+    waiters_count_.fetch_sub(1, std::memory_order_acq_rel);
+  }
+
+  inline void
+  InflightLimiter::release() noexcept
+  {
+    release(1);
+  }
+
+  inline void
+  InflightLimiter::release(std::size_t count) noexcept
+  {
+    if (!max_inflight_)
+    {
+      return;
+    }
+
+    inflight_count_.fetch_sub(count, std::memory_order_acq_rel);
     if (waiters_count_.load(std::memory_order_acquire) != 0)
     {
-      cv_.notify_one();
+      cv_.notify_all();
     }
   }
 

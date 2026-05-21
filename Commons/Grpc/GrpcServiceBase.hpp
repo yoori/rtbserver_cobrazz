@@ -654,12 +654,6 @@ namespace AdServer::Grpc
         {
           if (!ok)
           {
-            if (context_.IsCancelled())
-            {
-              delete this;
-              return;
-            }
-
             state_ = State::Finish;
             responder_.Finish(::grpc::Status::OK, this);
             return;

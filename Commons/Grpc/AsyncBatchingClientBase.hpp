@@ -67,7 +67,6 @@ namespace AdServer::Grpc
     using StreamHolderPtr = std::shared_ptr<StreamHolder>;
     using ActivityGatePtr = std::shared_ptr<AdServer::Commons::ActivityGate>;
     using DetachedBatchStoragePtr = std::shared_ptr<DetachedBatchStorage>;
-    using DetachedBatchOwnerPtr = std::shared_ptr<DetachedBatchOwner>;
     using BatchResponseCallback =
       std::function<void(const adserver::grpc::BatchResponseItem&)>;
 
@@ -83,6 +82,9 @@ namespace AdServer::Grpc
     void process_batch_(
       BatchingStreamBase::PendingBatch&& batch,
       const Generics::Time& now) noexcept;
+    bool acquire_batch_inflight_(
+      BatchingStreamBase::PendingBatch& batch,
+      bool allow_limit_error) noexcept;
     bool maybe_start_connect_for_pending_(
       std::vector<BatchingStreamBase::PendingBatch>& failed_batches,
       const Generics::Time& now) noexcept;
@@ -103,7 +105,6 @@ namespace AdServer::Grpc
       BatchingStreamBase* stream,
       const StreamHolderPtr& stream_holder) noexcept;
     void update_max_streams_(std::size_t streams_count) noexcept;
-    void release_request_() noexcept;
     void deactivate_streams_() noexcept;
     void wait_streams_() noexcept;
     void clear_streams_() noexcept;
@@ -135,7 +136,6 @@ namespace AdServer::Grpc
     ActivityGatePtr submission_gate_;
     ActivityGatePtr timing_coalesce_gate_;
     ActivityGatePtr stream_shrink_gate_;
-    std::atomic<std::size_t> outstanding_requests_{0};
     std::atomic<unsigned int> next_queue_index_{0};
     std::atomic<std::size_t> up_streams_{0};
     std::atomic<std::uint64_t> max_streams_seen_{0};
