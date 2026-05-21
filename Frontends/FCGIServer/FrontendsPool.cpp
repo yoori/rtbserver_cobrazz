@@ -262,7 +262,8 @@ namespace AdServer
               fe_config.UserBindFeConfiguration(),
               logger_,
               request_workers_,
-              common_module_);
+              common_module_,
+              stats_);
           }
           else if(*module_it == M_PASSBACK)
           {

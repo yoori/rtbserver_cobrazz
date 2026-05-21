@@ -43,7 +43,7 @@ namespace AdServer::Grpc
     using BatchResponse = adserver::grpc::BatchResponse;
     using BatchTransport = grpc::TemplatedGenericStub<BatchRequest, BatchResponse>;
     using PendingRequest = AdServer::Grpc::BatchingPendingOperation;
-    using PendingBatch = std::vector<std::shared_ptr<PendingRequest>>;
+    using PendingBatch = std::vector<PendingRequest>;
     using ReadyCallback = std::function<void(BatchingStreamBase*)>;
     using ClosedCallback = std::function<void(BatchingStreamBase*)>;
     using DrainedCallback = std::function<void(BatchingStreamBase*)>;

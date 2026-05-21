@@ -90,7 +90,7 @@ namespace AdServer::Grpc
     struct WriteRequest
     {
       std::uint64_t request_id = 0;
-      std::shared_ptr<PendingRequest> pending;
+      PendingRequest pending;
     };
     struct InflightRequest
     {
@@ -101,9 +101,9 @@ namespace AdServer::Grpc
 
     bool active() const noexcept;
     bool start_write_(
-      std::vector<std::shared_ptr<PendingRequest>>&& pending_batch,
+      std::vector<PendingRequest>&& pending_batch,
       bool measure_consumer_stream_write,
-      std::vector<std::shared_ptr<PendingRequest>>* failed_batch);
+      std::vector<PendingRequest>* failed_batch);
     bool start_stream_();
     void maybe_start_read_i_();
     void maybe_start_shutdown_i_();
@@ -118,7 +118,7 @@ namespace AdServer::Grpc
       grpc::StatusCode status_code,
       const char* status_message);
     void finish_requests_with_error_(
-      std::vector<std::shared_ptr<PendingRequest>>& requests,
+      std::vector<PendingRequest>& requests,
       grpc::StatusCode status_code,
       const char* status_message);
     void fail_inflight_with_error_(
@@ -604,9 +604,9 @@ namespace AdServer::Grpc
 
   bool
   BatchingStreamBase::Impl::start_write_(
-    std::vector<std::shared_ptr<PendingRequest>>&& pending_batch,
+    std::vector<PendingRequest>&& pending_batch,
     bool measure_consumer_stream_write,
-    std::vector<std::shared_ptr<PendingRequest>>* failed_batch)
+    std::vector<PendingRequest>* failed_batch)
   {
     write_arena_.Reset();
     auto* write_batch =
@@ -614,8 +614,7 @@ namespace AdServer::Grpc
     auto write_requests =
       std::make_shared<WriteRequests>();
     write_requests->reserve(pending_batch.size());
-    std::vector<std::pair<std::shared_ptr<PendingRequest>, Generics::Time>>
-      timed_out_requests;
+    std::vector<std::pair<PendingRequest, Generics::Time>> timed_out_requests;
     timed_out_requests.reserve(pending_batch.size());
     const auto write_time = Generics::Time::get_time_of_day();
 
@@ -623,7 +622,7 @@ namespace AdServer::Grpc
       std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
       for (auto& pending : pending_batch)
       {
-        const auto wait_time = duration_time(pending->enqueue_time, write_time);
+        const auto wait_time = duration_time(pending.enqueue_time, write_time);
         const auto wait_us = wait_time.microseconds();
         add_queue_wait_stats(wait_us);
         if (options_.max_queue_wait && wait_time > *options_.max_queue_wait)
@@ -640,12 +639,12 @@ namespace AdServer::Grpc
           1,
           std::memory_order_relaxed);
         item->set_request_id(request_id);
-        item->set_full_method(pending->request->full_method);
-        item->set_payload(pending->request->payload);
+        item->set_full_method(pending.request->full_method);
+        item->set_payload(pending.request->payload);
 
         auto inflight_request = std::make_shared<InflightRequest>();
         inflight_request->write_time = write_time;
-        inflight_request->request = pending->request;
+        inflight_request->request = pending.request;
         inflight_.emplace(request_id, std::move(inflight_request));
         write_requests->push_back(WriteRequest{
           request_id,
@@ -655,7 +654,7 @@ namespace AdServer::Grpc
 
     for (auto& [request, wait_time] : timed_out_requests)
     {
-      if (!request->request || !request->request->callback)
+      if (!request.request || !request.request->callback)
       {
         continue;
       }
@@ -668,7 +667,7 @@ namespace AdServer::Grpc
       BatchResponseItem item;
       item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
       item.set_status_message(status_message);
-      request->request->callback(item);
+      request.request->callback(item);
     }
 
     const auto batch_size = write_batch->items_size();
@@ -995,7 +994,7 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
-      std::vector<std::shared_ptr<PendingRequest>> failed_write_requests;
+      std::vector<PendingRequest> failed_write_requests;
       {
         std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
         for (auto& request : write_requests)
@@ -1032,7 +1031,7 @@ namespace AdServer::Grpc
 
   void
   BatchingStreamBase::Impl::finish_requests_with_error_(
-    std::vector<std::shared_ptr<PendingRequest>>& requests,
+    std::vector<PendingRequest>& requests,
     grpc::StatusCode status_code,
     const char* status_message)
   {
@@ -1041,9 +1040,9 @@ namespace AdServer::Grpc
       BatchResponseItem item;
       item.set_status_code(status_code);
       item.set_status_message(status_message);
-      if (request->request && request->request->callback)
+      if (request.request && request.request->callback)
       {
-        request->request->callback(item);
+        request.request->callback(item);
       }
     }
     requests.clear();
@@ -1054,7 +1053,7 @@ namespace AdServer::Grpc
     grpc::StatusCode status_code,
     const char* status_message)
   {
-    std::vector<std::shared_ptr<PendingRequest>> inflight_requests;
+    std::vector<PendingRequest> inflight_requests;
 
     {
       std::lock_guard<std::mutex> lock(inflight_lock_);
@@ -1063,9 +1062,9 @@ namespace AdServer::Grpc
       {
         if (request)
         {
-          auto pending = std::make_shared<PendingRequest>();
-          pending->request = std::move(request->request);
-          inflight_requests.emplace_back(std::move(pending));
+          inflight_requests.emplace_back(PendingRequest{
+            Generics::Time::ZERO,
+            std::move(request->request)});
         }
       }
       inflight_.clear();
@@ -1079,7 +1078,7 @@ namespace AdServer::Grpc
     grpc::StatusCode status_code,
     const char* status_message)
   {
-    std::vector<std::shared_ptr<PendingRequest>> requests;
+    std::vector<PendingRequest> requests;
 
     {
       std::lock_guard<std::mutex> lock(inflight_lock_);
@@ -1088,9 +1087,9 @@ namespace AdServer::Grpc
       {
         if (request)
         {
-          auto pending = std::make_shared<PendingRequest>();
-          pending->request = std::move(request->request);
-          requests.emplace_back(std::move(pending));
+          requests.emplace_back(PendingRequest{
+            Generics::Time::ZERO,
+            std::move(request->request)});
         }
       }
       inflight_.clear();

@@ -33,6 +33,8 @@ namespace AdServer
       unsigned long request_other;
       unsigned long request_other_bid;
       unsigned long skipped;
+      unsigned long user_bind_requests;
+      unsigned long user_bind_rejected_requests;
       Generics::Time processing_time;
       typedef std::map<Generics::Time, std::size_t> TimeoutsMap;
       TimeoutsMap timeout_counters;
@@ -53,6 +55,15 @@ namespace AdServer
 
     void
     add_timeout(const Generics::Time& timeout) noexcept;
+
+    void
+    add_user_bind_request() noexcept;
+
+    void
+    complete_user_bind_request() noexcept;
+
+    void
+    add_user_bind_rejected_request() noexcept;
 
     virtual Generics::Values_var
     dump_stats();

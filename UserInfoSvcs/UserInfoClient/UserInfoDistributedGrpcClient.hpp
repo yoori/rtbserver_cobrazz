@@ -40,6 +40,8 @@ namespace AdServer::UserInfoSvcs
 
     AdServer::Grpc::Stats stats() const noexcept override;
 
+    std::string endpoint_for_user(const std::string& user_id) noexcept;
+
     void get_source(
       const adserver::user_info_svcs::user_info_manager::GetSourceRequest& request,
       GetSourceCallback callback) override;

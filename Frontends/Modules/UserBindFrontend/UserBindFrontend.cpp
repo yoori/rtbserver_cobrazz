@@ -141,12 +141,51 @@ namespace AdServer
     std::string dns_bind_request_id)
     noexcept
   {
+    const unsigned long cur_task_count =
+      bind_task_count_.exchange_and_add(1) + 1;
+
+    if(cur_task_count >
+      config_->bind_pending_task_limit() + config_->threads())
+    {
+      bind_task_count_ += -1;
+      if(stats_.in())
+      {
+        stats_->add_user_bind_rejected_request();
+      }
+      co_return ProcessRequestResult{503, BindResult()};
+    }
+
+    if(stats_.in())
+    {
+      stats_->add_user_bind_request();
+    }
+
+    struct BindTaskGuard
+    {
+      UserBindFrontend* frontend;
+
+      ~BindTaskGuard()
+      {
+        frontend->complete_bind_task_();
+      }
+    } bind_task_guard{this};
+
     auto state = std::make_shared<BindRequestState>(
       this,
       std::move(request_info),
       std::move(dns_bind_request_id));
     auto result = co_await state->co_process_();
     co_return result;
+  }
+
+  void
+  UserBindFrontend::complete_bind_task_() noexcept
+  {
+    bind_task_count_ += -1;
+    if(stats_.in())
+    {
+      stats_->complete_user_bind_request();
+    }
   }
 
   bool
@@ -222,7 +261,8 @@ namespace AdServer
     Configuration* frontend_config,
     Logging::Logger* logger,
     std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
-    CommonModule* common_module)
+    CommonModule* common_module,
+    StatHolder* stats)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
@@ -236,6 +276,8 @@ namespace AdServer
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       workers_(std::move(request_workers)),
+      stats_(ReferenceCounting::add_ref(stats)),
+      bind_task_count_(0),
       match_task_count_(0)
   {}
 

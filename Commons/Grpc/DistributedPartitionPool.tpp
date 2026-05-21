@@ -729,6 +729,7 @@ namespace AdServer::Grpc
     result.response_wait_sum_us += source.response_wait_sum_us;
     result.response_wait_max_us =
       std::max(result.response_wait_max_us, source.response_wait_max_us);
+    result.timing_coalesce_items += source.timing_coalesce_items;
     result.max_streams = std::max(result.max_streams, source.max_streams);
     if (source.consumer_stream_write.has_value())
     {

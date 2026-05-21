@@ -48,6 +48,11 @@
 #include "RequestMetricsProvider.hpp"
 #include "Stage.hpp"
 
+namespace AdServer::UserInfoSvcs
+{
+  class UserInfoDistributedGrpcClient;
+}
+
 namespace AdServer::Bidding
 {
   class BidRequestState;
@@ -366,6 +371,8 @@ namespace AdServer::Bidding
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
       user_bind_client_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>
+      user_info_distributed_client_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>

@@ -43,6 +43,8 @@ namespace AdServer::Grpc
     bool use_local_subchannel_pool = true;
     std::string batch_stream_full_method;
     Generics::Time reconnect_period;
+    Generics::Time stream_idle_timeout;
+    Generics::Time stream_shrink_period;
   };
 
   struct Stats
@@ -63,6 +65,7 @@ namespace AdServer::Grpc
     std::uint64_t response_wait_count = 0;
     std::uint64_t response_wait_sum_us = 0;
     std::uint64_t response_wait_max_us = 0;
+    std::uint64_t timing_coalesce_items = 0;
     std::uint64_t max_streams = 0;
     std::optional<ConsumerStreamWrite> consumer_stream_write;
   };
@@ -87,6 +90,8 @@ namespace AdServer::Grpc
 
     void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
 
+    void add_timing_coalesce_stats(std::uint64_t items) noexcept;
+
   private:
     Stats own_stats_() const noexcept;
 
@@ -103,6 +108,7 @@ namespace AdServer::Grpc
     std::atomic<std::uint64_t> response_wait_count_{0};
     std::atomic<std::uint64_t> response_wait_sum_us_{0};
     std::atomic<std::uint64_t> response_wait_max_us_{0};
+    std::atomic<std::uint64_t> timing_coalesce_items_{0};
     std::atomic<bool> consumer_stream_write_enabled_{false};
     std::atomic<std::uint64_t> consumer_stream_write_count_{0};
     std::atomic<std::uint64_t> consumer_stream_write_sum_us_{0};
@@ -131,7 +137,9 @@ namespace AdServer::Grpc
 
   inline
   BatchingOptions::BatchingOptions()
-    : reconnect_period(Generics::Time::ONE_SECOND)
+    : reconnect_period(Generics::Time::ONE_SECOND),
+      stream_idle_timeout(Generics::Time(20)),
+      stream_shrink_period(Generics::Time::ONE_SECOND)
   {}
 
   inline constexpr const char QUEUE_WAIT_TIMEOUT_STATUS[] =
@@ -204,6 +212,14 @@ namespace AdServer::Grpc
     update_max_(stats_owner_->consumer_stream_write_max_us_, wait_us);
   }
 
+  inline void
+  Client::add_timing_coalesce_stats(std::uint64_t items) noexcept
+  {
+    stats_owner_->timing_coalesce_items_.fetch_add(
+      items,
+      std::memory_order_relaxed);
+  }
+
   inline Stats
   Client::own_stats_() const noexcept
   {
@@ -217,6 +233,8 @@ namespace AdServer::Grpc
     stats.response_wait_count = response_wait_count_.load(std::memory_order_relaxed);
     stats.response_wait_sum_us = response_wait_sum_us_.load(std::memory_order_relaxed);
     stats.response_wait_max_us = response_wait_max_us_.load(std::memory_order_relaxed);
+    stats.timing_coalesce_items =
+      timing_coalesce_items_.load(std::memory_order_relaxed);
     if (consumer_stream_write_enabled_.load(std::memory_order_relaxed))
     {
       stats.consumer_stream_write = Stats::ConsumerStreamWrite{

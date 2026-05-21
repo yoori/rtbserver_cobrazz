@@ -35,6 +35,7 @@
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendWorkers.hpp>
+#include <BiddingFrontend/BiddingFrontendStat.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -75,7 +76,8 @@ namespace AdServer
       Configuration* frontend_config,
       Logging::Logger* logger,
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      StatHolder* stats)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -182,6 +184,9 @@ namespace AdServer
       UserBind::RequestInfo_var request_info,
       std::string dns_bind_request_id)
       noexcept;
+
+    void
+    complete_bind_task_() noexcept;
 
     bool
     has_user_bind_client_() const noexcept;
@@ -303,6 +308,8 @@ namespace AdServer
 
     FrontendCommons::FrontendWorkers_var match_workers_;
 
+    StatHolder_var stats_;
+    Algs::AtomicInt bind_task_count_;
     Algs::AtomicInt match_task_count_;
   };
 }

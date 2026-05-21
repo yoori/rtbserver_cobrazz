@@ -556,7 +556,14 @@ namespace AdServer::Grpc
     {
       ::grpc::Status status;
       (service_impl_->*handler_rpc_)(this->request_, this->response_, status);
-      this->responder_.Finish(this->response_, status, this);
+      if (status.ok())
+      {
+        this->responder_.Finish(this->response_, status, this);
+      }
+      else
+      {
+        this->responder_.FinishWithError(status, this);
+      }
     }
 
   private:
@@ -647,6 +654,12 @@ namespace AdServer::Grpc
         {
           if (!ok)
           {
+            if (context_.IsCancelled())
+            {
+              delete this;
+              return;
+            }
+
             state_ = State::Finish;
             responder_.Finish(::grpc::Status::OK, this);
             return;

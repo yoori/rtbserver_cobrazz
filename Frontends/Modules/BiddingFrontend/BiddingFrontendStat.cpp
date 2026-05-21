@@ -18,6 +18,8 @@ namespace
   const Generics::Values::Key BF_SKIPPED          = "rtbRequestSkipCount";
   const Generics::Values::Key BF_TIMEOUTS         = "rtbRequestTimeoutCount";
   const Generics::Values::Key BF_TIME_COUNTER     = "rtbRequestTimeCounter";
+  const Generics::Values::Key UB_BIND_REQUESTS    = "userBindRequestInProgressCount";
+  const Generics::Values::Key UB_BIND_REJECTED    = "userBindRequestRejectedCount";
 
   struct GapKey
   {
@@ -92,7 +94,9 @@ namespace AdServer
       request_openrtb_bid(0),
       request_other(0),
       request_other_bid(0),
-      skipped(0)
+      skipped(0),
+      user_bind_requests(0),
+      user_bind_rejected_requests(0)
   {}
 
   StatHolder::StatData::StatData(
@@ -109,6 +113,9 @@ namespace AdServer
       request_openrtb_bid(request_openrtb_bid_),
       request_other(request_other_),
       request_other_bid(request_other_bid_),
+      skipped(0),
+      user_bind_requests(0),
+      user_bind_rejected_requests(0),
       processing_time(processing_time_val)
   {}
 
@@ -121,7 +128,15 @@ namespace AdServer
     request_openrtb_bid += rhs.request_openrtb_bid;
     request_other += rhs.request_other;
     request_other_bid += rhs.request_other_bid;
+    skipped += rhs.skipped;
+    user_bind_requests += rhs.user_bind_requests;
+    user_bind_rejected_requests += rhs.user_bind_rejected_requests;
     processing_time += rhs.processing_time;
+    for (TimeoutsMap::const_iterator it = rhs.timeout_counters.begin();
+      it != rhs.timeout_counters.end(); ++it)
+    {
+      timeout_counters[it->first] += it->second;
+    }
 
     return *this;
   }
@@ -170,6 +185,30 @@ namespace AdServer
     ++stat_data_.timeout_counters[time_round];
   }
 
+  void
+  StatHolder::add_user_bind_request() noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    ++stat_data_.user_bind_requests;
+  }
+
+  void
+  StatHolder::complete_user_bind_request() noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    if(stat_data_.user_bind_requests)
+    {
+      --stat_data_.user_bind_requests;
+    }
+  }
+
+  void
+  StatHolder::add_user_bind_rejected_request() noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    ++stat_data_.user_bind_rejected_requests;
+  }
+
   Generics::Values_var
   StatHolder::dump_stats()
   {
@@ -198,6 +237,8 @@ namespace AdServer
     v->set(BF_REQ_OTHER_BIDS, d.request_other_bid);
 
     v->set(BF_SKIPPED, d.skipped);
+    v->set(UB_BIND_REQUESTS, d.user_bind_requests);
+    v->set(UB_BIND_REJECTED, d.user_bind_rejected_requests);
     std::size_t timeout_counter = 0;
     for (StatData::TimeoutsMap::const_iterator cit = d.timeout_counters.begin();
       cit != d.timeout_counters.end(); ++cit)

@@ -468,6 +468,7 @@ main(int argc, char** argv)
       std::uint64_t prev_errors = 0;
       std::uint64_t prev_write_batches = 0;
       std::uint64_t prev_write_items = 0;
+      std::uint64_t prev_timing_coalesce_items = 0;
       std::uint64_t prev_queue_wait_count = 0;
       std::uint64_t prev_queue_wait_sum_us = 0;
       std::uint64_t prev_queue_timeout_count = 0;
@@ -511,6 +512,8 @@ main(int argc, char** argv)
         const auto stats = client->stats();
         const auto write_batches = stats.write_batches - prev_write_batches;
         const auto write_items = stats.write_items - prev_write_items;
+        const auto timing_coalesce_items =
+          stats.timing_coalesce_items - prev_timing_coalesce_items;
         const auto queue_wait_count =
           stats.queue_wait_count - prev_queue_wait_count;
         const auto queue_wait_sum_us =
@@ -523,6 +526,7 @@ main(int argc, char** argv)
           stats.queue_timeout_count - prev_queue_timeout_count;
         prev_write_batches = stats.write_batches;
         prev_write_items = stats.write_items;
+        prev_timing_coalesce_items = stats.timing_coalesce_items;
         prev_queue_wait_count = stats.queue_wait_count;
         prev_queue_wait_sum_us = stats.queue_wait_sum_us;
         prev_queue_timeout_count = stats.queue_timeout_count;
@@ -540,6 +544,8 @@ main(int argc, char** argv)
         std::cout << ", writes=" << write_batches <<
           ", avg_batch=" << format_stat_float(avg_batch) <<
           ", total_avg_batch=" << format_stat_float(total_avg_batch) <<
+          ", timing_items=" << timing_coalesce_items <<
+          ", total_timing_items=" << stats.timing_coalesce_items <<
           ", max_streams=" << stats.max_streams <<
           ", avg_latency=" << format_stat_float(avg_latency_us) << "us" <<
           ", p99_latency=" << latency_p99.p99(current_latency_count) << "us" <<
@@ -715,6 +721,7 @@ main(int argc, char** argv)
       ", writes: " << stats.write_batches <<
       ", write_items: " << stats.write_items <<
       ", avg_batch: " << format_stat_float(total_avg_batch) <<
+      ", timing_items: " << stats.timing_coalesce_items <<
       ", max_streams: " << stats.max_streams <<
       ", avg_latency: " << format_stat_float(total_avg_latency_us) << "us" <<
       ", p99_latency: " << latency_p99.p99(total_latency_count) << "us" <<

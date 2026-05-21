@@ -857,6 +857,7 @@ namespace AdServer::Bidding
             grpc_executor_,
             common_module_->grpc_coalesce_runner(),
             logger());
+        user_info_distributed_client_ = user_info_client;
         user_info_client_ = user_info_client;
         user_info_client_coro_ = std::make_shared<
           AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
@@ -1872,6 +1873,11 @@ namespace AdServer::Bidding
           auto* user_info = history_match_request.mutable_user_info();
           const auto packed_user_id =
             GrpcAlgs::pack_user_id(request_task->resolved_user_id_);
+          if(request_task->hostname_.empty() && user_info_distributed_client_)
+          {
+            request_task->hostname_ =
+              user_info_distributed_client_->endpoint_for_user(packed_user_id);
+          }
           user_info->set_user_id(packed_user_id);
           user_info->set_last_colo_id(colo_id_);
           user_info->set_request_colo_id(colo_id_);

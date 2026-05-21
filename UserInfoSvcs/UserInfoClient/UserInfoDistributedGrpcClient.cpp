@@ -67,6 +67,14 @@ namespace AdServer::UserInfoSvcs
     return pool_->stats();
   }
 
+  std::string
+  UserInfoDistributedGrpcClient::endpoint_for_user(
+    const std::string& user_id) noexcept
+  {
+    auto ref = get_ref_(user_id);
+    return ref ? (*ref)->endpoint : std::string();
+  }
+
 #define USER_INFO_ROUTE_USER(method_name, request_type, response_type, callback_type, user_expr) \
   void \
   UserInfoDistributedGrpcClient::method_name( \

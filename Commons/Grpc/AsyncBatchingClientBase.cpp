@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -14,6 +15,7 @@ namespace AdServer::Grpc
   struct AsyncBatchingClientBase::StreamHolder
   {
     BatchingStreamPtr stream;
+    Generics::Time last_use = Generics::Time::get_time_of_day();
   };
 
   namespace
@@ -28,9 +30,9 @@ namespace AdServer::Grpc
         adserver::grpc::BatchResponseItem item;
         item.set_status_code(status_code);
         item.set_status_message(status_message);
-        if (request->request && request->request->callback)
+        if (request.request && request.request->callback)
         {
-          request->request->callback(item);
+          request.request->callback(item);
         }
       }
       batch.clear();
@@ -235,13 +237,17 @@ namespace AdServer::Grpc
     detached_batch_storage_ = std::make_shared<DetachedBatchStorage>();
     timing_coalesce_gate_ =
       std::make_shared<AdServer::Commons::ActivityGate>();
+    stream_shrink_gate_ =
+      std::make_shared<AdServer::Commons::ActivityGate>();
     submission_gate_->activate_object();
     timing_coalesce_gate_->activate_object();
+    stream_shrink_gate_->activate_object();
     {
       std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
       coalesce_timer_deadline_.reset();
     }
     Generics::CompositeActiveObject::activate_object_();
+    schedule_stream_shrink_();
   }
 
   void
@@ -250,6 +256,8 @@ namespace AdServer::Grpc
     submission_gate_->deactivate_object();
     assert(timing_coalesce_gate_);
     timing_coalesce_gate_->deactivate_object();
+    assert(stream_shrink_gate_);
+    stream_shrink_gate_->deactivate_object();
     detached_batch_storage_->close();
     Generics::CompositeActiveObject::deactivate_object_();
     deactivate_streams_();
@@ -264,14 +272,28 @@ namespace AdServer::Grpc
     Generics::CompositeActiveObject::wait_object_();
     assert(timing_coalesce_gate_);
     timing_coalesce_gate_->wait_object();
+    assert(stream_shrink_gate_);
+    stream_shrink_gate_->wait_object();
     auto detached_batches = detached_batch_storage_->drain_all();
     finish_batches_with_error(
       detached_batches,
       grpc::StatusCode::UNAVAILABLE,
       "inactive");
-    auto deferred_dispatch_batches = drain_deferred_dispatch_batches_();
+    std::vector<BatchingStreamBase::PendingBatch> pending_batches;
+    {
+      std::lock_guard<std::mutex> lock(streams_lock_);
+      pending_batches.reserve(pending_batches_.size());
+      while (!pending_batches_.empty())
+      {
+        pending_batches.emplace_back(std::move(pending_batches_.front()));
+        pending_batches_.pop_front();
+      }
+      connecting_ = false;
+      connecting_stream_.reset();
+      last_connect_failure_time_.reset();
+    }
     finish_batches_with_error(
-      deferred_dispatch_batches,
+      pending_batches,
       grpc::StatusCode::UNAVAILABLE,
       "inactive");
     auto batches = batching_queue_->drain_all();
@@ -281,6 +303,7 @@ namespace AdServer::Grpc
       "inactive");
     clear_streams_();
     timing_coalesce_gate_.reset();
+    stream_shrink_gate_.reset();
   }
 
   void
@@ -386,14 +409,13 @@ namespace AdServer::Grpc
         release_request_();
       };
 
-    auto pending_operation =
-      std::make_shared<BatchingQueue::PendingOperation>();
-    pending_operation->request = std::move(pending_request);
-    BatchingQueue::Batch batch;
-    batch.emplace_back(std::move(pending_operation));
-    auto enqueue_result = batching_queue_->enqueue(std::move(batch));
+    const auto now = Generics::Time::get_time_of_day();
+    auto enqueue_result = batching_queue_->enqueue(
+      std::move(pending_request),
+      now);
 
     if (enqueue_result.was_empty_before_push &&
+      !enqueue_result.queue_empty_after_enqueue &&
       options_.max_batch_delay.has_value())
     {
       schedule_timing_coalesce_();
@@ -401,24 +423,7 @@ namespace AdServer::Grpc
 
     if (!enqueue_result.ready_batch.empty())
     {
-      auto* stream = try_acquire_stream_();
-      if (!stream)
-      {
-        if (fail_pending_if_no_streams_())
-        {
-          finish_batch_with_error(
-            enqueue_result.ready_batch,
-            grpc::StatusCode::UNAVAILABLE,
-            "no active batching streams");
-          return;
-        }
-
-        defer_dispatch_batch_(std::move(enqueue_result.ready_batch));
-        schedule_timing_coalesce_();
-        return;
-      }
-
-      dispatch_batch_(std::move(enqueue_result.ready_batch), stream);
+      process_batch_(std::move(enqueue_result.ready_batch), now);
     }
   }
 
@@ -428,140 +433,251 @@ namespace AdServer::Grpc
     auto stream_holder = std::make_shared<StreamHolder>();
     std::weak_ptr<StreamHolder> weak_stream_holder = stream_holder;
     stream_holder->stream = std::make_shared<AdServer::Grpc::BatchingStreamBase>(
-        channel_,
-        grpc_executor_,
-        batching_queue_,
-        next_queue_index_.fetch_add(1, std::memory_order_relaxed),
-        this,
-        [this](auto* stream) {
-          handle_stream_ready_(stream);
-        },
-        [this](auto* stream) noexcept {
-          handle_stream_closed_(stream);
-        },
-        [this, weak_stream_holder](auto* stream) noexcept {
-          if (auto stream_holder = weak_stream_holder.lock())
-          {
-            handle_stream_drained_(stream, stream_holder);
-          }
-        },
-        options_);
+      channel_,
+      grpc_executor_,
+      batching_queue_,
+      next_queue_index_.fetch_add(1, std::memory_order_relaxed),
+      this,
+      [this](auto* stream) { //< ready callback.
+        handle_stream_ready_(stream);
+      },
+      [this](auto* stream) noexcept { //< close callback.
+        handle_stream_closed_(stream);
+      },
+      [this, weak_stream_holder](auto* stream) noexcept { //< drain callback.
+        if (auto stream_holder = weak_stream_holder.lock())
+        {
+          handle_stream_drained_(stream, stream_holder);
+        }
+      },
+      options_);
     return stream_holder;
   }
 
-  BatchingStreamBase*
-  AsyncBatchingClientBase::try_acquire_stream_()
+  void
+  AsyncBatchingClientBase::process_batch_(
+    BatchingStreamBase::PendingBatch&& batch,
+    const Generics::Time& now)
+    noexcept
   {
-    clear_deferred_streams_();
+    assert(!batch.empty());
 
-    if (!active())
-    {
-      return nullptr;
-    }
-
-    {
-      std::lock_guard<std::mutex> lock(streams_lock_);
-      while (!available_streams_.empty())
-      {
-        auto* stream = available_streams_.front();
-        available_streams_.pop_front();
-        return stream;
-      }
-    }
-
-    auto streams_count = up_streams_.load(std::memory_order_acquire);
-    bool stream_slot_reserved = false;
-    while (streams_count < max_streams_)
-    {
-      if (up_streams_.compare_exchange_strong(
-            streams_count,
-            streams_count + 1,
-            std::memory_order_acq_rel,
-            std::memory_order_acquire))
-      {
-        ++streams_count;
-        stream_slot_reserved = true;
-        break;
-      }
-    }
-
-    if (stream_slot_reserved)
-    {
-      stream_start_attempts_.fetch_add(1, std::memory_order_acq_rel);
-      StreamHolderPtr stream_holder;
-      BatchingStreamBase* stream = nullptr;
-      bool stream_registered = false;
-      try
-      {
-        stream_holder = make_stream_();
-        stream = stream_holder->stream.get();
-        if (!active())
-        {
-          up_streams_.fetch_sub(1, std::memory_order_acq_rel);
-          return nullptr;
-        }
-        {
-          std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
-          streams_.emplace(stream, stream_holder);
-        }
-        stream_registered = true;
-        update_max_streams_(streams_count);
-        stream_holder->stream->activate_object();
-      }
-      catch (...)
-      {
-        bool release_stream_slot = !stream_registered;
-        if (stream_registered)
-        {
-          std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
-          auto it = streams_.find(stream);
-          if (it != streams_.end())
-          {
-            streams_.erase(it);
-            release_stream_slot = true;
-          }
-        }
-        if (release_stream_slot)
-        {
-          up_streams_.fetch_sub(1, std::memory_order_acq_rel);
-        }
-        throw;
-      }
-    }
-
+    StreamHolderPtr stream_holder;
+    bool start_connect = false;
+    bool fail_batch = false;
+    std::vector<BatchingStreamBase::PendingBatch> failed_batches;
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
-      while (!available_streams_.empty())
+      if (!active())
       {
-        auto* stream = available_streams_.front();
+        fail_batch = true;
+      }
+      else if (!available_streams_.empty())
+      {
+        stream_holder = std::move(available_streams_.front());
         available_streams_.pop_front();
-        return stream;
+        stream_holder->last_use = now;
+      }
+      else
+      {
+        if (last_connect_failure_time_ &&
+          now - *last_connect_failure_time_ < options_.reconnect_period)
+        {
+          fail_batch = true;
+        }
+        else
+        {
+          pending_batches_.emplace_back(std::move(batch));
+          start_connect =
+            maybe_start_connect_for_pending_(failed_batches, now);
+        }
       }
     }
 
-    return nullptr;
+    if (fail_batch)
+    {
+      finish_batch_with_error(
+        batch,
+        grpc::StatusCode::UNAVAILABLE,
+        "no active batching streams");
+      return;
+    }
+
+    if (!failed_batches.empty())
+    {
+      finish_batches_with_error(
+        failed_batches,
+        grpc::StatusCode::UNAVAILABLE,
+        "no active batching streams");
+    }
+
+    if (stream_holder)
+    {
+      dispatch_batch_(std::move(batch), stream_holder);
+    }
+
+    if (start_connect)
+    {
+      start_connect_();
+    }
+  }
+
+  bool
+  AsyncBatchingClientBase::maybe_start_connect_for_pending_(
+    std::vector<BatchingStreamBase::PendingBatch>& failed_batches,
+    const Generics::Time& now) noexcept
+  {
+    if (!active() ||
+      pending_batches_.empty() ||
+      !available_streams_.empty() ||
+      connecting_)
+    {
+      return false;
+    }
+
+    if (last_connect_failure_time_ &&
+      now - *last_connect_failure_time_ < options_.reconnect_period)
+    {
+      failed_batches.reserve(
+        failed_batches.size() + pending_batches_.size());
+      while (!pending_batches_.empty())
+      {
+        failed_batches.emplace_back(std::move(pending_batches_.front()));
+        pending_batches_.pop_front();
+      }
+      return false;
+    }
+
+    const auto streams_count =
+      up_streams_.load(std::memory_order_acquire);
+    if (streams_count >= max_streams_)
+    {
+      return false;
+    }
+
+    connecting_ = true;
+    const auto new_streams_count =
+      up_streams_.fetch_add(1, std::memory_order_acq_rel) + 1;
+    update_max_streams_(new_streams_count);
+
+    return true;
   }
 
   void
-  AsyncBatchingClientBase::release_stream_(BatchingStreamBase* stream) noexcept
+  AsyncBatchingClientBase::start_connect_() noexcept
   {
-    assert(stream);
+    StreamHolderPtr stream_holder;
+    BatchingStreamBase* stream = nullptr;
+    bool stream_registered = false;
+    try
+    {
+      stream_holder = make_stream_();
+      stream = stream_holder->stream.get();
+      if (!active())
+      {
+        throw std::runtime_error("inactive");
+      }
+
+      {
+        std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
+        streams_.emplace(stream, stream_holder);
+      }
+
+      stream_registered = true;
+
+      {
+        std::lock_guard<std::mutex> lock(streams_lock_);
+        connecting_stream_ = stream_holder;
+      }
+
+      stream_holder->stream->activate_object();
+    }
+    catch (...)
+    {
+      if (stream_registered)
+      {
+        std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
+        streams_.erase(stream);
+      }
+
+      std::vector<BatchingStreamBase::PendingBatch> failed_batches;
+      const auto failure_time = Generics::Time::get_time_of_day();
+
+      {
+        std::lock_guard<std::mutex> lock(streams_lock_);
+        connecting_ = false;
+        connecting_stream_.reset();
+        last_connect_failure_time_ = failure_time;
+        up_streams_.fetch_sub(1, std::memory_order_acq_rel);
+        while (!pending_batches_.empty())
+        {
+          failed_batches.emplace_back(std::move(pending_batches_.front()));
+          pending_batches_.pop_front();
+        }
+      }
+
+      finish_batches_with_error(
+        failed_batches,
+        grpc::StatusCode::UNAVAILABLE,
+        "no active batching streams");
+    }
+  }
+
+  void
+  AsyncBatchingClientBase::release_or_dispatch_(
+    const StreamHolderPtr& stream_holder) noexcept
+  {
+    assert(stream_holder);
+    assert(stream_holder->stream);
+
+    BatchingStreamBase::PendingBatch batch;
+    bool start_connect = false;
+    std::vector<BatchingStreamBase::PendingBatch> failed_batches;
+    const auto now = Generics::Time::get_time_of_day();
 
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
-      if (active() && stream->available())
+      if (active() && stream_holder->stream->available())
       {
-        available_streams_.emplace_back(stream);
+        stream_holder->last_use = now;
+
+        if (!pending_batches_.empty())
+        {
+          batch = std::move(pending_batches_.front());
+          pending_batches_.pop_front();
+          start_connect =
+            maybe_start_connect_for_pending_(failed_batches, now);
+        }
+        else
+        {
+          available_streams_.emplace_front(stream_holder);
+        }
       }
+    }
+
+    finish_batches_with_error(
+      failed_batches,
+      grpc::StatusCode::UNAVAILABLE,
+      "no active batching streams");
+
+    if (!batch.empty())
+    {
+      dispatch_batch_(std::move(batch), stream_holder);
+    }
+
+    if (start_connect)
+    {
+      start_connect_();
     }
   }
 
   bool
   AsyncBatchingClientBase::dispatch_batch_(
     BatchingStreamBase::PendingBatch&& batch,
-    BatchingStreamBase* stream) noexcept
+    const StreamHolderPtr& stream_holder) noexcept
   {
-    assert(stream);
+    assert(stream_holder);
+    assert(stream_holder->stream);
 
     auto owner = detached_batch_storage_->register_batch(std::move(batch));
     assert(owner);
@@ -572,7 +688,7 @@ namespace AdServer::Grpc
     bool write_started = false;
     try
     {
-      write_started = stream->try_start_write(
+      write_started = stream_holder->stream->try_start_write(
         std::move(owned_batch),
         false,
         &failed_batch);
@@ -588,7 +704,6 @@ namespace AdServer::Grpc
       return true;
     }
 
-    release_stream_(stream);
     if (!failed_batch.empty())
     {
       finish_batch_with_error(
@@ -596,25 +711,40 @@ namespace AdServer::Grpc
         grpc::StatusCode::UNAVAILABLE,
         "stream write failed");
     }
+
+    try
+    {
+      stream_holder->stream->deactivate_object();
+    }
+    catch (...)
+    {}
+
     return false;
   }
 
   void
   AsyncBatchingClientBase::schedule_timing_coalesce_() noexcept
   {
-    const auto deadline = batching_queue_->next_deadline();
-    if (!active() || !deadline)
+    if (!active() || !options_.max_batch_delay.has_value())
     {
       return;
     }
 
+    const auto oldest_enqueue_time = batching_queue_->oldest_enqueue_time();
+    if (!oldest_enqueue_time)
+    {
+      return;
+    }
+    const auto deadline = *oldest_enqueue_time + *options_.max_batch_delay;
+
     {
       std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
-      if (coalesce_timer_deadline_ && *coalesce_timer_deadline_ <= *deadline)
+      if (coalesce_timer_deadline_.has_value() &&
+        *coalesce_timer_deadline_ <= deadline)
       {
         return;
       }
-      coalesce_timer_deadline_ = *deadline;
+      coalesce_timer_deadline_ = deadline;
     }
 
     const auto gate = timing_coalesce_gate_;
@@ -622,13 +752,13 @@ namespace AdServer::Grpc
 
     const auto now = Generics::Time::get_time_of_day();
     const auto timeout =
-      now < *deadline ? *deadline - now : Generics::Time::ZERO;
+      now < deadline ? deadline - now : Generics::Time::ZERO;
 
     try
     {
       coalesce_runner_->schedule(
         timeout,
-        [this, gate, deadline = *deadline]()
+        [this, gate, deadline]()
         {
           auto guard = gate->enter();
           if (!guard)
@@ -641,8 +771,8 @@ namespace AdServer::Grpc
     catch (...)
     {
       std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
-      if (coalesce_timer_deadline_ &&
-        *coalesce_timer_deadline_ == *deadline)
+      if (coalesce_timer_deadline_.has_value() &&
+        *coalesce_timer_deadline_ == deadline)
       {
         coalesce_timer_deadline_.reset();
       }
@@ -650,21 +780,21 @@ namespace AdServer::Grpc
   }
 
   void
-  AsyncBatchingClientBase::run_timing_coalesce_(
-    Generics::Time deadline) noexcept
+  AsyncBatchingClientBase::run_timing_coalesce_(Generics::Time deadline)
+    noexcept
   {
     try
     {
       {
         std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
-        if (!coalesce_timer_deadline_ ||
+        if (!coalesce_timer_deadline_.has_value() ||
           *coalesce_timer_deadline_ != deadline)
         {
           return;
         }
         coalesce_timer_deadline_.reset();
       }
-      coalesce_timed_batch_();
+      coalesce_timed_batch_(Generics::Time::get_time_of_day());
       schedule_timing_coalesce_();
     }
     catch (...)
@@ -672,119 +802,161 @@ namespace AdServer::Grpc
     }
   }
 
-  bool
-  AsyncBatchingClientBase::coalesce_timed_batch_() noexcept
-  {
-    auto* stream = try_acquire_stream_();
-    if (!stream)
-    {
-      fail_pending_if_no_streams_();
-      return false;
-    }
-
-    BatchingStreamBase::PendingBatch pending_batch;
-    const bool has_batch = batching_queue_->try_pop_due_batch(pending_batch);
-    if (!has_batch)
-    {
-      release_stream_(stream);
-      return false;
-    }
-
-    return dispatch_batch_(std::move(pending_batch), stream);
-  }
-
-  bool
-  AsyncBatchingClientBase::dispatch_ready_batch_() noexcept
-  {
-    auto* stream = try_acquire_stream_();
-    if (!stream)
-    {
-      fail_pending_if_no_streams_();
-      return false;
-    }
-
-    BatchingStreamBase::PendingBatch pending_batch;
-    if (!batching_queue_->try_pop_ready_batch(pending_batch))
-    {
-      release_stream_(stream);
-      return false;
-    }
-
-    return dispatch_batch_(std::move(pending_batch), stream);
-  }
-
   void
-  AsyncBatchingClientBase::dispatch_deferred_batches_() noexcept
+  AsyncBatchingClientBase::schedule_stream_shrink_() noexcept
   {
-    while (true)
-    {
-      auto* stream = try_acquire_stream_();
-      if (!stream)
-      {
-        fail_pending_if_no_streams_();
-        return;
-      }
-
-      BatchingStreamBase::PendingBatch pending_batch;
-      if (!try_pop_deferred_dispatch_batch_(pending_batch))
-      {
-        release_stream_(stream);
-        return;
-      }
-
-      dispatch_batch_(std::move(pending_batch), stream);
-    }
-  }
-
-  void
-  AsyncBatchingClientBase::defer_dispatch_batch_(
-    BatchingStreamBase::PendingBatch&& batch) noexcept
-  {
-    if (batch.empty())
+    if (!active() || options_.stream_shrink_period == Generics::Time::ZERO)
     {
       return;
     }
 
-    std::lock_guard<std::mutex> lock(deferred_dispatch_lock_);
-    deferred_dispatch_batches_.emplace_back(std::move(batch));
+    const auto gate = stream_shrink_gate_;
+    assert(gate);
+    try
+    {
+      coalesce_runner_->schedule(
+        options_.stream_shrink_period,
+        [this, gate]()
+        {
+          auto guard = gate->enter();
+          if (!guard)
+          {
+            return;
+          }
+          shrink_idle_streams_();
+          schedule_stream_shrink_();
+        });
+    }
+    catch (...)
+    {}
+  }
+
+  void
+  AsyncBatchingClientBase::shrink_idle_streams_() noexcept
+  {
+    clear_deferred_streams_();
+
+    if (options_.stream_idle_timeout == Generics::Time::ZERO)
+    {
+      return;
+    }
+
+    const auto now = Generics::Time::get_time_of_day();
+    std::vector<StreamHolderPtr> streams_to_close;
+    {
+      std::lock_guard<std::mutex> lock(streams_lock_);
+      while (available_streams_.size() > 1 &&
+        up_streams_.load(std::memory_order_acquire) >
+          streams_to_close.size() + 1)
+      {
+        auto stream_holder = available_streams_.back();
+        if (!stream_holder ||
+          now - stream_holder->last_use <= options_.stream_idle_timeout)
+        {
+          break;
+        }
+
+        available_streams_.pop_back();
+        streams_to_close.emplace_back(std::move(stream_holder));
+      }
+    }
+
+    for (auto& stream_holder : streams_to_close)
+    {
+      try
+      {
+        if (stream_holder && stream_holder->stream)
+        {
+          stream_holder->stream->deactivate_object();
+        }
+      }
+      catch (...)
+      {}
+    }
   }
 
   bool
-  AsyncBatchingClientBase::try_pop_deferred_dispatch_batch_(
-    BatchingStreamBase::PendingBatch& batch) noexcept
+  AsyncBatchingClientBase::can_process_timed_batch_() const noexcept
   {
-    std::lock_guard<std::mutex> lock(deferred_dispatch_lock_);
-    if (deferred_dispatch_batches_.empty())
+    std::lock_guard<std::mutex> lock(streams_lock_);
+    if (!active())
     {
       return false;
     }
 
-    batch = std::move(deferred_dispatch_batches_.front());
-    deferred_dispatch_batches_.pop_front();
-    return true;
-  }
-
-  std::vector<BatchingStreamBase::PendingBatch>
-  AsyncBatchingClientBase::drain_deferred_dispatch_batches_() noexcept
-  {
-    std::deque<BatchingStreamBase::PendingBatch> batches;
+    if (!available_streams_.empty())
     {
-      std::lock_guard<std::mutex> lock(deferred_dispatch_lock_);
-      batches.swap(deferred_dispatch_batches_);
+      return true;
     }
 
-    return std::vector<BatchingStreamBase::PendingBatch>(
-      std::make_move_iterator(batches.begin()),
-      std::make_move_iterator(batches.end()));
+    if (!pending_batches_.empty() || connecting_)
+    {
+      return false;
+    }
+
+    return up_streams_.load(std::memory_order_acquire) < max_streams_;
+  }
+
+  bool
+  AsyncBatchingClientBase::coalesce_timed_batch_(const Generics::Time& now)
+    noexcept
+  {
+    BatchingStreamBase::PendingBatch pending_batch;
+    if (!options_.max_batch_delay.has_value())
+    {
+      return false;
+    }
+
+    if (!can_process_timed_batch_())
+    {
+      return false;
+    }
+
+    const bool has_batch = batching_queue_->try_pop_due_batch(
+      pending_batch,
+      now,
+      *options_.max_batch_delay);
+    if (!has_batch)
+    {
+      return false;
+    }
+
+    add_timing_coalesce_stats(pending_batch.size());
+    process_batch_(std::move(pending_batch), now);
+    return true;
   }
 
   void
   AsyncBatchingClientBase::handle_stream_ready_(BatchingStreamBase* stream)
   {
-    stream_start_attempts_.store(0, std::memory_order_release);
-    release_stream_(stream);
-    dispatch_deferred_batches_();
-    dispatch_ready_batch_();
+    StreamHolderPtr stream_holder;
+    bool connect_success = false;
+    {
+      std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
+      auto it = streams_.find(stream);
+      if (it != streams_.end())
+      {
+        stream_holder = it->second;
+      }
+    }
+
+    if (!stream_holder)
+    {
+      return;
+    }
+
+    {
+      std::lock_guard<std::mutex> lock(streams_lock_);
+      if (connecting_stream_ == stream_holder)
+      {
+        connecting_ = false;
+        connecting_stream_.reset();
+        connect_success = true;
+      }
+    }
+
+    (void)connect_success;
+    release_or_dispatch_(stream_holder);
   }
 
   void
@@ -800,9 +972,9 @@ namespace AdServer::Grpc
       auto it = streams_.find(stream);
       if (it != streams_.end())
       {
-        stream_holder = std::move(it->second);
+        stream_holder = it->second;
         streams_.erase(it);
-        draining_streams_.emplace_back(std::move(stream_holder));
+        draining_streams_.emplace_back(stream_holder);
         stream_removed = true;
       }
     }
@@ -812,18 +984,44 @@ namespace AdServer::Grpc
       return;
     }
 
+    std::vector<BatchingStreamBase::PendingBatch> failed_batches;
+    bool start_connect = false;
+    const auto failure_time = Generics::Time::get_time_of_day();
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.erase(
         std::remove(
           available_streams_.begin(),
           available_streams_.end(),
-          stream),
+          stream_holder),
         available_streams_.end());
+      if (connecting_stream_ == stream_holder)
+      {
+        connecting_ = false;
+        connecting_stream_.reset();
+        last_connect_failure_time_ = failure_time;
+        if (available_streams_.empty())
+        {
+          while (!pending_batches_.empty())
+          {
+            failed_batches.emplace_back(std::move(pending_batches_.front()));
+            pending_batches_.pop_front();
+          }
+        }
+      }
+      up_streams_.fetch_sub(1, std::memory_order_acq_rel);
+      start_connect =
+        maybe_start_connect_for_pending_(failed_batches, failure_time);
     }
 
-    up_streams_.fetch_sub(1, std::memory_order_acq_rel);
-    fail_pending_if_no_streams_();
+    finish_batches_with_error(
+      failed_batches,
+      grpc::StatusCode::UNAVAILABLE,
+      "no active batching streams");
+    if (start_connect)
+    {
+      start_connect_();
+    }
   }
 
   void
@@ -849,42 +1047,6 @@ namespace AdServer::Grpc
     {
       deferred_streams_.emplace_back(std::move(holder->stream));
     }
-  }
-
-  bool
-  AsyncBatchingClientBase::fail_pending_if_no_streams_() noexcept
-  {
-    const auto stream_start_attempts =
-      stream_start_attempts_.load(std::memory_order_acquire);
-    const auto up_streams =
-      up_streams_.load(std::memory_order_acquire);
-    const auto start_attempts_threshold = std::max<std::size_t>(
-      1,
-      std::min(max_streams_, options_.workers_number));
-
-    if (!active() ||
-      up_streams != 0 ||
-      stream_start_attempts < start_attempts_threshold ||
-      stream_start_attempts <= up_streams)
-    {
-      return false;
-    }
-
-    {
-      std::lock_guard<std::mutex> lock(streams_lock_);
-      if (!available_streams_.empty())
-      {
-        return false;
-      }
-    }
-
-    auto batches = batching_queue_->drain_all();
-    finish_batches_with_error(
-      batches,
-      grpc::StatusCode::UNAVAILABLE,
-      "no active batching streams");
-    stream_start_attempts_.store(0, std::memory_order_release);
-    return true;
   }
 
   void
@@ -943,6 +1105,8 @@ namespace AdServer::Grpc
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.clear();
+      connecting_ = false;
+      connecting_stream_.reset();
     }
 
     for (auto& [_, stream_holder] : streams)
@@ -981,6 +1145,10 @@ namespace AdServer::Grpc
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.clear();
+      pending_batches_.clear();
+      connecting_ = false;
+      connecting_stream_.reset();
+      last_connect_failure_time_.reset();
     }
     std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams;
     {
@@ -989,6 +1157,7 @@ namespace AdServer::Grpc
       draining_streams.swap(draining_streams_);
       deferred_streams.swap(deferred_streams_);
     }
+    up_streams_.store(0, std::memory_order_release);
   }
 
   void
