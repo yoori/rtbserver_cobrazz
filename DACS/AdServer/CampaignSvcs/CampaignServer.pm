@@ -21,9 +21,9 @@ sub start
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
     "ulimit -n 4096 && " .
-    "{ \${VALGRIND_PREFIX} CampaignServer " .
+    "{ setsid -f \${VALGRIND_PREFIX} CampaignServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CampaignServerConfig.xml " .
-      "> \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}CampaignServer.out 2>&1 < /dev/null & } ";
+      "> \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}CampaignServer.out 2>&1 < /dev/null ; } ";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }

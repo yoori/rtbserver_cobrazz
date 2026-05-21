@@ -111,9 +111,9 @@ sub start
     "ulimit -n 16000 && " .
     "export MALLOC_ARENA_MAX=2 && " .
     "{ " .
-      "\${VALGRIND_PREFIX} RequestInfoManager " .
+      "setsid -f \${VALGRIND_PREFIX} RequestInfoManager " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/RequestInfoManagerConfig.xml " .
-      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}RequestInfoManager.out 2>&1 < /dev/null & " .
+      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}RequestInfoManager.out 2>&1 < /dev/null ; " .
     "} ";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
