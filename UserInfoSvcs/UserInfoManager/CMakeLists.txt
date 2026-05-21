@@ -50,6 +50,8 @@ target_link_libraries(UserInfoContainer
   Allocator
   PlainStorage2
   PlainStorage3
+  ProfileMap
+  ProfileMapRocksDB
 
   ChannelMatcher
   LogCommons
@@ -83,6 +85,7 @@ target_link_libraries(UserInfoManager
   PlainStorage2
   PrivacyFilter
   ProfileMap
+  ProfileMapRocksDB
 
   UserInfoManagerConfigXSD
   UserInfoManagerIDL

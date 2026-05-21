@@ -257,7 +257,9 @@ namespace ProfilingCommons
 
     bool empty() const noexcept;
 
-    void copy_keys(typename ProfileMap<KeyType>::KeyList& keys)
+    void process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
       /*throw(Exception)*/;
 
     std::unique_ptr<KeyType> next_key(const KeyType* key)

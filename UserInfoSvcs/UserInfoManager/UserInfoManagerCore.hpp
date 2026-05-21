@@ -341,28 +341,6 @@ namespace AdServer::UserInfoSvcs
       bool reschedule_;
     };
 
-    class AllUsersProcessingTask: public TaskBase
-    {
-    public:
-      AllUsersProcessingTask(
-        Generics::TaskRunner* task_runner,
-        UserInfoManagerCore* user_info_manager_impl,
-        bool reschedule,
-        UserInfoContainer::AllUsersProcessingState* processing_state,
-        const Generics::Time cleanup_time =  Generics::Time(-1),
-        long portion = -1)
-        noexcept;
-
-      virtual void execute() noexcept;
-
-    protected:
-      UserInfoManagerCore* user_info_manager_impl_;
-      bool reschedule_;
-      UserInfoContainer::AllUsersProcessingState_var processing_state_;
-      Generics::Time cleanup_time_;
-      long portion_;
-    };
-
     class LoadChunksDataTask : public TaskBase
     {
     public:
@@ -438,15 +416,6 @@ namespace AdServer::UserInfoSvcs
       noexcept;
 
     void flush_logs_() noexcept;
-
-    void
-    all_users_process_step_(
-      bool reschedule,
-      UserInfoContainer::AllUsersProcessingState* state,
-      bool fast_mode,
-      const Generics::Time& cleanup_time,
-      long portion)
-      noexcept;
 
     AdServer::ProfilingCommons::LevelMapTraits
     fill_level_map_traits_(
@@ -597,36 +566,6 @@ namespace AdServer::UserInfoSvcs
     noexcept
   {
     user_info_manager_impl_->delete_old_temporary_profiles_(reschedule_);
-  }
-
-  // UserInfoManagerCore::AllUsersProcessingTask
-  inline
-  UserInfoManagerCore::AllUsersProcessingTask::AllUsersProcessingTask(
-    Generics::TaskRunner* task_runner,
-    UserInfoManagerCore* user_info_manager_impl,
-    bool reschedule,
-    UserInfoContainer::AllUsersProcessingState* processing_state,
-    const Generics::Time cleanup_time,
-    long portion)
-    noexcept
-    : TaskBase(task_runner),
-      user_info_manager_impl_(user_info_manager_impl),
-      reschedule_(reschedule),
-      processing_state_(ReferenceCounting::add_ref(processing_state)),
-      cleanup_time_(cleanup_time),
-      portion_(portion)
-  {}
-
-  inline
-  void
-  UserInfoManagerCore::AllUsersProcessingTask::execute() noexcept
-  {
-    user_info_manager_impl_->all_users_process_step_(
-      reschedule_,
-      processing_state_,
-      false,
-      cleanup_time_,
-      portion_);
   }
 
   // UserInfoManagerCore::LoadChunksDataTask

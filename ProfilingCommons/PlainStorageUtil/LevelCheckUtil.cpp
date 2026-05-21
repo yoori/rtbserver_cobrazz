@@ -142,46 +142,46 @@ divide_to_chunks(
     std::map<unsigned long, ReferenceCounting::SmartPtr<ProfileMap> > destination_chunks;
     Generics::Time now = Generics::Time::get_time_of_day();
 
-    ProfileMap::KeyList key_list;
-    source_map->copy_keys(key_list);
-    for (auto iter = key_list.begin(); iter != key_list.end(); ++iter)
-    {
-      Generics::ConstSmartMemBuf_var profile = source_map->get_profile(*iter);
-      if (profile.in())
+    source_map->process_keys(
+      [&](const ProfileMap::KeyTypeT& key)
       {
-        unsigned long hash = Generics::CRC::quick(0, iter->data(), iter->size());
-        unsigned long chunk_num = hash % chunks_number;
-
-        if (!destination_chunks[chunk_num].in())
+        Generics::ConstSmartMemBuf_var profile = source_map->get_profile(key);
+        if (profile.in())
         {
-          std::ostringstream ostr;
-          ostr << dst_path_prefix << chunk_num;
-          std::string destination_map_path = ostr.str();
+          unsigned long hash = Generics::CRC::quick(0, key.data(), key.size());
+          unsigned long chunk_num = hash % chunks_number;
 
-          mkdir(destination_map_path.c_str(), 0777);
+          if (!destination_chunks[chunk_num].in())
+          {
+            std::ostringstream ostr;
+            ostr << dst_path_prefix << chunk_num;
+            std::string destination_map_path = ostr.str();
 
-          ReferenceCounting::SmartPtr<ProfileMap> map =
-            new ProfileMap(
-              Generics::ActiveObjectCallback_var(
-                new TestCommons::ActiveObjectCallbackStreamImpl(std::cerr, "LevelCheckUtil")),
-              destination_map_path.c_str(),
-              prefix.c_str(),
-              AdServer::ProfilingCommons::LevelMapTraits(
-                AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
-                rw_buffer_size,
-                rwlevel_max_size,
-                max_undumped_size,
-                max_levels0,
-                Generics::Time::ZERO));
+            mkdir(destination_map_path.c_str(), 0777);
 
-          map->activate_object();
+            ReferenceCounting::SmartPtr<ProfileMap> map =
+              new ProfileMap(
+                Generics::ActiveObjectCallback_var(
+                  new TestCommons::ActiveObjectCallbackStreamImpl(std::cerr, "LevelCheckUtil")),
+                destination_map_path.c_str(),
+                prefix.c_str(),
+                AdServer::ProfilingCommons::LevelMapTraits(
+                  AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
+                  rw_buffer_size,
+                  rwlevel_max_size,
+                  max_undumped_size,
+                  max_levels0,
+                  Generics::Time::ZERO));
 
-          destination_chunks[chunk_num] = map;
+            map->activate_object();
+
+            destination_chunks[chunk_num] = map;
+          }
+
+          destination_chunks[chunk_num]->save_profile(key, profile, now);
         }
-
-        destination_chunks[chunk_num]->save_profile(*iter, profile, now);
-      }
-    }
+      },
+      std::function<void(void)>());
 
     for (unsigned long chunk_num = 0; chunk_num < chunks_number; ++chunk_num)
     {
@@ -259,13 +259,13 @@ void merge(
             max_levels0,
             Generics::Time::ZERO));
 
-      ProfileMap::KeyList key_list;
-      source_map->copy_keys(key_list);
-      for (auto iter = key_list.begin(); iter != key_list.end(); ++iter)
-      {
-        Generics::ConstSmartMemBuf_var profile = source_map->get_profile(*iter);
-        destination_map->save_profile(*iter, profile, now);
-      }
+      source_map->process_keys(
+        [&](const ProfileMap::KeyTypeT& key)
+        {
+          Generics::ConstSmartMemBuf_var profile = source_map->get_profile(key);
+          destination_map->save_profile(key, profile, now);
+        },
+        std::function<void(void)>());
     }
 
     destination_map->deactivate_object();

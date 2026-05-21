@@ -352,10 +352,12 @@ namespace ProfilingCommons
     typename MapTraitsType>
   void
   HashIndexProfileMap<KeyType, BlockIndexType, MapTraitsType>::
-    copy_keys(typename ProfileMap<KeyType>::KeyList& keys) 
+    process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
     /*throw (Exception)*/
   {
-    static const char* FUN = "HashIndexProfileMap::copy_keys()";
+    static const char* FUN = "HashIndexProfileMap::process_keys()";
 
     try
     {
@@ -375,8 +377,20 @@ namespace ProfilingCommons
         if (write_key_block.in())
         {
           const KeyBlock key_block(write_key_block);
+          typename ProfileMap<KeyType>::KeyList keys;
           key_block.copy_keys(keys);
+          for(typename ProfileMap<KeyType>::KeyList::const_iterator
+                key_it = keys.begin();
+              key_it != keys.end(); ++key_it)
+          {
+            process_key(*key_it);
+          }
         }
+      }
+
+      if(process_complete)
+      {
+        process_complete();
       }
     }
     catch(const eh::Exception& ex)

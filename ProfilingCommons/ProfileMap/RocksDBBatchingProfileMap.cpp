@@ -1,4 +1,5 @@
 #include <rocksdb/db.h>
+#include <rocksdb/iterator.h>
 #include <rocksdb/options.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
@@ -269,30 +270,93 @@ namespace AdServer::ProfilingCommons
   {
     check_background_error_();
 
-    std::promise<std::optional<std::string>> promise;
-    std::future<std::optional<std::string>> future = promise.get_future();
+    using RemoveResult = std::pair<bool, std::optional<std::string>>;
+    std::promise<RemoveResult> promise;
+    std::future<RemoveResult> future = promise.get_future();
+
+    remove_profile_async(
+      key,
+      OP_RUNTIME,
+      [&promise](bool result, std::optional<std::string> error)
+      {
+        promise.set_value(std::make_pair(result, std::move(error)));
+      });
+
+    const auto result = future.get();
+    if(result.second)
+    {
+      throw ProfileMap<std::string>::Exception(*result.second);
+    }
+
+    return result.first;
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::remove_profile_async(
+    const std::string& key,
+    OperationPriority,
+    RemoveCallback callback)
+  {
+    check_background_error_();
 
     Operation operation;
     operation.type = OT_REMOVE;
     operation.key = key;
-    operation.save_callback =
-      [&promise](std::optional<std::string> error)
-      {
-        promise.set_value(std::move(error));
-      };
+    if(callback)
+    {
+      operation.remove_callback = std::move(callback);
+    }
 
     if(!enqueue_operation_(std::move(operation)))
     {
-      return false;
+      throw ProfileMap<std::string>::Exception(
+        "RocksDBBatchingProfileMapImpl::remove_profile_async(): "
+        "object isn't active");
     }
+  }
 
-    const auto error = future.get();
-    if(error)
+  void
+  RocksDBBatchingProfileMapImpl::clear_expired_async(
+    const Generics::Time&,
+    CompleteCallback complete)
+  {
+    if(complete)
     {
-      throw ProfileMap<std::string>::Exception(*error);
+      complete();
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::process_keys(
+    std::function<void(const std::string&)> process_key,
+    std::function<void(void)> process_complete)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "RocksDBBatchingProfileMapImpl::process_keys()";
+
+    check_background_error_();
+    wait_pending_operations_();
+
+    std::unique_ptr<rocksdb::Iterator> it(
+      db_->NewIterator(rocksdb::ReadOptions()));
+    for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+      process_key(it->key().ToString());
     }
 
-    return true;
+    const auto status = it->status();
+    if(!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": can't iterate DB '" << path_ << "': " <<
+        status.ToString();
+      throw ProfileMap<std::string>::Exception(ostr.str());
+    }
+
+    if(process_complete)
+    {
+      process_complete();
+    }
   }
 
   bool
@@ -502,10 +566,7 @@ namespace AdServer::ProfilingCommons
       }
     }
 
-    if(!read_operations_.empty() || !write_operations_.empty())
-    {
-      queue_cond_.broadcast();
-    }
+    queue_cond_.broadcast();
   }
 
   void
@@ -644,6 +705,16 @@ namespace AdServer::ProfilingCommons
         catch(...)
         {}
       }
+
+      if(operation.remove_callback)
+      {
+        try
+        {
+          (*operation.remove_callback)(true, std::nullopt);
+        }
+        catch(...)
+        {}
+      }
     }
   }
 
@@ -669,6 +740,11 @@ namespace AdServer::ProfilingCommons
         if(operation.save_callback)
         {
           (*operation.save_callback)(error);
+        }
+
+        if(operation.remove_callback)
+        {
+          (*operation.remove_callback)(false, error);
         }
       }
       catch(...)
@@ -712,6 +788,19 @@ namespace AdServer::ProfilingCommons
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl background error: " +
         background_error_);
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::wait_pending_operations_() const
+  {
+    Sync::PosixGuard guard(queue_lock_);
+    while(active() &&
+      (!read_operations_.empty() ||
+        !write_operations_.empty() ||
+        !in_flight_keys_.empty()))
+    {
+      queue_cond_.wait(queue_lock_);
     }
   }
 
