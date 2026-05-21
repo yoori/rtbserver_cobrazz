@@ -723,7 +723,9 @@ namespace Frontends
       new AdServer::Commons::BoostAsioContextRunActiveObject(
         callback,
         io_service_,
-        process_threads)));
+        process_threads,
+        128 * 1024,
+        "fcgi-accept")));
   }
 
   FCGIAcceptor::~FCGIAcceptor() noexcept

@@ -34,6 +34,10 @@
     <xsl:attribute name="fe_config">
       <xsl:value-of select="concat($config-root,'/',$out-dir,'/FeConfig.xml')"/>
     </xsl:attribute>
+    <xsl:attribute name="grpc_coalesce_threads">
+      <xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbConfig/@threads"/>
+      <xsl:if test="count($fcgi-rtbserver-config/cfg:rtbConfig/@threads) = 0">64</xsl:if>
+    </xsl:attribute>
     <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
       <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>

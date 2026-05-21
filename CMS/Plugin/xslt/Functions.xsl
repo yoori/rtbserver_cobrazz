@@ -719,6 +719,7 @@
 <xsl:template name="AddUserInfoManagerControllerGroups">
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="error-prefix"/>
+  <xsl:param name="add-user-info-grpc" select="'false'"/>
 
   <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
     <cfg:UserInfoManagerControllerGroup name="UserInfoManagerControllers">
@@ -755,7 +756,7 @@
       </cfg:UserInfoManagerControllerGroup>
     </xsl:for-each>
 
-  <xsl:if test="count($full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $user-info-controller2-descriptor]) > 0">
+  <xsl:if test="$add-user-info-grpc = 'true' and count($full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $user-info-controller2-descriptor]) > 0">
     <cfg:UserInfo grpc_executor_threads="16">
       <cfg:BatchingOptions
         channels_number="32"

@@ -12,6 +12,8 @@
 #include <Generics/CompositeActiveObject.hpp>
 
 #include <Commons/ExecutorPool.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
@@ -41,7 +43,8 @@ namespace AdServer
     ContentFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+      CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     void
@@ -174,6 +177,7 @@ namespace AdServer
 
   private:
     Configuration_var frontend_config_;
+    CommonModule_var common_module_;
     CommonConfigPtr common_config_;
     ConfigPtr config_;
 
@@ -181,6 +185,7 @@ namespace AdServer
     TemplateRuleMap template_rules_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
       campaign_manager_coro_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
     Commons::TextTemplateCache_var template_files_;
   };

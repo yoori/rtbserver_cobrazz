@@ -45,6 +45,13 @@ namespace RequestInfoSvcs {
     {
       return uuid.to_string();
     }
+
+    template<typename KeyType>
+    KeyType
+    key_from_string(const std::string& value) const
+    {
+      return KeyType(value.c_str());
+    }
   };
 
   /** profile help methods */

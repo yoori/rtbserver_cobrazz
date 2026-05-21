@@ -188,6 +188,9 @@ namespace AdServer
     void
     complete_bind_task_() noexcept;
 
+    void
+    complete_match_task_() noexcept;
+
     bool
     has_user_bind_client_() const noexcept;
 

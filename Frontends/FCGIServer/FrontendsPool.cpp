@@ -4,6 +4,8 @@
 #include <iostream>
 #include <thread>
 
+#include <boost/asio.hpp>
+
 #include "FrontendsPool.hpp"
 #include <BiddingFrontend/BiddingFrontend.hpp>
 #include <DirectoryModule/DirectoryModule.hpp>
@@ -47,7 +49,8 @@ namespace AdServer
       const ModuleIdArray& modules,
       Logging::Logger* logger,
       StatHolder* stats,
-      Generics::CompositeMetricsProvider* composite_metrics_provider)
+      Generics::CompositeMetricsProvider* composite_metrics_provider,
+      unsigned long grpc_coalesce_threads)
       : config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
@@ -61,6 +64,12 @@ namespace AdServer
         common_module_(new CommonModule(logger_))
     {
       frontends_.reserve(4);
+      grpc_coalesce_runner_ =
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          callback_,
+          std::make_shared<boost::asio::io_service>(),
+          grpc_coalesce_threads);
+      common_module_->set_grpc_coalesce_runner(grpc_coalesce_runner_);
     }
 
     bool
@@ -219,7 +228,8 @@ namespace AdServer
               "pubpixel",
               fe_config.PubPixelFeConfiguration(),
               logger_,
-              request_workers_);
+              request_workers_,
+              common_module_);
           }
           else if(*module_it == M_CONTENT)
           {
@@ -227,7 +237,8 @@ namespace AdServer
               "content",
               fe_config.ContentFeConfiguration(),
               logger_,
-              request_workers_);
+              request_workers_,
+              common_module_);
           }
           else if(*module_it == M_DIRECTORY)
           {
@@ -332,6 +343,10 @@ namespace AdServer
 
         init_frontends_();
 
+        trace_startup("FrontendsPool grpc_coalesce_runner activate begin");
+        grpc_coalesce_runner_->activate_object();
+        trace_startup("FrontendsPool grpc_coalesce_runner activate end");
+
         if (request_workers_)
         {
           trace_startup("FrontendsPool request_workers activate begin");
@@ -364,6 +379,13 @@ namespace AdServer
         request_workers_->deactivate_object();
         request_workers_->wait_object();
         request_workers_.reset();
+      }
+
+      if (grpc_coalesce_runner_)
+      {
+        grpc_coalesce_runner_->deactivate_object();
+        grpc_coalesce_runner_->wait_object();
+        grpc_coalesce_runner_.reset();
       }
 
       common_module_->shutdown();

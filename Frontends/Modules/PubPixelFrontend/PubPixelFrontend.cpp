@@ -34,7 +34,8 @@ namespace AdServer::PubPixel
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
-    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+    CommonModule* common_module)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
@@ -45,6 +46,7 @@ namespace AdServer::PubPixel
         "PubPixelFrontend",
         Aspect::PUBPIXEL_FRONTEND, 0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
+      common_module_(ReferenceCounting::add_ref(common_module)),
       workers_(std::move(request_workers))
   {}
 
@@ -129,7 +131,8 @@ namespace AdServer::PubPixel
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
           FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
           AdServer::Grpc::BatchingOptions(),
-          grpc_executor_);
+          grpc_executor_,
+          common_module_->grpc_coalesce_runner());
       campaign_manager_coro_ = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
           campaign_manager,

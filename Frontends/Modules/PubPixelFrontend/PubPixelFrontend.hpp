@@ -16,6 +16,7 @@
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
+#include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
@@ -39,7 +40,8 @@ namespace AdServer::PubPixel
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers)
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+      CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     typedef ReferenceCounting::SmartPtr<Frontend> Frontend_var;
@@ -117,6 +119,7 @@ namespace AdServer::PubPixel
   private:
     // configuration
     Configuration_var frontend_config_;
+    CommonModule_var common_module_;
     CommonConfigPtr common_config_;
     ConfigPtr config_;
 

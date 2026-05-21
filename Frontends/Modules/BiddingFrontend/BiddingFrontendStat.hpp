@@ -35,6 +35,14 @@ namespace AdServer
       unsigned long skipped;
       unsigned long user_bind_requests;
       unsigned long user_bind_rejected_requests;
+      unsigned long user_bind_match_requests;
+      unsigned long user_bind_match_rejected_requests;
+      unsigned long user_bind_match_channel_requests;
+      unsigned long user_bind_match_get_profile_requests;
+      unsigned long user_bind_match_merge_requests;
+      unsigned long user_bind_match_remove_requests;
+      unsigned long user_bind_match_history_requests;
+      unsigned long user_bind_match_campaign_requests;
       Generics::Time processing_time;
       typedef std::map<Generics::Time, std::size_t> TimeoutsMap;
       TimeoutsMap timeout_counters;
@@ -64,6 +72,51 @@ namespace AdServer
 
     void
     add_user_bind_rejected_request() noexcept;
+
+    void
+    add_user_bind_match_request() noexcept;
+
+    void
+    complete_user_bind_match_request() noexcept;
+
+    void
+    add_user_bind_match_rejected_request() noexcept;
+
+    void
+    add_user_bind_match_channel_request() noexcept;
+
+    void
+    complete_user_bind_match_channel_request() noexcept;
+
+    void
+    add_user_bind_match_get_profile_request() noexcept;
+
+    void
+    complete_user_bind_match_get_profile_request() noexcept;
+
+    void
+    add_user_bind_match_merge_request() noexcept;
+
+    void
+    complete_user_bind_match_merge_request() noexcept;
+
+    void
+    add_user_bind_match_remove_request() noexcept;
+
+    void
+    complete_user_bind_match_remove_request() noexcept;
+
+    void
+    add_user_bind_match_history_request() noexcept;
+
+    void
+    complete_user_bind_match_history_request() noexcept;
+
+    void
+    add_user_bind_match_campaign_request() noexcept;
+
+    void
+    complete_user_bind_match_campaign_request() noexcept;
 
     virtual Generics::Values_var
     dump_stats();

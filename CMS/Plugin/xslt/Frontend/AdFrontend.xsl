@@ -506,6 +506,7 @@
     <xsl:call-template name="AddUserInfoManagerControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
+      <xsl:with-param name="add-user-info-grpc" select="'true'"/>
     </xsl:call-template>
 
     <cfg:ChannelManagerControllerRefs name="ChannelManagerControllers">

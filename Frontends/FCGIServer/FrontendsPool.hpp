@@ -7,6 +7,7 @@
 #include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Commons/ExecutorPool.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 // TO FIX !!! :
 #include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
@@ -59,7 +60,8 @@ namespace AdServer
         const ModuleIdArray& modules,
         Logging::Logger* logger,
         StatHolder* stats,
-        Generics::CompositeMetricsProvider* composite_metrics_provider);
+        Generics::CompositeMetricsProvider* composite_metrics_provider,
+        unsigned long grpc_coalesce_threads);
 
       /**
        * @brief Handle or not URI.
@@ -131,6 +133,8 @@ namespace AdServer
       Generics::CompositeMetricsProvider_var composite_metrics_provider_;
 
       CommonModule_var common_module_;
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        grpc_coalesce_runner_;
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers_;
       std::vector<std::string> frontend_names_;
       std::vector<FrontendCommons::Frontend_var> frontends_;

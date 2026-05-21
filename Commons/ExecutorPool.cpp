@@ -1,5 +1,7 @@
 #include "ExecutorPool.hpp"
 
+#include <Commons/ThreadName.hpp>
+
 namespace AdServer::Commons
 {
   ExecutorPool::ExecutorPool(
@@ -66,6 +68,8 @@ namespace AdServer::Commons
   void
   ExecutorPool::work_() noexcept
   {
+    set_current_thread_name("asio-pool");
+
     while(active())
     {
       try

@@ -267,7 +267,8 @@ namespace Frontends
         modules,
         logger(),
         stats_,
-        composite_metrics_provider_);
+        composite_metrics_provider_,
+        config_->grpc_coalesce_threads());
       trace_startup("create FrontendsPool end");
 
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();

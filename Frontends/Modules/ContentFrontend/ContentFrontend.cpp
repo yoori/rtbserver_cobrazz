@@ -174,7 +174,8 @@ namespace AdServer
   ContentFrontend::ContentFrontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
-    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers) /*throw(eh::Exception)*/
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+    CommonModule* common_module) /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
@@ -184,6 +185,7 @@ namespace AdServer
         "ContentFrontend",
         Aspect::CONTENT_FRONTEND, 0),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
+      common_module_(ReferenceCounting::add_ref(common_module)),
       workers_(std::move(request_workers))
   {}
 
@@ -253,9 +255,17 @@ namespace AdServer
           }
         }
       }
+
+      grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+        common_config_->grpc_executor_threads());
+      add_child_object(grpc_executor_);
+
       auto campaign_manager = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-          FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+          FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+          AdServer::Grpc::BatchingOptions(),
+          grpc_executor_,
+          common_module_->grpc_coalesce_runner());
       campaign_manager_coro_ = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
           campaign_manager,

@@ -188,6 +188,16 @@ namespace AdServer
     }
   }
 
+  void
+  UserBindFrontend::complete_match_task_() noexcept
+  {
+    match_task_count_ += -1;
+    if(stats_.in())
+    {
+      stats_->complete_user_bind_match_request();
+    }
+  }
+
   bool
   UserBindFrontend::has_user_bind_client_() const noexcept
   {
@@ -225,7 +235,16 @@ namespace AdServer
       config_->match_threads())
     {
       match_task_count_ += -1;
+      if(stats_.in())
+      {
+        stats_->add_user_bind_match_rejected_request();
+      }
       return;
+    }
+
+    if(stats_.in())
+    {
+      stats_->add_user_bind_match_request();
     }
 
     match_workers_->post(
@@ -240,7 +259,6 @@ namespace AdServer
         location = std::move(location),
         source = source.str()]()
       {
-        match_task_count_ += -1;
         user_match_(
           result_user_id,
           merge_user_id,

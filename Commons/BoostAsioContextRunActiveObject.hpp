@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 
 #include <boost/asio.hpp>
 
@@ -20,7 +21,8 @@ namespace AdServer::Commons
       Generics::ActiveObjectCallback* callback,
       std::shared_ptr<IoService> io_service,
       unsigned long threads,
-      unsigned long stack_size = 128 * 1024)
+      unsigned long stack_size = 128 * 1024,
+      std::string thread_name = "grpc-pool")
       /*throw(Gears::Exception)*/;
 
     ~BoostAsioContextRunActiveObject() noexcept override;
@@ -49,5 +51,6 @@ namespace AdServer::Commons
 
     std::shared_ptr<IoService> io_service_;
     std::unique_ptr<Work> io_work_;
+    std::string thread_name_;
   };
 }

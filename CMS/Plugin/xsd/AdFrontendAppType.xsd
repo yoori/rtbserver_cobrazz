@@ -207,6 +207,10 @@
     </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:complexType name="FCGIGrpcConfigType">
+    <xsd:attribute name="threads" type="xsd:positiveInteger" default="64"/>
+  </xsd:complexType>
+
   <xsd:complexType name="AdFrontendCommonConfigType">
     <xsd:sequence>
       <xsd:element name="adFCGINetworkParams" type="AdFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
@@ -251,6 +255,10 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name="adConfig" type="FCGIGrpcConfigType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="rtbConfig" type="FCGIGrpcConfigType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="trackConfig" type="FCGIGrpcConfigType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="userBindConfig" type="FCGIGrpcConfigType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="webServerParams" type="WebServerParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -73,6 +75,12 @@ namespace AdServer
 
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
     grpc_coalesce_runner() const noexcept;
+
+    void
+    set_grpc_coalesce_runner(
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        grpc_coalesce_runner)
+      noexcept;
 
     AdServer::CampaignSvcs::ColocationFlagsSeq_var
     get_colocation_flags(unsigned service_index) /*throw(Exception)*/;
@@ -172,5 +180,15 @@ namespace AdServer
   CommonModule::grpc_coalesce_runner() const noexcept
   {
     return grpc_coalesce_runner_;
+  }
+
+  inline
+  void
+  CommonModule::set_grpc_coalesce_runner(
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      grpc_coalesce_runner)
+    noexcept
+  {
+    grpc_coalesce_runner_ = std::move(grpc_coalesce_runner);
   }
 } // namespace AdServer

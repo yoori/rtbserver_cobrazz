@@ -34,6 +34,7 @@
     </xsd:sequence>
 
     <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
+    <xsd:attribute name="grpc_coalesce_threads" type="xsd:positiveInteger" default="64"/>
   </xsd:complexType>
 
   <xsd:complexType name="BindSocketType">

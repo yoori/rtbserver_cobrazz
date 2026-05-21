@@ -20,6 +20,14 @@ namespace
   const Generics::Values::Key BF_TIME_COUNTER     = "rtbRequestTimeCounter";
   const Generics::Values::Key UB_BIND_REQUESTS    = "userBindRequestInProgressCount";
   const Generics::Values::Key UB_BIND_REJECTED    = "userBindRequestRejectedCount";
+  const Generics::Values::Key UB_MATCH_REQUESTS   = "userBindMatchRequestInProgressCount";
+  const Generics::Values::Key UB_MATCH_REJECTED   = "userBindMatchRequestRejectedCount";
+  const Generics::Values::Key UB_MATCH_CHANNEL    = "userBindMatchChannelInProgressCount";
+  const Generics::Values::Key UB_MATCH_GET_PROFILE = "userBindMatchGetProfileInProgressCount";
+  const Generics::Values::Key UB_MATCH_MERGE      = "userBindMatchMergeInProgressCount";
+  const Generics::Values::Key UB_MATCH_REMOVE     = "userBindMatchRemoveInProgressCount";
+  const Generics::Values::Key UB_MATCH_HISTORY    = "userBindMatchHistoryInProgressCount";
+  const Generics::Values::Key UB_MATCH_CAMPAIGN   = "userBindMatchCampaignInProgressCount";
 
   struct GapKey
   {
@@ -96,7 +104,15 @@ namespace AdServer
       request_other_bid(0),
       skipped(0),
       user_bind_requests(0),
-      user_bind_rejected_requests(0)
+      user_bind_rejected_requests(0),
+      user_bind_match_requests(0),
+      user_bind_match_rejected_requests(0),
+      user_bind_match_channel_requests(0),
+      user_bind_match_get_profile_requests(0),
+      user_bind_match_merge_requests(0),
+      user_bind_match_remove_requests(0),
+      user_bind_match_history_requests(0),
+      user_bind_match_campaign_requests(0)
   {}
 
   StatHolder::StatData::StatData(
@@ -116,6 +132,14 @@ namespace AdServer
       skipped(0),
       user_bind_requests(0),
       user_bind_rejected_requests(0),
+      user_bind_match_requests(0),
+      user_bind_match_rejected_requests(0),
+      user_bind_match_channel_requests(0),
+      user_bind_match_get_profile_requests(0),
+      user_bind_match_merge_requests(0),
+      user_bind_match_remove_requests(0),
+      user_bind_match_history_requests(0),
+      user_bind_match_campaign_requests(0),
       processing_time(processing_time_val)
   {}
 
@@ -131,6 +155,14 @@ namespace AdServer
     skipped += rhs.skipped;
     user_bind_requests += rhs.user_bind_requests;
     user_bind_rejected_requests += rhs.user_bind_rejected_requests;
+    user_bind_match_requests += rhs.user_bind_match_requests;
+    user_bind_match_rejected_requests += rhs.user_bind_match_rejected_requests;
+    user_bind_match_channel_requests += rhs.user_bind_match_channel_requests;
+    user_bind_match_get_profile_requests += rhs.user_bind_match_get_profile_requests;
+    user_bind_match_merge_requests += rhs.user_bind_match_merge_requests;
+    user_bind_match_remove_requests += rhs.user_bind_match_remove_requests;
+    user_bind_match_history_requests += rhs.user_bind_match_history_requests;
+    user_bind_match_campaign_requests += rhs.user_bind_match_campaign_requests;
     processing_time += rhs.processing_time;
     for (TimeoutsMap::const_iterator it = rhs.timeout_counters.begin();
       it != rhs.timeout_counters.end(); ++it)
@@ -209,6 +241,44 @@ namespace AdServer
     ++stat_data_.user_bind_rejected_requests;
   }
 
+#define ADD_COUNTER(method_name, member_name) \
+  void \
+  StatHolder::method_name() noexcept \
+  { \
+    Sync::PosixGuard lock(mutex_); \
+    ++stat_data_.member_name; \
+  }
+
+#define COMPLETE_COUNTER(method_name, member_name) \
+  void \
+  StatHolder::method_name() noexcept \
+  { \
+    Sync::PosixGuard lock(mutex_); \
+    if(stat_data_.member_name) \
+    { \
+      --stat_data_.member_name; \
+    } \
+  }
+
+  ADD_COUNTER(add_user_bind_match_request, user_bind_match_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_request, user_bind_match_requests)
+  ADD_COUNTER(add_user_bind_match_rejected_request, user_bind_match_rejected_requests)
+  ADD_COUNTER(add_user_bind_match_channel_request, user_bind_match_channel_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_channel_request, user_bind_match_channel_requests)
+  ADD_COUNTER(add_user_bind_match_get_profile_request, user_bind_match_get_profile_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_get_profile_request, user_bind_match_get_profile_requests)
+  ADD_COUNTER(add_user_bind_match_merge_request, user_bind_match_merge_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_merge_request, user_bind_match_merge_requests)
+  ADD_COUNTER(add_user_bind_match_remove_request, user_bind_match_remove_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_remove_request, user_bind_match_remove_requests)
+  ADD_COUNTER(add_user_bind_match_history_request, user_bind_match_history_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_history_request, user_bind_match_history_requests)
+  ADD_COUNTER(add_user_bind_match_campaign_request, user_bind_match_campaign_requests)
+  COMPLETE_COUNTER(complete_user_bind_match_campaign_request, user_bind_match_campaign_requests)
+
+#undef ADD_COUNTER
+#undef COMPLETE_COUNTER
+
   Generics::Values_var
   StatHolder::dump_stats()
   {
@@ -239,6 +309,14 @@ namespace AdServer
     v->set(BF_SKIPPED, d.skipped);
     v->set(UB_BIND_REQUESTS, d.user_bind_requests);
     v->set(UB_BIND_REJECTED, d.user_bind_rejected_requests);
+    v->set(UB_MATCH_REQUESTS, d.user_bind_match_requests);
+    v->set(UB_MATCH_REJECTED, d.user_bind_match_rejected_requests);
+    v->set(UB_MATCH_CHANNEL, d.user_bind_match_channel_requests);
+    v->set(UB_MATCH_GET_PROFILE, d.user_bind_match_get_profile_requests);
+    v->set(UB_MATCH_MERGE, d.user_bind_match_merge_requests);
+    v->set(UB_MATCH_REMOVE, d.user_bind_match_remove_requests);
+    v->set(UB_MATCH_HISTORY, d.user_bind_match_history_requests);
+    v->set(UB_MATCH_CAMPAIGN, d.user_bind_match_campaign_requests);
     std::size_t timeout_counter = 0;
     for (StatData::TimeoutsMap::const_iterator cit = d.timeout_counters.begin();
       cit != d.timeout_counters.end(); ++cit)

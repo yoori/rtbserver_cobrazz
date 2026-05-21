@@ -1,5 +1,7 @@
 #include <Commons/Grpc/GrpcExecutor.hpp>
 
+#include <Commons/ThreadName.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <thread>
@@ -60,6 +62,7 @@ namespace AdServer::Grpc
     {
       auto queue = holder.queue;
       holder.thread = std::thread([queue]() {
+        AdServer::Commons::set_current_thread_name("grpc-pool");
         queue->run();
       });
     }

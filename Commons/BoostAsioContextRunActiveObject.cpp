@@ -1,5 +1,7 @@
 #include "BoostAsioContextRunActiveObject.hpp"
 
+#include <Commons/ThreadName.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <utility>
@@ -10,14 +12,16 @@ namespace AdServer::Commons
     Generics::ActiveObjectCallback* callback,
     std::shared_ptr<IoService> io_service,
     unsigned long threads,
-    unsigned long stack_size)
+    unsigned long stack_size,
+    std::string thread_name)
     /*throw(Gears::Exception)*/
     : AdServer::Commons::DelegateActiveObject(
         callback,
         threads,
         stack_size),
       io_service_(std::move(io_service)),
-      io_work_(std::make_unique<Work>(*io_service_))
+      io_work_(std::make_unique<Work>(*io_service_)),
+      thread_name_(std::move(thread_name))
   {}
 
   BoostAsioContextRunActiveObject::~BoostAsioContextRunActiveObject() noexcept
@@ -58,6 +62,8 @@ namespace AdServer::Commons
   void
   BoostAsioContextRunActiveObject::work_() noexcept
   {
+    set_current_thread_name(thread_name_);
+
     while (active())
     {
       try
