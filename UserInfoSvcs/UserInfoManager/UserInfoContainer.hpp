@@ -63,33 +63,6 @@ namespace AdServer
 
       typedef std::list<UserId> UserIdList;
 
-      struct AllUsersProcessingState: public ReferenceCounting::AtomicImpl
-      {
-        Generics::Time start_time;
-        Generics::Time end_time;
-        long user_processing_portion;
-        bool collect_unique_channels;
-
-        // processing state user counters (including invalid)
-        unsigned long start_user_count;
-        unsigned long processed_user_count;
-
-        long chunk_i;
-        UserIdList chunk_users_to_process;
-        unsigned long chunk_users_to_process_count;
-
-        // processing result stats (users count contains only valid users)
-        unsigned long user_channels_count;
-        unsigned long user_discover_channels_count;
-        unsigned long users_count;
-
-      protected:
-        virtual ~AllUsersProcessingState() noexcept {}
-      };
-
-      typedef ReferenceCounting::SmartPtr<AllUsersProcessingState>
-        AllUsersProcessingState_var;
-
     public:
       UserInfoContainer(
         Logging::Logger* logger,
@@ -248,19 +221,6 @@ namespace AdServer
         const Generics::Time& temp_lifetime)
         /*throw(NotReady, Exception)*/;
 
-      AllUsersProcessingState_var
-      start_all_users_processing(
-        const Generics::Time& processing_time,
-        unsigned long user_processing_portion,
-        bool collect_unique_channels)
-        /*throw(NotReady, Exception)*/;
-
-      Generics::Time
-      continue_all_users_processing(
-        AllUsersProcessingState& state,
-        Generics::ActiveObject* interrupter)
-        /*throw(NotReady, Exception)*/;
-
     protected:
       typedef AdServer::ProfilingCommons::
         TransactionProfileMap<UserId>::MaxWaitersReached
@@ -327,13 +287,6 @@ namespace AdServer
         const Generics::MemBuf& base_profile,
         const Generics::MemBuf* add_profile)
         noexcept;
-
-      bool
-      process_user_(
-        unsigned long* channels_count,
-        unsigned long* discover_channels_count,
-        const UserId& user_id_val,
-        const Generics::Time& now);
 
     private:
       Logging::Logger_var logger_;

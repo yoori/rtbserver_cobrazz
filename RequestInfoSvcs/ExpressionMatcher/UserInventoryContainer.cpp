@@ -967,7 +967,12 @@ namespace RequestInfoSvcs
   UserInventoryInfoContainer::all_users(UserIdList& users)
     /*throw(Exception)*/
   {
-    user_map_->copy_keys(users);
+    user_map_->process_keys(
+      [&users](const AdServer::Commons::UserId& user_id)
+      {
+        users.push_back(user_id);
+      },
+      std::function<void(void)>());
   }
 
 
@@ -1894,4 +1899,3 @@ namespace RequestInfoSvcs
   }
 } /* namespace RequestInfoSvcs */
 } /* namespace AdServer */
-

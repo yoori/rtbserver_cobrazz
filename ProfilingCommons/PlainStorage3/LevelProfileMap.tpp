@@ -775,8 +775,9 @@ namespace ProfilingCommons
 
   template<typename KeyType, typename KeySerializerType>
   void
-  LevelProfileMap<KeyType, KeySerializerType>::copy_keys(
-    typename ProfileMap<KeyType>::KeyList& keys)
+  LevelProfileMap<KeyType, KeySerializerType>::process_keys(
+    std::function<void(const KeyType&)> process_key,
+    std::function<void(void)> process_complete)
     /*throw(Exception)*/
   {
     ConstMapHolder_var map_holder = get_map_holder_();
@@ -807,7 +808,12 @@ namespace ProfilingCommons
     Generics::Time cur_access_time;
     while(it->get_next(cur_key, cur_operation, cur_access_time))
     {
-      keys.push_back(cur_key);
+      process_key(cur_key);
+    }
+
+    if(process_complete)
+    {
+      process_complete();
     }
   }
 

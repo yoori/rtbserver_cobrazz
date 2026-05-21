@@ -159,7 +159,9 @@ namespace ProfilingCommons
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   void
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
-  copy_keys(typename ProfileMap<KeyType>::KeyList& keys)
+  process_keys(
+    std::function<void(const KeyType&)> process_key,
+    std::function<void(void)> process_complete)
     /*throw(Exception)*/
   {
     try
@@ -170,8 +172,13 @@ namespace ProfilingCommons
       {
         if(chunk_it->in())
         {
-          (*chunk_it)->copy_keys(keys);
+          (*chunk_it)->process_keys(process_key, std::function<void(void)>());
         }
+      }
+
+      if(process_complete)
+      {
+        process_complete();
       }
     }
     catch(const eh::Exception& ex)

@@ -102,7 +102,10 @@ namespace ProfilingCommons
       /*throw(NotActive, Blocked, Exception)*/;
 
     virtual void
-    copy_keys(typename ProfileMap<KeyType>::KeyList& keys) /*throw(Exception)*/;
+    process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
+      /*throw(Exception)*/;
 
     virtual void
     clear_expired(const Generics::Time& /*expire_time*/)

@@ -1,11 +1,15 @@
 #pragma once
 
 #include <cstdint>
+#include <exception>
 #include <list>
 #include <functional>
 #include <future>
+#include <memory>
 #include <optional>
 #include <string>
+#include <utility>
+#include <Commons/Coro.hpp>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -41,8 +45,7 @@ namespace ProfilingCommons
 
     virtual void
     wait_preconditions(const KeyType&, OperationPriority) const
-      /*throw(Exception)*/
-    {}
+      /*throw(Exception)*/;
 
     virtual bool
     check_profile(const KeyType& key) const /*throw(Exception)*/ = 0;
@@ -67,25 +70,21 @@ namespace ProfilingCommons
       OperationPriority op_priority = OP_RUNTIME)
       /*throw(Exception)*/ = 0;
 
-    virtual void clear_expired(const Generics::Time& /*expire_time*/)
-      /*throw(Exception)*/
-    {
-      throw Exception("clear_expired isn't supported");
-    }
+    virtual void
+    clear_expired(const Generics::Time& expire_time)
+      /*throw(Exception)*/;
 
-    virtual void copy_keys(KeyList& /*keys*/) /*throw(Exception)*/
-    {
-      throw Exception("copy_keys isn't supported");
-    };
+    virtual void
+    process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
+      /*throw(Exception)*/;
 
-    virtual unsigned long size() const noexcept = 0;
+    virtual unsigned long size() const noexcept;
 
-    virtual unsigned long area_size() const noexcept = 0;
+    virtual unsigned long area_size() const noexcept;
 
-    virtual Stats stats() const noexcept
-    {
-      return {};
-    }
+    virtual Stats stats() const noexcept;
   };
 
   template<typename KeyType>
@@ -96,6 +95,56 @@ namespace ProfilingCommons
       const Generics::ConstSmartMemBuf_var&,
       std::optional<std::string> error)>;
     using SaveCallback = std::function<void(std::optional<std::string> error)>;
+    using RemoveCallback = std::function<void(
+      bool,
+      std::optional<std::string> error)>;
+    using CompleteCallback = std::function<void()>;
+
+    template<typename ResultType>
+    class CallbackAwaitable
+    {
+    public:
+      using RawAwaitable = AdServer::Commons::AsyncCallbackAwaitable<
+        ResultType,
+        std::optional<std::string> >;
+
+      explicit
+      CallbackAwaitable(RawAwaitable awaitable);
+
+      bool
+      await_ready() const noexcept;
+
+      bool
+      await_suspend(std::coroutine_handle<> handle);
+
+      ResultType
+      await_resume();
+
+    private:
+      RawAwaitable awaitable_;
+    };
+
+    class VoidCallbackAwaitable
+    {
+    public:
+      using RawAwaitable = AdServer::Commons::AsyncCallbackAwaitable<
+        std::optional<std::string> >;
+
+      explicit
+      VoidCallbackAwaitable(RawAwaitable awaitable);
+
+      bool
+      await_ready() const noexcept;
+
+      bool
+      await_suspend(std::coroutine_handle<> handle);
+
+      void
+      await_resume();
+
+    private:
+      RawAwaitable awaitable_;
+    };
 
     virtual void
     check_profile_async(
@@ -117,6 +166,41 @@ namespace ProfilingCommons
       const Generics::Time& now = Generics::Time::get_time_of_day(),
       SaveCallback callback = SaveCallback())
       /*throw(Exception)*/ = 0;
+
+    virtual void
+    remove_profile_async(
+      const KeyType& key,
+      OperationPriority op_priority = OP_RUNTIME,
+      RemoveCallback callback = RemoveCallback())
+      /*throw(Exception)*/ = 0;
+
+    virtual void
+    clear_expired_async(
+      const Generics::Time& expire_time,
+      CompleteCallback complete = CompleteCallback())
+      /*throw(Exception)*/ = 0;
+
+    CallbackAwaitable<bool>
+    co_check_profile(const KeyType& key) const;
+
+    CallbackAwaitable<Generics::ConstSmartMemBuf_var>
+    co_get_profile(
+      const KeyType& key,
+      std::optional<Generics::Time> last_access_time = std::nullopt);
+
+    VoidCallbackAwaitable
+    co_save_profile(
+      const KeyType& key,
+      const Generics::ConstSmartMemBuf* mem_buf,
+      const Generics::Time& now = Generics::Time::get_time_of_day());
+
+    CallbackAwaitable<bool>
+    co_remove_profile(
+      const KeyType& key,
+      OperationPriority op_priority = OP_RUNTIME);
+
+    AdServer::Commons::AsyncCallbackAwaitable<>
+    co_clear_expired(const Generics::Time& expire_time);
   };
 
   template<typename KeyType>
@@ -129,117 +213,38 @@ namespace ProfilingCommons
 
     explicit
     AsyncProfileMapToProfileMap(AsyncProfileMap<KeyType>* async_profile_map)
-      noexcept
-      : async_profile_map_(ReferenceCounting::add_ref(async_profile_map))
-    {}
+      noexcept;
 
     bool
-    check_profile(const KeyType& key) const override
-    {
-      using Result = std::pair<bool, std::optional<std::string>>;
-      std::promise<Result> promise;
-      std::future<Result> future = promise.get_future();
-
-      async_profile_map_->check_profile_async(
-        key,
-        [&promise](bool result, std::optional<std::string> error)
-        {
-          promise.set_value(std::make_pair(result, std::move(error)));
-        });
-
-      const auto result = future.get();
-      if(result.second)
-      {
-        throw Exception(*result.second);
-      }
-
-      return result.first;
-    }
+    check_profile(const KeyType& key) const override;
 
     Generics::ConstSmartMemBuf_var
     get_profile(
       const KeyType& key,
-      Generics::Time* last_access_time = 0) override
-    {
-      using Result = std::pair<
-        Generics::ConstSmartMemBuf_var,
-        std::optional<std::string>>;
-      std::promise<Result> promise;
-      std::future<Result> future = promise.get_future();
-
-      async_profile_map_->get_profile_async(
-        key,
-        [&promise](
-          const Generics::ConstSmartMemBuf_var& profile,
-          std::optional<std::string> error)
-        {
-          promise.set_value(std::make_pair(profile, std::move(error)));
-        },
-        last_access_time ?
-          std::optional<Generics::Time>(*last_access_time) :
-          std::nullopt);
-
-      const auto result = future.get();
-      if(result.second)
-      {
-        throw Exception(*result.second);
-      }
-
-      return result.first;
-    }
+      Generics::Time* last_access_time = 0) override;
 
     void
     save_profile(
       const KeyType& key,
       const Generics::ConstSmartMemBuf* mem_buf,
       const Generics::Time& now = Generics::Time::get_time_of_day(),
-      OperationPriority op_priority = OP_RUNTIME) override
-    {
-      static_cast<void>(op_priority);
-
-      std::promise<std::optional<std::string>> promise;
-      std::future<std::optional<std::string>> future = promise.get_future();
-
-      async_profile_map_->save_profile_async(
-        key,
-        mem_buf,
-        now,
-        [&promise](std::optional<std::string> error)
-        {
-          promise.set_value(std::move(error));
-        });
-
-      const auto error = future.get();
-      if(error)
-      {
-        throw Exception(*error);
-      }
-    }
+      OperationPriority op_priority = OP_RUNTIME) override;
 
     bool
     remove_profile(
-      const KeyType&,
-      OperationPriority = OP_RUNTIME) override
-    {
-      throw Exception("remove_profile isn't supported");
-    }
+      const KeyType& key,
+      OperationPriority op_priority = OP_RUNTIME) override;
 
-    unsigned long
-    size() const noexcept override
-    {
-      return 0;
-    }
-
-    unsigned long
-    area_size() const noexcept override
-    {
-      return 0;
-    }
+    void
+    clear_expired(const Generics::Time& expire_time) override;
 
   private:
     ReferenceCounting::SmartPtr<
       AsyncProfileMap<KeyType>,
       ReferenceCounting::PolicyNotNull> async_profile_map_;
   };
+
 }
 }
+
+#include "ProfileMap.tpp"

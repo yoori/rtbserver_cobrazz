@@ -41,8 +41,9 @@ namespace ProfilingCommons
       OperationPriority priority)
       /*throw(Exception)*/;
 
-    virtual void copy_keys(
-      typename ProfileMap<KeyType>::KeyList& keys)
+    virtual void process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
       /*throw(Exception)*/;
 
     virtual void clear_expired(const Generics::Time& expire_time)
@@ -129,11 +130,14 @@ namespace ProfilingCommons
 
   template<typename KeyType>
   void
-  DelegateProfileMap<KeyType>::copy_keys(
-    typename ProfileMap<KeyType>::KeyList& keys)
+  DelegateProfileMap<KeyType>::process_keys(
+    std::function<void(const KeyType&)> process_key,
+    std::function<void(void)> process_complete)
     /*throw(Exception)*/
   {
-    profile_map_->copy_keys(keys);
+    profile_map_->process_keys(
+      std::move(process_key),
+      std::move(process_complete));
   }
 
   template<typename KeyType>

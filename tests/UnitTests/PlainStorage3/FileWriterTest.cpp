@@ -999,7 +999,12 @@ test_merge_operation(const char* dir) noexcept
     std::cout << "CHECKED" << std::endl;
 
     AdServer::ProfilingCommons::ProfileMap<StringKey>::KeyList keys;
-    level_profile_map->copy_keys(keys);
+    level_profile_map->process_keys(
+      [&keys](const StringKey& key)
+      {
+        keys.push_back(key);
+      },
+      std::function<void(void)>());
     std::set<std::string> keysSet(keys.begin(), keys.end());
 
     if (keysSet.find("key 1") == keysSet.end())

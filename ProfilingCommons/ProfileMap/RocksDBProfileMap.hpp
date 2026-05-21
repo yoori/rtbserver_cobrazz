@@ -76,6 +76,23 @@ namespace ProfilingCommons
       const std::string& key,
       OperationPriority op_priority = OP_RUNTIME);
 
+    virtual void
+    remove_profile_async(
+      const std::string& key,
+      OperationPriority op_priority = OP_RUNTIME,
+      RemoveCallback callback = RemoveCallback());
+
+    virtual void
+    clear_expired_async(
+      const Generics::Time& expire_time,
+      CompleteCallback complete = CompleteCallback());
+
+    virtual void
+    process_keys(
+      std::function<void(const std::string&)> process_key,
+      std::function<void(void)> process_complete)
+      /*throw(Exception)*/;
+
     virtual unsigned long
     size() const noexcept;
 
@@ -103,6 +120,13 @@ namespace ProfilingCommons
     template<typename Type>
     std::string
     operator()(const Type& key) const
+    {
+      return key;
+    }
+
+    template<typename Type>
+    Type
+    key_from_string(const std::string& key) const
     {
       return key;
     }
@@ -158,6 +182,25 @@ namespace ProfilingCommons
     remove_profile(
       const KeyType& key,
       OperationPriority op_priority = OP_RUNTIME);
+
+    virtual void
+    remove_profile_async(
+      const KeyType& key,
+      OperationPriority op_priority = OP_RUNTIME,
+      typename AsyncProfileMap<KeyType>::RemoveCallback callback =
+        typename AsyncProfileMap<KeyType>::RemoveCallback());
+
+    virtual void
+    clear_expired_async(
+      const Generics::Time& expire_time,
+      typename AsyncProfileMap<KeyType>::CompleteCallback complete =
+        typename AsyncProfileMap<KeyType>::CompleteCallback());
+
+    virtual void
+    process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
+      /*throw(Exception)*/;
 
     virtual unsigned long
     size() const noexcept;
@@ -266,6 +309,43 @@ namespace ProfilingCommons
     OperationPriority op_priority)
   {
     return impl_->remove_profile(key_adapter_(key), op_priority);
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  void
+  RocksDBProfileMap<KeyType, KeyAdapterType>::remove_profile_async(
+    const KeyType& key,
+    OperationPriority op_priority,
+    typename AsyncProfileMap<KeyType>::RemoveCallback callback)
+  {
+    impl_->remove_profile_async(
+      key_adapter_(key),
+      op_priority,
+      std::move(callback));
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  void
+  RocksDBProfileMap<KeyType, KeyAdapterType>::clear_expired_async(
+    const Generics::Time& expire_time,
+    typename AsyncProfileMap<KeyType>::CompleteCallback complete)
+  {
+    impl_->clear_expired_async(expire_time, std::move(complete));
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  void
+  RocksDBProfileMap<KeyType, KeyAdapterType>::process_keys(
+    std::function<void(const KeyType&)> process_key,
+    std::function<void(void)> process_complete)
+    /*throw(Exception)*/
+  {
+    impl_->process_keys(
+      [this, &process_key](const std::string& key)
+      {
+        process_key(key_adapter_.template key_from_string<KeyType>(key));
+      },
+      std::move(process_complete));
   }
 
   template<typename KeyType, typename KeyAdapterType>

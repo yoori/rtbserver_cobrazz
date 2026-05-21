@@ -136,7 +136,12 @@ extract_data(
     ReferenceCounting::add_ref(profile_map_ptr);
 
   ProfileMap::KeyList keys;
-  profile_map->copy_keys(keys);
+  profile_map->process_keys(
+    [&keys](const typename ProfileMap::KeyTypeT& key)
+    {
+      keys.push_back(key);
+    },
+    std::function<void(void)>());
 
   if (verbose && keys.empty())
   {

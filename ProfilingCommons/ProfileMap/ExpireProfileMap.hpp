@@ -216,15 +216,13 @@ namespace ProfilingCommons
     virtual unsigned long
     area_size() const noexcept;
 
-    /**
-     * Copy all keys from all SubMaps in some output iterator
-     * @param ins_it The output iterator - place for copied keys
-     */
     void
-    copy_keys(typename ProfileMap<KeyType>::KeyList& keys)
+    process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
       /*throw(Exception)*/
     {
-      static const char* FUN = "ExpireProfileMapBase::copy_keys()";
+      static const char* FUN = "ExpireProfileMapBase::process_keys()";
 
       try
       {
@@ -233,7 +231,12 @@ namespace ProfilingCommons
         for(typename SubMapList::const_iterator it = sub_maps_holder->maps.begin();
               it != sub_maps_holder->maps.end(); ++it)
         {
-          (*it)->map->copy_keys(keys);
+          (*it)->map->process_keys(process_key, std::function<void(void)>());
+        }
+
+        if(process_complete)
+        {
+          process_complete();
         }
       }
       catch(const eh::Exception& ex)

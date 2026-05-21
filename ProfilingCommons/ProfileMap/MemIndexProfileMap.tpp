@@ -507,13 +507,15 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType, typename BlockIndexType,
-    typename MapTraitsType, template<typename, typename> class ContainerType>  
+    typename MapTraitsType, template<typename, typename> class ContainerType>
   void
   MemIndexProfileMap<KeyType, BlockIndexType, MapTraitsType, ContainerType>::
-  copy_keys(typename ProfileMap<KeyType>::KeyList& keys)
+  process_keys(
+    std::function<void(const KeyType&)> process_key,
+    std::function<void(void)> process_complete)
     /*throw(Exception)*/
   {
-    static const char* FUN = "MemIndexProfileMap::copy_keys()";
+    static const char* FUN = "MemIndexProfileMap::process_keys()";
 
     try
     {
@@ -525,7 +527,12 @@ namespace ProfilingCommons
             this->index_container_.begin();
           it != this->index_container_.end(); ++it)
       {
-        keys.push_back(it->first);
+        process_key(it->first);
+      }
+
+      if(process_complete)
+      {
+        process_complete();
       }
     }
     catch(const eh::Exception& ex)

@@ -87,7 +87,9 @@ namespace ProfilingCommons
     area_size() const noexcept;
 
     virtual void
-    copy_keys(typename ProfileMap<KeyType>::KeyList& keys)
+    process_keys(
+      std::function<void(const KeyType&)> process_key,
+      std::function<void(void)> process_complete)
       /*throw(Exception)*/;
 
   private:

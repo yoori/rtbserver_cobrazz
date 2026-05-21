@@ -1,4 +1,5 @@
 #include <rocksdb/db.h>
+#include <rocksdb/iterator.h>
 #include <rocksdb/options.h>
 #include <rocksdb/utilities/db_ttl.h>
 
@@ -196,6 +197,74 @@ namespace ProfilingCommons
     */
 
     return true;
+  }
+
+  void
+  RocksDBProfileMapImpl::remove_profile_async(
+    const std::string& key,
+    OperationPriority op_priority,
+    RemoveCallback callback)
+  {
+    bool result = false;
+    std::optional<std::string> error;
+    try
+    {
+      result = remove_profile(key, op_priority);
+    }
+    catch(const std::exception& ex)
+    {
+      error = ex.what();
+    }
+    catch(...)
+    {
+      error = "unknown remove error";
+    }
+
+    if(callback)
+    {
+      callback(result, std::move(error));
+    }
+  }
+
+  void
+  RocksDBProfileMapImpl::clear_expired_async(
+    const Generics::Time&,
+    CompleteCallback complete)
+  {
+    if(complete)
+    {
+      complete();
+    }
+  }
+
+  void
+  RocksDBProfileMapImpl::process_keys(
+    std::function<void(const std::string&)> process_key,
+    std::function<void(void)> process_complete)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "RocksDBProfileMapImpl::process_keys()";
+
+    std::unique_ptr<rocksdb::Iterator> it(
+      db_->NewIterator(rocksdb::ReadOptions()));
+    for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+      process_key(it->key().ToString());
+    }
+
+    const auto status = it->status();
+    if(!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": can't iterate DB '" << path_ << "': " <<
+        status.ToString();
+      throw Exception(ostr.str());
+    }
+
+    if(process_complete)
+    {
+      process_complete();
+    }
   }
 
   void

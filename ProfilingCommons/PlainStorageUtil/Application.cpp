@@ -265,56 +265,38 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
 
     std::cout << "number of keys: " << read_map->size() << std::endl;
 
-    std::list<BinKey> keys;
-    read_map->copy_keys(keys);
-
     unsigned long sum_used_size = 0;
 
-    for(std::list<BinKey>::const_iterator it =
-          keys.begin(); it != keys.end(); ++it)
-    {
-      try
+    read_map->process_keys(
+      [&](const BinKey& key)
       {
-        std::cout << it->str() << ":";
-
-        Generics::ConstSmartMemBuf_var mb = read_map->get_profile(*it);
-
-        /*
-        PlainStorage::ReadBlock_var rb = it->second->create_reader();
-        Generics::ArrayAutoPtr<char> buf(1024);
-        PlainStorage::SizeType index_size = rb->read_index_(buf.get(), 1024);
-        WriteRecordLayerT::BlockIndex index;
-        WriteRecordLayerT::IndexSerializer index_serializer;
-        index_serializer.load(buf.get(), index_size, index);
-
-        if(free_indexes.find(index.base_index) != free_indexes.end())
+        try
         {
-          std::cout << " ERROR this block marked as FREE" << std::endl;
-        }
+          std::cout << key.str() << ":";
 
-        rb->print_(std::cout, "  ");
-        */
+          Generics::ConstSmartMemBuf_var mb = read_map->get_profile(key);
 
-        sum_used_size += mb->membuf().size();
+          sum_used_size += mb->membuf().size();
 
-        if(print_content)
-        {
+          if(print_content)
+          {
+            std::cout << std::endl;
+            print_plain_(std::cout, mb->membuf().data(), mb->membuf().size(), "    ");
+          }
+          else
+          {
+            std::cout << mb->membuf().size();
+          }
+
           std::cout << std::endl;
-          print_plain_(std::cout, mb->membuf().data(), mb->membuf().size(), "    ");
         }
-        else
+        catch(const eh::Exception& ex)
         {
-          std::cout << mb->membuf().size();
+          std::cerr << key.str() << ":" << std::endl <<
+            ex.what() << std::endl;
         }
-
-        std::cout << std::endl;
-      }
-      catch(const eh::Exception& ex)
-      {
-        std::cerr << it->str() << ":" << std::endl <<
-          ex.what() << std::endl;
-      }
-    }
+      },
+      std::function<void(void)>());
 
     /* print free indexes */
     std::cout <<
@@ -377,23 +359,21 @@ resave_mem_index(const char* source_file, const char* target_file)
 
   // copy content
   {
-    std::list<BinKey> keys;
-    source_map->copy_keys(keys);
-
-    for(std::list<BinKey>::const_iterator it =
-          keys.begin(); it != keys.end(); ++it)
-    {
-      try
+    source_map->process_keys(
+      [&](const BinKey& key)
       {
-        Generics::ConstSmartMemBuf_var mb = source_map->get_profile(*it);
-        target_map->save_profile(*it, mb);
-      }
-      catch(const eh::Exception& ex)
-      {
-        std::cerr << it->str() << ":" << std::endl <<
-          ex.what() << std::endl;
-      }
-    }
+        try
+        {
+          Generics::ConstSmartMemBuf_var mb = source_map->get_profile(key);
+          target_map->save_profile(key, mb);
+        }
+        catch(const eh::Exception& ex)
+        {
+          std::cerr << key.str() << ":" << std::endl <<
+            ex.what() << std::endl;
+        }
+      },
+      std::function<void(void)>());
   }
 }
 
@@ -438,24 +418,23 @@ convert_mem_index_to_level(
   target_map->activate_object();
 
   {
-    std::list<BinKey> keys;
-    source_map->copy_keys(keys);
     Generics::Time now = Generics::Time::get_time_of_day();
 
-    for(std::list<BinKey>::const_iterator it =
-          keys.begin(); it != keys.end(); ++it)
-    {
-      try
+    source_map->process_keys(
+      [&](const BinKey& key)
       {
-        Generics::ConstSmartMemBuf_var mb = source_map->get_profile(*it);
-        target_map->save_profile(*it, mb, now);
-      }
-      catch(const eh::Exception& ex)
-      {
-        std::cerr << it->str() << ":" << std::endl <<
-          ex.what() << std::endl;
-      }
-    }
+        try
+        {
+          Generics::ConstSmartMemBuf_var mb = source_map->get_profile(key);
+          target_map->save_profile(key, mb, now);
+        }
+        catch(const eh::Exception& ex)
+        {
+          std::cerr << key.str() << ":" << std::endl <<
+            ex.what() << std::endl;
+        }
+      },
+      std::function<void(void)>());
   }
 
   target_map->deactivate_object();

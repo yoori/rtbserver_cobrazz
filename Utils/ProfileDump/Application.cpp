@@ -115,18 +115,21 @@ Application_::print_profile_from_file_(
   }
   else
   {
-    std::list<AdServer::Commons::UserId> users;
-    user_map->copy_keys(users);
-    for(std::list<AdServer::Commons::UserId>::iterator it = users.begin();
-        it != users.end(); ++it)
-    {
-      Generics::ConstSmartMemBuf_var mb = user_map->get_profile(*it);
-      if(mb)
+    user_map->process_keys(
+      [&](const AdServer::Commons::UserId& user)
       {
-        std::cout << ">>>>>>>>>> User '" << *it << "'(" << mb->membuf().size() << "):" << std::endl;
-        print_profile_from_block_(profile_type, it->to_string().c_str(), mb->membuf());
-      }
-    }
+        Generics::ConstSmartMemBuf_var mb = user_map->get_profile(user);
+        if(mb)
+        {
+          std::cout << ">>>>>>>>>> User '" << user << "'(" <<
+            mb->membuf().size() << "):" << std::endl;
+          print_profile_from_block_(
+            profile_type,
+            user.to_string().c_str(),
+            mb->membuf());
+        }
+      },
+      std::function<void(void)>());
   }
 }
 
@@ -235,19 +238,17 @@ Application_::dump_request_profiles_(const FileNameList& files) noexcept
         new AdServer::ProfilingCommons::AdaptProfileMap<
           AdServer::ProfilingCommons::RequestIdPackHashAdapter,
           AdServer::RequestInfoSvcs::RequestProfileAdapter>(base_map));
-      std::list<AdServer::ProfilingCommons::RequestIdPackHashAdapter> requests_ids;
-      map->copy_keys(requests_ids);
-
-      for (std::list<AdServer::ProfilingCommons::RequestIdPackHashAdapter>::const_iterator  it =
-           requests_ids.begin(); it != requests_ids.end(); ++it)
-      {
-        Generics::ConstSmartMemBuf_var mb =
-          map->get_profile(*it);
-        AdServer::RequestInfoSvcs::RequestInfoProfileReader reader(
-          mb->membuf().data(), mb->membuf().size());
-        AdServer::RequestInfoSvcs::print_request_info_profile(
-          std::cout, reader);
-      }
+      map->process_keys(
+        [&](const AdServer::ProfilingCommons::RequestIdPackHashAdapter& request_id)
+        {
+          Generics::ConstSmartMemBuf_var mb =
+            map->get_profile(request_id);
+          AdServer::RequestInfoSvcs::RequestInfoProfileReader reader(
+            mb->membuf().data(), mb->membuf().size());
+          AdServer::RequestInfoSvcs::print_request_info_profile(
+            std::cout, reader);
+        },
+        std::function<void(void)>());
     }
   }
   catch (eh::Exception& ex)
@@ -431,5 +432,4 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
 
