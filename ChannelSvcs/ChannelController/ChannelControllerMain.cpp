@@ -1,4 +1,4 @@
-#include "ChannelController2Main.hpp"
+#include "ChannelControllerMain.hpp"
 
 #include <csignal>
 #include <iostream>
@@ -10,7 +10,7 @@
 
 namespace
 {
-  const char ASPECT[] = "ChannelController2";
+  const char ASPECT[] = "ChannelController";
 
   void
   wait_for_shutdown_signal_()
@@ -27,7 +27,7 @@ namespace
 }
 
 void
-ChannelController2App_::stop_() noexcept
+ChannelControllerApp_::stop_() noexcept
 {
   if (grpc_adapter_.in())
   {
@@ -45,13 +45,13 @@ ChannelController2App_::stop_() noexcept
 }
 
 void
-ChannelController2App_::main(int& argc, char** argv) noexcept
+ChannelControllerApp_::main(int& argc, char** argv) noexcept
 {
-  static const char* FUN = "ChannelController2App_::main()";
+  static const char* FUN = "ChannelControllerApp_::main()";
 
   try
   {
-    const char* usage = "usage: ChannelController2 <config_file>";
+    const char* usage = "usage: ChannelController <config_file>";
     if (argc < 2)
     {
       Stream::Error ostr;
@@ -73,8 +73,8 @@ ChannelController2App_::main(int& argc, char** argv) noexcept
       }
 
       configuration_.reset(
-        new ChannelController2ConfigType(
-          ad_configuration->ChannelController2Config()));
+        new ChannelControllerConfigType(
+          ad_configuration->ChannelControllerConfig()));
     }
     catch (const xml_schema::parsing& ex)
     {
@@ -102,15 +102,15 @@ ChannelController2App_::main(int& argc, char** argv) noexcept
     Logging::ActiveObjectCallbackImpl_var callback(
       new Logging::ActiveObjectCallbackImpl(
         logger(),
-        "ChannelController2App",
+        "ChannelControllerApp",
         ASPECT));
 
-    controller_ = new AdServer::ChannelSvcs::ChannelController2Impl(
+    controller_ = new AdServer::ChannelSvcs::ChannelControllerImpl(
       callback,
       logger(),
       config());
 
-    grpc_adapter_ = new AdServer::ChannelSvcs::ChannelController2Grpc(
+    grpc_adapter_ = new AdServer::ChannelSvcs::ChannelControllerGrpc(
       controller_,
       logger(),
       config().GrpcConfig().Endpoint().host().present() &&
@@ -134,11 +134,11 @@ ChannelController2App_::main(int& argc, char** argv) noexcept
     if (logger())
     {
       logger()->sstream(Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-73") <<
-        FUN << ": caught ChannelController2App_::Exception: " << ex.what();
+        FUN << ": caught ChannelControllerApp_::Exception: " << ex.what();
     }
     else
     {
-      std::cerr << FUN << ": caught ChannelController2App_::Exception: " <<
+      std::cerr << FUN << ": caught ChannelControllerApp_::Exception: " <<
         ex.what() << '\n';
     }
   }
@@ -168,6 +168,6 @@ main(int argc, char** argv)
   sigaddset(&signals, SIGQUIT);
   pthread_sigmask(SIG_BLOCK, &signals, nullptr);
 
-  ChannelController2App_ app;
+  ChannelControllerApp_ app;
   app.main(argc, argv);
 }

@@ -16,7 +16,7 @@ namespace AdServer::ChannelSvcs
     ChannelDistributedGrpcClient::ChannelControllerRefs
       channel_controller_refs;
 
-    for(const auto& group : common_config.ChannelController2Group())
+    for(const auto& group : common_config.ChannelControllerGroup())
     {
       for(const auto& endpoint : group.Endpoint())
       {

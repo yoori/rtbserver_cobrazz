@@ -25,18 +25,6 @@ target_link_libraries(ChannelManagerControllerIDL
   ChannelCommons
 )
 
-add_executable( ChannelController
-  ChannelControllerMain.cpp
-  ChannelControllerImpl.cpp
-)
-target_link_libraries(ChannelController
-  ChannelSessionFactory
-  ChannelClusterControl
-  ChannelClusterControlIDL
-  ChannelManagerControllerIDL
-  ChannelManagerControllerConfigXSD
-)
-
 add_library(ChannelSessionFactory SHARED
   ChannelLoadSessionFactory.cpp
   ChannelServerSessionFactory.cpp

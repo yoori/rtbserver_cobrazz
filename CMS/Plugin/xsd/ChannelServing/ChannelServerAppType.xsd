@@ -95,7 +95,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="memory_size" type="xsd:positiveInteger" use="optional" default="100">
+    <xsd:attribute name="memory_size" type="xsd:positiveInteger" use="optional" default="2000">
       <xsd:annotation>
         <xsd:documentation>
           Size of additional memory to use on update.

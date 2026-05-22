@@ -15,7 +15,6 @@ add_executable(FCGIServer
 )
 
 target_link_libraries(FCGIServer
-  ProcessControlVars
   RequestMatchers
   CreativeTemplateArgs
 
@@ -46,7 +45,6 @@ target_link_libraries(FCGIServer
   Commons
 
   Generics
-  CORBACommons
   SecToken
 
   boost_system

@@ -336,6 +336,30 @@ namespace AdServer::ChannelSvcs
   }
 
   void
+  ChannelCorbaClient::set_sources(
+    const adserver::channel_svcs::channel_server::SetSourcesRequest&,
+    SetSourcesCallback callback)
+  {
+    callback(
+      grpc::Status(
+        grpc::StatusCode::UNIMPLEMENTED,
+        "set_sources isn't supported by ChannelCorbaClient"),
+      adserver::channel_svcs::channel_server::SetSourcesResponse());
+  }
+
+  void
+  ChannelCorbaClient::set_proxy_sources(
+    const adserver::channel_svcs::channel_server::SetProxySourcesRequest&,
+    SetProxySourcesCallback callback)
+  {
+    callback(
+      grpc::Status(
+        grpc::StatusCode::UNIMPLEMENTED,
+        "set_proxy_sources isn't supported by ChannelCorbaClient"),
+      adserver::channel_svcs::channel_server::SetProxySourcesResponse());
+  }
+
+  void
   ChannelCorbaClient::match(
     const ChannelServerBase::MatchQuery& query,
     ChannelServerBase::MatchResult_out result)

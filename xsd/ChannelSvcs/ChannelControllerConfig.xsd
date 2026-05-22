@@ -8,7 +8,7 @@
 
   <xsd:annotation>
     <xsd:documentation>
-      ChannelController2 Configuration File XML Schema
+      ChannelController Configuration File XML Schema
     </xsd:documentation>
   </xsd:annotation>
 
@@ -18,12 +18,12 @@
 
   <xsd:complexType name="AdConfigurationType">
     <xsd:sequence>
-      <xsd:element name="ChannelController2Config"
-        type="ChannelController2ConfigType"/>
+      <xsd:element name="ChannelControllerConfig"
+        type="ChannelControllerConfigType"/>
     </xsd:sequence>
   </xsd:complexType>
 
-  <xsd:complexType name="ChannelController2ConfigType">
+  <xsd:complexType name="ChannelControllerConfigType">
     <xsd:sequence>
       <xsd:element name="GrpcConfig" type="GrpcConfigType">
         <xsd:annotation>
@@ -33,10 +33,16 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="ColoSettings"
+        type="ChannelControllerColoSettingsType"/>
+
+      <xsd:element name="ChannelSource"
+        type="ChannelControllerSourceType"/>
+
       <xsd:element name="Logger" type="ErrorLoggerType">
         <xsd:annotation>
           <xsd:documentation>
-            Error logger for ChannelController2
+            Error logger for ChannelController
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -58,6 +64,36 @@
       use="required"/>
   </xsd:complexType>
 
+  <xsd:complexType name="ChannelControllerRegularSourceType">
+    <xsd:sequence>
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="PGConnection" type="PGConnectionType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelControllerSourceType">
+    <xsd:choice>
+      <xsd:element name="RegularSource"
+        type="ChannelControllerRegularSourceType"/>
+      <xsd:element name="ProxySource"
+        type="ChannelControllerProxySourceType"/>
+    </xsd:choice>
+    <xsd:attribute name="local_groups" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelControllerProxySourceType">
+    <xsd:sequence>
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="ProxyRefs" type="MultiCorbaObjectRefType" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="use_local_on_first_load" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelControllerColoSettingsType">
+    <xsd:attribute name="colo" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="version" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
   <xsd:complexType name="ChannelServerGroupType">
     <xsd:sequence>
       <xsd:element name="ChannelServerHost"
@@ -72,6 +108,10 @@
       <xsd:element name="ChannelServerGrpcRef"
         type="GrpcEndpointConfigType"
         minOccurs="1"
+        maxOccurs="1"/>
+      <xsd:element name="ChannelUpdateRef"
+        type="CorbaObjectRefType"
+        minOccurs="0"
         maxOccurs="1"/>
     </xsd:sequence>
   </xsd:complexType>

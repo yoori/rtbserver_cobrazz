@@ -1,45 +1,48 @@
 package AdServer::Frontends::FCGIRtbServer2;
 
-use Utils::Functions;
 use AdServer::Functions;
 use AdServer::Path;
 
-my $fcgi_rtbserver2_port = "fcgi_rtbserver2_port";
+my $pid_file = "\${workspace_root}/run/FCGIRtbServer2.pid";
 
 sub start
 {
   my ($host, $descr) = @_;
 
   my $command =
-    "mkdir -p \${log_root}/FCGIRtbServer2 && ".
-    "ulimit -n 256000 && " .
+    "mkdir -p \${log_root}/FCGIRtbServer2 \${workspace_root}/run && " .
+    "if test -e $pid_file; then " .
+      "pid=`cat $pid_file`; " .
+      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
+    "fi && " .
     "ulimit -s 100000 && " .
+    "ulimit -n 256000 && " .
     "export MALLOC_ARENA_MAX=4 && " .
-    "{ FCGIServer " .
+    "setsid -f \${VALGRIND_PREFIX} FCGIServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServer2Config.xml " .
-      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer2.out 2>&1 < /dev/null & }";
+      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer2.out 2>&1 < /dev/null";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }
 
 sub stop
 {
-  my ($host) = @_;
+  my ($host, $descr) = @_;
 
-  return AdServer::Functions::process_control_stop(
-    $host,
-    $fcgi_rtbserver2_port,
-    $verbose);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file);
 }
 
 sub is_alive
 {
-  my ($host, $verbose) = @_;
+  my ($host, $descr) = @_;
 
-  return AdServer::Functions::process_control_is_alive(
-    $host,
-    $fcgi_rtbserver2_port,
-    $verbose);
+  my $command =
+    "test -e $pid_file || exit 1 && " .
+    "pid=`cat $pid_file` && " .
+    "kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 1; } && " .
+    "exit 0";
+
+  return AdServer::Functions::execute_command($host, $descr, $command);
 }
 
 1;

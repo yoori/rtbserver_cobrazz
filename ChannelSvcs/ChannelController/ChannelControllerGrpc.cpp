@@ -1,4 +1,4 @@
-#include "ChannelController2Grpc.hpp"
+#include "ChannelControllerGrpc.hpp"
 
 #include <utility>
 
@@ -12,15 +12,15 @@ namespace AdServer::ChannelSvcs
 {
   namespace
   {
-    constexpr const char channel_controller2_grpc_aspect[] =
-      "ChannelController2";
+    constexpr const char channel_controller_grpc_aspect[] =
+      "ChannelController";
   }
 
-  class ChannelController2Grpc::ServiceImpl final:
+  class ChannelControllerGrpc::ServiceImpl final:
     public AdServer::Grpc::GrpcServiceBase
   {
   public:
-    explicit ServiceImpl(ChannelController2Impl* controller)
+    explicit ServiceImpl(ChannelControllerImpl* controller)
       : controller_(ReferenceCounting::add_ref(controller)),
         service_(controller_.in())
     {
@@ -41,7 +41,7 @@ namespace AdServer::ChannelSvcs
         ChannelControllerGrpc::Service
     {
     public:
-      explicit Service(ChannelController2Impl* controller)
+      explicit Service(ChannelControllerImpl* controller)
         : controller_(ReferenceCounting::add_ref(controller))
       {}
 
@@ -57,7 +57,7 @@ namespace AdServer::ChannelSvcs
           controller_->fill_session_description(*response);
           return grpc::Status::OK;
         }
-        catch (const ChannelController2Impl::NotReady& ex)
+        catch (const ChannelControllerImpl::NotReady& ex)
         {
           return grpc::Status(grpc::StatusCode::UNAVAILABLE, ex.what());
         }
@@ -68,28 +68,28 @@ namespace AdServer::ChannelSvcs
       }
 
     private:
-      ChannelController2Impl_var controller_;
+      ChannelControllerImpl_var controller_;
     };
 
   private:
-    ChannelController2Impl_var controller_;
+    ChannelControllerImpl_var controller_;
     Service service_;
   };
 
-  ChannelController2Grpc::ChannelController2Grpc(
-    ChannelController2Impl* controller,
+  ChannelControllerGrpc::ChannelControllerGrpc(
+    ChannelControllerImpl* controller,
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       impl_(std::make_shared<Impl>(
         logger,
-        channel_controller2_grpc_aspect,
+        channel_controller_grpc_aspect,
         bind_address_,
         std::make_unique<ServiceImpl>(controller)))
   {
     add_child_object(impl_);
   }
 
-  ChannelController2Grpc::~ChannelController2Grpc() noexcept = default;
+  ChannelControllerGrpc::~ChannelControllerGrpc() noexcept = default;
 }

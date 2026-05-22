@@ -2,9 +2,10 @@
 #include <chrono>
 #include <iostream>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include <XMLUtility/Utility.cpp>
 
@@ -16,7 +17,6 @@
 namespace
 {
   const char ASPECT[] = "FCGIServer";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 
   const auto STARTUP_STARTED_AT = std::chrono::steady_clock::now();
 
@@ -33,37 +33,16 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace Frontends
+namespace AdServer::Frontends
 {
   FCGIServer::FCGIServer() /*throw(eh::Exception)*/
-    : AdServer::Commons::ProcessControlVarsLoggerImpl(
-        "FCGIServer", ASPECT),
+    : Logging::LoggerCallbackHolder(
+        Logging::Logger_var(new Logging::OStream::Logger(
+          Logging::OStream::Config(std::cerr))),
+        "FCGIServer", ASPECT, 0),
       stats_(new StatHolder()), // to remove ?
       composite_metrics_provider_(new Generics::CompositeMetricsProvider())
   {}
-
-  void
-  FCGIServer::shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/
-  {
-    deactivate_object();
-    wait_object();
-
-    if(frontend_pool_)
-    {
-      frontend_pool_->shutdown();
-    }
-
-    CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-  }
-
-  CORBACommons::IProcessControl::ALIVE_STATUS
-  FCGIServer::is_alive() /*throw(CORBA::SystemException)*/
-  {
-    return CORBACommons::ProcessControlImpl::is_alive();
-  }
 
   void
   FCGIServer::read_config_(
@@ -113,19 +92,6 @@ namespace Frontends
 
       try
       {
-        Config::CorbaConfigReader::read_config(
-          config_->CorbaConfig(),
-          corba_config_);
-      }
-      catch(const eh::Exception &ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Can't read Corba Config: " << ex.what();
-        throw Exception(ostr);
-      }
-
-      try
-      {
         logger(Config::LoggerConfigReader::create(
                  config_->Logger(), argv0));
       }
@@ -156,25 +122,6 @@ namespace Frontends
       Stream::Error ostr;
       ostr << FUN << ": got Exception. Invalid configuration: " <<
         ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  FCGIServer::init_corba_() /*throw(Exception)*/
-  {
-    try
-    {
-      corba_server_adapter_ =
-        new CORBACommons::CorbaServerAdapter(corba_config_);
-      shutdowner_ = corba_server_adapter_->shutdowner();
-      corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << "FCGIServer::init_corba(): "
-        "Can't init CorbaServerAdapter: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -339,6 +286,8 @@ namespace Frontends
       return;
     }
 
+    std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
+
     try
     {
       if (argc < 2)
@@ -369,21 +318,19 @@ namespace Frontends
         throw Exception(ostr);
       }
 
-      trace_startup("register_vars_controller begin");
-      register_vars_controller();
-      trace_startup("register_vars_controller end");
-      trace_startup("init_corba begin");
-      init_corba_();
-      trace_startup("init_corba end");
       init_fcgi_();
+      pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+        std::string(config_->pid_file()));
+      AdServer::Commons::SignalActiveObject signal_active_object;
       trace_startup("activate_object begin");
       activate_object();
       trace_startup("activate_object end");
       logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
       trace_startup("service started");
-      corba_server_adapter_->run();
 
-      wait();
+      signal_active_object.wait_object();
+      deactivate_object();
+      wait_object();
       logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
       XMLUtility::terminate();
     }
@@ -395,16 +342,6 @@ namespace Frontends
       logger()->log(
         ostr.str(),
         Logging::Logger::CRITICAL,
-        ASPECT,
-        "ADS-IMPL-150");
-    }
-    catch (const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Got CORBA::SystemException: " << e;
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
         ASPECT,
         "ADS-IMPL-150");
     }
@@ -427,8 +364,7 @@ namespace Frontends
         "ADS-IMPL-150");
     }
   }
-} // Frontends
-} // AdServer
+} // namespace AdServer::Frontends
 
 int
 main(int argc, char** argv)

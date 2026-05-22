@@ -23,6 +23,26 @@ sub process_control_is_alive
     $descr);
 }
 
+sub stop_by_pidfile
+{
+  my ($host, $descr, $pid_file) = @_;
+
+  my $command =
+    "test -e $pid_file || exit 0 && " .
+    "pid=`cat $pid_file` && " .
+    "{ kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 0; }; } && " .
+    "kill -TERM \$pid 2>/dev/null || true; " .
+    "for i in `seq 1 60`; do " .
+      "test -e $pid_file || exit 0; " .
+      "kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 0; }; " .
+      "sleep 1; " .
+    "done; " .
+    "kill -9 \$pid 2>/dev/null || true; " .
+    "test -e $pid_file && rm -f $pid_file || true";
+
+  return execute_command($host, $descr, $command);
+}
+
 sub execute_command
 {
   my ($host, $descr, $exe_command) = @_;

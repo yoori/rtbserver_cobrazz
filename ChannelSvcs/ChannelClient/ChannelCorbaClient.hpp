@@ -34,6 +34,14 @@ namespace AdServer::ChannelSvcs
       const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
       GetCcgTraitsCallback callback) override;
 
+    void set_sources(
+      const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+      SetSourcesCallback callback) override;
+
+    void set_proxy_sources(
+      const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
+      SetProxySourcesCallback callback) override;
+
   protected:
     static void pack_get_ccg_traits_request_(
       const ChannelIdSeq& source,

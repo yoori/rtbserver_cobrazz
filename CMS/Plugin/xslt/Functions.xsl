@@ -629,38 +629,38 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template name="AddChannelController2Groups">
+<xsl:template name="AddChannelControllerGroups">
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="error-prefix"/>
 
   <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
-    <cfg:ChannelController2Group>
-      <xsl:for-each select="./service[@descriptor = $channel-controller2-descriptor]">
+    <cfg:ChannelControllerGroup>
+      <xsl:for-each select="./service[@descriptor = $channel-controller-descriptor]">
         <xsl:variable name="hosts">
           <xsl:call-template name="GetHosts">
             <xsl:with-param name="hosts" select="@host"/>
             <xsl:with-param name="error-prefix"
               select="concat($error-prefix,
-                ': AddChannelController2Groups: ChannelController2 grpc hosts resolving: ')"/>
+                ': AddChannelControllerGroups: ChannelController grpc hosts resolving: ')"/>
           </xsl:call-template>
         </xsl:variable>
 
         <xsl:variable
           name="channel-controller-grpc-port"
-          select="./configuration/cfg:channelController2/cfg:networkParams/@grpc_port"/>
+          select="./configuration/cfg:channelController/cfg:networkParams/@grpc_port"/>
 
         <xsl:variable name="channel-controller-grpc-port-value">
           <xsl:choose>
             <xsl:when
-              test="count(./configuration/cfg:channelController2/cfg:networkParams/@port) > 0">
+              test="count(./configuration/cfg:channelController/cfg:networkParams/@port) > 0">
               <xsl:value-of
-                select="./configuration/cfg:channelController2/cfg:networkParams/@port"/>
+                select="./configuration/cfg:channelController/cfg:networkParams/@port"/>
             </xsl:when>
             <xsl:when test="count($channel-controller-grpc-port) > 0">
               <xsl:value-of select="$channel-controller-grpc-port"/>
             </xsl:when>
             <xsl:otherwise>
-              <xsl:value-of select="$def-channel-controller2-grpc-port"/>
+              <xsl:value-of select="$def-channel-controller-grpc-port"/>
             </xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
@@ -671,7 +671,7 @@
           </cfg:Endpoint>
         </xsl:for-each>
       </xsl:for-each>
-    </cfg:ChannelController2Group>
+    </cfg:ChannelControllerGroup>
   </xsl:for-each>
 </xsl:template>
 

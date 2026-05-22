@@ -83,7 +83,7 @@
         type="MultiCorbaObjectRefType"
         minOccurs="0"/>
 
-      <xsd:element name="ChannelController2Group"
+      <xsd:element name="ChannelControllerGroup"
         type="ChannelControllerGrpcGroupType"
         minOccurs="0"
         maxOccurs="2"/>

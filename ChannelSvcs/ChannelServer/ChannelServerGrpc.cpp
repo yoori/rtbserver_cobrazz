@@ -102,6 +102,67 @@ namespace AdServer::ChannelSvcs
         target.add_neg_ccg(ccg_id);
       }
     }
+
+    std::vector<unsigned long>
+    unpack_sources(
+      const google::protobuf::RepeatedField<::google::protobuf::uint64>& source)
+    {
+      std::vector<unsigned long> result;
+      result.reserve(source.size());
+      for (const auto item : source)
+      {
+        result.emplace_back(item);
+      }
+      return result;
+    }
+
+    void
+    unpack_local_groups(
+      const google::protobuf::RepeatedPtrField<
+        adserver::channel_svcs::channel_server::LocalLoadGroup>& groups,
+      ChannelSvcs::GroupLoadDescriptionSeq& result)
+    {
+      CORBACommons::CorbaClientAdapter_var adapter =
+        new CORBACommons::CorbaClientAdapter();
+      result.length(groups.size());
+
+      CORBA::ULong group_index = 0;
+      for (const auto& group : groups)
+      {
+        result[group_index].length(group.servers_size());
+        CORBA::ULong server_index = 0;
+        for (const auto& server : group.servers())
+        {
+          CORBACommons::CorbaObjectRef ref(
+            server.channel_update_ref().c_str());
+          CORBA::Object_var obj = adapter->resolve_object(ref);
+          ChannelSvcs::ChannelUpdate_var update =
+            ChannelSvcs::ChannelUpdate::_narrow(obj.in());
+          result[group_index][server_index].load_server =
+            ChannelSvcs::ChannelUpdateBase::_duplicate(update.in());
+          if (CORBA::is_nil(result[group_index][server_index].load_server.in()))
+          {
+            Stream::Error ostr;
+            ostr << "can't narrow ChannelUpdateBase reference: " <<
+              server.channel_update_ref();
+            throw ChannelServerCore::Exception(ostr);
+          }
+
+          result[group_index][server_index].chunks.length(
+            server.sources_size());
+          CORBA::ULong source_index = 0;
+          for (const auto source : server.sources())
+          {
+            result[group_index][server_index].chunks[source_index++] = source;
+          }
+          result[group_index][server_index].count_chunks =
+            server.count_chunks();
+
+          ++server_index;
+        }
+        ++group_index;
+      }
+    }
   }
 
   class ChannelServerGrpc::ServiceImpl final:
@@ -126,7 +187,15 @@ namespace AdServer::ChannelSvcs
         MAKE_GRPC_CALL(
           adserver::channel_svcs::channel_server::GetCcgTraitsRequest,
           adserver::channel_svcs::channel_server::GetCcgTraitsResponse,
-          get_ccg_traits));
+          get_ccg_traits),
+        MAKE_GRPC_CALL(
+          adserver::channel_svcs::channel_server::SetSourcesRequest,
+          adserver::channel_svcs::channel_server::SetSourcesResponse,
+          set_sources),
+        MAKE_GRPC_CALL(
+          adserver::channel_svcs::channel_server::SetProxySourcesRequest,
+          adserver::channel_svcs::channel_server::SetProxySourcesResponse,
+          set_proxy_sources));
     }
 
     void match(
@@ -137,6 +206,16 @@ namespace AdServer::ChannelSvcs
     void get_ccg_traits(
       const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
       adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    void set_sources(
+      const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+      adserver::channel_svcs::channel_server::SetSourcesResponse& response,
+      ::grpc::Status& result_status) const;
+
+    void set_proxy_sources(
+      const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
+      adserver::channel_svcs::channel_server::SetProxySourcesResponse& response,
       ::grpc::Status& result_status) const;
 
   private:
@@ -378,6 +457,100 @@ namespace AdServer::ChannelSvcs
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::INTERNAL,
         ex.what());
+    }
+  }
+
+  void
+  ChannelServerGrpc::ServiceImpl::set_sources(
+    const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+    adserver::channel_svcs::channel_server::SetSourcesResponse&,
+    ::grpc::Status& result_status) const
+  {
+    try
+    {
+      ChannelServerCore::DBSourceInfo db_info;
+      db_info.pg_connection = request.pg_connection();
+      db_info.colo = request.colo();
+      db_info.version = request.version();
+      db_info.count_chunks = request.count_chunks();
+      db_info.check_sum = request.check_sum();
+
+      db_info.campaign_refs.reserve(request.campaign_refs_size());
+      for (const auto& ref : request.campaign_refs())
+      {
+        db_info.campaign_refs.emplace_back(ref);
+      }
+
+      core_->set_sources(db_info, unpack_sources(request.sources()));
+      result_status = ::grpc::Status::OK;
+    }
+    catch (const ChannelServerCore::Exception& ex)
+    {
+      result_status = AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        ex.what());
+    }
+    catch (const eh::Exception& ex)
+    {
+      result_status = AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        ex.what());
+    }
+  }
+
+  void
+  ChannelServerGrpc::ServiceImpl::set_proxy_sources(
+    const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
+    adserver::channel_svcs::channel_server::SetProxySourcesResponse&,
+    ::grpc::Status& result_status) const
+  {
+    try
+    {
+      ChannelServerCore::ProxySourceInfo proxy_info;
+      proxy_info.count_chunks = request.count_chunks();
+      proxy_info.colo = request.colo();
+      proxy_info.version = request.version();
+      proxy_info.check_sum = request.check_sum();
+      unpack_local_groups(
+        request.local_groups(),
+        proxy_info.local_descriptor);
+
+      proxy_info.campaign_refs.reserve(request.campaign_refs_size());
+      for (const auto& ref : request.campaign_refs())
+      {
+        proxy_info.campaign_refs.emplace_back(ref);
+      }
+
+      proxy_info.proxy_refs.reserve(request.proxy_refs_size());
+      for (const auto& ref : request.proxy_refs())
+      {
+        proxy_info.proxy_refs.emplace_back(ref);
+      }
+
+      core_->set_proxy_sources(proxy_info, unpack_sources(request.sources()));
+      result_status = ::grpc::Status::OK;
+    }
+    catch (const ChannelServerCore::Exception& ex)
+    {
+      result_status = AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        ex.what());
+    }
+    catch (const eh::Exception& ex)
+    {
+      result_status = AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        ex.what());
+    }
+    catch (const CORBA::SystemException& ex)
+    {
+      Stream::Error ostr;
+      ostr << ex;
+      const String::SubString error_substr = ostr.str();
+      const std::string error(error_substr.data(), error_substr.size());
+      result_status = AdServer::Grpc::error_status(
+        ::grpc::StatusCode::INTERNAL,
+        error.c_str());
     }
   }
 

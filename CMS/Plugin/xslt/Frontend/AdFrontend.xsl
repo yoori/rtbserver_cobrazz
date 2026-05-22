@@ -509,36 +509,7 @@
       <xsl:with-param name="add-user-info-grpc" select="'true'"/>
     </xsl:call-template>
 
-    <cfg:ChannelManagerControllerRefs name="ChannelManagerControllers">
-      <xsl:for-each select="$channel-controller-path">
-
-        <xsl:variable name="hosts">
-          <xsl:call-template name="GetHosts">
-            <xsl:with-param name="hosts" select="@host"/>
-            <xsl:with-param name="error-prefix" select="'AdFrontend:ChannelManagerController'"/>
-          </xsl:call-template>
-        </xsl:variable>
-
-        <xsl:variable name="channel-controller-port">
-          <xsl:value-of select="./configuration/cfg:channelController/cfg:networkParams/@port"/>
-          <xsl:if test="count(./configuration/cfg:channelController/cfg:networkParams/@port) = 0">
-            <xsl:value-of select="$def-channel-controller-port"/>
-          </xsl:if>
-        </xsl:variable>
-
-        <xsl:for-each select="exsl:node-set($hosts)/host">
-        <cfg:Ref>
-          <xsl:attribute name="ref">
-            <xsl:value-of
-              select="concat('corbaloc:iiop:', ., ':', $channel-controller-port,
-                '/ChannelManagerController')"/>
-          </xsl:attribute>
-        </cfg:Ref>
-        </xsl:for-each>
-      </xsl:for-each>
-    </cfg:ChannelManagerControllerRefs>
-
-    <xsl:call-template name="AddChannelController2Groups">
+    <xsl:call-template name="AddChannelControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
     </xsl:call-template>

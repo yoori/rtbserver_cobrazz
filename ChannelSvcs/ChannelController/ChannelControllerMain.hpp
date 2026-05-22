@@ -4,10 +4,10 @@
 
 #include <eh/Exception.hpp>
 
-#include "ChannelController2Grpc.hpp"
-#include "ChannelController2Impl.hpp"
+#include "ChannelControllerGrpc.hpp"
+#include "ChannelControllerImpl.hpp"
 
-class ChannelController2App_
+class ChannelControllerApp_
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -17,7 +17,7 @@ public:
 
 private:
   using ConfigType =
-    AdServer::ChannelSvcs::ChannelController2Impl::ChannelControllerConfig;
+    AdServer::ChannelSvcs::ChannelControllerImpl::ChannelControllerConfig;
   using ConfigPtr = std::unique_ptr<ConfigType>;
 
   void stop_() noexcept;
@@ -27,20 +27,20 @@ private:
   const ConfigType& config() const noexcept;
 
 private:
-  AdServer::ChannelSvcs::ChannelController2Impl_var controller_;
-  AdServer::ChannelSvcs::ChannelController2Grpc_var grpc_adapter_;
+  AdServer::ChannelSvcs::ChannelControllerImpl_var controller_;
+  AdServer::ChannelSvcs::ChannelControllerGrpc_var grpc_adapter_;
   ConfigPtr configuration_;
   Logging::Logger_var logger_;
 };
 
 inline Logging::Logger*
-ChannelController2App_::logger() const noexcept
+ChannelControllerApp_::logger() const noexcept
 {
   return logger_;
 }
 
-inline const ChannelController2App_::ConfigType&
-ChannelController2App_::config() const noexcept
+inline const ChannelControllerApp_::ConfigType&
+ChannelControllerApp_::config() const noexcept
 {
   return *configuration_;
 }

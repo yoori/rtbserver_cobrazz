@@ -9,13 +9,13 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-#include <xsd/ChannelSvcs/ChannelController2Config.hpp>
+#include <xsd/ChannelSvcs/ChannelControllerConfig.hpp>
 
 #include "ChannelControllerGrpc.pb.h"
 
 namespace AdServer::ChannelSvcs
 {
-  class ChannelController2Impl:
+  class ChannelControllerImpl:
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
@@ -24,11 +24,11 @@ namespace AdServer::ChannelSvcs
     DECLARE_EXCEPTION(NotReady, Exception);
 
     using ChannelControllerConfig =
-      xsd::AdServer::Configuration::ChannelController2ConfigType;
+      xsd::AdServer::Configuration::ChannelControllerConfigType;
     using SessionDescription =
       adserver::channel_svcs::channel_controller::GetSessionDescriptionResponse;
 
-    ChannelController2Impl(
+    ChannelControllerImpl(
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
       const ChannelControllerConfig& config);
@@ -36,7 +36,9 @@ namespace AdServer::ChannelSvcs
     void fill_session_description(SessionDescription& response) const;
 
   protected:
-    ~ChannelController2Impl() noexcept override;
+    void activate_object_() override;
+
+    ~ChannelControllerImpl() noexcept override;
 
   private:
     using ChunkArray = std::vector<unsigned long>;
@@ -44,6 +46,7 @@ namespace AdServer::ChannelSvcs
     struct ChannelServerRef
     {
       std::string endpoint;
+      std::string update_ref;
       ChunkArray chunks;
     };
 
@@ -51,6 +54,7 @@ namespace AdServer::ChannelSvcs
     using ChannelServerGroups = std::vector<ChannelServerGroup>;
 
     void fill_refs_();
+    void set_sources_() const;
 
   private:
     Generics::ActiveObjectCallback_var callback_;
@@ -59,6 +63,6 @@ namespace AdServer::ChannelSvcs
     ChannelServerGroups channel_server_groups_;
   };
 
-  using ChannelController2Impl_var =
-    ReferenceCounting::SmartPtr<ChannelController2Impl>;
+  using ChannelControllerImpl_var =
+    ReferenceCounting::SmartPtr<ChannelControllerImpl>;
 }

@@ -78,9 +78,12 @@ main(int argc, char** argv)
     }
   }
 
-  auto channel = grpc::CreateChannel(
+  grpc::ChannelArguments channel_args;
+  channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
+  auto channel = grpc::CreateCustomChannel(
     endpoint,
-    grpc::InsecureChannelCredentials());
+    grpc::InsecureChannelCredentials(),
+    channel_args);
   auto stub = pc::ProcessControl::NewStub(channel);
 
   if (argc > arg_pos)

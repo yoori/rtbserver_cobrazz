@@ -8,7 +8,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Logger/ActiveObjectCallback.hpp>
-#include <ChannelSvcs/ChannelController2/ChannelControllerGrpc.grpc.pb.h>
+#include <ChannelSvcs/ChannelController/ChannelControllerGrpc.grpc.pb.h>
 
 namespace AdServer::ChannelSvcs
 {
@@ -81,6 +81,21 @@ namespace AdServer::ChannelSvcs
       client_holder->client->get_ccg_traits(request, std::move(callback));
     }
 
+    void set_sources(
+      const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+      SetSourcesCallback callback)
+    {
+      client_holder->client->set_sources(request, std::move(callback));
+    }
+
+    void set_proxy_sources(
+      const adserver::channel_svcs::channel_server::SetProxySourcesRequest&
+        request,
+      SetProxySourcesCallback callback)
+    {
+      client_holder->client->set_proxy_sources(request, std::move(callback));
+    }
+
     AdServer::Grpc::Stats stats() const noexcept
     {
       return static_cast<ChannelServerGrpcAsyncClient*>(
@@ -140,7 +155,7 @@ namespace AdServer::ChannelSvcs
     if (channel_controller_refs_.empty())
     {
       throw Exception(
-        "ChannelDistributedGrpcClient: empty ChannelController2 refs");
+        "ChannelDistributedGrpcClient: empty ChannelController refs");
     }
 
     if (!coalesce_runner_)
@@ -306,6 +321,97 @@ namespace AdServer::ChannelSvcs
       ](
         const grpc::Status& status,
         const adserver::channel_svcs::channel_server::GetCcgTraitsResponse&
+          response)
+      mutable
+      {
+        if (!status.ok())
+        {
+          ref.mark_as_bad(
+            Generics::Time::get_time_of_day() + pool_timeout);
+        }
+        callback(status, response);
+      });
+  }
+
+  void
+  ChannelDistributedGrpcClient::set_sources(
+    const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+    SetSourcesCallback callback)
+  {
+    if (!active())
+    {
+      callback(
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
+        adserver::channel_svcs::channel_server::SetSourcesResponse());
+      return;
+    }
+
+    auto ref = get_ref_();
+    if (!ref)
+    {
+      callback(
+        grpc::Status(
+          grpc::StatusCode::UNAVAILABLE,
+          "no available ChannelServer grpc client"),
+        adserver::channel_svcs::channel_server::SetSourcesResponse());
+      return;
+    }
+
+    (*ref)->set_sources(
+      request,
+      [
+        ref = std::move(*ref),
+        callback = std::move(callback),
+        pool_timeout = pool_timeout_
+      ](
+        const grpc::Status& status,
+        const adserver::channel_svcs::channel_server::SetSourcesResponse&
+          response)
+      mutable
+      {
+        if (!status.ok())
+        {
+          ref.mark_as_bad(
+            Generics::Time::get_time_of_day() + pool_timeout);
+        }
+        callback(status, response);
+      });
+  }
+
+  void
+  ChannelDistributedGrpcClient::set_proxy_sources(
+    const adserver::channel_svcs::channel_server::SetProxySourcesRequest&
+      request,
+    SetProxySourcesCallback callback)
+  {
+    if (!active())
+    {
+      callback(
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
+        adserver::channel_svcs::channel_server::SetProxySourcesResponse());
+      return;
+    }
+
+    auto ref = get_ref_();
+    if (!ref)
+    {
+      callback(
+        grpc::Status(
+          grpc::StatusCode::UNAVAILABLE,
+          "no available ChannelServer grpc client"),
+        adserver::channel_svcs::channel_server::SetProxySourcesResponse());
+      return;
+    }
+
+    (*ref)->set_proxy_sources(
+      request,
+      [
+        ref = std::move(*ref),
+        callback = std::move(callback),
+        pool_timeout = pool_timeout_
+      ](
+        const grpc::Status& status,
+        const adserver::channel_svcs::channel_server::SetProxySourcesResponse&
           response)
       mutable
       {

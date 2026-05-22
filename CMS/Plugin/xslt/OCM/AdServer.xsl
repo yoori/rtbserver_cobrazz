@@ -46,7 +46,6 @@
   serviceGroup[@descriptor = $fe-cluster-descriptor]/service[
     @descriptor = $channel-server-descriptor or
     @descriptor = $channel-controller-descriptor or
-    @descriptor = $channel-controller2-descriptor or
     @descriptor = $http-frontend-descriptor]"/>
 
 <xsl:variable name="tr-hosts">
@@ -431,20 +430,11 @@
         <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserInfoController'"/>
       </xsl:call-template>
 
-      <xsl:if test="count(./service[@descriptor = $channel-controller2-descriptor]) = 0">
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $channel-controller-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController')"/>
-          <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController'"/>
-        </xsl:call-template>
-      </xsl:if>
-
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
-          select="./service[@descriptor = $channel-controller2-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController2')"/>
-        <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController2'"/>
+          select="./service[@descriptor = $channel-controller-descriptor]"/>
+        <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController')"/>
+        <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController'"/>
       </xsl:call-template>
 
       <xsl:if test="count(./service[@descriptor = $user-bind-server-descriptor]) > 0">
@@ -1948,14 +1938,7 @@
         </xsl:if>
       </xsl:variable>
       <xsl:variable name="channel-controller-dep">
-        <xsl:choose>
-          <xsl:when test="count($fe-cluster-path/service[@descriptor = $channel-controller2-descriptor]) > 0">
-            <xsl:value-of select="'AdServer::ChannelSvcs::ChannelController2'"/>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:value-of select="'AdServer::ChannelSvcs::ChannelController'"/>
-          </xsl:otherwise>
-        </xsl:choose>
+        <xsl:value-of select="'AdServer::ChannelSvcs::ChannelController'"/>
       </xsl:variable>
       <xsl:variable name="conv-server-dep">
         <xsl:if test="count($fe-cluster-path/service[@descriptor = $conv-server-descriptor]) > 0">

@@ -41,6 +41,9 @@
     <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
       <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>
+    <xsl:attribute name="pid_file">
+      <xsl:value-of select="concat($workspace-root, '/run/FCGIAdServer.pid')"/>
+    </xsl:attribute>
 
     <xsl:variable name="socket_arr">
       <i>1</i><i>2</i><i>3</i><i>4</i>
@@ -63,33 +66,7 @@
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
-    <xsl:variable name="fcgi-adserver-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:adFCGINetworkParams/@port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:adFCGINetworkParams/@port) = 0">
-        <xsl:value-of select="$def-fcgi-adserver-port"/>
-      </xsl:if>
-    </xsl:variable>
-
-    <exsl:document href="FCGIServer.port"
-      method="text" omit-xml-declaration="yes"
-      >  ['FCGIServer', <xsl:copy-of select="$fcgi-adserver-port"/>],</exsl:document>
-
     <xsl:variable name="fcgi-adserver-logging" select="$fcgi-adserver-config/cfg:logging"/>
-
-    <!-- check that defined all needed parameters -->
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$fcgi-adserver-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($fcgi-adserver-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="1"/>
-        </xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$fcgi-adserver-port"/></xsl:attribute>
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-        <cfg:Object servant="FCGIServerStats" name="FCGIServerStats"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$fcgi-adserver-logging"/>

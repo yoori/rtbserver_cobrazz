@@ -5,6 +5,8 @@ package adserver.channel_svcs.channel_server;
 service ChannelServerGrpc {
   rpc match(MatchRequest) returns (MatchResponse);
   rpc get_ccg_traits(GetCcgTraitsRequest) returns (GetCcgTraitsResponse);
+  rpc set_sources(SetSourcesRequest) returns (SetSourcesResponse);
+  rpc set_proxy_sources(SetProxySourcesRequest) returns (SetProxySourcesResponse);
 }
 
 message ChannelAtom {
@@ -68,3 +70,38 @@ message GetCcgTraitsResponse {
   repeated CcgKeyword ccg_keywords = 1;
   repeated uint64 neg_ccg = 2;
 }
+
+message SetSourcesRequest {
+  repeated string campaign_refs = 1;
+  string pg_connection = 2;
+  uint64 count_chunks = 3;
+  uint64 colo = 4;
+  string version = 5;
+  uint64 check_sum = 6;
+  repeated uint64 sources = 7;
+}
+
+message SetSourcesResponse {}
+
+message LocalLoadServer {
+  string channel_update_ref = 1;
+  repeated uint64 sources = 2;
+  uint64 count_chunks = 3;
+}
+
+message LocalLoadGroup {
+  repeated LocalLoadServer servers = 1;
+}
+
+message SetProxySourcesRequest {
+  repeated string campaign_refs = 1;
+  repeated string proxy_refs = 2;
+  repeated LocalLoadGroup local_groups = 3;
+  uint64 count_chunks = 4;
+  uint64 colo = 5;
+  string version = 6;
+  uint64 check_sum = 7;
+  repeated uint64 sources = 8;
+}
+
+message SetProxySourcesResponse {}

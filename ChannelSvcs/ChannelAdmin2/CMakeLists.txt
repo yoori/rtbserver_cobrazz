@@ -12,6 +12,6 @@ target_link_libraries(ChannelAdmin2
 )
 
 target_include_directories(ChannelAdmin2 PRIVATE
-  ${PB_DIRECTORY}/ChannelSvcs/ChannelController2
+  ${PB_DIRECTORY}/ChannelSvcs/ChannelController
   ${PB_DIRECTORY}/ChannelSvcs/ChannelServer
 )

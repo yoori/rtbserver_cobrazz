@@ -109,7 +109,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="merge_size" type="xsd:positiveInteger" default="100">
+    <xsd:attribute name="merge_size" type="xsd:positiveInteger" default="2000">
       <xsd:annotation>
         <xsd:documentation>
           Set memory limit on merging in Mb
