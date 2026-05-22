@@ -1,6 +1,7 @@
 #pragma once
 
 #include <String/SubString.hpp>
+#include <Generics/ActiveObject.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -17,7 +18,7 @@ namespace FrontendCommons
    * @brief HTTP Frontend interface.
    */
   class FrontendInterface :
-    public virtual ReferenceCounting::Interface
+    public virtual Generics::RefCountableActiveObject
   {
   public:
     /**
@@ -105,12 +106,6 @@ namespace FrontendCommons
      */
     virtual void
     init() /*throw(eh::Exception)*/ = 0;
-
-    /**
-     * @brief Shutdown frontend.
-     */
-    virtual void
-    shutdown() noexcept = 0;
 
   protected:
     virtual

@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <Generics/AppUtils.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/StreamLogger.hpp>
 
 #include <Frontends/FCGIServer/Http2Acceptor.hpp>
@@ -25,6 +26,7 @@ namespace Utils
 {
   class EchoFrontendImpl final:
     public FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:
@@ -57,10 +59,6 @@ namespace Utils
 
     void
     init() override
-    {}
-
-    void
-    shutdown() noexcept override
     {}
 
   protected:

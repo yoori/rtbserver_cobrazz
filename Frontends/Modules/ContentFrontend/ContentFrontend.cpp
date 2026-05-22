@@ -278,8 +278,6 @@ namespace AdServer
           Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
             Generics::Time::ONE_SECOND,
             new CreativesUpdater(campaign_manager_coro_)));
-
-      activate_object();
     }
     catch(const eh::Exception& ex)
     {

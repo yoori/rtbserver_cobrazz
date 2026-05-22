@@ -218,6 +218,13 @@ namespace AdServer::Frontends
         config_->grpc_coalesce_threads());
       trace_startup("create FrontendsPool end");
 
+      trace_startup("FrontendsPool init begin");
+      frontend_pool->init();
+      trace_startup("FrontendsPool init end");
+
+      frontend_pool_ = frontend_pool;
+      add_child_object(frontend_pool.in());
+
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)
       {
@@ -253,10 +260,6 @@ namespace AdServer::Frontends
         trace_startup("create Http2Acceptor end");
       }
 
-      frontend_pool_ = frontend_pool;
-      trace_startup("FrontendsPool init begin");
-      frontend_pool_->init();
-      trace_startup("FrontendsPool init end");
     }
     catch(const eh::Exception& ex)
     {

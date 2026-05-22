@@ -373,8 +373,6 @@ namespace AdServer::WebStat
         request_info_filler_.reset(new RequestInfoFiller(
           config_->rid_public_key().c_str(),
           common_module_.in()));
-
-        activate_object();
       }
       catch (const eh::Exception& ex)
       {

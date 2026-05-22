@@ -453,9 +453,6 @@ namespace AdServer
             acl_colo,
             Commons::LogReferrer::read_log_referrer_settings(
               config_->use_referrer_site_referrer_stats())));
-
-        activate_object();
-
         start_update_loop_();
       }
       catch (const eh::Exception& ex)

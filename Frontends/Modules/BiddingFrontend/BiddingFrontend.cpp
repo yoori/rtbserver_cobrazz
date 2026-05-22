@@ -1087,9 +1087,6 @@ namespace AdServer::Bidding
           request_timeout_ = Generics::Time(*(config_->request_timeout()));
           request_timeout_ /= 1000;
         }
-
-        activate_object();
-
         control_task_runner_->enqueue_task(
           Generics::Task_var(new UpdateConfigTask(this, control_task_runner_)));
 
@@ -1127,7 +1124,6 @@ namespace AdServer::Bidding
         Logging::Logger::INFO,
         Aspect::BIDDING_FRONTEND);
 
-      common_module_->shutdown();
     }
     catch(...)
     {}

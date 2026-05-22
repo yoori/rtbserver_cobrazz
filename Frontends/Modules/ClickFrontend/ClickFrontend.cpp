@@ -346,8 +346,6 @@ namespace AdServer
           common_module_->user_id_controller(),
           config_->set_uid(),
           config_->probe_uid());
-
-        activate_object();
       }
       catch(const eh::Exception& ex)
       {

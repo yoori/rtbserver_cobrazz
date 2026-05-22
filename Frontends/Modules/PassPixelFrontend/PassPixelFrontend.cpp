@@ -311,8 +311,6 @@ namespace AdServer::PassbackPixel
             campaign_manager,
             workers_);
         add_child_object(campaign_manager);
-
-        activate_object();
       }
       catch(const eh::Exception& ex)
       {

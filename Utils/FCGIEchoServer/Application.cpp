@@ -6,6 +6,7 @@
 #include <thread>
 
 #include <Generics/AppUtils.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 
@@ -25,6 +26,7 @@ namespace
 
   class EchoFrontend final:
     public FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:
@@ -64,11 +66,6 @@ namespace
 
     void
     init() override
-    {
-    }
-
-    void
-    shutdown() noexcept override
     {
     }
 
@@ -124,7 +121,8 @@ main(int argc, char** argv)
 
   acceptor->deactivate_object();
   acceptor->wait_object();
-  frontend->shutdown();
+  frontend->deactivate_object();
+  frontend->wait_object();
 
   return 0;
 }

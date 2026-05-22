@@ -575,8 +575,6 @@ namespace
 
         request_info_filler_.reset(
           new OptOut::RequestInfoFiller(config_.get(), logger(), common_module_));
-
-        activate_object();
       }
       catch(const eh::Exception& ex)
       {

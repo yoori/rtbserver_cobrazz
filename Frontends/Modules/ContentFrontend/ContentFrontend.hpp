@@ -66,7 +66,7 @@ namespace AdServer
 
     /** Performs shutdown for the module child process. */
     void
-    shutdown() noexcept override;
+    shutdown() noexcept;
 
     bool
     log(const String::SubString& text,

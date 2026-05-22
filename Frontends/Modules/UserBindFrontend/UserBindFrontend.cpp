@@ -535,8 +535,6 @@ namespace AdServer
             config_->match_threads());
           add_child_object(match_workers_);
         }
-
-        activate_object();
       }
       catch(const eh::Exception& ex)
       {

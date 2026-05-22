@@ -345,8 +345,6 @@ namespace AdServer::Action
 
           redirect_rules_.push_back(redirect_rule);
         }
-
-        activate_object();
       }
       catch (const eh::Exception& e)
       {

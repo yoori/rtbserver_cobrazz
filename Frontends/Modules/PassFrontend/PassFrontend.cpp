@@ -446,8 +446,6 @@ namespace AdServer::Passback
             user_info_client,
             workers_);
         add_child_object(user_info_client);
-
-        activate_object();
       }
       catch (const eh::Exception& ex)
       {

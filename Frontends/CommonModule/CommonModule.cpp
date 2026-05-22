@@ -248,7 +248,6 @@ namespace AdServer
         segmentor_ = new Language::Segmentor::NormalizePolyglotSegmentor(
             common_config->Polyglot().get().base().c_str());
       }
-      activate_object();
     }
     catch(const eh::Exception& ex)
     {
@@ -264,25 +263,15 @@ namespace AdServer
   }
 
   void
-  CommonModule::shutdown() noexcept
+  CommonModule::deactivate_object_()
+    /*throw(eh::Exception)*/
   {
-    try
+    if (scheduler_)
     {
       scheduler_->clear();
-
-      deactivate_object();
-      wait_object();
-
-      Stream::Error ostr;
-      ostr << "CommonModule::shutdown: frontend terminated (pid = " <<
-        ::getpid() << ").";
-
-      logger()->log(ostr.str(),
-        Logging::Logger::INFO,
-        Aspect::COMMON_MODULE);
     }
-    catch(...)
-    {}
+
+    Generics::CompositeActiveObject::deactivate_object_();
   }
 
   void CommonModule::update(unsigned service_index) noexcept

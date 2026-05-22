@@ -315,7 +315,6 @@ namespace AdServer::ImprTrack
             default_keys,
             account_keys,
             site_keys));
-        activate_object();
       }
       catch(const eh::Exception& ex)
       {

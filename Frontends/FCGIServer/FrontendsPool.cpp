@@ -131,6 +131,11 @@ namespace AdServer
         trace_startup("FrontendsPool common_module set_config begin");
         common_module_->set_config_file(config_->path().c_str());
         trace_startup("FrontendsPool common_module set_config end");
+
+        trace_startup("FrontendsPool common_module add begin");
+        add_child_object(common_module_.in());
+        trace_startup("FrontendsPool common_module add end");
+
         trace_startup("FrontendsPool common_module init begin");
         common_module_->init();
         trace_startup("FrontendsPool common_module init end");
@@ -341,18 +346,23 @@ namespace AdServer
           }
         }
 
-        init_frontends_();
-
-        trace_startup("FrontendsPool grpc_coalesce_runner activate begin");
-        grpc_coalesce_runner_->activate_object();
-        trace_startup("FrontendsPool grpc_coalesce_runner activate end");
+        trace_startup("FrontendsPool grpc_coalesce_runner add begin");
+        add_child_object(grpc_coalesce_runner_);
+        trace_startup("FrontendsPool grpc_coalesce_runner add end");
 
         if (request_workers_)
         {
-          trace_startup("FrontendsPool request_workers activate begin");
-          request_workers_->activate_object();
-          trace_startup("FrontendsPool request_workers activate end");
+          trace_startup("FrontendsPool request_workers add begin");
+          add_child_object(request_workers_);
+          trace_startup("FrontendsPool request_workers add end");
         }
+
+        for (const auto& frontend : frontends_)
+        {
+          add_child_object(frontend.in());
+        }
+
+        init_frontends_();
       }
       catch (const Configuration::InvalidConfiguration& ex)
       {
@@ -360,35 +370,6 @@ namespace AdServer
         ostr << "Invalid configuration: " << ex.what();
         throw Exception(ostr);
       }
-    }
-
-    void
-    FrontendsPool::shutdown() noexcept
-    {
-      for (auto frontend_it = frontends_.begin();
-           frontend_it != frontends_.end(); frontend_it++)
-      {
-        (*frontend_it)->shutdown();
-      }
-
-      frontends_.clear();
-      frontend_names_.clear();
-
-      if (request_workers_)
-      {
-        request_workers_->deactivate_object();
-        request_workers_->wait_object();
-        request_workers_.reset();
-      }
-
-      if (grpc_coalesce_runner_)
-      {
-        grpc_coalesce_runner_->deactivate_object();
-        grpc_coalesce_runner_->wait_object();
-        grpc_coalesce_runner_.reset();
-      }
-
-      common_module_->shutdown();
     }
 
     void
@@ -435,7 +416,8 @@ namespace AdServer
 
         for (auto& frontend : frontends_)
         {
-          frontend->shutdown();
+          frontend->deactivate_object();
+          frontend->wait_object();
         }
 
         try

@@ -24,6 +24,7 @@ namespace AdServer
      */
     class FrontendsPool :
       public virtual FrontendCommons::FrontendInterface,
+      public virtual Generics::CompositeActiveObject,
       public virtual ReferenceCounting::AtomicImpl
     {
     public:
@@ -92,17 +93,8 @@ namespace AdServer
         FCGI::BaseHttpResponseWriter_var response_writer)
         /*throw(eh::Exception)*/;
 
-      /**
-       * @brief Initialize frontend.
-       */
       virtual void
       init() /*throw(eh::Exception)*/;
-
-      /**
-       * @brief Shutdown frontend.
-       */
-      virtual void
-      shutdown() noexcept;
 
     protected:
       virtual

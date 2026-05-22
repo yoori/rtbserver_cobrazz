@@ -464,8 +464,6 @@ namespace AdServer
          VersionedFileCacheConfiguration(Generics::Time(2)));
        directories_[it->path()] = new_directory;
     }
-
-    activate_object();
   }
 
   void

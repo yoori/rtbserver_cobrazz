@@ -207,8 +207,6 @@ namespace AdServer::Instantiate
             common_config_->IpEncryptConfig().present() ?
               String::SubString(common_config_->IpEncryptConfig()->key()) :
             String::SubString()));
-
-        activate_object();
       }
       catch (const eh::Exception& ex)
       {

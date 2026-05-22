@@ -32,8 +32,7 @@ namespace AdServer
 
   class CommonModule:
     private Logging::LoggerCallbackHolder,
-    private virtual Generics::CompositeActiveObject,
-    public virtual ReferenceCounting::AtomicImpl
+    public virtual Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -42,9 +41,6 @@ namespace AdServer
 
     void
     init() noexcept;
-
-    void
-    shutdown() noexcept;
 
     UserIdController_var
     user_id_controller() const noexcept;
@@ -111,6 +107,9 @@ namespace AdServer
   protected:
     virtual
     ~CommonModule() noexcept;
+
+    void
+    deactivate_object_() override;
 
   private:
     void parse_config_(
