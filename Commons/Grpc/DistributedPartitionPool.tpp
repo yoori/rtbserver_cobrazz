@@ -274,6 +274,37 @@ namespace AdServer::Grpc
   }
 
   template<typename ClientType>
+  std::optional<unsigned long>
+  DistributedPartitionPool<ClientType>::chunk_index(
+    const std::string& key) noexcept
+  {
+    try
+    {
+      if (key.empty())
+      {
+        return std::nullopt;
+      }
+
+      const auto partitions_number = partition_holders_.size();
+      const auto primary_partition = partition_index_(key, partitions_number);
+      for (unsigned long i = 0; i < partitions_number; ++i)
+      {
+        const auto partition_num = (primary_partition + i) % partitions_number;
+        auto partition = get_partition_(partition_num);
+        if (partition && partition->max_chunk_number)
+        {
+          return chunk_index_(key, partition->max_chunk_number);
+        }
+      }
+    }
+    catch (...)
+    {
+    }
+
+    return std::nullopt;
+  }
+
+  template<typename ClientType>
   void
   DistributedPartitionPool<ClientType>::try_to_reresolve_partition(
     unsigned long partition_num) noexcept

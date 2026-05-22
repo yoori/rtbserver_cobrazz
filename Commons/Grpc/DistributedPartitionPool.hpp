@@ -99,6 +99,7 @@ namespace AdServer::Grpc
 
     std::optional<Ref> get_ref(const std::string& key) noexcept;
     std::optional<Ref> get_any_ref() noexcept;
+    std::optional<unsigned long> chunk_index(const std::string& key) noexcept;
     void try_to_reresolve_partition(unsigned long partition_num) noexcept;
 
   private:

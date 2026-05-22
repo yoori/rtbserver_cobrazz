@@ -122,7 +122,21 @@ namespace AdServer::UserInfoSvcs
 
   UserBindServerCore::~UserBindServerCore()
   {
-    dump();
+    try
+    {
+      dump();
+    }
+    catch(const eh::Exception& ex)
+    {
+      logger_->sstream(Logging::Logger::ERROR, "UserBindServer") <<
+        "UserBindServerCore::~UserBindServerCore(): Can't dump user binds: " <<
+        ex.what();
+    }
+    catch(...)
+    {
+      logger_->sstream(Logging::Logger::ERROR, "UserBindServer") <<
+        "UserBindServerCore::~UserBindServerCore(): Can't dump user binds";
+    }
   }
 
   UserBindServerCore::GetUserResponseInfo
@@ -363,8 +377,19 @@ namespace AdServer::UserInfoSvcs
   void
   UserBindServerCore::dump() const
   {
-    user_bind_container_->get_object()->dump();
-    bind_request_container_->get_object()->dump();
+    const UserBindProcessor_var user_bind_processor =
+      user_bind_container_->get_object();
+    if(user_bind_processor.in())
+    {
+      user_bind_processor->dump();
+    }
+
+    const BindRequestProcessor_var bind_request_processor =
+      bind_request_container_->get_object();
+    if(bind_request_processor.in())
+    {
+      bind_request_processor->dump();
+    }
   }
 
   void

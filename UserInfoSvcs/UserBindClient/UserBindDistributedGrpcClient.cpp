@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -153,7 +154,9 @@ namespace AdServer::UserInfoSvcs
       auto ref = pool_->get_ref(key);
       if (!ref)
       {
-        finish_with_unavailable_<Response>(std::move(callback));
+        finish_with_unavailable_<Response>(
+          std::move(callback),
+          pool_->chunk_index(key));
         return;
       }
 
@@ -177,12 +180,21 @@ namespace AdServer::UserInfoSvcs
     }
 
     template<typename Response, typename Callback>
-    static void finish_with_unavailable_(Callback callback)
+    static void finish_with_unavailable_(
+      Callback callback,
+      std::optional<unsigned long> chunk_index)
     {
+      std::ostringstream message;
+      message << "no available UserBindServer grpc client";
+      if (chunk_index)
+      {
+        message << " for chunk #" << *chunk_index;
+      }
+
       callback(
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
-          "no available UserBindServer grpc client"),
+          message.str()),
         Response());
     }
 

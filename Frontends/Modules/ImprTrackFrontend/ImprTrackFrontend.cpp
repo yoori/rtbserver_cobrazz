@@ -1217,7 +1217,7 @@ namespace AdServer::ImprTrack
 
   FrontendCommons::RequestTask
   Frontend::co_match_request_(
-    const std::shared_ptr<ImprTrackMatchRequestState>& state)
+    std::shared_ptr<ImprTrackMatchRequestState> state)
     noexcept
   {
     adserver::channel_svcs::channel_server::MatchRequest channel_request;

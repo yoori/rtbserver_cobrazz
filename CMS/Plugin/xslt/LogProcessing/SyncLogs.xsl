@@ -1183,24 +1183,6 @@
           </cfg:Route>
         </cfg:FeedRouteGroup>
       </xsl:if>
-
-      <xsl:if test="count($colo-config/cfg:audienceChannelConfig/cfg:sourceRef) > 0">
-        <xsl:variable name="source-ref" select="$colo-config/cfg:audienceChannelConfig/cfg:sourceRef"/>
-
-        <cfg:FeedRouteGroup
-          local_copy_command_type="rsync"
-          remote_copy_command_type="rsync"
-          tries_per_file="2"
-          parse_source="false"
-          unlink_source="false"
-          interruptible="true">
-          <xsl:variable name="copy_command"><![CDATA[/usr/bin/rsync --partial -avz -t --timeout=55 --log-format=%f --delete-after rsync://]]><xsl:value-of
-            select="$source-ref/@host"/>:<xsl:value-of
-            select="$source-ref/@port"/><![CDATA[/channels##SRC_PATH## ##DST_PATH##]]></xsl:variable>
-          <xsl:attribute name="remote_copy_command"><xsl:value-of select="$copy_command"/></xsl:attribute>
-          <xsl:attribute name="local_copy_command"><xsl:value-of select="$copy_command"/></xsl:attribute>
-        </cfg:FeedRouteGroup>
-      </xsl:if>
     </cfg:ClusterConfig>
   </cfg:SyncLogsConfig>
 

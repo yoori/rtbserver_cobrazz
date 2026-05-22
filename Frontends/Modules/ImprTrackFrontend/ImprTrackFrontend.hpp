@@ -162,7 +162,7 @@ namespace AdServer::ImprTrack
 
     FrontendCommons::RequestTask
     co_match_request_(
-      const std::shared_ptr<ImprTrackMatchRequestState>& state)
+      std::shared_ptr<ImprTrackMatchRequestState> state)
       noexcept;
 
     FrontendCommons::RequestTask
