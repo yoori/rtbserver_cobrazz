@@ -60,31 +60,12 @@ namespace AdServer::PassbackPixel
   RequestInfoFiller::RequestInfoFiller(
     Logging::Logger* logger,
     unsigned long colo_id,
-    const char* geo_ip_path)
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
-      colo_id_(colo_id)
+      colo_id_(colo_id),
+      ip_map_(std::move(ip_map))
   {
-    static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
-    if(geo_ip_path)
-    {
-      try
-      {
-        ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(geo_ip_path));
-      }
-      catch (const GeoIPMapping::IPMap::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-        logger->log(ostr.str(),
-          Logging::Logger::CRITICAL,
-          Aspect::PASS_PIXEL_FRONTEND,
-          "ADS-IMPL-102");
-      }
-    }
-
     // track request
     track_cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID,

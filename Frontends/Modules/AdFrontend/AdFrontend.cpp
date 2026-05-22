@@ -323,10 +323,7 @@ namespace AdServer
         task_scheduler_ = new FrontendCommons::TaskScheduler(
           callback(), task_runner_);
         add_child_object(task_scheduler_.in());
-
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
@@ -445,8 +442,7 @@ namespace AdServer
             logger(),
             common_config_->colo_id(),
             common_module_,
-            common_config_->GeoIP().present() ?
-              common_config_->GeoIP()->path().c_str() : 0,
+            common_module_->ip_mapper(),
             user_agent_filter_path.c_str(),
             set_uid_controller,
             common_config_->DebugInfo().use_acl() ? &acl_list : 0,

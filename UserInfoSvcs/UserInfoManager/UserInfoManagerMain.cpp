@@ -81,6 +81,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
   noexcept
 {
   static const char* FUN = "UserInfoManagerApp_::main()";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
   try
   {
@@ -204,7 +205,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       add_child_object(grpc_adapter_);
     }
 
-    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(config().pid_file()));
 
     add_child_object(corba_server_adapter_.in());
@@ -218,7 +219,6 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
     deactivate_object();
     wait();
-    pid_file_guard_.reset();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
@@ -246,7 +246,6 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
   deactivate_object();
   wait_object();
-  pid_file_guard_.reset();
 }
 
 int

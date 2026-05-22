@@ -245,9 +245,6 @@
 
   <xsl:param name="channel-server-count"/>
 
-  <xsl:param name="stats-collector-path"/>
-  <xsl:param name="stats-collector"/>
-
   <xsl:param name="frontend-config"/>
 
   <xsl:variable name="www-root"><xsl:value-of select="$env-config/@data_root"/>
@@ -804,11 +801,6 @@
       </cfg:XsltToken>
     </cfg:TemplateRule>
 
-    <xsl:call-template name="AddStatsDumper">
-      <xsl:with-param name="stats-collector-path" select="$stats-collector-path"/>
-      <xsl:with-param name="stats-collector-config" select="$stats-collector"/>
-    </xsl:call-template>
-
     <cfg:DebugInfo>
       <xsl:if test="string-length($debug-param/@use_acl) > 0">
         <xsl:attribute name="use_acl"><xsl:value-of select="$debug-param/@use_acl"/></xsl:attribute>
@@ -1169,7 +1161,12 @@
   </cfg:PubPixelFeConfiguration>
 
   <xsl:if test="$conf-type = 'nginx'">
-    <cfg:BidFeConfiguration max_pending_tasks="10000">
+    <cfg:BidFeConfiguration>
+      <xsl:attribute name="max_pending_tasks"><xsl:value-of select="$bidding-module/@max_pending_tasks"/>
+        <xsl:if test="count($bidding-module/@max_pending_tasks) = 0">
+          <xsl:value-of select="'10000'"/>
+        </xsl:if>
+      </xsl:attribute>
       <xsl:attribute name="threads"><xsl:value-of select="$bidding-module/@threads"/>
         <xsl:if test="count($bidding-module/@threads) = 0">
           <xsl:value-of select="$def-bidding-module-threads"/>
@@ -1482,10 +1479,6 @@
             $full-cluster-path/serviceGroup[@descriptor ='AdProfilingCluster/BackendSubCluster']"/>
 
   <xsl:variable
-    name="stats-collector-path"
-    select="$be-cluster-path/service[@descriptor = $stats-collector-descriptor]"/>
-
-  <xsl:variable
     name="channel-server-count"
     select="count($fe-cluster-path/service[@descriptor = $channel-server-descriptor] |
                   $fe-cluster-path/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/ChannelServer'])"/>
@@ -1550,10 +1543,6 @@
     select="$fe-config/cfg:channelServing"/>
 
   <xsl:variable
-    name="stats-collector-config"
-    select="$stats-collector-path/configuration/cfg:statsCollector"/>
-
-  <xsl:variable
     name="frontend-config" select="$xpath/configuration/cfg:frontend"/>
 
   <xsl:variable
@@ -1594,9 +1583,6 @@
       <xsl:with-param name="channel-controller-path" select="$channel-controller-path"/>
 
       <xsl:with-param name="channel-server-count" select="$channel-server-count"/>
-      <xsl:with-param name="stats-collector-path" select="$stats-collector-path"/>
-      <xsl:with-param name="stats-collector" select="$stats-collector-config"/>
-
       <xsl:with-param name="frontend-config" select="$frontend-config"/>
     </xsl:call-template>
   </cfg:FeConfiguration>

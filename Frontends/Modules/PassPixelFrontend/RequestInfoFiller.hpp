@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <Sync/SyncPolicy.hpp>
 #include <GeoIP/IPMap.hpp>
@@ -54,7 +55,7 @@ namespace AdServer::PassbackPixel
     RequestInfoFiller(
       Logging::Logger* logger,
       unsigned long colo_id,
-      const char* geo_ip_path)
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
       /*throw(eh::Exception)*/;
 
     void fill_track(
@@ -76,7 +77,7 @@ namespace AdServer::PassbackPixel
       Generics::SubStringHashAdapter, PassbackTrackParamProcessor_var>
       PassbackTrackProcessorMap;
 
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
   private:
     Logging::Logger_var logger_;

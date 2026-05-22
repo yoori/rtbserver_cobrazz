@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <Generics/GnuHashTable.hpp>
 #include <GeoIP/IPMap.hpp>
 #include <HTTP/Http.hpp>
@@ -133,7 +135,7 @@ namespace AdServer::ImprTrack
   public:
     RequestInfoFiller(
       Logging::Logger* logger,
-      const char* geo_ip_path,
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
       CommonModule* common_module,
       unsigned long colo_id,
       const RequestInfoFiller::EncryptionKeys* default_keys,
@@ -184,7 +186,7 @@ namespace AdServer::ImprTrack
 
   private:
     Logging::Logger_var logger_;
-    std::unique_ptr<GeoIPMapping::IPMapCity2> ip_map_;
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map_;
     CommonModule_var common_module_;
     const unsigned long colo_id_;
 

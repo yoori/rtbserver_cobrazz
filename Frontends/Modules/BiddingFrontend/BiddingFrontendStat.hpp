@@ -14,25 +14,32 @@ namespace AdServer
   class StatHolder : public ReferenceCounting::AtomicImpl
   {
   public:
+    struct RtbRequestInProgressStats
+    {
+      unsigned long request = 0;
+      unsigned long user_resolving = 0;
+      unsigned long trigger_match = 0;
+      unsigned long history_match = 0;
+      unsigned long campaign_selection = 0;
+    };
+
     struct StatData
     {
       StatData();
       StatData(
-        unsigned long request_google_,
-        unsigned long request_google_bid_,
-        unsigned long request_openrtb_,
-        unsigned long request_openrtb_bid_,
-        unsigned long request_other_,
-        unsigned long request_other_bid_,
+        unsigned long request_total_,
+        unsigned long request_total_bid_,
         const Generics::Time& processing_time);
 
-      unsigned long request_google;
-      unsigned long request_google_bid;
-      unsigned long request_openrtb;
-      unsigned long request_openrtb_bid;
-      unsigned long request_other;
-      unsigned long request_other_bid;
+      unsigned long request_total;
+      unsigned long request_total_bid;
       unsigned long skipped;
+      unsigned long request_in_progress;
+      unsigned long user_resolving_in_progress;
+      unsigned long trigger_match_in_progress;
+      unsigned long history_match_in_progress;
+      unsigned long campaign_selection_in_progress;
+      unsigned long user_bind_request_count;
       unsigned long user_bind_requests;
       unsigned long user_bind_rejected_requests;
       unsigned long user_bind_match_requests;
@@ -63,6 +70,39 @@ namespace AdServer
 
     void
     add_timeout(const Generics::Time& timeout) noexcept;
+
+    void
+    add_rtb_request() noexcept;
+
+    void
+    complete_rtb_request() noexcept;
+
+    void
+    add_rtb_request_user_resolving() noexcept;
+
+    void
+    complete_rtb_request_user_resolving() noexcept;
+
+    void
+    add_rtb_request_trigger_match() noexcept;
+
+    void
+    complete_rtb_request_trigger_match() noexcept;
+
+    void
+    add_rtb_request_history_match() noexcept;
+
+    void
+    complete_rtb_request_history_match() noexcept;
+
+    void
+    add_rtb_request_campaign_selection() noexcept;
+
+    void
+    complete_rtb_request_campaign_selection() noexcept;
+
+    RtbRequestInProgressStats
+    rtb_request_in_progress_stats() noexcept;
 
     void
     add_user_bind_request() noexcept;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -155,7 +156,7 @@ namespace AdServer::Instantiate
     RequestInfoFiller(
       Logging::Logger* logger,
       CommonModule* common_module,
-      const char* geo_ip_path,
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
       const String::SubString& ip_key)
       /*throw(eh::Exception)*/;
 
@@ -176,7 +177,7 @@ namespace AdServer::Instantiate
       /*throw(InvalidParamException)*/;
 
   private:
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, RequestInfoParamProcessor_var>

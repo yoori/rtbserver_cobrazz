@@ -220,7 +220,7 @@ namespace AdServer::ImprTrack
     std::string track_pixel_content_type_;
     BindURLRuleArray bind_url_rules_;
 
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
 
     // external services
@@ -235,7 +235,7 @@ namespace AdServer::ImprTrack
       user_info_client_coro_;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
-    FrontendCommons::FrontendWorkers_var match_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> match_workers_;
     std::atomic<unsigned long> match_tasks_count_{0};
 
     Generics::StringHashAdapter track_template_file_;

@@ -291,7 +291,6 @@ namespace AdServer
     std::string fe_config_path_;
     std::string pixel_content_type_;
     SourceMap sources_;
-    std::unique_ptr<GeoIPMapping::IPMapCity2> ip_map_;
     std::unique_ptr<UserBind::RequestInfoFiller> request_info_filler_;
 
     // external services
@@ -309,7 +308,7 @@ namespace AdServer
     std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
 
-    FrontendCommons::FrontendWorkers_var match_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> match_workers_;
 
     StatHolder_var stats_;
     Algs::AtomicInt bind_task_count_;

@@ -100,7 +100,7 @@ namespace AdServer::PassbackPixel
       request_info_filler_.reset(new RequestInfoFiller(
         logger(),
         common_config_->colo_id(),
-        common_config_->GeoIP().present() ? common_config_->GeoIP()->path().c_str() : 0));
+        common_module_->ip_mapper()));
 
       track_pixel_ = FileCachePtr(
         new FileCache(config_->track_pixel_path().c_str()));
@@ -295,10 +295,7 @@ namespace AdServer::PassbackPixel
       try
       {
         parse_config_();
-
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(

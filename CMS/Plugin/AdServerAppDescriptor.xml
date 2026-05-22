@@ -90,14 +90,6 @@
         maxHostOccurs="unbounded"/>
 
       <service
-        type="StatsCollector"
-        configSchema="xsd/Controlling/StatsCollectorApp.xsd"
-        minOccurs="0"
-        maxOccurs="1"
-        minHostOccurs="1"
-        maxHostOccurs="unbounded"/>
-
-      <service
         type="RequestInfoManager"
         configSchema="xsd/LogProcessing/RequestInfoManagerApp.xsd"
         minOccurs="1"

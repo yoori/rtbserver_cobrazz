@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -54,7 +55,7 @@ namespace AdServer
       Logging::Logger* logger,
       unsigned long colo_id,
       CommonModule* common_module,
-      const char* geo_ip_path,
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
       const char* user_agent_filter_path,
       SetUidController* set_uid_controller,
       std::set<std::string>* ip_list,
@@ -90,7 +91,7 @@ namespace AdServer
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
 
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
   private:
     ColoFlagsMap_var

@@ -89,7 +89,6 @@
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
 <xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
-<xsl:variable name="stats-collector-descriptor" select="'AdCluster/BackendSubCluster/StatsCollector'"/>
 
 <xsl:variable name="campaign-manager-descriptor" select="'AdCluster/FrontendSubCluster/CampaignManager'"/>
 <xsl:variable name="conv-server-descriptor" select="'AdCluster/FrontendSubCluster/ConvServer'"/>
@@ -158,7 +157,6 @@
 <xsl:variable name="user-info-manager-log-level" select="$default-log-level"/>
 <xsl:variable name="user-info-manager-log-path" select="'/log/UserInfoManager/UserInfoManager'"/>
 <xsl:variable name="user-info-controller-log-path" select="'/log/UserInfoController/UserInfoController'"/>
-<xsl:variable name="stats-collector-log-path" select="'/log/StatsCollector/StatsCollector'"/>
 <xsl:variable name="fcgi-adserver-log-path" select="'/log/FCGIAdServer/FCGIAdServer'"/>
 
 <xsl:variable name="fcgi-trackserver1-log-path" select="'/log/FCGITrackServer1/FCGITrackServer1'"/>
@@ -186,10 +184,7 @@
 <xsl:variable name="userbind-module-log-level" select="$default-log-level"/>
 <xsl:variable name="profiling-module-log-level" select="$default-log-level"/>
 
-<xsl:variable name="stats-collector-log-level" select="$default-log-level"/>
-
 <!-- threadParams specific params -->
-<xsl:variable name="def-stats-collector-threads" select="'32'"/>
 <xsl:variable name="def-log-generalizer-threads" select="'10'"/>
 <xsl:variable name="def-request-info-manager-threads" select="'10'"/>
 <xsl:variable name="def-sync-logs-threads" select="'10'"/>
@@ -351,9 +346,6 @@
 <xsl:variable name="def-frontend-port" select="$def-range-start + 180"/>
 <xsl:variable name="def-secure-frontend-port" select="$def-range-start + 43"/>
 <xsl:variable name="def-stunnel-server-port" select="$def-range-start + 100"/>
-
-<xsl:variable name="def-stats-collector-port" select="$def-range-start + 18"/>
-<xsl:variable name="def-stats-dumping-period" select="'60'"/>
 
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="$def-range-start + 56"/>

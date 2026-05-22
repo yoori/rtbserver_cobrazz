@@ -4,8 +4,6 @@
 
 #include <eh/Exception.hpp>
 
-#include <Commons/PidFileGuard.hpp>
-
 #include "UserInfoControllerGrpc.hpp"
 #include "UserInfoControllerImpl.hpp"
 
@@ -33,7 +31,6 @@ private:
   AdServer::UserInfoSvcs::UserInfoControllerGrpc_var grpc_adapter_;
   ConfigPtr configuration_;
   Logging::Logger_var logger_;
-  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard_;
 };
 
 inline Logging::Logger*

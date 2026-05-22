@@ -6,6 +6,7 @@
 
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
+#include <Commons/PidFileGuard.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 
 namespace
@@ -51,6 +52,7 @@ ChannelControllerApp_::main(int& argc, char** argv) noexcept
 
   try
   {
+    std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
     const char* usage = "usage: ChannelController <config_file>";
     if (argc < 2)
     {
@@ -99,6 +101,9 @@ ChannelControllerApp_::main(int& argc, char** argv) noexcept
     }
 
     logger_ = Config::LoggerConfigReader::create(config().Logger(), argv[0]);
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(config().pid_file()));
+
     Logging::ActiveObjectCallbackImpl_var callback(
       new Logging::ActiveObjectCallbackImpl(
         logger(),

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -75,7 +76,7 @@ namespace AdServer::ClickFE
     RequestInfoFiller(
       Logging::Logger* logger,
       CommonModule* common_module,
-      const char* geo_ip_path)
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
       /*throw(eh::Exception)*/;
 
     void
@@ -88,7 +89,7 @@ namespace AdServer::ClickFE
     logger() const noexcept;
 
   private:
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, RequestInfoParamProcessor_var>

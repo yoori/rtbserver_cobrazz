@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <memory>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -228,7 +229,7 @@ namespace AdServer::Bidding
       Logging::Logger* logger,
       unsigned long colo_id,
       CommonModule* common_module,
-      const char* geo_ip_path,
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
       const char* user_agent_filter_path,
       const ExternalUserIdSet& skip_external_ids,
       bool ip_logging_enabled,
@@ -312,7 +313,7 @@ namespace AdServer::Bidding
   protected:
     typedef Sync::Policy::PosixThread SyncPolicy;
 
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
     typedef Generics::GnuHashTable<Generics::SubStringHashAdapter, std::string>
       SourceNameMap;

@@ -170,9 +170,7 @@ namespace AdServer::Instantiate
       try
       {
         parse_configs_();
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
@@ -202,8 +200,7 @@ namespace AdServer::Instantiate
           new RequestInfoFiller(
             logger(),
             common_module_,
-            common_config_->GeoIP().present() ?
-              common_config_->GeoIP()->path().c_str() : 0,
+            common_module_->ip_mapper(),
             common_config_->IpEncryptConfig().present() ?
               String::SubString(common_config_->IpEncryptConfig()->key()) :
             String::SubString()));

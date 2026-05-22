@@ -30,7 +30,6 @@
   GetLowestHost
   GetServiceRefs
   FillCorbaRef
-  AddStatsDumper
   AddUserInfoManagerControllerGroups
   substring-before-last
   substring-after-last
@@ -523,56 +522,6 @@
     <xsl:value-of select="concat('corbaloc:iiop:', exsl:node-set($hosts)//host[1],
       ':', $port, $obj-name)"/>
   </xsl:attribute>
-</xsl:template>
-
-<xsl:template name="AddStatsDumper">
-  <xsl:param name="stats-collector-path"/>
-  <xsl:param name="stats-collector-config"/>
-  <xsl:param name="provide-channel-counters"/>
-
-  <xsl:if test="count($stats-collector-path)">
-    <xsl:choose>
-      <xsl:when test="string-length($provide-channel-counters) > 0">
-        <cfg:StatsDumper>
-          <xsl:attribute name="period">
-            <xsl:value-of select="$stats-collector-config/@period"/>
-            <xsl:if test="count($stats-collector-config/@period) = 0">
-              <xsl:value-of select="$def-stats-dumping-period"/>
-            </xsl:if>
-          </xsl:attribute>
-          <xsl:attribute name="provide_channel_counters">
-            <xsl:value-of select="$provide-channel-counters"/>
-          </xsl:attribute>
-          <cfg:StatsDumperRef name="StatsDumperRef">
-            <xsl:call-template name="FillCorbaRef">
-              <xsl:with-param name="service-path" select="$stats-collector-path"/>
-              <xsl:with-param name="services-config" select="$stats-collector-config"/>
-              <xsl:with-param name="default-port" select="$def-stats-collector-port"/>
-              <xsl:with-param name="obj-name" select="'/StatsCollector'"/>
-            </xsl:call-template>
-          </cfg:StatsDumperRef>
-        </cfg:StatsDumper>
-      </xsl:when>
-      <xsl:otherwise>
-        <cfg:StatsDumper>
-          <xsl:attribute name="period">
-            <xsl:value-of select="$stats-collector-config/@period"/>
-            <xsl:if test="count($stats-collector-config/@period) = 0">
-              <xsl:value-of select="$def-stats-dumping-period"/>
-            </xsl:if>
-          </xsl:attribute>
-          <cfg:StatsDumperRef name="StatsDumperRef">
-            <xsl:call-template name="FillCorbaRef">
-              <xsl:with-param name="service-path" select="$stats-collector-path"/>
-              <xsl:with-param name="services-config" select="$stats-collector-config"/>
-              <xsl:with-param name="default-port" select="$def-stats-collector-port"/>
-              <xsl:with-param name="obj-name" select="'/StatsCollector'"/>
-            </xsl:call-template>
-          </cfg:StatsDumperRef>
-        </cfg:StatsDumper>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:if>
 </xsl:template>
 
 <xsl:template name="AddUserBindControllerGroups">

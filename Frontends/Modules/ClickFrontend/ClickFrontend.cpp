@@ -262,11 +262,8 @@ namespace AdServer
           new ClickFE::RequestInfoFiller(
             logger(),
             common_module_,
-            common_config_->GeoIP().present() ?
-              common_config_->GeoIP()->path().c_str() : 0));
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+            common_module_->ip_mapper()));
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
@@ -318,29 +315,9 @@ namespace AdServer
 
         click_template_file_ = config_->template_file();
 
-        try
-        {
-          if (common_config_->GeoIP().present())
-          {
-            ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(
-              common_config_->GeoIP()->path().c_str()));
-          }
-        }
-        catch (const GeoIPMapping::IPMap::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
+        ip_map_ = common_module_->ip_mapper();
 
-          logger()->log(ostr.str(),
-            Logging::Logger::CRITICAL,
-            Aspect::CLICK_FRONTEND,
-            "ADS-IMPL-102");
-        }
-
-        match_workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(match_workers_);
+        match_workers_ = workers_;
 
         set_uid_controller_ = new SetUidController(
           common_module_->user_id_controller(),

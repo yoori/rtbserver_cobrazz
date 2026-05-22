@@ -2,6 +2,7 @@
 
 #include <string>
 #include <set>
+#include <memory>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -74,7 +75,7 @@ namespace AdServer::Action
     RequestInfoFiller(
       Logging::Logger* logger,
       CommonModule* common_module,
-      const char* geo_ip_path,
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
       Commons::LogReferrer::Setting use_referer,
       bool set_uid)
       /*throw(eh::Exception)*/;
@@ -97,7 +98,7 @@ namespace AdServer::Action
       /*throw(InvalidParamException)*/;
 
   private:
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, RequestInfoParamProcessor_var>

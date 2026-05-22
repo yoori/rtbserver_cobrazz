@@ -440,7 +440,7 @@ namespace AdServer
     Logging::Logger* logger,
     unsigned long colo_id,
     CommonModule* common_module,
-    const char* geo_ip_path,
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
     const char* user_agent_filter_path,
     SetUidController* set_uid_controller,
     std::set<std::string>* ip_list,
@@ -453,28 +453,9 @@ namespace AdServer
       use_ip_list_(false),
       log_referrer_setting_(log_referrer_site_stas_setting),
       common_module_(ReferenceCounting::add_ref(common_module)),
+      ip_map_(std::move(ip_map)),
       set_uid_controller_(ReferenceCounting::add_ref(set_uid_controller))
   {
-    static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
-    if(geo_ip_path)
-    {
-      try
-      {
-        ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(geo_ip_path));
-      }
-      catch (const GeoIPMapping::IPMap::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-        logger->log(ostr.str(),
-          Logging::Logger::CRITICAL,
-          Aspect::AD_FRONTEND,
-          "ADS-IMPL-102");
-      }
-    }
-
     if(user_agent_filter_path[0])
     {
       user_agent_matcher_.init(user_agent_filter_path);

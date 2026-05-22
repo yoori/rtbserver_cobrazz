@@ -492,6 +492,40 @@ namespace AdServer
     return ip_matcher_;
   }
 
+  std::shared_ptr<GeoIPMapping::IPMapCity2>
+  CommonModule::ip_mapper() noexcept
+  {
+    Sync::PosixGuard lock(ip_mapper_lock_);
+    if(ip_mapper_)
+    {
+      return ip_mapper_;
+    }
+
+    try
+    {
+      CommonConfigPtr common_config;
+      DomainConfigPtr domain_config;
+      parse_config_(common_config, domain_config);
+
+      if(common_config->GeoIP().present())
+      {
+        ip_mapper_ = std::make_shared<GeoIPMapping::IPMapCity2>(
+          common_config->GeoIP()->path().c_str());
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      logger()->sstream(
+        Logging::Logger::CRITICAL,
+        Aspect::COMMON_MODULE,
+        "ADS-IMPL-102") <<
+        "CommonModule::ip_mapper(): can't initialize GeoIP mapping: " <<
+        ex.what();
+    }
+
+    return ip_mapper_;
+  }
+
   FrontendCommons::CountryFilter_var
   CommonModule::country_filter() const noexcept
   {

@@ -68,8 +68,6 @@
   <xsl:param name="campaign-servers"/>
   <xsl:param name="user-info-manager-config"/>
   <xsl:param name="secure-files-root"/>
-  <xsl:param name="stats-collector-path"/>
-  <xsl:param name="stats-collector-config"/>
 
   <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
     <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
@@ -266,12 +264,6 @@
       <xsl:with-param name="service-name" select="'UserInfoManager'"/>
     </xsl:call-template>
 
-    <xsl:call-template name="AddStatsDumper">
-      <xsl:with-param name="stats-collector-path" select="$stats-collector-path"/>
-      <xsl:with-param name="stats-collector-config" select="$stats-collector-config"/>
-      <xsl:with-param name="provide-channel-counters" select="'true'"/>
-    </xsl:call-template>
-
     <xsl:if test="(count($user-info-manager-config/cfg:profilesCleanupParams/@clean_user_profiles) = 0 and
        $def-clean-user-profiles) or $user-info-manager-config/cfg:profilesCleanupParams/@clean_user_profiles = 'true' or
        $user-info-manager-config/cfg:profilesCleanupParams/@clean_user_profiles = '1'">
@@ -368,14 +360,6 @@
     select="$be-cluster-path/configuration/cfg:backendCluster"/>
 
   <xsl:variable
-    name="stats-collector-path"
-    select="$be-cluster-path/service[@descriptor = $stats-collector-descriptor]"/>
-
-  <xsl:variable
-    name="stats-collector-config"
-    select="$stats-collector-path/configuration/cfg:statsCollector"/>
-
-  <xsl:variable
     name="user-info-manager-config"
     select="$user-info-manager-path/configuration/cfg:userInfoManager"/>
 
@@ -402,8 +386,6 @@
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
       <xsl:with-param name="user-info-manager-config" select="$user-info-manager-config"/>
       <xsl:with-param name="secure-files-root" select="$secure-files-root"/>
-      <xsl:with-param name="stats-collector-path" select="$stats-collector-path"/>
-      <xsl:with-param name="stats-collector-config" select="$stats-collector-config"/>
     </xsl:call-template>
   </cfg:AdConfiguration>
 

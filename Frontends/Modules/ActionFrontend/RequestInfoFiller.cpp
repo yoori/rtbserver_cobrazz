@@ -114,35 +114,16 @@ namespace AdServer::Action
   RequestInfoFiller::RequestInfoFiller(
     Logging::Logger* logger,
     CommonModule* common_module,
-    const char* geo_ip_path,
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
     Commons::LogReferrer::Setting use_referrer,
     bool set_uid)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       common_module_(ReferenceCounting::add_ref(common_module)),
+      ip_map_(std::move(ip_map)),
       use_referrer_(use_referrer),
       set_uid_(set_uid)
   {
-    static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
-    if(geo_ip_path)
-    {
-      try
-      {
-        ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(geo_ip_path));
-      }
-      catch (const GeoIPMapping::IPMap::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-        logger->log(ostr.str(),
-          Logging::Logger::CRITICAL,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-102");
-      }
-    }
-
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID,
       RequestInfoParamProcessor_var(new UuidParamProcessor(this, set_uid))));

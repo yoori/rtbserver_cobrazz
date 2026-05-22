@@ -255,10 +255,7 @@ namespace AdServer
           }
         }
       }
-
-      grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-        common_config_->grpc_executor_threads());
-      add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
       auto campaign_manager = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(

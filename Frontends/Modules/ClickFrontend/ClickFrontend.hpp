@@ -204,10 +204,10 @@ namespace AdServer
     Generics::StringHashAdapter click_template_file_;
     Commons::TextTemplateCache_var template_files_;
 
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
 
-    FrontendCommons::FrontendWorkers_var match_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> match_workers_;
     Algs::AtomicInt match_task_count_;
 
     std::unique_ptr<FrontendCommons::CookieManager<

@@ -62,6 +62,9 @@
     <xsd:attribute name="count_chunks"
       type="xsd:positiveInteger"
       use="required"/>
+    <xsd:attribute name="pid_file"
+      type="xsd:string"
+      use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="ChannelControllerRegularSourceType">

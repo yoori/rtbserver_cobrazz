@@ -345,13 +345,6 @@
         <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::DictionaryProvider'"/>
       </xsl:call-template>
 
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="$be-cluster-path/service[@descriptor = $stats-collector-descriptor]"/>
-        <xsl:with-param name="service-name" select="'be-StatsCollector'"/>
-        <xsl:with-param name="service-type" select="'AdServer::Controlling::StatsCollector'"/>
-      </xsl:call-template>
-
       <xsl:if test="count($localproxy-path//service) > 0" >
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"
@@ -2039,12 +2032,6 @@
             <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoChecker'"/>
             <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
           </xsl:call-template>
-          <xsl:if test="count($be-cluster-path/service[@descriptor = $stats-collector-descriptor]) > 0">
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="masters" select="'AdServer::Controlling::StatsCollector'"/>
-              <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
-            </xsl:call-template>
-          </xsl:if>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
             <xsl:with-param name="slaves" select="concat('AdServer::UserInfoSvcs::UserInfoController',
@@ -2071,12 +2058,6 @@
               $conv-server-dep)"/>
             <xsl:with-param name="slaves" select= "concat($fe-services, $prestart-dep)"/>
           </xsl:call-template>
-          <xsl:if test="count($be-cluster-path/service[@descriptor = $stats-collector-descriptor]) > 0">
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="masters" select="'AdServer::Controlling::StatsCollector'"/>
-              <xsl:with-param name="slaves" select= "$fe-services"/>
-            </xsl:call-template>
-          </xsl:if>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select="concat($psconfig-dep, $prestart-dep)"/>
             <xsl:with-param name="slaves" select= "$fe-services"/>
@@ -2145,12 +2126,6 @@
           <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoChecker'"/>
           <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
         </xsl:call-template>
-        <xsl:if test="count($be-cluster-path/service[@descriptor = $stats-collector-descriptor]) > 0">
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::Controlling::StatsCollector'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
-          </xsl:call-template>
-        </xsl:if>
         <xsl:call-template name="AddDependence">
           <xsl:with-param name="masters" select= "'AdServer::UserInfoSvcs::UserInfoManager'"/>
           <xsl:with-param name="slaves" select="'AdServer::UserInfoSvcs::UserInfoController'"/>

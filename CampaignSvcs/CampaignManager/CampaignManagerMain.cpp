@@ -105,6 +105,7 @@ void
 CampaignManagerApp_::main(int& argc, char** argv) noexcept
 {
   const char* stage = "beginning main()";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
   try
   {
@@ -189,7 +190,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     }
     active_objects->add_child_object(corba_server_adapter_.in());
 
-    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       configuration_.pid_file);
 
     AdServer::Commons::SignalActiveObject signal_active_object;
@@ -212,7 +213,6 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     campaign_manager_impl_.reset();
     campaign_manager_core_.reset();
     grpc_adapter_.reset();
-    pid_file_guard_.reset();
   }
   catch (const Exception& e)
   {
@@ -244,7 +244,6 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
   }
 
   stop_();
-  pid_file_guard_.reset();
 }
 
 void

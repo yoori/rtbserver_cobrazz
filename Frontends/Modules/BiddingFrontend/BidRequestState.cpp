@@ -184,7 +184,15 @@ namespace AdServer::Bidding
     request_time_metering_.total_time =
       Generics::Time::get_time_of_day() - start_processing_time_;
     print_available_request_debug_info_();
-    debug_sink_.print_interrupt_debug_info(interrupted_step);
+    const auto in_progress_stats =
+      bid_frontend_->stats_->rtb_request_in_progress_stats();
+    debug_sink_.print_interrupt_debug_info(
+      interrupted_step,
+      in_progress_stats.request,
+      in_progress_stats.user_resolving,
+      in_progress_stats.trigger_match,
+      in_progress_stats.history_match,
+      in_progress_stats.campaign_selection);
     debug_sink_.print_time_metering_debug_info(request_time_metering_);
     write_empty_response(0);
   }

@@ -373,10 +373,7 @@ namespace AdServer
       try
       {
         parse_configs_();
-
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto user_bind_client =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
@@ -469,13 +466,6 @@ namespace AdServer
           }
         }
 
-        const char* geo_ip_path = 0;
-
-        if(common_config_->GeoIP().present())
-        {
-          geo_ip_path = common_config_->GeoIP()->path().c_str();
-        }
-
         UserBind::RequestInfoFiller::ExternalUserIdSet skip_external_ids;
 
         if (common_config_->SkipExternalIds().present())
@@ -516,7 +506,7 @@ namespace AdServer
           new UserBind::RequestInfoFiller(
             logger(),
             common_module_,
-            geo_ip_path,
+            common_module_->ip_mapper(),
             skip_external_ids,
             allowed_passback_domains,
             common_config_->colo_id()));
@@ -530,10 +520,7 @@ namespace AdServer
 
         if(config_->match_threads() > 0)
         {
-          match_workers_ = new FrontendCommons::FrontendWorkers(
-            callback(),
-            config_->match_threads());
-          add_child_object(match_workers_);
+          match_workers_ = workers_;
         }
       }
       catch(const eh::Exception& ex)

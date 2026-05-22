@@ -218,9 +218,7 @@ namespace AdServer::Action
             }
           }
         }
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto user_bind_client =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
@@ -276,8 +274,7 @@ namespace AdServer::Action
           new RequestInfoFiller(
             logger(),
             common_module_.in(),
-            common_config_->GeoIP().present() ?
-              common_config_->GeoIP()->path().c_str() : 0,
+            common_module_->ip_mapper(),
             Commons::LogReferrer::read_log_referrer_settings(
             config_->use_referrer_action_stats()),
             config_->set_uid()));
@@ -311,10 +308,7 @@ namespace AdServer::Action
           add_child_object(stats_.in());
         }
 
-        match_workers_ = new FrontendCommons::FrontendWorkers(
-          callback(),
-          config_->threads());
-        add_child_object(match_workers_);
+        match_workers_ = workers_;
 
         derived_config_.use_referrer = Commons::LogReferrer::read_log_referrer_settings(
           config_->use_referrer_action_stats());

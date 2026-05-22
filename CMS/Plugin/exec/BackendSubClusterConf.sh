@@ -27,7 +27,6 @@ LOG_PROCESSING_DESCR=$BACKEND_CLUSTER/LogProcessing
 REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
 CLICKHOUSE_UPLOADER_DESCR=$BACKEND_CLUSTER/ClickhouseUploader
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
-STATS_COLLECTOR_DESCR=$BACKEND_CLUSTER/StatsCollector
 
 LOCAL_PROXY_DESCR=AdCluster/BackendSubCluster/LocalProxy
 STUNNEL_CLIENT_DESCR=$LOCAL_PROXY_DESCR/STunnelClient
@@ -311,32 +310,6 @@ $EXEC/CurrentEnvGen.sh \
   --app-xml $APP_XML \
   --search-xpath "configuration/cfg:statReceiver" \
   --services-xpath "$STAT_RECEIVER_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/be.sh
-
-let "EXIT_CODE|=$?"
-
-## configure Controlling
-STATS_COLLECTOR_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$STATS_COLLECTOR_DESCR']"
-
-$EXEC/ServiceConf.sh \
- --services-xpath "$STATS_COLLECTOR_SERVICE_XPATH" \
- --app-xml $APP_XML \
- --xsl $XSLT_ROOT/Controlling/StatsCollector.xsl \
- --out-file StatsCollector.xml \
- --out-dir-suffix "$OUT_DIR_SUFFIX" \
- --out-dir $OUT_DIR \
- --plugin-root $PLUGIN_ROOT
-
-let "EXIT_CODE|=$?"
-
-### StatsCollector
-$EXEC/CurrentEnvGen.sh \
-  --service-name "stats_collector" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:statsCollector" \
-  --services-xpath "$STATS_COLLECTOR_SERVICE_XPATH" \
   --out-dir $OUT_DIR \
   --out-file CurrentEnv/be.sh
 

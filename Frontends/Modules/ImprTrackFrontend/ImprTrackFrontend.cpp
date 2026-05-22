@@ -174,37 +174,15 @@ namespace AdServer::ImprTrack
       {
         parse_config_();
 
-        try
-        {
-          if (common_config_->GeoIP().present())
-          {
-            ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(
-              common_config_->GeoIP()->path().c_str()));
-          }
-        }
-        catch (const GeoIPMapping::IPMap::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-          logger()->log(ostr.str(),
-            Logging::Logger::CRITICAL,
-            Aspect::IMPR_TRACK_FRONTEND,
-            "ADS-IMPL-102");
-        }
+        ip_map_ = common_module_->ip_mapper();
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
             FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
         if(config_->match_threads() > 0)
         {
-          match_workers_ = new FrontendCommons::FrontendWorkers(
-            callback(),
-            config_->match_threads());
-          add_child_object(match_workers_);
+          match_workers_ = workers_;
         }
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
@@ -308,8 +286,7 @@ namespace AdServer::ImprTrack
         request_info_filler_.reset(
           new RequestInfoFiller(
             logger(),
-            common_config_->GeoIP().present() ?
-              common_config_->GeoIP()->path().c_str() : 0,
+            ip_map_,
             common_module_,
             common_config_->colo_id(),
             default_keys,

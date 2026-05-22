@@ -93,11 +93,11 @@
   <xsl:param name="channel-servers"/>
   <xsl:param name="campaign-servers"/>
 
-  <cfg:ChannelControllerConfig>
-    <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
-      <xsl:if test="count($env-config/@workspace_root) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
-    </xsl:variable>
+  <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
+    <xsl:if test="count($env-config/@workspace_root) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
+  </xsl:variable>
 
+  <cfg:ChannelControllerConfig pid_file="{concat($workspace-root, '/run/ChannelController.pid')}">
     <xsl:variable name="chunks-count"><xsl:value-of select="$channel-serving-config/cfg:scaleParams/@chunks_count"/>
       <xsl:if test="count($channel-serving-config/cfg:scaleParams/@chunks_count) = 0">
         <xsl:value-of select="$channel-serving-scale-chunks"/>

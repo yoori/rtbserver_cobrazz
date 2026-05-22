@@ -50,7 +50,8 @@ namespace AdServer
       Logging::Logger* logger,
       StatHolder* stats,
       Generics::CompositeMetricsProvider* composite_metrics_provider,
-      unsigned long grpc_coalesce_threads)
+      unsigned long grpc_coalesce_threads,
+      unsigned long service_index)
       : config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
@@ -61,6 +62,7 @@ namespace AdServer
           0)),
         stats_(ReferenceCounting::add_ref(stats)),
         composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
+        service_index_(service_index),
         common_module_(new CommonModule(logger_))
     {
       frontends_.reserve(4);
@@ -161,6 +163,10 @@ namespace AdServer
           {
             use_threads(fe_config.PubPixelFeConfiguration()->threads());
           }
+          else if (*module_it == M_BIDDING && fe_config.BidFeConfiguration().present())
+          {
+            use_threads(fe_config.BidFeConfiguration()->threads());
+          }
           else if ((*module_it == M_CONTENT || *module_it == M_DIRECTORY) &&
             fe_config.ContentFeConfiguration().present())
           {
@@ -215,6 +221,10 @@ namespace AdServer
             request_threads);
         }
 
+        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+          fe_config.CommonFeConfiguration()->grpc_executor_threads());
+        common_module_->set_grpc_executor(grpc_executor_);
+
         for(auto module_it = modules_.begin(); module_it != modules_.end(); ++module_it)
         {
           if(*module_it == M_BIDDING)
@@ -225,7 +235,9 @@ namespace AdServer
               logger_,
               common_module_,
               stats_,
-              composite_metrics_provider_);
+              composite_metrics_provider_,
+              request_workers_,
+              service_index_);
           }
           else if(*module_it == M_PUBPIXEL)
           {
@@ -356,6 +368,10 @@ namespace AdServer
           add_child_object(request_workers_);
           trace_startup("FrontendsPool request_workers add end");
         }
+
+        trace_startup("FrontendsPool grpc_executor add begin");
+        add_child_object(grpc_executor_);
+        trace_startup("FrontendsPool grpc_executor add end");
 
         for (const auto& frontend : frontends_)
         {

@@ -554,7 +554,12 @@ namespace AdServer::Bidding
 
   void
   DebugSink::print_interrupt_debug_info(
-    const String::SubString& interrupted_step) noexcept
+    const String::SubString& interrupted_step,
+    unsigned long request_in_progress,
+    unsigned long user_resolving_in_progress,
+    unsigned long trigger_match_in_progress,
+    unsigned long history_match_in_progress,
+    unsigned long campaign_selection_in_progress) noexcept
   {
     if(!require_debug_info())
     {
@@ -570,7 +575,18 @@ namespace AdServer::Bidding
       debug_info_str_ << Debug::INTERRUPT_HEAD << sep_;
     }
 
-    debug_info_str_ << "interrupted_step = " << interrupted_step << sep_;
+    debug_info_str_ <<
+      "server-id = " << server_id_ << sep_ <<
+      "rtb_request_in_progress_count = " << request_in_progress << sep_ <<
+      "rtb_request_user_resolving_in_progress_count = " <<
+        user_resolving_in_progress << sep_ <<
+      "rtb_request_trigger_match_in_progress_count = " <<
+        trigger_match_in_progress << sep_ <<
+      "rtb_request_history_match_in_progress_count = " <<
+        history_match_in_progress << sep_ <<
+      "rtb_request_campaign_selection_in_progress_count = " <<
+        campaign_selection_in_progress << sep_ <<
+      "interrupted_step = " << interrupted_step << sep_;
   }
 
   DebugInfo

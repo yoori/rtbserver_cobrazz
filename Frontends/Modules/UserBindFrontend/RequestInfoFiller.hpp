@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <Generics/GnuHashTable.hpp>
 #include <GeoIP/IPMap.hpp>
 #include <HTTP/Http.hpp>
@@ -89,7 +91,7 @@ namespace AdServer::UserBind
     RequestInfoFiller(
       Logging::Logger* logger,
       CommonModule* common_module,
-      const char* geo_ip_path,
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
       const ExternalUserIdSet& skip_external_ids,
       const AllowedPassbackDomainArray& allowed_passback_domains,
       unsigned long colo_id)
@@ -120,7 +122,7 @@ namespace AdServer::UserBind
     const AllowedPassbackDomainArray allowed_passback_domains_;
     const unsigned long colo_id_;
 
-    std::unique_ptr<GeoIPMapping::IPMapCity2> ip_map_;
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map_;
 
     ParamProcessorMap header_processors_;
     ParamProcessorMap param_processors_;

@@ -277,7 +277,7 @@ namespace AdServer::Action
     AcFrontendStat_var stats_;
     RedirectRuleArray redirect_rules_;
 
-    FrontendCommons::FrontendWorkers_var match_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> match_workers_;
     Algs::AtomicInt match_task_count_;
 
     /* external services */

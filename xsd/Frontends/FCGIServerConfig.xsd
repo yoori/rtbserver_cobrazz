@@ -34,6 +34,7 @@
 
     <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
     <xsd:attribute name="grpc_coalesce_threads" type="xsd:positiveInteger" default="64"/>
+    <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" default="0"/>
     <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
   </xsd:complexType>
 

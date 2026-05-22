@@ -6,7 +6,6 @@
 #include <Generics/Time.hpp>
 
 #include <Commons/HttpServer/HttpServer.hpp>
-#include <Commons/PidFileGuard.hpp>
 
 #include <xsd/UserInfoSvcs/UserBindServerConfig.hpp>
 
@@ -39,7 +38,6 @@ private:
 private:
   ConfigPtr configuration_;
   Logging::Logger_var logger_;
-  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard_;
 
   AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter_;
   AdServer::Commons::HttpServer::HttpServer_var http_server_;

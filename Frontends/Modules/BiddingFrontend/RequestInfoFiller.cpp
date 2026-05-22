@@ -2434,7 +2434,7 @@ namespace AdServer::Bidding
     Logging::Logger* logger,
     unsigned long colo_id,
     CommonModule* common_module,
-    const char* geo_ip_path,
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
     const char* user_agent_filter_path,
     const ExternalUserIdSet& skip_external_ids,
     bool ip_logging_enabled,
@@ -2449,6 +2449,7 @@ namespace AdServer::Bidding
       common_module_(ReferenceCounting::add_ref(common_module)),
       ip_logging_enabled_(ip_logging_enabled),
       ip_salt_(ip_salt),
+      ip_map_(std::move(ip_map)),
       sources_(sources),
       enable_profile_referer_(enable_profile_referer),
       account_traits_(account_traits),
@@ -2472,29 +2473,9 @@ namespace AdServer::Bidding
         {5, "Interstitial"}
       })
   {
-    static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("MegafonID")), "megafon-stableid");
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("quietmedia")), "megafon-stableid");
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("const.uno")), "megafon-stableid");
-
-    if(geo_ip_path)
-    {
-      try
-      {
-        ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(geo_ip_path));
-      }
-      catch (const GeoIPMapping::IPMap::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-        logger->log(ostr.str(),
-          Logging::Logger::CRITICAL,
-          Aspect::BIDDING_FRONTEND,
-          "ADS-IMPL-102");
-      }
-    }
 
     if(user_agent_filter_path[0])
     {
@@ -5440,10 +5421,23 @@ namespace AdServer::Bidding
                  geo_location,
                  false))
             {
+              request_info.location =
+                std::make_shared<FrontendCommons::Location>();
+              request_info.location->country = geo_location.country_code.str();
+              geo_location.region.assign_to(request_info.location->region);
+              request_info.location->city = geo_location.city.str();
+              request_info.location->normalize();
+
               request_params.common_info.location.resize(1);
-              CampaignManager::assign_string(request_params.common_info.location[0].country, geo_location.country_code);
-              CampaignManager::assign_string(request_params.common_info.location[0].region, geo_location.region);
-              CampaignManager::assign_string(request_params.common_info.location[0].city, geo_location.city);
+              CampaignManager::assign_string(
+                request_params.common_info.location[0].country,
+                request_info.location->country);
+              CampaignManager::assign_string(
+                request_params.common_info.location[0].region,
+                request_info.location->region);
+              CampaignManager::assign_string(
+                request_params.common_info.location[0].city,
+                request_info.location->city);
             }
           }
           catch(const eh::Exception&)

@@ -499,7 +499,7 @@ namespace AdServer::ImprTrack
 
   RequestInfoFiller::RequestInfoFiller(
     Logging::Logger* logger,
-    const char* geo_ip_path,
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map,
     CommonModule* common_module,
     unsigned long colo_id,
     const RequestInfoFiller::EncryptionKeys* default_keys,
@@ -507,32 +507,13 @@ namespace AdServer::ImprTrack
     const RequestInfoFiller::EncryptionKeysMap& site_keys)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
+      ip_map_(std::move(ip_map)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(colo_id),
       default_keys_(ReferenceCounting::add_ref(default_keys)),
       account_keys_(account_keys),
       site_keys_(site_keys)
   {
-    static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
-    if(geo_ip_path)
-    {
-      try
-      {
-        ip_map_.reset(new GeoIPMapping::IPMapCity2(geo_ip_path));
-      }
-      catch (const GeoIPMapping::IPMap::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-        logger->log(ostr.str(),
-          Logging::Logger::CRITICAL,
-          Aspect::IMPR_TRACK_FRONTEND,
-          "ADS-IMPL-102");
-      }
-    }
-
     add_processor_(false, true, Param::GLOBAL_REQUEST_ID,
       new FrontendCommons::UuidParamProcessor<RequestInfo>(
         &RequestInfo::common_request_id));

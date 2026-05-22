@@ -15,7 +15,9 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
 
+#include <GeoIP/IPMap.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/DomainParser.hpp>
@@ -57,6 +59,9 @@ namespace AdServer
     FrontendCommons::IPMatcher_var
     ip_matcher() const noexcept;
 
+    std::shared_ptr<GeoIPMapping::IPMapCity2>
+    ip_mapper() noexcept;
+
     FrontendCommons::CountryFilter_var
     country_filter() const noexcept;
 
@@ -72,10 +77,18 @@ namespace AdServer
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
     grpc_coalesce_runner() const noexcept;
 
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor>
+    grpc_executor() const noexcept;
+
     void
     set_grpc_coalesce_runner(
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
         grpc_coalesce_runner)
+      noexcept;
+
+    void
+    set_grpc_executor(
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
       noexcept;
 
     AdServer::CampaignSvcs::ColocationFlagsSeq_var
@@ -126,16 +139,19 @@ namespace AdServer
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       grpc_coalesce_runner_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
 
     UserIdController_var user_id_controller_;
 
     CampaignServerPoolPtr campaign_servers_;
     mutable SyncPolicy::Mutex matchers_lock_;
+    mutable Sync::PosixMutex ip_mapper_lock_;
     FrontendCommons::UrlMatcher_var url_matcher_;
     FrontendCommons::WebBrowserMatcher_var web_browser_matcher_;
     FrontendCommons::PlatformMatcher_var platform_matcher_;
     FrontendCommons::IPMatcher_var ip_matcher_;
     FrontendCommons::CountryFilter_var country_filter_;
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_mapper_;
     Generics::Time matchers_timestamp_;
 
     CampaignSvcs::DomainParser_var domain_parser_;
@@ -182,6 +198,13 @@ namespace AdServer
   }
 
   inline
+  std::shared_ptr<AdServer::Grpc::GrpcExecutor>
+  CommonModule::grpc_executor() const noexcept
+  {
+    return grpc_executor_;
+  }
+
+  inline
   void
   CommonModule::set_grpc_coalesce_runner(
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
@@ -189,5 +212,14 @@ namespace AdServer
     noexcept
   {
     grpc_coalesce_runner_ = std::move(grpc_coalesce_runner);
+  }
+
+  inline
+  void
+  CommonModule::set_grpc_executor(
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
+    noexcept
+  {
+    grpc_executor_ = std::move(grpc_executor);
   }
 } // namespace AdServer

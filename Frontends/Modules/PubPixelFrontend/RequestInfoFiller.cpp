@@ -77,30 +77,11 @@ namespace AdServer::PubPixel
   /** RequestInfoFiller */
   RequestInfoFiller::RequestInfoFiller(
     Logging::Logger* logger,
-    const char* geo_ip_path)
+    std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
     /*throw(eh::Exception)*/
-    : logger_(ReferenceCounting::add_ref(logger))
+    : logger_(ReferenceCounting::add_ref(logger)),
+      ip_map_(std::move(ip_map))
   {
-    static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
-    if(geo_ip_path)
-    {
-      try
-      {
-        ip_map_ = IPMapPtr(new GeoIPMapping::IPMapCity2(geo_ip_path));
-      }
-      catch (const GeoIPMapping::IPMap::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": GeoIPMapping::IPMap::Exception caught: " << e.what();
-
-        logger->log(ostr.str(),
-          Logging::Logger::CRITICAL,
-          Aspect::PUBPIXEL_FRONTEND,
-          "ADS-IMPL-102");
-      }
-    }
-
     // redirect request
     param_processors_.insert(std::make_pair(
       Request::Parameters::USER_STATUS,

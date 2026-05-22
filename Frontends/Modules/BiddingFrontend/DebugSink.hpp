@@ -97,7 +97,12 @@ namespace AdServer::Bidding
 
     void
     print_interrupt_debug_info(
-      const String::SubString& interrupted_step) noexcept;
+      const String::SubString& interrupted_step,
+      unsigned long request_in_progress,
+      unsigned long user_resolving_in_progress,
+      unsigned long trigger_match_in_progress,
+      unsigned long history_match_in_progress,
+      unsigned long campaign_selection_in_progress) noexcept;
 
     void
     write_response(

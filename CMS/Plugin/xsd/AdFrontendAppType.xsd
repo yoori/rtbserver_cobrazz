@@ -748,6 +748,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="max_pending_tasks" type="xsd:positiveInteger" default="10000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum pending bidding request tasks.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="threads" type="xsd:positiveInteger" default="128">
       <xsd:annotation>
         <xsd:documentation>

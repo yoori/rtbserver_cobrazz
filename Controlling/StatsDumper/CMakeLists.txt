@@ -10,7 +10,6 @@ target_link_libraries(StatsDumper
   XMLUtility
   StatsCollectorIDL
   SNMPAgent
-  StatsCollectorConfigXSD
 )
 
 #install(TARGETS  StatsDumper DESTINATION ${INSTALL_DIR})

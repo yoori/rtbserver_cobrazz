@@ -4,7 +4,6 @@
 #include <map>
 #include <vector>
 
-#include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Uuid.hpp>
@@ -99,8 +98,6 @@ namespace AdServer::WebStat
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, RequestInfoParamProcessor_var>
       ParamProcessorMap;
-
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
     typedef std::unique_ptr<Generics::SignedUuidVerifier> RequestIdVerifierPtr;
 

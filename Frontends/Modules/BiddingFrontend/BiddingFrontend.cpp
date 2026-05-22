@@ -67,6 +67,48 @@ namespace AdServer::Bidding
     namespace PB = adserver::campaign_svcs::campaign_manager;
 
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
+
+    class InProgressGuard
+    {
+    public:
+      using Method = void (StatHolder::*)() noexcept;
+
+      InProgressGuard(
+        StatHolder* stats,
+        Method add,
+        Method complete) noexcept
+        : stats_(ReferenceCounting::add_ref(stats)),
+          complete_(stats ? complete : nullptr)
+      {
+        if(stats_.in())
+        {
+          (stats_.in()->*add)();
+        }
+      }
+
+      ~InProgressGuard() noexcept
+      {
+        reset();
+      }
+
+      InProgressGuard(const InProgressGuard&) = delete;
+      InProgressGuard& operator=(const InProgressGuard&) = delete;
+
+      void
+      reset() noexcept
+      {
+        if(stats_.in() && complete_)
+        {
+          (stats_.in()->*complete_)();
+          complete_ = nullptr;
+        }
+      }
+
+    private:
+      StatHolder_var stats_;
+      Method complete_;
+    };
+
     template<typename ByteSeq>
     std::string pack_oct_seq(const ByteSeq& seq)
     {
@@ -697,7 +739,9 @@ namespace AdServer::Bidding
     Logging::Logger* logger,
     CommonModule* common_module,
     StatHolder* stats,
-    Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/
+    Generics::CompositeMetricsProvider* composite_metrics_provider,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+    unsigned long service_index) /*throw(eh::Exception)*/
     : GroupLogger(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
@@ -711,6 +755,7 @@ namespace AdServer::Bidding
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
       campaign_manager_(),
+      bid_workers_(std::move(request_workers)),
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
       passback_task_count_(0),
@@ -721,7 +766,7 @@ namespace AdServer::Bidding
     if(gethostname(hostname, sizeof(hostname)) == 0)
     {
       hostname[sizeof(hostname) - 1] = 0;
-      server_id_ = hostname;
+      server_id_ = std::string(hostname) + "." + std::to_string(service_index);
     }
   }
 
@@ -816,23 +861,12 @@ namespace AdServer::Bidding
         planner_ = new Generics::Planner(callback());
         add_child_object(planner_);
 
-        bid_workers_ = make_shared_reference<FrontendCommons::FrontendWorkers>(
-          new FrontendCommons::FrontendWorkers(
-            callback(),
-            config_->threads()));
-        add_child_object(bid_workers_);
-
         control_task_runner_ = new Generics::TaskRunner(callback(), 4);
         add_child_object(control_task_runner_);
 
         // ADSC-10554
         // Interrupted requests queue
-        passback_workers_ =
-          make_shared_reference<FrontendCommons::FrontendWorkers>(
-            new FrontendCommons::FrontendWorkers(
-              callback(),
-              config_->interrupted_threads()));
-        add_child_object(passback_workers_);
+        passback_workers_ = bid_workers_;
 
         Generics::Planner_var task_scheduler(new Generics::Planner(callback()));
         add_child_object(task_scheduler);
@@ -846,10 +880,7 @@ namespace AdServer::Bidding
           control_task_runner_,
           task_scheduler,
           flush_period)->schedule(flush_period);
-
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          common_config_->grpc_executor_threads());
-        add_child_object(grpc_executor_);
+        grpc_executor_ = common_module_->grpc_executor();
 
         auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
@@ -1072,8 +1103,7 @@ namespace AdServer::Bidding
             logger(),
             common_config_->colo_id(),
             common_module_.in(),
-            common_config_->GeoIP().present() ?
-              common_config_->GeoIP()->path().c_str() : 0,
+            common_module_->ip_mapper(),
             "", //user_agent_filter_path.c_str()
             skip_external_ids,
             common_config_->ip_logging_enabled(),
@@ -1320,9 +1350,31 @@ namespace AdServer::Bidding
 
     auto campaign_match_result =
       std::make_shared<AdServer::Bidding::CampaignManager::RequestCreativeResult>();
+    bool stats_flushed = false;
+    auto flush_stats = [&]() noexcept
+    {
+      if(stats_.in() && !stats_flushed && request_task->request_params().in())
+      {
+        stats_->flush(
+          *request_task->request_params(),
+          campaign_match_result.get(),
+          Generics::Time::get_time_of_day() -
+            request_task->start_processing_time());
+        stats_flushed = true;
+      }
+    };
+
+    InProgressGuard request_in_progress(
+      stats_.in(),
+      &StatHolder::add_rtb_request,
+      &StatHolder::complete_rtb_request);
 
     try
     {
+      InProgressGuard user_resolving_in_progress(
+        stats_.in(),
+        &StatHolder::add_rtb_request_user_resolving,
+        &StatHolder::complete_rtb_request_user_resolving);
       request_task->set_current_stage(Stage::UserResolving);
       request_task->request_time_metering_.user_resolving_started_at =
         Generics::Time::get_time_of_day() - request_task->start_processing_time();
@@ -1575,6 +1627,7 @@ namespace AdServer::Bidding
       finish_user_resolving();
       request_time_metering.user_resolving_time =
         Generics::Time::get_time_of_day() - user_resolving_started_at;
+      user_resolving_in_progress.reset();
 
       request_task->print_available_request_debug_info_();
       request_task->debug_sink_.print_user_resolving_debug_info(
@@ -1586,6 +1639,10 @@ namespace AdServer::Bidding
         co_return FrontendCommons::RequestResult::written();
       }
 
+      InProgressGuard trigger_match_in_progress(
+        stats_.in(),
+        &StatHolder::add_rtb_request_trigger_match,
+        &StatHolder::complete_rtb_request_trigger_match);
       request_task->set_current_stage(Stage::TriggerMatching);
       request_time_metering.trigger_match_started_at =
         Generics::Time::get_time_of_day() -
@@ -1753,6 +1810,7 @@ namespace AdServer::Bidding
       }
       request_time_metering.trigger_match_time =
         Generics::Time::get_time_of_day() - trigger_match_started_at;
+      trigger_match_in_progress.reset();
 
       if(trigger_match.present)
       {
@@ -1766,6 +1824,10 @@ namespace AdServer::Bidding
         co_return FrontendCommons::RequestResult::written();
       }
 
+      InProgressGuard history_match_in_progress(
+        stats_.in(),
+        &StatHolder::add_rtb_request_history_match,
+        &StatHolder::complete_rtb_request_history_match);
       request_task->set_current_stage(Stage::HistoryMatching);
       request_time_metering.history_match_started_at =
         Generics::Time::get_time_of_day() -
@@ -1998,6 +2060,7 @@ namespace AdServer::Bidding
         std::move(history_match_result));
       request_time_metering.history_match_time =
         Generics::Time::get_time_of_day() - history_match_started_at;
+      history_match_in_progress.reset();
 
       if(history_match_result)
       {
@@ -2014,6 +2077,10 @@ namespace AdServer::Bidding
         co_return FrontendCommons::RequestResult::written();
       }
 
+      InProgressGuard campaign_selection_in_progress(
+        stats_.in(),
+        &StatHolder::add_rtb_request_campaign_selection,
+        &StatHolder::complete_rtb_request_campaign_selection);
       request_task->set_current_stage(Stage::CampaignSelection);
 
       std::shared_ptr<
@@ -2154,6 +2221,7 @@ namespace AdServer::Bidding
 
       request_time_metering.creative_selection_time =
         Generics::Time::get_time_of_day() - creative_selection_started_at;
+      campaign_selection_in_progress.reset();
 
       if(campaign_match_result->ad_slots.size())
       {
@@ -2163,6 +2231,7 @@ namespace AdServer::Bidding
 
       if(check_interrupt_(FUN, Stage::CampaignSelection, request_task))
       {
+        flush_stats();
         request_task->complete_request_(false, *campaign_match_result);
         co_return FrontendCommons::RequestResult::written();
       }
@@ -2189,6 +2258,7 @@ namespace AdServer::Bidding
           Aspect::BIDDING_FRONTEND);
       }
 
+      flush_stats();
       request_task->complete_request_(true, *campaign_match_result);
     }
     catch(const eh::Exception& ex)
@@ -2198,6 +2268,7 @@ namespace AdServer::Bidding
         Aspect::BIDDING_FRONTEND,
         "ADS-IMPL-109") <<
         FUN << ": eh::Exception caught: " << ex.what();
+      flush_stats();
       request_task->complete_request_(false, *campaign_match_result);
     }
     catch(...)
@@ -2207,6 +2278,7 @@ namespace AdServer::Bidding
         Aspect::BIDDING_FRONTEND,
         "ADS-IMPL-109") <<
         FUN << ": unknown exception caught";
+      flush_stats();
       request_task->complete_request_(false, *campaign_match_result);
     }
 

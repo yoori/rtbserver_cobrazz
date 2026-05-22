@@ -38,6 +38,7 @@
       <xsl:value-of select="$fcgi-adserver-config/cfg:trackConfig/@threads"/>
       <xsl:if test="count($fcgi-adserver-config/cfg:trackConfig/@threads) = 0">64</xsl:if>
     </xsl:attribute>
+    <xsl:attribute name="service_index">0</xsl:attribute>
     <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
       <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>

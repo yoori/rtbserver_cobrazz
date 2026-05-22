@@ -6,6 +6,7 @@
 
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
+#include <Commons/PidFileGuard.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 
 namespace
@@ -48,6 +49,7 @@ void
 UserInfoControllerApp_::main(int& argc, char** argv) noexcept
 {
   static const char* FUN = "UserInfoControllerApp_::main()";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
   try
   {
@@ -99,7 +101,7 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
     }
 
     logger_ = Config::LoggerConfigReader::create(config().Logger(), argv[0]);
-    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(config().pid_file()));
 
     Logging::ActiveObjectCallbackImpl_var callback(
@@ -129,7 +131,6 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
 
     wait_for_shutdown_signal_();
     stop_();
-    pid_file_guard_.reset();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
@@ -160,7 +161,6 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
   }
 
   stop_();
-  pid_file_guard_.reset();
 }
 
 int

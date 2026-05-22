@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <Sync/SyncPolicy.hpp>
 #include <GeoIP/IPMap.hpp>
@@ -48,7 +49,7 @@ namespace AdServer::PubPixel
 
     RequestInfoFiller(
       Logging::Logger* logger,
-      const char* geo_ip_path)
+      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
       /*throw(eh::Exception)*/;
 
     void fill(RequestInfo& request_info,
@@ -69,7 +70,7 @@ namespace AdServer::PubPixel
       Generics::SubStringHashAdapter, RequestParamProcessor_var>
       RequestParamProcessorMap;
 
-    typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
+    typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
   private:
     Logging::Logger_var logger_;

@@ -1,6 +1,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <sstream>
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -30,6 +31,103 @@ namespace
       << (elapsed.count() / 1000) << "."
       << (elapsed.count() % 1000) << " "
       << label << std::endl;
+  }
+
+  std::string
+  escape_json_string(const std::string& value)
+  {
+    std::string result;
+    result.reserve(value.size());
+
+    for (const char ch : value)
+    {
+      switch (ch)
+      {
+      case '\\':
+        result += "\\\\";
+        break;
+      case '"':
+        result += "\\\"";
+        break;
+      case '\n':
+        result += "\\n";
+        break;
+      case '\r':
+        result += "\\r";
+        break;
+      case '\t':
+        result += "\\t";
+        break;
+      default:
+        result += ch;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  struct JsonStatsWriter
+  {
+    explicit
+    JsonStatsWriter(std::ostream& out) noexcept
+      : out(out)
+    {}
+
+    void
+    operator()(const std::size_t)
+    {}
+
+    template<typename Type>
+    void
+    operator()(
+      const Generics::Values::Key& key,
+      const Type& value)
+    {
+      append_key_(key);
+      out << value;
+    }
+
+    void
+    operator()(
+      const Generics::Values::Key& key,
+      const std::string& value)
+    {
+      append_key_(key);
+      out << '"' << escape_json_string(value) << '"';
+    }
+
+    std::ostream& out;
+    bool first = true;
+
+  private:
+    void
+    append_key_(const Generics::Values::Key& key)
+    {
+      if (first)
+      {
+        first = false;
+      }
+      else
+      {
+        out << ',';
+      }
+
+      out << '"' << escape_json_string(key.text()) << "\":";
+    }
+  };
+
+  std::string
+  dump_stats_json(const AdServer::StatHolder_var& stats)
+  {
+    Generics::Values_var values = stats->dump_stats();
+
+    std::ostringstream out;
+    out << '{';
+    JsonStatsWriter writer(out);
+    values->enumerate_all(writer);
+    out << "}\n";
+    return out.str();
   }
 }
 
@@ -102,20 +200,28 @@ namespace AdServer::Frontends
         throw Exception(ostr);
       }
 
-      /*
-      // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
-      // init metrics http provider
       if(config_->Monitoring().present())
       {
-        UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
-          new UServerUtils::MetricsHTTPProvider(
-            composite_metrics_provider_,
-            config_->Monitoring()->port(),
-            "/metrics");
+        http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+          "0.0.0.0",
+          config_->Monitoring()->port(),
+          4);
 
-        add_child_object(metrics_http_provider);
+        StatHolder_var stats = stats_;
+        http_server_->add_handler(
+          "/stats",
+          [stats](
+            const AdServer::Commons::HttpServer::HttpServer::Request&)
+          {
+            return AdServer::Commons::HttpServer::HttpServer::Response{
+              200,
+              "application/json",
+              dump_stats_json(stats)
+            };
+          });
+
+        add_child_object(http_server_);
       }
-      */
     }
     catch (const Exception &ex)
     {
@@ -215,7 +321,8 @@ namespace AdServer::Frontends
         logger(),
         stats_,
         composite_metrics_provider_,
-        config_->grpc_coalesce_threads());
+        config_->grpc_coalesce_threads(),
+        config_->service_index());
       trace_startup("create FrontendsPool end");
 
       trace_startup("FrontendsPool init begin");

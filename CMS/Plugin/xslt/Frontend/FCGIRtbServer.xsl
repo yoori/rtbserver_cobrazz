@@ -38,6 +38,12 @@
       <xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbConfig/@threads"/>
       <xsl:if test="count($fcgi-rtbserver-config/cfg:rtbConfig/@threads) = 0">64</xsl:if>
     </xsl:attribute>
+    <xsl:attribute name="service_index">
+      <xsl:choose>
+        <xsl:when test="'{FCGIRTBSERVER_INDEX}' = '1'">0</xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:attribute>
     <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root[1]"/>
       <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>

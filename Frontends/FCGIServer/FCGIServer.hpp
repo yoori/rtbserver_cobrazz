@@ -9,10 +9,10 @@
 #include <Logger/StreamLogger.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <xsd/Frontends/FCGIServerConfig.hpp>
 
 #include <FrontendCommons/FrontendInterface.hpp>
-//#include <UServerUtils/MetricsHTTPProvider.hpp>
 #include <Generics/CompositeMetricsProvider.hpp>
 
 namespace AdServer::Frontends
@@ -63,6 +63,7 @@ namespace AdServer::Frontends
     StatHolder_var stats_;
     Generics::CompositeMetricsProvider_var composite_metrics_provider_;
     FrontendCommons::Frontend_var frontend_pool_;
+    AdServer::Commons::HttpServer::HttpServer_var http_server_;
   };
 
   typedef ReferenceCounting::QualPtr<FCGIServer> FCGIServer_var;

@@ -43,6 +43,7 @@ target_link_libraries(FCGIServer
   UtilCommons
   FrontendServerCommons
   Commons
+  HttpServer
 
   Generics
   SecToken

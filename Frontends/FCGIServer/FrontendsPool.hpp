@@ -8,6 +8,7 @@
 
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 // TO FIX !!! :
 #include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
@@ -62,7 +63,8 @@ namespace AdServer
         Logging::Logger* logger,
         StatHolder* stats,
         Generics::CompositeMetricsProvider* composite_metrics_provider,
-        unsigned long grpc_coalesce_threads);
+        unsigned long grpc_coalesce_threads,
+        unsigned long service_index);
 
       /**
        * @brief Handle or not URI.
@@ -123,10 +125,12 @@ namespace AdServer
       Logging::ActiveObjectCallbackImpl_var callback_;
       StatHolder_var stats_;
       Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+      unsigned long service_index_;
 
       CommonModule_var common_module_;
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
         grpc_coalesce_runner_;
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers_;
       std::vector<std::string> frontend_names_;
       std::vector<FrontendCommons::Frontend_var> frontends_;

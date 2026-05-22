@@ -10,6 +10,7 @@
 #include <Logger/Syslog.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
+#include <Commons/PidFileGuard.hpp>
 
 #include "UserBindServerMain.hpp"
 
@@ -144,6 +145,7 @@ void
 UserBindServerApp_::main(int& argc, char** argv) noexcept
 {
   static const char* FUN = "UserBindServerApp_::main()";
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
   try
   {
@@ -210,7 +212,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
       throw Exception(ostr);
     }
 
-    pid_file_guard_ = std::make_unique<AdServer::Commons::PidFileGuard>(
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(config().pid_file()));
     block_shutdown_signals_();
 
@@ -269,8 +271,6 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
 
     deactivate_object();
     wait_object();
-
-    pid_file_guard_.reset();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }

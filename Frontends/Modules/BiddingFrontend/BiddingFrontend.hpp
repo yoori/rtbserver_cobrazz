@@ -89,7 +89,9 @@ namespace AdServer::Bidding
       Logging::Logger* logger,
       CommonModule* common_module,
       StatHolder* stats,
-      Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/;
+      Generics::CompositeMetricsProvider* composite_metrics_provider,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+      unsigned long service_index) /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
@@ -350,7 +352,7 @@ namespace AdServer::Bidding
   protected:
     // ADSC-10554
     // Interrupted requests queue
-    std::shared_ptr<FrontendCommons::FrontendWorkers> passback_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> passback_workers_;
 
     // configuration
     CommonConfigPtr common_config_;
@@ -387,7 +389,7 @@ namespace AdServer::Bidding
       channel_client_coro_;
 
     Generics::Planner_var planner_;
-    std::shared_ptr<FrontendCommons::FrontendWorkers> bid_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers_;
     Generics::TaskRunner_var control_task_runner_;
     StatHolder_var stats_;
 
