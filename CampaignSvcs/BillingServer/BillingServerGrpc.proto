@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package adserver.campaign_svcs.billing_server;
+
+service BillingServerGrpc {
+  rpc check_available_bid(CheckBidRequest) returns (BidResultResponse);
+  rpc reserve_bid(ReserveBidRequest) returns (ReserveBidResponse);
+  rpc confirm_bid(ConfirmBidRequest) returns (ConfirmBidResponse);
+  rpc add_amount(AddAmountRequest) returns (AddAmountResponse);
+}
+
+message BidInfo {
+  bytes time = 1;
+  uint64 account_id = 2;
+  uint64 advertiser_id = 3;
+  uint64 campaign_id = 4;
+  uint64 ccg_id = 5;
+  bytes ctr = 6;
+  bool optimize_campaign_ctr = 7;
+}
+
+message CheckBidRequest {
+  BidInfo bid = 1;
+}
+
+message ReserveBidRequest {
+  BidInfo bid = 1;
+  bytes reserve_budget = 2;
+}
+
+message ConfirmBidInfo {
+  BidInfo bid = 1;
+  bytes account_spent_budget = 2;
+  bytes spent_budget = 3;
+  bytes reserved_budget = 4;
+  bytes imps = 5;
+  bytes clicks = 6;
+  bool forced = 7;
+}
+
+message ConfirmBidRefInfo {
+  uint64 index = 1;
+  ConfirmBidInfo confirm_bid = 2;
+}
+
+message BidResultResponse {
+  bool available = 1;
+  bytes goal_ctr = 2;
+}
+
+message ReserveBidResponse {
+  bool reserved = 1;
+}
+
+message ConfirmBidRequest {
+  ConfirmBidInfo bid = 1;
+}
+
+message ConfirmBidResponse {
+  BidResultResponse result = 1;
+  ConfirmBidInfo bid = 2;
+}
+
+message AddAmountRequest {
+  repeated ConfirmBidInfo requests = 1;
+}
+
+message AddAmountResponse {
+  repeated ConfirmBidRefInfo remainder_requests = 1;
+}
