@@ -227,12 +227,8 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           return AdServer::Commons::HttpServer::HttpServer::Response{
             200,
             "application/json",
-            std::string("{\"get_source_in_progress\":") +
-              std::to_string(stats.get_source_in_progress) +
-              ",\"get_master_stamp_in_progress\":" +
-              std::to_string(stats.get_master_stamp_in_progress) +
-              ",\"get_user_profile_in_progress\":" +
-              std::to_string(stats.get_user_profile_in_progress) +
+            std::string("{\"call_in_progress\":") +
+              std::to_string(stats.call_in_progress) +
               ",\"match_in_progress\":" +
               std::to_string(stats.match_in_progress) +
               ",\"update_user_freq_caps_in_progress\":" +
@@ -247,12 +243,6 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               std::to_string(stats.merge_in_progress) +
               ",\"consider_publishers_optin_in_progress\":" +
               std::to_string(stats.consider_publishers_optin_in_progress) +
-              ",\"uim_ready_in_progress\":" +
-              std::to_string(stats.uim_ready_in_progress) +
-              ",\"get_progress_in_progress\":" +
-              std::to_string(stats.get_progress_in_progress) +
-              ",\"clear_expired_in_progress\":" +
-              std::to_string(stats.clear_expired_in_progress) +
               "}\n"
           };
         });
@@ -300,6 +290,26 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
   deactivate_object();
   wait_object();
+  clear_children();
+
+  try
+  {
+    corba_server_adapter_.reset();
+  }
+  catch(const CORBA::Exception& e)
+  {
+    logger()->sstream(Logging::Logger::EMERGENCY,
+      ASPECT,
+      "ADS-IMPL-59") << FUN <<
+      ": Got CORBA::Exception in destroy ORB: " << e;
+  }
+  catch(...)
+  {
+    logger()->sstream(Logging::Logger::EMERGENCY,
+      ASPECT,
+      "ADS-IMPL-59") << FUN <<
+      ": Got unknown exception in destroy ORB";
+  }
 }
 
 int

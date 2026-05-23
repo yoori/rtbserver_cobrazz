@@ -20,9 +20,7 @@ namespace AdServer::UserInfoSvcs
 {
   struct UserInfoManagerGrpc::StatsCounters
   {
-    std::atomic<std::uint64_t> get_source_in_progress{0};
-    std::atomic<std::uint64_t> get_master_stamp_in_progress{0};
-    std::atomic<std::uint64_t> get_user_profile_in_progress{0};
+    std::atomic<std::uint64_t> call_in_progress{0};
     std::atomic<std::uint64_t> match_in_progress{0};
     std::atomic<std::uint64_t> update_user_freq_caps_in_progress{0};
     std::atomic<std::uint64_t> confirm_user_freq_caps_in_progress{0};
@@ -30,9 +28,6 @@ namespace AdServer::UserInfoSvcs
     std::atomic<std::uint64_t> remove_user_profile_in_progress{0};
     std::atomic<std::uint64_t> merge_in_progress{0};
     std::atomic<std::uint64_t> consider_publishers_optin_in_progress{0};
-    std::atomic<std::uint64_t> uim_ready_in_progress{0};
-    std::atomic<std::uint64_t> get_progress_in_progress{0};
-    std::atomic<std::uint64_t> clear_expired_in_progress{0};
   };
 
   namespace
@@ -693,7 +688,7 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerGrpc::ServiceImpl::get_status_(
     pc::GetStatusResponse& response) const
   {
-    InProgressGuard in_progress(stats_counters_->get_source_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
       const bool ready = user_info_manager_->uim_ready();
@@ -715,7 +710,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::GetSourceResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->get_master_stamp_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
       UserInfoManagerCore::ChunkIdList chunks;
@@ -741,7 +736,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::GetMasterStampResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->get_user_profile_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
       response.set_master_stamp(oct_seq_to_bytes_(CorbaAlgs::pack_time(
@@ -757,7 +752,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::GetUserProfileResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->match_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
       CORBACommons::UserIdInfo user_id;
@@ -785,8 +780,8 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::MatchResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
-      stats_counters_->update_user_freq_caps_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard in_progress(stats_counters_->match_in_progress);
     try
     {
       UserInfo user_info;
@@ -813,8 +808,9 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse&,
     grpc::Status& result_status) const
   {
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
-      stats_counters_->confirm_user_freq_caps_in_progress);
+      stats_counters_->update_user_freq_caps_in_progress);
     try
     {
       CORBACommons::UserIdInfo user_id;
@@ -857,7 +853,9 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse&,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->fraud_user_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard in_progress(
+      stats_counters_->confirm_user_freq_caps_in_progress);
     try
     {
       CORBACommons::UserIdInfo user_id;
@@ -887,8 +885,9 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::FraudUserResponse& response,
     grpc::Status& result_status) const
   {
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
-      stats_counters_->remove_user_profile_in_progress);
+      stats_counters_->fraud_user_in_progress);
     try
     {
       CORBACommons::UserIdInfo user_id;
@@ -910,7 +909,9 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::RemoveUserProfileResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->merge_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard in_progress(
+      stats_counters_->remove_user_profile_in_progress);
     try
     {
       CORBACommons::UserIdInfo user_id;
@@ -929,8 +930,8 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::MergeResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
-      stats_counters_->consider_publishers_optin_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard in_progress(stats_counters_->merge_in_progress);
     try
     {
       UserInfo user_info;
@@ -962,6 +963,9 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinResponse&,
     grpc::Status& result_status) const
   {
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard in_progress(
+      stats_counters_->consider_publishers_optin_in_progress);
     try
     {
       CORBACommons::UserIdInfo user_id;
@@ -988,7 +992,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::UimReadyResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->uim_ready_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     response.set_ready(user_info_manager_->uim_ready());
     result_status = grpc::Status::OK;
   }
@@ -998,7 +1002,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::GetProgressResponse& response,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->get_progress_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     response.set_progress(user_info_manager_->get_progress());
     result_status = grpc::Status::OK;
   }
@@ -1008,7 +1012,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::ClearExpiredResponse&,
     grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(stats_counters_->clear_expired_in_progress);
+    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
       CORBACommons::TimestampInfo cleanup_time;
@@ -1047,19 +1051,14 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerGrpc::stats() const noexcept
   {
     return Stats{
-      stats_counters_->get_source_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->get_master_stamp_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->get_user_profile_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->call_in_progress.load(std::memory_order_relaxed),
       stats_counters_->match_in_progress.load(std::memory_order_relaxed),
       stats_counters_->update_user_freq_caps_in_progress.load(std::memory_order_relaxed),
       stats_counters_->confirm_user_freq_caps_in_progress.load(std::memory_order_relaxed),
       stats_counters_->fraud_user_in_progress.load(std::memory_order_relaxed),
       stats_counters_->remove_user_profile_in_progress.load(std::memory_order_relaxed),
       stats_counters_->merge_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->consider_publishers_optin_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->uim_ready_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->get_progress_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->clear_expired_in_progress.load(std::memory_order_relaxed)
+      stats_counters_->consider_publishers_optin_in_progress.load(std::memory_order_relaxed)
     };
   }
 
