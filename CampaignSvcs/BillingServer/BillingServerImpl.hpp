@@ -1,161 +1,75 @@
 #pragma once
 
-#include <ReferenceCounting/ReferenceCounting.hpp>
-#include <ReferenceCounting/PtrHolder.hpp>
-
-#include <Logger/Logger.hpp>
-#include <Sync/SyncPolicy.hpp>
-#include <Generics/ActiveObject.hpp>
-#include <Generics/CompositeActiveObject.hpp>
-#include <Generics/Scheduler.hpp>
-#include <Generics/TaskRunner.hpp>
-#include <Generics/Time.hpp>
-
 #include <CORBACommons/ServantImpl.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/AccessActiveObject.hpp>
-#include <ReferenceCounting/PtrHolder.hpp>
-
-#include <xsd/AdServerCommons/AdServerCommons.hpp>
-#include <xsd/CampaignSvcs/BillingServerConfig.hpp>
-
-#include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignServer/BillStatSource.hpp>
-
 #include <CampaignSvcs/BillingServer/BillingServer_s.hpp>
 
-#include "BillingContainer.hpp"
+#include "BillingServerCore.hpp"
 
 namespace AdServer
 {
 namespace CampaignSvcs
 {
-  /**
-   * Implementation of BillingServer.
-   */
   class BillingServerImpl:
     public virtual CORBACommons::ReferenceCounting::ServantImpl<
-      POA_AdServer::CampaignSvcs::BillingServer>,
-    public virtual Generics::CompositeActiveObject,
-    public virtual Generics::RefCountableActiveObject
+      POA_AdServer::CampaignSvcs::BillingServer>
   {
   public:
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    explicit BillingServerImpl(BillingServerCore* core) noexcept;
 
-    typedef xsd::AdServer::Configuration::BillingServerConfigType
-      BillingServerConfig;
-
-    BillingServerImpl(
-      Generics::ActiveObjectCallback* callback,
-      Logging::Logger* logger,
-      const BillingServerConfig& billing_server_config)
-      /*throw(Exception)*/;
-
-    virtual AdServer::CampaignSvcs::BillingServer::BidResultInfo*
+    AdServer::CampaignSvcs::BillingServer::BidResultInfo*
     check_available_bid(
       const AdServer::CampaignSvcs::BillingServer::CheckBidInfo& request_info)
-      /*throw(AdServer::CampaignSvcs::BillingServer::NotReady,
-        AdServer::CampaignSvcs::BillingServer::ImplementationException)*/;
+      override;
 
-    virtual AdServer::CampaignSvcs::BillingServer::BidResultInfo*
+    AdServer::CampaignSvcs::BillingServer::BidResultInfo*
     confirm_bid(
       AdServer::CampaignSvcs::BillingServer::ConfirmBidInfo& request_info)
-      /*throw(AdServer::CampaignSvcs::BillingServer::NotReady,
-        AdServer::CampaignSvcs::BillingServer::ImplementationException)*/;
+      override;
 
-    virtual bool
+    bool
     reserve_bid(
       const AdServer::CampaignSvcs::BillingServer::ReserveBidInfo& request_info)
-      /*throw(AdServer::CampaignSvcs::BillingServer::NotReady,
-        AdServer::CampaignSvcs::BillingServer::ImplementationException)*/;
+      override;
 
-    virtual void
+    void
     add_amount(
-      AdServer::CampaignSvcs::BillingServer::ConfirmBidRefSeq_out remainder_request_seq,
+      AdServer::CampaignSvcs::BillingServer::ConfirmBidRefSeq_out
+        remainder_request_seq,
       const AdServer::CampaignSvcs::BillingServer::ConfirmBidSeq& request_seq)
-      /*throw(AdServer::CampaignSvcs::BillingServer::NotReady,
-        AdServer::CampaignSvcs::BillingServer::ImplementationException)*/;
-
-    virtual void
-    wait_object()
-      /*throw(Generics::ActiveObject::Exception, eh::Exception)*/;
-
-    Logging::Logger*
-    logger() noexcept;
+      override;
 
   protected:
-    typedef Sync::Policy::PosixThreadRW SyncPolicy;
-
-    typedef AdServer::Commons::AccessActiveObject<
-      BillingProcessor_var>
-      BillingProcessorHolder;
-
-    typedef ReferenceCounting::SmartPtr<BillingProcessorHolder>
-      BillingProcessorHolder_var;
-
-  protected:
-    virtual
-    ~BillingServerImpl() noexcept {};
-
-    BillingProcessorHolder::Accessor
-    get_accessor_()
-      /*throw(AdServer::CampaignSvcs::BillingServer::NotReady)*/;
-
-    void
-    apply_delivery_limitation_config_update_(
-      BillingContainer::Config& res_config,
-      const AdServer::CampaignSvcs::CampaignServer::
-        DeliveryLimitConfigInfo& config)
-      /*throw(Exception)*/;
-
-    // tasks
-    Generics::Time
-    load_() noexcept;
-
-    Generics::Time
-    update_config_() noexcept;
-
-    Generics::Time
-    update_stat_() noexcept;
-
-    void
-    clear_expired_reservation_()
-      noexcept;
-
-    void
-    dump_() noexcept;
+    ~BillingServerImpl() noexcept override = default;
 
   private:
-    Generics::ActiveObjectCallback_var callback_;
-    Logging::Logger_var logger_;
-    Generics::Planner_var scheduler_;
-    Generics::TaskRunner_var task_runner_;
+    static BillingServerCore::CheckBidInfo
+    adapt_check_bid_(
+      const AdServer::CampaignSvcs::BillingServer::CheckBidInfo& source);
 
-    const BillingServerConfig config_;
+    static BillingServerCore::ReserveBidInfo
+    adapt_reserve_bid_(
+      const AdServer::CampaignSvcs::BillingServer::ReserveBidInfo& source);
 
-    CampaignServerPoolPtr campaign_servers_;
-    BillStatSource_var bill_stat_source_;
-    BillingProcessorHolder_var billing_processor_;
-    ReferenceCounting::PtrHolder<BillingContainer_var> billing_container_;
+    static BillingServerCore::ConfirmBidInfo
+    adapt_confirm_bid_(
+      const AdServer::CampaignSvcs::BillingServer::ConfirmBidInfo& source);
+
+    static void
+    fill_confirm_bid_(
+      AdServer::CampaignSvcs::BillingServer::ConfirmBidInfo& target,
+      const BillingServerCore::ConfirmBidInfo& source);
+
+    static AdServer::CampaignSvcs::BillingServer::BidResultInfo*
+    adapt_bid_result_(const BillingServerCore::BidResultInfo& source);
+
+    static void
+    translate_exception_(const char* fun);
+
+  private:
+    BillingServerCore_var core_;
   };
 
   typedef ReferenceCounting::SmartPtr<BillingServerImpl>
     BillingServerImpl_var;
-
-} /* CampaignSvcs */
-} /* AdServer */
-
-namespace AdServer
-{
-namespace CampaignSvcs
-{
-  inline
-  Logging::Logger*
-  BillingServerImpl::logger() noexcept
-  {
-    return logger_;
-  }
 }
 }

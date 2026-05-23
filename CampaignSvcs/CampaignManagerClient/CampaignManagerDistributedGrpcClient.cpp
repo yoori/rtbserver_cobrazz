@@ -211,6 +211,12 @@ namespace AdServer::CampaignSvcs
     {
       client_holder->client->deactivate_object();
     }
+  }
+
+  void
+  CampaignManagerDistributedGrpcClient::wait_object_()
+  {
+    Generics::CompositeActiveObject::wait_object_();
 
     for (auto& service_index_pool : service_index_pools_)
     {

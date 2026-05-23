@@ -19,14 +19,45 @@ add_library(BillingContainer STATIC
 target_link_libraries(BillingContainer
   CTROptimizer)
 
+# BillingServerGrpc
+set(BILLING_SERVER_GRPC_PROTO_DIR ${PB_DIRECTORY}/CampaignSvcs/BillingServer)
+set(BILLING_SERVER_GRPC_PROTO BillingServerGrpc.proto)
+
+add_grpc_sources(
+  BillingServerGrpc
+  ${BILLING_SERVER_GRPC_PROTO}
+  ${BILLING_SERVER_GRPC_PROTO_DIR}
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(BillingServerGrpc protobuf::libprotobuf GrpcBatch)
+
+add_library(BillingServerGrpcClient STATIC)
+
+add_adserver_grpc_client_sources(
+  BillingServerGrpcClient
+  ${CMAKE_SOURCE_DIR}/CampaignSvcs/BillingServer/BillingServerGrpc.proto
+  ${CMAKE_CURRENT_BINARY_DIR}
+  AdServer::CampaignSvcs
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(BillingServerGrpcClient
+  PUBLIC
+  Commons
+  GrpcBatch
+  BillingServerGrpc
+  gRPC::grpc++)
+
 add_executable(BillingServer
   BillingServerMain.cpp
+  BillingServerCore.cpp
   BillingServerImpl.cpp
+  BillingServerGrpc.cpp
 )
 
 target_link_libraries(BillingServer
   BillStatServerSource
   BillingContainer
+  BillingServerGrpc
   Commons
 
   ProcessControlIDL
@@ -60,4 +91,17 @@ target_link_libraries(BillingServer
   TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
 )
 
+target_include_directories(BillingServer PRIVATE
+  ${Protobuf_INCLUDE_DIRS}
+)
+
+if(TARGET Protobuf::libprotobuf)
+  target_link_libraries(BillingServer Protobuf::libprotobuf)
+elseif(TARGET protobuf::libprotobuf)
+  target_link_libraries(BillingServer protobuf::libprotobuf)
+else()
+  target_link_libraries(BillingServer ${Protobuf_LIBRARIES})
+endif()
+
+target_link_libraries(BillingServer gRPC::grpc++)
 

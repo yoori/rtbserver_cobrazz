@@ -74,6 +74,28 @@ namespace
 
   const char REQUEST_BASIC_CHANNELS_LOGGER[] = "RequestBasicChannelsLogger";
   const char REQUEST_LOGGER[] = "RequestLogger";
+  const unsigned long SAMPLING_RESOLUTION = 1000000;
+
+  bool
+  check_percentage_sampling_(
+    unsigned long hash,
+    double percentage)
+    noexcept
+  {
+    if (percentage >= 100)
+    {
+      return true;
+    }
+
+    if (percentage <= 0)
+    {
+      return false;
+    }
+
+    return hash % SAMPLING_RESOLUTION <
+      static_cast<unsigned long>(
+        percentage * (SAMPLING_RESOLUTION / 100.0));
+  }
   const char IMPRESSION_LOGGER[] = "ImpressionLogger";
   const char CLICK_LOGGER[] = "ClickLogger";
 
@@ -384,7 +406,7 @@ namespace AdServer
         noexcept;
 
     private:
-      unsigned long inventory_users_percentage_;
+      double inventory_users_percentage_;
       bool dump_channel_triggers_;
       bool adrequest_anonymize_;
       AdServer::Commons::UserId null_id_;
@@ -1684,8 +1706,12 @@ namespace AdServer
       noexcept
     {
       return (!request_info.user_id.is_null() ?
-        request_info.user_id.hash() % 100 < inventory_users_percentage_ :
-        request_info.request_id.hash() % 100 < inventory_users_percentage_) &&
+        check_percentage_sampling_(
+          request_info.user_id.hash(),
+          inventory_users_percentage_) :
+        check_percentage_sampling_(
+          request_info.request_id.hash(),
+          inventory_users_percentage_)) &&
         !adrequest_anonymize_
         ;
     }

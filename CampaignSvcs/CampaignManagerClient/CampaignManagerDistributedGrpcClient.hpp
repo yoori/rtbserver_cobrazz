@@ -160,6 +160,7 @@ namespace AdServer::CampaignSvcs
 
     void activate_object_() override;
     void deactivate_object_() override;
+    void wait_object_() override;
 
     PoolPtr get_pool_(
       const std::string& service_index = std::string()) const;

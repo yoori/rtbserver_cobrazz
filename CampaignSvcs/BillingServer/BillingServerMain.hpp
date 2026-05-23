@@ -10,6 +10,8 @@
 
 #include <xsd/CampaignSvcs/BillingServerConfig.hpp>
 
+#include "BillingServerCore.hpp"
+#include "BillingServerGrpc.hpp"
 #include "BillingServerImpl.hpp"
 
 class BillingServerApp_
@@ -30,7 +32,7 @@ protected:
   typedef Sync::Policy::PosixThread ShutdownSyncPolicy;
 
   typedef std::unique_ptr<
-    AdServer::CampaignSvcs::BillingServerImpl::BillingServerConfig>
+    AdServer::CampaignSvcs::BillingServerCore::BillingServerConfig>
     ConfigPtr;
 
 protected:
@@ -44,14 +46,16 @@ protected:
   virtual CORBACommons::IProcessControl::ALIVE_STATUS
   is_alive() /*throw(CORBA::SystemException)*/;
 
-  const AdServer::CampaignSvcs::BillingServerImpl::BillingServerConfig&
+  const AdServer::CampaignSvcs::BillingServerCore::BillingServerConfig&
   config() const noexcept;
 
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   CORBACommons::CorbaConfig corba_config_;
 
+  AdServer::CampaignSvcs::BillingServerCore_var billing_server_core_;
   AdServer::CampaignSvcs::BillingServerImpl_var billing_server_impl_;
+  AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter_;
 
   ConfigPtr configuration_;
 
@@ -66,7 +70,7 @@ typedef Generics::Singleton<BillingServerApp_, BillingServerApp_var>
 
 // Inlines
 inline
-const AdServer::CampaignSvcs::BillingServerImpl::BillingServerConfig&
+const AdServer::CampaignSvcs::BillingServerCore::BillingServerConfig&
 BillingServerApp_::config() const noexcept
 {
   return *configuration_.get();

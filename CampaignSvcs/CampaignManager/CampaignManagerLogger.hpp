@@ -24,7 +24,7 @@ namespace AdServer
     struct RequestBasicChannelsFlushTraits:
       public AdServer::LogProcessing::LogFlushTraits
     {
-      unsigned long inventory_users_percentage;
+      double inventory_users_percentage;
       unsigned long distrib_count;
       bool dump_channel_triggers;
       bool adrequest_anonymize;

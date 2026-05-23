@@ -11,7 +11,7 @@
 namespace
 {
   const char ASPECT[] = "BillingServer";
-  const char USER_BIND_SERVER_OBJ_KEY[] = "BillingServer";
+  const char BILLING_SERVER_OBJ_KEY[] = "BillingServer";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
@@ -124,18 +124,32 @@ BillingServerApp_::main(int argc, char** argv)
       throw Exception(ostr);
     }
 
-    billing_server_impl_ = new AdServer::CampaignSvcs::BillingServerImpl(
+    billing_server_core_ = new AdServer::CampaignSvcs::BillingServerCore(
       callback(),
       logger(),
       config());
 
-    add_child_object(billing_server_impl_.in());
+    billing_server_impl_ = new AdServer::CampaignSvcs::BillingServerImpl(
+      billing_server_core_);
+
+    add_child_object(billing_server_core_.in());
+
+    if(config().GrpcConfig().present())
+    {
+      grpc_adapter_ = new AdServer::CampaignSvcs::BillingServerGrpc(
+        billing_server_core_,
+        logger(),
+        config().GrpcConfig()->Endpoint().host().present() ?
+          config().GrpcConfig()->Endpoint().host()->c_str() : "0.0.0.0",
+        config().GrpcConfig()->Endpoint().port());
+      add_child_object(grpc_adapter_);
+    }
 
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
     corba_server_adapter_->add_binding(
-      USER_BIND_SERVER_OBJ_KEY, billing_server_impl_.in());
+      BILLING_SERVER_OBJ_KEY, billing_server_impl_.in());
 
     corba_server_adapter_->add_binding(
       PROCESS_CONTROL_OBJ_KEY, this);
