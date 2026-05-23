@@ -1021,7 +1021,7 @@ namespace AdServer::Grpc
     draining_streams_.erase(it);
     if (holder && holder->stream)
     {
-      deferred_streams_.emplace_back(std::move(holder->stream));
+      deferred_streams_.emplace_back(holder->stream);
     }
   }
 

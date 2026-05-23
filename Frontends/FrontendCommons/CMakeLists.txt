@@ -5,7 +5,6 @@ add_library(CookieManager SHARED
 target_link_libraries(CookieManager
   HTTP
   Commons
-  CORBACommons
   FeConfigXSD
 )
 
@@ -53,7 +52,6 @@ target_link_libraries(RequestMatchers
   HTTP
   BLogic
   Commons
-  CORBACommons
 
   UserInfoClient
   UserBindControllerGrpc
