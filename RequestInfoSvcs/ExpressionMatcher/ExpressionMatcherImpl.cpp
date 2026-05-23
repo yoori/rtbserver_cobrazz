@@ -40,8 +40,30 @@ namespace
   const char COLO_USER_STAT_OUT_DIR[] = "ColoUserStat";
 
   const unsigned long MAX_CHANNEL_LEVEL = 20;
+  const unsigned long SAMPLING_RESOLUTION = 1000000;
 
   typedef const String::AsciiStringManip::Char1Category<','> Sep;
+
+  bool
+  check_percentage_sampling_(
+    unsigned long hash,
+    double percentage)
+    noexcept
+  {
+    if (percentage >= 100)
+    {
+      return true;
+    }
+
+    if (percentage <= 0)
+    {
+      return false;
+    }
+
+    return hash % SAMPLING_RESOLUTION <
+      static_cast<unsigned long>(
+        percentage * (SAMPLING_RESOLUTION / 100.0));
+  }
 }
 
 namespace Aspect
@@ -187,22 +209,16 @@ namespace RequestInfoSvcs
       const xsd::AdServer::Configuration::OutLogsType&
         lp_config = expression_matcher_config_.LogProcessing().OutLogs();
 
+      const double inventory_users_percentage =
+        expression_matcher_config_.inventory_users_percentage();
       RevenueDecimal div_simpl_factor_reminder;
       RevenueDecimal simpl_factor =
-        expression_matcher_config_.inventory_users_percentage() != 0 ?
+        inventory_users_percentage != 0 ?
         RevenueDecimal::div(
           RevenueDecimal(false, 100, 0),
-          RevenueDecimal(false,
-            expression_matcher_config_.inventory_users_percentage(),
-            0),
+          RevenueDecimal(inventory_users_percentage),
           div_simpl_factor_reminder) :
         RevenueDecimal::ZERO;
-
-      // FIXME: temporary check, before all sampled stats will be make double
-      if (simpl_factor != RevenueDecimal(false, simpl_factor.integer<long>(), 0))
-      {
-        throw Exception("inventory_users_percentage does not correspond to an integral number");
-      }
 
       const std::string log_root = lp_config.log_root();
 
@@ -1416,7 +1432,9 @@ namespace RequestInfoSvcs
   ExpressionMatcherImpl::check_sampling_(const UserId& user_id) const noexcept
   {
     return (user_id.is_null() ||
-      user_id.hash() % 100 < expression_matcher_config_.inventory_users_percentage());
+      check_percentage_sampling_(
+        user_id.hash(),
+        expression_matcher_config_.inventory_users_percentage()));
   }
 
   void

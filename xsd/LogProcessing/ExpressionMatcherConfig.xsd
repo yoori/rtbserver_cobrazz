@@ -141,7 +141,7 @@
       </xsd:annotation>
     </xsd:attribute>
 
-    <xsd:attribute name="inventory_users_percentage" type="xsd:nonNegativeInteger" use="required">
+    <xsd:attribute name="inventory_users_percentage" type="xsd:decimal" use="required">
       <xsd:annotation>
         <xsd:documentation>
           Percentage of users, that take part in collection
