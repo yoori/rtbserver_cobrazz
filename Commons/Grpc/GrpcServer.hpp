@@ -127,6 +127,7 @@ namespace AdServer::Grpc
   void GrpcServer<ServiceImplType>::deactivate_object_()
   {
     service_->stop_accepting_requests();
+    service_->stop_finishing_requests();
 
     if (server_)
     {

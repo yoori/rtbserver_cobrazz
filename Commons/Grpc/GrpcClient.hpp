@@ -168,6 +168,30 @@ namespace AdServer::Grpc
     return status.error_code() == grpc::StatusCode::DEADLINE_EXCEEDED;
   }
 
+  inline grpc::Status
+  status_with_endpoint(
+    const grpc::Status& status,
+    const std::string& endpoint)
+  {
+    if (status.ok() || endpoint.empty())
+    {
+      return status;
+    }
+
+    std::string message = status.error_message();
+    if (!message.empty())
+    {
+      message += ' ';
+    }
+    message += "[grpc_endpoint=";
+    message += endpoint;
+    message += "]";
+    return grpc::Status(
+      status.error_code(),
+      std::move(message),
+      status.error_details());
+  }
+
   inline
   Client::Client(Client* stats_owner) noexcept
     : stats_owner_(stats_owner ? stats_owner : this)

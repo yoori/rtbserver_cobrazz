@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -16,6 +17,7 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <Commons/ActivityGate.hpp>
 #include <Commons/Grpc/Batch.grpc.pb.h>
 
 #define MAKE_GRPC_CALL(RequestType, ResponseType, MethodName) \
@@ -113,6 +115,7 @@ namespace AdServer::Grpc
 
     void start(const CompletionQueues& completion_queues)
     {
+      finish_gate_.activate_object();
       accepting_requests_.store(true, std::memory_order_release);
 
       const auto registrations = registrations_per_queue();
@@ -133,6 +136,12 @@ namespace AdServer::Grpc
       registration_cv_.wait(lock, [this]() noexcept {
         return active_registrations_.load(std::memory_order_acquire) == 0;
       });
+    }
+
+    void stop_finishing_requests() noexcept
+    {
+      finish_gate_.deactivate_object();
+      finish_gate_.wait_object();
     }
 
   protected:
@@ -295,6 +304,16 @@ namespace AdServer::Grpc
       }
     }
 
+    bool accepting_requests() const noexcept
+    {
+      return accepting_requests_.load(std::memory_order_acquire);
+    }
+
+    AdServer::Commons::ActivityGate::Guard enter_finish_operation() noexcept
+    {
+      return finish_gate_.enter();
+    }
+
   private:
     using BatchDispatchFn = std::function<void(
       const adserver::grpc::BatchRequestItem&,
@@ -306,6 +325,7 @@ namespace AdServer::Grpc
     std::atomic_size_t active_registrations_{0};
     std::mutex registration_lock_;
     std::condition_variable registration_cv_;
+    AdServer::Commons::ActivityGate finish_gate_;
   };
 
   template<
@@ -455,7 +475,10 @@ namespace AdServer::Grpc
 
         state_ = State::Finish;
         spawn_next_();
-        process_();
+        if (!process_())
+        {
+          delete this;
+        }
         return;
       }
 
@@ -467,7 +490,7 @@ namespace AdServer::Grpc
 
     virtual void spawn_next_() = 0;
 
-    virtual void process_() = 0;
+    virtual bool process_() = 0;
 
   protected:
     ::grpc::ServerCompletionQueue* const completion_queue_;
@@ -552,10 +575,18 @@ namespace AdServer::Grpc
       next_call->proceed(true);
     }
 
-    void process_() override
+    bool process_() override
     {
       ::grpc::Status status;
       (service_impl_->*handler_rpc_)(this->request_, this->response_, status);
+
+      auto finish_guard = service_impl_->enter_finish_operation();
+      if (!finish_guard)
+      {
+        return false;
+      }
+      finish_guard_.emplace(std::move(finish_guard));
+
       if (status.ok())
       {
         this->responder_.Finish(this->response_, status, this);
@@ -564,6 +595,7 @@ namespace AdServer::Grpc
       {
         this->responder_.FinishWithError(status, this);
       }
+      return true;
     }
 
   private:
@@ -571,6 +603,7 @@ namespace AdServer::Grpc
     AsyncServiceType* const async_service_;
     const RequestMethod request_rpc_;
     const Handler handler_rpc_;
+    std::optional<AdServer::Commons::ActivityGate::Guard> finish_guard_;
   };
 
   template<
@@ -654,8 +687,23 @@ namespace AdServer::Grpc
         {
           if (!ok)
           {
-            state_ = State::Finish;
-            responder_.Finish(::grpc::Status::OK, this);
+            if (service_impl_->accepting_requests())
+            {
+              auto finish_guard = service_impl_->enter_finish_operation();
+              if (!finish_guard)
+              {
+                delete this;
+                return;
+              }
+              finish_guard_.emplace(std::move(finish_guard));
+
+              state_ = State::Finish;
+              responder_.Finish(::grpc::Status::OK, this);
+            }
+            else
+            {
+              delete this;
+            }
             return;
           }
 
@@ -706,6 +754,7 @@ namespace AdServer::Grpc
     ::grpc::ServerAsyncReaderWriter<Response, Request> responder_;
     Request request_;
     Response response_;
+    std::optional<AdServer::Commons::ActivityGate::Guard> finish_guard_;
     State state_;
   };
 }
