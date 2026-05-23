@@ -97,10 +97,12 @@ namespace AdServer::UserInfoSvcs
       return; \
     } \
     auto pool_ref = std::move(*ref); \
+    const auto endpoint = pool_ref->endpoint; \
     pool_ref->client->method_name( \
       request, \
       [ \
         pool_ref = std::move(pool_ref), \
+        endpoint, \
         callback = std::move(callback) \
       ](const grpc::Status& status, const response_type& response) mutable \
       { \
@@ -109,7 +111,9 @@ namespace AdServer::UserInfoSvcs
           pool_ref.mark_as_bad( \
             Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
         } \
-        callback(status, response); \
+        callback( \
+          AdServer::Grpc::status_with_endpoint(status, endpoint), \
+          response); \
       }); \
   }
 
@@ -135,10 +139,12 @@ namespace AdServer::UserInfoSvcs
       return; \
     } \
     auto pool_ref = std::move(*ref); \
+    const auto endpoint = pool_ref->endpoint; \
     pool_ref->client->method_name( \
       request, \
       [ \
         pool_ref = std::move(pool_ref), \
+        endpoint, \
         callback = std::move(callback) \
       ](const grpc::Status& status, const response_type& response) mutable \
       { \
@@ -147,7 +153,9 @@ namespace AdServer::UserInfoSvcs
           pool_ref.mark_as_bad( \
             Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
         } \
-        callback(status, response); \
+        callback( \
+          AdServer::Grpc::status_with_endpoint(status, endpoint), \
+          response); \
       }); \
   }
 

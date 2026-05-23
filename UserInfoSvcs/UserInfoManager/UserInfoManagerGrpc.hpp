@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -19,13 +20,33 @@ namespace AdServer::UserInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    struct Stats
+    {
+      std::uint64_t get_source_in_progress = 0;
+      std::uint64_t get_master_stamp_in_progress = 0;
+      std::uint64_t get_user_profile_in_progress = 0;
+      std::uint64_t match_in_progress = 0;
+      std::uint64_t update_user_freq_caps_in_progress = 0;
+      std::uint64_t confirm_user_freq_caps_in_progress = 0;
+      std::uint64_t fraud_user_in_progress = 0;
+      std::uint64_t remove_user_profile_in_progress = 0;
+      std::uint64_t merge_in_progress = 0;
+      std::uint64_t consider_publishers_optin_in_progress = 0;
+      std::uint64_t uim_ready_in_progress = 0;
+      std::uint64_t get_progress_in_progress = 0;
+      std::uint64_t clear_expired_in_progress = 0;
+    };
+
     UserInfoManagerGrpc(
       UserInfoManagerCorePtr user_info_manager,
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port);
 
+    Stats stats() const noexcept;
+
   protected:
+    struct StatsCounters;
     class ServiceImpl;
     using Impl = AdServer::Grpc::GrpcServer<ServiceImpl>;
 
@@ -34,6 +55,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const std::string bind_address_;
+    const std::shared_ptr<StatsCounters> stats_counters_;
     const std::shared_ptr<Impl> impl_;
   };
 

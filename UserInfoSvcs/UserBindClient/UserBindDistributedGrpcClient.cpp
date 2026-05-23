@@ -162,11 +162,13 @@ namespace AdServer::UserInfoSvcs
 
       auto pool_ref = std::move(*ref);
       auto client = pool_ref->client;
+      const auto endpoint = pool_ref->endpoint;
       call(
         client,
         request,
         [
           pool_ref = std::move(pool_ref),
+          endpoint,
           callback = std::move(callback)
         ](const grpc::Status& status, const Response& response) mutable
         {
@@ -175,7 +177,9 @@ namespace AdServer::UserInfoSvcs
             pool_ref.mark_as_bad(
               Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT);
           }
-          callback(status, response);
+          callback(
+            AdServer::Grpc::status_with_endpoint(status, endpoint),
+            response);
         });
     }
 

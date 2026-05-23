@@ -1,5 +1,7 @@
 #include <iostream>
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -17,6 +19,7 @@
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserInfoManip.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <UserBindControllerGrpc.grpc.pb.h>
 #include <UserBindServerGrpc.grpc-client.hpp>
@@ -39,7 +42,8 @@ namespace
     "UserBindAdmin get-user-id <external id> "
       "-r[--reference=]<grpc endpoint>\n\n";
 
-  bool is_user_bind_controller_(const std::string& reference)
+  std::optional<Controller::GetSessionDescriptionResponse>
+  get_controller_session_description_(const std::string& reference)
   {
     auto stub = Controller::UserBindControllerGrpc::NewStub(
       grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
@@ -53,11 +57,58 @@ namespace
       request,
       &response);
 
-    return status.ok() && !response.user_bind_servers().empty();
+    if (!status.ok() || response.user_bind_servers().empty())
+    {
+      return std::nullopt;
+    }
+
+    return response;
+  }
+
+  std::optional<std::pair<std::string, unsigned long>>
+  endpoint_for_external_id_(
+    const Controller::GetSessionDescriptionResponse& description,
+    const std::string& external_id)
+  {
+    unsigned long chunks_number = 0;
+    for (const auto& server : description.user_bind_servers())
+    {
+      for (const auto chunk_id : server.chunk_ids())
+      {
+        chunks_number = std::max<unsigned long>(chunks_number, chunk_id + 1);
+      }
+    }
+
+    if (!chunks_number)
+    {
+      return std::nullopt;
+    }
+
+    const auto chunk_id =
+      AdServer::Commons::external_id_distribution_hash(
+        String::SubString(external_id)) % chunks_number;
+
+    for (const auto& server : description.user_bind_servers())
+    {
+      for (const auto server_chunk_id : server.chunk_ids())
+      {
+        if (server_chunk_id == chunk_id)
+        {
+          return std::make_pair(
+            server.user_bind_server_endpoint(),
+            chunk_id);
+        }
+      }
+    }
+
+    return std::nullopt;
   }
 
   struct ClientHolder
   {
+    std::string reference;
+    std::optional<Controller::GetSessionDescriptionResponse>
+      controller_session_description;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       coalesce_runner;
@@ -69,6 +120,7 @@ namespace
   ClientHolder create_client_(const std::string& reference)
   {
     ClientHolder result;
+    result.reference = reference;
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
     Logging::Logger_var logger =
@@ -80,7 +132,9 @@ namespace
         1);
     result.coalesce_runner->activate_object();
 
-    if (is_user_bind_controller_(reference))
+    result.controller_session_description =
+      get_controller_session_description_(reference);
+    if (result.controller_session_description)
     {
       auto client =
         std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
@@ -177,7 +231,7 @@ namespace
   }
 
   void get_user_id_(
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient* client,
+    const ClientHolder& holder,
     const std::string& external_id)
   {
     const auto now = Generics::Time::get_time_of_day();
@@ -195,8 +249,25 @@ namespace
       AdServer::Grpc::sync_call<Proto::GetUserIdResponse>(
         [&](auto callback)
         {
-          client->get_user_id(request, std::move(callback));
+          holder.client->get_user_id(request, std::move(callback));
         });
+
+    if (holder.controller_session_description)
+    {
+      const auto endpoint = endpoint_for_external_id_(
+        *holder.controller_session_description,
+        external_id);
+      if (endpoint)
+      {
+        std::cout <<
+          "endpoint = " << endpoint->first << std::endl <<
+          "chunk = " << endpoint->second << std::endl;
+      }
+    }
+    else
+    {
+      std::cout << "endpoint = " << holder.reference << std::endl;
+    }
 
     std::cout <<
       "user_id = " <<
@@ -280,7 +351,7 @@ int main(int argc, char** argv)
       {
         throw std::runtime_error("get-user-id: expected argument: <external id>");
       }
-      get_user_id_(holder.client.get(), commands.front());
+      get_user_id_(holder, commands.front());
     }
     else
     {

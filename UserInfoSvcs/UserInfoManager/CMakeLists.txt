@@ -80,6 +80,7 @@ target_link_libraries(UserInfoManager
   CORBACommons
   LogCommons
   ProcessControlVars
+  HttpServer
   Commons
   AdServerCommonsXSD
   PlainStorage2

@@ -205,6 +205,60 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       add_child_object(grpc_adapter_);
     }
 
+    if(config().HttpConfig().present())
+    {
+      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+        config().HttpConfig()->Endpoint().host().present() &&
+          *(config().HttpConfig()->Endpoint().host()) != "*" ?
+          *config().HttpConfig()->Endpoint().host() :
+          "0.0.0.0",
+        config().HttpConfig()->Endpoint().port(),
+        4);
+      AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter =
+        grpc_adapter_;
+      http_server_->add_handler(
+        "/stats",
+        [grpc_adapter](
+          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        {
+          const auto stats = grpc_adapter ?
+            grpc_adapter->stats() :
+            AdServer::UserInfoSvcs::UserInfoManagerGrpc::Stats{};
+          return AdServer::Commons::HttpServer::HttpServer::Response{
+            200,
+            "application/json",
+            std::string("{\"get_source_in_progress\":") +
+              std::to_string(stats.get_source_in_progress) +
+              ",\"get_master_stamp_in_progress\":" +
+              std::to_string(stats.get_master_stamp_in_progress) +
+              ",\"get_user_profile_in_progress\":" +
+              std::to_string(stats.get_user_profile_in_progress) +
+              ",\"match_in_progress\":" +
+              std::to_string(stats.match_in_progress) +
+              ",\"update_user_freq_caps_in_progress\":" +
+              std::to_string(stats.update_user_freq_caps_in_progress) +
+              ",\"confirm_user_freq_caps_in_progress\":" +
+              std::to_string(stats.confirm_user_freq_caps_in_progress) +
+              ",\"fraud_user_in_progress\":" +
+              std::to_string(stats.fraud_user_in_progress) +
+              ",\"remove_user_profile_in_progress\":" +
+              std::to_string(stats.remove_user_profile_in_progress) +
+              ",\"merge_in_progress\":" +
+              std::to_string(stats.merge_in_progress) +
+              ",\"consider_publishers_optin_in_progress\":" +
+              std::to_string(stats.consider_publishers_optin_in_progress) +
+              ",\"uim_ready_in_progress\":" +
+              std::to_string(stats.uim_ready_in_progress) +
+              ",\"get_progress_in_progress\":" +
+              std::to_string(stats.get_progress_in_progress) +
+              ",\"clear_expired_in_progress\":" +
+              std::to_string(stats.clear_expired_in_progress) +
+              "}\n"
+          };
+        });
+      add_child_object(http_server_);
+    }
+
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(config().pid_file()));
 

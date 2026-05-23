@@ -8,6 +8,7 @@
 #include <Generics/Singleton.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
@@ -68,6 +69,7 @@ private:
   AdServer::UserInfoSvcs::UserInfoManagerControlImpl_var
     user_info_manager_control_impl_;
   AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter_;
+  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   ConfigPtr configuration_;
 
