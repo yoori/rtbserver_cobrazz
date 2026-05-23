@@ -308,14 +308,14 @@
               count($colo-config/cfg:channelTriggerImpStats[@enable = 'true']) > 0 or
               count($colo-config/cfg:channelTriggerImpStats[@enable = '1']) > 0 or
               count($colo-config/cfg:inventoryStats/@simplifying) = 0 or
-              count($colo-config/cfg:inventoryStats[@simplifying = '0']) = 0">true</xsl:when>
+              number($colo-config/cfg:inventoryStats/@simplifying) != 0">true</xsl:when>
             <xsl:otherwise>false</xsl:otherwise>
           </xsl:choose>
         </xsl:attribute>
         <xsl:attribute name="notify_revenue">
           <xsl:choose>
             <xsl:when test="count($colo-config/cfg:inventoryStats/@simplifying) = 0 or
-              count($colo-config/cfg:inventoryStats[@simplifying = '0']) = 0">true</xsl:when>
+              number($colo-config/cfg:inventoryStats/@simplifying) != 0">true</xsl:when>
             <xsl:otherwise>false</xsl:otherwise>
           </xsl:choose>
         </xsl:attribute>

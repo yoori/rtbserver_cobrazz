@@ -18,6 +18,7 @@
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="cluster_id" select="$CLUSTER_ID * 1024"/>
+<xsl:variable name="service_id" select="$SERVICE_ID"/>
 
 <xsl:template name="AddChannelServerGroup">
   <xsl:param name="all-hosts"/>
@@ -119,6 +120,19 @@
     </xsl:variable>
 
     <xsl:attribute name="count_chunks"><xsl:value-of select="$chunks-count"/></xsl:attribute>
+
+    <cfg:Primary>
+      <xsl:attribute name="control">
+        <xsl:choose>
+          <xsl:when test="$service_id = 1">
+            <xsl:value-of select="'true'"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="'false'"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:attribute>
+    </cfg:Primary>
 
     <cfg:GrpcConfig>
       <cfg:Endpoint host="*" port="{$channel-controller-grpc-port}"/>

@@ -925,7 +925,7 @@
       </xsl:attribute>
 
       <xsl:attribute name="session_timeout"><xsl:value-of select="$request-session-timeout"/></xsl:attribute>
-      <xsl:attribute name="inventory_users_percentage"><xsl:value-of select="$inventory-users-percentage"/></xsl:attribute>
+      <xsl:attribute name="inventory_users_percentage"><xsl:value-of select="$inventory-users-percentage-value"/></xsl:attribute>
       <xsl:attribute name="use_referrer_site_referrer_stats"><xsl:value-of select="$use-referrer-site-referrer-stats"/></xsl:attribute>
       <xsl:if test="count(
          $colo-config/cfg:WebIndex/@enable_direct_request_profiling) > 0 and

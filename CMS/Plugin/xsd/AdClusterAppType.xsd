@@ -1269,7 +1269,7 @@
   </xsd:complexType>
 
   <xsd:complexType name="InventoryStatsType">
-    <xsd:attribute name="simplifying" type="xsd:nonNegativeInteger" use="required">
+    <xsd:attribute name="simplifying" type="xsd:decimal" use="required">
       <xsd:annotation>
         <xsd:documentation>
           Percent of users, which is used for calculating Inventory Statistics.

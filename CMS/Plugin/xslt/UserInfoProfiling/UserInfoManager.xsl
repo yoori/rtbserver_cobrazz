@@ -103,6 +103,12 @@
         <xsl:value-of select="$user-info-manager-port + 500"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="user-info-manager-monitoring-port">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$user-info-manager-port + 600"/>
+      </xsl:if>
+    </xsl:variable>
 
     <exsl:document href="userInfoManager.port"
       method="text" omit-xml-declaration="yes"
@@ -177,6 +183,12 @@
         <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>
     </cfg:GrpcConfig>
+
+    <cfg:HttpConfig>
+      <cfg:Endpoint host="*">
+        <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-monitoring-port"/></xsl:attribute>
+      </cfg:Endpoint>
+    </cfg:HttpConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$user-info-manager-config/cfg:logging"/>

@@ -62,6 +62,12 @@
    </xsl:if>
   </xsl:variable>
 
+  <xsl:variable name="billing-server-grpc-port"><xsl:value-of select="$billing-server-config/cfg:networkParams/@grpc_port"/>
+    <xsl:if test="count($billing-server-config/cfg:networkParams/@grpc_port) = 0">
+      <xsl:value-of select="$def-billing-server-grpc-port"/>
+   </xsl:if>
+  </xsl:variable>
+
   <exsl:document href="billingServer.port"
     method="text" omit-xml-declaration="yes"
     >  ['billingServer', <xsl:copy-of select="$billing-server-port"/>],</exsl:document>
@@ -96,6 +102,10 @@
         <cfg:Object servant="BillingServer" name="{$current-billing-server-obj}"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>
+
+    <cfg:GrpcConfig>
+      <cfg:Endpoint host="*" port="{$billing-server-grpc-port}"/>
+    </cfg:GrpcConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$billing-server-config/cfg:logging"/>
