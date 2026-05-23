@@ -18,6 +18,8 @@ namespace
     const char CHANNEL_CONTROLLER[] = "ChannelController";
   }
 
+  const Generics::Time SOURCE_UPDATE_PERIOD(20);
+
   std::string
   endpoint_from_grpc_ref_(
     const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
@@ -47,7 +49,8 @@ namespace AdServer::ChannelSvcs
     const ChannelControllerConfig& config)
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
-      config_(config)
+      config_(config),
+      control_sources_(config.Primary().control())
   {
     static const char* FUN =
       "ChannelControllerImpl::ChannelControllerImpl()";
@@ -55,6 +58,12 @@ namespace AdServer::ChannelSvcs
     try
     {
       fill_refs_();
+      if (control_sources_)
+      {
+        source_update_runner_ =
+          std::make_shared<AdServer::Commons::ExecutorPool>(callback, 1);
+        add_child_object(source_update_runner_);
+      }
     }
     catch (const eh::Exception& ex)
     {
@@ -70,7 +79,10 @@ namespace AdServer::ChannelSvcs
   ChannelControllerImpl::activate_object_()
   {
     Generics::CompositeActiveObject::activate_object_();
-    set_sources_();
+    if (control_sources_)
+    {
+      schedule_set_sources_(Generics::Time::ZERO);
+    }
   }
 
   void
@@ -304,6 +316,57 @@ namespace AdServer::ChannelSvcs
           "set sources for ChannelServer " << server.endpoint <<
           ", chunks = " << server.chunks.size();
       }
+    }
+  }
+
+  void
+  ChannelControllerImpl::schedule_set_sources_(
+    const Generics::Time& delay) noexcept
+  {
+    try
+    {
+      source_update_runner_->schedule(
+        delay,
+        [this]()
+        {
+          update_sources_();
+        });
+    }
+    catch (const eh::Exception& ex)
+    {
+      logger_->sstream(
+        Logging::Logger::ALERT,
+        Aspect::CHANNEL_CONTROLLER,
+        "ADS-IMPL-20") <<
+        "ChannelControllerImpl::schedule_set_sources_(): "
+        "can't schedule sources update: " << ex.what();
+    }
+  }
+
+  void
+  ChannelControllerImpl::update_sources_() noexcept
+  {
+    if (!active() || !control_sources_)
+    {
+      return;
+    }
+
+    try
+    {
+      set_sources_();
+    }
+    catch (const eh::Exception& ex)
+    {
+      logger_->sstream(
+        Logging::Logger::ERROR,
+        Aspect::CHANNEL_CONTROLLER,
+        "ADS-IMPL-22") <<
+        "ChannelControllerImpl::update_sources_(): " << ex.what();
+    }
+
+    if (active())
+    {
+      schedule_set_sources_(SOURCE_UPDATE_PERIOD);
     }
   }
 }

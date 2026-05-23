@@ -75,6 +75,7 @@ namespace AdServer::ChannelSvcs
 
     void activate_object_() override;
     void deactivate_object_() override;
+    void wait_object_() override;
 
     std::optional<Pool::Ref> get_ref_() const noexcept;
     void resolve_refs_() noexcept;
@@ -101,8 +102,10 @@ namespace AdServer::ChannelSvcs
 
     mutable std::shared_mutex pool_lock_;
     PoolPtr pool_;
+    PoolPtr shutdown_pool_;
     ControllerRefsState refs_state_;
     std::vector<ClientHolderPtr> current_client_holders_;
+    std::vector<ClientHolderPtr> shutdown_client_holders_;
     std::map<std::string, std::weak_ptr<ClientHolder>> client_holders_;
 
     std::mutex resolve_lock_;

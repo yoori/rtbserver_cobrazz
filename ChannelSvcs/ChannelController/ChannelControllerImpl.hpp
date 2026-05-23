@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include <Commons/ExecutorPool.hpp>
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
@@ -55,12 +56,16 @@ namespace AdServer::ChannelSvcs
 
     void fill_refs_();
     void set_sources_() const;
+    void schedule_set_sources_(const Generics::Time& delay) noexcept;
+    void update_sources_() noexcept;
 
   private:
     Generics::ActiveObjectCallback_var callback_;
     Logging::Logger_var logger_;
     const ChannelControllerConfig config_;
+    bool control_sources_;
     ChannelServerGroups channel_server_groups_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> source_update_runner_;
   };
 
   using ChannelControllerImpl_var =

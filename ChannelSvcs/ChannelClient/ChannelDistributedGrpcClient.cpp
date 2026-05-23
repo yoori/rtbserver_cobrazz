@@ -189,31 +189,41 @@ namespace AdServer::ChannelSvcs
 
     Generics::CompositeActiveObject::deactivate_object_();
 
-    PoolPtr old_pool;
-    std::vector<ClientHolderPtr> client_holders;
     {
       std::unique_lock<std::shared_mutex> lock(pool_lock_);
-      old_pool = std::move(pool_);
-      client_holders = std::move(current_client_holders_);
+      shutdown_pool_ = std::move(pool_);
+      shutdown_client_holders_ = std::move(current_client_holders_);
       refs_state_.clear();
       client_holders_.clear();
     }
 
-    for (const auto& client_holder : client_holders)
+    for (const auto& client_holder : shutdown_client_holders_)
     {
       client_holder->client->deactivate_object();
     }
 
-    if (old_pool)
+    if (shutdown_pool_)
     {
-      old_pool->deactivate_object();
-      old_pool->wait_object();
+      shutdown_pool_->deactivate_object();
+    }
+  }
+
+  void
+  ChannelDistributedGrpcClient::wait_object_()
+  {
+    Generics::CompositeActiveObject::wait_object_();
+
+    if (shutdown_pool_)
+    {
+      shutdown_pool_->wait_object();
+      shutdown_pool_.reset();
     }
 
-    for (const auto& client_holder : client_holders)
+    for (const auto& client_holder : shutdown_client_holders_)
     {
       client_holder->client->wait_object();
     }
+    shutdown_client_holders_.clear();
   }
 
   AdServer::Grpc::Stats
