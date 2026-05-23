@@ -10,22 +10,11 @@
 #include <String/SubString.hpp>
 #include <String/TextTemplate.hpp>
 #include <Commons/BoundedCache.hpp>
-#include <Commons/CorbaTypes.hpp>
 
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <eh/Errno.hpp>
 #include <Generics/MMap.hpp>
-
-inline
-void
-operator <<(CORBACommons::OctSeq_out& corba_str, const std::string& str)
-  /*throw(eh::Exception)*/
-{
-  CORBACommons::OctSeq::value_type* ptr = CORBACommons::OctSeq::allocation_traits::allocbuf(str.size());
-  std::copy(str.begin(), str.end(), ptr);
-  corba_str = new CORBACommons::OctSeq(str.size(), str.size(), ptr);
-}
 
 namespace AdServer
 {
@@ -274,7 +263,6 @@ namespace Commons
 
     if(::stat(path.text().c_str(), &fs) < 0)
     {
-      // Call CampaignManagersPool->get_file(filename)
       return updater_->far_update(path.text().data() + path.text().rfind('/') + 1, service_id);
     }
 
