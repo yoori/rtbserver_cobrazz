@@ -62,6 +62,11 @@ namespace AdServer::Grpc
 
     std::uint64_t write_batches = 0;
     std::uint64_t write_items = 0;
+    std::uint64_t read_batches = 0;
+    std::uint64_t read_items = 0;
+    std::uint64_t input_items = 0;
+    std::uint64_t completed_items = 0;
+    std::uint64_t completed_error_items = 0;
     std::uint64_t queue_wait_count = 0;
     std::uint64_t queue_wait_sum_us = 0;
     std::uint64_t queue_wait_max_us = 0;
@@ -71,6 +76,8 @@ namespace AdServer::Grpc
     std::uint64_t response_wait_max_us = 0;
     std::uint64_t timing_coalesce_items = 0;
     std::uint64_t max_streams = 0;
+    std::uint64_t inflight_items = 0;
+    std::uint64_t stream_inflight_items = 0;
     std::uint64_t queue_items = 0;
     std::uint64_t pending_batches = 0;
     std::uint64_t pending_batch_items = 0;
@@ -89,10 +96,16 @@ namespace AdServer::Grpc
 
     virtual Stats stats() const noexcept;
 
+    void add_completed_stats(bool error) noexcept;
+
   protected:
     explicit Client(Client* stats_owner = nullptr) noexcept;
 
+    void add_input_stats(std::uint64_t items) noexcept;
+
     void add_write_stats(std::uint64_t batches, std::uint64_t items) noexcept;
+
+    void add_read_stats(std::uint64_t batches, std::uint64_t items) noexcept;
 
     void add_queue_wait_stats(std::uint64_t wait_us) noexcept;
 
@@ -113,6 +126,11 @@ namespace AdServer::Grpc
 
     std::atomic<std::uint64_t> write_batches_{0};
     std::atomic<std::uint64_t> write_items_{0};
+    std::atomic<std::uint64_t> read_batches_{0};
+    std::atomic<std::uint64_t> read_items_{0};
+    std::atomic<std::uint64_t> input_items_{0};
+    std::atomic<std::uint64_t> completed_items_{0};
+    std::atomic<std::uint64_t> completed_error_items_{0};
     std::atomic<std::uint64_t> queue_wait_count_{0};
     std::atomic<std::uint64_t> queue_wait_sum_us_{0};
     std::atomic<std::uint64_t> queue_wait_max_us_{0};
@@ -141,6 +159,7 @@ namespace AdServer::Grpc
 
     void release() noexcept;
     void release(std::size_t count) noexcept;
+    std::size_t count() const noexcept;
 
   private:
     std::mutex lock_;
@@ -222,12 +241,39 @@ namespace AdServer::Grpc
   }
 
   inline void
+  Client::add_completed_stats(bool error) noexcept
+  {
+    stats_owner_->completed_items_.fetch_add(1, std::memory_order_relaxed);
+    if (error)
+    {
+      stats_owner_->completed_error_items_.fetch_add(
+        1,
+        std::memory_order_relaxed);
+    }
+  }
+
+  inline void
+  Client::add_input_stats(std::uint64_t items) noexcept
+  {
+    stats_owner_->input_items_.fetch_add(items, std::memory_order_relaxed);
+  }
+
+  inline void
   Client::add_write_stats(
     std::uint64_t batches,
     std::uint64_t items) noexcept
   {
     stats_owner_->write_batches_.fetch_add(batches, std::memory_order_relaxed);
     stats_owner_->write_items_.fetch_add(items, std::memory_order_relaxed);
+  }
+
+  inline void
+  Client::add_read_stats(
+    std::uint64_t batches,
+    std::uint64_t items) noexcept
+  {
+    stats_owner_->read_batches_.fetch_add(batches, std::memory_order_relaxed);
+    stats_owner_->read_items_.fetch_add(items, std::memory_order_relaxed);
   }
 
   inline void
@@ -275,6 +321,12 @@ namespace AdServer::Grpc
     Stats stats;
     stats.write_batches = write_batches_.load(std::memory_order_relaxed);
     stats.write_items = write_items_.load(std::memory_order_relaxed);
+    stats.read_batches = read_batches_.load(std::memory_order_relaxed);
+    stats.read_items = read_items_.load(std::memory_order_relaxed);
+    stats.input_items = input_items_.load(std::memory_order_relaxed);
+    stats.completed_items = completed_items_.load(std::memory_order_relaxed);
+    stats.completed_error_items =
+      completed_error_items_.load(std::memory_order_relaxed);
     stats.queue_wait_count = queue_wait_count_.load(std::memory_order_relaxed);
     stats.queue_wait_sum_us = queue_wait_sum_us_.load(std::memory_order_relaxed);
     stats.queue_wait_max_us = queue_wait_max_us_.load(std::memory_order_relaxed);
@@ -388,6 +440,12 @@ namespace AdServer::Grpc
     {
       cv_.notify_all();
     }
+  }
+
+  inline std::size_t
+  InflightLimiter::count() const noexcept
+  {
+    return inflight_count_.load(std::memory_order_acquire);
   }
 
   template<typename Stub>

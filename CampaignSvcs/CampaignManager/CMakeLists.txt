@@ -168,6 +168,7 @@ target_link_libraries(CampaignManager
   CampaignConfigSource
   Stream
   HTTP
+  HttpServer
   CORBACommons
   Commons
   XslTransformer

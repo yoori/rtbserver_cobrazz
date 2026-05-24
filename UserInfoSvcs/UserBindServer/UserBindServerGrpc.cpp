@@ -23,6 +23,33 @@ namespace AdServer::UserInfoSvcs
   {
     constexpr const char user_bind_server_grpc_aspect[] = "UserBindServerGrpc";
 
+    class InProgressGuard final
+    {
+    public:
+      InProgressGuard(
+        std::atomic<std::uint64_t>& call_counter,
+        std::atomic<std::uint64_t>& method_counter) noexcept
+        : call_counter_(call_counter),
+          method_counter_(method_counter)
+      {
+        call_counter_.fetch_add(1, std::memory_order_relaxed);
+        method_counter_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      ~InProgressGuard()
+      {
+        method_counter_.fetch_sub(1, std::memory_order_relaxed);
+        call_counter_.fetch_sub(1, std::memory_order_relaxed);
+      }
+
+      InProgressGuard(const InProgressGuard&) = delete;
+      InProgressGuard& operator=(const InProgressGuard&) = delete;
+
+    private:
+      std::atomic<std::uint64_t>& call_counter_;
+      std::atomic<std::uint64_t>& method_counter_;
+    };
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     void
     maybe_sleep_mock_response(const std::shared_ptr<std::atomic_bool>& enabled)
@@ -34,6 +61,15 @@ namespace AdServer::UserInfoSvcs
     }
 #endif
   }
+
+  struct UserBindServerGrpc::AtomicStats
+  {
+    std::atomic<std::uint64_t> call_in_progress{0};
+    std::atomic<std::uint64_t> get_bind_request_in_progress{0};
+    std::atomic<std::uint64_t> add_bind_request_in_progress{0};
+    std::atomic<std::uint64_t> get_user_id_in_progress{0};
+    std::atomic<std::uint64_t> add_user_id_in_progress{0};
+  };
 
   class UserBindServerGrpc::ServiceImpl final:
     public AdServer::Grpc::GrpcAsyncServiceBase<
@@ -47,6 +83,7 @@ namespace AdServer::UserInfoSvcs
   public:
     ServiceImpl(
       UserBindServerCore* core,
+      std::shared_ptr<AtomicStats> stats,
       std::shared_ptr<std::atomic_bool> response_sleep_enabled = nullptr);
 
     static auto grpc_calls()
@@ -101,6 +138,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const UserBindServerCore_var core_;
+    const std::shared_ptr<AtomicStats> stats_;
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     const std::shared_ptr<std::atomic_bool> response_sleep_enabled_;
 #endif
@@ -109,8 +147,10 @@ namespace AdServer::UserInfoSvcs
   // UserBindServerGrpc::ServiceImpl
   UserBindServerGrpc::ServiceImpl::ServiceImpl(
     UserBindServerCore* core,
+    std::shared_ptr<AtomicStats> stats,
     std::shared_ptr<std::atomic_bool> response_sleep_enabled)
-    : core_(ReferenceCounting::add_ref(core))
+    : core_(ReferenceCounting::add_ref(core)),
+      stats_(std::move(stats))
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
       ,
       response_sleep_enabled_(std::move(response_sleep_enabled))
@@ -127,6 +167,10 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_bind_request_in_progress);
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_enabled_);
     result_status = ::grpc::Status::OK;
@@ -172,6 +216,10 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::AddBindRequestResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->add_bind_request_in_progress);
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_enabled_);
     result_status = ::grpc::Status::OK;
@@ -220,6 +268,10 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_user_id_in_progress);
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_enabled_);
     response.set_user_id(request.current_user_id());
@@ -278,6 +330,10 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->add_user_id_in_progress);
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_enabled_);
     response.set_merge_user_id(request.user_id());
@@ -374,15 +430,29 @@ namespace AdServer::UserInfoSvcs
     unsigned int bind_port,
     std::shared_ptr<std::atomic_bool> response_sleep_enabled)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
+      stats_(std::make_shared<AtomicStats>()),
       impl_(std::make_shared<Impl>(
         logger,
         user_bind_server_grpc_aspect,
         bind_address_,
         std::make_unique<ServiceImpl>(
           core,
+          stats_,
           std::move(response_sleep_enabled))))
   {
     add_child_object(impl_);
+  }
+
+  UserBindServerGrpc::Stats
+  UserBindServerGrpc::stats() const noexcept
+  {
+    return Stats{
+      stats_->call_in_progress.load(std::memory_order_relaxed),
+      stats_->get_bind_request_in_progress.load(std::memory_order_relaxed),
+      stats_->add_bind_request_in_progress.load(std::memory_order_relaxed),
+      stats_->get_user_id_in_progress.load(std::memory_order_relaxed),
+      stats_->add_user_id_in_progress.load(std::memory_order_relaxed)
+    };
   }
 
   UserBindServerGrpc::~UserBindServerGrpc() noexcept

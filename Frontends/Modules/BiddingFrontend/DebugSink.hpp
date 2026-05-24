@@ -106,7 +106,9 @@ namespace AdServer::Bidding
       unsigned long history_match_in_progress,
       unsigned long campaign_selection_in_progress,
       const AdServer::Grpc::Stats& user_bind_client_stats,
-      const AdServer::Grpc::Stats& user_info_client_stats) noexcept;
+      const AdServer::Grpc::Stats& user_info_client_stats,
+      const AdServer::Grpc::Stats& channel_client_stats,
+      const AdServer::Grpc::Stats& campaign_client_stats) noexcept;
 
     void
     write_response(

@@ -199,6 +199,16 @@ namespace AdServer::Bidding
       user_info_client_stats =
         bid_frontend_->user_info_distributed_client_->stats();
     }
+    AdServer::Grpc::Stats channel_client_stats;
+    if (bid_frontend_->channel_client_)
+    {
+      channel_client_stats = bid_frontend_->channel_client_->stats();
+    }
+    AdServer::Grpc::Stats campaign_client_stats;
+    if (bid_frontend_->campaign_manager_)
+    {
+      campaign_client_stats = bid_frontend_->campaign_manager_->stats();
+    }
     debug_sink_.print_interrupt_debug_info(
       interrupted_step,
       hostname_,
@@ -208,7 +218,9 @@ namespace AdServer::Bidding
       in_progress_stats.history_match,
       in_progress_stats.campaign_selection,
       user_bind_client_stats,
-      user_info_client_stats);
+      user_info_client_stats,
+      channel_client_stats,
+      campaign_client_stats);
     debug_sink_.print_time_metering_debug_info(request_time_metering_);
     write_empty_response(0);
   }

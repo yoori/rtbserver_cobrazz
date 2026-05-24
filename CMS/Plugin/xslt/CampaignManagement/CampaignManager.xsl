@@ -176,6 +176,12 @@
     <xsl:variable name="campaign-manager-grpc-port">
       <xsl:value-of select="$campaign-manager-port + 500"/>
     </xsl:variable>
+    <xsl:variable name="campaign-manager-monitoring-port">
+      <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($campaign-manager-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$campaign-manager-port + 600"/>
+      </xsl:if>
+    </xsl:variable>
 
     <exsl:document href="campaignManager.port"
       method="text" omit-xml-declaration="yes"
@@ -298,6 +304,10 @@
     <cfg:GrpcConfig>
       <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
     </cfg:GrpcConfig>
+
+    <cfg:HttpConfig>
+      <cfg:Endpoint host="*" port="{$campaign-manager-monitoring-port}"/>
+    </cfg:HttpConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$campaign-manager-config/cfg:logging"/>

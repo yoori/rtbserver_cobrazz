@@ -22,6 +22,33 @@ namespace AdServer::CampaignSvcs
     namespace pb = adserver::campaign_svcs::campaign_manager;
     namespace pc = adserver::grpc::process_control;
 
+    class InProgressGuard final
+    {
+    public:
+      InProgressGuard(
+        std::atomic<std::uint64_t>& call_counter,
+        std::atomic<std::uint64_t>& method_counter) noexcept
+        : call_counter_(call_counter),
+          method_counter_(method_counter)
+      {
+        call_counter_.fetch_add(1, std::memory_order_relaxed);
+        method_counter_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      ~InProgressGuard()
+      {
+        method_counter_.fetch_sub(1, std::memory_order_relaxed);
+        call_counter_.fetch_sub(1, std::memory_order_relaxed);
+      }
+
+      InProgressGuard(const InProgressGuard&) = delete;
+      InProgressGuard& operator=(const InProgressGuard&) = delete;
+
+    private:
+      std::atomic<std::uint64_t>& call_counter_;
+      std::atomic<std::uint64_t>& method_counter_;
+    };
+
     CORBACommons::OctSeq
     unpack_oct_seq(const std::string& source)
     {
@@ -1298,6 +1325,35 @@ namespace AdServer::CampaignSvcs
     }
   }
 
+  struct CampaignManagerGrpc::AtomicStats
+  {
+    std::atomic<std::uint64_t> call_in_progress{0};
+    std::atomic<std::uint64_t> ready_in_progress{0};
+    std::atomic<std::uint64_t> progress_comment_in_progress{0};
+    std::atomic<std::uint64_t> match_geo_channels_in_progress{0};
+    std::atomic<std::uint64_t> get_file_in_progress{0};
+    std::atomic<std::uint64_t> get_campaign_creative_in_progress{0};
+    std::atomic<std::uint64_t> process_match_request_in_progress{0};
+    std::atomic<std::uint64_t> process_anonymous_request_in_progress{0};
+    std::atomic<std::uint64_t> instantiate_ad_in_progress{0};
+    std::atomic<std::uint64_t> trace_campaign_selection_index_in_progress{0};
+    std::atomic<std::uint64_t> trace_campaign_selection_in_progress{0};
+    std::atomic<std::uint64_t> get_campaign_creative_by_ccid_in_progress{0};
+    std::atomic<std::uint64_t> get_channel_links_in_progress{0};
+    std::atomic<std::uint64_t> get_discover_channels_in_progress{0};
+    std::atomic<std::uint64_t> get_category_channels_in_progress{0};
+    std::atomic<std::uint64_t> get_colocation_flags_in_progress{0};
+    std::atomic<std::uint64_t> get_pub_pixels_in_progress{0};
+    std::atomic<std::uint64_t> consider_passback_in_progress{0};
+    std::atomic<std::uint64_t> consider_passback_track_in_progress{0};
+    std::atomic<std::uint64_t> get_click_url_in_progress{0};
+    std::atomic<std::uint64_t> verify_impression_in_progress{0};
+    std::atomic<std::uint64_t> action_taken_in_progress{0};
+    std::atomic<std::uint64_t> verify_opt_operation_in_progress{0};
+    std::atomic<std::uint64_t> consider_web_operation_in_progress{0};
+    std::atomic<std::uint64_t> get_config_in_progress{0};
+  };
+
   class CampaignManagerGrpc::ServiceImpl final:
     public AdServer::Grpc::GrpcAsyncServiceBase<
       CampaignManagerGrpc::ServiceImpl,
@@ -1307,7 +1363,9 @@ namespace AdServer::CampaignSvcs
     using AsyncService = pb::CampaignManagerGrpc::AsyncService;
 
   public:
-    explicit ServiceImpl(CampaignManagerCore* core);
+    ServiceImpl(
+      CampaignManagerCore* core,
+      std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
     {
@@ -1545,6 +1603,7 @@ namespace AdServer::CampaignSvcs
   private:
     ProcessControlService process_control_service_;
     CampaignManagerCore_var core_;
+    const std::shared_ptr<AtomicStats> stats_;
   };
 
   CampaignManagerGrpc::ServiceImpl::ProcessControlService::
@@ -1562,9 +1621,12 @@ namespace AdServer::CampaignSvcs
     return ::grpc::Status::OK;
   }
 
-  CampaignManagerGrpc::ServiceImpl::ServiceImpl(CampaignManagerCore* core)
+  CampaignManagerGrpc::ServiceImpl::ServiceImpl(
+    CampaignManagerCore* core,
+    std::shared_ptr<AtomicStats> stats)
     : process_control_service_(*this),
-      core_(ReferenceCounting::add_ref(core))
+      core_(ReferenceCounting::add_ref(core)),
+      stats_(std::move(stats))
   {
     add_grpc_service(&process_control_service_);
   }
@@ -1594,6 +1656,10 @@ namespace AdServer::CampaignSvcs
     pb::ReadyResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->ready_in_progress);
+
     try
     {
       response.set_ready(core_->ready());
@@ -1613,6 +1679,10 @@ namespace AdServer::CampaignSvcs
     pb::ProgressCommentResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->progress_comment_in_progress);
+
     try
     {
       std::string comment;
@@ -1634,6 +1704,10 @@ namespace AdServer::CampaignSvcs
     pb::MatchGeoChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->match_geo_channels_in_progress);
+
     try
     {
       std::vector<CampaignManagerCore::GeoInfo> location;
@@ -1673,6 +1747,10 @@ namespace AdServer::CampaignSvcs
     pb::GetFileResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_file_in_progress);
+
     try
     {
       const auto file = core_->get_file(request.file_name());
@@ -1693,6 +1771,10 @@ namespace AdServer::CampaignSvcs
     pb::TraceCampaignSelectionIndexResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->trace_campaign_selection_index_in_progress);
+
     try
     {
       response.set_trace_xml(core_->trace_campaign_selection_index());
@@ -1712,6 +1794,10 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_campaign_creative_in_progress);
+
     try
     {
 
@@ -1762,6 +1848,10 @@ namespace AdServer::CampaignSvcs
     pb::ProcessMatchRequestResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->process_match_request_in_progress);
+
     try
     {
       const auto& source = request.match_request_info();
@@ -1808,6 +1898,10 @@ namespace AdServer::CampaignSvcs
     pb::ProcessAnonymousRequestResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->process_anonymous_request_in_progress);
+
     try
     {
       const auto& source = request.anonymous_request_info();
@@ -1851,6 +1945,10 @@ namespace AdServer::CampaignSvcs
     pb::InstantiateAdResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->instantiate_ad_in_progress);
+
     try
     {
       const auto& source = request.instantiate_ad_info();
@@ -1919,6 +2017,10 @@ namespace AdServer::CampaignSvcs
     pb::TraceCampaignSelectionResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->trace_campaign_selection_in_progress);
+
     try
     {
       response.set_trace_xml(core_->trace_campaign_selection(
@@ -1943,6 +2045,10 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeByCcidResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_campaign_creative_by_ccid_in_progress);
+
     try
     {
       CampaignManagerCore::PreviewCreativeParams params;
@@ -1972,6 +2078,10 @@ namespace AdServer::CampaignSvcs
     pb::GetChannelLinksResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_channel_links_in_progress);
+
     try
     {
       const auto result = core_->get_channel_links(
@@ -1999,6 +2109,10 @@ namespace AdServer::CampaignSvcs
     pb::GetDiscoverChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_discover_channels_in_progress);
+
     try
     {
       std::vector<CampaignManagerCore::ChannelWeight> channels;
@@ -2041,6 +2155,10 @@ namespace AdServer::CampaignSvcs
     pb::GetCategoryChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_category_channels_in_progress);
+
     try
     {
       const auto result = core_->get_category_channels(request.language());
@@ -2071,6 +2189,10 @@ namespace AdServer::CampaignSvcs
     pb::GetColocationFlagsResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_colocation_flags_in_progress);
+
     try
     {
       const auto result = core_->get_colocation_flags();
@@ -2104,6 +2226,10 @@ namespace AdServer::CampaignSvcs
     pb::GetPubPixelsResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_pub_pixels_in_progress);
+
     try
     {
       const auto result = core_->get_pub_pixels(
@@ -2138,6 +2264,10 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderPassbackResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->consider_passback_in_progress);
+
     try
     {
       CampaignManagerCore::PassbackInfo info;
@@ -2168,6 +2298,10 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderPassbackTrackResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->consider_passback_track_in_progress);
+
     try
     {
       CampaignManagerCore::PassbackTrackInfo info;
@@ -2200,6 +2334,10 @@ namespace AdServer::CampaignSvcs
     pb::VerifyOptOperationResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->verify_opt_operation_in_progress);
+
     try
     {
       CampaignManagerCore::OptOperation operation =
@@ -2256,6 +2394,10 @@ namespace AdServer::CampaignSvcs
     pb::GetClickUrlResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_click_url_in_progress);
+
     try
     {
       const auto& source = request.click_info();
@@ -2312,6 +2454,10 @@ namespace AdServer::CampaignSvcs
     pb::VerifyImpressionResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->verify_impression_in_progress);
+
     try
     {
       const auto& source = request.impression_info();
@@ -2362,6 +2508,10 @@ namespace AdServer::CampaignSvcs
     pb::ActionTakenResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->action_taken_in_progress);
+
     try
     {
       const auto& source = request.action_info();
@@ -2413,6 +2563,10 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderWebOperationResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->consider_web_operation_in_progress);
+
     try
     {
       CampaignManagerCore::WebOperationInfo info;
@@ -2473,6 +2627,10 @@ namespace AdServer::CampaignSvcs
     pb::GetConfigResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_config_in_progress);
+
     try
     {
       CampaignManager::GetConfigInfo get_config_info;
@@ -2504,13 +2662,46 @@ namespace AdServer::CampaignSvcs
     std::string_view bind_address,
     unsigned int bind_port)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
+      stats_(std::make_shared<AtomicStats>()),
       impl_(std::make_shared<Impl>(
         logger,
         campaign_manager_grpc_aspect,
         bind_address_,
-        std::make_unique<ServiceImpl>(core)))
+        std::make_unique<ServiceImpl>(core, stats_)))
   {
     add_child_object(impl_);
+  }
+
+  CampaignManagerGrpc::Stats
+  CampaignManagerGrpc::stats() const noexcept
+  {
+    return Stats{
+      stats_->call_in_progress.load(std::memory_order_relaxed),
+      stats_->ready_in_progress.load(std::memory_order_relaxed),
+      stats_->progress_comment_in_progress.load(std::memory_order_relaxed),
+      stats_->match_geo_channels_in_progress.load(std::memory_order_relaxed),
+      stats_->get_file_in_progress.load(std::memory_order_relaxed),
+      stats_->get_campaign_creative_in_progress.load(std::memory_order_relaxed),
+      stats_->process_match_request_in_progress.load(std::memory_order_relaxed),
+      stats_->process_anonymous_request_in_progress.load(std::memory_order_relaxed),
+      stats_->instantiate_ad_in_progress.load(std::memory_order_relaxed),
+      stats_->trace_campaign_selection_index_in_progress.load(std::memory_order_relaxed),
+      stats_->trace_campaign_selection_in_progress.load(std::memory_order_relaxed),
+      stats_->get_campaign_creative_by_ccid_in_progress.load(std::memory_order_relaxed),
+      stats_->get_channel_links_in_progress.load(std::memory_order_relaxed),
+      stats_->get_discover_channels_in_progress.load(std::memory_order_relaxed),
+      stats_->get_category_channels_in_progress.load(std::memory_order_relaxed),
+      stats_->get_colocation_flags_in_progress.load(std::memory_order_relaxed),
+      stats_->get_pub_pixels_in_progress.load(std::memory_order_relaxed),
+      stats_->consider_passback_in_progress.load(std::memory_order_relaxed),
+      stats_->consider_passback_track_in_progress.load(std::memory_order_relaxed),
+      stats_->get_click_url_in_progress.load(std::memory_order_relaxed),
+      stats_->verify_impression_in_progress.load(std::memory_order_relaxed),
+      stats_->action_taken_in_progress.load(std::memory_order_relaxed),
+      stats_->verify_opt_operation_in_progress.load(std::memory_order_relaxed),
+      stats_->consider_web_operation_in_progress.load(std::memory_order_relaxed),
+      stats_->get_config_in_progress.load(std::memory_order_relaxed)
+    };
   }
 
   CampaignManagerGrpc::~CampaignManagerGrpc() noexcept = default;

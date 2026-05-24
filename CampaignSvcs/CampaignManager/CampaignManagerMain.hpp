@@ -12,6 +12,7 @@
 #include <LogCommons/LogHolder.hpp>
 
 #include <Commons/CorbaConfig.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <CampaignSvcs/DomainConfig.hpp>
 
@@ -120,6 +121,7 @@ private:
   AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core_;
   AdServer::CampaignSvcs::CampaignManagerImpl_var campaign_manager_impl_;
   AdServer::CampaignSvcs::CampaignManagerGrpc_var grpc_adapter_;
+  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   typedef Sync::Policy::PosixThread SyncPolicy;
   typedef SyncPolicy::Mutex ShutdownMutex;

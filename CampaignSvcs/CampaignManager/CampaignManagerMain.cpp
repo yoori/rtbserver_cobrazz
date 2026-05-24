@@ -188,6 +188,120 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       active_objects->add_child_object(non_owning_active_object(
         grpc_adapter_.in()));
     }
+    if(campaign_manager_config_->HttpConfig().present())
+    {
+      stage = "creating CampaignManager HttpServer";
+      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+        campaign_manager_config_->HttpConfig()->Endpoint().host().present() &&
+          *(campaign_manager_config_->HttpConfig()->Endpoint().host()) != "*" ?
+          *campaign_manager_config_->HttpConfig()->Endpoint().host() :
+          "0.0.0.0",
+        campaign_manager_config_->HttpConfig()->Endpoint().port(),
+        4);
+      http_server_->add_handler(
+        "/stats",
+        [grpc_adapter = grpc_adapter_](
+          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        {
+          std::string body = "{";
+          if(grpc_adapter.in() != 0)
+          {
+            const auto stats = grpc_adapter->stats();
+            auto append_stat = [&body, first = true](
+              const char* name,
+              std::uint64_t value) mutable
+            {
+              if(!first)
+              {
+                body += ",";
+              }
+              first = false;
+              body += "\"";
+              body += name;
+              body += "\":";
+              body += std::to_string(value);
+            };
+
+            append_stat("call_in_progress", stats.call_in_progress);
+            append_stat("ready_in_progress", stats.ready_in_progress);
+            append_stat(
+              "progress_comment_in_progress",
+              stats.progress_comment_in_progress);
+            append_stat(
+              "match_geo_channels_in_progress",
+              stats.match_geo_channels_in_progress);
+            append_stat("get_file_in_progress", stats.get_file_in_progress);
+            append_stat(
+              "get_campaign_creative_in_progress",
+              stats.get_campaign_creative_in_progress);
+            append_stat(
+              "process_match_request_in_progress",
+              stats.process_match_request_in_progress);
+            append_stat(
+              "process_anonymous_request_in_progress",
+              stats.process_anonymous_request_in_progress);
+            append_stat(
+              "instantiate_ad_in_progress",
+              stats.instantiate_ad_in_progress);
+            append_stat(
+              "trace_campaign_selection_index_in_progress",
+              stats.trace_campaign_selection_index_in_progress);
+            append_stat(
+              "trace_campaign_selection_in_progress",
+              stats.trace_campaign_selection_in_progress);
+            append_stat(
+              "get_campaign_creative_by_ccid_in_progress",
+              stats.get_campaign_creative_by_ccid_in_progress);
+            append_stat(
+              "get_channel_links_in_progress",
+              stats.get_channel_links_in_progress);
+            append_stat(
+              "get_discover_channels_in_progress",
+              stats.get_discover_channels_in_progress);
+            append_stat(
+              "get_category_channels_in_progress",
+              stats.get_category_channels_in_progress);
+            append_stat(
+              "get_colocation_flags_in_progress",
+              stats.get_colocation_flags_in_progress);
+            append_stat(
+              "get_pub_pixels_in_progress",
+              stats.get_pub_pixels_in_progress);
+            append_stat(
+              "consider_passback_in_progress",
+              stats.consider_passback_in_progress);
+            append_stat(
+              "consider_passback_track_in_progress",
+              stats.consider_passback_track_in_progress);
+            append_stat(
+              "get_click_url_in_progress",
+              stats.get_click_url_in_progress);
+            append_stat(
+              "verify_impression_in_progress",
+              stats.verify_impression_in_progress);
+            append_stat(
+              "action_taken_in_progress",
+              stats.action_taken_in_progress);
+            append_stat(
+              "verify_opt_operation_in_progress",
+              stats.verify_opt_operation_in_progress);
+            append_stat(
+              "consider_web_operation_in_progress",
+              stats.consider_web_operation_in_progress);
+            append_stat(
+              "get_config_in_progress",
+              stats.get_config_in_progress);
+          }
+          body += "}\n";
+
+          return AdServer::Commons::HttpServer::HttpServer::Response{
+            200,
+            "application/json",
+            std::move(body)
+          };
+        });
+      active_objects->add_child_object(http_server_.in());
+    }
     active_objects->add_child_object(corba_server_adapter_.in());
 
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -27,9 +28,16 @@ namespace AdServer::Grpc
     std::string payload;
     std::function<void(const adserver::grpc::BatchResponseItem&)> callback;
     AdServer::Grpc::InflightLimiter* inflight_limiter = nullptr;
+    AdServer::Grpc::Client* stats_owner = nullptr;
 
     void complete(const adserver::grpc::BatchResponseItem& item)
     {
+      if (stats_owner)
+      {
+        stats_owner->add_completed_stats(
+          item.status_code() != grpc::StatusCode::OK);
+      }
+
       if (callback)
       {
         callback(item);
@@ -77,6 +85,7 @@ namespace AdServer::Grpc
     ~BatchingStreamBase() override;
 
     bool available() noexcept;
+    std::uint64_t inflight_items() noexcept;
     bool try_start_write(
       PendingBatch&& pending_batch,
       bool measure_consumer_stream_write,

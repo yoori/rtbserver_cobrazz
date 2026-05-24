@@ -37,6 +37,59 @@ namespace AdServer::Bidding
       const char INTERRUPT_HEAD[] = "=== Interrupt ===";
     }
 
+    std::uint64_t
+    outstanding_items_(const AdServer::Grpc::Stats& stats) noexcept
+    {
+      return stats.input_items >= stats.completed_items ?
+        stats.input_items - stats.completed_items : 0;
+    }
+
+    void
+    print_client_stats_(
+      std::ostream& out,
+      const char* prefix,
+      const AdServer::Grpc::Stats& stats,
+      const char* sep)
+    {
+      out <<
+        prefix << "_input_items = " <<
+          stats.input_items << sep <<
+        prefix << "_completed_items = " <<
+          stats.completed_items << sep <<
+        prefix << "_completed_error_items = " <<
+          stats.completed_error_items << sep <<
+        prefix << "_outstanding_items = " <<
+          outstanding_items_(stats) << sep <<
+        prefix << "_write_batches = " <<
+          stats.write_batches << sep <<
+        prefix << "_write_items = " <<
+          stats.write_items << sep <<
+        prefix << "_read_batches = " <<
+          stats.read_batches << sep <<
+        prefix << "_read_items = " <<
+          stats.read_items << sep <<
+        prefix << "_queue_items = " <<
+          stats.queue_items << sep <<
+        prefix << "_pending_batches = " <<
+          stats.pending_batches << sep <<
+        prefix << "_pending_batch_items = " <<
+          stats.pending_batch_items << sep <<
+        prefix << "_inflight_items = " <<
+          stats.inflight_items << sep <<
+        prefix << "_stream_inflight_items = " <<
+          stats.stream_inflight_items << sep <<
+        prefix << "_active_streams = " <<
+          stats.active_streams << sep <<
+        prefix << "_available_streams = " <<
+          stats.available_streams << sep <<
+        prefix << "_connecting_streams = " <<
+          stats.connecting_streams << sep <<
+        prefix << "_draining_streams = " <<
+          stats.draining_streams << sep <<
+        prefix << "_deferred_streams = " <<
+          stats.deferred_streams << sep;
+    }
+
     struct GetChannelId
     {
       unsigned long
@@ -562,7 +615,9 @@ namespace AdServer::Bidding
     unsigned long history_match_in_progress,
     unsigned long campaign_selection_in_progress,
     const AdServer::Grpc::Stats& user_bind_client_stats,
-    const AdServer::Grpc::Stats& user_info_client_stats) noexcept
+    const AdServer::Grpc::Stats& user_info_client_stats,
+    const AdServer::Grpc::Stats& channel_client_stats,
+    const AdServer::Grpc::Stats& campaign_client_stats) noexcept
   {
     if(!require_debug_info())
     {
@@ -590,40 +645,30 @@ namespace AdServer::Bidding
       "rtb_request_history_match_in_progress_count = " <<
         history_match_in_progress << sep_ <<
       "rtb_request_campaign_selection_in_progress_count = " <<
-        campaign_selection_in_progress << sep_ <<
-      "user_bind_client_queue_items = " <<
-        user_bind_client_stats.queue_items << sep_ <<
-      "user_bind_client_pending_batches = " <<
-        user_bind_client_stats.pending_batches << sep_ <<
-      "user_bind_client_pending_batch_items = " <<
-        user_bind_client_stats.pending_batch_items << sep_ <<
-      "user_bind_client_active_streams = " <<
-        user_bind_client_stats.active_streams << sep_ <<
-      "user_bind_client_available_streams = " <<
-        user_bind_client_stats.available_streams << sep_ <<
-      "user_bind_client_connecting_streams = " <<
-        user_bind_client_stats.connecting_streams << sep_ <<
-      "user_bind_client_draining_streams = " <<
-        user_bind_client_stats.draining_streams << sep_ <<
-      "user_bind_client_deferred_streams = " <<
-        user_bind_client_stats.deferred_streams << sep_ <<
-      "user_info_client_queue_items = " <<
-        user_info_client_stats.queue_items << sep_ <<
-      "user_info_client_pending_batches = " <<
-        user_info_client_stats.pending_batches << sep_ <<
-      "user_info_client_pending_batch_items = " <<
-        user_info_client_stats.pending_batch_items << sep_ <<
-      "user_info_client_active_streams = " <<
-        user_info_client_stats.active_streams << sep_ <<
-      "user_info_client_available_streams = " <<
-        user_info_client_stats.available_streams << sep_ <<
-      "user_info_client_connecting_streams = " <<
-        user_info_client_stats.connecting_streams << sep_ <<
-      "user_info_client_draining_streams = " <<
-        user_info_client_stats.draining_streams << sep_ <<
-      "user_info_client_deferred_streams = " <<
-        user_info_client_stats.deferred_streams << sep_ <<
-      "interrupted_step = " << interrupted_step << sep_;
+        campaign_selection_in_progress << sep_;
+
+    print_client_stats_(
+      debug_info_str_,
+      "user_bind_client",
+      user_bind_client_stats,
+      sep_);
+    print_client_stats_(
+      debug_info_str_,
+      "user_info_client",
+      user_info_client_stats,
+      sep_);
+    print_client_stats_(
+      debug_info_str_,
+      "channel_client",
+      channel_client_stats,
+      sep_);
+    print_client_stats_(
+      debug_info_str_,
+      "campaign_client",
+      campaign_client_stats,
+      sep_);
+
+    debug_info_str_ << "interrupted_step = " << interrupted_step << sep_;
   }
 
   DebugInfo

@@ -326,6 +326,7 @@ namespace AdServer::Grpc
   {
     auto total = AdServer::Grpc::Client::stats();
     total.max_streams = max_streams_seen_.load(std::memory_order_relaxed);
+    total.inflight_items = inflight_limiter_.count();
     total.queue_items = batching_queue_ ? batching_queue_->size() : 0;
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
@@ -339,6 +340,14 @@ namespace AdServer::Grpc
       total.active_streams = streams_.size();
       total.draining_streams = draining_streams_.size();
       total.deferred_streams = deferred_streams_.size();
+      for (const auto& [_, stream_holder] : streams_)
+      {
+        if (stream_holder && stream_holder->stream)
+        {
+          total.stream_inflight_items +=
+            stream_holder->stream->inflight_items();
+        }
+      }
     }
     return total;
   }
@@ -349,6 +358,8 @@ namespace AdServer::Grpc
     std::string payload,
     BatchResponseCallback callback)
   {
+    add_input_stats(1);
+
     auto submission_guard = submission_gate_->enter();
     if (!submission_guard)
     {
@@ -366,6 +377,7 @@ namespace AdServer::Grpc
     pending_request->full_method = full_method;
     pending_request->payload = std::move(payload);
     pending_request->callback = std::move(callback);
+    pending_request->stats_owner = this;
 
     const auto now = Generics::Time::get_time_of_day();
     auto enqueue_result = batching_queue_->enqueue(

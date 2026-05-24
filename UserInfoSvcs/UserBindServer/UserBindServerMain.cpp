@@ -237,6 +237,8 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
 
     if(config().HttpConfig().present())
     {
+      AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter =
+        grpc_adapter_;
       http_server_ = new AdServer::Commons::HttpServer::HttpServer(
         config().HttpConfig()->Endpoint().host().present() &&
           *(config().HttpConfig()->Endpoint().host()) != "*" ?
@@ -246,18 +248,37 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
         4);
       http_server_->add_handler(
         "/stats",
-        [user_bind_server_core](
+        [user_bind_server_core, grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           const auto stats = user_bind_server_core->stats();
+          std::string body =
+            std::string("{\"get_user_id_total_requests\":") +
+            std::to_string(stats.get_user_id_total_requests) +
+            ",\"add_user_id_requests\":" +
+            std::to_string(stats.add_user_id_requests);
+
+          if(grpc_adapter.in())
+          {
+            const auto grpc_stats = grpc_adapter->stats();
+            body +=
+              ",\"call_in_progress\":" +
+              std::to_string(grpc_stats.call_in_progress) +
+              ",\"get_bind_request_in_progress\":" +
+              std::to_string(grpc_stats.get_bind_request_in_progress) +
+              ",\"add_bind_request_in_progress\":" +
+              std::to_string(grpc_stats.add_bind_request_in_progress) +
+              ",\"get_user_id_in_progress\":" +
+              std::to_string(grpc_stats.get_user_id_in_progress) +
+              ",\"add_user_id_in_progress\":" +
+              std::to_string(grpc_stats.add_user_id_in_progress);
+          }
+
+          body += "}\n";
           return AdServer::Commons::HttpServer::HttpServer::Response{
             200,
             "application/json",
-            std::string("{\"get_user_id_total_requests\":") +
-              std::to_string(stats.get_user_id_total_requests) +
-              ",\"add_user_id_requests\":" +
-              std::to_string(stats.add_user_id_requests) +
-              "}\n"
+            std::move(body)
           };
         });
       add_child_object(http_server_);

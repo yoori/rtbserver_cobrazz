@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -19,12 +20,23 @@ namespace AdServer::UserInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    struct Stats
+    {
+      std::uint64_t call_in_progress = 0;
+      std::uint64_t get_bind_request_in_progress = 0;
+      std::uint64_t add_bind_request_in_progress = 0;
+      std::uint64_t get_user_id_in_progress = 0;
+      std::uint64_t add_user_id_in_progress = 0;
+    };
+
     UserBindServerGrpc(
       UserBindServerCore* core,
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
       std::shared_ptr<std::atomic_bool> response_sleep_enabled = nullptr);
+
+    Stats stats() const noexcept;
 
   protected:
     class ServiceImpl;
@@ -34,7 +46,10 @@ namespace AdServer::UserInfoSvcs
     ~UserBindServerGrpc() noexcept;
 
   private:
+    struct AtomicStats;
+
     const std::string bind_address_;
+    const std::shared_ptr<AtomicStats> stats_;
     const std::shared_ptr<Impl> impl_;
   };
 

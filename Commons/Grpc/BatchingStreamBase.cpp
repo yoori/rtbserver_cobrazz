@@ -63,6 +63,7 @@ namespace AdServer::Grpc
     ~Impl();
 
     bool available() noexcept;
+    std::uint64_t inflight_items() noexcept;
     bool try_start_write(
       PendingBatch&& pending_batch,
       bool measure_consumer_stream_write,
@@ -134,6 +135,7 @@ namespace AdServer::Grpc
     void notify_completion_tags_drained_() noexcept;
 
     void add_write_stats(std::uint64_t batches, std::uint64_t items) noexcept;
+    void add_read_stats(std::uint64_t batches, std::uint64_t items) noexcept;
     void add_queue_wait_stats(std::uint64_t wait_us) noexcept;
     void add_queue_timeout_stats() noexcept;
     void add_response_wait_stats(std::uint64_t wait_us) noexcept;
@@ -384,6 +386,12 @@ namespace AdServer::Grpc
     return impl_->available();
   }
 
+  std::uint64_t
+  BatchingStreamBase::inflight_items() noexcept
+  {
+    return impl_->inflight_items();
+  }
+
   bool
   BatchingStreamBase::try_start_write(
     PendingBatch&& pending_batch,
@@ -443,6 +451,14 @@ namespace AdServer::Grpc
   }
 
   void
+  BatchingStreamBase::Impl::add_read_stats(
+    std::uint64_t batches,
+    std::uint64_t items) noexcept
+  {
+    owner_.add_read_stats(batches, items);
+  }
+
+  void
   BatchingStreamBase::Impl::add_queue_wait_stats(
     std::uint64_t wait_us) noexcept
   {
@@ -474,6 +490,13 @@ namespace AdServer::Grpc
   {
     std::lock_guard<std::mutex> lock(state_lock_);
     return active() && accepts_requests_i_();
+  }
+
+  std::uint64_t
+  BatchingStreamBase::Impl::inflight_items() noexcept
+  {
+    std::lock_guard<std::mutex> lock(inflight_lock_);
+    return inflight_.size();
   }
 
   void
@@ -908,6 +931,7 @@ namespace AdServer::Grpc
 
     if (ok)
     {
+      add_read_stats(1, response->items_size());
       completed_requests.reserve(response->items_size());
       completed_items.reserve(response->items_size());
 

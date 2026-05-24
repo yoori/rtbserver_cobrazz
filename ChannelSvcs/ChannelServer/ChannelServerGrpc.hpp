@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -23,11 +25,20 @@ namespace AdServer::ChannelSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    struct Stats
+    {
+      std::uint64_t call_in_progress = 0;
+      std::uint64_t match_in_progress = 0;
+      std::uint64_t get_ccg_traits_in_progress = 0;
+    };
+
     ChannelServerGrpc(
       ChannelServerCorePtr core,
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port);
+
+    Stats stats() const noexcept;
 
   protected:
     class ServiceImpl;
@@ -37,7 +48,10 @@ namespace AdServer::ChannelSvcs
     ~ChannelServerGrpc() noexcept;
 
   private:
+    struct AtomicStats;
+
     const std::string bind_address_;
+    const std::shared_ptr<AtomicStats> stats_;
     const std::shared_ptr<Impl> impl_;
   };
 

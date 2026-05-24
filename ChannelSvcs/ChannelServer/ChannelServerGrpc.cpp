@@ -20,6 +20,33 @@ namespace AdServer::ChannelSvcs
     constexpr const char channel_server_grpc_aspect[] = "ChannelServerGrpc";
     namespace pc = adserver::grpc::process_control;
 
+    class InProgressGuard final
+    {
+    public:
+      InProgressGuard(
+        std::atomic<std::uint64_t>& call_counter,
+        std::atomic<std::uint64_t>& method_counter) noexcept
+        : call_counter_(call_counter),
+          method_counter_(method_counter)
+      {
+        call_counter_.fetch_add(1, std::memory_order_relaxed);
+        method_counter_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      ~InProgressGuard()
+      {
+        method_counter_.fetch_sub(1, std::memory_order_relaxed);
+        call_counter_.fetch_sub(1, std::memory_order_relaxed);
+      }
+
+      InProgressGuard(const InProgressGuard&) = delete;
+      InProgressGuard& operator=(const InProgressGuard&) = delete;
+
+    private:
+      std::atomic<std::uint64_t>& call_counter_;
+      std::atomic<std::uint64_t>& method_counter_;
+    };
+
     template<typename CorbaOctSeq>
     std::string
     pack_oct_seq(const CorbaOctSeq& seq)
@@ -165,6 +192,13 @@ namespace AdServer::ChannelSvcs
     }
   }
 
+  struct ChannelServerGrpc::AtomicStats
+  {
+    std::atomic<std::uint64_t> call_in_progress{0};
+    std::atomic<std::uint64_t> match_in_progress{0};
+    std::atomic<std::uint64_t> get_ccg_traits_in_progress{0};
+  };
+
   class ChannelServerGrpc::ServiceImpl final:
     public AdServer::Grpc::GrpcAsyncServiceBase<
       ChannelServerGrpc::ServiceImpl,
@@ -175,7 +209,9 @@ namespace AdServer::ChannelSvcs
       adserver::channel_svcs::channel_server::ChannelServerGrpc::AsyncService;
 
   public:
-    explicit ServiceImpl(ChannelServerCorePtr core);
+    ServiceImpl(
+      ChannelServerCorePtr core,
+      std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
     {
@@ -251,6 +287,7 @@ namespace AdServer::ChannelSvcs
   private:
     ProcessControlService process_control_service_;
     ChannelServerCorePtr core_;
+    const std::shared_ptr<AtomicStats> stats_;
   };
 
   ChannelServerGrpc::ServiceImpl::ProcessControlService::
@@ -287,9 +324,11 @@ namespace AdServer::ChannelSvcs
   }
 
   ChannelServerGrpc::ServiceImpl::ServiceImpl(
-    ChannelServerCorePtr core)
+    ChannelServerCorePtr core,
+    std::shared_ptr<AtomicStats> stats)
     : process_control_service_(*this),
-      core_(std::move(core))
+      core_(std::move(core)),
+      stats_(std::move(stats))
   {
     add_grpc_service(&process_control_service_);
   }
@@ -372,6 +411,10 @@ namespace AdServer::ChannelSvcs
     adserver::channel_svcs::channel_server::MatchResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->match_in_progress);
+
     try
     {
       ChannelServerCore::MatchQuery query;
@@ -425,6 +468,10 @@ namespace AdServer::ChannelSvcs
     adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->get_ccg_traits_in_progress);
+
     try
     {
       std::vector<unsigned long> ids;
@@ -560,13 +607,24 @@ namespace AdServer::ChannelSvcs
     std::string_view bind_address,
     unsigned int bind_port)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
+      stats_(std::make_shared<AtomicStats>()),
       impl_(std::make_shared<Impl>(
         logger,
         channel_server_grpc_aspect,
         bind_address_,
-        std::make_unique<ServiceImpl>(std::move(core))))
+        std::make_unique<ServiceImpl>(std::move(core), stats_)))
   {
     add_child_object(impl_);
+  }
+
+  ChannelServerGrpc::Stats
+  ChannelServerGrpc::stats() const noexcept
+  {
+    return Stats{
+      stats_->call_in_progress.load(std::memory_order_relaxed),
+      stats_->match_in_progress.load(std::memory_order_relaxed),
+      stats_->get_ccg_traits_in_progress.load(std::memory_order_relaxed)
+    };
   }
 
   ChannelServerGrpc::~ChannelServerGrpc() noexcept = default;

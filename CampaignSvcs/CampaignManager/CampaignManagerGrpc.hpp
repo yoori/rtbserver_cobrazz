@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -19,11 +21,42 @@ namespace AdServer::CampaignSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    struct Stats
+    {
+      std::uint64_t call_in_progress = 0;
+      std::uint64_t ready_in_progress = 0;
+      std::uint64_t progress_comment_in_progress = 0;
+      std::uint64_t match_geo_channels_in_progress = 0;
+      std::uint64_t get_file_in_progress = 0;
+      std::uint64_t get_campaign_creative_in_progress = 0;
+      std::uint64_t process_match_request_in_progress = 0;
+      std::uint64_t process_anonymous_request_in_progress = 0;
+      std::uint64_t instantiate_ad_in_progress = 0;
+      std::uint64_t trace_campaign_selection_index_in_progress = 0;
+      std::uint64_t trace_campaign_selection_in_progress = 0;
+      std::uint64_t get_campaign_creative_by_ccid_in_progress = 0;
+      std::uint64_t get_channel_links_in_progress = 0;
+      std::uint64_t get_discover_channels_in_progress = 0;
+      std::uint64_t get_category_channels_in_progress = 0;
+      std::uint64_t get_colocation_flags_in_progress = 0;
+      std::uint64_t get_pub_pixels_in_progress = 0;
+      std::uint64_t consider_passback_in_progress = 0;
+      std::uint64_t consider_passback_track_in_progress = 0;
+      std::uint64_t get_click_url_in_progress = 0;
+      std::uint64_t verify_impression_in_progress = 0;
+      std::uint64_t action_taken_in_progress = 0;
+      std::uint64_t verify_opt_operation_in_progress = 0;
+      std::uint64_t consider_web_operation_in_progress = 0;
+      std::uint64_t get_config_in_progress = 0;
+    };
+
     CampaignManagerGrpc(
       CampaignManagerCore* core,
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port);
+
+    Stats stats() const noexcept;
 
   protected:
     class ServiceImpl;
@@ -33,7 +66,10 @@ namespace AdServer::CampaignSvcs
     ~CampaignManagerGrpc() noexcept override;
 
   private:
+    struct AtomicStats;
+
     const std::string bind_address_;
+    const std::shared_ptr<AtomicStats> stats_;
     const std::shared_ptr<Impl> impl_;
   };
 

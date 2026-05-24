@@ -217,7 +217,10 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
         4);
       http_server_->add_handler(
         "/stats",
-        [server_core = server_core_](
+        [
+          server_core = server_core_,
+          grpc_adapter = grpc_adapter_
+        ](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           AdServer::ChannelSvcs::ChannelServerStats stats;
@@ -241,6 +244,16 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
           body += json_escape_(stats.configuration);
           body += "\",\"configuration_date\":";
           body += std::to_string(stats.configuration_date.tv_sec);
+          if (grpc_adapter)
+          {
+            const auto grpc_stats = grpc_adapter->stats();
+            body += ",\"call_in_progress\":";
+            body += std::to_string(grpc_stats.call_in_progress);
+            body += ",\"match_in_progress\":";
+            body += std::to_string(grpc_stats.match_in_progress);
+            body += ",\"get_ccg_traits_in_progress\":";
+            body += std::to_string(grpc_stats.get_ccg_traits_in_progress);
+          }
           body += "}\n";
 
           return AdServer::Commons::HttpServer::HttpServer::Response{
