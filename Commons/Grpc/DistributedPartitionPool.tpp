@@ -764,6 +764,14 @@ namespace AdServer::Grpc
       std::max(result.response_wait_max_us, source.response_wait_max_us);
     result.timing_coalesce_items += source.timing_coalesce_items;
     result.max_streams = std::max(result.max_streams, source.max_streams);
+    result.queue_items += source.queue_items;
+    result.pending_batches += source.pending_batches;
+    result.pending_batch_items += source.pending_batch_items;
+    result.active_streams += source.active_streams;
+    result.available_streams += source.available_streams;
+    result.connecting_streams += source.connecting_streams;
+    result.draining_streams += source.draining_streams;
+    result.deferred_streams += source.deferred_streams;
     if (source.consumer_stream_write.has_value())
     {
       if (!result.consumer_stream_write.has_value())

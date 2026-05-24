@@ -555,11 +555,14 @@ namespace AdServer::Bidding
   void
   DebugSink::print_interrupt_debug_info(
     const String::SubString& interrupted_step,
+    const std::string& user_info_client_endpoint,
     unsigned long request_in_progress,
     unsigned long user_resolving_in_progress,
     unsigned long trigger_match_in_progress,
     unsigned long history_match_in_progress,
-    unsigned long campaign_selection_in_progress) noexcept
+    unsigned long campaign_selection_in_progress,
+    const AdServer::Grpc::Stats& user_bind_client_stats,
+    const AdServer::Grpc::Stats& user_info_client_stats) noexcept
   {
     if(!require_debug_info())
     {
@@ -577,6 +580,8 @@ namespace AdServer::Bidding
 
     debug_info_str_ <<
       "server-id = " << server_id_ << sep_ <<
+      "user_info_client_endpoint = " <<
+        user_info_client_endpoint << sep_ <<
       "rtb_request_in_progress_count = " << request_in_progress << sep_ <<
       "rtb_request_user_resolving_in_progress_count = " <<
         user_resolving_in_progress << sep_ <<
@@ -586,6 +591,38 @@ namespace AdServer::Bidding
         history_match_in_progress << sep_ <<
       "rtb_request_campaign_selection_in_progress_count = " <<
         campaign_selection_in_progress << sep_ <<
+      "user_bind_client_queue_items = " <<
+        user_bind_client_stats.queue_items << sep_ <<
+      "user_bind_client_pending_batches = " <<
+        user_bind_client_stats.pending_batches << sep_ <<
+      "user_bind_client_pending_batch_items = " <<
+        user_bind_client_stats.pending_batch_items << sep_ <<
+      "user_bind_client_active_streams = " <<
+        user_bind_client_stats.active_streams << sep_ <<
+      "user_bind_client_available_streams = " <<
+        user_bind_client_stats.available_streams << sep_ <<
+      "user_bind_client_connecting_streams = " <<
+        user_bind_client_stats.connecting_streams << sep_ <<
+      "user_bind_client_draining_streams = " <<
+        user_bind_client_stats.draining_streams << sep_ <<
+      "user_bind_client_deferred_streams = " <<
+        user_bind_client_stats.deferred_streams << sep_ <<
+      "user_info_client_queue_items = " <<
+        user_info_client_stats.queue_items << sep_ <<
+      "user_info_client_pending_batches = " <<
+        user_info_client_stats.pending_batches << sep_ <<
+      "user_info_client_pending_batch_items = " <<
+        user_info_client_stats.pending_batch_items << sep_ <<
+      "user_info_client_active_streams = " <<
+        user_info_client_stats.active_streams << sep_ <<
+      "user_info_client_available_streams = " <<
+        user_info_client_stats.available_streams << sep_ <<
+      "user_info_client_connecting_streams = " <<
+        user_info_client_stats.connecting_streams << sep_ <<
+      "user_info_client_draining_streams = " <<
+        user_info_client_stats.draining_streams << sep_ <<
+      "user_info_client_deferred_streams = " <<
+        user_info_client_stats.deferred_streams << sep_ <<
       "interrupted_step = " << interrupted_step << sep_;
   }
 

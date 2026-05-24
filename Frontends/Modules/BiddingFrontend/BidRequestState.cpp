@@ -1,5 +1,7 @@
 #include "BidRequestState.hpp"
 
+#include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
+
 namespace AdServer::Bidding
 {
   BidRequestState::BidRequestState(
@@ -186,13 +188,27 @@ namespace AdServer::Bidding
     print_available_request_debug_info_();
     const auto in_progress_stats =
       bid_frontend_->stats_->rtb_request_in_progress_stats();
+    AdServer::Grpc::Stats user_bind_client_stats;
+    if (bid_frontend_->user_bind_client_)
+    {
+      user_bind_client_stats = bid_frontend_->user_bind_client_->stats();
+    }
+    AdServer::Grpc::Stats user_info_client_stats;
+    if (bid_frontend_->user_info_distributed_client_)
+    {
+      user_info_client_stats =
+        bid_frontend_->user_info_distributed_client_->stats();
+    }
     debug_sink_.print_interrupt_debug_info(
       interrupted_step,
+      hostname_,
       in_progress_stats.request,
       in_progress_stats.user_resolving,
       in_progress_stats.trigger_match,
       in_progress_stats.history_match,
-      in_progress_stats.campaign_selection);
+      in_progress_stats.campaign_selection,
+      user_bind_client_stats,
+      user_info_client_stats);
     debug_sink_.print_time_metering_debug_info(request_time_metering_);
     write_empty_response(0);
   }

@@ -20,6 +20,17 @@ namespace AdServer::Grpc
 
   namespace
   {
+    std::uint64_t batch_items_count(
+      const std::deque<BatchingStreamBase::PendingBatch>& batches) noexcept
+    {
+      std::uint64_t result = 0;
+      for (const auto& batch : batches)
+      {
+        result += batch.size();
+      }
+      return result;
+    }
+
     void finish_batch_with_error(
       BatchingQueue::Batch& batch,
       grpc::StatusCode status_code,
@@ -315,6 +326,20 @@ namespace AdServer::Grpc
   {
     auto total = AdServer::Grpc::Client::stats();
     total.max_streams = max_streams_seen_.load(std::memory_order_relaxed);
+    total.queue_items = batching_queue_ ? batching_queue_->size() : 0;
+    {
+      std::lock_guard<std::mutex> lock(streams_lock_);
+      total.pending_batches = pending_batches_.size();
+      total.pending_batch_items = batch_items_count(pending_batches_);
+      total.available_streams = available_streams_.size();
+      total.connecting_streams = connecting_ ? 1 : 0;
+    }
+    {
+      std::lock_guard<std::mutex> lock(streams_registry_lock_);
+      total.active_streams = streams_.size();
+      total.draining_streams = draining_streams_.size();
+      total.deferred_streams = deferred_streams_.size();
+    }
     return total;
   }
 

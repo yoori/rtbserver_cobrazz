@@ -113,6 +113,12 @@ namespace AdServer::Grpc
     return oldest_enqueue_time_();
   }
 
+  std::size_t
+  BatchingQueue::size() const noexcept
+  {
+    return hot_size_.load(std::memory_order_acquire);
+  }
+
   std::vector<BatchingQueue::Batch>
   BatchingQueue::drain_all()
   {

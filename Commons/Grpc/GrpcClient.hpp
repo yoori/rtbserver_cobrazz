@@ -71,6 +71,14 @@ namespace AdServer::Grpc
     std::uint64_t response_wait_max_us = 0;
     std::uint64_t timing_coalesce_items = 0;
     std::uint64_t max_streams = 0;
+    std::uint64_t queue_items = 0;
+    std::uint64_t pending_batches = 0;
+    std::uint64_t pending_batch_items = 0;
+    std::uint64_t active_streams = 0;
+    std::uint64_t available_streams = 0;
+    std::uint64_t connecting_streams = 0;
+    std::uint64_t draining_streams = 0;
+    std::uint64_t deferred_streams = 0;
     std::optional<ConsumerStreamWrite> consumer_stream_write;
   };
 

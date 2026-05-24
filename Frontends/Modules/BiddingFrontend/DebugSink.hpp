@@ -8,6 +8,7 @@
 #include <UserInfoManagerGrpc.grpc.pb.h>
 #include <Generics/Time.hpp>
 #include <String/SubString.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
@@ -98,11 +99,14 @@ namespace AdServer::Bidding
     void
     print_interrupt_debug_info(
       const String::SubString& interrupted_step,
+      const std::string& user_info_client_endpoint,
       unsigned long request_in_progress,
       unsigned long user_resolving_in_progress,
       unsigned long trigger_match_in_progress,
       unsigned long history_match_in_progress,
-      unsigned long campaign_selection_in_progress) noexcept;
+      unsigned long campaign_selection_in_progress,
+      const AdServer::Grpc::Stats& user_bind_client_stats,
+      const AdServer::Grpc::Stats& user_info_client_stats) noexcept;
 
     void
     write_response(

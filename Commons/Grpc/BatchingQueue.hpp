@@ -48,6 +48,8 @@ namespace AdServer::Grpc
 
     std::optional<Generics::Time> oldest_enqueue_time();
 
+    std::size_t size() const noexcept;
+
   private:
     struct HotBucket
     {
