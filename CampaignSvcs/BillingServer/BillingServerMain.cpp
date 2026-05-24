@@ -139,8 +139,10 @@ BillingServerApp_::main(int argc, char** argv)
       grpc_adapter_ = new AdServer::CampaignSvcs::BillingServerGrpc(
         billing_server_core_,
         logger(),
-        config().GrpcConfig()->Endpoint().host().present() ?
-          config().GrpcConfig()->Endpoint().host()->c_str() : "0.0.0.0",
+        config().GrpcConfig()->Endpoint().host().present() &&
+          *(config().GrpcConfig()->Endpoint().host()) != "*" ?
+          config().GrpcConfig()->Endpoint().host()->c_str() :
+          "0.0.0.0",
         config().GrpcConfig()->Endpoint().port());
       add_child_object(grpc_adapter_);
     }
