@@ -3,6 +3,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
+#include <chrono>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -21,6 +22,17 @@ namespace AdServer::UserInfoSvcs
   namespace
   {
     constexpr const char user_bind_server_grpc_aspect[] = "UserBindServerGrpc";
+
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    void
+    maybe_sleep_mock_response(const std::shared_ptr<std::atomic_bool>& enabled)
+    {
+      if (enabled && enabled->load(std::memory_order_acquire))
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+    }
+#endif
   }
 
   class UserBindServerGrpc::ServiceImpl final:
@@ -33,7 +45,9 @@ namespace AdServer::UserInfoSvcs
       adserver::user_info_svcs::user_bind::UserBindServerGrpc::AsyncService;
 
   public:
-    ServiceImpl(UserBindServerCore* core);
+    ServiceImpl(
+      UserBindServerCore* core,
+      std::shared_ptr<std::atomic_bool> response_sleep_enabled = nullptr);
 
     static auto grpc_calls()
     {
@@ -87,13 +101,25 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const UserBindServerCore_var core_;
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    const std::shared_ptr<std::atomic_bool> response_sleep_enabled_;
+#endif
   };
 
   // UserBindServerGrpc::ServiceImpl
   UserBindServerGrpc::ServiceImpl::ServiceImpl(
-    UserBindServerCore* core)
+    UserBindServerCore* core,
+    std::shared_ptr<std::atomic_bool> response_sleep_enabled)
     : core_(ReferenceCounting::add_ref(core))
-  {}
+#ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+      ,
+      response_sleep_enabled_(std::move(response_sleep_enabled))
+#endif
+  {
+#ifndef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    (void)response_sleep_enabled;
+#endif
+  }
 
   void
   UserBindServerGrpc::ServiceImpl::get_bind_request(
@@ -102,6 +128,7 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    maybe_sleep_mock_response(response_sleep_enabled_);
     result_status = ::grpc::Status::OK;
     return;
 #endif
@@ -146,6 +173,7 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    maybe_sleep_mock_response(response_sleep_enabled_);
     result_status = ::grpc::Status::OK;
     return;
 #endif
@@ -193,6 +221,7 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    maybe_sleep_mock_response(response_sleep_enabled_);
     response.set_user_id(request.current_user_id());
     response.set_min_age_reached(true);
     response.set_created(false);
@@ -250,6 +279,7 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    maybe_sleep_mock_response(response_sleep_enabled_);
     response.set_merge_user_id(request.user_id());
     response.set_invalid_operation(false);
     result_status = ::grpc::Status::OK;
@@ -298,6 +328,7 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    maybe_sleep_mock_response(response_sleep_enabled_);
     response.set_chunks_number(1);
     response.add_chunks(0);
     result_status = ::grpc::Status::OK;
@@ -340,13 +371,16 @@ namespace AdServer::UserInfoSvcs
     UserBindServerCore* core,
     Logging::Logger* logger,
     std::string_view bind_address,
-    unsigned int bind_port)
+    unsigned int bind_port,
+    std::shared_ptr<std::atomic_bool> response_sleep_enabled)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       impl_(std::make_shared<Impl>(
         logger,
         user_bind_server_grpc_aspect,
         bind_address_,
-        std::make_unique<ServiceImpl>(core)))
+        std::make_unique<ServiceImpl>(
+          core,
+          std::move(response_sleep_enabled))))
   {
     add_child_object(impl_);
   }

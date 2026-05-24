@@ -1,6 +1,8 @@
 #include <csignal>
+#include <atomic>
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <Generics/AppUtils.hpp>
@@ -40,8 +42,9 @@ namespace
   print_usage(std::ostream& out)
   {
     out
-      << "Usage: MockUserBindServer [OPTIONS]\n"
-      << "  --grpc-endpoint <host:port|port> gRPC endpoint (default: 0.0.0.0:26528)\n";
+	      << "Usage: MockUserBindServer [OPTIONS]\n"
+	      << "  --grpc-endpoint <host:port|port> gRPC endpoint (default: 0.0.0.0:26528)\n"
+	      << "  SIGUSR1 toggles 100 ms response sleep on/off\n";
   }
 }
 
@@ -67,24 +70,41 @@ main(int argc, char** argv)
     const Endpoint endpoint = parse_endpoint(*opt_grpc_endpoint);
 
     sigset_t signals;
-    sigemptyset(&signals);
-    sigaddset(&signals, SIGINT);
-    sigaddset(&signals, SIGTERM);
-    pthread_sigmask(SIG_BLOCK, &signals, nullptr);
+	    sigemptyset(&signals);
+	    sigaddset(&signals, SIGINT);
+	    sigaddset(&signals, SIGTERM);
+	    sigaddset(&signals, SIGUSR1);
+	    pthread_sigmask(SIG_BLOCK, &signals, nullptr);
 
-    AdServer::UserInfoSvcs::UserBindServerGrpc_var server =
-      new AdServer::UserInfoSvcs::UserBindServerGrpc(
-        nullptr,
-        nullptr,
-        endpoint.host,
-        endpoint.port);
+	    auto response_sleep_enabled = std::make_shared<std::atomic_bool>(false);
+	    AdServer::UserInfoSvcs::UserBindServerGrpc_var server =
+	      new AdServer::UserInfoSvcs::UserBindServerGrpc(
+	        nullptr,
+	        nullptr,
+	        endpoint.host,
+	        endpoint.port,
+	        response_sleep_enabled);
     server->activate_object();
 
     std::cout << "MockUserBindServer listening at " << endpoint.host << ":" <<
       endpoint.port << std::endl;
 
-    int signal = 0;
-    sigwait(&signals, &signal);
+	    for (;;)
+	    {
+	      int signal = 0;
+	      sigwait(&signals, &signal);
+	      if (signal == SIGUSR1)
+	      {
+	        const bool enabled =
+	          !response_sleep_enabled->load(std::memory_order_acquire);
+	        response_sleep_enabled->store(enabled, std::memory_order_release);
+	        std::cout << "MockUserBindServer response sleep "
+	          << (enabled ? "enabled" : "disabled")
+	          << std::endl;
+	        continue;
+	      }
+	      break;
+	    }
 
     server->deactivate_object();
     server->wait_object();

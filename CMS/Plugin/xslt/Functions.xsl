@@ -533,8 +533,8 @@
       <cfg:BatchingOptions
         channels_number="32"
         max_batch_size="2000"
-        max_inflight="1000000"
-        error_on_inflight_reaching="false"
+        max_inflight="10000"
+        error_on_inflight_reaching="true"
         max_outstanding_requests="0"
         hot_buckets_count="4"
         max_batch_delay_us="3000"
@@ -634,8 +634,8 @@
       <cfg:BatchingOptions
         channels_number="32"
         max_batch_size="2000"
-        max_inflight="1000000"
-        error_on_inflight_reaching="false"
+        max_inflight="10000"
+        error_on_inflight_reaching="true"
         max_outstanding_requests="0"
         hot_buckets_count="4"
         max_batch_delay_us="3000"

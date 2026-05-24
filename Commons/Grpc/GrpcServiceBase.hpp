@@ -4,6 +4,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -247,7 +248,20 @@ namespace AdServer::Grpc
           continue;
         }
 
-        it->second(request_item, *response_item);
+        try
+        {
+          it->second(request_item, *response_item);
+        }
+        catch (const std::exception& ex)
+        {
+          response_item->set_status_code(::grpc::StatusCode::INTERNAL);
+          response_item->set_status_message(ex.what());
+        }
+        catch (...)
+        {
+          response_item->set_status_code(::grpc::StatusCode::INTERNAL);
+          response_item->set_status_message("Unknown batch handler exception");
+        }
       }
     }
 

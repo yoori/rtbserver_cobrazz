@@ -30,13 +30,13 @@ namespace AdServer::Grpc
 
     std::size_t channels_number = 1;
     std::size_t max_batch_size = 1024;
-    // Limits requests that have left BatchingQueue through full-batch flushes.
+    // Limits requests that have left BatchingQueue for stream processing.
     // Queued requests are not counted. Accounting is reserved and released per
-    // batch, not per request. Concurrent full-batch flushes can overshoot the
-    // limit; the timing flush path bypasses the limiter and can add one more
-    // batch of overshoot.
-    std::optional<std::size_t> max_inflight;
-    bool error_on_inflight_reaching = false;
+    // batch, not per request. Concurrent flushes can overshoot the limit. With
+    // error_on_inflight_reaching enabled, flushes complete their callbacks with
+    // RESOURCE_EXHAUSTED instead of blocking on the limiter.
+    std::optional<std::size_t> max_inflight{10000};
+    bool error_on_inflight_reaching = true;
     std::size_t workers_number = 4;
     std::size_t hot_buckets_count = 1;
     std::optional<Generics::Time> max_batch_delay{
@@ -160,6 +160,9 @@ namespace AdServer::Grpc
   inline constexpr const char QUEUE_WAIT_TIMEOUT_STATUS[] =
     "queue wait timeout";
 
+  inline constexpr const char NO_ACTIVE_BATCHING_STREAMS_MESSAGE[] =
+    "no active batching streams";
+
   inline bool
   is_queue_wait_timeout(const grpc::Status& status)
   {
@@ -174,6 +177,13 @@ namespace AdServer::Grpc
   is_transport_timeout(const grpc::Status& status)
   {
     return status.error_code() == grpc::StatusCode::DEADLINE_EXCEEDED;
+  }
+
+  inline bool
+  is_no_active_batching_streams(const grpc::Status& status)
+  {
+    return status.error_code() == grpc::StatusCode::UNAVAILABLE &&
+      status.error_message() == NO_ACTIVE_BATCHING_STREAMS_MESSAGE;
   }
 
   inline grpc::Status

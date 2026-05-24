@@ -1164,7 +1164,7 @@
     <cfg:BidFeConfiguration>
       <xsl:attribute name="max_pending_tasks"><xsl:value-of select="$bidding-module/@max_pending_tasks"/>
         <xsl:if test="count($bidding-module/@max_pending_tasks) = 0">
-          <xsl:value-of select="'10000'"/>
+          <xsl:value-of select="'200000'"/>
         </xsl:if>
       </xsl:attribute>
       <xsl:attribute name="threads"><xsl:value-of select="$bidding-module/@threads"/>

@@ -29,7 +29,7 @@ namespace AdServer::Grpc
 {
   inline const grpc::Status NO_ACTIVE_BATCHING_STREAMS_STATUS(
     grpc::StatusCode::UNAVAILABLE,
-    "no active batching streams");
+    NO_ACTIVE_BATCHING_STREAMS_MESSAGE);
 
   class AsyncBatchingClientBase
     : public Generics::CompositeActiveObject,

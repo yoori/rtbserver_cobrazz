@@ -923,6 +923,12 @@ namespace AdServer::Grpc
     }
 
     add_timing_coalesce_stats(pending_batch.size());
+    if (options_.error_on_inflight_reaching &&
+      !acquire_batch_inflight_(pending_batch, true))
+    {
+      return true;
+    }
+
     process_batch_(std::move(pending_batch), now);
     return true;
   }

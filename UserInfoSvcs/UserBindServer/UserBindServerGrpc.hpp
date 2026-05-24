@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <string>
 
@@ -22,7 +23,8 @@ namespace AdServer::UserInfoSvcs
       UserBindServerCore* core,
       Logging::Logger* logger,
       std::string_view bind_address,
-      unsigned int bind_port);
+      unsigned int bind_port,
+      std::shared_ptr<std::atomic_bool> response_sleep_enabled = nullptr);
 
   protected:
     class ServiceImpl;
