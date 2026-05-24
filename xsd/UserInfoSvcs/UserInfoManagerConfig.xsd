@@ -107,11 +107,6 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="StatsDumper"
-        type="StatsDumperType"
-        minOccurs="0"
-        maxOccurs="1"/>
-
       <xsd:element name="UserProfilesCleanup"
         type="UserProfilesCleanupType"
         minOccurs="0"

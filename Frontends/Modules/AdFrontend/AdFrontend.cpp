@@ -21,7 +21,6 @@
 #include <LogCommons/AdRequestLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
-#include <Controlling/StatsDumper/StatsDumper.hpp>
 
 #include <Frontends/FrontendCommons/OptOutManip.hpp>
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
@@ -376,23 +375,7 @@ namespace AdServer
             workers_);
         add_child_object(channel_client);
 
-        if(common_config_->StatsDumper().present())
-        {
-          FrontendStat::StatsCollectorRef dumper_ref;
-
-          FrontendStat::read_stats_collector_ref(
-            dumper_ref,
-            common_config_->StatsDumper().get().StatsDumperRef());
-
-          stats_ = new AdFrontendStat(
-            logger(),
-            dumper_ref,
-            0,
-            Generics::Time(common_config_->StatsDumper().get().period()),
-            callback());
-
-          add_child_object(stats_.in());
-        }
+        stats_ = new AdFrontendStat();
 
         std::string user_agent_filter_path;
         if(common_config_->user_agent_filter_path().present())
@@ -2059,7 +2042,7 @@ namespace AdServer
         Generics::Time(common_config_->update_period()),
         logger());
 
-      msg->execute();
+      msg->deliver();
     }
     catch(const eh::Exception& ex)
     {

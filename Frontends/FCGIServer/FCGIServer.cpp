@@ -428,9 +428,9 @@ namespace AdServer::Frontends
         throw Exception(ostr);
       }
 
-      init_fcgi_();
       pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
         std::string(config_->pid_file()));
+      init_fcgi_();
       AdServer::Commons::SignalActiveObject signal_active_object;
       trace_startup("activate_object begin");
       activate_object();

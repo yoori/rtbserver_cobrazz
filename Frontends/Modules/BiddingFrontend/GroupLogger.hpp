@@ -5,6 +5,7 @@
 #include <iomanip>
 
 #include <eh/Exception.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Commons/MessagePacker.hpp>
 
 namespace AdServer::Bidding

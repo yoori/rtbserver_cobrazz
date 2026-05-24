@@ -235,7 +235,7 @@ namespace AdServer::ChannelSvcs
       client_holders = current_client_holders_;
     }
 
-    AdServer::Grpc::Stats result;
+    AdServer::Grpc::Stats result = AdServer::Grpc::Client::stats();
     std::set<const ClientHolder*> seen_clients;
     for (const auto& client_holder : client_holders)
     {
@@ -257,8 +257,11 @@ namespace AdServer::ChannelSvcs
     const adserver::channel_svcs::channel_server::MatchRequest& request,
     MatchCallback callback)
   {
+    add_input_stats(1);
+
     if (!active())
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         adserver::channel_svcs::channel_server::MatchResponse());
@@ -268,6 +271,7 @@ namespace AdServer::ChannelSvcs
     auto ref = get_ref_();
     if (!ref)
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
@@ -303,8 +307,11 @@ namespace AdServer::ChannelSvcs
     const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
     GetCcgTraitsCallback callback)
   {
+    add_input_stats(1);
+
     if (!active())
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         adserver::channel_svcs::channel_server::GetCcgTraitsResponse());
@@ -314,6 +321,7 @@ namespace AdServer::ChannelSvcs
     auto ref = get_ref_();
     if (!ref)
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
@@ -348,8 +356,11 @@ namespace AdServer::ChannelSvcs
     const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
     SetSourcesCallback callback)
   {
+    add_input_stats(1);
+
     if (!active())
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         adserver::channel_svcs::channel_server::SetSourcesResponse());
@@ -359,6 +370,7 @@ namespace AdServer::ChannelSvcs
     auto ref = get_ref_();
     if (!ref)
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
@@ -394,8 +406,11 @@ namespace AdServer::ChannelSvcs
       request,
     SetProxySourcesCallback callback)
   {
+    add_input_stats(1);
+
     if (!active())
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         adserver::channel_svcs::channel_server::SetProxySourcesResponse());
@@ -405,6 +420,7 @@ namespace AdServer::ChannelSvcs
     auto ref = get_ref_();
     if (!ref)
     {
+      add_completed_stats(true);
       callback(
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
@@ -609,7 +625,6 @@ namespace AdServer::ChannelSvcs
     result.write_items += source.write_items;
     result.read_batches += source.read_batches;
     result.read_items += source.read_items;
-    result.input_items += source.input_items;
     result.completed_items += source.completed_items;
     result.completed_error_items += source.completed_error_items;
     result.queue_wait_count += source.queue_wait_count;

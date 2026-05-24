@@ -2,8 +2,8 @@
 #pragma once
 
 #include <eh/Exception.hpp>
-#include <Generics/CompositeActiveObject.hpp>
-#include <Frontends/FrontendCommons/FrontendStatistic.hpp>
+#include <Generics/Values.hpp>
+#include <ReferenceCounting/AtomicImpl.hpp>
 
 namespace AdServer
 {
@@ -15,7 +15,7 @@ namespace AdServer
     OO_STATUS
   };
 
-  class OptOutFrontendStat: public FrontendStat
+  class OptOutFrontendStat: public ReferenceCounting::AtomicImpl
   {
     struct StatData
     {
@@ -30,18 +30,12 @@ namespace AdServer
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    OptOutFrontendStat(
-      Logging::Logger* logger,
-      const FrontendStat::StatsCollectorRef& stats_collector_ref,
-      Generics::Planner* shep_ptr,
-      const Generics::Time& dump_period,
-      Generics::ActiveObjectCallback* callback,
-      const char* host_name = 0)
+    OptOutFrontendStat()
       /*throw(Exception)*/;
 
     void consider_request(OptOperation op) noexcept;
 
-    virtual Generics::Values_var
+    Generics::Values_var
     extract_stats_values();
 
   private:

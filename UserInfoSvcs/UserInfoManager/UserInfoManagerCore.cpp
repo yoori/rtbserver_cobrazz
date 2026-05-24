@@ -285,28 +285,7 @@ namespace AdServer::UserInfoSvcs
       throw Exception(ostr);
     }
 
-    try
-    {
-      provide_channel_counters_ = false;
-
-      if (user_info_manager_config_.StatsDumper().present() &&
-          user_info_manager_config_.StatsDumper()
-              .get()
-              .provide_channel_counters()
-              .present())
-      {
-        provide_channel_counters_ = user_info_manager_config_.StatsDumper()
-                                        .get()
-                                        .provide_channel_counters()
-                                        .get();
-      }
-    }
-    catch (const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << ex.what();
-      throw Exception(ostr);
-    }
+    provide_channel_counters_ = false;
 
     try
     {

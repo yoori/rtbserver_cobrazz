@@ -80,11 +80,12 @@ namespace AdServer::Commons
 
     create_directories(parent_path(path_));
 
-    std::ofstream stream(path_, std::ios::out | std::ios::trunc);
+    const std::string tmp_path = path_ + "." + pid_ + ".tmp";
+    std::ofstream stream(tmp_path, std::ios::out | std::ios::trunc);
     if (!stream)
     {
       Stream::Error ostr;
-      ostr << "Can't open pid file '" << path_ << "'";
+      ostr << "Can't open pid file '" << tmp_path << "'";
       throw Exception(ostr);
     }
 
@@ -92,8 +93,19 @@ namespace AdServer::Commons
     stream.close();
     if (!stream)
     {
+      ::unlink(tmp_path.c_str());
       Stream::Error ostr;
-      ostr << "Can't write pid file '" << path_ << "'";
+      ostr << "Can't write pid file '" << tmp_path << "'";
+      throw Exception(ostr);
+    }
+
+    if (::rename(tmp_path.c_str(), path_.c_str()) == -1)
+    {
+      const int error = errno;
+      ::unlink(tmp_path.c_str());
+      Stream::Error ostr;
+      ostr << "Can't rename pid file '" << tmp_path << "' to '" <<
+        path_ << "': " << std::strerror(error);
       throw Exception(ostr);
     }
   }

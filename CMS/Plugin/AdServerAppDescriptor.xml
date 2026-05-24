@@ -198,14 +198,6 @@
         minHostOccurs="1"
         maxHostOccurs="unbounded"/>
 
-      <service
-        type="ConvServer"
-        configSchema="xsd/Frontends/ConvServerApp.xsd"
-        minOccurs="0"
-        maxOccurs="unbounded"
-        minHostOccurs="1"
-        maxHostOccurs="unbounded"/>
-
      <service
        type="HttpFrontend"
        configSchema="xsd/FrontendHostApp.xsd"

@@ -39,7 +39,6 @@ USER_BIND_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController
 BILLING_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/BillingServer
 
 CAMPAIGN_MANAGER_DESCR=$FRONTEND_CLUSTER_DESCR/CampaignManager
-CONV_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ConvServer
 FRONTEND_DESCR=$FRONTEND_CLUSTER_DESCR/Frontend
 
 HTTP_FRONTEND_DESCR=$FRONTEND_CLUSTER_DESCR/HttpFrontend
@@ -216,36 +215,6 @@ then
       --out-dir $OUT_DIR \
       --cmd 'mkdir -p $HOST_DIR' \
       --cmd 'cp -r $PLUGIN_ROOT/data/FrontendSubCluster/CampaignManager/* $HOST_DIR'
-
-  let "EXIT_CODE|=$?"
-fi
-
-## configure ConvServer
-CONV_SERVER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CONV_SERVER_DESCR']"
-
-CONV_SERVER_COUNT_XPATH="count($CONV_SERVER_XPATH)"
-CONV_SERVER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath "$CONV_SERVER_COUNT_XPATH" --plugin-root $PLUGIN_ROOT`
-
-if [ $CONV_SERVER_COUNT -ne 0 ]
-then
-  $EXEC/ServiceConf.sh \
-    --services-xpath "$CONV_SERVER_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/ConvServer.xsl \
-    --out-file ConvServerConfig.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT \
-    --cluster-id $CLUSTER_ID \
-    --var MODE AD
-
-  let "EXIT_CODE|=$?"
-  $EXEC/ProcessHostFiles.sh \
-      --services-xpath "$CONV_SERVER_XPATH" \
-      --app-xml $APP_XML \
-      --plugin-root $PLUGIN_ROOT \
-      --out-dir $OUT_DIR \
-      --cmd 'mkdir -p $HOST_DIR'
 
   let "EXIT_CODE|=$?"
 fi

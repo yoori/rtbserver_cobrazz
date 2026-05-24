@@ -14,7 +14,6 @@ target_link_libraries(AdFrontend
   UserInfoManagerGrpcClient
   CookieManager
   RequestMatchers
-  FrontendStatistic
   FeConfigXSD
   CommonModule
   CampaignManagerGrpcDistributedClient

@@ -345,14 +345,6 @@
     <xsd:attribute name="value" type="xsd:string" use="required"/>
   </xsd:complexType>
 
-  <xsd:complexType name="StatsDumperType">
-    <xsd:sequence>
-      <xsd:element name="StatsDumperRef" type="CorbaObjectRefType"/>
-    </xsd:sequence>
-    <xsd:attribute name="period" type="xsd:positiveInteger" default="60"/>
-    <xsd:attribute name="provide_channel_counters" type="xsd:boolean" use="optional"/>
-  </xsd:complexType>
-
   <xsd:complexType name="SNMPConfigType">
     <xsd:attribute name="mib_dirs" type="xsd:string" use="required"/>
     <xsd:attribute name="index" type="xsd:nonNegativeInteger" use="optional"/>

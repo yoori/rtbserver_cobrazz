@@ -552,23 +552,7 @@ namespace
             workers_);
         add_child_object(campaign_manager);
 
-        if(common_config_->StatsDumper().present())
-        {
-          FrontendStat::StatsCollectorRef dumper_ref;
-
-          FrontendStat::read_stats_collector_ref(
-            dumper_ref,
-            common_config_->StatsDumper().get().StatsDumperRef());
-
-          stats_ = new OptOutFrontendStat(
-            logger(),
-            dumper_ref,
-            0,
-            Generics::Time(common_config_->StatsDumper().get().period()),
-            callback());
-
-          add_child_object(stats_);
-        }
+        stats_ = new OptOutFrontendStat();
 
         request_info_filler_.reset(
           new OptOut::RequestInfoFiller(config_.get(), logger(), common_module_));

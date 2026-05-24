@@ -2,14 +2,14 @@
 #pragma once
 
 #include <eh/Exception.hpp>
-#include <Generics/CompositeActiveObject.hpp>
-#include <Frontends/FrontendCommons/FrontendStatistic.hpp>
+#include <Generics/Values.hpp>
+#include <ReferenceCounting/AtomicImpl.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace AdServer
 {
-  class AcFrontendStat: public FrontendStat
+  class AcFrontendStat: public ReferenceCounting::AtomicImpl
   {
     struct StatData
     {
@@ -23,13 +23,7 @@ namespace AdServer
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    AcFrontendStat(
-      Logging::Logger* logger,
-      const FrontendStat::StatsCollectorRef& stats_collector_ref,
-      Generics::Planner* shep_ptr,
-      const Generics::Time& dump_period,
-      Generics::ActiveObjectCallback* callback,
-      const char* host_name = 0)
+    AcFrontendStat()
       /*throw(Exception)*/;
 
     void consider_request(
@@ -37,7 +31,7 @@ namespace AdServer
       unsigned long user_status)
       noexcept;
 
-    virtual Generics::Values_var
+    Generics::Values_var
     extract_stats_values();
 
   private:

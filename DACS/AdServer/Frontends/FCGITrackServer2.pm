@@ -39,7 +39,7 @@ sub is_alive
   my $command =
     "test -e $pid_file || exit 1 && " .
     "pid=`cat $pid_file` && " .
-    "kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 1; } && " .
+    "kill -0 \$pid 2>/dev/null || exit 1; " .
     "exit 0";
 
   return AdServer::Functions::execute_command($host, $descr, $command);

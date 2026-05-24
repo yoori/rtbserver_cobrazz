@@ -29,7 +29,6 @@ USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
 USER_BIND_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController
 
 CAMPAIGN_MANAGER_DESCR=$FRONTEND_CLUSTER_DESCR/CampaignManager
-CONV_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ConvServer
 BILLING_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/BillingServer
 FRONTEND_DESCR=$FRONTEND_CLUSTER_DESCR/Frontend
 NGINX_FRONTEND_DESCR=$FRONTEND_CLUSTER_DESCR/NginxFrontend
@@ -120,20 +119,6 @@ $EXEC/CurrentEnvGen.sh \
   --app-xml $APP_XML \
   --search-xpath "configuration/cfg:campaignManager" \
   --services-xpath "$CAMPAIGN_MANAGER_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/$FE_CURRENT_NAME
-
-let "EXIT_CODE|=$?"
-
-##
-CONV_SERVER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CONV_SERVER_DESCR']"
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "conv_server" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:convServer" \
-  --services-xpath "$CONV_SERVER_XPATH" \
   --out-dir $OUT_DIR \
   --out-file CurrentEnv/$FE_CURRENT_NAME
 

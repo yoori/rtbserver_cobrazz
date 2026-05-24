@@ -11,7 +11,6 @@ target_link_libraries(ActionFrontend
   CommonModule
   CampaignManagerGrpcDistributedClient
   FeConfigXSD
-  FrontendStatistic
   UserBindClient
   UserIdController
   CookieManager

@@ -9,7 +9,6 @@ target_link_libraries(OptoutFrontend
   Commons
   PrivacyFilter
   RequestMatchers
-  FrontendStatistic
   CommonModule
   CampaignManagerGrpcDistributedClient
   FeConfigXSD

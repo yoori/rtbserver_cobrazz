@@ -41,7 +41,6 @@
 <!-- these services used in tr zone and must have unique version for all changes -->
 <xsl:variable name="app-version-num" select="translate($app-version, '0123456789.', '0123456789')"/>
 <xsl:variable name="current-campaign-manager-obj" select="concat('CampaignManager_v', $app-version-num)"/>
-<xsl:variable name="current-conv-server-obj" select="concat('ConvServer_v', $app-version-num)"/>
 <xsl:variable name="current-user-info-manager-obj" select="'UserInfoManager_v351'"/>
 <xsl:variable name="current-user-bind-server-obj" select="concat('UserBindServer_v', $app-version-num)"/>
 <xsl:variable name="current-billing-server-obj" select="'BillingServer_v355'"/>
@@ -91,7 +90,6 @@
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
 
 <xsl:variable name="campaign-manager-descriptor" select="'AdCluster/FrontendSubCluster/CampaignManager'"/>
-<xsl:variable name="conv-server-descriptor" select="'AdCluster/FrontendSubCluster/ConvServer'"/>
 
 <xsl:variable name="channel-server-descriptor" select="'AdCluster/FrontendSubCluster/ChannelServer'"/>
 <xsl:variable name="channel-controller-descriptor" select="'AdCluster/FrontendSubCluster/ChannelController'"/>
@@ -124,8 +122,6 @@
 
 <xsl:variable name="campaign-manager-log-level" select="$default-log-level"/>
 <xsl:variable name="campaign-manager-log-path" select="'/log/CampaignManager/CampaignManager'"/>
-<xsl:variable name="conv-server-log-level" select="$default-log-level"/>
-<xsl:variable name="conv-server-log-path" select="'/log/ConvServer/ConvServer'"/>
 <xsl:variable name="campaign-server-log-level" select="$default-log-level"/>
 <xsl:variable name="campaign-server-log-path" select="'/log/CampaignServer/CampaignServer'"/>
 <xsl:variable name="billing-server-log-level" select="$default-log-level"/>
@@ -191,7 +187,6 @@
 <xsl:variable name="def-expression-matcher-threads" select="'10'"/>
 <xsl:variable name="def-campaign-server-threads" select="'10'"/>
 <xsl:variable name="def-campaign-manager-threads" select="'40'"/>
-<xsl:variable name="def-conv-server-threads" select="'40'"/>
 <xsl:variable name="def-user-info-manager-controller-threads" select="'10'"/>
 <xsl:variable name="def-user-info-manager-threads" select="'40'"/>
 <xsl:variable name="def-channel-controller-threads" select="'10'"/>
@@ -325,7 +320,6 @@
 <xsl:variable name="def-channel-controller-grpc-port" select="$def-range-start + 430"/>
 <xsl:variable name="def-campaign-server-port" select="$def-range-start + 6"/>
 <xsl:variable name="def-campaign-manager-port" select="$def-range-start + 7"/>
-<xsl:variable name="def-conv-server-port" select="$def-range-start + 34"/>
 <xsl:variable name="def-channel-search-service-port" select="$def-range-start + 9"/>
 <xsl:variable name="def-dictionary-provider-port" select="$def-range-start + 10"/>
 <xsl:variable name="def-user-bind-server-port" select="$def-range-start + 28"/>

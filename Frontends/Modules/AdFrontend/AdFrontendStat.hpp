@@ -2,8 +2,8 @@
 #pragma once
 
 #include <eh/Exception.hpp>
-#include <Generics/CompositeActiveObject.hpp>
-#include <Frontends/FrontendCommons/FrontendStatistic.hpp>
+#include <Generics/Values.hpp>
+#include <ReferenceCounting/AtomicImpl.hpp>
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer
@@ -30,7 +30,7 @@ namespace AdServer
     bool profiling;
   };
 
-  class AdFrontendStat: public FrontendStat
+  class AdFrontendStat: public ReferenceCounting::AtomicImpl
   {
     struct BaseStatData
     {
@@ -103,13 +103,7 @@ namespace AdServer
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    AdFrontendStat(
-      Logging::Logger* logger,
-      const FrontendStat::StatsCollectorRef& stats_collector_ref,
-      Generics::Planner* shep_ptr,
-      const Generics::Time& dump_period,
-      Generics::ActiveObjectCallback* callback,
-      const char* host_name = 0)
+    AdFrontendStat()
       /*throw(Exception)*/;
 
     void consider_request(
@@ -117,7 +111,7 @@ namespace AdServer
       const RequestTimeMetering& request_times)
       noexcept;
 
-    virtual Generics::Values_var
+    Generics::Values_var
     extract_stats_values();
 
   protected:

@@ -3,7 +3,7 @@
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <Controlling/StatsDumper/StatsDumper.hpp>
+#include <Generics/Values.hpp>
 #include "CampaignManagerTypes.hpp"
 
 

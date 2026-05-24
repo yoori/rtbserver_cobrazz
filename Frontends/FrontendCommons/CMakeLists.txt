@@ -22,17 +22,6 @@ target_link_libraries(FCGI
   FeConfigXSD
 )
 
-add_library(FrontendStatistic SHARED
-  FrontendStatistic.cpp
-)
-
-target_link_libraries(FrontendStatistic
-  CORBACommons
-  Logger
-  StatsDumper
-)
-
-
 add_library(ProcessingTemplates SHARED
   ProcessingTemplates.cpp
 )

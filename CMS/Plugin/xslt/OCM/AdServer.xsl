@@ -471,13 +471,6 @@
         <xsl:with-param name="service-type" select="'AdServer::CampaignSvcs::CampaignManager'"/>
       </xsl:call-template>
 
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $conv-server-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('fe', $pos, '-ConvServer')"/>
-        <xsl:with-param name="service-type" select="'AdServer::Frontends::ConvServer'"/>
-      </xsl:call-template>
-
       <xsl:if test="count($fe-cluster-path/service[@descriptor = $http-frontend-descriptor]) > 0">
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"
@@ -1933,11 +1926,6 @@
       <xsl:variable name="channel-controller-dep">
         <xsl:value-of select="'AdServer::ChannelSvcs::ChannelController'"/>
       </xsl:variable>
-      <xsl:variable name="conv-server-dep">
-        <xsl:if test="count($fe-cluster-path/service[@descriptor = $conv-server-descriptor]) > 0">
-          <xsl:value-of select="'AdServer::Frontends::ConvServer '"/>
-        </xsl:if>
-      </xsl:variable>
       <xsl:variable name="psconfig-dep">
         <xsl:if test="count($fe-cluster-path/service[@descriptor = $http-frontend-descriptor]) > 0">
           <xsl:value-of select="'AdServer::PSConfigurator '"/>
@@ -2049,13 +2037,8 @@
             <xsl:with-param name="slaves" select= "'AdServer::RequestInfoSvcs::RequestInfoManager'"/>
           </xsl:call-template>
           <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="$campaign-manager-dep"/>
-            <xsl:with-param name="slaves" select= "$conv-server-dep"/>
-          </xsl:call-template>
-          <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select="concat($channel-controller-dep, ' ',
-              $campaign-manager-dep,
-              $conv-server-dep)"/>
+              $campaign-manager-dep)"/>
             <xsl:with-param name="slaves" select= "concat($fe-services, $prestart-dep)"/>
           </xsl:call-template>
           <xsl:call-template name="AddDependence">

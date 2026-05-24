@@ -290,23 +290,7 @@ namespace AdServer::Action
             FCGI::HttpRequest, FCGI::HttpResponse>(
               common_config_->Cookies()));
 
-        if(common_config_->StatsDumper().present())
-        {
-          FrontendStat::StatsCollectorRef dumper_ref;
-
-          FrontendStat::read_stats_collector_ref(
-            dumper_ref,
-            common_config_->StatsDumper().get().StatsDumperRef());
-
-          stats_ = new AcFrontendStat(
-            logger(),
-            dumper_ref,
-            0,
-            Generics::Time(common_config_->StatsDumper().get().period()),
-            callback());
-
-          add_child_object(stats_.in());
-        }
+        stats_ = new AcFrontendStat();
 
         match_workers_ = workers_;
 

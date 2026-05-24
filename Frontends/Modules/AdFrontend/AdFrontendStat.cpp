@@ -1,5 +1,4 @@
 /// @file AdFrontend/AdFrontendStat.cpp
-#include <Frontends/FrontendCommons/FrontendStatistic.hpp>
 #include "AdFrontendStat.hpp"
 
 namespace
@@ -120,16 +119,8 @@ namespace AdServer
     }
   }
 
-  AdFrontendStat::AdFrontendStat(
-    Logging::Logger* logger,
-    const FrontendStat::StatsCollectorRef& stats_collector_ref,
-    Generics::Planner* scheduler_ptr,
-    const Generics::Time& dump_period,
-    Generics::ActiveObjectCallback* callback,
-    const char* host_name)
+  AdFrontendStat::AdFrontendStat()
     /*throw(Exception)*/
-    : FrontendStat(logger, stats_collector_ref, scheduler_ptr,
-                   dump_period, callback, host_name)
   {
   }
 
