@@ -209,7 +209,6 @@ our %CLEANUP_CONFIG = (
       @descriptor = $user-info-manager-descriptor]"/>
   <xsl:variable name="pbe-synclogs-serv-path"
     select="$xpath//service[
-      @descriptor = $pbe-channel-proxy-descriptor or
       @descriptor = $pbe-campaign-server-descriptor or
       @descriptor = $pbe-stunnel-server-descriptor]"/>
   <xsl:variable name="synclogs-serv-path" select="$be-synclogs-serv-path |

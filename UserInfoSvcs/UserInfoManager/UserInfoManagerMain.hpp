@@ -6,22 +6,20 @@
 
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
 
-#include "UserInfoManager.hpp"
 #include "UserInfoManagerCore.hpp"
-#include "UserInfoManagerImpl.hpp"
-#include "UserInfoManagerControlImpl.hpp"
 #include "UserInfoManagerGrpc.hpp"
 
 class UserInfoManagerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl,
-    public virtual Generics::CompositeActiveObject
+  : private Logging::LoggerCallbackHolder,
+    public virtual Generics::CompositeActiveObject,
+    public virtual ReferenceCounting::AtomicImpl
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -32,23 +30,6 @@ public:
 
   void main(int& argc, char** argv) noexcept;
 
-protected:
-  //
-  // IDL:CORBACommons/IProcessControl/shutdown:1.0
-  //
-  virtual void shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  //
-  // IDL:CORBACommons/IProcessControl/is_alive:1.0
-  //
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
-
-  virtual bool is_ready_() noexcept;
-
-  virtual char* comment()
-    /*throw(CORBACommons::OutOfMemory)*/;
 private:
   virtual ~UserInfoManagerApp_() noexcept{};
 
@@ -60,23 +41,14 @@ private:
     ConfigPtr;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-  CORBACommons::CorbaConfig corba_config_;
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
 
   AdServer::UserInfoSvcs::UserInfoManagerCorePtr user_info_manager_core_;
-  AdServer::UserInfoSvcs::UserInfoManagerImpl_var
-    user_info_manager_impl_;
-  AdServer::UserInfoSvcs::UserInfoManagerControlImpl_var
-    user_info_manager_control_impl_;
   AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter_;
   AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   ConfigPtr configuration_;
-
-  typedef Sync::PosixMutex ShutdownMutex;
-  typedef Sync::PosixGuard ShutdownGuard;
-
-  ShutdownMutex shutdown_lock_;
 };
 
 typedef ReferenceCounting::SmartPtr<UserInfoManagerApp_>

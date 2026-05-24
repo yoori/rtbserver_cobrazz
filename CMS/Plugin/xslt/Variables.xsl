@@ -36,7 +36,6 @@
   select="document('../xsd/CampaignManagement/CampaignServerAppType.xsd')/xsd:schema/xsd:complexType[@name='CampaignServerUpdateParamsType']"/>
 
 <xsl:variable name="current-campaign-server-obj" select="'/CampaignServer_v360'"/>
-<xsl:variable name="current-channel-proxy-obj" select="'/ChannelProxy_v33'"/>
 
 <!-- these services used in tr zone and must have unique version for all changes -->
 <xsl:variable name="app-version-num" select="translate($app-version, '0123456789.', '0123456789')"/>
@@ -102,12 +101,10 @@
 <xsl:variable name="http-frontend-descriptor" select="'AdCluster/FrontendSubCluster/HttpFrontend'"/>
 
 <!-- remote specific descriptors -->
-<xsl:variable name="remote-channel-proxy-descriptor" select="'AdCluster/BackendSubCluster/LocalProxy/ChannelProxy'"/>
 <xsl:variable name="remote-stunnel-client-descriptor" select="'AdCluster/BackendSubCluster/LocalProxy/STunnelClient'"/>
 
 <!-- pbe specific descriptors -->
 <xsl:variable name="pbe-campaign-server-descriptor" select="'AdProxyCluster/CampaignServer'"/>
-<xsl:variable name="pbe-channel-proxy-descriptor" select="'AdProxyCluster/ChannelProxy'"/>
 <xsl:variable name="pbe-stunnel-server-descriptor" select="'AdProxyCluster/STunnelServer'"/>
 
 <!-- logger specific params -->
@@ -132,8 +129,6 @@
 <xsl:variable name="user-bind-server-log-level" select="$default-log-level"/>
 <xsl:variable name="user-bind-controller-log-path" select="'/log/UserBindController/UserBindController'"/>
 <xsl:variable name="user-bind-controller-log-level" select="$default-log-level"/>
-<xsl:variable name="channel-proxy-log-level" select="$default-log-level"/>
-<xsl:variable name="channel-proxy-log-path" select="'/log/ChannelProxy/ChannelProxy'"/>
 <xsl:variable name="channel-server-log-level" select="$default-log-level"/>
 <xsl:variable name="channel-server-log-path" select="'/log/ChannelServer/ChannelServer'"/>
 <xsl:variable name="channel-controller-log-level" select="$default-log-level"/>
@@ -190,7 +185,6 @@
 <xsl:variable name="def-user-info-manager-controller-threads" select="'10'"/>
 <xsl:variable name="def-user-info-manager-threads" select="'40'"/>
 <xsl:variable name="def-channel-controller-threads" select="'10'"/>
-<xsl:variable name="def-channel-proxy-threads" select="'10'"/>
 <xsl:variable name="def-dictionary-provider-threads" select="'10'"/>
 <xsl:variable name="def-user-bind-server-threads" select="'40'"/>
 <xsl:variable name="def-user-bind-controller-threads" select="'40'"/>
@@ -334,7 +328,6 @@
 <xsl:variable name="def-sync-logs-server-port" select="$def-range-start + 14"/>
 <xsl:variable name="def-stat-receiver-port" select="$def-range-start + 15"/>
 <xsl:variable name="def-request-info-manager-port" select="$def-range-start + 16"/>
-<!--xsl:variable name="def-local-channel-proxy-port" select="concat($def-range-start, '120')"/-->
 <xsl:variable name="def-stunnel-client-port" select="$def-range-start + 21"/>
 <xsl:variable name="def-predictor-sync-logs-server-port" select="$def-range-start + 68"/>
 
@@ -344,7 +337,6 @@
 
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="$def-range-start + 56"/>
-<xsl:variable name="def-channel-proxy-port" select="$def-range-start + 55"/>
 <xsl:variable name="def-proxy-sync-logs-port" select="$def-range-start + 62"/>
 <xsl:variable name="def-stunnel-server-internal-port" select="$def-range-start + 72"/>
 

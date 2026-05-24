@@ -5,6 +5,7 @@
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/GrpcAlgs.hpp>
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
@@ -1718,30 +1719,23 @@ namespace RequestInfoSvcs{
     {
       AdServer::UserInfoSvcs::GrpcAlgs::fraud_user(
         *user_info_matcher_,
-        CorbaAlgs::pack_user_id(user_id),
-        CorbaAlgs::pack_time(deactivate_time));
+        ::GrpcAlgs::pack_user_id(user_id),
+        ::GrpcAlgs::pack_time(deactivate_time));
     }
-    catch(const AdServer::UserInfoSvcs::UserInfoMatcher::NotReady&)
+    catch(const AdServer::UserInfoSvcs::GrpcAlgs::NotReady&)
     {
       logger_->stream(Logging::Logger::NOTICE,
         Aspect::REQUEST_INFO_MANAGER) << FUN <<
         ": Can't mark user as fraud. "
-        "Caught UserInfoMatcher::NotReady.";
+        "Caught UserInfoSvcs::GrpcAlgs::NotReady.";
     }
-    catch(const AdServer::UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
+    catch(const AdServer::UserInfoSvcs::GrpcAlgs::Exception& e)
     {
       logger_->stream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
         "ADS-IMPL-3027") << FUN <<
         ": Can't mark user as fraud. "
-        "Caught UserInfoMatcher::ImplementationException: " << e.description;
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      logger_->stream(Logging::Logger::EMERGENCY,
-        Aspect::REQUEST_INFO_MANAGER,
-        "ADS-ICON-3001") << FUN <<
-        ": Can't mark user as fraud. Caught CORBA::SystemException: " << e;
+        "Caught UserInfoSvcs::GrpcAlgs::Exception: " << e.what();
     }
   }
 } /* RequestInfoSvcs */

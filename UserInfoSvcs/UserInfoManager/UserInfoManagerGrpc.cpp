@@ -13,7 +13,6 @@
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
-#include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <UserInfoSvcs/UserInfoManager/UserInfoManagerGrpc.grpc.pb.h>
 
 namespace AdServer::UserInfoSvcs
@@ -54,19 +53,59 @@ namespace AdServer::UserInfoSvcs
       std::atomic<std::uint64_t>& counter_;
     };
 
-    template<typename CorbaSeq>
-    void bytes_to_oct_seq_(const std::string& src, CorbaSeq& dst)
+    template<typename Seq>
+    void bytes_to_seq_(const std::string& src, Seq& dst)
     {
       dst.length(src.size());
       std::copy(src.begin(), src.end(), dst.get_buffer());
     }
 
-    template<typename CorbaSeq>
-    std::string oct_seq_to_bytes_(const CorbaSeq& src)
+    template<typename Seq>
+    std::string seq_to_bytes_(const Seq& src)
     {
       return std::string(
         reinterpret_cast<const char*>(src.get_buffer()),
         reinterpret_cast<const char*>(src.get_buffer() + src.length()));
+    }
+
+    AdServer::Commons::UserId unpack_user_id_(const std::string& src)
+    {
+      CORBACommons::UserIdInfo id;
+      bytes_to_seq_(src, id);
+      return CorbaAlgs::unpack_user_id(id);
+    }
+
+    Generics::Time unpack_time_(const std::string& src)
+    {
+      CORBACommons::TimestampInfo time;
+      bytes_to_seq_(src, time);
+      return CorbaAlgs::unpack_time(time);
+    }
+
+    Generics::Uuid unpack_request_id_(const std::string& src)
+    {
+      CORBACommons::RequestIdInfo request_id;
+      bytes_to_seq_(src, request_id);
+      return CorbaAlgs::unpack_request_id(request_id);
+    }
+
+    std::string pack_time_(const Generics::Time& src)
+    {
+      return seq_to_bytes_(CorbaAlgs::pack_time(src));
+    }
+
+    template<typename Decimal>
+    Decimal unpack_decimal_(const std::string& src)
+    {
+      CORBACommons::OctSeq value;
+      bytes_to_seq_(src, value);
+      return CorbaAlgs::unpack_decimal<Decimal>(value);
+    }
+
+    template<typename Decimal>
+    std::string pack_decimal_(const Decimal& src)
+    {
+      return seq_to_bytes_(CorbaAlgs::pack_decimal<Decimal>(src));
     }
 
     UserInfoManagerCore::ByteVector bytes_to_vector_(const std::string& src)
@@ -80,120 +119,40 @@ namespace AdServer::UserInfoSvcs
       return std::string(src.begin(), src.end());
     }
 
-    template<typename CorbaSeq, typename Repeated>
-    void repeated_to_id_seq_(const Repeated& src, CorbaSeq& dst)
-    {
-      dst.length(src.size());
-      for(int i = 0; i < src.size(); ++i)
-      {
-        dst[i] = src.Get(i);
-      }
-    }
-
-    template<typename CorbaSeq, typename Repeated>
-    void id_seq_to_repeated_(const CorbaSeq& src, Repeated* dst)
-    {
-      for(CORBA::ULong i = 0; i < src.length(); ++i)
-      {
-        dst->Add(src[i]);
-      }
-    }
-
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::GeoData& src,
-      GeoData& dst)
-    {
-      bytes_to_oct_seq_(src.latitude(), dst.latitude);
-      bytes_to_oct_seq_(src.longitude(), dst.longitude);
-      bytes_to_oct_seq_(src.accuracy(), dst.accuracy);
-    }
-
-    void convert_(
-      const GeoData& src,
-      adserver::user_info_svcs::user_info_manager::GeoData& dst)
-    {
-      dst.set_latitude(oct_seq_to_bytes_(src.latitude));
-      dst.set_longitude(oct_seq_to_bytes_(src.longitude));
-      dst.set_accuracy(oct_seq_to_bytes_(src.accuracy));
-    }
-
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::UserInfo& src,
-      UserInfo& dst)
-    {
-      bytes_to_oct_seq_(src.user_id(), dst.user_id);
-      bytes_to_oct_seq_(src.huser_id(), dst.huser_id);
-      dst.time = src.time();
-      dst.last_colo_id = src.last_colo_id();
-      dst.current_colo_id = src.current_colo_id();
-      dst.request_colo_id = src.request_colo_id();
-      dst.temporary = src.temporary();
-    }
-
-    UserInfoManagerCore::UserInfo unpack_user_info_(const UserInfo& src)
+    UserInfoManagerCore::UserInfo unpack_user_info_(
+      const adserver::user_info_svcs::user_info_manager::UserInfo& src)
     {
       UserInfoManagerCore::UserInfo dst;
-      dst.user_id = CorbaAlgs::unpack_user_id(src.user_id);
-      dst.huser_id = CorbaAlgs::unpack_user_id(src.huser_id);
-      dst.time = Generics::Time(src.time);
-      dst.request_colo_id = src.request_colo_id;
-      dst.current_colo_id = src.current_colo_id;
-      dst.temporary = src.temporary;
+      dst.user_id = unpack_user_id_(src.user_id());
+      dst.huser_id = unpack_user_id_(src.huser_id());
+      dst.time = Generics::Time(src.time());
+      dst.request_colo_id = src.request_colo_id();
+      dst.current_colo_id = src.current_colo_id();
+      dst.temporary = src.temporary();
       return dst;
     }
 
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::ProfilesRequestInfo& src,
-      ProfilesRequestInfo& dst)
-    {
-      dst.base_profile = src.base_profile();
-      dst.add_profile = src.add_profile();
-      dst.history_profile = src.history_profile();
-      dst.freq_cap_profile = src.freq_cap_profile();
-      dst.pref_profile = src.pref_profile();
-    }
-
     UserInfoManagerCore::ProfilesRequest
-    unpack_profiles_request_(const ProfilesRequestInfo& src)
+    unpack_profiles_request_(
+      const adserver::user_info_svcs::user_info_manager::ProfilesRequestInfo& src)
     {
       return {
-        src.base_profile,
-        src.add_profile,
-        src.history_profile,
-        src.freq_cap_profile};
-    }
-
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::UserProfiles& src,
-      UserProfiles& dst)
-    {
-      bytes_to_oct_seq_(src.base_user_profile(), dst.base_user_profile);
-      bytes_to_oct_seq_(src.add_user_profile(), dst.add_user_profile);
-      bytes_to_oct_seq_(src.history_user_profile(), dst.history_user_profile);
-      bytes_to_oct_seq_(src.freq_cap(), dst.freq_cap);
-      bytes_to_oct_seq_(src.pref_profile(), dst.pref_profile);
-    }
-
-    void convert_(
-      const UserProfiles& src,
-      adserver::user_info_svcs::user_info_manager::UserProfiles& dst)
-    {
-      dst.set_base_user_profile(oct_seq_to_bytes_(src.base_user_profile));
-      dst.set_add_user_profile(oct_seq_to_bytes_(src.add_user_profile));
-      dst.set_history_user_profile(oct_seq_to_bytes_(src.history_user_profile));
-      dst.set_freq_cap(oct_seq_to_bytes_(src.freq_cap));
-      dst.set_pref_profile(oct_seq_to_bytes_(src.pref_profile));
+        src.base_profile(),
+        src.add_profile(),
+        src.history_profile(),
+        src.freq_cap_profile()};
     }
 
     UserInfoManagerCore::UserProfiles
-    unpack_user_profiles_(const UserProfiles& src)
+    unpack_user_profiles_(
+      const adserver::user_info_svcs::user_info_manager::UserProfiles& src)
     {
       return {
-        bytes_to_vector_(oct_seq_to_bytes_(src.base_user_profile)),
-        bytes_to_vector_(oct_seq_to_bytes_(src.add_user_profile)),
-        bytes_to_vector_(oct_seq_to_bytes_(src.history_user_profile)),
-        bytes_to_vector_(oct_seq_to_bytes_(src.freq_cap)),
-        bytes_to_vector_(oct_seq_to_bytes_(src.pref_profile))};
+        bytes_to_vector_(src.base_user_profile()),
+        bytes_to_vector_(src.add_user_profile()),
+        bytes_to_vector_(src.history_user_profile()),
+        bytes_to_vector_(src.freq_cap()),
+        bytes_to_vector_(src.pref_profile())};
     }
 
     void pack_user_profiles_(
@@ -207,216 +166,91 @@ namespace AdServer::UserInfoSvcs
       dst.set_pref_profile(vector_to_bytes_(src.pref_profile));
     }
 
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::ChannelTriggerMatch& src,
-      UserInfoMatcher::ChannelTriggerMatch& dst)
-    {
-      dst.channel_id = src.channel_id();
-      dst.channel_trigger_id = src.channel_trigger_id();
-    }
-
-    void convert_(
-      const UserInfoMatcher::ChannelTriggerMatch& src,
-      adserver::user_info_svcs::user_info_manager::ChannelTriggerMatch& dst)
-    {
-      dst.set_channel_id(src.channel_id);
-      dst.set_channel_trigger_id(src.channel_trigger_id);
-    }
-
-    template<typename PbRepeated, typename CorbaSeq>
-    void convert_channel_match_seq_(const PbRepeated& src, CorbaSeq& dst)
-    {
-      dst.length(src.size());
-      for(int i = 0; i < src.size(); ++i)
-      {
-        convert_(src.Get(i), dst[i]);
-      }
-    }
-
-    template<typename Seq>
+    template<typename Repeated>
     std::vector<UserInfoManagerCore::ChannelTriggerMatch>
-    unpack_channel_matches_(const Seq& src)
+    unpack_channel_matches_(const Repeated& src)
     {
       std::vector<UserInfoManagerCore::ChannelTriggerMatch> result;
-      result.reserve(src.length());
-      for(CORBA::ULong i = 0; i < src.length(); ++i)
+      result.reserve(src.size());
+      for(int i = 0; i < src.size(); ++i)
       {
-        result.push_back({src[i].channel_id, src[i].channel_trigger_id});
+        const auto& item = src.Get(i);
+        result.push_back({item.channel_id(), item.channel_trigger_id()});
       }
       return result;
     }
 
-    template<typename Seq>
-    std::vector<unsigned long> unpack_ids_(const Seq& src)
+    template<typename Repeated>
+    std::vector<unsigned long> unpack_ids_(const Repeated& src)
     {
-      return std::vector<unsigned long>(
-        src.get_buffer(),
-        src.get_buffer() + src.length());
+      std::vector<unsigned long> result;
+      result.reserve(src.size());
+      for(int i = 0; i < src.size(); ++i)
+      {
+        result.push_back(src.Get(i));
+      }
+      return result;
     }
 
-    template<typename Seq>
-    std::set<unsigned long> unpack_id_set_(const Seq& src)
+    template<typename Repeated>
+    std::set<unsigned long> unpack_id_set_(const Repeated& src)
     {
-      return std::set<unsigned long>(
-        src.get_buffer(),
-        src.get_buffer() + src.length());
+      std::set<unsigned long> result;
+      for(int i = 0; i < src.size(); ++i)
+      {
+        result.insert(src.Get(i));
+      }
+      return result;
     }
 
+    template<typename Repeated>
     std::vector<UserInfoManagerCore::SeqOrder>
-    unpack_seq_orders_(const UserInfoManager::SeqOrderSeq& src)
+    unpack_seq_orders_(const Repeated& src)
     {
       std::vector<UserInfoManagerCore::SeqOrder> result;
-      result.reserve(src.length());
-      for(CORBA::ULong i = 0; i < src.length(); ++i)
+      result.reserve(src.size());
+      for(int i = 0; i < src.size(); ++i)
       {
-        result.push_back({src[i].ccg_id, src[i].set_id, src[i].imps});
+        const auto& item = src.Get(i);
+        result.push_back({item.ccg_id(), item.set_id(), item.imps()});
       }
       return result;
-    }
-
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::MatchParams& src,
-      UserInfoMatcher::MatchParams& dst)
-    {
-      repeated_to_id_seq_(src.persistent_channel_ids(), dst.persistent_channel_ids);
-      convert_channel_match_seq_(src.search_channel_ids(), dst.search_channel_ids);
-      convert_channel_match_seq_(src.page_channel_ids(), dst.page_channel_ids);
-      convert_channel_match_seq_(src.url_channel_ids(), dst.url_channel_ids);
-      convert_channel_match_seq_(
-        src.url_keyword_channel_ids(),
-        dst.url_keyword_channel_ids);
-      bytes_to_oct_seq_(src.publishers_optin_timeout(), dst.publishers_optin_timeout);
-      dst.use_empty_profile = src.use_empty_profile();
-      dst.silent_match = src.silent_match();
-      dst.no_match = src.no_match();
-      dst.no_result = src.no_result();
-      dst.ret_freq_caps = src.ret_freq_caps();
-      dst.provide_channel_count = src.provide_channel_count();
-      dst.provide_persistent_channels = src.provide_persistent_channels();
-      dst.change_last_request = src.change_last_request();
-      dst.cohort = src.cohort().c_str();
-      dst.cohort2 = src.cohort2().c_str();
-      dst.filter_contextual_triggers = src.filter_contextual_triggers();
-      dst.geo_data_seq.length(src.geo_data_seq_size());
-      for(int i = 0; i < src.geo_data_seq_size(); ++i)
-      {
-        convert_(src.geo_data_seq(i), dst.geo_data_seq[i]);
-      }
     }
 
     UserInfoManagerCore::MatchParams
-    unpack_match_params_(const UserInfoMatcher::MatchParams& src)
+    unpack_match_params_(
+      const adserver::user_info_svcs::user_info_manager::MatchParams& src)
     {
       UserInfoManagerCore::MatchParams dst;
-      dst.page_channel_ids = unpack_channel_matches_(src.page_channel_ids);
-      dst.search_channel_ids = unpack_channel_matches_(src.search_channel_ids);
-      dst.url_channel_ids = unpack_channel_matches_(src.url_channel_ids);
+      dst.page_channel_ids = unpack_channel_matches_(src.page_channel_ids());
+      dst.search_channel_ids = unpack_channel_matches_(src.search_channel_ids());
+      dst.url_channel_ids = unpack_channel_matches_(src.url_channel_ids());
       dst.url_keyword_channel_ids =
-        unpack_channel_matches_(src.url_keyword_channel_ids);
-      dst.persistent_channel_ids = unpack_ids_(src.persistent_channel_ids);
-      dst.cohort = src.cohort.in();
-      dst.cohort2 = src.cohort2.in();
+        unpack_channel_matches_(src.url_keyword_channel_ids());
+      dst.persistent_channel_ids = unpack_ids_(src.persistent_channel_ids());
+      dst.cohort = src.cohort();
+      dst.cohort2 = src.cohort2();
       dst.publishers_optin_timeout =
-        CorbaAlgs::unpack_time(src.publishers_optin_timeout);
-      dst.use_empty_profile = src.use_empty_profile;
-      dst.filter_contextual_triggers = src.filter_contextual_triggers;
-      dst.silent_match = src.silent_match;
-      dst.no_match = src.no_match;
-      dst.no_result = src.no_result;
-      dst.provide_channel_count = src.provide_channel_count;
-      dst.provide_persistent_channels = src.provide_persistent_channels;
-      dst.change_last_request = src.change_last_request;
-      dst.ret_freq_caps = src.ret_freq_caps;
-      dst.geo_data_seq.reserve(src.geo_data_seq.length());
-      for(CORBA::ULong i = 0; i < src.geo_data_seq.length(); ++i)
+        unpack_time_(src.publishers_optin_timeout());
+      dst.use_empty_profile = src.use_empty_profile();
+      dst.filter_contextual_triggers = src.filter_contextual_triggers();
+      dst.silent_match = src.silent_match();
+      dst.no_match = src.no_match();
+      dst.no_result = src.no_result();
+      dst.provide_channel_count = src.provide_channel_count();
+      dst.provide_persistent_channels = src.provide_persistent_channels();
+      dst.change_last_request = src.change_last_request();
+      dst.ret_freq_caps = src.ret_freq_caps();
+      dst.geo_data_seq.reserve(src.geo_data_seq_size());
+      for(int i = 0; i < src.geo_data_seq_size(); ++i)
       {
+        const auto& geo_data = src.geo_data_seq(i);
         dst.geo_data_seq.push_back({
-          CorbaAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
-            src.geo_data_seq[i].latitude),
-          CorbaAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
-            src.geo_data_seq[i].longitude),
-          CorbaAlgs::unpack_decimal<CampaignSvcs::AccuracyDecimal>(
-            src.geo_data_seq[i].accuracy)});
+          unpack_decimal_<CampaignSvcs::CoordDecimal>(geo_data.latitude()),
+          unpack_decimal_<CampaignSvcs::CoordDecimal>(geo_data.longitude()),
+          unpack_decimal_<CampaignSvcs::AccuracyDecimal>(geo_data.accuracy())});
       }
       return dst;
-    }
-
-    void convert_(
-      const UserInfoMatcher::ChannelWeight& src,
-      adserver::user_info_svcs::user_info_manager::ChannelWeight& dst)
-    {
-      dst.set_channel_id(src.channel_id);
-      dst.set_weight(src.weight);
-    }
-
-    void convert_(
-      const UserInfoMatcher::SeqOrderInfo& src,
-      adserver::user_info_svcs::user_info_manager::SeqOrderInfo& dst)
-    {
-      dst.set_ccg_id(src.ccg_id);
-      dst.set_set_id(src.set_id);
-      dst.set_imps(src.imps);
-    }
-
-    void convert_(
-      const adserver::user_info_svcs::user_info_manager::SeqOrderInfo& src,
-      UserInfoMatcher::SeqOrderInfo& dst)
-    {
-      dst.ccg_id = src.ccg_id();
-      dst.set_id = src.set_id();
-      dst.imps = src.imps();
-    }
-
-    void convert_(
-      const Commons::CampaignFreq& src,
-      adserver::user_info_svcs::user_info_manager::CampaignFreq& dst)
-    {
-      dst.set_campaign_id(src.campaign_id);
-      dst.set_imps(src.imps);
-    }
-
-    void convert_(
-      const UserInfoMatcher::MatchResult& src,
-      adserver::user_info_svcs::user_info_manager::MatchResult& dst)
-    {
-      dst.set_times_inited(src.times_inited);
-      dst.set_last_request_time(oct_seq_to_bytes_(src.last_request_time));
-      dst.set_create_time(oct_seq_to_bytes_(src.create_time));
-      dst.set_session_start(oct_seq_to_bytes_(src.session_start));
-      dst.set_colo_id(src.colo_id);
-      for(CORBA::ULong i = 0; i < src.channels.length(); ++i)
-      {
-        convert_(src.channels[i], *dst.add_channels());
-      }
-      for(CORBA::ULong i = 0; i < src.hid_channels.length(); ++i)
-      {
-        convert_(src.hid_channels[i], *dst.add_hid_channels());
-      }
-      id_seq_to_repeated_(src.full_freq_caps, dst.mutable_full_freq_caps());
-      id_seq_to_repeated_(
-        src.full_virtual_freq_caps,
-        dst.mutable_full_virtual_freq_caps());
-      for(CORBA::ULong i = 0; i < src.seq_orders.length(); ++i)
-      {
-        convert_(src.seq_orders[i], *dst.add_seq_orders());
-      }
-      for(CORBA::ULong i = 0; i < src.campaign_freqs.length(); ++i)
-      {
-        convert_(src.campaign_freqs[i], *dst.add_campaign_freqs());
-      }
-      dst.set_fraud_request(src.fraud_request);
-      dst.set_process_time(oct_seq_to_bytes_(src.process_time));
-      dst.set_adv_channel_count(src.adv_channel_count);
-      dst.set_discover_channel_count(src.discover_channel_count);
-      dst.set_cohort(src.cohort.in());
-      dst.set_cohort2(src.cohort2.in());
-      id_seq_to_repeated_(
-        src.exclude_pubpixel_accounts,
-        dst.mutable_exclude_pubpixel_accounts());
-      for(CORBA::ULong i = 0; i < src.geo_data_seq.length(); ++i)
-      {
-        convert_(src.geo_data_seq[i], *dst.add_geo_data_seq());
-      }
     }
 
     void convert_(
@@ -448,12 +282,9 @@ namespace AdServer::UserInfoSvcs
       const UserInfoManagerCore::GeoData& src,
       adserver::user_info_svcs::user_info_manager::GeoData& dst)
     {
-      dst.set_latitude(oct_seq_to_bytes_(
-        CorbaAlgs::pack_decimal<CampaignSvcs::CoordDecimal>(src.latitude)));
-      dst.set_longitude(oct_seq_to_bytes_(
-        CorbaAlgs::pack_decimal<CampaignSvcs::CoordDecimal>(src.longitude)));
-      dst.set_accuracy(oct_seq_to_bytes_(
-        CorbaAlgs::pack_decimal<CampaignSvcs::AccuracyDecimal>(src.accuracy)));
+      dst.set_latitude(pack_decimal_(src.latitude));
+      dst.set_longitude(pack_decimal_(src.longitude));
+      dst.set_accuracy(pack_decimal_(src.accuracy));
     }
 
     void convert_(
@@ -461,12 +292,9 @@ namespace AdServer::UserInfoSvcs
       adserver::user_info_svcs::user_info_manager::MatchResult& dst)
     {
       dst.set_times_inited(src.times_inited);
-      dst.set_last_request_time(oct_seq_to_bytes_(CorbaAlgs::pack_time(
-        src.last_request_time)));
-      dst.set_create_time(oct_seq_to_bytes_(CorbaAlgs::pack_time(
-        src.create_time)));
-      dst.set_session_start(oct_seq_to_bytes_(CorbaAlgs::pack_time(
-        src.session_start)));
+      dst.set_last_request_time(pack_time_(src.last_request_time));
+      dst.set_create_time(pack_time_(src.create_time));
+      dst.set_session_start(pack_time_(src.session_start));
       dst.set_colo_id(src.colo_id);
       for(const auto& channel : src.channels)
       {
@@ -493,8 +321,7 @@ namespace AdServer::UserInfoSvcs
         convert_(campaign_freq, *dst.add_campaign_freqs());
       }
       dst.set_fraud_request(src.fraud_request);
-      dst.set_process_time(oct_seq_to_bytes_(CorbaAlgs::pack_time(
-        src.process_time)));
+      dst.set_process_time(pack_time_(src.process_time));
       dst.set_adv_channel_count(src.adv_channel_count);
       dst.set_discover_channel_count(src.discover_channel_count);
       dst.set_cohort(src.cohort);
@@ -506,16 +333,6 @@ namespace AdServer::UserInfoSvcs
       for(const auto& geo_data : src.geo_data_seq)
       {
         convert_(geo_data, *dst.add_geo_data_seq());
-      }
-    }
-
-    template<typename PbRepeated, typename CorbaSeq>
-    void convert_seq_order_seq_(const PbRepeated& src, CorbaSeq& dst)
-    {
-      dst.length(src.size());
-      for(int i = 0; i < src.size(); ++i)
-      {
-        convert_(src.Get(i), dst[i]);
       }
     }
 
@@ -739,8 +556,7 @@ namespace AdServer::UserInfoSvcs
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
-      response.set_master_stamp(oct_seq_to_bytes_(CorbaAlgs::pack_time(
-        user_info_manager_->get_master_stamp())));
+      response.set_master_stamp(pack_time_(user_info_manager_->get_master_stamp()));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -755,16 +571,11 @@ namespace AdServer::UserInfoSvcs
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
-      CORBACommons::UserIdInfo user_id;
-      ProfilesRequestInfo profile_request;
-      bytes_to_oct_seq_(request.user_id(), user_id);
-      convert_(request.profile_request(), profile_request);
-
       UserInfoManagerCore::UserProfiles user_profile;
       const bool found = user_info_manager_->get_user_profile(
-        CorbaAlgs::unpack_user_id(user_id),
+        unpack_user_id_(request.user_id()),
         request.temporary(),
-        unpack_profiles_request_(profile_request),
+        unpack_profiles_request_(request.profile_request()),
         user_profile);
       response.set_found(found);
       pack_user_profiles_(user_profile, *response.mutable_user_profile());
@@ -784,15 +595,10 @@ namespace AdServer::UserInfoSvcs
     InProgressGuard in_progress(stats_counters_->match_in_progress);
     try
     {
-      UserInfo user_info;
-      UserInfoMatcher::MatchParams match_params;
-      convert_(request.user_info(), user_info);
-      convert_(request.match_params(), match_params);
-
       UserInfoManagerCore::MatchResult match_result;
       const bool matched = user_info_manager_->match(
-        unpack_user_info_(user_info),
-        unpack_match_params_(match_params),
+        unpack_user_info_(request.user_info()),
+        unpack_match_params_(request.match_params()),
         match_result);
       response.set_matched(matched);
       convert_(match_result, *response.mutable_match_result());
@@ -813,34 +619,16 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->update_user_freq_caps_in_progress);
     try
     {
-      CORBACommons::UserIdInfo user_id;
-      CORBACommons::TimestampInfo time;
-      CORBACommons::RequestIdInfo request_id;
-      FreqCapIdSeq freq_caps;
-      FreqCapIdSeq uc_freq_caps;
-      FreqCapIdSeq virtual_freq_caps;
-      UserInfoManager::SeqOrderSeq seq_orders;
-      CampaignIdSeq campaign_ids;
-      CampaignIdSeq uc_campaign_ids;
-      bytes_to_oct_seq_(request.user_id(), user_id);
-      bytes_to_oct_seq_(request.time(), time);
-      bytes_to_oct_seq_(request.request_id(), request_id);
-      repeated_to_id_seq_(request.freq_caps(), freq_caps);
-      repeated_to_id_seq_(request.uc_freq_caps(), uc_freq_caps);
-      repeated_to_id_seq_(request.virtual_freq_caps(), virtual_freq_caps);
-      convert_seq_order_seq_(request.seq_orders(), seq_orders);
-      repeated_to_id_seq_(request.campaign_ids(), campaign_ids);
-      repeated_to_id_seq_(request.uc_campaign_ids(), uc_campaign_ids);
       user_info_manager_->update_user_freq_caps(
-        CorbaAlgs::unpack_user_id(user_id),
-        CorbaAlgs::unpack_time(time),
-        CorbaAlgs::unpack_request_id(request_id),
-        unpack_ids_(freq_caps),
-        unpack_ids_(uc_freq_caps),
-        unpack_ids_(virtual_freq_caps),
-        unpack_seq_orders_(seq_orders),
-        unpack_ids_(campaign_ids),
-        unpack_ids_(uc_campaign_ids));
+        unpack_user_id_(request.user_id()),
+        unpack_time_(request.time()),
+        unpack_request_id_(request.request_id()),
+        unpack_ids_(request.freq_caps()),
+        unpack_ids_(request.uc_freq_caps()),
+        unpack_ids_(request.virtual_freq_caps()),
+        unpack_seq_orders_(request.seq_orders()),
+        unpack_ids_(request.campaign_ids()),
+        unpack_ids_(request.uc_campaign_ids()));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -858,21 +646,11 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->confirm_user_freq_caps_in_progress);
     try
     {
-      CORBACommons::UserIdInfo user_id;
-      CORBACommons::TimestampInfo time;
-      CORBACommons::RequestIdInfo request_id;
-      CORBACommons::IdSeq exclude_pubpixel_accounts;
-      bytes_to_oct_seq_(request.user_id(), user_id);
-      bytes_to_oct_seq_(request.time(), time);
-      bytes_to_oct_seq_(request.request_id(), request_id);
-      repeated_to_id_seq_(
-        request.exclude_pubpixel_accounts(),
-        exclude_pubpixel_accounts);
       user_info_manager_->confirm_user_freq_caps(
-        CorbaAlgs::unpack_user_id(user_id),
-        CorbaAlgs::unpack_time(time),
-        CorbaAlgs::unpack_request_id(request_id),
-        unpack_id_set_(exclude_pubpixel_accounts));
+        unpack_user_id_(request.user_id()),
+        unpack_time_(request.time()),
+        unpack_request_id_(request.request_id()),
+        unpack_id_set_(request.exclude_pubpixel_accounts()));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -890,13 +668,9 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->fraud_user_in_progress);
     try
     {
-      CORBACommons::UserIdInfo user_id;
-      CORBACommons::TimestampInfo time;
-      bytes_to_oct_seq_(request.user_id(), user_id);
-      bytes_to_oct_seq_(request.time(), time);
       response.set_fraud(user_info_manager_->fraud_user(
-        CorbaAlgs::unpack_user_id(user_id),
-        CorbaAlgs::unpack_time(time)));
+        unpack_user_id_(request.user_id()),
+        unpack_time_(request.time())));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -914,10 +688,8 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->remove_user_profile_in_progress);
     try
     {
-      CORBACommons::UserIdInfo user_id;
-      bytes_to_oct_seq_(request.user_id(), user_id);
       response.set_removed(user_info_manager_->remove_user_profile(
-        CorbaAlgs::unpack_user_id(user_id)));
+        unpack_user_id_(request.user_id())));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -934,23 +706,16 @@ namespace AdServer::UserInfoSvcs
     InProgressGuard in_progress(stats_counters_->merge_in_progress);
     try
     {
-      UserInfo user_info;
-      UserInfoMatcher::MatchParams match_params;
-      UserProfiles merge_user_profile;
       bool merge_success = false;
       Generics::Time last_request;
-      convert_(request.user_info(), user_info);
-      convert_(request.match_params(), match_params);
-      convert_(request.merge_user_profile(), merge_user_profile);
       response.set_result(user_info_manager_->merge(
-        unpack_user_info_(user_info),
-        unpack_match_params_(match_params),
-        unpack_user_profiles_(merge_user_profile),
+        unpack_user_info_(request.user_info()),
+        unpack_match_params_(request.match_params()),
+        unpack_user_profiles_(request.merge_user_profile()),
         merge_success,
         last_request));
       response.set_merge_success(merge_success);
-      response.set_last_request(oct_seq_to_bytes_(CorbaAlgs::pack_time(
-        last_request)));
+      response.set_last_request(pack_time_(last_request));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -968,18 +733,10 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->consider_publishers_optin_in_progress);
     try
     {
-      CORBACommons::UserIdInfo user_id;
-      CORBACommons::TimestampInfo now;
-      CORBACommons::IdSeq exclude_pubpixel_accounts;
-      bytes_to_oct_seq_(request.user_id(), user_id);
-      bytes_to_oct_seq_(request.now(), now);
-      repeated_to_id_seq_(
-        request.exclude_pubpixel_accounts(),
-        exclude_pubpixel_accounts);
       user_info_manager_->consider_publishers_optin(
-        CorbaAlgs::unpack_user_id(user_id),
-        unpack_id_set_(exclude_pubpixel_accounts),
-        CorbaAlgs::unpack_time(now));
+        unpack_user_id_(request.user_id()),
+        unpack_id_set_(request.exclude_pubpixel_accounts()),
+        unpack_time_(request.now()));
       result_status = grpc::Status::OK;
     }
     catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
@@ -1015,11 +772,9 @@ namespace AdServer::UserInfoSvcs
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     try
     {
-      CORBACommons::TimestampInfo cleanup_time;
-      bytes_to_oct_seq_(request.cleanup_time(), cleanup_time);
       user_info_manager_->clear_expired(
         request.sync(),
-        CorbaAlgs::unpack_time(cleanup_time),
+        unpack_time_(request.cleanup_time()),
         request.portion());
       result_status = grpc::Status::OK;
     }

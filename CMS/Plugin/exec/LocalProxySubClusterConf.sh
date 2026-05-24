@@ -26,33 +26,7 @@ then
 fi
 
 LOCAL_PROXY_DESCR=AdCluster/BackendSubCluster/LocalProxy
-CHANNEL_PROXY_DESCR=$LOCAL_PROXY_DESCR/ChannelProxy
 STUNNEL_CLIENT_DESCR=$LOCAL_PROXY_DESCR/STunnelClient
-
-## configure ChannelProxy
-CHANNEL_PROXY_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CHANNEL_PROXY_DESCR']"
-$EXEC/ServiceConf.sh \
-  --services-xpath "$CHANNEL_PROXY_XPATH" \
-  --var MODE REMOTE-MODE \
-  --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/ChannelServing/ChannelProxy.xsl \
-  --out-file ChannelProxy.xml \
-  --out-dir-suffix "$OUT_DIR_SUFFIX" \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT
-
-let "EXIT_CODE|=$?"
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "channel_proxy" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:channelProxy" \
-  --services-xpath "$CHANNEL_PROXY_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/$DACS_LOCAL_PROXY_NAME
-
-let "EXIT_CODE|=$?"
 
 ## configure STunnelClient
 STUNNEL_CLIENT_XPATH="$CLUSTER_XPATH/service[@descriptor = '$STUNNEL_CLIENT_DESCR']"

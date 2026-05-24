@@ -159,25 +159,6 @@
     <xsl:attribute name="root_dir"><xsl:value-of select="$root-dir"/></xsl:attribute>
     <xsl:attribute name="colo_id"><xsl:value-of select="$colo-id"/></xsl:attribute>
 
-    <!-- check that defined all needed parameters -->
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$user-info-manager-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($user-info-manager-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-user-info-manager-threads"/>
-        </xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-port"/></xsl:attribute>
-        <cfg:Object servant="UserInfoManager" name="UserInfoManager"/>
-        <cfg:Object servant="UserInfoManagerControl" name="UserInfoManagerControl"/>
-        <cfg:Object servant="UserInfoManagerStats" name="UserInfoManagerStats"/>
-        <cfg:Object servant="UserInfoManager" name="UserInfoManager">
-          <xsl:attribute name="name"><xsl:value-of select="$current-user-info-manager-obj"/></xsl:attribute>
-        </cfg:Object>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
-
     <cfg:GrpcConfig>
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>

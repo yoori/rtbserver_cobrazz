@@ -348,13 +348,6 @@
       <xsl:if test="count($localproxy-path//service) > 0" >
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"
-            select="$localproxy-path/service[@descriptor = $remote-channel-proxy-descriptor]"/>
-          <xsl:with-param name="service-name" select="'localproxy-ChannelProxy'"/>
-          <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelProxy'"/>
-        </xsl:call-template>
-
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
             select="$localproxy-path/service[@descriptor = $remote-stunnel-client-descriptor]"/>
           <xsl:with-param name="service-name" select="'localproxy-STunnel'"/>
           <xsl:with-param name="service-type" select="'AdServer::LogProcessing::STunnel'"/>
@@ -531,17 +524,9 @@
     <!--proxy cluster services-->
     <xsl:variable name="group"><xsl:value-of select="concat('pbe', $number, '-')"/></xsl:variable>
 
-    <xsl:call-template name="AddService">
-      <xsl:with-param name="service-path"
-        select="$cluster-path/service[@descriptor = $pbe-channel-proxy-descriptor]"/>
-      <xsl:with-param name="service-name" select="concat($group, 'ChannelProxy')"/>
-      <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelProxy'"/>
-    </xsl:call-template>
-
     <xsl:call-template name="AddOneOnHostService">
       <xsl:with-param name="serv-path"
         select="$cluster-path/service[
-          @descriptor = $pbe-channel-proxy-descriptor or
           @descriptor = $pbe-campaign-server-descriptor or
           @descriptor = $pbe-stunnel-server-descriptor]"/>
       <xsl:with-param name="service-name" select="concat($group, 'SyncLogs')"/>
@@ -1985,12 +1970,6 @@
             <xsl:with-param name="masters" select="'AdServer::LogProcessing::LogGeneralizer'"/>
             <xsl:with-param name="slaves" select= "'AdServer::CampaignSvcs::CampaignServer'"/>
           </xsl:call-template>
-          <xsl:if test="count($localproxy-path) > 0">
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="slaves" select="$channel-controller-dep"/>
-              <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::ChannelProxy'"/>
-            </xsl:call-template>
-          </xsl:if>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select=
               "'AdServer::ChannelSvcs::ChannelServer

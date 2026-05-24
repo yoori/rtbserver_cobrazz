@@ -4,11 +4,9 @@ add_library(UserInfoClient SHARED
 )
 
 target_link_libraries(UserInfoClient
-  CORBACommons
   Generics
   Commons
   Logger
-  UserInfoManagerIDL
   UserInfoControllerGrpc
   UserInfoManagerGrpcClient
 )

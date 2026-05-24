@@ -548,8 +548,7 @@ install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/
     <xsl:call-template name="GetAllHosts">
       <xsl:with-param name="path" select=".//service[
         @descriptor = $pbe-stunnel-server-descriptor or
-        @descriptor = $pbe-campaign-server-descriptor or
-        @descriptor = $pbe-channel-proxy-descriptor]"/>
+        @descriptor = $pbe-campaign-server-descriptor]"/>
     </xsl:call-template>
   </xsl:variable>
 
@@ -563,7 +562,6 @@ install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/
     <xsl:call-template name="GetAllHosts">
       <xsl:with-param name="path" select=".//service[
         @descriptor = $pbe-campaign-server-descriptor or
-        @descriptor = $pbe-channel-proxy-descriptor or
         @descriptor = $pbe-stunnel-server-descriptor]"/>
     </xsl:call-template>
     </xsl:if>

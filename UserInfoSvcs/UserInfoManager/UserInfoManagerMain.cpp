@@ -1,12 +1,14 @@
 #include <eh/Exception.hpp>
 
 #include <memory>
+#include <string>
+#include <unistd.h>
+
+#include <Logger/StreamLogger.hpp>
 
 #include <Commons/PidFileGuard.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/SignalActiveObject.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 
@@ -15,66 +17,28 @@
 namespace
 {
   const char ASPECT[] = "UserInfoManager";
-  const char USER_INFO_MANAGER_OBJ_KEY[] = "UserInfoManager";
-  const char USER_INFO_MANAGER_CONTROL_OBJ_KEY[] = "UserInfoManagerControl";
+
+  void
+  lifecycle_debug_(
+    const char* step,
+    const std::string& pid_file = std::string()) noexcept
+  {
+    std::cerr << "TEMP UserInfoManager lifecycle: pid=" << ::getpid() <<
+      " step=" << step;
+    if (!pid_file.empty())
+    {
+      std::cerr << " pid_file=" << pid_file;
+    }
+    std::cerr << std::endl;
+  }
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "UserInfoManagerApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "UserInfoManagerApp_", ASPECT, 0)
 {}
-
-void
-UserInfoManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownGuard guard(shutdown_lock_);
-
-  deactivate_object();
-  wait_object();
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-UserInfoManagerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
-}
-
-bool
-UserInfoManagerApp_::is_ready_() noexcept
-{
-  return user_info_manager_core_ &&
-    user_info_manager_core_->uim_ready();
-}
-
-char*
-UserInfoManagerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
-{
-  try
-  {
-    if (user_info_manager_core_)
-    {
-      CORBA::String_var result;
-      result << user_info_manager_core_->get_progress();
-      return result._retn();
-    }
-    CORBA::String_var r;
-    r << std::string("0.0%");
-    return r._retn();
-  }
-  catch(const CORBA::Exception&)
-  {
-    std::cerr << "ex" << std::endl;
-    throw CORBACommons::OutOfMemory();
-  }
-  catch(const eh::Exception& e)
-  {
-    std::cerr << "ex" << std::endl;
-    throw CORBACommons::OutOfMemory();
-  }
-}
 
 void
 UserInfoManagerApp_::main(int& argc, char** argv)
@@ -151,46 +115,13 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       throw Exception(ostr);
     }
 
-    // fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        config().CorbaConfig(),
-        corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't read Corba Config: " << e.what();
-      throw Exception(ostr);
-    }
-
-    corba_server_adapter_ =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
-
-    // Creating user info manager servant
     user_info_manager_core_ =
       std::make_shared<AdServer::UserInfoSvcs::UserInfoManagerCore>(
         callback(),
         logger(),
         config());
-    user_info_manager_impl_ =
-      new AdServer::UserInfoSvcs::UserInfoManagerImpl(
-        user_info_manager_core_);
 
     add_child_object(user_info_manager_core_);
-
-    user_info_manager_control_impl_ =
-      new AdServer::UserInfoSvcs::UserInfoManagerControlImpl(
-        user_info_manager_core_);
-
-    register_vars_controller();
-
-    corba_server_adapter_->add_binding(
-      USER_INFO_MANAGER_OBJ_KEY, user_info_manager_impl_.in());
-
-    corba_server_adapter_->add_binding(
-      USER_INFO_MANAGER_CONTROL_OBJ_KEY, user_info_manager_control_impl_.in());
 
     if(config().GrpcConfig().present())
     {
@@ -249,20 +180,30 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       add_child_object(http_server_);
     }
 
-    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
-      std::string(config().pid_file()));
+    const std::string pid_file = std::string(config().pid_file());
+    lifecycle_debug_("before pid file create", pid_file);
+    pid_file_guard =
+      std::make_unique<AdServer::Commons::PidFileGuard>(pid_file);
+    lifecycle_debug_("after pid file create", pid_file);
 
-    add_child_object(corba_server_adapter_.in());
     AdServer::Commons::SignalActiveObject signal_active_object;
 
+    lifecycle_debug_("before activate_object", pid_file);
     activate_object();
+    lifecycle_debug_("after activate_object", pid_file);
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
+    lifecycle_debug_("before wait shutdown signal", pid_file);
     signal_active_object.wait_object();
+    lifecycle_debug_("after wait shutdown signal", pid_file);
 
+    lifecycle_debug_("before normal deactivate_object", pid_file);
     deactivate_object();
-    wait();
+    lifecycle_debug_("after normal deactivate_object", pid_file);
+    lifecycle_debug_("before normal wait_object", pid_file);
+    wait_object();
+    lifecycle_debug_("after normal wait_object", pid_file);
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
@@ -273,13 +214,6 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       "ADS-IMPL-58") << FUN <<
       ": Got UserInfoManagerApp_::Exception: " << e.what();
   }
-  catch (const CORBA::SystemException& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
-      ": Got CORBA::SystemException: " << e;
-  }
   catch (const eh::Exception& e)
   {
     logger()->sstream(Logging::Logger::EMERGENCY,
@@ -288,27 +222,21 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       ": Got eh::Exception: " << e.what();
   }
 
+  lifecycle_debug_("before final deactivate_object");
   deactivate_object();
+  lifecycle_debug_("after final deactivate_object");
+  lifecycle_debug_("before final wait_object");
   wait_object();
+  lifecycle_debug_("after final wait_object");
+  lifecycle_debug_("before clear_children");
   clear_children();
+  lifecycle_debug_("after clear_children");
 
-  try
+  if (pid_file_guard)
   {
-    corba_server_adapter_.reset();
-  }
-  catch(const CORBA::Exception& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
-      ": Got CORBA::Exception in destroy ORB: " << e;
-  }
-  catch(...)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
-      ": Got unknown exception in destroy ORB";
+    lifecycle_debug_("before pid file remove");
+    pid_file_guard.reset();
+    lifecycle_debug_("after pid file remove");
   }
 }
 

@@ -50,9 +50,6 @@
         minOccurs="0"
         maxOccurs="1">
         <service
-          type="ChannelProxy"
-          configSchema="xsd/ChannelServing/ChannelProxyApp.xsd"/>
-        <service
           type="STunnelClient"
           configSchema="xsd/LogProcessing/STunnelClientApp.xsd"/>
       </serviceGroup>
@@ -260,10 +257,6 @@
     <service
       type="CampaignServer"
       configSchema="xsd/CampaignManagement/CampaignServerApp.xsd"/>
-
-    <service
-      type="ChannelProxy"
-      configSchema="xsd/ChannelServing/ChannelProxyApp.xsd"/>
 
     <service
       type="STunnelServer"

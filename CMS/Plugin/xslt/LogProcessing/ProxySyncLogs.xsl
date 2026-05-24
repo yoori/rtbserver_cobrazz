@@ -200,10 +200,10 @@
       <xsl:with-param name="default-log-level" select="$sync-logs-log-level"/>
     </xsl:call-template>
 
-    <!-- get host from channelproxy it presents always -->
+    <!-- get host from CampaignServer, it presents always -->
     <xsl:variable
       name="sync-logs-host-name"
-      select="$pbe-cluster-path/service[@descriptor = $pbe-channel-proxy-descriptor]/@host"/>
+      select="$pbe-cluster-path/service[@descriptor = $pbe-campaign-server-descriptor]/@host"/>
 
     <xsl:variable name="sync-logs-host">
       <xsl:call-template name="ResolveHostName">
@@ -290,7 +290,6 @@
 
         <cfg:Route post_command="touch ##SRC_DIR##/~##FILE_NAME##.commit.##DST_HOST##" type="RoundRobin">
           <cfg:files source="CampaignServer/Out/ColoUpdateStat/ColoUpdateStat.2*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
-          <cfg:files source="ChannelProxy/Out/ColoUpdateStat/ColoUpdateStat.2*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>
@@ -298,7 +297,6 @@
         </cfg:Route>
         <cfg:Route type="HostName" pattern="\.commit\.(.*)$">
           <cfg:files source="CampaignServer/Out/ColoUpdateStat/~ColoUpdateStat.2*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
-          <cfg:files source="ChannelProxy/Out/ColoUpdateStat/~ColoUpdateStat.2*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>

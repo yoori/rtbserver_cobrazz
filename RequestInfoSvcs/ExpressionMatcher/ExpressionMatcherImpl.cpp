@@ -1989,8 +1989,11 @@ namespace RequestInfoSvcs
           {
             daily_check_user_impl_(*user_it, now, placement_colo_now_date, user_inventory_container);
           }
-          catch(const AdServer::UserInfoSvcs::
-            UserInfoManager::ImplementationException& ex)
+          catch(const AdServer::UserInfoSvcs::GrpcAlgs::NotReady&)
+          {
+            users.unprocessed_users.push_back(*user_it);
+          }
+          catch(const AdServer::UserInfoSvcs::GrpcAlgs::Exception& ex)
           {
             // user must be ignored after implement
             // native ImplementationException catch (from UIM)
@@ -1998,18 +2001,9 @@ namespace RequestInfoSvcs
             logger()->sstream(Logging::Logger::EMERGENCY,
               Aspect::EXPRESSION_MATCHER_DAILY_CHECK,
               "ADS-IMPL-4019") << FUN <<
-              ": Caught UserInfoManager::ImplementationException: " <<
+              ": Caught UserInfoSvcs::GrpcAlgs::Exception: " <<
               ex.description;
             */
-            users.unprocessed_users.push_back(*user_it);
-          }
-          catch(const AdServer::UserInfoSvcs::
-            UserInfoManager::NotReady& )
-          {
-            users.unprocessed_users.push_back(*user_it);
-          }
-          catch(const CORBA::SystemException& ex)
-          {
             users.unprocessed_users.push_back(*user_it);
           }
         } // need_process
@@ -2050,9 +2044,6 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherImpl::daily_check_user_impl_()";
 
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
-    CORBA::String_var hostname;
-
     adserver::user_info_svcs::user_info_manager::MatchRequest
       history_match_request;
     auto* match_params = history_match_request.mutable_match_params();
@@ -2073,18 +2064,20 @@ namespace RequestInfoSvcs
     user_info->set_request_colo_id(-1);
     user_info->set_temporary(false);
     user_info->set_time(now.tv_sec);
-    match_result =
-      AdServer::UserInfoSvcs::GrpcAlgs::history_match(
-        *user_info_manager_session_,
-        history_match_request);
+    adserver::user_info_svcs::user_info_manager::MatchResponse
+      history_match_response;
+    AdServer::UserInfoSvcs::GrpcAlgs::history_match(
+      *user_info_manager_session_,
+      history_match_request,
+      history_match_response);
 
     ChannelIdSet history_channels;
 
     UserInventoryInfoContainer::InventoryDailyMatchInfo daily_match_info;
 
-    for (CORBA::ULong hi = 0; hi < match_result->channels.length(); ++hi)
+    for (const auto& channel : history_match_response.match_result().channels())
     {
-      history_channels.insert(match_result->channels[hi].channel_id);
+      history_channels.insert(channel.channel_id());
     }
 
     if(logger()->log_level() >= Logging::Logger::TRACE)

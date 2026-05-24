@@ -90,13 +90,6 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="channelProxyRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
-        <xsd:annotation>
-          <xsd:documentation>
-            CORBA reference to ChannelProxy.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
     </xsd:sequence>
     <xsd:attribute name="connect_timeout" type="xsd:nonNegativeInteger" default="86400">
       <xsd:annotation>

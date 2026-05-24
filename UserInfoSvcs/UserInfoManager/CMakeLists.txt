@@ -1,14 +1,5 @@
 ADD_SUBDIRECTORY(Compatibility)
 
-add_idl(UserInfoManagerIDL  UserInfoManager.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManager)
-add_idl(UserInfoManagerControlIDL  UserInfoManagerControl.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManager)
-
-target_link_libraries(UserInfoManagerIDL
-  CorbaTypesIDL
-  CampaignFreqIDL
-  FreqCapInfoIDL
-)
-
 set(USER_INFO_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/UserInfoSvcs/UserInfoManager)
 set(USER_INFO_MANAGER_GRPC_PROTO UserInfoManagerGrpc.proto)
 
@@ -69,9 +60,7 @@ add_executable(UserInfoManager
   UserInfoManagerMain.cpp
   FileRWStats.cpp
   UserInfoManagerCore.cpp
-  UserInfoManagerImpl.cpp
   UserInfoManagerGrpc.cpp
-  UserInfoManagerControlImpl.cpp
   UserInfoContainer.cpp
   UserInfoManagerLogger.cpp
 
@@ -79,7 +68,6 @@ add_executable(UserInfoManager
 target_link_libraries(UserInfoManager
   CORBACommons
   LogCommons
-  ProcessControlVars
   HttpServer
   Commons
   AdServerCommonsXSD
@@ -89,8 +77,6 @@ target_link_libraries(UserInfoManager
   ProfileMapRocksDB
 
   UserInfoManagerConfigXSD
-  UserInfoManagerIDL
-  UserInfoManagerControlIDL
   UserInfoManagerGrpc
   CampaignServerIDL
 
@@ -113,4 +99,4 @@ endif()
 
 target_link_libraries(UserInfoManager gRPC::grpc++)
 
-#install(TARGETS UserInfoManager UserInfoContainer UserInfoManagerIDL UserInfoManagerControlIDL  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserInfoManager UserInfoContainer DESTINATION ${INSTALL_DIR})

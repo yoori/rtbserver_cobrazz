@@ -38,7 +38,6 @@ then
 fi
 
 PROXY_CAMPAIGN_SERVER_DESCR=AdProxyCluster/CampaignServer
-PROXY_CHANNEL_PROXY_DESCR=AdProxyCluster/ChannelProxy
 STUNNEL_SERVER_DESCR=AdProxyCluster/STunnelServer
 
 mkdir -p ${OUT_DIR}
@@ -84,35 +83,8 @@ $EXEC/CurrentEnvGen.sh \
 
 let "EXIT_CODE += $?"
 
-## configure ChannelProxy
-CHANNEL_PROXY_XPATH="$CLUSTER_XPATH/service[@descriptor = '$PROXY_CHANNEL_PROXY_DESCR']"
-$EXEC/ServiceConf.sh \
-  --services-xpath "$CHANNEL_PROXY_XPATH" \
-  --var MODE PROXY-MODE \
-  --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/ChannelServing/ChannelProxy.xsl \
-  --out-file ChannelProxy.xml \
-  --out-dir-suffix "$OUT_DIR_SUFFIX" \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT
-
-
-let "EXIT_CODE += $?"
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "channel_proxy" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:channelProxy" \
-  --services-xpath "$CHANNEL_PROXY_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/$DACS_PBE_NAME
-
-let "EXIT_CODE += $?"
-
 ## configure SyncLogs
 SYNC_PROCESSING_XPATH="$CLUSTER_XPATH/service["\
-"@descriptor = '$PROXY_CHANNEL_PROXY_DESCR' or "\
 "@descriptor = '$PROXY_CAMPAIGN_SERVER_DESCR' or "\
 "@descriptor = '$STUNNEL_SERVER_DESCR']"
 

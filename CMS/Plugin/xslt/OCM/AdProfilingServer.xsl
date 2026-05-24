@@ -148,13 +148,6 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
-          select="$localproxy-path/service[@descriptor = 'AdProfilingCluster/BackendSubCluster/LocalProxy/ChannelProxy']"/>
-        <xsl:with-param name="service-name" select="'localproxy-ChannelProxy'"/>
-        <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelProxy'"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
           select="$localproxy-path/service[@descriptor = $remote-stunnel-client-descriptor]"/>
         <xsl:with-param name="service-name" select="'localproxy-STunnel'"/>
         <xsl:with-param name="service-type" select="'AdServer::LogProcessing::STunnel'"/>
@@ -768,10 +761,6 @@
             <xsl:with-param name="slaves" select="'AdServer::ChannelSvcs::ChannelController'"/>
             <xsl:with-param name="masters" select="'AdServer::CampaignSvcs::CampaignServer
               AdServer::ChannelSvcs::ChannelServer'"/>
-          </xsl:call-template>
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="slaves" select="'AdServer::ChannelSvcs::ChannelController'"/>
-            <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::ChannelProxy'"/>
           </xsl:call-template>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select="concat('AdServer::CampaignSvcs::CampaignManager ', 'AdServer::ChannelSvcs::ChannelController')"/>

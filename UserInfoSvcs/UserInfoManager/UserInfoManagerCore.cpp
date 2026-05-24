@@ -14,7 +14,6 @@
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
-#include <UserInfoSvcs/UserInfoManager/UserInfoManager_s.hpp>
 
 #include "UserInfoContainer.hpp"
 #include "UserInfoManagerCore.hpp"

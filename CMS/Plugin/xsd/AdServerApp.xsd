@@ -59,13 +59,6 @@
 
   <xsd:complexType name="RemoteConfigType">
     <xsd:sequence>
-      <xsd:element name="channelProxyRef" type="CorbaObjectRefType">
-        <xsd:annotation>
-          <xsd:documentation>
-            CORBA reference to ChannelProxy.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
       <xsd:element name="campaignServerRef" type="CorbaObjectRefType">
         <xsd:annotation>
           <xsd:documentation>
