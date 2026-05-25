@@ -723,15 +723,33 @@ namespace CampaignSvcs
 
     if(!available)
     {
-      SyncPolicy::WriteGuard lock(add_recheck_ccgs_lock_);
-      Generics::Time& planned_time = add_recheck_ccgs_[ccg_id];
-      if(planned_time != Generics::Time::ZERO)
+      bool new_deactivation = false;
+      Generics::Time planned_recheck_time;
       {
-        planned_time = std::min(planned_time, now + REENABLE_INDEX_TIME);
+        SyncPolicy::WriteGuard lock(add_recheck_ccgs_lock_);
+        Generics::Time& planned_time = add_recheck_ccgs_[ccg_id];
+        if(planned_time != Generics::Time::ZERO)
+        {
+          planned_time = std::min(planned_time, now + REENABLE_INDEX_TIME);
+        }
+        else
+        {
+          new_deactivation = true;
+          planned_time = now + REENABLE_INDEX_TIME;
+        }
+        planned_recheck_time = planned_time;
       }
-      else
+
+      if(new_deactivation)
       {
-        planned_time = now + REENABLE_INDEX_TIME;
+        Stream::Error ostr;
+        ostr << "BillingStateContainer::ccg_set_available_(): CCG #" <<
+          ccg_id << " deactivated by BillingServer response, goal_ctr = " <<
+          goal_ctr << ", recheck planned at " << planned_recheck_time;
+        logger_->log(ostr.str(),
+          Logging::Logger::NOTICE,
+          Aspect::BILLING_STATE_CONTAINER,
+          "ADS-ICON-4004");
       }
     }
   }
