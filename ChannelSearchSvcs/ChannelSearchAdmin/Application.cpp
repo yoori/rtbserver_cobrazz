@@ -3,11 +3,18 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <map>
+#include <set>
+#include <vector>
 
 #include <String/StringManip.hpp>
 #include <Generics/AppUtils.hpp>
+#include <HTTP/UrlAddress.hpp>
 
 #include <UtilCommons/Table.hpp>
+
+#include <ChannelSvcs/ChannelClient/ChannelGrpcAlgs.hpp>
+#include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 
 #include "Application.hpp"
 
@@ -23,7 +30,7 @@ namespace
     "Sample:\n"
     "\tChannelSearchAdmin search -r corbaloc:iiop:dev.ocslab.com:18102/ChannelSearch"
     " --phrase=car\n"
-    "\tChannelSearchAdmin match -r corbaloc:iiop:dev.ocslab.com:18102/ChannelSearch"
+    "\tChannelSearchAdmin match -r dev.ocslab.com:25430"
     " --phrase=car --url=test.com --limit=10\n";
 
   const Table::Column RESULT_TABLE_COLUMNS[] =
@@ -40,6 +47,80 @@ namespace
   };
 
   typedef std::unique_ptr<Table> TablePtr;
+
+  typedef std::set<unsigned long> TriggerIdSet;
+  typedef std::map<unsigned long, TriggerIdSet> ChannelTriggerMap;
+
+  std::vector<std::string>
+  split_refs(const std::string& refs)
+  {
+    std::vector<std::string> result;
+    String::StringManip::SplitComma tokenizer(refs);
+    String::SubString token;
+    while(tokenizer.get_token(token))
+    {
+      result.emplace_back(token.str());
+    }
+    return result;
+  }
+
+  void
+  add_matched_channels(
+    ChannelTriggerMap& result,
+    const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtomSeq& channels)
+  {
+    for(CORBA::ULong i = 0; i < channels.length(); ++i)
+    {
+      result[channels[i].id].insert(channels[i].trigger_channel_id);
+    }
+  }
+
+  AdServer::ChannelSearchSvcs::MatchInfo*
+  make_channel_search_match_info(
+    const AdServer::ChannelSvcs::ChannelServerBase::MatchResult& source,
+    CORBA::Long channels_count)
+  {
+    AdServer::ChannelSearchSvcs::MatchInfo_var result =
+      new AdServer::ChannelSearchSvcs::MatchInfo;
+
+    ChannelTriggerMap matched_channels;
+    add_matched_channels(
+      matched_channels,
+      source.matched_channels.page_channels);
+    add_matched_channels(
+      matched_channels,
+      source.matched_channels.search_channels);
+    add_matched_channels(
+      matched_channels,
+      source.matched_channels.url_channels);
+    add_matched_channels(
+      matched_channels,
+      source.matched_channels.url_keyword_channels);
+
+    result->channels.length(matched_channels.size());
+
+    CORBA::Long channel_i = 0;
+    for(ChannelTriggerMap::const_iterator it = matched_channels.begin();
+      it != matched_channels.end() && channel_i < channels_count;
+      ++it, ++channel_i)
+    {
+      result->channels[channel_i].channel_id = it->first;
+      result->channels[channel_i].triggers.length(it->second.size());
+
+      CORBA::ULong trigger_i = 0;
+      for(TriggerIdSet::const_iterator trigger_it = it->second.begin();
+        trigger_it != it->second.end();
+        ++trigger_it, ++trigger_i)
+      {
+        result->channels[channel_i].triggers[trigger_i] = *trigger_it;
+      }
+
+      result->channels[channel_i].ccgs.length(0);
+    }
+
+    result->channels.length(channel_i);
+    return result._retn();
+  }
 }
 
 ////////////////////////////////////////////////////
@@ -97,6 +178,20 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/
 
 Application::~Application() noexcept
 {
+  if(channel_client_)
+  {
+    channel_client_->deactivate_object();
+    channel_client_->wait_object();
+    channel_client_.reset();
+  }
+
+  if(grpc_executor_)
+  {
+    grpc_executor_->deactivate_object();
+    grpc_executor_->wait_object();
+    grpc_executor_.reset();
+  }
+
   channel_search_ = 0;
 
   if (!CORBA::is_nil(orb_))
@@ -143,13 +238,6 @@ Application::run(int& argc, char** argv)
 
   args.parse(argc - 1, argv + 1);
 
-  orb_ = CORBA::ORB_init(argc, argv);
-
-  if (CORBA::is_nil(orb_))
-  {
-    throw Exception("CORBA::ORB_init failed");
-  }
-
   if (argc < 2)
   {
     throw InvalidArgument("Too few arguments");
@@ -181,35 +269,45 @@ Application::run(int& argc, char** argv)
       std::string url = *opt_url;
       std::string phrase = *opt_phrase;
 
-      try
+      if(cmd == "search")
       {
-        CORBA::Object_var obj = orb_->string_to_object(service_ref.c_str());
+        orb_ = CORBA::ORB_init(argc, argv);
 
-        if (CORBA::is_nil(obj))
+        if (CORBA::is_nil(orb_))
         {
-          Stream::Error ostr;
-          ostr << "string_to_object failed for service reference '" <<
-            service_ref << "'";
-          throw Exception(ostr);
+          throw Exception("CORBA::ORB_init failed");
         }
 
-        channel_search_ =
-          AdServer::ChannelSearchSvcs::ChannelSearch::_narrow(obj.in());
+        try
+        {
+          CORBA::Object_var obj = orb_->string_to_object(service_ref.c_str());
 
-        if (CORBA::is_nil(channel_search_))
+          if (CORBA::is_nil(obj))
+          {
+            Stream::Error ostr;
+            ostr << "string_to_object failed for service reference '" <<
+              service_ref << "'";
+            throw Exception(ostr);
+          }
+
+          channel_search_ =
+            AdServer::ChannelSearchSvcs::ChannelSearch::_narrow(obj.in());
+
+          if (CORBA::is_nil(channel_search_))
+          {
+            Stream::Error ostr;
+            ostr << "AdServer::ChannelSearchSvcs::ChannelSearch::_narrow() failed "
+              "for service reference '" << service_ref << "'";
+            throw Exception(ostr);
+          }
+        }
+        catch (const CORBA::SystemException& ex)
         {
           Stream::Error ostr;
-          ostr << "AdServer::ChannelSearchSvcs::ChannelSearch::_narrow() failed "
-            "for service reference '" << service_ref << "'";
+          ostr << "failed to resolve service reference '" <<
+            service_ref << "'. CORBA::SystemException caught:\n" << ex;
           throw Exception(ostr);
         }
-      }
-      catch (const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << "failed to resolve service reference '" <<
-          service_ref << "'. CORBA::SystemException caught:\n" << ex;
-        throw Exception(ostr);
       }
 
       try
@@ -221,8 +319,49 @@ Application::run(int& argc, char** argv)
         }
         else if(cmd == "match")
         {
+          grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+          grpc_executor_->activate_object();
+
+          channel_client_ =
+            std::make_shared<AdServer::ChannelSvcs::ChannelDistributedGrpcClient>(
+              split_refs(service_ref),
+              AdServer::Grpc::BatchingOptions(),
+              grpc_executor_);
+          channel_client_->activate_object();
+
+          AdServer::ChannelSvcs::ChannelServerBase::MatchQuery query;
+          query.request_id = phrase.c_str();
+          try
+          {
+            const std::string normalized_url =
+              HTTP::BrowserAddress(String::SubString(url)).url();
+            query.first_url = normalized_url.c_str();
+          }
+          catch(const eh::Exception&)
+          {
+          }
+          query.pwords = phrase.c_str();
+          query.swords = phrase.c_str();
+          query.statuses[0] = 'A';
+          query.statuses[1] = '\0';
+          query.non_strict_word_match = false;
+          query.non_strict_url_match = false;
+          query.return_negative = false;
+          query.simplify_page = false;
+          query.fill_content = false;
+
+          adserver::channel_svcs::channel_server::MatchRequest request;
+          AdServer::ChannelSvcs::GrpcAlgs::make_match_request(query, request);
+          AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var
+            channel_match_result =
+              AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
+                AdServer::ChannelSvcs::GrpcAlgs::channel_match(
+                  *channel_client_,
+                  request));
           AdServer::ChannelSearchSvcs::MatchInfo_var result =
-            channel_search_->match(url.c_str(), phrase.c_str(), *opt_limit);
+            make_channel_search_match_info(
+              channel_match_result.in(),
+              *opt_limit);
           print_match_result(result);
         }
       }

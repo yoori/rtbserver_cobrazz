@@ -109,6 +109,11 @@ namespace AdServer
       noexcept;
 
     void
+    print_creative_selection_error(
+      const String::SubString& error)
+      noexcept;
+
+    void
     print_request_debug_info(
       const RequestInfo& request_info)
       noexcept;

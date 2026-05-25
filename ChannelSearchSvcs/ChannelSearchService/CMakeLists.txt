@@ -14,12 +14,10 @@ target_link_libraries(ChannelSearchService
   AdServerCommonsXSD
   CORBACommons
   CampaignServerIDL
-  ChannelManagerControllerIDL
   ChannelSearchServiceConfigXSD
   ChannelSearchServiceIDL
   ChannelCommonsIDL
-  ChannelClusterControlIDL
-  ChannelSessionFactory
+  ChannelGrpcClient
   DictionaryProviderIDL
   Commons
   ExpressionChannel

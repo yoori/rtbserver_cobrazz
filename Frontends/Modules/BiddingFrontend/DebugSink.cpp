@@ -88,6 +88,20 @@ namespace AdServer::Bidding
           stats.draining_streams << sep <<
         prefix << "_deferred_streams = " <<
           stats.deferred_streams << sep;
+      if (stats.last_error.has_value())
+      {
+        out <<
+          prefix << "_last_error_time = " <<
+            stats.last_error->time.get_gm_time().format("%F %T") << sep <<
+          prefix << "_last_error_endpoint = " <<
+            stats.last_error->endpoint << sep <<
+          prefix << "_last_error_code = " <<
+            stats.last_error->code << sep <<
+          prefix << "_last_error_message = " <<
+            stats.last_error->message << sep <<
+          prefix << "_last_error_source = " <<
+            stats.last_error->source << sep;
+      }
     }
 
     struct GetChannelId

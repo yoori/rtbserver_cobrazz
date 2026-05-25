@@ -11,9 +11,10 @@
 #include <Commons/Algs.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/ConfigUtils.hpp>
 
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
-#include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelGrpcAlgs.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
@@ -86,11 +87,13 @@ namespace AdServer
       /*throw(Exception, eh::Exception)*/
       : logger_(ReferenceCounting::add_ref(logger)),
         corba_client_adapter_(new CORBACommons::CorbaClientAdapter()),
+        grpc_executor_(std::make_shared<AdServer::Grpc::GrpcExecutor>(4)),
         task_runner_(new Generics::TaskRunner(callback, 1)),
         scheduler_(new Generics::Planner(callback)),
         SERVICE_INDEX_(config.service_index()),
         channel_matcher_(new ChannelMatcher())
     {
+      add_child_object(grpc_executor_);
       add_child_object(task_runner_.in());
       add_child_object(scheduler_.in());
 
@@ -145,39 +148,39 @@ namespace AdServer
     void
     ChannelSearchServiceImpl::resolve_channel_session_(
       const ConfigType& config,
-      Generics::ActiveObjectCallback* callback)
+      Generics::ActiveObjectCallback*)
       /*throw(Exception)*/
     {
       static const char* FUN =
         "ChannelSearchServiceImpl::resolve_channel_session_()";
       try
       {
-        AdServer::ChannelSvcs::ChannelServerSessionFactory::init(
-          *corba_client_adapter_,
-          &server_session_factory_,
-          0,
-          callback,
-          0);
+        AdServer::Grpc::BatchingOptions batching_options;
+        if(config.BatchingOptions().present())
+        {
+          batching_options =
+            Config::read_xsd_grpc_options(*config.BatchingOptions());
+        }
 
-        add_child_object(server_session_factory_.in());
+        AdServer::ChannelSvcs::ChannelDistributedGrpcClient::
+          ChannelControllerRefs channel_controller_refs;
 
-        CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          config.ChannelManagerControllerRefs(),
-          channel_manager_controller_refs);
+        for(const auto& group : config.ChannelControllerGroup())
+        {
+          for(const auto& endpoint : group.Endpoint())
+          {
+            channel_controller_refs.emplace_back(endpoint);
+          }
+        }
 
-        ChannelServerSessionPoolConfig pool_config(
-          corba_client_adapter_, server_session_factory_);
-
-        std::copy(channel_manager_controller_refs.begin(),
-          channel_manager_controller_refs.end(),
-          std::back_inserter(pool_config.iors_list));
-        pool_config.timeout = Generics::Time(10);
-
-        channel_manager_controllers_.reset(
-          new ChannelServerSessionPool(
-            pool_config,
-            CORBACommons::ChoosePolicyType::PT_BAD_SWITCH));
+        channel_client_ =
+          std::make_shared<AdServer::ChannelSvcs::ChannelDistributedGrpcClient>(
+            channel_controller_refs,
+            batching_options,
+            grpc_executor_,
+            std::shared_ptr<
+              AdServer::Commons::BoostAsioContextRunActiveObject>());
+        add_child_object(channel_client_);
       }
       catch(const eh::Exception& e)
       {
@@ -371,48 +374,19 @@ namespace AdServer
       static const char* FUN = "ChannelSearchServiceImpl::channel_session_match_()";
       try
       {
-        ChannelServerHandler channel_server =
-          channel_manager_controllers_->get_object<Exception>();
-        try
-        {
-          channel_server->match(query, match_result.out());
-        }
-        catch (const AdServer::ChannelSvcs::ImplementationException& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN <<
-            ": Caught ChannelServer::ImplementationException: " <<
-            ex.description;
+        adserver::channel_svcs::channel_server::MatchRequest request;
+        AdServer::ChannelSvcs::GrpcAlgs::make_match_request(query, request);
 
-          CORBACommons::throw_desc<AdServer::
-            ChannelSearchSvcs::ChannelSearch::ImplementationException>(
-              ostr.str());
-        }
-        catch (const AdServer::ChannelSvcs::NotConfigured& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": Caught ChannelServer::NotConfigured.";
-
-          CORBACommons::throw_desc<AdServer::
-            ChannelSearchSvcs::ChannelSearch::ImplementationException>(
-              ostr.str());
-        }
-        catch (const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": Caught CORBA::SystemException by "
-            "ChannelServerSession::match(): " << ex;
-
-          channel_server.release_bad(ostr.str());
-          CORBACommons::throw_desc<AdServer::
-            ChannelSearchSvcs::ChannelSearch::ImplementationException>(
-              ostr.str());
-        }
+        match_result =
+          AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
+            AdServer::ChannelSvcs::GrpcAlgs::channel_match(
+              *channel_client_,
+              request));
       }
-      catch (const Exception& ex)
+      catch (const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ex.what();
+        ostr << FUN << ": Caught eh::Exception: " << ex.what();
         CORBACommons::throw_desc<AdServer::
           ChannelSearchSvcs::ChannelSearch::ImplementationException>(
             ostr.str());

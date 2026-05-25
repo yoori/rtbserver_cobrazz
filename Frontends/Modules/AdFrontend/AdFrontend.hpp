@@ -228,6 +228,7 @@ namespace AdServer
       bool& log_as_test,
       adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
         campaign_matching_result,
+      std::string& error,
       RequestTimeMetering& request_time_metering,
       const RequestInfo& request_info,
       const Generics::SubStringHashAdapter& instantiate_type,

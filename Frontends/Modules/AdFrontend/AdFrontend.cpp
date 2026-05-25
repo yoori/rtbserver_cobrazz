@@ -1441,10 +1441,12 @@ namespace AdServer
         ccg_keywords.get(),
         history_match_result->match_result());
 
+      std::string campaign_error;
       const bool campaign_success = co_await co_request_campaign_manager_(
         context->passback_info,
         context->request_info.log_as_test,
         *campaign_matching_result,
+        campaign_error,
         context->request_time_metering,
         context->request_info,
         FrontendCommons::deduce_instantiate_type(
@@ -1460,6 +1462,8 @@ namespace AdServer
         &context->debug_sink);
       if(!campaign_success)
       {
+        context->debug_sink.print_creative_selection_error(
+          String::SubString(campaign_error));
         co_return false;
       }
 
@@ -1908,6 +1912,7 @@ namespace AdServer
     PassbackInfo& passback_info,
     bool& log_as_test,
     CM::RequestCreativeResult& campaign_matching_result,
+    std::string& error,
     RequestTimeMetering& request_time_metering,
     const RequestInfo& request_info,
     const Generics::SubStringHashAdapter& instantiate_type,
@@ -1950,6 +1955,7 @@ namespace AdServer
           "gRPC call failed: code=" <<
           static_cast<int>(campaign_result.status.error_code()) <<
           ", message=" << campaign_result.status.error_message();
+        error = ostr.str().str();
         logger()->log(
           ostr.str(),
           Logging::Logger::EMERGENCY,
@@ -1991,6 +1997,7 @@ namespace AdServer
       Stream::Error ostr;
       ostr << "AdFrontend::co_request_campaign_manager_(): fail. "
         "Caught eh::Exception: " << ex.what();
+      error = ostr.str().str();
       logger()->log(
         ostr.str(),
         Logging::Logger::EMERGENCY,

@@ -4,6 +4,8 @@
 
 #include <Generics/Singleton.hpp>
 
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelDistributedGrpcClient.hpp>
 #include <ChannelSearchSvcs/ChannelSearchService/ChannelSearchService.hpp>
 
 /**
@@ -71,8 +73,13 @@ public:
     /*throw(Exception, eh::Exception, CORBA::Exception)*/;
 
 private:
+  typedef std::shared_ptr<AdServer::ChannelSvcs::ChannelDistributedGrpcClient>
+    ChannelDistributedGrpcClientPtr;
+
   CORBA::ORB_var orb_;
   AdServer::ChannelSearchSvcs::ChannelSearch_var channel_search_;
+  std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+  ChannelDistributedGrpcClientPtr channel_client_;
 };
 
 /**

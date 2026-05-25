@@ -409,6 +409,7 @@ namespace AdServer::Grpc
     std::weak_ptr<StreamHolder> weak_stream_holder = stream_holder;
     stream_holder->stream = std::make_shared<AdServer::Grpc::BatchingStreamBase>(
       channel_,
+      endpoint_,
       grpc_executor_,
       batching_queue_,
       next_queue_index_.fetch_add(1, std::memory_order_relaxed),
@@ -605,8 +606,49 @@ namespace AdServer::Grpc
 
       stream_holder->stream->activate_object();
     }
+    catch (const std::exception& ex)
+    {
+      set_last_error(
+        endpoint_,
+        grpc::StatusCode::UNAVAILABLE,
+        ex.what(),
+        "connect_exception");
+
+      if (stream_registered)
+      {
+        std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
+        streams_.erase(stream);
+      }
+
+      std::vector<BatchingStreamBase::PendingBatch> failed_batches;
+      const auto failure_time = Generics::Time::get_time_of_day();
+
+      {
+        std::lock_guard<std::mutex> lock(streams_lock_);
+        connecting_ = false;
+        connecting_stream_.reset();
+        last_connect_failure_time_ = failure_time;
+        up_streams_.fetch_sub(1, std::memory_order_acq_rel);
+        while (!pending_batches_.empty())
+        {
+          failed_batches.emplace_back(std::move(pending_batches_.front()));
+          pending_batches_.pop_front();
+        }
+      }
+
+      finish_batches_with_error(
+        failed_batches,
+        grpc::StatusCode::UNAVAILABLE,
+        "no active batching streams");
+    }
     catch (...)
     {
+      set_last_error(
+        endpoint_,
+        grpc::StatusCode::UNAVAILABLE,
+        "unknown connect exception",
+        "connect_exception");
+
       if (stream_registered)
       {
         std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);

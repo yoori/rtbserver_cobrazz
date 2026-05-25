@@ -11,15 +11,18 @@
 #include <Generics/Scheduler.hpp>
 #include <Language/SegmentorCommons/SegmentorInterface.hpp>
 
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <CORBACommons/ObjectPool.hpp>
 #include <CORBACommons/ServantImpl.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
-#include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
-#include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
+#include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelDistributedGrpcClient.hpp>
 #include <ChannelSearchSvcs/ChannelSearchService/ChannelSearchService_s.hpp>
 
 #include <xsd/ChannelSearchSvcs/ChannelSearchServiceConfig.hpp>
@@ -89,45 +92,8 @@ namespace AdServer
 
       typedef std::unique_ptr<CampaignServerPool> CampaignServerPoolPtr;
 
-      struct ChannelServerSessionPoolConfig:
-        public CORBACommons::ObjectPoolRefConfiguration
-      {
-        ChannelServerSessionPoolConfig(
-          const CORBACommons::CorbaClientAdapter* corba_client_adapter,
-          ChannelServerSessionFactoryImpl* factory) noexcept
-          : ObjectPoolRefConfiguration(corba_client_adapter),
-            channel_session_factory_(::ReferenceCounting::add_ref(factory)),
-            resolver(corba_client_adapter)
-        {}
-
-        struct Resolver
-        {
-          Resolver(
-            const CORBACommons::CorbaClientAdapter* corba_client_adapter)
-            noexcept;
-
-          template <typename PoolType>
-          PoolType*
-          resolve(const ObjectRef& ref)
-            /*throw(Exception)*/;
-
-        private:
-          CORBACommons::CorbaClientAdapter_var c_adapter_;
-        };
-
-        ChannelServerSessionFactoryImpl_var channel_session_factory_;
-        Resolver resolver;
-      };
-
-      typedef
-        CORBACommons::ObjectPool<
-          AdServer::ChannelSvcs::ChannelServerBase,
-          ChannelServerSessionPoolConfig>
-        ChannelServerSessionPool;
-
-      typedef std::unique_ptr<ChannelServerSessionPool>
-        ChannelServerSessionPoolPtr;
-      typedef ChannelServerSessionPool::ObjectHandlerType ChannelServerHandler;
+      typedef std::shared_ptr<AdServer::ChannelSvcs::ChannelDistributedGrpcClient>
+        ChannelDistributedGrpcClientPtr;
 
       class UpdateExpressionChannelsTask: public Generics::TaskGoal
       {
@@ -175,14 +141,14 @@ namespace AdServer
       Logging::Logger_var logger_;
 
       CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
       Generics::TaskRunner_var task_runner_;
       Generics::Planner_var scheduler_;
 
       CampaignServerPoolPtr campaign_servers_;
       const unsigned SERVICE_INDEX_;
 
-      ChannelServerSessionFactoryImpl_var server_session_factory_;
-      ChannelServerSessionPoolPtr channel_manager_controllers_;
+      ChannelDistributedGrpcClientPtr channel_client_;
 
       ChannelMatcher_var channel_matcher_;
     };
@@ -215,66 +181,5 @@ namespace ChannelSearchSvcs
     channel_search_service_impl_->update_expression_channels_();
   }
 
-  inline
-  ChannelSearchServiceImpl::ChannelServerSessionPoolConfig::Resolver::Resolver(
-    const CORBACommons::CorbaClientAdapter* corba_client_adapter)
-    noexcept
-    : c_adapter_(
-        ::ReferenceCounting::add_ref(corba_client_adapter))
-  {
-  }
-
-  template <typename PoolType>
-  PoolType*
-  ChannelSearchServiceImpl::ChannelServerSessionPoolConfig::Resolver::resolve(
-    const ObjectRef& ref)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "ChannelSearchServiceImpl::"
-      "ChannelServerSessionPoolConfig::Resolver::resolve()";
-    try
-    {
-      CORBA::Object_var obj = c_adapter_->resolve_object(ref);
-
-      AdServer::ChannelSvcs::ChannelManagerController_var manager =
-        AdServer::ChannelSvcs::ChannelManagerController::_narrow(obj);
-      if(CORBA::is_nil(manager))
-      {
-        return 0;
-      }
-
-      AdServer::ChannelSvcs::ChannelServerSession_var channel_session =
-        manager->get_channel_session();
-
-      return AdServer::ChannelSvcs::ChannelServerSession::_narrow(
-        channel_session);
-    }
-    catch (const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": failed to resolve channel manager controller reference '" <<
-        ref.object_ref << "'. eh::Exception caught: " << ex.what();
-      throw Exception(ostr);
-    }
-    catch (const AdServer::ChannelSvcs::ImplementationException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": failed to resolve channel manager controller reference '" <<
-        ref.object_ref << "'. AdServer::ChannelSvcs::"
-          "ImplementationException caught: " <<
-        ex.description;
-      throw Exception(ostr);
-    }
-    catch (const CORBA::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": failed to resolve channel manager controller reference '" <<
-        ref.object_ref << "'. CORBA::Exception caught: " << ex;
-      throw Exception(ostr);
-    }
-  }
 }
 }

@@ -1,7 +1,9 @@
 
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <sstream>
+#include <string>
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -100,9 +102,14 @@ namespace
     std::ostream& out;
     bool first = true;
 
-  private:
     void
     append_key_(const Generics::Values::Key& key)
+    {
+      append_key_(key.text());
+    }
+
+    void
+    append_key_(const std::string& key)
     {
       if (first)
       {
@@ -113,19 +120,181 @@ namespace
         out << ',';
       }
 
-      out << '"' << escape_json_string(key.text()) << "\":";
+      out << '"' << escape_json_string(key) << "\":";
     }
   };
 
+  struct JsonMetricValueWriter : boost::static_visitor<>
+  {
+    explicit JsonMetricValueWriter(std::ostream& out) noexcept
+      : out(out)
+    {}
+
+    void operator()(double value) const
+    {
+      out << value;
+    }
+
+    void operator()(long value) const
+    {
+      out << value;
+    }
+
+    void operator()(const std::string& value) const
+    {
+      out << '"' << escape_json_string(value) << '"';
+    }
+
+    std::ostream& out;
+  };
+
+  struct GrpcErrorStat
+  {
+    std::string time;
+    std::string endpoint;
+    long code = 0;
+    std::string message;
+    std::string source;
+  };
+
+  bool
+  parse_last_error_metric(
+    const std::string& name,
+    std::string& client_name,
+    std::string& field)
+  {
+    static const std::string suffix = "_last_error_";
+    const auto pos = name.find(suffix);
+    if (pos == std::string::npos)
+    {
+      return false;
+    }
+
+    client_name = name.substr(0, pos);
+    field = name.substr(pos + suffix.size());
+    return !client_name.empty() && !field.empty();
+  }
+
+  template<typename Value>
+  void
+  set_error_field(
+    GrpcErrorStat& error,
+    const std::string& field,
+    const Value& value)
+  {
+    (void)error;
+    (void)field;
+    (void)value;
+  }
+
+  template<>
+  void
+  set_error_field<std::string>(
+    GrpcErrorStat& error,
+    const std::string& field,
+    const std::string& value)
+  {
+    if (field == "time")
+    {
+      error.time = value;
+    }
+    else if (field == "endpoint")
+    {
+      error.endpoint = value;
+    }
+    else if (field == "message")
+    {
+      error.message = value;
+    }
+    else if (field == "source")
+    {
+      error.source = value;
+    }
+  }
+
+  template<>
+  void
+  set_error_field<long>(
+    GrpcErrorStat& error,
+    const std::string& field,
+    const long& value)
+  {
+    if (field == "code")
+    {
+      error.code = value;
+    }
+  }
+
+  struct GrpcErrorFieldVisitor : boost::static_visitor<>
+  {
+    GrpcErrorFieldVisitor(GrpcErrorStat& error, const std::string& field)
+      : error(error),
+        field(field)
+    {}
+
+    template<typename Value>
+    void operator()(const Value& value) const
+    {
+      set_error_field(error, field, value);
+    }
+
+    GrpcErrorStat& error;
+    const std::string& field;
+  };
+
   std::string
-  dump_stats_json(const AdServer::StatHolder_var& stats)
+  dump_stats_json(
+    const AdServer::StatHolder_var& stats,
+    const Generics::CompositeMetricsProvider_var& metrics)
   {
     Generics::Values_var values = stats->dump_stats();
+    std::map<std::string, GrpcErrorStat> errors;
 
     std::ostringstream out;
     out << '{';
     JsonStatsWriter writer(out);
     values->enumerate_all(writer);
+    if (metrics)
+    {
+      for (const auto& metric : metrics->get_values())
+      {
+        std::string client_name;
+        std::string field;
+        if (parse_last_error_metric(metric.first, client_name, field))
+        {
+          auto& error = errors[client_name];
+          boost::apply_visitor(
+            GrpcErrorFieldVisitor(error, field),
+            metric.second);
+          continue;
+        }
+
+        writer.append_key_(metric.first);
+        boost::apply_visitor(JsonMetricValueWriter(out), metric.second);
+      }
+    }
+    writer.append_key_(std::string("errors"));
+    out << '{';
+    bool first_error = true;
+    for (const auto& [client_name, error] : errors)
+    {
+      if (first_error)
+      {
+        first_error = false;
+      }
+      else
+      {
+        out << ',';
+      }
+      out << '"' << escape_json_string(client_name) << "\":{";
+      out << "\"time\":\"" << escape_json_string(error.time) << "\",";
+      out << "\"endpoint\":\"" << escape_json_string(error.endpoint) << "\",";
+      out << "\"code\":" << error.code << ',';
+      out << "\"message\":\"" << escape_json_string(error.message) << "\",";
+      out << "\"source\":\"" << escape_json_string(error.source) << "\"";
+      out << '}';
+    }
+    out << '}';
     out << "}\n";
     return out.str();
   }
@@ -208,15 +377,17 @@ namespace AdServer::Frontends
           4);
 
         StatHolder_var stats = stats_;
+        Generics::CompositeMetricsProvider_var metrics =
+          composite_metrics_provider_;
         http_server_->add_handler(
           "/stats",
-          [stats](
+          [stats, metrics](
             const AdServer::Commons::HttpServer::HttpServer::Request&)
           {
             return AdServer::Commons::HttpServer::HttpServer::Response{
               200,
               "application/json",
-              dump_stats_json(stats)
+              dump_stats_json(stats, metrics)
             };
           });
 

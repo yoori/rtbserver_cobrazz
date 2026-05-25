@@ -793,6 +793,7 @@ namespace AdServer::Grpc
         result.consumer_stream_write->max_us,
         source.consumer_stream_write->max_us);
     }
+    AdServer::Grpc::merge_last_error(result, source);
   }
 
   template<typename ClientType>

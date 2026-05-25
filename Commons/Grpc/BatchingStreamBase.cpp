@@ -52,6 +52,7 @@ namespace AdServer::Grpc
     Impl(
       BatchingStreamBase& owner,
       std::shared_ptr<grpc::Channel> channel,
+      std::string endpoint,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
       unsigned int queue_index,
@@ -126,6 +127,10 @@ namespace AdServer::Grpc
     void fail_inflight_with_error_(
       grpc::StatusCode status_code,
       const char* status_message);
+    void record_last_error_(
+      grpc::StatusCode status_code,
+      const char* status_message,
+      const char* source) noexcept;
     void handle_executor_shutdown_i_() noexcept;
     void complete_shutdown_i_() noexcept;
     void release_grpc_resources_i_() noexcept;
@@ -143,6 +148,7 @@ namespace AdServer::Grpc
 
   private:
     BatchingStreamBase& owner_;
+    const std::string endpoint_;
     const AdServer::Grpc::BatchingOptions options_;
     const std::string batch_stream_full_method_;
     std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue_;
@@ -313,6 +319,7 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::Impl(
     BatchingStreamBase& owner,
     std::shared_ptr<grpc::Channel> channel,
+    std::string endpoint,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
     unsigned int queue_index,
@@ -321,6 +328,7 @@ namespace AdServer::Grpc
     DrainedCallback drained_callback,
     AdServer::Grpc::BatchingOptions options)
     : owner_(owner),
+      endpoint_(std::move(endpoint)),
       options_(options),
       batch_stream_full_method_(
         options_.batch_stream_full_method.empty() ?
@@ -356,6 +364,7 @@ namespace AdServer::Grpc
 
   BatchingStreamBase::BatchingStreamBase(
     std::shared_ptr<grpc::Channel> channel,
+    std::string endpoint,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
     unsigned int queue_index,
@@ -369,6 +378,7 @@ namespace AdServer::Grpc
     impl_ = std::make_shared<Impl>(
       *this,
       std::move(channel),
+      std::move(endpoint),
       std::move(grpc_executor),
       std::move(batching_queue),
       queue_index,
@@ -390,6 +400,15 @@ namespace AdServer::Grpc
   BatchingStreamBase::inflight_items() noexcept
   {
     return impl_->inflight_items();
+  }
+
+  std::string
+  BatchingStreamBase::last_error_message() const noexcept
+  {
+    const auto current_stats = stats();
+    return current_stats.last_error.has_value() ?
+      current_stats.last_error->message :
+      std::string();
   }
 
   bool
@@ -592,6 +611,10 @@ namespace AdServer::Grpc
       stream_state_.store(StreamState::Broken);
       callback_cv_.notify_one();
       maybe_start_shutdown_i_();
+      record_last_error_(
+        grpc::StatusCode::UNAVAILABLE,
+        "grpc executor rejected stream start",
+        "stream_start");
       return false;
     }
 
@@ -913,6 +936,10 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
+      record_last_error_(
+        grpc::StatusCode::UNAVAILABLE,
+        "stream start failed",
+        "stream_start");
       finish_with_error_(grpc::StatusCode::UNAVAILABLE, "stream start failed");
     }
     else if (ready && ready_callback_)
@@ -986,6 +1013,10 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
+      record_last_error_(
+        grpc::StatusCode::UNAVAILABLE,
+        "stream read failed",
+        "stream_read");
       fail_inflight_with_error_(grpc::StatusCode::UNAVAILABLE, "stream read failed");
     }
   }
@@ -1029,6 +1060,10 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
+      record_last_error_(
+        grpc::StatusCode::UNAVAILABLE,
+        "stream write failed",
+        "stream_write");
       std::vector<PendingRequest> failed_write_requests;
       {
         std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
@@ -1059,6 +1094,14 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::process_finish_completion_(bool /*ok*/)
   {
+    if (!finish_status_.ok())
+    {
+      record_last_error_(
+        finish_status_.error_code(),
+        finish_status_.error_message().c_str(),
+        "stream_finish");
+    }
+
     std::lock_guard<std::mutex> lock(state_lock_);
     finish_in_flight_ = false;
     complete_shutdown_i_();
@@ -1109,6 +1152,19 @@ namespace AdServer::Grpc
   }
 
   void
+  BatchingStreamBase::Impl::record_last_error_(
+    grpc::StatusCode status_code,
+    const char* status_message,
+    const char* source) noexcept
+  {
+    owner_.set_last_error(
+      endpoint_,
+      status_code,
+      status_message ? status_message : "",
+      source);
+  }
+
+  void
   BatchingStreamBase::Impl::finish_with_error_(
     grpc::StatusCode status_code,
     const char* status_message)
@@ -1136,6 +1192,10 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::handle_executor_shutdown_i_() noexcept
   {
+    record_last_error_(
+      grpc::StatusCode::UNAVAILABLE,
+      "grpc executor shutdown",
+      "executor_shutdown");
     stream_state_.store(StreamState::Broken);
     callback_cv_.notify_one();
 

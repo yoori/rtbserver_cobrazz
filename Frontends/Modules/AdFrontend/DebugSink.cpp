@@ -770,4 +770,21 @@ namespace AdServer
         request_time_metering);
     }
   }
+
+  void
+  DebugSink::print_creative_selection_error(
+    const String::SubString& error)
+    noexcept
+  {
+    if(require_debug_info())
+    {
+      if(require_debug_body())
+      {
+        debug_info_str_ << "\n" <<
+          Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
+      }
+
+      debug_info_str_ << "error = " << error << sep_;
+    }
+  }
 }

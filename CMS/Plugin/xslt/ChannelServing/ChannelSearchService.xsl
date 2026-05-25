@@ -22,6 +22,7 @@
 <xsl:template name="ChannelSearchServiceConfigGenerator">
   <xsl:param name="env-config"/>
   <xsl:param name="colo-config"/>
+  <xsl:param name="full-cluster-path"/>
   <xsl:param name="campaign-servers"/>
   <xsl:param name="channel-controller-path"/>
   <xsl:param name="channel-search-service-config"/>
@@ -65,33 +66,10 @@
       <xsl:with-param name="default-log-level" select="$channel-search-service-log-level"/>
     </xsl:call-template>
 
-    <cfg:ChannelManagerControllerRefs name="ChannelManagerControllers">
-      <xsl:for-each select="$channel-controller-path">
-
-        <xsl:variable name="hosts">
-          <xsl:call-template name="GetHosts">
-            <xsl:with-param name="hosts" select="@host"/>
-            <xsl:with-param name="error-prefix" select="'ChannelSearchService:ChannelManagerController'"/>
-          </xsl:call-template>
-        </xsl:variable>
-
-        <xsl:variable name="channel-controller-port">
-          <xsl:value-of select="./configuration/cfg:channelController/cfg:networkParams/@port"/>
-          <xsl:if test="count(./configuration/cfg:channelController/cfg:networkParams/@port) = 0">
-            <xsl:value-of select="$def-channel-controller-port"/>
-          </xsl:if>
-        </xsl:variable>
-
-        <xsl:for-each select="exsl:node-set($hosts)//host">
-        <cfg:Ref>
-          <xsl:attribute name="ref">
-            <xsl:value-of
-              select="concat('corbaloc:iiop:', ., ':', $channel-controller-port, '/ChannelManagerController')"/>
-          </xsl:attribute>
-        </cfg:Ref>
-        </xsl:for-each>
-      </xsl:for-each>
-    </cfg:ChannelManagerControllerRefs>
+    <xsl:call-template name="AddChannelControllerGroups">
+      <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
+      <xsl:with-param name="error-prefix" select="'ChannelSearchService'"/>
+    </xsl:call-template>
 
     <xsl:call-template name="CampaignServerCorbaRefs">
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
@@ -192,6 +170,7 @@
     <xsl:call-template name="ChannelSearchServiceConfigGenerator">
       <xsl:with-param name="env-config" select="$env-config"/>
       <xsl:with-param name="colo-config" select="$colo-config"/>
+      <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="campaign-servers" select="$campaign-server-path"/>
       <xsl:with-param name="channel-controller-path" select="$channel-controller-path"/>
       <xsl:with-param name="channel-search-service-config" select="$channel-search-service-config"/>

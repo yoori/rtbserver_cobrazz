@@ -73,6 +73,7 @@ namespace AdServer::Grpc
 
     explicit BatchingStreamBase(
       std::shared_ptr<grpc::Channel> channel,
+      std::string endpoint,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
       unsigned int queue_index,
@@ -86,6 +87,7 @@ namespace AdServer::Grpc
 
     bool available() noexcept;
     std::uint64_t inflight_items() noexcept;
+    std::string last_error_message() const noexcept;
     bool try_start_write(
       PendingBatch&& pending_batch,
       bool measure_consumer_stream_write,

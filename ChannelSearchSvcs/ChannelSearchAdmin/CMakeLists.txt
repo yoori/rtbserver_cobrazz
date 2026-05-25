@@ -8,6 +8,5 @@ target_link_libraries(ChannelSearchAdmin
   Commons
   UtilCommons
   ChannelSearchServiceIDL
-  ChannelManagerControllerIDL  ChannelClusterControlIDL
-  ChannelSessionFactory
+  ChannelGrpcClient
 )

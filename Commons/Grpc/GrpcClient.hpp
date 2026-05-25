@@ -60,6 +60,15 @@ namespace AdServer::Grpc
       std::uint64_t max_us = 0;
     };
 
+    struct LastError
+    {
+      Generics::Time time;
+      std::string endpoint;
+      int code = 0;
+      std::string message;
+      std::string source;
+    };
+
     std::uint64_t write_batches = 0;
     std::uint64_t write_items = 0;
     std::uint64_t read_batches = 0;
@@ -87,6 +96,7 @@ namespace AdServer::Grpc
     std::uint64_t draining_streams = 0;
     std::uint64_t deferred_streams = 0;
     std::optional<ConsumerStreamWrite> consumer_stream_write;
+    std::optional<LastError> last_error;
   };
 
   class Client
@@ -117,6 +127,12 @@ namespace AdServer::Grpc
 
     void add_timing_coalesce_stats(std::uint64_t items) noexcept;
 
+    void set_last_error(
+      const std::string& endpoint,
+      grpc::StatusCode code,
+      const std::string& message,
+      const char* source) noexcept;
+
   private:
     Stats own_stats_() const noexcept;
 
@@ -143,6 +159,8 @@ namespace AdServer::Grpc
     std::atomic<std::uint64_t> consumer_stream_write_count_{0};
     std::atomic<std::uint64_t> consumer_stream_write_sum_us_{0};
     std::atomic<std::uint64_t> consumer_stream_write_max_us_{0};
+    mutable std::mutex last_error_lock_;
+    std::optional<Stats::LastError> last_error_;
     Client* const stats_owner_;
   };
 
@@ -203,6 +221,17 @@ namespace AdServer::Grpc
   {
     return status.error_code() == grpc::StatusCode::UNAVAILABLE &&
       status.error_message() == NO_ACTIVE_BATCHING_STREAMS_MESSAGE;
+  }
+
+  inline void
+  merge_last_error(Stats& result, const Stats& source) noexcept
+  {
+    if (source.last_error.has_value() &&
+      (!result.last_error.has_value() ||
+        result.last_error->time < source.last_error->time))
+    {
+      result.last_error = source.last_error;
+    }
   }
 
   inline grpc::Status
@@ -315,6 +344,33 @@ namespace AdServer::Grpc
       std::memory_order_relaxed);
   }
 
+  inline void
+  Client::set_last_error(
+    const std::string& endpoint,
+    grpc::StatusCode code,
+    const std::string& message,
+    const char* source) noexcept
+  {
+    if (message.empty() || message == "inactive")
+    {
+      return;
+    }
+
+    try
+    {
+      std::lock_guard<std::mutex> lock(stats_owner_->last_error_lock_);
+      stats_owner_->last_error_ = Stats::LastError{
+        Generics::Time::get_time_of_day(),
+        endpoint,
+        static_cast<int>(code),
+        message,
+        source ? source : ""
+      };
+    }
+    catch (...)
+    {}
+  }
+
   inline Stats
   Client::own_stats_() const noexcept
   {
@@ -343,6 +399,10 @@ namespace AdServer::Grpc
         consumer_stream_write_sum_us_.load(std::memory_order_relaxed),
         consumer_stream_write_max_us_.load(std::memory_order_relaxed)
       };
+    }
+    {
+      std::lock_guard<std::mutex> lock(last_error_lock_);
+      stats.last_error = last_error_;
     }
     return stats;
   }

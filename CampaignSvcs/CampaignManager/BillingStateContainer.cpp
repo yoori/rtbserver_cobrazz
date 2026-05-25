@@ -518,8 +518,16 @@ namespace CampaignSvcs
           "ADS-ICON-4003");
       }
     }
-    catch(const eh::Exception&) // NoGoodReference,NoFreeObject,InvalidReference
-    {}
+    catch(const eh::Exception& ex) // NoGoodReference, NoFreeObject, InvalidReference
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": can't get BillingServer object by service index #" <<
+        service_index << ": " << ex.what();
+      logger_->log(ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::BILLING_STATE_CONTAINER,
+        "ADS-ICON-4003");
+    }
 
     return false;
   }
