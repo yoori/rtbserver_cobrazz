@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <string>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -217,7 +218,8 @@ namespace CampaignSvcs
       unsigned long ccg_id,
       bool available,
       const RevenueDecimal& goal_ctr,
-      const Generics::Time& now)
+      const Generics::Time& now,
+      const std::string& billing_request_params)
       noexcept;
 
   protected:

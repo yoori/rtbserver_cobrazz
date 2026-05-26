@@ -14,66 +14,57 @@ namespace AdServer::ChannelSvcs
   {
     constexpr const char channel_controller_grpc_aspect[] =
       "ChannelController";
+
+    namespace pb = adserver::channel_svcs::channel_controller;
   }
 
   class ChannelControllerGrpc::ServiceImpl final:
-    public AdServer::Grpc::GrpcServiceBase
+    public AdServer::Grpc::GrpcAsyncServiceBase<
+      ChannelControllerGrpc::ServiceImpl,
+      adserver::channel_svcs::channel_controller::ChannelControllerGrpc,
+      adserver::channel_svcs::channel_controller::ChannelControllerGrpc::AsyncService>
   {
+    using AsyncService =
+      adserver::channel_svcs::channel_controller::ChannelControllerGrpc::AsyncService;
+
   public:
     explicit ServiceImpl(ChannelControllerImpl* controller)
-      : controller_(ReferenceCounting::add_ref(controller)),
-        service_(controller_.in())
-    {
-      add_grpc_service(&service_);
-    }
-
-    std::size_t completion_queues_count() const noexcept override
-    {
-      return 0;
-    }
-
-  private:
-    void register_in_queue(grpc::ServerCompletionQueue*) override
+      : controller_(ReferenceCounting::add_ref(controller))
     {}
 
-    class Service final:
-      public adserver::channel_svcs::channel_controller::
-        ChannelControllerGrpc::Service
+    static auto grpc_calls()
     {
-    public:
-      explicit Service(ChannelControllerImpl* controller)
-        : controller_(ReferenceCounting::add_ref(controller))
-      {}
+      return std::make_tuple(
+        MAKE_GRPC_CALL(
+          pb::GetSessionDescriptionRequest,
+          pb::GetSessionDescriptionResponse,
+          get_session_description));
+    }
 
-      grpc::Status get_session_description(
-        grpc::ServerContext*,
-        const adserver::channel_svcs::channel_controller::
-          GetSessionDescriptionRequest*,
-        adserver::channel_svcs::channel_controller::
-          GetSessionDescriptionResponse* response) override
+    void get_session_description(
+      const pb::GetSessionDescriptionRequest&,
+      pb::GetSessionDescriptionResponse& response,
+      ::grpc::Status& result_status) const
+    {
+      try
       {
-        try
-        {
-          controller_->fill_session_description(*response);
-          return grpc::Status::OK;
-        }
-        catch (const ChannelControllerImpl::NotReady& ex)
-        {
-          return grpc::Status(grpc::StatusCode::UNAVAILABLE, ex.what());
-        }
-        catch (const eh::Exception& ex)
-        {
-          return grpc::Status(grpc::StatusCode::INTERNAL, ex.what());
-        }
+        controller_->fill_session_description(response);
+        result_status = ::grpc::Status::OK;
       }
-
-    private:
-      ChannelControllerImpl_var controller_;
-    };
+      catch (const ChannelControllerImpl::NotReady& ex)
+      {
+        result_status =
+          ::grpc::Status(::grpc::StatusCode::UNAVAILABLE, ex.what());
+      }
+      catch (const eh::Exception& ex)
+      {
+        result_status =
+          ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+      }
+    }
 
   private:
     ChannelControllerImpl_var controller_;
-    Service service_;
   };
 
   ChannelControllerGrpc::ChannelControllerGrpc(

@@ -303,7 +303,8 @@ namespace AdServer
           AdServer::ChannelSvcs::create_distributed_channel_client(
             *common_config_,
             grpc_executor_,
-            common_module_->grpc_coalesce_runner());
+            common_module_->grpc_coalesce_runner(),
+            logger());
         channel_client_ = channel_client;
         add_child_object(channel_client);
 

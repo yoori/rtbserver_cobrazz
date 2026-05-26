@@ -127,6 +127,11 @@ namespace AdServer
       noexcept;
 
     void
+    print_trigger_matching_error(
+      const String::SubString& error)
+      noexcept;
+
+    void
     fill_debug_body(
       HttpResponse& response,
       int& http_status,

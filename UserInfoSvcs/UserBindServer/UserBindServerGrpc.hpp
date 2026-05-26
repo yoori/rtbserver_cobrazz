@@ -34,7 +34,7 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::shared_ptr<std::atomic_bool> response_sleep_enabled = nullptr);
+      std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
     Stats stats() const noexcept;
 

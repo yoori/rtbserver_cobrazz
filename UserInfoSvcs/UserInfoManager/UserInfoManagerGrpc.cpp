@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unistd.h>
+#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
@@ -34,6 +36,22 @@ namespace AdServer::UserInfoSvcs
     constexpr const char user_info_manager_grpc_aspect[] =
       "UserInfoManagerGrpc";
     namespace pc = adserver::grpc::process_control;
+
+    const std::string&
+    service_hostname_()
+    {
+      static const std::string hostname = []()
+      {
+        char buffer[256];
+        if (::gethostname(buffer, sizeof(buffer)) != 0)
+        {
+          return std::string();
+        }
+        buffer[sizeof(buffer) - 1] = 0;
+        return std::string(buffer);
+      }();
+      return hostname;
+    }
 
     class InProgressGuard final
     {
@@ -419,12 +437,12 @@ namespace AdServer::UserInfoSvcs
 
     void update_user_freq_caps(
       const adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest& request,
-      adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse&,
+      adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse& response,
       grpc::Status& result_status) const;
 
     void confirm_user_freq_caps(
       const adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest& request,
-      adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse&,
+      adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse& response,
       grpc::Status& result_status) const;
 
     void fraud_user(
@@ -569,6 +587,7 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    response.set_hostname(service_hostname_());
     try
     {
       UserInfoManagerCore::UserProfiles user_profile;
@@ -593,6 +612,7 @@ namespace AdServer::UserInfoSvcs
   {
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(stats_counters_->match_in_progress);
+    response.set_hostname(service_hostname_());
     try
     {
       UserInfoManagerCore::MatchResult match_result;
@@ -611,12 +631,13 @@ namespace AdServer::UserInfoSvcs
 
   void UserInfoManagerGrpc::ServiceImpl::update_user_freq_caps(
     const adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest& request,
-    adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse&,
+    adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse& response,
     grpc::Status& result_status) const
   {
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
       stats_counters_->update_user_freq_caps_in_progress);
+    response.set_hostname(service_hostname_());
     try
     {
       user_info_manager_->update_user_freq_caps(
@@ -638,12 +659,13 @@ namespace AdServer::UserInfoSvcs
 
   void UserInfoManagerGrpc::ServiceImpl::confirm_user_freq_caps(
     const adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest& request,
-    adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse&,
+    adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse& response,
     grpc::Status& result_status) const
   {
     InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
       stats_counters_->confirm_user_freq_caps_in_progress);
+    response.set_hostname(service_hostname_());
     try
     {
       user_info_manager_->confirm_user_freq_caps(

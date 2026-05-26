@@ -19,6 +19,74 @@ namespace CampaignSvcs
     const Generics::Time REENABLE_INDEX_TIME = Generics::Time(10);
 
     const bool DEBUG_BILLING_SERVER_CALL_ = false;
+
+    std::string
+    check_available_bid_request_params_(
+      long service_index,
+      const char* reason,
+      const Generics::Time& now,
+      unsigned long account_id,
+      unsigned long advertiser_id,
+      unsigned long campaign_id,
+      unsigned long ccg_id,
+      const RevenueDecimal& ctr,
+      bool optimize_campaign_ctr)
+    {
+      Stream::Error ostr;
+      ostr << "check_available_bid request params: service_index=" <<
+        service_index;
+      if(reason)
+      {
+        ostr << ", reason=" << reason;
+      }
+      ostr << ", time=" << now <<
+        ", account_id=" << account_id <<
+        ", advertiser_id=" << advertiser_id <<
+        ", campaign_id=" << campaign_id <<
+        ", ccg_id=" << ccg_id <<
+        ", ctr=" << ctr <<
+        ", optimize_campaign_ctr=" << optimize_campaign_ctr;
+      return ostr.str().str();
+    }
+
+    std::string
+    confirm_bid_request_params_(
+      long service_index,
+      const char* reason,
+      const Generics::Time& now,
+      unsigned long account_id,
+      unsigned long advertiser_id,
+      unsigned long campaign_id,
+      unsigned long ccg_id,
+      const RevenueDecimal& ctr,
+      const AdServer::CampaignSvcs::BillingServer::ConfirmBidInfo&
+        confirm_bid_info)
+    {
+      Stream::Error ostr;
+      ostr << "confirm_bid request params: service_index=" << service_index;
+      if(reason)
+      {
+        ostr << ", reason=" << reason;
+      }
+      ostr << ", time=" << now <<
+        ", account_id=" << account_id <<
+        ", advertiser_id=" << advertiser_id <<
+        ", campaign_id=" << campaign_id <<
+        ", ccg_id=" << ccg_id <<
+        ", ctr=" << ctr <<
+        ", account_spent_budget=" << CorbaAlgs::unpack_decimal<RevenueDecimal>(
+          confirm_bid_info.account_spent_budget) <<
+        ", spent_budget=" << CorbaAlgs::unpack_decimal<RevenueDecimal>(
+          confirm_bid_info.spent_budget) <<
+        ", reserved_budget=" << CorbaAlgs::unpack_decimal<RevenueDecimal>(
+          confirm_bid_info.reserved_budget) <<
+        ", imps=" << CorbaAlgs::unpack_decimal<RevenueDecimal>(
+          confirm_bid_info.imps) <<
+        ", clicks=" << CorbaAlgs::unpack_decimal<RevenueDecimal>(
+          confirm_bid_info.clicks) <<
+        ", forced=" << confirm_bid_info.forced;
+      return ostr.str().str();
+    }
   };
 
   class BillingStateContainer::RecheckCCGTask: public Generics::TaskGoal
@@ -123,6 +191,16 @@ namespace CampaignSvcs
     bool some_call_failed = false;
     bool available = false;
     RevenueDecimal goal_ctr = RevenueDecimal::ZERO;
+    std::string billing_request_params = check_available_bid_request_params_(
+      -1,
+      "not called yet",
+      now,
+      account_id,
+      advertiser_id,
+      campaign_id,
+      ccg_id,
+      ctr,
+      optimize_campaign_ctr_);
 
     while(true)
     {
@@ -139,6 +217,17 @@ namespace CampaignSvcs
 
       if(res_service_index == -1)
       {
+        billing_request_params = check_available_bid_request_params_(
+          res_service_index,
+          "no available BillingServer index",
+          now,
+          account_id,
+          advertiser_id,
+          campaign_id,
+          ccg_id,
+          ctr,
+          optimize_campaign_ctr_);
+
         full_deactivation_check = true;
         break;
       }
@@ -152,6 +241,17 @@ namespace CampaignSvcs
       assert(static_cast<unsigned long>(res_service_index) < billing_servers_.size());
 
       AdServer::CampaignSvcs::BillingServer::BidResultInfo_var check_available_bid_result;
+
+      billing_request_params = check_available_bid_request_params_(
+        res_service_index,
+        nullptr,
+        now,
+        account_id,
+        advertiser_id,
+        campaign_id,
+        ccg_id,
+        ctr,
+        optimize_campaign_ctr_);
 
       bool success_called = billing_server_call_(
         check_available_bid_result,
@@ -210,7 +310,13 @@ namespace CampaignSvcs
 
     if(deactivate_ccg)
     {
-      ccg_set_available_(ccg_setter, ccg_id, false, goal_ctr, now);
+      ccg_set_available_(
+        ccg_setter,
+        ccg_id,
+        false,
+        goal_ctr,
+        now,
+        billing_request_params);
     }
 
     return result;
@@ -254,6 +360,16 @@ namespace CampaignSvcs
     bool available = false;
     RevenueDecimal goal_ctr = RevenueDecimal::ZERO;
     //unsigned long try_i = 0;
+    std::string billing_request_params = confirm_bid_request_params_(
+      -1,
+      "not called yet",
+      now,
+      account_id,
+      advertiser_id,
+      campaign_id,
+      ccg_id,
+      ctr,
+      confirm_bid_info);
 
     // fetch all services before success confirm (confirm can't be rollbacked)
     // loop should be interrupted only on success or if no servers that can confirm
@@ -273,6 +389,17 @@ namespace CampaignSvcs
         // all indexes disabled
         if(confirm_bid_info.forced)
         {
+          billing_request_params = confirm_bid_request_params_(
+            res_service_index,
+            "no available BillingServer index",
+            now,
+            account_id,
+            advertiser_id,
+            campaign_id,
+            ccg_id,
+            ctr,
+            confirm_bid_info);
+
           break;
         }
         else
@@ -286,6 +413,17 @@ namespace CampaignSvcs
       AdServer::CampaignSvcs::BillingServer::BidResultInfo_var confirm_bid_result;
 
       // confirm_bid_info is inout, can be confirmed part of amount
+      billing_request_params = confirm_bid_request_params_(
+        res_service_index,
+        nullptr,
+        now,
+        account_id,
+        advertiser_id,
+        campaign_id,
+        ccg_id,
+        ctr,
+        confirm_bid_info);
+
       bool success_called = billing_server_call_(
         confirm_bid_result,
         res_service_index,
@@ -347,7 +485,13 @@ namespace CampaignSvcs
 
     if(!available)
     {
-      ccg_set_available_(ccg_setter, ccg_id, false, goal_ctr, now);
+      ccg_set_available_(
+        ccg_setter,
+        ccg_id,
+        false,
+        goal_ctr,
+        now,
+        billing_request_params);
     }
 
     return result;
@@ -676,7 +820,14 @@ namespace CampaignSvcs
               " set available" << std::endl;
           }
 
-          ccg_set_available_(ccg_setter, ccg_id, true, RevenueDecimal::ZERO, now);
+          ccg_set_available_(
+            ccg_setter,
+            ccg_id,
+            true,
+            RevenueDecimal::ZERO,
+            now,
+            "recheck_ccgs request params: action=set_available"
+            ", reason=planned recheck time reached");
 
           recheck_ccgs_.erase(it++);
         }
@@ -713,7 +864,8 @@ namespace CampaignSvcs
     unsigned long ccg_id,
     bool available,
     const RevenueDecimal& goal_ctr,
-    const Generics::Time& now)
+    const Generics::Time& now,
+    const std::string& billing_request_params)
     noexcept
   {
     if(ccg_setter)
@@ -746,6 +898,14 @@ namespace CampaignSvcs
         ostr << "BillingStateContainer::ccg_set_available_(): CCG #" <<
           ccg_id << " deactivated by BillingServer response, goal_ctr = " <<
           goal_ctr << ", recheck planned at " << planned_recheck_time;
+        if(!billing_request_params.empty())
+        {
+          ostr << ", " << billing_request_params;
+        }
+        else
+        {
+          ostr << ", billing request params: missing";
+        }
         logger_->log(ostr.str(),
           Logging::Logger::NOTICE,
           Aspect::BILLING_STATE_CONTAINER,

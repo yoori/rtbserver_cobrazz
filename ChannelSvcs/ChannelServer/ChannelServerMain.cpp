@@ -253,6 +253,12 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             body += std::to_string(grpc_stats.match_in_progress);
             body += ",\"get_ccg_traits_in_progress\":";
             body += std::to_string(grpc_stats.get_ccg_traits_in_progress);
+            body += ",\"check_configuration_in_progress\":";
+            body += std::to_string(grpc_stats.check_configuration_in_progress);
+            body += ",\"set_sources_in_progress\":";
+            body += std::to_string(grpc_stats.set_sources_in_progress);
+            body += ",\"set_proxy_sources_in_progress\":";
+            body += std::to_string(grpc_stats.set_proxy_sources_in_progress);
           }
           body += "}\n";
 

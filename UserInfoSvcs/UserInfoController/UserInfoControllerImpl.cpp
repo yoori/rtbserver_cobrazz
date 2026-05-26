@@ -11,7 +11,7 @@
 namespace
 {
   const Generics::Time REINIT_SOURCES_INTERVAL = Generics::Time(10);
-  const std::chrono::seconds GET_SOURCE_TIMEOUT(5);
+  const std::chrono::seconds GET_SOURCE_TIMEOUT(60);
 
   namespace Aspect
   {

@@ -5,6 +5,8 @@ package adserver.channel_svcs.channel_server;
 service ChannelServerGrpc {
   rpc match(MatchRequest) returns (MatchResponse);
   rpc get_ccg_traits(GetCcgTraitsRequest) returns (GetCcgTraitsResponse);
+  rpc check_configuration(CheckConfigurationRequest)
+    returns (CheckConfigurationResponse);
   rpc set_sources(SetSourcesRequest) returns (SetSourcesResponse);
   rpc set_proxy_sources(SetProxySourcesRequest) returns (SetProxySourcesResponse);
 }
@@ -50,6 +52,7 @@ message MatchResponse {
   bool no_adv = 3;
   bool no_track = 4;
   bytes match_time = 5;
+  string hostname = 6;
 }
 
 message GetCcgTraitsRequest {
@@ -69,6 +72,13 @@ message CcgKeyword {
 message GetCcgTraitsResponse {
   repeated CcgKeyword ccg_keywords = 1;
   repeated uint64 neg_ccg = 2;
+  string hostname = 3;
+}
+
+message CheckConfigurationRequest {}
+
+message CheckConfigurationResponse {
+  uint64 check_sum = 1;
 }
 
 message SetSourcesRequest {

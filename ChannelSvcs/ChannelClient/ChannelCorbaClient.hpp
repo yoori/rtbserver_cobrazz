@@ -34,6 +34,10 @@ namespace AdServer::ChannelSvcs
       const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
       GetCcgTraitsCallback callback) override;
 
+    void check_configuration(
+      const adserver::channel_svcs::channel_server::CheckConfigurationRequest& request,
+      CheckConfigurationCallback callback) override;
+
     void set_sources(
       const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
       SetSourcesCallback callback) override;

@@ -4,6 +4,8 @@
 
 #include <string>
 #include <utility>
+#include <unistd.h>
+#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
@@ -21,6 +23,22 @@ namespace AdServer::CampaignSvcs
 
     namespace pb = adserver::campaign_svcs::campaign_manager;
     namespace pc = adserver::grpc::process_control;
+
+    const std::string&
+    service_hostname_()
+    {
+      static const std::string hostname = []()
+      {
+        char buffer[256];
+        if (::gethostname(buffer, sizeof(buffer)) != 0)
+        {
+          return std::string();
+        }
+        buffer[sizeof(buffer) - 1] = 0;
+        return std::string(buffer);
+      }();
+      return hostname;
+    }
 
     class InProgressGuard final
     {
@@ -1751,6 +1769,8 @@ namespace AdServer::CampaignSvcs
       stats_->call_in_progress,
       stats_->get_file_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       const auto file = core_->get_file(request.file_name());
@@ -1845,12 +1865,14 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerGrpc::ServiceImpl::process_match_request(
     const pb::ProcessMatchRequestRequest& request,
-    pb::ProcessMatchRequestResponse&,
+    pb::ProcessMatchRequestResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->process_match_request_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {
@@ -1948,6 +1970,8 @@ namespace AdServer::CampaignSvcs
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->instantiate_ad_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {
@@ -2193,6 +2217,8 @@ namespace AdServer::CampaignSvcs
       stats_->call_in_progress,
       stats_->get_colocation_flags_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       const auto result = core_->get_colocation_flags();
@@ -2230,6 +2256,8 @@ namespace AdServer::CampaignSvcs
       stats_->call_in_progress,
       stats_->get_pub_pixels_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       const auto result = core_->get_pub_pixels(
@@ -2261,12 +2289,14 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerGrpc::ServiceImpl::consider_passback(
     const pb::ConsiderPassbackRequest& request,
-    pb::ConsiderPassbackResponse&,
+    pb::ConsiderPassbackResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->consider_passback_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {
@@ -2295,12 +2325,14 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerGrpc::ServiceImpl::consider_passback_track(
     const pb::ConsiderPassbackTrackRequest& request,
-    pb::ConsiderPassbackTrackResponse&,
+    pb::ConsiderPassbackTrackResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->consider_passback_track_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {
@@ -2331,12 +2363,14 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerGrpc::ServiceImpl::verify_opt_operation(
     const pb::VerifyOptOperationRequest& request,
-    pb::VerifyOptOperationResponse&,
+    pb::VerifyOptOperationResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->verify_opt_operation_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {
@@ -2398,6 +2432,8 @@ namespace AdServer::CampaignSvcs
       stats_->call_in_progress,
       stats_->get_click_url_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       const auto& source = request.click_info();
@@ -2458,6 +2494,8 @@ namespace AdServer::CampaignSvcs
       stats_->call_in_progress,
       stats_->verify_impression_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       const auto& source = request.impression_info();
@@ -2505,12 +2543,14 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerGrpc::ServiceImpl::action_taken(
     const pb::ActionTakenRequest& request,
-    pb::ActionTakenResponse&,
+    pb::ActionTakenResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->action_taken_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {
@@ -2560,12 +2600,14 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerGrpc::ServiceImpl::consider_web_operation(
     const pb::ConsiderWebOperationRequest& request,
-    pb::ConsiderWebOperationResponse&,
+    pb::ConsiderWebOperationResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->consider_web_operation_in_progress);
+
+    response.set_hostname(service_hostname_());
 
     try
     {

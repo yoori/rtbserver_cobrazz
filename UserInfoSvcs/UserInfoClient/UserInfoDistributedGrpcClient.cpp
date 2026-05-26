@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -283,7 +284,12 @@ namespace AdServer::UserInfoSvcs
 
     if (!status.ok())
     {
-      return std::nullopt;
+      std::ostringstream ostr;
+      ostr << "UserInfoController '" << endpoint
+        << "': get_session_description failed: code="
+        << static_cast<int>(status.error_code())
+        << ", message=" << status.error_message();
+      throw Exception(ostr.str());
     }
 
     Pool::EndpointChunksList refs;
@@ -298,6 +304,13 @@ namespace AdServer::UserInfoSvcs
         endpoint_chunks.chunk_ids.emplace_back(chunk_id);
       }
       refs.emplace_back(std::move(endpoint_chunks));
+    }
+    if (refs.empty())
+    {
+      std::ostringstream ostr;
+      ostr << "UserInfoController '" << endpoint
+        << "': get_session_description returned no UserInfoManager refs";
+      throw Exception(ostr.str());
     }
     return refs;
   }

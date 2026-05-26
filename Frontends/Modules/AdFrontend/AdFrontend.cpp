@@ -12,6 +12,7 @@
 #include <Generics/Uuid.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
+#include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
@@ -62,6 +63,126 @@ namespace
     {
       return ChannelMatch(atom.id(), atom.trigger_channel_id());
     }
+  };
+
+  class GrpcClientMetricsProvider final : public Generics::MetricsProvider
+  {
+  public:
+    struct ClientSource
+    {
+      std::string prefix;
+      std::weak_ptr<AdServer::Grpc::Client> client;
+    };
+
+    explicit GrpcClientMetricsProvider(std::vector<ClientSource> clients)
+      : clients_(std::move(clients))
+    {}
+
+    MetricArray get_values() override
+    {
+      MetricArray result;
+      for (const auto& source : clients_)
+      {
+        if (auto client = source.client.lock())
+        {
+          add_client_stats_(result, source.prefix, client->stats());
+        }
+      }
+      return result;
+    }
+
+    void add_value(std::string_view, double) override {}
+    void add_value(std::string_view, long) override {}
+    void add_value(std::string_view, const std::string&) override {}
+    void add_value_prometheus(
+      const std::string&,
+      const std::map<std::string, std::string>&,
+      double) override
+    {}
+    void set_value_prometheus(
+      const std::string&,
+      const std::map<std::string, std::string>&,
+      double) override
+    {}
+
+  private:
+    static void add_counter_(
+      MetricArray& result,
+      const std::string& prefix,
+      const char* name,
+      std::uint64_t value)
+    {
+      result.emplace_back(prefix + "_" + name, static_cast<long>(value));
+    }
+
+    static void add_client_stats_(
+      MetricArray& result,
+      const std::string& prefix,
+      const AdServer::Grpc::Stats& stats)
+    {
+      add_counter_(result, prefix, "input_items", stats.input_items);
+      add_counter_(result, prefix, "completed_items", stats.completed_items);
+      add_counter_(
+        result,
+        prefix,
+        "completed_error_items",
+        stats.completed_error_items);
+      add_counter_(
+        result,
+        prefix,
+        "outstanding_items",
+        stats.input_items > stats.completed_items ?
+          stats.input_items - stats.completed_items :
+          0);
+      add_counter_(result, prefix, "write_batches", stats.write_batches);
+      add_counter_(result, prefix, "write_items", stats.write_items);
+      add_counter_(result, prefix, "read_batches", stats.read_batches);
+      add_counter_(result, prefix, "read_items", stats.read_items);
+      add_counter_(result, prefix, "queue_items", stats.queue_items);
+      add_counter_(result, prefix, "pending_batches", stats.pending_batches);
+      add_counter_(
+        result,
+        prefix,
+        "pending_batch_items",
+        stats.pending_batch_items);
+      add_counter_(result, prefix, "inflight_items", stats.inflight_items);
+      add_counter_(
+        result,
+        prefix,
+        "stream_inflight_items",
+        stats.stream_inflight_items);
+      add_counter_(result, prefix, "active_streams", stats.active_streams);
+      add_counter_(result, prefix, "available_streams", stats.available_streams);
+      add_counter_(
+        result,
+        prefix,
+        "connecting_streams",
+        stats.connecting_streams);
+      add_counter_(result, prefix, "draining_streams", stats.draining_streams);
+      add_counter_(result, prefix, "deferred_streams", stats.deferred_streams);
+
+      if (stats.last_error.has_value())
+      {
+        result.emplace_back(
+          prefix + "_last_error_time",
+          stats.last_error->time.get_gm_time().format("%F %T"));
+        result.emplace_back(
+          prefix + "_last_error_endpoint",
+          stats.last_error->endpoint);
+        result.emplace_back(
+          prefix + "_last_error_code",
+          static_cast<long>(stats.last_error->code));
+        result.emplace_back(
+          prefix + "_last_error_message",
+          stats.last_error->message);
+        result.emplace_back(
+          prefix + "_last_error_source",
+          stats.last_error->source);
+      }
+    }
+
+  private:
+    std::vector<ClientSource> clients_;
   };
 }
 
@@ -214,7 +335,8 @@ namespace AdServer
     Configuration* frontend_config,
     Logging::Logger* logger,
     std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
-    CommonModule* common_module)
+    CommonModule* common_module,
+    Generics::CompositeMetricsProvider* composite_metrics_provider)
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
@@ -228,6 +350,8 @@ namespace AdServer
       fe_config_path_(frontend_config->path()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
+      composite_metrics_provider_(
+        ReferenceCounting::add_ref(composite_metrics_provider)),
       workers_(std::move(request_workers))
   {}
 
@@ -368,12 +492,37 @@ namespace AdServer
           AdServer::ChannelSvcs::create_distributed_channel_client(
             *common_config_,
             grpc_executor_,
-              common_module_->grpc_coalesce_runner());
+            common_module_->grpc_coalesce_runner(),
+            logger());
         channel_client_coro_ = std::make_shared<
           AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
             channel_client,
             workers_);
         add_child_object(channel_client);
+
+        if (composite_metrics_provider_)
+        {
+          std::vector<GrpcClientMetricsProvider::ClientSource> client_sources;
+          const auto add_client_source =
+            [&client_sources](const char* prefix, const auto& client)
+            {
+              if (client)
+              {
+                client_sources.push_back(GrpcClientMetricsProvider::ClientSource{
+                  prefix,
+                  std::static_pointer_cast<AdServer::Grpc::Client>(client)
+                });
+              }
+            };
+
+          add_client_source("ad_user_info_client", user_info_client);
+          add_client_source("ad_campaign_client", campaign_manager_client);
+          add_client_source("ad_user_bind_client", user_bind_client);
+          add_client_source("ad_channel_client", channel_client);
+
+          composite_metrics_provider_->add_provider(
+            new GrpcClientMetricsProvider(std::move(client_sources)));
+        }
 
         stats_ = new AdFrontendStat();
 
@@ -1315,7 +1464,8 @@ namespace AdServer
     const std::shared_ptr<RequestContext>& context,
     adserver::channel_svcs::channel_server::MatchRequest channel_request,
     std::shared_ptr<
-      adserver::channel_svcs::channel_server::MatchResponse> response)
+      adserver::channel_svcs::channel_server::MatchResponse> response,
+    std::string& error)
     noexcept
   {
     const RequestInfo& request_info = context->request_info;
@@ -1349,6 +1499,7 @@ namespace AdServer
       ostr << "ChannelServer::match(): gRPC call failed: code=" <<
         static_cast<int>(channel_result.status.error_code()) <<
         ", message=" << channel_result.status.error_message();
+      error = ostr.str().str();
       logger()->log(
         ostr.str(),
         Logging::Logger::EMERGENCY,
@@ -1408,6 +1559,7 @@ namespace AdServer
       }
 
       bool trigger_success = true;
+      std::string trigger_error;
       if(context->request_info.passback_by_colocation)
       {
         *trigger_matched_channels = get_empty_trigger_matching();
@@ -1417,7 +1569,8 @@ namespace AdServer
         trigger_success = co_await co_match_triggers_(
           context,
           std::move(channel_request),
-          trigger_matched_channels);
+          trigger_matched_channels,
+          trigger_error);
       }
 
       auto user_info_matcher = co_await co_acquire_user_info_matcher_(
@@ -1440,6 +1593,11 @@ namespace AdServer
         trigger_success ? trigger_matched_channels.get() : nullptr,
         ccg_keywords.get(),
         history_match_result->match_result());
+      if(!trigger_success)
+      {
+        context->debug_sink.print_trigger_matching_error(
+          String::SubString(trigger_error));
+      }
 
       std::string campaign_error;
       const bool campaign_success = co_await co_request_campaign_manager_(

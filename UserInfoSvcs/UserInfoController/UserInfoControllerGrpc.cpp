@@ -14,66 +14,57 @@ namespace AdServer::UserInfoSvcs
   {
     constexpr const char user_info_controller2_grpc_aspect[] =
       "UserInfoController";
+
+    namespace pb = adserver::user_info_svcs::user_info_controller;
   }
 
   class UserInfoControllerGrpc::ServiceImpl final:
-    public AdServer::Grpc::GrpcServiceBase
+    public AdServer::Grpc::GrpcAsyncServiceBase<
+      UserInfoControllerGrpc::ServiceImpl,
+      adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc,
+      adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc::AsyncService>
   {
+    using AsyncService =
+      adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc::AsyncService;
+
   public:
     explicit ServiceImpl(UserInfoControllerImpl* controller)
-      : controller_(ReferenceCounting::add_ref(controller)),
-        service_(controller_.in())
-    {
-      add_grpc_service(&service_);
-    }
-
-    std::size_t completion_queues_count() const noexcept override
-    {
-      return 0;
-    }
-
-  private:
-    void register_in_queue(grpc::ServerCompletionQueue*) override
+      : controller_(ReferenceCounting::add_ref(controller))
     {}
 
-    class Service final:
-      public adserver::user_info_svcs::user_info_controller::
-        UserInfoControllerGrpc::Service
+    static auto grpc_calls()
     {
-    public:
-      explicit Service(UserInfoControllerImpl* controller)
-        : controller_(ReferenceCounting::add_ref(controller))
-      {}
+      return std::make_tuple(
+        MAKE_GRPC_CALL(
+          pb::GetSessionDescriptionRequest,
+          pb::GetSessionDescriptionResponse,
+          get_session_description));
+    }
 
-      grpc::Status get_session_description(
-        grpc::ServerContext*,
-        const adserver::user_info_svcs::user_info_controller::
-          GetSessionDescriptionRequest*,
-        adserver::user_info_svcs::user_info_controller::
-          GetSessionDescriptionResponse* response) override
+    void get_session_description(
+      const pb::GetSessionDescriptionRequest&,
+      pb::GetSessionDescriptionResponse& response,
+      ::grpc::Status& result_status) const
+    {
+      try
       {
-        try
-        {
-          controller_->fill_session_description(*response);
-          return grpc::Status::OK;
-        }
-        catch (const UserInfoControllerImpl::NotReady& ex)
-        {
-          return grpc::Status(grpc::StatusCode::UNAVAILABLE, ex.what());
-        }
-        catch (const eh::Exception& ex)
-        {
-          return grpc::Status(grpc::StatusCode::INTERNAL, ex.what());
-        }
+        controller_->fill_session_description(response);
+        result_status = ::grpc::Status::OK;
       }
-
-    private:
-      UserInfoControllerImpl_var controller_;
-    };
+      catch (const UserInfoControllerImpl::NotReady& ex)
+      {
+        result_status =
+          ::grpc::Status(::grpc::StatusCode::UNAVAILABLE, ex.what());
+      }
+      catch (const eh::Exception& ex)
+      {
+        result_status =
+          ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+      }
+    }
 
   private:
     UserInfoControllerImpl_var controller_;
-    Service service_;
   };
 
   UserInfoControllerGrpc::UserInfoControllerGrpc(

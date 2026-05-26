@@ -13,6 +13,7 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
+#include <Logger/Logger.hpp>
 
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
@@ -36,7 +37,8 @@ namespace AdServer::ChannelSvcs
       AdServer::Grpc::BatchingOptions batching_options,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
-        coalesce_runner = {});
+        coalesce_runner = {},
+      Logging::Logger* logger = nullptr);
 
     ~ChannelDistributedGrpcClient() noexcept override = default;
 
@@ -49,6 +51,10 @@ namespace AdServer::ChannelSvcs
     void get_ccg_traits(
       const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
       GetCcgTraitsCallback callback) override;
+
+    void check_configuration(
+      const adserver::channel_svcs::channel_server::CheckConfigurationRequest& request,
+      CheckConfigurationCallback callback) override;
 
     void set_sources(
       const adserver::channel_svcs::channel_server::SetSourcesRequest& request,

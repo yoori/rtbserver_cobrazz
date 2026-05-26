@@ -221,7 +221,12 @@ namespace AdServer::UserInfoSvcs
         stub->get_session_description(&context, request, &response);
       if (!status.ok())
       {
-        return std::nullopt;
+        std::ostringstream ostr;
+        ostr << "UserBindController '" << endpoint
+          << "': get_session_description failed: code="
+          << static_cast<int>(status.error_code())
+          << ", message=" << status.error_message();
+        throw Exception(ostr.str());
       }
 
       Pool::EndpointChunksList refs;
@@ -236,6 +241,13 @@ namespace AdServer::UserInfoSvcs
           endpoint_chunks.chunk_ids.emplace_back(chunk_id);
         }
         refs.emplace_back(std::move(endpoint_chunks));
+      }
+      if (refs.empty())
+      {
+        std::ostringstream ostr;
+        ostr << "UserBindController '" << endpoint
+          << "': get_session_description returned no UserBindServer refs";
+        throw Exception(ostr.str());
       }
       return refs;
     }

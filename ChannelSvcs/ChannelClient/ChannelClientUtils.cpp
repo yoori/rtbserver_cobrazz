@@ -8,12 +8,14 @@ namespace AdServer::ChannelSvcs
       channel_controller_refs,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
-      coalesce_runner)
+      coalesce_runner,
+    Logging::Logger* logger)
   {
     return std::make_shared<ChannelDistributedGrpcClient>(
       channel_controller_refs,
       AdServer::Grpc::BatchingOptions(),
       std::move(grpc_executor),
-      std::move(coalesce_runner));
+      std::move(coalesce_runner),
+      logger);
   }
 }

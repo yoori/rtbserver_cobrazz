@@ -336,6 +336,18 @@ namespace AdServer::ChannelSvcs
   }
 
   void
+  ChannelCorbaClient::check_configuration(
+    const adserver::channel_svcs::channel_server::CheckConfigurationRequest&,
+    CheckConfigurationCallback callback)
+  {
+    callback(
+      grpc::Status(
+        grpc::StatusCode::UNIMPLEMENTED,
+        "check_configuration is not supported by ChannelCorbaClient"),
+      adserver::channel_svcs::channel_server::CheckConfigurationResponse());
+  }
+
+  void
   ChannelCorbaClient::set_sources(
     const adserver::channel_svcs::channel_server::SetSourcesRequest&,
     SetSourcesCallback callback)

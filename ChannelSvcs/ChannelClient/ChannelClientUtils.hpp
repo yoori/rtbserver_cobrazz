@@ -18,5 +18,6 @@ namespace AdServer::ChannelSvcs
       channel_controller_refs,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
-      coalesce_runner = {});
+      coalesce_runner = {},
+    Logging::Logger* logger = nullptr);
 }

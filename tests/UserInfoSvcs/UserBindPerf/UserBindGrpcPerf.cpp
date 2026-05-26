@@ -8,6 +8,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -223,6 +224,92 @@ namespace
     std::atomic<std::uint64_t> threshold_{0};
   };
 
+  class ErrorAccumulator final
+  {
+  public:
+    using ErrorMap = std::map<std::string, std::uint64_t>;
+
+    void add(const grpc::Status& status)
+    {
+      std::ostringstream key;
+      key << '[' << static_cast<int>(status.error_code()) << "] " <<
+        status.error_message();
+
+      std::lock_guard<std::mutex> lock(lock_);
+      ++errors_[key.str()];
+    }
+
+    ErrorMap snapshot() const
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      return errors_;
+    }
+
+    static void print_delta(
+      std::ostream& out,
+      const ErrorMap& current,
+      const ErrorMap& previous)
+    {
+      print_(out, current, &previous);
+    }
+
+    static void print_total(std::ostream& out, const ErrorMap& current)
+    {
+      print_(out, current, nullptr);
+    }
+
+  private:
+    static void print_(
+      std::ostream& out,
+      const ErrorMap& current,
+      const ErrorMap* previous)
+    {
+      bool first = true;
+      for (const auto& [message, count] : current)
+      {
+        std::uint64_t previous_count = 0;
+        if (previous)
+        {
+          const auto it = previous->find(message);
+          if (it != previous->end())
+          {
+            previous_count = it->second;
+          }
+        }
+
+        if (count <= previous_count)
+        {
+          continue;
+        }
+
+        if (first)
+        {
+          out << "{";
+          first = false;
+        }
+        else
+        {
+          out << ", ";
+        }
+
+        out << message << ": " << (count - previous_count);
+      }
+
+      if (first)
+      {
+        out << "{}";
+      }
+      else
+      {
+        out << "}";
+      }
+    }
+
+  private:
+    mutable std::mutex lock_;
+    ErrorMap errors_;
+  };
+
   void
   print_usage()
   {
@@ -244,6 +331,9 @@ namespace
       << "  --stream-start-timeout-us <N> maximum stream start wait before cancelling stream, 0 disables (default: 0)\n"
       << "  --local-subchannel-pool <0|1> use local subchannel pool per channel (default: 1)\n"
       << "  --grpc-compression <0|1> use grpc compression (default: 1)\n"
+      << "  --print-errors <0|1> print aggregated grpc errors (default: 0)\n"
+      << "  --reconnect-per-request <0|1> create new grpc channel/stub per request (default: 0)\n"
+      << "  --rpc-timeout-ms <N> unary rpc deadline for reconnect-per-request mode (default: 5000)\n"
       << "  --user-id <id>        fixed id for GetUserIdRequest::id\n";
   }
 }
@@ -271,6 +361,9 @@ main(int argc, char** argv)
     Generics::AppUtils::Option<unsigned long> opt_hot_buckets_count(1);
     Generics::AppUtils::Option<unsigned int> opt_local_subchannel_pool(1);
     Generics::AppUtils::Option<unsigned int> opt_grpc_compression(1);
+    Generics::AppUtils::Option<unsigned int> opt_print_errors(0);
+    Generics::AppUtils::Option<unsigned int> opt_reconnect_per_request(0);
+    Generics::AppUtils::Option<unsigned long> opt_rpc_timeout_ms(5000);
     StringOption opt_user_id;
 
     Args args(-1);
@@ -292,6 +385,9 @@ main(int argc, char** argv)
     args.add(equal_name("hot-buckets-count"), opt_hot_buckets_count);
     args.add(equal_name("local-subchannel-pool"), opt_local_subchannel_pool);
     args.add(equal_name("grpc-compression"), opt_grpc_compression);
+    args.add(equal_name("print-errors"), opt_print_errors);
+    args.add(equal_name("reconnect-per-request"), opt_reconnect_per_request);
+    args.add(equal_name("rpc-timeout-ms"), opt_rpc_timeout_ms);
     args.add(equal_name("user-id"), opt_user_id);
 
     args.parse(argc - 1, argv + 1);
@@ -337,6 +433,7 @@ main(int argc, char** argv)
     }
 
     const auto client_threads = *opt_client_threads;
+    const bool reconnect_per_request = *opt_reconnect_per_request != 0;
     const auto max_streams =
       *opt_max_streams == 0 ? client_threads : *opt_max_streams;
     const auto max_inflight =
@@ -363,13 +460,14 @@ main(int argc, char** argv)
     std::atomic<std::uint64_t> latency_sum_us{0};
     std::atomic<std::uint64_t> latency_max_us{0};
     LatencyTopPercentile latency_p99((*opt_count + 99) / 100);
+    ErrorAccumulator errors;
 
     Generics::ActiveObjectSet_var async_batch_active_objects = new Generics::ActiveObjectSet();
     std::shared_ptr<BatchClient> batch_client;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>
       distributed_client;
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient* client = nullptr;
-    if (*mode == Mode::AsyncBatch)
+    if (!reconnect_per_request && *mode == Mode::AsyncBatch)
     {
       AdServer::Grpc::BatchingOptions options;
       options.channels_number = max_streams;
@@ -402,7 +500,7 @@ main(int argc, char** argv)
       async_batch_active_objects->add_child_object(batch_client);
       client = batch_client.get();
     }
-    else if (*mode == Mode::DistributedGrpc)
+    else if (!reconnect_per_request && *mode == Mode::DistributedGrpc)
     {
       AdServer::Grpc::BatchingOptions options;
       options.channels_number = max_streams;
@@ -439,13 +537,15 @@ main(int argc, char** argv)
       client = distributed_client.get();
     }
 
-    async_batch_active_objects->activate_object();
-
-    std::mutex callback_lock;
+    if (!reconnect_per_request)
+    {
+      async_batch_active_objects->activate_object();
+    }
 
     std::thread reporter_thread([&]() {
       std::uint64_t prev = 0;
       std::uint64_t prev_errors = 0;
+      ErrorAccumulator::ErrorMap prev_error_details;
       std::uint64_t prev_write_batches = 0;
       std::uint64_t prev_write_items = 0;
       std::uint64_t prev_timing_coalesce_items = 0;
@@ -489,88 +589,101 @@ main(int argc, char** argv)
 
         std::cout << std::put_time(&tm, "%T") << ": " << per_second <<
           ", errors=" << errors_delta;
-        const auto stats = client->stats();
-        const auto write_batches = stats.write_batches - prev_write_batches;
-        const auto write_items = stats.write_items - prev_write_items;
-        const auto timing_coalesce_items =
-          stats.timing_coalesce_items - prev_timing_coalesce_items;
-        const auto queue_wait_count =
-          stats.queue_wait_count - prev_queue_wait_count;
-        const auto queue_wait_sum_us =
-          stats.queue_wait_sum_us - prev_queue_wait_sum_us;
-        const auto response_wait_count =
-          stats.response_wait_count - prev_response_wait_count;
-        const auto response_wait_sum_us =
-          stats.response_wait_sum_us - prev_response_wait_sum_us;
-        const auto queue_timeout_count =
-          stats.queue_timeout_count - prev_queue_timeout_count;
-        prev_write_batches = stats.write_batches;
-        prev_write_items = stats.write_items;
-        prev_timing_coalesce_items = stats.timing_coalesce_items;
-        prev_queue_wait_count = stats.queue_wait_count;
-        prev_queue_wait_sum_us = stats.queue_wait_sum_us;
-        prev_queue_timeout_count = stats.queue_timeout_count;
-        prev_response_wait_count = stats.response_wait_count;
-        prev_response_wait_sum_us = stats.response_wait_sum_us;
-
-        const auto avg_batch = write_batches == 0 ?
-          0.0 :
-          static_cast<double>(write_items) / static_cast<double>(write_batches);
-        const auto total_avg_batch = stats.write_batches == 0 ?
-          0.0 :
-          static_cast<double>(stats.write_items) /
-            static_cast<double>(stats.write_batches);
-
-        std::cout << ", writes=" << write_batches <<
-          ", avg_batch=" << format_stat_float(avg_batch) <<
-          ", total_avg_batch=" << format_stat_float(total_avg_batch) <<
-          ", timing_items=" << timing_coalesce_items <<
-          ", total_timing_items=" << stats.timing_coalesce_items <<
-          ", max_streams=" << stats.max_streams <<
-          ", avg_latency=" << format_stat_float(avg_latency_us) << "us" <<
+        if (*opt_print_errors != 0 && errors_delta != 0)
+        {
+          const auto current_error_details = errors.snapshot();
+          std::cout << ", error_details=";
+          ErrorAccumulator::print_delta(
+            std::cout,
+            current_error_details,
+            prev_error_details);
+          prev_error_details = std::move(current_error_details);
+        }
+        std::cout << ", avg_latency=" << format_stat_float(avg_latency_us) << "us" <<
           ", p99_latency=" << latency_p99.p99(current_latency_count) << "us" <<
           ", max_latency=" << latency_max_us.load(std::memory_order_relaxed) << "us";
-        if (queue_wait_count != 0)
+        if (client)
         {
-          std::cout << ", avg_queue_wait=" <<
-            format_stat_float(
-              static_cast<double>(queue_wait_sum_us) /
-                static_cast<double>(queue_wait_count)) <<
-            "us, max_queue_wait=" << stats.queue_wait_max_us << "us";
-        }
-        if (queue_timeout_count != 0)
-        {
-          std::cout << ", queue_timeouts=" << queue_timeout_count <<
-            ", total_queue_timeouts=" << stats.queue_timeout_count;
-        }
-        if (response_wait_count != 0)
-        {
-          std::cout << ", avg_response_wait=" <<
-            format_stat_float(
-              static_cast<double>(response_wait_sum_us) /
-                static_cast<double>(response_wait_count)) <<
-            "us, max_response_wait=" << stats.response_wait_max_us << "us";
-        }
-        if (stats.consumer_stream_write.has_value())
-        {
-          const auto consumer_stream_write_count =
-            stats.consumer_stream_write->count -
-              prev_consumer_stream_write_count;
-          const auto consumer_stream_write_sum_us =
-            stats.consumer_stream_write->sum_us -
-              prev_consumer_stream_write_sum_us;
-          prev_consumer_stream_write_count =
-            stats.consumer_stream_write->count;
-          prev_consumer_stream_write_sum_us =
-            stats.consumer_stream_write->sum_us;
-          if (consumer_stream_write_count != 0)
+          const auto stats = client->stats();
+          const auto write_batches = stats.write_batches - prev_write_batches;
+          const auto write_items = stats.write_items - prev_write_items;
+          const auto timing_coalesce_items =
+            stats.timing_coalesce_items - prev_timing_coalesce_items;
+          const auto queue_wait_count =
+            stats.queue_wait_count - prev_queue_wait_count;
+          const auto queue_wait_sum_us =
+            stats.queue_wait_sum_us - prev_queue_wait_sum_us;
+          const auto response_wait_count =
+            stats.response_wait_count - prev_response_wait_count;
+          const auto response_wait_sum_us =
+            stats.response_wait_sum_us - prev_response_wait_sum_us;
+          const auto queue_timeout_count =
+            stats.queue_timeout_count - prev_queue_timeout_count;
+          prev_write_batches = stats.write_batches;
+          prev_write_items = stats.write_items;
+          prev_timing_coalesce_items = stats.timing_coalesce_items;
+          prev_queue_wait_count = stats.queue_wait_count;
+          prev_queue_wait_sum_us = stats.queue_wait_sum_us;
+          prev_queue_timeout_count = stats.queue_timeout_count;
+          prev_response_wait_count = stats.response_wait_count;
+          prev_response_wait_sum_us = stats.response_wait_sum_us;
+
+          const auto avg_batch = write_batches == 0 ?
+            0.0 :
+            static_cast<double>(write_items) / static_cast<double>(write_batches);
+          const auto total_avg_batch = stats.write_batches == 0 ?
+            0.0 :
+            static_cast<double>(stats.write_items) /
+              static_cast<double>(stats.write_batches);
+
+          std::cout << ", writes=" << write_batches <<
+            ", avg_batch=" << format_stat_float(avg_batch) <<
+            ", total_avg_batch=" << format_stat_float(total_avg_batch) <<
+            ", timing_items=" << timing_coalesce_items <<
+            ", total_timing_items=" << stats.timing_coalesce_items <<
+            ", max_streams=" << stats.max_streams;
+          if (queue_wait_count != 0)
           {
-            std::cout << ", avg_consumer_stream_write=" <<
+            std::cout << ", avg_queue_wait=" <<
               format_stat_float(
-                static_cast<double>(consumer_stream_write_sum_us) /
-                  static_cast<double>(consumer_stream_write_count)) <<
-              "us, max_consumer_stream_write=" <<
-              stats.consumer_stream_write->max_us << "us";
+                static_cast<double>(queue_wait_sum_us) /
+                  static_cast<double>(queue_wait_count)) <<
+              "us, max_queue_wait=" << stats.queue_wait_max_us << "us";
+          }
+          if (queue_timeout_count != 0)
+          {
+            std::cout << ", queue_timeouts=" << queue_timeout_count <<
+              ", total_queue_timeouts=" << stats.queue_timeout_count;
+          }
+          if (response_wait_count != 0)
+          {
+            std::cout << ", avg_response_wait=" <<
+              format_stat_float(
+                static_cast<double>(response_wait_sum_us) /
+                  static_cast<double>(response_wait_count)) <<
+              "us, max_response_wait=" << stats.response_wait_max_us << "us";
+          }
+          if (stats.consumer_stream_write.has_value())
+          {
+            const auto consumer_stream_write_count =
+              stats.consumer_stream_write->count -
+                prev_consumer_stream_write_count;
+            const auto consumer_stream_write_sum_us =
+              stats.consumer_stream_write->sum_us -
+                prev_consumer_stream_write_sum_us;
+            prev_consumer_stream_write_count =
+              stats.consumer_stream_write->count;
+            prev_consumer_stream_write_sum_us =
+              stats.consumer_stream_write->sum_us;
+            if (consumer_stream_write_count != 0)
+            {
+              std::cout << ", avg_consumer_stream_write=" <<
+                format_stat_float(
+                  static_cast<double>(consumer_stream_write_sum_us) /
+                    static_cast<double>(consumer_stream_write_count)) <<
+                "us, max_consumer_stream_write=" <<
+                stats.consumer_stream_write->max_us << "us";
+            }
           }
         }
         std::cout << std::endl;
@@ -615,20 +728,17 @@ main(int argc, char** argv)
           request.set_current_user_id(GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
 
           const auto start = std::chrono::steady_clock::now();
-          client->get_user_id(
-            request,
+          const auto complete_request =
             [
               &error_count,
+              &errors,
               &done_count,
-              &callback_lock,
               &latency_count,
               &latency_sum_us,
               &latency_max_us,
               &latency_p99,
               start
-            ](
-              const grpc::Status& status,
-              const auto&) {
+            ](const grpc::Status& status) {
               const auto finish = std::chrono::steady_clock::now();
               const auto latency_us = static_cast<std::uint64_t>(
                 std::chrono::duration_cast<std::chrono::microseconds>(
@@ -645,13 +755,47 @@ main(int argc, char** argv)
               {}
               if(!status.ok())
               {
+                errors.add(status);
                 error_count.fetch_add(1, std::memory_order_relaxed);
-                std::lock_guard<std::mutex> lock(callback_lock);
-                std::cerr << "grpc error: [" << status.error_code() << "] " <<
-                  status.error_message() << std::endl;
               }
               done_count.fetch_add(1, std::memory_order_relaxed);
-            });
+            };
+
+          if (reconnect_per_request)
+          {
+            grpc::ChannelArguments channel_args;
+            channel_args.SetMaxReceiveMessageSize(-1);
+            channel_args.SetMaxSendMessageSize(-1);
+            channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
+            channel_args.SetInt(
+              GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
+              *opt_local_subchannel_pool != 0 ? 1 : 0);
+            if (*opt_grpc_compression == 0)
+            {
+              channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
+            }
+
+            auto channel = grpc::CreateCustomChannel(
+              *opt_user_bind_grpc_endpoint,
+              grpc::InsecureChannelCredentials(),
+              channel_args);
+            auto stub = adserver::user_info_svcs::user_bind::
+              UserBindServerGrpc::NewStub(channel);
+            grpc::ClientContext context;
+            context.set_deadline(
+              std::chrono::system_clock::now() +
+              std::chrono::milliseconds(*opt_rpc_timeout_ms));
+            adserver::user_info_svcs::user_bind::GetUserIdResponse response;
+            complete_request(stub->get_user_id(&context, request, &response));
+          }
+          else
+          {
+            client->get_user_id(
+              request,
+              [complete_request](const grpc::Status& status, const auto&) {
+                complete_request(status);
+              });
+          }
         }
       });
     }
@@ -668,12 +812,15 @@ main(int argc, char** argv)
     const auto run_finish = std::chrono::steady_clock::now();
     const auto cpu_finish = process_cpu_times();
 
-    async_batch_active_objects->deactivate_object();
-    async_batch_active_objects->wait_object();
+    if (!reconnect_per_request)
+    {
+      async_batch_active_objects->deactivate_object();
+      async_batch_active_objects->wait_object();
+    }
 
     reporter_thread.join();
 
-    const auto stats = client->stats();
+    const auto stats = client ? client->stats() : AdServer::Grpc::Stats();
     const auto total_avg_batch = stats.write_batches == 0 ?
       0.0 :
       static_cast<double>(stats.write_items) /
@@ -735,6 +882,12 @@ main(int argc, char** argv)
             static_cast<double>(stats.consumer_stream_write->count)) <<
         "us, max_consumer_stream_write: " <<
         stats.consumer_stream_write->max_us << "us";
+    }
+    if (*opt_print_errors != 0 &&
+      error_count.load(std::memory_order_relaxed) != 0)
+    {
+      std::cout << ", error_details=";
+      ErrorAccumulator::print_total(std::cout, errors.snapshot());
     }
     std::cout << std::endl;
 

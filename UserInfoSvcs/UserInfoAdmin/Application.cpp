@@ -50,6 +50,7 @@ namespace
     "UserInfoAdmin remove --uid=<user id> -r[--reference=]<grpc endpoint>\n\n"
     "UserInfoAdmin delete-old-profiles -r[--reference=]<grpc endpoint> "
       "--sync --time=<HH-MM> --portion=<number>\n\n"
+    "UserInfoAdmin get-source -r[--reference=]<grpc endpoint>\n\n"
     "UserInfoAdmin get-config-timestamp -r[--reference=]<grpc endpoint>\n\n"
     "UserInfoAdmin generate --keys-dir=<path to key directory> --persistent\n";
 
@@ -58,6 +59,7 @@ namespace
   const unsigned long PRINT_HISTORY = 0x04;
   const unsigned long PRINT_ALL = static_cast<unsigned long>(-1);
   const std::chrono::seconds RPC_TIMEOUT(10);
+  const std::chrono::seconds GET_SOURCE_TIMEOUT(60);
 
   struct ChannelMatch
   {
@@ -212,6 +214,74 @@ namespace
 
     result.active_object->activate_object();
     return result;
+  }
+
+  uim::GetSourceResponse get_source_from_manager_(const std::string& reference)
+  {
+    auto stub = uim::UserInfoManagerGrpc::NewStub(
+      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+
+    grpc::ClientContext context;
+    context.set_deadline(std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
+    uim::GetSourceRequest request;
+    uim::GetSourceResponse response;
+
+    const auto status = stub->get_source(&context, request, &response);
+    if (!status.ok())
+    {
+      std::ostringstream ostr;
+      ostr << "UserInfoManager '" << reference <<
+        "': get_source failed: code=" <<
+        static_cast<int>(status.error_code()) <<
+        ", message=" << status.error_message();
+      throw std::runtime_error(ostr.str());
+    }
+
+    return response;
+  }
+
+  void print_source_(
+    const std::string& reference,
+    const uim::GetSourceResponse& response)
+  {
+    std::cout << "Reference : " << reference << std::endl;
+    std::cout << "Chunks number : " << response.chunks_number() << std::endl;
+    std::cout << "Chunks :";
+    for (const auto chunk_id : response.chunks())
+    {
+      std::cout << " " << chunk_id;
+    }
+    std::cout << std::endl;
+  }
+
+  void print_source_(const std::string& reference)
+  {
+    auto controller_stub = uic::UserInfoControllerGrpc::NewStub(
+      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+
+    grpc::ClientContext context;
+    context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
+    uic::GetSessionDescriptionRequest request;
+    uic::GetSessionDescriptionResponse response;
+    const auto status = controller_stub->get_session_description(
+      &context,
+      request,
+      &response);
+
+    if (status.ok() && !response.user_info_managers().empty())
+    {
+      for (const auto& manager : response.user_info_managers())
+      {
+        const std::string manager_reference =
+          manager.user_info_manager_endpoint();
+        print_source_(
+          manager_reference,
+          get_source_from_manager_(manager_reference));
+      }
+      return;
+    }
+
+    print_source_(reference, get_source_from_manager_(reference));
   }
 
   void shutdown_user_info_client_(UserInfoClientHolder& holder) noexcept
@@ -481,6 +551,12 @@ int main(int argc, char** argv)
     if (!opt_reference.installed())
     {
       throw std::runtime_error("reference to gRPC manager or controller is required");
+    }
+
+    if (command == "get-source")
+    {
+      print_source_(*opt_reference);
+      return 0;
     }
 
     UserInfoClientHolder client_holder = create_user_info_client_(*opt_reference);

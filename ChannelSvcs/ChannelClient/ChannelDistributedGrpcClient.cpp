@@ -8,6 +8,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Logger/ActiveObjectCallback.hpp>
+#include <Stream/MemoryStream.hpp>
 #include <ChannelSvcs/ChannelController/ChannelControllerGrpc.grpc.pb.h>
 
 namespace AdServer::ChannelSvcs
@@ -81,6 +82,14 @@ namespace AdServer::ChannelSvcs
       client_holder->client->get_ccg_traits(request, std::move(callback));
     }
 
+    void check_configuration(
+      const adserver::channel_svcs::channel_server::CheckConfigurationRequest&
+        request,
+      CheckConfigurationCallback callback)
+    {
+      client_holder->client->check_configuration(request, std::move(callback));
+    }
+
     void set_sources(
       const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
       SetSourcesCallback callback)
@@ -139,7 +148,8 @@ namespace AdServer::ChannelSvcs
     AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
-      coalesce_runner)
+      coalesce_runner,
+    Logging::Logger* logger)
     : channel_controller_refs_(channel_controller_refs),
       batching_options_(std::move(batching_options)),
       grpc_executor_(std::move(grpc_executor)),
@@ -147,7 +157,7 @@ namespace AdServer::ChannelSvcs
       pool_timeout_(DEFAULT_POOL_TIMEOUT),
       resolve_period_(DEFAULT_RESOLVE_PERIOD),
       callback_(new Logging::ActiveObjectCallbackImpl(
-        nullptr,
+        logger,
         "ChannelDistributedGrpcClient",
         "ChannelSvcs")),
       task_runner_(new Generics::TaskRunner(callback_, 1))
@@ -352,6 +362,55 @@ namespace AdServer::ChannelSvcs
   }
 
   void
+  ChannelDistributedGrpcClient::check_configuration(
+    const adserver::channel_svcs::channel_server::CheckConfigurationRequest& request,
+    CheckConfigurationCallback callback)
+  {
+    add_input_stats(1);
+
+    if (!active())
+    {
+      add_completed_stats(true);
+      callback(
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
+        adserver::channel_svcs::channel_server::CheckConfigurationResponse());
+      return;
+    }
+
+    auto ref = get_ref_();
+    if (!ref)
+    {
+      add_completed_stats(true);
+      callback(
+        grpc::Status(
+          grpc::StatusCode::UNAVAILABLE,
+          "no available ChannelServer grpc client"),
+        adserver::channel_svcs::channel_server::CheckConfigurationResponse());
+      return;
+    }
+
+    (*ref)->check_configuration(
+      request,
+      [
+        ref = std::move(*ref),
+        callback = std::move(callback),
+        pool_timeout = pool_timeout_
+      ](
+        const grpc::Status& status,
+        const adserver::channel_svcs::channel_server::CheckConfigurationResponse&
+          response)
+      mutable
+      {
+        if (!status.ok())
+        {
+          ref.mark_as_bad(
+            Generics::Time::get_time_of_day() + pool_timeout);
+        }
+        callback(status, response);
+      });
+  }
+
+  void
   ChannelDistributedGrpcClient::set_sources(
     const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
     SetSourcesCallback callback)
@@ -482,9 +541,9 @@ namespace AdServer::ChannelSvcs
     refs_state.clear();
     refs_state.reserve(channel_controller_refs_.size());
 
-    try
+    for (const auto& controller_ref : channel_controller_refs_)
     {
-      for (const auto& controller_ref : channel_controller_refs_)
+      try
       {
         auto channel = grpc::CreateChannel(
           controller_ref,
@@ -500,7 +559,16 @@ namespace AdServer::ChannelSvcs
           stub->get_session_description(&context, request, &response);
         if (!status.ok())
         {
-          return false;
+          Stream::Error ostr;
+          ostr << "ChannelController '" << controller_ref
+            << "': get_session_description failed: code="
+            << static_cast<int>(status.error_code())
+            << ", message=" << status.error_message();
+          callback_->report_error(
+            Generics::ActiveObjectCallback::WARNING,
+            ostr.str(),
+            "ADS-IMPL-117");
+          continue;
         }
 
         std::vector<std::string> server_refs;
@@ -511,16 +579,44 @@ namespace AdServer::ChannelSvcs
             server_refs.emplace_back(server.channel_server_endpoint());
           }
         }
+        if (server_refs.empty())
+        {
+          Stream::Error ostr;
+          ostr << "ChannelController '" << controller_ref
+            << "': get_session_description returned no ChannelServer refs";
+          callback_->report_error(
+            Generics::ActiveObjectCallback::WARNING,
+            ostr.str(),
+            "ADS-IMPL-117");
+          continue;
+        }
+
         std::sort(server_refs.begin(), server_refs.end());
         refs_state.emplace_back(controller_ref, std::move(server_refs));
       }
-    }
-    catch (...)
-    {
-      return false;
+      catch (const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << "ChannelController '" << controller_ref
+          << "': can't resolve refs: " << ex.what();
+        callback_->report_error(
+          Generics::ActiveObjectCallback::WARNING,
+          ostr.str(),
+          "ADS-IMPL-117");
+      }
+      catch (...)
+      {
+        Stream::Error ostr;
+        ostr << "ChannelController '" << controller_ref
+          << "': can't resolve refs: unknown exception";
+        callback_->report_error(
+          Generics::ActiveObjectCallback::WARNING,
+          ostr.str(),
+          "ADS-IMPL-117");
+      }
     }
 
-    return true;
+    return !refs_state.empty();
   }
 
   bool

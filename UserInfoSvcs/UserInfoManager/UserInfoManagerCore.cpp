@@ -1308,19 +1308,19 @@ namespace AdServer::UserInfoSvcs
 
   void
   UserInfoManagerCore::get_controllable_chunks(
-      UserInfoManagerCore::ChunkIdList& chunk_ids,
-      unsigned long& common_chunks_number)
-  /*throw(Exception)*/
+    UserInfoManagerCore::ChunkIdList& chunk_ids,
+    unsigned long& common_chunks_number)
+    /*throw(Exception)*/
   {
     for (AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap::
-             const_iterator chunk_it = chunk_folders_.begin();
-         chunk_it != chunk_folders_.end(); ++chunk_it)
+        const_iterator chunk_it = chunk_folders_.begin();
+      chunk_it != chunk_folders_.end(); ++chunk_it)
     {
       chunk_ids.push_back(chunk_it->first);
     }
 
     common_chunks_number =
-        user_info_manager_config_.Storage().common_chunks_number();
+      user_info_manager_config_.Storage().common_chunks_number();
   }
 
   void

@@ -400,6 +400,22 @@ namespace AdServer
   }
 
   void
+  DebugSink::print_trigger_matching_error(
+    const String::SubString& error)
+    noexcept
+  {
+    if(require_debug_info())
+    {
+      if(require_debug_body())
+      {
+        debug_info_str_ << "\n" << Debug::CHANNEL_MATCHING_HEAD << "\n";
+      }
+
+      debug_info_str_ << "error = " << error << sep_;
+    }
+  }
+
+  void
   DebugSink::print_history_matching_debug_info_(
     const adserver::user_info_svcs::user_info_manager::MatchResult&
       history_match_result)

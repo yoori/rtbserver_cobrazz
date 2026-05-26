@@ -30,6 +30,9 @@ namespace AdServer::ChannelSvcs
       std::uint64_t call_in_progress = 0;
       std::uint64_t match_in_progress = 0;
       std::uint64_t get_ccg_traits_in_progress = 0;
+      std::uint64_t check_configuration_in_progress = 0;
+      std::uint64_t set_sources_in_progress = 0;
+      std::uint64_t set_proxy_sources_in_progress = 0;
     };
 
     ChannelServerGrpc(

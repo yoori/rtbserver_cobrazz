@@ -141,6 +141,7 @@ message GetUserProfileRequest {
 message GetUserProfileResponse {
   bool found = 1;
   UserProfiles user_profile = 2;
+  string hostname = 3;
 }
 
 message MatchRequest {
@@ -151,6 +152,7 @@ message MatchRequest {
 message MatchResponse {
   bool matched = 1;
   MatchResult match_result = 2;
+  string hostname = 3;
 }
 
 message UpdateUserFreqCapsRequest {
@@ -165,7 +167,9 @@ message UpdateUserFreqCapsRequest {
   repeated uint32 uc_campaign_ids = 9;
 }
 
-message UpdateUserFreqCapsResponse {}
+message UpdateUserFreqCapsResponse {
+  string hostname = 1;
+}
 
 message ConfirmUserFreqCapsRequest {
   bytes user_id = 1;
@@ -174,7 +178,9 @@ message ConfirmUserFreqCapsRequest {
   repeated uint32 exclude_pubpixel_accounts = 4;
 }
 
-message ConfirmUserFreqCapsResponse {}
+message ConfirmUserFreqCapsResponse {
+  string hostname = 1;
+}
 
 message FraudUserRequest {
   bytes user_id = 1;

@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <string>
+#include <unistd.h>
+#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
@@ -19,6 +21,22 @@ namespace AdServer::ChannelSvcs
   {
     constexpr const char channel_server_grpc_aspect[] = "ChannelServerGrpc";
     namespace pc = adserver::grpc::process_control;
+
+    const std::string&
+    service_hostname_()
+    {
+      static const std::string hostname = []()
+      {
+        char buffer[256];
+        if (::gethostname(buffer, sizeof(buffer)) != 0)
+        {
+          return std::string();
+        }
+        buffer[sizeof(buffer) - 1] = 0;
+        return std::string(buffer);
+      }();
+      return hostname;
+    }
 
     class InProgressGuard final
     {
@@ -197,6 +215,9 @@ namespace AdServer::ChannelSvcs
     std::atomic<std::uint64_t> call_in_progress{0};
     std::atomic<std::uint64_t> match_in_progress{0};
     std::atomic<std::uint64_t> get_ccg_traits_in_progress{0};
+    std::atomic<std::uint64_t> check_configuration_in_progress{0};
+    std::atomic<std::uint64_t> set_sources_in_progress{0};
+    std::atomic<std::uint64_t> set_proxy_sources_in_progress{0};
   };
 
   class ChannelServerGrpc::ServiceImpl final:
@@ -225,6 +246,10 @@ namespace AdServer::ChannelSvcs
           adserver::channel_svcs::channel_server::GetCcgTraitsResponse,
           get_ccg_traits),
         MAKE_GRPC_CALL(
+          adserver::channel_svcs::channel_server::CheckConfigurationRequest,
+          adserver::channel_svcs::channel_server::CheckConfigurationResponse,
+          check_configuration),
+        MAKE_GRPC_CALL(
           adserver::channel_svcs::channel_server::SetSourcesRequest,
           adserver::channel_svcs::channel_server::SetSourcesResponse,
           set_sources),
@@ -242,6 +267,11 @@ namespace AdServer::ChannelSvcs
     void get_ccg_traits(
       const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
       adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    void check_configuration(
+      const adserver::channel_svcs::channel_server::CheckConfigurationRequest& request,
+      adserver::channel_svcs::channel_server::CheckConfigurationResponse& response,
       ::grpc::Status& result_status) const;
 
     void set_sources(
@@ -415,6 +445,8 @@ namespace AdServer::ChannelSvcs
       stats_->call_in_progress,
       stats_->match_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       ChannelServerCore::MatchQuery query;
@@ -472,6 +504,8 @@ namespace AdServer::ChannelSvcs
       stats_->call_in_progress,
       stats_->get_ccg_traits_in_progress);
 
+    response.set_hostname(service_hostname_());
+
     try
     {
       std::vector<unsigned long> ids;
@@ -508,11 +542,36 @@ namespace AdServer::ChannelSvcs
   }
 
   void
+  ChannelServerGrpc::ServiceImpl::check_configuration(
+    const adserver::channel_svcs::channel_server::CheckConfigurationRequest&,
+    adserver::channel_svcs::channel_server::CheckConfigurationResponse& response,
+    ::grpc::Status& result_status) const
+  {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->check_configuration_in_progress);
+
+    response.set_check_sum(core_->check_configuration());
+    result_status = ::grpc::Status::OK;
+  }
+
+  void
   ChannelServerGrpc::ServiceImpl::set_sources(
     const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
     adserver::channel_svcs::channel_server::SetSourcesResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->set_sources_in_progress);
+
+    if (request.check_sum() != 0 &&
+        core_->check_configuration() == request.check_sum())
+    {
+      result_status = ::grpc::Status::OK;
+      return;
+    }
+
     try
     {
       ChannelServerCore::DBSourceInfo db_info;
@@ -551,6 +610,17 @@ namespace AdServer::ChannelSvcs
     adserver::channel_svcs::channel_server::SetProxySourcesResponse&,
     ::grpc::Status& result_status) const
   {
+    InProgressGuard in_progress(
+      stats_->call_in_progress,
+      stats_->set_proxy_sources_in_progress);
+
+    if (request.check_sum() != 0 &&
+        core_->check_configuration() == request.check_sum())
+    {
+      result_status = ::grpc::Status::OK;
+      return;
+    }
+
     try
     {
       ChannelServerCore::ProxySourceInfo proxy_info;
@@ -623,7 +693,10 @@ namespace AdServer::ChannelSvcs
     return Stats{
       stats_->call_in_progress.load(std::memory_order_relaxed),
       stats_->match_in_progress.load(std::memory_order_relaxed),
-      stats_->get_ccg_traits_in_progress.load(std::memory_order_relaxed)
+      stats_->get_ccg_traits_in_progress.load(std::memory_order_relaxed),
+      stats_->check_configuration_in_progress.load(std::memory_order_relaxed),
+      stats_->set_sources_in_progress.load(std::memory_order_relaxed),
+      stats_->set_proxy_sources_in_progress.load(std::memory_order_relaxed)
     };
   }
 

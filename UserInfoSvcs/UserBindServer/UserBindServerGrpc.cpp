@@ -7,6 +7,8 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <unistd.h>
+#include <unistd.h>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Commons/GrpcAlgs.hpp>
@@ -22,6 +24,22 @@ namespace AdServer::UserInfoSvcs
   namespace
   {
     constexpr const char user_bind_server_grpc_aspect[] = "UserBindServerGrpc";
+
+    const std::string&
+    service_hostname_()
+    {
+      static const std::string hostname = []()
+      {
+        char buffer[256];
+        if (::gethostname(buffer, sizeof(buffer)) != 0)
+        {
+          return std::string();
+        }
+        buffer[sizeof(buffer) - 1] = 0;
+        return std::string(buffer);
+      }();
+      return hostname;
+    }
 
     class InProgressGuard final
     {
@@ -52,11 +70,18 @@ namespace AdServer::UserInfoSvcs
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     void
-    maybe_sleep_mock_response(const std::shared_ptr<std::atomic_bool>& enabled)
+    maybe_sleep_mock_response(
+      const std::shared_ptr<std::atomic_uint>& response_sleep_ms)
     {
-      if (enabled && enabled->load(std::memory_order_acquire))
+      if (!response_sleep_ms)
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        return;
+      }
+
+      const auto delay_ms = response_sleep_ms->load(std::memory_order_acquire);
+      if (delay_ms != 0)
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
       }
     }
 #endif
@@ -84,7 +109,7 @@ namespace AdServer::UserInfoSvcs
     ServiceImpl(
       UserBindServerCore* core,
       std::shared_ptr<AtomicStats> stats,
-      std::shared_ptr<std::atomic_bool> response_sleep_enabled = nullptr);
+      std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
     static auto grpc_calls()
     {
@@ -118,7 +143,7 @@ namespace AdServer::UserInfoSvcs
 
     void add_bind_request(
       const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
-      adserver::user_info_svcs::user_bind::AddBindRequestResponse&,
+      adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
     void get_user_id(
@@ -140,7 +165,7 @@ namespace AdServer::UserInfoSvcs
     const UserBindServerCore_var core_;
     const std::shared_ptr<AtomicStats> stats_;
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    const std::shared_ptr<std::atomic_bool> response_sleep_enabled_;
+    const std::shared_ptr<std::atomic_uint> response_sleep_ms_;
 #endif
   };
 
@@ -148,16 +173,16 @@ namespace AdServer::UserInfoSvcs
   UserBindServerGrpc::ServiceImpl::ServiceImpl(
     UserBindServerCore* core,
     std::shared_ptr<AtomicStats> stats,
-    std::shared_ptr<std::atomic_bool> response_sleep_enabled)
+    std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : core_(ReferenceCounting::add_ref(core)),
       stats_(std::move(stats))
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
       ,
-      response_sleep_enabled_(std::move(response_sleep_enabled))
+      response_sleep_ms_(std::move(response_sleep_ms))
 #endif
   {
 #ifndef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    (void)response_sleep_enabled;
+    (void)response_sleep_ms;
 #endif
   }
 
@@ -171,8 +196,10 @@ namespace AdServer::UserInfoSvcs
       stats_->call_in_progress,
       stats_->get_bind_request_in_progress);
 
+    response.set_hostname(service_hostname_());
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    maybe_sleep_mock_response(response_sleep_enabled_);
+    maybe_sleep_mock_response(response_sleep_ms_);
     result_status = ::grpc::Status::OK;
     return;
 #endif
@@ -213,15 +240,17 @@ namespace AdServer::UserInfoSvcs
   void
   UserBindServerGrpc::ServiceImpl::add_bind_request(
     const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
-    adserver::user_info_svcs::user_bind::AddBindRequestResponse&,
+    adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->add_bind_request_in_progress);
 
+    response.set_hostname(service_hostname_());
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    maybe_sleep_mock_response(response_sleep_enabled_);
+    maybe_sleep_mock_response(response_sleep_ms_);
     result_status = ::grpc::Status::OK;
     return;
 #endif
@@ -272,8 +301,10 @@ namespace AdServer::UserInfoSvcs
       stats_->call_in_progress,
       stats_->get_user_id_in_progress);
 
+    response.set_hostname(service_hostname_());
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    maybe_sleep_mock_response(response_sleep_enabled_);
+    maybe_sleep_mock_response(response_sleep_ms_);
     response.set_user_id(request.current_user_id());
     response.set_min_age_reached(true);
     response.set_created(false);
@@ -334,8 +365,10 @@ namespace AdServer::UserInfoSvcs
       stats_->call_in_progress,
       stats_->add_user_id_in_progress);
 
+    response.set_hostname(service_hostname_());
+
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    maybe_sleep_mock_response(response_sleep_enabled_);
+    maybe_sleep_mock_response(response_sleep_ms_);
     response.set_merge_user_id(request.user_id());
     response.set_invalid_operation(false);
     result_status = ::grpc::Status::OK;
@@ -384,7 +417,7 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    maybe_sleep_mock_response(response_sleep_enabled_);
+    maybe_sleep_mock_response(response_sleep_ms_);
     response.set_chunks_number(1);
     response.add_chunks(0);
     result_status = ::grpc::Status::OK;
@@ -428,7 +461,7 @@ namespace AdServer::UserInfoSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::shared_ptr<std::atomic_bool> response_sleep_enabled)
+    std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
       impl_(std::make_shared<Impl>(
@@ -438,7 +471,7 @@ namespace AdServer::UserInfoSvcs
         std::make_unique<ServiceImpl>(
           core,
           stats_,
-          std::move(response_sleep_enabled))))
+          std::move(response_sleep_ms))))
   {
     add_child_object(impl_);
   }

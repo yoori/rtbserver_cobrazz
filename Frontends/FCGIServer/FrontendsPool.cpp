@@ -354,7 +354,8 @@ namespace AdServer
               fe_config.AdFeConfiguration(),
               logger_,
               request_workers_,
-              common_module_);
+              common_module_,
+              composite_metrics_provider_);
           }
         }
 

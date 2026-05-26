@@ -49,6 +49,7 @@ namespace AdServer::ChannelSvcs
       std::string endpoint;
       std::string update_ref;
       ChunkArray chunks;
+      unsigned long check_sum = 0;
     };
 
     using ChannelServerGroup = std::vector<ChannelServerRef>;

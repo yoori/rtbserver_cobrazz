@@ -13,6 +13,7 @@
 
 #include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
+#include <Generics/CompositeMetricsProvider.hpp>
 #include <Generics/Statistics.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
@@ -77,7 +78,8 @@ namespace AdServer
       Configuration* frontend_config,
       Logging::Logger* logger,
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      Generics::CompositeMetricsProvider* composite_metrics_provider)
       /*throw(eh::Exception)*/;
 
     /** Determines whether the module is able to process the URI.
@@ -262,7 +264,8 @@ namespace AdServer
       const std::shared_ptr<RequestContext>& context,
       adserver::channel_svcs::channel_server::MatchRequest request,
       std::shared_ptr<
-        adserver::channel_svcs::channel_server::MatchResponse> response)
+        adserver::channel_svcs::channel_server::MatchResponse> response,
+      std::string& error)
       noexcept;
 
     UserInfoMatcherTask
@@ -343,6 +346,7 @@ namespace AdServer
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    Generics::CompositeMetricsProvider_var composite_metrics_provider_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
 

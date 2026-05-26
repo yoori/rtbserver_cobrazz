@@ -19,6 +19,7 @@ namespace
   }
 
   const Generics::Time SOURCE_UPDATE_PERIOD(20);
+  const std::chrono::seconds CONFIG_RPC_TIMEOUT(60);
 
   std::string
   endpoint_from_grpc_ref_(
@@ -38,6 +39,17 @@ namespace
     Generics::CRC32Hash hash(check_sum, check_sum);
     hash.add(value.c_str(), value.size());
     return check_sum;
+  }
+
+  std::string
+  chunks_to_string_(const std::vector<unsigned long>& chunks)
+  {
+    std::ostringstream ostr;
+    for (const auto chunk_id : chunks)
+    {
+      ostr << chunk_id << ',';
+    }
+    return ostr.str();
   }
 }
 
@@ -196,6 +208,12 @@ namespace AdServer::ChannelSvcs
     {
       check_sum = add_to_check_sum_(check_sum, campaign_ref.object_ref);
     }
+    if (config_.ChannelSource().local_groups().present())
+    {
+      check_sum = add_to_check_sum_(
+        check_sum,
+        config_.ChannelSource().local_groups().get());
+    }
 
     grpc::ChannelArguments channel_args;
     channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
@@ -212,7 +230,7 @@ namespace AdServer::ChannelSvcs
       {
         grpc::ClientContext context;
         context.set_deadline(
-          std::chrono::system_clock::now() + std::chrono::seconds(10));
+          std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
 
         auto channel = grpc::CreateCustomChannel(
           server.endpoint,
@@ -220,13 +238,42 @@ namespace AdServer::ChannelSvcs
           channel_args);
         auto stub = pb::ChannelServerGrpc::NewStub(channel);
 
+        const unsigned long desired_check_sum = add_to_check_sum_(
+          check_sum,
+          chunks_to_string_(server.chunks));
+
+        {
+          grpc::ClientContext check_context;
+          check_context.set_deadline(
+            std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
+          pb::CheckConfigurationRequest check_request;
+          pb::CheckConfigurationResponse check_response;
+          const grpc::Status check_status =
+            stub->check_configuration(
+              &check_context,
+              check_request,
+              &check_response);
+          if (check_status.ok() &&
+              desired_check_sum != 0 &&
+              check_response.check_sum() == desired_check_sum)
+          {
+            logger_->sstream(
+              Logging::Logger::TRACE,
+              Aspect::CHANNEL_CONTROLLER) <<
+              "skip sources for already configured ChannelServer " <<
+              server.endpoint <<
+              ", check_sum = " << desired_check_sum;
+            continue;
+          }
+        }
+
         if (use_local_group && group_index > 0)
         {
           pb::SetProxySourcesRequest request;
           request.set_colo(config_.ColoSettings().colo());
           request.set_version(config_.ColoSettings().version());
           request.set_count_chunks(config_.count_chunks());
-          request.set_check_sum(check_sum);
+          request.set_check_sum(desired_check_sum);
 
           for (const auto& campaign_ref : campaign_refs)
           {
@@ -281,7 +328,7 @@ namespace AdServer::ChannelSvcs
           request.set_colo(config_.ColoSettings().colo());
           request.set_version(config_.ColoSettings().version());
           request.set_count_chunks(config_.count_chunks());
-          request.set_check_sum(check_sum);
+          request.set_check_sum(desired_check_sum);
 
           for (const auto& campaign_ref : campaign_refs)
           {

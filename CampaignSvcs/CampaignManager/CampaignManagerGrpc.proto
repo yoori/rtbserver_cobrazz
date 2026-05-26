@@ -84,6 +84,7 @@ message GetFileRequest {
 
 message GetFileResponse {
   bytes file = 1;
+  string hostname = 2;
 }
 
 message TraceCampaignSelectionIndexRequest {}
@@ -175,6 +176,7 @@ message ColocationFlags {
 
 message GetColocationFlagsResponse {
   repeated ColocationFlags colocations = 1;
+  string hostname = 2;
 }
 
 message GetPubPixelsRequest {
@@ -185,6 +187,7 @@ message GetPubPixelsRequest {
 
 message GetPubPixelsResponse {
   repeated string pixels = 1;
+  string hostname = 2;
 }
 
 message OptionalUInt64 {
@@ -648,7 +651,9 @@ message ConsiderPassbackRequest {
   OptionalUInt64 user_id_hash_mod = 3;
 }
 
-message ConsiderPassbackResponse {}
+message ConsiderPassbackResponse {
+  string hostname = 1;
+}
 
 message ConsiderPassbackTrackRequest {
   bytes time = 1;
@@ -658,7 +663,9 @@ message ConsiderPassbackTrackRequest {
   uint64 user_status = 5;
 }
 
-message ConsiderPassbackTrackResponse {}
+message ConsiderPassbackTrackResponse {
+  string hostname = 1;
+}
 
 enum OptOperation {
   OPT_OPERATION_IN = 0;
@@ -682,7 +689,9 @@ message VerifyOptOperationRequest {
   bytes user_id = 12;
 }
 
-message VerifyOptOperationResponse {}
+message VerifyOptOperationResponse {
+  string hostname = 1;
+}
 
 message ConsiderWebOperationRequest {
   bytes time = 1;
@@ -708,7 +717,9 @@ message ConsiderWebOperationRequest {
   string user_agent = 21;
 }
 
-message ConsiderWebOperationResponse {}
+message ConsiderWebOperationResponse {
+  string hostname = 1;
+}
 
 message GetCampaignCreativeRequest {
   RequestParams request_params = 1;
@@ -723,7 +734,9 @@ message ProcessMatchRequestRequest {
   MatchRequestInfo match_request_info = 1;
 }
 
-message ProcessMatchRequestResponse {}
+message ProcessMatchRequestResponse {
+  string hostname = 1;
+}
 
 message ProcessAnonymousRequestRequest {
   AnonymousRequestInfo anonymous_request_info = 1;
@@ -738,6 +751,7 @@ message InstantiateAdRequest {
 
 message InstantiateAdResponse {
   InstantiateAdResult instantiate_ad_result = 1;
+  string hostname = 2;
 }
 
 message TraceCampaignSelectionRequest {
@@ -760,6 +774,7 @@ message GetClickUrlRequest {
 message GetClickUrlResponse {
   bool found = 1;
   ClickResultInfo click_result_info = 2;
+  string hostname = 3;
 }
 
 message VerifyImpressionRequest {
@@ -768,13 +783,16 @@ message VerifyImpressionRequest {
 
 message VerifyImpressionResponse {
   ImpressionResultInfo impression_result_info = 1;
+  string hostname = 2;
 }
 
 message ActionTakenRequest {
   ActionInfo action_info = 1;
 }
 
-message ActionTakenResponse {}
+message ActionTakenResponse {
+  string hostname = 1;
+}
 
 message GetConfigRequest {
   bool geo_channels = 1;
