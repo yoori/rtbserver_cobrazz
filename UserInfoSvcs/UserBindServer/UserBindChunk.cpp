@@ -453,6 +453,24 @@ namespace AdServer::UserInfoSvcs
       base_time);
   }
 
+  AdServer::Commons::Task<UserBindChunk::UserInfo>
+  UserBindChunk::co_get_user_id(
+    const String::SubString& external_id,
+    const Commons::UserId& current_user_id,
+    const Generics::Time& now,
+    bool silent,
+    const Generics::Time& create_time,
+    bool for_set_cookie)
+  {
+    co_return get_user_id(
+      external_id,
+      current_user_id,
+      now,
+      silent,
+      create_time,
+      for_set_cookie);
+  }
+
   UserBindChunk::UserInfo
   UserBindChunk::add_user_id(
     const String::SubString& external_id,
@@ -574,6 +592,22 @@ namespace AdServer::UserInfoSvcs
       external_id_suffix_hash, found_user_info);
 
     return res_user_info;
+  }
+
+  AdServer::Commons::Task<UserBindChunk::UserInfo>
+  UserBindChunk::co_add_user_id(
+    const String::SubString& external_id,
+    const Commons::UserId& user_id,
+    const Generics::Time& now,
+    bool resave_if_exists,
+    bool ignore_bad_event)
+  {
+    co_return add_user_id(
+      external_id,
+      user_id,
+      now,
+      resave_if_exists,
+      ignore_bad_event);
   }
 
   void

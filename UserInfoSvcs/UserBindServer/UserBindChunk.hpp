@@ -59,6 +59,14 @@ namespace AdServer::UserInfoSvcs
       bool ignore_bad_event)
       noexcept;
 
+    AdServer::Commons::Task<UserInfo>
+    co_add_user_id(
+      const String::SubString& external_id,
+      const Commons::UserId& user_id,
+      const Generics::Time& now,
+      bool resave_if_exists,
+      bool ignore_bad_event) override;
+
     UserInfo
     get_user_id(
       const String::SubString& external_id,
@@ -68,6 +76,15 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& create_time,
       bool for_set_cookie)
       noexcept;
+
+    AdServer::Commons::Task<UserInfo>
+    co_get_user_id(
+      const String::SubString& external_id,
+      const Commons::UserId& current_user_id,
+      const Generics::Time& now,
+      bool silent,
+      const Generics::Time& create_time,
+      bool for_set_cookie) override;
 
     void
     remove_user_id(

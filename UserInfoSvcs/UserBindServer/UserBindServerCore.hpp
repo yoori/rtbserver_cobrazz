@@ -114,9 +114,11 @@ namespace AdServer::UserInfoSvcs
       const BindRequestInfo& bind_request,
       const Generics::Time& timestamp);
 
-    GetUserResponseInfo get_user_id(const GetUserRequestInfo& request_info);
+    AdServer::Commons::Task<GetUserResponseInfo>
+    co_get_user_id(const GetUserRequestInfo& request_info);
 
-    AddUserResponseInfo add_user_id(const AddUserRequestInfo& request_info);
+    AdServer::Commons::Task<AddUserResponseInfo>
+    co_add_user_id(const AddUserRequestInfo& request_info);
 
     Source get_source() const;
 

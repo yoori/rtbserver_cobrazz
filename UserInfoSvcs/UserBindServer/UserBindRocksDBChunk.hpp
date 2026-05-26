@@ -28,16 +28,16 @@ namespace AdServer::UserInfoSvcs
       bool bind_at_min_age,
       unsigned long max_bad_event);
 
-    UserInfo
-    add_user_id(
+    AdServer::Commons::Task<UserInfo>
+    co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
       const Generics::Time& now,
       bool resave_if_exists,
       bool ignore_bad_event) override;
 
-    UserInfo
-    get_user_id(
+    AdServer::Commons::Task<UserInfo>
+    co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,
       const Generics::Time& now,
@@ -53,15 +53,15 @@ namespace AdServer::UserInfoSvcs
     void
     dump() override;
 
-    void
-    migrate_seen_user(
+    AdServer::Commons::Task<bool>
+    co_migrate_seen_user(
       const String::SubString& external_id,
       bool min_age_reached,
       const Generics::Time& create_time,
       const Generics::Time& now);
 
-    void
-    migrate_bound_user(
+    AdServer::Commons::Task<bool>
+    co_migrate_bound_user(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
       const Generics::Time& now,
@@ -99,11 +99,11 @@ namespace AdServer::UserInfoSvcs
     deserialize_(Record& record, const Generics::ConstSmartMemBuf* profile)
       const;
 
-    bool
-    load_record_(Record& record, const String::SubString& external_id);
+    AdServer::Commons::Task<bool>
+    co_load_record_(Record& record, const String::SubString& external_id);
 
-    void
-    save_record_(
+    AdServer::Commons::Task<bool>
+    co_save_record_(
       const String::SubString& external_id,
       const Record& record,
       const Generics::Time& now);

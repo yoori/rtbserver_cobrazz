@@ -8,9 +8,11 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-#include <unistd.h>
 
+#include <Generics/HashTableAdapters.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
@@ -85,6 +87,16 @@ namespace AdServer::UserInfoSvcs
       }
     }
 #endif
+
+    std::size_t
+    resolve_max_batch_split(
+      std::size_t configured,
+      std::size_t process_threads)
+    {
+      return std::max<std::size_t>(
+        1,
+        configured != 0 ? configured : process_threads);
+    }
   }
 
   struct UserBindServerGrpc::AtomicStats
@@ -108,61 +120,88 @@ namespace AdServer::UserInfoSvcs
   public:
     ServiceImpl(
       UserBindServerCore* core,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+      std::size_t max_batch_split,
       std::shared_ptr<AtomicStats> stats,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::GetBindRequestRequest,
           adserver::user_info_svcs::user_bind::GetBindRequestResponse,
-          get_bind_request),
-        MAKE_GRPC_CALL(
+          get_bind_request,
+          co_get_bind_request,
+          &ServiceImpl::hash_get_bind_request),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::AddBindRequestRequest,
           adserver::user_info_svcs::user_bind::AddBindRequestResponse,
-          add_bind_request),
-        MAKE_GRPC_CALL(
+          add_bind_request,
+          co_add_bind_request,
+          &ServiceImpl::hash_add_bind_request),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::GetUserIdRequest,
           adserver::user_info_svcs::user_bind::GetUserIdResponse,
-          get_user_id),
-        MAKE_GRPC_CALL(
+          get_user_id,
+          co_get_user_id,
+          &ServiceImpl::hash_get_user_id),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::AddUserIdRequest,
           adserver::user_info_svcs::user_bind::AddUserIdResponse,
-          add_user_id),
-        MAKE_GRPC_CALL(
+          add_user_id,
+          co_add_user_id,
+          &ServiceImpl::hash_add_user_id),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::GetSourceRequest,
           adserver::user_info_svcs::user_bind::GetSourceResponse,
-          get_source));
+          get_source,
+          co_get_source));
     }
 
-    void get_bind_request(
+    std::size_t distributed_batch_max_split() const noexcept override;
+
+    AdServer::Grpc::GrpcCoroutine co_get_bind_request(
       const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
       adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    void add_bind_request(
+    AdServer::Grpc::GrpcCoroutine co_add_bind_request(
       const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
       adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    void get_user_id(
+    AdServer::Grpc::GrpcCoroutine co_get_user_id(
       const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
       adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
       ::grpc::Status& result_status) const;
 
-    void add_user_id(
+    AdServer::Grpc::GrpcCoroutine co_add_user_id(
       const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
       adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
       ::grpc::Status& result_status) const;
 
-    void get_source(
-      const adserver::user_info_svcs::user_bind::GetSourceRequest&,
+    AdServer::Grpc::GrpcCoroutine co_get_source(
+      const adserver::user_info_svcs::user_bind::GetSourceRequest& request,
       adserver::user_info_svcs::user_bind::GetSourceResponse& response,
       ::grpc::Status& result_status) const;
 
+    static std::size_t hash_get_user_id(
+      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request);
+
+    static std::size_t hash_add_user_id(
+      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request);
+
+    static std::size_t hash_get_bind_request(
+      const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request);
+
+    static std::size_t hash_add_bind_request(
+      const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request);
+
   private:
     const UserBindServerCore_var core_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
+    const std::size_t max_batch_split_;
     const std::shared_ptr<AtomicStats> stats_;
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     const std::shared_ptr<std::atomic_uint> response_sleep_ms_;
@@ -172,9 +211,13 @@ namespace AdServer::UserInfoSvcs
   // UserBindServerGrpc::ServiceImpl
   UserBindServerGrpc::ServiceImpl::ServiceImpl(
     UserBindServerCore* core,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+    std::size_t max_batch_split,
     std::shared_ptr<AtomicStats> stats,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : core_(ReferenceCounting::add_ref(core)),
+      executor_pool_(std::move(executor_pool)),
+      max_batch_split_(max_batch_split),
       stats_(std::move(stats))
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
       ,
@@ -186,12 +229,20 @@ namespace AdServer::UserInfoSvcs
 #endif
   }
 
-  void
-  UserBindServerGrpc::ServiceImpl::get_bind_request(
+  std::size_t
+  UserBindServerGrpc::ServiceImpl::distributed_batch_max_split()
+    const noexcept
+  {
+    return max_batch_split_;
+  }
+
+  AdServer::Grpc::GrpcCoroutine
+  UserBindServerGrpc::ServiceImpl::co_get_bind_request(
     const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->get_bind_request_in_progress);
@@ -201,7 +252,7 @@ namespace AdServer::UserInfoSvcs
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);
     result_status = ::grpc::Status::OK;
-    return;
+    co_return;
 #endif
 
     try
@@ -237,12 +288,14 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  void
-  UserBindServerGrpc::ServiceImpl::add_bind_request(
+  AdServer::Grpc::GrpcCoroutine
+  UserBindServerGrpc::ServiceImpl::co_add_bind_request(
     const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
     adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
+    (void)response;
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->add_bind_request_in_progress);
@@ -252,7 +305,7 @@ namespace AdServer::UserInfoSvcs
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);
     result_status = ::grpc::Status::OK;
-    return;
+    co_return;
 #endif
 
     try
@@ -291,8 +344,8 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  void
-  UserBindServerGrpc::ServiceImpl::get_user_id(
+  AdServer::Grpc::GrpcCoroutine
+  UserBindServerGrpc::ServiceImpl::co_get_user_id(
     const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
     adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
     ::grpc::Status& result_status) const
@@ -304,6 +357,7 @@ namespace AdServer::UserInfoSvcs
     response.set_hostname(service_hostname_());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     maybe_sleep_mock_response(response_sleep_ms_);
     response.set_user_id(request.current_user_id());
     response.set_min_age_reached(true);
@@ -311,7 +365,7 @@ namespace AdServer::UserInfoSvcs
     response.set_invalid_operation(false);
     response.set_user_found(false);
     result_status = ::grpc::Status::OK;
-    return;
+    co_return;
 #endif
 
     try
@@ -326,7 +380,7 @@ namespace AdServer::UserInfoSvcs
       req_info.create_timestamp = GrpcAlgs::unpack_time(request.create_timestamp());
       req_info.current_user_id = GrpcAlgs::unpack_user_id(request.current_user_id());
 
-      const auto result = core_->get_user_id(req_info);
+      const auto result = co_await core_->co_get_user_id(req_info);
       response.set_user_id(GrpcAlgs::pack_user_id(result.user_id));
       response.set_min_age_reached(result.min_age_reached);
       response.set_created(result.created);
@@ -355,8 +409,8 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  void
-  UserBindServerGrpc::ServiceImpl::add_user_id(
+  AdServer::Grpc::GrpcCoroutine
+  UserBindServerGrpc::ServiceImpl::co_add_user_id(
     const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
     adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
     ::grpc::Status& result_status) const
@@ -368,11 +422,12 @@ namespace AdServer::UserInfoSvcs
     response.set_hostname(service_hostname_());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     maybe_sleep_mock_response(response_sleep_ms_);
     response.set_merge_user_id(request.user_id());
     response.set_invalid_operation(false);
     result_status = ::grpc::Status::OK;
-    return;
+    co_return;
 #endif
 
     try
@@ -383,7 +438,7 @@ namespace AdServer::UserInfoSvcs
       req_info.timestamp = GrpcAlgs::unpack_time(request.timestamp());
       req_info.user_id = GrpcAlgs::unpack_user_id(request.user_id());
 
-      const auto result = core_->add_user_id(req_info);
+      const auto result = co_await core_->co_add_user_id(req_info);
 
       response.set_merge_user_id(GrpcAlgs::pack_user_id(result.merge_user_id));
       response.set_invalid_operation(result.invalid_operation);
@@ -410,18 +465,20 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  void
-  UserBindServerGrpc::ServiceImpl::get_source(
-    const adserver::user_info_svcs::user_bind::GetSourceRequest&,
+  AdServer::Grpc::GrpcCoroutine
+  UserBindServerGrpc::ServiceImpl::co_get_source(
+    const adserver::user_info_svcs::user_bind::GetSourceRequest& request,
     adserver::user_info_svcs::user_bind::GetSourceResponse& response,
     ::grpc::Status& result_status) const
   {
+    (void)request;
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);
     response.set_chunks_number(1);
     response.add_chunks(0);
     result_status = ::grpc::Status::OK;
-    return;
+    co_return;
 #endif
 
     try
@@ -455,26 +512,66 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
+  std::size_t
+  UserBindServerGrpc::ServiceImpl::hash_get_user_id(
+    const adserver::user_info_svcs::user_bind::GetUserIdRequest& request)
+  {
+    return Generics::StringHashAdapter(request.id()).hash();
+  }
+
+  std::size_t
+  UserBindServerGrpc::ServiceImpl::hash_add_user_id(
+    const adserver::user_info_svcs::user_bind::AddUserIdRequest& request)
+  {
+    return Generics::StringHashAdapter(request.id()).hash();
+  }
+
+  std::size_t
+  UserBindServerGrpc::ServiceImpl::hash_get_bind_request(
+    const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request)
+  {
+    return Generics::StringHashAdapter(request.request_id()).hash();
+  }
+
+  std::size_t
+  UserBindServerGrpc::ServiceImpl::hash_add_bind_request(
+    const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request)
+  {
+    return Generics::StringHashAdapter(request.request_id()).hash();
+  }
+
   // UserBindServerGrpc impl
   UserBindServerGrpc::UserBindServerGrpc(
     UserBindServerCore* core,
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t grpc_threads,
+    std::size_t process_threads,
+    std::size_t max_split,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
+      max_batch_split_(resolve_max_batch_split(max_split, process_threads)),
       stats_(std::make_shared<AtomicStats>()),
+      executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
+        Generics::ActiveObjectCallback_var(
+          new Logging::ActiveObjectCallbackImpl(
+            logger,
+            "",
+            user_bind_server_grpc_aspect)),
+        std::max<std::size_t>(1, process_threads))),
       impl_(std::make_shared<Impl>(
         logger,
         user_bind_server_grpc_aspect,
         bind_address_,
-        grpc_threads,
+        process_threads,
         std::make_unique<ServiceImpl>(
           core,
+          executor_pool_,
+          max_batch_split_,
           stats_,
           std::move(response_sleep_ms))))
   {
+    add_child_object(executor_pool_);
     add_child_object(impl_);
   }
 

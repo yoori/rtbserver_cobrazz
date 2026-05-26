@@ -54,24 +54,22 @@ namespace AdServer::UserInfoSvcs
       /*throw(eh::Exception)*/;
 
     // UserBindProcessor impl
-    virtual UserInfo
-    add_user_id(
+    AdServer::Commons::Task<UserInfo>
+    co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
       const Generics::Time& now,
       bool resave_if_exists,
-      bool ignore_bad_event)
-      /*throw(ChunkNotFound, Exception)*/;
+      bool ignore_bad_event) override;
 
-    virtual UserInfo
-    get_user_id(
+    AdServer::Commons::Task<UserInfo>
+    co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,
       const Generics::Time& now,
       bool silent,
       const Generics::Time& create_time,
-      bool for_set_cookie)
-      /*throw(ChunkNotFound, Exception)*/;
+      bool for_set_cookie) override;
 
     virtual void
     clear_expired(

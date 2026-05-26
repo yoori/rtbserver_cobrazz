@@ -3,8 +3,10 @@
 #include <coroutine>
 #include <exception>
 #include <functional>
+#include <future>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -70,6 +72,55 @@ namespace AdServer::Commons
   template<typename... CallbackArgs, typename Call, typename... Args>
   AsyncCallbackAwaitable<CallbackArgs...>
   async_callback(Call&& call, Args&&... args);
+
+  template<typename ResultType>
+  class Task
+  {
+  public:
+    struct promise_type;
+    using Handle = std::coroutine_handle<promise_type>;
+
+    explicit Task(Handle handle) noexcept;
+    Task(Task&& other) noexcept;
+    Task& operator=(Task&& other) noexcept;
+    Task(const Task&) = delete;
+    Task& operator=(const Task&) = delete;
+    ~Task();
+
+    bool await_ready() const noexcept;
+    void await_suspend(std::coroutine_handle<> continuation) noexcept;
+    ResultType await_resume();
+    ResultType sync_wait();
+
+  private:
+    Handle handle_;
+  };
+
+  template<typename ResultType>
+  struct Task<ResultType>::promise_type
+  {
+    Task get_return_object() noexcept;
+    std::suspend_always initial_suspend() const noexcept;
+
+    struct FinalAwaiter
+    {
+      bool await_ready() const noexcept;
+      void await_suspend(Handle handle) const noexcept;
+      void await_resume() const noexcept;
+    };
+
+    FinalAwaiter final_suspend() const noexcept;
+
+    template<typename ValueType>
+    void return_value(ValueType&& value);
+
+    void unhandled_exception() noexcept;
+
+    std::coroutine_handle<> continuation;
+    std::function<void()> completion;
+    std::optional<ResultType> result;
+    std::exception_ptr exception;
+  };
 
   template<typename... CallbackArgs>
   AsyncCallbackAwaitable<CallbackArgs...>::AsyncCallbackAwaitable(
@@ -168,5 +219,145 @@ namespace AdServer::Commons
           std::move(args)...,
           std::move(callback));
       });
+  }
+
+  template<typename ResultType>
+  Task<ResultType>::Task(Handle handle) noexcept
+    : handle_(handle)
+  {}
+
+  template<typename ResultType>
+  Task<ResultType>::Task(Task&& other) noexcept
+    : handle_(std::exchange(other.handle_, {}))
+  {}
+
+  template<typename ResultType>
+  Task<ResultType>&
+  Task<ResultType>::operator=(Task&& other) noexcept
+  {
+    if(this != &other)
+    {
+      if(handle_)
+      {
+        handle_.destroy();
+      }
+      handle_ = std::exchange(other.handle_, {});
+    }
+
+    return *this;
+  }
+
+  template<typename ResultType>
+  Task<ResultType>::~Task()
+  {
+    if(handle_)
+    {
+      handle_.destroy();
+    }
+  }
+
+  template<typename ResultType>
+  bool
+  Task<ResultType>::await_ready() const noexcept
+  {
+    return false;
+  }
+
+  template<typename ResultType>
+  void
+  Task<ResultType>::await_suspend(
+    std::coroutine_handle<> continuation) noexcept
+  {
+    handle_.promise().continuation = continuation;
+    handle_.resume();
+  }
+
+  template<typename ResultType>
+  ResultType
+  Task<ResultType>::await_resume()
+  {
+    if(handle_.promise().exception)
+    {
+      std::rethrow_exception(handle_.promise().exception);
+    }
+
+    return std::move(*handle_.promise().result);
+  }
+
+  template<typename ResultType>
+  ResultType
+  Task<ResultType>::sync_wait()
+  {
+    std::promise<void> promise;
+    auto future = promise.get_future();
+    handle_.promise().completion = [&promise]() {
+      promise.set_value();
+    };
+    handle_.resume();
+    future.get();
+    return await_resume();
+  }
+
+  template<typename ResultType>
+  Task<ResultType>
+  Task<ResultType>::promise_type::get_return_object() noexcept
+  {
+    return Task(Handle::from_promise(*this));
+  }
+
+  template<typename ResultType>
+  std::suspend_always
+  Task<ResultType>::promise_type::initial_suspend() const noexcept
+  {
+    return {};
+  }
+
+  template<typename ResultType>
+  bool
+  Task<ResultType>::promise_type::FinalAwaiter::await_ready() const noexcept
+  {
+    return false;
+  }
+
+  template<typename ResultType>
+  void
+  Task<ResultType>::promise_type::FinalAwaiter::await_suspend(
+    Handle handle) const noexcept
+  {
+    if(handle.promise().completion)
+    {
+      handle.promise().completion();
+    }
+    else if(handle.promise().continuation)
+    {
+      handle.promise().continuation.resume();
+    }
+  }
+
+  template<typename ResultType>
+  void
+  Task<ResultType>::promise_type::FinalAwaiter::await_resume() const noexcept
+  {}
+
+  template<typename ResultType>
+  typename Task<ResultType>::promise_type::FinalAwaiter
+  Task<ResultType>::promise_type::final_suspend() const noexcept
+  {
+    return {};
+  }
+
+  template<typename ResultType>
+  template<typename ValueType>
+  void
+  Task<ResultType>::promise_type::return_value(ValueType&& value)
+  {
+    result.emplace(std::forward<ValueType>(value));
+  }
+
+  template<typename ResultType>
+  void
+  Task<ResultType>::promise_type::unhandled_exception() noexcept
+  {
+    exception = std::current_exception();
   }
 }

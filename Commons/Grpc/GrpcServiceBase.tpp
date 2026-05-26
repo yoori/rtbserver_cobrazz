@@ -24,6 +24,113 @@ namespace AdServer::Grpc
     return {request_method, handler, std::move(batch_full_method)};
   }
 
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>
+  make_grpc_coro_call(
+    typename GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>::RequestMethod request_method,
+    typename GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>::Handler handler,
+    std::string batch_full_method)
+  {
+    return {
+      request_method,
+      handler,
+      nullptr,
+      std::move(batch_full_method),
+      {},
+      false
+    };
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response,
+    typename HashFn>
+  GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>
+  make_distributed_grpc_coro_call(
+    typename GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>::RequestMethod request_method,
+    typename GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>::Handler handler,
+    std::string batch_full_method,
+    HashFn hash_fn)
+  {
+    using Call = GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>;
+    typename Call::BatchHashFn batch_hash =
+      [hash_fn](const adserver::grpc::BatchRequestItem& batch_item)
+      {
+        Request request;
+        if (!request.ParseFromString(batch_item.payload()))
+        {
+          return static_cast<std::size_t>(batch_item.request_id());
+        }
+
+        return hash_fn(request);
+      };
+
+    return {
+      request_method,
+      handler,
+      nullptr,
+      std::move(batch_full_method),
+      std::move(batch_hash),
+      true
+    };
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>
+  make_distributed_grpc_coro_call(
+    typename GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>::RequestMethod request_method,
+    typename GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>::Handler handler,
+    std::string batch_full_method)
+  {
+    return {
+      request_method,
+      handler,
+      nullptr,
+      std::move(batch_full_method),
+      {},
+      true
+    };
+  }
+
   template<typename ServiceImplType, typename Calls>
   void
   GrpcServiceBase::register_batch_methods(
@@ -71,6 +178,52 @@ namespace AdServer::Grpc
       });
   }
 
+
+  template<typename Request, typename Response, typename Handler>
+  void
+  GrpcServiceBase::register_batch_coro_method(
+    std::string full_method,
+    Handler&& handler,
+    typename GrpcCoroCall<
+      GrpcServiceBase,
+      GrpcServiceBase,
+      Request,
+      Response>::BatchHashFn hash,
+    bool distributed)
+  {
+    batch_coro_methods_.emplace(
+      std::move(full_method),
+      BatchCoroMethod{
+        [handler = std::forward<Handler>(handler)](
+          const adserver::grpc::BatchRequestItem& batch_request,
+          adserver::grpc::BatchResponseItem& batch_response)
+          -> GrpcCoroutine
+        {
+          Request request;
+          if (!request.ParseFromString(batch_request.payload()))
+          {
+            batch_response.set_status_code(
+              ::grpc::StatusCode::INVALID_ARGUMENT);
+            batch_response.set_status_message("Unable to parse payload");
+            co_return;
+          }
+
+          Response response;
+          ::grpc::Status status;
+          co_await handler(request, response, status);
+
+          batch_response.set_status_code(status.error_code());
+          batch_response.set_status_message(status.error_message());
+          if (status.ok())
+          {
+            batch_response.set_payload(response.SerializeAsString());
+          }
+        },
+        std::move(hash),
+        distributed
+      });
+  }
+
   template<
     typename ServiceImplType,
     typename AsyncServiceType,
@@ -100,6 +253,56 @@ namespace AdServer::Grpc
       });
   }
 
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  void
+  GrpcServiceBase::register_batch_method(
+    ServiceImplType* service_impl,
+    const GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>& call)
+  {
+    if (call.batch_full_method.empty())
+    {
+      return;
+    }
+
+    register_batch_coro_method<Request, Response>(
+      call.batch_full_method,
+      [
+        service_impl,
+        handler = call.handler
+      ](
+        const Request& request,
+        Response& response,
+        ::grpc::Status& status) -> GrpcCoroutine
+      {
+        co_await (service_impl->*handler)(request, response, status);
+      },
+      call.batch_hash,
+      call.distributed_batch);
+
+    if (!call.batch_handler)
+    {
+      return;
+    }
+
+    register_batch_method<Request, Response>(
+      call.batch_full_method,
+      [
+        service_impl,
+        handler = call.batch_handler
+      ](
+        const Request& request,
+        Response& response,
+        ::grpc::Status& status)
+      {
+        (service_impl->*handler)(request, response, status);
+      });
+  }
+
   template<
     typename ServiceImplType,
     typename AsyncServiceType,
@@ -112,6 +315,31 @@ namespace AdServer::Grpc
     ::grpc::ServerCompletionQueue* completion_queue)
   {
     auto* grpc_call = new GrpcUnaryCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>(
+      service_impl,
+      async_service,
+      call.request_method,
+      call.handler,
+      completion_queue);
+    grpc_call->proceed(true);
+  }
+
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  void register_grpc_unary_call(
+    ServiceImplType* service_impl,
+    AsyncServiceType* async_service,
+    const GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>& call,
+    ::grpc::ServerCompletionQueue* completion_queue)
+  {
+    auto* grpc_call = new GrpcCoroUnaryCall<
       ServiceImplType,
       AsyncServiceType,
       Request,
@@ -164,6 +392,121 @@ namespace AdServer::Grpc
       batch_method_name ?
         std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
         std::string()
+    };
+  }
+
+
+  template<
+    typename ServiceImplType,
+    typename ServiceType,
+    typename AsyncServiceType>
+  template<typename Request, typename Response>
+  GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>
+  GrpcAsyncServiceBase<ServiceImplType, ServiceType, AsyncServiceType>::
+    make_grpc_coro_call(
+      typename GrpcCoroCall<
+        ServiceImplType,
+        AsyncServiceType,
+        Request,
+        Response>::RequestMethod request_method,
+      typename GrpcCoroCall<
+        ServiceImplType,
+        AsyncServiceType,
+        Request,
+        Response>::Handler handler,
+      const char* batch_method_name)
+  {
+    return {
+      request_method,
+      handler,
+      nullptr,
+      batch_method_name ?
+        std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
+        std::string(),
+      {},
+      false
+    };
+  }
+
+  template<
+    typename ServiceImplType,
+    typename ServiceType,
+    typename AsyncServiceType>
+  template<typename Request, typename Response, typename HashFn>
+  GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>
+  GrpcAsyncServiceBase<ServiceImplType, ServiceType, AsyncServiceType>::
+    make_distributed_grpc_coro_call(
+      typename GrpcCoroCall<
+        ServiceImplType,
+        AsyncServiceType,
+        Request,
+        Response>::RequestMethod request_method,
+      typename GrpcCoroCall<
+        ServiceImplType,
+        AsyncServiceType,
+        Request,
+        Response>::Handler handler,
+      const char* batch_method_name,
+      HashFn hash_fn)
+  {
+    using Call = GrpcCoroCall<
+      ServiceImplType,
+      AsyncServiceType,
+      Request,
+      Response>;
+    typename Call::BatchHashFn batch_hash =
+      [hash_fn](const adserver::grpc::BatchRequestItem& batch_item)
+      {
+        Request request;
+        if (!request.ParseFromString(batch_item.payload()))
+        {
+          return static_cast<std::size_t>(batch_item.request_id());
+        }
+
+        return hash_fn(request);
+      };
+
+    return {
+      request_method,
+      handler,
+      nullptr,
+      batch_method_name ?
+        std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
+        std::string(),
+      std::move(batch_hash),
+      true
+    };
+  }
+
+  template<
+    typename ServiceImplType,
+    typename ServiceType,
+    typename AsyncServiceType>
+  template<typename Request, typename Response>
+  GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>
+  GrpcAsyncServiceBase<ServiceImplType, ServiceType, AsyncServiceType>::
+    make_distributed_grpc_coro_call(
+      typename GrpcCoroCall<
+        ServiceImplType,
+        AsyncServiceType,
+        Request,
+        Response>::RequestMethod request_method,
+      typename GrpcCoroCall<
+        ServiceImplType,
+        AsyncServiceType,
+        Request,
+        Response>::Handler handler,
+      const char* batch_method_name)
+  {
+    return {
+      request_method,
+      handler,
+      nullptr,
+      batch_method_name ?
+        std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
+        std::string(),
+      {},
+      true
     };
   }
 
@@ -350,6 +693,152 @@ namespace AdServer::Grpc
     return true;
   }
 
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  GrpcCoroUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    GrpcCoroUnaryCall(
+      ServiceImplType* service_impl,
+      AsyncServiceType* async_service,
+      RequestMethod request_method,
+      Handler handler,
+      ::grpc::ServerCompletionQueue* completion_queue)
+    : Base(completion_queue),
+      service_impl_(service_impl),
+      async_service_(async_service),
+      request_rpc_(request_method),
+      handler_rpc_(handler)
+  {}
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  bool
+  GrpcCoroUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    request_method_()
+  {
+    auto grpc_operation_guard = service_impl_->enter_grpc_operation();
+    if (!grpc_operation_guard)
+    {
+      return false;
+    }
+
+    (async_service_->*request_rpc_)(
+      &this->context_,
+      &this->request_,
+      &this->responder_,
+      this->completion_queue_,
+      this->completion_queue_,
+      this);
+    return true;
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  void
+  GrpcCoroUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    spawn_next_()
+  {
+    auto* next_call = new GrpcCoroUnaryCall(
+      service_impl_,
+      async_service_,
+      request_rpc_,
+      handler_rpc_,
+      this->completion_queue_);
+    next_call->proceed(true);
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  bool
+  GrpcCoroUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    process_()
+  {
+    auto grpc_operation_guard = service_impl_->enter_grpc_operation();
+    if (!grpc_operation_guard)
+    {
+      return false;
+    }
+    grpc_operation_guard_.emplace(std::move(grpc_operation_guard));
+
+    try
+    {
+      operation_.emplace(
+        (service_impl_->*handler_rpc_)(
+          this->request_,
+          this->response_,
+          status_));
+    }
+    catch (const std::exception& ex)
+    {
+      status_ = ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+      finish_();
+      return true;
+    }
+    catch (...)
+    {
+      status_ = ::grpc::Status(
+        ::grpc::StatusCode::INTERNAL,
+        "Unknown coroutine handler exception");
+      finish_();
+      return true;
+    }
+
+    operation_->start([this](std::exception_ptr exception) {
+      if (exception)
+      {
+        try
+        {
+          std::rethrow_exception(exception);
+        }
+        catch (const std::exception& ex)
+        {
+          status_ = ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+        }
+        catch (...)
+        {
+          status_ = ::grpc::Status(
+            ::grpc::StatusCode::INTERNAL,
+            "Unknown coroutine handler exception");
+        }
+      }
+
+      finish_();
+    });
+
+    return true;
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  void
+  GrpcCoroUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    finish_()
+  {
+    if (status_.ok())
+    {
+      this->responder_.Finish(this->response_, status_, this);
+    }
+    else
+    {
+      this->responder_.FinishWithError(status_, this);
+    }
+  }
+
   template<
     typename ServiceImplType,
     typename AsyncServiceType>
@@ -439,11 +928,53 @@ namespace AdServer::Grpc
 #ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
         start_debug_response_watchdog_();
 #endif
-        service_impl_->handle_batch_request(request_, response_);
-        if (!write_or_delete_())
+        auto process_guard = service_impl_->enter_grpc_operation();
+        if (!process_guard)
         {
+          delete this;
           return;
         }
+        process_guard_.emplace(std::move(process_guard));
+
+        try
+        {
+          batch_operation_.emplace(
+            service_impl_->co_handle_batch_request(request_, response_));
+        }
+        catch (const std::exception& ex)
+        {
+          finish_with_error_(ex.what());
+          return;
+        }
+        catch (...)
+        {
+          finish_with_error_("Unknown batch handler exception");
+          return;
+        }
+
+        batch_operation_->start([this](std::exception_ptr exception) {
+          if (exception)
+          {
+            try
+            {
+              std::rethrow_exception(exception);
+            }
+            catch (const std::exception& ex)
+            {
+              finish_with_error_(ex.what());
+            }
+            catch (...)
+            {
+              finish_with_error_("Unknown batch handler exception");
+            }
+            return;
+          }
+
+          if (!write_or_delete_())
+          {
+            return;
+          }
+        });
         return;
       }
 
@@ -453,6 +984,8 @@ namespace AdServer::Grpc
         finish_debug_response_watchdog_();
 #endif
         finish_inprogress_stats_();
+        process_guard_.reset();
+        batch_operation_.reset();
         if (!ok)
         {
           delete this;
@@ -547,6 +1080,21 @@ namespace AdServer::Grpc
 
     state_ = State::Finish;
     responder_.Finish(::grpc::Status::OK, this);
+  }
+
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType>
+  void
+  GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::finish_with_error_(
+    const char* message)
+  {
+    response_.Clear();
+    auto* response_item = response_.add_items();
+    response_item->set_status_code(::grpc::StatusCode::INTERNAL);
+    response_item->set_status_message(message ? message : "Unknown error");
+    write_or_delete_();
   }
 
   template<

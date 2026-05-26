@@ -2,6 +2,7 @@
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+#include <Commons/Coro.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/UserIdBlackList.hpp>
 
@@ -32,8 +33,8 @@ namespace AdServer::UserInfoSvcs
 
   public:
     // return previous state
-    virtual UserInfo
-    add_user_id(
+    virtual AdServer::Commons::Task<UserInfo>
+    co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
       const Generics::Time& now,
@@ -42,8 +43,8 @@ namespace AdServer::UserInfoSvcs
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
     // create_time : time of user creation, will be used for min age check
-    virtual UserInfo
-    get_user_id(
+    virtual AdServer::Commons::Task<UserInfo>
+    co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,
       const Generics::Time& now,
@@ -94,4 +95,5 @@ namespace AdServer::UserInfoSvcs
       ", user found: " << user_found;
     return out;
   }
+
 }

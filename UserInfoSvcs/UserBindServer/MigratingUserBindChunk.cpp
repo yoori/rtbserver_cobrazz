@@ -15,8 +15,8 @@ namespace AdServer::UserInfoSvcs
       user_locks_(DEFAULT_LOCKS)
   {}
 
-  UserBindProcessor::UserInfo
-  MigratingUserBindChunk::add_user_id(
+  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  MigratingUserBindChunk::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
     const Generics::Time& now,
@@ -26,7 +26,7 @@ namespace AdServer::UserInfoSvcs
     UserLockMap::WriteGuard user_lock(
       user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
 
-    UserInfo current = rocksdb_chunk_->get_user_id(
+    UserInfo current = co_await rocksdb_chunk_->co_get_user_id(
       external_id,
       Commons::UserId(),
       now,
@@ -36,7 +36,7 @@ namespace AdServer::UserInfoSvcs
 
     if(!current.user_found && legacy_chunk_.in())
     {
-      current = legacy_chunk_->get_user_id(
+      current = co_await legacy_chunk_->co_get_user_id(
         external_id,
         Commons::UserId(),
         now,
@@ -46,7 +46,7 @@ namespace AdServer::UserInfoSvcs
 
       if(current.user_found && !current.user_id.is_null())
       {
-        rocksdb_chunk_->migrate_bound_user(
+        co_await rocksdb_chunk_->co_migrate_bound_user(
           external_id,
           current.user_id,
           now,
@@ -55,7 +55,7 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    return rocksdb_chunk_->add_user_id(
+    co_return co_await rocksdb_chunk_->co_add_user_id(
       external_id,
       user_id,
       now,
@@ -63,8 +63,8 @@ namespace AdServer::UserInfoSvcs
       ignore_bad_event);
   }
 
-  UserBindProcessor::UserInfo
-  MigratingUserBindChunk::get_user_id(
+  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  MigratingUserBindChunk::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
     const Generics::Time& now,
@@ -75,7 +75,7 @@ namespace AdServer::UserInfoSvcs
     UserLockMap::WriteGuard user_lock(
       user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
 
-    UserInfo result = rocksdb_chunk_->get_user_id(
+    UserInfo result = co_await rocksdb_chunk_->co_get_user_id(
       external_id,
       Commons::UserId(),
       now,
@@ -85,7 +85,7 @@ namespace AdServer::UserInfoSvcs
 
     if(result.user_found)
     {
-      return rocksdb_chunk_->get_user_id(
+      co_return co_await rocksdb_chunk_->co_get_user_id(
         external_id,
         current_user_id,
         now,
@@ -96,7 +96,7 @@ namespace AdServer::UserInfoSvcs
 
     if(legacy_chunk_.in())
     {
-      result = legacy_chunk_->get_user_id(
+      result = co_await legacy_chunk_->co_get_user_id(
         external_id,
         Commons::UserId(),
         now,
@@ -106,7 +106,7 @@ namespace AdServer::UserInfoSvcs
 
       if(result.user_found)
       {
-        result = legacy_chunk_->get_user_id(
+        result = co_await legacy_chunk_->co_get_user_id(
           external_id,
           current_user_id,
           now,
@@ -116,7 +116,7 @@ namespace AdServer::UserInfoSvcs
 
         if(!result.user_id.is_null())
         {
-          rocksdb_chunk_->migrate_bound_user(
+          co_await rocksdb_chunk_->co_migrate_bound_user(
             external_id,
             result.user_id,
             now,
@@ -125,7 +125,7 @@ namespace AdServer::UserInfoSvcs
         }
         else
         {
-          rocksdb_chunk_->migrate_seen_user(
+          co_await rocksdb_chunk_->co_migrate_seen_user(
             external_id,
             result.min_age_reached,
             create_time,
@@ -133,11 +133,11 @@ namespace AdServer::UserInfoSvcs
           legacy_chunk_->remove_user_id(external_id);
         }
 
-        return result;
+        co_return result;
       }
     }
 
-    return rocksdb_chunk_->get_user_id(
+    co_return co_await rocksdb_chunk_->co_get_user_id(
       external_id,
       current_user_id,
       now,

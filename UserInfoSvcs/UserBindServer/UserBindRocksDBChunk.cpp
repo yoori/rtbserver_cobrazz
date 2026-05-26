@@ -70,8 +70,8 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  UserBindProcessor::UserInfo
-  UserBindRocksDBChunk::add_user_id(
+  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  UserBindRocksDBChunk::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
     const Generics::Time& now,
@@ -82,7 +82,7 @@ namespace AdServer::UserInfoSvcs
       user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
 
     Record record;
-    const bool found = load_record_(record, external_id);
+    const bool found = co_await co_load_record_(record, external_id);
     const bool found_bound = found && record.type == Record::RT_BOUND;
 
     if(record.type != Record::RT_BOUND)
@@ -101,14 +101,14 @@ namespace AdServer::UserInfoSvcs
     if(resave_if_exists || !result.user_found)
     {
       save_user_id_(record, result, user_id, ignore_bad_event, now);
-      save_record_(external_id, record, now);
+      co_await co_save_record_(external_id, record, now);
     }
 
-    return result;
+    co_return result;
   }
 
-  UserBindProcessor::UserInfo
-  UserBindRocksDBChunk::get_user_id(
+  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  UserBindRocksDBChunk::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
     const Generics::Time& now,
@@ -120,7 +120,7 @@ namespace AdServer::UserInfoSvcs
       user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
 
     Record record;
-    const bool found = load_record_(record, external_id);
+    const bool found = co_await co_load_record_(record, external_id);
 
     if(found && record.type == Record::RT_BOUND)
     {
@@ -144,10 +144,10 @@ namespace AdServer::UserInfoSvcs
           (record.flags & BF_SETCOOKIE_) &&
           record.bad_event_count > max_bad_event_;
 
-        save_record_(external_id, record, now);
+        co_await co_save_record_(external_id, record, now);
       }
 
-      return adapt_bound_record_(record, false, true, invalid_operation);
+      co_return adapt_bound_record_(record, false, true, invalid_operation);
     }
 
     if(silent)
@@ -158,7 +158,7 @@ namespace AdServer::UserInfoSvcs
       {
         result = adapt_seen_record_(record, false, true, now);
       }
-      return result;
+      co_return result;
     }
 
     bool created = false;
@@ -187,12 +187,12 @@ namespace AdServer::UserInfoSvcs
         bound_record.flags |= BF_SETCOOKIE_;
       }
 
-      save_record_(external_id, bound_record, now);
-      return adapt_bound_record_(bound_record, true, true, false);
+      co_await co_save_record_(external_id, bound_record, now);
+      co_return adapt_bound_record_(bound_record, true, true, false);
     }
 
-    save_record_(external_id, record, now);
-    return adapt_seen_record_(record, created, true, now);
+    co_await co_save_record_(external_id, record, now);
+    co_return adapt_seen_record_(record, created, true, now);
   }
 
   void
@@ -205,8 +205,8 @@ namespace AdServer::UserInfoSvcs
   UserBindRocksDBChunk::dump()
   {}
 
-  void
-  UserBindRocksDBChunk::migrate_seen_user(
+  AdServer::Commons::Task<bool>
+  UserBindRocksDBChunk::co_migrate_seen_user(
     const String::SubString& external_id,
     bool min_age_reached,
     const Generics::Time& create_time,
@@ -229,11 +229,12 @@ namespace AdServer::UserInfoSvcs
         create_time == Generics::Time::ZERO ? now : create_time;
     }
 
-    save_record_(external_id, record, now);
+    co_await co_save_record_(external_id, record, now);
+    co_return true;
   }
 
-  void
-  UserBindRocksDBChunk::migrate_bound_user(
+  AdServer::Commons::Task<bool>
+  UserBindRocksDBChunk::co_migrate_bound_user(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
     const Generics::Time& now,
@@ -251,7 +252,8 @@ namespace AdServer::UserInfoSvcs
       record.flags |= BF_SETCOOKIE_;
     }
 
-    save_record_(external_id, record, now);
+    co_await co_save_record_(external_id, record, now);
+    co_return true;
   }
 
   Generics::ConstSmartMemBuf_var
@@ -336,25 +338,25 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  bool
-  UserBindRocksDBChunk::load_record_(
+  AdServer::Commons::Task<bool>
+  UserBindRocksDBChunk::co_load_record_(
     Record& record,
     const String::SubString& external_id)
   {
     const std::string key = external_id.str();
 
-    const auto bound_profile = user_bind_map_->get_profile(key);
+    const auto bound_profile = co_await user_bind_map_->co_get_profile(key);
     if(deserialize_(record, bound_profile.in()))
     {
-      return true;
+      co_return true;
     }
 
-    const auto seen_profile = user_seen_map_->get_profile(key);
-    return deserialize_(record, seen_profile.in());
+    const auto seen_profile = co_await user_seen_map_->co_get_profile(key);
+    co_return deserialize_(record, seen_profile.in());
   }
 
-  void
-  UserBindRocksDBChunk::save_record_(
+  AdServer::Commons::Task<bool>
+  UserBindRocksDBChunk::co_save_record_(
     const String::SubString& external_id,
     const Record& record,
     const Generics::Time& now)
@@ -365,13 +367,15 @@ namespace AdServer::UserInfoSvcs
 
     if(record.type == Record::RT_BOUND)
     {
-      user_bind_map_->save_profile(key, profile.in(), now);
-      user_seen_map_->remove_profile(key);
+      co_await user_bind_map_->co_save_profile(key, profile.in(), now);
+      co_await user_seen_map_->co_remove_profile(key);
     }
     else if(record.type == Record::RT_SEEN)
     {
-      user_seen_map_->save_profile(key, profile.in(), now);
+      co_await user_seen_map_->co_save_profile(key, profile.in(), now);
     }
+
+    co_return true;
   }
 
   UserBindProcessor::UserInfo

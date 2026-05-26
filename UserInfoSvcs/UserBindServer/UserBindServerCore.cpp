@@ -139,8 +139,8 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  UserBindServerCore::GetUserResponseInfo
-  UserBindServerCore::get_user_id(const GetUserRequestInfo& request_info)
+  AdServer::Commons::Task<UserBindServerCore::GetUserResponseInfo>
+  UserBindServerCore::co_get_user_id(const GetUserRequestInfo& request_info)
   {
     get_user_id_total_requests_.fetch_add(1, std::memory_order_relaxed);
 
@@ -154,13 +154,14 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserBindContainer::UserInfo user_info = user_bind_accessor->get_user_id(
-        String::SubString(request_info.id),
-        request_info.current_user_id,
-        request_info.timestamp,
-        request_info.silent,
-        request_info.create_timestamp,
-        request_info.for_set_cookie);
+      UserBindContainer::UserInfo user_info =
+        co_await user_bind_accessor->co_get_user_id(
+          String::SubString(request_info.id),
+          request_info.current_user_id,
+          request_info.timestamp,
+          request_info.silent,
+          request_info.create_timestamp,
+          request_info.for_set_cookie);
 
       GetUserResponseInfo res;
 
@@ -173,7 +174,7 @@ namespace AdServer::UserInfoSvcs
         {
           const Commons::UserId new_user_id = Commons::UserId::create_random_based();
 
-          user_info = user_bind_accessor->add_user_id(
+          user_info = co_await user_bind_accessor->co_add_user_id(
             String::SubString(request_info.id),
             new_user_id,
             request_info.timestamp,
@@ -194,11 +195,11 @@ namespace AdServer::UserInfoSvcs
         res.invalid_operation = user_info.invalid_operation;
         res.user_found = user_info.user_found;
 
-        return res;
+        co_return res;
       }
 
       const Commons::UserId new_user_id = Commons::UserId::create_random_based();
-      user_info = user_bind_accessor->add_user_id(
+      user_info = co_await user_bind_accessor->co_add_user_id(
         String::SubString(request_info.id),
         new_user_id,
         request_info.timestamp,
@@ -220,7 +221,7 @@ namespace AdServer::UserInfoSvcs
         res.created = false;
       }
 
-      return res;
+      co_return res;
     }
     catch(const UserBindProcessor::ChunkNotFound& ex)
     {
@@ -228,8 +229,8 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  UserBindServerCore::AddUserResponseInfo
-  UserBindServerCore::add_user_id(const AddUserRequestInfo& request_info)
+  AdServer::Commons::Task<UserBindServerCore::AddUserResponseInfo>
+  UserBindServerCore::co_add_user_id(const AddUserRequestInfo& request_info)
   {
     add_user_id_requests_.fetch_add(1, std::memory_order_relaxed);
 
@@ -244,7 +245,7 @@ namespace AdServer::UserInfoSvcs
     try
     {
       const UserBindContainer::UserInfo user_info =
-        user_bind_accessor->add_user_id(
+        co_await user_bind_accessor->co_add_user_id(
           String::SubString(request_info.id),
           request_info.user_id,
           request_info.timestamp,
@@ -254,7 +255,7 @@ namespace AdServer::UserInfoSvcs
       AddUserResponseInfo res;
       res.merge_user_id = user_info.user_id;
       res.invalid_operation = user_info.invalid_operation;
-      return res;
+      co_return res;
     }
     catch(const UserBindProcessor::ChunkNotFound& ex)
     {

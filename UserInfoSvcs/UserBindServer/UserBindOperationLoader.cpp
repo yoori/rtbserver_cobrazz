@@ -309,14 +309,14 @@ namespace AdServer::UserInfoSvcs
   {
     UserBindGetOperationReader reader(data_buf, data_size);
 
-    user_bind_processor_->get_user_id(
+    user_bind_processor_->co_get_user_id(
       String::SubString(reader.external_id()),
       Commons::UserId(reader.current_user_id()),
       Generics::Time(reader.time()),
       false,
       Generics::Time::ZERO,
       false // for_set_cookie
-      );
+      ).sync_wait();
   }
 
   void
@@ -327,13 +327,13 @@ namespace AdServer::UserInfoSvcs
   {
     UserBindAddOperationReader reader(data_buf, data_size);
 
-    user_bind_processor_->add_user_id(
+    user_bind_processor_->co_add_user_id(
       String::SubString(reader.external_id()),
       Commons::UserId(reader.user_id()),
       Generics::Time(reader.time()),
       reader.resave_if_exists(),
       true // ignore_bad_event
-      );
+      ).sync_wait();
   }
 
   // UserBindOperationLoader

@@ -14,8 +14,8 @@ namespace AdServer::UserInfoSvcs
       next_processor_(ReferenceCounting::add_ref(next_processor))
   {}
 
-  UserBindProcessor::UserInfo
-  UserBindOperationSaver::add_user_id(
+  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  UserBindOperationSaver::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
     const Generics::Time& now,
@@ -23,7 +23,7 @@ namespace AdServer::UserInfoSvcs
     bool ignore_bad_event)
     /*throw(ChunkNotFound, UserBindProcessor::Exception)*/
   {
-    UserInfo res = next_processor_->add_user_id(
+    UserInfo res = co_await next_processor_->co_add_user_id(
       external_id,
       user_id,
       now,
@@ -49,11 +49,11 @@ namespace AdServer::UserInfoSvcs
         op_mem_buf);
     }
 
-    return res;
+    co_return res;
   }
 
-  UserBindProcessor::UserInfo
-  UserBindOperationSaver::get_user_id(
+  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  UserBindOperationSaver::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
     const Generics::Time& now,
@@ -62,7 +62,7 @@ namespace AdServer::UserInfoSvcs
     bool for_set_cookie)
     /*throw(ChunkNotFound, UserBindProcessor::Exception)*/
   {
-    UserInfo res = next_processor_->get_user_id(
+    UserInfo res = co_await next_processor_->co_get_user_id(
       external_id,
       current_user_id,
       now,
@@ -113,7 +113,7 @@ namespace AdServer::UserInfoSvcs
         op_mem_buf);
     }
 
-    return res;
+    co_return res;
   }
 
   void

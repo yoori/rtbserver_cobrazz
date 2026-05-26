@@ -87,8 +87,9 @@ main(int argc, char** argv)
 	        nullptr,
 	        endpoint.host,
 	        endpoint.port,
-	        128,
-	        response_sleep_ms);
+        128,
+        0,
+        response_sleep_ms);
     server->activate_object();
 
     std::cout << "MockUserBindServer listening at " << endpoint.host << ":" <<

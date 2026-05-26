@@ -104,8 +104,8 @@ namespace AdServer::UserInfoSvcs
   UserBindContainer::~UserBindContainer() noexcept
   {}
 
-  UserBindContainer::UserInfo
-  UserBindContainer::get_user_id(
+  AdServer::Commons::Task<UserBindContainer::UserInfo>
+  UserBindContainer::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
     const Generics::Time& now,
@@ -114,7 +114,7 @@ namespace AdServer::UserInfoSvcs
     bool for_set_cookie)
     /*throw(ChunkNotFound, Exception)*/
   {
-    return get_chunk_(external_id)->get_user_id(
+    co_return co_await get_chunk_(external_id)->co_get_user_id(
       external_id,
       current_user_id,
       now,
@@ -123,8 +123,8 @@ namespace AdServer::UserInfoSvcs
       for_set_cookie);
   }
 
-  UserBindContainer::UserInfo
-  UserBindContainer::add_user_id(
+  AdServer::Commons::Task<UserBindContainer::UserInfo>
+  UserBindContainer::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
     const Generics::Time& now,
@@ -132,7 +132,7 @@ namespace AdServer::UserInfoSvcs
     bool ignore_bad_event)
     /*throw(ChunkNotFound, Exception)*/
   {
-    return get_chunk_(external_id)->add_user_id(
+    co_return co_await get_chunk_(external_id)->co_add_user_id(
       external_id,
       user_id,
       now,

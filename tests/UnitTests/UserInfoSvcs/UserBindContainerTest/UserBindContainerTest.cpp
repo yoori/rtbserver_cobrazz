@@ -166,13 +166,13 @@ performance_test(unsigned long iterations)
     {
       size_t size = String::StringManip::int_to_str(i, buf, sizeof(buf));
 
-      user_bind_container->get_user_id(
+      user_bind_container->co_get_user_id(
         String::SubString(buf, size),
         AdServer::Commons::UserId(),
         start_time,
         false,
         Generics::Time::ZERO,
-        false);
+        false).sync_wait();
     }
 
     Generics::Time finish_time = Generics::Time::get_time_of_day();
@@ -211,13 +211,13 @@ public:
     {
       int res = counter_.exchange_and_add(1);
       size_t size = String::StringManip::int_to_str(res, buf, sizeof(buf));
-      user_bind_container_->get_user_id(
+      user_bind_container_->co_get_user_id(
         String::SubString(buf, size),
         AdServer::Commons::UserId(),
         start_time,
         false,
         Generics::Time::ZERO,
-        false);
+        false).sync_wait();
     }
 
     Generics::Time finish_time = Generics::Time::get_time_of_day();
@@ -326,13 +326,13 @@ int simple_test()
   Generics::Time base_time(String::SubString("2008-01-01"), "%Y-%m-%d");
   std::string test_external_id("x");
 
-  UserBindContainer::UserInfo user_info = user_bind_container->get_user_id(
+  UserBindContainer::UserInfo user_info = user_bind_container->co_get_user_id(
     test_external_id,
     AdServer::Commons::UserId(),
     base_time,
     false,
     Generics::Time::ZERO,
-    false);
+    false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
   {
@@ -340,13 +340,13 @@ int simple_test()
     return 1;
   }
 
-  user_info = user_bind_container->get_user_id(
+  user_info = user_bind_container->co_get_user_id(
     test_external_id,
     AdServer::Commons::UserId(),
     base_time + Generics::Time::ONE_HOUR - 2,
     false,
     Generics::Time::ZERO,
-    false);
+    false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
   {
@@ -354,13 +354,13 @@ int simple_test()
     return 1;
   }
 
-  user_info = user_bind_container->get_user_id(
+  user_info = user_bind_container->co_get_user_id(
     test_external_id,
     AdServer::Commons::UserId(),
     base_time + Generics::Time::ONE_HOUR + 1,
     false,
     Generics::Time::ZERO,
-    false);
+    false).sync_wait();
 
   if(user_info.user_id.is_null() || !user_info.min_age_reached)
   {
@@ -373,13 +373,13 @@ int simple_test()
 
   for(int i = 0; i < 10; ++i)
   {
-    user_info = user_bind_container->get_user_id(
+    user_info = user_bind_container->co_get_user_id(
       test_external_id,
       AdServer::Commons::UserId(),
       base_time + Generics::Time::ONE_DAY * (2 + i) + 1,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if(user_info.user_id.is_null() || !user_info.min_age_reached)
     {
@@ -418,13 +418,13 @@ int expired_test()
   Generics::Time base_time(String::SubString("2008-01-01"), "%Y-%m-%d");
   std::string test_external_id("x");
 
-  UserBindContainer::UserInfo user_info = user_bind_container->get_user_id(
+  UserBindContainer::UserInfo user_info = user_bind_container->co_get_user_id(
     test_external_id,
     AdServer::Commons::UserId(),
     base_time,
     false,
     Generics::Time::ZERO,
-    false);
+    false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
   {
@@ -436,13 +436,13 @@ int expired_test()
     Generics::Time(String::SubString("2008-01-02"), "%Y-%m-%d"),
     Generics::Time(String::SubString("2008-01-02"), "%Y-%m-%d"));
 
-  user_info = user_bind_container->get_user_id(
+  user_info = user_bind_container->co_get_user_id(
     test_external_id,
     AdServer::Commons::UserId(),
     base_time + Generics::Time::ONE_DAY + 1,
     false,
     Generics::Time::ZERO,
-    false);
+    false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
   {
@@ -484,13 +484,13 @@ mem_usage_test()
   {
     std::ostringstream external_id;
     external_id << "external_id_" << i;
-    user_bind_container->get_user_id(
+    user_bind_container->co_get_user_id(
       external_id.str(),
       AdServer::Commons::UserId(),
       base_date,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (i == j - 1)
     {
@@ -529,13 +529,13 @@ get_get_user_id_test()
   const Generics::Time base_date(Generics::Time::get_time_of_day().get_gm_time().get_date());
   const std::string external_id = "external_id";
 
-  UserBindContainer::UserInfo user_info = user_bind_container->get_user_id(
+  UserBindContainer::UserInfo user_info = user_bind_container->co_get_user_id(
     external_id,
     AdServer::Commons::UserId(),
     base_date,
     false,
     Generics::Time::ZERO,
-    false);
+    false).sync_wait();
 
   if (!check_user_info(expected[0], user_info))
   {
@@ -544,13 +544,13 @@ get_get_user_id_test()
 
   for (size_t i = 1; i < COUNT; ++i)
   {
-    user_info = user_bind_container->get_user_id(
+    user_info = user_bind_container->co_get_user_id(
       external_id,
       AdServer::Commons::UserId(),
       base_date + Generics::Time::ONE_DAY * (i - 1) + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (!check_user_info(expected[i], user_info))
     {
@@ -579,26 +579,26 @@ save_load_users_test()
     UserBindContainer_var user_bind_container =
       get_default_user_bind_container(true);
 
-    UserBindContainer::UserInfo user_info = user_bind_container->get_user_id(
+    UserBindContainer::UserInfo user_info = user_bind_container->co_get_user_id(
       external_id,
       AdServer::Commons::UserId(),
       base_date,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
     {
       return 1;
     }
 
-    user_info = user_bind_container->get_user_id(
+    user_info = user_bind_container->co_get_user_id(
       external_id,
       AdServer::Commons::UserId(),
       base_date + Generics::Time::ONE_DAY + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
     {
@@ -612,26 +612,26 @@ save_load_users_test()
     UserBindContainer_var user_bind_container =
       get_default_user_bind_container(false);
 
-    UserBindContainer::UserInfo user_info = user_bind_container->get_user_id(
+    UserBindContainer::UserInfo user_info = user_bind_container->co_get_user_id(
       external_id,
       AdServer::Commons::UserId(),
       base_date + Generics::Time::ONE_DAY + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
     {
       return 1;
     }
 
-    user_info = user_bind_container->get_user_id(
+    user_info = user_bind_container->co_get_user_id(
       external_id,
       AdServer::Commons::UserId(),
       base_date + Generics::Time::ONE_DAY * 4 + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
     {
@@ -645,13 +645,13 @@ save_load_users_test()
     UserBindContainer_var user_bind_container =
       get_default_user_bind_container(false);
 
-    UserBindContainer::UserInfo user_info = user_bind_container->get_user_id(
+    UserBindContainer::UserInfo user_info = user_bind_container->co_get_user_id(
       external_id,
       AdServer::Commons::UserId(),
       base_date + Generics::Time::ONE_DAY * 4 + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
-      false);
+      false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
     {

@@ -10,6 +10,7 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Logger/Logger.hpp>
 #include <Generics/ActiveObject.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include "UserBindServerCore.hpp"
 
@@ -35,7 +36,8 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::size_t grpc_threads = 128,
+      std::size_t process_threads = 128,
+      std::size_t max_split = 0,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
     Stats stats() const noexcept;
@@ -51,7 +53,9 @@ namespace AdServer::UserInfoSvcs
     struct AtomicStats;
 
     const std::string bind_address_;
+    const std::size_t max_batch_split_;
     const std::shared_ptr<AtomicStats> stats_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<Impl> impl_;
   };
 

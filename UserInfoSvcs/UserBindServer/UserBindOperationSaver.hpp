@@ -29,23 +29,23 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& flush_period,
       UserBindProcessor* next_processor);
 
-    virtual UserInfo
-    add_user_id(
+    AdServer::Commons::Task<UserInfo>
+    co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
       const Generics::Time& now,
       bool resave_if_exists,
-      bool ignore_bad_event)
+      bool ignore_bad_event) override
       /*throw(ChunkNotFound, UserBindProcessor::Exception)*/;
 
-    virtual UserInfo
-    get_user_id(
+    AdServer::Commons::Task<UserInfo>
+    co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,
       const Generics::Time& now,
       bool silent,
       const Generics::Time& create_time,
-      bool for_set_cookie)
+      bool for_set_cookie) override
       /*throw(ChunkNotFound, UserBindProcessor::Exception)*/;
 
     virtual void

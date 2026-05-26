@@ -1,10 +1,189 @@
 #include "GrpcServiceBase.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
 namespace AdServer::Grpc
 {
+
+  GrpcCoroutine::GrpcCoroutine(Handle handle) noexcept
+    : handle_(handle)
+  {}
+
+  GrpcCoroutine::GrpcCoroutine(GrpcCoroutine&& other) noexcept
+    : handle_(std::exchange(other.handle_, {}))
+  {}
+
+  GrpcCoroutine&
+  GrpcCoroutine::operator=(GrpcCoroutine&& other) noexcept
+  {
+    if (this != &other)
+    {
+      if (handle_)
+      {
+        handle_.destroy();
+      }
+      handle_ = std::exchange(other.handle_, {});
+    }
+
+    return *this;
+  }
+
+  GrpcCoroutine::~GrpcCoroutine()
+  {
+    if (handle_)
+    {
+      handle_.destroy();
+    }
+  }
+
+  void
+  GrpcCoroutine::start(Completion completion)
+  {
+    handle_.promise().completion = std::move(completion);
+    handle_.resume();
+  }
+
+  bool
+  GrpcCoroutine::await_ready() const noexcept
+  {
+    return false;
+  }
+
+  void
+  GrpcCoroutine::await_suspend(std::coroutine_handle<> continuation)
+  {
+    start([continuation](std::exception_ptr) mutable {
+      continuation.resume();
+    });
+  }
+
+  void
+  GrpcCoroutine::await_resume()
+  {
+    if (handle_.promise().exception)
+    {
+      std::rethrow_exception(handle_.promise().exception);
+    }
+  }
+
+  GrpcCoroutine
+  GrpcCoroutine::promise_type::get_return_object() noexcept
+  {
+    return GrpcCoroutine(Handle::from_promise(*this));
+  }
+
+  std::suspend_always
+  GrpcCoroutine::promise_type::initial_suspend() const noexcept
+  {
+    return {};
+  }
+
+  bool
+  GrpcCoroutine::promise_type::FinalAwaiter::await_ready() const noexcept
+  {
+    return false;
+  }
+
+  void
+  GrpcCoroutine::promise_type::FinalAwaiter::await_suspend(
+    Handle handle) const noexcept
+  {
+    auto& promise = handle.promise();
+    if (promise.completion)
+    {
+      promise.completion(promise.exception);
+    }
+  }
+
+  void
+  GrpcCoroutine::promise_type::FinalAwaiter::await_resume() const noexcept
+  {}
+
+  GrpcCoroutine::promise_type::FinalAwaiter
+  GrpcCoroutine::promise_type::final_suspend() const noexcept
+  {
+    return {};
+  }
+
+  void
+  GrpcCoroutine::promise_type::return_void() const noexcept
+  {}
+
+  void
+  GrpcCoroutine::promise_type::unhandled_exception() noexcept
+  {
+    exception = std::current_exception();
+  }
+
+  GrpcCoroutineAll::GrpcCoroutineAll(std::vector<GrpcCoroutine> operations)
+    : state_(std::make_shared<State>())
+  {
+    state_->operations = std::move(operations);
+  }
+
+  bool
+  GrpcCoroutineAll::await_ready() const noexcept
+  {
+    return state_->operations.empty();
+  }
+
+  bool
+  GrpcCoroutineAll::await_suspend(std::coroutine_handle<> continuation)
+  {
+    state_->continuation = continuation;
+    state_->remaining = state_->operations.size();
+
+    for (auto& operation : state_->operations)
+    {
+      operation.start([state = state_](std::exception_ptr exception) mutable {
+        bool resume = false;
+        {
+          std::lock_guard<std::mutex> guard(state->lock);
+          if (exception && !state->exception)
+          {
+            state->exception = exception;
+          }
+
+          if (--state->remaining == 0)
+          {
+            resume = state->suspended;
+          }
+        }
+
+        if (resume)
+        {
+          state->continuation.resume();
+        }
+      });
+    }
+
+    std::lock_guard<std::mutex> guard(state_->lock);
+    if (state_->remaining == 0)
+    {
+      return false;
+    }
+
+    state_->suspended = true;
+    return true;
+  }
+
+  void
+  GrpcCoroutineAll::await_resume()
+  {
+    if (state_->exception)
+    {
+      std::rethrow_exception(state_->exception);
+    }
+  }
+
+  GrpcCoroutineAll
+  when_all(std::vector<GrpcCoroutine> operations)
+  {
+    return GrpcCoroutineAll(std::move(operations));
+  }
+
 #ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
   GrpcBatchStreamDebugTimerService&
   GrpcBatchStreamDebugTimerService::instance()
@@ -197,6 +376,177 @@ namespace AdServer::Grpc
         response_item->set_status_message("Unknown batch handler exception");
       }
     }
+  }
+
+
+  GrpcCoroutine
+  GrpcServiceBase::co_handle_batch_request(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    const std::size_t max_split = distributed_batch_max_split();
+    if (max_split <= 1 || batch_request.items_size() <= 1)
+    {
+      co_await co_handle_batch_request_sequential_(
+        batch_request,
+        batch_response);
+      co_return;
+    }
+
+    co_await co_handle_batch_request_distributed_(
+      batch_request,
+      batch_response,
+      max_split);
+    co_return;
+  }
+
+  std::size_t
+  GrpcServiceBase::distributed_batch_max_split() const noexcept
+  {
+    return 1;
+  }
+
+  GrpcCoroutine
+  GrpcServiceBase::co_handle_batch_request_sequential_(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    for (int i = 0; i < batch_request.items_size(); ++i)
+    {
+      const auto& request_item = batch_request.items(i);
+      auto* response_item = batch_response.add_items();
+      co_await co_handle_batch_item_(request_item, *response_item);
+    }
+
+    co_return;
+  }
+
+  GrpcCoroutine
+  GrpcServiceBase::co_handle_batch_request_distributed_(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response,
+    const std::size_t max_split) const
+  {
+    const std::size_t batch_size =
+      static_cast<std::size_t>(batch_request.items_size());
+    const std::size_t split = std::min(max_split, batch_size);
+
+    std::vector<std::vector<int>> lanes(split);
+    for (int i = 0; i < batch_request.items_size(); ++i)
+    {
+      const auto& item = batch_request.items(i);
+      lanes[batch_item_hash_(item) % split].emplace_back(i);
+    }
+
+    std::vector<adserver::grpc::BatchResponseItem> item_responses(batch_size);
+    std::vector<GrpcCoroutine> operations;
+    operations.reserve(split);
+    for (auto& lane : lanes)
+    {
+      if (lane.empty())
+      {
+        continue;
+      }
+
+      operations.emplace_back(co_handle_batch_lane_(
+        batch_request,
+        item_responses,
+        std::move(lane)));
+    }
+
+    co_await when_all(std::move(operations));
+
+    for (auto& item_response : item_responses)
+    {
+      *batch_response.add_items() = std::move(item_response);
+    }
+
+    co_return;
+  }
+
+  GrpcCoroutine
+  GrpcServiceBase::co_handle_batch_lane_(
+    const adserver::grpc::BatchRequest& batch_request,
+    std::vector<adserver::grpc::BatchResponseItem>& item_responses,
+    std::vector<int> indexes) const
+  {
+    for (const int index : indexes)
+    {
+      co_await co_handle_batch_item_(
+        batch_request.items(index),
+        item_responses[static_cast<std::size_t>(index)]);
+    }
+
+    co_return;
+  }
+
+  GrpcCoroutine
+  GrpcServiceBase::co_handle_batch_item_(
+    const adserver::grpc::BatchRequestItem& request_item,
+    adserver::grpc::BatchResponseItem& response_item) const
+  {
+    response_item.set_request_id(request_item.request_id());
+
+    const auto coro_it = batch_coro_methods_.find(request_item.full_method());
+    if (coro_it != batch_coro_methods_.end())
+    {
+      try
+      {
+        co_await coro_it->second.dispatch(request_item, response_item);
+      }
+      catch (const std::exception& ex)
+      {
+        response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+        response_item.set_status_message(ex.what());
+      }
+      catch (...)
+      {
+        response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+        response_item.set_status_message("Unknown batch handler exception");
+      }
+
+      co_return;
+    }
+
+    const auto sync_it = batch_methods_.find(request_item.full_method());
+    if (sync_it == batch_methods_.end())
+    {
+      response_item.set_status_code(::grpc::StatusCode::UNIMPLEMENTED);
+      response_item.set_status_message("Unknown method");
+      co_return;
+    }
+
+    try
+    {
+      sync_it->second(request_item, response_item);
+    }
+    catch (const std::exception& ex)
+    {
+      response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+      response_item.set_status_message(ex.what());
+    }
+    catch (...)
+    {
+      response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+      response_item.set_status_message("Unknown batch handler exception");
+    }
+
+    co_return;
+  }
+
+  std::size_t
+  GrpcServiceBase::batch_item_hash_(
+    const adserver::grpc::BatchRequestItem& request_item) const
+  {
+    const auto coro_it = batch_coro_methods_.find(request_item.full_method());
+    if (coro_it != batch_coro_methods_.end() &&
+      coro_it->second.distributed &&
+      coro_it->second.hash)
+    {
+      return coro_it->second.hash(request_item);
+    }
+
+    return static_cast<std::size_t>(request_item.request_id());
   }
 
   AdServer::Commons::ActivityGate::Guard
