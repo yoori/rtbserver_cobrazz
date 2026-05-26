@@ -71,12 +71,14 @@ namespace AdServer::ChannelSvcs
     ChannelControllerImpl* controller,
     Logging::Logger* logger,
     std::string_view bind_address,
-    unsigned int bind_port)
+    unsigned int bind_port,
+    std::size_t grpc_threads)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       impl_(std::make_shared<Impl>(
         logger,
         channel_controller_grpc_aspect,
         bind_address_,
+        grpc_threads,
         std::make_unique<ServiceImpl>(controller)))
   {
     add_child_object(impl_);

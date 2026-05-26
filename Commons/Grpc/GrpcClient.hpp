@@ -235,6 +235,26 @@ namespace AdServer::Grpc
     }
   }
 
+  inline std::string
+  message_with_endpoint(
+    std::string message,
+    const std::string& endpoint)
+  {
+    if (endpoint.empty() || message.find("[grpc_endpoint=") != std::string::npos)
+    {
+      return message;
+    }
+
+    if (!message.empty())
+    {
+      message += ' ';
+    }
+    message += "[grpc_endpoint=";
+    message += endpoint;
+    message += "]";
+    return message;
+  }
+
   inline grpc::Status
   status_with_endpoint(
     const grpc::Status& status,
@@ -245,17 +265,9 @@ namespace AdServer::Grpc
       return status;
     }
 
-    std::string message = status.error_message();
-    if (!message.empty())
-    {
-      message += ' ';
-    }
-    message += "[grpc_endpoint=";
-    message += endpoint;
-    message += "]";
     return grpc::Status(
       status.error_code(),
-      std::move(message),
+      message_with_endpoint(status.error_message(), endpoint),
       status.error_details());
   }
 

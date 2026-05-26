@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -34,6 +35,7 @@ namespace AdServer::Grpc
       Logging::Logger* logger,
       std::string_view aspect,
       std::string_view bind_address,
+      std::size_t threads,
       std::unique_ptr<ServiceImplType> service);
 
   private:
@@ -49,6 +51,7 @@ namespace AdServer::Grpc
     Logging::Logger_var logger_;
     const std::string aspect_;
     const std::string bind_address_;
+    const std::size_t threads_;
     std::unique_ptr<ServiceImplType> service_;
     std::unique_ptr<::grpc::Server> server_;
     std::vector<std::unique_ptr<::grpc::ServerCompletionQueue>> completion_queues_;
@@ -61,10 +64,12 @@ namespace AdServer::Grpc
     Logging::Logger* logger,
     std::string_view aspect,
     std::string_view bind_address,
+    std::size_t threads,
     std::unique_ptr<ServiceImplType> service)
     : logger_(ReferenceCounting::add_ref(logger)),
       aspect_(aspect),
       bind_address_(bind_address),
+      threads_(std::max<std::size_t>(1, threads)),
       service_(std::move(service))
   {}
 
@@ -77,7 +82,7 @@ namespace AdServer::Grpc
     builder.AddListeningPort(bind_address_, ::grpc::InsecureServerCredentials());
     service_->register_services(builder);
 
-    const auto completion_queues_count = service_->completion_queues_count();
+    const auto completion_queues_count = threads_;
     completion_queues_.reserve(completion_queues_count);
     for (std::size_t i = 0; i < completion_queues_count; ++i)
     {
@@ -119,7 +124,8 @@ namespace AdServer::Grpc
     if (logger_)
     {
       logger_->sstream(Logging::Logger::NOTICE, aspect_.c_str()) <<
-        "gRPC endpoint started at " << bind_address_;
+        "gRPC endpoint started at " << bind_address_ <<
+        ", threads = " << threads_;
     }
   }
 

@@ -800,13 +800,15 @@ namespace AdServer::UserInfoSvcs
     UserInfoManagerCorePtr user_info_manager,
     Logging::Logger* logger,
     std::string_view bind_address,
-    unsigned int bind_port)
+    unsigned int bind_port,
+    std::size_t grpc_threads)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_counters_(std::make_shared<StatsCounters>()),
       impl_(std::make_shared<Impl>(
         logger,
         user_info_manager_grpc_aspect,
         bind_address_,
+        grpc_threads,
         std::make_unique<ServiceImpl>(
           std::move(user_info_manager),
           stats_counters_)))

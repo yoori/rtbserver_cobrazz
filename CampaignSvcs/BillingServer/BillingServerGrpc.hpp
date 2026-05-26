@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <cstddef>
 #include <string>
 #include <string_view>
 
@@ -26,7 +27,8 @@ namespace AdServer::CampaignSvcs
       BillingServerCore* core,
       Logging::Logger* logger,
       std::string_view bind_address,
-      unsigned int bind_port);
+      unsigned int bind_port,
+      std::size_t grpc_threads);
 
   protected:
     class ServiceImpl;

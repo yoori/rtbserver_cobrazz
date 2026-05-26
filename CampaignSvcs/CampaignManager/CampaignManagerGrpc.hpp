@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -54,7 +55,8 @@ namespace AdServer::CampaignSvcs
       CampaignManagerCore* core,
       Logging::Logger* logger,
       std::string_view bind_address,
-      unsigned int bind_port);
+      unsigned int bind_port,
+      std::size_t grpc_threads);
 
     Stats stats() const noexcept;
 

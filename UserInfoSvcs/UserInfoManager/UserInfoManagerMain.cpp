@@ -132,7 +132,8 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           *(config().GrpcConfig()->Endpoint().host()) != "*" ?
           *config().GrpcConfig()->Endpoint().host() :
           "0.0.0.0",
-        config().GrpcConfig()->Endpoint().port());
+        config().GrpcConfig()->Endpoint().port(),
+        config().GrpcConfig()->threads());
       add_child_object(grpc_adapter_);
     }
 

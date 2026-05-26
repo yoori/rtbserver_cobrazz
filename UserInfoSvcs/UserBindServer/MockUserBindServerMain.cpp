@@ -87,6 +87,7 @@ main(int argc, char** argv)
 	        nullptr,
 	        endpoint.host,
 	        endpoint.port,
+	        128,
 	        response_sleep_ms);
     server->activate_object();
 

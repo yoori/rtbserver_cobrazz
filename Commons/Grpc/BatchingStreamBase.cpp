@@ -722,7 +722,9 @@ namespace AdServer::Grpc
               std::to_string(options_.max_queue_wait->microseconds());
         BatchResponseItem item;
         item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
-        item.set_status_message(status_message);
+        item.set_status_message(message_with_endpoint(
+          status_message,
+          endpoint_));
         request.request->complete(item);
       }
     }
@@ -1113,11 +1115,14 @@ namespace AdServer::Grpc
     grpc::StatusCode status_code,
     const char* status_message)
   {
+    const auto message = message_with_endpoint(
+      status_message ? status_message : "",
+      endpoint_);
     for (auto& request : requests)
     {
       BatchResponseItem item;
       item.set_status_code(status_code);
-      item.set_status_message(status_message);
+      item.set_status_message(message);
       if (request.request)
       {
         request.request->complete(item);

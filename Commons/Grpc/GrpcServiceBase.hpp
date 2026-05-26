@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
@@ -10,7 +9,6 @@
 #include <mutex>
 #include <optional>
 #include <string>
-#include <thread>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -107,11 +105,6 @@ namespace AdServer::Grpc
       {
         builder.RegisterService(service);
       }
-    }
-
-    virtual std::size_t completion_queues_count() const noexcept
-    {
-      return std::max<std::size_t>(1, std::thread::hardware_concurrency());
     }
 
     void start(const CompletionQueues& completion_queues)

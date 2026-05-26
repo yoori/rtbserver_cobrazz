@@ -47,13 +47,17 @@ namespace AdServer::Grpc
     void finish_batch_with_error(
       BatchingQueue::Batch& batch,
       grpc::StatusCode status_code,
-      const char* status_message)
+      const char* status_message,
+      const std::string& endpoint)
     {
+      const auto message = message_with_endpoint(
+        status_message ? status_message : "",
+        endpoint);
       for (auto& request : batch)
       {
         adserver::grpc::BatchResponseItem item;
         item.set_status_code(status_code);
-        item.set_status_message(status_message);
+        item.set_status_message(message);
         if (request.request)
         {
           request.request->complete(item);
@@ -65,11 +69,12 @@ namespace AdServer::Grpc
     void finish_batches_with_error(
       std::vector<BatchingQueue::Batch>& batches,
       grpc::StatusCode status_code,
-      const char* status_message)
+      const char* status_message,
+      const std::string& endpoint)
     {
       for (auto& batch : batches)
       {
-        finish_batch_with_error(batch, status_code, status_message);
+        finish_batch_with_error(batch, status_code, status_message, endpoint);
       }
       batches.clear();
     }
@@ -306,7 +311,8 @@ namespace AdServer::Grpc
     finish_batches_with_error(
       detached_batches,
       grpc::StatusCode::UNAVAILABLE,
-      "inactive");
+      "inactive",
+      endpoint_);
     std::vector<BatchingStreamBase::PendingBatch> pending_batches;
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
@@ -323,12 +329,14 @@ namespace AdServer::Grpc
     finish_batches_with_error(
       pending_batches,
       grpc::StatusCode::UNAVAILABLE,
-      "inactive");
+      "inactive",
+      endpoint_);
     auto batches = batching_queue_->drain_all();
     finish_batches_with_error(
       batches,
       grpc::StatusCode::UNAVAILABLE,
-      "inactive");
+      "inactive",
+      endpoint_);
     clear_streams_();
     timing_coalesce_gate_.reset();
     stream_shrink_gate_.reset();
@@ -380,7 +388,9 @@ namespace AdServer::Grpc
       {
         adserver::grpc::BatchResponseItem item;
         item.set_status_code(NO_ACTIVE_BATCHING_STREAMS_STATUS.error_code());
-        item.set_status_message(NO_ACTIVE_BATCHING_STREAMS_SUBMISSION_CLOSED);
+        item.set_status_message(message_with_endpoint(
+          NO_ACTIVE_BATCHING_STREAMS_SUBMISSION_CLOSED,
+          endpoint_));
         callback(item);
       }
       return;
@@ -491,7 +501,8 @@ namespace AdServer::Grpc
       finish_batch_with_error(
         batch,
         grpc::StatusCode::UNAVAILABLE,
-        no_active_streams_context);
+        no_active_streams_context,
+        endpoint_);
       return;
     }
 
@@ -500,7 +511,8 @@ namespace AdServer::Grpc
       finish_batches_with_error(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
-        NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY);
+        NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY,
+        endpoint_);
     }
 
     if (stream_holder)
@@ -533,7 +545,8 @@ namespace AdServer::Grpc
         finish_batch_with_error(
           batch,
           grpc::StatusCode::RESOURCE_EXHAUSTED,
-          "inflight limit reached");
+          "inflight limit reached",
+          endpoint_);
         return false;
       }
     }
@@ -656,7 +669,8 @@ namespace AdServer::Grpc
       finish_batches_with_error(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
-        NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION);
+        NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION,
+        endpoint_);
     }
     catch (...)
     {
@@ -691,7 +705,8 @@ namespace AdServer::Grpc
       finish_batches_with_error(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
-        NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION);
+        NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION,
+        endpoint_);
     }
   }
 
@@ -730,7 +745,8 @@ namespace AdServer::Grpc
     finish_batches_with_error(
       failed_batches,
       grpc::StatusCode::UNAVAILABLE,
-      NO_ACTIVE_BATCHING_STREAMS_RELEASE_OR_DISPATCH);
+      NO_ACTIVE_BATCHING_STREAMS_RELEASE_OR_DISPATCH,
+      endpoint_);
 
     if (!batch.empty())
     {
@@ -781,7 +797,8 @@ namespace AdServer::Grpc
       finish_batch_with_error(
         failed_batch,
         grpc::StatusCode::UNAVAILABLE,
-        "stream write failed");
+        "stream write failed",
+        endpoint_);
     }
 
     try
@@ -1098,7 +1115,8 @@ namespace AdServer::Grpc
     finish_batches_with_error(
       failed_batches,
       grpc::StatusCode::UNAVAILABLE,
-      NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY);
+      NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY,
+      endpoint_);
     if (start_connect)
     {
       start_connect_();

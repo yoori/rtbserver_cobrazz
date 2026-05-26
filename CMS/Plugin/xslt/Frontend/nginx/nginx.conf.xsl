@@ -185,6 +185,7 @@ http {
 
     fastcgi_keep_conn on;
     fastcgi_ignore_client_abort on;
+    fastcgi_next_upstream off;
 
     upstream fastcgi_rtbbackend {
       <xsl:variable name="rtbbackend_socket_arr">
@@ -529,7 +530,8 @@ http {
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }
      
-      error_page   500 502 503 504  /50x.html;
+      error_page   502 = @return_204;
+      error_page   500 503 504  /50x.html;
       location = /50x.html {
         root   /usr/share/nginx/html;
       }
@@ -727,7 +729,8 @@ http {
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }
 
-      error_page   500 502 503 504  /50x.html;
+      error_page   502 = @return_204;
+      error_page   500 503 504  /50x.html;
       location = /50x.html {
         root   /usr/share/nginx/html;
       }

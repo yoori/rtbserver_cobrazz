@@ -184,7 +184,8 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           *(campaign_manager_config_->GrpcConfig()->Endpoint().host()) != "*" ?
           *campaign_manager_config_->GrpcConfig()->Endpoint().host() :
           "0.0.0.0",
-        campaign_manager_config_->GrpcConfig()->Endpoint().port());
+        campaign_manager_config_->GrpcConfig()->Endpoint().port(),
+        campaign_manager_config_->GrpcConfig()->threads());
       active_objects->add_child_object(non_owning_active_object(
         grpc_adapter_.in()));
     }

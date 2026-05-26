@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -36,7 +37,8 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerCorePtr user_info_manager,
       Logging::Logger* logger,
       std::string_view bind_address,
-      unsigned int bind_port);
+      unsigned int bind_port,
+      std::size_t grpc_threads);
 
     Stats stats() const noexcept;
 

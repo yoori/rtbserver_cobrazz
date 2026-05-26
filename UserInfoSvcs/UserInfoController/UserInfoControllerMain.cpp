@@ -122,7 +122,8 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
         *config().GrpcConfig().Endpoint().host() != "*" ?
         *config().GrpcConfig().Endpoint().host() :
         "0.0.0.0",
-      config().GrpcConfig().Endpoint().port());
+      config().GrpcConfig().Endpoint().port(),
+      config().GrpcConfig().threads());
 
     controller_->activate_object();
     grpc_adapter_->activate_object();

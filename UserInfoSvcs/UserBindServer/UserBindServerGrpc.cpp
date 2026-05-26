@@ -461,6 +461,7 @@ namespace AdServer::UserInfoSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
+    std::size_t grpc_threads,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
@@ -468,6 +469,7 @@ namespace AdServer::UserInfoSvcs
         logger,
         user_bind_server_grpc_aspect,
         bind_address_,
+        grpc_threads,
         std::make_unique<ServiceImpl>(
           core,
           stats_,
