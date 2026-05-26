@@ -214,11 +214,150 @@ namespace AdServer::Bidding
       std::replace(value.begin(), value.end(), '\n', ' ');
       return value;
     }
+
+    const std::string&
+    stage_error_source_to_string_(const StageResult::Error::Source source)
+      noexcept
+    {
+      static const std::string grpc = "grpc";
+      static const std::string exception = "exception";
+      static const std::string unknown = "unknown";
+
+      switch(source)
+      {
+      case StageResult::Error::Source::Grpc:
+        return grpc;
+      case StageResult::Error::Source::Exception:
+        return exception;
+      }
+
+      return unknown;
+    }
+
+    std::string
+    extract_grpc_endpoint_(const std::string& message)
+    {
+      static const std::string marker = "[grpc_endpoint=";
+
+      const auto begin = message.rfind(marker);
+      if(begin == std::string::npos)
+      {
+        return {};
+      }
+
+      const auto endpoint_begin = begin + marker.size();
+      const auto endpoint_end = message.find(']', endpoint_begin);
+      if(endpoint_end == std::string::npos)
+      {
+        return {};
+      }
+
+      return message.substr(endpoint_begin, endpoint_end - endpoint_begin);
+    }
+
+    void
+    print_stage_server_id_(
+      std::ostream& out,
+      const char* name,
+      const StageResult* stage,
+      const char* sep)
+    {
+      if(stage && !stage->server_id.empty())
+      {
+        out << name << "_server_id = " << stage->server_id << sep;
+      }
+    }
+
+    void
+    print_stage_time_(
+      std::ostream& out,
+      const char* name,
+      const std::optional<StageResult>& stage,
+      const char* sep)
+    {
+      out << name << "_started_at = ";
+      if(!stage)
+      {
+        out << "not started" << sep <<
+          name << "_time = not started" << sep;
+        return;
+      }
+
+      out << stage->started_at.float_str() << sep <<
+        name << "_time = ";
+      if(stage->finished_at)
+      {
+        out << (*stage->finished_at - stage->started_at).float_str();
+      }
+      else
+      {
+        out << "incomplete";
+      }
+
+      if(stage->local_time)
+      {
+        out << " : " << stage->local_time->float_str();
+      }
+
+      if(stage->error)
+      {
+        out << " => error";
+      }
+      out << sep;
+
+      if(stage->error)
+      {
+        out << name << "_error_source = " <<
+          stage_error_source_to_string_(stage->error->source) << sep <<
+          name << "_error_code = " << stage->error->code << sep;
+        if(!stage->error->endpoint.empty())
+        {
+          out << name << "_error_endpoint = " <<
+            stage->error->endpoint << sep;
+        }
+        out <<
+          name << "_error_message = " <<
+            normalize_debug_field_(stage->error->message) << sep;
+      }
+    }
   }
 
   DebugSink::DebugSink(std::string server_id)
     : server_id_(std::move(server_id))
   {}
+
+  void
+  StageResult::finish(const Generics::Time& request_started_at)
+  {
+    finished_at = Generics::Time::get_time_of_day() - request_started_at;
+  }
+
+  void
+  StageResult::set_grpc_error(
+    const grpc::Status& status,
+    std::string endpoint)
+  {
+    if(endpoint.empty())
+    {
+      endpoint = extract_grpc_endpoint_(status.error_message());
+    }
+
+    error = Error{
+      Error::Source::Grpc,
+      static_cast<int>(status.error_code()),
+      status.error_message(),
+      std::move(endpoint)};
+  }
+
+  void
+  StageResult::set_exception_error(const eh::Exception& ex)
+  {
+    error = Error{
+      Error::Source::Exception,
+      0,
+      ex.what(),
+      std::string()};
+  }
 
   void
   DebugSink::set(const String::SubString& require_debug_info) noexcept
@@ -335,7 +474,8 @@ namespace AdServer::Bidding
 
   void
   DebugSink::print_user_resolving_debug_info(
-    const UserResolvingDebugInfo& user_resolving_debug_info) noexcept
+    const UserResolvingDebugInfo& user_resolving_debug_info,
+    const StageResult* stage) noexcept
   {
     if(!require_debug_info())
     {
@@ -350,6 +490,12 @@ namespace AdServer::Bidding
     {
       debug_info_str_ << Debug::USER_RESOLVING_HEAD << sep_;
     }
+
+    print_stage_server_id_(
+      debug_info_str_,
+      "user_resolving",
+      stage,
+      sep_);
 
     debug_info_str_ << "user_id = ";
     if(user_resolving_debug_info.response_present)
@@ -391,7 +537,8 @@ namespace AdServer::Bidding
   void
   DebugSink::print_creative_selection_debug_info(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
-      campaign_match_result) noexcept
+      campaign_match_result,
+    const StageResult* stage) noexcept
   {
     if(!require_debug_info())
     {
@@ -412,13 +559,13 @@ namespace AdServer::Bidding
       if(ad_slot_result.selected_creatives.size() > 0)
       {
         ad_selected = true;
-        print_creative_selection_debug_info_(ad_slot_result);
+        print_creative_selection_debug_info_(ad_slot_result, stage);
       }
     }
 
     if(!ad_selected)
     {
-      print_empty_creative_selection_debug_info_();
+      print_empty_creative_selection_debug_info_(stage);
     }
 
     if(expected_debug_info)
@@ -430,7 +577,8 @@ namespace AdServer::Bidding
   void
   DebugSink::print_channel_matching_debug_info(
     const adserver::channel_svcs::channel_server::MatchResponse&
-      response) noexcept
+      response,
+    const StageResult* stage) noexcept
   {
     if(!require_debug_info())
     {
@@ -445,6 +593,12 @@ namespace AdServer::Bidding
     {
       debug_info_str_ << Debug::CHANNEL_MATCHING_HEAD << sep_;
     }
+
+    print_stage_server_id_(
+      debug_info_str_,
+      "trigger_match",
+      stage,
+      sep_);
 
     ChannelIdSet ids;
     const auto& match_result = response.matched_channels();
@@ -522,7 +676,8 @@ namespace AdServer::Bidding
   void
   DebugSink::print_history_matching_debug_info(
     const adserver::user_info_svcs::user_info_manager::MatchResult&
-      match_result) noexcept
+      match_result,
+    const StageResult* stage) noexcept
   {
     if(!require_debug_info())
     {
@@ -537,6 +692,12 @@ namespace AdServer::Bidding
     {
       debug_info_str_ << Debug::HISTORY_MATCHING_HEAD << sep_;
     }
+
+    print_stage_server_id_(
+      debug_info_str_,
+      "history_match",
+      stage,
+      sep_);
 
     debug_info_str_ << "last_request_time = ";
     try
@@ -588,35 +749,27 @@ namespace AdServer::Bidding
 
     debug_info_str_ <<
       "total_time = " <<
-        time_metering.total_time.float_str() << sep_ <<
-      "user_resolving_started_at = " <<
-        time_metering.user_resolving_started_at.float_str() << sep_ <<
-      "user_resolving_time = " <<
-        time_metering.user_resolving_time.float_str() << sep_ <<
-      "trigger_match_started_at = " <<
-        time_metering.trigger_match_started_at.float_str() << sep_ <<
-      "trigger_match_time = " <<
-        time_metering.trigger_match_time.float_str() << sep_ <<
-      "history_match_started_at = " <<
-        time_metering.history_match_started_at.float_str() << sep_ <<
-      "history_match_time = " <<
-        time_metering.history_match_time.float_str() << " : " <<
-        time_metering.history_match_local_time.float_str();
-    if(time_metering.history_match_error)
-    {
-      debug_info_str_ << " => error";
-    }
-    debug_info_str_ << sep_ <<
-      "creative_selection_started_at = " <<
-        time_metering.creative_selection_started_at.float_str() << sep_ <<
-      "creative_selection_time = " <<
-        time_metering.creative_selection_time.float_str() << " : " <<
-        time_metering.creative_selection_local_time.float_str();
-    if(time_metering.creative_selection_error)
-    {
-      debug_info_str_ << " => error";
-    }
-    debug_info_str_ << sep_;
+        time_metering.total_time.float_str() << sep_;
+    print_stage_time_(
+      debug_info_str_,
+      "user_resolving",
+      time_metering.user_resolving,
+      sep_);
+    print_stage_time_(
+      debug_info_str_,
+      "trigger_match",
+      time_metering.trigger_match,
+      sep_);
+    print_stage_time_(
+      debug_info_str_,
+      "history_match",
+      time_metering.history_match,
+      sep_);
+    print_stage_time_(
+      debug_info_str_,
+      "creative_selection",
+      time_metering.creative_selection,
+      sep_);
   }
 
   void
@@ -760,12 +913,19 @@ namespace AdServer::Bidding
   }
 
   void
-  DebugSink::print_empty_creative_selection_debug_info_() noexcept
+  DebugSink::print_empty_creative_selection_debug_info_(
+    const StageResult* stage) noexcept
   {
     if(require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
     }
+
+    print_stage_server_id_(
+      debug_info_str_,
+      "creative_selection",
+      stage,
+      sep_);
 
     debug_info_str_ <<
       "ccid = 0" << sep_ <<
@@ -792,7 +952,8 @@ namespace AdServer::Bidding
   void
   DebugSink::print_creative_selection_debug_info_(
     const AdServer::Bidding::CampaignManager::AdSlotResult&
-      ad_slot_result) noexcept
+      ad_slot_result,
+    const StageResult* stage) noexcept
   {
     const auto& selected_creatives = ad_slot_result.selected_creatives;
     const auto& debug_info = ad_slot_result.debug_info;
@@ -802,6 +963,12 @@ namespace AdServer::Bidding
     {
       debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
     }
+
+    print_stage_server_id_(
+      debug_info_str_,
+      "creative_selection",
+      stage,
+      sep_);
 
     unsigned long first_ccid = 0;
     unsigned long first_cmp_id = 0;

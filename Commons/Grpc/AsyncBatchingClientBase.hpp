@@ -81,7 +81,8 @@ namespace AdServer::Grpc
     StreamHolderPtr make_stream_();
     void process_batch_(
       BatchingStreamBase::PendingBatch&& batch,
-      const Generics::Time& now) noexcept;
+      const Generics::Time& now,
+      const char* no_active_streams_context) noexcept;
     bool acquire_batch_inflight_(
       BatchingStreamBase::PendingBatch& batch,
       bool allow_limit_error) noexcept;

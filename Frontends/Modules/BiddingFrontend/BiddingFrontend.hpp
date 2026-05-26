@@ -207,18 +207,16 @@ namespace AdServer::Bidding
 
     void
     select_campaign_(
-      AdServer::Bidding::CampaignManager::RequestCreativeResult&
-        campaign_match_result,
       const adserver::user_info_svcs::user_info_manager::MatchResponse*
         history_match_result,
-      const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
+      const adserver::channel_svcs::channel_server::MatchResponse*
+        trigger_match_result,
       const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
         ccg_keywords,
       const RequestInfo& request_info,
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Commons::UserId& user_id,
       bool passback,
-      std::string& hostname,
       bool interrupted)
       noexcept;
 

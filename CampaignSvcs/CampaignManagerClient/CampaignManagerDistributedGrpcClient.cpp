@@ -341,7 +341,11 @@ namespace AdServer::CampaignSvcs
               status_description(status));
           }
         }
-        callback(status, response);
+        callback(
+          AdServer::Grpc::status_with_endpoint(
+            status,
+            ref->endpoint),
+          response);
       });
   }
 

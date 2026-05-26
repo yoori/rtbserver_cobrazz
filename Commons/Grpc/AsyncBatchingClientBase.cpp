@@ -20,6 +20,19 @@ namespace AdServer::Grpc
 
   namespace
   {
+    const char NO_ACTIVE_BATCHING_STREAMS_FORCED_SEND[] =
+      "no active batching streams (forced send)";
+    const char NO_ACTIVE_BATCHING_STREAMS_TIMED_SEND[] =
+      "no active batching streams (timed send)";
+    const char NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY[] =
+      "no active batching streams (after connect trying)";
+    const char NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION[] =
+      "no active batching streams (connect exception)";
+    const char NO_ACTIVE_BATCHING_STREAMS_RELEASE_OR_DISPATCH[] =
+      "no active batching streams (release or dispatch)";
+    const char NO_ACTIVE_BATCHING_STREAMS_SUBMISSION_CLOSED[] =
+      "no active batching streams (submission closed)";
+
     std::uint64_t batch_items_count(
       const std::deque<BatchingStreamBase::PendingBatch>& batches) noexcept
     {
@@ -367,7 +380,7 @@ namespace AdServer::Grpc
       {
         adserver::grpc::BatchResponseItem item;
         item.set_status_code(NO_ACTIVE_BATCHING_STREAMS_STATUS.error_code());
-        item.set_status_message(NO_ACTIVE_BATCHING_STREAMS_STATUS.error_message());
+        item.set_status_message(NO_ACTIVE_BATCHING_STREAMS_SUBMISSION_CLOSED);
         callback(item);
       }
       return;
@@ -397,7 +410,10 @@ namespace AdServer::Grpc
             enqueue_result.ready_batch,
             options_.error_on_inflight_reaching))
       {
-        process_batch_(std::move(enqueue_result.ready_batch), now);
+        process_batch_(
+          std::move(enqueue_result.ready_batch),
+          now,
+          NO_ACTIVE_BATCHING_STREAMS_FORCED_SEND);
       }
     }
   }
@@ -433,7 +449,8 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::process_batch_(
     BatchingStreamBase::PendingBatch&& batch,
-    const Generics::Time& now) noexcept
+    const Generics::Time& now,
+    const char* no_active_streams_context) noexcept
   {
     assert(!batch.empty());
 
@@ -474,7 +491,7 @@ namespace AdServer::Grpc
       finish_batch_with_error(
         batch,
         grpc::StatusCode::UNAVAILABLE,
-        "no active batching streams");
+        no_active_streams_context);
       return;
     }
 
@@ -483,7 +500,7 @@ namespace AdServer::Grpc
       finish_batches_with_error(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
-        "no active batching streams");
+        NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY);
     }
 
     if (stream_holder)
@@ -639,7 +656,7 @@ namespace AdServer::Grpc
       finish_batches_with_error(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
-        "no active batching streams");
+        NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION);
     }
     catch (...)
     {
@@ -674,7 +691,7 @@ namespace AdServer::Grpc
       finish_batches_with_error(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
-        "no active batching streams");
+        NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION);
     }
   }
 
@@ -713,7 +730,7 @@ namespace AdServer::Grpc
     finish_batches_with_error(
       failed_batches,
       grpc::StatusCode::UNAVAILABLE,
-      "no active batching streams");
+      NO_ACTIVE_BATCHING_STREAMS_RELEASE_OR_DISPATCH);
 
     if (!batch.empty())
     {
@@ -983,7 +1000,10 @@ namespace AdServer::Grpc
       return true;
     }
 
-    process_batch_(std::move(pending_batch), now);
+    process_batch_(
+      std::move(pending_batch),
+      now,
+      NO_ACTIVE_BATCHING_STREAMS_TIMED_SEND);
     return true;
   }
 
@@ -1078,7 +1098,7 @@ namespace AdServer::Grpc
     finish_batches_with_error(
       failed_batches,
       grpc::StatusCode::UNAVAILABLE,
-      "no active batching streams");
+      NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY);
     if (start_connect)
     {
       start_connect_();

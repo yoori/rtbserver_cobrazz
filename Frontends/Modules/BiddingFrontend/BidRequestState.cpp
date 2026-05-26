@@ -117,7 +117,10 @@ namespace AdServer::Bidding
       }
     }
 
-    debug_sink_.print_creative_selection_debug_info(campaign_match_result);
+    debug_sink_.print_creative_selection_debug_info(
+      campaign_match_result,
+      request_time_metering_.creative_selection ?
+        &*request_time_metering_.creative_selection : nullptr);
     request_time_metering_.total_time =
       Generics::Time::get_time_of_day() - start_processing_time_;
     debug_sink_.print_time_metering_debug_info(request_time_metering_);

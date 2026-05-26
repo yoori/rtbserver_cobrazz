@@ -308,7 +308,11 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, response);
+        callback(
+          AdServer::Grpc::status_with_endpoint(
+            status,
+            ref->name()),
+          response);
       });
   }
 
@@ -357,7 +361,11 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, response);
+        callback(
+          AdServer::Grpc::status_with_endpoint(
+            status,
+            ref->name()),
+          response);
       });
   }
 

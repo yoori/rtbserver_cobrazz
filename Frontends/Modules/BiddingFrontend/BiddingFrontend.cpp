@@ -40,6 +40,7 @@
 #include "ClickStarBidRequestState.hpp"
 #include "AdJsonBidRequestState.hpp"
 #include "DAOBidRequestState.hpp"
+#include "GrpcClientMetricsProvider.hpp"
 #include "RequestMetricsProvider.hpp"
 #include "Utils.hpp"
 
@@ -69,127 +70,6 @@ namespace AdServer::Bidding
     namespace PB = adserver::campaign_svcs::campaign_manager;
 
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
-
-    class GrpcClientMetricsProvider final : public Generics::MetricsProvider
-    {
-    public:
-      struct ClientSource
-      {
-        std::string prefix;
-        std::weak_ptr<AdServer::Grpc::Client> client;
-      };
-
-      explicit GrpcClientMetricsProvider(std::vector<ClientSource> clients)
-        : clients_(std::move(clients))
-      {}
-
-      MetricArray get_values() override
-      {
-        MetricArray result;
-        for (const auto& source : clients_)
-        {
-          if (auto client = source.client.lock())
-          {
-            add_client_stats_(result, source.prefix, client->stats());
-          }
-        }
-        return result;
-      }
-
-      void add_value(std::string_view, double) override {}
-      void add_value(std::string_view, long) override {}
-      void add_value(std::string_view, const std::string&) override {}
-      void add_value_prometheus(
-        const std::string&,
-        const std::map<std::string, std::string>&,
-        double) override
-      {}
-      void set_value_prometheus(
-        const std::string&,
-        const std::map<std::string, std::string>&,
-        double) override
-      {}
-
-    private:
-      static void add_counter_(
-        MetricArray& result,
-        const std::string& prefix,
-        const char* name,
-        std::uint64_t value)
-      {
-        result.emplace_back(
-          prefix + "_" + name,
-          static_cast<long>(value));
-      }
-
-      static void add_client_stats_(
-        MetricArray& result,
-        const std::string& prefix,
-        const AdServer::Grpc::Stats& stats)
-      {
-        add_counter_(result, prefix, "input_items", stats.input_items);
-        add_counter_(result, prefix, "completed_items", stats.completed_items);
-        add_counter_(
-          result,
-          prefix,
-          "completed_error_items",
-          stats.completed_error_items);
-        add_counter_(
-          result,
-          prefix,
-          "outstanding_items",
-          stats.input_items > stats.completed_items ?
-            stats.input_items - stats.completed_items :
-            0);
-        add_counter_(result, prefix, "write_batches", stats.write_batches);
-        add_counter_(result, prefix, "write_items", stats.write_items);
-        add_counter_(result, prefix, "read_batches", stats.read_batches);
-        add_counter_(result, prefix, "read_items", stats.read_items);
-        add_counter_(result, prefix, "queue_items", stats.queue_items);
-        add_counter_(result, prefix, "pending_batches", stats.pending_batches);
-        add_counter_(
-          result,
-          prefix,
-          "pending_batch_items",
-          stats.pending_batch_items);
-        add_counter_(result, prefix, "inflight_items", stats.inflight_items);
-        add_counter_(
-          result,
-          prefix,
-          "stream_inflight_items",
-          stats.stream_inflight_items);
-        add_counter_(result, prefix, "active_streams", stats.active_streams);
-        add_counter_(result, prefix, "available_streams", stats.available_streams);
-        add_counter_(
-          result,
-          prefix,
-          "connecting_streams",
-          stats.connecting_streams);
-        add_counter_(result, prefix, "draining_streams", stats.draining_streams);
-        add_counter_(result, prefix, "deferred_streams", stats.deferred_streams);
-
-        if (stats.last_error.has_value())
-        {
-          result.emplace_back(
-            prefix + "_last_error_time",
-            stats.last_error->time.get_gm_time().format("%F %T"));
-          result.emplace_back(
-            prefix + "_last_error_endpoint",
-            stats.last_error->endpoint);
-          result.emplace_back(
-            prefix + "_last_error_code",
-            static_cast<long>(stats.last_error->code));
-          result.emplace_back(
-            prefix + "_last_error_message",
-            stats.last_error->message);
-          result.emplace_back(
-            prefix + "_last_error_source",
-            stats.last_error->source);
-        }
-      }
-
-      std::vector<ClientSource> clients_;
-    };
 
     class InProgressGuard
     {
@@ -311,20 +191,6 @@ namespace AdServer::Bidding
       {
         target[i] = source[i];
       }
-    }
-
-    void pack_decimal(
-      const CampaignManager::DecimalInfo& source,
-      PB::DecimalInfo& target)
-    {
-      target.set_value(pack_oct_seq(source));
-    }
-
-    void unpack_decimal(
-      const PB::DecimalInfo& source,
-      CampaignManager::DecimalInfo& target)
-    {
-      unpack_oct_seq(source.value(), target);
     }
 
     void pack_tokens(
@@ -460,8 +326,8 @@ namespace AdServer::Bidding
         kw->set_ccg_keyword_id(source.ccg_keywords[i].ccg_keyword_id);
         kw->set_ccg_id(source.ccg_keywords[i].ccg_id);
         kw->set_channel_id(source.ccg_keywords[i].channel_id);
-        pack_decimal(source.ccg_keywords[i].max_cpc, *kw->mutable_max_cpc());
-        pack_decimal(source.ccg_keywords[i].ctr, *kw->mutable_ctr());
+        kw->mutable_max_cpc()->set_value(source.ccg_keywords[i].max_cpc);
+        kw->mutable_ctr()->set_value(source.ccg_keywords[i].ctr);
         kw->set_click_url(source.ccg_keywords[i].click_url);
         kw->set_original_keyword(source.ccg_keywords[i].original_keyword);
       }
@@ -495,7 +361,7 @@ namespace AdServer::Bidding
         dst->set_tag_id(src.tag_id);
         pack_strings(src.sizes, dst->mutable_sizes());
         dst->set_ext_tag_id(src.ext_tag_id);
-        pack_decimal(src.min_ecpm, *dst->mutable_min_ecpm());
+        dst->mutable_min_ecpm()->set_value(src.min_ecpm);
         dst->set_min_ecpm_currency_code(src.min_ecpm_currency_code);
         pack_strings(src.currency_codes, dst->mutable_currency_codes());
         dst->set_passback(src.passback);
@@ -582,9 +448,9 @@ namespace AdServer::Bidding
           dst_creative.advertiser_id = src_creative.advertiser_id();
           dst_creative.advertiser_name = src_creative.advertiser_name();
           dst_creative.creative_size = src_creative.creative_size();
-          unpack_decimal(src_creative.revenue(), dst_creative.revenue);
-          unpack_decimal(src_creative.ecpm(), dst_creative.ecpm);
-          unpack_decimal(src_creative.pub_ecpm(), dst_creative.pub_ecpm);
+          dst_creative.revenue = src_creative.revenue().value();
+          dst_creative.ecpm = src_creative.ecpm().value();
+          dst_creative.pub_ecpm = src_creative.pub_ecpm().value();
           dst_creative.click_url = src_creative.click_url();
           dst_creative.destination_url = src_creative.destination_url();
           dst_creative.creative_version_id = src_creative.creative_version_id();
@@ -619,17 +485,21 @@ namespace AdServer::Bidding
         dst_debug.min_text_ecpm = src_debug.min_text_ecpm();
         dst_debug.auction_type = src_debug.auction_type();
         dst_debug.track_pixel_url = src_debug.track_pixel_url();
-        unpack_decimal(src_debug.cpm_threshold(), dst_debug.cpm_threshold);
+        dst_debug.cpm_threshold = src_debug.cpm_threshold().value();
         dst_debug.walled_garden = src_debug.walled_garden();
         dst_debug.selected_creatives.resize(src_debug.selected_creatives_size());
         for(int j = 0; j < src_debug.selected_creatives_size(); ++j)
         {
           const auto& src_debug_creative = src_debug.selected_creatives(j);
           auto& dst_debug_creative = dst_debug.selected_creatives[j];
-          unpack_decimal(src_debug_creative.imp_revenue(), dst_debug_creative.imp_revenue);
-          unpack_decimal(src_debug_creative.click_revenue(), dst_debug_creative.click_revenue);
-          unpack_decimal(src_debug_creative.action_revenue(), dst_debug_creative.action_revenue);
-          unpack_decimal(src_debug_creative.ecpm_bid(), dst_debug_creative.ecpm_bid);
+          dst_debug_creative.imp_revenue =
+            src_debug_creative.imp_revenue().value();
+          dst_debug_creative.click_revenue =
+            src_debug_creative.click_revenue().value();
+          dst_debug_creative.action_revenue =
+            src_debug_creative.action_revenue().value();
+          dst_debug_creative.ecpm_bid =
+            src_debug_creative.ecpm_bid().value();
           dst_debug_creative.action_adv_url = src_debug_creative.action_adv_url();
           dst_debug_creative.html_url = src_debug_creative.html_url();
           dst_debug_creative.triggered_expression =
@@ -731,22 +601,15 @@ namespace AdServer::Bidding
       Generics::Timer timer_;
     };
 
-    void
-    throw_user_bind_exception_(const grpc::Status& status)
+    StageResult&
+    start_stage(
+      std::optional<StageResult>& stage,
+      const Generics::Time& request_started_at)
     {
-      const std::string message = status.error_message();
-      switch(status.error_code())
-      {
-      case grpc::StatusCode::UNAVAILABLE:
-        throw AdServer::UserInfoSvcs::UserBindClient::NotReady(
-          message.c_str());
-      case grpc::StatusCode::NOT_FOUND:
-        throw AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound(
-          message.c_str());
-      default:
-        throw AdServer::UserInfoSvcs::UserBindClient::ImplementationException(
-          message.c_str());
-      }
+      const auto now = Generics::Time::get_time_of_day();
+      stage.emplace();
+      stage->started_at = now - request_started_at;
+      return *stage;
     }
 
     AdServer::Bidding::CampaignManager::ChannelTriggerMatchInfo
@@ -1523,12 +1386,11 @@ namespace AdServer::Bidding
         &StatHolder::add_rtb_request_user_resolving,
         &StatHolder::complete_rtb_request_user_resolving);
       request_task->set_current_stage(Stage::UserResolving);
-      request_task->request_time_metering_.user_resolving_started_at =
-        Generics::Time::get_time_of_day() - request_task->start_processing_time();
-      const Generics::Time user_resolving_started_at =
-        Generics::Time::get_time_of_day();
 
       auto& request_time_metering = request_task->request_time_metering_;
+      StageResult& user_resolving_stage = start_stage(
+        request_time_metering.user_resolving,
+        request_task->start_processing_time());
       auto& request_info = request_task->request_info_;
       auto& common_info = request_task->request_params()->common_info;
       auto& match_user_id = request_task->resolved_user_id_;
@@ -1635,8 +1497,9 @@ namespace AdServer::Bidding
           std::size_t base_index = 0;
 
           auto log_user_bind_exception =
-            [this](const eh::Exception& ex)
+            [this, &user_resolving_stage](const eh::Exception& ex)
             {
+              user_resolving_stage.set_exception_error(ex);
               Stream::Error ostr;
               ostr << FUN << ": caught UserBindClient exception: " << ex.what();
               logger()->log(
@@ -1644,6 +1507,22 @@ namespace AdServer::Bidding
                 Logging::Logger::ERROR,
                 Aspect::BIDDING_FRONTEND,
                 "ADS-IMPL-10681");
+            };
+          auto log_user_bind_grpc_error =
+            [this, &user_resolving_stage](
+              const char* method,
+              const grpc::Status& status)
+            {
+              user_resolving_stage.set_grpc_error(status);
+              logger()->sstream(
+                Logging::Logger::ERROR,
+                Aspect::BIDDING_FRONTEND,
+                "ADS-IMPL-10681") <<
+                "Bidding::Frontend::co_process_bid_request_(): "
+                "UserBindServer::" << method <<
+                "(): gRPC call failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
             };
 
           for(std::size_t get_index = 0;
@@ -1666,10 +1545,12 @@ namespace AdServer::Bidding
                 user_bind_client_coro_->get_user_id(std::move(get_request));
               if(!get_result.status.ok())
               {
-                throw_user_bind_exception_(get_result.status);
+                log_user_bind_grpc_error("get_user_id", get_result.status);
+                break;
               }
 
               user_bind_info = std::move(get_result.response);
+              user_resolving_stage.server_id = user_bind_info.hostname();
               min_age_reached |= user_bind_info.min_age_reached();
               local_match_user_id =
                 GrpcAlgs::unpack_user_id(user_bind_info.user_id());
@@ -1738,7 +1619,13 @@ namespace AdServer::Bidding
                     std::move(add_user_request));
                 if(!add_result.status.ok())
                 {
-                  throw_user_bind_exception_(add_result.status);
+                  log_user_bind_grpc_error("add_user_id", add_result.status);
+                  break;
+                }
+                if(user_resolving_stage.server_id.empty())
+                {
+                  user_resolving_stage.server_id =
+                    add_result.response.hostname();
                 }
               }
               catch(const eh::Exception& ex)
@@ -1772,13 +1659,13 @@ namespace AdServer::Bidding
       }
 
       finish_user_resolving();
-      request_time_metering.user_resolving_time =
-        Generics::Time::get_time_of_day() - user_resolving_started_at;
+      user_resolving_stage.finish(request_task->start_processing_time());
       user_resolving_in_progress.reset();
 
       request_task->print_available_request_debug_info_();
       request_task->debug_sink_.print_user_resolving_debug_info(
-        user_resolving_debug_info);
+        user_resolving_debug_info,
+        &user_resolving_stage);
 
       if(check_interrupt_(FUN, Stage::UserResolving, request_task))
       {
@@ -1791,10 +1678,9 @@ namespace AdServer::Bidding
         &StatHolder::add_rtb_request_trigger_match,
         &StatHolder::complete_rtb_request_trigger_match);
       request_task->set_current_stage(Stage::TriggerMatching);
-      request_time_metering.trigger_match_started_at =
-        Generics::Time::get_time_of_day() -
-        request_task->start_processing_time();
-      const auto trigger_match_started_at = Generics::Time::get_time_of_day();
+      StageResult& trigger_match_stage = start_stage(
+        request_time_metering.trigger_match,
+        request_task->start_processing_time());
 
       TriggerMatchResult trigger_match;
       if(!request_info.filter_request)
@@ -1879,6 +1765,7 @@ namespace AdServer::Bidding
             channel_client_coro_->match(std::move(channel_request));
           if(channel_result.status.ok())
           {
+            trigger_match_stage.server_id = channel_result.response.hostname();
             trigger_match.result = std::make_shared<
               adserver::channel_svcs::channel_server::MatchResponse>(
                 std::move(channel_result.response));
@@ -1935,6 +1822,7 @@ namespace AdServer::Bidding
           }
           else
           {
+            trigger_match_stage.set_grpc_error(channel_result.status);
             logger()->sstream(
               Logging::Logger::EMERGENCY,
               Aspect::BIDDING_FRONTEND,
@@ -1947,6 +1835,7 @@ namespace AdServer::Bidding
         }
         catch(const eh::Exception& ex)
         {
+          trigger_match_stage.set_exception_error(ex);
           logger()->sstream(
             Logging::Logger::EMERGENCY,
             Aspect::BIDDING_FRONTEND,
@@ -1955,14 +1844,14 @@ namespace AdServer::Bidding
             ex.what();
         }
       }
-      request_time_metering.trigger_match_time =
-        Generics::Time::get_time_of_day() - trigger_match_started_at;
+      trigger_match_stage.finish(request_task->start_processing_time());
       trigger_match_in_progress.reset();
 
       if(trigger_match.present)
       {
         request_task->debug_sink_.print_channel_matching_debug_info(
-          *trigger_match.result);
+          *trigger_match.result,
+          &trigger_match_stage);
       }
 
       if(check_interrupt_(FUN, Stage::TriggerMatching, request_task))
@@ -1976,10 +1865,9 @@ namespace AdServer::Bidding
         &StatHolder::add_rtb_request_history_match,
         &StatHolder::complete_rtb_request_history_match);
       request_task->set_current_stage(Stage::HistoryMatching);
-      request_time_metering.history_match_started_at =
-        Generics::Time::get_time_of_day() -
-        request_task->start_processing_time();
-      const auto history_match_started_at = Generics::Time::get_time_of_day();
+      StageResult& history_match_stage = start_stage(
+        request_time_metering.history_match,
+        request_task->start_processing_time());
 
       auto init_synthetic_match_result = [](auto* match_result)
       {
@@ -2173,13 +2061,16 @@ namespace AdServer::Bidding
           if(history_result.status.ok())
           {
             request_task->request_params()->profiling_available = true;
+            history_match_stage.server_id = history_result.response.hostname();
             history_match_result = std::make_shared<
               adserver::user_info_svcs::user_info_manager::MatchResponse>(
                 std::move(history_result.response));
           }
           else
           {
-            request_time_metering.history_match_error = true;
+            history_match_stage.set_grpc_error(
+              history_result.status,
+              request_task->hostname_);
             logger()->sstream(
               Logging::Logger::EMERGENCY,
               Aspect::BIDDING_FRONTEND,
@@ -2192,7 +2083,7 @@ namespace AdServer::Bidding
         }
         catch(const eh::Exception& ex)
         {
-          request_time_metering.history_match_error = true;
+          history_match_stage.set_exception_error(ex);
           logger()->sstream(
             Logging::Logger::EMERGENCY,
             Aspect::BIDDING_FRONTEND,
@@ -2205,17 +2096,17 @@ namespace AdServer::Bidding
 
       history_match_result = finish_history_match(
         std::move(history_match_result));
-      request_time_metering.history_match_time =
-        Generics::Time::get_time_of_day() - history_match_started_at;
+      history_match_stage.finish(request_task->start_processing_time());
       history_match_in_progress.reset();
 
       if(history_match_result)
       {
-        request_time_metering.history_match_local_time =
+        history_match_stage.local_time =
           GrpcAlgs::unpack_time(
             history_match_result->match_result().process_time());
         request_task->debug_sink_.print_history_matching_debug_info(
-          history_match_result->match_result());
+          history_match_result->match_result(),
+          &history_match_stage);
       }
 
       if(check_interrupt_(FUN, Stage::HistoryMatching, request_task))
@@ -2279,11 +2170,9 @@ namespace AdServer::Bidding
         }
       }
 
-      request_time_metering.creative_selection_started_at =
-        Generics::Time::get_time_of_day() -
-        request_task->start_processing_time();
-      const auto creative_selection_started_at =
-        Generics::Time::get_time_of_day();
+      StageResult& creative_selection_stage = start_stage(
+        request_time_metering.creative_selection,
+        request_task->start_processing_time());
 
       auto& request_params = *request_task->request_params();
       const bool passback =
@@ -2292,7 +2181,6 @@ namespace AdServer::Bidding
         request_info.filter_request;
 
       select_campaign_(
-        *campaign_match_result,
         history_match_result.get(),
         trigger_match.present ? trigger_match.result.get() : nullptr,
         ccg_keywords.get(),
@@ -2300,7 +2188,6 @@ namespace AdServer::Bidding
         request_params,
         request_task->resolved_user_id_,
         passback,
-        request_task->hostname_,
         false);
 
       PB::GetCampaignCreativeRequest campaign_request;
@@ -2314,6 +2201,7 @@ namespace AdServer::Bidding
         if(campaign_result.status.ok())
         {
           const auto& response = campaign_result.response;
+          creative_selection_stage.server_id = response.hostname();
           if(request_task->debug_sink_.require_debug_info())
           {
             const auto& request_result = response.request_result();
@@ -2344,7 +2232,7 @@ namespace AdServer::Bidding
         }
         else
         {
-          request_time_metering.creative_selection_error = true;
+          creative_selection_stage.set_grpc_error(campaign_result.status);
           logger()->sstream(
             Logging::Logger::EMERGENCY,
             Aspect::BIDDING_FRONTEND,
@@ -2357,7 +2245,7 @@ namespace AdServer::Bidding
       }
       catch(const eh::Exception& ex)
       {
-        request_time_metering.creative_selection_error = true;
+        creative_selection_stage.set_exception_error(ex);
         logger()->sstream(
           Logging::Logger::EMERGENCY,
           Aspect::BIDDING_FRONTEND,
@@ -2366,13 +2254,12 @@ namespace AdServer::Bidding
           "caught CampaignManagerGrpcCoroClient error: " << ex.what();
       }
 
-      request_time_metering.creative_selection_time =
-        Generics::Time::get_time_of_day() - creative_selection_started_at;
+      creative_selection_stage.finish(request_task->start_processing_time());
       campaign_selection_in_progress.reset();
 
       if(campaign_match_result->ad_slots.size())
       {
-        request_time_metering.creative_selection_local_time =
+        creative_selection_stage.local_time =
           CampaignManager::unpack_time(campaign_match_result->process_time);
       }
 
@@ -2666,26 +2553,22 @@ namespace AdServer::Bidding
 
   void
   Frontend::select_campaign_(
-    AdServer::Bidding::CampaignManager::RequestCreativeResult&
-      campaign_match_result,
-      const adserver::user_info_svcs::user_info_manager::MatchResponse*
-        history_match_result,
-    const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
+    const adserver::user_info_svcs::user_info_manager::MatchResponse*
+      history_match_result,
+    const adserver::channel_svcs::channel_server::MatchResponse*
+      trigger_match_result,
     const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
       ccg_keywords,
     const RequestInfo& request_info,
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const AdServer::Commons::UserId& user_id,
     bool passback,
-    std::string& hostname,
     bool interrupted)
     noexcept
   {
     static const char* FUN = "Bidding::Frontend::request_campaign_manager_()";
 
     Generics::Time start_process_time;
-    (void)campaign_match_result;
-    (void)hostname;
 
     if(logger()->log_level() >= Logging::Logger::TRACE)
     {

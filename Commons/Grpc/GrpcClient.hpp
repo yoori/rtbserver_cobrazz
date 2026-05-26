@@ -28,7 +28,7 @@ namespace AdServer::Grpc
   {
     BatchingOptions();
 
-    std::size_t channels_number = 1;
+    std::size_t channels_number = 16;
     std::size_t max_batch_size = 1024;
     // Limits requests that have left BatchingQueue for stream processing.
     // Queued requests are not counted. Accounting is reserved and released per
@@ -219,8 +219,9 @@ namespace AdServer::Grpc
   inline bool
   is_no_active_batching_streams(const grpc::Status& status)
   {
+    const auto message = status.error_message();
     return status.error_code() == grpc::StatusCode::UNAVAILABLE &&
-      status.error_message() == NO_ACTIVE_BATCHING_STREAMS_MESSAGE;
+      message.rfind(NO_ACTIVE_BATCHING_STREAMS_MESSAGE, 0) == 0;
   }
 
   inline void

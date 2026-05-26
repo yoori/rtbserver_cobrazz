@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
@@ -110,20 +111,6 @@ namespace AdServer::UserInfoSvcs
     std::string pack_time_(const Generics::Time& src)
     {
       return seq_to_bytes_(CorbaAlgs::pack_time(src));
-    }
-
-    template<typename Decimal>
-    Decimal unpack_decimal_(const std::string& src)
-    {
-      CORBACommons::OctSeq value;
-      bytes_to_seq_(src, value);
-      return CorbaAlgs::unpack_decimal<Decimal>(value);
-    }
-
-    template<typename Decimal>
-    std::string pack_decimal_(const Decimal& src)
-    {
-      return seq_to_bytes_(CorbaAlgs::pack_decimal<Decimal>(src));
     }
 
     UserInfoManagerCore::ByteVector bytes_to_vector_(const std::string& src)
@@ -264,9 +251,12 @@ namespace AdServer::UserInfoSvcs
       {
         const auto& geo_data = src.geo_data_seq(i);
         dst.geo_data_seq.push_back({
-          unpack_decimal_<CampaignSvcs::CoordDecimal>(geo_data.latitude()),
-          unpack_decimal_<CampaignSvcs::CoordDecimal>(geo_data.longitude()),
-          unpack_decimal_<CampaignSvcs::AccuracyDecimal>(geo_data.accuracy())});
+          GrpcAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
+            geo_data.latitude()),
+          GrpcAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
+            geo_data.longitude()),
+          GrpcAlgs::unpack_decimal<CampaignSvcs::AccuracyDecimal>(
+            geo_data.accuracy())});
       }
       return dst;
     }
@@ -300,9 +290,9 @@ namespace AdServer::UserInfoSvcs
       const UserInfoManagerCore::GeoData& src,
       adserver::user_info_svcs::user_info_manager::GeoData& dst)
     {
-      dst.set_latitude(pack_decimal_(src.latitude));
-      dst.set_longitude(pack_decimal_(src.longitude));
-      dst.set_accuracy(pack_decimal_(src.accuracy));
+      dst.set_latitude(GrpcAlgs::pack_decimal(src.latitude));
+      dst.set_longitude(GrpcAlgs::pack_decimal(src.longitude));
+      dst.set_accuracy(GrpcAlgs::pack_decimal(src.accuracy));
     }
 
     void convert_(

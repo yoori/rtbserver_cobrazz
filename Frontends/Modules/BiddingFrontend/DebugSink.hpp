@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <sstream>
 
@@ -7,6 +8,8 @@
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc.pb.h>
 #include <Generics/Time.hpp>
+#include <eh/Exception.hpp>
+#include <grpcpp/support/status.h>
 #include <String/SubString.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -23,21 +26,47 @@ namespace AdServer::Bidding
     DI_BODY
   };
 
+  struct StageResult
+  {
+    struct Error
+    {
+      enum class Source
+      {
+        Grpc,
+        Exception
+      };
+
+      Source source = Source::Exception;
+      int code = 0;
+      std::string message;
+      std::string endpoint;
+    };
+
+    Generics::Time started_at;
+    std::optional<Generics::Time> finished_at;
+    std::optional<Generics::Time> local_time;
+    std::optional<Error> error;
+    std::string server_id;
+
+    void
+    finish(const Generics::Time& request_started_at);
+
+    void
+    set_grpc_error(
+      const grpc::Status& status,
+      std::string endpoint = {});
+
+    void
+    set_exception_error(const eh::Exception& ex);
+  };
+
   struct RequestTimeMetering
   {
     Generics::Time total_time;
-    Generics::Time user_resolving_started_at;
-    Generics::Time user_resolving_time;
-    Generics::Time trigger_match_started_at;
-    Generics::Time trigger_match_time;
-    Generics::Time history_match_started_at;
-    Generics::Time history_match_time;
-    Generics::Time history_match_local_time;
-    bool history_match_error = false;
-    Generics::Time creative_selection_started_at;
-    Generics::Time creative_selection_time;
-    Generics::Time creative_selection_local_time;
-    bool creative_selection_error = false;
+    std::optional<StageResult> user_resolving;
+    std::optional<StageResult> trigger_match;
+    std::optional<StageResult> history_match;
+    std::optional<StageResult> creative_selection;
   };
 
   class DebugSink
@@ -75,22 +104,26 @@ namespace AdServer::Bidding
 
     void
     print_user_resolving_debug_info(
-      const UserResolvingDebugInfo& user_resolving_debug_info) noexcept;
+      const UserResolvingDebugInfo& user_resolving_debug_info,
+      const StageResult* stage = nullptr) noexcept;
 
     void
     print_creative_selection_debug_info(
       const AdServer::Bidding::CampaignManager::RequestCreativeResult&
-        campaign_match_result) noexcept;
+        campaign_match_result,
+      const StageResult* stage = nullptr) noexcept;
 
     void
     print_channel_matching_debug_info(
       const adserver::channel_svcs::channel_server::MatchResponse&
-        response) noexcept;
+        response,
+      const StageResult* stage = nullptr) noexcept;
 
     void
     print_history_matching_debug_info(
       const adserver::user_info_svcs::user_info_manager::MatchResult&
-        match_result) noexcept;
+        match_result,
+      const StageResult* stage = nullptr) noexcept;
 
     void
     print_time_metering_debug_info(
@@ -122,7 +155,8 @@ namespace AdServer::Bidding
       const AdServer::Commons::UserId& user_id) const;
 
     void
-    print_empty_creative_selection_debug_info_() noexcept;
+    print_empty_creative_selection_debug_info_(
+      const StageResult* stage) noexcept;
 
     void
     print_expected_debug_info_(
@@ -132,7 +166,8 @@ namespace AdServer::Bidding
     void
     print_creative_selection_debug_info_(
       const AdServer::Bidding::CampaignManager::AdSlotResult&
-        ad_slot_result) noexcept;
+        ad_slot_result,
+      const StageResult* stage) noexcept;
 
     static DebugInfo
     parse_require_debug_info_(
