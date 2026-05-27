@@ -6,6 +6,7 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
 namespace
@@ -80,7 +81,7 @@ main(int argc, char** argv)
 
   grpc::ChannelArguments channel_args;
   channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
-  auto channel = grpc::CreateCustomChannel(
+  auto channel = AdServer::Grpc::create_custom_channel(
     endpoint,
     grpc::InsecureChannelCredentials(),
     channel_args);

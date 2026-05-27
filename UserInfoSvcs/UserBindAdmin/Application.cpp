@@ -17,6 +17,7 @@
 #include <Logger/StreamLogger.hpp>
 
 #include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -46,7 +47,9 @@ namespace
   get_controller_session_description_(const std::string& reference)
   {
     auto stub = Controller::UserBindControllerGrpc::NewStub(
-      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(
+        reference,
+        grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);

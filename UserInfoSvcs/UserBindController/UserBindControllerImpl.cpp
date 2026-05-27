@@ -5,6 +5,7 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <String/StringManip.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindServerGrpc.grpc.pb.h>
 
@@ -120,7 +121,7 @@ namespace AdServer::UserInfoSvcs
     {
       try
       {
-        auto channel = grpc::CreateChannel(
+        auto channel = AdServer::Grpc::create_channel(
           server.endpoint,
           grpc::InsecureChannelCredentials());
         auto stub = adserver::user_info_svcs::user_bind::

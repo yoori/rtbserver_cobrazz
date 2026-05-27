@@ -17,6 +17,7 @@
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
@@ -36,7 +37,9 @@ namespace
   is_channel_controller(const std::string& reference)
   {
     auto stub = Controller::ChannelControllerGrpc::NewStub(
-      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(
+        reference,
+        grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);

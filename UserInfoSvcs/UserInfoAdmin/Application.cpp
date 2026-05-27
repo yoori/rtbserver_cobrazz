@@ -20,6 +20,7 @@
 #include <String/StringManip.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
@@ -150,7 +151,9 @@ namespace
   bool is_user_info_controller_(const std::string& reference)
   {
     auto stub = uic::UserInfoControllerGrpc::NewStub(
-      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(
+        reference,
+        grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
@@ -220,7 +223,9 @@ namespace
   uim::GetSourceResponse get_source_from_manager_(const std::string& reference)
   {
     auto stub = uim::UserInfoManagerGrpc::NewStub(
-      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(
+        reference,
+        grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
@@ -258,7 +263,9 @@ namespace
   void print_source_(const std::string& reference)
   {
     auto controller_stub = uic::UserInfoControllerGrpc::NewStub(
-      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(
+        reference,
+        grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);

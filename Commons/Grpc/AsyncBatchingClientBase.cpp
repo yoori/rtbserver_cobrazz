@@ -254,7 +254,7 @@ namespace AdServer::Grpc
       channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
     }
 
-    channel_ = grpc::CreateCustomChannel(
+    channel_ = create_custom_channel(
       endpoint_,
       grpc::InsecureChannelCredentials(),
       channel_args);
@@ -629,6 +629,11 @@ namespace AdServer::Grpc
     const char* status_message,
     const char* source) noexcept
   {
+    if (batches.empty())
+    {
+      return;
+    }
+
     set_last_error(
       endpoint_,
       status_code,
@@ -640,6 +645,8 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::start_connect_() noexcept
   {
+    log_grpc_connect(endpoint_);
+
     StreamHolderPtr stream_holder;
     BatchingStreamBase* stream = nullptr;
     bool stream_registered = false;

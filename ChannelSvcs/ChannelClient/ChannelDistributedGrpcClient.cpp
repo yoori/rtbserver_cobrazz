@@ -47,7 +47,7 @@ namespace AdServer::ChannelSvcs
     explicit ControllerClient(const std::string& endpoint)
       : endpoint(endpoint),
         name(endpoint),
-        channel(grpc::CreateChannel(
+        channel(AdServer::Grpc::create_channel(
           endpoint,
           grpc::InsecureChannelCredentials())),
         stub(ControllerGrpc::NewStub(channel))
@@ -55,7 +55,7 @@ namespace AdServer::ChannelSvcs
 
     void reset()
     {
-      channel = grpc::CreateChannel(
+      channel = AdServer::Grpc::create_channel(
         endpoint,
         grpc::InsecureChannelCredentials());
       stub = ControllerGrpc::NewStub(channel);

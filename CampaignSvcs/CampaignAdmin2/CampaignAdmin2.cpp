@@ -22,6 +22,7 @@
 
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -1111,7 +1112,7 @@ namespace
     channel_args.SetMaxReceiveMessageSize(-1);
     channel_args.SetMaxSendMessageSize(-1);
     channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
-    auto channel = grpc::CreateCustomChannel(
+    auto channel = AdServer::Grpc::create_custom_channel(
       reference,
       grpc::InsecureChannelCredentials(),
       channel_args);

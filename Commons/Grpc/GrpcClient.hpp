@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -14,6 +15,7 @@
 #include <thread>
 #include <vector>
 
+#include <grpcpp/grpcpp.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/completion_queue.h>
@@ -24,6 +26,34 @@
 
 namespace AdServer::Grpc
 {
+  inline void
+  log_grpc_connect(const std::string& endpoint)
+  {
+    std::cout
+      << "[" << Generics::Time::get_time_of_day().gm_ft() << "] "
+      << "grpc connect to " << endpoint
+      << std::endl;
+  }
+
+  inline std::shared_ptr<grpc::Channel>
+  create_channel(
+    const std::string& endpoint,
+    const std::shared_ptr<grpc::ChannelCredentials>& credentials)
+  {
+    log_grpc_connect(endpoint);
+    return grpc::CreateChannel(endpoint, credentials);
+  }
+
+  inline std::shared_ptr<grpc::Channel>
+  create_custom_channel(
+    const std::string& endpoint,
+    const std::shared_ptr<grpc::ChannelCredentials>& credentials,
+    const grpc::ChannelArguments& arguments)
+  {
+    log_grpc_connect(endpoint);
+    return grpc::CreateCustomChannel(endpoint, credentials, arguments);
+  }
+
   struct BatchingOptions
   {
     BatchingOptions();

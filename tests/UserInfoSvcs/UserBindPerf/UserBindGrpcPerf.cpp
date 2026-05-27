@@ -30,6 +30,7 @@
 
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <UserInfoSvcs/UserBindServer/UserBindServerGrpc.grpc.pb.h>
@@ -776,7 +777,7 @@ main(int argc, char** argv)
               channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
             }
 
-            auto channel = grpc::CreateCustomChannel(
+            auto channel = AdServer::Grpc::create_custom_channel(
               *opt_user_bind_grpc_endpoint,
               grpc::InsecureChannelCredentials(),
               channel_args);

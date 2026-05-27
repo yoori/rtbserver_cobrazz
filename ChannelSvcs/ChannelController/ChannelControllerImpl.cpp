@@ -8,6 +8,7 @@
 
 #include <Generics/Hash.hpp>
 #include <Commons/CorbaConfig.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
 
@@ -232,7 +233,7 @@ namespace AdServer::ChannelSvcs
         context.set_deadline(
           std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
 
-        auto channel = grpc::CreateCustomChannel(
+        auto channel = AdServer::Grpc::create_custom_channel(
           server.endpoint,
           grpc::InsecureChannelCredentials(),
           channel_args);
