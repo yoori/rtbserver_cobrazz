@@ -3,12 +3,14 @@
 #include <cstdint>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Logger/Logger.hpp>
 #include <Generics/ActiveObject.hpp>
+#include <Generics/Time.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
 #include "UserInfoManagerCore.hpp"
@@ -31,6 +33,8 @@ namespace AdServer::UserInfoSvcs
       std::uint64_t remove_user_profile_in_progress = 0;
       std::uint64_t merge_in_progress = 0;
       std::uint64_t consider_publishers_optin_in_progress = 0;
+      std::uint64_t call_inflight = 0;
+      std::optional<Generics::Time> min_time_of_request_in_progress;
     };
 
     UserInfoManagerGrpc(

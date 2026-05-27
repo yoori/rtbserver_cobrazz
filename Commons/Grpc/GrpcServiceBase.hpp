@@ -1,10 +1,12 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <exception>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -14,10 +16,19 @@
 #include <utility>
 #include <vector>
 
+#define ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+#include <thread>
+
+#include <boost/asio.hpp>
+#endif
+
 #include <grpcpp/grpcpp.h>
 
 #include <Commons/ActivityGate.hpp>
 #include <Commons/Grpc/Batch.grpc.pb.h>
+#include <Generics/Time.hpp>
 
 #define MAKE_GRPC_CALL(RequestType, ResponseType, MethodName) \
   make_grpc_call<RequestType, ResponseType>( \
@@ -27,6 +38,65 @@
 
 namespace AdServer::Grpc
 {
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+  struct GrpcBatchStreamDebugWatchdogState
+  {
+    std::atomic_bool done{false};
+    std::string peer;
+    std::string first_method;
+    int items_size = 0;
+  };
+
+  class GrpcBatchStreamDebugTimerService final
+  {
+  public:
+    using WatchdogState = GrpcBatchStreamDebugWatchdogState;
+
+    static GrpcBatchStreamDebugTimerService& instance()
+    {
+      static auto* service = new GrpcBatchStreamDebugTimerService();
+      return *service;
+    }
+
+    void schedule(std::shared_ptr<WatchdogState> state)
+    {
+      auto timer = std::make_shared<boost::asio::steady_timer>(io_service_);
+      timer->expires_after(std::chrono::seconds(20));
+      timer->async_wait(
+        [
+          timer = std::move(timer),
+          state = std::move(state)
+        ](const boost::system::error_code& error)
+        {
+          if (!error && state &&
+            !state->done.load(std::memory_order_acquire))
+          {
+            std::cout
+              << "ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT: "
+              << "response timeout after 20 sec"
+              << ", peer=" << state->peer
+              << ", batch_items=" << state->items_size;
+            if (!state->first_method.empty())
+            {
+              std::cout << ", first_method=" << state->first_method;
+            }
+            std::cout << std::endl;
+          }
+        });
+    }
+
+  private:
+    GrpcBatchStreamDebugTimerService()
+      : work_(io_service_),
+        thread_([this] { io_service_.run(); })
+    {}
+
+    boost::asio::io_service io_service_;
+    boost::asio::io_service::work work_;
+    std::thread thread_;
+  };
+#endif
+
   template<typename ServiceImplType, typename AsyncServiceType>
   class GrpcBatchStreamCall;
 
@@ -97,6 +167,84 @@ namespace AdServer::Grpc
   public:
     using CompletionQueues = std::vector<::grpc::ServerCompletionQueue*>;
 
+    struct InprogressStatsSnapshot
+    {
+      std::uint64_t call_inflight = 0;
+      std::optional<Generics::Time> min_time_of_request_in_progress;
+    };
+
+    class InprogressStats final
+    {
+    public:
+      std::uint64_t add(
+        const std::uint64_t call_inflight,
+        const Generics::Time& read_time)
+      {
+        const auto receiver_id = next_receiver_id_.fetch_add(
+          1,
+          std::memory_order_relaxed);
+
+        std::lock_guard<std::mutex> lock(lock_);
+        requests_.emplace(receiver_id, Request{read_time, call_inflight});
+        call_inflight_ += call_inflight;
+        if (!min_time_of_request_in_progress_ ||
+          read_time < *min_time_of_request_in_progress_)
+        {
+          min_time_of_request_in_progress_ = read_time;
+        }
+
+        return receiver_id;
+      }
+
+      void remove(const std::uint64_t receiver_id) noexcept
+      {
+        std::lock_guard<std::mutex> lock(lock_);
+        const auto it = requests_.find(receiver_id);
+        if (it == requests_.end())
+        {
+          return;
+        }
+
+        call_inflight_ -= it->second.call_inflight;
+        requests_.erase(it);
+        recalculate_min_time_();
+      }
+
+      InprogressStatsSnapshot snapshot() const
+      {
+        std::lock_guard<std::mutex> lock(lock_);
+        return InprogressStatsSnapshot{
+          call_inflight_,
+          min_time_of_request_in_progress_};
+      }
+
+    private:
+      struct Request
+      {
+        Generics::Time read_time;
+        std::uint64_t call_inflight = 0;
+      };
+
+      void recalculate_min_time_() noexcept
+      {
+        min_time_of_request_in_progress_.reset();
+        for (const auto& [_, request] : requests_)
+        {
+          if (!min_time_of_request_in_progress_ ||
+            request.read_time < *min_time_of_request_in_progress_)
+          {
+            min_time_of_request_in_progress_ = request.read_time;
+          }
+        }
+      }
+
+      std::atomic<std::uint64_t> next_receiver_id_{1};
+      mutable std::mutex lock_;
+      std::unordered_map<std::uint64_t, Request> requests_;
+      std::uint64_t call_inflight_ = 0;
+      std::optional<Generics::Time> min_time_of_request_in_progress_;
+    };
+
     virtual ~GrpcServiceBase() noexcept = default;
 
     void register_services(::grpc::ServerBuilder& builder)
@@ -136,6 +284,11 @@ namespace AdServer::Grpc
     {
       finish_gate_.deactivate_object();
       finish_gate_.wait_object();
+    }
+
+    InprogressStatsSnapshot inprogress_stats() const
+    {
+      return inprogress_stats_->snapshot();
     }
 
   protected:
@@ -333,6 +486,8 @@ namespace AdServer::Grpc
     std::mutex registration_lock_;
     std::condition_variable registration_cv_;
     AdServer::Commons::ActivityGate finish_gate_;
+    std::shared_ptr<InprogressStats> inprogress_stats_ =
+      std::make_shared<InprogressStats>();
   };
 
   template<
@@ -642,6 +797,14 @@ namespace AdServer::Grpc
         state_(State::Create)
     {}
 
+    ~GrpcBatchStreamCall() noexcept override
+    {
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+      finish_debug_response_watchdog_();
+#endif
+      finish_inprogress_stats_();
+    }
+
     void proceed(bool ok) override
     {
       switch (state_)
@@ -715,6 +878,10 @@ namespace AdServer::Grpc
           }
 
           response_.Clear();
+          start_inprogress_stats_();
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+          start_debug_response_watchdog_();
+#endif
           service_impl_->handle_batch_request(request_, response_);
           state_ = State::Write;
           responder_.Write(response_, this);
@@ -723,6 +890,10 @@ namespace AdServer::Grpc
 
         case State::Write:
         {
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+          finish_debug_response_watchdog_();
+#endif
+          finish_inprogress_stats_();
           if (!ok)
           {
             delete this;
@@ -753,6 +924,56 @@ namespace AdServer::Grpc
     };
 
   private:
+    void start_inprogress_stats_()
+    {
+      finish_inprogress_stats_();
+
+      inprogress_stats_receiver_id_ = service_impl_->inprogress_stats_->add(
+        request_.items_size(),
+        Generics::Time::get_time_of_day());
+    }
+
+    void finish_inprogress_stats_() noexcept
+    {
+      if (inprogress_stats_receiver_id_)
+      {
+        service_impl_->inprogress_stats_->remove(*inprogress_stats_receiver_id_);
+        inprogress_stats_receiver_id_.reset();
+      }
+    }
+
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+    using DebugWatchdogState = GrpcBatchStreamDebugWatchdogState;
+
+    void start_debug_response_watchdog_()
+    {
+      finish_debug_response_watchdog_();
+
+      auto state = std::make_shared<DebugWatchdogState>();
+      state->peer = context_.peer();
+      state->items_size = request_.items_size();
+      if (state->items_size > 0)
+      {
+        state->first_method = request_.items(0).full_method();
+      }
+
+      debug_response_watchdog_state_ = state;
+
+      GrpcBatchStreamDebugTimerService::instance().schedule(std::move(state));
+    }
+
+    void finish_debug_response_watchdog_() noexcept
+    {
+      if (debug_response_watchdog_state_)
+      {
+        debug_response_watchdog_state_->done.store(
+          true,
+          std::memory_order_release);
+        debug_response_watchdog_state_.reset();
+      }
+    }
+#endif
+
     ServiceImplType* const service_impl_;
     AsyncServiceType* const async_service_;
     const RequestMethod request_stream_;
@@ -763,5 +984,9 @@ namespace AdServer::Grpc
     Response response_;
     std::optional<AdServer::Commons::ActivityGate::Guard> finish_guard_;
     State state_;
+    std::optional<std::uint64_t> inprogress_stats_receiver_id_;
+#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
+    std::shared_ptr<DebugWatchdogState> debug_response_watchdog_state_;
+#endif
   };
 }

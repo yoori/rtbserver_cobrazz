@@ -156,6 +156,10 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           const auto stats = grpc_adapter ?
             grpc_adapter->stats() :
             AdServer::UserInfoSvcs::UserInfoManagerGrpc::Stats{};
+          const std::string min_time_of_request_in_progress =
+            stats.min_time_of_request_in_progress ?
+              "\"" + stats.min_time_of_request_in_progress->gm_ft() + "\"" :
+              "null";
           return AdServer::Commons::HttpServer::HttpServer::Response{
             200,
             "application/json",
@@ -175,6 +179,10 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               std::to_string(stats.merge_in_progress) +
               ",\"consider_publishers_optin_in_progress\":" +
               std::to_string(stats.consider_publishers_optin_in_progress) +
+              ",\"call_inflight\":" +
+              std::to_string(stats.call_inflight) +
+              ",\"min_time_of_request_in_progress\":" +
+              min_time_of_request_in_progress +
               "}\n"
           };
         });

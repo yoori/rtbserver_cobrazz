@@ -38,6 +38,16 @@ namespace AdServer::Grpc
       std::size_t threads,
       std::unique_ptr<ServiceImplType> service);
 
+    ServiceImplType& service() noexcept
+    {
+      return *service_;
+    }
+
+    const ServiceImplType& service() const noexcept
+    {
+      return *service_;
+    }
+
   private:
     void activate_object_() override;
 

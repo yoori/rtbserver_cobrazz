@@ -819,6 +819,7 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerGrpc::Stats
   UserInfoManagerGrpc::stats() const noexcept
   {
+    const auto inprogress_stats = impl_->service().inprogress_stats();
     return Stats{
       stats_counters_->call_in_progress.load(std::memory_order_relaxed),
       stats_counters_->match_in_progress.load(std::memory_order_relaxed),
@@ -827,7 +828,9 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->fraud_user_in_progress.load(std::memory_order_relaxed),
       stats_counters_->remove_user_profile_in_progress.load(std::memory_order_relaxed),
       stats_counters_->merge_in_progress.load(std::memory_order_relaxed),
-      stats_counters_->consider_publishers_optin_in_progress.load(std::memory_order_relaxed)
+      stats_counters_->consider_publishers_optin_in_progress.load(std::memory_order_relaxed),
+      inprogress_stats.call_inflight,
+      inprogress_stats.min_time_of_request_in_progress
     };
   }
 
