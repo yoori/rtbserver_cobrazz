@@ -70,10 +70,10 @@
         minOccurs="0"
         maxOccurs="1"/>
 
-      <xsd:element name="ChannelControllerGroup"
-        type="ChannelControllerGrpcGroupType"
+      <xsd:element name="Channel"
+        type="ChannelType"
         minOccurs="0"
-        maxOccurs="2"/>
+        maxOccurs="1"/>
 
       <xsd:element name="UserBind"
         type="UserBindType"
@@ -200,6 +200,19 @@
         maxOccurs="2"/>
     </xsd:sequence>
     <xsd:attribute name="grpc_executor_threads" type="xsd:positiveInteger" default="16"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelType">
+    <xsd:sequence>
+      <xsd:element name="BatchingOptions"
+        type="GrpcBatchingOptionsType"
+        minOccurs="0"
+        maxOccurs="1"/>
+      <xsd:element name="ChannelControllerGroup"
+        type="ChannelControllerGrpcGroupType"
+        minOccurs="0"
+        maxOccurs="2"/>
+    </xsd:sequence>
   </xsd:complexType>
 
   <xsd:complexType name="UserInfoControllerGrpcGroupType">

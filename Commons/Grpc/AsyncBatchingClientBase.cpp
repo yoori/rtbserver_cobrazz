@@ -498,21 +498,21 @@ namespace AdServer::Grpc
 
     if (fail_batch)
     {
-      finish_batch_with_error(
+      finish_batch_with_error_(
         batch,
         grpc::StatusCode::UNAVAILABLE,
         no_active_streams_context,
-        endpoint_);
+        "process_batch");
       return;
     }
 
     if (!failed_batches.empty())
     {
-      finish_batches_with_error(
+      finish_batches_with_error_(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
         NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY,
-        endpoint_);
+        "after_connect_try");
     }
 
     if (stream_holder)
@@ -542,11 +542,11 @@ namespace AdServer::Grpc
     {
       if (!inflight_limiter_.try_acquire(batch.size()))
       {
-        finish_batch_with_error(
+        finish_batch_with_error_(
           batch,
           grpc::StatusCode::RESOURCE_EXHAUSTED,
           "inflight limit reached",
-          endpoint_);
+          "inflight_limit");
         return false;
       }
     }
@@ -608,6 +608,36 @@ namespace AdServer::Grpc
   }
 
   void
+  AsyncBatchingClientBase::finish_batch_with_error_(
+    BatchingStreamBase::PendingBatch& batch,
+    grpc::StatusCode status_code,
+    const char* status_message,
+    const char* source) noexcept
+  {
+    set_last_error(
+      endpoint_,
+      status_code,
+      status_message ? status_message : "",
+      source);
+    finish_batch_with_error(batch, status_code, status_message, endpoint_);
+  }
+
+  void
+  AsyncBatchingClientBase::finish_batches_with_error_(
+    std::vector<BatchingStreamBase::PendingBatch>& batches,
+    grpc::StatusCode status_code,
+    const char* status_message,
+    const char* source) noexcept
+  {
+    set_last_error(
+      endpoint_,
+      status_code,
+      status_message ? status_message : "",
+      source);
+    finish_batches_with_error(batches, status_code, status_message, endpoint_);
+  }
+
+  void
   AsyncBatchingClientBase::start_connect_() noexcept
   {
     StreamHolderPtr stream_holder;
@@ -666,11 +696,11 @@ namespace AdServer::Grpc
         }
       }
 
-      finish_batches_with_error(
+      finish_batches_with_error_(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
         NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION,
-        endpoint_);
+        "connect_exception");
     }
     catch (...)
     {
@@ -702,11 +732,11 @@ namespace AdServer::Grpc
         }
       }
 
-      finish_batches_with_error(
+      finish_batches_with_error_(
         failed_batches,
         grpc::StatusCode::UNAVAILABLE,
         NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION,
-        endpoint_);
+        "connect_exception");
     }
   }
 
@@ -742,11 +772,11 @@ namespace AdServer::Grpc
       }
     }
 
-    finish_batches_with_error(
+    finish_batches_with_error_(
       failed_batches,
       grpc::StatusCode::UNAVAILABLE,
       NO_ACTIVE_BATCHING_STREAMS_RELEASE_OR_DISPATCH,
-      endpoint_);
+      "release_or_dispatch");
 
     if (!batch.empty())
     {
@@ -794,11 +824,11 @@ namespace AdServer::Grpc
 
     if (!failed_batch.empty())
     {
-      finish_batch_with_error(
+      finish_batch_with_error_(
         failed_batch,
         grpc::StatusCode::UNAVAILABLE,
         "stream write failed",
-        endpoint_);
+        "stream_write");
     }
 
     try
@@ -1112,11 +1142,11 @@ namespace AdServer::Grpc
         maybe_start_connect_for_pending_(failed_batches, failure_time);
     }
 
-    finish_batches_with_error(
+    finish_batches_with_error_(
       failed_batches,
       grpc::StatusCode::UNAVAILABLE,
       NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY,
-      endpoint_);
+      "after_connect_try");
     if (start_connect)
     {
       start_connect_();

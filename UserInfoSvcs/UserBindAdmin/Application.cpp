@@ -138,7 +138,8 @@ namespace
     {
       auto client =
         std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
-          std::vector<std::string>{reference},
+          AdServer::UserInfoSvcs::UserBindDistributedGrpcClient::
+            UserBindControllerRefs{{reference}},
           AdServer::Grpc::BatchingOptions(),
           result.grpc_executor,
           logger,

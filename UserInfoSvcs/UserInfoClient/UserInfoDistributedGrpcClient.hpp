@@ -26,7 +26,8 @@ namespace AdServer::UserInfoSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    using UserInfoControllerRefs = std::vector<std::string>;
+    using UserInfoControllerRefGroup = std::vector<std::string>;
+    using UserInfoControllerRefs = std::vector<UserInfoControllerRefGroup>;
 
     UserInfoDistributedGrpcClient(
       const UserInfoControllerRefs& user_info_controller_refs,
@@ -96,13 +97,15 @@ namespace AdServer::UserInfoSvcs
 
   private:
     using Client = UserInfoManagerGrpcAsyncBatchingClient;
-    using Pool = AdServer::Grpc::DistributedPartitionPool<Client>;
+    struct ControllerClient;
+    using Pool =
+      AdServer::Grpc::DistributedPartitionPool<Client, ControllerClient>;
     using PoolPtr = std::shared_ptr<Pool>;
 
     std::optional<Pool::Ref> get_ref_(const std::string& user_id) noexcept;
     std::optional<Pool::Ref> get_any_ref_() noexcept;
-    static std::optional<Pool::EndpointChunksList> resolve_partition_(
-      const std::string& endpoint);
+    std::optional<Pool::EndpointChunksList> resolve_partition_(
+      ControllerClient& controller_client);
 
     static unsigned long chunk_index_(
       const std::string& user_id,

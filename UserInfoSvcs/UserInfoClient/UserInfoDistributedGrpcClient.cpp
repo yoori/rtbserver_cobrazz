@@ -35,6 +35,34 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
+  struct UserInfoDistributedGrpcClient::ControllerClient
+  {
+    using ControllerGrpc =
+      adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc;
+
+    explicit ControllerClient(const std::string& endpoint)
+      : endpoint(endpoint),
+        name(endpoint),
+        channel(grpc::CreateChannel(
+          this->endpoint,
+          grpc::InsecureChannelCredentials())),
+        stub(ControllerGrpc::NewStub(channel))
+    {}
+
+    void reset()
+    {
+      channel = grpc::CreateChannel(
+        endpoint,
+        grpc::InsecureChannelCredentials());
+      stub = ControllerGrpc::NewStub(channel);
+    }
+
+    const std::string endpoint;
+    const std::string name;
+    std::shared_ptr<grpc::Channel> channel;
+    std::unique_ptr<ControllerGrpc::Stub> stub;
+  };
+
   UserInfoDistributedGrpcClient::UserInfoDistributedGrpcClient(
     const UserInfoControllerRefs& user_info_controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
@@ -51,7 +79,10 @@ namespace AdServer::UserInfoSvcs
       std::move(grpc_executor),
       std::move(coalesce_runner),
       logger,
-      &resolve_partition_,
+      [this](ControllerClient& controller_client)
+      {
+        return resolve_partition_(controller_client);
+      },
       &partition_index_,
       &chunk_index_,
       DEFAULT_POOL_TIMEOUT,
@@ -262,14 +293,9 @@ namespace AdServer::UserInfoSvcs
   }
 
   std::optional<UserInfoDistributedGrpcClient::Pool::EndpointChunksList>
-  UserInfoDistributedGrpcClient::resolve_partition_(const std::string& endpoint)
+  UserInfoDistributedGrpcClient::resolve_partition_(
+    ControllerClient& controller_client)
   {
-    auto stub = adserver::user_info_svcs::user_info_controller::
-      UserInfoControllerGrpc::NewStub(
-        grpc::CreateChannel(
-          endpoint,
-          grpc::InsecureChannelCredentials()));
-
     grpc::ClientContext context;
     set_deadline_(context);
     adserver::user_info_svcs::user_info_controller::
@@ -277,15 +303,16 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_controller::
       GetSessionDescriptionResponse response;
 
-    const auto status = stub->get_session_description(
+    const auto status = controller_client.stub->get_session_description(
       &context,
       request,
       &response);
 
     if (!status.ok())
     {
+      controller_client.reset();
       std::ostringstream ostr;
-      ostr << "UserInfoController '" << endpoint
+      ostr << "UserInfoController '" << controller_client.endpoint
         << "': get_session_description failed: code="
         << static_cast<int>(status.error_code())
         << ", message=" << status.error_message();
@@ -308,7 +335,7 @@ namespace AdServer::UserInfoSvcs
     if (refs.empty())
     {
       std::ostringstream ostr;
-      ostr << "UserInfoController '" << endpoint
+      ostr << "UserInfoController '" << controller_client.endpoint
         << "': get_session_description returned no UserInfoManager refs";
       throw Exception(ostr.str());
     }

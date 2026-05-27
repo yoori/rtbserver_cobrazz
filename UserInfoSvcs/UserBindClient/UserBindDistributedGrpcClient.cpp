@@ -33,11 +33,36 @@ namespace AdServer::UserInfoSvcs
     public UserBindServerGrpcAsyncClient
   {
   public:
-    using ControllerRefList = std::vector<std::string>;
+    using ControllerRefList = UserBindControllerRefs;
     using ServerClient = UserBindServerGrpcAsyncBatchingClient;
-    using Pool = AdServer::Grpc::DistributedPartitionPool<ServerClient>;
     using ControllerGrpc =
       adserver::user_info_svcs::user_bind_controller::UserBindControllerGrpc;
+    struct ControllerClient
+    {
+      explicit ControllerClient(const std::string& endpoint)
+        : endpoint(endpoint),
+          name(endpoint),
+          channel(grpc::CreateChannel(
+            this->endpoint,
+            grpc::InsecureChannelCredentials())),
+          stub(ControllerGrpc::NewStub(channel))
+      {}
+
+      void reset()
+      {
+        channel = grpc::CreateChannel(
+          endpoint,
+          grpc::InsecureChannelCredentials());
+        stub = ControllerGrpc::NewStub(channel);
+      }
+
+      const std::string endpoint;
+      const std::string name;
+      std::shared_ptr<grpc::Channel> channel;
+      std::unique_ptr<ControllerGrpc::Stub> stub;
+    };
+    using Pool =
+      AdServer::Grpc::DistributedPartitionPool<ServerClient, ControllerClient>;
 
     Distributor(
       Logging::Logger* logger,
@@ -54,7 +79,10 @@ namespace AdServer::UserInfoSvcs
           std::move(grpc_executor),
           std::move(coalesce_runner),
           logger,
-          &resolve_partition_,
+          [this](ControllerClient& controller_client)
+          {
+            return resolve_partition_(controller_client);
+          },
           &partition_index_,
           &chunk_index_,
           DEFAULT_POOL_TIMEOUT,
@@ -202,14 +230,9 @@ namespace AdServer::UserInfoSvcs
         Response());
     }
 
-    static std::optional<Pool::EndpointChunksList> resolve_partition_(
-      const std::string& endpoint)
+    std::optional<Pool::EndpointChunksList> resolve_partition_(
+      ControllerClient& controller_client)
     {
-      auto channel = grpc::CreateChannel(
-        endpoint,
-        grpc::InsecureChannelCredentials());
-      auto stub = ControllerGrpc::NewStub(channel);
-
       grpc::ClientContext context;
       set_deadline_(context);
       adserver::user_info_svcs::user_bind_controller::
@@ -218,11 +241,15 @@ namespace AdServer::UserInfoSvcs
         GetSessionDescriptionResponse response;
 
       const auto status =
-        stub->get_session_description(&context, request, &response);
+        controller_client.stub->get_session_description(
+          &context,
+          request,
+          &response);
       if (!status.ok())
       {
+        controller_client.reset();
         std::ostringstream ostr;
-        ostr << "UserBindController '" << endpoint
+        ostr << "UserBindController '" << controller_client.endpoint
           << "': get_session_description failed: code="
           << static_cast<int>(status.error_code())
           << ", message=" << status.error_message();
@@ -245,7 +272,7 @@ namespace AdServer::UserInfoSvcs
       if (refs.empty())
       {
         std::ostringstream ostr;
-        ostr << "UserBindController '" << endpoint
+        ostr << "UserBindController '" << controller_client.endpoint
           << "': get_session_description returned no UserBindServer refs";
         throw Exception(ostr.str());
       }

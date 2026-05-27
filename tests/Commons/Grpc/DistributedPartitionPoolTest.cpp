@@ -143,15 +143,15 @@ namespace
     return std::make_shared<Pool>(
       "DistributedPartitionPoolTest",
       "Test",
-      std::vector<std::string>{"controller-0", "controller-1"},
+      Pool::ControllerRefList{{"controller-0"}, {"controller-1"}},
       AdServer::Grpc::BatchingOptions(),
       std::shared_ptr<AdServer::Grpc::GrpcExecutor>(),
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>(),
       nullptr,
-      [controller](const std::string& url)
+      [controller](AdServer::Grpc::BasicControllerRefHolder& controller_ref)
         -> std::optional<Pool::EndpointChunksList>
       {
-        return controller->resolve(url);
+        return controller->resolve(controller_ref.endpoint);
       },
       [](const std::string& key, const unsigned long partitions_number)
         -> unsigned long

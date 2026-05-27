@@ -23,7 +23,49 @@ namespace AdServer::ChannelSvcs
     {
       context.set_deadline(std::chrono::system_clock::now() + DEFAULT_RPC_TIMEOUT);
     }
+
+    std::string group_name_(const std::vector<std::string>& group)
+    {
+      std::string result;
+      for (const auto& endpoint : group)
+      {
+        if (!result.empty())
+        {
+          result += ",";
+        }
+        result += endpoint;
+      }
+      return result;
+    }
   }
+
+  struct ChannelDistributedGrpcClient::ControllerClient
+  {
+    using ControllerGrpc =
+      adserver::channel_svcs::channel_controller::ChannelControllerGrpc;
+
+    explicit ControllerClient(const std::string& endpoint)
+      : endpoint(endpoint),
+        name(endpoint),
+        channel(grpc::CreateChannel(
+          endpoint,
+          grpc::InsecureChannelCredentials())),
+        stub(ControllerGrpc::NewStub(channel))
+    {}
+
+    void reset()
+    {
+      channel = grpc::CreateChannel(
+        endpoint,
+        grpc::InsecureChannelCredentials());
+      stub = ControllerGrpc::NewStub(channel);
+    }
+
+    const std::string endpoint;
+    const std::string name;
+    std::shared_ptr<grpc::Channel> channel;
+    std::unique_ptr<ControllerGrpc::Stub> stub;
+  };
 
   struct ChannelDistributedGrpcClient::ClientHolder
   {
@@ -167,6 +209,14 @@ namespace AdServer::ChannelSvcs
       throw Exception(
         "ChannelDistributedGrpcClient: empty ChannelController refs");
     }
+    for (const auto& controller_group : channel_controller_refs_)
+    {
+      if (controller_group.empty())
+      {
+        throw Exception(
+          "ChannelDistributedGrpcClient: empty ChannelController ref group");
+      }
+    }
 
     if (!coalesce_runner_)
     {
@@ -179,6 +229,22 @@ namespace AdServer::ChannelSvcs
     }
 
     add_child_object(task_runner_);
+    controller_pools_.reserve(channel_controller_refs_.size());
+    for (const auto& controller_group : channel_controller_refs_)
+    {
+      std::vector<ControllerClientPtr> controller_clients;
+      controller_clients.reserve(controller_group.size());
+      for (const auto& endpoint : controller_group)
+      {
+        controller_clients.emplace_back(
+          std::make_shared<ControllerClient>(endpoint));
+      }
+      auto controller_pool = std::make_shared<ControllerPool>(
+        std::move(controller_clients),
+        coalesce_runner_);
+      add_child_object(controller_pool);
+      controller_pools_.emplace_back(std::move(controller_pool));
+    }
   }
 
   void
@@ -549,14 +615,25 @@ namespace AdServer::ChannelSvcs
     refs_state.clear();
     refs_state.reserve(channel_controller_refs_.size());
 
-    for (const auto& controller_ref : channel_controller_refs_)
+    for (std::size_t i = 0; i < channel_controller_refs_.size(); ++i)
     {
       try
       {
-        auto channel = grpc::CreateChannel(
-          controller_ref,
-          grpc::InsecureChannelCredentials());
-        auto stub = ControllerProto::ChannelControllerGrpc::NewStub(channel);
+        auto controller_ref = controller_pools_[i]->get_object();
+        if (!controller_ref)
+        {
+          Stream::Error ostr;
+          ostr << "ChannelController group '" <<
+            group_name_(channel_controller_refs_[i]) <<
+            "': no available refs: " <<
+            controller_pools_[i]->unavailable_description();
+          callback_->report_error(
+            Generics::ActiveObjectCallback::WARNING,
+            ostr.str(),
+            "ADS-IMPL-117");
+          continue;
+        }
+        auto& ref = *controller_ref;
 
         grpc::ClientContext context;
         set_deadline_(context);
@@ -564,11 +641,18 @@ namespace AdServer::ChannelSvcs
         ControllerProto::GetSessionDescriptionResponse response;
 
         const auto status =
-          stub->get_session_description(&context, request, &response);
+          ref->stub->get_session_description(
+            &context,
+            request,
+            &response);
         if (!status.ok())
         {
+          ref->reset();
+          ref.mark_as_bad(
+            Generics::Time::get_time_of_day() + pool_timeout_,
+            status.error_message());
           Stream::Error ostr;
-          ostr << "ChannelController '" << controller_ref
+          ostr << "ChannelController '" << ref->endpoint
             << "': get_session_description failed: code="
             << static_cast<int>(status.error_code())
             << ", message=" << status.error_message();
@@ -589,8 +673,11 @@ namespace AdServer::ChannelSvcs
         }
         if (server_refs.empty())
         {
+          ref.mark_as_bad(
+            Generics::Time::get_time_of_day() + pool_timeout_,
+            "get_session_description returned no ChannelServer refs");
           Stream::Error ostr;
-          ostr << "ChannelController '" << controller_ref
+          ostr << "ChannelController '" << ref->endpoint
             << "': get_session_description returned no ChannelServer refs";
           callback_->report_error(
             Generics::ActiveObjectCallback::WARNING,
@@ -600,12 +687,15 @@ namespace AdServer::ChannelSvcs
         }
 
         std::sort(server_refs.begin(), server_refs.end());
-        refs_state.emplace_back(controller_ref, std::move(server_refs));
+        refs_state.emplace_back(
+          group_name_(channel_controller_refs_[i]),
+          std::move(server_refs));
       }
       catch (const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << "ChannelController '" << controller_ref
+        ostr << "ChannelController group '" <<
+          group_name_(channel_controller_refs_[i])
           << "': can't resolve refs: " << ex.what();
         callback_->report_error(
           Generics::ActiveObjectCallback::WARNING,
@@ -615,7 +705,8 @@ namespace AdServer::ChannelSvcs
       catch (...)
       {
         Stream::Error ostr;
-        ostr << "ChannelController '" << controller_ref
+        ostr << "ChannelController group '" <<
+          group_name_(channel_controller_refs_[i])
           << "': can't resolve refs: unknown exception";
         callback_->report_error(
           Generics::ActiveObjectCallback::WARNING,

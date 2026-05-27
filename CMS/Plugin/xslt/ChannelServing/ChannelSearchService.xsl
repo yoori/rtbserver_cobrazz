@@ -66,6 +66,7 @@
       <xsl:with-param name="default-log-level" select="$channel-search-service-log-level"/>
     </xsl:call-template>
 
+    <xsl:call-template name="AddGrpcBatchingOptions"/>
     <xsl:call-template name="AddChannelControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="'ChannelSearchService'"/>

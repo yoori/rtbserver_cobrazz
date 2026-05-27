@@ -324,7 +324,8 @@ Application::run(int& argc, char** argv)
 
           channel_client_ =
             std::make_shared<AdServer::ChannelSvcs::ChannelDistributedGrpcClient>(
-              split_refs(service_ref),
+              AdServer::ChannelSvcs::ChannelDistributedGrpcClient::
+                ChannelControllerRefs{split_refs(service_ref)},
               AdServer::Grpc::BatchingOptions(),
               grpc_executor_);
           channel_client_->activate_object();

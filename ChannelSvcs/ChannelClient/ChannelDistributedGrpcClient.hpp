@@ -30,7 +30,8 @@ namespace AdServer::ChannelSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    using ChannelControllerRefs = std::vector<std::string>;
+    using ChannelControllerRefGroup = std::vector<std::string>;
+    using ChannelControllerRefs = std::vector<ChannelControllerRefGroup>;
 
     ChannelDistributedGrpcClient(
       const ChannelControllerRefs& channel_controller_refs,
@@ -74,6 +75,10 @@ namespace AdServer::ChannelSvcs
     using ClientHolderPtr = std::shared_ptr<ClientHolder>;
 
     struct RefHolder;
+    struct ControllerClient;
+    using ControllerClientPtr = std::shared_ptr<ControllerClient>;
+    using ControllerPool = AdServer::Grpc::RefPool<ControllerClient>;
+    using ControllerPoolPtr = std::shared_ptr<ControllerPool>;
     using Pool = AdServer::Grpc::RefPool<RefHolder>;
     using PoolPtr = std::shared_ptr<Pool>;
     using ControllerRefsState =
@@ -113,6 +118,7 @@ namespace AdServer::ChannelSvcs
     std::vector<ClientHolderPtr> current_client_holders_;
     std::vector<ClientHolderPtr> shutdown_client_holders_;
     std::map<std::string, std::weak_ptr<ClientHolder>> client_holders_;
+    std::vector<ControllerPoolPtr> controller_pools_;
 
     std::mutex resolve_lock_;
     std::condition_variable resolve_cond_;

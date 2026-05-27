@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <Commons/ConfigUtils.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
@@ -31,9 +33,16 @@ namespace AdServer::UserInfoSvcs
 
       for(const auto& group : user_info_config.UserInfoControllerGroup())
       {
+        UserInfoDistributedGrpcClient::UserInfoControllerRefGroup
+          user_info_controller_ref_group;
         for(const auto& endpoint : group.Endpoint())
         {
-          user_info_controller_refs.emplace_back(endpoint);
+          user_info_controller_ref_group.emplace_back(endpoint);
+        }
+        if(!user_info_controller_ref_group.empty())
+        {
+          user_info_controller_refs.emplace_back(
+            std::move(user_info_controller_ref_group));
         }
       }
     }

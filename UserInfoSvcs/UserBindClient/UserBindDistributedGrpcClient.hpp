@@ -22,7 +22,8 @@ namespace AdServer::UserInfoSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    using UserBindControllerRefs = std::vector<std::string>;
+    using UserBindControllerRefGroup = std::vector<std::string>;
+    using UserBindControllerRefs = std::vector<UserBindControllerRefGroup>;
 
     UserBindDistributedGrpcClient(
       const UserBindControllerRefs& user_bind_controller_refs,

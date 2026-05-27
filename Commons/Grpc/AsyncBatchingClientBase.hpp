@@ -89,6 +89,16 @@ namespace AdServer::Grpc
     bool maybe_start_connect_for_pending_(
       std::vector<BatchingStreamBase::PendingBatch>& failed_batches,
       const Generics::Time& now) noexcept;
+    void finish_batch_with_error_(
+      BatchingStreamBase::PendingBatch& batch,
+      grpc::StatusCode status_code,
+      const char* status_message,
+      const char* source) noexcept;
+    void finish_batches_with_error_(
+      std::vector<BatchingStreamBase::PendingBatch>& batches,
+      grpc::StatusCode status_code,
+      const char* status_message,
+      const char* source) noexcept;
     void start_connect_() noexcept;
     void release_or_dispatch_(const StreamHolderPtr& stream_holder) noexcept;
     bool dispatch_batch_(

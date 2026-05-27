@@ -2,6 +2,7 @@
 
 #include <set>
 #include <sstream>
+#include <utility>
 
 #include <HTTP/UrlAddress.hpp>
 
@@ -167,9 +168,16 @@ namespace AdServer
 
         for(const auto& group : config.ChannelControllerGroup())
         {
+          AdServer::ChannelSvcs::ChannelDistributedGrpcClient::
+            ChannelControllerRefGroup channel_controller_ref_group;
           for(const auto& endpoint : group.Endpoint())
           {
-            channel_controller_refs.emplace_back(endpoint);
+            channel_controller_ref_group.emplace_back(endpoint);
+          }
+          if(!channel_controller_ref_group.empty())
+          {
+            channel_controller_refs.emplace_back(
+              std::move(channel_controller_ref_group));
           }
         }
 

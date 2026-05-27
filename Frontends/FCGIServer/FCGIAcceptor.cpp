@@ -416,6 +416,15 @@ namespace Frontends
         offset += chunk_size;
       }
 
+      std::vector<char> stdout_end_buf(256);
+      tinyfcgi::message stdout_end_msg(
+        1,
+        stdout_end_buf.data(),
+        stdout_end_buf.size());
+      stdout_end_msg.end_stream(FCGI_STDOUT);
+      auto stdout_end_chunk = stdout_end_msg.str();
+      result.emplace_back(stdout_end_chunk.data(), stdout_end_chunk.size());
+
       std::vector<char> end_buf(256);
       tinyfcgi::message end_msg(1, end_buf.data(), end_buf.size());
       end_msg.end_request(0, FCGI_REQUEST_COMPLETE);
@@ -577,7 +586,10 @@ namespace Frontends
           std::vector<boost::asio::const_buffer> buffer_seq;
           for(auto buf_it = ordered_send_bufs_.begin(); buf_it != ordered_send_bufs_.end(); ++buf_it)
           {
-            buffer_seq.assign((*buf_it)->bufs.begin(), (*buf_it)->bufs.end());
+            buffer_seq.insert(
+              buffer_seq.end(),
+              (*buf_it)->bufs.begin(),
+              (*buf_it)->bufs.end());
           }
 
           boost::asio::async_write(

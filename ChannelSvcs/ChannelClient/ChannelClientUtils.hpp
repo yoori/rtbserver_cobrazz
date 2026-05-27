@@ -19,5 +19,6 @@ namespace AdServer::ChannelSvcs
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       coalesce_runner = {},
-    Logging::Logger* logger = nullptr);
+    Logging::Logger* logger = nullptr,
+    AdServer::Grpc::BatchingOptions batching_options = {});
 }

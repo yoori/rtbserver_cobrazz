@@ -95,7 +95,7 @@ namespace
     if (references.size() > 1 || is_channel_controller(references.front()))
     {
       auto client = std::make_shared<ChannelDistributedGrpcClient>(
-        references,
+        ChannelDistributedGrpcClient::ChannelControllerRefs{references},
         AdServer::Grpc::BatchingOptions(),
         result.grpc_executor,
         result.coalesce_runner);

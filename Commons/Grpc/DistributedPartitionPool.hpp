@@ -29,9 +29,23 @@
 
 namespace AdServer::Grpc
 {
-  template<typename ClientType>
+  struct BasicControllerRefHolder
+  {
+    explicit BasicControllerRefHolder(std::string endpoint_val)
+      : endpoint(std::move(endpoint_val)),
+        name(endpoint)
+    {}
+
+    const std::string endpoint;
+    const std::string name;
+  };
+
+  template<
+    typename ClientType,
+    typename ControllerClientType = BasicControllerRefHolder>
   class DistributedPartitionPool:
-    public Generics::CompositeActiveObject
+    public Generics::CompositeActiveObject,
+    public virtual AdServer::Grpc::Client
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -45,11 +59,14 @@ namespace AdServer::Grpc
     };
 
     using EndpointChunksList = std::vector<EndpointChunks>;
-    using ControllerRefList = std::vector<std::string>;
+    using ControllerRefGroup = std::vector<std::string>;
+    using ControllerRefList = std::vector<ControllerRefGroup>;
     using Client = ClientType;
     using ClientPtr = std::shared_ptr<Client>;
+    using ControllerClient = ControllerClientType;
+    using ControllerClientPtr = std::shared_ptr<ControllerClient>;
     using ResolvePartition = std::function<
-      std::optional<EndpointChunksList>(const std::string&)>;
+      std::optional<EndpointChunksList>(ControllerClient&)>;
     using PartitionIndex = std::function<
       unsigned long(const std::string&, unsigned long)>;
     using ChunkIndex = std::function<
@@ -76,6 +93,9 @@ namespace AdServer::Grpc
     using RefHolderPtr = std::shared_ptr<RefHolder>;
     using Pool = AdServer::Grpc::RefPool<RefHolder>;
     using PoolPtr = std::shared_ptr<Pool>;
+
+    using ControllerPool = AdServer::Grpc::RefPool<ControllerClient>;
+    using ControllerPoolPtr = std::shared_ptr<ControllerPool>;
     using Ref = typename Pool::Ref;
 
     DistributedPartitionPool(
@@ -136,6 +156,11 @@ namespace AdServer::Grpc
       unsigned long partition_num,
       bool force) noexcept;
     void resolve_partition_(unsigned long partition_num) noexcept;
+    void record_resolve_error_(
+      unsigned long partition_num,
+      const std::string& message,
+      const char* source,
+      std::string endpoint = {}) noexcept;
     bool begin_resolve_partition_(
       unsigned long partition_num,
       bool force) noexcept;
@@ -171,6 +196,7 @@ namespace AdServer::Grpc
     Generics::FixedTaskRunner_var task_runner_;
     Logging::Logger_var logger_;
     std::vector<PartitionHolderPtr> partition_holders_;
+    std::vector<ControllerPoolPtr> controller_pools_;
     std::mutex ref_holders_lock_;
     std::map<std::string, std::weak_ptr<RefHolder>> ref_holders_;
     std::mutex resolve_lock_;

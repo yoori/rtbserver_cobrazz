@@ -541,41 +541,57 @@
         enable_grpc_compression="true"
         use_local_subchannel_pool="true"
         reconnect_period="1"/>
-      <cfg:UserBindControllerGroup>
-        <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $user-bind-controller-descriptor]">
-          <xsl:variable name="hosts">
-            <xsl:call-template name="GetHosts">
-              <xsl:with-param name="hosts" select="@host"/>
-              <xsl:with-param name="error-prefix"
-                select="concat($error-prefix,
-                  ': AddUserBindControllerGroups: UserBindController grpc hosts resolving: ')"/>
-            </xsl:call-template>
-          </xsl:variable>
+      <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
+        <cfg:UserBindControllerGroup>
+          <xsl:for-each select="./service[@descriptor = $user-bind-controller-descriptor]">
+            <xsl:variable name="hosts">
+              <xsl:call-template name="GetHosts">
+                <xsl:with-param name="hosts" select="@host"/>
+                <xsl:with-param name="error-prefix"
+                  select="concat($error-prefix,
+                    ': AddUserBindControllerGroups: UserBindController grpc hosts resolving: ')"/>
+              </xsl:call-template>
+            </xsl:variable>
 
-          <xsl:variable
-            name="user-bind-controller-grpc-port"
-            select="./configuration/cfg:userBindController/cfg:networkParams/@grpc_port"/>
+            <xsl:variable
+              name="user-bind-controller-grpc-port"
+              select="./configuration/cfg:userBindController/cfg:networkParams/@grpc_port"/>
 
-          <xsl:variable name="user-bind-controller-grpc-port-value">
-            <xsl:choose>
-              <xsl:when test="count($user-bind-controller-grpc-port) > 0">
-                <xsl:value-of select="$user-bind-controller-grpc-port"/>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:value-of select="$def-user-bind-controller-grpc-port"/>
-              </xsl:otherwise>
-            </xsl:choose>
-          </xsl:variable>
+            <xsl:variable name="user-bind-controller-grpc-port-value">
+              <xsl:choose>
+                <xsl:when test="count($user-bind-controller-grpc-port) > 0">
+                  <xsl:value-of select="$user-bind-controller-grpc-port"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="$def-user-bind-controller-grpc-port"/>
+                </xsl:otherwise>
+              </xsl:choose>
+            </xsl:variable>
 
-          <xsl:for-each select="exsl:node-set($hosts)//host">
-            <cfg:Endpoint>
-              <xsl:value-of select="concat(., ':', $user-bind-controller-grpc-port-value)"/>
-            </cfg:Endpoint>
+            <xsl:for-each select="exsl:node-set($hosts)//host">
+              <cfg:Endpoint>
+                <xsl:value-of select="concat(., ':', $user-bind-controller-grpc-port-value)"/>
+              </cfg:Endpoint>
+            </xsl:for-each>
           </xsl:for-each>
-        </xsl:for-each>
-      </cfg:UserBindControllerGroup>
+        </cfg:UserBindControllerGroup>
+      </xsl:for-each>
     </cfg:UserBind>
   </xsl:if>
+</xsl:template>
+
+<xsl:template name="AddGrpcBatchingOptions">
+  <cfg:BatchingOptions
+    channels_number="16"
+    max_batch_size="2000"
+    max_inflight="10000"
+    error_on_inflight_reaching="true"
+    max_outstanding_requests="0"
+    hot_buckets_count="4"
+    max_batch_delay_us="3000"
+    enable_grpc_compression="true"
+    use_local_subchannel_pool="true"
+    reconnect_period="1"/>
 </xsl:template>
 
 <xsl:template name="AddChannelControllerGroups">
@@ -642,42 +658,44 @@
         enable_grpc_compression="true"
         use_local_subchannel_pool="true"
         reconnect_period="1"/>
-      <cfg:UserInfoControllerGroup>
-        <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $user-info-controller-descriptor]">
-          <xsl:variable name="hosts">
-            <xsl:call-template name="GetHosts">
-              <xsl:with-param name="hosts" select="@host"/>
-              <xsl:with-param name="error-prefix"
-                select="concat($error-prefix,
-                  ': AddUserInfoManagerControllerGroups: UserInfoController grpc hosts resolving: ')"/>
-            </xsl:call-template>
-          </xsl:variable>
+      <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
+        <cfg:UserInfoControllerGroup>
+          <xsl:for-each select="./service[@descriptor = $user-info-controller-descriptor]">
+            <xsl:variable name="hosts">
+              <xsl:call-template name="GetHosts">
+                <xsl:with-param name="hosts" select="@host"/>
+                <xsl:with-param name="error-prefix"
+                  select="concat($error-prefix,
+                    ': AddUserInfoManagerControllerGroups: UserInfoController grpc hosts resolving: ')"/>
+              </xsl:call-template>
+            </xsl:variable>
 
-          <xsl:variable
-            name="user-info-controller-grpc-port"
-            select="./configuration/cfg:userInfoController/cfg:networkParams/@grpc_port"/>
+            <xsl:variable
+              name="user-info-controller-grpc-port"
+              select="./configuration/cfg:userInfoController/cfg:networkParams/@grpc_port"/>
 
-          <xsl:variable name="user-info-controller-grpc-port-value">
-            <xsl:choose>
-              <xsl:when test="count(./configuration/cfg:userInfoController/cfg:networkParams/@port) > 0">
-                <xsl:value-of select="./configuration/cfg:userInfoController/cfg:networkParams/@port"/>
-              </xsl:when>
-              <xsl:when test="count($user-info-controller-grpc-port) > 0">
-                <xsl:value-of select="$user-info-controller-grpc-port"/>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:value-of select="$def-user-info-controller-grpc-port"/>
-              </xsl:otherwise>
-            </xsl:choose>
-          </xsl:variable>
+            <xsl:variable name="user-info-controller-grpc-port-value">
+              <xsl:choose>
+                <xsl:when test="count(./configuration/cfg:userInfoController/cfg:networkParams/@port) > 0">
+                  <xsl:value-of select="./configuration/cfg:userInfoController/cfg:networkParams/@port"/>
+                </xsl:when>
+                <xsl:when test="count($user-info-controller-grpc-port) > 0">
+                  <xsl:value-of select="$user-info-controller-grpc-port"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="$def-user-info-controller-grpc-port"/>
+                </xsl:otherwise>
+              </xsl:choose>
+            </xsl:variable>
 
-          <xsl:for-each select="exsl:node-set($hosts)//host">
-            <cfg:Endpoint>
-              <xsl:value-of select="concat(., ':', $user-info-controller-grpc-port-value)"/>
-            </cfg:Endpoint>
+            <xsl:for-each select="exsl:node-set($hosts)//host">
+              <cfg:Endpoint>
+                <xsl:value-of select="concat(., ':', $user-info-controller-grpc-port-value)"/>
+              </cfg:Endpoint>
+            </xsl:for-each>
           </xsl:for-each>
-        </xsl:for-each>
-      </cfg:UserInfoControllerGroup>
+        </cfg:UserInfoControllerGroup>
+      </xsl:for-each>
     </cfg:UserInfo>
   </xsl:if>
 </xsl:template>

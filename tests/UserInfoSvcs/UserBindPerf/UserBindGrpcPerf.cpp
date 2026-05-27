@@ -526,7 +526,8 @@ main(int argc, char** argv)
           client_threads);
       distributed_client =
         std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
-          std::vector<std::string>{*opt_user_bind_controller_grpc_endpoint},
+          AdServer::UserInfoSvcs::UserBindDistributedGrpcClient::
+            UserBindControllerRefs{{*opt_user_bind_controller_grpc_endpoint}},
           options,
           grpc_executor,
           nullptr,

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <Commons/ConfigUtils.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
@@ -30,9 +32,16 @@ namespace AdServer::UserInfoSvcs
 
       for(const auto& group : user_bind_config.UserBindControllerGroup())
       {
+        UserBindDistributedGrpcClient::UserBindControllerRefGroup
+          user_bind_controller_ref_group;
         for(const auto& endpoint : group.Endpoint())
         {
-          user_bind_controller_refs.emplace_back(endpoint);
+          user_bind_controller_ref_group.emplace_back(endpoint);
+        }
+        if(!user_bind_controller_ref_group.empty())
+        {
+          user_bind_controller_refs.emplace_back(
+            std::move(user_bind_controller_ref_group));
         }
       }
     }

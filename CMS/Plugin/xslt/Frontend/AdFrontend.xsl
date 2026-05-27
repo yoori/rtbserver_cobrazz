@@ -463,10 +463,13 @@
       <xsl:with-param name="add-user-info-grpc" select="'true'"/>
     </xsl:call-template>
 
-    <xsl:call-template name="AddChannelControllerGroups">
-      <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
-      <xsl:with-param name="error-prefix" select="AdFrontend"/>
-    </xsl:call-template>
+    <cfg:Channel>
+      <xsl:call-template name="AddGrpcBatchingOptions"/>
+      <xsl:call-template name="AddChannelControllerGroups">
+        <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
+        <xsl:with-param name="error-prefix" select="AdFrontend"/>
+      </xsl:call-template>
+    </cfg:Channel>
 
     <xsl:call-template name="AddUserBindControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
