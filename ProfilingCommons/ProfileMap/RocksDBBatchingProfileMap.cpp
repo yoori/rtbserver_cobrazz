@@ -362,29 +362,36 @@ namespace AdServer::ProfilingCommons
   bool
   RocksDBBatchingProfileMapImpl::enqueue_operation_(Operation&& operation) const
   {
-    Sync::PosixGuard guard(queue_lock_);
-    if(!active())
+    Operations new_operations;
+    new_operations.emplace_back(std::move(operation));
+
     {
-      return false;
+      Sync::PosixGuard guard(queue_lock_);
+      if(!active())
+      {
+        return false;
+      }
+
+      Operation& operation_ref = new_operations.front();
+      operation_ref.sequence = next_operation_sequence_++;
+      key_sequences_[operation_ref.key].push_back(operation_ref.sequence);
+
+      const bool was_empty =
+        read_operations_.empty() && write_operations_.empty();
+      Operations& queue = is_write_operation_(operation_ref.type) ?
+        write_operations_ :
+        read_operations_;
+      const bool fills_batch =
+        queue.size() + 1 >= batch_size_ && queue.size() < batch_size_;
+      queue.splice(queue.end(), new_operations);
+
+      if(!was_empty && !fills_batch)
+      {
+        return true;
+      }
     }
 
-    operation.sequence = next_operation_sequence_++;
-    key_sequences_[operation.key].push_back(operation.sequence);
-
-    const bool was_empty =
-      read_operations_.empty() && write_operations_.empty();
-    Operations& queue = is_write_operation_(operation.type) ?
-      write_operations_ :
-      read_operations_;
-    const bool fills_batch =
-      queue.size() + 1 >= batch_size_ && queue.size() < batch_size_;
-    queue.emplace_back(std::move(operation));
-
-    if(was_empty || fills_batch)
-    {
-      queue_cond_.signal();
-    }
-
+    queue_cond_.signal();
     return true;
   }
 
