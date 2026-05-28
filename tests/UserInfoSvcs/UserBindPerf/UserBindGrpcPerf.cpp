@@ -142,6 +142,40 @@ namespace
     };
   }
 
+  void
+  print_async_batch_diagnostics(
+    std::ostream& out,
+    const AdServer::Grpc::Stats& stats)
+  {
+    out <<
+      ", input_items=" << stats.input_items <<
+      ", completed_items=" << stats.completed_items <<
+      ", completed_error_items=" << stats.completed_error_items <<
+      ", outstanding_items=" <<
+        (stats.input_items - stats.completed_items) <<
+      ", queue_items=" << stats.queue_items <<
+      ", pending_batches=" << stats.pending_batches <<
+      ", pending_batch_items=" << stats.pending_batch_items <<
+      ", inflight_items=" << stats.inflight_items <<
+      ", stream_inflight_items=" << stats.stream_inflight_items <<
+      ", active_streams=" << stats.active_streams <<
+      ", available_streams=" << stats.available_streams <<
+      ", connecting_streams=" << stats.connecting_streams <<
+      ", draining_streams=" << stats.draining_streams <<
+      ", deferred_streams=" << stats.deferred_streams;
+
+    if (stats.last_error.has_value())
+    {
+      out <<
+        ", last_error_time=" <<
+          stats.last_error->time.get_gm_time().format("%F %T") <<
+        ", last_error_endpoint=" << stats.last_error->endpoint <<
+        ", last_error_code=" << stats.last_error->code <<
+        ", last_error_message=" << stats.last_error->message <<
+        ", last_error_source=" << stats.last_error->source;
+    }
+  }
+
   class LatencyTopPercentile final
   {
   public:
@@ -644,6 +678,7 @@ main(int argc, char** argv)
             ", timing_items=" << timing_coalesce_items <<
             ", total_timing_items=" << stats.timing_coalesce_items <<
             ", max_streams=" << stats.max_streams;
+          print_async_batch_diagnostics(std::cout, stats);
           if (queue_wait_count != 0)
           {
             std::cout << ", avg_queue_wait=" <<
@@ -851,7 +886,9 @@ main(int argc, char** argv)
       ", write_items: " << stats.write_items <<
       ", avg_batch: " << format_stat_float(total_avg_batch) <<
       ", timing_items: " << stats.timing_coalesce_items <<
-      ", max_streams: " << stats.max_streams <<
+      ", max_streams: " << stats.max_streams;
+    print_async_batch_diagnostics(std::cout, stats);
+    std::cout <<
       ", avg_latency: " << format_stat_float(total_avg_latency_us) << "us" <<
       ", p99_latency: " << latency_p99.p99(total_latency_count) << "us" <<
       ", max_latency: " << latency_max_us.load(std::memory_order_relaxed) << "us";
