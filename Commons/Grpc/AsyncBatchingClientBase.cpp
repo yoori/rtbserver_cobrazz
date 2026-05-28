@@ -80,140 +80,6 @@ namespace AdServer::Grpc
     }
   }
 
-  // This helper guarantees callback delivery when a batch owner is lost inside
-  // the asio executor processing stack before the callback path is reached.
-  class AsyncBatchingClientBase::DetachedBatchStorage final
-  {
-  public:
-    struct BatchGuard
-    {
-      explicit BatchGuard(
-        std::uint64_t id_val,
-        BatchingStreamBase::PendingBatch batch_val)
-        : id(id_val),
-          batch(std::move(batch_val))
-      {}
-
-      BatchingStreamBase::PendingBatch claim_payload()
-      {
-        if (claimed.exchange(true, std::memory_order_acq_rel))
-        {
-          return {};
-        }
-
-        return std::move(batch);
-      }
-
-      const std::uint64_t id;
-
-    private:
-      std::atomic<bool> claimed{false};
-      BatchingStreamBase::PendingBatch batch;
-    };
-
-    using BatchGuardPtr = std::shared_ptr<BatchGuard>;
-
-    BatchGuardPtr register_batch(BatchingStreamBase::PendingBatch&& batch);
-
-    void unregister_batch(std::uint64_t id);
-
-    void close();
-
-    std::vector<BatchingStreamBase::PendingBatch> drain_all();
-
-  private:
-    std::mutex lock_;
-    bool closed_ = false;
-    std::unordered_map<std::uint64_t, BatchGuardPtr> batches_;
-    std::atomic<std::uint64_t> next_id_{1};
-  };
-
-  struct AsyncBatchingClientBase::DetachedBatchOwner
-  {
-    explicit DetachedBatchOwner(
-      DetachedBatchStorage::BatchGuardPtr guard_val)
-      : guard(std::move(guard_val))
-    {}
-
-    ~DetachedBatchOwner() = default;
-
-    DetachedBatchOwner(const DetachedBatchOwner&) = delete;
-    DetachedBatchOwner& operator=(const DetachedBatchOwner&) = delete;
-    DetachedBatchOwner(DetachedBatchOwner&&) noexcept = default;
-    DetachedBatchOwner& operator=(DetachedBatchOwner&&) noexcept = default;
-
-    BatchingStreamBase::PendingBatch claim_payload()
-    {
-      assert(guard);
-      return guard->claim_payload();
-    }
-
-    std::uint64_t id() const noexcept
-    {
-      assert(guard);
-      return guard->id;
-    }
-
-    DetachedBatchStorage::BatchGuardPtr guard;
-  };
-
-  AsyncBatchingClientBase::DetachedBatchStorage::BatchGuardPtr
-  AsyncBatchingClientBase::DetachedBatchStorage::register_batch(
-    BatchingStreamBase::PendingBatch&& batch)
-  {
-    assert(!batch.empty());
-
-    const auto id = next_id_.fetch_add(1, std::memory_order_relaxed);
-    auto batch_guard = std::make_shared<BatchGuard>(id, std::move(batch));
-    auto registered_batch_guard = batch_guard;
-
-    {
-      std::lock_guard<std::mutex> lock(lock_);
-      assert(!closed_);
-      batches_.emplace(id, std::move(registered_batch_guard));
-    }
-
-    return batch_guard;
-  }
-
-  void
-  AsyncBatchingClientBase::DetachedBatchStorage::unregister_batch(
-    std::uint64_t id)
-  {
-    std::lock_guard<std::mutex> lock(lock_);
-    batches_.erase(id);
-  }
-
-  void
-  AsyncBatchingClientBase::DetachedBatchStorage::close()
-  {
-    std::lock_guard<std::mutex> lock(lock_);
-    closed_ = true;
-  }
-
-  std::vector<BatchingStreamBase::PendingBatch>
-  AsyncBatchingClientBase::DetachedBatchStorage::drain_all()
-  {
-    decltype(batches_) batches;
-    {
-      std::lock_guard<std::mutex> lock(lock_);
-      batches.swap(batches_);
-    }
-
-    std::vector<BatchingStreamBase::PendingBatch> result;
-    result.reserve(batches.size());
-    for (auto& [_, batch] : batches)
-    {
-      auto pending_batch = batch->claim_payload();
-      if (!pending_batch.empty())
-      {
-        result.emplace_back(std::move(pending_batch));
-      }
-    }
-
-    return result;
-  }
-
   AsyncBatchingClientBase::AsyncBatchingClientBase(
     const std::string& endpoint,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
@@ -227,7 +93,6 @@ namespace AdServer::Grpc
       grpc_executor_(std::move(grpc_executor)),
       coalesce_runner_(std::move(coalesce_runner)),
       batching_queue_(std::make_shared<AdServer::Grpc::BatchingQueue>(options_)),
-      detached_batch_storage_(std::make_shared<DetachedBatchStorage>()),
       inflight_limiter_(options_.max_inflight),
       submission_gate_(std::make_shared<AdServer::Commons::ActivityGate>())
   {
@@ -267,7 +132,6 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::activate_object_()
   {
-    detached_batch_storage_ = std::make_shared<DetachedBatchStorage>();
     timing_coalesce_gate_ =
       std::make_shared<AdServer::Commons::ActivityGate>();
     stream_shrink_gate_ =
@@ -291,7 +155,6 @@ namespace AdServer::Grpc
     timing_coalesce_gate_->deactivate_object();
     assert(stream_shrink_gate_);
     stream_shrink_gate_->deactivate_object();
-    detached_batch_storage_->close();
     Generics::CompositeActiveObject::deactivate_object_();
     deactivate_streams_();
   }
@@ -307,12 +170,6 @@ namespace AdServer::Grpc
     timing_coalesce_gate_->wait_object();
     assert(stream_shrink_gate_);
     stream_shrink_gate_->wait_object();
-    auto detached_batches = detached_batch_storage_->drain_all();
-    finish_batches_with_error(
-      detached_batches,
-      grpc::StatusCode::UNAVAILABLE,
-      "inactive",
-      endpoint_);
     std::vector<BatchingStreamBase::PendingBatch> pending_batches;
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
@@ -804,26 +661,20 @@ namespace AdServer::Grpc
     assert(stream_holder);
     assert(stream_holder->stream);
 
-    DetachedBatchOwner owner(
-      detached_batch_storage_->register_batch(std::move(batch)));
-    auto owned_batch = owner.claim_payload();
-    assert(!owned_batch.empty());
-
     BatchingStreamBase::PendingBatch failed_batch;
     bool write_started = false;
     try
     {
       write_started = stream_holder->stream->try_start_write(
-        std::move(owned_batch),
+        std::move(batch),
         false,
         &failed_batch);
     }
     catch (...)
     {
-      failed_batch = std::move(owned_batch);
+      failed_batch = std::move(batch);
     }
 
-    detached_batch_storage_->unregister_batch(owner.id());
     if (write_started)
     {
       return true;
@@ -1167,20 +1018,33 @@ namespace AdServer::Grpc
   {
     assert(stream);
 
-    std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
-    auto it = std::find(
-      draining_streams_.begin(),
-      draining_streams_.end(),
-      stream_holder);
-    if (it == draining_streams_.end())
+    StreamHolderPtr holder;
     {
-      return;
+      std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
+      auto it = std::find(
+        draining_streams_.begin(),
+        draining_streams_.end(),
+        stream_holder);
+      if (it == draining_streams_.end())
+      {
+        return;
+      }
+
+      holder = std::move(*it);
+      draining_streams_.erase(it);
     }
 
-    auto holder = std::move(*it);
-    draining_streams_.erase(it);
     if (holder && holder->stream)
     {
+      try
+      {
+        holder->stream->deactivate_object();
+        holder->stream->wait_object();
+      }
+      catch (...)
+      {}
+
+      std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
       deferred_streams_.emplace_back(holder->stream);
     }
   }

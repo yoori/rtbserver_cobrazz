@@ -11,9 +11,17 @@ namespace AdServer::Commons
 
   ActivityGate::Guard::~Guard() noexcept
   {
+    reset();
+  }
+
+  void
+  ActivityGate::Guard::reset() noexcept
+  {
     if (gate_)
     {
-      gate_->leave_();
+      auto* gate = gate_;
+      gate_ = nullptr;
+      gate->leave_();
     }
   }
 
@@ -47,6 +55,24 @@ namespace AdServer::Commons
   }
 
   void
+  ActivityGate::wait_for_activities()
+  {
+    Sync::ConditionalGuard guard(cond_);
+    waiters_.fetch_add(1, std::memory_order_acq_rel);
+    while (running_.load(std::memory_order_acquire) != 0)
+    {
+      guard.wait();
+    }
+    waiters_.fetch_sub(1, std::memory_order_acq_rel);
+  }
+
+  bool
+  ActivityGate::has_activities() const noexcept
+  {
+    return running_.load(std::memory_order_acquire) != 0;
+  }
+
+  void
   ActivityGate::activate_object_()
   {
     assert(running_.load(std::memory_order_acquire) == 0);
@@ -70,7 +96,8 @@ namespace AdServer::Commons
   {
     const auto previous = running_.fetch_sub(1, std::memory_order_acq_rel);
     assert(previous > 0);
-    if (previous == 1 && closed_.load(std::memory_order_acquire))
+    if (previous == 1 && (closed_.load(std::memory_order_acquire) ||
+      waiters_.load(std::memory_order_acquire) != 0))
     {
       Sync::PosixGuard guard(cond_);
       cond_.broadcast();

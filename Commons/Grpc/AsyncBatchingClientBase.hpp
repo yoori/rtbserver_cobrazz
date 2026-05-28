@@ -62,11 +62,8 @@ namespace AdServer::Grpc
     using BatchingQueuePtr =
       std::shared_ptr<AdServer::Grpc::BatchingQueue>;
     struct StreamHolder;
-    class DetachedBatchStorage;
-    struct DetachedBatchOwner;
     using StreamHolderPtr = std::shared_ptr<StreamHolder>;
     using ActivityGatePtr = std::shared_ptr<AdServer::Commons::ActivityGate>;
-    using DetachedBatchStoragePtr = std::shared_ptr<DetachedBatchStorage>;
     using BatchResponseCallback =
       std::function<void(const adserver::grpc::BatchResponseItem&)>;
 
@@ -130,7 +127,6 @@ namespace AdServer::Grpc
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       coalesce_runner_;
     BatchingQueuePtr batching_queue_;
-    DetachedBatchStoragePtr detached_batch_storage_;
     std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams_;
     std::vector<StreamHolderPtr> draining_streams_;
     std::vector<BatchingStreamPtr> deferred_streams_;

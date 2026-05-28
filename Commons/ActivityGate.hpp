@@ -20,6 +20,8 @@ namespace AdServer::Commons
 
       ~Guard() noexcept;
 
+      void reset() noexcept;
+
       Guard(const Guard&) = delete;
       Guard& operator=(const Guard&) = delete;
 
@@ -37,6 +39,8 @@ namespace AdServer::Commons
     ~ActivityGate() noexcept override = default;
 
     Guard enter() noexcept;
+    void wait_for_activities();
+    bool has_activities() const noexcept;
 
   protected:
     void activate_object_() override;
@@ -49,5 +53,6 @@ namespace AdServer::Commons
   private:
     std::atomic<bool> closed_{true};
     std::atomic<std::size_t> running_{0};
+    std::atomic<std::size_t> waiters_{0};
   };
 }
