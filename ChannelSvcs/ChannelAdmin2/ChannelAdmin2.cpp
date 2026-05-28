@@ -10,6 +10,8 @@
 #include <Generics/ActiveObject.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/Uuid.hpp>
+#include <HTTP/UrlAddress.hpp>
+#include <Language/BLogic/NormalizeTrigger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <String/StringManip.hpp>
@@ -146,9 +148,39 @@ namespace
   }
 
   void
+  print_channel_atoms(
+    const char* name,
+    const google::protobuf::RepeatedPtrField<Proto::ChannelAtom>& channels)
+  {
+    std::cout << name << '=';
+    for (const auto& channel : channels)
+    {
+      std::cout << ' ' << channel.id();
+      if (channel.trigger_channel_id())
+      {
+        std::cout << "::" << channel.trigger_channel_id();
+      }
+    }
+    std::cout << '\n';
+  }
+
+  void
+  print_content_channels(
+    const google::protobuf::RepeatedPtrField<Proto::ContentChannelAtom>& channels)
+  {
+    std::cout << "content_channel_ids=";
+    for (const auto& channel : channels)
+    {
+      std::cout << ' ' << channel.id() << ':' << channel.weight();
+    }
+    std::cout << '\n';
+  }
+
+  void
   print_match_result(const Proto::MatchResponse& result)
   {
     const auto& matched_channels = result.matched_channels();
+    std::cout << "hostname=" << result.hostname() << '\n';
     std::cout << "page_channels=" <<
       matched_channels.page_channels_size() << '\n';
     std::cout << "search_channels=" <<
@@ -161,8 +193,25 @@ namespace
       matched_channels.uid_channels_size() << '\n';
     std::cout << "content_channels=" <<
       result.content_channels_size() << '\n';
+    print_channel_atoms("page_channel_ids", matched_channels.page_channels());
+    print_channel_atoms("search_channel_ids", matched_channels.search_channels());
+    print_channel_atoms("url_channel_ids", matched_channels.url_channels());
+    print_channel_atoms(
+      "url_keyword_channel_ids",
+      matched_channels.url_keyword_channels());
+    print_content_channels(result.content_channels());
     std::cout << "no_adv=" << result.no_adv() << '\n';
     std::cout << "no_track=" << result.no_track() << '\n';
+  }
+
+  void
+  print_match_request(const Proto::MatchRequest& request)
+  {
+    std::cout << "request.first_url=" << request.first_url() << '\n';
+    std::cout << "request.first_url_words=" << request.first_url_words() << '\n';
+    std::cout << "request.pwords=" << request.pwords() << '\n';
+    std::cout << "request.swords=" << request.swords() << '\n';
+    std::cout << "request.statuses=" << request.statuses() << '\n';
   }
 
   void
@@ -188,22 +237,32 @@ main(int argc, char** argv)
     Generics::AppUtils::Args args(-1);
     Generics::AppUtils::StringOption endpoints;
     Generics::AppUtils::StringOption url("");
+    Generics::AppUtils::StringOption url_words("");
     Generics::AppUtils::StringOption pwords("");
     Generics::AppUtils::StringOption swords("");
     Generics::AppUtils::StringOption uid("");
     Generics::AppUtils::StringOption status("A");
     Generics::AppUtils::StringOption ids("");
+    Generics::AppUtils::CheckOption normalize_url;
+    Generics::AppUtils::CheckOption normalize_url_words;
+    Generics::AppUtils::CheckOption show_request;
 
     args.add(
       Generics::AppUtils::equal_name("endpoints") ||
       Generics::AppUtils::short_name("h"),
       endpoints);
     args.add(Generics::AppUtils::equal_name("url"), url);
+    args.add(Generics::AppUtils::equal_name("url-words"), url_words);
     args.add(Generics::AppUtils::equal_name("pwords"), pwords);
     args.add(Generics::AppUtils::equal_name("swords"), swords);
     args.add(Generics::AppUtils::equal_name("uid"), uid);
     args.add(Generics::AppUtils::equal_name("status"), status);
     args.add(Generics::AppUtils::equal_name("ids"), ids);
+    args.add(Generics::AppUtils::equal_name("normalize-url"), normalize_url);
+    args.add(
+      Generics::AppUtils::equal_name("normalize-url-words"),
+      normalize_url_words);
+    args.add(Generics::AppUtils::equal_name("show-request"), show_request);
     args.parse(argc - 1, argv + 1);
 
     const auto& commands = args.commands();
@@ -211,8 +270,9 @@ main(int argc, char** argv)
     {
       std::cerr <<
         "Usage: ChannelAdmin2 --endpoints controller-host:port|server-host:port "
-        "match|ccg_traits [--url URL] [--pwords WORDS] [--swords WORDS] "
-        "[--uid UID] [--status S] [--ids 1,2]\n";
+        "match|ccg_traits [--url URL] [--url-words WORDS] [--pwords WORDS] "
+        "[--swords WORDS] [--uid UID] [--status S] [--ids 1,2] "
+        "[--normalize-url] [--normalize-url-words] [--show-request]\n";
       return 1;
     }
 
@@ -229,8 +289,23 @@ main(int argc, char** argv)
     if (commands.front() == "match")
     {
       Proto::MatchRequest request;
+      std::string first_url = *url;
+      if (normalize_url.enabled() && !first_url.empty())
+      {
+        HTTP::BrowserAddress addr(first_url);
+        addr.get_view(HTTP::HTTPAddress::VW_FULL, first_url);
+      }
+
+      std::string first_url_words = *url_words;
+      if (normalize_url_words.enabled() && first_url_words.empty())
+      {
+        std::string kw_from_http = HTTP::keywords_from_http_address(first_url);
+        Language::Trigger::normalize_phrase(kw_from_http, first_url_words, 0);
+      }
+
       request.set_request_id("ChannelAdmin2");
-      request.set_first_url(*url);
+      request.set_first_url(first_url);
+      request.set_first_url_words(first_url_words);
       request.set_pwords(*pwords);
       request.set_swords(*swords);
       request.set_uid(::GrpcAlgs::pack_user_id(
@@ -241,6 +316,10 @@ main(int argc, char** argv)
       request.set_return_negative(false);
       request.set_simplify_page(true);
       request.set_fill_content(true);
+      if (show_request.enabled())
+      {
+        print_match_request(request);
+      }
       const auto result =
         AdServer::ChannelSvcs::GrpcAlgs::channel_match(*client, request);
       print_match_result(result);

@@ -5,6 +5,8 @@ add_executable(ChannelAdmin2
 target_link_libraries(ChannelAdmin2
   Logger
   Generics
+  HTTP
+  BLogic
   Commons
   ChannelClient
   ChannelControllerGrpc

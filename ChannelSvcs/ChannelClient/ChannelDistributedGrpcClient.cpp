@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <map>
 #include <set>
 #include <utility>
 
@@ -36,6 +37,123 @@ namespace AdServer::ChannelSvcs
         result += endpoint;
       }
       return result;
+    }
+
+    void append_channel_atoms_(
+      google::protobuf::RepeatedPtrField<
+        adserver::channel_svcs::channel_server::ChannelAtom>* target,
+      const google::protobuf::RepeatedPtrField<
+        adserver::channel_svcs::channel_server::ChannelAtom>& source)
+    {
+      for (const auto& atom : source)
+      {
+        *target->Add() = atom;
+      }
+    }
+
+    void merge_match_response_(
+      adserver::channel_svcs::channel_server::MatchResponse& target,
+      const adserver::channel_svcs::channel_server::MatchResponse& source)
+    {
+      auto* target_channels = target.mutable_matched_channels();
+      const auto& source_channels = source.matched_channels();
+
+      append_channel_atoms_(
+        target_channels->mutable_page_channels(),
+        source_channels.page_channels());
+      append_channel_atoms_(
+        target_channels->mutable_search_channels(),
+        source_channels.search_channels());
+      append_channel_atoms_(
+        target_channels->mutable_url_channels(),
+        source_channels.url_channels());
+      append_channel_atoms_(
+        target_channels->mutable_url_keyword_channels(),
+        source_channels.url_keyword_channels());
+
+      for (const auto channel_id : source_channels.uid_channels())
+      {
+        target_channels->add_uid_channels(channel_id);
+      }
+
+      std::map<std::uint32_t, std::uint32_t> content_weights;
+      for (const auto& channel : target.content_channels())
+      {
+        content_weights[channel.id()] += channel.weight();
+      }
+      for (const auto& channel : source.content_channels())
+      {
+        content_weights[channel.id()] += channel.weight();
+      }
+      target.clear_content_channels();
+      for (const auto& [channel_id, weight] : content_weights)
+      {
+        auto* channel = target.add_content_channels();
+        channel->set_id(channel_id);
+        channel->set_weight(weight);
+      }
+
+      target.set_no_adv(target.no_adv() || source.no_adv());
+      target.set_no_track(target.no_track() || source.no_track());
+      if (!source.hostname().empty())
+      {
+        if (target.hostname().empty())
+        {
+          target.set_hostname(source.hostname());
+        }
+        else
+        {
+          target.set_hostname(target.hostname() + "," + source.hostname());
+        }
+      }
+      if (!source.match_time().empty())
+      {
+        if (target.match_time().empty())
+        {
+          target.set_match_time(source.match_time());
+        }
+      }
+    }
+
+    void compose_traits_response_(
+      adserver::channel_svcs::channel_server::GetCcgTraitsResponse& target,
+      const std::vector<
+        adserver::channel_svcs::channel_server::GetCcgTraitsResponse>& sources)
+    {
+      std::set<std::uint64_t> negative_ccgs;
+      for (const auto& source : sources)
+      {
+        for (const auto ccg_id : source.neg_ccg())
+        {
+          if (negative_ccgs.insert(ccg_id).second)
+          {
+            target.add_neg_ccg(ccg_id);
+          }
+        }
+      }
+
+      for (const auto& source : sources)
+      {
+        for (const auto& keyword : source.ccg_keywords())
+        {
+          if (!negative_ccgs.count(keyword.ccg_id()))
+          {
+            *target.add_ccg_keywords() = keyword;
+          }
+        }
+
+        if (!source.hostname().empty())
+        {
+          if (target.hostname().empty())
+          {
+            target.set_hostname(source.hostname());
+          }
+          else
+          {
+            target.set_hostname(target.hostname() + "," + source.hostname());
+          }
+        }
+      }
     }
   }
 
@@ -106,22 +224,176 @@ namespace AdServer::ChannelSvcs
 
   struct ChannelDistributedGrpcClient::RefHolder
   {
-    explicit RefHolder(ClientHolderPtr client_holder_val)
-      : client_holder(std::move(client_holder_val))
-    {}
+    explicit RefHolder(std::vector<ClientHolderPtr> client_holders_val)
+      : client_holders(std::move(client_holders_val))
+    {
+      for (const auto& client_holder : client_holders)
+      {
+        if (!name_value.empty())
+        {
+          name_value += ",";
+        }
+        name_value += client_holder->endpoint;
+      }
+    }
 
     void match(
       const adserver::channel_svcs::channel_server::MatchRequest& request,
       MatchCallback callback)
     {
-      client_holder->client->match(request, std::move(callback));
+      if (client_holders.empty())
+      {
+        callback(
+          grpc::Status(
+            grpc::StatusCode::UNAVAILABLE,
+            "empty ChannelServer grpc group"),
+          adserver::channel_svcs::channel_server::MatchResponse());
+        return;
+      }
+
+      struct MatchState
+      {
+        explicit MatchState(std::size_t remaining_val)
+          : remaining(remaining_val)
+        {}
+
+        std::mutex lock;
+        std::size_t remaining;
+        std::size_t errors = 0;
+        grpc::Status last_error;
+        adserver::channel_svcs::channel_server::MatchResponse response;
+        MatchCallback callback;
+      };
+
+      const auto group_size = client_holders.size();
+      auto state = std::make_shared<MatchState>(group_size);
+      state->callback = std::move(callback);
+      for (const auto& client_holder : client_holders)
+      {
+        client_holder->client->match(
+          request,
+          [state, endpoint = client_holder->endpoint, group_size](
+            const grpc::Status& status,
+            const adserver::channel_svcs::channel_server::MatchResponse&
+              response)
+          {
+            MatchCallback callback;
+            grpc::Status result_status = grpc::Status::OK;
+            adserver::channel_svcs::channel_server::MatchResponse
+              result_response;
+            {
+              std::lock_guard<std::mutex> guard(state->lock);
+              if (status.ok())
+              {
+                merge_match_response_(state->response, response);
+              }
+              else
+              {
+                ++state->errors;
+                state->last_error =
+                  AdServer::Grpc::status_with_endpoint(status, endpoint);
+              }
+
+              if (--state->remaining != 0)
+              {
+                return;
+              }
+
+              if (state->errors == 0 || state->errors < group_size)
+              {
+                result_response = std::move(state->response);
+              }
+              else
+              {
+                result_status = state->last_error;
+              }
+              callback = std::move(state->callback);
+            }
+
+            callback(result_status, result_response);
+          });
+      }
     }
 
     void get_ccg_traits(
       const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
       GetCcgTraitsCallback callback)
     {
-      client_holder->client->get_ccg_traits(request, std::move(callback));
+      if (client_holders.empty())
+      {
+        callback(
+          grpc::Status(
+            grpc::StatusCode::UNAVAILABLE,
+            "empty ChannelServer grpc group"),
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse());
+        return;
+      }
+
+      struct TraitsState
+      {
+        explicit TraitsState(std::size_t remaining_val)
+          : remaining(remaining_val)
+        {}
+
+        std::mutex lock;
+        std::size_t remaining;
+        std::size_t errors = 0;
+        grpc::Status last_error;
+        std::vector<
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>
+            responses;
+        GetCcgTraitsCallback callback;
+      };
+
+      const auto group_size = client_holders.size();
+      auto state = std::make_shared<TraitsState>(group_size);
+      state->callback = std::move(callback);
+      state->responses.reserve(group_size);
+      for (const auto& client_holder : client_holders)
+      {
+        client_holder->client->get_ccg_traits(
+          request,
+          [state, endpoint = client_holder->endpoint, group_size](
+            const grpc::Status& status,
+            const adserver::channel_svcs::channel_server::GetCcgTraitsResponse&
+              response)
+          {
+            GetCcgTraitsCallback callback;
+            grpc::Status result_status = grpc::Status::OK;
+            adserver::channel_svcs::channel_server::GetCcgTraitsResponse
+              result_response;
+            {
+              std::lock_guard<std::mutex> guard(state->lock);
+              if (status.ok())
+              {
+                state->responses.emplace_back(response);
+              }
+              else
+              {
+                ++state->errors;
+                state->last_error =
+                  AdServer::Grpc::status_with_endpoint(status, endpoint);
+              }
+
+              if (--state->remaining != 0)
+              {
+                return;
+              }
+
+              if (state->errors == 0 || state->errors < group_size)
+              {
+                compose_traits_response_(result_response, state->responses);
+              }
+              else
+              {
+                result_status = state->last_error;
+              }
+              callback = std::move(state->callback);
+            }
+
+            callback(result_status, result_response);
+          });
+      }
     }
 
     void check_configuration(
@@ -129,14 +401,16 @@ namespace AdServer::ChannelSvcs
         request,
       CheckConfigurationCallback callback)
     {
-      client_holder->client->check_configuration(request, std::move(callback));
+      client_holders.front()->client->check_configuration(
+        request,
+        std::move(callback));
     }
 
     void set_sources(
       const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
       SetSourcesCallback callback)
     {
-      client_holder->client->set_sources(request, std::move(callback));
+      client_holders.front()->client->set_sources(request, std::move(callback));
     }
 
     void set_proxy_sources(
@@ -144,21 +418,24 @@ namespace AdServer::ChannelSvcs
         request,
       SetProxySourcesCallback callback)
     {
-      client_holder->client->set_proxy_sources(request, std::move(callback));
+      client_holders.front()->client->set_proxy_sources(
+        request,
+        std::move(callback));
     }
 
     AdServer::Grpc::Stats stats() const noexcept
     {
       return static_cast<ChannelServerGrpcAsyncClient*>(
-        client_holder->client.get())->stats();
+          client_holders.front()->client.get())->stats();
     }
 
     const std::string& name() const noexcept
     {
-      return client_holder->endpoint;
+      return name_value;
     }
 
-    ClientHolderPtr client_holder;
+    std::string name_value;
+    std::vector<ClientHolderPtr> client_holders;
   };
 
   class ChannelDistributedGrpcClient::ResolveRefsTask:
@@ -663,22 +940,28 @@ namespace AdServer::ChannelSvcs
           continue;
         }
 
-        std::vector<std::string> server_refs;
+        std::vector<ChannelServerGroup> server_groups;
         for (const auto& group : response.channel_server_groups())
         {
+          ChannelServerGroup server_refs;
           for (const auto& server : group.channel_servers())
           {
             server_refs.emplace_back(server.channel_server_endpoint());
           }
+          if (!server_refs.empty())
+          {
+            std::sort(server_refs.begin(), server_refs.end());
+            server_groups.emplace_back(std::move(server_refs));
+          }
         }
-        if (server_refs.empty())
+        if (server_groups.empty())
         {
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout_,
-            "get_session_description returned no ChannelServer refs");
+            "get_session_description returned no ChannelServer groups");
           Stream::Error ostr;
           ostr << "ChannelController '" << ref->endpoint
-            << "': get_session_description returned no ChannelServer refs";
+            << "': get_session_description returned no ChannelServer groups";
           callback_->report_error(
             Generics::ActiveObjectCallback::WARNING,
             ostr.str(),
@@ -686,10 +969,10 @@ namespace AdServer::ChannelSvcs
           continue;
         }
 
-        std::sort(server_refs.begin(), server_refs.end());
+        std::sort(server_groups.begin(), server_groups.end());
         refs_state.emplace_back(
           group_name_(channel_controller_refs_[i]),
-          std::move(server_refs));
+          std::move(server_groups));
       }
       catch (const eh::Exception& ex)
       {
@@ -728,16 +1011,24 @@ namespace AdServer::ChannelSvcs
       std::vector<ClientHolderPtr> client_holders;
       for (const auto& controller_refs : refs_state)
       {
-        for (const auto& endpoint : controller_refs.second)
+        for (const auto& server_group : controller_refs.second)
         {
-          auto client_holder = get_or_create_client_holder_(endpoint);
-          if (!client_holder)
+          std::vector<ClientHolderPtr> group_client_holders;
+          group_client_holders.reserve(server_group.size());
+          for (const auto& endpoint : server_group)
           {
-            return false;
+            auto client_holder = get_or_create_client_holder_(endpoint);
+            if (!client_holder)
+            {
+              return false;
+            }
+
+            group_client_holders.emplace_back(client_holder);
+            client_holders.emplace_back(std::move(client_holder));
           }
 
-          refs.emplace_back(std::make_shared<RefHolder>(client_holder));
-          client_holders.emplace_back(std::move(client_holder));
+          refs.emplace_back(
+            std::make_shared<RefHolder>(std::move(group_client_holders)));
         }
       }
 

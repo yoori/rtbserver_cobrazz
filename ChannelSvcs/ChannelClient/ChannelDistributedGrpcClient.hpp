@@ -81,8 +81,9 @@ namespace AdServer::ChannelSvcs
     using ControllerPoolPtr = std::shared_ptr<ControllerPool>;
     using Pool = AdServer::Grpc::RefPool<RefHolder>;
     using PoolPtr = std::shared_ptr<Pool>;
+    using ChannelServerGroup = std::vector<std::string>;
     using ControllerRefsState =
-      std::vector<std::pair<std::string, std::vector<std::string>>>;
+      std::vector<std::pair<std::string, std::vector<ChannelServerGroup>>>;
 
     void activate_object_() override;
     void deactivate_object_() override;

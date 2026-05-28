@@ -58,5 +58,19 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
+    <xsd:attribute name="hosts_in_group" type="xsd:unsignedInt" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of ChannelServer hosts in one generated ChannelServerGroup.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="local_load" type="xsd:boolean" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Use local ChannelServer group as source for other groups.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 </xsd:schema>

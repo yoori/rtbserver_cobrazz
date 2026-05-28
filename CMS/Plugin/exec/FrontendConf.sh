@@ -123,6 +123,7 @@ $EXEC/ProcessHostFiles.sh \
    --out-dir $OUT_DIR \
    --cmd "mkdir -p \$HOST_DIR/$CONF_SUFFIX" \
    --cmd "cp -r $PLUGIN_ROOT/data/FrontendSubCluster/Frontend/* \$HOST_DIR/$CONF_SUFFIX" \
+   --cmd "echo \$host > \$HOST_DIR/$CONF_SUFFIX/http/htdocs/ready" \
    --cmd "mkdir -p \$HOST_DIR/\"$CONF_SUFFIX\"conf1" \
    --cmd "touch \$HOST_DIR/\"$CONF_SUFFIX\"conf1/empty" \
    --cmd "mkdir -p \$HOST_DIR/\"$CONF_SUFFIX\"conf2" \
