@@ -21,7 +21,9 @@ target_sources(GrpcBatch PRIVATE
   GrpcExecutor.cpp
   GrpcExecutor.hpp
   GrpcServer.hpp
+  GrpcServiceBase.cpp
   GrpcServiceBase.hpp
+  GrpcServiceBase.tpp
 )
 
 target_link_libraries(GrpcBatch
