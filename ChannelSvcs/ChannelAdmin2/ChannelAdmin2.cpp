@@ -148,6 +148,71 @@ namespace
   }
 
   void
+  print_session_description(
+    const Controller::GetSessionDescriptionResponse& response)
+  {
+    std::cout << "chunks_number=" << response.chunks_number() << '\n';
+    std::cout << "channel_server_groups=" <<
+      response.channel_server_groups_size() << '\n';
+    for (int group_i = 0;
+      group_i < response.channel_server_groups_size();
+      ++group_i)
+    {
+      const auto& group = response.channel_server_groups(group_i);
+      std::cout << "group[" << group_i << "].channel_servers=" <<
+        group.channel_servers_size() << '\n';
+      for (int server_i = 0;
+        server_i < group.channel_servers_size();
+        ++server_i)
+      {
+        const auto& server = group.channel_servers(server_i);
+        std::cout << "group[" << group_i << "].server[" << server_i <<
+          "].endpoint=" << server.channel_server_endpoint() << '\n';
+        std::cout << "group[" << group_i << "].server[" << server_i <<
+          "].chunk_ids=";
+        for (const auto chunk_id : server.chunk_ids())
+        {
+          std::cout << ' ' << chunk_id;
+        }
+        std::cout << '\n';
+      }
+    }
+  }
+
+  Controller::GetSessionDescriptionResponse
+  get_session_description(const std::vector<std::string>& endpoints)
+  {
+    if (endpoints.size() != 1)
+    {
+      throw std::runtime_error(
+        "session_description requires exactly one ChannelController endpoint");
+    }
+
+    auto stub = Controller::ChannelControllerGrpc::NewStub(
+      AdServer::Grpc::create_channel(
+        endpoints.front(),
+        grpc::InsecureChannelCredentials()));
+
+    grpc::ClientContext context;
+    context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
+    Controller::GetSessionDescriptionRequest request;
+    Controller::GetSessionDescriptionResponse response;
+    const auto status = stub->get_session_description(
+      &context,
+      request,
+      &response);
+    if (!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << "get_session_description failed: code=" <<
+        status.error_code() << ", message=" << status.error_message();
+      throw std::runtime_error(ostr.str().str());
+    }
+
+    return response;
+  }
+
+  void
   print_channel_atoms(
     const char* name,
     const google::protobuf::RepeatedPtrField<Proto::ChannelAtom>& channels)
@@ -270,13 +335,20 @@ main(int argc, char** argv)
     {
       std::cerr <<
         "Usage: ChannelAdmin2 --endpoints controller-host:port|server-host:port "
-        "match|ccg_traits [--url URL] [--url-words WORDS] [--pwords WORDS] "
+        "match|ccg_traits|session_description "
+        "[--url URL] [--url-words WORDS] [--pwords WORDS] "
         "[--swords WORDS] [--uid UID] [--status S] [--ids 1,2] "
         "[--normalize-url] [--normalize-url-words] [--show-request]\n";
       return 1;
     }
 
     const auto endpoint_list = split_endpoints(*endpoints);
+    if (commands.front() == "session_description")
+    {
+      print_session_description(get_session_description(endpoint_list));
+      return 0;
+    }
+
     ClientHolder holder = create_client(endpoint_list);
     auto holder_guard = std::unique_ptr<ClientHolder, void(*)(ClientHolder*)>(
       &holder,
