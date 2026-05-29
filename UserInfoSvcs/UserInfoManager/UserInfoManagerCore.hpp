@@ -18,6 +18,7 @@
 #include <Generics/Time.hpp>
 
 #include <Commons/AccessActiveObject.hpp>
+#include <Commons/Coro.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
@@ -182,11 +183,27 @@ namespace AdServer::UserInfoSvcs
       bool& merge_success,
       Generics::Time& last_request);
 
+    AdServer::Commons::Task<bool> co_merge(
+      const UserInfo& user_info,
+      const MatchParams& match_params,
+      const UserProfiles& merge_user_profile,
+      bool& merge_success,
+      Generics::Time& last_request);
+
     bool fraud_user(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time);
 
+    AdServer::Commons::Task<bool> co_fraud_user(
+      const AdServer::Commons::UserId& user_id,
+      const Generics::Time& time);
+
     bool match(
+      const UserInfo& user_info,
+      const MatchParams& match_params,
+      MatchResult& match_result);
+
+    AdServer::Commons::Task<bool> co_match(
       const UserInfo& user_info,
       const MatchParams& match_params,
       MatchResult& match_result);
@@ -197,9 +214,29 @@ namespace AdServer::UserInfoSvcs
       const ProfilesRequest& profile_request,
       UserProfiles& user_profile);
 
+    AdServer::Commons::Task<bool> co_get_user_profile(
+      const AdServer::Commons::UserId& user_id,
+      bool temporary,
+      const ProfilesRequest& profile_request,
+      UserProfiles& user_profile);
+
     bool remove_user_profile(const AdServer::Commons::UserId& user_id);
 
+    AdServer::Commons::Task<bool> co_remove_user_profile(
+      const AdServer::Commons::UserId& user_id);
+
     void update_user_freq_caps(
+      const AdServer::Commons::UserId& user_id,
+      const Generics::Time& time,
+      const Generics::Uuid& request_id,
+      const std::vector<unsigned long>& freq_caps,
+      const std::vector<unsigned long>& uc_freq_caps,
+      const std::vector<unsigned long>& virtual_freq_caps,
+      const std::vector<SeqOrder>& seq_orders,
+      const std::vector<unsigned long>& campaign_ids,
+      const std::vector<unsigned long>& uc_campaign_ids);
+
+    AdServer::Commons::Task<bool> co_update_user_freq_caps(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
       const Generics::Uuid& request_id,
@@ -216,7 +253,18 @@ namespace AdServer::UserInfoSvcs
       const Generics::Uuid& request_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts);
 
+    AdServer::Commons::Task<bool> co_confirm_user_freq_caps(
+      const AdServer::Commons::UserId& user_id,
+      const Generics::Time& time,
+      const Generics::Uuid& request_id,
+      const std::set<unsigned long>& exclude_pubpixel_accounts);
+
     void consider_publishers_optin(
+      const AdServer::Commons::UserId& user_id,
+      const std::set<unsigned long>& exclude_pubpixel_accounts,
+      const Generics::Time& now);
+
+    AdServer::Commons::Task<bool> co_consider_publishers_optin(
       const AdServer::Commons::UserId& user_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts,
       const Generics::Time& now);

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <atomic>
+#include <memory>
+#include <optional>
 #include <vector>
 #include <set>
 #include <eh/Exception.hpp>
@@ -22,6 +25,7 @@ namespace ProfilingCommons
     typename KeyHashType>
   class ChunkedProfileMap:
     public virtual ProfileMap<KeyType>,
+    public virtual AsyncProfileMap<KeyType>,
     public virtual ReferenceCounting::AtomicImpl
   {
     /* requirements:
@@ -58,6 +62,43 @@ namespace ProfilingCommons
     bool
     check_profile(const KeyType& key) const
       /*throw(ChunkNotFound, Exception)*/;
+
+    void
+    check_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::CheckCallback callback) const
+      override;
+
+    Generics::ConstSmartMemBuf_var
+    get_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::GetCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt)
+      override;
+
+    void
+    save_profile_async(
+      const KeyType& key,
+      const Generics::ConstSmartMemBuf* mem_buf,
+      const Generics::Time& now = Generics::Time::get_time_of_day(),
+      typename AsyncProfileMap<KeyType>::SaveCallback callback =
+        typename AsyncProfileMap<KeyType>::SaveCallback())
+      override;
+
+    void
+    remove_profile_async(
+      const KeyType& key,
+      OperationPriority priority = OP_RUNTIME,
+      typename AsyncProfileMap<KeyType>::RemoveCallback callback =
+        typename AsyncProfileMap<KeyType>::RemoveCallback())
+      override;
+
+    void
+    clear_expired_async(
+      const Generics::Time& expire_time,
+      typename AsyncProfileMap<KeyType>::CompleteCallback complete =
+        typename AsyncProfileMap<KeyType>::CompleteCallback())
+      override;
 
     Generics::ConstSmartMemBuf_var
     get_profile(

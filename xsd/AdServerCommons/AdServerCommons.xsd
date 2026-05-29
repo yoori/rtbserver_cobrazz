@@ -197,7 +197,8 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
-    <xsd:attribute name="threads" type="xsd:positiveInteger" default="128"/>
+    <xsd:attribute name="process_threads" type="xsd:positiveInteger" default="128"/>
+    <xsd:attribute name="max_split" type="xsd:positiveInteger"/>
   </xsd:complexType>
   <!-- GrpcConfigType ends -->
 

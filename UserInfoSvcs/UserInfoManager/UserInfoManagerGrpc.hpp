@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <cstddef>
 #include <memory>
@@ -12,6 +13,7 @@
 #include <Generics/ActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
+#include <Commons/ExecutorPool.hpp>
 
 #include "UserInfoManagerCore.hpp"
 
@@ -42,7 +44,8 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::size_t grpc_threads);
+      std::size_t process_threads = 128,
+      std::size_t max_split = 0);
 
     Stats stats() const noexcept;
 
@@ -56,6 +59,8 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const std::string bind_address_;
+    const std::size_t max_batch_split_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<StatsCounters> stats_counters_;
     const std::shared_ptr<Impl> impl_;
   };
