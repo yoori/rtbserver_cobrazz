@@ -204,7 +204,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             *configuration_->GrpcConfig()->Endpoint().host() :
             "0.0.0.0",
           configuration_->GrpcConfig()->Endpoint().port(),
-          configuration_->GrpcConfig()->threads()));
+          configuration_->GrpcConfig()->process_threads()));
     }
 
     if(configuration_->HttpConfig().present())
