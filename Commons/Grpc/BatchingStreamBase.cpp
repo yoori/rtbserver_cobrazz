@@ -1,8 +1,8 @@
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
-#include <cassert>
 #include <cstdint>
 #include <mutex>
 #include <optional>
@@ -11,10 +11,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include <grpc/impl/channel_arg_names.h>
 #include <grpcpp/client_context.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
 #include <grpcpp/support/async_stream.h>
 #include <google/protobuf/arena.h>
 
@@ -82,7 +79,36 @@ namespace AdServer::Grpc
       Open,
       Closing,
       Broken,
+      Finishing,
       Finished
+    };
+
+    enum class ReadState
+    {
+      Idle,
+      Reading
+    };
+
+    enum class WriteState
+    {
+      Idle,
+      Writing,
+      WritesDoneInFlight,
+      WritesDoneCompleted
+    };
+
+    enum class StreamAction
+    {
+      None,
+      StartRead,
+      StartWritesDone,
+      StartFinish
+    };
+
+    struct StreamTransition
+    {
+      StreamAction action = StreamAction::None;
+      bool ready = false;
     };
 
     struct CompletionTag;
@@ -151,15 +177,23 @@ namespace AdServer::Grpc
       bool measure_consumer_stream_write,
       std::vector<PendingRequest>* failed_batch);
     bool start_stream_();
-    void maybe_start_read_i_();
-    void maybe_start_shutdown_i_();
-    void process_read_completion_(bool ok, std::unique_ptr<BatchResponse> response);
-    void process_write_completion_(
+    StreamTransition plan_start_completion_i_(bool ok);
+    StreamAction plan_start_read_i_();
+    StreamAction plan_shutdown_i_();
+    void execute_stream_action_(StreamAction action) noexcept;
+    void execute_stream_action_cq_(StreamAction action) noexcept;
+    void start_read_cq_() noexcept;
+    void start_writes_done_(bool use_grpc_operation_gate) noexcept;
+    void start_finish_(bool use_grpc_operation_gate) noexcept;
+    void process_read_completion_cq_(
+      bool ok,
+      std::unique_ptr<BatchResponse> response);
+    void process_write_completion_cq_(
       bool ok,
       std::uint64_t batch_id);
-    void process_start_completion_(bool ok);
-    void process_writes_done_completion_(bool ok);
-    void process_finish_completion_(bool ok);
+    void process_start_completion_cq_(bool ok);
+    void process_writes_done_completion_cq_(bool ok);
+    void process_finish_completion_cq_(bool ok);
     void finish_with_error_(
       grpc::StatusCode status_code,
       const char* status_message);
@@ -174,8 +208,9 @@ namespace AdServer::Grpc
       grpc::StatusCode status_code,
       const char* status_message,
       const char* source) noexcept;
-    void handle_grpc_queue_shutdown_i_() noexcept;
-    void complete_shutdown_i_() noexcept;
+    bool mark_grpc_queue_shutdown_i_() noexcept;
+    bool mark_shutdown_complete_i_() noexcept;
+    void deactivate_shutdown_gates_() noexcept;
     void notify_closed_if_needed_() noexcept;
     bool complete_drain_if_ready_() noexcept;
     void release_grpc_resources_i_() noexcept;
@@ -200,17 +235,15 @@ namespace AdServer::Grpc
     bool closed_notified_ = false;
     bool drained_notified_ = false;
 
+    AdServer::Commons::ActivityGate grpc_operation_gate_;
     AdServer::Commons::ActivityGate completion_tags_gate_;
     DetachedBatchStorage detached_batch_storage_;
     std::atomic<std::uint64_t> next_request_id_{1};
 
     std::mutex state_lock_;
 
-    bool read_in_flight_ = false;
-    bool writes_done_started_ = false;
-    bool writes_done_in_flight_ = false;
-    bool finish_in_flight_ = false;
-    std::atomic_bool write_in_flight_{false};
+    ReadState read_state_ = ReadState::Idle;
+    WriteState write_state_ = WriteState::Idle;
     std::atomic<StreamState> stream_state_{StreamState::Starting};
     std::unique_ptr<grpc::ClientContext> stream_context_;
     std::unique_ptr<BatchTransport> batch_stub_;
@@ -322,7 +355,7 @@ namespace AdServer::Grpc
   {
     explicit CompletionTag(std::shared_ptr<Impl> impl)
       : completion_tag_guard_(impl->completion_tags_gate_.enter()),
-        impl_(impl)
+        impl_(std::move(impl))
     {}
 
     ~CompletionTag() override
@@ -359,7 +392,7 @@ namespace AdServer::Grpc
     proceed(bool ok) override
     {
       with_impl_([ok](auto& impl) {
-        impl.process_start_completion_(ok);
+        impl.process_start_completion_cq_(ok);
       });
     }
   };
@@ -377,7 +410,7 @@ namespace AdServer::Grpc
     proceed(bool ok) override
     {
       with_impl_([this, ok](auto& impl) {
-        impl.process_read_completion_(ok, std::move(response_));
+        impl.process_read_completion_cq_(ok, std::move(response_));
       });
     }
 
@@ -398,7 +431,7 @@ namespace AdServer::Grpc
     proceed(bool ok) override
     {
       with_impl_([this, ok](auto& impl) {
-        impl.process_write_completion_(ok, batch_id_);
+        impl.process_write_completion_cq_(ok, batch_id_);
       });
     }
 
@@ -416,7 +449,7 @@ namespace AdServer::Grpc
     proceed(bool ok) override
     {
       with_impl_([ok](auto& impl) {
-        impl.process_writes_done_completion_(ok);
+        impl.process_writes_done_completion_cq_(ok);
       });
     }
   };
@@ -431,7 +464,7 @@ namespace AdServer::Grpc
     proceed(bool ok) override
     {
       with_impl_([ok](auto& impl) {
-        impl.process_finish_completion_(ok);
+        impl.process_finish_completion_cq_(ok);
       });
     }
   };
@@ -461,6 +494,7 @@ namespace AdServer::Grpc
       grpc_executor_(std::move(grpc_executor)),
       queue_index_(queue_index)
   {
+    grpc_operation_gate_.activate_object();
     completion_tags_gate_.activate_object();
     if (!grpc_executor_)
     {
@@ -480,6 +514,8 @@ namespace AdServer::Grpc
 
   BatchingStreamBase::Impl::~Impl()
   {
+    grpc_operation_gate_.deactivate_object();
+    grpc_operation_gate_.wait_object();
     completion_tags_gate_.deactivate_object();
     completion_tags_gate_.wait_object();
   }
@@ -615,7 +651,6 @@ namespace AdServer::Grpc
   bool
   BatchingStreamBase::Impl::available() noexcept
   {
-    std::lock_guard<std::mutex> lock(state_lock_);
     return active() && accepts_requests_i_();
   }
 
@@ -634,6 +669,7 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::deactivate_object_()
   {
+    StreamAction action = StreamAction::None;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       const auto stream_state = stream_state_.load();
@@ -644,9 +680,11 @@ namespace AdServer::Grpc
       else if (stream_state == StreamState::Open)
       {
         stream_state_.store(StreamState::Closing);
-        maybe_start_shutdown_i_();
+        action = plan_shutdown_i_();
       }
     }
+
+    execute_stream_action_(action);
 
     detached_batch_storage_.close();
     fail_inflight_with_error_(grpc::StatusCode::UNAVAILABLE, "inactive");
@@ -660,17 +698,19 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::wait_object_()
   {
-    completion_tags_gate_.wait_for_activities();
+    grpc_operation_gate_.deactivate_object();
     completion_tags_gate_.deactivate_object();
+    grpc_operation_gate_.wait_object();
     completion_tags_gate_.wait_object();
 
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       if (stream_state_.load() != StreamState::Finished)
       {
-        complete_shutdown_i_();
+        mark_shutdown_complete_i_();
       }
     }
+    release_grpc_resources_i_();
 
     notify_closed_if_needed_();
     complete_drain_if_ready_();
@@ -679,7 +719,8 @@ namespace AdServer::Grpc
   bool
   BatchingStreamBase::Impl::start_stream_()
   {
-    std::unique_ptr<StartTag> start_tag;
+    auto stream_context = std::make_unique<grpc::ClientContext>();
+    auto grpc_queue = grpc_executor_->queue(queue_index_);
 
     {
       std::lock_guard<std::mutex> lock(state_lock_);
@@ -688,37 +729,59 @@ namespace AdServer::Grpc
         return false;
       }
 
-      stream_context_ = std::make_unique<grpc::ClientContext>();
-      grpc_queue_ = grpc_executor_->queue(queue_index_);
+      stream_context_ = std::move(stream_context);
+      grpc_queue_ = std::move(grpc_queue);
       finish_status_ = grpc::Status();
-      read_in_flight_ = false;
-      writes_done_started_ = false;
-      writes_done_in_flight_ = false;
-      finish_in_flight_ = false;
-      write_in_flight_.store(false);
+      read_state_ = ReadState::Idle;
+      write_state_ = WriteState::Idle;
       stream_state_.store(StreamState::Starting);
-      start_tag = std::make_unique<StartTag>(shared_from_this());
     }
 
-    if (!grpc_queue_->execute([this, start_tag = std::move(start_tag)]() mutable {
+    const auto operation_start = grpc_queue_->execute_result([this]() mutable {
+      auto start_tag = std::make_unique<StartTag>(shared_from_this());
+
+      auto grpc_operation_guard = grpc_operation_gate_.enter();
+      if (!grpc_operation_guard)
+      {
+        return false;
+      }
+
       stream_ = batch_stub_->Call(
         stream_context_.get(),
         batch_stream_full_method_,
         &grpc_queue_->completion_queue(),
         start_tag.get()).release();
       start_tag.release();
-    }))
+      return true;
+    });
+
+    if (!operation_start.has_value() || !*operation_start)
     {
+      bool shutdown_completed = false;
       {
         std::lock_guard<std::mutex> lock(state_lock_);
-        stream_state_.store(StreamState::Broken);
-        maybe_start_shutdown_i_();
+        shutdown_completed = mark_shutdown_complete_i_();
       }
 
-      record_last_error_(
-        grpc::StatusCode::UNAVAILABLE,
-        "grpc executor rejected stream start",
-        "stream_start");
+      if (shutdown_completed)
+      {
+        deactivate_shutdown_gates_();
+      }
+
+      if (!operation_start.has_value())
+      {
+        record_last_error_(
+          grpc::StatusCode::UNAVAILABLE,
+          "grpc executor rejected stream start",
+          "stream_start");
+      }
+      else
+      {
+        record_last_error_(
+          grpc::StatusCode::UNAVAILABLE,
+          "grpc operation gate rejected stream start",
+          "stream_start");
+      }
       notify_closed_if_needed_();
       complete_drain_if_ready_();
       return false;
@@ -733,19 +796,33 @@ namespace AdServer::Grpc
     bool measure_consumer_stream_write,
     PendingBatch* failed_batch)
   {
+    if (!active())
+    {
+      if (failed_batch)
+      {
+        *failed_batch = std::move(pending_batch);
+      }
+      return false;
+    }
+
+    bool write_started = false;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      if (!active() || stream_state_.load() != StreamState::Open ||
-        write_in_flight_.load())
+      if (stream_state_.load() == StreamState::Open &&
+        write_state_ == WriteState::Idle)
       {
-        if (failed_batch)
-        {
-          *failed_batch = std::move(pending_batch);
-        }
-        return false;
+        write_state_ = WriteState::Writing;
+        write_started = true;
       }
+    }
 
-      write_in_flight_.store(true);
+    if (!write_started)
+    {
+      if (failed_batch)
+      {
+        *failed_batch = std::move(pending_batch);
+      }
+      return false;
     }
 
     return start_write_(
@@ -773,11 +850,19 @@ namespace AdServer::Grpc
           return;
         }
 
-        std::lock_guard<std::mutex> lock(impl.state_lock_);
-        impl.write_in_flight_.store(false);
-        if (impl.stream_state_.load() != StreamState::Open)
+        StreamAction action = StreamAction::None;
         {
-          impl.maybe_start_shutdown_i_();
+          std::lock_guard<std::mutex> lock(impl.state_lock_);
+          impl.write_state_ = WriteState::Idle;
+          if (impl.stream_state_.load() != StreamState::Open)
+          {
+            action = impl.plan_shutdown_i_();
+          }
+        }
+
+        if (action != StreamAction::None)
+        {
+          impl.execute_stream_action_(action);
         }
       }
 
@@ -873,14 +958,23 @@ namespace AdServer::Grpc
     {
       write_arena_.Reset();
 
-      const bool ready = stream_state_.load() == StreamState::Open;
-
-      if (ready)
+      bool stream_open = false;
+      StreamAction action = StreamAction::None;
       {
-        if (ready_callback_)
+        std::lock_guard<std::mutex> lock(state_lock_);
+        write_state_ = WriteState::Idle;
+        stream_open = stream_state_.load() == StreamState::Open;
+        if (!stream_open)
         {
-          ready_callback_(&owner_);
+          action = plan_shutdown_i_();
         }
+      }
+      write_slot_guard.release();
+      execute_stream_action_(action);
+
+      if (stream_open && active() && ready_callback_)
+      {
+        ready_callback_(&owner_);
       }
 
       return true;
@@ -894,6 +988,17 @@ namespace AdServer::Grpc
 
     if (!batch_guard)
     {
+      StreamAction action = StreamAction::None;
+      {
+        std::lock_guard<std::mutex> lock(state_lock_);
+        write_state_ = WriteState::Idle;
+        if (stream_state_.load() != StreamState::Open)
+        {
+          action = plan_shutdown_i_();
+        }
+      }
+      write_slot_guard.release();
+
       if (failed_batch)
       {
         failed_batch->reserve(failed_batch->size() + accepted_requests.size());
@@ -904,22 +1009,28 @@ namespace AdServer::Grpc
       }
 
       write_arena_.Reset();
+      execute_stream_action_(action);
       return false;
     }
 
-    const bool write_scheduled = grpc_queue_->execute(
+    const auto operation_start = grpc_queue_->execute_result(
       [
         this,
         write_batch,
         batch_id,
         measure_consumer_stream_write
-      ]() {
+      ]() mutable {
+        auto grpc_operation_guard = grpc_operation_gate_.enter();
+        if (!grpc_operation_guard)
+        {
+          return false;
+        }
+
         auto write_tag = std::make_unique<WriteTag>(
           shared_from_this(),
           batch_id);
-        auto* write_tag_ptr = write_tag.get();
         const auto start = Generics::Time::get_time_of_day();
-        stream_->Write(*write_batch, write_tag_ptr);
+        stream_->Write(*write_batch, write_tag.get());
         write_tag.release();
         if (measure_consumer_stream_write)
         {
@@ -927,13 +1038,38 @@ namespace AdServer::Grpc
             duration_time(start, Generics::Time::get_time_of_day()).microseconds();
           add_consumer_stream_write_stats(wait_us);
         }
+        return true;
       });
 
-    if (!write_scheduled)
+    if (!operation_start.has_value() || !*operation_start)
     {
+      bool shutdown_completed = false;
+      const bool grpc_queue_shutdown = !operation_start.has_value();
       {
         std::lock_guard<std::mutex> lock(state_lock_);
-        handle_grpc_queue_shutdown_i_();
+        write_state_ = WriteState::Idle;
+        if (grpc_queue_shutdown)
+        {
+          shutdown_completed = mark_grpc_queue_shutdown_i_();
+        }
+        else
+        {
+          shutdown_completed = mark_shutdown_complete_i_();
+        }
+      }
+      write_slot_guard.release();
+
+      if (shutdown_completed)
+      {
+        deactivate_shutdown_gates_();
+      }
+
+      if (grpc_queue_shutdown)
+      {
+        record_last_error_(
+          grpc::StatusCode::UNAVAILABLE,
+          "grpc executor shutdown",
+          "executor_shutdown");
       }
 
       auto failed_batch_record = detached_batch_storage_.take_batch(batch_id);
@@ -958,124 +1094,305 @@ namespace AdServer::Grpc
     return true;
   }
 
-  void
-  BatchingStreamBase::Impl::maybe_start_read_i_()
+  BatchingStreamBase::Impl::StreamTransition
+  BatchingStreamBase::Impl::plan_start_completion_i_(bool ok)
   {
-    if (stream_state_.load() != StreamState::Open || read_in_flight_)
+    struct StateTransition
     {
-      return;
+      StreamState state;
+      bool ready;
+    };
+
+    constexpr auto state_count =
+      static_cast<std::size_t>(StreamState::Finished) + 1;
+    constexpr std::array<StateTransition, state_count> success_transitions = {{
+      {StreamState::Open, true},       // Starting
+      {StreamState::Open, true},       // Open
+      {StreamState::Closing, false},   // Closing
+      {StreamState::Broken, false},    // Broken
+      {StreamState::Finishing, false}, // Finishing
+      {StreamState::Finished, false}   // Finished
+    }};
+    constexpr std::array<StateTransition, state_count> failure_transitions = {{
+      {StreamState::Broken, false}, // Starting
+      {StreamState::Broken, false}, // Open
+      {StreamState::Broken, false}, // Closing
+      {StreamState::Broken, false}, // Broken
+      {StreamState::Broken, false}, // Finishing
+      {StreamState::Broken, false}  // Finished
+    }};
+
+    const auto old_state = stream_state_.load();
+    const auto transition =
+      (ok ? success_transitions : failure_transitions)[
+        static_cast<std::size_t>(old_state)];
+    stream_state_.store(transition.state);
+
+    return {
+      transition.ready ? plan_start_read_i_() : plan_shutdown_i_(),
+      transition.ready
+    };
+  }
+
+  BatchingStreamBase::Impl::StreamAction
+  BatchingStreamBase::Impl::plan_start_read_i_()
+  {
+    if (stream_state_.load() != StreamState::Open ||
+      read_state_ == ReadState::Reading)
+    {
+      return StreamAction::None;
     }
 
-    read_in_flight_ = true;
-    auto response = std::make_unique<BatchResponse>();
-    auto* response_ptr = response.get();
-    auto read_tag = std::make_unique<ReadTag>(
-      shared_from_this(),
-      std::move(response));
-    auto* read_tag_ptr = read_tag.get();
-    if (!grpc_queue_->execute([this, response_ptr, read_tag_ptr]() {
-      stream_->Read(response_ptr, read_tag_ptr);
-    }))
-    {
-      read_in_flight_ = false;
-      handle_grpc_queue_shutdown_i_();
-    }
-    else
-    {
+    read_state_ = ReadState::Reading;
+    return StreamAction::StartRead;
+  }
+
+  void
+  BatchingStreamBase::Impl::start_read_cq_() noexcept
+  {
+    const auto operation_start = grpc_queue_->execute_result([this]() mutable {
+      auto response = std::make_unique<BatchResponse>();
+      auto* response_ptr = response.get();
+      auto read_tag = std::make_unique<ReadTag>(
+        shared_from_this(),
+        std::move(response));
+
+      stream_->Read(response_ptr, read_tag.get());
       read_tag.release();
+      return true;
+    });
+
+    if (!operation_start.has_value() || !*operation_start)
+    {
+      bool shutdown_completed = false;
+      const bool grpc_queue_shutdown = !operation_start.has_value();
+      {
+        std::lock_guard<std::mutex> lock(state_lock_);
+        read_state_ = ReadState::Idle;
+        if (grpc_queue_shutdown)
+        {
+          shutdown_completed = mark_grpc_queue_shutdown_i_();
+        }
+        else
+        {
+          shutdown_completed = mark_shutdown_complete_i_();
+        }
+      }
+
+      if (shutdown_completed)
+      {
+        deactivate_shutdown_gates_();
+      }
+
+      if (grpc_queue_shutdown)
+      {
+        record_last_error_(
+          grpc::StatusCode::UNAVAILABLE,
+          "grpc executor shutdown",
+          "executor_shutdown");
+      }
     }
   }
 
-  void
-  BatchingStreamBase::Impl::maybe_start_shutdown_i_()
+  BatchingStreamBase::Impl::StreamAction
+  BatchingStreamBase::Impl::plan_shutdown_i_()
   {
-    if (stream_state_.load() == StreamState::Finished)
+    const auto stream_state = stream_state_.load();
+    if (stream_state == StreamState::Finished ||
+      stream_state == StreamState::Finishing ||
+      stream_state == StreamState::Starting)
     {
-      return;
+      return StreamAction::None;
     }
 
-    if (!stream_)
+    if (stream_state == StreamState::Closing &&
+      write_state_ == WriteState::Idle)
     {
-      complete_shutdown_i_();
-      return;
+      write_state_ = WriteState::WritesDoneInFlight;
+      return StreamAction::StartWritesDone;
     }
 
-    if (stream_state_.load() == StreamState::Starting)
+    if (read_state_ != ReadState::Reading &&
+      write_state_ != WriteState::Writing &&
+      write_state_ != WriteState::WritesDoneInFlight)
     {
-      return;
+      stream_state_.store(StreamState::Finishing);
+      return StreamAction::StartFinish;
     }
 
-    if (stream_state_.load() == StreamState::Closing &&
-      !writes_done_started_ &&
-      !writes_done_in_flight_ &&
-      !write_in_flight_.load())
-    {
-      writes_done_started_ = true;
-      writes_done_in_flight_ = true;
-      auto writes_done_tag = std::make_unique<WritesDoneTag>(shared_from_this());
-      auto* writes_done_tag_ptr = writes_done_tag.get();
-      if (!grpc_queue_->execute([this, writes_done_tag_ptr]() {
-        stream_->WritesDone(writes_done_tag_ptr);
-      }))
+    return StreamAction::None;
+  }
+
+  void
+  BatchingStreamBase::Impl::start_writes_done_(
+    bool use_grpc_operation_gate) noexcept
+  {
+    const auto operation_start = grpc_queue_->execute_result([
+      this,
+      use_grpc_operation_gate
+    ]() mutable {
+      auto writes_done_tag =
+        std::make_unique<WritesDoneTag>(shared_from_this());
+
+      if (use_grpc_operation_gate)
       {
-        writes_done_started_ = false;
-        writes_done_in_flight_ = false;
-        handle_grpc_queue_shutdown_i_();
-      }
-      else
-      {
+        auto grpc_operation_guard = grpc_operation_gate_.enter();
+        if (!grpc_operation_guard)
+        {
+          return false;
+        }
+
+        stream_->WritesDone(writes_done_tag.get());
         writes_done_tag.release();
+        return true;
       }
-      return;
-    }
 
-    if (!finish_in_flight_ &&
-      !read_in_flight_ &&
-      !write_in_flight_.load() &&
-      !writes_done_in_flight_)
+      stream_->WritesDone(writes_done_tag.get());
+      writes_done_tag.release();
+      return true;
+    });
+
+    if (!operation_start.has_value() || !*operation_start)
     {
-      finish_in_flight_ = true;
-      auto finish_tag = std::make_unique<FinishTag>(shared_from_this());
-      auto* finish_tag_ptr = finish_tag.get();
-      if (!grpc_queue_->execute([this, finish_tag_ptr]() {
-        stream_->Finish(&finish_status_, finish_tag_ptr);
-      }))
+      bool shutdown_completed = false;
+      const bool grpc_queue_shutdown = !operation_start.has_value();
       {
-        finish_in_flight_ = false;
-        handle_grpc_queue_shutdown_i_();
+        std::lock_guard<std::mutex> lock(state_lock_);
+        if (grpc_queue_shutdown)
+        {
+          write_state_ = WriteState::WritesDoneCompleted;
+          shutdown_completed = mark_grpc_queue_shutdown_i_();
+        }
+        else
+        {
+          shutdown_completed = mark_shutdown_complete_i_();
+        }
       }
-      else
+
+      if (shutdown_completed)
       {
-        finish_tag.release();
+        deactivate_shutdown_gates_();
+      }
+
+      if (grpc_queue_shutdown)
+      {
+        record_last_error_(
+          grpc::StatusCode::UNAVAILABLE,
+          "grpc executor shutdown",
+          "executor_shutdown");
       }
     }
   }
 
   void
-  BatchingStreamBase::Impl::process_start_completion_(bool ok)
+  BatchingStreamBase::Impl::start_finish_(
+    bool use_grpc_operation_gate) noexcept
   {
-    bool ready = false;
+    const auto operation_start = grpc_queue_->execute_result([
+      this,
+      use_grpc_operation_gate
+    ]() mutable {
+      auto finish_tag = std::make_unique<FinishTag>(shared_from_this());
+
+      if (use_grpc_operation_gate)
+      {
+        auto grpc_operation_guard = grpc_operation_gate_.enter();
+        if (!grpc_operation_guard)
+        {
+          return false;
+        }
+
+        stream_->Finish(&finish_status_, finish_tag.get());
+        finish_tag.release();
+        return true;
+      }
+
+      stream_->Finish(&finish_status_, finish_tag.get());
+      finish_tag.release();
+      return true;
+    });
+
+    if (!operation_start.has_value() || !*operation_start)
+    {
+      bool shutdown_completed = false;
+      const bool grpc_queue_shutdown = !operation_start.has_value();
+      {
+        std::lock_guard<std::mutex> lock(state_lock_);
+        if (grpc_queue_shutdown)
+        {
+          shutdown_completed = mark_grpc_queue_shutdown_i_();
+        }
+        else
+        {
+          shutdown_completed = mark_shutdown_complete_i_();
+        }
+      }
+
+      if (shutdown_completed)
+      {
+        deactivate_shutdown_gates_();
+      }
+
+      if (grpc_queue_shutdown)
+      {
+        record_last_error_(
+          grpc::StatusCode::UNAVAILABLE,
+          "grpc executor shutdown",
+          "executor_shutdown");
+      }
+    }
+  }
+
+  void
+  BatchingStreamBase::Impl::execute_stream_action_(
+    StreamAction action) noexcept
+  {
+    switch (action)
+    {
+    case StreamAction::None:
+      return;
+    case StreamAction::StartRead:
+      start_read_cq_();
+      return;
+    case StreamAction::StartWritesDone:
+      start_writes_done_(true);
+      return;
+    case StreamAction::StartFinish:
+      start_finish_(true);
+      return;
+    }
+  }
+
+  void
+  BatchingStreamBase::Impl::execute_stream_action_cq_(
+    StreamAction action) noexcept
+  {
+    switch (action)
+    {
+    case StreamAction::None:
+      return;
+    case StreamAction::StartRead:
+      start_read_cq_();
+      return;
+    case StreamAction::StartWritesDone:
+      start_writes_done_(false);
+      return;
+    case StreamAction::StartFinish:
+      start_finish_(false);
+      return;
+    }
+  }
+
+  void
+  BatchingStreamBase::Impl::process_start_completion_cq_(bool ok)
+  {
+    StreamTransition transition;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      if (!ok)
-      {
-        stream_state_.store(StreamState::Broken);
-      }
-      else if (stream_state_.load() == StreamState::Starting)
-      {
-        stream_state_.store(StreamState::Open);
-      }
-
-      if (stream_state_.load() == StreamState::Open)
-      {
-        maybe_start_read_i_();
-        ready = true;
-      }
-      else
-      {
-        maybe_start_shutdown_i_();
-      }
+      transition = plan_start_completion_i_(ok);
     }
+
+    execute_stream_action_cq_(transition.action);
 
     if (!ok)
     {
@@ -1085,7 +1402,7 @@ namespace AdServer::Grpc
         "stream_start");
       finish_with_error_(grpc::StatusCode::UNAVAILABLE, "stream start failed");
     }
-    else if (ready && ready_callback_)
+    else if (transition.ready && ready_callback_)
     {
       ready_callback_(&owner_);
     }
@@ -1095,7 +1412,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::process_read_completion_(
+  BatchingStreamBase::Impl::process_read_completion_cq_(
     bool ok,
     std::unique_ptr<BatchResponse> response)
   {
@@ -1182,12 +1499,13 @@ namespace AdServer::Grpc
       }
     }
 
+    StreamAction action = StreamAction::None;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      read_in_flight_ = false;
+      read_state_ = ReadState::Idle;
       if (ok && !protocol_error)
       {
-        maybe_start_read_i_();
+        action = plan_start_read_i_();
       }
       else
       {
@@ -1196,9 +1514,11 @@ namespace AdServer::Grpc
 
       if (stream_state_.load() != StreamState::Open)
       {
-        maybe_start_shutdown_i_();
+        action = plan_shutdown_i_();
       }
     }
+
+    execute_stream_action_cq_(action);
 
     if (protocol_error)
     {
@@ -1232,28 +1552,22 @@ namespace AdServer::Grpc
         "batch response protocol error");
     }
 
-    if (!ok || protocol_error)
-    {
-      std::lock_guard<std::mutex> lock(state_lock_);
-      write_in_flight_.store(false);
-      maybe_start_shutdown_i_();
-    }
-
     notify_closed_if_needed_();
     complete_drain_if_ready_();
   }
 
   void
-  BatchingStreamBase::Impl::process_write_completion_(
+  BatchingStreamBase::Impl::process_write_completion_cq_(
     bool ok,
     std::uint64_t batch_id)
   {
     write_arena_.Reset();
 
-    bool ready = false;
+    bool stream_open = false;
+    StreamAction action = StreamAction::None;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      write_in_flight_.store(false);
+      write_state_ = WriteState::Idle;
 
       if (!ok)
       {
@@ -1261,14 +1575,16 @@ namespace AdServer::Grpc
       }
       else
       {
-        ready = active() && stream_state_.load() == StreamState::Open;
+        stream_open = stream_state_.load() == StreamState::Open;
       }
 
       if (stream_state_.load() != StreamState::Open)
       {
-        maybe_start_shutdown_i_();
+        action = plan_shutdown_i_();
       }
     }
+
+    execute_stream_action_cq_(action);
 
     if (!ok)
     {
@@ -1296,7 +1612,7 @@ namespace AdServer::Grpc
       return;
     }
 
-    if (ready)
+    if (stream_open && active())
     {
       if (ready_callback_)
       {
@@ -1309,20 +1625,23 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::process_writes_done_completion_(bool /*ok*/)
+  BatchingStreamBase::Impl::process_writes_done_completion_cq_(bool /*ok*/)
   {
+    StreamAction action = StreamAction::None;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      writes_done_in_flight_ = false;
-      maybe_start_shutdown_i_();
+      write_state_ = WriteState::WritesDoneCompleted;
+      action = plan_shutdown_i_();
     }
+
+    execute_stream_action_cq_(action);
 
     notify_closed_if_needed_();
     complete_drain_if_ready_();
   }
 
   void
-  BatchingStreamBase::Impl::process_finish_completion_(bool /*ok*/)
+  BatchingStreamBase::Impl::process_finish_completion_cq_(bool /*ok*/)
   {
     if (!finish_status_.ok())
     {
@@ -1332,10 +1651,15 @@ namespace AdServer::Grpc
         "stream_finish");
     }
 
+    bool shutdown_completed = false;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      finish_in_flight_ = false;
-      complete_shutdown_i_();
+      shutdown_completed = mark_shutdown_complete_i_();
+    }
+
+    if (shutdown_completed)
+    {
+      deactivate_shutdown_gates_();
     }
 
     notify_closed_if_needed_();
@@ -1397,35 +1721,38 @@ namespace AdServer::Grpc
     fail_inflight_with_error_(status_code, status_message);
   }
 
-  void
-  BatchingStreamBase::Impl::handle_grpc_queue_shutdown_i_() noexcept
+  bool
+  BatchingStreamBase::Impl::mark_grpc_queue_shutdown_i_() noexcept
   {
-    record_last_error_(
-      grpc::StatusCode::UNAVAILABLE,
-      "grpc executor shutdown",
-      "executor_shutdown");
     stream_state_.store(StreamState::Broken);
 
-    if (!read_in_flight_ && !write_in_flight_.load() &&
-      !writes_done_in_flight_ && !finish_in_flight_)
+    if (read_state_ != ReadState::Reading &&
+      write_state_ != WriteState::Writing &&
+      write_state_ != WriteState::WritesDoneInFlight)
     {
-      complete_shutdown_i_();
+      return mark_shutdown_complete_i_();
     }
+
+    return false;
   }
 
-  void
-  BatchingStreamBase::Impl::complete_shutdown_i_() noexcept
+  bool
+  BatchingStreamBase::Impl::mark_shutdown_complete_i_() noexcept
   {
     if (stream_state_.load() == StreamState::Finished)
     {
-      return;
+      return false;
     }
 
     stream_state_.store(StreamState::Finished);
-    completion_tags_gate_.deactivate_object();
+    return true;
+  }
 
-    Sync::PosixGuard guard(owner_.cond_);
-    owner_.cond_.broadcast();
+  void
+  BatchingStreamBase::Impl::deactivate_shutdown_gates_() noexcept
+  {
+    grpc_operation_gate_.deactivate_object();
+    completion_tags_gate_.deactivate_object();
   }
 
   void
@@ -1453,18 +1780,22 @@ namespace AdServer::Grpc
   bool
   BatchingStreamBase::Impl::complete_drain_if_ready_() noexcept
   {
+    if (grpc_operation_gate_.has_activities() ||
+      completion_tags_gate_.has_activities())
+    {
+      return false;
+    }
+
     DrainedCallback drained_callback;
     BatchingStreamBase* drained_stream = nullptr;
 
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      if (stream_state_.load() != StreamState::Finished ||
-        completion_tags_gate_.has_activities())
+      if (stream_state_.load() != StreamState::Finished)
       {
         return false;
       }
 
-      release_grpc_resources_i_();
       if (!drained_notified_)
       {
         drained_notified_ = true;

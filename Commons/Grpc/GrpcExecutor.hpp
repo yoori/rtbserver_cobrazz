@@ -4,7 +4,9 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -31,6 +33,10 @@ namespace AdServer::Grpc
 
       template<typename Functor>
       bool execute(Functor&& functor);
+
+      template<typename Functor>
+      auto execute_result(Functor&& functor) ->
+        std::optional<std::invoke_result_t<Functor>>;
 
     private:
       friend class GrpcExecutor;
@@ -81,6 +87,20 @@ AdServer::Grpc::GrpcExecutor::CQ::execute(Functor&& functor)
 
   std::forward<Functor>(functor)();
   return true;
+}
+
+template<typename Functor>
+auto
+AdServer::Grpc::GrpcExecutor::CQ::execute_result(Functor&& functor) ->
+  std::optional<std::invoke_result_t<Functor>>
+{
+  std::lock_guard<std::mutex> lock(lock_);
+  if (shutdown_requested_)
+  {
+    return std::nullopt;
+  }
+
+  return std::forward<Functor>(functor)();
 }
 
 template<typename Functor>
