@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "TransactionMap.hpp"
 #include "ProfileMap.hpp"
 #include "DelegateProfileMap.hpp"
@@ -27,6 +29,14 @@ namespace ProfilingCommons
       TransactionBase::TransactionHolderBase* holder,
       const KeyType& key,
       OperationPriority op_priority)
+      noexcept;
+
+    ProfileTransactionImpl(
+      TransactionProfileMap<KeyType>& profile_map,
+      TransactionBase::TransactionHolderBase* holder,
+      const KeyType& key,
+      OperationPriority op_priority,
+      AdServer::Commons::AsyncMutex::Guard&& guard)
       noexcept;
 
     /**
@@ -181,6 +191,12 @@ namespace ProfilingCommons
       OperationPriority op_priority = ProfilingCommons::OP_RUNTIME)
       /*throw(MaxWaitersReached, Exception)*/;
 
+    AdServer::Commons::Task<Transaction_var>
+    co_get_transaction(
+      const KeyType& key,
+      bool check_max_waiters = true,
+      OperationPriority op_priority = ProfilingCommons::OP_RUNTIME);
+
   protected:
     virtual ~TransactionProfileMap() noexcept {}
 
@@ -197,6 +213,22 @@ namespace ProfilingCommons
       /*throw(eh::Exception)*/
     {
       return new ProfileTransactionImplType(*this, holder, key, arg);
+    }
+
+    virtual Transaction_var
+    create_transaction_impl_(
+      TransactionHolder* holder,
+      const KeyType& key,
+      const OperationPriority& arg,
+      AdServer::Commons::AsyncMutex::Guard&& guard)
+      /*throw(eh::Exception)*/
+    {
+      return new ProfileTransactionImplType(
+        *this,
+        holder,
+        key,
+        arg,
+        std::move(guard));
     }
 
     Generics::ConstSmartMemBuf_var
@@ -246,6 +278,21 @@ namespace ProfilingCommons
     OperationPriority op_priority)
     noexcept
     : TransactionBase(holder),
+      profile_map_(profile_map),
+      key_(key),
+      op_priority_(op_priority)
+  {}
+
+  template <typename KeyType>
+  ProfileTransactionImpl<KeyType>::
+  ProfileTransactionImpl(
+    TransactionProfileMap<KeyType>& profile_map,
+    TransactionBase::TransactionHolderBase* holder,
+    const KeyType& key,
+    OperationPriority op_priority,
+    AdServer::Commons::AsyncMutex::Guard&& guard)
+    noexcept
+    : TransactionBase(holder, std::move(guard)),
       profile_map_(profile_map),
       key_(key),
       op_priority_(op_priority)
@@ -562,7 +609,24 @@ namespace ProfilingCommons
 
     return BaseTransactionMapType::get_transaction(
       key,
-      check_max_waiters);
+      check_max_waiters,
+      op_priority);
+  }
+
+  template <typename KeyType>
+  AdServer::Commons::Task<
+    typename TransactionProfileMap<KeyType>::Transaction_var>
+  TransactionProfileMap<KeyType>::co_get_transaction(
+    const KeyType& key,
+    bool check_max_waiters,
+    OperationPriority op_priority)
+  {
+    this->no_add_ref_delegate_map_()->wait_preconditions(key, op_priority);
+
+    co_return co_await BaseTransactionMapType::co_get_transaction(
+      key,
+      check_max_waiters,
+      op_priority);
   }
 
   template <typename KeyType>

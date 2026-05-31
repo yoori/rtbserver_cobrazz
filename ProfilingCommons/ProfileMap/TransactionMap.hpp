@@ -6,9 +6,15 @@
  */
 #pragma once
 
+#include <map>
+#include <utility>
+#include <vector>
+
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Commons/AtomicInt.hpp>
+#include <Commons/AsyncMutex.hpp>
+#include <Commons/Coro.hpp>
 
 namespace AdServer
 {
@@ -26,7 +32,7 @@ namespace AdServer
         TransactionHolderBase(): lock_count_(1)
         {}
 
-        SyncPolicy::Mutex lock_;
+        AdServer::Commons::AsyncMutex lock_;
         Algs::AtomicInt lock_count_;
 
       protected:
@@ -41,12 +47,16 @@ namespace AdServer
        */
       TransactionBase(TransactionHolderBase* holder) noexcept;
 
+      TransactionBase(
+        TransactionHolderBase* holder,
+        AdServer::Commons::AsyncMutex::Guard&& guard) noexcept;
+
     protected:
       virtual ~TransactionBase() noexcept;
 
     private:
       TransactionHolderBase_var holder_;
-      SyncPolicy::WriteGuard locker_;
+      AdServer::Commons::AsyncMutex::Guard locker_;
     };
 
     /**
@@ -81,6 +91,12 @@ namespace AdServer
         bool check_max_waiters = true,
         const TransactionArgType& arg = TransactionArgType())
         /*throw(MaxWaitersReached, Exception)*/;
+
+      AdServer::Commons::Task<Transaction_var>
+      co_get_transaction(
+        const KeyType& key,
+        bool check_max_waiters = true,
+        const TransactionArgType& arg = TransactionArgType());
 
       virtual ~TransactionMap() noexcept;
 
@@ -137,6 +153,14 @@ namespace AdServer
         const TransactionArgType& arg)
         /*throw(eh::Exception)*/ = 0;
 
+      virtual Transaction_var
+      create_transaction_impl_(
+        TransactionHolder* holder,
+        const KeyType& key,
+        const TransactionArgType& arg,
+        AdServer::Commons::AsyncMutex::Guard&& guard)
+        /*throw(eh::Exception)*/ = 0;
+
       Portion*
       get_portion_(const KeyType& key)
         noexcept;
@@ -174,7 +198,16 @@ namespace AdServer
     TransactionBase::TransactionBase(TransactionHolderBase* holder)
       noexcept
       : holder_(ReferenceCounting::add_ref(holder)),
-        locker_(holder->lock_)
+        locker_(holder->lock_.scoped_lock())
+    {}
+
+    inline
+    TransactionBase::TransactionBase(
+      TransactionHolderBase* holder,
+      AdServer::Commons::AsyncMutex::Guard&& guard)
+      noexcept
+      : holder_(ReferenceCounting::add_ref(holder)),
+        locker_(std::move(guard))
     {}
 
     inline
@@ -307,6 +340,86 @@ namespace AdServer
         throw;
       }
       catch (const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": cannot create transaction: " << ex.what();
+        throw Exception(ostr);
+      }
+    }
+
+    template <typename KeyType, typename TransactionImplType>
+    AdServer::Commons::Task<
+      typename TransactionMap<KeyType, TransactionImplType>::Transaction_var>
+    TransactionMap<KeyType, TransactionImplType>::
+    co_get_transaction(
+      const KeyType& key,
+      bool check_max_waiters,
+      const TransactionArgType& arg)
+    {
+      static const char* FUN = "TransactionMap::co_get_transaction()";
+
+      Portion* portion = get_portion_(key);
+      TransactionHolder_var holder;
+      unsigned long lock_count;
+      bool max_waiters_reached = false;
+
+      try
+      {
+        {
+          SyncPolicy::WriteGuard lock(portion->open_transaction_map_lock);
+          typename OpenedTransactionMap::iterator it =
+            portion->open_transaction_map.find(key);
+          if(it == portion->open_transaction_map.end())
+          {
+            holder = new TransactionHolder(*this, key);
+            portion->open_transaction_map.insert(
+              std::make_pair(key, holder.in()));
+          }
+          else
+          {
+            holder = ReferenceCounting::add_ref(it->second);
+            lock_count = it->second->lock_count_;
+            if(check_max_waiters &&
+               max_waiters_ != 0 &&
+               lock_count >= max_waiters_)
+            {
+              max_waiters_reached = true;
+            }
+            else
+            {
+              it->second->lock_count_ += 1;
+            }
+          }
+        }
+
+        if(max_waiters_reached)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": already opened " << lock_count <<
+            " transactions, max waiters = " << max_waiters_;
+          throw MaxWaitersReached(ostr);
+        }
+
+        try
+        {
+          auto transaction_lock = co_await holder->lock_.scoped_lock_async();
+          co_return create_transaction_impl_(
+            holder,
+            key,
+            arg,
+            std::move(transaction_lock));
+        }
+        catch(...)
+        {
+          holder->lock_count_ += -1;
+          throw;
+        }
+      }
+      catch(const MaxWaitersReached&)
+      {
+        throw;
+      }
+      catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN << ": cannot create transaction: " << ex.what();

@@ -23,8 +23,8 @@ namespace AdServer::UserInfoSvcs
     bool resave_if_exists,
     bool ignore_bad_event)
   {
-    UserLockMap::WriteGuard user_lock(
-      user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
+    auto user_lock = co_await user_locks_.scoped_lock_async(
+      Generics::StringHashAdapter(external_id));
 
     UserInfo current = co_await rocksdb_chunk_->co_get_user_id(
       external_id,
@@ -72,8 +72,8 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& create_time,
     bool for_set_cookie)
   {
-    UserLockMap::WriteGuard user_lock(
-      user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
+    auto user_lock = co_await user_locks_.scoped_lock_async(
+      Generics::StringHashAdapter(external_id));
 
     UserInfo result = co_await rocksdb_chunk_->co_get_user_id(
       external_id,

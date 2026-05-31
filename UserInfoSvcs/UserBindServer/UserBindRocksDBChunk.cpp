@@ -78,8 +78,8 @@ namespace AdServer::UserInfoSvcs
     bool resave_if_exists,
     bool ignore_bad_event)
   {
-    UserLockMap::WriteGuard user_lock(
-      user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
+    auto user_lock = co_await user_locks_.scoped_lock_async(
+      Generics::StringHashAdapter(external_id));
 
     Record record;
     const bool found = co_await co_load_record_(record, external_id);
@@ -116,8 +116,8 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& create_time,
     bool for_set_cookie)
   {
-    UserLockMap::WriteGuard user_lock(
-      user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
+    auto user_lock = co_await user_locks_.scoped_lock_async(
+      Generics::StringHashAdapter(external_id));
 
     Record record;
     const bool found = co_await co_load_record_(record, external_id);
@@ -212,8 +212,8 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& create_time,
     const Generics::Time& now)
   {
-    UserLockMap::WriteGuard user_lock(
-      user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
+    auto user_lock = co_await user_locks_.scoped_lock_async(
+      Generics::StringHashAdapter(external_id));
 
     Record record;
     record.type = Record::RT_SEEN;
@@ -240,8 +240,8 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now,
     bool for_set_cookie)
   {
-    UserLockMap::WriteGuard user_lock(
-      user_locks_.write_lock(Generics::StringHashAdapter(external_id)));
+    auto user_lock = co_await user_locks_.scoped_lock_async(
+      Generics::StringHashAdapter(external_id));
 
     Record record;
     record.type = Record::RT_BOUND;

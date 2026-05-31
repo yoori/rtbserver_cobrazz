@@ -350,7 +350,7 @@ namespace UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(
+        co_await freq_cap_profiles_->co_get_transaction(
           user_id,
           true, // check max waiters
           ProfilingCommons::OP_RUNTIME);
@@ -489,7 +489,7 @@ namespace UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, true, op_priority);
+        co_await freq_cap_profiles_->co_get_transaction(user_id, true, op_priority);
 
       ConstSmartMemBuf_var fc_mem_buf =
         co_await fc_profile_trans->co_get_profile();
@@ -623,7 +623,7 @@ namespace UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, false);
+        co_await freq_cap_profiles_->co_get_transaction(user_id, false);
 
       ConstSmartMemBuf_var fc_mem_buf =
         co_await fc_profile_trans->co_get_profile();
@@ -1488,12 +1488,19 @@ namespace UserInfoSvcs
 
       try
       {
-        target_profile_trans = temporary ?
-          temp_profiles_->get_transaction(user_id, true, op_priority) :
-          base_profiles_->get_transaction(user_id, true, op_priority);
+        if(temporary)
+        {
+          target_profile_trans = co_await temp_profiles_->co_get_transaction(
+            user_id, true, op_priority);
+        }
+        else
+        {
+          target_profile_trans = co_await base_profiles_->co_get_transaction(
+            user_id, true, op_priority);
+        }
 
         UserProfileMap::Transaction_var add_profile_trans =
-          add_profiles_->get_transaction(user_id, true, op_priority);
+          co_await add_profiles_->co_get_transaction(user_id, true, op_priority);
 
         target_profile = Algs::copy_membuf(
           co_await add_profile_trans->co_get_profile());
@@ -1561,9 +1568,18 @@ namespace UserInfoSvcs
         user_app.create_time = get_create_time_(target_profile.in());
       }
 
-      target_history_profile_trans = temporary ?
-        temp_history_profiles_->get_transaction(user_id, true, op_priority) :
-        history_profiles_->get_transaction(user_id, true, op_priority);
+      if(temporary)
+      {
+        target_history_profile_trans =
+          co_await temp_history_profiles_->co_get_transaction(
+            user_id, true, op_priority);
+      }
+      else
+      {
+        target_history_profile_trans =
+          co_await history_profiles_->co_get_transaction(
+            user_id, true, op_priority);
+      }
 
       target_history_profile = Algs::copy_membuf(
         co_await target_history_profile_trans->co_get_profile());
@@ -1729,7 +1745,8 @@ namespace UserInfoSvcs
       }
 
       UserProfileMap::Transaction_var target_freq_cap_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, true, op_priority);
+        co_await freq_cap_profiles_->co_get_transaction(
+          user_id, true, op_priority);
 
       ConstSmartMemBuf_var target_freq_cap_profile =
         co_await target_freq_cap_profile_trans->co_get_profile();
@@ -1909,7 +1926,7 @@ namespace UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var base_profile_trans =
-        base_profiles_->get_transaction(
+        co_await base_profiles_->co_get_transaction(
           user_id,
           true,
           AdServer::ProfilingCommons::OP_RUNTIME);
@@ -2421,12 +2438,19 @@ namespace UserInfoSvcs
       bool temporary = request_params.temporary;
       Generics::Time match_time = request_params.current_time;
 
-      UserProfileMap::Transaction_var base_profile_trans =
-        temporary ?
-        temp_profiles_->get_transaction(user_id, true, op_priority) :
-        base_profiles_->get_transaction(user_id, true, op_priority);
+      UserProfileMap::Transaction_var base_profile_trans;
+      if(temporary)
+      {
+        base_profile_trans = co_await temp_profiles_->co_get_transaction(
+          user_id, true, op_priority);
+      }
+      else
+      {
+        base_profile_trans = co_await base_profiles_->co_get_transaction(
+          user_id, true, op_priority);
+      }
       UserProfileMap::Transaction_var add_profile_trans =
-        add_profiles_->get_transaction(user_id, true, op_priority);
+        co_await add_profiles_->co_get_transaction(user_id, true, op_priority);
 
       SmartMemBuf_var base_mem_buf = Algs::copy_membuf(
         co_await base_profile_trans->co_get_profile());
@@ -2533,10 +2557,19 @@ namespace UserInfoSvcs
         if(need_history_optimize)
         {
           /* first request today : history optimization */
-          UserProfileMap::Transaction_var history_profile_trans =
-            temporary ?
-            temp_history_profiles_->get_transaction(user_id, true, op_priority) :
-            history_profiles_->get_transaction(user_id, true, op_priority);
+          UserProfileMap::Transaction_var history_profile_trans;
+          if(temporary)
+          {
+            history_profile_trans =
+              co_await temp_history_profiles_->co_get_transaction(
+                user_id, true, op_priority);
+          }
+          else
+          {
+            history_profile_trans =
+              co_await history_profiles_->co_get_transaction(
+                user_id, true, op_priority);
+          }
 
           SmartMemBuf_var hist_mem_buf = Algs::copy_membuf(
             co_await history_profile_trans->co_get_profile());
@@ -2626,7 +2659,8 @@ namespace UserInfoSvcs
       if (request_params.provide_channel_count && unique_channels_result != 0)
       {
         UserProfileMap::Transaction_var history_profile_trans =
-          history_profiles_->get_transaction(user_id, true, op_priority);
+          co_await history_profiles_->co_get_transaction(
+            user_id, true, op_priority);
 
         SmartMemBuf_var hist_mem_buf = Algs::copy_membuf(
           co_await history_profile_trans->co_get_profile());
@@ -2646,7 +2680,8 @@ namespace UserInfoSvcs
         if (new_user && !temporary && ho_info != 0)
         {
           UserProfileMap::Transaction_var history_profile_trans =
-            history_profiles_->get_transaction(user_id, true, op_priority);
+            co_await history_profiles_->co_get_transaction(
+              user_id, true, op_priority);
 
           SmartMemBuf_var hist_mem_buf = Algs::copy_membuf(
             co_await history_profile_trans->co_get_profile());
@@ -3035,7 +3070,7 @@ namespace UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, true, op_priority);
+        co_await freq_cap_profiles_->co_get_transaction(user_id, true, op_priority);
 
       ConstSmartMemBuf_var fc_mem_buf =
         co_await fc_profile_trans->co_get_profile();

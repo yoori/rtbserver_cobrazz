@@ -8,6 +8,7 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Commons/Coro.hpp>
 
 /**
  * ChunkedUserMap:
@@ -128,6 +129,12 @@ namespace ProfilingCommons
       /*throw(ChunkNotFound,
         typename BaseProfileMap::MaxWaitersReached,
         typename BaseProfileMap::Exception)*/;
+
+    AdServer::Commons::Task<Transaction_var>
+    co_get_transaction(
+      const KeyType& key,
+      bool check_max_waiters = true,
+      OperationPriority op_priority = ProfilingCommons::OP_RUNTIME);
 
     virtual void
     process_keys(

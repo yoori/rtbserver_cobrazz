@@ -259,6 +259,19 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
+  AdServer::Commons::Task<typename ProfileMapType::Transaction_var>
+  ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
+  co_get_transaction(
+    const KeyType& key,
+    bool check_max_waiters,
+    OperationPriority op_priority)
+  {
+    co_return co_await get_chunk(
+      key_hash_(key) % common_chunks_number_)->co_get_transaction(
+        key, check_max_waiters, op_priority);
+  }
+
+  template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   void
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
   clear_expired_async(

@@ -1,9 +1,7 @@
 #pragma once
 
-#include <mutex>
-
 #include <Generics/HashTableAdapters.hpp>
-#include <Commons/LockMap.hpp>
+#include <Commons/AsyncLockMap.hpp>
 
 #include "UserBindChunk.hpp"
 #include "UserBindRocksDBChunk.hpp"
@@ -48,16 +46,8 @@ namespace AdServer::UserInfoSvcs
     ~MigratingUserBindChunk() noexcept override = default;
 
   private:
-    struct UserLockPolicy
-    {
-      typedef std::mutex Mutex;
-      typedef std::lock_guard<Mutex> ReadGuard;
-      typedef std::lock_guard<Mutex> WriteGuard;
-    };
-
-    typedef AdServer::Commons::NoAllocLockMap<
-      Generics::StringHashAdapter,
-      UserLockPolicy>
+    typedef AdServer::Commons::AsyncNoAllocLockMap<
+      Generics::StringHashAdapter>
       UserLockMap;
 
     UserBindRocksDBChunk_var rocksdb_chunk_;

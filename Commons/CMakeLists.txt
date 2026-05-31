@@ -17,6 +17,7 @@ add_library(Commons  SHARED
   PathManip.cpp
   PidFileGuard.cpp
   ActivityGate.cpp
+  AsyncMutex.cpp
   CountActiveObject.cpp
   ZmqConfig.cpp
   IPCrypter.cpp

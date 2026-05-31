@@ -2,12 +2,11 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <string>
 
 #include <Generics/HashTableAdapters.hpp>
 #include <Generics/Time.hpp>
-#include <Commons/LockMap.hpp>
+#include <Commons/AsyncLockMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
 
 #include "UserBindProcessor.hpp"
@@ -138,16 +137,8 @@ namespace AdServer::UserInfoSvcs
   private:
     static constexpr unsigned char BF_SETCOOKIE_ = 1;
 
-    struct UserLockPolicy
-    {
-      typedef std::mutex Mutex;
-      typedef std::lock_guard<Mutex> ReadGuard;
-      typedef std::lock_guard<Mutex> WriteGuard;
-    };
-
-    typedef AdServer::Commons::NoAllocLockMap<
-      Generics::StringHashAdapter,
-      UserLockPolicy>
+    typedef AdServer::Commons::AsyncNoAllocLockMap<
+      Generics::StringHashAdapter>
       UserLockMap;
 
     const Generics::Time min_bind_age_;
