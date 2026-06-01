@@ -1,5 +1,7 @@
 #include "RequestTask.hpp"
 
+#include <Commons/Coro.hpp>
+
 namespace FrontendCommons
 {
   RequestResult
@@ -80,7 +82,7 @@ namespace FrontendCommons
       handle_.promise().response_writer = std::move(response_writer);
       handle_.promise().detached = true;
       auto handle = std::exchange(handle_, nullptr);
-      handle.resume();
+      AdServer::Commons::resume_coroutine(handle);
     }
   }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coroutine>
+#include <deque>
 #include <exception>
 #include <functional>
 #include <future>
@@ -13,6 +14,28 @@
 
 namespace AdServer::Commons
 {
+  inline void
+  resume_coroutine(std::coroutine_handle<> handle)
+  {
+    thread_local bool draining = false;
+    thread_local std::deque<std::coroutine_handle<>> pending;
+
+    pending.push_back(handle);
+    if(draining)
+    {
+      return;
+    }
+
+    draining = true;
+    while(!pending.empty())
+    {
+      std::coroutine_handle<> next = pending.front();
+      pending.pop_front();
+      next.resume();
+    }
+    draining = false;
+  }
+
   template<typename... Args>
   struct AsyncCallbackResult
   {
@@ -159,7 +182,7 @@ namespace AdServer::Commons
 
           if(resume)
           {
-            state->handle.resume();
+            resume_coroutine(state->handle);
           }
         });
     }
@@ -269,7 +292,7 @@ namespace AdServer::Commons
     std::coroutine_handle<> continuation) noexcept
   {
     handle_.promise().continuation = continuation;
-    handle_.resume();
+    resume_coroutine(handle_);
   }
 
   template<typename ResultType>
@@ -293,7 +316,7 @@ namespace AdServer::Commons
     handle_.promise().completion = [&promise]() {
       promise.set_value();
     };
-    handle_.resume();
+    resume_coroutine(handle_);
     future.get();
     return await_resume();
   }
@@ -330,7 +353,7 @@ namespace AdServer::Commons
     }
     else if(handle.promise().continuation)
     {
-      handle.promise().continuation.resume();
+      resume_coroutine(handle.promise().continuation);
     }
   }
 

@@ -2,8 +2,9 @@
 
 #include <coroutine>
 #include <condition_variable>
-#include <deque>
 #include <mutex>
+
+#include <boost/intrusive/list.hpp>
 
 namespace AdServer::Commons
 {
@@ -31,7 +32,15 @@ namespace AdServer::Commons
     class ScopedLockAwaiter final
     {
     public:
+      struct Waiter
+        : boost::intrusive::list_base_hook<
+            boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
+      {
+        std::coroutine_handle<> handle;
+      };
+
       explicit ScopedLockAwaiter(AsyncMutex& mutex) noexcept;
+      ~ScopedLockAwaiter() noexcept;
 
       bool await_ready() const noexcept;
       bool await_suspend(std::coroutine_handle<> handle);
@@ -39,6 +48,7 @@ namespace AdServer::Commons
 
     private:
       AsyncMutex& mutex_;
+      Waiter waiter_;
     };
 
     AsyncMutex() noexcept = default;
@@ -53,13 +63,18 @@ namespace AdServer::Commons
     friend class Guard;
     friend class ScopedLockAwaiter;
 
-    bool try_lock_or_enqueue_(std::coroutine_handle<> handle);
+    bool try_lock_or_enqueue_(
+      ScopedLockAwaiter::Waiter& waiter,
+      std::coroutine_handle<> handle);
+    void cancel_(ScopedLockAwaiter::Waiter& waiter) noexcept;
     void unlock_() noexcept;
 
   private:
     std::mutex mutex_;
     std::condition_variable condition_;
     bool locked_ = false;
-    std::deque<std::coroutine_handle<>> waiters_;
+    boost::intrusive::list<
+      ScopedLockAwaiter::Waiter,
+      boost::intrusive::constant_time_size<false>> waiters_;
   };
 }

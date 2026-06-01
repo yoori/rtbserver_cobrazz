@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <Commons/Coro.hpp>
+
 namespace AdServer::Commons
 {
   AsyncMutex::Guard::Guard(AsyncMutex* mutex) noexcept
@@ -48,6 +50,11 @@ namespace AdServer::Commons
     : mutex_(mutex)
   {}
 
+  AsyncMutex::ScopedLockAwaiter::~ScopedLockAwaiter() noexcept
+  {
+    mutex_.cancel_(waiter_);
+  }
+
   bool
   AsyncMutex::ScopedLockAwaiter::await_ready() const noexcept
   {
@@ -58,7 +65,7 @@ namespace AdServer::Commons
   AsyncMutex::ScopedLockAwaiter::await_suspend(
     std::coroutine_handle<> handle)
   {
-    return mutex_.try_lock_or_enqueue_(handle);
+    return mutex_.try_lock_or_enqueue_(waiter_, handle);
   }
 
   AsyncMutex::Guard
@@ -89,7 +96,9 @@ namespace AdServer::Commons
   }
 
   bool
-  AsyncMutex::try_lock_or_enqueue_(std::coroutine_handle<> handle)
+  AsyncMutex::try_lock_or_enqueue_(
+    ScopedLockAwaiter::Waiter& waiter,
+    std::coroutine_handle<> handle)
   {
     std::lock_guard<std::mutex> guard(mutex_);
     if(!locked_)
@@ -98,8 +107,19 @@ namespace AdServer::Commons
       return false;
     }
 
-    waiters_.push_back(handle);
+    waiter.handle = handle;
+    waiters_.push_back(waiter);
     return true;
+  }
+
+  void
+  AsyncMutex::cancel_(ScopedLockAwaiter::Waiter& waiter) noexcept
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    if(waiter.is_linked())
+    {
+      waiter.unlink();
+    }
   }
 
   void
@@ -108,17 +128,22 @@ namespace AdServer::Commons
     std::coroutine_handle<> next;
     {
       std::lock_guard<std::mutex> guard(mutex_);
-      if(waiters_.empty())
+      while(!waiters_.empty())
+      {
+        ScopedLockAwaiter::Waiter& waiter = waiters_.front();
+        waiter.unlink();
+        next = waiter.handle;
+        break;
+      }
+
+      if(!next)
       {
         locked_ = false;
         condition_.notify_one();
         return;
       }
-
-      next = waiters_.front();
-      waiters_.pop_front();
     }
 
-    next.resume();
+    resume_coroutine(next);
   }
 }

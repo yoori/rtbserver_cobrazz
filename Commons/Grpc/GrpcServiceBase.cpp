@@ -1,5 +1,7 @@
 #include "GrpcServiceBase.hpp"
 
+#include <Commons/Coro.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -42,7 +44,7 @@ namespace AdServer::Grpc
   GrpcCoroutine::start(Completion completion)
   {
     handle_.promise().completion = std::move(completion);
-    handle_.resume();
+    AdServer::Commons::resume_coroutine(handle_);
   }
 
   bool
@@ -55,7 +57,7 @@ namespace AdServer::Grpc
   GrpcCoroutine::await_suspend(std::coroutine_handle<> continuation)
   {
     start([continuation](std::exception_ptr) mutable {
-      continuation.resume();
+      AdServer::Commons::resume_coroutine(continuation);
     });
   }
 
@@ -154,7 +156,7 @@ namespace AdServer::Grpc
 
         if (resume)
         {
-          state->continuation.resume();
+          AdServer::Commons::resume_coroutine(state->continuation);
         }
       });
     }

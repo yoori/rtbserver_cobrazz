@@ -363,6 +363,31 @@ namespace AdServer
       unsigned long lock_count;
       bool max_waiters_reached = false;
 
+      struct LockCountGuard
+      {
+        TransactionHolder* holder = nullptr;
+        bool active = false;
+
+        ~LockCountGuard() noexcept
+        {
+          if(active && holder)
+          {
+            holder->lock_count_ += -1;
+          }
+        }
+
+        void reset(TransactionHolder* new_holder) noexcept
+        {
+          holder = new_holder;
+          active = true;
+        }
+
+        void release() noexcept
+        {
+          active = false;
+        }
+      } lock_count_guard;
+
       try
       {
         {
@@ -374,6 +399,7 @@ namespace AdServer
             holder = new TransactionHolder(*this, key);
             portion->open_transaction_map.insert(
               std::make_pair(key, holder.in()));
+            lock_count_guard.reset(holder.in());
           }
           else
           {
@@ -388,6 +414,7 @@ namespace AdServer
             else
             {
               it->second->lock_count_ += 1;
+              lock_count_guard.reset(it->second);
             }
           }
         }
@@ -403,15 +430,16 @@ namespace AdServer
         try
         {
           auto transaction_lock = co_await holder->lock_.scoped_lock_async();
-          co_return create_transaction_impl_(
+          Transaction_var transaction = create_transaction_impl_(
             holder,
             key,
             arg,
             std::move(transaction_lock));
+          lock_count_guard.release();
+          co_return transaction;
         }
         catch(...)
         {
-          holder->lock_count_ += -1;
           throw;
         }
       }

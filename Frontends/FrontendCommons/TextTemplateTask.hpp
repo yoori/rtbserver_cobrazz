@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <Commons/ExecutorPool.hpp>
+#include <Commons/Coro.hpp>
 #include <Commons/TextTemplateCache.hpp>
 
 namespace FrontendCommons
@@ -115,7 +116,7 @@ namespace FrontendCommons
 
                 if(handle)
                 {
-                  handle.resume();
+                  AdServer::Commons::resume_coroutine(handle);
                 }
               };
 

@@ -502,8 +502,6 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::start_connect_() noexcept
   {
-    log_grpc_connect(endpoint_);
-
     StreamHolderPtr stream_holder;
     BatchingStreamBase* stream = nullptr;
     bool stream_registered = false;
