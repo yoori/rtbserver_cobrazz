@@ -183,8 +183,8 @@ namespace AdServer::Grpc
     void execute_stream_action_(StreamAction action) noexcept;
     void execute_stream_action_cq_(StreamAction action) noexcept;
     void start_read_cq_() noexcept;
-    void start_writes_done_(bool use_grpc_operation_gate) noexcept;
-    void start_finish_(bool use_grpc_operation_gate) noexcept;
+    void start_writes_done_() noexcept;
+    void start_finish_() noexcept;
     void process_read_completion_cq_(
       bool ok,
       std::unique_ptr<BatchResponse> response);
@@ -235,7 +235,6 @@ namespace AdServer::Grpc
     bool closed_notified_ = false;
     bool drained_notified_ = false;
 
-    AdServer::Commons::ActivityGate grpc_operation_gate_;
     AdServer::Commons::ActivityGate completion_tags_gate_;
     DetachedBatchStorage detached_batch_storage_;
     std::atomic<std::uint64_t> next_request_id_{1};
@@ -357,6 +356,12 @@ namespace AdServer::Grpc
       : completion_tag_guard_(impl->completion_tags_gate_.enter()),
         impl_(std::move(impl))
     {}
+
+    bool
+    active() const noexcept
+    {
+      return static_cast<bool>(completion_tag_guard_);
+    }
 
     ~CompletionTag() override
     {
@@ -494,7 +499,6 @@ namespace AdServer::Grpc
       grpc_executor_(std::move(grpc_executor)),
       queue_index_(queue_index)
   {
-    grpc_operation_gate_.activate_object();
     completion_tags_gate_.activate_object();
     if (!grpc_executor_)
     {
@@ -514,8 +518,6 @@ namespace AdServer::Grpc
 
   BatchingStreamBase::Impl::~Impl()
   {
-    grpc_operation_gate_.deactivate_object();
-    grpc_operation_gate_.wait_object();
     completion_tags_gate_.deactivate_object();
     completion_tags_gate_.wait_object();
   }
@@ -698,9 +700,7 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::wait_object_()
   {
-    grpc_operation_gate_.deactivate_object();
     completion_tags_gate_.deactivate_object();
-    grpc_operation_gate_.wait_object();
     completion_tags_gate_.wait_object();
 
     {
@@ -739,9 +739,7 @@ namespace AdServer::Grpc
 
     const auto operation_start = grpc_queue_->execute_result([this]() mutable {
       auto start_tag = std::make_unique<StartTag>(shared_from_this());
-
-      auto grpc_operation_guard = grpc_operation_gate_.enter();
-      if (!grpc_operation_guard)
+      if (!start_tag->active())
       {
         return false;
       }
@@ -1020,15 +1018,14 @@ namespace AdServer::Grpc
         batch_id,
         measure_consumer_stream_write
       ]() mutable {
-        auto grpc_operation_guard = grpc_operation_gate_.enter();
-        if (!grpc_operation_guard)
+        auto write_tag = std::make_unique<WriteTag>(
+          shared_from_this(),
+          batch_id);
+        if (!write_tag->active())
         {
           return false;
         }
 
-        auto write_tag = std::make_unique<WriteTag>(
-          shared_from_this(),
-          batch_id);
         const auto start = Generics::Time::get_time_of_day();
         stream_->Write(*write_batch, write_tag.get());
         write_tag.release();
@@ -1156,6 +1153,10 @@ namespace AdServer::Grpc
       auto read_tag = std::make_unique<ReadTag>(
         shared_from_this(),
         std::move(response));
+      if (!read_tag->active())
+      {
+        return false;
+      }
 
       stream_->Read(response_ptr, read_tag.get());
       read_tag.release();
@@ -1224,27 +1225,14 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::start_writes_done_(
-    bool use_grpc_operation_gate) noexcept
+  BatchingStreamBase::Impl::start_writes_done_() noexcept
   {
-    const auto operation_start = grpc_queue_->execute_result([
-      this,
-      use_grpc_operation_gate
-    ]() mutable {
+    const auto operation_start = grpc_queue_->execute_result([this]() mutable {
       auto writes_done_tag =
         std::make_unique<WritesDoneTag>(shared_from_this());
-
-      if (use_grpc_operation_gate)
+      if (!writes_done_tag->active())
       {
-        auto grpc_operation_guard = grpc_operation_gate_.enter();
-        if (!grpc_operation_guard)
-        {
-          return false;
-        }
-
-        stream_->WritesDone(writes_done_tag.get());
-        writes_done_tag.release();
-        return true;
+        return false;
       }
 
       stream_->WritesDone(writes_done_tag.get());
@@ -1285,26 +1273,13 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::start_finish_(
-    bool use_grpc_operation_gate) noexcept
+  BatchingStreamBase::Impl::start_finish_() noexcept
   {
-    const auto operation_start = grpc_queue_->execute_result([
-      this,
-      use_grpc_operation_gate
-    ]() mutable {
+    const auto operation_start = grpc_queue_->execute_result([this]() mutable {
       auto finish_tag = std::make_unique<FinishTag>(shared_from_this());
-
-      if (use_grpc_operation_gate)
+      if (!finish_tag->active())
       {
-        auto grpc_operation_guard = grpc_operation_gate_.enter();
-        if (!grpc_operation_guard)
-        {
-          return false;
-        }
-
-        stream_->Finish(&finish_status_, finish_tag.get());
-        finish_tag.release();
-        return true;
+        return false;
       }
 
       stream_->Finish(&finish_status_, finish_tag.get());
@@ -1355,10 +1330,10 @@ namespace AdServer::Grpc
       start_read_cq_();
       return;
     case StreamAction::StartWritesDone:
-      start_writes_done_(true);
+      start_writes_done_();
       return;
     case StreamAction::StartFinish:
-      start_finish_(true);
+      start_finish_();
       return;
     }
   }
@@ -1375,10 +1350,10 @@ namespace AdServer::Grpc
       start_read_cq_();
       return;
     case StreamAction::StartWritesDone:
-      start_writes_done_(false);
+      start_writes_done_();
       return;
     case StreamAction::StartFinish:
-      start_finish_(false);
+      start_finish_();
       return;
     }
   }
@@ -1751,7 +1726,6 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::deactivate_shutdown_gates_() noexcept
   {
-    grpc_operation_gate_.deactivate_object();
     completion_tags_gate_.deactivate_object();
   }
 
@@ -1780,8 +1754,7 @@ namespace AdServer::Grpc
   bool
   BatchingStreamBase::Impl::complete_drain_if_ready_() noexcept
   {
-    if (grpc_operation_gate_.has_activities() ||
-      completion_tags_gate_.has_activities())
+    if (completion_tags_gate_.has_activities())
     {
       return false;
     }
