@@ -1,5 +1,6 @@
 #include "ExecutorPool.hpp"
 
+#include <Commons/Coro.hpp>
 #include <Commons/ThreadName.hpp>
 
 namespace AdServer::Commons
@@ -52,7 +53,7 @@ namespace AdServer::Commons
   ExecutorPool::YieldAwaiter::await_suspend(
     std::coroutine_handle<> handle) noexcept
   {
-    executor_pool_->post([handle]() mutable { handle.resume(); });
+    executor_pool_->post([handle]() mutable { resume_coroutine(handle); });
   }
 
   void
@@ -69,6 +70,17 @@ namespace AdServer::Commons
   ExecutorPool::work_() noexcept
   {
     set_current_thread_name("asio-pool");
+
+    CoroutineResumeScheduler resume_scheduler(
+      [io_service = io_service_](std::coroutine_handle<> handle)
+      {
+        io_service->post(
+          [handle]() mutable
+          {
+            resume_coroutine(handle);
+          });
+      });
+    ScopedCoroutineResumeScheduler scheduler_scope(resume_scheduler);
 
     while(active())
     {

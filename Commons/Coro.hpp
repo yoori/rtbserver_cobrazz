@@ -36,6 +36,47 @@ namespace AdServer::Commons
     draining = false;
   }
 
+  using CoroutineResumeScheduler =
+    std::function<void(std::coroutine_handle<>)>;
+
+  inline const CoroutineResumeScheduler*&
+  current_coroutine_resume_scheduler_ref() noexcept
+  {
+    thread_local const CoroutineResumeScheduler* scheduler = nullptr;
+    return scheduler;
+  }
+
+  inline const CoroutineResumeScheduler*
+  current_coroutine_resume_scheduler() noexcept
+  {
+    return current_coroutine_resume_scheduler_ref();
+  }
+
+  class ScopedCoroutineResumeScheduler
+  {
+  public:
+    explicit
+    ScopedCoroutineResumeScheduler(const CoroutineResumeScheduler& scheduler)
+      : previous_(current_coroutine_resume_scheduler_ref())
+    {
+      current_coroutine_resume_scheduler_ref() = &scheduler;
+    }
+
+    ~ScopedCoroutineResumeScheduler()
+    {
+      current_coroutine_resume_scheduler_ref() = previous_;
+    }
+
+    ScopedCoroutineResumeScheduler(const ScopedCoroutineResumeScheduler&) =
+      delete;
+
+    ScopedCoroutineResumeScheduler&
+    operator=(const ScopedCoroutineResumeScheduler&) = delete;
+
+  private:
+    const CoroutineResumeScheduler* previous_;
+  };
+
   template<typename... Args>
   struct AsyncCallbackResult
   {
@@ -84,6 +125,7 @@ namespace AdServer::Commons
       std::coroutine_handle<> handle;
       StoredResult result;
       std::exception_ptr exception;
+      CoroutineResumeScheduler resume_scheduler;
       bool completed = false;
       bool suspended = false;
     };
@@ -165,6 +207,10 @@ namespace AdServer::Commons
     std::coroutine_handle<> handle)
   {
     state_->handle = handle;
+    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    {
+      state_->resume_scheduler = *scheduler;
+    }
 
     try
     {
@@ -182,7 +228,14 @@ namespace AdServer::Commons
 
           if(resume)
           {
-            resume_coroutine(state->handle);
+            if(state->resume_scheduler)
+            {
+              state->resume_scheduler(state->handle);
+            }
+            else
+            {
+              resume_coroutine(state->handle);
+            }
           }
         });
     }
