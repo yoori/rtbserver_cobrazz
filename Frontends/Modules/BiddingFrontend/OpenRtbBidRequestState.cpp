@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <zlib.h>
 
 
@@ -444,7 +446,7 @@ namespace AdServer::Bidding
   }
 
   void
-  OpenRtbBidRequestState::write_empty_response(unsigned int code)
+  OpenRtbBidRequestState::write_empty_response(unsigned int code, bool response_claimed)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -465,11 +467,11 @@ namespace AdServer::Bidding
       response->add_header_nocopy(
         Response::Header::OPENRTB_VERSION,
         Response::Header::OPENRTB_VERSION_VALUE);
-      write_response_(204, response);
+      write_response_(204, response, response_claimed);
     }
     else
     {
-      write_response_(code, response);
+      write_response_(code, response, response_claimed);
     }
   }
 
@@ -659,7 +661,9 @@ namespace AdServer::Bidding
 
     try
     {
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      std::string response;
+      {
+        AdServer::Commons::JsonFormatter root_json(response);
       root_json.add_escaped_string(Response::OpenRtb::ID, context.request_id);
       if(fill_yandex_attributes)
       {
@@ -735,7 +739,6 @@ namespace AdServer::Bidding
               sum_pub_ecpm,
               CampaignSvcs::RevenueDecimal(false, 100, 0));
 
-//            std::string escaped_impid = String::StringManip::json_escape(slot_it->id);
             std::string escaped_creative_url;
             std::string escaped_creative_body;
 
@@ -835,10 +838,10 @@ namespace AdServer::Bidding
                   request_info.native_ads_instantiate_type == SourceTraits::NAIT_ADM_NATIVE_1_2 ||
                   request_info.native_ads_instantiate_type == SourceTraits::NAIT_ESCAPE_SLASH_ADM)
                 {
-                  std::ostringstream native_response_ostr;
+                  std::string native_response;
 
                   {
-                    AdServer::Commons::JsonFormatter native_json(native_response_ostr);
+                    AdServer::Commons::JsonFormatter native_json(native_response);
                     fill_native_response_(
                       &native_json,
                       *slot_it->native,
@@ -851,7 +854,7 @@ namespace AdServer::Bidding
                   }
 
                   escaped_creative_body = String::StringManip::json_escape(
-                    String::SubString(native_response_ostr.str()));
+                    std::move(native_response));
 
                   if(request_info.native_ads_instantiate_type == SourceTraits::NAIT_ESCAPE_SLASH_ADM)
                   {
@@ -1085,6 +1088,8 @@ namespace AdServer::Bidding
         } // for(std::size_t ad_slot_i = 0, ...
       }
       root_json.add_string(Response::OpenRtb::CUR, pub_currency_code);
+      }
+      response_ostr << response;
     }
     catch(const AdServer::Commons::JsonObject::Exception& ex)
     {
@@ -1118,7 +1123,9 @@ namespace AdServer::Bidding
       std::string escaped_request_id =
         String::StringManip::json_escape(context.request_id);
 
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      std::string response;
+      {
+        AdServer::Commons::JsonFormatter root_json(response);
       root_json.add(Response::Yandex::ID, YandexIdFormatter(escaped_request_id));
       root_json.add_number(Response::Yandex::UNITS, 2);
 
@@ -1237,7 +1244,7 @@ namespace AdServer::Bidding
                 click_params.data(),
                 click_params.size());
               escaped_click_params = String::StringManip::json_escape(
-                base64_encoded_click_params);
+                std::move(base64_encoded_click_params));
             }
 
             AdServer::Commons::JsonObject bid_object(bidarray.add_object());
@@ -1335,6 +1342,8 @@ namespace AdServer::Bidding
         } // for(std::size_t ad_slot_i = 0, ...
       } // close bidset oject and array
       root_json.add_string(Response::Yandex::CUR, pub_currency_code);
+      }
+      response_ostr << response;
     }
     catch(const AdServer::Commons::JsonObject::Exception& ex)
     {

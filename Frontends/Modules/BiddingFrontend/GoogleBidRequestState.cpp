@@ -407,7 +407,7 @@ namespace AdServer::Bidding
   }
 
   void
-  GoogleBidRequestState::write_empty_response(unsigned int code)
+  GoogleBidRequestState::write_empty_response(unsigned int code, bool response_claimed)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -422,11 +422,11 @@ namespace AdServer::Bidding
       empty_bid_response.SerializeToOstream(&response_writer);
       response_writer.flush();
 
-      write_response_(200, response);
+      write_response_(200, response, response_claimed);
     }
     else
     {
-      write_response_(code, response);
+      write_response_(code, response, response_claimed);
     }
   }
 

@@ -107,7 +107,7 @@ def generate_hpp(file_desc, namespace):
       lines.extend([
         "    using {} = std::function<void(".format(callback_name(method.name)),
         "      const grpc::Status&,",
-        "      const {}&)>;".format(cpp_type(method.output_type)),
+        "      {}&&)>;".format(cpp_type(method.output_type)),
         "",
       ])
     lines.extend([
@@ -342,10 +342,10 @@ def generate_cpp(file_desc, namespace):
         "         executor_pool = std::move(executor_pool),",
         "         handle](",
         "          const grpc::Status& status,",
-        "          const {}& response)".format(response_type),
+        "          {}&& response)".format(response_type),
         "        {",
         "          state->status = status;",
-        "          state->response = response;",
+        "          state->response = std::move(response);",
         "          executor_pool->post([handle]() mutable { handle.resume(); });",
         "        });",
         "    }",

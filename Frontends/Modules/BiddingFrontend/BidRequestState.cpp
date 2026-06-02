@@ -90,16 +90,27 @@ namespace AdServer::Bidding
       campaign_match_result)
     noexcept
   {
+    const bool write_empty_response = complete_request_impl_(
+      not_interrupted,
+      campaign_match_result);
+    finish_(write_empty_response);
+  }
+
+  bool
+  BidRequestState::complete_request_impl_(
+    bool not_interrupted,
+    AdServer::Bidding::CampaignManager::RequestCreativeResult&
+      campaign_match_result)
+    noexcept
+  {
     if(!not_interrupted)
     {
-      finish_(true);
-      return;
+      return true;
     }
 
     if(check_interrupt_(Stage::CampaignSelection))
     {
-      finish_(true);
-      return;
+      return true;
     }
 
     if(campaign_match_result.ad_slots.size())
@@ -112,8 +123,7 @@ namespace AdServer::Bidding
         campaign_match_result,
         hostname_))
       {
-        finish_(true);
-        return;
+        return true;
       }
     }
 
@@ -121,14 +131,11 @@ namespace AdServer::Bidding
       campaign_match_result,
       request_time_metering_.creative_selection ?
         &*request_time_metering_.creative_selection : nullptr);
-    request_time_metering_.total_time =
-      Generics::Time::get_time_of_day() - start_processing_time_;
-    debug_sink_.print_time_metering_debug_info(request_time_metering_);
+    print_time_metering_debug_info_();
 
     if(check_interrupt_(Stage::CampaignSelectionConsidering))
     {
-      finish_(true);
-      return;
+      return true;
     }
 
     if(campaign_match_result.ad_slots.size())
@@ -153,12 +160,11 @@ namespace AdServer::Bidding
       if(ad_selected)
       {
         this->write_response(campaign_match_result);
-        finish_(false);
-        return;
+        return false;
       }
     }
 
-    finish_(true);
+    return true;
   }
 
   void
@@ -166,6 +172,7 @@ namespace AdServer::Bidding
   {
     if(write_empty_response)
     {
+      print_time_metering_debug_info_();
       this->write_empty_response(0);
     }
 
@@ -185,9 +192,12 @@ namespace AdServer::Bidding
   BidRequestState::write_interrupted_empty_response(
     const String::SubString& interrupted_step) noexcept
   {
+    if(!claim_response_())
+    {
+      return;
+    }
+
     timeout_interrupted_.store(true, std::memory_order_relaxed);
-    request_time_metering_.total_time =
-      Generics::Time::get_time_of_day() - start_processing_time_;
     print_available_request_debug_info_();
     const auto in_progress_stats =
       bid_frontend_->stats_->rtb_request_in_progress_stats();
@@ -224,8 +234,8 @@ namespace AdServer::Bidding
       user_info_client_stats,
       channel_client_stats,
       campaign_client_stats);
-    debug_sink_.print_time_metering_debug_info(request_time_metering_);
-    write_empty_response(0);
+    print_time_metering_debug_info_();
+    write_empty_response(0, true);
   }
 
   bool
@@ -238,10 +248,11 @@ namespace AdServer::Bidding
   void
   BidRequestState::write_response_(
     int code,
-    FCGI::HttpResponse_var response)
+    FCGI::HttpResponse_var response,
+    bool response_claimed)
     noexcept
   {
-    bool send_response = (to_interrupt_.exchange_and_add(1) == 0);
+    bool send_response = response_claimed || claim_response_();
 
     if(send_response)
     {
@@ -251,6 +262,12 @@ namespace AdServer::Bidding
       response_writer_ = FCGI::BaseHttpResponseWriter_var();
     response_sent_ = true;
     }
+  }
+
+  bool
+  BidRequestState::claim_response_() noexcept
+  {
+    return to_interrupt_.exchange_and_add(1) == 0;
   }
 
   void
@@ -266,6 +283,18 @@ namespace AdServer::Bidding
         resolved_user_id_,
         keywords_);
       request_debug_info_printed_ = true;
+    }
+  }
+
+  void
+  BidRequestState::print_time_metering_debug_info_() noexcept
+  {
+    if(!time_metering_debug_info_printed_)
+    {
+      request_time_metering_.total_time =
+        Generics::Time::get_time_of_day() - start_processing_time_;
+      debug_sink_.print_time_metering_debug_info(request_time_metering_);
+      time_metering_debug_info_printed_ = true;
     }
   }
 

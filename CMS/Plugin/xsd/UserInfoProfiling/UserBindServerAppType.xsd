@@ -24,6 +24,16 @@
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_process_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>UserBindServer gRPC processing threads.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="grpc_max_split" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>UserBindServer gRPC maximum server-side batch split.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="UserBindServerConfigType">

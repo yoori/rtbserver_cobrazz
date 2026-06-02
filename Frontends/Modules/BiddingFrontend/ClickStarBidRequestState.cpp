@@ -132,7 +132,7 @@ namespace AdServer::Bidding
   }
 
   void
-  ClickStarBidRequestState::write_empty_response(unsigned int code)
+  ClickStarBidRequestState::write_empty_response(unsigned int code, bool response_claimed)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -140,11 +140,11 @@ namespace AdServer::Bidding
     if(code < 300)
     {
       // no-bid is No content
-      write_response_(204, response);
+      write_response_(204, response, response_claimed);
     }
     else
     {
-      write_response_(code, response);
+      write_response_(code, response, response_claimed);
     }
   }
 
@@ -206,7 +206,9 @@ namespace AdServer::Bidding
     const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
-    AdServer::Commons::JsonFormatter root_json(response_ostr);
+    std::string response;
+    {
+      AdServer::Commons::JsonFormatter root_json(response);
 
     // result cpc price, ecpm is in 0.01/1000
     CampaignSvcs::RevenueDecimal cpc_price =
@@ -262,6 +264,8 @@ namespace AdServer::Bidding
       String::SubString(ad_slot_result.selected_creatives[0].click_url));
 
     root_json.add_number(Response::Json::TTL, Response::Json::TTL_VALUE);
+    }
+    response_ostr << response;
   }
 
   void

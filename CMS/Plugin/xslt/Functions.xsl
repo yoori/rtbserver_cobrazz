@@ -220,23 +220,6 @@
     </xsl:if>
   </xsl:variable>
 
-  <xsl:variable name="sys-log-level">
-    <xsl:choose>
-      <xsl:when test="$default-syslog-level &lt; $log-level">
-        <xsl:value-of select="$default-syslog-level"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$log-level"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:variable>
-
-  <xsl:variable name="sys-log"><xsl:value-of select="$logger-node/@sys_log"/>
-    <xsl:if test="count($logger-node/@sys_log) = 0">
-      <xsl:value-of select="$def-sys-log"/>
-    </xsl:if>
-  </xsl:variable>
-
   <xsl:variable name="rotate-size">
     <xsl:value-of select="$logger-node/@rotate_size"/>
     <xsl:if test="count($logger-node/@rotate_size) = 0">
@@ -256,11 +239,6 @@
       <xsl:value-of select="$log-file"/>
     </xsl:attribute>
     <xsl:attribute name="log_level"><xsl:value-of select="$log-level"/></xsl:attribute>
-    <xsl:if test="$sys-log = 'true'">
-      <cfg:SysLog>
-        <xsl:attribute name="log_level"><xsl:value-of select="$sys-log-level"/></xsl:attribute>
-      </cfg:SysLog>
-    </xsl:if>
     <cfg:Suffix>
       <xsl:attribute name="time_span"><xsl:value-of select="$rotate-time * 60"/></xsl:attribute>
       <xsl:attribute name="size_span"><xsl:value-of select="$rotate-size * 1024 * 1024"/></xsl:attribute>

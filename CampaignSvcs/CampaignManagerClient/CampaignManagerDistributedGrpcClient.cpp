@@ -329,7 +329,7 @@ namespace AdServer::CampaignSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        const Response& response)
+        Response&& response)
       mutable
       {
         if (!status.ok())
@@ -345,7 +345,7 @@ namespace AdServer::CampaignSvcs
           AdServer::Grpc::status_with_endpoint(
             status,
             ref->endpoint),
-          response);
+          std::move(response));
       });
   }
 
@@ -417,7 +417,7 @@ namespace AdServer::CampaignSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        const pb::GetFileResponse& response)
+        pb::GetFileResponse&& response)
       mutable
       {
         if (status.ok() || !fallback_ref)
@@ -431,7 +431,7 @@ namespace AdServer::CampaignSvcs
                 status_description(status));
             }
           }
-          callback(status, response);
+          callback(status, std::move(response));
           return;
         }
 
@@ -452,7 +452,7 @@ namespace AdServer::CampaignSvcs
             pool_timeout
           ](
             const grpc::Status& fallback_status,
-            const pb::GetFileResponse& fallback_response)
+            pb::GetFileResponse&& fallback_response)
           mutable
           {
             if (!fallback_status.ok())
@@ -464,7 +464,7 @@ namespace AdServer::CampaignSvcs
                   status_description(fallback_status));
               }
             }
-            callback(fallback_status, fallback_response);
+            callback(fallback_status, std::move(fallback_response));
           });
       });
   }

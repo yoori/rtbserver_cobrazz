@@ -198,7 +198,7 @@ namespace AdServer::UserInfoSvcs
           pool_ref = std::move(pool_ref),
           endpoint,
           callback = std::move(callback)
-        ](const grpc::Status& status, const Response& response) mutable
+        ](const grpc::Status& status, Response&& response) mutable
         {
           if (!status.ok())
           {
@@ -207,7 +207,7 @@ namespace AdServer::UserInfoSvcs
           }
           callback(
             AdServer::Grpc::status_with_endpoint(status, endpoint),
-            response);
+            std::move(response));
         });
     }
 

@@ -31,7 +31,9 @@ namespace AdServer::Bidding
       noexcept;
 
     virtual void
-    write_empty_response(unsigned int code)
+    write_empty_response(
+      unsigned int code,
+      bool response_claimed = false)
       noexcept;
 
     virtual void

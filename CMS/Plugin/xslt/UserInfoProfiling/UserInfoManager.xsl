@@ -103,6 +103,14 @@
         <xsl:value-of select="$user-info-manager-port + 500"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="user-info-manager-grpc-process-threads">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_process_threads"/>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_process_threads) = 0">128</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="user-info-manager-grpc-max-split">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_max_split"/>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_max_split) = 0">8</xsl:if>
+    </xsl:variable>
     <xsl:variable name="user-info-manager-monitoring-port">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@monitoring_port"/>
       <xsl:if test="count($user-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
@@ -159,7 +167,8 @@
     <xsl:attribute name="root_dir"><xsl:value-of select="$root-dir"/></xsl:attribute>
     <xsl:attribute name="colo_id"><xsl:value-of select="$colo-id"/></xsl:attribute>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig process_threads="{$user-info-manager-grpc-process-threads}"
+      max_split="{$user-info-manager-grpc-max-split}">
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>

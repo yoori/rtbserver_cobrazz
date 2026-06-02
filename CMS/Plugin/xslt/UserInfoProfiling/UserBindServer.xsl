@@ -47,6 +47,14 @@
         <xsl:value-of select="$def-user-bind-server-port + 500"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="user-bind-server-grpc-process-threads">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_process_threads"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_process_threads) = 0">128</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="user-bind-server-grpc-max-split">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_max_split"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_max_split) = 0">8</xsl:if>
+    </xsl:variable>
     <xsl:variable name="user-bind-server-monitoring-port">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>
       <xsl:if test="count($user-bind-server-config/cfg:networkParams/@monitoring_port) = 0">
@@ -77,7 +85,8 @@
       <xsl:value-of select="concat($workspace-root, '/run/UserBindServer.pid')"/>
     </xsl:attribute>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig process_threads="{$user-bind-server-grpc-process-threads}"
+      max_split="{$user-bind-server-grpc-max-split}">
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>

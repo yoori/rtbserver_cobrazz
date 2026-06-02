@@ -310,7 +310,7 @@ namespace AdServer::ChannelSvcs
               callback = std::move(state->callback);
             }
 
-            callback(result_status, result_response);
+            callback(result_status, std::move(result_response));
           });
       }
     }
@@ -391,7 +391,7 @@ namespace AdServer::ChannelSvcs
               callback = std::move(state->callback);
             }
 
-            callback(result_status, result_response);
+            callback(result_status, std::move(result_response));
           });
       }
     }
@@ -642,7 +642,7 @@ namespace AdServer::ChannelSvcs
       ]
       (
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::MatchResponse& response
+        adserver::channel_svcs::channel_server::MatchResponse&& response
       )
       mutable
       {
@@ -655,7 +655,7 @@ namespace AdServer::ChannelSvcs
           AdServer::Grpc::status_with_endpoint(
             status,
             ref->name()),
-          response);
+          std::move(response));
       });
   }
 
@@ -695,7 +695,7 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::GetCcgTraitsResponse&
+        adserver::channel_svcs::channel_server::GetCcgTraitsResponse&&
           response)
       mutable
       {
@@ -708,7 +708,7 @@ namespace AdServer::ChannelSvcs
           AdServer::Grpc::status_with_endpoint(
             status,
             ref->name()),
-          response);
+          std::move(response));
       });
   }
 
@@ -748,7 +748,7 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::CheckConfigurationResponse&
+        adserver::channel_svcs::channel_server::CheckConfigurationResponse&&
           response)
       mutable
       {
@@ -757,7 +757,7 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, response);
+        callback(status, std::move(response));
       });
   }
 
@@ -797,7 +797,7 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::SetSourcesResponse&
+        adserver::channel_svcs::channel_server::SetSourcesResponse&&
           response)
       mutable
       {
@@ -806,7 +806,7 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, response);
+        callback(status, std::move(response));
       });
   }
 
@@ -847,7 +847,7 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::SetProxySourcesResponse&
+        adserver::channel_svcs::channel_server::SetProxySourcesResponse&&
           response)
       mutable
       {
@@ -856,7 +856,7 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, response);
+        callback(status, std::move(response));
       });
   }
 

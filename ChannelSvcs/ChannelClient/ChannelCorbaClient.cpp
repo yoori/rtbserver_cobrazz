@@ -259,27 +259,27 @@ namespace AdServer::ChannelSvcs
       {
         response.set_match_time(pack_oct_seq(result->match_time[0]));
       }
-      callback(grpc::Status::OK, response);
+      callback(grpc::Status::OK, std::move(response));
     }
     catch(const NotConfigured& ex)
     {
       callback(
         exception_status(grpc::StatusCode::UNAVAILABLE, ex.description.in()),
-        response);
+        std::move(response));
     }
     catch(const ImplementationException& ex)
     {
       callback(
         exception_status(grpc::StatusCode::INTERNAL, ex.description.in()),
-        response);
+        std::move(response));
     }
     catch(const CORBA::SystemException& ex)
     {
-      callback(exception_status(ex), response);
+      callback(exception_status(ex), std::move(response));
     }
     catch(const eh::Exception& ex)
     {
-      callback(exception_status(ex), response);
+      callback(exception_status(ex), std::move(response));
     }
   }
 
@@ -311,27 +311,27 @@ namespace AdServer::ChannelSvcs
         keyword->set_click_url(source_keyword.click_url.in());
         keyword->set_original_keyword(source_keyword.original_keyword.in());
       }
-      callback(grpc::Status::OK, response);
+      callback(grpc::Status::OK, std::move(response));
     }
     catch(const NotConfigured& ex)
     {
       callback(
         exception_status(grpc::StatusCode::UNAVAILABLE, ex.description.in()),
-        response);
+        std::move(response));
     }
     catch(const ImplementationException& ex)
     {
       callback(
         exception_status(grpc::StatusCode::INTERNAL, ex.description.in()),
-        response);
+        std::move(response));
     }
     catch(const CORBA::SystemException& ex)
     {
-      callback(exception_status(ex), response);
+      callback(exception_status(ex), std::move(response));
     }
     catch(const eh::Exception& ex)
     {
-      callback(exception_status(ex), response);
+      callback(exception_status(ex), std::move(response));
     }
   }
 

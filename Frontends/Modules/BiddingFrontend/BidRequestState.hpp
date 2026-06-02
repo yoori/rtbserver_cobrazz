@@ -106,7 +106,9 @@ namespace AdServer::Bidding
       noexcept = 0;
 
     virtual void
-    write_empty_response(unsigned int code)
+    write_empty_response(
+      unsigned int code,
+      bool response_claimed = false)
       noexcept = 0;
 
     virtual void
@@ -132,6 +134,12 @@ namespace AdServer::Bidding
       AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result) noexcept;
 
+    bool
+    complete_request_impl_(
+      bool not_interrupted,
+      AdServer::Bidding::CampaignManager::RequestCreativeResult&
+        campaign_match_result) noexcept;
+
     void
     finish_(bool write_empty_response) noexcept;
 
@@ -142,11 +150,18 @@ namespace AdServer::Bidding
     void
     write_response_(
       int code,
-      FCGI::HttpResponse_var response)
+      FCGI::HttpResponse_var response,
+      bool response_claimed = false)
       noexcept;
+
+    bool
+    claim_response_() noexcept;
 
     void
     print_available_request_debug_info_() noexcept;
+
+    void
+    print_time_metering_debug_info_() noexcept;
 
   protected:
     Frontend* bid_frontend_;
@@ -173,6 +188,7 @@ namespace AdServer::Bidding
     FCGI::BaseHttpResponseWriter_var response_writer_;
     bool response_sent_;
     bool request_debug_info_printed_ = false;
+    bool time_metering_debug_info_printed_ = false;
   };
 
   typedef ReferenceCounting::SmartPtr<BidRequestState>

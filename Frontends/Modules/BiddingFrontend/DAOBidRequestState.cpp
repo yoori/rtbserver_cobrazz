@@ -90,7 +90,7 @@ namespace AdServer::Bidding
   }
 
   void
-  DAOBidRequestState::write_empty_response(unsigned int code)
+  DAOBidRequestState::write_empty_response(unsigned int code, bool response_claimed)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -98,11 +98,11 @@ namespace AdServer::Bidding
     if(code < 300)
     {
       // no-bid is No content
-      write_response_(204, response);
+      write_response_(204, response, response_claimed);
     }
     else
     {
-      write_response_(code, response);
+      write_response_(code, response, response_claimed);
     }
   }
 
@@ -134,7 +134,9 @@ namespace AdServer::Bidding
     {
       //Generics::Time now = Generics::Time::get_time_of_day();
 
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      std::string response;
+      {
+        AdServer::Commons::JsonFormatter root_json(response);
 
       assert(campaign_match_result.ad_slots.size() > 0);
 
@@ -191,6 +193,8 @@ namespace AdServer::Bidding
         root_json.add_escaped_string(
           Response::AdJson::IMAGE, String::SubString(token.value));
       }
+      }
+      response_ostr << response;
     }
     catch(const eh::Exception& ex)
     {

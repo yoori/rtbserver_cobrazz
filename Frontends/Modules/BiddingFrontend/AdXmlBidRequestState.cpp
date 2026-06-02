@@ -119,7 +119,7 @@ namespace AdServer::Bidding
   }
 
   void
-  AdXmlBidRequestState::write_empty_response(unsigned int code)
+  AdXmlBidRequestState::write_empty_response(unsigned int code, bool response_claimed)
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
@@ -127,11 +127,11 @@ namespace AdServer::Bidding
     if(code < 300)
     {
       // no-bid is No content
-      write_response_(204, response);
+      write_response_(204, response, response_claimed);
     }
     else
     {
-      write_response_(code, response);
+      write_response_(code, response, response_claimed);
     }
   }
 

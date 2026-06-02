@@ -1407,7 +1407,7 @@ namespace AdServer
       }
     }
 
-    std::ostringstream response_string;
+    std::string response_string;
     {
       AdServer::Commons::JsonFormatter root_json(response_string);
       if(!request_info->session_id.empty())
@@ -1429,7 +1429,7 @@ namespace AdServer
     }
 
     response->set_content_type_nocopy(Response::Type::JSON);
-    response->write(response_string.str());
+    response->write(response_string);
     co_return FrontendCommons::RequestResult{200, response, false};
   }
 }
