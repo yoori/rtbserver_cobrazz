@@ -176,14 +176,14 @@ namespace AdServer::Grpc
           {
             callback(
               grpc::Status(grpc::StatusCode::INTERNAL, parse_error_message),
-              {});
+              Response());
           }
           return;
         }
 
         if (callback)
         {
-          callback(status, response);
+          callback(status, std::move(response));
         }
       });
   }

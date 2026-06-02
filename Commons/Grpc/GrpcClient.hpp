@@ -579,7 +579,7 @@ namespace AdServer::Grpc
       add_write_stats(1, 1);
       if (callback)
       {
-        callback(status, response);
+        callback(status, std::move(response));
       }
     }
 
@@ -711,7 +711,7 @@ namespace AdServer::Grpc
         {
           if (ok)
           {
-            callback(status, response);
+            callback(status, std::move(response));
           }
           else
           {
@@ -719,7 +719,7 @@ namespace AdServer::Grpc
               grpc::Status(
                 grpc::StatusCode::UNKNOWN,
                 "completion queue event failed"),
-              {});
+              Response());
           }
         }
 

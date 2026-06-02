@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ostream>
+#include <string>
 #include <String/SubString.hpp>
 #include <String/StringManip.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -10,7 +10,7 @@ namespace AdServer
 {
 namespace Commons
 {
-  // Write Bid Response in JSON format in stream on the fly.
+  // Write Bid Response in JSON format into string on the fly.
 
   // Possible split JsonObject to JsonObject and JsonArray
   class JsonObject
@@ -108,7 +108,7 @@ namespace Commons
       OT_ESCAPED_STRING_ARRAY
     };
 
-    JsonObject(std::ostream& out);
+    JsonObject(std::string& out);
 
     // Check on add elements into object
     void
@@ -124,9 +124,22 @@ namespace Commons
     void
     name_(const String::SubString& name);
 
+    void
+    append_(const char* value);
+
+    void
+    append_(char value);
+
+    void
+    append_(const String::SubString& value);
+
+    template<typename Value>
+    void
+    append_value_(const Value& value);
+
   private:
     ObjectType type_;
-    std::ostream& out_stream_;
+    std::string* out_string_;
     bool empty_;
     size_t opened_child_object_;
     JsonObject* parent_;
@@ -135,7 +148,7 @@ namespace Commons
   class JsonFormatter: public JsonObject
   {
   public:
-    JsonFormatter(std::ostream& out);
+    JsonFormatter(std::string& out);
   };
 }
 }
@@ -151,31 +164,31 @@ namespace Commons
   {}
 
   inline
-  JsonFormatter::JsonFormatter(std::ostream& out)
+  JsonFormatter::JsonFormatter(std::string& out)
   : JsonObject(out)
   {}
 
   inline
   JsonObject::JsonObject(JsonObjectDelegate&& delegate)
   : type_(delegate.array_ ? OT_ARRAY : OT_SIMPLE_OBJECT),
-    out_stream_(delegate.j_obj_->out_stream_),
+    out_string_(delegate.j_obj_->out_string_),
     empty_(true),
     opened_child_object_(0),
     parent_(delegate.j_obj_)
   {
     ++parent_->opened_child_object_;
-    out_stream_ << (type_ == OT_SIMPLE_OBJECT ? "{" : "[");
+    append_(type_ == OT_SIMPLE_OBJECT ? "{" : "[");
   }
 
   inline
-  JsonObject::JsonObject(std::ostream& out)
+  JsonObject::JsonObject(std::string& out)
   : type_(OT_SIMPLE_OBJECT),
-    out_stream_(out),
+    out_string_(&out),
     empty_(true),
     opened_child_object_(0),
     parent_(0)
   {
-    out_stream_ << "{";
+    append_("{");
   }
 
   inline
@@ -185,7 +198,7 @@ namespace Commons
     {
       --parent_->opened_child_object_;
     }
-    out_stream_ << (type_ == OT_SIMPLE_OBJECT ? "}" : "]");
+    append_(type_ == OT_SIMPLE_OBJECT ? "}" : "]");
   }
 
   inline
@@ -246,7 +259,7 @@ namespace Commons
   {
     if (!empty_)
     {
-      out_stream_ << ", ";
+      append_(", ");
     }
     empty_ = false;
   }
@@ -255,7 +268,41 @@ namespace Commons
   void
   JsonObject::name_(const String::SubString& name)
   {
-    out_stream_ <<  "\"" << name << "\": ";
+    append_('"');
+    append_(name);
+    append_("\": ");
+  }
+
+  inline
+  void
+  JsonObject::append_(const char* value)
+  {
+    out_string_->append(value);
+  }
+
+  inline
+  void
+  JsonObject::append_(char value)
+  {
+    out_string_->push_back(value);
+  }
+
+  inline
+  void
+  JsonObject::append_(const String::SubString& value)
+  {
+    out_string_->append(value.data(), value.size());
+  }
+
+  template<typename Value>
+  inline
+  void
+  JsonObject::append_value_(const Value& value)
+  {
+    Stream::Dynamic out;
+    out << value;
+    const String::SubString str = out.str();
+    append_(str);
   }
 
   inline
@@ -286,7 +333,7 @@ namespace Commons
     check_(name);
     comma_();
     name_(name);
-    out_stream_ << (value ? "true" : "false");
+    append_(value ? "true" : "false");
     return *this;
   }
 
@@ -297,7 +344,9 @@ namespace Commons
     check_(name);
     comma_();
     name_(name);
-    out_stream_ << "\"" << value << "\"";
+    append_('"');
+    append_(value);
+    append_('"');
     return *this;
   }
 
@@ -309,7 +358,9 @@ namespace Commons
     check_(name);
     comma_();
     name_(name);
-    out_stream_ << "\"" << value << "\"";
+    append_('"');
+    append_value_(value);
+    append_('"');
     return *this;
   }
 
@@ -320,7 +371,9 @@ namespace Commons
     check_(name);
     comma_();
     name_(name);
-    out_stream_ << "\"" << String::StringManip::json_escape(value) << "\"";
+    append_('"');
+    String::StringManip::json_escape_append(*out_string_, value);
+    append_('"');
     return *this;
   }
 
@@ -356,7 +409,7 @@ namespace Commons
     check_(name);
     comma_();
     name_(name);
-    out_stream_ << value;
+    append_value_(value);
     return *this;
   }
 
@@ -376,7 +429,9 @@ namespace Commons
   {
     check_(OT_STRING_ARRAY);
     comma_();
-    out_stream_ << "\"" << value << "\"";
+    append_('"');
+    append_(value);
+    append_('"');
     return *this;
   }
 
@@ -386,7 +441,9 @@ namespace Commons
   {
     check_(OT_ESCAPED_STRING_ARRAY);
     comma_();
-    out_stream_ << "\"" << String::StringManip::json_escape(value) << "\"";
+    append_('"');
+    String::StringManip::json_escape_append(*out_string_, value);
+    append_('"');
     return *this;
   }
 
@@ -408,7 +465,7 @@ namespace Commons
   {
     check_(OT_NUMBER_ARRAY);
     comma_();
-    out_stream_ << value;
+    append_value_(value);
     return *this;
   }
 
