@@ -11,6 +11,7 @@
 
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
+#include <Commons/AsyncMutex.hpp>
 
 #include "UserInfoManagerMain.hpp"
 
@@ -163,6 +164,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
             stats.min_time_of_request_in_progress ?
               "\"" + stats.min_time_of_request_in_progress->gm_ft() + "\"" :
               "null";
+          const auto async_mutex_stats = AdServer::Commons::AsyncMutex::stats();
           return AdServer::Commons::HttpServer::HttpServer::Response{
             200,
             "application/json",
@@ -186,6 +188,16 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               std::to_string(stats.call_inflight) +
               ",\"min_time_of_request_in_progress\":" +
               min_time_of_request_in_progress +
+              ",\"async_mutex_lock_attempts\":" +
+              std::to_string(async_mutex_stats.lock_attempts) +
+              ",\"async_mutex_immediate_locks\":" +
+              std::to_string(async_mutex_stats.immediate_locks) +
+              ",\"async_mutex_contended_locks\":" +
+              std::to_string(async_mutex_stats.contended_locks) +
+              ",\"async_mutex_current_waiters\":" +
+              std::to_string(async_mutex_stats.current_waiters) +
+              ",\"async_mutex_max_waiters\":" +
+              std::to_string(async_mutex_stats.max_waiters) +
               "}\n"
           };
         });

@@ -6,6 +6,12 @@
 
 namespace AdServer::Commons
 {
+  std::atomic<std::uint64_t> AsyncMutex::lock_attempts_{0};
+  std::atomic<std::uint64_t> AsyncMutex::immediate_locks_{0};
+  std::atomic<std::uint64_t> AsyncMutex::contended_locks_{0};
+  std::atomic<std::uint64_t> AsyncMutex::current_waiters_{0};
+  std::atomic<std::uint64_t> AsyncMutex::max_waiters_{0};
+
   AsyncMutex::Guard::Guard(AsyncMutex* mutex) noexcept
     : mutex_(mutex)
   {}
@@ -80,6 +86,18 @@ namespace AdServer::Commons
     return ScopedLockAwaiter(*this);
   }
 
+  AsyncMutex::Stats
+  AsyncMutex::stats() noexcept
+  {
+    return Stats{
+      lock_attempts_.load(std::memory_order_relaxed),
+      immediate_locks_.load(std::memory_order_relaxed),
+      contended_locks_.load(std::memory_order_relaxed),
+      current_waiters_.load(std::memory_order_relaxed),
+      max_waiters_.load(std::memory_order_relaxed)
+    };
+  }
+
   AsyncMutex::Guard
   AsyncMutex::scoped_lock()
   {
@@ -100,15 +118,22 @@ namespace AdServer::Commons
     ScopedLockAwaiter::Waiter& waiter,
     std::coroutine_handle<> handle)
   {
+    lock_attempts_.fetch_add(1, std::memory_order_relaxed);
+
     std::lock_guard<std::mutex> guard(mutex_);
     if(!locked_)
     {
       locked_ = true;
+      immediate_locks_.fetch_add(1, std::memory_order_relaxed);
       return false;
     }
 
     waiter.handle = handle;
     waiters_.push_back(waiter);
+    contended_locks_.fetch_add(1, std::memory_order_relaxed);
+    const auto waiters =
+      current_waiters_.fetch_add(1, std::memory_order_acq_rel) + 1;
+    update_max_waiters_(waiters);
     return true;
   }
 
@@ -119,6 +144,7 @@ namespace AdServer::Commons
     if(waiter.is_linked())
     {
       waiter.unlink();
+      current_waiters_.fetch_sub(1, std::memory_order_acq_rel);
     }
   }
 
@@ -132,6 +158,7 @@ namespace AdServer::Commons
       {
         ScopedLockAwaiter::Waiter& waiter = waiters_.front();
         waiter.unlink();
+        current_waiters_.fetch_sub(1, std::memory_order_acq_rel);
         next = waiter.handle;
         break;
       }
@@ -145,5 +172,18 @@ namespace AdServer::Commons
     }
 
     resume_coroutine(next);
+  }
+
+  void
+  AsyncMutex::update_max_waiters_(std::uint64_t value) noexcept
+  {
+    auto current = max_waiters_.load(std::memory_order_relaxed);
+    while(current < value &&
+      !max_waiters_.compare_exchange_weak(
+        current,
+        value,
+        std::memory_order_relaxed,
+        std::memory_order_relaxed))
+    {}
   }
 }

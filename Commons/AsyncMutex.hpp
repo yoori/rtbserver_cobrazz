@@ -1,8 +1,10 @@
 #pragma once
 
 #include <coroutine>
+#include <cstdint>
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 
 #include <boost/intrusive/list.hpp>
 
@@ -11,6 +13,15 @@ namespace AdServer::Commons
   class AsyncMutex final
   {
   public:
+    struct Stats
+    {
+      std::uint64_t lock_attempts = 0;
+      std::uint64_t immediate_locks = 0;
+      std::uint64_t contended_locks = 0;
+      std::uint64_t current_waiters = 0;
+      std::uint64_t max_waiters = 0;
+    };
+
     class Guard final
     {
     public:
@@ -58,6 +69,7 @@ namespace AdServer::Commons
 
     Guard scoped_lock();
     ScopedLockAwaiter scoped_lock_async() noexcept;
+    static Stats stats() noexcept;
 
   private:
     friend class Guard;
@@ -68,8 +80,15 @@ namespace AdServer::Commons
       std::coroutine_handle<> handle);
     void cancel_(ScopedLockAwaiter::Waiter& waiter) noexcept;
     void unlock_() noexcept;
+    static void update_max_waiters_(std::uint64_t value) noexcept;
 
   private:
+    static std::atomic<std::uint64_t> lock_attempts_;
+    static std::atomic<std::uint64_t> immediate_locks_;
+    static std::atomic<std::uint64_t> contended_locks_;
+    static std::atomic<std::uint64_t> current_waiters_;
+    static std::atomic<std::uint64_t> max_waiters_;
+
     std::mutex mutex_;
     std::condition_variable condition_;
     bool locked_ = false;
