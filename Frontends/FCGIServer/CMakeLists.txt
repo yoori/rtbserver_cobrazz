@@ -49,5 +49,6 @@ target_link_libraries(FCGIServer
   SecToken
 
   boost_system
+  tcmalloc
   nghttp2
 )

@@ -33,11 +33,12 @@
 %define __open_ssl_ver_req      1.1.1k-7
 %define __vanga_ver_req         1.0.0.21
 %define __rocksdb_ver_req       11.1.1
+%define __gperftools_ver_req    2.18.1-ssv1.el8
 %define __boost_suffix          176
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv523%{?dist}
+Release: ssv524%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -124,9 +125,10 @@ BuildRequires: protobuf-devel = 25.9
 BuildRequires: protobuf-compiler = 25.9
 BuildRequires: grpc-devel = 1.80.0-ssv4.el8
 BuildRequires: grpc-plugins = 1.80.0-ssv4.el8
-BuildRequires: jemalloc-devel >= 5.2.1
+BuildRequires: gperftools-devel = %__gperftools_ver_req
 
 Requires: protobuf = %{__protobuf_ver_req}
+Requires: gperftools-libs = %__gperftools_ver_req
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
 Requires: rsync >= 3.0.7-3.el6
 Requires: stunnel >= 4.29
