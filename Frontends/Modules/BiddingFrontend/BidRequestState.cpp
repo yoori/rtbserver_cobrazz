@@ -199,41 +199,45 @@ namespace AdServer::Bidding
 
     timeout_interrupted_.store(true, std::memory_order_relaxed);
     print_available_request_debug_info_();
-    const auto in_progress_stats =
-      bid_frontend_->stats_->rtb_request_in_progress_stats();
-    AdServer::Grpc::Stats user_bind_client_stats;
-    if (bid_frontend_->user_bind_client_)
+
+    if (debug_sink_.require_debug_info())
     {
-      user_bind_client_stats = bid_frontend_->user_bind_client_->stats();
+      const auto in_progress_stats =
+        bid_frontend_->stats_->rtb_request_in_progress_stats();
+      AdServer::Grpc::Stats user_bind_client_stats;
+      if (bid_frontend_->user_bind_client_)
+      {
+        user_bind_client_stats = bid_frontend_->user_bind_client_->stats();
+      }
+      AdServer::Grpc::Stats user_info_client_stats;
+      if (bid_frontend_->user_info_distributed_client_)
+      {
+        user_info_client_stats =
+          bid_frontend_->user_info_distributed_client_->stats();
+      }
+      AdServer::Grpc::Stats channel_client_stats;
+      if (bid_frontend_->channel_client_)
+      {
+        channel_client_stats = bid_frontend_->channel_client_->stats();
+      }
+      AdServer::Grpc::Stats campaign_client_stats;
+      if (bid_frontend_->campaign_manager_)
+      {
+        campaign_client_stats = bid_frontend_->campaign_manager_->stats();
+      }
+      debug_sink_.print_interrupt_debug_info(
+        interrupted_step,
+        hostname_,
+        in_progress_stats.request,
+        in_progress_stats.user_resolving,
+        in_progress_stats.trigger_match,
+        in_progress_stats.history_match,
+        in_progress_stats.campaign_selection,
+        user_bind_client_stats,
+        user_info_client_stats,
+        channel_client_stats,
+        campaign_client_stats);
     }
-    AdServer::Grpc::Stats user_info_client_stats;
-    if (bid_frontend_->user_info_distributed_client_)
-    {
-      user_info_client_stats =
-        bid_frontend_->user_info_distributed_client_->stats();
-    }
-    AdServer::Grpc::Stats channel_client_stats;
-    if (bid_frontend_->channel_client_)
-    {
-      channel_client_stats = bid_frontend_->channel_client_->stats();
-    }
-    AdServer::Grpc::Stats campaign_client_stats;
-    if (bid_frontend_->campaign_manager_)
-    {
-      campaign_client_stats = bid_frontend_->campaign_manager_->stats();
-    }
-    debug_sink_.print_interrupt_debug_info(
-      interrupted_step,
-      hostname_,
-      in_progress_stats.request,
-      in_progress_stats.user_resolving,
-      in_progress_stats.trigger_match,
-      in_progress_stats.history_match,
-      in_progress_stats.campaign_selection,
-      user_bind_client_stats,
-      user_info_client_stats,
-      channel_client_stats,
-      campaign_client_stats);
     print_time_metering_debug_info_();
     write_empty_response(0, true);
   }
