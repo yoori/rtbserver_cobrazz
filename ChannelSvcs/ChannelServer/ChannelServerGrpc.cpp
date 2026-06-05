@@ -12,6 +12,7 @@
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
+#include <Generics/Time.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
 
@@ -63,6 +64,39 @@ namespace AdServer::ChannelSvcs
     private:
       std::atomic<std::uint64_t>& call_counter_;
       std::atomic<std::uint64_t>& method_counter_;
+    };
+
+    class BatchStatsGuard final
+    {
+    public:
+      BatchStatsGuard(
+        std::atomic<std::uint64_t>& total,
+        std::atomic<std::uint64_t>& total_time,
+        std::atomic<std::uint64_t>& in_progress) noexcept
+        : total_(total),
+          total_time_(total_time),
+          in_progress_(in_progress)
+      {
+        total_.fetch_add(1, std::memory_order_relaxed);
+        in_progress_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      ~BatchStatsGuard() noexcept
+      {
+        const auto elapsed_us =
+          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        in_progress_.fetch_sub(1, std::memory_order_relaxed);
+      }
+
+      BatchStatsGuard(const BatchStatsGuard&) = delete;
+      BatchStatsGuard& operator=(const BatchStatsGuard&) = delete;
+
+    private:
+      std::atomic<std::uint64_t>& total_;
+      std::atomic<std::uint64_t>& total_time_;
+      std::atomic<std::uint64_t>& in_progress_;
+      const Generics::Time start_time_ = Generics::Time::get_time_of_day();
     };
 
     template<typename CorbaOctSeq>
@@ -218,6 +252,9 @@ namespace AdServer::ChannelSvcs
     std::atomic<std::uint64_t> check_configuration_in_progress{0};
     std::atomic<std::uint64_t> set_sources_in_progress{0};
     std::atomic<std::uint64_t> set_proxy_sources_in_progress{0};
+    std::atomic<std::uint64_t> batch_total{0};
+    std::atomic<std::uint64_t> batch_total_time{0};
+    std::atomic<std::uint64_t> batch_in_progress{0};
   };
 
   class ChannelServerGrpc::ServiceImpl final:
@@ -283,6 +320,10 @@ namespace AdServer::ChannelSvcs
       const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
       adserver::channel_svcs::channel_server::SetProxySourcesResponse& response,
       ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response) const override;
 
   private:
     class ProcessControlService final:
@@ -361,6 +402,20 @@ namespace AdServer::ChannelSvcs
       stats_(std::move(stats))
   {
     add_grpc_service(&process_control_service_);
+  }
+
+  AdServer::Grpc::GrpcCoroutine
+  ChannelServerGrpc::ServiceImpl::co_handle_batch_request(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    BatchStatsGuard in_progress(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
+      batch_request,
+      batch_response);
   }
 
   void
@@ -698,7 +753,10 @@ namespace AdServer::ChannelSvcs
       stats_->get_ccg_traits_in_progress.load(std::memory_order_relaxed),
       stats_->check_configuration_in_progress.load(std::memory_order_relaxed),
       stats_->set_sources_in_progress.load(std::memory_order_relaxed),
-      stats_->set_proxy_sources_in_progress.load(std::memory_order_relaxed)
+      stats_->set_proxy_sources_in_progress.load(std::memory_order_relaxed),
+      stats_->batch_total.load(std::memory_order_relaxed),
+      stats_->batch_total_time.load(std::memory_order_relaxed),
+      stats_->batch_in_progress.load(std::memory_order_relaxed)
     };
   }
 

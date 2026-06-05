@@ -17,6 +17,7 @@
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Generics/HashTableAdapters.hpp>
+#include <Generics/Time.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 
@@ -26,14 +27,33 @@ namespace AdServer::UserInfoSvcs
 {
   struct UserInfoManagerGrpc::StatsCounters
   {
+    std::atomic<std::uint64_t> call_total{0};
+    std::atomic<std::uint64_t> call_total_time{0};
     std::atomic<std::uint64_t> call_in_progress{0};
+    std::atomic<std::uint64_t> match_total{0};
+    std::atomic<std::uint64_t> match_total_time{0};
     std::atomic<std::uint64_t> match_in_progress{0};
+    std::atomic<std::uint64_t> update_user_freq_caps_total{0};
+    std::atomic<std::uint64_t> update_user_freq_caps_total_time{0};
     std::atomic<std::uint64_t> update_user_freq_caps_in_progress{0};
+    std::atomic<std::uint64_t> confirm_user_freq_caps_total{0};
+    std::atomic<std::uint64_t> confirm_user_freq_caps_total_time{0};
     std::atomic<std::uint64_t> confirm_user_freq_caps_in_progress{0};
+    std::atomic<std::uint64_t> fraud_user_total{0};
+    std::atomic<std::uint64_t> fraud_user_total_time{0};
     std::atomic<std::uint64_t> fraud_user_in_progress{0};
+    std::atomic<std::uint64_t> remove_user_profile_total{0};
+    std::atomic<std::uint64_t> remove_user_profile_total_time{0};
     std::atomic<std::uint64_t> remove_user_profile_in_progress{0};
+    std::atomic<std::uint64_t> merge_total{0};
+    std::atomic<std::uint64_t> merge_total_time{0};
     std::atomic<std::uint64_t> merge_in_progress{0};
+    std::atomic<std::uint64_t> consider_publishers_optin_total{0};
+    std::atomic<std::uint64_t> consider_publishers_optin_total_time{0};
     std::atomic<std::uint64_t> consider_publishers_optin_in_progress{0};
+    std::atomic<std::uint64_t> batch_total{0};
+    std::atomic<std::uint64_t> batch_total_time{0};
+    std::atomic<std::uint64_t> batch_in_progress{0};
   };
 
   namespace
@@ -61,19 +81,58 @@ namespace AdServer::UserInfoSvcs
     class InProgressGuard final
     {
     public:
-      explicit InProgressGuard(std::atomic<std::uint64_t>& counter) noexcept
-        : counter_(counter)
+      InProgressGuard(
+        std::atomic<std::uint64_t>& total,
+        std::atomic<std::uint64_t>& total_time,
+        std::atomic<std::uint64_t>& in_progress) noexcept
+        : total_(total),
+          total_time_(total_time),
+          in_progress_(in_progress)
       {
-        counter_.fetch_add(1, std::memory_order_relaxed);
+        total_.fetch_add(1, std::memory_order_relaxed);
+        in_progress_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      InProgressGuard(
+        std::atomic<std::uint64_t>& total,
+        std::atomic<std::uint64_t>& total_time,
+        std::atomic<std::uint64_t>& in_progress,
+        std::atomic<std::uint64_t>& method_total,
+        std::atomic<std::uint64_t>& method_total_time,
+        std::atomic<std::uint64_t>& method_in_progress) noexcept
+        : InProgressGuard(total, total_time, in_progress)
+      {
+        method_total_ = &method_total;
+        method_total_time_ = &method_total_time;
+        method_in_progress_ = &method_in_progress;
+        method_total_->fetch_add(1, std::memory_order_relaxed);
+        method_in_progress_->fetch_add(1, std::memory_order_relaxed);
       }
 
       ~InProgressGuard() noexcept
       {
-        counter_.fetch_sub(1, std::memory_order_relaxed);
+        const auto elapsed_us =
+          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        if (method_total_time_)
+        {
+          method_total_time_->fetch_add(elapsed_us, std::memory_order_relaxed);
+        }
+        if (method_in_progress_)
+        {
+          method_in_progress_->fetch_sub(1, std::memory_order_relaxed);
+        }
+        in_progress_.fetch_sub(1, std::memory_order_relaxed);
       }
 
     private:
-      std::atomic<std::uint64_t>& counter_;
+      std::atomic<std::uint64_t>& total_;
+      std::atomic<std::uint64_t>& total_time_;
+      std::atomic<std::uint64_t>& in_progress_;
+      std::atomic<std::uint64_t>* method_total_ = nullptr;
+      std::atomic<std::uint64_t>* method_total_time_ = nullptr;
+      std::atomic<std::uint64_t>* method_in_progress_ = nullptr;
+      const Generics::Time start_time_ = Generics::Time::get_time_of_day();
     };
 
     template<typename Seq>
@@ -488,6 +547,10 @@ namespace AdServer::UserInfoSvcs
       adserver::user_info_svcs::user_info_manager::ClearExpiredResponse& response,
       grpc::Status& result_status) const;
 
+    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response) const override;
+
   private:
     class ProcessControlService final:
       public pc::ProcessControl::Service
@@ -559,7 +622,10 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerGrpc::ServiceImpl::get_status_(
     pc::GetStatusResponse& response) const
   {
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     try
     {
       const bool ready = user_info_manager_->uim_ready();
@@ -583,7 +649,10 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     try
     {
       UserInfoManagerCore::ChunkIdList chunks;
@@ -613,7 +682,10 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     try
     {
       response.set_master_stamp(pack_time_(user_info_manager_->get_master_stamp()));
@@ -631,7 +703,10 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     response.set_hostname(service_hostname_());
     try
     {
@@ -658,8 +733,13 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
-    InProgressGuard in_progress(stats_counters_->match_in_progress);
+    InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->match_total,
+      stats_counters_->match_total_time,
+      stats_counters_->match_in_progress);
     response.set_hostname(service_hostname_());
     try
     {
@@ -685,8 +765,12 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->update_user_freq_caps_total,
+      stats_counters_->update_user_freq_caps_total_time,
       stats_counters_->update_user_freq_caps_in_progress);
     response.set_hostname(service_hostname_());
     try
@@ -716,8 +800,12 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->confirm_user_freq_caps_total,
+      stats_counters_->confirm_user_freq_caps_total_time,
       stats_counters_->confirm_user_freq_caps_in_progress);
     response.set_hostname(service_hostname_());
     try
@@ -742,8 +830,12 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->fraud_user_total,
+      stats_counters_->fraud_user_total_time,
       stats_counters_->fraud_user_in_progress);
     try
     {
@@ -765,8 +857,12 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->remove_user_profile_total,
+      stats_counters_->remove_user_profile_total_time,
       stats_counters_->remove_user_profile_in_progress);
     try
     {
@@ -787,8 +883,13 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
-    InProgressGuard in_progress(stats_counters_->merge_in_progress);
+    InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->merge_total,
+      stats_counters_->merge_total_time,
+      stats_counters_->merge_in_progress);
     try
     {
       bool merge_success = false;
@@ -816,8 +917,12 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
     InProgressGuard in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress,
+      stats_counters_->consider_publishers_optin_total,
+      stats_counters_->consider_publishers_optin_total_time,
       stats_counters_->consider_publishers_optin_in_progress);
     try
     {
@@ -840,7 +945,10 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     response.set_ready(user_info_manager_->uim_ready());
     result_status = grpc::Status::OK;
   }
@@ -852,7 +960,10 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     response.set_progress(user_info_manager_->get_progress());
     result_status = grpc::Status::OK;
   }
@@ -864,7 +975,10 @@ namespace AdServer::UserInfoSvcs
     grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard call_in_progress(stats_counters_->call_in_progress);
+    InProgressGuard call_in_progress(
+      stats_counters_->call_total,
+      stats_counters_->call_total_time,
+      stats_counters_->call_in_progress);
     try
     {
       user_info_manager_->clear_expired(
@@ -886,6 +1000,20 @@ namespace AdServer::UserInfoSvcs
     const noexcept
   {
     return max_batch_split_;
+  }
+
+  AdServer::Grpc::GrpcCoroutine
+  UserInfoManagerGrpc::ServiceImpl::co_handle_batch_request(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    InProgressGuard in_progress(
+      stats_counters_->batch_total,
+      stats_counters_->batch_total_time,
+      stats_counters_->batch_in_progress);
+    co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
+      batch_request,
+      batch_response);
   }
 
   std::size_t
@@ -950,6 +1078,7 @@ namespace AdServer::UserInfoSvcs
     std::string_view bind_address,
     unsigned int bind_port,
     std::size_t process_threads,
+    std::size_t cq_threads,
     std::size_t max_split)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       max_batch_split_(resolve_max_batch_split_(max_split, process_threads)),
@@ -965,7 +1094,7 @@ namespace AdServer::UserInfoSvcs
         logger,
         user_info_manager_grpc_aspect,
         bind_address_,
-        process_threads,
+        cq_threads != 0 ? cq_threads : process_threads,
         std::make_unique<ServiceImpl>(
           std::move(user_info_manager),
           executor_pool_,
@@ -981,14 +1110,33 @@ namespace AdServer::UserInfoSvcs
   {
     const auto inprogress_stats = impl_->service().inprogress_stats();
     return Stats{
+      stats_counters_->call_total.load(std::memory_order_relaxed),
+      stats_counters_->call_total_time.load(std::memory_order_relaxed),
       stats_counters_->call_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->match_total.load(std::memory_order_relaxed),
+      stats_counters_->match_total_time.load(std::memory_order_relaxed),
       stats_counters_->match_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->update_user_freq_caps_total.load(std::memory_order_relaxed),
+      stats_counters_->update_user_freq_caps_total_time.load(std::memory_order_relaxed),
       stats_counters_->update_user_freq_caps_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->confirm_user_freq_caps_total.load(std::memory_order_relaxed),
+      stats_counters_->confirm_user_freq_caps_total_time.load(std::memory_order_relaxed),
       stats_counters_->confirm_user_freq_caps_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->fraud_user_total.load(std::memory_order_relaxed),
+      stats_counters_->fraud_user_total_time.load(std::memory_order_relaxed),
       stats_counters_->fraud_user_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->remove_user_profile_total.load(std::memory_order_relaxed),
+      stats_counters_->remove_user_profile_total_time.load(std::memory_order_relaxed),
       stats_counters_->remove_user_profile_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->merge_total.load(std::memory_order_relaxed),
+      stats_counters_->merge_total_time.load(std::memory_order_relaxed),
       stats_counters_->merge_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->consider_publishers_optin_total.load(std::memory_order_relaxed),
+      stats_counters_->consider_publishers_optin_total_time.load(std::memory_order_relaxed),
       stats_counters_->consider_publishers_optin_in_progress.load(std::memory_order_relaxed),
+      stats_counters_->batch_total.load(std::memory_order_relaxed),
+      stats_counters_->batch_total_time.load(std::memory_order_relaxed),
+      stats_counters_->batch_in_progress.load(std::memory_order_relaxed),
       inprogress_stats.call_inflight,
       inprogress_stats.min_time_of_request_in_progress
     };

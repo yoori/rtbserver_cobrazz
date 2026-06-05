@@ -804,14 +804,14 @@ namespace AdServer::Bidding
       "server-id = " << server_id_ << sep_ <<
       "user_info_client_endpoint = " <<
         user_info_client_endpoint << sep_ <<
-      "rtb_request_in_progress_count = " << request_in_progress << sep_ <<
-      "rtb_request_user_resolving_in_progress_count = " <<
+      "rtb_request_in_progress = " << request_in_progress << sep_ <<
+      "rtb_request_user_resolving_in_progress = " <<
         user_resolving_in_progress << sep_ <<
-      "rtb_request_trigger_match_in_progress_count = " <<
+      "rtb_request_trigger_match_in_progress = " <<
         trigger_match_in_progress << sep_ <<
-      "rtb_request_history_match_in_progress_count = " <<
+      "rtb_request_history_match_in_progress = " <<
         history_match_in_progress << sep_ <<
-      "rtb_request_campaign_selection_in_progress_count = " <<
+      "rtb_request_campaign_selection_in_progress = " <<
         campaign_selection_in_progress << sep_;
 
     print_client_stats_(

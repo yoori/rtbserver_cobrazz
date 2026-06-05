@@ -123,7 +123,9 @@ UserBindControllerApp_::main(int& argc, char** argv) noexcept
         *config().GrpcConfig().Endpoint().host() :
         "0.0.0.0",
       config().GrpcConfig().Endpoint().port(),
-      config().GrpcConfig().process_threads());
+      config().GrpcConfig().cq_threads().present() ?
+        *config().GrpcConfig().cq_threads() :
+        config().GrpcConfig().process_threads());
 
     controller_->activate_object();
     grpc_adapter_->activate_object();

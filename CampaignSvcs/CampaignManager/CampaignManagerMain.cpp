@@ -183,9 +183,11 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         campaign_manager_config_->GrpcConfig()->Endpoint().host().present() &&
           *(campaign_manager_config_->GrpcConfig()->Endpoint().host()) != "*" ?
           *campaign_manager_config_->GrpcConfig()->Endpoint().host() :
-          "0.0.0.0",
+        "0.0.0.0",
         campaign_manager_config_->GrpcConfig()->Endpoint().port(),
-        campaign_manager_config_->GrpcConfig()->process_threads());
+        campaign_manager_config_->GrpcConfig()->cq_threads().present() ?
+          *campaign_manager_config_->GrpcConfig()->cq_threads() :
+          campaign_manager_config_->GrpcConfig()->process_threads());
       active_objects->add_child_object(non_owning_active_object(
         grpc_adapter_.in()));
     }

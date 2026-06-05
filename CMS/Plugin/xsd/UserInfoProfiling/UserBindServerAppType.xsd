@@ -29,6 +29,11 @@
         <xsd:documentation>UserBindServer gRPC processing threads.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_cq_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>UserBindServer gRPC completion queue threads.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="grpc_max_split" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>UserBindServer gRPC maximum server-side batch split.</xsd:documentation>

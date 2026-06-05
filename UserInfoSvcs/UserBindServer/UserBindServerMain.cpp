@@ -233,6 +233,9 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
           "0.0.0.0",
         config().GrpcConfig()->Endpoint().port(),
         static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
+        config().GrpcConfig()->cq_threads().present() ?
+          static_cast<std::size_t>(*config().GrpcConfig()->cq_threads()) :
+          static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
         config().GrpcConfig()->max_split().present() ?
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
@@ -257,25 +260,51 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
         {
           const auto stats = user_bind_server_core->stats();
           std::string body =
-            std::string("{\"get_user_id_total_requests\":") +
+            std::string("{\"get_user_id_total\":") +
             std::to_string(stats.get_user_id_total_requests) +
-            ",\"add_user_id_requests\":" +
+            ",\"add_user_id_request_total\":" +
             std::to_string(stats.add_user_id_requests);
 
           if(grpc_adapter.in())
           {
             const auto grpc_stats = grpc_adapter->stats();
             body +=
+              ",\"call_total\":" +
+              std::to_string(grpc_stats.call_total) +
+              ",\"call_total_time\":" +
+              std::to_string(grpc_stats.call_total_time) +
               ",\"call_in_progress\":" +
               std::to_string(grpc_stats.call_in_progress) +
+              ",\"get_bind_request_total\":" +
+              std::to_string(grpc_stats.get_bind_request_total) +
+              ",\"get_bind_request_total_time\":" +
+              std::to_string(grpc_stats.get_bind_request_total_time) +
               ",\"get_bind_request_in_progress\":" +
               std::to_string(grpc_stats.get_bind_request_in_progress) +
+              ",\"add_bind_request_total\":" +
+              std::to_string(grpc_stats.add_bind_request_total) +
+              ",\"add_bind_request_total_time\":" +
+              std::to_string(grpc_stats.add_bind_request_total_time) +
               ",\"add_bind_request_in_progress\":" +
               std::to_string(grpc_stats.add_bind_request_in_progress) +
+              ",\"get_user_id_total_time\":" +
+              std::to_string(grpc_stats.get_user_id_total_time) +
               ",\"get_user_id_in_progress\":" +
               std::to_string(grpc_stats.get_user_id_in_progress) +
+              ",\"add_user_id_total\":" +
+              std::to_string(grpc_stats.add_user_id_total) +
+              ",\"add_user_id_request_total_time\":" +
+              std::to_string(grpc_stats.add_user_id_total_time) +
+              ",\"add_user_id_total_time\":" +
+              std::to_string(grpc_stats.add_user_id_total_time) +
               ",\"add_user_id_in_progress\":" +
-              std::to_string(grpc_stats.add_user_id_in_progress);
+              std::to_string(grpc_stats.add_user_id_in_progress) +
+              ",\"batch_total\":" +
+              std::to_string(grpc_stats.batch_total) +
+              ",\"batch_total_time\":" +
+              std::to_string(grpc_stats.batch_total_time) +
+              ",\"batch_in_progress\":" +
+              std::to_string(grpc_stats.batch_in_progress);
           }
 
           body += "}\n";

@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <Generics/HashTableAdapters.hpp>
+#include <Generics/Time.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Commons/ExecutorPool.hpp>
@@ -47,17 +48,31 @@ namespace AdServer::UserInfoSvcs
     {
     public:
       InProgressGuard(
+        std::atomic<std::uint64_t>& call_total,
+        std::atomic<std::uint64_t>& call_total_time,
         std::atomic<std::uint64_t>& call_counter,
+        std::atomic<std::uint64_t>& method_total,
+        std::atomic<std::uint64_t>& method_total_time,
         std::atomic<std::uint64_t>& method_counter) noexcept
-        : call_counter_(call_counter),
+        : call_total_(call_total),
+          call_total_time_(call_total_time),
+          call_counter_(call_counter),
+          method_total_(method_total),
+          method_total_time_(method_total_time),
           method_counter_(method_counter)
       {
+        call_total_.fetch_add(1, std::memory_order_relaxed);
         call_counter_.fetch_add(1, std::memory_order_relaxed);
+        method_total_.fetch_add(1, std::memory_order_relaxed);
         method_counter_.fetch_add(1, std::memory_order_relaxed);
       }
 
       ~InProgressGuard()
       {
+        const auto elapsed_us =
+          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        call_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        method_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         method_counter_.fetch_sub(1, std::memory_order_relaxed);
         call_counter_.fetch_sub(1, std::memory_order_relaxed);
       }
@@ -66,8 +81,46 @@ namespace AdServer::UserInfoSvcs
       InProgressGuard& operator=(const InProgressGuard&) = delete;
 
     private:
+      std::atomic<std::uint64_t>& call_total_;
+      std::atomic<std::uint64_t>& call_total_time_;
       std::atomic<std::uint64_t>& call_counter_;
+      std::atomic<std::uint64_t>& method_total_;
+      std::atomic<std::uint64_t>& method_total_time_;
       std::atomic<std::uint64_t>& method_counter_;
+      const Generics::Time start_time_ = Generics::Time::get_time_of_day();
+    };
+
+    class BatchStatsGuard final
+    {
+    public:
+      BatchStatsGuard(
+        std::atomic<std::uint64_t>& total,
+        std::atomic<std::uint64_t>& total_time,
+        std::atomic<std::uint64_t>& in_progress) noexcept
+        : total_(total),
+          total_time_(total_time),
+          in_progress_(in_progress)
+      {
+        total_.fetch_add(1, std::memory_order_relaxed);
+        in_progress_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      ~BatchStatsGuard() noexcept
+      {
+        const auto elapsed_us =
+          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        in_progress_.fetch_sub(1, std::memory_order_relaxed);
+      }
+
+      BatchStatsGuard(const BatchStatsGuard&) = delete;
+      BatchStatsGuard& operator=(const BatchStatsGuard&) = delete;
+
+    private:
+      std::atomic<std::uint64_t>& total_;
+      std::atomic<std::uint64_t>& total_time_;
+      std::atomic<std::uint64_t>& in_progress_;
+      const Generics::Time start_time_ = Generics::Time::get_time_of_day();
     };
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
@@ -101,11 +154,24 @@ namespace AdServer::UserInfoSvcs
 
   struct UserBindServerGrpc::AtomicStats
   {
+    std::atomic<std::uint64_t> call_total{0};
+    std::atomic<std::uint64_t> call_total_time{0};
     std::atomic<std::uint64_t> call_in_progress{0};
+    std::atomic<std::uint64_t> get_bind_request_total{0};
+    std::atomic<std::uint64_t> get_bind_request_total_time{0};
     std::atomic<std::uint64_t> get_bind_request_in_progress{0};
+    std::atomic<std::uint64_t> add_bind_request_total{0};
+    std::atomic<std::uint64_t> add_bind_request_total_time{0};
     std::atomic<std::uint64_t> add_bind_request_in_progress{0};
+    std::atomic<std::uint64_t> get_user_id_total{0};
+    std::atomic<std::uint64_t> get_user_id_total_time{0};
     std::atomic<std::uint64_t> get_user_id_in_progress{0};
+    std::atomic<std::uint64_t> add_user_id_total{0};
+    std::atomic<std::uint64_t> add_user_id_total_time{0};
     std::atomic<std::uint64_t> add_user_id_in_progress{0};
+    std::atomic<std::uint64_t> batch_total{0};
+    std::atomic<std::uint64_t> batch_total_time{0};
+    std::atomic<std::uint64_t> batch_in_progress{0};
   };
 
   class UserBindServerGrpc::ServiceImpl final:
@@ -160,6 +226,10 @@ namespace AdServer::UserInfoSvcs
     }
 
     std::size_t distributed_batch_max_split() const noexcept override;
+
+    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response) const override;
 
     AdServer::Grpc::GrpcCoroutine co_get_bind_request(
       const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
@@ -237,6 +307,20 @@ namespace AdServer::UserInfoSvcs
   }
 
   AdServer::Grpc::GrpcCoroutine
+  UserBindServerGrpc::ServiceImpl::co_handle_batch_request(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    BatchStatsGuard in_progress(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
+      batch_request,
+      batch_response);
+  }
+
+  AdServer::Grpc::GrpcCoroutine
   UserBindServerGrpc::ServiceImpl::co_get_bind_request(
     const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
@@ -244,7 +328,11 @@ namespace AdServer::UserInfoSvcs
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
+      stats_->call_total,
+      stats_->call_total_time,
       stats_->call_in_progress,
+      stats_->get_bind_request_total,
+      stats_->get_bind_request_total_time,
       stats_->get_bind_request_in_progress);
 
     response.set_hostname(service_hostname_());
@@ -297,7 +385,11 @@ namespace AdServer::UserInfoSvcs
     (void)response;
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
+      stats_->call_total,
+      stats_->call_total_time,
       stats_->call_in_progress,
+      stats_->add_bind_request_total,
+      stats_->add_bind_request_total_time,
       stats_->add_bind_request_in_progress);
 
     response.set_hostname(service_hostname_());
@@ -351,7 +443,11 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
+      stats_->call_total,
+      stats_->call_total_time,
       stats_->call_in_progress,
+      stats_->get_user_id_total,
+      stats_->get_user_id_total_time,
       stats_->get_user_id_in_progress);
 
     response.set_hostname(service_hostname_());
@@ -416,7 +512,11 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
     InProgressGuard in_progress(
+      stats_->call_total,
+      stats_->call_total_time,
       stats_->call_in_progress,
+      stats_->add_user_id_total,
+      stats_->add_user_id_total_time,
       stats_->add_user_id_in_progress);
 
     response.set_hostname(service_hostname_());
@@ -547,6 +647,7 @@ namespace AdServer::UserInfoSvcs
     std::string_view bind_address,
     unsigned int bind_port,
     std::size_t process_threads,
+    std::size_t cq_threads,
     std::size_t max_split,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
@@ -563,7 +664,7 @@ namespace AdServer::UserInfoSvcs
         logger,
         user_bind_server_grpc_aspect,
         bind_address_,
-        process_threads,
+        cq_threads != 0 ? cq_threads : process_threads,
         std::make_unique<ServiceImpl>(
           core,
           executor_pool_,
@@ -579,11 +680,24 @@ namespace AdServer::UserInfoSvcs
   UserBindServerGrpc::stats() const noexcept
   {
     return Stats{
+      stats_->call_total.load(std::memory_order_relaxed),
+      stats_->call_total_time.load(std::memory_order_relaxed),
       stats_->call_in_progress.load(std::memory_order_relaxed),
+      stats_->get_bind_request_total.load(std::memory_order_relaxed),
+      stats_->get_bind_request_total_time.load(std::memory_order_relaxed),
       stats_->get_bind_request_in_progress.load(std::memory_order_relaxed),
+      stats_->add_bind_request_total.load(std::memory_order_relaxed),
+      stats_->add_bind_request_total_time.load(std::memory_order_relaxed),
       stats_->add_bind_request_in_progress.load(std::memory_order_relaxed),
+      stats_->get_user_id_total.load(std::memory_order_relaxed),
+      stats_->get_user_id_total_time.load(std::memory_order_relaxed),
       stats_->get_user_id_in_progress.load(std::memory_order_relaxed),
-      stats_->add_user_id_in_progress.load(std::memory_order_relaxed)
+      stats_->add_user_id_total.load(std::memory_order_relaxed),
+      stats_->add_user_id_total_time.load(std::memory_order_relaxed),
+      stats_->add_user_id_in_progress.load(std::memory_order_relaxed),
+      stats_->batch_total.load(std::memory_order_relaxed),
+      stats_->batch_total_time.load(std::memory_order_relaxed),
+      stats_->batch_in_progress.load(std::memory_order_relaxed)
     };
   }
 

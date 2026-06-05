@@ -202,9 +202,11 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
           configuration_->GrpcConfig()->Endpoint().host().present() &&
             *(configuration_->GrpcConfig()->Endpoint().host()) != "*" ?
             *configuration_->GrpcConfig()->Endpoint().host() :
-            "0.0.0.0",
+          "0.0.0.0",
           configuration_->GrpcConfig()->Endpoint().port(),
-          configuration_->GrpcConfig()->process_threads()));
+          configuration_->GrpcConfig()->cq_threads().present() ?
+            *configuration_->GrpcConfig()->cq_threads() :
+            configuration_->GrpcConfig()->process_threads()));
     }
 
     if(configuration_->HttpConfig().present())
@@ -260,6 +262,12 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             body += std::to_string(grpc_stats.set_sources_in_progress);
             body += ",\"set_proxy_sources_in_progress\":";
             body += std::to_string(grpc_stats.set_proxy_sources_in_progress);
+            body += ",\"batch_total\":";
+            body += std::to_string(grpc_stats.batch_total);
+            body += ",\"batch_total_time\":";
+            body += std::to_string(grpc_stats.batch_total_time);
+            body += ",\"batch_in_progress\":";
+            body += std::to_string(grpc_stats.batch_in_progress);
           }
           body += "}\n";
 

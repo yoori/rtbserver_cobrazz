@@ -142,9 +142,11 @@ BillingServerApp_::main(int argc, char** argv)
         config().GrpcConfig()->Endpoint().host().present() &&
           *(config().GrpcConfig()->Endpoint().host()) != "*" ?
           config().GrpcConfig()->Endpoint().host()->c_str() :
-          "0.0.0.0",
+        "0.0.0.0",
         config().GrpcConfig()->Endpoint().port(),
-        config().GrpcConfig()->process_threads());
+        config().GrpcConfig()->cq_threads().present() ?
+          *config().GrpcConfig()->cq_threads() :
+          config().GrpcConfig()->process_threads());
       add_child_object(grpc_adapter_);
     }
 

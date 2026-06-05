@@ -1,9 +1,11 @@
 
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -20,6 +22,7 @@
 namespace
 {
   const char ASPECT[] = "FCGIServer";
+  const char RTB_REQUEST_TIME_COUNTER[] = "rtb_request_time_counter";
 
   const auto STARTUP_STARTED_AT = std::chrono::steady_clock::now();
 
@@ -87,6 +90,17 @@ namespace
       const Type& value)
     {
       append_key_(key);
+      if constexpr (std::is_arithmetic_v<Type>)
+      {
+        if (key.text() == RTB_REQUEST_TIME_COUNTER)
+        {
+          std::ostringstream seconds;
+          seconds << std::fixed << std::setprecision(6)
+            << (static_cast<double>(value) / 1000000.0);
+          out << seconds.str();
+          return;
+        }
+      }
       out << value;
     }
 

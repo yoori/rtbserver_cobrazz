@@ -75,13 +75,18 @@ namespace AdServer::Bidding
     {
     public:
       using Method = void (StatHolder::*)() noexcept;
+      using TimeMethod = void (StatHolder::*)(const Generics::Time&) noexcept;
 
       InProgressGuard(
         StatHolder* stats,
         Method add,
-        Method complete) noexcept
+        Method complete,
+        TimeMethod add_time = nullptr) noexcept
         : stats_(ReferenceCounting::add_ref(stats)),
-          complete_(stats ? complete : nullptr)
+          complete_(stats ? complete : nullptr),
+          add_time_(stats ? add_time : nullptr),
+          started_at_(add_time_ ? Generics::Time::get_time_of_day() :
+            Generics::Time::ZERO)
       {
         if(stats_.in())
         {
@@ -103,13 +108,21 @@ namespace AdServer::Bidding
         if(stats_.in() && complete_)
         {
           (stats_.in()->*complete_)();
+          if(add_time_)
+          {
+            (stats_.in()->*add_time_)(
+              Generics::Time::get_time_of_day() - started_at_);
+          }
           complete_ = nullptr;
+          add_time_ = nullptr;
         }
       }
 
     private:
       StatHolder_var stats_;
       Method complete_;
+      TimeMethod add_time_;
+      Generics::Time started_at_;
     };
 
     template<typename ByteSeq>
@@ -1384,7 +1397,8 @@ namespace AdServer::Bidding
       InProgressGuard user_resolving_in_progress(
         stats_.in(),
         &StatHolder::add_rtb_request_user_resolving,
-        &StatHolder::complete_rtb_request_user_resolving);
+        &StatHolder::complete_rtb_request_user_resolving,
+        &StatHolder::add_rtb_request_user_resolving_time);
       request_task->set_current_stage(Stage::UserResolving);
 
       auto& request_time_metering = request_task->request_time_metering_;
@@ -1676,7 +1690,8 @@ namespace AdServer::Bidding
       InProgressGuard trigger_match_in_progress(
         stats_.in(),
         &StatHolder::add_rtb_request_trigger_match,
-        &StatHolder::complete_rtb_request_trigger_match);
+        &StatHolder::complete_rtb_request_trigger_match,
+        &StatHolder::add_rtb_request_trigger_match_time);
       request_task->set_current_stage(Stage::TriggerMatching);
       StageResult& trigger_match_stage = start_stage(
         request_time_metering.trigger_match,
@@ -1863,7 +1878,8 @@ namespace AdServer::Bidding
       InProgressGuard history_match_in_progress(
         stats_.in(),
         &StatHolder::add_rtb_request_history_match,
-        &StatHolder::complete_rtb_request_history_match);
+        &StatHolder::complete_rtb_request_history_match,
+        &StatHolder::add_rtb_request_history_match_time);
       request_task->set_current_stage(Stage::HistoryMatching);
       StageResult& history_match_stage = start_stage(
         request_time_metering.history_match,
@@ -2118,7 +2134,8 @@ namespace AdServer::Bidding
       InProgressGuard campaign_selection_in_progress(
         stats_.in(),
         &StatHolder::add_rtb_request_campaign_selection,
-        &StatHolder::complete_rtb_request_campaign_selection);
+        &StatHolder::complete_rtb_request_campaign_selection,
+        &StatHolder::add_rtb_request_campaign_selection_time);
       request_task->set_current_stage(Stage::CampaignSelection);
 
       std::shared_ptr<

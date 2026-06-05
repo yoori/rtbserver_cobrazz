@@ -6,32 +6,49 @@
 
 namespace
 {
-  const Generics::Values::Key BF_REQ_COUNT        = "rtb_request_count";
-  const Generics::Values::Key BF_REQ_BIDS         = "rtb_request_bid_count";
+  const Generics::Values::Key BF_REQ_COUNT        = "rtb_request_total";
+  const Generics::Values::Key BF_REQ_FINISHED     = "rtb_request_finished_total";
+  const Generics::Values::Key BF_REQ_BIDS         = "rtb_request_bid_total";
 
-  const Generics::Values::Key BF_SKIPPED          = "rtb_request_skip_count";
-  const Generics::Values::Key BF_TIMEOUTS         = "rtb_request_timeout_count";
+  const Generics::Values::Key BF_SKIPPED          = "rtb_request_skip_total";
+  const Generics::Values::Key BF_TIMEOUTS         = "rtb_request_timeout_total";
   const Generics::Values::Key BF_TIME_COUNTER     = "rtb_request_time_counter";
-  const Generics::Values::Key BF_REQ_IN_PROGRESS  = "rtb_request_in_progress_count";
+  const Generics::Values::Key BF_REQ_IN_PROGRESS  = "rtb_request_in_progress";
+  const Generics::Values::Key BF_USER_RESOLVING_TOTAL =
+    "rtb_request_user_resolving_total";
+  const Generics::Values::Key BF_USER_RESOLVING_TOTAL_TIME =
+    "rtb_request_user_resolving_total_time";
   const Generics::Values::Key BF_USER_RESOLVING_IN_PROGRESS =
-    "rtb_request_user_resolving_in_progress_count";
+    "rtb_request_user_resolving_in_progress";
+  const Generics::Values::Key BF_TRIGGER_MATCH_TOTAL =
+    "rtb_request_trigger_match_total";
+  const Generics::Values::Key BF_TRIGGER_MATCH_TOTAL_TIME =
+    "rtb_request_trigger_match_total_time";
   const Generics::Values::Key BF_TRIGGER_MATCH_IN_PROGRESS =
-    "rtb_request_trigger_match_in_progress_count";
+    "rtb_request_trigger_match_in_progress";
+  const Generics::Values::Key BF_HISTORY_MATCH_TOTAL =
+    "rtb_request_history_match_total";
+  const Generics::Values::Key BF_HISTORY_MATCH_TOTAL_TIME =
+    "rtb_request_history_match_total_time";
   const Generics::Values::Key BF_HISTORY_MATCH_IN_PROGRESS =
-    "rtb_request_history_match_in_progress_count";
+    "rtb_request_history_match_in_progress";
+  const Generics::Values::Key BF_CAMPAIGN_SELECTION_TOTAL =
+    "rtb_request_campaign_selection_total";
+  const Generics::Values::Key BF_CAMPAIGN_SELECTION_TOTAL_TIME =
+    "rtb_request_campaign_selection_total_time";
   const Generics::Values::Key BF_CAMPAIGN_SELECTION_IN_PROGRESS =
-    "rtb_request_campaign_selection_in_progress_count";
-  const Generics::Values::Key UB_BIND_REQUEST_COUNT = "user_bind_request_count";
-  const Generics::Values::Key UB_BIND_REQUESTS    = "user_bind_request_in_progress_count";
-  const Generics::Values::Key UB_BIND_REJECTED    = "user_bind_request_rejected_count";
-  const Generics::Values::Key UB_MATCH_REQUESTS   = "user_bind_match_request_in_progress_count";
-  const Generics::Values::Key UB_MATCH_REJECTED   = "user_bind_match_request_rejected_count";
-  const Generics::Values::Key UB_MATCH_CHANNEL    = "user_bind_match_channel_in_progress_count";
-  const Generics::Values::Key UB_MATCH_GET_PROFILE = "user_bind_match_get_profile_in_progress_count";
-  const Generics::Values::Key UB_MATCH_MERGE      = "user_bind_match_merge_in_progress_count";
-  const Generics::Values::Key UB_MATCH_REMOVE     = "user_bind_match_remove_in_progress_count";
-  const Generics::Values::Key UB_MATCH_HISTORY    = "user_bind_match_history_in_progress_count";
-  const Generics::Values::Key UB_MATCH_CAMPAIGN   = "user_bind_match_campaign_in_progress_count";
+    "rtb_request_campaign_selection_in_progress";
+  const Generics::Values::Key UB_BIND_REQUEST_COUNT = "user_bind_request_total";
+  const Generics::Values::Key UB_BIND_REQUESTS    = "user_bind_request_in_progress";
+  const Generics::Values::Key UB_BIND_REJECTED    = "user_bind_request_rejected_total";
+  const Generics::Values::Key UB_MATCH_REQUESTS   = "user_bind_match_request_in_progress";
+  const Generics::Values::Key UB_MATCH_REJECTED   = "user_bind_match_request_rejected_total";
+  const Generics::Values::Key UB_MATCH_CHANNEL    = "user_bind_match_channel_in_progress";
+  const Generics::Values::Key UB_MATCH_GET_PROFILE = "user_bind_match_get_profile_in_progress";
+  const Generics::Values::Key UB_MATCH_MERGE      = "user_bind_match_merge_in_progress";
+  const Generics::Values::Key UB_MATCH_REMOVE     = "user_bind_match_remove_in_progress";
+  const Generics::Values::Key UB_MATCH_HISTORY    = "user_bind_match_history_in_progress";
+  const Generics::Values::Key UB_MATCH_CAMPAIGN   = "user_bind_match_campaign_in_progress";
 
   struct GapKey
   {
@@ -101,12 +118,21 @@ namespace AdServer
 
   StatHolder::StatData::StatData()
     : request_total(0),
+      request_finished_total(0),
       request_total_bid(0),
       skipped(0),
       request_in_progress(0),
+      user_resolving_total(0),
+      user_resolving_total_time(Generics::Time::ZERO),
       user_resolving_in_progress(0),
+      trigger_match_total(0),
+      trigger_match_total_time(Generics::Time::ZERO),
       trigger_match_in_progress(0),
+      history_match_total(0),
+      history_match_total_time(Generics::Time::ZERO),
       history_match_in_progress(0),
+      campaign_selection_total(0),
+      campaign_selection_total_time(Generics::Time::ZERO),
       campaign_selection_in_progress(0),
       user_bind_request_count(0),
       user_bind_requests(0),
@@ -122,16 +148,25 @@ namespace AdServer
   {}
 
   StatHolder::StatData::StatData(
-    unsigned long request_total_,
+    unsigned long request_finished_total_,
     unsigned long request_total_bid_,
     const Generics::Time& processing_time_val)
-    : request_total(request_total_),
+    : request_total(0),
+      request_finished_total(request_finished_total_),
       request_total_bid(request_total_bid_),
       skipped(0),
       request_in_progress(0),
+      user_resolving_total(0),
+      user_resolving_total_time(Generics::Time::ZERO),
       user_resolving_in_progress(0),
+      trigger_match_total(0),
+      trigger_match_total_time(Generics::Time::ZERO),
       trigger_match_in_progress(0),
+      history_match_total(0),
+      history_match_total_time(Generics::Time::ZERO),
       history_match_in_progress(0),
+      campaign_selection_total(0),
+      campaign_selection_total_time(Generics::Time::ZERO),
       campaign_selection_in_progress(0),
       user_bind_request_count(0),
       user_bind_requests(0),
@@ -151,12 +186,21 @@ namespace AdServer
   StatHolder::StatData::operator +=(const StatHolder::StatData& rhs) noexcept
   {
     request_total += rhs.request_total;
+    request_finished_total += rhs.request_finished_total;
     request_total_bid += rhs.request_total_bid;
     skipped += rhs.skipped;
     request_in_progress += rhs.request_in_progress;
+    user_resolving_total += rhs.user_resolving_total;
+    user_resolving_total_time += rhs.user_resolving_total_time;
     user_resolving_in_progress += rhs.user_resolving_in_progress;
+    trigger_match_total += rhs.trigger_match_total;
+    trigger_match_total_time += rhs.trigger_match_total_time;
     trigger_match_in_progress += rhs.trigger_match_in_progress;
+    history_match_total += rhs.history_match_total;
+    history_match_total_time += rhs.history_match_total_time;
     history_match_in_progress += rhs.history_match_in_progress;
+    campaign_selection_total += rhs.campaign_selection_total;
+    campaign_selection_total_time += rhs.campaign_selection_total_time;
     campaign_selection_in_progress += rhs.campaign_selection_in_progress;
     user_bind_request_count += rhs.user_bind_request_count;
     user_bind_requests += rhs.user_bind_requests;
@@ -249,6 +293,23 @@ namespace AdServer
     ++stat_data_.member_name; \
   }
 
+#define ADD_IN_PROGRESS_COUNTER(method_name, total_member_name, in_progress_member_name) \
+  void \
+  StatHolder::method_name() noexcept \
+  { \
+    Sync::PosixGuard lock(mutex_); \
+    ++stat_data_.total_member_name; \
+    ++stat_data_.in_progress_member_name; \
+  }
+
+#define ADD_TIME_COUNTER(method_name, member_name) \
+  void \
+  StatHolder::method_name(const Generics::Time& time) noexcept \
+  { \
+    Sync::PosixGuard lock(mutex_); \
+    stat_data_.member_name += time; \
+  }
+
 #define COMPLETE_COUNTER(method_name, member_name) \
   void \
   StatHolder::method_name() noexcept \
@@ -275,18 +336,44 @@ namespace AdServer
   COMPLETE_COUNTER(complete_user_bind_match_history_request, user_bind_match_history_requests)
   ADD_COUNTER(add_user_bind_match_campaign_request, user_bind_match_campaign_requests)
   COMPLETE_COUNTER(complete_user_bind_match_campaign_request, user_bind_match_campaign_requests)
-  ADD_COUNTER(add_rtb_request, request_in_progress)
+  ADD_IN_PROGRESS_COUNTER(add_rtb_request, request_total, request_in_progress)
   COMPLETE_COUNTER(complete_rtb_request, request_in_progress)
-  ADD_COUNTER(add_rtb_request_user_resolving, user_resolving_in_progress)
+  ADD_IN_PROGRESS_COUNTER(
+    add_rtb_request_user_resolving,
+    user_resolving_total,
+    user_resolving_in_progress)
+  ADD_TIME_COUNTER(
+    add_rtb_request_user_resolving_time,
+    user_resolving_total_time)
   COMPLETE_COUNTER(complete_rtb_request_user_resolving, user_resolving_in_progress)
-  ADD_COUNTER(add_rtb_request_trigger_match, trigger_match_in_progress)
+  ADD_IN_PROGRESS_COUNTER(
+    add_rtb_request_trigger_match,
+    trigger_match_total,
+    trigger_match_in_progress)
+  ADD_TIME_COUNTER(
+    add_rtb_request_trigger_match_time,
+    trigger_match_total_time)
   COMPLETE_COUNTER(complete_rtb_request_trigger_match, trigger_match_in_progress)
-  ADD_COUNTER(add_rtb_request_history_match, history_match_in_progress)
+  ADD_IN_PROGRESS_COUNTER(
+    add_rtb_request_history_match,
+    history_match_total,
+    history_match_in_progress)
+  ADD_TIME_COUNTER(
+    add_rtb_request_history_match_time,
+    history_match_total_time)
   COMPLETE_COUNTER(complete_rtb_request_history_match, history_match_in_progress)
-  ADD_COUNTER(add_rtb_request_campaign_selection, campaign_selection_in_progress)
+  ADD_IN_PROGRESS_COUNTER(
+    add_rtb_request_campaign_selection,
+    campaign_selection_total,
+    campaign_selection_in_progress)
+  ADD_TIME_COUNTER(
+    add_rtb_request_campaign_selection_time,
+    campaign_selection_total_time)
   COMPLETE_COUNTER(complete_rtb_request_campaign_selection, campaign_selection_in_progress)
 
 #undef ADD_COUNTER
+#undef ADD_IN_PROGRESS_COUNTER
+#undef ADD_TIME_COUNTER
 #undef COMPLETE_COUNTER
 
   StatHolder::RtbRequestInProgressStats
@@ -314,13 +401,22 @@ namespace AdServer
     Generics::Values_var v(new Generics::Values);
 
     v->set(BF_REQ_COUNT, d.request_total);
+    v->set(BF_REQ_FINISHED, d.request_finished_total);
     v->set(BF_REQ_BIDS, d.request_total_bid);
 
     v->set(BF_SKIPPED, d.skipped);
     v->set(BF_REQ_IN_PROGRESS, d.request_in_progress);
+    v->set(BF_USER_RESOLVING_TOTAL, d.user_resolving_total);
+    v->set(BF_USER_RESOLVING_TOTAL_TIME, d.user_resolving_total_time.as_double());
     v->set(BF_USER_RESOLVING_IN_PROGRESS, d.user_resolving_in_progress);
+    v->set(BF_TRIGGER_MATCH_TOTAL, d.trigger_match_total);
+    v->set(BF_TRIGGER_MATCH_TOTAL_TIME, d.trigger_match_total_time.as_double());
     v->set(BF_TRIGGER_MATCH_IN_PROGRESS, d.trigger_match_in_progress);
+    v->set(BF_HISTORY_MATCH_TOTAL, d.history_match_total);
+    v->set(BF_HISTORY_MATCH_TOTAL_TIME, d.history_match_total_time.as_double());
     v->set(BF_HISTORY_MATCH_IN_PROGRESS, d.history_match_in_progress);
+    v->set(BF_CAMPAIGN_SELECTION_TOTAL, d.campaign_selection_total);
+    v->set(BF_CAMPAIGN_SELECTION_TOTAL_TIME, d.campaign_selection_total_time.as_double());
     v->set(BF_CAMPAIGN_SELECTION_IN_PROGRESS, d.campaign_selection_in_progress);
     v->set(UB_BIND_REQUEST_COUNT, d.user_bind_request_count);
     v->set(UB_BIND_REQUESTS, d.user_bind_requests);

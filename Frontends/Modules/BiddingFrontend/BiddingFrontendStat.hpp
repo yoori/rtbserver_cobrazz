@@ -27,17 +27,26 @@ namespace AdServer
     {
       StatData();
       StatData(
-        unsigned long request_total_,
+        unsigned long request_finished_total_,
         unsigned long request_total_bid_,
         const Generics::Time& processing_time);
 
       unsigned long request_total;
+      unsigned long request_finished_total;
       unsigned long request_total_bid;
       unsigned long skipped;
       unsigned long request_in_progress;
+      unsigned long user_resolving_total;
+      Generics::Time user_resolving_total_time;
       unsigned long user_resolving_in_progress;
+      unsigned long trigger_match_total;
+      Generics::Time trigger_match_total_time;
       unsigned long trigger_match_in_progress;
+      unsigned long history_match_total;
+      Generics::Time history_match_total_time;
       unsigned long history_match_in_progress;
+      unsigned long campaign_selection_total;
+      Generics::Time campaign_selection_total_time;
       unsigned long campaign_selection_in_progress;
       unsigned long user_bind_request_count;
       unsigned long user_bind_requests;
@@ -84,10 +93,16 @@ namespace AdServer
     complete_rtb_request_user_resolving() noexcept;
 
     void
+    add_rtb_request_user_resolving_time(const Generics::Time& time) noexcept;
+
+    void
     add_rtb_request_trigger_match() noexcept;
 
     void
     complete_rtb_request_trigger_match() noexcept;
+
+    void
+    add_rtb_request_trigger_match_time(const Generics::Time& time) noexcept;
 
     void
     add_rtb_request_history_match() noexcept;
@@ -96,10 +111,16 @@ namespace AdServer
     complete_rtb_request_history_match() noexcept;
 
     void
+    add_rtb_request_history_match_time(const Generics::Time& time) noexcept;
+
+    void
     add_rtb_request_campaign_selection() noexcept;
 
     void
     complete_rtb_request_campaign_selection() noexcept;
+
+    void
+    add_rtb_request_campaign_selection_time(const Generics::Time& time) noexcept;
 
     RtbRequestInProgressStats
     rtb_request_in_progress_stats() noexcept;

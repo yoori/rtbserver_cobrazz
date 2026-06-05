@@ -24,11 +24,24 @@ namespace AdServer::UserInfoSvcs
   public:
     struct Stats
     {
+      std::uint64_t call_total = 0;
+      std::uint64_t call_total_time = 0;
       std::uint64_t call_in_progress = 0;
+      std::uint64_t get_bind_request_total = 0;
+      std::uint64_t get_bind_request_total_time = 0;
       std::uint64_t get_bind_request_in_progress = 0;
+      std::uint64_t add_bind_request_total = 0;
+      std::uint64_t add_bind_request_total_time = 0;
       std::uint64_t add_bind_request_in_progress = 0;
+      std::uint64_t get_user_id_total = 0;
+      std::uint64_t get_user_id_total_time = 0;
       std::uint64_t get_user_id_in_progress = 0;
+      std::uint64_t add_user_id_total = 0;
+      std::uint64_t add_user_id_total_time = 0;
       std::uint64_t add_user_id_in_progress = 0;
+      std::uint64_t batch_total = 0;
+      std::uint64_t batch_total_time = 0;
+      std::uint64_t batch_in_progress = 0;
     };
 
     UserBindServerGrpc(
@@ -37,6 +50,7 @@ namespace AdServer::UserInfoSvcs
       std::string_view bind_address,
       unsigned int bind_port,
       std::size_t process_threads = 128,
+      std::size_t cq_threads = 0,
       std::size_t max_split = 0,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 

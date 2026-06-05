@@ -135,6 +135,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           "0.0.0.0",
         config().GrpcConfig()->Endpoint().port(),
         static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
+        config().GrpcConfig()->cq_threads().present() ?
+          static_cast<std::size_t>(*config().GrpcConfig()->cq_threads()) :
+          static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
         config().GrpcConfig()->max_split().present() ?
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
@@ -168,22 +171,60 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           return AdServer::Commons::HttpServer::HttpServer::Response{
             200,
             "application/json",
-            std::string("{\"call_in_progress\":") +
+            std::string("{\"call_total\":") +
+              std::to_string(stats.call_total) +
+              ",\"call_total_time\":" +
+              std::to_string(stats.call_total_time) +
+              ",\"call_in_progress\":" +
               std::to_string(stats.call_in_progress) +
+              ",\"match_total\":" +
+              std::to_string(stats.match_total) +
+              ",\"match_total_time\":" +
+              std::to_string(stats.match_total_time) +
               ",\"match_in_progress\":" +
               std::to_string(stats.match_in_progress) +
+              ",\"update_user_freq_caps_total\":" +
+              std::to_string(stats.update_user_freq_caps_total) +
+              ",\"update_user_freq_caps_total_time\":" +
+              std::to_string(stats.update_user_freq_caps_total_time) +
               ",\"update_user_freq_caps_in_progress\":" +
               std::to_string(stats.update_user_freq_caps_in_progress) +
+              ",\"confirm_user_freq_caps_total\":" +
+              std::to_string(stats.confirm_user_freq_caps_total) +
+              ",\"confirm_user_freq_caps_total_time\":" +
+              std::to_string(stats.confirm_user_freq_caps_total_time) +
               ",\"confirm_user_freq_caps_in_progress\":" +
               std::to_string(stats.confirm_user_freq_caps_in_progress) +
+              ",\"fraud_user_total\":" +
+              std::to_string(stats.fraud_user_total) +
+              ",\"fraud_user_total_time\":" +
+              std::to_string(stats.fraud_user_total_time) +
               ",\"fraud_user_in_progress\":" +
               std::to_string(stats.fraud_user_in_progress) +
+              ",\"remove_user_profile_total\":" +
+              std::to_string(stats.remove_user_profile_total) +
+              ",\"remove_user_profile_total_time\":" +
+              std::to_string(stats.remove_user_profile_total_time) +
               ",\"remove_user_profile_in_progress\":" +
               std::to_string(stats.remove_user_profile_in_progress) +
+              ",\"merge_total\":" +
+              std::to_string(stats.merge_total) +
+              ",\"merge_total_time\":" +
+              std::to_string(stats.merge_total_time) +
               ",\"merge_in_progress\":" +
               std::to_string(stats.merge_in_progress) +
+              ",\"consider_publishers_optin_total\":" +
+              std::to_string(stats.consider_publishers_optin_total) +
+              ",\"consider_publishers_optin_total_time\":" +
+              std::to_string(stats.consider_publishers_optin_total_time) +
               ",\"consider_publishers_optin_in_progress\":" +
               std::to_string(stats.consider_publishers_optin_in_progress) +
+              ",\"batch_total\":" +
+              std::to_string(stats.batch_total) +
+              ",\"batch_total_time\":" +
+              std::to_string(stats.batch_total_time) +
+              ",\"batch_in_progress\":" +
+              std::to_string(stats.batch_in_progress) +
               ",\"call_inflight\":" +
               std::to_string(stats.call_inflight) +
               ",\"min_time_of_request_in_progress\":" +

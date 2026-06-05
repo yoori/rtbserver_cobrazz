@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv520%{?dist}
+Release: ssv522%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -295,7 +295,6 @@ for f in $(find -L %{buildroot} %{buildroot}%{__inst_root} -type f) ; do
   res=`find $test_dir -type f -name $binary`
     if [ -n "$res" ] || \
       [ "$binary" = "ChannelTest" ] || \
-      [ "$binary" = "UserInfoAdmin" ] || \
       [ "$binary" = "ProfileDump" ] || \
       [ "$binary" = "ExtractMatchedChannels.pl" ] || \
       [ "$binary" = "ExtractCampaignClick.pl" ] || \
