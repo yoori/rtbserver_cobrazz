@@ -127,11 +127,14 @@ namespace AdServer::Bidding
       }
     }
 
-    debug_sink_.print_creative_selection_debug_info(
-      campaign_match_result,
-      request_time_metering_.creative_selection ?
-        &*request_time_metering_.creative_selection : nullptr);
-    print_time_metering_debug_info_();
+    if(debug_sink_.require_debug_info())
+    {
+      debug_sink_.print_creative_selection_debug_info(
+        campaign_match_result,
+        request_time_metering_.creative_selection ?
+          &*request_time_metering_.creative_selection : nullptr);
+      print_time_metering_debug_info_();
+    }
 
     if(check_interrupt_(Stage::CampaignSelectionConsidering))
     {
@@ -172,7 +175,10 @@ namespace AdServer::Bidding
   {
     if(write_empty_response)
     {
-      print_time_metering_debug_info_();
+      if(debug_sink_.require_debug_info())
+      {
+        print_time_metering_debug_info_();
+      }
       this->write_empty_response(0);
     }
 
@@ -198,10 +204,10 @@ namespace AdServer::Bidding
     }
 
     timeout_interrupted_.store(true, std::memory_order_relaxed);
-    print_available_request_debug_info_();
 
     if (debug_sink_.require_debug_info())
     {
+      print_available_request_debug_info_();
       const auto in_progress_stats =
         bid_frontend_->stats_->rtb_request_in_progress_stats();
       AdServer::Grpc::Stats user_bind_client_stats;
@@ -236,9 +242,9 @@ namespace AdServer::Bidding
         user_bind_client_stats,
         user_info_client_stats,
         channel_client_stats,
-        campaign_client_stats);
+          campaign_client_stats);
+      print_time_metering_debug_info_();
     }
-    print_time_metering_debug_info_();
     write_empty_response(0, true);
   }
 
@@ -260,8 +266,10 @@ namespace AdServer::Bidding
 
     if(send_response)
     {
-      debug_sink_.set(String::SubString(request_info_.require_debug_info));
-      debug_sink_.write_response(response, code, resolved_user_id_);
+      if(debug_sink_.require_debug_info())
+      {
+        debug_sink_.write_response(response, code, resolved_user_id_);
+      }
       response_writer_->write(code, response);
       response_writer_ = FCGI::BaseHttpResponseWriter_var();
     response_sent_ = true;
@@ -277,7 +285,8 @@ namespace AdServer::Bidding
   void
   BidRequestState::print_available_request_debug_info_() noexcept
   {
-    if(!request_debug_info_printed_ &&
+    if(debug_sink_.require_debug_info() &&
+       !request_debug_info_printed_ &&
        get_current_stage() != Stage::Initial &&
        request_params_.in())
     {
@@ -293,7 +302,7 @@ namespace AdServer::Bidding
   void
   BidRequestState::print_time_metering_debug_info_() noexcept
   {
-    if(!time_metering_debug_info_printed_)
+    if(debug_sink_.require_debug_info() && !time_metering_debug_info_printed_)
     {
       request_time_metering_.total_time =
         Generics::Time::get_time_of_day() - start_processing_time_;
