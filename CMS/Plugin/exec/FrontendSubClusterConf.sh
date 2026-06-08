@@ -291,6 +291,18 @@ then
     let "EXIT_CODE|=$?"
   done
 
+  # FCGI Action server
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$HTTP_FRONTEND_XPATH" \
+    --app-xml "$APP_XML" \
+    --xsl "$XSLT_ROOT/Frontend/FCGIActionServer.xsl" \
+    --out-file "FCGIActionServerConfig.xml" \
+    --out-dir-suffix "$OUT_DIR_SUFFIX" \
+    --out-dir "$OUT_DIR" \
+    --plugin-root "$PLUGIN_ROOT"
+
+  let "EXIT_CODE|=$?"
+
   # RTB FCGI server
   for RTB_INDEX in 1
   do

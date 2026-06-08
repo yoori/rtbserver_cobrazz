@@ -84,19 +84,11 @@
 
     <cfg:Monitoring port="{$fcgi-trackserver-mon-port}"/>
 
-    <cfg:Module name="pubpixel"/>
     <cfg:Module name="content"/>
     <cfg:Module name="directory"/>
-    <cfg:Module name="webstat"/>
-    <cfg:Module name="action"/>
-    <cfg:Module name="passback"/>
-    <cfg:Module name="passbackpixel"/>
-    <cfg:Module name="optout"/>
-    <cfg:Module name="nullad"/>
     <cfg:Module name="adinst"/>
     <cfg:Module name="click"/>
     <cfg:Module name="imprtrack"/>
-    <cfg:Module name="ad"/>
   </cfg:FCGIServerConfig>
 
 </xsl:template>

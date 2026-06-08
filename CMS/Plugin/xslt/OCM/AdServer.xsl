@@ -484,6 +484,12 @@
 
 	<xsl:call-template name="AddService">
 	  <xsl:with-param name="service-path" select="$frontend-path"/>
+	  <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIActionServer')"/>
+	  <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIActionServer'"/>
+	</xsl:call-template>
+
+	<xsl:call-template name="AddService">
+	  <xsl:with-param name="service-path" select="$frontend-path"/>
 	  <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIRtbServer')"/>
 	  <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIRtbServer'"/>
 	</xsl:call-template>
@@ -1888,6 +1894,7 @@
       <xsl:variable name="fcgi-dep"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
           AdServer::Frontends::FCGIUserBindServer '"/>
           <xsl:value-of select="'AdServer::Frontends::FCGIRtbServer '"/>
+          <xsl:value-of select="'AdServer::Frontends::FCGIActionServer '"/>
         <xsl:for-each
           select="exsl:node-set($fcgi_track_server_indexes)/i">AdServer::Frontends::FCGITrackServer<xsl:value-of select="concat(., ' ')"/>
         </xsl:for-each>
@@ -2038,6 +2045,7 @@
             <xsl:with-param name="masters"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
               AdServer::Frontends::FCGIUserBindServer '"/>
               <xsl:value-of select="'AdServer::Frontends::FCGIRtbServer '"/>
+              <xsl:value-of select="'AdServer::Frontends::FCGIActionServer '"/>
               <xsl:for-each
                 select="exsl:node-set($fcgi_track_server_indexes)/i">AdServer::Frontends::FCGITrackServer<xsl:value-of select="concat(., ' ')"/>
               </xsl:for-each>

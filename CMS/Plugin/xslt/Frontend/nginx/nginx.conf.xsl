@@ -245,6 +245,21 @@ http {
       keepalive_timeout 300s;
     }
 
+    upstream fastcgi_actionbackend {
+      <xsl:variable name="actionbackend_socket_arr">
+        <i>1</i><i>2</i><i>3</i><i>4</i>
+      </xsl:variable>
+      <xsl:for-each select="exsl:node-set($actionbackend_socket_arr)/i">
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_actionserver_',
+         ., '.sock')"/> max_fails=0;
+      </xsl:for-each>
+
+      keepalive <xsl:value-of select="$frontend-config/cfg:trackFCGINetworkParams/@keep_connections"/><xsl:if
+        test="count($frontend-config/cfg:trackFCGINetworkParams/@keep_connections) = 0">800</xsl:if>;
+      keepalive_requests 100000;
+      keepalive_timeout 300s;
+    }
+
     upstream fastcgi_userbindbackend {
       <xsl:variable name="userbindbackend_socket_arr">
         <i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i>
@@ -491,8 +506,28 @@ http {
         return  204;
       }
 
-      location ~ ^/(conv|conv.html|pubpixels)$ {                                                                                                                                      
-        fastcgi_pass fastcgi_trackbackend;                                                                                                                                     
+      location ~ ^/(services/ActionServer/|action/) {
+        fastcgi_pass fastcgi_actionbackend;
+        fastcgi_keep_conn on;
+
+        fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when
+        test="@proxy_protocol=
+          'true' or @proxy_protocol =
+          '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
+          >$remote_addr;</xsl:otherwise></xsl:choose>
+        include <xsl:value-of
+          select="$config-root"/>/conf/fastcgi_params;
+
+        proxy_connect_timeout 40ms;
+        proxy_send_timeout 50ms;
+        proxy_read_timeout 140ms;
+        send_timeout 50ms;
+
+        error_page 400 404 405 408 500 502 503 504 = @return_204;
+      }
+
+      location ~ ^/(conv|conv.html|pubpixels|services/passback|passback|services/passback[.]gif|passback[.]gif|services/sl[.]gif|sl[.]gif|services/yandex_notification|services/OO|OO)$ {
+        fastcgi_pass fastcgi_actionbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when
@@ -511,7 +546,7 @@ http {
         error_page 400 404 405 408 500 502 503 504 = @return_204;
       }
 
-      # Directory, PubPixel, Content
+      # Directory, Content, ImprTrack, AdInst, Click
       location / {
         fastcgi_pass fastcgi_trackbackend;
         fastcgi_keep_conn on;
@@ -689,8 +724,28 @@ http {
           >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }      
-      location ~ ^/(conv|conv.html|pubpixels)$ {                                                                                                                                      
-        fastcgi_pass fastcgi_trackbackend;                                                                                                                                     
+      location ~ ^/(services/ActionServer/|action/) {
+        fastcgi_pass fastcgi_actionbackend;
+        fastcgi_keep_conn on;
+
+        fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when
+        test="@proxy_protocol=
+          'true' or @proxy_protocol =
+          '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
+          >$remote_addr;</xsl:otherwise></xsl:choose>
+        include <xsl:value-of
+          select="$config-root"/>/conf/fastcgi_params;
+
+        proxy_connect_timeout 40ms;
+        proxy_send_timeout 50ms;
+        proxy_read_timeout 140ms;
+        send_timeout 50ms;
+
+        error_page 400 404 405 408 500 502 503 504 = @return_204;
+      }
+
+      location ~ ^/(conv|conv.html|pubpixels|services/passback|passback|services/passback[.]gif|passback[.]gif|services/sl[.]gif|sl[.]gif|services/yandex_notification|services/OO|OO)$ {
+        fastcgi_pass fastcgi_actionbackend;
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when
@@ -709,7 +764,7 @@ http {
         error_page 400 404 405 408 500 502 503 504 = @return_204;
       }
 
-      # Directory, Content, ImprTrack, Pass, WebStat, AdInst
+      # Directory, Content, ImprTrack, AdInst, Click
       location / {
         fastcgi_pass fastcgi_trackbackend;
         fastcgi_keep_conn on;

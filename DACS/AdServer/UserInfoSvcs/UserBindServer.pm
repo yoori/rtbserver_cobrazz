@@ -18,6 +18,8 @@ sub start
    "mkdir -p \${log_root}/UserBindServer/Out/UserBindOp_1 && " .
    "mkdir -p \${log_root}/UserBindServer/Out/UserBindOp_2 && " .
    "ulimit -n 16384 && " .
+   "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=536870912 && " .
+   "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
    "export MALLOC_ARENA_MAX=1 && " .
    "if test -e $pid_file; then " .
      "pid=`cat $pid_file`; " .
