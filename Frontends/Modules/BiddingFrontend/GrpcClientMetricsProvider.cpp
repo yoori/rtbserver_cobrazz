@@ -70,6 +70,7 @@ namespace AdServer::Bidding
     const AdServer::Grpc::Stats& stats)
   {
     add_counter_(result, prefix, "input_items", stats.input_items);
+    add_counter_(result, prefix, "call_total", stats.input_items);
     add_counter_(result, prefix, "completed_items", stats.completed_items);
     add_counter_(
       result,
@@ -79,14 +80,45 @@ namespace AdServer::Bidding
     add_counter_(
       result,
       prefix,
+      "call_error_total",
+      stats.completed_error_items);
+    add_counter_(
+      result,
+      prefix,
       "outstanding_items",
       stats.input_items > stats.completed_items ?
         stats.input_items - stats.completed_items :
         0);
     add_counter_(result, prefix, "write_batches", stats.write_batches);
+    add_counter_(result, prefix, "batch_total", stats.write_batches);
+    add_counter_(result, prefix, "write_batch_total", stats.write_batches);
     add_counter_(result, prefix, "write_items", stats.write_items);
     add_counter_(result, prefix, "read_batches", stats.read_batches);
+    add_counter_(result, prefix, "read_batch_total", stats.read_batches);
     add_counter_(result, prefix, "read_items", stats.read_items);
+    add_counter_(result, prefix, "queue_wait_total", stats.queue_wait_count);
+    add_counter_(result, prefix, "queue_wait_time", stats.queue_wait_sum_us);
+    add_counter_(result, prefix, "queue_wait_max_time", stats.queue_wait_max_us);
+    add_counter_(
+      result,
+      prefix,
+      "queue_timeout_total",
+      stats.queue_timeout_count);
+    add_counter_(
+      result,
+      prefix,
+      "response_wait_total",
+      stats.response_wait_count);
+    add_counter_(
+      result,
+      prefix,
+      "response_wait_time",
+      stats.response_wait_sum_us);
+    add_counter_(
+      result,
+      prefix,
+      "response_wait_max_time",
+      stats.response_wait_max_us);
     add_counter_(result, prefix, "queue_items", stats.queue_items);
     add_counter_(result, prefix, "pending_batches", stats.pending_batches);
     add_counter_(
@@ -109,6 +141,25 @@ namespace AdServer::Bidding
       stats.connecting_streams);
     add_counter_(result, prefix, "draining_streams", stats.draining_streams);
     add_counter_(result, prefix, "deferred_streams", stats.deferred_streams);
+
+    if (stats.consumer_stream_write.has_value())
+    {
+      add_counter_(
+        result,
+        prefix,
+        "consumer_stream_write_total",
+        stats.consumer_stream_write->count);
+      add_counter_(
+        result,
+        prefix,
+        "consumer_stream_write_time",
+        stats.consumer_stream_write->sum_us);
+      add_counter_(
+        result,
+        prefix,
+        "consumer_stream_write_max_time",
+        stats.consumer_stream_write->max_us);
+    }
 
     if(stats.last_error.has_value())
     {

@@ -3,24 +3,26 @@ package AdServer::Frontends::FCGIRtbServer;
 use AdServer::Functions;
 use AdServer::Path;
 
-my $pid_file = "\${workspace_root}/run/FCGIRtbServer1.pid";
+my $pid_file = "\${workspace_root}/run/FCGIRtbServer.pid";
 
 sub start
 {
   my ($host, $descr) = @_;
 
   my $command =
-    "mkdir -p \${log_root}/FCGIRtbServer1 \${workspace_root}/run && " .
+    "mkdir -p \${log_root}/FCGIRtbServer \${workspace_root}/run && " .
     "if test -e $pid_file; then " .
       "pid=`cat $pid_file`; " .
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
     "ulimit -s 100000 && " .
     "ulimit -n 256000 && " .
+    "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=536870912 && " .
+    "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
     "export MALLOC_ARENA_MAX=4 && " .
     "setsid -f \${VALGRIND_PREFIX} FCGIServer " .
-      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServer1Config.xml " .
-      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer1.out 2>&1 < /dev/null";
+      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServerConfig.xml " .
+      " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer.out 2>&1 < /dev/null";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }

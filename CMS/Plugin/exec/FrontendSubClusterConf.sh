@@ -292,14 +292,14 @@ then
   done
 
   # RTB FCGI server
-  for RTB_INDEX in $(seq 1 2)
+  for RTB_INDEX in 1
   do
     $EXEC/ServiceConf.sh \
       --macro "{FCGIRTBSERVER_INDEX}" "$RTB_INDEX" \
       --services-xpath "$HTTP_FRONTEND_XPATH" \
       --app-xml "$APP_XML" \
       --xsl "$XSLT_ROOT/Frontend/FCGIRtbServer.xsl" \
-      --out-file "FCGIRtbServer${RTB_INDEX}Config.xml" \
+      --out-file "FCGIRtbServerConfig.xml" \
       --out-dir-suffix "$OUT_DIR_SUFFIX" \
       --out-dir "$OUT_DIR" \
       --plugin-root "$PLUGIN_ROOT"
@@ -307,7 +307,7 @@ then
     let "EXIT_CODE|=$?"
 
     $EXEC/CurrentEnvGen.sh \
-      --service-name "fcgi_rtbserver$RTB_INDEX" \
+      --service-name "fcgi_rtbserver" \
       --plugin-root "$PLUGIN_ROOT" \
       --app-xml "$APP_XML" \
       --relative-port-xpath "configuration/cfg:frontend/cfg:rtbFCGI${RTB_INDEX}NetworkParams/@port" \

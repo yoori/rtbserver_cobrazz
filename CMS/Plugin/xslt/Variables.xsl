@@ -153,8 +153,7 @@
 <xsl:variable name="fcgi-trackserver1-log-path" select="'/log/FCGITrackServer1/FCGITrackServer1'"/>
 <xsl:variable name="fcgi-trackserver2-log-path" select="'/log/FCGITrackServer2/FCGITrackServer2'"/>
 
-<xsl:variable name="fcgi-rtbserver1-log-path" select="'/log/FCGIRtbServer1/FCGIRtbServer1'"/>
-<xsl:variable name="fcgi-rtbserver2-log-path" select="'/log/FCGIRtbServer2/FCGIRtbServer2'"/>
+<xsl:variable name="fcgi-rtbserver-log-path" select="'/log/FCGIRtbServer/FCGIRtbServer'"/>
 
 <xsl:variable name="fcgi-userbindserver-log-path" select="'/log/FCGIUserBindServer/FCGIUserBindServer'"/>
 
@@ -368,6 +367,8 @@
 
 <xsl:variable name="def-fcgi-rtbserver1-port" select="$def-range-start + 77"/>
 <xsl:variable name="def-fcgi-rtbserver1-mon-port" select="$def-range-start + 177"/>
+<xsl:variable name="def-fcgi-rtbserver-port" select="$def-fcgi-rtbserver1-port"/>
+<xsl:variable name="def-fcgi-rtbserver-mon-port" select="$def-fcgi-rtbserver1-mon-port"/>
 <xsl:variable name="def-fcgi-rtbserver2-port" select="$def-range-start + 96"/>
 <xsl:variable name="def-fcgi-rtbserver2-mon-port" select="$def-range-start + 196"/>
 

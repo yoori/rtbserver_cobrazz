@@ -781,6 +781,7 @@ namespace AdServer::Bidding
     unsigned long trigger_match_in_progress,
     unsigned long history_match_in_progress,
     unsigned long campaign_selection_in_progress,
+    unsigned long history_post_match_in_progress,
     const AdServer::Grpc::Stats& user_bind_client_stats,
     const AdServer::Grpc::Stats& user_info_client_stats,
     const AdServer::Grpc::Stats& channel_client_stats,
@@ -812,7 +813,9 @@ namespace AdServer::Bidding
       "rtb_request_history_match_in_progress = " <<
         history_match_in_progress << sep_ <<
       "rtb_request_campaign_selection_in_progress = " <<
-        campaign_selection_in_progress << sep_;
+        campaign_selection_in_progress << sep_ <<
+      "rtb_request_history_post_match_in_progress = " <<
+        history_post_match_in_progress << sep_;
 
     print_client_stats_(
       debug_info_str_,

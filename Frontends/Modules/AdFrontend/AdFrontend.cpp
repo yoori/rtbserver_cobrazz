@@ -3,6 +3,7 @@
 #include <sstream>
 #include <algorithm>
 #include <set>
+#include <type_traits>
 
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -121,6 +122,7 @@ namespace
       const AdServer::Grpc::Stats& stats)
     {
       add_counter_(result, prefix, "input_items", stats.input_items);
+      add_counter_(result, prefix, "call_total", stats.input_items);
       add_counter_(result, prefix, "completed_items", stats.completed_items);
       add_counter_(
         result,
@@ -130,14 +132,45 @@ namespace
       add_counter_(
         result,
         prefix,
+        "call_error_total",
+        stats.completed_error_items);
+      add_counter_(
+        result,
+        prefix,
         "outstanding_items",
         stats.input_items > stats.completed_items ?
           stats.input_items - stats.completed_items :
           0);
       add_counter_(result, prefix, "write_batches", stats.write_batches);
+      add_counter_(result, prefix, "batch_total", stats.write_batches);
+      add_counter_(result, prefix, "write_batch_total", stats.write_batches);
       add_counter_(result, prefix, "write_items", stats.write_items);
       add_counter_(result, prefix, "read_batches", stats.read_batches);
+      add_counter_(result, prefix, "read_batch_total", stats.read_batches);
       add_counter_(result, prefix, "read_items", stats.read_items);
+      add_counter_(result, prefix, "queue_wait_total", stats.queue_wait_count);
+      add_counter_(result, prefix, "queue_wait_time", stats.queue_wait_sum_us);
+      add_counter_(result, prefix, "queue_wait_max_time", stats.queue_wait_max_us);
+      add_counter_(
+        result,
+        prefix,
+        "queue_timeout_total",
+        stats.queue_timeout_count);
+      add_counter_(
+        result,
+        prefix,
+        "response_wait_total",
+        stats.response_wait_count);
+      add_counter_(
+        result,
+        prefix,
+        "response_wait_time",
+        stats.response_wait_sum_us);
+      add_counter_(
+        result,
+        prefix,
+        "response_wait_max_time",
+        stats.response_wait_max_us);
       add_counter_(result, prefix, "queue_items", stats.queue_items);
       add_counter_(result, prefix, "pending_batches", stats.pending_batches);
       add_counter_(
@@ -161,6 +194,25 @@ namespace
       add_counter_(result, prefix, "draining_streams", stats.draining_streams);
       add_counter_(result, prefix, "deferred_streams", stats.deferred_streams);
 
+      if (stats.consumer_stream_write.has_value())
+      {
+        add_counter_(
+          result,
+          prefix,
+          "consumer_stream_write_total",
+          stats.consumer_stream_write->count);
+        add_counter_(
+          result,
+          prefix,
+          "consumer_stream_write_time",
+          stats.consumer_stream_write->sum_us);
+        add_counter_(
+          result,
+          prefix,
+          "consumer_stream_write_max_time",
+          stats.consumer_stream_write->max_us);
+      }
+
       if (stats.last_error.has_value())
       {
         result.emplace_back(
@@ -183,6 +235,156 @@ namespace
 
   private:
     std::vector<ClientSource> clients_;
+  };
+
+  struct ValuesMetricWriter
+  {
+    explicit ValuesMetricWriter(Generics::MetricsProvider::MetricArray& result)
+      : result(result)
+    {}
+
+    void
+    operator()(const std::size_t)
+    {}
+
+    template<typename Type>
+    void
+    operator()(
+      const Generics::Values::Key& key,
+      const Type& value)
+    {
+      if constexpr (std::is_integral_v<Type>)
+      {
+        result.emplace_back(key.text(), static_cast<long>(value));
+      }
+      else if constexpr (std::is_floating_point_v<Type>)
+      {
+        result.emplace_back(key.text(), static_cast<double>(value));
+      }
+      else
+      {
+        result.emplace_back(key.text(), value);
+      }
+    }
+
+    Generics::MetricsProvider::MetricArray& result;
+  };
+
+  class AdFrontendMetricsProvider final : public Generics::MetricsProvider
+  {
+  public:
+    explicit AdFrontendMetricsProvider(AdServer::AdFrontendStat* stats)
+      : stats_(ReferenceCounting::add_ref(stats))
+    {}
+
+    MetricArray get_values() override
+    {
+      MetricArray result;
+      if(stats_.in())
+      {
+        Generics::Values_var values = stats_->extract_stats_values();
+        ValuesMetricWriter writer(result);
+        values->enumerate_all(writer);
+      }
+      return result;
+    }
+
+    void add_value(std::string_view, double) override {}
+    void add_value(std::string_view, long) override {}
+    void add_value(std::string_view, const std::string&) override {}
+    void add_value_prometheus(
+      const std::string&,
+      const std::map<std::string, std::string>&,
+      double) override
+    {}
+    void set_value_prometheus(
+      const std::string&,
+      const std::map<std::string, std::string>&,
+      double) override
+    {}
+
+  private:
+    AdServer::AdFrontendStat_var stats_;
+  };
+
+  class AdRequestInProgressGuard
+  {
+  public:
+    explicit AdRequestInProgressGuard(AdServer::AdFrontendStat* stats) noexcept
+      : stats_(ReferenceCounting::add_ref(stats))
+    {
+      if(stats_.in())
+      {
+        stats_->add_request();
+      }
+    }
+
+    ~AdRequestInProgressGuard() noexcept
+    {
+      if(stats_.in())
+      {
+        stats_->complete_request();
+      }
+    }
+
+    AdRequestInProgressGuard(const AdRequestInProgressGuard&) = delete;
+    AdRequestInProgressGuard& operator=(const AdRequestInProgressGuard&) = delete;
+
+  private:
+    AdServer::AdFrontendStat_var stats_;
+  };
+
+  class AdStageInProgressGuard
+  {
+  public:
+    AdStageInProgressGuard(
+      AdServer::AdFrontendStat* stats,
+      AdServer::AdFrontendStat::Stage stage,
+      bool track_time = true)
+      noexcept
+      : stats_(ReferenceCounting::add_ref(stats)),
+        stage_(stage),
+        track_time_(track_time),
+        started_at_(track_time ? Generics::Time::get_time_of_day() :
+          Generics::Time::ZERO)
+    {
+      if(stats_.in())
+      {
+        stats_->add_stage(stage_);
+      }
+    }
+
+    ~AdStageInProgressGuard() noexcept
+    {
+      if(stats_.in())
+      {
+        stats_->complete_stage(stage_);
+        if(track_time_)
+        {
+          stats_->add_stage_time(
+            stage_,
+            Generics::Time::get_time_of_day() - started_at_);
+        }
+      }
+    }
+
+    void
+    add_error() noexcept
+    {
+      if(stats_.in())
+      {
+        stats_->add_stage_error(stage_);
+      }
+    }
+
+    AdStageInProgressGuard(const AdStageInProgressGuard&) = delete;
+    AdStageInProgressGuard& operator=(const AdStageInProgressGuard&) = delete;
+
+  private:
+    AdServer::AdFrontendStat_var stats_;
+    AdServer::AdFrontendStat::Stage stage_;
+    bool track_time_;
+    Generics::Time started_at_;
   };
 }
 
@@ -500,6 +702,8 @@ namespace AdServer
             workers_);
         add_child_object(channel_client);
 
+        stats_ = new AdFrontendStat();
+
         if (composite_metrics_provider_)
         {
           std::vector<GrpcClientMetricsProvider::ClientSource> client_sources;
@@ -522,9 +726,9 @@ namespace AdServer
 
           composite_metrics_provider_->add_provider(
             new GrpcClientMetricsProvider(std::move(client_sources)));
+          composite_metrics_provider_->add_provider(
+            new AdFrontendMetricsProvider(stats_.in()));
         }
-
-        stats_ = new AdFrontendStat();
 
         std::string user_agent_filter_path;
         if(common_config_->user_agent_filter_path().present())
@@ -807,6 +1011,7 @@ namespace AdServer
       common_config_->DebugInfo().show_history_matching());
     context->request_holder = std::move(request_holder);
     const FCGI::HttpRequest& request = context->request_holder->request();
+    AdRequestInProgressGuard request_in_progress(stats_.in());
 
     if(logger()->log_level() >= TraceLevel::MIDDLE)
     {
@@ -1202,6 +1407,10 @@ namespace AdServer
       co_return finish(nullptr, false);
     }
 
+    AdStageInProgressGuard history_match_in_progress(
+      stats_.in(),
+      AdFrontendStat::Stage::HistoryMatch);
+
     adserver::user_info_svcs::user_info_manager::MatchRequest
       history_match_request;
     auto* user_info = history_match_request.mutable_user_info();
@@ -1258,6 +1467,7 @@ namespace AdServer
       std::move(history_match_request));
     if(!match_result.status.ok())
     {
+      history_match_in_progress.add_error();
       Stream::Error ostr;
       ostr << "UserInfoManager::match(): gRPC call failed: code=" <<
         static_cast<int>(match_result.status.error_code()) <<
@@ -1424,23 +1634,43 @@ namespace AdServer
       request)
     noexcept
   {
-    auto update_result = co_await user_info_client_coro_->
-      update_user_freq_caps(std::move(request));
-    if(!update_result.status.ok())
+    AdStageInProgressGuard history_post_match_in_progress(
+      stats_.in(),
+      AdFrontendStat::Stage::HistoryPostMatch);
+
+    try
     {
+      auto update_result = co_await user_info_client_coro_->
+        update_user_freq_caps(std::move(request));
+      if(!update_result.status.ok())
+      {
+        history_post_match_in_progress.add_error();
+        Stream::Error ostr;
+        ostr << "UserInfoManager::update_user_freq_caps(): "
+          "gRPC call failed: code=" <<
+          static_cast<int>(update_result.status.error_code()) <<
+          ", message=" << update_result.status.error_message();
+        logger()->log(
+          ostr.str(),
+          update_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+            Logging::Logger::WARNING :
+            Logging::Logger::EMERGENCY,
+          Aspect::AD_FRONTEND,
+          update_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+            "" : "ADS-IMPL-112");
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      history_post_match_in_progress.add_error();
       Stream::Error ostr;
       ostr << "UserInfoManager::update_user_freq_caps(): "
-        "gRPC call failed: code=" <<
-        static_cast<int>(update_result.status.error_code()) <<
-        ", message=" << update_result.status.error_message();
+        "caught eh::Exception: " << ex.what();
       logger()->log(
         ostr.str(),
-        update_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-          Logging::Logger::WARNING :
-          Logging::Logger::EMERGENCY,
+        Logging::Logger::EMERGENCY,
         Aspect::AD_FRONTEND,
-        update_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-          "" : "ADS-IMPL-112");
+        "ADS-IMPL-112");
     }
 
     co_return FrontendCommons::RequestResult{};
@@ -1469,6 +1699,10 @@ namespace AdServer
     noexcept
   {
     const RequestInfo& request_info = context->request_info;
+    AdStageInProgressGuard trigger_match_in_progress(
+      stats_.in(),
+      AdFrontendStat::Stage::TriggerMatch,
+      false);
     TimeGuard trigger_match_time_metering;
 
     channel_request.set_first_url(request_info.referer);
@@ -1495,6 +1729,7 @@ namespace AdServer
       std::move(channel_request));
     if(!channel_result.status.ok())
     {
+      trigger_match_in_progress.add_error();
       Stream::Error ostr;
       ostr << "ChannelServer::match(): gRPC call failed: code=" <<
         static_cast<int>(channel_result.status.error_code()) <<
@@ -2085,6 +2320,10 @@ namespace AdServer
     DebugSink* debug_sink)
     noexcept
   {
+    AdStageInProgressGuard campaign_selection_in_progress(
+      stats_.in(),
+      AdFrontendStat::Stage::CampaignSelection);
+
     try
     {
       CM::GetCampaignCreativeRequest request;
@@ -2108,6 +2347,7 @@ namespace AdServer
         std::move(request));
       if(!campaign_result.status.ok())
       {
+        campaign_selection_in_progress.add_error();
         Stream::Error ostr;
         ostr << "CampaignManager::get_campaign_creative(): "
           "gRPC call failed: code=" <<
@@ -2152,6 +2392,7 @@ namespace AdServer
     }
     catch(const eh::Exception& ex)
     {
+      campaign_selection_in_progress.add_error();
       Stream::Error ostr;
       ostr << "AdFrontend::co_request_campaign_manager_(): fail. "
         "Caught eh::Exception: " << ex.what();

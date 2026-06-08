@@ -10,6 +10,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
+#include <Generics/Time.hpp>
 
 #include <CampaignSvcs/CampaignManager/CampaignManagerGrpc.grpc.pb.h>
 #include <CampaignSvcs/CampaignManager/CampaignManagerImpl.hpp>
@@ -40,31 +41,45 @@ namespace AdServer::CampaignSvcs
       return hostname;
     }
 
-    class InProgressGuard final
+    class CallStatsGuard final
     {
     public:
-      InProgressGuard(
-        std::atomic<std::uint64_t>& call_counter,
-        std::atomic<std::uint64_t>& method_counter) noexcept
-        : call_counter_(call_counter),
-          method_counter_(method_counter)
+      CallStatsGuard(
+        std::atomic<std::uint64_t>& call_in_progress,
+        std::atomic<std::uint64_t>& call_total,
+        std::atomic<std::uint64_t>& call_time,
+        std::atomic<std::uint64_t>& method_in_progress,
+        std::atomic<std::uint64_t>& method_total,
+        std::atomic<std::uint64_t>& method_time) noexcept
+        : call_in_progress_(call_in_progress),
+          call_time_(call_time),
+          method_in_progress_(method_in_progress),
+          method_time_(method_time)
       {
-        call_counter_.fetch_add(1, std::memory_order_relaxed);
-        method_counter_.fetch_add(1, std::memory_order_relaxed);
+        call_in_progress_.fetch_add(1, std::memory_order_relaxed);
+        call_total.fetch_add(1, std::memory_order_relaxed);
+        method_in_progress_.fetch_add(1, std::memory_order_relaxed);
+        method_total.fetch_add(1, std::memory_order_relaxed);
       }
 
-      ~InProgressGuard()
+      ~CallStatsGuard()
       {
-        method_counter_.fetch_sub(1, std::memory_order_relaxed);
-        call_counter_.fetch_sub(1, std::memory_order_relaxed);
+        const auto elapsed_us = timer_.elapsed_time().microseconds();
+        method_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        call_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        method_in_progress_.fetch_sub(1, std::memory_order_relaxed);
+        call_in_progress_.fetch_sub(1, std::memory_order_relaxed);
       }
 
-      InProgressGuard(const InProgressGuard&) = delete;
-      InProgressGuard& operator=(const InProgressGuard&) = delete;
+      CallStatsGuard(const CallStatsGuard&) = delete;
+      CallStatsGuard& operator=(const CallStatsGuard&) = delete;
 
     private:
-      std::atomic<std::uint64_t>& call_counter_;
-      std::atomic<std::uint64_t>& method_counter_;
+      Generics::Timer timer_;
+      std::atomic<std::uint64_t>& call_in_progress_;
+      std::atomic<std::uint64_t>& call_time_;
+      std::atomic<std::uint64_t>& method_in_progress_;
+      std::atomic<std::uint64_t>& method_time_;
     };
 
     CORBACommons::OctSeq
@@ -1346,30 +1361,80 @@ namespace AdServer::CampaignSvcs
   struct CampaignManagerGrpc::AtomicStats
   {
     std::atomic<std::uint64_t> call_in_progress{0};
+    std::atomic<std::uint64_t> call_total{0};
+    std::atomic<std::uint64_t> call_time{0};
     std::atomic<std::uint64_t> ready_in_progress{0};
+    std::atomic<std::uint64_t> ready_total{0};
+    std::atomic<std::uint64_t> ready_time{0};
     std::atomic<std::uint64_t> progress_comment_in_progress{0};
+    std::atomic<std::uint64_t> progress_comment_total{0};
+    std::atomic<std::uint64_t> progress_comment_time{0};
     std::atomic<std::uint64_t> match_geo_channels_in_progress{0};
+    std::atomic<std::uint64_t> match_geo_channels_total{0};
+    std::atomic<std::uint64_t> match_geo_channels_time{0};
     std::atomic<std::uint64_t> get_file_in_progress{0};
+    std::atomic<std::uint64_t> get_file_total{0};
+    std::atomic<std::uint64_t> get_file_time{0};
     std::atomic<std::uint64_t> get_campaign_creative_in_progress{0};
+    std::atomic<std::uint64_t> get_campaign_creative_total{0};
+    std::atomic<std::uint64_t> get_campaign_creative_time{0};
     std::atomic<std::uint64_t> process_match_request_in_progress{0};
+    std::atomic<std::uint64_t> process_match_request_total{0};
+    std::atomic<std::uint64_t> process_match_request_time{0};
     std::atomic<std::uint64_t> process_anonymous_request_in_progress{0};
+    std::atomic<std::uint64_t> process_anonymous_request_total{0};
+    std::atomic<std::uint64_t> process_anonymous_request_time{0};
     std::atomic<std::uint64_t> instantiate_ad_in_progress{0};
+    std::atomic<std::uint64_t> instantiate_ad_total{0};
+    std::atomic<std::uint64_t> instantiate_ad_time{0};
     std::atomic<std::uint64_t> trace_campaign_selection_index_in_progress{0};
+    std::atomic<std::uint64_t> trace_campaign_selection_index_total{0};
+    std::atomic<std::uint64_t> trace_campaign_selection_index_time{0};
     std::atomic<std::uint64_t> trace_campaign_selection_in_progress{0};
+    std::atomic<std::uint64_t> trace_campaign_selection_total{0};
+    std::atomic<std::uint64_t> trace_campaign_selection_time{0};
     std::atomic<std::uint64_t> get_campaign_creative_by_ccid_in_progress{0};
+    std::atomic<std::uint64_t> get_campaign_creative_by_ccid_total{0};
+    std::atomic<std::uint64_t> get_campaign_creative_by_ccid_time{0};
     std::atomic<std::uint64_t> get_channel_links_in_progress{0};
+    std::atomic<std::uint64_t> get_channel_links_total{0};
+    std::atomic<std::uint64_t> get_channel_links_time{0};
     std::atomic<std::uint64_t> get_discover_channels_in_progress{0};
+    std::atomic<std::uint64_t> get_discover_channels_total{0};
+    std::atomic<std::uint64_t> get_discover_channels_time{0};
     std::atomic<std::uint64_t> get_category_channels_in_progress{0};
+    std::atomic<std::uint64_t> get_category_channels_total{0};
+    std::atomic<std::uint64_t> get_category_channels_time{0};
     std::atomic<std::uint64_t> get_colocation_flags_in_progress{0};
+    std::atomic<std::uint64_t> get_colocation_flags_total{0};
+    std::atomic<std::uint64_t> get_colocation_flags_time{0};
     std::atomic<std::uint64_t> get_pub_pixels_in_progress{0};
+    std::atomic<std::uint64_t> get_pub_pixels_total{0};
+    std::atomic<std::uint64_t> get_pub_pixels_time{0};
     std::atomic<std::uint64_t> consider_passback_in_progress{0};
+    std::atomic<std::uint64_t> consider_passback_total{0};
+    std::atomic<std::uint64_t> consider_passback_time{0};
     std::atomic<std::uint64_t> consider_passback_track_in_progress{0};
+    std::atomic<std::uint64_t> consider_passback_track_total{0};
+    std::atomic<std::uint64_t> consider_passback_track_time{0};
     std::atomic<std::uint64_t> get_click_url_in_progress{0};
+    std::atomic<std::uint64_t> get_click_url_total{0};
+    std::atomic<std::uint64_t> get_click_url_time{0};
     std::atomic<std::uint64_t> verify_impression_in_progress{0};
+    std::atomic<std::uint64_t> verify_impression_total{0};
+    std::atomic<std::uint64_t> verify_impression_time{0};
     std::atomic<std::uint64_t> action_taken_in_progress{0};
+    std::atomic<std::uint64_t> action_taken_total{0};
+    std::atomic<std::uint64_t> action_taken_time{0};
     std::atomic<std::uint64_t> verify_opt_operation_in_progress{0};
+    std::atomic<std::uint64_t> verify_opt_operation_total{0};
+    std::atomic<std::uint64_t> verify_opt_operation_time{0};
     std::atomic<std::uint64_t> consider_web_operation_in_progress{0};
+    std::atomic<std::uint64_t> consider_web_operation_total{0};
+    std::atomic<std::uint64_t> consider_web_operation_time{0};
     std::atomic<std::uint64_t> get_config_in_progress{0};
+    std::atomic<std::uint64_t> get_config_total{0};
+    std::atomic<std::uint64_t> get_config_time{0};
   };
 
   class CampaignManagerGrpc::ServiceImpl final:
@@ -1674,9 +1739,13 @@ namespace AdServer::CampaignSvcs
     pb::ReadyResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->ready_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->ready_in_progress,
+      stats_->ready_total,
+      stats_->ready_time);
 
     try
     {
@@ -1697,9 +1766,13 @@ namespace AdServer::CampaignSvcs
     pb::ProgressCommentResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->progress_comment_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->progress_comment_in_progress,
+      stats_->progress_comment_total,
+      stats_->progress_comment_time);
 
     try
     {
@@ -1722,9 +1795,13 @@ namespace AdServer::CampaignSvcs
     pb::MatchGeoChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->match_geo_channels_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->match_geo_channels_in_progress,
+      stats_->match_geo_channels_total,
+      stats_->match_geo_channels_time);
 
     try
     {
@@ -1765,9 +1842,13 @@ namespace AdServer::CampaignSvcs
     pb::GetFileResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_file_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_file_in_progress,
+      stats_->get_file_total,
+      stats_->get_file_time);
 
     response.set_hostname(service_hostname_());
 
@@ -1791,9 +1872,13 @@ namespace AdServer::CampaignSvcs
     pb::TraceCampaignSelectionIndexResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->trace_campaign_selection_index_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->trace_campaign_selection_index_in_progress,
+      stats_->trace_campaign_selection_index_total,
+      stats_->trace_campaign_selection_index_time);
 
     try
     {
@@ -1814,9 +1899,13 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_campaign_creative_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_campaign_creative_in_progress,
+      stats_->get_campaign_creative_total,
+      stats_->get_campaign_creative_time);
 
     try
     {
@@ -1868,9 +1957,13 @@ namespace AdServer::CampaignSvcs
     pb::ProcessMatchRequestResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->process_match_request_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->process_match_request_in_progress,
+      stats_->process_match_request_total,
+      stats_->process_match_request_time);
 
     response.set_hostname(service_hostname_());
 
@@ -1920,9 +2013,13 @@ namespace AdServer::CampaignSvcs
     pb::ProcessAnonymousRequestResponse&,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->process_anonymous_request_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->process_anonymous_request_in_progress,
+      stats_->process_anonymous_request_total,
+      stats_->process_anonymous_request_time);
 
     try
     {
@@ -1967,9 +2064,13 @@ namespace AdServer::CampaignSvcs
     pb::InstantiateAdResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->instantiate_ad_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->instantiate_ad_in_progress,
+      stats_->instantiate_ad_total,
+      stats_->instantiate_ad_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2041,9 +2142,13 @@ namespace AdServer::CampaignSvcs
     pb::TraceCampaignSelectionResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->trace_campaign_selection_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->trace_campaign_selection_in_progress,
+      stats_->trace_campaign_selection_total,
+      stats_->trace_campaign_selection_time);
 
     try
     {
@@ -2069,9 +2174,13 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeByCcidResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_campaign_creative_by_ccid_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_campaign_creative_by_ccid_in_progress,
+      stats_->get_campaign_creative_by_ccid_total,
+      stats_->get_campaign_creative_by_ccid_time);
 
     try
     {
@@ -2102,9 +2211,13 @@ namespace AdServer::CampaignSvcs
     pb::GetChannelLinksResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_channel_links_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_channel_links_in_progress,
+      stats_->get_channel_links_total,
+      stats_->get_channel_links_time);
 
     try
     {
@@ -2133,9 +2246,13 @@ namespace AdServer::CampaignSvcs
     pb::GetDiscoverChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_discover_channels_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_discover_channels_in_progress,
+      stats_->get_discover_channels_total,
+      stats_->get_discover_channels_time);
 
     try
     {
@@ -2179,9 +2296,13 @@ namespace AdServer::CampaignSvcs
     pb::GetCategoryChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_category_channels_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_category_channels_in_progress,
+      stats_->get_category_channels_total,
+      stats_->get_category_channels_time);
 
     try
     {
@@ -2213,9 +2334,13 @@ namespace AdServer::CampaignSvcs
     pb::GetColocationFlagsResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_colocation_flags_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_colocation_flags_in_progress,
+      stats_->get_colocation_flags_total,
+      stats_->get_colocation_flags_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2252,9 +2377,13 @@ namespace AdServer::CampaignSvcs
     pb::GetPubPixelsResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_pub_pixels_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_pub_pixels_in_progress,
+      stats_->get_pub_pixels_total,
+      stats_->get_pub_pixels_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2292,9 +2421,13 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderPassbackResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->consider_passback_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->consider_passback_in_progress,
+      stats_->consider_passback_total,
+      stats_->consider_passback_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2328,9 +2461,13 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderPassbackTrackResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->consider_passback_track_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->consider_passback_track_in_progress,
+      stats_->consider_passback_track_total,
+      stats_->consider_passback_track_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2366,9 +2503,13 @@ namespace AdServer::CampaignSvcs
     pb::VerifyOptOperationResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->verify_opt_operation_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->verify_opt_operation_in_progress,
+      stats_->verify_opt_operation_total,
+      stats_->verify_opt_operation_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2428,9 +2569,13 @@ namespace AdServer::CampaignSvcs
     pb::GetClickUrlResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_click_url_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_click_url_in_progress,
+      stats_->get_click_url_total,
+      stats_->get_click_url_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2490,9 +2635,13 @@ namespace AdServer::CampaignSvcs
     pb::VerifyImpressionResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->verify_impression_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->verify_impression_in_progress,
+      stats_->verify_impression_total,
+      stats_->verify_impression_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2546,9 +2695,13 @@ namespace AdServer::CampaignSvcs
     pb::ActionTakenResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->action_taken_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->action_taken_in_progress,
+      stats_->action_taken_total,
+      stats_->action_taken_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2603,9 +2756,13 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderWebOperationResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->consider_web_operation_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->consider_web_operation_in_progress,
+      stats_->consider_web_operation_total,
+      stats_->consider_web_operation_time);
 
     response.set_hostname(service_hostname_());
 
@@ -2669,9 +2826,13 @@ namespace AdServer::CampaignSvcs
     pb::GetConfigResponse& response,
     ::grpc::Status& result_status) const
   {
-    InProgressGuard in_progress(
+    CallStatsGuard call_stats(
       stats_->call_in_progress,
-      stats_->get_config_in_progress);
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_config_in_progress,
+      stats_->get_config_total,
+      stats_->get_config_time);
 
     try
     {
@@ -2719,33 +2880,88 @@ namespace AdServer::CampaignSvcs
   CampaignManagerGrpc::Stats
   CampaignManagerGrpc::stats() const noexcept
   {
-    return Stats{
-      stats_->call_in_progress.load(std::memory_order_relaxed),
-      stats_->ready_in_progress.load(std::memory_order_relaxed),
-      stats_->progress_comment_in_progress.load(std::memory_order_relaxed),
-      stats_->match_geo_channels_in_progress.load(std::memory_order_relaxed),
-      stats_->get_file_in_progress.load(std::memory_order_relaxed),
-      stats_->get_campaign_creative_in_progress.load(std::memory_order_relaxed),
-      stats_->process_match_request_in_progress.load(std::memory_order_relaxed),
-      stats_->process_anonymous_request_in_progress.load(std::memory_order_relaxed),
-      stats_->instantiate_ad_in_progress.load(std::memory_order_relaxed),
-      stats_->trace_campaign_selection_index_in_progress.load(std::memory_order_relaxed),
-      stats_->trace_campaign_selection_in_progress.load(std::memory_order_relaxed),
-      stats_->get_campaign_creative_by_ccid_in_progress.load(std::memory_order_relaxed),
-      stats_->get_channel_links_in_progress.load(std::memory_order_relaxed),
-      stats_->get_discover_channels_in_progress.load(std::memory_order_relaxed),
-      stats_->get_category_channels_in_progress.load(std::memory_order_relaxed),
-      stats_->get_colocation_flags_in_progress.load(std::memory_order_relaxed),
-      stats_->get_pub_pixels_in_progress.load(std::memory_order_relaxed),
-      stats_->consider_passback_in_progress.load(std::memory_order_relaxed),
-      stats_->consider_passback_track_in_progress.load(std::memory_order_relaxed),
-      stats_->get_click_url_in_progress.load(std::memory_order_relaxed),
-      stats_->verify_impression_in_progress.load(std::memory_order_relaxed),
-      stats_->action_taken_in_progress.load(std::memory_order_relaxed),
-      stats_->verify_opt_operation_in_progress.load(std::memory_order_relaxed),
-      stats_->consider_web_operation_in_progress.load(std::memory_order_relaxed),
-      stats_->get_config_in_progress.load(std::memory_order_relaxed)
-    };
+    Stats result;
+#define LOAD_STAT_(name) \
+    result.name = stats_->name.load(std::memory_order_relaxed)
+
+    LOAD_STAT_(call_in_progress);
+    LOAD_STAT_(call_total);
+    LOAD_STAT_(call_time);
+    LOAD_STAT_(ready_in_progress);
+    LOAD_STAT_(ready_total);
+    LOAD_STAT_(ready_time);
+    LOAD_STAT_(progress_comment_in_progress);
+    LOAD_STAT_(progress_comment_total);
+    LOAD_STAT_(progress_comment_time);
+    LOAD_STAT_(match_geo_channels_in_progress);
+    LOAD_STAT_(match_geo_channels_total);
+    LOAD_STAT_(match_geo_channels_time);
+    LOAD_STAT_(get_file_in_progress);
+    LOAD_STAT_(get_file_total);
+    LOAD_STAT_(get_file_time);
+    LOAD_STAT_(get_campaign_creative_in_progress);
+    LOAD_STAT_(get_campaign_creative_total);
+    LOAD_STAT_(get_campaign_creative_time);
+    LOAD_STAT_(process_match_request_in_progress);
+    LOAD_STAT_(process_match_request_total);
+    LOAD_STAT_(process_match_request_time);
+    LOAD_STAT_(process_anonymous_request_in_progress);
+    LOAD_STAT_(process_anonymous_request_total);
+    LOAD_STAT_(process_anonymous_request_time);
+    LOAD_STAT_(instantiate_ad_in_progress);
+    LOAD_STAT_(instantiate_ad_total);
+    LOAD_STAT_(instantiate_ad_time);
+    LOAD_STAT_(trace_campaign_selection_index_in_progress);
+    LOAD_STAT_(trace_campaign_selection_index_total);
+    LOAD_STAT_(trace_campaign_selection_index_time);
+    LOAD_STAT_(trace_campaign_selection_in_progress);
+    LOAD_STAT_(trace_campaign_selection_total);
+    LOAD_STAT_(trace_campaign_selection_time);
+    LOAD_STAT_(get_campaign_creative_by_ccid_in_progress);
+    LOAD_STAT_(get_campaign_creative_by_ccid_total);
+    LOAD_STAT_(get_campaign_creative_by_ccid_time);
+    LOAD_STAT_(get_channel_links_in_progress);
+    LOAD_STAT_(get_channel_links_total);
+    LOAD_STAT_(get_channel_links_time);
+    LOAD_STAT_(get_discover_channels_in_progress);
+    LOAD_STAT_(get_discover_channels_total);
+    LOAD_STAT_(get_discover_channels_time);
+    LOAD_STAT_(get_category_channels_in_progress);
+    LOAD_STAT_(get_category_channels_total);
+    LOAD_STAT_(get_category_channels_time);
+    LOAD_STAT_(get_colocation_flags_in_progress);
+    LOAD_STAT_(get_colocation_flags_total);
+    LOAD_STAT_(get_colocation_flags_time);
+    LOAD_STAT_(get_pub_pixels_in_progress);
+    LOAD_STAT_(get_pub_pixels_total);
+    LOAD_STAT_(get_pub_pixels_time);
+    LOAD_STAT_(consider_passback_in_progress);
+    LOAD_STAT_(consider_passback_total);
+    LOAD_STAT_(consider_passback_time);
+    LOAD_STAT_(consider_passback_track_in_progress);
+    LOAD_STAT_(consider_passback_track_total);
+    LOAD_STAT_(consider_passback_track_time);
+    LOAD_STAT_(get_click_url_in_progress);
+    LOAD_STAT_(get_click_url_total);
+    LOAD_STAT_(get_click_url_time);
+    LOAD_STAT_(verify_impression_in_progress);
+    LOAD_STAT_(verify_impression_total);
+    LOAD_STAT_(verify_impression_time);
+    LOAD_STAT_(action_taken_in_progress);
+    LOAD_STAT_(action_taken_total);
+    LOAD_STAT_(action_taken_time);
+    LOAD_STAT_(verify_opt_operation_in_progress);
+    LOAD_STAT_(verify_opt_operation_total);
+    LOAD_STAT_(verify_opt_operation_time);
+    LOAD_STAT_(consider_web_operation_in_progress);
+    LOAD_STAT_(consider_web_operation_total);
+    LOAD_STAT_(consider_web_operation_time);
+    LOAD_STAT_(get_config_in_progress);
+    LOAD_STAT_(get_config_total);
+    LOAD_STAT_(get_config_time);
+
+#undef LOAD_STAT_
+    return result;
   }
 
   CampaignManagerGrpc::~CampaignManagerGrpc() noexcept = default;

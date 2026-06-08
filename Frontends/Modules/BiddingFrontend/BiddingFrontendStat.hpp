@@ -21,6 +21,7 @@ namespace AdServer
       unsigned long trigger_match = 0;
       unsigned long history_match = 0;
       unsigned long campaign_selection = 0;
+      unsigned long history_post_match = 0;
     };
 
     struct StatData
@@ -48,6 +49,9 @@ namespace AdServer
       unsigned long campaign_selection_total;
       Generics::Time campaign_selection_total_time;
       unsigned long campaign_selection_in_progress;
+      unsigned long history_post_match_total;
+      Generics::Time history_post_match_total_time;
+      unsigned long history_post_match_in_progress;
       unsigned long user_bind_request_count;
       unsigned long user_bind_requests;
       unsigned long user_bind_rejected_requests;
@@ -121,6 +125,15 @@ namespace AdServer
 
     void
     add_rtb_request_campaign_selection_time(const Generics::Time& time) noexcept;
+
+    void
+    add_rtb_request_history_post_match() noexcept;
+
+    void
+    complete_rtb_request_history_post_match() noexcept;
+
+    void
+    add_rtb_request_history_post_match_time(const Generics::Time& time) noexcept;
 
     RtbRequestInProgressStats
     rtb_request_in_progress_stats() noexcept;

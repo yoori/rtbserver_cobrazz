@@ -32,6 +32,24 @@ namespace AdServer
 
   class AdFrontendStat: public ReferenceCounting::AtomicImpl
   {
+  public:
+    enum class Stage
+    {
+      TriggerMatch,
+      HistoryMatch,
+      CampaignSelection,
+      HistoryPostMatch
+    };
+
+    struct StageStat
+    {
+      unsigned long total = 0;
+      unsigned long in_progress = 0;
+      unsigned long error_total = 0;
+      Generics::Time total_time = Generics::Time::ZERO;
+    };
+
+  private:
     struct BaseStatData
     {
       BaseStatData();
@@ -100,6 +118,16 @@ namespace AdServer
       process_time(const Generics::Time& time, Generics::Time& total, Generics::Time& min, Generics::Time& max) noexcept;
     };
 
+    struct RealtimeStatData
+    {
+      unsigned long ad_request_total = 0;
+      unsigned long ad_request_in_progress = 0;
+      StageStat trigger_match;
+      StageStat history_match;
+      StageStat campaign_selection;
+      StageStat history_post_match;
+    };
+
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -111,6 +139,24 @@ namespace AdServer
       const RequestTimeMetering& request_times)
       noexcept;
 
+    void
+    add_request() noexcept;
+
+    void
+    complete_request() noexcept;
+
+    void
+    add_stage(Stage stage) noexcept;
+
+    void
+    complete_stage(Stage stage) noexcept;
+
+    void
+    add_stage_time(Stage stage, const Generics::Time& time) noexcept;
+
+    void
+    add_stage_error(Stage stage) noexcept;
+
     Generics::Values_var
     extract_stats_values();
 
@@ -119,7 +165,12 @@ namespace AdServer
     {}
 
   private:
+    static StageStat&
+    select_stage_(RealtimeStatData& data, Stage stage) noexcept;
+
+  private:
     StatData stat_data_;
+    RealtimeStatData realtime_stat_data_;
     Sync::PosixMutex mutex_;
   };
 

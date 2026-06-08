@@ -239,6 +239,7 @@ namespace AdServer::Bidding
         in_progress_stats.trigger_match,
         in_progress_stats.history_match,
         in_progress_stats.campaign_selection,
+        in_progress_stats.history_post_match,
         user_bind_client_stats,
         user_info_client_stats,
         channel_client_stats,

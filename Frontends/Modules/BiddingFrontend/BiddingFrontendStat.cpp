@@ -38,6 +38,12 @@ namespace
     "rtb_request_campaign_selection_total_time";
   const Generics::Values::Key BF_CAMPAIGN_SELECTION_IN_PROGRESS =
     "rtb_request_campaign_selection_in_progress";
+  const Generics::Values::Key BF_HISTORY_POST_MATCH_TOTAL =
+    "rtb_request_history_post_match_total";
+  const Generics::Values::Key BF_HISTORY_POST_MATCH_TOTAL_TIME =
+    "rtb_request_history_post_match_total_time";
+  const Generics::Values::Key BF_HISTORY_POST_MATCH_IN_PROGRESS =
+    "rtb_request_history_post_match_in_progress";
   const Generics::Values::Key UB_BIND_REQUEST_COUNT = "user_bind_request_total";
   const Generics::Values::Key UB_BIND_REQUESTS    = "user_bind_request_in_progress";
   const Generics::Values::Key UB_BIND_REJECTED    = "user_bind_request_rejected_total";
@@ -134,6 +140,9 @@ namespace AdServer
       campaign_selection_total(0),
       campaign_selection_total_time(Generics::Time::ZERO),
       campaign_selection_in_progress(0),
+      history_post_match_total(0),
+      history_post_match_total_time(Generics::Time::ZERO),
+      history_post_match_in_progress(0),
       user_bind_request_count(0),
       user_bind_requests(0),
       user_bind_rejected_requests(0),
@@ -168,6 +177,9 @@ namespace AdServer
       campaign_selection_total(0),
       campaign_selection_total_time(Generics::Time::ZERO),
       campaign_selection_in_progress(0),
+      history_post_match_total(0),
+      history_post_match_total_time(Generics::Time::ZERO),
+      history_post_match_in_progress(0),
       user_bind_request_count(0),
       user_bind_requests(0),
       user_bind_rejected_requests(0),
@@ -202,6 +214,9 @@ namespace AdServer
     campaign_selection_total += rhs.campaign_selection_total;
     campaign_selection_total_time += rhs.campaign_selection_total_time;
     campaign_selection_in_progress += rhs.campaign_selection_in_progress;
+    history_post_match_total += rhs.history_post_match_total;
+    history_post_match_total_time += rhs.history_post_match_total_time;
+    history_post_match_in_progress += rhs.history_post_match_in_progress;
     user_bind_request_count += rhs.user_bind_request_count;
     user_bind_requests += rhs.user_bind_requests;
     user_bind_rejected_requests += rhs.user_bind_rejected_requests;
@@ -370,6 +385,16 @@ namespace AdServer
     add_rtb_request_campaign_selection_time,
     campaign_selection_total_time)
   COMPLETE_COUNTER(complete_rtb_request_campaign_selection, campaign_selection_in_progress)
+  ADD_IN_PROGRESS_COUNTER(
+    add_rtb_request_history_post_match,
+    history_post_match_total,
+    history_post_match_in_progress)
+  ADD_TIME_COUNTER(
+    add_rtb_request_history_post_match_time,
+    history_post_match_total_time)
+  COMPLETE_COUNTER(
+    complete_rtb_request_history_post_match,
+    history_post_match_in_progress)
 
 #undef ADD_COUNTER
 #undef ADD_IN_PROGRESS_COUNTER
@@ -385,7 +410,8 @@ namespace AdServer
       stat_data_.user_resolving_in_progress,
       stat_data_.trigger_match_in_progress,
       stat_data_.history_match_in_progress,
-      stat_data_.campaign_selection_in_progress};
+      stat_data_.campaign_selection_in_progress,
+      stat_data_.history_post_match_in_progress};
   }
 
   Generics::Values_var
@@ -418,6 +444,9 @@ namespace AdServer
     v->set(BF_CAMPAIGN_SELECTION_TOTAL, d.campaign_selection_total);
     v->set(BF_CAMPAIGN_SELECTION_TOTAL_TIME, d.campaign_selection_total_time.as_double());
     v->set(BF_CAMPAIGN_SELECTION_IN_PROGRESS, d.campaign_selection_in_progress);
+    v->set(BF_HISTORY_POST_MATCH_TOTAL, d.history_post_match_total);
+    v->set(BF_HISTORY_POST_MATCH_TOTAL_TIME, d.history_post_match_total_time.as_double());
+    v->set(BF_HISTORY_POST_MATCH_IN_PROGRESS, d.history_post_match_in_progress);
     v->set(UB_BIND_REQUEST_COUNT, d.user_bind_request_count);
     v->set(UB_BIND_REQUESTS, d.user_bind_requests);
     v->set(UB_BIND_REJECTED, d.user_bind_rejected_requests);

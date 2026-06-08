@@ -1994,7 +1994,7 @@ namespace AdServer::Bidding
           }
         }
       }
-      else if(user_info_client_coro_)
+      else
       {
         try
         {
@@ -2454,17 +2454,6 @@ namespace AdServer::Bidding
       return true;
     }
 
-    if(!user_info_client_coro_)
-    {
-      logger()->log(
-        String::SubString("Bidding::Frontend::user_info_post_match_():"
-          " non resolved user info session."),
-        Logging::Logger::TRACE,
-        Aspect::BIDDING_FRONTEND);
-
-      return false;
-    }
-
     try
     {
       co_consider_campaign_selection_(
@@ -2506,6 +2495,12 @@ namespace AdServer::Bidding
 
     try
     {
+      InProgressGuard history_post_match_in_progress(
+        stats_.in(),
+        &StatHolder::add_rtb_request_history_post_match,
+        &StatHolder::complete_rtb_request_history_post_match,
+        &StatHolder::add_rtb_request_history_post_match_time);
+
       if(logger()->log_level() >= Logging::Logger::TRACE)
       {
         start_process_time = Generics::Time::get_time_of_day();

@@ -26,6 +26,61 @@ namespace
   const std::string REQUEST_FILLING_TIME = "requestParsing";
   const std::string CREATIVE_SELECTION_TIME = "creativeSelection";
   const std::string CREATIVE_SELECTION_LOCAL_TIME = "creativeSelectionLocal";
+
+  const char AD_REQUEST_TOTAL[] = "ad_request_total";
+  const char AD_REQUEST_IN_PROGRESS[] = "ad_request_in_progress";
+
+  const char AD_REQUEST_TRIGGER_MATCH_TOTAL[] =
+    "ad_request_trigger_match_total";
+  const char AD_REQUEST_TRIGGER_MATCH_IN_PROGRESS[] =
+    "ad_request_trigger_match_in_progress";
+  const char AD_REQUEST_TRIGGER_MATCH_ERROR_TOTAL[] =
+    "ad_request_trigger_match_error_total";
+
+  const char AD_REQUEST_HISTORY_MATCH_TOTAL[] =
+    "ad_request_history_match_total";
+  const char AD_REQUEST_HISTORY_MATCH_TOTAL_TIME[] =
+    "ad_request_history_match_total_time";
+  const char AD_REQUEST_HISTORY_MATCH_IN_PROGRESS[] =
+    "ad_request_history_match_in_progress";
+  const char AD_REQUEST_HISTORY_MATCH_ERROR_TOTAL[] =
+    "ad_request_history_match_error_total";
+
+  const char AD_REQUEST_CAMPAIGN_SELECTION_TOTAL[] =
+    "ad_request_campaign_selection_total";
+  const char AD_REQUEST_CAMPAIGN_SELECTION_TOTAL_TIME[] =
+    "ad_request_campaign_selection_total_time";
+  const char AD_REQUEST_CAMPAIGN_SELECTION_IN_PROGRESS[] =
+    "ad_request_campaign_selection_in_progress";
+  const char AD_REQUEST_CAMPAIGN_SELECTION_ERROR_TOTAL[] =
+    "ad_request_campaign_selection_error_total";
+
+  const char AD_REQUEST_HISTORY_POST_MATCH_TOTAL[] =
+    "ad_request_history_post_match_total";
+  const char AD_REQUEST_HISTORY_POST_MATCH_TOTAL_TIME[] =
+    "ad_request_history_post_match_total_time";
+  const char AD_REQUEST_HISTORY_POST_MATCH_IN_PROGRESS[] =
+    "ad_request_history_post_match_in_progress";
+  const char AD_REQUEST_HISTORY_POST_MATCH_ERROR_TOTAL[] =
+    "ad_request_history_post_match_error_total";
+
+  void
+  add_stage_stats(
+    Generics::Values& values,
+    const AdServer::AdFrontendStat::StageStat& stage,
+    const char* total_key,
+    const char* total_time_key,
+    const char* in_progress_key,
+    const char* error_total_key)
+  {
+    values.set(total_key, stage.total);
+    if(total_time_key)
+    {
+      values.set(total_time_key, stage.total_time.as_double());
+    }
+    values.set(in_progress_key, stage.in_progress);
+    values.set(error_total_key, stage.error_total);
+  }
 }
 
 namespace Aspect
@@ -124,6 +179,27 @@ namespace AdServer
   {
   }
 
+  AdFrontendStat::StageStat&
+  AdFrontendStat::select_stage_(
+    RealtimeStatData& data,
+    Stage stage)
+    noexcept
+  {
+    switch(stage)
+    {
+    case Stage::TriggerMatch:
+      return data.trigger_match;
+    case Stage::HistoryMatch:
+      return data.history_match;
+    case Stage::CampaignSelection:
+      return data.campaign_selection;
+    case Stage::HistoryPostMatch:
+      return data.history_post_match;
+    }
+
+    return data.history_post_match;
+  }
+
   void
   AdFrontendStat::consider_request(
     const RequestInfo& request_info,
@@ -166,14 +242,71 @@ namespace AdServer
       stat_data_.creativeSelectionLocalTotal, stat_data_.creativeSelectionLocalMin, stat_data_.creativeSelectionLocalMax);
   }
 
+  void
+  AdFrontendStat::add_request() noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    ++realtime_stat_data_.ad_request_total;
+    ++realtime_stat_data_.ad_request_in_progress;
+  }
+
+  void
+  AdFrontendStat::complete_request() noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    if(realtime_stat_data_.ad_request_in_progress)
+    {
+      --realtime_stat_data_.ad_request_in_progress;
+    }
+  }
+
+  void
+  AdFrontendStat::add_stage(Stage stage) noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    StageStat& stage_stat = select_stage_(realtime_stat_data_, stage);
+    ++stage_stat.total;
+    ++stage_stat.in_progress;
+  }
+
+  void
+  AdFrontendStat::complete_stage(Stage stage) noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    StageStat& stage_stat = select_stage_(realtime_stat_data_, stage);
+    if(stage_stat.in_progress)
+    {
+      --stage_stat.in_progress;
+    }
+  }
+
+  void
+  AdFrontendStat::add_stage_time(
+    Stage stage,
+    const Generics::Time& time)
+    noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    select_stage_(realtime_stat_data_, stage).total_time += time;
+  }
+
+  void
+  AdFrontendStat::add_stage_error(Stage stage) noexcept
+  {
+    Sync::PosixGuard lock(mutex_);
+    ++select_stage_(realtime_stat_data_, stage).error_total;
+  }
+
   Generics::Values_var
   AdFrontendStat::extract_stats_values()
   {
     StatData d;
+    RealtimeStatData realtime;
 
     {
       Sync::PosixGuard lock(mutex_);
       std::swap(d, stat_data_);
+      realtime = realtime_stat_data_;
     }
 
     Generics::Values_var v(new Generics::Values);
@@ -217,6 +350,37 @@ namespace AdServer
     v->set(CREATIVE_SELECTION_LOCAL_TIME + "-Total", d.creativeSelectionLocalTotal.as_double());
     v->set(CREATIVE_SELECTION_LOCAL_TIME + "-Min", d.creativeSelectionLocalMin.as_double());
     v->set(CREATIVE_SELECTION_LOCAL_TIME + "-Max", d.creativeSelectionLocalMax.as_double());
+
+    v->set(AD_REQUEST_TOTAL, realtime.ad_request_total);
+    v->set(AD_REQUEST_IN_PROGRESS, realtime.ad_request_in_progress);
+    add_stage_stats(
+      *v,
+      realtime.trigger_match,
+      AD_REQUEST_TRIGGER_MATCH_TOTAL,
+      nullptr,
+      AD_REQUEST_TRIGGER_MATCH_IN_PROGRESS,
+      AD_REQUEST_TRIGGER_MATCH_ERROR_TOTAL);
+    add_stage_stats(
+      *v,
+      realtime.history_match,
+      AD_REQUEST_HISTORY_MATCH_TOTAL,
+      AD_REQUEST_HISTORY_MATCH_TOTAL_TIME,
+      AD_REQUEST_HISTORY_MATCH_IN_PROGRESS,
+      AD_REQUEST_HISTORY_MATCH_ERROR_TOTAL);
+    add_stage_stats(
+      *v,
+      realtime.campaign_selection,
+      AD_REQUEST_CAMPAIGN_SELECTION_TOTAL,
+      AD_REQUEST_CAMPAIGN_SELECTION_TOTAL_TIME,
+      AD_REQUEST_CAMPAIGN_SELECTION_IN_PROGRESS,
+      AD_REQUEST_CAMPAIGN_SELECTION_ERROR_TOTAL);
+    add_stage_stats(
+      *v,
+      realtime.history_post_match,
+      AD_REQUEST_HISTORY_POST_MATCH_TOTAL,
+      AD_REQUEST_HISTORY_POST_MATCH_TOTAL_TIME,
+      AD_REQUEST_HISTORY_POST_MATCH_IN_PROGRESS,
+      AD_REQUEST_HISTORY_POST_MATCH_ERROR_TOTAL);
 
     return v;
   }

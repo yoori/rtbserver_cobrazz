@@ -226,6 +226,8 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
             };
 
             append_stat("call_in_progress", stats.call_in_progress);
+            append_stat("call_total", stats.call_total);
+            append_stat("call_time", stats.call_time);
             append_stat("ready_in_progress", stats.ready_in_progress);
             append_stat(
               "progress_comment_in_progress",
@@ -294,6 +296,36 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
             append_stat(
               "get_config_in_progress",
               stats.get_config_in_progress);
+#define APPEND_RPC_TOTAL_TIME_(name) \
+            append_stat(#name "_total", stats.name##_total); \
+            append_stat(#name "_time", stats.name##_time)
+
+            APPEND_RPC_TOTAL_TIME_(ready);
+            APPEND_RPC_TOTAL_TIME_(progress_comment);
+            APPEND_RPC_TOTAL_TIME_(match_geo_channels);
+            APPEND_RPC_TOTAL_TIME_(get_file);
+            APPEND_RPC_TOTAL_TIME_(get_campaign_creative);
+            APPEND_RPC_TOTAL_TIME_(process_match_request);
+            APPEND_RPC_TOTAL_TIME_(process_anonymous_request);
+            APPEND_RPC_TOTAL_TIME_(instantiate_ad);
+            APPEND_RPC_TOTAL_TIME_(trace_campaign_selection_index);
+            APPEND_RPC_TOTAL_TIME_(trace_campaign_selection);
+            APPEND_RPC_TOTAL_TIME_(get_campaign_creative_by_ccid);
+            APPEND_RPC_TOTAL_TIME_(get_channel_links);
+            APPEND_RPC_TOTAL_TIME_(get_discover_channels);
+            APPEND_RPC_TOTAL_TIME_(get_category_channels);
+            APPEND_RPC_TOTAL_TIME_(get_colocation_flags);
+            APPEND_RPC_TOTAL_TIME_(get_pub_pixels);
+            APPEND_RPC_TOTAL_TIME_(consider_passback);
+            APPEND_RPC_TOTAL_TIME_(consider_passback_track);
+            APPEND_RPC_TOTAL_TIME_(get_click_url);
+            APPEND_RPC_TOTAL_TIME_(verify_impression);
+            APPEND_RPC_TOTAL_TIME_(action_taken);
+            APPEND_RPC_TOTAL_TIME_(verify_opt_operation);
+            APPEND_RPC_TOTAL_TIME_(consider_web_operation);
+            APPEND_RPC_TOTAL_TIME_(get_config);
+
+#undef APPEND_RPC_TOTAL_TIME_
           }
           body += "}\n";
 

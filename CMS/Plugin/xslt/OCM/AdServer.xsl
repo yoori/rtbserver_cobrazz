@@ -21,7 +21,7 @@
 <xsl:include href="../LogProcessing/ExpressionMatcherDistribution.xsl"/>
 
 <xsl:variable name="fcgi_rtb_server_indexes">
-  <i>1</i><i>2</i>
+  <i>1</i>
 </xsl:variable>
 
 <xsl:variable name="fcgi_track_server_indexes">
@@ -482,13 +482,11 @@
 	  </xsl:call-template>
 	</xsl:for-each>
 
-	<xsl:for-each select="exsl:node-set($fcgi_rtb_server_indexes)/i">
-	  <xsl:call-template name="AddService">
-	    <xsl:with-param name="service-path" select="$frontend-path"/>
-	    <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIRtbServer', .)"/>
-	    <xsl:with-param name="service-type" select="concat('AdServer::Frontends::FCGIRtbServer', .)"/>
-	  </xsl:call-template>
-	</xsl:for-each>
+	<xsl:call-template name="AddService">
+	  <xsl:with-param name="service-path" select="$frontend-path"/>
+	  <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGIRtbServer')"/>
+	  <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGIRtbServer'"/>
+	</xsl:call-template>
 
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"
@@ -1115,8 +1113,8 @@
   <xsl:variable name="prestart-checker-args">--env=<xsl:value-of
     select="$config-root"/>/<xsl:value-of
     select="$colo-name"/>/%%env%%/environment.sh --ssh-identity=<xsl:value-of select="$ssh-key"
-    /><xsl:if test="$ui-backup = 'true'"> --serv-UserInfoManager=<xsl:value-of
-      select="$user-info-manager-arg"/></xsl:if><xsl:if
+    /> --serv-UserInfoManager=<xsl:value-of
+      select="$user-info-manager-arg"/><xsl:if
         test="string-length($campaign-manager-arg) > 0"> --serv-CampaignManager=<xsl:value-of
           select="$campaign-manager-arg"/></xsl:if
     > --serv-ChannelServer=<xsl:value-of select="$channel-server-arg"/></xsl:variable>
@@ -1889,9 +1887,7 @@
         select="$adcluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]"/>
       <xsl:variable name="fcgi-dep"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
           AdServer::Frontends::FCGIUserBindServer '"/>
-          <xsl:for-each
-          select="exsl:node-set($fcgi_rtb_server_indexes)/i">AdServer::Frontends::FCGIRtbServer<xsl:value-of select="concat(., ' ')"/>
-        </xsl:for-each>
+          <xsl:value-of select="'AdServer::Frontends::FCGIRtbServer '"/>
         <xsl:for-each
           select="exsl:node-set($fcgi_track_server_indexes)/i">AdServer::Frontends::FCGITrackServer<xsl:value-of select="concat(., ' ')"/>
         </xsl:for-each>
@@ -2041,9 +2037,7 @@
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
               AdServer::Frontends::FCGIUserBindServer '"/>
-              <xsl:for-each
-                select="exsl:node-set($fcgi_rtb_server_indexes)/i">AdServer::Frontends::FCGIRtbServer<xsl:value-of select="concat(., ' ')"/>
-              </xsl:for-each>
+              <xsl:value-of select="'AdServer::Frontends::FCGIRtbServer '"/>
               <xsl:for-each
                 select="exsl:node-set($fcgi_track_server_indexes)/i">AdServer::Frontends::FCGITrackServer<xsl:value-of select="concat(., ' ')"/>
               </xsl:for-each>

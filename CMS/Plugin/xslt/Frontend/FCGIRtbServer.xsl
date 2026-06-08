@@ -48,7 +48,7 @@
       <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>
     <xsl:attribute name="pid_file">
-      <xsl:value-of select="concat($workspace-root, '/run/FCGIRtbServer{FCGIRTBSERVER_INDEX}.pid')"/>
+      <xsl:value-of select="concat($workspace-root, '/run/FCGIRtbServer.pid')"/>
     </xsl:attribute>
 
     <xsl:variable name="socket_arr">
@@ -77,14 +77,14 @@
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$fcgi-rtbserver-logging"/>
-      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-rtbserver{FCGIRTBSERVER_INDEX}-log-path)"/>
+      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-rtbserver-log-path)"/>
       <xsl:with-param name="default-log-level" select="$default-fcgiserver-log-level"/>
     </xsl:call-template>
 
     <xsl:variable name="fcgi-rtbserver-mon-port">
       <xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbFCGI{FCGIRTBSERVER_INDEX}NetworkParams/@monitoring_port"/>
       <xsl:if test="count($fcgi-rtbserver-config/cfg:rtbFCGI{FCGIRTBSERVER_INDEX}NetworkParams/@monitoring_port) = 0">
-        <xsl:value-of select="$def-fcgi-rtbserver{FCGIRTBSERVER_INDEX}-mon-port"/>
+        <xsl:value-of select="$def-fcgi-rtbserver-mon-port"/>
       </xsl:if>
     </xsl:variable>
 
