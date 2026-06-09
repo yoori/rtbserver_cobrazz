@@ -46,58 +46,63 @@ namespace Commons
       rhs.cont_.swap(cont_);
     }
 
-    // return false if error occured on load
-    template <typename XSDType, typename LoggerType>
-    bool load(const XSDType& xsd_config, LoggerType logger, const char* aspect)
+    template <typename LoggerType>
+    bool load(const std::string& user_id_black_list_str, LoggerType logger, const char* aspect)
     {
       bool res = true;
-      if (xsd_config.UserIdBlackList().present())
+      if (!user_id_black_list_str.empty())
       {
-        std::string user_id_black_list_str =
-          xsd_config.UserIdBlackList().get();
-
-        if (!user_id_black_list_str.empty())
+        std::string buf;
+        std::istringstream oss(user_id_black_list_str);
+        while (std::getline(oss, buf))
         {
-          std::string buf;
-          std::istringstream oss(user_id_black_list_str);
-          while (std::getline(oss, buf))
+          String::StringManip::trim(buf, buf);
+          if (!buf.empty() && buf[0] != '#')
           {
-            String::StringManip::trim(buf, buf);
-            if (!buf.empty() && buf[0] != '#')
+            try
             {
-              try
-              {
-                AdServer::Commons::UserId uid(buf);
-                cont_.insert(uid);
-              }
-              catch(const eh::Exception& ex)
-              {
-                Stream::Error ostr;
-                ostr << FNS << " can not add UserId: \'" << buf
-                     << "\' into UserIdBlackList: eh::Exception: " << ex.what();
-                logger->log(ostr.str(),
-                  Logging::Logger::WARNING,
-                  aspect,
-                  "ADS-IMPL-132");
-                res = false;
-              }
-              catch(...)
-              {
-                Stream::Error ostr;
-                ostr << FNS << " can not add UserId: \'" << buf
-                     << "\' into UserIdBlackList: unknown exception";
-                logger->log(ostr.str(),
-                  Logging::Logger::WARNING,
-                  aspect,
-                  "ADS-IMPL-132");
-                res = false;
-              }
-              buf.clear();
+              AdServer::Commons::UserId uid(buf);
+              cont_.insert(uid);
             }
+            catch(const eh::Exception& ex)
+            {
+              Stream::Error ostr;
+              ostr << FNS << " can not add UserId: \'" << buf
+                   << "\' into UserIdBlackList: eh::Exception: " << ex.what();
+              logger->log(ostr.str(),
+                Logging::Logger::WARNING,
+                aspect,
+                "ADS-IMPL-132");
+              res = false;
+            }
+            catch(...)
+            {
+              Stream::Error ostr;
+              ostr << FNS << " can not add UserId: \'" << buf
+                   << "\' into UserIdBlackList: unknown exception";
+              logger->log(ostr.str(),
+                Logging::Logger::WARNING,
+                aspect,
+                "ADS-IMPL-132");
+              res = false;
+            }
+            buf.clear();
           }
         }
       }
       return res;
+    }
+
+    // return false if error occured on load
+    template <typename XSDType, typename LoggerType>
+    bool load(const XSDType& xsd_config, LoggerType logger, const char* aspect)
+    {
+      if (xsd_config.UserIdBlackList().present())
+      {
+        return load(std::string(xsd_config.UserIdBlackList().get()), logger, aspect);
+      }
+
+      return true;
     }
 
   private:

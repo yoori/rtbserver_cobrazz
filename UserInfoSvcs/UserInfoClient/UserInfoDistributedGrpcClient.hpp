@@ -40,6 +40,8 @@ namespace AdServer::UserInfoSvcs
     ~UserInfoDistributedGrpcClient() noexcept override;
 
     AdServer::Grpc::Stats stats() const noexcept override;
+    AdServer::Grpc::Client::EndpointStats endpoint_stats()
+      const noexcept override;
 
     std::string endpoint_for_user(const std::string& user_id) noexcept;
 

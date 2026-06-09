@@ -4,6 +4,30 @@
 
 namespace AdServer::Bidding
 {
+  namespace
+  {
+    std::string
+    sanitize_endpoint_key_(const std::string& endpoint)
+    {
+      std::string result;
+      result.reserve(endpoint.size());
+      for (const char ch : endpoint)
+      {
+        if ((ch >= 'a' && ch <= 'z') ||
+          (ch >= 'A' && ch <= 'Z') ||
+          (ch >= '0' && ch <= '9'))
+        {
+          result += ch;
+        }
+        else
+        {
+          result += '_';
+        }
+      }
+      return result.empty() ? std::string("unknown") : result;
+    }
+  }
+
   GrpcClientMetricsProvider::GrpcClientMetricsProvider(
     std::vector<ClientSource> clients)
     : clients_(std::move(clients))
@@ -18,6 +42,10 @@ namespace AdServer::Bidding
       if(auto client = source.client.lock())
       {
         add_client_stats_(result, source.prefix, client->stats());
+        add_client_endpoint_stats_(
+          result,
+          source.prefix,
+          client->endpoint_stats());
       }
     }
     return result;
@@ -178,6 +206,21 @@ namespace AdServer::Bidding
       result.emplace_back(
         prefix + "_last_error_source",
         stats.last_error->source);
+    }
+  }
+
+  void
+  GrpcClientMetricsProvider::add_client_endpoint_stats_(
+    MetricArray& result,
+    const std::string& prefix,
+    const AdServer::Grpc::Client::EndpointStats& endpoint_stats)
+  {
+    for (const auto& [endpoint, stats] : endpoint_stats)
+    {
+      const auto endpoint_prefix =
+        prefix + "_endpoints_" + sanitize_endpoint_key_(endpoint);
+      result.emplace_back(endpoint_prefix + "_endpoint", endpoint);
+      add_client_stats_(result, endpoint_prefix, stats);
     }
   }
 }

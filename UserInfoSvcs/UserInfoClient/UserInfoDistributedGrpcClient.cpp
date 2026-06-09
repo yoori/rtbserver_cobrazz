@@ -99,6 +99,12 @@ namespace AdServer::UserInfoSvcs
     return pool_->stats();
   }
 
+  AdServer::Grpc::Client::EndpointStats
+  UserInfoDistributedGrpcClient::endpoint_stats() const noexcept
+  {
+    return pool_->endpoint_stats();
+  }
+
   std::string
   UserInfoDistributedGrpcClient::endpoint_for_user(
     const std::string& user_id) noexcept

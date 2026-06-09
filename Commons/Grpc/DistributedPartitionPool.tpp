@@ -214,6 +214,33 @@ namespace AdServer::Grpc
   }
 
   template<typename ClientType, typename ControllerClientType>
+  AdServer::Grpc::Client::EndpointStats
+  DistributedPartitionPool<ClientType, ControllerClientType>::endpoint_stats()
+    const noexcept
+  {
+    std::vector<RefHolderPtr> ref_holders;
+    {
+      std::lock_guard<std::mutex> lock(ref_holders_lock_);
+      ref_holders.reserve(ref_holders_.size());
+      for (const auto& [_, weak_ref_holder] : ref_holders_)
+      {
+        if (auto ref_holder = weak_ref_holder.lock())
+        {
+          ref_holders.emplace_back(std::move(ref_holder));
+        }
+      }
+    }
+
+    AdServer::Grpc::Client::EndpointStats result;
+    result.reserve(ref_holders.size());
+    for (const auto& ref_holder : ref_holders)
+    {
+      result.emplace_back(ref_holder->endpoint, ref_holder->stats());
+    }
+    return result;
+  }
+
+  template<typename ClientType, typename ControllerClientType>
   std::optional<typename DistributedPartitionPool<ClientType, ControllerClientType>::Ref>
   DistributedPartitionPool<ClientType, ControllerClientType>::get_ref(const std::string& key) noexcept
   {

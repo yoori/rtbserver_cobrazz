@@ -44,6 +44,8 @@ namespace AdServer::ChannelSvcs
     ~ChannelDistributedGrpcClient() noexcept override = default;
 
     AdServer::Grpc::Stats stats() const noexcept override;
+    AdServer::Grpc::Client::EndpointStats endpoint_stats()
+      const noexcept override;
 
     void match(
       const adserver::channel_svcs::channel_server::MatchRequest& request,

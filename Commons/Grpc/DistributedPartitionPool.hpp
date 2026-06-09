@@ -116,6 +116,8 @@ namespace AdServer::Grpc
     ~DistributedPartitionPool() noexcept override;
 
     AdServer::Grpc::Stats stats() const noexcept;
+    AdServer::Grpc::Client::EndpointStats endpoint_stats()
+      const noexcept override;
 
     std::optional<Ref> get_ref(const std::string& key) noexcept;
     std::optional<Ref> get_any_ref() noexcept;
@@ -197,7 +199,7 @@ namespace AdServer::Grpc
     Logging::Logger_var logger_;
     std::vector<PartitionHolderPtr> partition_holders_;
     std::vector<ControllerPoolPtr> controller_pools_;
-    std::mutex ref_holders_lock_;
+    mutable std::mutex ref_holders_lock_;
     std::map<std::string, std::weak_ptr<RefHolder>> ref_holders_;
     std::mutex resolve_lock_;
     std::condition_variable resolve_cond_;

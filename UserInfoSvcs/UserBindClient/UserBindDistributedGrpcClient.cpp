@@ -171,6 +171,12 @@ namespace AdServer::UserInfoSvcs
       return pool_->stats();
     }
 
+    AdServer::Grpc::Client::EndpointStats endpoint_stats()
+      const noexcept override
+    {
+      return pool_->endpoint_stats();
+    }
+
   private:
     template<typename Response, typename Request, typename Callback, typename Call>
     void route_request_(
@@ -325,6 +331,12 @@ namespace AdServer::UserInfoSvcs
   UserBindDistributedGrpcClient::stats() const noexcept
   {
     return user_bind_mapper_->stats();
+  }
+
+  AdServer::Grpc::Client::EndpointStats
+  UserBindDistributedGrpcClient::endpoint_stats() const noexcept
+  {
+    return user_bind_mapper_->endpoint_stats();
   }
 
   void

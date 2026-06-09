@@ -36,6 +36,8 @@ namespace AdServer::UserInfoSvcs
     ~UserBindDistributedGrpcClient() noexcept override;
 
     AdServer::Grpc::Stats stats() const noexcept override;
+    AdServer::Grpc::Client::EndpointStats endpoint_stats()
+      const noexcept override;
 
     void get_bind_request(
       const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,

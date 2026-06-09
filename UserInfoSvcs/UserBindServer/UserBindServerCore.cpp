@@ -85,10 +85,10 @@ namespace AdServer::UserInfoSvcs
   }
 
   UserBindServerCore::UserBindServerCore(
-    const UserBindServerConfig& user_bind_server_config,
+    const Config& config,
     Logging::Logger* logger)
     : logger_(ReferenceCounting::add_ref(logger)),
-      user_bind_server_config_(user_bind_server_config),
+      config_(config),
       scheduler_(new Generics::Planner(
         Generics::ActiveObjectCallback_var(
           new Logging::ActiveObjectCallbackImpl(logger_, "", "UserBindServerCore")))),
@@ -98,7 +98,7 @@ namespace AdServer::UserInfoSvcs
         2)),
       user_bind_container_(new UserBindProcessorHolder()),
       bind_request_container_(new BindRequestProcessorHolder()),
-      chunks_number_(user_bind_server_config.Storage().common_chunks_number())
+      chunks_number_(config.storage.common_chunks_number)
   {
     add_child_object(task_runner_);
     add_child_object(scheduler_);
@@ -107,10 +107,10 @@ namespace AdServer::UserInfoSvcs
 
     AdServer::ProfilingCommons::ProfileMapFactory::fetch_chunk_folders(
       chunks_,
-      user_bind_server_config.Storage().chunks_root().c_str(),
+      config.storage.chunks_root.c_str(),
       "Chunk");
 
-    user_id_black_list_.load(user_bind_server_config, logger_, "UserBindServer");
+    user_id_black_list_.load(config.user_id_black_list, logger_, "UserBindServer");
 
     task_runner_->enqueue_task(Generics::Task_var(new LoadUserBindTask(task_runner_, this)));
     task_runner_->enqueue_task(Generics::Task_var(new LoadBindRequestTask(task_runner_, this)));
@@ -404,31 +404,32 @@ namespace AdServer::UserInfoSvcs
     {
       UserBindProcessor_var user_bind_processor = new UserBindContainer(
         logger_,
-        user_bind_server_config_.Storage().common_chunks_number(),
+        config_.storage.common_chunks_number,
         chunks_,
-        user_bind_server_config_.Storage().prefix().c_str(),
-        user_bind_server_config_.Storage().bound_prefix().c_str(),
-        Generics::Time(user_bind_server_config_.Storage().expire_time() / 4),
-        Generics::Time(user_bind_server_config_.Storage().bound_expire_time() / 4),
-        Generics::Time(user_bind_server_config_.min_age()),
-        user_bind_server_config_.bind_on_min_age(),
-        user_bind_server_config_.max_bad_event(),
-        user_bind_server_config_.Storage().portions(),
-        (user_bind_server_config_.Storage().user_bind_keep_mode() == "keep slave"),
-        user_bind_server_config_.partition_index(),
-        user_bind_server_config_.partitions_number());
+        config_.storage.prefix.c_str(),
+        config_.storage.bound_prefix.c_str(),
+        config_.storage.expire_time / 4,
+        config_.storage.bound_expire_time / 4,
+        config_.min_age,
+        config_.bind_on_min_age,
+        config_.max_bad_event,
+        config_.storage.portions,
+        config_.storage.load_slave,
+        config_.partition_index,
+        config_.partitions_number);
 
       UserBindProcessor_var result_user_bind_processor;
 
-      if(user_bind_server_config_.OperationBackup().present())
+      if(config_.operation_backup.has_value())
       {
+        const auto& operation_backup = *config_.operation_backup;
         UserBindOperationSaver_var user_bind_operation_saver =
           new UserBindOperationSaver(
             logger_,
-            user_bind_server_config_.OperationBackup()->dir().c_str(),
-            user_bind_server_config_.OperationBackup()->file_prefix().c_str(),
-            user_bind_server_config_.Storage().common_chunks_number(),
-            Generics::Time(user_bind_server_config_.OperationBackup()->rotate_period()),
+            operation_backup.dir.c_str(),
+            operation_backup.file_prefix.c_str(),
+            config_.storage.common_chunks_number,
+            operation_backup.rotate_period,
             user_bind_processor);
 
         add_child_object(user_bind_operation_saver);
@@ -439,8 +440,9 @@ namespace AdServer::UserInfoSvcs
         result_user_bind_processor = user_bind_processor;
       }
 
-      if(user_bind_server_config_.OperationLoad().present())
+      if(config_.operation_load.has_value())
       {
+        const auto& operation_load = *config_.operation_load;
         UserBindOperationLoader::ChunkIdSet chunk_ids;
         for(UserBindContainer::ChunkPathMap::const_iterator chunk_it = chunks_.begin();
             chunk_it != chunks_.end(); ++chunk_it)
@@ -456,11 +458,11 @@ namespace AdServer::UserInfoSvcs
                 "",
                 "UserBindOperationLoader")),
             user_bind_processor,
-            user_bind_server_config_.OperationLoad()->dir().c_str(),
-            user_bind_server_config_.OperationLoad()->unprocessed_dir().c_str(),
-            user_bind_server_config_.OperationLoad()->file_prefix().c_str(),
-            Generics::Time(user_bind_server_config_.OperationLoad()->check_period()),
-            user_bind_server_config_.OperationLoad()->threads(),
+            operation_load.dir.c_str(),
+            operation_load.unprocessed_dir.c_str(),
+            operation_load.file_prefix.c_str(),
+            operation_load.check_period,
+            operation_load.threads,
             chunk_ids);
 
         add_child_object(user_bind_operation_loader);
@@ -491,14 +493,14 @@ namespace AdServer::UserInfoSvcs
       return;
     }
 
-    if(user_bind_server_config_.Storage().dump_period().present() &&
-      *user_bind_server_config_.Storage().dump_period() > 0)
+    if(config_.storage.dump_period.has_value() &&
+      *config_.storage.dump_period > Generics::Time::ZERO)
     {
       try
       {
         scheduler_->schedule(
           Generics::Goal_var(new DumpUserBindTask(task_runner_, this)),
-          Generics::Time::get_time_of_day() + *user_bind_server_config_.Storage().dump_period());
+          Generics::Time::get_time_of_day() + *config_.storage.dump_period);
       }
       catch(const eh::Exception& ex)
       {
@@ -518,11 +520,11 @@ namespace AdServer::UserInfoSvcs
     {
       BindRequestProcessor_var bind_request_processor = new BindRequestContainer(
         logger_,
-        user_bind_server_config_.BindRequestStorage().common_chunks_number(),
+        config_.bind_request_storage.common_chunks_number,
         chunks_,
-        user_bind_server_config_.BindRequestStorage().prefix().c_str(),
-        Generics::Time(user_bind_server_config_.BindRequestStorage().expire_time() / 4),
-        user_bind_server_config_.BindRequestStorage().portions());
+        config_.bind_request_storage.prefix.c_str(),
+        config_.bind_request_storage.expire_time / 4,
+        config_.bind_request_storage.portions);
       *bind_request_container_ = bind_request_processor;
       reschedule = false;
     }
@@ -562,8 +564,8 @@ namespace AdServer::UserInfoSvcs
       {
         Generics::Time now = Generics::Time::get_time_of_day();
         user_bind_accessor->clear_expired(
-          now - Generics::Time(user_bind_server_config_.Storage().expire_time()),
-          now - Generics::Time(user_bind_server_config_.Storage().bound_expire_time()));
+          now - config_.storage.expire_time,
+          now - config_.storage.bound_expire_time);
       }
     }
     catch(const eh::Exception& ex)
@@ -594,7 +596,7 @@ namespace AdServer::UserInfoSvcs
       {
         Generics::Time now = Generics::Time::get_time_of_day();
         bind_request_accessor->clear_expired(
-          now - Generics::Time(user_bind_server_config_.BindRequestStorage().expire_time()));
+          now - config_.bind_request_storage.expire_time);
       }
     }
     catch(const eh::Exception& ex)
@@ -626,12 +628,12 @@ namespace AdServer::UserInfoSvcs
         "UserBindServer") << FUN << ": Can't dump user binds: " << ex.what();
     }
 
-    if(user_bind_server_config_.Storage().dump_period().present() &&
-      *user_bind_server_config_.Storage().dump_period() > 0)
+    if(config_.storage.dump_period.has_value() &&
+      *config_.storage.dump_period > Generics::Time::ZERO)
     {
       scheduler_->schedule(
         Generics::Goal_var(new DumpUserBindTask(task_runner_, this)),
-        Generics::Time::get_time_of_day() + *user_bind_server_config_.Storage().dump_period());
+        Generics::Time::get_time_of_day() + *config_.storage.dump_period);
     }
   }
 }

@@ -26,11 +26,11 @@ public:
   void main(int& argc, char** argv) noexcept;
 
 private:
-  const AdServer::UserInfoSvcs::UserBindServerCore::UserBindServerConfig&
+  const xsd::AdServer::Configuration::UserBindServerConfigType&
   config() const noexcept;
 
   typedef std::unique_ptr<
-    AdServer::UserInfoSvcs::UserBindServerCore::UserBindServerConfig>
+    xsd::AdServer::Configuration::UserBindServerConfigType>
     ConfigPtr;
 
   Logging::Logger* logger() const noexcept;
@@ -45,7 +45,7 @@ private:
 
 // Inlines
 inline
-const AdServer::UserInfoSvcs::UserBindServerCore::UserBindServerConfig&
+const xsd::AdServer::Configuration::UserBindServerConfigType&
 UserBindServerApp_::config() const noexcept
 {
   return *configuration_.get();

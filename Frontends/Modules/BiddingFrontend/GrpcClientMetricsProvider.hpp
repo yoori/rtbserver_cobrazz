@@ -58,6 +58,12 @@ namespace AdServer::Bidding
       const std::string& prefix,
       const AdServer::Grpc::Stats& stats);
 
+    static void
+    add_client_endpoint_stats_(
+      MetricArray& result,
+      const std::string& prefix,
+      const AdServer::Grpc::Client::EndpointStats& endpoint_stats);
+
   private:
     std::vector<ClientSource> clients_;
   };

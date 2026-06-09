@@ -592,13 +592,49 @@ namespace AdServer::ChannelSvcs
     std::set<const ClientHolder*> seen_clients;
     for (const auto& client_holder : client_holders)
     {
-      if (!client_holder || !seen_clients.insert(client_holder.get()).second)
+      if (!seen_clients.insert(client_holder.get()).second)
       {
         continue;
       }
 
       merge_stats_(
         result,
+        static_cast<ChannelServerGrpcAsyncClient*>(
+          client_holder->client.get())->stats());
+    }
+    return result;
+  }
+
+  AdServer::Grpc::Client::EndpointStats
+  ChannelDistributedGrpcClient::endpoint_stats() const noexcept
+  {
+    std::vector<ClientHolderPtr> client_holders;
+    {
+      std::shared_lock<std::shared_mutex> lock(pool_lock_);
+      client_holders.reserve(
+        current_client_holders_.size() + shutdown_client_holders_.size());
+      client_holders.insert(
+        client_holders.end(),
+        current_client_holders_.begin(),
+        current_client_holders_.end());
+      client_holders.insert(
+        client_holders.end(),
+        shutdown_client_holders_.begin(),
+        shutdown_client_holders_.end());
+    }
+
+    AdServer::Grpc::Client::EndpointStats result;
+    result.reserve(client_holders.size());
+    std::set<const ClientHolder*> seen_clients;
+    for (const auto& client_holder : client_holders)
+    {
+      if (!seen_clients.insert(client_holder.get()).second)
+      {
+        continue;
+      }
+
+      result.emplace_back(
+        client_holder->endpoint,
         static_cast<ChannelServerGrpcAsyncClient*>(
           client_holder->client.get())->stats());
     }

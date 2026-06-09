@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <optional>
 #include <string>
 #include <vector>
 #include <utility>
@@ -16,7 +17,6 @@
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Logger/Logger.hpp>
-#include <xsd/UserInfoSvcs/UserBindServerConfig.hpp>
 
 #include "UserBindProcessor.hpp"
 #include "BindRequestProcessor.hpp"
@@ -30,8 +30,56 @@ namespace AdServer::UserInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    typedef xsd::AdServer::Configuration::UserBindServerConfigType
-      UserBindServerConfig;
+    struct StorageConfig
+    {
+      std::string chunks_root;
+      std::string prefix;
+      std::string bound_prefix;
+      unsigned long common_chunks_number = 0;
+      Generics::Time expire_time;
+      Generics::Time bound_expire_time;
+      std::optional<Generics::Time> dump_period;
+      unsigned long portions = 0;
+      bool load_slave = false;
+    };
+
+    struct BindRequestStorageConfig
+    {
+      std::string prefix;
+      unsigned long common_chunks_number = 0;
+      Generics::Time expire_time;
+      unsigned long portions = 0;
+    };
+
+    struct OperationBackupConfig
+    {
+      std::string dir;
+      std::string file_prefix;
+      Generics::Time rotate_period;
+    };
+
+    struct OperationLoadConfig
+    {
+      std::string dir;
+      std::string unprocessed_dir;
+      std::string file_prefix;
+      Generics::Time check_period;
+      unsigned long threads = 0;
+    };
+
+    struct Config
+    {
+      StorageConfig storage;
+      BindRequestStorageConfig bind_request_storage;
+      std::optional<OperationBackupConfig> operation_backup;
+      std::optional<OperationLoadConfig> operation_load;
+      std::string user_id_black_list;
+      Generics::Time min_age;
+      bool bind_on_min_age = false;
+      unsigned long max_bad_event = 0;
+      unsigned long partition_index = 0;
+      unsigned long partitions_number = 1;
+    };
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -100,7 +148,7 @@ namespace AdServer::UserInfoSvcs
 
   public:
     UserBindServerCore(
-      const UserBindServerConfig& user_bind_server_config,
+      const Config& config,
       Logging::Logger* logger);
 
     virtual ~UserBindServerCore();
@@ -217,7 +265,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const Logging::Logger_var logger_;
-    const UserBindServerConfig user_bind_server_config_;
+    const Config config_;
     Generics::FixedPlanner_var scheduler_;
     Generics::FixedTaskRunner_var task_runner_;
     const UserBindProcessorHolder_var user_bind_container_;

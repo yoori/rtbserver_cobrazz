@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <grpcpp/grpcpp.h>
@@ -120,9 +121,12 @@ namespace AdServer::Grpc
   class Client
   {
   public:
+    using EndpointStats = std::vector<std::pair<std::string, Stats>>;
+
     virtual ~Client() = default;
 
     virtual Stats stats() const noexcept;
+    virtual EndpointStats endpoint_stats() const noexcept;
 
     void add_completed_stats(bool error) noexcept;
 
@@ -298,6 +302,13 @@ namespace AdServer::Grpc
   Client::stats() const noexcept
   {
     return stats_owner_->own_stats_();
+  }
+
+  inline
+  Client::EndpointStats
+  Client::endpoint_stats() const noexcept
+  {
+    return {};
   }
 
   inline void

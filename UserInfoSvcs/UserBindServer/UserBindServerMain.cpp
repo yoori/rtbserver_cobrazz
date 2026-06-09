@@ -139,6 +139,77 @@ namespace
       throw UserBindServerApp_::Exception(ostr);
     }
   }
+
+  AdServer::UserInfoSvcs::UserBindServerCore::Config
+  make_core_config_(
+    const xsd::AdServer::Configuration::UserBindServerConfigType& config)
+  {
+    AdServer::UserInfoSvcs::UserBindServerCore::Config core_config;
+
+    core_config.storage.chunks_root = config.Storage().chunks_root();
+    core_config.storage.prefix = config.Storage().prefix();
+    core_config.storage.bound_prefix = config.Storage().bound_prefix();
+    core_config.storage.common_chunks_number =
+      config.Storage().common_chunks_number();
+    core_config.storage.expire_time =
+      Generics::Time(config.Storage().expire_time());
+    core_config.storage.bound_expire_time =
+      Generics::Time(config.Storage().bound_expire_time());
+    if(config.Storage().dump_period().present())
+    {
+      core_config.storage.dump_period =
+        Generics::Time(*config.Storage().dump_period());
+    }
+    core_config.storage.portions = config.Storage().portions();
+    core_config.storage.load_slave =
+      config.Storage().user_bind_keep_mode() == "keep slave";
+
+    core_config.bind_request_storage.prefix =
+      config.BindRequestStorage().prefix();
+    core_config.bind_request_storage.common_chunks_number =
+      config.BindRequestStorage().common_chunks_number();
+    core_config.bind_request_storage.expire_time =
+      Generics::Time(config.BindRequestStorage().expire_time());
+    core_config.bind_request_storage.portions =
+      config.BindRequestStorage().portions();
+
+    if(config.OperationBackup().present())
+    {
+      AdServer::UserInfoSvcs::UserBindServerCore::OperationBackupConfig
+        operation_backup;
+      operation_backup.dir = config.OperationBackup()->dir();
+      operation_backup.file_prefix = config.OperationBackup()->file_prefix();
+      operation_backup.rotate_period =
+        Generics::Time(config.OperationBackup()->rotate_period());
+      core_config.operation_backup = std::move(operation_backup);
+    }
+
+    if(config.OperationLoad().present())
+    {
+      AdServer::UserInfoSvcs::UserBindServerCore::OperationLoadConfig
+        operation_load;
+      operation_load.dir = config.OperationLoad()->dir();
+      operation_load.unprocessed_dir = config.OperationLoad()->unprocessed_dir();
+      operation_load.file_prefix = config.OperationLoad()->file_prefix();
+      operation_load.check_period =
+        Generics::Time(config.OperationLoad()->check_period());
+      operation_load.threads = config.OperationLoad()->threads();
+      core_config.operation_load = std::move(operation_load);
+    }
+
+    if(config.UserIdBlackList().present())
+    {
+      core_config.user_id_black_list = config.UserIdBlackList().get();
+    }
+
+    core_config.min_age = Generics::Time(config.min_age());
+    core_config.bind_on_min_age = config.bind_on_min_age();
+    core_config.max_bad_event = config.max_bad_event();
+    core_config.partition_index = config.partition_index();
+    core_config.partitions_number = config.partitions_number();
+
+    return core_config;
+  }
 }
 
 void
@@ -218,7 +289,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
 
     AdServer::UserInfoSvcs::UserBindServerCore_var user_bind_server_core =
       new AdServer::UserInfoSvcs::UserBindServerCore(
-        config(),
+        make_core_config_(config()),
         logger());
     add_child_object(user_bind_server_core);
 
