@@ -25,6 +25,8 @@ namespace
     std::filesystem::path data_root;
     std::uint64_t count = 0;
     std::size_t threads = 1;
+    std::size_t batching_threads = 1;
+    bool disable_wal = false;
   };
 
   struct CpuTimes
@@ -40,7 +42,9 @@ namespace
       << "Usage: RocksDBBatchingProfileMapPerfTest --data-root <path> "
       << "--count <N> [OPTIONS]\n"
       << "Options:\n"
-      << "  --threads <N>  load and batching worker threads count (default: 1)\n";
+      << "  --threads <N>           load worker threads count (default: 1)\n"
+      << "  --batching-threads <N>  RocksDB batching worker threads count (default: 1)\n"
+      << "  --disable-wal  disable RocksDB WAL for writes\n";
   }
 
   Options
@@ -51,12 +55,16 @@ namespace
     StringOption opt_data_root;
     Option<unsigned long> opt_count(0);
     Option<unsigned long> opt_threads(1);
+    Option<unsigned long> opt_batching_threads(1);
+    CheckOption opt_disable_wal;
     CheckOption opt_help;
 
     Args args(-1);
     args.add(equal_name("data-root"), opt_data_root);
     args.add(equal_name("count"), opt_count);
     args.add(equal_name("threads"), opt_threads);
+    args.add(equal_name("batching-threads"), opt_batching_threads);
+    args.add(equal_name("disable-wal"), opt_disable_wal);
     args.add(equal_name("help") || short_name("h"), opt_help);
 
     args.parse(argc - 1, argv + 1);
@@ -71,6 +79,8 @@ namespace
     options.data_root = *opt_data_root;
     options.count = *opt_count;
     options.threads = *opt_threads;
+    options.batching_threads = *opt_batching_threads;
+    options.disable_wal = opt_disable_wal.enabled();
 
     if(options.data_root.empty())
     {
@@ -85,6 +95,11 @@ namespace
     if(options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
+    }
+
+    if(options.batching_threads == 0)
+    {
+      throw std::runtime_error("--batching-threads must be > 0");
     }
 
     return options;
@@ -165,7 +180,10 @@ main(int argc, char** argv)
     ProfileMap profile_map(
       data_root.string(),
       Generics::Time(604800),
-      options.threads);
+      options.batching_threads,
+      128,
+      Generics::Time::ZERO,
+      options.disable_wal);
     profile_map.activate_object();
 
     std::atomic<std::uint64_t> next{0};
@@ -247,6 +265,8 @@ main(int argc, char** argv)
     std::cout
       << "data_root=" << data_root.string() << '\n'
       << "threads=" << options.threads << '\n'
+      << "batching_threads=" << options.batching_threads << '\n'
+      << "disable_wal=" << options.disable_wal << '\n'
       << "operations=" << options.count << '\n'
       << "reads=" << reads.load(std::memory_order_relaxed) << '\n'
       << "writes=" << writes.load(std::memory_order_relaxed) << '\n'

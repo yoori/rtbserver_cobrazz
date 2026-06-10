@@ -27,6 +27,12 @@ namespace PlainTypes
   template<typename ElementType>
   struct Vector: public BaseVector<ElementType>
   {
+    Vector() = default;
+
+    Vector(const Vector&) = default;
+
+    Vector(Vector&&) = default;
+
     void unsafe_init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;
 

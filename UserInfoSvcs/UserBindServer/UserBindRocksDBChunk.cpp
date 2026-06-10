@@ -14,7 +14,7 @@ namespace AdServer::UserInfoSvcs
 {
   namespace
   {
-    constexpr unsigned long DEFAULT_WORKERS = 4;
+    constexpr unsigned long DEFAULT_WORKERS = 2;
     constexpr unsigned long DEFAULT_BATCH_SIZE = 128;
     constexpr unsigned long DEFAULT_LOCKS = 1000;
     constexpr std::uint32_t PROFILE_VERSION = 1;

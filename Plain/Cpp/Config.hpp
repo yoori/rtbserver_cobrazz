@@ -10,6 +10,7 @@ namespace Cpp
 
   const char INCLUDE_LIST[] =
     "#include <string>\n"
+    "#include <utility>\n"
     "#include <Plain/Base.hpp>\n"
     "#include <Plain/String.hpp>\n"
     "#include <Plain/ConstVector.hpp>\n"

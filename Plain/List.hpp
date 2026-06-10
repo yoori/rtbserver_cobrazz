@@ -47,6 +47,12 @@ namespace PlainTypes
   template<typename ElementType>
   struct List: public BaseList<ElementType>
   {
+    List() = default;
+
+    List(const List&) = default;
+
+    List(List&&) = default;
+
     void unsafe_init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;
 
@@ -70,6 +76,12 @@ namespace PlainTypes
     const unsigned long STEP>
   struct SimpleList: public BaseList<ElementType>
   {
+    SimpleList() = default;
+
+    SimpleList(const SimpleList&) = default;
+
+    SimpleList(SimpleList&&) = default;
+
     void init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;
 

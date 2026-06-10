@@ -34,6 +34,7 @@ namespace AdServer::ProfilingCommons
     options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
     options.create_if_missing = true;
+    options.compression = rocksdb::kNoCompression;
     options.target_file_size_multiplier = 2;
 
     rocksdb::DBWithTTL* db = nullptr;
@@ -526,8 +527,7 @@ namespace AdServer::ProfilingCommons
     Operations& batch) noexcept
   {
     auto it = source.begin();
-    while(it != source.end() &&
-      batch.size() < batch_size_)
+    while(it != source.end() && batch.size() < batch_size_)
     {
       const auto key_sequence_it = key_sequences_.find(it->key);
       const bool is_next_for_key =

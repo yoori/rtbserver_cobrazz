@@ -27,6 +27,7 @@ namespace ProfilingCommons
     options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
     options.create_if_missing = true;
+    options.compression = rocksdb::kNoCompression;
     // rocksdb : Each next level's file size will be
     // target_file_size_multiplier bigger than previous one
     // we set it for decrease number of opened files

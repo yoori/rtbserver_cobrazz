@@ -91,6 +91,28 @@ namespace Cpp
     std::string offset_;
   };
 
+  struct FieldBuffersCopyImplOps: public OnlyFixedSumOps
+  {
+    FieldBuffersCopyImplOps(
+      std::ostream& out, const char* offset)
+      : out_(out), offset_(offset)
+    {}
+
+    void process_fixed_sum(
+      unsigned long fixed_buf_i,
+      unsigned long fixed_buf_size,
+      const char*) const
+    {
+      out_ << offset_ << "::memcpy(" << FIXED_BUFFER_PREFIX <<
+        fixed_buf_i << "_, right." << FIXED_BUFFER_PREFIX <<
+        fixed_buf_i << "_, " << fixed_buf_size << ");" << std::endl;
+    }
+
+  private:
+    std::ostream& out_;
+    std::string offset_;
+  };
+
   struct FieldBuffersMaxOps: public OnlyFixedSumOps
   {
     FieldBuffersMaxOps()
@@ -282,6 +304,40 @@ namespace Cpp
     const std::string offset_;
   };
 
+  struct FieldMoveCtorInitOps: public OnlyFixedSumOps
+  {
+    FieldMoveCtorInitOps(std::ostream& out, const char* offset)
+      : out_(out),
+        offset_(offset)
+    {}
+
+    void process_fixed_sum(
+      unsigned long,
+      unsigned long,
+      const char*) const
+    {}
+
+    template<typename FieldType>
+    void process_non_fixed_or_complex(const FieldType& field) const
+    {
+      if(first_)
+      {
+        out_ << std::endl << offset_ << "  : ";
+      }
+      else
+      {
+        out_ << "," << std::endl << offset_ << "    ";
+      }
+
+      out_ << field->name() << "_(std::move(right." << field->name() << "_))";
+      first_ = false;
+    }
+
+    std::ostream& out_;
+    std::string offset_;
+    mutable bool first_ = true;
+  };
+
   /* WriterGenerator */
   WriterGenerator::WriterGenerator(
     std::ostream& out_hpp,
@@ -458,6 +514,10 @@ namespace Cpp
   {
     out_ << offset_ << name << "(bool init_defaults = false);" << std::endl <<
         std::endl <<
+      offset_ << name << "(const " << name << "& right) = default;" << std::endl <<
+        std::endl <<
+      offset_ << name << "(" << name << "&& right);" << std::endl <<
+        std::endl <<
       offset_ << name << "(const void* buf, unsigned long buf_size);" << std::endl <<
         std::endl <<
       offset_ << name << "(const PlainTypes::ConstBuf& buf);" << std::endl <<
@@ -473,6 +533,8 @@ namespace Cpp
       offset_ << "void save(void* buf, unsigned long size) const;" << std::endl <<
         std::endl <<
       offset_ << "void swap(" << name << "& right);" << std::endl <<
+        std::endl <<
+      offset_ << name << "& operator=(const " << name << "& right) = default;" << std::endl <<
         std::endl <<
       offset_ << name << "& operator=(const PlainTypes::ConstBuf& buf);" << std::endl <<
         std::endl <<
@@ -512,6 +574,23 @@ namespace Cpp
       offset_ << "    init_default();" << std::endl <<
       offset_ << "  }" << std::endl <<
       offset_ << "}" << std::endl << std::endl;
+
+    /* move c-tor */
+    out_ << offset_ << "inline" << std::endl <<
+      offset_ << class_name << "::" << class_name <<
+        "(" << class_name << "&& " <<
+        (!fields->empty() ? "right" : "/*right*/") << ")";
+
+    Utils::fetch_fields_with_fixed_sum(
+      *fields, FieldMoveCtorInitOps(out_, offset_.c_str()));
+
+    out_ << std::endl <<
+      offset_ << "{" << std::endl;
+
+    Utils::fetch_fields_with_fixed_sum(
+      *fields, FieldBuffersCopyImplOps(out_, (offset_ + "  ").c_str()));
+
+    out_ << offset_ << "}" << std::endl << std::endl;
 
     /* c-tor(const void* buf, unsigned long buf_size) */
     out_ << offset_ << "inline" << std::endl <<

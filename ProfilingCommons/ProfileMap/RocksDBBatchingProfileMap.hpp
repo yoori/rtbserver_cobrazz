@@ -66,7 +66,7 @@ namespace AdServer::ProfilingCommons
     RocksDBBatchingProfileMapImpl(
       const String::SubString& path,
       const Generics::Time& expire_time,
-      unsigned long workers_count = 4,
+      unsigned long workers_count = 2,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false);
@@ -228,7 +228,7 @@ namespace AdServer::ProfilingCommons
     RocksDBBatchingProfileMap(
       const String::SubString& path,
       const Generics::Time& expire_time,
-      unsigned long workers_count = 4,
+      unsigned long workers_count = 2,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false);
