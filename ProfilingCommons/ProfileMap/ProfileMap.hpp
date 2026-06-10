@@ -90,6 +90,16 @@ namespace ProfilingCommons
   template<typename KeyType>
   struct AsyncProfileMap: public virtual ReferenceCounting::Interface
   {
+    /*
+     * Async operation ordering contract:
+     * - Reads are check_profile_async/get_profile_async operations.
+     * - Writes are save_profile_async/remove_profile_async operations.
+     * - If a read is submitted after a write for the same key is accepted by
+     *   the same AsyncProfileMap instance, the read must not observe storage
+     *   before that earlier write has completed.
+     * - Write/write ordering for the same key is the caller's responsibility
+     *   and should be provided by a transaction layer when required.
+     */
     using CheckCallback = std::function<void(bool, std::optional<std::string>)>;
     using GetCallback = std::function<void(
       const Generics::ConstSmartMemBuf_var&,

@@ -111,39 +111,7 @@
     </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:complexType name="TrackFCGI1NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
-      <xsd:annotation>
-        <xsd:documentation>
-         Port for CORBA interface.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
-      <xsd:annotation>
-        <xsd:documentation>
-         Port for get monitoring metrics.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
-      <xsd:annotation>
-        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
-      <xsd:annotation>
-        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
-      <xsd:annotation>
-        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-  </xsd:complexType>
-
-  <xsd:complexType name="TrackFCGI2NetworkParamsType">
+  <xsd:complexType name="TrackFCGINetworkParamsType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
@@ -234,14 +202,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="trackFCGI1NetworkParams" type="TrackFCGI1NetworkParamsType" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-           Network settings for running control.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-      <xsd:element name="trackFCGI2NetworkParams" type="TrackFCGI2NetworkParamsType" minOccurs="0" maxOccurs="1">
+      <xsd:element name="trackFCGINetworkParams" type="TrackFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
            Network settings for running control.

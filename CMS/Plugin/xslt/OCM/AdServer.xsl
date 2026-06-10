@@ -24,10 +24,6 @@
   <i>1</i>
 </xsl:variable>
 
-<xsl:variable name="fcgi_track_server_indexes">
-  <i>1</i><i>2</i>
-</xsl:variable>
-
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 
 <xsl:variable name="current-time" select="$CURRENT_TIME"/>
@@ -474,13 +470,11 @@
 
 	<xsl:variable name="frontend-path" select="./service[@descriptor = $http-frontend-descriptor]"/>
 
-	<xsl:for-each select="exsl:node-set($fcgi_track_server_indexes)/i">
-	  <xsl:call-template name="AddService">
-            <xsl:with-param name="service-path" select="$frontend-path"/>
-            <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGITrackServer', .)"/>
-            <xsl:with-param name="service-type" select="concat('AdServer::Frontends::FCGITrackServer', .)"/>
-	  </xsl:call-template>
-	</xsl:for-each>
+	<xsl:call-template name="AddService">
+	  <xsl:with-param name="service-path" select="$frontend-path"/>
+	  <xsl:with-param name="service-name" select="concat('tr', $pos, '-FCGITrackServer')"/>
+	  <xsl:with-param name="service-type" select="'AdServer::Frontends::FCGITrackServer'"/>
+	</xsl:call-template>
 
 	<xsl:call-template name="AddService">
 	  <xsl:with-param name="service-path" select="$frontend-path"/>
@@ -1895,9 +1889,7 @@
           AdServer::Frontends::FCGIUserBindServer '"/>
           <xsl:value-of select="'AdServer::Frontends::FCGIRtbServer '"/>
           <xsl:value-of select="'AdServer::Frontends::FCGIActionServer '"/>
-        <xsl:for-each
-          select="exsl:node-set($fcgi_track_server_indexes)/i">AdServer::Frontends::FCGITrackServer<xsl:value-of select="concat(., ' ')"/>
-        </xsl:for-each>
+          <xsl:value-of select="'AdServer::Frontends::FCGITrackServer '"/>
       </xsl:variable>
 
       <xsl:variable name="fe-services">
@@ -2046,9 +2038,7 @@
               AdServer::Frontends::FCGIUserBindServer '"/>
               <xsl:value-of select="'AdServer::Frontends::FCGIRtbServer '"/>
               <xsl:value-of select="'AdServer::Frontends::FCGIActionServer '"/>
-              <xsl:for-each
-                select="exsl:node-set($fcgi_track_server_indexes)/i">AdServer::Frontends::FCGITrackServer<xsl:value-of select="concat(., ' ')"/>
-              </xsl:for-each>
+              <xsl:value-of select="'AdServer::Frontends::FCGITrackServer '"/>
             </xsl:with-param>
             <xsl:with-param name="slaves"
               select="'AdServer::HttpFrontend AdServer::HttpFrontend2 AdServer::HttpFrontend3'"/>

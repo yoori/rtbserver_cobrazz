@@ -265,31 +265,27 @@ then
   let "EXIT_CODE|=$?"
 
   # FCGI Track server
-  for TRACK_INDEX in $(seq 1 2)
-  do
-    $EXEC/ServiceConf.sh \
-      --macro "{FCGITRACKSERVER_INDEX}" "$TRACK_INDEX" \
-      --services-xpath "$HTTP_FRONTEND_XPATH" \
-      --app-xml "$APP_XML" \
-      --xsl "$XSLT_ROOT/Frontend/FCGITrackServer.xsl" \
-      --out-file FCGITrackServer${TRACK_INDEX}Config.xml \
-      --out-dir-suffix "$OUT_DIR_SUFFIX" \
-      --out-dir "$OUT_DIR" \
-      --plugin-root "$PLUGIN_ROOT"
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$HTTP_FRONTEND_XPATH" \
+    --app-xml "$APP_XML" \
+    --xsl "$XSLT_ROOT/Frontend/FCGITrackServer.xsl" \
+    --out-file FCGITrackServerConfig.xml \
+    --out-dir-suffix "$OUT_DIR_SUFFIX" \
+    --out-dir "$OUT_DIR" \
+    --plugin-root "$PLUGIN_ROOT"
 
-    let "EXIT_CODE|=$?"
+  let "EXIT_CODE|=$?"
 
-    $EXEC/CurrentEnvGen.sh \
-      --service-name "fcgi_trackserver$TRACK_INDEX" \
-      --plugin-root "$PLUGIN_ROOT" \
-      --app-xml "$APP_XML" \
-      --relative-port-xpath "configuration/cfg:frontend/cfg:trackFCGI${TRACK_INDEX}NetworkParams/@port" \
-      --services-xpath "$HTTP_FRONTEND_XPATH" \
-      --out-dir "$OUT_DIR" \
-      --out-file "CurrentEnv/$DACS_FE_NAME"
+  $EXEC/CurrentEnvGen.sh \
+    --service-name "fcgi_trackserver" \
+    --plugin-root "$PLUGIN_ROOT" \
+    --app-xml "$APP_XML" \
+    --relative-port-xpath "configuration/cfg:frontend/cfg:trackFCGINetworkParams/@port" \
+    --services-xpath "$HTTP_FRONTEND_XPATH" \
+    --out-dir "$OUT_DIR" \
+    --out-file "CurrentEnv/$DACS_FE_NAME"
 
-    let "EXIT_CODE|=$?"
-  done
+  let "EXIT_CODE|=$?"
 
   # FCGI Action server
   $EXEC/ServiceConf.sh \

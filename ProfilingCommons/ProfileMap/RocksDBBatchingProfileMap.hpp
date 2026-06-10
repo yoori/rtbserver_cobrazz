@@ -2,12 +2,10 @@
 
 #include <atomic>
 #include <cstdint>
-#include <deque>
 #include <list>
 #include <memory>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <optional>
@@ -165,20 +163,31 @@ namespace AdServer::ProfilingCommons
     };
 
     using Operations = std::list<Operation>;
-    using KeySequences = std::unordered_map<std::string, std::deque<std::uint64_t>>;
+    struct BatchScratch;
 
     bool enqueue_operation_(Operation&& operation) const;
     void worker_loop_() noexcept;
-    bool pop_batch_(Operations& batch) noexcept;
-    void collect_batch_(Operations& batch) noexcept;
+    bool pop_batch_(
+      Operations& batch,
+      BatchScratch& scratch) noexcept;
+    void collect_batch_(
+      Operations& batch,
+      BatchScratch& scratch) noexcept;
     void collect_from_queue_(
       Operations& source,
-      Operations& batch) noexcept;
+      Operations& batch,
+      BatchScratch& scratch) noexcept;
     void complete_batch_(Operations& batch) noexcept;
-    void process_batch_(Operations& batch);
+    void process_batch_(
+      Operations& batch,
+      BatchScratch& scratch);
 
-    void process_read_batch_(Operations& batch);
-    void process_write_batch_(Operations& batch);
+    void process_read_batch_(
+      Operations& batch,
+      BatchScratch& scratch);
+    void process_write_batch_(
+      Operations& batch,
+      BatchScratch& scratch);
 
     void notify_failed_operations_(
       Operations& operations,
@@ -208,9 +217,9 @@ namespace AdServer::ProfilingCommons
     mutable Sync::Conditional queue_cond_;
     mutable Operations read_operations_;
     mutable Operations write_operations_;
-    mutable std::unordered_set<std::string> in_flight_keys_;
-    mutable KeySequences key_sequences_;
+    mutable std::unordered_set<std::string> in_flight_write_keys_;
     mutable std::uint64_t next_operation_sequence_ = 0;
+    mutable unsigned long processing_batches_ = 0;
 
     mutable Sync::PosixMutex error_lock_;
     std::string background_error_;

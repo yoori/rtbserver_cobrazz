@@ -364,7 +364,7 @@ namespace UserInfoSvcs
            now,
            *freq_cap_config))
       {
-        co_await fc_profile_trans->co_save_profile(
+        fc_profile_trans->save_profile_async(
           profile.transfer_membuf(),
           now);
       }
@@ -506,7 +506,7 @@ namespace UserInfoSvcs
         uc_campaign_ids,
         *freq_cap_config);
 
-      co_await fc_profile_trans->co_save_profile(
+      fc_profile_trans->save_profile_async(
         profile.transfer_membuf(),
         now);
       co_return true;
@@ -644,7 +644,7 @@ namespace UserInfoSvcs
 
       if(res)
       {
-        co_await fc_profile_trans->co_save_profile(
+        fc_profile_trans->save_profile_async(
           profile.transfer_membuf(),
           now);
       }
@@ -1815,21 +1815,21 @@ namespace UserInfoSvcs
 
       if (target_history_profile->membuf().size() != 0)
       {
-        co_await target_history_profile_trans->co_save_profile(
+        target_history_profile_trans->save_profile_async(
           Generics::transfer_membuf(target_history_profile),
           merge_time);
       }
 
       if (target_profile->membuf().size() != 0)
       {
-        co_await target_profile_trans->co_save_profile(
+        target_profile_trans->save_profile_async(
           Generics::transfer_membuf(target_profile),
           merge_time);
       }
 
       if(target_freq_cap_profile && merge_freq_cap_profile)
       {
-        co_await target_freq_cap_profile_trans->co_save_profile(
+        target_freq_cap_profile_trans->save_profile_async(
           target_freq_cap_profile,
           merge_time);
       }
@@ -1943,7 +1943,7 @@ namespace UserInfoSvcs
 
       if(cm.fraud_user(now))
       {
-        co_await base_profile_trans->co_save_profile(
+        base_profile_trans->save_profile_async(
           Generics::transfer_membuf(base_mem_buf),
           cm.last_request());
       }
@@ -2623,7 +2623,7 @@ namespace UserInfoSvcs
 
           if (!request_params.silent_match)
           {
-            co_await history_profile_trans->co_save_profile(
+            history_profile_trans->save_profile_async(
               Generics::transfer_membuf(hist_mem_buf),
               match_time);
           }
@@ -2706,7 +2706,7 @@ namespace UserInfoSvcs
           }
           else
           {
-            co_await add_profile_trans->co_save_profile(
+            add_profile_trans->save_profile_async(
               Generics::transfer_membuf(add_mem_buf),
               match_time);
           }
@@ -2715,7 +2715,7 @@ namespace UserInfoSvcs
         /* save profiles */
         if (base_mem_buf->membuf().size() != 0)
         {
-          co_await base_profile_trans->co_save_profile(
+          base_profile_trans->save_profile_async(
             Generics::transfer_membuf(base_mem_buf),
             match_time);
         }
@@ -3076,7 +3076,7 @@ namespace UserInfoSvcs
         co_await fc_profile_trans->co_get_profile();
       UserFreqCapProfile profile(fc_mem_buf);
       profile.consider_publishers_optin(publisher_account_ids, now);
-      co_await fc_profile_trans->co_save_profile(
+      fc_profile_trans->save_profile_async(
         profile.transfer_membuf(),
         now);
       co_return true;

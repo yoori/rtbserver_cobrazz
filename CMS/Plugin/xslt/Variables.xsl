@@ -150,8 +150,7 @@
 <xsl:variable name="user-info-controller-log-path" select="'/log/UserInfoController/UserInfoController'"/>
 <xsl:variable name="fcgi-adserver-log-path" select="'/log/FCGIAdServer/FCGIAdServer'"/>
 
-<xsl:variable name="fcgi-trackserver1-log-path" select="'/log/FCGITrackServer1/FCGITrackServer1'"/>
-<xsl:variable name="fcgi-trackserver2-log-path" select="'/log/FCGITrackServer2/FCGITrackServer2'"/>
+<xsl:variable name="fcgi-trackserver-log-path" select="'/log/FCGITrackServer/FCGITrackServer'"/>
 <xsl:variable name="fcgi-actionserver-log-path" select="'/log/FCGIActionServer/FCGIActionServer'"/>
 
 <xsl:variable name="fcgi-rtbserver-log-path" select="'/log/FCGIRtbServer/FCGIRtbServer'"/>
@@ -377,10 +376,8 @@
 <xsl:variable name="def-fcgi-userbindserver-mon-port" select="$def-range-start + 178"/>
 
 
-<xsl:variable name="def-fcgi-trackserver1-port" select="$def-range-start + 95"/>
-<xsl:variable name="def-fcgi-trackserver1-mon-port" select="$def-range-start + 195"/>
-<xsl:variable name="def-fcgi-trackserver2-port" select="$def-range-start + 99"/>
-<xsl:variable name="def-fcgi-trackserver2-mon-port" select="$def-range-start + 199"/>
+<xsl:variable name="def-fcgi-trackserver-port" select="$def-range-start + 95"/>
+<xsl:variable name="def-fcgi-trackserver-mon-port" select="$def-range-start + 195"/>
 <xsl:variable name="def-fcgi-actionserver-mon-port" select="$def-range-start + 198"/>
 
 <xsl:variable name="def-storage-rw-buffer-size" select="10485760"/>

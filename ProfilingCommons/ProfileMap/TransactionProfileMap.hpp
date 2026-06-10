@@ -56,6 +56,12 @@ namespace ProfilingCommons
       const Generics::Time& now = Generics::Time::get_time_of_day())
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
+    void
+    save_profile_async(
+      const Generics::ConstSmartMemBuf* mem_buf,
+      const Generics::Time& now = Generics::Time::get_time_of_day())
+      /*throw(typename ProfileMap<KeyType>::Exception)*/;
+
     /**
      * Simply delegate to ExpireProfileMap::remove_profile
      */
@@ -319,6 +325,23 @@ namespace ProfilingCommons
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
     profile_map_.save_profile_i_(key_, mem_buf, now, op_priority_);
+  }
+
+  template <typename KeyType>
+  void
+  ProfileTransactionImpl<KeyType>::save_profile_async(
+    const Generics::ConstSmartMemBuf* mem_buf,
+    const Generics::Time& now)
+    /*throw(typename ProfileMap<KeyType>::Exception)*/
+  {
+    if(auto* async_map = profile_map_.async_delegate_map_())
+    {
+      async_map->save_profile_async(key_, mem_buf, now);
+    }
+    else
+    {
+      profile_map_.save_profile_i_(key_, mem_buf, now, op_priority_);
+    }
   }
 
   template <typename KeyType>

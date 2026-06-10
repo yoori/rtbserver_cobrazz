@@ -43,7 +43,7 @@
       <xsl:if test="count($env-config/@workspace_root[1]) = 0"><xsl:value-of select="$def-workspace-root"/></xsl:if>
     </xsl:variable>
     <xsl:attribute name="pid_file">
-      <xsl:value-of select="concat($workspace-root, '/run/FCGITrackServer{FCGITRACKSERVER_INDEX}.pid')"/>
+      <xsl:value-of select="concat($workspace-root, '/run/FCGITrackServer.pid')"/>
     </xsl:attribute>
 
     <xsl:variable name="socket_arr">
@@ -52,15 +52,15 @@
     <xsl:for-each select="exsl:node-set($socket_arr)/i">
       <cfg:BindSocket>
         <xsl:attribute name="backlog">
-          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@backlog"/>
-          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@backlog) = 0">1000</xsl:if>
+          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@backlog"/>
+          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@backlog) = 0">1000</xsl:if>
         </xsl:attribute>
         <xsl:attribute name="accept_threads">
-          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@accept_threads"/>
-          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@accept_threads) = 0">5</xsl:if>
+          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@accept_threads"/>
+          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@accept_threads) = 0">5</xsl:if>
         </xsl:attribute>
         <xsl:attribute name="bind">
-          <xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver{FCGITRACKSERVER_INDEX}', '_', . , '.sock')"/>
+          <xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver_', . , '.sock')"/>
         </xsl:attribute>
       </cfg:BindSocket>
     </xsl:for-each>
@@ -71,14 +71,14 @@
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$fcgi-adserver-logging"/>
-      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-trackserver{FCGITRACKSERVER_INDEX}-log-path)"/>
+      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-trackserver-log-path)"/>
       <xsl:with-param name="default-log-level" select="$default-fcgiserver-log-level"/>
     </xsl:call-template>
 
     <xsl:variable name="fcgi-trackserver-mon-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@monitoring_port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@monitoring_port) = 0">
-        <xsl:value-of select="$def-fcgi-trackserver{FCGITRACKSERVER_INDEX}-mon-port"/>
+      <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@monitoring_port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$def-fcgi-trackserver-mon-port"/>
       </xsl:if>
     </xsl:variable>
 

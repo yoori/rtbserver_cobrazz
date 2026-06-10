@@ -367,12 +367,12 @@ namespace AdServer::UserInfoSvcs
 
     if(record.type == Record::RT_BOUND)
     {
-      co_await user_bind_map_->co_save_profile(key, profile.in(), now);
+      user_bind_map_->save_profile_async(key, profile.in(), now);
       co_await user_seen_map_->co_remove_profile(key);
     }
     else if(record.type == Record::RT_SEEN)
     {
-      co_await user_seen_map_->co_save_profile(key, profile.in(), now);
+      user_seen_map_->save_profile_async(key, profile.in(), now);
     }
 
     co_return true;
