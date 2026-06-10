@@ -124,7 +124,10 @@ namespace UserInfoSvcs
   };
 
   autoreader PersistentMatchesReader<PersistentMatches>;
-  autowriter PersistentMatchesWriter<PersistentMatches>;
+  writer PersistentMatchesWriter<PersistentMatches>
+  {
+    list<uint>(cpp_vector) channel_ids;
+  };
 
   struct LastTrigger
   {
@@ -176,10 +179,10 @@ namespace UserInfoSvcs
     ChannelsInfo url_keyword_channels;
     array<AudienceChannel> audience_channels;
 
-    list<LastTrigger> last_page_triggers;
-    list<LastTrigger> last_search_triggers;
-    list<LastTrigger> last_url_triggers;
-    list<LastTrigger> last_url_keyword_triggers;
+    list<LastTrigger> unused_last_page_triggers;
+    list<LastTrigger> unused_last_search_triggers;
+    list<LastTrigger> unused_last_url_triggers;
+    list<LastTrigger> unused_last_url_keyword_triggers;
 
     list<GeoData> geo_data;
   };
@@ -204,10 +207,10 @@ namespace UserInfoSvcs
     ChannelsInfoReader url_keyword_channels;
     array<AudienceChannelReader> audience_channels;
      
-    list<LastTriggerReader> last_page_triggers;
-    list<LastTriggerReader> last_search_triggers;
-    list<LastTriggerReader> last_url_triggers;
-    list<LastTriggerReader> last_url_keyword_triggers;
+    list<LastTriggerReader> unused_last_page_triggers;
+    list<LastTriggerReader> unused_last_search_triggers;
+    list<LastTriggerReader> unused_last_url_triggers;
+    list<LastTriggerReader> unused_last_url_keyword_triggers;
 
     list<GeoDataReader> geo_data;
   };
@@ -231,11 +234,11 @@ namespace UserInfoSvcs
     ChannelsInfoWriter url_channels;
     ChannelsInfoWriter url_keyword_channels;
     array<AudienceChannelWriter>(cpp_vector) audience_channels;
-    
-    list<LastTriggerWriter>(cpp_vector) last_page_triggers;
-    list<LastTriggerWriter>(cpp_vector) last_search_triggers;
-    list<LastTriggerWriter>(cpp_vector) last_url_triggers;
-    list<LastTriggerWriter>(cpp_vector) last_url_keyword_triggers;
+
+    list<LastTriggerWriter>(cpp_vector) unused_last_page_triggers;
+    list<LastTriggerWriter>(cpp_vector) unused_last_search_triggers;
+    list<LastTriggerWriter>(cpp_vector) unused_last_url_triggers;
+    list<LastTriggerWriter>(cpp_vector) unused_last_url_keyword_triggers;
 
     list<GeoDataWriter>(cpp_vector) geo_data;
   };

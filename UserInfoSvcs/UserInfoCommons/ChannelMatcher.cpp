@@ -243,9 +243,7 @@ namespace AdServer
       {
         long max_time_to = cil.max_time_to();
 
-        for (SessionMatchesWriter::timestamps_Container::
-               const_iterator in_it = in.begin();
-             in_it != in.end(); ++in_it)
+        for (auto in_it = in.begin(); in_it != in.end(); ++in_it)
         {
           if (now_ - *in_it <= max_time_to)
           {
@@ -329,7 +327,6 @@ namespace AdServer
         }
 
         ret.days_visits().reserve(left.days_visits().size() + 1);
-
         ret.days_visits().push_back(dvw);
 
         for (; it != left.days_visits().end(); ++it)
@@ -394,7 +391,7 @@ namespace AdServer
         DaysVisitsWriter dvw;
         dvw.days() = days_offset_;
         dvw.visits() = right.visits();
-        ret.days_visits().push_back(dvw);
+        ret.days_visits().push_back(std::move(dvw));
 
         return ret;
       }
@@ -862,242 +859,6 @@ namespace AdServer
       }
     }
 
-    bool
-    ChannelsMatcher::merge_triggers_section_(
-      ChannelIdVector& result_filtered_channels,
-      ChannelsProfileWriter::last_page_triggers_Container& last_triggers,
-      const ChannelMatchVector& triggered_channels,
-      const ChannelsProfileReader::last_page_triggers_Container& last_triggers_rdr,
-      const ChannelsHashMap& channels,
-      const Generics::Time& now,
-      const Generics::Time& repeat_trigger_timeout,
-      bool filter_contextual_triggers)
-    {
-      bool res = false;
-
-      std::set<unsigned long> result_channels_set;
-      uint32_t time_offset = (now - repeat_trigger_timeout).tv_sec;
-
-      last_triggers.reserve(last_triggers_rdr.size() + triggered_channels.size());
-      ChannelsProfileReader::last_page_triggers_Container::const_iterator rdr_it =
-        last_triggers_rdr.begin();
-      ChannelMatchVector::const_iterator match_it = triggered_channels.begin();
-
-      if (repeat_trigger_timeout == Generics::Time::ZERO)
-      {
-        while (match_it != triggered_channels.end())
-        {
-          ChannelsHashMap::const_iterator cit = channels.find(match_it->channel_id);
-
-          if (cit != channels.end())
-          {
-            result_channels_set.insert(match_it->channel_id);
-
-            res = true;
-          }
-
-          ++match_it;
-        }
-      }
-      else
-      {
-        while (rdr_it != last_triggers_rdr.end() &&
-               match_it != triggered_channels.end())
-        {
-          if (*rdr_it < *match_it)
-          {
-            if (channels.find((*rdr_it).channel_id()) != channels.end() &&
-                time_offset < (*rdr_it).last_match_time())
-            {
-              last_triggers.push_back(*rdr_it);
-            }
-
-            ++rdr_it;
-          }
-          else if (*rdr_it == *match_it)
-          {
-            ChannelsHashMap::const_iterator cit = channels.find((*rdr_it).channel_id());
-
-            if (cit != channels.end())
-            {
-              if ((*rdr_it).channel_trigger_id() != 0)
-              {
-                LastTriggerWriter wr;
-                wr.channel_id() = (*rdr_it).channel_id();
-                wr.channel_trigger_id() = (*rdr_it).channel_trigger_id();
-                wr.last_match_time() =
-                  time_offset >= (*rdr_it).last_match_time() ?
-                  now.tv_sec :
-                  (*rdr_it).last_match_time();
-
-                last_triggers.push_back(wr);
-              }
-
-              if ((!filter_contextual_triggers && cit->second->contextual) ||
-                  time_offset >= (*rdr_it).last_match_time() ||
-                  match_it->channel_trigger_id == 0)
-              {
-                result_channels_set.insert(match_it->channel_id);
-
-                res = true;
-              }
-            }
-
-            ++match_it;
-            ++rdr_it;
-          }
-          else
-          {
-            ChannelsHashMap::const_iterator cit = channels.find(match_it->channel_id);
-
-            if (cit != channels.end())
-            {
-              if (!cit->second->contextual && match_it->channel_trigger_id != 0)
-              {
-                LastTriggerWriter wr;
-                wr.channel_id() = match_it->channel_id;
-                wr.channel_trigger_id() = match_it->channel_trigger_id;
-                wr.last_match_time() = now.tv_sec;
-
-                last_triggers.push_back(wr);
-              }
-
-              result_channels_set.insert(match_it->channel_id);
-
-              res = true;
-            }
-
-            ++match_it;
-          }
-        }
-
-        while (rdr_it != last_triggers_rdr.end())
-        {
-          if (channels.find((*rdr_it).channel_id()) != channels.end() &&
-              time_offset < (*rdr_it).last_match_time())
-          {
-            last_triggers.push_back(*rdr_it);
-          }
-
-          ++rdr_it;
-        }
-
-        while (match_it != triggered_channels.end())
-        {
-          ChannelsHashMap::const_iterator cit = channels.find(match_it->channel_id);
-
-          if (cit != channels.end())
-          {
-            if (!cit->second->contextual && match_it->channel_trigger_id != 0)
-            {
-              LastTriggerWriter wr;
-              wr.channel_id() = match_it->channel_id;
-              wr.channel_trigger_id() = match_it->channel_trigger_id;
-              wr.last_match_time() = now.tv_sec;
-
-              last_triggers.push_back(wr);
-            }
-
-            result_channels_set.insert(match_it->channel_id);
-
-            res = true;
-          }
-
-          ++match_it;
-        }
-      }
-
-      result_filtered_channels.assign(result_channels_set.begin(), result_channels_set.end());
-
-      return res;
-    }
-
-    bool
-    ChannelsMatcher::update_triggers_(
-      ChannelIdPack& result_filtered_channels,
-      ChannelsProfileWriter& result_profile_triggers,
-      const ChannelMatchPack& triggered_channels,
-      const ChannelsProfileReader* profile_reader,
-      const ChannelDictionary& channels,
-      const Generics::Time& now,
-      const Generics::Time& repeat_trigger_timeout,
-      bool filter_contextual_triggers)
-      /*throw(InvalidProfileException)*/
-    {
-      static const char* FUN = "ChannelsMatcher::update_triggers_()";
-
-      bool res = false;
-
-      try
-      {
-        result_filtered_channels.persistent_channels =
-          triggered_channels.persistent_channels;
-
-        ChannelsProfileReader::last_page_triggers_Container last_page_triggers;
-        ChannelsProfileReader::last_search_triggers_Container last_search_triggers;
-        ChannelsProfileReader::last_url_triggers_Container last_url_triggers;
-        ChannelsProfileReader::last_url_keyword_triggers_Container last_url_keyword_triggers;
-
-        res |= merge_triggers_section_(
-          result_filtered_channels.page_channels,
-          result_profile_triggers.last_page_triggers(),
-          triggered_channels.page_channels,
-          profile_reader != 0 ?
-            (*profile_reader).last_page_triggers() :
-            last_page_triggers,
-          channels.page_channels,
-          now,
-          repeat_trigger_timeout,
-          filter_contextual_triggers);
-
-        res |= merge_triggers_section_(
-          result_filtered_channels.search_channels,
-          result_profile_triggers.last_search_triggers(),
-          triggered_channels.search_channels,
-          profile_reader != 0 ?
-            (*profile_reader).last_search_triggers() :
-            last_search_triggers,
-          channels.search_channels,
-          now,
-          repeat_trigger_timeout,
-          filter_contextual_triggers);
-
-        res |= merge_triggers_section_(
-          result_filtered_channels.url_channels,
-          result_profile_triggers.last_url_triggers(),
-          triggered_channels.url_channels,
-          profile_reader != 0 ?
-            (*profile_reader).last_url_triggers() :
-            last_url_triggers,
-          channels.url_channels,
-          now,
-          repeat_trigger_timeout,
-          filter_contextual_triggers);
-
-        res |= merge_triggers_section_(
-          result_filtered_channels.url_keyword_channels,
-          result_profile_triggers.last_url_keyword_triggers(),
-          triggered_channels.url_keyword_channels,
-          profile_reader != 0 ?
-            (*profile_reader).last_url_keyword_triggers() :
-            last_url_keyword_triggers,
-          channels.url_keyword_channels,
-          now,
-          repeat_trigger_timeout,
-          filter_contextual_triggers);
-
-        return res;
-      }
-      catch (const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Attempt to match invalid profile: " << ex.what();
-        throw InvalidProfileException(ostr);
-      }
-
-      return false;
-    }
-
     void
     ChannelsMatcher::add_audience_channels(
       const AudienceChannelSet& audience_channels,
@@ -1387,28 +1148,7 @@ namespace AdServer
            base_profile_->membuf().data(),
            base_profile_->membuf().size());
 
-       ChannelsProfileReader* rdr_ptr = 0;
-       if (match_to_add && add_exists)
-       {
-         rdr_ptr = &add_rdr;
-       }
-       else if (base_exists)
-       {
-         rdr_ptr = &base_rdr;
-       }
-
-       if (true)
-       {
-         update_triggers_(
-           matched_channels,
-           res_upw,
-           channels_pack,
-           rdr_ptr,
-           channels,
-           current_time,
-           profile_match_params.repeat_trigger_timeout,
-           profile_match_params.filter_contextual_triggers);
-       }
+       matched_channels.persistent_channels = channels_pack.persistent_channels;
 
        ChannelsInfoReader add_page_channels(0, 0);
        ChannelsInfoReader add_search_channels(0, 0);
@@ -1470,30 +1210,6 @@ namespace AdServer
            res_upw.cohort(),
            profile_match_params.cohort,
            profile_match_params.cohort2);
-
-         /*
-         if (profile_match_params.coord_data.defined)
-         {
-           GeoDataWriter new_geo_data;
-           write_geo_data_(
-             new_geo_data,
-             profile_match_params.coord_data,
-             current_time);
-
-           add_geo_data_(
-             res_upw.geo_data(),
-             add_geo_data,
-             new_geo_data);
-         }
-         else
-         {
-           for (ChannelsProfileReader::geo_data_Container::const_iterator it =
-                  add_geo_data.begin(); it != add_geo_data.end(); ++it)
-           {
-             res_upw.geo_data().push_back(*it);
-           }
-         }
-         */
        }
        else
        {
@@ -1515,30 +1231,6 @@ namespace AdServer
            res_upw.cohort(),
            profile_match_params.cohort,
            profile_match_params.cohort2);
-
-         /*
-         if (profile_match_params.coord_data.defined)
-         {
-           GeoDataWriter new_geo_data;
-           write_geo_data_(
-             new_geo_data,
-             profile_match_params.coord_data,
-             current_time);
-
-           add_geo_data_(
-             res_upw.geo_data(),
-             base_geo_data,
-             new_geo_data);
-         }
-         else
-         {
-           for (ChannelsProfileReader::geo_data_Container::const_iterator it =
-                  base_geo_data.begin(); it != base_geo_data.end(); ++it)
-           {
-             res_upw.geo_data().push_back(*it);
-           }
-         }
-         */
        }
 
        split_cohort_(
@@ -1664,31 +1356,6 @@ namespace AdServer
                copy_section(res_upw.url_channels(), add_url_channels);
                copy_section(res_upw.url_keyword_channels(), add_url_keyword_channels);
 
-               res_upw.last_page_triggers().clear();
-               res_upw.last_page_triggers().reserve(add_rdr.last_page_triggers().size());
-               std::copy(
-                 add_rdr.last_page_triggers().begin(), add_rdr.last_page_triggers().end(),
-                 std::back_inserter(res_upw.last_page_triggers()));
-
-               res_upw.last_search_triggers().clear();
-               res_upw.last_search_triggers().reserve(add_rdr.last_search_triggers().size());
-               std::copy(
-                 add_rdr.last_search_triggers().begin(), add_rdr.last_search_triggers().end(),
-                 std::back_inserter(res_upw.last_search_triggers()));
-
-               res_upw.last_url_triggers().clear();
-               res_upw.last_url_triggers().reserve(add_rdr.last_url_triggers().size());
-               std::copy(
-                 add_rdr.last_url_triggers().begin(), add_rdr.last_url_triggers().end(),
-                 std::back_inserter(res_upw.last_url_triggers()));
-
-               res_upw.last_url_keyword_triggers().clear();
-               res_upw.last_url_keyword_triggers().reserve(add_rdr.last_url_keyword_triggers().size());
-               std::copy(
-                 add_rdr.last_url_keyword_triggers().begin(),
-                 add_rdr.last_url_keyword_triggers().end(),
-                 std::back_inserter(res_upw.last_url_keyword_triggers()));
-
                res_upw.geo_data().clear();
                res_upw.geo_data().reserve(add_rdr.geo_data().size());
                std::copy(
@@ -1709,32 +1376,6 @@ namespace AdServer
                copy_section(res_upw.search_channels(), base_search_channels);
                copy_section(res_upw.url_channels(), base_url_channels);
                copy_section(res_upw.url_keyword_channels(), base_url_keyword_channels);
-
-               res_upw.last_page_triggers().clear();
-               res_upw.last_page_triggers().reserve(base_rdr.last_page_triggers().size());
-               std::copy(
-                 base_rdr.last_page_triggers().begin(), base_rdr.last_page_triggers().end(),
-                 std::back_inserter(res_upw.last_page_triggers()));
-
-               res_upw.last_search_triggers().clear();
-               res_upw.last_search_triggers().reserve(base_rdr.last_search_triggers().size());
-               std::copy(
-                 base_rdr.last_search_triggers().begin(), base_rdr.last_search_triggers().end(),
-                 std::back_inserter(res_upw.last_search_triggers()));
-
-               res_upw.last_url_triggers().clear();
-               res_upw.last_url_triggers().reserve(base_rdr.last_url_triggers().size());
-               std::copy(
-                 base_rdr.last_url_triggers().begin(),
-                 base_rdr.last_url_triggers().end(),
-                 std::back_inserter(res_upw.last_url_triggers()));
-
-               res_upw.last_url_keyword_triggers().clear();
-               res_upw.last_url_keyword_triggers().reserve(base_rdr.last_url_keyword_triggers().size());
-               std::copy(
-                 base_rdr.last_url_keyword_triggers().begin(),
-                 base_rdr.last_url_keyword_triggers().end(),
-                 std::back_inserter(res_upw.last_url_keyword_triggers()));
 
                res_upw.geo_data().clear();
                res_upw.geo_data().reserve(base_rdr.geo_data().size());
@@ -1770,7 +1411,7 @@ namespace AdServer
            geo_res.latitude = read_coord_((*it).latitude().data());
            geo_res.accuracy = read_accuracy_((*it).accuracy().data());
 
-           properties.geo_data_list.push_back(geo_res);
+           properties.geo_data_list.push_back(std::move(geo_res));
          }
        }
 
@@ -1847,8 +1488,6 @@ namespace AdServer
          section.history_matches(), dictionary, HISTORY, auc);
        process_channels_sequence_(
          section.history_visits(), dictionary, HISTORY, auc);
- //      process_channels_sequence_(
- //        section.session_matches(), dictionary, SESSION, auc);
      }
 
      template<typename ContainerType>
@@ -2008,8 +1647,7 @@ namespace AdServer
      {
        try
        {
-         for (ChannelIdVector::const_iterator it = channels.begin();
-              it != channels.end(); ++it)
+         for (auto it = channels.begin(); it != channels.end(); ++it)
          {
            match_pmw->channel_ids().push_back(*it);
          }
@@ -2035,18 +1673,14 @@ namespace AdServer
 
            merge_persistent_channels_(temp_pmw, base_in, out_pmw);
 
-           for (PersistentMatchesWriter::channel_ids_Container::const_iterator it =
-                  temp_pmw.channel_ids().begin();
-                it != temp_pmw.channel_ids().end(); ++it)
+           for (auto it = temp_pmw.channel_ids().begin(); it != temp_pmw.channel_ids().end(); ++it)
            {
              add_weight_(result_channels, *it, 1);
            }
          }
          else if (provide_persistent_channels)
          {
-           for (PersistentMatchesWriter::channel_ids_Container::const_iterator it =
-                  out_pmw->channel_ids().begin();
-                it != out_pmw->channel_ids().end(); ++it)
+           for (auto it = out_pmw->channel_ids().begin(); it != out_pmw->channel_ids().end(); ++it)
            {
              add_weight_(result_channels, *it, 1);
            }
@@ -2080,8 +1714,7 @@ namespace AdServer
          match_ciw->session_matches().reserve(
            match_ciw->session_matches().size() + channels.size());
 
-         for (ChannelIdVector::const_iterator it = channels.begin();
-              it != channels.end(); ++it)
+         for (auto it = channels.begin(); it != channels.end(); ++it)
          {
            add_channel_visit_(now, *it, dictionary, *match_ciw, result_channels);
          }
@@ -2129,93 +1762,59 @@ namespace AdServer
        }
      }
 
+     inline void ChannelsMatcher::add_weight_(
+       ChannelMatchMap& result_channels,
+       uint32_t index,
+       uint32_t weight)
+     {
+       result_channels[index] += weight;
+     }
+
      void ChannelsMatcher::fill_channels_results_(
        ChannelMatchMap& result_channels,
        const ChannelsInfoWriter& ciw,
        const Generics::Time& now,
        const ChannelsHashMap& channels)
      {
-       for (ChannelsInfoWriter::session_matches_Container::
-              const_iterator it = ciw.session_matches().begin();
-            it != ciw.session_matches().end(); ++it)
+       for (auto it = ciw.session_matches().begin();
+         it != ciw.session_matches().end(); ++it)
        {
          ChannelsHashMap::const_iterator cit = channels.find((*it).channel_id());
 
          if (cit != channels.end())
          {
-           /*
-           for (ChannelIntervalList::const_iterator ci_it =
-                  cit->second->short_intervals.begin();
-                ci_it != cit->second->short_intervals.end(); ++ci_it)
-           {
-             unsigned long visits = ci_it->min_visits;
+           auto start_ci_it = cit->second->short_intervals.begin();
+           auto fin_ci_it = cit->second->short_intervals.end();
 
-             for (WriteUIntVector::const_iterator dv_it = (*it).timestamps().begin();
-                  dv_it != (*it).timestamps().end(); ++dv_it)
+           auto start_dv_it = (*it).timestamps().begin();
+           auto fin_dv_it = (*it).timestamps().end();
+
+           for (auto ci_it = start_ci_it; ci_it != fin_ci_it; ++ci_it)
+           {
+             unsigned long vis = ci_it->min_visits;
+
+             for (auto dv_it = start_dv_it; dv_it != fin_dv_it; ++dv_it)
              {
-               if (now.tv_sec - *dv_it >= ci_it->time_from.tv_sec &&
-                   now.tv_sec - *dv_it <= ci_it->time_to.tv_sec)
+               if (now.tv_sec - *dv_it < ci_it->time_from.tv_sec)
                {
-                 if(--visits == 0)
+                 break;
+               }
+               
+               if (now.tv_sec - *dv_it <= ci_it->time_to.tv_sec)
+               {
+                 if (--vis == 0)
                  {
+                   add_weight_(result_channels, (*it).channel_id(), ci_it->weight);
                    break;
                  }
                }
              }
-
-             if (visits == 0)
-             {
-               add_weight_(result_channels, (*it).channel_id(), ci_it->weight);
-             }
-           }
-           */
-
-           ChannelIntervalList::const_iterator start_ci_it =
-             cit->second->short_intervals.begin();
-           ChannelIntervalList::const_iterator fin_ci_it =
-             cit->second->short_intervals.end();
-           ChannelIntervalList::const_iterator ci_it = start_ci_it;
-
-           SessionMatchesWriter::timestamps_Container::
-             const_iterator start_dv_it = (*it).timestamps().begin();
-           SessionMatchesWriter::timestamps_Container::
-             const_iterator fin_dv_it = (*it).timestamps().end();
-           SessionMatchesWriter::timestamps_Container::const_iterator dv_it;
-
-           while (ci_it != fin_ci_it)
-           {
-             unsigned long vis = ci_it->min_visits;
-             dv_it = start_dv_it;
-
-             while (dv_it != fin_dv_it)
-             {
-               if (now.tv_sec - *dv_it >= ci_it->time_from.tv_sec)
-               {
-                 if(now.tv_sec - *dv_it <= ci_it->time_to.tv_sec)
-                 {
-                   if (--vis == 0)
-                   {
-                     add_weight_(result_channels, (*it).channel_id(), ci_it->weight);
-                     break;
-                   }
-                 }
-
-                 ++dv_it;
-               }
-               else
-               {
-                 break;
-               }
-             }
-
-             ++ci_it;
            }
          }
        }
 
-       for (ChannelsInfoWriter::ht_candidates_Container::
-              const_iterator it = ciw.ht_candidates().begin();
-            it != ciw.ht_candidates().end(); ++it)
+       for (auto it = ciw.ht_candidates().begin();
+         it != ciw.ht_candidates().end(); ++it)
        {
          if ((*it).req_visits() == 0)
          {
@@ -2223,28 +1822,10 @@ namespace AdServer
          }
        }
 
-       for (ChannelsInfoWriter::history_matches_Container::
-              const_iterator it = ciw.history_matches().begin();
-            it != ciw.history_matches().end(); ++it)
+       for (auto it = ciw.history_matches().begin();
+         it != ciw.history_matches().end(); ++it)
        {
          add_weight_(result_channels, (*it).channel_id(), (*it).weight());
-       }
-     }
-
-     void ChannelsMatcher::add_weight_(
-       ChannelMatchMap& result_channels,
-       uint32_t index,
-       uint32_t weight)
-     {
-       ChannelMatchMap::iterator it = result_channels.find(index);
-
-       if (it != result_channels.end())
-       {
-         it->second += weight;
-       }
-       else if (!no_result_)
-       {
-         result_channels.insert(std::make_pair(index, weight));
        }
      }
 
@@ -2315,39 +1896,6 @@ namespace AdServer
            other_base_rdr = temp_base_rdr;
          }
 
- /*
-         Generics::MemBuf base = base_profile_->membuf();
-         if (base.empty())
-         {
-           ChannelsProfileWriter profile_writer;
-           profile_writer.version() = CURRENT_BASE_PROFILE_VERSION;
-           profile_writer.create_time() = merge_time.integer_part();
-           profile_writer.history_time() = merge_time.integer_part();
-           profile_writer.ignore_fraud_time() = 0;
-           profile_writer.last_request_time() = 0;
-           profile_writer.session_start() = 0;
-
-           base.alloc(profile_writer.size());
-           profile_writer.save(base.data(), profile_writer.size());
-         }
-
-
-         Generics::MemBuf other_base = other_base_profile;
-         if (other_base.empty())
-         {
-           ChannelsProfileWriter empty_base_profile_writer;
-           empty_base_profile_writer.version() = CURRENT_BASE_PROFILE_VERSION;
-           empty_base_profile_writer.create_time() = merge_time.integer_part();
-           empty_base_profile_writer.history_time() = merge_time.integer_part();
-           empty_base_profile_writer.ignore_fraud_time() = 0;
-           empty_base_profile_writer.last_request_time() = 0;
-           empty_base_profile_writer.session_start() = 0;
-
-           other_base.alloc(empty_base_profile_writer.size());
-           empty_base_profile_writer.save(
-             other_base.data(), empty_base_profile_writer.size());
-         }
- */
          ChannelsProfileWriter result_profile_writer;
          result_profile_writer.version() = CURRENT_BASE_PROFILE_VERSION;
          result_profile_writer.create_time() = base_create_time;
@@ -2496,8 +2044,7 @@ namespace AdServer
        return false;
      }
 
-     template <typename HistoryChannelsInfoListWriter,
-               typename HistoryChannelsInfoListReader>
+     template <typename HistoryChannelsInfoListWriter, typename HistoryChannelsInfoListReader>
      void ChannelsMatcher::history_optimize_(
        ChannelsInfoWriter& channels_info_writer,
        HistoryChannelsInfoListWriter& history_channels_writer,
@@ -2580,9 +2127,9 @@ namespace AdServer
          base_profile_->membuf().data(),
          base_profile_->membuf().size());
 
-       Generics::Time current_time(
-         std::max(static_cast<uint32_t>(now.tv_sec),
-                  rdr.last_request_time()));
+       const Generics::Time current_time = Generics::Time(std::max(
+         static_cast<uint32_t>(now.tv_sec),
+         rdr.last_request_time()));
 
        HistoryUserProfileReader::page_channels_Container hrdr_page;
        HistoryUserProfileReader::page_channels_Container hrdr_search;
@@ -2605,9 +2152,9 @@ namespace AdServer
        hwr.minor_version() = CURRENT_HISTORY_MINOR_PROFILE_VERSION;
        hwr.major_version() = CURRENT_HISTORY_MAJOR_PROFILE_VERSION;
 
-       uint32_t days =
-         (current_time.tv_sec + gmt_offset.tv_sec)/SEC_IN_DAY -
-         (rdr.history_time() + gmt_offset.tv_sec)/SEC_IN_DAY;
+       const uint32_t days =
+         (current_time.tv_sec + gmt_offset.tv_sec) / SEC_IN_DAY -
+         (rdr.history_time() + gmt_offset.tv_sec) / SEC_IN_DAY;
 
        if (first_today_history_optimization != 0)
        {
@@ -2630,34 +2177,6 @@ namespace AdServer
          rdr.persistent_matches().channel_ids().begin(),
          rdr.persistent_matches().channel_ids().end(),
          std::back_inserter(bwr.persistent_matches().channel_ids()));
-
-       bwr.last_page_triggers().reserve(
-         bwr.last_page_triggers().size() + rdr.last_page_triggers().size());
-       std::copy(
-         rdr.last_page_triggers().begin(),
-         rdr.last_page_triggers().end(),
-         std::back_inserter(bwr.last_page_triggers()));
-
-       bwr.last_search_triggers().reserve(
-         bwr.last_search_triggers().size() + rdr.last_search_triggers().size());
-       std::copy(
-         rdr.last_search_triggers().begin(),
-         rdr.last_search_triggers().end(),
-         std::back_inserter(bwr.last_search_triggers()));
-
-       bwr.last_url_triggers().reserve(
-         bwr.last_url_triggers().size() + rdr.last_url_triggers().size());
-       std::copy(
-         rdr.last_url_triggers().begin(),
-         rdr.last_url_triggers().end(),
-         std::back_inserter(bwr.last_url_triggers()));
-
-       bwr.last_url_keyword_triggers().reserve(
-         bwr.last_url_keyword_triggers().size() + rdr.last_url_keyword_triggers().size());
-       std::copy(
-         rdr.last_url_keyword_triggers().begin(),
-         rdr.last_url_keyword_triggers().end(),
-         std::back_inserter(bwr.last_url_keyword_triggers()));
 
        bwr.geo_data().reserve(bwr.geo_data().size() + rdr.geo_data().size());
        std::copy(
@@ -2716,7 +2235,7 @@ namespace AdServer
         if (c_it != channels.audience_channels.end())
         {
           if (current_time.tv_sec / SEC_IN_DAY - (*it).time() / SEC_IN_DAY <
-              (c_it->second->today_long_intervals.begin())->time_to.tv_sec / SEC_IN_DAY)
+            (c_it->second->today_long_intervals.begin())->time_to.tv_sec / SEC_IN_DAY)
           {
             bwr.audience_channels().push_back(*it);
           }
@@ -2741,8 +2260,7 @@ namespace AdServer
       ciw.ht_candidates().reserve(ciw.ht_candidates().size() + hciw.size());
       ciw.history_matches().reserve(ciw.history_matches().size() + hciw.size());
 
-      for (typename HistoryChannelInfoList::const_iterator it = hciw.begin();
-           it != hciw.end(); ++it)
+      for (auto it = hciw.begin(); it != hciw.end(); ++it)
       {
         unsigned long weight = history_matched_(*it, channels);
 
@@ -2751,7 +2269,7 @@ namespace AdServer
           HistoryMatchesWriter hmw;
           hmw.channel_id() = (*it).channel_id();
           hmw.weight() = weight;
-          ciw.history_matches().push_back(hmw);
+          ciw.history_matches().push_back(std::move(hmw));
         }
 
         fill_history_candidate_visits_(
@@ -2817,7 +2335,6 @@ namespace AdServer
            it != cit->second->long_intervals.end(); ++it)
       {
         unsigned long interval_visits = 0;
-//        unsigned long from_now_visits = 0;
 
         for (HistoryChannelInfoWriter::days_visits_Container::const_iterator d_it =
                hciw.days_visits().begin();
@@ -2829,8 +2346,6 @@ namespace AdServer
             {
               interval_visits += (*d_it).visits();
             }
-
-//            from_now_visits += (*d_it).visits();
           }
         }
 
@@ -2839,30 +2354,6 @@ namespace AdServer
           res += it->weight;
         }
       }
-
-      /*
-      for (ChannelIntervalList::const_iterator it =
-             cit->second->today_long_intervals.begin();
-           it != cit->second->today_long_intervals.end(); ++it)
-      {
-        unsigned long interval_visits = 0;
-
-        for (WriteDVVector::const_iterator d_it = hciw.days_visits().begin();
-             d_it != hciw.days_visits().end(); ++d_it)
-        {
-          if ((*d_it).days() >= it->time_from.tv_sec/SEC_IN_DAY &&
-              (*d_it).days() < it->time_to.tv_sec/SEC_IN_DAY)
-          {
-            interval_visits += (*d_it).visits();
-          }
-        }
-
-        if (interval_visits >= it->min_visits)
-        {
-          res += it->weight;
-        }
-      }
-      */
 
       return res;
     }
@@ -2881,9 +2372,8 @@ namespace AdServer
 
       bool insert_all_ints = false;
 
-      for (ChannelIntervalList::const_iterator it =
-             cit->second->today_long_intervals.begin();
-           it != cit->second->today_long_intervals.end(); ++it)
+      for (auto it = cit->second->today_long_intervals.begin();
+        it != cit->second->today_long_intervals.end(); ++it)
       {
         unsigned long found_visits = 0;
 
@@ -2891,8 +2381,8 @@ namespace AdServer
                hciw.days_visits().begin();
              d_it != hciw.days_visits().end(); ++d_it)
         {
-          if ((*d_it).days() >= it->time_from.tv_sec/SEC_IN_DAY &&
-              (*d_it).days() < it->time_to.tv_sec/SEC_IN_DAY)
+          if ((*d_it).days() >= it->time_from.tv_sec / SEC_IN_DAY &&
+            (*d_it).days() < it->time_to.tv_sec / SEC_IN_DAY)
           {
             found_visits += (*d_it).visits();
           }
@@ -2911,7 +2401,7 @@ namespace AdServer
               new_ht_candidate.req_visits() = lit->min_visits;
               new_ht_candidate.visits() = 0;
               new_ht_candidate.weight() = 0;
-              ht_candidates.push_back(new_ht_candidate);
+              ht_candidates.push_back(std::move(new_ht_candidate));
             }
           }
 
@@ -2925,7 +2415,7 @@ namespace AdServer
           new_ht_candidate.weight() =
             new_ht_candidate.req_visits() != 0 ? 0 : it->weight;
 
-          ht_candidates.push_back(new_ht_candidate);
+          ht_candidates.push_back(std::move(new_ht_candidate));
         }
       }
     }
@@ -2951,23 +2441,22 @@ namespace AdServer
           SessionMatchesWriter smw;
           smw.channel_id() = channel_id;
           smw.timestamps().push_back(now.tv_sec);
-
-          ciw.session_matches().push_back(smw);
+          ciw.session_matches().push_back(std::move(smw));
         }
 
         if (!c_it->second->long_intervals.empty() ||
-            !c_it->second->today_long_intervals.empty())
+          !c_it->second->today_long_intervals.empty())
         {
           HistoryVisitsWriter hvw;
           hvw.channel_id() = channel_id;
           hvw.visits() = 1;
-          ciw.history_visits().push_back(hvw);
+          ciw.history_visits().push_back(std::move(hvw));
         }
 
         if (!c_it->second->today_long_intervals.empty())
         {
           const ChannelIntervalList& tli_list = c_it->second->today_long_intervals;
-          ciw.ht_candidates().reserve(ciw.ht_candidates().size() + tli_list.size());
+          //ciw.ht_candidates().reserve(ciw.ht_candidates().size() + tli_list.size());
 
           for (ChannelIntervalList::const_iterator ci_it = tli_list.begin();
                ci_it != tli_list.end(); ++ci_it)
@@ -2978,19 +2467,20 @@ namespace AdServer
             htcw.visits() = 1;
             htcw.weight() = htcw.req_visits() == 0 ? ci_it->weight : 0;
 
-            ciw.ht_candidates().push_back(htcw);
+            ciw.ht_candidates().push_back(std::move(htcw));
           }
         }
       }
     }
 
-    template <typename HistoryChannelInfoListWriter,
-              typename HistoryChannelInfoListReader>
+    template <
+      typename HistoryChannelInfoListWriter,
+      typename HistoryChannelInfoListReader>
     void ChannelsMatcher::merge_history_data_(
       HistoryChannelInfoListWriter& hw,
       const HistoryChannelInfoListReader& base,
       const HistoryChannelInfoListReader& add,
-      const Generics::Time& /* now */,
+      const Generics::Time& /*now*/,
       const ChannelsHashMap& channels)
     {
       hw.reserve(base.size() + add.size());
@@ -3035,12 +2525,6 @@ namespace AdServer
 
         PersistentMatchesReader base_persistent_channels(0, 0);
 
-        ChannelsProfileReader::last_page_triggers_Container base_last_page_triggers;
-        ChannelsProfileReader::last_search_triggers_Container base_last_search_triggers;
-        ChannelsProfileReader::last_url_triggers_Container base_last_url_triggers;
-        ChannelsProfileReader::last_url_keyword_triggers_Container
-          base_last_url_keyword_triggers;
-
         ChannelsProfileReader::geo_data_Container base_geo_data;
 
         if (base_exists)
@@ -3049,15 +2533,8 @@ namespace AdServer
           base_search_channels = base->search_channels();
           base_url_channels = base->url_channels();
           base_url_keyword_channels = base->url_keyword_channels();
-
           base_audience_channels = base->audience_channels();
-
           base_persistent_channels = base->persistent_matches();
-
-          base_last_page_triggers = base->last_page_triggers();
-          base_last_search_triggers = base->last_search_triggers();
-          base_last_url_triggers = base->last_url_triggers();
-          base_last_url_keyword_triggers = base->last_url_keyword_triggers();
 
           base_geo_data = base->geo_data();
         }
@@ -3068,12 +2545,6 @@ namespace AdServer
         ChannelsInfoReader add_url_keyword_channels(0, 0);
         PersistentMatchesReader add_persistent_channels(0, 0);
 
-        ChannelsProfileReader::last_page_triggers_Container add_last_page_triggers;
-        ChannelsProfileReader::last_search_triggers_Container add_last_search_triggers;
-        ChannelsProfileReader::last_url_triggers_Container add_last_url_triggers;
-        ChannelsProfileReader::last_url_keyword_triggers_Container
-          add_last_url_keyword_triggers;
-
         ChannelsProfileReader::geo_data_Container add_geo_data;
 
         if (add_exists)
@@ -3082,13 +2553,7 @@ namespace AdServer
           add_search_channels = add->search_channels();
           add_url_channels = add->url_channels();
           add_url_keyword_channels = add->url_keyword_channels();
-
           add_persistent_channels = add->persistent_matches();
-
-          add_last_page_triggers = add->last_page_triggers();
-          add_last_search_triggers = add->last_search_triggers();
-          add_last_url_triggers = add->last_url_triggers();
-          add_last_url_keyword_triggers = add->last_url_keyword_triggers();
 
           add_geo_data = add->geo_data();
         }
@@ -3136,62 +2601,6 @@ namespace AdServer
           now,
           base_exists ? &base_search_channels : 0,
           add_exists ? &add_search_channels : 0);
-
-        upw.last_page_triggers().reserve(
-          upw.last_page_triggers().size() + add_last_page_triggers.size() +
-          base_last_page_triggers.size());
-        Algs::merge_unique(
-          base_last_page_triggers.begin(), base_last_page_triggers.end(),
-          add_last_page_triggers.begin(), add_last_page_triggers.end(),
-          Algs::filter_inserter(
-            std::back_inserter(upw.last_page_triggers()),
-            ExistChannelFilter(channels.page_channels)),
-          ChannelMatchLess(),
-          LastTriggersMerge());
-
-        upw.last_search_triggers().reserve(
-          upw.last_search_triggers().size() + add_last_search_triggers.size() +
-          base_last_search_triggers.size());
-        Algs::merge_unique(
-          base_last_search_triggers.begin(), base_last_search_triggers.end(),
-          add_last_search_triggers.begin(), add_last_search_triggers.end(),
-          Algs::filter_inserter(
-            std::back_inserter(upw.last_search_triggers()),
-            ExistChannelFilter(channels.search_channels)),
-          ChannelMatchLess(),
-          LastTriggersMerge());
-
-        upw.last_url_triggers().reserve(
-          upw.last_url_triggers().size() + add_last_url_triggers.size() +
-          base_last_url_triggers.size());
-        Algs::merge_unique(
-          base_last_url_triggers.begin(), base_last_url_triggers.end(),
-          add_last_url_triggers.begin(), add_last_url_triggers.end(),
-          Algs::filter_inserter(
-            std::back_inserter(upw.last_url_triggers()),
-            ExistChannelFilter(channels.url_channels)),
-          ChannelMatchLess(),
-          LastTriggersMerge());
-
-        upw.last_url_keyword_triggers().reserve(
-          upw.last_url_keyword_triggers().size() + add_last_url_keyword_triggers.size() +
-          base_last_url_keyword_triggers.size());
-        Algs::merge_unique(
-          base_last_url_keyword_triggers.begin(), base_last_url_keyword_triggers.end(),
-          add_last_url_keyword_triggers.begin(), add_last_url_keyword_triggers.end(),
-          Algs::filter_inserter(
-            std::back_inserter(upw.last_url_keyword_triggers()),
-            ExistChannelFilter(channels.url_keyword_channels)),
-          ChannelMatchLess(),
-          LastTriggersMerge());
-
-        /*
-        merge_geo_data_(
-          upw.geo_data(),
-          base_geo_data,
-          add_geo_data,
-          now);
-        */
       }
       catch(const eh::Exception& ex)
       {
@@ -3398,7 +2807,7 @@ namespace AdServer
               htc.visits() = (*base_it).visits() + (*add_it).visits();
               htc.weight() = htc.req_visits() == 0 ? ci_it->weight : 0;
 
-              htcw.push_back(htc);
+              htcw.push_back(std::move(htc));
             }
 
             ++tli_count;

@@ -16,9 +16,6 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
-    //typedef Generics::TAlloc::AllocOnly<unsigned long, 256, true> HashAllocOnly;
-    //typedef Generics::TAlloc::ThreadPool<void*, 256> ThreadPoolAlloc;
-
     typedef std::map<
       unsigned long,
       unsigned long,
@@ -128,7 +125,7 @@ namespace AdServer
         iterator it = BaseChannelIntervalList::begin();
 
         while (it != BaseChannelIntervalList::end() &&
-               it->time_from < val.time_from)
+          it->time_from < val.time_from)
         {
           ++it;
         }
@@ -141,17 +138,9 @@ namespace AdServer
         {
           BaseChannelIntervalList::push_back(val);
         }
-/*
-        if (val.time_to.tv_sec - val.time_from.tv_sec <
-            pref_channel_interval_.time_to.tv_sec -
-            pref_channel_interval_.time_from.tv_sec)
-        {
-          pref_channel_interval_.time_to = val.time_to;
-          pref_channel_interval_.time_from = val.time_from;
-        }
-*/
+
         if (static_cast<unsigned long>(val.time_to.tv_sec - val.time_from.tv_sec) <
-            pref_channel_interval_.min_window_size)
+          pref_channel_interval_.min_window_size)
         {
           pref_channel_interval_.min_window_size =
             val.time_to.tv_sec - val.time_from.tv_sec;

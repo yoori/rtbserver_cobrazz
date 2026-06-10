@@ -51,11 +51,6 @@ namespace AdServer
 
         Table::Column("audience_channels", Table::Column::TEXT),
 
-        Table::Column("last_page_triggers", Table::Column::TEXT),
-        Table::Column("last_search_triggers", Table::Column::TEXT),
-        Table::Column("last_url_triggers", Table::Column::TEXT),
-        Table::Column("last_url_keyword_triggers", Table::Column::TEXT),
-
         Table::Column("geo_data", Table::Column::TEXT),
       };
 
@@ -95,11 +90,6 @@ namespace AdServer
         Table::Column("url_keyword_session_matches", Table::Column::TEXT),
 
         Table::Column("audience_channels", Table::Column::TEXT),
-
-        Table::Column("last_page_triggers", Table::Column::TEXT),
-        Table::Column("last_search_triggers", Table::Column::TEXT),
-        Table::Column("last_url_triggers", Table::Column::TEXT),
-        Table::Column("last_url_keyword_triggers", Table::Column::TEXT),
 
         Table::Column("geo_data", Table::Column::TEXT),
       };
@@ -204,30 +194,6 @@ namespace AdServer
               row,
               reader.audience_channels().begin(),
               reader.audience_channels().end(),
-              space_align.str().c_str());
-
-            add_last_triggers_row(
-              row,
-              reader.last_page_triggers().begin(),
-              reader.last_page_triggers().end(),
-              space_align.str().c_str());
-
-            add_last_triggers_row(
-              row,
-              reader.last_search_triggers().begin(),
-              reader.last_search_triggers().end(),
-              space_align.str().c_str());
-
-            add_last_triggers_row(
-              row,
-              reader.last_url_triggers().begin(),
-              reader.last_url_triggers().end(),
-              space_align.str().c_str());
-
-            add_last_triggers_row(
-              row,
-              reader.last_url_keyword_triggers().begin(),
-              reader.last_url_keyword_triggers().end(),
               space_align.str().c_str());
 
             add_geo_data_row(

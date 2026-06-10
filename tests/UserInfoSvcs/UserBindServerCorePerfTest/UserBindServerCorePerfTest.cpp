@@ -36,7 +36,7 @@ namespace
   print_usage()
   {
     std::cerr
-      << "Usage: UserBindServerCoreTest --cache-root <path> --count <N> [OPTIONS]\n"
+      << "Usage: UserBindServerCorePerfTest --cache-root <path> --count <N> [OPTIONS]\n"
       << "Options:\n"
       << "  --chunk-count <N>  chunks count (default: 16)\n"
       << "  --threads <N>      worker threads count (default: 1)\n"
@@ -219,48 +219,50 @@ main(int argc, char** argv)
 
     for(std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
     {
-      workers.emplace_back([&, thread_index]()
-      {
-        const auto timestamp = Generics::Time::get_time_of_day();
-        while(true)
+      workers.emplace_back(
+        [&, thread_index]()
         {
-          const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
-          if(operation_index >= options.count)
+          const auto timestamp = Generics::Time::get_time_of_day();
+          while(true)
           {
-            break;
-          }
-
-          try
-          {
-            AdServer::UserInfoSvcs::UserBindServerCore::GetUserRequestInfo request;
-            request.id = "UserBindServerCoreTest/" + std::to_string(operation_index);
-            request.timestamp = timestamp;
-            request.create_timestamp = Generics::Time::ZERO;
-            request.generate_user_id = false;
-
-            const auto response = core->co_get_user_id(request).sync_wait();
-            if(response.created)
+            const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
+            if(operation_index >= options.count)
             {
-              created.fetch_add(1, std::memory_order_relaxed);
+              break;
             }
 
-            if(response.user_found)
+            try
             {
-              found.fetch_add(1, std::memory_order_relaxed);
+              AdServer::UserInfoSvcs::UserBindServerCore::GetUserRequestInfo request;
+              request.id = "UserBindServerCorePerfTest/" + std::to_string(operation_index);
+              request.timestamp = timestamp;
+              request.create_timestamp = Generics::Time::ZERO;
+              request.generate_user_id = false;
+
+              const auto response = core->co_get_user_id(request).sync_wait();
+              if(response.created)
+              {
+                created.fetch_add(1, std::memory_order_relaxed);
+              }
+
+              if(response.user_found)
+              {
+                found.fetch_add(1, std::memory_order_relaxed);
+              }
             }
-          }
-          catch(const std::exception& ex)
-          {
-            if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+            catch(const std::exception& ex)
             {
-              std::cerr
-                << "worker #" << thread_index
-                << " operation #" << operation_index
-                << " failed: " << ex.what() << std::endl;
+              if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+              {
+                std::cerr
+                  << "worker #" << thread_index
+                  << " operation #" << operation_index
+                  << " failed: " << ex.what() << std::endl;
+              }
             }
           }
         }
-      });
+      );
     }
 
     for(auto& worker : workers)

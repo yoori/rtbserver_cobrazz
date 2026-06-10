@@ -1,7 +1,8 @@
 add_subdirectory(UserBindPerf)
-add_subdirectory(UserBindServerCoreTest)
-add_subdirectory(UserInfoManagerCoreTest)
+add_subdirectory(UserBindServerCorePerfTest)
+add_subdirectory(UserInfoManagerCorePerfTest)
 add_subdirectory(RocksDBProfileMapTest)
+add_subdirectory(RocksDBBatchingProfileMapPerfTest)
 
 add_executable(UserBindContainerTest
   ../UnitTests/UserInfoSvcs/UserBindContainerTest/UserBindContainerTest.cpp

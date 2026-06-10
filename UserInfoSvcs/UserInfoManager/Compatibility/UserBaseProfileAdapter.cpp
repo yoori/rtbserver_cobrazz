@@ -465,26 +465,6 @@ namespace AdServer
             profile_reader.persistent_matches().channel_ids().end(),
             std::back_inserter(writer.persistent_matches().channel_ids()));
 
-          std::copy(
-            profile_reader.last_page_triggers().begin(),
-            profile_reader.last_page_triggers().end(),
-            std::back_inserter(writer.last_page_triggers()));
-
-          std::copy(
-            profile_reader.last_search_triggers().begin(),
-            profile_reader.last_search_triggers().end(),
-            std::back_inserter(writer.last_search_triggers()));
-
-          std::copy(
-            profile_reader.last_url_triggers().begin(),
-            profile_reader.last_url_triggers().end(),
-            std::back_inserter(writer.last_url_triggers()));
-
-          std::copy(
-            profile_reader.last_url_keyword_triggers().begin(),
-            profile_reader.last_url_keyword_triggers().end(),
-            std::back_inserter(writer.last_url_keyword_triggers()));
-
           Generics::MemBuf mb(writer.size());
           writer.save(mb.data(), mb.size());
           membuf.assign(mb.data(), mb.size());

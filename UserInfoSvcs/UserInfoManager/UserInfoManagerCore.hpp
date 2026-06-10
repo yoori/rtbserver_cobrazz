@@ -29,14 +29,13 @@
 #include <ProfilingCommons/PlainStorage3/LoadingProgressCallbackBase.hpp>
 
 #include "FileRWStats.hpp"
+#include "UserInfoConfigSource.hpp"
 #include "UserInfoContainer.hpp"
 #include "UserOperationLoader.hpp"
 #include "UserOperationSaver.hpp"
 
 namespace AdServer::UserInfoSvcs
 {
-  struct UserInfoManagerCoreState;
-
   /**
    * Implementation of UserInfoManager.
    */
@@ -163,6 +162,13 @@ namespace AdServer::UserInfoSvcs
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
       const UserInfoManagerConfig& user_info_manager_config)
+      /*throw(Exception)*/;
+
+    UserInfoManagerCore(
+      Generics::ActiveObjectCallback* callback,
+      Logging::Logger* logger,
+      const UserInfoManagerConfig& user_info_manager_config,
+      UserInfoConfigSourcePtr config_source)
       /*throw(Exception)*/;
 
     // ActiveObject interface
@@ -402,8 +408,6 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerCore* user_info_manager_impl_;
     };
 
-    typedef std::unique_ptr<UserInfoManagerCoreState> StatePtr;
-
     typedef AdServer::Commons::AccessActiveObject<
       UserInfoContainer_var>
       UserInfoContainerHolder;
@@ -447,15 +451,6 @@ namespace AdServer::UserInfoSvcs
       UserOperationProcessor* user_operation_processor)
       noexcept;
 
-    static void push_channel_interval_(
-      ChannelIntervalsPack* cip,
-      const ChannelInterval& ci)
-      noexcept;
-
-    void
-    resolve_campaign_servers_(const std::vector<std::string>& campaign_server_refs)
-      /*throw(Exception, eh::Exception)*/;
-
     void calc_user_daily_stat_(
       const Generics::Time& current_time,
       const Generics::Time& request_tiem,
@@ -491,11 +486,10 @@ namespace AdServer::UserInfoSvcs
     // objects that can be deactivated only after
     // user_info_container_ deactivation
     Generics::CompositeActiveObject_var user_info_container_dependent_active_object_;
+    UserInfoConfigSourcePtr config_source_;
 
     mutable SyncPolicy::Mutex lock_;
     bool campaignserver_ready_; // REVIEW
-
-    StatePtr state_;
 
     bool clean_user_profiles_;
     Generics::Time profile_lifetime_;

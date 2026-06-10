@@ -59,6 +59,7 @@ target_link_libraries(UserInfoContainer
 add_executable(UserInfoManager
   UserInfoManagerMain.cpp
   FileRWStats.cpp
+  UserInfoConfigCampaignServerSource.cpp
   UserInfoManagerCore.cpp
   UserInfoManagerGrpc.cpp
   UserInfoContainer.cpp

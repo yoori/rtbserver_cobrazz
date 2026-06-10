@@ -24,7 +24,9 @@
 #include <UserInfoSvcs/UserInfoCommons/FreqCapConfig.hpp>
 
 #define private public
+#define protected public
 #include <UserInfoSvcs/UserInfoManager/UserInfoManagerCore.hpp>
+#undef protected
 #undef private
 
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
@@ -49,7 +51,7 @@ namespace
   print_usage()
   {
     std::cerr
-      << "Usage: UserInfoManagerCoreTest --cache-root <path> --count <N> [OPTIONS]\n"
+      << "Usage: UserInfoManagerCorePerfTest --cache-root <path> --count <N> [OPTIONS]\n"
       << "Options:\n"
       << "  --chunk-count <N>  chunks count (default: 16)\n"
       << "  --threads <N>      worker threads count (default: 1)\n"
@@ -163,9 +165,9 @@ namespace
     const std::filesystem::path& cache_root,
     const std::size_t chunk_count)
   {
-    const auto config_path = cache_root / "UserInfoManagerCoreTest.xml";
-    const auto log_path = cache_root / "UserInfoManagerCoreTest";
-    const auto pid_path = cache_root / "UserInfoManagerCoreTest.pid";
+    const auto config_path = cache_root / "UserInfoManagerCorePerfTest.xml";
+    const auto log_path = cache_root / "UserInfoManagerCorePerfTest";
+    const auto pid_path = cache_root / "UserInfoManagerCorePerfTest.pid";
     std::ofstream out(config_path);
     if(!out)
     {
@@ -246,29 +248,44 @@ namespace
     throw std::runtime_error("UserInfoManagerCore storage is not ready after 60 seconds");
   }
 
-  void
-  install_empty_channels_config(AdServer::UserInfoSvcs::UserInfoManagerCore* core)
+  class TestUserInfoConfigSource:
+    public AdServer::UserInfoSvcs::UserInfoConfigSource
   {
-    auto accessor = core->user_info_container_->get_accessor();
-    if(!accessor.get().in())
+  public:
+    Config get_config() override
     {
-      throw std::runtime_error("UserInfoContainer is not loaded");
+      Config config;
+      config.channels_config = new AdServer::UserInfoSvcs::ChannelDictionary();
+      config.freq_cap_config = new AdServer::UserInfoSvcs::FreqCapConfig();
+      config.freq_cap_config->confirm_timeout = Generics::Time(1);
+
+      for(unsigned long channel_id = 1; channel_id <= 1000; ++channel_id)
+      {
+        AdServer::UserInfoSvcs::ChannelIntervalsPack_var intervals =
+          new AdServer::UserInfoSvcs::ChannelIntervalsPack();
+        intervals->contextual = true;
+        intervals->zero_channel = true;
+        intervals->weight = 1;
+
+        if(channel_id <= 100)
+        {
+          intervals->today_long_intervals.insert(
+            AdServer::UserInfoSvcs::ChannelInterval(
+              Generics::Time::ZERO,
+              Generics::Time(30 * 24 * 60 * 60),
+              1,
+              1));
+        }
+
+        config.channels_config->page_channels[channel_id] = intervals;
+        config.channels_config->channel_features.insert(std::make_pair(
+          channel_id,
+          AdServer::UserInfoSvcs::ChannelFeatures(false, 0)));
+      }
+
+      return config;
     }
-
-    AdServer::UserInfoSvcs::ChannelDictionary_var channels_config =
-      new AdServer::UserInfoSvcs::ChannelDictionary();
-    AdServer::UserInfoSvcs::FreqCapConfig_var freq_cap_config =
-      new AdServer::UserInfoSvcs::FreqCapConfig();
-    freq_cap_config->confirm_timeout = Generics::Time(1);
-
-    accessor->config(
-      Generics::Time::ZERO,
-      Generics::Time::get_time_of_day(),
-      channels_config,
-      freq_cap_config);
-
-    core->campaignserver_ready_ = true;
-  }
+  };
 
   AdServer::Commons::UserId
   make_user_id(std::uint64_t index)
@@ -301,17 +318,18 @@ main(int argc, char** argv)
     Generics::ActiveObjectCallback_var callback(
       new Logging::ActiveObjectCallbackImpl(
         logger,
-        "UserInfoManagerCoreTest",
-        "UserInfoManagerCoreTest"));
+        "UserInfoManagerCorePerfTest",
+        "UserInfoManagerCorePerfTest"));
 
     auto core = std::make_shared<AdServer::UserInfoSvcs::UserInfoManagerCore>(
       callback,
       logger,
-      config);
+      config,
+      std::make_shared<TestUserInfoConfigSource>());
 
     core->activate_object();
     wait_storage_loaded(core.get());
-    install_empty_channels_config(core.get());
+    core->update_config_();
 
     std::atomic<std::uint64_t> next{0};
     std::atomic<std::uint64_t> errors{0};
@@ -325,45 +343,55 @@ main(int argc, char** argv)
 
     for(std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
     {
-      workers.emplace_back([&, thread_index]()
-      {
-        while(true)
+      workers.emplace_back(
+        [&, thread_index]()
         {
-          const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
-          if(operation_index >= options.count)
+          while(true)
           {
-            break;
-          }
-
-          try
-          {
-            AdServer::UserInfoSvcs::UserInfoManagerCore::UserInfo user_info;
-            user_info.user_id = make_user_id(operation_index + 1);
-            user_info.time = Generics::Time::get_time_of_day();
-            user_info.request_colo_id = 1;
-            user_info.current_colo_id = 1;
-
-            AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params;
-            match_params.no_result = true;
-
-            AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result;
-            if(core->match(user_info, match_params, match_result))
+            const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
+            if(operation_index >= options.count)
             {
-              matched.fetch_add(1, std::memory_order_relaxed);
+              break;
             }
-          }
-          catch(const std::exception& ex)
-          {
-            if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+
+            try
             {
-              std::cerr
-                << "worker #" << thread_index
-                << " operation #" << operation_index
-                << " failed: " << ex.what() << std::endl;
+              AdServer::UserInfoSvcs::UserInfoManagerCore::UserInfo user_info;
+              user_info.user_id = make_user_id(operation_index + 1);
+              user_info.time = Generics::Time::get_time_of_day();
+              user_info.request_colo_id = 1;
+              user_info.current_colo_id = 1;
+
+              AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params;
+              match_params.no_result = false;
+              match_params.page_channel_ids.reserve(100);
+              for(unsigned long channel_id = 1; channel_id <= 100; ++channel_id)
+              {
+                AdServer::UserInfoSvcs::UserInfoManagerCore::ChannelTriggerMatch
+                  channel_trigger_match;
+                channel_trigger_match.channel_id = channel_id;
+                match_params.page_channel_ids.push_back(channel_trigger_match);
+              }
+
+              AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result;
+              if(core->match(user_info, match_params, match_result))
+              {
+                matched.fetch_add(1, std::memory_order_relaxed);
+              }
+            }
+            catch(const std::exception& ex)
+            {
+              if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+              {
+                std::cerr
+                  << "worker #" << thread_index
+                  << " operation #" << operation_index
+                  << " failed: " << ex.what() << std::endl;
+              }
             }
           }
         }
-      });
+      );
     }
 
     for(auto& worker : workers)

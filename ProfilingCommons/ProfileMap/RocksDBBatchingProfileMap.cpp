@@ -400,7 +400,7 @@ namespace AdServer::ProfilingCommons
   {
     Operations batch;
 
-    while(pop_batch_(batch))
+    while (pop_batch_(batch))
     {
       try
       {

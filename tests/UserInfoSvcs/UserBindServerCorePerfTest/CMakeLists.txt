@@ -1,11 +1,11 @@
-add_executable(UserBindServerCoreTest
-  UserBindServerCoreTest.cpp
+add_executable(UserBindServerCorePerfTest
+  UserBindServerCorePerfTest.cpp
   ${CMAKE_SOURCE_DIR}/UserInfoSvcs/UserBindServer/UserBindServerCore.cpp
   ${CMAKE_SOURCE_DIR}/UserInfoSvcs/UserBindServer/UserBindOperationSaver.cpp
   ${CMAKE_SOURCE_DIR}/UserInfoSvcs/UserBindServer/UserBindOperationLoader.cpp
 )
 
-target_link_libraries(UserBindServerCoreTest
+target_link_libraries(UserBindServerCorePerfTest
   PRIVATE
     PrivacyFilter
     Commons
@@ -17,7 +17,7 @@ target_link_libraries(UserBindServerCoreTest
     Generics
 )
 
-target_include_directories(UserBindServerCoreTest
+target_include_directories(UserBindServerCorePerfTest
   PRIVATE
     ${CMAKE_SOURCE_DIR}
 )

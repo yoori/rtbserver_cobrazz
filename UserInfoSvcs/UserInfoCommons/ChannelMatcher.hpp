@@ -87,17 +87,15 @@ namespace AdServer
 
     struct ChannelMatch
     {
-      ChannelMatch(unsigned long test_id)            // for unit tests only!
-        :
-        channel_id(test_id),
-        channel_trigger_id(test_id)
+      ChannelMatch(unsigned long test_id) // for unit tests only!
+        : channel_id(test_id),
+          channel_trigger_id(test_id)
       {}
 
       ChannelMatch(unsigned long channel_id_val,
-                   unsigned long channel_trigger_id_val)
-        :
-        channel_id(channel_id_val),
-        channel_trigger_id(channel_trigger_id_val)
+        unsigned long channel_trigger_id_val)
+        : channel_id(channel_id_val),
+          channel_trigger_id(channel_trigger_id_val)
       {}
 
       bool operator<(const ChannelMatch& right) const
@@ -111,6 +109,7 @@ namespace AdServer
       unsigned long channel_id;
       unsigned long channel_trigger_id;
     };
+
     typedef std::vector<ChannelMatch> ChannelMatchVector;
 
     struct ChannelMatchPack
@@ -466,29 +465,6 @@ namespace AdServer
         ChannelsProfileWriter::geo_data_Container& res_geo_data,
         const _T1& geo_data_array,
         const _T2& new_geo_data);
-
-      bool
-      merge_triggers_section_(
-        ChannelIdVector& result_filtered_channels,
-        ChannelsProfileWriter::last_page_triggers_Container& last_triggers,
-        const ChannelMatchVector& triggered_channels,
-        const ChannelsProfileReader::last_page_triggers_Container& last_triggers_rdr,
-        const ChannelsHashMap& channels,
-        const Generics::Time& now,
-        const Generics::Time& repeat_trigger_timeout,
-        bool filter_contextual_triggers);
-
-      bool
-      update_triggers_(
-        ChannelIdPack& result_filtered_channels,
-        ChannelsProfileWriter& result_profile_triggers,
-        const ChannelMatchPack& triggered_channels,
-        const ChannelsProfileReader* profile_reader,
-        const ChannelDictionary& channels,
-        const Generics::Time& now,
-        const Generics::Time& repeat_trigger_timeout,
-        bool filter_contextual_triggers)
-        /*throw(InvalidProfileException)*/;
 
       static void collect_channel_ids_(
         const Generics::MemBuf& base_profile,
