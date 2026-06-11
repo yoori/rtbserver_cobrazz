@@ -842,7 +842,8 @@ namespace RequestInfoSvcs
     unsigned long max_trigger_visits,
     ProfilingCommons::ProfileMapFactory::Cache* /*cache*/,
     const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-    const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits)
+    const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits,
+    bool use_rocksdb_user_map)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       processor_(ReferenceCounting::add_ref(processor)),
@@ -854,9 +855,6 @@ namespace RequestInfoSvcs
     static const char* FUN =
       "UserTriggerMatchContainer::UserTriggerMatchContainer()";
 
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserTriggerMatchProfileAdapter>
-      AdaptUserTriggerMatchProfile;
-
     default_channel_info_ = new Config::ChannelInfo();
     default_channel_info_->page_min_visits = 1;
     default_channel_info_->search_min_visits = 1;
@@ -865,26 +863,45 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-        open_chunked_map<
-          AdServer::Commons::UserId,
-          AdServer::ProfilingCommons::UserIdAccessor,
-          unsigned long (*)(const Generics::Uuid& uuid),
-          AdaptUserTriggerMatchProfile>(
-            common_chunks_number,
-            chunk_folders,
-            user_file_prefix,
-            user_level_map_traits,
-            *this,
-            Generics::ActiveObjectCallback_var(
-              new Logging::ActiveObjectCallbackImpl(
-                logger_,
-                "UserTriggerMatchContainer",
-                "ExpressionMatcher",
-                "ADS-IMPL-4024")),
-            AdServer::Commons::uuid_distribution_hash,
-            nullptr // file controller
-            );
+      if(use_rocksdb_user_map)
+      {
+        user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+          open_rocksdb_chunked_map<
+            AdServer::Commons::UserId,
+            AdServer::ProfilingCommons::UserIdAccessor,
+            unsigned long (*)(const Generics::Uuid& uuid)>(
+              common_chunks_number,
+              chunk_folders,
+              user_file_prefix,
+              user_level_map_traits,
+              AdServer::Commons::uuid_distribution_hash);
+      }
+      else
+      {
+        typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserTriggerMatchProfileAdapter>
+          AdaptUserTriggerMatchProfile;
+
+        user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+          open_chunked_map<
+            AdServer::Commons::UserId,
+            AdServer::ProfilingCommons::UserIdAccessor,
+            unsigned long (*)(const Generics::Uuid& uuid),
+            AdaptUserTriggerMatchProfile>(
+              common_chunks_number,
+              chunk_folders,
+              user_file_prefix,
+              user_level_map_traits,
+              *this,
+              Generics::ActiveObjectCallback_var(
+                new Logging::ActiveObjectCallbackImpl(
+                  logger_,
+                  "UserTriggerMatchContainer",
+                  "ExpressionMatcher",
+                  "ADS-IMPL-4024")),
+              AdServer::Commons::uuid_distribution_hash,
+              nullptr // file controller
+              );
+      }
     }
     catch(const eh::Exception& ex)
     {

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <list>
+#include <vector>
+
 #include <Generics/MemBuf.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include "Allocator.hpp"
@@ -43,8 +46,8 @@ namespace UserInfoSvcs
       unsigned long imps;
     };
 
-    typedef std::list<SeqOrder> SeqOrderList;
-    typedef std::list<unsigned long> FreqCapIdList;
+    typedef std::vector<SeqOrder> SeqOrderArray;
+    typedef std::vector<unsigned long> FreqCapIdArray;
     typedef std::list<CampaignFreq> CampaignFreqs;
     typedef std::list<unsigned long> CampaignIds;
 
@@ -55,9 +58,9 @@ namespace UserInfoSvcs
       /*throw(Invalid)*/;
 
     bool
-    full(FreqCapIdList& fcs,
-      FreqCapIdList* virtual_fcs,
-      SeqOrderList& seq_orders,
+    full(FreqCapIdArray& fcs,
+      FreqCapIdArray* virtual_fcs,
+      SeqOrderArray& seq_orders,
       CampaignFreqs& campaign_freqs,
       const Generics::Time& now,
       const FreqCapConfig& fc_config)
@@ -66,10 +69,10 @@ namespace UserInfoSvcs
     void
     consider(const Commons::RequestId& request_id,
       const Generics::Time& now,
-      const FreqCapIdList& fcs, // sorted
-      const FreqCapIdList& uc_fcs, // sorted
-      const FreqCapIdList& virtual_fcs, // sorted
-      const SeqOrderList& seq_orders,
+      const FreqCapIdArray& fcs, // sorted
+      const FreqCapIdArray& uc_fcs, // sorted
+      const FreqCapIdArray& virtual_fcs, // sorted
+      const SeqOrderArray& seq_orders,
       const CampaignIds& campaign_ids,
       const CampaignIds& uc_campaign_ids,
       const FreqCapConfig& fc_config) noexcept;

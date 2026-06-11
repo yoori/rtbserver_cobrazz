@@ -584,7 +584,7 @@ namespace
   };
 
   void check_full_freq_caps(
-    UserFreqCapProfile::FreqCapIdList& fcs,
+    UserFreqCapProfile::FreqCapIdArray& fcs,
     const Generics::Time& now,
     const FreqCapConfig& fc_config,
     const UserFreqCapProfileReader::freq_caps_Container& freq_caps)
@@ -639,8 +639,8 @@ namespace
 
   void
   global_check_freq_caps(
-    UserFreqCapProfile::FreqCapIdList& fcs,
-    UserFreqCapProfile::FreqCapIdList* virtual_fcs,
+    UserFreqCapProfile::FreqCapIdArray& fcs,
+    UserFreqCapProfile::FreqCapIdArray* virtual_fcs,
     const Generics::Time& now,
     const FreqCapConfig& fc_config,
     const UserFreqCapProfileReader& reader)
@@ -795,12 +795,12 @@ namespace
   void
   pack_freq_caps(
     FreqCapCounterVector& fcs_res,
-    const UserFreqCapProfile::FreqCapIdList& fcs,
+    const UserFreqCapProfile::FreqCapIdArray& fcs,
     bool unconfirmed)
     noexcept
   {
     fcs_res.reserve(fcs_res.size() + fcs.size());
-    for(UserFreqCapProfile::FreqCapIdList::const_iterator fc_it = fcs.begin();
+    for(UserFreqCapProfile::FreqCapIdArray::const_iterator fc_it = fcs.begin();
         fc_it != fcs.end(); ++fc_it)
     {
       if(fcs_res.empty() || fcs_res.back().fc_id != *fc_it)
@@ -869,9 +869,9 @@ namespace
 
   bool
   UserFreqCapProfile::full(
-    FreqCapIdList& fcs,
-    FreqCapIdList* virtual_fcs,
-    SeqOrderList& seq_orders,
+    FreqCapIdArray& fcs,
+    FreqCapIdArray* virtual_fcs,
+    SeqOrderArray& seq_orders,
     CampaignFreqs& campaign_freqs,
     const Generics::Time& now,
     const FreqCapConfig& fc_config)
@@ -945,10 +945,10 @@ namespace
   UserFreqCapProfile::consider(
     const Commons::RequestId& request_id,
     const Generics::Time& now,
-    const FreqCapIdList& c_fcs,
-    const FreqCapIdList& uc_fcs,
-    const FreqCapIdList& virtual_fcs,
-    const SeqOrderList& seq_orders,
+    const FreqCapIdArray& c_fcs,
+    const FreqCapIdArray& uc_fcs,
+    const FreqCapIdArray& virtual_fcs,
+    const SeqOrderArray& seq_orders,
     const CampaignIds& campaign_ids,
     const CampaignIds& uc_campaign_ids,
     const FreqCapConfig& fc_config) noexcept

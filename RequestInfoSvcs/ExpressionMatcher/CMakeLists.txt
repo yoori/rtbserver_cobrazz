@@ -72,6 +72,7 @@ target_link_libraries(ExpressionMatcher
   PlainStorage3
   SNMPAgent
   ProfileMap
+  ProfileMapRocksDB
   XMLUtility
   CampaignTypes
   CampaignConfigSource

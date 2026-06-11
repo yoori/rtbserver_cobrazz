@@ -110,15 +110,15 @@ namespace AdServer
       unsigned long channel_trigger_id;
     };
 
-    typedef std::vector<ChannelMatch> ChannelMatchVector;
+    typedef std::vector<ChannelMatch> ChannelMatchArray;
 
     struct ChannelMatchPack
     {
-      ChannelMatchVector page_channels;
-      ChannelMatchVector search_channels;
-      ChannelMatchVector url_channels;
-      ChannelMatchVector url_keyword_channels;
-      ChannelMatchVector audience_channels;
+      ChannelMatchArray page_channels;
+      ChannelMatchArray search_channels;
+      ChannelMatchArray url_channels;
+      ChannelMatchArray url_keyword_channels;
+      ChannelMatchArray audience_channels;
 
       ChannelIdVector persistent_channels;
     };

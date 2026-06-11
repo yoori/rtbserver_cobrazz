@@ -88,9 +88,9 @@ namespace AdServer
       get_full_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
-        UserFreqCapProfile::FreqCapIdList& freq_caps,
-        UserFreqCapProfile::FreqCapIdList& virtual_freq_caps,
-        UserFreqCapProfile::SeqOrderList& seq_orders,
+        UserFreqCapProfile::FreqCapIdArray& freq_caps,
+        UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
+        UserFreqCapProfile::SeqOrderArray& seq_orders,
         UserFreqCapProfile::CampaignFreqs& campaign_freqs)
         /*throw(ChunkNotFound, UserIsFraud, Exception)*/;
 
@@ -98,19 +98,19 @@ namespace AdServer
       co_get_full_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
-        UserFreqCapProfile::FreqCapIdList& freq_caps,
-        UserFreqCapProfile::FreqCapIdList& virtual_freq_caps,
-        UserFreqCapProfile::SeqOrderList& seq_orders,
+        UserFreqCapProfile::FreqCapIdArray& freq_caps,
+        UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
+        UserFreqCapProfile::SeqOrderArray& seq_orders,
         UserFreqCapProfile::CampaignFreqs& campaign_freqs);
 
       virtual void update_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
         const Commons::RequestId& request_id,
-        const UserFreqCapProfile::FreqCapIdList& freq_caps,
-        const UserFreqCapProfile::FreqCapIdList& uc_freq_caps,
-        const UserFreqCapProfile::FreqCapIdList& virtual_freq_caps,
-        const UserFreqCapProfile::SeqOrderList& seq_orders,
+        const UserFreqCapProfile::FreqCapIdArray& freq_caps,
+        const UserFreqCapProfile::FreqCapIdArray& uc_freq_caps,
+        const UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
+        const UserFreqCapProfile::SeqOrderArray& seq_orders,
         const UserFreqCapProfile::CampaignIds& campaign_ids,
         const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
         AdServer::ProfilingCommons::OperationPriority op_priority)
@@ -120,10 +120,10 @@ namespace AdServer
         const UserId& user_id,
         const Generics::Time& now,
         const Commons::RequestId& request_id,
-        const UserFreqCapProfile::FreqCapIdList& freq_caps,
-        const UserFreqCapProfile::FreqCapIdList& uc_freq_caps,
-        const UserFreqCapProfile::FreqCapIdList& virtual_freq_caps,
-        const UserFreqCapProfile::SeqOrderList& seq_orders,
+        const UserFreqCapProfile::FreqCapIdArray& freq_caps,
+        const UserFreqCapProfile::FreqCapIdArray& uc_freq_caps,
+        const UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
+        const UserFreqCapProfile::SeqOrderArray& seq_orders,
         const UserFreqCapProfile::CampaignIds& campaign_ids,
         const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
         AdServer::ProfilingCommons::OperationPriority op_priority);

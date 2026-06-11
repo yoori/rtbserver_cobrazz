@@ -394,7 +394,7 @@ namespace UserInfoSvcs
 
       ChannelTriggerMatchWriter cm_writer;
 
-      for (ChannelMatchVector::const_iterator it =  matched_channels.page_channels.begin();
+      for (ChannelMatchArray::const_iterator it =  matched_channels.page_channels.begin();
            it != matched_channels.page_channels.end(); ++it)
       {
         cm_writer.channel_id() = it->channel_id;
@@ -402,7 +402,7 @@ namespace UserInfoSvcs
         match_operation_writer.page_channels().push_back(cm_writer);
       }
 
-      for (ChannelMatchVector::const_iterator it =  matched_channels.search_channels.begin();
+      for (ChannelMatchArray::const_iterator it =  matched_channels.search_channels.begin();
            it != matched_channels.search_channels.end(); ++it)
       {
         cm_writer.channel_id() = it->channel_id;
@@ -410,7 +410,7 @@ namespace UserInfoSvcs
         match_operation_writer.search_channels().push_back(cm_writer);
       }
 
-      for (ChannelMatchVector::const_iterator it =  matched_channels.url_channels.begin();
+      for (ChannelMatchArray::const_iterator it =  matched_channels.url_channels.begin();
            it != matched_channels.url_channels.end(); ++it)
       {
         cm_writer.channel_id() = it->channel_id;
@@ -418,7 +418,7 @@ namespace UserInfoSvcs
         match_operation_writer.url_channels().push_back(cm_writer);
       }
 
-      for (ChannelMatchVector::const_iterator it =  matched_channels.url_keyword_channels.begin();
+      for (ChannelMatchArray::const_iterator it =  matched_channels.url_keyword_channels.begin();
            it != matched_channels.url_keyword_channels.end(); ++it)
       {
         cm_writer.channel_id() = it->channel_id;
@@ -572,10 +572,10 @@ namespace UserInfoSvcs
     const UserId& user_id,
     const Generics::Time& now,
     const Commons::RequestId& request_id,
-    const UserFreqCapProfile::FreqCapIdList& freq_caps,
-    const UserFreqCapProfile::FreqCapIdList& uc_freq_caps,
-    const UserFreqCapProfile::FreqCapIdList& virtual_freq_caps,
-    const UserFreqCapProfile::SeqOrderList& seq_orders,
+    const UserFreqCapProfile::FreqCapIdArray& freq_caps,
+    const UserFreqCapProfile::FreqCapIdArray& uc_freq_caps,
+    const UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
+    const UserFreqCapProfile::SeqOrderArray& seq_orders,
     const UserFreqCapProfile::CampaignIds& campaign_ids,
     const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
     AdServer::ProfilingCommons::OperationPriority op_priority)
@@ -604,7 +604,7 @@ namespace UserInfoSvcs
         uc_campaign_ids.end(),
         std::back_inserter(profile_writer.uc_campaign_ids()));
 
-      for (UserFreqCapProfile::SeqOrderList::const_iterator it = seq_orders.begin();
+      for (UserFreqCapProfile::SeqOrderArray::const_iterator it = seq_orders.begin();
            it != seq_orders.end(); ++it)
       {
         SeqOrderDescriptorWriter seq_order;

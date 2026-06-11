@@ -364,17 +364,16 @@ main(int argc, char** argv)
 
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params;
               match_params.no_result = false;
-              match_params.page_channel_ids.reserve(100);
+              match_params.matched_channels.page_channels.reserve(100);
               for(unsigned long channel_id = 1; channel_id <= 100; ++channel_id)
               {
-                AdServer::UserInfoSvcs::UserInfoManagerCore::ChannelTriggerMatch
-                  channel_trigger_match;
-                channel_trigger_match.channel_id = channel_id;
-                match_params.page_channel_ids.push_back(channel_trigger_match);
+                match_params.matched_channels.page_channels.emplace_back(
+                  channel_id,
+                  0);
               }
 
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result;
-              if(core->match(user_info, match_params, match_result))
+              if(core->co_match(user_info, match_params, match_result).sync_wait())
               {
                 matched.fetch_add(1, std::memory_order_relaxed);
               }

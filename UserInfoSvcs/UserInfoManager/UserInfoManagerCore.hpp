@@ -22,6 +22,7 @@
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <UserInfoSvcs/UserInfoCommons/ChannelMatcher.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
@@ -63,12 +64,6 @@ namespace AdServer::UserInfoSvcs
       bool temporary = false;
     };
 
-    struct ChannelTriggerMatch
-    {
-      unsigned long channel_id = 0;
-      unsigned long channel_trigger_id = 0;
-    };
-
     struct GeoData
     {
       CampaignSvcs::CoordDecimal latitude;
@@ -78,11 +73,7 @@ namespace AdServer::UserInfoSvcs
 
     struct MatchParams
     {
-      std::vector<ChannelTriggerMatch> page_channel_ids;
-      std::vector<ChannelTriggerMatch> search_channel_ids;
-      std::vector<ChannelTriggerMatch> url_channel_ids;
-      std::vector<ChannelTriggerMatch> url_keyword_channel_ids;
-      std::vector<unsigned long> persistent_channel_ids;
+      ChannelMatchPack matched_channels;
       std::string cohort;
       std::string cohort2;
       std::vector<GeoData> geo_data_seq;
@@ -182,13 +173,6 @@ namespace AdServer::UserInfoSvcs
 
     std::string get_progress() noexcept;
 
-    bool merge(
-      const UserInfo& user_info,
-      const MatchParams& match_params,
-      const UserProfiles& merge_user_profile,
-      bool& merge_success,
-      Generics::Time& last_request);
-
     AdServer::Commons::Task<bool> co_merge(
       const UserInfo& user_info,
       const MatchParams& match_params,
@@ -196,29 +180,14 @@ namespace AdServer::UserInfoSvcs
       bool& merge_success,
       Generics::Time& last_request);
 
-    bool fraud_user(
-      const AdServer::Commons::UserId& user_id,
-      const Generics::Time& time);
-
     AdServer::Commons::Task<bool> co_fraud_user(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time);
-
-    bool match(
-      const UserInfo& user_info,
-      const MatchParams& match_params,
-      MatchResult& match_result);
 
     AdServer::Commons::Task<bool> co_match(
       const UserInfo& user_info,
       const MatchParams& match_params,
       MatchResult& match_result);
-
-    bool get_user_profile(
-      const AdServer::Commons::UserId& user_id,
-      bool temporary,
-      const ProfilesRequest& profile_request,
-      UserProfiles& user_profile);
 
     AdServer::Commons::Task<bool> co_get_user_profile(
       const AdServer::Commons::UserId& user_id,
@@ -231,17 +200,6 @@ namespace AdServer::UserInfoSvcs
     AdServer::Commons::Task<bool> co_remove_user_profile(
       const AdServer::Commons::UserId& user_id);
 
-    void update_user_freq_caps(
-      const AdServer::Commons::UserId& user_id,
-      const Generics::Time& time,
-      const Generics::Uuid& request_id,
-      const std::vector<unsigned long>& freq_caps,
-      const std::vector<unsigned long>& uc_freq_caps,
-      const std::vector<unsigned long>& virtual_freq_caps,
-      const std::vector<SeqOrder>& seq_orders,
-      const std::vector<unsigned long>& campaign_ids,
-      const std::vector<unsigned long>& uc_campaign_ids);
-
     AdServer::Commons::Task<bool> co_update_user_freq_caps(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
@@ -253,22 +211,11 @@ namespace AdServer::UserInfoSvcs
       const std::vector<unsigned long>& campaign_ids,
       const std::vector<unsigned long>& uc_campaign_ids);
 
-    void confirm_user_freq_caps(
-      const AdServer::Commons::UserId& user_id,
-      const Generics::Time& time,
-      const Generics::Uuid& request_id,
-      const std::set<unsigned long>& exclude_pubpixel_accounts);
-
     AdServer::Commons::Task<bool> co_confirm_user_freq_caps(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
       const Generics::Uuid& request_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts);
-
-    void consider_publishers_optin(
-      const AdServer::Commons::UserId& user_id,
-      const std::set<unsigned long>& exclude_pubpixel_accounts,
-      const Generics::Time& now);
 
     AdServer::Commons::Task<bool> co_consider_publishers_optin(
       const AdServer::Commons::UserId& user_id,

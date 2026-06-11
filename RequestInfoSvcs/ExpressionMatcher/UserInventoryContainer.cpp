@@ -738,26 +738,15 @@ namespace RequestInfoSvcs
 
     try
     {
-      typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserChannelInventoryProfileAdapter>
-        AdaptUserChannelInventoryProfile;
-
       user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-        open_chunked_map<
+        open_rocksdb_chunked_map<
           UserId,
           AdServer::ProfilingCommons::UserIdAccessor,
-          unsigned long (*)(const Generics::Uuid& uuid),
-          AdaptUserChannelInventoryProfile>(
+          unsigned long (*)(const Generics::Uuid& uuid)>(
             common_chunks_number,
             chunk_folders,
             inv_prefix,
             user_level_map_traits,
-            *this,
-            Generics::ActiveObjectCallback_var(
-              new Logging::ActiveObjectCallbackImpl(
-                logger_,
-                "UserInventoryInfoContainer",
-                "ExpressionMatcher",
-                "ADS-IMPL-4024")),
             AdServer::Commons::uuid_distribution_hash);
     }
     catch(const eh::Exception& ex)

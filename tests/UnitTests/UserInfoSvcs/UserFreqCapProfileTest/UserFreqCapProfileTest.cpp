@@ -18,8 +18,8 @@ empty_full_fcs(
   const Generics::Time& now,
   const FreqCapConfig& fc_config)
 {
-  UserFreqCapProfile::FreqCapIdList fcs;
-  UserFreqCapProfile::SeqOrderList seq_orders;
+  UserFreqCapProfile::FreqCapIdArray fcs;
+  UserFreqCapProfile::SeqOrderArray seq_orders;
   UserFreqCapProfile::CampaignFreqs campaign_freqs;
   fc_profile.full(fcs, 0, seq_orders, campaign_freqs, now, fc_config);
   return fcs.empty();
@@ -31,8 +31,8 @@ fc_consider_and_period_check(
   const char* STEP,
   const AdServer::Commons::RequestId& req_id,
   const Generics::Time& now,
-  const UserFreqCapProfile::FreqCapIdList& fcs,
-  const UserFreqCapProfile::FreqCapIdList& uc_fcs,
+  const UserFreqCapProfile::FreqCapIdArray& fcs,
+  const UserFreqCapProfile::FreqCapIdArray& uc_fcs,
   const FreqCapConfig& fc_config,
   const Generics::Time& period)
 {
@@ -50,8 +50,8 @@ fc_consider_and_period_check(
     now,
     fcs,
     uc_fcs,
-    UserFreqCapProfile::FreqCapIdList(),
-    UserFreqCapProfile::SeqOrderList(),
+    UserFreqCapProfile::FreqCapIdArray(),
+    UserFreqCapProfile::SeqOrderArray(),
     UserFreqCapProfile::CampaignIds(),
     UserFreqCapProfile::CampaignIds(),
     fc_config);
@@ -119,7 +119,7 @@ int test_fc_full()
   UserFreqCapProfile fc_profile(Generics::transfer_membuf(buf));
 
   {
-    UserFreqCapProfile::FreqCapIdList fcs;
+    UserFreqCapProfile::FreqCapIdArray fcs;
     fcs.push_back(1);
 
     if(!fc_consider_and_period_check(
@@ -128,7 +128,7 @@ int test_fc_full()
          AdServer::Commons::RequestId(),
          Generics::Time(1),
          fcs,
-         UserFreqCapProfile::FreqCapIdList(),
+         UserFreqCapProfile::FreqCapIdArray(),
          *fc_config,
          Generics::Time(3)))
     {
@@ -141,7 +141,7 @@ int test_fc_full()
          AdServer::Commons::RequestId(),
          Generics::Time(4),
          fcs,
-         UserFreqCapProfile::FreqCapIdList(),
+         UserFreqCapProfile::FreqCapIdArray(),
          *fc_config,
          Generics::Time(3)))
     {
@@ -153,15 +153,15 @@ int test_fc_full()
         AdServer::Commons::RequestId(),
         Generics::Time(7),
         fcs,
-        UserFreqCapProfile::FreqCapIdList(),
-        UserFreqCapProfile::FreqCapIdList(),
-        UserFreqCapProfile::SeqOrderList(),
+        UserFreqCapProfile::FreqCapIdArray(),
+        UserFreqCapProfile::FreqCapIdArray(),
+        UserFreqCapProfile::SeqOrderArray(),
         UserFreqCapProfile::CampaignIds(),
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
 
-      UserFreqCapProfile::FreqCapIdList check_fcs;
-      UserFreqCapProfile::SeqOrderList seq_orders;
+      UserFreqCapProfile::FreqCapIdArray check_fcs;
+      UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(10), *fc_config);
       if(check_fcs.size() != 1 || *check_fcs.begin() != 1)
@@ -178,8 +178,8 @@ int test_fc_full()
     }
 
     {
-      UserFreqCapProfile::FreqCapIdList check_fcs;
-      UserFreqCapProfile::SeqOrderList seq_orders;
+      UserFreqCapProfile::FreqCapIdArray check_fcs;
+      UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(20), *fc_config);
       if(check_fcs.size() != 1 || *check_fcs.begin() != 1)
@@ -196,8 +196,8 @@ int test_fc_full()
     }
 
     {
-      UserFreqCapProfile::FreqCapIdList check_fcs;
-      UserFreqCapProfile::SeqOrderList seq_orders;
+      UserFreqCapProfile::FreqCapIdArray check_fcs;
+      UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(22), *fc_config);
       if(!check_fcs.empty())
@@ -255,10 +255,10 @@ int test_ucfc()
     SmartMemBuf_var buf(new SmartMemBuf);
     UserFreqCapProfile fc_profile(Generics::transfer_membuf(buf));
 
-    UserFreqCapProfile::FreqCapIdList fcs;
+    UserFreqCapProfile::FreqCapIdArray fcs;
     fcs.push_back(1);
 
-    UserFreqCapProfile::FreqCapIdList fcs2;
+    UserFreqCapProfile::FreqCapIdArray fcs2;
     fcs2.push_back(2);
 
     if(!fc_consider_and_period_check(
@@ -266,7 +266,7 @@ int test_ucfc()
          "step #1",
          AdServer::Commons::RequestId::create_random_based(),
          Generics::Time(1),
-         UserFreqCapProfile::FreqCapIdList(),
+         UserFreqCapProfile::FreqCapIdArray(),
          fcs,
          *fc_config,
          Generics::Time::ZERO))
@@ -279,7 +279,7 @@ int test_ucfc()
          "step #2",
          AdServer::Commons::RequestId::create_random_based(),
          Generics::Time(1),
-         UserFreqCapProfile::FreqCapIdList(),
+         UserFreqCapProfile::FreqCapIdArray(),
          fcs2,
          *fc_config,
          Generics::Time::ZERO))
@@ -288,8 +288,8 @@ int test_ucfc()
     }
 
     {
-      UserFreqCapProfile::FreqCapIdList check_fcs;
-      UserFreqCapProfile::SeqOrderList seq_orders;
+      UserFreqCapProfile::FreqCapIdArray check_fcs;
+      UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(7), *fc_config);
       if(!check_fcs.empty())
@@ -312,10 +312,10 @@ int test_ucfc()
       fc_profile.consider(
         req_id,
         Generics::Time(25),
-        UserFreqCapProfile::FreqCapIdList(),
+        UserFreqCapProfile::FreqCapIdArray(),
         fcs, // unconfirmed
-        UserFreqCapProfile::FreqCapIdList(),
-        UserFreqCapProfile::SeqOrderList(),
+        UserFreqCapProfile::FreqCapIdArray(),
+        UserFreqCapProfile::SeqOrderArray(),
         UserFreqCapProfile::CampaignIds(),
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
@@ -323,10 +323,10 @@ int test_ucfc()
       fc_profile.consider(
         AdServer::Commons::RequestId::create_random_based(),
         Generics::Time(26),
-        UserFreqCapProfile::FreqCapIdList(),
+        UserFreqCapProfile::FreqCapIdArray(),
         fcs2, // unconfirmed
-        UserFreqCapProfile::FreqCapIdList(),
-        UserFreqCapProfile::SeqOrderList(),
+        UserFreqCapProfile::FreqCapIdArray(),
+        UserFreqCapProfile::SeqOrderArray(),
         UserFreqCapProfile::CampaignIds(),
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
@@ -336,8 +336,8 @@ int test_ucfc()
         Generics::Time(26),
         *fc_config);
 
-      UserFreqCapProfile::FreqCapIdList check_fcs;
-      UserFreqCapProfile::SeqOrderList seq_orders;
+      UserFreqCapProfile::FreqCapIdArray check_fcs;
+      UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(26 + 6), *fc_config);
       if(check_fcs.size() != 1 || *check_fcs.begin() != 1)
@@ -358,10 +358,10 @@ int test_ucfc()
     SmartMemBuf_var buf(new SmartMemBuf);
     UserFreqCapProfile fc_profile(Generics::transfer_membuf(buf));
 
-    UserFreqCapProfile::FreqCapIdList fcs2;
+    UserFreqCapProfile::FreqCapIdArray fcs2;
     fcs2.push_back(2);
 
-    UserFreqCapProfile::FreqCapIdList fcs3;
+    UserFreqCapProfile::FreqCapIdArray fcs3;
     fcs3.push_back(3);
 
     // two unconfirmed imps at one freq cap - one confirmed after
@@ -373,10 +373,10 @@ int test_ucfc()
     fc_profile.consider(
       req_id,
       Generics::Time(25),
-      UserFreqCapProfile::FreqCapIdList(),
+      UserFreqCapProfile::FreqCapIdArray(),
       fcs3, // unconfirmed
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds(),
       UserFreqCapProfile::CampaignIds(),
       *fc_config);
@@ -384,10 +384,10 @@ int test_ucfc()
     fc_profile.consider(
       AdServer::Commons::RequestId::create_random_based(),
       Generics::Time(26),
-      UserFreqCapProfile::FreqCapIdList(),
+      UserFreqCapProfile::FreqCapIdArray(),
       fcs2, // unconfirmed
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds(),
       UserFreqCapProfile::CampaignIds(),
       *fc_config);
@@ -395,10 +395,10 @@ int test_ucfc()
     fc_profile.consider(
       req_id2,
       Generics::Time(29),
-      UserFreqCapProfile::FreqCapIdList(),
+      UserFreqCapProfile::FreqCapIdArray(),
       fcs3, // unconfirmed
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds(),
       UserFreqCapProfile::CampaignIds(),
       *fc_config);
@@ -408,8 +408,8 @@ int test_ucfc()
       Generics::Time(29),
       *fc_config);
 
-    UserFreqCapProfile::FreqCapIdList check_fcs;
-    UserFreqCapProfile::SeqOrderList seq_orders;
+    UserFreqCapProfile::FreqCapIdArray check_fcs;
+    UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
     fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(25 + 6), *fc_config);
     if(check_fcs.size() != 2 || *check_fcs.begin() != 2 ||
@@ -453,8 +453,8 @@ int test_ucfc()
 bool
 check_fcs(
   const String::SubString& STEP,
-  const UserFreqCapProfile::FreqCapIdList& check_fcs,
-  const UserFreqCapProfile::FreqCapIdList& etalon)
+  const UserFreqCapProfile::FreqCapIdArray& check_fcs,
+  const UserFreqCapProfile::FreqCapIdArray& etalon)
 {
   if(check_fcs.size() != etalon.size() ||
     !std::equal(check_fcs.begin(), check_fcs.end(), etalon.begin()))
@@ -498,7 +498,7 @@ concurrent_case_ADSC_9494()
     for(int i = 0; i < 2; ++i)
     {
       // step 1: consider request
-      UserFreqCapProfile::FreqCapIdList fcs;
+      UserFreqCapProfile::FreqCapIdArray fcs;
       fcs.push_back(1);
 
       // two unconfirmed imps at one freq cap - one confirmed after
@@ -508,10 +508,10 @@ concurrent_case_ADSC_9494()
       fc_profile.consider(
         req_id,
         BASE,
-        UserFreqCapProfile::FreqCapIdList(),
+        UserFreqCapProfile::FreqCapIdArray(),
         fcs, // unconfirmed
-        UserFreqCapProfile::FreqCapIdList(),
-        UserFreqCapProfile::SeqOrderList(),
+        UserFreqCapProfile::FreqCapIdArray(),
+        UserFreqCapProfile::SeqOrderArray(),
         UserFreqCapProfile::CampaignIds(),
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
@@ -522,7 +522,7 @@ concurrent_case_ADSC_9494()
     for(int i = 0; i < 2; ++i)
     {
       // step 2: consider concurrent request
-      UserFreqCapProfile::FreqCapIdList fcs;
+      UserFreqCapProfile::FreqCapIdArray fcs;
       fcs.push_back(1);
 
       // two unconfirmed imps at one freq cap - one confirmed after
@@ -532,10 +532,10 @@ concurrent_case_ADSC_9494()
       fc_profile.consider(
         req_id,
         BASE + 1,
-        UserFreqCapProfile::FreqCapIdList(),
+        UserFreqCapProfile::FreqCapIdArray(),
         fcs, // unconfirmed
-        UserFreqCapProfile::FreqCapIdList(),
-        UserFreqCapProfile::SeqOrderList(),
+        UserFreqCapProfile::FreqCapIdArray(),
+        UserFreqCapProfile::SeqOrderArray(),
         UserFreqCapProfile::CampaignIds(),
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
@@ -551,10 +551,10 @@ concurrent_case_ADSC_9494()
 
     {
       // step 3: initiate last_impressions cleanup
-      UserFreqCapProfile::FreqCapIdList etalon_fcs;
+      UserFreqCapProfile::FreqCapIdArray etalon_fcs;
       etalon_fcs.push_back(1);
-      UserFreqCapProfile::FreqCapIdList full_fcs;
-      UserFreqCapProfile::SeqOrderList skip;
+      UserFreqCapProfile::FreqCapIdArray full_fcs;
+      UserFreqCapProfile::SeqOrderArray skip;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(
         full_fcs,
@@ -598,10 +598,10 @@ test_campaign_freqs()
     fc_profile.consider(
       req_id,
       BASE,
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds(),
       UserFreqCapProfile::CampaignIds{200, 100},
       *fc_config);
@@ -652,8 +652,8 @@ test_campaign_freqs()
 
   {
     UserFreqCapProfile fc_profile(Generics::transfer_membuf(buf));
-    UserFreqCapProfile::FreqCapIdList full_fcs;
-    UserFreqCapProfile::SeqOrderList seq_orders;
+    UserFreqCapProfile::FreqCapIdArray full_fcs;
+    UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
 
     fc_profile.full(
@@ -676,16 +676,16 @@ test_campaign_freqs()
     fc_profile.consider(
       req_id,
       BASE,
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds(),
       UserFreqCapProfile::CampaignIds{200, 100},
       *fc_config);
 
-    UserFreqCapProfile::FreqCapIdList full_fcs;
-    UserFreqCapProfile::SeqOrderList seq_orders;
+    UserFreqCapProfile::FreqCapIdArray full_fcs;
+    UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
 
     fc_profile.full(
@@ -711,10 +711,10 @@ test_campaign_freqs()
     fc_profile2.consider(
       req_id,
       BASE,
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds{300, 100},
       UserFreqCapProfile::CampaignIds(),
       *fc_config);
@@ -722,10 +722,10 @@ test_campaign_freqs()
     fc_profile2.consider(
       req_id,
       BASE,
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::FreqCapIdList(),
-      UserFreqCapProfile::SeqOrderList(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::FreqCapIdArray(),
+      UserFreqCapProfile::SeqOrderArray(),
       UserFreqCapProfile::CampaignIds{100},
       UserFreqCapProfile::CampaignIds(),
       *fc_config);
@@ -735,8 +735,8 @@ test_campaign_freqs()
     UserFreqCapProfile fc_profile(Generics::transfer_membuf(buf));
     fc_profile.merge(Generics::transfer_membuf(buf2), BASE + 30, *fc_config);
 
-    UserFreqCapProfile::FreqCapIdList full_fcs;
-    UserFreqCapProfile::SeqOrderList seq_orders;
+    UserFreqCapProfile::FreqCapIdArray full_fcs;
+    UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
 
     fc_profile.full(
@@ -784,8 +784,8 @@ main(
         Generics::Time(3600)  // window time
         )));
 
-    UserFreqCapProfile::FreqCapIdList fcs;
-    UserFreqCapProfile::SeqOrderList seq_orders;
+    UserFreqCapProfile::FreqCapIdArray fcs;
+    UserFreqCapProfile::SeqOrderArray seq_orders;
     Generics::Time now = Generics::Time(1435915007 + 9000) + Generics::Time::ONE_DAY * 10;
     std::cerr << now.gm_ft() << std::endl;
 

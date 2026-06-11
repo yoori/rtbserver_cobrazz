@@ -495,12 +495,6 @@ namespace RequestInfoSvcs
         chunk_inventory_folders,
         expression_matcher_config_.ChunksConfig().chunks_root().c_str(),
         "Chunk");
-      for(auto iter = chunk_inventory_folders.begin();
-          iter != chunk_inventory_folders.end();
-          ++iter)
-      {
-        iter->second += "/Inventory";
-      }
 
       if(!user_inventory_container_.get().in())
       {
@@ -539,12 +533,6 @@ namespace RequestInfoSvcs
           chunk_trigger_folders,
           expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig().chunks_root().c_str(),
           "Chunk");
-        for(auto iter = chunk_trigger_folders.begin();
-            iter != chunk_trigger_folders.end();
-            ++iter)
-        {
-          iter->second += "/UserTriggerMatch";
-        }
       }
       catch(const eh::Exception& ex)
       {
@@ -572,7 +560,8 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
             profile_cache_,
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->TempUserChunksConfig()),
-            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
+            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig()),
+            true
             );
 
           add_child_object(temp_user_trigger_match_container.in(), true);
@@ -635,7 +624,8 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
             profile_cache_,
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig()),
-            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
+            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig()),
+            true
             );
 
           add_child_object(user_trigger_match_container.in(), true);
@@ -659,12 +649,6 @@ namespace RequestInfoSvcs
         chunk_colo_reach_folders,
         expression_matcher_config_.HouseholdColoReachChunksConfig().chunks_root().c_str(),
         "Chunk");
-      for(auto iter = chunk_colo_reach_folders.begin();
-          iter != chunk_colo_reach_folders.end();
-          ++iter)
-      {
-        iter->second += "/HouseholdColoReach";
-      }
 
       if(!household_colo_reach_container_.get().in())
       {

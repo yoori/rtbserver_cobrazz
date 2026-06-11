@@ -33,26 +33,42 @@ namespace AdServer
         typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserColoReachProfileAdapter>
           AdaptUserColoReachProfile;
 
-        user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-          open_chunked_map<
-            AdServer::Commons::UserId,
-            AdServer::ProfilingCommons::UserIdAccessor,
-            unsigned long (*)(const Generics::Uuid& uuid),
-            AdaptUserColoReachProfile>(
-              common_chunks_number,
-              chunk_folders,
-              file_prefix,
-              user_level_map_traits,
-              *this,
-              Generics::ActiveObjectCallback_var(
-                new Logging::ActiveObjectCallbackImpl(
-                  logger_,
-                  "UserColoReachContainer",
-                  "ExpressionMatcher",
-                  "ADS-IMPL-4024")),
-              AdServer::Commons::uuid_distribution_hash,
-              nullptr // file controller
-              );
+        if(HOUSEHOLD_)
+        {
+          user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+            open_rocksdb_chunked_map<
+              AdServer::Commons::UserId,
+              AdServer::ProfilingCommons::UserIdAccessor,
+              unsigned long (*)(const Generics::Uuid& uuid)>(
+                common_chunks_number,
+                chunk_folders,
+                file_prefix,
+                user_level_map_traits,
+                AdServer::Commons::uuid_distribution_hash);
+        }
+        else
+        {
+          user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+            open_chunked_map<
+              AdServer::Commons::UserId,
+              AdServer::ProfilingCommons::UserIdAccessor,
+              unsigned long (*)(const Generics::Uuid& uuid),
+              AdaptUserColoReachProfile>(
+                common_chunks_number,
+                chunk_folders,
+                file_prefix,
+                user_level_map_traits,
+                *this,
+                Generics::ActiveObjectCallback_var(
+                  new Logging::ActiveObjectCallbackImpl(
+                    logger_,
+                    "UserColoReachContainer",
+                    "ExpressionMatcher",
+                    "ADS-IMPL-4024")),
+                AdServer::Commons::uuid_distribution_hash,
+                nullptr // file controller
+                );
+        }
       }
       catch(const eh::Exception& ex)
       {
@@ -489,4 +505,3 @@ namespace AdServer
     }
   }
 }
-

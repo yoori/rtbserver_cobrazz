@@ -421,6 +421,60 @@ namespace ProfilingCommons
 
     template<typename KeyType,
       typename KeyAccessorType,
+      typename KeyHashType>
+    static
+    ReferenceCounting::SmartPtr<
+      AdServer::ProfilingCommons::ChunkedProfileMap<
+        KeyType, AdServer::ProfilingCommons::TransactionProfileMap<KeyType>, KeyHashType> >
+    open_rocksdb_chunked_map(
+      unsigned long common_chunks_number,
+      const ChunkPathMap& chunk_folders,
+      const char* chunk_prefix,
+      const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+      KeyHashType key_hash,
+      unsigned long max_waiters = 0)
+      /*throw(eh::Exception)*/
+    {
+      typedef ChunkedProfileMap<
+        KeyType,
+        AdServer::ProfilingCommons::TransactionProfileMap<KeyType>,
+        KeyHashType> ProfileMapType;
+      typedef RocksDBBatchingProfileMap<
+        KeyType,
+        KeyAccessorStringAdapter<KeyAccessorType> >
+        RocksDBMap;
+
+      typename ProfileMapType::ChunkIdToProfileMap chunks;
+
+      for(ChunkPathMap::const_iterator chunk_folder_it =
+            chunk_folders.begin();
+          chunk_folder_it != chunk_folders.end(); ++chunk_folder_it)
+      {
+        const std::string rocksdb_path =
+          chunk_folder_it->second + "/" + chunk_prefix + ".rocksdb";
+        ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map =
+          new RocksDBMap(
+            String::SubString(rocksdb_path.c_str()),
+            user_level_map_traits.expire_time);
+        rocksdb_map->activate_object();
+
+        ReferenceCounting::SmartPtr<
+          AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =
+            new TransactionProfileMap<KeyType>(
+              rocksdb_map,
+              max_waiters);
+
+        chunks.insert(std::make_pair(chunk_folder_it->first, base_map));
+      }
+
+      return new ProfileMapType(
+        common_chunks_number,
+        chunks,
+        key_hash);
+    }
+
+    template<typename KeyType,
+      typename KeyAccessorType,
       typename KeyHashType,
       typename AdapterOptionalType>
     static

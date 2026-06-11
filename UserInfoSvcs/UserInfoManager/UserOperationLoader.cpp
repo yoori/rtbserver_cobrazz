@@ -651,10 +651,10 @@ namespace UserInfoSvcs
     const UserFreqCapUpdateOperationReader reader(
       smb.in()->membuf().data(),
       smb.in()->membuf().size());
-    UserFreqCapProfile::FreqCapIdList freq_caps;
-    UserFreqCapProfile::FreqCapIdList uc_freq_caps;
-    UserFreqCapProfile::FreqCapIdList virtual_freq_caps;
-    UserFreqCapProfile::SeqOrderList seq_orders;
+    UserFreqCapProfile::FreqCapIdArray freq_caps;
+    UserFreqCapProfile::FreqCapIdArray uc_freq_caps;
+    UserFreqCapProfile::FreqCapIdArray virtual_freq_caps;
+    UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignIds campaign_ids;
     UserFreqCapProfile::CampaignIds uc_campaign_ids;
 
