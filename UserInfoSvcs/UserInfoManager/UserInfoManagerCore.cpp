@@ -1,4 +1,6 @@
 #include <list>
+#include <iostream>
+#include <sstream>
 #include <vector>
 #include <iterator>
 
@@ -73,6 +75,229 @@ namespace
 
 namespace AdServer::UserInfoSvcs
 {
+  namespace
+  {
+    std::string
+    user_id_to_string(const AdServer::Commons::UserId& user_id)
+    {
+      return user_id.is_null() ? std::string("<null>") : user_id.to_string();
+    }
+
+    template<typename Container>
+    void
+    print_id_sequence(
+      std::ostream& out,
+      const char* name,
+      const Container& values)
+    {
+      out << "  " << name << " = [";
+      bool first = true;
+      for (const auto& value : values)
+      {
+        if (!first)
+        {
+          out << ',';
+        }
+        first = false;
+        out << value;
+      }
+      out << "]\n";
+    }
+
+    template<typename Container>
+    void
+    print_channel_trigger_sequence(
+      std::ostream& out,
+      const char* name,
+      const Container& values)
+    {
+      out << "  " << name << " = [";
+      bool first = true;
+      for (const auto& value : values)
+      {
+        if (!first)
+        {
+          out << ',';
+        }
+        first = false;
+        out << value.channel_id << ':' << value.channel_trigger_id;
+      }
+      out << "]\n";
+    }
+
+    void
+    print_geo_data_sequence(
+      std::ostream& out,
+      const char* name,
+      const std::vector<UserInfoManagerCore::GeoData>& values)
+    {
+      out << "  " << name << " = [";
+      bool first = true;
+      for (const auto& value : values)
+      {
+        if (!first)
+        {
+          out << ',';
+        }
+        first = false;
+        out << "{latitude=" << value.latitude <<
+          ",longitude=" << value.longitude <<
+          ",accuracy=" << value.accuracy << '}';
+      }
+      out << "]\n";
+    }
+
+    void
+    print_channel_weight_sequence(
+      std::ostream& out,
+      const char* name,
+      const std::vector<UserInfoManagerCore::ChannelWeight>& values)
+    {
+      out << "  " << name << " = [";
+      bool first = true;
+      for (const auto& value : values)
+      {
+        if (!first)
+        {
+          out << ',';
+        }
+        first = false;
+        out << value.channel_id << ':' << value.weight;
+      }
+      out << "]\n";
+    }
+
+    void
+    print_seq_order_sequence(
+      std::ostream& out,
+      const char* name,
+      const std::vector<UserInfoManagerCore::SeqOrder>& values)
+    {
+      out << "  " << name << " = [";
+      bool first = true;
+      for (const auto& value : values)
+      {
+        if (!first)
+        {
+          out << ',';
+        }
+        first = false;
+        out << "{ccg_id=" << value.ccg_id <<
+          ",set_id=" << value.set_id <<
+          ",imps=" << value.imps << '}';
+      }
+      out << "]\n";
+    }
+
+    void
+    print_campaign_freq_sequence(
+      std::ostream& out,
+      const char* name,
+      const std::vector<UserInfoManagerCore::CampaignFreq>& values)
+    {
+      out << "  " << name << " = [";
+      bool first = true;
+      for (const auto& value : values)
+      {
+        if (!first)
+        {
+          out << ',';
+        }
+        first = false;
+        out << value.campaign_id << ':' << value.imps;
+      }
+      out << "]\n";
+    }
+
+    void
+    debug_print_match_input(
+      const char* function_name,
+      const UserInfoManagerCore::UserInfo& user_info,
+      const UserInfoManagerCore::MatchParams& match_params)
+    {
+      std::ostringstream out;
+      out << "=== " << function_name << " input ===\n"
+        << "  user_id = " << user_id_to_string(user_info.user_id) << '\n'
+        << "  huser_id = " << user_id_to_string(user_info.huser_id) << '\n'
+        << "  time = " << user_info.time << '\n'
+        << "  request_colo_id = " << user_info.request_colo_id << '\n'
+        << "  current_colo_id = " << user_info.current_colo_id << '\n'
+        << "  temporary = " << user_info.temporary << '\n';
+
+      print_channel_trigger_sequence(
+        out, "page_channel_ids", match_params.matched_channels.page_channels);
+      print_channel_trigger_sequence(
+        out, "search_channel_ids", match_params.matched_channels.search_channels);
+      print_channel_trigger_sequence(
+        out, "url_channel_ids", match_params.matched_channels.url_channels);
+      print_channel_trigger_sequence(
+        out, "url_keyword_channel_ids",
+        match_params.matched_channels.url_keyword_channels);
+      print_id_sequence(
+        out, "persistent_channel_ids",
+        match_params.matched_channels.persistent_channels);
+      out << "  cohort = " << match_params.cohort << '\n'
+        << "  cohort2 = " << match_params.cohort2 << '\n';
+      print_geo_data_sequence(out, "geo_data_seq", match_params.geo_data_seq);
+      out << "  publishers_optin_timeout = " <<
+          match_params.publishers_optin_timeout << '\n'
+        << "  use_empty_profile = " << match_params.use_empty_profile << '\n'
+        << "  filter_contextual_triggers = " <<
+          match_params.filter_contextual_triggers << '\n'
+        << "  silent_match = " << match_params.silent_match << '\n'
+        << "  no_match = " << match_params.no_match << '\n'
+        << "  no_result = " << match_params.no_result << '\n'
+        << "  provide_channel_count = " <<
+          match_params.provide_channel_count << '\n'
+        << "  provide_persistent_channels = " <<
+          match_params.provide_persistent_channels << '\n'
+        << "  change_last_request = " <<
+          match_params.change_last_request << '\n'
+        << "  ret_freq_caps = " << match_params.ret_freq_caps << '\n';
+
+      std::cout << out.str() << std::flush;
+    }
+
+    void
+    debug_print_match_result(
+      const char* function_name,
+      bool result,
+      const UserInfoManagerCore::MatchResult& match_result)
+    {
+      std::ostringstream out;
+      out << "=== " << function_name << " output ===\n"
+        << "  return = " << result << '\n'
+        << "  adv_channel_count = " << match_result.adv_channel_count << '\n'
+        << "  discover_channel_count = " <<
+          match_result.discover_channel_count << '\n'
+        << "  colo_id = " << match_result.colo_id << '\n'
+        << "  times_inited = " << match_result.times_inited << '\n'
+        << "  last_request_time = " << match_result.last_request_time << '\n'
+        << "  create_time = " << match_result.create_time << '\n'
+        << "  session_start = " << match_result.session_start << '\n'
+        << "  fraud_request = " << match_result.fraud_request << '\n'
+        << "  cohort = " << match_result.cohort << '\n'
+        << "  cohort2 = " << match_result.cohort2 << '\n';
+      print_geo_data_sequence(out, "geo_data_seq", match_result.geo_data_seq);
+      print_id_sequence(
+        out, "exclude_pubpixel_accounts",
+        match_result.exclude_pubpixel_accounts);
+      print_id_sequence(out, "full_freq_caps", match_result.full_freq_caps);
+      print_id_sequence(
+        out, "full_virtual_freq_caps",
+        match_result.full_virtual_freq_caps);
+      print_seq_order_sequence(out, "seq_orders", match_result.seq_orders);
+      print_campaign_freq_sequence(
+        out, "campaign_freqs", match_result.campaign_freqs);
+      print_channel_weight_sequence(out, "channels", match_result.channels);
+      print_channel_weight_sequence(
+        out, "hid_channels", match_result.hid_channels);
+      out << "  process_time = " << match_result.process_time << '\n';
+
+      std::cout << out.str() << std::flush;
+    }
+  }
+
   UserInfoManagerCore::~UserInfoManagerCore() noexcept = default;
 
   UserInfoManagerCore::ByteVector
@@ -887,6 +1112,8 @@ namespace AdServer::UserInfoSvcs
   {
     static const char* FUN = "UserInfoManagerCore::co_match()";
 
+    debug_print_match_input(FUN, user_info, match_params);
+
     try
     {
       Generics::Timer process_timer;
@@ -1102,6 +1329,7 @@ namespace AdServer::UserInfoSvcs
       process_timer.stop();
       match_result.process_time = process_timer.elapsed_time();
 
+      debug_print_match_result(FUN, true, match_result);
       co_return true;
     }
     catch (const UserInfoContainer::NotReady& ex)
