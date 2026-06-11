@@ -576,7 +576,9 @@ namespace Cpp
       offset_ << "}" << std::endl << std::endl;
 
     /* move c-tor */
-    out_ << offset_ << "inline" << std::endl <<
+    out_ << "#pragma GCC diagnostic push" << std::endl <<
+      "#pragma GCC diagnostic ignored \"-Wmaybe-uninitialized\"" << std::endl <<
+      offset_ << "inline" << std::endl <<
       offset_ << class_name << "::" << class_name <<
         "(" << class_name << "&& " <<
         (!fields->empty() ? "right" : "/*right*/") << ")";
@@ -590,7 +592,8 @@ namespace Cpp
     Utils::fetch_fields_with_fixed_sum(
       *fields, FieldBuffersCopyImplOps(out_, (offset_ + "  ").c_str()));
 
-    out_ << offset_ << "}" << std::endl << std::endl;
+    out_ << offset_ << "}" << std::endl <<
+      "#pragma GCC diagnostic pop" << std::endl << std::endl;
 
     /* c-tor(const void* buf, unsigned long buf_size) */
     out_ << offset_ << "inline" << std::endl <<
