@@ -237,7 +237,7 @@ namespace AdServer
         long last_colo_id,
         long current_placement_colo_id,
         ColoUserId& colo_user_id,
-        const ChannelMatchPack& matched_channels,
+        const ChannelIdPack& matched_channels,
         ChannelMatchMap& result_channels,
         UserAppearance& user_app,
         //PartlyMatchResult& partly_match_result,
@@ -252,7 +252,7 @@ namespace AdServer
         long last_colo_id,
         long current_placement_colo_id,
         ColoUserId& colo_user_id,
-        const ChannelMatchPack& matched_channels,
+        const ChannelIdPack& matched_channels,
         ChannelMatchMap& result_channels,
         UserAppearance& user_app,
         ProfileProperties& properties,
@@ -361,7 +361,7 @@ namespace AdServer
       void trace_match_request_(
         std::ostream& ostr,
         const RequestMatchParams& request_params,
-        const ChannelMatchPack& matched_channels,
+        const ChannelIdPack& matched_channels,
         const Generics::MemBuf& base_profile,
         const Generics::MemBuf* add_profile)
         noexcept;

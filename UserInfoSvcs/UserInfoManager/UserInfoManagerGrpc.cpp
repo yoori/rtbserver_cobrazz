@@ -235,20 +235,6 @@ namespace AdServer::UserInfoSvcs
     }
 
     template<typename Repeated>
-    ChannelMatchArray
-    unpack_channel_matches_(const Repeated& src)
-    {
-      ChannelMatchArray result;
-      result.reserve(src.size());
-      for(int i = 0; i < src.size(); ++i)
-      {
-        const auto& item = src.Get(i);
-        result.emplace_back(item.channel_id(), item.channel_trigger_id());
-      }
-      return result;
-    }
-
-    template<typename Repeated>
     std::vector<unsigned long> unpack_ids_(const Repeated& src)
     {
       std::vector<unsigned long> result;
@@ -256,6 +242,19 @@ namespace AdServer::UserInfoSvcs
       for(int i = 0; i < src.size(); ++i)
       {
         result.push_back(src.Get(i));
+      }
+      return result;
+    }
+
+    template<typename Repeated>
+    ChannelIdVector
+    unpack_channel_ids_(const Repeated& src)
+    {
+      ChannelIdVector result;
+      result.reserve(src.size());
+      for(int i = 0; i < src.size(); ++i)
+      {
+        result.push_back(src.Get(i).channel_id());
       }
       return result;
     }
@@ -291,13 +290,13 @@ namespace AdServer::UserInfoSvcs
     {
       UserInfoManagerCore::MatchParams dst;
       dst.matched_channels.page_channels =
-        unpack_channel_matches_(src.page_channel_ids());
+        unpack_channel_ids_(src.page_channel_ids());
       dst.matched_channels.search_channels =
-        unpack_channel_matches_(src.search_channel_ids());
+        unpack_channel_ids_(src.search_channel_ids());
       dst.matched_channels.url_channels =
-        unpack_channel_matches_(src.url_channel_ids());
+        unpack_channel_ids_(src.url_channel_ids());
       dst.matched_channels.url_keyword_channels =
-        unpack_channel_matches_(src.url_keyword_channel_ids());
+        unpack_channel_ids_(src.url_keyword_channel_ids());
       dst.matched_channels.persistent_channels =
         unpack_ids_(src.persistent_channel_ids());
       dst.cohort = src.cohort();

@@ -503,15 +503,14 @@ namespace UserInfoSvcs
 
     channel_match_params.no_result = true;
 
-    ChannelMatchPack matched_channels;
+    ChannelIdPack matched_channels;
 
     matched_channels.page_channels.reserve(reader.page_channels().size());
 
     for (UserMatchOperationReader::page_channels_Container::const_iterator it =
            reader.page_channels().begin(); it != reader.page_channels().end(); ++it)
     {
-      matched_channels.page_channels.push_back(
-        ChannelMatch((*it).channel_id(), (*it).channel_trigger_id()));
+      matched_channels.page_channels.push_back((*it).channel_id());
     }
 
     matched_channels.search_channels.reserve(reader.search_channels().size());
@@ -519,8 +518,7 @@ namespace UserInfoSvcs
     for (UserMatchOperationReader::search_channels_Container::const_iterator it =
            reader.search_channels().begin(); it != reader.search_channels().end(); ++it)
     {
-      matched_channels.search_channels.push_back(
-        ChannelMatch((*it).channel_id(), (*it).channel_trigger_id()));
+      matched_channels.search_channels.push_back((*it).channel_id());
     }
 
     matched_channels.url_channels.reserve(reader.url_channels().size());
@@ -528,8 +526,7 @@ namespace UserInfoSvcs
     for (UserMatchOperationReader::url_channels_Container::const_iterator it =
            reader.url_channels().begin(); it != reader.url_channels().end(); ++it)
     {
-      matched_channels.url_channels.push_back(
-        ChannelMatch((*it).channel_id(), (*it).channel_trigger_id()));
+      matched_channels.url_channels.push_back((*it).channel_id());
     }
 
     matched_channels.url_keyword_channels.reserve(reader.url_keyword_channels().size());
@@ -537,8 +534,7 @@ namespace UserInfoSvcs
     for (UserMatchOperationReader::url_keyword_channels_Container::const_iterator it =
            reader.url_keyword_channels().begin(); it != reader.url_keyword_channels().end(); ++it)
     {
-      matched_channels.url_keyword_channels.push_back(
-        ChannelMatch((*it).channel_id(), (*it).channel_trigger_id()));
+      matched_channels.url_keyword_channels.push_back((*it).channel_id());
     }
 
     matched_channels.persistent_channels.reserve(reader.persistent_channels().size());

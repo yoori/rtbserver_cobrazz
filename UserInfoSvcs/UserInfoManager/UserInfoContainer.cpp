@@ -2053,7 +2053,7 @@ namespace UserInfoSvcs
     long last_colo_id,
     long current_placement_colo_id,
     ColoUserId& colo_user_id,
-    const ChannelMatchPack& matched_channels,
+    const ChannelIdPack& matched_channels,
     ChannelMatchMap& result_channels,
     UserAppearance& user_app,
     ProfileProperties& properties,
@@ -2411,7 +2411,7 @@ namespace UserInfoSvcs
     long last_colo_id,
     long current_placement_colo_id,
     ColoUserId& colo_user_id,
-    const ChannelMatchPack& matched_channels,
+    const ChannelIdPack& matched_channels,
     ChannelMatchMap& result_channels,
     UserAppearance& user_app,
     ProfileProperties& properties,
@@ -3148,7 +3148,7 @@ namespace UserInfoSvcs
   UserInfoContainer::trace_match_request_(
     std::ostream& ostr,
     const RequestMatchParams& request_params,
-    const ChannelMatchPack& matched_channels,
+    const ChannelIdPack& matched_channels,
     const Generics::MemBuf& base_profile,
     const Generics::MemBuf* add_profile)
     noexcept
@@ -3169,32 +3169,28 @@ namespace UserInfoSvcs
       matched_channels.persistent_channels.end());
 
     ostr << std::endl << "  Url channels: ";
-    Algs::print_fields(
+    Algs::print(
       ostr,
-      matched_channels.url_channels,
-      &ChannelMatch::channel_id,
-      &ChannelMatch::channel_trigger_id);
+      matched_channels.url_channels.begin(),
+      matched_channels.url_channels.end());
 
     ostr << std::endl << "  Page channels: ";
-    Algs::print_fields(
+    Algs::print(
       ostr,
-      matched_channels.page_channels,
-      &ChannelMatch::channel_id,
-      &ChannelMatch::channel_trigger_id);
+      matched_channels.page_channels.begin(),
+      matched_channels.page_channels.end());
 
     ostr << std::endl << "  Search channels: ";
-    Algs::print_fields(
+    Algs::print(
       ostr,
-      matched_channels.search_channels,
-      &ChannelMatch::channel_id,
-      &ChannelMatch::channel_trigger_id);
+      matched_channels.search_channels.begin(),
+      matched_channels.search_channels.end());
 
     ostr << std::endl << "  Url keyword channels: ";
-    Algs::print_fields(
+    Algs::print(
       ostr,
-      matched_channels.url_keyword_channels,
-      &ChannelMatch::channel_id,
-      &ChannelMatch::channel_trigger_id);
+      matched_channels.url_keyword_channels.begin(),
+      matched_channels.url_keyword_channels.end());
 
     ostr << std::endl << "  Base user profile: " << std::endl;
     ChannelsMatcher::print(

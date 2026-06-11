@@ -104,27 +104,6 @@ namespace AdServer::UserInfoSvcs
       out << "]\n";
     }
 
-    template<typename Container>
-    void
-    print_channel_trigger_sequence(
-      std::ostream& out,
-      const char* name,
-      const Container& values)
-    {
-      out << "  " << name << " = [";
-      bool first = true;
-      for (const auto& value : values)
-      {
-        if (!first)
-        {
-          out << ',';
-        }
-        first = false;
-        out << value.channel_id << ':' << value.channel_trigger_id;
-      }
-      out << "]\n";
-    }
-
     void
     print_geo_data_sequence(
       std::ostream& out,
@@ -224,13 +203,13 @@ namespace AdServer::UserInfoSvcs
         << "  current_colo_id = " << user_info.current_colo_id << '\n'
         << "  temporary = " << user_info.temporary << '\n';
 
-      print_channel_trigger_sequence(
+      print_id_sequence(
         out, "page_channel_ids", match_params.matched_channels.page_channels);
-      print_channel_trigger_sequence(
+      print_id_sequence(
         out, "search_channel_ids", match_params.matched_channels.search_channels);
-      print_channel_trigger_sequence(
+      print_id_sequence(
         out, "url_channel_ids", match_params.matched_channels.url_channels);
-      print_channel_trigger_sequence(
+      print_id_sequence(
         out, "url_keyword_channel_ids",
         match_params.matched_channels.url_keyword_channels);
       print_id_sequence(
@@ -1130,28 +1109,24 @@ namespace AdServer::UserInfoSvcs
              << std::endl
              << "  current colo id: " << user_info.current_colo_id << std::endl
              << "  Input search channels: ";
-        for (const auto& channel : match_params.matched_channels.search_channels)
+        for (const auto channel_id : match_params.matched_channels.search_channels)
         {
-          ostr << channel.channel_id << ':' << channel.channel_trigger_id
-               << ',';
+          ostr << channel_id << ',';
         }
         ostr << std::endl << "  Input page channels: ";
-        for (const auto& channel : match_params.matched_channels.page_channels)
+        for (const auto channel_id : match_params.matched_channels.page_channels)
         {
-          ostr << channel.channel_id << ':' << channel.channel_trigger_id
-               << ',';
+          ostr << channel_id << ',';
         }
         ostr << std::endl << "  Input url channels: ";
-        for (const auto& channel : match_params.matched_channels.url_channels)
+        for (const auto channel_id : match_params.matched_channels.url_channels)
         {
-          ostr << channel.channel_id << ':' << channel.channel_trigger_id
-               << ',';
+          ostr << channel_id << ',';
         }
         ostr << std::endl << "  Input url keyword channels: ";
-        for (const auto& channel : match_params.matched_channels.url_keyword_channels)
+        for (const auto channel_id : match_params.matched_channels.url_keyword_channels)
         {
-          ostr << channel.channel_id << ':' << channel.channel_trigger_id
-               << ',';
+          ostr << channel_id << ',';
         }
 
         ostr << std::endl << "  Input persistent channels: ";

@@ -59,7 +59,7 @@ namespace UserInfoSvcs
       long last_colo_id,
       long current_placement_colo_id,
       ColoUserId& colo_user_id,
-      const ChannelMatchPack& matched_channels,
+      const ChannelIdPack& matched_channels,
       ChannelMatchMap& result_channels,
       UserAppearance& user_app,
       ProfileProperties& properties,

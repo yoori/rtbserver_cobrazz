@@ -1030,7 +1030,7 @@ namespace AdServer
     void ChannelsMatcher::match(
       ChannelMatchMap& result_channels,
       const Generics::Time& now,
-      const ChannelMatchPack& channels_pack,
+      const ChannelIdPack& channels_pack,
       const ChannelDictionary& channels,
       const ProfileMatchParams& profile_match_params,
       ProfileProperties& properties,
@@ -1138,7 +1138,6 @@ namespace AdServer
         (base_profile_->membuf().size() != 0) ?
          base_household : profile_match_params.household;
 
-       ChannelIdPack matched_channels;
        ChannelsProfileReader base_rdr =
          ChannelsProfileReader(
            base_profile_->membuf().data(),
@@ -1147,8 +1146,6 @@ namespace AdServer
          ChannelsProfileReader(
            base_profile_->membuf().data(),
            base_profile_->membuf().size());
-
-       matched_channels.persistent_channels = channels_pack.persistent_channels;
 
        ChannelsInfoReader add_page_channels(0, 0);
        ChannelsInfoReader add_search_channels(0, 0);
@@ -1275,7 +1272,7 @@ namespace AdServer
              &upw.persistent_matches(),
              base_exists ? &base_persistent_matches : 0,
              add_exists ? &add_persistent_matches : 0,
-             matched_channels.persistent_channels,
+             channels_pack.persistent_channels,
              match_to_add,
              profile_match_params.provide_persistent_channels);
 
@@ -1285,7 +1282,7 @@ namespace AdServer
              &upw.page_channels(),
              base_exists ? &base_page_channels : 0,
              add_exists ? &add_page_channels : 0,
-             matched_channels.page_channels,
+             channels_pack.page_channels,
              channels.page_channels,
              current_time,
              match_to_add,
@@ -1297,7 +1294,7 @@ namespace AdServer
              &upw.search_channels(),
              base_exists ? &base_search_channels : 0,
              add_exists ? &add_search_channels : 0,
-             matched_channels.search_channels,
+             channels_pack.search_channels,
              channels.search_channels,
              current_time,
              match_to_add,
@@ -1309,7 +1306,7 @@ namespace AdServer
              &upw.url_channels(),
              base_exists ? &base_url_channels : 0,
              add_exists ? &add_url_channels : 0,
-             matched_channels.url_channels,
+             channels_pack.url_channels,
              channels.url_channels,
              current_time,
              match_to_add,
@@ -1321,7 +1318,7 @@ namespace AdServer
              &upw.url_keyword_channels(),
              base_exists ? &base_url_keyword_channels : 0,
              add_exists ? &add_url_keyword_channels : 0,
-             matched_channels.url_keyword_channels,
+             channels_pack.url_keyword_channels,
              channels.url_keyword_channels,
              current_time,
              match_to_add,

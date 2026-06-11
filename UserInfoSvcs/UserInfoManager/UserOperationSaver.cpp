@@ -363,7 +363,7 @@ namespace UserInfoSvcs
     long last_colo_id,
     long current_placement_colo_id,
     ColoUserId& colo_user_id,
-    const ChannelMatchPack& matched_channels,
+    const ChannelIdPack& matched_channels,
     ChannelMatchMap& result_channels,
     UserAppearance& user_app,
     //PartlyMatchResult& partly_match_result,
@@ -394,35 +394,31 @@ namespace UserInfoSvcs
 
       ChannelTriggerMatchWriter cm_writer;
 
-      for (ChannelMatchArray::const_iterator it =  matched_channels.page_channels.begin();
-           it != matched_channels.page_channels.end(); ++it)
+      for (const auto channel_id : matched_channels.page_channels)
       {
-        cm_writer.channel_id() = it->channel_id;
-        cm_writer.channel_trigger_id() = it->channel_trigger_id;
+        cm_writer.channel_id() = channel_id;
+        cm_writer.channel_trigger_id() = 0;
         match_operation_writer.page_channels().push_back(cm_writer);
       }
 
-      for (ChannelMatchArray::const_iterator it =  matched_channels.search_channels.begin();
-           it != matched_channels.search_channels.end(); ++it)
+      for (const auto channel_id : matched_channels.search_channels)
       {
-        cm_writer.channel_id() = it->channel_id;
-        cm_writer.channel_trigger_id() = it->channel_trigger_id;
+        cm_writer.channel_id() = channel_id;
+        cm_writer.channel_trigger_id() = 0;
         match_operation_writer.search_channels().push_back(cm_writer);
       }
 
-      for (ChannelMatchArray::const_iterator it =  matched_channels.url_channels.begin();
-           it != matched_channels.url_channels.end(); ++it)
+      for (const auto channel_id : matched_channels.url_channels)
       {
-        cm_writer.channel_id() = it->channel_id;
-        cm_writer.channel_trigger_id() = it->channel_trigger_id;
+        cm_writer.channel_id() = channel_id;
+        cm_writer.channel_trigger_id() = 0;
         match_operation_writer.url_channels().push_back(cm_writer);
       }
 
-      for (ChannelMatchArray::const_iterator it =  matched_channels.url_keyword_channels.begin();
-           it != matched_channels.url_keyword_channels.end(); ++it)
+      for (const auto channel_id : matched_channels.url_keyword_channels)
       {
-        cm_writer.channel_id() = it->channel_id;
-        cm_writer.channel_trigger_id() = it->channel_trigger_id;
+        cm_writer.channel_id() = channel_id;
+        cm_writer.channel_trigger_id() = 0;
         match_operation_writer.url_keyword_channels().push_back(cm_writer);
       }
 

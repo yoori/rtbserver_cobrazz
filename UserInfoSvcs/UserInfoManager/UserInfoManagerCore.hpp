@@ -73,7 +73,7 @@ namespace AdServer::UserInfoSvcs
 
     struct MatchParams
     {
-      ChannelMatchPack matched_channels;
+      ChannelIdPack matched_channels;
       std::string cohort;
       std::string cohort2;
       std::vector<GeoData> geo_data_seq;

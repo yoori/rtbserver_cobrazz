@@ -85,44 +85,6 @@ namespace AdServer
       ChannelIdVector persistent_channels;
     };
 
-    struct ChannelMatch
-    {
-      ChannelMatch(unsigned long test_id) // for unit tests only!
-        : channel_id(test_id),
-          channel_trigger_id(test_id)
-      {}
-
-      ChannelMatch(unsigned long channel_id_val,
-        unsigned long channel_trigger_id_val)
-        : channel_id(channel_id_val),
-          channel_trigger_id(channel_trigger_id_val)
-      {}
-
-      bool operator<(const ChannelMatch& right) const
-      {
-        return
-          (channel_id < right.channel_id ||
-           (channel_id == right.channel_id &&
-            channel_trigger_id < right.channel_trigger_id));
-      }
-
-      unsigned long channel_id;
-      unsigned long channel_trigger_id;
-    };
-
-    typedef std::vector<ChannelMatch> ChannelMatchArray;
-
-    struct ChannelMatchPack
-    {
-      ChannelMatchArray page_channels;
-      ChannelMatchArray search_channels;
-      ChannelMatchArray url_channels;
-      ChannelMatchArray url_keyword_channels;
-      ChannelMatchArray audience_channels;
-
-      ChannelIdVector persistent_channels;
-    };
-
     struct UniqueChannelsResult
     {
       UniqueChannelsResult()
@@ -250,27 +212,6 @@ namespace AdServer
       CoordData coord_data;
     };
 
-    inline
-    bool operator<(
-      const LastTriggerReader& last_trigger_rdr,
-      const ChannelMatch& channel)
-    {
-      return
-        (last_trigger_rdr.channel_id() < channel.channel_id ||
-         (last_trigger_rdr.channel_id() == channel.channel_id &&
-          last_trigger_rdr.channel_trigger_id() < channel.channel_trigger_id));
-    }
-
-    inline
-    bool operator==(
-      const LastTriggerReader& last_trigger_rdr,
-      const ChannelMatch& channel)
-    {
-      return
-        (last_trigger_rdr.channel_id() == channel.channel_id &&
-         last_trigger_rdr.channel_trigger_id() == channel.channel_trigger_id);
-    }
-
     class ChannelsMatcher
     {
     public:
@@ -314,7 +255,7 @@ namespace AdServer
       void match(
         ChannelMatchMap& result_channels,
         const Generics::Time& now,
-        const ChannelMatchPack& channels_pack,
+        const ChannelIdPack& channels_pack,
         const ChannelDictionary& channels,
         const ProfileMatchParams& profile_match_params,
         ProfileProperties& properties,

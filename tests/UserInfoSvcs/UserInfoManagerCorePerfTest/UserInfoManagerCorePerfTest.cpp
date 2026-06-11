@@ -367,9 +367,7 @@ main(int argc, char** argv)
               match_params.matched_channels.page_channels.reserve(100);
               for(unsigned long channel_id = 1; channel_id <= 100; ++channel_id)
               {
-                match_params.matched_channels.page_channels.emplace_back(
-                  channel_id,
-                  0);
+                match_params.matched_channels.page_channels.push_back(channel_id);
               }
 
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result;
