@@ -81,7 +81,7 @@ sub start
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
     "ulimit -n 4096 && " .
-    "setsid -f valgrind --tool=callgrind --collect-jumps=yes --callgrind-out-file=/home/jurij_kuznecov/projects/run/etc-ssv400/callgrind_campaignmanager_only_20260611_121500/callgrind.out.%p CampaignManager " .
+    "setsid -f \${VALGRIND_PREFIX} CampaignManager " .
     #"{ scl enable devtoolset-8 -- valgrind --tool=callgrind CampaignManager " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CampaignManagerConfig.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}CampaignManager.out 2>&1 < /dev/null";
