@@ -338,13 +338,32 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         }
         if (!json_is_delim(*str)) return *endptr = str, JSON_PARSE_BAD_STRING;
         break;
-      case 't':
-        for (const char *s = "rue"; *s; ++s, ++str)
-        {
-          if (*s != *str) return JSON_PARSE_BAD_IDENTIFIER;
-        }
-        if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
-        o = JsonValue(JSON_TAG_BOOL, (void *)true);
+      case ',':
+        // allow few separators in series and after object or array beginning
+        //if (/*separator || */stack[top].key != 0) return JSON_PARSE_UNEXPECTED_CHARACTER;
+        separator = true;
+        continue;
+      case ':':
+        if (separator || stack[top].key == 0) return JSON_PARSE_UNEXPECTED_CHARACTER;
+        separator = true;
+        continue;
+      case '{':
+        if (++top == JSON_STACK_SIZE) return JSON_PARSE_STACK_OVERFLOW;
+        stack[top] = JsonList(JSON_TAG_OBJECT, JsonValue(JSON_TAG_OBJECT, 0), 0);
+        continue;
+      case '[':
+        if (++top == JSON_STACK_SIZE) return JSON_PARSE_STACK_OVERFLOW;
+        stack[top] = JsonList(JSON_TAG_ARRAY, JsonValue(JSON_TAG_ARRAY, 0), 0);
+        continue;
+      case '}':
+        if (top == -1) return JSON_PARSE_STACK_UNDERFLOW;
+        if (stack[top].tag != JSON_TAG_OBJECT) return JSON_PARSE_MISMATCH_BRACKET;
+        o = stack[top--].cut_the_head();
+        break;
+      case ']':
+        if (top == -1) return JSON_PARSE_STACK_UNDERFLOW;
+        if (stack[top].tag != JSON_TAG_ARRAY) return JSON_PARSE_MISMATCH_BRACKET;
+        o = stack[top--].cut_the_head();
         break;
       case 'f':
         for (const char *s = "alse"; *s; ++s, ++str)
@@ -354,6 +373,14 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
         o = JsonValue(JSON_TAG_BOOL, (void *)false);
         break;
+      case 't':
+        for (const char *s = "rue"; *s; ++s, ++str)
+        {
+          if (*s != *str) return JSON_PARSE_BAD_IDENTIFIER;
+        }
+        if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
+        o = JsonValue(JSON_TAG_BOOL, (void *)true);
+        break;
       case 'n':
         for (const char *s = "ull"; *s; ++s, ++str)
         {
@@ -361,33 +388,6 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         }
         if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
         break;
-      case ']':
-        if (top == -1) return JSON_PARSE_STACK_UNDERFLOW;
-        if (stack[top].tag != JSON_TAG_ARRAY) return JSON_PARSE_MISMATCH_BRACKET;
-        o = stack[top--].cut_the_head();
-        break;
-      case '}':
-        if (top == -1) return JSON_PARSE_STACK_UNDERFLOW;
-        if (stack[top].tag != JSON_TAG_OBJECT) return JSON_PARSE_MISMATCH_BRACKET;
-        o = stack[top--].cut_the_head();
-        break;
-      case '[':
-        if (++top == JSON_STACK_SIZE) return JSON_PARSE_STACK_OVERFLOW;
-        stack[top] = JsonList(JSON_TAG_ARRAY, JsonValue(JSON_TAG_ARRAY, 0), 0);
-        continue;
-      case '{':
-        if (++top == JSON_STACK_SIZE) return JSON_PARSE_STACK_OVERFLOW;
-        stack[top] = JsonList(JSON_TAG_OBJECT, JsonValue(JSON_TAG_OBJECT, 0), 0);
-        continue;
-      case ':':
-        if (separator || stack[top].key == 0) return JSON_PARSE_UNEXPECTED_CHARACTER;
-        separator = true;
-        continue;
-      case ',':
-        // allow few separators in series and after object or array beginning
-        //if (/*separator || */stack[top].key != 0) return JSON_PARSE_UNEXPECTED_CHARACTER;
-        separator = true;
-        continue;
       default:
         if (**endptr == '-' || json_is_dec(**endptr))
         {
