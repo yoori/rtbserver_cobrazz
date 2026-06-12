@@ -3,6 +3,8 @@
 #include <coroutine>
 #include <functional>
 #include <memory>
+#include <atomic>
+#include <vector>
 
 #include <boost/asio.hpp>
 
@@ -21,6 +23,12 @@ namespace AdServer::Commons
 
     void
     post(std::function<void()> task);
+
+    void
+    dispatch(std::function<void()> task);
+
+    bool
+    running_in_this_thread() const noexcept;
 
     void
     schedule(
@@ -62,7 +70,20 @@ namespace AdServer::Commons
     using Work = IoService::work;
     using SteadyTimer = boost::asio::steady_timer;
 
-    std::shared_ptr<IoService> io_service_;
-    std::unique_ptr<Work> io_work_;
+    struct Context
+    {
+      std::shared_ptr<IoService> io_service;
+      std::unique_ptr<Work> io_work;
+    };
+
+    IoService&
+    next_io_service() noexcept;
+
+    std::vector<Context> contexts_;
+    std::atomic_size_t post_index_{0};
+    std::atomic_size_t work_index_{0};
+
+    static thread_local const ExecutorPool* current_executor_pool_;
+    static thread_local IoService* current_io_service_;
   };
 }

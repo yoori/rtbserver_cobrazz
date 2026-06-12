@@ -5,18 +5,48 @@
 
 namespace AdServer::Commons
 {
+  thread_local const ExecutorPool* ExecutorPool::current_executor_pool_ = nullptr;
+  thread_local ExecutorPool::IoService* ExecutorPool::current_io_service_ = nullptr;
+
   ExecutorPool::ExecutorPool(
     Generics::ActiveObjectCallback* callback,
     unsigned long threads)
-    : DelegateActiveObject(callback, threads, 1024 * 1024),
-      io_service_(std::make_shared<IoService>()),
-      io_work_(std::make_unique<Work>(*io_service_))
-  {}
+    : DelegateActiveObject(callback, threads ? threads : 1, 1024 * 1024)
+  {
+    const auto context_count = threads ? threads : 1;
+    contexts_.reserve(context_count);
+    for(unsigned long i = 0; i < context_count; ++i)
+    {
+      auto io_service = std::make_shared<IoService>();
+      contexts_.emplace_back(Context{
+        io_service,
+        std::make_unique<Work>(*io_service)});
+    }
+  }
 
   void
   ExecutorPool::post(std::function<void()> task)
   {
-    io_service_->post(std::move(task));
+    next_io_service().post(std::move(task));
+  }
+
+  void
+  ExecutorPool::dispatch(std::function<void()> task)
+  {
+    if(current_executor_pool_ == this && current_io_service_)
+    {
+      boost::asio::dispatch(*current_io_service_, std::move(task));
+    }
+    else
+    {
+      boost::asio::dispatch(next_io_service(), std::move(task));
+    }
+  }
+
+  bool
+  ExecutorPool::running_in_this_thread() const noexcept
+  {
+    return current_executor_pool_ == this && current_io_service_;
   }
 
   void
@@ -25,7 +55,7 @@ namespace AdServer::Commons
     std::function<void()> task)
   {
     const auto timeout_us = timeout.microseconds();
-    auto timer = std::make_shared<SteadyTimer>(*io_service_);
+    auto timer = std::make_shared<SteadyTimer>(next_io_service());
     timer->expires_after(
       std::chrono::microseconds(timeout_us > 0 ? timeout_us : 0));
     timer->async_wait(
@@ -46,7 +76,7 @@ namespace AdServer::Commons
   bool
   ExecutorPool::YieldAwaiter::await_ready() const noexcept
   {
-    return false;
+    return executor_pool_->running_in_this_thread();
   }
 
   void
@@ -71,10 +101,17 @@ namespace AdServer::Commons
   {
     set_current_thread_name("asio-pool");
 
+    const auto context_index = work_index_.fetch_add(
+      1,
+      std::memory_order_relaxed) % contexts_.size();
+    auto& io_service = *contexts_[context_index].io_service;
+    current_executor_pool_ = this;
+    current_io_service_ = &io_service;
+
     CoroutineResumeScheduler resume_scheduler(
-      [io_service = io_service_](std::coroutine_handle<> handle)
+      [this](std::coroutine_handle<> handle)
       {
-        io_service->post(
+        dispatch(
           [handle]() mutable
           {
             resume_coroutine(handle);
@@ -86,17 +123,32 @@ namespace AdServer::Commons
     {
       try
       {
-        io_service_->run();
+        io_service.run();
       }
       catch(...)
       {}
     }
+
+    current_executor_pool_ = nullptr;
+    current_io_service_ = nullptr;
   }
 
   void
   ExecutorPool::terminate_() noexcept
   {
-    io_work_.reset();
-    io_service_->stop();
+    for(auto& context : contexts_)
+    {
+      context.io_work.reset();
+      context.io_service->stop();
+    }
+  }
+
+  ExecutorPool::IoService&
+  ExecutorPool::next_io_service() noexcept
+  {
+    const auto context_index = post_index_.fetch_add(
+      1,
+      std::memory_order_relaxed) % contexts_.size();
+    return *contexts_[context_index].io_service;
   }
 }
