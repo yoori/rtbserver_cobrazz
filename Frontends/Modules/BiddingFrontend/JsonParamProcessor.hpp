@@ -1,6 +1,10 @@
 #pragma once
 
+#include <list>
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <set>
+#include <string>
+#include <vector>
 #include <Generics/GnuHashTable.hpp>
 #include <HTTP/UrlAddress.hpp>
 
@@ -10,7 +14,7 @@
 
 namespace AdServer::Bidding
 {
-  typedef std::list<std::string> StringList;
+  typedef std::vector<std::string> StringArray;
   typedef std::set<unsigned long> ULongSet;
 
   struct JsonAdSlotProcessingContext
@@ -20,61 +24,59 @@ namespace AdServer::Bidding
     typedef Commons::ValueStateHolder<unsigned long> ULValueStateHolder;
     typedef Commons::ValueStateHolder<ULongSet> ULSetStateHolder;
 
-    struct BannerFormat: public ReferenceCounting::DefaultImpl<>
+    struct BannerFormat
     {
       BannerFormat()
       {}
+
+      BannerFormat(BannerFormat&&) noexcept = default;
+      BannerFormat& operator=(BannerFormat&&) noexcept = default;
 
       std::string width;
       std::string height;
       std::string ext_type;
       std::string ext_format;
-
-    protected:
-      virtual ~BannerFormat() noexcept = default;
     };
 
-    typedef ReferenceCounting::SmartPtr<BannerFormat> BannerFormat_var;
-    typedef std::vector<BannerFormat_var> BannerFormatArray;
+    typedef std::vector<BannerFormat> BannerFormatArray;
 
-    struct Banner: public ReferenceCounting::DefaultImpl<>
+    struct Banner
     {
       Banner()
-        : default_format(new BannerFormat()),
-          pos("0"),
+        : pos("0"),
           ext_hpos(CampaignSvcs::UNDEFINED_PUB_POSITION_BOTTOM)
       {}
 
+      Banner(Banner&&) noexcept = default;
+      Banner& operator=(Banner&&) noexcept = default;
+
       BannerFormatArray formats;
-      BannerFormat_var default_format;
+      BannerFormat default_format;
 
       std::string pos;
       std::string matching_ad;
-      StringList exclude_categories;
+      StringArray exclude_categories;
 
       unsigned long ext_hpos;
-
-    protected:
-      virtual ~Banner() noexcept = default;
     };
 
-    typedef ReferenceCounting::SmartPtr<Banner> Banner_var;
-    typedef std::vector<Banner_var> BannerArray;
+    typedef std::vector<Banner> BannerArray;
 
     struct BannerFormatHolder
     {
       BannerFormatHolder()
+        : banner(nullptr)
       {}
 
       BannerFormatHolder(
-        Banner_var banner_val,
-        BannerFormat_var banner_format_val)
-        : banner(std::move(banner_val)),
-          banner_format(std::move(banner_format_val))
+        const Banner* banner_val,
+        const BannerFormat* banner_format_val)
+        : banner(banner_val),
+          banner_format(banner_format_val)
       {}
 
-      Banner_var banner;
-      BannerFormat_var banner_format;
+      const Banner* banner;
+      const BannerFormat* banner_format;
     };
 
     typedef std::map<std::string, BannerFormatHolder> SizeBannerMap;
@@ -259,7 +261,7 @@ namespace AdServer::Bidding
     ULValueStateHolder video_reward;
 
 
-    StringList video_exclude_categories;
+    StringArray video_exclude_categories;
 
     // v 2.5 video .placement
     Commons::Optional<long> video_placement;
@@ -336,9 +338,9 @@ namespace AdServer::Bidding
     unsigned int ssp_devicetype;
 
     std::string request_id;
-    StringList currencies;
+    StringArray currencies;
     std::string required_category;
-    StringList exclude_categories;
+    StringArray exclude_categories;
 
     std::string gender;
     std::string age;
@@ -352,9 +354,9 @@ namespace AdServer::Bidding
     std::string site_name;
     HTTP::HTTPAddress site_page;
     HTTP::HTTPAddress site_domain;
-    StringList site_pagecat;
-    StringList site_sectioncat;
-    StringList site_cat;
+    StringArray site_pagecat;
+    StringArray site_sectioncat;
+    StringArray site_cat;
     std::string site_keywords;
     std::string site_search;
     HTTP::HTTPAddress site_ref;
@@ -367,9 +369,9 @@ namespace AdServer::Bidding
     std::string app_bundle;
     HTTP::HTTPAddress app_domain;
     HTTP::HTTPAddress app_store_url;
-    StringList app_pagecat;
-    StringList app_sectioncat;
-    StringList app_cat;
+    StringArray app_pagecat;
+    StringArray app_sectioncat;
+    StringArray app_cat;
     std::string app_keywords;
 
     bool secure;
@@ -392,19 +394,19 @@ namespace AdServer::Bidding
     std::string content_title;
     std::string content_series;
     std::string content_season;
-    StringList content_cat;
+    StringArray content_cat;
 
     // publisher from site or app
     bool app_publisher;
     bool site_publisher;
-    StringList publisher_cat;
+    StringArray publisher_cat;
     std::string publisher_name;
     std::string publisher_id;
 
     bool app_content_producer;
     bool site_content_producer;
     // collect here all names from all producer objects
-    StringList content_producer_name;
+    StringArray content_producer_name;
 
     std::string allyessitetype; //ALLYES specific in site object
 
@@ -479,15 +481,15 @@ namespace AdServer::Bidding
             banner_it != slot_it->banners.end(); ++banner_it)
         {
           out << "{ formats = [";
-          for(auto format_it = (*banner_it)->formats.begin();
-              format_it != (*banner_it)->formats.end(); ++format_it)
+          for(auto format_it = banner_it->formats.begin();
+              format_it != banner_it->formats.end(); ++format_it)
           {
-            out << "{ width = " << (*format_it)->width <<
-              ", height = " << (*format_it)->height <<
+            out << "{ width = " << format_it->width <<
+              ", height = " << format_it->height <<
               " }";
           }
-          out << "], pos = " << (*banner_it)->pos <<
-            ", hpos = " << (*banner_it)->ext_hpos <<
+          out << "], pos = " << banner_it->pos <<
+            ", hpos = " << banner_it->ext_hpos <<
             "}";
         }
 

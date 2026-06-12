@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <list>
 
 #include <String/SubString.hpp>
 #include <String/AsciiStringManip.hpp>
@@ -93,10 +92,13 @@ namespace AdServer::Bidding
       }
     }
 
+    template <typename CategoryStringContainerType>
     void
-    add_cat_list(const std::list<std::string>& cat_list, bool open_rtb = false)
+    add_cat_list(
+      const CategoryStringContainerType& cat_list,
+      bool open_rtb = false)
     {
-      for(std::list<std::string>::const_iterator l_iter = cat_list.begin();
+      for(typename CategoryStringContainerType::const_iterator l_iter = cat_list.begin();
           l_iter != cat_list.end(); ++l_iter)
       {
         add_cat(*l_iter, open_rtb);
@@ -160,9 +162,9 @@ namespace AdServer::Bidding
       String::SubString token3;
       String::SubString token4;
       if(tokenizer.get_token(token1) &&
-         tokenizer.get_token(token2) &&
-         tokenizer.get_token(token3) &&
-         tokenizer.get_token(token4))
+        tokenizer.get_token(token2) &&
+        tokenizer.get_token(token3) &&
+        tokenizer.get_token(token4))
       {
         std::string res_keyword_ip3;
         res_keyword_ip3 += token1.str();
@@ -199,6 +201,22 @@ namespace AdServer::Bidding
       else
       {
         add_(dict_name, String::SubString(), keyword);
+      }
+    }
+
+    void
+    add_dict_keyword_norm_spaces(
+      const String::SubString& dict_name,
+      const String::SubString& keyword,
+      bool add_rtb_prefix = true)
+    {
+      if (add_rtb_prefix)
+      {
+        add_norm_spaces_(dict_name, short_rtb_name_, keyword);
+      }
+      else
+      {
+        add_norm_spaces_(dict_name, String::SubString(), keyword);
       }
     }
 
@@ -246,11 +264,11 @@ namespace AdServer::Bidding
       }
     }
 
-    template <typename ValueStringListType>
+    template <typename ValueStringContainerType>
     void
-    add_keyword_list(const ValueStringListType& kwl)
+    add_keyword_list(const ValueStringContainerType& kwl)
     {
-      for(typename ValueStringListType::const_iterator l_iter = kwl.begin();
+      for(typename ValueStringContainerType::const_iterator l_iter = kwl.begin();
           l_iter != kwl.end(); ++l_iter)
       {
         if(!l_iter->empty())
@@ -304,6 +322,39 @@ namespace AdServer::Bidding
       short_rtb_name.append_to(keywords_osrt_);
       param_name.append_to(keywords_osrt_);
       value.append_to(keywords_osrt_);
+
+      keywords_non_empty_ = true;
+    }
+
+    void
+    add_norm_spaces_(
+      const String::SubString& param_name,
+      const String::SubString& short_rtb_name,
+      const String::SubString& value,
+      bool add_rtb_prefix = true)
+    {
+      if(param_name.empty() && value.empty())
+      {
+        return;
+      }
+
+      if(keywords_non_empty_)
+      {
+        keywords_osrt_ += CUSTOM_KEYWORD_SEPARATOR;
+      }
+
+      if(add_rtb_prefix)
+      {
+        keywords_osrt_ += RTB_PREFIX;
+      }
+
+      short_rtb_name.append_to(keywords_osrt_);
+      param_name.append_to(keywords_osrt_);
+      for(String::SubString::ConstPointer value_it = value.begin();
+          value_it != value.end(); ++value_it)
+      {
+        keywords_osrt_ += *value_it == ' ' ? 'x' : *value_it;
+      }
 
       keywords_non_empty_ = true;
     }

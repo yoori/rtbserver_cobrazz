@@ -259,27 +259,6 @@ namespace AdServer::Bidding
       uri_(request_holder_->request().uri().str())
   {}
 
-  /*
-  void
-  OpenRtbBidRequestState::execute_impl_() noexcept
-  {
-    bool bad_request_val = false;
-
-    if(bid_frontend_->process_openrtb_request_(
-         bad_request_val,
-         this,
-         request_info_,
-         bid_request_.c_str()))
-    {
-      //write_response_();
-    }
-    else
-    {
-      write_empty_response(bad_request_val ? 400 : 0);
-    }
-  }
-  */
-
   bool
   OpenRtbBidRequestState::read_request() noexcept
   {
@@ -336,7 +315,6 @@ namespace AdServer::Bidding
         {
           // decompression error
           return false;
-          //throw BidRequestState::Invalid("can make unzip");
         }
 
         res.resize(res.size() - zs.avail_out);
@@ -345,13 +323,6 @@ namespace AdServer::Bidding
 
         bid_request.swap(res);
       }
-
-      /*
-      std::cout << ">>>>>>>>>>>>>>>>>>>>" << std::endl <<
-        bid_request << std::endl <<
-        ">>>>>>>>>>>>>>>>>>>>" <<
-        std::endl;
-      */
 
       bid_frontend_->request_info_filler_->fill_by_openrtb_request(
         *request_params_,
@@ -385,8 +356,6 @@ namespace AdServer::Bidding
       campaign_match_result)
     noexcept
   {
-    //static const char* FUN = "OpenRtbBidRequestState::write_response()";
-
     AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
 
@@ -943,7 +912,7 @@ namespace AdServer::Bidding
               if(banner_by_size_it != slot_it->size_banner.end())
               {
                 const JsonAdSlotProcessingContext::BannerFormat& use_banner_format =
-                  *(banner_by_size_it->second.banner_format);
+                  *banner_by_size_it->second.banner_format;
                 bid_object.add_number(
                   Response::OpenRtb::WIDTH,
                   use_banner_format.width);
@@ -1009,9 +978,9 @@ namespace AdServer::Bidding
                 if(fill_overlay_ext)
                 {
                   const JsonAdSlotProcessingContext::Banner& use_banner =
-                    *(banner_by_size_it->second.banner);
+                    *banner_by_size_it->second.banner;
                   const JsonAdSlotProcessingContext::BannerFormat& use_banner_format =
-                    *(banner_by_size_it->second.banner_format);
+                    *banner_by_size_it->second.banner_format;
 
                   bool add_ext_width_height = (
                     ad_slot_result.selected_creatives.size() == 1 &&

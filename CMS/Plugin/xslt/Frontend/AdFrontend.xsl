@@ -1132,6 +1132,11 @@
           <xsl:value-of select="$def-bidding-module-threads"/>
         </xsl:if>
       </xsl:attribute>
+      <xsl:attribute name="interrupt_threads"><xsl:value-of select="$bidding-module/@interrupt_threads"/>
+        <xsl:if test="count($bidding-module/@interrupt_threads) = 0">
+          <xsl:value-of select="'10'"/>
+        </xsl:if>
+      </xsl:attribute>
       <xsl:attribute name="request_timeout"><xsl:value-of select="$bidding-module/@max_bid_time"/>
         <xsl:if test="count($bidding-module/@max_bid_time) = 0">
           <xsl:value-of select="'50'"/>

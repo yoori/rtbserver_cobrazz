@@ -158,6 +158,10 @@ namespace AdServer::Bidding
     claim_response_() noexcept;
 
     void
+    write_interrupted_empty_response_(
+      const String::SubString& interrupted_step) noexcept;
+
+    void
     print_available_request_debug_info_() noexcept;
 
     void

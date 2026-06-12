@@ -20,6 +20,12 @@ namespace AutoTest
     typedef google::protobuf::EnumValueDescriptor EnumValueDescriptor;
     typedef google::protobuf::EnumDescriptor EnumDescriptor;
 
+    template<typename T>
+    concept IntegralBidParam = std::is_integral_v<typename T::Type>;
+
+    template<typename T>
+    concept NonIntegralBidParam = !IntegralBidParam<T>;
+
     const FieldDescriptor*
     get_field(
       const Descriptor* descriptor,
@@ -308,9 +314,8 @@ namespace AutoTest
       void
       set_int(
         T& param,
-        Arg arg,
-        typename std::enable_if<
-          std::is_integral<typename T::Type>::value>::type* = 0);
+        Arg arg)
+        requires AutoTest::ProtoBuf::IntegralBidParam<T>;
 
       /**
        * @brief Set int value (for non-integral types).
@@ -322,9 +327,8 @@ namespace AutoTest
       void
       set_int(
         T& param,
-        Arg arg,
-        typename std::enable_if<
-          !std::is_integral<typename T::Type>::value>::type* = 0);
+        Arg arg)
+        requires AutoTest::ProtoBuf::NonIntegralBidParam<T>;
 
       /**
        * @brief Set string value (for integral types).
@@ -336,9 +340,8 @@ namespace AutoTest
       void
       set_string(
         T& param,
-        const std::string& arg,
-        typename std::enable_if<
-          std::is_integral<typename T::Type>::value>::type* = 0);
+        const std::string& arg)
+        requires AutoTest::ProtoBuf::IntegralBidParam<T>;
 
       /**
        * @brief Set string value (for non integral types).
@@ -350,9 +353,8 @@ namespace AutoTest
       void
       set_string(
         T& param,
-        const std::string& arg,
-        typename std::enable_if<
-          !std::is_integral<typename T::Type>::value>::type* = 0);
+        const std::string& arg)
+        requires AutoTest::ProtoBuf::NonIntegralBidParam<T>;
     };
 
   public:

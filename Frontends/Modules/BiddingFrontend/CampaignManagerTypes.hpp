@@ -6,6 +6,7 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -477,13 +478,33 @@ namespace AdServer::Bidding::CampaignManager
     TargetSeq& target,
     bool add = false)
   {
-    const auto old_size = add ? target.size() : 0;
-    target.resize(old_size + std::distance(begin, end));
-
-    std::size_t pos = old_size;
-    for(auto it = begin; it != end; ++it, ++pos)
+    if(!add)
     {
-      target[pos] = *it;
+      target.clear();
+    }
+
+    using IteratorCategory = typename std::iterator_traits<
+      SourceIteratorType>::iterator_category;
+    if constexpr(std::is_base_of_v<
+      std::random_access_iterator_tag,
+      IteratorCategory>)
+    {
+      const auto old_size = target.size();
+      target.resize(old_size + (end - begin));
+
+      std::size_t pos = old_size;
+      for(auto it = begin; it != end; ++it, ++pos)
+      {
+        target[pos] = *it;
+      }
+    }
+    else
+    {
+      for(auto it = begin; it != end; ++it)
+      {
+        target.emplace_back();
+        target.back() = *it;
+      }
     }
   }
 

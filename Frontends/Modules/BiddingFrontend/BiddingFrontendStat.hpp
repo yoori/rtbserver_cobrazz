@@ -2,6 +2,7 @@
 #pragma once
 
 #include <eh/Exception.hpp>
+#include <atomic>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Values.hpp>
 #include "CampaignManagerTypes.hpp"
@@ -83,6 +84,15 @@ namespace AdServer
 
     void
     add_timeout(const Generics::Time& timeout) noexcept;
+
+    void
+    add_fcgi_accept() noexcept;
+
+    void
+    add_fcgi_connection() noexcept;
+
+    void
+    complete_fcgi_connection() noexcept;
 
     void
     add_rtb_request() noexcept;
@@ -201,6 +211,8 @@ namespace AdServer
 
   private:
     StatData stat_data_;
+    std::atomic<unsigned long> fcgi_accept_total_{0};
+    std::atomic<unsigned long> fcgi_connection_in_progress_{0};
     Sync::PosixMutex mutex_;
   };
 

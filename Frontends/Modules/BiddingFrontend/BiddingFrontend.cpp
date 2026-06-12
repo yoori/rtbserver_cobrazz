@@ -746,6 +746,7 @@ namespace AdServer::Bidding
     StatHolder* stats,
     Generics::CompositeMetricsProvider* composite_metrics_provider,
     std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers,
     unsigned long service_index) /*throw(eh::Exception)*/
     : GroupLogger(
         Logging::Logger_var(
@@ -761,12 +762,18 @@ namespace AdServer::Bidding
       colo_id_(0),
       campaign_manager_(),
       bid_workers_(std::move(request_workers)),
+      timeout_workers_(std::move(timeout_workers)),
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
       passback_task_count_(0),
       reached_max_pending_tasks_(0),
       composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {
+    if(!timeout_workers_)
+    {
+      timeout_workers_ = bid_workers_;
+    }
+
     char hostname[256];
     if(gethostname(hostname, sizeof(hostname)) == 0)
     {
@@ -846,8 +853,7 @@ namespace AdServer::Bidding
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << "': " <<
-        e.what();
+      ostr << FUN << "': " << e.what();
       throw Exception(ostr);
     }
   }
@@ -1304,9 +1310,9 @@ namespace AdServer::Bidding
       }
       else
       {
-        // Delegate response writing to the request task and schedule timeout
-        // on the same bounded worker pool that runs request stages.
-        bid_workers_->schedule(
+        // Keep timeout callbacks out of the request continuation pool to avoid interrupt delays
+        // when the main pool is busy
+        timeout_workers_->schedule(
           request_timeout,
           [request_task]()
           {
@@ -1898,10 +1904,12 @@ namespace AdServer::Bidding
             ex.what();
         }
       }
+
       if(trigger_match_stage)
       {
         trigger_match_stage->finish(request_task->start_processing_time());
       }
+
       trigger_match_in_progress.reset();
 
       if(require_debug_info && trigger_match.present)

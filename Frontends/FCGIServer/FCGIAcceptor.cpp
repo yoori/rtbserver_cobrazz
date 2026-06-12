@@ -233,7 +233,8 @@ namespace Frontends
       boost::asio::io_service& io_service,
       Logging::Logger* logger,
       FrontendCommons::FrontendInterface* frontend,
-      State* state)
+      State* state,
+      StatHolder* stats)
       noexcept;
 
     virtual
@@ -304,6 +305,7 @@ namespace Frontends
   private:
     Logging::Logger_var logger_;
     FrontendCommons::Frontend_var frontend_;
+    StatHolder_var stats_;
     State_var state_;
     boost::asio::io_service& io_service_;
     //std::shared_ptr<boost::asio::io_context::strand> strand_;
@@ -465,10 +467,12 @@ namespace Frontends
     boost::asio::io_service& io_service,
     Logging::Logger* logger,
     FrontendCommons::FrontendInterface* frontend,
-    State* /*state*/)
+    State* /*state*/,
+    StatHolder* stats)
     noexcept
     : logger_(ReferenceCounting::add_ref(logger)),
       frontend_(ReferenceCounting::add_ref(frontend)),
+      stats_(ReferenceCounting::add_ref(stats)),
       io_service_(io_service),
       //strand_(new boost::asio::io_context::strand(*io_service_)),
       socket_(io_service_),
@@ -481,6 +485,7 @@ namespace Frontends
 
   FCGIAcceptor::Connection::~Connection() noexcept
   {
+    deactivate();
     //std::cerr << "FCGIAcceptor::Connection::~Connection()" << std::endl;
   }
 
@@ -493,17 +498,23 @@ namespace Frontends
   void
   FCGIAcceptor::Connection::activate()
   {
-    active_ = true;
+    if(active_.exchange(1) == 0 && stats_.in())
+    {
+      stats_->add_fcgi_connection();
+    }
     order_read_();
   }
 
   void
   FCGIAcceptor::Connection::deactivate()
   {
-    if(active_)
+    if(active_.exchange(0) != 0)
     {
-      active_ = false;
       socket_.close();
+      if(stats_.in())
+      {
+        stats_->complete_fcgi_connection();
+      }
     }
   }
 
@@ -512,12 +523,16 @@ namespace Frontends
     const boost::system::error_code& error,
     size_t bytes_transferred)
   {
+    --read_ordered_;
+
     if(!error)
     {
       // process got buffer
-      process_read_data_(bytes_transferred);
-
-      --read_ordered_;
+      if(!process_read_data_(bytes_transferred))
+      {
+        deactivate();
+        return;
+      }
 
       order_write_();
       order_read_();
@@ -525,22 +540,24 @@ namespace Frontends
     else
     {
       // destroy & close on ref count == 0
+      deactivate();
     }
   }
 
   void
   FCGIAcceptor::Connection::handle_write_(const boost::system::error_code& error)
   {
+    --write_ordered_;
+
     if(!error)
     {
       // writing done
-      --write_ordered_;
-
       order_write_();
     }
     else
     {
       // destroy & close on ref count == 0
+      deactivate();
     }
   }
 
@@ -717,12 +734,14 @@ namespace Frontends
     Logging::Logger* logger,
     FrontendCommons::FrontendInterface* frontend,
     Generics::ActiveObjectCallback* callback,
+    StatHolder* stats,
     const String::SubString& bind_address,
     unsigned long backlog,
     unsigned long process_threads)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       frontend_(ReferenceCounting::add_ref(frontend)),
+      stats_(ReferenceCounting::add_ref(stats)),
       worker_stats_object_(new WorkerStatsObject(
         logger,
         callback)),
@@ -797,7 +816,7 @@ namespace Frontends
 
     // create stub for new connection
     Connection_var new_connection(
-      new Connection(*io_service_, logger_, frontend_, state_));
+      new Connection(*io_service_, logger_, frontend_, state_, stats_));
     acceptor_->async_accept(
       new_connection->socket(),
       [this, new_connection](const boost::system::error_code& error)
@@ -813,6 +832,11 @@ namespace Frontends
   {
     if(!error)
     {
+      if(stats_.in())
+      {
+        stats_->add_fcgi_accept();
+      }
+
       // activate stub as normal connection
       accepted_connection->activate();
     }

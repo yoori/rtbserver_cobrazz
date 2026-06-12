@@ -722,6 +722,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="interrupt_threads" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Timeout interrupt processing threads.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="UserBindFrontendConfigType">

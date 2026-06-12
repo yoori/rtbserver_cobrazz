@@ -384,6 +384,9 @@
     <xsd:attribute name="interrupted_threads"
       type="xsd:positiveInteger"
       use="optional" default="10"/>
+    <xsd:attribute name="interrupt_threads"
+      type="xsd:positiveInteger"
+      use="required"/>
     <xsd:attribute name="interrupted_max_pending_tasks"
       type="xsd:positiveInteger"
       use="optional" default="100"/>

@@ -190,7 +190,12 @@ namespace AdServer::Bidding
   void
   BidRequestState::interrupt() noexcept
   {
-    write_interrupted_empty_response(
+    if(!claim_response_())
+    {
+      return;
+    }
+
+    write_interrupted_empty_response_(
       convert_stage_to_string(get_current_stage()));
   }
 
@@ -203,6 +208,13 @@ namespace AdServer::Bidding
       return;
     }
 
+    write_interrupted_empty_response_(interrupted_step);
+  }
+
+  void
+  BidRequestState::write_interrupted_empty_response_(
+    const String::SubString& interrupted_step) noexcept
+  {
     timeout_interrupted_.store(true, std::memory_order_relaxed);
 
     if (debug_sink_.require_debug_info())
@@ -273,7 +285,7 @@ namespace AdServer::Bidding
       }
       response_writer_->write(code, response);
       response_writer_ = FCGI::BaseHttpResponseWriter_var();
-    response_sent_ = true;
+      response_sent_ = true;
     }
   }
 

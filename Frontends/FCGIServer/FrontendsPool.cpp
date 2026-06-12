@@ -26,6 +26,8 @@ namespace AdServer
 {
   namespace
   {
+    constexpr unsigned long DEFAULT_BIDDING_INTERRUPT_THREADS = 10;
+
     const auto STARTUP_STARTED_AT = std::chrono::steady_clock::now();
 
     void
@@ -221,6 +223,36 @@ namespace AdServer
             request_threads);
         }
 
+        unsigned long interrupt_threads = 0;
+        for(const auto& module : modules_)
+        {
+          if(module == M_BIDDING && fe_config.BidFeConfiguration().present())
+          {
+            interrupt_threads =
+              fe_config.BidFeConfiguration()->interrupt_threads();
+            break;
+          }
+        }
+
+        if(interrupt_threads == 0)
+        {
+          for(const auto& module : modules_)
+          {
+            if(module == M_BIDDING)
+            {
+              interrupt_threads = DEFAULT_BIDDING_INTERRUPT_THREADS;
+              break;
+            }
+          }
+        }
+
+        if(interrupt_threads != 0)
+        {
+          timeout_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
+            callback_,
+            interrupt_threads);
+        }
+
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           fe_config.CommonFeConfiguration()->grpc_executor_threads());
         common_module_->set_grpc_executor(grpc_executor_);
@@ -237,6 +269,7 @@ namespace AdServer
               stats_,
               composite_metrics_provider_,
               request_workers_,
+              timeout_workers_,
               service_index_);
           }
           else if(*module_it == M_PUBPIXEL)
@@ -368,6 +401,13 @@ namespace AdServer
           trace_startup("FrontendsPool request_workers add begin");
           add_child_object(request_workers_);
           trace_startup("FrontendsPool request_workers add end");
+        }
+
+        if (timeout_workers_)
+        {
+          trace_startup("FrontendsPool timeout_workers add begin");
+          add_child_object(timeout_workers_);
+          trace_startup("FrontendsPool timeout_workers add end");
         }
 
         trace_startup("FrontendsPool grpc_executor add begin");

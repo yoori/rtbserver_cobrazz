@@ -91,6 +91,7 @@ namespace AdServer::Bidding
       StatHolder* stats,
       Generics::CompositeMetricsProvider* composite_metrics_provider,
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers,
       unsigned long service_index) /*throw(eh::Exception)*/;
 
     virtual bool
@@ -388,6 +389,7 @@ namespace AdServer::Bidding
 
     Generics::Planner_var planner_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers_;
+    std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers_;
     Generics::TaskRunner_var control_task_runner_;
     StatHolder_var stats_;
 

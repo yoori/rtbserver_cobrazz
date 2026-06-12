@@ -200,9 +200,8 @@ namespace AutoTest
   RequestMember< Request, BidParam<Request,Setter> >::
   MemberSetter::set_int(
     T& param,
-    Arg arg,
-    typename std::enable_if<
-      std::is_integral<typename T::Type>::value>::type*)
+    Arg arg)
+    requires AutoTest::ProtoBuf::IntegralBidParam<T>
   {
     param.operator()(
       static_cast<typename T::Type>(arg));
@@ -214,9 +213,8 @@ namespace AutoTest
   RequestMember< Request, BidParam<Request,Setter> >::
   MemberSetter::set_int(
     T& param,
-    Arg arg,
-    typename std::enable_if<
-      !std::is_integral<typename T::Type>::value>::type*)
+    Arg arg)
+    requires AutoTest::ProtoBuf::NonIntegralBidParam<T>
   {
     std::stringstream s;
     s << arg;
@@ -229,9 +227,8 @@ namespace AutoTest
   RequestMember< Request, BidParam<Request,Setter> >::
   MemberSetter::set_string(
     T& param,
-    const std::string& arg,
-    typename std::enable_if<
-      std::is_integral<typename T::Type>::value>::type*)
+    const std::string& arg)
+    requires AutoTest::ProtoBuf::IntegralBidParam<T>
   {
     std::istringstream is(arg);
     typename T::Type v;
@@ -252,9 +249,8 @@ namespace AutoTest
   RequestMember< Request, BidParam<Request,Setter> >::
   MemberSetter::set_string(
     T& param,
-    const std::string& arg,
-    typename std::enable_if<
-      !std::is_integral<typename T::Type>::value>::type*)
+    const std::string& arg)
+    requires AutoTest::ProtoBuf::NonIntegralBidParam<T>
   {
     param.operator()(arg);
   }

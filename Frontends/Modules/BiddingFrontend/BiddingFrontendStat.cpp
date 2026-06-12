@@ -9,6 +9,9 @@ namespace
   const Generics::Values::Key BF_REQ_COUNT        = "rtb_request_total";
   const Generics::Values::Key BF_REQ_FINISHED     = "rtb_request_finished_total";
   const Generics::Values::Key BF_REQ_BIDS         = "rtb_request_bid_total";
+  const Generics::Values::Key FCGI_ACCEPT_TOTAL   = "fcgi_accept_total";
+  const Generics::Values::Key FCGI_CONNECTION_IN_PROGRESS =
+    "fcgi_connection_in_progress";
 
   const Generics::Values::Key BF_SKIPPED          = "rtb_request_skip_total";
   const Generics::Values::Key BF_TIMEOUTS         = "rtb_request_timeout_total";
@@ -276,6 +279,24 @@ namespace AdServer
   }
 
   void
+  StatHolder::add_fcgi_accept() noexcept
+  {
+    fcgi_accept_total_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void
+  StatHolder::add_fcgi_connection() noexcept
+  {
+    fcgi_connection_in_progress_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void
+  StatHolder::complete_fcgi_connection() noexcept
+  {
+    fcgi_connection_in_progress_.fetch_sub(1, std::memory_order_relaxed);
+  }
+
+  void
   StatHolder::add_user_bind_request() noexcept
   {
     Sync::PosixGuard lock(mutex_);
@@ -429,6 +450,10 @@ namespace AdServer
     v->set(BF_REQ_COUNT, d.request_total);
     v->set(BF_REQ_FINISHED, d.request_finished_total);
     v->set(BF_REQ_BIDS, d.request_total_bid);
+    v->set(FCGI_ACCEPT_TOTAL, fcgi_accept_total_.load(std::memory_order_relaxed));
+    v->set(
+      FCGI_CONNECTION_IN_PROGRESS,
+      fcgi_connection_in_progress_.load(std::memory_order_relaxed));
 
     v->set(BF_SKIPPED, d.skipped);
     v->set(BF_REQ_IN_PROGRESS, d.request_in_progress);

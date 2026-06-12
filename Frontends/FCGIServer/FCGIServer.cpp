@@ -527,6 +527,7 @@ namespace AdServer::Frontends
               logger(),
               frontend_pool,
               callback(),
+              stats_,
               bind_it->bind(), // bind_it->bind().data(),
               bind_it->backlog(),
               bind_it->accept_threads())));
