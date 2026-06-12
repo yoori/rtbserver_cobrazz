@@ -1,26 +1,86 @@
 #include <stdlib.h>
 #include "Gason.hpp"
 
-static unsigned char ctype[256];
-
-static const struct ctype_init_t
+namespace
 {
-  ctype_init_t()
+  inline bool
+  json_is_space(char c)
   {
-    ctype[(int)'\0'] |= 002;
-    for (const char *s = "\t\n\v\f\r\x20"; *s; ++s) ctype[(int)*s] |= 001;
-    for (const char *s = ",:]}"; *s; ++s) ctype[(int)*s] |= 002;
-    for (const char *s = "+-"; *s; ++s) ctype[(int)*s] |= 004;
-    for (const char *s = "0123456789"; *s; ++s) ctype[(int)*s] |= 010;
-    for (const char *s = "ABCDEF" "abcdef"; *s; ++s) ctype[(int)*s] |= 020;
+    return c == ' ' || static_cast<unsigned>(c - '\t') <= ('\r' - '\t');
   }
-} ctype_init;
 
-bool is_space(char c) { return (ctype[(int)(unsigned char)c] & 001) != 0; }
-bool is_delim(char c) { return (ctype[(int)(unsigned char)c] & 003) != 0; }
-bool is_sign(char c) { return (ctype[(int)(unsigned char)c] & 004) != 0; }
-bool is_dec(char c) { return (ctype[(int)(unsigned char)c] & 010) != 0; }
-bool is_hex(char c) { return (ctype[(int)(unsigned char)c] & 030) != 0; }
+  inline bool
+  json_is_delim(char c)
+  {
+    return c == '\0' || c == ',' || c == ':' || c == ']' || c == '}';
+  }
+
+  inline bool
+  json_is_sign(char c)
+  {
+    return c == '+' || c == '-';
+  }
+
+  inline bool
+  json_is_dec(char c)
+  {
+    return static_cast<unsigned>(c - '0') <= 9;
+  }
+
+  inline bool
+  json_is_hex(char c)
+  {
+    return json_is_dec(c) ||
+      static_cast<unsigned>((c | 0x20) - 'a') <= ('f' - 'a');
+  }
+
+  inline char*
+  json_consume_float(char* str)
+  {
+    if (json_is_sign(*str))
+    {
+      ++str;
+    }
+
+    while (json_is_dec(*str))
+    {
+      ++str;
+    }
+
+    if (*str == '.')
+    {
+      ++str;
+
+      while (json_is_dec(*str))
+      {
+        ++str;
+      }
+    }
+
+    if (*str == 'e' || *str == 'E')
+    {
+      ++str;
+
+      if (json_is_sign(*str))
+      {
+        ++str;
+      }
+
+      while (json_is_dec(*str))
+      {
+        ++str;
+      }
+    }
+
+    return str;
+  }
+}
+
+bool is_space(char c) { return json_is_space(c); }
+bool is_delim(char c) { return json_is_delim(c); }
+bool is_sign(char c) { return json_is_sign(c); }
+bool is_dec(char c) { return json_is_dec(c); }
+bool is_hex(char c) { return json_is_hex(c); }
 
 inline int char2int(char c)
 {
@@ -34,50 +94,15 @@ consume_float(
   char *str,
   char **endptr)
 {
-  if (is_sign(*str))
-  {
-    ++str;
-  }
-
-  while (is_dec(*str))
-  {
-    ++str;
-  }
-
-  if (*str == '.')
-  {
-    ++str;
-
-    while (is_dec(*str))
-    {
-      ++str;
-    }
-  }
-
-  if (*str == 'e' || *str == 'E')
-  {
-    ++str;
-
-    if (is_sign(*str))
-    {
-      ++str;
-    }
-
-    while (is_dec(*str))
-    {
-      ++str;
-    }
-  }
-
-  *endptr = str;
+  *endptr = json_consume_float(str);
 }
 
 double
 str2float(const char* str)
 {
-  double sign = is_sign(*str) && *str++ == '-' ? -1 : 1;
+  double sign = json_is_sign(*str) && *str++ == '-' ? -1 : 1;
   double result = 0;
-  while (is_dec(*str))
+  while (json_is_dec(*str))
   {
     result = (result * 10) + (*str++ - '0');
   }
@@ -86,7 +111,7 @@ str2float(const char* str)
   {
     ++str;
     double fraction = 1;
-    while (is_dec(*str))
+    while (json_is_dec(*str))
     {
       fraction *= 0.1;
       result += (*str++ - '0') * fraction;
@@ -95,9 +120,9 @@ str2float(const char* str)
   if (*str == 'e' || *str == 'E')
   {
     ++str;
-    double base = is_sign(*str) && *str++ == '-' ? 0.1 : 10;
+    double base = json_is_sign(*str) && *str++ == '-' ? 0.1 : 10;
     int exponent = 0;
-    while (is_dec(*str))
+    while (json_is_dec(*str))
     {
       exponent = (exponent * 10) + (*str++ - '0');
     }
@@ -130,32 +155,43 @@ inline void *align_pointer(void *x, size_t align)
   return (void *)(((uintptr_t)x + (align - 1)) & ~(align - 1));
 }
 
+namespace
+{
+  inline void*
+  json_allocate(JsonAllocator& allocator, size_t n, size_t align)
+  {
+    JsonAllocator::Zone* head = allocator.head;
+    if (head)
+    {
+      char *p = (char *)align_pointer(head->end, align);
+      if (p + n <= (char *)head + JSON_ZONE_SIZE)
+      {
+        head->end = p + n;
+        return p;
+      }
+    }
+    size_t zone_size = sizeof(JsonAllocator::Zone) + n + align;
+    JsonAllocator::Zone *z = (JsonAllocator::Zone *)malloc(
+      zone_size <= JSON_ZONE_SIZE ? JSON_ZONE_SIZE : zone_size);
+    char *p = (char *)align_pointer(z + 1, align);
+    z->end = p + n;
+    if (zone_size <= JSON_ZONE_SIZE || !head)
+    {
+      z->next = head;
+      allocator.head = z;
+    }
+    else
+    {
+      z->next = head->next;
+      head->next = z;
+    }
+    return p;
+  }
+}
+
 void *JsonAllocator::allocate(size_t n, size_t align)
 {
-  if (head)
-  {
-    char *p = (char *)align_pointer(head->end, align);
-    if (p + n <= (char *)head + JSON_ZONE_SIZE)
-    {
-      head->end = p + n;
-      return p;
-    }
-  }
-  size_t zone_size = sizeof(Zone) + n + align;
-  Zone *z = (Zone *)malloc(zone_size <= JSON_ZONE_SIZE ? JSON_ZONE_SIZE : zone_size);
-  char *p = (char *)align_pointer(z + 1, align);
-  z->end = p + n;
-  if (zone_size <= JSON_ZONE_SIZE || !head)
-  {
-    z->next = head;
-    head = z;
-  }
-  else
-  {
-    z->next = head->next;
-    head->next = z;
-  }
-  return p;
+  return json_allocate(*this, n, align);
 }
 
 struct JsonList
@@ -208,88 +244,106 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
   while (*str)
   {
     JsonValue o;
-    while (*str && is_space(*str)) ++str;
+    while (json_is_space(*str)) ++str;
     *endptr = str++;
+
     switch (**endptr)
     {
       case '\0':
         continue;
-      case '-':
-        if (!is_dec(*str) && *str != '.') return *endptr = str, JSON_PARSE_BAD_NUMBER;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        o = JsonValue(JSON_TAG_NUMBER, *endptr);
-        consume_float(*endptr, &str);
-        if (!is_delim(*str)) return *endptr = str, JSON_PARSE_BAD_NUMBER;
-        break;
       case '"':
         o = JsonValue(JSON_TAG_STRING, str);
-        for (char *s = str; *str; ++s, ++str)
+        for (;; ++str)
         {
-          int c = *s = *str;
-          if (c == '\\')
+          const char c = *str;
+          if (c == '"')
           {
-            c = *++str;
-            switch (c)
-            {
-              case '\\':
-              case '"':
-              case '/': *s = c; break;
-              case 'b': *s = '\b'; break;
-              case 'f': *s = '\f'; break;
-              case 'n': *s = '\n'; break;
-              case 'r': *s = '\r'; break;
-              case 't': *s = '\t'; break;
-              case 'u':
-                c = 0;
-                for (int i = 0; i < 4; ++i)
-                {
-                  if (!is_hex(*++str)) return *endptr = str, JSON_PARSE_BAD_STRING;
-                  c = c * 16 + char2int(*str);
-                }
-                if (c < 0x80)
-                {
-                  *s = c;
-                }
-                else if (c < 0x800)
-                {
-                  *s++ = 0xC0 | (c >> 6);
-                  *s = 0x80 | (c & 0x3F);
-                }
-                else
-                {
-                  *s++ = 0xE0 | (c >> 12);
-                  *s++ = 0x80 | ((c >> 6) & 0x3F);
-                  *s = 0x80 | (c & 0x3F);
-                }
-                break;
-              default:
-                return *endptr = str, JSON_PARSE_BAD_STRING;
-            }
-          }
-          else if (c == '"')
-          {
-            *s = 0;
-            ++str;
+            *str++ = 0;
             break;
           }
+          if (c == '\\')
+          {
+            break;
+          }
+          if (c == '\0')
+          {
+            return *endptr = str, JSON_PARSE_BAD_STRING;
+          }
         }
-        if (!is_delim(*str)) return *endptr = str, JSON_PARSE_BAD_STRING;
+
+        if (*str == '\\')
+        {
+          char* s = str;
+          for (;; ++s, ++str)
+          {
+            int c = *str;
+            if (c == '\\')
+            {
+              c = *++str;
+              switch (c)
+              {
+                case '\\':
+                case '"':
+                case '/': *s = c; break;
+                case 'b': *s = '\b'; break;
+                case 'f': *s = '\f'; break;
+                case 'n': *s = '\n'; break;
+                case 'r': *s = '\r'; break;
+                case 't': *s = '\t'; break;
+                case 'u':
+                  c = 0;
+                  for (int i = 0; i < 4; ++i)
+                  {
+                    if (!json_is_hex(*++str))
+                    {
+                      return *endptr = str, JSON_PARSE_BAD_STRING;
+                    }
+                    c = c * 16 + char2int(*str);
+                  }
+                  if (c < 0x80)
+                  {
+                    *s = c;
+                  }
+                  else if (c < 0x800)
+                  {
+                    *s++ = 0xC0 | (c >> 6);
+                    *s = 0x80 | (c & 0x3F);
+                  }
+                  else
+                  {
+                    *s++ = 0xE0 | (c >> 12);
+                    *s++ = 0x80 | ((c >> 6) & 0x3F);
+                    *s = 0x80 | (c & 0x3F);
+                  }
+                  break;
+                default:
+                  return *endptr = str, JSON_PARSE_BAD_STRING;
+              }
+            }
+            else if (c == '"')
+            {
+              *s = 0;
+              ++str;
+              break;
+            }
+            else if (c == '\0')
+            {
+              return *endptr = str, JSON_PARSE_BAD_STRING;
+            }
+            else
+            {
+              *s = c;
+            }
+          }
+        }
+        if (!json_is_delim(*str)) return *endptr = str, JSON_PARSE_BAD_STRING;
         break;
       case 't':
         for (const char *s = "rue"; *s; ++s, ++str)
         {
           if (*s != *str) return JSON_PARSE_BAD_IDENTIFIER;
         }
-        if (!is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
+        if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
         o = JsonValue(JSON_TAG_BOOL, (void *)true);
         break;
       case 'f':
@@ -297,7 +351,7 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         {
           if (*s != *str) return JSON_PARSE_BAD_IDENTIFIER;
         }
-        if (!is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
+        if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
         o = JsonValue(JSON_TAG_BOOL, (void *)false);
         break;
       case 'n':
@@ -305,7 +359,7 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         {
           if (*s != *str) return JSON_PARSE_BAD_IDENTIFIER;
         }
-        if (!is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
+        if (!json_is_delim(*str)) return JSON_PARSE_BAD_IDENTIFIER;
         break;
       case ']':
         if (top == -1) return JSON_PARSE_STACK_UNDERFLOW;
@@ -335,6 +389,22 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         separator = true;
         continue;
       default:
+        if (**endptr == '-' || json_is_dec(**endptr))
+        {
+          if (**endptr == '-' && !json_is_dec(*str) && *str != '.')
+          {
+            return *endptr = str, JSON_PARSE_BAD_NUMBER;
+          }
+
+          o = JsonValue(JSON_TAG_NUMBER, *endptr);
+          str = json_consume_float(*endptr);
+          if (!json_is_delim(*str))
+          {
+            return *endptr = str, JSON_PARSE_BAD_NUMBER;
+          }
+          break;
+        }
+
         return JSON_PARSE_UNEXPECTED_CHARACTER;
     }
 
@@ -355,7 +425,10 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
         stack[top].key = reinterpret_cast<char*>(o.getPayload());
         continue;
       }
-      JsonNode *p = (JsonNode *)allocator.allocate(sizeof(JsonNode));
+      JsonNode *p = (JsonNode *)json_allocate(
+        allocator,
+        sizeof(JsonNode),
+        8);
       p->value = o;
       p->key = stack[top].key;
       stack[top].key = 0;
@@ -363,7 +436,10 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
       continue;
     }
 
-    JsonNode *p = (JsonNode *)allocator.allocate(sizeof(JsonNode) - sizeof(char *));
+    JsonNode *p = (JsonNode *)json_allocate(
+      allocator,
+      sizeof(JsonNode) - sizeof(char *),
+      8);
     p->value = o;
     stack[top].grow_the_tail(p);
   }
