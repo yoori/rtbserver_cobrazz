@@ -5,6 +5,7 @@
 #include <atomic>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Values.hpp>
+#include <Frontends/FCGIServer/FCGIAcceptorStats.hpp>
 #include "CampaignManagerTypes.hpp"
 
 
@@ -12,7 +13,7 @@ namespace AdServer
 {
   class BiddingStatInfo;
 
-  class StatHolder : public ReferenceCounting::AtomicImpl
+  class StatHolder : public Frontends::FCGIAcceptorStats
   {
   public:
     struct RtbRequestInProgressStats

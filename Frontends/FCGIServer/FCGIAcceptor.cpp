@@ -7,7 +7,6 @@
 #include <boost/asio/io_service.hpp>
 
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
-
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 
 #include "FCGIAcceptor.hpp"
@@ -234,7 +233,7 @@ namespace Frontends
       Logging::Logger* logger,
       FrontendCommons::FrontendInterface* frontend,
       State* state,
-      StatHolder* stats)
+      FCGIAcceptorStats* stats)
       noexcept;
 
     virtual
@@ -305,7 +304,7 @@ namespace Frontends
   private:
     Logging::Logger_var logger_;
     FrontendCommons::Frontend_var frontend_;
-    StatHolder_var stats_;
+    FCGIAcceptorStats_var stats_;
     State_var state_;
     boost::asio::io_service& io_service_;
     //std::shared_ptr<boost::asio::io_context::strand> strand_;
@@ -468,7 +467,7 @@ namespace Frontends
     Logging::Logger* logger,
     FrontendCommons::FrontendInterface* frontend,
     State* /*state*/,
-    StatHolder* stats)
+    FCGIAcceptorStats* stats)
     noexcept
     : logger_(ReferenceCounting::add_ref(logger)),
       frontend_(ReferenceCounting::add_ref(frontend)),
@@ -734,7 +733,7 @@ namespace Frontends
     Logging::Logger* logger,
     FrontendCommons::FrontendInterface* frontend,
     Generics::ActiveObjectCallback* callback,
-    StatHolder* stats,
+    FCGIAcceptorStats* stats,
     const String::SubString& bind_address,
     unsigned long backlog,
     unsigned long process_threads)
@@ -757,6 +756,25 @@ namespace Frontends
         process_threads,
         128 * 1024,
         "fcgi-accept")));
+  }
+
+  FCGIAcceptor::FCGIAcceptor(
+    Logging::Logger* logger,
+    FrontendCommons::FrontendInterface* frontend,
+    Generics::ActiveObjectCallback* callback,
+    const String::SubString& bind_address,
+    unsigned long backlog,
+    unsigned long process_threads)
+    /*throw(eh::Exception)*/
+    : FCGIAcceptor(
+        logger,
+        frontend,
+        callback,
+        nullptr,
+        bind_address,
+        backlog,
+        process_threads)
+  {
   }
 
   FCGIAcceptor::~FCGIAcceptor() noexcept

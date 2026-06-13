@@ -11,8 +11,8 @@
 #include <Generics/CompositeActiveObject.hpp>
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <BiddingFrontend/BiddingFrontendStat.hpp>
 
+#include "FCGIAcceptorStats.hpp"
 #include "WorkerStatsObject.hpp"
 
 namespace AdServer::Frontends
@@ -27,7 +27,16 @@ namespace AdServer::Frontends
       Logging::Logger* logger,
       FrontendCommons::FrontendInterface* frontend,
       Generics::ActiveObjectCallback* callback,
-      StatHolder* stats,
+      FCGIAcceptorStats* stats,
+      const String::SubString& bind_address,
+      unsigned long backlog,
+      unsigned long accept_threads)
+      /*throw(eh::Exception)*/;
+
+    FCGIAcceptor(
+      Logging::Logger* logger,
+      FrontendCommons::FrontendInterface* frontend,
+      Generics::ActiveObjectCallback* callback,
       const String::SubString& bind_address,
       unsigned long backlog,
       unsigned long accept_threads)
@@ -86,7 +95,7 @@ namespace AdServer::Frontends
   private:
     const Logging::Logger_var logger_;
     const FrontendCommons::Frontend_var frontend_;
-    const StatHolder_var stats_;
+    const FCGIAcceptorStats_var stats_;
 
     WorkerStatsObject_var worker_stats_object_;
     State_var state_;
