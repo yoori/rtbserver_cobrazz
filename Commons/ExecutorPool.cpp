@@ -10,8 +10,10 @@ namespace AdServer::Commons
 
   ExecutorPool::ExecutorPool(
     Generics::ActiveObjectCallback* callback,
-    unsigned long threads)
+    unsigned long threads,
+    std::string thread_name)
     : DelegateActiveObject(callback, threads ? threads : 1, 1024 * 1024)
+    , thread_name_(std::move(thread_name))
   {
     const auto context_count = threads ? threads : 1;
     contexts_.reserve(context_count);
@@ -99,7 +101,7 @@ namespace AdServer::Commons
   void
   ExecutorPool::work_() noexcept
   {
-    set_current_thread_name("asio-pool");
+    set_current_thread_name(thread_name_);
 
     const auto context_index = work_index_.fetch_add(
       1,

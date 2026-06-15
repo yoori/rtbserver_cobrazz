@@ -220,7 +220,8 @@ namespace AdServer
         {
           request_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
-            request_threads);
+            request_threads,
+            "fcgi-request");
         }
 
         unsigned long interrupt_threads = 0;
@@ -250,12 +251,9 @@ namespace AdServer
         {
           timeout_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
-            interrupt_threads);
+            interrupt_threads,
+            "fcgi-timeout");
         }
-
-        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-          fe_config.CommonFeConfiguration()->grpc_executor_threads());
-        common_module_->set_grpc_executor(grpc_executor_);
 
         for(auto module_it = modules_.begin(); module_it != modules_.end(); ++module_it)
         {
@@ -409,10 +407,6 @@ namespace AdServer
           add_child_object(timeout_workers_);
           trace_startup("FrontendsPool timeout_workers add end");
         }
-
-        trace_startup("FrontendsPool grpc_executor add begin");
-        add_child_object(grpc_executor_);
-        trace_startup("FrontendsPool grpc_executor add end");
 
         for (const auto& frontend : frontends_)
         {

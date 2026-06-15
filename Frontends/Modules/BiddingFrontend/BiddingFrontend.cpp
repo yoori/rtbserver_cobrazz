@@ -891,12 +891,26 @@ namespace AdServer::Bidding
           control_task_runner_,
           task_scheduler,
           flush_period)->schedule(flush_period);
-        grpc_executor_ = common_module_->grpc_executor();
+        constexpr std::size_t GRPC_CLIENT_THREADS = 16;
+        auto make_grpc_executor =
+          [this, GRPC_CLIENT_THREADS](const char* thread_name)
+          {
+            auto executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+              GRPC_CLIENT_THREADS,
+              thread_name);
+            add_child_object(executor);
+            return executor;
+          };
+
+        user_info_grpc_executor_ = make_grpc_executor("grpc-userinfo");
+        user_bind_grpc_executor_ = make_grpc_executor("grpc-userbind");
+        campaign_grpc_executor_ = make_grpc_executor("grpc-campaign");
+        channel_grpc_executor_ = make_grpc_executor("grpc-channel");
 
         auto user_info_client =
           AdServer::UserInfoSvcs::create_distributed_user_info_client(
             *common_config_,
-            grpc_executor_,
+            user_info_grpc_executor_,
             common_module_->grpc_coalesce_runner(),
             logger());
         user_info_distributed_client_ = user_info_client;
@@ -909,10 +923,10 @@ namespace AdServer::Bidding
 
         auto campaign_manager_client =
           std::make_shared<
-            AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+              AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
               FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
               AdServer::Grpc::BatchingOptions(),
-              grpc_executor_,
+              campaign_grpc_executor_,
               common_module_->grpc_coalesce_runner());
         campaign_manager_ = campaign_manager_client;
         campaign_manager_coro_ = std::make_shared<
@@ -924,7 +938,7 @@ namespace AdServer::Bidding
         auto user_bind_client =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
             *common_config_,
-            grpc_executor_,
+            user_bind_grpc_executor_,
             common_module_->grpc_coalesce_runner(),
             logger());
         if(user_bind_client)
@@ -940,7 +954,7 @@ namespace AdServer::Bidding
         auto channel_client =
           AdServer::ChannelSvcs::create_distributed_channel_client(
             *common_config_,
-            grpc_executor_,
+            channel_grpc_executor_,
             common_module_->grpc_coalesce_runner(),
             logger());
         channel_client_ = channel_client;

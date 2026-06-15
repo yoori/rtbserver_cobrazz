@@ -371,7 +371,10 @@ namespace AdServer::Bidding
       user_bind_client_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>
       user_bind_client_coro_;
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> user_info_grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> user_bind_grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> campaign_grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> channel_grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>
       user_info_distributed_client_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>

@@ -1091,7 +1091,7 @@ namespace AdServer::UserInfoSvcs
   {
     static const char* FUN = "UserInfoManagerCore::co_match()";
 
-    debug_print_match_input(FUN, user_info, match_params);
+    //debug_print_match_input(FUN, user_info, match_params);
 
     try
     {
@@ -1304,7 +1304,7 @@ namespace AdServer::UserInfoSvcs
       process_timer.stop();
       match_result.process_time = process_timer.elapsed_time();
 
-      debug_print_match_result(FUN, true, match_result);
+      //debug_print_match_result(FUN, true, match_result);
       co_return true;
     }
     catch (const UserInfoContainer::NotReady& ex)

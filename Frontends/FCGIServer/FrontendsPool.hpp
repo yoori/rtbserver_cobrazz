@@ -130,7 +130,6 @@ namespace AdServer
       CommonModule_var common_module_;
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
         grpc_coalesce_runner_;
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
       std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers_;
       std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers_;
       std::vector<std::string> frontend_names_;

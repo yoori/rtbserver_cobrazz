@@ -139,7 +139,9 @@ namespace AdServer
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       grpc_coalesce_runner_;
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    mutable std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    mutable Sync::PosixMutex grpc_executor_lock_;
+    unsigned long grpc_executor_threads_ = 1;
 
     UserIdController_var user_id_controller_;
 
@@ -198,13 +200,6 @@ namespace AdServer
   }
 
   inline
-  std::shared_ptr<AdServer::Grpc::GrpcExecutor>
-  CommonModule::grpc_executor() const noexcept
-  {
-    return grpc_executor_;
-  }
-
-  inline
   void
   CommonModule::set_grpc_coalesce_runner(
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
@@ -220,6 +215,7 @@ namespace AdServer
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
     noexcept
   {
+    Sync::PosixGuard lock(grpc_executor_lock_);
     grpc_executor_ = std::move(grpc_executor);
   }
 } // namespace AdServer

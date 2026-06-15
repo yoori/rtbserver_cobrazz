@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -50,7 +51,9 @@ namespace AdServer::Grpc
       bool shutdown_requested_ = false;
     };
 
-    explicit GrpcExecutor(std::size_t workers_number);
+    explicit GrpcExecutor(
+      std::size_t workers_number,
+      std::string thread_name = "grpc-pool");
 
     std::shared_ptr<CQ> queue(unsigned int index) noexcept;
 
@@ -72,6 +75,7 @@ namespace AdServer::Grpc
     };
 
     std::vector<CQHolder> holders_;
+    std::string thread_name_;
   };
 }
 

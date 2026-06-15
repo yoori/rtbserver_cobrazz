@@ -12,7 +12,10 @@ namespace AdServer::Grpc
     : queue(std::move(queue_val))
   {}
 
-  GrpcExecutor::GrpcExecutor(std::size_t workers_number)
+  GrpcExecutor::GrpcExecutor(
+    std::size_t workers_number,
+    std::string thread_name)
+    : thread_name_(std::move(thread_name))
   {
     const auto safe_workers_number = std::max<std::size_t>(1, workers_number);
     holders_.reserve(safe_workers_number);
@@ -61,8 +64,8 @@ namespace AdServer::Grpc
     for (auto& holder : holders_)
     {
       auto queue = holder.queue;
-      holder.thread = std::thread([queue]() {
-        AdServer::Commons::set_current_thread_name("grpc-pool");
+      holder.thread = std::thread([queue, thread_name = thread_name_]() {
+        AdServer::Commons::set_current_thread_name(thread_name);
         queue->run();
       });
     }

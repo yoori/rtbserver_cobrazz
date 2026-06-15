@@ -3,6 +3,7 @@
 
 #include <eh/Exception.hpp>
 #include <atomic>
+#include <array>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Values.hpp>
 #include <Frontends/FCGIServer/FCGIAcceptorStats.hpp>
@@ -29,10 +30,6 @@ namespace AdServer
     struct StatData
     {
       StatData();
-      StatData(
-        unsigned long request_finished_total_,
-        unsigned long request_total_bid_,
-        const Generics::Time& processing_time);
 
       unsigned long request_total;
       unsigned long request_finished_total;
@@ -66,11 +63,6 @@ namespace AdServer
       unsigned long user_bind_match_history_requests;
       unsigned long user_bind_match_campaign_requests;
       Generics::Time processing_time;
-      typedef std::map<Generics::Time, std::size_t> TimeoutsMap;
-      TimeoutsMap timeout_counters;
-
-      StatData&
-      operator +=(const StatData& rhs) noexcept;
     };
 
     void
@@ -211,10 +203,44 @@ namespace AdServer
     ~StatHolder() noexcept = default;
 
   private:
-    StatData stat_data_;
+    static constexpr std::size_t TIMEOUT_COUNTERS_SIZE = 28;
+
     std::atomic<unsigned long> fcgi_accept_total_{0};
     std::atomic<unsigned long> fcgi_connection_in_progress_{0};
-    Sync::PosixMutex mutex_;
+    std::atomic<unsigned long> request_total_{0};
+    std::atomic<unsigned long> request_finished_total_{0};
+    std::atomic<unsigned long> request_total_bid_{0};
+    std::atomic<unsigned long> skipped_{0};
+    std::atomic<unsigned long> request_in_progress_{0};
+    std::atomic<unsigned long> user_resolving_total_{0};
+    std::atomic<long long> user_resolving_total_time_us_{0};
+    std::atomic<unsigned long> user_resolving_in_progress_{0};
+    std::atomic<unsigned long> trigger_match_total_{0};
+    std::atomic<long long> trigger_match_total_time_us_{0};
+    std::atomic<unsigned long> trigger_match_in_progress_{0};
+    std::atomic<unsigned long> history_match_total_{0};
+    std::atomic<long long> history_match_total_time_us_{0};
+    std::atomic<unsigned long> history_match_in_progress_{0};
+    std::atomic<unsigned long> campaign_selection_total_{0};
+    std::atomic<long long> campaign_selection_total_time_us_{0};
+    std::atomic<unsigned long> campaign_selection_in_progress_{0};
+    std::atomic<unsigned long> history_post_match_total_{0};
+    std::atomic<long long> history_post_match_total_time_us_{0};
+    std::atomic<unsigned long> history_post_match_in_progress_{0};
+    std::atomic<long long> processing_time_us_{0};
+    std::atomic<unsigned long> user_bind_request_count_{0};
+    std::atomic<unsigned long> user_bind_requests_{0};
+    std::atomic<unsigned long> user_bind_rejected_requests_{0};
+    std::atomic<unsigned long> user_bind_match_requests_{0};
+    std::atomic<unsigned long> user_bind_match_rejected_requests_{0};
+    std::atomic<unsigned long> user_bind_match_channel_requests_{0};
+    std::atomic<unsigned long> user_bind_match_get_profile_requests_{0};
+    std::atomic<unsigned long> user_bind_match_merge_requests_{0};
+    std::atomic<unsigned long> user_bind_match_remove_requests_{0};
+    std::atomic<unsigned long> user_bind_match_history_requests_{0};
+    std::atomic<unsigned long> user_bind_match_campaign_requests_{0};
+    std::array<std::atomic<unsigned long>, TIMEOUT_COUNTERS_SIZE>
+      timeout_counters_{};
   };
 
   typedef ReferenceCounting::SmartPtr<StatHolder>

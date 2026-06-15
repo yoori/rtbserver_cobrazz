@@ -146,6 +146,7 @@ namespace AdServer
     try
     {
       parse_config_(common_config, domain_config);
+      grpc_executor_threads_ = common_config->grpc_executor_threads();
       corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
       task_runner_ = new Generics::TaskRunner(callback(), 2);
       add_child_object(task_runner_);
@@ -260,6 +261,22 @@ namespace AdServer
 
       ::kill(::getppid(), SIGTERM);
     }
+  }
+
+  std::shared_ptr<AdServer::Grpc::GrpcExecutor>
+  CommonModule::grpc_executor() const noexcept
+  {
+    Sync::PosixGuard lock(grpc_executor_lock_);
+    if (!grpc_executor_)
+    {
+      auto executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+        grpc_executor_threads_,
+        "grpc-common");
+      const_cast<CommonModule*>(this)->add_child_object(executor);
+      grpc_executor_ = std::move(executor);
+    }
+
+    return grpc_executor_;
   }
 
   void

@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <atomic>
+#include <string>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -19,7 +20,8 @@ namespace AdServer::Commons
   public:
     ExecutorPool(
       Generics::ActiveObjectCallback* callback,
-      unsigned long threads);
+      unsigned long threads,
+      std::string thread_name = "asio-pool");
 
     void
     post(std::function<void()> task);
@@ -82,6 +84,7 @@ namespace AdServer::Commons
     std::vector<Context> contexts_;
     std::atomic_size_t post_index_{0};
     std::atomic_size_t work_index_{0};
+    std::string thread_name_;
 
     static thread_local const ExecutorPool* current_executor_pool_;
     static thread_local IoService* current_io_service_;
