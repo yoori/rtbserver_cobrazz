@@ -165,6 +165,7 @@ namespace AdServer::Bidding
       const SourceSeq& source,
       google::protobuf::RepeatedField<google::protobuf::uint64>* target)
     {
+      target->Reserve(source.size());
       for(std::size_t i = 0; i < source.size(); ++i)
       {
         target->Add(source[i]);
@@ -176,6 +177,7 @@ namespace AdServer::Bidding
       const SourceSeq& source,
       google::protobuf::RepeatedPtrField<std::string>* target)
     {
+      target->Reserve(source.size());
       for(std::size_t i = 0; i < source.size(); ++i)
       {
         *target->Add() = source[i];
@@ -210,6 +212,7 @@ namespace AdServer::Bidding
       const CampaignManager::TokenSeq& source,
       google::protobuf::RepeatedPtrField<PB::TokenInfo>* target)
     {
+      target->Reserve(source.size());
       for(std::size_t i = 0; i < source.size(); ++i)
       {
         auto* token = target->Add();
@@ -244,6 +247,7 @@ namespace AdServer::Bidding
       target.set_colo_id(source.colo_id);
       target.set_external_user_id(source.external_user_id);
       target.set_source_id(source.source_id);
+      target.mutable_location()->Reserve(source.location.size());
       for(std::size_t i = 0; i < source.location.size(); ++i)
       {
         auto* location = target.add_location();
@@ -251,6 +255,7 @@ namespace AdServer::Bidding
         location->set_region(source.location[i].region);
         location->set_city(source.location[i].city);
       }
+      target.mutable_coord_location()->Reserve(source.coord_location.size());
       for(std::size_t i = 0; i < source.coord_location.size(); ++i)
       {
         auto* coord = target.add_coord_location();
@@ -313,6 +318,7 @@ namespace AdServer::Bidding
       target.set_ad_instantiate_type(source.ad_instantiate_type);
       target.set_only_display_ad(source.only_display_ad);
       pack_ids(source.full_freq_caps, target.mutable_full_freq_caps());
+      target.mutable_seq_orders()->Reserve(source.seq_orders.size());
       for(std::size_t i = 0; i < source.seq_orders.size(); ++i)
       {
         auto* seq_order = target.add_seq_orders();
@@ -320,6 +326,7 @@ namespace AdServer::Bidding
         seq_order->set_set_id(source.seq_orders[i].set_id);
         seq_order->set_imps(source.seq_orders[i].imps);
       }
+      target.mutable_campaign_freqs()->Reserve(source.campaign_freqs.size());
       for(std::size_t i = 0; i < source.campaign_freqs.size(); ++i)
       {
         auto* campaign_freq = target.add_campaign_freqs();
@@ -333,6 +340,7 @@ namespace AdServer::Bidding
       target.set_profiling_available(source.profiling_available);
       target.set_fraud(source.fraud);
       pack_ids(source.channels, target.mutable_channels());
+      target.mutable_ccg_keywords()->Reserve(source.ccg_keywords.size());
       for(std::size_t i = 0; i < source.ccg_keywords.size(); ++i)
       {
         auto* kw = target.add_ccg_keywords();
@@ -347,6 +355,7 @@ namespace AdServer::Bidding
       auto* trigger = target.mutable_trigger_match_result();
       auto pack_trigger = [](const auto& source_channels, auto* target_channels)
       {
+        target_channels->Reserve(source_channels.size());
         for(std::size_t i = 0; i < source_channels.size(); ++i)
         {
           auto* channel = target_channels->Add();
@@ -365,6 +374,7 @@ namespace AdServer::Bidding
       target.set_tag_delivery_factor(source.tag_delivery_factor);
       target.set_ccg_delivery_factor(source.ccg_delivery_factor);
       target.set_preview_ccid(source.preview_ccid);
+      target.mutable_ad_slots()->Reserve(source.ad_slots.size());
       for(std::size_t i = 0; i < source.ad_slots.size(); ++i)
       {
         const auto& src = source.ad_slots[i];
@@ -395,12 +405,14 @@ namespace AdServer::Bidding
         pack_strings(src.required_categories, dst->mutable_required_categories());
         dst->set_debug_ccg(src.debug_ccg);
         pack_ids(src.allowed_durations, dst->mutable_allowed_durations());
+        dst->mutable_native_data_tokens()->Reserve(src.native_data_tokens.size());
         for(std::size_t j = 0; j < src.native_data_tokens.size(); ++j)
         {
           auto* token = dst->add_native_data_tokens();
           token->set_name(src.native_data_tokens[j].name);
           token->set_required(src.native_data_tokens[j].required);
         }
+        dst->mutable_native_image_tokens()->Reserve(src.native_image_tokens.size());
         for(std::size_t j = 0; j < src.native_image_tokens.size(); ++j)
         {
           auto* token = dst->add_native_image_tokens();
