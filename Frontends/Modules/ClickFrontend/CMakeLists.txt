@@ -8,7 +8,7 @@ target_link_libraries(ClickFrontend
   Stream
   Geoip
   Commons
-  ChannelClient
+  ChannelGrpcClient
   UserInfoManagerGrpcClient
   UserBindClient
   UserIdController

@@ -23,6 +23,7 @@
 #include <grpcpp/support/status.h>
 
 #include <Generics/Time.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 
 namespace AdServer::Grpc
 {
@@ -722,7 +723,10 @@ namespace AdServer::Grpc
         {
           if (ok)
           {
-            callback(status, std::move(response));
+            callback(
+              status,
+              AdServer::Grpc::ResponseHolder<Response>::make_value(
+                std::move(response)));
           }
           else
           {
@@ -730,7 +734,8 @@ namespace AdServer::Grpc
               grpc::Status(
                 grpc::StatusCode::UNKNOWN,
                 "completion queue event failed"),
-              Response());
+              AdServer::Grpc::ResponseHolder<Response>::make_value(
+                Response()));
           }
         }
 

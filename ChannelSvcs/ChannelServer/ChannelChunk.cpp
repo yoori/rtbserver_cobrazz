@@ -27,15 +27,6 @@ namespace ChannelSvcs
       os << '(' << atom.channel_id << ',' << atom.channel_trigger_id << ')';
       return os;
     }
-
-    std::ostream& operator<<(std::ostream& os, const MatchingEntity& entity)
-    {
-      for(auto it = entity.begin(); it != entity.end(); ++it)
-      {
-        os << *it << (it + 1 == entity.end() ? '.' : ',');
-      }
-      return os;
-    }
   }
 
   struct MatchingEntityLess

@@ -353,7 +353,23 @@ namespace AdServer::Bidding
       for(String::SubString::ConstPointer value_it = value.begin();
           value_it != value.end(); ++value_it)
       {
-        keywords_osrt_ += *value_it == ' ' ? 'x' : *value_it;
+        const unsigned char ch = *value_it;
+        if(ch >= 0x80)
+        {
+          keywords_osrt_ += *value_it;
+        }
+        else if((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
+        {
+          keywords_osrt_ += *value_it;
+        }
+        else if(ch >= 'A' && ch <= 'Z')
+        {
+          keywords_osrt_ += static_cast<char>(ch - 'A' + 'a');
+        }
+        else
+        {
+          keywords_osrt_ += 'x';
+        }
       }
 
       keywords_non_empty_ = true;

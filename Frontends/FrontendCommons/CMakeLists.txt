@@ -49,7 +49,7 @@ target_link_libraries(RequestMatchers
   UserBindClient
   GrpcBatch
   gRPC::grpc++
-  ChannelClient
+  ChannelGrpcClient
 
   FeConfigXSD
 

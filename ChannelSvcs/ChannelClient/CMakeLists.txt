@@ -11,14 +11,3 @@ target_link_libraries(ChannelGrpcClient
   ChannelServerGrpcClient
   ChannelServerIDL
 )
-
-add_library(ChannelClient SHARED
-  ChannelCorbaClient.cpp
-)
-
-target_link_libraries(ChannelClient
-  ChannelGrpcClient
-  CORBACommons
-  ChannelManagerControllerIDL
-  ChannelSessionFactory
-)

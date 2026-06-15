@@ -22,7 +22,7 @@
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelGrpcAlgs.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelDistributedGrpcClient.hpp>
 #include <ChannelControllerGrpc.grpc.pb.h>
 #include <ChannelServerGrpc.grpc-client.hpp>
@@ -82,7 +82,7 @@ namespace
   {
     if (references.empty())
     {
-      throw std::runtime_error("empty ChannelAdmin2 endpoint list");
+      throw std::runtime_error("empty ChannelAdmin endpoint list");
     }
 
     ClientHolder result;
@@ -92,7 +92,7 @@ namespace
       new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
-        new Logging::ActiveObjectCallbackImpl(logger, "ChannelAdmin2", "gRPC"),
+        new Logging::ActiveObjectCallbackImpl(logger, "ChannelAdmin", "gRPC"),
         std::make_shared<boost::asio::io_service>(),
         1);
     result.coalesce_runner->activate_object();
@@ -334,7 +334,7 @@ main(int argc, char** argv)
     if (commands.empty() || !endpoints.installed())
     {
       std::cerr <<
-        "Usage: ChannelAdmin2 --endpoints controller-host:port|server-host:port "
+        "Usage: ChannelAdmin --endpoints controller-host:port|server-host:port "
         "match|ccg_traits|session_description "
         "[--url URL] [--url-words WORDS] [--pwords WORDS] "
         "[--swords WORDS] [--uid UID] [--status S] [--ids 1,2] "
@@ -375,7 +375,7 @@ main(int argc, char** argv)
         Language::Trigger::normalize_phrase(kw_from_http, first_url_words, 0);
       }
 
-      request.set_request_id("ChannelAdmin2");
+      request.set_request_id("ChannelAdmin");
       request.set_first_url(first_url);
       request.set_first_url_words(first_url_words);
       request.set_pwords(*pwords);
@@ -425,7 +425,7 @@ main(int argc, char** argv)
     }
     else
     {
-      throw std::runtime_error("unsupported ChannelAdmin2 command");
+      throw std::runtime_error("unsupported ChannelAdmin command");
     }
 
     return 0;

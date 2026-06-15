@@ -1407,6 +1407,7 @@ namespace AdServer::Bidding
       std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
         result;
       bool present = false;
+      bool failed = false;
     };
 
     auto campaign_match_result =
@@ -1590,20 +1591,23 @@ namespace AdServer::Bidding
               get_index < external_user_ids.size();
               ++get_index)
           {
-            adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-            get_request.set_id(external_user_ids[get_index]);
-            get_request.set_timestamp(
+            google::protobuf::Arena get_request_arena;
+            auto* get_request = google::protobuf::Arena::CreateMessage<
+              adserver::user_info_svcs::user_bind::GetUserIdRequest>(
+                &get_request_arena);
+            get_request->set_id(external_user_ids[get_index]);
+            get_request->set_timestamp(
               GrpcAlgs::pack_time(request_info.current_time));
-            get_request.set_silent(false);
-            get_request.set_generate_user_id(false);
-            get_request.set_for_set_cookie(false);
-            get_request.set_create_timestamp(
+            get_request->set_silent(false);
+            get_request->set_generate_user_id(false);
+            get_request->set_for_set_cookie(false);
+            get_request->set_create_timestamp(
               GrpcAlgs::pack_time(request_info.user_create_time));
 
             try
             {
               auto get_result = co_await
-                user_bind_client_coro_->get_user_id(std::move(get_request));
+                user_bind_client_coro_->get_user_id(*get_request);
               if(!get_result.status.ok())
               {
                 log_user_bind_grpc_error("get_user_id", get_result.status);
@@ -1672,18 +1676,20 @@ namespace AdServer::Bidding
                 continue;
               }
 
-              adserver::user_info_svcs::user_bind::AddUserIdRequest
-                add_user_request;
-              add_user_request.set_id(external_user_ids[add_index]);
-              add_user_request.set_timestamp(
+              google::protobuf::Arena add_user_request_arena;
+              auto* add_user_request = google::protobuf::Arena::CreateMessage<
+                adserver::user_info_svcs::user_bind::AddUserIdRequest>(
+                  &add_user_request_arena);
+              add_user_request->set_id(external_user_ids[add_index]);
+              add_user_request->set_timestamp(
                 GrpcAlgs::pack_time(request_info.current_time));
-              add_user_request.set_user_id(GrpcAlgs::pack_user_id(match_user_id));
+              add_user_request->set_user_id(
+                GrpcAlgs::pack_user_id(match_user_id));
 
               try
               {
                 auto add_result = co_await
-                  user_bind_client_coro_->add_user_id(
-                    std::move(add_user_request));
+                  user_bind_client_coro_->add_user_id(*add_user_request);
                 if(!add_result.status.ok())
                 {
                   log_user_bind_grpc_error("add_user_id", add_result.status);
@@ -1763,16 +1769,19 @@ namespace AdServer::Bidding
       {
         try
         {
-          adserver::channel_svcs::channel_server::MatchRequest channel_request;
+          google::protobuf::Arena channel_request_arena;
+          auto* channel_request = google::protobuf::Arena::CreateMessage<
+            adserver::channel_svcs::channel_server::MatchRequest>(
+              &channel_request_arena);
           auto& request_params = *request_task->request_params();
 
-          channel_request.set_non_strict_word_match(false);
-          channel_request.set_non_strict_url_match(false);
-          channel_request.set_return_negative(false);
-          channel_request.set_simplify_page(true);
-          channel_request.set_fill_content(true);
-          channel_request.set_statuses("A", 2);
-          channel_request.set_first_url(request_params.common_info.referer);
+          channel_request->set_non_strict_word_match(false);
+          channel_request->set_non_strict_url_match(false);
+          channel_request->set_return_negative(false);
+          channel_request->set_simplify_page(true);
+          channel_request->set_fill_content(true);
+          channel_request->set_statuses("A", 2);
+          channel_request->set_first_url(request_params.common_info.referer);
 
           try
           {
@@ -1784,7 +1793,7 @@ namespace AdServer::Bidding
 
             if(!ref_words.empty())
             {
-              channel_request.set_first_url_words(ref_words);
+              channel_request->set_first_url_words(ref_words);
             }
           }
           catch(const eh::Exception& e)
@@ -1823,22 +1832,22 @@ namespace AdServer::Bidding
             }
           }
 
-          channel_request.set_urls(urls_str);
+          channel_request->set_urls(urls_str);
           if(!urls_words_str.empty())
           {
-            channel_request.set_urls_words(urls_words_str);
+            channel_request->set_urls_words(urls_words_str);
           }
 
           if(!request_task->keywords_.empty())
           {
-            channel_request.set_pwords(request_task->keywords_);
+            channel_request->set_pwords(request_task->keywords_);
           }
-          channel_request.set_swords(request_info.search_words);
-          channel_request.set_uid(
+          channel_request->set_swords(request_info.search_words);
+          channel_request->set_uid(
             GrpcAlgs::pack_user_id(request_task->resolved_user_id_));
 
           auto channel_result = co_await
-            channel_client_coro_->match(std::move(channel_request));
+            channel_client_coro_->match(*channel_request);
           if(channel_result.status.ok())
           {
             if(trigger_match_stage)
@@ -1902,6 +1911,7 @@ namespace AdServer::Bidding
           }
           else
           {
+            trigger_match.failed = true;
             if(trigger_match_stage)
             {
               trigger_match_stage->set_grpc_error(channel_result.status);
@@ -1918,6 +1928,7 @@ namespace AdServer::Bidding
         }
         catch(const eh::Exception& ex)
         {
+          trigger_match.failed = true;
           if(trigger_match_stage)
           {
             trigger_match_stage->set_exception_error(ex);
@@ -2033,11 +2044,14 @@ namespace AdServer::Bidding
         try
         {
           typedef std::set<ChannelMatch> ChannelMatchSet;
-          adserver::user_info_svcs::user_info_manager::MatchRequest
-            history_match_request;
+          google::protobuf::Arena history_match_request_arena;
+          auto* history_match_request =
+            google::protobuf::Arena::CreateMessage<
+              adserver::user_info_svcs::user_info_manager::MatchRequest>(
+                &history_match_request_arena);
           auto& request_params = *request_task->request_params();
 
-          auto* user_info = history_match_request.mutable_user_info();
+          auto* user_info = history_match_request->mutable_user_info();
           const auto packed_user_id =
             GrpcAlgs::pack_user_id(request_task->resolved_user_id_);
           if(request_task->hostname_.empty() && user_info_distributed_client_)
@@ -2052,7 +2066,7 @@ namespace AdServer::Bidding
           user_info->set_temporary(false);
           user_info->set_time(request_info.current_time.tv_sec);
 
-          auto* match_params = history_match_request.mutable_match_params();
+          auto* match_params = history_match_request->mutable_match_params();
           match_params->set_use_empty_profile(false);
           match_params->set_silent_match(false);
           match_params->set_no_match(
@@ -2131,7 +2145,7 @@ namespace AdServer::Bidding
           }
 
           auto history_result = co_await
-            user_info_client_coro_->match(std::move(history_match_request));
+            user_info_client_coro_->match(*history_match_request);
           if(history_result.status.ok())
           {
             request_task->request_params()->profiling_available = true;
@@ -2223,18 +2237,20 @@ namespace AdServer::Bidding
          !request_info.skip_ccg_keywords &&
          !request_info.filter_request)
       {
-        adserver::channel_svcs::channel_server::GetCcgTraitsRequest
-          ccg_traits_request;
+        google::protobuf::Arena ccg_traits_request_arena;
+        auto* ccg_traits_request = google::protobuf::Arena::CreateMessage<
+          adserver::channel_svcs::channel_server::GetCcgTraitsRequest>(
+            &ccg_traits_request_arena);
         for(const auto& channel :
             history_match_result->match_result().channels())
         {
-          ccg_traits_request.add_ids(channel.channel_id());
+          ccg_traits_request->add_ids(channel.channel_id());
         }
 
         try
         {
           auto ccg_traits_result = co_await
-            channel_client_coro_->get_ccg_traits(std::move(ccg_traits_request));
+            channel_client_coro_->get_ccg_traits(*ccg_traits_request);
           if(ccg_traits_result.status.ok())
           {
             ccg_keywords = std::make_shared<
@@ -2271,6 +2287,7 @@ namespace AdServer::Bidding
 
       auto& request_params = *request_task->request_params();
       const bool passback =
+        trigger_match.failed ||
         (trigger_match.present &&
           (trigger_match.result->no_track() || trigger_match.result->no_adv())) ||
         request_info.filter_request;
@@ -2285,14 +2302,17 @@ namespace AdServer::Bidding
         passback,
         false);
 
-      PB::GetCampaignCreativeRequest campaign_request;
-      pack_get_campaign_creative_request(campaign_request, request_params);
+      google::protobuf::Arena campaign_request_arena;
+      auto* campaign_request =
+        google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
+          &campaign_request_arena);
+      pack_get_campaign_creative_request(*campaign_request, request_params);
 
       try
       {
         auto campaign_result = co_await
           campaign_manager_coro_->get_campaign_creative(
-            std::move(campaign_request));
+            *campaign_request);
         if(campaign_result.status.ok())
         {
           const auto& response = campaign_result.response;
@@ -2588,37 +2608,39 @@ namespace AdServer::Bidding
           campaign_ids[creative_i] = creative.campaign_group_id;
         }
 
-        adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest
-          request;
-        request.set_user_id(GrpcAlgs::pack_user_id(user_id));
-        request.set_time(GrpcAlgs::pack_time(now));
-        request.set_request_id(ad_slot_result.request_id);
+        google::protobuf::Arena request_arena;
+        auto* request = google::protobuf::Arena::CreateMessage<
+          adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest>(
+            &request_arena);
+        request->set_user_id(GrpcAlgs::pack_user_id(user_id));
+        request->set_time(GrpcAlgs::pack_time(now));
+        request->set_request_id(ad_slot_result.request_id);
         for(const auto freq_cap : ad_slot_result.freq_caps)
         {
-          request.add_freq_caps(freq_cap);
+          request->add_freq_caps(freq_cap);
         }
         for(const auto uc_freq_cap : ad_slot_result.uc_freq_caps)
         {
-          request.add_uc_freq_caps(uc_freq_cap);
+          request->add_uc_freq_caps(uc_freq_cap);
         }
         for(const auto& seq_order : seq_orders)
         {
-          *request.add_seq_orders() = seq_order;
+          *request->add_seq_orders() = seq_order;
         }
         for(const auto campaign_id : campaign_ids)
         {
           if(ad_slot_result.track_impr)
           {
-            request.add_uc_campaign_ids(campaign_id);
+            request->add_uc_campaign_ids(campaign_id);
           }
           else
           {
-            request.add_campaign_ids(campaign_id);
+            request->add_campaign_ids(campaign_id);
           }
         }
 
         auto result = co_await user_info_client_coro_->update_user_freq_caps(
-          std::move(request));
+          *request);
         if(!result.status.ok())
         {
           logger()->sstream(
@@ -3114,9 +3136,12 @@ namespace AdServer::Bidding
       co_await AdServer::Commons::ExecutorPool::yield(passback_workers_);
       passback_task_count_ += -1;
 
-      PB::GetCampaignCreativeRequest request;
-      pack_get_campaign_creative_request(request, request_params);
-      co_await campaign_manager_coro_->get_campaign_creative(std::move(request));
+      google::protobuf::Arena request_arena;
+      auto* request =
+        google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
+          &request_arena);
+      pack_get_campaign_creative_request(*request, request_params);
+      co_await campaign_manager_coro_->get_campaign_creative(*request);
     }
     catch(const eh::Exception&)
     {

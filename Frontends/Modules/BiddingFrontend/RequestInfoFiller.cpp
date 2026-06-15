@@ -538,38 +538,6 @@ namespace AdServer::Bidding
       return false;
     }
 
-    // Get width & height from string size
-    // (Appnexus size parsing for the REQ-3939)
-    void size_decode(
-      const std::string& size,
-      unsigned long& width,
-      unsigned long& height)
-    {
-      unsigned long s[] = { 0, 0 };
-      int index = 0;
-      for (std::string::const_iterator cit = size.begin();
-        cit != size.end(); ++cit)
-      {
-        if (isdigit(*cit))
-        {
-          s[index] = 10 * s[index] + (*cit - '0');
-        }
-        else if (*cit == 'x' && index == 0)
-        {
-          index++;
-        }
-        else
-        {
-          return;
-        }
-      }
-      if (index)
-      {
-        width = s[0];
-        height = s[1];
-      }
-    }
-
     template <typename Seq, typename Arg>
     bool test_value_in_list(
       const Seq& seq,
@@ -1423,7 +1391,7 @@ namespace AdServer::Bidding
   private:
     void
     process_metric_(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
     {
@@ -5841,12 +5809,26 @@ namespace AdServer::Bidding
   RequestInfoFiller::norm_keyword_(const String::SubString& kw) noexcept
   {
     std::string simplified_kw(kw.str());
-    //String::case_change<String::Simplify>(kw, simplified_kw);
-    std::replace(
-      simplified_kw.begin(),
-      simplified_kw.end(),
-      ' ',
-      'x');
+    for(auto& ch_ref : simplified_kw)
+    {
+      const unsigned char ch = ch_ref;
+      if(ch >= 0x80)
+      {
+        continue;
+      }
+      else if((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
+      {
+        continue;
+      }
+      else if(ch >= 'A' && ch <= 'Z')
+      {
+        ch_ref = static_cast<char>(ch - 'A' + 'a');
+      }
+      else
+      {
+        ch_ref = 'x';
+      }
+    }
     return simplified_kw;
   }
 

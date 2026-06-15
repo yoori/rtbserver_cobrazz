@@ -1,17 +1,19 @@
 add_executable(ChannelAdmin
-  Application.cpp
+  ChannelAdmin.cpp
 )
+
 target_link_libraries(ChannelAdmin
   Logger
   Generics
-  XMLUtility
+  HTTP
+  BLogic
   Commons
-  UtilCommons
-  ChannelCommons
-  ChannelClient
-  ChannelContainer
-  ChannelSessionFactory
-  DictionaryProviderIDL
+  ChannelGrpcClient
+  ChannelControllerGrpc
+  ChannelServerGrpcClient
 )
 
-#install(TARGETS ChannelAdmin DESTINATION ${INSTALL_DIR})
+target_include_directories(ChannelAdmin PRIVATE
+  ${PB_DIRECTORY}/ChannelSvcs/ChannelController
+  ${PB_DIRECTORY}/ChannelSvcs/ChannelServer
+)

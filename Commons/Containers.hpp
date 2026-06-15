@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 namespace AdServer
 {
   namespace Commons
@@ -191,6 +193,8 @@ namespace AdServer
       explicit ValueStateHolder(State state, Args... data): val_(std::forward<Args>(data)...), state_(state) {}
       explicit ValueStateHolder(const ObjectType& val): val_(val), state_(S_GOOD) {}
       ValueStateHolder(const ObjectType* val): val_(val ? *val : ObjectType()), state_(val ? S_GOOD : S_NOT_INITED) {}
+      ValueStateHolder(const ValueStateHolder&) = default;
+      ValueStateHolder(ValueStateHolder&&) = default;
 
       const ObjectType*
       operator->() const noexcept

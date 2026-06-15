@@ -8,6 +8,7 @@
 #include <Stream/MemoryStream.hpp>
 
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 
 #include "ClickFrontend.hpp"
 
@@ -139,8 +140,11 @@ namespace AdServer
       channel_request,
       [self](
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::MatchResponse& response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::MatchResponse>&&
+            response_holder)
       {
+        const auto& response = response_holder.get();
         self->frontend_->workers_->post(
           [self, status, response]()
           {
@@ -206,8 +210,11 @@ namespace AdServer
       get_request_info,
       [self](
         const grpc::Status& status,
-        const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::user_info_svcs::user_bind::GetUserIdResponse>&&
+            response_holder)
       {
+        const auto& response = response_holder.get();
         self->frontend_->workers_->post(
           [self, status, response]()
           {
@@ -258,8 +265,11 @@ namespace AdServer
       request,
       [self](
         const grpc::Status& status,
-        const adserver::user_info_svcs::user_info_manager::MatchResponse& response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::user_info_svcs::user_info_manager::MatchResponse>&&
+            response_holder)
       {
+        const auto& response = response_holder.get();
         self->frontend_->workers_->post(
           [self, status, response]()
           {

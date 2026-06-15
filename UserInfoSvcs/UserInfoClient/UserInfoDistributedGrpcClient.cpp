@@ -10,6 +10,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <UserInfoSvcs/UserInfoController/UserInfoControllerGrpc.grpc.pb.h>
 
@@ -31,7 +32,7 @@ namespace AdServer::UserInfoSvcs
     {
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, message),
-        Response());
+        AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
     }
   }
 
@@ -142,7 +143,10 @@ namespace AdServer::UserInfoSvcs
         pool_ref = std::move(pool_ref), \
         endpoint, \
         callback = std::move(callback) \
-      ](const grpc::Status& status, response_type&& response) mutable \
+      ]( \
+        const grpc::Status& status, \
+        AdServer::Grpc::ResponseHolder<response_type>&& response_holder) \
+      mutable \
       { \
         if (!status.ok()) \
         { \
@@ -151,7 +155,7 @@ namespace AdServer::UserInfoSvcs
         } \
         callback( \
           AdServer::Grpc::status_with_endpoint(status, endpoint), \
-          std::move(response)); \
+          std::move(response_holder)); \
       }); \
   }
 
@@ -184,7 +188,10 @@ namespace AdServer::UserInfoSvcs
         pool_ref = std::move(pool_ref), \
         endpoint, \
         callback = std::move(callback) \
-      ](const grpc::Status& status, response_type&& response) mutable \
+      ]( \
+        const grpc::Status& status, \
+        AdServer::Grpc::ResponseHolder<response_type>&& response_holder) \
+      mutable \
       { \
         if (!status.ok()) \
         { \
@@ -193,7 +200,7 @@ namespace AdServer::UserInfoSvcs
         } \
         callback( \
           AdServer::Grpc::status_with_endpoint(status, endpoint), \
-          std::move(response)); \
+          std::move(response_holder)); \
       }); \
   }
 

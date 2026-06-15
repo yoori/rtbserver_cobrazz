@@ -5,6 +5,8 @@
 #include <sstream>
 #include <utility>
 
+#include <Commons/Grpc/ResponseHolder.hpp>
+
 namespace AdServer::CampaignSvcs
 {
   namespace
@@ -303,7 +305,9 @@ namespace AdServer::CampaignSvcs
   {
     if (!active())
     {
-      callback(unavailable_status("inactive"), Response());
+      callback(
+        unavailable_status("inactive"),
+        AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
       return;
     }
 
@@ -313,7 +317,7 @@ namespace AdServer::CampaignSvcs
     {
       callback(
         unavailable_status(unavailable_description_(pool)),
-        Response());
+        AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
       return;
     }
 
@@ -329,7 +333,7 @@ namespace AdServer::CampaignSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        Response&& response)
+        AdServer::Grpc::ResponseHolder<Response>&& response_holder)
       mutable
       {
         if (!status.ok())
@@ -345,7 +349,7 @@ namespace AdServer::CampaignSvcs
           AdServer::Grpc::status_with_endpoint(
             status,
             ref->endpoint),
-          std::move(response));
+          std::move(response_holder));
       });
   }
 
@@ -399,7 +403,8 @@ namespace AdServer::CampaignSvcs
     {
       callback(
         unavailable_status(unavailable_description_(pool)),
-        pb::GetFileResponse());
+        AdServer::Grpc::ResponseHolder<pb::GetFileResponse>::make_value(
+          pb::GetFileResponse()));
       return;
     }
 
@@ -417,7 +422,7 @@ namespace AdServer::CampaignSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        pb::GetFileResponse&& response)
+        AdServer::Grpc::ResponseHolder<pb::GetFileResponse>&& response_holder)
       mutable
       {
         if (status.ok() || !fallback_ref)
@@ -431,7 +436,7 @@ namespace AdServer::CampaignSvcs
                 status_description(status));
             }
           }
-          callback(status, std::move(response));
+          callback(status, std::move(response_holder));
           return;
         }
 
@@ -452,7 +457,8 @@ namespace AdServer::CampaignSvcs
             pool_timeout
           ](
             const grpc::Status& fallback_status,
-            pb::GetFileResponse&& fallback_response)
+            AdServer::Grpc::ResponseHolder<pb::GetFileResponse>&&
+              fallback_response_holder)
           mutable
           {
             if (!fallback_status.ok())
@@ -464,7 +470,7 @@ namespace AdServer::CampaignSvcs
                   status_description(fallback_status));
               }
             }
-            callback(fallback_status, std::move(fallback_response));
+            callback(fallback_status, std::move(fallback_response_holder));
           });
       });
   }

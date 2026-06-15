@@ -10,6 +10,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Commons/Grpc/DistributedPartitionPool.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <String/StringManip.hpp>
 #include <UserInfoSvcs/UserBindController/UserBindControllerGrpc.grpc.pb.h>
@@ -204,7 +205,10 @@ namespace AdServer::UserInfoSvcs
           pool_ref = std::move(pool_ref),
           endpoint,
           callback = std::move(callback)
-        ](const grpc::Status& status, Response&& response) mutable
+        ](
+          const grpc::Status& status,
+          AdServer::Grpc::ResponseHolder<Response>&& response_holder)
+        mutable
         {
           if (!status.ok())
           {
@@ -213,7 +217,7 @@ namespace AdServer::UserInfoSvcs
           }
           callback(
             AdServer::Grpc::status_with_endpoint(status, endpoint),
-            std::move(response));
+            std::move(response_holder));
         });
     }
 
@@ -233,7 +237,7 @@ namespace AdServer::UserInfoSvcs
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
           message.str()),
-        Response());
+        AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
     }
 
     std::optional<Pool::EndpointChunksList> resolve_partition_(

@@ -23,7 +23,7 @@ target_link_libraries(BiddingFrontend
   Stream
   Geoip
   Commons
-  ChannelClient
+  ChannelGrpcClient
   UserInfoManagerGrpcClient
   UserBindClient
   RequestMatchers

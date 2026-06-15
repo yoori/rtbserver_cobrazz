@@ -7,6 +7,8 @@
 
 #include <grpcpp/support/status.h>
 
+#include <Commons/Grpc/ResponseHolder.hpp>
+
 namespace AdServer::Grpc
 {
   inline const char*
@@ -78,9 +80,9 @@ namespace AdServer::Grpc
 
     start([&](
       const grpc::Status& status,
-      const Response& response)
+      ResponseHolder<Response>&& response_holder)
     {
-      promise.set_value(std::make_pair(status, response));
+      promise.set_value(std::make_pair(status, response_holder.get()));
     });
 
     auto result = future.get();

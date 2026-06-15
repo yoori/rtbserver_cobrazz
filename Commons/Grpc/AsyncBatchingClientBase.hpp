@@ -14,6 +14,7 @@
 
 #include <grpcpp/channel.h>
 #include <grpcpp/support/status.h>
+#include <google/protobuf/arena.h>
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -24,6 +25,7 @@
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 
 namespace AdServer::Grpc
 {
@@ -169,21 +171,29 @@ namespace AdServer::Grpc
           static_cast<grpc::StatusCode>(batch_response.status_code()),
           batch_response.status_message());
 
-        Response response;
-        if (status.ok() && !response.ParseFromString(batch_response.payload()))
+        auto arena = std::make_shared<google::protobuf::Arena>();
+        auto* response =
+          google::protobuf::Arena::CreateMessage<Response>(arena.get());
+        if (status.ok() && !response->ParseFromString(batch_response.payload()))
         {
           if (callback)
           {
             callback(
               grpc::Status(grpc::StatusCode::INTERNAL, parse_error_message),
-              Response());
+              AdServer::Grpc::ResponseHolder<Response>::make_arena(
+                *response,
+                std::move(arena)));
           }
           return;
         }
 
         if (callback)
         {
-          callback(status, std::move(response));
+          callback(
+            status,
+            AdServer::Grpc::ResponseHolder<Response>::make_arena(
+              *response,
+              std::move(arena)));
         }
       });
   }

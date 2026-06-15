@@ -9,7 +9,7 @@ target_link_libraries(ImprTrackFrontend
   Stream
   Geoip
   Commons
-  ChannelClient
+  ChannelGrpcClient
   UserInfoManagerGrpcClient
   UserBindClient
   RequestMatchers

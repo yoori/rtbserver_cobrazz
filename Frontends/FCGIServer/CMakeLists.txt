@@ -40,6 +40,7 @@ target_link_libraries(FCGIServer
   AdFrontend
 
   FCGI
+  XMLUtility
   UtilCommons
   FrontendServerCommons
   Commons

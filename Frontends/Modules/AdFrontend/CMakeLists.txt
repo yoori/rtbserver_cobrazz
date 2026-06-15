@@ -10,7 +10,7 @@ target_link_libraries(AdFrontend
   HTTP
   Geoip
   Commons
-  ChannelClient
+  ChannelGrpcClient
   UserInfoManagerGrpcClient
   CookieManager
   RequestMatchers

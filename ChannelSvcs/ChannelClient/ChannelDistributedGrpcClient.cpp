@@ -10,6 +10,7 @@
 
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Stream/MemoryStream.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 #include <ChannelSvcs/ChannelController/ChannelControllerGrpc.grpc.pb.h>
 
 namespace AdServer::ChannelSvcs
@@ -247,7 +248,10 @@ namespace AdServer::ChannelSvcs
           grpc::Status(
             grpc::StatusCode::UNAVAILABLE,
             "empty ChannelServer grpc group"),
-          adserver::channel_svcs::channel_server::MatchResponse());
+          AdServer::Grpc::ResponseHolder<
+            adserver::channel_svcs::channel_server::MatchResponse>::
+              make_value(
+                adserver::channel_svcs::channel_server::MatchResponse()));
         return;
       }
 
@@ -274,8 +278,9 @@ namespace AdServer::ChannelSvcs
           request,
           [state, endpoint = client_holder->endpoint, group_size](
             const grpc::Status& status,
-            const adserver::channel_svcs::channel_server::MatchResponse&
-              response)
+            AdServer::Grpc::ResponseHolder<
+              adserver::channel_svcs::channel_server::MatchResponse>&&
+                response_holder)
           {
             MatchCallback callback;
             grpc::Status result_status = grpc::Status::OK;
@@ -285,7 +290,7 @@ namespace AdServer::ChannelSvcs
               std::lock_guard<std::mutex> guard(state->lock);
               if (status.ok())
               {
-                merge_match_response_(state->response, response);
+                merge_match_response_(state->response, response_holder.get());
               }
               else
               {
@@ -310,7 +315,11 @@ namespace AdServer::ChannelSvcs
               callback = std::move(state->callback);
             }
 
-            callback(result_status, std::move(result_response));
+            callback(
+              result_status,
+              AdServer::Grpc::ResponseHolder<
+                adserver::channel_svcs::channel_server::MatchResponse>::
+                  make_value(std::move(result_response)));
           });
       }
     }
@@ -325,7 +334,11 @@ namespace AdServer::ChannelSvcs
           grpc::Status(
             grpc::StatusCode::UNAVAILABLE,
             "empty ChannelServer grpc group"),
-          adserver::channel_svcs::channel_server::GetCcgTraitsResponse());
+          AdServer::Grpc::ResponseHolder<
+            adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
+              make_value(
+                adserver::channel_svcs::channel_server::
+                  GetCcgTraitsResponse()));
         return;
       }
 
@@ -355,8 +368,9 @@ namespace AdServer::ChannelSvcs
           request,
           [state, endpoint = client_holder->endpoint, group_size](
             const grpc::Status& status,
-            const adserver::channel_svcs::channel_server::GetCcgTraitsResponse&
-              response)
+            AdServer::Grpc::ResponseHolder<
+              adserver::channel_svcs::channel_server::GetCcgTraitsResponse>&&
+                response_holder)
           {
             GetCcgTraitsCallback callback;
             grpc::Status result_status = grpc::Status::OK;
@@ -366,7 +380,7 @@ namespace AdServer::ChannelSvcs
               std::lock_guard<std::mutex> guard(state->lock);
               if (status.ok())
               {
-                state->responses.emplace_back(response);
+                state->responses.emplace_back(response_holder.get());
               }
               else
               {
@@ -391,7 +405,11 @@ namespace AdServer::ChannelSvcs
               callback = std::move(state->callback);
             }
 
-            callback(result_status, std::move(result_response));
+            callback(
+              result_status,
+              AdServer::Grpc::ResponseHolder<
+                adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
+                  make_value(std::move(result_response)));
           });
       }
     }
@@ -653,7 +671,10 @@ namespace AdServer::ChannelSvcs
       add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
-        adserver::channel_svcs::channel_server::MatchResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::MatchResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::MatchResponse()));
       return;
     }
 
@@ -665,7 +686,10 @@ namespace AdServer::ChannelSvcs
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
           "no available ChannelServer grpc client"),
-        adserver::channel_svcs::channel_server::MatchResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::MatchResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::MatchResponse()));
       return;
     }
 
@@ -678,7 +702,9 @@ namespace AdServer::ChannelSvcs
       ]
       (
         const grpc::Status& status,
-        adserver::channel_svcs::channel_server::MatchResponse&& response
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::MatchResponse>&&
+            response_holder
       )
       mutable
       {
@@ -691,7 +717,7 @@ namespace AdServer::ChannelSvcs
           AdServer::Grpc::status_with_endpoint(
             status,
             ref->name()),
-          std::move(response));
+          std::move(response_holder));
       });
   }
 
@@ -707,7 +733,10 @@ namespace AdServer::ChannelSvcs
       add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
-        adserver::channel_svcs::channel_server::GetCcgTraitsResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
       return;
     }
 
@@ -719,7 +748,10 @@ namespace AdServer::ChannelSvcs
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
           "no available ChannelServer grpc client"),
-        adserver::channel_svcs::channel_server::GetCcgTraitsResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
       return;
     }
 
@@ -731,8 +763,9 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        adserver::channel_svcs::channel_server::GetCcgTraitsResponse&&
-          response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>&&
+            response_holder)
       mutable
       {
         if (!status.ok())
@@ -744,7 +777,7 @@ namespace AdServer::ChannelSvcs
           AdServer::Grpc::status_with_endpoint(
             status,
             ref->name()),
-          std::move(response));
+          std::move(response_holder));
       });
   }
 
@@ -760,7 +793,11 @@ namespace AdServer::ChannelSvcs
       add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
-        adserver::channel_svcs::channel_server::CheckConfigurationResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::CheckConfigurationResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::
+                CheckConfigurationResponse()));
       return;
     }
 
@@ -772,7 +809,11 @@ namespace AdServer::ChannelSvcs
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
           "no available ChannelServer grpc client"),
-        adserver::channel_svcs::channel_server::CheckConfigurationResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::CheckConfigurationResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::
+                CheckConfigurationResponse()));
       return;
     }
 
@@ -784,8 +825,9 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        adserver::channel_svcs::channel_server::CheckConfigurationResponse&&
-          response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::CheckConfigurationResponse>&&
+            response_holder)
       mutable
       {
         if (!status.ok())
@@ -793,7 +835,7 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, std::move(response));
+        callback(status, std::move(response_holder));
       });
   }
 
@@ -809,7 +851,10 @@ namespace AdServer::ChannelSvcs
       add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
-        adserver::channel_svcs::channel_server::SetSourcesResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::SetSourcesResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::SetSourcesResponse()));
       return;
     }
 
@@ -821,7 +866,10 @@ namespace AdServer::ChannelSvcs
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
           "no available ChannelServer grpc client"),
-        adserver::channel_svcs::channel_server::SetSourcesResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::SetSourcesResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::SetSourcesResponse()));
       return;
     }
 
@@ -833,8 +881,9 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        adserver::channel_svcs::channel_server::SetSourcesResponse&&
-          response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::SetSourcesResponse>&&
+            response_holder)
       mutable
       {
         if (!status.ok())
@@ -842,7 +891,7 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, std::move(response));
+        callback(status, std::move(response_holder));
       });
   }
 
@@ -859,7 +908,11 @@ namespace AdServer::ChannelSvcs
       add_completed_stats(true);
       callback(
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
-        adserver::channel_svcs::channel_server::SetProxySourcesResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::SetProxySourcesResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::
+                SetProxySourcesResponse()));
       return;
     }
 
@@ -871,7 +924,11 @@ namespace AdServer::ChannelSvcs
         grpc::Status(
           grpc::StatusCode::UNAVAILABLE,
           "no available ChannelServer grpc client"),
-        adserver::channel_svcs::channel_server::SetProxySourcesResponse());
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::SetProxySourcesResponse>::
+            make_value(
+              adserver::channel_svcs::channel_server::
+                SetProxySourcesResponse()));
       return;
     }
 
@@ -883,8 +940,9 @@ namespace AdServer::ChannelSvcs
         pool_timeout = pool_timeout_
       ](
         const grpc::Status& status,
-        adserver::channel_svcs::channel_server::SetProxySourcesResponse&&
-          response)
+        AdServer::Grpc::ResponseHolder<
+          adserver::channel_svcs::channel_server::SetProxySourcesResponse>&&
+            response_holder)
       mutable
       {
         if (!status.ok())
@@ -892,7 +950,7 @@ namespace AdServer::ChannelSvcs
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
         }
-        callback(status, std::move(response));
+        callback(status, std::move(response_holder));
       });
   }
 
