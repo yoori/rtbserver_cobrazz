@@ -2,6 +2,8 @@
 #include <coroutine>
 #include <sstream>
 
+#include <google/protobuf/arena.h>
+
 #include <Logger/StreamLogger.hpp>
 #include <String/StringManip.hpp>
 #include <String/AsciiStringManip.hpp>
@@ -918,18 +920,21 @@ namespace AdServer::ImprTrack
 
     if(!result.user_id.is_null())
     {
-      adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-      get_request.set_id(std::string("c/") + result.user_id.to_string());
-      get_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
-      get_request.set_silent(true);
-      get_request.set_generate_user_id(false);
-      get_request.set_for_set_cookie(request_info.set_cookie);
-      get_request.set_create_timestamp(
+      google::protobuf::Arena get_request_arena;
+      auto* get_request = google::protobuf::Arena::CreateMessage<
+        adserver::user_info_svcs::user_bind::GetUserIdRequest>(
+          &get_request_arena);
+      get_request->set_id(std::string("c/") + result.user_id.to_string());
+      get_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
+      get_request->set_silent(true);
+      get_request->set_generate_user_id(false);
+      get_request->set_for_set_cookie(request_info.set_cookie);
+      get_request->set_create_timestamp(
         GrpcAlgs::pack_time(Generics::Time::ZERO));
-      get_request.set_current_user_id(GrpcAlgs::pack_user_id(result.user_id));
+      get_request->set_current_user_id(GrpcAlgs::pack_user_id(result.user_id));
 
       auto get_result = co_await user_bind_client_coro_->get_user_id(
-        std::move(get_request));
+        *get_request);
       if(get_result.status.ok())
       {
         if(get_result.response.invalid_operation())
@@ -960,13 +965,16 @@ namespace AdServer::ImprTrack
 
     if(!result.user_id.is_null())
     {
-      adserver::user_info_svcs::user_bind::AddUserIdRequest add_user_request;
-      add_user_request.set_id(request_info.external_user_id);
-      add_user_request.set_user_id(GrpcAlgs::pack_user_id(result.user_id));
-      add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
+      google::protobuf::Arena add_user_request_arena;
+      auto* add_user_request = google::protobuf::Arena::CreateMessage<
+        adserver::user_info_svcs::user_bind::AddUserIdRequest>(
+          &add_user_request_arena);
+      add_user_request->set_id(request_info.external_user_id);
+      add_user_request->set_user_id(GrpcAlgs::pack_user_id(result.user_id));
+      add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
 
       auto add_result = co_await user_bind_client_coro_->add_user_id(
-        std::move(add_user_request));
+        *add_user_request);
       if(!add_result.status.ok())
       {
         co_return result;
@@ -981,16 +989,19 @@ namespace AdServer::ImprTrack
       co_return result;
     }
 
-    adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-    get_request.set_id(request_info.external_user_id);
-    get_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
-    get_request.set_silent(true);
-    get_request.set_generate_user_id(false);
-    get_request.set_for_set_cookie(request_info.set_cookie);
-    get_request.set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
+    google::protobuf::Arena get_request_arena;
+    auto* get_request = google::protobuf::Arena::CreateMessage<
+      adserver::user_info_svcs::user_bind::GetUserIdRequest>(
+        &get_request_arena);
+    get_request->set_id(request_info.external_user_id);
+    get_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
+    get_request->set_silent(true);
+    get_request->set_generate_user_id(false);
+    get_request->set_for_set_cookie(request_info.set_cookie);
+    get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
     auto get_result = co_await user_bind_client_coro_->get_user_id(
-      std::move(get_request));
+      *get_request);
     if(!get_result.status.ok())
     {
       co_return result;
@@ -1198,13 +1209,16 @@ namespace AdServer::ImprTrack
     std::shared_ptr<ImprTrackMatchRequestState> state)
     noexcept
   {
-    adserver::channel_svcs::channel_server::MatchRequest channel_request;
-    channel_request.set_non_strict_word_match(false);
-    channel_request.set_non_strict_url_match(false);
-    channel_request.set_return_negative(false);
-    channel_request.set_simplify_page(false);
-    channel_request.set_fill_content(false);
-    channel_request.set_statuses("A", 2);
+    google::protobuf::Arena channel_request_arena;
+    auto* channel_request = google::protobuf::Arena::CreateMessage<
+      adserver::channel_svcs::channel_server::MatchRequest>(
+        &channel_request_arena);
+    channel_request->set_non_strict_word_match(false);
+    channel_request->set_non_strict_url_match(false);
+    channel_request->set_return_negative(false);
+    channel_request->set_simplify_page(false);
+    channel_request->set_fill_content(false);
+    channel_request->set_statuses("A", 2);
 
     std::ostringstream keywords_ostr;
     keywords_ostr << "poadimp";
@@ -1218,10 +1232,10 @@ namespace AdServer::ImprTrack
       keywords_ostr << " poadimpa" << advertiser_id;
     }
 
-    channel_request.set_pwords(keywords_ostr.str());
+    channel_request->set_pwords(keywords_ostr.str());
 
     auto channel_result = co_await channel_client_coro_->match(
-      std::move(channel_request));
+      *channel_request);
     if(!channel_result.status.ok())
     {
       Stream::Error ostr;
@@ -1243,19 +1257,22 @@ namespace AdServer::ImprTrack
       !state->cookie_user_id.is_null() &&
       state->user_id != state->cookie_user_id)
     {
-      adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-      get_request.set_id(std::string("c/") + state->cookie_user_id.to_string());
-      get_request.set_timestamp(GrpcAlgs::pack_time(state->request_info.time));
-      get_request.set_silent(true);
-      get_request.set_generate_user_id(false);
-      get_request.set_for_set_cookie(false);
-      get_request.set_create_timestamp(
+      google::protobuf::Arena get_request_arena;
+      auto* get_request = google::protobuf::Arena::CreateMessage<
+        adserver::user_info_svcs::user_bind::GetUserIdRequest>(
+          &get_request_arena);
+      get_request->set_id(std::string("c/") + state->cookie_user_id.to_string());
+      get_request->set_timestamp(GrpcAlgs::pack_time(state->request_info.time));
+      get_request->set_silent(true);
+      get_request->set_generate_user_id(false);
+      get_request->set_for_set_cookie(false);
+      get_request->set_create_timestamp(
         GrpcAlgs::pack_time(Generics::Time::ZERO));
-      get_request.set_current_user_id(
+      get_request->set_current_user_id(
         GrpcAlgs::pack_user_id(state->cookie_user_id));
 
       auto get_result = co_await user_bind_client_coro_->get_user_id(
-        std::move(get_request));
+        *get_request);
       if(get_result.status.ok() && !get_result.response.invalid_operation())
       {
         const AdServer::Commons::UserId resolved_user_id =
@@ -1282,10 +1299,10 @@ namespace AdServer::ImprTrack
       page_channels.emplace(channel.id(), channel.trigger_channel_id());
     }
 
-    auto build_history_match_request = [this, &page_channels, state](
+    auto fill_history_match_request = [this, &page_channels, state](
+      adserver::user_info_svcs::user_info_manager::MatchRequest& request,
       const AdServer::Commons::UserId& match_user_id)
     {
-      adserver::user_info_svcs::user_info_manager::MatchRequest request;
       auto* match_params = request.mutable_match_params();
       match_params->set_use_empty_profile(false);
       match_params->set_silent_match(false);
@@ -1314,16 +1331,19 @@ namespace AdServer::ImprTrack
       user_info->set_current_colo_id(-1);
       user_info->set_temporary(false);
       user_info->set_time(state->request_info.time.tv_sec);
-      return request;
     };
 
     if(user_info_client_coro_)
     {
       if(state->user_id != AdServer::Commons::PROBE_USER_ID)
       {
-        auto history_match_request = build_history_match_request(state->user_id);
+        google::protobuf::Arena history_match_request_arena;
+        auto* history_match_request = google::protobuf::Arena::CreateMessage<
+          adserver::user_info_svcs::user_info_manager::MatchRequest>(
+            &history_match_request_arena);
+        fill_history_match_request(*history_match_request, state->user_id);
         auto match_result = co_await user_info_client_coro_->match(
-          std::move(history_match_request));
+          *history_match_request);
         if(match_result.status.ok())
         {
           state->history_match_response = std::move(match_result.response);
@@ -1349,18 +1369,26 @@ namespace AdServer::ImprTrack
       if(state->user_id != state->resolved_cookie_user_id &&
         !state->resolved_cookie_user_id.is_null())
       {
-        auto cookie_match_request = build_history_match_request(
+        google::protobuf::Arena cookie_match_request_arena;
+        auto* cookie_match_request = google::protobuf::Arena::CreateMessage<
+          adserver::user_info_svcs::user_info_manager::MatchRequest>(
+            &cookie_match_request_arena);
+        fill_history_match_request(
+          *cookie_match_request,
           state->resolved_cookie_user_id);
-        co_await user_info_client_coro_->match(std::move(cookie_match_request));
+        co_await user_info_client_coro_->match(*cookie_match_request);
       }
     }
 
-    adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest request;
+    google::protobuf::Arena request_arena;
+    auto* request = google::protobuf::Arena::CreateMessage<
+      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(
+        &request_arena);
     fill_match_request_info_(
-      *request.mutable_match_request_info(),
+      *request->mutable_match_request_info(),
       *state);
     auto process_result = co_await campaign_manager_coro_->process_match_request(
-      std::move(request));
+      *request);
     if(!process_result.status.ok())
     {
       Stream::Error ostr;

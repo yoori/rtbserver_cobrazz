@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <google/protobuf/arena.h>
+
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
@@ -47,13 +49,17 @@ namespace AdServer
           co_return ProcessRequestResult{http_status, BindResult(request_info->user_id)};
         }
 
-        adserver::user_info_svcs::user_bind::AddUserIdRequest add_user_request;
-        add_user_request.set_id(request_info->external_id);
-        add_user_request.set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
-        add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
+        google::protobuf::Arena arena;
+        auto* add_user_request = google::protobuf::Arena::CreateMessage<
+          adserver::user_info_svcs::user_bind::AddUserIdRequest>(&arena);
+        add_user_request->set_id(request_info->external_id);
+        add_user_request->set_user_id(
+          GrpcAlgs::pack_user_id(Commons::UserId()));
+        add_user_request->set_timestamp(
+          GrpcAlgs::pack_time(request_info->time));
 
         auto add_result = co_await frontend->user_bind_client_coro_->add_user_id(
-          std::move(add_user_request));
+          *add_user_request);
         co_return ProcessRequestResult{
           add_result.status.ok() ? 204 : 500,
           BindResult(request_info->user_id)};
@@ -73,19 +79,21 @@ namespace AdServer
         const std::string cookie_external_id_str =
           std::string("c/") + result_user_id.to_string();
 
-        adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-        get_request.set_id(cookie_external_id_str);
-        get_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-        get_request.set_silent(true);
-        get_request.set_generate_user_id(false);
-        get_request.set_for_set_cookie(true);
-        get_request.set_create_timestamp(
+        google::protobuf::Arena arena;
+        auto* get_request = google::protobuf::Arena::CreateMessage<
+          adserver::user_info_svcs::user_bind::GetUserIdRequest>(&arena);
+        get_request->set_id(cookie_external_id_str);
+        get_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
+        get_request->set_silent(true);
+        get_request->set_generate_user_id(false);
+        get_request->set_for_set_cookie(true);
+        get_request->set_create_timestamp(
           GrpcAlgs::pack_time(Generics::Time::ZERO));
-        get_request.set_current_user_id(
+        get_request->set_current_user_id(
           GrpcAlgs::pack_user_id(result_user_id));
 
         auto get_result = co_await frontend->user_bind_client_coro_->get_user_id(
-          std::move(get_request));
+          *get_request);
         if(get_result.status.ok())
         {
           if(get_result.response.invalid_operation())
@@ -133,17 +141,19 @@ namespace AdServer
               continue;
             }
 
-            adserver::user_info_svcs::user_bind::GetUserIdRequest get_request;
-            get_request.set_id(external_ids[index].id);
-            get_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
-            get_request.set_silent(true);
-            get_request.set_generate_user_id(external_ids[index].set_uid);
-            get_request.set_for_set_cookie(!app_request);
-            get_request.set_create_timestamp(
+            google::protobuf::Arena arena;
+            auto* get_request = google::protobuf::Arena::CreateMessage<
+              adserver::user_info_svcs::user_bind::GetUserIdRequest>(&arena);
+            get_request->set_id(external_ids[index].id);
+            get_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
+            get_request->set_silent(true);
+            get_request->set_generate_user_id(external_ids[index].set_uid);
+            get_request->set_for_set_cookie(!app_request);
+            get_request->set_create_timestamp(
               GrpcAlgs::pack_time(Generics::Time::ZERO));
 
             auto get_result = co_await
-              frontend->user_bind_client_coro_->get_user_id(std::move(get_request));
+              frontend->user_bind_client_coro_->get_user_id(*get_request);
             if(get_result.status.ok())
             {
               if(get_result.response.invalid_operation())
@@ -195,14 +205,17 @@ namespace AdServer
             continue;
           }
 
-          adserver::user_info_svcs::user_bind::AddUserIdRequest add_user_request;
-          add_user_request.set_id(external_id);
-          add_user_request.set_user_id(GrpcAlgs::pack_user_id(
+          google::protobuf::Arena arena;
+          auto* add_user_request = google::protobuf::Arena::CreateMessage<
+            adserver::user_info_svcs::user_bind::AddUserIdRequest>(&arena);
+          add_user_request->set_id(external_id);
+          add_user_request->set_user_id(GrpcAlgs::pack_user_id(
             !opted_out ? result_user_id : Commons::UserId()));
-          add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
+          add_user_request->set_timestamp(
+            GrpcAlgs::pack_time(request_info->time));
 
           auto add_result = co_await
-            frontend->user_bind_client_coro_->add_user_id(std::move(add_user_request));
+            frontend->user_bind_client_coro_->add_user_id(*add_user_request);
           if(add_result.status.ok())
           {
             if(add_result.response.invalid_operation())
@@ -286,16 +299,18 @@ namespace AdServer
             request_info->add_user_id.to_string());
         }
 
-        adserver::user_info_svcs::user_bind::AddBindRequestRequest bind_request;
-        bind_request.set_request_id(dns_bind_request_id);
-        bind_request.set_timestamp(GrpcAlgs::pack_time(request_info->time));
+        google::protobuf::Arena arena;
+        auto* bind_request = google::protobuf::Arena::CreateMessage<
+          adserver::user_info_svcs::user_bind::AddBindRequestRequest>(&arena);
+        bind_request->set_request_id(dns_bind_request_id);
+        bind_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
         for(const auto& user_id : user_ids)
         {
-          bind_request.add_bind_user_ids(user_id);
+          bind_request->add_bind_user_ids(user_id);
         }
 
         co_await frontend->user_bind_client_coro_->add_bind_request(
-          std::move(bind_request));
+          *bind_request);
       }
 
       co_return ProcessRequestResult{http_status, bind_result};

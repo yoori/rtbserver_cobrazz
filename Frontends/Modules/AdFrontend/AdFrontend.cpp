@@ -5,6 +5,8 @@
 #include <set>
 #include <type_traits>
 
+#include <google/protobuf/arena.h>
+
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <String/StringManip.hpp>
@@ -1146,11 +1148,13 @@ namespace AdServer
     }
 
     TimeGuard user_merge_time_metering;
-    adserver::user_info_svcs::user_info_manager::GetUserProfileRequest
-      get_profile_request;
-    get_profile_request.set_user_id(GrpcAlgs::pack_user_id(merged_uid));
-    get_profile_request.set_temporary(merge_temp);
-    auto* profile_request = get_profile_request.mutable_profile_request();
+    google::protobuf::Arena get_profile_request_arena;
+    auto* get_profile_request = google::protobuf::Arena::CreateMessage<
+      adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(
+        &get_profile_request_arena);
+    get_profile_request->set_user_id(GrpcAlgs::pack_user_id(merged_uid));
+    get_profile_request->set_temporary(merge_temp);
+    auto* profile_request = get_profile_request->mutable_profile_request();
     profile_request->set_base_profile(true);
     profile_request->set_add_profile(true);
     profile_request->set_history_profile(true);
@@ -1159,7 +1163,7 @@ namespace AdServer
 
     auto get_profile_result =
       co_await user_info_client_coro_->get_user_profile(
-        std::move(get_profile_request));
+        *get_profile_request);
     context->request_time_metering.merge_users_time =
       user_merge_time_metering.consider();
 
@@ -1199,12 +1203,14 @@ namespace AdServer
 
     if(context->request_info.remove_merged_uid)
     {
-      adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest
-        remove_request;
-      remove_request.set_user_id(GrpcAlgs::pack_user_id(merged_uid));
+      google::protobuf::Arena remove_request_arena;
+      auto* remove_request = google::protobuf::Arena::CreateMessage<
+        adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(
+          &remove_request_arena);
+      remove_request->set_user_id(GrpcAlgs::pack_user_id(merged_uid));
       auto remove_result =
         co_await user_info_client_coro_->remove_user_profile(
-          std::move(remove_request));
+          *remove_request);
       if(!remove_result.status.ok())
       {
         Stream::Error ostr;
@@ -1235,8 +1241,11 @@ namespace AdServer
         MergeMessage::MERGE_EXCEPTION};
     }
 
-    adserver::user_info_svcs::user_info_manager::MergeRequest merge_request;
-    auto* user_info = merge_request.mutable_user_info();
+    google::protobuf::Arena merge_request_arena;
+    auto* merge_request = google::protobuf::Arena::CreateMessage<
+      adserver::user_info_svcs::user_info_manager::MergeRequest>(
+        &merge_request_arena);
+    auto* user_info = merge_request->mutable_user_info();
     user_info->set_user_id(
       GrpcAlgs::pack_user_id(context->request_info.client_id));
     user_info->set_last_colo_id(context->request_info.last_colo_id);
@@ -1247,7 +1256,7 @@ namespace AdServer
         AdServer::CampaignSvcs::US_TEMPORARY);
     user_info->set_time(context->request_info.current_time.tv_sec);
 
-    auto* match_params = merge_request.mutable_match_params();
+    auto* match_params = merge_request->mutable_match_params();
     match_params->set_use_empty_profile(
       context->request_info.user_status !=
         AdServer::CampaignSvcs::US_OPTIN &&
@@ -1266,11 +1275,11 @@ namespace AdServer
           context->request_info.current_time -
             Generics::Time::ONE_DAY * 15) :
         GrpcAlgs::pack_time(Generics::Time::ZERO));
-    *merge_request.mutable_merge_user_profile() =
+    *merge_request->mutable_merge_user_profile() =
       response.user_profile();
 
     auto merge_result = co_await user_info_client_coro_->merge(
-      std::move(merge_request));
+      *merge_request);
     if(!merge_result.status.ok())
     {
       Stream::Error ostr;
@@ -1411,9 +1420,11 @@ namespace AdServer
       stats_.in(),
       AdFrontendStat::Stage::HistoryMatch);
 
-    adserver::user_info_svcs::user_info_manager::MatchRequest
-      history_match_request;
-    auto* user_info = history_match_request.mutable_user_info();
+    google::protobuf::Arena history_match_request_arena;
+    auto* history_match_request = google::protobuf::Arena::CreateMessage<
+      adserver::user_info_svcs::user_info_manager::MatchRequest>(
+        &history_match_request_arena);
+    auto* user_info = history_match_request->mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(request_info.client_id));
     user_info->set_last_colo_id(request_info.last_colo_id);
     user_info->set_request_colo_id(
@@ -1424,7 +1435,7 @@ namespace AdServer
       request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY);
     user_info->set_time(request_info.current_time.tv_sec);
 
-    auto* match_params = history_match_request.mutable_match_params();
+    auto* match_params = history_match_request->mutable_match_params();
     match_params->set_use_empty_profile(false);
     match_params->set_silent_match(request_info.silent_match);
     match_params->set_no_match(request_info.no_match ||
@@ -1464,7 +1475,7 @@ namespace AdServer
 
     TimeGuard history_match_time_metering;
     auto match_result = co_await user_info_client_coro_->match(
-      std::move(history_match_request));
+      *history_match_request);
     if(!match_result.status.ok())
     {
       history_match_in_progress.add_error();
@@ -1692,7 +1703,7 @@ namespace AdServer
   AdFrontend::BoolTask
   AdFrontend::co_match_triggers_(
     const std::shared_ptr<RequestContext>& context,
-    adserver::channel_svcs::channel_server::MatchRequest channel_request,
+    adserver::channel_svcs::channel_server::MatchRequest& channel_request,
     std::shared_ptr<
       adserver::channel_svcs::channel_server::MatchResponse> response,
     std::string& error)
@@ -1726,7 +1737,7 @@ namespace AdServer
     channel_request.set_uid(GrpcAlgs::pack_user_id(request_info.client_id));
 
     auto channel_result = co_await channel_client_coro_->match(
-      std::move(channel_request));
+      channel_request);
     if(!channel_result.status.ok())
     {
       trigger_match_in_progress.add_error();
@@ -1771,7 +1782,11 @@ namespace AdServer
   {
     try
     {
-      auto channel_request = get_empty_matching_request();
+      google::protobuf::Arena channel_request_arena;
+      auto* channel_request = google::protobuf::Arena::CreateMessage<
+        adserver::channel_svcs::channel_server::MatchRequest>(
+          &channel_request_arena);
+      *channel_request = get_empty_matching_request();
       auto trigger_matched_channels = std::make_shared<
         adserver::channel_svcs::channel_server::MatchResponse>();
       auto campaign_matching_result =
@@ -1783,7 +1798,7 @@ namespace AdServer
 
       if(context->request_info.keywords_normalized)
       {
-        channel_request.set_simplify_page(false);
+        channel_request->set_simplify_page(false);
       }
 
       MergeUsersResult merge_result;
@@ -1803,7 +1818,7 @@ namespace AdServer
       {
         trigger_success = co_await co_match_triggers_(
           context,
-          std::move(channel_request),
+          *channel_request,
           trigger_matched_channels,
           trigger_error);
       }
@@ -2326,7 +2341,9 @@ namespace AdServer
 
     try
     {
-      CM::GetCampaignCreativeRequest request;
+      google::protobuf::Arena request_arena;
+      auto* request = google::protobuf::Arena::CreateMessage<
+        CM::GetCampaignCreativeRequest>(&request_arena);
       request_campaign_manager_(
         passback_info,
         log_as_test,
@@ -2340,11 +2357,11 @@ namespace AdServer
         profiling_available,
         ccg_keywords,
         debug_sink,
-        request.mutable_request_params());
+        request->mutable_request_params());
 
       TimeGuard creative_selection_time_metering;
       auto campaign_result = co_await campaign_manager_coro_->get_campaign_creative(
-        std::move(request));
+        *request);
       if(!campaign_result.status.ok())
       {
         campaign_selection_in_progress.add_error();

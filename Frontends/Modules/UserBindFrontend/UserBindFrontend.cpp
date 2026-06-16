@@ -4,6 +4,8 @@
 #include <utility>
 #include <Generics/Uuid.hpp>
 
+#include <google/protobuf/arena.h>
+
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
 
@@ -1350,9 +1352,10 @@ namespace AdServer
       co_return FrontendCommons::RequestResult{500, response, false};
     }
 
-    adserver::user_info_svcs::user_info_manager::MatchRequest
-      history_match_request;
-    auto* match_params = history_match_request.mutable_match_params();
+    google::protobuf::Arena arena;
+    auto* history_match_request = google::protobuf::Arena::CreateMessage<
+      adserver::user_info_svcs::user_info_manager::MatchRequest>(&arena);
+    auto* match_params = history_match_request->mutable_match_params();
     match_params->set_use_empty_profile(false);
     match_params->set_silent_match(false);
     match_params->set_no_match(false);
@@ -1363,7 +1366,7 @@ namespace AdServer
     match_params->set_change_last_request(false);
     match_params->set_publishers_optin_timeout(
       GrpcAlgs::pack_time(Generics::Time::ZERO));
-    auto* user_info = history_match_request.mutable_user_info();
+    auto* user_info = history_match_request->mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(request_info->user_id));
     user_info->set_last_colo_id(request_info->colo_id);
     user_info->set_request_colo_id(request_info->colo_id);
@@ -1372,7 +1375,7 @@ namespace AdServer
     user_info->set_time(Generics::Time::get_time_of_day().tv_sec);
 
     auto match_result = co_await user_info_client_coro_->match(
-      std::move(history_match_request));
+      *history_match_request);
 
     static const String::SubString JSON_SESSION_ID_NAME("session_id");
     static const String::SubString JSON_CL_ID_NAME("cl_id");

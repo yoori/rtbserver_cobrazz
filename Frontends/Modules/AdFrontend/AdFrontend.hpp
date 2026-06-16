@@ -262,7 +262,7 @@ namespace AdServer
     BoolTask
     co_match_triggers_(
       const std::shared_ptr<RequestContext>& context,
-      adserver::channel_svcs::channel_server::MatchRequest request,
+      adserver::channel_svcs::channel_server::MatchRequest& request,
       std::shared_ptr<
         adserver::channel_svcs::channel_server::MatchResponse> response,
       std::string& error)
