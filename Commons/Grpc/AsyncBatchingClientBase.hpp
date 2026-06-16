@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -104,6 +105,8 @@ namespace AdServer::Grpc
       BatchingStreamBase::PendingBatch&& batch,
       const StreamHolderPtr& stream_holder) noexcept;
     void schedule_timing_coalesce_() noexcept;
+    void schedule_timing_coalesce_(
+      const Generics::Time& oldest_enqueue_time) noexcept;
     void run_timing_coalesce_(Generics::Time deadline) noexcept;
     void schedule_stream_shrink_() noexcept;
     void shrink_idle_streams_() noexcept;
@@ -140,7 +143,7 @@ namespace AdServer::Grpc
     bool connecting_ = false;
     mutable std::mutex streams_lock_;
     AdServer::Grpc::InflightLimiter inflight_limiter_;
-    std::mutex coalesce_timer_lock_;
+    std::shared_mutex coalesce_timer_lock_;
     std::optional<Generics::Time> coalesce_timer_deadline_;
     ActivityGatePtr submission_gate_;
     ActivityGatePtr timing_coalesce_gate_;

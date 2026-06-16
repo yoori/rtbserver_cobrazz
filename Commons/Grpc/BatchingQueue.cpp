@@ -46,6 +46,10 @@ namespace AdServer::Grpc
     const auto hot_size =
       hot_size_.fetch_add(1, std::memory_order_acq_rel) + 1;
     result.was_empty_before_push = hot_size == 1;
+    if (result.was_empty_before_push)
+    {
+      result.oldest_enqueue_time = enqueue_time;
+    }
 
     if (hot_size >= options_.max_batch_size)
     {

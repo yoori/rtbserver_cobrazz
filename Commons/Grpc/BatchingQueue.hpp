@@ -26,6 +26,7 @@ namespace AdServer::Grpc
     struct EnqueueResult
     {
       Batch ready_batch;
+      std::optional<Generics::Time> oldest_enqueue_time;
       bool was_empty_before_push = false;
       bool queue_empty_after_enqueue = true;
     };

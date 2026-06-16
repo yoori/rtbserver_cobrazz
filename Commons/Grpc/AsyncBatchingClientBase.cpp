@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <shared_mutex>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -140,7 +141,7 @@ namespace AdServer::Grpc
     timing_coalesce_gate_->activate_object();
     stream_shrink_gate_->activate_object();
     {
-      std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
+      std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
       coalesce_timer_deadline_.reset();
     }
     Generics::CompositeActiveObject::activate_object_();
@@ -268,7 +269,8 @@ namespace AdServer::Grpc
       !enqueue_result.queue_empty_after_enqueue &&
       options_.max_batch_delay.has_value())
     {
-      schedule_timing_coalesce_();
+      assert(enqueue_result.oldest_enqueue_time.has_value());
+      schedule_timing_coalesce_(*enqueue_result.oldest_enqueue_time);
     }
 
     if (!enqueue_result.ready_batch.empty())
@@ -710,10 +712,31 @@ namespace AdServer::Grpc
     {
       return;
     }
-    const auto deadline = *oldest_enqueue_time + *options_.max_batch_delay;
+    schedule_timing_coalesce_(*oldest_enqueue_time);
+  }
+
+  void
+  AsyncBatchingClientBase::schedule_timing_coalesce_(
+    const Generics::Time& oldest_enqueue_time) noexcept
+  {
+    if (!active() || !options_.max_batch_delay.has_value())
+    {
+      return;
+    }
+
+    const auto deadline = oldest_enqueue_time + *options_.max_batch_delay;
 
     {
-      std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
+      std::shared_lock<std::shared_mutex> lock(coalesce_timer_lock_);
+      if (coalesce_timer_deadline_.has_value() &&
+        *coalesce_timer_deadline_ <= deadline)
+      {
+        return;
+      }
+    }
+
+    {
+      std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
       if (coalesce_timer_deadline_.has_value() &&
         *coalesce_timer_deadline_ <= deadline)
       {
@@ -725,14 +748,10 @@ namespace AdServer::Grpc
     const auto gate = timing_coalesce_gate_;
     assert(gate);
 
-    const auto now = Generics::Time::get_time_of_day();
-    const auto timeout =
-      now < deadline ? deadline - now : Generics::Time::ZERO;
-
     try
     {
       coalesce_runner_->schedule(
-        timeout,
+        deadline - Generics::Time::get_time_of_day(),
         [this, gate, deadline]()
         {
           auto guard = gate->enter();
@@ -745,7 +764,7 @@ namespace AdServer::Grpc
     }
     catch (...)
     {
-      std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
+      std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
       if (coalesce_timer_deadline_.has_value() &&
         *coalesce_timer_deadline_ == deadline)
       {
@@ -761,7 +780,7 @@ namespace AdServer::Grpc
     try
     {
       {
-        std::lock_guard<std::mutex> lock(coalesce_timer_lock_);
+        std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
         if (!coalesce_timer_deadline_.has_value() ||
           *coalesce_timer_deadline_ != deadline)
         {
