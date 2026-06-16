@@ -67,6 +67,7 @@ add_executable(UserInfoManager
 
 )
 target_link_libraries(UserInfoManager
+  tcmalloc
   CORBACommons
   LogCommons
   HttpServer

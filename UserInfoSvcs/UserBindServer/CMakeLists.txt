@@ -74,6 +74,7 @@ add_executable(UserBindServer
 target_link_options(UserBindServer PRIVATE -Wl,--as-needed)
 
 target_link_libraries(UserBindServer
+  tcmalloc
   PrivacyFilter
   Commons
   ProfileMap

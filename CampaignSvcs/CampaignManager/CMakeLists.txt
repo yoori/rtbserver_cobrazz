@@ -165,6 +165,7 @@ add_executable(CampaignManager
 )
 
 target_link_libraries(CampaignManager
+  tcmalloc
   CampaignConfigSource
   Stream
   HTTP

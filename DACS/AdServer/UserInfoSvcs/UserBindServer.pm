@@ -20,7 +20,7 @@ sub start
    "ulimit -n 16384 && " .
    "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=536870912 && " .
    "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
-   "export MALLOC_ARENA_MAX=1 && " .
+   "export MALLOC_ARENA_MAX=4 && " .
    "if test -e $pid_file; then " .
      "pid=`cat $pid_file`; " .
      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .

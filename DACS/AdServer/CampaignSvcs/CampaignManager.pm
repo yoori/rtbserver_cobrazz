@@ -81,6 +81,9 @@ sub start
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
     "ulimit -n 4096 && " .
+    "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=536870912 && " .
+    "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
+    "export MALLOC_ARENA_MAX=4 && " .
     "setsid -f \${VALGRIND_PREFIX} CampaignManager " .
     #"{ scl enable devtoolset-8 -- valgrind --tool=callgrind CampaignManager " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CampaignManagerConfig.xml " .
