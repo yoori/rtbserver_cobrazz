@@ -13,7 +13,6 @@
 #include <Generics/Time.hpp>
 
 #include <CampaignSvcs/CampaignManager/CampaignManagerGrpc.grpc.pb.h>
-#include <CampaignSvcs/CampaignManager/CampaignManagerImpl.hpp>
 
 namespace AdServer::CampaignSvcs
 {
@@ -763,87 +762,111 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    template<typename Seq>
+    template<typename SourceSeq>
     void
-    pack_corba_ids(
-      const Seq& source,
+    pack_config_ids(
+      const SourceSeq& source,
       google::protobuf::RepeatedField<google::protobuf::uint64>* target)
     {
-      for(CORBA::ULong i = 0; i < source.length(); ++i)
+      for(const auto& id : source)
       {
-        target->Add(source[i]);
+        target->Add(id);
       }
     }
 
-    template<typename Seq>
+    template<typename DecimalType>
     void
-    pack_corba_strings(
-      const Seq& source,
-      google::protobuf::RepeatedPtrField<std::string>* target)
+    pack_decimal_into_config_ids(
+      google::protobuf::RepeatedField<google::protobuf::uint64>* target,
+      const DecimalType& value)
     {
-      for(CORBA::ULong i = 0; i < source.length(); ++i)
-      {
-        *target->Add() = source[i].in();
-      }
-    }
+      const unsigned long EL_NUMBER = DecimalType::PACK_SIZE / 4 +
+        (DecimalType::PACK_SIZE % 4 ? 1 : 0);
+      uint32_t buf[EL_NUMBER];
+      ::memset(buf, 0, EL_NUMBER * 4);
+      value.pack(buf);
 
-    void
-    pack_decimal_info(
-      const CORBACommons::DecimalInfo& source,
-      pb::DecimalInfo& target)
-    {
-      target.set_value(pack_oct_seq(source));
+      target->Add(0);
+      for(unsigned long i = 0; i < EL_NUMBER; ++i)
+      {
+        target->Add(buf[i]);
+      }
     }
 
     void
     pack_config_option_value(
-      const OptionValueInfo& source,
+      const OptionValue& source,
       pb::ConfigOptionValue& target)
     {
       target.set_option_id(source.option_id);
-      target.set_value(source.value.in());
+      target.set_value(source.value);
     }
 
     void
     pack_config_option_values(
-      const OptionValueSeq& source,
+      const OptionTokenValueMap& source,
       google::protobuf::RepeatedPtrField<pb::ConfigOptionValue>* target)
     {
-      for(CORBA::ULong i = 0; i < source.length(); ++i)
+      for(const auto& item : source)
       {
-        pack_config_option_value(source[i], *target->Add());
+        auto* value = target->Add();
+        value->set_option_id(item.second.option_id);
+        value->set_value(item.second.value);
       }
     }
 
     void
     pack_config_expression(
-      const ExpressionInfo& source,
+      const ExpressionChannel::Expression& source,
       pb::ConfigExpression& target)
     {
-      target.set_operation(static_cast<unsigned char>(source.operation));
-      target.set_channel_id(source.channel_id);
-      for(CORBA::ULong i = 0; i < source.sub_channels.length(); ++i)
+      target.set_operation(static_cast<unsigned char>(source.op));
+      if(source.op == ExpressionChannel::NOP)
       {
-        pack_config_expression(source.sub_channels[i], *target.add_sub_channels());
+        if(source.channel.in() &&
+          (source.channel->expression_channel().in() ||
+            source.channel->simple_channel().in()))
+        {
+          target.set_channel_id(source.channel->params().channel_id);
+        }
+        else
+        {
+          target.set_channel_id(0);
+        }
+      }
+      else
+      {
+        for(const auto& sub_channel : source.sub_channels)
+        {
+          pack_config_expression(sub_channel, *target.add_sub_channels());
+        }
       }
     }
 
     void
     pack_config_delivery_limits(
-      const CampaignDeliveryLimitsInfo& source,
+      const CampaignDeliveryLimits& source,
       pb::ConfigDeliveryLimits& target)
     {
-      target.set_date_start(pack_oct_seq(source.date_start));
-      target.set_date_end(pack_oct_seq(source.date_end));
-      pack_decimal_info(source.budget, *target.mutable_budget());
-      pack_decimal_info(source.daily_budget, *target.mutable_daily_budget());
-      if(source.imps_defined)
+      target.set_date_start(pack_time(source.date_start));
+      target.set_date_end(pack_time(source.date_end));
+      if(source.budget.present())
       {
-        target.set_imps(source.imps);
+        pack_revenue_decimal(*source.budget, *target.mutable_budget());
       }
-      if(source.clicks_defined)
+      if(source.daily_budget.present())
       {
-        target.set_clicks(source.clicks);
+        pack_revenue_decimal(
+          *source.daily_budget,
+          *target.mutable_daily_budget());
+      }
+      if(source.imps.present())
+      {
+        target.set_imps(*source.imps);
+      }
+      if(source.clicks.present())
+      {
+        target.set_clicks(*source.clicks);
       }
       target.set_delivery_pacing(
         static_cast<unsigned char>(source.delivery_pacing));
@@ -851,38 +874,39 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_config_creative(
-      const CreativeInfo& source,
+      const Creative& source,
       pb::ConfigCreative& target)
     {
       target.set_ccid(source.ccid);
       target.set_creative_id(source.creative_id);
       target.set_fc_id(source.fc_id);
       target.set_weight(source.weight);
-      for(CORBA::ULong i = 0; i < source.sizes.length(); ++i)
+      for(const auto& src_size : source.sizes)
       {
-        const auto& src_size = source.sizes[i];
         auto* dst_size = target.add_sizes();
-        dst_size->set_size_id(src_size.size_id);
-        dst_size->set_up_expand_space(src_size.up_expand_space);
-        dst_size->set_right_expand_space(src_size.right_expand_space);
-        dst_size->set_down_expand_space(src_size.down_expand_space);
-        dst_size->set_left_expand_space(src_size.left_expand_space);
-        pack_config_option_values(src_size.tokens, dst_size->mutable_tokens());
+        dst_size->set_size_id(src_size.first);
+        dst_size->set_up_expand_space(src_size.second.up_expand_space);
+        dst_size->set_right_expand_space(src_size.second.right_expand_space);
+        dst_size->set_down_expand_space(src_size.second.down_expand_space);
+        dst_size->set_left_expand_space(src_size.second.left_expand_space);
+        pack_config_option_values(
+          src_size.second.tokens,
+          dst_size->mutable_tokens());
       }
-      target.set_creative_format(source.creative_format.in());
+      target.set_creative_format(source.creative_format);
       pack_config_option_value(source.click_url, *target.mutable_click_url());
-      pack_config_option_value(source.html_url, *target.mutable_html_url());
       target.set_order_set_id(source.order_set_id);
-      target.set_initial_contract_id(source.initial_contract_id);
-      pack_corba_ids(source.categories, target.mutable_categories());
+      target.set_initial_contract_id(
+        source.initial_contract ? source.initial_contract->contract_id : 0);
+      pack_config_ids(source.categories, target.mutable_categories());
       pack_config_option_values(source.tokens, target.mutable_tokens());
       target.set_status(static_cast<unsigned char>(source.status));
-      target.set_version_id(source.version_id.in());
+      target.set_version_id(source.version_id);
     }
 
     void
     pack_config_campaign(
-      const CampaignInfo& source,
+      const Campaign& source,
       pb::ConfigCampaign& target)
     {
       target.set_campaign_id(source.campaign_id);
@@ -891,45 +915,50 @@ namespace AdServer::CampaignSvcs
       target.set_ccg_rate_type(static_cast<unsigned char>(source.ccg_rate_type));
       target.set_fc_id(source.fc_id);
       target.set_group_fc_id(source.group_fc_id);
-      target.set_priority(source.priority);
       target.set_flags(source.flags);
       target.set_marketplace(static_cast<unsigned char>(source.marketplace));
-      pack_config_expression(source.expression, *target.mutable_expression());
       pack_config_expression(
-        source.stat_expression,
+        source.channel.in() ?
+          source.channel->expression() : ExpressionChannel::Expression::EMPTY,
+        *target.mutable_expression());
+      pack_config_expression(
+        source.stat_channel.in() ?
+          source.stat_channel->expression() : ExpressionChannel::Expression::EMPTY,
         *target.mutable_stat_expression());
-      target.set_country(source.country.in());
-      pack_corba_ids(source.sites, target.mutable_sites());
+      target.set_country(source.country);
+      pack_config_ids(source.sites, target.mutable_sites());
       target.set_status(static_cast<unsigned char>(source.status));
       target.set_eval_status(static_cast<unsigned char>(source.eval_status));
-      for(CORBA::ULong i = 0; i < source.weekly_run_intervals.length(); ++i)
+      for(const auto& interval : source.weekly_run_intervals)
       {
-        auto* interval = target.add_weekly_run_intervals();
-        interval->set_min(source.weekly_run_intervals[i].min);
-        interval->set_max(source.weekly_run_intervals[i].max);
+        auto* dst_interval = target.add_weekly_run_intervals();
+        dst_interval->set_min(interval.min);
+        dst_interval->set_max(interval.max);
       }
-      for(CORBA::ULong i = 0; i < source.creatives.length(); ++i)
+      for(const auto& creative : source.get_creatives())
       {
-        pack_config_creative(source.creatives[i], *target.add_creatives());
+        pack_config_creative(*creative, *target.add_creatives());
       }
-      target.set_account_id(source.account_id);
-      target.set_advertiser_id(source.advertiser_id);
-      pack_corba_ids(
+      target.set_account_id(source.account->account_id);
+      target.set_advertiser_id(source.advertiser->account_id);
+      pack_config_ids(
         source.exclude_pub_accounts,
         target.mutable_exclude_pub_accounts());
-      for(CORBA::ULong i = 0; i < source.exclude_tags.length(); ++i)
+      for(const auto& src_tag : source.exclude_tags)
       {
-        auto* tag = target.add_exclude_tags();
-        tag->set_tag_id(source.exclude_tags[i].tag_id);
-        tag->set_delivery_value(source.exclude_tags[i].delivery_value);
+        auto* dst_tag = target.add_exclude_tags();
+        dst_tag->set_tag_id(src_tag.first);
+        dst_tag->set_delivery_value(src_tag.second);
       }
       target.set_delivery_coef(source.delivery_coef);
-      pack_decimal_info(source.imp_revenue, *target.mutable_imp_revenue());
-      pack_decimal_info(source.click_revenue, *target.mutable_click_revenue());
-      pack_decimal_info(source.action_revenue, *target.mutable_action_revenue());
-      pack_decimal_info(source.commision, *target.mutable_commision());
+      pack_revenue_decimal(source.imp_revenue, *target.mutable_imp_revenue());
+      pack_revenue_decimal(source.click_revenue, *target.mutable_click_revenue());
+      pack_revenue_decimal(
+        source.action_revenue,
+        *target.mutable_action_revenue());
+      pack_revenue_decimal(source.commision, *target.mutable_commision());
       target.set_ccg_type(static_cast<unsigned char>(source.ccg_type));
-      target.set_target_type(static_cast<unsigned char>(source.target_type));
+      target.set_target_type(static_cast<unsigned char>(source.targeting_type));
       pack_config_delivery_limits(
         source.campaign_delivery_limits,
         *target.mutable_campaign_delivery_limits());
@@ -938,66 +967,58 @@ namespace AdServer::CampaignSvcs
         *target.mutable_ccg_delivery_limits());
       target.set_start_user_group_id(source.start_user_group_id);
       target.set_end_user_group_id(source.end_user_group_id);
-      pack_decimal_info(source.max_pub_share, *target.mutable_max_pub_share());
+      pack_revenue_decimal(source.max_pub_share, *target.mutable_max_pub_share());
       target.set_ctr_reset_id(source.ctr_reset_id);
-      target.set_random_imps(source.random_imps);
       target.set_mode(source.mode);
       target.set_seq_set_rotate_imps(source.seq_set_rotate_imps);
-      target.set_min_uid_age(pack_oct_seq(source.min_uid_age));
-      pack_corba_ids(source.colocations, target.mutable_colocations());
+      target.set_min_uid_age(pack_time(source.min_uid_age));
+      pack_config_ids(source.colocations, target.mutable_colocations());
       target.set_bid_strategy(source.bid_strategy);
-      pack_decimal_info(source.min_ctr_goal, *target.mutable_min_ctr_goal());
-      target.set_timestamp(pack_oct_seq(source.timestamp));
+      pack_revenue_decimal(source.min_ctr_goal(), *target.mutable_min_ctr_goal());
+      target.set_timestamp(pack_time(source.timestamp));
     }
 
     void
     pack_config_tag(
-      const TagInfo& source,
+      const Tag& source,
       pb::ConfigTag& target)
     {
       target.set_tag_id(source.tag_id);
-      target.set_site_id(source.site_id);
-      target.set_status(static_cast<unsigned char>(source.status));
-      for(CORBA::ULong i = 0; i < source.sizes.length(); ++i)
+      target.set_site_id(source.site->site_id);
+      target.set_status(static_cast<unsigned char>(source.site->status));
+      for(const auto& src_size : source.sizes)
       {
-        const auto& src_size = source.sizes[i];
         auto* dst_size = target.add_sizes();
-        dst_size->set_size_id(src_size.size_id);
-        dst_size->set_max_text_creatives(src_size.max_text_creatives);
-        pack_config_option_values(src_size.tokens, dst_size->mutable_tokens());
+        dst_size->set_size_id(src_size.first);
+        dst_size->set_max_text_creatives(src_size.second->max_text_creatives);
         pack_config_option_values(
-          src_size.hidden_tokens,
-          dst_size->mutable_hidden_tokens());
+          src_size.second->tokens,
+          dst_size->mutable_tokens());
       }
-      target.set_imp_track_pixel(source.imp_track_pixel.in());
-      target.set_passback(source.passback.in());
-      target.set_passback_type(source.passback_type.in());
+      target.set_imp_track_pixel(source.imp_track_pixel);
+      target.set_passback(source.passback);
+      target.set_passback_type(source.passback_type);
       target.set_flags(source.flags);
       target.set_marketplace(static_cast<unsigned char>(source.marketplace));
-      pack_decimal_info(source.adjustment, *target.mutable_adjustment());
-      for(CORBA::ULong i = 0; i < source.tag_pricings.length(); ++i)
+      pack_revenue_decimal(source.adjustment, *target.mutable_adjustment());
+      for(const auto& src_pricing : source.tag_pricings)
       {
-        const auto& src_pricing = source.tag_pricings[i];
         auto* dst_pricing = target.add_tag_pricings();
-        dst_pricing->set_country_code(src_pricing.country_code.in());
+        dst_pricing->set_country_code(src_pricing.first.country_code);
         dst_pricing->set_ccg_type(
-          static_cast<unsigned char>(src_pricing.ccg_type));
+          static_cast<unsigned char>(src_pricing.first.ccg_type));
         dst_pricing->set_ccg_rate_type(
-          static_cast<unsigned char>(src_pricing.ccg_rate_type));
-        dst_pricing->set_site_rate_id(src_pricing.site_rate_id);
-        pack_decimal_info(
-          src_pricing.imp_revenue,
+          static_cast<unsigned char>(src_pricing.first.ccg_rate_type));
+        dst_pricing->set_site_rate_id(src_pricing.second.site_rate_id);
+        pack_revenue_decimal(
+          src_pricing.second.imp_revenue,
           *dst_pricing->mutable_imp_revenue());
-        pack_decimal_info(
-          src_pricing.revenue_share,
+        pack_revenue_decimal(
+          src_pricing.second.revenue_share,
           *dst_pricing->mutable_revenue_share());
       }
-      pack_corba_ids(
-        source.accepted_categories,
-        target.mutable_accepted_categories());
-      pack_corba_ids(
-        source.rejected_categories,
-        target.mutable_rejected_categories());
+      pack_config_ids(source.accepted_categories, target.mutable_accepted_categories());
+      pack_config_ids(source.rejected_categories, target.mutable_rejected_categories());
       target.set_allow_expandable(source.allow_expandable);
       pack_config_option_values(source.tokens, target.mutable_tokens());
       pack_config_option_values(
@@ -1006,356 +1027,419 @@ namespace AdServer::CampaignSvcs
       pack_config_option_values(
         source.passback_tokens,
         target.mutable_passback_tokens());
-      for(CORBA::ULong i = 0; i < source.template_tokens.length(); ++i)
+      for(const auto& src_template : source.template_tokens)
       {
-        auto* template_options = target.add_template_tokens();
-        template_options->set_template_name(source.template_tokens[i].template_name.in());
+        auto* dst_template = target.add_template_tokens();
+        dst_template->set_template_name(src_template.first);
         pack_config_option_values(
-          source.template_tokens[i].tokens,
-          template_options->mutable_tokens());
+          src_template.second,
+          dst_template->mutable_tokens());
       }
-      pack_decimal_info(
+      pack_revenue_decimal(
         source.auction_max_ecpm_share,
         *target.mutable_auction_max_ecpm_share());
-      pack_decimal_info(
+      pack_revenue_decimal(
         source.auction_prop_probability_share,
         *target.mutable_auction_prop_probability_share());
-      pack_decimal_info(
+      pack_revenue_decimal(
         source.auction_random_share,
         *target.mutable_auction_random_share());
-      pack_decimal_info(source.cost_coef, *target.mutable_cost_coef());
-      target.set_tag_pricings_timestamp(
-        pack_oct_seq(source.tag_pricings_timestamp));
-      target.set_timestamp(pack_oct_seq(source.timestamp));
+      pack_revenue_decimal(source.cost_coef, *target.mutable_cost_coef());
+      target.set_tag_pricings_timestamp(pack_time(source.tag_pricings_timestamp));
+      target.set_timestamp(pack_time(source.timestamp));
+    }
+
+    CreativeTemplateType
+    adopt_config_template_type(CreativeTemplateFactory::Handler::Type type)
+    {
+      if(type == CreativeTemplateFactory::Handler::CTT_TEXT)
+      {
+        return CTT_TEXT;
+      }
+      if(type == CreativeTemplateFactory::Handler::CTT_XSLT)
+      {
+        return CTT_XSLT;
+      }
+      Stream::Error ostr;
+      ostr << "Unknown template type: " << type;
+      throw CampaignManagerCore::Exception(ostr);
+    }
+
+    void
+    pack_config_expression_channel(
+      const ExpressionChannelBase& source,
+      pb::ConfigExpressionChannel& target)
+    {
+      const ChannelParams& params = source.params();
+      target.set_channel_id(params.channel_id);
+      target.set_type(static_cast<unsigned char>(params.type));
+      target.set_country_code(params.country);
+      target.set_status(static_cast<unsigned char>(params.status));
+      target.set_action_id(params.action_id);
+      target.set_timestamp(pack_time(params.timestamp));
+
+      if(params.common_params.in())
+      {
+        target.set_account_id(params.common_params->account_id);
+        target.set_flags(params.common_params->flags);
+        target.set_is_public(params.common_params->is_public);
+        target.set_freq_cap_id(params.common_params->freq_cap_id);
+        target.set_language(params.common_params->language);
+      }
+      else
+      {
+        target.set_is_public(true);
+      }
+
+      if(params.descriptive_params.in())
+      {
+        target.set_name(params.descriptive_params->name);
+        target.set_parent_channel_id(
+          params.descriptive_params->parent_channel_id);
+      }
+
+      if(params.discover_params.in())
+      {
+        target.set_discover_query(params.discover_params->query);
+        target.set_discover_annotation(params.discover_params->annotation);
+      }
+
+      if(params.cmp_params.in())
+      {
+        target.set_channel_rate_id(params.cmp_params->channel_rate_id);
+        pack_revenue_decimal(
+          params.cmp_params->imp_revenue,
+          *target.mutable_imp_revenue());
+        pack_revenue_decimal(
+          params.cmp_params->click_revenue,
+          *target.mutable_click_revenue());
+      }
+
+      ConstSimpleChannel_var simple_channel = source.simple_channel();
+      if(simple_channel.in())
+      {
+        target.mutable_expression()->set_operation('S');
+      }
+      else
+      {
+        ConstExpressionChannel_var expression_channel =
+          source.expression_channel();
+        assert(expression_channel.in());
+        pack_config_expression(
+          expression_channel->expression(),
+          *target.mutable_expression());
+      }
+    }
+
+    void
+    pack_config_contract(
+      const Contract& source,
+      pb::ConfigContract& target)
+    {
+      target.set_contract_id(source.contract_id);
+      target.set_number(source.number);
+      target.set_date(source.date);
+      target.set_type(source.type);
+      target.set_vat_included(source.vat_included);
+      target.set_ord_contract_id(source.ord_contract_id);
+      target.set_ord_ado_id(source.ord_ado_id);
+      target.set_subject_type(source.subject_type);
+      target.set_action_type(source.action_type);
+      target.set_agent_acting_for_publisher(source.agent_acting_for_publisher);
+      target.set_parent_contract_id(
+        source.parent_contract ? source.parent_contract->contract_id : 0);
+      target.set_client_id(source.client_id);
+      target.set_client_name(source.client_name);
+      target.set_client_legal_form(source.client_legal_form);
+      target.set_contractor_id(source.contractor_id);
+      target.set_contractor_name(source.contractor_name);
+      target.set_contractor_legal_form(source.contractor_legal_form);
+      target.set_timestamp(pack_time(source.timestamp));
     }
 
     void
     pack_config(
-      const CampaignManager::CampaignConfig& source,
+      const CampaignConfig& source,
+      bool geo_channels,
       pb::CampaignConfig& target)
     {
-      for(CORBA::ULong i = 0; i < source.app_formats.length(); ++i)
+      for(const auto& src : source.app_formats)
       {
         auto* item = target.add_app_formats();
-        item->set_app_format(source.app_formats[i].app_format.in());
-        item->set_mime_format(source.app_formats[i].mime_format.in());
-        item->set_timestamp(pack_oct_seq(source.app_formats[i].timestamp));
+        item->set_app_format(src.first);
+        item->set_mime_format(src.second.mime_format);
+        item->set_timestamp(pack_time(src.second.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.sizes.length(); ++i)
+      for(const auto& src : source.sizes)
       {
         auto* item = target.add_sizes();
-        item->set_size_id(source.sizes[i].size_id);
-        item->set_protocol_name(source.sizes[i].protocol_name.in());
-        item->set_size_type_id(source.sizes[i].size_type_id);
-        item->set_width(source.sizes[i].width);
-        item->set_height(source.sizes[i].height);
-        item->set_timestamp(pack_oct_seq(source.sizes[i].timestamp));
+        item->set_size_id(src.first);
+        item->set_protocol_name(src.second->protocol_name);
+        item->set_size_type_id(src.second->size_type_id);
+        item->set_width(src.second->width);
+        item->set_height(src.second->height);
+        item->set_timestamp(pack_time(src.second->timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.accounts.length(); ++i)
+      for(const auto& src : source.accounts)
       {
-        const auto& src = source.accounts[i];
+        const auto& account = *src.second;
         auto* item = target.add_accounts();
-        item->set_account_id(src.account_id);
-        item->set_agency_account_id(src.agency_account_id);
-        item->set_internal_account_id(src.internal_account_id);
-        item->set_role_id(src.role_id);
-        item->set_legal_name(src.legal_name.in());
-        item->set_flags(src.flags);
-        item->set_at_flags(src.at_flags);
-        item->set_text_adserving(static_cast<unsigned char>(src.text_adserving));
-        item->set_currency_id(src.currency_id);
-        item->set_country(src.country.in());
-        item->set_time_offset(pack_oct_seq(src.time_offset));
-        pack_decimal_info(src.commision, *item->mutable_commision());
-        pack_decimal_info(src.budget, *item->mutable_budget());
-        pack_decimal_info(src.paid_amount, *item->mutable_paid_amount());
-        pack_corba_ids(
-          src.walled_garden_accounts,
+        item->set_account_id(src.first);
+        item->set_agency_account_id(
+          account.agency_account ? account.agency_account->account_id : 0);
+        item->set_internal_account_id(account.internal_account_id);
+        item->set_legal_name(account.legal_name);
+        item->set_flags(account.flags);
+        item->set_at_flags(account.at_flags);
+        item->set_text_adserving(static_cast<unsigned char>(account.text_adserving));
+        item->set_currency_id(account.currency->currency_id);
+        item->set_country(account.country);
+        item->set_time_offset(pack_time(account.time_offset));
+        pack_revenue_decimal(account.commision, *item->mutable_commision());
+        pack_revenue_decimal(account.budget, *item->mutable_budget());
+        pack_revenue_decimal(account.paid_amount, *item->mutable_paid_amount());
+        pack_config_ids(
+          account.walled_garden_accounts,
           item->mutable_walled_garden_accounts());
-        item->set_auction_rate(src.auction_rate);
-        item->set_use_pub_pixels(src.use_pub_pixels);
-        item->set_pub_pixel_optin(src.pub_pixel_optin.in());
-        item->set_pub_pixel_optout(src.pub_pixel_optout.in());
-        pack_decimal_info(
-          src.self_service_commission,
+        item->set_auction_rate(static_cast<unsigned long>(account.auction_rate));
+        item->set_use_pub_pixels(account.use_pub_pixels);
+        item->set_pub_pixel_optin(account.pub_pixel_optin);
+        item->set_pub_pixel_optout(account.pub_pixel_optout);
+        pack_revenue_decimal(
+          account.self_service_commission,
           *item->mutable_self_service_commission());
-        item->set_status(static_cast<unsigned char>(src.status));
-        item->set_eval_status(static_cast<unsigned char>(src.eval_status));
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_status(static_cast<unsigned char>(account.status));
+        item->set_eval_status(static_cast<unsigned char>(account.eval_status));
+        item->set_timestamp(pack_time(account.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.creative_options.length(); ++i)
+      for(const auto& src : source.creative_options)
       {
         auto* item = target.add_creative_options();
-        item->set_option_id(source.creative_options[i].option_id);
-        item->set_token(source.creative_options[i].token.in());
-        item->set_type(
-          static_cast<unsigned char>(source.creative_options[i].type));
-        pack_corba_strings(
-          source.creative_options[i].token_relations,
-          item->mutable_token_relations());
-        item->set_timestamp(
-          pack_oct_seq(source.creative_options[i].timestamp));
+        item->set_option_id(src.first);
+        item->set_token(src.second.token);
+        item->set_type(static_cast<unsigned char>(src.second.type));
+        for(const auto& relation : src.second.token_relations)
+        {
+          *item->add_token_relations() = relation;
+        }
+        item->set_timestamp(pack_time(src.second.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.campaigns.length(); ++i)
+      for(const auto& src : source.campaigns)
       {
         auto* item = target.add_campaigns();
-        pack_config_campaign(source.campaigns[i].info, *item->mutable_info());
+        pack_config_campaign(*src.second, *item->mutable_info());
         pack_config_expression(
-          source.campaigns[i].expression,
+          src.second->channel.in() ?
+            src.second->channel->expression() : ExpressionChannel::Expression::EMPTY,
           *item->mutable_expression());
-        pack_decimal_info(source.campaigns[i].ecpm, *item->mutable_ecpm());
-        pack_decimal_info(source.campaigns[i].ctr, *item->mutable_ctr());
+        pack_revenue_decimal(src.second->ecpm_, *item->mutable_ecpm());
+        pack_revenue_decimal(src.second->ctr, *item->mutable_ctr());
       }
-      for(CORBA::ULong i = 0; i < source.campaign_ecpms.length(); ++i)
+      for(const auto& src : source.sites)
       {
-        auto* item = target.add_campaign_ecpms();
-        item->set_ccg_id(source.campaign_ecpms[i].ccg_id);
-        pack_decimal_info(source.campaign_ecpms[i].ecpm, *item->mutable_ecpm());
-        pack_decimal_info(source.campaign_ecpms[i].ctr, *item->mutable_ctr());
-        item->set_timestamp(pack_oct_seq(source.campaign_ecpms[i].timestamp));
-      }
-      for(CORBA::ULong i = 0; i < source.sites.length(); ++i)
-      {
-        const auto& src = source.sites[i];
+        const auto& site = *src.second;
         auto* item = target.add_sites();
-        item->set_site_id(src.site_id);
-        item->set_status(static_cast<unsigned char>(src.status));
-        item->set_freq_cap_id(src.freq_cap_id);
-        item->set_noads_timeout(src.noads_timeout);
-        pack_corba_ids(
-          src.approved_creative_categories,
+        item->set_site_id(src.first);
+        item->set_status(static_cast<unsigned char>(site.status));
+        item->set_freq_cap_id(site.freq_cap_id);
+        item->set_noads_timeout(site.noads_timeout);
+        pack_config_ids(
+          site.approved_creative_categories,
           item->mutable_approved_creative_categories());
-        pack_corba_ids(
-          src.rejected_creative_categories,
+        pack_config_ids(
+          site.rejected_creative_categories,
           item->mutable_rejected_creative_categories());
-        pack_corba_ids(src.approved_creatives, item->mutable_approved_creatives());
-        pack_corba_ids(src.rejected_creatives, item->mutable_rejected_creatives());
-        item->set_flags(src.flags);
-        item->set_account_id(src.account_id);
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        pack_config_ids(site.approved_creatives, item->mutable_approved_creatives());
+        pack_config_ids(site.rejected_creatives, item->mutable_rejected_creatives());
+        item->set_flags(site.flags);
+        item->set_account_id(site.account->account_id);
+        item->set_timestamp(pack_time(site.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.tags.length(); ++i)
+      for(const auto& src : source.tags)
       {
         auto* item = target.add_tags();
-        pack_config_tag(source.tags[i].info, *item->mutable_info());
-        for(CORBA::ULong j = 0; j < source.tags[i].cpms.length(); ++j)
+        pack_config_tag(*src.second, *item->mutable_info());
+        for(const auto& pricing : src.second->tag_pricings)
         {
-          pack_decimal_info(source.tags[i].cpms[j], *item->add_cpms());
+          pack_revenue_decimal(pricing.second.cpm, *item->add_cpms());
         }
       }
-      for(CORBA::ULong i = 0; i < source.currencies.length(); ++i)
+      for(const auto& src : source.currencies)
       {
-        const auto& src = source.currencies[i];
+        const auto& currency = *src.second;
         auto* item = target.add_currencies();
-        pack_decimal_info(src.rate, *item->mutable_rate());
-        item->set_currency_id(src.currency_id);
-        item->set_currency_exchange_id(src.currency_exchange_id);
-        item->set_effective_date(src.effective_date);
-        item->set_fraction_digits(src.fraction_digits);
-        item->set_currency_code(src.currency_code.in());
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        pack_revenue_decimal(currency.rate, *item->mutable_rate());
+        item->set_currency_id(src.first);
+        item->set_currency_exchange_id(currency.currency_exchange_id);
+        item->set_effective_date(currency.effective_date);
+        item->set_fraction_digits(currency.fraction);
+        item->set_currency_code(currency.currency_code);
+        item->set_timestamp(pack_time(currency.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.colocations.length(); ++i)
+      for(const auto& src : source.colocations)
       {
-        const auto& src = source.colocations[i];
+        const auto& colocation = *src.second;
         auto* item = target.add_colocations();
-        item->set_colo_id(src.colo_id);
-        item->set_colo_name(src.colo_name.in());
-        item->set_colo_rate_id(src.colo_rate_id);
-        item->set_at_flags(src.at_flags);
-        item->set_ad_serving(src.ad_serving);
-        item->set_hid_profile(src.hid_profile);
-        item->set_account_id(src.account_id);
-        pack_decimal_info(src.revenue_share, *item->mutable_revenue_share());
-        pack_config_option_values(src.tokens, item->mutable_tokens());
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_colo_id(src.first);
+        item->set_colo_name(colocation.colo_name);
+        item->set_colo_rate_id(colocation.colo_rate_id);
+        item->set_at_flags(colocation.at_flags);
+        item->set_ad_serving(colocation.ad_serving);
+        item->set_hid_profile(colocation.hid_profile);
+        item->set_account_id(colocation.account->account_id);
+        pack_revenue_decimal(
+          colocation.revenue_share,
+          *item->mutable_revenue_share());
+        pack_config_option_values(colocation.tokens, item->mutable_tokens());
+        item->set_timestamp(pack_time(colocation.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.countries.length(); ++i)
+      for(const auto& src : source.countries)
       {
         auto* item = target.add_countries();
-        item->set_country_code(source.countries[i].country_code.in());
-        pack_config_option_values(
-          source.countries[i].tokens,
-          item->mutable_tokens());
-        item->set_timestamp(pack_oct_seq(source.countries[i].timestamp));
+        item->set_country_code(src.first);
+        pack_config_option_values(src.second->tokens, item->mutable_tokens());
+        item->set_timestamp(pack_time(src.second->timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.frequency_caps.length(); ++i)
+      for(const auto& src : source.freq_caps)
       {
-        const auto& src = source.frequency_caps[i];
+        const auto& freq_cap = src.second;
         auto* item = target.add_frequency_caps();
-        item->set_fc_id(src.fc_id);
-        item->set_lifelimit(src.lifelimit);
-        item->set_period(src.period);
-        item->set_window_limit(src.window_limit);
-        item->set_window_time(src.window_time);
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_fc_id(freq_cap.fc_id);
+        item->set_lifelimit(freq_cap.lifelimit);
+        item->set_period(freq_cap.period.tv_sec);
+        item->set_window_limit(freq_cap.window_limit);
+        item->set_window_time(freq_cap.window_time.tv_sec);
+        item->set_timestamp(pack_time(freq_cap.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.creative_template_files.length(); ++i)
+      for(const auto& src : source.creative_templates)
       {
-        const auto& src = source.creative_template_files[i];
         auto* item = target.add_creative_template_files();
-        item->set_creative_format(src.creative_format.in());
-        item->set_creative_size(src.creative_size.in());
-        item->set_app_format(src.app_format.in());
-        item->set_mime_format(src.mime_format.in());
-        item->set_track_impr(src.track_impr);
-        item->set_type(src.type);
-        item->set_template_file(src.template_file.in());
-        item->set_timestamp(pack_oct_seq(src.timestamp));
-        pack_config_option_values(src.tokens, item->mutable_tokens());
+        item->set_creative_format(src.first.creative_format);
+        item->set_creative_size(src.first.creative_size);
+        item->set_app_format(src.first.app_format);
+        item->set_mime_format(src.second.mime_format);
+        item->set_track_impr(src.second.track_impressions);
+        item->set_type(adopt_config_template_type(src.second.type));
+        item->set_template_file(src.second.file);
+        item->set_timestamp(pack_time(src.second.timestamp));
+        pack_config_option_values(*src.second.tokens, item->mutable_tokens());
         pack_config_option_values(
-          src.hidden_tokens,
+          *src.second.hidden_tokens,
           item->mutable_hidden_tokens());
-        item->set_status(static_cast<unsigned char>(src.status));
+        item->set_status(static_cast<unsigned char>(src.second.status));
       }
-      for(CORBA::ULong i = 0; i < source.campaign_keywords.length(); ++i)
+      for(const auto& src : source.ccg_keyword_click_info_map)
       {
-        const auto& src = source.campaign_keywords[i];
         auto* item = target.add_campaign_keywords();
-        item->set_ccg_keyword_id(src.ccg_keyword_id);
-        item->set_original_keyword(src.original_keyword.in());
-        item->set_click_url(src.click_url.in());
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_ccg_keyword_id(src.first);
+        item->set_original_keyword(src.second.original_keyword);
+        item->set_click_url(src.second.click_url);
+        item->set_timestamp(pack_time(Generics::Time::ZERO));
       }
-      for(CORBA::ULong i = 0; i < source.expression_channels.length(); ++i)
+      for(const auto& src : source.expression_channels)
       {
-        const auto& src = source.expression_channels[i];
-        auto* item = target.add_expression_channels();
-        item->set_channel_id(src.channel_id);
-        item->set_name(src.name.in());
-        item->set_account_id(src.account_id);
-        item->set_country_code(src.country_code.in());
-        item->set_flags(src.flags);
-        item->set_status(static_cast<unsigned char>(src.status));
-        item->set_type(static_cast<unsigned char>(src.type));
-        item->set_is_public(src.is_public);
-        item->set_language(src.language.in());
-        item->set_freq_cap_id(src.freq_cap_id);
-        item->set_parent_channel_id(src.parent_channel_id);
-        item->set_action_id(src.action_id);
-        item->set_timestamp(pack_oct_seq(src.timestamp));
-        item->set_discover_query(src.discover_query.in());
-        item->set_discover_annotation(src.discover_annotation.in());
-        item->set_channel_rate_id(src.channel_rate_id);
-        pack_decimal_info(src.imp_revenue, *item->mutable_imp_revenue());
-        pack_decimal_info(src.click_revenue, *item->mutable_click_revenue());
-        pack_config_expression(src.expression, *item->mutable_expression());
-        item->set_threshold(src.threshold);
+        if(src.second->channel.in())
+        {
+          pack_config_expression_channel(
+            *src.second->channel,
+            *target.add_expression_channels());
+        }
       }
-      for(CORBA::ULong i = 0; i < source.creative_categories.length(); ++i)
+      for(const auto& src : source.creative_categories)
       {
-        const auto& src = source.creative_categories[i];
         auto* item = target.add_creative_categories();
-        item->set_creative_category_id(src.creative_category_id);
-        item->set_cct_id(src.cct_id);
-        item->set_name(src.name.in());
-        for(CORBA::ULong j = 0; j < src.external_categories.length(); ++j)
+        item->set_creative_category_id(src.first);
+        item->set_cct_id(src.second.cct_id);
+        item->set_name(src.second.name);
+        for(const auto& src_category : src.second.external_categories)
         {
           auto* external_category = item->add_external_categories();
-          external_category->set_ad_request_type(
-            src.external_categories[j].ad_request_type);
-          pack_corba_strings(
-            src.external_categories[j].names,
-            external_category->mutable_names());
+          external_category->set_ad_request_type(src_category.first);
+          for(const auto& name : src_category.second)
+          {
+            *external_category->add_names() = name;
+          }
         }
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_timestamp(pack_time(src.second.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.adv_actions.length(); ++i)
+      for(const auto& src : source.adv_actions)
       {
         auto* item = target.add_adv_actions();
-        item->set_action_id(source.adv_actions[i].action_id);
-        item->set_timestamp(pack_oct_seq(source.adv_actions[i].timestamp));
-        pack_corba_ids(source.adv_actions[i].ccg_ids, item->mutable_ccg_ids());
+        item->set_action_id(src.second.action_id);
+        item->set_timestamp(pack_time(src.second.timestamp));
+        pack_config_ids(src.second.ccg_ids, item->mutable_ccg_ids());
+        pack_decimal_into_config_ids(
+          item->mutable_ccg_ids(),
+          src.second.cur_value);
       }
-      for(CORBA::ULong i = 0; i < source.category_channels.length(); ++i)
+      for(const auto& src : source.category_channels)
       {
-        const auto& src = source.category_channels[i];
+        const auto& category_channel = *src.second;
         auto* item = target.add_category_channels();
-        item->set_channel_id(src.channel_id);
-        item->set_name(src.name.in());
-        item->set_newsgate_name(src.newsgate_name.in());
-        for(CORBA::ULong j = 0; j < src.localizations.length(); ++j)
+        item->set_channel_id(src.first);
+        item->set_name(category_channel.name);
+        item->set_newsgate_name(category_channel.newsgate_name);
+        for(const auto& localization : category_channel.localizations)
         {
           auto* loc = item->add_localizations();
-          loc->set_language(src.localizations[j].language.in());
-          loc->set_name(src.localizations[j].name.in());
+          loc->set_language(localization.first);
+          loc->set_name(localization.second);
         }
-        item->set_parent_channel_id(src.parent_channel_id);
-        item->set_flags(src.flags);
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_parent_channel_id(category_channel.parent_channel_id);
+        item->set_flags(category_channel.flags);
+        item->set_timestamp(pack_time(category_channel.timestamp));
       }
-      for(CORBA::ULong i = 0; i < source.geo_channels.length(); ++i)
+      if(geo_channels)
       {
-        const auto& src = source.geo_channels[i];
-        auto* item = target.add_geo_channels();
-        item->set_channel_id(src.channel_id);
-        item->set_country(src.country.in());
-        for(CORBA::ULong j = 0; j < src.geoip_targets.length(); ++j)
+        for(const auto& src : source.geo_channels->channels())
         {
+          auto* item = target.add_geo_channels();
+          item->set_channel_id(src.second);
+          item->set_country(src.first.country());
           auto* geoip_target = item->add_geoip_targets();
-          geoip_target->set_region(src.geoip_targets[j].region.in());
-          geoip_target->set_city(src.geoip_targets[j].city.in());
+          geoip_target->set_region(src.first.region());
+          geoip_target->set_city(src.first.city());
+          item->set_timestamp(pack_time(Generics::Time::ZERO));
         }
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        for(const auto& src : source.geo_coord_channels->channels())
+        {
+          for(const auto channel_id : src.second->channels)
+          {
+            auto* item = target.add_geo_coord_channels();
+            item->set_channel_id(channel_id);
+            pack_revenue_decimal(src.first.longitude, *item->mutable_longitude());
+            pack_revenue_decimal(src.first.latitude, *item->mutable_latitude());
+            pack_revenue_decimal(src.first.accuracy, *item->mutable_radius());
+            item->set_timestamp(pack_time(Generics::Time::ZERO));
+          }
+        }
       }
-      for(CORBA::ULong i = 0; i < source.geo_coord_channels.length(); ++i)
+      for(WebOperationHash::const_iterator it = source.web_operations.begin();
+        it != source.web_operations.end(); ++it)
       {
-        const auto& src = source.geo_coord_channels[i];
-        auto* item = target.add_geo_coord_channels();
-        item->set_channel_id(src.channel_id);
-        pack_decimal_info(src.longitude, *item->mutable_longitude());
-        pack_decimal_info(src.latitude, *item->mutable_latitude());
-        pack_decimal_info(src.radius, *item->mutable_radius());
-        item->set_timestamp(pack_oct_seq(src.timestamp));
-      }
-      for(CORBA::ULong i = 0; i < source.web_operations.length(); ++i)
-      {
-        const auto& src = source.web_operations[i];
         auto* item = target.add_web_operations();
-        item->set_id(src.id);
-        item->set_app(src.app.in());
-        item->set_source(src.source.in());
-        item->set_operation(src.operation.in());
-        item->set_flags(src.flags);
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        item->set_id(it->second->id);
+        item->set_app(it->second->app);
+        item->set_source(it->second->source);
+        item->set_operation(it->second->operation);
+        item->set_flags(it->second->flags);
+        item->set_timestamp(pack_time(Generics::Time::ZERO));
       }
-      for(CORBA::ULong i = 0; i < source.contracts.length(); ++i)
+      for(const auto& src : source.contracts)
       {
-        const auto& src = source.contracts[i];
-        auto* item = target.add_contracts();
-        item->set_contract_id(src.contract_id);
-        item->set_number(src.number.in());
-        item->set_date(src.date.in());
-        item->set_type(src.type.in());
-        item->set_vat_included(src.vat_included);
-        item->set_ord_contract_id(src.ord_contract_id.in());
-        item->set_ord_ado_id(src.ord_ado_id.in());
-        item->set_subject_type(src.subject_type.in());
-        item->set_action_type(src.action_type.in());
-        item->set_agent_acting_for_publisher(src.agent_acting_for_publisher);
-        item->set_parent_contract_id(src.parent_contract_id);
-        item->set_client_id(src.client_id.in());
-        item->set_client_name(src.client_name.in());
-        item->set_client_legal_form(src.client_legal_form.in());
-        item->set_contractor_id(src.contractor_id.in());
-        item->set_contractor_name(src.contractor_name.in());
-        item->set_contractor_legal_form(src.contractor_legal_form.in());
-        item->set_timestamp(pack_oct_seq(src.timestamp));
+        pack_config_contract(*src.second, *target.add_contracts());
       }
       target.set_currency_exchange_id(source.currency_exchange_id);
       target.set_fraud_user_deactivate_period(
-        pack_oct_seq(source.fraud_user_deactivate_period));
-      pack_decimal_info(source.cost_limit, *target.mutable_cost_limit());
-      target.set_google_publisher_account_id(
-        source.google_publisher_account_id);
-      target.set_master_stamp(pack_oct_seq(source.master_stamp));
-      target.set_first_load_stamp(pack_oct_seq(source.first_load_stamp));
-      target.set_finish_load_stamp(pack_oct_seq(source.finish_load_stamp));
-      target.set_global_params_timestamp(
-        pack_oct_seq(source.global_params_timestamp));
-      target.set_creative_categories_timestamp(
-        pack_oct_seq(source.creative_categories_timestamp));
+        pack_time(source.fraud_user_deactivate_period));
+      pack_revenue_decimal(source.cost_limit, *target.mutable_cost_limit());
+      target.set_google_publisher_account_id(source.google_publisher_account_id);
+      target.set_master_stamp(pack_time(source.master_stamp));
+      target.set_first_load_stamp(pack_time(source.first_load_stamp));
+      target.set_finish_load_stamp(pack_time(source.finish_load_stamp));
+      target.set_global_params_timestamp(pack_time(source.global_params_timestamp));
     }
+
   }
 
   struct CampaignManagerGrpc::AtomicStats
@@ -2800,11 +2884,11 @@ namespace AdServer::CampaignSvcs
       core_->consider_web_operation(info);
       result_status = ::grpc::Status::OK;
     }
-    catch(const CampaignManagerCore::InvalidArgument&)
+    catch(const CampaignManagerCore::InvalidArgument& ex)
     {
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::INVALID_ARGUMENT,
-        "incorrect argument");
+        ex.what());
     }
     catch(const CampaignManagerCore::NotReady& ex)
     {
@@ -2836,20 +2920,20 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      CampaignManager::GetConfigInfo get_config_info;
+      CampaignManagerCore::ConfigRequestInfo get_config_info;
       get_config_info.geo_channels = request.geo_channels();
-      CampaignManagerImpl_var corba_pack_adapter =
-        new CampaignManagerImpl(core_.in());
-      CampaignManager::CampaignConfig_var config =
-        corba_pack_adapter->get_config(get_config_info);
-      pack_config(config.in(), *response.mutable_config());
+      CampaignConfig_var core_config = core_->get_config(get_config_info);
+      pack_config(
+        *core_config,
+        get_config_info.geo_channels,
+        *response.mutable_config());
       result_status = ::grpc::Status::OK;
     }
-    catch(const CampaignManager::ImplementationException& ex)
+    catch(const CampaignManagerCore::Exception& ex)
     {
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::INTERNAL,
-        ex.description.in());
+        ex.what());
     }
     catch(const eh::Exception& ex)
     {

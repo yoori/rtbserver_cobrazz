@@ -498,36 +498,30 @@ namespace AdServer
     }
 
     ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig*
-    CampaignManagerImpl::get_config(
-      const AdServer::CampaignSvcs::CampaignManager::GetConfigInfo& get_config_props)
-      /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/
+    pack_campaign_config_to_corba(
+      const CampaignConfig& config,
+      bool geo_channels)
+      /*throw(eh::Exception)*/
     {
-      try
-      {
-      CampaignManagerCore::ConfigRequestInfo core_info;
-      core_info.geo_channels = get_config_props.geo_channels;
-
-      CampaignConfig_var config = core_->get_config(core_info);
-
       ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig_var result =
           new ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig();
 
       result->master_stamp =
-        CorbaAlgs::pack_time(config->master_stamp);
+        CorbaAlgs::pack_time(config.master_stamp);
       result->first_load_stamp =
-        CorbaAlgs::pack_time(config->first_load_stamp);
+        CorbaAlgs::pack_time(config.first_load_stamp);
       result->finish_load_stamp =
-        CorbaAlgs::pack_time(config->finish_load_stamp);
+        CorbaAlgs::pack_time(config.finish_load_stamp);
       result->global_params_timestamp =
-        CorbaAlgs::pack_time(config->global_params_timestamp);
+        CorbaAlgs::pack_time(config.global_params_timestamp);
 
       {
         // fill sizes
-        result->sizes.length(config->sizes.size());
+        result->sizes.length(config.sizes.size());
 
         CORBA::ULong i = 0;
-        for(SizeMap::const_iterator size_it = config->sizes.begin();
-            size_it != config->sizes.end(); ++size_it, ++i)
+        for(SizeMap::const_iterator size_it = config.sizes.begin();
+            size_it != config.sizes.end(); ++size_it, ++i)
         {
           SizeInfo& size_info = result->sizes[i];
           size_info.size_id = size_it->first;
@@ -541,12 +535,12 @@ namespace AdServer
 
       // fill app formats
       {
-        result->app_formats.length(config->app_formats.size());
+        result->app_formats.length(config.app_formats.size());
 
         CORBA::ULong i = 0;
         for(AppFormatMap::const_iterator it =
-              config->app_formats.begin();
-            it != config->app_formats.end(); ++it, ++i)
+              config.app_formats.begin();
+            it != config.app_formats.end(); ++it, ++i)
         {
           AppFormatInfo& app_format_info = result->app_formats[i];
           const AppFormatDef& app_format = it->second;
@@ -559,12 +553,12 @@ namespace AdServer
 
       /* fill adv actions */
       {
-        result->adv_actions.length(config->adv_actions.size());
+        result->adv_actions.length(config.adv_actions.size());
 
         CORBA::ULong i = 0;
         for(AdvActionMap::const_iterator it =
-              config->adv_actions.begin();
-            it != config->adv_actions.end(); ++it, i++)
+              config.adv_actions.begin();
+            it != config.adv_actions.end(); ++it, i++)
         {
           AdvActionInfo& adv_action_info = result->adv_actions[i];
           const AdvActionDef& ai = it->second;
@@ -585,12 +579,12 @@ namespace AdServer
 
       /* fill creative options */
       {
-        result->creative_options.length(config->creative_options.size());
+        result->creative_options.length(config.creative_options.size());
 
         CORBA::ULong i = 0;
         for(CreativeOptionMap::const_iterator it =
-              config->creative_options.begin();
-            it != config->creative_options.end(); ++it, i++)
+              config.creative_options.begin();
+            it != config.creative_options.end(); ++it, i++)
         {
           CreativeOptionInfo& co_info = result->creative_options[i];
           const CreativeOptionDef& co = it->second;
@@ -609,11 +603,11 @@ namespace AdServer
 
       /* fill accounts */
       {
-        result->accounts.length(config->accounts.size());
+        result->accounts.length(config.accounts.size());
 
         CORBA::ULong i = 0;
-        for(AccountMap::const_iterator it = config->accounts.begin();
-            it != config->accounts.end(); ++it, i++)
+        for(AccountMap::const_iterator it = config.accounts.begin();
+            it != config.accounts.end(); ++it, i++)
         {
           AccountInfo& acc_info = result->accounts[i];
 
@@ -648,12 +642,12 @@ namespace AdServer
       }
 
       /* fill campaigns */
-      result->campaigns.length(config->campaigns.size());
+      result->campaigns.length(config.campaigns.size());
 
       CORBA::ULong i = 0;
       for(CampaignConfig::CampaignMap::const_iterator it =
-            config->campaigns.begin();
-          it != config->campaigns.end(); ++it, i++)
+            config.campaigns.begin();
+          it != config.campaigns.end(); ++it, i++)
       {
         CampaignInfo& campaign_info = result->campaigns[i].info;
         const Campaign* campaign = it->second;
@@ -796,11 +790,11 @@ namespace AdServer
       }
 
       /* fill expression channels */
-      result->expression_channels.length(config->expression_channels.size());
+      result->expression_channels.length(config.expression_channels.size());
       CORBA::ULong ch_i = 0;
       for(CampaignConfig::ChannelMap::const_iterator ch_it =
-            config->expression_channels.begin();
-          ch_it != config->expression_channels.end(); ++ch_it)
+            config.expression_channels.begin();
+          ch_it != config.expression_channels.end(); ++ch_it)
       {
         if(ch_it->second->channel.in())
         {
@@ -810,9 +804,9 @@ namespace AdServer
       result->expression_channels.length(ch_i);
 
       /* fill sites */
-      unsigned int len = config->sites.size();
+      unsigned int len = config.sites.size();
       result->sites.length(len);
-      SiteMap::const_iterator pt = config->sites.begin();
+      SiteMap::const_iterator pt = config.sites.begin();
 
       for (CORBA::ULong k = 0; k < len; k++, pt++)
       {
@@ -848,12 +842,12 @@ namespace AdServer
       }
 
       {
-        result->tags.length(config->tags.size());
+        result->tags.length(config.tags.size());
 
         CORBA::ULong k = 0;
 
-        for(TagMap::const_iterator pt = config->tags.begin();
-            pt != config->tags.end();
+        for(TagMap::const_iterator pt = config.tags.begin();
+            pt != config.tags.end();
             ++pt, ++k)
         {
           AdServer::CampaignSvcs::CampaignManager::AdaptedTagInfo&
@@ -951,9 +945,9 @@ namespace AdServer
       }
 
       i = 0;
-      result->frequency_caps.length(config->freq_caps.size());
-      for(FreqCapMap::const_iterator it = config->freq_caps.begin();
-          it != config->freq_caps.end(); ++it, i++)
+      result->frequency_caps.length(config.freq_caps.size());
+      for(FreqCapMap::const_iterator it = config.freq_caps.begin();
+          it != config.freq_caps.end(); ++it, i++)
       {
         FreqCapInfo& freq_cap_info = result->frequency_caps[i];
         const FreqCap& freq_cap = it->second;
@@ -966,19 +960,19 @@ namespace AdServer
         freq_cap_info.window_time = freq_cap.window_time.tv_sec;
       }
 
-      result->currency_exchange_id = config->currency_exchange_id;
+      result->currency_exchange_id = config.currency_exchange_id;
       result->fraud_user_deactivate_period = CorbaAlgs::pack_time(
-        config->fraud_user_deactivate_period);
-      result->cost_limit = CorbaAlgs::pack_decimal(config->cost_limit);
-      result->google_publisher_account_id = config->google_publisher_account_id;
+        config.fraud_user_deactivate_period);
+      result->cost_limit = CorbaAlgs::pack_decimal(config.cost_limit);
+      result->google_publisher_account_id = config.google_publisher_account_id;
 
       {
         // fill colocations
         i = 0;
-        result->colocations.length(config->colocations.size());
+        result->colocations.length(config.colocations.size());
         for (CampaignConfig::ColocationMap::const_iterator it =
-               config->colocations.begin();
-             it != config->colocations.end();
+               config.colocations.begin();
+             it != config.colocations.end();
              ++it, i++)
         {
           ColocationInfo& colo = result->colocations[i];
@@ -998,10 +992,10 @@ namespace AdServer
       {
         // fill countries
         i = 0;
-        result->countries.length(config->countries.size());
-        for (CampaignConfig::CountryMap::iterator it =
-               config->countries.begin();
-             it != config->countries.end();
+        result->countries.length(config.countries.size());
+        for (CampaignConfig::CountryMap::const_iterator it =
+               config.countries.begin();
+             it != config.countries.end();
              ++it, i++)
         {
           CountryInfo& country = result->countries[i];
@@ -1012,10 +1006,10 @@ namespace AdServer
       }
 
       i = 0;
-      result->creative_template_files.length(config->creative_templates.size());
+      result->creative_template_files.length(config.creative_templates.size());
       for(CreativeTemplateMap::const_iterator it =
-            config->creative_templates.begin();
-          it != config->creative_templates.end(); ++it, i++)
+            config.creative_templates.begin();
+          it != config.creative_templates.end(); ++it, i++)
       {
         AdServer::CampaignSvcs::
         CampaignManager::CreativeTemplateFileInfo& ctf_info =
@@ -1035,9 +1029,9 @@ namespace AdServer
       }
 
       i = 0;
-      result->currencies.length(config->currencies.size());
-      for (CurrencyMap::const_iterator it = config->currencies.begin();
-        it != config->currencies.end(); ++it, ++i)
+      result->currencies.length(config.currencies.size());
+      for (CurrencyMap::const_iterator it = config.currencies.begin();
+        it != config.currencies.end(); ++it, ++i)
       {
         CurrencyInfo& currency_info = result->currencies[i];
         currency_info.currency_id = it->first;
@@ -1051,11 +1045,11 @@ namespace AdServer
 
       {
         CORBA::ULong i = 0;
-        result->creative_categories.length(config->creative_categories.size());
+        result->creative_categories.length(config.creative_categories.size());
 
         for(CampaignConfig::CreativeCategoryMap::const_iterator ccat_it =
-              config->creative_categories.begin();
-            ccat_it != config->creative_categories.end();
+              config.creative_categories.begin();
+            ccat_it != config.creative_categories.end();
             ++ccat_it, ++i)
         {
           CreativeCategoryInfo& ccat_info = result->creative_categories[i];
@@ -1085,11 +1079,11 @@ namespace AdServer
 
       {
         CORBA::ULong i = 0;
-        result->category_channels.length(config->category_channels.size());
+        result->category_channels.length(config.category_channels.size());
 
         for(CampaignConfig::CategoryChannelMap::const_iterator cc_it =
-              config->category_channels.begin();
-            cc_it != config->category_channels.end();
+              config.category_channels.begin();
+            cc_it != config.category_channels.end();
             ++cc_it, ++i)
         {
           result->category_channels[i].channel_id = cc_it->first;
@@ -1117,13 +1111,13 @@ namespace AdServer
 
       {
         // fill keywords
-        result->campaign_keywords.length(config->ccg_keyword_click_info_map.size());
+        result->campaign_keywords.length(config.ccg_keyword_click_info_map.size());
 
         CORBA::ULong i = 0;
 
         for(CCGKeywordPostClickInfoMap::const_iterator kit =
-              config->ccg_keyword_click_info_map.begin();
-            kit != config->ccg_keyword_click_info_map.end();
+              config.ccg_keyword_click_info_map.begin();
+            kit != config.ccg_keyword_click_info_map.end();
             ++kit, ++i)
         {
           AdServer::CampaignSvcs::CampaignKeywordInfo& kw_info =
@@ -1135,15 +1129,15 @@ namespace AdServer
         }
       }
 
-      if(get_config_props.geo_channels)
+      if(geo_channels)
       {
-        CORBA::ULong channels_count = config->geo_channels->channels().size();
+        CORBA::ULong channels_count = config.geo_channels->channels().size();
         result->geo_channels.length(channels_count);
         CORBA::ULong i = 0;
 
         for(GeoChannelIndex::GeoChannelMap::const_iterator ind_it =
-              config->geo_channels->channels().begin();
-            ind_it != config->geo_channels->channels().end();
+              config.geo_channels->channels().begin();
+            ind_it != config.geo_channels->channels().end();
             ++ind_it, ++i)
         {
           GeoChannelInfo& geo_channel_info = result->geo_channels[i];
@@ -1157,8 +1151,8 @@ namespace AdServer
 
         CORBA::ULong geo_coord_channels_count = 0;
         for(GeoCoordChannelIndex::ChannelMap::const_iterator ch_it =
-              config->geo_coord_channels->channels().begin();
-            ch_it != config->geo_coord_channels->channels().end();
+              config.geo_coord_channels->channels().begin();
+            ch_it != config.geo_coord_channels->channels().end();
             ++ch_it)
         {
           geo_coord_channels_count += ch_it->second->channels.size();
@@ -1168,8 +1162,8 @@ namespace AdServer
         i = 0;
 
         for(GeoCoordChannelIndex::ChannelMap::const_iterator ch_it =
-              config->geo_coord_channels->channels().begin();
-            ch_it != config->geo_coord_channels->channels().end();
+              config.geo_coord_channels->channels().begin();
+            ch_it != config.geo_coord_channels->channels().end();
             ++ch_it)
         {
           for(ChannelIdList::const_iterator sub_ch_it =
@@ -1192,10 +1186,10 @@ namespace AdServer
         }
       }
 
-      result->web_operations.length(config->web_operations.size());
+      result->web_operations.length(config.web_operations.size());
       i = 0;
-      for(WebOperationHash::const_iterator it = config->web_operations.begin();
-          it != config->web_operations.end(); ++it, i++)
+      for(WebOperationHash::const_iterator it = config.web_operations.begin();
+          it != config.web_operations.end(); ++it, i++)
       {
         AdServer::CampaignSvcs::WebOperationInfo& info =
           result->web_operations[i];
@@ -1209,17 +1203,31 @@ namespace AdServer
 
       // fill contracts
       {
-        result->contracts.length(config->contracts.size());
+        result->contracts.length(config.contracts.size());
 
         CORBA::ULong i = 0;
-        for(CampaignConfig::ContractMap::const_iterator it = config->contracts.begin();
-            it != config->contracts.end(); ++it, i++)
+        for(CampaignConfig::ContractMap::const_iterator it = config.contracts.begin();
+            it != config.contracts.end(); ++it, i++)
         {
           fill_contract_info(result->contracts[i], *(it->second));
         }
       }
 
       return result._retn();
+    }
+
+    ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig*
+    CampaignManagerImpl::get_config(
+      const AdServer::CampaignSvcs::CampaignManager::GetConfigInfo& get_config_props)
+      /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/
+    {
+      try
+      {
+        CampaignManagerCore::ConfigRequestInfo core_info;
+        core_info.geo_channels = get_config_props.geo_channels;
+
+        CampaignConfig_var config = core_->get_config(core_info);
+        return pack_campaign_config_to_corba(*config, core_info.geo_channels);
       }
       catch(const CampaignManagerCore::Exception& ex)
       {

@@ -45,7 +45,8 @@ namespace AdServer::CampaignSvcs
 
     bool should_mark_as_bad(const grpc::Status& status)
     {
-      return !AdServer::Grpc::is_transport_timeout(status) &&
+      return !AdServer::Grpc::is_request_specific_error(status) &&
+        !AdServer::Grpc::is_transport_timeout(status) &&
         !AdServer::Grpc::is_no_active_batching_streams(status);
     }
 
