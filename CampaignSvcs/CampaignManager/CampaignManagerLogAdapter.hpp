@@ -7,8 +7,6 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Constants.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
-
 #include "CampaignManagerDeclarations.hpp"
 #include "CampaignManagerLogger.hpp"
 #include "CampaignConfig.hpp"
@@ -26,7 +24,7 @@ namespace AdServer
       void
       fill(
         const CampaignConfig* campaign_config,
-        const CampaignManager::AnonymousRequestInfo& request_params,
+        const CampaignManagerCore::AnonymousRequestInfo& request_params,
         CampaignManagerLogger::AnonymousRequestInfo& logger_info)
         /*throw(Exception)*/;
 
@@ -35,10 +33,10 @@ namespace AdServer
         CampaignManagerLogger::RequestInfo& request_info,
         const CampaignConfig* campaign_config,
         const Colocation* colocation,
-        const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
-        const AdServer::CampaignSvcs::CampaignManager::ContextAdRequestInfo& context_info,
-        const AdServer::CampaignSvcs::CampaignManager::RequestParams* request_params,
-        AdServer::CampaignSvcs::CampaignManager::AdRequestDebugInfo* debug_info,
+        const CampaignManagerCore::CommonAdRequestInfo& common_info,
+        const CampaignManagerCore::ContextAdRequestInfo& context_info,
+        const CampaignManagerCore::CreativeRequestInfo* request_params,
+        CampaignManagerCore::AdRequestDebugInfo* debug_info,
         const CampaignManagerCore::AdSlotContext& ad_slot_context)
         /*throw(Exception)*/;
 
@@ -47,10 +45,10 @@ namespace AdServer
         CampaignManagerLogger::AdRequestSelectionInfo& ad_request_selection_info,
         const CampaignConfig* campaign_config,
         const Colocation* colocation,
-        const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
-        const AdServer::CampaignSvcs::CampaignManager::ContextAdRequestInfo& context_info,
-        const AdServer::CampaignSvcs::CampaignManager::RequestParams* request_params,
-        const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
+        const CampaignManagerCore::CommonAdRequestInfo& common_info,
+        const CampaignManagerCore::ContextAdRequestInfo& context_info,
+        const CampaignManagerCore::CreativeRequestInfo* request_params,
+        const CampaignManagerCore::TraceAdSlotInfo& ad_slot,
         const Tag* tag,
         const AdSelectionResult& ad_selection_request,
         const CampaignManagerCore::AdSlotContext& ad_slot_context,
@@ -63,7 +61,7 @@ namespace AdServer
       fill_match_request_info(
         CampaignManagerLogger::MatchRequestInfo& result_match_request,
         const CampaignConfig* campaign_config,
-        const AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& match_request_info,
+        const CampaignManagerCore::MatchRequestInfo& match_request_info,
         const ChannelIdList& geo_channels)
         /*throw(Exception)*/;
 
@@ -104,10 +102,10 @@ namespace AdServer
         DataPricing& data_pricing,
         const CampaignConfig* campaign_config,
         const Colocation* colocation,
-        const CampaignManager::CommonAdRequestInfo& common_info,
-        const CampaignManager::ContextAdRequestInfo& context_info,
-        const CampaignManager::RequestParams* request_params,
-        const CampaignManager::AdSlotInfo& ad_slot,
+        const CampaignManagerCore::CommonAdRequestInfo& common_info,
+        const CampaignManagerCore::ContextAdRequestInfo& context_info,
+        const CampaignManagerCore::CreativeRequestInfo* request_params,
+        const CampaignManagerCore::TraceAdSlotInfo& ad_slot,
         const Tag* tag,
         const Tag::TagPricing* tag_pricing,
         const AdSelectionResult& ad_selection_result,
@@ -121,24 +119,22 @@ namespace AdServer
         ChannelIdHashSet& res2,
         CampaignManagerLogger::TriggerChannelMap& triggers,
         CampaignManagerLogger::TriggerChannelMap* discover_keyword_triggers,
-        const AdServer::CampaignSvcs::CampaignManager::
-          ChannelTriggerMatchSeq& behav_params,
+        const CampaignManagerCore::ChannelTriggerMatchVector& behav_params,
         const CampaignConfig* campaign_config)
         noexcept;
-
 
       static void
       fill_request_info_by_profiling_(
         CampaignManagerLogger::RequestInfo& request_info,
         const CampaignConfig* campaign_config,
-        const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-        const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info)
+        const CampaignManagerCore::CreativeRequestInfo& request_params,
+        const CampaignManagerCore::CommonAdRequestInfo& common_info)
         /*throw(Exception)*/;
 
       static void
       fill_request_info_by_common_info_(
         CampaignManagerLogger::RequestInfo& request_info,
-        const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info)
+        const CampaignManagerCore::CommonAdRequestInfo& common_info)
         /*throw(Exception)*/;
     };
   }
@@ -185,20 +181,20 @@ namespace AdServer
       ChannelIdHashSet& channels,
       CampaignManagerLogger::TriggerChannelMap& triggers,
       CampaignManagerLogger::TriggerChannelMap* discover_keyword_triggers,
-      const AdServer::CampaignSvcs::CampaignManager::ChannelTriggerMatchSeq&
+      const CampaignManagerCore::ChannelTriggerMatchVector&
         channel_trigger_matches,
       const CampaignConfig* campaign_config)
       noexcept
     {
       if (campaign_config)
       {
-        channels.rehash((channels.size() + channel_trigger_matches.length()) * 3);
+        channels.rehash((channels.size() + channel_trigger_matches.size()) * 3);
 
-        for(CORBA::ULong i = 0; i < channel_trigger_matches.length(); ++i)
+        for(const auto& channel_trigger_match : channel_trigger_matches)
         {
           CampaignConfig::ChannelMap::const_iterator ch_it =
             campaign_config->expression_channels.find(
-              channel_trigger_matches[i].channel_id);
+              channel_trigger_match.channel_id);
           if (ch_it != campaign_config->expression_channels.end() &&
              ch_it->second->has_params() &&
              (ch_it->second->params().type == 'D' ||
@@ -206,25 +202,25 @@ namespace AdServer
           {
             if(discover_keyword_triggers)
             {
-              (*discover_keyword_triggers)[channel_trigger_matches[i].channel_trigger_id] =
-                channel_trigger_matches[i].channel_id;
+              (*discover_keyword_triggers)[channel_trigger_match.channel_trigger_id] =
+                channel_trigger_match.channel_id;
             }
           }
           else
           {
-            triggers[channel_trigger_matches[i].channel_trigger_id] =
-              channel_trigger_matches[i].channel_id;
+            triggers[channel_trigger_match.channel_trigger_id] =
+              channel_trigger_match.channel_id;
           }
-          channels.insert(channel_trigger_matches[i].channel_id);
+          channels.insert(channel_trigger_match.channel_id);
         }
       }
       else
       {
-        for(CORBA::ULong i = 0; i < channel_trigger_matches.length(); ++i)
+        for(const auto& channel_trigger_match : channel_trigger_matches)
         {
-          triggers[channel_trigger_matches[i].channel_trigger_id] =
-            channel_trigger_matches[i].channel_id;
-          channels.insert(channel_trigger_matches[i].channel_id);
+          triggers[channel_trigger_match.channel_trigger_id] =
+            channel_trigger_match.channel_id;
+          channels.insert(channel_trigger_match.channel_id);
         }
       }
     }
@@ -233,18 +229,16 @@ namespace AdServer
     CampaignManagerLogAdapter::fill_request_info_by_profiling_(
       CampaignManagerLogger::RequestInfo& request_info,
       const CampaignConfig* campaign_config,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-      const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info)
+      const CampaignManagerCore::CreativeRequestInfo& request_params,
+      const CampaignManagerCore::CommonAdRequestInfo& common_info)
       /*throw(Exception)*/
     {
       static const char* FUN = "CampaignManagerLogAdapter::fill_request_info_by_profiling_()";
 
       try
       {
-        request_info.household_id = CorbaAlgs::unpack_user_id(
-          request_params.household_id);
-        request_info.merged_user_id = CorbaAlgs::unpack_user_id(
-          request_params.merged_user_id);
+        request_info.household_id = request_params.household_id;
+        request_info.merged_user_id = request_params.merged_user_id;
       }
       catch(const eh::Exception& ex)
       {
@@ -282,17 +276,18 @@ namespace AdServer
         campaign_config);
 
       request_info.triggered_channels.uid_channels.insert(
-        request_params.trigger_match_result.uid_channels.get_buffer(),
-        request_params.trigger_match_result.uid_channels.get_buffer() +
-        request_params.trigger_match_result.uid_channels.length());
+        request_params.trigger_match_result.uid_channels.begin(),
+        request_params.trigger_match_result.uid_channels.end());
 
-      request_info.history_channels.reserve(request_params.channels.length());
+      request_info.history_channels.reserve(request_params.channels.size());
 
-      CorbaAlgs::convert_sequence(
-        request_params.channels, request_info.history_channels);
+      request_info.history_channels.assign(
+        request_params.channels.begin(),
+        request_params.channels.end());
 
-      CorbaAlgs::convert_sequence(
-        request_params.hid_channels, request_info.hid_history_channels);
+      request_info.hid_history_channels.assign(
+        request_params.hid_channels.begin(),
+        request_params.hid_channels.end());
 
       request_info.page_keywords_present = request_params.page_keywords_present;
 
@@ -302,7 +297,7 @@ namespace AdServer
         new Commons::StringHolder(request_params.page_keywords);
       request_info.url_keywords =
         new Commons::StringHolder(request_params.url_keywords);
-      request_info.additional_info = request_params.additional_info.in();
+      request_info.additional_info = request_params.additional_info;
 
       request_info.fraud = request_params.fraud;
       request_info.search_engine_id = request_params.search_engine_id;
@@ -311,11 +306,11 @@ namespace AdServer
       {
         HTTP::BrowserAddress referer;
 
-        if(common_info.referer[0])
+        if(!common_info.referer.empty())
         {
           try
           {
-            referer.url(String::SubString(common_info.referer.in()));
+            referer.url(String::SubString(common_info.referer));
           }
           catch(const eh::Exception&)
           {
@@ -330,43 +325,22 @@ namespace AdServer
     inline void
     CampaignManagerLogAdapter::fill_request_info_by_common_info_(
       CampaignManagerLogger::RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info)
+      const CampaignManagerCore::CommonAdRequestInfo& common_info)
       /*throw(Exception)*/
     {
-      static const char* FUN = "CampaignManagerLogAdapter::fill_request_info_by_common_info_()";
-
       request_info.user_status = static_cast<UserStatus>(
         common_info.user_status);
 
-      try
-      {
-        request_info.user_id = CorbaAlgs::unpack_user_id(
-          common_info.user_id);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": invalid user id: " << ex.what();
-        throw Exception(ostr);
-      }
+      request_info.user_id = common_info.user_id;
+      request_info.request_id = common_info.request_id;
 
-      try
-      {
-        request_info.request_id = CorbaAlgs::unpack_request_id(
-          common_info.request_id);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": invalid user id: " << ex.what();
-        throw Exception(ostr);
-      }
+      request_info.referer = common_info.referer;
 
-      request_info.referer = common_info.referer.in();
+      request_info.urls.assign(
+        common_info.urls.begin(),
+        common_info.urls.end());
 
-      CorbaAlgs::convert_sequence(common_info.urls, request_info.urls);
-
-      if(common_info.location.length())
+      if(!common_info.location.empty())
       {
         request_info.country_code = common_info.location[0].country;
       }
@@ -378,11 +352,11 @@ namespace AdServer
     void
     CampaignManagerLogAdapter::fill(
       const CampaignConfig* campaign_config,
-      const CampaignManager::AnonymousRequestInfo& request_params,
+      const CampaignManagerCore::AnonymousRequestInfo& request_params,
       CampaignManagerLogger::AnonymousRequestInfo& logger_info)
       /*throw(Exception)*/
     {
-      logger_info.time = CorbaAlgs::unpack_time(request_params.time);
+      logger_info.time = request_params.time;
       logger_info.user_status = static_cast<UserStatus>(request_params.user_status);
       logger_info.log_as_test = request_params.test_request;
       logger_info.search_engine_id = request_params.search_engine_id;
@@ -396,11 +370,13 @@ namespace AdServer
         logger_info.user_agent = new Commons::StringHolder(request_params.user_agent);
       }
 
-      logger_info.search_engine_host = request_params.search_engine_host.in();
+      logger_info.search_engine_host = request_params.search_engine_host;
       logger_info.country_code = request_params.country_code;
       logger_info.page_keywords_present = request_params.page_keywords_present;
 
-      CorbaAlgs::convert_sequence(request_params.platform_ids, logger_info.platforms);
+      logger_info.platforms.insert(
+        request_params.platform_ids.begin(),
+        request_params.platform_ids.end());
 
       if(campaign_config)
       {
@@ -426,19 +402,18 @@ namespace AdServer
     CampaignManagerLogAdapter::fill_match_request_info(
       CampaignManagerLogger::MatchRequestInfo& result_match_request,
       const CampaignConfig* campaign_config,
-      const AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& match_request_info,
+      const CampaignManagerCore::MatchRequestInfo& match_request_info,
       const ChannelIdList& geo_channels)
       /*throw(Exception)*/
     {
-      result_match_request.user_id = CorbaAlgs::unpack_user_id(match_request_info.user_id);
-      result_match_request.household_id = CorbaAlgs::unpack_user_id(
-        match_request_info.household_id);
-      result_match_request.time = CorbaAlgs::unpack_time(match_request_info.request_time);
+      result_match_request.user_id = match_request_info.user_id;
+      result_match_request.household_id = match_request_info.household_id;
+      result_match_request.time = match_request_info.request_time;
       result_match_request.match_info.colo_id = match_request_info.match_info.colo_id;
 
-      CorbaAlgs::convert_sequence(
-        match_request_info.match_info.channels,
-        result_match_request.match_info.channels);
+      result_match_request.match_info.channels.insert(
+        match_request_info.match_info.channels.begin(),
+        match_request_info.match_info.channels.end());
       std::copy(
         geo_channels.begin(),
         geo_channels.end(),
@@ -452,9 +427,9 @@ namespace AdServer
         nullptr, // discover triggers
         match_request_info.match_info.pkw_channels,
         campaign_config);
-      CorbaAlgs::convert_sequence(
-        match_request_info.match_info.hid_channels,
-        result_match_request.match_info.hid_channels);
+      result_match_request.match_info.hid_channels.insert(
+        match_request_info.match_info.hid_channels.begin(),
+        match_request_info.match_info.hid_channels.end());
 
       CampaignConfig::ColocationMap::const_iterator colo_it =
         match_request_info.match_info.colo_id <= 0 ? campaign_config->colocations.end() :
@@ -472,10 +447,10 @@ namespace AdServer
       CampaignManagerLogger::RequestInfo& request_info,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
-      const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
-      const AdServer::CampaignSvcs::CampaignManager::ContextAdRequestInfo& context_info,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams* request_params,
-      AdServer::CampaignSvcs::CampaignManager::AdRequestDebugInfo* ad_request_debug_info,
+      const CampaignManagerCore::CommonAdRequestInfo& common_info,
+      const CampaignManagerCore::ContextAdRequestInfo& context_info,
+      const CampaignManagerCore::CreativeRequestInfo* request_params,
+      CampaignManagerCore::AdRequestDebugInfo* ad_request_debug_info,
       const CampaignManagerCore::AdSlotContext& ad_slot_context)
       /*throw(Exception)*/
     {
@@ -489,7 +464,7 @@ namespace AdServer
           *request_params,
           common_info);
 
-        request_info.is_ad_request = (request_params->ad_slots.length() > 0);
+        request_info.is_ad_request = !request_params->ad_slots.empty();
         request_info.disable_fraud_detection =
           request_params->disable_fraud_detection;
         request_info.track_passback = request_params->required_passback;
@@ -507,7 +482,7 @@ namespace AdServer
         request_info,
         common_info);
 
-      Generics::Time request_time = CorbaAlgs::unpack_time(common_info.time);
+      Generics::Time request_time = common_info.time;
       request_info.time = request_time;
       request_info.isp_time = request_time;
 
@@ -548,14 +523,16 @@ namespace AdServer
       request_info.full_platform = context_info.full_platform;
       request_info.ip_hash = context_info.ip_hash;
 
-      if(common_info.user_agent[0] != 0)
+      if(!common_info.user_agent.empty())
       {
         request_info.user_agent = new Commons::StringHolder(
           common_info.user_agent);
       }
 
-      CorbaAlgs::convert_sequence(
-        context_info.platform_ids, request_info.platforms);
+      request_info.platforms.clear();
+      request_info.platforms.insert(
+        context_info.platform_ids.begin(),
+        context_info.platform_ids.end());
 
       if(campaign_config)
       {
@@ -586,10 +563,9 @@ namespace AdServer
 
         if(ad_request_debug_info)
         {
-          CorbaAlgs::fill_sequence(
+          ad_request_debug_info->platform_channels.assign(
             request_info.platform_channels.begin(),
-            request_info.platform_channels.end(),
-            ad_request_debug_info->platform_channels);
+            request_info.platform_channels.end());
           ad_request_debug_info->last_platform_channel_id =
             request_info.last_platform_channel_id;
         }
@@ -599,8 +575,9 @@ namespace AdServer
         ad_request_debug_info->last_platform_channel_id = 0;
       }
 
-      CorbaAlgs::convert_sequence(
-        context_info.geo_channels, request_info.geo_channels);
+      request_info.geo_channels.assign(
+        context_info.geo_channels.begin(),
+        context_info.geo_channels.end());
     }
 
     inline
@@ -610,10 +587,10 @@ namespace AdServer
         ad_request_selection_info,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
-      const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
-      const AdServer::CampaignSvcs::CampaignManager::ContextAdRequestInfo& context_info,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams* request_params,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
+      const CampaignManagerCore::CommonAdRequestInfo& common_info,
+      const CampaignManagerCore::ContextAdRequestInfo& context_info,
+      const CampaignManagerCore::CreativeRequestInfo* request_params,
+      const CampaignManagerCore::TraceAdSlotInfo& ad_slot,
       const Tag* tag,
       const AdSelectionResult& ad_selection_result,
       const CampaignManagerCore::AdSlotContext& ad_slot_context,
@@ -624,7 +601,7 @@ namespace AdServer
     {
       typedef std::vector<DataPricing> DataPricingVector;
 
-      Generics::Time request_time = CorbaAlgs::unpack_time(common_info.time);
+      Generics::Time request_time = common_info.time;
 
       ad_request_selection_info.max_ads = 0;
       ad_request_selection_info.size_id = 0;
@@ -679,14 +656,14 @@ namespace AdServer
 
       const Tag::TagPricing* no_imp_tag_pricing =
         tag->select_no_impression_tag_pricing(tag ?
-          (common_info.location.length() ? common_info.location[0].country.in() : "") : 0);
+          (!common_info.location.empty() ? common_info.location[0].country.c_str() : "") : 0);
 
       if(tag)
       {
         const Tag::TagPricing* tag_pricing = (!ad_selection_result.selected_campaigns.empty() ?
           tag->select_country_tag_pricing(
-             common_info.location.length() ?
-             common_info.location[0].country.in() : "") :
+             !common_info.location.empty() ?
+             common_info.location[0].country.c_str() : "") :
           no_imp_tag_pricing);
 
         ad_request_selection_info.min_no_adv_ecpm = std::max(
@@ -814,8 +791,8 @@ namespace AdServer
             if(cs_data)
             {
               tag_pricing = tag->select_tag_pricing(
-                common_info.location.length() ?
-                  common_info.location[0].country.in() : "",
+                !common_info.location.empty() ?
+                  common_info.location[0].country.c_str() : "",
                 cs_data->campaign->ccg_type,
                 cs_data->campaign->ccg_rate_type);
             }
@@ -863,10 +840,10 @@ namespace AdServer
       DataPricing& data_pricing,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
-      const CampaignManager::CommonAdRequestInfo& common_info,
-      const CampaignManager::ContextAdRequestInfo& context_info,
-      const CampaignManager::RequestParams* request_params,
-      const CampaignManager::AdSlotInfo& /*ad_slot*/,
+      const CampaignManagerCore::CommonAdRequestInfo& common_info,
+      const CampaignManagerCore::ContextAdRequestInfo& context_info,
+      const CampaignManagerCore::CreativeRequestInfo* request_params,
+      const CampaignManagerCore::TraceAdSlotInfo& /*ad_slot*/,
       const Tag* tag,
       const Tag::TagPricing* tag_pricing,
       const AdSelectionResult& ad_selection_result,
@@ -901,7 +878,7 @@ namespace AdServer
 
         if(cs_data)
         {
-          const Generics::Time curr_time = CorbaAlgs::unpack_time(common_info.time);
+          const Generics::Time curr_time = common_info.time;
           campaign_currency = cs_data->campaign->account->currency;
 
           ad_info.adv_time = curr_time +
@@ -1116,7 +1093,9 @@ namespace AdServer
               // fill channel cpm
               ExpressionChannelList cmp_channels;
               ChannelIdHashSet simple_channels;
-              CorbaAlgs::convert_sequence(request_params->channels, simple_channels);
+              simple_channels.insert(
+                request_params->channels.begin(),
+                request_params->channels.end());
 
               cs_data->campaign->channel->get_cmp_channels(cmp_channels, simple_channels);
 

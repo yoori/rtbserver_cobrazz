@@ -166,10 +166,7 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerCore::IdVector& source,
       google::protobuf::RepeatedField<google::protobuf::uint64>* target)
     {
-      for(const auto id : source)
-      {
-        target->Add(id);
-      }
+      target->Add(source.begin(), source.end());
     }
 
     CampaignManagerCore::IdVector
