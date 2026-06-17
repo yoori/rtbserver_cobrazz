@@ -1743,14 +1743,14 @@ namespace AdServer
       // fill CREATIVES_JSON
       if(creative_template->key_used(CreativeTokens::CREATIVES_JSON))
       {
-        std::ostringstream creatives_json_ostr;
-        creatives_json_ostr << "[";
+        std::string creatives_json;
+        creatives_json.push_back('[');
         for(TemplateParamsList::const_iterator cr_it =
               creative_template_params.begin();
             cr_it != creative_template_params.end(); ++cr_it)
         {
           const TokenValueMap& creative_tokens = **cr_it;
-          creatives_json_ostr << (cr_it != creative_template_params.begin() ? ",{" : "{");
+          creatives_json += (cr_it != creative_template_params.begin() ? ",{" : "{");
           for(TokenValueMap::const_iterator token_it = creative_tokens.begin();
               token_it != creative_tokens.end(); ++token_it)
           {
@@ -1758,15 +1758,16 @@ namespace AdServer
             String::StringManip::js_encode(token_it->first.c_str(), js_token_name);
             std::string js_token_value;
             String::StringManip::js_encode(token_it->second.c_str(), js_token_value);
-            creatives_json_ostr <<
-              (token_it != creative_tokens.begin() ? ",\"" : "\"") <<
-              js_token_name << "\":\"" <<
-              js_token_value << "\"";
+            creatives_json += (token_it != creative_tokens.begin() ? ",\"" : "\"");
+            creatives_json += js_token_name;
+            creatives_json += "\":\"";
+            creatives_json += js_token_value;
+            creatives_json.push_back('"');
           }
-          creatives_json_ostr << "}";
+          creatives_json.push_back('}');
         }
-        creatives_json_ostr << "]";
-        request_args[CreativeTokens::CREATIVES_JSON] = creatives_json_ostr.str();
+        creatives_json.push_back(']');
+        request_args[CreativeTokens::CREATIVES_JSON] = std::move(creatives_json);
       }
     }
 
