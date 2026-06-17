@@ -16,6 +16,7 @@ namespace ProfilingCommons
   template<typename KeyType, typename AsyncMapType>
   class MigratingProfileMap:
     public virtual ProfileMap<KeyType>,
+    public virtual AsyncProfileMap<KeyType>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
@@ -85,6 +86,151 @@ namespace ProfilingCommons
     clear_expired(const Generics::Time& expire_time) override
     {
       wait_clear_expired_(fallback_async_map_.in(), expire_time);
+    }
+
+    void
+    check_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::CheckCallback callback)
+      const override
+    {
+      ReferenceCounting::SmartPtr<AsyncProfileMap<KeyType> > fallback_async_map(
+        fallback_async_map_);
+      primary_map_->check_profile_async(
+        key,
+        [
+          fallback_async_map,
+          key,
+          callback = std::move(callback)
+        ](
+          bool result,
+          std::optional<std::string> error) mutable
+        {
+          if(result || error)
+          {
+            if(callback)
+            {
+              callback(result, std::move(error));
+            }
+            return;
+          }
+
+          fallback_async_map->check_profile_async(
+            key,
+            std::move(callback));
+        });
+    }
+
+    Generics::ConstSmartMemBuf_var
+    get_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::GetCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt) override
+    {
+      ReferenceCounting::SmartPtr<AsyncProfileMap<KeyType> > fallback_async_map(
+        fallback_async_map_);
+      primary_map_->get_profile_async(
+        key,
+        [
+          fallback_async_map,
+          key,
+          last_access_time,
+          callback = std::move(callback)
+        ](
+          const Generics::ConstSmartMemBuf_var& profile,
+          std::optional<std::string> error) mutable
+        {
+          if(profile.in() || error)
+          {
+            if(callback)
+            {
+              callback(profile, std::move(error));
+            }
+            return;
+          }
+
+          fallback_async_map->get_profile_async(
+            key,
+            std::move(callback),
+            last_access_time);
+        },
+        last_access_time);
+
+      return Generics::ConstSmartMemBuf_var();
+    }
+
+    void
+    save_profile_async(
+      const KeyType& key,
+      const Generics::ConstSmartMemBuf* mem_buf,
+      const Generics::Time& now = Generics::Time::get_time_of_day(),
+      typename AsyncProfileMap<KeyType>::SaveCallback callback =
+        typename AsyncProfileMap<KeyType>::SaveCallback()) override
+    {
+      primary_map_->save_profile_async(
+        key,
+        mem_buf,
+        now,
+        std::move(callback));
+    }
+
+    void
+    remove_profile_async(
+      const KeyType& key,
+      OperationPriority op_priority = OP_RUNTIME,
+      typename AsyncProfileMap<KeyType>::RemoveCallback callback =
+        typename AsyncProfileMap<KeyType>::RemoveCallback()) override
+    {
+      ReferenceCounting::SmartPtr<AsyncProfileMap<KeyType> > fallback_async_map(
+        fallback_async_map_);
+      primary_map_->remove_profile_async(
+        key,
+        op_priority,
+        [
+          fallback_async_map,
+          key,
+          op_priority,
+          callback = std::move(callback)
+        ](
+          bool primary_result,
+          std::optional<std::string> primary_error) mutable
+        {
+          if(primary_error)
+          {
+            if(callback)
+            {
+              callback(false, std::move(primary_error));
+            }
+            return;
+          }
+
+          fallback_async_map->remove_profile_async(
+            key,
+            op_priority,
+            [
+              primary_result,
+              callback = std::move(callback)
+            ](
+              bool fallback_result,
+              std::optional<std::string> fallback_error) mutable
+            {
+              if(callback)
+              {
+                callback(
+                  primary_result || fallback_result,
+                  std::move(fallback_error));
+              }
+            });
+        });
+    }
+
+    void
+    clear_expired_async(
+      const Generics::Time& expire_time,
+      typename AsyncProfileMap<KeyType>::CompleteCallback complete =
+        typename AsyncProfileMap<KeyType>::CompleteCallback()) override
+    {
+      fallback_async_map_->clear_expired_async(expire_time, std::move(complete));
     }
 
     unsigned long
