@@ -349,10 +349,9 @@ namespace AdServer::UserInfoSvcs
         request.request_id(),
         GrpcAlgs::unpack_time(request.timestamp()));
 
-      for (const auto& bind_user_id : result.bind_user_ids)
-      {
-        response.add_bind_user_ids(bind_user_id);
-      }
+      response.mutable_bind_user_ids()->Add(
+        result.bind_user_ids.begin(),
+        result.bind_user_ids.end());
 
       result_status = ::grpc::Status::OK;
     }
@@ -584,10 +583,9 @@ namespace AdServer::UserInfoSvcs
     try
     {
       const auto result = core_->get_source();
-      for (const auto chunk_id : result.chunks)
-      {
-        response.add_chunks(chunk_id);
-      }
+      response.mutable_chunks()->Add(
+        result.chunks.begin(),
+        result.chunks.end());
       response.set_chunks_number(result.chunks_number);
 
       result_status = ::grpc::Status::OK;

@@ -33,7 +33,8 @@ namespace AdServer::Bidding
       enum class Source
       {
         Grpc,
-        Exception
+        Exception,
+        ChannelServer
       };
 
       Source source = Source::Exception;
@@ -58,6 +59,9 @@ namespace AdServer::Bidding
 
     void
     set_exception_error(const eh::Exception& ex);
+
+    void
+    set_channel_server_error(std::string message);
   };
 
   struct RequestTimeMetering

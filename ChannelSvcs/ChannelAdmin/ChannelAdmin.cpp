@@ -267,6 +267,7 @@ namespace
     print_content_channels(result.content_channels());
     std::cout << "no_adv=" << result.no_adv() << '\n';
     std::cout << "no_track=" << result.no_track() << '\n';
+    std::cout << "full_loaded=" << result.full_loaded() << '\n';
   }
 
   void

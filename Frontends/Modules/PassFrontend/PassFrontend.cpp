@@ -311,10 +311,9 @@ namespace AdServer::Passback
           confirm_request.set_time(GrpcAlgs::pack_time(passback_info.time));
           confirm_request.set_request_id(GrpcAlgs::pack_request_id(
             Commons::RequestId()));
-          for(const auto account_id : passback_info.pubpixel_accounts)
-          {
-            confirm_request.add_exclude_pubpixel_accounts(account_id);
-          }
+          confirm_request.mutable_exclude_pubpixel_accounts()->Add(
+            passback_info.pubpixel_accounts.begin(),
+            passback_info.pubpixel_accounts.end());
 
           co_confirm_user_freq_caps_(
             std::move(confirm_request)).start_detached(nullptr);

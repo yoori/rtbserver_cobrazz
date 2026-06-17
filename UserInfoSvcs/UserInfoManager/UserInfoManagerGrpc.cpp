@@ -370,26 +370,28 @@ namespace AdServer::UserInfoSvcs
       dst.set_create_time(pack_time_(src.create_time));
       dst.set_session_start(pack_time_(src.session_start));
       dst.set_colo_id(src.colo_id);
+      dst.mutable_channels()->Reserve(src.channels.size());
       for(const auto& channel : src.channels)
       {
         convert_(channel, *dst.add_channels());
       }
+      dst.mutable_hid_channels()->Reserve(src.hid_channels.size());
       for(const auto& channel : src.hid_channels)
       {
         convert_(channel, *dst.add_hid_channels());
       }
-      for(const auto id : src.full_freq_caps)
-      {
-        dst.add_full_freq_caps(id);
-      }
-      for(const auto id : src.full_virtual_freq_caps)
-      {
-        dst.add_full_virtual_freq_caps(id);
-      }
+      dst.mutable_full_freq_caps()->Add(
+        src.full_freq_caps.begin(),
+        src.full_freq_caps.end());
+      dst.mutable_full_virtual_freq_caps()->Add(
+        src.full_virtual_freq_caps.begin(),
+        src.full_virtual_freq_caps.end());
+      dst.mutable_seq_orders()->Reserve(src.seq_orders.size());
       for(const auto& seq_order : src.seq_orders)
       {
         convert_(seq_order, *dst.add_seq_orders());
       }
+      dst.mutable_campaign_freqs()->Reserve(src.campaign_freqs.size());
       for(const auto& campaign_freq : src.campaign_freqs)
       {
         convert_(campaign_freq, *dst.add_campaign_freqs());
@@ -400,10 +402,10 @@ namespace AdServer::UserInfoSvcs
       dst.set_discover_channel_count(src.discover_channel_count);
       dst.set_cohort(src.cohort);
       dst.set_cohort2(src.cohort2);
-      for(const auto id : src.exclude_pubpixel_accounts)
-      {
-        dst.add_exclude_pubpixel_accounts(id);
-      }
+      dst.mutable_exclude_pubpixel_accounts()->Add(
+        src.exclude_pubpixel_accounts.begin(),
+        src.exclude_pubpixel_accounts.end());
+      dst.mutable_geo_data_seq()->Reserve(src.geo_data_seq.size());
       for(const auto& geo_data : src.geo_data_seq)
       {
         convert_(geo_data, *dst.add_geo_data_seq());
@@ -661,10 +663,7 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerCore::ChunkIdList chunks;
       unsigned long chunks_number = 0;
       user_info_manager_->get_controllable_chunks(chunks, chunks_number);
-      for(const auto chunk : chunks)
-      {
-        response.add_chunks(chunk);
-      }
+      response.mutable_chunks()->Add(chunks.begin(), chunks.end());
       response.set_chunks_number(chunks_number);
       result_status = grpc::Status::OK;
     co_return;

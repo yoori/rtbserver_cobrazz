@@ -221,6 +221,7 @@ namespace AdServer::Bidding
     {
       static const std::string grpc = "grpc";
       static const std::string exception = "exception";
+      static const std::string channel_server = "channel_server";
       static const std::string unknown = "unknown";
 
       switch(source)
@@ -229,6 +230,8 @@ namespace AdServer::Bidding
         return grpc;
       case StageResult::Error::Source::Exception:
         return exception;
+      case StageResult::Error::Source::ChannelServer:
+        return channel_server;
       }
 
       return unknown;
@@ -356,6 +359,16 @@ namespace AdServer::Bidding
       Error::Source::Exception,
       0,
       ex.what(),
+      std::string()};
+  }
+
+  void
+  StageResult::set_channel_server_error(std::string message)
+  {
+    error = Error{
+      Error::Source::ChannelServer,
+      0,
+      std::move(message),
       std::string()};
   }
 
@@ -610,6 +623,8 @@ namespace AdServer::Bidding
       std::inserter(ids, ids.end()));
 
     debug_info_str_ <<
+      "full_loaded = " << (response.full_loaded() ? "true" : "false") <<
+        sep_ <<
       "special_channels_effects = " <<
         (response.no_track() ? "NO TRACK" : "TRACK") << ", " <<
         (response.no_adv() ? "NO ADV" : "ADV") << sep_ <<

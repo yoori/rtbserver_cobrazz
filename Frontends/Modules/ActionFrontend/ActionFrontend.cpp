@@ -1151,10 +1151,9 @@ namespace AdServer::Action
         verify_action_info.set_peer_ip(request_info.peer_ip);
       }
 
-      for(const auto platform_id : request_info.platform_ids)
-      {
-        verify_action_info.add_platform_ids(platform_id);
-      }
+      verify_action_info.mutable_platform_ids()->Add(
+        request_info.platform_ids.begin(),
+        request_info.platform_ids.end());
 
       const Commons::UserId* verify_user_ids[] = {
         &request_info.user_id,

@@ -692,10 +692,9 @@ namespace AdServer::ImprTrack
           confirm_request.set_time(GrpcAlgs::pack_time(request_info.time));
           confirm_request.set_request_id(GrpcAlgs::pack_request_id(
             request_info.common_request_id));
-          for(const auto account_id : request_info.pubpixel_accounts)
-          {
-            confirm_request.add_exclude_pubpixel_accounts(account_id);
-          }
+          confirm_request.mutable_exclude_pubpixel_accounts()->Add(
+            request_info.pubpixel_accounts.begin(),
+            request_info.pubpixel_accounts.end());
 
           co_confirm_user_freq_caps_(std::move(confirm_request)).
             start_detached(nullptr);

@@ -139,10 +139,9 @@ namespace AdServer::ChannelSvcs
         source.matched_channels.url_keyword_channels,
         matched_channels->mutable_url_keyword_channels());
 
-      for (const auto channel_id : source.matched_channels.uid_channels)
-      {
-        matched_channels->add_uid_channels(channel_id);
-      }
+      matched_channels->mutable_uid_channels()->Add(
+        source.matched_channels.uid_channels.begin(),
+        source.matched_channels.uid_channels.end());
 
       for (const auto& source_channel : source.content_channels)
       {
@@ -153,6 +152,7 @@ namespace AdServer::ChannelSvcs
 
       target.set_no_adv(source.no_adv);
       target.set_no_track(source.no_track);
+      target.set_full_loaded(source.full_loaded);
       target.set_match_time(pack_oct_seq(CorbaAlgs::pack_time(source.match_time)));
     }
 
@@ -176,10 +176,9 @@ namespace AdServer::ChannelSvcs
         keyword->set_original_keyword(source_keyword.original_keyword);
       }
 
-      for (const auto ccg_id : source.neg_ccg)
-      {
-        target.add_neg_ccg(ccg_id);
-      }
+      target.mutable_neg_ccg()->Add(
+        source.neg_ccg.begin(),
+        source.neg_ccg.end());
     }
 
     std::vector<unsigned long>

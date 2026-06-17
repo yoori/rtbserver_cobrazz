@@ -17,7 +17,7 @@ sub start
     "fi && " .
     "ulimit -s 100000 && " .
     "ulimit -n 256000 && " .
-    "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=536870912 && " .
+    "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=134217728 && " .
     "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
     "export MALLOC_ARENA_MAX=4 && " .
     "setsid -f \${VALGRIND_PREFIX} FCGIServer " .

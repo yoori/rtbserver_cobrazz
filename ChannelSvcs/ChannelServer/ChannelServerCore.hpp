@@ -105,6 +105,7 @@ namespace AdServer::ChannelSvcs
       std::vector<ContentChannelAtom> content_channels;
       bool no_adv = false;
       bool no_track = false;
+      bool full_loaded = false;
       Generics::Time match_time;
     };
 

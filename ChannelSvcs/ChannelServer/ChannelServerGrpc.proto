@@ -53,6 +53,7 @@ message MatchResponse {
   bool no_track = 4;
   bytes match_time = 5;
   string hostname = 6;
+  bool full_loaded = 7;
 }
 
 message GetCcgTraitsRequest {

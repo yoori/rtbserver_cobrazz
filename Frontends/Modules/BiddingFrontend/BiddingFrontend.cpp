@@ -165,11 +165,7 @@ namespace AdServer::Bidding
       const SourceSeq& source,
       google::protobuf::RepeatedField<google::protobuf::uint64>* target)
     {
-      target->Reserve(source.size());
-      for(std::size_t i = 0; i < source.size(); ++i)
-      {
-        target->Add(source[i]);
-      }
+      target->Add(source.begin(), source.end());
     }
 
     template<typename SourceSeq>
@@ -1845,54 +1841,72 @@ namespace AdServer::Bidding
               adserver::channel_svcs::channel_server::MatchResponse>(
                 std::move(channel_result.response));
             trigger_match.present = true;
-
-            const auto& matched_channels =
-              trigger_match.result->matched_channels();
-
-            request_params.trigger_match_result.pkw_channels.resize(
-              matched_channels.page_channels_size());
-            std::transform(
-              matched_channels.page_channels().begin(),
-              matched_channels.page_channels().end(),
-              request_params.trigger_match_result.pkw_channels.data(),
-              convert_channel_atom);
-            request_params.trigger_match_result.url_channels.resize(
-              matched_channels.url_channels_size());
-            std::transform(
-              matched_channels.url_channels().begin(),
-              matched_channels.url_channels().end(),
-              request_params.trigger_match_result.url_channels.data(),
-              convert_channel_atom);
-            request_params.trigger_match_result.ukw_channels.resize(
-              matched_channels.url_keyword_channels_size());
-            std::transform(
-              matched_channels.url_keyword_channels().begin(),
-              matched_channels.url_keyword_channels().end(),
-              request_params.trigger_match_result.ukw_channels.data(),
-              convert_channel_atom);
-            request_params.trigger_match_result.skw_channels.resize(
-              matched_channels.search_channels_size());
-            std::transform(
-              matched_channels.search_channels().begin(),
-              matched_channels.search_channels().end(),
-              request_params.trigger_match_result.skw_channels.data(),
-              convert_channel_atom);
-            request_params.trigger_match_result.uid_channels.resize(
-              matched_channels.uid_channels_size());
-            for(int i = 0; i < matched_channels.uid_channels_size(); ++i)
+            if(!trigger_match.result->full_loaded())
             {
-              request_params.trigger_match_result.uid_channels[i] =
-                matched_channels.uid_channels(i);
+              trigger_match.failed = true;
+              if(trigger_match_stage)
+              {
+                trigger_match_stage->set_channel_server_error(
+                  "ChannelServer is not fully loaded");
+              }
+              logger()->sstream(
+                Logging::Logger::EMERGENCY,
+                Aspect::BIDDING_FRONTEND,
+                "ADS-IMPL-117") <<
+                "Bidding::Frontend::co_process_bid_request_(): "
+                "ChannelServer grpc match returned not fully loaded result";
             }
 
-            if(request_params.common_info.user_status ==
-                 static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN) &&
-               (trigger_match.result->no_track() ||
-                trigger_match.result->no_adv()))
+            if(!trigger_match.failed)
             {
-              request_params.common_info.user_status =
-                static_cast<std::size_t>(
-                  AdServer::CampaignSvcs::US_BLACKLISTED);
+              const auto& matched_channels =
+                trigger_match.result->matched_channels();
+
+              request_params.trigger_match_result.pkw_channels.resize(
+                matched_channels.page_channels_size());
+              std::transform(
+                matched_channels.page_channels().begin(),
+                matched_channels.page_channels().end(),
+                request_params.trigger_match_result.pkw_channels.data(),
+                convert_channel_atom);
+              request_params.trigger_match_result.url_channels.resize(
+                matched_channels.url_channels_size());
+              std::transform(
+                matched_channels.url_channels().begin(),
+                matched_channels.url_channels().end(),
+                request_params.trigger_match_result.url_channels.data(),
+                convert_channel_atom);
+              request_params.trigger_match_result.ukw_channels.resize(
+                matched_channels.url_keyword_channels_size());
+              std::transform(
+                matched_channels.url_keyword_channels().begin(),
+                matched_channels.url_keyword_channels().end(),
+                request_params.trigger_match_result.ukw_channels.data(),
+                convert_channel_atom);
+              request_params.trigger_match_result.skw_channels.resize(
+                matched_channels.search_channels_size());
+              std::transform(
+                matched_channels.search_channels().begin(),
+                matched_channels.search_channels().end(),
+                request_params.trigger_match_result.skw_channels.data(),
+                convert_channel_atom);
+              request_params.trigger_match_result.uid_channels.resize(
+                matched_channels.uid_channels_size());
+              for(int i = 0; i < matched_channels.uid_channels_size(); ++i)
+              {
+                request_params.trigger_match_result.uid_channels[i] =
+                  matched_channels.uid_channels(i);
+              }
+
+              if(request_params.common_info.user_status ==
+                   static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN) &&
+                 (trigger_match.result->no_track() ||
+                  trigger_match.result->no_adv()))
+              {
+                request_params.common_info.user_status =
+                  static_cast<std::size_t>(
+                    AdServer::CampaignSvcs::US_BLACKLISTED);
+              }
             }
           }
           else
@@ -1981,7 +1995,7 @@ namespace AdServer::Bidding
       {
         auto& request_params = *request_task->request_params();
 
-        if(!result && trigger_match.result)
+        if(!result && trigger_match.result && !trigger_match.failed)
         {
           result = std::make_shared<
             adserver::user_info_svcs::user_info_manager::MatchResponse>();
@@ -2009,7 +2023,9 @@ namespace AdServer::Bidding
 
       if(request_task->resolved_user_id_.is_null())
       {
-        if(trigger_match.result && !trigger_match.result->no_track())
+        if(trigger_match.result &&
+           !trigger_match.failed &&
+           !trigger_match.result->no_track())
         {
           history_match_result = std::make_shared<
             adserver::user_info_svcs::user_info_manager::MatchResponse>();
@@ -2056,7 +2072,9 @@ namespace AdServer::Bidding
           match_params->set_use_empty_profile(false);
           match_params->set_silent_match(false);
           match_params->set_no_match(
-            trigger_match.result && trigger_match.result->no_track());
+            trigger_match.result &&
+              !trigger_match.failed &&
+              trigger_match.result->no_track());
           match_params->set_no_result(false);
           match_params->set_ret_freq_caps(true);
           match_params->set_provide_channel_count(false);
@@ -2068,15 +2086,13 @@ namespace AdServer::Bidding
             !request_info.idfa.empty() ?
               request_info.idfa : request_info.advertising_id);
 
-          for(std::size_t i = 0;
-              i < request_params.context_info.platform_ids.size();
-              ++i)
-          {
-            match_params->add_persistent_channel_ids(
-              request_params.context_info.platform_ids[i]);
-          }
+          match_params->mutable_persistent_channel_ids()->Add(
+            request_params.context_info.platform_ids.begin(),
+            request_params.context_info.platform_ids.end());
 
-          if(trigger_match.result && !trigger_match.result->no_track())
+          if(trigger_match.result &&
+             !trigger_match.failed &&
+             !trigger_match.result->no_track())
           {
             const auto& matched_channels =
               trigger_match.result->matched_channels();
@@ -2280,7 +2296,8 @@ namespace AdServer::Bidding
 
       select_campaign_(
         history_match_result.get(),
-        trigger_match.present ? trigger_match.result.get() : nullptr,
+        trigger_match.present && !trigger_match.failed ?
+          trigger_match.result.get() : nullptr,
         ccg_keywords.get(),
         request_info,
         request_params,
@@ -2601,28 +2618,27 @@ namespace AdServer::Bidding
         request->set_user_id(GrpcAlgs::pack_user_id(user_id));
         request->set_time(GrpcAlgs::pack_time(now));
         request->set_request_id(ad_slot_result.request_id);
-        for(const auto freq_cap : ad_slot_result.freq_caps)
-        {
-          request->add_freq_caps(freq_cap);
-        }
-        for(const auto uc_freq_cap : ad_slot_result.uc_freq_caps)
-        {
-          request->add_uc_freq_caps(uc_freq_cap);
-        }
+        request->mutable_freq_caps()->Add(
+          ad_slot_result.freq_caps.begin(),
+          ad_slot_result.freq_caps.end());
+        request->mutable_uc_freq_caps()->Add(
+          ad_slot_result.uc_freq_caps.begin(),
+          ad_slot_result.uc_freq_caps.end());
         for(const auto& seq_order : seq_orders)
         {
           *request->add_seq_orders() = seq_order;
         }
-        for(const auto campaign_id : campaign_ids)
+        if(ad_slot_result.track_impr)
         {
-          if(ad_slot_result.track_impr)
-          {
-            request->add_uc_campaign_ids(campaign_id);
-          }
-          else
-          {
-            request->add_campaign_ids(campaign_id);
-          }
+          request->mutable_uc_campaign_ids()->Add(
+            campaign_ids.begin(),
+            campaign_ids.end());
+        }
+        else
+        {
+          request->mutable_campaign_ids()->Add(
+            campaign_ids.begin(),
+            campaign_ids.end());
         }
 
         auto result = co_await user_info_client_coro_->update_user_freq_caps(

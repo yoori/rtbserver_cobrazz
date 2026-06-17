@@ -97,6 +97,7 @@ namespace AdServer::ChannelSvcs
 
       target.set_no_adv(target.no_adv() || source.no_adv());
       target.set_no_track(target.no_track() || source.no_track());
+      target.set_full_loaded(target.full_loaded() && source.full_loaded());
       if (!source.hostname().empty())
       {
         if (target.hostname().empty())
@@ -278,7 +279,9 @@ namespace AdServer::ChannelSvcs
       {
         explicit MatchState(std::size_t remaining_val)
           : remaining(remaining_val)
-        {}
+        {
+          response.set_full_loaded(true);
+        }
 
         std::mutex lock;
         std::size_t remaining;

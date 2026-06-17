@@ -1591,14 +1591,12 @@ namespace AdServer
           }
 
           update_request.set_request_id(GrpcAlgs::pack_request_id(request_id));
-          for(const auto freq_cap : ad_slot_result.freq_caps())
-          {
-            update_request.add_freq_caps(freq_cap);
-          }
-          for(const auto uc_freq_cap : ad_slot_result.uc_freq_caps())
-          {
-            update_request.add_uc_freq_caps(uc_freq_cap);
-          }
+          update_request.mutable_freq_caps()->Add(
+            ad_slot_result.freq_caps().begin(),
+            ad_slot_result.freq_caps().end());
+          update_request.mutable_uc_freq_caps()->Add(
+            ad_slot_result.uc_freq_caps().begin(),
+            ad_slot_result.uc_freq_caps().end());
           for(const auto& creative : ad_slot_result.selected_creatives())
           {
             if(creative.order_set_id())
@@ -1609,14 +1607,12 @@ namespace AdServer
               seq_order->set_imps(1);
             }
           }
-          for(const auto campaign_id : campaign_ids)
-          {
-            update_request.add_campaign_ids(campaign_id);
-          }
-          for(const auto campaign_id : uc_campaign_ids)
-          {
-            update_request.add_uc_campaign_ids(campaign_id);
-          }
+          update_request.mutable_campaign_ids()->Add(
+            campaign_ids.begin(),
+            campaign_ids.end());
+          update_request.mutable_uc_campaign_ids()->Add(
+            uc_campaign_ids.begin(),
+            uc_campaign_ids.end());
 
           co_user_info_post_match_(std::move(update_request)).
             start_detached(nullptr);
@@ -2046,10 +2042,9 @@ namespace AdServer
           *trigger_match_result->add_ukw_channels() =
             convert_channel_atom(channel);
         }
-        for(const auto channel : matched_channels.uid_channels())
-        {
-          trigger_match_result->add_uid_channels(channel);
-        }
+        trigger_match_result->mutable_uid_channels()->Add(
+          matched_channels.uid_channels().begin(),
+          matched_channels.uid_channels().end());
       }
 
       common_info->set_creative_instantiate_type(
@@ -2180,10 +2175,9 @@ namespace AdServer
       context_info->set_client(request_info.client_app);
       context_info->set_client_version(request_info.client_app_version);
       context_info->set_web_browser(request_info.web_browser);
-      for(const auto platform_id : request_info.platform_ids)
-      {
-        context_info->add_platform_ids(platform_id);
-      }
+      context_info->mutable_platform_ids()->Add(
+        request_info.platform_ids.begin(),
+        request_info.platform_ids.end());
       context_info->set_platform(request_info.platform);
       context_info->set_full_platform(request_info.full_platform);
       context_info->set_page_load_id(request_info.page_load_id);
@@ -2194,10 +2188,9 @@ namespace AdServer
         context_info->set_ip_hash(ip_hash);
       }
 
-      for(const auto full_freq_cap : history_match_result.full_freq_caps())
-      {
-        request_params.add_full_freq_caps(full_freq_cap);
-      }
+      request_params.mutable_full_freq_caps()->Add(
+        history_match_result.full_freq_caps().begin(),
+        history_match_result.full_freq_caps().end());
 
       for(const auto& history_seq_order : history_match_result.seq_orders())
       {
@@ -2239,18 +2232,14 @@ namespace AdServer
       {
         const auto& uid_channels =
           trigger_matched_channels->matched_channels().uid_channels();
-        for (int i = 0; i < uid_channels.size(); ++i)
-        {
-          request_params.add_channels(uid_channels[i]);
-        }
+        request_params.mutable_channels()->Add(
+          uid_channels.begin(),
+          uid_channels.end());
       }
 
-      for(const auto exclude_pubpixel_account :
-          history_match_result.exclude_pubpixel_accounts())
-      {
-        request_params.add_exclude_pubpixel_accounts(
-          exclude_pubpixel_account);
-      }
+      request_params.mutable_exclude_pubpixel_accounts()->Add(
+        history_match_result.exclude_pubpixel_accounts().begin(),
+        history_match_result.exclude_pubpixel_accounts().end());
 
       convert_ccg_keywords_(*request_params.mutable_ccg_keywords(), ccg_keywords);
 
@@ -2687,10 +2676,9 @@ namespace AdServer
         match_params.mutable_url_keyword_channel_ids(),
         url_keyword_channels);
 
-      for(const auto channel_id : request_info.platform_ids)
-      {
-        match_params.add_persistent_channel_ids(channel_id);
-      }
+      match_params.mutable_persistent_channel_ids()->Add(
+        request_info.platform_ids.begin(),
+        request_info.platform_ids.end());
     }
 
     add_hit_channels_(
