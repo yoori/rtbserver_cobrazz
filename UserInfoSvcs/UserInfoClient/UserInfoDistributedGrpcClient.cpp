@@ -10,6 +10,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <UserInfoSvcs/UserInfoController/UserInfoControllerGrpc.grpc.pb.h>
@@ -148,7 +149,7 @@ namespace AdServer::UserInfoSvcs
         AdServer::Grpc::ResponseHolder<response_type>&& response_holder) \
       mutable \
       { \
-        if (!status.ok()) \
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status)) \
         { \
           pool_ref.mark_as_bad( \
             Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
@@ -193,7 +194,7 @@ namespace AdServer::UserInfoSvcs
         AdServer::Grpc::ResponseHolder<response_type>&& response_holder) \
       mutable \
       { \
-        if (!status.ok()) \
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status)) \
         { \
           pool_ref.mark_as_bad( \
             Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
