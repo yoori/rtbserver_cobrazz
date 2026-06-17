@@ -1042,7 +1042,7 @@ namespace AdServer::ChannelSvcs
         match_flags,
         res);
       fill_result_(res, result, query.fill_content);
-      result.full_loaded = state_ == UpdateData::US_FINISH;
+      result.full_loaded = ready_;
       timer.stop();
       if (statistic_logger_)
       {
