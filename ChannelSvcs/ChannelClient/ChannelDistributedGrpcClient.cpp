@@ -10,6 +10,7 @@
 
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Stream/MemoryStream.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
 #include <ChannelSvcs/ChannelController/ChannelControllerGrpc.grpc.pb.h>
 
@@ -252,6 +253,24 @@ namespace AdServer::ChannelSvcs
             adserver::channel_svcs::channel_server::MatchResponse>::
               make_value(
                 adserver::channel_svcs::channel_server::MatchResponse()));
+        return;
+      }
+
+      if (client_holders.size() == 1)
+      {
+        const auto client_holder = client_holders.front();
+        client_holder->client->match(
+          request,
+          [
+            callback = std::move(callback)
+          ](
+            const grpc::Status& status,
+            AdServer::Grpc::ResponseHolder<
+              adserver::channel_svcs::channel_server::MatchResponse>&&
+                response_holder) mutable
+          {
+            callback(status, std::move(response_holder));
+          });
         return;
       }
 
@@ -708,7 +727,7 @@ namespace AdServer::ChannelSvcs
       )
       mutable
       {
-        if (!status.ok())
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
@@ -768,7 +787,7 @@ namespace AdServer::ChannelSvcs
             response_holder)
       mutable
       {
-        if (!status.ok())
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
@@ -830,7 +849,7 @@ namespace AdServer::ChannelSvcs
             response_holder)
       mutable
       {
-        if (!status.ok())
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
@@ -886,7 +905,7 @@ namespace AdServer::ChannelSvcs
             response_holder)
       mutable
       {
-        if (!status.ok())
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
@@ -945,7 +964,7 @@ namespace AdServer::ChannelSvcs
             response_holder)
       mutable
       {
-        if (!status.ok())
+        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
           ref.mark_as_bad(
             Generics::Time::get_time_of_day() + pool_timeout);
