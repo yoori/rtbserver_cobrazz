@@ -247,6 +247,22 @@ namespace AdServer::Grpc
       message.rfind(NO_ACTIVE_BATCHING_STREAMS_MESSAGE, 0) == 0;
   }
 
+  inline bool
+  is_request_specific_error(const grpc::Status& status)
+  {
+    switch (status.error_code())
+    {
+    case grpc::StatusCode::INVALID_ARGUMENT:
+    case grpc::StatusCode::NOT_FOUND:
+    case grpc::StatusCode::ALREADY_EXISTS:
+    case grpc::StatusCode::FAILED_PRECONDITION:
+    case grpc::StatusCode::OUT_OF_RANGE:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   inline void
   merge_last_error(Stats& result, const Stats& source) noexcept
   {

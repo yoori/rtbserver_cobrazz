@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <memory>
 
 namespace AdServer::Grpc
 {
@@ -440,7 +441,32 @@ namespace AdServer::Grpc
       lanes[batch_item_hash_(item) % split].emplace_back(i);
     }
 
-    std::vector<adserver::grpc::BatchResponseItem> item_responses(batch_size);
+    auto* const response_arena = batch_response.GetArena();
+    std::vector<adserver::grpc::BatchResponseItem*> item_responses;
+    item_responses.reserve(batch_size);
+    std::vector<std::unique_ptr<adserver::grpc::BatchResponseItem>> heap_item_responses;
+    if (!response_arena)
+    {
+      heap_item_responses.reserve(batch_size);
+    }
+
+    for (std::size_t i = 0; i < batch_size; ++i)
+    {
+      if (response_arena)
+      {
+        item_responses.emplace_back(
+          google::protobuf::Arena::CreateMessage<
+            adserver::grpc::BatchResponseItem>(response_arena));
+      }
+      else
+      {
+        auto item_response =
+          std::make_unique<adserver::grpc::BatchResponseItem>();
+        item_responses.emplace_back(item_response.get());
+        heap_item_responses.emplace_back(std::move(item_response));
+      }
+    }
+
     std::vector<GrpcCoroutine> operations;
     operations.reserve(split);
     for (auto& lane : lanes)
@@ -458,9 +484,19 @@ namespace AdServer::Grpc
 
     co_await when_all(std::move(operations));
 
-    for (auto& item_response : item_responses)
+    if (response_arena)
     {
-      *batch_response.add_items() = std::move(item_response);
+      for (auto* item_response : item_responses)
+      {
+        batch_response.mutable_items()->UnsafeArenaAddAllocated(item_response);
+      }
+    }
+    else
+    {
+      for (auto& item_response : heap_item_responses)
+      {
+        batch_response.mutable_items()->AddAllocated(item_response.release());
+      }
     }
 
     co_return;
@@ -469,14 +505,14 @@ namespace AdServer::Grpc
   GrpcCoroutine
   GrpcServiceBase::co_handle_batch_lane_(
     const adserver::grpc::BatchRequest& batch_request,
-    std::vector<adserver::grpc::BatchResponseItem>& item_responses,
+    std::vector<adserver::grpc::BatchResponseItem*>& item_responses,
     std::vector<int> indexes) const
   {
     for (const int index : indexes)
     {
       co_await co_handle_batch_item_(
         batch_request.items(index),
-        item_responses[static_cast<std::size_t>(index)]);
+        *item_responses[static_cast<std::size_t>(index)]);
     }
 
     co_return;

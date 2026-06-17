@@ -23,6 +23,7 @@
 #endif
 
 #include <grpcpp/grpcpp.h>
+#include <google/protobuf/arena.h>
 
 #include <Commons/ActivityGate.hpp>
 #include <Commons/Grpc/Batch.grpc.pb.h>
@@ -447,7 +448,7 @@ namespace AdServer::Grpc
 
     GrpcCoroutine co_handle_batch_lane_(
       const adserver::grpc::BatchRequest& batch_request,
-      std::vector<adserver::grpc::BatchResponseItem>& item_responses,
+      std::vector<adserver::grpc::BatchResponseItem*>& item_responses,
       std::vector<int> indexes) const;
 
     GrpcCoroutine co_handle_batch_item_(
@@ -584,7 +585,8 @@ namespace AdServer::Grpc
   protected:
     ::grpc::ServerCompletionQueue* const completion_queue_;
     ::grpc::ServerContext context_;
-    Request request_;
+    google::protobuf::Arena request_arena_;
+    Request* const request_;
     Response response_;
     ::grpc::ServerAsyncResponseWriter<Response> responder_;
 
@@ -745,7 +747,8 @@ namespace AdServer::Grpc
     ::grpc::ServerContext context_;
     ::grpc::ServerAsyncReaderWriter<Response, Request> responder_;
     Request request_;
-    Response response_;
+    google::protobuf::Arena response_arena_;
+    Response* response_;
     std::optional<GrpcCoroutine> batch_operation_;
     std::optional<AdServer::Commons::ActivityGate::Guard> process_guard_;
     State state_;

@@ -157,23 +157,27 @@ namespace AdServer::Grpc
         const adserver::grpc::BatchRequestItem& batch_request,
         adserver::grpc::BatchResponseItem& batch_response)
       {
-        Request request;
-        if (!request.ParseFromString(batch_request.payload()))
+        google::protobuf::Arena request_arena;
+        auto* request =
+          google::protobuf::Arena::CreateMessage<Request>(&request_arena);
+        if (!request->ParseFromString(batch_request.payload()))
         {
           batch_response.set_status_code(::grpc::StatusCode::INVALID_ARGUMENT);
           batch_response.set_status_message("Unable to parse payload");
           return;
         }
 
-        Response response;
+        google::protobuf::Arena response_arena;
+        auto* response =
+          google::protobuf::Arena::CreateMessage<Response>(&response_arena);
         ::grpc::Status status;
-        handler(request, response, status);
+        handler(*request, *response, status);
 
         batch_response.set_status_code(status.error_code());
         batch_response.set_status_message(status.error_message());
         if (status.ok())
         {
-          batch_response.set_payload(response.SerializeAsString());
+          batch_response.set_payload(response->SerializeAsString());
         }
       });
   }
@@ -199,8 +203,10 @@ namespace AdServer::Grpc
           adserver::grpc::BatchResponseItem& batch_response)
           -> GrpcCoroutine
         {
-          Request request;
-          if (!request.ParseFromString(batch_request.payload()))
+          google::protobuf::Arena request_arena;
+          auto* request =
+            google::protobuf::Arena::CreateMessage<Request>(&request_arena);
+          if (!request->ParseFromString(batch_request.payload()))
           {
             batch_response.set_status_code(
               ::grpc::StatusCode::INVALID_ARGUMENT);
@@ -208,15 +214,17 @@ namespace AdServer::Grpc
             co_return;
           }
 
-          Response response;
+          google::protobuf::Arena response_arena;
+          auto* response =
+            google::protobuf::Arena::CreateMessage<Response>(&response_arena);
           ::grpc::Status status;
-          co_await handler(request, response, status);
+          co_await handler(*request, *response, status);
 
           batch_response.set_status_code(status.error_code());
           batch_response.set_status_message(status.error_message());
           if (status.ok())
           {
-            batch_response.set_payload(response.SerializeAsString());
+            batch_response.set_payload(response->SerializeAsString());
           }
         },
         std::move(hash),
@@ -558,6 +566,8 @@ namespace AdServer::Grpc
   GrpcUnaryCallBase<Request, Response>::GrpcUnaryCallBase(
     ::grpc::ServerCompletionQueue* completion_queue)
     : completion_queue_(completion_queue),
+      request_(
+        google::protobuf::Arena::CreateMessage<Request>(&request_arena_)),
       responder_(&context_),
       state_(State::Create)
   {}
@@ -638,7 +648,7 @@ namespace AdServer::Grpc
 
     (async_service_->*request_rpc_)(
       &this->context_,
-      &this->request_,
+      this->request_,
       &this->responder_,
       this->completion_queue_,
       this->completion_queue_,
@@ -674,7 +684,7 @@ namespace AdServer::Grpc
     process_()
   {
     ::grpc::Status status;
-    (service_impl_->*handler_rpc_)(this->request_, this->response_, status);
+    (service_impl_->*handler_rpc_)(*this->request_, this->response_, status);
 
     auto grpc_operation_guard = service_impl_->enter_grpc_operation();
     if (!grpc_operation_guard)
@@ -730,7 +740,7 @@ namespace AdServer::Grpc
 
     (async_service_->*request_rpc_)(
       &this->context_,
-      &this->request_,
+      this->request_,
       &this->responder_,
       this->completion_queue_,
       this->completion_queue_,
@@ -776,7 +786,7 @@ namespace AdServer::Grpc
     {
       operation_.emplace(
         (service_impl_->*handler_rpc_)(
-          this->request_,
+          *this->request_,
           this->response_,
           status_));
     }
@@ -853,6 +863,8 @@ namespace AdServer::Grpc
       request_stream_(request_method),
       completion_queue_(completion_queue),
       responder_(&context_),
+      response_(
+        google::protobuf::Arena::CreateMessage<Response>(&response_arena_)),
       state_(State::Create)
   {}
 
@@ -923,7 +935,9 @@ namespace AdServer::Grpc
           return;
         }
 
-        response_.Clear();
+        response_arena_.Reset();
+        response_ =
+          google::protobuf::Arena::CreateMessage<Response>(&response_arena_);
         start_inprogress_stats_();
 #ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
         start_debug_response_watchdog_();
@@ -939,7 +953,7 @@ namespace AdServer::Grpc
         try
         {
           batch_operation_.emplace(
-            service_impl_->co_handle_batch_request(request_, response_));
+            service_impl_->co_handle_batch_request(request_, *response_));
         }
         catch (const std::exception& ex)
         {
@@ -1061,7 +1075,7 @@ namespace AdServer::Grpc
     }
 
     state_ = State::Write;
-    responder_.Write(response_, this);
+    responder_.Write(*response_, this);
     return true;
   }
 
@@ -1090,8 +1104,10 @@ namespace AdServer::Grpc
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::finish_with_error_(
     const char* message)
   {
-    response_.Clear();
-    auto* response_item = response_.add_items();
+    response_arena_.Reset();
+    response_ =
+      google::protobuf::Arena::CreateMessage<Response>(&response_arena_);
+    auto* response_item = response_->add_items();
     response_item->set_status_code(::grpc::StatusCode::INTERNAL);
     response_item->set_status_message(message ? message : "Unknown error");
     write_or_delete_();
