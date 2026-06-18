@@ -53,7 +53,8 @@ add_executable(ChannelServer
 )
 
 target_link_libraries(ChannelServer
-  tcmalloc
+  jemalloc
+
   HTTP
   HttpServer
   XMLUtility

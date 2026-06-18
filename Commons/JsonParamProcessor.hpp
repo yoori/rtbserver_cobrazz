@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+#include <memory_resource>
 #include <type_traits>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -28,12 +29,12 @@ namespace Commons
   };
 
   // JsonStringParamProcessor
-  template<typename RequestInfoType>
+  template<typename RequestInfoType, typename StringType = std::string>
   struct JsonStringParamProcessor:
     public JsonParamProcessor<RequestInfoType>
   {
     JsonStringParamProcessor(
-      std::string RequestInfoType::* field)
+      StringType RequestInfoType::* field)
       noexcept;
 
     virtual void
@@ -45,7 +46,7 @@ namespace Commons
     {}
 
   protected:
-    std::string RequestInfoType::* field_;
+    StringType RequestInfoType::* field_;
   };
 
   // JsonNumberParamProcessor
@@ -228,16 +229,16 @@ namespace AdServer
 namespace Commons
 {
   // JsonStringParamProcessor impl
-  template<typename RequestInfoType>
-  JsonStringParamProcessor<RequestInfoType>::JsonStringParamProcessor(
-    std::string RequestInfoType::* field)
+  template<typename RequestInfoType, typename StringType>
+  JsonStringParamProcessor<RequestInfoType, StringType>::JsonStringParamProcessor(
+    StringType RequestInfoType::* field)
     noexcept
     : field_(field)
   {}
 
-  template<typename RequestInfoType>
+  template<typename RequestInfoType, typename StringType>
   void
-  JsonStringParamProcessor<RequestInfoType>::process(
+  JsonStringParamProcessor<RequestInfoType, StringType>::process(
     RequestInfoType& request_info,
     const JsonValue& value) const
   {
@@ -411,14 +412,44 @@ namespace Commons
         if(it->value.getTag() == JSON_TAG_STRING ||
           it->value.getTag() == JSON_TAG_NUMBER)
         {
-          (context.*field_).insert((context.*field_).end(), it->value.toString());
+          auto& target = context.*field_;
+          if constexpr (
+            requires { target.get_allocator().resource(); } &&
+            std::is_constructible_v<
+              typename CollectionType::value_type,
+              std::pmr::memory_resource*>)
+          {
+            typename CollectionType::value_type str(
+              target.get_allocator().resource());
+            it->value.toString(str);
+            target.insert(target.end(), std::move(str));
+          }
+          else
+          {
+            target.insert(target.end(), it->value.toString());
+          }
         }
       }
     }
     else if(value.getTag() == JSON_TAG_STRING ||
       value.getTag() == JSON_TAG_NUMBER)
     {
-      (context.*field_).insert((context.*field_).end(), value.toString());
+      auto& target = context.*field_;
+      if constexpr (
+        requires { target.get_allocator().resource(); } &&
+        std::is_constructible_v<
+          typename CollectionType::value_type,
+          std::pmr::memory_resource*>)
+      {
+        typename CollectionType::value_type str(
+          target.get_allocator().resource());
+        value.toString(str);
+        target.insert(target.end(), std::move(str));
+      }
+      else
+      {
+        target.insert(target.end(), value.toString());
+      }
     }
   }
 }

@@ -4,6 +4,7 @@
 #include <new>
 #include <memory_resource>
 #include <string>
+#include <string_view>
 #include <memory>
 
 #include <GeoIP/IPMap.hpp>
@@ -114,6 +115,8 @@ namespace AdServer::Bidding
   {
     typedef std::pmr::vector<unsigned long> AccountIdArray;
     typedef std::pmr::string PmrString;
+    static constexpr std::size_t ARENA_INITIAL_SIZE = 64 * 1024;
+
     struct AdditionalInfo
     {
       AdditionalInfo(
@@ -137,7 +140,8 @@ namespace AdServer::Bidding
     };
 
     RequestInfo()
-      : RequestInfo(std::make_unique<std::pmr::monotonic_buffer_resource>())
+      : RequestInfo(std::make_unique<std::pmr::monotonic_buffer_resource>(
+          ARENA_INITIAL_SIZE))
     {}
 
     explicit RequestInfo(
@@ -458,7 +462,7 @@ namespace AdServer::Bidding
 
     void
     verify_user_id_(
-      const std::string& signed_user_id,
+      std::string_view signed_user_id,
       const String::SubString& source_id,
       AdServer::Bidding::CampaignManager::RequestParams& request_params)
       const
@@ -482,10 +486,10 @@ namespace AdServer::Bidding
     static
     std::string
     openrtb_ext_tag_id(
-      const std::string& publisher_id,
-      const std::string& id,
-      const std::string& publisher_name,
-      const std::string& name);
+      std::string_view publisher_id,
+      std::string_view id,
+      std::string_view publisher_name,
+      std::string_view name);
 
     static
     std::string

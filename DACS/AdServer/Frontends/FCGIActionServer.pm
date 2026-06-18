@@ -17,9 +17,7 @@ sub start
     "fi && " .
     "ulimit -s 100000 && " .
     "ulimit -n 256000 && " .
-    "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=134217728 && " .
-    "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
-    "export MALLOC_ARENA_MAX=4 && " .
+    "export MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 && " .
     "setsid -f \${VALGRIND_PREFIX} FCGIServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIActionServerConfig.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIActionServer.out 2>&1 < /dev/null";

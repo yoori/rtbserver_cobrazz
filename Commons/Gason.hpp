@@ -117,8 +117,9 @@ struct JsonValue
     return res;
   }
 
+  template<typename StringType>
   void toString(
-    std::string& str,
+    StringType& str,
     bool normalize_integer_number = false)
     const
   {

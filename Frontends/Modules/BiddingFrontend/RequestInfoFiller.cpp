@@ -718,7 +718,7 @@ namespace AdServer::Bidding
     bool
     try_parse_float_(
       float& result,
-      const std::string& value) noexcept
+      const std::string_view value) noexcept
     {
       if(value.empty())
       {
@@ -726,8 +726,8 @@ namespace AdServer::Bidding
       }
 
       char* end = nullptr;
-      const float parsed = std::strtof(value.c_str(), &end);
-      if(end == value.c_str() || (end != nullptr && *end != '\0'))
+      const float parsed = std::strtof(value.data(), &end);
+      if(end == value.data() || (end != nullptr && *end != '\0'))
       {
         return false;
       }
@@ -1001,9 +1001,9 @@ namespace AdServer::Bidding
         {
           if(it->value.getTag() == JSON_TAG_STRING || it->value.getTag() == JSON_TAG_NUMBER)
           {
-            std::string str;
+            PmrString str((context.*field_).get_allocator().resource());
             it->value.toString(str, true);
-            (context.*field_).emplace_back(str);
+            (context.*field_).emplace_back(std::move(str));
           }
         }
       }
@@ -1018,13 +1018,13 @@ namespace AdServer::Bidding
     {}
   };
 
-  template<typename ContextType>
+  template<typename ContextType, typename StringType = std::string>
   class JsonSerializeParamProcessor:
     public AdServer::Commons::JsonParamProcessor<ContextType>
   {
   public:
     JsonSerializeParamProcessor(
-      std::string ContextType::* field)
+      StringType ContextType::* field)
       : field_(field)
     {}
 
@@ -1043,7 +1043,7 @@ namespace AdServer::Bidding
     {}
 
   protected:
-    std::string ContextType::* field_;
+    StringType ContextType::* field_;
   };
 
   // JsonBannerFormatParamProcessor
@@ -1064,13 +1064,13 @@ namespace AdServer::Bidding
       banner_format_processor->add_processor(
         Request::OpenRtb::IMP_BANNER_WIDTH,
         JsonBannerFormatParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<BannerFormat>(
+          new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
             &BannerFormat::width)));
 
       banner_format_processor->add_processor(
         Request::OpenRtb::IMP_BANNER_HEIGHT,
         JsonBannerFormatParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<BannerFormat>(
+          new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
             &BannerFormat::height)));
 
       {
@@ -1080,12 +1080,12 @@ namespace AdServer::Bidding
         banner_format_ext_processor->add_processor(
           Request::OpenRtb::IMP_BANNER_EXT_TYPE,
           JsonBannerFormatParamProcessor_var(
-            new AdServer::Commons::JsonStringParamProcessor<BannerFormat>(
+            new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
               &BannerFormat::ext_type)));
         banner_format_ext_processor->add_processor(
           Request::OpenRtb::IMP_BANNER_EXT_FORMAT,
           JsonBannerFormatParamProcessor_var(
-            new AdServer::Commons::JsonStringParamProcessor<BannerFormat>(
+            new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
               &BannerFormat::ext_format)));
       }
 
@@ -1101,13 +1101,13 @@ namespace AdServer::Bidding
       {
         for(JsonIterator it = begin(value); it != end(value); ++it)
         {
-          banner.formats.emplace_back();
+          banner.formats.emplace_back(banner.formats.get_allocator().resource());
           banner_format_processor_->process(banner.formats.back(), it->value);
         }
       }
       else
       {
-        banner.formats.emplace_back();
+        banner.formats.emplace_back(banner.formats.get_allocator().resource());
         banner_format_processor_->process(banner.formats.back(), value);
       }
     }
@@ -1142,7 +1142,7 @@ namespace AdServer::Bidding
       banner_processor->add_processor(
         Request::OpenRtb::IMP_BANNER_POS,
         JsonBannerParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<Banner>(
+          new AdServer::Commons::JsonStringParamProcessor<Banner, PmrString>(
             &Banner::pos)));
 
       banner_processor->add_processor(
@@ -1171,7 +1171,7 @@ namespace AdServer::Bidding
           JsonBannerParamProcessor_var(
             new AdServer::Commons::JsonArrayParamProcessor<Banner>(
               JsonBannerParamProcessor_var(
-                new JsonSerializeParamProcessor<Banner>(
+                new JsonSerializeParamProcessor<Banner, PmrString>(
                   &Banner::matching_ad)),
               1U))); // process only first element
 
@@ -1206,14 +1206,14 @@ namespace AdServer::Bidding
       {
         for(JsonIterator it = begin(value); it != end(value); ++it)
         {
-          ad_slot_context.banners.emplace_back();
+          ad_slot_context.banners.emplace_back(ad_slot_context.resource());
           banner_processor_->process(ad_slot_context.banners.back(), it->value);
           banner_format_processor_->process(ad_slot_context.banners.back(), it->value);
         }
       }
       else
       {
-        ad_slot_context.banners.emplace_back();
+        ad_slot_context.banners.emplace_back(ad_slot_context.resource());
         banner_processor_->process(ad_slot_context.banners.back(), value);
         banner_format_processor_->process(ad_slot_context.banners.back(), value);
       }
@@ -1303,7 +1303,7 @@ namespace AdServer::Bidding
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
     {
-      Deal deal;
+      Deal deal(context.resource());
       deal_processor_->process(request_params, deal, value);
       context.deals.push_back(std::move(deal));
     }
@@ -1360,7 +1360,7 @@ namespace AdServer::Bidding
       metric_processor->add_processor(
         Request::OpenRtb::IMP_METRIC_TYPE,
         JsonMetricParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<Metric>(
+          new AdServer::Commons::JsonStringParamProcessor<Metric, PmrString>(
             &Metric::type)));
 
       metric_processor->add_processor(
@@ -1402,7 +1402,7 @@ namespace AdServer::Bidding
         return;
       }
 
-      JsonAdSlotProcessingContext::Metric metric;
+      JsonAdSlotProcessingContext::Metric metric(context.resource());
       metric_processor_->process(metric, value);
 
       if(!metric.type.empty() && !metric.value.empty())
@@ -1475,7 +1475,7 @@ namespace AdServer::Bidding
       JsonProcessingContext& context,
       const JsonValue& value) const
     {
-      Segment segment;
+      Segment segment(context.resource());
       segment_processor_->process(request_params, segment, value);
       context.segments.emplace_back(std::move(segment));
     }
@@ -1503,7 +1503,7 @@ namespace AdServer::Bidding
     typedef ReferenceCounting::SmartPtr<
       JsonAssetParamProcessor> JsonAssetParamProcessor_var;
 
-    typedef std::vector<Asset> SeqType;
+    typedef std::pmr::vector<Asset> SeqType;
 
     typedef JsonCompositeParamProcessor<Asset>
       JsonAssetCompositeParamProcessor;
@@ -1542,7 +1542,7 @@ namespace AdServer::Bidding
     {
       if(value.getTag() == JSON_TAG_OBJECT)
       {
-        Asset asset;
+        Asset asset(context.resource());
         processor_->process(request_params, asset, value);
         (context.*seq_field_).push_back(std::move(asset));
       }
@@ -1893,7 +1893,8 @@ namespace AdServer::Bidding
     {
       if(value.getTag() == JSON_TAG_OBJECT)
       {
-        context.native = JsonAdSlotProcessingContext::Native_var(new Native);
+        context.native = JsonAdSlotProcessingContext::Native_var(
+          new Native(context.resource()));
         processor_->process(request_params, *context.native, value);
       }
       else
@@ -1992,7 +1993,7 @@ namespace AdServer::Bidding
       JsonProcessingContext::UserEid& user_eid,
       const JsonValue& value) const
     {
-      JsonProcessingContext::UserEidUid user_eid_uid;
+      JsonProcessingContext::UserEidUid user_eid_uid(user_eid.uids.get_allocator().resource());
       user_eid_uid_processor_->process(request_params, user_eid_uid, value);
       user_eid.uids.emplace_back(std::move(user_eid_uid));
     }
@@ -2058,7 +2059,7 @@ namespace AdServer::Bidding
       JsonProcessingContext& context,
       const JsonValue& value) const
     {
-      UserEid user_eid;
+      UserEid user_eid(context.resource());
       user_eid_processor_->process(request_params, user_eid, value);
       context.user_eids.emplace_back(std::move(user_eid));
     }
@@ -2346,7 +2347,7 @@ namespace AdServer::Bidding
 
       for(JsonIterator it = begin(value); it != end(value); ++it)
       {
-        JsonAdSlotProcessingContext ad_slot_context;
+        JsonAdSlotProcessingContext ad_slot_context(context.resource());
         processor_->process(request_params, ad_slot_context, it->value);
         context.ad_slots.push_back(std::move(ad_slot_context));
       }
@@ -3886,21 +3887,33 @@ namespace AdServer::Bidding
 
   std::string
   RequestInfoFiller::openrtb_ext_tag_id(
-    const std::string& publisher_id,
-    const std::string& id,
-    const std::string& publisher_name,
-    const std::string& name)
+    std::string_view publisher_id,
+    std::string_view id,
+    std::string_view publisher_name,
+    std::string_view name)
   {
     std::string res;
     res.reserve(EXT_TAG_ID_MAX_LENGTH);
 
-    res += (publisher_id.empty() ? "0" : publisher_id);
-    res += "-";
-    res += (id.empty() ? "0" : id );
-    res += "-";
-    res += (publisher_name.empty() ? "0" : publisher_name);
-    res += "-";
-    res += (name.empty() ? "0" : name);
+    const auto append_or_zero = [&res](std::string_view value)
+    {
+      if(value.empty())
+      {
+        res += '0';
+      }
+      else
+      {
+        res.append(value.data(), value.size());
+      }
+    };
+
+    append_or_zero(publisher_id);
+    res += '-';
+    append_or_zero(id);
+    res += '-';
+    append_or_zero(publisher_name);
+    res += '-';
+    append_or_zero(name);
 
     if(res.size() > EXT_TAG_ID_MAX_LENGTH)
     {
@@ -4134,11 +4147,28 @@ namespace AdServer::Bidding
     if(!context.external_user_id.empty() &&
       use_external_user_id_(context.external_user_id))
     {
-      CampaignManager::assign_string(request_params.common_info.external_user_id, (
-        !request_info.source_id.empty() ?
-          std::string(request_info.source_id.data(), request_info.source_id.size()) +
-            "/" + context.external_user_id :
-          context.external_user_id));
+      if(!request_info.source_id.empty())
+      {
+        std::string external_user_id;
+        external_user_id.reserve(
+          request_info.source_id.size() + 1 + context.external_user_id.size());
+        external_user_id.append(
+          request_info.source_id.data(),
+          request_info.source_id.size());
+        external_user_id += '/';
+        external_user_id.append(
+          context.external_user_id.data(),
+          context.external_user_id.size());
+        CampaignManager::assign_string(
+          request_params.common_info.external_user_id,
+          external_user_id);
+      }
+      else
+      {
+        CampaignManager::assign_string(
+          request_params.common_info.external_user_id,
+          context.external_user_id);
+      }
     }
 
     if(request_params.common_info.external_user_id.empty() &&
@@ -4320,8 +4350,8 @@ namespace AdServer::Bidding
       if(slot_it->imp_ext_type == "popup")
       {
         // add popup banner
-        JsonAdSlotProcessingContext::Banner popup_banner;
-        popup_banner.formats.emplace_back();
+        JsonAdSlotProcessingContext::Banner popup_banner(slot_it->resource());
+        popup_banner.formats.emplace_back(slot_it->resource());
         popup_banner.formats.back().ext_format = "popup";
         slot_it->banners.push_back(std::move(popup_banner));
       }
@@ -4792,45 +4822,60 @@ namespace AdServer::Bidding
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    RM_SIZE,
+                    PmrString(RM_SIZE, slot_it->resource()),
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "popup")
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], POPUP_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    POPUP_SIZE,
+                    PmrString(POPUP_SIZE, slot_it->resource()),
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "overlay")
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_DTO_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    RM_DTO_SIZE,
+                    PmrString(RM_DTO_SIZE, slot_it->resource()),
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "rich")
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_RICH_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    RM_RICH_SIZE,
+                    PmrString(RM_RICH_SIZE, slot_it->resource()),
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if(!banner_format.width.empty() && !banner_format.height.empty())
                 {
                   const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
                   const auto size_it = debug_sizes.find(slot_i);
-                  std::string res_size = size_it != debug_sizes.end() ?
-                    std::string(size_it->second.data(), size_it->second.size()) :
-                    (
-                      request_info.default_debug_size.empty() ?
-                      banner_format.width + "x" + banner_format.height :
-                      std::string(
-                        request_info.default_debug_size.data(),
-                        request_info.default_debug_size.size()));
+                  std::string res_size;
+                  if(size_it != debug_sizes.end())
+                  {
+                    res_size.assign(size_it->second.data(), size_it->second.size());
+                  }
+                  else if(request_info.default_debug_size.empty())
+                  {
+                    res_size.reserve(
+                      banner_format.width.size() + 1 + banner_format.height.size());
+                    res_size.append(
+                      banner_format.width.data(),
+                      banner_format.width.size());
+                    res_size += 'x';
+                    res_size.append(
+                      banner_format.height.data(),
+                      banner_format.height.size());
+                  }
+                  else
+                  {
+                    res_size.assign(
+                      request_info.default_debug_size.data(),
+                      request_info.default_debug_size.size());
+                  }
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], res_size);
                   slot_it->size_banner.insert(std::make_pair(
-                    res_size,
+                    PmrString(res_size, slot_it->resource()),
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
               }
@@ -4859,19 +4904,20 @@ namespace AdServer::Bidding
 
         if (!slot_it->deals.empty())
         {
-          std::map<AdServer::CampaignSvcs::RevenueDecimal, std::string> prices;
-
           const String::SubString currency_code =
             slot_it->min_cpm_price_currency_code.empty() ?
             Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY :
             slot_it->min_cpm_price_currency_code;
 
+          bool min_price_present = false;
+          AdServer::CampaignSvcs::RevenueDecimal min_price =
+            AdServer::CampaignSvcs::RevenueDecimal::ZERO;
+          const PmrString* min_deal_id = nullptr;
+
           if (slot_it->min_cpm_price != AdServer::CampaignSvcs::RevenueDecimal::ZERO)
           {
-            prices.insert(
-              std::make_pair(
-                slot_it->min_cpm_price,
-                std::string()));
+            min_price_present = true;
+            min_price = slot_it->min_cpm_price;
           }
 
           for (auto it = slot_it->deals.begin(); it != slot_it->deals.end();
@@ -4879,18 +4925,21 @@ namespace AdServer::Bidding
           {
             if (caseless_compare(it->currency_code, currency_code))
             {
-              prices.insert(
-                std::make_pair(it->cpm_price, it->id));
+              if(!min_price_present || it->cpm_price < min_price)
+              {
+                min_price_present = true;
+                min_price = it->cpm_price;
+                min_deal_id = &it->id;
+              }
             }
           }
 
-          if (!prices.empty())
+          if (min_price_present)
           {
-            auto min_price = prices.begin();
-            slot_it->min_cpm_price = min_price->first;
-            if (!min_price->second.empty())
+            slot_it->min_cpm_price = min_price;
+            if (min_deal_id && !min_deal_id->empty())
             {
-              slot_it->deal_id = min_price->second;
+              slot_it->deal_id.assign(min_deal_id->data(), min_deal_id->size());
             }
           }
         }
@@ -4920,7 +4969,9 @@ namespace AdServer::Bidding
         // normalize currency codes
         if(!slot_it->min_cpm_price_currency_code.empty())
         {
-          String::AsciiStringManip::to_lower(slot_it->min_cpm_price_currency_code);
+          String::AsciiStringManip::to_lower(
+            slot_it->min_cpm_price_currency_code.begin(),
+            slot_it->min_cpm_price_currency_code.end());
         }
 
         if(!context.currencies.empty())
@@ -4928,7 +4979,9 @@ namespace AdServer::Bidding
           for(auto currency_it = context.currencies.begin();
             currency_it != context.currencies.end(); ++currency_it)
           {
-            String::AsciiStringManip::to_lower(*currency_it);
+            String::AsciiStringManip::to_lower(
+              currency_it->begin(),
+              currency_it->end());
           }
         }
 
@@ -5071,9 +5124,17 @@ namespace AdServer::Bidding
     {
       for(auto sub_it = it->uids.begin(); sub_it != it->uids.end(); ++sub_it)
       {
-        std::string source = !it->source.empty() ?
-          it->source :
-          std::string(request_info.source_id.data(), request_info.source_id.size());
+        std::string source;
+        if(!it->source.empty())
+        {
+          source.assign(it->source.data(), it->source.size());
+        }
+        else
+        {
+          source.assign(
+            request_info.source_id.data(),
+            request_info.source_id.size());
+        }
         auto source_mapping_it = source_mapping_.find(source);
         if(source_mapping_it != source_mapping_.end())
         {
@@ -5082,12 +5143,23 @@ namespace AdServer::Bidding
 
         if(!sub_it->id.empty() && use_external_user_id_(sub_it->id))
         {
-          request_info.ext_user_ids.emplace_back(source + "/" + sub_it->id);
+          std::string user_id;
+          user_id.reserve(source.size() + 1 + sub_it->id.size());
+          user_id += source;
+          user_id += '/';
+          user_id.append(sub_it->id.data(), sub_it->id.size());
+          request_info.ext_user_ids.emplace_back(std::move(user_id));
         }
         else if(!sub_it->stable_id.empty() && use_external_user_id_(sub_it->stable_id))
         {
-          request_info.ext_user_ids.emplace_back(
-            (!source.empty() ? source : Request::OpenRtb::STABLE_SOURCE) + "/" + sub_it->stable_id);
+          const std::string& use_source =
+            !source.empty() ? source : Request::OpenRtb::STABLE_SOURCE;
+          std::string user_id;
+          user_id.reserve(use_source.size() + 1 + sub_it->stable_id.size());
+          user_id += use_source;
+          user_id += '/';
+          user_id.append(sub_it->stable_id.data(), sub_it->stable_id.size());
+          request_info.ext_user_ids.emplace_back(std::move(user_id));
         }
       }
     }
@@ -5454,7 +5526,7 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::verify_user_id_(
-    const std::string& signed_user_id,
+    std::string_view signed_user_id,
     const String::SubString& source_id,
     AdServer::Bidding::CampaignManager::RequestParams& request_params)
     const noexcept
@@ -5473,14 +5545,18 @@ namespace AdServer::Bidding
         {
           std::string ssp_id_buf;
           String::StringManip::base64mod_decode(
-            ssp_id_buf, signed_user_id, false, &ssp_uid_marker);
+            ssp_id_buf,
+            String::SubString(signed_user_id.data(), signed_user_id.size()),
+            false,
+            &ssp_uid_marker);
           ssp_uid = Generics::Uuid(ssp_id_buf.begin(), ssp_id_buf.end());
         }
         else
         {
           Generics::SignedUuid signed_ssp_uid =
             common_module_->user_id_controller()->verify(
-              signed_user_id, UserIdController::SSP);
+              String::SubString(signed_user_id.data(), signed_user_id.size()),
+              UserIdController::SSP);
           ssp_uid = signed_ssp_uid.uuid();
           ssp_uid_marker = signed_ssp_uid.data();
         }
@@ -5503,7 +5579,8 @@ namespace AdServer::Bidding
         request_params.common_info.track_user_id =
           request_params.common_info.user_id;
 
-        if(AdServer::Commons::PROBE_USER_ID.to_string() == signed_user_id)
+        if(std::string_view(AdServer::Commons::PROBE_USER_ID.to_string()) ==
+          signed_user_id)
         {
           request_params.common_info.user_status = static_cast<std::size_t>(
             AdServer::CampaignSvcs::US_PROBE);
@@ -5749,39 +5826,44 @@ namespace AdServer::Bidding
   RequestInfoFiller::make_ssp_uid_by_device_(const JsonProcessingContext& ctx)
     /*throw(std::exception)*/
   {
+    const auto to_string = [](const PmrString& value)
+    {
+      return std::string(value.data(), value.size());
+    };
+
     /*
     if (!ctx.ifa.empty())
     {
-      return ctx.ifa;
+      return to_string(ctx.ifa);
     }
     */
 
     if (!ctx.didmd5.empty())
     {
-      return ctx.didmd5;
+      return to_string(ctx.didmd5);
     }
 
     if (!ctx.didsha1.empty())
     {
-      return ctx.didsha1;
+      return to_string(ctx.didsha1);
     }
 
     if (!ctx.dpidmd5.empty())
     {
-      return ctx.dpidmd5;
+      return to_string(ctx.dpidmd5);
     }
 
     if (!ctx.dpisha1.empty())
     {
-      return ctx.dpisha1;
+      return to_string(ctx.dpisha1);
     }
 
     if (!ctx.macsha1.empty())
     {
-      return ctx.macsha1;
+      return to_string(ctx.macsha1);
     }
 
-    return ctx.macmd5;
+    return to_string(ctx.macmd5);
   }
 
   std::string

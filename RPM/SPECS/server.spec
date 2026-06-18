@@ -33,7 +33,7 @@
 %define __open_ssl_ver_req      1.1.1k-7
 %define __vanga_ver_req         1.0.0.21
 %define __rocksdb_ver_req       11.1.1
-%define __gperftools_ver_req    2.18.1-ssv1.el8
+%define __jemalloc_ver_req      5.3.0-ssv1.el8
 %define __boost_suffix          176
 
 Name:    foros-server%{?__type:-%__type}
@@ -125,10 +125,10 @@ BuildRequires: protobuf-devel = 25.9
 BuildRequires: protobuf-compiler = 25.9
 BuildRequires: grpc-devel = 1.80.0-ssv4.el8
 BuildRequires: grpc-plugins = 1.80.0-ssv4.el8
-BuildRequires: gperftools-devel = %__gperftools_ver_req
+BuildRequires: jemalloc-devel = %__jemalloc_ver_req
 
 Requires: protobuf = %{__protobuf_ver_req}
-Requires: gperftools-libs = %__gperftools_ver_req
+Requires: jemalloc = %__jemalloc_ver_req
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
 Requires: rsync >= 3.0.7-3.el6
 Requires: stunnel >= 4.29

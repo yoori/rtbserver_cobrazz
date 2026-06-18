@@ -7,6 +7,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include <sys/resource.h>
 
@@ -34,6 +36,7 @@ namespace
   struct Options
   {
     std::uint64_t count = 1000000;
+    std::uint64_t threads = 1;
     std::string request_file;
     std::string fe_config;
     std::string domain_config;
@@ -52,6 +55,7 @@ namespace
       << "Usage: BiddingFrontendRequestInfoFillerPerfTest [OPTIONS]\n"
       << "Options:\n"
       << "  --count <N>         fill_by_openrtb_request calls count (default: 1000000)\n"
+      << "  --threads <N>       worker threads count (default: 1)\n"
       << "  --request-file <P>  file with OpenRTB request body\n"
       << "  --fe-config <P>     FeConfig.xml for UserIdConfig and domain_config_path\n"
       << "  --domain-config <P> domain config for referer parsing\n";
@@ -63,6 +67,7 @@ namespace
     using namespace Generics::AppUtils;
 
     Option<unsigned long> opt_count(1000000);
+    Option<unsigned long> opt_threads(1);
     StringOption opt_request_file;
     StringOption opt_fe_config;
     StringOption opt_domain_config;
@@ -70,6 +75,7 @@ namespace
 
     Args args(-1);
     args.add(equal_name("count"), opt_count);
+    args.add(equal_name("threads"), opt_threads);
     args.add(equal_name("request-file"), opt_request_file);
     args.add(equal_name("fe-config"), opt_fe_config);
     args.add(equal_name("domain-config"), opt_domain_config);
@@ -85,6 +91,7 @@ namespace
 
     Options options;
     options.count = *opt_count;
+    options.threads = *opt_threads;
     options.request_file = *opt_request_file;
     options.fe_config = *opt_fe_config;
     options.domain_config = *opt_domain_config;
@@ -92,6 +99,10 @@ namespace
     if(options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
+    }
+    if(options.threads == 0)
+    {
+      throw std::runtime_error("--threads must be > 0");
     }
 
     return options;
@@ -286,10 +297,46 @@ main(int argc, char** argv)
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();
 
-    const std::uint64_t checksum = bidding_request_info_filler_run_benchmark(
-      filler,
-      options.count,
-      request_body);
+    std::uint64_t checksum = 0;
+    if(options.threads == 1)
+    {
+      checksum = bidding_request_info_filler_run_benchmark(
+        filler,
+        options.count,
+        request_body);
+    }
+    else
+    {
+      std::vector<std::thread> threads;
+      std::vector<std::uint64_t> checksums(options.threads, 0);
+      threads.reserve(options.threads);
+
+      const std::uint64_t base_count = options.count / options.threads;
+      const std::uint64_t extra_count = options.count % options.threads;
+      for(std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
+      {
+        const std::uint64_t thread_count =
+          base_count + (thread_i < extra_count ? 1 : 0);
+        threads.emplace_back(
+          [&filler, &request_body, &checksums, thread_i, thread_count]()
+          {
+            checksums[thread_i] = bidding_request_info_filler_run_benchmark(
+              filler,
+              thread_count,
+              request_body);
+          });
+      }
+
+      for(auto& thread : threads)
+      {
+        thread.join();
+      }
+
+      for(const std::uint64_t thread_checksum : checksums)
+      {
+        checksum += thread_checksum;
+      }
+    }
 
     const CpuTimes cpu_finished = current_cpu_times();
     const auto finished_at = std::chrono::steady_clock::now();
@@ -302,6 +349,7 @@ main(int argc, char** argv)
 
     std::cout
       << "count=" << options.count << '\n'
+      << "threads=" << options.threads << '\n'
       << "elapsed_sec=" << format_float(elapsed) << '\n'
       << "rate_per_sec=" << format_float(rate) << '\n'
       << "user_cpu_sec=" << format_float(user_cpu) << '\n'

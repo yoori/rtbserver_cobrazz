@@ -3,6 +3,7 @@ add_executable(BiddingFrontendRequestInfoFillerPerfTest
 
 target_link_libraries(BiddingFrontendRequestInfoFillerPerfTest
   PRIVATE
+    jemalloc
     BiddingFrontend
     Generics
 )

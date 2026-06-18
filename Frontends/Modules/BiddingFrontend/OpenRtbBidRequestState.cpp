@@ -449,7 +449,7 @@ namespace AdServer::Bidding
   {
     BidRequestState::clear();
     uri_.clear();
-    context_ = JsonProcessingContext();
+    context_.clear();
   }
 
   void
@@ -907,8 +907,11 @@ namespace AdServer::Bidding
 
             if(!slot_it->banners.empty())
             {
+              const PmrString tag_size(
+                ad_slot_result.tag_size,
+                slot_it->resource());
               auto banner_by_size_it = slot_it->size_banner.find(
-                ad_slot_result.tag_size);
+                tag_size);
 
               if(banner_by_size_it != slot_it->size_banner.end())
               {
@@ -924,8 +927,11 @@ namespace AdServer::Bidding
             }
 
             {
+              const PmrString tag_size(
+                ad_slot_result.tag_size,
+                slot_it->resource());
               auto banner_by_size_it = slot_it->size_banner.find(
-                ad_slot_result.tag_size);
+                tag_size);
 
               const bool fill_overlay_ext = (!slot_it->banners.empty() && (banner_by_size_it != slot_it->size_banner.end()));
               const bool fill_nroa = (!ad_slot_result.erid.empty() || ad_slot_result.contracts.size() > 0);
@@ -1262,8 +1268,11 @@ namespace AdServer::Bidding
             {
               AdServer::Commons::JsonObject banner(bid_object.add_object(Response::Yandex::BANNER));
 
+              const PmrString tag_size(
+                ad_slot_result.tag_size,
+                slot_it->resource());
               auto banner_by_size_it = slot_it->size_banner.find(
-                ad_slot_result.tag_size);
+                tag_size);
 
               if(banner_by_size_it != slot_it->size_banner.end())
               {

@@ -234,10 +234,15 @@ namespace AdServer::Bidding
       add_(dict_name, String::SubString(), keyword, true);
     }
 
+    template<typename StringType>
     void
-    add_keyword(const std::string& kw)
+    add_keyword(const StringType& kw)
     {
-      add_(String::SubString(), String::SubString(), kw, false);
+      add_(
+        String::SubString(),
+        String::SubString(),
+        String::SubString(kw.data(), kw.size()),
+        false);
     }
 
     void

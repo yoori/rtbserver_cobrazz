@@ -28,9 +28,7 @@ sub start
      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
    "fi && " .
    "ulimit -n 16000 && " .
-   "export TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=536870912 && " .
-   "export TCMALLOC_DISABLE_MEMORY_RELEASE=1 && " .
-   "export MALLOC_ARENA_MAX=4 && " .
+   "export MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 && " .
    "{ ".
      "setsid -f \${VALGRIND_PREFIX} UserInfoManager " .
        "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserInfoManagerConfig.xml > " .
