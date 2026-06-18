@@ -20,7 +20,7 @@ sub start
          "pid=`cat $pid_file`; " .
          "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
        "fi && " .
-       "export MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 && " .
+       "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
        "{ ".
          "setsid -f \${VALGRIND_PREFIX} ChannelServer " .
            "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServer.xml > " .

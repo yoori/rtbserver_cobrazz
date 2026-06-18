@@ -18,7 +18,7 @@ sub start
    "mkdir -p \${log_root}/UserBindServer/Out/UserBindOp_1 && " .
    "mkdir -p \${log_root}/UserBindServer/Out/UserBindOp_2 && " .
    "ulimit -n 16384 && " .
-   "export MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 && " .
+   "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
    "if test -e $pid_file; then " .
      "pid=`cat $pid_file`; " .
      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .

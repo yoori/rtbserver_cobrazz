@@ -17,7 +17,7 @@ sub start
     "fi && " .
     "ulimit -s 100000 && " .
     "ulimit -n 256000 && " .
-    "export MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 && " .
+    "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
     "setsid -f \${VALGRIND_PREFIX} FCGIServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIAdServerConfig.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIAdServer.out 2>&1 < /dev/null";
