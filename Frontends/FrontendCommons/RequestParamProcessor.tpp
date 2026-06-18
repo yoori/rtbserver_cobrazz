@@ -3,9 +3,9 @@
 
 namespace FrontendCommons
 {
-  template<typename RequestInfoType>
-  StringParamProcessor<RequestInfoType>::StringParamProcessor(
-    std::string RequestInfoType::* field,
+  template<typename RequestInfoType, typename StringType>
+  StringParamProcessor<RequestInfoType, StringType>::StringParamProcessor(
+    StringType RequestInfoType::* field,
     unsigned long max_len,
     bool lower,
     bool truncate,
@@ -17,9 +17,9 @@ namespace FrontendCommons
       mime_decode_(mime_decode)
   {}
 
-  template<typename RequestInfoType>
+  template<typename RequestInfoType, typename StringType>
   void
-  StringParamProcessor<RequestInfoType>::process(
+  StringParamProcessor<RequestInfoType, StringType>::process(
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
@@ -39,7 +39,9 @@ namespace FrontendCommons
       in_value.assign_to(request_info.*field_);
       if(lower_)
       {
-        String::AsciiStringManip::to_lower(request_info.*field_);
+        String::AsciiStringManip::to_lower(
+          (request_info.*field_).begin(),
+          (request_info.*field_).end());
       }
     }
     else if (truncate_)
@@ -47,15 +49,17 @@ namespace FrontendCommons
       in_value.substr(0, max_len_).assign_to(request_info.*field_);
       if(lower_)
       {
-        String::AsciiStringManip::to_lower(request_info.*field_);
+        String::AsciiStringManip::to_lower(
+          (request_info.*field_).begin(),
+          (request_info.*field_).end());
       }
     }
   }
 
-  template<typename RequestInfoType, typename CharCategoryType>
-  StringCheckParamProcessor<RequestInfoType, CharCategoryType>::
+  template<typename RequestInfoType, typename CharCategoryType, typename StringType>
+  StringCheckParamProcessor<RequestInfoType, CharCategoryType, StringType>::
    StringCheckParamProcessor(
-    std::string RequestInfoType::* field,
+    StringType RequestInfoType::* field,
     const CharCategoryType& allowed_symbols,
     unsigned long max_len,
     bool lower,
@@ -67,9 +71,9 @@ namespace FrontendCommons
       truncate_(truncate)
   {}
 
-  template<typename RequestInfoType, typename CharCategoryType>
+  template<typename RequestInfoType, typename CharCategoryType, typename StringType>
   void
-  StringCheckParamProcessor<RequestInfoType, CharCategoryType>::process(
+  StringCheckParamProcessor<RequestInfoType, CharCategoryType, StringType>::process(
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
@@ -81,7 +85,9 @@ namespace FrontendCommons
         value.assign_to(request_info.*field_);
         if(lower_)
         {
-          String::AsciiStringManip::to_lower(request_info.*field_);
+          String::AsciiStringManip::to_lower(
+            (request_info.*field_).begin(),
+            (request_info.*field_).end());
         }
       }
     }
@@ -93,7 +99,9 @@ namespace FrontendCommons
         value.substr(0, max_len_).assign_to(request_info.*field_);
         if(lower_)
         {
-          String::AsciiStringManip::to_lower(request_info.*field_);
+          String::AsciiStringManip::to_lower(
+            (request_info.*field_).begin(),
+            (request_info.*field_).end());
         }
       }
     }
@@ -190,9 +198,9 @@ namespace FrontendCommons
     request_info.*field_ = (true_value_ == value);
   }
 
-  template<typename RequestInfoType>
-  UrlParamProcessor<RequestInfoType>::UrlParamProcessor(
-    std::string RequestInfoType::* field,
+  template<typename RequestInfoType, typename StringType>
+  UrlParamProcessor<RequestInfoType, StringType>::UrlParamProcessor(
+    StringType RequestInfoType::* field,
     unsigned long max_len,
     unsigned long view_flags)
     : field_(field),
@@ -200,9 +208,9 @@ namespace FrontendCommons
       view_flags_(view_flags)
   {}
 
-  template<typename RequestInfoType>
+  template<typename RequestInfoType, typename StringType>
   void
-  UrlParamProcessor<RequestInfoType>::process(
+  UrlParamProcessor<RequestInfoType, StringType>::process(
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
@@ -217,7 +225,9 @@ namespace FrontendCommons
       try
       {
         HTTP::BrowserAddress addr(value);
-        addr.get_view(view_flags_, request_info.*field_);
+        std::string dst;
+        addr.get_view(view_flags_, dst);
+        request_info.*field_ = std::move(dst);
       }
       catch(...)
       {}

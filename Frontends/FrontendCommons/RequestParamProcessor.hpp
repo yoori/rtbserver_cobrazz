@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory_resource>
 #include <string>
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -53,13 +54,13 @@ namespace FrontendCommons
     ~ExtRequestParamProcessor() noexcept {}
   };
 
-  template<typename RequestInfoType>
+  template<typename RequestInfoType, typename StringType = std::string>
   class StringParamProcessor:
     public RequestParamProcessor<RequestInfoType>
   {
   public:
     StringParamProcessor(
-      std::string RequestInfoType::* field,
+      StringType RequestInfoType::* field,
       unsigned long max_len = 0,
       bool lower = false,
       bool truncate = false,
@@ -70,20 +71,20 @@ namespace FrontendCommons
       const String::SubString& value) const;
 
   private:
-    std::string RequestInfoType::* field_;
+    StringType RequestInfoType::* field_;
     unsigned long max_len_;
     bool lower_;
     bool truncate_;
     bool mime_decode_;
   };
 
-  template <typename RequestInfoType, typename CharCategoryType>
+  template <typename RequestInfoType, typename CharCategoryType, typename StringType = std::string>
   class StringCheckParamProcessor:
     public RequestParamProcessor<RequestInfoType>
   {
   public:
     StringCheckParamProcessor(
-      std::string RequestInfoType::* field,
+      StringType RequestInfoType::* field,
       const CharCategoryType& allowed_symbols,
       unsigned long max_len = 0,
       bool lower = false,
@@ -94,7 +95,7 @@ namespace FrontendCommons
       const String::SubString& value) const;
 
   private:
-    std::string RequestInfoType::* field_;
+    StringType RequestInfoType::* field_;
     const CharCategoryType& allowed_symbols_;
     unsigned long max_len_;
     bool lower_;
@@ -182,14 +183,14 @@ namespace FrontendCommons
     String::SubString true_value_;
   };
 
-  template<typename RequestInfoType>
+  template<typename RequestInfoType, typename StringType = std::string>
   class UrlParamProcessor: public RequestParamProcessor<RequestInfoType>
   {
   public:
     static const unsigned long MAX_URL_LENGTH = 8 * 1024;
 
     UrlParamProcessor(
-      std::string RequestInfoType::* field,
+      StringType RequestInfoType::* field,
       unsigned long max_len = MAX_URL_LENGTH,
       unsigned long view_flags = HTTP::HTTPAddress::VW_FULL);
 
@@ -198,7 +199,7 @@ namespace FrontendCommons
       const String::SubString& value) const;
 
   private:
-    std::string RequestInfoType::* field_;
+    StringType RequestInfoType::* field_;
     const unsigned long max_len_;
     const unsigned long view_flags_;
   };

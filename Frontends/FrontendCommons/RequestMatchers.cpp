@@ -525,7 +525,7 @@ namespace FrontendCommons
 
           if(platform_names)
           {
-            platform_names->insert("application");
+            platform_names->emplace("application");
           }
         }
       }
@@ -569,7 +569,7 @@ namespace FrontendCommons
 
       if(platform_names)
       {
-        platform_names->insert(element->name);
+        platform_names->emplace(element->name);
       }
 
       if (platform)
@@ -1091,4 +1091,3 @@ namespace FrontendCommons
     }
   }
 } /* namespace FrontendCommons */
-

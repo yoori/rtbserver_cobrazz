@@ -9,6 +9,7 @@
 #include <queue>
 #include <map>
 #include <memory>
+#include <memory_resource>
 
 #include <eh/Exception.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -146,7 +147,7 @@ namespace FrontendCommons
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
     typedef std::set<unsigned long> PlatformIdSet;
-    typedef std::set<std::string> PlatformNameSet;
+    typedef std::pmr::set<std::pmr::string, std::less<>> PlatformNameSet;
 
     PlatformMatcher() /*throw(eh::Exception)*/;
 
