@@ -17,7 +17,7 @@
 #include <Commons/LockMap.hpp>
 #include <Commons/Containers.hpp>
 
-#include "MigratingUserBindChunk.hpp"
+#include "UserBindProcessor.hpp"
 
 namespace AdServer::UserInfoSvcs
 {
@@ -81,7 +81,7 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/;
 
   protected:
-    typedef std::vector<UserBindProcessor_var> UserBindChunkArray;
+    typedef std::vector<UserBindProcessor_var> UserBindProcessorArray;
 
   protected:
     virtual ~UserBindContainer() noexcept;
@@ -93,7 +93,7 @@ namespace AdServer::UserInfoSvcs
   private:
     const Logging::Logger_var logger_;
     const unsigned long common_chunks_number_;
-    UserBindChunkArray chunks_;
+    UserBindProcessorArray chunks_;
   };
 
   typedef ReferenceCounting::SmartPtr<UserBindContainer>

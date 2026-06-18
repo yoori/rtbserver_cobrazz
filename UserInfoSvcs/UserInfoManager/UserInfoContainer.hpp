@@ -18,8 +18,7 @@
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
-#include <ProfilingCommons/PlainStorage3/LoadingProgressCallback.hpp>
+#include <ProfilingCommons/PlainStorage3/LoadingProgressCallbackBase.hpp>
 
 
 #include <UserInfoSvcs/UserInfoCommons/ChannelDictionary.hpp>
@@ -348,7 +347,7 @@ namespace AdServer
         const Generics::Time& timeout)
         /*throw(NotReady, ChannelsMatcher::InvalidProfileException)*/;
 
-      template<typename ProfileMapType, typename AdapterOptionalType>
+      template<typename ProfileMapType>
       ReferenceCounting::SmartPtr<ProfileMapType>
       open_chunked_map_(
         unsigned long common_chunks_number,
@@ -397,8 +396,6 @@ namespace AdServer
       const Generics::Time session_timeout_;
       const Generics::Time base_profile_expire_time_;
 
-      AdServer::ProfilingCommons::LoadingProgressCallbackBase_var
-        loading_progress_processor_;
     };
 
     typedef ReferenceCounting::SmartPtr<UserInfoContainer>

@@ -13,6 +13,7 @@
 #include <LogCommons/LogCommons.ipp>
 
 #include "UserBindContainer.hpp"
+#include "UserBindRocksDBChunk.hpp"
 
 namespace Aspect
 {
@@ -41,17 +42,17 @@ namespace AdServer::UserInfoSvcs
     Logging::Logger* logger,
     unsigned long common_chunks_number,
     const ChunkPathMap& chunk_folders,
-    const char* file_prefix,
-    const char* bound_file_prefix,
+    const char* /*file_prefix*/,
+    const char* /*bound_file_prefix*/,
     const Generics::Time& extend_time_period,
     const Generics::Time& bound_extend_time_period,
     const Generics::Time& min_age,
     bool bind_at_min_age,
     unsigned long max_bad_event,
-    unsigned long portions_number,
-    bool load_slave,
-    unsigned long partition_index, // instance partition number (first or second part of cluster)
-    unsigned long partitions_number)
+    unsigned long /*portions_number*/,
+    bool /*load_slave*/,
+    unsigned long /*partition_index*/, // instance partition number (first or second part of cluster)
+    unsigned long /*partitions_number*/)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       common_chunks_number_(common_chunks_number)
@@ -63,22 +64,6 @@ namespace AdServer::UserInfoSvcs
     for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
         chunk_it != chunk_folders.end(); ++chunk_it)
     {
-      const UserBindChunk_var legacy_chunk = new UserBindChunk(
-        logger,
-        chunk_it->second.c_str(),
-        file_prefix,
-        bound_file_prefix,
-        extend_time_period,
-        bound_extend_time_period,
-        min_age,
-        bind_at_min_age,
-        max_bad_event,
-        portions_number,
-        load_slave,
-        partition_index,
-        partitions_number,
-        chunk_folders.size());
-
       const std::string user_seen_path =
         chunk_it->second + "/UserSeen.rocksdb";
       const std::string user_bind_path =
@@ -95,9 +80,7 @@ namespace AdServer::UserInfoSvcs
         bind_at_min_age,
         max_bad_event);
 
-      chunks_[chunk_it->first] = new MigratingUserBindChunk(
-        rocksdb_chunk,
-        legacy_chunk);
+      chunks_[chunk_it->first] = rocksdb_chunk;
     }
   }
 
@@ -146,7 +129,7 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& bound_expire_time)
     /*throw(Exception)*/
   {
-    for(UserBindChunkArray::iterator chunk_it = chunks_.begin();
+    for(UserBindProcessorArray::iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end(); ++chunk_it)
     {
       if(*chunk_it)
@@ -159,7 +142,7 @@ namespace AdServer::UserInfoSvcs
   void
   UserBindContainer::dump() /*throw(Exception)*/
   {
-    for(UserBindChunkArray::iterator chunk_it = chunks_.begin();
+    for(UserBindProcessorArray::iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end(); ++chunk_it)
     {
       if(*chunk_it)

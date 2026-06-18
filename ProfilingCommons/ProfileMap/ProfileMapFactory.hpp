@@ -9,8 +9,6 @@
 #include <ProfilingCommons/ProfileMap/AdaptProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
-#include <ProfilingCommons/ProfileMap/MigratingProfileMap.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapAsyncAdapter.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
 
 namespace AdServer
@@ -473,104 +471,6 @@ namespace ProfilingCommons
         key_hash);
     }
 
-    template<typename KeyType,
-      typename KeyAccessorType,
-      typename KeyHashType,
-      typename AdapterOptionalType>
-    static
-    ReferenceCounting::SmartPtr<
-      AdServer::ProfilingCommons::ChunkedProfileMap<
-        KeyType, AdServer::ProfilingCommons::TransactionProfileMap<KeyType>, KeyHashType> >
-    open_migrating_rocksdb_chunked_map(
-      unsigned long common_chunks_number,
-      const ChunkPathMap& chunk_folders,
-      const char* chunk_prefix,
-      const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-      Generics::CompositeActiveObject& parent_container,
-      Generics::ActiveObjectCallback_var callback,
-      KeyHashType key_hash,
-      LoadingProgressCallbackBase_var progress_checker_parent = nullptr,
-      unsigned long max_waiters = 0,
-      const AdapterOptionalType& optional_adapter = AdapterOptionalType())
-      /*throw(eh::Exception)*/
-    {
-      typedef ChunkedProfileMap<
-        KeyType,
-        AdServer::ProfilingCommons::TransactionProfileMap<KeyType>,
-        KeyHashType> ProfileMapType;
-
-      typename ProfileMapType::ChunkIdToProfileMap chunks;
-      auto fallback_executor_pool =
-        std::make_shared<AdServer::Commons::ExecutorPool>(
-          callback,
-          4);
-      parent_container.add_child_object(fallback_executor_pool);
-
-      for(ChunkPathMap::const_iterator chunk_folder_it =
-            chunk_folders.begin();
-          chunk_folder_it != chunk_folders.end(); ++chunk_folder_it)
-      {
-        Generics::ActiveObject_var active_object;
-        ReferenceCounting::SmartPtr<ProfileMap<KeyType> > legacy_map;
-        ReferenceCounting::SmartPtr<LevelProfileMap<KeyType, KeyAccessorType> > level_map =
-          new LevelProfileMap<KeyType, KeyAccessorType>(
-            callback,
-            chunk_folder_it->second.c_str(),
-            chunk_prefix,
-            user_level_map_traits,
-            progress_checker_parent);
-
-        active_object = level_map;
-
-        if(AdapterOptionalType::DEFINED)
-        {
-          legacy_map = new AdaptProfileMap<
-            KeyType,
-            typename AdapterOptionalType::AdapterType>(
-              level_map,
-              optional_adapter.adapter);
-        }
-        else
-        {
-          legacy_map = level_map;
-        }
-
-        typedef RocksDBBatchingProfileMap<
-          KeyType,
-          KeyAccessorStringAdapter<KeyAccessorType> >
-          RocksDBMap;
-        const std::string rocksdb_path =
-          chunk_folder_it->second + "/" + chunk_prefix + ".rocksdb";
-        ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map =
-          new RocksDBMap(
-            String::SubString(rocksdb_path.c_str()),
-            user_level_map_traits.expire_time);
-        rocksdb_map->activate_object();
-
-        ReferenceCounting::SmartPtr<AsyncProfileMap<KeyType> >
-          legacy_async_map =
-            new ProfileMapAsyncAdapter<KeyType>(
-              legacy_map,
-              fallback_executor_pool);
-        ReferenceCounting::SmartPtr<ProfileMap<KeyType> > migrating_map =
-          new MigratingProfileMap<KeyType, RocksDBMap>(
-            rocksdb_map,
-            legacy_async_map);
-        ReferenceCounting::SmartPtr<
-          AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =
-            new TransactionProfileMap<KeyType>(
-              migrating_map,
-              max_waiters);
-
-        parent_container.add_child_object(active_object);
-        chunks.insert(std::make_pair(chunk_folder_it->first, base_map));
-      }
-
-      return new ProfileMapType(
-        common_chunks_number,
-        chunks,
-        key_hash);
-    }
   };
 }
 }

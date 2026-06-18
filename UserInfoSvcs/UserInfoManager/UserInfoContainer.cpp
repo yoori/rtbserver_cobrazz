@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 
@@ -5,8 +7,6 @@
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
-
-#include <Logger/ActiveObjectCallback.hpp>
 
 #include <String/AsciiStringManip.hpp>
 #include <String/Tokenizer.hpp>
@@ -32,7 +32,42 @@ namespace
   const char HISTORY_CHUNK_PREFIX[] = "History";
   const char TEMP_HISTORY_CHUNK_PREFIX[] = "TempHistory";
   const char FREQCAP_CHUNK_PREFIX[] = "FreqCap";
-  const unsigned int CHUNKED_MAPS_COUNT = 8;
+
+  struct UserIdRocksDBAccessor
+  {
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    static unsigned int
+    size(const Generics::Uuid&) noexcept
+    {
+      return Generics::Uuid::size();
+    }
+
+    static void
+    load(const void* buf, unsigned int size, Generics::Uuid& key)
+    {
+      const char* buf_ptr = static_cast<const char*>(buf);
+      if (size == Generics::Uuid::encoded_size())
+      {
+        key = Generics::Uuid(String::SubString(buf_ptr, size));
+      }
+      else
+      {
+        key = Generics::Uuid(buf_ptr, buf_ptr + size);
+      }
+    }
+
+    static void
+    save(const Generics::Uuid& key, void* buf, unsigned int size)
+    {
+      if (key.size() > size)
+      {
+        throw Exception("UserIdRocksDBAccessor::save(): buffer is too small");
+      }
+
+      std::memcpy(static_cast<char*>(buf), &*key.begin(), key.size());
+    }
+  };
 }
 
 namespace AdServer
@@ -57,7 +92,7 @@ namespace UserInfoSvcs
     unsigned long max_base_profile_waiters,
     unsigned long max_temp_profile_waiters,
     unsigned long max_freqcap_profile_waiters,
-    AdServer::ProfilingCommons::LoadingProgressCallbackBase_var progress_processor_parent)
+    AdServer::ProfilingCommons::LoadingProgressCallbackBase_var /*progress_processor_parent*/)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
@@ -70,65 +105,39 @@ namespace UserInfoSvcs
       session_timeout_(session_timeout),
       base_profile_expire_time_(base_level_map_traits.expire_time)
   {
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<BaseProfileAdapter>
-      AdaptBaseProfile;
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<HistoryProfileAdapter>
-      AdaptHistoryProfile;
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserFreqCapProfileAdapter>
-      AdaptFreqCapProfile;
-
-    if (progress_processor_parent.in())
-    {
-      loading_progress_processor_ =
-        new AdServer::ProfilingCommons::LoadingProgressCallback(
-          progress_processor_parent,
-          CHUNKED_MAPS_COUNT * chunk_folders.size());
-    }
-    else
-    {
-      loading_progress_processor_ =
-        new AdServer::ProfilingCommons::LoadingProgressCallbackBase();
-    }
-
-    base_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptBaseProfile>(
+    base_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         BASE_CHUNK_PREFIX,
         base_level_map_traits,
         max_base_profile_waiters);
 
-    temp_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptBaseProfile>(
+    temp_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         TEMP_CHUNK_PREFIX,
         temp_level_map_traits,
         max_temp_profile_waiters);
 
-    add_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptBaseProfile>(
+    add_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         ADD_CHUNK_PREFIX,
         add_level_map_traits);
 
-    history_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptHistoryProfile>(
+    history_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         HISTORY_CHUNK_PREFIX,
         history_level_map_traits);
 
-    temp_history_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptHistoryProfile>(
+    temp_history_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         TEMP_HISTORY_CHUNK_PREFIX,
         temp_level_map_traits);
 
-    freq_cap_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptFreqCapProfile>(
+    freq_cap_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         FREQCAP_CHUNK_PREFIX,
@@ -3099,8 +3108,7 @@ namespace UserInfoSvcs
     }
   }
 
-  template<typename ProfileMapType,
-    typename AdapterOptionalType>
+  template<typename ProfileMapType>
   ReferenceCounting::SmartPtr<ProfileMapType>
   UserInfoContainer::open_chunked_map_(
     unsigned long common_chunks_number,
@@ -3115,24 +3123,15 @@ namespace UserInfoSvcs
     try
     {
       return AdServer::ProfilingCommons::ProfileMapFactory::
-        open_migrating_rocksdb_chunked_map<
+        open_rocksdb_chunked_map<
           UserId,
-          AdServer::ProfilingCommons::UserIdAccessor,
-          unsigned long (*)(const Generics::Uuid& uuid),
-          AdapterOptionalType>(
+          UserIdRocksDBAccessor,
+          unsigned long (*)(const Generics::Uuid& uuid)>(
             common_chunks_number,
             chunk_folders,
             chunk_prefix,
             user_level_map_traits,
-            *this,
-            Generics::ActiveObjectCallback_var(
-              new Logging::ActiveObjectCallbackImpl(
-                logger_,
-                "UserInfoContainer",
-                "UserInfo",
-                "ADS-IMPL-84")),
             AdServer::Commons::uuid_distribution_hash,
-            loading_progress_processor_,
             max_waiters);
     }
     catch(const eh::Exception& ex)
