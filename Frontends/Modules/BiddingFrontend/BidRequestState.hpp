@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -131,13 +132,15 @@ namespace AdServer::Bidding
     void
     complete_request_(
       bool not_interrupted,
-      AdServer::Bidding::CampaignManager::RequestCreativeResult&
+      std::shared_ptr<
+        const AdServer::Bidding::CampaignManager::RequestCreativeResult>
         campaign_match_result) noexcept;
 
     bool
     complete_request_impl_(
       bool not_interrupted,
-      AdServer::Bidding::CampaignManager::RequestCreativeResult&
+      std::shared_ptr<
+        const AdServer::Bidding::CampaignManager::RequestCreativeResult>
         campaign_match_result) noexcept;
 
     void

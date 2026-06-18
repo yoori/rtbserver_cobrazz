@@ -3335,7 +3335,12 @@ namespace AdServer::Bidding
     }
 
     as_slots_context.resize(bid_request.adslot_size());
-    request_params.ad_slots.resize(bid_request.adslot_size());
+    request_params.ad_slots.clear();
+    request_params.ad_slots.reserve(bid_request.adslot_size());
+    for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
+    {
+      request_params.ad_slots.emplace_back(request_params.arena_.get());
+    }
     for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
     {
       AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
@@ -4298,7 +4303,12 @@ namespace AdServer::Bidding
 
     request_params.common_info.log_as_test = context.test;
 
-    request_params.ad_slots.resize(context.ad_slots.size());
+    request_params.ad_slots.clear();
+    request_params.ad_slots.reserve(context.ad_slots.size());
+    for(std::size_t i = 0; i < context.ad_slots.size(); ++i)
+    {
+      request_params.ad_slots.emplace_back(request_params.arena_.get());
+    }
     std::size_t slot_i = 0;
     for(JsonAdSlotProcessingContextList::iterator slot_it =
           context.ad_slots.begin();

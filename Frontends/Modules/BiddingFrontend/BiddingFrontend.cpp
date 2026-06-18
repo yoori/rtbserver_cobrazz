@@ -436,11 +436,12 @@ namespace AdServer::Bidding
       const PB::RequestCreativeResult& source,
       CampaignManager::RequestCreativeResult& target)
     {
-      target.ad_slots.resize(source.ad_slots_size());
+      target.ad_slots.clear();
+      target.ad_slots.reserve(source.ad_slots_size());
       for(int i = 0; i < source.ad_slots_size(); ++i)
       {
         const auto& src = source.ad_slots(i);
-        auto& dst = target.ad_slots[i];
+        auto& dst = target.ad_slots.emplace_back(target.arena_.get());
         dst.ad_slot_id = src.ad_slot_id();
         unpack_oct_seq(src.request_id(), dst.request_id);
         dst.passback = src.passback();
@@ -773,7 +774,6 @@ namespace AdServer::Bidding
       timeout_workers_(std::move(timeout_workers)),
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
-      passback_task_count_(0),
       reached_max_pending_tasks_(0),
       composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {
@@ -882,10 +882,6 @@ namespace AdServer::Bidding
 
         control_task_runner_ = new Generics::TaskRunner(callback(), 4);
         add_child_object(control_task_runner_);
-
-        // ADSC-10554
-        // Interrupted requests queue
-        passback_workers_ = bid_workers_;
 
         Generics::Planner_var task_scheduler(new Generics::Planner(callback()));
         add_child_object(task_scheduler);
@@ -1735,7 +1731,7 @@ namespace AdServer::Bidding
 
       if(check_interrupt_(FUN, Stage::UserResolving, request_task))
       {
-        request_task->complete_request_(false, *campaign_match_result);
+        request_task->complete_request_(false, campaign_match_result);
         co_return FrontendCommons::RequestResult::written();
       }
 
@@ -1962,7 +1958,7 @@ namespace AdServer::Bidding
 
       if(check_interrupt_(FUN, Stage::TriggerMatching, request_task))
       {
-        request_task->complete_request_(false, *campaign_match_result);
+        request_task->complete_request_(false, campaign_match_result);
         co_return FrontendCommons::RequestResult::written();
       }
 
@@ -2224,7 +2220,7 @@ namespace AdServer::Bidding
 
       if(check_interrupt_(FUN, Stage::HistoryMatching, request_task))
       {
-        request_task->complete_request_(false, *campaign_match_result);
+        request_task->complete_request_(false, campaign_match_result);
         co_return FrontendCommons::RequestResult::written();
       }
 
@@ -2400,7 +2396,7 @@ namespace AdServer::Bidding
       if(check_interrupt_(FUN, Stage::CampaignSelection, request_task))
       {
         flush_stats();
-        request_task->complete_request_(false, *campaign_match_result);
+        request_task->complete_request_(false, campaign_match_result);
         co_return FrontendCommons::RequestResult::written();
       }
 
@@ -2427,7 +2423,7 @@ namespace AdServer::Bidding
       }
 
       flush_stats();
-      request_task->complete_request_(true, *campaign_match_result);
+      request_task->complete_request_(true, campaign_match_result);
     }
     catch(const eh::Exception& ex)
     {
@@ -2437,7 +2433,7 @@ namespace AdServer::Bidding
         "ADS-IMPL-109") <<
         FUN << ": eh::Exception caught: " << ex.what();
       flush_stats();
-      request_task->complete_request_(false, *campaign_match_result);
+      request_task->complete_request_(false, campaign_match_result);
     }
     catch(...)
     {
@@ -2447,65 +2443,18 @@ namespace AdServer::Bidding
         "ADS-IMPL-109") <<
         FUN << ": unknown exception caught";
       flush_stats();
-      request_task->complete_request_(false, *campaign_match_result);
+      request_task->complete_request_(false, campaign_match_result);
     }
 
     co_return FrontendCommons::RequestResult::written();
-  }
-
-  void
-  Frontend::interrupted_select_campaign_(
-    BidRequestState* request_task) noexcept
-  {
-    static const char* FUN = "Bidding::Frontend::interrupted_select_campaign_()";
-
-    try
-    {
-      RequestParamsHolder_var
-        request_params(request_task->request_params());
-
-      //request_task->request_params.reset();
-
-      unsigned long cur_task_count = passback_task_count_.exchange_and_add(1) + 1;
-
-      if(cur_task_count > config_->interrupted_max_pending_tasks() + config_->interrupted_threads())
-      {
-        passback_task_count_ += -1;
-      }
-      else if(!passback_workers_)
-      {
-        passback_task_count_ += -1;
-      }
-      else
-      {
-        try
-        {
-          co_interrupted_select_campaign_(request_params).start_detached(nullptr);
-        }
-        catch(...)
-        {
-          passback_task_count_ += -1;
-          throw;
-        }
-      }
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << ex.what();
-
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-10554");
-    }
   }
 
   bool
   Frontend::consider_campaign_selection_(
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
-    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
+    std::shared_ptr<
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult>
       campaign_match_result,
     std::string& hostname)
     noexcept
@@ -2520,9 +2469,7 @@ namespace AdServer::Bidding
       co_consider_campaign_selection_(
         user_id,
         now,
-        std::make_shared<
-          AdServer::Bidding::CampaignManager::RequestCreativeResult>(
-            campaign_match_result),
+        std::move(campaign_match_result),
         hostname).start_detached(nullptr);
     }
     catch(const eh::Exception& e)
@@ -3130,31 +3077,6 @@ namespace AdServer::Bidding
         Aspect::BIDDING_FRONTEND,
         "ADS-IMPL-118") << FUN <<
         ": CampaignManager::get_colocation_flags() failed: " << ex.what();
-    }
-
-    co_return FrontendCommons::RequestResult::written();
-  }
-
-  FrontendCommons::RequestTask
-  Frontend::co_interrupted_select_campaign_(
-    ReferenceCounting::SmartPtr<RequestParamsHolder> request_params)
-    noexcept
-  {
-    try
-    {
-      co_await AdServer::Commons::ExecutorPool::yield(passback_workers_);
-      passback_task_count_ += -1;
-
-      google::protobuf::Arena request_arena;
-      auto* request =
-        google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
-          &request_arena);
-      pack_get_campaign_creative_request(*request, *request_params);
-      co_await campaign_manager_coro_->get_campaign_creative(*request);
-    }
-    catch(const eh::Exception&)
-    {
-      // Interrupted request passback is best-effort.
     }
 
     co_return FrontendCommons::RequestResult::written();

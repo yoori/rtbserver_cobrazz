@@ -388,6 +388,11 @@ namespace AdServer::Bidding::CampaignManager
 
   struct AdSlotDebugInfo
   {
+    AdSlotDebugInfo(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : selected_creatives(resource)
+    {}
+
     unsigned long tag_id = 0;
     unsigned long tag_size_id = 0;
     unsigned long site_id = 0;
@@ -434,6 +439,22 @@ namespace AdServer::Bidding::CampaignManager
 
   struct AdSlotResult
   {
+    AdSlotResult(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : track_pixel_urls(resource),
+        selected_creatives(resource),
+        external_visual_categories(resource),
+        external_content_categories(resource),
+        tokens(resource),
+        ext_tokens(resource),
+        freq_caps(resource),
+        uc_freq_caps(resource),
+        debug_info(resource),
+        native_data_tokens(resource),
+        native_image_tokens(resource),
+        contracts(resource)
+    {}
+
     unsigned long ad_slot_id = 0;
     RequestIdInfo request_id;
     bool passback = false;
@@ -472,6 +493,12 @@ namespace AdServer::Bidding::CampaignManager
 
   struct AdRequestDebugInfo
   {
+    AdRequestDebugInfo(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : geo_channels(resource),
+        platform_channels(resource)
+    {}
+
     unsigned long colo_id = 0;
     IdSeq geo_channels;
     IdSeq platform_channels;
@@ -481,6 +508,19 @@ namespace AdServer::Bidding::CampaignManager
 
   struct RequestCreativeResult
   {
+    RequestCreativeResult(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : arena_(std::make_unique<std::pmr::monotonic_buffer_resource>(resource)),
+        ad_slots(arena_.get()),
+        debug_info(arena_.get())
+    {}
+
+    RequestCreativeResult(const RequestCreativeResult&) = delete;
+    RequestCreativeResult& operator=(const RequestCreativeResult&) = delete;
+    RequestCreativeResult(RequestCreativeResult&&) noexcept = default;
+    RequestCreativeResult& operator=(RequestCreativeResult&&) = delete;
+
+    std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;
     AdSlotResultSeq ad_slots;
     TimestampInfo process_time;
     AdRequestDebugInfo debug_info;

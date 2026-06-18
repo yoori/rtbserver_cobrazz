@@ -86,7 +86,8 @@ namespace AdServer::Bidding
   void
   BidRequestState::complete_request_(
     bool not_interrupted,
-    AdServer::Bidding::CampaignManager::RequestCreativeResult&
+    std::shared_ptr<
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult>
       campaign_match_result)
     noexcept
   {
@@ -99,7 +100,8 @@ namespace AdServer::Bidding
   bool
   BidRequestState::complete_request_impl_(
     bool not_interrupted,
-    AdServer::Bidding::CampaignManager::RequestCreativeResult&
+    std::shared_ptr<
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult>
       campaign_match_result)
     noexcept
   {
@@ -113,7 +115,9 @@ namespace AdServer::Bidding
       return true;
     }
 
-    if(campaign_match_result.ad_slots.size())
+    const auto& campaign_match_result_ref = *campaign_match_result;
+
+    if(campaign_match_result_ref.ad_slots.size())
     {
       set_current_stage(Stage::CampaignSelectionConsidering);
 
@@ -130,7 +134,7 @@ namespace AdServer::Bidding
     if(debug_sink_.require_debug_info())
     {
       debug_sink_.print_creative_selection_debug_info(
-        campaign_match_result,
+        campaign_match_result_ref,
         request_time_metering_.creative_selection ?
           &*request_time_metering_.creative_selection : nullptr);
       print_time_metering_debug_info_();
@@ -141,17 +145,18 @@ namespace AdServer::Bidding
       return true;
     }
 
-    if(campaign_match_result.ad_slots.size())
+    if(campaign_match_result_ref.ad_slots.size())
     {
       // check that any campaign selected (in any slot)
       bool ad_selected = false;
 
       for(std::size_t ad_slot_i = 0;
-          ad_slot_i < campaign_match_result.ad_slots.size();
+          ad_slot_i < campaign_match_result_ref.ad_slots.size();
           ++ad_slot_i)
       {
         const AdServer::Bidding::CampaignManager::
-          AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
+          AdSlotResult& ad_slot_result =
+            campaign_match_result_ref.ad_slots[ad_slot_i];
 
         if(ad_slot_result.selected_creatives.size() > 0)
         {
@@ -162,7 +167,7 @@ namespace AdServer::Bidding
 
       if(ad_selected)
       {
-        this->write_response(campaign_match_result);
+        this->write_response(campaign_match_result_ref);
         return false;
       }
     }

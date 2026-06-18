@@ -137,9 +137,14 @@ namespace AdServer::Bidding
     };
 
     RequestInfo()
-      : arena_(std::make_unique<std::pmr::monotonic_buffer_resource>()),
+      : RequestInfo(std::make_unique<std::pmr::monotonic_buffer_resource>())
+    {}
+
+    explicit RequestInfo(
+      std::unique_ptr<std::pmr::monotonic_buffer_resource> arena) noexcept
+      : arena_(std::move(arena)),
         current_time(),
-        source_id(),
+        source_id(arena_.get()),
         debug_ccg(0),
         publisher_account_ids(arena_.get()),
         publisher_site_id(0),
@@ -147,21 +152,21 @@ namespace AdServer::Bidding
         flag(0),
         filter_request(false),
         skip_ccg_keywords(false),
-        search_words(),
-        seat(),
+        search_words(arena_.get()),
+        seat(arena_.get()),
         truncate_domain(false),
         ipw_extension(false),
-        format(),
-        default_debug_size(),
+        format(arena_.get()),
+        default_debug_size(arena_.get()),
         debug_sizes(arena_.get()),
         user_create_time(Generics::Time::ZERO),
         location(),
         is_app(false),
-        application_id(),
-        advertising_id(),
-        idfa(),
-        ssp_devicetype_str(),
-        ssp_video_placementtype_str(),
+        application_id(arena_.get()),
+        advertising_id(arena_.get()),
+        idfa(arena_.get()),
+        ssp_devicetype_str(arena_.get()),
+        ssp_video_placementtype_str(arena_.get()),
         notice_instantiate_type(SourceTraits::NIT_NONE),
         vast_notice_instantiate_type(SourceTraits::NIT_NONE),
         native_notice_instantiate_type(SourceTraits::NIT_NONE),
@@ -170,11 +175,11 @@ namespace AdServer::Bidding
         native_ads_impression_tracker_type(AdServer::CampaignSvcs::NAITT_IMP),
         erid_return_type(SourceTraits::ERIDRT_EXT_BUZSAPE), // by default fill buz sape nroa
         skip_ext_category(false),
-        notice_url(),
-        require_debug_info(),
-        bid_request_id(),
-        bid_site_id(),
-        bid_publisher_id(),
+        notice_url(arena_.get()),
+        require_debug_info(arena_.get()),
+        bid_request_id(arena_.get()),
+        bid_site_id(arena_.get()),
+        bid_publisher_id(arena_.get()),
         ext_user_ids(arena_.get()),
         additional_info(arena_.get())
     {}
@@ -188,8 +193,10 @@ namespace AdServer::Bidding
     void
     reset() noexcept
     {
+      auto arena = std::move(arena_);
       this->~RequestInfo();
-      new(this) RequestInfo();
+      arena->release();
+      new(this) RequestInfo(std::move(arena));
     }
 
     std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;

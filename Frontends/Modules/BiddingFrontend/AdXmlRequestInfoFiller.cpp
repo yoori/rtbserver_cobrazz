@@ -179,7 +179,9 @@ namespace AdServer::Bidding
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
 
-    request_params.ad_slots.resize(1);
+    request_params.ad_slots.clear();
+    request_params.ad_slots.reserve(1);
+    request_params.ad_slots.emplace_back(request_params.arena_.get());
 
     AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
       request_params.ad_slots[0];

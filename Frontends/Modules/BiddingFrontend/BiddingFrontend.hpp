@@ -200,15 +200,6 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    interrupted_select_campaign_(
-      BidRequestState* request_task) noexcept;
-
-    FrontendCommons::RequestTask
-    co_interrupted_select_campaign_(
-      ReferenceCounting::SmartPtr<RequestParamsHolder> request_params)
-      noexcept;
-
-    void
     select_campaign_(
       const adserver::user_info_svcs::user_info_manager::MatchResponse*
         history_match_result,
@@ -227,7 +218,8 @@ namespace AdServer::Bidding
     consider_campaign_selection_(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
-      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
+      std::shared_ptr<
+        const AdServer::Bidding::CampaignManager::RequestCreativeResult>
         campaign_match_result,
       std::string& hostname)
       noexcept;
@@ -351,10 +343,6 @@ namespace AdServer::Bidding
       bool add_root_native);
     */
   protected:
-    // ADSC-10554
-    // Interrupted requests queue
-    std::shared_ptr<AdServer::Commons::ExecutorPool> passback_workers_;
-
     // configuration
     CommonConfigPtr common_config_;
     ConfigPtr config_;
@@ -399,7 +387,6 @@ namespace AdServer::Bidding
     ExtConfig_var ext_config_;
 
     Generics::AtomicInt bid_task_count_;
-    Generics::AtomicInt passback_task_count_;
 
     mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
     unsigned long reached_max_pending_tasks_;
