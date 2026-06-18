@@ -17,15 +17,24 @@ namespace AdServer::Grpc
     static ResponseHolder make_value(Response&& response)
     {
       auto owner = std::make_shared<Response>(std::move(response));
-      const auto* response_ptr = owner.get();
+      auto* response_ptr = owner.get();
       return ResponseHolder(response_ptr, std::move(owner));
     }
 
     static ResponseHolder make_arena(
-      const Response& response,
+      Response& response,
       std::shared_ptr<google::protobuf::Arena> arena)
     {
       return ResponseHolder(&response, std::move(arena));
+    }
+
+    Response& get()
+    {
+      if (!response_)
+      {
+        throw std::logic_error("gRPC response is not initialized");
+      }
+      return *response_;
     }
 
     const Response& get() const
@@ -37,9 +46,19 @@ namespace AdServer::Grpc
       return *response_;
     }
 
+    Response& operator*()
+    {
+      return get();
+    }
+
     const Response& operator*() const
     {
       return get();
+    }
+
+    Response* operator->()
+    {
+      return &get();
     }
 
     const Response* operator->() const
@@ -53,13 +72,13 @@ namespace AdServer::Grpc
     }
 
   private:
-    ResponseHolder(const Response* response, std::shared_ptr<void> owner)
+    ResponseHolder(Response* response, std::shared_ptr<void> owner)
       : owner_(std::move(owner)),
         response_(response)
     {}
 
   private:
     std::shared_ptr<void> owner_;
-    const Response* response_ = nullptr;
+    Response* response_ = nullptr;
   };
 }

@@ -140,10 +140,12 @@ namespace AdServer::Grpc
     submission_gate_->activate_object();
     timing_coalesce_gate_->activate_object();
     stream_shrink_gate_->activate_object();
+
     {
       std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
       coalesce_timer_deadline_.reset();
     }
+
     Generics::CompositeActiveObject::activate_object_();
     schedule_stream_shrink_();
   }
@@ -172,6 +174,7 @@ namespace AdServer::Grpc
     assert(stream_shrink_gate_);
     stream_shrink_gate_->wait_object();
     std::vector<BatchingStreamBase::PendingBatch> pending_batches;
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       pending_batches.reserve(pending_batches_.size());
@@ -184,6 +187,7 @@ namespace AdServer::Grpc
       connecting_stream_.reset();
       last_connect_failure_time_.reset();
     }
+
     finish_batches_with_error(
       pending_batches,
       grpc::StatusCode::UNAVAILABLE,
@@ -207,6 +211,7 @@ namespace AdServer::Grpc
     total.max_streams = max_streams_seen_.load(std::memory_order_relaxed);
     total.inflight_items = inflight_limiter_.count();
     total.queue_items = batching_queue_ ? batching_queue_->size() : 0;
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       total.pending_batches = pending_batches_.size();
@@ -214,6 +219,7 @@ namespace AdServer::Grpc
       total.available_streams = available_streams_.size();
       total.connecting_streams = connecting_ ? 1 : 0;
     }
+
     {
       std::lock_guard<std::mutex> lock(streams_registry_lock_);
       total.active_streams = streams_.size();
@@ -228,6 +234,7 @@ namespace AdServer::Grpc
         }
       }
     }
+
     return total;
   }
 
@@ -327,6 +334,7 @@ namespace AdServer::Grpc
     bool start_connect = false;
     bool fail_batch = false;
     std::vector<BatchingStreamBase::PendingBatch> failed_batches;
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       if (!active())
@@ -837,6 +845,7 @@ namespace AdServer::Grpc
 
     const auto now = Generics::Time::get_time_of_day();
     std::vector<StreamHolderPtr> streams_to_close;
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       while (available_streams_.size() > 1 &&
@@ -934,6 +943,7 @@ namespace AdServer::Grpc
   {
     StreamHolderPtr stream_holder;
     bool connect_success = false;
+
     {
       std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
       auto it = streams_.find(stream);
@@ -970,6 +980,7 @@ namespace AdServer::Grpc
 
     bool stream_removed = false;
     StreamHolderPtr stream_holder;
+
     {
       std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
       auto it = streams_.find(stream);
@@ -990,6 +1001,7 @@ namespace AdServer::Grpc
     std::vector<BatchingStreamBase::PendingBatch> failed_batches;
     bool start_connect = false;
     const auto failure_time = Generics::Time::get_time_of_day();
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.erase(
@@ -1036,6 +1048,7 @@ namespace AdServer::Grpc
     assert(stream);
 
     StreamHolderPtr holder;
+
     {
       std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
       auto it = std::find(
@@ -1083,6 +1096,7 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::deactivate_streams_() noexcept
   {
     std::vector<StreamHolderPtr> streams;
+
     {
       std::lock_guard<std::mutex> lock(streams_registry_lock_);
       streams.reserve(streams_.size());
@@ -1113,12 +1127,14 @@ namespace AdServer::Grpc
     std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams;
     std::vector<StreamHolderPtr> draining_streams;
     std::vector<BatchingStreamPtr> deferred_streams;
+
     {
       std::lock_guard<std::mutex> lock(streams_registry_lock_);
       streams.swap(streams_);
       draining_streams.swap(draining_streams_);
       deferred_streams.swap(deferred_streams_);
     }
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.clear();
@@ -1159,6 +1175,7 @@ namespace AdServer::Grpc
   {
     std::vector<StreamHolderPtr> draining_streams;
     std::vector<BatchingStreamPtr> deferred_streams;
+
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.clear();
@@ -1167,13 +1184,16 @@ namespace AdServer::Grpc
       connecting_stream_.reset();
       last_connect_failure_time_.reset();
     }
+
     std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams;
+
     {
       std::lock_guard<std::mutex> lock(streams_registry_lock_);
       streams.swap(streams_);
       draining_streams.swap(draining_streams_);
       deferred_streams.swap(deferred_streams_);
     }
+
     up_streams_.store(0, std::memory_order_release);
   }
 
@@ -1181,6 +1201,7 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::clear_deferred_streams_() noexcept
   {
     std::vector<BatchingStreamPtr> streams_to_destroy;
+
     {
       std::lock_guard<std::mutex> lock(streams_registry_lock_);
       streams_to_destroy.swap(deferred_streams_);
