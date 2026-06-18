@@ -1111,12 +1111,11 @@ namespace AdServer
         }
       }
 
-      Generics::Time current_time(
-        std::max(static_cast<uint32_t>(now.tv_sec),
-                 base_last_request_time));
+      Generics::Time current_time(std::max(
+        static_cast<uint32_t>(now.tv_sec),
+        base_last_request_time));
 
-      properties.fraud_request =
-        now.tv_sec <= base_ignore_fraud_time;
+      properties.fraud_request = (now.tv_sec <= base_ignore_fraud_time);
 
       ChannelsProfileWriter upw;
       upw.version() = CURRENT_BASE_PROFILE_VERSION;
@@ -1138,1094 +1137,1094 @@ namespace AdServer
         (base_profile_->membuf().size() != 0) ?
          base_household : profile_match_params.household;
 
-       ChannelsProfileReader base_rdr =
-         ChannelsProfileReader(
-           base_profile_->membuf().data(),
-           base_profile_->membuf().size());
-       ChannelsProfileReader add_rdr =
-         ChannelsProfileReader(
-           base_profile_->membuf().data(),
-           base_profile_->membuf().size());
-
-       ChannelsInfoReader add_page_channels(0, 0);
-       ChannelsInfoReader add_search_channels(0, 0);
-       ChannelsInfoReader add_url_channels(0, 0);
-       ChannelsInfoReader add_url_keyword_channels(0, 0);
-
-       PersistentMatchesReader add_persistent_matches(0, 0);
-
-       ChannelsProfileReader::geo_data_Container add_geo_data;
-
-       uint32_t add_last_request_time = 0;
-       uint32_t add_create_time = 0;
-       uint32_t add_session_start = 0;
-       uint32_t add_first_colo_id = profile_match_params.request_colo_id;
-       std::string add_cohort;
-
-       if (add_profile_->membuf().size() != 0)
-       {
-         add_exists = true;
-
-         ChannelsProfileReader add_rdr(
-           add_profile_->membuf().data(),
-           add_profile_->membuf().size());
-
-         add_last_request_time = add_rdr.last_request_time();
-         add_create_time = add_rdr.create_time();
-
-         add_page_channels = add_rdr.page_channels();
-         add_search_channels = add_rdr.search_channels();
-         add_url_channels = add_rdr.url_channels();
-         add_url_keyword_channels = add_rdr.url_keyword_channels();
-
-         add_persistent_matches = add_rdr.persistent_matches();
-
-         add_first_colo_id = add_rdr.first_colo_id();
-
-         add_cohort = add_rdr.cohort();
-
-         add_geo_data = add_rdr.geo_data();
-       }
-
-       if (match_to_add)
-       {
-         res_upw.create_time() = add_create_time == 0 ?
-           current_time.tv_sec : add_create_time;
-
-         res_upw.last_request_time() =
-           profile_match_params.change_last_request ?
-             current_time.tv_sec : add_last_request_time;
-
-         res_upw.first_colo_id() =
-           (add_first_colo_id != UNKNOWN_COLO_ID && add_first_colo_id != DEFAULT_COLO) ?
-           add_first_colo_id :
-           profile_match_params.request_colo_id;
-
-         res_upw.cohort() = add_cohort;
-
-         set_cohort_(
-           res_upw.cohort(),
-           profile_match_params.cohort,
-           profile_match_params.cohort2);
-       }
-       else
-       {
-         res_upw.create_time() = base_create_time == 0 ?
-           current_time.tv_sec : base_create_time;
-
-         res_upw.last_request_time() =
-           profile_match_params.change_last_request ?
-             current_time.tv_sec : base_last_request_time;
-
-         res_upw.first_colo_id() =
-           (base_first_colo_id != UNKNOWN_COLO_ID && base_first_colo_id != DEFAULT_COLO) ?
-           base_first_colo_id :
-           profile_match_params.request_colo_id;
-
-         res_upw.cohort() = base_cohort;
-
-         set_cohort_(
-           res_upw.cohort(),
-           profile_match_params.cohort,
-           profile_match_params.cohort2);
-       }
-
-       split_cohort_(
-         properties.cohort,
-         properties.cohort2,
-         res_upw.cohort());
-
-       res_upw.last_colo_id() = profile_match_params.request_colo_id;
-
-       res_upw.history_time() = base_create_time == 0 ?
-         current_time.tv_sec : base_history_time;
-       res_upw.ignore_fraud_time() = base_ignore_fraud_time;
-
-       unsigned long max_lr =
-         std::max(base_last_request_time, add_last_request_time);
-
-       if (profile_match_params.change_last_request)
-       {
-         if (max_lr + session_timeout.tv_sec <
-             static_cast<unsigned long>(current_time.tv_sec))
-         {
-           res_upw.session_start() = current_time.tv_sec;
-         }
-         else
-         {
-           res_upw.session_start() =
-             std::max(base_session_start, add_session_start);
-         }
-       }
-       else
-       {
-         res_upw.session_start() = match_to_add ? add_session_start : base_session_start;
-       }
-
-       try
-       {
-         if (!profile_match_params.no_match)
-         {
-           match_persistent_section_(
-             result_channels,
-             &res_upw.persistent_matches(),
-             &upw.persistent_matches(),
-             base_exists ? &base_persistent_matches : 0,
-             add_exists ? &add_persistent_matches : 0,
-             channels_pack.persistent_channels,
-             match_to_add,
-             profile_match_params.provide_persistent_channels);
-
-           match_section_(
-             result_channels,
-             &res_upw.page_channels(),
-             &upw.page_channels(),
-             base_exists ? &base_page_channels : 0,
-             add_exists ? &add_page_channels : 0,
-             channels_pack.page_channels,
-             channels.page_channels,
-             current_time,
-             match_to_add,
-             res_upw.household() == 1);
-
-           match_section_(
-             result_channels,
-             &res_upw.search_channels(),
-             &upw.search_channels(),
-             base_exists ? &base_search_channels : 0,
-             add_exists ? &add_search_channels : 0,
-             channels_pack.search_channels,
-             channels.search_channels,
-             current_time,
-             match_to_add,
-             res_upw.household() == 1);
-
-           match_section_(
-             result_channels,
-             &res_upw.url_channels(),
-             &upw.url_channels(),
-             base_exists ? &base_url_channels : 0,
-             add_exists ? &add_url_channels : 0,
-             channels_pack.url_channels,
-             channels.url_channels,
-             current_time,
-             match_to_add,
-             res_upw.household() == 1);
-
-           match_section_(
-             result_channels,
-             &res_upw.url_keyword_channels(),
-             &upw.url_keyword_channels(),
-             base_exists ? &base_url_keyword_channels : 0,
-             add_exists ? &add_url_keyword_channels : 0,
-             channels_pack.url_keyword_channels,
-             channels.url_keyword_channels,
-             current_time,
-             match_to_add,
-             res_upw.household() == 1);
-
-           res_upw.audience_channels().reserve(base_audience_channels.size());
-           for (ChannelsProfileReader::audience_channels_Container::const_iterator it =
-                  base_audience_channels.begin();
-                it != base_audience_channels.end(); ++it)
-           {
-             ChannelsHashMap::const_iterator c_it =
-               channels.audience_channels.find((*it).channel_id());
-             if (c_it != channels.audience_channels.end())
-             {
-               res_upw.audience_channels().push_back(*it);
-             }
-           }
-         }
-         else
-         {
-           if (match_to_add)
-           {
-             if (add_exists)
-             {
-               std::copy(
-                 add_persistent_matches.channel_ids().begin(),
-                 add_persistent_matches.channel_ids().end(),
-                 std::back_inserter(res_upw.persistent_matches().channel_ids()));
-
-               copy_section(res_upw.page_channels(), add_page_channels);
-               copy_section(res_upw.search_channels(), add_search_channels);
-               copy_section(res_upw.url_channels(), add_url_channels);
-               copy_section(res_upw.url_keyword_channels(), add_url_keyword_channels);
-
-               res_upw.geo_data().clear();
-               res_upw.geo_data().reserve(add_rdr.geo_data().size());
-               std::copy(
-                 add_rdr.geo_data().begin(), add_rdr.geo_data().end(),
-                 std::back_inserter(res_upw.geo_data()));
-             }
-           }
-           else
-           {
-             if (base_exists)
-             {
-               std::copy(
-                 base_persistent_matches.channel_ids().begin(),
-                 base_persistent_matches.channel_ids().end(),
-                 std::back_inserter(res_upw.persistent_matches().channel_ids()));
-
-               copy_section(res_upw.page_channels(), base_page_channels);
-               copy_section(res_upw.search_channels(), base_search_channels);
-               copy_section(res_upw.url_channels(), base_url_channels);
-               copy_section(res_upw.url_keyword_channels(), base_url_keyword_channels);
-
-               res_upw.geo_data().clear();
-               res_upw.geo_data().reserve(base_rdr.geo_data().size());
-               std::copy(
-                 base_rdr.geo_data().begin(), base_rdr.geo_data().end(),
-                 std::back_inserter(res_upw.geo_data()));
-
-               upw.audience_channels().reserve(base_audience_channels.size());
-               std::copy(
-                 base_audience_channels.begin(),
-                 base_audience_channels.end(),
-                 std::back_inserter(upw.audience_channels()));
-             }
-           }
-
-           result_channels.clear();
-         }
-       }
-       catch(const eh::Exception& ex)
-       {
-         Stream::Error ostr;
-         ostr << FUN << ": " << ex.what();
-         throw InvalidProfileException(ostr);
-       }
-
-       if (!no_result_)
-       {
-         for (ChannelsProfileWriter::geo_data_Container::const_iterator it =
-                res_upw.geo_data().begin(); it != res_upw.geo_data().end(); ++it)
-         {
-           GeoDataResult geo_res;
-           geo_res.longitude = read_coord_((*it).longitude().data());
-           geo_res.latitude = read_coord_((*it).latitude().data());
-           geo_res.accuracy = read_accuracy_((*it).accuracy().data());
-
-           properties.geo_data_list.push_back(std::move(geo_res));
-         }
-       }
-
-       if (!match_to_add)
-       {
-         base_profile_->membuf().alloc(res_upw.size());
-         res_upw.save(base_profile_->membuf().data(), res_upw.size());
-
-         add_profile_->membuf().clear();
-       }
-       else
-       {
-         add_profile_->membuf().alloc(res_upw.size());
-         res_upw.save(add_profile_->membuf().data(), res_upw.size());
-       }
-
-       if (no_result_)
-       {
-         result_channels.clear();
-       }
-     }
-
-     void ChannelsMatcher::collect_channel_ids_(
-       const Generics::MemBuf& base_profile,
-       const ChannelDictionary& dictionary,
-       AllUniqueChannels& auc)
-       /*throw(Exception)*/
-     {
-       if (base_profile.size() != 0)
-       {
-         ChannelsProfileReader rdr(
-           base_profile.data(),
-           base_profile.size());
-
-         fill_unique_channels_(rdr.page_channels(), dictionary, auc);
-         fill_unique_channels_(rdr.search_channels(), dictionary, auc);
-         fill_unique_channels_(rdr.url_channels(), dictionary, auc);
-         fill_unique_channels_(rdr.url_keyword_channels(), dictionary, auc);
-       }
-     }
-
-     void ChannelsMatcher::collect_history_channel_ids_(
-       const Generics::MemBuf& history_profile,
-       const ChannelDictionary& dictionary,
-       AllUniqueChannels& auc)
-       /*throw(Exception)*/
-     {
-       if (history_profile.size() != 0)
-       {
-         HistoryUserProfileReader rdr(
-           history_profile.data(),
-           history_profile.size());
-
-         process_channels_sequence_(
-           rdr.page_channels(), dictionary, HISTORY, auc);
-         process_channels_sequence_(
-           rdr.search_channels(), dictionary, HISTORY, auc);
-         process_channels_sequence_(
-           rdr.url_channels(), dictionary, HISTORY, auc);
-         process_channels_sequence_(
-           rdr.url_keyword_channels(), dictionary, HISTORY, auc);
-       }
-     }
-
-     void ChannelsMatcher::fill_unique_channels_(
-       const ChannelsInfoReader& section,
-       const ChannelDictionary& dictionary,
-       AllUniqueChannels& auc)
-       /*throw(Exception)*/
-     {
-       process_channels_sequence_(
-         section.ht_candidates(), dictionary, HISTORY, auc);
-       process_channels_sequence_(
-         section.history_matches(), dictionary, HISTORY, auc);
-       process_channels_sequence_(
-         section.history_visits(), dictionary, HISTORY, auc);
-     }
-
-     template<typename ContainerType>
-     void ChannelsMatcher::process_channels_sequence_(
-       const ContainerType& sequence,
-       const ChannelDictionary& dictionary,
-       UniqueType channels_type,
-       AllUniqueChannels& auc)
-       /*throw(Exception)*/
-     {
-       typename ContainerType::const_iterator it = sequence.begin();
-
-       const ChannelsHashMap& page = dictionary.page_channels;
-       const ChannelsHashMap& search = dictionary.search_channels;
-       const ChannelsHashMap& url = dictionary.url_channels;
-       const ChannelsHashMap& url_keyword = dictionary.url_keyword_channels;
-
-       if (channels_type == SESSION)
-       {
-         for (; it != sequence.end(); ++it)
-         {
-           if (auc.found_session_channels.find((*it).channel_id()) ==
-               auc.found_session_channels.end())
-           {
-             ChannelsHashMap::const_iterator ch_it =
-               page.find((*it).channel_id());
-
-             if(ch_it == page.end())
-             {
-               ch_it = search.find((*it).channel_id());
-
-               if (ch_it == search.end())
-               {
-                 ch_it = url.find((*it).channel_id());
-
-                 if (ch_it == url.end())
-                 {
-                   ch_it = url_keyword.find((*it).channel_id());
-
-                   if (ch_it == url_keyword.end())
-                   {
-                     continue;
-                   }
-                 }
-               }
-             }
-
-             ChannelFeaturesMap::const_iterator f_it =
-               dictionary.channel_features.find((*it).channel_id());
-
-             if (f_it->second.discover)
-             {
-               auc.found_session_channels.insert((*it).channel_id());
-
-               auc.discover.session_channels.insert((*it).channel_id());
-               auc.discover.unique_channels.insert((*it).channel_id());
-             }
-             else
-             {
-               auc.found_session_channels.insert((*it).channel_id());
-
-               auc.simple.session_channels.insert((*it).channel_id());
-               auc.simple.unique_channels.insert((*it).channel_id());
-             }
-           }
-         }
-       }
-       else
-       {
-         for (; it != sequence.end(); ++it)
-         {
-           if (auc.found_history_channels.find((*it).channel_id()) ==
-               auc.found_history_channels.end())
-           {
-             ChannelsHashMap::const_iterator ch_it =
-               page.find((*it).channel_id());
-
-             if(ch_it == page.end())
-             {
-               ch_it = search.find((*it).channel_id());
-
-               if (ch_it == search.end())
-               {
-                 ch_it = url.find((*it).channel_id());
-
-                 if (ch_it == url.end())
-                 {
-                   ch_it = url_keyword.find((*it).channel_id());
-
-                   if (ch_it == url_keyword.end())
-                   {
-                     continue;
-                   }
-                 }
-               }
-             }
-
-             ChannelFeaturesMap::const_iterator f_it =
-               dictionary.channel_features.find((*it).channel_id());
-
-             if (f_it->second.discover)
-             {
-               auc.found_history_channels.insert((*it).channel_id());
-
-               auc.discover.history_channels.insert((*it).channel_id());
-               auc.discover.unique_channels.insert((*it).channel_id());
-             }
-             else
-             {
-               auc.found_history_channels.insert((*it).channel_id());
-
-               auc.simple.history_channels.insert((*it).channel_id());
-               auc.simple.unique_channels.insert((*it).channel_id());
-             }
-           }
-         }
-       }
-     }
-
-     template <typename BaseChannelsInfoType, typename AddChannelsInfoType>
-     void ChannelsMatcher::merge_persistent_channels_(
-       PersistentMatchesWriter& pmw,
-       const BaseChannelsInfoType* base,
-       const AddChannelsInfoType* add)
-     {
-       if (base != 0 && add != 0)
-       {
-         Algs::merge_unique(
-           base->channel_ids().begin(), base->channel_ids().end(),
-           add->channel_ids().begin(), add->channel_ids().end(),
-           std::back_inserter(pmw.channel_ids()));
-       }
-       else if (base != 0)
-       {
-         std::copy(
-           base->channel_ids().begin(), base->channel_ids().end(),
-           std::back_inserter(pmw.channel_ids()));
-       }
-       else if (add != 0)
-       {
-         std::copy(
-           add->channel_ids().begin(), add->channel_ids().end(),
-           std::back_inserter(pmw.channel_ids()));
-       }
-     }
-
-     void ChannelsMatcher::match_persistent_section_(
-       ChannelMatchMap& result_channels,
-       PersistentMatchesWriter* out_pmw,
-       PersistentMatchesWriter* match_pmw,
-       const PersistentMatchesReader* base_in,
-       const PersistentMatchesReader* add_in,
-       const ChannelIdVector& channels,
-       bool match_to_add,
-       bool provide_persistent_channels)
-       /*throw(Exception)*/
-     {
-       try
-       {
-         for (auto it = channels.begin(); it != channels.end(); ++it)
-         {
-           match_pmw->channel_ids().push_back(*it);
-         }
-
-         if ((match_to_add && add_in != 0) || (!match_to_add && base_in != 0))
-         {
-           Algs::merge_unique(
-             match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
-             match_to_add ? (*add_in).channel_ids().begin() : (*base_in).channel_ids().begin(),
-             match_to_add ? (*add_in).channel_ids().end() : (*base_in).channel_ids().end(),
-             std::back_inserter((*out_pmw).channel_ids()));
-         }
-         else
-         {
-           std::copy(
-             match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
-             std::back_inserter((*out_pmw).channel_ids()));
-         }
-
-         if(match_to_add && provide_persistent_channels)
-         {
-           PersistentMatchesWriter temp_pmw;
-
-           merge_persistent_channels_(temp_pmw, base_in, out_pmw);
-
-           for (auto it = temp_pmw.channel_ids().begin(); it != temp_pmw.channel_ids().end(); ++it)
-           {
-             add_weight_(result_channels, *it, 1);
-           }
-         }
-         else if (provide_persistent_channels)
-         {
-           for (auto it = out_pmw->channel_ids().begin(); it != out_pmw->channel_ids().end(); ++it)
-           {
-             add_weight_(result_channels, *it, 1);
-           }
-         }
-       }
-       catch (const eh::Exception& ex)
-       {
-         Stream::Error ostr;
-         ostr << "Attempt to match invalid profile: " << ex.what();
-         throw Exception(ostr);
-       }
-     }
-
-     void ChannelsMatcher::match_section_(
-       ChannelMatchMap& result_channels,
-       ChannelsInfoWriter* out_ciw,
-       ChannelsInfoWriter* match_ciw,
-       const ChannelsInfoReader* base_in,
-       const ChannelsInfoReader* add_in,
-       const ChannelIdVector& channels,
-       const ChannelsHashMap& dictionary,
-       const Generics::Time& now,
-       bool match_to_add,
-       bool household)
-       /*throw(Exception)*/
-     {
-       try
-       {
-         match_ciw->history_visits().reserve(
-           match_ciw->history_visits().size() + channels.size());
-         match_ciw->session_matches().reserve(
-           match_ciw->session_matches().size() + channels.size());
-
-         for (auto it = channels.begin(); it != channels.end(); ++it)
-         {
-           add_channel_visit_(now, *it, dictionary, *match_ciw, result_channels);
-         }
-
-         merge_channels_info_(
-           *out_ciw,
-           dictionary,
-           now,
-           match_to_add ? add_in : base_in,
-           match_ciw,
-           household);
-
-         if(match_to_add)
-         {
-           ChannelsInfoWriter temp_ciw;
-
-           merge_channels_info_(
-             temp_ciw,
-             dictionary,
-             now,
-             out_ciw,
-             base_in,
-             household);
-
-           fill_channels_results_(
-             result_channels,
-             temp_ciw,
-             now,
-             dictionary);
-         }
-         else
-         {
-           fill_channels_results_(
-             result_channels,
-             *out_ciw,
-             now,
-             dictionary);
-         }
-       }
-       catch (const eh::Exception& ex)
-       {
-         Stream::Error ostr;
-         ostr << "Attempt to match invalid profile: " << ex.what();
-         throw Exception(ostr);
-       }
-     }
-
-     inline void ChannelsMatcher::add_weight_(
-       ChannelMatchMap& result_channels,
-       uint32_t index,
-       uint32_t weight)
-     {
-       result_channels[index] += weight;
-     }
-
-     void ChannelsMatcher::fill_channels_results_(
-       ChannelMatchMap& result_channels,
-       const ChannelsInfoWriter& ciw,
-       const Generics::Time& now,
-       const ChannelsHashMap& channels)
-     {
-       for (auto it = ciw.session_matches().begin();
-         it != ciw.session_matches().end(); ++it)
-       {
-         ChannelsHashMap::const_iterator cit = channels.find((*it).channel_id());
-
-         if (cit != channels.end())
-         {
-           auto start_ci_it = cit->second->short_intervals.begin();
-           auto fin_ci_it = cit->second->short_intervals.end();
-
-           auto start_dv_it = (*it).timestamps().begin();
-           auto fin_dv_it = (*it).timestamps().end();
-
-           for (auto ci_it = start_ci_it; ci_it != fin_ci_it; ++ci_it)
-           {
-             unsigned long vis = ci_it->min_visits;
-
-             for (auto dv_it = start_dv_it; dv_it != fin_dv_it; ++dv_it)
-             {
-               if (now.tv_sec - *dv_it < ci_it->time_from.tv_sec)
-               {
-                 break;
-               }
-               
-               if (now.tv_sec - *dv_it <= ci_it->time_to.tv_sec)
-               {
-                 if (--vis == 0)
-                 {
-                   add_weight_(result_channels, (*it).channel_id(), ci_it->weight);
-                   break;
-                 }
-               }
-             }
-           }
-         }
-       }
-
-       for (auto it = ciw.ht_candidates().begin();
-         it != ciw.ht_candidates().end(); ++it)
-       {
-         if ((*it).req_visits() == 0)
-         {
-           add_weight_(result_channels, (*it).channel_id(), (*it).weight());
-         }
-       }
-
-       for (auto it = ciw.history_matches().begin();
-         it != ciw.history_matches().end(); ++it)
-       {
-         add_weight_(result_channels, (*it).channel_id(), (*it).weight());
-       }
-     }
-
-     void ChannelsMatcher::merge(
-       Generics::SmartMemBuf* history_profile,
-       const Generics::MemBuf& other_base_profile,
-       const Generics::MemBuf& other_history_profile,
-       const ChannelDictionary& channels,
-       const ProfileMatchParams& match_params,
-       const Generics::Time& merge_time)
-       /*throw(InvalidProfileException)*/
-     {
-       static const char* FUN = "ChannelsMatcher::merge()";
-
-       try
-       {
-         bool base_exists = false;
-         bool other_base_exists = false;
-
-         ChannelsProfileReader base_rdr(0, 0);
-
-         uint32_t base_last_request_time = 0;
-         uint32_t base_household = 0;
-         uint32_t base_ignore_fraud_time = 0;
-         uint32_t base_create_time = merge_time.tv_sec;
-         uint32_t base_history_time = merge_time.tv_sec;
-         uint32_t base_first_colo_id = match_params.request_colo_id;
-         uint32_t base_last_colo_id = match_params.request_colo_id;
-         std::string base_cohort;
-
-         if (base_profile_->membuf().size() != 0)
-         {
-           base_exists = true;
-
-           ChannelsProfileReader temp_base_rdr(
-             base_profile_->membuf().data(),
-             base_profile_->membuf().size());
-
-           base_last_request_time = temp_base_rdr.last_request_time();
-           base_household = temp_base_rdr.household();
-           base_ignore_fraud_time = temp_base_rdr.ignore_fraud_time();
-           base_create_time = temp_base_rdr.create_time();
-           base_history_time = temp_base_rdr.history_time();
-
-           base_first_colo_id = temp_base_rdr.first_colo_id();
-           base_last_colo_id = temp_base_rdr.last_colo_id();
-
-           base_rdr = temp_base_rdr;
-
-           base_cohort = temp_base_rdr.cohort();
-         }
-
-         ChannelsProfileReader other_base_rdr(0, 0);
-
-         uint32_t other_base_history_time = merge_time.tv_sec;
-         uint32_t other_base_ignore_fraud_time = 0;
-         if (other_base_profile.size() != 0)
-         {
-           other_base_exists = true;
-
-           ChannelsProfileReader temp_base_rdr(
-             other_base_profile.data(),
-             other_base_profile.size());
-
-           other_base_history_time = temp_base_rdr.history_time();
-           other_base_ignore_fraud_time = temp_base_rdr.ignore_fraud_time();
-
-           other_base_rdr = temp_base_rdr;
-         }
-
-         ChannelsProfileWriter result_profile_writer;
-         result_profile_writer.version() = CURRENT_BASE_PROFILE_VERSION;
-         result_profile_writer.create_time() = base_create_time;
-         result_profile_writer.history_time() =
-           std::min(base_history_time, other_base_history_time);
-         result_profile_writer.ignore_fraud_time() =
-           std::max(base_ignore_fraud_time, other_base_ignore_fraud_time);
-         result_profile_writer.last_request_time() = 0;
-         result_profile_writer.session_start() = 0;
-         result_profile_writer.household() = match_params.household || base_household;
-         result_profile_writer.first_colo_id() =
-           (base_first_colo_id != UNKNOWN_COLO_ID && base_first_colo_id != DEFAULT_COLO) ?
-           base_first_colo_id : match_params.request_colo_id;
-         result_profile_writer.last_colo_id() =
-           base_last_colo_id != UNKNOWN_COLO_ID ?
-             base_last_colo_id : match_params.request_colo_id;
-         result_profile_writer.cohort() = base_cohort;
-
-         merge_(
-           result_profile_writer,
-           channels,
-           Generics::Time(base_last_request_time),
-           base_exists ? &base_rdr : 0,
-           other_base_exists ? &other_base_rdr : 0);
-
-         result_profile_writer.last_request_time() =
-           match_params.change_last_request ?
-             merge_time.tv_sec : base_last_request_time;
-
-         base_profile_->membuf().alloc(result_profile_writer.size());
-         result_profile_writer.save(
-           base_profile_->membuf().data(), result_profile_writer.size());
-
-         HistoryUserProfileWriter hupw;
-         hupw.minor_version() = CURRENT_HISTORY_MINOR_PROFILE_VERSION;
-         hupw.major_version() = CURRENT_HISTORY_MAJOR_PROFILE_VERSION;
-
-         HistoryUserProfileReader::page_channels_Container base_page_channels;
-         HistoryUserProfileReader::search_channels_Container base_search_channels;
-         HistoryUserProfileReader::url_channels_Container base_url_channels;
-         HistoryUserProfileReader::url_keyword_channels_Container
-           base_url_keyword_channels;
-
-         if(history_profile && !history_profile->membuf().empty())
-         {
-           HistoryUserProfileReader base_hpr(
-             history_profile->membuf().data(),
-             history_profile->membuf().size());
-
-           base_page_channels = base_hpr.page_channels();
-           base_search_channels = base_hpr.search_channels();
-           base_url_channels = base_hpr.url_channels();
-           base_url_keyword_channels = base_hpr.url_keyword_channels();
-         }
-
-         HistoryUserProfileReader::page_channels_Container other_page_channels;
-         HistoryUserProfileReader::search_channels_Container other_search_channels;
-         HistoryUserProfileReader::url_channels_Container other_url_channels;
-         HistoryUserProfileReader::url_keyword_channels_Container
-           other_url_keyword_channels;
-
-         if (!other_history_profile.empty())
-         {
-           HistoryUserProfileReader other_hpr(
-             other_history_profile.data(),
-             other_history_profile.size());
-
-           other_page_channels = other_hpr.page_channels();
-           other_search_channels = other_hpr.search_channels();
-           other_url_channels = other_hpr.url_channels();
-           other_url_keyword_channels = other_hpr.url_keyword_channels();
-         }
-
-         Generics::Time last_request_time(base_last_request_time);
-
-         merge_history_data_(
-           hupw.search_channels(),
-           base_search_channels,
-           other_search_channels,
-           last_request_time,
-           channels.search_channels);
-
-         merge_history_data_(
-           hupw.url_channels(),
-           base_url_channels,
-           other_url_channels,
-           last_request_time,
-           channels.url_channels);
-
-         merge_history_data_(
-           hupw.page_channels(),
-           base_page_channels,
-           other_page_channels,
-           last_request_time,
-           channels.page_channels);
-
-         merge_history_data_(
-           hupw.url_keyword_channels(),
-           base_url_keyword_channels,
-           other_url_keyword_channels,
-           last_request_time,
-           channels.url_keyword_channels);
-
-         if (history_profile &&
-             (!history_profile->membuf().empty() || !other_history_profile.empty()))
-         {
-           history_profile->membuf().alloc(hupw.size());
-           hupw.save(history_profile->membuf().data(), hupw.size());
-         }
-       }
-       catch (const eh::Exception& ex)
-       {
-         Stream::Error ostr;
-         ostr << FUN << ": Attempt to merge invalid profiles: " << ex.what();
-         throw InvalidProfileException(ostr);
-       }
-     }
-
-     bool ChannelsMatcher::need_history_optimization(
-       const Generics::Time& now,
-       const Generics::Time& period,
-       const Generics::Time& gmt_offset)
-       const
-       /*throw(InvalidProfileException)*/
-     {
-       static const char* FUN = "ChannelsMatcher::need_history_optimization()";
-
-       try
-       {
-         if (!base_profile_->membuf().empty() && add_profile_->membuf().empty())
-         {
-           return need_history_optimization_(
-             base_profile_.in(),
-             now,
-             period,
-             gmt_offset);
-         }
-       }
-       catch (const eh::Exception& ex)
-       {
-         Stream::Error ostr;
-         ostr << FUN << ": Attempt to match invalid profile: " << ex.what();
-         throw InvalidProfileException(ostr);
-       }
-
-       return false;
-     }
-
-     template <typename HistoryChannelsInfoListWriter, typename HistoryChannelsInfoListReader>
-     void ChannelsMatcher::history_optimize_(
-       ChannelsInfoWriter& channels_info_writer,
-       HistoryChannelsInfoListWriter& history_channels_writer,
-       const HistoryChannelsInfoListReader& history_channels_reader,
-       const ChannelsInfoReader& channels_info_reader,
-       const ChannelsHashMap& channels,
-       unsigned long days,
-       const Generics::Time& now,
-       bool /*household*/)
-     {
-       // copy and clean session matches
-       channels_info_writer.session_matches().reserve(
-         channels_info_writer.session_matches().size() + channels_info_reader.session_matches().size());
-
-       std::copy(
-         channels_info_reader.session_matches().begin(),
-         channels_info_reader.session_matches().end(),
-         Algs::modify_inserter(
-           Algs::filter_inserter(
-             std::back_inserter(channels_info_writer.session_matches()),
-             SessionMatchesFilter()),
-           SessionMatchesCleaner(channels, now)));
-
-       /* merge HistoryVisits and HistoryProfile
-        * with shift history information for days and
-        * save into new history profile */
-
-       if (!history_channels_reader.empty())
-       {
-         history_channels_writer.reserve(
-           history_channels_reader.size() + channels_info_reader.history_visits().size());
-
-         Algs::merge_unique(
-           history_channels_reader.begin(),
-           history_channels_reader.end(),
-           channels_info_reader.history_visits().begin(),
-           channels_info_reader.history_visits().end(),
-           Algs::modify_inserter(
-             Algs::modify_inserter( // clean excess visits
-               Algs::filter_inserter( // filter empty channels
-                 std::back_inserter(history_channels_writer),
-                 HistoryChannelInfoFilter(channels)),
-               HistoryChannelInfoCleaner(channels)),
-             HistoryChannelInfoConverter(days)),
-           ChannelIdLess(),
-           HistoryChannelInfoHistoryVisitsMerge(days));
-       }
-       else
-       {
-         history_channels_writer.reserve(channels_info_reader.history_visits().size());
-
-         std::copy(
-           channels_info_reader.history_visits().begin(),
-           channels_info_reader.history_visits().end(),
-           Algs::modify_inserter(
-             Algs::modify_inserter(
-               Algs::filter_inserter(
-                 std::back_inserter(history_channels_writer),
-                 HistoryChannelInfoFilter(channels)),
-               HistoryChannelInfoCleaner(channels)),
-             HistoryChannelInfoConverter(days)));
-       }
-
-       /* fill HistoryTodayCandidates by HistoryProfile and
-        * partly match result only for History(Long) channels */
-       fill_history_candidates_(
-         channels_info_writer,
-         history_channels_writer,
-         channels);
-     }
-
-     void ChannelsMatcher::history_optimize(
-       Generics::SmartMemBuf* history_profile,
-       const Generics::Time& now,
-       const Generics::Time& gmt_offset,
-       const ChannelDictionary& channels,
-       bool* first_today_history_optimization)
-     {
-       ChannelsProfileReader rdr(
-         base_profile_->membuf().data(),
-         base_profile_->membuf().size());
-
-       const Generics::Time current_time = Generics::Time(std::max(
-         static_cast<uint32_t>(now.tv_sec),
-         rdr.last_request_time()));
-
-       HistoryUserProfileReader::page_channels_Container hrdr_page;
-       HistoryUserProfileReader::page_channels_Container hrdr_search;
-       HistoryUserProfileReader::page_channels_Container hrdr_url;
-       HistoryUserProfileReader::page_channels_Container hrdr_url_keyword;
-
-       if(!history_profile->membuf().empty())
-       {
-         HistoryUserProfileReader hrdr(
-           history_profile->membuf().data(),
-           history_profile->membuf().size());
-
-         hrdr_page = hrdr.page_channels();
-         hrdr_search = hrdr.search_channels();
-         hrdr_url = hrdr.url_channels();
-         hrdr_url_keyword = hrdr.url_keyword_channels();
-       }
-
-       HistoryUserProfileWriter hwr;
-       hwr.minor_version() = CURRENT_HISTORY_MINOR_PROFILE_VERSION;
-       hwr.major_version() = CURRENT_HISTORY_MAJOR_PROFILE_VERSION;
-
-       const uint32_t days =
-         (current_time.tv_sec + gmt_offset.tv_sec) / SEC_IN_DAY -
-         (rdr.history_time() + gmt_offset.tv_sec) / SEC_IN_DAY;
-
-       if (first_today_history_optimization != 0)
-       {
-         *first_today_history_optimization = days != 0;
-       }
-
-       ChannelsProfileWriter bwr;
-       bwr.version() = CURRENT_BASE_PROFILE_VERSION;
-       bwr.last_request_time() = rdr.last_request_time();
-       bwr.history_time() = current_time.tv_sec;
-       bwr.create_time() = rdr.create_time();
-       bwr.ignore_fraud_time() = rdr.ignore_fraud_time();
-       bwr.session_start() = rdr.session_start();
-       bwr.household() = rdr.household();
-       bwr.first_colo_id() = rdr.first_colo_id();
-       bwr.last_colo_id() = rdr.last_colo_id();
-       bwr.cohort() = rdr.cohort();
-
-       std::copy(
-         rdr.persistent_matches().channel_ids().begin(),
-         rdr.persistent_matches().channel_ids().end(),
-         std::back_inserter(bwr.persistent_matches().channel_ids()));
-
-       bwr.geo_data().reserve(bwr.geo_data().size() + rdr.geo_data().size());
-       std::copy(
-         rdr.geo_data().begin(),
-         rdr.geo_data().end(),
-         std::back_inserter(bwr.geo_data()));
-
-       history_optimize_(
-         bwr.page_channels(),
-         hwr.page_channels(),
-         hrdr_page,
-         rdr.page_channels(),
-         channels.page_channels,
-         days,
-         current_time,
-         rdr.household() == 1);
-
-       history_optimize_(
-         bwr.search_channels(),
-         hwr.search_channels(),
-         hrdr_search,
-         rdr.search_channels(),
-         channels.search_channels,
-         days,
-         current_time,
-         rdr.household() == 1);
-
-       history_optimize_(
-         bwr.url_channels(),
-         hwr.url_channels(),
-         hrdr_url,
-         rdr.url_channels(),
-         channels.url_channels,
-         days,
-         current_time,
-         rdr.household() == 1);
-
-       history_optimize_(
-         bwr.url_keyword_channels(),
-         hwr.url_keyword_channels(),
-         hrdr_url_keyword,
-         rdr.url_keyword_channels(),
-         channels.url_keyword_channels,
-         days,
-         current_time,
-         rdr.household() == 1);
+      ChannelsProfileReader base_rdr =
+        ChannelsProfileReader(
+          base_profile_->membuf().data(),
+          base_profile_->membuf().size());
+      ChannelsProfileReader add_rdr =
+        ChannelsProfileReader(
+          base_profile_->membuf().data(),
+          base_profile_->membuf().size());
+
+      ChannelsInfoReader add_page_channels(0, 0);
+      ChannelsInfoReader add_search_channels(0, 0);
+      ChannelsInfoReader add_url_channels(0, 0);
+      ChannelsInfoReader add_url_keyword_channels(0, 0);
+
+      PersistentMatchesReader add_persistent_matches(0, 0);
+
+      ChannelsProfileReader::geo_data_Container add_geo_data;
+
+      uint32_t add_last_request_time = 0;
+      uint32_t add_create_time = 0;
+      uint32_t add_session_start = 0;
+      uint32_t add_first_colo_id = profile_match_params.request_colo_id;
+      std::string add_cohort;
+
+      if (add_profile_->membuf().size() != 0)
+      {
+        add_exists = true;
+
+        ChannelsProfileReader add_rdr(
+          add_profile_->membuf().data(),
+          add_profile_->membuf().size());
+
+        add_last_request_time = add_rdr.last_request_time();
+        add_create_time = add_rdr.create_time();
+
+        add_page_channels = add_rdr.page_channels();
+        add_search_channels = add_rdr.search_channels();
+        add_url_channels = add_rdr.url_channels();
+        add_url_keyword_channels = add_rdr.url_keyword_channels();
+
+        add_persistent_matches = add_rdr.persistent_matches();
+
+        add_first_colo_id = add_rdr.first_colo_id();
+
+        add_cohort = add_rdr.cohort();
+
+        add_geo_data = add_rdr.geo_data();
+      }
+
+      if (match_to_add)
+      {
+        res_upw.create_time() = add_create_time == 0 ?
+          current_time.tv_sec : add_create_time;
+
+        res_upw.last_request_time() =
+          profile_match_params.change_last_request ?
+            current_time.tv_sec : add_last_request_time;
+
+        res_upw.first_colo_id() =
+          (add_first_colo_id != UNKNOWN_COLO_ID && add_first_colo_id != DEFAULT_COLO) ?
+          add_first_colo_id :
+          profile_match_params.request_colo_id;
+
+        res_upw.cohort() = add_cohort;
+
+        set_cohort_(
+          res_upw.cohort(),
+          profile_match_params.cohort,
+          profile_match_params.cohort2);
+      }
+      else
+      {
+        res_upw.create_time() = base_create_time == 0 ?
+          current_time.tv_sec : base_create_time;
+
+        res_upw.last_request_time() =
+          profile_match_params.change_last_request ?
+            current_time.tv_sec : base_last_request_time;
+
+        res_upw.first_colo_id() =
+          (base_first_colo_id != UNKNOWN_COLO_ID && base_first_colo_id != DEFAULT_COLO) ?
+          base_first_colo_id :
+          profile_match_params.request_colo_id;
+
+        res_upw.cohort() = base_cohort;
+
+        set_cohort_(
+          res_upw.cohort(),
+          profile_match_params.cohort,
+          profile_match_params.cohort2);
+      }
+
+      split_cohort_(
+        properties.cohort,
+        properties.cohort2,
+        res_upw.cohort());
+
+      res_upw.last_colo_id() = profile_match_params.request_colo_id;
+
+      res_upw.history_time() = base_create_time == 0 ?
+        current_time.tv_sec : base_history_time;
+      res_upw.ignore_fraud_time() = base_ignore_fraud_time;
+
+      unsigned long max_lr =
+        std::max(base_last_request_time, add_last_request_time);
+
+      if (profile_match_params.change_last_request)
+      {
+        if (max_lr + session_timeout.tv_sec <
+            static_cast<unsigned long>(current_time.tv_sec))
+        {
+          res_upw.session_start() = current_time.tv_sec;
+        }
+        else
+        {
+          res_upw.session_start() =
+            std::max(base_session_start, add_session_start);
+        }
+      }
+      else
+      {
+        res_upw.session_start() = match_to_add ? add_session_start : base_session_start;
+      }
+
+      try
+      {
+        if (!profile_match_params.no_match)
+        {
+          match_persistent_section_(
+            result_channels,
+            &res_upw.persistent_matches(),
+            &upw.persistent_matches(),
+            base_exists ? &base_persistent_matches : 0,
+            add_exists ? &add_persistent_matches : 0,
+            channels_pack.persistent_channels,
+            match_to_add,
+            profile_match_params.provide_persistent_channels);
+
+          match_section_(
+            result_channels,
+            &res_upw.page_channels(),
+            &upw.page_channels(),
+            base_exists ? &base_page_channels : 0,
+            add_exists ? &add_page_channels : 0,
+            channels_pack.page_channels,
+            channels.page_channels,
+            current_time,
+            match_to_add,
+            res_upw.household() == 1);
+
+          match_section_(
+            result_channels,
+            &res_upw.search_channels(),
+            &upw.search_channels(),
+            base_exists ? &base_search_channels : 0,
+            add_exists ? &add_search_channels : 0,
+            channels_pack.search_channels,
+            channels.search_channels,
+            current_time,
+            match_to_add,
+            res_upw.household() == 1);
+
+          match_section_(
+            result_channels,
+            &res_upw.url_channels(),
+            &upw.url_channels(),
+            base_exists ? &base_url_channels : 0,
+            add_exists ? &add_url_channels : 0,
+            channels_pack.url_channels,
+            channels.url_channels,
+            current_time,
+            match_to_add,
+            res_upw.household() == 1);
+
+          match_section_(
+            result_channels,
+            &res_upw.url_keyword_channels(),
+            &upw.url_keyword_channels(),
+            base_exists ? &base_url_keyword_channels : 0,
+            add_exists ? &add_url_keyword_channels : 0,
+            channels_pack.url_keyword_channels,
+            channels.url_keyword_channels,
+            current_time,
+            match_to_add,
+            res_upw.household() == 1);
+
+          res_upw.audience_channels().reserve(base_audience_channels.size());
+          for (ChannelsProfileReader::audience_channels_Container::const_iterator it =
+                 base_audience_channels.begin();
+               it != base_audience_channels.end(); ++it)
+          {
+            ChannelsHashMap::const_iterator c_it =
+              channels.audience_channels.find((*it).channel_id());
+            if (c_it != channels.audience_channels.end())
+            {
+              res_upw.audience_channels().push_back(*it);
+            }
+          }
+        }
+        else
+        {
+          if (match_to_add)
+          {
+            if (add_exists)
+            {
+              std::copy(
+                add_persistent_matches.channel_ids().begin(),
+                add_persistent_matches.channel_ids().end(),
+                std::back_inserter(res_upw.persistent_matches().channel_ids()));
+
+              copy_section(res_upw.page_channels(), add_page_channels);
+              copy_section(res_upw.search_channels(), add_search_channels);
+              copy_section(res_upw.url_channels(), add_url_channels);
+              copy_section(res_upw.url_keyword_channels(), add_url_keyword_channels);
+
+              res_upw.geo_data().clear();
+              res_upw.geo_data().reserve(add_rdr.geo_data().size());
+              std::copy(
+                add_rdr.geo_data().begin(), add_rdr.geo_data().end(),
+                std::back_inserter(res_upw.geo_data()));
+            }
+          }
+          else
+          {
+            if (base_exists)
+            {
+              std::copy(
+                base_persistent_matches.channel_ids().begin(),
+                base_persistent_matches.channel_ids().end(),
+                std::back_inserter(res_upw.persistent_matches().channel_ids()));
+
+              copy_section(res_upw.page_channels(), base_page_channels);
+              copy_section(res_upw.search_channels(), base_search_channels);
+              copy_section(res_upw.url_channels(), base_url_channels);
+              copy_section(res_upw.url_keyword_channels(), base_url_keyword_channels);
+
+              res_upw.geo_data().clear();
+              res_upw.geo_data().reserve(base_rdr.geo_data().size());
+              std::copy(
+                base_rdr.geo_data().begin(), base_rdr.geo_data().end(),
+                std::back_inserter(res_upw.geo_data()));
+
+              upw.audience_channels().reserve(base_audience_channels.size());
+              std::copy(
+                base_audience_channels.begin(),
+                base_audience_channels.end(),
+                std::back_inserter(upw.audience_channels()));
+            }
+          }
+
+          result_channels.clear();
+        }
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": " << ex.what();
+        throw InvalidProfileException(ostr);
+      }
+
+      if (!no_result_)
+      {
+        for (ChannelsProfileWriter::geo_data_Container::const_iterator it =
+               res_upw.geo_data().begin(); it != res_upw.geo_data().end(); ++it)
+        {
+          GeoDataResult geo_res;
+          geo_res.longitude = read_coord_((*it).longitude().data());
+          geo_res.latitude = read_coord_((*it).latitude().data());
+          geo_res.accuracy = read_accuracy_((*it).accuracy().data());
+
+          properties.geo_data_list.push_back(std::move(geo_res));
+        }
+      }
+
+      if (!match_to_add)
+      {
+        base_profile_->membuf().alloc(res_upw.size());
+        res_upw.save(base_profile_->membuf().data(), res_upw.size());
+
+        add_profile_->membuf().clear();
+      }
+      else
+      {
+        add_profile_->membuf().alloc(res_upw.size());
+        res_upw.save(add_profile_->membuf().data(), res_upw.size());
+      }
+
+      if (no_result_)
+      {
+        result_channels.clear();
+      }
+    }
+
+    void ChannelsMatcher::collect_channel_ids_(
+      const Generics::MemBuf& base_profile,
+      const ChannelDictionary& dictionary,
+      AllUniqueChannels& auc)
+      /*throw(Exception)*/
+    {
+      if (base_profile.size() != 0)
+      {
+        ChannelsProfileReader rdr(
+          base_profile.data(),
+          base_profile.size());
+
+        fill_unique_channels_(rdr.page_channels(), dictionary, auc);
+        fill_unique_channels_(rdr.search_channels(), dictionary, auc);
+        fill_unique_channels_(rdr.url_channels(), dictionary, auc);
+        fill_unique_channels_(rdr.url_keyword_channels(), dictionary, auc);
+      }
+    }
+
+    void ChannelsMatcher::collect_history_channel_ids_(
+      const Generics::MemBuf& history_profile,
+      const ChannelDictionary& dictionary,
+      AllUniqueChannels& auc)
+      /*throw(Exception)*/
+    {
+      if (history_profile.size() != 0)
+      {
+        HistoryUserProfileReader rdr(
+          history_profile.data(),
+          history_profile.size());
+
+        process_channels_sequence_(
+          rdr.page_channels(), dictionary, HISTORY, auc);
+        process_channels_sequence_(
+          rdr.search_channels(), dictionary, HISTORY, auc);
+        process_channels_sequence_(
+          rdr.url_channels(), dictionary, HISTORY, auc);
+        process_channels_sequence_(
+          rdr.url_keyword_channels(), dictionary, HISTORY, auc);
+      }
+    }
+
+    void ChannelsMatcher::fill_unique_channels_(
+      const ChannelsInfoReader& section,
+      const ChannelDictionary& dictionary,
+      AllUniqueChannels& auc)
+      /*throw(Exception)*/
+    {
+      process_channels_sequence_(
+        section.ht_candidates(), dictionary, HISTORY, auc);
+      process_channels_sequence_(
+        section.history_matches(), dictionary, HISTORY, auc);
+      process_channels_sequence_(
+        section.history_visits(), dictionary, HISTORY, auc);
+    }
+
+    template<typename ContainerType>
+    void ChannelsMatcher::process_channels_sequence_(
+      const ContainerType& sequence,
+      const ChannelDictionary& dictionary,
+      UniqueType channels_type,
+      AllUniqueChannels& auc)
+      /*throw(Exception)*/
+    {
+      typename ContainerType::const_iterator it = sequence.begin();
+
+      const ChannelsHashMap& page = dictionary.page_channels;
+      const ChannelsHashMap& search = dictionary.search_channels;
+      const ChannelsHashMap& url = dictionary.url_channels;
+      const ChannelsHashMap& url_keyword = dictionary.url_keyword_channels;
+
+      if (channels_type == SESSION)
+      {
+        for (; it != sequence.end(); ++it)
+        {
+          if (auc.found_session_channels.find((*it).channel_id()) ==
+              auc.found_session_channels.end())
+          {
+            ChannelsHashMap::const_iterator ch_it =
+              page.find((*it).channel_id());
+
+            if(ch_it == page.end())
+            {
+              ch_it = search.find((*it).channel_id());
+
+              if (ch_it == search.end())
+              {
+                ch_it = url.find((*it).channel_id());
+
+                if (ch_it == url.end())
+                {
+                  ch_it = url_keyword.find((*it).channel_id());
+
+                  if (ch_it == url_keyword.end())
+                  {
+                    continue;
+                  }
+                }
+              }
+            }
+
+            ChannelFeaturesMap::const_iterator f_it =
+              dictionary.channel_features.find((*it).channel_id());
+
+            if (f_it->second.discover)
+            {
+              auc.found_session_channels.insert((*it).channel_id());
+
+              auc.discover.session_channels.insert((*it).channel_id());
+              auc.discover.unique_channels.insert((*it).channel_id());
+            }
+            else
+            {
+              auc.found_session_channels.insert((*it).channel_id());
+
+              auc.simple.session_channels.insert((*it).channel_id());
+              auc.simple.unique_channels.insert((*it).channel_id());
+            }
+          }
+        }
+      }
+      else
+      {
+        for (; it != sequence.end(); ++it)
+        {
+          if (auc.found_history_channels.find((*it).channel_id()) ==
+              auc.found_history_channels.end())
+          {
+            ChannelsHashMap::const_iterator ch_it =
+              page.find((*it).channel_id());
+
+            if(ch_it == page.end())
+            {
+              ch_it = search.find((*it).channel_id());
+
+              if (ch_it == search.end())
+              {
+                ch_it = url.find((*it).channel_id());
+
+                if (ch_it == url.end())
+                {
+                  ch_it = url_keyword.find((*it).channel_id());
+
+                  if (ch_it == url_keyword.end())
+                  {
+                    continue;
+                  }
+                }
+              }
+            }
+
+            ChannelFeaturesMap::const_iterator f_it =
+              dictionary.channel_features.find((*it).channel_id());
+
+            if (f_it->second.discover)
+            {
+              auc.found_history_channels.insert((*it).channel_id());
+
+              auc.discover.history_channels.insert((*it).channel_id());
+              auc.discover.unique_channels.insert((*it).channel_id());
+            }
+            else
+            {
+              auc.found_history_channels.insert((*it).channel_id());
+
+              auc.simple.history_channels.insert((*it).channel_id());
+              auc.simple.unique_channels.insert((*it).channel_id());
+            }
+          }
+        }
+      }
+    }
+
+    template <typename BaseChannelsInfoType, typename AddChannelsInfoType>
+    void ChannelsMatcher::merge_persistent_channels_(
+      PersistentMatchesWriter& pmw,
+      const BaseChannelsInfoType* base,
+      const AddChannelsInfoType* add)
+    {
+      if (base != 0 && add != 0)
+      {
+        Algs::merge_unique(
+          base->channel_ids().begin(), base->channel_ids().end(),
+          add->channel_ids().begin(), add->channel_ids().end(),
+          std::back_inserter(pmw.channel_ids()));
+      }
+      else if (base != 0)
+      {
+        std::copy(
+          base->channel_ids().begin(), base->channel_ids().end(),
+          std::back_inserter(pmw.channel_ids()));
+      }
+      else if (add != 0)
+      {
+        std::copy(
+          add->channel_ids().begin(), add->channel_ids().end(),
+          std::back_inserter(pmw.channel_ids()));
+      }
+    }
+
+    void ChannelsMatcher::match_persistent_section_(
+      ChannelMatchMap& result_channels,
+      PersistentMatchesWriter* out_pmw,
+      PersistentMatchesWriter* match_pmw,
+      const PersistentMatchesReader* base_in,
+      const PersistentMatchesReader* add_in,
+      const ChannelIdVector& channels,
+      bool match_to_add,
+      bool provide_persistent_channels)
+      /*throw(Exception)*/
+    {
+      try
+      {
+        for (auto it = channels.begin(); it != channels.end(); ++it)
+        {
+          match_pmw->channel_ids().push_back(*it);
+        }
+
+        if ((match_to_add && add_in != 0) || (!match_to_add && base_in != 0))
+        {
+          Algs::merge_unique(
+            match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
+            match_to_add ? (*add_in).channel_ids().begin() : (*base_in).channel_ids().begin(),
+            match_to_add ? (*add_in).channel_ids().end() : (*base_in).channel_ids().end(),
+            std::back_inserter((*out_pmw).channel_ids()));
+        }
+        else
+        {
+          std::copy(
+            match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
+            std::back_inserter((*out_pmw).channel_ids()));
+        }
+
+        if(match_to_add && provide_persistent_channels)
+        {
+          PersistentMatchesWriter temp_pmw;
+
+          merge_persistent_channels_(temp_pmw, base_in, out_pmw);
+
+          for (auto it = temp_pmw.channel_ids().begin(); it != temp_pmw.channel_ids().end(); ++it)
+          {
+            add_weight_(result_channels, *it, 1);
+          }
+        }
+        else if (provide_persistent_channels)
+        {
+          for (auto it = out_pmw->channel_ids().begin(); it != out_pmw->channel_ids().end(); ++it)
+          {
+            add_weight_(result_channels, *it, 1);
+          }
+        }
+      }
+      catch (const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << "Attempt to match invalid profile: " << ex.what();
+        throw Exception(ostr);
+      }
+    }
+
+    void ChannelsMatcher::match_section_(
+      ChannelMatchMap& result_channels,
+      ChannelsInfoWriter* out_ciw,
+      ChannelsInfoWriter* match_ciw,
+      const ChannelsInfoReader* base_in,
+      const ChannelsInfoReader* add_in,
+      const ChannelIdVector& channels,
+      const ChannelsHashMap& dictionary,
+      const Generics::Time& now,
+      bool match_to_add,
+      bool household)
+      /*throw(Exception)*/
+    {
+      try
+      {
+        match_ciw->history_visits().reserve(
+          match_ciw->history_visits().size() + channels.size());
+        match_ciw->session_matches().reserve(
+          match_ciw->session_matches().size() + channels.size());
+
+        for (auto it = channels.begin(); it != channels.end(); ++it)
+        {
+          add_channel_visit_(now, *it, dictionary, *match_ciw, result_channels);
+        }
+
+        merge_channels_info_(
+          *out_ciw,
+          dictionary,
+          now,
+          match_to_add ? add_in : base_in,
+          match_ciw,
+          household);
+
+        if(match_to_add)
+        {
+          ChannelsInfoWriter temp_ciw;
+
+          merge_channels_info_(
+            temp_ciw,
+            dictionary,
+            now,
+            out_ciw,
+            base_in,
+            household);
+
+          fill_channels_results_(
+            result_channels,
+            temp_ciw,
+            now,
+            dictionary);
+        }
+        else
+        {
+          fill_channels_results_(
+            result_channels,
+            *out_ciw,
+            now,
+            dictionary);
+        }
+      }
+      catch (const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << "Attempt to match invalid profile: " << ex.what();
+        throw Exception(ostr);
+      }
+    }
+
+    inline void ChannelsMatcher::add_weight_(
+      ChannelMatchMap& result_channels,
+      uint32_t index,
+      uint32_t weight)
+    {
+      result_channels[index] += weight;
+    }
+
+    void ChannelsMatcher::fill_channels_results_(
+      ChannelMatchMap& result_channels,
+      const ChannelsInfoWriter& ciw,
+      const Generics::Time& now,
+      const ChannelsHashMap& channels)
+    {
+      for (auto it = ciw.session_matches().begin();
+        it != ciw.session_matches().end(); ++it)
+      {
+        ChannelsHashMap::const_iterator cit = channels.find((*it).channel_id());
+
+        if (cit != channels.end())
+        {
+          auto start_ci_it = cit->second->short_intervals.begin();
+          auto fin_ci_it = cit->second->short_intervals.end();
+
+          auto start_dv_it = (*it).timestamps().begin();
+          auto fin_dv_it = (*it).timestamps().end();
+
+          for (auto ci_it = start_ci_it; ci_it != fin_ci_it; ++ci_it)
+          {
+            unsigned long vis = ci_it->min_visits;
+
+            for (auto dv_it = start_dv_it; dv_it != fin_dv_it; ++dv_it)
+            {
+              if (now.tv_sec - *dv_it < ci_it->time_from.tv_sec)
+              {
+                break;
+              }
+
+              if (now.tv_sec - *dv_it <= ci_it->time_to.tv_sec)
+              {
+                if (--vis == 0)
+                {
+                  add_weight_(result_channels, (*it).channel_id(), ci_it->weight);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      for (auto it = ciw.ht_candidates().begin();
+        it != ciw.ht_candidates().end(); ++it)
+      {
+        if ((*it).req_visits() == 0)
+        {
+          add_weight_(result_channels, (*it).channel_id(), (*it).weight());
+        }
+      }
+
+      for (auto it = ciw.history_matches().begin();
+        it != ciw.history_matches().end(); ++it)
+      {
+        add_weight_(result_channels, (*it).channel_id(), (*it).weight());
+      }
+    }
+
+    void ChannelsMatcher::merge(
+      Generics::SmartMemBuf* history_profile,
+      const Generics::MemBuf& other_base_profile,
+      const Generics::MemBuf& other_history_profile,
+      const ChannelDictionary& channels,
+      const ProfileMatchParams& match_params,
+      const Generics::Time& merge_time)
+      /*throw(InvalidProfileException)*/
+    {
+      static const char* FUN = "ChannelsMatcher::merge()";
+
+      try
+      {
+        bool base_exists = false;
+        bool other_base_exists = false;
+
+        ChannelsProfileReader base_rdr(0, 0);
+
+        uint32_t base_last_request_time = 0;
+        uint32_t base_household = 0;
+        uint32_t base_ignore_fraud_time = 0;
+        uint32_t base_create_time = merge_time.tv_sec;
+        uint32_t base_history_time = merge_time.tv_sec;
+        uint32_t base_first_colo_id = match_params.request_colo_id;
+        uint32_t base_last_colo_id = match_params.request_colo_id;
+        std::string base_cohort;
+
+        if (base_profile_->membuf().size() != 0)
+        {
+          base_exists = true;
+
+          ChannelsProfileReader temp_base_rdr(
+            base_profile_->membuf().data(),
+            base_profile_->membuf().size());
+
+          base_last_request_time = temp_base_rdr.last_request_time();
+          base_household = temp_base_rdr.household();
+          base_ignore_fraud_time = temp_base_rdr.ignore_fraud_time();
+          base_create_time = temp_base_rdr.create_time();
+          base_history_time = temp_base_rdr.history_time();
+
+          base_first_colo_id = temp_base_rdr.first_colo_id();
+          base_last_colo_id = temp_base_rdr.last_colo_id();
+
+          base_rdr = temp_base_rdr;
+
+          base_cohort = temp_base_rdr.cohort();
+        }
+
+        ChannelsProfileReader other_base_rdr(0, 0);
+
+        uint32_t other_base_history_time = merge_time.tv_sec;
+        uint32_t other_base_ignore_fraud_time = 0;
+        if (other_base_profile.size() != 0)
+        {
+          other_base_exists = true;
+
+          ChannelsProfileReader temp_base_rdr(
+            other_base_profile.data(),
+            other_base_profile.size());
+
+          other_base_history_time = temp_base_rdr.history_time();
+          other_base_ignore_fraud_time = temp_base_rdr.ignore_fraud_time();
+
+          other_base_rdr = temp_base_rdr;
+        }
+
+        ChannelsProfileWriter result_profile_writer;
+        result_profile_writer.version() = CURRENT_BASE_PROFILE_VERSION;
+        result_profile_writer.create_time() = base_create_time;
+        result_profile_writer.history_time() =
+          std::min(base_history_time, other_base_history_time);
+        result_profile_writer.ignore_fraud_time() =
+          std::max(base_ignore_fraud_time, other_base_ignore_fraud_time);
+        result_profile_writer.last_request_time() = 0;
+        result_profile_writer.session_start() = 0;
+        result_profile_writer.household() = match_params.household || base_household;
+        result_profile_writer.first_colo_id() =
+          (base_first_colo_id != UNKNOWN_COLO_ID && base_first_colo_id != DEFAULT_COLO) ?
+          base_first_colo_id : match_params.request_colo_id;
+        result_profile_writer.last_colo_id() =
+          base_last_colo_id != UNKNOWN_COLO_ID ?
+            base_last_colo_id : match_params.request_colo_id;
+        result_profile_writer.cohort() = base_cohort;
+
+        merge_(
+          result_profile_writer,
+          channels,
+          Generics::Time(base_last_request_time),
+          base_exists ? &base_rdr : 0,
+          other_base_exists ? &other_base_rdr : 0);
+
+        result_profile_writer.last_request_time() =
+          match_params.change_last_request ?
+            merge_time.tv_sec : base_last_request_time;
+
+        base_profile_->membuf().alloc(result_profile_writer.size());
+        result_profile_writer.save(
+          base_profile_->membuf().data(), result_profile_writer.size());
+
+        HistoryUserProfileWriter hupw;
+        hupw.minor_version() = CURRENT_HISTORY_MINOR_PROFILE_VERSION;
+        hupw.major_version() = CURRENT_HISTORY_MAJOR_PROFILE_VERSION;
+
+        HistoryUserProfileReader::page_channels_Container base_page_channels;
+        HistoryUserProfileReader::search_channels_Container base_search_channels;
+        HistoryUserProfileReader::url_channels_Container base_url_channels;
+        HistoryUserProfileReader::url_keyword_channels_Container
+          base_url_keyword_channels;
+
+        if(history_profile && !history_profile->membuf().empty())
+        {
+          HistoryUserProfileReader base_hpr(
+            history_profile->membuf().data(),
+            history_profile->membuf().size());
+
+          base_page_channels = base_hpr.page_channels();
+          base_search_channels = base_hpr.search_channels();
+          base_url_channels = base_hpr.url_channels();
+          base_url_keyword_channels = base_hpr.url_keyword_channels();
+        }
+
+        HistoryUserProfileReader::page_channels_Container other_page_channels;
+        HistoryUserProfileReader::search_channels_Container other_search_channels;
+        HistoryUserProfileReader::url_channels_Container other_url_channels;
+        HistoryUserProfileReader::url_keyword_channels_Container
+          other_url_keyword_channels;
+
+        if (!other_history_profile.empty())
+        {
+          HistoryUserProfileReader other_hpr(
+            other_history_profile.data(),
+            other_history_profile.size());
+
+          other_page_channels = other_hpr.page_channels();
+          other_search_channels = other_hpr.search_channels();
+          other_url_channels = other_hpr.url_channels();
+          other_url_keyword_channels = other_hpr.url_keyword_channels();
+        }
+
+        Generics::Time last_request_time(base_last_request_time);
+
+        merge_history_data_(
+          hupw.search_channels(),
+          base_search_channels,
+          other_search_channels,
+          last_request_time,
+          channels.search_channels);
+
+        merge_history_data_(
+          hupw.url_channels(),
+          base_url_channels,
+          other_url_channels,
+          last_request_time,
+          channels.url_channels);
+
+        merge_history_data_(
+          hupw.page_channels(),
+          base_page_channels,
+          other_page_channels,
+          last_request_time,
+          channels.page_channels);
+
+        merge_history_data_(
+          hupw.url_keyword_channels(),
+          base_url_keyword_channels,
+          other_url_keyword_channels,
+          last_request_time,
+          channels.url_keyword_channels);
+
+        if (history_profile &&
+            (!history_profile->membuf().empty() || !other_history_profile.empty()))
+        {
+          history_profile->membuf().alloc(hupw.size());
+          hupw.save(history_profile->membuf().data(), hupw.size());
+        }
+      }
+      catch (const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Attempt to merge invalid profiles: " << ex.what();
+        throw InvalidProfileException(ostr);
+      }
+    }
+
+    bool ChannelsMatcher::need_history_optimization(
+      const Generics::Time& now,
+      const Generics::Time& period,
+      const Generics::Time& gmt_offset)
+      const
+      /*throw(InvalidProfileException)*/
+    {
+      static const char* FUN = "ChannelsMatcher::need_history_optimization()";
+
+      try
+      {
+        if (!base_profile_->membuf().empty() && add_profile_->membuf().empty())
+        {
+          return need_history_optimization_(
+            base_profile_.in(),
+            now,
+            period,
+            gmt_offset);
+        }
+      }
+      catch (const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Attempt to match invalid profile: " << ex.what();
+        throw InvalidProfileException(ostr);
+      }
+
+      return false;
+    }
+
+    template <typename HistoryChannelsInfoListWriter, typename HistoryChannelsInfoListReader>
+    void ChannelsMatcher::history_optimize_(
+      ChannelsInfoWriter& channels_info_writer,
+      HistoryChannelsInfoListWriter& history_channels_writer,
+      const HistoryChannelsInfoListReader& history_channels_reader,
+      const ChannelsInfoReader& channels_info_reader,
+      const ChannelsHashMap& channels,
+      unsigned long days,
+      const Generics::Time& now,
+      bool /*household*/)
+    {
+      // copy and clean session matches
+      channels_info_writer.session_matches().reserve(
+        channels_info_writer.session_matches().size() + channels_info_reader.session_matches().size());
+
+      std::copy(
+        channels_info_reader.session_matches().begin(),
+        channels_info_reader.session_matches().end(),
+        Algs::modify_inserter(
+          Algs::filter_inserter(
+            std::back_inserter(channels_info_writer.session_matches()),
+            SessionMatchesFilter()),
+          SessionMatchesCleaner(channels, now)));
+
+      /* merge HistoryVisits and HistoryProfile
+       * with shift history information for days and
+       * save into new history profile */
+
+      if (!history_channels_reader.empty())
+      {
+        history_channels_writer.reserve(
+          history_channels_reader.size() + channels_info_reader.history_visits().size());
+
+        Algs::merge_unique(
+          history_channels_reader.begin(),
+          history_channels_reader.end(),
+          channels_info_reader.history_visits().begin(),
+          channels_info_reader.history_visits().end(),
+          Algs::modify_inserter(
+            Algs::modify_inserter( // clean excess visits
+              Algs::filter_inserter( // filter empty channels
+                std::back_inserter(history_channels_writer),
+                HistoryChannelInfoFilter(channels)),
+              HistoryChannelInfoCleaner(channels)),
+            HistoryChannelInfoConverter(days)),
+          ChannelIdLess(),
+          HistoryChannelInfoHistoryVisitsMerge(days));
+      }
+      else
+      {
+        history_channels_writer.reserve(channels_info_reader.history_visits().size());
+
+        std::copy(
+          channels_info_reader.history_visits().begin(),
+          channels_info_reader.history_visits().end(),
+          Algs::modify_inserter(
+            Algs::modify_inserter(
+              Algs::filter_inserter(
+                std::back_inserter(history_channels_writer),
+                HistoryChannelInfoFilter(channels)),
+              HistoryChannelInfoCleaner(channels)),
+            HistoryChannelInfoConverter(days)));
+      }
+
+      /* fill HistoryTodayCandidates by HistoryProfile and
+       * partly match result only for History(Long) channels */
+      fill_history_candidates_(
+        channels_info_writer,
+        history_channels_writer,
+        channels);
+    }
+
+    void ChannelsMatcher::history_optimize(
+      Generics::SmartMemBuf* history_profile,
+      const Generics::Time& now,
+      const Generics::Time& gmt_offset,
+      const ChannelDictionary& channels,
+      bool* first_today_history_optimization)
+    {
+      ChannelsProfileReader rdr(
+        base_profile_->membuf().data(),
+        base_profile_->membuf().size());
+
+      const Generics::Time current_time = Generics::Time(std::max(
+        static_cast<uint32_t>(now.tv_sec),
+        rdr.last_request_time()));
+
+      HistoryUserProfileReader::page_channels_Container hrdr_page;
+      HistoryUserProfileReader::page_channels_Container hrdr_search;
+      HistoryUserProfileReader::page_channels_Container hrdr_url;
+      HistoryUserProfileReader::page_channels_Container hrdr_url_keyword;
+
+      if(!history_profile->membuf().empty())
+      {
+        HistoryUserProfileReader hrdr(
+          history_profile->membuf().data(),
+          history_profile->membuf().size());
+
+        hrdr_page = hrdr.page_channels();
+        hrdr_search = hrdr.search_channels();
+        hrdr_url = hrdr.url_channels();
+        hrdr_url_keyword = hrdr.url_keyword_channels();
+      }
+
+      HistoryUserProfileWriter hwr;
+      hwr.minor_version() = CURRENT_HISTORY_MINOR_PROFILE_VERSION;
+      hwr.major_version() = CURRENT_HISTORY_MAJOR_PROFILE_VERSION;
+
+      const uint32_t days =
+        (current_time.tv_sec + gmt_offset.tv_sec) / SEC_IN_DAY -
+        (rdr.history_time() + gmt_offset.tv_sec) / SEC_IN_DAY;
+
+      if (first_today_history_optimization != 0)
+      {
+        *first_today_history_optimization = days != 0;
+      }
+
+      ChannelsProfileWriter bwr;
+      bwr.version() = CURRENT_BASE_PROFILE_VERSION;
+      bwr.last_request_time() = rdr.last_request_time();
+      bwr.history_time() = current_time.tv_sec;
+      bwr.create_time() = rdr.create_time();
+      bwr.ignore_fraud_time() = rdr.ignore_fraud_time();
+      bwr.session_start() = rdr.session_start();
+      bwr.household() = rdr.household();
+      bwr.first_colo_id() = rdr.first_colo_id();
+      bwr.last_colo_id() = rdr.last_colo_id();
+      bwr.cohort() = rdr.cohort();
+
+      std::copy(
+        rdr.persistent_matches().channel_ids().begin(),
+        rdr.persistent_matches().channel_ids().end(),
+        std::back_inserter(bwr.persistent_matches().channel_ids()));
+
+      bwr.geo_data().reserve(bwr.geo_data().size() + rdr.geo_data().size());
+      std::copy(
+        rdr.geo_data().begin(),
+        rdr.geo_data().end(),
+        std::back_inserter(bwr.geo_data()));
+
+      history_optimize_(
+        bwr.page_channels(),
+        hwr.page_channels(),
+        hrdr_page,
+        rdr.page_channels(),
+        channels.page_channels,
+        days,
+        current_time,
+        rdr.household() == 1);
+
+      history_optimize_(
+        bwr.search_channels(),
+        hwr.search_channels(),
+        hrdr_search,
+        rdr.search_channels(),
+        channels.search_channels,
+        days,
+        current_time,
+        rdr.household() == 1);
+
+      history_optimize_(
+        bwr.url_channels(),
+        hwr.url_channels(),
+        hrdr_url,
+        rdr.url_channels(),
+        channels.url_channels,
+        days,
+        current_time,
+        rdr.household() == 1);
+
+      history_optimize_(
+        bwr.url_keyword_channels(),
+        hwr.url_keyword_channels(),
+        hrdr_url_keyword,
+        rdr.url_keyword_channels(),
+        channels.url_keyword_channels,
+        days,
+        current_time,
+        rdr.household() == 1);
 
       bwr.audience_channels().reserve(bwr.audience_channels().size() + rdr.audience_channels().size());
 
       for (ChannelsProfileReader::audience_channels_Container::const_iterator it =
             rdr.audience_channels().begin();
-          it != rdr.audience_channels().end(); ++it)
+        it != rdr.audience_channels().end(); ++it)
       {
         ChannelsHashMap::const_iterator c_it =
           channels.audience_channels.find((*it).channel_id());
