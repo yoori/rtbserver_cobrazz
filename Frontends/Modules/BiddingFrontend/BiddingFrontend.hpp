@@ -26,6 +26,7 @@
 
 #include <Commons/AtomicInt.hpp>
 #include <Commons/Interval.hpp>
+#include <ReferenceCounting/SmartPtr.hpp>
 
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
@@ -56,6 +57,7 @@ namespace AdServer::UserInfoSvcs
 namespace AdServer::Bidding
 {
   class BidRequestState;
+  class RequestParamsHolder;
   typedef ReferenceCounting::SmartPtr<BidRequestState>
     BidRequestState_var;
   class OpenRtbBidRequestState;
@@ -203,7 +205,7 @@ namespace AdServer::Bidding
 
     FrontendCommons::RequestTask
     co_interrupted_select_campaign_(
-      AdServer::Bidding::CampaignManager::RequestParams request_params)
+      ReferenceCounting::SmartPtr<RequestParamsHolder> request_params)
       noexcept;
 
     void

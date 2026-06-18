@@ -328,7 +328,7 @@ namespace AdServer::Bidding
   BidRequestState::clear() noexcept
   {
     request_holder_ = FCGI::HttpRequestHolder_var();
-    request_info_ = RequestInfo();
+    request_info_.reset();
     hostname_.clear();
     request_params_ = RequestParamsHolder_var();
     keywords_.clear();

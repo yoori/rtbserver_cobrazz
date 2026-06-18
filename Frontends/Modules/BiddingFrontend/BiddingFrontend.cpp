@@ -1511,14 +1511,18 @@ namespace AdServer::Bidding
 
           if(!request_info.idfa.empty())
           {
-            std::string resolve_idfa = request_info.idfa;
+            std::string resolve_idfa(
+              request_info.idfa.data(),
+              request_info.idfa.size());
             String::AsciiStringManip::to_lower(resolve_idfa);
             external_user_ids.push_back(std::string("ifa/") + resolve_idfa);
           }
 
           if(!request_info.advertising_id.empty())
           {
-            std::string resolve_idfa = request_info.advertising_id;
+            std::string resolve_idfa(
+              request_info.advertising_id.data(),
+              request_info.advertising_id.size());
             String::AsciiStringManip::to_lower(resolve_idfa);
             external_user_ids.push_back(std::string("ifa/") + resolve_idfa);
           }
@@ -2457,7 +2461,7 @@ namespace AdServer::Bidding
 
     try
     {
-      ConstRequestParamsHolder_var
+      RequestParamsHolder_var
         request_params(request_task->request_params());
 
       //request_task->request_params.reset();
@@ -2476,7 +2480,7 @@ namespace AdServer::Bidding
       {
         try
         {
-          co_interrupted_select_campaign_(*request_params).start_detached(nullptr);
+          co_interrupted_select_campaign_(request_params).start_detached(nullptr);
         }
         catch(...)
         {
@@ -2896,11 +2900,14 @@ namespace AdServer::Bidding
         }
         else if(history_result && !history_result->cohort().empty())
         {
-          if(request_info.platform_names.find("ipad") !=
+          if(request_info.platform_names.find(
+               RequestInfo::PmrString("ipad")) !=
               request_info.platform_names.end() ||
-            request_info.platform_names.find("iphone") !=
+            request_info.platform_names.find(
+              RequestInfo::PmrString("iphone")) !=
               request_info.platform_names.end() ||
-            request_info.platform_names.find("ios") !=
+            request_info.platform_names.find(
+              RequestInfo::PmrString("ios")) !=
               request_info.platform_names.end())
           {
             add_token(request_params.common_info.tokens,
@@ -3130,7 +3137,7 @@ namespace AdServer::Bidding
 
   FrontendCommons::RequestTask
   Frontend::co_interrupted_select_campaign_(
-    AdServer::Bidding::CampaignManager::RequestParams request_params)
+    ReferenceCounting::SmartPtr<RequestParamsHolder> request_params)
     noexcept
   {
     try
@@ -3142,7 +3149,7 @@ namespace AdServer::Bidding
       auto* request =
         google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
           &request_arena);
-      pack_get_campaign_creative_request(*request, request_params);
+      pack_get_campaign_creative_request(*request, *request_params);
       co_await campaign_manager_coro_->get_campaign_creative(*request);
     }
     catch(const eh::Exception&)

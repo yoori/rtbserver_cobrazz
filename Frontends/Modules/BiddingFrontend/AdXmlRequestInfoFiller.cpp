@@ -126,7 +126,8 @@ namespace AdServer::Bidding
     {
       request_params.common_info.external_user_id = (
         !request_info.source_id.empty() ?
-          request_info.source_id + "/" + context.external_user_id :
+          std::string(request_info.source_id.data(), request_info.source_id.size()) +
+            "/" + context.external_user_id :
           context.external_user_id);
     }
 

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <memory>
+#include <memory_resource>
 #include <iterator>
 #include <ostream>
 #include <string>
@@ -15,32 +17,38 @@
 
 namespace AdServer::Bidding::CampaignManager
 {
-  using IdSeq = std::vector<unsigned long>;
-  using StringSeq = std::vector<std::string>;
+  using IdSeq = std::pmr::vector<unsigned long>;
+  using StringSeq = std::pmr::vector<std::string>;
   using ExternalCreativeCategoryIdSeq = StringSeq;
   using TimestampInfo = std::string;
   using RequestIdInfo = std::string;
   using UserIdInfo = std::string;
   using DecimalInfo = std::string;
 
-  inline void assign_string(std::string& target, std::string_view value)
+  template<typename Traits, typename Allocator, typename SrcTraits, typename SrcAllocator>
+  inline void assign_string(
+    std::basic_string<char, Traits, Allocator>& target,
+    const std::basic_string<char, SrcTraits, SrcAllocator>& value)
   {
     target.assign(value.data(), value.size());
   }
 
-  inline void assign_string(std::string& target, const std::string& value)
-  {
-    target = value;
-  }
-
-  inline void assign_string(std::string& target, std::string&& value)
-  {
-    target = std::move(value);
-  }
-
-  inline void assign_string(std::string& target, const String::SubString& value)
+  template<typename Traits, typename Allocator>
+  inline void assign_string(
+    std::basic_string<char, Traits, Allocator>& target,
+    const String::SubString& value)
   {
     target.assign(value.data(), value.size());
+  }
+
+  template<typename Traits, typename Allocator, typename ValueType>
+  inline auto assign_string(
+    std::basic_string<char, Traits, Allocator>& target,
+    const ValueType& value)
+    -> decltype(value.text(), void())
+  {
+    const String::SubString src = value.text();
+    target.assign(src.data(), src.size());
   }
 
   struct ChannelTriggerMatchInfo
@@ -49,10 +57,19 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long channel_id = 0;
   };
 
-  using ChannelTriggerMatchSeq = std::vector<ChannelTriggerMatchInfo>;
+  using ChannelTriggerMatchSeq = std::pmr::vector<ChannelTriggerMatchInfo>;
 
   struct TriggerMatchResult
   {
+    TriggerMatchResult(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : url_channels(resource),
+        pkw_channels(resource),
+        skw_channels(resource),
+        ukw_channels(resource),
+        uid_channels(resource)
+    {}
+
     ChannelTriggerMatchSeq url_channels;
     ChannelTriggerMatchSeq pkw_channels;
     ChannelTriggerMatchSeq skw_channels;
@@ -71,7 +88,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string original_keyword;
   };
 
-  using CCGKeywordSeq = std::vector<CCGKeywordInfo>;
+  using CCGKeywordSeq = std::pmr::vector<CCGKeywordInfo>;
   using FreqCapIdSeq = IdSeq;
   using PublisherAccountIdSeq = IdSeq;
 
@@ -81,7 +98,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string value;
   };
 
-  using TokenSeq = std::vector<TokenInfo>;
+  using TokenSeq = std::pmr::vector<TokenInfo>;
 
   struct TokenImageInfo
   {
@@ -91,7 +108,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long height = 0;
   };
 
-  using TokenImageSeq = std::vector<TokenImageInfo>;
+  using TokenImageSeq = std::pmr::vector<TokenImageInfo>;
 
   struct GeoInfo
   {
@@ -100,7 +117,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string city;
   };
 
-  using GeoInfoSeq = std::vector<GeoInfo>;
+  using GeoInfoSeq = std::pmr::vector<GeoInfo>;
 
   struct GeoCoordInfo
   {
@@ -109,7 +126,7 @@ namespace AdServer::Bidding::CampaignManager
     DecimalInfo accuracy;
   };
 
-  using GeoCoordInfoSeq = std::vector<GeoCoordInfo>;
+  using GeoCoordInfoSeq = std::pmr::vector<GeoCoordInfo>;
 
   struct SeqOrderInfo
   {
@@ -118,7 +135,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long imps = 0;
   };
 
-  using SeqOrderSeq = std::vector<SeqOrderInfo>;
+  using SeqOrderSeq = std::pmr::vector<SeqOrderInfo>;
 
   struct CampaignFreq
   {
@@ -134,7 +151,7 @@ namespace AdServer::Bidding::CampaignManager
     }
   };
 
-  using CampaignFreqSeq = std::vector<CampaignFreq>;
+  using CampaignFreqSeq = std::pmr::vector<CampaignFreq>;
 
   struct NativeDataToken
   {
@@ -142,7 +159,7 @@ namespace AdServer::Bidding::CampaignManager
     bool required = false;
   };
 
-  using NativeDataTokens = std::vector<NativeDataToken>;
+  using NativeDataTokens = std::pmr::vector<NativeDataToken>;
 
   struct NativeImageToken
   {
@@ -152,10 +169,22 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long height = 0;
   };
 
-  using NativeImageTokens = std::vector<NativeImageToken>;
+  using NativeImageTokens = std::pmr::vector<NativeImageToken>;
 
   struct AdSlotInfo
   {
+    AdSlotInfo(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : sizes(resource),
+        currency_codes(resource),
+        exclude_categories(resource),
+        required_categories(resource),
+        allowed_durations(resource),
+        native_data_tokens(resource),
+        native_image_tokens(resource),
+        tokens(resource)
+    {}
+
     unsigned long ad_slot_id = 0;
     std::string format;
     unsigned long tag_id = 0;
@@ -189,10 +218,18 @@ namespace AdServer::Bidding::CampaignManager
     TokenSeq tokens;
   };
 
-  using AdSlotSeq = std::vector<AdSlotInfo>;
+  using AdSlotArray = std::pmr::vector<AdSlotInfo>;
 
   struct CommonAdRequestInfo
   {
+    CommonAdRequestInfo(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : location(resource),
+        coord_location(resource),
+        urls(resource),
+        tokens(resource)
+    {}
+
     TimestampInfo time;
     RequestIdInfo request_id;
     std::string creative_instantiate_type;
@@ -230,6 +267,12 @@ namespace AdServer::Bidding::CampaignManager
 
   struct ContextAdRequestInfo
   {
+    ContextAdRequestInfo(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : platform_ids(resource),
+        geo_channels(resource)
+    {}
+
     bool enabled_notice = false;
     std::string client;
     std::string client_version;
@@ -247,6 +290,28 @@ namespace AdServer::Bidding::CampaignManager
 
   struct RequestParams
   {
+    RequestParams(
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : arena_(std::make_unique<std::pmr::monotonic_buffer_resource>(resource)),
+        common_info(arena_.get()),
+        context_info(arena_.get()),
+        publisher_account_ids(arena_.get()),
+        full_freq_caps(arena_.get()),
+        seq_orders(arena_.get()),
+        campaign_freqs(arena_.get()),
+        channels(arena_.get()),
+        ccg_keywords(arena_.get()),
+        trigger_match_result(arena_.get()),
+        exclude_pubpixel_accounts(arena_.get()),
+        ad_slots(arena_.get())
+    {}
+
+    RequestParams(const RequestParams&) = delete;
+    RequestParams& operator=(const RequestParams&) = delete;
+    RequestParams(RequestParams&&) noexcept = default;
+    RequestParams& operator=(RequestParams&&) = delete;
+
+    std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;
     CommonAdRequestInfo common_info;
     ContextAdRequestInfo context_info;
     unsigned long publisher_site_id = 0;
@@ -273,7 +338,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long tag_delivery_factor = 0;
     unsigned long ccg_delivery_factor = 0;
     unsigned long preview_ccid = 0;
-    AdSlotSeq ad_slots;
+    AdSlotArray ad_slots;
     bool required_passback = false;
     unsigned long profiling_type = 0;
     bool disable_fraud_detection = false;
@@ -305,7 +370,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned char expanding = 0;
   };
 
-  using CreativeSelectResultSeq = std::vector<CreativeSelectResult>;
+  using CreativeSelectResultSeq = std::pmr::vector<CreativeSelectResult>;
 
   struct CreativeSelectDebugInfo
   {
@@ -319,7 +384,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string full_expression;
   };
 
-  using CreativeSelectDebugInfoSeq = std::vector<CreativeSelectDebugInfo>;
+  using CreativeSelectDebugInfoSeq = std::pmr::vector<CreativeSelectDebugInfo>;
 
   struct AdSlotDebugInfo
   {
@@ -365,7 +430,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string parent_contract_id;
   };
 
-  using ExtContractInfoSeq = std::vector<ExtContractInfo>;
+  using ExtContractInfoSeq = std::pmr::vector<ExtContractInfo>;
 
   struct AdSlotResult
   {
@@ -403,7 +468,7 @@ namespace AdServer::Bidding::CampaignManager
     ExtContractInfoSeq contracts;
   };
 
-  using AdSlotResultSeq = std::vector<AdSlotResult>;
+  using AdSlotResultSeq = std::pmr::vector<AdSlotResult>;
 
   struct AdRequestDebugInfo
   {

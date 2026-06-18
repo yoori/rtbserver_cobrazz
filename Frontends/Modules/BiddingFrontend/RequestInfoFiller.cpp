@@ -782,8 +782,9 @@ namespace AdServer::Bidding
     }
   }
 
+  template<typename StringType>
   void
-  stringify_ifa(std::string& res, const String::SubString& bin_idfa)
+  stringify_ifa(StringType& res, const String::SubString& bin_idfa)
   {
     res.reserve(bin_idfa.size() + 4);
     if(bin_idfa.size() == 16)
@@ -881,9 +882,10 @@ namespace AdServer::Bidding
     json_serialize(ostr, node->value);
   }
 
+  template<typename StringType>
   bool
   decode_google_advertising_id(
-    std::string& advertising_id,
+    StringType& advertising_id,
     const void* encrypted_advertising_id,
     unsigned long encrypted_advertising_id_size,
     const unsigned char* encryption_key,
@@ -3047,7 +3049,7 @@ namespace AdServer::Bidding
   RequestInfoFiller::parse_debug_size_param_(
     DebugAdSlotSizeMap& debug_sizes,
     const String::SubString& name,
-    const std::string& value) const
+    const String::SubString& value) const
     noexcept
   {
     const String::SubString::SizeType adslot_length =
@@ -3076,7 +3078,7 @@ namespace AdServer::Bidding
         Request::Debug::AdSlot::SIZE.size(),
         Request::Debug::AdSlot::SIZE) == 0)
     {
-      debug_sizes.insert(std::make_pair(--si, value));
+      debug_sizes.emplace(--si, value.str());
       return true;
     }
 
@@ -3184,7 +3186,7 @@ namespace AdServer::Bidding
     }
 
     // Matching data
-    KeywordFormatter kw_fmt("goog");
+    KeywordFormatter kw_fmt(String::SubString("goog"));
 
     kw_fmt.add_keyword(MatchKeywords::RTBREQ);
 
@@ -3305,7 +3307,8 @@ namespace AdServer::Bidding
     {
       CampaignManager::assign_string(request_params.common_info.external_user_id, (
         !request_info.source_id.empty() ?
-          request_info.source_id + "/" + external_user_id :
+          std::string(request_info.source_id.data(), request_info.source_id.size()) +
+            "/" + external_user_id :
         external_user_id));
     }
 
@@ -3529,7 +3532,9 @@ namespace AdServer::Bidding
         if (size_it != debug_sizes.end())
         {
           ad_slot_request.sizes.resize(1);
-          CampaignManager::assign_string(ad_slot_request.sizes[0], size_it->second);
+          CampaignManager::assign_string(
+            ad_slot_request.sizes[0],
+            std::string(size_it->second));
         }
         else if (!request_info.default_debug_size.empty())
         {
@@ -3781,9 +3786,9 @@ namespace AdServer::Bidding
   }
 
   bool
-  RequestInfoFiller::fill_adid(const RequestInfo& request_info) const noexcept
+  RequestInfoFiller::fill_adid(const String::SubString& source_id) const noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(request_info.source_id);
+    SourceMap::const_iterator source_it = sources_.find(source_id.str());
     if(source_it != sources_.end())
     {
       return source_it->second.fill_adid;
@@ -3795,10 +3800,10 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::fill_vast_instantiate_type_(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    const std::string& source_id) const
+    const String::SubString& source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id);
+    SourceMap::const_iterator source_it = sources_.find(source_id.str());
     if(source_it != sources_.end())
     {
       request_params.ad_instantiate_type = source_it->second.vast_instantiate_type;
@@ -3811,10 +3816,10 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::fill_native_instantiate_type_(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    const std::string& source_id) const
+    const String::SubString& source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id);
+    SourceMap::const_iterator source_it = sources_.find(source_id.str());
     if(source_it != sources_.end())
     {
       request_params.context_info.enabled_notice = (
@@ -3826,10 +3831,10 @@ namespace AdServer::Bidding
   RequestInfoFiller::fill_request_type_(
     RequestInfo& request_info,
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    const std::string& source_id) const
+    const String::SubString& source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id);
+    SourceMap::const_iterator source_it = sources_.find(source_id.str());
     if(source_it != sources_.end())
     {
       if (request_info.publisher_account_ids.empty())
@@ -3918,7 +3923,7 @@ namespace AdServer::Bidding
       AdServer::CampaignSvcs::US_UNDEFINED);
 
     init_request_param(request_params, request_info);
-    request_info.additional_info = RequestInfo::AdditionalInfo{};
+    request_info.additional_info.clear();
 
     if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_URL)
     {
@@ -4126,7 +4131,8 @@ namespace AdServer::Bidding
     {
       CampaignManager::assign_string(request_params.common_info.external_user_id, (
         !request_info.source_id.empty() ?
-          request_info.source_id + "/" + context.external_user_id :
+          std::string(request_info.source_id.data(), request_info.source_id.size()) +
+            "/" + context.external_user_id :
           context.external_user_id));
     }
 
@@ -4299,7 +4305,7 @@ namespace AdServer::Bidding
         slot_it != context.ad_slots.end(); )
     {
       const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
-      const std::string& default_debug_size = request_info.default_debug_size;
+      const auto& default_debug_size = request_info.default_debug_size;
 
       if(slot_it->imp_ext_type == "popup")
       {
@@ -4674,7 +4680,10 @@ namespace AdServer::Bidding
             {
               CampaignManager::assign_string(ad_slot_request.sizes[0], (
                 size_it != debug_sizes.end() ?
-                size_it->second : request_info.default_debug_size));
+                std::string(size_it->second.data(), size_it->second.size()) :
+                std::string(
+                  request_info.default_debug_size.data(),
+                  request_info.default_debug_size.size())));
             }
             else if(main_image_found)
             {
@@ -4801,10 +4810,14 @@ namespace AdServer::Bidding
                 {
                   const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
                   const auto size_it = debug_sizes.find(slot_i);
-                  std::string res_size = (size_it != debug_sizes.end() ? size_it->second : (
-                    request_info.default_debug_size.empty() ?
-                    banner_format.width + "x" + banner_format.height :
-                    request_info.default_debug_size) );
+                  std::string res_size = size_it != debug_sizes.end() ?
+                    std::string(size_it->second.data(), size_it->second.size()) :
+                    (
+                      request_info.default_debug_size.empty() ?
+                      banner_format.width + "x" + banner_format.height :
+                      std::string(
+                        request_info.default_debug_size.data(),
+                        request_info.default_debug_size.size()));
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], res_size);
                   slot_it->size_banner.insert(std::make_pair(
                     res_size,
@@ -4982,9 +4995,15 @@ namespace AdServer::Bidding
     if(!context.ifa.empty())
     {
       // check idfa
-      if(request_info.platform_names.find(PlatformNames::IPAD) != request_info.platform_names.end() ||
-        request_info.platform_names.find(PlatformNames::IPHONE) != request_info.platform_names.end() ||
-        request_info.platform_names.find(PlatformNames::IOS) != request_info.platform_names.end())
+      if(request_info.platform_names.find(
+           RequestInfo::PmrString(PlatformNames::IPAD.data(), PlatformNames::IPAD.size())) !=
+           request_info.platform_names.end() ||
+        request_info.platform_names.find(
+          RequestInfo::PmrString(PlatformNames::IPHONE.data(), PlatformNames::IPHONE.size())) !=
+          request_info.platform_names.end() ||
+        request_info.platform_names.find(
+          RequestInfo::PmrString(PlatformNames::IOS.data(), PlatformNames::IOS.size())) !=
+          request_info.platform_names.end())
       {
         request_info.idfa = context.ifa;
       }
@@ -5042,7 +5061,9 @@ namespace AdServer::Bidding
     {
       for(auto sub_it = it->uids.begin(); sub_it != it->uids.end(); ++sub_it)
       {
-        std::string source = (!it->source.empty() ? it->source : request_info.source_id);
+        std::string source = !it->source.empty() ?
+          it->source :
+          std::string(request_info.source_id.data(), request_info.source_id.size());
         auto source_mapping_it = source_mapping_.find(source);
         if(source_mapping_it != source_mapping_.end())
         {
@@ -5086,15 +5107,15 @@ namespace AdServer::Bidding
         &RequestInfo::flag));
     add_param_processor_(
       Request::Context::SOURCE_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, RequestInfo::PmrString>(
         &RequestInfo::source_id));
     add_param_processor_(
       Request::Context::FORMAT,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, RequestInfo::PmrString>(
         &RequestInfo::format));
     add_param_processor_(
       Request::Context::REQUIRE_DEBUG_INFO,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, RequestInfo::PmrString>(
         &RequestInfo::require_debug_info));
     add_param_processor_(
       Request::Debug::CURRENT_TIME,
@@ -5110,7 +5131,7 @@ namespace AdServer::Bidding
         &RequestInfo::debug_ccg));
     add_param_processor_(
       Request::Debug::ADSLOTS_SIZE,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, RequestInfo::PmrString>(
         &RequestInfo::default_debug_size));
   }
 
@@ -5218,10 +5239,11 @@ namespace AdServer::Bidding
     }
   }
 
+  template<typename StringType>
   void
   RequestInfoFiller::fill_by_referer(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    std::string& search_words,
+    StringType& search_words,
     const HTTP::HTTPAddress& referer,
     bool fill_search_words,
     bool fill_instantiate_type)
@@ -5257,10 +5279,11 @@ namespace AdServer::Bidding
     }
   }
 
+  template<typename StringType>
   void
   RequestInfoFiller::fill_additional_url_(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    std::string& search_words,
+    StringType& search_words,
     const HTTP::HTTPAddress& add_url)
     const
     noexcept
@@ -5284,10 +5307,11 @@ namespace AdServer::Bidding
     }
   }
 
+  template<typename StringType>
   void
   RequestInfoFiller::fill_search_words_(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    std::string& search_words,
+    StringType& search_words,
     const HTTP::HTTPAddress& url)
     const
     noexcept
@@ -5318,12 +5342,12 @@ namespace AdServer::Bidding
 
           if(search_words.empty())
           {
-            search_words.swap(search_words_value);
+            search_words.assign(search_words_value.data(), search_words_value.size());
           }
           else
           {
             search_words += "\n";
-            search_words += search_words_value;
+            search_words.append(search_words_value.data(), search_words_value.size());
           }
         }
       }
@@ -5421,7 +5445,7 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::verify_user_id_(
     const std::string& signed_user_id,
-    const std::string& source_id,
+    const String::SubString& source_id,
     AdServer::Bidding::CampaignManager::RequestParams& request_params)
     const noexcept
   {

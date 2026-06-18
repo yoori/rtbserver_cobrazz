@@ -1,6 +1,8 @@
 #pragma once
 
 #include <optional>
+#include <new>
+#include <memory_resource>
 #include <string>
 #include <memory>
 
@@ -88,7 +90,7 @@ namespace AdServer::Bidding
   typedef std::map<std::string, SourceTraits>
     SourceMap;
 
-  typedef std::map<unsigned long, std::string> DebugAdSlotSizeMap;
+  typedef std::pmr::map<unsigned long, std::pmr::string> DebugAdSlotSizeMap;
 
   struct GoogleAdSlotContext
   {
@@ -110,34 +112,90 @@ namespace AdServer::Bidding
 
   struct RequestInfo
   {
-    typedef std::vector<unsigned long> AccountIdArray;
+    typedef std::pmr::vector<unsigned long> AccountIdArray;
+    typedef std::pmr::string PmrString;
     struct AdditionalInfo
     {
-      std::string tagid;
+      AdditionalInfo(
+        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        : tagid(resource)
+      {}
+
+      void
+      clear() noexcept
+      {
+        tagid.clear();
+        ctr.reset();
+        viewability.reset();
+        vtr.reset();
+      }
+
+      PmrString tagid;
       std::optional<float> ctr;
       std::optional<float> viewability;
       std::optional<float> vtr;
     };
 
     RequestInfo()
-      : debug_ccg(0),
+      : arena_(std::make_unique<std::pmr::monotonic_buffer_resource>()),
+        current_time(),
+        source_id(),
+        debug_ccg(0),
+        publisher_account_ids(arena_.get()),
         publisher_site_id(0),
         random(CampaignSvcs::RANDOM_PARAM_MAX),
         flag(0),
         filter_request(false),
         skip_ccg_keywords(false),
+        search_words(),
+        seat(),
         truncate_domain(false),
         ipw_extension(false),
+        format(),
+        default_debug_size(),
+        debug_sizes(arena_.get()),
         user_create_time(Generics::Time::ZERO),
+        location(),
         is_app(false),
+        application_id(),
+        advertising_id(),
+        idfa(),
+        ssp_devicetype_str(),
+        ssp_video_placementtype_str(),
+        notice_instantiate_type(SourceTraits::NIT_NONE),
+        vast_notice_instantiate_type(SourceTraits::NIT_NONE),
+        native_notice_instantiate_type(SourceTraits::NIT_NONE),
+        platform_names(),
         native_ads_instantiate_type(SourceTraits::NAIT_NONE),
         native_ads_impression_tracker_type(AdServer::CampaignSvcs::NAITT_IMP),
         erid_return_type(SourceTraits::ERIDRT_EXT_BUZSAPE), // by default fill buz sape nroa
-        skip_ext_category(false)
+        skip_ext_category(false),
+        notice_url(),
+        require_debug_info(),
+        bid_request_id(),
+        bid_site_id(),
+        bid_publisher_id(),
+        ext_user_ids(arena_.get()),
+        additional_info(arena_.get())
     {}
 
+    RequestInfo(const RequestInfo&) = delete;
+    RequestInfo& operator=(const RequestInfo&) = delete;
+
+    RequestInfo(RequestInfo&&) noexcept = default;
+    RequestInfo& operator=(RequestInfo&&) = delete;
+
+    void
+    reset() noexcept
+    {
+      this->~RequestInfo();
+      new(this) RequestInfo();
+    }
+
+    std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;
+
     Generics::Time current_time;
-    std::string source_id;
+    PmrString source_id;
     unsigned long debug_ccg;
     AccountIdArray publisher_account_ids;
     unsigned long publisher_site_id;
@@ -145,23 +203,23 @@ namespace AdServer::Bidding
     unsigned long flag;
     bool filter_request;
     bool skip_ccg_keywords;
-    std::string search_words;
-    std::string seat;
+    PmrString search_words;
+    PmrString seat;
     bool truncate_domain;
     bool ipw_extension;
-    std::string format;
-    std::string default_debug_size;
+    PmrString format;
+    PmrString default_debug_size;
     DebugAdSlotSizeMap debug_sizes;
     Generics::Time user_create_time;
     FrontendCommons::Location_var location;
 
     //std::string device_id;
     bool is_app;
-    std::string application_id;
-    std::string advertising_id; // ADVERTISING_ID
-    std::string idfa;
-    std::string ssp_devicetype_str;
-    std::string ssp_video_placementtype_str;
+    PmrString application_id;
+    PmrString advertising_id; // ADVERTISING_ID
+    PmrString idfa;
+    PmrString ssp_devicetype_str;
+    PmrString ssp_video_placementtype_str;
 
     SourceTraits::NoticeInstantiateType notice_instantiate_type;
     SourceTraits::NoticeInstantiateType vast_notice_instantiate_type;
@@ -173,13 +231,13 @@ namespace AdServer::Bidding
     SourceTraits::ERIDReturnType erid_return_type;
 
     bool skip_ext_category;
-    std::string notice_url;
-    std::string require_debug_info;
+    PmrString notice_url;
+    PmrString require_debug_info;
 
-    std::string bid_request_id;
-    std::string bid_site_id;
-    std::string bid_publisher_id;
-    std::vector<std::string> ext_user_ids;
+    PmrString bid_request_id;
+    PmrString bid_site_id;
+    PmrString bid_publisher_id;
+    std::pmr::vector<PmrString> ext_user_ids;
     AdditionalInfo additional_info;
   };
 
@@ -269,7 +327,7 @@ namespace AdServer::Bidding
       /*throw(InvalidParamException, Exception)*/;
 
     bool
-    fill_adid(const RequestInfo& request_info) const noexcept;
+    fill_adid(const String::SubString& source_id) const noexcept;
 
     void
     init_request_param(
@@ -282,10 +340,11 @@ namespace AdServer::Bidding
       AdServer::Bidding::CampaignManager::AdSlotInfo& adslot_info)
       noexcept;
 
+    template<typename StringType>
     void
     fill_by_referer(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      std::string& search_words,
+      StringType& search_words,
       const HTTP::HTTPAddress& referer,
       bool fill_search_words = true,
       bool fill_instantiate_type = true)
@@ -340,21 +399,23 @@ namespace AdServer::Bidding
     parse_debug_size_param_(
       DebugAdSlotSizeMap& debug_sizes,
       const String::SubString& name,
-      const std::string& value) const
+      const String::SubString& value) const
       noexcept;
 
+    template<typename StringType>
     void
     fill_additional_url_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      std::string& search_words,
+      StringType& search_words,
       const HTTP::HTTPAddress& add_url)
       const
       noexcept;
 
+    template<typename StringType>
     void
     fill_search_words_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      std::string& search_words,
+      StringType& search_words,
       const HTTP::HTTPAddress& url)
       const
       noexcept;
@@ -363,20 +424,20 @@ namespace AdServer::Bidding
     fill_request_type_(
       RequestInfo& request_info,
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const std::string& source_id)
+      const String::SubString& source_id)
       const
       noexcept;
 
     void
     fill_vast_instantiate_type_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const std::string& source_id) const
+      const String::SubString& source_id) const
       noexcept;
 
     void
     fill_native_instantiate_type_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const std::string& source_id) const
+      const String::SubString& source_id) const
       noexcept;
 
     void
@@ -391,7 +452,7 @@ namespace AdServer::Bidding
     void
     verify_user_id_(
       const std::string& signed_user_id,
-      const std::string& source_id,
+      const String::SubString& source_id,
       AdServer::Bidding::CampaignManager::RequestParams& request_params)
       const
       noexcept;

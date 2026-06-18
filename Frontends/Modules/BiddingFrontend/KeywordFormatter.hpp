@@ -36,9 +36,9 @@ namespace AdServer::Bidding
   {
   public:
     // short_rtb_name == source_id
-    KeywordFormatter(const std::string& source_id)
+    KeywordFormatter(const String::SubString& source_id)
       : keywords_non_empty_(false),
-        short_rtb_name_(source_id)
+        short_rtb_name_(source_id.str())
     {
       keywords_osrt_.reserve(1024);
     }

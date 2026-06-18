@@ -733,7 +733,8 @@ namespace AdServer::Bidding
             bid_object.add_escaped_string(Response::OpenRtb::IMPID, slot_it->id);
             bid_object.add_number(Response::OpenRtb::PRICE, openrtb_price);
 
-            if (bid_frontend_->request_info_filler_->fill_adid(request_info))
+            if (bid_frontend_->request_info_filler_->fill_adid(
+                  request_info.source_id))
             {
               bid_object.add_as_string(Response::OpenRtb::ADID, ad_slot_result.selected_creatives[0].creative_id);
             }
