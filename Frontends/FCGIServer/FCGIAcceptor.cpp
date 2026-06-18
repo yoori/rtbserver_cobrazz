@@ -246,6 +246,9 @@ namespace Frontends
     deactivate();
 
     void
+    deactivate_i_();
+
+    void
     handle_read_(
       const boost::system::error_code& error,
       size_t bytes_transferred);
@@ -307,7 +310,7 @@ namespace Frontends
     FCGIAcceptorStats_var stats_;
     State_var state_;
     boost::asio::io_service& io_service_;
-    //std::shared_ptr<boost::asio::io_context::strand> strand_;
+    boost::asio::io_service::strand strand_;
 
     SocketType socket_;
     std::atomic<int> active_;
@@ -473,7 +476,7 @@ namespace Frontends
       frontend_(ReferenceCounting::add_ref(frontend)),
       stats_(ReferenceCounting::add_ref(stats)),
       io_service_(io_service),
-      //strand_(new boost::asio::io_context::strand(*io_service_)),
+      strand_(io_service),
       socket_(io_service_),
       active_(0),
       read_ordered_(0),
@@ -484,7 +487,15 @@ namespace Frontends
 
   FCGIAcceptor::Connection::~Connection() noexcept
   {
-    deactivate();
+    if(active_.exchange(0) != 0)
+    {
+      boost::system::error_code ignored_error;
+      socket_.close(ignored_error);
+      if(stats_.in())
+      {
+        stats_->complete_fcgi_connection();
+      }
+    }
     //std::cerr << "FCGIAcceptor::Connection::~Connection()" << std::endl;
   }
 
@@ -497,19 +508,42 @@ namespace Frontends
   void
   FCGIAcceptor::Connection::activate()
   {
-    if(active_.exchange(1) == 0 && stats_.in())
-    {
-      stats_->add_fcgi_connection();
-    }
-    order_read_();
+    auto self = shared_from_this();
+    strand_.post(
+      [self]()
+      {
+        if(self->active_.exchange(1) == 0 && self->stats_.in())
+        {
+          self->stats_->add_fcgi_connection();
+        }
+        self->order_read_();
+      }
+    );
   }
 
   void
   FCGIAcceptor::Connection::deactivate()
   {
+    auto self = shared_from_this();
+    strand_.post(
+      [self]()
+      {
+        self->deactivate_i_();
+      }
+    );
+  }
+
+  void
+  FCGIAcceptor::Connection::deactivate_i_()
+  {
     if(active_.exchange(0) != 0)
     {
-      socket_.close();
+      boost::system::error_code ignored_error;
+      socket_.close(ignored_error);
+      {
+        WriteBufSyncPolicy::WriteGuard lock(send_bufs_lock_);
+        SendBufPtrArray().swap(send_bufs_);
+      }
       if(stats_.in())
       {
         stats_->complete_fcgi_connection();
@@ -529,7 +563,7 @@ namespace Frontends
       // process got buffer
       if(!process_read_data_(bytes_transferred))
       {
-        deactivate();
+        deactivate_i_();
         return;
       }
 
@@ -539,7 +573,7 @@ namespace Frontends
     else
     {
       // destroy & close on ref count == 0
-      deactivate();
+      deactivate_i_();
     }
   }
 
@@ -556,7 +590,7 @@ namespace Frontends
     else
     {
       // destroy & close on ref count == 0
-      deactivate();
+      deactivate_i_();
     }
   }
 
@@ -565,13 +599,22 @@ namespace Frontends
   {
     if(++read_ordered_ == 1)
     {
+      if(active_.load(std::memory_order_acquire) == 0)
+      {
+        --read_ordered_;
+        return;
+      }
+
       auto self = shared_from_this();
       socket_.async_read_some(
         boost::asio::buffer(&rbuf_[0], READ_BUF_SIZE_),
-	[self](const boost::system::error_code& error, size_t bytes_transferred)
-	{
-	  self->handle_read_(error, bytes_transferred);
-	});
+        strand_.wrap(
+          [self](
+            const boost::system::error_code& error,
+            size_t bytes_transferred)
+          {
+            self->handle_read_(error, bytes_transferred);
+          }));
     }
     else
     {
@@ -586,6 +629,16 @@ namespace Frontends
 
     if(++write_ordered_ == 1)
     {
+      if(active_.load(std::memory_order_acquire) == 0)
+      {
+        {
+          WriteBufSyncPolicy::WriteGuard lock(send_bufs_lock_);
+          SendBufPtrArray().swap(send_bufs_);
+        }
+        --write_ordered_;
+        return;
+      }
+
       // pass buffer that point to ordered_send_buf_
       {
         WriteBufSyncPolicy::WriteGuard lock(send_bufs_lock_);
@@ -611,20 +664,26 @@ namespace Frontends
           boost::asio::async_write(
             socket_,
             buffer_seq,
-	    [self](const boost::system::error_code& error, size_t /*bytes_transferred*/)
-	    {
-	      self->handle_write_(error);
-	    });
+            strand_.wrap(
+              [self](
+                const boost::system::error_code& error,
+                size_t /*bytes_transferred*/)
+              {
+                self->handle_write_(error);
+              }));
         }
         else
         {
           boost::asio::async_write(
             socket_,
             (*ordered_send_bufs_.begin())->bufs,
-	    [self](const boost::system::error_code& error, size_t /*bytes_transferred*/)
-	    {
-	      self->handle_write_(error);
-	    });
+            strand_.wrap(
+              [self](
+                const boost::system::error_code& error,
+                size_t /*bytes_transferred*/)
+              {
+                self->handle_write_(error);
+              }));
           
         }
       }
@@ -719,7 +778,13 @@ namespace Frontends
       send_bufs_.emplace_back(std::move(send_buf));
     }
 
-    order_write_();
+    auto self = shared_from_this();
+    strand_.post(
+      [self]()
+      {
+        self->order_write_();
+      }
+    );
   }
 
   Logging::Logger*
