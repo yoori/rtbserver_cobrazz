@@ -24,6 +24,7 @@
 #include <HTTP/HTTPCookie.hpp>
 
 #include <Commons/ExecutorPool.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 #include <ChannelServerGrpc.grpc-client.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <UserBindServerGrpc.grpc-client.hpp>
@@ -172,6 +173,18 @@ namespace AdServer
 
     using BoolTask = FrontendCommons::ValueTask<bool>;
 
+    struct TriggerMatcherResult
+    {
+      AdServer::Grpc::ResponseHolder<
+        adserver::channel_svcs::channel_server::MatchResponse>
+          trigger_match_result;
+      bool success = true;
+      std::string error_message;
+    };
+
+    using TriggerMatcherTask =
+      FrontendCommons::ValueTask<TriggerMatcherResult>;
+
     struct MergeUsersResult
     {
       bool success = true;
@@ -183,7 +196,7 @@ namespace AdServer
 
     struct UserInfoMatcherResult
     {
-      std::shared_ptr<
+      AdServer::Grpc::ResponseHolder<
         adserver::user_info_svcs::user_info_manager::MatchResponse>
           history_match_result;
       bool profiling_available = false;
@@ -259,20 +272,17 @@ namespace AdServer
       const std::shared_ptr<RequestContext>& context)
       noexcept;
 
-    BoolTask
+    TriggerMatcherTask
     co_match_triggers_(
       const std::shared_ptr<RequestContext>& context,
-      adserver::channel_svcs::channel_server::MatchRequest& request,
-      std::shared_ptr<
-        adserver::channel_svcs::channel_server::MatchResponse> response,
-      std::string& error)
+      adserver::channel_svcs::channel_server::MatchRequest& request)
       noexcept;
 
     UserInfoMatcherTask
     co_acquire_user_info_matcher_(
       const std::shared_ptr<RequestContext>& context,
-      std::shared_ptr<
-        adserver::channel_svcs::channel_server::MatchResponse> trigger_matching_result,
+      const adserver::channel_svcs::channel_server::MatchResponse*
+        trigger_matching_result,
       bool trigger_matching_result_present)
       noexcept;
 

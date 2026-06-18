@@ -1250,7 +1250,7 @@ namespace AdServer::ImprTrack
       co_return FrontendCommons::RequestResult{};
     }
 
-    state->trigger_match_result = std::move(channel_result.response);
+    state->trigger_match_result = std::move(channel_result.response_holder);
 
     if(user_bind_client_coro_ &&
       !state->cookie_user_id.is_null() &&
@@ -1284,7 +1284,7 @@ namespace AdServer::ImprTrack
     }
 
     const auto& matched_channels =
-      state->trigger_match_result.matched_channels();
+      state->trigger_match_result->matched_channels();
     if(matched_channels.page_channels_size() == 0)
     {
       finish_match_channels_request_();
@@ -1345,8 +1345,8 @@ namespace AdServer::ImprTrack
           *history_match_request);
         if(match_result.status.ok())
         {
-          state->history_match_response = std::move(match_result.response);
-          state->history_match_present = state->history_match_response.matched();
+          state->history_match_response = std::move(match_result.response_holder);
+          state->history_match_present = state->history_match_response->matched();
         }
         else
         {
@@ -1418,7 +1418,7 @@ namespace AdServer::ImprTrack
     mri.set_request_time(GrpcAlgs::pack_time(state.request_info.time));
 
     const auto& page_channels =
-      state.trigger_match_result.matched_channels().page_channels();
+      state.trigger_match_result->matched_channels().page_channels();
     for(const auto& channel : page_channels)
     {
       auto* pkw_channel = match_info->add_pkw_channels();
@@ -1429,7 +1429,7 @@ namespace AdServer::ImprTrack
     if(state.history_match_present)
     {
       for(const auto& channel :
-        state.history_match_response.match_result().channels())
+        state.history_match_response->match_result().channels())
       {
         match_info->add_channels(channel.channel_id());
       }

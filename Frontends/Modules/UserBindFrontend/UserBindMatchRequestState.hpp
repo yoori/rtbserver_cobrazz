@@ -5,6 +5,7 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <Commons/Grpc/ResponseHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/Location.hpp>
 #include <Frontends/FrontendCommons/RequestTask.hpp>
@@ -75,10 +76,12 @@ namespace AdServer
     FrontendCommons::Location_var location_;
     std::string source_;
     Generics::Time now_;
-    adserver::channel_svcs::channel_server::MatchResponse
+    AdServer::Grpc::ResponseHolder<
+      adserver::channel_svcs::channel_server::MatchResponse>
       trigger_match_result_;
     bool trigger_match_result_present_;
-    std::shared_ptr<adserver::user_info_svcs::user_info_manager::MatchResponse>
+    AdServer::Grpc::ResponseHolder<
+      adserver::user_info_svcs::user_info_manager::MatchResponse>
       history_match_result_;
   };
 }

@@ -171,7 +171,7 @@ namespace AdServer
         *channel_request);
       if(match_result.status.ok())
       {
-        trigger_match_result_ = std::move(match_result.response);
+        trigger_match_result_ = std::move(match_result.response_holder);
         trigger_match_result_present_ = true;
       }
       else
@@ -288,9 +288,7 @@ namespace AdServer
         *history_match_request);
       if(match_result.status.ok())
       {
-        history_match_result_ = std::make_shared<
-          adserver::user_info_svcs::user_info_manager::MatchResponse>(
-            std::move(match_result.response));
+        history_match_result_ = std::move(match_result.response_holder);
       }
       else
       {
@@ -312,8 +310,8 @@ namespace AdServer
       *process_match_request->mutable_match_request_info(),
       result_user_id_,
       now_,
-      trigger_match_result_present_ ? &trigger_match_result_ : nullptr,
-      history_match_result_.get(),
+      trigger_match_result_present_ ? &*trigger_match_result_ : nullptr,
+      history_match_result_ ? &*history_match_result_ : nullptr,
       location_.get(),
       referer_,
       source_);
@@ -355,7 +353,7 @@ namespace AdServer
 
     if(trigger_match_result_present_)
     {
-      const auto& matched_channels = trigger_match_result_.matched_channels();
+      const auto& matched_channels = trigger_match_result_->matched_channels();
       typedef std::set<ChannelMatch> ChannelMatchSet;
 
       ChannelMatchSet page_channels;
@@ -428,9 +426,9 @@ namespace AdServer
       !cohort_.empty() ||
       !keywords_.empty() ||
       (!result_user_id_.is_null() && trigger_match_result_present_ && (
-        trigger_match_result_.matched_channels().page_channels_size() > 0 ||
-        trigger_match_result_.matched_channels().url_channels_size() > 0 ||
-        trigger_match_result_.matched_channels().url_keyword_channels_size() > 0));
+        trigger_match_result_->matched_channels().page_channels_size() > 0 ||
+        trigger_match_result_->matched_channels().url_channels_size() > 0 ||
+        trigger_match_result_->matched_channels().url_keyword_channels_size() > 0));
   }
 
   void

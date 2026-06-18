@@ -1347,7 +1347,7 @@ namespace AdServer
   AdFrontend::UserInfoMatcherTask
   AdFrontend::co_acquire_user_info_matcher_(
     const std::shared_ptr<RequestContext>& context,
-    std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
+    const adserver::channel_svcs::channel_server::MatchResponse*
       trigger_matching_result,
     bool trigger_matching_result_present)
     noexcept
@@ -1358,14 +1358,18 @@ namespace AdServer
       request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
 
     auto finish = [&](
-      std::shared_ptr<
+      AdServer::Grpc::ResponseHolder<
         adserver::user_info_svcs::user_info_manager::MatchResponse>
           match_response,
       bool match_success)
     {
         if(!match_response)
         {
-          match_response = get_empty_history_matching();
+          auto empty_response = *get_empty_history_matching();
+          match_response =
+            AdServer::Grpc::ResponseHolder<
+              adserver::user_info_svcs::user_info_manager::MatchResponse>::
+                make_value(std::move(empty_response));
         }
         auto* match_result = match_response->mutable_match_result();
 
@@ -1374,7 +1378,11 @@ namespace AdServer
         {
           if(!match_success || !do_history_matching)
           {
-            match_response = get_empty_history_matching();
+            auto empty_response = *get_empty_history_matching();
+            match_response =
+              AdServer::Grpc::ResponseHolder<
+                adserver::user_info_svcs::user_info_manager::MatchResponse>::
+                  make_value(std::move(empty_response));
             match_result = match_response->mutable_match_result();
             const auto& content_channels =
               trigger_matching_result->content_channels();
@@ -1408,12 +1416,12 @@ namespace AdServer
           }
         }
 
-        return UserInfoMatcherResult{match_response, match_success};
+        return UserInfoMatcherResult{std::move(match_response), match_success};
     };
 
     if(!user_info_client_coro_ || !do_history_matching)
     {
-      co_return finish(nullptr, false);
+      co_return finish({}, false);
     }
 
     AdStageInProgressGuard history_match_in_progress(
@@ -1466,8 +1474,7 @@ namespace AdServer
     {
       prepare_ui_match_params_(
         *match_params,
-        trigger_matching_result_present ? trigger_matching_result.get() :
-          nullptr,
+        trigger_matching_result_present ? trigger_matching_result : nullptr,
         request_info);
     }
 
@@ -1491,21 +1498,18 @@ namespace AdServer
         Aspect::AD_FRONTEND,
         match_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
           "" : "ADS-IMPL-112");
-      co_return finish(nullptr, false);
+      co_return finish({}, false);
     }
 
-    auto response = std::make_shared<
-      adserver::user_info_svcs::user_info_manager::MatchResponse>(
-        std::move(match_result.response));
     context->request_time_metering.matched_channels =
-      response->match_result().channels_size();
+      match_result.response.match_result().channels_size();
     context->request_time_metering.history_match_time =
       history_match_time_metering.consider();
     context->request_time_metering.history_match_local_time =
       GrpcAlgs::unpack_time(
-        response->match_result().process_time());
+        match_result.response.match_result().process_time());
 
-    co_return finish(response, true);
+    co_return finish(std::move(match_result.response_holder), true);
   }
 
   void
@@ -1696,13 +1700,10 @@ namespace AdServer
     return request;
   }
 
-  AdFrontend::BoolTask
+  AdFrontend::TriggerMatcherTask
   AdFrontend::co_match_triggers_(
     const std::shared_ptr<RequestContext>& context,
-    adserver::channel_svcs::channel_server::MatchRequest& channel_request,
-    std::shared_ptr<
-      adserver::channel_svcs::channel_server::MatchResponse> response,
-    std::string& error)
+    adserver::channel_svcs::channel_server::MatchRequest& channel_request)
     noexcept
   {
     const RequestInfo& request_info = context->request_info;
@@ -1741,17 +1742,17 @@ namespace AdServer
       ostr << "ChannelServer::match(): gRPC call failed: code=" <<
         static_cast<int>(channel_result.status.error_code()) <<
         ", message=" << channel_result.status.error_message();
-      error = ostr.str().str();
+      const auto error = ostr.str().str();
       logger()->log(
         ostr.str(),
         Logging::Logger::EMERGENCY,
         Aspect::AD_FRONTEND,
         "ADS-IMPL-117");
-      co_return false;
+      co_return TriggerMatcherResult{{}, false, error};
     }
 
-    *response = std::move(channel_result.response);
-    const auto& matched_channels = response->matched_channels();
+    const auto& response = channel_result.response;
+    const auto& matched_channels = response.matched_channels();
     context->request_time_metering.matched_triggers =
       matched_channels.page_channels_size() +
       matched_channels.search_channels_size() +
@@ -1761,14 +1762,17 @@ namespace AdServer
     context->request_time_metering.trigger_match_time =
       trigger_match_time_metering.consider();
     context->request_time_metering.detail_trigger_match_time.resize(
-      response->match_time().empty() ? 0 : 1);
-    if(!response->match_time().empty())
+      response.match_time().empty() ? 0 : 1);
+    if(!response.match_time().empty())
     {
       context->request_time_metering.detail_trigger_match_time[0] =
-        GrpcAlgs::unpack_time(response->match_time());
+        GrpcAlgs::unpack_time(response.match_time());
     }
 
-    co_return true;
+    co_return TriggerMatcherResult{
+      std::move(channel_result.response_holder),
+      true,
+      {}};
   }
 
   AdFrontend::BoolTask
@@ -1783,8 +1787,9 @@ namespace AdServer
         adserver::channel_svcs::channel_server::MatchRequest>(
           &channel_request_arena);
       *channel_request = get_empty_matching_request();
-      auto trigger_matched_channels = std::make_shared<
-        adserver::channel_svcs::channel_server::MatchResponse>();
+      AdServer::Grpc::ResponseHolder<
+        adserver::channel_svcs::channel_server::MatchResponse>
+          trigger_matched_channels;
       auto campaign_matching_result =
         std::make_shared<CM::RequestCreativeResult>();
       const bool make_merge =
@@ -1808,25 +1813,33 @@ namespace AdServer
       std::string trigger_error;
       if(context->request_info.passback_by_colocation)
       {
-        *trigger_matched_channels = get_empty_trigger_matching();
+        trigger_matched_channels =
+          AdServer::Grpc::ResponseHolder<
+            adserver::channel_svcs::channel_server::MatchResponse>::
+              make_value(get_empty_trigger_matching());
       }
       else
       {
-        trigger_success = co_await co_match_triggers_(
+        auto trigger_matcher = co_await co_match_triggers_(
           context,
-          *channel_request,
-          trigger_matched_channels,
-          trigger_error);
+          *channel_request);
+        trigger_success = trigger_matcher.success;
+        trigger_error = std::move(trigger_matcher.error_message);
+        trigger_matched_channels = std::move(trigger_matcher.trigger_match_result);
       }
 
       auto user_info_matcher = co_await co_acquire_user_info_matcher_(
         context,
-        trigger_matched_channels,
+        trigger_matched_channels ? &*trigger_matched_channels : nullptr,
         trigger_success);
       auto history_match_result = user_info_matcher.history_match_result;
       if(!history_match_result)
       {
-        history_match_result = get_empty_history_matching();
+        auto empty_response = *get_empty_history_matching();
+        history_match_result =
+          AdServer::Grpc::ResponseHolder<
+            adserver::user_info_svcs::user_info_manager::MatchResponse>::
+              make_value(std::move(empty_response));
       }
 
       std::shared_ptr<
@@ -1836,7 +1849,7 @@ namespace AdServer
 
       context->debug_sink.print_acquire_ad(
         context->request_info,
-        trigger_success ? trigger_matched_channels.get() : nullptr,
+        trigger_success ? &*trigger_matched_channels : nullptr,
         ccg_keywords.get(),
         history_match_result->match_result());
       if(!trigger_success)
@@ -1856,8 +1869,8 @@ namespace AdServer
         FrontendCommons::deduce_instantiate_type(
           &context->request_info.secure,
           context->request_holder->request()),
-        trigger_success ? trigger_matched_channels.get() : nullptr,
-        history_match_result.get(),
+        trigger_success ? &*trigger_matched_channels : nullptr,
+        &*history_match_result,
         merge_result.success ? merge_result.merged_last_request :
           GrpcAlgs::unpack_time(
             history_match_result->match_result().last_request_time()),

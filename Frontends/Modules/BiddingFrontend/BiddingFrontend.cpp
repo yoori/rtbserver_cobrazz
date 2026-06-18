@@ -26,6 +26,7 @@
 #include <Commons/ExternalUserIdUtils.hpp>
 
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/ResponseHolder.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -68,8 +69,18 @@ namespace AdServer::Bidding
   namespace
   {
     namespace PB = adserver::campaign_svcs::campaign_manager;
+    namespace UIM = adserver::user_info_svcs::user_info_manager;
 
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
+
+    using HistoryMatchResponseHolder =
+      AdServer::Grpc::ResponseHolder<UIM::MatchResponse>;
+    using TriggerMatchResponseHolder =
+      AdServer::Grpc::ResponseHolder<
+        adserver::channel_svcs::channel_server::MatchResponse>;
+    using CcgTraitsResponseHolder =
+      AdServer::Grpc::ResponseHolder<
+        adserver::channel_svcs::channel_server::GetCcgTraitsResponse>;
 
     class InProgressGuard
     {
@@ -1382,8 +1393,7 @@ namespace AdServer::Bidding
 
     struct TriggerMatchResult
     {
-      std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
-        result;
+      TriggerMatchResponseHolder result;
       bool present = false;
       bool failed = false;
     };
@@ -1529,7 +1539,9 @@ namespace AdServer::Bidding
           }
 
           AdServer::Commons::UserId local_match_user_id;
-          adserver::user_info_svcs::user_bind::GetUserIdResponse user_bind_info;
+          AdServer::Grpc::ResponseHolder<
+            adserver::user_info_svcs::user_bind::GetUserIdResponse>
+              user_bind_info;
           bool blacklisted = false;
           bool min_age_reached = false;
           std::size_t base_index = 0;
@@ -1596,14 +1608,14 @@ namespace AdServer::Bidding
                 break;
               }
 
-              user_bind_info = std::move(get_result.response);
+              user_bind_info = std::move(get_result.response_holder);
               if(user_resolving_stage)
               {
-                user_resolving_stage->server_id = user_bind_info.hostname();
+                user_resolving_stage->server_id = user_bind_info->hostname();
               }
-              min_age_reached |= user_bind_info.min_age_reached();
+              min_age_reached |= user_bind_info->min_age_reached();
               local_match_user_id =
-                GrpcAlgs::unpack_user_id(user_bind_info.user_id());
+                GrpcAlgs::unpack_user_id(user_bind_info->user_id());
 
               if(require_debug_info)
               {
@@ -1612,11 +1624,11 @@ namespace AdServer::Bidding
                   local_match_user_id.is_null() ?
                     std::string() : local_match_user_id.to_string();
                 user_resolving_debug_info.min_age_reached =
-                  user_bind_info.min_age_reached();
-                user_resolving_debug_info.created = user_bind_info.created();
+                  user_bind_info->min_age_reached();
+                user_resolving_debug_info.created = user_bind_info->created();
                 user_resolving_debug_info.invalid_operation =
-                  user_bind_info.invalid_operation();
-                user_resolving_debug_info.user_found = user_bind_info.user_found();
+                  user_bind_info->invalid_operation();
+                user_resolving_debug_info.user_found = user_bind_info->user_found();
               }
 
               blacklisted |=
@@ -1696,7 +1708,7 @@ namespace AdServer::Bidding
             common_info.user_status = static_cast<std::size_t>(
               AdServer::CampaignSvcs::US_UNDEFINED);
           }
-          else if(user_bind_info.user_found())
+          else if(user_bind_info && user_bind_info->user_found())
           {
             common_info.user_status = static_cast<std::size_t>(
               AdServer::CampaignSvcs::US_OPTOUT);
@@ -1837,9 +1849,7 @@ namespace AdServer::Bidding
               trigger_match_stage->server_id =
                 channel_result.response.hostname();
             }
-            trigger_match.result = std::make_shared<
-              adserver::channel_svcs::channel_server::MatchResponse>(
-                std::move(channel_result.response));
+            trigger_match.result = std::move(channel_result.response_holder);
             trigger_match.present = true;
             if(!trigger_match.result->full_loaded())
             {
@@ -1989,17 +1999,14 @@ namespace AdServer::Bidding
       };
 
       auto finish_history_match = [&](
-        std::shared_ptr<
-          adserver::user_info_svcs::user_info_manager::MatchResponse>
-            result)
+        HistoryMatchResponseHolder result)
       {
         auto& request_params = *request_task->request_params();
 
         if(!result && trigger_match.result && !trigger_match.failed)
         {
-          result = std::make_shared<
-            adserver::user_info_svcs::user_info_manager::MatchResponse>();
-          auto* match_result = result->mutable_match_result();
+          UIM::MatchResponse synthetic_response;
+          auto* match_result = synthetic_response.mutable_match_result();
           init_synthetic_match_result(match_result);
           for(const auto& content_channel :
               trigger_match.result->content_channels())
@@ -2008,6 +2015,8 @@ namespace AdServer::Bidding
             channel->set_channel_id(content_channel.id());
             channel->set_weight(content_channel.weight());
           }
+          result = HistoryMatchResponseHolder::make_value(
+            std::move(synthetic_response));
         }
 
         request_params.context_info.profile_referer =
@@ -2017,9 +2026,7 @@ namespace AdServer::Bidding
       };
 
       request_task->request_params()->profiling_available = false;
-      std::shared_ptr<
-        adserver::user_info_svcs::user_info_manager::MatchResponse>
-          history_match_result;
+      HistoryMatchResponseHolder history_match_result;
 
       if(request_task->resolved_user_id_.is_null())
       {
@@ -2027,9 +2034,8 @@ namespace AdServer::Bidding
            !trigger_match.failed &&
            !trigger_match.result->no_track())
         {
-          history_match_result = std::make_shared<
-            adserver::user_info_svcs::user_info_manager::MatchResponse>();
-          auto* match_result = history_match_result->mutable_match_result();
+          UIM::MatchResponse synthetic_response;
+          auto* match_result = synthetic_response.mutable_match_result();
           init_synthetic_match_result(match_result);
           for(int i = 0; i < trigger_match.result->content_channels_size(); ++i)
           {
@@ -2039,6 +2045,8 @@ namespace AdServer::Bidding
             channel->set_weight(
               trigger_match.result->content_channels(i).weight());
           }
+          history_match_result = HistoryMatchResponseHolder::make_value(
+            std::move(synthetic_response));
         }
       }
       else
@@ -2156,9 +2164,7 @@ namespace AdServer::Bidding
               history_match_stage->server_id =
                 history_result.response.hostname();
             }
-            history_match_result = std::make_shared<
-              adserver::user_info_svcs::user_info_manager::MatchResponse>(
-                std::move(history_result.response));
+            history_match_result = std::move(history_result.response_holder);
           }
           else
           {
@@ -2231,9 +2237,7 @@ namespace AdServer::Bidding
         &StatHolder::add_rtb_request_campaign_selection_time);
       request_task->set_current_stage(Stage::CampaignSelection);
 
-      std::shared_ptr<
-        adserver::channel_svcs::channel_server::GetCcgTraitsResponse>
-          ccg_keywords;
+      CcgTraitsResponseHolder ccg_keywords;
       if(history_match_result &&
          history_match_result->match_result().channels_size() &&
          !request_info.skip_ccg_keywords &&
@@ -2255,9 +2259,7 @@ namespace AdServer::Bidding
             channel_client_coro_->get_ccg_traits(*ccg_traits_request);
           if(ccg_traits_result.status.ok())
           {
-            ccg_keywords = std::make_shared<
-              adserver::channel_svcs::channel_server::GetCcgTraitsResponse>(
-                std::move(ccg_traits_result.response));
+            ccg_keywords = std::move(ccg_traits_result.response_holder);
           }
           else
           {
@@ -2295,10 +2297,10 @@ namespace AdServer::Bidding
         request_info.filter_request;
 
       select_campaign_(
-        history_match_result.get(),
+        history_match_result ? &*history_match_result : nullptr,
         trigger_match.present && !trigger_match.failed ?
-          trigger_match.result.get() : nullptr,
-        ccg_keywords.get(),
+          &*trigger_match.result : nullptr,
+        ccg_keywords ? &*ccg_keywords : nullptr,
         request_info,
         request_params,
         request_task->resolved_user_id_,
