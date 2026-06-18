@@ -195,7 +195,6 @@ target_link_libraries(CampaignManager
   PassbackTemplate
   SecToken
   BillingServerIDL
-  KafkaProducer
 
   CTRProvider
   BidRateProvider

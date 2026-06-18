@@ -22,7 +22,6 @@
 #include <Commons/SecToken.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
-#include <Commons/Kafka/KafkaProducer.hpp>
 
 #include <xsd/CampaignSvcs/CampaignManagerConfig.hpp>
 
@@ -1676,34 +1675,6 @@ namespace AdServer
         const StringSet& norm_platform_names)
         noexcept;
 
-      void
-      produce_ads_space_(
-        const CreativeRequestInfo& request_params,
-        unsigned long request_tag_id,
-        const RevenueDecimal& adsspace_system_cpm);
-
-      void
-      produce_match_(
-        const MatchRequestInfo& request_params);
-
-      void
-      produce_action_message_(
-        const ActionInfo& action_info);
-
-      void
-      produce_ads_space_message_impl_(
-        const Generics::Time& request_time,
-        const AdServer::Commons::UserId& user_id,
-        unsigned long request_tag_id,
-        const String::SubString& referer,
-        const std::vector<TraceAdSlotInfo>* ad_slots,
-        const IdVector* publisher_account_ids,
-        const String::SubString& peer_ip,
-        const std::vector<GeoInfo>& location,
-        const String::SubString& ssp_location,
-        const RevenueDecimal& adsspace_system_cpm,
-        const String::SubString& external_user_id);
-
       // config manips
       static void
       fill_campaign_contracts_(
@@ -1762,8 +1733,6 @@ namespace AdServer
       Generics::SignedUuidGenerator rid_signer_;
       CountryList country_whitelist_;
       Commons::BoundedFileCache_var template_files_;
-      Commons::Kafka::Producer_var kafka_producer_;
-      Commons::Kafka::Producer_var kafka_match_producer_;
     };
 
     typedef ReferenceCounting::SmartPtr<CampaignManagerCore>

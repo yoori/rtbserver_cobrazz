@@ -2,6 +2,7 @@
 
 
 #include <iosfwd>
+#include <vector>
 #include <Generics/Time.hpp>
 #include <Generics/Rand.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -105,7 +106,7 @@ public:
     unsigned long channel_trigger_id;
   };
 
-  typedef std::list<TriggerMatch> TriggerMatchList;
+  typedef std::vector<TriggerMatch> TriggerMatchList;
 
   struct PartlyHistoryMatch
   {

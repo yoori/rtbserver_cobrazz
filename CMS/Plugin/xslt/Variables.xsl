@@ -94,8 +94,6 @@
 <xsl:variable name="channel-controller-descriptor" select="'AdCluster/FrontendSubCluster/ChannelController'"/>
 <xsl:variable name="channel-search-service-descriptor" select="'AdCluster/FrontendSubCluster/ChannelSearchService'"/>
 
-<xsl:variable name="default-ads-spaces-topic" select="'adsspaces'"/>
-<xsl:variable name="default-match-topic" select="'match'"/>
 <xsl:variable name="default-kafka-threads" select="'20'"/>
 <xsl:variable name="default-kafka-message-queue-size" select="'1000000'"/>
 <xsl:variable name="http-frontend-descriptor" select="'AdCluster/FrontendSubCluster/HttpFrontend'"/>

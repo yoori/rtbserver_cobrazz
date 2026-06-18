@@ -264,25 +264,6 @@ namespace AdServer
       virtual
       ~ChannelHitStatLogger() noexcept = default;
 
-    private:
-      typedef std::map<unsigned long, unsigned long> HitMap;
-
-      class CalcHits
-      {
-      public:
-        CalcHits(
-          HitMap& map,
-          unsigned long flag)
-          noexcept :
-          map_(map),
-          flag_(flag){};
-
-        void operator()(unsigned long id);
-
-      private:
-        HitMap& map_;
-        unsigned long flag_;
-      };
     };
 
     /** CampaignManagerLogger::UserPropertiesLogger */
@@ -399,11 +380,6 @@ namespace AdServer
         const CampaignManagerLogger::AdRequestSelectionInfo*
           ad_request_selection_info)
         /*throw(Exception)*/;
-
-      static void convert_triggers_(
-        CollectorT::DataT::DataT::TriggerMatchList& res_triggers,
-        const CampaignManagerLogger::TriggerChannelMap& triggers)
-        noexcept;
 
     private:
       double inventory_users_percentage_;
@@ -1239,7 +1215,10 @@ namespace AdServer
           tr_it != triggers.end(); ++tr_it)
       {
         data.add(
-          CollectorT::DataT::KeyT(tr_it->first, tr_it->second, type),
+          CollectorT::DataT::KeyT(
+            tr_it->channel_trigger_id,
+            tr_it->channel_id,
+            type),
           inner_data);
       }
     }
@@ -1321,20 +1300,6 @@ namespace AdServer
     }
 
     /** ChannelHitStatLogger implementation */
-    void CampaignManagerLogger::ChannelHitStatLogger::CalcHits::operator()(
-      unsigned long id)
-    {
-      HitMap::iterator it = map_.find(id);
-      if(it == map_.end())
-      {
-        map_[id] = flag_;
-      }
-      else
-      {
-        it->second |= flag_;
-      }
-    }
-
     void
     CampaignManagerLogger::ChannelHitStatLogger::
     process_match_request(
@@ -1386,50 +1351,47 @@ namespace AdServer
 
       try
       {
-        enum HitFlags
+        auto add_channel_hits = [](
+          CollectorT::DataT& data,
+          const ChannelIdHashSet& channels,
+          const CollectorT::DataT::DataT& hit_data)
         {
-          HF_URL = 1,
-          HF_PKW = 2,
-          HF_UKW = 4,
-          HF_SKW = 8
+          for(auto channel_id : channels)
+          {
+            data.add(CollectorT::DataT::KeyT(channel_id), hit_data);
+          }
         };
 
-        HitMap hits;
-
-        std::for_each(
-          request_info.triggered_channels.url_channels.begin(),
-          request_info.triggered_channels.url_channels.end(),
-          CalcHits(hits, HF_URL));
-        std::for_each(
-          request_info.triggered_channels.page_channels.begin(),
-          request_info.triggered_channels.page_channels.end(),
-          CalcHits(hits, HF_PKW));
-        std::for_each(
-          request_info.triggered_channels.search_channels.begin(),
-          request_info.triggered_channels.search_channels.end(),
-          CalcHits(hits, HF_SKW));
-        std::for_each(
-          request_info.triggered_channels.url_keyword_channels.begin(),
-          request_info.triggered_channels.url_keyword_channels.end(),
-          CalcHits(hits, HF_UKW));
-
-
-        if(!hits.empty())
+        if(!request_info.triggered_channels.channels.empty())
         {
           CollectorT::DataT data;
-          data.prepare_adding(hits.size());
+          data.prepare_adding(
+            request_info.triggered_channels.channels.size() +
+            request_info.triggered_channels.url_channels.size() +
+            request_info.triggered_channels.page_channels.size() +
+            request_info.triggered_channels.search_channels.size() +
+            request_info.triggered_channels.url_keyword_channels.size());
 
-          for(HitMap::const_iterator it = hits.begin(); it != hits.end(); ++it)
-          {
-            data.add(
-              CollectorT::DataT::KeyT(it->first),
-              CollectorT::DataT::DataT(
-                1,
-                (it->second & HF_URL ? 1 : 0),
-                (it->second & HF_PKW ? 1 : 0),
-                (it->second & HF_SKW ? 1 : 0),
-                (it->second & HF_UKW ? 1 : 0)));
-          }
+          add_channel_hits(
+            data,
+            request_info.triggered_channels.channels,
+            CollectorT::DataT::DataT(1, 0, 0, 0, 0));
+          add_channel_hits(
+            data,
+            request_info.triggered_channels.url_channels,
+            CollectorT::DataT::DataT(0, 1, 0, 0, 0));
+          add_channel_hits(
+            data,
+            request_info.triggered_channels.page_channels,
+            CollectorT::DataT::DataT(0, 0, 1, 0, 0));
+          add_channel_hits(
+            data,
+            request_info.triggered_channels.search_channels,
+            CollectorT::DataT::DataT(0, 0, 0, 1, 0));
+          add_channel_hits(
+            data,
+            request_info.triggered_channels.url_keyword_channels,
+            CollectorT::DataT::DataT(0, 0, 0, 0, 1));
 
           add_record(
             CollectorT::KeyT(request_info.isp_time, request_info.colo_id),
@@ -1643,16 +1605,11 @@ namespace AdServer
           match_request_info.match_info.channels.begin(),
           match_request_info.match_info.channels.end());
 
-        CollectorT::DataT::DataT::TriggerMatchList page_trigger_channels;
-
-        if(dump_channel_triggers_)
-        {
-          convert_triggers_(page_trigger_channels, match_request_info.match_info.page_triggers);
-        }
-
         CollectorT::DataT::DataT::Match match_request(
-          history_channels,
-          page_trigger_channels, // page trigger channels
+          std::move(history_channels),
+          dump_channel_triggers_ ?
+            match_request_info.match_info.page_triggers :
+            CollectorT::DataT::DataT::TriggerMatchList(), // page trigger channels
           CollectorT::DataT::DataT::TriggerMatchList(), // search trigger channels
           CollectorT::DataT::DataT::TriggerMatchList(), // url trigger channels
           CollectorT::DataT::DataT::TriggerMatchList() // url keyword trigger channels
@@ -1714,22 +1671,6 @@ namespace AdServer
           inventory_users_percentage_)) &&
         !adrequest_anonymize_
         ;
-    }
-
-    void
-    CampaignManagerLogger::RequestBasicChannelsLogger::
-    convert_triggers_(
-      CollectorT::DataT::DataT::TriggerMatchList& res_triggers,
-      const CampaignManagerLogger::TriggerChannelMap& triggers)
-      noexcept
-    {
-      for (auto tr_it = triggers.begin(); tr_it != triggers.end(); ++tr_it)
-      {
-        res_triggers.emplace_back(
-          tr_it->second, // channel_id
-          tr_it->first  // channel_trigger_id
-          );
-      }
     }
 
     void
@@ -1850,31 +1791,24 @@ namespace AdServer
           temporary_user_id = request_info.merged_user_id;
         }
 
-        CollectorT::DataT::DataT::TriggerMatchList page_trigger_channels;
-        CollectorT::DataT::DataT::TriggerMatchList search_trigger_channels;
-        CollectorT::DataT::DataT::TriggerMatchList url_trigger_channels;
-        CollectorT::DataT::DataT::TriggerMatchList url_keyword_trigger_channels;
-
-        if((ad_selection_info == 0 || !adrequest_anonymize_) &&
-           dump_channel_triggers_ && (
-             !user_id.is_null() || !temporary_user_id.is_null()))
-        {
-          convert_triggers_(page_trigger_channels, request_info.page_triggers);
-          convert_triggers_(search_trigger_channels, request_info.search_triggers);
-          convert_triggers_(url_trigger_channels, request_info.url_triggers);
-          convert_triggers_(
-            url_keyword_trigger_channels, request_info.url_keyword_triggers);
-        }
+        const bool dump_triggers =
+          (ad_selection_info == 0 || !adrequest_anonymize_) &&
+          dump_channel_triggers_ && (
+            !user_id.is_null() || !temporary_user_id.is_null());
 
         CollectorT::DataT::DataT::Match match_request(
           request_info.user_status != US_TEMPORARY && need_dump_channels_(request_info) ?
             AdServer::LogProcessing::NumberArray(
               request_info.history_channels.begin(), request_info.history_channels.end()) :
             AdServer::LogProcessing::NumberArray(),
-          std::move(page_trigger_channels),
-          std::move(search_trigger_channels),
-          std::move(url_trigger_channels),
-          std::move(url_keyword_trigger_channels));
+          dump_triggers ? request_info.page_triggers :
+            CollectorT::DataT::DataT::TriggerMatchList(),
+          dump_triggers ? request_info.search_triggers :
+            CollectorT::DataT::DataT::TriggerMatchList(),
+          dump_triggers ? request_info.url_triggers :
+            CollectorT::DataT::DataT::TriggerMatchList(),
+          dump_triggers ? request_info.url_keyword_triggers :
+            CollectorT::DataT::DataT::TriggerMatchList());
 
         data.add(
           CollectorT::DataT::DataT(

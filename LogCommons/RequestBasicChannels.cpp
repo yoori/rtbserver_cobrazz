@@ -123,6 +123,43 @@ operator>>(
   return is;
 }
 
+FixedBufStream<TabCategory>&
+operator>>(
+  FixedBufStream<TabCategory>& is,
+  RequestBasicChannelsInnerData::TriggerMatchList& values
+)
+{
+  const String::SubString token = is.read_token();
+  if (is.good())
+  {
+    if (token == "-")
+    {
+      values.clear();
+      return is;
+    }
+
+    RequestBasicChannelsInnerData::TriggerMatchList container;
+    FixedBufStream<CommaCategory> list_stream(token);
+    while (true)
+    {
+      RequestBasicChannelsInnerData::TriggerMatch elem;
+      list_stream >> elem;
+      if (!list_stream.good())
+      {
+        break;
+      }
+      container.push_back(elem);
+    }
+
+    is.take_fails(list_stream);
+    if (is.good())
+    {
+      values.swap(container);
+    }
+  }
+  return is;
+}
+
 FixedBufStream<CommaCategory>&
 operator>>(
   FixedBufStream<CommaCategory>& is,
@@ -445,6 +482,24 @@ operator<<(
 {
   os << match.channel_id << TRIGGER_MATCH_SEP;
   os << match.channel_trigger_id;
+  return os;
+}
+
+std::ostream&
+operator<<(
+  std::ostream& os,
+  const RequestBasicChannelsInnerData::TriggerMatchList& trigger_matches
+)
+{
+  if (!trigger_matches.empty())
+  {
+    char SEP[2] = { ',' };
+    output_sequence(os, trigger_matches, SEP);
+  }
+  else
+  {
+    os << '-';
+  }
   return os;
 }
 

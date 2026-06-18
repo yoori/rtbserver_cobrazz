@@ -116,19 +116,6 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="KafkaAdsSpacesStorage" type="KafkaTopic" minOccurs="0" 
-        maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>Kafka Ads space storage</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
-      <xsd:element name="KafkaMatchStorage" type="KafkaTopic" minOccurs="0" 
-        maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>Kafka Match space storage</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
     </xsd:sequence>
 
     <xsd:attribute name="host" type="xsd:string" use="required"/>

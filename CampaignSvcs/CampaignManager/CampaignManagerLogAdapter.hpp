@@ -116,7 +116,8 @@ namespace AdServer
 
       static void
       convert_channel_ids_(
-        ChannelIdHashSet& res2,
+        ChannelIdHashSet& all_channels,
+        ChannelIdHashSet& channels,
         CampaignManagerLogger::TriggerChannelMap& triggers,
         CampaignManagerLogger::TriggerChannelMap* discover_keyword_triggers,
         const CampaignManagerCore::ChannelTriggerMatchVector& behav_params,
@@ -178,6 +179,7 @@ namespace AdServer
     inline
     void
     CampaignManagerLogAdapter::convert_channel_ids_(
+      ChannelIdHashSet& all_channels,
       ChannelIdHashSet& channels,
       CampaignManagerLogger::TriggerChannelMap& triggers,
       CampaignManagerLogger::TriggerChannelMap* discover_keyword_triggers,
@@ -188,7 +190,18 @@ namespace AdServer
     {
       if (campaign_config)
       {
+        if(&all_channels != &channels)
+        {
+          all_channels.rehash(
+            (all_channels.size() + channel_trigger_matches.size()) * 3);
+        }
         channels.rehash((channels.size() + channel_trigger_matches.size()) * 3);
+        triggers.reserve(triggers.size() + channel_trigger_matches.size());
+        if(discover_keyword_triggers)
+        {
+          discover_keyword_triggers->reserve(
+            discover_keyword_triggers->size() + channel_trigger_matches.size());
+        }
 
         for(const auto& channel_trigger_match : channel_trigger_matches)
         {
@@ -202,24 +215,36 @@ namespace AdServer
           {
             if(discover_keyword_triggers)
             {
-              (*discover_keyword_triggers)[channel_trigger_match.channel_trigger_id] =
-                channel_trigger_match.channel_id;
+              discover_keyword_triggers->emplace_back(
+                channel_trigger_match.channel_id,
+                channel_trigger_match.channel_trigger_id);
             }
           }
           else
           {
-            triggers[channel_trigger_match.channel_trigger_id] =
-              channel_trigger_match.channel_id;
+            triggers.emplace_back(
+              channel_trigger_match.channel_id,
+              channel_trigger_match.channel_trigger_id);
+          }
+          if(&all_channels != &channels)
+          {
+            all_channels.insert(channel_trigger_match.channel_id);
           }
           channels.insert(channel_trigger_match.channel_id);
         }
       }
       else
       {
+        triggers.reserve(triggers.size() + channel_trigger_matches.size());
         for(const auto& channel_trigger_match : channel_trigger_matches)
         {
-          triggers[channel_trigger_match.channel_trigger_id] =
-            channel_trigger_match.channel_id;
+          triggers.emplace_back(
+            channel_trigger_match.channel_id,
+            channel_trigger_match.channel_trigger_id);
+          if(&all_channels != &channels)
+          {
+            all_channels.insert(channel_trigger_match.channel_id);
+          }
           channels.insert(channel_trigger_match.channel_id);
         }
       }
@@ -248,6 +273,7 @@ namespace AdServer
       }
 
       convert_channel_ids_(
+        request_info.triggered_channels.channels,
         request_info.triggered_channels.url_channels,
         request_info.url_triggers,
         &request_info.discover_keyword_url_triggers,
@@ -255,6 +281,7 @@ namespace AdServer
         campaign_config);
 
       convert_channel_ids_(
+        request_info.triggered_channels.channels,
         request_info.triggered_channels.page_channels,
         request_info.page_triggers,
         &request_info.discover_keyword_page_triggers,
@@ -262,6 +289,7 @@ namespace AdServer
         campaign_config);
 
       convert_channel_ids_(
+        request_info.triggered_channels.channels,
         request_info.triggered_channels.search_channels,
         request_info.search_triggers,
         &request_info.discover_keyword_search_triggers,
@@ -269,6 +297,7 @@ namespace AdServer
         campaign_config);
 
       convert_channel_ids_(
+        request_info.triggered_channels.channels,
         request_info.triggered_channels.url_keyword_channels,
         request_info.url_keyword_triggers,
         &request_info.discover_keyword_url_keyword_triggers,
@@ -422,6 +451,7 @@ namespace AdServer
           result_match_request.match_info.channels.begin()));
 
       convert_channel_ids_(
+        result_match_request.match_info.triggered_page_channels,
         result_match_request.match_info.triggered_page_channels,
         result_match_request.match_info.page_triggers,
         nullptr, // discover triggers

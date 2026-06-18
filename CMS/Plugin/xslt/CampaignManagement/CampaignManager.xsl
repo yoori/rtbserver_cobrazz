@@ -288,11 +288,7 @@
     </xsl:choose>
 
     <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$campaign-manager-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($campaign-manager-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-campaign-manager-threads"/>
-        </xsl:if>
-      </xsl:attribute>
+      <xsl:attribute name="threading-pool">2</xsl:attribute>
 
       <cfg:Endpoint host="*" port="{$campaign-manager-port}">
         <!-- this object can be used only in utils -->
@@ -558,27 +554,6 @@
           </xsl:for-each>
         </cfg:CountryWhitelist>
       </xsl:if>
-    </xsl:if>
-
-    <xsl:variable name="kafka-config" select="$colo-config/cfg:coloParams/cfg:kafkaStorage"/>
-    <xsl:if test="count($kafka-config/cfg:adsSpaces) != 0">
-      <cfg:KafkaAdsSpacesStorage>
-        <xsl:call-template name="SaveKafkaTopic">
-          <xsl:with-param name="topic-config" select="$kafka-config/cfg:adsSpaces"/>
-          <xsl:with-param name="default-topic-name" select="$default-ads-spaces-topic"/>
-          <xsl:with-param name="kafka-config" select="$kafka-config"/>
-        </xsl:call-template>
-      </cfg:KafkaAdsSpacesStorage>
-    </xsl:if>
-
-    <xsl:if test="count($kafka-config/cfg:match) > 0">
-      <cfg:KafkaMatchStorage>
-        <xsl:call-template name="SaveKafkaTopic">
-          <xsl:with-param name="topic-config" select="$kafka-config/cfg:match"/>
-          <xsl:with-param name="default-topic-name" select="$default-match-topic"/>
-          <xsl:with-param name="kafka-config" select="$kafka-config"/>
-        </xsl:call-template>
-      </cfg:KafkaMatchStorage>
     </xsl:if>
 
   </cfg:CampaignManager>

@@ -26,7 +26,6 @@
 #include "CampaignManagerLogger.hpp"
 
 #include "DomainParser.hpp"
-#include <LogCommons/CsvUtils.hpp>
 
 namespace AdServer
 {
@@ -471,22 +470,6 @@ namespace AdServer
         add_child_object(task_runner_.in());
         add_child_object(update_task_runner_.in());
         add_child_object(scheduler_.in());
-
-        if (campaign_manager_config_.KafkaAdsSpacesStorage().present())
-        {
-          kafka_producer_ = new Commons::Kafka::Producer(
-            logger, callback,
-            campaign_manager_config_.KafkaAdsSpacesStorage().get());
-          add_child_object(kafka_producer_.in());
-        }
-
-        if (campaign_manager_config_.KafkaMatchStorage().present())
-        {
-          kafka_match_producer_ = new Commons::Kafka::Producer(
-            logger, callback,
-            campaign_manager_config_.KafkaMatchStorage().get());
-          add_child_object(kafka_match_producer_.in());
-        }
       }
       catch(const Generics::CompositeActiveObject::Exception& ex)
       {
@@ -941,12 +924,6 @@ namespace AdServer
             filtered_core_request_params.context_info.geo_channels;
         }
 
-        // Log ads space info
-        produce_ads_space_(
-          filtered_core_request_params,
-          request_tag_id,
-          adsspace_system_cpm);
-
         process_timer.stop();
         result.process_time = process_timer.elapsed_time();
         result.debug_info.colo_id = debug_info.colo_id;
@@ -1027,8 +1004,9 @@ namespace AdServer
             (ch_it->second->params().type != 'D' &&
               ch_it->second->params().type != 'K'))
           {
-            mri.match_info.page_triggers[pkw_channel.channel_trigger_id] =
-              pkw_channel.channel_id;
+            mri.match_info.page_triggers.emplace_back(
+              pkw_channel.channel_id,
+              pkw_channel.channel_trigger_id);
           }
 
           mri.match_info.triggered_page_channels.insert(pkw_channel.channel_id);
@@ -1052,8 +1030,6 @@ namespace AdServer
 
         campaign_manager_logger_->process_match_request(mri);
 
-        // Log ads space info
-        produce_match_(match_request_info);
       }
       catch (const NotReady&)
       {
@@ -3347,44 +3323,6 @@ namespace AdServer
           confirm_amounts_(config, bid_time, creatives, CR_CPC);
         }
 
-        if(kafka_producer_ &&
-          (!click_info.match_user_id.is_null() ||
-            !click_info.cookie_user_id.is_null()))
-        {
-          const AdServer::Commons::UserId* produce_user_ids[] = {0, 0};
-          unsigned long produce_user_id_i = 0;
-          if(!click_info.match_user_id.is_null())
-          {
-            produce_user_ids[produce_user_id_i++] = &click_info.match_user_id;
-          }
-
-          if(!click_info.cookie_user_id.is_null())
-          {
-            produce_user_ids[produce_user_id_i++] = &click_info.cookie_user_id;
-          }
-
-          const std::vector<GeoInfo> empty_location;
-          for(unsigned long i = 0; i < produce_user_id_i; ++i)
-          {
-            char campaign_id_str[40];
-            size_t campaign_id_str_size = String::StringManip::int_to_str(
-              click_result_info.campaign_id,
-              campaign_id_str,
-              sizeof(campaign_id_str));
-            produce_ads_space_message_impl_(
-              click_info.time,
-              *produce_user_ids[i],
-              0, // tag_id
-              std::string("click-").append(campaign_id_str, campaign_id_str_size), // referer
-              0, // ad_slots
-              0, // publisher_account_ids
-              String::SubString(),
-              empty_location,
-              String::SubString(),
-              RevenueDecimal::ZERO,
-              String::SubString());
-          }
-        }
       }
       catch (const NotReady&)
       {
@@ -4639,8 +4577,6 @@ namespace AdServer
           adv_action_info.ccg_ids.push_back(*action_info.campaign_id);
         }
 
-        produce_action_message_(action_info);
-
         campaign_manager_logger_->process_action(adv_action_info);
       }
       catch (const eh::Exception& e)
@@ -5573,234 +5509,5 @@ namespace AdServer
       }
     }
 
-    void
-    CampaignManagerCore::produce_ads_space_message_impl_(
-      const Generics::Time& request_time,
-      const AdServer::Commons::UserId& user_id_orig,
-      unsigned long request_tag_id,
-      const String::SubString& referer,
-      const std::vector<TraceAdSlotInfo>* ad_slots,
-      const IdVector* publisher_account_ids,
-      const String::SubString& peer_ip,
-      const std::vector<GeoInfo>& location,
-      const String::SubString& ssp_location,
-      const RevenueDecimal& adsspace_system_cpm,
-      const String::SubString& external_user_id)
-    {
-      std::string user_id(user_id_orig.to_string(false));
-
-      std::string csv_encoded_ref;
-      String::StringManip::csv_encode(referer.str().c_str(), csv_encoded_ref);
-
-      char usec_str[40];
-      size_t usec_str_size = String::StringManip::int_to_str(
-        request_time.tv_usec, usec_str + 6, sizeof(usec_str) - 6);
-      ::memset(usec_str + usec_str_size, '0', 6 - usec_str_size);
-
-      char tag_id_str[40];
-      size_t tag_id_str_size = String::StringManip::int_to_str(
-        request_tag_id, tag_id_str, sizeof(tag_id_str));
-
-      std::string record;
-      record.reserve(1024);
-      record += request_time.gm_ft();
-      record += '.';
-      record.append(usec_str + usec_str_size, 6);
-      record += ',';
-      record += user_id;
-      record += ',';
-      record.append(tag_id_str, tag_id_str_size);
-      record += ',';
-      record += csv_encoded_ref;
-      record += ',';
-      record += adsspace_system_cpm.str();
-      record += ',';
-
-      if(publisher_account_ids)
-      {
-        char acc_id_str[40];
-        for(IdVector::const_iterator acc_it = publisher_account_ids->begin();
-            acc_it != publisher_account_ids->end(); ++acc_it)
-        {
-          if(acc_it != publisher_account_ids->begin())
-          {
-            record += ";";
-          }
-
-          size_t acc_id_str_size = String::StringManip::int_to_str(
-            *acc_it, acc_id_str, sizeof(acc_id_str));
-          record.append(acc_id_str, acc_id_str_size);
-        }
-      }
-
-      record += ',';
-
-      if(ad_slots)
-      {
-        bool first_size = true;
-        for(std::vector<TraceAdSlotInfo>::const_iterator slot_it = ad_slots->begin();
-            slot_it != ad_slots->end(); ++slot_it)
-        {
-          for(StringVector::const_iterator size_it = slot_it->sizes.begin();
-              size_it != slot_it->sizes.end(); ++size_it)
-          {
-            if(first_size)
-            {
-              first_size = false;
-            }
-            else
-            {
-              record += ';';
-            }
-
-            record += *size_it;
-          }
-        }
-      }
-
-      record += ',';
-      record += peer_ip.str();
-      record += ',';
-
-      for(std::size_t loc_i = 0; loc_i < location.size(); ++loc_i)
-      {
-        if(loc_i > 0)
-        {
-          record += ';';
-        }
-        record += location[loc_i].country;
-        record += '/';
-        record += location[loc_i].region;
-        record += '/';
-        record += location[loc_i].city;
-      }
-
-      record += ',';
-      record += ssp_location.str();
-      record += ',';
-      record += external_user_id.str();
-
-      kafka_producer_->push_data(user_id, record);
-    }
-
-    void
-    CampaignManagerCore::produce_action_message_(
-      const ActionInfo& action_info)
-    {
-      if(kafka_producer_)
-      {
-        if(!action_info.referer.empty())
-        {
-          produce_ads_space_message_impl_(
-            action_info.time,
-            action_info.user_id,
-            0, // tag_id
-            String::SubString(action_info.referer),
-            0, // ad_slots
-            0, // publisher_account_ids
-            String::SubString(action_info.peer_ip),
-            action_info.location,
-            String::SubString(),
-            RevenueDecimal::ZERO,
-            String::SubString());
-        }
-
-        char action_id_str[40];
-        size_t action_id_size = String::StringManip::int_to_str(
-          action_info.action_id.value_or(0), action_id_str, sizeof(action_id_str));
-
-        std::string act_ref("act-");
-        act_ref.append(action_id_str, action_id_size);
-
-        produce_ads_space_message_impl_(
-          action_info.time,
-          action_info.user_id,
-          0, // tag_id
-          act_ref,
-          0, // ad_slots
-          0, // publisher_account_ids
-          String::SubString(action_info.peer_ip),
-          action_info.location,
-          String::SubString(),
-          RevenueDecimal::ZERO,
-          String::SubString());
-      }
-    }
-
-    void
-    CampaignManagerCore::produce_ads_space_(
-      const CreativeRequestInfo& request_params,
-      unsigned long request_tag_id,
-      const RevenueDecimal& adsspace_system_cpm)
-    {
-      if(kafka_producer_)
-      {
-        std::vector<TraceAdSlotInfo> ad_slots;
-        ad_slots.reserve(request_params.ad_slots.size());
-        for(const auto& request_ad_slot : request_params.ad_slots)
-        {
-          TraceAdSlotInfo ad_slot;
-          ad_slot.sizes = request_ad_slot.sizes;
-          ad_slots.push_back(ad_slot);
-        }
-
-        produce_ads_space_message_impl_(
-          request_params.common_info.time,
-          request_params.common_info.user_id,
-          request_tag_id,
-          String::SubString(request_params.common_info.referer),
-          &ad_slots,
-          &request_params.publisher_account_ids,
-          String::SubString(request_params.common_info.peer_ip),
-          request_params.common_info.location,
-          String::SubString(request_params.ssp_location),
-          adsspace_system_cpm,
-          String::SubString(request_params.common_info.external_user_id));
-      }
-    }
-
-    void
-    CampaignManagerCore::produce_match_(
-      const MatchRequestInfo& request_params)
-    {
-      if (kafka_match_producer_ &&
-        !request_params.match_info.full_referer.empty())
-      {
-        const Generics::Time request_time = request_params.request_time;
-
-        std::string user_id(request_params.user_id.to_string(false));
-
-        std::string csv_encoded_ref;
-        String::StringManip::csv_encode(
-          request_params.match_info.full_referer.c_str(),
-          csv_encoded_ref);
-
-        std::string csv_encoded_source;
-        String::StringManip::csv_encode(
-          request_params.source.c_str(),
-          csv_encoded_source);
-
-        char usec_str[40];
-        size_t usec_str_size = String::StringManip::int_to_str(
-          request_time.tv_usec, usec_str + 6, sizeof(usec_str) - 6);
-        ::memset(usec_str + usec_str_size, '0', 6 - usec_str_size);
-
-        std::string record;
-        record.reserve(1024);
-        record += request_time.gm_ft();
-        record += '.';
-        record.append(usec_str + usec_str_size, 6);
-        record += ',';
-        record += user_id;
-        record += ',';
-        record += csv_encoded_ref;
-        record += ',';
-        record += csv_encoded_source;
-
-        kafka_match_producer_->push_data(
-          user_id,
-          record);
-      }
-    }
   } // namespace CampaignSvcs
 } // namespace AdServer

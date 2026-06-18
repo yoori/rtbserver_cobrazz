@@ -13,6 +13,7 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
 #include <LogCommons/LogHolder.hpp>
+#include <LogCommons/RequestBasicChannels.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <Commons/LogReferrerUtils.hpp>
 #include "CampaignConfig.hpp"
@@ -99,6 +100,7 @@ namespace AdServer
 
       struct TriggeredChannelsData
       {
+        ChannelIdHashSet channels;
         ChannelIdHashSet url_channels;
         ChannelIdHashSet page_channels;
         ChannelIdHashSet search_channels;
@@ -122,7 +124,8 @@ namespace AdServer
         AdServer::Commons::StringHolderHashAdapter, TriggeredChannels_var>
         StringTriggerChannelMap;
 
-      typedef std::map<unsigned long, unsigned long> TriggerChannelMap;
+      typedef AdServer::LogProcessing::RequestBasicChannelsInnerData::
+        TriggerMatchList TriggerChannelMap;
 
       typedef AdServer::Commons::Optional<unsigned long> UserIdHashMod;
 
