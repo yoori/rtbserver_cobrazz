@@ -254,6 +254,26 @@ namespace AdServer::CampaignSvcs
     return result;
   }
 
+  AdServer::Grpc::Client::EndpointStats
+  CampaignManagerDistributedGrpcClient::endpoint_stats() const noexcept
+  {
+    AdServer::Grpc::Client::EndpointStats result;
+    result.reserve(client_holders_.size());
+    for (const auto& client_holder : client_holders_)
+    {
+      if (!client_holder)
+      {
+        continue;
+      }
+
+      result.emplace_back(
+        client_holder->endpoint,
+        static_cast<CampaignManagerGrpcAsyncClient*>(
+          client_holder->client.get())->stats());
+    }
+    return result;
+  }
+
   CampaignManagerDistributedGrpcClient::PoolPtr
   CampaignManagerDistributedGrpcClient::get_pool_(
     const std::string& service_index) const

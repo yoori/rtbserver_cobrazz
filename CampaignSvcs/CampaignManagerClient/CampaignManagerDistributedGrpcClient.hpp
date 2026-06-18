@@ -51,6 +51,8 @@ namespace AdServer::CampaignSvcs
     ~CampaignManagerDistributedGrpcClient() noexcept override;
 
     AdServer::Grpc::Stats stats() const noexcept override;
+    AdServer::Grpc::Client::EndpointStats endpoint_stats()
+      const noexcept override;
 
     void ready(
       const adserver::campaign_svcs::campaign_manager::ReadyRequest& request,
