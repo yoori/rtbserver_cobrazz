@@ -1531,127 +1531,128 @@ namespace AdServer::CampaignSvcs
     ServiceImpl(
       CampaignManagerCore* core,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+      std::size_t max_batch_split,
       std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ReadyRequest,
           pb::ReadyResponse,
           ready,
           co_ready),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ProgressCommentRequest,
           pb::ProgressCommentResponse,
           progress_comment,
           co_progress_comment),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::MatchGeoChannelsRequest,
           pb::MatchGeoChannelsResponse,
           match_geo_channels,
           co_match_geo_channels),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetFileRequest,
           pb::GetFileResponse,
           get_file,
           co_get_file),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetCampaignCreativeRequest,
           pb::GetCampaignCreativeResponse,
           get_campaign_creative,
           co_get_campaign_creative),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ProcessMatchRequestRequest,
           pb::ProcessMatchRequestResponse,
           process_match_request,
           co_process_match_request),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ProcessAnonymousRequestRequest,
           pb::ProcessAnonymousRequestResponse,
           process_anonymous_request,
           co_process_anonymous_request),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::InstantiateAdRequest,
           pb::InstantiateAdResponse,
           instantiate_ad,
           co_instantiate_ad),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::TraceCampaignSelectionIndexRequest,
           pb::TraceCampaignSelectionIndexResponse,
           trace_campaign_selection_index,
           co_trace_campaign_selection_index),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::TraceCampaignSelectionRequest,
           pb::TraceCampaignSelectionResponse,
           trace_campaign_selection,
           co_trace_campaign_selection),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetCampaignCreativeByCcidRequest,
           pb::GetCampaignCreativeByCcidResponse,
           get_campaign_creative_by_ccid,
           co_get_campaign_creative_by_ccid),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetChannelLinksRequest,
           pb::GetChannelLinksResponse,
           get_channel_links,
           co_get_channel_links),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetDiscoverChannelsRequest,
           pb::GetDiscoverChannelsResponse,
           get_discover_channels,
           co_get_discover_channels),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetCategoryChannelsRequest,
           pb::GetCategoryChannelsResponse,
           get_category_channels,
           co_get_category_channels),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetColocationFlagsRequest,
           pb::GetColocationFlagsResponse,
           get_colocation_flags,
           co_get_colocation_flags),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetPubPixelsRequest,
           pb::GetPubPixelsResponse,
           get_pub_pixels,
           co_get_pub_pixels),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ConsiderPassbackRequest,
           pb::ConsiderPassbackResponse,
           consider_passback,
           co_consider_passback),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ConsiderPassbackTrackRequest,
           pb::ConsiderPassbackTrackResponse,
           consider_passback_track,
           co_consider_passback_track),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetClickUrlRequest,
           pb::GetClickUrlResponse,
           get_click_url,
           co_get_click_url),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::VerifyImpressionRequest,
           pb::VerifyImpressionResponse,
           verify_impression,
           co_verify_impression),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ActionTakenRequest,
           pb::ActionTakenResponse,
           action_taken,
           co_action_taken),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::VerifyOptOperationRequest,
           pb::VerifyOptOperationResponse,
           verify_opt_operation,
           co_verify_opt_operation),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ConsiderWebOperationRequest,
           pb::ConsiderWebOperationResponse,
           consider_web_operation,
           co_consider_web_operation),
-        MAKE_GRPC_CORO_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetConfigRequest,
           pb::GetConfigResponse,
           get_config,
@@ -1896,10 +1897,13 @@ namespace AdServer::CampaignSvcs
 
     void get_status_(pc::GetStatusResponse& response) const;
 
+    std::size_t distributed_batch_max_split() const noexcept override;
+
   private:
     ProcessControlService process_control_service_;
     CampaignManagerCore_var core_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
+    const std::size_t max_batch_split_;
     const std::shared_ptr<AtomicStats> stats_;
   };
 
@@ -1921,13 +1925,22 @@ namespace AdServer::CampaignSvcs
   CampaignManagerGrpc::ServiceImpl::ServiceImpl(
     CampaignManagerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+    std::size_t max_batch_split,
     std::shared_ptr<AtomicStats> stats)
     : process_control_service_(*this),
       core_(ReferenceCounting::add_ref(core)),
       executor_pool_(std::move(executor_pool)),
+      max_batch_split_(std::max<std::size_t>(1, max_batch_split)),
       stats_(std::move(stats))
   {
     add_grpc_service(&process_control_service_);
+  }
+
+  std::size_t
+  CampaignManagerGrpc::ServiceImpl::distributed_batch_max_split()
+    const noexcept
+  {
+    return max_batch_split_;
   }
 
   void
@@ -3192,7 +3205,8 @@ namespace AdServer::CampaignSvcs
     std::string_view bind_address,
     unsigned int bind_port,
     std::size_t process_threads,
-    std::size_t cq_threads)
+    std::size_t cq_threads,
+    std::size_t max_split)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
@@ -3208,7 +3222,11 @@ namespace AdServer::CampaignSvcs
         campaign_manager_grpc_aspect,
         bind_address_,
         cq_threads,
-        std::make_unique<ServiceImpl>(core, executor_pool_, stats_)))
+        std::make_unique<ServiceImpl>(
+          core,
+          executor_pool_,
+          max_split,
+          stats_)))
   {
     add_child_object(executor_pool_);
     add_child_object(impl_);

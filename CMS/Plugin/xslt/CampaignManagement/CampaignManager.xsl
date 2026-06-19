@@ -297,7 +297,7 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig max_split="16">
       <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
     </cfg:GrpcConfig>
 
