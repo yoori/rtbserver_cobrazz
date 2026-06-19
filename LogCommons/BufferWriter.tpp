@@ -2,6 +2,60 @@
 
 namespace AdServer::LogProcessing
 {
+  inline void
+  BufferWriter::append(char value)
+  {
+    flush_if_required_(1);
+    buffer_.push_back(value);
+  }
+
+  inline void
+  BufferWriter::append_number(unsigned long value)
+  {
+    append_integer_(value);
+  }
+
+  inline void
+  BufferWriter::append_number(long value)
+  {
+    append_integer_(value);
+  }
+
+  inline void
+  BufferWriter::append_number(unsigned long long value)
+  {
+    append_integer_(value);
+  }
+
+  inline void
+  BufferWriter::append_number(long long value)
+  {
+    append_integer_(value);
+  }
+
+  inline void
+  BufferWriter::append_number(unsigned int value)
+  {
+    append_integer_(value);
+  }
+
+  inline void
+  BufferWriter::append_number(int value)
+  {
+    append_integer_(value);
+  }
+
+  inline void
+  BufferWriter::flush_if_required_(std::size_t append_size)
+  {
+    if (file_ &&
+      buffer_limit_ != 0 &&
+      buffer_.size() + append_size > buffer_limit_)
+    {
+      flush();
+    }
+  }
+
   template<typename Integer>
   void
   BufferWriter::append_integer_(Integer value)
@@ -12,6 +66,62 @@ namespace AdServer::LogProcessing
       buffer + sizeof(buffer),
       value);
     append(std::string_view(buffer, result.ptr - buffer));
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, char value)
+  {
+    out.append(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, bool value)
+  {
+    out.append(value ? '1' : '0');
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, unsigned long value)
+  {
+    out.append_number(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, long value)
+  {
+    out.append_number(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, unsigned long long value)
+  {
+    out.append_number(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, long long value)
+  {
+    out.append_number(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, unsigned int value)
+  {
+    out.append_number(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, int value)
+  {
+    out.append_number(value);
+    return out;
   }
 
   template <typename Container>

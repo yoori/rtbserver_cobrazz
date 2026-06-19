@@ -750,7 +750,8 @@ namespace AdServer
       get_file(const std::string& file_name)
         /*throw(Exception)*/;
 
-      InstantiateAdResult instantiate_ad(
+      AdServer::Commons::Task<InstantiateAdResult>
+      co_instantiate_ad(
         const InstantiateAdInfo& instantiate_ad_info)
         /*throw(Exception, NotReady)*/;
 
@@ -778,13 +779,14 @@ namespace AdServer
         const PassbackTrackInfo& in)
         /*throw(Exception, NotReady)*/;
 
-      bool
-      get_click_url(
+      AdServer::Commons::Task<bool>
+      co_get_click_url(
         const ClickInfo& click_info,
         ClickResultInfo& click_result_info)
         /*throw(Exception, NotReady)*/;
 
-      ImpressionResultInfo verify_impression(
+      AdServer::Commons::Task<ImpressionResultInfo>
+      co_verify_impression(
         const ImpressionInfo& impression_info)
         /*throw(Exception, NotReady)*/;
 
@@ -1123,7 +1125,7 @@ namespace AdServer
         TokenToParamMap;
 
     private:
-      void
+      AdServer::Commons::Task<bool>
       select_adslot_campaign_creative_(
         const CreativeRequestInfo& request_params,
         const TraceAdSlotInfo& ad_slot,
@@ -1173,28 +1175,6 @@ namespace AdServer
         const PreviewCreativeParams& params,
         std::string& creative_body)
         /*throw(eh::Exception)*/;
-
-      void
-      get_site_creative_(
-        CampaignIndex* config_index,
-        const Colocation* colocation,
-        const Tag* tag,
-        const Tag::SizeMap& tag_sizes,
-        const CreativeRequestInfo& request_params,
-        const TraceAdSlotInfo& ad_slot,
-        AdSlotContext& ad_slot_context,
-        const AdSlotMinCpm& ad_slot_min_cpm,
-        const FreqCapIdSet& full_freq_caps,
-        const SeqOrderMap& seq_orders,
-        RequestResultParams& request_result_params,
-        AdSelectionResult& select_result,
-        std::string& creative_body,
-        std::string& creative_url,
-        AdRequestDebugInfo*
-          ad_request_debug_info,
-        AdSlotDebugInfo* ad_slot_debug_info)
-        /*throw(eh::Exception)*/;
-
 
       AdServer::Commons::Task<bool>
       co_get_site_creative_(
@@ -1679,14 +1659,6 @@ namespace AdServer
         const Campaign* campaign, // change mutable
         const BillingStateContainer::BidCheckResult& check_result,
         const RevenueDecimal& ctr)
-        noexcept;
-
-      void
-      confirm_amounts_(
-        const CampaignConfig* config,
-        const Generics::Time& now,
-        const ConfirmCreativeAmountArray& creatives,
-        CCGRateType rate_type)
         noexcept;
 
       AdServer::Commons::Task<bool>

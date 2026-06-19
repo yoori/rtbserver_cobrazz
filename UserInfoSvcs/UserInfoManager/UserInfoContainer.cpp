@@ -3110,7 +3110,8 @@ namespace UserInfoSvcs
 
     try
     {
-      return AdServer::ProfilingCommons::ProfileMapFactory::
+      auto profile_map =
+        AdServer::ProfilingCommons::ProfileMapFactory::
         open_rocksdb_chunked_map<
           UserId,
           UserIdRocksDBAccessor,
@@ -3121,6 +3122,8 @@ namespace UserInfoSvcs
             user_level_map_traits,
             AdServer::Commons::uuid_distribution_hash,
             max_waiters);
+      add_child_object(profile_map.second);
+      return profile_map.first;
     }
     catch(const eh::Exception& ex)
     {

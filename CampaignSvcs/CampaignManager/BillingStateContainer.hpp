@@ -58,17 +58,6 @@ namespace AdServer::CampaignSvcs
       unsigned long max_use_count,
       bool optimize_campaign_ctr);
 
-    BidCheckResult
-    check_available_bid(
-      const Generics::Time& now,
-      unsigned long account_id,
-      unsigned long advertiser_id,
-      unsigned long campaign_id,
-      unsigned long ccg_id,
-      const RevenueDecimal& ctr,
-      const AvailableAndMinCTRSetter* ccg_setter)
-      noexcept;
-
     AdServer::Commons::Task<BidCheckResult>
     co_check_available_bid(
       const Generics::Time& now,
@@ -78,21 +67,6 @@ namespace AdServer::CampaignSvcs
       unsigned long ccg_id,
       const RevenueDecimal& ctr,
       const AvailableAndMinCTRSetter* ccg_setter);
-
-    BidCheckResult
-    confirm_bid(
-      const Generics::Time& now,
-      unsigned long account_id,
-      unsigned long advertiser_id,
-      unsigned long campaign_id,
-      unsigned long ccg_id,
-      const RevenueDecimal& account_spent_amount,
-      const RevenueDecimal& spent_amount,
-      const RevenueDecimal& ctr,
-      const ImpRevenueDecimal& imps,
-      const ImpRevenueDecimal& clicks,
-      const AvailableAndMinCTRSetter* ccg_setter)
-      noexcept;
 
     AdServer::Commons::Task<BidCheckResult>
     co_confirm_bid(

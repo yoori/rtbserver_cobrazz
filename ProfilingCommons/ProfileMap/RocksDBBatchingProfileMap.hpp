@@ -231,6 +231,7 @@ namespace AdServer::ProfilingCommons
   class RocksDBBatchingProfileMap:
     public AsyncProfileMap<KeyType>,
     public virtual ProfileMap<KeyType>,
+    public virtual Generics::RefCountableActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:
@@ -314,6 +315,7 @@ namespace AdServer::ProfilingCommons
     void activate_object();
     void deactivate_object();
     void wait_object();
+    bool active() const;
 
   private:
     KeyAdapterType key_adapter_;
@@ -494,5 +496,12 @@ namespace AdServer::ProfilingCommons
   RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::wait_object()
   {
     impl_->wait_object();
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  bool
+  RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::active() const
+  {
+    return impl_->active();
   }
 }

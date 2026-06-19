@@ -35,7 +35,7 @@ namespace AdServer
 
         if(HOUSEHOLD_)
         {
-          user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+          auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
             open_rocksdb_chunked_map<
               AdServer::Commons::UserId,
               AdServer::ProfilingCommons::UserIdAccessor,
@@ -45,6 +45,8 @@ namespace AdServer
                 file_prefix,
                 user_level_map_traits,
                 AdServer::Commons::uuid_distribution_hash);
+          user_map_ = user_map.first;
+          add_child_object(user_map.second);
         }
         else
         {

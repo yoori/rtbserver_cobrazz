@@ -11,6 +11,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
 #include "CampaignManagerCore.hpp"
@@ -106,7 +107,8 @@ namespace AdServer::CampaignSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::size_t grpc_threads);
+      std::size_t process_threads,
+      std::size_t cq_threads);
 
     Stats stats() const noexcept;
 
@@ -122,6 +124,7 @@ namespace AdServer::CampaignSvcs
 
     const std::string bind_address_;
     const std::shared_ptr<AtomicStats> stats_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<Impl> impl_;
   };
 

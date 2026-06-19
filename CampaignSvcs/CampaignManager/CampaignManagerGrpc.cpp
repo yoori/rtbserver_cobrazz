@@ -2,15 +2,16 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <algorithm>
 #include <string>
 #include <utility>
-#include <unistd.h>
 #include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 #include <Generics/Time.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 
 #include <CampaignSvcs/CampaignManager/CampaignManagerGrpc.grpc.pb.h>
 
@@ -1529,104 +1530,255 @@ namespace AdServer::CampaignSvcs
   public:
     ServiceImpl(
       CampaignManagerCore* core,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CALL(pb::ReadyRequest, pb::ReadyResponse, ready),
-        MAKE_GRPC_CALL(
+        MAKE_GRPC_CORO_CALL(
+          pb::ReadyRequest,
+          pb::ReadyResponse,
+          ready,
+          co_ready),
+        MAKE_GRPC_CORO_CALL(
           pb::ProgressCommentRequest,
           pb::ProgressCommentResponse,
-          progress_comment),
-        MAKE_GRPC_CALL(
+          progress_comment,
+          co_progress_comment),
+        MAKE_GRPC_CORO_CALL(
           pb::MatchGeoChannelsRequest,
           pb::MatchGeoChannelsResponse,
-          match_geo_channels),
-        MAKE_GRPC_CALL(pb::GetFileRequest, pb::GetFileResponse, get_file),
+          match_geo_channels,
+          co_match_geo_channels),
+        MAKE_GRPC_CORO_CALL(
+          pb::GetFileRequest,
+          pb::GetFileResponse,
+          get_file,
+          co_get_file),
         MAKE_GRPC_CORO_CALL(
           pb::GetCampaignCreativeRequest,
           pb::GetCampaignCreativeResponse,
           get_campaign_creative,
           co_get_campaign_creative),
-        MAKE_GRPC_CALL(
+        MAKE_GRPC_CORO_CALL(
           pb::ProcessMatchRequestRequest,
           pb::ProcessMatchRequestResponse,
-          process_match_request),
-        MAKE_GRPC_CALL(
+          process_match_request,
+          co_process_match_request),
+        MAKE_GRPC_CORO_CALL(
           pb::ProcessAnonymousRequestRequest,
           pb::ProcessAnonymousRequestResponse,
-          process_anonymous_request),
-        MAKE_GRPC_CALL(
+          process_anonymous_request,
+          co_process_anonymous_request),
+        MAKE_GRPC_CORO_CALL(
           pb::InstantiateAdRequest,
           pb::InstantiateAdResponse,
-          instantiate_ad),
-        MAKE_GRPC_CALL(
+          instantiate_ad,
+          co_instantiate_ad),
+        MAKE_GRPC_CORO_CALL(
           pb::TraceCampaignSelectionIndexRequest,
           pb::TraceCampaignSelectionIndexResponse,
-          trace_campaign_selection_index),
-        MAKE_GRPC_CALL(
+          trace_campaign_selection_index,
+          co_trace_campaign_selection_index),
+        MAKE_GRPC_CORO_CALL(
           pb::TraceCampaignSelectionRequest,
           pb::TraceCampaignSelectionResponse,
-          trace_campaign_selection),
-        MAKE_GRPC_CALL(
+          trace_campaign_selection,
+          co_trace_campaign_selection),
+        MAKE_GRPC_CORO_CALL(
           pb::GetCampaignCreativeByCcidRequest,
           pb::GetCampaignCreativeByCcidResponse,
-          get_campaign_creative_by_ccid),
-        MAKE_GRPC_CALL(
+          get_campaign_creative_by_ccid,
+          co_get_campaign_creative_by_ccid),
+        MAKE_GRPC_CORO_CALL(
           pb::GetChannelLinksRequest,
           pb::GetChannelLinksResponse,
-          get_channel_links),
-        MAKE_GRPC_CALL(
+          get_channel_links,
+          co_get_channel_links),
+        MAKE_GRPC_CORO_CALL(
           pb::GetDiscoverChannelsRequest,
           pb::GetDiscoverChannelsResponse,
-          get_discover_channels),
-        MAKE_GRPC_CALL(
+          get_discover_channels,
+          co_get_discover_channels),
+        MAKE_GRPC_CORO_CALL(
           pb::GetCategoryChannelsRequest,
           pb::GetCategoryChannelsResponse,
-          get_category_channels),
-        MAKE_GRPC_CALL(
+          get_category_channels,
+          co_get_category_channels),
+        MAKE_GRPC_CORO_CALL(
           pb::GetColocationFlagsRequest,
           pb::GetColocationFlagsResponse,
-          get_colocation_flags),
-        MAKE_GRPC_CALL(
+          get_colocation_flags,
+          co_get_colocation_flags),
+        MAKE_GRPC_CORO_CALL(
           pb::GetPubPixelsRequest,
           pb::GetPubPixelsResponse,
-          get_pub_pixels),
-        MAKE_GRPC_CALL(
+          get_pub_pixels,
+          co_get_pub_pixels),
+        MAKE_GRPC_CORO_CALL(
           pb::ConsiderPassbackRequest,
           pb::ConsiderPassbackResponse,
-          consider_passback),
-        MAKE_GRPC_CALL(
+          consider_passback,
+          co_consider_passback),
+        MAKE_GRPC_CORO_CALL(
           pb::ConsiderPassbackTrackRequest,
           pb::ConsiderPassbackTrackResponse,
-          consider_passback_track),
-        MAKE_GRPC_CALL(
+          consider_passback_track,
+          co_consider_passback_track),
+        MAKE_GRPC_CORO_CALL(
           pb::GetClickUrlRequest,
           pb::GetClickUrlResponse,
-          get_click_url),
-        MAKE_GRPC_CALL(
+          get_click_url,
+          co_get_click_url),
+        MAKE_GRPC_CORO_CALL(
           pb::VerifyImpressionRequest,
           pb::VerifyImpressionResponse,
-          verify_impression),
-        MAKE_GRPC_CALL(
+          verify_impression,
+          co_verify_impression),
+        MAKE_GRPC_CORO_CALL(
           pb::ActionTakenRequest,
           pb::ActionTakenResponse,
-          action_taken),
-        MAKE_GRPC_CALL(
+          action_taken,
+          co_action_taken),
+        MAKE_GRPC_CORO_CALL(
           pb::VerifyOptOperationRequest,
           pb::VerifyOptOperationResponse,
-          verify_opt_operation),
-        MAKE_GRPC_CALL(
+          verify_opt_operation,
+          co_verify_opt_operation),
+        MAKE_GRPC_CORO_CALL(
           pb::ConsiderWebOperationRequest,
           pb::ConsiderWebOperationResponse,
-          consider_web_operation),
-        MAKE_GRPC_CALL(
+          consider_web_operation,
+          co_consider_web_operation),
+        MAKE_GRPC_CORO_CALL(
           pb::GetConfigRequest,
           pb::GetConfigResponse,
-          get_config));
+          get_config,
+          co_get_config));
     }
 
+    AdServer::Grpc::GrpcCoroutine co_ready(
+      const pb::ReadyRequest& request,
+      pb::ReadyResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_progress_comment(
+      const pb::ProgressCommentRequest& request,
+      pb::ProgressCommentResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_match_geo_channels(
+      const pb::MatchGeoChannelsRequest& request,
+      pb::MatchGeoChannelsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_file(
+      const pb::GetFileRequest& request,
+      pb::GetFileResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_campaign_creative(
+      const pb::GetCampaignCreativeRequest& request,
+      pb::GetCampaignCreativeResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_process_match_request(
+      const pb::ProcessMatchRequestRequest& request,
+      pb::ProcessMatchRequestResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_process_anonymous_request(
+      const pb::ProcessAnonymousRequestRequest& request,
+      pb::ProcessAnonymousRequestResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_instantiate_ad(
+      const pb::InstantiateAdRequest& request,
+      pb::InstantiateAdResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_trace_campaign_selection_index(
+      const pb::TraceCampaignSelectionIndexRequest& request,
+      pb::TraceCampaignSelectionIndexResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_trace_campaign_selection(
+      const pb::TraceCampaignSelectionRequest& request,
+      pb::TraceCampaignSelectionResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_campaign_creative_by_ccid(
+      const pb::GetCampaignCreativeByCcidRequest& request,
+      pb::GetCampaignCreativeByCcidResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_channel_links(
+      const pb::GetChannelLinksRequest& request,
+      pb::GetChannelLinksResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_discover_channels(
+      const pb::GetDiscoverChannelsRequest& request,
+      pb::GetDiscoverChannelsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_category_channels(
+      const pb::GetCategoryChannelsRequest& request,
+      pb::GetCategoryChannelsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_colocation_flags(
+      const pb::GetColocationFlagsRequest& request,
+      pb::GetColocationFlagsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_pub_pixels(
+      const pb::GetPubPixelsRequest& request,
+      pb::GetPubPixelsResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_consider_passback(
+      const pb::ConsiderPassbackRequest& request,
+      pb::ConsiderPassbackResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_consider_passback_track(
+      const pb::ConsiderPassbackTrackRequest& request,
+      pb::ConsiderPassbackTrackResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_click_url(
+      const pb::GetClickUrlRequest& request,
+      pb::GetClickUrlResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_verify_impression(
+      const pb::VerifyImpressionRequest& request,
+      pb::VerifyImpressionResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_action_taken(
+      const pb::ActionTakenRequest& request,
+      pb::ActionTakenResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_verify_opt_operation(
+      const pb::VerifyOptOperationRequest& request,
+      pb::VerifyOptOperationResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_consider_web_operation(
+      const pb::ConsiderWebOperationRequest& request,
+      pb::ConsiderWebOperationResponse& response,
+      ::grpc::Status& result_status) const;
+
+    AdServer::Grpc::GrpcCoroutine co_get_config(
+      const pb::GetConfigRequest& request,
+      pb::GetConfigResponse& response,
+      ::grpc::Status& result_status) const;
+
+  private:
     void ready(
       const pb::ReadyRequest& request,
       pb::ReadyResponse& response,
@@ -1647,11 +1799,6 @@ namespace AdServer::CampaignSvcs
       pb::GetFileResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_campaign_creative(
-      const pb::GetCampaignCreativeRequest& request,
-      pb::GetCampaignCreativeResponse& response,
-      ::grpc::Status& result_status) const;
-
     void process_match_request(
       const pb::ProcessMatchRequestRequest& request,
       pb::ProcessMatchRequestResponse& response,
@@ -1660,11 +1807,6 @@ namespace AdServer::CampaignSvcs
     void process_anonymous_request(
       const pb::ProcessAnonymousRequestRequest& request,
       pb::ProcessAnonymousRequestResponse& response,
-      ::grpc::Status& result_status) const;
-
-    void instantiate_ad(
-      const pb::InstantiateAdRequest& request,
-      pb::InstantiateAdResponse& response,
       ::grpc::Status& result_status) const;
 
     void trace_campaign_selection_index(
@@ -1717,16 +1859,6 @@ namespace AdServer::CampaignSvcs
       pb::ConsiderPassbackTrackResponse& response,
       ::grpc::Status& result_status) const;
 
-    void get_click_url(
-      const pb::GetClickUrlRequest& request,
-      pb::GetClickUrlResponse& response,
-      ::grpc::Status& result_status) const;
-
-    void verify_impression(
-      const pb::VerifyImpressionRequest& request,
-      pb::VerifyImpressionResponse& response,
-      ::grpc::Status& result_status) const;
-
     void action_taken(
       const pb::ActionTakenRequest& request,
       pb::ActionTakenResponse& response,
@@ -1747,7 +1879,6 @@ namespace AdServer::CampaignSvcs
       pb::GetConfigResponse& response,
       ::grpc::Status& result_status) const;
 
-  private:
     class ProcessControlService final:
       public pc::ProcessControl::Service
     {
@@ -1768,6 +1899,7 @@ namespace AdServer::CampaignSvcs
   private:
     ProcessControlService process_control_service_;
     CampaignManagerCore_var core_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<AtomicStats> stats_;
   };
 
@@ -1788,9 +1920,11 @@ namespace AdServer::CampaignSvcs
 
   CampaignManagerGrpc::ServiceImpl::ServiceImpl(
     CampaignManagerCore* core,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::shared_ptr<AtomicStats> stats)
     : process_control_service_(*this),
       core_(ReferenceCounting::add_ref(core)),
+      executor_pool_(std::move(executor_pool)),
       stats_(std::move(stats))
   {
     add_grpc_service(&process_control_service_);
@@ -1814,6 +1948,101 @@ namespace AdServer::CampaignSvcs
       response.set_description(ex.what());
     }
   }
+
+#define DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(MethodName, RequestType, ResponseType) \
+  AdServer::Grpc::GrpcCoroutine \
+  CampaignManagerGrpc::ServiceImpl::co_##MethodName( \
+    const RequestType& request, \
+    ResponseType& response, \
+    ::grpc::Status& result_status) const \
+  { \
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_); \
+    MethodName(request, response, result_status); \
+    co_return; \
+  }
+
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    ready,
+    pb::ReadyRequest,
+    pb::ReadyResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    progress_comment,
+    pb::ProgressCommentRequest,
+    pb::ProgressCommentResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    match_geo_channels,
+    pb::MatchGeoChannelsRequest,
+    pb::MatchGeoChannelsResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_file,
+    pb::GetFileRequest,
+    pb::GetFileResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    process_match_request,
+    pb::ProcessMatchRequestRequest,
+    pb::ProcessMatchRequestResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    process_anonymous_request,
+    pb::ProcessAnonymousRequestRequest,
+    pb::ProcessAnonymousRequestResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    trace_campaign_selection_index,
+    pb::TraceCampaignSelectionIndexRequest,
+    pb::TraceCampaignSelectionIndexResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    trace_campaign_selection,
+    pb::TraceCampaignSelectionRequest,
+    pb::TraceCampaignSelectionResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_campaign_creative_by_ccid,
+    pb::GetCampaignCreativeByCcidRequest,
+    pb::GetCampaignCreativeByCcidResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_channel_links,
+    pb::GetChannelLinksRequest,
+    pb::GetChannelLinksResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_discover_channels,
+    pb::GetDiscoverChannelsRequest,
+    pb::GetDiscoverChannelsResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_category_channels,
+    pb::GetCategoryChannelsRequest,
+    pb::GetCategoryChannelsResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_colocation_flags,
+    pb::GetColocationFlagsRequest,
+    pb::GetColocationFlagsResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_pub_pixels,
+    pb::GetPubPixelsRequest,
+    pb::GetPubPixelsResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    consider_passback,
+    pb::ConsiderPassbackRequest,
+    pb::ConsiderPassbackResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    consider_passback_track,
+    pb::ConsiderPassbackTrackRequest,
+    pb::ConsiderPassbackTrackResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    action_taken,
+    pb::ActionTakenRequest,
+    pb::ActionTakenResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    verify_opt_operation,
+    pb::VerifyOptOperationRequest,
+    pb::VerifyOptOperationResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    consider_web_operation,
+    pb::ConsiderWebOperationRequest,
+    pb::ConsiderWebOperationResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
+    get_config,
+    pb::GetConfigRequest,
+    pb::GetConfigResponse)
+
+#undef DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER
 
   void
   CampaignManagerGrpc::ServiceImpl::ready(
@@ -1981,6 +2210,8 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2142,12 +2373,14 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  CampaignManagerGrpc::ServiceImpl::instantiate_ad(
+  AdServer::Grpc::GrpcCoroutine
+  CampaignManagerGrpc::ServiceImpl::co_instantiate_ad(
     const pb::InstantiateAdRequest& request,
     pb::InstantiateAdResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2196,7 +2429,7 @@ namespace AdServer::CampaignSvcs
         info.pub_imp_revenue = unpack_revenue_decimal(source.pub_imp_revenue());
       }
 
-      const auto result = core_->instantiate_ad(info);
+      const auto result = co_await core_->co_instantiate_ad(info);
       auto* target = response.mutable_instantiate_ad_result();
       target->set_creative_body(result.creative_body);
       target->set_mime_format(result.mime_format);
@@ -2218,6 +2451,8 @@ namespace AdServer::CampaignSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+
+    co_return;
   }
 
   void
@@ -2647,12 +2882,14 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  CampaignManagerGrpc::ServiceImpl::get_click_url(
+  AdServer::Grpc::GrpcCoroutine
+  CampaignManagerGrpc::ServiceImpl::co_get_click_url(
     const pb::GetClickUrlRequest& request,
     pb::GetClickUrlResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2692,7 +2929,7 @@ namespace AdServer::CampaignSvcs
       }
 
       CampaignManagerCore::ClickResultInfo result;
-      response.set_found(core_->get_click_url(info, result));
+      response.set_found(co_await core_->co_get_click_url(info, result));
       auto* target = response.mutable_click_result_info();
       target->set_url(result.url);
       target->set_campaign_id(result.campaign_id);
@@ -2711,14 +2948,18 @@ namespace AdServer::CampaignSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+
+    co_return;
   }
 
-  void
-  CampaignManagerGrpc::ServiceImpl::verify_impression(
+  AdServer::Grpc::GrpcCoroutine
+  CampaignManagerGrpc::ServiceImpl::co_verify_impression(
     const pb::VerifyImpressionRequest& request,
     pb::VerifyImpressionResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2749,7 +2990,7 @@ namespace AdServer::CampaignSvcs
       info.viewability = source.viewability();
       info.action_name = source.action_name();
 
-      const auto result = core_->verify_impression(info);
+      const auto result = co_await core_->co_verify_impression(info);
       for(const auto& creative : result)
       {
         auto* target =
@@ -2771,6 +3012,8 @@ namespace AdServer::CampaignSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+
+    co_return;
   }
 
   void
@@ -2948,16 +3191,26 @@ namespace AdServer::CampaignSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t grpc_threads)
+    std::size_t process_threads,
+    std::size_t cq_threads)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
+      executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
+        Generics::ActiveObjectCallback_var(
+          new Logging::ActiveObjectCallbackImpl(
+            logger,
+            "",
+            campaign_manager_grpc_aspect)),
+        std::max<std::size_t>(1, process_threads),
+        "cm-grpc-pool")),
       impl_(std::make_shared<Impl>(
         logger,
         campaign_manager_grpc_aspect,
         bind_address_,
-        grpc_threads,
-        std::make_unique<ServiceImpl>(core, stats_)))
+        cq_threads,
+        std::make_unique<ServiceImpl>(core, executor_pool_, stats_)))
   {
+    add_child_object(executor_pool_);
     add_child_object(impl_);
   }
 

@@ -237,7 +237,7 @@ namespace AdServer::UserInfoSvcs
       std::cout << out.str() << std::flush;
     }
 
-    void
+    [[maybe_unused]] void
     debug_print_match_result(
       const char* function_name,
       bool result,

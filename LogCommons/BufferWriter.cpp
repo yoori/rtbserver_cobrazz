@@ -65,13 +65,6 @@ namespace AdServer::LogProcessing
   }
 
   void
-  BufferWriter::append(char value)
-  {
-    flush_if_required_(1);
-    buffer_.push_back(value);
-  }
-
-  void
   BufferWriter::append(const char* value)
   {
     append(std::string_view(value));
@@ -95,42 +88,6 @@ namespace AdServer::LogProcessing
   BufferWriter::append(const std::string& value)
   {
     append(std::string_view(value));
-  }
-
-  void
-  BufferWriter::append_number(unsigned long value)
-  {
-    append_integer_(value);
-  }
-
-  void
-  BufferWriter::append_number(long value)
-  {
-    append_integer_(value);
-  }
-
-  void
-  BufferWriter::append_number(unsigned long long value)
-  {
-    append_integer_(value);
-  }
-
-  void
-  BufferWriter::append_number(long long value)
-  {
-    append_integer_(value);
-  }
-
-  void
-  BufferWriter::append_number(unsigned int value)
-  {
-    append_integer_(value);
-  }
-
-  void
-  BufferWriter::append_number(int value)
-  {
-    append_integer_(value);
   }
 
   void
@@ -174,17 +131,6 @@ namespace AdServer::LogProcessing
   }
 
   void
-  BufferWriter::flush_if_required_(std::size_t append_size)
-  {
-    if (file_ &&
-      buffer_limit_ != 0 &&
-      buffer_.size() + append_size > buffer_limit_)
-    {
-      flush();
-    }
-  }
-
-  void
   BufferWriter::write_direct_(const char* data, std::size_t size)
   {
     if (!file_)
@@ -197,13 +143,6 @@ namespace AdServer::LogProcessing
     {
       good_ = false;
     }
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, char value)
-  {
-    out.append(value);
-    return out;
   }
 
   BufferWriter&
@@ -224,55 +163,6 @@ namespace AdServer::LogProcessing
   operator<<(BufferWriter& out, const std::string& value)
   {
     out.append(value);
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, bool value)
-  {
-    out.append(value ? '1' : '0');
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, unsigned long value)
-  {
-    out.append_number(value);
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, long value)
-  {
-    out.append_number(value);
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, unsigned long long value)
-  {
-    out.append_number(value);
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, long long value)
-  {
-    out.append_number(value);
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, unsigned int value)
-  {
-    out.append_number(value);
-    return out;
-  }
-
-  BufferWriter&
-  operator<<(BufferWriter& out, int value)
-  {
-    out.append_number(value);
     return out;
   }
 
