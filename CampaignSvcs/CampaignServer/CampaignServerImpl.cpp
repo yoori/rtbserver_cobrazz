@@ -229,7 +229,7 @@ namespace AdServer
 
           info.geoip_targets.length(value.second->geoip_targets.size());
           CORBA::ULong i = 0;
-          for(GeoChannelDef::GeoIPTargetList::const_iterator gt_it =
+          for(GeoChannelDef::GeoIPTargetArray::const_iterator gt_it =
                 value.second->geoip_targets.begin();
               gt_it != value.second->geoip_targets.end(); ++gt_it, ++i)
           {

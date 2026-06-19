@@ -434,7 +434,7 @@ namespace CampaignSvcs
 
     typedef ReferenceCounting::SmartPtr<AccountDef> Account_var;
     typedef ReferenceCounting::SmartPtr<const AccountDef> ConstAccount_var;
-    typedef std::vector<Account_var> AccountList;
+    typedef std::vector<Account_var> AccountArray;
     typedef std::map<unsigned long, Account_var> AccountMap;
 
     typedef std::set<unsigned long> CreativeCategoryIdSet;
@@ -1034,8 +1034,8 @@ namespace CampaignSvcs
     class SimpleChannelCategories: public ReferenceCounting::AtomicImpl
     {
     public:
-      typedef std::vector<unsigned long> CategoryIdList;
-      CategoryIdList categories;
+      typedef std::vector<unsigned long> CategoryIdArray;
+      CategoryIdArray categories;
 
     protected:
       virtual

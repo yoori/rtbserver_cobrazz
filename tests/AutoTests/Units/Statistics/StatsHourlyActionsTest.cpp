@@ -82,7 +82,7 @@ StatsHourlyActionsTest::case_base_functionality()
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/1"));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::WAIT);
@@ -163,7 +163,7 @@ StatsHourlyActionsTest::case_action_from_different_campaign()
   request.colo(fetch_string("Colo"));
   request.debug_time(target_request_time_);
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
   actions.push_back(AutoTest::CLICK);
 
@@ -211,7 +211,7 @@ StatsHourlyActionsTest::case_triple_action()
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/2x2"));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::ACTION);
@@ -264,7 +264,7 @@ StatsHourlyActionsTest::case_action_before_click()
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/3"));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
   actions.push_back(AutoTest::ConsequenceAction(
     AutoTest::ACTION, target_request_time_));
@@ -318,7 +318,7 @@ StatsHourlyActionsTest::case_action_before_impression_confirmation()
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/4"));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::ConsequenceAction(
     AutoTest::ACTION, target_request_time_));
   actions.push_back(AutoTest::ConsequenceAction(
@@ -377,7 +377,7 @@ StatsHourlyActionsTest::case_one_action_for_multiple_creatives_in_campaign()
       AutoTest::CreativeList exp_ccids;
       exp_ccids.push_back(fetch_string("CC Id/5/1"));
 
-      AutoTest::ConsequenceActionList actions;
+      AutoTest::ConsequenceActionArray actions;
       actions.push_back(AutoTest::TRACK);
       actions.push_back(AutoTest::CLICK);
 
@@ -390,7 +390,7 @@ StatsHourlyActionsTest::case_one_action_for_multiple_creatives_in_campaign()
       AutoTest::CreativeList exp_ccids;
       exp_ccids.push_back(fetch_string("CC Id/5/2"));
 
-      AutoTest::ConsequenceActionList actions;
+      AutoTest::ConsequenceActionArray actions;
       actions.push_back(AutoTest::TRACK);
       actions.push_back(AutoTest::CLICK);
 
@@ -443,7 +443,7 @@ StatsHourlyActionsTest::case_action_for_display_creative_group_with_cpc_rate()
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/6"));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::ACTION);
@@ -521,7 +521,7 @@ StatsHourlyActionsTest::case_actions_for_text_ad_group()
         isp_amount(!i? 499.9966666: 249.9966666) );
   }
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::ACTION);

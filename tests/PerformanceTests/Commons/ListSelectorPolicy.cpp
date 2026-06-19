@@ -334,7 +334,7 @@ SelectorPolicy::make_policy(
 
 // Cookie utils
 
-void make_cookie_policy_list(SelectorPolicyList& cookie_policies,
+void make_cookie_policy_list(SelectorPolicyArray& cookie_policies,
                              const String::SubString& value,
                              const RequestLists& lists)
   /*throw(SelectorPolicy::InvalidConfigRequestData)*/

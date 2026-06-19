@@ -495,7 +495,7 @@ FraudProtectionFeatureTest::process_request(
               fraud(data[i].flags & TRF_FRAUD? "1": "0")));
         }
 
-        AutoTest::ConsequenceActionList actions;
+        AutoTest::ConsequenceActionArray actions;
 
         AutoTest::Time action_time(
           data[i].flags & TRF_ACTIONS_NOW?

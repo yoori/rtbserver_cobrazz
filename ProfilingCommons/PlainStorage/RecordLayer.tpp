@@ -256,7 +256,7 @@ namespace PlainStorage
       ReadBlock_var block;
     };
 
-    typedef std::vector<ReadBlockWithPos> ReadBlockWithPosList;
+    typedef std::vector<ReadBlockWithPos> ReadBlockWithPosArray;
     typedef BlockWithPosLess<ReadBlockWithPos> ReadBlockWithPosLess;
 
     /// Allow access to Data Blocks
@@ -271,7 +271,7 @@ namespace PlainStorage
     /// Be filled with the sorted positions by ascending
     /// References to blocks + position in whole buffer + offset to user data
     /// Record placed in these blocks
-    ReadBlockWithPosList read_blocks_;
+    ReadBlockWithPosArray read_blocks_;
   };
 
   /**
@@ -423,7 +423,7 @@ namespace PlainStorage
       WriteBlock_var block;
     };
 
-    typedef std::vector<WriteBlockWithPos> WriteBlockWithPosList;
+    typedef std::vector<WriteBlockWithPos> WriteBlockWithPosArray;
     typedef BlockWithPosLess<WriteBlockWithPos> WriteBlockWithPosLess;
 
   protected:
@@ -442,7 +442,7 @@ namespace PlainStorage
     /// Be filled with the sorted positions by ascending
     /// References to blocks + position in whole buffer + offset to user data
     /// Record placed in these blocks
-    WriteBlockWithPosList write_blocks_;
+    WriteBlockWithPosArray write_blocks_;
   };
 
   /**
@@ -528,7 +528,7 @@ namespace PlainStorage
       return 0;
     }
 
-    read_block_seq<ReadBlockWithPosList>(
+    read_block_seq<ReadBlockWithPosArray>(
       read_blocks_,
       buffer,
       full_size_);
@@ -564,7 +564,7 @@ namespace PlainStorage
       throw BaseException(ostr);
     }
 
-    read_block_seq_part<ReadBlockWithPosList, ReadBlockWithPosLess>(
+    read_block_seq_part<ReadBlockWithPosArray, ReadBlockWithPosLess>(
       read_blocks_,
       pos,
       buffer,
@@ -784,7 +784,7 @@ namespace PlainStorage
 
     try
     {
-      read_block_seq<WriteBlockWithPosList>(
+      read_block_seq<WriteBlockWithPosArray>(
         write_blocks_,
         buffer,
         full_size_);
@@ -841,7 +841,7 @@ namespace PlainStorage
 
     try
     {
-      read_block_seq_part<WriteBlockWithPosList, WriteBlockWithPosLess>(
+      read_block_seq_part<WriteBlockWithPosArray, WriteBlockWithPosLess>(
         write_blocks_,
         pos,
         buffer,
@@ -919,7 +919,7 @@ namespace PlainStorage
         resize_(write_size, false);
       }
 
-      write_block_seq<WriteBlockWithPosList>(
+      write_block_seq<WriteBlockWithPosArray>(
         write_blocks_,
         buffer,
         write_size);
@@ -961,7 +961,7 @@ namespace PlainStorage
       throw BaseException(ostr);
     }
 
-    write_block_seq_part<WriteBlockWithPosList, WriteBlockWithPosLess>(
+    write_block_seq_part<WriteBlockWithPosArray, WriteBlockWithPosLess>(
       write_blocks_,
       pos,
       buffer,
@@ -995,7 +995,7 @@ namespace PlainStorage
 
     full_size_ = 0;
 
-    for(typename WriteBlockWithPosList::iterator it = write_blocks_.begin();
+    for(typename WriteBlockWithPosArray::iterator it = write_blocks_.begin();
         it != write_blocks_.end(); ++it)
     {
       it->block->deallocate();
@@ -1070,9 +1070,9 @@ namespace PlainStorage
     
     SizeType cur_size = full_size_;
 
-    typename WriteBlockWithPosList::iterator erase_it = write_blocks_.end();
+    typename WriteBlockWithPosArray::iterator erase_it = write_blocks_.end();
 
-    for(typename WriteBlockWithPosList::iterator it = --write_blocks_.end();
+    for(typename WriteBlockWithPosArray::iterator it = --write_blocks_.end();
         it != write_blocks_.begin(); --it)
     {
       SizeType data_size = it->block->size() - it->data_offset;
@@ -1102,7 +1102,7 @@ namespace PlainStorage
 
       {
         // link last block reference into null
-        typename WriteBlockWithPosList::iterator prev_it = erase_it;
+        typename WriteBlockWithPosArray::iterator prev_it = erase_it;
         --prev_it;
         SizeType last_head_offset = (
           prev_it == write_blocks_.begin() ? sizeof(u_int32_t) : 0);
@@ -1156,7 +1156,7 @@ namespace PlainStorage
         typename BlockSizeAllocator<BlockIndex>::AllocatedBlock alloc;
         allocator->allocate_size(alloc_size, alloc);
 
-        typename WriteBlockWithPosList::iterator last_it = --write_blocks_.end();
+        typename WriteBlockWithPosArray::iterator last_it = --write_blocks_.end();
         SizeType last_head_offset = (
           last_it == write_blocks_.begin() ? sizeof(u_int32_t) : 0);
         SubBlockHead::write_next_index(
@@ -1226,7 +1226,7 @@ namespace PlainStorage
       offset << "block sequence: " << std::endl;
 
     unsigned long block_i = 0;
-    for(typename WriteBlockWithPosList::const_iterator it = write_blocks_.begin();
+    for(typename WriteBlockWithPosArray::const_iterator it = write_blocks_.begin();
         it != write_blocks_.end(); ++it, ++block_i)
     {
       ostr << offset << "  #" << block_i <<

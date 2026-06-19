@@ -343,7 +343,7 @@ ZerodowntimeTest::check_click_and_actions_(
     AdClient::create_user(
       this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(
     AutoTest::ConsequenceAction(
       AutoTest::CLICK, time_));

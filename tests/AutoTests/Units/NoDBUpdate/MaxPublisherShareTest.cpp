@@ -429,7 +429,7 @@ MaxPublisherShareTest::text_static_()
       expected_ccids.begin()),
     "TEXT/CC/1,TEXT/CC/2,TEXT/CC/3");
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::CLICK);
 
   FAIL_CONTEXT(

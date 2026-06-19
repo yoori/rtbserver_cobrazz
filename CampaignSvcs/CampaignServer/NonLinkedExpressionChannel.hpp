@@ -38,10 +38,10 @@ namespace AdServer
 
       struct Expression
       {
-        typedef std::vector<Expression> ExpressionList;
+        typedef std::vector<Expression> ExpressionArray;
         Operation op;
         unsigned long channel_id;
-        ExpressionList sub_channels;
+        ExpressionArray sub_channels;
 
         Expression(): op(NOP), channel_id(0) {}
         Expression(unsigned long channel_id_val)
@@ -136,7 +136,7 @@ namespace AdServer
       else
       {
         out << "(";
-        for(NonLinkedExpressionChannel::Expression::ExpressionList::const_iterator eit =
+        for(NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expr.sub_channels.begin();
             eit != expr.sub_channels.end(); ++eit)
         {
@@ -215,7 +215,7 @@ namespace AdServer
       }
       else
       {
-        for(ExpressionList::const_iterator eit = sub_channels.begin();
+        for(ExpressionArray::const_iterator eit = sub_channels.begin();
             eit != sub_channels.end(); ++eit)
         {
           eit->all_channels(channels);

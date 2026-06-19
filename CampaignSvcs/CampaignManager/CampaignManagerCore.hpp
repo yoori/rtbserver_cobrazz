@@ -71,7 +71,7 @@ namespace AdServer
       struct CreativeInstantiate;
       struct CreativeParams;
 
-      typedef std::vector<unsigned char> ByteVector;
+      typedef std::vector<unsigned char> ByteArray;
       typedef std::vector<unsigned long> IdVector;
       typedef std::vector<std::string> StringVector;
       typedef std::vector<AdServer::Commons::RequestId> RequestIdVector;
@@ -749,7 +749,7 @@ namespace AdServer
         const AnonymousRequestInfo& anon_request_info)
         /*throw(Exception, NotReady)*/;
 
-      ByteVector
+      ByteArray
       get_file(const std::string& file_name)
         /*throw(Exception)*/;
 
@@ -1613,7 +1613,7 @@ namespace AdServer
 
       void
       get_pub_pixel_account_ids_(
-        AccountList& result_account_ids,
+        AccountArray& result_account_ids,
         const CampaignConfig* campaign_config,
         const char* country,
         UserStatus user_status,

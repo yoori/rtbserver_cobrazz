@@ -17,13 +17,13 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
-    typedef std::vector<Generics::Time> TimeList;
+    typedef std::vector<Generics::Time> TimeArray;
 
     struct NewsItemImpression
     {
       std::string id;
       unsigned long total;
-      TimeList times;
+      TimeArray times;
     };
 
     typedef std::list<NewsItemImpression> NewsItemImpressionList;
@@ -32,7 +32,7 @@ namespace AdServer
     {
       unsigned long id;
       unsigned long total;
-      TimeList times;
+      TimeArray times;
     };
 
     typedef std::list<IdImpression> IdImpressionList;

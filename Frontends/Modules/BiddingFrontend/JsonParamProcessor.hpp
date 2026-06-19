@@ -235,7 +235,7 @@ namespace AdServer::Bidding
         virtual ~Data() noexcept = default;
       };
 
-      typedef std::pmr::vector<Data> DataList;
+      typedef std::pmr::vector<Data> DataArray;
 
       enum ImageTypeEnum
       {
@@ -275,7 +275,7 @@ namespace AdServer::Bidding
         StringSet mimes;
       };
 
-      typedef std::pmr::vector<Image> ImageList;
+      typedef std::pmr::vector<Image> ImageArray;
 
       struct Video: Asset
       {
@@ -293,7 +293,7 @@ namespace AdServer::Bidding
         virtual ~Video() noexcept = default;
       };
 
-      typedef std::pmr::vector<Video> VideoList;
+      typedef std::pmr::vector<Video> VideoArray;
 
       explicit Native(
         std::pmr::memory_resource* resource = std::pmr::get_default_resource())
@@ -313,9 +313,9 @@ namespace AdServer::Bidding
       std::pmr::memory_resource* resource_;
       PmrString version;
       Commons::Optional<long> placement;
-      DataList data_assets;
-      ImageList image_assets;
-      VideoList video_assets;
+      DataArray data_assets;
+      ImageArray image_assets;
+      VideoArray video_assets;
 
     protected:
       virtual ~Native() noexcept = default;

@@ -121,7 +121,7 @@ AverageUsersCost::test_case(
         t_imps += exp_ccid.size(); }
     }
 
-    AutoTest::ConsequenceActionList consequence_actions;
+    AutoTest::ConsequenceActionArray consequence_actions;
     if (requests[i].actions & UA_TRACK)
     {
       consequence_actions.push_back(

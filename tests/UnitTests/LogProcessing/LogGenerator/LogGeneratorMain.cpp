@@ -983,7 +983,7 @@ struct Filler
     impression_channels.push_back(301);
     impression_channels.push_back(302);
 
-    RequestBasicChannelsCollector::DataT::DataT::TriggerMatchList
+    RequestBasicChannelsCollector::DataT::DataT::TriggerMatchArray
       page_trigger_channels, search_trigger_channels, url_trigger_channels,
       url_keyword_trigger_channels;
 

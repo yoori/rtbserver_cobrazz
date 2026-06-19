@@ -182,7 +182,7 @@ namespace Oracle
     // define all columns
     ub4 position = 1;
 
-    for (ColumnList::iterator it = columns_.begin();
+    for (ColumnArray::iterator it = columns_.begin();
          it != columns_.end(); ++it)
     {
       sword result;

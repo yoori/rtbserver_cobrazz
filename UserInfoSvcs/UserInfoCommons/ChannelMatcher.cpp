@@ -1399,6 +1399,7 @@ namespace AdServer
 
       if (!no_result_)
       {
+        properties.geo_data_list.reserve(MAX_GEO_DATA);
         for (ChannelsProfileWriter::geo_data_Container::const_iterator it =
                res_upw.geo_data().begin(); it != res_upw.geo_data().end(); ++it)
         {

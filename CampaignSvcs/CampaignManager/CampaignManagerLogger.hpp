@@ -131,7 +131,7 @@ namespace AdServer::CampaignSvcs
       StringTriggerChannelMap;
 
     typedef AdServer::LogProcessing::RequestBasicChannelsInnerData::
-      TriggerMatchList TriggerChannelMap;
+      TriggerMatchArray TriggerChannelMap;
 
     typedef AdServer::Commons::Optional<unsigned long> UserIdHashMod;
 

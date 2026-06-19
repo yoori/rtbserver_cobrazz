@@ -306,7 +306,7 @@ namespace AdServer::UserInfoSvcs
     return pool_->get_any_ref();
   }
 
-  std::optional<UserInfoDistributedGrpcClient::Pool::EndpointChunksList>
+  std::optional<UserInfoDistributedGrpcClient::Pool::EndpointChunksArray>
   UserInfoDistributedGrpcClient::resolve_partition_(
     ControllerClient& controller_client)
   {
@@ -333,7 +333,7 @@ namespace AdServer::UserInfoSvcs
       throw Exception(ostr.str());
     }
 
-    Pool::EndpointChunksList refs;
+    Pool::EndpointChunksArray refs;
     refs.reserve(response.user_info_managers_size());
     for (const auto& manager : response.user_info_managers())
     {

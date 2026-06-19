@@ -236,7 +236,7 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_1(
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/2"));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::ACTION);
 
@@ -335,10 +335,10 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string(std::string("CC Id/") + name_prefix));
 
-  AutoTest::ConsequenceActionList actions1;
+  AutoTest::ConsequenceActionArray actions1;
   actions1.push_back(AutoTest::CLICK);
 
-  AutoTest::ConsequenceActionList actions2;
+  AutoTest::ConsequenceActionArray actions2;
   actions2.push_back(AutoTest::CLICK);
   actions2.push_back(AutoTest::CLICK);
 

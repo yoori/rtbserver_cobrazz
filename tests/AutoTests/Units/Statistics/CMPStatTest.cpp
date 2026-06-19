@@ -967,7 +967,7 @@ CMPStatTest::ta_scenario()
     referer_kw(fetch_string("TA/KWD/TEXT")).
     debug_time(today));
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
 
   actions.push_back(
     AutoTest::ConsequenceAction(

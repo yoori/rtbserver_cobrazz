@@ -106,7 +106,7 @@ public:
     unsigned long channel_trigger_id;
   };
 
-  typedef std::vector<TriggerMatch> TriggerMatchList;
+  typedef std::vector<TriggerMatch> TriggerMatchArray;
 
   struct PartlyHistoryMatch
   {
@@ -424,9 +424,9 @@ public:
     const UserId& temporary_user_id,
     const NumberList& history_channels,
     const NumberList& platform_channels,
-    const TriggerMatchList& page_trigger_channels,
-    const TriggerMatchList& search_trigger_channels,
-    const TriggerMatchList& url_trigger_channels,
+    const TriggerMatchArray& page_trigger_channels,
+    const TriggerMatchArray& search_trigger_channels,
+    const TriggerMatchArray& url_trigger_channels,
     const PartlyHistoryMatchList& partly_from_to_history_channels,
     const PartlyHistoryMatchList& partly_now_to_history_channels,
     const AdRequestPropsOptional& ad_request
@@ -495,17 +495,17 @@ public:
     return holder_->platform_channels;
   }
 
-  const TriggerMatchList& page_trigger_channels() const
+  const TriggerMatchArray& page_trigger_channels() const
   {
     return holder_->page_trigger_channels;
   }
 
-  const TriggerMatchList& search_trigger_channels() const
+  const TriggerMatchArray& search_trigger_channels() const
   {
     return holder_->search_trigger_channels;
   }
 
-  const TriggerMatchList& url_trigger_channels() const
+  const TriggerMatchArray& url_trigger_channels() const
   {
     return holder_->url_trigger_channels;
   }
@@ -570,9 +570,9 @@ private:
       const UserId& temporary_user_id_val,
       const NumberList& history_channels_val,
       const NumberList& platform_channels_val,
-      const TriggerMatchList& page_trigger_channels_val,
-      const TriggerMatchList& search_trigger_channels_val,
-      const TriggerMatchList& url_trigger_channels_val,
+      const TriggerMatchArray& page_trigger_channels_val,
+      const TriggerMatchArray& search_trigger_channels_val,
+      const TriggerMatchArray& url_trigger_channels_val,
       const PartlyHistoryMatchList& partly_from_to_history_channels_val,
       const PartlyHistoryMatchList& partly_now_to_history_channels_val,
       const AdRequestPropsOptional& ad_request_val,
@@ -630,9 +630,9 @@ private:
     UserId temporary_user_id;
     NumberList history_channels;
     NumberList platform_channels;
-    TriggerMatchList page_trigger_channels;
-    TriggerMatchList search_trigger_channels;
-    TriggerMatchList url_trigger_channels;
+    TriggerMatchArray page_trigger_channels;
+    TriggerMatchArray search_trigger_channels;
+    TriggerMatchArray url_trigger_channels;
     PartlyHistoryMatchList partly_from_to_history_channels;
     PartlyHistoryMatchList partly_now_to_history_channels;
     AdRequestPropsOptional ad_request;
@@ -661,8 +661,8 @@ public:
 
   typedef RequestBasicChannelsInnerData_V_2_7::TriggerMatch TriggerMatch;
 
-  typedef RequestBasicChannelsInnerData_V_2_7::TriggerMatchList
-    TriggerMatchList;
+  typedef RequestBasicChannelsInnerData_V_2_7::TriggerMatchArray
+    TriggerMatchArray;
 
   typedef RequestBasicChannelsInnerData_V_2_7::AdSlotImpression
     AdSlotImpression;
@@ -953,9 +953,9 @@ public:
     const UserId& user_id,
     const UserId& temporary_user_id,
     const NumberList& history_channels,
-    const TriggerMatchList& page_trigger_channels,
-    const TriggerMatchList& search_trigger_channels,
-    const TriggerMatchList& url_trigger_channels,
+    const TriggerMatchArray& page_trigger_channels,
+    const TriggerMatchArray& search_trigger_channels,
+    const TriggerMatchArray& url_trigger_channels,
     const AdRequestPropsOptional& ad_request
   )
   :
@@ -1009,17 +1009,17 @@ public:
     return holder_->history_channels;
   }
 
-  const TriggerMatchList& page_trigger_channels() const
+  const TriggerMatchArray& page_trigger_channels() const
   {
     return holder_->page_trigger_channels;
   }
 
-  const TriggerMatchList& search_trigger_channels() const
+  const TriggerMatchArray& search_trigger_channels() const
   {
     return holder_->search_trigger_channels;
   }
 
-  const TriggerMatchList& url_trigger_channels() const
+  const TriggerMatchArray& url_trigger_channels() const
   {
     return holder_->url_trigger_channels;
   }
@@ -1070,9 +1070,9 @@ private:
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
       const NumberList& history_channels_val,
-      const TriggerMatchList& page_trigger_channels_val,
-      const TriggerMatchList& search_trigger_channels_val,
-      const TriggerMatchList& url_trigger_channels_val,
+      const TriggerMatchArray& page_trigger_channels_val,
+      const TriggerMatchArray& search_trigger_channels_val,
+      const TriggerMatchArray& url_trigger_channels_val,
       const AdRequestPropsOptional& ad_request_val,
       unsigned long random_val
     )
@@ -1121,9 +1121,9 @@ private:
     UserId user_id;
     UserId temporary_user_id;
     NumberList history_channels;
-    TriggerMatchList page_trigger_channels;
-    TriggerMatchList search_trigger_channels;
-    TriggerMatchList url_trigger_channels;
+    TriggerMatchArray page_trigger_channels;
+    TriggerMatchArray search_trigger_channels;
+    TriggerMatchArray url_trigger_channels;
     AdRequestPropsOptional ad_request;
     unsigned long random;
 
@@ -1149,8 +1149,8 @@ public:
 
   typedef RequestBasicChannelsInnerData_V_3_1::TriggerMatch TriggerMatch;
 
-  typedef RequestBasicChannelsInnerData_V_3_1::TriggerMatchList
-    TriggerMatchList;
+  typedef RequestBasicChannelsInnerData_V_3_1::TriggerMatchArray
+    TriggerMatchArray;
 
   typedef RequestBasicChannelsInnerData_V_3_1::AdSlotImpression
     AdSlotImpression;
@@ -1499,10 +1499,10 @@ public:
 
       Data(
         const NumberList& history_channels_val,
-        const TriggerMatchList& page_trigger_channels_val,
-        const TriggerMatchList& search_trigger_channels_val,
-        const TriggerMatchList& url_trigger_channels_val,
-        const TriggerMatchList& url_keyword_trigger_channels_val
+        const TriggerMatchArray& page_trigger_channels_val,
+        const TriggerMatchArray& search_trigger_channels_val,
+        const TriggerMatchArray& url_trigger_channels_val,
+        const TriggerMatchArray& url_keyword_trigger_channels_val
         )
         : history_channels(history_channels_val),
           page_trigger_channels(page_trigger_channels_val),
@@ -1531,10 +1531,10 @@ public:
       }
 
       NumberList history_channels;
-      TriggerMatchList page_trigger_channels;
-      TriggerMatchList search_trigger_channels;
-      TriggerMatchList url_trigger_channels;
-      TriggerMatchList url_keyword_trigger_channels;
+      TriggerMatchArray page_trigger_channels;
+      TriggerMatchArray search_trigger_channels;
+      TriggerMatchArray url_trigger_channels;
+      TriggerMatchArray url_keyword_trigger_channels;
 
     protected:
       virtual
@@ -1548,10 +1548,10 @@ public:
 
     Match(
       const NumberList& history_channels,
-      const TriggerMatchList& page_trigger_channels,
-      const TriggerMatchList& search_trigger_channels,
-      const TriggerMatchList& url_trigger_channels,
-      const TriggerMatchList& url_keyword_trigger_channels
+      const TriggerMatchArray& page_trigger_channels,
+      const TriggerMatchArray& search_trigger_channels,
+      const TriggerMatchArray& url_trigger_channels,
+      const TriggerMatchArray& url_keyword_trigger_channels
       )
       : data_(new Data(
           history_channels,
@@ -1576,22 +1576,22 @@ public:
       return data_->history_channels;
     }
 
-    const TriggerMatchList& page_trigger_channels() const
+    const TriggerMatchArray& page_trigger_channels() const
     {
       return data_->page_trigger_channels;
     }
 
-    const TriggerMatchList& search_trigger_channels() const
+    const TriggerMatchArray& search_trigger_channels() const
     {
       return data_->search_trigger_channels;
     }
 
-    const TriggerMatchList& url_trigger_channels() const
+    const TriggerMatchArray& url_trigger_channels() const
     {
       return data_->url_trigger_channels;
     }
 
-    const TriggerMatchList& url_keyword_trigger_channels() const
+    const TriggerMatchArray& url_keyword_trigger_channels() const
     {
       return data_->url_keyword_trigger_channels;
     }
@@ -1645,7 +1645,7 @@ public:
         data.page_trigger_channels(),
         data.search_trigger_channels(),
         data.url_trigger_channels(),
-        TriggerMatchList(), // url_keyword_trigger_channels
+        TriggerMatchArray(), // url_keyword_trigger_channels
         data.ad_request(),
         Generics::safe_rand()
       )
@@ -1666,7 +1666,7 @@ public:
         data.page_trigger_channels(),
         data.search_trigger_channels(),
         data.url_trigger_channels(),
-        TriggerMatchList(), // url_keyword_trigger_channels
+        TriggerMatchArray(), // url_keyword_trigger_channels
         data.ad_request(),
         Generics::safe_rand()
       )
@@ -1773,10 +1773,10 @@ private:
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
       const NumberList& history_channels_val,
-      const TriggerMatchList& page_trigger_channels_val,
-      const TriggerMatchList& search_trigger_channels_val,
-      const TriggerMatchList& url_trigger_channels_val,
-      const TriggerMatchList& url_keyword_trigger_channels_val,
+      const TriggerMatchArray& page_trigger_channels_val,
+      const TriggerMatchArray& search_trigger_channels_val,
+      const TriggerMatchArray& url_trigger_channels_val,
+      const TriggerMatchArray& url_keyword_trigger_channels_val,
       const AdRequestPropsOptional& ad_request_val,
       unsigned long random_val
     )
@@ -1801,10 +1801,10 @@ private:
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
       const NumberList& history_channels_val,
-      const TriggerMatchList& page_trigger_channels_val,
-      const TriggerMatchList& search_trigger_channels_val,
-      const TriggerMatchList& url_trigger_channels_val,
-      const TriggerMatchList& url_keyword_trigger_channels_val,
+      const TriggerMatchArray& page_trigger_channels_val,
+      const TriggerMatchArray& search_trigger_channels_val,
+      const TriggerMatchArray& url_trigger_channels_val,
+      const TriggerMatchArray& url_keyword_trigger_channels_val,
       const RequestBasicChannelsInnerData_V_2_7::AdRequestPropsOptional&
         ad_request_val,
       unsigned long random_val
@@ -1830,10 +1830,10 @@ private:
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
       const NumberList& history_channels_val,
-      const TriggerMatchList& page_trigger_channels_val,
-      const TriggerMatchList& search_trigger_channels_val,
-      const TriggerMatchList& url_trigger_channels_val,
-      const TriggerMatchList& url_keyword_trigger_channels_val,
+      const TriggerMatchArray& page_trigger_channels_val,
+      const TriggerMatchArray& search_trigger_channels_val,
+      const TriggerMatchArray& url_trigger_channels_val,
+      const TriggerMatchArray& url_keyword_trigger_channels_val,
       const RequestBasicChannelsInnerData_V_3_1::AdRequestPropsOptional&
         ad_request_val,
       unsigned long random_val
@@ -1905,8 +1905,8 @@ public:
 
   typedef RequestBasicChannelsInnerData_V_3_3::TriggerMatch TriggerMatch;
 
-  typedef RequestBasicChannelsInnerData_V_3_3::TriggerMatchList
-    TriggerMatchList;
+  typedef RequestBasicChannelsInnerData_V_3_3::TriggerMatchArray
+    TriggerMatchArray;
 
   typedef RequestBasicChannelsInnerData_V_3_3::AdSlotImpression
     AdSlotImpression;
@@ -2294,10 +2294,10 @@ public:
 
       Data(
         NumberArray history_channels_val,
-        TriggerMatchList page_trigger_channels_val,
-        TriggerMatchList search_trigger_channels_val,
-        TriggerMatchList url_trigger_channels_val,
-        TriggerMatchList url_keyword_trigger_channels_val
+        TriggerMatchArray page_trigger_channels_val,
+        TriggerMatchArray search_trigger_channels_val,
+        TriggerMatchArray url_trigger_channels_val,
+        TriggerMatchArray url_keyword_trigger_channels_val
         )
         : history_channels(std::move(history_channels_val)),
           page_trigger_channels(std::move(page_trigger_channels_val)),
@@ -2326,10 +2326,10 @@ public:
       }
 
       NumberArray history_channels;
-      TriggerMatchList page_trigger_channels;
-      TriggerMatchList search_trigger_channels;
-      TriggerMatchList url_trigger_channels;
-      TriggerMatchList url_keyword_trigger_channels;
+      TriggerMatchArray page_trigger_channels;
+      TriggerMatchArray search_trigger_channels;
+      TriggerMatchArray url_trigger_channels;
+      TriggerMatchArray url_keyword_trigger_channels;
 
     protected:
       virtual
@@ -2343,10 +2343,10 @@ public:
 
     Match(
       NumberArray history_channels,
-      TriggerMatchList page_trigger_channels,
-      TriggerMatchList search_trigger_channels,
-      TriggerMatchList url_trigger_channels,
-      TriggerMatchList url_keyword_trigger_channels
+      TriggerMatchArray page_trigger_channels,
+      TriggerMatchArray search_trigger_channels,
+      TriggerMatchArray url_trigger_channels,
+      TriggerMatchArray url_keyword_trigger_channels
       )
       : data_(
           new Data(
@@ -2384,22 +2384,22 @@ public:
       return data_->history_channels;
     }
 
-    const TriggerMatchList& page_trigger_channels() const
+    const TriggerMatchArray& page_trigger_channels() const
     {
       return data_->page_trigger_channels;
     }
 
-    const TriggerMatchList& search_trigger_channels() const
+    const TriggerMatchArray& search_trigger_channels() const
     {
       return data_->search_trigger_channels;
     }
 
-    const TriggerMatchList& url_trigger_channels() const
+    const TriggerMatchArray& url_trigger_channels() const
     {
       return data_->url_trigger_channels;
     }
 
-    const TriggerMatchList& url_keyword_trigger_channels() const
+    const TriggerMatchArray& url_keyword_trigger_channels() const
     {
       return data_->url_keyword_trigger_channels;
     }
@@ -2470,7 +2470,7 @@ public:
         data.page_trigger_channels(),
         data.search_trigger_channels(),
         data.url_trigger_channels(),
-        TriggerMatchList(), // url_keyword_trigger_channels
+        TriggerMatchArray(), // url_keyword_trigger_channels
         data.ad_request(),
         Generics::safe_rand()
       )
@@ -2584,10 +2584,10 @@ private:
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
       const NumberArray& history_channels_val,
-      const TriggerMatchList& page_trigger_channels_val,
-      const TriggerMatchList& search_trigger_channels_val,
-      const TriggerMatchList& url_trigger_channels_val,
-      const TriggerMatchList& url_keyword_trigger_channels_val,
+      const TriggerMatchArray& page_trigger_channels_val,
+      const TriggerMatchArray& search_trigger_channels_val,
+      const TriggerMatchArray& url_trigger_channels_val,
+      const TriggerMatchArray& url_keyword_trigger_channels_val,
       const AdRequestPropsOptional_ANY& ad_request_val,
       unsigned long random_val
     )

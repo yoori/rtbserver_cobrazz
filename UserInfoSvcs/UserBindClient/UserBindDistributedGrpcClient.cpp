@@ -35,7 +35,7 @@ namespace AdServer::UserInfoSvcs
     public UserBindServerGrpcAsyncClient
   {
   public:
-    using ControllerRefList = UserBindControllerRefs;
+    using ControllerRefArray = UserBindControllerRefs;
     using ServerClient = UserBindServerGrpcAsyncBatchingClient;
     using ControllerGrpc =
       adserver::user_info_svcs::user_bind_controller::UserBindControllerGrpc;
@@ -68,7 +68,7 @@ namespace AdServer::UserInfoSvcs
 
     Distributor(
       Logging::Logger* logger,
-      ControllerRefList controller_refs,
+      ControllerRefArray controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
@@ -242,7 +242,7 @@ namespace AdServer::UserInfoSvcs
         AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
     }
 
-    std::optional<Pool::EndpointChunksList> resolve_partition_(
+    std::optional<Pool::EndpointChunksArray> resolve_partition_(
       ControllerClient& controller_client)
     {
       grpc::ClientContext context;
@@ -268,7 +268,7 @@ namespace AdServer::UserInfoSvcs
         throw Exception(ostr.str());
       }
 
-      Pool::EndpointChunksList refs;
+      Pool::EndpointChunksArray refs;
       refs.reserve(response.user_bind_servers_size());
       for (const auto& server : response.user_bind_servers())
       {

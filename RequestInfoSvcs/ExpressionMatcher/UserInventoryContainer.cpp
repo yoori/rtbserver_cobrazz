@@ -298,7 +298,7 @@ namespace RequestInfoSvcs
     ChannelInventoryDayWriter::display_impop_no_imp_channel_list_Container&
       res_impop_no_imp_channel_list,
     InventoryActionProcessor::InventoryInfo::ChannelImpAppearInfo& appears,
-    const ChannelIdVector& triggered_channels,
+    const ChannelIdArray& triggered_channels,
     const ChannelIdSet& impression_channels,
     bool impression)
     /*throw(PlainTypes::CorruptedStruct)*/
@@ -354,7 +354,7 @@ namespace RequestInfoSvcs
         //ChannelInventoryDayWriter::display_imp_channel_list_Container::
         //  const_iterator imp_channel_list_it = imp_channel_list.begin();
 
-        ChannelIdVector imp_appear_channels;
+        ChannelIdArray imp_appear_channels;
         imp_appear_channels.reserve(impression_channels.size());
 
         std::set_difference(
@@ -398,7 +398,7 @@ namespace RequestInfoSvcs
         new_imp_other_channel_list.reserve(
           imp_other_channel_list.size() + triggered_channels.size());
 
-        ChannelIdVector impression_other_channels;
+        ChannelIdArray impression_other_channels;
         impression_other_channels.reserve(triggered_channels.size());
 
         std::set_difference(
@@ -408,7 +408,7 @@ namespace RequestInfoSvcs
           impression_channels.end(),
           std::back_inserter(impression_other_channels));
 
-        ChannelIdVector imp_other_appear_channels;
+        ChannelIdArray imp_other_appear_channels;
         imp_other_appear_channels.reserve(impression_other_channels.size());
 
         std::set_difference(
@@ -448,7 +448,7 @@ namespace RequestInfoSvcs
       ChannelInventoryDayWriter::display_impop_no_imp_channel_list_Container
         new_impop_no_imp_channel_list;
 
-      ChannelIdVector impop_no_imp_appear_channels;
+      ChannelIdArray impop_no_imp_appear_channels;
       impop_no_imp_appear_channels.reserve(triggered_channels.size());
 
       std::set_difference(
@@ -560,8 +560,8 @@ namespace RequestInfoSvcs
       }
     }
 
-    ChannelIdVector triggered_expr_holder;
-    const ChannelIdVector& triggered_expression_channels =
+    ChannelIdArray triggered_expr_holder;
+    const ChannelIdArray& triggered_expression_channels =
       inv_request_info.triggered_expression_channels.present() ?
       *inv_request_info.triggered_expression_channels : triggered_expr_holder;
 
@@ -1594,7 +1594,7 @@ namespace RequestInfoSvcs
             profile_writer,
             processing_date);
 
-          ChannelIdVector total_appear_expression_channels;
+          ChannelIdArray total_appear_expression_channels;
 
           std::set_difference(
             inv_daily_match_info.triggered_expression_channels.begin(),
@@ -1681,8 +1681,8 @@ namespace RequestInfoSvcs
     inv_info.sizes = request_info.sizes;
     inv_info.auction_type = request_info.auction_type;
 
-    ChannelIdVector triggered_expr_holder;
-    const ChannelIdVector& triggered_expression_channels =
+    ChannelIdArray triggered_expr_holder;
+    const ChannelIdArray& triggered_expression_channels =
       request_info.triggered_expression_channels.present() ?
       *request_info.triggered_expression_channels : triggered_expr_holder;
 

@@ -1238,12 +1238,12 @@ namespace AdServer
         bool operator==(const GeoIPTarget& right) const noexcept;
       };
 
-      typedef std::vector<GeoIPTarget> GeoIPTargetList;
+      typedef std::vector<GeoIPTarget> GeoIPTargetArray;
 
       bool operator==(const GeoChannelDef& right) const noexcept;
 
       std::string country;
-      GeoIPTargetList geoip_targets;
+      GeoIPTargetArray geoip_targets;
 
       Generics::Time timestamp;
 

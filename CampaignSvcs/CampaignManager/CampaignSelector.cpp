@@ -445,12 +445,12 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const ChannelIdHashSet& matched_channels,
-      const CampaignIndex::CampaignCellPtrList& campaign_list,
+      const CampaignIndex::CampaignCellPtrArray& campaign_list,
       ConstCampaignPtrList& filtered_campaigns)
       const
       noexcept
     {
-      for(CampaignIndex::CampaignCellPtrList::const_iterator
+      for(CampaignIndex::CampaignCellPtrArray::const_iterator
             cit = campaign_list.begin();
           cit != campaign_list.end(); ++cit)
       {
@@ -945,7 +945,7 @@ namespace AdServer
       const Tag* tag,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
-      const CampaignIndex::CampaignCellPtrList& lost_campaigns)
+      const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
       const
       noexcept
     {
@@ -1072,8 +1072,8 @@ namespace AdServer
       const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
       const CampaignKeywordMap& matched_keywords,
       const ChannelIdHashSet& matched_channels,
-      const CampaignIndex::CampaignCellPtrList& keyword_campaigns,
-      const CampaignIndex::CampaignCellPtrList& nonkeyword_campaigns)
+      const CampaignIndex::CampaignCellPtrArray& keyword_campaigns,
+      const CampaignIndex::CampaignCellPtrArray& nonkeyword_campaigns)
       const
       noexcept
     {
@@ -1234,7 +1234,7 @@ namespace AdServer
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
-      const CampaignIndex::CampaignCellPtrList& lost_campaigns)
+      const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
       const
       noexcept
     {
@@ -2230,14 +2230,14 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const ChannelIdHashSet& matched_channels,
-      const CampaignIndex::CampaignCellPtrList& campaigns,
+      const CampaignIndex::CampaignCellPtrArray& campaigns,
       const CampaignKeywordMap& campaign_keywords,
       CampaignKeywordMap& filtered_campaign_keywords)
       const
       noexcept
     {
       /* intersect campaigns & campaign_keywords sets */
-      CampaignIndex::CampaignCellPtrList::const_iterator
+      CampaignIndex::CampaignCellPtrArray::const_iterator
         cmp_it = campaigns.begin();
       CampaignKeywordMap::const_iterator kw_it = campaign_keywords.begin();
 
@@ -2789,8 +2789,8 @@ namespace AdServer
 
       CampaignIndex::CampaignSelectionCellPtrList wg_display_check_campaigns;
       CampaignIndex::CampaignSelectionCellPtrList display_check_campaigns;
-      CampaignIndex::CampaignCellPtrList keyword_check_campaigns;
-      CampaignIndex::CampaignCellPtrList text_check_campaigns;
+      CampaignIndex::CampaignCellPtrArray keyword_check_campaigns;
+      CampaignIndex::CampaignCellPtrArray text_check_campaigns;
 
       campaign_selection_index_->get_random_campaigns(
         key,
@@ -3054,10 +3054,10 @@ namespace AdServer
 
       CampaignIndex::CampaignSelectionCellPtrList wg_display_check_campaigns;
       CampaignIndex::CampaignSelectionCellPtrList display_check_campaigns;
-      CampaignIndex::CampaignCellPtrList keyword_check_campaigns;
-      CampaignIndex::CampaignCellPtrList text_check_campaigns;
-      CampaignIndex::CampaignCellPtrList lost_wg_campaigns;
-      CampaignIndex::CampaignCellPtrList lost_campaigns;
+      CampaignIndex::CampaignCellPtrArray keyword_check_campaigns;
+      CampaignIndex::CampaignCellPtrArray text_check_campaigns;
+      CampaignIndex::CampaignCellPtrArray lost_wg_campaigns;
+      CampaignIndex::CampaignCellPtrArray lost_campaigns;
       CampaignIndex::CampaignSelectionCellPtrList get_all_display_lost_campaigns;
 
       campaign_selection_index_->get_campaigns(
@@ -3510,10 +3510,10 @@ namespace AdServer
       // select display campaign (WG)
       CampaignIndex::CampaignSelectionCellPtrList wg_display_check_campaigns;
       CampaignIndex::CampaignSelectionCellPtrList display_check_campaigns;
-      CampaignIndex::CampaignCellPtrList keyword_check_campaigns;
-      CampaignIndex::CampaignCellPtrList text_check_campaigns;
-      CampaignIndex::CampaignCellPtrList lost_wg_campaigns;
-      CampaignIndex::CampaignCellPtrList lost_campaigns;
+      CampaignIndex::CampaignCellPtrArray keyword_check_campaigns;
+      CampaignIndex::CampaignCellPtrArray text_check_campaigns;
+      CampaignIndex::CampaignCellPtrArray lost_wg_campaigns;
+      CampaignIndex::CampaignCellPtrArray lost_campaigns;
       LostAuction* lost_auction = (collect_lost ? &select_result.lost_auction : 0);
 
       campaign_selection_index_->get_campaigns(

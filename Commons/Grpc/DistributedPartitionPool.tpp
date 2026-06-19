@@ -93,7 +93,7 @@ namespace AdServer::Grpc
   DistributedPartitionPool<ClientType, ControllerClientType>::DistributedPartitionPool(
     std::string name,
     std::string log_aspect,
-    ControllerRefList controller_refs,
+    ControllerRefArray controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
@@ -428,7 +428,7 @@ namespace AdServer::Grpc
       return;
     }
 
-    EndpointChunksList refs;
+    EndpointChunksArray refs;
     std::optional<typename ControllerPool::Ref> controller_ref;
     try
     {
@@ -928,9 +928,9 @@ namespace AdServer::Grpc
   }
 
   template<typename ClientType, typename ControllerClientType>
-  typename DistributedPartitionPool<ClientType, ControllerClientType>::ControllerRefList
+  typename DistributedPartitionPool<ClientType, ControllerClientType>::ControllerRefArray
   DistributedPartitionPool<ClientType, ControllerClientType>::validate_controller_refs_(
-    ControllerRefList controller_refs,
+    ControllerRefArray controller_refs,
     const std::string& name)
   {
     if (controller_refs.empty())

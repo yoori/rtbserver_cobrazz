@@ -104,11 +104,12 @@ namespace AdServer::UserInfoSvcs
       out << "]\n";
     }
 
+    template<typename Container>
     void
     print_geo_data_sequence(
       std::ostream& out,
       const char* name,
-      const std::vector<UserInfoManagerCore::GeoData>& values)
+      const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -126,11 +127,12 @@ namespace AdServer::UserInfoSvcs
       out << "]\n";
     }
 
+    template<typename Container>
     void
     print_channel_weight_sequence(
       std::ostream& out,
       const char* name,
-      const std::vector<UserInfoManagerCore::ChannelWeight>& values)
+      const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -146,11 +148,12 @@ namespace AdServer::UserInfoSvcs
       out << "]\n";
     }
 
+    template<typename Container>
     void
     print_seq_order_sequence(
       std::ostream& out,
       const char* name,
-      const std::vector<UserInfoManagerCore::SeqOrder>& values)
+      const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -168,11 +171,12 @@ namespace AdServer::UserInfoSvcs
       out << "]\n";
     }
 
+    template<typename Container>
     void
     print_campaign_freq_sequence(
       std::ostream& out,
       const char* name,
-      const std::vector<UserInfoManagerCore::CampaignFreq>& values)
+      const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -279,10 +283,10 @@ namespace AdServer::UserInfoSvcs
 
   UserInfoManagerCore::~UserInfoManagerCore() noexcept = default;
 
-  UserInfoManagerCore::ByteVector
+  UserInfoManagerCore::ByteArray
   convert_mem_buf(const Generics::MemBuf& mem_buf)
   {
-    return UserInfoManagerCore::ByteVector(
+    return UserInfoManagerCore::ByteArray(
       static_cast<const unsigned char*>(mem_buf.data()),
       static_cast<const unsigned char*>(mem_buf.data()) + mem_buf.size());
   }
@@ -1176,7 +1180,8 @@ namespace AdServer::UserInfoSvcs
 
       UserInfoContainer::UserAppearance user_app;
 
-      AdServer::UserInfoSvcs::ChannelMatchMap result_channels;
+      AdServer::UserInfoSvcs::ChannelMatchMap result_channels(
+        match_result.channels.get_allocator().resource());
 
       ColoUserId colo_user_id;
 
@@ -1286,6 +1291,7 @@ namespace AdServer::UserInfoSvcs
       }
 
       /* generate output params */
+      match_result.channels.reserve(result_channels.size());
       for (const auto& channel : result_channels)
       {
         match_result.channels.push_back(

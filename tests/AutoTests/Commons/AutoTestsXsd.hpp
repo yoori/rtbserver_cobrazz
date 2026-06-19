@@ -72,8 +72,8 @@ class GlobalConfig
       bool remote_);
   };
 
-  typedef std::vector<Service> ServiceList;
-  typedef std::map<ServiceTypeEnum, ServiceList> ServiceDictionary;
+  typedef std::vector<Service> ServiceArray;
+  typedef std::map<ServiceTypeEnum, ServiceArray> ServiceDictionary;
   typedef std::map<ClusterTypeEnum, ServiceDictionary> ClusterDictionary;
   typedef std::unique_ptr<class xsd::AdServer::Configuration::GeneralParamsType> ParamsPtr;
 
@@ -103,7 +103,7 @@ class GlobalConfig
    * @param service.
    * @return services list.
    */
-  const ServiceList& get_services(
+  const ServiceArray& get_services(
     ClusterTypeEnum cluster,
     ServiceTypeEnum service) const
     /*throw(eh::Exception)*/;
@@ -134,7 +134,7 @@ private:
 private:
   ParamsPtr params_;
   ClusterDictionary cluster_services_;
-  static const ServiceList EMPTY_;
+  static const ServiceArray EMPTY_;
 };
 
 /**

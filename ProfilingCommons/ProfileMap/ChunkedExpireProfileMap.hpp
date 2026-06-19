@@ -39,7 +39,7 @@ namespace ProfilingCommons
     typedef std::map<unsigned long, ReferenceCounting::SmartPtr<ProfileMapType> >
       ChunkIdToProfileMap;
 
-    typedef std::vector<BaseProfileMap_var> ChunkList;
+    typedef std::vector<BaseProfileMap_var> ChunkArray;
 
     DECLARE_EXCEPTION(Exception, typename ProfileMap<KeyType>::Exception);
     DECLARE_EXCEPTION(ChunkNotFound, Exception);
@@ -154,7 +154,7 @@ namespace ProfilingCommons
     BaseProfileMap_var get_chunk(unsigned long chunk_id) const
       /*throw(ChunkNotFound)*/;
 
-    const ChunkList& chunks() const noexcept;
+    const ChunkArray& chunks() const noexcept;
 
   protected:
     virtual ~ChunkedProfileMap() noexcept {}
@@ -166,7 +166,7 @@ namespace ProfilingCommons
     const KeyHashType key_hash_;
     unsigned long common_chunks_number_;
     ChunkIdSet chunk_ids_;
-    ChunkList chunks_;
+    ChunkArray chunks_;
   };
 }
 }

@@ -128,7 +128,7 @@ operator>>(
 FixedBufStream<TabCategory>&
 operator>>(
   FixedBufStream<TabCategory>& is,
-  RequestBasicChannelsInnerData::TriggerMatchList& values
+  RequestBasicChannelsInnerData::TriggerMatchArray& values
 )
 {
   const String::SubString token = is.read_token();
@@ -140,7 +140,7 @@ operator>>(
       return is;
     }
 
-    RequestBasicChannelsInnerData::TriggerMatchList container;
+    RequestBasicChannelsInnerData::TriggerMatchArray container;
     FixedBufStream<CommaCategory> list_stream(token);
     while (true)
     {
@@ -500,7 +500,7 @@ operator<<(
 std::ostream&
 operator<<(
   std::ostream& os,
-  const RequestBasicChannelsInnerData::TriggerMatchList& trigger_matches
+  const RequestBasicChannelsInnerData::TriggerMatchArray& trigger_matches
 )
 {
   if (!trigger_matches.empty())
@@ -518,7 +518,7 @@ operator<<(
 BufferWriter&
 operator<<(
   BufferWriter& out,
-  const RequestBasicChannelsInnerData::TriggerMatchList& trigger_matches
+  const RequestBasicChannelsInnerData::TriggerMatchArray& trigger_matches
 )
 {
   return write_sequence_(out, trigger_matches, ',');

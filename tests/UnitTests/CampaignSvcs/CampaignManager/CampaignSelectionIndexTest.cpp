@@ -246,8 +246,8 @@ namespace Test1
 
     CampaignIndex::CampaignSelectionCellPtrList wg_ch_cmps;
     CampaignIndex::CampaignSelectionCellPtrList ch_cmps;
-    CampaignIndex::CampaignCellPtrList text_cmps;
-    CampaignIndex::CampaignCellPtrList kw_cmps;
+    CampaignIndex::CampaignCellPtrArray text_cmps;
+    CampaignIndex::CampaignCellPtrArray kw_cmps;
 
     campaign_index->get_campaigns(
       key,

@@ -595,14 +595,14 @@ namespace AdServer::Bidding
     // ADSC-10918 Native ads
 
     typedef AdServer::Bidding::JsonAdSlotProcessingContext::Native Native;
-    typedef Native::DataList NativeDataList;
+    typedef Native::DataArray NativeDataArray;
     typedef Native::Data NativeData;
-    typedef Native::ImageList NativeImageList;
+    typedef Native::ImageArray NativeImageArray;
     typedef Native::Image NativeImage;
     typedef Native::Video NativeVideo;
 
     bool find_main_image(
-      const NativeImageList& image_assets,
+      const NativeImageArray& image_assets,
       NativeImage& image)
     {
       auto image_it = std::find_if(

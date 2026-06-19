@@ -3,8 +3,10 @@
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <atomic>
+#include <memory_resource>
 #include <set>
 #include <string>
 #include <utility>
@@ -176,13 +178,13 @@ namespace AdServer::UserInfoSvcs
       return seq_to_bytes_(CorbaAlgs::pack_time(src));
     }
 
-    UserInfoManagerCore::ByteVector bytes_to_vector_(const std::string& src)
+    UserInfoManagerCore::ByteArray bytes_to_vector_(const std::string& src)
     {
-      return UserInfoManagerCore::ByteVector(src.begin(), src.end());
+      return UserInfoManagerCore::ByteArray(src.begin(), src.end());
     }
 
     std::string vector_to_bytes_(
-      const UserInfoManagerCore::ByteVector& src)
+      const UserInfoManagerCore::ByteArray& src)
     {
       return std::string(src.begin(), src.end());
     }
@@ -247,14 +249,31 @@ namespace AdServer::UserInfoSvcs
     }
 
     template<typename Repeated>
-    ChannelIdVector
-    unpack_channel_ids_(const Repeated& src)
+    ChannelIdArray
+    unpack_channel_ids_(
+      const Repeated& src,
+      std::pmr::memory_resource* resource)
     {
-      ChannelIdVector result;
+      ChannelIdArray result(resource);
       result.reserve(src.size());
       for(int i = 0; i < src.size(); ++i)
       {
         result.push_back(src.Get(i).channel_id());
+      }
+      return result;
+    }
+
+    template<typename Repeated>
+    ChannelIdArray
+    unpack_channel_id_values_(
+      const Repeated& src,
+      std::pmr::memory_resource* resource)
+    {
+      ChannelIdArray result(resource);
+      result.reserve(src.size());
+      for(int i = 0; i < src.size(); ++i)
+      {
+        result.push_back(src.Get(i));
       }
       return result;
     }
@@ -286,19 +305,20 @@ namespace AdServer::UserInfoSvcs
 
     UserInfoManagerCore::MatchParams
     unpack_match_params_(
-      const adserver::user_info_svcs::user_info_manager::MatchParams& src)
+      const adserver::user_info_svcs::user_info_manager::MatchParams& src,
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
     {
-      UserInfoManagerCore::MatchParams dst;
+      UserInfoManagerCore::MatchParams dst(resource);
       dst.matched_channels.page_channels =
-        unpack_channel_ids_(src.page_channel_ids());
+        unpack_channel_ids_(src.page_channel_ids(), resource);
       dst.matched_channels.search_channels =
-        unpack_channel_ids_(src.search_channel_ids());
+        unpack_channel_ids_(src.search_channel_ids(), resource);
       dst.matched_channels.url_channels =
-        unpack_channel_ids_(src.url_channel_ids());
+        unpack_channel_ids_(src.url_channel_ids(), resource);
       dst.matched_channels.url_keyword_channels =
-        unpack_channel_ids_(src.url_keyword_channel_ids());
+        unpack_channel_ids_(src.url_keyword_channel_ids(), resource);
       dst.matched_channels.persistent_channels =
-        unpack_ids_(src.persistent_channel_ids());
+        unpack_channel_id_values_(src.persistent_channel_ids(), resource);
       dst.cohort = src.cohort();
       dst.cohort2 = src.cohort2();
       dst.publishers_optin_timeout =
@@ -472,19 +492,79 @@ namespace AdServer::UserInfoSvcs
     {
       namespace pb = adserver::user_info_svcs::user_info_manager;
       return std::make_tuple(
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::GetSourceRequest, pb::GetSourceResponse, get_source, co_get_source),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::GetMasterStampRequest, pb::GetMasterStampResponse, get_master_stamp, co_get_master_stamp),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::GetUserProfileRequest, pb::GetUserProfileResponse, get_user_profile, co_get_user_profile, &ServiceImpl::hash_get_user_profile),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::MatchRequest, pb::MatchResponse, match, co_match, &ServiceImpl::hash_match),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::UpdateUserFreqCapsRequest, pb::UpdateUserFreqCapsResponse, update_user_freq_caps, co_update_user_freq_caps, &ServiceImpl::hash_update_user_freq_caps),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::ConfirmUserFreqCapsRequest, pb::ConfirmUserFreqCapsResponse, confirm_user_freq_caps, co_confirm_user_freq_caps, &ServiceImpl::hash_confirm_user_freq_caps),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::FraudUserRequest, pb::FraudUserResponse, fraud_user, co_fraud_user, &ServiceImpl::hash_fraud_user),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::RemoveUserProfileRequest, pb::RemoveUserProfileResponse, remove_user_profile, co_remove_user_profile, &ServiceImpl::hash_remove_user_profile),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::MergeRequest, pb::MergeResponse, merge, co_merge, &ServiceImpl::hash_merge),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::ConsiderPublishersOptinRequest, pb::ConsiderPublishersOptinResponse, consider_publishers_optin, co_consider_publishers_optin, &ServiceImpl::hash_consider_publishers_optin),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::UimReadyRequest, pb::UimReadyResponse, uim_ready, co_uim_ready),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::GetProgressRequest, pb::GetProgressResponse, get_progress, co_get_progress),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::ClearExpiredRequest, pb::ClearExpiredResponse, clear_expired, co_clear_expired));
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::GetSourceRequest,
+          pb::GetSourceResponse,
+          get_source,
+          co_get_source),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::GetMasterStampRequest,
+          pb::GetMasterStampResponse,
+          get_master_stamp,
+          co_get_master_stamp),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::GetUserProfileRequest,
+          pb::GetUserProfileResponse,
+          get_user_profile,
+          co_get_user_profile,
+          &ServiceImpl::hash_get_user_profile),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::MatchRequest,
+          pb::MatchResponse,
+          match,
+          co_match,
+          &ServiceImpl::hash_match),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::UpdateUserFreqCapsRequest,
+          pb::UpdateUserFreqCapsResponse,
+          update_user_freq_caps,
+          co_update_user_freq_caps,
+          &ServiceImpl::hash_update_user_freq_caps),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::ConfirmUserFreqCapsRequest,
+          pb::ConfirmUserFreqCapsResponse,
+          confirm_user_freq_caps,
+          co_confirm_user_freq_caps,
+          &ServiceImpl::hash_confirm_user_freq_caps),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::FraudUserRequest,
+          pb::FraudUserResponse,
+          fraud_user,
+          co_fraud_user,
+          &ServiceImpl::hash_fraud_user),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::RemoveUserProfileRequest,
+          pb::RemoveUserProfileResponse,
+          remove_user_profile,
+          co_remove_user_profile,
+          &ServiceImpl::hash_remove_user_profile),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::MergeRequest,
+          pb::MergeResponse,
+          merge,
+          co_merge,
+          &ServiceImpl::hash_merge),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::ConsiderPublishersOptinRequest,
+          pb::ConsiderPublishersOptinResponse,
+          consider_publishers_optin,
+          co_consider_publishers_optin,
+          &ServiceImpl::hash_consider_publishers_optin),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::UimReadyRequest,
+          pb::UimReadyResponse,
+          uim_ready,
+          co_uim_ready),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::GetProgressRequest,
+          pb::GetProgressResponse,
+          get_progress,
+          co_get_progress),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+          pb::ClearExpiredRequest,
+          pb::ClearExpiredResponse,
+          clear_expired,
+          co_clear_expired));
     }
 
     AdServer::Grpc::GrpcCoroutine co_get_source(
@@ -640,7 +720,7 @@ namespace AdServer::UserInfoSvcs
         response.set_description(user_info_manager_->get_progress());
       }
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       response.set_ready(false);
       response.set_description(ex.what());
@@ -666,15 +746,15 @@ namespace AdServer::UserInfoSvcs
       response.mutable_chunks()->Add(chunks.begin(), chunks.end());
       response.set_chunks_number(chunks_number);
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const eh::Exception& ex)
+      co_return;
+    }
+    catch (const eh::Exception& ex)
     {
       result_status = AdServer::Grpc::error_status(
         grpc::StatusCode::INTERNAL,
         ex.what());
-    co_return;
-  }
+      co_return;
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -692,10 +772,16 @@ namespace AdServer::UserInfoSvcs
     {
       response.set_master_stamp(pack_time_(user_info_manager_->get_master_stamp()));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -721,11 +807,20 @@ namespace AdServer::UserInfoSvcs
       response.set_found(found);
       pack_user_profiles_(user_profile, *response.mutable_user_profile());
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -745,19 +840,36 @@ namespace AdServer::UserInfoSvcs
     response.set_hostname(service_hostname_());
     try
     {
-      UserInfoManagerCore::MatchResult match_result;
+      std::array<std::byte, 8 * 1024> initial_buffer;
+      std::pmr::monotonic_buffer_resource request_resource(
+        initial_buffer.data(),
+        initial_buffer.size());
+      const auto user_info = unpack_user_info_(request.user_info());
+      const auto match_params = unpack_match_params_(
+        request.match_params(),
+        &request_resource);
+      UserInfoManagerCore::MatchResult match_result(&request_resource);
       const bool matched = co_await user_info_manager_->co_match(
-        unpack_user_info_(request.user_info()),
-        unpack_match_params_(request.match_params()),
+        user_info,
+        match_params,
         match_result);
       response.set_matched(matched);
       convert_(match_result, *response.mutable_match_result());
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -788,11 +900,20 @@ namespace AdServer::UserInfoSvcs
         unpack_ids_(request.campaign_ids()),
         unpack_ids_(request.uc_campaign_ids()));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -818,11 +939,20 @@ namespace AdServer::UserInfoSvcs
         unpack_request_id_(request.request_id()),
         unpack_id_set_(request.exclude_pubpixel_accounts()));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -845,11 +975,20 @@ namespace AdServer::UserInfoSvcs
         unpack_user_id_(request.user_id()),
         unpack_time_(request.time())));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -871,11 +1010,20 @@ namespace AdServer::UserInfoSvcs
       response.set_removed(co_await user_info_manager_->co_remove_user_profile(
         unpack_user_id_(request.user_id())));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -894,22 +1042,39 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->merge_in_progress);
     try
     {
+      std::array<std::byte, 8 * 1024> initial_buffer;
+      std::pmr::monotonic_buffer_resource request_resource(
+        initial_buffer.data(),
+        initial_buffer.size());
+      const auto user_info = unpack_user_info_(request.user_info());
+      const auto match_params = unpack_match_params_(
+        request.match_params(),
+        &request_resource);
       bool merge_success = false;
       Generics::Time last_request;
       response.set_result(co_await user_info_manager_->co_merge(
-        unpack_user_info_(request.user_info()),
-        unpack_match_params_(request.match_params()),
+        user_info,
+        match_params,
         unpack_user_profiles_(request.merge_user_profile()),
         merge_success,
         last_request));
       response.set_merge_success(merge_success);
       response.set_last_request(pack_time_(last_request));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -933,11 +1098,20 @@ namespace AdServer::UserInfoSvcs
         unpack_id_set_(request.exclude_pubpixel_accounts()),
         unpack_time_(request.now()));
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
+      co_return;
+    }
+    catch (const UserInfoManagerCore::NotReady& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
+    {
+      result_status = to_status_(ex);
+    }
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -988,13 +1162,13 @@ namespace AdServer::UserInfoSvcs
         unpack_time_(request.cleanup_time()),
         request.portion());
       result_status = grpc::Status::OK;
-    co_return;
-  }
-    catch(const UserInfoManagerCore::Exception& ex)
+      co_return;
+    }
+    catch (const UserInfoManagerCore::Exception& ex)
     {
       result_status = to_status_(ex);
-    co_return;
-  }
+      co_return;
+    }
   }
 
   std::size_t

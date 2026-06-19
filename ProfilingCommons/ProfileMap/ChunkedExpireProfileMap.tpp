@@ -282,7 +282,7 @@ namespace ProfilingCommons
     {
       std::shared_ptr<std::atomic_size_t> remaining =
         std::make_shared<std::atomic_size_t>(0);
-      for(typename ChunkList::const_iterator chunk_it = chunks_.begin();
+      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
@@ -300,7 +300,7 @@ namespace ProfilingCommons
 
       auto shared_complete = std::make_shared<typename AsyncProfileMap<KeyType>::CompleteCallback>(
         std::move(complete));
-      for(typename ChunkList::const_iterator chunk_it = chunks_.begin();
+      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
@@ -335,7 +335,7 @@ namespace ProfilingCommons
   {
     try
     {
-      for(typename ChunkList::const_iterator chunk_it = chunks_.begin();
+      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
@@ -364,7 +364,7 @@ namespace ProfilingCommons
   {
     try
     {
-      for(typename ChunkList::const_iterator chunk_it = chunks_.begin();
+      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
@@ -387,7 +387,7 @@ namespace ProfilingCommons
   {
     unsigned long res = 0;
       
-    for(typename ChunkList::const_iterator chunk_it = chunks_.begin();
+    for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end();
         ++chunk_it)
     {
@@ -407,7 +407,7 @@ namespace ProfilingCommons
   {
     unsigned long res = 0;
       
-    for(typename ChunkList::const_iterator chunk_it = chunks_.begin();
+    for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end();
         ++chunk_it)
     {
@@ -449,7 +449,7 @@ namespace ProfilingCommons
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   const typename ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
-  ChunkList&
+  ChunkArray&
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::chunks() const noexcept
   {
     return chunks_;

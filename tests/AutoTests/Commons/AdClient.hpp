@@ -123,7 +123,7 @@ namespace AutoTest
     ConsequenceActionType action;
     Generics::Time time;
   };
-  typedef std::vector<ConsequenceAction> ConsequenceActionList;
+  typedef std::vector<ConsequenceAction> ConsequenceActionArray;
 
   /**
    * @brief list of creatives
@@ -404,7 +404,7 @@ namespace AutoTest
     void do_ad_requests(
       const NSLookupRequest& request,
       const CreativeList& ccids,
-      const ConsequenceActionList& action_list,
+      const ConsequenceActionArray& action_list,
       unsigned long count = 1)
       /*throw(eh::Exception)*/;
 
@@ -437,7 +437,7 @@ namespace AutoTest
      */
     void do_ad_requests(
       const CreativeList& ccids,
-      const ConsequenceActionList& action_list,
+      const ConsequenceActionArray& action_list,
       const HTTP::HeaderList& headers = HTTP::HeaderList())
       /*throw(eh::Exception)*/;
 
@@ -780,7 +780,7 @@ namespace AutoTest
       BaseUnit* test,
       const NSLookupRequest& request,
       const CreativeList& ccids,
-      const ConsequenceActionList& action_list,
+      const ConsequenceActionArray& action_list,
       unsigned long count = 1)
         /*throw(eh::Exception)*/
     {

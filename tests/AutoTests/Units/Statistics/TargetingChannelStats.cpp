@@ -490,7 +490,7 @@ TargetingChannelStats::process_case_(
 
   stats.users.push_back("\\" + client.debug_info.uid.value());
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::ACTION);
 
@@ -658,7 +658,7 @@ TargetingChannelStats::case_all_()
 
   stats.users.push_back("\\" + client.debug_info.uid.value());
 
-  AutoTest::ConsequenceActionList actions;
+  AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::CLICK);
   actions.push_back(AutoTest::NON_EMPTY_ACTION);
 

@@ -23,7 +23,7 @@ namespace AdServer
     typedef Generics::SimpleDecimal<uint64_t, 18, 8> RevenueDecimal;
 
     typedef std::list<unsigned long> ChannelIdList;
-    typedef std::vector<unsigned long> ChannelIdVector;
+    typedef std::vector<unsigned long> ChannelIdArray;
     typedef std::set<unsigned long> ChannelIdSet;
     typedef std::set<Commons::ImmutableString> StringSet;
     typedef std::map<unsigned long, unsigned long> ChannelActionMap;
@@ -43,7 +43,7 @@ namespace AdServer
       unsigned long channel_id;
     };
 
-    typedef std::vector<SizeChannel> SizeChannelList;
+    typedef std::vector<SizeChannel> SizeChannelArray;
 
     struct ChannelECPM: public SizeChannel
     {
@@ -62,7 +62,7 @@ namespace AdServer
       unsigned long ecpm;
     };
 
-    typedef std::vector<ChannelECPM> ChannelECPMList;
+    typedef std::vector<ChannelECPM> ChannelECPMArray;
 
     struct ChannelLevel
     {
@@ -119,7 +119,7 @@ namespace AdServer
         Generics::Time placement_colo_time;
         unsigned long colo_id;
 
-        typedef AdServer::Commons::Optional<ChannelIdVector> ChannelIdVectorOptional;
+        typedef AdServer::Commons::Optional<ChannelIdArray> ChannelIdVectorOptional;
         ChannelIdVectorOptional triggered_expression_channels; // sorted
         ChannelIdSet triggered_cpm_expression_channels;
         ChannelActionMap channel_actions;
@@ -166,7 +166,7 @@ namespace AdServer
         Generics::Time isp_time;
         Generics::Time placement_colo_time;
         unsigned long colo_id;
-        ChannelIdVector total_appear_channels; // => +total_user_count
+        ChannelIdArray total_appear_channels; // => +total_user_count
       };
 
       class InventoryInfo : public InventoryUserInfo
@@ -212,10 +212,10 @@ namespace AdServer
 
         struct ChannelImpAppearInfo
         {
-          ChannelIdVector impop_appear_channels; // => +impop_user_count
-          ChannelIdVector imp_appear_channels; // => +imps.user_count
-          ChannelIdVector imp_other_appear_channels; // => +imps_other.user_count
-          ChannelIdVector impop_no_imp_appear_channels; // => +impop_no_imp.user_count
+          ChannelIdArray impop_appear_channels; // => +impop_user_count
+          ChannelIdArray imp_appear_channels; // => +imps.user_count
+          ChannelIdArray imp_other_appear_channels; // => +imps_other.user_count
+          ChannelIdArray impop_no_imp_appear_channels; // => +impop_no_imp.user_count
 
           bool operator==(const ChannelImpAppearInfo& right) const noexcept;
 
@@ -240,7 +240,7 @@ namespace AdServer
       public:
         /* channel appears (user counters) */
         /* this field isn't empty only at running of daily processing task */
-        ChannelIdVector active_appear_channels; // => +active_user_count
+        ChannelIdArray active_appear_channels; // => +active_user_count
         ChannelImpAppearInfo display_appears;
         ChannelImpAppearInfo text_appears;
 
@@ -251,10 +251,10 @@ namespace AdServer
         /* channel by ecpm */
         Commons::ImmutableString country_code;
         unsigned long impop_ecpm;
-        ChannelIdVector impop_channels;
+        ChannelIdArray impop_channels;
         StringSet sizes;
-        ChannelECPMList disappear_channel_ecpms;
-        SizeChannelList appear_channel_ecpms;
+        ChannelECPMArray disappear_channel_ecpms;
+        SizeChannelArray appear_channel_ecpms;
         CampaignSvcs::AuctionType auction_type;
 
       public:
@@ -274,7 +274,7 @@ namespace AdServer
         std::ostream&
         print_channels_(
           std::ostream& ostr,
-          const ChannelIdVector& lst)
+          const ChannelIdArray& lst)
           noexcept;
 
         std::ostream&
@@ -449,7 +449,7 @@ namespace AdServer
     std::ostream&
     InventoryActionProcessor::InventoryInfo::print_channels_(
       std::ostream& ostr,
-      const ChannelIdVector& lst)
+      const ChannelIdArray& lst)
       noexcept
     {
       Algs::print(ostr, lst.begin(), lst.end());
@@ -551,7 +551,7 @@ namespace AdServer
       // channel by cpm fields
       ostr << offset << "appear channel ecpms: ";
 
-      for(SizeChannelList::const_iterator size_channel_it =
+      for(SizeChannelArray::const_iterator size_channel_it =
             appear_channel_ecpms.begin();
           size_channel_it != appear_channel_ecpms.end();
           ++size_channel_it)
@@ -563,7 +563,7 @@ namespace AdServer
       ostr << std::endl;
       ostr << offset << "disappear channel ecpms: ";
 
-      for(ChannelECPMList::const_iterator ecpm_it =
+      for(ChannelECPMArray::const_iterator ecpm_it =
             disappear_channel_ecpms.begin();
           ecpm_it != disappear_channel_ecpms.end();
           ++ecpm_it)

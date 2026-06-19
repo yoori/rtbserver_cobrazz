@@ -106,7 +106,7 @@ namespace AdServer::UserInfoSvcs
 
     std::optional<Pool::Ref> get_ref_(const std::string& user_id) noexcept;
     std::optional<Pool::Ref> get_any_ref_() noexcept;
-    std::optional<Pool::EndpointChunksList> resolve_partition_(
+    std::optional<Pool::EndpointChunksArray> resolve_partition_(
       ControllerClient& controller_client);
 
     static unsigned long chunk_index_(

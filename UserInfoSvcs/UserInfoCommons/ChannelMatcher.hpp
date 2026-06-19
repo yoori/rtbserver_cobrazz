@@ -141,7 +141,7 @@ namespace AdServer
       AdServer::CampaignSvcs::CoordDecimal longitude;
       AdServer::CampaignSvcs::AccuracyDecimal accuracy;
     };
-    typedef std::list<GeoDataResult> GeoDataResultList;
+    typedef std::vector<GeoDataResult> GeoDataResultArray;
 
     struct ProfileProperties
     {
@@ -149,7 +149,7 @@ namespace AdServer
       std::string cohort;
       std::string cohort2;
 
-      GeoDataResultList geo_data_list;
+      GeoDataResultArray geo_data_list;
     };
 
     struct CoordData

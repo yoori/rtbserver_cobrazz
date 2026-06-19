@@ -1018,7 +1018,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  CampaignManagerCore::ByteVector
+  CampaignManagerCore::ByteArray
   CampaignManagerCore::get_file(const std::string& file_name)
     /*throw(Exception)*/
   {
@@ -1029,7 +1029,7 @@ namespace AdServer::CampaignSvcs
       std::string full_file_name(campaign_manager_config_.Creative().ContentCache().root());
       full_file_name += file_name;
       const auto file = template_files_->get(full_file_name);
-      return ByteVector(file->begin(), file->end());
+      return ByteArray(file->begin(), file->end());
     }
     catch(const eh::Exception& e)
     {
@@ -4954,7 +4954,7 @@ namespace AdServer::CampaignSvcs
       }
 
       StringVector result;
-      AccountList result_accounts;
+      AccountArray result_accounts;
 
       if(!publisher_account_ids.empty())
       {
@@ -4994,7 +4994,7 @@ namespace AdServer::CampaignSvcs
       }
 
       result.reserve(result_accounts.size());
-      for(AccountList::const_iterator acc_it = result_accounts.begin();
+      for(AccountArray::const_iterator acc_it = result_accounts.begin();
           acc_it != result_accounts.end(); ++acc_it)
       {
         result.emplace_back(
@@ -5019,7 +5019,7 @@ namespace AdServer::CampaignSvcs
 
   void
   CampaignManagerCore::get_pub_pixel_account_ids_(
-    AccountList& result_account_ids,
+    AccountArray& result_account_ids,
     const CampaignConfig* campaign_config,
     const char* country,
     UserStatus user_status,
@@ -5083,7 +5083,7 @@ namespace AdServer::CampaignSvcs
       exclude_pubpixel_accounts_seq.end());
     exclude_pubpixel_accounts.insert(tag->site->account->account_id);
 
-    AccountList result_accounts;
+    AccountArray result_accounts;
     get_pub_pixel_account_ids_(
       result_accounts,
       campaign_config,
@@ -5093,7 +5093,7 @@ namespace AdServer::CampaignSvcs
       exclude_pubpixel_accounts,
       MAX_PUBPIXELS_PER_REQUEST);
 
-    for(AccountList::const_iterator acc_it = result_accounts.begin();
+    for(AccountArray::const_iterator acc_it = result_accounts.begin();
         acc_it != result_accounts.end(); ++acc_it)
     {
       result_account_ids.push_back((*acc_it)->account_id);

@@ -641,7 +641,7 @@ void OIXTestModeTest::make_derivative_requests_(
     std::list<std::string> expected_ccs;
     expected_ccs.push_back(exp_ccid);
 
-    AutoTest::ConsequenceActionList actions;
+    AutoTest::ConsequenceActionArray actions;
 
     actions.push_back(
       AutoTest::ConsequenceAction(

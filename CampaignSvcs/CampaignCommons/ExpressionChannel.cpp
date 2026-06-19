@@ -299,7 +299,7 @@ namespace CampaignSvcs
     case AND:
       {
         result = true;
-        for(Expression::ExpressionList::const_iterator ch_it =
+        for(Expression::ExpressionArray::const_iterator ch_it =
               expr.sub_channels.begin();
             ch_it != expr.sub_channels.end(); ++ch_it)
         {
@@ -315,7 +315,7 @@ namespace CampaignSvcs
       break;
     case OR:
       {
-        for(Expression::ExpressionList::const_iterator ch_it =
+        for(Expression::ExpressionArray::const_iterator ch_it =
               expr.sub_channels.begin();
             ch_it != expr.sub_channels.end(); ++ch_it)
         {
@@ -331,7 +331,7 @@ namespace CampaignSvcs
       break;
     case AND_NOT:
       {
-        Expression::ExpressionList::const_iterator ch_it = expr.sub_channels.begin();
+        Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
         result = triggered_(*ch_it,
           triggered_channels, weighted_triggered_channels,
           status_set, uc_tbl, matched_channels_ptr);
@@ -447,7 +447,7 @@ namespace CampaignSvcs
 
     if(!expr.channel.in())
     {
-      for(Expression::ExpressionList::const_iterator ch_it =
+      for(Expression::ExpressionArray::const_iterator ch_it =
             expr.sub_channels.begin();
         ch_it != expr.sub_channels.end(); ++ch_it)
       {
@@ -541,7 +541,7 @@ namespace CampaignSvcs
     }
 
     /* trace childs */
-    for (Expression::ExpressionList::const_iterator ch_it =
+    for (Expression::ExpressionArray::const_iterator ch_it =
            expr.sub_channels.begin();
          ch_it != expr.sub_channels.end(); ++ch_it)
     {
@@ -593,7 +593,7 @@ namespace CampaignSvcs
       return false;
     }
 
-    Expression::ExpressionList::const_iterator end_it = expr.sub_channels.end();
+    Expression::ExpressionArray::const_iterator end_it = expr.sub_channels.end();
 
     switch (expr.op)
     {
@@ -623,7 +623,7 @@ namespace CampaignSvcs
     case AND:
       {
         std::ostringstream sub_expr;
-        for (Expression::ExpressionList::const_iterator ch_it = expr.sub_channels.begin();
+        for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
              ch_it != end_it;
              ++ch_it)
         {
@@ -646,7 +646,7 @@ namespace CampaignSvcs
       {
         std::ostringstream sub_expr;
         unsigned int count = 0;
-        for (Expression::ExpressionList::const_iterator ch_it = expr.sub_channels.begin();
+        for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
              ch_it != expr.sub_channels.end();
              ++ch_it)
         {
@@ -700,7 +700,7 @@ namespace CampaignSvcs
         return false;
       }
 
-      for(Expression::ExpressionList::iterator sit =
+      for(Expression::ExpressionArray::iterator sit =
             ++expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
       {
@@ -722,7 +722,7 @@ namespace CampaignSvcs
     }
     else
     {
-      for(Expression::ExpressionList::iterator sit =
+      for(Expression::ExpressionArray::iterator sit =
             expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
       {
@@ -758,9 +758,9 @@ namespace CampaignSvcs
 
     if(expr.op == AND || expr.op == OR)
     {
-      Expression::ExpressionList new_sub_channels;
+      Expression::ExpressionArray new_sub_channels;
 
-      for(Expression::ExpressionList::const_iterator sit =
+      for(Expression::ExpressionArray::const_iterator sit =
             expr.sub_channels.begin();
           sit != expr.sub_channels.end(); ++sit)
       {
@@ -823,7 +823,7 @@ namespace CampaignSvcs
     }
     else
     {
-      for (Expression::ExpressionList::const_iterator ch_it =
+      for (Expression::ExpressionArray::const_iterator ch_it =
              expr.sub_channels.begin();
            ch_it != expr.sub_channels.end(); ++ch_it)
       {
@@ -844,7 +844,7 @@ namespace CampaignSvcs
     }
     else
     {
-      Expression::ExpressionList::const_iterator last_it =
+      Expression::ExpressionArray::const_iterator last_it =
         expr.sub_channels.end();
 
       if(expr.op == AND_NOT)
@@ -853,7 +853,7 @@ namespace CampaignSvcs
         --last_it;
       }
 
-      for (Expression::ExpressionList::const_iterator ch_it =
+      for (Expression::ExpressionArray::const_iterator ch_it =
              expr.sub_channels.begin();
            ch_it != last_it; ++ch_it)
       {
@@ -873,7 +873,7 @@ namespace CampaignSvcs
     }
     else
     {
-      for (Expression::ExpressionList::const_iterator ch_it =
+      for (Expression::ExpressionArray::const_iterator ch_it =
              expr.sub_channels.begin();
            ch_it != expr.sub_channels.end(); ++ch_it)
       {

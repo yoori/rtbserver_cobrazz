@@ -620,7 +620,7 @@ void GEOChannelsStats::make_location_request(
   if (expected_ccids)
   {
     AutoTest::CreativeList exp_ccids;
-    AutoTest::ConsequenceActionList actions;
+    AutoTest::ConsequenceActionArray actions;
 
     if ( flags & AE_CLICK )
     {

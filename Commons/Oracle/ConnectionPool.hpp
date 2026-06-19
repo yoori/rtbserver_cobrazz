@@ -96,7 +96,7 @@ namespace Oracle
   protected:
     friend class PooledConnection;
 
-    typedef std::vector<Connection_var> ConnectionList;
+    typedef std::vector<Connection_var> ConnectionArray;
 
   protected:
     const ReferenceCounting::SmartPtr<Environment> environment_;
@@ -104,7 +104,7 @@ namespace Oracle
     const unsigned long max_connections_;
 
     mutable Sync::Condition free_connection_cond_;
-    ConnectionList free_connections_;
+    ConnectionArray free_connections_;
 
     // serialize connections creation
     Sync::PosixMutex create_lock_;

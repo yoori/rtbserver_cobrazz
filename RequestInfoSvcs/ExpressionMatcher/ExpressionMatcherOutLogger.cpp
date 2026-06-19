@@ -57,7 +57,7 @@ namespace RequestInfoSvcs
 
     void
     add_inv_record_(
-      const ChannelIdVector& channels,
+      const ChannelIdArray& channels,
       const ChannelInventoryInnerData& channel_props,
       ChannelInventoryData& ch_inv_data)
       /*throw(eh::Exception)*/

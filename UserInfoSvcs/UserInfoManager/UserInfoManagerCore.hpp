@@ -3,6 +3,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <memory_resource>
 #include <set>
 #include <vector>
 #include <string>
@@ -52,7 +53,7 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerConfig;
 
     typedef std::list<unsigned long> ChunkIdList;
-    typedef std::vector<unsigned char> ByteVector;
+    typedef std::vector<unsigned char> ByteArray;
 
     struct UserInfo
     {
@@ -73,10 +74,16 @@ namespace AdServer::UserInfoSvcs
 
     struct MatchParams
     {
+      explicit MatchParams(
+        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        : matched_channels(resource),
+          geo_data_seq(resource)
+      {}
+
       ChannelIdPack matched_channels;
       std::string cohort;
       std::string cohort2;
-      std::vector<GeoData> geo_data_seq;
+      std::pmr::vector<GeoData> geo_data_seq;
       Generics::Time publishers_optin_timeout;
       bool use_empty_profile = false;
       bool filter_contextual_triggers = false;
@@ -99,11 +106,11 @@ namespace AdServer::UserInfoSvcs
 
     struct UserProfiles
     {
-      ByteVector base_user_profile;
-      ByteVector add_user_profile;
-      ByteVector history_user_profile;
-      ByteVector freq_cap;
-      ByteVector pref_profile;
+      ByteArray base_user_profile;
+      ByteArray add_user_profile;
+      ByteArray history_user_profile;
+      ByteArray freq_cap;
+      ByteArray pref_profile;
     };
 
     struct ChannelWeight
@@ -127,6 +134,18 @@ namespace AdServer::UserInfoSvcs
 
     struct MatchResult
     {
+      explicit MatchResult(
+        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        : geo_data_seq(resource),
+          exclude_pubpixel_accounts(resource),
+          full_freq_caps(resource),
+          full_virtual_freq_caps(resource),
+          seq_orders(resource),
+          campaign_freqs(resource),
+          channels(resource),
+          hid_channels(resource)
+      {}
+
       unsigned long adv_channel_count = 0;
       unsigned long discover_channel_count = 0;
       long colo_id = -1;
@@ -137,14 +156,14 @@ namespace AdServer::UserInfoSvcs
       bool fraud_request = false;
       std::string cohort;
       std::string cohort2;
-      std::vector<GeoData> geo_data_seq;
-      std::vector<unsigned long> exclude_pubpixel_accounts;
-      std::vector<unsigned long> full_freq_caps;
-      std::vector<unsigned long> full_virtual_freq_caps;
-      std::vector<SeqOrder> seq_orders;
-      std::vector<CampaignFreq> campaign_freqs;
-      std::vector<ChannelWeight> channels;
-      std::vector<ChannelWeight> hid_channels;
+      std::pmr::vector<GeoData> geo_data_seq;
+      std::pmr::vector<unsigned long> exclude_pubpixel_accounts;
+      std::pmr::vector<unsigned long> full_freq_caps;
+      std::pmr::vector<unsigned long> full_virtual_freq_caps;
+      std::pmr::vector<SeqOrder> seq_orders;
+      std::pmr::vector<CampaignFreq> campaign_freqs;
+      std::pmr::vector<ChannelWeight> channels;
+      std::pmr::vector<ChannelWeight> hid_channels;
       Generics::Time process_time;
     };
 

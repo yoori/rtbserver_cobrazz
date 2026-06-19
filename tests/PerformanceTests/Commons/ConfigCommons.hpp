@@ -65,30 +65,30 @@ public:
    *
    * @return reference to parameters selector
    */
-  const SelectorPolicyList& parameters() const;
+  const SelectorPolicyArray& parameters() const;
 
   /**
    * @brief Access to request headers.
    *
    * @return reference to headers selector
    */
-  const SelectorPolicyList& headers()  const;
+  const SelectorPolicyArray& headers()  const;
 
   /**
    * @brief Access to request cookies.
    *
    * @return reference to cookies selector
    */
-  const SelectorPolicyList& cookies()  const;
+  const SelectorPolicyArray& cookies()  const;
 
   const std::string url;                  // request base URL
   const std::string method;               // HTTP-method using for request
   const ConstraintConfig_var constraint;  // constraint for request.
 
 protected:
-  SelectorPolicyList parameters_;         // parameters selector
-  SelectorPolicyList headers_;            // headers selector
-  SelectorPolicyList cookies_;            // cookies selector
+  SelectorPolicyArray parameters_;         // parameters selector
+  SelectorPolicyArray headers_;            // headers selector
+  SelectorPolicyArray cookies_;            // cookies selector
 };
 
 typedef ClientRequestType::requestConstraint_type client_constraint;

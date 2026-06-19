@@ -171,7 +171,7 @@ namespace
     }
   };
 
-  typedef std::vector<FreqCapCounter> FreqCapCounterVector;
+  typedef std::vector<FreqCapCounter> FreqCapCounterArray;
 
   struct FreqCapLess
   {
@@ -794,7 +794,7 @@ namespace
 
   void
   pack_freq_caps(
-    FreqCapCounterVector& fcs_res,
+    FreqCapCounterArray& fcs_res,
     const UserFreqCapProfile::FreqCapIdArray& fcs,
     bool unconfirmed)
     noexcept
@@ -967,13 +967,13 @@ namespace
     }
 
     UserFreqCapProfileWriter::freq_caps_Container new_freq_caps;
-    FreqCapCounterVector packed_fcs;
+    FreqCapCounterArray packed_fcs;
 
     {
-      FreqCapCounterVector packed_c_fcs;
+      FreqCapCounterArray packed_c_fcs;
       pack_freq_caps(packed_c_fcs, c_fcs, false);
 
-      FreqCapCounterVector packed_uc_fcs;
+      FreqCapCounterArray packed_uc_fcs;
       pack_freq_caps(packed_uc_fcs, uc_fcs, true);
 
       Algs::merge_unique(
@@ -1000,7 +1000,7 @@ namespace
     writer.freq_caps().swap(new_freq_caps);
 
     UserFreqCapProfileWriter::freq_caps_Container new_virtual_freq_caps;
-    FreqCapCounterVector packed_virtual_fcs;
+    FreqCapCounterArray packed_virtual_fcs;
     pack_freq_caps(packed_virtual_fcs, virtual_fcs, false);
 
     Algs::merge_unique(

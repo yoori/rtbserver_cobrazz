@@ -338,7 +338,7 @@ private:
 
 
 typedef ReferenceCounting::SmartPtr<SelectorPolicy> SelectorPolicy_var;
-typedef std::vector<SelectorPolicy_var> SelectorPolicyList;
+typedef std::vector<SelectorPolicy_var> SelectorPolicyArray;
 
 /**
  * @brief making cookie selection policy list
@@ -347,7 +347,7 @@ typedef std::vector<SelectorPolicy_var> SelectorPolicyList;
  * @param value [in] text presentation of policy from XML configuration.
  * @param lists [in] configurations map (set name -> reference to "set" tag type).
  */
-void make_cookie_policy_list(SelectorPolicyList& cookies,
+void make_cookie_policy_list(SelectorPolicyArray& cookies,
                              const String::SubString& value,
                              const RequestLists& lists)
   /*throw(SelectorPolicy::InvalidConfigRequestData)*/;

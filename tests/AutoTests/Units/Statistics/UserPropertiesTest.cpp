@@ -26,7 +26,7 @@ namespace
   typedef void (*ClientGenerator)(
     BaseUnit*, const AutoTest::NSLookupRequest&,
     const AutoTest::CreativeList&,
-    const AutoTest::ConsequenceActionList&,
+    const AutoTest::ConsequenceActionArray&,
     unsigned long);
 
   const ClientGenerator UserGenerators[] =
@@ -554,7 +554,7 @@ void UserPropertiesTest::test_case(
       properties[prop_idx].actions
     };
 
-    AutoTest::ConsequenceActionList actions;
+    AutoTest::ConsequenceActionArray actions;
     AutoTest::ConsequenceActionType action = AutoTest::TRACK;
 
     for (size_t i = 0; i < countof(counts); ++i)

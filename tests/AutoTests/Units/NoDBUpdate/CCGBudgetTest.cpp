@@ -232,7 +232,7 @@ void CCGBudgetTest::process_case(
 
     client.process_request(request);
 
-    AutoTest::ConsequenceActionList actions;
+    AutoTest::ConsequenceActionArray actions;
 
     std::list<std::string> expected_ccs;
 

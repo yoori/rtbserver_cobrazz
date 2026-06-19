@@ -1627,10 +1627,10 @@ namespace AdServer::CampaignSvcs
           std::move(history_channels),
           dump_channel_triggers_ ?
             match_request_info.match_info.page_triggers :
-            CollectorT::DataT::DataT::TriggerMatchList(), // page trigger channels
-          CollectorT::DataT::DataT::TriggerMatchList(), // search trigger channels
-          CollectorT::DataT::DataT::TriggerMatchList(), // url trigger channels
-          CollectorT::DataT::DataT::TriggerMatchList() // url keyword trigger channels
+            CollectorT::DataT::DataT::TriggerMatchArray(), // page trigger channels
+          CollectorT::DataT::DataT::TriggerMatchArray(), // search trigger channels
+          CollectorT::DataT::DataT::TriggerMatchArray(), // url trigger channels
+          CollectorT::DataT::DataT::TriggerMatchArray() // url keyword trigger channels
           );
 
         const CollectorT::DataT::DataT inner_data(
@@ -1716,10 +1716,10 @@ namespace AdServer::CampaignSvcs
             AdServer::LogProcessing::NumberArray(
               request_info.hid_history_channels.begin(),
               request_info.hid_history_channels.end()),
-            CollectorT::DataT::DataT::TriggerMatchList(), // page trigger channels
-            CollectorT::DataT::DataT::TriggerMatchList(), // search trigger channels
-            CollectorT::DataT::DataT::TriggerMatchList(), // url trigger channels
-            CollectorT::DataT::DataT::TriggerMatchList() // url keyword trigger channels
+            CollectorT::DataT::DataT::TriggerMatchArray(), // page trigger channels
+            CollectorT::DataT::DataT::TriggerMatchArray(), // search trigger channels
+            CollectorT::DataT::DataT::TriggerMatchArray(), // url trigger channels
+            CollectorT::DataT::DataT::TriggerMatchArray() // url keyword trigger channels
           );
 
           data.add(
@@ -1820,13 +1820,13 @@ namespace AdServer::CampaignSvcs
               request_info.history_channels.begin(), request_info.history_channels.end()) :
             AdServer::LogProcessing::NumberArray(),
           dump_triggers ? request_info.page_triggers :
-            CollectorT::DataT::DataT::TriggerMatchList(),
+            CollectorT::DataT::DataT::TriggerMatchArray(),
           dump_triggers ? request_info.search_triggers :
-            CollectorT::DataT::DataT::TriggerMatchList(),
+            CollectorT::DataT::DataT::TriggerMatchArray(),
           dump_triggers ? request_info.url_triggers :
-            CollectorT::DataT::DataT::TriggerMatchList(),
+            CollectorT::DataT::DataT::TriggerMatchArray(),
           dump_triggers ? request_info.url_keyword_triggers :
-            CollectorT::DataT::DataT::TriggerMatchList());
+            CollectorT::DataT::DataT::TriggerMatchArray());
 
         data.add(
           CollectorT::DataT::DataT(

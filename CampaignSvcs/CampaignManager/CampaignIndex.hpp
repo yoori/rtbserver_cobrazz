@@ -206,7 +206,7 @@ namespace AdServer
 
       typedef std::deque<const CampaignSelectionCell*>
         CampaignSelectionCellPtrList;
-      typedef std::deque<const CampaignCell*> CampaignCellPtrList;
+      typedef std::deque<const CampaignCell*> CampaignCellPtrArray;
       typedef std::list<const Creative*> ConstCreativePtrList;
 
     public:
@@ -314,10 +314,10 @@ namespace AdServer
         const Key& index,
         CampaignSelectionCellPtrList& wg_campaign_cell_list,
         CampaignSelectionCellPtrList& campaign_cell_list,
-        CampaignCellPtrList& text_campaign_cell_list,
-        CampaignCellPtrList& keyword_campaign_cell_list,
-        CampaignCellPtrList* lost_wg_campaign_cell_list,
-        CampaignCellPtrList* lost_campaign_cell_list)
+        CampaignCellPtrArray& text_campaign_cell_list,
+        CampaignCellPtrArray& keyword_campaign_cell_list,
+        CampaignCellPtrArray* lost_wg_campaign_cell_list,
+        CampaignCellPtrArray* lost_campaign_cell_list)
         const;
 
       void
@@ -325,8 +325,8 @@ namespace AdServer
         const Key& index,
         CampaignSelectionCellPtrList& wg_display_campaign_cell_list,
         CampaignSelectionCellPtrList& display_campaign_cell_list,
-        CampaignCellPtrList& text_campaign_cell_list,
-        CampaignCellPtrList& keyword_campaign_cell_list)
+        CampaignCellPtrArray& text_campaign_cell_list,
+        CampaignCellPtrArray& keyword_campaign_cell_list)
         const;
 
       bool

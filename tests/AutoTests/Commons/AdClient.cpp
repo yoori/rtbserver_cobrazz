@@ -24,7 +24,7 @@ namespace AutoTest
       Generics::Time time;
     };
 
-    typedef std::vector<UrlAction> UrlsList;
+    typedef std::vector<UrlAction> UrlsArray;
   }
 
 
@@ -491,14 +491,14 @@ namespace AutoTest
   void
   AdClient::do_ad_requests(
     const CreativeList& ccids,
-    const ConsequenceActionList& action_list,
+    const ConsequenceActionArray& action_list,
     const HTTP::HeaderList& headers)
     /*throw(eh::Exception)*/
   {
 
-    UrlsList urls;
+    UrlsArray urls;
 
-    for (ConsequenceActionList::const_iterator
+    for (ConsequenceActionArray::const_iterator
            action = action_list.begin();
            action != action_list.end(); ++action)
     {
@@ -597,7 +597,7 @@ namespace AutoTest
       }
     }
 
-    for (UrlsList::const_iterator url = urls.begin();
+    for (UrlsArray::const_iterator url = urls.begin();
          url != urls.end(); ++url)
     {
       if (url->url.empty())
@@ -638,7 +638,7 @@ namespace AutoTest
   AdClient::do_ad_requests(
     const NSLookupRequest& request,
     const CreativeList& ccids,
-    const ConsequenceActionList& action_list,
+    const ConsequenceActionArray& action_list,
     unsigned long count)
     /*throw(eh::Exception)*/
   {
@@ -659,7 +659,7 @@ namespace AutoTest
     unsigned long count)
     /*throw(eh::Exception)*/
   {
-    ConsequenceActionList actions;
+    ConsequenceActionArray actions;
 
      for( ConsequenceActionType action = TRACK;
           action <= WAIT; action = ConsequenceActionType( action << 1 ) )

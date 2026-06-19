@@ -9,8 +9,8 @@
 class FraudProtectionFeatureTest: public BaseDBUnit
 {
 
-  typedef std::map<std::string, bool> RequestList;
-  typedef std::map<std::string, bool> UserList;
+  typedef std::map<std::string, bool> RequestArray;
+  typedef std::map<std::string, bool> UserArray;
   typedef AutoTest::AdClient AdClient;
 
 public:

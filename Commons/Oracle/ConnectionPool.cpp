@@ -221,7 +221,7 @@ namespace Oracle
   void
   SwitchableConnectionPool::deactivate_object() noexcept
   {
-    ConnectionList free_connections;
+    ConnectionArray free_connections;
 
     {
       // add_active_count(1) can be called only inside free_connections_lock_ and
@@ -233,7 +233,7 @@ namespace Oracle
       free_connections_.swap(free_connections);
     }
 
-    for(ConnectionList::iterator it = free_connections.begin();
+    for(ConnectionArray::iterator it = free_connections.begin();
         it != free_connections.end(); ++it)
     {
       (*it)->owner_(0);

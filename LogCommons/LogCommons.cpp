@@ -942,7 +942,7 @@ HitsFilter::check(
   if (it == counters_.end())
   {
     it = counters_.insert(std::make_pair(date,
-      ByteVector_(TABLE_SIZE_))).first;
+      ByteArray_(TABLE_SIZE_))).first;
   }
   unsigned long index = hash % it->second.size();
   unsigned char old_counter = it->second[index];
@@ -1013,14 +1013,14 @@ HitsFilter::load_() /*throw(Exception, eh::Exception)*/
 
     ifs.seekg(0, std::ios::beg);
 
-    ByteVector_ bytes;
+    ByteArray_ bytes;
 
 // TEMPORARY OLD FILE COMPATIBILITY WORKAROUND
     static const unsigned long OLD_FILE_SIZE = 10485760;
 
     if (file_size == OLD_FILE_SIZE)
     {
-      ByteVector_ tmp_bytes(file_size);
+      ByteArray_ tmp_bytes(file_size);
 
       if (!ifs.read(reinterpret_cast<char*>(&tmp_bytes[0]), file_size))
       {
@@ -1064,7 +1064,7 @@ HitsFilter::load_() /*throw(Exception, eh::Exception)*/
         throw Exception(es);
       }
 
-      ByteVector_ tmp_bytes(table_size);
+      ByteArray_ tmp_bytes(table_size);
 
       if (!ifs.read(reinterpret_cast<char*>(&tmp_bytes[0]), table_size))
       {

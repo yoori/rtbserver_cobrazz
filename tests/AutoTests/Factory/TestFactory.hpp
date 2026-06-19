@@ -4,8 +4,8 @@
 
 namespace TestFactory
 {
-  typedef std::set<std::string> StringList;
-  typedef std::set<AutoTestSpeedGroup> GroupList;
+  typedef std::set<std::string> StringArray;
+  typedef std::set<AutoTestSpeedGroup> GroupArray;
   typedef std::list<UnitDescriptor*> UnitsList;
   typedef std::vector<UnitDescriptor*> UnitsSeq;
   typedef const xsd::tests::AutoTests::UnitLocalDataType& Locals;
@@ -23,17 +23,17 @@ namespace TestFactory
 
     void
     filter(
-      const StringList& exclude_tests,
-      const StringList& exclude_categories,
-      const StringList& tests,
-      const GroupList& groups,
-      const StringList& categories,
+      const StringArray& exclude_tests,
+      const StringArray& exclude_categories,
+      const StringArray& tests,
+      const GroupArray& groups,
+      const StringArray& categories,
       int select_serialized)
       noexcept;
 
     void
     filter(
-      const StringList& tests)
+      const StringArray& tests)
       noexcept;
 
     const UnitsList&

@@ -282,7 +282,7 @@ namespace AdServer
         const Tag* tag,
         const ChannelIdHashSet& matched_channels,
         const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
-        const CampaignIndex::CampaignCellPtrList& lost_campaigns)
+        const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
         const
         noexcept;
 
@@ -295,8 +295,8 @@ namespace AdServer
         const CTR::CTRProvider::CalculationContext* ctr_calculation,
         const CampaignKeywordMap& matched_keywords,
         const ChannelIdHashSet& matched_channels,
-        const CampaignIndex::CampaignCellPtrList& keyword_campaigns,
-        const CampaignIndex::CampaignCellPtrList& nonkeyword_campaigns)
+        const CampaignIndex::CampaignCellPtrArray& keyword_campaigns,
+        const CampaignIndex::CampaignCellPtrArray& nonkeyword_campaigns)
         const
         noexcept;
 
@@ -311,7 +311,7 @@ namespace AdServer
         const CTR::CTRProvider::Calculation* conv_rate_calculation,
         const ChannelIdHashSet& matched_channels,
         const CampaignIndex::CampaignSelectionCellPtrList& candidates,
-        const CampaignIndex::CampaignCellPtrList& lost_campaigns)
+        const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
         const
         noexcept;
 
@@ -325,7 +325,7 @@ namespace AdServer
         const CampaignIndex::Key& key,
         const CampaignSelectParams& request_params,
         const ChannelIdHashSet& matched_channels,
-        const CampaignIndex::CampaignCellPtrList& campaign_list,
+        const CampaignIndex::CampaignCellPtrArray& campaign_list,
         ConstCampaignPtrList& filtered_campaigns)
         const
         noexcept;
@@ -336,7 +336,7 @@ namespace AdServer
         const CampaignIndex::Key& key,
         const CampaignSelectParams& request_params,
         const ChannelIdHashSet& matched_channels,
-        const CampaignIndex::CampaignCellPtrList& campaigns,
+        const CampaignIndex::CampaignCellPtrArray& campaigns,
         const CampaignKeywordMap& campaign_keywords,
         CampaignKeywordMap& filtered_campaign_keywords)
         const

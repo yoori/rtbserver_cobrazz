@@ -11,17 +11,17 @@ RequestConfig::RequestConfig(ConstraintConfig* _constraint,
 {
 }
 
-const SelectorPolicyList& RequestConfig::parameters() const
+const SelectorPolicyArray& RequestConfig::parameters() const
 {
   return parameters_;
 }
 
-const SelectorPolicyList& RequestConfig::headers() const
+const SelectorPolicyArray& RequestConfig::headers() const
 {
   return headers_;
 }
 
-const SelectorPolicyList& RequestConfig::cookies() const
+const SelectorPolicyArray& RequestConfig::cookies() const
 {
   return cookies_;
 }

@@ -1549,7 +1549,7 @@ namespace RequestInfoSvcs
               Match& match_request = record.match_request().get();
 
             for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchList::
+                  RequestBasicChannelsInnerData::TriggerMatchArray::
                     const_iterator cht_it = match_request.page_trigger_channels().begin();
                 cht_it != match_request.page_trigger_channels().end(); ++cht_it)
             {
@@ -1558,7 +1558,7 @@ namespace RequestInfoSvcs
             }
 
             for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchList::
+                  RequestBasicChannelsInnerData::TriggerMatchArray::
                     const_iterator cht_it = match_request.search_trigger_channels().begin();
                 cht_it != match_request.search_trigger_channels().end(); ++cht_it)
             {
@@ -1567,7 +1567,7 @@ namespace RequestInfoSvcs
             }
 
             for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchList::
+                  RequestBasicChannelsInnerData::TriggerMatchArray::
                     const_iterator cht_it = match_request.url_trigger_channels().begin();
                 cht_it != match_request.url_trigger_channels().end(); ++cht_it)
             {
@@ -1576,7 +1576,7 @@ namespace RequestInfoSvcs
             }
 
             for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchList::
+                  RequestBasicChannelsInnerData::TriggerMatchArray::
                     const_iterator cht_it = match_request.url_keyword_trigger_channels().begin();
                 cht_it != match_request.url_keyword_trigger_channels().end(); ++cht_it)
             {

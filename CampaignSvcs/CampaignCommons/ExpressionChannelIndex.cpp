@@ -151,7 +151,7 @@ namespace CampaignSvcs
       }
       else
       {
-        ExpressionChannel::Expression::ExpressionList::const_iterator end_it =
+        ExpressionChannel::Expression::ExpressionArray::const_iterator end_it =
           expr.sub_channels.end();
 
         if(expr.op == ExpressionChannel::AND_NOT)
@@ -159,7 +159,7 @@ namespace CampaignSvcs
           --end_it;
         }
 
-        for(ExpressionChannel::Expression::ExpressionList::const_iterator it =
+        for(ExpressionChannel::Expression::ExpressionArray::const_iterator it =
               expr.sub_channels.begin();
             it != end_it; ++it)
         {
@@ -212,11 +212,11 @@ namespace CampaignSvcs
       else if(expr.op == ExpressionChannel::AND ||
         expr.op == ExpressionChannel::AND_NOT)
       {
-        ExpressionChannel::Expression::ExpressionList::const_iterator end_it =
+        ExpressionChannel::Expression::ExpressionArray::const_iterator end_it =
           expr.op == ExpressionChannel::AND_NOT ?
           --expr.sub_channels.end() : expr.sub_channels.end();
 
-        for(ExpressionChannel::Expression::ExpressionList::const_iterator eit =
+        for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expr.sub_channels.begin();
             eit != end_it; ++eit)
         {
@@ -1282,7 +1282,7 @@ namespace CampaignSvcs
     {
       // fully reduced if all sub channels fully reduced (look above)
       bool ret = true;
-      for(ExpressionChannel::Expression::ExpressionList::const_iterator eit =
+      for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
             expr.sub_channels.begin();
           eit != expr.sub_channels.end(); ++eit)
       {
@@ -1294,12 +1294,12 @@ namespace CampaignSvcs
     }
 
     // AND, AND_NOT operations
-    ExpressionChannel::Expression::ExpressionList::const_iterator end_it =
+    ExpressionChannel::Expression::ExpressionArray::const_iterator end_it =
       expr.op == ExpressionChannel::AND_NOT ?
       --expr.sub_channels.end() : expr.sub_channels.end();
 
     ChannelIdSet local_used_simple_channels;
-    for(ExpressionChannel::Expression::ExpressionList::const_iterator eit =
+    for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
           expr.sub_channels.begin();
         eit != end_it; ++eit)
     {
@@ -1367,7 +1367,7 @@ namespace CampaignSvcs
     }
     else if(expr.op == ExpressionChannel::OR)
     {
-      for(ExpressionChannel::Expression::ExpressionList::iterator eit =
+      for(ExpressionChannel::Expression::ExpressionArray::iterator eit =
             expr.sub_channels.begin();
           eit != expr.sub_channels.end(); ++eit)
       {
@@ -1379,7 +1379,7 @@ namespace CampaignSvcs
     }
     else if(expr.op == ExpressionChannel::AND)
     {
-      for(ExpressionChannel::Expression::ExpressionList::iterator eit =
+      for(ExpressionChannel::Expression::ExpressionArray::iterator eit =
             expr.sub_channels.begin();
           eit != expr.sub_channels.end(); )
       {
@@ -1397,7 +1397,7 @@ namespace CampaignSvcs
     }
     else if(expr.op == ExpressionChannel::AND_NOT)
     {
-      ExpressionChannel::Expression::ExpressionList::iterator eit =
+      ExpressionChannel::Expression::ExpressionArray::iterator eit =
         expr.sub_channels.begin();
 
       assert(!expr.sub_channels.empty());

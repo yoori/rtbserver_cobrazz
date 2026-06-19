@@ -29,12 +29,12 @@ namespace
   public:
     using EndpointChunks = AdServer::Grpc::DistributedPartitionPool<
       class TestRef>::EndpointChunks;
-    using EndpointChunksList = AdServer::Grpc::DistributedPartitionPool<
-      class TestRef>::EndpointChunksList;
+    using EndpointChunksArray = AdServer::Grpc::DistributedPartitionPool<
+      class TestRef>::EndpointChunksArray;
 
     void set_partition(
       std::string controller_url,
-      EndpointChunksList refs)
+      EndpointChunksArray refs)
     {
       std::lock_guard<std::mutex> lock(lock_);
       partitions_[std::move(controller_url)] = std::move(refs);
@@ -57,7 +57,7 @@ namespace
       return it == objects_.end() ? nullptr : it->second;
     }
 
-    std::optional<EndpointChunksList> resolve(const std::string& url)
+    std::optional<EndpointChunksArray> resolve(const std::string& url)
     {
       std::lock_guard<std::mutex> lock(lock_);
       ++resolve_count_[url];
@@ -89,7 +89,7 @@ namespace
 
   private:
     mutable std::mutex lock_;
-    std::map<std::string, EndpointChunksList> partitions_;
+    std::map<std::string, EndpointChunksArray> partitions_;
     std::map<std::string, std::shared_ptr<TestObj>> objects_;
     std::map<std::string, int> resolve_count_;
   };
@@ -143,13 +143,13 @@ namespace
     return std::make_shared<Pool>(
       "DistributedPartitionPoolTest",
       "Test",
-      Pool::ControllerRefList{{"controller-0"}, {"controller-1"}},
+      Pool::ControllerRefArray{{"controller-0"}, {"controller-1"}},
       AdServer::Grpc::BatchingOptions(),
       std::shared_ptr<AdServer::Grpc::GrpcExecutor>(),
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>(),
       nullptr,
       [controller](AdServer::Grpc::BasicControllerRefHolder& controller_ref)
-        -> std::optional<Pool::EndpointChunksList>
+        -> std::optional<Pool::EndpointChunksArray>
       {
         return controller->resolve(controller_ref.endpoint);
       },
@@ -175,10 +175,10 @@ namespace
     controller->add_object("ref-1", 1);
     controller->set_partition(
       "controller-0",
-      Pool::EndpointChunksList{endpoint_chunks("ref-0", {0})});
+      Pool::EndpointChunksArray{endpoint_chunks("ref-0", {0})});
     controller->set_partition(
       "controller-1",
-      Pool::EndpointChunksList{endpoint_chunks("ref-1", {0})});
+      Pool::EndpointChunksArray{endpoint_chunks("ref-1", {0})});
     return controller;
   }
 

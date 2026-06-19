@@ -1309,8 +1309,8 @@ private:
   make_file_name_(const DayTimestamp& date, std::string& file_name)
     /*throw(Exception, eh::Exception)*/;
 
-  typedef std::vector<unsigned char> ByteVector_;
-  typedef std::map<DayTimestamp, ByteVector_> CounterMap_;
+  typedef std::vector<unsigned char> ByteArray_;
+  typedef std::map<DayTimestamp, ByteArray_> CounterMap_;
 
   static const char CURRENT_FILE_VERSION_[];
   static const char EOF_MARKER_[];

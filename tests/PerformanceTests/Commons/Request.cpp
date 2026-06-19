@@ -167,7 +167,7 @@ BaseRequest::_body()
 void
 BaseRequest::headers(HeaderList& headers) const
 {
-  SelectorPolicyList::const_iterator it_header =
+  SelectorPolicyArray::const_iterator it_header =
     config_->headers().begin();
   for(; it_header != config_->headers().end(); ++it_header)
   {
@@ -266,7 +266,7 @@ ParamsRequest::_url(
 {
   if (!generate) return url_;
   url_ = server_ + config_->url;
-  SelectorPolicyList::const_iterator it_param =
+  SelectorPolicyArray::const_iterator it_param =
     config_->parameters().begin();
   unsigned int param_count = 0;
   for(; it_param != config_->parameters().end(); ++it_param)
@@ -552,7 +552,7 @@ UserBindRequest::_url(bool)
 {
   std::ostringstream url_stream;
   url_stream << server_ << config_->url;
-  SelectorPolicyList::const_iterator it_param =
+  SelectorPolicyArray::const_iterator it_param =
     config_->parameters().begin();
   unsigned int param_count = 0;
   for(; it_param != config_->parameters().end(); ++it_param)
@@ -697,7 +697,7 @@ OpenRTBRequest::_init()
 {
   AutoTest::OpenRTBRequest request;
 
-  SelectorPolicyList::const_iterator it_param =
+  SelectorPolicyArray::const_iterator it_param =
     config_->parameters().begin();
   for(; it_param != config_->parameters().end(); ++it_param)
   {

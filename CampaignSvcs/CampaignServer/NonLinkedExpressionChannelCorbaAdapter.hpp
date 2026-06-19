@@ -48,7 +48,7 @@ namespace AdServer
       expression_info.channel_id = expression.channel_id;
       expression_info.sub_channels.length(expression.sub_channels.size());
       CORBA::ULong ei = 0;
-      for(NonLinkedExpressionChannel::Expression::ExpressionList::const_iterator eit =
+      for(NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
             expression.sub_channels.begin();
           eit != expression.sub_channels.end(); ++eit, ++ei)
       {

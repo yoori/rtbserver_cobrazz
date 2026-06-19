@@ -168,8 +168,8 @@ namespace
     }
 
   private:
-    typedef std::vector<ProbabilityCounter> CounterList;
-    CounterList counts_;
+    typedef std::vector<ProbabilityCounter> CounterArray;
+    CounterArray counts_;
     size_t sample_size_;
   };
 }

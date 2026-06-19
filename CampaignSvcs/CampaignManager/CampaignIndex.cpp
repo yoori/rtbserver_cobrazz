@@ -2030,8 +2030,8 @@ namespace AdServer
       const Key& request_params,
       CampaignSelectionCellPtrList& wg_display_campaign_cell_list,
       CampaignSelectionCellPtrList& display_campaign_cell_list,
-      CampaignCellPtrList& text_campaign_cell_list,
-      CampaignCellPtrList& keyword_campaign_cell_list)
+      CampaignCellPtrArray& text_campaign_cell_list,
+      CampaignCellPtrArray& keyword_campaign_cell_list)
       const
     {
       IndexNodeList index_nodes;
@@ -2068,10 +2068,10 @@ namespace AdServer
       const Key& request_params,
       CampaignSelectionCellPtrList& result_wg_campaign_cell_list,
       CampaignSelectionCellPtrList& result_campaign_cell_list,
-      CampaignCellPtrList& result_text_campaign_cell_list,
-      CampaignCellPtrList& result_keyword_campaign_cell_list,
-      CampaignCellPtrList* result_lost_wg_campaign_cell_list,
-      CampaignCellPtrList* result_lost_campaign_cell_list)
+      CampaignCellPtrArray& result_text_campaign_cell_list,
+      CampaignCellPtrArray& result_keyword_campaign_cell_list,
+      CampaignCellPtrArray* result_lost_wg_campaign_cell_list,
+      CampaignCellPtrArray* result_lost_campaign_cell_list)
       const
     {
       IndexNodeList index_nodes;

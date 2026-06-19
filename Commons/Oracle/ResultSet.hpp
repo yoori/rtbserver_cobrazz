@@ -153,11 +153,11 @@ namespace AdServer
         };
 
         typedef ReferenceCounting::SmartPtr<Column> Column_var;
-        typedef std::vector<Column_var> ColumnList;
+        typedef std::vector<Column_var> ColumnArray;
 
       private:
         Statement_var statement_;
-        ColumnList columns_;
+        ColumnArray columns_;
         unsigned long fetch_count_;
         unsigned long rows_fetched_;
         unsigned long current_row_;

@@ -245,7 +245,7 @@ namespace AutoTest
     typedef std::string              value_type;
     typedef std::vector<std::string> values_type;
     typedef std::vector<values_type> values_list_type;
-    typedef ComparableList expects_type;
+    typedef ComparableArray expects_type;
     typedef std::vector<expects_type> expects_list_type;
     typedef std::vector<bool>        mask_type;
   protected:

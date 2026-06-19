@@ -194,7 +194,7 @@ WalledGardenTest::test_priority(
       }
       else
       {
-        AutoTest::ConsequenceActionList actions;
+        AutoTest::ConsequenceActionArray actions;
 
         // Send click requests
         if (CREATIVES[i].ccgtype == CT_CPC)
@@ -241,7 +241,7 @@ WalledGardenTest::test_case(const TestCase& testcase)
       // Send click requests
       if (CREATIVES[i].ccgtype == CT_CPC)
       {
-        AutoTest::ConsequenceActionList actions;
+        AutoTest::ConsequenceActionArray actions;
 
         std::list<std::string> expected_ccs;
 
@@ -400,7 +400,7 @@ WalledGardenTest::wg_foros_competition_case (
 
     if (!ccids[i].empty())
     {
-      AutoTest::ConsequenceActionList actions;
+      AutoTest::ConsequenceActionArray actions;
 
       // Send click requests
       actions.push_back(

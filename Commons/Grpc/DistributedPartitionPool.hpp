@@ -58,15 +58,15 @@ namespace AdServer::Grpc
       bool operator==(const EndpointChunks& rhs) const noexcept = default;
     };
 
-    using EndpointChunksList = std::vector<EndpointChunks>;
+    using EndpointChunksArray = std::vector<EndpointChunks>;
     using ControllerRefGroup = std::vector<std::string>;
-    using ControllerRefList = std::vector<ControllerRefGroup>;
+    using ControllerRefArray = std::vector<ControllerRefGroup>;
     using Client = ClientType;
     using ClientPtr = std::shared_ptr<Client>;
     using ControllerClient = ControllerClientType;
     using ControllerClientPtr = std::shared_ptr<ControllerClient>;
     using ResolvePartition = std::function<
-      std::optional<EndpointChunksList>(ControllerClient&)>;
+      std::optional<EndpointChunksArray>(ControllerClient&)>;
     using PartitionIndex = std::function<
       unsigned long(const std::string&, unsigned long)>;
     using ChunkIndex = std::function<
@@ -101,7 +101,7 @@ namespace AdServer::Grpc
     DistributedPartitionPool(
       std::string name,
       std::string log_aspect,
-      ControllerRefList controller_refs,
+      ControllerRefArray controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
@@ -131,7 +131,7 @@ namespace AdServer::Grpc
     struct Partition
     {
       std::map<unsigned long, PoolPtr> chunk_pools;
-      EndpointChunksList state;
+      EndpointChunksArray state;
       unsigned long max_chunk_number = 0;
       std::vector<RefHolderPtr> ref_holders;
     };
@@ -177,15 +177,15 @@ namespace AdServer::Grpc
     static void merge_stats_(
       AdServer::Grpc::Stats& result,
       const AdServer::Grpc::Stats& source) noexcept;
-    static ControllerRefList validate_controller_refs_(
-      ControllerRefList controller_refs,
+    static ControllerRefArray validate_controller_refs_(
+      ControllerRefArray controller_refs,
       const std::string& name);
 
   private:
     const std::string name_;
     const Generics::Time pool_timeout_;
     const Generics::Time resolve_period_;
-    const ControllerRefList controller_refs_;
+    const ControllerRefArray controller_refs_;
     const AdServer::Grpc::BatchingOptions batching_options_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>

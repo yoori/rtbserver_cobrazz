@@ -72,8 +72,8 @@ class ClientStorage : public virtual ReferenceCounting::Interface,
                       public virtual ReferenceCounting::AtomicImpl
 {
 
-  typedef std::map<unsigned long, RequestStorage_var> RequestStoragesList;
-  typedef RequestStoragesList::const_iterator ClientIterator;
+  typedef std::map<unsigned long, RequestStorage_var> RequestStoragesArray;
+  typedef RequestStoragesArray::const_iterator ClientIterator;
 
 public:
 
@@ -119,7 +119,7 @@ public:
 
 
 private:
-  RequestStoragesList requests_;  // request storages list
+  RequestStoragesArray requests_;  // request storages list
   ClientIterator current_client_; // current client
   size_t size_;                   // total request containers size
 };
@@ -134,7 +134,7 @@ class BenchmarkStorage
 {
 
   typedef std::map<unsigned long, AdServerClient_var> ClientMap;
-  typedef std::vector<ClientStorage_var> ClientStorageList;
+  typedef std::vector<ClientStorage_var> ClientStorageArray;
   typedef ClientMap::const_iterator ClientIterator;
   typedef Sync::PosixRWLock Mutex_;
   typedef Sync::PosixRGuard ReadGuard_;
@@ -218,7 +218,7 @@ public:
   Statistics* stats();
 
 private:
-  ClientStorageList storages_;        // clients storages list
+  ClientStorageArray storages_;        // clients storages list
   ClientMap clients_;                 // clients list
   ClientIterator current_client_;     // current client
   Statistics* stats_;                 // statistics

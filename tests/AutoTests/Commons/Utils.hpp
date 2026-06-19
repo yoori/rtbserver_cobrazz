@@ -1145,5 +1145,5 @@ namespace AutoTest
   };
 
   typedef ValueWrapperVar<Comparable> ComparableVar;
-  typedef std::vector<ComparableVar> ComparableList;
+  typedef std::vector<ComparableVar> ComparableArray;
 }
