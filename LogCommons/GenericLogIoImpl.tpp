@@ -1,5 +1,6 @@
 #pragma once
 
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/StatCollector.hpp>
 
 namespace AdServer {
@@ -85,6 +86,54 @@ namespace LogProcessing {
     }
   };
 
+  namespace BufferWriterDump
+  {
+    template <typename Value>
+    void
+    write_value(BufferWriter& out, const Value& value)
+    {
+      out << value;
+    }
+
+    template <class DATA_, bool USE_FIXED_BUF_STREAM_, bool STOP_>
+    void
+    write_value(
+      BufferWriter& out,
+      const SeqCollector<DATA_, USE_FIXED_BUF_STREAM_, STOP_>& collector)
+    {
+      for (auto it = collector.begin(); it != collector.end(); ++it)
+      {
+        out << *it << '\n';
+      }
+    }
+
+    template <
+      class KEY_,
+      class DATA_,
+      bool EXCLUDE_NULL_VALUES_,
+      bool USE_FIXED_BUF_STREAM_,
+      bool STOP_AT_BLANK_LINE_,
+      bool ORDERED_>
+    void
+    write_value(
+      BufferWriter& out,
+      const StatCollector<
+        KEY_,
+        DATA_,
+        EXCLUDE_NULL_VALUES_,
+        USE_FIXED_BUF_STREAM_,
+        STOP_AT_BLANK_LINE_,
+        ORDERED_>& collector)
+    {
+      for (auto it = collector.begin(); it != collector.end(); ++it)
+      {
+        out << it->first << '\t';
+        write_value(out, it->second);
+        out << '\n';
+      }
+    }
+  }
+
   template <class LOG_TYPE_TRAITS_>
   struct DefaultSaveStrategy
   {
@@ -94,6 +143,12 @@ namespace LogProcessing {
     save(std::ostream& o, const CollectorT& collector) const
     {
       o << collector;
+    }
+
+    void
+    save(BufferWriter& o, const CollectorT& collector) const
+    {
+      BufferWriterDump::write_value(o, collector);
     }
   };
 
@@ -114,6 +169,22 @@ namespace LogProcessing {
         }
 
         o << it->first << '\n' << it->second;
+      }
+    }
+
+    void
+    save(BufferWriter& o, const CollectorT& collector) const
+    {
+      for (typename CollectorT::const_iterator it = collector.begin();
+        it != collector.end(); ++it)
+      {
+        if (it != collector.begin())
+        {
+          o << '\n';
+        }
+
+        o << it->first << '\n';
+        BufferWriterDump::write_value(o, it->second);
       }
     }
   };
@@ -183,9 +254,10 @@ namespace LogProcessing {
       }
 
       filenames = make_log_file_name_pair(name_info, path_);
-      std::ofstream ofs(filenames.second.c_str());
+      const std::size_t BUFFER_LIMIT = 1024 * 1024;
+      BufferWriter ofs(filenames.second.c_str(), BUFFER_LIMIT);
 
-      if (!ofs)
+      if (!ofs.good())
       {
         Stream::Error es;
         es << __PRETTY_FUNCTION__ << ": Error: "
@@ -195,7 +267,7 @@ namespace LogProcessing {
 
       typename LOG_TYPE_TRAITS_::HeaderType log_header(LOG_TYPE_TRAITS_::current_version());
       ofs << log_header;
-      if (!ofs)
+      if (!ofs.good())
       {
         Stream::Error es;
         es << __PRETTY_FUNCTION__ << ": Error: Failed to write log header";
@@ -205,7 +277,7 @@ namespace LogProcessing {
       SaveStrategy().save(ofs, collector);
       ofs.close();
 
-      if (!ofs)
+      if (!ofs.good())
       {
         Stream::Error es;
         es << __PRETTY_FUNCTION__ << ": Error: Failed to write log data "

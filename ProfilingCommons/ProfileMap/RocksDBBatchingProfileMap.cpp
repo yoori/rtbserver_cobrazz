@@ -10,6 +10,8 @@
 
 #include <Stream/MemoryStream.hpp>
 
+#include <Commons/ThreadName.hpp>
+
 #include "RocksDBBatchingProfileMap.hpp"
 
 namespace AdServer::ProfilingCommons
@@ -424,6 +426,8 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::worker_loop_() noexcept
   {
+    AdServer::Commons::set_current_thread_name("rocksdb-batching");
+
     Operations batch;
     BatchScratch scratch;
 

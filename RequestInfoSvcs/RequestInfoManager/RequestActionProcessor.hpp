@@ -30,6 +30,7 @@ namespace AdServer
     static const AdServer::Commons::UserId OPTOUT_USER_ID("OOOOOOOOOOOOOOOOOOOOOA..");
 
     typedef AdServer::CampaignSvcs::RevenueDecimal RevenueDecimal;
+    typedef AdServer::CampaignSvcs::ImpRevenueDecimal ImpRevenueDecimal;
     typedef AdServer::CampaignSvcs::DeliveryThresholdDecimal DeliveryThresholdDecimal;
 
     // RequestInfo

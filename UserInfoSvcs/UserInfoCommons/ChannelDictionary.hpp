@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <unordered_map>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/Time.hpp>
@@ -218,11 +219,7 @@ namespace AdServer
         Generics::GnuHashTable<ChannelIdHash, ChannelIntervalsPack_var>::value_type, 256, true> >
       ChannelsHashMap;
 
-    typedef Generics::GnuHashTable<
-      ChannelIdHash,
-      ChannelFeatures,
-      Generics::TAlloc::AllocOnly<
-        Generics::GnuHashTable<ChannelIdHash, ChannelFeatures>::value_type, 256, true> >
+    typedef std::unordered_map<unsigned long, ChannelFeatures>
       ChannelFeaturesMap;
 
     struct ChannelDictionary: public ReferenceCounting::AtomicImpl

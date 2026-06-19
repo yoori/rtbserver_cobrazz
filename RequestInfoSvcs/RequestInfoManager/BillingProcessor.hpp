@@ -51,8 +51,8 @@ namespace AdServer
           Mode mode_val,
           const RevenueDecimal& account_amount_val,
           const RevenueDecimal& amount_val,
-          const RevenueDecimal& imps_val,
-          const RevenueDecimal& clicks_val)
+          const ImpRevenueDecimal& imps_val,
+          const ImpRevenueDecimal& clicks_val)
           noexcept;
 
         Request(
@@ -66,8 +66,8 @@ namespace AdServer
           const Generics::Time& first_request_time_val,
           const RevenueDecimal& account_amount_val,
           const RevenueDecimal& amount_val,
-          const RevenueDecimal& imps_val,
-          const RevenueDecimal& clicks_val)
+          const ImpRevenueDecimal& imps_val,
+          const ImpRevenueDecimal& clicks_val)
           noexcept;
 
         // return true of first_request_time changed
@@ -96,8 +96,8 @@ namespace AdServer
         Generics::Time first_request_time;
         RevenueDecimal account_amount;
         RevenueDecimal amount;
-        RevenueDecimal imps;
-        RevenueDecimal clicks;
+        ImpRevenueDecimal imps;
+        ImpRevenueDecimal clicks;
 
       protected:
         virtual ~Request() noexcept = default;

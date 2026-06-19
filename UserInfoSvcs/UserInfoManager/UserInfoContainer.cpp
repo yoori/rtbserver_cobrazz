@@ -2549,11 +2549,10 @@ namespace UserInfoSvcs
           user_app.last_request = matching.last_request();
         }
 
-        bool need_history_optimize =
-          matching.need_history_optimization(
-            match_time,
-            history_optimization_period_,
-            current_time_offset);
+        bool need_history_optimize = matching.need_history_optimization(
+          match_time,
+          history_optimization_period_,
+          current_time_offset);
 
         new_user =
           !match_to_additional &&
@@ -2982,8 +2981,7 @@ namespace UserInfoSvcs
     return cm.create_time();
   }
 
-  void UserInfoContainer::filter_channel_thresholds_(
-    ChannelMatchMap& channels)
+  void UserInfoContainer::filter_channel_thresholds_(ChannelMatchMap& channels)
     /*throw(NotReady, Exception)*/
   {
     static const char* FUN = "UserInfoContainer::filter_channel_thresholds_()";
@@ -3000,13 +2998,11 @@ namespace UserInfoSvcs
       ChannelMatchMap::iterator ch_it = channels.begin();
       const ChannelFeaturesMap& channel_features = channel_rules->channel_features;
 
-      while(ch_it != channels.end())
+      while (ch_it != channels.end())
       {
-        ChannelFeaturesMap::const_iterator f_it =
-          channel_features.find(ch_it->first);
+        auto f_it = channel_features.find(ch_it->first);
 
-        if(f_it != channel_features.end() &&
-           ch_it->second < f_it->second.threshold)
+        if(f_it != channel_features.end() && ch_it->second < f_it->second.threshold)
         {
           channels.erase(ch_it++);
         }
@@ -3038,18 +3034,10 @@ namespace UserInfoSvcs
     {
       UserProfileMap::Transaction_var fc_profile_trans =
         freq_cap_profiles_->get_transaction(user_id, true, op_priority);
-
       ConstSmartMemBuf_var fc_mem_buf = fc_profile_trans->get_profile();
-
       UserFreqCapProfile profile(fc_mem_buf);
-
-      profile.consider_publishers_optin(
-        publisher_account_ids,
-        now);
-
-      fc_profile_trans->save_profile(
-        profile.transfer_membuf(),
-        now);
+      profile.consider_publishers_optin(publisher_account_ids, now);
+      fc_profile_trans->save_profile(profile.transfer_membuf(), now);
     }
     catch(const UserProfileMap::ChunkNotFound& ex)
     {

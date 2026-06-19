@@ -6,6 +6,7 @@ add_library(LogCommons SHARED
   ActionStat.cpp
   AdRequestLogger.cpp
   BidCostStat.cpp
+  BufferWriter.cpp
   CampaignReferrerStat.cpp
   CampaignUserStat.cpp
   CcUserStat.cpp
@@ -76,7 +77,6 @@ target_link_libraries(LogCommons
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
 
 
 

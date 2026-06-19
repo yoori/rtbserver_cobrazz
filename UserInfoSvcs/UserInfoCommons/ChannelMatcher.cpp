@@ -1772,8 +1772,7 @@ namespace AdServer
       const Generics::Time& now,
       const ChannelsHashMap& channels)
     {
-      for (auto it = ciw.session_matches().begin();
-        it != ciw.session_matches().end(); ++it)
+      for (auto it = ciw.session_matches().begin(); it != ciw.session_matches().end(); ++it)
       {
         ChannelsHashMap::const_iterator cit = channels.find((*it).channel_id());
 
@@ -1809,8 +1808,7 @@ namespace AdServer
         }
       }
 
-      for (auto it = ciw.ht_candidates().begin();
-        it != ciw.ht_candidates().end(); ++it)
+      for (auto it = ciw.ht_candidates().begin(); it != ciw.ht_candidates().end(); ++it)
       {
         if ((*it).req_visits() == 0)
         {
@@ -1818,8 +1816,7 @@ namespace AdServer
         }
       }
 
-      for (auto it = ciw.history_matches().begin();
-        it != ciw.history_matches().end(); ++it)
+      for (auto it = ciw.history_matches().begin(); it != ciw.history_matches().end(); ++it)
       {
         add_weight_(result_channels, (*it).channel_id(), (*it).weight());
       }

@@ -31,6 +31,8 @@
 namespace AdServer {
 namespace LogProcessing {
 
+class BufferWriter;
+
 DECLARE_EXCEPTION(InvalidArgValue, eh::DescriptiveException);
 DECLARE_EXCEPTION(ConstraintViolation, eh::DescriptiveException);
 DECLARE_EXCEPTION(InvalidLogFileNameFormat, eh::DescriptiveException);

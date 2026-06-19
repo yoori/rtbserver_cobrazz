@@ -1,6 +1,8 @@
 
 #include <algorithm>
 #include "RequestBasicChannels.hpp"
+#include "BufferWriter.hpp"
+
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -485,6 +487,16 @@ operator<<(
   return os;
 }
 
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::TriggerMatch& match
+)
+{
+  out << match.channel_id << TRIGGER_MATCH_SEP << match.channel_trigger_id;
+  return out;
+}
+
 std::ostream&
 operator<<(
   std::ostream& os,
@@ -503,6 +515,15 @@ operator<<(
   return os;
 }
 
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::TriggerMatchList& trigger_matches
+)
+{
+  return write_sequence_(out, trigger_matches, ',');
+}
+
 std::ostream&
 operator<<(
   std::ostream& os,
@@ -512,6 +533,17 @@ operator<<(
   os << ad_imp.data_->revenue << ASI_SEP1;
   os << ad_imp.data_->impression_channels;
   return os;
+}
+
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::AdSlotImpression& ad_imp
+)
+{
+  out << ad_imp.revenue() << ASI_SEP1
+    << ad_imp.impression_channels();
+  return out;
 }
 
 std::ostream&
@@ -524,6 +556,18 @@ operator<<(
   os << absi.data_->revenue_bid << ABSI_SEP1;
   os << absi.data_->impression_channels;
   return os;
+}
+
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::AdBidSlotImpression& absi
+)
+{
+  out << absi.revenue() << ABSI_SEP1
+    << absi.revenue_bid() << ABSI_SEP1
+    << absi.impression_channels();
+  return out;
 }
 
 std::ostream&
@@ -544,6 +588,15 @@ operator<<(
   return os;
 }
 
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::AdBidSlotImpressionList& absi_list
+)
+{
+  return write_sequence_(out, absi_list, ABSI_SEP2);
+}
+
 std::ostream&
 operator<<(
   std::ostream& os,
@@ -559,6 +612,23 @@ operator<<(
   os << ad_req.data_->ad_select << '\t';
   os << put_auction_type(ad_req.data_->auction_type);
   return os;
+}
+
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::AdRequestProps& ad_req
+)
+{
+  out << ad_req.sizes() << '\t'
+    << StringIoWrapperOptional(ad_req.country_code()) << '\t'
+    << ad_req.max_text_ads() << '\t'
+    << ad_req.text_ad_cost_threshold() << '\t'
+    << ad_req.display_ad_shown() << '\t'
+    << ad_req.text_ad_shown() << '\t'
+    << ad_req.ad_select() << '\t'
+    << put_auction_type(ad_req.auction_type());
+  return out;
 }
 
 std::ostream&
@@ -577,6 +647,21 @@ operator<<(
   return os;
 }
 
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::AdSelectProps& ad_select
+)
+{
+  out << ad_select.tag_id() << AD_SELECT_FIELD_SEPARATOR
+    << SpacesMarksString(ad_select.size()) << AD_SELECT_FIELD_SEPARATOR
+    << SpacesMarksString(ad_select.format()) << AD_SELECT_FIELD_SEPARATOR
+    << ad_select.test_request() << AD_SELECT_FIELD_SEPARATOR
+    << ad_select.profiling_available() << AD_SELECT_FIELD_SEPARATOR
+    << ad_select.full_freq_caps();
+  return out;
+}
+
 std::ostream&
 operator<<(
   std::ostream& os,
@@ -591,13 +676,41 @@ operator<<(
   return os;
 }
 
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const RequestBasicChannelsInnerData::Match& match_request
+)
+{
+  out << match_request.history_channels() << '\t'
+    << match_request.page_trigger_channels() << '\t'
+    << match_request.search_trigger_channels() << '\t'
+    << match_request.url_trigger_channels() << '\t'
+    << match_request.url_keyword_trigger_channels() << '\t';
+  return out;
+}
+
 std::ostream&
 operator<<(std::ostream& os, const RequestBasicChannelsInnerData& data)
   /*throw(eh::Exception)*/
 {
-  TabOutputArchive oa(os);
-  oa << *data.holder_;
+  BufferWriter writer(512);
+  writer << data;
+  writer.write_to(os);
   return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const RequestBasicChannelsInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  data.holder_->invariant();
+  out << data.holder_->user_type << '\t'
+    << data.holder_->user_id << '\t'
+    << data.holder_->temporary_user_id << '\t'
+    << data.holder_->match_request << '\t'
+    << data.holder_->ad_request;
+  return out;
 }
 
 } // namespace LogProcessing

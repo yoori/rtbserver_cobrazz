@@ -5758,8 +5758,8 @@ namespace AdServer::CampaignSvcs
               campaign->account && campaign->account->cost_is_gross() ?
                 amount + comm_amount : amount,
               cc_it->ctr,
-              RevenueDecimal(false, rate_type == CR_CPM || rate_type == CR_MAXBID ? 1 : 0, 0),
-              RevenueDecimal(false, rate_type == CR_CPC ? 1 : 0, 0),
+              ImpRevenueDecimal(false, rate_type == CR_CPM || rate_type == CR_MAXBID ? 1 : 0, 0),
+              ImpRevenueDecimal(false, rate_type == CR_CPC ? 1 : 0, 0),
               campaign);
 
           apply_check_available_bid_result_(
@@ -5848,8 +5848,8 @@ namespace AdServer::CampaignSvcs
               campaign->account && campaign->account->cost_is_gross() ?
                 amount + comm_amount : amount,
               cc_it->ctr,
-              RevenueDecimal(false, rate_type == CR_CPM || rate_type == CR_MAXBID ? 1 : 0, 0),
-              RevenueDecimal(false, rate_type == CR_CPC ? 1 : 0, 0),
+              ImpRevenueDecimal(false, rate_type == CR_CPM || rate_type == CR_MAXBID ? 1 : 0, 0),
+              ImpRevenueDecimal(false, rate_type == CR_CPC ? 1 : 0, 0),
               campaign);
 
           apply_check_available_bid_result_(

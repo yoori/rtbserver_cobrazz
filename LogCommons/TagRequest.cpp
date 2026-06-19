@@ -1,5 +1,7 @@
 
 #include "TagRequest.hpp"
+#include "BufferWriter.hpp"
+
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -134,6 +136,21 @@ operator<<(
   return os;
 }
 
+BufferWriter&
+operator<<(
+  BufferWriter& out,
+  const TagRequestData::OptInSection& opt_in_sect
+)
+{
+  out << opt_in_sect.site_id() << '\t'
+    << opt_in_sect.user_id() << '\t'
+    << opt_in_sect.page_load_id() << '\t'
+    << opt_in_sect.ad_shown() << '\t'
+    << opt_in_sect.profile_referer() << '\t'
+    << StringIoWrapperOptional(opt_in_sect.user_agent());
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, TagRequestData& data)
   /*throw(eh::Exception)*/
@@ -169,35 +186,50 @@ std::ostream&
 operator<<(std::ostream& os, const TagRequestData& data)
   /*throw(eh::Exception)*/
 {
+  BufferWriter writer(512);
+  writer << data;
+  writer.write_to(os);
+  return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const TagRequestData& data)
+  /*throw(eh::Exception)*/
+{
   data.invariant();
 
-  TabOutputArchive oa(os);
-  oa & data.time_
-     & data.isp_time_
-     & data.test_request_
-     & data.colo_id_
-     & data.tag_id_
-     & data.size_id_
-     & data.ext_tag_id_
-     & data.referer_
-     & data.full_referer_hash_
-     & data.user_status_
-     & data.country_
-     & data.passback_request_id_
-     & data.floor_cost_;
+  out << data.time_ << '\t'
+    << data.isp_time_ << '\t'
+    << data.test_request_ << '\t'
+    << data.colo_id_ << '\t'
+    << data.tag_id_ << '\t'
+    << data.size_id_ << '\t'
+    << data.ext_tag_id_ << '\t'
+    << data.referer_ << '\t'
+    << data.full_referer_hash_ << '\t'
+    << data.user_status_ << '\t'
+    << data.country_ << '\t'
+    << data.passback_request_id_ << '\t'
+    << data.floor_cost_ << '\t';
 
   if (data.urls_.empty())
   {
-    oa & "-";
+    out << '-';
   }
   else
   {
-    output_sequence(os, data.urls_, " ");
-    os << '\t';
+    for (auto it = data.urls_.begin(); it != data.urls_.end(); ++it)
+    {
+      if (it != data.urls_.begin())
+      {
+        out << ' ';
+      }
+      out << *it;
+    }
   }
 
-  oa ^ data.opt_in_section_;
-  return os;
+  out << '\t' << data.opt_in_section_;
+  return out;
 }
 
 } // namespace LogProcessing

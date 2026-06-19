@@ -1145,6 +1145,11 @@ public:
   operator<<(std::ostream& os, const TagRequestData& data)
     /*throw(eh::Exception)*/;
 
+  friend
+  BufferWriter&
+  operator<<(BufferWriter& out, const TagRequestData& data)
+    /*throw(eh::Exception)*/;
+
 private:
   void invariant() const /*throw(eh::Exception)*/
   {

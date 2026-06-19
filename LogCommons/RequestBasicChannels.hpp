@@ -2537,6 +2537,10 @@ public:
   operator<<(std::ostream& os, const RequestBasicChannelsInnerData& data)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const RequestBasicChannelsInnerData& data)
+    /*throw(eh::Exception)*/;
+
 private:
   class DataHolder: public ReferenceCounting::AtomicImpl
   {

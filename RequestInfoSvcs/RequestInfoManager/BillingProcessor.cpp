@@ -62,8 +62,8 @@ namespace RequestInfoSvcs
       const RevenueDecimal& ctr,
       const RevenueDecimal& account_amount,
       const RevenueDecimal& amount,
-      const RevenueDecimal& imps,
-      const RevenueDecimal& clicks,
+      const ImpRevenueDecimal& imps,
+      const ImpRevenueDecimal& clicks,
       bool check_active = true)
       /*throw(Exception)*/;
 
@@ -415,8 +415,8 @@ namespace RequestInfoSvcs
     Mode mode_val,
     const RevenueDecimal& account_amount_val,
     const RevenueDecimal& amount_val,
-    const RevenueDecimal& imps_val,
-    const RevenueDecimal& clicks_val)
+    const ImpRevenueDecimal& imps_val,
+    const ImpRevenueDecimal& clicks_val)
     noexcept
     : rounded_time(time_val.tv_sec / Generics::Time::ONE_HOUR.tv_sec * Generics::Time::ONE_HOUR.tv_sec),
       account_id(account_id_val),
@@ -443,8 +443,8 @@ namespace RequestInfoSvcs
     const Generics::Time& first_request_time_val,
     const RevenueDecimal& account_amount_val,
     const RevenueDecimal& amount_val,
-    const RevenueDecimal& imps_val,
-    const RevenueDecimal& clicks_val)
+    const ImpRevenueDecimal& imps_val,
+    const ImpRevenueDecimal& clicks_val)
     noexcept
     : rounded_time(rounded_time_val),
       account_id(account_id_val),
@@ -508,8 +508,8 @@ namespace RequestInfoSvcs
       prefix << "first_request_time: " << first_request_time.gm_ft() << std::endl <<
       prefix << "account_amount: " << account_amount << std::endl <<
       prefix << "amount: " << amount << std::endl <<
-      prefix << "imps: " << imps << std::endl <<
-      prefix << "clicks: " << clicks;
+      prefix << "imps: " << imps.str() << std::endl <<
+      prefix << "clicks: " << clicks.str();
   }
 
   // BillingProcessor::RequestPool::AggregateRequestHashAdapter impl
@@ -738,8 +738,8 @@ namespace RequestInfoSvcs
     const RevenueDecimal& ctr,
     const RevenueDecimal& account_amount,
     const RevenueDecimal& amount,
-    const RevenueDecimal& imps,
-    const RevenueDecimal& clicks,
+    const ImpRevenueDecimal& imps,
+    const ImpRevenueDecimal& clicks,
     bool check_active)
     /*throw(Exception)*/
   {
@@ -800,13 +800,13 @@ namespace RequestInfoSvcs
         // divide amount between servers
         RevenueDecimal first_account_amount;
         RevenueDecimal first_amount;
-        RevenueDecimal first_imps;
-        RevenueDecimal first_clicks;
+        ImpRevenueDecimal first_imps;
+        ImpRevenueDecimal first_clicks;
 
         RevenueDecimal non_first_account_amount;
         RevenueDecimal non_first_amount;
-        RevenueDecimal non_first_imps;
-        RevenueDecimal non_first_clicks;
+        ImpRevenueDecimal non_first_imps;
+        ImpRevenueDecimal non_first_clicks;
 
         {
           RevenueDecimal account_amount_div_reminder;
@@ -824,17 +824,17 @@ namespace RequestInfoSvcs
             amount_div_reminder);
           first_amount = non_first_amount + amount_div_reminder;
 
-          RevenueDecimal imps_div_reminder;
-          non_first_imps = RevenueDecimal::div(
+          ImpRevenueDecimal imps_div_reminder;
+          non_first_imps = ImpRevenueDecimal::div(
             (*req_it)->imps,
-            RevenueDecimal(false, servers_.size(), 0),
+            ImpRevenueDecimal(false, servers_.size(), 0),
             imps_div_reminder);
           first_imps = non_first_imps + imps_div_reminder;
 
-          RevenueDecimal clicks_div_reminder;
-          non_first_clicks = RevenueDecimal::div(
+          ImpRevenueDecimal clicks_div_reminder;
+          non_first_clicks = ImpRevenueDecimal::div(
             (*req_it)->clicks,
-            RevenueDecimal(false, servers_.size(), 0),
+            ImpRevenueDecimal(false, servers_.size(), 0),
             clicks_div_reminder);
           first_clicks = non_first_clicks + clicks_div_reminder;
         }
@@ -1660,10 +1660,10 @@ namespace RequestInfoSvcs
         RevenueDecimal amount(amount_str);
         RevenueDecimal ctr = !ctr_str.empty() ?
           RevenueDecimal(ctr_str) : RevenueDecimal::ZERO;
-        RevenueDecimal imps = !imps_str.empty() ?
-          RevenueDecimal(imps_str) : RevenueDecimal::ZERO;
-        RevenueDecimal clicks = !clicks_str.empty() ?
-          RevenueDecimal(clicks_str) : RevenueDecimal::ZERO;
+        ImpRevenueDecimal imps = !imps_str.empty() ?
+          ImpRevenueDecimal(imps_str) : ImpRevenueDecimal::ZERO;
+        ImpRevenueDecimal clicks = !clicks_str.empty() ?
+          ImpRevenueDecimal(clicks_str) : ImpRevenueDecimal::ZERO;
 
         add(date,
           account_id,
@@ -1739,8 +1739,8 @@ namespace RequestInfoSvcs
         agg_it->request()->account_amount << '\t' <<
         agg_it->request()->amount << '\t' <<
         agg_it->request()->ctr << '\t' <<
-        agg_it->request()->imps << '\t' <<
-        agg_it->request()->clicks;
+        agg_it->request()->imps.str() << '\t' <<
+        agg_it->request()->clicks.str();
     }
   }
 
@@ -2003,9 +2003,9 @@ namespace RequestInfoSvcs
           remainder_request.confirm_bid().account_spent_budget());
         result->amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
           remainder_request.confirm_bid().spent_budget());
-        result->imps = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+        result->imps = GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
           remainder_request.confirm_bid().imps());
-        result->clicks = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+        result->clicks = GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
           remainder_request.confirm_bid().clicks());
         remind_requests.push_back(result);
       }
@@ -2118,8 +2118,8 @@ namespace RequestInfoSvcs
         RevenueDecimal(ri.adv_revenue.impression +
           ri.delta_adv_revenue.impression + ri.adv_payable_comm_amount.impression).negate(),
         RevenueDecimal(ri.adv_revenue.impression + ri.delta_adv_revenue.impression).negate(),
-        RevenueDecimal(true, 1, 0), // imps: -1
-        RevenueDecimal::ZERO // clicks
+        ImpRevenueDecimal(true, 1, 0), // imps: -1
+        ImpRevenueDecimal::ZERO // clicks
         );
     }
     // corection on normal impression (delta_adv_revenue)
@@ -2135,8 +2135,8 @@ namespace RequestInfoSvcs
         ri.ctr,
         RevenueDecimal(ri.delta_adv_revenue.impression).negate(), // account amount
         RevenueDecimal(ri.delta_adv_revenue.impression).negate(), // campaign & ccg amount
-        RevenueDecimal::ZERO, // imps
-        RevenueDecimal::ZERO // clicks
+        ImpRevenueDecimal::ZERO, // imps
+        ImpRevenueDecimal::ZERO // clicks
         );
     }
   }
@@ -2160,8 +2160,8 @@ namespace RequestInfoSvcs
         RevenueDecimal(ri.adv_revenue.click +
           ri.delta_adv_revenue.click + ri.adv_payable_comm_amount.click).negate(),
         RevenueDecimal(ri.adv_revenue.click + ri.delta_adv_revenue.click).negate(),
-        RevenueDecimal::ZERO, // imps
-        RevenueDecimal(true, 1, 0) // clicks: -1
+        ImpRevenueDecimal::ZERO, // imps
+        ImpRevenueDecimal(true, 1, 0) // clicks: -1
         );
     }
     // corection on normal impression (delta_adv_revenue)
@@ -2177,8 +2177,8 @@ namespace RequestInfoSvcs
         ri.ctr,
         RevenueDecimal(ri.delta_adv_revenue.click).negate(), // account amount
         RevenueDecimal(ri.delta_adv_revenue.click).negate(), // campaign & ccg amount
-        RevenueDecimal::ZERO, // imps
-        RevenueDecimal::ZERO // clicks
+        ImpRevenueDecimal::ZERO, // imps
+        ImpRevenueDecimal::ZERO // clicks
         );
     }
   }

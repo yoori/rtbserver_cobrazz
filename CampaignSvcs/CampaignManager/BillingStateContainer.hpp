@@ -89,8 +89,8 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& account_spent_amount,
       const RevenueDecimal& spent_amount,
       const RevenueDecimal& ctr,
-      const RevenueDecimal& imps,
-      const RevenueDecimal& clicks,
+      const ImpRevenueDecimal& imps,
+      const ImpRevenueDecimal& clicks,
       const AvailableAndMinCTRSetter* ccg_setter)
       noexcept;
 
@@ -104,8 +104,8 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& account_spent_amount,
       const RevenueDecimal& spent_amount,
       const RevenueDecimal& ctr,
-      const RevenueDecimal& imps,
-      const RevenueDecimal& clicks,
+      const ImpRevenueDecimal& imps,
+      const ImpRevenueDecimal& clicks,
       const AvailableAndMinCTRSetter* ccg_setter);
 
     BidCheckResult
