@@ -1,5 +1,6 @@
 #include <boost/asio.hpp>
 
+#include <algorithm>
 #include <deque>
 #include <map>
 #include <stdexcept>
@@ -62,6 +63,60 @@ namespace AdServer::CampaignSvcs
       return value.empty() ?
         RevenueDecimal::ZERO :
         GrpcAlgs::unpack_decimal<RevenueDecimal>(value);
+    }
+
+    void
+    merge_grpc_stats_(
+      AdServer::Grpc::Stats& result,
+      const AdServer::Grpc::Stats& source) noexcept
+    {
+      result.write_batches += source.write_batches;
+      result.write_items += source.write_items;
+      result.read_batches += source.read_batches;
+      result.read_items += source.read_items;
+      result.input_items += source.input_items;
+      result.completed_items += source.completed_items;
+      result.completed_error_items += source.completed_error_items;
+      result.queue_wait_count += source.queue_wait_count;
+      result.queue_wait_sum_us += source.queue_wait_sum_us;
+      result.queue_wait_max_us =
+        std::max(result.queue_wait_max_us, source.queue_wait_max_us);
+      result.queue_timeout_count += source.queue_timeout_count;
+      result.response_wait_count += source.response_wait_count;
+      result.response_wait_sum_us += source.response_wait_sum_us;
+      result.response_wait_max_us =
+        std::max(result.response_wait_max_us, source.response_wait_max_us);
+      result.timing_coalesce_items += source.timing_coalesce_items;
+      result.max_streams = std::max(result.max_streams, source.max_streams);
+      result.inflight_items += source.inflight_items;
+      result.stream_inflight_items += source.stream_inflight_items;
+      result.queue_items += source.queue_items;
+      result.pending_batches += source.pending_batches;
+      result.pending_batch_items += source.pending_batch_items;
+      result.active_streams += source.active_streams;
+      result.available_streams += source.available_streams;
+      result.connecting_streams += source.connecting_streams;
+      result.draining_streams += source.draining_streams;
+      result.deferred_streams += source.deferred_streams;
+
+      if(source.consumer_stream_write.has_value())
+      {
+        if(!result.consumer_stream_write.has_value())
+        {
+          result.consumer_stream_write =
+            AdServer::Grpc::Stats::ConsumerStreamWrite();
+        }
+
+        result.consumer_stream_write->count +=
+          source.consumer_stream_write->count;
+        result.consumer_stream_write->sum_us +=
+          source.consumer_stream_write->sum_us;
+        result.consumer_stream_write->max_us = std::max(
+          result.consumer_stream_write->max_us,
+          source.consumer_stream_write->max_us);
+      }
+
+      AdServer::Grpc::merge_last_error(result, source);
     }
 
     std::string
@@ -232,6 +287,9 @@ namespace AdServer::CampaignSvcs
 
     void
     clear_cache() noexcept;
+
+    BillingStateContainer::Stats
+    stats() const noexcept;
 
   private:
     unsigned long
@@ -477,11 +535,34 @@ namespace AdServer::CampaignSvcs
     impl_->clear_cache();
   }
 
+  BillingStateContainer::Stats
+  BillingStateContainer::stats() const noexcept
+  {
+    return impl_->stats();
+  }
+
   void
   BillingStateContainer::Impl::clear_cache() noexcept
   {
     SyncPolicy::WriteGuard lock(lock_);
     cache_.clear();
+  }
+
+  BillingStateContainer::Stats
+  BillingStateContainer::Impl::stats() const noexcept
+  {
+    BillingStateContainer::Stats result;
+    result.endpoints.reserve(billing_servers_.size());
+
+    for(const auto& billing_server : billing_servers_)
+    {
+      const auto stats = static_cast<const AdServer::Grpc::Client&>(
+        *billing_server.client).stats();
+      merge_grpc_stats_(result.total, stats);
+      result.endpoints.emplace_back(billing_server.endpoint, stats);
+    }
+
+    return result;
   }
 
   AdServer::Commons::Task<BillingStateContainer::BidCheckResult>

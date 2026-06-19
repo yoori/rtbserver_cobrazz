@@ -531,6 +531,22 @@ namespace AdServer::CampaignSvcs
     return config_index.in() != 0;
   }
 
+  BillingStateContainer::Stats
+  CampaignManagerCore::billing_server_stats() const noexcept
+  {
+    if(check_billing_state_container_)
+    {
+      return check_billing_state_container_->stats();
+    }
+
+    if(confirm_billing_state_container_)
+    {
+      return confirm_billing_state_container_->stats();
+    }
+
+    return BillingStateContainer::Stats();
+  }
+
   bool
   CampaignManagerCore::match_geo_channels_(
     const std::vector<GeoInfo>& location,

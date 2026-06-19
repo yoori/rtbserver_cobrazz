@@ -69,6 +69,314 @@ namespace
       object,
       [](Generics::ActiveObject*) {});
   }
+
+  std::string
+  sanitize_endpoint_key_(const std::string& endpoint)
+  {
+    std::string result;
+    result.reserve(endpoint.size());
+    for(const char ch : endpoint)
+    {
+      if((ch >= 'a' && ch <= 'z') ||
+        (ch >= 'A' && ch <= 'Z') ||
+        (ch >= '0' && ch <= '9'))
+      {
+        result += ch;
+      }
+      else
+      {
+        result += '_';
+      }
+    }
+
+    return result.empty() ? std::string("unknown") : result;
+  }
+
+  void
+  append_json_string_(std::string& body, const std::string& value)
+  {
+    static const char HEX[] = "0123456789abcdef";
+
+    body += '"';
+    for(const unsigned char ch : value)
+    {
+      switch(ch)
+      {
+      case '"':
+        body += "\\\"";
+        break;
+      case '\\':
+        body += "\\\\";
+        break;
+      case '\b':
+        body += "\\b";
+        break;
+      case '\f':
+        body += "\\f";
+        break;
+      case '\n':
+        body += "\\n";
+        break;
+      case '\r':
+        body += "\\r";
+        break;
+      case '\t':
+        body += "\\t";
+        break;
+      default:
+        if(ch < 0x20)
+        {
+          body += "\\u00";
+          body += HEX[(ch >> 4) & 0x0f];
+          body += HEX[ch & 0x0f];
+        }
+        else
+        {
+          body += static_cast<char>(ch);
+        }
+        break;
+      }
+    }
+    body += '"';
+  }
+
+  void
+  append_json_field_name_(
+    std::string& body,
+    bool& first,
+    const std::string& name)
+  {
+    if(!first)
+    {
+      body += ',';
+    }
+    first = false;
+    append_json_string_(body, name);
+    body += ':';
+  }
+
+  void
+  append_json_stat_(
+    std::string& body,
+    bool& first,
+    const std::string& name,
+    std::uint64_t value)
+  {
+    append_json_field_name_(body, first, name);
+    body += std::to_string(value);
+  }
+
+  void
+  append_json_string_stat_(
+    std::string& body,
+    bool& first,
+    const std::string& name,
+    const std::string& value)
+  {
+    append_json_field_name_(body, first, name);
+    append_json_string_(body, value);
+  }
+
+  void
+  append_grpc_client_stats_(
+    std::string& body,
+    bool& first,
+    const std::string& prefix,
+    const AdServer::Grpc::Stats& stats)
+  {
+    append_json_stat_(body, first, prefix + "_input_items", stats.input_items);
+    append_json_stat_(body, first, prefix + "_call_total", stats.input_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_completed_items",
+      stats.completed_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_completed_error_items",
+      stats.completed_error_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_call_error_total",
+      stats.completed_error_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_outstanding_items",
+      stats.input_items > stats.completed_items ?
+        stats.input_items - stats.completed_items :
+        0);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_write_batches",
+      stats.write_batches);
+    append_json_stat_(body, first, prefix + "_batch_total", stats.write_batches);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_write_batch_total",
+      stats.write_batches);
+    append_json_stat_(body, first, prefix + "_write_items", stats.write_items);
+    append_json_stat_(body, first, prefix + "_read_batches", stats.read_batches);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_read_batch_total",
+      stats.read_batches);
+    append_json_stat_(body, first, prefix + "_read_items", stats.read_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_queue_wait_total",
+      stats.queue_wait_count);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_queue_wait_time",
+      stats.queue_wait_sum_us);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_queue_wait_max_time",
+      stats.queue_wait_max_us);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_queue_timeout_total",
+      stats.queue_timeout_count);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_response_wait_total",
+      stats.response_wait_count);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_response_wait_time",
+      stats.response_wait_sum_us);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_response_wait_max_time",
+      stats.response_wait_max_us);
+    append_json_stat_(body, first, prefix + "_queue_items", stats.queue_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_pending_batches",
+      stats.pending_batches);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_pending_batch_items",
+      stats.pending_batch_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_inflight_items",
+      stats.inflight_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_stream_inflight_items",
+      stats.stream_inflight_items);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_active_streams",
+      stats.active_streams);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_available_streams",
+      stats.available_streams);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_connecting_streams",
+      stats.connecting_streams);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_draining_streams",
+      stats.draining_streams);
+    append_json_stat_(
+      body,
+      first,
+      prefix + "_deferred_streams",
+      stats.deferred_streams);
+
+    if(stats.consumer_stream_write.has_value())
+    {
+      append_json_stat_(
+        body,
+        first,
+        prefix + "_consumer_stream_write_total",
+        stats.consumer_stream_write->count);
+      append_json_stat_(
+        body,
+        first,
+        prefix + "_consumer_stream_write_time",
+        stats.consumer_stream_write->sum_us);
+      append_json_stat_(
+        body,
+        first,
+        prefix + "_consumer_stream_write_max_time",
+        stats.consumer_stream_write->max_us);
+    }
+
+    if(stats.last_error.has_value())
+    {
+      append_json_string_stat_(
+        body,
+        first,
+        prefix + "_last_error_time",
+        stats.last_error->time.get_gm_time().format("%F %T"));
+      append_json_string_stat_(
+        body,
+        first,
+        prefix + "_last_error_endpoint",
+        stats.last_error->endpoint);
+      append_json_stat_(
+        body,
+        first,
+        prefix + "_last_error_code",
+        static_cast<std::uint64_t>(stats.last_error->code));
+      append_json_string_stat_(
+        body,
+        first,
+        prefix + "_last_error_message",
+        stats.last_error->message);
+      append_json_string_stat_(
+        body,
+        first,
+        prefix + "_last_error_source",
+        stats.last_error->source);
+    }
+  }
+
+  void
+  append_grpc_client_endpoint_stats_(
+    std::string& body,
+    bool& first,
+    const std::string& prefix,
+    const AdServer::Grpc::Client::EndpointStats& endpoint_stats)
+  {
+    for(const auto& [endpoint, stats] : endpoint_stats)
+    {
+      const auto endpoint_prefix =
+        prefix + "_endpoints_" + sanitize_endpoint_key_(endpoint);
+      append_json_string_stat_(
+        body,
+        first,
+        endpoint_prefix + "_endpoint",
+        endpoint);
+      append_grpc_client_stats_(body, first, endpoint_prefix, stats);
+    }
+  }
 }
 
 CampaignManagerApp_::CampaignManagerApp_() /*throw(eh::Exception)*/
@@ -181,24 +489,18 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         "/stats",
         [
           grpc_adapter = grpc_adapter_,
+          campaign_manager_core = campaign_manager_core_,
           campaign_manager_logger
         ](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           std::string body = "{";
-          auto append_stat = [&body, first = true](
-            const char* name,
-            std::uint64_t value) mutable
+          bool first = true;
+          auto append_stat = [&body, &first](
+            const std::string& name,
+            std::uint64_t value)
           {
-            if(!first)
-            {
-              body += ",";
-            }
-            first = false;
-            body += "\"";
-            body += name;
-            body += "\":";
-            body += std::to_string(value);
+            append_json_stat_(body, first, name, value);
           };
 
           if(grpc_adapter.in() != 0)
@@ -312,6 +614,23 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           append_stat(
             "logging_request_in_progress",
             logger_stats.request_in_progress);
+
+          if(campaign_manager_core.in() != 0)
+          {
+            const auto billing_stats =
+              campaign_manager_core->billing_server_stats();
+            append_grpc_client_stats_(
+              body,
+              first,
+              "billing_server_client",
+              billing_stats.total);
+            append_grpc_client_endpoint_stats_(
+              body,
+              first,
+              "billing_server_client",
+              billing_stats.endpoints);
+          }
+
           body += "}\n";
 
           return AdServer::Commons::HttpServer::HttpServer::Response{

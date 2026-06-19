@@ -725,6 +725,9 @@ namespace AdServer
 
       virtual bool ready() /*throw(eh::Exception)*/;
 
+      BillingStateContainer::Stats
+      billing_server_stats() const noexcept;
+
       AdServer::Commons::Task<CreativeRequestResultInfo>
       co_get_campaign_creative(
         const CreativeRequestInfo& request_params);

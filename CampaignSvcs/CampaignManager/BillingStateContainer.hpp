@@ -10,6 +10,7 @@
 #include <Generics/CompositeActiveObject.hpp>
 
 #include <Commons/Coro.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace Generics
@@ -46,6 +47,12 @@ namespace AdServer::CampaignSvcs
       bool deactivate_ccg;
       bool available;
       RevenueDecimal goal_ctr;
+    };
+
+    struct Stats
+    {
+      AdServer::Grpc::Stats total;
+      AdServer::Grpc::Client::EndpointStats endpoints;
     };
 
     /*
@@ -93,6 +100,8 @@ namespace AdServer::CampaignSvcs
       noexcept;
 
     void clear_cache() noexcept;
+
+    Stats stats() const noexcept;
 
   protected:
     virtual
