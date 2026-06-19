@@ -595,12 +595,8 @@ std::ostream&
 operator<<(std::ostream& os, const RequestBasicChannelsInnerData& data)
   /*throw(eh::Exception)*/
 {
-  data.holder_->invariant();
-  os << data.holder_->user_type << '\t';
-  os << data.holder_->user_id << '\t';
-  os << data.holder_->temporary_user_id << '\t';
-  os << data.holder_->match_request << '\t';
-  os << data.holder_->ad_request;
+  TabOutputArchive oa(os);
+  oa << *data.holder_;
   return os;
 }
 

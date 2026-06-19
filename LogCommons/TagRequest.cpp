@@ -170,33 +170,35 @@ operator<<(std::ostream& os, const TagRequestData& data)
   /*throw(eh::Exception)*/
 {
   data.invariant();
-  os << data.time_ << '\t';
-  os << data.isp_time_ << '\t';
-  os << data.test_request_ << '\t';
-  os << data.colo_id_ << '\t';
-  os << data.tag_id_ << '\t';
-  os << data.size_id_ << '\t';
-  os << data.ext_tag_id_ << '\t';
-  os << data.referer_ << '\t';
-  os << data.full_referer_hash_ << '\t';
-  os << data.user_status_ << '\t';
-  os << data.country_ << '\t';
-  os << data.passback_request_id_ << '\t';
-  os << data.floor_cost_ << '\t';
+
+  TabOutputArchive oa(os);
+  oa & data.time_
+     & data.isp_time_
+     & data.test_request_
+     & data.colo_id_
+     & data.tag_id_
+     & data.size_id_
+     & data.ext_tag_id_
+     & data.referer_
+     & data.full_referer_hash_
+     & data.user_status_
+     & data.country_
+     & data.passback_request_id_
+     & data.floor_cost_;
 
   if (data.urls_.empty())
   {
-    os << "-" << '\t';
+    oa & "-";
   }
   else
   {
-    output_sequence(os, data.urls_, " ") << '\t';
+    output_sequence(os, data.urls_, " ");
+    os << '\t';
   }
 
-  os << data.opt_in_section_;
+  oa ^ data.opt_in_section_;
   return os;
 }
 
 } // namespace LogProcessing
 } // namespace AdServer
-
