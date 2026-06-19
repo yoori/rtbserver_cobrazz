@@ -42,7 +42,6 @@
 <xsl:variable name="current-campaign-manager-obj" select="concat('CampaignManager_v', $app-version-num)"/>
 <xsl:variable name="current-user-info-manager-obj" select="'UserInfoManager_v351'"/>
 <xsl:variable name="current-user-bind-server-obj" select="concat('UserBindServer_v', $app-version-num)"/>
-<xsl:variable name="current-billing-server-obj" select="'BillingServer_v355'"/>
 
 <xsl:variable name="colocation-name" select="/colo:colocation/@name"/>
 <xsl:variable name="colo-name" select="translate($colocation-name,

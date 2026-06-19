@@ -2,13 +2,16 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
 #include <Commons/Grpc/Batch.grpc.pb.h>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <CampaignSvcs/BillingServer/BillingServerGrpc.grpc.pb.h>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 namespace AdServer::CampaignSvcs
@@ -114,6 +117,16 @@ namespace AdServer::CampaignSvcs
       const std::string message = ostr.str().str();
       return AdServer::Grpc::error_status(code, message.c_str());
     }
+
+    std::size_t
+    resolve_max_batch_split(
+      std::size_t configured,
+      std::size_t process_threads)
+    {
+      return std::max<std::size_t>(
+        1,
+        configured != 0 ? configured : process_threads);
+    }
   }
 
   class BillingServerGrpc::ServiceImpl final:
@@ -125,69 +138,122 @@ namespace AdServer::CampaignSvcs
     using AsyncService = Proto::BillingServerGrpc::AsyncService;
 
   public:
-    explicit ServiceImpl(BillingServerCore* core);
+    ServiceImpl(
+      BillingServerCore* core,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+      std::size_t max_batch_split);
 
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::CheckBidRequest,
           Proto::BidResultResponse,
-          check_available_bid),
-        MAKE_GRPC_CALL(
+          check_available_bid,
+          co_check_available_bid,
+          &ServiceImpl::hash_check_available_bid),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::ReserveBidRequest,
           Proto::ReserveBidResponse,
-          reserve_bid),
-        MAKE_GRPC_CALL(
+          reserve_bid,
+          co_reserve_bid,
+          &ServiceImpl::hash_reserve_bid),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::ConfirmBidRequest,
           Proto::ConfirmBidResponse,
-          confirm_bid),
-        MAKE_GRPC_CALL(
+          confirm_bid,
+          co_confirm_bid,
+          &ServiceImpl::hash_confirm_bid),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::AddAmountRequest,
           Proto::AddAmountResponse,
-          add_amount));
+          add_amount,
+          co_add_amount));
     }
 
-    void check_available_bid(
+    std::size_t distributed_batch_max_split() const noexcept override;
+
+    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response) const override;
+
+    AdServer::Grpc::GrpcCoroutine co_check_available_bid(
       const Proto::CheckBidRequest& request,
       Proto::BidResultResponse& response,
       ::grpc::Status& result_status) const;
 
-    void reserve_bid(
+    AdServer::Grpc::GrpcCoroutine co_reserve_bid(
       const Proto::ReserveBidRequest& request,
       Proto::ReserveBidResponse& response,
       ::grpc::Status& result_status) const;
 
-    void confirm_bid(
+    AdServer::Grpc::GrpcCoroutine co_confirm_bid(
       const Proto::ConfirmBidRequest& request,
       Proto::ConfirmBidResponse& response,
       ::grpc::Status& result_status) const;
 
-    void add_amount(
+    AdServer::Grpc::GrpcCoroutine co_add_amount(
       const Proto::AddAmountRequest& request,
       Proto::AddAmountResponse& response,
       ::grpc::Status& result_status) const;
 
+    static std::size_t hash_check_available_bid(
+      const Proto::CheckBidRequest& request);
+
+    static std::size_t hash_reserve_bid(
+      const Proto::ReserveBidRequest& request);
+
+    static std::size_t hash_confirm_bid(
+      const Proto::ConfirmBidRequest& request);
+
   private:
+    static std::size_t hash_bid_(const Proto::BidInfo& bid);
+
     static void
     translate_exception_(const char* fun, ::grpc::Status& result_status);
 
   private:
     const BillingServerCore_var core_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
+    const std::size_t max_batch_split_;
   };
 
-  BillingServerGrpc::ServiceImpl::ServiceImpl(BillingServerCore* core)
-    : core_(ReferenceCounting::add_ref(core))
+  BillingServerGrpc::ServiceImpl::ServiceImpl(
+    BillingServerCore* core,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+    std::size_t max_batch_split)
+    : core_(ReferenceCounting::add_ref(core)),
+      executor_pool_(std::move(executor_pool)),
+      max_batch_split_(max_batch_split)
   {}
 
-  void
-  BillingServerGrpc::ServiceImpl::check_available_bid(
+  std::size_t
+  BillingServerGrpc::ServiceImpl::distributed_batch_max_split()
+    const noexcept
+  {
+    return max_batch_split_;
+  }
+
+  AdServer::Grpc::GrpcCoroutine
+  BillingServerGrpc::ServiceImpl::co_handle_batch_request(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
+      batch_request,
+      batch_response);
+  }
+
+  AdServer::Grpc::GrpcCoroutine
+  BillingServerGrpc::ServiceImpl::co_check_available_bid(
     const Proto::CheckBidRequest& request,
     Proto::BidResultResponse& response,
     ::grpc::Status& result_status) const
   {
     static const char* FUN =
       "BillingServerGrpc::ServiceImpl::check_available_bid()";
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
     {
@@ -204,13 +270,15 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  BillingServerGrpc::ServiceImpl::reserve_bid(
+  AdServer::Grpc::GrpcCoroutine
+  BillingServerGrpc::ServiceImpl::co_reserve_bid(
     const Proto::ReserveBidRequest& request,
     Proto::ReserveBidResponse& response,
     ::grpc::Status& result_status) const
   {
     static const char* FUN = "BillingServerGrpc::ServiceImpl::reserve_bid()";
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
     {
@@ -227,13 +295,15 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  BillingServerGrpc::ServiceImpl::confirm_bid(
+  AdServer::Grpc::GrpcCoroutine
+  BillingServerGrpc::ServiceImpl::co_confirm_bid(
     const Proto::ConfirmBidRequest& request,
     Proto::ConfirmBidResponse& response,
     ::grpc::Status& result_status) const
   {
     static const char* FUN = "BillingServerGrpc::ServiceImpl::confirm_bid()";
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
     {
@@ -251,13 +321,15 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  BillingServerGrpc::ServiceImpl::add_amount(
+  AdServer::Grpc::GrpcCoroutine
+  BillingServerGrpc::ServiceImpl::co_add_amount(
     const Proto::AddAmountRequest& request,
     Proto::AddAmountResponse& response,
     ::grpc::Status& result_status) const
   {
     static const char* FUN = "BillingServerGrpc::ServiceImpl::add_amount()";
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
     {
@@ -286,6 +358,37 @@ namespace AdServer::CampaignSvcs
     {
       translate_exception_(FUN, result_status);
     }
+  }
+
+  std::size_t
+  BillingServerGrpc::ServiceImpl::hash_check_available_bid(
+    const Proto::CheckBidRequest& request)
+  {
+    return hash_bid_(request.bid());
+  }
+
+  std::size_t
+  BillingServerGrpc::ServiceImpl::hash_reserve_bid(
+    const Proto::ReserveBidRequest& request)
+  {
+    return hash_bid_(request.bid());
+  }
+
+  std::size_t
+  BillingServerGrpc::ServiceImpl::hash_confirm_bid(
+    const Proto::ConfirmBidRequest& request)
+  {
+    return hash_bid_(request.bid().bid());
+  }
+
+  std::size_t
+  BillingServerGrpc::ServiceImpl::hash_bid_(const Proto::BidInfo& bid)
+  {
+    std::size_t result = bid.account_id();
+    result = result * 31 + bid.advertiser_id();
+    result = result * 31 + bid.campaign_id();
+    result = result * 31 + bid.ccg_id();
+    return result;
   }
 
   void
@@ -320,15 +423,29 @@ namespace AdServer::CampaignSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t grpc_threads)
+    std::size_t process_threads,
+    std::size_t cq_threads,
+    std::size_t max_split)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
+      max_batch_split_(resolve_max_batch_split(max_split, process_threads)),
+      executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
+        Generics::ActiveObjectCallback_var(
+          new Logging::ActiveObjectCallbackImpl(
+            logger,
+            "",
+            billing_server_grpc_aspect)),
+        std::max<std::size_t>(1, process_threads))),
       impl_(std::make_shared<Impl>(
         logger,
         billing_server_grpc_aspect,
         bind_address_,
-        grpc_threads,
-        std::make_unique<ServiceImpl>(core)))
+        cq_threads != 0 ? cq_threads : process_threads,
+        std::make_unique<ServiceImpl>(
+          core,
+          executor_pool_,
+          max_batch_split_)))
   {
+    add_child_object(executor_pool_);
     add_child_object(impl_);
   }
 

@@ -436,13 +436,11 @@
     <xsl:if test="$mode = 'AD'">
       <cfg:Billing check_bids="true" confirm_bids="true"
         optimize_campaign_ctr="false">
-        <cfg:BillingServerCorbaRef name="BillingServer">
-          <xsl:call-template name="BillingServerCorbaRefs">
-            <xsl:with-param name="billing-servers"
-              select="$full-cluster-path//service[@descriptor = $billing-server-descriptor]"/>
-            <xsl:with-param name="error-prefix" select="'CampaignManager'"/>
-          </xsl:call-template>
-        </cfg:BillingServerCorbaRef>
+        <xsl:call-template name="BillingServerGrpcRefs">
+          <xsl:with-param name="billing-servers"
+            select="$full-cluster-path//service[@descriptor = $billing-server-descriptor]"/>
+          <xsl:with-param name="error-prefix" select="'CampaignManager'"/>
+        </xsl:call-template>
       </cfg:Billing>
     </xsl:if>
 
@@ -455,6 +453,10 @@
     <cfg:Logging
       inventory_users_percentage="{$inventory-users-percentage}"
       use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}" >
+
+      <xsl:attribute name="threads"><xsl:value-of select="$stat-config/@threads"/>
+        <xsl:if test="count($stat-config/@threads) = 0">1</xsl:if>
+      </xsl:attribute>
 
       <xsl:attribute name="distrib_count"><xsl:value-of select="$colo-config/cfg:inventoryStats/@distrib_count"/>
         <xsl:if test="count($colo-config/cfg:inventoryStats/@distrib_count) = 0">

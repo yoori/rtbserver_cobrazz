@@ -7,7 +7,7 @@ add_library(BillingProcessor SHARED
 target_link_libraries(BillingProcessor
   Generics
   Commons
-  BillingServerIDL
+  BillingServerGrpcClient
 )
 
 add_library(PassbackContainer SHARED

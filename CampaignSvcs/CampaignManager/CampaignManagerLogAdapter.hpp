@@ -182,71 +182,23 @@ namespace AdServer
       ChannelIdHashSet& all_channels,
       ChannelIdHashSet& channels,
       CampaignManagerLogger::TriggerChannelMap& triggers,
-      CampaignManagerLogger::TriggerChannelMap* discover_keyword_triggers,
+      CampaignManagerLogger::TriggerChannelMap* /*discover_keyword_triggers*/,
       const CampaignManagerCore::ChannelTriggerMatchVector&
         channel_trigger_matches,
-      const CampaignConfig* campaign_config)
+      const CampaignConfig* /*campaign_config*/)
       noexcept
     {
-      if (campaign_config)
+      triggers.reserve(triggers.size() + channel_trigger_matches.size());
+      for(const auto& channel_trigger_match : channel_trigger_matches)
       {
+        triggers.emplace_back(
+          channel_trigger_match.channel_id,
+          channel_trigger_match.channel_trigger_id);
         if(&all_channels != &channels)
         {
-          all_channels.rehash(
-            (all_channels.size() + channel_trigger_matches.size()) * 3);
+          all_channels.insert(channel_trigger_match.channel_id);
         }
-        channels.rehash((channels.size() + channel_trigger_matches.size()) * 3);
-        triggers.reserve(triggers.size() + channel_trigger_matches.size());
-        if(discover_keyword_triggers)
-        {
-          discover_keyword_triggers->reserve(
-            discover_keyword_triggers->size() + channel_trigger_matches.size());
-        }
-
-        for(const auto& channel_trigger_match : channel_trigger_matches)
-        {
-          CampaignConfig::ChannelMap::const_iterator ch_it =
-            campaign_config->expression_channels.find(
-              channel_trigger_match.channel_id);
-          if (ch_it != campaign_config->expression_channels.end() &&
-             ch_it->second->has_params() &&
-             (ch_it->second->params().type == 'D' ||
-              ch_it->second->params().type == 'K'))
-          {
-            if(discover_keyword_triggers)
-            {
-              discover_keyword_triggers->emplace_back(
-                channel_trigger_match.channel_id,
-                channel_trigger_match.channel_trigger_id);
-            }
-          }
-          else
-          {
-            triggers.emplace_back(
-              channel_trigger_match.channel_id,
-              channel_trigger_match.channel_trigger_id);
-          }
-          if(&all_channels != &channels)
-          {
-            all_channels.insert(channel_trigger_match.channel_id);
-          }
-          channels.insert(channel_trigger_match.channel_id);
-        }
-      }
-      else
-      {
-        triggers.reserve(triggers.size() + channel_trigger_matches.size());
-        for(const auto& channel_trigger_match : channel_trigger_matches)
-        {
-          triggers.emplace_back(
-            channel_trigger_match.channel_id,
-            channel_trigger_match.channel_trigger_id);
-          if(&all_channels != &channels)
-          {
-            all_channels.insert(channel_trigger_match.channel_id);
-          }
-          channels.insert(channel_trigger_match.channel_id);
-        }
+        channels.insert(channel_trigger_match.channel_id);
       }
     }
 
@@ -314,10 +266,6 @@ namespace AdServer
         request_params.channels.begin(),
         request_params.channels.end());
 
-      request_info.hid_history_channels.assign(
-        request_params.hid_channels.begin(),
-        request_params.hid_channels.end());
-
       request_info.page_keywords_present = request_params.page_keywords_present;
 
       request_info.search_words =
@@ -365,9 +313,7 @@ namespace AdServer
 
       request_info.referer = common_info.referer;
 
-      request_info.urls.assign(
-        common_info.urls.begin(),
-        common_info.urls.end());
+      request_info.urls.assign(common_info.urls.begin(), common_info.urls.end());
 
       if(!common_info.location.empty())
       {
@@ -457,9 +403,6 @@ namespace AdServer
         nullptr, // discover triggers
         match_request_info.match_info.pkw_channels,
         campaign_config);
-      result_match_request.match_info.hid_channels.insert(
-        match_request_info.match_info.hid_channels.begin(),
-        match_request_info.match_info.hid_channels.end());
 
       CampaignConfig::ColocationMap::const_iterator colo_it =
         match_request_info.match_info.colo_id <= 0 ? campaign_config->colocations.end() :

@@ -1,16 +1,5 @@
 include_directories(/opt/foros/vanga/include . ${LIBXML2_INCLUDE_DIR})
 
-add_idl(CampaignManagerIDL
-  CampaignManager.idl
-  ${IDL_DIRECTORY}/CampaignSvcs/CampaignManager
-)
-
-target_link_libraries(CampaignManagerIDL
-  CorbaTypesIDL
-  CampaignFreqIDL
-  CampaignCommonsIDL
-)
-
 # CampaignManagerGrpc
 set(CAMPAIGN_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/CampaignSvcs/CampaignManager)
 set(CAMPAIGN_MANAGER_GRPC_PROTO CampaignManagerGrpc.proto)
@@ -47,7 +36,6 @@ target_link_libraries(BidRateProvider
   Generics
   CORBACommons
   CorbaTypesIDL
-  CampaignManagerIDL
   pthread
   pcre
   HTTP
@@ -91,8 +79,6 @@ target_link_libraries(CampaignConfig
   HTTP
   XslTransformer
   ExpressionChannel
-  CampaignManagerIDL
-  BillingServerIDL
 )
 
 add_library(CampaignConfigSource
@@ -103,7 +89,6 @@ target_link_libraries(CampaignConfigSource
   Generics
   HTTP
   CampaignConfig
-  CampaignManagerIDL
   CampaignIndex
   DomainParser
 )
@@ -153,7 +138,6 @@ target_link_libraries(CampaignManagerLogger
 
 add_executable(CampaignManager
   CampaignManagerCore.cpp
-  CampaignManagerImpl.cpp
   CampaignManagerGrpc.cpp
   CampaignManagerMain.cpp
   InstantiateCreative.cpp
@@ -182,7 +166,6 @@ target_link_libraries(CampaignManager
 
   CampaignCommonsIDL
   CampaignServerIDL
-  CampaignManagerIDL
   CampaignTypes
 
   ExpressionChannelIndex
@@ -194,13 +177,13 @@ target_link_libraries(CampaignManager
   CampaignManagerLogger
   PassbackTemplate
   SecToken
-  BillingServerIDL
 
   CTRProvider
   BidRateProvider
   DomainConfigXSD
   StatInfoIDL
   CampaignManagerGrpc
+  BillingServerGrpcClient
 )
 
 target_include_directories(CampaignManager PRIVATE

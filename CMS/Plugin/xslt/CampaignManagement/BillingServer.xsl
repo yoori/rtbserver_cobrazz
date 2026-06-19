@@ -99,7 +99,6 @@
 
       <cfg:Endpoint host="*" port="{$billing-server-port}">
         <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-        <cfg:Object servant="BillingServer" name="{$current-billing-server-obj}"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 

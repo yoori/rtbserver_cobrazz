@@ -3,10 +3,9 @@ add_executable(BillingAdmin
 )
 
 target_link_libraries(BillingAdmin
-  BillingServerIDL
+  BillingServerGrpcClient
   CampaignCommonsIDL
 
   Commons
-  CORBACommons
   Generics
 )

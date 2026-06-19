@@ -2250,7 +2250,7 @@ namespace AdServer
 
       /*
        * Note the same 'tag visibility' checking and 'frequency caps' checking are used
-       * in the function CampaignManagerImpl::get_site_creative_().
+       * in the campaign creative selection path.
        * This checks are used to prevent 'auction type check' step printing
        * in inappropriate case in debug.ccg mode.
        * Note if 'visibility checking' and 'frequency caps' checking are not passed
@@ -2391,4 +2391,3 @@ namespace AdServer
     }
   } /* CampaignSvcs */
 } /* AdServer */
-

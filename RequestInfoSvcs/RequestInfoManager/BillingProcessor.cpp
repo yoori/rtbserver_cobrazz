@@ -1,12 +1,14 @@
 #include <Generics/Time.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 #include <PrivacyFilter/Filter.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/FileManip.hpp>
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/LogCommons.hpp>
 
-#include <CampaignSvcs/CampaignManager/BillingStateContainer.hpp>
+#include <BillingServerGrpc.grpc-client.hpp>
 
 #include "BillingProcessor.hpp"
 
@@ -324,33 +326,6 @@ namespace RequestInfoSvcs
       /*throw(eh::Exception)*/;
 
   protected:
-    typedef CORBACommons::ObjectPool<
-      AdServer::CampaignSvcs::BillingServer,
-      CORBACommons::ObjectPoolRefConfiguration>
-      SingleBillingServerPool;
-
-    struct BillingServerDescr
-    {
-      BillingServerDescr(SingleBillingServerPool* pool_val)
-        : pool(pool_val)
-      {}
-
-      BillingServerDescr(BillingServerDescr&& init)
-        : pool(std::move(init.pool))
-      {}
-
-      BillingServerDescr&
-      operator=(BillingServerDescr&& init)
-      {
-        std::swap(pool, init.pool);
-        return *this;
-      }
-
-      std::unique_ptr<SingleBillingServerPool> pool;
-    };
-
-    typedef std::vector<BillingServerDescr> BillingServerDescrArray;
-
     class Job: public SingleJob
     {
     public:
@@ -410,12 +385,20 @@ namespace RequestInfoSvcs
 
   struct BillingProcessor::BillingServerRequestSender::BillingServerArrayHolder
   {
-    typedef AdServer::Commons::CorbaObject<AdServer::CampaignSvcs::BillingServer>
-      BillingServerObject;
+    struct BillingServerObject
+    {
+      BillingServerObject(
+        std::string endpoint_val,
+        std::shared_ptr<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient> client_val)
+        : endpoint(std::move(endpoint_val)),
+          client(std::move(client_val))
+      {}
 
-    typedef std::vector<BillingServerObject> BillingServerArray;
+      std::string endpoint;
+      std::shared_ptr<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient> client;
+    };
 
-    BillingServerArray billing_servers;
+    std::vector<BillingServerObject> billing_servers;
   };
 
   const char*
@@ -1918,20 +1901,35 @@ namespace RequestInfoSvcs
 
   // BillingServerRequestSender impl
   BillingProcessor::BillingServerRequestSender::BillingServerRequestSender(
-    const CORBACommons::CorbaObjectRefList& billing_server_refs)
-    noexcept
+    Generics::ActiveObjectCallback* callback,
+    std::vector<std::string> billing_server_refs)
   {
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter(
-      new CORBACommons::CorbaClientAdapter());
-
     billing_servers_holder_.reset(new BillingServerArrayHolder());
 
-    for(auto it = billing_server_refs.begin(); it != billing_server_refs.end(); ++it)
+    auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+      1,
+      "request-info-billing-grpc");
+    auto coalesce_runner =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        callback,
+        std::make_shared<boost::asio::io_service>(),
+        1,
+        128 * 1024,
+        "request-info-billing-coalesce");
+
+    add_child_object(grpc_executor);
+    add_child_object(coalesce_runner);
+
+    for(std::string& endpoint : billing_server_refs)
     {
+      std::string client_endpoint = endpoint;
       billing_servers_holder_->billing_servers.push_back(
-        AdServer::Commons::CorbaObject<AdServer::CampaignSvcs::BillingServer>(
-          corba_client_adapter,
-          *it));
+        BillingServerArrayHolder::BillingServerObject(
+          std::move(endpoint),
+          std::make_shared<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient>(
+            client_endpoint,
+            grpc_executor,
+            coalesce_runner)));
     }
   }
 
@@ -1949,78 +1947,79 @@ namespace RequestInfoSvcs
 
     try
     {
-      AdServer::CampaignSvcs::BillingServer::ConfirmBidSeq request_seq;
-      request_seq.length(requests.size());
+      namespace Proto = adserver::campaign_svcs::billing_server;
 
-      CORBA::ULong req_i = 0;
+      Proto::AddAmountRequest request;
       for(RequestArray::const_iterator req_it = requests.begin();
-          req_it != requests.end(); ++req_it, ++req_i)
+          req_it != requests.end(); ++req_it)
       {
-        AdServer::CampaignSvcs::BillingServer::ConfirmBidInfo& confirm_bid_info = request_seq[req_i];
-        confirm_bid_info.time = CorbaAlgs::pack_time((*req_it)->rounded_time);
-        confirm_bid_info.account_id = (*req_it)->account_id;
-        confirm_bid_info.advertiser_id = (*req_it)->advertiser_id;
-        confirm_bid_info.campaign_id = (*req_it)->campaign_id;
-        confirm_bid_info.ccg_id = (*req_it)->ccg_id;
-        confirm_bid_info.ctr = CorbaAlgs::pack_decimal((*req_it)->ctr);
-        confirm_bid_info.account_spent_budget = CorbaAlgs::pack_decimal((*req_it)->account_amount);
-        confirm_bid_info.spent_budget = CorbaAlgs::pack_decimal((*req_it)->amount);
-        confirm_bid_info.reserved_budget = CorbaAlgs::pack_decimal(RevenueDecimal::ZERO);
-        confirm_bid_info.imps = CorbaAlgs::pack_decimal((*req_it)->imps);
-        confirm_bid_info.clicks = CorbaAlgs::pack_decimal((*req_it)->clicks);
-        confirm_bid_info.forced = false;
+        Proto::ConfirmBidInfo* confirm_bid_info = request.add_requests();
+        Proto::BidInfo* bid = confirm_bid_info->mutable_bid();
+        bid->set_time(GrpcAlgs::pack_time((*req_it)->rounded_time));
+        bid->set_account_id((*req_it)->account_id);
+        bid->set_advertiser_id((*req_it)->advertiser_id);
+        bid->set_campaign_id((*req_it)->campaign_id);
+        bid->set_ccg_id((*req_it)->ccg_id);
+        bid->set_ctr(GrpcAlgs::pack_decimal((*req_it)->ctr));
+        confirm_bid_info->set_account_spent_budget(
+          GrpcAlgs::pack_decimal((*req_it)->account_amount));
+        confirm_bid_info->set_spent_budget(
+          GrpcAlgs::pack_decimal((*req_it)->amount));
+        confirm_bid_info->set_reserved_budget(
+          GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
+        confirm_bid_info->set_imps(
+          GrpcAlgs::pack_decimal((*req_it)->imps));
+        confirm_bid_info->set_clicks(
+          GrpcAlgs::pack_decimal((*req_it)->clicks));
+        confirm_bid_info->set_forced(false);
       }
 
-      AdServer::CampaignSvcs::BillingServer::ConfirmBidRefSeq_var remainder_request_seq;
+      const BillingServerArrayHolder::BillingServerObject& billing_server =
+        billing_servers_holder_->billing_servers[service_index];
 
-      billing_servers_holder_->billing_servers[service_index]->add_amount(
-        remainder_request_seq.out(),
-        request_seq);
+      const Proto::AddAmountResponse response =
+        AdServer::Grpc::sync_call<Proto::AddAmountResponse>(
+          [&billing_server, &request](auto callback)
+          {
+            billing_server.client->add_amount(request, std::move(callback));
+          },
+          [&billing_server, service_index](const grpc::Status& status)
+          {
+            Stream::Error ostr;
+            ostr << "BillingServer gRPC add_amount failed by service index #" <<
+              service_index << ", endpoint=" << billing_server.endpoint <<
+              ", code=" << status.error_code() <<
+              ", message=" << status.error_message();
+            throw RequestSender::ServerUnreachable(ostr.str());
+          });
 
       RequestArray remind_requests;
 
-      for(CORBA::ULong rr_i = 0; rr_i < remainder_request_seq->length(); ++rr_i)
+      for(const Proto::ConfirmBidRefInfo& remainder_request :
+        response.remainder_requests())
       {
-        const AdServer::CampaignSvcs::BillingServer::ConfirmBidRefInfo& remainder_request =
-          (*remainder_request_seq)[rr_i];
-
-        Request_var result = new Request(*requests[remainder_request.index]);
-        result->account_amount = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-          remainder_request.confirm_bid.account_spent_budget);
-        result->amount = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-          remainder_request.confirm_bid.spent_budget);
-        result->imps = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-          remainder_request.confirm_bid.imps);
-        result->clicks = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-          remainder_request.confirm_bid.clicks);
+        Request_var result = new Request(*requests[remainder_request.index()]);
+        result->account_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          remainder_request.confirm_bid().account_spent_budget());
+        result->amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          remainder_request.confirm_bid().spent_budget());
+        result->imps = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          remainder_request.confirm_bid().imps());
+        result->clicks = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          remainder_request.confirm_bid().clicks());
         remind_requests.push_back(result);
       }
 
       requests.swap(remind_requests);
     }
-    catch(const AdServer::CampaignSvcs::BillingServer::NotReady&)
+    catch(const RequestSender::ServerUnreachable&)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": BillingServer::NotReady caught";
-      throw RequestSender::ServerUnreachable(ostr.str());
+      throw;
     }
-    catch(const AdServer::CampaignSvcs::BillingServer::ImplementationException& e)
+    catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": BillingServer::ImplementationException caught: " <<
-        e.description;
-      throw RequestSender::ServerUnreachable(ostr.str());
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": CORBA::SystemException caught: " << e;
-      throw RequestSender::ServerUnreachable(ostr.str());
-    }
-    catch(const BillingServerArrayHolder::BillingServerObject::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": BillingServerObject::Exception caught: " << ex.what();
+      ostr << FUN << ": caught eh::Exception: " << ex.what();
       throw RequestSender::ServerUnreachable(ostr.str());
     }
   }
@@ -2054,6 +2053,11 @@ namespace RequestInfoSvcs
     add_child_object(scheduler_.in());
     add_child_object(task_runner_.in());
     add_child_object(request_pool_.in());
+    if(Generics::RefCountableActiveObject* active_request_sender =
+      dynamic_cast<Generics::RefCountableActiveObject*>(request_sender))
+    {
+      add_child_object(active_request_sender);
+    }
 
     // init context
     Sender::Context_var context(new Sender::Context());
@@ -2259,14 +2263,6 @@ namespace RequestInfoSvcs
     }
 
     return Generics::Time::get_time_of_day() + send_delayed_period_; // reschedule
-  }
-
-  BillingProcessor::RequestSender_var
-  BillingProcessor::init_request_sender_(
-    const CORBACommons::CorbaObjectRefList& billing_server_refs)
-    noexcept
-  {
-    return new BillingServerRequestSender(billing_server_refs);
   }
 
   void

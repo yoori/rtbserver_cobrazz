@@ -12,7 +12,6 @@
 
 #include "BillingServerCore.hpp"
 #include "BillingServerGrpc.hpp"
-#include "BillingServerImpl.hpp"
 
 class BillingServerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
@@ -54,7 +53,6 @@ private:
   CORBACommons::CorbaConfig corba_config_;
 
   AdServer::CampaignSvcs::BillingServerCore_var billing_server_core_;
-  AdServer::CampaignSvcs::BillingServerImpl_var billing_server_impl_;
   AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter_;
 
   ConfigPtr configuration_;

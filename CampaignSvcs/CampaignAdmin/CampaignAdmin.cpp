@@ -355,7 +355,7 @@ namespace
 
   const char USAGE[] =
     "Usage:\n"
-    "CampaignAdmin2 <command> -r <CampaignManager gRPC endpoint> [options]\n\n"
+    "CampaignAdmin <command> -r <CampaignManager gRPC endpoint> [options]\n\n"
     "Commands:\n"
     "  globals\n"
     "  app_format\n"
@@ -522,7 +522,7 @@ namespace
       new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
-        new Logging::ActiveObjectCallbackImpl(logger, "CampaignAdmin2", "gRPC"),
+        new Logging::ActiveObjectCallbackImpl(logger, "CampaignAdmin", "gRPC"),
         std::make_shared<boost::asio::io_service>(),
         1);
     result.coalesce_runner->activate_object();
@@ -2480,7 +2480,7 @@ main(int argc, char** argv)
     }
     else
     {
-      throw std::runtime_error("unsupported CampaignAdmin2 command: " + command);
+      throw std::runtime_error("unsupported CampaignAdmin command: " + command);
     }
 
     return 0;

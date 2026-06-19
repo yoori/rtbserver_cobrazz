@@ -11,17 +11,15 @@
 
 #include <LogCommons/LogHolder.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <CampaignSvcs/DomainConfig.hpp>
 
 #include "CampaignManagerGrpc.hpp"
-#include "CampaignManagerImpl.hpp"
 
 /**
  * Parses command line parameters, loads configuration file,
- * runs orb, creates corba objects, etc.
+ * creates service objects.
  * Responsible for general configuration, logging and error handling.
  */
 class CampaignManagerApp_
@@ -37,15 +35,13 @@ public:
 
   /**
    * Parses command line, opens config file,
-   * creates corba objects, initialize.
+   * creates service objects and initializes them.
    */
   void main(int& argc, char** argv) noexcept;
 
 private:
   struct Configuration
   {
-    CORBACommons::CorbaConfig corba_config;
-
     std::string log_root;
     std::string out_logs_dir;
     std::string pid_file;
@@ -111,15 +107,11 @@ private:
     DomainConfig;
   typedef std::unique_ptr<DomainConfig> DomainConfigPtr;
 
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-
   ConfigPtr campaign_manager_config_;
   DomainConfigPtr domain_config_;
   Configuration configuration_;
-  CORBACommons::CorbaConfig corba_config_;
 
   AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core_;
-  AdServer::CampaignSvcs::CampaignManagerImpl_var campaign_manager_impl_;
   AdServer::CampaignSvcs::CampaignManagerGrpc_var grpc_adapter_;
   AdServer::Commons::HttpServer::HttpServer_var http_server_;
 

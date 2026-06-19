@@ -1,12 +1,16 @@
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Logger/Logger.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
@@ -121,12 +125,14 @@ namespace AdServer
 
       typedef ReferenceCounting::SmartPtr<RequestSender> RequestSender_var;
 
-      class BillingServerRequestSender: public RequestSender
+      class BillingServerRequestSender:
+        public RequestSender,
+        public Generics::CompositeActiveObject
       {
       public:
         BillingServerRequestSender(
-          const CORBACommons::CorbaObjectRefList& billing_server_refs)
-          noexcept;
+          Generics::ActiveObjectCallback* callback,
+          std::vector<std::string> billing_server_refs);
 
         virtual void
         send_requests(
@@ -205,11 +211,6 @@ namespace AdServer
 
       Generics::Time
       send_delayed_() noexcept;
-
-      virtual RequestSender_var
-      init_request_sender_(
-        const CORBACommons::CorbaObjectRefList& billing_server_refs)
-        noexcept;
 
       static void
       mark_resend_(RequestArray& requests)

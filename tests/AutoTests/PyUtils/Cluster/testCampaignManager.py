@@ -1143,7 +1143,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
     try:
       instantiate_ad_result = self.CampaignObject.instantiate_ad(instantiate_ad_info)
     except CampaignManagerUtils.ImplementationException as e:
-      self.assertEqual("CampaignManagerImpl::instantiate_ad(): creative not found", e.description, 'exception')
+      self.assertEqual("CampaignManagerCore::instantiate_ad(): creative not found", e.description, 'exception')
 
   def testPropProbAuctionWithMaxTextCreativeIsZero( self ):
     "campaign selection prop probability auction with max_text_creatives=0"

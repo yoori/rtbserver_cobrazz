@@ -78,7 +78,6 @@ target_link_libraries(CampaignServer
   SNMPAgent
   Logger
   CorbaTypesIDL
-  BillingServerIDL
   Generics ACE Sync
   String
   xerces-c

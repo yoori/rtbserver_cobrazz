@@ -1237,14 +1237,24 @@ namespace RequestInfoSvcs{
       const xsd::AdServer::Configuration::BillingType&
         bs_config = *request_info_manager_config_.Billing();
 
+      std::vector<std::string> billing_server_refs;
+      for(const auto& grpc_ref : bs_config.BillingServerGrpcRef())
+      {
+        const std::string host = grpc_ref.host().present() ?
+          std::string(*grpc_ref.host()) :
+          std::string("localhost");
+        billing_server_refs.emplace_back(
+          host + ":" + std::to_string(grpc_ref.port()));
+      }
+
       BillingProcessor_var billing_processor = new BillingProcessor(
         logger_,
         callback_,
         bs_config.storage_root(),
         BillingProcessor::RequestSender_var(
           new BillingProcessor::BillingServerRequestSender(
-            Config::CorbaConfigReader::read_multi_corba_ref(
-              bs_config.BillingServerCorbaRef()))),
+            callback_,
+            std::move(billing_server_refs))),
         bs_config.threads(), // thread_count
         Generics::Time(bs_config.dump_period()), // dump_period
         Generics::Time(bs_config.send_delayed_period()) // send_delayed_period

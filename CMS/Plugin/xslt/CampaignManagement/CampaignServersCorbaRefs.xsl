@@ -15,10 +15,6 @@
   select="document('../../xsd/CampaignManagement/CampaignServerAppType.xsd')/xsd:schema/xsd:complexType[
     @name='CampaignServerNetworkParamsType']"/>
 
-<xsl:variable name="xsd-billing-server-network-params-type"
-  select="document('../../xsd/CampaignManagement/BillingServerAppType.xsd')/xsd:schema/xsd:complexType[
-    @name='BillingServerNetworkParamsType']"/>
-
 <xsl:template name="CampaignServerCorbaRefs">
   <xsl:param name="campaign-servers"/>
   <xsl:param name="service-name"/>
@@ -59,13 +55,13 @@
 
 </xsl:template>
 
-<xsl:template name="BillingServerCorbaRefs">
+<xsl:template name="BillingServerGrpcRefs">
   <xsl:param name="billing-servers"/>
   <xsl:param name="error-prefix"/>
 
   <xsl:if test="count($billing-servers) = 0">
     <xsl:message terminate="yes"><xsl:value-of
-      select="$error-prefix"/>: BillingServerCorbaRefs: xpath is empty</xsl:message>
+      select="$error-prefix"/>: BillingServerGrpcRefs: xpath is empty</xsl:message>
   </xsl:if>
 
   <xsl:for-each select="$billing-servers">
@@ -74,7 +70,7 @@
 
     <xsl:if test="count(@host) = 0">
       <xsl:message terminate="yes"><xsl:value-of
-        select="$error-prefix"/>: BillingServerCorbaRefs: xpath is incorrect (
+        select="$error-prefix"/>: BillingServerGrpcRefs: xpath is incorrect (
           element don't have host attribute)</xsl:message>
     </xsl:if>
 
@@ -82,22 +78,22 @@
       <xsl:call-template name="GetHosts">
         <xsl:with-param name="hosts" select="@host"/>
         <xsl:with-param name="error-prefix"
-          select="concat($error-prefix, ': BillingServerCorbaRefs')"/>
+          select="concat($error-prefix, ': BillingServerGrpcRefs')"/>
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:variable name="billing-server-port">
-      <xsl:value-of select="$billing-server-config/cfg:networkParams/@port"/>
-      <xsl:if test="count($billing-server-config/cfg:networkParams/@port) = 0">
-        <xsl:value-of select="$def-billing-server-port"/>
+    <xsl:variable name="billing-server-grpc-port">
+      <xsl:value-of select="$billing-server-config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($billing-server-config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$def-billing-server-grpc-port"/>
       </xsl:if>
     </xsl:variable>
 
     <xsl:for-each select="exsl:node-set($hosts)/host">
-      <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':',
-        $billing-server-port, '/', $current-billing-server-obj)}"/>
+      <cfg:BillingServerGrpcRef host="{.}" port="{$billing-server-grpc-port}"/>
     </xsl:for-each>
   </xsl:for-each>
+
 </xsl:template>
 
 </xsl:stylesheet>

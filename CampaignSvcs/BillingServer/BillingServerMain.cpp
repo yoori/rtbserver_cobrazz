@@ -11,7 +11,6 @@
 namespace
 {
   const char ASPECT[] = "BillingServer";
-  const char BILLING_SERVER_OBJ_KEY[] = "BillingServer";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
@@ -129,9 +128,6 @@ BillingServerApp_::main(int argc, char** argv)
       logger(),
       config());
 
-    billing_server_impl_ = new AdServer::CampaignSvcs::BillingServerImpl(
-      billing_server_core_);
-
     add_child_object(billing_server_core_.in());
 
     if(config().GrpcConfig().present())
@@ -144,17 +140,18 @@ BillingServerApp_::main(int argc, char** argv)
           config().GrpcConfig()->Endpoint().host()->c_str() :
         "0.0.0.0",
         config().GrpcConfig()->Endpoint().port(),
+        static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
         config().GrpcConfig()->cq_threads().present() ?
-          *config().GrpcConfig()->cq_threads() :
-          config().GrpcConfig()->process_threads());
+          static_cast<std::size_t>(*config().GrpcConfig()->cq_threads()) :
+          static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
+        config().GrpcConfig()->max_split().present() ?
+          static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
+          static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
       add_child_object(grpc_adapter_);
     }
 
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);
-
-    corba_server_adapter_->add_binding(
-      BILLING_SERVER_OBJ_KEY, billing_server_impl_.in());
 
     corba_server_adapter_->add_binding(
       PROCESS_CONTROL_OBJ_KEY, this);

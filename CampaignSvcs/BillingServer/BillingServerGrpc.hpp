@@ -11,6 +11,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
 #include "BillingServerCore.hpp"
@@ -28,7 +29,9 @@ namespace AdServer::CampaignSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::size_t grpc_threads);
+      std::size_t process_threads = 128,
+      std::size_t cq_threads = 0,
+      std::size_t max_split = 0);
 
   protected:
     class ServiceImpl;
@@ -39,6 +42,8 @@ namespace AdServer::CampaignSvcs
 
   private:
     const std::string bind_address_;
+    const std::size_t max_batch_split_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<Impl> impl_;
   };
 

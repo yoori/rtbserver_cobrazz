@@ -1,13 +1,20 @@
 #include <iostream>
+#include <memory>
 #include <string>
+
+#include <boost/asio.hpp>
 
 #include <eh/Exception.hpp>
 #include <Generics/AppUtils.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-
-#include <Commons/CorbaAlgs.hpp>
-#include <CampaignSvcs/BillingServer/BillingServer.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Logger/StreamLogger.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <BillingServerGrpc.grpc-client.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace
@@ -17,7 +24,7 @@ namespace
     "BillingAdmin <command> <options>\n\n"
     "Commands:\n"
     "  check-available-bid\n"
-    "    -r, --reference=<billing server corba ref>\n"
+    "    -r, --reference=<billing server grpc endpoint host:port>\n"
     "    --account-id=<id>\n"
     "    --advertiser-id=<id>\n"
     "    --campaign-id=<id>\n"
@@ -26,15 +33,14 @@ namespace
     "    [--optimize-campaign-ctr]\n\n"
     "Example:\n"
     "  BillingAdmin check-available-bid "
-    "-r corbaloc::localhost:10108/BillingServer "
+    "-r localhost:10607 "
     "--account-id=1 --advertiser-id=2 --campaign-id=3 --ccg-id=4 --ctr=0.01\n";
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
 
   typedef AdServer::CampaignSvcs::RevenueDecimal RevenueDecimal;
-  typedef AdServer::CampaignSvcs::BillingServer BillingServer;
-  typedef AdServer::CampaignSvcs::BillingServer_var BillingServer_var;
+  namespace Proto = adserver::campaign_svcs::billing_server;
 
   void
   require_option(
@@ -52,7 +58,7 @@ namespace
 
   int
   run(int argc, char** argv)
-    /*throw(Exception, InvalidArgument, eh::Exception, CORBA::Exception)*/
+    /*throw(Exception, InvalidArgument, eh::Exception)*/
   {
     Generics::AppUtils::CheckOption opt_help;
     Generics::AppUtils::CheckOption opt_optimize_campaign_ctr;
@@ -109,42 +115,66 @@ namespace
     require_option(opt_ccg_id.installed(), "ccg-id");
     require_option(opt_ctr.installed(), "ctr");
 
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter(
-      new CORBACommons::CorbaClientAdapter());
+    Logging::Logger_var logger(new Logging::OStream::Logger(
+      Logging::OStream::Config(std::cerr)));
+    Generics::ActiveObjectCallback_var callback(
+      new Logging::ActiveObjectCallbackImpl(logger, "BillingAdmin"));
 
-    CORBA::Object_var billing_server_obj =
-      corba_client_adapter->resolve_object(
-        CORBACommons::CorbaObjectRef(opt_reference->c_str()));
+    auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+      1,
+      "billing-admin-grpc");
+    auto coalesce_runner =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        callback,
+        std::make_shared<boost::asio::io_service>(),
+        1,
+        128 * 1024,
+        "billing-admin-coalesce");
+    auto billing_server =
+      std::make_shared<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient>(
+        *opt_reference,
+        grpc_executor,
+        coalesce_runner);
 
-    BillingServer_var billing_server = BillingServer::_narrow(
-      billing_server_obj.in());
+    Generics::CompositeActiveObject active_objects;
+    active_objects.add_child_object(grpc_executor);
+    active_objects.add_child_object(coalesce_runner);
+    active_objects.activate_object();
 
-    if(CORBA::is_nil(billing_server.in()))
-    {
-      Stream::Error ostr;
-      ostr << "AdServer::CampaignSvcs::BillingServer::_narrow failed for '"
-        << *opt_reference << "'";
-      throw Exception(ostr);
-    }
+    Proto::CheckBidRequest request;
+    Proto::BidInfo* bid = request.mutable_bid();
+    bid->set_time(GrpcAlgs::pack_time(Generics::Time::get_time_of_day()));
+    bid->set_account_id(*opt_account_id);
+    bid->set_advertiser_id(*opt_advertiser_id);
+    bid->set_campaign_id(*opt_campaign_id);
+    bid->set_ccg_id(*opt_ccg_id);
+    bid->set_ctr(GrpcAlgs::pack_decimal(RevenueDecimal(opt_ctr->c_str())));
+    bid->set_optimize_campaign_ctr(opt_optimize_campaign_ctr.enabled());
 
-    BillingServer::CheckBidInfo check_bid_info;
-    check_bid_info.time = CorbaAlgs::pack_time(Generics::Time::get_time_of_day());
-    check_bid_info.account_id = *opt_account_id;
-    check_bid_info.advertiser_id = *opt_advertiser_id;
-    check_bid_info.campaign_id = *opt_campaign_id;
-    check_bid_info.ccg_id = *opt_ccg_id;
-    check_bid_info.ctr = CorbaAlgs::pack_decimal(RevenueDecimal(opt_ctr->c_str()));
-    check_bid_info.optimize_campaign_ctr = opt_optimize_campaign_ctr.enabled();
+    const Proto::BidResultResponse result =
+      AdServer::Grpc::sync_call<Proto::BidResultResponse>(
+        [&billing_server, &request](auto callback)
+        {
+          billing_server->check_available_bid(request, std::move(callback));
+        },
+        [](const grpc::Status& status)
+        {
+          Stream::Error ostr;
+          ostr << "BillingServer gRPC check_available_bid failed: code=" <<
+            status.error_code() << ", message=" << status.error_message();
+          throw Exception(ostr);
+        });
 
-    BillingServer::BidResultInfo_var result =
-      billing_server->check_available_bid(check_bid_info);
+    const RevenueDecimal goal_ctr = result.goal_ctr().empty() ?
+      RevenueDecimal::ZERO :
+      GrpcAlgs::unpack_decimal<RevenueDecimal>(result.goal_ctr());
 
-    const RevenueDecimal goal_ctr =
-      CorbaAlgs::unpack_decimal<RevenueDecimal>(result->goal_ctr);
-
-    std::cout << "available: " << (result->available ? "true" : "false") <<
+    std::cout << "available: " << (result.available() ? "true" : "false") <<
       "\n"
       "goal_ctr: " << goal_ctr.str() << std::endl;
+
+    active_objects.deactivate_object();
+    active_objects.wait_object();
 
     return 0;
   }
@@ -161,20 +191,6 @@ main(int argc, char** argv)
   {
     std::cerr << "Invalid argument: " << ex.what() <<
       "\nRun 'BillingAdmin help' for usage details" << std::endl;
-  }
-  catch(const BillingServer::NotReady& ex)
-  {
-    std::cerr << "BillingAdmin: BillingServer::NotReady caught: " <<
-      ex.description.in() << std::endl;
-  }
-  catch(const BillingServer::ImplementationException& ex)
-  {
-    std::cerr << "BillingAdmin: BillingServer::ImplementationException caught: " <<
-      ex.description.in() << std::endl;
-  }
-  catch(const CORBA::Exception& ex)
-  {
-    std::cerr << "BillingAdmin: CORBA::Exception caught: " << ex << std::endl;
   }
   catch(const eh::Exception& ex)
   {

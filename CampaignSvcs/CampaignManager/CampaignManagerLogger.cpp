@@ -1,8 +1,13 @@
 #include <openssl/md5.h>
 
 #include <algorithm>
+#include <condition_variable>
+#include <deque>
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 #include <Generics/Rand.hpp>
 #include <Generics/Decimal.hpp>
@@ -53,7 +58,6 @@
  * ClickLogger
  * ActionLogger
  * PassbackImpressionLogger
- * UserPropertiesLogger - log only requests counter (other filled in RIM)
  * TagRequest
  * SearchTermStatLogger
  * TagAuctionStatLogger
@@ -70,7 +74,6 @@ namespace
   const char CHANNEL_HIT_STAT_LOGGER[] = "ChannelHitStatLogger";
   const char WEB_STAT_LOGGER[] = "WebStatLogger";
   const char CREATIVE_STAT_LOGGER[] = "CreativeStatLogger";
-  const char USER_PROPERTIES_LOGGER[] = "UserPropertiesLogger";
 
   const char REQUEST_BASIC_CHANNELS_LOGGER[] = "RequestBasicChannelsLogger";
   const char REQUEST_LOGGER[] = "RequestLogger";
@@ -117,19 +120,16 @@ namespace
   typedef Generics::SimpleDecimal<uint64_t, 11, 5> ExDeliveryThresholdDecimal;
 
   const unsigned long MAX_WEBSTAT_SOURCE_LENGTH = 10;
-}
 
-namespace PropertyNames
-{
-  const Generics::StringHashAdapter COUNTRY = "CountryCode";
-  const Generics::StringHashAdapter CLIENT_APP = "Client";
-  const Generics::StringHashAdapter CLIENT_APP_VERSION = "ClientVersion";
-  const Generics::StringHashAdapter OS_VERSION = "OsVersion";
-  const Generics::StringHashAdapter BROWSER_VERSION = "BrowserVersion";
-}
+  namespace PropertyNames
+  {
+    const Generics::StringHashAdapter COUNTRY = "CountryCode";
+    const Generics::StringHashAdapter CLIENT_APP = "Client";
+    const Generics::StringHashAdapter CLIENT_APP_VERSION = "ClientVersion";
+    const Generics::StringHashAdapter OS_VERSION = "OsVersion";
+    const Generics::StringHashAdapter BROWSER_VERSION = "BrowserVersion";
+  }
 
-namespace
-{
   void fill_log_revenue(
     const AdServer::CampaignSvcs::
       CampaignManagerLogger::AdSelectionInfo::Revenue& revenue,
@@ -177,9 +177,194 @@ namespace
   }
 }
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  CampaignManagerLogger::Params::Params()
+    : profiling_research_record_limit(5000),
+      profiling_log_sampling(0),
+      threads(1)
+  {}
+
+  CampaignManagerLogger::TriggeredChannels::~TriggeredChannels() noexcept
+  {}
+
+  CampaignManagerLogger::ActionInfo::ActionInfo(
+    const Generics::Time& time_val,
+    const AdServer::Commons::RequestId& request_id_val,
+    const UserIdHashMod& user_id_hash_mod_val)
+    : time(time_val),
+      request_id(request_id_val),
+      user_id_hash_mod(user_id_hash_mod_val)
+  {}
+
+  CampaignManagerLogger::ImpressionInfo::ImpressionInfo(
+    const Generics::Time& time_val,
+    const AdServer::Commons::RequestId& request_id_val,
+    const UserIdHashMod& user_id_hash_mod_val,
+    RequestVerificationType verify_type_val,
+    RevenueType pub_imp_revenue_type_val,
+    const Commons::Optional<RevenueDecimal>& pub_imp_revenue_val,
+    const AdServer::Commons::UserId& user_id_val,
+    const char* referrer_val,
+    int viewability_val,
+    const String::SubString& action_name_val)
+    : ActionInfo(time_val, request_id_val, user_id_hash_mod_val),
+      verify_type(verify_type_val),
+      pub_imp_revenue_type(pub_imp_revenue_type_val),
+      pub_imp_revenue(pub_imp_revenue_val),
+      user_id(user_id_val),
+      referrer(referrer_val),
+      viewability(viewability_val),
+      action_name(action_name_val.str())
+  {}
+
+  CampaignManagerLogger::ClickInfo::ClickInfo(
+    const Generics::Time& time_val,
+    const AdServer::Commons::RequestId& request_id_val,
+    const UserIdHashMod& user_id_hash_mod_val,
+    const char* referrer_val)
+    : ActionInfo(time_val, request_id_val, user_id_hash_mod_val),
+      referer(referrer_val)
+  {}
+
+  CampaignManagerLogger::PassbackInfo::PassbackInfo(
+    const AdServer::Commons::RequestId& request_id_val,
+    const Generics::Time& time_val,
+    const UserIdHashMod& user_id_hash_mod_val)
+    : request_id(request_id_val),
+      time(time_val),
+      user_id_hash_mod(user_id_hash_mod_val)
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue::Revenue()
+    : rate_id(0),
+      request(RevenueDecimal::ZERO),
+      impression(RevenueDecimal::ZERO),
+      click(RevenueDecimal::ZERO),
+      action(RevenueDecimal::ZERO)
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::operator*=(
+    const RevenueDecimal& op)
+  {
+    request = RevenueDecimal::mul(request, op, Generics::DMR_FLOOR);
+    impression = RevenueDecimal::mul(impression, op, Generics::DMR_FLOOR);
+    click = RevenueDecimal::mul(click, op, Generics::DMR_FLOOR);
+    action = RevenueDecimal::mul(action, op, Generics::DMR_FLOOR);
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::operator/=(
+    const RevenueDecimal& divider)
+  {
+    request = RevenueDecimal::div(request, divider);
+    impression = RevenueDecimal::div(impression, divider);
+    click = RevenueDecimal::div(click, divider);
+    action = RevenueDecimal::div(action, divider);
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::div(
+    const RevenueDecimal& divider,
+    Revenue& reminder)
+  {
+    request = RevenueDecimal::div(request, divider, reminder.request);
+    impression = RevenueDecimal::div(
+      impression,
+      divider,
+      reminder.impression);
+    click = RevenueDecimal::div(click, divider, reminder.click);
+    action = RevenueDecimal::div(action, divider, reminder.action);
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::operator+=(
+    const Revenue& add)
+  {
+    request += add.request;
+    impression += add.impression;
+    click += add.click;
+    action += add.action;
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::operator-=(
+    const Revenue& sub)
+  {
+    request -= sub.request;
+    impression -= sub.impression;
+    click -= sub.click;
+    action -= sub.action;
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::from_system_currency(
+    const AdInstances::Currency& currency)
+  {
+    request = currency.from_system_currency(request);
+    impression = currency.from_system_currency(impression);
+    click = currency.from_system_currency(click);
+    action = currency.from_system_currency(action);
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue
+  CampaignManagerLogger::AdSelectionInfo::Revenue::to_system_currency(
+    const AdInstances::Currency& currency)
+  {
+    Revenue ret;
+    ret.request = currency.to_system_currency(request);
+    ret.impression = currency.to_system_currency(impression);
+    ret.click = currency.to_system_currency(click);
+    ret.action = currency.to_system_currency(action);
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo::Revenue
+  CampaignManagerLogger::AdSelectionInfo::Revenue::convert_currency(
+    const AdInstances::Currency& from_currency,
+    const AdInstances::Currency& to_currency)
+  {
+    Revenue ret;
+    ret.request = to_currency.convert(&from_currency, request);
+    ret.impression = to_currency.convert(&from_currency, impression);
+    ret.click = to_currency.convert(&from_currency, click);
+    ret.action = to_currency.convert(&from_currency, action);
+    return ret;
+  }
+
+  std::ostream&
+  CampaignManagerLogger::AdSelectionInfo::Revenue::print(
+    std::ostream& out) const noexcept
+  {
+    out << "request = " << request <<
+      ", impression = " << impression <<
+      ", click = " << click <<
+      ", action = " << action;
+    return out;
+  }
+
+  CampaignManagerLogger::AdRequestSelectionInfo::TimedId::TimedId(
+    const Generics::Time& adv_time_val,
+    unsigned long id_val)
+    : adv_time(adv_time_val),
+      id(id_val)
+  {}
+
+  unsigned long
+  CampaignManagerLogger::AdRequestSelectionInfo::TimedId::get_id()
+    const noexcept
+  {
+    return id;
+  }
+
+  namespace
   {
     class CMPChannelConv:
       public std::unary_function<
@@ -202,8 +387,8 @@ namespace AdServer
       }
     };
 
-    /** CampaignManagerLogger::ChannelTriggerStatLogger */
-    class CampaignManagerLogger::ChannelTriggerStatLogger:
+    /** ChannelTriggerStatLogger */
+    class ChannelTriggerStatLogger:
       public AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::ChannelTriggerStatTraits>
     {
@@ -223,7 +408,7 @@ namespace AdServer
         /*throw(Exception)*/;
 
       void process_match_request(
-        const MatchRequestInfo& match_request_info)
+        const CampaignManagerLogger::MatchRequestInfo& match_request_info)
         /*throw(Exception)*/;
 
     protected:
@@ -238,8 +423,8 @@ namespace AdServer
         /*throw(eh::Exception)*/;
     };
 
-    /** CampaignManagerLogger::ChannelHitStatLogger */
-    class CampaignManagerLogger::ChannelHitStatLogger:
+    /** ChannelHitStatLogger */
+    class ChannelHitStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::ChannelHitStatTraits>
     {
@@ -257,7 +442,7 @@ namespace AdServer
         /*throw(Exception)*/;
 
       void process_match_request(
-        const MatchRequestInfo& match_request_info)
+        const CampaignManagerLogger::MatchRequestInfo& match_request_info)
         /*throw(Exception)*/;
 
     protected:
@@ -266,51 +451,8 @@ namespace AdServer
 
     };
 
-    /** CampaignManagerLogger::UserPropertiesLogger */
-    class CampaignManagerLogger::UserPropertiesLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
-        AdServer::LogProcessing::UserPropertiesTraits>
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
-
-      UserPropertiesLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
-        /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::UserPropertiesTraits>(flush_traits)
-      {};
-
-      void
-      process_request(
-        const CampaignManagerLogger::RequestInfo& request_info)
-        /*throw(Exception)*/;
-
-      void
-      process_ad_request(
-        const CampaignManagerLogger::RequestInfo& ri,
-        const CampaignManagerLogger::AdRequestSelectionInfo&)
-        /*throw(Exception)*/;
-
-      void
-      process_anon_request(
-        const CampaignManagerLogger::AnonymousRequestInfo& request_info)
-        /*throw(Exception)*/;
-
-    protected:
-      virtual
-      ~UserPropertiesLogger() noexcept = default;
-
-    private:
-      void
-      add_record_(
-        const CampaignManagerLogger::AnonymousRequestInfo& request_info,
-        bool is_ad_request)
-        /*throw(Exception)*/;
-    };
-
     /** RequestBasicChannelsLogger */
-    class CampaignManagerLogger::RequestBasicChannelsLogger:
+    class RequestBasicChannelsLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::RequestBasicChannelsTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -388,8 +530,8 @@ namespace AdServer
       AdServer::Commons::UserId null_id_;
     };
 
-    /** CampaignManagerLogger::WebStatLogger */
-    class CampaignManagerLogger::WebStatLogger:
+    /** WebStatLogger */
+    class WebStatLogger:
       public AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::WebStatTraits>
     {
@@ -413,8 +555,8 @@ namespace AdServer
       ~WebStatLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::ResearchWebStatLogger */
-    class CampaignManagerLogger::ResearchWebStatLogger:
+    /** ResearchWebStatLogger */
+    class ResearchWebStatLogger:
       public AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::ResearchWebStatTraits,
         AdServer::LogProcessing::SimpleCsvSavePolicy<
@@ -443,8 +585,8 @@ namespace AdServer
       ~ResearchWebStatLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::CreativeStatLogger */
-    class CampaignManagerLogger::CreativeStatLogger:
+    /** CreativeStatLogger */
+    class CreativeStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::CreativeStatTraits>
     {
@@ -504,7 +646,7 @@ namespace AdServer
     };
 
     /** RequestLogger */
-    class CampaignManagerLogger::RequestLogger:
+    class RequestLogger:
       public virtual AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::RequestTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -533,8 +675,8 @@ namespace AdServer
       ~RequestLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::ImpressionLogger */
-    class CampaignManagerLogger::ImpressionLogger:
+    /** ImpressionLogger */
+    class ImpressionLogger:
       public AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::ImpressionTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -562,8 +704,8 @@ namespace AdServer
       ~ImpressionLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::ClickLogger */
-    class CampaignManagerLogger::ClickLogger:
+    /** ClickLogger */
+    class ClickLogger:
       public AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::ClickTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -591,8 +733,8 @@ namespace AdServer
       ~ClickLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::AdvertiserActionLogger */
-    class CampaignManagerLogger::AdvertiserActionLogger:
+    /** AdvertiserActionLogger */
+    class AdvertiserActionLogger:
       public AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::AdvertiserActionTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -620,8 +762,8 @@ namespace AdServer
       ~AdvertiserActionLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::ActionRequestLogger */
-    class CampaignManagerLogger::ActionRequestLogger:
+    /** ActionRequestLogger */
+    class ActionRequestLogger:
       public AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::ActionRequestTraits>
     {
@@ -645,8 +787,8 @@ namespace AdServer
       ~ActionRequestLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::PassbackImpressionLogger */
-    class CampaignManagerLogger::PassbackImpressionLogger:
+    /** PassbackImpressionLogger */
+    class PassbackImpressionLogger:
       public AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::PassbackImpressionTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -673,8 +815,8 @@ namespace AdServer
       ~PassbackImpressionLogger() noexcept = default;
     };
 
-    /** CampaignManagerLogger::PassbackStatLogger */
-    class CampaignManagerLogger::PassbackStatLogger:
+    /** PassbackStatLogger */
+    class PassbackStatLogger:
       public AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::PassbackStatTraits>
     {
@@ -689,7 +831,7 @@ namespace AdServer
       {}
 
       void process_passback_track(
-        const PassbackTrackInfo& passback_track_info)
+        const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
         /*throw(Exception)*/;
 
     protected:
@@ -698,7 +840,7 @@ namespace AdServer
     };
 
     /** TagRequestLogger */
-    class CampaignManagerLogger::TagRequestLogger:
+    class TagRequestLogger:
       public virtual AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::TagRequestTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
@@ -738,7 +880,7 @@ namespace AdServer
     };
 
     /** TagPositionStatLogger */
-    class CampaignManagerLogger::TagPositionStatLogger:
+    class TagPositionStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::TagPositionStatTraits>
     {
@@ -769,7 +911,7 @@ namespace AdServer
     };
 
     /** CcgStatLogger */
-    class CampaignManagerLogger::CcgStatLogger:
+    class CcgStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::CcgStatTraits>
     {
@@ -801,7 +943,7 @@ namespace AdServer
     };
 
     /** CcStatLogger */
-    class CampaignManagerLogger::CcStatLogger:
+    class CcStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::CcStatTraits>
     {
@@ -833,7 +975,7 @@ namespace AdServer
     };
 
     /** SearchTermStatLogger */
-    class CampaignManagerLogger::SearchTermStatLogger:
+    class SearchTermStatLogger:
       public AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::SearchTermStatTraits>
     {
@@ -848,12 +990,6 @@ namespace AdServer
               flush_traits),
           STAT_HITS_ONE_(1)
       {}
-
-      void
-      process_ad_request(
-        const CampaignManagerLogger::RequestInfo& request_info,
-        const CampaignManagerLogger::AdRequestSelectionInfo&)
-        /*throw(Exception)*/;
 
       void
       process_request(
@@ -878,7 +1014,7 @@ namespace AdServer
     };
 
     /** SearchEngineStatLogger */
-    class CampaignManagerLogger::SearchEngineStatLogger:
+    class SearchEngineStatLogger:
       public AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::SearchEngineStatTraits>
     {
@@ -894,12 +1030,6 @@ namespace AdServer
           STAT_HITS_ONE_(1, 0),
           STAT_EMPTY_PAGE_HITS_ONE_(1, 1)
       {}
-
-      void
-      process_ad_request(
-        const CampaignManagerLogger::RequestInfo& request_info,
-        const CampaignManagerLogger::AdRequestSelectionInfo&)
-        /*throw(Exception)*/;
 
       void
       process_request(
@@ -925,7 +1055,7 @@ namespace AdServer
     };
 
     /** TagAuctionStatLogger */
-    class CampaignManagerLogger::TagAuctionStatLogger:
+    class TagAuctionStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::TagAuctionStatTraits>
     {
@@ -988,7 +1118,7 @@ namespace AdServer
     };
 
     /** UserAgentStatLogger */
-    class CampaignManagerLogger::UserAgentStatLogger:
+    class UserAgentStatLogger:
       public virtual AdServer::LogProcessing::LogHolderPool<
         AdServer::LogProcessing::UserAgentStatTraits>
     {
@@ -1067,7 +1197,7 @@ namespace AdServer
     }
 
     /**  ProfilingResearchLogger */
-    class CampaignManagerLogger::ProfilingResearchLogger:
+    class ProfilingResearchLogger:
       public virtual AdServer::LogProcessing::LogHolderLimitedDataAdd<
         AdServer::LogProcessing::ResearchProfTraits,
         AdServer::LogProcessing::SimpleCsvSavePolicy<
@@ -1200,7 +1330,7 @@ namespace AdServer
 
     /** ChannelTriggerStatLogger implementation */
     void
-    CampaignManagerLogger::ChannelTriggerStatLogger::add_hits_(
+    ChannelTriggerStatLogger::add_hits_(
       CollectorT::DataT& data,
       char type,
       const CampaignManagerLogger::TriggerChannelMap& triggers)
@@ -1224,7 +1354,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::ChannelTriggerStatLogger::
+    ChannelTriggerStatLogger::
     process_request(
       const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
@@ -1273,9 +1403,9 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::ChannelTriggerStatLogger::
+    ChannelTriggerStatLogger::
     process_match_request(
-      const MatchRequestInfo& match_request_info)
+      const CampaignManagerLogger::MatchRequestInfo& match_request_info)
       /*throw(Exception)*/
     {
       static const char* FUN = "ChannelTriggerStatLogger::process_match_request()";
@@ -1301,9 +1431,9 @@ namespace AdServer
 
     /** ChannelHitStatLogger implementation */
     void
-    CampaignManagerLogger::ChannelHitStatLogger::
+    ChannelHitStatLogger::
     process_match_request(
-      const MatchRequestInfo& match_request_info)
+      const CampaignManagerLogger::MatchRequestInfo& match_request_info)
       /*throw(Exception)*/
     {
       // static const char* FUN = "ChannelHitStatLogger::process_match_request()";
@@ -1334,7 +1464,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::ChannelHitStatLogger::
+    ChannelHitStatLogger::
     process_request(
       const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
@@ -1406,121 +1536,9 @@ namespace AdServer
       }
     }
 
-    // UserPropertiesLogger impl
-    void
-    CampaignManagerLogger::UserPropertiesLogger::
-    add_record_(
-      const CampaignManagerLogger::AnonymousRequestInfo& request_info,
-      bool is_ad_request)
-      /*throw(Exception)*/
-    {
-      static const char* FUN = "UserPropertiesLogger::process_request()";
-
-      if(request_info.log_as_test)
-      {
-        return;
-      }
-
-      try
-      {
-        CollectorT::DataT data(
-          !is_ad_request ? 1 : 0 /* profiling_requests (tag not defined) */,
-          is_ad_request ? 1 : 0 /* requests (defined tag) */,
-          0, 0, 0, 0);
-
-        char user_status = adapt_user_status(request_info.user_status);
-
-        PoolObject_var pool_object = get_object();
-
-        pool_object->add_record(
-          CollectorT::KeyT(
-            request_info.time,
-            request_info.isp_time,
-            request_info.colo_id,
-            user_status,
-            PropertyNames::COUNTRY,
-            request_info.country_code),
-          data);
-
-        pool_object->add_record(
-          CollectorT::KeyT(
-            request_info.time,
-            request_info.isp_time,
-            request_info.colo_id,
-            user_status,
-            PropertyNames::CLIENT_APP_VERSION,
-            request_info.client_app_version),
-          data);
-
-        pool_object->add_record(
-          CollectorT::KeyT(
-            request_info.time,
-            request_info.isp_time,
-            request_info.colo_id,
-            user_status,
-            PropertyNames::CLIENT_APP,
-            request_info.client_app),
-          data);
-
-        pool_object->add_record(
-          CollectorT::KeyT(
-            request_info.time,
-            request_info.isp_time,
-            request_info.colo_id,
-            user_status,
-            PropertyNames::OS_VERSION,
-            request_info.full_platform),
-          data);
-
-        pool_object->add_record(
-          CollectorT::KeyT(
-            request_info.time,
-            request_info.isp_time,
-            request_info.colo_id,
-            user_status,
-            PropertyNames::BROWSER_VERSION,
-            request_info.web_browser),
-          data);
-      }
-      catch (const eh::Exception &ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": eh::Exception caught: " << ex.what();
-        throw Exception(ostr);
-      }
-    }
-
-    void
-    CampaignManagerLogger::UserPropertiesLogger::
-    process_request(
-      const CampaignManagerLogger::RequestInfo& ri)
-      /*throw(Exception)*/
-    {
-      add_record_(ri, ri.is_ad_request);
-    }
-
-    void
-    CampaignManagerLogger::UserPropertiesLogger::
-    process_ad_request(
-      const CampaignManagerLogger::RequestInfo& ri,
-      const CampaignManagerLogger::AdRequestSelectionInfo&)
-      /*throw(Exception)*/
-    {
-      add_record_(ri, ri.is_ad_request);
-    }
-
-    void
-    CampaignManagerLogger::UserPropertiesLogger::
-    process_anon_request(
-      const CampaignManagerLogger::AnonymousRequestInfo& ri)
-      /*throw(Exception)*/
-    {
-      add_record_(ri, false);
-    }
-
     /** RequestBasicChannelsLogger implementation */
     void
-    CampaignManagerLogger::RequestBasicChannelsLogger::
+    RequestBasicChannelsLogger::
     process_request(
       const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
@@ -1532,7 +1550,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::RequestBasicChannelsLogger::
+    RequestBasicChannelsLogger::
     process_oo_operation(
       unsigned long colo_id,
       const Generics::Time& time,
@@ -1570,7 +1588,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::RequestBasicChannelsLogger::
+    RequestBasicChannelsLogger::
     process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo&
@@ -1584,7 +1602,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::RequestBasicChannelsLogger::
+    RequestBasicChannelsLogger::
     process_match_request(
       const CampaignManagerLogger::MatchRequestInfo& match_request_info)
       /*throw(Exception)*/
@@ -1642,7 +1660,7 @@ namespace AdServer
     }
 
     bool
-    CampaignManagerLogger::RequestBasicChannelsLogger::need_process_request_(
+    RequestBasicChannelsLogger::need_process_request_(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo*
         ad_request_selection_info)
@@ -1657,7 +1675,7 @@ namespace AdServer
     }
 
     bool
-    CampaignManagerLogger::RequestBasicChannelsLogger::need_dump_channels_(
+    RequestBasicChannelsLogger::need_dump_channels_(
       const CampaignManagerLogger::RequestInfo& request_info)
       const
       noexcept
@@ -1674,7 +1692,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::RequestBasicChannelsLogger::
+    RequestBasicChannelsLogger::
     add_record_(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo* ad_selection_info)
@@ -1724,7 +1742,7 @@ namespace AdServer
 
           if(ad_selection_info->text_campaigns)
           {
-            for(AdSelectionInfoList::const_iterator ad_it =
+            for(CampaignManagerLogger::AdSelectionInfoList::const_iterator ad_it =
                   ad_selection_info->ad_selection_info_list.begin();
                 ad_it != ad_selection_info->ad_selection_info_list.end();
                 ++ad_it)
@@ -1750,7 +1768,7 @@ namespace AdServer
             if(!ad_selection_info->ad_selection_info_list.empty() &&
               ad_selection_info->ad_selection_info_list.front().ad_selected)
             {
-              const AdSelectionInfo& display_ad_info =
+              const CampaignManagerLogger::AdSelectionInfo& display_ad_info =
                 *(ad_selection_info->ad_selection_info_list.begin());
               RevenueDecimal revenue = RevenueDecimal::div(
                 display_ad_info.ecpm,
@@ -1831,7 +1849,7 @@ namespace AdServer
 
     /** WebStatLogger implementation */
     void
-    CampaignManagerLogger::WebStatLogger::
+    WebStatLogger::
     process_web_operation(
       const CampaignManagerLogger::WebOperationInfo& web_op)
       /*throw(Exception)*/
@@ -1875,7 +1893,7 @@ namespace AdServer
 
     /** ResearchWebStatLogger implementation */
     void
-    CampaignManagerLogger::ResearchWebStatLogger::
+    ResearchWebStatLogger::
     process_web_operation(
       const CampaignManagerLogger::WebOperationInfo& web_op)
       /*throw(Exception)*/
@@ -1924,42 +1942,46 @@ namespace AdServer
       }
     }
 
-    void
-    CampaignManagerLogger::WebOperationInfo::init_by_flags(
-      const Generics::Time& time_in,
-      const char* ct_in,
-      const char* curt_in,
-      const char* browser_in,
-      const char* os_in,
-      unsigned int flags)
-      noexcept
-    {
-      full_time = time_in;
-      time = time_in;
-      if(!(flags & LOG_HOUR))
-      {
-        time = Algs::round_to_day(time);
-      }
-      if(flags & LOG_CT)
-      {
-        ct = ct_in;
-      }
-      if(flags & LOG_CURT)
-      {
-        curct = curt_in;
-      }
-      if(flags & LOG_BROWSER)
-      {
-        browser = browser_in;
-      }
-      if(flags & LOG_OS)
-      {
-        os = os_in;
-      }
-    }
+  }
 
+  void
+  CampaignManagerLogger::WebOperationInfo::init_by_flags(
+    const Generics::Time& time_in,
+    const char* ct_in,
+    const char* curt_in,
+    const char* browser_in,
+    const char* os_in,
+    unsigned int flags)
+    noexcept
+  {
+    full_time = time_in;
+    time = time_in;
+    if(!(flags & LOG_HOUR))
+    {
+      time = Algs::round_to_day(time);
+    }
+    if(flags & LOG_CT)
+    {
+      ct = ct_in;
+    }
+    if(flags & LOG_CURT)
+    {
+      curct = curt_in;
+    }
+    if(flags & LOG_BROWSER)
+    {
+      browser = browser_in;
+    }
+    if(flags & LOG_OS)
+    {
+      os = os_in;
+    }
+  }
+
+  namespace
+  {
     /** CreativeStatLogger implementation */
-    CampaignManagerLogger::CreativeStatLogger::CreativeStatLogger(
+    CreativeStatLogger::CreativeStatLogger(
       const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
       : AdServer::LogProcessing::LogHolderPool<
@@ -1995,9 +2017,9 @@ namespace AdServer
     {}
 
     inline
-    CampaignManagerLogger::CreativeStatLogger::
+    CreativeStatLogger::
     CollectorT::DataT::KeyT
-    CampaignManagerLogger::CreativeStatLogger::init_no_ad_key_(
+    CreativeStatLogger::init_no_ad_key_(
       unsigned long colo_id,
       unsigned long tag_id,
       unsigned long size_id,
@@ -2046,9 +2068,9 @@ namespace AdServer
     }
 
     inline
-    CampaignManagerLogger::CreativeStatLogger::
+    CreativeStatLogger::
     CollectorT::DataT::KeyT
-    CampaignManagerLogger::CreativeStatLogger::init_no_ad_key_(
+    CreativeStatLogger::init_no_ad_key_(
       bool fraud,
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo&
@@ -2076,7 +2098,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::CreativeStatLogger::
+    CreativeStatLogger::
     process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo&
@@ -2121,7 +2143,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::CreativeStatLogger::
+    CreativeStatLogger::
     process_passback_track(
       const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
       /*throw(Exception)*/
@@ -2164,10 +2186,10 @@ namespace AdServer
 
     /** RequestLogger implementation */
     void
-    CampaignManagerLogger::RequestLogger::
+    RequestLogger::
     process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
-      const AdRequestSelectionInfo& ad_ri)
+      const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
       /*throw(Exception)*/
     {
       typedef CollectorT::DataT::OptionalUlong OptionalUlong;
@@ -2226,7 +2248,7 @@ namespace AdServer
               ad_ri.lost_auction_ccgs.begin(),
               ad_ri.lost_auction_ccgs.end(),
               std::back_inserter(lost_auction_ccgs),
-              std::mem_fun_ref(&AdRequestSelectionInfo::TimedId::get_id));
+              std::mem_fun_ref(&CampaignManagerLogger::AdRequestSelectionInfo::TimedId::get_id));
 
             CollectorT::DataT data(
               request_info.time,
@@ -2349,7 +2371,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::ImpressionLogger::
+    ImpressionLogger::
     process_impression(
       const CampaignManagerLogger::ImpressionInfo& impression_info)
       /*throw(Exception)*/
@@ -2382,7 +2404,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::ClickLogger::
+    ClickLogger::
     process_click(
       const CampaignManagerLogger::ClickInfo& click_info)
       /*throw(Exception)*/
@@ -2408,7 +2430,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::AdvertiserActionLogger::
+    AdvertiserActionLogger::
     process_action(
       const CampaignManagerLogger::AdvActionInfo& adv_action_info)
       /*throw(Exception)*/
@@ -2439,9 +2461,9 @@ namespace AdServer
       }
     }
 
-    /* CampaignManagerLogger::ActionRequestLogger */
+    /* ActionRequestLogger */
     void
-    CampaignManagerLogger::ActionRequestLogger::
+    ActionRequestLogger::
     process_action(
       const CampaignManagerLogger::AdvActionInfo& adv_action_info)
       /*throw(Exception)*/
@@ -2483,8 +2505,8 @@ namespace AdServer
       }
     }
 
-    /** CampaignManagerLogger::PassbackImpressionLogger */
-    void CampaignManagerLogger::PassbackImpressionLogger::process_passback(
+    /** PassbackImpressionLogger */
+    void PassbackImpressionLogger::process_passback(
       const CampaignManagerLogger::PassbackInfo& passback_info)
       /*throw(Exception)*/
     {
@@ -2505,10 +2527,10 @@ namespace AdServer
       }
     }
 
-    /** CampaignManagerLogger::PassbackStatLogger */
+    /** PassbackStatLogger */
     void
-    CampaignManagerLogger::PassbackStatLogger::process_passback_track(
-      const PassbackTrackInfo& passback_track_info)
+    PassbackStatLogger::process_passback_track(
+      const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
       /*throw(Exception)*/
     {
       static const char* FUN = "PassbackStatLogger::process_passback_track()";
@@ -2542,7 +2564,6 @@ namespace AdServer
     // TagRequestLogger
 
     void
-    CampaignManagerLogger::
     TagRequestLogger::process_request(
       const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
@@ -2598,7 +2619,6 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::
     TagRequestLogger::process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
@@ -2665,7 +2685,6 @@ namespace AdServer
 
     // TagPositionStatLogger
     void
-    CampaignManagerLogger::
     TagPositionStatLogger::process_ad_request(
       const CampaignManagerLogger::RequestInfo& ri,
       const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
@@ -2702,7 +2721,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::CcgStatLogger::process_ad_request(
+    CcgStatLogger::process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo&
         ad_request_selection_info)
@@ -2738,7 +2757,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::CcStatLogger::process_ad_request(
+    CcStatLogger::process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo&
         ad_request_selection_info)
@@ -2775,17 +2794,7 @@ namespace AdServer
 
     /** SearchTermStatLogger implementation */
     void
-    CampaignManagerLogger::SearchTermStatLogger::
-    process_ad_request(
-      const CampaignManagerLogger::RequestInfo& request_info,
-      const CampaignManagerLogger::AdRequestSelectionInfo&)
-      /*throw(Exception)*/
-    {
-      add_record_(request_info);
-    }
-
-    void
-    CampaignManagerLogger::SearchTermStatLogger::
+    SearchTermStatLogger::
     process_request(
       const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
@@ -2794,7 +2803,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::SearchTermStatLogger::
+    SearchTermStatLogger::
     process_anon_request(
       const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
@@ -2803,7 +2812,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::SearchTermStatLogger::
+    SearchTermStatLogger::
     add_record_(
       const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
@@ -2823,17 +2832,7 @@ namespace AdServer
 
     /** SearchEngineStatLogger implementation */
     void
-    CampaignManagerLogger::SearchEngineStatLogger::
-    process_ad_request(
-      const CampaignManagerLogger::RequestInfo& request_info,
-      const CampaignManagerLogger::AdRequestSelectionInfo&)
-      /*throw(Exception)*/
-    {
-      add_record_(request_info);
-    }
-
-    void
-    CampaignManagerLogger::SearchEngineStatLogger::
+    SearchEngineStatLogger::
     process_request(
       const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
@@ -2842,7 +2841,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::SearchEngineStatLogger::
+    SearchEngineStatLogger::
     process_anon_request(
       const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
@@ -2851,7 +2850,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerLogger::SearchEngineStatLogger::
+    SearchEngineStatLogger::
     add_record_(
       const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
@@ -2870,403 +2869,931 @@ namespace AdServer
       }
     }
 
-    /** CampaignManagerLogger */
-    CampaignManagerLogger::CampaignManagerLogger(
-      const CampaignManagerLogger::Params& params,
-      Logging::Logger* logger)
-      /*throw(Exception)*/
-      : logger_(ReferenceCounting::add_ref(logger))
-    {
-      static const char* FUN = "CampaignManagerLogger::CampaignManagerLogger()";
+    typedef ReferenceCounting::SmartPtr<ChannelTriggerStatLogger>
+      ChannelTriggerStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<ChannelHitStatLogger>
+      ChannelHitStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<RequestBasicChannelsLogger>
+      RequestBasicChannelsLogger_var;
+    typedef ReferenceCounting::SmartPtr<WebStatLogger>
+      WebStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<ResearchWebStatLogger>
+      ResearchWebStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<CreativeStatLogger>
+      CreativeStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<RequestLogger>
+      RequestLogger_var;
+    typedef ReferenceCounting::SmartPtr<ImpressionLogger>
+      ImpressionLogger_var;
+    typedef ReferenceCounting::SmartPtr<ClickLogger>
+      ClickLogger_var;
+    typedef ReferenceCounting::SmartPtr<AdvertiserActionLogger>
+      AdvertiserActionLogger_var;
+    typedef ReferenceCounting::SmartPtr<ActionRequestLogger>
+      ActionRequestLogger_var;
+    typedef ReferenceCounting::SmartPtr<PassbackImpressionLogger>
+      PassbackImpressionLogger_var;
+    typedef ReferenceCounting::SmartPtr<TagRequestLogger>
+      TagRequestLogger_var;
+    typedef ReferenceCounting::SmartPtr<TagPositionStatLogger>
+      TagPositionStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<CcgStatLogger>
+      CcgStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<CcStatLogger>
+      CcStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<SearchTermStatLogger>
+      SearchTermStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<SearchEngineStatLogger>
+      SearchEngineStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<TagAuctionStatLogger>
+      TagAuctionStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<PassbackStatLogger>
+      PassbackStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<UserAgentStatLogger>
+      UserAgentStatLogger_var;
+    typedef ReferenceCounting::SmartPtr<ProfilingResearchLogger>
+      ProfilingResearchLogger_var;
+  }
 
-      try
-      {
-        if(params.channel_trigger_stat.period != Generics::Time::ZERO)
-        {
-          channel_trigger_stat_logger_ =
-            new ChannelTriggerStatLogger(params.channel_trigger_stat);
-          add_child_log_holder(channel_trigger_stat_logger_);
-        }
-
-        channel_hit_stat_logger_ =
-          new ChannelHitStatLogger(params.channel_hit_stat);
-        add_child_log_holder(channel_hit_stat_logger_);
-
-        request_basic_channels_logger_ =
-          new RequestBasicChannelsLogger(params.request_basic_channels);
-        add_child_log_holder(request_basic_channels_logger_);
-
-        web_stat_logger_ = new WebStatLogger(params.web_stat);
-        add_child_log_holder(web_stat_logger_);
-
-        if(params.research_web_stat.period != Generics::Time::ZERO)
-        {
-          research_web_stat_logger_ = new ResearchWebStatLogger(params.research_web_stat);
-          add_child_log_holder(research_web_stat_logger_);
-        }
-
-        creative_stat_logger_ =
-          new CreativeStatLogger(params.creative_stat);
-        add_child_log_holder(creative_stat_logger_);
-
-        action_request_logger_ =
-          new ActionRequestLogger(params.action_request);
-        add_child_log_holder(action_request_logger_);
-
-        request_logger_ = new RequestLogger(params.request);
-        add_child_log_holder(request_logger_);
-
-        impression_logger_ = new ImpressionLogger(params.impression);
-        add_child_log_holder(impression_logger_);
-
-        click_logger_ = new ClickLogger(params.click);
-        add_child_log_holder(click_logger_);
-
-        advertiser_action_logger_ =
-          new AdvertiserActionLogger(params.advertiser_action);
-        add_child_log_holder(advertiser_action_logger_);
-
-        passback_impression_logger_ =
-          new PassbackImpressionLogger(params.passback_impression);
-        add_child_log_holder(passback_impression_logger_);
-
-        if(params.search_term_stat.period != Generics::Time::ZERO)
-        {
-          search_term_stat_logger_ =
-            new SearchTermStatLogger(params.search_term_stat);
-          add_child_log_holder(search_term_stat_logger_);
-        }
-
-        search_engine_stat_logger_ =
-          new SearchEngineStatLogger(params.search_engine_stat);
-        add_child_log_holder(search_engine_stat_logger_);
-
-        tag_auction_stat_logger_ =
-          new TagAuctionStatLogger(params.tag_auction_stat);
-        add_child_log_holder(tag_auction_stat_logger_);
-
-        /*
-        user_properties_logger_ =
-          new UserPropertiesLogger(params.user_properties);
-        add_child_log_holder(user_properties_logger_);
-        */
-
-        tag_request_logger_ = new TagRequestLogger(params.tag_request);
-        add_child_log_holder(tag_request_logger_);
-
-        tag_position_stat_logger_ = new TagPositionStatLogger(params.tag_position_stat);
-        add_child_log_holder(tag_position_stat_logger_);
-
-        if(params.ccg_stat.period != Generics::Time::ZERO)
-        {
-          ccg_stat_logger_ = new CcgStatLogger(params.ccg_stat);
-          add_child_log_holder(ccg_stat_logger_);
-        }
-
-        if(params.cc_stat.period != Generics::Time::ZERO)
-        {
-          cc_stat_logger_ = new CcStatLogger(params.cc_stat);
-          add_child_log_holder(cc_stat_logger_);
-        }
-
-        passback_stat_logger_ = new PassbackStatLogger(params.passback_stat);
-        add_child_log_holder(passback_stat_logger_);
-
-        user_agent_stat_logger_ = new UserAgentStatLogger(params.user_agent_stat);
-        add_child_log_holder(user_agent_stat_logger_);
-
-        if(params.prof_research.period != Generics::Time::ZERO &&
-            params.profiling_log_sampling > 0)
-        {
-          profiling_research_logger_ = new ProfilingResearchLogger(
-            logger_,
-            params.profiling_research_record_limit,
-            params.profiling_log_sampling,
-            params.prof_research,
-            params.log_referrer_setting);
-
-          add_child_log_holder(profiling_research_logger_);
-        }
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Can't init loggers. Caught eh::Exception: " << ex.what();
-        throw Exception(ostr);
-      }
-    }
-
-    CampaignManagerLogger::~CampaignManagerLogger() noexcept
+  class CampaignManagerLogger::Impl:
+    public Generics::SimpleActiveObject
+  {
+  public:
+    Impl(
+      CampaignManagerLogger& owner,
+      Logging::Logger* logger,
+      unsigned long threads)
+      : owner_(owner),
+        logger_(ReferenceCounting::add_ref(logger)),
+        threads_(std::max<unsigned long>(threads, 1)),
+        processing_tasks_(0),
+        queue_closed_(true)
     {}
 
     void
-    CampaignManagerLogger::process_request(
-      const CampaignManagerLogger::RequestInfo& request_info,
+    init_loggers(const Params& params)
+      /*throw(Exception)*/;
+
+    void
+    enqueue_task(std::function<void()> task)
+      /*throw(Exception)*/;
+
+    void
+    wait_processing();
+
+    Stats
+    get_stats() const noexcept;
+
+    void
+    process_request(
+      const RequestInfo& request_info,
       unsigned long profiling_type)
-      /*throw(Exception)*/
+      /*throw(Exception)*/;
+
+    void
+    process_ad_request(
+      const RequestInfo& request_info,
+      const CampaignManagerLogger::AdRequestSelectionInfo& ad_request_selection_info)
+      /*throw(Exception)*/;
+
+    void
+    process_impression(const ImpressionInfo& action_info)
+      /*throw(Exception)*/;
+
+    void
+    process_click(const ClickInfo& action_info)
+      /*throw(Exception)*/;
+
+    void
+    process_action(const AdvActionInfo& action_info)
+      /*throw(Exception)*/;
+
+    void
+    process_oo_operation(
+      unsigned long colo_id,
+      Generics::Time time,
+      Generics::Time time_offset,
+      AdServer::Commons::UserId user_id,
+      bool log_as_test,
+      char operation)
+      /*throw(Exception)*/;
+
+    void
+    process_web_operation(const WebOperationInfo& web_op_info)
+      /*throw(Exception)*/;
+
+    void
+    process_passback(const PassbackInfo& passback_info)
+      /*throw(Exception)*/;
+
+    void
+    process_passback_track(const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
+      /*throw(Exception)*/;
+
+    void
+    process_anon_request(const AnonymousRequestInfo& anon_request_info)
+      /*throw(Exception)*/;
+
+    void
+    process_match_request(const CampaignManagerLogger::MatchRequestInfo& match_request_info)
+      /*throw(Exception)*/;
+
+  private:
+    void
+    activate_object_() override;
+
+    void
+    deactivate_object_() override;
+
+    void
+    wait_object_() override;
+
+    void
+    worker_loop_() noexcept;
+
+  private:
+    CampaignManagerLogger& owner_;
+    const Logging::Logger_var logger_;
+    const unsigned long threads_;
+
+    std::vector<std::thread> threads_pool_;
+    mutable std::mutex queue_mutex_;
+    std::condition_variable queue_cond_;
+    std::condition_variable processing_cond_;
+    std::deque<std::function<void()>> tasks_;
+    std::size_t processing_tasks_;
+    bool queue_closed_;
+
+    ChannelTriggerStatLogger_var channel_trigger_stat_logger_;
+    ChannelHitStatLogger_var channel_hit_stat_logger_;
+    RequestBasicChannelsLogger_var request_basic_channels_logger_;
+    WebStatLogger_var web_stat_logger_;
+    ResearchWebStatLogger_var research_web_stat_logger_;
+
+    CreativeStatLogger_var creative_stat_logger_; // only for requests counter logging
+
+    ActionRequestLogger_var action_request_logger_;
+
+    RequestLogger_var request_logger_;
+    ImpressionLogger_var impression_logger_;
+    ClickLogger_var click_logger_;
+    AdvertiserActionLogger_var  advertiser_action_logger_;
+
+    PassbackImpressionLogger_var passback_impression_logger_;
+    TagRequestLogger_var tag_request_logger_;
+    TagPositionStatLogger_var tag_position_stat_logger_;
+
+    CcgStatLogger_var ccg_stat_logger_;
+    CcStatLogger_var cc_stat_logger_;
+
+    SearchTermStatLogger_var search_term_stat_logger_;
+    SearchEngineStatLogger_var search_engine_stat_logger_;
+    TagAuctionStatLogger_var tag_auction_stat_logger_;
+
+    PassbackStatLogger_var passback_stat_logger_;
+    UserAgentStatLogger_var user_agent_stat_logger_;
+    ProfilingResearchLogger_var profiling_research_logger_;
+  };
+
+  CampaignManagerLogger::CampaignManagerLogger(
+    const CampaignManagerLogger::Params& params,
+    Logging::Logger* logger)
+    /*throw(Exception)*/
+    : impl_(std::make_shared<Impl>(*this, logger, params.threads))
+  {
+    add_child_object(impl_);
+    impl_->init_loggers(params);
+  }
+
+  /** CampaignManagerLogger */
+  void
+  CampaignManagerLogger::Impl::init_loggers(
+    const CampaignManagerLogger::Params& params)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::CampaignManagerLogger()";
+
+    try
     {
-      if (profiling_type & PT_PROFILING_INFO)
+      if(params.channel_trigger_stat.period != Generics::Time::ZERO)
       {
-        if(channel_trigger_stat_logger_.in())
+        channel_trigger_stat_logger_ =
+          new ChannelTriggerStatLogger(params.channel_trigger_stat);
+        owner_.add_child_log_holder(channel_trigger_stat_logger_);
+      }
+
+      channel_hit_stat_logger_ =
+        new ChannelHitStatLogger(params.channel_hit_stat);
+      owner_.add_child_log_holder(channel_hit_stat_logger_);
+
+      request_basic_channels_logger_ =
+        new RequestBasicChannelsLogger(params.request_basic_channels);
+      owner_.add_child_log_holder(request_basic_channels_logger_);
+
+      web_stat_logger_ = new WebStatLogger(params.web_stat);
+      owner_.add_child_log_holder(web_stat_logger_);
+
+      if(params.research_web_stat.period != Generics::Time::ZERO)
+      {
+        research_web_stat_logger_ = new ResearchWebStatLogger(params.research_web_stat);
+        owner_.add_child_log_holder(research_web_stat_logger_);
+      }
+
+      creative_stat_logger_ =
+        new CreativeStatLogger(params.creative_stat);
+      owner_.add_child_log_holder(creative_stat_logger_);
+
+      action_request_logger_ =
+        new ActionRequestLogger(params.action_request);
+      owner_.add_child_log_holder(action_request_logger_);
+
+      request_logger_ = new RequestLogger(params.request);
+      owner_.add_child_log_holder(request_logger_);
+
+      impression_logger_ = new ImpressionLogger(params.impression);
+      owner_.add_child_log_holder(impression_logger_);
+
+      click_logger_ = new ClickLogger(params.click);
+      owner_.add_child_log_holder(click_logger_);
+
+      advertiser_action_logger_ =
+        new AdvertiserActionLogger(params.advertiser_action);
+      owner_.add_child_log_holder(advertiser_action_logger_);
+
+      passback_impression_logger_ =
+        new PassbackImpressionLogger(params.passback_impression);
+      owner_.add_child_log_holder(passback_impression_logger_);
+
+      if(params.search_term_stat.period != Generics::Time::ZERO)
+      {
+        search_term_stat_logger_ =
+          new SearchTermStatLogger(params.search_term_stat);
+        owner_.add_child_log_holder(search_term_stat_logger_);
+      }
+
+      search_engine_stat_logger_ =
+        new SearchEngineStatLogger(params.search_engine_stat);
+      owner_.add_child_log_holder(search_engine_stat_logger_);
+
+      tag_auction_stat_logger_ =
+        new TagAuctionStatLogger(params.tag_auction_stat);
+      owner_.add_child_log_holder(tag_auction_stat_logger_);
+
+      tag_request_logger_ = new TagRequestLogger(params.tag_request);
+      owner_.add_child_log_holder(tag_request_logger_);
+
+      tag_position_stat_logger_ = new TagPositionStatLogger(params.tag_position_stat);
+      owner_.add_child_log_holder(tag_position_stat_logger_);
+
+      if(params.ccg_stat.period != Generics::Time::ZERO)
+      {
+        ccg_stat_logger_ = new CcgStatLogger(params.ccg_stat);
+        owner_.add_child_log_holder(ccg_stat_logger_);
+      }
+
+      if(params.cc_stat.period != Generics::Time::ZERO)
+      {
+        cc_stat_logger_ = new CcStatLogger(params.cc_stat);
+        owner_.add_child_log_holder(cc_stat_logger_);
+      }
+
+      passback_stat_logger_ = new PassbackStatLogger(params.passback_stat);
+      owner_.add_child_log_holder(passback_stat_logger_);
+
+      user_agent_stat_logger_ = new UserAgentStatLogger(params.user_agent_stat);
+      owner_.add_child_log_holder(user_agent_stat_logger_);
+
+      if(params.prof_research.period != Generics::Time::ZERO &&
+          params.profiling_log_sampling > 0)
+      {
+        profiling_research_logger_ = new ProfilingResearchLogger(
+          logger_,
+          params.profiling_research_record_limit,
+          params.profiling_log_sampling,
+          params.prof_research,
+          params.log_referrer_setting);
+
+        owner_.add_child_log_holder(profiling_research_logger_);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't init loggers. Caught eh::Exception: " << ex.what();
+      throw Exception(ostr);
+    }
+  }
+
+  CampaignManagerLogger::~CampaignManagerLogger() noexcept
+  {}
+
+  void
+  CampaignManagerLogger::process_request(
+    std::shared_ptr<const CampaignManagerLogger::RequestInfo> request_info,
+    unsigned long profiling_type)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), request_info, profiling_type]()
+      {
+        impl->process_request(*request_info, profiling_type);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_anon_request(
+    const AnonymousRequestInfo& anon_request_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task([impl = impl_.get(), anon_request_info]()
+    {
+      impl->process_anon_request(anon_request_info);
+    });
+  }
+
+  void
+  CampaignManagerLogger::process_match_request(
+    const CampaignManagerLogger::MatchRequestInfo& match_request_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), match_request_info]()
+      {
+        impl->process_match_request(match_request_info);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_ad_request(
+    std::shared_ptr<const CampaignManagerLogger::RequestInfo> ri,
+    const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), ri, ad_ri]()
+      {
+        impl->process_ad_request(*ri, ad_ri);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_impression(const ImpressionInfo& impression_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), impression_info]()
+      {
+        impl->process_impression(impression_info);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_click(const ClickInfo& request_id)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), request_id]()
+      {
+        impl->process_click(request_id);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_action(const AdvActionInfo& adv_action_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), adv_action_info]()
+      {
+        impl->process_action(adv_action_info);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_passback(const PassbackInfo& passback_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), passback_info]()
+      {
+        impl->process_passback(passback_info);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_passback_track(const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), passback_track_info]()
+      {
+        impl->process_passback_track(passback_track_info);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_web_operation(const WebOperationInfo& web_op_info)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [impl = impl_.get(), web_op_info]()
+      {
+        impl->process_web_operation(web_op_info);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::process_oo_operation(
+    unsigned long colo_id,
+    const Generics::Time& time,
+    const Generics::Time& time_offset,
+    const AdServer::Commons::UserId& user_id,
+    bool log_as_test,
+    char operation)
+    /*throw(Exception)*/
+  {
+    impl_->enqueue_task(
+      [
+        impl = impl_.get(),
+        colo_id,
+        time,
+        time_offset,
+        user_id,
+        log_as_test,
+        operation
+      ]()
+      {
+        impl->process_oo_operation(
+          colo_id,
+          time,
+          time_offset,
+          user_id,
+          log_as_test,
+          operation);
+      }
+    );
+  }
+
+  void
+  CampaignManagerLogger::wait_processing()
+  {
+    impl_->wait_processing();
+  }
+
+  CampaignManagerLogger::Stats
+  CampaignManagerLogger::get_stats() const noexcept
+  {
+    return impl_->get_stats();
+  }
+
+  void
+  CampaignManagerLogger::Impl::activate_object_()
+  {
+    {
+      std::lock_guard<std::mutex> guard(queue_mutex_);
+      queue_closed_ = false;
+    }
+
+    threads_pool_.reserve(threads_);
+    try
+    {
+      for(unsigned long i = 0; i < threads_; ++i)
+      {
+        threads_pool_.emplace_back(
+          [this]()
+          {
+            worker_loop_();
+          }
+        );
+      }
+    }
+    catch(...)
+    {
+      {
+        std::lock_guard<std::mutex> guard(queue_mutex_);
+        queue_closed_ = true;
+      }
+
+      queue_cond_.notify_all();
+      for(auto& thread : threads_pool_)
+      {
+        if(thread.joinable())
         {
-          channel_trigger_stat_logger_->process_request(request_info);
+          thread.join();
+        }
+      }
+      threads_pool_.clear();
+      throw;
+    }
+  }
+
+  void
+  CampaignManagerLogger::Impl::deactivate_object_()
+  {
+    // Queue is closed in wait_object(), because CompositeActiveObject
+    // deactivates all children before waiting for any of them. CampaignManagerCore
+    // can still enqueue logs until its wait_object() completes.
+  }
+
+  void
+  CampaignManagerLogger::Impl::wait_object_()
+  {
+    {
+      std::lock_guard<std::mutex> guard(queue_mutex_);
+      queue_closed_ = true;
+    }
+
+    queue_cond_.notify_all();
+
+    for(auto& thread : threads_pool_)
+    {
+      if(thread.joinable())
+      {
+        thread.join();
+      }
+    }
+    threads_pool_.clear();
+  }
+
+  void
+  CampaignManagerLogger::Impl::worker_loop_() noexcept
+  {
+    for(;;)
+    {
+      std::deque<std::function<void()>> tasks;
+
+      {
+        std::unique_lock<std::mutex> guard(queue_mutex_);
+        queue_cond_.wait(guard, [this]()
+        {
+          return queue_closed_ || !tasks_.empty();
+        });
+
+        if(tasks_.empty() && queue_closed_)
+        {
+          return;
         }
 
-        channel_hit_stat_logger_->process_request(request_info);
-        request_basic_channels_logger_->process_request(request_info);
+        tasks.swap(tasks_);
+        processing_tasks_ += tasks.size();
       }
 
-      if (profiling_type & PT_OTHER)
+      for(auto& task : tasks)
       {
-        //user_properties_logger_->process_request(request_info);
-        user_agent_stat_logger_->process_request(request_info);
-
-        if(search_term_stat_logger_.in())
+        try
         {
-          search_term_stat_logger_->process_request(request_info);
+          task();
+        }
+        catch(const eh::Exception& ex)
+        {
+          logger_->sstream(
+            Logging::Logger::EMERGENCY,
+            "CampaignManagerLogger")
+            << "CampaignManagerLogger::worker_loop_(): "
+               "caught eh::Exception: " << ex.what();
+        }
+        catch(...)
+        {
+          logger_->sstream(
+            Logging::Logger::EMERGENCY,
+            "CampaignManagerLogger")
+            << "CampaignManagerLogger::worker_loop_(): "
+               "caught unknown exception";
         }
 
-        search_engine_stat_logger_->process_request(request_info);
-        tag_request_logger_->process_request(request_info);
-      }
-
-      if (profiling_research_logger_.in())
-      {
-        profiling_research_logger_->process_request(request_info);
+        {
+          std::lock_guard<std::mutex> guard(queue_mutex_);
+          --processing_tasks_;
+          if(processing_tasks_ == 0 && tasks_.empty())
+          {
+            processing_cond_.notify_all();
+          }
+        }
       }
     }
+  }
 
-    void
-    CampaignManagerLogger::process_anon_request(
-      const AnonymousRequestInfo& anon_request_info)
-      /*throw(Exception)*/
+  void
+  CampaignManagerLogger::Impl::wait_processing()
+  {
+    std::unique_lock<std::mutex> guard(queue_mutex_);
+    processing_cond_.wait(guard, [this]()
     {
-      //user_properties_logger_->process_anon_request(anon_request_info);
-      user_agent_stat_logger_->process_anon_request(anon_request_info);
+      return tasks_.empty() && processing_tasks_ == 0;
+    });
+  }
 
-      if(search_term_stat_logger_.in())
+  CampaignManagerLogger::Stats
+  CampaignManagerLogger::Impl::get_stats() const noexcept
+  {
+    std::lock_guard<std::mutex> guard(queue_mutex_);
+
+    Stats stats;
+    stats.queue_size = tasks_.size();
+    stats.processing_requests = processing_tasks_;
+    stats.request_in_progress =
+      stats.queue_size + stats.processing_requests;
+    return stats;
+  }
+
+  void
+  CampaignManagerLogger::Impl::enqueue_task(std::function<void()> task)
+    /*throw(Exception)*/
+  {
+    bool was_empty = false;
+
+    {
+      std::lock_guard<std::mutex> guard(queue_mutex_);
+
+      if(queue_closed_)
       {
-        search_term_stat_logger_->process_anon_request(anon_request_info);
+        Stream::Error ostr;
+        ostr << "CampaignManagerLogger::enqueue_task(): "
+          "queue is closed";
+        throw Exception(ostr);
       }
 
-      search_engine_stat_logger_->process_anon_request(anon_request_info);
+      was_empty = tasks_.empty();
+      tasks_.emplace_back(std::move(task));
     }
 
-    void
-    CampaignManagerLogger::process_match_request(
-      const MatchRequestInfo& match_request_info)
-      /*throw(Exception)*/
+    if(was_empty)
     {
-      request_basic_channels_logger_->process_match_request(match_request_info);
-      channel_hit_stat_logger_->process_match_request(match_request_info);
-      channel_trigger_stat_logger_->process_match_request(match_request_info);
+      queue_cond_.notify_one();
+    }
+  }
+
+  void
+  CampaignManagerLogger::Impl::process_ad_request(
+    const CampaignManagerLogger::RequestInfo& ri,
+    const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
+    /*throw(Exception)*/
+  {
+    if(channel_trigger_stat_logger_.in())
+    {
+      channel_trigger_stat_logger_->process_request(ri);
     }
 
-    void
-    CampaignManagerLogger::process_ad_request(
-      const CampaignManagerLogger::RequestInfo& ri,
-      const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
-      /*throw(Exception)*/
+    channel_hit_stat_logger_->process_request(ri);
+    if(search_term_stat_logger_.in())
+    {
+      search_term_stat_logger_->process_request(ri);
+    }
+
+    search_engine_stat_logger_->process_request(ri);
+
+    request_basic_channels_logger_->process_ad_request(ri, ad_ri);
+
+    creative_stat_logger_->process_ad_request(ri, ad_ri);
+
+    request_logger_->process_ad_request(ri, ad_ri);
+
+    tag_request_logger_->process_ad_request(ri, ad_ri);
+
+    tag_position_stat_logger_->process_ad_request(ri, ad_ri);
+
+    if(ccg_stat_logger_.in())
+    {
+      ccg_stat_logger_->process_ad_request(ri, ad_ri);
+    }
+
+    if(cc_stat_logger_.in())
+    {
+      cc_stat_logger_->process_ad_request(ri, ad_ri);
+    }
+
+    tag_auction_stat_logger_->process_ad_request(ri, ad_ri);
+
+    user_agent_stat_logger_->process_request(ri);
+
+    if (profiling_research_logger_.in())
+    {
+      profiling_research_logger_->process_request(ri);
+    }
+  }
+
+  void
+  CampaignManagerLogger::Impl::process_impression(
+    const ImpressionInfo& impression_info)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::process_impression()";
+
+    try
+    {
+      impression_logger_->process_impression(impression_info);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw Exception(ostr);
+    }
+  }
+
+  void
+  CampaignManagerLogger::Impl::process_request(
+    const CampaignManagerLogger::RequestInfo& request_info,
+    unsigned long profiling_type)
+    /*throw(Exception)*/
+  {
+    if (profiling_type & PT_PROFILING_INFO)
     {
       if(channel_trigger_stat_logger_.in())
       {
-        channel_trigger_stat_logger_->process_request(ri);
+        channel_trigger_stat_logger_->process_request(request_info);
       }
 
-      channel_hit_stat_logger_->process_request(ri);
-      //user_properties_logger_->process_ad_request(ri, ad_ri);
+      channel_hit_stat_logger_->process_request(request_info);
+      request_basic_channels_logger_->process_request(request_info);
+    }
+
+    if (profiling_type & PT_OTHER)
+    {
+      user_agent_stat_logger_->process_request(request_info);
 
       if(search_term_stat_logger_.in())
       {
-        search_term_stat_logger_->process_request(ri);
+        search_term_stat_logger_->process_request(request_info);
       }
 
-      search_engine_stat_logger_->process_request(ri);
-
-      request_basic_channels_logger_->process_ad_request(ri, ad_ri);
-
-      creative_stat_logger_->process_ad_request(ri, ad_ri);
-
-      request_logger_->process_ad_request(ri, ad_ri);
-
-      tag_request_logger_->process_ad_request(ri, ad_ri);
-
-      tag_position_stat_logger_->process_ad_request(ri, ad_ri);
-
-      if(ccg_stat_logger_.in())
-      {
-        ccg_stat_logger_->process_ad_request(ri, ad_ri);
-      }
-
-      if(cc_stat_logger_.in())
-      {
-        cc_stat_logger_->process_ad_request(ri, ad_ri);
-      }
-
-      tag_auction_stat_logger_->process_ad_request(ri, ad_ri);
-
-      user_agent_stat_logger_->process_request(ri);
-
-      if (profiling_research_logger_.in())
-      {
-        profiling_research_logger_->process_request(ri);
-      }
+      search_engine_stat_logger_->process_request(request_info);
+      tag_request_logger_->process_request(request_info);
     }
 
-    void
-    CampaignManagerLogger::process_impression(
-      const ImpressionInfo& impression_info)
-      /*throw(Exception)*/
+    if (profiling_research_logger_.in())
     {
-      static const char* FUN = "CampaignManagerLogger::process_impression()";
-
-      try
-      {
-        impression_logger_->process_impression(impression_info);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Caught eh::Exception: " << ex.what();
-        throw Exception(ostr);
-      }
+      profiling_research_logger_->process_request(request_info);
     }
+  }
 
-    void
-    CampaignManagerLogger::process_click(
-      const ClickInfo& request_id)
-      /*throw(Exception)*/
+  void
+  CampaignManagerLogger::Impl::process_click(
+    const ClickInfo& request_id)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::process_click()";
+
+    try
     {
-      static const char* FUN = "CampaignManagerLogger::process_click()";
-
-      try
-      {
-        click_logger_->process_click(request_id);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Caught eh::Exception: " << ex.what();
-        throw Exception(ostr);
-      }
+      click_logger_->process_click(request_id);
     }
-
-    void
-    CampaignManagerLogger::process_action(
-      const AdvActionInfo& adv_action_info)
-      /*throw(Exception)*/
+    catch(const eh::Exception& ex)
     {
-      static const char* FUN = "CampaignManagerLogger::process_action()";
-
-      try
-      {
-        advertiser_action_logger_->process_action(adv_action_info);
-        action_request_logger_->process_action(adv_action_info);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Caught eh::Exception: " << ex.what();
-        throw Exception(ostr);
-      }
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw Exception(ostr);
     }
+  }
 
-    void
-    CampaignManagerLogger::process_passback(
-      const PassbackInfo& passback_info)
-      /*throw(Exception)*/
+  void
+  CampaignManagerLogger::Impl::process_anon_request(
+    const AnonymousRequestInfo& anon_request_info)
+    /*throw(Exception)*/
+  {
+    user_agent_stat_logger_->process_anon_request(anon_request_info);
+
+    if(search_term_stat_logger_.in())
     {
-      static const char* FUN = "CampaignManagerLogger::process_passback()";
-
-      try
-      {
-        passback_impression_logger_->process_passback(passback_info);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Caught eh::Exception: " << ex.what();
-        throw Exception(ostr.str());
-      }
+      search_term_stat_logger_->process_anon_request(anon_request_info);
     }
 
-    void
-    CampaignManagerLogger::process_passback_track(
-      const PassbackTrackInfo& passback_track_info)
-      /*throw(Exception)*/
+    search_engine_stat_logger_->process_anon_request(anon_request_info);
+  }
+
+  void
+  CampaignManagerLogger::Impl::process_match_request(
+    const CampaignManagerLogger::MatchRequestInfo& match_request_info)
+    /*throw(Exception)*/
+  {
+    request_basic_channels_logger_->process_match_request(match_request_info);
+    channel_hit_stat_logger_->process_match_request(match_request_info);
+    channel_trigger_stat_logger_->process_match_request(match_request_info);
+  }
+
+  void
+  CampaignManagerLogger::Impl::process_action(
+    const AdvActionInfo& adv_action_info)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::process_action()";
+
+    try
     {
-      static const char* FUN = "CampaignManagerLogger::process_passback_track()";
-
-      try
-      {
-        passback_stat_logger_->process_passback_track(
-          passback_track_info);
-
-        creative_stat_logger_->process_passback_track(
-          passback_track_info);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Caught eh::Exception: " << ex.what();
-        throw Exception(ostr.str());
-      }
+      advertiser_action_logger_->process_action(adv_action_info);
+      action_request_logger_->process_action(adv_action_info);
     }
-
-    void
-    CampaignManagerLogger::process_web_operation(
-      const WebOperationInfo& web_op_info)
-      /*throw(Exception)*/
+    catch(const eh::Exception& ex)
     {
-      static const char* FUN = "CampaignManagerLogger::process_web_operation()";
-
-      try
-      {
-        web_stat_logger_->process_web_operation(web_op_info);
-
-        if(research_web_stat_logger_.in())
-        {
-          research_web_stat_logger_->process_web_operation(web_op_info);
-        }
-      }
-      catch(const eh::Exception& e)
-      {
-        Stream::Error err;
-        err << FUN << ": Caught eh::Exception: " << e.what();
-        throw Exception(err);
-      }
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw Exception(ostr);
     }
+  }
 
-    void
-    CampaignManagerLogger::process_oo_operation(
-      unsigned long colo_id,
-      const Generics::Time& time,
-      const Generics::Time& time_offset,
-      const AdServer::Commons::UserId& user_id,
-      bool log_as_test,
-      char operation)
-      /*throw(Exception)*/
+  void
+  CampaignManagerLogger::Impl::process_passback(
+    const PassbackInfo& passback_info)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::process_passback()";
+
+    try
     {
-      static const char* FN = "CampaignManagerLogger::process_oo_operation";
+      passback_impression_logger_->process_passback(passback_info);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw Exception(ostr.str());
+    }
+  }
 
-      try
+  void
+  CampaignManagerLogger::Impl::process_passback_track(
+    const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::process_passback_track()";
+
+    try
+    {
+      passback_stat_logger_->process_passback_track(
+        passback_track_info);
+
+      creative_stat_logger_->process_passback_track(
+        passback_track_info);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw Exception(ostr.str());
+    }
+  }
+
+  void
+  CampaignManagerLogger::Impl::process_web_operation(
+    const WebOperationInfo& web_op_info)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignManagerLogger::process_web_operation()";
+
+    try
+    {
+      web_stat_logger_->process_web_operation(web_op_info);
+
+      if(research_web_stat_logger_.in())
       {
-        if ((operation == 'I' || operation == 'F') && !log_as_test)
-        {
-          request_basic_channels_logger_->process_oo_operation(
-            colo_id,
-            time,
-            time_offset,
-            user_id);
-        }
-      }
-      catch(const eh::Exception& e)
-      {
-        Stream::Error err;
-        err << FN << ": Caught eh::Exception: " << e.what();
-        throw Exception(err);
+        research_web_stat_logger_->process_web_operation(web_op_info);
       }
     }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error err;
+      err << FUN << ": Caught eh::Exception: " << e.what();
+      throw Exception(err);
+    }
+  }
 
-  } // namespace CampaignSvcs
-} // namespace AdServer
+  void
+  CampaignManagerLogger::Impl::process_oo_operation(
+    unsigned long colo_id,
+    Generics::Time time,
+    Generics::Time time_offset,
+    AdServer::Commons::UserId user_id,
+    bool log_as_test,
+    char operation)
+    /*throw(Exception)*/
+  {
+    static const char* FN = "CampaignManagerLogger::process_oo_operation";
+
+    try
+    {
+      if ((operation == 'I' || operation == 'F') && !log_as_test)
+      {
+        request_basic_channels_logger_->process_oo_operation(
+          colo_id,
+          time,
+          time_offset,
+          user_id);
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error err;
+      err << FN << ": Caught eh::Exception: " << e.what();
+      throw Exception(err);
+    }
+  }
+} // namespace AdServer::CampaignSvcs

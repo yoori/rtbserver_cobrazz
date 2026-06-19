@@ -6,7 +6,6 @@
 
 #include <Logger/StreamLogger.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PathManip.hpp>
@@ -40,7 +39,6 @@
 namespace
 {
   const char* ASPECT  = "CampaignManager";
-  const char* CAMPAIGN_MANAGER_OBJ_KEY = "CampaignManager";
 
   const char* OUT_LOGS_DIR_NAME = "Out";
 }
@@ -129,23 +127,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     stage = "reading config file";
     read_config(argv[1], argv[0]);
 
-    stage = "init corba server adapter";
-    try
-    {
-      // init CORBA Server
-      corba_server_adapter_ =
-        new CORBACommons::CorbaServerAdapter(corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "SyncLogsApp_::init_corba(): "
-        << "Can't init CorbaServerAdapter. : "
-        << e.what();
-      throw Exception(ostr);
-    }
-
-    stage = "creating CampaignManager servant";
+    stage = "creating CampaignManager core";
 
     AdServer::CampaignSvcs::CampaignManagerLogger_var
       campaign_manager_logger =
@@ -162,16 +144,9 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         configuration_.creative_instantiate,
         configuration_.campaigns_types.c_str());
 
-    campaign_manager_impl_ =
-      new AdServer::CampaignSvcs::CampaignManagerImpl(
-        campaign_manager_core_.in());
-
-    stage = "Initializing CORBA bindings";
-    corba_server_adapter_->add_binding(
-      CAMPAIGN_MANAGER_OBJ_KEY, campaign_manager_impl_.in());
-
     auto active_objects =
       std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects->add_child_object(campaign_manager_logger.in());
     active_objects->add_child_object(campaign_manager_core_.in());
 
     if(campaign_manager_config_->GrpcConfig().present())
@@ -203,27 +178,31 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         4);
       http_server_->add_handler(
         "/stats",
-        [grpc_adapter = grpc_adapter_](
+        [
+          grpc_adapter = grpc_adapter_,
+          campaign_manager_logger
+        ](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           std::string body = "{";
+          auto append_stat = [&body, first = true](
+            const char* name,
+            std::uint64_t value) mutable
+          {
+            if(!first)
+            {
+              body += ",";
+            }
+            first = false;
+            body += "\"";
+            body += name;
+            body += "\":";
+            body += std::to_string(value);
+          };
+
           if(grpc_adapter.in() != 0)
           {
             const auto stats = grpc_adapter->stats();
-            auto append_stat = [&body, first = true](
-              const char* name,
-              std::uint64_t value) mutable
-            {
-              if(!first)
-              {
-                body += ",";
-              }
-              first = false;
-              body += "\"";
-              body += name;
-              body += "\":";
-              body += std::to_string(value);
-            };
 
             append_stat("call_in_progress", stats.call_in_progress);
             append_stat("call_total", stats.call_total);
@@ -327,6 +306,11 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
 
 #undef APPEND_RPC_TOTAL_TIME_
           }
+
+          const auto logger_stats = campaign_manager_logger->get_stats();
+          append_stat(
+            "logging_request_in_progress",
+            logger_stats.request_in_progress);
           body += "}\n";
 
           return AdServer::Commons::HttpServer::HttpServer::Response{
@@ -337,8 +321,6 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         });
       active_objects->add_child_object(http_server_.in());
     }
-    active_objects->add_child_object(corba_server_adapter_.in());
-
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       configuration_.pid_file);
 
@@ -359,7 +341,6 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service stopped.";
 
-    campaign_manager_impl_.reset();
     campaign_manager_core_.reset();
     grpc_adapter_.reset();
   }
@@ -628,6 +609,7 @@ CampaignManagerApp_::read_logging_config(
 
   log_params.profiling_research_record_limit = config.profiling_research_record_limit();
   log_params.profiling_log_sampling = config.profiling_log_sampling();
+  log_params.threads = config.threads();
 
   if (config.Request().present())
   {
@@ -870,22 +852,6 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
       Stream::Error ostr;
       ostr << "CampaignManagerApp_::read_config(): "
         << "got LoggerConfigReader::Exception: "
-        << e.what();
-      throw Exception(ostr);
-    }
-
-    // Fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        configuration->CorbaConfig(),
-        corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "CampaignManagerApp_::read_config: "
-        << "Can't read Corba Config. : "
         << e.what();
       throw Exception(ostr);
     }

@@ -1544,10 +1544,11 @@ namespace AdServer::CampaignSvcs
           pb::MatchGeoChannelsResponse,
           match_geo_channels),
         MAKE_GRPC_CALL(pb::GetFileRequest, pb::GetFileResponse, get_file),
-        MAKE_GRPC_CALL(
+        MAKE_GRPC_CORO_CALL(
           pb::GetCampaignCreativeRequest,
           pb::GetCampaignCreativeResponse,
-          get_campaign_creative),
+          get_campaign_creative,
+          co_get_campaign_creative),
         MAKE_GRPC_CALL(
           pb::ProcessMatchRequestRequest,
           pb::ProcessMatchRequestResponse,
@@ -1646,7 +1647,7 @@ namespace AdServer::CampaignSvcs
       pb::GetFileResponse& response,
       ::grpc::Status& result_status) const;
 
-    void get_campaign_creative(
+    AdServer::Grpc::GrpcCoroutine co_get_campaign_creative(
       const pb::GetCampaignCreativeRequest& request,
       pb::GetCampaignCreativeResponse& response,
       ::grpc::Status& result_status) const;
@@ -1974,8 +1975,8 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  CampaignManagerGrpc::ServiceImpl::get_campaign_creative(
+  AdServer::Grpc::GrpcCoroutine
+  CampaignManagerGrpc::ServiceImpl::co_get_campaign_creative(
     const pb::GetCampaignCreativeRequest& request,
     pb::GetCampaignCreativeResponse& response,
     ::grpc::Status& result_status) const
@@ -1991,7 +1992,7 @@ namespace AdServer::CampaignSvcs
     try
     {
 
-      const auto result = core_->get_campaign_creative(
+      const auto result = co_await core_->co_get_campaign_creative(
         unpack_request_params(request.request_params()));
 
       response.set_hostname(result.hostname);
@@ -2030,6 +2031,8 @@ namespace AdServer::CampaignSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+
+    co_return;
   }
 
   void

@@ -321,7 +321,7 @@
 
   <xsd:complexType name="BillingType">
     <xsd:sequence>
-      <xsd:element name="BillingServerCorbaRef" type="MultiCorbaObjectRefType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="BillingServerGrpcRef" type="GrpcEndpointConfigType" minOccurs="1" maxOccurs="unbounded"/>
     </xsd:sequence>
 
     <xsd:attribute name="storage_root" type="xsd:string" use="required"/>

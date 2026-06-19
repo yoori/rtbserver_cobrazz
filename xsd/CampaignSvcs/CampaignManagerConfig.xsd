@@ -428,9 +428,12 @@
   <!-- BillingType -->
   <xsd:complexType name="BillingType">
     <xsd:sequence>
-      <xsd:element name="BillingServerCorbaRef" type="MultiCorbaObjectRefType">
+      <xsd:element name="BillingServerGrpcRef"
+        type="GrpcEndpointConfigType"
+        minOccurs="1"
+        maxOccurs="unbounded">
         <xsd:annotation>
-          <xsd:documentation>Defines refs to BillingServer's</xsd:documentation>
+          <xsd:documentation>Defines refs to BillingServer gRPC endpoints.</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
@@ -626,6 +629,14 @@
       <xsd:annotation>
         <xsd:documentation>
           Referrer logging in ResearchProf logs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="threads" type="xsd:positiveInteger" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of CampaignManagerLogger worker threads.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

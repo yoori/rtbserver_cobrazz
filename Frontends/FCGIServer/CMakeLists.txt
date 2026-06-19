@@ -20,7 +20,6 @@ target_link_libraries(FCGIServer
   RequestMatchers
   CreativeTemplateArgs
 
-  CampaignManagerIDL
   CampaignServerIDL
 
   AdServerCommonsXSD

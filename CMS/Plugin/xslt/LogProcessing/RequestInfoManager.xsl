@@ -275,13 +275,11 @@
       <xsl:attribute name="storage_root"><xsl:value-of
         select="concat($cache-root, '/RequestInfoManager/Amount')"/>
       </xsl:attribute>
-      <cfg:BillingServerCorbaRef name="BillingServer">
-        <xsl:call-template name="BillingServerCorbaRefs">
-          <xsl:with-param name="billing-servers"
-            select="$full-cluster-path//service[@descriptor = $billing-server-descriptor]"/>
-          <xsl:with-param name="error-prefix" select="'RequestInfoManager'"/>
-        </xsl:call-template>
-      </cfg:BillingServerCorbaRef>
+      <xsl:call-template name="BillingServerGrpcRefs">
+        <xsl:with-param name="billing-servers"
+          select="$full-cluster-path//service[@descriptor = $billing-server-descriptor]"/>
+        <xsl:with-param name="error-prefix" select="'RequestInfoManager'"/>
+      </xsl:call-template>
     </cfg:Billing>
 
     <cfg:LogProcessing>

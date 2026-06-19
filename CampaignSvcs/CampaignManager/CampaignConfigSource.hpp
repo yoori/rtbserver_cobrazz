@@ -7,7 +7,6 @@
 #include <Generics/FileCache.hpp>
 
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignManager/CampaignManager_s.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include "DomainParser.hpp"

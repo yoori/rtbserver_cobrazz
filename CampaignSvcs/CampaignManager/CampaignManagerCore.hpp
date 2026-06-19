@@ -19,6 +19,7 @@
 #include <String/StringManip.hpp>
 
 #include <Commons/IPCrypter.hpp>
+#include <Commons/Coro.hpp>
 #include <Commons/SecToken.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -724,9 +725,9 @@ namespace AdServer
 
       virtual bool ready() /*throw(eh::Exception)*/;
 
-      CreativeRequestResultInfo get_campaign_creative(
-        const CreativeRequestInfo& request_params)
-        /*throw(Exception, NotReady)*/;
+      AdServer::Commons::Task<CreativeRequestResultInfo>
+      co_get_campaign_creative(
+        const CreativeRequestInfo& request_params);
 
       void
       match_geo_channels(
@@ -1152,8 +1153,8 @@ namespace AdServer
         const StringVector& currency_codes)
         const noexcept;
 
-      void
-      get_adslot_campaign_creative_(
+      AdServer::Commons::Task<bool>
+      co_get_adslot_campaign_creative_(
         const CampaignConfig* campaign_config,
         AdSlotResultInfo& ad_slot_result,
         AdServer::CampaignSvcs::RevenueDecimal& adsspace_system_cpm,
@@ -1165,8 +1166,7 @@ namespace AdServer
         AdRequestDebugInfo* debug_info,
         AdSlotContext& ad_slot_context,
         const ChannelIdHashSet& matched_channels,
-        unsigned long& request_tag_id)
-        noexcept;
+        unsigned long& request_tag_id);
 
       bool
       get_campaign_creative_by_ccid_impl(
@@ -1178,7 +1178,7 @@ namespace AdServer
       get_site_creative_(
         CampaignIndex* config_index,
         const Colocation* colocation,
-        const Tag* requested_tag,
+        const Tag* tag,
         const Tag::SizeMap& tag_sizes,
         const CreativeRequestInfo& request_params,
         const TraceAdSlotInfo& ad_slot,
@@ -1194,6 +1194,26 @@ namespace AdServer
           ad_request_debug_info,
         AdSlotDebugInfo* ad_slot_debug_info)
         /*throw(eh::Exception)*/;
+
+
+      AdServer::Commons::Task<bool>
+      co_get_site_creative_(
+        CampaignIndex* config_index,
+        const Colocation* colocation,
+        const Tag* requested_tag,
+        const Tag::SizeMap& tag_sizes,
+        const CreativeRequestInfo& request_params,
+        const TraceAdSlotInfo& ad_slot,
+        AdSlotContext& ad_slot_context,
+        const AdSlotMinCpm& ad_slot_min_cpm,
+        const FreqCapIdSet& full_freq_caps,
+        const SeqOrderMap& seq_orders,
+        RequestResultParams& request_result_params,
+        AdSelectionResult& select_result,
+        std::string& creative_body,
+        std::string& creative_url,
+        AdRequestDebugInfo* ad_request_debug_info,
+        AdSlotDebugInfo* ad_slot_debug_info);
 
       void
       get_bid_costs_(
@@ -1669,6 +1689,13 @@ namespace AdServer
         CCGRateType rate_type)
         noexcept;
 
+      AdServer::Commons::Task<bool>
+      co_confirm_amounts_(
+        const CampaignConfig* config,
+        const Generics::Time& now,
+        const ConfirmCreativeAmountArray& creatives,
+        CCGRateType rate_type);
+
       static void
       fill_tns_counter_device_type_(
         std::string& tns_counter_device_type,
@@ -1676,12 +1703,6 @@ namespace AdServer
         noexcept;
 
       // config manips
-      static void
-      fill_campaign_contracts_(
-        AdServer::CampaignSvcs::CampaignManager::ExtContractInfoSeq& contract_seq,
-        const Contract* contract)
-        noexcept;
-
       static void
       fill_contract_(
         ::AdServer::CampaignSvcs::ContractInfo& contract_info,
@@ -1695,10 +1716,6 @@ namespace AdServer
         unsigned long auction_type,
         bool test_request)
         /*throw(Exception)*/;
-
-      CreativeRequestResultInfo get_campaign_creative_(
-        const CreativeRequestInfo& request_params)
-        /*throw(Exception, NotReady)*/;
 
     protected:
       CampaignManagerConfig campaign_manager_config_;
