@@ -1636,7 +1636,7 @@ namespace AdServer
       PersistentMatchesWriter* match_pmw,
       const PersistentMatchesReader* base_in,
       const PersistentMatchesReader* add_in,
-      const ChannelIdVector& channels,
+      const ChannelIdArray& channels,
       bool match_to_add,
       bool provide_persistent_channels)
       /*throw(Exception)*/
@@ -1696,7 +1696,7 @@ namespace AdServer
       ChannelsInfoWriter* match_ciw,
       const ChannelsInfoReader* base_in,
       const ChannelsInfoReader* add_in,
-      const ChannelIdVector& channels,
+      const ChannelIdArray& channels,
       const ChannelsHashMap& dictionary,
       const Generics::Time& now,
       bool match_to_add,

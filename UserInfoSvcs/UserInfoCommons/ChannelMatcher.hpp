@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory_resource>
 #include <list>
 #include <set>
 
@@ -27,7 +28,7 @@ namespace AdServer
 
     const unsigned long MAX_GEO_DATA = 1;
 
-    typedef std::vector<unsigned long> ChannelIdVector;
+    typedef std::pmr::vector<unsigned long> ChannelIdArray;
 
     typedef std::set<
       unsigned long,
@@ -77,12 +78,21 @@ namespace AdServer
 
     struct ChannelIdPack
     {
-      ChannelIdVector page_channels;
-      ChannelIdVector search_channels;
-      ChannelIdVector url_channels;
-      ChannelIdVector url_keyword_channels;
+      explicit ChannelIdPack(
+        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        : page_channels(resource),
+          search_channels(resource),
+          url_channels(resource),
+          url_keyword_channels(resource),
+          persistent_channels(resource)
+      {}
 
-      ChannelIdVector persistent_channels;
+      ChannelIdArray page_channels;
+      ChannelIdArray search_channels;
+      ChannelIdArray url_channels;
+      ChannelIdArray url_keyword_channels;
+
+      ChannelIdArray persistent_channels;
     };
 
     struct UniqueChannelsResult
@@ -453,7 +463,7 @@ namespace AdServer
         PersistentMatchesWriter* match_pmw,
         const PersistentMatchesReader* base_in,
         const PersistentMatchesReader* add_in,
-        const ChannelIdVector& channels,
+        const ChannelIdArray& channels,
         bool match_to_add,
         bool provide_persistent_channels) /*throw(Exception)*/;
 
@@ -463,7 +473,7 @@ namespace AdServer
         ChannelsInfoWriter* match_ciw,
         const ChannelsInfoReader* base_in,
         const ChannelsInfoReader* add_in,
-        const ChannelIdVector& channels,
+        const ChannelIdArray& channels,
         const ChannelsHashMap& dictionary,
         const Generics::Time& now,
         bool match_to_add,

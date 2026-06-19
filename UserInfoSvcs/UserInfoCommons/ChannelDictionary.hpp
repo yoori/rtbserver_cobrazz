@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <memory_resource>
 #include <unordered_map>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -17,12 +18,7 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
-    typedef std::map<
-      unsigned long,
-      unsigned long,
-      std::less<unsigned long>,
-      Generics::TAlloc::ThreadPool<
-        std::map<unsigned long, unsigned long>::value_type, 256> >
+    typedef std::pmr::map<unsigned long, unsigned long>
       ChannelMatchMap; // channel_id => weight
 
     typedef std::list<unsigned long, Generics::TAlloc::ThreadPool<unsigned long, 256> >
