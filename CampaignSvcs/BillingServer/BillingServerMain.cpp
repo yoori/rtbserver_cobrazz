@@ -1,5 +1,10 @@
 #include <eh/Exception.hpp>
 
+#include <cstdint>
+#include <string>
+#include <utility>
+
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <Commons/CorbaConfig.hpp>
@@ -12,6 +17,28 @@ namespace
 {
   const char ASPECT[] = "BillingServer";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
+
+  void
+  append_json_stat_(
+    std::string& body,
+    bool& first,
+    const char* name,
+    std::uint64_t value)
+  {
+    if(first)
+    {
+      first = false;
+    }
+    else
+    {
+      body += ',';
+    }
+
+    body += '"';
+    body += name;
+    body += "\":";
+    body += std::to_string(value);
+  }
 }
 
 BillingServerApp_::BillingServerApp_() /*throw(eh::Exception)*/
@@ -148,6 +175,82 @@ BillingServerApp_::main(int argc, char** argv)
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
       add_child_object(grpc_adapter_);
+    }
+
+    if(config().HttpConfig().present())
+    {
+      AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter =
+        grpc_adapter_;
+      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+        config().HttpConfig()->Endpoint().host().present() &&
+          *(config().HttpConfig()->Endpoint().host()) != "*" ?
+          *config().HttpConfig()->Endpoint().host() :
+        "0.0.0.0",
+        config().HttpConfig()->Endpoint().port(),
+        4);
+      http_server_->add_handler(
+        "/stats",
+        [grpc_adapter](
+          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        {
+          std::string body = "{";
+          bool first = true;
+          auto append_stat = [&body, &first](
+            const char* name,
+            std::uint64_t value)
+          {
+            append_json_stat_(body, first, name, value);
+          };
+
+          if(grpc_adapter.in() != 0)
+          {
+            const auto stats = grpc_adapter->stats();
+            append_stat("call_total", stats.call_total);
+            append_stat("call_total_time", stats.call_total_time);
+            append_stat("call_in_progress", stats.call_in_progress);
+            append_stat(
+              "check_available_bid_total",
+              stats.check_available_bid_total);
+            append_stat(
+              "check_available_bid_total_time",
+              stats.check_available_bid_total_time);
+            append_stat(
+              "check_available_bid_in_progress",
+              stats.check_available_bid_in_progress);
+            append_stat("reserve_bid_total", stats.reserve_bid_total);
+            append_stat(
+              "reserve_bid_total_time",
+              stats.reserve_bid_total_time);
+            append_stat(
+              "reserve_bid_in_progress",
+              stats.reserve_bid_in_progress);
+            append_stat("confirm_bid_total", stats.confirm_bid_total);
+            append_stat(
+              "confirm_bid_total_time",
+              stats.confirm_bid_total_time);
+            append_stat(
+              "confirm_bid_in_progress",
+              stats.confirm_bid_in_progress);
+            append_stat("add_amount_total", stats.add_amount_total);
+            append_stat(
+              "add_amount_total_time",
+              stats.add_amount_total_time);
+            append_stat(
+              "add_amount_in_progress",
+              stats.add_amount_in_progress);
+            append_stat("batch_total", stats.batch_total);
+            append_stat("batch_total_time", stats.batch_total_time);
+            append_stat("batch_in_progress", stats.batch_in_progress);
+          }
+
+          body += "}\n";
+          return AdServer::Commons::HttpServer::HttpServer::Response{
+            200,
+            "application/json",
+            std::move(body)
+          };
+        });
+      add_child_object(http_server_);
     }
 
     corba_server_adapter_ =

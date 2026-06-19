@@ -39,6 +39,12 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="HttpConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>HTTP monitoring config.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>

@@ -6,6 +6,7 @@
 #include <Sync/SyncPolicy.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/CampaignSvcs/BillingServerConfig.hpp>
@@ -54,6 +55,7 @@ private:
 
   AdServer::CampaignSvcs::BillingServerCore_var billing_server_core_;
   AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter_;
+  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   ConfigPtr configuration_;
 

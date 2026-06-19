@@ -1,7 +1,9 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 
@@ -24,6 +26,28 @@ namespace AdServer::CampaignSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    struct Stats
+    {
+      std::uint64_t call_total = 0;
+      std::uint64_t call_total_time = 0;
+      std::uint64_t call_in_progress = 0;
+      std::uint64_t check_available_bid_total = 0;
+      std::uint64_t check_available_bid_total_time = 0;
+      std::uint64_t check_available_bid_in_progress = 0;
+      std::uint64_t reserve_bid_total = 0;
+      std::uint64_t reserve_bid_total_time = 0;
+      std::uint64_t reserve_bid_in_progress = 0;
+      std::uint64_t confirm_bid_total = 0;
+      std::uint64_t confirm_bid_total_time = 0;
+      std::uint64_t confirm_bid_in_progress = 0;
+      std::uint64_t add_amount_total = 0;
+      std::uint64_t add_amount_total_time = 0;
+      std::uint64_t add_amount_in_progress = 0;
+      std::uint64_t batch_total = 0;
+      std::uint64_t batch_total_time = 0;
+      std::uint64_t batch_in_progress = 0;
+    };
+
     BillingServerGrpc(
       BillingServerCore* core,
       Logging::Logger* logger,
@@ -33,6 +57,8 @@ namespace AdServer::CampaignSvcs
       std::size_t cq_threads = 0,
       std::size_t max_split = 0);
 
+    Stats stats() const noexcept;
+
   protected:
     class ServiceImpl;
     using Impl = AdServer::Grpc::GrpcServer<ServiceImpl>;
@@ -41,8 +67,11 @@ namespace AdServer::CampaignSvcs
     ~BillingServerGrpc() noexcept override;
 
   private:
+    struct AtomicStats;
+
     const std::string bind_address_;
     const std::size_t max_batch_split_;
+    const std::shared_ptr<AtomicStats> stats_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<Impl> impl_;
   };

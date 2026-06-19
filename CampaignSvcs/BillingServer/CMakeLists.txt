@@ -32,6 +32,7 @@ target_link_libraries(BillingServer
   BillStatServerSource
   BillingContainer
   BillingServerGrpc
+  HttpServer
   Commons
 
   ProcessControlIDL
