@@ -3,6 +3,7 @@
 #include <iterator>
 #include <ostream>
 #include <set>
+#include <utility>
 #include <Stream/MemoryStream.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
@@ -133,11 +134,11 @@ namespace Algs
     {}
 
     template<typename ValueType>
-    FilterInsertIterator& operator=(const ValueType& val)
+    FilterInsertIterator& operator=(ValueType&& val)
     {
       if(filter_op_(val))
       {
-        *(ins_it_++) = val;
+        *(ins_it_++) = std::forward<ValueType>(val);
       }
 
       return *this;
@@ -180,9 +181,9 @@ namespace Algs
     {}
 
     template<typename ValueType>
-    ModifyInsertIterator& operator=(const ValueType& val)
+    ModifyInsertIterator& operator=(ValueType&& val)
     {
-      *(ins_it_++) = modify_op_(val);
+      *(ins_it_++) = modify_op_(std::forward<ValueType>(val));
       return *this;
     }
 
