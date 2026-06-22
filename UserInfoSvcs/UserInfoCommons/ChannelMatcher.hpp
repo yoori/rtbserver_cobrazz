@@ -388,6 +388,8 @@ namespace AdServer
         const ChannelIntervalList& cil) noexcept;
 
     private:
+      struct RequestChannelsDelta;
+
       void
       write_geo_data_(
         GeoDataWriter& gdw,
@@ -460,7 +462,6 @@ namespace AdServer
       void match_persistent_section_(
         ChannelMatchMap& result_channels,
         PersistentMatchesWriter* out_pmw,
-        PersistentMatchesWriter* match_pmw,
         const PersistentMatchesReader* base_in,
         const ChannelIdArray& channels,
         bool provide_persistent_channels) /*throw(Exception)*/;
@@ -468,10 +469,10 @@ namespace AdServer
       void match_section_(
         ChannelMatchMap& result_channels,
         ChannelsInfoWriter* out_ciw,
-        ChannelsInfoWriter* match_ciw,
-        const ChannelsInfoReader* base_in,
+        const ChannelsInfoReader& base,
         const ChannelIdArray& channels,
         const ChannelsHashMap& dictionary,
+        std::pmr::memory_resource* request_delta_resource,
         const Generics::Time& now,
         bool household = false) /*throw(Exception)*/;
 
@@ -505,7 +506,7 @@ namespace AdServer
         const Generics::Time& now,
         const unsigned long channel_id,
         const ChannelsHashMap& channels,
-        ChannelsInfoWriter& ciw,
+        RequestChannelsDelta& delta,
         ChannelMatchMap& result_channels) noexcept;
 
       void merge_history_info_(
@@ -531,6 +532,14 @@ namespace AdServer
         const BaseProfileType* base,
         const AddProfileType* add)
         /*throw(InvalidProfileException)*/;
+
+      void merge_request_channels_delta_(
+        ChannelsInfoWriter& ciw,
+        const ChannelsHashMap& channels,
+        const Generics::Time& now,
+        const ChannelsInfoReader& base,
+        const RequestChannelsDelta& delta,
+        bool household = false);
 
       template <typename BaseChannelsInfoType, typename AddChannelsInfoType>
       void merge_channels_info_(

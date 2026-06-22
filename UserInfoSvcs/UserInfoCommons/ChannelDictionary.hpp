@@ -4,6 +4,7 @@
 #include <map>
 #include <memory_resource>
 #include <unordered_map>
+#include <vector>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/Time.hpp>
@@ -83,6 +84,25 @@ namespace AdServer
       unsigned long min_visits;
       unsigned long weight;
     };
+
+    struct ChannelHTCandidateTemplate
+    {
+      ChannelHTCandidateTemplate(
+        unsigned long min_visits_val,
+        unsigned long req_visits_val,
+        unsigned long weight_val)
+        : min_visits(min_visits_val),
+          req_visits(req_visits_val),
+          weight(weight_val)
+      {}
+
+      unsigned long min_visits;
+      unsigned long req_visits;
+      unsigned long weight;
+    };
+
+    typedef std::vector<ChannelHTCandidateTemplate>
+      ChannelHTCandidateTemplateArray;
 
     class ChannelIntervalList:
       protected std::list<ChannelInterval, Generics::TAlloc::AllocOnly<ChannelInterval, 256, true> >
@@ -191,6 +211,7 @@ namespace AdServer
       ChannelIntervalList short_intervals;
       ChannelIntervalList today_long_intervals;
       ChannelIntervalList long_intervals;
+      ChannelHTCandidateTemplateArray ht_candidate_templates;
 
     protected:
       virtual ~ChannelIntervalsPack() noexcept {}

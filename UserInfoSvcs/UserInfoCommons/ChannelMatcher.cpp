@@ -18,6 +18,334 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
+    namespace
+    {
+      struct RequestHTCandidate
+      {
+        RequestHTCandidate(
+          uint32_t channel_id,
+          uint32_t min_visits,
+          uint32_t req_visits,
+          uint32_t visits,
+          uint32_t weight) noexcept;
+
+        uint32_t channel_id;
+        uint32_t min_visits;
+        uint32_t req_visits;
+        uint32_t visits;
+        uint32_t weight;
+      };
+
+      struct RequestHistoryVisit
+      {
+        RequestHistoryVisit(uint32_t channel_id, uint32_t visits) noexcept;
+
+        uint32_t channel_id;
+        uint32_t visits;
+      };
+
+      struct RequestSessionMatch
+      {
+        RequestSessionMatch(uint32_t channel_id, uint32_t timestamp) noexcept;
+
+        uint32_t channel_id;
+        uint32_t timestamp;
+      };
+    }
+
+    struct ChannelsMatcher::RequestChannelsDelta
+    {
+      explicit RequestChannelsDelta(std::pmr::memory_resource* resource);
+
+      std::pmr::vector<RequestHTCandidate> ht_candidates;
+      std::pmr::vector<RequestHistoryVisit> history_visits;
+      std::pmr::vector<RequestSessionMatch> session_matches;
+    };
+
+    namespace
+    {
+      RequestHTCandidate::RequestHTCandidate(
+        uint32_t channel_id,
+        uint32_t min_visits,
+        uint32_t req_visits,
+        uint32_t visits,
+        uint32_t weight) noexcept
+        : channel_id(channel_id),
+          min_visits(min_visits),
+          req_visits(req_visits),
+          visits(visits),
+          weight(weight)
+      {}
+
+      HTCandidatesWriter
+      make_ht_candidate_writer(const RequestHTCandidate& candidate)
+      {
+        HTCandidatesWriter writer;
+        writer.channel_id() = candidate.channel_id;
+        writer.req_visits() = candidate.req_visits;
+        writer.visits() = candidate.visits;
+        writer.weight() = candidate.weight;
+        return writer;
+      }
+
+      struct HTCandidateLess
+      {
+        template<typename LeftType, typename RightType>
+        bool operator()(
+          const LeftType& left,
+          const RightType& right) const
+        {
+          return channel_id(left) < channel_id(right);
+        }
+
+        static uint32_t channel_id(const HTCandidatesReader& candidate)
+        {
+          return candidate.channel_id();
+        }
+
+        static uint32_t channel_id(const HTCandidatesWriter& candidate)
+        {
+          return candidate.channel_id();
+        }
+
+        static uint32_t channel_id(const RequestHTCandidate& candidate)
+        {
+          return candidate.channel_id;
+        }
+      };
+
+      struct ExistingHTCandidate
+      {
+        explicit ExistingHTCandidate(const ChannelsHashMap& channels) noexcept
+          : channels(channels)
+        {}
+
+        template<typename CandidateType>
+        bool operator()(const CandidateType& candidate) const
+        {
+          return channels.find(HTCandidateLess::channel_id(candidate)) !=
+            channels.end();
+        }
+
+        const ChannelsHashMap& channels;
+      };
+
+      struct HTCandidateWriterAdapter
+      {
+        HTCandidatesWriter operator()(const HTCandidatesReader& reader) const
+        {
+          HTCandidatesWriter writer;
+          writer.channel_id() = reader.channel_id();
+          writer.req_visits() = reader.req_visits();
+          writer.visits() = reader.visits();
+          writer.weight() = reader.weight();
+          return writer;
+        }
+
+        const HTCandidatesWriter& operator()(
+          const HTCandidatesWriter& writer) const
+        {
+          return writer;
+        }
+
+        HTCandidatesWriter&& operator()(HTCandidatesWriter&& writer) const
+        {
+          return std::move(writer);
+        }
+
+        HTCandidatesWriter operator()(
+          const RequestHTCandidate& candidate) const
+        {
+          return make_ht_candidate_writer(candidate);
+        }
+      };
+
+      struct HTCandidateMerge
+      {
+        HTCandidatesWriter operator()(
+          const HTCandidatesReader& base,
+          const RequestHTCandidate& delta) const
+        {
+          const int visits = static_cast<int>(base.req_visits()) +
+            delta.req_visits - delta.min_visits;
+
+          HTCandidatesWriter writer;
+          writer.channel_id() = delta.channel_id;
+          writer.req_visits() = std::max(visits, 0);
+          writer.visits() = base.visits() + delta.visits;
+          writer.weight() = writer.req_visits() == 0 ? delta.weight : 0;
+          return writer;
+        }
+      };
+
+      RequestHistoryVisit::RequestHistoryVisit(
+        uint32_t channel_id,
+        uint32_t visits) noexcept
+        : channel_id(channel_id),
+          visits(visits)
+      {}
+
+      HistoryVisitsWriter
+      make_history_visit_writer(const RequestHistoryVisit& visit)
+      {
+        HistoryVisitsWriter writer;
+        writer.channel_id() = visit.channel_id;
+        writer.visits() = visit.visits;
+        return writer;
+      }
+
+      struct HistoryVisitLess
+      {
+        template<typename LeftType, typename RightType>
+        bool operator()(
+          const LeftType& left,
+          const RightType& right) const
+        {
+          return channel_id(left) < channel_id(right);
+        }
+
+        static uint32_t channel_id(const HistoryVisitsReader& visit)
+        {
+          return visit.channel_id();
+        }
+
+        static uint32_t channel_id(const HistoryVisitsWriter& visit)
+        {
+          return visit.channel_id();
+        }
+
+        static uint32_t channel_id(const RequestHistoryVisit& visit)
+        {
+          return visit.channel_id;
+        }
+      };
+
+      struct ExistingHistoryVisit
+      {
+        explicit ExistingHistoryVisit(const ChannelsHashMap& channels) noexcept
+          : channels(channels)
+        {}
+
+        template<typename VisitType>
+        bool operator()(const VisitType& visit) const
+        {
+          return channels.find(HistoryVisitLess::channel_id(visit)) !=
+            channels.end();
+        }
+
+        const ChannelsHashMap& channels;
+      };
+
+      struct HistoryVisitWriterAdapter
+      {
+        HistoryVisitsWriter operator()(const HistoryVisitsReader& reader) const
+        {
+          HistoryVisitsWriter writer;
+          writer.channel_id() = reader.channel_id();
+          writer.visits() = reader.visits();
+          return writer;
+        }
+
+        const HistoryVisitsWriter& operator()(
+          const HistoryVisitsWriter& writer) const
+        {
+          return writer;
+        }
+
+        HistoryVisitsWriter&& operator()(HistoryVisitsWriter&& writer) const
+        {
+          return std::move(writer);
+        }
+
+        HistoryVisitsWriter operator()(
+          const RequestHistoryVisit& visit) const
+        {
+          return make_history_visit_writer(visit);
+        }
+      };
+
+      struct HistoryVisitMerge
+      {
+        HistoryVisitsWriter operator()(
+          const HistoryVisitsReader& base,
+          const RequestHistoryVisit& delta) const
+        {
+          HistoryVisitsWriter writer;
+          writer.channel_id() = delta.channel_id;
+          writer.visits() = base.visits() + delta.visits;
+          return writer;
+        }
+      };
+
+      SessionMatchesWriter
+      make_session_match_writer(const RequestSessionMatch& match)
+      {
+        SessionMatchesWriter writer;
+        writer.channel_id() = match.channel_id;
+        writer.timestamps().push_back(match.timestamp);
+        return writer;
+      }
+
+      RequestSessionMatch::RequestSessionMatch(
+        uint32_t channel_id,
+        uint32_t timestamp) noexcept
+        : channel_id(channel_id),
+          timestamp(timestamp)
+      {}
+
+      struct SessionMatchLess
+      {
+        template<typename LeftType, typename RightType>
+        bool operator()(
+          const LeftType& left,
+          const RightType& right) const
+        {
+          return channel_id(left) < channel_id(right);
+        }
+
+        static uint32_t channel_id(const SessionMatchesReader& match)
+        {
+          return match.channel_id();
+        }
+
+        static uint32_t channel_id(const SessionMatchesWriter& match)
+        {
+          return match.channel_id();
+        }
+
+        static uint32_t channel_id(const RequestSessionMatch& match)
+        {
+          return match.channel_id;
+        }
+      };
+
+      struct RequestSessionMatchesMerge
+      {
+        SessionMatchesWriter operator()(
+          const SessionMatchesReader& base,
+          const RequestSessionMatch& delta) const
+        {
+          SessionMatchesWriter writer;
+          writer.channel_id() = delta.channel_id;
+          std::merge(
+            base.timestamps().begin(),
+            base.timestamps().end(),
+            &delta.timestamp,
+            &delta.timestamp + 1,
+            std::back_inserter(writer.timestamps()));
+
+          return writer;
+        }
+      };
+    }
+
+    ChannelsMatcher::RequestChannelsDelta::RequestChannelsDelta(
+      std::pmr::memory_resource* resource)
+      : ht_candidates(resource),
+        history_visits(resource),
+        session_matches(resource)
+    {}
+
     struct DaysVisitsLess
     {
       bool operator()(
@@ -220,7 +548,8 @@ namespace AdServer
           now_(now.tv_sec)
       {}
 
-      SessionMatchesWriter operator()(const SessionMatchesWriter& obj) const
+      template<typename ObjectType>
+      SessionMatchesWriter operator()(const ObjectType& obj) const
         /*throw(eh::Exception)*/
       {
         SessionMatchesWriter ret;
@@ -228,7 +557,10 @@ namespace AdServer
         ChannelsHashMap::const_iterator ch_it = channels_.find(obj.channel_id());
         if(ch_it != channels_.end())
         {
-          check_ts_(ret.timestamps(), obj.timestamps(), ch_it->second->short_intervals);
+          check_ts_(
+            ret.timestamps(),
+            obj.timestamps(),
+            ch_it->second->short_intervals);
           ChannelsMatcher::delete_excess_timestamps_(
             ret.timestamps(), ch_it->second->short_intervals);
         }
@@ -236,9 +568,10 @@ namespace AdServer
       }
 
     private:
+      template<typename TimestampContainer>
       void check_ts_(
         SessionMatchesWriter::timestamps_Container& out,
-        const SessionMatchesWriter::timestamps_Container& in,
+        const TimestampContainer& in,
         const ChannelIntervalList& cil) const noexcept
       {
         long max_time_to = cil.max_time_to();
@@ -255,6 +588,30 @@ namespace AdServer
     private:
       const ChannelsHashMap& channels_;
       long now_;
+    };
+
+    class SessionMatchesCleanAdapter
+    {
+    public:
+      SessionMatchesCleanAdapter(
+        const ChannelsHashMap& channels,
+        const Generics::Time& now) noexcept
+        : cleaner_(channels, now)
+      {}
+
+      SessionMatchesWriter operator()(const RequestSessionMatch& match) const
+      {
+        return cleaner_(make_session_match_writer(match));
+      }
+
+      template<typename MatchType>
+      SessionMatchesWriter operator()(const MatchType& match) const
+      {
+        return cleaner_(match);
+      }
+
+    private:
+      SessionMatchesCleaner cleaner_;
     };
 
     class HistoryChannelInfoCleaner
@@ -1115,11 +1472,7 @@ namespace AdServer
 
       properties.fraud_request = (now.tv_sec <= base_ignore_fraud_time);
 
-      PersistentMatchesWriter request_persistent_matches;
-      ChannelsInfoWriter request_page_channels;
-      ChannelsInfoWriter request_search_channels;
-      ChannelsInfoWriter request_url_channels;
-      ChannelsInfoWriter request_url_keyword_channels;
+      std::pmr::monotonic_buffer_resource request_delta_resource;
 
       /* fill result profile */
       ChannelsProfileWriter res_upw;
@@ -1192,7 +1545,6 @@ namespace AdServer
           match_persistent_section_(
             result_channels,
             &res_upw.persistent_matches(),
-            &request_persistent_matches,
             base_exists ? &base_persistent_matches : 0,
             channels_pack.persistent_channels,
             profile_match_params.provide_persistent_channels);
@@ -1200,40 +1552,40 @@ namespace AdServer
           match_section_(
             result_channels,
             &res_upw.page_channels(),
-            &request_page_channels,
-            base_exists ? &base_page_channels : 0,
+            base_page_channels,
             channels_pack.page_channels,
             channels.page_channels,
+            &request_delta_resource,
             current_time,
             res_upw.household() == 1);
 
           match_section_(
             result_channels,
             &res_upw.search_channels(),
-            &request_search_channels,
-            base_exists ? &base_search_channels : 0,
+            base_search_channels,
             channels_pack.search_channels,
             channels.search_channels,
+            &request_delta_resource,
             current_time,
             res_upw.household() == 1);
 
           match_section_(
             result_channels,
             &res_upw.url_channels(),
-            &request_url_channels,
-            base_exists ? &base_url_channels : 0,
+            base_url_channels,
             channels_pack.url_channels,
             channels.url_channels,
+            &request_delta_resource,
             current_time,
             res_upw.household() == 1);
 
           match_section_(
             result_channels,
             &res_upw.url_keyword_channels(),
-            &request_url_keyword_channels,
-            base_exists ? &base_url_keyword_channels : 0,
+            base_url_keyword_channels,
             channels_pack.url_keyword_channels,
             channels.url_keyword_channels,
+            &request_delta_resource,
             current_time,
             res_upw.household() == 1);
 
@@ -1510,7 +1862,6 @@ namespace AdServer
     void ChannelsMatcher::match_persistent_section_(
       ChannelMatchMap& result_channels,
       PersistentMatchesWriter* out_pmw,
-      PersistentMatchesWriter* match_pmw,
       const PersistentMatchesReader* base_in,
       const ChannelIdArray& channels,
       bool provide_persistent_channels)
@@ -1518,15 +1869,11 @@ namespace AdServer
     {
       try
       {
-        for (auto it = channels.begin(); it != channels.end(); ++it)
-        {
-          match_pmw->channel_ids().push_back(*it);
-        }
-
         if (base_in != 0)
         {
           Algs::merge_unique(
-            match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
+            channels.begin(),
+            channels.end(),
             base_in->channel_ids().begin(),
             base_in->channel_ids().end(),
             std::back_inserter((*out_pmw).channel_ids()));
@@ -1534,13 +1881,15 @@ namespace AdServer
         else
         {
           std::copy(
-            match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
+            channels.begin(),
+            channels.end(),
             std::back_inserter((*out_pmw).channel_ids()));
         }
 
         if (provide_persistent_channels)
         {
-          for (auto it = out_pmw->channel_ids().begin(); it != out_pmw->channel_ids().end(); ++it)
+          for (auto it = out_pmw->channel_ids().begin();
+            it != out_pmw->channel_ids().end(); ++it)
           {
             add_weight_(result_channels, *it, 1);
           }
@@ -1557,32 +1906,36 @@ namespace AdServer
     void ChannelsMatcher::match_section_(
       ChannelMatchMap& result_channels,
       ChannelsInfoWriter* out_ciw,
-      ChannelsInfoWriter* match_ciw,
-      const ChannelsInfoReader* base_in,
+      const ChannelsInfoReader& base,
       const ChannelIdArray& channels,
       const ChannelsHashMap& dictionary,
+      std::pmr::memory_resource* request_delta_resource,
       const Generics::Time& now,
       bool household)
       /*throw(Exception)*/
     {
       try
       {
-        match_ciw->history_visits().reserve(
-          match_ciw->history_visits().size() + channels.size());
-        match_ciw->session_matches().reserve(
-          match_ciw->session_matches().size() + channels.size());
+        RequestChannelsDelta request_delta(request_delta_resource);
+        request_delta.history_visits.reserve(channels.size());
+        request_delta.session_matches.reserve(channels.size());
 
         for (auto it = channels.begin(); it != channels.end(); ++it)
         {
-          add_channel_visit_(now, *it, dictionary, *match_ciw, result_channels);
+          add_channel_visit_(
+            now,
+            *it,
+            dictionary,
+            request_delta,
+            result_channels);
         }
 
-        merge_channels_info_(
+        merge_request_channels_delta_(
           *out_ciw,
           dictionary,
           now,
-          base_in,
-          match_ciw,
+          base,
+          request_delta,
           household);
 
         fill_channels_results_(
@@ -2258,7 +2611,7 @@ namespace AdServer
       const Generics::Time& now,
       const unsigned long channel_id,
       const ChannelsHashMap& channels,
-      ChannelsInfoWriter& ciw,
+      RequestChannelsDelta& delta,
       ChannelMatchMap& result_channels) noexcept
     {
       ChannelsHashMap::const_iterator c_it = channels.find(channel_id);
@@ -2272,37 +2625,28 @@ namespace AdServer
 
         if (!c_it->second->short_intervals.empty())
         {
-          SessionMatchesWriter smw;
-          smw.channel_id() = channel_id;
-          smw.timestamps().push_back(now.tv_sec);
-          ciw.session_matches().push_back(std::move(smw));
+          delta.session_matches.emplace_back(channel_id, now.tv_sec);
         }
 
         if (!c_it->second->long_intervals.empty() ||
           !c_it->second->today_long_intervals.empty())
         {
-          HistoryVisitsWriter hvw;
-          hvw.channel_id() = channel_id;
-          hvw.visits() = 1;
-          ciw.history_visits().push_back(std::move(hvw));
+          delta.history_visits.emplace_back(channel_id, 1);
         }
 
-        if (!c_it->second->today_long_intervals.empty())
+        delta.ht_candidates.reserve(
+          delta.ht_candidates.size() +
+          c_it->second->ht_candidate_templates.size());
+
+        for (auto it = c_it->second->ht_candidate_templates.begin();
+          it != c_it->second->ht_candidate_templates.end(); ++it)
         {
-          const ChannelIntervalList& tli_list = c_it->second->today_long_intervals;
-          //ciw.ht_candidates().reserve(ciw.ht_candidates().size() + tli_list.size());
-
-          for (ChannelIntervalList::const_iterator ci_it = tli_list.begin();
-               ci_it != tli_list.end(); ++ci_it)
-          {
-            HTCandidatesWriter htcw;
-            htcw.channel_id() = channel_id;
-            htcw.req_visits() = ci_it->min_visits - 1;
-            htcw.visits() = 1;
-            htcw.weight() = htcw.req_visits() == 0 ? ci_it->weight : 0;
-
-            ciw.ht_candidates().push_back(std::move(htcw));
-          }
+          delta.ht_candidates.emplace_back(
+            channel_id,
+            it->min_visits,
+            it->req_visits,
+            1,
+            it->weight);
         }
       }
     }
@@ -2442,6 +2786,72 @@ namespace AdServer
         ostr << FUN << ": caught eh::Exception: " << ex.what();
         throw InvalidProfileException(ostr);
       }
+    }
+
+    void ChannelsMatcher::merge_request_channels_delta_(
+      ChannelsInfoWriter& ciw,
+      const ChannelsHashMap& channels,
+      const Generics::Time& now,
+      const ChannelsInfoReader& base,
+      const RequestChannelsDelta& delta,
+      bool /*household*/)
+    {
+      ciw.ht_candidates().reserve(
+        ciw.ht_candidates().size() +
+        base.ht_candidates().size() +
+        delta.ht_candidates.size());
+
+      Algs::merge_unique(
+        base.ht_candidates().begin(), base.ht_candidates().end(),
+        delta.ht_candidates.begin(), delta.ht_candidates.end(),
+        Algs::modify_inserter(
+          Algs::filter_inserter(
+            std::back_inserter(ciw.ht_candidates()),
+            ExistingHTCandidate(channels)),
+          HTCandidateWriterAdapter()),
+        HTCandidateLess(),
+        HTCandidateMerge());
+
+      ciw.history_matches().reserve(
+        ciw.history_matches().size() + base.history_matches().size());
+
+      std::copy(
+        base.history_matches().begin(), base.history_matches().end(),
+        Algs::filter_inserter(
+          std::back_inserter(ciw.history_matches()),
+          ExistChannelFilter(channels)));
+
+      ciw.history_visits().reserve(
+        ciw.history_visits().size() +
+        base.history_visits().size() +
+        delta.history_visits.size());
+
+      Algs::merge_unique(
+        base.history_visits().begin(), base.history_visits().end(),
+        delta.history_visits.begin(), delta.history_visits.end(),
+        Algs::modify_inserter(
+          Algs::filter_inserter(
+            std::back_inserter(ciw.history_visits()),
+            ExistingHistoryVisit(channels)),
+          HistoryVisitWriterAdapter()),
+        HistoryVisitLess(),
+        HistoryVisitMerge());
+
+      ciw.session_matches().reserve(
+        ciw.session_matches().size() +
+        base.session_matches().size() +
+        delta.session_matches.size());
+
+      Algs::merge_unique(
+        base.session_matches().begin(), base.session_matches().end(),
+        delta.session_matches.begin(), delta.session_matches.end(),
+        Algs::modify_inserter(
+          Algs::filter_inserter(
+            std::back_inserter(ciw.session_matches()),
+            SessionMatchesFilter()),
+          SessionMatchesCleanAdapter(channels, now)),
+        SessionMatchLess(),
+        RequestSessionMatchesMerge());
     }
 
     template <typename BaseChannelsInfoType, typename AddChannelsInfoType>

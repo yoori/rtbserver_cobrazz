@@ -99,6 +99,41 @@ namespace
   }
 
   void
+  init_ht_candidate_templates_(
+    AdServer::UserInfoSvcs::ChannelIntervalsPack* cip)
+    noexcept
+  {
+    cip->ht_candidate_templates.clear();
+    cip->ht_candidate_templates.reserve(cip->today_long_intervals.size());
+
+    for (auto it = cip->today_long_intervals.begin();
+      it != cip->today_long_intervals.end(); ++it)
+    {
+      const unsigned long req_visits = it->min_visits - 1;
+      cip->ht_candidate_templates.emplace_back(
+        it->min_visits,
+        req_visits,
+        req_visits == 0 ? it->weight : 0);
+    }
+  }
+
+  void
+  init_ht_candidate_templates_(
+    AdServer::UserInfoSvcs::ChannelIntervalsPack* page_cip,
+    AdServer::UserInfoSvcs::ChannelIntervalsPack* search_cip,
+    AdServer::UserInfoSvcs::ChannelIntervalsPack* url_cip,
+    AdServer::UserInfoSvcs::ChannelIntervalsPack* url_keyword_cip,
+    AdServer::UserInfoSvcs::ChannelIntervalsPack* audience_cip)
+    noexcept
+  {
+    init_ht_candidate_templates_(page_cip);
+    init_ht_candidate_templates_(search_cip);
+    init_ht_candidate_templates_(url_cip);
+    init_ht_candidate_templates_(url_keyword_cip);
+    init_ht_candidate_templates_(audience_cip);
+  }
+
+  void
   apply_freq_caps_(
     AdServer::UserInfoSvcs::FreqCapConfig& freq_cap_config,
     const AdServer::CampaignSvcs_v360::FreqCapConfigInfo& freq_cap_config_info,
@@ -360,6 +395,13 @@ namespace AdServer::UserInfoSvcs
                 }
               }
 
+              init_ht_candidate_templates_(
+                page_cip,
+                search_cip,
+                url_cip,
+                url_keyword_cip,
+                audience_cip);
+
               behav_channel_interval_map[BehavIdTypeKey(
                 bpi.id, PAGE_CHANNEL)] = page_cip;
               behav_channel_interval_map[BehavIdTypeKey(
@@ -486,6 +528,13 @@ namespace AdServer::UserInfoSvcs
                   }
                 }
               }
+
+              init_ht_candidate_templates_(
+                page_cip,
+                search_cip,
+                url_cip,
+                url_keyword_cip,
+                audience_cip);
 
               str_behav_channel_interval_map[StrBehavIdTypeKey(
                 kbpi.id, PAGE_CHANNEL)] = page_cip;
