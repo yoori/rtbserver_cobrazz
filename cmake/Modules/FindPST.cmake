@@ -12,11 +12,11 @@ function(add_pst _target _pstfile target_dir)
   execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${target_dir})
   set (SRC ${CMAKE_CURRENT_LIST_DIR}/${_pstfile})
   set(PST_TARGET ${_target}_pst)
-  add_custom_target(${PST_TARGET} DEPENDS "${OUTPUTCPP}" )
+  add_custom_target(${PST_TARGET} DEPENDS ${OUTPUTCPP} ${OUTPUTHPP})
   add_custom_command(
     OUTPUT  ${OUTPUTCPP} ${OUTPUTHPP}
     COMMAND PlainCppCompiler --output-hpp=${OUTPUTHPP} --output-cpp=${OUTPUTCPP} ${SRC}
-    DEPENDS ${PST_TARGET}
+    DEPENDS PlainCppCompiler ${SRC}
   )
 
   add_library(${_target} STATIC
