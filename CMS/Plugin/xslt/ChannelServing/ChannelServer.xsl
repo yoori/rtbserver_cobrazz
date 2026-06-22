@@ -127,7 +127,7 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig max_split="16">
       <cfg:Endpoint host="*" port="{$channel-server-grpc-port}"/>
     </cfg:GrpcConfig>
 

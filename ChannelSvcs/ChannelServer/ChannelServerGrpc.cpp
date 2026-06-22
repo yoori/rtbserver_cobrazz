@@ -23,6 +23,16 @@ namespace AdServer::ChannelSvcs
     constexpr const char channel_server_grpc_aspect[] = "ChannelServerGrpc";
     namespace pc = adserver::grpc::process_control;
 
+    std::size_t
+    resolve_max_batch_split(
+      std::size_t configured,
+      std::size_t process_threads)
+    {
+      return std::max<std::size_t>(
+        1,
+        configured != 0 ? configured : process_threads);
+    }
+
     const std::string&
     service_hostname_()
     {
@@ -268,7 +278,8 @@ namespace AdServer::ChannelSvcs
   public:
     ServiceImpl(
       ChannelServerCorePtr core,
-      std::shared_ptr<AtomicStats> stats);
+      std::shared_ptr<AtomicStats> stats,
+      std::size_t max_split);
 
     static auto grpc_calls()
     {
@@ -324,6 +335,8 @@ namespace AdServer::ChannelSvcs
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
 
+    std::size_t distributed_batch_max_split() const noexcept override;
+
   private:
     class ProcessControlService final:
       public pc::ProcessControl::Service
@@ -358,6 +371,7 @@ namespace AdServer::ChannelSvcs
     ProcessControlService process_control_service_;
     ChannelServerCorePtr core_;
     const std::shared_ptr<AtomicStats> stats_;
+    const std::size_t max_batch_split_;
   };
 
   ChannelServerGrpc::ServiceImpl::ProcessControlService::
@@ -395,10 +409,12 @@ namespace AdServer::ChannelSvcs
 
   ChannelServerGrpc::ServiceImpl::ServiceImpl(
     ChannelServerCorePtr core,
-    std::shared_ptr<AtomicStats> stats)
+    std::shared_ptr<AtomicStats> stats,
+    std::size_t max_split)
     : process_control_service_(*this),
       core_(std::move(core)),
-      stats_(std::move(stats))
+      stats_(std::move(stats)),
+      max_batch_split_(max_split)
   {
     add_grpc_service(&process_control_service_);
   }
@@ -415,6 +431,12 @@ namespace AdServer::ChannelSvcs
     co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
       batch_request,
       batch_response);
+  }
+
+  std::size_t
+  ChannelServerGrpc::ServiceImpl::distributed_batch_max_split() const noexcept
+  {
+    return max_batch_split_;
   }
 
   void
@@ -730,7 +752,8 @@ namespace AdServer::ChannelSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t grpc_threads)
+    std::size_t grpc_threads,
+    std::size_t max_split)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
       impl_(std::make_shared<Impl>(
@@ -738,7 +761,10 @@ namespace AdServer::ChannelSvcs
         channel_server_grpc_aspect,
         bind_address_,
         grpc_threads,
-        std::make_unique<ServiceImpl>(std::move(core), stats_)))
+        std::make_unique<ServiceImpl>(
+          std::move(core),
+          stats_,
+          resolve_max_batch_split(max_split, grpc_threads))))
   {
     add_child_object(impl_);
   }

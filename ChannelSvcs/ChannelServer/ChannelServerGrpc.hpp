@@ -44,7 +44,8 @@ namespace AdServer::ChannelSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::size_t grpc_threads);
+      std::size_t grpc_threads,
+      std::size_t max_split);
 
     Stats stats() const noexcept;
 
