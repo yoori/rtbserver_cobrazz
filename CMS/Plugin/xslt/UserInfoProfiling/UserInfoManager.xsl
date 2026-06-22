@@ -115,7 +115,7 @@
     </xsl:variable>
     <xsl:variable name="user-info-manager-grpc-max-split">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_max_split"/>
-      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_max_split) = 0">8</xsl:if>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_max_split) = 0">16</xsl:if>
     </xsl:variable>
     <xsl:variable name="user-info-manager-monitoring-port">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@monitoring_port"/>
