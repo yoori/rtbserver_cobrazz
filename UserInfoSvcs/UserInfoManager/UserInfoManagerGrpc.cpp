@@ -348,7 +348,7 @@ namespace AdServer::UserInfoSvcs
     }
 
     void convert_(
-      const UserInfoManagerCore::ChannelWeight& src,
+      const ChannelWeight& src,
       adserver::user_info_svcs::user_info_manager::ChannelWeight& dst)
     {
       dst.set_channel_id(src.channel_id);

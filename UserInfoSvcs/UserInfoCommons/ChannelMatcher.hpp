@@ -269,8 +269,8 @@ namespace AdServer
         const ChannelDictionary& channels,
         const ProfileMatchParams& profile_match_params,
         ProfileProperties& properties,
-        const Generics::Time& session_timeout,
-        bool match_to_add = false) /*throw(InvalidProfileException)*/;
+        const Generics::Time& session_timeout)
+        /*throw(InvalidProfileException)*/;
 
       template <typename WriterType, typename ReaderType>
       static void copy_history_section(
@@ -462,9 +462,7 @@ namespace AdServer
         PersistentMatchesWriter* out_pmw,
         PersistentMatchesWriter* match_pmw,
         const PersistentMatchesReader* base_in,
-        const PersistentMatchesReader* add_in,
         const ChannelIdArray& channels,
-        bool match_to_add,
         bool provide_persistent_channels) /*throw(Exception)*/;
 
       void match_section_(
@@ -472,11 +470,9 @@ namespace AdServer
         ChannelsInfoWriter* out_ciw,
         ChannelsInfoWriter* match_ciw,
         const ChannelsInfoReader* base_in,
-        const ChannelsInfoReader* add_in,
         const ChannelIdArray& channels,
         const ChannelsHashMap& dictionary,
         const Generics::Time& now,
-        bool match_to_add,
         bool household = false) /*throw(Exception)*/;
 
       void fill_channels_results_(

@@ -1034,14 +1034,12 @@ namespace AdServer
       const ChannelDictionary& channels,
       const ProfileMatchParams& profile_match_params,
       ProfileProperties& properties,
-      const Generics::Time& session_timeout,
-      bool match_to_add)
+      const Generics::Time& session_timeout)
       /*throw(InvalidProfileException)*/
     {
       static const char* FUN = "ChannelsMatcher::match()";
 
       bool base_exists = false;
-      bool add_exists = false;
 
       no_result_ = profile_match_params.no_result;
 
@@ -1117,13 +1115,11 @@ namespace AdServer
 
       properties.fraud_request = (now.tv_sec <= base_ignore_fraud_time);
 
-      ChannelsProfileWriter upw;
-      upw.version() = CURRENT_BASE_PROFILE_VERSION;
-      upw.create_time() = 0;
-      upw.history_time() = 0;
-      upw.ignore_fraud_time() = 0;
-      upw.last_request_time() = current_time.tv_sec;
-      upw.session_start() = 0;
+      PersistentMatchesWriter request_persistent_matches;
+      ChannelsInfoWriter request_page_channels;
+      ChannelsInfoWriter request_search_channels;
+      ChannelsInfoWriter request_url_channels;
+      ChannelsInfoWriter request_url_keyword_channels;
 
       /* fill result profile */
       ChannelsProfileWriter res_upw;
@@ -1137,97 +1133,28 @@ namespace AdServer
         (base_profile_->membuf().size() != 0) ?
          base_household : profile_match_params.household;
 
-      ChannelsProfileReader base_rdr =
-        ChannelsProfileReader(
-          base_profile_->membuf().data(),
-          base_profile_->membuf().size());
-      ChannelsProfileReader add_rdr =
-        ChannelsProfileReader(
-          base_profile_->membuf().data(),
-          base_profile_->membuf().size());
+      ChannelsProfileReader base_rdr(
+        base_profile_->membuf().data(),
+        base_profile_->membuf().size());
 
-      ChannelsInfoReader add_page_channels(0, 0);
-      ChannelsInfoReader add_search_channels(0, 0);
-      ChannelsInfoReader add_url_channels(0, 0);
-      ChannelsInfoReader add_url_keyword_channels(0, 0);
+      res_upw.create_time() = base_create_time == 0 ?
+        current_time.tv_sec : base_create_time;
 
-      PersistentMatchesReader add_persistent_matches(0, 0);
+      res_upw.last_request_time() =
+        profile_match_params.change_last_request ?
+          current_time.tv_sec : base_last_request_time;
 
-      ChannelsProfileReader::geo_data_Container add_geo_data;
+      res_upw.first_colo_id() =
+        (base_first_colo_id != UNKNOWN_COLO_ID && base_first_colo_id != DEFAULT_COLO) ?
+        base_first_colo_id :
+        profile_match_params.request_colo_id;
 
-      uint32_t add_last_request_time = 0;
-      uint32_t add_create_time = 0;
-      uint32_t add_session_start = 0;
-      uint32_t add_first_colo_id = profile_match_params.request_colo_id;
-      std::string add_cohort;
+      res_upw.cohort() = base_cohort;
 
-      if (add_profile_->membuf().size() != 0)
-      {
-        add_exists = true;
-
-        ChannelsProfileReader add_rdr(
-          add_profile_->membuf().data(),
-          add_profile_->membuf().size());
-
-        add_last_request_time = add_rdr.last_request_time();
-        add_create_time = add_rdr.create_time();
-
-        add_page_channels = add_rdr.page_channels();
-        add_search_channels = add_rdr.search_channels();
-        add_url_channels = add_rdr.url_channels();
-        add_url_keyword_channels = add_rdr.url_keyword_channels();
-
-        add_persistent_matches = add_rdr.persistent_matches();
-
-        add_first_colo_id = add_rdr.first_colo_id();
-
-        add_cohort = add_rdr.cohort();
-
-        add_geo_data = add_rdr.geo_data();
-      }
-
-      if (match_to_add)
-      {
-        res_upw.create_time() = add_create_time == 0 ?
-          current_time.tv_sec : add_create_time;
-
-        res_upw.last_request_time() =
-          profile_match_params.change_last_request ?
-            current_time.tv_sec : add_last_request_time;
-
-        res_upw.first_colo_id() =
-          (add_first_colo_id != UNKNOWN_COLO_ID && add_first_colo_id != DEFAULT_COLO) ?
-          add_first_colo_id :
-          profile_match_params.request_colo_id;
-
-        res_upw.cohort() = add_cohort;
-
-        set_cohort_(
-          res_upw.cohort(),
-          profile_match_params.cohort,
-          profile_match_params.cohort2);
-      }
-      else
-      {
-        res_upw.create_time() = base_create_time == 0 ?
-          current_time.tv_sec : base_create_time;
-
-        res_upw.last_request_time() =
-          profile_match_params.change_last_request ?
-            current_time.tv_sec : base_last_request_time;
-
-        res_upw.first_colo_id() =
-          (base_first_colo_id != UNKNOWN_COLO_ID && base_first_colo_id != DEFAULT_COLO) ?
-          base_first_colo_id :
-          profile_match_params.request_colo_id;
-
-        res_upw.cohort() = base_cohort;
-
-        set_cohort_(
-          res_upw.cohort(),
-          profile_match_params.cohort,
-          profile_match_params.cohort2);
-      }
+      set_cohort_(
+        res_upw.cohort(),
+        profile_match_params.cohort,
+        profile_match_params.cohort2);
 
       split_cohort_(
         properties.cohort,
@@ -1240,25 +1167,22 @@ namespace AdServer
         current_time.tv_sec : base_history_time;
       res_upw.ignore_fraud_time() = base_ignore_fraud_time;
 
-      unsigned long max_lr =
-        std::max(base_last_request_time, add_last_request_time);
-
       if (profile_match_params.change_last_request)
       {
-        if (max_lr + session_timeout.tv_sec <
+        if (base_last_request_time +
+              static_cast<unsigned long>(session_timeout.tv_sec) <
             static_cast<unsigned long>(current_time.tv_sec))
         {
           res_upw.session_start() = current_time.tv_sec;
         }
         else
         {
-          res_upw.session_start() =
-            std::max(base_session_start, add_session_start);
+          res_upw.session_start() = base_session_start;
         }
       }
       else
       {
-        res_upw.session_start() = match_to_add ? add_session_start : base_session_start;
+        res_upw.session_start() = base_session_start;
       }
 
       try
@@ -1268,59 +1192,49 @@ namespace AdServer
           match_persistent_section_(
             result_channels,
             &res_upw.persistent_matches(),
-            &upw.persistent_matches(),
+            &request_persistent_matches,
             base_exists ? &base_persistent_matches : 0,
-            add_exists ? &add_persistent_matches : 0,
             channels_pack.persistent_channels,
-            match_to_add,
             profile_match_params.provide_persistent_channels);
 
           match_section_(
             result_channels,
             &res_upw.page_channels(),
-            &upw.page_channels(),
+            &request_page_channels,
             base_exists ? &base_page_channels : 0,
-            add_exists ? &add_page_channels : 0,
             channels_pack.page_channels,
             channels.page_channels,
             current_time,
-            match_to_add,
             res_upw.household() == 1);
 
           match_section_(
             result_channels,
             &res_upw.search_channels(),
-            &upw.search_channels(),
+            &request_search_channels,
             base_exists ? &base_search_channels : 0,
-            add_exists ? &add_search_channels : 0,
             channels_pack.search_channels,
             channels.search_channels,
             current_time,
-            match_to_add,
             res_upw.household() == 1);
 
           match_section_(
             result_channels,
             &res_upw.url_channels(),
-            &upw.url_channels(),
+            &request_url_channels,
             base_exists ? &base_url_channels : 0,
-            add_exists ? &add_url_channels : 0,
             channels_pack.url_channels,
             channels.url_channels,
             current_time,
-            match_to_add,
             res_upw.household() == 1);
 
           match_section_(
             result_channels,
             &res_upw.url_keyword_channels(),
-            &upw.url_keyword_channels(),
+            &request_url_keyword_channels,
             base_exists ? &base_url_keyword_channels : 0,
-            add_exists ? &add_url_keyword_channels : 0,
             channels_pack.url_keyword_channels,
             channels.url_keyword_channels,
             current_time,
-            match_to_add,
             res_upw.household() == 1);
 
           res_upw.audience_channels().reserve(base_audience_channels.size());
@@ -1338,53 +1252,23 @@ namespace AdServer
         }
         else
         {
-          if (match_to_add)
+          if (base_exists)
           {
-            if (add_exists)
-            {
-              std::copy(
-                add_persistent_matches.channel_ids().begin(),
-                add_persistent_matches.channel_ids().end(),
-                std::back_inserter(res_upw.persistent_matches().channel_ids()));
+            std::copy(
+              base_persistent_matches.channel_ids().begin(),
+              base_persistent_matches.channel_ids().end(),
+              std::back_inserter(res_upw.persistent_matches().channel_ids()));
 
-              copy_section(res_upw.page_channels(), add_page_channels);
-              copy_section(res_upw.search_channels(), add_search_channels);
-              copy_section(res_upw.url_channels(), add_url_channels);
-              copy_section(res_upw.url_keyword_channels(), add_url_keyword_channels);
+            copy_section(res_upw.page_channels(), base_page_channels);
+            copy_section(res_upw.search_channels(), base_search_channels);
+            copy_section(res_upw.url_channels(), base_url_channels);
+            copy_section(res_upw.url_keyword_channels(), base_url_keyword_channels);
 
-              res_upw.geo_data().clear();
-              res_upw.geo_data().reserve(add_rdr.geo_data().size());
-              std::copy(
-                add_rdr.geo_data().begin(), add_rdr.geo_data().end(),
-                std::back_inserter(res_upw.geo_data()));
-            }
-          }
-          else
-          {
-            if (base_exists)
-            {
-              std::copy(
-                base_persistent_matches.channel_ids().begin(),
-                base_persistent_matches.channel_ids().end(),
-                std::back_inserter(res_upw.persistent_matches().channel_ids()));
-
-              copy_section(res_upw.page_channels(), base_page_channels);
-              copy_section(res_upw.search_channels(), base_search_channels);
-              copy_section(res_upw.url_channels(), base_url_channels);
-              copy_section(res_upw.url_keyword_channels(), base_url_keyword_channels);
-
-              res_upw.geo_data().clear();
-              res_upw.geo_data().reserve(base_rdr.geo_data().size());
-              std::copy(
-                base_rdr.geo_data().begin(), base_rdr.geo_data().end(),
-                std::back_inserter(res_upw.geo_data()));
-
-              upw.audience_channels().reserve(base_audience_channels.size());
-              std::copy(
-                base_audience_channels.begin(),
-                base_audience_channels.end(),
-                std::back_inserter(upw.audience_channels()));
-            }
+            res_upw.geo_data().clear();
+            res_upw.geo_data().reserve(base_rdr.geo_data().size());
+            std::copy(
+              base_rdr.geo_data().begin(), base_rdr.geo_data().end(),
+              std::back_inserter(res_upw.geo_data()));
           }
 
           result_channels.clear();
@@ -1412,18 +1296,10 @@ namespace AdServer
         }
       }
 
-      if (!match_to_add)
-      {
-        base_profile_->membuf().alloc(res_upw.size());
-        res_upw.save(base_profile_->membuf().data(), res_upw.size());
+      base_profile_->membuf().alloc(res_upw.size());
+      res_upw.save(base_profile_->membuf().data(), res_upw.size());
 
-        add_profile_->membuf().clear();
-      }
-      else
-      {
-        add_profile_->membuf().alloc(res_upw.size());
-        res_upw.save(add_profile_->membuf().data(), res_upw.size());
-      }
+      add_profile_->membuf().clear();
 
       if (no_result_)
       {
@@ -1636,9 +1512,7 @@ namespace AdServer
       PersistentMatchesWriter* out_pmw,
       PersistentMatchesWriter* match_pmw,
       const PersistentMatchesReader* base_in,
-      const PersistentMatchesReader* add_in,
       const ChannelIdArray& channels,
-      bool match_to_add,
       bool provide_persistent_channels)
       /*throw(Exception)*/
     {
@@ -1649,12 +1523,12 @@ namespace AdServer
           match_pmw->channel_ids().push_back(*it);
         }
 
-        if ((match_to_add && add_in != 0) || (!match_to_add && base_in != 0))
+        if (base_in != 0)
         {
           Algs::merge_unique(
             match_pmw->channel_ids().begin(), match_pmw->channel_ids().end(),
-            match_to_add ? (*add_in).channel_ids().begin() : (*base_in).channel_ids().begin(),
-            match_to_add ? (*add_in).channel_ids().end() : (*base_in).channel_ids().end(),
+            base_in->channel_ids().begin(),
+            base_in->channel_ids().end(),
             std::back_inserter((*out_pmw).channel_ids()));
         }
         else
@@ -1664,18 +1538,7 @@ namespace AdServer
             std::back_inserter((*out_pmw).channel_ids()));
         }
 
-        if(match_to_add && provide_persistent_channels)
-        {
-          PersistentMatchesWriter temp_pmw;
-
-          merge_persistent_channels_(temp_pmw, base_in, out_pmw);
-
-          for (auto it = temp_pmw.channel_ids().begin(); it != temp_pmw.channel_ids().end(); ++it)
-          {
-            add_weight_(result_channels, *it, 1);
-          }
-        }
-        else if (provide_persistent_channels)
+        if (provide_persistent_channels)
         {
           for (auto it = out_pmw->channel_ids().begin(); it != out_pmw->channel_ids().end(); ++it)
           {
@@ -1696,11 +1559,9 @@ namespace AdServer
       ChannelsInfoWriter* out_ciw,
       ChannelsInfoWriter* match_ciw,
       const ChannelsInfoReader* base_in,
-      const ChannelsInfoReader* add_in,
       const ChannelIdArray& channels,
       const ChannelsHashMap& dictionary,
       const Generics::Time& now,
-      bool match_to_add,
       bool household)
       /*throw(Exception)*/
     {
@@ -1720,36 +1581,15 @@ namespace AdServer
           *out_ciw,
           dictionary,
           now,
-          match_to_add ? add_in : base_in,
+          base_in,
           match_ciw,
           household);
 
-        if(match_to_add)
-        {
-          ChannelsInfoWriter temp_ciw;
-
-          merge_channels_info_(
-            temp_ciw,
-            dictionary,
-            now,
-            out_ciw,
-            base_in,
-            household);
-
-          fill_channels_results_(
-            result_channels,
-            temp_ciw,
-            now,
-            dictionary);
-        }
-        else
-        {
-          fill_channels_results_(
-            result_channels,
-            *out_ciw,
-            now,
-            dictionary);
-        }
+        fill_channels_results_(
+          result_channels,
+          *out_ciw,
+          now,
+          dictionary);
       }
       catch (const eh::Exception& ex)
       {

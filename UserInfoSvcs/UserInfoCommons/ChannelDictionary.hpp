@@ -18,7 +18,13 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
-    typedef std::pmr::map<unsigned long, unsigned long>
+    struct ChannelWeight
+    {
+      unsigned long channel_id = 0;
+      unsigned long weight = 0;
+    };
+
+    typedef std::pmr::unordered_map<unsigned long, unsigned long>
       ChannelMatchMap; // channel_id => weight
 
     typedef std::list<unsigned long, Generics::TAlloc::ThreadPool<unsigned long, 256> >

@@ -113,12 +113,6 @@ namespace AdServer::UserInfoSvcs
       ByteArray pref_profile;
     };
 
-    struct ChannelWeight
-    {
-      unsigned long channel_id = 0;
-      unsigned long weight = 0;
-    };
-
     struct SeqOrder
     {
       unsigned long ccg_id = 0;
