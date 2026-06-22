@@ -20,6 +20,7 @@ target_link_libraries(UserInfoManagerCorePerfTest
     UserInfoContainer
     UserOperationProfilesPST
     Generics
+    jemalloc
 )
 
 target_include_directories(UserInfoManagerCorePerfTest
