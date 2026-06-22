@@ -338,6 +338,30 @@ namespace Cpp
     mutable bool first_ = true;
   };
 
+  struct FieldMoveAssignImplOps: public OnlyFixedSumOps
+  {
+    FieldMoveAssignImplOps(std::ostream& out, const char* offset)
+      : out_(out),
+        offset_(offset)
+    {}
+
+    void process_fixed_sum(
+      unsigned long,
+      unsigned long,
+      const char*) const
+    {}
+
+    template<typename FieldType>
+    void process_non_fixed_or_complex(const FieldType& field) const
+    {
+      out_ << offset_ << field->name() << "_ = std::move(right." <<
+        field->name() << "_);" << std::endl;
+    }
+
+    std::ostream& out_;
+    std::string offset_;
+  };
+
   /* WriterGenerator */
   WriterGenerator::WriterGenerator(
     std::ostream& out_hpp,
@@ -536,6 +560,8 @@ namespace Cpp
         std::endl <<
       offset_ << name << "& operator=(const " << name << "& right) = default;" << std::endl <<
         std::endl <<
+      offset_ << name << "& operator=(" << name << "&& right);" << std::endl <<
+        std::endl <<
       offset_ << name << "& operator=(const PlainTypes::ConstBuf& buf);" << std::endl <<
         std::endl <<
       offset_ << "unsigned long dyn_size_() const;" << std::endl <<
@@ -593,6 +619,25 @@ namespace Cpp
       *fields, FieldBuffersCopyImplOps(out_, (offset_ + "  ").c_str()));
 
     out_ << offset_ << "}" << std::endl <<
+      "#pragma GCC diagnostic pop" << std::endl << std::endl;
+
+    /* move operator */
+    out_ << "#pragma GCC diagnostic push" << std::endl <<
+      "#pragma GCC diagnostic ignored \"-Wmaybe-uninitialized\"" << std::endl <<
+      offset_ << "inline" << std::endl <<
+      offset_ << class_name << "&" << std::endl <<
+      offset_ << class_name << "::operator=(" << class_name << "&& " <<
+        (!fields->empty() ? "right" : "/*right*/") << ")" << std::endl <<
+      offset_ << "{" << std::endl;
+
+    Utils::fetch_fields_with_fixed_sum(
+      *fields, FieldMoveAssignImplOps(out_, (offset_ + "  ").c_str()));
+
+    Utils::fetch_fields_with_fixed_sum(
+      *fields, FieldBuffersCopyImplOps(out_, (offset_ + "  ").c_str()));
+
+    out_ << offset_ << "  return *this;" << std::endl <<
+      offset_ << "}" << std::endl <<
       "#pragma GCC diagnostic pop" << std::endl << std::endl;
 
     /* c-tor(const void* buf, unsigned long buf_size) */

@@ -53,6 +53,10 @@ namespace PlainTypes
 
     List(List&&) = default;
 
+    List& operator=(const List&) = default;
+
+    List& operator=(List&&) = default;
+
     void unsafe_init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;
 
@@ -81,6 +85,10 @@ namespace PlainTypes
     SimpleList(const SimpleList&) = default;
 
     SimpleList(SimpleList&&) = default;
+
+    SimpleList& operator=(const SimpleList&) = default;
+
+    SimpleList& operator=(SimpleList&&) = default;
 
     void init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;

@@ -33,6 +33,10 @@ namespace PlainTypes
 
     Vector(Vector&&) = default;
 
+    Vector& operator=(const Vector&) = default;
+
+    Vector& operator=(Vector&&) = default;
+
     void unsafe_init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;
 
@@ -56,6 +60,16 @@ namespace PlainTypes
     const unsigned long STEP>
   struct SimpleVector: public BaseVector<ElementType>
   {
+    SimpleVector() = default;
+
+    SimpleVector(const SimpleVector&) = default;
+
+    SimpleVector(SimpleVector&&) = default;
+
+    SimpleVector& operator=(const SimpleVector&) = default;
+
+    SimpleVector& operator=(SimpleVector&&) = default;
+
     void init(const void* buf, unsigned long size)
       /*throw(CorruptedStruct)*/;
 
