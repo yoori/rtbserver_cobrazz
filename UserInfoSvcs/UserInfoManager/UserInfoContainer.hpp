@@ -353,7 +353,7 @@ namespace AdServer
         unsigned long common_chunks_number,
         const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
         const char* chunk_prefix,
-        const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+        const AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits& profile_map_traits,
         unsigned long max_waiters = 0)
         /*throw(Exception)*/;
 

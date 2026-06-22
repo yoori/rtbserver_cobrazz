@@ -746,7 +746,8 @@ namespace RequestInfoSvcs
             common_chunks_number,
             chunk_folders,
             inv_prefix,
-            user_level_map_traits,
+            AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+              user_level_map_traits.expire_time),
             AdServer::Commons::uuid_distribution_hash);
       user_map_ = user_map.first;
       add_child_object(user_map.second);

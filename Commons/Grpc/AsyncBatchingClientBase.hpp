@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -30,6 +32,46 @@
 
 namespace AdServer::Grpc
 {
+  namespace Detail
+  {
+    inline constexpr const char PARSE_RESPONSE_SOURCE[] = "parse_response";
+
+    inline
+    std::string hex_prefix_(const std::string& value, const std::size_t limit)
+    {
+      static constexpr char HEX[] = "0123456789abcdef";
+
+      const auto size = std::min(value.size(), limit);
+      std::string result;
+      result.reserve(size * 2);
+      for (std::size_t i = 0; i < size; ++i)
+      {
+        const auto ch = static_cast<unsigned char>(value[i]);
+        result.push_back(HEX[ch >> 4]);
+        result.push_back(HEX[ch & 0x0F]);
+      }
+
+      return result;
+    }
+
+    inline
+    std::string make_parse_error_message_(
+      const char* parse_error_message,
+      const char* full_method,
+      const std::string& payload)
+    {
+      std::string message = parse_error_message ? parse_error_message : "";
+      message += " [method=";
+      message += full_method ? full_method : "";
+      message += ", payload_size=";
+      message += std::to_string(payload.size());
+      message += ", payload_hex_prefix=";
+      message += hex_prefix_(payload, 64);
+      message += "]";
+      return message;
+    }
+  }
+
   inline const grpc::Status NO_ACTIVE_BATCHING_STREAMS_STATUS(
     grpc::StatusCode::UNAVAILABLE,
     NO_ACTIVE_BATCHING_STREAMS_MESSAGE);
@@ -166,6 +208,8 @@ namespace AdServer::Grpc
       full_method,
       std::move(payload),
       [
+        this,
+        full_method,
         callback = std::move(callback),
         parse_error_message
       ](const auto& batch_response) mutable
@@ -179,10 +223,19 @@ namespace AdServer::Grpc
           google::protobuf::Arena::CreateMessage<Response>(arena.get());
         if (status.ok() && !response->ParseFromString(batch_response.payload()))
         {
+          const auto message = AdServer::Grpc::Detail::make_parse_error_message_(
+            parse_error_message,
+            full_method,
+            batch_response.payload());
+          set_last_error(
+            endpoint_,
+            grpc::StatusCode::INTERNAL,
+            message,
+            AdServer::Grpc::Detail::PARSE_RESPONSE_SOURCE);
           if (callback)
           {
             callback(
-              grpc::Status(grpc::StatusCode::INTERNAL, parse_error_message),
+              grpc::Status(grpc::StatusCode::INTERNAL, message),
               AdServer::Grpc::ResponseHolder<Response>::make_arena(
                 *response,
                 std::move(arena)));

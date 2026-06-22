@@ -46,7 +46,9 @@ namespace AdServer::CampaignSvcs
     {
       std::uint64_t request_in_progress = 0;
       std::uint64_t queue_size = 0;
+      std::uint64_t queue_total = 0;
       std::uint64_t processing_requests = 0;
+      std::uint64_t processing_requests_total = 0;
     };
 
     struct Params

@@ -74,6 +74,15 @@ namespace ProfilingCommons
 
   struct ProfileMapFactory
   {
+    struct ProfileMapTraits
+    {
+      explicit ProfileMapTraits(const Generics::Time& expire_time_val) noexcept
+        : expire_time(expire_time_val)
+      {}
+
+      Generics::Time expire_time;
+    };
+
     typedef PlainStorage::LayerFactory<
       Sync::Policy::PosixThreadRW>::CacheT
       Cache;
@@ -432,7 +441,7 @@ namespace ProfilingCommons
       unsigned long common_chunks_number,
       const ChunkPathMap& chunk_folders,
       const char* chunk_prefix,
-      const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+      const ProfileMapTraits& profile_map_traits,
       KeyHashType key_hash,
       unsigned long max_waiters = 0)
       /*throw(eh::Exception)*/
@@ -459,7 +468,7 @@ namespace ProfilingCommons
         ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map =
           new RocksDBMap(
             String::SubString(rocksdb_path.c_str()),
-            user_level_map_traits.expire_time);
+            profile_map_traits.expire_time);
 
         ReferenceCounting::SmartPtr<
           AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =

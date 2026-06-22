@@ -2926,7 +2926,9 @@ namespace AdServer::CampaignSvcs
       : owner_(owner),
         logger_(ReferenceCounting::add_ref(logger)),
         threads_(std::max<unsigned long>(threads, 1)),
+        queue_total_(0),
         processing_tasks_(0),
+        processing_requests_total_(0),
         queue_closed_(true)
     {}
 
@@ -3021,7 +3023,9 @@ namespace AdServer::CampaignSvcs
     std::condition_variable queue_cond_;
     std::condition_variable processing_cond_;
     std::deque<std::function<void()>> tasks_;
+    std::uint64_t queue_total_;
     std::size_t processing_tasks_;
+    std::uint64_t processing_requests_total_;
     bool queue_closed_;
 
     ChannelTriggerStatLogger_var channel_trigger_stat_logger_;
@@ -3445,6 +3449,7 @@ namespace AdServer::CampaignSvcs
 
         tasks.swap(tasks_);
         processing_tasks_ += tasks.size();
+        processing_requests_total_ += tasks.size();
       }
 
       for(auto& task : tasks)
@@ -3499,7 +3504,9 @@ namespace AdServer::CampaignSvcs
 
     Stats stats;
     stats.queue_size = tasks_.size();
+    stats.queue_total = queue_total_;
     stats.processing_requests = processing_tasks_;
+    stats.processing_requests_total = processing_requests_total_;
     stats.request_in_progress =
       stats.queue_size + stats.processing_requests;
     return stats;
@@ -3524,6 +3531,7 @@ namespace AdServer::CampaignSvcs
 
       was_empty = tasks_.empty();
       tasks_.emplace_back(std::move(task));
+      ++queue_total_;
     }
 
     if(was_empty)

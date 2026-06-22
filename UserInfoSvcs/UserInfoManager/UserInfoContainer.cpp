@@ -109,39 +109,45 @@ namespace UserInfoSvcs
         common_chunks_number,
         chunk_folders,
         BASE_CHUNK_PREFIX,
-        base_level_map_traits,
+        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+          base_level_map_traits.expire_time),
         max_base_profile_waiters);
 
     temp_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         TEMP_CHUNK_PREFIX,
-        temp_level_map_traits,
+        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+          temp_level_map_traits.expire_time),
         max_temp_profile_waiters);
 
     add_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         ADD_CHUNK_PREFIX,
-        add_level_map_traits);
+        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+          add_level_map_traits.expire_time));
 
     history_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         HISTORY_CHUNK_PREFIX,
-        history_level_map_traits);
+        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+          history_level_map_traits.expire_time));
 
     temp_history_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         TEMP_HISTORY_CHUNK_PREFIX,
-        temp_level_map_traits);
+        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+          temp_level_map_traits.expire_time));
 
     freq_cap_profiles_ = open_chunked_map_<UserProfileMap>(
         common_chunks_number,
         chunk_folders,
         FREQCAP_CHUNK_PREFIX,
-        freq_cap_level_map_traits,
+        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+          freq_cap_level_map_traits.expire_time),
         max_freqcap_profile_waiters);
   }
 
@@ -3102,7 +3108,7 @@ namespace UserInfoSvcs
     unsigned long common_chunks_number,
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* chunk_prefix,
-    const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+    const AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits& profile_map_traits,
     unsigned long max_waiters)
     /*throw(Exception)*/
   {
@@ -3119,7 +3125,7 @@ namespace UserInfoSvcs
             common_chunks_number,
             chunk_folders,
             chunk_prefix,
-            user_level_map_traits,
+            profile_map_traits,
             AdServer::Commons::uuid_distribution_hash,
             max_waiters);
       add_child_object(profile_map.second);

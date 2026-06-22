@@ -56,6 +56,7 @@ namespace AdServer::CampaignSvcs
           method_in_progress_(method_in_progress),
           method_time_(method_time)
       {
+        timer_.start();
         call_in_progress_.fetch_add(1, std::memory_order_relaxed);
         call_total.fetch_add(1, std::memory_order_relaxed);
         method_in_progress_.fetch_add(1, std::memory_order_relaxed);
@@ -64,6 +65,7 @@ namespace AdServer::CampaignSvcs
 
       ~CallStatsGuard()
       {
+        timer_.stop();
         const auto elapsed_us = timer_.elapsed_time().microseconds();
         method_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         call_time_.fetch_add(elapsed_us, std::memory_order_relaxed);

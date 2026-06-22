@@ -617,6 +617,14 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           append_stat(
             "logging_request_in_progress",
             logger_stats.request_in_progress);
+          append_stat("logging_queue_size", logger_stats.queue_size);
+          append_stat("logging_queue_total", logger_stats.queue_total);
+          append_stat(
+            "logging_processing_requests",
+            logger_stats.processing_requests);
+          append_stat(
+            "logging_processing_requests_total",
+            logger_stats.processing_requests_total);
 
           if(campaign_manager_core.in() != 0)
           {
