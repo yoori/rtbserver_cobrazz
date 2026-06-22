@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory_resource>
+
 #include <eh/Exception.hpp>
 #include <Generics/CRC.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -373,6 +375,7 @@ namespace AdServer
         const CreativeCategoryIdSet& required_categories,
         bool secure,
         bool filter_empty_destination,
+        std::pmr::memory_resource* memory_resource,
         TraceParams* trace_params)
         const;
 

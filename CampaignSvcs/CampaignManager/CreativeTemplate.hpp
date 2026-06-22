@@ -131,18 +131,18 @@ namespace AdServer
     };
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     class TemplateMap
     {
     protected:
       typedef Sync::Policy::PosixThread SyncPolicy;
 
     public:
-      typedef Generics::GnuHashTable<_KEY, _VALUE> KeyMap;
-      typedef Generics::GnuHashSet<_KEY> KeySet;
+      typedef Generics::GnuHashTable<KeyType, ValueType> KeyMap;
+      typedef Generics::GnuHashSet<KeyType> KeySet;
 
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -153,16 +153,18 @@ namespace AdServer
       TemplateMap() noexcept;
 
       void insert(
-        const _KEY& key,
-        const _VALUE& value)
+        const KeyType& key,
+        const ValueType& value)
         /*throw(Exception)*/;
 
-      bool exist(const _KEY& key) const noexcept;
+      bool exist(const KeyType& key) const noexcept;
 
-      Template* get(const _KEY& key) const
+      bool get_value(const KeyType& key, ValueType& val) const noexcept;
+
+      Template* get(const KeyType& key) const
         /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/;
 
-      Template* get(const _KEY& key, _VALUE& val) const
+      Template* get(const KeyType& key, ValueType& val) const
         /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/;
 
       void assign(const KeySet& key_set, TemplateMap& source_map)
@@ -204,23 +206,23 @@ namespace AdServer
         {}
 
         TemplateWithState(
-          const typename _FACTORY::State& state_val,
+          const typename FactoryType::State& state_val,
           Template* templ_val)
           : state(state_val),
             templ(ReferenceCounting::add_ref(templ_val))
         {}
 
         typename SyncPolicy::Mutex lock;
-        typename _FACTORY::State state;
+        typename FactoryType::State state;
         Template_var templ;
       };
 
-      typedef std::map<_VALUE_HANDLER, TemplateWithState> ValueMap;
+      typedef std::map<ValueHandlerType, TemplateWithState> ValueMap;
 
     protected:
       void insert_(
-        const _KEY& key,
-        const _VALUE& value,
+        const KeyType& key,
+        const ValueType& value,
         const TemplateWithState& templ_with_state)
         /*throw(Exception)*/;
 
@@ -228,7 +230,7 @@ namespace AdServer
         /*throw(Template::FileNotExists, Template::InvalidTemplate)*/;
 
     protected:
-      _FACTORY factory_;
+      FactoryType factory_;
       KeyMap key_map_;
       mutable ValueMap value_map_;
     };
@@ -326,21 +328,22 @@ namespace AdServer
 
     /** TemplateMap */
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::TemplateMap()
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::
+      TemplateMap()
       noexcept
     {}
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     void
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::assign(
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::assign(
       const KeySet& key_set,
       TemplateMap& source_map)
       /*throw(Exception)*/
@@ -362,14 +365,14 @@ namespace AdServer
     }
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     void
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::insert_(
-      const _KEY& key,
-      const _VALUE& handler,
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::insert_(
+      const KeyType& key,
+      const ValueType& handler,
       const TemplateWithState& templ_with_state)
       /*throw(Exception)*/
     {
@@ -382,27 +385,27 @@ namespace AdServer
     }
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     void
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::insert(
-      const _KEY& key,
-      const _VALUE& handler)
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::insert(
+      const KeyType& key,
+      const ValueType& handler)
       /*throw(Exception)*/
     {
       insert_(key, handler, TemplateWithState());
     }
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     bool
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::exist(
-      const _KEY& key) const
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::exist(
+      const KeyType& key) const
       noexcept
     {
       typename KeyMap::const_iterator it = key_map_.find(key);
@@ -410,19 +413,40 @@ namespace AdServer
     }
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
+    bool
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::get_value(
+      const KeyType& key,
+      ValueType& val) const
+      noexcept
+    {
+      typename KeyMap::const_iterator it = key_map_.find(key);
+      if(it == key_map_.end())
+      {
+        return false;
+      }
+
+      val = it->second;
+      return true;
+    }
+
+    template<
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     Template*
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::get_(
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::get_(
       typename ValueMap::iterator& value_map_it) const
       /*throw(Template::FileNotExists, Template::InvalidTemplate)*/
     {
       if(value_map_it == value_map_.end())
       {
         typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
-        typename _FACTORY::State state;
+        typename FactoryType::State state;
         Template_var templ = factory_.create(value_map_it->first, state);
         value_map_.insert(
           std::make_pair(value_map_it->first, TemplateWithState(state, templ)));
@@ -463,13 +487,13 @@ namespace AdServer
     }
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     Template*
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::get(
-      const _KEY& key) const
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::get(
+      const KeyType& key) const
       /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/
     {
       typename KeyMap::const_iterator it = key_map_.find(key);
@@ -484,14 +508,14 @@ namespace AdServer
     }
 
     template<
-      typename _KEY,
-      typename _VALUE,
-      typename _VALUE_HANDLER,
-      typename _FACTORY>
+      typename KeyType,
+      typename ValueType,
+      typename ValueHandlerType,
+      typename FactoryType>
     Template*
-    TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::get(
-      const _KEY& key,
-      _VALUE& val) const
+    TemplateMap<KeyType, ValueType, ValueHandlerType, FactoryType>::get(
+      const KeyType& key,
+      ValueType& val) const
       /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/
     {
       typename KeyMap::const_iterator it = key_map_.find(key);

@@ -2,6 +2,7 @@
 
 #include <map>
 #include <cassert>
+#include <memory_resource>
 
 #include <Commons/Containers.hpp>
 
@@ -446,7 +447,8 @@ namespace AdServer
         const CampaignIndex::Key& key,
         const CampaignSelectParams& request_params,
         const Campaign* campaign,
-        const Tag* tag) const
+        const Tag* tag,
+        std::pmr::memory_resource* memory_resource) const
         /*throw(eh::Exception)*/;
 
       static

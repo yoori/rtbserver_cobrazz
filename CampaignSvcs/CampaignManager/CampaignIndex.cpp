@@ -1,4 +1,6 @@
 #include <iostream>
+#include <memory_resource>
+#include <unordered_set>
 
 #include <HTTP/UrlAddress.hpp>
 #include <Generics/Rand.hpp>
@@ -1734,10 +1736,137 @@ namespace AdServer
       const CreativeCategoryIdSet& required_categories,
       bool secure,
       bool filter_empty_destination,
+      std::pmr::memory_resource* memory_resource,
       TraceParams* trace_params)
       const
     {
       const CreativeList& campaign_creatives = campaign->get_creatives();
+      const Tag::SizeMap* check_tag_sizes = tag_sizes ? tag_sizes : &tag->sizes;
+
+      const auto indexed_creative_available = [&, this](const Creative* creative)
+      {
+        return (creative->fc_id == 0 || key.user_status == US_OPTIN) &&
+          (!secure || creative->https_safe_flag) &&
+          (!filter_empty_destination ||
+            !creative->destination_url.url().empty()) &&
+          creative_available_by_sizes_(
+            tag,
+            tag_sizes,
+            creative,
+            up_expand_space,
+            right_expand_space,
+            down_expand_space,
+            left_expand_space) &&
+          creative_available_by_categories_(
+            campaign,
+            creative,
+            tag,
+            check_click_categories) &&
+          creative_available_by_templates_(
+            campaign,
+            creative,
+            tag,
+            key.format.c_str()) &&
+          // check video duration
+          (creative->video_duration >= video_min_duration &&
+           (creative->video_skip_offset.present() ? // skippable
+             (!video_skippable_max_duration.present() ||
+               creative->video_duration <= *video_skippable_max_duration) :
+             (!video_max_duration.present() ||
+               creative->video_duration <= *video_max_duration)
+            )) &&
+          (allowed_durations.empty() ||
+            (allowed_durations.find(creative->video_duration) !=
+              allowed_durations.end())) &&
+          // check video skippable
+          ((video_allow_skippable && creative->video_skip_offset.present()) ||
+           (video_allow_unskippable && !creative->video_skip_offset.present())) &&
+          // check frequency caps
+          (creative->fc_id == 0 ||
+           (profiling_available &&
+            full_freq_caps.find(creative->fc_id) == full_freq_caps.end())) &&
+          creative_available_by_exclude_categories_(
+            creative,
+            exclude_categories) &&
+          creative_available_by_required_categories_(
+            creative,
+            required_categories);
+      };
+
+      const auto creative_available = [&, this](const Creative* creative)
+      {
+        return creative->status == 'A' &&
+          indexed_creative_available(creative);
+      };
+
+      if(!trace_params)
+      {
+        if(check_tag_sizes->size() == 1)
+        {
+          const Campaign::CreativeBySizeKey creative_by_size_key{
+            check_tag_sizes->begin()->first,
+            key.format};
+          const Campaign::CreativeBySizeMap::const_iterator size_creatives_it =
+            campaign->opt_creatives_by_size.find(creative_by_size_key);
+
+          if(size_creatives_it != campaign->opt_creatives_by_size.end())
+          {
+            const Campaign::CreativeBySizeArray& size_creatives =
+              size_creatives_it->second;
+
+            for(Campaign::CreativeBySizeArray::const_iterator cr_it =
+                  size_creatives.begin();
+                cr_it != size_creatives.end();
+                ++cr_it)
+            {
+              const Creative* creative = cr_it->creative;
+              if(indexed_creative_available(creative))
+              {
+                creatives.push_back(creative);
+              }
+            }
+          }
+        }
+        else
+        {
+          std::pmr::unordered_set<const Creative*> seen_creatives(
+            memory_resource);
+
+          for(Tag::SizeMap::const_iterator tag_size_it =
+                check_tag_sizes->begin();
+              tag_size_it != check_tag_sizes->end();
+              ++tag_size_it)
+          {
+            const Campaign::CreativeBySizeMap::const_iterator
+              size_creatives_it =
+                campaign->opt_creatives_by_size.find(
+                  Campaign::CreativeBySizeKey{tag_size_it->first, key.format});
+
+            if(size_creatives_it == campaign->opt_creatives_by_size.end())
+            {
+              continue;
+            }
+
+            const Campaign::CreativeBySizeArray& size_creatives =
+              size_creatives_it->second;
+
+            for(Campaign::CreativeBySizeArray::const_iterator cr_it =
+                  size_creatives.begin();
+                cr_it != size_creatives.end();
+                ++cr_it)
+            {
+              const Creative* creative = cr_it->creative;
+              if(seen_creatives.insert(creative).second &&
+                 indexed_creative_available(creative))
+              {
+                creatives.push_back(creative);
+              }
+            }
+          }
+        }
+
+        return;
+      }
 
       if(trace_params)
       {
@@ -1750,52 +1879,7 @@ namespace AdServer
       {
         const Creative* creative = *cr_it;
 
-        if((creative->fc_id == 0 || key.user_status == US_OPTIN) &&
-           creative->status == 'A' &&
-           (!secure || creative->https_safe_flag) &&
-           (!filter_empty_destination || !creative->destination_url.url().empty()) &&
-           creative_available_by_sizes_(
-             tag,
-             tag_sizes,
-             creative,
-             up_expand_space,
-             right_expand_space,
-             down_expand_space,
-             left_expand_space) &&
-           creative_available_by_categories_(
-             campaign,
-             creative,
-             tag,
-             check_click_categories) &&
-           creative_available_by_templates_(
-             campaign,
-             creative,
-             tag,
-             key.format.c_str()) &&
-           // check video duration
-           (creative->video_duration >= video_min_duration &&
-            (creative->video_skip_offset.present() ? // skippable
-              (!video_skippable_max_duration.present() ||
-                creative->video_duration <= *video_skippable_max_duration) :
-              (!video_max_duration.present() ||
-                creative->video_duration <= *video_max_duration)
-             )) &&
-           (allowed_durations.empty() ||
-             (allowed_durations.find(creative->video_duration) != allowed_durations.end())) &&
-           // check video skippable
-           ((video_allow_skippable && creative->video_skip_offset.present()) ||
-            (video_allow_unskippable && !creative->video_skip_offset.present())) &&
-           // check frequency caps
-           (creative->fc_id == 0 ||
-            (profiling_available &&
-             full_freq_caps.find(creative->fc_id) == full_freq_caps.end())) &&
-           creative_available_by_exclude_categories_(
-             creative,
-             exclude_categories) &&
-           creative_available_by_required_categories_(
-             creative,
-             required_categories)
-           )
+        if(creative_available(creative))
         {
           if(trace_params)
           {
@@ -2246,6 +2330,7 @@ namespace AdServer
         required_categories,
         secure,
         filter_empty_destination,
+        std::pmr::get_default_resource(),
         &trace_params);
 
       /*

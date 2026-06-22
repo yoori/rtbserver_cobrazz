@@ -1,6 +1,9 @@
 #include <math.h>
 #include <assert.h>
 #include <iostream>
+#include <array>
+#include <cstddef>
+#include <memory_resource>
 
 #include <Generics/GnuHashTable.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -35,6 +38,27 @@ namespace AdServer
 
     typedef std::list<CampaignKeywordCreative>
       CampaignKeywordCreativeList;
+
+    struct CampaignSelectorPmrBuffer
+    {
+      CampaignSelectorPmrBuffer()
+        : resource(buffer.data(), buffer.size())
+      {}
+
+      std::pmr::memory_resource* memory_resource() noexcept
+      {
+        return &resource;
+      }
+
+      std::pmr::memory_resource* reset_memory_resource()
+      {
+        resource.release();
+        return memory_resource();
+      }
+
+      std::array<std::byte, 16 * 1024> buffer;
+      std::pmr::monotonic_buffer_resource resource;
+    };
 
     typedef std::map<RevenueDecimal, CampaignKeywordCreativeList>
       CPCKeywordCreativeMap;
@@ -355,7 +379,8 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Campaign* campaign,
-      const Tag* tag)
+      const Tag* tag,
+      std::pmr::memory_resource* memory_resource)
       const
       /*throw(eh::Exception)*/
     {
@@ -384,6 +409,7 @@ namespace AdServer
         request_params.required_categories,
         request_params.secure,
         request_params.filter_empty_destination,
+        memory_resource,
         0);
     }
 
@@ -487,6 +513,8 @@ namespace AdServer
       const
       noexcept
     {
+      CampaignSelectorPmrBuffer pmr_buffer;
+
       for(; it != end; ++it)
       {
         const Campaign* campaign = (*it)->campaign;
@@ -532,6 +560,7 @@ namespace AdServer
             request_params.required_categories,
             request_params.secure,
             request_params.filter_empty_destination,
+            pmr_buffer.reset_memory_resource(),
             0);
 
           std::copy(
@@ -580,6 +609,7 @@ namespace AdServer
 
       CTRWeightedCampaignHolderList unknown_ctr_campaign_candidates;
       CTRWeightedCampaignHolderList known_ctr_campaign_candidates;
+      CampaignSelectorPmrBuffer pmr_buffer;
 
       // step 1: filter all campaigns without ecpm checking
       for(CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
@@ -608,7 +638,8 @@ namespace AdServer
             key,
             request_params,
             (*cmp_it)->campaign,
-            tag);
+            tag,
+            pmr_buffer.reset_memory_resource());
 
           if(!available_creatives.empty()) // any creative can be selected
           {
@@ -859,6 +890,8 @@ namespace AdServer
       const
       noexcept
     {
+      CampaignSelectorPmrBuffer pmr_buffer;
+
       for(CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
             campaign_list.begin();
           cmp_it != campaign_list.end(); ++cmp_it)
@@ -905,7 +938,8 @@ namespace AdServer
             key,
             request_params,
             (*cmp_it)->campaign,
-            tag);
+            tag,
+            pmr_buffer.reset_memory_resource());
 
           if(!available_creatives.empty()) // any creative can be selected
           {
@@ -954,6 +988,7 @@ namespace AdServer
 
       CampaignIndex::CampaignSelectionCellPtrList::const_iterator
         cmp_it = campaign_list.begin();
+      CampaignSelectorPmrBuffer pmr_buffer;
 
       for(; cmp_it != campaign_list.end(); ++cmp_it)
       {
@@ -1009,7 +1044,8 @@ namespace AdServer
             key,
             request_params,
             (*cmp_it)->campaign,
-            tag);
+            tag,
+            pmr_buffer.reset_memory_resource());
 
           const Creative* result_creative = select_display_creative_(
             available_creatives);
@@ -1079,6 +1115,7 @@ namespace AdServer
     {
       CampaignKeywordMap filtered_campaign_keywords;
       ConstCampaignPtrList filtered_text_campaigns;
+      CampaignSelectorPmrBuffer pmr_buffer;
 
       cross_campaigns_with_keywords_(
         key,
@@ -1135,7 +1172,8 @@ namespace AdServer
             key,
             request_params,
             kw_it->second->campaign,
-            tag);
+            tag,
+            pmr_buffer.reset_memory_resource());
 
           const Creative* creative;
 
@@ -1184,7 +1222,8 @@ namespace AdServer
               key,
               request_params,
               *ch_text_campaign_it,
-              tag);
+              tag,
+              pmr_buffer.reset_memory_resource());
 
             if(available_creatives.empty())
             {
@@ -1790,6 +1829,7 @@ namespace AdServer
 
       CPCKeywordCreativeMap filtered_cpc_keyword_map;
       unsigned long selected_keywords = 0;
+      CampaignSelectorPmrBuffer pmr_buffer;
 
       // removing multiple ads from same accounts filters
       AccountIdSet account_filter_ids;
@@ -1874,6 +1914,7 @@ namespace AdServer
                 request_params.required_categories,
                 request_params.secure,
                 request_params.filter_empty_destination,
+                pmr_buffer.reset_memory_resource(),
                 0);
 
               {
@@ -2615,6 +2656,7 @@ namespace AdServer
       Tag::SizeMap tag_sizes;
       tag_sizes.insert(std::make_pair(
         tag_size->size->size_id, ReferenceCounting::add_ref(tag_size)));
+      CampaignSelectorPmrBuffer pmr_buffer;
 
       for(WeightedCampaignKeywordList::const_iterator cmp_it =
             text_campaigns.begin();
@@ -2657,6 +2699,7 @@ namespace AdServer
               request_params.required_categories,
               request_params.secure,
               request_params.filter_empty_destination,
+              pmr_buffer.reset_memory_resource(),
               0);
 
             if(!available_creatives.empty())
@@ -3422,6 +3465,7 @@ namespace AdServer
               lost_ccg_it != lost_auction->ccgs.end(); ++lost_ccg_it)
           {
             CampaignIndex::ConstCreativePtrList available_creatives;
+            CampaignSelectorPmrBuffer pmr_buffer;
 
             for(TextSelectionBySizeList::iterator text_selection_it =
                   text_selections.begin();
@@ -3452,6 +3496,7 @@ namespace AdServer
                 request_params.required_categories,
                 request_params.secure,
                 request_params.filter_empty_destination,
+                pmr_buffer.reset_memory_resource(),
                 0);
             }
 
@@ -3995,4 +4040,3 @@ namespace AdServer
     }
   }
 }
-

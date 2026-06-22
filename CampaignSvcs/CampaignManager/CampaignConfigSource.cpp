@@ -113,6 +113,58 @@ namespace CampaignSvcs
     return value;
   }
 
+  namespace
+  {
+    void
+    rebuild_creative_appformat_index_(CampaignConfig& config) noexcept
+    {
+      for(CampaignConfig::CampaignMap::iterator cmp_it =
+            config.campaigns.begin();
+          cmp_it != config.campaigns.end();
+          ++cmp_it)
+      {
+        CreativeList& creatives = cmp_it->second->creatives;
+        for(CreativeList::iterator cr_it = creatives.begin();
+            cr_it != creatives.end();
+            ++cr_it)
+        {
+          Creative* creative = *cr_it;
+          for(Creative::SizeMap::iterator size_it =
+                creative->sizes.begin();
+              size_it != creative->sizes.end();
+              ++size_it)
+          {
+            StringSet& available_appformats =
+              size_it->second.available_appformats;
+            available_appformats.clear();
+
+            for(StringSet::const_iterator app_format_it =
+                  config.all_template_appformats.begin();
+                app_format_it != config.all_template_appformats.end();
+                ++app_format_it)
+            {
+              CreativeTemplate creative_template;
+              if(config.creative_templates.get_value(
+                   CreativeTemplateKey(
+                     creative->creative_format.c_str(),
+                     size_it->second.size->protocol_name.c_str(),
+                     app_format_it->c_str()),
+                   creative_template) &&
+                 creative_template.status == 'A')
+              {
+                available_appformats.insert(*app_format_it);
+              }
+            }
+          }
+        }
+
+        cmp_it->second->rebuild_creative_by_size_index(
+          config.creative_templates,
+          config.all_template_appformats);
+      }
+    }
+  }
+
   CampaignConfigSource::CampaignConfigSource(
     Logging::Logger* logger,
     DomainParser* domain_parser,
@@ -382,6 +434,8 @@ namespace CampaignSvcs
           }
 
           preinstantiate_creative_tokens_(*new_config);
+
+          rebuild_creative_appformat_index_(*new_config);
 
           if(!old_config ||
              old_config->geo_channels.in() != new_config->geo_channels.in())
@@ -864,26 +918,6 @@ namespace CampaignSvcs
               (*cr_it)->click_categories,
               (*cr_it)->click_url.value,
               config_update_links.domain_category_exclusions);
-
-            for(Creative::SizeMap::iterator size_it =
-                  (*cr_it)->sizes.begin();
-                size_it != (*cr_it)->sizes.end(); ++size_it)
-            {
-              for(StringSet::const_iterator app_format_it =
-                    new_config.all_template_appformats.begin();
-                  app_format_it != new_config.all_template_appformats.end();
-                  ++app_format_it)
-              {
-                if(new_config.creative_templates.exist(
-                     CreativeTemplateKey(
-                       (*cr_it)->creative_format.c_str(),
-                       size_it->second.size->protocol_name.c_str(),
-                       app_format_it->c_str())))
-                {
-                  size_it->second.available_appformats.insert(*app_format_it);
-                }
-              }
-            }
 
             {
               // fill destination_url

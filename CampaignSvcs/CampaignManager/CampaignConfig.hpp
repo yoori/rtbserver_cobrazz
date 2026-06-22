@@ -4,6 +4,10 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
+
+#include <boost/functional/hash.hpp>
 
 #include <eh/Exception.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -830,6 +834,40 @@ namespace CampaignSvcs
       typedef std::set<unsigned long> OrderSetIdSet;
       typedef std::unordered_set<unsigned long> SizeIdSet;
 
+      struct CreativeBySizeKey
+      {
+        unsigned long size_id;
+        std::string app_format;
+
+        bool operator==(const CreativeBySizeKey& right) const noexcept
+        {
+          return size_id == right.size_id && app_format == right.app_format;
+        }
+      };
+
+      struct CreativeBySizeKeyHash
+      {
+        std::size_t operator()(const CreativeBySizeKey& key) const noexcept
+        {
+          std::size_t seed = 0;
+          boost::hash_combine(seed, key.size_id);
+          boost::hash_combine(seed, key.app_format);
+          return seed;
+        }
+      };
+
+      struct CreativeBySizeEntry
+      {
+        const Creative* creative;
+      };
+
+      typedef std::vector<CreativeBySizeEntry> CreativeBySizeArray;
+      typedef std::unordered_map<
+        CreativeBySizeKey,
+        CreativeBySizeArray,
+        CreativeBySizeKeyHash>
+        CreativeBySizeMap;
+
       Campaign() noexcept;
 
       bool targeted() const noexcept;
@@ -864,6 +902,12 @@ namespace CampaignSvcs
       is_available() const noexcept;
 
       void add_creative(Creative* new_creative) noexcept;
+
+      void
+      rebuild_creative_by_size_index(
+        const CreativeTemplateMap& creative_templates,
+        const StringSet& all_template_appformats)
+        noexcept;
 
       const CreativeList& get_creatives() const noexcept;
 
@@ -941,6 +985,7 @@ namespace CampaignSvcs
 
       /* optimization */
       SizeIdSet opt_available_sizes;
+      CreativeBySizeMap opt_creatives_by_size;
       CreativeList creatives;          /**< Campaign creatives */
       OrderSetIdSet opt_order_sets;
       RevenueDecimal base_min_ctr_goal;
@@ -1442,6 +1487,68 @@ namespace CampaignSvcs
             size_it != new_creative->sizes.end(); ++size_it)
         {
           opt_available_sizes.insert(size_it->first);
+        }
+      }
+    }
+
+    inline
+    void
+    Campaign::rebuild_creative_by_size_index(
+      const CreativeTemplateMap& creative_templates,
+      const StringSet& all_template_appformats)
+      noexcept
+    {
+      opt_creatives_by_size.clear();
+
+      for(CreativeList::const_iterator cr_it = creatives.begin();
+          cr_it != creatives.end();
+          ++cr_it)
+      {
+        const Creative* creative = *cr_it;
+        if(creative->status != 'A')
+        {
+          continue;
+        }
+
+        StringSet creative_appformats;
+        for(Creative::SizeMap::const_iterator size_it =
+              creative->sizes.begin();
+            size_it != creative->sizes.end();
+            ++size_it)
+        {
+          for(StringSet::const_iterator app_format_it =
+                all_template_appformats.begin();
+              app_format_it != all_template_appformats.end();
+              ++app_format_it)
+          {
+            CreativeTemplate creative_template;
+            if(creative_templates.get_value(
+                 CreativeTemplateKey(
+                   creative->creative_format.c_str(),
+                   size_it->second.size->protocol_name.c_str(),
+                   app_format_it->c_str()),
+                 creative_template) &&
+               creative_template.status == 'A')
+            {
+              creative_appformats.insert(*app_format_it);
+            }
+          }
+        }
+
+        for(Creative::SizeMap::const_iterator size_it =
+              creative->sizes.begin();
+            size_it != creative->sizes.end();
+            ++size_it)
+        {
+          for(StringSet::const_iterator app_format_it =
+                creative_appformats.begin();
+              app_format_it != creative_appformats.end();
+              ++app_format_it)
+          {
+            opt_creatives_by_size[
+              CreativeBySizeKey{size_it->first, *app_format_it}].push_back(
+                CreativeBySizeEntry{creative});
+          }
         }
       }
     }

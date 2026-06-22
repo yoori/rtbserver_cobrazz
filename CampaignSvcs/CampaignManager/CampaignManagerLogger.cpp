@@ -14,6 +14,8 @@
 #include <Generics/BitAlgs.hpp>
 #include <HTTP/UrlAddress.hpp>
 
+#include <Commons/ThreadName.hpp>
+
 #include <LogCommons/ActionRequest.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/CcgStat.hpp>
@@ -3375,6 +3377,7 @@ namespace AdServer::CampaignSvcs
         threads_pool_.emplace_back(
           [this]()
           {
+            AdServer::Commons::set_current_thread_name("cm-logging");
             worker_loop_();
           }
         );
