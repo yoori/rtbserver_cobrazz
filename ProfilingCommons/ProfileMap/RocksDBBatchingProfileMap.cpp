@@ -1,6 +1,7 @@
 #include <rocksdb/db.h>
 #include <rocksdb/iterator.h>
 #include <rocksdb/options.h>
+#include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
@@ -66,6 +67,11 @@ namespace AdServer::ProfilingCommons
     options.create_if_missing = true;
     options.compression = rocksdb::kNoCompression;
     options.target_file_size_multiplier = 2;
+
+    rocksdb::BlockBasedTableOptions table_options;
+    table_options.checksum = rocksdb::kNoChecksum;
+    options.table_factory.reset(
+      rocksdb::NewBlockBasedTableFactory(table_options));
 
     rocksdb::DBWithTTL* db = nullptr;
     const auto status = rocksdb::DBWithTTL::Open(

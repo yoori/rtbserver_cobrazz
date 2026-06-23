@@ -185,6 +185,7 @@ namespace AdServer::ProfilingCommons
     void process_read_batch_(
       Operations& batch,
       BatchScratch& scratch);
+
     void process_write_batch_(
       Operations& batch,
       BatchScratch& scratch);
