@@ -19,7 +19,7 @@ namespace
   const char ASPECT[] = "BillingServer";
 
   void
-  append_json_stat_(
+  append_json_stat(
     std::string& body,
     bool& first,
     const char* name,
@@ -38,6 +38,79 @@ namespace
     body += name;
     body += "\":";
     body += std::to_string(value);
+  }
+
+  void
+  append_billing_server_stats(
+    std::string& body,
+    bool& first,
+    const AdServer::CampaignSvcs::BillingServerGrpc* grpc_adapter)
+  {
+    if(grpc_adapter == 0)
+    {
+      return;
+    }
+
+    const auto stats = grpc_adapter->stats();
+
+    append_json_stat(body, first, "call_total", stats.call_total);
+    append_json_stat(body, first, "call_total_time", stats.call_total_time);
+    append_json_stat(body, first, "call_in_progress", stats.call_in_progress);
+    append_json_stat(
+      body,
+      first,
+      "check_available_bid_total",
+      stats.check_available_bid_total);
+    append_json_stat(
+      body,
+      first,
+      "check_available_bid_total_time",
+      stats.check_available_bid_total_time);
+    append_json_stat(
+      body,
+      first,
+      "check_available_bid_in_progress",
+      stats.check_available_bid_in_progress);
+    append_json_stat(body, first, "reserve_bid_total", stats.reserve_bid_total);
+    append_json_stat(
+      body,
+      first,
+      "reserve_bid_total_time",
+      stats.reserve_bid_total_time);
+    append_json_stat(
+      body,
+      first,
+      "reserve_bid_in_progress",
+      stats.reserve_bid_in_progress);
+    append_json_stat(body, first, "confirm_bid_total", stats.confirm_bid_total);
+    append_json_stat(
+      body,
+      first,
+      "confirm_bid_total_time",
+      stats.confirm_bid_total_time);
+    append_json_stat(
+      body,
+      first,
+      "confirm_bid_in_progress",
+      stats.confirm_bid_in_progress);
+    append_json_stat(body, first, "add_amount_total", stats.add_amount_total);
+    append_json_stat(
+      body,
+      first,
+      "add_amount_total_time",
+      stats.add_amount_total_time);
+    append_json_stat(
+      body,
+      first,
+      "add_amount_in_progress",
+      stats.add_amount_in_progress);
+    append_json_stat(body, first, "batch_total", stats.batch_total);
+    append_json_stat(
+      body,
+      first,
+      "batch_total_time",
+      stats.batch_total_time);
+    append_json_stat(body, first, "batch_in_progress", stats.batch_in_progress);
   }
 }
 
@@ -131,9 +204,10 @@ BillingServerApp_::main(int argc, char** argv)
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(config().pid_file()));
 
+    AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter;
     if(config().GrpcConfig().present())
     {
-      grpc_adapter_ = new AdServer::CampaignSvcs::BillingServerGrpc(
+      grpc_adapter = new AdServer::CampaignSvcs::BillingServerGrpc(
         billing_server_core_,
         logger(),
         config().GrpcConfig()->Endpoint().host().present() &&
@@ -148,74 +222,27 @@ BillingServerApp_::main(int argc, char** argv)
         config().GrpcConfig()->max_split().present() ?
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
-      add_child_object(grpc_adapter_);
+      add_child_object(grpc_adapter);
     }
 
     if(config().HttpConfig().present())
     {
-      AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter =
-        grpc_adapter_;
-      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+      AdServer::Commons::HttpServer::HttpServer_var http_server =
+        new AdServer::Commons::HttpServer::HttpServer(
         config().HttpConfig()->Endpoint().host().present() &&
           *(config().HttpConfig()->Endpoint().host()) != "*" ?
           *config().HttpConfig()->Endpoint().host() :
         "0.0.0.0",
         config().HttpConfig()->Endpoint().port(),
         4);
-      http_server_->add_handler(
+      http_server->add_handler(
         "/stats",
         [grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           std::string body = "{";
           bool first = true;
-          auto append_stat = [&body, &first](
-            const char* name,
-            std::uint64_t value)
-          {
-            append_json_stat_(body, first, name, value);
-          };
-
-          if(grpc_adapter.in() != 0)
-          {
-            const auto stats = grpc_adapter->stats();
-            append_stat("call_total", stats.call_total);
-            append_stat("call_total_time", stats.call_total_time);
-            append_stat("call_in_progress", stats.call_in_progress);
-            append_stat(
-              "check_available_bid_total",
-              stats.check_available_bid_total);
-            append_stat(
-              "check_available_bid_total_time",
-              stats.check_available_bid_total_time);
-            append_stat(
-              "check_available_bid_in_progress",
-              stats.check_available_bid_in_progress);
-            append_stat("reserve_bid_total", stats.reserve_bid_total);
-            append_stat(
-              "reserve_bid_total_time",
-              stats.reserve_bid_total_time);
-            append_stat(
-              "reserve_bid_in_progress",
-              stats.reserve_bid_in_progress);
-            append_stat("confirm_bid_total", stats.confirm_bid_total);
-            append_stat(
-              "confirm_bid_total_time",
-              stats.confirm_bid_total_time);
-            append_stat(
-              "confirm_bid_in_progress",
-              stats.confirm_bid_in_progress);
-            append_stat("add_amount_total", stats.add_amount_total);
-            append_stat(
-              "add_amount_total_time",
-              stats.add_amount_total_time);
-            append_stat(
-              "add_amount_in_progress",
-              stats.add_amount_in_progress);
-            append_stat("batch_total", stats.batch_total);
-            append_stat("batch_total_time", stats.batch_total_time);
-            append_stat("batch_in_progress", stats.batch_in_progress);
-          }
+          append_billing_server_stats(body, first, grpc_adapter.in());
 
           body += "}\n";
           return AdServer::Commons::HttpServer::HttpServer::Response{
@@ -224,7 +251,7 @@ BillingServerApp_::main(int argc, char** argv)
             std::move(body)
           };
         });
-      add_child_object(http_server_);
+      add_child_object(http_server);
     }
 
     AdServer::Commons::SignalActiveObject signal_active_object;

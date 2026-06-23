@@ -45,8 +45,6 @@ private:
   using Logging::LoggerCallbackHolder::logger;
 
   AdServer::UserInfoSvcs::UserInfoManagerCorePtr user_info_manager_core_;
-  AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter_;
-  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   ConfigPtr configuration_;
 };

@@ -43,8 +43,6 @@ private:
   using Logging::LoggerCallbackHolder::logger;
 
   AdServer::CampaignSvcs::BillingServerCore_var billing_server_core_;
-  AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter_;
-  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   ConfigPtr configuration_;
 };

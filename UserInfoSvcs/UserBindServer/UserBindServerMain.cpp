@@ -19,6 +19,28 @@ namespace
 {
   const char ASPECT[] = "UserBindServer";
 
+  void
+  append_json_stat(
+    std::string& body,
+    bool& first,
+    const char* name,
+    std::uint64_t value)
+  {
+    if(first)
+    {
+      first = false;
+    }
+    else
+    {
+      body += ',';
+    }
+
+    body += '"';
+    body += name;
+    body += "\":";
+    body += std::to_string(value);
+  }
+
   void fill_shutdown_signals_(sigset_t& signals)
   {
     sigemptyset(&signals);
@@ -211,6 +233,108 @@ namespace
 
     return core_config;
   }
+
+  void
+  append_user_bind_server_stats(
+    std::string& body,
+    bool& first,
+    const AdServer::UserInfoSvcs::UserBindServerCore* user_bind_server_core,
+    const AdServer::UserInfoSvcs::UserBindServerGrpc* grpc_adapter)
+  {
+    const auto stats = user_bind_server_core->stats();
+    append_json_stat(
+      body,
+      first,
+      "get_user_id_total",
+      stats.get_user_id_total_requests);
+    append_json_stat(
+      body,
+      first,
+      "add_user_id_request_total",
+      stats.add_user_id_requests);
+
+    if(grpc_adapter != 0)
+    {
+      const auto grpc_stats = grpc_adapter->stats();
+      append_json_stat(body, first, "call_total", grpc_stats.call_total);
+      append_json_stat(
+        body,
+        first,
+        "call_total_time",
+        grpc_stats.call_total_time);
+      append_json_stat(
+        body,
+        first,
+        "call_in_progress",
+        grpc_stats.call_in_progress);
+      append_json_stat(
+        body,
+        first,
+        "get_bind_request_total",
+        grpc_stats.get_bind_request_total);
+      append_json_stat(
+        body,
+        first,
+        "get_bind_request_total_time",
+        grpc_stats.get_bind_request_total_time);
+      append_json_stat(
+        body,
+        first,
+        "get_bind_request_in_progress",
+        grpc_stats.get_bind_request_in_progress);
+      append_json_stat(
+        body,
+        first,
+        "add_bind_request_total",
+        grpc_stats.add_bind_request_total);
+      append_json_stat(
+        body,
+        first,
+        "add_bind_request_total_time",
+        grpc_stats.add_bind_request_total_time);
+      append_json_stat(
+        body,
+        first,
+        "add_bind_request_in_progress",
+        grpc_stats.add_bind_request_in_progress);
+      append_json_stat(
+        body,
+        first,
+        "get_user_id_total_time",
+        grpc_stats.get_user_id_total_time);
+      append_json_stat(
+        body,
+        first,
+        "get_user_id_in_progress",
+        grpc_stats.get_user_id_in_progress);
+      append_json_stat(
+        body,
+        first,
+        "add_user_id_total",
+        grpc_stats.add_user_id_total);
+      append_json_stat(
+        body,
+        first,
+        "add_user_id_total_time",
+        grpc_stats.add_user_id_total_time);
+      append_json_stat(
+        body,
+        first,
+        "add_user_id_in_progress",
+        grpc_stats.add_user_id_in_progress);
+      append_json_stat(body, first, "batch_total", grpc_stats.batch_total);
+      append_json_stat(
+        body,
+        first,
+        "batch_total_time",
+        grpc_stats.batch_total_time);
+      append_json_stat(
+        body,
+        first,
+        "batch_in_progress",
+        grpc_stats.batch_in_progress);
+    }
+  }
 }
 
 void
@@ -340,54 +464,14 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
         [user_bind_server_core, grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
-          const auto stats = user_bind_server_core->stats();
           std::string body =
-            std::string("{\"get_user_id_total\":") +
-            std::to_string(stats.get_user_id_total_requests) +
-            ",\"add_user_id_request_total\":" +
-            std::to_string(stats.add_user_id_requests);
-
-          if(grpc_adapter.in())
-          {
-            const auto grpc_stats = grpc_adapter->stats();
-            body +=
-              ",\"call_total\":" +
-              std::to_string(grpc_stats.call_total) +
-              ",\"call_total_time\":" +
-              std::to_string(grpc_stats.call_total_time) +
-              ",\"call_in_progress\":" +
-              std::to_string(grpc_stats.call_in_progress) +
-              ",\"get_bind_request_total\":" +
-              std::to_string(grpc_stats.get_bind_request_total) +
-              ",\"get_bind_request_total_time\":" +
-              std::to_string(grpc_stats.get_bind_request_total_time) +
-              ",\"get_bind_request_in_progress\":" +
-              std::to_string(grpc_stats.get_bind_request_in_progress) +
-              ",\"add_bind_request_total\":" +
-              std::to_string(grpc_stats.add_bind_request_total) +
-              ",\"add_bind_request_total_time\":" +
-              std::to_string(grpc_stats.add_bind_request_total_time) +
-              ",\"add_bind_request_in_progress\":" +
-              std::to_string(grpc_stats.add_bind_request_in_progress) +
-              ",\"get_user_id_total_time\":" +
-              std::to_string(grpc_stats.get_user_id_total_time) +
-              ",\"get_user_id_in_progress\":" +
-              std::to_string(grpc_stats.get_user_id_in_progress) +
-              ",\"add_user_id_total\":" +
-              std::to_string(grpc_stats.add_user_id_total) +
-              ",\"add_user_id_request_total_time\":" +
-              std::to_string(grpc_stats.add_user_id_total_time) +
-              ",\"add_user_id_total_time\":" +
-              std::to_string(grpc_stats.add_user_id_total_time) +
-              ",\"add_user_id_in_progress\":" +
-              std::to_string(grpc_stats.add_user_id_in_progress) +
-              ",\"batch_total\":" +
-              std::to_string(grpc_stats.batch_total) +
-              ",\"batch_total_time\":" +
-              std::to_string(grpc_stats.batch_total_time) +
-              ",\"batch_in_progress\":" +
-              std::to_string(grpc_stats.batch_in_progress);
-          }
+            "{";
+          bool first = true;
+          append_user_bind_server_stats(
+            body,
+            first,
+            user_bind_server_core.in(),
+            grpc_adapter.in());
 
           body += "}\n";
           return AdServer::Commons::HttpServer::HttpServer::Response{

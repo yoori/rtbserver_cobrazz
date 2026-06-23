@@ -2,8 +2,6 @@
 
 #include <memory>
 #include <string>
-#include <unistd.h>
-
 #include <Logger/StreamLogger.hpp>
 
 #include <Commons/PidFileGuard.hpp>
@@ -18,20 +16,6 @@
 namespace
 {
   const char ASPECT[] = "UserInfoManager";
-
-  void
-  lifecycle_debug_(
-    const char* step,
-    const std::string& pid_file = std::string()) noexcept
-  {
-    std::cerr << "TEMP UserInfoManager lifecycle: pid=" << ::getpid() <<
-      " step=" << step;
-    if (!pid_file.empty())
-    {
-      std::cerr << " pid_file=" << pid_file;
-    }
-    std::cerr << std::endl;
-  }
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
@@ -124,9 +108,10 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
     add_child_object(user_info_manager_core_);
 
+    AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter;
     if(config().GrpcConfig().present())
     {
-      grpc_adapter_ = new AdServer::UserInfoSvcs::UserInfoManagerGrpc(
+      grpc_adapter = new AdServer::UserInfoSvcs::UserInfoManagerGrpc(
         user_info_manager_core_,
         logger(),
         config().GrpcConfig()->Endpoint().host().present() &&
@@ -141,21 +126,20 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         config().GrpcConfig()->max_split().present() ?
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
-      add_child_object(grpc_adapter_);
+      add_child_object(grpc_adapter);
     }
 
     if(config().HttpConfig().present())
     {
-      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+      AdServer::Commons::HttpServer::HttpServer_var http_server =
+        new AdServer::Commons::HttpServer::HttpServer(
         config().HttpConfig()->Endpoint().host().present() &&
           *(config().HttpConfig()->Endpoint().host()) != "*" ?
           *config().HttpConfig()->Endpoint().host() :
           "0.0.0.0",
         config().HttpConfig()->Endpoint().port(),
         4);
-      AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter =
-        grpc_adapter_;
-      http_server_->add_handler(
+      http_server->add_handler(
         "/stats",
         [grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
@@ -242,33 +226,23 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               "}\n"
           };
         });
-      add_child_object(http_server_);
+      add_child_object(http_server);
     }
 
-    const std::string pid_file = std::string(config().pid_file());
-    lifecycle_debug_("before pid file create", pid_file);
     pid_file_guard =
-      std::make_unique<AdServer::Commons::PidFileGuard>(pid_file);
-    lifecycle_debug_("after pid file create", pid_file);
+      std::make_unique<AdServer::Commons::PidFileGuard>(
+        std::string(config().pid_file()));
 
     AdServer::Commons::SignalActiveObject signal_active_object;
 
-    lifecycle_debug_("before activate_object", pid_file);
     activate_object();
-    lifecycle_debug_("after activate_object", pid_file);
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
-    lifecycle_debug_("before wait shutdown signal", pid_file);
     signal_active_object.wait_object();
-    lifecycle_debug_("after wait shutdown signal", pid_file);
 
-    lifecycle_debug_("before normal deactivate_object", pid_file);
     deactivate_object();
-    lifecycle_debug_("after normal deactivate_object", pid_file);
-    lifecycle_debug_("before normal wait_object", pid_file);
     wait_object();
-    lifecycle_debug_("after normal wait_object", pid_file);
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
