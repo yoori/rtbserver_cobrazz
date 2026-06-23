@@ -8,11 +8,8 @@
 
 #include <Generics/DirSelector.hpp>
 
-#include <Commons/CorbaConfig.hpp>
-
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
 
-#include "UserInfoConfigCampaignServerSource.hpp"
 #include "UserInfoContainer.hpp"
 #include "UserInfoManagerCore.hpp"
 
@@ -45,30 +42,6 @@ namespace
       first += "/";
     }
     first += second;
-  }
-
-  AdServer::UserInfoSvcs::UserInfoConfigSourcePtr
-  make_config_source(
-    Logging::Logger* logger,
-    const xsd::AdServer::Configuration::UserInfoManagerConfigType& config)
-  {
-    CORBACommons::CorbaObjectRefList campaign_server_refs;
-    Config::CorbaConfigReader::read_multi_corba_ref(
-      config.CampaignServerCorbaRef(),
-      campaign_server_refs);
-
-    std::vector<std::string> campaign_server_ref_strings;
-    campaign_server_ref_strings.reserve(campaign_server_refs.size());
-    for (const auto& campaign_server_ref : campaign_server_refs)
-    {
-      campaign_server_ref_strings.push_back(campaign_server_ref.object_ref);
-    }
-
-    return std::make_shared<AdServer::UserInfoSvcs::UserInfoConfigCampaignServerSource>(
-      logger,
-      campaign_server_ref_strings,
-      config.service_index(),
-      Generics::Time(config.FreqCaps().confirm_timeout()));
   }
 
 } // namespace
@@ -320,18 +293,6 @@ namespace AdServer::UserInfoSvcs
   /**
    * UserInfoManagerCore
    */
-  UserInfoManagerCore::UserInfoManagerCore(
-    Generics::ActiveObjectCallback* callback, Logging::Logger* logger,
-    const UserInfoManagerConfig& user_info_manager_config)
-    /*throw(Exception)*/
-    : UserInfoManagerCore(
-        callback,
-        logger,
-        user_info_manager_config,
-        make_config_source(logger, user_info_manager_config))
-  {
-  }
-
   UserInfoManagerCore::UserInfoManagerCore(
     Generics::ActiveObjectCallback* callback, Logging::Logger* logger,
     const UserInfoManagerConfig& user_info_manager_config,
