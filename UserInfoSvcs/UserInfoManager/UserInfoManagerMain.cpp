@@ -286,23 +286,6 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       "ADS-IMPL-59") << FUN <<
       ": Got eh::Exception: " << e.what();
   }
-
-  lifecycle_debug_("before final deactivate_object");
-  deactivate_object();
-  lifecycle_debug_("after final deactivate_object");
-  lifecycle_debug_("before final wait_object");
-  wait_object();
-  lifecycle_debug_("after final wait_object");
-  lifecycle_debug_("before clear_children");
-  clear_children();
-  lifecycle_debug_("after clear_children");
-
-  if (pid_file_guard)
-  {
-    lifecycle_debug_("before pid file remove");
-    pid_file_guard.reset();
-    lifecycle_debug_("after pid file remove");
-  }
 }
 
 int

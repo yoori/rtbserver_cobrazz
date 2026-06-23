@@ -11,6 +11,7 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/PidFileGuard.hpp>
+#include <Commons/ScopeGuard.hpp>
 
 #include "UserBindServerMain.hpp"
 
@@ -293,9 +294,20 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
         logger());
     add_child_object(user_bind_server_core);
 
+    AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter;
+    auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
+      [&]() noexcept
+      {
+        if(active())
+        {
+          deactivate_object();
+          wait_object();
+        }
+      });
+
     if(config().GrpcConfig().present())
     {
-      grpc_adapter_ = new AdServer::UserInfoSvcs::UserBindServerGrpc(
+      grpc_adapter = new AdServer::UserInfoSvcs::UserBindServerGrpc(
         user_bind_server_core,
         logger(),
         config().GrpcConfig()->Endpoint().host().present() &&
@@ -310,21 +322,20 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
         config().GrpcConfig()->max_split().present() ?
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
-      add_child_object(grpc_adapter_);
+      add_child_object(grpc_adapter);
     }
 
     if(config().HttpConfig().present())
     {
-      AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter =
-        grpc_adapter_;
-      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+      AdServer::Commons::HttpServer::HttpServer_var http_server;
+      http_server = new AdServer::Commons::HttpServer::HttpServer(
         config().HttpConfig()->Endpoint().host().present() &&
           *(config().HttpConfig()->Endpoint().host()) != "*" ?
           *config().HttpConfig()->Endpoint().host() :
           "0.0.0.0",
         config().HttpConfig()->Endpoint().port(),
         4);
-      http_server_->add_handler(
+      http_server->add_handler(
         "/stats",
         [user_bind_server_core, grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
@@ -385,7 +396,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
             std::move(body)
           };
         });
-      add_child_object(http_server_);
+      add_child_object(http_server);
     }
 
     activate_object();

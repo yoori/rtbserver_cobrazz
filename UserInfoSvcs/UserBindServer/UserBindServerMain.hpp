@@ -38,9 +38,6 @@ private:
 private:
   ConfigPtr configuration_;
   Logging::Logger_var logger_;
-
-  AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter_;
-  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 };
 
 // Inlines

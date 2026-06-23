@@ -8,6 +8,7 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PidFileGuard.hpp>
+#include <Commons/ScopeGuard.hpp>
 #include <Commons/SignalActiveObject.hpp>
 
 #include "RequestInfoManagerMain.hpp"
@@ -129,7 +130,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
       throw Exception(ostr, "ADS-IMPL-3002");
     }
 
-    corba_server_adapter_ =
+    CORBACommons::CorbaServerAdapter_var corba_server_adapter =
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
@@ -165,7 +166,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     }
 
     // Creating user info manager servant
-    request_info_manager_impl_ =
+    AdServer::RequestInfoSvcs::RequestInfoManagerImpl_var request_info_manager_impl =
       new AdServer::RequestInfoSvcs::RequestInfoManagerImpl(
         callback(),
         logger(),
@@ -179,24 +180,32 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     CORBACommons::POA_ProcessStatsControl_var proc_stat_ctrl =
       new ProcessStatsImpl(rim_stats_impl);
 
-    corba_server_adapter_->add_binding(
-      REQUEST_INFO_MANAGER_OBJ_KEY, request_info_manager_impl_.in());
+    corba_server_adapter->add_binding(
+      REQUEST_INFO_MANAGER_OBJ_KEY, request_info_manager_impl.in());
 
-    corba_server_adapter_->add_binding(
+    corba_server_adapter->add_binding(
       PROCESS_STATS_CONTROL_OBJ_KEY, proc_stat_ctrl.in());
 
-    active_objects_ =
+    auto active_objects =
       std::make_shared<Generics::CompositeActiveObject>(false, false);
-    active_objects_->add_child_object(request_info_manager_impl_.in());
-    active_objects_->add_child_object(corba_server_adapter_.in());
+    auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
+      [&]() noexcept
+      {
+        if(active_objects->active())
+        {
+          active_objects->deactivate_object();
+          active_objects->wait_object();
+        }
+      });
+
+    active_objects->add_child_object(request_info_manager_impl.in());
+    active_objects->add_child_object(corba_server_adapter.in());
 
     AdServer::Commons::SignalActiveObject signal_active_object;
-    active_objects_->activate_object();
+    active_objects->activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
     signal_active_object.wait_object();
-    active_objects_->deactivate_object();
-    active_objects_->wait_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }

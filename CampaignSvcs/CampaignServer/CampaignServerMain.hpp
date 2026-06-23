@@ -9,8 +9,6 @@
 #include <Logger/ActiveObjectCallback.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <SNMPAgent/SNMPAgentX.hpp>
-
 #include <CORBACommons/StatsImpl.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/CorbaConfig.hpp>
@@ -69,33 +67,6 @@ private:
 
     Logger logger;
 
-    struct SnmpConfig
-    {
-      SnmpConfig(): index_(), mib_dirs_(), empty_(true) {}
-
-      void init(unsigned index, const std::string &mib_dirs)
-      {
-        index_ = index;
-        mib_dirs_ = mib_dirs;
-        empty_ = false;
-      }
-
-      unsigned index() const { return index_; }
-
-      const std::string& mib_dirs() const { return mib_dirs_; }
-
-      bool empty() const { return empty_; }
-
-      operator bool() const { return !empty_; }
-
-    private:
-      unsigned index_;
-      std::string mib_dirs_;
-      bool empty_;
-    };
-
-    SnmpConfig snmp_config;
-
     CORBACommons::CorbaConfig corba_config;
     AdServer::CampaignSvcs::LogFlushTraits colo_update_flush_traits;
 
@@ -129,20 +100,9 @@ private:
     /*throw(Exception, eh::Exception)*/;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   Configuration configuration_;
-  std::shared_ptr<AdServer::CampaignSvcs::CampaignServerBaseImpl>
-    campaign_server_impl_;
-  std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
   CORBACommons::CorbaConfig corba_config_;
-  AdServer::CampaignSvcs::ProcStatImpl_var proc_stat_impl_;
-  CORBACommons::POA_ProcessStatsControl_var proc_stat_ctrl_;
 
-  typedef SNMPAgentX::SNMPStatsGen<AdServer::CampaignSvcs::ProcStatImpl>
-    SNMPProcStatsImpl;
-  typedef ReferenceCounting::SmartPtr<SNMPProcStatsImpl>
-    SNMPProcStatsImpl_var;
-  SNMPProcStatsImpl_var snmp_stat_impl_;
 };
 
 typedef ReferenceCounting::SmartPtr<CampaignServerApp_>

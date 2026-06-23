@@ -10,6 +10,7 @@
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PathManip.hpp>
 #include <Commons/PidFileGuard.hpp>
+#include <Commons/ScopeGuard.hpp>
 #include <Commons/SignalActiveObject.hpp>
 
 #include <LogCommons/ActionRequest.hpp>
@@ -71,7 +72,7 @@ namespace
   }
 
   std::string
-  sanitize_endpoint_key_(const std::string& endpoint)
+  sanitize_endpoint_key(const std::string& endpoint)
   {
     std::string result;
     result.reserve(endpoint.size());
@@ -93,7 +94,7 @@ namespace
   }
 
   void
-  append_json_string_(std::string& body, const std::string& value)
+  append_json_string(std::string& body, const std::string& value)
   {
     static const char HEX[] = "0123456789abcdef";
 
@@ -141,7 +142,7 @@ namespace
   }
 
   void
-  append_json_field_name_(
+  append_json_field_name(
     std::string& body,
     bool& first,
     const std::string& name)
@@ -151,159 +152,159 @@ namespace
       body += ',';
     }
     first = false;
-    append_json_string_(body, name);
+    append_json_string(body, name);
     body += ':';
   }
 
   void
-  append_json_stat_(
+  append_json_stat(
     std::string& body,
     bool& first,
     const std::string& name,
     std::uint64_t value)
   {
-    append_json_field_name_(body, first, name);
+    append_json_field_name(body, first, name);
     body += std::to_string(value);
   }
 
   void
-  append_json_string_stat_(
+  append_json_string_stat(
     std::string& body,
     bool& first,
     const std::string& name,
     const std::string& value)
   {
-    append_json_field_name_(body, first, name);
-    append_json_string_(body, value);
+    append_json_field_name(body, first, name);
+    append_json_string(body, value);
   }
 
   void
-  append_grpc_client_stats_(
+  append_grpc_client_stats(
     std::string& body,
     bool& first,
     const std::string& prefix,
     const AdServer::Grpc::Stats& stats)
   {
-    append_json_stat_(body, first, prefix + "_input_items", stats.input_items);
-    append_json_stat_(body, first, prefix + "_call_total", stats.input_items);
-    append_json_stat_(
+    append_json_stat(body, first, prefix + "_input_items", stats.input_items);
+    append_json_stat(body, first, prefix + "_call_total", stats.input_items);
+    append_json_stat(
       body,
       first,
       prefix + "_completed_items",
       stats.completed_items);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_completed_error_items",
       stats.completed_error_items);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_call_error_total",
       stats.completed_error_items);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_outstanding_items",
       stats.input_items > stats.completed_items ?
         stats.input_items - stats.completed_items :
         0);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_write_batches",
       stats.write_batches);
-    append_json_stat_(body, first, prefix + "_batch_total", stats.write_batches);
-    append_json_stat_(
+    append_json_stat(body, first, prefix + "_batch_total", stats.write_batches);
+    append_json_stat(
       body,
       first,
       prefix + "_write_batch_total",
       stats.write_batches);
-    append_json_stat_(body, first, prefix + "_write_items", stats.write_items);
-    append_json_stat_(body, first, prefix + "_read_batches", stats.read_batches);
-    append_json_stat_(
+    append_json_stat(body, first, prefix + "_write_items", stats.write_items);
+    append_json_stat(body, first, prefix + "_read_batches", stats.read_batches);
+    append_json_stat(
       body,
       first,
       prefix + "_read_batch_total",
       stats.read_batches);
-    append_json_stat_(body, first, prefix + "_read_items", stats.read_items);
-    append_json_stat_(
+    append_json_stat(body, first, prefix + "_read_items", stats.read_items);
+    append_json_stat(
       body,
       first,
       prefix + "_queue_wait_total",
       stats.queue_wait_count);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_queue_wait_time",
       stats.queue_wait_sum_us);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_queue_wait_max_time",
       stats.queue_wait_max_us);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_queue_timeout_total",
       stats.queue_timeout_count);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_response_wait_total",
       stats.response_wait_count);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_response_wait_time",
       stats.response_wait_sum_us);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_response_wait_max_time",
       stats.response_wait_max_us);
-    append_json_stat_(body, first, prefix + "_queue_items", stats.queue_items);
-    append_json_stat_(
+    append_json_stat(body, first, prefix + "_queue_items", stats.queue_items);
+    append_json_stat(
       body,
       first,
       prefix + "_pending_batches",
       stats.pending_batches);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_pending_batch_items",
       stats.pending_batch_items);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_inflight_items",
       stats.inflight_items);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_stream_inflight_items",
       stats.stream_inflight_items);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_active_streams",
       stats.active_streams);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_available_streams",
       stats.available_streams);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_connecting_streams",
       stats.connecting_streams);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_draining_streams",
       stats.draining_streams);
-    append_json_stat_(
+    append_json_stat(
       body,
       first,
       prefix + "_deferred_streams",
@@ -311,17 +312,17 @@ namespace
 
     if(stats.consumer_stream_write.has_value())
     {
-      append_json_stat_(
+      append_json_stat(
         body,
         first,
         prefix + "_consumer_stream_write_total",
         stats.consumer_stream_write->count);
-      append_json_stat_(
+      append_json_stat(
         body,
         first,
         prefix + "_consumer_stream_write_time",
         stats.consumer_stream_write->sum_us);
-      append_json_stat_(
+      append_json_stat(
         body,
         first,
         prefix + "_consumer_stream_write_max_time",
@@ -330,27 +331,27 @@ namespace
 
     if(stats.last_error.has_value())
     {
-      append_json_string_stat_(
+      append_json_string_stat(
         body,
         first,
         prefix + "_last_error_time",
         stats.last_error->time.get_gm_time().format("%F %T"));
-      append_json_string_stat_(
+      append_json_string_stat(
         body,
         first,
         prefix + "_last_error_endpoint",
         stats.last_error->endpoint);
-      append_json_stat_(
+      append_json_stat(
         body,
         first,
         prefix + "_last_error_code",
         static_cast<std::uint64_t>(stats.last_error->code));
-      append_json_string_stat_(
+      append_json_string_stat(
         body,
         first,
         prefix + "_last_error_message",
         stats.last_error->message);
-      append_json_string_stat_(
+      append_json_string_stat(
         body,
         first,
         prefix + "_last_error_source",
@@ -359,7 +360,7 @@ namespace
   }
 
   void
-  append_grpc_client_endpoint_stats_(
+  append_grpc_client_endpoint_stats(
     std::string& body,
     bool& first,
     const std::string& prefix,
@@ -368,13 +369,163 @@ namespace
     for(const auto& [endpoint, stats] : endpoint_stats)
     {
       const auto endpoint_prefix =
-        prefix + "_endpoints_" + sanitize_endpoint_key_(endpoint);
-      append_json_string_stat_(
+        prefix + "_endpoints_" + sanitize_endpoint_key(endpoint);
+      append_json_string_stat(
         body,
         first,
         endpoint_prefix + "_endpoint",
         endpoint);
-      append_grpc_client_stats_(body, first, endpoint_prefix, stats);
+      append_grpc_client_stats(body, first, endpoint_prefix, stats);
+    }
+  }
+
+  void
+  append_campaign_manager_stats(
+    std::string& body,
+    bool& first,
+    const AdServer::CampaignSvcs::CampaignManagerGrpc* grpc_adapter,
+    const AdServer::CampaignSvcs::CampaignManagerCore* campaign_manager_core,
+    const AdServer::CampaignSvcs::CampaignManagerLogger_var& campaign_manager_logger)
+  {
+    auto append_stat = [&body, &first](
+      const std::string& name,
+      std::uint64_t value)
+    {
+      append_json_stat(body, first, name, value);
+    };
+
+    if(grpc_adapter != 0)
+    {
+      const auto stats = grpc_adapter->stats();
+
+      append_stat("call_in_progress", stats.call_in_progress);
+      append_stat("call_total", stats.call_total);
+      append_stat("call_time", stats.call_time);
+      append_stat("ready_in_progress", stats.ready_in_progress);
+      append_stat(
+        "progress_comment_in_progress",
+        stats.progress_comment_in_progress);
+      append_stat(
+        "match_geo_channels_in_progress",
+        stats.match_geo_channels_in_progress);
+      append_stat("get_file_in_progress", stats.get_file_in_progress);
+      append_stat(
+        "get_campaign_creative_in_progress",
+        stats.get_campaign_creative_in_progress);
+      append_stat(
+        "process_match_request_in_progress",
+        stats.process_match_request_in_progress);
+      append_stat(
+        "process_anonymous_request_in_progress",
+        stats.process_anonymous_request_in_progress);
+      append_stat(
+        "instantiate_ad_in_progress",
+        stats.instantiate_ad_in_progress);
+      append_stat(
+        "trace_campaign_selection_index_in_progress",
+        stats.trace_campaign_selection_index_in_progress);
+      append_stat(
+        "trace_campaign_selection_in_progress",
+        stats.trace_campaign_selection_in_progress);
+      append_stat(
+        "get_campaign_creative_by_ccid_in_progress",
+        stats.get_campaign_creative_by_ccid_in_progress);
+      append_stat(
+        "get_channel_links_in_progress",
+        stats.get_channel_links_in_progress);
+      append_stat(
+        "get_discover_channels_in_progress",
+        stats.get_discover_channels_in_progress);
+      append_stat(
+        "get_category_channels_in_progress",
+        stats.get_category_channels_in_progress);
+      append_stat(
+        "get_colocation_flags_in_progress",
+        stats.get_colocation_flags_in_progress);
+      append_stat(
+        "get_pub_pixels_in_progress",
+        stats.get_pub_pixels_in_progress);
+      append_stat(
+        "consider_passback_in_progress",
+        stats.consider_passback_in_progress);
+      append_stat(
+        "consider_passback_track_in_progress",
+        stats.consider_passback_track_in_progress);
+      append_stat(
+        "get_click_url_in_progress",
+        stats.get_click_url_in_progress);
+      append_stat(
+        "verify_impression_in_progress",
+        stats.verify_impression_in_progress);
+      append_stat(
+        "action_taken_in_progress",
+        stats.action_taken_in_progress);
+      append_stat(
+        "verify_opt_operation_in_progress",
+        stats.verify_opt_operation_in_progress);
+      append_stat(
+        "consider_web_operation_in_progress",
+        stats.consider_web_operation_in_progress);
+      append_stat(
+        "get_config_in_progress",
+        stats.get_config_in_progress);
+
+#define APPEND_RPC_TOTAL_TIME_(name) \
+      append_stat(#name "_total", stats.name##_total); \
+      append_stat(#name "_time", stats.name##_time)
+
+      APPEND_RPC_TOTAL_TIME_(ready);
+      APPEND_RPC_TOTAL_TIME_(progress_comment);
+      APPEND_RPC_TOTAL_TIME_(match_geo_channels);
+      APPEND_RPC_TOTAL_TIME_(get_file);
+      APPEND_RPC_TOTAL_TIME_(get_campaign_creative);
+      APPEND_RPC_TOTAL_TIME_(process_match_request);
+      APPEND_RPC_TOTAL_TIME_(process_anonymous_request);
+      APPEND_RPC_TOTAL_TIME_(instantiate_ad);
+      APPEND_RPC_TOTAL_TIME_(trace_campaign_selection_index);
+      APPEND_RPC_TOTAL_TIME_(trace_campaign_selection);
+      APPEND_RPC_TOTAL_TIME_(get_campaign_creative_by_ccid);
+      APPEND_RPC_TOTAL_TIME_(get_channel_links);
+      APPEND_RPC_TOTAL_TIME_(get_discover_channels);
+      APPEND_RPC_TOTAL_TIME_(get_category_channels);
+      APPEND_RPC_TOTAL_TIME_(get_colocation_flags);
+      APPEND_RPC_TOTAL_TIME_(get_pub_pixels);
+      APPEND_RPC_TOTAL_TIME_(consider_passback);
+      APPEND_RPC_TOTAL_TIME_(consider_passback_track);
+      APPEND_RPC_TOTAL_TIME_(get_click_url);
+      APPEND_RPC_TOTAL_TIME_(verify_impression);
+      APPEND_RPC_TOTAL_TIME_(action_taken);
+      APPEND_RPC_TOTAL_TIME_(verify_opt_operation);
+      APPEND_RPC_TOTAL_TIME_(consider_web_operation);
+      APPEND_RPC_TOTAL_TIME_(get_config);
+
+#undef APPEND_RPC_TOTAL_TIME_
+    }
+
+    const auto logger_stats = campaign_manager_logger->get_stats();
+    append_stat("logging_request_in_progress", logger_stats.request_in_progress);
+    append_stat("logging_queue_size", logger_stats.queue_size);
+    append_stat("logging_queue_total", logger_stats.queue_total);
+    append_stat(
+      "logging_processing_requests",
+      logger_stats.processing_requests);
+    append_stat(
+      "logging_processing_requests_total",
+      logger_stats.processing_requests_total);
+
+    if(campaign_manager_core != 0)
+    {
+      const auto billing_stats = campaign_manager_core->billing_server_stats();
+      append_grpc_client_stats(
+        body,
+        first,
+        "billing_server_client",
+        billing_stats.total);
+      append_grpc_client_endpoint_stats(
+        body,
+        first,
+        "billing_server_client",
+        billing_stats.endpoints);
     }
   }
 }
@@ -388,26 +539,6 @@ CampaignManagerApp_::CampaignManagerApp_() /*throw(eh::Exception)*/
 }
 
 void
-CampaignManagerApp_::stop_() noexcept
-{
-  ShutdownWriteGuard guard(shutdown_lock_);
-
-  if(grpc_adapter_.in() != 0)
-  {
-    grpc_adapter_->deactivate_object();
-    grpc_adapter_->wait_object();
-    grpc_adapter_.reset();
-  }
-
-  if(campaign_manager_core_.in() != 0)
-  {
-    campaign_manager_core_->deactivate_object();
-    campaign_manager_core_->wait_object();
-  }
-
-}
-
-void
 CampaignManagerApp_::main(int& argc, char** argv) noexcept
 {
   const char* stage = "beginning main()";
@@ -417,8 +548,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
   {
     if (!::setlocale(LC_CTYPE, "en_US.utf8"))
     {
-      throw Exception("CampaignManagerApp_::main(): "
-                      "cannot set locale.");
+      throw Exception("CampaignManagerApp_::main(): cannot set locale.");
     }
 
     const char* usage = "usage: CampaignManager <config_file>";
@@ -442,7 +572,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         new AdServer::CampaignSvcs::CampaignManagerLogger(
           configuration_.log_params, logger());
 
-    campaign_manager_core_ =
+    AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core =
       new AdServer::CampaignSvcs::CampaignManagerCore(
         *campaign_manager_config_,
         *domain_config_,
@@ -452,16 +582,31 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         configuration_.creative_instantiate,
         configuration_.campaigns_types.c_str());
 
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      configuration_.pid_file);
+
+    AdServer::CampaignSvcs::CampaignManagerGrpc_var grpc_adapter;
     auto active_objects =
       std::make_shared<Generics::CompositeActiveObject>(false, false);
+    auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
+      [&]() noexcept
+      {
+        if(active_objects->active())
+        {
+          active_objects->deactivate_object();
+          active_objects->wait_object();
+        }
+      }
+    );
+
     active_objects->add_child_object(campaign_manager_logger.in());
-    active_objects->add_child_object(campaign_manager_core_.in());
+    active_objects->add_child_object(campaign_manager_core.in());
 
     if(campaign_manager_config_->GrpcConfig().present())
     {
       stage = "creating CampaignManagerGrpc";
-      grpc_adapter_ = new AdServer::CampaignSvcs::CampaignManagerGrpc(
-        campaign_manager_core_.in(),
+      grpc_adapter = new AdServer::CampaignSvcs::CampaignManagerGrpc(
+        campaign_manager_core.in(),
         logger(),
         campaign_manager_config_->GrpcConfig()->Endpoint().host().present() &&
           *(campaign_manager_config_->GrpcConfig()->Endpoint().host()) != "*" ?
@@ -476,171 +621,37 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           *campaign_manager_config_->GrpcConfig()->max_split() :
           16);
       active_objects->add_child_object(non_owning_active_object(
-        grpc_adapter_.in()));
+        grpc_adapter.in()));
     }
+
     if(campaign_manager_config_->HttpConfig().present())
     {
+      AdServer::Commons::HttpServer::HttpServer_var http_server;
       stage = "creating CampaignManager HttpServer";
-      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+      http_server = new AdServer::Commons::HttpServer::HttpServer(
         campaign_manager_config_->HttpConfig()->Endpoint().host().present() &&
           *(campaign_manager_config_->HttpConfig()->Endpoint().host()) != "*" ?
           *campaign_manager_config_->HttpConfig()->Endpoint().host() :
           "0.0.0.0",
         campaign_manager_config_->HttpConfig()->Endpoint().port(),
         4);
-      http_server_->add_handler(
+      http_server->add_handler(
         "/stats",
         [
-          grpc_adapter = grpc_adapter_,
-          campaign_manager_core = campaign_manager_core_,
+          grpc_adapter,
+          campaign_manager_core,
           campaign_manager_logger
         ](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           std::string body = "{";
           bool first = true;
-          auto append_stat = [&body, &first](
-            const std::string& name,
-            std::uint64_t value)
-          {
-            append_json_stat_(body, first, name, value);
-          };
-
-          if(grpc_adapter.in() != 0)
-          {
-            const auto stats = grpc_adapter->stats();
-
-            append_stat("call_in_progress", stats.call_in_progress);
-            append_stat("call_total", stats.call_total);
-            append_stat("call_time", stats.call_time);
-            append_stat("ready_in_progress", stats.ready_in_progress);
-            append_stat(
-              "progress_comment_in_progress",
-              stats.progress_comment_in_progress);
-            append_stat(
-              "match_geo_channels_in_progress",
-              stats.match_geo_channels_in_progress);
-            append_stat("get_file_in_progress", stats.get_file_in_progress);
-            append_stat(
-              "get_campaign_creative_in_progress",
-              stats.get_campaign_creative_in_progress);
-            append_stat(
-              "process_match_request_in_progress",
-              stats.process_match_request_in_progress);
-            append_stat(
-              "process_anonymous_request_in_progress",
-              stats.process_anonymous_request_in_progress);
-            append_stat(
-              "instantiate_ad_in_progress",
-              stats.instantiate_ad_in_progress);
-            append_stat(
-              "trace_campaign_selection_index_in_progress",
-              stats.trace_campaign_selection_index_in_progress);
-            append_stat(
-              "trace_campaign_selection_in_progress",
-              stats.trace_campaign_selection_in_progress);
-            append_stat(
-              "get_campaign_creative_by_ccid_in_progress",
-              stats.get_campaign_creative_by_ccid_in_progress);
-            append_stat(
-              "get_channel_links_in_progress",
-              stats.get_channel_links_in_progress);
-            append_stat(
-              "get_discover_channels_in_progress",
-              stats.get_discover_channels_in_progress);
-            append_stat(
-              "get_category_channels_in_progress",
-              stats.get_category_channels_in_progress);
-            append_stat(
-              "get_colocation_flags_in_progress",
-              stats.get_colocation_flags_in_progress);
-            append_stat(
-              "get_pub_pixels_in_progress",
-              stats.get_pub_pixels_in_progress);
-            append_stat(
-              "consider_passback_in_progress",
-              stats.consider_passback_in_progress);
-            append_stat(
-              "consider_passback_track_in_progress",
-              stats.consider_passback_track_in_progress);
-            append_stat(
-              "get_click_url_in_progress",
-              stats.get_click_url_in_progress);
-            append_stat(
-              "verify_impression_in_progress",
-              stats.verify_impression_in_progress);
-            append_stat(
-              "action_taken_in_progress",
-              stats.action_taken_in_progress);
-            append_stat(
-              "verify_opt_operation_in_progress",
-              stats.verify_opt_operation_in_progress);
-            append_stat(
-              "consider_web_operation_in_progress",
-              stats.consider_web_operation_in_progress);
-            append_stat(
-              "get_config_in_progress",
-              stats.get_config_in_progress);
-#define APPEND_RPC_TOTAL_TIME_(name) \
-            append_stat(#name "_total", stats.name##_total); \
-            append_stat(#name "_time", stats.name##_time)
-
-            APPEND_RPC_TOTAL_TIME_(ready);
-            APPEND_RPC_TOTAL_TIME_(progress_comment);
-            APPEND_RPC_TOTAL_TIME_(match_geo_channels);
-            APPEND_RPC_TOTAL_TIME_(get_file);
-            APPEND_RPC_TOTAL_TIME_(get_campaign_creative);
-            APPEND_RPC_TOTAL_TIME_(process_match_request);
-            APPEND_RPC_TOTAL_TIME_(process_anonymous_request);
-            APPEND_RPC_TOTAL_TIME_(instantiate_ad);
-            APPEND_RPC_TOTAL_TIME_(trace_campaign_selection_index);
-            APPEND_RPC_TOTAL_TIME_(trace_campaign_selection);
-            APPEND_RPC_TOTAL_TIME_(get_campaign_creative_by_ccid);
-            APPEND_RPC_TOTAL_TIME_(get_channel_links);
-            APPEND_RPC_TOTAL_TIME_(get_discover_channels);
-            APPEND_RPC_TOTAL_TIME_(get_category_channels);
-            APPEND_RPC_TOTAL_TIME_(get_colocation_flags);
-            APPEND_RPC_TOTAL_TIME_(get_pub_pixels);
-            APPEND_RPC_TOTAL_TIME_(consider_passback);
-            APPEND_RPC_TOTAL_TIME_(consider_passback_track);
-            APPEND_RPC_TOTAL_TIME_(get_click_url);
-            APPEND_RPC_TOTAL_TIME_(verify_impression);
-            APPEND_RPC_TOTAL_TIME_(action_taken);
-            APPEND_RPC_TOTAL_TIME_(verify_opt_operation);
-            APPEND_RPC_TOTAL_TIME_(consider_web_operation);
-            APPEND_RPC_TOTAL_TIME_(get_config);
-
-#undef APPEND_RPC_TOTAL_TIME_
-          }
-
-          const auto logger_stats = campaign_manager_logger->get_stats();
-          append_stat(
-            "logging_request_in_progress",
-            logger_stats.request_in_progress);
-          append_stat("logging_queue_size", logger_stats.queue_size);
-          append_stat("logging_queue_total", logger_stats.queue_total);
-          append_stat(
-            "logging_processing_requests",
-            logger_stats.processing_requests);
-          append_stat(
-            "logging_processing_requests_total",
-            logger_stats.processing_requests_total);
-
-          if(campaign_manager_core.in() != 0)
-          {
-            const auto billing_stats =
-              campaign_manager_core->billing_server_stats();
-            append_grpc_client_stats_(
+            append_campaign_manager_stats(
               body,
               first,
-              "billing_server_client",
-              billing_stats.total);
-            append_grpc_client_endpoint_stats_(
-              body,
-              first,
-              "billing_server_client",
-              billing_stats.endpoints);
-          }
+              grpc_adapter.in(),
+            campaign_manager_core.in(),
+            campaign_manager_logger);
 
           body += "}\n";
 
@@ -650,61 +661,45 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
             std::move(body)
           };
         });
-      active_objects->add_child_object(http_server_.in());
+
+      active_objects->add_child_object(http_server.in());
     }
-    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
-      configuration_.pid_file);
 
-    AdServer::Commons::SignalActiveObject signal_active_object;
-
-    stage = "activating active objects";
     active_objects->activate_object();
 
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT)
-      << "service started.";
+    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
+    AdServer::Commons::SignalActiveObject signal_active_object;
     signal_active_object.wait_object();
 
-    stage = "stopping active objects";
-    active_objects->deactivate_object();
-    active_objects->wait_object();
-
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT)
-      << "service stopped.";
-
-    campaign_manager_core_.reset();
-    grpc_adapter_.reset();
+    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
   catch (const Exception& e)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-                      ASPECT,
-                      "ADS-IMPL-168")
-      << "CampaignManagerApp_::main(): "
-      << "Got CampaignManagerApp_::Exception on "
-      << stage << " stage. : \n"
-      << e.what();
+    logger()->sstream(
+      Logging::Logger::CRITICAL,
+      ASPECT,
+      "ADS-IMPL-168") <<
+      "CampaignManagerApp_::main(): Got CampaignManagerApp_::Exception on " <<
+      stage << " stage. : \n" << e.what();
   }
   catch (const eh::Exception& e)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                      ASPECT,
-                      "ADS-IMPL-168")
-      << "CampaignManagerApp_::main(): "
-      << "Got eh::Exception on "
-      << stage << " stage. : \n"
-      << e.what();
+    logger()->sstream(
+      Logging::Logger::EMERGENCY,
+      ASPECT,
+      "ADS-IMPL-168") <<
+      "CampaignManagerApp_::main(): Got eh::Exception on " <<
+      stage << " stage. : \n" << e.what();
   }
   catch (...)
   {
     logger()->log(String::SubString("CampaignManagerApp_::main(): "
-                  "Got Unknown exception. "),
-                  Logging::Logger::EMERGENCY,
-                  ASPECT,
-                  "ADS-IMPL-168");
+      "Got Unknown exception. "),
+      Logging::Logger::EMERGENCY,
+      ASPECT,
+      "ADS-IMPL-168");
   }
-
-  stop_();
 }
 
 void

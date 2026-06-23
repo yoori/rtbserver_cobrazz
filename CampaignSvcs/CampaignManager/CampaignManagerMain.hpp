@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <memory>
@@ -22,8 +21,7 @@
  * creates service objects.
  * Responsible for general configuration, logging and error handling.
  */
-class CampaignManagerApp_
-  : private Logging::LoggerCallbackHolder
+class CampaignManagerApp_: private Logging::LoggerCallbackHolder
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -56,13 +54,10 @@ private:
   };
 
 private:
-
   // Reads configuration from config XML tree.
   xsd::AdServer::Configuration::CampaignManagerType
   read_config(const char* filename, const char* argv0)
     /*throw(Exception, eh::Exception)*/;
-
-  void stop_() noexcept;
 
   void read_creative_config(
     AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate&
@@ -107,20 +102,10 @@ private:
     DomainConfig;
   typedef std::unique_ptr<DomainConfig> DomainConfigPtr;
 
+private:
   ConfigPtr campaign_manager_config_;
   DomainConfigPtr domain_config_;
   Configuration configuration_;
-
-  AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core_;
-  AdServer::CampaignSvcs::CampaignManagerGrpc_var grpc_adapter_;
-  AdServer::Commons::HttpServer::HttpServer_var http_server_;
-
-  typedef Sync::Policy::PosixThread SyncPolicy;
-  typedef SyncPolicy::Mutex ShutdownMutex;
-  typedef SyncPolicy::ReadGuard ShutdownReadGuard;
-  typedef SyncPolicy::WriteGuard ShutdownWriteGuard;
-
-  ShutdownMutex shutdown_lock_;
 };
 
 //////////////////////////////////////////////////////////////////////////////

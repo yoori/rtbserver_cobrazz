@@ -44,12 +44,7 @@ private:
     ConfigPtr;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   CORBACommons::CorbaConfig corba_config_;
-
-  AdServer::RequestInfoSvcs::RequestInfoManagerImpl_var
-    request_info_manager_impl_;
-  std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
 
   ConfigPtr configuration_;
 };
