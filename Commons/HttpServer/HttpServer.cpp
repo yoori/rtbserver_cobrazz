@@ -1,4 +1,5 @@
 #include <Commons/HttpServer/HttpServer.hpp>
+#include <Commons/ThreadName.hpp>
 
 #include <chrono>
 #include <algorithm>
@@ -175,6 +176,7 @@ namespace AdServer::Commons::HttpServer
     for (unsigned long i = 0; i < threads_; ++i)
     {
       worker_threads_.emplace_back([this]() {
+        AdServer::Commons::set_current_thread_name("http-server");
         impl_->io_context.run();
       });
     }

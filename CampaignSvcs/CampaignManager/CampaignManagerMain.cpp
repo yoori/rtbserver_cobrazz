@@ -614,9 +614,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         "0.0.0.0",
         campaign_manager_config_->GrpcConfig()->Endpoint().port(),
         campaign_manager_config_->GrpcConfig()->process_threads(),
-        campaign_manager_config_->GrpcConfig()->cq_threads().present() ?
-          *campaign_manager_config_->GrpcConfig()->cq_threads() :
-          campaign_manager_config_->GrpcConfig()->process_threads(),
+        campaign_manager_config_->GrpcConfig()->cq_threads(),
         campaign_manager_config_->GrpcConfig()->max_split().present() ?
           *campaign_manager_config_->GrpcConfig()->max_split() :
           16);

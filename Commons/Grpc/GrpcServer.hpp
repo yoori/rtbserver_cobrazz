@@ -16,6 +16,7 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Stream/MemoryStream.hpp>
 
+#include <Commons/ThreadName.hpp>
 #include <Commons/Grpc/GrpcServiceBase.hpp>
 
 namespace AdServer::Grpc
@@ -120,6 +121,7 @@ namespace AdServer::Grpc
     {
       auto* completion_queue_ptr = completion_queue.get();
       workers_.emplace_back([this, completion_queue_ptr]() {
+        AdServer::Commons::set_current_thread_name("grpc-server");
         process_queue_loop_(completion_queue_ptr);
       });
     }
@@ -127,6 +129,7 @@ namespace AdServer::Grpc
     if (completion_queues_.empty())
     {
       server_wait_thread_.emplace([this]() {
+        AdServer::Commons::set_current_thread_name("grpc-server");
         server_->Wait();
       });
     }

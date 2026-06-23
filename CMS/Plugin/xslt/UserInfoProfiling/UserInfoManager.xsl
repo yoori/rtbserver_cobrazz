@@ -110,7 +110,7 @@
     <xsl:variable name="user-info-manager-grpc-cq-threads">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_cq_threads"/>
       <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_cq_threads) = 0">
-        <xsl:value-of select="$user-info-manager-grpc-process-threads"/>
+        <xsl:value-of select="16"/>
       </xsl:if>
     </xsl:variable>
     <xsl:variable name="user-info-manager-grpc-max-split">

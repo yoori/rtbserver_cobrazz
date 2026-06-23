@@ -580,7 +580,7 @@ namespace AdServer::CampaignSvcs
         logger,
         billing_server_grpc_aspect,
         bind_address_,
-        cq_threads != 0 ? cq_threads : process_threads,
+        cq_threads != 0 ? cq_threads : 16,
         std::make_unique<ServiceImpl>(
           core,
           executor_pool_,

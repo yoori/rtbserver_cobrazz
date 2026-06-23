@@ -440,9 +440,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
           "0.0.0.0",
         config().GrpcConfig()->Endpoint().port(),
         static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
-        config().GrpcConfig()->cq_threads().present() ?
-          static_cast<std::size_t>(*config().GrpcConfig()->cq_threads()) :
-          static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
+        static_cast<std::size_t>(config().GrpcConfig()->cq_threads()),
         config().GrpcConfig()->max_split().present() ?
           static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
           static_cast<std::size_t>(config().GrpcConfig()->process_threads()));

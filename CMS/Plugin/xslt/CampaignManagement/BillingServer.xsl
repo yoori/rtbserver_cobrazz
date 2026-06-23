@@ -113,7 +113,7 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig cq_threads="16">
       <cfg:Endpoint host="*" port="{$billing-server-grpc-port}"/>
     </cfg:GrpcConfig>
 

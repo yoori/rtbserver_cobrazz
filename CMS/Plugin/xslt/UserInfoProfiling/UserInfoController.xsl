@@ -55,7 +55,7 @@
       <xsl:value-of select="concat($workspace-root, '/run/UserInfoController.pid')"/>
     </xsl:attribute>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig cq_threads="16">
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-info-controller-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>

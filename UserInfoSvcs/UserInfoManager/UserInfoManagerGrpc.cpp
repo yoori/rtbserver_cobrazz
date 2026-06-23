@@ -1264,13 +1264,14 @@ namespace AdServer::UserInfoSvcs
             logger,
             "",
             user_info_manager_grpc_aspect)),
-        std::max<std::size_t>(1, process_threads))),
+        std::max<std::size_t>(1, process_threads),
+        "uim-grpc-pool")),
       stats_counters_(std::make_shared<StatsCounters>()),
       impl_(std::make_shared<Impl>(
         logger,
         user_info_manager_grpc_aspect,
         bind_address_,
-        cq_threads != 0 ? cq_threads : process_threads,
+        cq_threads != 0 ? cq_threads : 16,
         std::make_unique<ServiceImpl>(
           std::move(user_info_manager),
           executor_pool_,

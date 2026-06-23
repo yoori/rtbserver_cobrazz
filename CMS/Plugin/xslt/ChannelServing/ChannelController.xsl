@@ -134,7 +134,7 @@
       </xsl:attribute>
     </cfg:Primary>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig cq_threads="16">
       <cfg:Endpoint host="*" port="{$channel-controller-grpc-port}"/>
     </cfg:GrpcConfig>
 

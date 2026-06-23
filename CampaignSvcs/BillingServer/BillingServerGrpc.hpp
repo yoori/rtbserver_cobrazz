@@ -54,7 +54,7 @@ namespace AdServer::CampaignSvcs
       std::string_view bind_address,
       unsigned int bind_port,
       std::size_t process_threads = 128,
-      std::size_t cq_threads = 0,
+      std::size_t cq_threads = 16,
       std::size_t max_split = 0);
 
     Stats stats() const noexcept;

@@ -54,7 +54,7 @@
     <xsl:variable name="user-bind-server-grpc-cq-threads">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_cq_threads"/>
       <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_cq_threads) = 0">
-        <xsl:value-of select="$user-bind-server-grpc-process-threads"/>
+        <xsl:value-of select="16"/>
       </xsl:if>
     </xsl:variable>
     <xsl:variable name="user-bind-server-grpc-max-split">

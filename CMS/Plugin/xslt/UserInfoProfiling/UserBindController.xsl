@@ -49,7 +49,7 @@
     <xsl:attribute name="status_check_period"><xsl:value-of select="$status-check-period"/></xsl:attribute>
     <xsl:attribute name="pid_file"><xsl:value-of select="concat($workspace-root, '/run/UserBindController.pid')"/></xsl:attribute>
 
-    <cfg:GrpcConfig>
+    <cfg:GrpcConfig cq_threads="16">
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-bind-controller-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>
