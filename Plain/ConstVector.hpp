@@ -186,18 +186,6 @@ namespace PlainTypes
   {
     static const char* FUN = "PlainTypes::init_const_vector()";
 
-    if(buf == nullptr)
-    {
-      if(size == 0)
-      {
-        return ConstVectorType();
-      }
-
-      Stream::Error ostr;
-      ostr << FUN << ": null buffer for non-empty vector, size = " << size;
-      throw CorruptedStruct(ostr);
-    }
-
     const unsigned char* buf_ptr = static_cast<const unsigned char*>(buf);
     uint32_t begin_offset = *static_cast<const uint32_t*>(buf);
     uint32_t end_offset = static_cast<const uint32_t*>(buf)[1];

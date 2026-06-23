@@ -469,7 +469,7 @@ namespace AdServer
       void match_section_(
         ChannelMatchMap& result_channels,
         ChannelsInfoWriter* out_ciw,
-        const ChannelsInfoReader& base,
+        const ChannelsInfoReader* base,
         const ChannelIdArray& channels,
         const ChannelsHashMap& dictionary,
         std::pmr::memory_resource* request_delta_resource,
@@ -537,7 +537,7 @@ namespace AdServer
         ChannelsInfoWriter& ciw,
         const ChannelsHashMap& channels,
         const Generics::Time& now,
-        const ChannelsInfoReader& base,
+        const ChannelsInfoReader* base,
         const RequestChannelsDelta& delta,
         bool household = false);
 

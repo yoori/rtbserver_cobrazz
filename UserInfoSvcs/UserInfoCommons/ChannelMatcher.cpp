@@ -1552,7 +1552,7 @@ namespace AdServer
           match_section_(
             result_channels,
             &res_upw.page_channels(),
-            base_page_channels,
+            base_exists ? &base_page_channels : nullptr,
             channels_pack.page_channels,
             channels.page_channels,
             &request_delta_resource,
@@ -1562,7 +1562,7 @@ namespace AdServer
           match_section_(
             result_channels,
             &res_upw.search_channels(),
-            base_search_channels,
+            base_exists ? &base_search_channels : nullptr,
             channels_pack.search_channels,
             channels.search_channels,
             &request_delta_resource,
@@ -1572,7 +1572,7 @@ namespace AdServer
           match_section_(
             result_channels,
             &res_upw.url_channels(),
-            base_url_channels,
+            base_exists ? &base_url_channels : nullptr,
             channels_pack.url_channels,
             channels.url_channels,
             &request_delta_resource,
@@ -1582,7 +1582,7 @@ namespace AdServer
           match_section_(
             result_channels,
             &res_upw.url_keyword_channels(),
-            base_url_keyword_channels,
+            base_exists ? &base_url_keyword_channels : nullptr,
             channels_pack.url_keyword_channels,
             channels.url_keyword_channels,
             &request_delta_resource,
@@ -1906,7 +1906,7 @@ namespace AdServer
     void ChannelsMatcher::match_section_(
       ChannelMatchMap& result_channels,
       ChannelsInfoWriter* out_ciw,
-      const ChannelsInfoReader& base,
+      const ChannelsInfoReader* base,
       const ChannelIdArray& channels,
       const ChannelsHashMap& dictionary,
       std::pmr::memory_resource* request_delta_resource,
@@ -2792,66 +2792,112 @@ namespace AdServer
       ChannelsInfoWriter& ciw,
       const ChannelsHashMap& channels,
       const Generics::Time& now,
-      const ChannelsInfoReader& base,
+      const ChannelsInfoReader* base,
       const RequestChannelsDelta& delta,
       bool /*household*/)
     {
       ciw.ht_candidates().reserve(
         ciw.ht_candidates().size() +
-        base.ht_candidates().size() +
+        (base ? base->ht_candidates().size() : 0) +
         delta.ht_candidates.size());
 
-      Algs::merge_unique(
-        base.ht_candidates().begin(), base.ht_candidates().end(),
-        delta.ht_candidates.begin(), delta.ht_candidates.end(),
-        Algs::modify_inserter(
-          Algs::filter_inserter(
-            std::back_inserter(ciw.ht_candidates()),
-            ExistingHTCandidate(channels)),
-          HTCandidateWriterAdapter()),
-        HTCandidateLess(),
-        HTCandidateMerge());
+      if(base)
+      {
+        Algs::merge_unique(
+          base->ht_candidates().begin(), base->ht_candidates().end(),
+          delta.ht_candidates.begin(), delta.ht_candidates.end(),
+          Algs::modify_inserter(
+            Algs::filter_inserter(
+              std::back_inserter(ciw.ht_candidates()),
+              ExistingHTCandidate(channels)),
+            HTCandidateWriterAdapter()),
+          HTCandidateLess(),
+          HTCandidateMerge());
+      }
+      else
+      {
+        std::copy(
+          delta.ht_candidates.begin(),
+          delta.ht_candidates.end(),
+          Algs::modify_inserter(
+            Algs::filter_inserter(
+              std::back_inserter(ciw.ht_candidates()),
+              ExistingHTCandidate(channels)),
+            HTCandidateWriterAdapter()));
+      }
 
       ciw.history_matches().reserve(
-        ciw.history_matches().size() + base.history_matches().size());
+        ciw.history_matches().size() +
+        (base ? base->history_matches().size() : 0));
 
-      std::copy(
-        base.history_matches().begin(), base.history_matches().end(),
-        Algs::filter_inserter(
-          std::back_inserter(ciw.history_matches()),
-          ExistChannelFilter(channels)));
+      if(base)
+      {
+        std::copy(
+          base->history_matches().begin(), base->history_matches().end(),
+          Algs::filter_inserter(
+            std::back_inserter(ciw.history_matches()),
+            ExistChannelFilter(channels)));
+      }
 
       ciw.history_visits().reserve(
         ciw.history_visits().size() +
-        base.history_visits().size() +
+        (base ? base->history_visits().size() : 0) +
         delta.history_visits.size());
 
-      Algs::merge_unique(
-        base.history_visits().begin(), base.history_visits().end(),
-        delta.history_visits.begin(), delta.history_visits.end(),
-        Algs::modify_inserter(
-          Algs::filter_inserter(
-            std::back_inserter(ciw.history_visits()),
-            ExistingHistoryVisit(channels)),
-          HistoryVisitWriterAdapter()),
-        HistoryVisitLess(),
-        HistoryVisitMerge());
+      if(base)
+      {
+        Algs::merge_unique(
+          base->history_visits().begin(), base->history_visits().end(),
+          delta.history_visits.begin(), delta.history_visits.end(),
+          Algs::modify_inserter(
+            Algs::filter_inserter(
+              std::back_inserter(ciw.history_visits()),
+              ExistingHistoryVisit(channels)),
+            HistoryVisitWriterAdapter()),
+          HistoryVisitLess(),
+          HistoryVisitMerge());
+      }
+      else
+      {
+        std::copy(
+          delta.history_visits.begin(),
+          delta.history_visits.end(),
+          Algs::modify_inserter(
+            Algs::filter_inserter(
+              std::back_inserter(ciw.history_visits()),
+              ExistingHistoryVisit(channels)),
+            HistoryVisitWriterAdapter()));
+      }
 
       ciw.session_matches().reserve(
         ciw.session_matches().size() +
-        base.session_matches().size() +
+        (base ? base->session_matches().size() : 0) +
         delta.session_matches.size());
 
-      Algs::merge_unique(
-        base.session_matches().begin(), base.session_matches().end(),
-        delta.session_matches.begin(), delta.session_matches.end(),
-        Algs::modify_inserter(
-          Algs::filter_inserter(
-            std::back_inserter(ciw.session_matches()),
-            SessionMatchesFilter()),
-          SessionMatchesCleanAdapter(channels, now)),
-        SessionMatchLess(),
-        RequestSessionMatchesMerge());
+      if(base)
+      {
+        Algs::merge_unique(
+          base->session_matches().begin(), base->session_matches().end(),
+          delta.session_matches.begin(), delta.session_matches.end(),
+          Algs::modify_inserter(
+            Algs::filter_inserter(
+              std::back_inserter(ciw.session_matches()),
+              SessionMatchesFilter()),
+            SessionMatchesCleanAdapter(channels, now)),
+          SessionMatchLess(),
+          RequestSessionMatchesMerge());
+      }
+      else
+      {
+        std::copy(
+          delta.session_matches.begin(),
+          delta.session_matches.end(),
+          Algs::modify_inserter(
+            Algs::filter_inserter(
+              std::back_inserter(ciw.session_matches()),
+              SessionMatchesFilter()),
+            SessionMatchesCleanAdapter(channels, now)));
+      }
     }
 
     template <typename BaseChannelsInfoType, typename AddChannelsInfoType>
