@@ -74,6 +74,10 @@
    </xsl:if>
   </xsl:variable>
 
+  <xsl:variable name="billing-server-pid-file">
+    <xsl:value-of select="concat($workspace-root, '/run/BillingServer.pid')"/>
+  </xsl:variable>
+
   <exsl:document href="billingServer.port"
     method="text" omit-xml-declaration="yes"
     >  ['billingServer', <xsl:copy-of select="$billing-server-port"/>],</exsl:document>
@@ -84,7 +88,8 @@
     log_root="{concat($workspace-root, '/log/BillingServer/Out')}"
     service_index="{$service-id}"
     service_count="{$all-billing-server-count}"
-    reserve_timeout="60">
+    reserve_timeout="60"
+    pid_file="{$billing-server-pid-file}">
 
     <xsl:attribute name="stat_update_period"><xsl:value-of select="$update-config/@stat_update_period"/>
       <xsl:if test="count($update-config/@stat_update_period) = 0">600</xsl:if>

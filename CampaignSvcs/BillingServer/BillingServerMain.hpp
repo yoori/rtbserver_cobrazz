@@ -3,11 +3,10 @@
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
-#include <Sync/SyncPolicy.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 
 #include <xsd/CampaignSvcs/BillingServerConfig.hpp>
 
@@ -15,8 +14,9 @@
 #include "BillingServerGrpc.hpp"
 
 class BillingServerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl,
-    public virtual Generics::CompositeActiveObject
+  : private Logging::LoggerCallbackHolder,
+    public virtual Generics::CompositeActiveObject,
+    public virtual ReferenceCounting::AtomicImpl
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -28,9 +28,6 @@ public:
   void
   main(int argc, char** argv) noexcept;
 
-protected:
-  typedef Sync::Policy::PosixThread ShutdownSyncPolicy;
-
   typedef std::unique_ptr<
     AdServer::CampaignSvcs::BillingServerCore::BillingServerConfig>
     ConfigPtr;
@@ -38,28 +35,18 @@ protected:
 protected:
   virtual ~BillingServerApp_() noexcept {};
 
-  // ProcessControl interface
-  virtual void
-  shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
-
   const AdServer::CampaignSvcs::BillingServerCore::BillingServerConfig&
   config() const noexcept;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-  CORBACommons::CorbaConfig corba_config_;
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
 
   AdServer::CampaignSvcs::BillingServerCore_var billing_server_core_;
   AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter_;
   AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   ConfigPtr configuration_;
-
-  ShutdownSyncPolicy::Mutex shutdown_lock_;
 };
 
 typedef ReferenceCounting::SmartPtr<BillingServerApp_>

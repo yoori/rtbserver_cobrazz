@@ -4,19 +4,19 @@
 #include <string>
 #include <utility>
 
-#include <Commons/HttpServer/HttpServer.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Logger/StreamLogger.hpp>
 
-#include <Commons/CorbaConfig.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
+#include <Commons/PidFileGuard.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include "BillingServerMain.hpp"
 
 namespace
 {
   const char ASPECT[] = "BillingServer";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 
   void
   append_json_stat_(
@@ -42,27 +42,11 @@ namespace
 }
 
 BillingServerApp_::BillingServerApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "BillingServerApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(
+        Logging::OStream::Config(std::cerr))),
+      "BillingServerApp_", ASPECT, 0)
 {}
-
-void
-BillingServerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
-{
-  ShutdownSyncPolicy::WriteGuard guard(shutdown_lock_);
-
-  deactivate_object();
-  wait_object();
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-BillingServerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
-}
 
 void
 BillingServerApp_::main(int argc, char** argv)
@@ -136,26 +120,16 @@ BillingServerApp_::main(int argc, char** argv)
       throw Exception(ostr);
     }
 
-    // fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        config().CorbaConfig(),
-        corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't read Corba Config: " << e.what();
-      throw Exception(ostr);
-    }
-
     billing_server_core_ = new AdServer::CampaignSvcs::BillingServerCore(
       callback(),
       logger(),
       config());
 
     add_child_object(billing_server_core_.in());
+
+    std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(config().pid_file()));
 
     if(config().GrpcConfig().present())
     {
@@ -253,22 +227,15 @@ BillingServerApp_::main(int argc, char** argv)
       add_child_object(http_server_);
     }
 
-    corba_server_adapter_ =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
-
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
-
-    shutdowner_ = corba_server_adapter_->shutdowner();
-
+    AdServer::Commons::SignalActiveObject signal_active_object;
     activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
-    // Running orb loop
-    corba_server_adapter_->run();
+    signal_active_object.wait_object();
 
-    wait();
+    deactivate_object();
+    wait_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
