@@ -44,9 +44,10 @@ namespace AdServer::Bidding
         stats.input_items - stats.completed_items : 0;
     }
 
+    template<typename Writer>
     void
     print_client_stats_(
-      std::ostream& out,
+      Writer& out,
       const char* prefix,
       const AdServer::Grpc::Stats& stats,
       const char* sep)
@@ -130,9 +131,10 @@ namespace AdServer::Bidding
         GetChannelId());
     }
 
+    template<typename Writer>
     void
     print_channel_ids_(
-      std::ostream& out,
+      Writer& out,
       const ChannelIdSet& ids,
       char type,
       bool& print_delimiter)
@@ -148,9 +150,10 @@ namespace AdServer::Bidding
       }
     }
 
+    template<typename Writer>
     void
     print_channel_atom_seq_(
-      std::ostream& out,
+      Writer& out,
       const google::protobuf::RepeatedPtrField<
         adserver::channel_svcs::channel_server::ChannelAtom>& channels,
       char type,
@@ -165,6 +168,25 @@ namespace AdServer::Bidding
         out << channel.id() << type << " :: " <<
           channel.trigger_channel_id();
         print_delimiter = true;
+      }
+    }
+
+    template<typename Writer, typename Iterator>
+    void
+    print_sequence_(
+      Writer& out,
+      Iterator begin,
+      Iterator end)
+    {
+      if(begin == end)
+      {
+        return;
+      }
+
+      out << *begin;
+      for(++begin; begin != end; ++begin)
+      {
+        out << "," << *begin;
       }
     }
 
@@ -258,9 +280,10 @@ namespace AdServer::Bidding
       return message.substr(endpoint_begin, endpoint_end - endpoint_begin);
     }
 
+    template<typename Writer>
     void
     print_stage_server_id_(
-      std::ostream& out,
+      Writer& out,
       const char* name,
       const StageResult* stage,
       const char* sep)
@@ -271,9 +294,10 @@ namespace AdServer::Bidding
       }
     }
 
+    template<typename Writer>
     void
     print_stage_time_(
-      std::ostream& out,
+      Writer& out,
       const char* name,
       const std::optional<StageResult>& stage,
       const char* sep)
@@ -434,7 +458,7 @@ namespace AdServer::Bidding
       "bid_publisher_id = " << request_info.bid_publisher_id << sep_ <<
       "publisher_site_id = " << request_params.publisher_site_id << sep_ <<
       "publisher_account_ids = ";
-    Algs::print(
+    print_sequence_(
       debug_info_str_,
       request_info.publisher_account_ids.begin(),
       request_info.publisher_account_ids.end());
@@ -476,11 +500,10 @@ namespace AdServer::Bidding
       "platform = " << request_params.context_info.platform << sep_ <<
       "full_platform = " << request_params.context_info.full_platform << sep_ <<
       "platform_ids = ";
-    Algs::print(
+    print_sequence_(
       debug_info_str_,
-      request_params.context_info.platform_ids.data(),
-      request_params.context_info.platform_ids.data() +
-        request_params.context_info.platform_ids.size());
+      request_params.context_info.platform_ids.begin(),
+      request_params.context_info.platform_ids.end());
     debug_info_str_ << sep_ << "ad_slots = " <<
       request_params.ad_slots.size() << sep_;
   }
@@ -917,16 +940,14 @@ namespace AdServer::Bidding
   DebugSink::make_debug_info_(
     const AdServer::Commons::UserId& user_id) const
   {
+    if(!debug_info_str_.empty())
+    {
+      return debug_info_str_.str();
+    }
+
     std::ostringstream out;
-    if(!debug_info_str_.str().empty())
-    {
-      out << debug_info_str_.str();
-    }
-    else
-    {
-      out << "server-id = " << server_id_ << sep_ <<
-        "uid = " << (user_id.is_null() ? "" : user_id.to_string());
-    }
+    out << "server-id = " << server_id_ << sep_ <<
+      "uid = " << (user_id.is_null() ? "" : user_id.to_string());
     return out.str();
   }
 
@@ -934,6 +955,7 @@ namespace AdServer::Bidding
   DebugSink::print_empty_creative_selection_debug_info_(
     const StageResult* stage) noexcept
   {
+
     if(require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
@@ -960,6 +982,7 @@ namespace AdServer::Bidding
     const AdServer::Bidding::CampaignManager::AdSlotDebugInfo&
       debug_info) noexcept
   {
+
     if(require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
     {
       debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n" <<
@@ -973,6 +996,7 @@ namespace AdServer::Bidding
       ad_slot_result,
     const StageResult* stage) noexcept
   {
+
     const auto& selected_creatives = ad_slot_result.selected_creatives;
     const auto& debug_info = ad_slot_result.debug_info;
     const auto& debug_selected_creatives = debug_info.selected_creatives;

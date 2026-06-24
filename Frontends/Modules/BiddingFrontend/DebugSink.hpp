@@ -2,9 +2,9 @@
 
 #include <optional>
 #include <string>
-#include <sstream>
 
 #include "CampaignManagerTypes.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc.pb.h>
 #include <Generics/Time.hpp>
@@ -182,6 +182,6 @@ namespace AdServer::Bidding
     std::string server_id_;
     const char* sep_ = nullptr;
     DebugInfo require_debug_info_ = DI_NONE;
-    std::ostringstream debug_info_str_;
+    AdServer::LogProcessing::BufferWriter debug_info_str_;
   };
 }

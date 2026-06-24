@@ -78,10 +78,6 @@ namespace AdServer::Bidding
     using TriggerMatchResponseHolder =
       AdServer::Grpc::ResponseHolder<
         adserver::channel_svcs::channel_server::MatchResponse>;
-    using CcgTraitsResponseHolder =
-      AdServer::Grpc::ResponseHolder<
-        adserver::channel_svcs::channel_server::GetCcgTraitsResponse>;
-
     class InProgressGuard
     {
     public:
@@ -2060,9 +2056,8 @@ namespace AdServer::Bidding
             request_params.context_info.platform_ids.begin(),
             request_params.context_info.platform_ids.end());
 
-          if(trigger_match.result &&
-             !trigger_match.failed &&
-             !trigger_match.result->no_track())
+          if(trigger_match.result && !trigger_match.failed &&
+            !trigger_match.result->no_track())
           {
             const auto& matched_channels =
               trigger_match.result->matched_channels();
@@ -2178,6 +2173,7 @@ namespace AdServer::Bidding
             GrpcAlgs::unpack_time(
               history_match_result->match_result().process_time());
         }
+
         if(require_debug_info)
         {
           request_task->print_history_matching_debug_info_(
@@ -2198,53 +2194,6 @@ namespace AdServer::Bidding
         &StatHolder::complete_rtb_request_campaign_selection,
         &StatHolder::add_rtb_request_campaign_selection_time);
       request_task->set_current_stage(Stage::CampaignSelection);
-
-      CcgTraitsResponseHolder ccg_keywords;
-      if(history_match_result &&
-         history_match_result->match_result().channels_size() &&
-         !request_info.skip_ccg_keywords &&
-         !request_info.filter_request)
-      {
-        google::protobuf::Arena ccg_traits_request_arena;
-        auto* ccg_traits_request = google::protobuf::Arena::CreateMessage<
-          adserver::channel_svcs::channel_server::GetCcgTraitsRequest>(
-            &ccg_traits_request_arena);
-        for(const auto& channel :
-            history_match_result->match_result().channels())
-        {
-          ccg_traits_request->add_ids(channel.channel_id());
-        }
-
-        try
-        {
-          auto ccg_traits_result = co_await
-            channel_client_coro_->get_ccg_traits(*ccg_traits_request);
-          if(ccg_traits_result.status.ok())
-          {
-            ccg_keywords = std::move(ccg_traits_result.response_holder);
-          }
-          else
-          {
-            logger()->sstream(
-              Logging::Logger::EMERGENCY,
-              Aspect::BIDDING_FRONTEND,
-              "ADS-IMPL-117") <<
-              "ChannelServer grpc get_ccg_traits failed: code=" <<
-              static_cast<int>(ccg_traits_result.status.error_code()) <<
-              ", message=" << ccg_traits_result.status.error_message();
-          }
-        }
-        catch(const eh::Exception& ex)
-        {
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::BIDDING_FRONTEND,
-            "ADS-IMPL-117") <<
-            "Frontend::co_process_bid_request_(): "
-            "caught ChannelServerGrpcCoroClient get_ccg_traits error: " <<
-            ex.what();
-        }
-      }
 
       StageResult* creative_selection_stage = start_stage(
         request_time_metering.creative_selection,
@@ -2268,7 +2217,7 @@ namespace AdServer::Bidding
         history_match_result ? &*history_match_result : nullptr,
         trigger_match.present && !trigger_match.failed ?
           &*trigger_match.result : nullptr,
-        ccg_keywords ? &*ccg_keywords : nullptr,
+        nullptr, //< ccg_keywords
         request_info,
         request_task->resolved_user_id_,
         passback,
