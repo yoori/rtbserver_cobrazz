@@ -3618,7 +3618,7 @@ namespace AdServer::CampaignSvcs
         campaign_select_params_ptr,
         triggered_channels,
         request_result_params.hit_keywords,
-        true, // collect lost
+        false, // lost auction collection removed
         weighted_campaign_keywords,
         weighted_campaign,
         select_result);

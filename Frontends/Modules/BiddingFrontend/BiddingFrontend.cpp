@@ -599,14 +599,6 @@ namespace AdServer::Bidding
     }
 
     void
-    pack_get_campaign_creative_request(
-      PB::GetCampaignCreativeRequest& request,
-      const CampaignManager::RequestParams& request_params)
-    {
-      pack_request_params(request_params, *request.mutable_request_params());
-    }
-
-    void
     unpack_get_campaign_creative_response(
       const PB::GetCampaignCreativeResponse& response,
       CampaignManager::RequestCreativeResult& result,
@@ -693,24 +685,6 @@ namespace AdServer::Bidding
         return ChannelMatch(atom.id(), atom.trigger_channel_id());
       }
     };
-
-    Commons::Interval<Generics::Time>
-    construct_time_interval(const String::SubString& str)
-      /*throw(eh::Exception)*/
-    {
-      const std::size_t pos = str.find('-');
-
-      if (pos == String::SubString::NPOS)
-      {
-        Stream::Error ostr;
-        ostr << "Separator not found in '" << str << "'";
-        throw Frontend::Exception(ostr);
-      }
-
-      const Generics::Time min_val = Generics::Time(str.substr(0, pos), "%H:%M");
-      const Generics::Time max_val = Generics::Time(str.substr(pos + 1), "%H:%M");
-      return Commons::Interval<Generics::Time>(min_val, max_val);
-    }
 
   }
 
@@ -1114,16 +1088,6 @@ namespace AdServer::Bidding
           sources_.insert(std::make_pair(it->id(), source_traits));
         }
 
-        {
-          const String::SubString intervalsBlacklist = config_->intervalsBlacklist();
-          String::StringManip::SplitNL tokenizer(intervalsBlacklist);
-
-          for (String::SubString interval; tokenizer.get_token(interval);)
-          {
-            blacklisted_time_intervals_.insert(construct_time_interval(interval.str()));
-          }
-        }
-
         RequestInfoFiller::ExternalUserIdSet skip_external_ids;
 
         if (common_config_->SkipExternalIds().present())
@@ -1385,8 +1349,7 @@ namespace AdServer::Bidding
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_process_bid_request_(
-    BidRequestState_var request_task)
+  Frontend::co_process_bid_request_(BidRequestState_var request_task)
     noexcept
   {
     static const char* FUN = "Bidding::Frontend::co_process_bid_request_()";
@@ -1429,7 +1392,7 @@ namespace AdServer::Bidding
       request_task->set_current_stage(Stage::UserResolving);
 
       const bool require_debug_info =
-        request_task->debug_sink_.require_debug_info();
+        request_task->require_debug_info_();
       auto& request_time_metering = request_task->request_time_metering_;
       StageResult* user_resolving_stage = start_stage(
         request_time_metering.user_resolving,
@@ -1658,8 +1621,7 @@ namespace AdServer::Bidding
 
           if(!match_user_id.is_null())
           {
-            common_info.user_status = static_cast<std::size_t>(
-              AdServer::CampaignSvcs::US_OPTIN);
+            common_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN);
 
             for(std::size_t add_index = 0;
                 add_index < external_user_ids.size();
@@ -1736,7 +1698,7 @@ namespace AdServer::Bidding
       if(require_debug_info)
       {
         request_task->print_available_request_debug_info_();
-        request_task->debug_sink_.print_user_resolving_debug_info(
+        request_task->print_user_resolving_debug_info_(
           user_resolving_debug_info,
           user_resolving_stage);
       }
@@ -1961,7 +1923,7 @@ namespace AdServer::Bidding
 
       if(require_debug_info && trigger_match.present)
       {
-        request_task->debug_sink_.print_channel_matching_debug_info(
+        request_task->print_channel_matching_debug_info_(
           *trigger_match.result,
           trigger_match_stage);
       }
@@ -2218,7 +2180,7 @@ namespace AdServer::Bidding
         }
         if(require_debug_info)
         {
-          request_task->debug_sink_.print_history_matching_debug_info(
+          request_task->print_history_matching_debug_info_(
             history_match_result->match_result(),
             history_match_stage);
         }
@@ -2289,29 +2251,28 @@ namespace AdServer::Bidding
         request_task->start_processing_time(),
         require_debug_info);
 
-      auto& request_params = *request_task->request_params();
       const bool passback =
         trigger_match.failed ||
         (trigger_match.present &&
           (trigger_match.result->no_track() || trigger_match.result->no_adv())) ||
         request_info.filter_request;
 
-      select_campaign_(
+      google::protobuf::Arena campaign_request_arena;
+      auto* campaign_request =
+        google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
+          &campaign_request_arena);
+
+      prepare_get_campaign_creative_request_(
+        *campaign_request,
+        *request_task->request_params(),
         history_match_result ? &*history_match_result : nullptr,
         trigger_match.present && !trigger_match.failed ?
           &*trigger_match.result : nullptr,
         ccg_keywords ? &*ccg_keywords : nullptr,
         request_info,
-        request_params,
         request_task->resolved_user_id_,
         passback,
         false);
-
-      google::protobuf::Arena campaign_request_arena;
-      auto* campaign_request =
-        google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
-          &campaign_request_arena);
-      pack_get_campaign_creative_request(*campaign_request, request_params);
 
       try
       {
@@ -2325,6 +2286,7 @@ namespace AdServer::Bidding
           {
             creative_selection_stage->server_id = response.hostname();
           }
+
           if(require_debug_info)
           {
             const auto& request_result = response.request_result();
@@ -2404,12 +2366,12 @@ namespace AdServer::Bidding
 
       if(campaign_match_result->ad_slots.size() > 0 &&
         campaign_match_result->ad_slots[0].debug_info.trace_ccg[0] &&
-        request_params.ad_slots.size() > 0 &&
+        request_task->request_params()->ad_slots.size() > 0 &&
         logger()->log_level() >= Logging::Logger::TRACE)
       {
         std::ostringstream ostr;
         ostr << FUN << ": CCG Trace of " <<
-          request_params.ad_slots[0].debug_ccg <<
+          request_task->request_params()->ad_slots[0].debug_ccg <<
           " for request:" << std::endl;
 
         request_task->print_request(ostr);
@@ -2498,8 +2460,7 @@ namespace AdServer::Bidding
     std::string /*hostname*/)
     noexcept
   {
-    static const char* FUN =
-      "Bidding::Frontend::co_consider_campaign_selection_()";
+    static const char* FUN = "Bidding::Frontend::co_consider_campaign_selection_()";
 
     Generics::Time start_process_time;
 
@@ -2540,8 +2501,7 @@ namespace AdServer::Bidding
           continue;
         }
 
-        std::vector<unsigned long> campaign_ids(
-          ad_slot_result.selected_creatives.size());
+        std::vector<unsigned long> campaign_ids(ad_slot_result.selected_creatives.size());
 
         for(std::size_t creative_i = 0;
             creative_i < ad_slot_result.selected_creatives.size();
@@ -2581,6 +2541,7 @@ namespace AdServer::Bidding
         {
           *request->add_seq_orders() = seq_order;
         }
+
         if(ad_slot_result.track_impr)
         {
           request->mutable_uc_campaign_ids()->Add(
@@ -2594,8 +2555,7 @@ namespace AdServer::Bidding
             campaign_ids.end());
         }
 
-        auto result = co_await user_info_client_coro_->update_user_freq_caps(
-          *request);
+        auto result = co_await user_info_client_coro_->update_user_freq_caps(*request);
         if(!result.status.ok())
         {
           logger()->sstream(
@@ -2631,7 +2591,9 @@ namespace AdServer::Bidding
   }
 
   void
-  Frontend::select_campaign_(
+  Frontend::prepare_get_campaign_creative_request_(
+    PB::GetCampaignCreativeRequest& request,
+    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const adserver::user_info_svcs::user_info_manager::MatchResponse*
       history_match_result,
     const adserver::channel_svcs::channel_server::MatchResponse*
@@ -2639,106 +2601,122 @@ namespace AdServer::Bidding
     const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
       ccg_keywords,
     const RequestInfo& request_info,
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const AdServer::Commons::UserId& user_id,
     bool passback,
     bool interrupted)
     noexcept
   {
-    static const char* FUN = "Bidding::Frontend::request_campaign_manager_()";
+    static const char* FUN = "Bidding::Frontend::prepare_get_campaign_creative_request_()";
 
-    Generics::Time start_process_time;
+    auto& request_params_pb = *request.mutable_request_params();
 
-    if(logger()->log_level() >= Logging::Logger::TRACE)
+    pack_request_params(request_params, request_params_pb);
+
+    auto add_token = [](auto* tokens, const char* token_name, const auto& token_value)
     {
-      start_process_time = Generics::Time::get_time_of_day();
-    }
+      auto* token = tokens->Add();
+      token->set_name(token_name);
+      token->set_value(
+        std::string(token_value.data(), token_value.size()));
+    };
 
-    // do campaign selection
     try
     {
+      auto* common_info = request_params_pb.mutable_common_info();
+
       // Fill user info
       if(!user_id.is_null())
       {
-        request_params.common_info.user_id = CampaignManager::pack_user_id(user_id);
-        request_params.common_info.track_user_id =
-          request_params.common_info.user_id;
+        const auto packed_user_id = CampaignManager::pack_user_id(user_id);
+        common_info->set_user_id(packed_user_id);
+        common_info->set_track_user_id(packed_user_id);
       }
 
       // Fill debug-info & process fraud
-      request_params.only_display_ad = false;
+      request_params_pb.set_only_display_ad(false);
       const auto* history_result =
         history_match_result ? &history_match_result->match_result() : nullptr;
-      if(request_params.ad_slots.size() > 0)
+      if(request_params_pb.ad_slots_size() > 0)
       {
         if (!interrupted)
         {
-          request_params.need_debug_info = true;
-          request_params.ad_slots[0].debug_ccg = request_info.debug_ccg;
+          request_params_pb.set_need_debug_info(true);
+          request_params_pb.mutable_ad_slots(0)->set_debug_ccg(
+            request_info.debug_ccg);
         }
-        for(size_t i = 0; i < request_params.ad_slots.size(); ++i)
+
+        for(int i = 0; i < request_params_pb.ad_slots_size(); ++i)
         {
-          request_params.ad_slots[i].passback |=
-            passback || interrupted ||
-              (history_result && history_result->fraud_request());
+          auto* ad_slot = request_params_pb.mutable_ad_slots(i);
+          ad_slot->set_passback(
+            ad_slot->passback() ||
+            passback ||
+            interrupted ||
+            (history_result && history_result->fraud_request()));
         }
       }
 
       // Fill user history data
-      request_params.client_create_time =
-        CampaignManager::pack_time(Generics::Time::ZERO);
-      request_params.session_start =
-        CampaignManager::pack_time(Generics::Time::ZERO);
+      request_params_pb.set_client_create_time(
+        CampaignManager::pack_time(Generics::Time::ZERO));
+      request_params_pb.set_session_start(
+        CampaignManager::pack_time(Generics::Time::ZERO));
       if(history_result)
       {
-        request_params.client_create_time = history_result->create_time();
-        request_params.session_start = history_result->session_start();
+        request_params_pb.set_client_create_time(history_result->create_time());
+        request_params_pb.set_session_start(history_result->session_start());
 
-        request_params.full_freq_caps.resize(
+        request_params_pb.clear_full_freq_caps();
+        request_params_pb.mutable_full_freq_caps()->Reserve(
           history_result->full_freq_caps_size());
         for(int i = 0; i < history_result->full_freq_caps_size(); ++i)
         {
-          request_params.full_freq_caps[i] =
-            history_result->full_freq_caps(i);
+          request_params_pb.mutable_full_freq_caps()->Add(
+            history_result->full_freq_caps(i));
         }
 
-        request_params.exclude_pubpixel_accounts.resize(
+        request_params_pb.clear_exclude_pubpixel_accounts();
+        request_params_pb.mutable_exclude_pubpixel_accounts()->Reserve(
           history_result->exclude_pubpixel_accounts_size());
         for(int i = 0; i < history_result->exclude_pubpixel_accounts_size(); ++i)
         {
-          request_params.exclude_pubpixel_accounts[i] =
-            history_result->exclude_pubpixel_accounts(i);
+          request_params_pb.mutable_exclude_pubpixel_accounts()->Add(
+            history_result->exclude_pubpixel_accounts(i));
         }
 
-        request_params.campaign_freqs.resize(
+        request_params_pb.clear_campaign_freqs();
+        request_params_pb.mutable_campaign_freqs()->Reserve(
           history_result->campaign_freqs_size());
         for(int i = 0; i < history_result->campaign_freqs_size(); ++i)
         {
           const auto& source = history_result->campaign_freqs(i);
-          auto& target = request_params.campaign_freqs[i];
-          target.campaign_id = source.campaign_id();
-          target.imps = source.imps();
+          auto* target = request_params_pb.add_campaign_freqs();
+          target->set_campaign_id(source.campaign_id());
+          target->set_imps(source.imps());
         }
 
-        request_params.seq_orders.resize(history_result->seq_orders_size());
+        request_params_pb.clear_seq_orders();
+        request_params_pb.mutable_seq_orders()->Reserve(
+          history_result->seq_orders_size());
         for(int i = 0; i < history_result->seq_orders_size(); ++i)
         {
           const auto& source = history_result->seq_orders(i);
-          auto& target = request_params.seq_orders[i];
-          target.ccg_id = source.ccg_id();
-          target.set_id = source.set_id();
-          target.imps = source.imps();
+          auto* target = request_params_pb.add_seq_orders();
+          target->set_ccg_id(source.ccg_id());
+          target->set_set_id(source.set_id());
+          target->set_imps(source.imps());
         }
 
-        request_params.common_info.coord_location.resize(
+        common_info->clear_coord_location();
+        common_info->mutable_coord_location()->Reserve(
           history_result->geo_data_seq_size());
         for(int i = 0; i < history_result->geo_data_seq_size(); ++i)
         {
           const auto& source = history_result->geo_data_seq(i);
-          auto& target = request_params.common_info.coord_location[i];
-          target.longitude = source.longitude();
-          target.latitude = source.latitude();
-          target.accuracy = source.accuracy();
+          auto* target = common_info->add_coord_location();
+          target->set_longitude(source.longitude());
+          target->set_latitude(source.latitude());
+          target->set_accuracy(source.accuracy());
         }
       }
 
@@ -2753,61 +2731,43 @@ namespace AdServer::Bidding
 
       const int history_channels_size =
         history_result ? history_result->channels_size() : 0;
-      request_params.channels.resize(history_channels_size + uid_channels_length);
+      request_params_pb.clear_channels();
+      request_params_pb.mutable_channels()->Reserve(
+        history_channels_size + uid_channels_length);
 
-      std::size_t j = 0;
-      for (int i = 0; i < history_channels_size; ++i, ++j)
+      for (int i = 0; i < history_channels_size; ++i)
       {
-        request_params.channels[j] =
-          history_result->channels(i).channel_id();
+        request_params_pb.mutable_channels()->Add(
+          history_result->channels(i).channel_id());
       }
 
       if (trigger_match_result)
       {
         const auto& uid_channels =
           trigger_match_result->matched_channels().uid_channels();
-        for (int i = 0; i < uid_channels.size(); ++i, ++j)
+        for (int i = 0; i < uid_channels.size(); ++i)
         {
-          request_params.channels[j] = uid_channels[i];
+          request_params_pb.mutable_channels()->Add(uid_channels[i]);
         }
       }
 
       // Fill CCG keywords
       if(ccg_keywords)
       {
-        request_params.ccg_keywords.resize(ccg_keywords->ccg_keywords_size());
+        request_params_pb.clear_ccg_keywords();
+        request_params_pb.mutable_ccg_keywords()->Reserve(
+          ccg_keywords->ccg_keywords_size());
         for(int i = 0; i < ccg_keywords->ccg_keywords_size(); ++i)
         {
           const auto& src_ccg_kw = ccg_keywords->ccg_keywords(i);
-          AdServer::Bidding::CampaignManager::CCGKeywordInfo&
-            res_ccg_kw = request_params.ccg_keywords[i];
-          res_ccg_kw.ccg_keyword_id = src_ccg_kw.ccg_keyword_id();
-          res_ccg_kw.ccg_id = src_ccg_kw.ccg_id();
-          res_ccg_kw.channel_id = src_ccg_kw.channel_id();
-          res_ccg_kw.max_cpc = src_ccg_kw.max_cpc();
-          res_ccg_kw.ctr = src_ccg_kw.ctr();
-          res_ccg_kw.click_url = src_ccg_kw.click_url();
-          res_ccg_kw.original_keyword = src_ccg_kw.original_keyword();
-        }
-      }
-
-      // Process black list users
-      const Generics::Time day_time =
-        request_info.current_time - request_info.current_time.get_gm_time().get_date();
-
-      if (blacklisted_time_intervals_.contains(day_time))
-      {
-        if (request_params.common_info.user_status ==
-            static_cast<std::size_t>(CampaignSvcs::US_OPTIN))
-        {
-          request_params.common_info.user_status =
-            static_cast<std::size_t>(CampaignSvcs::US_BLACKLISTED);
-        }
-
-        for(std::size_t slot_i = 0;
-            slot_i < request_params.ad_slots.size(); ++slot_i)
-        {
-          request_params.ad_slots[slot_i].passback = true;
+          auto* res_ccg_kw = request_params_pb.add_ccg_keywords();
+          res_ccg_kw->set_ccg_keyword_id(src_ccg_kw.ccg_keyword_id());
+          res_ccg_kw->set_ccg_id(src_ccg_kw.ccg_id());
+          res_ccg_kw->set_channel_id(src_ccg_kw.channel_id());
+          res_ccg_kw->mutable_max_cpc()->set_value(src_ccg_kw.max_cpc());
+          res_ccg_kw->mutable_ctr()->set_value(src_ccg_kw.ctr());
+          res_ccg_kw->set_click_url(src_ccg_kw.click_url());
+          res_ccg_kw->set_original_keyword(src_ccg_kw.original_keyword());
         }
       }
 
@@ -2815,36 +2775,36 @@ namespace AdServer::Bidding
         // fill special tokens
         if(!request_info.bid_request_id.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "BR_ID", request_info.bid_request_id);
         }
 
         if(!request_info.bid_site_id.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "BS_ID", request_info.bid_site_id);
         }
 
         if(!request_info.bid_publisher_id.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "BP_ID", request_info.bid_publisher_id);
         }
 
         if(!request_info.application_id.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "APPLICATION_ID", request_info.application_id);
         }
 
         if(!request_info.idfa.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "IDFA", request_info.idfa);
         }
         else if(!request_info.advertising_id.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "ADVERTISING_ID", request_info.advertising_id);
         }
         else if(history_result && !history_result->cohort().empty())
@@ -2859,32 +2819,32 @@ namespace AdServer::Bidding
               RequestInfo::PmrString("ios")) !=
               request_info.platform_names.end())
           {
-            add_token(request_params.common_info.tokens,
+            add_token(common_info->mutable_tokens(),
               "IDFA", history_result->cohort());
           }
           else
           {
-            add_token(request_params.common_info.tokens,
+            add_token(common_info->mutable_tokens(),
               "ADVERTISING_ID", history_result->cohort());
           }
         }
 
-        if(request_params.common_info.ext_track_params[0])
+        if(!common_info->ext_track_params().empty())
         {
-          add_token(request_params.common_info.tokens,
-            "EXT_TRACK_PARAMS", std::string(request_params.common_info.ext_track_params));
+          add_token(common_info->mutable_tokens(),
+            "EXT_TRACK_PARAMS", common_info->ext_track_params());
         }
 
         if(request_info.location)
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "GEO_REGION",
             request_info.location->region);
         }
 
         if(!request_info.ssp_devicetype_str.empty())
         {
-          add_token(request_params.common_info.tokens,
+          add_token(common_info->mutable_tokens(),
             "SSP_DEVICETYPE",
             request_info.ssp_devicetype_str);
         }
@@ -2892,7 +2852,7 @@ namespace AdServer::Bidding
 
       if (interrupted)
       {
-        request_params.required_passback = false;
+        request_params_pb.set_required_passback(false);
       }
     }
     catch(const eh::Exception& ex)
@@ -2905,22 +2865,10 @@ namespace AdServer::Bidding
         Aspect::BIDDING_FRONTEND,
         "ADS-IMPL-118");
     }
-
-    if(!interrupted && logger()->log_level() >= Logging::Logger::TRACE)
-    {
-      Generics::Time end_process_time = Generics::Time::get_time_of_day();
-      Stream::Error ostr;
-      ostr << FUN << ": campaign selection time = " <<
-        (end_process_time - start_process_time);
-      logger()->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::BIDDING_FRONTEND);
-    }
   }
 
   void
-  Frontend::update_config_()
-    noexcept
+  Frontend::update_config_() noexcept
   {
     static const char* FUN = "Frontend::update_config_()";
 
@@ -2942,8 +2890,7 @@ namespace AdServer::Bidding
   }
 
   void
-  Frontend::flush_state_()
-    noexcept
+  Frontend::flush_state_() noexcept
   {
     static const char* FUN = "Frontend::flush_state_()";
 
@@ -3037,8 +2984,7 @@ namespace AdServer::Bidding
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_update_config_()
-    noexcept
+  Frontend::co_update_config_() noexcept
   {
     static const char* FUN = "Frontend::co_update_config_()";
 
@@ -3218,8 +3164,7 @@ namespace AdServer::Bidding
   }
 
   SourceTraits::NativeAdsInstantiateType
-  Frontend::adapt_native_ads_instantiate_type_(
-    const std::string& inst_type_str)
+  Frontend::adapt_native_ads_instantiate_type_(const std::string& inst_type_str)
     /*throw(Exception)*/
   {
     if(inst_type_str == "none")
@@ -3287,8 +3232,7 @@ namespace AdServer::Bidding
   }
 
   AdServer::CampaignSvcs::NativeAdsImpressionTrackerType
-  Frontend::adapt_native_ads_impression_tracker_type_(
-    const std::string& imp_type_str)
+  Frontend::adapt_native_ads_impression_tracker_type_(const std::string& imp_type_str)
     /*throw(Exception)*/
   {
     if(imp_type_str == "imp")

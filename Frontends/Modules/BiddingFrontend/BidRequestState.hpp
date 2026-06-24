@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -164,6 +165,25 @@ namespace AdServer::Bidding
     write_interrupted_empty_response_(
       const String::SubString& interrupted_step) noexcept;
 
+    bool
+    require_debug_info_() noexcept;
+
+    void
+    print_user_resolving_debug_info_(
+      const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
+      const StageResult* stage) noexcept;
+
+    void
+    print_channel_matching_debug_info_(
+      const adserver::channel_svcs::channel_server::MatchResponse& response,
+      const StageResult* stage) noexcept;
+
+    void
+    print_history_matching_debug_info_(
+      const adserver::user_info_svcs::user_info_manager::MatchResult&
+        match_result,
+      const StageResult* stage) noexcept;
+
     void
     print_available_request_debug_info_() noexcept;
 
@@ -190,6 +210,7 @@ namespace AdServer::Bidding
 
     Stage current_stage_ = Stage::Initial;
     std::mutex mutex_current_stage_;
+    std::mutex debug_sink_mutex_;
 
   private:
     FCGI::BaseHttpResponseWriter_var response_writer_;

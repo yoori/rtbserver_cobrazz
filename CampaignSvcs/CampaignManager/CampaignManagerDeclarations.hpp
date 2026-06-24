@@ -87,18 +87,6 @@ namespace AdServer::CampaignSvcs
   typedef std::set<const Campaign*> ConstCampaignPtrSet;
   typedef std::set<const Creative*> ConstCreativePtrSet;
 
-  struct LostAuction
-  {
-    void swap(LostAuction& right)
-    {
-      ccgs.swap(right.ccgs);
-      creatives.swap(right.creatives);
-    }
-
-    ConstCampaignPtrSet ccgs;
-    ConstCreativePtrSet creatives;
-  };
-
   struct AdSelectionResult
   {
     AdSelectionResult()
@@ -134,6 +122,5 @@ namespace AdServer::CampaignSvcs
     bool household_based;
 
     AuctionType auction_type;
-    LostAuction lost_auction;
   };
 } // namespace AdServer::CampaignSvcs

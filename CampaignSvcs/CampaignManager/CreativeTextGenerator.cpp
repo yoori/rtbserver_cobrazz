@@ -16,25 +16,22 @@ namespace CampaignSvcs
     /*throw(eh::Exception)*/
   {
     OptionTokenValueMap union_args;
-    for(TokenValueMap::const_iterator req_arg_it =
-          request_args.begin();
-        req_arg_it != request_args.end(); ++req_arg_it)
+    for(TokenValueMap::const_iterator req_arg_it = request_args.begin();
+      req_arg_it != request_args.end(); ++req_arg_it)
     {
-      union_args.insert(std::make_pair(
+      union_args.emplace(
         req_arg_it->first,
-        OptionValue(0, req_arg_it->second.c_str())));
+        OptionValue(0, req_arg_it->second.c_str()));
     }
 
-    for(OptionTokenValueMap::const_iterator cr_arg_it =
-          creative_args.begin();
-        cr_arg_it != creative_args.end(); ++cr_arg_it)
+    for(OptionTokenValueMap::const_iterator cr_arg_it = creative_args.begin();
+      cr_arg_it != creative_args.end(); ++cr_arg_it)
     {
       union_args[cr_arg_it->first] = cr_arg_it->second;
     }
 
     for(OptionTokenValueMap::const_iterator it = creative_args.begin();
-        it != creative_args.end();
-        ++it)
+      it != creative_args.end(); ++it)
     {
       BaseTokenProcessor_var token_processor;
       TokenProcessorMap::const_iterator proc_it = token_processors.find(

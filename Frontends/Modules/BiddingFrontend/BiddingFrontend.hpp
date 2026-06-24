@@ -169,9 +169,6 @@ namespace AdServer::Bidding
     typedef Sync::Policy::PosixThread
       MaxPendingSyncPolicy;
 
-    typedef Commons::IntervalSet<Generics::Time>
-      BlacklistedTimeIntervals;
-
   public:
     /*
     bool
@@ -200,7 +197,9 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    select_campaign_(
+    prepare_get_campaign_creative_request_(
+      adserver::campaign_svcs::campaign_manager::GetCampaignCreativeRequest& request,
+      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const adserver::user_info_svcs::user_info_manager::MatchResponse*
         history_match_result,
       const adserver::channel_svcs::channel_server::MatchResponse*
@@ -208,11 +207,10 @@ namespace AdServer::Bidding
       const adserver::channel_svcs::channel_server::GetCcgTraitsResponse*
         ccg_keywords,
       const RequestInfo& request_info,
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Commons::UserId& user_id,
       bool passback,
       bool interrupted)
-      noexcept;
+    noexcept;
 
     bool
     consider_campaign_selection_(
@@ -353,7 +351,6 @@ namespace AdServer::Bidding
     Generics::Time request_timeout_;
     std::string server_id_;
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    BlacklistedTimeIntervals blacklisted_time_intervals_;
     RequestInfoFiller::AccountTraitsById account_traits_;
 
     // external services

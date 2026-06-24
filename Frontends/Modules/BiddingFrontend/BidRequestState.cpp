@@ -47,7 +47,10 @@ namespace AdServer::Bidding
           start_processing_time_);
       }
 
-      debug_sink_.set(String::SubString(request_info_.require_debug_info));
+      {
+        std::lock_guard lock(debug_sink_mutex_);
+        debug_sink_.set(String::SubString(request_info_.require_debug_info));
+      }
     }
     catch(...)
     {}
@@ -63,7 +66,10 @@ namespace AdServer::Bidding
       request_info_,
       request_holder_->request(),
       start_processing_time_);
-    debug_sink_.set(String::SubString(request_info_.require_debug_info));
+    {
+      std::lock_guard lock(debug_sink_mutex_);
+      debug_sink_.set(String::SubString(request_info_.require_debug_info));
+    }
 
     // fill request info & request type specific parameters
     if(!this->read_request())
@@ -71,7 +77,10 @@ namespace AdServer::Bidding
       this->write_empty_response(400);
       return false;
     }
-    debug_sink_.set(String::SubString(request_info_.require_debug_info));
+    {
+      std::lock_guard lock(debug_sink_mutex_);
+      debug_sink_.set(String::SubString(request_info_.require_debug_info));
+    }
 
     // check interrupt
     if(check_interrupt_(Stage::RequestParsing))
@@ -131,13 +140,22 @@ namespace AdServer::Bidding
       }
     }
 
-    if(debug_sink_.require_debug_info())
     {
-      debug_sink_.print_creative_selection_debug_info(
-        campaign_match_result_ref,
-        request_time_metering_.creative_selection ?
-          &*request_time_metering_.creative_selection : nullptr);
-      print_time_metering_debug_info_();
+      std::lock_guard lock(debug_sink_mutex_);
+      if(debug_sink_.require_debug_info())
+      {
+        debug_sink_.print_creative_selection_debug_info(
+          campaign_match_result_ref,
+          request_time_metering_.creative_selection ?
+            &*request_time_metering_.creative_selection : nullptr);
+        if(!time_metering_debug_info_printed_)
+        {
+          request_time_metering_.total_time =
+            Generics::Time::get_time_of_day() - start_processing_time_;
+          debug_sink_.print_time_metering_debug_info(request_time_metering_);
+          time_metering_debug_info_printed_ = true;
+        }
+      }
     }
 
     if(check_interrupt_(Stage::CampaignSelectionConsidering))
@@ -180,7 +198,7 @@ namespace AdServer::Bidding
   {
     if(write_empty_response)
     {
-      if(debug_sink_.require_debug_info())
+      if(require_debug_info_())
       {
         print_time_metering_debug_info_();
       }
@@ -222,7 +240,7 @@ namespace AdServer::Bidding
   {
     timeout_interrupted_.store(true, std::memory_order_relaxed);
 
-    if (debug_sink_.require_debug_info())
+    if (require_debug_info_())
     {
       print_available_request_debug_info_();
       const auto in_progress_stats =
@@ -248,20 +266,29 @@ namespace AdServer::Bidding
       {
         campaign_client_stats = bid_frontend_->campaign_manager_->stats();
       }
-      debug_sink_.print_interrupt_debug_info(
-        interrupted_step,
-        hostname_,
-        in_progress_stats.request,
-        in_progress_stats.user_resolving,
-        in_progress_stats.trigger_match,
-        in_progress_stats.history_match,
-        in_progress_stats.campaign_selection,
-        in_progress_stats.history_post_match,
-        user_bind_client_stats,
-        user_info_client_stats,
-        channel_client_stats,
+      {
+        std::lock_guard lock(debug_sink_mutex_);
+        debug_sink_.print_interrupt_debug_info(
+          interrupted_step,
+          hostname_,
+          in_progress_stats.request,
+          in_progress_stats.user_resolving,
+          in_progress_stats.trigger_match,
+          in_progress_stats.history_match,
+          in_progress_stats.campaign_selection,
+          in_progress_stats.history_post_match,
+          user_bind_client_stats,
+          user_info_client_stats,
+          channel_client_stats,
           campaign_client_stats);
-      print_time_metering_debug_info_();
+        if(!time_metering_debug_info_printed_)
+        {
+          request_time_metering_.total_time =
+            Generics::Time::get_time_of_day() - start_processing_time_;
+          debug_sink_.print_time_metering_debug_info(request_time_metering_);
+          time_metering_debug_info_printed_ = true;
+        }
+      }
     }
     write_empty_response(0, true);
   }
@@ -284,8 +311,9 @@ namespace AdServer::Bidding
 
     if(send_response)
     {
-      if(debug_sink_.require_debug_info())
+      if(require_debug_info_())
       {
+        std::lock_guard lock(debug_sink_mutex_);
         debug_sink_.write_response(response, code, resolved_user_id_);
       }
       response_writer_->write(code, response);
@@ -300,13 +328,51 @@ namespace AdServer::Bidding
     return to_interrupt_.exchange_and_add(1) == 0;
   }
 
+  bool
+  BidRequestState::require_debug_info_() noexcept
+  {
+    std::lock_guard lock(debug_sink_mutex_);
+    return debug_sink_.require_debug_info();
+  }
+
+  void
+  BidRequestState::print_user_resolving_debug_info_(
+    const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
+    const StageResult* stage) noexcept
+  {
+    std::lock_guard lock(debug_sink_mutex_);
+    debug_sink_.print_user_resolving_debug_info(
+      user_resolving_debug_info,
+      stage);
+  }
+
+  void
+  BidRequestState::print_channel_matching_debug_info_(
+    const adserver::channel_svcs::channel_server::MatchResponse& response,
+    const StageResult* stage) noexcept
+  {
+    std::lock_guard lock(debug_sink_mutex_);
+    debug_sink_.print_channel_matching_debug_info(response, stage);
+  }
+
+  void
+  BidRequestState::print_history_matching_debug_info_(
+    const adserver::user_info_svcs::user_info_manager::MatchResult&
+      match_result,
+    const StageResult* stage) noexcept
+  {
+    std::lock_guard lock(debug_sink_mutex_);
+    debug_sink_.print_history_matching_debug_info(match_result, stage);
+  }
+
   void
   BidRequestState::print_available_request_debug_info_() noexcept
   {
+    std::lock_guard lock(debug_sink_mutex_);
     if(debug_sink_.require_debug_info() &&
-       !request_debug_info_printed_ &&
-       get_current_stage() != Stage::Initial &&
-       request_params_.in())
+      !request_debug_info_printed_ &&
+      get_current_stage() != Stage::Initial &&
+      request_params_.in())
     {
       debug_sink_.print_request_debug_info(
         request_info_,
@@ -320,6 +386,7 @@ namespace AdServer::Bidding
   void
   BidRequestState::print_time_metering_debug_info_() noexcept
   {
+    std::lock_guard lock(debug_sink_mutex_);
     if(debug_sink_.require_debug_info() && !time_metering_debug_info_printed_)
     {
       request_time_metering_.total_time =

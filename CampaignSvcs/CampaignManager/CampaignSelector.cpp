@@ -500,80 +500,6 @@ namespace AdServer
       }
     }
 
-    template<typename CampaignHolderIteratorType>
-    void
-    CampaignSelector::collect_lost_(
-      LostAuction& lost_auction,
-      const CampaignIndex::Key& key,
-      const CampaignSelectParams& request_params,
-      const Tag* tag,
-      const ChannelIdHashSet& matched_channels,
-      CampaignHolderIteratorType it,
-      CampaignHolderIteratorType end)
-      const
-      noexcept
-    {
-      CampaignSelectorPmrBuffer pmr_buffer;
-
-      for(; it != end; ++it)
-      {
-        const Campaign* campaign = (*it)->campaign;
-
-        if(campaign_selection_index_->check_campaign(
-             key,
-             campaign,
-             request_params.time,
-             request_params.profiling_available,
-             request_params.full_freq_caps,
-             request_params.colocation->colo_id,
-             request_params.user_create_time,
-             request_params.user_id,
-             0) &&
-           campaign_selection_index_->check_campaign_channel(
-             campaign,
-             matched_channels))
-        {
-          // collect ads lost auction obviously (ecpm < result ecpm)
-          CampaignIndex::ConstCreativePtrList available_creatives;
-
-          campaign_selection_index_->filter_creatives(
-            key,
-            tag,
-            &request_params.tag_sizes,
-            campaign,
-            request_params.profiling_available,
-            request_params.full_freq_caps,
-            SeqOrderMap(),
-            available_creatives,
-            true, // check click categories
-            request_params.up_expand_space,
-            request_params.right_expand_space,
-            request_params.down_expand_space,
-            request_params.left_expand_space,
-            request_params.video_min_duration,
-            request_params.video_max_duration,
-            request_params.video_skippable_max_duration,
-            request_params.video_allow_skippable,
-            request_params.video_allow_unskippable,
-            request_params.allowed_durations,
-            request_params.exclude_categories,
-            request_params.required_categories,
-            request_params.secure,
-            request_params.filter_empty_destination,
-            pmr_buffer.reset_memory_resource(),
-            0);
-
-          std::copy(
-            available_creatives.begin(),
-            available_creatives.end(),
-            std::inserter(lost_auction.creatives,
-              lost_auction.creatives.begin()));
-
-          lost_auction.ccgs.insert(campaign);
-        }
-      }
-    }
-
     // get_all_display_campaign_candidates_ with ctr calculation
     void
     CampaignSelector::get_all_display_campaign_candidates_(
@@ -973,13 +899,11 @@ namespace AdServer
     void
     CampaignSelector::get_max_display_campaign_candidates_(
       WeightedCampaignList& result_campaign_candidates,
-      LostAuction* lost_auction,
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const ChannelIdHashSet& matched_channels,
-      const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
-      const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
+      const CampaignIndex::CampaignSelectionCellPtrList& campaign_list)
       const
       noexcept
     {
@@ -1073,29 +997,6 @@ namespace AdServer
             {}
           }
         }
-      }
-
-      if(lost_auction)
-      {
-        // collect lost for margin filtered campaigns
-        collect_lost_(
-          *lost_auction,
-          key,
-          request_params,
-          tag,
-          matched_channels,
-          lost_campaigns.begin(),
-          lost_campaigns.end());
-
-        // collect lost for non selected campaigns with ecpm < selected ecpm
-        collect_lost_(
-          *lost_auction,
-          key,
-          request_params,
-          tag,
-          matched_channels,
-          cmp_it,
-          campaign_list.end());
       }
     }
 
@@ -1264,7 +1165,6 @@ namespace AdServer
 
     CampaignSelector::WeightedCampaignPtr
     CampaignSelector::select_display_campaign_(
-      LostAuction* lost_auction,
       AuctionType auction_type,
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
@@ -1272,8 +1172,7 @@ namespace AdServer
       const CTR::CTRProvider::Calculation* ctr_calculation,
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& matched_channels,
-      const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
-      const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
+      const CampaignIndex::CampaignSelectionCellPtrList& campaign_list)
       const
       noexcept
     {
@@ -1283,13 +1182,11 @@ namespace AdServer
 
         get_max_display_campaign_candidates_(
           random_select_campaigns,
-          lost_auction,
           key,
           request_params,
           tag,
           matched_channels,
-          campaign_list,
-          lost_campaigns);
+          campaign_list);
 
         /*
         std::cerr << "random_select_campaigns :" << std::endl;
@@ -1310,37 +1207,16 @@ namespace AdServer
               random_select_campaigns.end(),
               equal_weight_fun);
 
-          if(lost_auction)
-          {
-            // collect lost for campaigns with equal ecpm (all filters already passed)
-            for(WeightedCampaignList::iterator eq_it =
-                  random_select_campaigns.begin();
-                eq_it != random_select_campaigns.end(); ++eq_it)
-            {
-              if(eq_it != res_it)
-              {
-                lost_auction->ccgs.insert((*eq_it)->campaign);
-
-                std::copy(
-                  (*eq_it)->available_creatives.begin(),
-                  (*eq_it)->available_creatives.end(),
-                  std::inserter(lost_auction->creatives,
-                    lost_auction->creatives.begin()));
-              }
-            }
-          }
-
           return std::move(*res_it);
         }
       }
       else
       {
         WeightedCampaignList random_select_campaigns;
-        CampaignIndex::CampaignSelectionCellPtrList get_all_display_lost_campaigns;
 
         get_all_display_campaign_candidates_(
           random_select_campaigns,
-          &get_all_display_lost_campaigns,
+          0,
           key,
           request_params,
           tag,
@@ -1460,53 +1336,9 @@ namespace AdServer
               cmp_it = *cmp_it_it;
             }
 
-            if(lost_auction)
-            {
-              // fill lost
-              for(WeightedCampaignList::iterator lost_cmp_it =
-                    random_select_campaigns.begin();
-                  lost_cmp_it != random_select_campaigns.end();
-                  ++lost_cmp_it)
-              {
-                if(lost_cmp_it != cmp_it)
-                {
-                  lost_auction->ccgs.insert((*lost_cmp_it)->campaign);
-
-                  std::copy(
-                    (*lost_cmp_it)->available_creatives.begin(),
-                    (*lost_cmp_it)->available_creatives.end(),
-                    std::inserter(lost_auction->creatives,
-                      lost_auction->creatives.begin()));
-                }
-              }
-            }
-
             return std::move(*cmp_it);
           }
         } // !random_select_campaigns.empty()
-
-        if(lost_auction)
-        {
-          // collect lost for margin filtered campaigns
-          collect_lost_(
-            *lost_auction,
-            key,
-            request_params,
-            tag,
-            matched_channels,
-            lost_campaigns.begin(),
-            lost_campaigns.end());
-
-          // collect lost for non selected campaigns with ecpm < selected ecpm
-          collect_lost_(
-            *lost_auction,
-            key,
-            request_params,
-            tag,
-            matched_channels,
-            get_all_display_lost_campaigns.begin(),
-            get_all_display_lost_campaigns.end());
-        }
       }
 
       return CampaignSelector::WeightedCampaignPtr();
@@ -1810,7 +1642,6 @@ namespace AdServer
 
     bool
     CampaignSelector::select_campaign_keywords_n_(
-      LostAuction* lost_auction,
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
@@ -1836,14 +1667,9 @@ namespace AdServer
       AccountIdSet advertiser_filter_ids;
       CCGIdSet ccg_filter_ids;
 
-      /* filter keywords by
-       *   creative availability
-       *   text ads multi showing
-       * fetch all if lost ccgs collect required
-       */
+      /* filter keywords by creative availability and multi showing */
       for(CPCKeywordMap::const_reverse_iterator cit = cpc_keyword_map.rbegin();
-          cit != cpc_keyword_map.rend() && (
-            selected_keywords < max_keywords || lost_auction);
+          cit != cpc_keyword_map.rend() && selected_keywords < max_keywords;
           ++cit)
       {
         const WeightedCampaignKeywordList& kws = cit->second;
@@ -1851,8 +1677,7 @@ namespace AdServer
         /* check keywords with equal actual cpc */
         for(WeightedCampaignKeywordList::const_iterator sub_cit =
               kws.begin();
-            sub_cit != kws.end() && (
-              selected_keywords < max_keywords || lost_auction);
+            sub_cit != kws.end() && selected_keywords < max_keywords;
             ++sub_cit)
         {
           bool filtered = false;
@@ -1985,9 +1810,6 @@ namespace AdServer
         CPCKeywordCreativeMap::reverse_iterator cit =
           filtered_cpc_keyword_map.rbegin();
 
-        ConstCampaignPtrSet sub_lost_ccgs;
-        ConstCreativePtrSet sub_lost_creatives;
-
         for(; cit != filtered_cpc_keyword_map.rend() &&
               selected_keywords < max_keywords - 1;
             ++cit)
@@ -2072,23 +1894,6 @@ namespace AdServer
             ++bidder_number;
           } // keywords with equal max_ecpm loop
 
-          if(lost_auction)
-          {
-            // fetch remaining campaigns for fill lost auction
-            // campaigns is unique, because minimal filtering for text ad :
-            // one ccg for showing
-            for(; sub_cit != kws.end(); ++sub_cit)
-            {
-              sub_lost_ccgs.insert(
-                sub_cit->weighted_campaign_keyword.campaign);
-
-              std::copy(
-                sub_cit->available_creatives.begin(),
-                sub_cit->available_creatives.end(),
-                std::inserter(sub_lost_creatives,
-                  sub_lost_creatives.begin()));
-            }
-          }
         } // filtered_cpc_keyword_map loop for 2..N bidders
 
         // first bidder calculations
@@ -2214,51 +2019,6 @@ namespace AdServer
         bool text_ads_selected = (
           non_first_bidders_actual_ecpm_sum + actual_ecpm) >=
           min_sum_ecpm;
-
-        if(lost_auction)
-        {
-          if(!text_ads_selected)
-          {
-            // all campaigns lost
-            cit = filtered_cpc_keyword_map.rbegin();
-          }
-          else
-          {
-            std::copy(
-              sub_lost_ccgs.begin(),
-              sub_lost_ccgs.end(),
-              std::inserter(lost_auction->ccgs,
-                lost_auction->ccgs.begin()));
-            std::copy(
-              sub_lost_creatives.begin(),
-              sub_lost_creatives.end(),
-              std::inserter(lost_auction->creatives,
-                lost_auction->creatives.begin()));
-
-            // first bidder win if text ads selected
-            if(cit == filtered_cpc_keyword_map.rbegin())
-            {
-              ++cit;
-            }
-          }
-
-          for(; cit != filtered_cpc_keyword_map.rend(); ++cit)
-          {
-            CampaignKeywordCreativeList& kws = cit->second;
-
-            for(CampaignKeywordCreativeList::iterator sub_cit = kws.begin();
-                sub_cit != kws.end(); ++sub_cit)
-            {
-              lost_auction->ccgs.insert(
-                sub_cit->weighted_campaign_keyword.campaign);
-              std::copy(
-                sub_cit->available_creatives.begin(),
-                sub_cit->available_creatives.end(),
-                std::inserter(lost_auction->creatives,
-                  lost_auction->creatives.begin()));
-            }
-          }
-        }
 
         return text_ads_selected;
       } // !filtered_cpc_keyword_map.empty()
@@ -3093,8 +2853,6 @@ namespace AdServer
       const
       noexcept
     {
-      LostAuction* lost_auction = collect_lost ? &select_result.lost_auction : 0;
-
       CampaignIndex::CampaignSelectionCellPtrList wg_display_check_campaigns;
       CampaignIndex::CampaignSelectionCellPtrList display_check_campaigns;
       CampaignIndex::CampaignCellPtrArray keyword_check_campaigns;
@@ -3406,128 +3164,6 @@ namespace AdServer
             min_text_ecpm,
             tag_size->max_text_creatives);
         }
-
-        if(lost_auction)
-        {
-          // fill lost
-          for(WeightedCampaignList::iterator lost_cmp_it =
-                display_campaign_candidates.begin();
-              lost_cmp_it != display_campaign_candidates.end();
-              ++lost_cmp_it)
-          {
-            if(lost_cmp_it->get() && (
-                 !result_display_campaign.get() ||
-                 (*lost_cmp_it)->campaign !=
-                   result_display_campaign->campaign))
-            {
-              lost_auction->ccgs.insert((*lost_cmp_it)->campaign);
-              std::copy(
-                (*lost_cmp_it)->available_creatives.begin(),
-                (*lost_cmp_it)->available_creatives.end(),
-                std::inserter(
-                  lost_auction->creatives,
-                  lost_auction->creatives.begin()));
-            }
-          }
-
-          // push all candidates into lost, clear selected after
-          text_selections.insert(text_selections.end(),
-            text_selections_zero_ecpm.begin(),
-            text_selections_zero_ecpm.end());
-
-          for(TextSelectionBySizeList::iterator text_selection_it =
-                text_selections.begin();
-              text_selection_it != text_selections.end();
-              ++text_selection_it)
-          {
-            for(WeightedCampaignKeywordList::iterator lost_cmp_it =
-                  text_selection_it->campaign_candidates.begin();
-                lost_cmp_it != text_selection_it->campaign_candidates.end();
-                ++lost_cmp_it)
-            {
-              lost_auction->ccgs.insert(lost_cmp_it->campaign);
-            }
-          }
-
-          if(result_text_campaigns.get())
-          {
-            for(WeightedCampaignKeywordList::const_iterator res_cmp_it =
-                  result_text_campaigns->begin();
-                res_cmp_it != result_text_campaigns->end();
-                ++res_cmp_it)
-            {
-              lost_auction->ccgs.erase(res_cmp_it->campaign);
-            }
-          }
-
-          for(ConstCampaignPtrSet::const_iterator lost_ccg_it =
-                lost_auction->ccgs.begin();
-              lost_ccg_it != lost_auction->ccgs.end(); ++lost_ccg_it)
-          {
-            CampaignIndex::ConstCreativePtrList available_creatives;
-            CampaignSelectorPmrBuffer pmr_buffer;
-
-            for(TextSelectionBySizeList::iterator text_selection_it =
-                  text_selections.begin();
-                text_selection_it != text_selections.end();
-                ++text_selection_it)
-            {
-              campaign_selection_index_->filter_creatives(
-                key,
-                tag,
-                &text_selection_it->tag_sizes,
-                *lost_ccg_it,
-                request_params.profiling_available,
-                request_params.full_freq_caps,
-                SeqOrderMap(),
-                available_creatives,
-                true, // check click categories
-                request_params.up_expand_space,
-                request_params.right_expand_space,
-                request_params.down_expand_space,
-                request_params.left_expand_space,
-                request_params.video_min_duration,
-                request_params.video_max_duration,
-                request_params.video_skippable_max_duration,
-                request_params.video_allow_skippable,
-                request_params.video_allow_unskippable,
-                request_params.allowed_durations,
-                request_params.exclude_categories,
-                request_params.required_categories,
-                request_params.secure,
-                request_params.filter_empty_destination,
-                pmr_buffer.reset_memory_resource(),
-                0);
-            }
-
-            for(CampaignIndex::ConstCreativePtrList::const_iterator cr_it =
-                  available_creatives.begin();
-                cr_it != available_creatives.end(); ++cr_it)
-            {
-              lost_auction->creatives.insert(*cr_it);
-            }
-          }
-
-          // collect lost for margin filtered campaigns
-          collect_lost_(
-            *lost_auction,
-            key,
-            request_params,
-            tag,
-            matched_channels,
-            lost_campaigns.begin(),
-            lost_campaigns.end());
-
-          // collect lost for non selected campaigns with ecpm < selected ecpm
-          collect_lost_(
-            *lost_auction,
-            key,
-            request_params,
-            tag,
-            matched_channels,
-            get_all_display_lost_campaigns.begin(),
-            get_all_display_lost_campaigns.end());
-        } // if(lost_auction)
       }
       else
       {
@@ -3559,7 +3195,6 @@ namespace AdServer
       CampaignIndex::CampaignCellPtrArray text_check_campaigns;
       CampaignIndex::CampaignCellPtrArray lost_wg_campaigns;
       CampaignIndex::CampaignCellPtrArray lost_campaigns;
-      LostAuction* lost_auction = (collect_lost ? &select_result.lost_auction : 0);
 
       campaign_selection_index_->get_campaigns(
         key,
@@ -3571,7 +3206,6 @@ namespace AdServer
         collect_lost ? &lost_campaigns : 0);
 
       weighted_campaign = select_display_campaign_(
-        lost_auction,
         AT_MAX_ECPM,
         key,
         request_params,
@@ -3579,8 +3213,7 @@ namespace AdServer
         ctr_calculation,
         conv_rate_calculation,
         channels,
-        wg_display_check_campaigns,
-        lost_wg_campaigns);
+        wg_display_check_campaigns);
 
       // select display campaign (OIX)
       if(!weighted_campaign.get() &&
@@ -3589,7 +3222,6 @@ namespace AdServer
       {
 
         weighted_campaign = select_display_campaign_(
-          lost_auction,
           AT_MAX_ECPM,
           key,
           request_params,
@@ -3597,15 +3229,7 @@ namespace AdServer
           ctr_calculation,
           conv_rate_calculation,
           channels,
-          display_check_campaigns,
-          lost_campaigns);
-
-        if(collect_lost && weighted_campaign.get())
-        {
-          // remove selected campaign from lost campaigns,
-          //   it can be present if lost WG auction
-          select_result.lost_auction.ccgs.erase(weighted_campaign->campaign);
-        }
+          display_check_campaigns);
 
         const Tag::TagPricing* tag_pricing = tag->select_tag_pricing(
           request_params.country_code.c_str(),
@@ -3718,7 +3342,6 @@ namespace AdServer
               WeightedCampaignKeywordList step_weighted_campaign_keywords;
 
               if(select_campaign_keywords_n_(
-                   collect_lost ? &select_result.lost_auction : 0,
                    key,
                    request_params,
                    tag,
@@ -3735,17 +3358,6 @@ namespace AdServer
                     wit != step_weighted_campaign_keywords.end(); ++wit)
                 {
                   sum_step_ecpm += wit->actual_ecpm;
-                }
-
-                if(collect_lost)
-                {
-                  for(WeightedCampaignKeywordList::const_iterator wit =
-                        step_weighted_campaign_keywords.begin();
-                      wit != step_weighted_campaign_keywords.end(); ++wit)
-                  {
-                    select_result.lost_auction.ccgs.insert(wit->campaign);
-                    select_result.lost_auction.creatives.insert(wit->creative);
-                  }
                 }
 
                 /*
@@ -3791,46 +3403,12 @@ namespace AdServer
               ts_it->campaign_candidates);
 
             assert(select_result.tag_size);
-
-            if(collect_lost)
-            {
-              // remove from lost ccgs, creatives selected cells
-              for(WeightedCampaignKeywordList::const_iterator wit =
-                    result_weighted_campaign_keywords->begin();
-                  wit != result_weighted_campaign_keywords->end(); ++wit)
-              {
-                select_result.lost_auction.ccgs.erase(wit->campaign);
-                select_result.lost_auction.creatives.erase(wit->creative);
-              }
-
-              if(weighted_campaign.get())
-              {
-                // text ads win: push selected display campaign to lost auctions
-                select_result.lost_auction.ccgs.insert(weighted_campaign->campaign);
-                std::copy(weighted_campaign->available_creatives.begin(),
-                  weighted_campaign->available_creatives.end(),
-                  std::inserter(select_result.lost_auction.creatives,
-                    select_result.lost_auction.creatives.begin()));
-              }
-            }
           }
         } // !request_params.only_display_ad
       }
       else
       {
         select_result.walled_garden = true;
-      }
-
-      if(lost_auction)
-      {
-        collect_lost_(
-          select_result.lost_auction,
-          key,
-          request_params,
-          tag,
-          channels,
-          lost_campaigns.begin(),
-          lost_campaigns.end());
       }
     }
 

@@ -693,29 +693,6 @@ namespace AdServer
               div_reminder));
       }
 
-      // copy lost auction info
-      for(ConstCampaignPtrSet::const_iterator ccg_it =
-            ad_selection_result.lost_auction.ccgs.begin();
-          ccg_it != ad_selection_result.lost_auction.ccgs.end();
-          ++ccg_it)
-      {
-        ad_request_selection_info.lost_auction_ccgs.push_back(
-          CampaignManagerLogger::AdRequestSelectionInfo::TimedId(
-            request_time + (*ccg_it)->account->time_offset,
-            (*ccg_it)->campaign_id));
-      }
-
-      for(ConstCreativePtrSet::const_iterator cc_it =
-            ad_selection_result.lost_auction.creatives.begin();
-          cc_it != ad_selection_result.lost_auction.creatives.end();
-          ++cc_it)
-      {
-          ad_request_selection_info.lost_auction_creatives.push_back(
-          CampaignManagerLogger::AdRequestSelectionInfo::TimedId(
-            request_time + (*cc_it)->campaign->account->time_offset,
-            (*cc_it)->ccid));
-      }
-
       AdSelectionInfoList& ad_info_list =
         ad_request_selection_info.ad_selection_info_list;
 

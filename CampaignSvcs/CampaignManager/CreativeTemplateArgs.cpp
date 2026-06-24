@@ -20,8 +20,7 @@ namespace CampaignSvcs
     return false;
   }
 
-  class TemplateArgsHelper:
-    public String::TextTemplate::ArgsCallback
+  class TemplateArgsHelper: public String::TextTemplate::ArgsCallback
   {
   public:
     TemplateArgsHelper(
@@ -40,10 +39,9 @@ namespace CampaignSvcs
     {}
 
   private:
-    virtual
     bool
     get_argument(const String::SubString& key, std::string& result,
-      bool value = true) const
+      bool value = true) const override
       /*throw(BaseTokenProcessor::InvalidValue, eh::Exception)*/
     {
       if(max_depth_ == 0)
@@ -143,11 +141,6 @@ namespace CampaignSvcs
       if(value_it == token_values.end() && !rule.use_empty_values_)
       {
         return false;
-        /*
-        Stream::Error ostr;
-        ostr << "Undefined value of '" << token_ << "'.";
-        throw String::TextTemplate::UnknownName(ostr);
-        */
       }
 
       String::TextTemplate::Basic templ(

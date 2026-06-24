@@ -277,13 +277,11 @@ namespace AdServer
       void
       get_max_display_campaign_candidates_(
         WeightedCampaignList& result_campaign_candidates,
-        LostAuction* lost_auction,
         const CampaignIndex::Key& key,
         const CampaignSelectParams& request_params,
         const Tag* tag,
         const ChannelIdHashSet& matched_channels,
-        const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
-        const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
+        const CampaignIndex::CampaignSelectionCellPtrList& campaign_list)
         const
         noexcept;
 
@@ -303,7 +301,6 @@ namespace AdServer
 
       WeightedCampaignPtr
       select_display_campaign_(
-        LostAuction* lost_auction,
         AuctionType auction_type,
         const CampaignIndex::Key& key,
         const CampaignSelectParams& request_params,
@@ -311,8 +308,7 @@ namespace AdServer
         const CTR::CTRProvider::Calculation* ctr_calculation,
         const CTR::CTRProvider::Calculation* conv_rate_calculation,
         const ChannelIdHashSet& matched_channels,
-        const CampaignIndex::CampaignSelectionCellPtrList& candidates,
-        const CampaignIndex::CampaignCellPtrArray& lost_campaigns)
+        const CampaignIndex::CampaignSelectionCellPtrList& candidates)
         const
         noexcept;
 
@@ -428,7 +424,6 @@ namespace AdServer
 
       bool
       select_campaign_keywords_n_(
-        LostAuction* lost_auction,
         const CampaignIndex::Key& key,
         const CampaignSelectParams& request_params,
         const Tag* tag,
@@ -483,20 +478,6 @@ namespace AdServer
       static
       const Tag::Size*
       select_tag_size_(const Tag* tag, const Creative* creative)
-        noexcept;
-
-      // Filter lost creatives and campaigns
-      // ex collect_max_ecpm_lost_
-      template<typename CampaignHolderIteratorType>
-      void collect_lost_(
-        LostAuction& lost_auction,
-        const CampaignIndex::Key& key,
-        const CampaignSelectParams& request_params,
-        const Tag* tag,
-        const ChannelIdHashSet& matched_channels,
-        CampaignHolderIteratorType begin,
-        CampaignHolderIteratorType end)
-        const
         noexcept;
 
       static RevenueDecimal
