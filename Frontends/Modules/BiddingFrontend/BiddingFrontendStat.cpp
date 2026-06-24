@@ -4,14 +4,13 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
+#include <map>
+
 namespace
 {
   const Generics::Values::Key BF_REQ_COUNT        = "rtb_request_total";
   const Generics::Values::Key BF_REQ_FINISHED     = "rtb_request_finished_total";
   const Generics::Values::Key BF_REQ_BIDS         = "rtb_request_bid_total";
-  const Generics::Values::Key FCGI_ACCEPT_TOTAL   = "fcgi_accept_total";
-  const Generics::Values::Key FCGI_CONNECTION_IN_PROGRESS =
-    "fcgi_connection_in_progress";
 
   const Generics::Values::Key BF_SKIPPED          = "rtb_request_skip_total";
   const Generics::Values::Key BF_TIMEOUTS         = "rtb_request_timeout_total";
@@ -143,6 +142,43 @@ using namespace AdServer::CampaignSvcs;
 
 namespace AdServer
 {
+  namespace
+  {
+    struct ValuesMetricWriter
+    {
+      explicit
+      ValuesMetricWriter(Generics::MetricsProvider::MetricArray& result)
+        : result(result)
+      {}
+
+      void
+      operator()(std::size_t)
+      {}
+
+      template<typename Type>
+      void
+      operator()(
+        const Generics::Values::Key& key,
+        const Type& value)
+      {
+        if constexpr(std::is_integral_v<Type>)
+        {
+          result.emplace_back(key.text(), static_cast<long>(value));
+        }
+        else if constexpr(std::is_floating_point_v<Type>)
+        {
+          result.emplace_back(key.text(), static_cast<double>(value));
+        }
+        else
+        {
+          result.emplace_back(key.text(), value);
+        }
+      }
+
+      Generics::MetricsProvider::MetricArray& result;
+    };
+  }
+
   // StatHolder::StatData
 
   StatHolder::StatData::StatData()
@@ -218,21 +254,17 @@ namespace AdServer
   }
 
   void
-  StatHolder::add_fcgi_accept() noexcept
+  StatHolder::add_selected_bid(unsigned long ccg_id) noexcept
   {
-    fcgi_accept_total_.fetch_add(1, std::memory_order_relaxed);
+    std::lock_guard lock(selected_bids_lock_);
+    ++selected_bids_[ccg_id];
   }
 
-  void
-  StatHolder::add_fcgi_connection() noexcept
+  std::map<unsigned long, unsigned long>
+  StatHolder::selected_bids() noexcept
   {
-    fcgi_connection_in_progress_.fetch_add(1, std::memory_order_relaxed);
-  }
-
-  void
-  StatHolder::complete_fcgi_connection() noexcept
-  {
-    fcgi_connection_in_progress_.fetch_sub(1, std::memory_order_relaxed);
+    std::lock_guard lock(selected_bids_lock_);
+    return selected_bids_;
   }
 
   void
@@ -437,10 +469,6 @@ namespace AdServer
     v->set(BF_REQ_COUNT, d.request_total);
     v->set(BF_REQ_FINISHED, d.request_finished_total);
     v->set(BF_REQ_BIDS, d.request_total_bid);
-    v->set(FCGI_ACCEPT_TOTAL, fcgi_accept_total_.load(std::memory_order_relaxed));
-    v->set(
-      FCGI_CONNECTION_IN_PROGRESS,
-      fcgi_connection_in_progress_.load(std::memory_order_relaxed));
 
     v->set(BF_SKIPPED, d.skipped);
     v->set(BF_REQ_IN_PROGRESS, d.request_in_progress);
@@ -483,8 +511,31 @@ namespace AdServer
     }
     v->set(BF_TIMEOUTS, timeout_counter);
     v->set(BF_TIME_COUNTER, static_cast<unsigned long>(d.processing_time.microseconds()));
+    for(const auto& [ccg_id, count] : selected_bids())
+    {
+      v->set(
+        Generics::Values::Key(
+          std::string("bids_ccg_") + std::to_string(ccg_id)),
+        count);
+    }
 
     return v;
   }
 
+  StatHolderMetricsProvider::StatHolderMetricsProvider(StatHolder* stats)
+    : stats_(ReferenceCounting::add_ref(stats))
+  {}
+
+  StatHolderMetricsProvider::MetricArray
+  StatHolderMetricsProvider::get_values()
+  {
+    MetricArray result;
+    if(stats_.in())
+    {
+      Generics::Values_var values = stats_->dump_stats();
+      ValuesMetricWriter writer(result);
+      values->enumerate_all(writer);
+    }
+    return result;
+  }
 }

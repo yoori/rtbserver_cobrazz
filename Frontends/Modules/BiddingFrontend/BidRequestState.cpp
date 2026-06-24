@@ -5,7 +5,7 @@
 namespace AdServer::Bidding
 {
   BidRequestState::BidRequestState(
-    Frontend* bid_frontend,
+    BiddingFrontendCore* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
@@ -13,7 +13,7 @@ namespace AdServer::Bidding
     : bid_frontend_(bid_frontend),
       request_holder_(std::move(request_holder)),
       start_processing_time_(start_processing_time),
-      debug_sink_(bid_frontend->server_id_),
+      debug_sink_(bid_frontend->server_id()),
       to_interrupt_(0),
       timeout_interrupted_(false),
       request_params_(new RequestParamsHolder()),
@@ -41,7 +41,7 @@ namespace AdServer::Bidding
     {
       if(request_info_.require_debug_info.empty() && request_holder_.in())
       {
-        bid_frontend_->request_info_filler_->fill(
+        bid_frontend_->request_info_filler()->fill(
           request_info_,
           request_holder_->request(),
           start_processing_time_);
@@ -62,7 +62,7 @@ namespace AdServer::Bidding
     set_current_stage(Stage::RequestParsing);
 
     // fill request info by url parameters
-    bid_frontend_->request_info_filler_->fill(
+    bid_frontend_->request_info_filler()->fill(
       request_info_,
       request_holder_->request(),
       start_processing_time_);
@@ -207,7 +207,7 @@ namespace AdServer::Bidding
 
     clear();
 
-    bid_frontend_->bid_task_count_ += -1;
+    bid_frontend_->bid_task_count() += -1;
   }
 
   void
@@ -244,27 +244,27 @@ namespace AdServer::Bidding
     {
       print_available_request_debug_info_();
       const auto in_progress_stats =
-        bid_frontend_->stats_->rtb_request_in_progress_stats();
+        bid_frontend_->stats()->rtb_request_in_progress_stats();
       AdServer::Grpc::Stats user_bind_client_stats;
-      if (bid_frontend_->user_bind_client_)
+      if (bid_frontend_->user_bind_client())
       {
-        user_bind_client_stats = bid_frontend_->user_bind_client_->stats();
+        user_bind_client_stats = bid_frontend_->user_bind_client()->stats();
       }
       AdServer::Grpc::Stats user_info_client_stats;
-      if (bid_frontend_->user_info_distributed_client_)
+      if (bid_frontend_->user_info_distributed_client())
       {
         user_info_client_stats =
-          bid_frontend_->user_info_distributed_client_->stats();
+          bid_frontend_->user_info_distributed_client()->stats();
       }
       AdServer::Grpc::Stats channel_client_stats;
-      if (bid_frontend_->channel_client_)
+      if (bid_frontend_->channel_client())
       {
-        channel_client_stats = bid_frontend_->channel_client_->stats();
+        channel_client_stats = bid_frontend_->channel_client()->stats();
       }
       AdServer::Grpc::Stats campaign_client_stats;
-      if (bid_frontend_->campaign_manager_)
+      if (bid_frontend_->campaign_manager())
       {
-        campaign_client_stats = bid_frontend_->campaign_manager_->stats();
+        campaign_client_stats = bid_frontend_->campaign_manager()->stats();
       }
       {
         std::lock_guard lock(debug_sink_mutex_);

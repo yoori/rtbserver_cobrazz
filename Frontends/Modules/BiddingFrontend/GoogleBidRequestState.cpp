@@ -151,7 +151,7 @@ namespace AdServer::Bidding
   }
 
   GoogleBidRequestState::GoogleBidRequestState(
-    Frontend* bid_frontend,
+    BiddingFrontendCore* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
@@ -189,7 +189,7 @@ namespace AdServer::Bidding
       }
       */
 
-      bid_frontend_->request_info_filler_->fill_by_google_request(
+      bid_frontend_->request_info_filler()->fill_by_google_request(
         *request_params_,
         request_info_,
         keywords_,
@@ -312,8 +312,8 @@ namespace AdServer::Bidding
               publisher_account_it != request_info_.publisher_account_ids.end();
               ++publisher_account_it)
           {
-            auto account_it = bid_frontend_->account_traits_.find(*publisher_account_it);
-            if(account_it != bid_frontend_->account_traits_.end())
+            auto account_it = bid_frontend_->account_traits().find(*publisher_account_it);
+            if(account_it != bid_frontend_->account_traits().end())
             {
               if(bid_request_.has_video())
               {

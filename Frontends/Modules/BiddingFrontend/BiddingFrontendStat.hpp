@@ -4,9 +4,11 @@
 #include <eh/Exception.hpp>
 #include <atomic>
 #include <array>
+#include <map>
+#include <mutex>
 #include <Generics/CompositeActiveObject.hpp>
+#include <Generics/MetricsProvider.hpp>
 #include <Generics/Values.hpp>
-#include <Frontends/FCGIServer/FCGIAcceptorStats.hpp>
 #include "CampaignManagerTypes.hpp"
 
 
@@ -14,7 +16,7 @@ namespace AdServer
 {
   class BiddingStatInfo;
 
-  class StatHolder : public Frontends::FCGIAcceptorStats
+  class StatHolder : public ReferenceCounting::AtomicImpl
   {
   public:
     struct RtbRequestInProgressStats
@@ -79,13 +81,10 @@ namespace AdServer
     add_timeout(const Generics::Time& timeout) noexcept;
 
     void
-    add_fcgi_accept() noexcept;
+    add_selected_bid(unsigned long ccg_id) noexcept;
 
-    void
-    add_fcgi_connection() noexcept;
-
-    void
-    complete_fcgi_connection() noexcept;
+    std::map<unsigned long, unsigned long>
+    selected_bids() noexcept;
 
     void
     add_rtb_request() noexcept;
@@ -205,8 +204,6 @@ namespace AdServer
   private:
     static constexpr std::size_t TIMEOUT_COUNTERS_SIZE = 28;
 
-    std::atomic<unsigned long> fcgi_accept_total_{0};
-    std::atomic<unsigned long> fcgi_connection_in_progress_{0};
     std::atomic<unsigned long> request_total_{0};
     std::atomic<unsigned long> request_finished_total_{0};
     std::atomic<unsigned long> request_total_bid_{0};
@@ -241,8 +238,23 @@ namespace AdServer
     std::atomic<unsigned long> user_bind_match_campaign_requests_{0};
     std::array<std::atomic<unsigned long>, TIMEOUT_COUNTERS_SIZE>
       timeout_counters_{};
+    std::mutex selected_bids_lock_;
+    std::map<unsigned long, unsigned long> selected_bids_;
   };
 
   typedef ReferenceCounting::SmartPtr<StatHolder>
     StatHolder_var;
+
+  class StatHolderMetricsProvider final : public Generics::MetricsProvider
+  {
+  public:
+    explicit
+    StatHolderMetricsProvider(StatHolder* stats);
+
+    MetricArray
+    get_values() override;
+
+  private:
+    StatHolder_var stats_;
+  };
 }

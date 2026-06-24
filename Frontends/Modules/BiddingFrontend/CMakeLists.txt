@@ -14,8 +14,8 @@ add_library(BiddingFrontend SHARED
   AdJsonBidRequestState.cpp
   ClickStarBidRequestState.cpp
   DAOBidRequestState.cpp
+  BiddingFrontendCore.cpp
   KeywordFormatter.cpp
-  RequestMetricsProvider.cpp
   Utils.cpp
 )
 

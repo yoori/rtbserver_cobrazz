@@ -23,27 +23,6 @@ namespace AdServer::Bidding
     MetricArray
     get_values() override;
 
-    void
-    add_value(std::string_view, double) override;
-
-    void
-    add_value(std::string_view, long) override;
-
-    void
-    add_value(std::string_view, const std::string&) override;
-
-    void
-    add_value_prometheus(
-      const std::string&,
-      const std::map<std::string, std::string>&,
-      double) override;
-
-    void
-    set_value_prometheus(
-      const std::string&,
-      const std::map<std::string, std::string>&,
-      double) override;
-
   private:
     static void
     add_counter_(

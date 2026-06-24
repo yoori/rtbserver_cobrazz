@@ -5563,7 +5563,7 @@ namespace AdServer::Bidding
         // Don't check for empty ssp_uid (UserIdBlackList)
 
         const Generics::Uuid uid =
-          common_module_->user_id_controller()->get_by_ssp_user_id(
+          UserIdController::get_by_ssp_user_id(
             ssp_uid, source_id, ssp_uid_marker);
 
         if (uid.is_null())

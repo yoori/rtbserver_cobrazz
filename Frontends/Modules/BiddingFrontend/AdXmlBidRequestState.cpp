@@ -27,7 +27,7 @@ namespace AdServer::Bidding
   }
 
   AdXmlBidRequestState::AdXmlBidRequestState(
-    Frontend* bid_frontend,
+    BiddingFrontendCore* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)

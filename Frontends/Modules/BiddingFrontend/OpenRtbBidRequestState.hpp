@@ -1,6 +1,9 @@
 #pragma once
 
 #include <iostream>
+
+#include <Commons/JsonFormatter.hpp>
+
 #include "BidRequestState.hpp"
 
 namespace AdServer::Bidding
@@ -12,7 +15,7 @@ namespace AdServer::Bidding
   {
   public:
     OpenRtbBidRequestState(
-      Frontend* bid_frontend,
+      BiddingFrontendCore* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
       const Generics::Time& start_processing_time)

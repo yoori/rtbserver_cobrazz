@@ -246,7 +246,7 @@ namespace AdServer::Bidding
   }
 
   OpenRtbBidRequestState::OpenRtbBidRequestState(
-    Frontend* bid_frontend,
+    BiddingFrontendCore* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
@@ -324,7 +324,7 @@ namespace AdServer::Bidding
         bid_request.swap(res);
       }
 
-      bid_frontend_->request_info_filler_->fill_by_openrtb_request(
+      bid_frontend_->request_info_filler()->fill_by_openrtb_request(
         *request_params_,
         request_info_,
         keywords_,
@@ -733,7 +733,7 @@ namespace AdServer::Bidding
             bid_object.add_escaped_string(Response::OpenRtb::IMPID, slot_it->id);
             bid_object.add_number(Response::OpenRtb::PRICE, openrtb_price);
 
-            if (bid_frontend_->request_info_filler_->fill_adid(
+            if (bid_frontend_->request_info_filler()->fill_adid(
                   request_info.source_id))
             {
               bid_object.add_as_string(Response::OpenRtb::ADID, ad_slot_result.selected_creatives[0].creative_id);
@@ -1132,14 +1132,14 @@ namespace AdServer::Bidding
         {
           root_json.add_string(
             Response::Yandex::SETUSERDATA,
-            bid_frontend_->common_module_->user_id_controller()->ssp_uuid_string(
-              bid_frontend_->common_module_->user_id_controller()->ssp_uuid(
+            AdServer::UserIdController::ssp_uuid_string(
+              bid_frontend_->user_id_controller()->ssp_uuid(
                 user_id, request_info.source_id)));
         }
         else if(some_campaign_selected && request_params.common_info.external_user_id.empty())
         {
-          std::string tmp_ssp_user_id = bid_frontend_->common_module_->user_id_controller()->ssp_uuid_string(
-            bid_frontend_->common_module_->user_id_controller()->ssp_uuid(
+          std::string tmp_ssp_user_id = AdServer::UserIdController::ssp_uuid_string(
+            bid_frontend_->user_id_controller()->ssp_uuid(
               AdServer::Commons::UserId::create_random_based(),
               request_info.source_id));
           tmp_ssp_user_id[0] = '~';

@@ -1,1 +1,2 @@
 ADD_SUBDIRECTORY(BiddingFrontendRequestInfoFillerPerfTest)
+ADD_SUBDIRECTORY(BiddingFrontendCoreTest)

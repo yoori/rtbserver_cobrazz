@@ -1,4 +1,5 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Commons/JsonFormatter.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "ClickStarBidRequestState.hpp"
@@ -40,7 +41,7 @@ namespace AdServer::Bidding
   }
 
   ClickStarBidRequestState::ClickStarBidRequestState(
-    Frontend* bid_frontend,
+    BiddingFrontendCore* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
     FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)

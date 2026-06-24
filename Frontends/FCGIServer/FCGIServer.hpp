@@ -15,6 +15,8 @@
 #include <FrontendCommons/FrontendInterface.hpp>
 #include <Generics/CompositeMetricsProvider.hpp>
 
+#include "FCGIAcceptorStats.hpp"
+
 namespace AdServer::Frontends
 {
   class FCGIServer:
@@ -60,6 +62,7 @@ namespace AdServer::Frontends
 
   private:
     FCGIServerConfigPtr config_;
+    FCGIAcceptorStatHolder_var fcgi_stats_;
     StatHolder_var stats_;
     Generics::CompositeMetricsProvider_var composite_metrics_provider_;
     FrontendCommons::Frontend_var frontend_pool_;

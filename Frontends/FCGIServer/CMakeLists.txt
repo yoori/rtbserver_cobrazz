@@ -1,5 +1,6 @@
 add_library(FrontendServerCommons
   FCGIAcceptor.cpp
+  FCGIAcceptorStats.cpp
   Http2Acceptor.cpp
   WorkerStatsObject.cpp
   Http2Acceptor.cpp

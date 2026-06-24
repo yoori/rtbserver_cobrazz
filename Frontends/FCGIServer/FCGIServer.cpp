@@ -258,16 +258,13 @@ namespace
 
   std::string
   dump_stats_json(
-    const AdServer::StatHolder_var& stats,
     const Generics::CompositeMetricsProvider_var& metrics)
   {
-    Generics::Values_var values = stats->dump_stats();
     std::map<std::string, GrpcErrorStat> errors;
 
     std::ostringstream out;
     out << '{';
     JsonStatsWriter writer(out);
-    values->enumerate_all(writer);
     if (metrics)
     {
       for (const auto& metric : metrics->get_values())
@@ -321,9 +318,15 @@ namespace AdServer::Frontends
         Logging::Logger_var(new Logging::OStream::Logger(
           Logging::OStream::Config(std::cerr))),
         "FCGIServer", ASPECT, 0),
+      fcgi_stats_(new FCGIAcceptorStatHolder()),
       stats_(new StatHolder()), // to remove ?
       composite_metrics_provider_(new Generics::CompositeMetricsProvider())
-  {}
+  {
+    composite_metrics_provider_->add_provider(
+      new FCGIAcceptorMetricsProvider(fcgi_stats_.in()));
+    composite_metrics_provider_->add_provider(
+      new StatHolderMetricsProvider(stats_.in()));
+  }
 
   void
   FCGIServer::read_config_(
@@ -390,18 +393,17 @@ namespace AdServer::Frontends
           config_->Monitoring()->port(),
           4);
 
-        StatHolder_var stats = stats_;
         Generics::CompositeMetricsProvider_var metrics =
           composite_metrics_provider_;
         http_server_->add_handler(
           "/stats",
-          [stats, metrics](
+          [metrics](
             const AdServer::Commons::HttpServer::HttpServer::Request&)
           {
             return AdServer::Commons::HttpServer::HttpServer::Response{
               200,
               "application/json",
-              dump_stats_json(stats, metrics)
+              dump_stats_json(metrics)
             };
           });
 
@@ -527,7 +529,7 @@ namespace AdServer::Frontends
               logger(),
               frontend_pool,
               callback(),
-              stats_,
+              fcgi_stats_,
               bind_it->bind(), // bind_it->bind().data(),
               bind_it->backlog(),
               bind_it->accept_threads())));

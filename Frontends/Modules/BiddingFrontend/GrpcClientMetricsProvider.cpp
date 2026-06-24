@@ -52,34 +52,6 @@ namespace AdServer::Bidding
   }
 
   void
-  GrpcClientMetricsProvider::add_value(std::string_view, double)
-  {}
-
-  void
-  GrpcClientMetricsProvider::add_value(std::string_view, long)
-  {}
-
-  void
-  GrpcClientMetricsProvider::add_value(
-    std::string_view,
-    const std::string&)
-  {}
-
-  void
-  GrpcClientMetricsProvider::add_value_prometheus(
-    const std::string&,
-    const std::map<std::string, std::string>&,
-    double)
-  {}
-
-  void
-  GrpcClientMetricsProvider::set_value_prometheus(
-    const std::string&,
-    const std::map<std::string, std::string>&,
-    double)
-  {}
-
-  void
   GrpcClientMetricsProvider::add_counter_(
     MetricArray& result,
     const std::string& prefix,

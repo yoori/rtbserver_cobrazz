@@ -18,7 +18,7 @@
 
 namespace AdServer
 {
-  class UserIdController: public ReferenceCounting::AtomicImpl
+  class UserIdControllerBase: public ReferenceCounting::AtomicImpl
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -29,6 +29,34 @@ namespace AdServer
       TEMPORARY,
       SSP
     };
+
+    virtual Generics::SignedUuid
+    verify(
+      const String::SubString& uid_str,
+      KeyType key_type = PERSISTENT) const = 0;
+
+    virtual bool
+    null_blacklisted(AdServer::Commons::UserId& user_id) const
+      noexcept = 0;
+
+    virtual Generics::Uuid
+    ssp_uuid(
+      const Generics::Uuid& uuid,
+      const String::SubString& source_id) = 0;
+
+  protected:
+    virtual
+    ~UserIdControllerBase() noexcept
+    {}
+  };
+
+  typedef ReferenceCounting::SmartPtr<UserIdControllerBase>
+    UserIdControllerBase_var;
+
+  class UserIdController: public UserIdControllerBase
+  {
+  public:
+    DECLARE_EXCEPTION(Exception, UserIdControllerBase::Exception);
 
   public:
     UserIdController(
@@ -48,6 +76,7 @@ namespace AdServer
     verify(
       const String::SubString& uid_str,
       KeyType key_type = PERSISTENT) const
+      override
       /*throw(eh::Exception)*/;
 
     Generics::SignedUuid
@@ -59,7 +88,7 @@ namespace AdServer
 
     bool
     null_blacklisted(AdServer::Commons::UserId& user_id) const
-      noexcept;
+      noexcept override;
 
     Generics::SignedUuid
     sign(
@@ -72,6 +101,7 @@ namespace AdServer
     ssp_uuid(
       const Generics::Uuid& uuid,
       const String::SubString& source_id)
+      override
       /*throw(eh::Exception)*/;
 
     static std::string
@@ -79,7 +109,7 @@ namespace AdServer
       noexcept;
 
     // convert ssp user id to user id(persistent)
-    Generics::Uuid
+    static Generics::Uuid
     get_by_ssp_user_id(
       const Generics::Uuid& uuid,
       const String::SubString& source_id,

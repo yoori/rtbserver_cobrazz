@@ -9,7 +9,8 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Time.hpp>
 
-#include "BiddingFrontend.hpp"
+#include "BiddingFrontendCore.hpp"
+#include "DebugSink.hpp"
 #include "Stage.hpp"
 
 namespace AdServer::Bidding
@@ -36,7 +37,7 @@ namespace AdServer::Bidding
   class BidRequestState:
     public ReferenceCounting::AtomicImpl
   {
-    friend class Frontend;
+    friend class BiddingFrontendCore;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -44,13 +45,13 @@ namespace AdServer::Bidding
 
   public:
     BidRequestState(
-      Frontend* bid_frontend,
+      BiddingFrontendCore* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer,
       const Generics::Time& start_processing_time)
       /*throw(Invalid)*/;
 
-    // delegate self to Bidding::Frontend
+    // delegate self to BiddingFrontendCore
     void
     execute() noexcept;
 
@@ -191,7 +192,7 @@ namespace AdServer::Bidding
     print_time_metering_debug_info_() noexcept;
 
   protected:
-    Frontend* bid_frontend_;
+    BiddingFrontendCore* bid_frontend_;
     FCGI::HttpRequestHolder_var request_holder_;
     const Generics::Time start_processing_time_;
 
