@@ -1085,6 +1085,7 @@ namespace AdServer::Grpc
     }
 
     state_ = State::Read;
+    Request().Swap(&request_);
     responder_.Read(&request_, this);
     return true;
   }
