@@ -205,6 +205,7 @@ namespace AdServer::Commons
       const char* end_;
     };
 
+    template<bool Strict>
     void
     parse_object_(
       Cursor& cursor,
@@ -212,24 +213,29 @@ namespace AdServer::Commons
       void* context,
       bool notify_started) const;
 
+    template<bool Strict>
     void
     parse_array_(
       Cursor& cursor,
       const JsonTreeProcessor& processor,
       void* context) const;
 
+    template<bool Strict>
     void
     parse_value_(
       Cursor& cursor,
       const JsonTreeProcessor& processor,
       void* context) const;
 
+    template<bool Strict>
     void
     skip_object_(Cursor& cursor) const;
 
+    template<bool Strict>
     void
     skip_array_(Cursor& cursor) const;
 
+    template<bool Strict>
     void
     skip_value_(Cursor& cursor) const;
 
@@ -383,7 +389,14 @@ namespace AdServer::Commons
       cursor.throw_error("top-level JSON value must be object");
     }
 
-    parse_object_(cursor, root_processor_, context, false);
+    if(strict_)
+    {
+      parse_object_<true>(cursor, root_processor_, context, false);
+    }
+    else
+    {
+      parse_object_<false>(cursor, root_processor_, context, false);
+    }
     cursor.skip_spaces();
 
     if(!cursor.eof())
@@ -867,6 +880,7 @@ namespace AdServer::Commons
     }
   }
 
+  template<bool Strict>
   inline void
   FastJsonParser::parse_object_(
     Cursor& cursor,
@@ -904,11 +918,11 @@ namespace AdServer::Commons
       const auto child_it = processor.sub_processors.find(key.value);
       if(child_it != processor.sub_processors.end())
       {
-        parse_value_(cursor, *child_it->second, context);
+        parse_value_<Strict>(cursor, *child_it->second, context);
       }
       else
       {
-        skip_value_(cursor);
+        skip_value_<Strict>(cursor);
       }
 
       cursor.skip_spaces();
@@ -929,6 +943,7 @@ namespace AdServer::Commons
     }
   }
 
+  template<bool Strict>
   inline void
   FastJsonParser::parse_array_(
     Cursor& cursor,
@@ -952,7 +967,7 @@ namespace AdServer::Commons
     for(;;)
     {
       cursor.skip_spaces();
-      parse_value_(cursor, processor, context);
+      parse_value_<Strict>(cursor, processor, context);
 
       cursor.skip_spaces();
       if(cursor.eof())
@@ -972,6 +987,7 @@ namespace AdServer::Commons
     }
   }
 
+  template<bool Strict>
   inline void
   FastJsonParser::parse_value_(
     Cursor& cursor,
@@ -987,11 +1003,11 @@ namespace AdServer::Commons
     const char c = cursor.peek();
     if(c == '{')
     {
-      parse_object_(cursor, processor, context, true);
+      parse_object_<Strict>(cursor, processor, context, true);
     }
     else if(c == '[')
     {
-      parse_array_(cursor, processor, context);
+      parse_array_<Strict>(cursor, processor, context);
     }
     else if(c == '"')
     {
@@ -1025,10 +1041,26 @@ namespace AdServer::Commons
       {
         if(number.is_float)
         {
-          std::string number_string(number.value);
+          constexpr std::size_t stack_buffer_size = 128;
+          char stack_buffer[stack_buffer_size];
+          const char* number_data = nullptr;
+          std::size_t number_size = number.value.size();
+          std::string number_string;
+          if(number_size < stack_buffer_size)
+          {
+            std::memcpy(stack_buffer, number.value.data(), number_size);
+            stack_buffer[number_size] = '\0';
+            number_data = stack_buffer;
+          }
+          else
+          {
+            number_string.assign(number.value);
+            number_data = number_string.c_str();
+          }
+
           char* end = nullptr;
-          const double value = std::strtod(number_string.c_str(), &end);
-          if(end != number_string.c_str() + number_string.size())
+          const double value = std::strtod(number_data, &end);
+          if(end != number_data + number_size)
           {
             cursor.throw_error("bad float");
           }
@@ -1092,10 +1124,11 @@ namespace AdServer::Commons
     }
   }
 
+  template<bool Strict>
   inline void
   FastJsonParser::skip_object_(Cursor& cursor) const
   {
-    if(!strict_)
+    if constexpr(!Strict)
     {
       cursor.skip_object_rough();
       return;
@@ -1121,7 +1154,7 @@ namespace AdServer::Commons
       cursor.skip_spaces();
       cursor.expect(':');
       cursor.skip_spaces();
-      skip_value_(cursor);
+      skip_value_<Strict>(cursor);
 
       cursor.skip_spaces();
       if(cursor.eof())
@@ -1141,10 +1174,11 @@ namespace AdServer::Commons
     }
   }
 
+  template<bool Strict>
   inline void
   FastJsonParser::skip_array_(Cursor& cursor) const
   {
-    if(!strict_)
+    if constexpr(!Strict)
     {
       cursor.skip_array_rough();
       return;
@@ -1161,7 +1195,7 @@ namespace AdServer::Commons
     for(;;)
     {
       cursor.skip_spaces();
-      skip_value_(cursor);
+      skip_value_<Strict>(cursor);
 
       cursor.skip_spaces();
       if(cursor.eof())
@@ -1181,6 +1215,7 @@ namespace AdServer::Commons
     }
   }
 
+  template<bool Strict>
   inline void
   FastJsonParser::skip_value_(Cursor& cursor) const
   {
@@ -1193,15 +1228,15 @@ namespace AdServer::Commons
     const char c = cursor.peek();
     if(c == '{')
     {
-      skip_object_(cursor);
+      skip_object_<Strict>(cursor);
     }
     else if(c == '[')
     {
-      skip_array_(cursor);
+      skip_array_<Strict>(cursor);
     }
     else if(c == '"')
     {
-      if(strict_)
+      if constexpr(Strict)
       {
         cursor.skip_string();
       }
