@@ -333,6 +333,24 @@ namespace AdServer::Grpc
     return inprogress_stats_->snapshot();
   }
 
+  GrpcServiceBase::LifecycleStatsSnapshot
+  GrpcServiceBase::lifecycle_stats() const noexcept
+  {
+    return LifecycleStatsSnapshot{
+      unary_call_created_total_.load(std::memory_order_relaxed),
+      unary_call_deleted_total_.load(std::memory_order_relaxed),
+      unary_call_live_.load(std::memory_order_relaxed),
+      coro_unary_call_created_total_.load(std::memory_order_relaxed),
+      coro_unary_call_deleted_total_.load(std::memory_order_relaxed),
+      coro_unary_call_live_.load(std::memory_order_relaxed),
+      batch_stream_call_created_total_.load(std::memory_order_relaxed),
+      batch_stream_call_deleted_total_.load(std::memory_order_relaxed),
+      batch_stream_call_live_.load(std::memory_order_relaxed),
+      debug_watchdog_scheduled_total_.load(std::memory_order_relaxed),
+      debug_watchdog_finished_total_.load(std::memory_order_relaxed),
+      debug_watchdog_live_.load(std::memory_order_relaxed)};
+  }
+
   std::size_t
   GrpcServiceBase::registrations_per_queue() const noexcept
   {
@@ -591,5 +609,61 @@ namespace AdServer::Grpc
   GrpcServiceBase::enter_grpc_operation() noexcept
   {
     return grpc_operation_gate_.enter();
+  }
+
+  void
+  GrpcServiceBase::add_unary_call_created_() noexcept
+  {
+    unary_call_created_total_.fetch_add(1, std::memory_order_relaxed);
+    unary_call_live_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_unary_call_deleted_() noexcept
+  {
+    unary_call_deleted_total_.fetch_add(1, std::memory_order_relaxed);
+    unary_call_live_.fetch_sub(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_coro_unary_call_created_() noexcept
+  {
+    coro_unary_call_created_total_.fetch_add(1, std::memory_order_relaxed);
+    coro_unary_call_live_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_coro_unary_call_deleted_() noexcept
+  {
+    coro_unary_call_deleted_total_.fetch_add(1, std::memory_order_relaxed);
+    coro_unary_call_live_.fetch_sub(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_batch_stream_call_created_() noexcept
+  {
+    batch_stream_call_created_total_.fetch_add(1, std::memory_order_relaxed);
+    batch_stream_call_live_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_batch_stream_call_deleted_() noexcept
+  {
+    batch_stream_call_deleted_total_.fetch_add(1, std::memory_order_relaxed);
+    batch_stream_call_live_.fetch_sub(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_debug_watchdog_scheduled_() noexcept
+  {
+    debug_watchdog_scheduled_total_.fetch_add(1, std::memory_order_relaxed);
+    debug_watchdog_live_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void
+  GrpcServiceBase::add_debug_watchdog_finished_() noexcept
+  {
+    debug_watchdog_finished_total_.fetch_add(1, std::memory_order_relaxed);
+    debug_watchdog_live_.fetch_sub(1, std::memory_order_relaxed);
   }
 }

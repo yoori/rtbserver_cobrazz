@@ -3318,6 +3318,7 @@ namespace AdServer::CampaignSvcs
     LOAD_STAT_(get_config_time);
 
 #undef LOAD_STAT_
+    result.grpc_lifecycle_stats = impl_->service().lifecycle_stats();
     return result;
   }
 

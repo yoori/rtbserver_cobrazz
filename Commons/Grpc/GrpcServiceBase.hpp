@@ -14,8 +14,6 @@
 #include <utility>
 #include <vector>
 
-#define ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-
 #ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
 #include <thread>
 
@@ -324,6 +322,22 @@ namespace AdServer::Grpc
       std::optional<Generics::Time> min_time_of_request_in_progress;
     };
 
+    struct LifecycleStatsSnapshot
+    {
+      std::uint64_t unary_call_created_total = 0;
+      std::uint64_t unary_call_deleted_total = 0;
+      std::uint64_t unary_call_live = 0;
+      std::uint64_t coro_unary_call_created_total = 0;
+      std::uint64_t coro_unary_call_deleted_total = 0;
+      std::uint64_t coro_unary_call_live = 0;
+      std::uint64_t batch_stream_call_created_total = 0;
+      std::uint64_t batch_stream_call_deleted_total = 0;
+      std::uint64_t batch_stream_call_live = 0;
+      std::uint64_t debug_watchdog_scheduled_total = 0;
+      std::uint64_t debug_watchdog_finished_total = 0;
+      std::uint64_t debug_watchdog_live = 0;
+    };
+
     class InprogressStats final
     {
     public:
@@ -362,6 +376,8 @@ namespace AdServer::Grpc
     void stop_finishing_requests() noexcept;
 
     InprogressStatsSnapshot inprogress_stats() const;
+
+    LifecycleStatsSnapshot lifecycle_stats() const noexcept;
 
   protected:
     virtual std::size_t registrations_per_queue() const noexcept;
@@ -458,12 +474,33 @@ namespace AdServer::Grpc
     std::size_t batch_item_hash_(
       const adserver::grpc::BatchRequestItem& request_item) const;
 
+    void add_unary_call_created_() noexcept;
+    void add_unary_call_deleted_() noexcept;
+    void add_coro_unary_call_created_() noexcept;
+    void add_coro_unary_call_deleted_() noexcept;
+    void add_batch_stream_call_created_() noexcept;
+    void add_batch_stream_call_deleted_() noexcept;
+    void add_debug_watchdog_scheduled_() noexcept;
+    void add_debug_watchdog_finished_() noexcept;
+
     std::unordered_map<std::string, BatchDispatchFn> batch_methods_;
     std::unordered_map<std::string, BatchCoroMethod> batch_coro_methods_;
     std::vector<::grpc::Service*> grpc_services_;
     AdServer::Commons::ActivityGate grpc_operation_gate_;
     std::shared_ptr<InprogressStats> inprogress_stats_ =
       std::make_shared<InprogressStats>();
+    std::atomic<std::uint64_t> unary_call_created_total_{0};
+    std::atomic<std::uint64_t> unary_call_deleted_total_{0};
+    std::atomic<std::uint64_t> unary_call_live_{0};
+    std::atomic<std::uint64_t> coro_unary_call_created_total_{0};
+    std::atomic<std::uint64_t> coro_unary_call_deleted_total_{0};
+    std::atomic<std::uint64_t> coro_unary_call_live_{0};
+    std::atomic<std::uint64_t> batch_stream_call_created_total_{0};
+    std::atomic<std::uint64_t> batch_stream_call_deleted_total_{0};
+    std::atomic<std::uint64_t> batch_stream_call_live_{0};
+    std::atomic<std::uint64_t> debug_watchdog_scheduled_total_{0};
+    std::atomic<std::uint64_t> debug_watchdog_finished_total_{0};
+    std::atomic<std::uint64_t> debug_watchdog_live_{0};
   };
 
   template<
@@ -630,6 +667,8 @@ namespace AdServer::Grpc
       Handler handler,
       ::grpc::ServerCompletionQueue* completion_queue);
 
+    ~GrpcUnaryCall() noexcept override;
+
   private:
     bool request_method_() override;
     void spawn_next_() override;
@@ -671,6 +710,8 @@ namespace AdServer::Grpc
       RequestMethod request_method,
       Handler handler,
       ::grpc::ServerCompletionQueue* completion_queue);
+
+    ~GrpcCoroUnaryCall() noexcept override;
 
   private:
     bool request_method_() override;

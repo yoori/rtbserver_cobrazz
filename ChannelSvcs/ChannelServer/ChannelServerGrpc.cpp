@@ -772,6 +772,7 @@ namespace AdServer::ChannelSvcs
   ChannelServerGrpc::Stats
   ChannelServerGrpc::stats() const noexcept
   {
+    const auto lifecycle_stats = impl_->service().lifecycle_stats();
     return Stats{
       stats_->call_in_progress.load(std::memory_order_relaxed),
       stats_->match_in_progress.load(std::memory_order_relaxed),
@@ -781,7 +782,8 @@ namespace AdServer::ChannelSvcs
       stats_->set_proxy_sources_in_progress.load(std::memory_order_relaxed),
       stats_->batch_total.load(std::memory_order_relaxed),
       stats_->batch_total_time.load(std::memory_order_relaxed),
-      stats_->batch_in_progress.load(std::memory_order_relaxed)
+      stats_->batch_in_progress.load(std::memory_order_relaxed),
+      lifecycle_stats
     };
   }
 

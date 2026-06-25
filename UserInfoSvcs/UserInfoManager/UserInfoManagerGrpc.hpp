@@ -56,6 +56,8 @@ namespace AdServer::UserInfoSvcs
       std::uint64_t batch_in_progress = 0;
       std::uint64_t call_inflight = 0;
       std::optional<Generics::Time> min_time_of_request_in_progress;
+      AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot
+        grpc_lifecycle_stats;
     };
 
     UserInfoManagerGrpc(

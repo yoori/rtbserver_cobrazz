@@ -41,6 +41,74 @@ namespace
     body += std::to_string(value);
   }
 
+  void
+  append_grpc_lifecycle_stats(
+    std::string& body,
+    bool& first,
+    const AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot& stats)
+  {
+    append_json_stat(
+      body,
+      first,
+      "grpc_unary_call_created_total",
+      stats.unary_call_created_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_unary_call_deleted_total",
+      stats.unary_call_deleted_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_unary_call_live",
+      stats.unary_call_live);
+    append_json_stat(
+      body,
+      first,
+      "grpc_coro_unary_call_created_total",
+      stats.coro_unary_call_created_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_coro_unary_call_deleted_total",
+      stats.coro_unary_call_deleted_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_coro_unary_call_live",
+      stats.coro_unary_call_live);
+    append_json_stat(
+      body,
+      first,
+      "grpc_batch_stream_call_created_total",
+      stats.batch_stream_call_created_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_batch_stream_call_deleted_total",
+      stats.batch_stream_call_deleted_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_batch_stream_call_live",
+      stats.batch_stream_call_live);
+    append_json_stat(
+      body,
+      first,
+      "grpc_debug_watchdog_scheduled_total",
+      stats.debug_watchdog_scheduled_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_debug_watchdog_finished_total",
+      stats.debug_watchdog_finished_total);
+    append_json_stat(
+      body,
+      first,
+      "grpc_debug_watchdog_live",
+      stats.debug_watchdog_live);
+  }
+
   void fill_shutdown_signals_(sigset_t& signals)
   {
     sigemptyset(&signals);
@@ -333,6 +401,10 @@ namespace
         first,
         "batch_in_progress",
         grpc_stats.batch_in_progress);
+      append_grpc_lifecycle_stats(
+        body,
+        first,
+        grpc_stats.grpc_lifecycle_stats);
     }
   }
 }

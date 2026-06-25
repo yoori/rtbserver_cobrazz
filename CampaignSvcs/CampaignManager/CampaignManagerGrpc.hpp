@@ -100,6 +100,8 @@ namespace AdServer::CampaignSvcs
       std::uint64_t get_config_in_progress = 0;
       std::uint64_t get_config_total = 0;
       std::uint64_t get_config_time = 0;
+      AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot
+        grpc_lifecycle_stats;
     };
 
     CampaignManagerGrpc(

@@ -629,7 +629,20 @@ namespace AdServer::Grpc
       async_service_(async_service),
       request_rpc_(request_method),
       handler_rpc_(handler)
-  {}
+  {
+    service_impl_->add_unary_call_created_();
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  GrpcUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    ~GrpcUnaryCall() noexcept
+  {
+    service_impl_->add_unary_call_deleted_();
+  }
 
   template<
     typename ServiceImplType,
@@ -721,7 +734,20 @@ namespace AdServer::Grpc
       async_service_(async_service),
       request_rpc_(request_method),
       handler_rpc_(handler)
-  {}
+  {
+    service_impl_->add_coro_unary_call_created_();
+  }
+
+  template<
+    typename ServiceImplType,
+    typename AsyncServiceType,
+    typename Request,
+    typename Response>
+  GrpcCoroUnaryCall<ServiceImplType, AsyncServiceType, Request, Response>::
+    ~GrpcCoroUnaryCall() noexcept
+  {
+    service_impl_->add_coro_unary_call_deleted_();
+  }
 
   template<
     typename ServiceImplType,
@@ -866,7 +892,9 @@ namespace AdServer::Grpc
       response_(
         google::protobuf::Arena::CreateMessage<Response>(&response_arena_)),
       state_(State::Create)
-  {}
+  {
+    service_impl_->add_batch_stream_call_created_();
+  }
 
   template<
     typename ServiceImplType,
@@ -879,6 +907,7 @@ namespace AdServer::Grpc
     finish_debug_response_watchdog_();
 #endif
     finish_inprogress_stats_();
+    service_impl_->add_batch_stream_call_deleted_();
   }
 
   template<
@@ -1161,6 +1190,7 @@ namespace AdServer::Grpc
 
     debug_response_watchdog_state_ = state;
 
+    service_impl_->add_debug_watchdog_scheduled_();
     GrpcBatchStreamDebugTimerService::instance().schedule(std::move(state));
   }
 
@@ -1177,6 +1207,7 @@ namespace AdServer::Grpc
         true,
         std::memory_order_release);
       debug_response_watchdog_state_.reset();
+      service_impl_->add_debug_watchdog_finished_();
     }
   }
 #endif

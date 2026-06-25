@@ -500,6 +500,43 @@ namespace
       APPEND_RPC_TOTAL_TIME_(get_config);
 
 #undef APPEND_RPC_TOTAL_TIME_
+      const auto& lifecycle_stats = stats.grpc_lifecycle_stats;
+      append_stat(
+        "grpc_unary_call_created_total",
+        lifecycle_stats.unary_call_created_total);
+      append_stat(
+        "grpc_unary_call_deleted_total",
+        lifecycle_stats.unary_call_deleted_total);
+      append_stat(
+        "grpc_unary_call_live",
+        lifecycle_stats.unary_call_live);
+      append_stat(
+        "grpc_coro_unary_call_created_total",
+        lifecycle_stats.coro_unary_call_created_total);
+      append_stat(
+        "grpc_coro_unary_call_deleted_total",
+        lifecycle_stats.coro_unary_call_deleted_total);
+      append_stat(
+        "grpc_coro_unary_call_live",
+        lifecycle_stats.coro_unary_call_live);
+      append_stat(
+        "grpc_batch_stream_call_created_total",
+        lifecycle_stats.batch_stream_call_created_total);
+      append_stat(
+        "grpc_batch_stream_call_deleted_total",
+        lifecycle_stats.batch_stream_call_deleted_total);
+      append_stat(
+        "grpc_batch_stream_call_live",
+        lifecycle_stats.batch_stream_call_live);
+      append_stat(
+        "grpc_debug_watchdog_scheduled_total",
+        lifecycle_stats.debug_watchdog_scheduled_total);
+      append_stat(
+        "grpc_debug_watchdog_finished_total",
+        lifecycle_stats.debug_watchdog_finished_total);
+      append_stat(
+        "grpc_debug_watchdog_live",
+        lifecycle_stats.debug_watchdog_live);
     }
 
     const auto logger_stats = campaign_manager_logger->get_stats();

@@ -1286,6 +1286,7 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerGrpc::stats() const noexcept
   {
     const auto inprogress_stats = impl_->service().inprogress_stats();
+    const auto lifecycle_stats = impl_->service().lifecycle_stats();
     return Stats{
       stats_counters_->call_total.load(std::memory_order_relaxed),
       stats_counters_->call_total_time.load(std::memory_order_relaxed),
@@ -1315,7 +1316,8 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->batch_total_time.load(std::memory_order_relaxed),
       stats_counters_->batch_in_progress.load(std::memory_order_relaxed),
       inprogress_stats.call_inflight,
-      inprogress_stats.min_time_of_request_in_progress
+      inprogress_stats.min_time_of_request_in_progress,
+      lifecycle_stats
     };
   }
 

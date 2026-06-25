@@ -1,2 +1,5 @@
 ADD_SUBDIRECTORY(BiddingFrontendRequestInfoFillerPerfTest)
 ADD_SUBDIRECTORY(BiddingFrontendCoreTest)
+ADD_SUBDIRECTORY(FastJsonParserTest)
+ADD_SUBDIRECTORY(FastJsonParserPerfTest)
+ADD_SUBDIRECTORY(GasonPerfTest)

@@ -16,6 +16,73 @@
 namespace
 {
   const char ASPECT[] = "UserInfoManager";
+
+  void
+  append_json_stat(
+    std::string& body,
+    const char* name,
+    const std::uint64_t value)
+  {
+    body += ",\"";
+    body += name;
+    body += "\":";
+    body += std::to_string(value);
+  }
+
+  void
+  append_grpc_lifecycle_stats(
+    std::string& body,
+    const AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot& stats)
+  {
+    append_json_stat(
+      body,
+      "grpc_unary_call_created_total",
+      stats.unary_call_created_total);
+    append_json_stat(
+      body,
+      "grpc_unary_call_deleted_total",
+      stats.unary_call_deleted_total);
+    append_json_stat(
+      body,
+      "grpc_unary_call_live",
+      stats.unary_call_live);
+    append_json_stat(
+      body,
+      "grpc_coro_unary_call_created_total",
+      stats.coro_unary_call_created_total);
+    append_json_stat(
+      body,
+      "grpc_coro_unary_call_deleted_total",
+      stats.coro_unary_call_deleted_total);
+    append_json_stat(
+      body,
+      "grpc_coro_unary_call_live",
+      stats.coro_unary_call_live);
+    append_json_stat(
+      body,
+      "grpc_batch_stream_call_created_total",
+      stats.batch_stream_call_created_total);
+    append_json_stat(
+      body,
+      "grpc_batch_stream_call_deleted_total",
+      stats.batch_stream_call_deleted_total);
+    append_json_stat(
+      body,
+      "grpc_batch_stream_call_live",
+      stats.batch_stream_call_live);
+    append_json_stat(
+      body,
+      "grpc_debug_watchdog_scheduled_total",
+      stats.debug_watchdog_scheduled_total);
+    append_json_stat(
+      body,
+      "grpc_debug_watchdog_finished_total",
+      stats.debug_watchdog_finished_total);
+    append_json_stat(
+      body,
+      "grpc_debug_watchdog_live",
+      stats.debug_watchdog_live);
+  }
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
@@ -150,11 +217,8 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               "\"" + stats.min_time_of_request_in_progress->gm_ft() + "\"" :
               "null";
           const auto async_mutex_stats = AdServer::Commons::AsyncMutex::stats();
-          return AdServer::Commons::HttpServer::HttpServer::Response{
-            200,
-            "application/json",
-            std::string("{\"call_total\":") +
-              std::to_string(stats.call_total) +
+          std::string body =
+            std::string("{\"call_total\":") + std::to_string(stats.call_total) +
               ",\"call_total_time\":" +
               std::to_string(stats.call_total_time) +
               ",\"call_in_progress\":" +
@@ -210,7 +274,11 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               ",\"call_inflight\":" +
               std::to_string(stats.call_inflight) +
               ",\"min_time_of_request_in_progress\":" +
-              min_time_of_request_in_progress +
+              min_time_of_request_in_progress;
+
+          append_grpc_lifecycle_stats(body, stats.grpc_lifecycle_stats);
+
+          body +=
               ",\"async_mutex_lock_attempts\":" +
               std::to_string(async_mutex_stats.lock_attempts) +
               ",\"async_mutex_immediate_locks\":" +
@@ -221,7 +289,12 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               std::to_string(async_mutex_stats.current_waiters) +
               ",\"async_mutex_max_waiters\":" +
               std::to_string(async_mutex_stats.max_waiters) +
-              "}\n"
+              "}\n";
+
+          return AdServer::Commons::HttpServer::HttpServer::Response{
+            200,
+            "application/json",
+            std::move(body)
           };
         });
       add_child_object(http_server);

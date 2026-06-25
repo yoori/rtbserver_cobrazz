@@ -37,6 +37,8 @@ namespace AdServer::ChannelSvcs
       std::uint64_t batch_total = 0;
       std::uint64_t batch_total_time = 0;
       std::uint64_t batch_in_progress = 0;
+      AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot
+        grpc_lifecycle_stats;
     };
 
     ChannelServerGrpc(

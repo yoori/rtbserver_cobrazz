@@ -71,6 +71,70 @@ namespace
     }
     return result;
   }
+
+  void
+  append_json_stat_(
+    std::string& body,
+    const char* name,
+    const std::uint64_t value)
+  {
+    body += ",\"";
+    body += name;
+    body += "\":";
+    body += std::to_string(value);
+  }
+
+  void
+  append_grpc_lifecycle_stats_(
+    std::string& body,
+    const AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot& stats)
+  {
+    append_json_stat_(
+      body,
+      "grpc_unary_call_created_total",
+      stats.unary_call_created_total);
+    append_json_stat_(
+      body,
+      "grpc_unary_call_deleted_total",
+      stats.unary_call_deleted_total);
+    append_json_stat_(body, "grpc_unary_call_live", stats.unary_call_live);
+    append_json_stat_(
+      body,
+      "grpc_coro_unary_call_created_total",
+      stats.coro_unary_call_created_total);
+    append_json_stat_(
+      body,
+      "grpc_coro_unary_call_deleted_total",
+      stats.coro_unary_call_deleted_total);
+    append_json_stat_(
+      body,
+      "grpc_coro_unary_call_live",
+      stats.coro_unary_call_live);
+    append_json_stat_(
+      body,
+      "grpc_batch_stream_call_created_total",
+      stats.batch_stream_call_created_total);
+    append_json_stat_(
+      body,
+      "grpc_batch_stream_call_deleted_total",
+      stats.batch_stream_call_deleted_total);
+    append_json_stat_(
+      body,
+      "grpc_batch_stream_call_live",
+      stats.batch_stream_call_live);
+    append_json_stat_(
+      body,
+      "grpc_debug_watchdog_scheduled_total",
+      stats.debug_watchdog_scheduled_total);
+    append_json_stat_(
+      body,
+      "grpc_debug_watchdog_finished_total",
+      stats.debug_watchdog_finished_total);
+    append_json_stat_(
+      body,
+      "grpc_debug_watchdog_live",
+      stats.debug_watchdog_live);
+  }
 }
 
 ChannelServerApp_::ChannelServerApp_() /*throw(eh::Exception)*/
@@ -269,6 +333,9 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             body += std::to_string(grpc_stats.batch_total_time);
             body += ",\"batch_in_progress\":";
             body += std::to_string(grpc_stats.batch_in_progress);
+            append_grpc_lifecycle_stats_(
+              body,
+              grpc_stats.grpc_lifecycle_stats);
           }
           body += "}\n";
 
