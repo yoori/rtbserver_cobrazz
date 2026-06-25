@@ -1135,7 +1135,6 @@ namespace AdServer::Commons
     }
 
     cursor.expect('{');
-    cursor.skip_spaces();
     if(!cursor.eof() && cursor.peek() == '}')
     {
       cursor.get();
@@ -1153,7 +1152,6 @@ namespace AdServer::Commons
       cursor.skip_string();
       cursor.skip_spaces();
       cursor.expect(':');
-      cursor.skip_spaces();
       skip_value_<Strict>(cursor);
 
       cursor.skip_spaces();
@@ -1185,7 +1183,6 @@ namespace AdServer::Commons
     }
 
     cursor.expect('[');
-    cursor.skip_spaces();
     if(!cursor.eof() && cursor.peek() == ']')
     {
       cursor.get();
