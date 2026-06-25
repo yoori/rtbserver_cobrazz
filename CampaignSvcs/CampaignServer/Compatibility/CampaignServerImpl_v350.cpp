@@ -13,20 +13,6 @@
 
 namespace
 {
-  void
-  copy_price_range_seq(
-    AdServer::CampaignSvcs_v350::PriceRangeSeq& tgt,
-    const AdServer::CampaignSvcs_v360::PriceRangeSeq& src)
-    noexcept
-  {
-    tgt.length(src.length());
-    for(CORBA::ULong i = 0; i < src.length(); ++i)
-    {
-      tgt[i].min = src[i].min;
-      tgt[i].max = src[i].max;
-    }
-  }
-
   template<class IN, class OUT>
   void
   copy_deleted_sequence(

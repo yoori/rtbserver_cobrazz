@@ -6,3 +6,6 @@ target_include_directories(FastJsonParserTest
     ${CMAKE_SOURCE_DIR}
 )
 
+target_link_libraries(FastJsonParserTest
+  Commons
+)

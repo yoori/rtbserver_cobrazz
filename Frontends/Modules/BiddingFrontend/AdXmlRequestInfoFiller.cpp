@@ -150,7 +150,7 @@ namespace AdServer::Bidding
 
     if(!context.ip.empty())
     {
-      kw_fmt.add_ip(String::SubString(context.ip));
+      kw_fmt.add_ip(context.ip);
     }
 
     request_info_filler_->fill_by_user_agent(

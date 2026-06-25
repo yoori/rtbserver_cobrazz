@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <list>
 #include <new>
 #include <memory_resource>
 #include <string>
@@ -204,6 +205,13 @@ namespace AdServer::Bidding
       new(this) RequestInfo(std::move(arena));
     }
 
+    std::string&
+    hold_string(std::string&& value)
+    {
+      string_holders_.emplace_back(std::move(value));
+      return string_holders_.back();
+    }
+
     std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;
 
     Generics::Time current_time;
@@ -251,6 +259,9 @@ namespace AdServer::Bidding
     PmrString bid_publisher_id;
     std::pmr::vector<PmrString> ext_user_ids;
     AdditionalInfo additional_info;
+
+  private:
+    std::list<std::string> string_holders_;
   };
 
   class RequestInfoFiller: public FrontendCommons::HTTPExceptions
@@ -306,8 +317,7 @@ namespace AdServer::Bidding
       const char* ip_salt,
       const SourceMap& sources,
       bool enable_profile_referer,
-      const AccountTraitsById& account_traits,
-      bool use_fast_json_parser = true)
+      const AccountTraitsById& account_traits)
       /*throw(eh::Exception)*/;
 
     AdXmlRequestInfoFiller*
@@ -336,11 +346,11 @@ namespace AdServer::Bidding
       RequestInfo& request_info,
       std::string& keywords,
       JsonProcessingContext& context,
-      const char* bid_request) const
+      std::string&& bid_request) const
       /*throw(InvalidParamException, Exception)*/;
 
     bool
-    fill_adid(const String::SubString& source_id) const noexcept;
+    fill_adid(std::string_view source_id) const noexcept;
 
     void
     init_request_param(
@@ -368,7 +378,7 @@ namespace AdServer::Bidding
     fill_by_user_agent(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
-      String::SubString user_agent,
+      std::string_view user_agent,
       bool filter_request,
       bool application = false)
       const
@@ -378,7 +388,7 @@ namespace AdServer::Bidding
     fill_by_ip(
       RequestInfo& request_info,
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      String::SubString ip)
+      std::string_view ip)
       const
       noexcept;
 
@@ -389,15 +399,6 @@ namespace AdServer::Bidding
 
     typedef Generics::GnuHashTable<Generics::SubStringHashAdapter, std::string>
       SourceNameMap;
-
-    typedef JsonParamProcessor<JsonProcessingContext>
-      JsonRequestParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonRequestParamProcessor>
-      JsonRequestParamProcessor_var;
-    typedef JsonCompositeParamProcessor<JsonProcessingContext>
-      JsonCompositeRequestParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonCompositeRequestParamProcessor>
-      JsonCompositeRequestParamProcessor_var;
 
     typedef FrontendCommons::RequestParamProcessor<RequestInfo>
       RequestInfoParamProcessor;
@@ -411,8 +412,8 @@ namespace AdServer::Bidding
     bool
     parse_debug_size_param_(
       DebugAdSlotSizeMap& debug_sizes,
-      const String::SubString& name,
-      const String::SubString& value) const
+      std::string_view name,
+      std::string_view value) const
       noexcept;
 
     template<typename StringType>
@@ -437,20 +438,20 @@ namespace AdServer::Bidding
     fill_request_type_(
       RequestInfo& request_info,
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const String::SubString& source_id)
+      std::string_view source_id)
       const
       noexcept;
 
     void
     fill_vast_instantiate_type_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const String::SubString& source_id) const
+      std::string_view source_id) const
       noexcept;
 
     void
     fill_native_instantiate_type_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      const String::SubString& source_id) const
+      std::string_view source_id) const
       noexcept;
 
     void
@@ -458,20 +459,20 @@ namespace AdServer::Bidding
       std::string& keywords,
       const RequestInfo& request_info,
       const JsonProcessingContext* context = 0,
-      const String::SubString& alt_app_id = String::SubString())
+      std::string_view alt_app_id = std::string_view())
       const
       noexcept;
 
     void
     verify_user_id_(
       std::string_view signed_user_id,
-      const String::SubString& source_id,
+      std::string_view source_id,
       AdServer::Bidding::CampaignManager::RequestParams& request_params)
       const
       noexcept;
 
     bool
-    use_external_user_id_(String::SubString external_user_id)
+    use_external_user_id_(std::string_view external_user_id)
       const noexcept;
 
     void
@@ -482,7 +483,7 @@ namespace AdServer::Bidding
       /*throw(eh::Exception)*/;
 
     std::string
-    first_significant_domain_part_(const String::SubString& host) const
+    first_significant_domain_part_(std::string_view host) const
       /*throw(eh::Exception)*/;
 
     static
@@ -495,12 +496,12 @@ namespace AdServer::Bidding
 
     static
     std::string
-    normalize_ext_tag_id_(const String::SubString& src)
+    normalize_ext_tag_id_(std::string_view src)
       noexcept;
 
     void
     add_param_processor_(
-      const String::SubString& name,
+      std::string_view name,
       RequestInfoParamProcessor* processor)
       noexcept;
 
@@ -513,25 +514,20 @@ namespace AdServer::Bidding
     void
     parse_openrtb_request_(
       AdServer::Bidding::CampaignManager::RequestParams& request_params,
+      RequestInfo& request_info,
       JsonProcessingContext& context,
-      const char* bid_request) const;
-
-    void
-    parse_openrtb_request_gason_(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext& context,
-      const char* bid_request) const;
+      std::string_view bid_request) const;
 
     static std::string
     make_ssp_uid_by_device_(const JsonProcessingContext& ctx)
       /*throw(eh::Exception)*/;
 
     static std::string
-    adapt_app_store_url_(const String::SubString& store_url)
+    adapt_app_store_url_(std::string_view store_url)
       /*throw(eh::Exception)*/;
 
     static std::string
-    norm_keyword_(const String::SubString& kw) noexcept;
+    norm_keyword_(std::string_view kw) noexcept;
 
     std::string openrtb_devicetype_to_string_(unsigned int devicetype) const;
 
@@ -551,9 +547,7 @@ namespace AdServer::Bidding
     SourceNameMap source_mapping_;
 
     ParamProcessorMap param_processors_;
-    JsonRequestParamProcessor_var json_root_processor_;
     std::unique_ptr<AdServer::Commons::FastJsonParser> fast_json_parser_;
-    const bool use_fast_json_parser_;
     const SourceMap sources_;
     const bool enable_profile_referer_;
     const AccountTraitsById account_traits_;
@@ -569,5 +563,5 @@ namespace AdServer::Bidding
 
 namespace Request::Context
 {
-    extern const String::SubString SOURCE_ID;
-  }
+  extern const std::string_view SOURCE_ID;
+}

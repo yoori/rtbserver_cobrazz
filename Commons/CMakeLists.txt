@@ -29,6 +29,7 @@ add_library(Commons  SHARED
   ExecutorPool.cpp
   ZmqSocketHolder.cpp
   SecToken.cpp
+  FastJsonParser.cpp
 
 )
 

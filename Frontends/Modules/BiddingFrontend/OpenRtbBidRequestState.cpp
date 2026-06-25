@@ -1,3 +1,4 @@
+#include <string_view>
 #include <utility>
 
 #include <zlib.h>
@@ -15,6 +16,12 @@ namespace AdServer::Bidding
     namespace Aspect
     {
       const char BIDDING_FRONTEND[] = "BiddingFrontend";
+    }
+
+    String::SubString
+    to_sub_string(std::string_view value) noexcept
+    {
+      return String::SubString(value.data(), value.size());
     }
 
     namespace Response::Header
@@ -329,7 +336,7 @@ namespace AdServer::Bidding
         request_info_,
         keywords_,
         context_,
-        bid_request.c_str());
+        std::move(bid_request));
 
       return true;
     }
@@ -633,7 +640,9 @@ namespace AdServer::Bidding
       std::string response;
       {
         AdServer::Commons::JsonFormatter root_json(response);
-      root_json.add_escaped_string(Response::OpenRtb::ID, context.request_id);
+      root_json.add_escaped_string(
+        Response::OpenRtb::ID,
+        to_sub_string(context.request_id));
       if(fill_yandex_attributes)
       {
         root_json.add_number(Response::Yandex::UNITS, 2);
@@ -730,7 +739,9 @@ namespace AdServer::Bidding
               bid_object.add_as_string(Response::OpenRtb::DEAL_ID, slot_it->deal_id);
             }
 
-            bid_object.add_escaped_string(Response::OpenRtb::IMPID, slot_it->id);
+            bid_object.add_escaped_string(
+              Response::OpenRtb::IMPID,
+              to_sub_string(slot_it->id));
             bid_object.add_number(Response::OpenRtb::PRICE, openrtb_price);
 
             if (bid_frontend_->request_info_filler()->fill_adid(
@@ -907,11 +918,10 @@ namespace AdServer::Bidding
 
             if(!slot_it->banners.empty())
             {
-              const PmrString tag_size(
-                ad_slot_result.tag_size,
-                slot_it->resource());
               auto banner_by_size_it = slot_it->size_banner.find(
-                tag_size);
+                std::string_view(
+                  ad_slot_result.tag_size.data(),
+                  ad_slot_result.tag_size.size()));
 
               if(banner_by_size_it != slot_it->size_banner.end())
               {
@@ -927,11 +937,10 @@ namespace AdServer::Bidding
             }
 
             {
-              const PmrString tag_size(
-                ad_slot_result.tag_size,
-                slot_it->resource());
               auto banner_by_size_it = slot_it->size_banner.find(
-                tag_size);
+                std::string_view(
+                  ad_slot_result.tag_size.data(),
+                  ad_slot_result.tag_size.size()));
 
               const bool fill_overlay_ext = (!slot_it->banners.empty() && (banner_by_size_it != slot_it->size_banner.end()));
               const bool fill_nroa = (!ad_slot_result.erid.empty() || ad_slot_result.contracts.size() > 0);
@@ -1097,7 +1106,7 @@ namespace AdServer::Bidding
     try
     {
       std::string escaped_request_id =
-        String::StringManip::json_escape(context.request_id);
+        String::StringManip::json_escape(to_sub_string(context.request_id));
 
       std::string response;
       {
@@ -1226,7 +1235,7 @@ namespace AdServer::Bidding
             AdServer::Commons::JsonObject bid_object(bidarray.add_object());
 
             bid_object.add(Response::Yandex::ID,
-              YandexIdFormatter(slot_it->id));
+              YandexIdFormatter(to_sub_string(slot_it->id)));
             bid_object.add_number(Response::Yandex::PRICE,
               openrtb_price.integer<unsigned long>());
             // Always add adid for yandex (don't check source_id)
@@ -1268,11 +1277,10 @@ namespace AdServer::Bidding
             {
               AdServer::Commons::JsonObject banner(bid_object.add_object(Response::Yandex::BANNER));
 
-              const PmrString tag_size(
-                ad_slot_result.tag_size,
-                slot_it->resource());
               auto banner_by_size_it = slot_it->size_banner.find(
-                tag_size);
+                std::string_view(
+                  ad_slot_result.tag_size.data(),
+                  ad_slot_result.tag_size.size()));
 
               if(banner_by_size_it != slot_it->size_banner.end())
               {

@@ -1,10 +1,17 @@
 #include <algorithm>
+#include <cassert>
+#include <charconv>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <iomanip>
+#include <limits>
 #include <math.h>
+#include <memory>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
@@ -12,12 +19,12 @@
 #include <String/UTF8Case.hpp>
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
+#include <Commons/DecimalUtils.hpp>
 #include <Generics/Rand.hpp>
 #include <HTTP/UrlAddress.hpp>
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <Commons/JsonParamProcessor.hpp>
 #include <LogCommons/CsvUtils.hpp>
 #include <Language/SegmentorManager/SegmentorManager.hpp>
 
@@ -36,333 +43,135 @@ namespace Aspect
 
 namespace Request::Context
 {
-    const String::SubString PUBLISHER_ACCOUNT_ID("aid");
-    const String::SubString PUBLISHER_SITE_ID("sid");
-    const String::SubString SOURCE_ID("src");
-    const String::SubString RANDOM("random");
-    const String::SubString FLAG("f");
-    const String::SubString FORMAT("format");
-    const String::SubString LOCATION_NAME("loc.name");
-    const String::SubString REQUIRE_DEBUG_INFO("require-debug-info");
-  }
+  extern const std::string_view PUBLISHER_ACCOUNT_ID("aid");
+  extern const std::string_view PUBLISHER_SITE_ID("sid");
+  extern const std::string_view SOURCE_ID("src");
+  extern const std::string_view RANDOM("random");
+  extern const std::string_view FLAG("f");
+  extern const std::string_view FORMAT("format");
+  extern const std::string_view LOCATION_NAME("loc.name");
+  extern const std::string_view REQUIRE_DEBUG_INFO("require-debug-info");
+}
 
 namespace Request::Debug
-  {
-    const String::SubString EXPECTED_CCG("debug.ccg");
-    const String::SubString CURRENT_TIME("debug.time");
-    const String::SubString ADSLOTS_SIZE("debug.size");
-    const String::SubString AD_SLOT("debug.adslot");
+{
+  const std::string_view EXPECTED_CCG("debug.ccg");
+  const std::string_view CURRENT_TIME("debug.time");
+  const std::string_view ADSLOTS_SIZE("debug.size");
+  const std::string_view AD_SLOT("debug.adslot");
 
-    namespace AdSlot
-    {
-      const String::SubString SIZE("size");
-    }
+  namespace AdSlot
+  {
+    const std::string_view SIZE("size");
   }
+}
 
 namespace Request::OpenRtb
+{
+  const std::string STABLE_SOURCE("stable");
+
+  // ADSC-10919
+  const std::string_view DEFAULT_BIDFLOORCUR_CURRENCY("usd");
+
+  const std::string_view VIDEO_PLACEMENT_NONE("none");
+
+  const std::string_view VIDEO_PLACEMENTS[] =
   {
-    const std::string STABLE_SOURCE("stable");
+    "unknown",
+    "instream",
+    "inbanner",
+    "inread",  // ADSC-10951 for google comatibility
+    "infeed",
+    "interstitial"
+  };
 
-    const String::SubString REQUEST_ID("id");
-    const String::SubString MAX_PROCESSING_TIME("tmax");
-    const String::SubString IMP("imp");
-    const String::SubString BADV("badv"); // ?
-    const String::SubString SITE("site");
-    const String::SubString APP("app");
-    const String::SubString CURRENCY("cur");
-    const String::SubString DEVICE("device");
-    const String::SubString USER("user");
-    const String::SubString BLOCKED_CATEGORIES("bcat");
-    const String::SubString EXT("ext");
-    const String::SubString EXT_TEST("is_test");
-    const String::SubString EXT_SECURE("secure");
-    const String::SubString EXT_UDI("udi");
-    const String::SubString EXT_GAID("gaid");
-    const String::SubString EXT_IDFA("idfa");
-    const String::SubString TEST("test");
-    const String::SubString PUBLISHER("publisher");
+  // TEAM-313
+  const std::string_view VIDEO_SKIPS[] =
+  {
+    "rtbvideotypeunskip",
+    "rtbvideotypeskip"
+  };
 
-    const String::SubString IMP_ID("id");
-    const String::SubString IMP_MIN_CPM_PRICE("bidfloor");
-    const String::SubString IMP_MIN_CPM_PRICE_CURRENCY_CODE("bidfloorcur");
-    const String::SubString IMP_SECURE("secure");
-    const String::SubString IMP_METRIC("metric");
-    const String::SubString IMP_TAGID("tagid");
-    const String::SubString IMP_METRIC_TYPE("type");
-    const String::SubString IMP_METRIC_VALUE("value");
+  const std::string_view VIDEO_REWARDS[] =
+  {
+    "rtbvideotypenonward",
+    "rtbvideotypereward"
+  };
 
-    // ext
-    const String::SubString IMP_EXT("ext");
-    const String::SubString IMP_EXT_TYPE("type");
+  const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_ON(1);
+  const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_OFF(2);
+  const std::string_view VIDEO_SOUND_ON("rtbsoundon");
+  const std::string_view VIDEO_SOUND_OFF("rtbsoundoff");
 
-    // banner
-    const String::SubString IMP_BANNER("banner");
-    const String::SubString IMP_BANNERS("banners");
-    const String::SubString IMP_BANNER_POS("pos");
-    const String::SubString IMP_BANNER_BLOCKED_CATEGORIES("battr");
-    const String::SubString IMP_BANNER_EXT_BLOCKED_CATEGORIES("bcont");
-    const String::SubString IMP_BANNER_EXT_MATCHING_AD("matching_ad_id");
-    const String::SubString IMP_BANNER_FORMAT("format");
+  const std::string_view VIDEO_PLACEMENTS_STREAM_NAMES[] =
+  {
+    "",
+    "rtbvideotypeinstream",
+    "rtbvideotypebanner",
+    "rtbvideotypearticle",
+    "rtbvideotypefeed",
+    "rtbvideotypeinterstitial"
+  };
 
-    const String::SubString IMP_BANNER_WIDTH("w");
-    const String::SubString IMP_BANNER_HEIGHT("h");
-    const String::SubString IMP_BANNER_EXT("ext");
-    const String::SubString IMP_BANNER_EXT_TYPE("type");
-    const String::SubString IMP_BANNER_EXT_FORMAT("fmt");
-    const String::SubString IMP_BANNER_EXT_OVERLAY("overlay");
-    const String::SubString IMP_BANNER_EXT_HPOS("hpos");
+  const std::array<int, 5> VIDEO_PLACEMENTS_OUT_STREAM_INDEXES =
+  {
+    2, 3, 4, 5, 7
+  };
+  const std::string_view VIDEO_TYPE_OUT_STREAM_NAME("rtbvideotypeoutstream");
 
-    // video
-    const String::SubString IMP_VIDEO("video");
-    const String::SubString IMP_VIDEO_WIDTH("w");
-    const String::SubString IMP_VIDEO_HEIGHT("h");
-    const String::SubString IMP_VIDEO_POS("pos");
-    const String::SubString IMP_VIDEO_BLOCKED_CATEGORIES("battr");
-    const String::SubString IMP_VIDEO_MIMES("mimes");
-    const String::SubString IMP_VIDEO_MINDURATION("minduration");
-    const String::SubString IMP_VIDEO_MAXDURATION("maxduration");
-    const String::SubString IMP_VIDEO_PROTOCOL("protocol");
-    const String::SubString IMP_VIDEO_PROTOCOLS("protocols");
-    const String::SubString IMP_VIDEO_PLAYBACKMETHOD("playbackmethod");
-    const String::SubString IMP_VIDEO_STARTDELAY("startdelay");
-    const String::SubString IMP_VIDEO_LINEARITY("linearity");
-    const String::SubString IMP_VIDEO_EXT("ext");
-    const String::SubString IMP_VIDEO_EXT_ADTYPE("adtype");
-    const String::SubString IMP_VIDEO_PLACEMENT("placement"); // v2.5
-    const String::SubString IMP_VIDEO_API("api");
-    const String::SubString IMP_VIDEO_SKIP("skip");
-    const String::SubString IMP_VIDEO_REWARD("reward");
+  const long VIDEO_START_DELAY_TYPE_PRE(0);
+  const long VIDEO_START_DELAY_TYPE_POST(-2);
+  const std::string_view VIDEO_TYPE_PRE("rtbvideotypepre");
+  const std::string_view VIDEO_TYPE_MID("rtbvideotypemid");
+  const std::string_view VIDEO_TYPE_POST("rtbvideotypepost");
 
-    const String::SubString SITE_DOMAIN("domain");
-    const String::SubString SITE_PAGE("page");
-    const String::SubString SITE_NAME("name");
-    const String::SubString SITE_ID("id");
-    const String::SubString SITE_EXT("ext");
-    const String::SubString SITE_EXT_SECURE("ssl_enabled");
-    const String::SubString SITE_EXT_PUID1("puid1");
-    const String::SubString SITE_EXT_PUID2("puid2");
-    const String::SubString SITE_KEYWORDS("keywords");
-    const String::SubString SITE_PAGECAT("pagecat");
-    const String::SubString SITE_SECTIONCAT("sectioncat");
-    const String::SubString SITE_CAT("cat");
-    const String::SubString SITE_SEARCH("search");
-    const String::SubString SITE_REF("ref");
-    const String::SubString SITE_REFERER("referer");
-    const String::SubString SITE_REREFERER("rereferer");
+  // ADSC-10933
+  const std::string_view VIDEO_PLAYBACKMETHODS[] =
+  {
+    "unknown",
+    "autoplaysoundon",
+    "autoplaysoundoff",
+    "clicktoplay",
+    "mouseover"
+  };
 
-    const String::SubString APP_ID("id");
-    const String::SubString APP_NAME("name");
-    const String::SubString APP_BUNDLE("bundle");
-    const String::SubString APP_DOMAIN("domain");
-    const String::SubString APP_STORE_URL("storeurl");
-    const String::SubString APP_KEYWORDS("keywords");
-    const String::SubString APP_PAGECAT("pagecat");
-    const String::SubString APP_SECTIONCAT("sectioncat");
-    const String::SubString APP_CAT("cat");
+  // ADSC-10918 Native ads
 
-    // content
-    const String::SubString CONTENT("content");
-    const String::SubString CONTENT_KEYWORDS("keywords");
-    const String::SubString CONTENT_TITLE("title");
-    const String::SubString CONTENT_SERIES("series");
-    const String::SubString CONTENT_SEASON("season");
-    const String::SubString CONTENT_CAT("cat");
+  const std::string_view NATIVE_DATA_ASSET_TOKENS[] =
+  {
+    "ADTITLE",      // supported - title asset
+    "SPONSORED",
+    "ALTTEXT",      // supported - Descriptive text associated with the product
+    "RATING",
+    "LIKES",
+    "DOWNLOADS",
+    "PRICE",
+    "SALEPRICE",
+    "PHONE",
+    "ADDRESS",
+    "DESCRIPTION2", // supported - Additional descriptive text
+    "DISPLAY_URL",  // supported - Display url for the text ad.
+    "CTA"           // supported - CTA description
+  };
 
-    // device
-    const String::SubString DEVICE_IP("ip");
-    const String::SubString DEVICE_IPv6("ipv6");
-    const String::SubString DEVICE_USER_AGENT("ua");
-    const String::SubString DEVICE_USER_DATA("userdata");
-    const String::SubString DEVICE_IFA("ifa");
-    const String::SubString DEVICE_DIDMD5("didmd5");
-    const String::SubString DEVICE_DIDSHA1("didsha1");
-    const String::SubString DEVICE_DPIDMD5("dpidmd5");
-    const String::SubString DEVICE_DPISHA1("dpisha1");
-    const String::SubString DEVICE_MACSHA1("macsha1");
-    const String::SubString DEVICE_MACMD5("macmd5");
-    const String::SubString DEVICE_LANGUAGE("language");
-    const String::SubString DEVICE_CARRIER("carrier");
-    const String::SubString DEVICE_GEO("geo");
-    const String::SubString DEVICE_GEO_COUNTRY("country");
-    const String::SubString DEVICE_GEO_REGION("region");
-    const String::SubString DEVICE_GEO_CITY("city");
-    const String::SubString DEVICE_DEVICETYPE("devicetype");
+  const std::string_view NATIVE_IMAGE_ASSET_TOKENS[] =
+  {
+    "", // unknown type
+    "ADICON",
+    "ADICON",
+    "ADIMAGE",
+    "ADIMAGE_SQUARE"
+  };
 
-    // regs
-    const String::SubString REGS("regs");
-    const String::SubString REGS_COPPA("coppa");
-
-    // pmp
-    const String::SubString PMP("pmp");
-    const String::SubString PMP_PRIVATE_AUCTION("private_auction");
-    const String::SubString PMP_DEALS("deals");
-    const String::SubString PMP_DEAL_ID("id");
-    const String::SubString PMP_DEAL_CPM_PRICE("bidfloor");
-    const String::SubString PMP_DEAL_CURRENCY_CODE("bidfloorcur");
-
-
-    // user
-    const String::SubString USER_ID("id");
-    const String::SubString BUYER_ID("buyeruid");
-    const String::SubString BUYER_ID2("buyerid");
-    const String::SubString USER_YOB("yob");
-    const String::SubString USER_GENDER("gender");
-    const String::SubString USER_KEYWORDS("keywords");
-
-    const String::SubString USER_DATA("data");
-    const String::SubString USER_DATA_SEGMENT("segment");
-    const String::SubString USER_SEGMENT_ID("id");
-    const String::SubString USER_SEGMENT_NAME("name");
-    const String::SubString USER_SEGMENT_VALUE("value");
-
-    // user.ext
-    const String::SubString USER_EXT("ext"); // user.ext
-    const String::SubString USER_EXT_EIDS("eids"); // user.ext.eids
-    const String::SubString USER_EXT_EIDS_SOURCE("source"); // user.ext.eids*.source
-    const String::SubString USER_EXT_EIDS_UIDS("uids"); // user.ext.eids*.uids -> JsonUserEidUidParamProcessor
-    const String::SubString USER_EXT_EIDS_UIDS_ID("id"); // user.ext.eids*.uids*.id
-    const String::SubString USER_EXT_EIDS_UIDS_STABLEID("stableid"); // user.ext.eids*.uids*.stableid
-
-    // publisher
-    const String::SubString PUBLISHER_NAME("name");
-    const String::SubString PUBLISHER_ID("id");
-    const String::SubString PUBLISHER_CAT("cat");
-
-    // producer
-    const String::SubString PRODUCER("producer");
-    const String::SubString PRODUCER_NAME("name");
-
-    // ext
-    const String::SubString EXT_CATEGORY("category");
-
-    // ADSC-10919
-    const String::SubString DEFAULT_BIDFLOORCUR_CURRENCY("usd");
-
-    const String::SubString VIDEO_PLACEMENT_NONE("none");
-
-    const String::SubString VIDEO_PLACEMENTS[] =
-    {
-      String::SubString("unknown"),
-      String::SubString("instream"),
-      String::SubString("inbanner"),
-      String::SubString("inread"),  // ADSC-10951 for google comatibility
-      String::SubString("infeed"),
-      String::SubString("interstitial")
-    };
-
-    // TEAM-313
-    const String::SubString VIDEO_SKIPS[] =
-    {
-      String::SubString("rtbvideotypeunskip"),
-      String::SubString("rtbvideotypeskip")
-    };
-
-    const String::SubString VIDEO_REWARDS[] =
-    {
-      String::SubString("rtbvideotypenonward"),
-      String::SubString("rtbvideotypereward")
-    };
-
-    const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_ON(1);
-    const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_OFF(2);
-    const String::SubString VIDEO_SOUND_ON("rtbsoundon");
-    const String::SubString VIDEO_SOUND_OFF("rtbsoundoff");
-
-    const String::SubString VIDEO_PLACEMENTS_STREAM_NAMES[] =
-    {
-      String::SubString(""),
-      String::SubString("rtbvideotypeinstream"),
-      String::SubString("rtbvideotypebanner"),
-      String::SubString("rtbvideotypearticle"),
-      String::SubString("rtbvideotypefeed"),
-      String::SubString("rtbvideotypeinterstitial")
-    };
-
-    const std::array<int, 5> VIDEO_PLACEMENTS_OUT_STREAM_INDEXES =
-    {
-      2, 3, 4, 5, 7
-    };
-    const String::SubString VIDEO_TYPE_OUT_STREAM_NAME("rtbvideotypeoutstream");
-
-    const long VIDEO_START_DELAY_TYPE_PRE(0);
-    const long VIDEO_START_DELAY_TYPE_POST(-2);
-    const String::SubString VIDEO_TYPE_PRE("rtbvideotypepre");
-    const String::SubString VIDEO_TYPE_MID("rtbvideotypemid");
-    const String::SubString VIDEO_TYPE_POST("rtbvideotypepost");
-
-    // ADSC-10933
-    const String::SubString VIDEO_PLAYBACKMETHODS[] =
-    {
-      String::SubString("unknown"),
-      String::SubString("autoplaysoundon"),
-      String::SubString("autoplaysoundoff"),
-      String::SubString("clicktoplay"),
-      String::SubString("mouseover")
-    };
-
-    // ADSC-10918 Native ads
-
-    const String::SubString NATIVE("native");
-    const String::SubString NATIVE_REQUEST("request");
-    const String::SubString NATIVE_VER("ver");
-    const String::SubString NATIVE_PLACEMENT("plcmttype");
-    const String::SubString NATIVE_ASSETS("assets");
-    const String::SubString NATIVE_ASSET_ID("id");
-    const String::SubString NATIVE_ASSET_REQUIRED("required");
-    const String::SubString NATIVE_ASSET_TITLE("title");
-    const String::SubString NATIVE_ASSET_DATA("data");
-    const String::SubString NATIVE_ASSET_IMAGE("img");
-    const String::SubString NATIVE_ASSET_VIDEO("video");
-    const String::SubString NATIVE_ASSET_TITLE_LEN("len");
-    const String::SubString NATIVE_ASSET_DATA_TYPE("type");
-    const String::SubString NATIVE_ASSET_DATA_LEN("len");
-    const String::SubString NATIVE_ASSET_IMAGE_TYPE("type");
-    const String::SubString NATIVE_ASSET_IMAGE_WIDTH("w");
-    const String::SubString NATIVE_ASSET_IMAGE_HEIGHT("h");
-    const String::SubString NATIVE_ASSET_IMAGE_WMIN("wmin");
-    const String::SubString NATIVE_ASSET_IMAGE_HMIN("hmin");
-    const String::SubString NATIVE_ASSET_IMAGE_MIMES("mimes");
-    const String::SubString NATIVE_ASSET_VIDEO_MIMES("mimes");
-    const String::SubString NATIVE_ASSET_VIDEO_PROTOCOLS("protocols");
-    const String::SubString NATIVE_ASSET_VIDEO_MIN_DURATION("minduration");
-    const String::SubString NATIVE_ASSET_VIDEO_MAX_DURATION("maxduration");
-
-    const String::SubString NATIVE_DATA_ASSET_TOKENS[] =
-    {
-      String::SubString("ADTITLE"),    // supported - title asset
-      String::SubString("SPONSORED"),
-      String::SubString("ALTTEXT"),    // supported - Descriptive text associated with the product
-      String::SubString("RATING"),
-      String::SubString("LIKES"),
-      String::SubString("DOWNLOADS"),
-      String::SubString("PRICE"),
-      String::SubString("SALEPRICE"),
-      String::SubString("PHONE"),
-      String::SubString("ADDRESS"),
-      String::SubString("DESCRIPTION2"), // supported - Additional descriptive text
-      String::SubString("DISPLAY_URL"),  // supported - Display url for the text ad.
-      String::SubString("CTA")           // supported - CTA description
-    };
-
-    const String::SubString NATIVE_IMAGE_ASSET_TOKENS[] =
-    {
-      String::SubString(), // unknown type
-      String::SubString("ADICON"),
-      String::SubString("ADICON"),
-      String::SubString("ADIMAGE"),
-      String::SubString("ADIMAGE_SQUARE")
-    };
-
-    const String::SubString NATIVE_PLACEMENTS[] =
-    {
-      String::SubString("unknown"),
-      String::SubString("infeed"),
-      String::SubString("inread"),
-      String::SubString("outside"),
-      String::SubString("recommendation")
-    };
-  }
-
+  const std::string_view NATIVE_PLACEMENTS[] =
+  {
+    "unknown",
+    "infeed",
+    "inread",
+    "outside",
+    "recommendation"
+  };
+}
 
 namespace CreativeCategory
 {
@@ -372,14 +181,14 @@ namespace CreativeCategory
 
 namespace GooglePlay
 {
-  const String::SubString STORE_HOST("play.google.com");
-  const String::SubString STORE_PATH("/store/apps/details");
-  const String::SubString STORE_APP_ID("id");
+  const std::string_view STORE_HOST("play.google.com");
+  const std::string_view STORE_PATH("/store/apps/details");
+  const std::string_view STORE_APP_ID("id");
 }
 
 namespace AppStore
 {
-  const String::SubString STORE_HOST("itunes.apple.com");
+  const std::string_view STORE_HOST("itunes.apple.com");
 }
 
 namespace AdServer::Commons
@@ -396,9 +205,9 @@ namespace AdServer::Bidding
 {
   namespace Google
   {
-    const String::SubString APPLICATION("google");
-    const String::SubString APPLICATION_VERSION("1");
-    const String::SubString APP_FORMAT("html");
+    const std::string_view APPLICATION("google");
+    const std::string_view APPLICATION_VERSION("1");
+    const std::string_view APP_FORMAT("html");
 
     // https://storage.googleapis.com/adx-rtb-dictionaries/publisher-excludable-creative-attributes.txt
     //
@@ -447,7 +256,7 @@ namespace AdServer::Bidding
 
     // RichMediaCapabilityType: RichMediaCapabilityFlash
     const ::google::protobuf::int32 CREATIVETYPE_FLASH = 34;
-    const String::SubString CREATIVETYPE_FLASH_STR("34");
+    const std::string_view CREATIVETYPE_FLASH_STR("34");
 
     // RichMediaCapabilityType: RichMediaCapabilityNonSSL
     const ::google::protobuf::int32 NON_SECURE = 48;
@@ -459,26 +268,26 @@ namespace AdServer::Bidding
 
 
     // ADSC-10919
-    const String::SubString VIDEO_PLACEMENTS[] =
+    const std::string_view VIDEO_PLACEMENTS[] =
     {
-      String::SubString("unknown"),
-      String::SubString("instream"),
-      String::SubString("interstitial"),
-      String::SubString("inread"),
-      String::SubString("audio"),
-      String::SubString("inarticle")
+      "unknown",
+      "instream",
+      "interstitial",
+      "inread",
+      "audio",
+      "inarticle"
     };
   }
 
   namespace
   {
     // Openrtb
-    const String::SubString OPENRTB_APPLICATION("openrtb");
-    const String::SubString OPENRTB_APPLICATION_VERSION("1");
-    const String::SubString OPENRTB_APP_FORMAT("html");
-    const String::SubString OPENRTB_VAST_APP_FORMAT("vast");
-    const String::SubString OPENRTB_NATIVE_APP_FORMAT("native");
-    const String::SubString VAST_PROTOCOL_SIZE("vast");
+    const std::string_view OPENRTB_APPLICATION("openrtb");
+    const std::string_view OPENRTB_APPLICATION_VERSION("1");
+    const std::string_view OPENRTB_APP_FORMAT("html");
+    const std::string_view OPENRTB_VAST_APP_FORMAT("vast");
+    const std::string_view OPENRTB_NATIVE_APP_FORMAT("native");
+    const std::string_view VAST_PROTOCOL_SIZE("vast");
 
     const std::size_t EXT_TAG_ID_MAX_LENGTH = 50;
 
@@ -527,9 +336,30 @@ namespace AdServer::Bidding
       return lhs == rhs;
     }
 
+    String::SubString
+    to_sub_string(std::string_view value) noexcept
+    {
+      return String::SubString(value.data(), value.size());
+    }
+
+    std::string_view
+    to_string_view(const String::SubString& value) noexcept
+    {
+      return std::string_view(value.data(), value.size());
+    }
+
+    std::string
+    make_size_string(unsigned long width, unsigned long height)
+    {
+      std::string result = std::to_string(width);
+      result += 'x';
+      result += std::to_string(height);
+      return result;
+    }
+
     bool caseless_compare(
-      const String::SubString& lhs,
-      const String::SubString& rhs)
+      std::string_view lhs,
+      std::string_view rhs)
     {
       if (lhs.size() == rhs.size())
       {
@@ -636,7 +466,7 @@ namespace AdServer::Bidding
     fill_asset_tokens(
       ResultSeq& res_seq,
       const AssetSeq& assets,
-      const String::SubString(&dict)[DictSize],
+      const std::string_view(&dict)[DictSize],
       long AssetSeq::value_type::* type_field,
       const char* /*token_prefix*/)
     {
@@ -699,7 +529,7 @@ namespace AdServer::Bidding
         size_t buf_size = String::StringManip::int_to_str(
           width, buf, sizeof(buf));
 
-        String::SubString(buf, buf_size).append_to(oss);
+        oss.append(buf, buf_size);
       }
       oss += "x";
       if (height)
@@ -710,7 +540,7 @@ namespace AdServer::Bidding
         size_t buf_size = String::StringManip::int_to_str(
           height, buf, sizeof(buf));
 
-        String::SubString(buf, buf_size).append_to(oss);
+        oss.append(buf, buf_size);
       }
 
       kw_fmt.add_keyword(oss);
@@ -746,7 +576,7 @@ namespace AdServer::Bidding
       result += "{\"ssp_tag_id\":\"";
       String::StringManip::json_escape_append(
         result,
-        String::SubString(additional_info.tagid));
+        to_sub_string(additional_info.tagid));
       result += '"';
 
       auto add_optional_metric =
@@ -785,7 +615,7 @@ namespace AdServer::Bidding
 
   template<typename StringType>
   void
-  stringify_ifa(StringType& res, const String::SubString& bin_idfa)
+  stringify_ifa(StringType& res, std::string_view bin_idfa)
   {
     res.reserve(bin_idfa.size() + 4);
     if(bin_idfa.size() == 16)
@@ -813,74 +643,6 @@ namespace AdServer::Bidding
         bin_idfa.size(),
         false);
     }
-  }
-
-  void
-  json_serialize(std::ostream& ostr, JsonNode* node);
-
-  void
-  json_serialize(std::ostream& ostr, const JsonValue& value)
-  {
-    if(value.getTag() == JSON_TAG_NUMBER)
-    {
-      double f = value.toNumber();
-      double int_part;
-      if(fabs(modf(f, &int_part)) < 0.0000000001)
-      {
-        ostr << static_cast<long long>(int_part + 0.01);
-      }
-      else
-      {
-        ostr << f;
-      }
-    }
-    else if(value.getTag() == JSON_TAG_STRING)
-    {
-      std::string escaped_str =
-        String::StringManip::json_escape(String::SubString(value.toString()));
-      ostr << "\"" << escaped_str << "\"";
-    }
-    else if(value.getTag() == JSON_TAG_BOOL)
-    {
-      ostr << (value.toBool() ? "true" : "false");
-    }
-    else if(value.getTag() == JSON_TAG_ARRAY)
-    {
-      ostr << "[";
-      for(JsonIterator arr_it = begin(value); arr_it != end(value); ++arr_it)
-      {
-        if(arr_it != begin(value))
-        {
-          ostr << ", ";
-        }
-        json_serialize(ostr, arr_it->value);
-      }
-      ostr << "]";
-    }
-    else if(value.getTag() == JSON_TAG_OBJECT)
-    {
-      ostr << "{";
-      for(JsonIterator arr_it = begin(value); arr_it != end(value); ++arr_it)
-      {
-        if(arr_it != begin(value))
-        {
-          ostr << ", ";
-        }
-        json_serialize(ostr, *arr_it);
-      }
-      ostr << "}";
-    }
-    else if(value.getTag() == JSON_TAG_NULL)
-    {
-      ostr << "null";
-    }
-  }
-
-  void
-  json_serialize(std::ostream& ostr, JsonNode* node)
-  {
-    ostr << "\"" << node->key << "\": ";
-    json_serialize(ostr, node->value);
   }
 
   template<typename StringType>
@@ -964,7 +726,9 @@ namespace AdServer::Bidding
     {
       stringify_ifa(
         advertising_id,
-        String::SubString(reinterpret_cast<char*>(plaintext_bytes), CIPHER_TEXT_SIZE));
+        std::string_view(
+          reinterpret_cast<char*>(plaintext_bytes),
+          CIPHER_TEXT_SIZE));
 
       return true;
     }
@@ -972,1401 +736,6 @@ namespace AdServer::Bidding
     // value = ntohllprice_pad ^ ciphertext_bytes)
     return false;
   }
-
-  template<typename ContextType>
-  class JsonStringArrayParamProcessor: public JsonParamProcessor<ContextType>
-  {
-  public:
-    JsonStringArrayParamProcessor(
-      StringArray ContextType::* field)
-       : field_(field)
-    {}
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::
-        RequestParams& /*request_params*/,
-      ContextType& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() != JSON_TAG_NULL)
-      {
-        if(value.getTag() != JSON_TAG_ARRAY)
-        {
-          Stream::Error ostr;
-          ostr << "incorrect bcat element type";
-          throw RequestInfoFiller::InvalidParamException(ostr);
-        }
-
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          if(it->value.getTag() == JSON_TAG_STRING || it->value.getTag() == JSON_TAG_NUMBER)
-          {
-            PmrString str((context.*field_).get_allocator().resource());
-            it->value.toString(str, true);
-            (context.*field_).emplace_back(std::move(str));
-          }
-        }
-      }
-    }
-
-  protected:
-    StringArray ContextType::* field_;
-
-  protected:
-    virtual
-    ~JsonStringArrayParamProcessor() noexcept
-    {}
-  };
-
-  template<typename ContextType, typename StringType = std::string>
-  class JsonSerializeParamProcessor:
-    public AdServer::Commons::JsonParamProcessor<ContextType>
-  {
-  public:
-    JsonSerializeParamProcessor(
-      StringType ContextType::* field)
-      : field_(field)
-    {}
-
-    virtual void
-    process(
-      ContextType& context,
-      const JsonValue& value) const
-    {
-      std::ostringstream ostr;
-      json_serialize(ostr, value);
-      context.*field_ = ostr.str();
-    }
-
-  protected:
-    virtual ~JsonSerializeParamProcessor() noexcept
-    {}
-
-  protected:
-    StringType ContextType::* field_;
-  };
-
-  // JsonBannerFormatParamProcessor
-  class JsonBannerFormatParamProcessor:
-    public AdServer::Commons::JsonParamProcessor<JsonAdSlotProcessingContext::Banner>
-  {
-  public:
-    JsonBannerFormatParamProcessor()
-    {
-      typedef ReferenceCounting::SmartPtr<
-        AdServer::Commons::JsonCompositeParamProcessor<BannerFormat> >
-        JsonCompositeParamProcessor_var;
-
-      JsonCompositeParamProcessor_var banner_format_processor =
-        new AdServer::Commons::JsonCompositeParamProcessor<
-          JsonAdSlotProcessingContext::BannerFormat>();
-
-      banner_format_processor->add_processor(
-        Request::OpenRtb::IMP_BANNER_WIDTH,
-        JsonBannerFormatParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
-            &BannerFormat::width)));
-
-      banner_format_processor->add_processor(
-        Request::OpenRtb::IMP_BANNER_HEIGHT,
-        JsonBannerFormatParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
-            &BannerFormat::height)));
-
-      {
-        JsonCompositeParamProcessor_var banner_format_ext_processor =
-          new AdServer::Commons::JsonCompositeParamProcessor<BannerFormat>();
-
-        banner_format_ext_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT_TYPE,
-          JsonBannerFormatParamProcessor_var(
-            new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
-              &BannerFormat::ext_type)));
-        banner_format_ext_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT_FORMAT,
-          JsonBannerFormatParamProcessor_var(
-            new AdServer::Commons::JsonStringParamProcessor<BannerFormat, PmrString>(
-              &BannerFormat::ext_format)));
-      }
-
-      banner_format_processor_ = banner_format_processor;
-    }
-
-    virtual void
-    process(
-      JsonAdSlotProcessingContext::Banner& banner,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          banner.formats.emplace_back(banner.formats.get_allocator().resource());
-          banner_format_processor_->process(banner.formats.back(), it->value);
-        }
-      }
-      else
-      {
-        banner.formats.emplace_back(banner.formats.get_allocator().resource());
-        banner_format_processor_->process(banner.formats.back(), value);
-      }
-    }
-
-  protected:
-    typedef JsonAdSlotProcessingContext::BannerFormat BannerFormat;
-
-    typedef ReferenceCounting::SmartPtr<
-      AdServer::Commons::JsonParamProcessor<JsonAdSlotProcessingContext::BannerFormat> >
-      JsonBannerFormatParamProcessor_var;
-
-  protected:
-    JsonBannerFormatParamProcessor_var banner_format_processor_;
-  };
-
-  // JsonBannerParamProcessor
-  class JsonBannerParamProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
-  {
-  public:
-    JsonBannerParamProcessor()
-    {
-      using JsonCompositeParamProcessor_var = ReferenceCounting::SmartPtr<
-        AdServer::Commons::JsonCompositeParamProcessor<Banner> >;
-
-      JsonCompositeParamProcessor_var banner_processor =
-        new AdServer::Commons::JsonCompositeParamProcessor<
-          JsonAdSlotProcessingContext::Banner>();
-
-      banner_format_processor_ = JsonBannerParamProcessor_var(
-        new JsonBannerFormatParamProcessor());
-
-      banner_processor->add_processor(
-        Request::OpenRtb::IMP_BANNER_POS,
-        JsonBannerParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<Banner, PmrString>(
-            &Banner::pos)));
-
-      banner_processor->add_processor(
-        Request::OpenRtb::IMP_BANNER_FORMAT,
-        banner_format_processor_);
-
-      banner_processor->add_processor(
-        Request::OpenRtb::IMP_BANNER_BLOCKED_CATEGORIES,
-        JsonBannerParamProcessor_var(
-          new AdServer::Commons::JsonStringArrayParamProcessor<
-            Banner, StringArray>(
-              &Banner::exclude_categories)));
-
-      {
-        JsonCompositeParamProcessor_var banner_ext_processor =
-          new AdServer::Commons::JsonCompositeParamProcessor<Banner>();
-
-        banner_ext_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT_BLOCKED_CATEGORIES,
-          JsonBannerParamProcessor_var(
-            new AdServer::Commons::JsonStringArrayParamProcessor<
-              Banner, StringArray>(
-                &Banner::exclude_categories)));
-        banner_ext_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT_MATCHING_AD,
-          JsonBannerParamProcessor_var(
-            new AdServer::Commons::JsonArrayParamProcessor<Banner>(
-              JsonBannerParamProcessor_var(
-                new JsonSerializeParamProcessor<Banner, PmrString>(
-                  &Banner::matching_ad)),
-              1U))); // process only first element
-
-        JsonCompositeParamProcessor_var banner_ext_overlay_processor =
-          new AdServer::Commons::JsonCompositeParamProcessor<Banner>();
-
-        banner_ext_overlay_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT_HPOS,
-          JsonBannerParamProcessor_var(
-            new AdServer::Commons::JsonNumberParamProcessor<Banner, unsigned long>(
-              &Banner::ext_hpos)));
-        banner_ext_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT_OVERLAY,
-          banner_ext_overlay_processor);
-
-        banner_processor->add_processor(
-          Request::OpenRtb::IMP_BANNER_EXT,
-          banner_ext_processor);
-      }
-
-      banner_processor_ = banner_processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::
-        RequestParams& /*request_params*/,
-      JsonAdSlotProcessingContext& ad_slot_context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          ad_slot_context.banners.emplace_back(ad_slot_context.resource());
-          banner_processor_->process(ad_slot_context.banners.back(), it->value);
-          banner_format_processor_->process(ad_slot_context.banners.back(), it->value);
-        }
-      }
-      else
-      {
-        ad_slot_context.banners.emplace_back(ad_slot_context.resource());
-        banner_processor_->process(ad_slot_context.banners.back(), value);
-        banner_format_processor_->process(ad_slot_context.banners.back(), value);
-      }
-    }
-
-  protected:
-    typedef JsonAdSlotProcessingContext::Banner Banner;
-
-    typedef ReferenceCounting::SmartPtr<
-      AdServer::Commons::JsonParamProcessor<Banner> >
-      JsonBannerParamProcessor_var;
-
-  protected:
-    JsonBannerParamProcessor_var banner_processor_;
-    JsonBannerParamProcessor_var banner_format_processor_;
-  };
-
-  // JsonPmpParamProcessor
-  class JsonPmpParamProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
-  {
-    typedef JsonAdSlotProcessingContext::Deal Deal;
-
-    typedef JsonParamProcessor<Deal> JsonDealParamProcessor;
-
-    typedef ReferenceCounting::SmartPtr<JsonDealParamProcessor>
-      JsonDealParamProcessor_var;
-
-  public:
-    JsonPmpParamProcessor()
-    {
-      typedef ReferenceCounting::SmartPtr<JsonCompositeParamProcessor<Deal> >
-        JsonDealCompositeParamProcessor_var;
-
-      JsonDealCompositeParamProcessor_var deal_processor =
-        new JsonCompositeParamProcessor<
-          Deal>();
-
-      deal_processor->add_processor(
-        Request::OpenRtb::PMP_DEAL_ID,
-        JsonDealParamProcessor_var(
-          new JsonContextStringParamProcessor<Deal>(
-            &Deal::id)));
-
-      deal_processor->add_processor(
-        Request::OpenRtb::PMP_DEAL_CPM_PRICE,
-        JsonDealParamProcessor_var(
-          new JsonContextDoubleParamProcessor<
-            Deal,
-            AdServer::CampaignSvcs::RevenueDecimal>(
-              &Deal::cpm_price,
-              Generics::DMR_CEIL,
-              AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM)));
-
-      deal_processor->add_processor(
-        Request::OpenRtb::PMP_DEAL_CURRENCY_CODE,
-        JsonDealParamProcessor_var(
-          new JsonContextStringParamProcessor<Deal>(
-            &Deal::currency_code)));
-
-      deal_processor_ = deal_processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams&
-        request_params,
-      JsonAdSlotProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          process_deal_(request_params, context, it->value);
-        }
-      }
-      else
-      {
-        process_deal_(request_params, context, value);
-      }
-    }
-
-  private:
-    void process_deal_(
-      AdServer::Bidding::CampaignManager::RequestParams&
-        request_params,
-      JsonAdSlotProcessingContext& context,
-      const JsonValue& value) const
-    {
-      Deal deal(context.resource());
-      deal_processor_->process(request_params, deal, value);
-      context.deals.push_back(std::move(deal));
-    }
-
-
-  protected:
-    JsonDealParamProcessor_var deal_processor_;
-  };
-
-  // metric element processor {"type" : "", "value" : 0.5}
-  class JsonImpMetricParamProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
-  {
-    typedef JsonAdSlotProcessingContext::Metric Metric;
-
-    using JsonMetricParamProcessor = AdServer::Commons::JsonParamProcessor<
-      JsonAdSlotProcessingContext::Metric>;
-
-    using JsonMetricParamProcessor_var = ReferenceCounting::SmartPtr<JsonMetricParamProcessor>;
-
-    class JsonMetricValueParamProcessor: public JsonMetricParamProcessor
-    {
-    public:
-      virtual void
-      process(
-	JsonAdSlotProcessingContext::Metric& metric,
-        const JsonValue& value) const
-      {
-        if(value.getTag() == JSON_TAG_STRING)
-        {
-          metric.value = value.toString();
-        }
-        else if(value.getTag() == JSON_TAG_NUMBER)
-        {
-          std::ostringstream ostr;
-          ostr << std::fixed << std::setprecision(3) << value.toNumber();
-          metric.value = ostr.str();
-        }
-      }
-
-    protected:
-      virtual ~JsonMetricValueParamProcessor() noexcept = default;
-    };
-
-  public:
-    JsonImpMetricParamProcessor()
-    {
-      typedef ReferenceCounting::SmartPtr<
-	AdServer::Commons::JsonCompositeParamProcessor<Metric>>
-        JsonMetricCompositeParamProcessor_var;
-
-      JsonMetricCompositeParamProcessor_var metric_processor =
-        new AdServer::Commons::JsonCompositeParamProcessor<Metric>();
-
-      metric_processor->add_processor(
-        Request::OpenRtb::IMP_METRIC_TYPE,
-        JsonMetricParamProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<Metric, PmrString>(
-            &Metric::type)));
-
-      metric_processor->add_processor(
-        Request::OpenRtb::IMP_METRIC_VALUE,
-        JsonMetricParamProcessor_var(
-          new JsonMetricValueParamProcessor()));
-
-      metric_processor_ = metric_processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonAdSlotProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          process_metric_(request_params, context, it->value);
-        }
-      }
-      else
-      {
-        process_metric_(request_params, context, value);
-      }
-    }
-
-  private:
-    void
-    process_metric_(
-      AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
-      JsonAdSlotProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() != JSON_TAG_OBJECT)
-      {
-        return;
-      }
-
-      JsonAdSlotProcessingContext::Metric metric(context.resource());
-      metric_processor_->process(metric, value);
-
-      if(!metric.type.empty() && !metric.value.empty())
-      {
-        context.metrics.emplace_back(std::move(metric));
-      }
-    }
-
-  protected:
-    JsonMetricParamProcessor_var metric_processor_;
-  };
-
-  // segment element processor {"value" : "", "id" : "", "name" : ""}
-  class JsonUserSegmentParamProcessor: public JsonParamProcessor<JsonProcessingContext>
-  {
-    typedef JsonProcessingContext::Segment Segment;
-    typedef JsonParamProcessor<Segment> JsonSegmentParamProcessor;
-    typedef ReferenceCounting::SmartPtr<
-      JsonSegmentParamProcessor> JsonSegmentParamProcessor_var;
-
-  public:
-    JsonUserSegmentParamProcessor()
-    {
-      typedef ReferenceCounting::SmartPtr<JsonCompositeParamProcessor<Segment> >
-        JsonSegmentCompositeParamProcessor_var;
-
-      JsonSegmentCompositeParamProcessor_var segment_processor =
-        new JsonCompositeParamProcessor<Segment>();
-
-      segment_processor->add_processor(
-        Request::OpenRtb::USER_SEGMENT_ID,
-        JsonSegmentParamProcessor_var(
-          new JsonContextStringParamProcessor<Segment>(&Segment::id)));
-
-      segment_processor->add_processor(
-        Request::OpenRtb::USER_SEGMENT_NAME,
-        JsonSegmentParamProcessor_var(
-          new JsonContextStringParamProcessor<Segment>(&Segment::name)));
-
-      segment_processor->add_processor(
-        Request::OpenRtb::USER_SEGMENT_VALUE,
-        JsonSegmentParamProcessor_var(
-          new JsonContextStringParamProcessor<Segment>(&Segment::value)));
-
-      segment_processor_ = segment_processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          process_segment_(request_params, context, it->value);
-        }
-      }
-      else
-      {
-        process_segment_(request_params, context, value);
-      }
-    }
-
-  private:
-    void process_segment_(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext& context,
-      const JsonValue& value) const
-    {
-      Segment segment(context.resource());
-      segment_processor_->process(request_params, segment, value);
-      context.segments.emplace_back(std::move(segment));
-    }
-
-  protected:
-    JsonSegmentParamProcessor_var segment_processor_;
-  };
-
-  // Native object processors
-  typedef JsonCompositeParamProcessor<JsonAdSlotProcessingContext::Native>
-    JsonNativeCompositeParamProcessor;
-
-  typedef ReferenceCounting::SmartPtr<JsonNativeCompositeParamProcessor>
-    JsonNativeCompositeParamProcessor_var;
-
-  // Common Asset class
-  template <typename Asset>
-  class JsonNativeAssetProcessor :
-    public JsonParamProcessor<JsonAdSlotProcessingContext::Native>
-  {
-  protected:
-
-    typedef JsonParamProcessor<Asset> JsonAssetParamProcessor;
-
-    typedef ReferenceCounting::SmartPtr<
-      JsonAssetParamProcessor> JsonAssetParamProcessor_var;
-
-    typedef std::pmr::vector<Asset> SeqType;
-
-    typedef JsonCompositeParamProcessor<Asset>
-      JsonAssetCompositeParamProcessor;
-
-    typedef ReferenceCounting::SmartPtr<JsonAssetCompositeParamProcessor>
-      JsonAssetCompositeParamProcessor_var;
-
-    typedef JsonAdSlotProcessingContext::Native Native;
-
-  public:
-
-    JsonNativeAssetProcessor(
-      SeqType Native::* seq_field):
-      seq_field_(seq_field),
-      processor_(new JsonCompositeParamProcessor<Asset>())
-    {
-      processor_->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_ID,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Asset, long>(&Asset::id)));
-
-      processor_->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_REQUIRED,
-        JsonAssetParamProcessor_var(
-          new JsonContextBoolParamProcessor<Asset>(
-            &Asset::required)));
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams&
-        request_params,
-      Native& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_OBJECT)
-      {
-        Asset asset(context.resource());
-        processor_->process(request_params, asset, value);
-        (context.*seq_field_).push_back(std::move(asset));
-      }
-    }
-
-  protected:
-    SeqType Native::* seq_field_;
-    JsonAssetCompositeParamProcessor_var processor_;
-  };
-
-  // Title asset processor
-  class JsonNativeTitleProcessor :
-    public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Data>
-  {
-    typedef Native::Data Data;
-
-  public:
-    JsonNativeTitleProcessor() :
-      JsonNativeAssetProcessor<Data>(
-        &Native::data_assets)
-    {
-      JsonAssetCompositeParamProcessor_var title_processor =
-        new JsonAssetCompositeParamProcessor();
-
-      title_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_TITLE_LEN,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Data, long>(&Data::len)));
-
-      processor_->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_TITLE,
-        title_processor);
-    }
-  };
-
-  // Data asset processor
-
-  class JsonNativeDataProcessor :
-    public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Data>
-  {
-    typedef Native::Data Data;
-
-  public:
-    JsonNativeDataProcessor() :
-      JsonNativeAssetProcessor<Data>(
-        &Native::data_assets)
-    {
-      JsonAssetCompositeParamProcessor_var data_processor =
-        new JsonAssetCompositeParamProcessor();
-
-      data_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_DATA_TYPE,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Data, long>(&Data::data_type)));
-
-      data_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_DATA_LEN,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Data, long>(&Data::len)));
-
-      processor_->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_DATA,
-        data_processor);
-    }
-
-  };
-
-  // Image asset processor
-
-  class JsonNativeImageProcessor :
-    public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Image>
-  {
-    typedef Native::Image Image;
-
-  public:
-    JsonNativeImageProcessor()
-      : JsonNativeAssetProcessor<Image>(&Native::image_assets)
-    {
-      JsonAssetCompositeParamProcessor_var image_processor =
-        new JsonAssetCompositeParamProcessor();
-
-      image_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE_TYPE,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Image, long>(&Image::image_type)));
-
-      image_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE_WMIN,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Image, long>(&Image::width)));
-
-      image_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE_WIDTH,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Image, long>(&Image::width)));
-
-      image_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE_HMIN,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Image, long>(&Image::height)));
-
-      image_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE_HEIGHT,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-          Image, long>(&Image::height)));
-
-      image_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE_MIMES,
-        JsonAssetParamProcessor_var(
-          new JsonContextStringArrayParamProcessor<
-            Image,
-            JsonAdSlotProcessingContext::StringSet>(
-            &Image::mimes)));
-
-      processor_->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_IMAGE,
-        image_processor);
-
-    }
-  };
-
-
-  // Video asset processor
-
-  class JsonNativeVideoProcessor :
-    public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Video>
-  {
-    typedef Native::Video Video;
-
-  public:
-    JsonNativeVideoProcessor() :
-      JsonNativeAssetProcessor<Video>(
-        &Native::video_assets)
-    {
-      JsonAssetCompositeParamProcessor_var video_processor =
-        new JsonAssetCompositeParamProcessor();
-
-      video_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_VIDEO_PROTOCOLS,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberArrayStateParamProcessor<
-            Video,
-            JsonAdSlotProcessingContext::ULSetStateHolder>(
-            &Video::protocols)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_VIDEO_MIMES,
-        JsonAssetParamProcessor_var(
-          new JsonContextStringArrayParamProcessor<
-            Video,
-            JsonAdSlotProcessingContext::StringSet>(
-            &Video::mimes)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_VIDEO_MIN_DURATION,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            Video,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &Video::min_duration)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_VIDEO_MIN_DURATION,
-        JsonAssetParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            Video,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &Video::max_duration)));
-
-      processor_->add_processor(
-        Request::OpenRtb::NATIVE_ASSET_VIDEO,
-        video_processor);
-    }
-  };
-
-  // Native assets processor
-  class JsonAssetProcessor :
-    public JsonParamProcessor<JsonAdSlotProcessingContext::Native>
-  {
-    typedef JsonAdSlotProcessingContext::Native Native;
-    typedef JsonParamProcessor<Native> JsonAssetParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonAssetParamProcessor>
-      JsonAssetParamProcessor_var;
-
-    typedef Generics::GnuHashTable<
-        Generics::SubStringHashAdapter,
-        JsonAssetParamProcessor_var> JsonAssetParamProcessorMap;
-
-  public:
-    JsonAssetProcessor()
-    {
-      sub_processors_.insert(
-        std::make_pair(
-          Request::OpenRtb::NATIVE_ASSET_TITLE,
-          JsonAssetParamProcessor_var(
-            new JsonNativeTitleProcessor())));
-
-      sub_processors_.insert(
-        std::make_pair(
-          Request::OpenRtb::NATIVE_ASSET_DATA,
-          JsonAssetParamProcessor_var(
-            new JsonNativeDataProcessor())));
-
-      sub_processors_.insert(
-        std::make_pair(
-          Request::OpenRtb::NATIVE_ASSET_IMAGE,
-          JsonAssetParamProcessor_var(
-            new JsonNativeImageProcessor())));
-
-      sub_processors_.insert(
-        std::make_pair(
-          Request::OpenRtb::NATIVE_ASSET_VIDEO,
-          JsonAssetParamProcessor_var(
-            new JsonNativeVideoProcessor())));
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams&
-        request_params,
-      JsonAdSlotProcessingContext::Native& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_OBJECT)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          JsonAssetParamProcessorMap::const_iterator processor_it =
-            sub_processors_.find(String::SubString(it->key));
-          if(processor_it != sub_processors_.end())
-          {
-            processor_it->second->process(request_params, context, value);
-          }
-        }
-      }
-    }
-
-  protected:
-    virtual ~JsonAssetProcessor() noexcept = default;
-
-  protected:
-    JsonAssetParamProcessorMap sub_processors_;
-  };
-
-  // Native object processor
-  class JsonNativeProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
-  {
-    typedef JsonAdSlotProcessingContext::Native Native;
-
-    typedef JsonParamProcessor<Native> JsonNativeParamProcessor;
-
-    typedef ReferenceCounting::SmartPtr<JsonNativeParamProcessor>
-      JsonNativeParamProcessor_var;
-
-    class JsonRequestCompositeParamProcessor: public JsonCompositeParamProcessor<Native>
-    {
-      virtual void
-      process(
-        AdServer::Bidding::CampaignManager::RequestParams& request_params,
-        Native& context,
-        const JsonValue& value) const
-      {
-        if(value.getTag() == JSON_TAG_OBJECT)
-        {
-          process(request_params, context, value);
-        }
-        else if(value.getTag() == JSON_TAG_STRING)
-        {
-          std::string str;
-          value.toString(str, true);
-          Generics::ArrayAutoPtr<char> str_holder(str.size() + 1);
-          ::strcpy(str_holder.get(), str.c_str());
-
-          JsonValue root_value;
-          JsonAllocator json_allocator;
-          char* parse_end = str_holder.get();
-          JsonParseStatus status = json_parse(
-            str_holder.get(), &parse_end, &root_value, json_allocator);
-          JsonTag root_tag = root_value.getTag();
-          if(status == JSON_PARSE_OK && root_tag == JSON_TAG_OBJECT)
-          {
-            process(request_params, context, root_value);
-          }
-          else
-          {
-            throw RequestInfoFiller::InvalidParamException(
-              "incorrect native.request tag type");
-          }
-        }
-        else
-        {
-          throw RequestInfoFiller::InvalidParamException(
-            "incorrect native.request tag type");
-        }
-      }
-    };
-
-    typedef JsonCompositeParamProcessor<Native>
-      JsonNativeCompositeParamProcessor;
-
-    typedef ReferenceCounting::SmartPtr<JsonNativeCompositeParamProcessor>
-      JsonNativeCompositeParamProcessor_var;
-
-  public:
-    JsonNativeProcessor()
-    {
-      JsonNativeCompositeParamProcessor_var processor =
-        new JsonNativeCompositeParamProcessor();
-
-      JsonNativeCompositeParamProcessor_var native_processor =
-        new JsonNativeCompositeParamProcessor();
-
-      add_native_processor_(native_processor);
-
-      {
-        // MobFox & Yandex case
-        JsonNativeCompositeParamProcessor_var mobfox_processor =
-          new JsonNativeCompositeParamProcessor();
-
-        add_native_processor_(mobfox_processor);
-
-        native_processor->add_processor(
-          Request::OpenRtb::NATIVE,
-          mobfox_processor);
-      }
-
-      processor->add_processor(
-        Request::OpenRtb::NATIVE_REQUEST,
-        native_processor);
-
-      processor_ = processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::
-        RequestParams& request_params,
-      JsonAdSlotProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_OBJECT)
-      {
-        context.native = JsonAdSlotProcessingContext::Native_var(
-          new Native(context.resource()));
-        processor_->process(request_params, *context.native, value);
-      }
-      else
-      {
-        throw RequestInfoFiller::InvalidParamException(
-          "incorrect native tag type");
-      }
-    }
-
-  private:
-    void
-    add_native_processor_(
-      JsonNativeCompositeParamProcessor* native_processor)
-    {
-      native_processor->add_processor(
-        Request::OpenRtb::NATIVE_VER,
-        JsonNativeParamProcessor_var(
-          new JsonContextStringParamProcessor<Native>(
-            &Native::version)));
-
-      native_processor->add_processor(
-        Request::OpenRtb::NATIVE_PLACEMENT,
-        JsonNativeParamProcessor_var(
-          new JsonContextNumberParamProcessor<Native,
-            AdServer::Commons::Optional<long> >(
-            &Native::placement)));
-
-      JsonNativeParamProcessor_var asset_processor =
-        new JsonAssetProcessor();
-
-      native_processor->add_processor(
-        Request::OpenRtb::NATIVE_ASSETS,
-        JsonNativeParamProcessor_var(
-          new JsonArrayParamProcessor<Native>(asset_processor)));
-    }
-
-  protected:
-    JsonNativeParamProcessor_var processor_;
-  };
-
-  // user.ext.eids.uids element processor {"id" : ""}
-  class JsonUserEidUidParamProcessor: public JsonParamProcessor<JsonProcessingContext::UserEid>
-  {
-    typedef JsonParamProcessor<JsonProcessingContext::UserEidUid>
-      JsonEidUidParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonEidUidParamProcessor>
-      JsonEidUidParamProcessor_var;
-
-  public:
-    JsonUserEidUidParamProcessor()
-    {
-      typedef ReferenceCounting::SmartPtr<
-        JsonCompositeParamProcessor<JsonProcessingContext::UserEidUid> >
-        JsonUserEidUidCompositeParamProcessor_var;
-
-      JsonUserEidUidCompositeParamProcessor_var user_eid_uid_processor =
-        new JsonCompositeParamProcessor<JsonProcessingContext::UserEidUid>();
-
-      user_eid_uid_processor->add_processor(
-        Request::OpenRtb::USER_EXT_EIDS_UIDS_STABLEID,
-        JsonEidUidParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext::UserEidUid>(
-            &JsonProcessingContext::UserEidUid::stable_id)));
-
-      user_eid_uid_processor->add_processor(
-        Request::OpenRtb::USER_EXT_EIDS_UIDS_ID,
-        JsonEidUidParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext::UserEidUid>(
-            &JsonProcessingContext::UserEidUid::id)));
-
-      user_eid_uid_processor_ = user_eid_uid_processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext::UserEid& user_eid,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          process_uid_(request_params, user_eid, it->value);
-        }
-      }
-      else
-      {
-        process_uid_(request_params, user_eid, value);
-      }
-    }
-
-  private:
-    void process_uid_(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext::UserEid& user_eid,
-      const JsonValue& value) const
-    {
-      JsonProcessingContext::UserEidUid user_eid_uid(user_eid.uids.get_allocator().resource());
-      user_eid_uid_processor_->process(request_params, user_eid_uid, value);
-      user_eid.uids.emplace_back(std::move(user_eid_uid));
-    }
-
-  protected:
-    JsonEidUidParamProcessor_var user_eid_uid_processor_;
-  };
-
-  // user.ext.eids element processor {"source" : "", "uids" : [{"id" : ""}]}
-  class JsonUserEidParamProcessor: public JsonParamProcessor<JsonProcessingContext>
-  {
-    typedef JsonProcessingContext::UserEid UserEid;
-    typedef JsonParamProcessor<UserEid> JsonEidParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonEidParamProcessor>
-      JsonEidParamProcessor_var;
-
-  public:
-    JsonUserEidParamProcessor()
-    {
-      typedef ReferenceCounting::SmartPtr<JsonCompositeParamProcessor<UserEid> >
-        JsonUserEidCompositeParamProcessor_var;
-
-      JsonUserEidCompositeParamProcessor_var user_eid_processor =
-        new JsonCompositeParamProcessor<UserEid>();
-
-      user_eid_processor->add_processor(
-        Request::OpenRtb::USER_EXT_EIDS_SOURCE,
-        JsonEidParamProcessor_var(
-          new JsonContextStringParamProcessor<UserEid>(&UserEid::source)));
-
-      JsonEidParamProcessor_var user_eid_uid_processor = new JsonUserEidUidParamProcessor();
-
-      user_eid_processor->add_processor(
-        Request::OpenRtb::USER_EXT_EIDS_UIDS,
-        JsonEidParamProcessor_var(
-          new JsonArrayParamProcessor<UserEid>(user_eid_uid_processor)));
-
-      user_eid_processor_ = user_eid_processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
-        {
-          process_user_eid_(request_params, context, it->value);
-        }
-      }
-      else
-      {
-        process_user_eid_(request_params, context, value);
-      }
-    }
-
-  private:
-    void process_user_eid_(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
-      JsonProcessingContext& context,
-      const JsonValue& value) const
-    {
-      UserEid user_eid(context.resource());
-      user_eid_processor_->process(request_params, user_eid, value);
-      context.user_eids.emplace_back(std::move(user_eid));
-    }
-
-  protected:
-    JsonEidParamProcessor_var user_eid_processor_;
-  };
-
-  // JsonImpParamProcessor
-  class JsonImpParamProcessor: public JsonParamProcessor<JsonProcessingContext>
-  {
-  public:
-    JsonImpParamProcessor()
-    {
-      // init imp element processor
-      JsonAdSlotCompositeParamProcessor_var processor =
-        new JsonAdSlotCompositeParamProcessor();
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_ID,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::id)));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_MIN_CPM_PRICE,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextDoubleParamProcessor<
-            JsonAdSlotProcessingContext,
-            AdServer::CampaignSvcs::RevenueDecimal>(
-              &JsonAdSlotProcessingContext::min_cpm_price,
-              Generics::DMR_CEIL,
-              AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM)));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_MIN_CPM_PRICE_CURRENCY_CODE,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::min_cpm_price_currency_code)));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_SECURE,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextBoolParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::secure)));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_METRIC,
-        JsonAdSlotParamProcessor_var(
-          new JsonImpMetricParamProcessor()));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_TAGID,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::tagid)));
-
-      // init imp::ext::type processor
-      JsonAdSlotCompositeParamProcessor_var imp_ext_processor =
-        new JsonAdSlotCompositeParamProcessor();
-
-      imp_ext_processor->add_processor(
-        Request::OpenRtb::IMP_EXT_TYPE,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::imp_ext_type)));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_EXT,
-        imp_ext_processor);
-
-      // banner & banners processor
-      JsonAdSlotParamProcessor_var banner_processor = new JsonBannerParamProcessor();
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_BANNER,
-        JsonAdSlotParamProcessor_var(
-          new JsonBannerParamProcessor()));
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_BANNERS,
-        JsonAdSlotParamProcessor_var(
-          new JsonArrayParamProcessor<JsonAdSlotProcessingContext>(
-            banner_processor)));
-
-      // init video element
-      JsonAdSlotCompositeParamProcessor_var video_processor =
-        new JsonAdSlotCompositeParamProcessor(
-          &JsonAdSlotProcessingContext::video);
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_WIDTH,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-              &JsonAdSlotProcessingContext::video_width)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_HEIGHT,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-              &JsonAdSlotProcessingContext::video_height)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_POS,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::video_pos)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_MIMES,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextStringArrayParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::StringSet>(
-            &JsonAdSlotProcessingContext::video_mimes)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_MINDURATION,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &JsonAdSlotProcessingContext::video_min_duration)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_MAXDURATION,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &JsonAdSlotProcessingContext::video_max_duration)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_PROTOCOL,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberArrayStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULSetStateHolder>(
-            &JsonAdSlotProcessingContext::video_protocols)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_PROTOCOLS,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberArrayStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULSetStateHolder>(
-            &JsonAdSlotProcessingContext::video_protocols)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_PLAYBACKMETHOD,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberArrayStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULSetStateHolder>(
-            &JsonAdSlotProcessingContext::video_playbackmethods)));
-
-     video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_API,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberArrayStateParamProcessor<
-            JsonAdSlotProcessingContext,
-          JsonAdSlotProcessingContext::ULSetStateHolder>(
-            &JsonAdSlotProcessingContext::video_api)));
-
-     video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_STARTDELAY,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::LValueStateHolder>(
-            &JsonAdSlotProcessingContext::video_start_delay)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_LINEARITY,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &JsonAdSlotProcessingContext::video_linearity)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_SKIP,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &JsonAdSlotProcessingContext::video_skip)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_REWARD,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberStateParamProcessor<
-            JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
-            &JsonAdSlotProcessingContext::video_reward)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_PLACEMENT,
-        JsonAdSlotParamProcessor_var(
-          new JsonContextNumberParamProcessor<
-            JsonAdSlotProcessingContext,
-            AdServer::Commons::Optional<long> >(
-            &JsonAdSlotProcessingContext::video_placement)));
-
-      video_processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO_BLOCKED_CATEGORIES,
-        JsonAdSlotParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonAdSlotProcessingContext>(
-            &JsonAdSlotProcessingContext::video_exclude_categories)));
-
-      {
-        JsonAdSlotCompositeParamProcessor_var video_ext_processor =
-          new JsonAdSlotCompositeParamProcessor();
-        video_ext_processor->add_processor(
-          Request::OpenRtb::IMP_VIDEO_EXT_ADTYPE,
-          JsonAdSlotParamProcessor_var(
-            new JsonContextNumberStateParamProcessor<
-              JsonAdSlotProcessingContext,
-              JsonAdSlotProcessingContext::ULValueStateHolder>(
-              &JsonAdSlotProcessingContext::video_adtype)));
-        video_processor->add_processor(
-          Request::OpenRtb::IMP_VIDEO_EXT,
-          video_ext_processor);
-      }
-
-      processor->add_processor(
-        Request::OpenRtb::IMP_VIDEO,
-        video_processor);
-
-      // Pmp object
-      {
-        JsonAdSlotCompositeParamProcessor_var pmp_processor =
-          new JsonAdSlotCompositeParamProcessor();
-
-        pmp_processor->add_processor(
-          Request::OpenRtb::PMP_PRIVATE_AUCTION,
-          JsonAdSlotParamProcessor_var(
-            new JsonContextNumberParamProcessor<
-              JsonAdSlotProcessingContext,
-              AdServer::Commons::Optional<long> >(
-                &JsonAdSlotProcessingContext::private_auction)));
-
-        JsonAdSlotParamProcessor_var deal_processor =
-          new JsonPmpParamProcessor();
-
-        pmp_processor->add_processor(
-          Request::OpenRtb::PMP_DEALS,
-          JsonAdSlotParamProcessor_var(
-            new JsonArrayParamProcessor<JsonAdSlotProcessingContext>(
-              deal_processor)));
-
-        processor->add_processor(
-          Request::OpenRtb::PMP,
-          pmp_processor);
-      }
-
-      // Native object
-      {
-        processor->add_processor(
-          Request::OpenRtb::NATIVE,
-          JsonAdSlotParamProcessor_var(
-            new JsonNativeProcessor()));
-      }
-
-      processor_ = processor;
-    }
-
-    virtual void
-    process(
-      AdServer::Bidding::CampaignManager::
-        RequestParams& request_params,
-      JsonProcessingContext& context,
-      const JsonValue& value) const
-    {
-      if(value.getTag() != JSON_TAG_ARRAY)
-      {
-        Stream::Error ostr;
-        ostr << "incorrect imp element type";
-        throw RequestInfoFiller::InvalidParamException(ostr);
-      }
-
-      for(JsonIterator it = begin(value); it != end(value); ++it)
-      {
-        JsonAdSlotProcessingContext ad_slot_context(context.resource());
-        processor_->process(request_params, ad_slot_context, it->value);
-        context.ad_slots.push_back(std::move(ad_slot_context));
-      }
-    }
-
-  protected:
-    typedef JsonParamProcessor<JsonAdSlotProcessingContext>
-      JsonAdSlotParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonAdSlotParamProcessor>
-      JsonAdSlotParamProcessor_var;
-    typedef JsonCompositeParamProcessor<JsonAdSlotProcessingContext>
-      JsonAdSlotCompositeParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonAdSlotCompositeParamProcessor>
-      JsonAdSlotCompositeParamProcessor_var;
-
-  protected:
-    JsonAdSlotParamProcessor_var processor_;
-  };
 
   // RequestInfoFiller
   RequestInfoFiller::RequestInfoFiller(
@@ -2380,8 +749,7 @@ namespace AdServer::Bidding
     const char* ip_salt,
     const SourceMap& sources,
     bool enable_profile_referer,
-    const AccountTraitsById& account_traits,
-    bool use_fast_json_parser)
+    const AccountTraitsById& account_traits)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
@@ -2390,7 +758,6 @@ namespace AdServer::Bidding
       ip_logging_enabled_(ip_logging_enabled),
       ip_salt_(ip_salt),
       ip_map_(std::move(ip_map)),
-      use_fast_json_parser_(use_fast_json_parser),
       sources_(sources),
       enable_profile_referer_(enable_profile_referer),
       account_traits_(account_traits),
@@ -2414,9 +781,9 @@ namespace AdServer::Bidding
         {5, "Interstitial"}
       })
   {
-    source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("MegafonID")), "megafon-stableid");
-    source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("quietmedia")), "megafon-stableid");
-    source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("const.uno")), "megafon-stableid");
+    source_mapping_.emplace(Generics::SubStringHashAdapter(to_sub_string("MegafonID")), "megafon-stableid");
+    source_mapping_.emplace(Generics::SubStringHashAdapter(to_sub_string("quietmedia")), "megafon-stableid");
+    source_mapping_.emplace(Generics::SubStringHashAdapter(to_sub_string("const.uno")), "megafon-stableid");
 
     if(user_agent_filter_path[0])
     {
@@ -2425,622 +792,6 @@ namespace AdServer::Bidding
 
     init_param_processors_();
 
-    // initialize OpenRTB json processors
-    JsonCompositeRequestParamProcessor_var root_processor =
-      new JsonCompositeRequestParamProcessor();
-
-    root_processor->add_processor(
-      Request::OpenRtb::REQUEST_ID,
-      JsonRequestParamProcessor_var(
-        new JsonContextStringParamProcessor<JsonProcessingContext>(
-          &JsonProcessingContext::request_id)));
-
-    root_processor->add_processor(
-      Request::OpenRtb::CURRENCY,
-      JsonRequestParamProcessor_var(
-        new JsonStringArrayParamProcessor<JsonProcessingContext>(
-          &JsonProcessingContext::currencies)));
-
-    root_processor->add_processor(
-      Request::OpenRtb::IMP,
-      JsonRequestParamProcessor_var(new JsonImpParamProcessor()));
-
-    root_processor->add_processor(
-      Request::OpenRtb::BLOCKED_CATEGORIES,
-      JsonRequestParamProcessor_var(
-        new JsonStringArrayParamProcessor<JsonProcessingContext>(
-          &JsonProcessingContext::exclude_categories)));
-
-    root_processor->add_processor(
-      Request::OpenRtb::TEST,
-      JsonRequestParamProcessor_var(
-        new JsonContextBoolParamProcessor<JsonProcessingContext>(
-          &JsonProcessingContext::test)));
-
-    {
-      JsonCompositeRequestParamProcessor_var site_processor =
-        new JsonCompositeRequestParamProcessor(
-          &JsonProcessingContext::site);
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_PAGE,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_page)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_NAME,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_name)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_DOMAIN,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_domain)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_ID,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_id)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_SEARCH,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_search)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_REF,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_ref)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_REFERER,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_referer)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_REREFERER,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_rereferer)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_KEYWORDS,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_keywords)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_PAGECAT,
-        JsonRequestParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_pagecat)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_SECTIONCAT,
-        JsonRequestParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_sectioncat)));
-
-      site_processor->add_processor(
-        Request::OpenRtb::SITE_CAT,
-        JsonRequestParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::site_cat)));
-
-      {
-        JsonCompositeRequestParamProcessor_var site_ext_processor =
-          new JsonCompositeRequestParamProcessor();
-
-        site_ext_processor->add_processor(
-          Request::OpenRtb::SITE_EXT_SECURE,
-          JsonRequestParamProcessor_var(
-            new JsonContextBoolParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::secure)));
-
-        site_ext_processor->add_processor(
-          Request::OpenRtb::SITE_EXT_PUID1,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::puid1)));
-
-        site_ext_processor->add_processor(
-          Request::OpenRtb::SITE_EXT_PUID2,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::puid2)));
-
-        site_processor->add_processor(
-          Request::OpenRtb::SITE_EXT,
-          site_ext_processor);
-      }
-
-      // content
-      {
-        JsonCompositeRequestParamProcessor_var site_content_processor =
-          new JsonCompositeRequestParamProcessor(
-            &JsonProcessingContext::site_content);
-
-        site_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_KEYWORDS,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_keywords)));
-
-        site_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_TITLE,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_title)));
-
-        site_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_SERIES,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_series)));
-
-        site_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_SEASON,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_season)));
-
-        site_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_CAT,
-          JsonRequestParamProcessor_var(
-            new JsonStringArrayParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_cat)));
-
-        // producer
-        {
-          JsonCompositeRequestParamProcessor_var site_content_producer_processor =
-            new JsonCompositeRequestParamProcessor(
-              &JsonProcessingContext::site_content_producer);
-
-         site_content_producer_processor->add_processor(
-          Request::OpenRtb::PRODUCER_NAME,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringArrayParamProcessor<
-              JsonProcessingContext,
-              StringArray>(
-              &JsonProcessingContext::content_producer_name)));
-
-          site_content_processor->add_processor(
-            Request::OpenRtb::PRODUCER,
-            site_content_producer_processor);
-        }
-
-        site_processor->add_processor(
-          Request::OpenRtb::CONTENT,
-          site_content_processor);
-      }
-
-      // publisher
-      {
-        JsonCompositeRequestParamProcessor_var site_publisher_processor =
-          new JsonCompositeRequestParamProcessor(
-            &JsonProcessingContext::site_publisher);
-
-        site_publisher_processor->add_processor(
-          Request::OpenRtb::PUBLISHER_NAME,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::publisher_name)));
-
-        site_publisher_processor->add_processor(
-          Request::OpenRtb::PUBLISHER_ID,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::publisher_id)));
-
-        site_publisher_processor->add_processor(
-          Request::OpenRtb::PUBLISHER_CAT,
-          JsonRequestParamProcessor_var(
-            new JsonStringArrayParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::publisher_cat)));
-
-        site_processor->add_processor(
-          Request::OpenRtb::PUBLISHER,
-          site_publisher_processor);
-      }
-
-      root_processor->add_processor(
-        Request::OpenRtb::SITE,
-        site_processor);
-    }
-
-    {
-      JsonCompositeRequestParamProcessor_var app_processor =
-        new JsonCompositeRequestParamProcessor(
-          &JsonProcessingContext::app);
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_ID,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_id)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_NAME,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_name)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_BUNDLE,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_bundle)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_DOMAIN,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_domain)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_STORE_URL,
-        JsonRequestParamProcessor_var(
-          new JsonContextURLParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_store_url)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_KEYWORDS,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_keywords)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_PAGECAT,
-        JsonRequestParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_pagecat)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_SECTIONCAT,
-        JsonRequestParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_sectioncat)));
-
-      app_processor->add_processor(
-        Request::OpenRtb::APP_CAT,
-        JsonRequestParamProcessor_var(
-          new JsonStringArrayParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::app_cat)));
-
-
-      // content
-      {
-        JsonCompositeRequestParamProcessor_var app_content_processor =
-          new JsonCompositeRequestParamProcessor(
-            &JsonProcessingContext::app_content);
-
-        app_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_KEYWORDS,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_keywords)));
-
-        app_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_TITLE,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_title)));
-
-        app_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_SERIES,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_series)));
-
-        app_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_SEASON,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_season)));
-
-        app_content_processor->add_processor(
-          Request::OpenRtb::CONTENT_CAT,
-          JsonRequestParamProcessor_var(
-            new JsonStringArrayParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::content_cat)));
-
-        // producer
-        {
-          JsonCompositeRequestParamProcessor_var app_content_producer_processor =
-            new JsonCompositeRequestParamProcessor(
-              &JsonProcessingContext::app_content_producer);
-
-         app_content_producer_processor->add_processor(
-          Request::OpenRtb::PRODUCER_NAME,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringArrayParamProcessor<
-              JsonProcessingContext,
-              StringArray>(
-              &JsonProcessingContext::content_producer_name)));
-
-          app_content_processor->add_processor(
-            Request::OpenRtb::PRODUCER,
-            app_content_producer_processor);
-        }
-
-        app_processor->add_processor(
-          Request::OpenRtb::CONTENT,
-          app_content_processor);
-
-      }
-
-      // publisher
-      {
-        JsonCompositeRequestParamProcessor_var app_publisher_processor =
-          new JsonCompositeRequestParamProcessor(
-            &JsonProcessingContext::app_publisher);
-
-        app_publisher_processor->add_processor(
-          Request::OpenRtb::PUBLISHER_NAME,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::publisher_name)));
-
-        app_publisher_processor->add_processor(
-          Request::OpenRtb::PUBLISHER_ID,
-          JsonRequestParamProcessor_var(
-            new JsonContextStringParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::publisher_id)));
-
-        app_publisher_processor->add_processor(
-          Request::OpenRtb::PUBLISHER_CAT,
-          JsonRequestParamProcessor_var(
-            new JsonStringArrayParamProcessor<JsonProcessingContext>(
-              &JsonProcessingContext::publisher_cat)));
-
-        app_processor->add_processor(
-          Request::OpenRtb::PUBLISHER,
-          app_publisher_processor);
-      }
-
-      root_processor->add_processor(
-        Request::OpenRtb::APP,
-        app_processor);
-    }
-
-    {
-      JsonCompositeRequestParamProcessor_var device_processor =
-        new JsonCompositeRequestParamProcessor();
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_IP,
-        &JsonProcessingContext::ip);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_IPv6,
-        &JsonProcessingContext::ipv6);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_USER_AGENT,
-        &JsonProcessingContext::user_agent);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_USER_DATA,
-        &JsonProcessingContext::user_id);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_IFA,
-        &JsonProcessingContext::ifa);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_DIDMD5,
-        &JsonProcessingContext::didmd5);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_DIDSHA1,
-        &JsonProcessingContext::didsha1);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_DPIDMD5,
-        &JsonProcessingContext::dpidmd5);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_DPISHA1,
-        &JsonProcessingContext::dpisha1);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_MACSHA1,
-        &JsonProcessingContext::macsha1);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_MACMD5,
-        &JsonProcessingContext::macmd5);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_LANGUAGE,
-        &JsonProcessingContext::language);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_CARRIER,
-        &JsonProcessingContext::carrier);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_DEVICETYPE,
-        JsonRequestParamProcessor_var(
-          new JsonContextNumberParamProcessor<JsonProcessingContext, unsigned int>(
-            &JsonProcessingContext::ssp_devicetype)));
-
-      JsonCompositeRequestParamProcessor_var device_geo_processor =
-        new JsonCompositeRequestParamProcessor();
-
-      device_geo_processor->add_processor(
-        Request::OpenRtb::DEVICE_GEO_COUNTRY,
-        &JsonProcessingContext::ssp_country);
-
-      device_geo_processor->add_processor(
-        Request::OpenRtb::DEVICE_GEO_REGION,
-        &JsonProcessingContext::ssp_region);
-
-      device_geo_processor->add_processor(
-        Request::OpenRtb::DEVICE_GEO_CITY,
-        &JsonProcessingContext::ssp_city);
-
-      device_processor->add_processor(
-        Request::OpenRtb::DEVICE_GEO,
-        device_geo_processor);
-
-      root_processor->add_processor(
-        Request::OpenRtb::DEVICE,
-        device_processor);
-    }
-
-    {
-      JsonCompositeRequestParamProcessor_var user_processor =
-        new JsonCompositeRequestParamProcessor(&JsonProcessingContext::user);
-
-      user_processor->add_processor(
-        Request::OpenRtb::USER_ID,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::external_user_id)));
-
-      user_processor->add_processor(
-        Request::OpenRtb::BUYER_ID,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::user_id)));
-
-      user_processor->add_processor(
-        Request::OpenRtb::BUYER_ID2,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::user_id)));
-
-      user_processor->add_processor(
-        Request::OpenRtb::USER_KEYWORDS,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::user_keywords)));
-
-      user_processor->add_processor(
-        Request::OpenRtb::USER_GENDER,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::user_gender)));
-
-      user_processor->add_processor(
-        Request::OpenRtb::USER_YOB,
-        JsonRequestParamProcessor_var(
-          new JsonContextNumberParamProcessor<JsonProcessingContext, unsigned long>(
-            &JsonProcessingContext::user_yob)));
-
-      JsonCompositeRequestParamProcessor_var user_data_processor =
-        new JsonCompositeRequestParamProcessor(&JsonProcessingContext::user);
-
-      user_data_processor->add_processor(
-        Request::OpenRtb::USER_DATA_SEGMENT,
-        JsonRequestParamProcessor_var(new JsonUserSegmentParamProcessor()));
-
-      user_processor->add_processor(
-        Request::OpenRtb::USER_DATA,
-        JsonRequestParamProcessor_var(
-          new JsonArrayParamProcessor<JsonProcessingContext>(user_data_processor))
-        );
-
-      JsonCompositeRequestParamProcessor_var user_ext_processor =
-        new JsonCompositeRequestParamProcessor();
-
-      // user.ext.eids
-      JsonRequestParamProcessor_var user_ext_eid_processor =
-        new JsonUserEidParamProcessor();
-
-      user_ext_processor->add_processor(
-        Request::OpenRtb::USER_EXT_EIDS,
-        JsonRequestParamProcessor_var(
-          new JsonArrayParamProcessor<JsonProcessingContext>(user_ext_eid_processor))
-        );
-
-      user_processor->add_processor(Request::OpenRtb::USER_EXT, user_ext_processor);
-
-      {
-        JsonCompositeRequestParamProcessor_var ext_processor =
-          new JsonCompositeRequestParamProcessor();
-
-        ext_processor->add_processor(
-          Request::OpenRtb::USER_EXT_EIDS,
-          JsonRequestParamProcessor_var(
-            new JsonArrayParamProcessor<JsonProcessingContext>(
-              JsonRequestParamProcessor_var(new JsonUserEidParamProcessor()))));
-
-        user_processor->add_processor(Request::OpenRtb::USER_EXT, ext_processor);
-      }
-
-      root_processor->add_processor(Request::OpenRtb::USER, user_processor);
-    }
-
-    {
-      // regs.coppa
-
-      JsonCompositeRequestParamProcessor_var regs_processor =
-        new JsonCompositeRequestParamProcessor();
-
-      regs_processor->add_processor(
-        Request::OpenRtb::REGS_COPPA,
-        JsonRequestParamProcessor_var(
-          new JsonContextBoolParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::regs_coppa)));
-
-      root_processor->add_processor(
-        Request::OpenRtb::REGS,
-        regs_processor);
-    }
-
-    {
-      JsonCompositeRequestParamProcessor_var ext_processor =
-        new JsonCompositeRequestParamProcessor();
-
-      ext_processor->add_processor(
-        Request::OpenRtb::EXT_TEST,
-        JsonRequestParamProcessor_var(
-          new JsonContextBoolParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::test)));
-
-      ext_processor->add_processor(
-        Request::OpenRtb::EXT_SECURE,
-        JsonRequestParamProcessor_var(
-          new JsonContextBoolParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::secure)));
-      {
-        JsonCompositeRequestParamProcessor_var ext_udi_processor =
-          new JsonCompositeRequestParamProcessor();
-
-        ext_udi_processor->add_processor(
-          Request::OpenRtb::EXT_IDFA,
-          &JsonProcessingContext::ifa);
-
-        ext_udi_processor->add_processor(
-          Request::OpenRtb::EXT_GAID,
-          &JsonProcessingContext::ifa);
-
-        ext_processor->add_processor(
-          Request::OpenRtb::EXT_UDI,
-          ext_udi_processor);
-      }
-
-      ext_processor->add_processor(
-        Request::OpenRtb::EXT_CATEGORY,
-        JsonRequestParamProcessor_var(
-          new JsonContextStringParamProcessor<JsonProcessingContext>(
-            &JsonProcessingContext::required_category)));
-
-      root_processor->add_processor(
-        Request::OpenRtb::EXT,
-        ext_processor);
-    }
-
-    json_root_processor_ = root_processor;
     init_fast_json_processors_();
   }
 
@@ -3053,37 +804,35 @@ namespace AdServer::Bidding
   bool
   RequestInfoFiller::parse_debug_size_param_(
     DebugAdSlotSizeMap& debug_sizes,
-    const String::SubString& name,
-    const String::SubString& value) const
+    std::string_view name,
+    std::string_view value) const
     noexcept
   {
-    const String::SubString::SizeType adslot_length =
+    const std::string_view::size_type adslot_length =
       Request::Debug::AD_SLOT.size();
     if (name.compare(0, adslot_length, Request::Debug::AD_SLOT) != 0)
     {
       return false;
     }
 
-    const String::SubString::SizeType dot_pos = name.find('.', adslot_length);
-    if (dot_pos == String::SubString::NPOS)
+    const std::string_view::size_type dot_pos = name.find('.', adslot_length);
+    if (dot_pos == std::string_view::npos)
     {
       return false;
     }
 
     unsigned long si;
-    if(!String::StringManip::str_to_int(String::SubString(
-      name.substr(adslot_length, dot_pos - adslot_length)), si))
+    if(!String::StringManip::str_to_int(
+      to_sub_string(name.substr(adslot_length, dot_pos - adslot_length)), si))
     {
       return false;
     }
-
-    const String::SubString param_name(name.substr(dot_pos + 1));
 
     if(name.compare(dot_pos + 1,
         Request::Debug::AdSlot::SIZE.size(),
         Request::Debug::AdSlot::SIZE) == 0)
     {
-      debug_sizes.emplace(--si, value.str());
+      debug_sizes.emplace(--si, value);
       return true;
     }
 
@@ -3103,7 +852,9 @@ namespace AdServer::Bidding
         it != params.end(); ++it)
     {
       if (!parse_debug_size_param_(
-            request_info.debug_sizes, it->name, it->value))
+            request_info.debug_sizes,
+            std::string_view(it->name.data(), it->name.size()),
+            std::string_view(it->value.data(), it->value.size())))
       {
         ParamProcessorMap::const_iterator param_it =
           param_processors_.find(it->name);
@@ -3146,7 +897,7 @@ namespace AdServer::Bidding
 
     init_request_param(request_params, request_info);
 
-    Stream::Stack<16> ip_str;
+    std::string ip_str;
 
     if (bid_request.has_ip() && bid_request.ip().size() == 3)
     {
@@ -3154,13 +905,19 @@ namespace AdServer::Bidding
       unsigned ip_byte1 = static_cast<unsigned char>(ip[0]);
       unsigned ip_byte2 = static_cast<unsigned char>(ip[1]);
       unsigned ip_byte3 = static_cast<unsigned char>(ip[2]);
-      ip_str << ip_byte1 << "." << ip_byte2 << "." << ip_byte3 << ".0";
+      ip_str.reserve(16);
+      ip_str += std::to_string(ip_byte1);
+      ip_str += '.';
+      ip_str += std::to_string(ip_byte2);
+      ip_str += '.';
+      ip_str += std::to_string(ip_byte3);
+      ip_str += ".0";
     }
 
-    fill_by_ip(
-      request_info,
-      request_params,
-      ip_str.str());
+      fill_by_ip(
+        request_info,
+        request_params,
+        ip_str);
 
     request_params.common_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
@@ -3191,13 +948,13 @@ namespace AdServer::Bidding
     }
 
     // Matching data
-    KeywordFormatter kw_fmt(String::SubString("goog"));
+    KeywordFormatter kw_fmt("goog");
 
     kw_fmt.add_keyword(MatchKeywords::RTBREQ);
 
     if(!request_info.source_id.empty())
     {
-      kw_fmt.add_dict_keyword(MatchKeywords::REQ, String::SubString());
+      kw_fmt.add_dict_keyword(MatchKeywords::REQ, std::string_view());
     }
 
     /*
@@ -3248,9 +1005,9 @@ namespace AdServer::Bidding
         bid_request.detected_content_label(dcl_kw_i));
     }
 
-    if(!ip_str.str().empty())
+    if(!ip_str.empty())
     {
-      kw_fmt.add_ip(String::SubString(ip_str.str()));
+      kw_fmt.add_ip(ip_str);
     }
 
     int seller_id = 0;
@@ -3442,7 +1199,9 @@ namespace AdServer::Bidding
           adslot.excluded_sensitive_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i], String::SubString(cat_str, len));
+          CampaignManager::assign_string(
+            ad_slot_request.exclude_categories[res_cat_i],
+            std::string_view(cat_str, len));
           ++res_cat_i;
         }
       }
@@ -3455,7 +1214,9 @@ namespace AdServer::Bidding
           adslot.excluded_product_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i], String::SubString(cat_str, len));
+          CampaignManager::assign_string(
+            ad_slot_request.exclude_categories[res_cat_i],
+            std::string_view(cat_str, len));
           ++res_cat_i;
         }
       }
@@ -3585,11 +1346,10 @@ namespace AdServer::Bidding
             ad_slot_context.width = adslot.width(max_size_i);
             ad_slot_context.height = adslot.height(max_size_i);
 
-            Stream::Stack<1024> oss;
-            oss << ad_slot_context.width << 'x' << ad_slot_context.height;
-
             ad_slot_request.sizes.resize(1);
-            CampaignManager::assign_string(ad_slot_request.sizes[0], oss.str());
+            CampaignManager::assign_string(
+              ad_slot_request.sizes[0],
+              make_size_string(ad_slot_context.width, ad_slot_context.height));
           }
         }
       }
@@ -3712,10 +1472,12 @@ namespace AdServer::Bidding
       }
 
       // External tag id
-      Stream::Stack<EXT_TAG_ID_MAX_LENGTH> oss;
-      oss << seller_id << '-' <<
-        (anonymous_id.empty()? "0": anonymous_id.c_str());
-      CampaignManager::assign_string(ad_slot_request.ext_tag_id, normalize_ext_tag_id_(oss.str()));
+      std::string ext_tag_id = std::to_string(seller_id);
+      ext_tag_id += '-';
+      ext_tag_id += anonymous_id.empty() ? "0" : anonymous_id;
+      CampaignManager::assign_string(
+        ad_slot_request.ext_tag_id,
+        normalize_ext_tag_id_(ext_tag_id));
 
       ad_slot_request.debug_ccg = 0;
 
@@ -3796,9 +1558,9 @@ namespace AdServer::Bidding
   }
 
   bool
-  RequestInfoFiller::fill_adid(const String::SubString& source_id) const noexcept
+  RequestInfoFiller::fill_adid(std::string_view source_id) const noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id.str());
+    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
     if(source_it != sources_.end())
     {
       return source_it->second.fill_adid;
@@ -3810,10 +1572,10 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::fill_vast_instantiate_type_(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    const String::SubString& source_id) const
+    std::string_view source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id.str());
+    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
     if(source_it != sources_.end())
     {
       request_params.ad_instantiate_type = source_it->second.vast_instantiate_type;
@@ -3826,10 +1588,10 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::fill_native_instantiate_type_(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    const String::SubString& source_id) const
+    std::string_view source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id.str());
+    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
     if(source_it != sources_.end())
     {
       request_params.context_info.enabled_notice = (
@@ -3841,10 +1603,10 @@ namespace AdServer::Bidding
   RequestInfoFiller::fill_request_type_(
     RequestInfo& request_info,
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    const String::SubString& source_id) const
+    std::string_view source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(source_id.str());
+    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
     if(source_it != sources_.end())
     {
       if (request_info.publisher_account_ids.empty())
@@ -3928,69 +1690,12 @@ namespace AdServer::Bidding
   }
 
   void
-  RequestInfoFiller::parse_openrtb_request_gason_(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    JsonProcessingContext& context,
-    const char* bid_request) const
-  {
-    static const char* FUN =
-      "RequestInfoFiller::parse_openrtb_request_gason_()";
-
-    const int bid_request_len = ::strlen(bid_request);
-    // in some specific cases required +1 symbol
-    Generics::ArrayAutoPtr<char> bid_request_holder(bid_request_len + 2);
-    JsonValue root_value;
-    JsonAllocator json_allocator;
-    char* parse_end = bid_request_holder.get();
-    ::strcpy(bid_request_holder.get(), bid_request);
-    bid_request_holder.get()[bid_request_len + 1] = 0;
-    JsonParseStatus status = json_parse(
-      bid_request_holder.get(), &parse_end, &root_value, json_allocator);
-
-    assert(parse_end < bid_request_holder.get() + bid_request_len + 2);
-
-    if(status != JSON_PARSE_OK)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": parsing error '" << json_parse_error(status) <<
-        "' at pos : ";
-      if(parse_end)
-      {
-        ostr << std::string(parse_end, 20);
-      }
-      else
-      {
-        ostr << "null";
-      }
-      throw InvalidParamException(ostr);
-    }
-
-    if(root_value.getTag() != JSON_TAG_OBJECT)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": incorrect root tag type";
-      throw InvalidParamException(ostr);
-    }
-
-    try
-    {
-      json_root_processor_->process(request_params, context, root_value);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": processing error: " << e.what();
-      throw InvalidParamException(ostr);
-    }
-  }
-
-  void
   RequestInfoFiller::fill_by_openrtb_request(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
     std::string& keywords,
     JsonProcessingContext& context,
-    const char* bid_request) const
+    std::string&& bid_request) const
     /*throw(InvalidParamException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
@@ -4017,14 +1722,14 @@ namespace AdServer::Bidding
       request_params.fill_track_pixel = true;
     }
 
-    if(use_fast_json_parser_)
-    {
-      parse_openrtb_request_(request_params, context, bid_request);
-    }
-    else
-    {
-      parse_openrtb_request_gason_(request_params, context, bid_request);
-    }
+    std::string& held_bid_request = request_info.hold_string(
+      std::move(bid_request));
+
+    parse_openrtb_request_(
+      request_params,
+      request_info,
+      context,
+      std::string_view(held_bid_request.data(), held_bid_request.size()));
 
     request_info.bid_publisher_id = context.publisher_id;
     request_info.bid_site_id = context.site_id;
@@ -4037,7 +1742,7 @@ namespace AdServer::Bidding
 
     if(!request_info.source_id.empty())
     {
-      kw_fmt.add_dict_keyword(MatchKeywords::REQ, String::SubString());
+      kw_fmt.add_dict_keyword(MatchKeywords::REQ, std::string_view());
     }
 
     if(context.user)
@@ -4091,15 +1796,15 @@ namespace AdServer::Bidding
         float metric_value = 0.0f;
         if(try_parse_float_(metric_value, metric_it->value))
         {
-          if(caseless_compare(metric_it->type, String::SubString("ctr")))
+          if(caseless_compare(metric_it->type, "ctr"))
           {
             request_info.additional_info.ctr = metric_value;
           }
-          else if(caseless_compare(metric_it->type, String::SubString("viewability")))
+          else if(caseless_compare(metric_it->type, "viewability"))
           {
             request_info.additional_info.viewability = metric_value;
           }
-          else if(caseless_compare(metric_it->type, String::SubString("vtr")))
+          else if(caseless_compare(metric_it->type, "vtr"))
           {
             request_info.additional_info.vtr = metric_value;
           }
@@ -4164,7 +1869,8 @@ namespace AdServer::Bidding
 
     if (context.external_user_id.empty())
     {
-      context.external_user_id = make_ssp_uid_by_device_(context);
+      context.external_user_id = request_info.hold_string(
+        make_ssp_uid_by_device_(context));
     }
 
     if(!context.external_user_id.empty() &&
@@ -4201,7 +1907,7 @@ namespace AdServer::Bidding
 
       if(!request_info.source_id.empty())
       {
-        kw_fmt.add_dict_keyword(MatchKeywords::NO_ID, String::SubString());
+        kw_fmt.add_dict_keyword(MatchKeywords::NO_ID, std::string_view());
       }
     }
 
@@ -4217,7 +1923,7 @@ namespace AdServer::Bidding
 
     if(!context.ip.empty())
     {
-      kw_fmt.add_ip(String::SubString(context.ip));
+      kw_fmt.add_ip(context.ip);
     }
 
     if (context.regs_coppa)
@@ -4282,7 +1988,7 @@ namespace AdServer::Bidding
       try
       {
         // workaround: some SSP provide url with spaces at beginning
-        String::SubString url_sstr(context.app_bundle);
+        String::SubString url_sstr = to_sub_string(context.app_bundle);
         String::StringManip::trim(url_sstr);
         request_info.application_id = url_sstr.str();
         app_bundle_url = HTTP::BrowserAddress(url_sstr).url();
@@ -4300,8 +2006,8 @@ namespace AdServer::Bidding
       {
         if(!context.app_domain.url().empty() && (
            context.app_store_url.url().empty() || (
-            context.app_domain.host().compare(GooglePlay::STORE_HOST) != 0 &&
-            context.app_domain.host().compare(AppStore::STORE_HOST) != 0)
+            context.app_domain.host().compare(to_sub_string(GooglePlay::STORE_HOST)) != 0 &&
+            context.app_domain.host().compare(to_sub_string(AppStore::STORE_HOST)) != 0)
             )
           )
         {
@@ -4658,7 +2364,7 @@ namespace AdServer::Bidding
             ad_slot_request.video_skippable_max_duration =
               ad_slot_request.video_max_duration;
           }
-          String::StringManip::str_to_int(slot_it->video_pos, pos);
+          String::StringManip::str_to_int(to_sub_string(slot_it->video_pos), pos);
           slot_it->banners.clear();
 
           fill_video_size(
@@ -4750,9 +2456,9 @@ namespace AdServer::Bidding
             }
             else if(main_image_found)
             {
-              Stream::Stack<1024> oss;
-              oss << main_image.width << 'x' << main_image.height;
-              CampaignManager::assign_string(ad_slot_request.sizes[0], oss.str());
+              CampaignManager::assign_string(
+                ad_slot_request.sizes[0],
+                make_size_string(main_image.width, main_image.height));
             }
             else
             {
@@ -4801,7 +2507,9 @@ namespace AdServer::Bidding
           if(!slot_it->banners.empty())
           {
             request_params.common_info.hpos = slot_it->banners.begin()->ext_hpos;
-            String::StringManip::str_to_int(slot_it->banners.begin()->pos, pos);
+            String::StringManip::str_to_int(
+              to_sub_string(slot_it->banners.begin()->pos),
+              pos);
           }
           else
           {
@@ -4845,28 +2553,28 @@ namespace AdServer::Bidding
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    PmrString(RM_SIZE, slot_it->resource()),
+                    RM_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "popup")
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], POPUP_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    PmrString(POPUP_SIZE, slot_it->resource()),
+                    POPUP_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "overlay")
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_DTO_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    PmrString(RM_DTO_SIZE, slot_it->resource()),
+                    RM_DTO_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "rich")
                 {
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_RICH_SIZE);
                   slot_it->size_banner.insert(std::make_pair(
-                    PmrString(RM_RICH_SIZE, slot_it->resource()),
+                    RM_RICH_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
                 else if(!banner_format.width.empty() && !banner_format.height.empty())
@@ -4897,8 +2605,10 @@ namespace AdServer::Bidding
                       request_info.default_debug_size.size());
                   }
                   CampaignManager::assign_string(ad_slot_request.sizes[size_i++], res_size);
+                  const std::string_view res_size_view =
+                    request_info.hold_string(std::move(res_size));
                   slot_it->size_banner.insert(std::make_pair(
-                    PmrString(res_size, slot_it->resource()),
+                    res_size_view,
                     JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
                 }
               }
@@ -4927,15 +2637,17 @@ namespace AdServer::Bidding
 
         if (!slot_it->deals.empty())
         {
-          const String::SubString currency_code =
+          const std::string_view currency_code =
             slot_it->min_cpm_price_currency_code.empty() ?
             Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY :
-            slot_it->min_cpm_price_currency_code;
+            std::string_view(
+              slot_it->min_cpm_price_currency_code.data(),
+              slot_it->min_cpm_price_currency_code.size());
 
           bool min_price_present = false;
           AdServer::CampaignSvcs::RevenueDecimal min_price =
             AdServer::CampaignSvcs::RevenueDecimal::ZERO;
-          const PmrString* min_deal_id = nullptr;
+          const JsonString* min_deal_id = nullptr;
 
           if (slot_it->min_cpm_price != AdServer::CampaignSvcs::RevenueDecimal::ZERO)
           {
@@ -4962,7 +2674,7 @@ namespace AdServer::Bidding
             slot_it->min_cpm_price = min_price;
             if (min_deal_id && !min_deal_id->empty())
             {
-              slot_it->deal_id.assign(min_deal_id->data(), min_deal_id->size());
+              slot_it->deal_id = *min_deal_id;
             }
           }
         }
@@ -4989,41 +2701,36 @@ namespace AdServer::Bidding
             AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
         }
 
-        // normalize currency codes
-        if(!slot_it->min_cpm_price_currency_code.empty())
-        {
-          String::AsciiStringManip::to_lower(
-            slot_it->min_cpm_price_currency_code.begin(),
-            slot_it->min_cpm_price_currency_code.end());
-        }
-
         if(!context.currencies.empty())
         {
-          for(auto currency_it = context.currencies.begin();
-            currency_it != context.currencies.end(); ++currency_it)
+          ad_slot_request.currency_codes.resize(context.currencies.size());
+          std::size_t currency_i = 0;
+          for(const std::string_view currency : context.currencies)
           {
-            String::AsciiStringManip::to_lower(
-              currency_it->begin(),
-              currency_it->end());
+            std::string currency_holder(currency);
+            String::AsciiStringManip::to_lower(currency_holder);
+            CampaignManager::assign_string(
+              ad_slot_request.currency_codes[currency_i++],
+              currency_holder);
           }
-        }
-
-        if(!context.currencies.empty())
-        {
-          CampaignManager::fill_sequence(
-            context.currencies.begin(),
-            context.currencies.end(),
-            ad_slot_request.currency_codes);
         }
         else if(!slot_it->min_cpm_price_currency_code.empty())
         {
           ad_slot_request.currency_codes.resize(1);
-          CampaignManager::assign_string(ad_slot_request.currency_codes[0], slot_it->min_cpm_price_currency_code);
+          std::string currency_holder(slot_it->min_cpm_price_currency_code);
+          String::AsciiStringManip::to_lower(currency_holder);
+          CampaignManager::assign_string(
+            ad_slot_request.currency_codes[0],
+            currency_holder);
         }
 
         if(!slot_it->min_cpm_price_currency_code.empty())
         {
-          CampaignManager::assign_string(ad_slot_request.min_ecpm_currency_code, slot_it->min_cpm_price_currency_code);
+          std::string currency_holder(slot_it->min_cpm_price_currency_code);
+          String::AsciiStringManip::to_lower(currency_holder);
+          CampaignManager::assign_string(
+            ad_slot_request.min_ecpm_currency_code,
+            currency_holder);
         }
         else
         {
@@ -5076,7 +2783,8 @@ namespace AdServer::Bidding
     }
 
     // fill idfa or advertising_id by ifa depends on device
-    context.ifa = FrontendCommons::normalize_ifa(context.ifa);
+    context.ifa = request_info.hold_string(
+      FrontendCommons::normalize_ifa(to_sub_string(context.ifa)));
 
     if(!context.ifa.empty())
     {
@@ -5107,7 +2815,9 @@ namespace AdServer::Bidding
       {
         ext_track_params += "puid1=";
         std::string mimed_puid1;
-        String::StringManip::mime_url_encode(context.puid1, mimed_puid1);
+        String::StringManip::mime_url_encode(
+          to_sub_string(context.puid1),
+          mimed_puid1);
         ext_track_params += mimed_puid1;
       }
 
@@ -5119,7 +2829,9 @@ namespace AdServer::Bidding
         }
         ext_track_params += "puid2=";
         std::string mimed_puid2;
-        String::StringManip::mime_url_encode(context.puid2, mimed_puid2);
+        String::StringManip::mime_url_encode(
+          to_sub_string(context.puid2),
+          mimed_puid2);
         ext_track_params += mimed_puid2;
       }
 
@@ -5138,9 +2850,18 @@ namespace AdServer::Bidding
 
     add_special_keywords_(keywords, request_info, &context, context.app_id);
 
-    CampaignManager::assign_string(request_params.ssp_location, (
-      context.ssp_country + '/' + context.ssp_region +
-      '/' + context.ssp_city));
+    std::string ssp_location;
+    ssp_location.reserve(
+      context.ssp_country.size() + context.ssp_region.size() +
+      context.ssp_city.size() + 2);
+    ssp_location.append(context.ssp_country.data(), context.ssp_country.size());
+    ssp_location += '/';
+    ssp_location.append(context.ssp_region.data(), context.ssp_region.size());
+    ssp_location += '/';
+    ssp_location.append(context.ssp_city.data(), context.ssp_city.size());
+    CampaignManager::assign_string(
+      request_params.ssp_location,
+      std::move(ssp_location));
 
     // push eids to request_info
     for(auto it = context.user_eids.begin(); it != context.user_eids.end(); ++it)
@@ -5242,12 +2963,12 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::add_param_processor_(
-    const String::SubString& name,
+    std::string_view name,
     RequestInfoParamProcessor* processor)
     noexcept
   {
     param_processors_.insert(std::make_pair(
-      name,
+      to_sub_string(name),
       RequestInfoParamProcessor_var(processor)));
   }
 
@@ -5255,7 +2976,7 @@ namespace AdServer::Bidding
   RequestInfoFiller::fill_by_user_agent(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
-    String::SubString user_agent,
+    std::string_view user_agent,
     bool filter_request,
     bool application)
     const
@@ -5278,7 +2999,7 @@ namespace AdServer::Bidding
         {
           web_browser_matcher->match(
             web_browser,
-            user_agent);
+            to_sub_string(user_agent));
         }
         catch(const eh::Exception& ex)
         {
@@ -5316,7 +3037,7 @@ namespace AdServer::Bidding
             &request_info.platform_names,
             platform,
             full_platform,
-            user_agent,
+            to_sub_string(user_agent),
             application);
         }
         catch(const eh::Exception& ex)
@@ -5463,7 +3184,7 @@ namespace AdServer::Bidding
   RequestInfoFiller::fill_by_ip(
     RequestInfo& request_info,
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
-    String::SubString ip)
+    std::string_view ip)
     const
     noexcept
   {
@@ -5485,7 +3206,7 @@ namespace AdServer::Bidding
         if(ip_logging_enabled_)
         {
           std::string ip_hash;
-          FrontendCommons::ip_hash(ip_hash, ip, ip_salt_);
+          FrontendCommons::ip_hash(ip_hash, to_sub_string(ip), ip_salt_);
           CampaignManager::assign_string(
             request_params.context_info.ip_hash,
             std::move(ip_hash));
@@ -5496,7 +3217,7 @@ namespace AdServer::Bidding
           try
           {
             if(ip_map_->city_location_by_addr(
-                 ip.str().c_str(),
+                 std::string(ip).c_str(),
                  geo_location,
                  false))
             {
@@ -5540,17 +3261,17 @@ namespace AdServer::Bidding
 
   bool
   RequestInfoFiller::use_external_user_id_(
-    String::SubString external_user_id)
+    std::string_view external_user_id)
     const noexcept
   {
-    return skip_external_ids_.find(external_user_id.str()) ==
+    return skip_external_ids_.find(std::string(external_user_id)) ==
       skip_external_ids_.end();
   }
 
   void
   RequestInfoFiller::verify_user_id_(
     std::string_view signed_user_id,
-    const String::SubString& source_id,
+    std::string_view source_id,
     AdServer::Bidding::CampaignManager::RequestParams& request_params)
     const noexcept
   {
@@ -5569,7 +3290,7 @@ namespace AdServer::Bidding
           std::string ssp_id_buf;
           String::StringManip::base64mod_decode(
             ssp_id_buf,
-            String::SubString(signed_user_id.data(), signed_user_id.size()),
+            to_sub_string(signed_user_id),
             false,
             &ssp_uid_marker);
           ssp_uid = Generics::Uuid(ssp_id_buf.begin(), ssp_id_buf.end());
@@ -5578,7 +3299,7 @@ namespace AdServer::Bidding
         {
           Generics::SignedUuid signed_ssp_uid =
             common_module_->user_id_controller()->verify(
-              String::SubString(signed_user_id.data(), signed_user_id.size()),
+              to_sub_string(signed_user_id),
               UserIdController::SSP);
           ssp_uid = signed_ssp_uid.uuid();
           ssp_uid_marker = signed_ssp_uid.data();
@@ -5587,7 +3308,7 @@ namespace AdServer::Bidding
 
         const Generics::Uuid uid =
           UserIdController::get_by_ssp_user_id(
-            ssp_uid, source_id, ssp_uid_marker);
+            ssp_uid, to_sub_string(source_id), ssp_uid_marker);
 
         if (uid.is_null())
         {
@@ -5649,12 +3370,14 @@ namespace AdServer::Bidding
     if (!context.site_page.url().empty())
     {
       const std::string site_page =
-        first_significant_domain_part_(context.site_page.host());
+        first_significant_domain_part_(
+          to_string_view(context.site_page.host()));
 
       if (!context.site_domain.url().empty())
       {
         const std::string site_domain =
-          first_significant_domain_part_(context.site_domain.host());
+          first_significant_domain_part_(
+            to_string_view(context.site_domain.host()));
 
         if (site_page == site_domain)
         {
@@ -5665,12 +3388,13 @@ namespace AdServer::Bidding
 
       if (referer.url().empty() && !context.site_name.empty())
       {
-        JsonContextURLParamProcessor<JsonProcessingContext>::fill_url(
+        fill_json_url(
           context.site_name,
           site_name_url);
 
         const std::string site_name =
-          first_significant_domain_part_(site_name_url.host());
+          first_significant_domain_part_(
+            to_string_view(site_name_url.host()));
 
         if (site_page == site_name)
         {
@@ -5693,7 +3417,7 @@ namespace AdServer::Bidding
       {
         if(!site_name_url_initialized)
         {
-          JsonContextURLParamProcessor<JsonProcessingContext>::fill_url(
+          fill_json_url(
             context.site_name,
             site_name_url);
           site_name_url_initialized = true;
@@ -5746,7 +3470,7 @@ namespace AdServer::Bidding
       if(selected_referer_field != SR_NAME && !context.site_name.empty())
       {
         std::string search_words; // ignore search words value (push to match only)
-        HTTP::BrowserAddress site_name_url(context.site_name);
+        HTTP::BrowserAddress site_name_url(to_sub_string(context.site_name));
         fill_additional_url_(
           request_params,
           search_words,
@@ -5760,11 +3484,11 @@ namespace AdServer::Bidding
 
   std::string
   RequestInfoFiller::first_significant_domain_part_(
-    const String::SubString& host) const
+    std::string_view host) const
     /*throw(eh::Exception)*/
   {
     std::string domain;
-    common_module_->domain_parser()->specific_domain(host, domain);
+    common_module_->domain_parser()->specific_domain(to_sub_string(host), domain);
     const std::size_t pos = domain.find('.');
 
     if (pos != std::string::npos)
@@ -5776,18 +3500,19 @@ namespace AdServer::Bidding
   }
 
   std::string
-  RequestInfoFiller::normalize_ext_tag_id_(const String::SubString& src)
+  RequestInfoFiller::normalize_ext_tag_id_(std::string_view src)
     noexcept
   {
     String::SubString res;
-    if(String::StringManip::utf8_substr(src, EXT_TAG_ID_MAX_LENGTH, res))
+    const String::SubString src_sub_string = to_sub_string(src);
+    if(String::StringManip::utf8_substr(src_sub_string, EXT_TAG_ID_MAX_LENGTH, res))
     {
       return res.str();
     }
 
     std::string enc_res;
     AdServer::LogProcessing::undisplayable_mime_encode(
-      enc_res, src.substr(0, EXT_TAG_ID_MAX_LENGTH));
+      enc_res, src_sub_string.substr(0, EXT_TAG_ID_MAX_LENGTH));
     return enc_res.substr(0, EXT_TAG_ID_MAX_LENGTH);
   }
 
@@ -5849,7 +3574,7 @@ namespace AdServer::Bidding
   RequestInfoFiller::make_ssp_uid_by_device_(const JsonProcessingContext& ctx)
     /*throw(std::exception)*/
   {
-    const auto to_string = [](const PmrString& value)
+    const auto to_string = [](std::string_view value)
     {
       return std::string(value.data(), value.size());
     };
@@ -5891,14 +3616,16 @@ namespace AdServer::Bidding
 
   std::string
   RequestInfoFiller::adapt_app_store_url_(
-    const String::SubString& store_url_str)
+    std::string_view store_url_str)
     /*throw(eh::Exception)*/
   {
-    HTTP::BrowserAddress store_url(store_url_str);
+    HTTP::BrowserAddress store_url(to_sub_string(store_url_str));
 
-    if(store_url.host().compare(GooglePlay::STORE_HOST) == 0 &&
+    if(store_url.host().compare(to_sub_string(GooglePlay::STORE_HOST)) == 0 &&
       store_url.path().compare(
-        0, GooglePlay::STORE_PATH.size(), GooglePlay::STORE_PATH) == 0)
+        0,
+        GooglePlay::STORE_PATH.size(),
+        to_sub_string(GooglePlay::STORE_PATH)) == 0)
     {
       const String::SubString args = store_url.query();
 
@@ -5906,7 +3633,7 @@ namespace AdServer::Bidding
       FCGI::HttpRequest::parse_params(args, params);
       for(auto param_it = params.begin(); param_it != params.end(); ++param_it)
       {
-        if(GooglePlay::STORE_APP_ID == param_it->name)
+        if(to_sub_string(GooglePlay::STORE_APP_ID) == param_it->name)
         {
           try
           {
@@ -5920,7 +3647,7 @@ namespace AdServer::Bidding
         }
       }
     }
-    else if(store_url.host().compare(AppStore::STORE_HOST) == 0)
+    else if(store_url.host().compare(to_sub_string(AppStore::STORE_HOST)) == 0)
     {
       // example : https://itunes.apple.com/us/app/youcam-perfect/id768469908
       String::StringManip::Splitter<String::AsciiStringManip::SepSlash>
@@ -5941,13 +3668,13 @@ namespace AdServer::Bidding
       }
     }
 
-    return store_url_str.str();
+    return std::string(store_url_str);
   }
 
   std::string
-  RequestInfoFiller::norm_keyword_(const String::SubString& kw) noexcept
+  RequestInfoFiller::norm_keyword_(std::string_view kw) noexcept
   {
-    std::string simplified_kw(kw.str());
+    std::string simplified_kw(kw);
     for(auto& ch_ref : simplified_kw)
     {
       const unsigned char ch = ch_ref;
@@ -5976,7 +3703,7 @@ namespace AdServer::Bidding
     std::string& keywords,
     const RequestInfo& request_info,
     const JsonProcessingContext* context,
-    const String::SubString& alt_app_id)
+    std::string_view alt_app_id)
     const
     noexcept
   {
@@ -6053,5 +3780,2091 @@ namespace AdServer::Bidding
     }
 
     return std::string();
+  }
+  namespace
+  {
+    using FastJsonParser = AdServer::Commons::FastJsonParser;
+    using ValueProcessor = FastJsonParser::ValueProcessor;
+    using RequestParams = AdServer::Bidding::CampaignManager::RequestParams;
+    using AdSlotContext = JsonAdSlotProcessingContext;
+    using Banner = AdSlotContext::Banner;
+    using BannerFormat = AdSlotContext::BannerFormat;
+    using Native = AdSlotContext::Native;
+    using NativeAsset = Native::Asset;
+
+    struct FastOpenRtbState
+    {
+      RequestParams* request_params = nullptr;
+      RequestInfo* request_info = nullptr;
+      JsonProcessingContext* context = nullptr;
+      AdSlotContext* ad_slot = nullptr;
+      Banner* banner = nullptr;
+      BannerFormat* banner_format = nullptr;
+      AdSlotContext::Deal* deal = nullptr;
+      AdSlotContext::Metric* metric = nullptr;
+      JsonProcessingContext::Segment* segment = nullptr;
+      JsonProcessingContext::UserEid* user_eid = nullptr;
+      JsonProcessingContext::UserEidUid* user_eid_uid = nullptr;
+      Native* native = nullptr;
+      Native::Data* native_data = nullptr;
+      Native::Image* native_image = nullptr;
+      Native::Video* native_video = nullptr;
+      NativeAsset* native_asset = nullptr;
+      long pending_native_asset_id = 0;
+      bool pending_native_asset_required = false;
+      bool pending_native_asset_id_present = false;
+      bool pending_native_asset_required_present = false;
+      bool matching_ad_processed = false;
+    };
+
+    template<typename Target>
+    void
+    assign_string(Target& target, std::string_view value)
+    {
+      target.assign(value.data(), value.size());
+    }
+
+    void
+    assign_string(std::string_view& target, std::string_view value)
+    {
+      target = value;
+    }
+
+    std::string_view
+    hold_string(FastOpenRtbState& state, std::string&& value)
+    {
+      std::string& held_value = state.request_info->hold_string(std::move(value));
+      return std::string_view(held_value.data(), held_value.size());
+    }
+
+    std::string
+    integer_to_string(int64_t value)
+    {
+      char buf[32];
+      const auto result = std::to_chars(buf, buf + sizeof(buf), value);
+      return std::string(buf, result.ptr);
+    }
+
+    std::string
+    float_to_string(double value)
+    {
+      char buf[64];
+      const int size = std::snprintf(buf, sizeof(buf), "%.17g", value);
+      return size > 0 ? std::string(buf, static_cast<std::size_t>(size)) :
+        std::string();
+    }
+
+    template<typename NumberType>
+    bool
+    parse_integer(std::string_view value, NumberType& result)
+    {
+      const auto parsed = std::from_chars(
+        value.data(),
+        value.data() + value.size(),
+        result);
+      return parsed.ec == std::errc() && parsed.ptr == value.data() + value.size();
+    }
+
+    template<typename DecimalType>
+    DecimalType
+    parse_decimal(
+      std::string_view value,
+      Generics::DecimalMulRemainder round_type,
+      const DecimalType& invalid_value = DecimalType())
+    {
+      try
+      {
+        return AdServer::Commons::extract_decimal<DecimalType>(
+          to_sub_string(value),
+          round_type);
+      }
+      catch(const typename DecimalType::Exception&)
+      {
+        return invalid_value;
+      }
+    }
+
+    template<typename NumberType>
+    bool
+    convert_integer(int64_t value, NumberType& result)
+    {
+      if constexpr(std::is_unsigned_v<NumberType>)
+      {
+        if(value < 0 ||
+          static_cast<uint64_t>(value) >
+            static_cast<uint64_t>(std::numeric_limits<NumberType>::max()))
+        {
+          return false;
+        }
+      }
+      else
+      {
+        if(value < static_cast<int64_t>(std::numeric_limits<NumberType>::min()) ||
+          value > static_cast<int64_t>(std::numeric_limits<NumberType>::max()))
+        {
+          return false;
+        }
+      }
+
+      result = static_cast<NumberType>(value);
+      return true;
+    }
+
+    template<typename NumberType>
+    bool
+    convert_integer(double value, NumberType& result)
+    {
+      if(!std::isfinite(value) || std::trunc(value) != value)
+      {
+        return false;
+      }
+
+      const auto min_value = static_cast<long double>(
+        std::numeric_limits<NumberType>::lowest());
+      const auto max_value = static_cast<long double>(
+        std::numeric_limits<NumberType>::max());
+      const auto check_value = static_cast<long double>(value);
+      if(check_value < min_value || check_value > max_value)
+      {
+        return false;
+      }
+
+      result = static_cast<NumberType>(value);
+      return true;
+    }
+
+    void
+    fill_url(std::string_view value, HTTP::HTTPAddress& target)
+    {
+      fill_json_url(
+        value,
+        target);
+    }
+
+    void
+    set_state_number(
+      AdSlotContext::ULValueStateHolder& target,
+      std::string_view value)
+    {
+      unsigned long result = 0;
+      if(parse_integer(value, result))
+      {
+        target = result;
+      }
+      else
+      {
+        target.set_state(AdSlotContext::ULValueStateHolder::S_FAIL);
+      }
+    }
+
+    template<typename HolderType>
+    void
+    set_state_number(HolderType& target, int64_t value)
+    {
+      typename HolderType::ValueType result = 0;
+      if(convert_integer(value, result))
+      {
+        target = result;
+      }
+      else
+      {
+        target.set_state(HolderType::S_FAIL);
+      }
+    }
+
+    template<typename HolderType>
+    void
+    set_state_number(HolderType& target, double value)
+    {
+      typename HolderType::ValueType result = 0;
+      if(convert_integer(value, result))
+      {
+        target = result;
+      }
+      else
+      {
+        target.set_state(HolderType::S_FAIL);
+      }
+    }
+
+    void
+    set_state_number(
+      AdSlotContext::LValueStateHolder& target,
+      std::string_view value)
+    {
+      long result = 0;
+      if(parse_integer(value, result))
+      {
+        target = result;
+      }
+      else
+      {
+        target.set_state(AdSlotContext::LValueStateHolder::S_FAIL);
+      }
+    }
+
+    template<typename SetType>
+    inline void
+    insert_string(SetType& target, std::string_view value)
+    {
+      target.emplace(value);
+    }
+
+    template<typename VectorType>
+    inline void
+    append_string(VectorType& target, std::string_view value)
+    {
+      target.emplace_back(value);
+    }
+
+    template<typename HolderType>
+    inline void
+    insert_number(HolderType& holder, std::string_view value)
+    {
+      typename HolderType::ValueType::value_type result = 0;
+      if(parse_integer(value, result))
+      {
+        if(!holder.present())
+        {
+          holder = typename HolderType::ValueType();
+        }
+        holder->insert(holder->end(), result);
+      }
+      else
+      {
+        holder.set_state(HolderType::S_FAIL);
+      }
+    }
+
+    template<typename HolderType>
+    inline void
+    insert_number(HolderType& holder, int64_t value)
+    {
+      typename HolderType::ValueType::value_type result = 0;
+      if(convert_integer(value, result))
+      {
+        if(!holder.present())
+        {
+          holder = typename HolderType::ValueType();
+        }
+        holder->insert(holder->end(), result);
+      }
+      else
+      {
+        holder.set_state(HolderType::S_FAIL);
+      }
+    }
+
+    template<typename HolderType>
+    inline void
+    insert_number(HolderType& holder, double value)
+    {
+      typename HolderType::ValueType::value_type result = 0;
+      if(convert_integer(value, result))
+      {
+        if(!holder.present())
+        {
+          holder = typename HolderType::ValueType();
+        }
+        holder->insert(holder->end(), result);
+      }
+      else
+      {
+        holder.set_state(HolderType::S_FAIL);
+      }
+    }
+
+    inline FastOpenRtbState&
+    state_from_context(void* context)
+    {
+      return *static_cast<FastOpenRtbState*>(context);
+    }
+
+    class IgnoringValueProcessor: public ValueProcessor
+    {
+    public:
+      void
+      object_started(std::string_view, void*) const override
+      {}
+
+      void
+      array_started(std::string_view, void*) const override
+      {}
+
+      void
+      process_integer(int64_t, std::string_view, void*) const override
+      {}
+
+      void
+      process_float(double, std::string_view, void*) const override
+      {}
+
+      void
+      process_string(std::string_view, std::string_view, void*) const override
+      {}
+
+      void
+      process_string(std::string&&, std::string_view, void*) const override
+      {}
+
+      void
+      process_bool(bool, std::string_view, void*) const override
+      {}
+
+      void
+      process_null(std::string_view, void*) const override
+      {}
+    };
+
+    template<typename ProcessorType>
+  void
+  add_processor(
+    FastJsonParser& parser,
+    std::string_view path,
+    std::shared_ptr<ProcessorType> processor,
+    bool as_string = false)
+  {
+    parser.add_processor(path, std::move(processor), as_string);
+  }
+
+    template<typename Context, typename Field>
+    class StringFieldProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      StringFieldProcessor(
+        Context* (*get_context)(FastOpenRtbState&),
+        Field Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        if(Context* target = get_context_(state_from_context(context)))
+        {
+          assign_string(target->*field_, value);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        if(Context* target = get_context_(state))
+        {
+          assign_string(target->*field_, hold_string(state, std::move(value)));
+        }
+      }
+
+    private:
+      Context* (*get_context_)(FastOpenRtbState&);
+      Field Context::* field_;
+    };
+
+    template<typename Context, typename Field>
+    class UrlFieldProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      UrlFieldProcessor(
+        Context* (*get_context)(FastOpenRtbState&),
+        Field Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        if(Context* target = get_context_(state_from_context(context)))
+        {
+          fill_url(value, target->*field_);
+        }
+      }
+
+    private:
+      Context* (*get_context_)(FastOpenRtbState&);
+      Field Context::* field_;
+    };
+
+    template<typename Context, typename NumberType>
+    class IntegerFieldProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      IntegerFieldProcessor(
+        Context* (*get_context)(FastOpenRtbState&),
+        NumberType Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        if(Context* target = get_context_(state_from_context(context)))
+        {
+          target->*field_ = static_cast<NumberType>(value);
+        }
+      }
+
+    private:
+      Context* (*get_context_)(FastOpenRtbState&);
+      NumberType Context::* field_;
+    };
+
+    template<typename Context>
+    class OptionalLongFieldProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      OptionalLongFieldProcessor(
+        Context* (*get_context)(FastOpenRtbState&),
+        AdServer::Commons::Optional<long> Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        if(Context* target = get_context_(state_from_context(context)))
+        {
+          target->*field_ = static_cast<long>(value);
+        }
+      }
+
+    private:
+      Context* (*get_context_)(FastOpenRtbState&);
+      AdServer::Commons::Optional<long> Context::* field_;
+    };
+
+    template<typename Context>
+    class BoolFieldProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      BoolFieldProcessor(
+        Context* (*get_context)(FastOpenRtbState&),
+        bool Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_bool(bool value, std::string_view, void* context) const override
+      {
+        set_(value, context);
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        set_(value != 0, context);
+      }
+
+    private:
+      void
+      set_(bool value, void* context) const
+      {
+        if(Context* target = get_context_(state_from_context(context)))
+        {
+          target->*field_ = value;
+        }
+      }
+
+    private:
+      Context* (*get_context_)(FastOpenRtbState&);
+      bool Context::* field_;
+    };
+
+    template<typename Context, typename DecimalType>
+    class DecimalFieldProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      DecimalFieldProcessor(
+        Context* (*get_context)(FastOpenRtbState&),
+        DecimalType Context::* field,
+        Generics::DecimalMulRemainder round_type,
+        const DecimalType& invalid_value)
+        : get_context_(get_context),
+          field_(field),
+          round_type_(round_type),
+          invalid_value_(invalid_value)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        parse_(value, context);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        parse_(value, context);
+      }
+
+      void
+      process_number(
+        std::string_view,
+        bool,
+        std::string_view,
+        void*) const override
+      {
+        assert(false && "DecimalFieldProcessor must be registered as string");
+      }
+
+      void
+      process_integer(int64_t, std::string_view, void*) const override
+      {
+        assert(false && "DecimalFieldProcessor must be registered as string");
+      }
+
+      void
+      process_float(double, std::string_view, void*) const override
+      {
+        assert(false && "DecimalFieldProcessor must be registered as string");
+      }
+
+    private:
+      void
+      parse_(std::string_view value, void* context) const
+      {
+        if(Context* target = get_context_(state_from_context(context)))
+        {
+          target->*field_ = parse_decimal(
+            value,
+            round_type_,
+            invalid_value_);
+        }
+      }
+
+    private:
+      Context* (*get_context_)(FastOpenRtbState&);
+      DecimalType Context::* field_;
+      Generics::DecimalMulRemainder round_type_;
+      DecimalType invalid_value_;
+    };
+
+    std::string
+    make_path(std::string_view prefix, std::string_view suffix)
+    {
+      if(prefix.empty())
+      {
+        return std::string(suffix);
+      }
+
+      std::string path;
+      path.reserve(prefix.size() + 1 + suffix.size());
+      path.append(prefix);
+      path += '.';
+      path.append(suffix);
+      return path;
+    }
+
+    template<typename Context, typename Field>
+    void
+    add_string(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(FastOpenRtbState&),
+      Field Context::* field)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<StringFieldProcessor<Context, Field>>(
+          get_context,
+          field),
+        true);
+    }
+
+    template<typename Context, typename Field>
+    void
+    add_url(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(FastOpenRtbState&),
+      Field Context::* field)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<UrlFieldProcessor<Context, Field>>(get_context, field));
+    }
+
+    template<typename Context, typename NumberType>
+    void
+    add_integer(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(FastOpenRtbState&),
+      NumberType Context::* field)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<IntegerFieldProcessor<Context, NumberType>>(
+          get_context,
+          field));
+    }
+
+    template<typename Context>
+    void
+    add_optional_long(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(FastOpenRtbState&),
+      AdServer::Commons::Optional<long> Context::* field)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<OptionalLongFieldProcessor<Context>>(get_context, field));
+    }
+
+    template<typename Context>
+    void
+    add_bool(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(FastOpenRtbState&),
+      bool Context::* field)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<BoolFieldProcessor<Context>>(get_context, field));
+    }
+
+    template<typename Context, typename DecimalType>
+    void
+    add_decimal(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(FastOpenRtbState&),
+      DecimalType Context::* field,
+      Generics::DecimalMulRemainder round_type,
+      const DecimalType& invalid_value = DecimalType())
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<DecimalFieldProcessor<Context, DecimalType>>(
+          get_context,
+          field,
+          round_type,
+          invalid_value),
+        true);
+    }
+
+    JsonProcessingContext*
+    root_context(FastOpenRtbState& state)
+    {
+      return state.context;
+    }
+
+    AdSlotContext*
+    ad_slot_context(FastOpenRtbState& state)
+    {
+      return state.ad_slot;
+    }
+
+    Banner*
+    banner_context(FastOpenRtbState& state)
+    {
+      return state.banner;
+    }
+
+    BannerFormat*
+    banner_format_context(FastOpenRtbState& state)
+    {
+      return state.banner_format;
+    }
+
+    AdSlotContext::Deal*
+    deal_context(FastOpenRtbState& state)
+    {
+      return state.deal;
+    }
+
+    AdSlotContext::Metric*
+    metric_context(FastOpenRtbState& state)
+    {
+      return state.metric;
+    }
+
+    JsonProcessingContext::Segment*
+    segment_context(FastOpenRtbState& state)
+    {
+      return state.segment;
+    }
+
+    JsonProcessingContext::UserEid*
+    user_eid_context(FastOpenRtbState& state)
+    {
+      return state.user_eid;
+    }
+
+    JsonProcessingContext::UserEidUid*
+    user_eid_uid_context(FastOpenRtbState& state)
+    {
+      return state.user_eid_uid;
+    }
+
+    Native*
+    native_context(FastOpenRtbState& state)
+    {
+      return state.native;
+    }
+
+    Native::Data*
+    native_data_context(FastOpenRtbState& state)
+    {
+      return state.native_data;
+    }
+
+    Native::Image*
+    native_image_context(FastOpenRtbState& state)
+    {
+      return state.native_image;
+    }
+
+    void
+    start_ad_slot(FastOpenRtbState& state)
+    {
+      state.context->ad_slots.emplace_back(state.context->resource());
+      state.ad_slot = &state.context->ad_slots.back();
+      state.banner = nullptr;
+      state.banner_format = nullptr;
+      state.deal = nullptr;
+      state.metric = nullptr;
+      state.native = nullptr;
+    }
+
+    void
+    start_banner(FastOpenRtbState& state)
+    {
+      if(!state.ad_slot)
+      {
+        return;
+      }
+
+      state.ad_slot->banners.emplace_back(state.ad_slot->resource());
+      state.banner = &state.ad_slot->banners.back();
+      state.banner_format = nullptr;
+      state.matching_ad_processed = false;
+    }
+
+    BannerFormat*
+    ensure_banner_format(FastOpenRtbState& state)
+    {
+      if(!state.banner)
+      {
+        return nullptr;
+      }
+
+      if(!state.banner_format)
+      {
+        state.banner->formats.emplace_back(state.banner->resource());
+        state.banner_format = &state.banner->formats.back();
+      }
+
+      return state.banner_format;
+    }
+
+    void
+    start_banner_format(FastOpenRtbState& state)
+    {
+      if(!state.banner)
+      {
+        return;
+      }
+      state.banner->formats.emplace_back(state.banner->resource());
+      state.banner_format = &state.banner->formats.back();
+    }
+
+    void
+    start_deal(FastOpenRtbState& state)
+    {
+      if(!state.ad_slot)
+      {
+        return;
+      }
+      state.ad_slot->deals.emplace_back(state.ad_slot->resource());
+      state.deal = &state.ad_slot->deals.back();
+    }
+
+    void
+    start_metric(FastOpenRtbState& state)
+    {
+      if(!state.ad_slot)
+      {
+        return;
+      }
+      state.ad_slot->metrics.emplace_back(state.ad_slot->resource());
+      state.metric = &state.ad_slot->metrics.back();
+    }
+
+    void
+    start_segment(FastOpenRtbState& state)
+    {
+      state.context->segments.emplace_back(state.context->resource());
+      state.segment = &state.context->segments.back();
+    }
+
+    void
+    start_user_eid(FastOpenRtbState& state)
+    {
+      state.context->user_eids.emplace_back(state.context->resource());
+      state.user_eid = &state.context->user_eids.back();
+      state.user_eid_uid = nullptr;
+    }
+
+    void
+    start_user_eid_uid(FastOpenRtbState& state)
+    {
+      if(!state.user_eid)
+      {
+        return;
+      }
+      state.user_eid->uids.emplace_back(
+        state.user_eid->uids.get_allocator().resource());
+      state.user_eid_uid = &state.user_eid->uids.back();
+    }
+
+    void
+    start_native(FastOpenRtbState& state)
+    {
+      if(!state.ad_slot)
+      {
+        return;
+      }
+      state.ad_slot->native = AdSlotContext::Native_var(
+        new Native(state.ad_slot->resource()));
+      state.native = state.ad_slot->native.in();
+    }
+
+    void
+    start_native_asset(FastOpenRtbState& state)
+    {
+      state.native_data = nullptr;
+      state.native_image = nullptr;
+      state.native_video = nullptr;
+      state.native_asset = nullptr;
+      state.pending_native_asset_id = 0;
+      state.pending_native_asset_required = false;
+      state.pending_native_asset_id_present = false;
+      state.pending_native_asset_required_present = false;
+    }
+
+    template<typename Asset>
+    void
+    apply_pending_native_asset(FastOpenRtbState& state, Asset& asset)
+    {
+      if(state.pending_native_asset_id_present)
+      {
+        asset.id = state.pending_native_asset_id;
+      }
+
+      if(state.pending_native_asset_required_present)
+      {
+        asset.required = state.pending_native_asset_required;
+      }
+
+      state.native_asset = &asset;
+    }
+
+    void
+    start_native_title(FastOpenRtbState& state)
+    {
+      if(!state.native)
+      {
+        return;
+      }
+      state.native->data_assets.emplace_back(state.native->resource());
+      state.native_data = &state.native->data_assets.back();
+      state.native_data->data_type = Native::NDTE_TITLE;
+      apply_pending_native_asset(state, *state.native_data);
+    }
+
+    void
+    start_native_data(FastOpenRtbState& state)
+    {
+      if(!state.native)
+      {
+        return;
+      }
+      state.native->data_assets.emplace_back(state.native->resource());
+      state.native_data = &state.native->data_assets.back();
+      apply_pending_native_asset(state, *state.native_data);
+    }
+
+    void
+    start_native_image(FastOpenRtbState& state)
+    {
+      if(!state.native)
+      {
+        return;
+      }
+      state.native->image_assets.emplace_back(state.native->resource());
+      state.native_image = &state.native->image_assets.back();
+      apply_pending_native_asset(state, *state.native_image);
+    }
+
+    void
+    start_native_video(FastOpenRtbState& state)
+    {
+      if(!state.native)
+      {
+        return;
+      }
+      state.native->video_assets.emplace_back(state.native->resource());
+      state.native_video = &state.native->video_assets.back();
+      apply_pending_native_asset(state, *state.native_video);
+    }
+
+    struct EmptyStateHandler
+    {
+      void
+      operator()(FastOpenRtbState&) const
+      {}
+    };
+
+    template<typename ObjectHandler, typename ArrayHandler>
+    class ObjectProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      ObjectProcessor(ObjectHandler object_handler, ArrayHandler array_handler)
+        : object_handler_(std::move(object_handler)),
+          array_handler_(std::move(array_handler))
+      {}
+
+      void
+      object_started(std::string_view, void* context) const override
+      {
+        object_handler_(state_from_context(context));
+      }
+
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        array_handler_(state_from_context(context));
+      }
+
+    private:
+      ObjectHandler object_handler_;
+      ArrayHandler array_handler_;
+    };
+
+    template<typename Append>
+    class StringArrayProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      explicit
+      StringArrayProcessor(Append append)
+        : append_(std::move(append))
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        append_(state_from_context(context), value);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        append_(state, hold_string(state, std::move(value)));
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        append_(state, hold_string(state, integer_to_string(value)));
+      }
+
+      void
+      process_float(double value, std::string_view, void* context) const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        append_(state, hold_string(state, float_to_string(value)));
+      }
+
+    private:
+      Append append_;
+    };
+
+    template<typename HolderGetter>
+    class StateValueNumberProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      explicit
+      StateValueNumberProcessor(HolderGetter get_holder)
+        : get_holder_(std::move(get_holder))
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        if(auto* holder = get_holder_(state_from_context(context)))
+        {
+          set_state_number(*holder, value);
+        }
+      }
+
+      void
+      process_float(double value, std::string_view, void* context) const override
+      {
+        if(auto* holder = get_holder_(state_from_context(context)))
+        {
+          set_state_number(*holder, value);
+        }
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        process_string_(value, context);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        process_string_(value, context);
+      }
+
+    private:
+      void
+      process_string_(std::string_view value, void* context) const
+      {
+        if(auto* holder = get_holder_(state_from_context(context)))
+        {
+          set_state_number(*holder, value);
+        }
+      }
+
+    private:
+      HolderGetter get_holder_;
+    };
+
+    template<typename HolderGetter>
+    class StateNumberSetProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      explicit
+      StateNumberSetProcessor(HolderGetter get_holder)
+        : get_holder_(std::move(get_holder))
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        if(auto* holder = get_holder_(state_from_context(context)))
+        {
+          insert_number(*holder, value);
+        }
+      }
+
+      void
+      process_float(double value, std::string_view, void* context) const override
+      {
+        if(auto* holder = get_holder_(state_from_context(context)))
+        {
+          insert_number(*holder, value);
+        }
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        process_string_(value, context);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        process_string_(value, context);
+      }
+
+    private:
+      void
+      process_string_(std::string_view value, void* context) const
+      {
+        if(auto* holder = get_holder_(state_from_context(context)))
+        {
+          insert_number(*holder, value);
+        }
+      }
+
+    private:
+      HolderGetter get_holder_;
+    };
+
+    template<typename Handler>
+    class StringHandlerProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      explicit
+      StringHandlerProcessor(Handler handler)
+        : handler_(std::move(handler))
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        handler_(state_from_context(context), value);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        handler_(state, hold_string(state, std::move(value)));
+      }
+
+    private:
+      Handler handler_;
+    };
+
+    class MatchingAdProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        state_from_context(context).matching_ad_processed = false;
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        process_(value, context);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        process_(hold_string(state, std::move(value)), context);
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        process_(hold_string(state, integer_to_string(value)), context);
+      }
+
+      void
+      process_float(double value, std::string_view, void* context) const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        process_(hold_string(state, float_to_string(value)), context);
+      }
+
+    private:
+      void
+      process_(std::string_view value, void* context) const
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        if(state.banner && !state.matching_ad_processed)
+        {
+          assign_string(state.banner->matching_ad, value);
+          state.matching_ad_processed = true;
+        }
+      }
+    };
+
+    template<bool Width>
+    class BannerSizeProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        process_(value, context);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        process_(hold_string(state, std::move(value)), context);
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        process_(hold_string(state, integer_to_string(value)), context);
+      }
+
+    private:
+      void
+      process_(std::string_view value, void* context) const
+      {
+        if(BannerFormat* format = ensure_banner_format(state_from_context(context)))
+        {
+          if constexpr(Width)
+          {
+            assign_string(format->width, value);
+          }
+          else
+          {
+            assign_string(format->height, value);
+          }
+        }
+      }
+    };
+
+    class NativeAssetIdProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        if(state.native_asset)
+        {
+          state.native_asset->id = static_cast<long>(value);
+        }
+        else
+        {
+          state.pending_native_asset_id = static_cast<long>(value);
+          state.pending_native_asset_id_present = true;
+        }
+      }
+    };
+
+    class NativeAssetRequiredProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      void
+      process_bool(bool value, std::string_view, void* context) const override
+      {
+        set_(value, context);
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        set_(value != 0, context);
+      }
+
+    private:
+      void
+      set_(bool value, void* context) const
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        if(state.native_asset)
+        {
+          state.native_asset->required = value;
+        }
+        else
+        {
+          state.pending_native_asset_required = value;
+          state.pending_native_asset_required_present = true;
+        }
+      }
+    };
+
+    class MetricValueProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        if(AdSlotContext::Metric* metric = state_from_context(context).metric)
+        {
+          assign_string(metric->value, value);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        if(AdSlotContext::Metric* metric = state.metric)
+        {
+          assign_string(metric->value, hold_string(state, std::move(value)));
+        }
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        process_number_(static_cast<double>(value), context);
+      }
+
+      void
+      process_float(double value, std::string_view, void* context) const override
+      {
+        process_number_(value, context);
+      }
+
+    private:
+      void
+      process_number_(double value, void* context) const
+      {
+        if(AdSlotContext::Metric* metric = state_from_context(context).metric)
+        {
+          char buf[64];
+          const int size = std::snprintf(buf, sizeof(buf), "%.3f", value);
+          FastOpenRtbState& state = state_from_context(context);
+          assign_string(
+            metric->value,
+            hold_string(
+              state,
+              std::string(buf, static_cast<std::size_t>(size))));
+        }
+      }
+    };
+
+    class VideoStartedProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      void
+      object_started(std::string_view, void* context) const override
+      {
+        if(AdSlotContext* ad_slot = state_from_context(context).ad_slot)
+        {
+          ad_slot->video = true;
+        }
+      }
+    };
+
+    template<typename ObjectHandler, typename ArrayHandler = EmptyStateHandler>
+    void
+    add_object_processor(
+      FastJsonParser& parser,
+      std::string_view path,
+      ObjectHandler object_handler,
+      ArrayHandler array_handler = {})
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<ObjectProcessor<ObjectHandler, ArrayHandler>>(
+          std::move(object_handler),
+          std::move(array_handler)));
+    }
+
+    template<typename Append>
+    void
+    add_string_array(
+      FastJsonParser& parser,
+      std::string_view path,
+      Append append)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<StringArrayProcessor<Append>>(std::move(append)));
+    }
+
+    template<typename HolderGetter>
+    void
+    add_state_value_number(
+      FastJsonParser& parser,
+      std::string_view path,
+      HolderGetter get_holder)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<StateValueNumberProcessor<HolderGetter>>(
+          std::move(get_holder)));
+    }
+
+    template<typename HolderGetter>
+    void
+    add_state_number_set(
+      FastJsonParser& parser,
+      std::string_view path,
+      HolderGetter get_holder)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<StateNumberSetProcessor<HolderGetter>>(
+          std::move(get_holder)));
+    }
+
+    void
+    init_banner_processors(FastJsonParser& parser, std::string_view base)
+    {
+      add_object_processor(parser, base, start_banner, [](FastOpenRtbState&) {});
+      add_string(parser, std::string(base) + ".pos", banner_context, &Banner::pos);
+      add_string_array(
+        parser,
+        std::string(base) + ".battr",
+        [](FastOpenRtbState& state, std::string_view value)
+        {
+          if(state.banner)
+          {
+            append_string(state.banner->exclude_categories, value);
+          }
+        });
+      add_string_array(
+        parser,
+        std::string(base) + ".ext.bcont",
+        [](FastOpenRtbState& state, std::string_view value)
+        {
+          if(state.banner)
+          {
+            append_string(state.banner->exclude_categories, value);
+          }
+        });
+      add_integer(
+        parser,
+        std::string(base) + ".ext.overlay.hpos",
+        banner_context,
+        &Banner::ext_hpos);
+      add_processor(
+        parser,
+        std::string(base) + ".ext.matching_ad_id",
+        std::make_shared<MatchingAdProcessor>());
+
+      add_object_processor(parser, std::string(base) + ".format", start_banner_format);
+      add_object_processor(
+        parser,
+        std::string(base) + ".format",
+        start_banner_format,
+        [](FastOpenRtbState&) {});
+
+      add_processor(
+        parser,
+        std::string(base) + ".w",
+        std::make_shared<BannerSizeProcessor<true>>());
+      add_processor(
+        parser,
+        std::string(base) + ".h",
+        std::make_shared<BannerSizeProcessor<false>>());
+
+      add_processor(
+        parser,
+        std::string(base) + ".format.w",
+        std::make_shared<BannerSizeProcessor<true>>());
+      add_processor(
+        parser,
+        std::string(base) + ".format.h",
+        std::make_shared<BannerSizeProcessor<false>>());
+      add_string(parser, std::string(base) + ".format.ext.type", banner_format_context, &BannerFormat::ext_type);
+      add_string(parser, std::string(base) + ".format.ext.fmt", banner_format_context, &BannerFormat::ext_format);
+    }
+
+    void
+    init_native_payload_processors(FastJsonParser& parser, std::string_view prefix)
+    {
+      add_string(parser, make_path(prefix, "ver"), native_context, &Native::version);
+      add_optional_long(
+        parser,
+        make_path(prefix, "plcmttype"),
+        native_context,
+        &Native::placement);
+      add_object_processor(
+        parser,
+        make_path(prefix, "assets"),
+        start_native_asset,
+        [](FastOpenRtbState&) {});
+
+      add_processor(
+        parser,
+        make_path(prefix, "assets.id"),
+        std::make_shared<NativeAssetIdProcessor>());
+      add_processor(
+        parser,
+        make_path(prefix, "assets.required"),
+        std::make_shared<NativeAssetRequiredProcessor>());
+
+      add_object_processor(
+        parser,
+        make_path(prefix, "assets.title"),
+        start_native_title);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.title.len"),
+        native_data_context,
+        &Native::Data::len);
+
+      add_object_processor(
+        parser,
+        make_path(prefix, "assets.data"),
+        start_native_data);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.data.type"),
+        native_data_context,
+        &Native::Data::data_type);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.data.len"),
+        native_data_context,
+        &Native::Data::len);
+
+      add_object_processor(
+        parser,
+        make_path(prefix, "assets.img"),
+        start_native_image);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.img.type"),
+        native_image_context,
+        &Native::Image::image_type);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.img.w"),
+        native_image_context,
+        &Native::Image::width);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.img.wmin"),
+        native_image_context,
+        &Native::Image::width);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.img.h"),
+        native_image_context,
+        &Native::Image::height);
+      add_integer(
+        parser,
+        make_path(prefix, "assets.img.hmin"),
+        native_image_context,
+        &Native::Image::height);
+      add_string_array(
+        parser,
+        make_path(prefix, "assets.img.mimes"),
+        [](FastOpenRtbState& state, std::string_view value)
+        {
+          if(state.native_image)
+          {
+            insert_string(state.native_image->mimes, value);
+          }
+        });
+
+      add_object_processor(
+        parser,
+        make_path(prefix, "assets.video"),
+        start_native_video);
+      add_string_array(
+        parser,
+        make_path(prefix, "assets.video.mimes"),
+        [](FastOpenRtbState& state, std::string_view value)
+        {
+          if(state.native_video)
+          {
+            insert_string(state.native_video->mimes, value);
+          }
+        });
+      add_state_value_number(
+        parser,
+        make_path(prefix, "assets.video.minduration"),
+        [](FastOpenRtbState& state)
+          -> AdSlotContext::ULValueStateHolder*
+        {
+          return state.native_video ? &state.native_video->min_duration : nullptr;
+        });
+      add_state_value_number(
+        parser,
+        make_path(prefix, "assets.video.maxduration"),
+        [](FastOpenRtbState& state)
+          -> AdSlotContext::ULValueStateHolder*
+        {
+          return state.native_video ? &state.native_video->max_duration : nullptr;
+        });
+      add_state_number_set(
+        parser,
+        make_path(prefix, "assets.video.protocols"),
+        [](FastOpenRtbState& state)
+          -> AdSlotContext::ULSetStateHolder*
+        {
+          return state.native_video ? &state.native_video->protocols : nullptr;
+        });
+    }
+
+    void
+    parse_native_request(FastOpenRtbState& state, std::string_view value)
+    {
+      if(!state.native)
+      {
+        return;
+      }
+
+      FastJsonParser native_parser(false);
+      init_native_payload_processors(native_parser, "");
+      init_native_payload_processors(native_parser, "native");
+      native_parser.parse(value, &state);
+    }
+
+    void
+    init_native_processors(FastJsonParser& parser, std::string_view base)
+    {
+      add_object_processor(parser, base, start_native);
+
+      add_processor(
+        parser,
+        std::string(base) + ".request",
+        std::make_shared<StringHandlerProcessor<decltype(&parse_native_request)>>(
+          &parse_native_request));
+
+      init_native_payload_processors(parser, std::string(base) + ".request");
+      init_native_payload_processors(parser, std::string(base) + ".request.native");
+    }
+  }
+
+  void
+  RequestInfoFiller::init_fast_json_processors_()
+  {
+    auto parser = std::make_unique<FastJsonParser>(false);
+
+    add_string(*parser, "id", root_context, &JsonProcessingContext::request_id);
+    add_string_array(
+      *parser,
+      "cur",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->currencies, value);
+      });
+    add_string_array(
+      *parser,
+      "bcat",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->exclude_categories, value);
+      });
+    add_bool(*parser, "test", root_context, &JsonProcessingContext::test);
+    add_bool(*parser, "ext.is_test", root_context, &JsonProcessingContext::test);
+    add_bool(*parser, "ext.secure", root_context, &JsonProcessingContext::secure);
+    add_string(*parser, "ext.category", root_context, &JsonProcessingContext::required_category);
+    add_string(*parser, "ext.udi.idfa", root_context, &JsonProcessingContext::ifa);
+    add_string(*parser, "ext.udi.gaid", root_context, &JsonProcessingContext::ifa);
+
+    add_object_processor(
+      *parser,
+      "imp",
+      start_ad_slot,
+      [](FastOpenRtbState&) {});
+    add_string(*parser, "imp.id", ad_slot_context, &AdSlotContext::id);
+    add_decimal(
+      *parser,
+      "imp.bidfloor",
+      ad_slot_context,
+      &AdSlotContext::min_cpm_price,
+      Generics::DMR_CEIL,
+      AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
+    add_string(
+      *parser,
+      "imp.bidfloorcur",
+      ad_slot_context,
+      &AdSlotContext::min_cpm_price_currency_code);
+    add_bool(*parser, "imp.secure", ad_slot_context, &AdSlotContext::secure);
+    add_string(*parser, "imp.tagid", ad_slot_context, &AdSlotContext::tagid);
+    add_string(*parser, "imp.ext.type", ad_slot_context, &AdSlotContext::imp_ext_type);
+    add_optional_long(
+      *parser,
+      "imp.pmp.private_auction",
+      ad_slot_context,
+      &AdSlotContext::private_auction);
+    add_object_processor(
+      *parser,
+      "imp.pmp.deals",
+      start_deal,
+      [](FastOpenRtbState&) {});
+    add_string(*parser, "imp.pmp.deals.id", deal_context, &AdSlotContext::Deal::id);
+    add_decimal(
+      *parser,
+      "imp.pmp.deals.bidfloor",
+      deal_context,
+      &AdSlotContext::Deal::cpm_price,
+      Generics::DMR_CEIL,
+      AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
+    add_string(
+      *parser,
+      "imp.pmp.deals.bidfloorcur",
+      deal_context,
+      &AdSlotContext::Deal::currency_code);
+
+    add_object_processor(
+      *parser,
+      "imp.metric",
+      start_metric,
+      [](FastOpenRtbState&) {});
+    add_string(*parser, "imp.metric.type", metric_context, &AdSlotContext::Metric::type);
+    add_processor(
+      *parser,
+      "imp.metric.value",
+      std::make_shared<MetricValueProcessor>());
+
+    init_banner_processors(*parser, "imp.banner");
+    init_banner_processors(*parser, "imp.banners");
+
+    add_processor(
+      *parser,
+      "imp.video",
+      std::make_shared<VideoStartedProcessor>());
+    add_state_value_number(
+      *parser,
+      "imp.video.w",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_width : nullptr;
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.h",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_height : nullptr;
+      });
+    add_string(*parser, "imp.video.pos", ad_slot_context, &AdSlotContext::video_pos);
+    add_string_array(
+      *parser,
+      "imp.video.mimes",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        if(state.ad_slot)
+        {
+          insert_string(state.ad_slot->video_mimes, value);
+        }
+      });
+    add_string_array(
+      *parser,
+      "imp.video.battr",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        if(state.ad_slot)
+        {
+          append_string(state.ad_slot->video_exclude_categories, value);
+        }
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.minduration",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_min_duration : nullptr;
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.maxduration",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_max_duration : nullptr;
+      });
+    add_state_number_set(
+      *parser,
+      "imp.video.protocol",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULSetStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_protocols : nullptr;
+      });
+    add_state_number_set(
+      *parser,
+      "imp.video.protocols",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULSetStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_protocols : nullptr;
+      });
+    add_state_number_set(
+      *parser,
+      "imp.video.playbackmethod",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULSetStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_playbackmethods : nullptr;
+      });
+    add_state_number_set(
+      *parser,
+      "imp.video.api",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULSetStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_api : nullptr;
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.startdelay",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::LValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_start_delay : nullptr;
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.linearity",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_linearity : nullptr;
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.skip",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_skip : nullptr;
+      });
+    add_state_value_number(
+      *parser,
+      "imp.video.reward",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_reward : nullptr;
+      });
+    add_optional_long(*parser, "imp.video.placement", ad_slot_context, &AdSlotContext::video_placement);
+    add_state_value_number(
+      *parser,
+      "imp.video.ext.adtype",
+      [](FastOpenRtbState& state)
+        -> AdSlotContext::ULValueStateHolder*
+      {
+        return state.ad_slot ? &state.ad_slot->video_adtype : nullptr;
+      });
+
+    init_native_processors(*parser, "imp.native");
+
+    add_object_processor(
+      *parser,
+      "site",
+      [](FastOpenRtbState& state) { state.context->site = true; }
+    );
+    add_url(*parser, "site.page", root_context, &JsonProcessingContext::site_page);
+    add_string(*parser, "site.name", root_context, &JsonProcessingContext::site_name);
+    add_url(*parser, "site.domain", root_context, &JsonProcessingContext::site_domain);
+    add_string(*parser, "site.id", root_context, &JsonProcessingContext::site_id);
+    add_string(*parser, "site.search", root_context, &JsonProcessingContext::site_search);
+    add_url(*parser, "site.ref", root_context, &JsonProcessingContext::site_ref);
+    add_url(*parser, "site.referer", root_context, &JsonProcessingContext::site_referer);
+    add_url(*parser, "site.rereferer", root_context, &JsonProcessingContext::site_rereferer);
+    add_string(*parser, "site.keywords", root_context, &JsonProcessingContext::site_keywords);
+    add_string_array(
+      *parser,
+      "site.pagecat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->site_pagecat, value); }
+    );
+    add_string_array(
+      *parser,
+      "site.sectioncat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->site_sectioncat, value); }
+    );
+    add_string_array(
+      *parser,
+      "site.cat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->site_cat, value); }
+    );
+    add_bool(*parser, "site.ext.ssl_enabled", root_context, &JsonProcessingContext::secure);
+    add_string(*parser, "site.ext.puid1", root_context, &JsonProcessingContext::puid1);
+    add_string(*parser, "site.ext.puid2", root_context, &JsonProcessingContext::puid2);
+    add_object_processor(*parser, "site.content", [](FastOpenRtbState& state) { state.context->site_content = true; });
+    add_string(*parser, "site.content.keywords", root_context, &JsonProcessingContext::content_keywords);
+    add_string(*parser, "site.content.title", root_context, &JsonProcessingContext::content_title);
+    add_string(*parser, "site.content.series", root_context, &JsonProcessingContext::content_series);
+    add_string(*parser, "site.content.season", root_context, &JsonProcessingContext::content_season);
+    add_string_array(*parser, "site.content.cat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->content_cat, value); });
+    add_object_processor(*parser, "site.content.producer",
+      [](FastOpenRtbState& state) { state.context->site_content_producer = true; });
+    add_string_array(
+      *parser,
+      "site.content.producer.name",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->content_producer_name, value);
+      });
+    add_object_processor(*parser, "site.publisher",
+      [](FastOpenRtbState& state) { state.context->site_publisher = true; });
+    add_string(*parser, "site.publisher.name", root_context, &JsonProcessingContext::publisher_name);
+    add_string(*parser, "site.publisher.id", root_context, &JsonProcessingContext::publisher_id);
+    add_string_array(
+      *parser,
+      "site.publisher.cat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->publisher_cat, value); }
+    );
+
+    add_object_processor(
+      *parser,
+      "app",
+      [](FastOpenRtbState& state) { state.context->app = true; });
+    add_string(*parser, "app.id", root_context, &JsonProcessingContext::app_id);
+    add_string(*parser, "app.name", root_context, &JsonProcessingContext::app_name);
+    add_string(*parser, "app.bundle", root_context, &JsonProcessingContext::app_bundle);
+    add_url(*parser, "app.domain", root_context, &JsonProcessingContext::app_domain);
+    add_url(*parser, "app.storeurl", root_context, &JsonProcessingContext::app_store_url);
+    add_string(*parser, "app.keywords", root_context, &JsonProcessingContext::app_keywords);
+    add_string_array(
+      *parser,
+      "app.pagecat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->app_pagecat, value); }
+    );
+    add_string_array(
+      *parser,
+      "app.sectioncat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->app_sectioncat, value); }
+    );
+    add_string_array(
+      *parser,
+      "app.cat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->app_cat, value); }
+    );
+    add_object_processor(*parser, "app.content", [](FastOpenRtbState& state) { state.context->app_content = true; });
+    add_string(*parser, "app.content.keywords", root_context, &JsonProcessingContext::content_keywords);
+    add_string(*parser, "app.content.title", root_context, &JsonProcessingContext::content_title);
+    add_string(*parser, "app.content.series", root_context, &JsonProcessingContext::content_series);
+    add_string(*parser, "app.content.season", root_context, &JsonProcessingContext::content_season);
+    add_string_array(
+      *parser,
+      "app.content.cat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->content_cat, value); }
+    );
+    add_object_processor(
+      *parser,
+      "app.content.producer",
+      [](FastOpenRtbState& state) { state.context->app_content_producer = true; }
+    );
+    add_string_array(
+      *parser,
+      "app.content.producer.name",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->content_producer_name, value);
+      }
+    );
+    add_object_processor(
+      *parser,
+      "app.publisher",
+      [](FastOpenRtbState& state) { state.context->app_publisher = true; }
+    );
+    add_string(*parser, "app.publisher.name", root_context, &JsonProcessingContext::publisher_name);
+    add_string(*parser, "app.publisher.id", root_context, &JsonProcessingContext::publisher_id);
+    add_string_array(
+      *parser,
+      "app.publisher.cat",
+      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->publisher_cat, value); }
+    );
+
+    add_string(*parser, "device.ip", root_context, &JsonProcessingContext::ip);
+    add_string(*parser, "device.ipv6", root_context, &JsonProcessingContext::ipv6);
+    add_string(*parser, "device.ua", root_context, &JsonProcessingContext::user_agent);
+    add_string(*parser, "device.userdata", root_context, &JsonProcessingContext::user_id);
+    add_string(*parser, "device.ifa", root_context, &JsonProcessingContext::ifa);
+    add_string(*parser, "device.didmd5", root_context, &JsonProcessingContext::didmd5);
+    add_string(*parser, "device.didsha1", root_context, &JsonProcessingContext::didsha1);
+    add_string(*parser, "device.dpidmd5", root_context, &JsonProcessingContext::dpidmd5);
+    add_string(*parser, "device.dpisha1", root_context, &JsonProcessingContext::dpisha1);
+    add_string(*parser, "device.macsha1", root_context, &JsonProcessingContext::macsha1);
+    add_string(*parser, "device.macmd5", root_context, &JsonProcessingContext::macmd5);
+    add_string(*parser, "device.language", root_context, &JsonProcessingContext::language);
+    add_string(*parser, "device.carrier", root_context, &JsonProcessingContext::carrier);
+    add_integer(*parser, "device.devicetype", root_context, &JsonProcessingContext::ssp_devicetype);
+    add_string(*parser, "device.geo.country", root_context, &JsonProcessingContext::ssp_country);
+    add_string(*parser, "device.geo.region", root_context, &JsonProcessingContext::ssp_region);
+    add_string(*parser, "device.geo.city", root_context, &JsonProcessingContext::ssp_city);
+
+    add_object_processor(*parser, "user", [](FastOpenRtbState& state) { state.context->user = true; });
+    add_string(*parser, "user.id", root_context, &JsonProcessingContext::external_user_id);
+    add_string(*parser, "user.buyeruid", root_context, &JsonProcessingContext::user_id);
+    add_string(*parser, "user.buyerid", root_context, &JsonProcessingContext::user_id);
+    add_string(*parser, "user.keywords", root_context, &JsonProcessingContext::user_keywords);
+    add_string(*parser, "user.gender", root_context, &JsonProcessingContext::user_gender);
+    add_integer(*parser, "user.yob", root_context, &JsonProcessingContext::user_yob);
+    add_object_processor(
+      *parser,
+      "user.data.segment",
+      start_segment,
+      [](FastOpenRtbState&) {});
+    add_string(*parser, "user.data.segment.id", segment_context, &JsonProcessingContext::Segment::id);
+    add_string(*parser, "user.data.segment.name", segment_context, &JsonProcessingContext::Segment::name);
+    add_string(*parser, "user.data.segment.value", segment_context, &JsonProcessingContext::Segment::value);
+    add_object_processor(
+      *parser,
+      "user.ext.eids",
+      start_user_eid,
+      [](FastOpenRtbState&) {});
+    add_string(*parser, "user.ext.eids.source", user_eid_context, &JsonProcessingContext::UserEid::source);
+    add_object_processor(
+      *parser,
+      "user.ext.eids.uids",
+      start_user_eid_uid,
+      [](FastOpenRtbState&) {});
+    add_string(*parser, "user.ext.eids.uids.id", user_eid_uid_context, &JsonProcessingContext::UserEidUid::id);
+    add_string(*parser, "user.ext.eids.uids.stableid", user_eid_uid_context, &JsonProcessingContext::UserEidUid::stable_id);
+
+    add_bool(*parser, "regs.coppa", root_context, &JsonProcessingContext::regs_coppa);
+
+    fast_json_parser_ = std::move(parser);
+  }
+
+  void
+  RequestInfoFiller::parse_openrtb_request_(
+    RequestParams& request_params,
+    RequestInfo& request_info,
+    JsonProcessingContext& context,
+    std::string_view bid_request) const
+  {
+    static const char* FUN = "RequestInfoFiller::parse_openrtb_request_()";
+
+    FastOpenRtbState state;
+    state.request_params = &request_params;
+    state.request_info = &request_info;
+    state.context = &context;
+
+    try
+    {
+      fast_json_parser_->parse(bid_request, &state);
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": parsing error: " << e.what();
+      throw InvalidParamException(ostr);
+    }
+
+    for(auto& ad_slot : context.ad_slots)
+    {
+      ad_slot.metrics.remove_if(
+        [](const AdSlotContext::Metric& metric)
+        {
+          return metric.type.empty() || metric.value.empty();
+        });
+    }
   }
 }

@@ -41,6 +41,14 @@ namespace AdServer::Bidding::CampaignManager
     target.assign(value.data(), value.size());
   }
 
+  template<typename Traits, typename Allocator>
+  inline void assign_string(
+    std::basic_string<char, Traits, Allocator>& target,
+    std::string_view value)
+  {
+    target.assign(value.data(), value.size());
+  }
+
   template<typename Traits, typename Allocator, typename ValueType>
   inline auto assign_string(
     std::basic_string<char, Traits, Allocator>& target,

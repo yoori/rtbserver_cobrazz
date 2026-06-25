@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include <String/SubString.hpp>
 #include <String/AsciiStringManip.hpp>
@@ -36,12 +37,22 @@ namespace AdServer::Bidding
   {
   public:
     // short_rtb_name == source_id
-    KeywordFormatter(const String::SubString& source_id)
+    KeywordFormatter(std::string_view source_id)
       : keywords_non_empty_(false),
-        short_rtb_name_(source_id.str())
+        short_rtb_name_(source_id)
     {
       keywords_osrt_.reserve(1024);
     }
+
+    template<std::size_t Size>
+    KeywordFormatter(const char (&source_id)[Size])
+      : KeywordFormatter(std::string_view(source_id, Size - 1))
+    {}
+
+    template<typename StringType>
+    KeywordFormatter(const StringType& source_id)
+      : KeywordFormatter(std::string_view(source_id.data(), source_id.size()))
+    {}
 
     void
     assign_to(std::string& kw) const
@@ -57,39 +68,37 @@ namespace AdServer::Bidding
       }
     }
 
-    template <typename ValueType>
     void
-    add_cat(const ValueType& cat, bool open_rtb = false)
+    add_cat(std::string_view cat, bool open_rtb = false)
     {
+      if(cat.empty())
+      {
+        return;
+      }
+
+      const String::SubString cat_sub_string(cat.data(), cat.size());
       if (open_rtb)
       {
-        add_(String::SubString(), String::SubString(), cat);
+        add_(String::SubString(), String::SubString(), cat_sub_string);
       }
 
       if (!open_rtb || !short_rtb_name_.empty())
       {
-        add_(String::SubString(), short_rtb_name_, cat);
+        add_(String::SubString(), short_rtb_name_, cat_sub_string);
       }
     }
 
     void
     add_cat(const std::string& cat, bool open_rtb = false)
     {
-      // Skip empty category values
-      if(cat.empty())
-      {
-        return;
-      }
+      add_cat(std::string_view(cat.data(), cat.size()), open_rtb);
+    }
 
-      if (open_rtb)
-      {
-        add_(String::SubString(), String::SubString(), cat);
-      }
-
-      if (!open_rtb || !short_rtb_name_.empty())
-      {
-        add_(String::SubString(), short_rtb_name_, cat);
-      }
+    template <typename ValueType>
+    void
+    add_cat(const ValueType& cat, bool open_rtb = false)
+    {
+      add_cat(std::string_view(cat.data(), cat.size()), open_rtb);
     }
 
     template <typename CategoryStringContainerType>
@@ -154,8 +163,9 @@ namespace AdServer::Bidding
     }
 
     void
-    add_ip(const String::SubString& addr)
+    add_ip(std::string_view addr_value)
     {
+      const String::SubString addr(addr_value.data(), addr_value.size());
       String::StringManip::Splitter<String::AsciiStringManip::SepPeriod> tokenizer(addr);
       String::SubString token1;
       String::SubString token2;
@@ -187,6 +197,13 @@ namespace AdServer::Bidding
       }
     }
 
+    template<typename StringType>
+    void
+    add_ip(const StringType& addr)
+    {
+      add_ip(std::string_view(addr.data(), addr.size()));
+    }
+
     template <typename ValueType>
     void
     add_dict_keyword(
@@ -205,6 +222,25 @@ namespace AdServer::Bidding
     }
 
     void
+    add_dict_keyword(
+      const String::SubString& dict_name,
+      std::string_view keyword,
+      bool add_rtb_prefix = true)
+    {
+      const String::SubString keyword_sub_string(
+        keyword.data(),
+        keyword.size());
+      if (add_rtb_prefix)
+      {
+        add_(dict_name, short_rtb_name_, keyword_sub_string);
+      }
+      else
+      {
+        add_(dict_name, String::SubString(), keyword_sub_string);
+      }
+    }
+
+    void
     add_dict_keyword_norm_spaces(
       const String::SubString& dict_name,
       const String::SubString& keyword,
@@ -218,6 +254,18 @@ namespace AdServer::Bidding
       {
         add_norm_spaces_(dict_name, String::SubString(), keyword);
       }
+    }
+
+    void
+    add_dict_keyword_norm_spaces(
+      const String::SubString& dict_name,
+      std::string_view keyword,
+      bool add_rtb_prefix = true)
+    {
+      add_dict_keyword_norm_spaces(
+        dict_name,
+        String::SubString(keyword.data(), keyword.size()),
+        add_rtb_prefix);
     }
 
     template <typename ValueType>
@@ -246,14 +294,14 @@ namespace AdServer::Bidding
     }
 
     void
-    add_full_rtb_keyword(const String::SubString& keyword)
+    add_full_rtb_keyword(std::string_view keyword)
     {
       if (keyword.empty())
       {
         return;
       }
 
-      std::string keyword_holder = keyword.str();
+      std::string keyword_holder(keyword);
       add_keyword(keyword_holder);
 
       if (!short_rtb_name_.empty())
