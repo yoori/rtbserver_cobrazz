@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <iomanip>
 #include <math.h>
@@ -2379,7 +2380,8 @@ namespace AdServer::Bidding
     const char* ip_salt,
     const SourceMap& sources,
     bool enable_profile_referer,
-    const AccountTraitsById& account_traits)
+    const AccountTraitsById& account_traits,
+    bool use_fast_json_parser)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
@@ -2388,6 +2390,7 @@ namespace AdServer::Bidding
       ip_logging_enabled_(ip_logging_enabled),
       ip_salt_(ip_salt),
       ip_map_(std::move(ip_map)),
+      use_fast_json_parser_(use_fast_json_parser),
       sources_(sources),
       enable_profile_referer_(enable_profile_referer),
       account_traits_(account_traits),
@@ -3038,6 +3041,7 @@ namespace AdServer::Bidding
     }
 
     json_root_processor_ = root_processor;
+    init_fast_json_processors_();
   }
 
   AdXmlRequestInfoFiller*
@@ -3924,6 +3928,63 @@ namespace AdServer::Bidding
   }
 
   void
+  RequestInfoFiller::parse_openrtb_request_gason_(
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    JsonProcessingContext& context,
+    const char* bid_request) const
+  {
+    static const char* FUN =
+      "RequestInfoFiller::parse_openrtb_request_gason_()";
+
+    const int bid_request_len = ::strlen(bid_request);
+    // in some specific cases required +1 symbol
+    Generics::ArrayAutoPtr<char> bid_request_holder(bid_request_len + 2);
+    JsonValue root_value;
+    JsonAllocator json_allocator;
+    char* parse_end = bid_request_holder.get();
+    ::strcpy(bid_request_holder.get(), bid_request);
+    bid_request_holder.get()[bid_request_len + 1] = 0;
+    JsonParseStatus status = json_parse(
+      bid_request_holder.get(), &parse_end, &root_value, json_allocator);
+
+    assert(parse_end < bid_request_holder.get() + bid_request_len + 2);
+
+    if(status != JSON_PARSE_OK)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": parsing error '" << json_parse_error(status) <<
+        "' at pos : ";
+      if(parse_end)
+      {
+        ostr << std::string(parse_end, 20);
+      }
+      else
+      {
+        ostr << "null";
+      }
+      throw InvalidParamException(ostr);
+    }
+
+    if(root_value.getTag() != JSON_TAG_OBJECT)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": incorrect root tag type";
+      throw InvalidParamException(ostr);
+    }
+
+    try
+    {
+      json_root_processor_->process(request_params, context, root_value);
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": processing error: " << e.what();
+      throw InvalidParamException(ostr);
+    }
+  }
+
+  void
   RequestInfoFiller::fill_by_openrtb_request(
     AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
@@ -3956,51 +4017,13 @@ namespace AdServer::Bidding
       request_params.fill_track_pixel = true;
     }
 
-    int bid_request_len = ::strlen(bid_request);
-    // in some specific cases required +1 symbol
-    Generics::ArrayAutoPtr<char> bid_request_holder(bid_request_len + 2);
-    JsonValue root_value;
-    JsonAllocator json_allocator;
-    char* parse_end = bid_request_holder.get();
-    ::strcpy(bid_request_holder.get(), bid_request);
-    bid_request_holder.get()[bid_request_len + 1] = 0;
-    JsonParseStatus status = json_parse(
-      bid_request_holder.get(), &parse_end, &root_value, json_allocator);
-
-    assert(parse_end < bid_request_holder.get() + bid_request_len + 2);
-
-    if(status != JSON_PARSE_OK)
+    if(use_fast_json_parser_)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": parsing error '" << json_parse_error(status) << "' at pos : ";
-      if(parse_end)
-      {
-        ostr << std::string(parse_end, 20);
-      }
-      else
-      {
-        ostr << "null";
-      }
-      throw InvalidParamException(ostr);
+      parse_openrtb_request_(request_params, context, bid_request);
     }
-
-    JsonTag root_tag = root_value.getTag();
-    if(root_tag != JSON_TAG_OBJECT)
+    else
     {
-      Stream::Error ostr;
-      ostr << FUN << ": incorrect root tag type";
-      throw InvalidParamException(ostr);
-    }
-
-    try
-    {
-      json_root_processor_->process(request_params, context, root_value);
-    }
-    catch (const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": processing error: " << e.what();
-      throw InvalidParamException(ostr);
+      parse_openrtb_request_gason_(request_params, context, bid_request);
     }
 
     request_info.bid_publisher_id = context.publisher_id;

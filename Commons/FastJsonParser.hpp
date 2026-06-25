@@ -45,6 +45,13 @@ namespace AdServer::Commons
         void* context) const;
 
       virtual void
+      process_number(
+        std::string_view value,
+        bool is_float,
+        std::string_view path,
+        void* context) const;
+
+      virtual void
       process_string(
         std::string_view value,
         std::string_view path,
@@ -80,6 +87,7 @@ namespace AdServer::Commons
       std::shared_ptr<ValueProcessor> value_processor;
       JsonTreeProcessor* parent = nullptr;
       std::string path;
+      bool as_string = false;
     };
 
   public:
@@ -94,7 +102,8 @@ namespace AdServer::Commons
     void
     add_processor(
       std::string_view path,
-      std::shared_ptr<ValueProcessor> processor);
+      std::shared_ptr<ValueProcessor> processor,
+      bool as_string = false);
 
     void
     parse(std::string_view json, void* context) const;
@@ -128,6 +137,9 @@ namespace AdServer::Commons
       get();
 
       void
+      skip_char() noexcept;
+
+      void
       expect(char expected);
 
       void
@@ -146,6 +158,9 @@ namespace AdServer::Commons
       skip_string_rough();
 
       void
+      skip_unquoted_value_rough();
+
+      void
       skip_object_rough();
 
       void
@@ -153,6 +168,9 @@ namespace AdServer::Commons
 
       NumberToken
       parse_number();
+
+      std::string_view
+      scan_number_literal();
 
       [[noreturn]] void
       throw_error(const std::string& message) const;
@@ -177,7 +195,7 @@ namespace AdServer::Commons
       parse_string_tail_(std::string& out);
 
       void
-      append_escape_(std::string& out);
+      append_escape_(char*& out);
 
       void
       skip_string_rough_after_quote_();
@@ -197,7 +215,7 @@ namespace AdServer::Commons
       skip_unicode_escape_();
 
       void
-      append_unicode_escape_(std::string& out);
+      append_unicode_escape_(char*& out);
 
     private:
       const char* begin_;
@@ -282,6 +300,56 @@ namespace AdServer::Commons
   }
 
   inline void
+  FastJsonParser::ValueProcessor::process_number(
+    std::string_view value,
+    bool is_float,
+    std::string_view path,
+    void* context) const
+  {
+    if(is_float)
+    {
+      constexpr std::size_t stack_buffer_size = 128;
+      char stack_buffer[stack_buffer_size];
+      const char* number_data = nullptr;
+      const std::size_t number_size = value.size();
+      std::string number_string;
+      if(number_size < stack_buffer_size)
+      {
+        std::memcpy(stack_buffer, value.data(), number_size);
+        stack_buffer[number_size] = '\0';
+        number_data = stack_buffer;
+      }
+      else
+      {
+        number_string.assign(value);
+        number_data = number_string.c_str();
+      }
+
+      char* end = nullptr;
+      const double parsed = std::strtod(number_data, &end);
+      if(end != number_data + number_size)
+      {
+        throw ParseError("bad float");
+      }
+      process_float(parsed, path, context);
+    }
+    else
+    {
+      int64_t parsed = 0;
+      const auto result = std::from_chars(
+        value.data(),
+        value.data() + value.size(),
+        parsed);
+      if(result.ec != std::errc() ||
+        result.ptr != value.data() + value.size())
+      {
+        throw ParseError("bad integer");
+      }
+      process_integer(parsed, path, context);
+    }
+  }
+
+  inline void
   FastJsonParser::ValueProcessor::process_string(
     std::string_view value,
     std::string_view path,
@@ -327,13 +395,15 @@ namespace AdServer::Commons
   inline void
   FastJsonParser::add_processor(
     std::string_view path,
-    std::shared_ptr<ValueProcessor> processor)
+    std::shared_ptr<ValueProcessor> processor,
+    bool as_string)
   {
     JsonTreeProcessor* current = &root_processor_;
 
     if(path.empty())
     {
       current->value_processor = std::move(processor);
+      current->as_string = as_string;
       return;
     }
 
@@ -376,6 +446,7 @@ namespace AdServer::Commons
     }
 
     current->value_processor = std::move(processor);
+    current->as_string = as_string;
   }
 
   inline void
@@ -435,6 +506,12 @@ namespace AdServer::Commons
   }
 
   inline void
+  FastJsonParser::Cursor::skip_char() noexcept
+  {
+    ++pos_;
+  }
+
+  inline void
   FastJsonParser::Cursor::expect(char expected)
   {
     if(eof() || *pos_ != expected)
@@ -471,7 +548,7 @@ namespace AdServer::Commons
   inline FastJsonParser::StringToken
   FastJsonParser::Cursor::parse_string()
   {
-    expect('"');
+    skip_char();
     const char* const value_begin = pos_;
 
     while(pos_ != end_)
@@ -483,11 +560,6 @@ namespace AdServer::Commons
           std::string_view(value_begin, pos_ - value_begin - 1),
           {},
           false};
-      }
-
-      if(static_cast<unsigned char>(c) < 0x20)
-      {
-        throw_error("bad string");
       }
 
       if(c == '\\')
@@ -507,7 +579,7 @@ namespace AdServer::Commons
   inline void
   FastJsonParser::Cursor::skip_string()
   {
-    expect('"');
+    skip_char();
 
     while(pos_ != end_)
     {
@@ -515,11 +587,6 @@ namespace AdServer::Commons
       if(c == '"')
       {
         return;
-      }
-
-      if(static_cast<unsigned char>(c) < 0x20)
-      {
-        throw_error("bad string");
       }
 
       if(c == '\\')
@@ -534,8 +601,22 @@ namespace AdServer::Commons
   inline void
   FastJsonParser::Cursor::skip_string_rough()
   {
-    expect('"');
+    skip_char();
     skip_string_rough_after_quote_();
+  }
+
+  inline void
+  FastJsonParser::Cursor::skip_unquoted_value_rough()
+  {
+    while(pos_ != end_)
+    {
+      const char c = *pos_;
+      if(c == ',' || c == ']' || c == '}')
+      {
+        return;
+      }
+      ++pos_;
+    }
   }
 
   inline void
@@ -583,7 +664,7 @@ namespace AdServer::Commons
     char open,
     const char* error_message)
   {
-    expect(open);
+    skip_char();
 
     unsigned object_depth = open == '{' ? 1 : 0;
     unsigned array_depth = open == '[' ? 1 : 0;
@@ -687,6 +768,68 @@ namespace AdServer::Commons
     return {std::string_view(number_begin, pos_ - number_begin), is_float};
   }
 
+  inline std::string_view
+  FastJsonParser::Cursor::scan_number_literal()
+  {
+    const char* const number_begin = pos_;
+
+    if(pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
+    {
+      ++pos_;
+    }
+
+    bool has_digits = false;
+    while(pos_ != end_ && is_dec_(*pos_))
+    {
+      has_digits = true;
+      ++pos_;
+    }
+
+    if(pos_ != end_ && *pos_ == '.')
+    {
+      ++pos_;
+
+      while(pos_ != end_ && is_dec_(*pos_))
+      {
+        has_digits = true;
+        ++pos_;
+      }
+    }
+
+    if(!has_digits)
+    {
+      throw_error("bad number");
+    }
+
+    if(pos_ != end_ && (*pos_ == 'e' || *pos_ == 'E'))
+    {
+      ++pos_;
+
+      if(pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
+      {
+        ++pos_;
+      }
+
+      const char* const exponent_begin = pos_;
+      while(pos_ != end_ && is_dec_(*pos_))
+      {
+        ++pos_;
+      }
+
+      if(exponent_begin == pos_)
+      {
+        throw_error("bad number");
+      }
+    }
+
+    if(pos_ != end_ && !is_delimiter_(*pos_))
+    {
+      throw_error("bad number");
+    }
+
+    return std::string_view(number_begin, pos_ - number_begin);
+  }
+
   inline void
   FastJsonParser::Cursor::throw_error(const std::string& message) const
   {
@@ -736,28 +879,29 @@ namespace AdServer::Commons
   inline void
   FastJsonParser::Cursor::parse_string_tail_(std::string& out)
   {
-    append_escape_(out);
+    const std::size_t prefix_size = out.size();
+    out.resize(prefix_size + static_cast<std::size_t>(end_ - pos_));
+    char* const out_begin = out.data();
+    char* out_pos = out_begin + prefix_size;
+
+    append_escape_(out_pos);
 
     while(pos_ != end_)
     {
       char c = *pos_++;
       if(c == '"')
       {
+        out.resize(static_cast<std::size_t>(out_pos - out_begin));
         return;
-      }
-
-      if(static_cast<unsigned char>(c) < 0x20)
-      {
-        throw_error("bad string");
       }
 
       if(c == '\\')
       {
-        append_escape_(out);
+        append_escape_(out_pos);
       }
       else
       {
-        out += c;
+        *out_pos++ = c;
       }
     }
 
@@ -765,7 +909,7 @@ namespace AdServer::Commons
   }
 
   inline void
-  FastJsonParser::Cursor::append_escape_(std::string& out)
+  FastJsonParser::Cursor::append_escape_(char*& out)
   {
     if(pos_ == end_)
     {
@@ -778,22 +922,22 @@ namespace AdServer::Commons
     case '\\':
     case '"':
     case '/':
-      out += c;
+      *out++ = c;
       return;
     case 'b':
-      out += '\b';
+      *out++ = '\b';
       return;
     case 'f':
-      out += '\f';
+      *out++ = '\f';
       return;
     case 'n':
-      out += '\n';
+      *out++ = '\n';
       return;
     case 'r':
-      out += '\r';
+      *out++ = '\r';
       return;
     case 't':
-      out += '\t';
+      *out++ = '\t';
       return;
     case 'u':
       append_unicode_escape_(out);
@@ -860,23 +1004,23 @@ namespace AdServer::Commons
   }
 
   inline void
-  FastJsonParser::Cursor::append_unicode_escape_(std::string& out)
+  FastJsonParser::Cursor::append_unicode_escape_(char*& out)
   {
     const uint32_t code = parse_unicode_escape_();
     if(code < 0x80)
     {
-      out += static_cast<char>(code);
+      *out++ = static_cast<char>(code);
     }
     else if(code < 0x800)
     {
-      out += static_cast<char>(0xC0 | (code >> 6));
-      out += static_cast<char>(0x80 | (code & 0x3F));
+      *out++ = static_cast<char>(0xC0 | (code >> 6));
+      *out++ = static_cast<char>(0x80 | (code & 0x3F));
     }
     else
     {
-      out += static_cast<char>(0xE0 | (code >> 12));
-      out += static_cast<char>(0x80 | ((code >> 6) & 0x3F));
-      out += static_cast<char>(0x80 | (code & 0x3F));
+      *out++ = static_cast<char>(0xE0 | (code >> 12));
+      *out++ = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+      *out++ = static_cast<char>(0x80 | (code & 0x3F));
     }
   }
 
@@ -888,7 +1032,7 @@ namespace AdServer::Commons
     void* context,
     bool notify_started) const
   {
-    cursor.expect('{');
+    cursor.skip_char();
 
     if(notify_started && processor.value_processor)
     {
@@ -932,10 +1076,12 @@ namespace AdServer::Commons
       }
 
       const char delimiter = cursor.get();
+
       if(delimiter == '}')
       {
         return;
       }
+
       if(delimiter != ',')
       {
         cursor.throw_error("expected ',' or '}'");
@@ -950,7 +1096,7 @@ namespace AdServer::Commons
     const JsonTreeProcessor& processor,
     void* context) const
   {
-    cursor.expect('[');
+    cursor.skip_char();
 
     if(processor.value_processor)
     {
@@ -976,10 +1122,12 @@ namespace AdServer::Commons
       }
 
       const char delimiter = cursor.get();
+
       if(delimiter == ']')
       {
         return;
       }
+
       if(delimiter != ',')
       {
         cursor.throw_error("expected ',' or ']'");
@@ -1036,53 +1184,21 @@ namespace AdServer::Commons
     }
     else if(c == '-' || (c >= '0' && c <= '9'))
     {
-      NumberToken number = cursor.parse_number();
-      if(processor.value_processor)
+      if(processor.value_processor && processor.as_string)
       {
-        if(number.is_float)
+        processor.value_processor->process_string(
+          cursor.scan_number_literal(),
+          processor.path,
+          context);
+      }
+      else
+      {
+        NumberToken number = cursor.parse_number();
+        if(processor.value_processor)
         {
-          constexpr std::size_t stack_buffer_size = 128;
-          char stack_buffer[stack_buffer_size];
-          const char* number_data = nullptr;
-          std::size_t number_size = number.value.size();
-          std::string number_string;
-          if(number_size < stack_buffer_size)
-          {
-            std::memcpy(stack_buffer, number.value.data(), number_size);
-            stack_buffer[number_size] = '\0';
-            number_data = stack_buffer;
-          }
-          else
-          {
-            number_string.assign(number.value);
-            number_data = number_string.c_str();
-          }
-
-          char* end = nullptr;
-          const double value = std::strtod(number_data, &end);
-          if(end != number_data + number_size)
-          {
-            cursor.throw_error("bad float");
-          }
-          processor.value_processor->process_float(
-            value,
-            processor.path,
-            context);
-        }
-        else
-        {
-          int64_t value = 0;
-          const auto result = std::from_chars(
-            number.value.data(),
-            number.value.data() + number.value.size(),
-            value);
-          if(result.ec != std::errc() ||
-            result.ptr != number.value.data() + number.value.size())
-          {
-            cursor.throw_error("bad integer");
-          }
-          processor.value_processor->process_integer(
-            value,
+          processor.value_processor->process_number(
+            number.value,
+            number.is_float,
             processor.path,
             context);
         }
@@ -1093,10 +1209,20 @@ namespace AdServer::Commons
       cursor.consume_literal("true");
       if(processor.value_processor)
       {
-        processor.value_processor->process_bool(
-          true,
-          processor.path,
-          context);
+        if(processor.as_string)
+        {
+          processor.value_processor->process_string(
+            std::string_view("true", 4),
+            processor.path,
+            context);
+        }
+        else
+        {
+          processor.value_processor->process_bool(
+            true,
+            processor.path,
+            context);
+        }
       }
     }
     else if(c == 'f')
@@ -1104,10 +1230,20 @@ namespace AdServer::Commons
       cursor.consume_literal("false");
       if(processor.value_processor)
       {
-        processor.value_processor->process_bool(
-          false,
-          processor.path,
-          context);
+        if(processor.as_string)
+        {
+          processor.value_processor->process_string(
+            std::string_view("false", 5),
+            processor.path,
+            context);
+        }
+        else
+        {
+          processor.value_processor->process_bool(
+            false,
+            processor.path,
+            context);
+        }
       }
     }
     else if(c == 'n')
@@ -1115,7 +1251,17 @@ namespace AdServer::Commons
       cursor.consume_literal("null");
       if(processor.value_processor)
       {
-        processor.value_processor->process_null(processor.path, context);
+        if(processor.as_string)
+        {
+          processor.value_processor->process_string(
+            std::string_view("null", 4),
+            processor.path,
+            context);
+        }
+        else
+        {
+          processor.value_processor->process_null(processor.path, context);
+        }
       }
     }
     else
@@ -1134,7 +1280,7 @@ namespace AdServer::Commons
       return;
     }
 
-    cursor.expect('{');
+    cursor.skip_char();
     if(!cursor.eof() && cursor.peek() == '}')
     {
       cursor.get();
@@ -1161,10 +1307,12 @@ namespace AdServer::Commons
       }
 
       const char delimiter = cursor.get();
+
       if(delimiter == '}')
       {
         return;
       }
+
       if(delimiter != ',')
       {
         cursor.throw_error("expected ',' or '}'");
@@ -1182,7 +1330,7 @@ namespace AdServer::Commons
       return;
     }
 
-    cursor.expect('[');
+    cursor.skip_char();
     if(!cursor.eof() && cursor.peek() == ']')
     {
       cursor.get();
@@ -1201,10 +1349,12 @@ namespace AdServer::Commons
       }
 
       const char delimiter = cursor.get();
+
       if(delimiter == ']')
       {
         return;
       }
+
       if(delimiter != ',')
       {
         cursor.throw_error("expected ',' or ']'");
@@ -1241,6 +1391,10 @@ namespace AdServer::Commons
       {
         cursor.skip_string_rough();
       }
+    }
+    else if constexpr(!Strict)
+    {
+      cursor.skip_unquoted_value_rough();
     }
     else if(c == '-' || (c >= '0' && c <= '9'))
     {

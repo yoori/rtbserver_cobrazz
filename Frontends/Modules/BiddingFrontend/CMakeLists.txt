@@ -2,6 +2,7 @@ add_pb(google-biddingPB google-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/B
 
 add_library(BiddingFrontend SHARED
   RequestInfoFiller.cpp
+  FastRequestInfoFiller.cpp
   DebugSink.cpp
   GrpcClientMetricsProvider.cpp
   AdXmlRequestInfoFiller.cpp

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -29,6 +30,14 @@
 
 namespace
 {
+#ifndef REQUEST_INFO_FILLER_TEST_NAME
+#define REQUEST_INFO_FILLER_TEST_NAME "BiddingFrontendRequestInfoFillerPerfTest"
+#endif
+
+#ifndef REQUEST_INFO_FILLER_USE_FAST_JSON_PARSER
+#define REQUEST_INFO_FILLER_USE_FAST_JSON_PARSER 0
+#endif
+
   constexpr const char OPENRTB_REQUEST[] = R"JSON(
 {"id":"96bd100fa3cd49de846c0b6452be3ace","imp":[{"id":"1","banner":{"w":300,"h":250,"mimes":["text/html","text/javascript","image/png","image/jpeg","image/gif"]},"instl":0,"tagid":"2843845655","bidfloor":0.02,"bidfloorcur":"RUB","pmp":{"deals":[{"id":"40004_18-24","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"40005_25-34","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"40006_35-44","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42282_Образование","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42287_Развлечения_и_досуг","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42322_Семья_и_дети","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42335_Телеком","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42339_Еда_и_напитки","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42346_Финансы","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42360_Строительство_обустройство_и_ремонт","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42404_Отдых_и_путешествия","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42422_Одежда_обувь_и_аксессуары","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42441_Бизнес","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42449_Транспорт","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42485_Красота_и_здоровье","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42507_Работа","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42511_Электроника","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42533_Животные","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42546_Недвижимость","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42559_Бытовая_техника","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42583_Спорт","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42609_Подарки_и_цветы","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42286_Образование_Дополнительное_образование_и_курсы","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42293_Развлечения_и_досуг_Рестораны","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42294_Развлечения_и_досуг_Музеи","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42295_Развлечения_и_досуг_Кино","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42296_Развлечения_и_досуг_Кино_Билеты_в_кино","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42312_Развлечения_и_досуг_Театры","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42314_Развлечения_и_досуг_Музыка","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42318_Развлечения_и_досуг_Рыбалка","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42320_Развлечения_и_досуг_Книги","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42323_Семья_и_дети_Товары_для_детей","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42328_Семья_и_дети_Товары_для_детей_Детские_игрушки","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42340_Еда_и_напитки_Доставка_готовых_блюд","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42341_Еда_и_напитки_Доставка_воды","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42342_Еда_и_напитки_Кулинария","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42347_Финансы_Инвестиции","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42348_Финансы_Ипотека","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42349_Финансы_Финансовые_услуги_для_бизнеса","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42353_Финансы_Банковские_вклады","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42354_Финансы_Форекс","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42355_Финансы_Кредитные_карты","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42356_Финансы_Кредиты","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42357_Финансы_Рефинансирование_кредитов","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42358_Финансы_Интернет_банкинг","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42363_Строительство_обустройство_и_ремонт_Дача_и_сад","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42367_Строительство_обустройство_и_ремонт_Мебель","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42370_Строительство_обустройство_и_ремонт_Мебель_Мебель_для_кухни","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42374_Строительство_обустройство_и_ремонт_Мебель_Мебель_для_детской","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42382_Строительство_обустройство_и_ремонт_Ремонт","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42397_Строительство_обустройство_и_ремонт_Товары_для_дома","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42406_Отдых_и_путешествия_Походы_и_спортивный_туризм","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42413_Отдых_и_путешествия_Авиабилеты","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42420_Отдых_и_путешествия_Билеты_на_поезд","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42423_Одежда_обувь_и_аксессуары_Обувь","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42428_Одежда_обувь_и_аксессуары_Аксессуары","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42429_Одежда_обувь_и_аксессуары_Аксессуары_Сумки_и_чемоданы","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42435_Одежда_обувь_и_аксессуары_Одежда_Спортивная_одежда","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42436_Одежда_обувь_и_аксессуары_Одежда_Женская_одежда","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42437_Одежда_обувь_и_аксессуары_Одежда_Верхняя_одежда","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42443_Бизнес_Реклама","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42444_Бизнес_Юридическая_поддержка","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42445_Бизнес_Грузоперевозки_и_транспортные_услуги","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42446_Бизнес_Создание_и_продвижение_сайтов","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42448_Бизнес_Открытие_бизнеса","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42467_Транспорт_Авто_Автомобили_представительского_класса","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42486_Красота_и_здоровье_Декоративная_косметика","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42487_Красота_и_здоровье_Декоративная_косметика_Декоративная_косметика_для_лица","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42488_Красота_и_здоровье_Декоративная_косметика_Декоративная_косметика_для_глаз","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42489_Красота_и_здоровье_Декоративная_косметика_Декоративная_косметика_для_губ","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42490_Красота_и_здоровье_Декоративная_косметика_Декоративная_косметика_для_ногтей","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42491_Красота_и_здоровье_Уход_за_телом","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42492_Красота_и_здоровье_Парфюмерия","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42494_Красота_и_здоровье_Парфюмерия_Женская_парфюмерия","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42495_Красота_и_здоровье_Уход_за_волосами","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42496_Красота_и_здоровье_Уход_за_волосами_Шампуни_для_волос","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42499_Красота_и_здоровье_Уход_за_волосами_Уход_после_мытья_волос","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42500_Красота_и_здоровье_Уход_за_лицом","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42508_Работа_Поиск_работы","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42547_Недвижимость_Жилая_недвижимость","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42549_Недвижимость_Аренда_недвижимости","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42556_Недвижимость_Загородная_недвижимость","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42560_Бытовая_техника_Техника_для_красоты_и_здоровья","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42562_Бытовая_техника_Техника_для_красоты_и_здоровья_Мужские_электробритвы","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42564_Бытовая_техника_Техника_для_красоты_и_здоровья_Устройства_для_ухода_за_полостью_рта","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42565_Бытовая_техника_Крупная_техника_для_кухни","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42572_Бытовая_техника_Мелкая_техника_для_кухни","bidfloor":0.02,"bidfloorcur":"RUB"},{"id":"42579_Бытовая_техника_Техника_для_дома","bidfloor":0.02,"bidfloorcur":"RUB"}]}}]}
 )JSON";
@@ -52,7 +61,7 @@ namespace
   print_usage()
   {
     std::cerr
-      << "Usage: BiddingFrontendRequestInfoFillerPerfTest [OPTIONS]\n"
+      << "Usage: " << REQUEST_INFO_FILLER_TEST_NAME << " [OPTIONS]\n"
       << "Options:\n"
       << "  --count <N>         fill_by_openrtb_request calls count (default: 1000000)\n"
       << "  --threads <N>       worker threads count (default: 1)\n"
@@ -222,6 +231,238 @@ namespace
     out << std::fixed << std::setprecision(6) << value;
     return out.str();
   }
+
+  void
+  hash_combine(std::uint64_t& seed, std::uint64_t value)
+  {
+    seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+  }
+
+  void
+  hash_string(std::uint64_t& seed, std::string_view value)
+  {
+    hash_combine(seed, std::hash<std::string_view>()(value));
+  }
+
+  template<typename StringType>
+  void
+  hash_string_value(std::uint64_t& seed, const StringType& value)
+  {
+    hash_string(seed, std::string_view(value.data(), value.size()));
+  }
+
+  template<typename Sequence>
+  void
+  hash_string_sequence(std::uint64_t& seed, const Sequence& values)
+  {
+    hash_combine(seed, values.size());
+    for(const auto& value : values)
+    {
+      hash_string_value(seed, value);
+    }
+  }
+
+  template<typename Set>
+  void
+  hash_number_set(std::uint64_t& seed, const Set& values)
+  {
+    hash_combine(seed, values.size());
+    for(const auto value : values)
+    {
+      hash_combine(seed, value);
+    }
+  }
+
+  void
+  hash_ad_slot(
+    std::uint64_t& seed,
+    const AdServer::Bidding::JsonAdSlotProcessingContext& ad_slot)
+  {
+    hash_string_value(seed, ad_slot.id);
+    hash_string(seed, ad_slot.min_cpm_price.str());
+    hash_combine(seed, ad_slot.private_auction.present());
+    if(ad_slot.private_auction.present())
+    {
+      hash_combine(seed, *ad_slot.private_auction);
+    }
+    hash_string_value(seed, ad_slot.deal_id);
+    hash_string_value(seed, ad_slot.tagid);
+    hash_string_value(seed, ad_slot.min_cpm_price_currency_code);
+    hash_combine(seed, ad_slot.secure);
+    hash_combine(seed, ad_slot.video);
+    hash_string_value(seed, ad_slot.video_pos);
+    hash_string_sequence(seed, ad_slot.video_exclude_categories);
+    hash_string_sequence(seed, ad_slot.video_mimes);
+    hash_combine(seed, ad_slot.video_width.present());
+    hash_combine(seed, ad_slot.video_height.present());
+    hash_combine(seed, ad_slot.video_placement.present());
+    hash_string_value(seed, ad_slot.imp_ext_type);
+
+    hash_combine(seed, ad_slot.deals.size());
+    for(const auto& deal : ad_slot.deals)
+    {
+      hash_string_value(seed, deal.id);
+      hash_string(seed, deal.cpm_price.str());
+      hash_string_value(seed, deal.currency_code);
+    }
+
+    hash_combine(seed, ad_slot.metrics.size());
+    for(const auto& metric : ad_slot.metrics)
+    {
+      hash_string_value(seed, metric.type);
+      hash_string_value(seed, metric.value);
+    }
+
+    hash_combine(seed, ad_slot.banners.size());
+    for(const auto& banner : ad_slot.banners)
+    {
+      hash_string_value(seed, banner.pos);
+      hash_string_value(seed, banner.matching_ad);
+      hash_string_sequence(seed, banner.exclude_categories);
+      hash_combine(seed, banner.ext_hpos);
+      hash_combine(seed, banner.formats.size());
+      for(const auto& format : banner.formats)
+      {
+        hash_string_value(seed, format.width);
+        hash_string_value(seed, format.height);
+        hash_string_value(seed, format.ext_type);
+        hash_string_value(seed, format.ext_format);
+      }
+    }
+
+    hash_combine(seed, ad_slot.native.in() != nullptr);
+    if(ad_slot.native.in())
+    {
+      const auto& native = *ad_slot.native;
+      hash_string_value(seed, native.version);
+      hash_combine(seed, native.placement.present());
+      if(native.placement.present())
+      {
+        hash_combine(seed, *native.placement);
+      }
+
+      hash_combine(seed, native.data_assets.size());
+      for(const auto& asset : native.data_assets)
+      {
+        hash_combine(seed, asset.id);
+        hash_combine(seed, asset.required);
+        hash_combine(seed, asset.data_type);
+        hash_combine(seed, asset.len);
+      }
+
+      hash_combine(seed, native.image_assets.size());
+      for(const auto& asset : native.image_assets)
+      {
+        hash_combine(seed, asset.id);
+        hash_combine(seed, asset.required);
+        hash_combine(seed, asset.image_type);
+        hash_combine(seed, asset.height);
+        hash_combine(seed, asset.width);
+        hash_string_sequence(seed, asset.mimes);
+      }
+
+      hash_combine(seed, native.video_assets.size());
+      for(const auto& asset : native.video_assets)
+      {
+        hash_combine(seed, asset.id);
+        hash_combine(seed, asset.required);
+        hash_string_sequence(seed, asset.mimes);
+      }
+    }
+  }
+
+  std::uint64_t
+  parsed_result_checksum(
+    const AdServer::Bidding::RequestInfo& request_info,
+    const AdServer::Bidding::JsonProcessingContext& context,
+    const std::string& keywords)
+  {
+    std::uint64_t seed = 0;
+    hash_string(seed, keywords);
+    hash_string(seed, request_info.bid_request_id);
+    hash_string(seed, request_info.bid_site_id);
+    hash_string(seed, request_info.bid_publisher_id);
+
+    hash_string_value(seed, context.request_id);
+    hash_string_sequence(seed, context.currencies);
+    hash_string_sequence(seed, context.exclude_categories);
+    hash_string_value(seed, context.required_category);
+    hash_string_value(seed, context.external_user_id);
+    hash_string_value(seed, context.user_id);
+    hash_string_value(seed, context.ip);
+    hash_string_value(seed, context.ipv6);
+    hash_string_value(seed, context.user_agent);
+    hash_string_value(seed, context.ifa);
+    hash_string_value(seed, context.language);
+    hash_string_value(seed, context.carrier);
+    hash_combine(seed, context.ssp_devicetype);
+    hash_combine(seed, context.site);
+    hash_string_value(seed, context.site_id);
+    hash_string_value(seed, context.site_name);
+    hash_string_value(seed, context.site_keywords);
+    hash_string_value(seed, context.site_search);
+    hash_string_sequence(seed, context.site_pagecat);
+    hash_string_sequence(seed, context.site_sectioncat);
+    hash_string_sequence(seed, context.site_cat);
+    hash_combine(seed, context.app);
+    hash_string_value(seed, context.app_id);
+    hash_string_value(seed, context.app_name);
+    hash_string_value(seed, context.app_bundle);
+    hash_string_value(seed, context.app_keywords);
+    hash_string_sequence(seed, context.app_pagecat);
+    hash_string_sequence(seed, context.app_sectioncat);
+    hash_string_sequence(seed, context.app_cat);
+    hash_combine(seed, context.secure);
+    hash_combine(seed, context.test);
+    hash_combine(seed, context.user);
+    hash_string_value(seed, context.user_keywords);
+    hash_combine(seed, context.user_yob);
+    hash_string_value(seed, context.user_gender);
+    hash_string_value(seed, context.content_keywords);
+    hash_string_value(seed, context.content_title);
+    hash_string_value(seed, context.content_series);
+    hash_string_value(seed, context.content_season);
+    hash_string_sequence(seed, context.content_cat);
+    hash_string_value(seed, context.publisher_name);
+    hash_string_value(seed, context.publisher_id);
+    hash_string_sequence(seed, context.publisher_cat);
+    hash_string_sequence(seed, context.content_producer_name);
+    hash_string_value(seed, context.puid1);
+    hash_string_value(seed, context.puid2);
+    hash_combine(seed, context.regs_coppa);
+    hash_string_value(seed, context.ssp_country);
+    hash_string_value(seed, context.ssp_region);
+    hash_string_value(seed, context.ssp_city);
+    hash_number_set(seed, context.member_ids);
+
+    hash_combine(seed, context.segments.size());
+    for(const auto& segment : context.segments)
+    {
+      hash_string_value(seed, segment.id);
+      hash_string_value(seed, segment.name);
+      hash_string_value(seed, segment.value);
+    }
+
+    hash_combine(seed, context.user_eids.size());
+    for(const auto& eid : context.user_eids)
+    {
+      hash_string_value(seed, eid.source);
+      hash_combine(seed, eid.uids.size());
+      for(const auto& uid : eid.uids)
+      {
+        hash_string_value(seed, uid.id);
+        hash_string_value(seed, uid.stable_id);
+      }
+    }
+
+    hash_combine(seed, context.ad_slots.size());
+    for(const auto& ad_slot : context.ad_slots)
+    {
+      hash_ad_slot(seed, ad_slot);
+    }
+
+    return seed;
+  }
 }
 
 extern "C"
@@ -251,10 +492,7 @@ extern "C"
         context,
         request_body.c_str());
 
-      checksum += request_params.ad_slots.size();
-      checksum += keywords.size();
-      checksum += request_info.bid_request_id.size();
-      checksum += request_params.common_info.peer_ip.size();
+      checksum += parsed_result_checksum(request_info, context, keywords);
     }
 
     return checksum;
@@ -292,7 +530,8 @@ main(int argc, char** argv)
       "",
       sources,
       true,
-      account_traits);
+      account_traits,
+      REQUEST_INFO_FILLER_USE_FAST_JSON_PARSER != 0);
 
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();
@@ -350,6 +589,8 @@ main(int argc, char** argv)
     std::cout
       << "count=" << options.count << '\n'
       << "threads=" << options.threads << '\n'
+      << "parser=" << (REQUEST_INFO_FILLER_USE_FAST_JSON_PARSER ?
+        "fast" : "gason") << '\n'
       << "elapsed_sec=" << format_float(elapsed) << '\n'
       << "rate_per_sec=" << format_float(rate) << '\n'
       << "user_cpu_sec=" << format_float(user_cpu) << '\n'

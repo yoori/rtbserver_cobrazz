@@ -237,6 +237,26 @@ TEST(default_string_processor_copies_view)
   ASSERT_EQUALS(context.moved_strings, 1UL);
 }
 
+TEST(as_string_passes_scalar_literals_without_conversion)
+{
+  AdServer::Commons::FastJsonParser parser;
+  parser.add_processor("price", std::make_shared<StringProcessor>(), true);
+  parser.add_processor("enabled", std::make_shared<StringProcessor>(), true);
+  parser.add_processor("optional", std::make_shared<StringProcessor>(), true);
+
+  Context context;
+  parser.parse(R"({"price":1.2300,"enabled":false,"optional":null})", &context);
+
+  ASSERT_EQUALS(context.strings.size(), 3UL);
+  ASSERT_EQUALS(context.strings[0], std::string("1.2300"));
+  ASSERT_EQUALS(context.strings[1], std::string("false"));
+  ASSERT_EQUALS(context.strings[2], std::string("null"));
+  ASSERT_TRUE(context.integers.empty());
+  ASSERT_TRUE(context.floats.empty());
+  ASSERT_TRUE(context.bools.empty());
+  ASSERT_TRUE(context.nulls.empty());
+}
+
 TEST(skips_unregistered_subtrees)
 {
   AdServer::Commons::FastJsonParser parser;

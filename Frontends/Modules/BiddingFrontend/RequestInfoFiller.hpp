@@ -16,6 +16,7 @@
 #include <HTTP/Http.hpp>
 
 #include <Commons/Containers.hpp>
+#include <Commons/FastJsonParser.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
@@ -305,7 +306,8 @@ namespace AdServer::Bidding
       const char* ip_salt,
       const SourceMap& sources,
       bool enable_profile_referer,
-      const AccountTraitsById& account_traits)
+      const AccountTraitsById& account_traits,
+      bool use_fast_json_parser = true)
       /*throw(eh::Exception)*/;
 
     AdXmlRequestInfoFiller*
@@ -505,6 +507,21 @@ namespace AdServer::Bidding
     void
     init_param_processors_() noexcept;
 
+    void
+    init_fast_json_processors_();
+
+    void
+    parse_openrtb_request_(
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
+      JsonProcessingContext& context,
+      const char* bid_request) const;
+
+    void
+    parse_openrtb_request_gason_(
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
+      JsonProcessingContext& context,
+      const char* bid_request) const;
+
     static std::string
     make_ssp_uid_by_device_(const JsonProcessingContext& ctx)
       /*throw(eh::Exception)*/;
@@ -535,6 +552,8 @@ namespace AdServer::Bidding
 
     ParamProcessorMap param_processors_;
     JsonRequestParamProcessor_var json_root_processor_;
+    std::unique_ptr<AdServer::Commons::FastJsonParser> fast_json_parser_;
+    const bool use_fast_json_parser_;
     const SourceMap sources_;
     const bool enable_profile_referer_;
     const AccountTraitsById account_traits_;
