@@ -383,6 +383,7 @@ namespace
     explicit MockChannelClient(const std::string& record_dir)
     {
       load_binary_proto(match_response_, record_dir, "channel_match.pb");
+      match_response_.set_full_loaded(true);
       load_binary_proto(ccg_traits_response_, record_dir, "channel_get_ccg_traits.pb");
     }
 

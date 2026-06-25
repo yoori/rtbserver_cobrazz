@@ -1416,12 +1416,6 @@ namespace AdServer::Bidding
                 trigger_match_stage->set_channel_server_error(
                   "ChannelServer is not fully loaded");
               }
-              logger()->sstream(
-                Logging::Logger::EMERGENCY,
-                Aspect::BIDDING_FRONTEND,
-                "ADS-IMPL-117") <<
-                "Bidding::BiddingFrontendCore::co_process_bid_request_(): "
-                "ChannelServer grpc match returned not fully loaded result";
             }
 
             if(!trigger_match.failed)
