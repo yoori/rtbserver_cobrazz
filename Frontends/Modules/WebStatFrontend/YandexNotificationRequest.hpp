@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <Commons/JsonParamProcessor.hpp>
 
 namespace AdServer::WebStat
 {
@@ -20,10 +19,4 @@ namespace AdServer::WebStat
   {
     std::vector<YandexNotificationProcessingElementContext> elements;
   };
-
-  typedef AdServer::Commons::JsonParamProcessor<YandexNotificationProcessingContext>
-    JsonYNParamProcessor;
-
-  typedef ReferenceCounting::SmartPtr<JsonYNParamProcessor>
-    JsonYNParamProcessor_var;
 }

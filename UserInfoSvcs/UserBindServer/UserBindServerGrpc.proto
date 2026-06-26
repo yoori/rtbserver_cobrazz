@@ -1,4 +1,10 @@
-syntax = "proto3";
+edition = "2023";
+
+option features.field_presence = IMPLICIT;
+option features.enum_type = OPEN;
+option features.repeated_field_encoding = PACKED;
+option features.utf8_validation = NONE;
+option features.json_format = ALLOW;
 
 package adserver.user_info_svcs.user_bind;
 

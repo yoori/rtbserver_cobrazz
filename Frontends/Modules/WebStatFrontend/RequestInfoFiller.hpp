@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <map>
 #include <vector>
@@ -14,6 +15,7 @@
 #include <Language/SegmentorCommons/SegmentorInterface.hpp>
 
 #include <Commons/Containers.hpp>
+#include <Commons/FastJsonParser.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -121,7 +123,8 @@ namespace AdServer::WebStat
     ParamProcessorMap param_processors_;
     ParamProcessorMap cookie_processors_;
 
-    JsonYNParamProcessor_var yn_json_root_processor_;
+    std::unique_ptr<AdServer::Commons::FastJsonParser>
+      yn_json_parser_;
 
     std::unordered_map<int, std::string> yn_reasons_;
   };

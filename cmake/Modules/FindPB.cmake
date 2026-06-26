@@ -15,7 +15,11 @@ function(add_pb _target _pbfile target_dir)
   add_custom_target(${PROTOBUF_TARGET} DEPENDS "${OUTPUTCPP}")
   add_custom_command(
     OUTPUT ${OUTPUTCPP} ${OUTPUTHPP}
-    COMMAND protoc --proto_path=${CMAKE_CURRENT_LIST_DIR} --cpp_out=${MIDL_OUTPUT_PATH} ${SRC}
+    COMMAND protoc
+      --experimental_editions
+      --proto_path=${CMAKE_CURRENT_LIST_DIR}
+      --cpp_out=${MIDL_OUTPUT_PATH}
+      ${SRC}
     DEPENDS ${PROTOBUF_TARGET}
   )
 

@@ -4,6 +4,7 @@ import os
 import sys
 
 from google.protobuf.compiler import plugin_pb2
+from google.protobuf import descriptor_pb2
 
 
 def cpp_type(type_name):
@@ -427,7 +428,10 @@ def main():
   files_to_generate = set(request.file_to_generate)
   response = plugin_pb2.CodeGeneratorResponse()
   response.supported_features = (
-    plugin_pb2.CodeGeneratorResponse.FEATURE_PROTO3_OPTIONAL)
+    plugin_pb2.CodeGeneratorResponse.FEATURE_PROTO3_OPTIONAL |
+    plugin_pb2.CodeGeneratorResponse.FEATURE_SUPPORTS_EDITIONS)
+  response.minimum_edition = descriptor_pb2.EDITION_PROTO3
+  response.maximum_edition = descriptor_pb2.EDITION_2023
 
   for file_desc in request.proto_file:
     if file_desc.name not in files_to_generate:

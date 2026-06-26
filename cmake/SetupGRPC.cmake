@@ -13,6 +13,7 @@ function(add_grpc_sources target proto_file output_dir)
   add_custom_command(
     OUTPUT ${pb_cc} ${pb_h} ${grpc_cc} ${grpc_h}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    --experimental_editions
     --proto_path=${proto_dir}
     ${ARGN}
     --cpp_out=${output_dir}
@@ -57,6 +58,7 @@ function(add_adserver_grpc_client_sources target proto_file output_dir namespace
   add_custom_command(
     OUTPUT ${client_cc} ${client_h}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    --experimental_editions
     --proto_path=${proto_dir}
     ${ARGN}
     --plugin=protoc-gen-adserver-grpc-client=${CMAKE_SOURCE_DIR}/cmake/protoc-gen-adserver-grpc-client.py

@@ -225,82 +225,145 @@ namespace AdServer::WebStat
     };
   }
 
-  // yandex notification parsing
-  typedef AdServer::Commons::JsonParamProcessor<YandexNotificationProcessingElementContext>
-    JsonYNElementProcessor;
-  typedef ReferenceCounting::SmartPtr<JsonYNElementProcessor>
-    JsonYNElementProcessor_var;
-
-  typedef AdServer::Commons::JsonCompositeParamProcessor<YandexNotificationProcessingElementContext>
-    JsonCompositeYNElementProcessor;
-  typedef ReferenceCounting::SmartPtr<JsonCompositeYNElementProcessor>
-    JsonCompositeYNElementProcessor_var;
-
-  class JsonYandexNotificationProcessor:
-    public AdServer::Commons::JsonCompositeParamProcessor<YandexNotificationProcessingContext>
+  namespace
   {
-  public:
-    JsonYandexNotificationProcessor()
-    {
-      element_processor_ = new JsonCompositeYNElementProcessor();
+    using FastJsonParser = AdServer::Commons::FastJsonParser;
+    using ValueProcessor = FastJsonParser::ValueProcessor;
 
-      element_processor_->add_processor(
-        YandexNotificationRequest::CR_ID,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<YandexNotificationProcessingElementContext>(
-            &YandexNotificationProcessingElementContext::cr_id)));
-      element_processor_->add_processor(
-        YandexNotificationRequest::REQUEST_ID,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<YandexNotificationProcessingElementContext>(
-            &YandexNotificationProcessingElementContext::request_id)));
-      element_processor_->add_processor(
-        YandexNotificationRequest::IMPRESSION_ID,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<YandexNotificationProcessingElementContext>(
-            &YandexNotificationProcessingElementContext::imp_id)));
-      element_processor_->add_processor(
-        YandexNotificationRequest::STATUS,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonNumberParamProcessor<YandexNotificationProcessingElementContext, int>(
-            &YandexNotificationProcessingElementContext::status)));
-      element_processor_->add_processor(
-        YandexNotificationRequest::REASONS,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonNumberArrayParamProcessor<
-            YandexNotificationProcessingElementContext, std::vector<int> >(
-            &YandexNotificationProcessingElementContext::reasons)));
-      element_processor_->add_processor(
-        YandexNotificationRequest::IMPRESSION_ID,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<YandexNotificationProcessingElementContext>(
-            &YandexNotificationProcessingElementContext::payload)));
-      element_processor_->add_processor(
-        YandexNotificationRequest::PAYLOAD,
-        JsonYNElementProcessor_var(
-          new AdServer::Commons::JsonStringParamProcessor<YandexNotificationProcessingElementContext>(
-            &YandexNotificationProcessingElementContext::payload)));
+    YandexNotificationProcessingContext&
+    yandex_context_(void* context) noexcept
+    {
+      return *static_cast<YandexNotificationProcessingContext*>(context);
     }
 
-    virtual void
-    process(
-      YandexNotificationProcessingContext& context,
-      const JsonValue& value) const
+    YandexNotificationProcessingElementContext*
+    current_yandex_element_(void* context) noexcept
     {
-      if(value.getTag() == JSON_TAG_ARRAY)
+      auto& elements = yandex_context_(context).elements;
+      return elements.empty() ? nullptr : &elements.back();
+    }
+
+    void
+    assign_string_(std::string& target, std::string_view value)
+    {
+      target.assign(value.data(), value.size());
+    }
+
+    class YandexNotificationsProcessor final:
+      public ValueProcessor
+    {
+    public:
+      void
+      array_started(std::string_view, void*) const override
+      {}
+
+      void
+      object_started(std::string_view, void* context) const override
       {
-        for(JsonIterator it = begin(value); it != end(value); ++it)
+        yandex_context_(context).elements.emplace_back();
+      }
+    };
+
+    class YandexNotificationStringProcessor final:
+      public ValueProcessor
+    {
+    public:
+      explicit
+      YandexNotificationStringProcessor(
+        std::string YandexNotificationProcessingElementContext::* field)
+        : field_(field)
+      {}
+
+      void
+      process_string(
+        std::string_view value,
+        std::string_view,
+        void* context) const override
+      {
+        if(auto* element = current_yandex_element_(context))
         {
-          YandexNotificationProcessingElementContext element;
-          element_processor_->process(element, it->value);
-          context.elements.emplace_back(std::move(element));
+          assign_string_(element->*field_, value);
         }
       }
-    }
 
-  protected:
-    JsonCompositeYNElementProcessor_var element_processor_;
-  };
+      void
+      process_string(
+        std::string&& value,
+        std::string_view,
+        void* context) const override
+      {
+        if(auto* element = current_yandex_element_(context))
+        {
+          element->*field_ = std::move(value);
+        }
+      }
+
+    private:
+      std::string YandexNotificationProcessingElementContext::* field_;
+    };
+
+    class YandexNotificationStatusProcessor final:
+      public ValueProcessor
+    {
+    public:
+      void
+      process_integer(
+        int64_t value,
+        std::string_view,
+        void* context) const override
+      {
+        if(auto* element = current_yandex_element_(context))
+        {
+          element->status = static_cast<int>(value);
+        }
+      }
+
+      void
+      process_float(
+        double value,
+        std::string_view,
+        void* context) const override
+      {
+        if(auto* element = current_yandex_element_(context))
+        {
+          element->status = static_cast<int>(value);
+        }
+      }
+    };
+
+    class YandexNotificationReasonsProcessor final:
+      public ValueProcessor
+    {
+    public:
+      void
+      array_started(std::string_view, void*) const override
+      {}
+
+      void
+      process_integer(
+        int64_t value,
+        std::string_view,
+        void* context) const override
+      {
+        if(auto* element = current_yandex_element_(context))
+        {
+          element->reasons.emplace_back(static_cast<int>(value));
+        }
+      }
+
+      void
+      process_float(
+        double value,
+        std::string_view,
+        void* context) const override
+      {
+        if(auto* element = current_yandex_element_(context))
+        {
+          element->reasons.emplace_back(static_cast<int>(value));
+        }
+      }
+    };
+  }
 
   /** RequestInfoFiller */
   RequestInfoFiller::RequestInfoFiller(
@@ -388,15 +451,35 @@ namespace AdServer::WebStat
 
     // init yandex notification filler
     {
-      ReferenceCounting::SmartPtr<AdServer::Commons::JsonCompositeParamProcessor<YandexNotificationProcessingContext> >
-        root_processor =
-          new AdServer::Commons::JsonCompositeParamProcessor<YandexNotificationProcessingContext>();
-
-      root_processor->add_processor(
-        YandexNotificationRequest::NOTIFICATIONS,
-        JsonYNParamProcessor_var(new JsonYandexNotificationProcessor()));
-
-      yn_json_root_processor_ = root_processor;
+      auto parser = std::make_unique<FastJsonParser>();
+      const std::string base_path =
+        std::string(YandexNotificationRequest::NOTIFICATIONS.str());
+      parser->add_processor(
+        base_path,
+        std::make_shared<YandexNotificationsProcessor>());
+      parser->add_processor(
+        base_path + "." + YandexNotificationRequest::CR_ID.str(),
+        std::make_shared<YandexNotificationStringProcessor>(
+          &YandexNotificationProcessingElementContext::cr_id));
+      parser->add_processor(
+        base_path + "." + YandexNotificationRequest::REQUEST_ID.str(),
+        std::make_shared<YandexNotificationStringProcessor>(
+          &YandexNotificationProcessingElementContext::request_id));
+      parser->add_processor(
+        base_path + "." + YandexNotificationRequest::IMPRESSION_ID.str(),
+        std::make_shared<YandexNotificationStringProcessor>(
+          &YandexNotificationProcessingElementContext::imp_id));
+      parser->add_processor(
+        base_path + "." + YandexNotificationRequest::STATUS.str(),
+        std::make_shared<YandexNotificationStatusProcessor>());
+      parser->add_processor(
+        base_path + "." + YandexNotificationRequest::REASONS.str(),
+        std::make_shared<YandexNotificationReasonsProcessor>());
+      parser->add_processor(
+        base_path + "." + YandexNotificationRequest::PAYLOAD.str(),
+        std::make_shared<YandexNotificationStringProcessor>(
+          &YandexNotificationProcessingElementContext::payload));
+      yn_json_parser_ = std::move(parser);
     }
   }
 
@@ -444,52 +527,16 @@ namespace AdServer::WebStat
   {
     static const char* FUN = "RequestInfoFiller::fill_by_yandex_notification()";
 
-    int bid_request_len = ::strlen(bid_request);
-    Generics::ArrayAutoPtr<char> bid_request_holder(bid_request_len + 1);
-    JsonValue root_value;
-    JsonAllocator json_allocator;
-    char* parse_end = bid_request_holder.get();
-    ::strcpy(bid_request_holder.get(), bid_request);
-    JsonParseStatus status = json_parse(
-      bid_request_holder.get(), &parse_end, &root_value, json_allocator);
-
-    assert(parse_end < bid_request_holder.get() + bid_request_len + 1);
-
-    if(status != JSON_PARSE_OK)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": parsing error '" <<
-        json_parse_error(status) << "' at pos : ";
-      if(parse_end)
-      {
-        ostr << std::string(parse_end, 20);
-      }
-      else
-      {
-        ostr << "null";
-      }
-      throw InvalidParamException(ostr);
-    }
-
-    JsonTag root_tag = root_value.getTag();
-
-    if(root_tag != JSON_TAG_OBJECT)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": incorrect root tag type";
-      throw InvalidParamException(ostr);
-    }
-
     YandexNotificationProcessingContext context;
 
     try
     {
-      yn_json_root_processor_->process(context, root_value);
+      yn_json_parser_->parse(bid_request, &context);
     }
     catch (const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": processing error: " << e.what();
+      ostr << FUN << ": parsing error: " << e.what();
       throw InvalidParamException(ostr);
     }
 

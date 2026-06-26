@@ -6,7 +6,6 @@ add_library(WebStatFrontend SHARED
 target_link_libraries(WebStatFrontend
   Stream
   Commons
-  Gason
   RequestMatchers
   CommonModule
   CampaignManagerGrpcDistributedClient

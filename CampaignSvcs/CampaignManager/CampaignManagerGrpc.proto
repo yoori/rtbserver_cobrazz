@@ -1,4 +1,10 @@
-syntax = "proto3";
+edition = "2023";
+
+option features.field_presence = IMPLICIT;
+option features.enum_type = OPEN;
+option features.repeated_field_encoding = PACKED;
+option features.utf8_validation = NONE;
+option features.json_format = ALLOW;
 
 package adserver.campaign_svcs.campaign_manager;
 
@@ -910,8 +916,8 @@ message ConfigDeliveryLimits {
   bytes date_end = 2;
   DecimalInfo budget = 3;
   DecimalInfo daily_budget = 4;
-  optional uint64 imps = 6;
-  optional uint64 clicks = 8;
+  uint64 imps = 6 [features.field_presence = EXPLICIT];
+  uint64 clicks = 8 [features.field_presence = EXPLICIT];
   uint32 delivery_pacing = 9;
 }
 
