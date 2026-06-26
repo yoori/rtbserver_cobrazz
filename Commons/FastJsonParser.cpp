@@ -405,10 +405,20 @@ namespace AdServer::Commons
       explicit
       JsonTreeProcessor(std::string path_val);
 
+      static std::uint64_t
+      short_key_(std::string_view key) noexcept;
+
+      JsonTreeProcessor*
+      find_sub_processor(std::string_view key, bool escaped);
+
+      const JsonTreeProcessor*
+      find_sub_processor(std::string_view key, bool escaped) const;
+
       std::list<std::string> key_holder;
       std::unordered_map<
         std::string_view,
         std::unique_ptr<JsonTreeProcessor> > sub_processors;
+      std::unordered_map<std::uint64_t, JsonTreeProcessor*> short_processors;
       std::shared_ptr<ValueProcessor> value_processor;
       std::string path;
       bool as_string = false;
@@ -754,6 +764,100 @@ namespace AdServer::Commons
     : path(std::move(path_val))
   {}
 
+  inline std::uint64_t
+  FastJsonParser::Impl::JsonTreeProcessor::short_key_(
+    std::string_view key) noexcept
+  {
+    const auto* data = reinterpret_cast<const unsigned char*>(key.data());
+    switch(key.size())
+    {
+    case 0:
+      return 0;
+    case 1:
+      return data[0];
+    case 2:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8);
+    case 3:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8) |
+        (std::uint64_t(data[2]) << 16);
+    case 4:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8) |
+        (std::uint64_t(data[2]) << 16) |
+        (std::uint64_t(data[3]) << 24);
+    case 5:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8) |
+        (std::uint64_t(data[2]) << 16) |
+        (std::uint64_t(data[3]) << 24) |
+        (std::uint64_t(data[4]) << 32);
+    case 6:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8) |
+        (std::uint64_t(data[2]) << 16) |
+        (std::uint64_t(data[3]) << 24) |
+        (std::uint64_t(data[4]) << 32) |
+        (std::uint64_t(data[5]) << 40);
+    case 7:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8) |
+        (std::uint64_t(data[2]) << 16) |
+        (std::uint64_t(data[3]) << 24) |
+        (std::uint64_t(data[4]) << 32) |
+        (std::uint64_t(data[5]) << 40) |
+        (std::uint64_t(data[6]) << 48);
+    default:
+      return data[0] |
+        (std::uint64_t(data[1]) << 8) |
+        (std::uint64_t(data[2]) << 16) |
+        (std::uint64_t(data[3]) << 24) |
+        (std::uint64_t(data[4]) << 32) |
+        (std::uint64_t(data[5]) << 40) |
+        (std::uint64_t(data[6]) << 48) |
+        (std::uint64_t(data[7]) << 56);
+    }
+  }
+
+  FastJsonParser::Impl::JsonTreeProcessor*
+  FastJsonParser::Impl::JsonTreeProcessor::find_sub_processor(
+    std::string_view key,
+    bool escaped)
+  {
+    if(!escaped && key.size() <= sizeof(std::uint64_t))
+    {
+      const auto short_it = short_processors.find(short_key_(key));
+      if(short_it != short_processors.end())
+      {
+        return short_it->second;
+      }
+      return nullptr;
+    }
+
+    const auto it = sub_processors.find(key);
+    return it != sub_processors.end() ? it->second.get() : nullptr;
+  }
+
+  const FastJsonParser::Impl::JsonTreeProcessor*
+  FastJsonParser::Impl::JsonTreeProcessor::find_sub_processor(
+    std::string_view key,
+    bool escaped) const
+  {
+    if(!escaped && key.size() <= sizeof(std::uint64_t))
+    {
+      const auto short_it = short_processors.find(short_key_(key));
+      if(short_it != short_processors.end())
+      {
+        return short_it->second;
+      }
+      return nullptr;
+    }
+
+    const auto it = sub_processors.find(key);
+    return it != sub_processors.end() ? it->second.get() : nullptr;
+  }
+
   FastJsonParser::Impl::Impl(bool strict_val, bool use_simd_val)
   {
     if(strict_val)
@@ -797,8 +901,9 @@ namespace AdServer::Commons
         throw ParseError("empty path element in '" + std::string(path) + "'");
       }
 
-      auto it = current->sub_processors.find(key);
-      if(it == current->sub_processors.end())
+      JsonTreeProcessor* child_processor =
+        current->find_sub_processor(key, false);
+      if(child_processor == nullptr)
       {
         current->key_holder.emplace_back(key);
         const std::string_view stored_key(current->key_holder.back());
@@ -808,12 +913,17 @@ namespace AdServer::Commons
 
         auto child = std::make_unique<JsonTreeProcessor>(
           std::move(child_path));
-        it = current->sub_processors.emplace(
-          stored_key,
-          std::move(child)).first;
+        child_processor = child.get();
+        current->sub_processors.emplace(stored_key, std::move(child));
+        if(stored_key.size() <= sizeof(std::uint64_t))
+        {
+          current->short_processors.emplace(
+            JsonTreeProcessor::short_key_(stored_key),
+            child_processor);
+        }
       }
 
-      current = it->second.get();
+      current = child_processor;
 
       if(next_pos == std::string_view::npos)
       {
@@ -1780,13 +1890,14 @@ namespace AdServer::Commons
         cursor.skip_char();
         cursor.skip_spaces<UseSimd>();
 
-        const auto child_it = frame.processor->sub_processors.find(key.value);
+        const JsonTreeProcessor* const child_processor =
+          frame.processor->find_sub_processor(key.value, key.escaped);
         frame.state = ParseFrameState::DelimiterOrEnd;
-        if(child_it != frame.processor->sub_processors.end())
+        if(child_processor != nullptr)
         {
           parse_value_iterative_<Strict, UseSimd>(
             cursor,
-            *child_it->second,
+            *child_processor,
             context,
             frames);
         }
