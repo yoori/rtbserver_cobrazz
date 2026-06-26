@@ -698,10 +698,17 @@ namespace AdServer
           add_client_source("ad_user_bind_client", user_bind_client);
           add_client_source("ad_channel_client", channel_client);
 
+          ReferenceCounting::SmartPtr<Generics::MetricsProvider>
+            grpc_client_metrics_provider(
+              new GrpcClientMetricsProvider(std::move(client_sources)));
           composite_metrics_provider_->add_provider(
-            new GrpcClientMetricsProvider(std::move(client_sources)));
+            grpc_client_metrics_provider.in());
+
+          ReferenceCounting::SmartPtr<Generics::MetricsProvider>
+            ad_frontend_metrics_provider(
+              new AdFrontendMetricsProvider(stats_.in()));
           composite_metrics_provider_->add_provider(
-            new AdFrontendMetricsProvider(stats_.in()));
+            ad_frontend_metrics_provider.in());
         }
 
         std::string user_agent_filter_path;

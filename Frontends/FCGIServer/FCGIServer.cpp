@@ -322,10 +322,15 @@ namespace AdServer::Frontends
       stats_(new StatHolder()), // to remove ?
       composite_metrics_provider_(new Generics::CompositeMetricsProvider())
   {
+    ReferenceCounting::SmartPtr<Generics::MetricsProvider>
+      fcgi_acceptor_metrics_provider(
+        new FCGIAcceptorMetricsProvider(fcgi_stats_.in()));
     composite_metrics_provider_->add_provider(
-      new FCGIAcceptorMetricsProvider(fcgi_stats_.in()));
-    composite_metrics_provider_->add_provider(
-      new StatHolderMetricsProvider(stats_.in()));
+      fcgi_acceptor_metrics_provider.in());
+
+    ReferenceCounting::SmartPtr<Generics::MetricsProvider>
+      stat_holder_metrics_provider(new StatHolderMetricsProvider(stats_.in()));
+    composite_metrics_provider_->add_provider(stat_holder_metrics_provider.in());
   }
 
   void

@@ -339,8 +339,11 @@ namespace AdServer::Bidding
           add_client_source("channel_client", channel_client_);
           add_client_source("campaign_client", campaign_manager_);
 
+          ReferenceCounting::SmartPtr<Generics::MetricsProvider>
+            grpc_client_metrics_provider(
+              new GrpcClientMetricsProvider(std::move(client_sources)));
           composite_metrics_provider_->add_provider(
-            new GrpcClientMetricsProvider(std::move(client_sources)));
+            grpc_client_metrics_provider.in());
         }
 
         for(BiddingFeConfiguration::Source_sequence::const_iterator
