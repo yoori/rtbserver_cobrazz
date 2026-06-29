@@ -53,7 +53,7 @@ namespace Aspect
 
 namespace Response::Header
 {
-    const String::SubString CONTENT_TYPE("Content-Type");
+    const std::string CONTENT_TYPE("Content-Type");
   }
 
 namespace AdServer::Bidding
@@ -131,7 +131,7 @@ namespace AdServer::Bidding
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
-      sources_(std::make_shared<SourceMap>()),
+      sources_(std::make_shared<RequestInfoFiller::SourceMap>()),
       account_traits_(
         std::make_shared<RequestInfoFiller::AccountTraitsById>()),
       campaign_manager_(),

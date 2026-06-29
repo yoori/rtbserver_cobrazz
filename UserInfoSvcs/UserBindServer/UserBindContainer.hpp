@@ -54,7 +54,7 @@ namespace AdServer::UserInfoSvcs
       /*throw(eh::Exception)*/;
 
     // UserBindProcessor impl
-    AdServer::Commons::Task<UserInfo>
+    AdServer::Commons::SyncCoro<UserInfo>
     co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
@@ -62,7 +62,7 @@ namespace AdServer::UserInfoSvcs
       bool resave_if_exists,
       bool ignore_bad_event) override;
 
-    AdServer::Commons::Task<UserInfo>
+    AdServer::Commons::SyncCoro<UserInfo>
     co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,

@@ -26,7 +26,7 @@ namespace CampaignSvcs
     TemplateArgsHelper(
       const TokenProcessorMap& token_processors,
       const TokenSet& insert_restrictions,
-      const OptionTokenValueMap& token_values,
+      const TokenOptionValueProvider& token_values,
       const CreativeInstantiateRule& rule,
       const CreativeInstantiateArgs& creative_args,
       unsigned long max_depth)
@@ -51,7 +51,8 @@ namespace CampaignSvcs
         throw BaseTokenProcessor::InvalidValue(ostr);
       }
 
-      std::string key_str(key.str());
+      const std::string_view key_view(key.data(), key.size());
+      std::string key_str(key_view);
       if(insert_restrictions_.find(key_str) == insert_restrictions_.end())
       {
         Stream::Error ostr;
@@ -62,17 +63,16 @@ namespace CampaignSvcs
       //FIXME
       if (!value)
       {
-        result = std::move(key_str);
+        result.assign(key.data(), key.size());
         return true;
       }
 
       BaseTokenProcessor_var token_processor;
-      OptionTokenValueMap::const_iterator opt_it = token_values_.find(key_str);
-
-      if(opt_it != token_values_.end())
+      TokenOptionValue token_value;
+      if(token_values_.get(key_view, token_value))
       {
         TokenProcessorMap::const_iterator it = token_processors_.find(
-          opt_it->second.option_id);
+          token_value.option_id);
 
         if(it != token_processors_.end())
         {
@@ -98,11 +98,54 @@ namespace CampaignSvcs
   private:
     const TokenProcessorMap& token_processors_;
     const TokenSet& insert_restrictions_;
-    const OptionTokenValueMap& token_values_;
+    const TokenOptionValueProvider& token_values_;
     const CreativeInstantiateRule& rule_;
     const CreativeInstantiateArgs& creative_args_;
     unsigned long max_depth_;
   };
+
+  TokenOptionValueProvider::TokenOptionValueProvider(
+    const TokenValueMap& request_args,
+    const OptionTokenValueMap& creative_args)
+    noexcept
+    : request_args_(&request_args),
+      creative_args_(creative_args)
+  {}
+
+  TokenOptionValueProvider::TokenOptionValueProvider(
+    const OptionTokenValueMap& creative_args)
+    noexcept
+    : request_args_(nullptr),
+      creative_args_(creative_args)
+  {}
+
+  bool
+  TokenOptionValueProvider::get(
+    std::string_view token,
+    TokenOptionValue& value) const
+  {
+    OptionTokenValueMap::const_iterator creative_it =
+      creative_args_.find(token);
+    if(creative_it != creative_args_.end())
+    {
+      value.option_id = creative_it->second.option_id;
+      value.value = creative_it->second.value;
+      return true;
+    }
+
+    if(request_args_)
+    {
+      TokenValueMap::const_iterator request_it = request_args_->find(token);
+      if(request_it != request_args_->end())
+      {
+        value.option_id = 0;
+        value.value = request_it->second;
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /** BaseTokenProcessor */
   BaseTokenProcessor::BaseTokenProcessor(
@@ -115,7 +158,7 @@ namespace CampaignSvcs
 
   bool
   BaseTokenProcessor::instantiate(
-    const OptionTokenValueMap& token_values,
+    const TokenOptionValueProvider& token_values,
     const TokenProcessorMap& token_processors,
     const CreativeInstantiateRule& rule,
     const CreativeInstantiateArgs& creative_args,
@@ -123,7 +166,8 @@ namespace CampaignSvcs
     int max_depth)
     const /*throw(eh::Exception)*/
   {
-    OptionTokenValueMap::const_iterator value_it = token_values.find(token_);
+    TokenOptionValue token_value;
+    const bool has_value = token_values.get(token_, token_value);
 
     try
     {
@@ -138,13 +182,15 @@ namespace CampaignSvcs
       String::TextTemplate::DefaultValue default_cont(&sub_args);
       String::TextTemplate::ArgsEncoder encoder(&default_cont);
 
-      if(value_it == token_values.end() && !rule.use_empty_values_)
+      if(!has_value && !rule.use_empty_values_)
       {
         return false;
       }
 
       String::TextTemplate::Basic templ(
-        value_it != token_values.end() ? String::SubString(value_it->second.value) : String::SubString(),
+        has_value ?
+          String::SubString(token_value.value.data(), token_value.value.size()) :
+          String::SubString(),
         TokenTemplateProperties::START_TOKEN,
         TokenTemplateProperties::STOP_TOKEN);
 
@@ -157,12 +203,32 @@ namespace CampaignSvcs
       Stream::Error ostr;
       ostr << "Can't init token '" << token_ <<
         "'='" <<
-        (value_it == token_values.end() ? "" : value_it->second.value) <<
+        (has_value ? std::string(token_value.value) : "") <<
         "': " << ex.what();
       throw Exception(ostr);
     }
 
     return true;
+  }
+
+  bool
+  BaseTokenProcessor::instantiate(
+    const OptionTokenValueMap& token_values,
+    const TokenProcessorMap& token_processors,
+    const CreativeInstantiateRule& rule,
+    const CreativeInstantiateArgs& creative_args,
+    std::string& result,
+    int max_depth)
+    const /*throw(eh::Exception)*/
+  {
+    const TokenOptionValueProvider token_value_provider(token_values);
+    return instantiate(
+      token_value_provider,
+      token_processors,
+      rule,
+      creative_args,
+      result,
+      max_depth);
   }
 
   BaseTokenProcessor*

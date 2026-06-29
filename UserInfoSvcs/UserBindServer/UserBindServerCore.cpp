@@ -139,7 +139,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<UserBindServerCore::GetUserResponseInfo>
+  AdServer::Commons::SyncCoro<UserBindServerCore::GetUserResponseInfo>
   UserBindServerCore::co_get_user_id(const GetUserRequestInfo& request_info)
   {
     get_user_id_total_requests_.fetch_add(1, std::memory_order_relaxed);
@@ -229,7 +229,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<UserBindServerCore::AddUserResponseInfo>
+  AdServer::Commons::SyncCoro<UserBindServerCore::AddUserResponseInfo>
   UserBindServerCore::co_add_user_id(const AddUserRequestInfo& request_info)
   {
     add_user_id_requests_.fetch_add(1, std::memory_order_relaxed);

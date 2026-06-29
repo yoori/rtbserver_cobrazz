@@ -38,7 +38,7 @@ namespace AdServer::CampaignSvcs
       bool drop_https_safe = false)
       /*throw(Exception)*/;
 
-    CampaignConfig_var
+    CampaignConfigPtr
     update(const CampaignConfig* old_config) /*throw(Exception)*/;
 
   private:

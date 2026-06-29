@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <memory_resource>
 #include <vector>
 
 #include <Logger/Logger.hpp>
@@ -29,7 +30,7 @@
 namespace AdServer::Bidding
 {
   class BidRequestState;
-  typedef ReferenceCounting::SmartPtr<BidRequestState> BidRequestState_var;
+  using BidRequestState_var = std::shared_ptr<BidRequestState>;
 
   class BiddingFrontendCore:
     public ReferenceCounting::AtomicImpl
@@ -45,7 +46,7 @@ namespace AdServer::Bidding
       CommonModule_var common_module;
       UserIdControllerBase_var user_id_controller;
       std::shared_ptr<RequestInfoFiller> request_info_filler;
-      std::shared_ptr<const SourceMap> sources;
+      std::shared_ptr<const RequestInfoFiller::SourceMap> sources;
       std::shared_ptr<const RequestInfoFiller::AccountTraitsById> account_traits;
       StatHolder_var stats;
       std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers;
@@ -130,7 +131,6 @@ namespace AdServer::Bidding
     void
     prepare_get_campaign_creative_request_(
       adserver::campaign_svcs::campaign_manager::GetCampaignCreativeRequest& request,
-      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const adserver::user_info_svcs::user_info_manager::MatchResponse*
         history_match_result,
       const adserver::channel_svcs::channel_server::MatchResponse*
@@ -140,6 +140,7 @@ namespace AdServer::Bidding
       const RequestInfo& request_info,
       const AdServer::Commons::UserId& user_id,
       bool passback,
+      bool profiling_available,
       bool interrupted)
     noexcept;
 
@@ -160,7 +161,7 @@ namespace AdServer::Bidding
     void
     limit_max_cpm_(
       AdServer::CampaignSvcs::RevenueDecimal& val,
-      const AdServer::Bidding::CampaignManager::IdSeq& account_ids)
+      const std::pmr::vector<unsigned long>& account_ids)
       const noexcept;
 
     RequestInfoFiller*
@@ -267,7 +268,7 @@ namespace AdServer::Bidding
     CommonModule_var common_module_;
     UserIdControllerBase_var user_id_controller_;
     std::shared_ptr<RequestInfoFiller> request_info_filler_;
-    std::shared_ptr<const SourceMap> sources_;
+    std::shared_ptr<const RequestInfoFiller::SourceMap> sources_;
     std::shared_ptr<const RequestInfoFiller::AccountTraitsById> account_traits_;
     StatHolder_var stats_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers_;

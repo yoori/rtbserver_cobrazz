@@ -16,6 +16,11 @@ namespace AdServer
 {
   class BiddingStatInfo;
 
+  namespace Bidding
+  {
+    struct RequestInfo;
+  }
+
   class StatHolder : public ReferenceCounting::AtomicImpl
   {
   public:
@@ -69,7 +74,7 @@ namespace AdServer
 
     void
     flush(
-      const AdServer::Bidding::CampaignManager::RequestParams&,
+      const Bidding::RequestInfo&,
       AdServer::Bidding::CampaignManager::RequestCreativeResult*,
       const Generics::Time& processing_time)
       noexcept;

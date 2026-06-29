@@ -370,11 +370,10 @@ namespace
   std::uint64_t
   parsed_result_checksum(
     const AdServer::Bidding::RequestInfo& request_info,
-    const AdServer::Bidding::JsonProcessingContext& context,
-    const std::string& keywords)
+    const AdServer::Bidding::JsonProcessingContext& context)
   {
     std::uint64_t seed = 0;
-    hash_string(seed, keywords);
+    hash_string(seed, request_info.keywords);
     hash_string(seed, request_info.bid_request_id);
     hash_string(seed, request_info.bid_site_id);
     hash_string(seed, request_info.bid_publisher_id);
@@ -474,21 +473,19 @@ extern "C"
 
     for(std::uint64_t i = 0; i < count; ++i)
     {
-      AdServer::Bidding::CampaignManager::RequestParams request_params;
       AdServer::Bidding::RequestInfo request_info;
       AdServer::Bidding::JsonProcessingContext context;
-      std::string keywords;
 
       request_info.current_time = Generics::Time::get_time_of_day();
 
       filler.fill_by_openrtb_request(
-        request_params,
         request_info,
-        keywords,
         context,
         request_body.c_str());
 
-      checksum += parsed_result_checksum(request_info, context, keywords);
+      checksum += parsed_result_checksum(
+        request_info,
+        context);
     }
 
     return checksum;
@@ -512,7 +509,7 @@ main(int argc, char** argv)
       options.domain_config);
 
     AdServer::Bidding::RequestInfoFiller::ExternalUserIdSet skip_external_ids;
-    AdServer::Bidding::SourceMap sources;
+    AdServer::Bidding::RequestInfoFiller::SourceMap sources;
     AdServer::Bidding::RequestInfoFiller::AccountTraitsById account_traits;
 
     const AdServer::Bidding::RequestInfoFiller filler(

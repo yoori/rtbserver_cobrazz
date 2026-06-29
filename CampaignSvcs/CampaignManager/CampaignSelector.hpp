@@ -527,7 +527,7 @@ namespace AdServer
 
     private:
       const CampaignIndex* campaign_selection_index_;
-      ConstCampaignConfig_var campaign_config_;
+      ConstCampaignConfigPtr campaign_config_;
       CTR::ConstCTRProvider_var ctr_provider_;
       CTR::ConstCTRProvider_var conv_rate_provider_;
     };

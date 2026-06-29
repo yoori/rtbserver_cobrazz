@@ -9,7 +9,7 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/CallbackCoro.hpp>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -114,7 +114,7 @@ namespace ProfilingCommons
     class CallbackAwaitable
     {
     public:
-      using RawAwaitable = AdServer::Commons::AsyncCallbackAwaitable<
+      using RawAwaitable = AdServer::Commons::CallbackCoro<
         ResultType,
         std::optional<std::string> >;
 
@@ -137,7 +137,7 @@ namespace ProfilingCommons
     class VoidCallbackAwaitable
     {
     public:
-      using RawAwaitable = AdServer::Commons::AsyncCallbackAwaitable<
+      using RawAwaitable = AdServer::Commons::CallbackCoro<
         std::optional<std::string> >;
 
       explicit
@@ -209,7 +209,7 @@ namespace ProfilingCommons
       const KeyType& key,
       OperationPriority op_priority = OP_RUNTIME);
 
-    AdServer::Commons::AsyncCallbackAwaitable<>
+    AdServer::Commons::CallbackCoro<>
     co_clear_expired(const Generics::Time& expire_time);
   };
 

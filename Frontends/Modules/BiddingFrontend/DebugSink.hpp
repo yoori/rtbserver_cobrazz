@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "CampaignManagerTypes.hpp"
 #include <LogCommons/BufferWriter.hpp>
@@ -101,10 +102,8 @@ namespace AdServer::Bidding
     void
     print_request_debug_info(
       const RequestInfo& request_info,
-      const AdServer::Bidding::CampaignManager::RequestParams&
-        request_params,
       const AdServer::Commons::UserId& user_id,
-      const std::string& channel_keywords) noexcept;
+      std::string_view channel_keywords) noexcept;
 
     void
     print_user_resolving_debug_info(

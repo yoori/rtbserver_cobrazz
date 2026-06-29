@@ -54,8 +54,9 @@ namespace AdServer::Bidding
       : KeywordFormatter(std::string_view(source_id.data(), source_id.size()))
     {}
 
+    template<typename Traits, typename Allocator>
     void
-    assign_to(std::string& kw) const
+    assign_to(std::basic_string<char, Traits, Allocator>& kw) const
     {
       if(kw.empty())
       {

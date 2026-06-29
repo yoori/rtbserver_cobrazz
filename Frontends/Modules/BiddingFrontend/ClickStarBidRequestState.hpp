@@ -45,6 +45,9 @@ namespace AdServer::Bidding
     virtual void
     clear() noexcept;
 
+    virtual
+    ~ClickStarBidRequestState() noexcept = default;
+
   public:
     //std::string bid_response;
     const std::string uri;
@@ -53,14 +56,10 @@ namespace AdServer::Bidding
     struct Context;
 
   protected:
-    virtual
-    ~ClickStarBidRequestState() noexcept = default;
-
     void
     fill_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
       noexcept;

@@ -259,7 +259,7 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
-  AdServer::Commons::Task<typename ProfileMapType::Transaction_var>
+  AdServer::Commons::SyncCoro<typename ProfileMapType::Transaction_var>
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
   co_get_transaction(
     const KeyType& key,

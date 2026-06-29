@@ -219,14 +219,14 @@ namespace AdServer
 
   void
   StatHolder::flush(
-    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    const Bidding::RequestInfo& request_info,
     AdServer::Bidding::CampaignManager::RequestCreativeResult*
       campaign_match_result,
     const Generics::Time& processing_time)
     noexcept
   {
     bool bid = campaign_match_result && campaign_match_result->ad_slots.size();
-    (void)request_params;
+    (void)request_info;
 
     request_finished_total_.fetch_add(1, std::memory_order_relaxed);
     if(bid)

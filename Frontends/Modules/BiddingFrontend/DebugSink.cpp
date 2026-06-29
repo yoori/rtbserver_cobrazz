@@ -17,13 +17,13 @@ namespace AdServer::Bidding
   {
     namespace Response::Header
     {
-        const String::SubString DEBUG_INFO("Debug-Info");
-      }
+      const std::string DEBUG_INFO("Debug-Info");
+    }
 
     namespace Response::Type
-      {
-        const String::SubString TEXT_PLAIN("text/plain");
-      }
+    {
+      const std::string TEXT_PLAIN("text/plain");
+    }
 
     namespace Debug
     {
@@ -230,6 +230,15 @@ namespace AdServer::Bidding
     }
 
     std::string
+    normalize_debug_field_(std::string_view value)
+    {
+      std::string result(value);
+      std::replace(result.begin(), result.end(), '\r', ' ');
+      std::replace(result.begin(), result.end(), '\n', ' ');
+      return result;
+    }
+
+    std::string
     normalize_debug_field_(std::string value)
     {
       std::replace(value.begin(), value.end(), '\r', ' ');
@@ -419,10 +428,8 @@ namespace AdServer::Bidding
   void
   DebugSink::print_request_debug_info(
     const RequestInfo& request_info,
-    const AdServer::Bidding::CampaignManager::RequestParams&
-      request_params,
     const AdServer::Commons::UserId& user_id,
-    const std::string& channel_keywords) noexcept
+    std::string_view channel_keywords) noexcept
   {
     if(!require_debug_info())
     {
@@ -449,14 +456,13 @@ namespace AdServer::Bidding
 
     debug_info_str_ << sep_ <<
       "user_status = " <<
-        user_status_to_string(request_params.common_info.user_status) << sep_ <<
+        user_status_to_string(request_info.user_status) << sep_ <<
       "source_id = " << request_info.source_id << sep_ <<
-      "request_id = " << CampaignManager::unpack_request_id(
-        request_params.common_info.request_id) << sep_ <<
+      "request_id = " << request_info.request_id << sep_ <<
       "bid_request_id = " << request_info.bid_request_id << sep_ <<
       "bid_site_id = " << request_info.bid_site_id << sep_ <<
       "bid_publisher_id = " << request_info.bid_publisher_id << sep_ <<
-      "publisher_site_id = " << request_params.publisher_site_id << sep_ <<
+      "publisher_site_id = " << request_info.publisher_site_id << sep_ <<
       "publisher_account_ids = ";
     print_sequence_(
       debug_info_str_,
@@ -464,8 +470,8 @@ namespace AdServer::Bidding
       request_info.publisher_account_ids.end());
 
     debug_info_str_ << sep_ <<
-      "test_request = " << request_params.common_info.test_request << sep_ <<
-      "log_as_test = " << request_params.common_info.log_as_test << sep_ <<
+      "test_request = " << request_info.test_request << sep_ <<
+      "log_as_test = " << request_info.log_as_test << sep_ <<
       "location = ";
 
     if(request_info.location)
@@ -476,17 +482,17 @@ namespace AdServer::Bidding
     }
 
     debug_info_str_ << sep_ <<
-      "referer = " << request_params.common_info.referer << sep_ <<
-      "full_referer = " << request_params.common_info.full_referer << sep_ <<
+      "referer = " << request_info.referer << sep_ <<
+      "full_referer = " << request_info.full_referer << sep_ <<
       "uid = " << (user_id.is_null() ? "" : user_id.to_string()) << sep_ <<
-      "external_user_id = " << request_params.common_info.external_user_id << sep_ <<
-      "ip = " << request_params.common_info.peer_ip << sep_ <<
-      "user_agent = " << request_params.common_info.user_agent << sep_ <<
-      "search-phrase = " << request_params.search_words << sep_ <<
+      "external_user_id = " << request_info.external_user_id << sep_ <<
+      "ip = " << request_info.peer_ip << sep_ <<
+      "user_agent = " << request_info.user_agent << sep_ <<
+      "search-phrase = " << request_info.search_words << sep_ <<
       "channel_keywords = " << normalized_channel_keywords << sep_ <<
-      "search_engine_id = " << request_params.search_engine_id << sep_ <<
+      "search_engine_id = " << request_info.search_engine_id << sep_ <<
       "filter_request = " << (request_info.filter_request ? "true" : "false") << sep_ <<
-      "passback_url = " << request_params.common_info.passback_url << sep_ <<
+      "passback_url = " << request_info.passback_url << sep_ <<
       "format = " << request_info.format << sep_ <<
       "seat = " << request_info.seat << sep_ <<
       "app = " << (request_info.is_app ? "true" : "false") << sep_ <<
@@ -496,16 +502,16 @@ namespace AdServer::Bidding
       "ssp_devicetype = " << request_info.ssp_devicetype_str << sep_ <<
       "ssp_video_placementtype = " <<
         request_info.ssp_video_placementtype_str << sep_ <<
-      "browser = " << request_params.context_info.web_browser << sep_ <<
-      "platform = " << request_params.context_info.platform << sep_ <<
-      "full_platform = " << request_params.context_info.full_platform << sep_ <<
+      "browser = " << request_info.web_browser << sep_ <<
+      "platform = " << request_info.platform << sep_ <<
+      "full_platform = " << request_info.full_platform << sep_ <<
       "platform_ids = ";
     print_sequence_(
       debug_info_str_,
-      request_params.context_info.platform_ids.begin(),
-      request_params.context_info.platform_ids.end());
+      request_info.platform_ids.begin(),
+      request_info.platform_ids.end());
     debug_info_str_ << sep_ << "ad_slots = " <<
-      request_params.ad_slots.size() << sep_;
+      request_info.ad_slots.size() << sep_;
   }
 
   void
@@ -1029,13 +1035,13 @@ namespace AdServer::Bidding
 
     for(std::size_t i = 0; i < debug_selected_creatives.size(); ++i)
     {
-      imp_revenue += CampaignManager::unpack_decimal<
+      imp_revenue += GrpcAlgs::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
           debug_selected_creatives[i].imp_revenue);
-      click_revenue += CampaignManager::unpack_decimal<
+      click_revenue += GrpcAlgs::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
           debug_selected_creatives[i].click_revenue);
-      action_revenue += CampaignManager::unpack_decimal<
+      action_revenue += GrpcAlgs::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
           debug_selected_creatives[i].action_revenue);
     }
@@ -1060,7 +1066,7 @@ namespace AdServer::Bidding
       "notice_url = " << ad_slot_result.notice_url << sep_ <<
       "track_pixel_url = " << debug_info.track_pixel_url << sep_ <<
       "cpm_threshold = " <<
-        CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
           debug_info.cpm_threshold) << sep_ <<
       "walled_garden = " << debug_info.walled_garden << sep_ <<
       "auction_type = " << auction_type_to_string(debug_info.auction_type) <<
@@ -1072,13 +1078,13 @@ namespace AdServer::Bidding
       const auto& creative = selected_creatives[i];
       const auto* debug_creative = i < debug_count ?
         &debug_selected_creatives[i] : nullptr;
-      const String::SubString offset(require_debug_info_ == DI_BODY ? "  " : "");
-      const String::SubString creative_start_sep(
+      const std::string offset(require_debug_info_ == DI_BODY ? "  " : "");
+      const std::string creative_start_sep(
         require_debug_info_ == DI_BODY ? "\n------\n" : "( ");
       const char* creative_end_sep = require_debug_info_ == DI_BODY ? "" : ") ";
 
       debug_info_str_ << creative_start_sep <<
-        offset << "request_id = " << CampaignManager::unpack_request_id(
+        offset << "request_id = " << GrpcAlgs::unpack_request_id(
           creative.request_id) << sep_ <<
         offset << "ccid = " << creative.ccid << sep_ <<
         offset << "cmp_id = " << creative.cmp_id << sep_ <<
@@ -1091,12 +1097,12 @@ namespace AdServer::Bidding
         offset << "creative_size = " << creative.creative_size << sep_ <<
         offset << "triggered_expression = " <<
           (debug_creative ? debug_creative->triggered_expression : "") << sep_ <<
-        offset << "ecpm = " << CampaignManager::unpack_decimal<
+        offset << "ecpm = " << GrpcAlgs::unpack_decimal<
           CampaignSvcs::RevenueDecimal>(creative.ecpm) << sep_ <<
-        offset << "pub_ecpm = " << CampaignManager::unpack_decimal<
+        offset << "pub_ecpm = " << GrpcAlgs::unpack_decimal<
           CampaignSvcs::RevenueDecimal>(creative.pub_ecpm) << sep_ <<
         offset << "ecpm_bid = " <<
-          (debug_creative ? CampaignManager::unpack_decimal<
+          (debug_creative ? GrpcAlgs::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->ecpm_bid).str() : "") << sep_ <<
         offset << "click_url = " << creative.click_url << sep_ <<
         offset << "destination_url = " << creative.destination_url << sep_ <<
@@ -1105,16 +1111,16 @@ namespace AdServer::Bidding
         offset << "action_adv_url = " <<
           (debug_creative ? debug_creative->action_adv_url : "") << sep_ <<
         offset << "revenue = " <<
-          CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             creative.revenue) << sep_ <<
         offset << "imp_revenue = " <<
-          (debug_creative ? CampaignManager::unpack_decimal<
+          (debug_creative ? GrpcAlgs::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->imp_revenue).str() : "") << sep_ <<
         offset << "click_revenue = " <<
-          (debug_creative ? CampaignManager::unpack_decimal<
+          (debug_creative ? GrpcAlgs::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->click_revenue).str() : "") << sep_ <<
         offset << "action_revenue = " <<
-          (debug_creative ? CampaignManager::unpack_decimal<
+          (debug_creative ? GrpcAlgs::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->action_revenue).str() : "");
       debug_info_str_ << creative_end_sep;
     }

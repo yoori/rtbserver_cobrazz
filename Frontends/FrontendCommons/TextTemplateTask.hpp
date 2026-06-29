@@ -8,7 +8,7 @@
 #include <utility>
 
 #include <Commons/ExecutorPool.hpp>
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/Utils.hpp>
 #include <Commons/TextTemplateCache.hpp>
 
 namespace FrontendCommons

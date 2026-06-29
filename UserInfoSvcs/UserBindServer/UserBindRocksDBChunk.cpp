@@ -70,7 +70,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
   UserBindRocksDBChunk::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
@@ -107,7 +107,7 @@ namespace AdServer::UserInfoSvcs
     co_return result;
   }
 
-  AdServer::Commons::Task<UserBindProcessor::UserInfo>
+  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
   UserBindRocksDBChunk::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
@@ -205,7 +205,7 @@ namespace AdServer::UserInfoSvcs
   UserBindRocksDBChunk::dump()
   {}
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserBindRocksDBChunk::co_migrate_seen_user(
     const String::SubString& external_id,
     bool min_age_reached,
@@ -233,7 +233,7 @@ namespace AdServer::UserInfoSvcs
     co_return true;
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserBindRocksDBChunk::co_migrate_bound_user(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
@@ -338,7 +338,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserBindRocksDBChunk::co_load_record_(
     Record& record,
     const String::SubString& external_id)
@@ -355,7 +355,7 @@ namespace AdServer::UserInfoSvcs
     co_return deserialize_(record, seen_profile.in());
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserBindRocksDBChunk::co_save_record_(
     const String::SubString& external_id,
     const Record& record,

@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <memory_resource>
+#include <string_view>
 
 #include <eh/Exception.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -156,7 +157,7 @@ namespace FrontendCommons
       PlatformIdSet* platform_id,
       std::string& platform,
       std::string& full_platform,
-      const String::SubString& user_agent,
+      std::string_view user_agent,
       bool application = false) const
       /*throw(eh::Exception)*/;
 
@@ -166,7 +167,7 @@ namespace FrontendCommons
       PlatformNameSet* platform_names,
       std::string& platform,
       std::string& full_platform,
-      const String::SubString& user_agent,
+      std::string_view user_agent,
       bool application = false) const
       /*throw(eh::Exception)*/;
 
@@ -231,7 +232,7 @@ namespace FrontendCommons
       CategoryMatcher() noexcept;
 
       const MatchElement*
-      match(const String::SubString& user_agent) const
+      match(std::string_view user_agent) const
         /*throw(eh::Exception, String::RegEx::Exception)*/;
 
       void
@@ -268,7 +269,7 @@ namespace FrontendCommons
       std::string* platform,
       std::string* full_platform,
       const CategoryMatcher& matchers,
-      const String::SubString& low_user_agent) const
+      std::string_view low_user_agent) const
       /*throw(eh::Exception)*/;
 
   private:
@@ -291,7 +292,7 @@ namespace FrontendCommons
     bool
     match(
       std::string& browser,
-      const String::SubString& user_agent) const
+      std::string_view user_agent) const
       /*throw(eh::Exception)*/;
 
     void add_rule(
@@ -330,7 +331,7 @@ namespace FrontendCommons
     class OnMatch
     {
     public:
-      OnMatch(const String::SubString& user_agent,
+      OnMatch(std::string_view user_agent,
         unsigned long max_priority) noexcept;
 
       bool
@@ -344,7 +345,7 @@ namespace FrontendCommons
       get_sub_strs() const noexcept;
 
     private:
-      String::SubString user_agent_;
+      std::string_view user_agent_;
       unsigned long max_priority_;
       const MatchElement* matched_element_;
       String::RegEx::Result sub_strs_;

@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -1354,19 +1355,13 @@ namespace CampaignSvcs
       ExternalCategoryMap external_creative_categories;
       ContractMap contracts;
 
-    protected:
+    public:
       virtual
       ~CampaignConfig() noexcept = default;
     };
 
-    typedef ReferenceCounting::SmartPtr<const CampaignConfig>
-      ConstCampaignConfig_var;
-
-    typedef ReferenceCounting::SmartPtr<CampaignConfig>
-      CampaignConfig_var;
-
-    typedef ReferenceCounting::QualPtr<CampaignConfig>
-      QCampaignConfig_var;
+    using ConstCampaignConfigPtr = std::shared_ptr<const CampaignConfig>;
+    using CampaignConfigPtr = std::shared_ptr<CampaignConfig>;
   } /* CampaignConfig */
 } /* CampaignSvcs */
 } /* AdServer */

@@ -215,7 +215,7 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType>
-  AdServer::Commons::AsyncCallbackAwaitable<>
+  AdServer::Commons::CallbackCoro<>
   AsyncProfileMap<KeyType>::co_clear_expired(
     const Generics::Time& expire_time)
   {

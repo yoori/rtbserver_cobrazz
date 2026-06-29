@@ -3,10 +3,9 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <string_view>
 
 #include <eh/Exception.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
-#include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Time.hpp>
 
 #include "BiddingFrontendCore.hpp"
@@ -15,27 +14,11 @@
 
 namespace AdServer::Bidding
 {
-  // RequestParamsHolder
-  class RequestParamsHolder:
-     public AdServer::Bidding::CampaignManager::RequestParams,
-     public ReferenceCounting::AtomicImpl
-  {
-  protected:
-    virtual
-    ~RequestParamsHolder() noexcept = default;
-  };
-
-  typedef ReferenceCounting::SmartPtr<RequestParamsHolder>
-    RequestParamsHolder_var;
-
-  typedef ReferenceCounting::ConstPtr<RequestParamsHolder>
-    ConstRequestParamsHolder_var;
-
   //
   // BidRequestState
   //
   class BidRequestState:
-    public ReferenceCounting::AtomicImpl
+    public std::enable_shared_from_this<BidRequestState>
   {
     friend class BiddingFrontendCore;
 
@@ -74,8 +57,8 @@ namespace AdServer::Bidding
     const RequestInfo&
     request_info() const noexcept;
 
-    RequestParamsHolder_var&
-    request_params() noexcept;
+    virtual std::string_view
+    channel_keywords() const noexcept;
 
     const std::string&
     hostname() const noexcept;
@@ -117,10 +100,6 @@ namespace AdServer::Bidding
     virtual void
     clear() noexcept;
 
-  protected:
-    typedef Sync::Policy::PosixThread SyncPolicy;
-
-  protected:
     virtual
     ~BidRequestState() noexcept
     {
@@ -128,6 +107,10 @@ namespace AdServer::Bidding
       assert(response_sent_);
     }
 
+  protected:
+    typedef Sync::Policy::PosixThread SyncPolicy;
+
+  protected:
     bool
     parse_request_() noexcept;
 
@@ -206,8 +189,6 @@ namespace AdServer::Bidding
 
     /// The host performed last unbreakable operation.
     std::string hostname_;
-    RequestParamsHolder_var request_params_;
-    std::string keywords_;
 
     Stage current_stage_ = Stage::Initial;
     std::mutex mutex_current_stage_;
@@ -220,8 +201,7 @@ namespace AdServer::Bidding
     bool time_metering_debug_info_printed_ = false;
   };
 
-  typedef ReferenceCounting::SmartPtr<BidRequestState>
-    BidRequestState_var;
+  using BidRequestState_var = std::shared_ptr<BidRequestState>;
 }
 
 namespace AdServer::Bidding
@@ -238,13 +218,6 @@ namespace AdServer::Bidding
   BidRequestState::request_info() const noexcept
   {
     return request_info_;
-  }
-
-  inline
-  RequestParamsHolder_var&
-  BidRequestState::request_params() noexcept
-  {
-    return request_params_;
   }
 
   inline

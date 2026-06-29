@@ -179,7 +179,7 @@ namespace AdServer
 
     void
     CampaignManagerCore::instantiate_click_url(
-      const CampaignConfig* const campaign_config,
+      const CampaignConfig& campaign_config,
       const OptionValue& click_url,
       std::string& result_click_url,
       const unsigned long* colo_id,
@@ -257,23 +257,23 @@ namespace AdServer
         BaseTokenProcessor* token_processor = 0;
 
         const TokenProcessorMap::const_iterator it =
-          campaign_config->token_processors.find(
+          campaign_config.token_processors.find(
           click_url.option_id);
 
-        if(it != campaign_config->token_processors.end())
+        if(it != campaign_config.token_processors.end())
         {
           token_processor = it->second;
         }
         else
         {
-          token_processor = campaign_config->default_click_token_processor;
+          token_processor = campaign_config.default_click_token_processor;
         }
 
         std::string click_url_str;
 
         token_processor->instantiate(
           args,
-          campaign_config->token_processors,
+          campaign_config.token_processors,
           CreativeInstantiateRule(),
           CreativeInstantiateArgs(),
           click_url_str);
@@ -302,7 +302,7 @@ namespace AdServer
     bool
     CampaignManagerCore::instantiate_creative_preview(
       const PreviewCreativeParams& params,
-      const CampaignConfig* const campaign_config,
+      const CampaignConfig& campaign_config,
       const Campaign* campaign,
       const Creative* creative,
       const Tag* tag,
@@ -379,7 +379,7 @@ namespace AdServer
           params.format.c_str());
 
         Template* creative_template =
-          campaign_config->creative_templates.get(key);
+          campaign_config.creative_templates.get(key);
 
         if(!creative_template)
         {
@@ -532,7 +532,7 @@ namespace AdServer
           CreativeTextGenerator::init_creative_tokens(
             creative_instantiate_rule,
             creative_instantiate_args,
-            campaign_config->token_processors,
+            campaign_config.token_processors,
             *request_args_ptr,
             creative_args,
             *result_creative_args);
@@ -589,7 +589,7 @@ namespace AdServer
     CampaignManagerCore::fill_instantiate_request_params_(
       TokenValueMap& request_args,
       AccountIdList* consider_pub_pixel_accounts,
-      const CampaignConfig* const campaign_config,
+      const CampaignConfig& campaign_config,
       const Colocation* colocation,
       const Tag* tag,
       const Tag::Size* tag_size,
@@ -627,7 +627,7 @@ namespace AdServer
 
         get_inst_optin_pub_pixel_account_ids_(
           optin_pubpixel_accounts_holder,
-          campaign_config,
+          &campaign_config,
           tag,
           request_params,
           *exclude_pubpixel_accounts);
@@ -660,8 +660,8 @@ namespace AdServer
         request_args[CreativeTokens::PUB_PIXELS_OPTIN] = pub_pixel_url_str.str();
       }
 
-      if (find_pub_pixel_accounts_(campaign_config, COUNTRY, US_OPTOUT) !=
-            campaign_config->pub_pixel_accounts.end())
+      if (find_pub_pixel_accounts_(&campaign_config, COUNTRY, US_OPTOUT) !=
+            campaign_config.pub_pixel_accounts.end())
       {
         request_args[CreativeTokens::PUB_PIXELS_OPTOUT] =
           instantiate_info.pub_pixels_optout;
@@ -1193,7 +1193,7 @@ namespace AdServer
         fill_instantiate_request_params_(
           request_args,
           &consider_pub_pixel_accounts,
-          campaign_config,
+          *campaign_config,
           colocation,
           tag,
           ad_selection_result.tag_size,
@@ -1239,6 +1239,7 @@ namespace AdServer
           request_result_params,
           inst_params,
           instantiate_info,
+          *campaign_config,
           request_params,
           ad_selection_result,
           ad_slot_context,
@@ -1361,7 +1362,7 @@ namespace AdServer
               OptionValue(creative->click_url.option_id, *click_url);
 
             instantiate_click_url(
-              configuration(),
+              *campaign_config,
               click_url_in,
               creative_params.click_url, /* out */
               colocation ? &colocation->colo_id : 0,
@@ -2016,6 +2017,7 @@ namespace AdServer
       const RequestResultParams& request_result_params,
       const InstantiateParams& inst_params,
       const CreativeInstantiateRule& instantiate_info,
+      const CampaignConfig& campaign_config,
       const CampaignManagerCore::CommonAdRequestInfo& request_params,
       const AdSelectionResult& ad_selection_result,
       const AdSlotContext& ad_slot_context,
@@ -2269,7 +2271,7 @@ namespace AdServer
               creative->click_url;
 
             instantiate_click_url(
-              configuration(),
+              campaign_config,
               click_url_in,
               creative_params.click_url, /* out */
               &colo_id,
@@ -2440,7 +2442,7 @@ namespace AdServer
       AdInstantiateType ad_instantiate_type,
       CreativeParamsList& creative_params_list,
       RequestResultParams& request_result_params,
-      const CampaignConfig* const campaign_config,
+      const CampaignConfig& campaign_config,
       const Tag* tag,
       const InstantiateParams& inst_params,
       const CreativeInstantiateRule& instantiate_info,
@@ -2462,7 +2464,7 @@ namespace AdServer
 
         get_inst_optin_pub_pixel_account_ids_(
           optin_pubpixel_accounts,
-          campaign_config,
+          &campaign_config,
           tag,
           request_params,
           exclude_pubpixel_accounts);
@@ -2474,6 +2476,7 @@ namespace AdServer
           request_result_params,
           inst_params,
           instantiate_info,
+          campaign_config,
           request_params,
           ad_selection_result,
           ad_slot_context,
@@ -2743,7 +2746,7 @@ namespace AdServer
     CampaignManagerCore::instantiate_passback(
       std::string& mime_format,
       std::string& passback_body,
-      const CampaignConfig* const campaign_config,
+      const CampaignConfig& campaign_config,
       const Colocation* colocation,
       const Tag* tag,
       const char* app_format,
@@ -2769,8 +2772,8 @@ namespace AdServer
 
         // getting passback template
         AppFormatMap::const_iterator app_format_it =
-          campaign_config->app_formats.find(app_format);
-        if(app_format_it != campaign_config->app_formats.end())
+          campaign_config.app_formats.find(app_format);
+        if(app_format_it != campaign_config.app_formats.end())
         {
           Generics::StringHashAdapter key =
             rule_it->second.passback_template_path_prefix + app_format_it->first;
@@ -2801,7 +2804,7 @@ namespace AdServer
 
             fill_instantiate_passback_params_(
               request_args,
-              campaign_config,
+              &campaign_config,
               tag,
               InstantiateParams(
                 request_params.common_info.user_id,
@@ -2815,7 +2818,7 @@ namespace AdServer
             CreativeTextGenerator::init_creative_tokens(
               instantiate_info,
               CreativeInstantiateArgs(),
-              campaign_config->token_processors,
+              campaign_config.token_processors,
               request_args,
               tag->tokens,
               request_args);
@@ -2826,7 +2829,7 @@ namespace AdServer
               CreativeTextGenerator::init_creative_tokens(
                 instantiate_info,
                 CreativeInstantiateArgs(),
-                campaign_config->token_processors,
+                campaign_config.token_processors,
                 request_args,
                 tag->sizes.begin()->second->tokens,
                 request_args);
@@ -2835,7 +2838,7 @@ namespace AdServer
             CreativeTextGenerator::init_creative_tokens(
               instantiate_info,
               CreativeInstantiateArgs(),
-              campaign_config->token_processors,
+              campaign_config.token_processors,
               request_args,
               tag->hidden_tokens,
               request_args);

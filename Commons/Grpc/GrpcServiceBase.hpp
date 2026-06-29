@@ -106,7 +106,7 @@ namespace AdServer::Grpc
     GrpcCoroutine& operator=(const GrpcCoroutine&) = delete;
     ~GrpcCoroutine();
 
-    void start(Completion completion);
+    void start(Completion completion) const;
     bool await_ready() const noexcept;
     void await_suspend(std::coroutine_handle<> continuation);
     void await_resume();
@@ -114,32 +114,6 @@ namespace AdServer::Grpc
   private:
     Handle handle_;
   };
-
-  class GrpcCoroutineAll
-  {
-  public:
-    explicit GrpcCoroutineAll(std::vector<GrpcCoroutine> operations);
-
-    bool await_ready() const noexcept;
-    bool await_suspend(std::coroutine_handle<> continuation);
-    void await_resume();
-
-  private:
-    struct State
-    {
-      std::mutex lock;
-      std::vector<GrpcCoroutine> operations;
-      std::coroutine_handle<> continuation;
-      std::exception_ptr exception;
-      std::size_t remaining = 0;
-      bool suspended = false;
-    };
-
-    std::shared_ptr<State> state_;
-  };
-
-  GrpcCoroutineAll
-  when_all(std::vector<GrpcCoroutine> operations);
 
   struct GrpcCoroutine::promise_type
   {

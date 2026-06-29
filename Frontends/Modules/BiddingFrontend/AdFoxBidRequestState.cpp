@@ -3,6 +3,8 @@
 #include "KeywordFormatter.hpp"
 #include "AdFoxBidRequestState.hpp"
 
+#include <Commons/GrpcAlgs.hpp>
+
 namespace AdServer::Bidding
 {
   namespace
@@ -14,30 +16,30 @@ namespace AdServer::Bidding
 
     namespace Response::Header
     {
-        const String::SubString CONTENT_TYPE("Content-Type");
-      }
+      const std::string CONTENT_TYPE("Content-Type");
+    }
 
     namespace Response::Type
-      {
-        const String::SubString TEXT_XML("text/xml");
-      }
+    {
+      const std::string TEXT_XML("text/xml");
+    }
 
     namespace Response::AdJson
-      {
-        const String::SubString BIDS("bids");
+    {
+      const std::string BIDS("bids");
 
-        const String::SubString DISPLAY_URL("displayUrl");
-        const String::SubString ID("id"); // fill from request
-        const String::SubString CPM("cpm");
-        const String::SubString CURRENCY("currency");
-        const String::SubString CODE_TYPE("codeType"); // = js ?
-        const String::SubString PLACEMENT_ID("placementId"); // fill from request
-        const String::SubString SIZE("size");
-        const String::SubString WIDTH("width");
-        const String::SubString HEIGHT("height");
-      }
+      const std::string DISPLAY_URL("displayUrl");
+      const std::string ID("id"); // fill from request
+      const std::string CPM("cpm");
+      const std::string CURRENCY("currency");
+      const std::string CODE_TYPE("codeType"); // = js ?
+      const std::string PLACEMENT_ID("placementId"); // fill from request
+      const std::string SIZE("size");
+      const std::string WIDTH("width");
+      const std::string HEIGHT("height");
+    }
 
-    const String::SubString ADFOX_CLIENT("adfox");
+    const std::string ADFOX_CLIENT("adfox");
   }
 
   AdFoxBidRequestState::AdFoxBidRequestState(
@@ -62,15 +64,11 @@ namespace AdServer::Bidding
   {
     //static const char* FUN = "AdFoxBidRequestState::write_response()";
 
-    AdServer::Bidding::CampaignManager::RequestParams& request_params =
-      *request_params_;
-
     std::ostringstream response_ostr;
 
     fill_response_(
       response_ostr,
-      request_info(),
-      request_params,
+      request_info_,
       campaign_match_result);
 
     // write response
@@ -126,8 +124,7 @@ namespace AdServer::Bidding
   void
   AdFoxBidRequestState::fill_response_(
     std::ostream& response_ostr,
-    const RequestInfo& /*request_info*/,
-    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    const RequestInfo& request_info,
     const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
@@ -153,11 +150,11 @@ namespace AdServer::Bidding
 
         AdServer::Commons::JsonObject bid_object(bid_array.add_object());
 
-        CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+        CampaignSvcs::RevenueDecimal sum_pub_ecpm = GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
           ad_slot_result.selected_creatives[0].pub_ecpm);
 
         bid_frontend_->limit_max_cpm_(
-          sum_pub_ecpm, request_params.publisher_account_ids);
+          sum_pub_ecpm, request_info.publisher_account_ids);
 
         // result price, ecpm is in 0.01/1000
         CampaignSvcs::RevenueDecimal adjson_price = CampaignSvcs::RevenueDecimal::div(
@@ -174,7 +171,7 @@ namespace AdServer::Bidding
       // icon
       if(ad_slot_result.native_image_tokens.size() > 1)
       {
-        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+        const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
         root_json.add_escaped_string(
           Response::AdJson::ICON,
@@ -184,7 +181,7 @@ namespace AdServer::Bidding
       // image
       if(ad_slot_result.native_image_tokens.size() > 0)
       {
-        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+        const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];
         root_json.add_escaped_string(
           Response::AdJson::IMAGE, String::SubString(token.value));

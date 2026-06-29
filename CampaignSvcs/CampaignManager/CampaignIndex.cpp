@@ -80,11 +80,11 @@ namespace AdServer
   {
     /** campaign index functions */
     CampaignIndex::CampaignIndex(
-      const CampaignConfig* campaign_config,
+      ConstCampaignConfigPtr campaign_config,
       Logging::Logger* logger)
       noexcept
       : logger_(ReferenceCounting::add_ref(logger)),
-        campaign_config_(ReferenceCounting::add_ref(campaign_config))
+        campaign_config_(std::move(campaign_config))
     {}
 
     CampaignIndex::CampaignIndex(
@@ -92,7 +92,7 @@ namespace AdServer
       Logging::Logger* logger)
       noexcept
       : logger_(ReferenceCounting::add_ref(logger)),
-        campaign_config_(ReferenceCounting::add_ref(init.campaign_config_))
+        campaign_config_(init.campaign_config_)
     {}
 
     /** campaign index functions */
@@ -2421,7 +2421,7 @@ namespace AdServer
     }
 
     void
-    CampaignIndex::trace_tree(std::ostream& ostr) noexcept
+    CampaignIndex::trace_tree(std::ostream& ostr) const noexcept
     {
       const char OFFSET[] = "  ";
 

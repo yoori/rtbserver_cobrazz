@@ -29,6 +29,65 @@ namespace CampaignSvcs
     }
   };
 
+  class TemplateArgsCallback: public String::TextTemplate::ArgsCallback
+  {
+  public:
+    TemplateArgsCallback(
+      const TokenValueMap& request_args,
+      const TokenValueMap* creative_args)
+      : request_args_(request_args),
+        creative_args_(creative_args)
+    {}
+
+  private:
+    bool
+    get_argument(
+      const String::SubString& key,
+      std::string& result,
+      bool value) const override
+      /*throw(eh::Exception)*/
+    {
+      if(!value)
+      {
+        result.assign(key.data(), key.size());
+        return true;
+      }
+
+      return get_argument_i_(
+        std::string_view(key.data(), key.size()),
+        result);
+    }
+
+    bool
+    get_argument_i_(
+      std::string_view key,
+      std::string& result) const
+    {
+      TokenValueMap::const_iterator it = request_args_.find(key);
+      if(it != request_args_.end())
+      {
+        result = it->second;
+        return true;
+      }
+
+      if(creative_args_)
+      {
+        it = creative_args_->find(key);
+        if(it != creative_args_->end())
+        {
+          result = it->second;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+  private:
+    const TokenValueMap& request_args_;
+    const TokenValueMap* creative_args_;
+  };
+
   /* Concrete template implementations */
   /** TextTemplate */
   class TextTemplate: public Template
@@ -136,18 +195,19 @@ namespace CampaignSvcs
   {
     try
     {
-      TokenValueMap args;
-      // request tokens override creative tokens
-      args.insert(request_params->begin(), request_params->end());
-
-      if(++params.begin() == params.end())
+      const TokenValueMap* creative_args = nullptr;
+      TemplateParamsList::const_iterator cr_it = params.begin();
+      if(cr_it != params.end())
       {
-        const TokenValueMap& creative_args = *(*params.begin());
-        args.insert(creative_args.begin(), creative_args.end());
+        TemplateParamsList::const_iterator next_it = cr_it;
+        ++next_it;
+        if(next_it == params.end())
+        {
+          creative_args = (*cr_it).in();
+        }
       }
 
-      String::TextTemplate::ArgsContainer<TokenValueMap,
-        String::TextTemplate::ArgsContainerStringAdapter> args_cont(&args);
+      TemplateArgsCallback args_cont(*request_params, creative_args);
       String::TextTemplate::DefaultValue default_cont(&args_cont);
       String::TextTemplate::ArgsEncoder encoder(&default_cont);
       ostr << text_template_.instantiate(encoder);

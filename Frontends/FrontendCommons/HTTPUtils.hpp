@@ -4,6 +4,7 @@
 
 #include <openssl/md5.h>
 #include <string>
+#include <string_view>
 
 #include <eh/Exception.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -48,7 +49,7 @@ namespace FrontendCommons
   void
   ip_hash(
     std::string& hash,
-    const String::SubString& ip_address,
+    std::string_view ip_address,
     const String::SubString& ip_salt)
     noexcept;
 
@@ -545,7 +546,7 @@ namespace FrontendCommons
   void
   ip_hash(
     std::string& result_hash,
-    const String::SubString& ip_address,
+    std::string_view ip_address,
     const String::SubString& ip_salt)
     noexcept
   {
@@ -561,7 +562,7 @@ namespace FrontendCommons
     }
     else
     {
-      result_hash = ip_address.str();
+      result_hash.assign(ip_address.data(), ip_address.size());
     }
   }
 

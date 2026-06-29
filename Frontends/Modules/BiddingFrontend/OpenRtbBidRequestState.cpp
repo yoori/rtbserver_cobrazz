@@ -6,6 +6,8 @@
 
 #include "OpenRtbBidRequestState.hpp"
 
+#include <Commons/GrpcAlgs.hpp>
+
 namespace AdServer::Bidding
 {
   namespace
@@ -26,180 +28,180 @@ namespace AdServer::Bidding
 
     namespace Response::Header
     {
-        const String::SubString CONTENT_TYPE("Content-Type");
-        const String::SubString OPENRTB_VERSION("x-openrtb-version");
-        const String::SubString OPENRTB_VERSION_VALUE("2.3");
-        const String::SubString OPENRTB_INTERRUPTED_BID("X-Interrupted-Bid");
+      const std::string CONTENT_TYPE("Content-Type");
+      const std::string OPENRTB_VERSION("x-openrtb-version");
+      const std::string OPENRTB_VERSION_VALUE("2.3");
+      const std::string OPENRTB_INTERRUPTED_BID("X-Interrupted-Bid");
 
-        const String::AsciiStringManip::Caseless CONTENT_ENCODING("content-encoding");
-        const String::AsciiStringManip::Caseless CONTENT_ENCODING2("content_encoding");
-        const String::AsciiStringManip::Caseless GZIP("gzip");
-      }
+      const String::AsciiStringManip::Caseless CONTENT_ENCODING("content-encoding");
+      const String::AsciiStringManip::Caseless CONTENT_ENCODING2("content_encoding");
+      const String::AsciiStringManip::Caseless GZIP("gzip");
+    }
 
     namespace Response::Type
-      {
-        const String::SubString TEXT_HTML("text/html");
-        const String::SubString JSON("application/json");
-        const String::SubString OCTET_STREAM("application/octet-stream");
-      }
+    {
+      const std::string TEXT_HTML("text/html");
+      const std::string JSON("application/json");
+      const std::string OCTET_STREAM("application/octet-stream");
+    }
 
     namespace Response::OpenRtb
+    {
+      const std::string ID("id");
+      const std::string DEAL_ID("dealid");
+      const std::string BID("bid");
+      const std::string BID_EXT("ext");
+      const std::string BIDID("bidid");
+      const std::string CUR("cur");
+      const std::string EXT("ext");
+      const std::string PROTOCOL("protocol");
+      const std::string SEATBID("seatbid");
+      const std::string ADID("adid");
+      const std::string PRICE("price");
+      const std::string IMPID("impid");
+      const std::string CRID("crid");
+      const std::string ADOMAIN("adomain");
+      const std::string ADVERTISER_NAME("advertiser_name");
+      const std::string VAST_URL("vast_url");
+      const std::string ADM("adm");
+      const std::string NURL("nurl");
+      const std::string BURL("burl");
+      const std::string CAT("cat");
+      const std::string IURL("iurl");
+
+      const std::string WIDTH("w");
+      const std::string HEIGHT("h");
+      const std::string CID("cid");
+      const std::string SEAT("seat");
+      const std::string ATTR("attr");
+
+      // ADSC-10918 Native ads
+      const std::string NATIVE("native");
+      const std::string NATIVE_VER("ver");
+      const std::string NATIVE_VER_1_0("1");
+      const std::string NATIVE_VER_1_2("1.2");
+
+      const std::string NATIVE_LINK("link");
+      const std::string NATIVE_LINK_URL("url");
+      const std::string NATIVE_LINK_CLICK_TRACKERS("clicktrackers");
+      const std::string NATIVE_IMP_TRACKERS("imptrackers");
+      const std::string NATIVE_EVENT_TRACKERS("eventtrackers");
+      const std::string NATIVE_JS_TRACKER("jstracker");
+      const std::string NATIVE_ASSETS("assets");
+      const std::string NATIVE_ASSET_ID("id");
+      const std::string NATIVE_ASSET_REQUIRED("required");
+      const std::string NATIVE_ASSET_IMG("img");
+      const std::string NATIVE_ASSET_IMG_URL("url");
+      const std::string NATIVE_ASSET_IMG_W("w");
+      const std::string NATIVE_ASSET_IMG_H("h");
+      const std::string NATIVE_ASSET_DATA("data");
+      const std::string NATIVE_ASSET_DATA_VALUE("value");
+      const std::string NATIVE_ASSET_TITLE("title");
+      const std::string NATIVE_ASSET_TITLE_TEXT("text");
+      const std::string NATIVE_ASSET_VIDEO("video");
+      const std::string NATIVE_ASSET_VIDEO_TAG("vasttag");
+
+      const std::string EVENT_EVENT("event");
+      const std::string EVENT_METHOD("method");
+      const std::string EVENT_URL("url");
+
+      const std::string BID_EXT_NROA("nroa");
+
+      const std::string NROA_ERID("erid");
+      const std::string NROA_CONTRACTS("contracts");
+      const std::string CONTRACT_ORD_ID("id");
+      const std::string CONTRACT_ORD_ADO_ID("ado_id");
+      const std::string CONTRACT_NUMBER("contract_number");
+      const std::string CONTRACT_DATE("contract_date");
+      const std::string CONTRACT_TYPE("type");
+      const std::string CONTRACT_CLIENT_ID("client_inn");
+      const std::string CONTRACT_CLIENT_NAME("client_name");
+      const std::string CONTRACT_CONTRACTOR_ID("contractor_inn");
+      const std::string CONTRACT_CONTRACTOR_NAME("contractor_name");
+
+      // nroa attributes by buzzula+sape standard
+      namespace BuzSapeNroa
       {
-        const String::SubString ID("id");
-        const String::SubString DEAL_ID("dealid");
-        const String::SubString BID("bid");
-        const String::SubString BID_EXT("ext");
-        const String::SubString BIDID("bidid");
-        const String::SubString CUR("cur");
-        const String::SubString EXT("ext");
-        const String::SubString PROTOCOL("protocol");
-        const String::SubString SEATBID("seatbid");
-        const String::SubString ADID("adid");
-        const String::SubString PRICE("price");
-        const String::SubString IMPID("impid");
-        const String::SubString CRID("crid");
-        const String::SubString ADOMAIN("adomain");
-        const String::SubString ADVERTISER_NAME("advertiser_name");
-        const String::SubString VAST_URL("vast_url");
-        const String::SubString ADM("adm");
-        const String::SubString NURL("nurl");
-        const String::SubString BURL("burl");
-        const String::SubString CAT("cat");
-        const String::SubString IURL("iurl");
+        const std::string HASNROAMARKUP("has_nroa_markup");
 
-        const String::SubString WIDTH("w");
-        const String::SubString HEIGHT("h");
-        const String::SubString CID("cid");
-        const String::SubString SEAT("seat");
-        const String::SubString ATTR("attr");
+        const std::string CONTRACTOR("contractor");
+        const std::string CONTRACTOR_INN("inn");
+        const std::string CONTRACTOR_NAME("name");
+        const std::string CONTRACTOR_LEGALFORM("legal_form");
 
-        // ADSC-10918 Native ads
-        const String::SubString NATIVE("native");
-        const String::SubString NATIVE_VER("ver");
-        const String::SubString NATIVE_VER_1_0("1");
-        const String::SubString NATIVE_VER_1_2("1.2");
+        const std::string CLIENT("client");
+        const std::string CLIENT_INN("inn");
+        const std::string CLIENT_NAME("name");
+        const std::string CLIENT_LEGALFORM("legal_form");
 
-        const String::SubString NATIVE_LINK("link");
-        const String::SubString NATIVE_LINK_URL("url");
-        const String::SubString NATIVE_LINK_CLICK_TRACKERS("clicktrackers");
-        const String::SubString NATIVE_IMP_TRACKERS("imptrackers");
-        const String::SubString NATIVE_EVENT_TRACKERS("eventtrackers");
-        const String::SubString NATIVE_JS_TRACKER("jstracker");
-        const String::SubString NATIVE_ASSETS("assets");
-        const String::SubString NATIVE_ASSET_ID("id");
-        const String::SubString NATIVE_ASSET_REQUIRED("required");
-        const String::SubString NATIVE_ASSET_IMG("img");
-        const String::SubString NATIVE_ASSET_IMG_URL("url");
-        const String::SubString NATIVE_ASSET_IMG_W("w");
-        const String::SubString NATIVE_ASSET_IMG_H("h");
-        const String::SubString NATIVE_ASSET_DATA("data");
-        const String::SubString NATIVE_ASSET_DATA_VALUE("value");
-        const String::SubString NATIVE_ASSET_TITLE("title");
-        const String::SubString NATIVE_ASSET_TITLE_TEXT("text");
-        const String::SubString NATIVE_ASSET_VIDEO("video");
-        const String::SubString NATIVE_ASSET_VIDEO_TAG("vasttag");
+        const std::string INITIALCONTRACT("initial_contract");
+        const std::string PARENTCONTRACTS("parent_contracts");
 
-        const String::SubString EVENT_EVENT("event");
-        const String::SubString EVENT_METHOD("method");
-        const String::SubString EVENT_URL("url");
-
-        const String::SubString BID_EXT_NROA("nroa");
-
-        const String::SubString NROA_ERID("erid");
-        const String::SubString NROA_CONTRACTS("contracts");
-        const String::SubString CONTRACT_ORD_ID("id");
-        const String::SubString CONTRACT_ORD_ADO_ID("ado_id");
-        const String::SubString CONTRACT_NUMBER("contract_number");
-        const String::SubString CONTRACT_DATE("contract_date");
-        const String::SubString CONTRACT_TYPE("type");
-        const String::SubString CONTRACT_CLIENT_ID("client_inn");
-        const String::SubString CONTRACT_CLIENT_NAME("client_name");
-        const String::SubString CONTRACT_CONTRACTOR_ID("contractor_inn");
-        const String::SubString CONTRACT_CONTRACTOR_NAME("contractor_name");
-
-        // nroa attributes by buzzula+sape standard
-        namespace BuzSapeNroa
-        {
-          const String::SubString HASNROAMARKUP("has_nroa_markup");
-
-          const String::SubString CONTRACTOR("contractor");
-          const String::SubString CONTRACTOR_INN("inn");
-          const String::SubString CONTRACTOR_NAME("name");
-          const String::SubString CONTRACTOR_LEGALFORM("legal_form");
-
-          const String::SubString CLIENT("client");
-          const String::SubString CLIENT_INN("inn");
-          const String::SubString CLIENT_NAME("name");
-          const String::SubString CLIENT_LEGALFORM("legal_form");
-
-          const String::SubString INITIALCONTRACT("initial_contract");
-          const String::SubString PARENTCONTRACTS("parent_contracts");
-
-          const String::SubString CONTRACT_SIGNDATE("sign_date");
-          const String::SubString CONTRACT_NUMBER("number");
-          const String::SubString CONTRACT_TYPE("type");
-          const String::SubString CONTRACT_SUBJECTTYPE("subject_type");
-          const String::SubString CONTRACT_ACTIONTYPE("action_type");
-          const String::SubString CONTRACT_ID("id");
-          const String::SubString CONTRACT_ADOID("ado_id");
-          const String::SubString CONTRACT_VATINCLUDED("vat_included");
-          const String::SubString CONTRACT_PARENTCONTRACTID("parent_contract_id");
-        }
+        const std::string CONTRACT_SIGNDATE("sign_date");
+        const std::string CONTRACT_NUMBER("number");
+        const std::string CONTRACT_TYPE("type");
+        const std::string CONTRACT_SUBJECTTYPE("subject_type");
+        const std::string CONTRACT_ACTIONTYPE("action_type");
+        const std::string CONTRACT_ID("id");
+        const std::string CONTRACT_ADOID("ado_id");
+        const std::string CONTRACT_VATINCLUDED("vat_included");
+        const std::string CONTRACT_PARENTCONTRACTID("parent_contract_id");
       }
+    }
 
     namespace Response::OpenX
-      {
-        const String::SubString AD_OX_CATS("ad_ox_cats");
-        const String::SubString MATCHING_AD_ID("matching_ad_id");
-      }
+    {
+      const std::string AD_OX_CATS("ad_ox_cats");
+      const std::string MATCHING_AD_ID("matching_ad_id");
+    }
 
     namespace Response::Yandex
-      {
-        const String::SubString ID("id");
-        const String::SubString SETUSERDATA("setuserdata");
-        const String::SubString BIDSET("bidset");
-        const String::SubString BID("bid");
-        const String::SubString BIDID("bidid");
-        const String::SubString CUR("cur");
-        const String::SubString UNITS("units");
-        const String::SubString ADID("adid");
-        const String::SubString PRICE("price");
-        const String::SubString ADM("adm");
-        const String::SubString VIEW_NOTICES("view_notices");
-        const String::SubString NURL("nurl");
-        const String::SubString BURL("burl");
+    {
+      const std::string ID("id");
+      const std::string SETUSERDATA("setuserdata");
+      const std::string BIDSET("bidset");
+      const std::string BID("bid");
+      const std::string BIDID("bidid");
+      const std::string CUR("cur");
+      const std::string UNITS("units");
+      const std::string ADID("adid");
+      const std::string PRICE("price");
+      const std::string ADM("adm");
+      const std::string VIEW_NOTICES("view_notices");
+      const std::string NURL("nurl");
+      const std::string BURL("burl");
 
-        const String::SubString BANNER("banner");
-        const String::SubString WIDTH("w");
-        const String::SubString HEIGHT("h");
-        const String::SubString SETSKIPTOKEN("setskiptoken");
+      const std::string BANNER("banner");
+      const std::string WIDTH("w");
+      const std::string HEIGHT("h");
+      const std::string SETSKIPTOKEN("setskiptoken");
 
-        const String::SubString DSP_PARAMS("dsp_params");
-        /*
-          const String::SubString URL_PARAM3("url_param3");
-          const String::SubString URL_PARAM4("url_param4");
-        */
-        const String::SubString URL_PARAM17("url_param17");
-        const String::SubString URL_PARAM18("url_param18");
+      const std::string DSP_PARAMS("dsp_params");
+      /*
+        const std::string URL_PARAM3("url_param3");
+        const std::string URL_PARAM4("url_param4");
+      */
+      const std::string URL_PARAM17("url_param17");
+      const std::string URL_PARAM18("url_param18");
 
-        const String::SubString URL_PARAM_ALL[] = {
-          String::SubString("url_param1"),
-          String::SubString("url_param2"),
-          String::SubString("url_param3"),
-          String::SubString("url_param4"),
-          String::SubString("url_param5"),
-          String::SubString("url_param6"),
-          String::SubString("url_param7"),
-          String::SubString("url_param8"),
-          String::SubString("url_param9"),
-          String::SubString("url_param10"),
-          String::SubString("url_param11"),
-          String::SubString("url_param12"),
-          String::SubString("url_param13"),
-          String::SubString("url_param14"),
-          String::SubString("url_param15")
-        };
-      } // namespace Yandex
+      const std::string URL_PARAM_ALL[] = {
+        "url_param1",
+        "url_param2",
+        "url_param3",
+        "url_param4",
+        "url_param5",
+        "url_param6",
+        "url_param7",
+        "url_param8",
+        "url_param9",
+        "url_param10",
+        "url_param11",
+        "url_param12",
+        "url_param13",
+        "url_param14",
+        "url_param15"
+      };
+    } // namespace Yandex
 
     struct YandexIdFormatter
     {
@@ -236,8 +238,7 @@ namespace AdServer::Bidding
     print_int_category_seq(
       AdServer::Commons::JsonObject& parent,
       const String::SubString& seq_name,
-      const AdServer::Bidding::CampaignManager::
-        ExternalCreativeCategoryIdSeq& categories)
+      const std::pmr::vector<std::string>& categories)
     {
       AdServer::Commons::JsonObject array(parent.add_array(seq_name));
       for(std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)
@@ -332,9 +333,7 @@ namespace AdServer::Bidding
       }
 
       bid_frontend_->request_info_filler()->fill_by_openrtb_request(
-        *request_params_,
         request_info_,
-        keywords_,
         context_,
         std::move(bid_request));
 
@@ -357,35 +356,38 @@ namespace AdServer::Bidding
     return false;
   }
 
+  std::string_view
+  OpenRtbBidRequestState::channel_keywords() const noexcept
+  {
+    return std::string_view(
+      request_info_.keywords.data(),
+      request_info_.keywords.size());
+  }
+
   bool
   OpenRtbBidRequestState::write_response(
     const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
-    AdServer::Bidding::CampaignManager::RequestParams& request_params =
-      *request_params_;
-
     std::ostringstream response_ostr;
     bool first_is_native = context_.ad_slots.empty() ? false : (context_.ad_slots.begin()->native != 0);
 
-    if(request_params.common_info.request_type != AdServer::CampaignSvcs::AR_YANDEX || first_is_native)
+    if(request_info_.request_type != AdServer::CampaignSvcs::AR_YANDEX || first_is_native)
     {
       // standard OpenRTB, OpenX, Yandex native
       fill_openrtb_response_(
         response_ostr,
-        request_info(),
-        request_params,
+        request_info_,
         context_,
         campaign_match_result,
-        request_params.common_info.request_type == AdServer::CampaignSvcs::AR_YANDEX);
+        request_info_.request_type == AdServer::CampaignSvcs::AR_YANDEX);
     }
     else
     {
       fill_yandex_response_(
         response_ostr,
-        request_info(),
-        request_params,
+        request_info_,
         context_,
         campaign_match_result);
     }
@@ -627,7 +629,6 @@ namespace AdServer::Bidding
   OpenRtbBidRequestState::fill_openrtb_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
-    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const JsonProcessingContext& context,
     const AdServer::Bidding::CampaignManager::RequestCreativeResult& campaign_match_result,
     bool fill_yandex_attributes)
@@ -651,7 +652,7 @@ namespace AdServer::Bidding
       {
         char bid_id[20];
         size_t len = String::StringManip::int_to_str(
-          request_params.common_info.random, bid_id, sizeof(bid_id));
+          request_info.random, bid_id, sizeof(bid_id));
         root_json.add_string(Response::OpenRtb::BIDID, String::SubString(bid_id, len));
       }
 
@@ -705,12 +706,12 @@ namespace AdServer::Bidding
                 creative_i < ad_slot_result.selected_creatives.size();
                 ++creative_i)
             {
-              sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+              sum_pub_ecpm += GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
                 ad_slot_result.selected_creatives[creative_i].pub_ecpm);
             }
 
             bid_frontend_->limit_max_cpm_(
-              sum_pub_ecpm, request_params.publisher_account_ids);
+              sum_pub_ecpm, request_info.publisher_account_ids);
 
             // result price in RUB/1000, ecpm is in 0.01/1000
             CampaignSvcs::RevenueDecimal openrtb_price = CampaignSvcs::RevenueDecimal::div(
@@ -875,14 +876,14 @@ namespace AdServer::Bidding
               }
               else if(!escaped_creative_url.empty())
               {
-                if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL)
+                if(request_info.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL)
                 {
                   video_url_in_ext = true;
                   notice_enabled = true;
                 }
-                else if(request_params.ad_instantiate_type ==
+                else if(request_info.ad_instantiate_type ==
                     AdServer::CampaignSvcs::AIT_VIDEO_URL_IN_BODY ||
-                  request_params.ad_instantiate_type ==
+                  request_info.ad_instantiate_type ==
                     AdServer::CampaignSvcs::AIT_URL_IN_BODY)
                 {
                   bid_object.add_string(Response::OpenRtb::ADM, escaped_creative_url);
@@ -1003,7 +1004,7 @@ namespace AdServer::Bidding
                     use_banner_format.ext_type == "20");
 
                   if(add_ext_width_height ||
-                    request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
+                    request_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
                     !ad_slot_result.erid.empty() ||
                     ad_slot_result.contracts.size() > 0)
                   {
@@ -1013,7 +1014,7 @@ namespace AdServer::Bidding
                       ext_obj.add_as_string(Response::OpenRtb::HEIGHT, ad_slot_result.overlay_height);
                     }
 
-                    if(request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
+                    if(request_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
                     {
                       if(!use_banner.matching_ad.empty())
                       {
@@ -1094,8 +1095,6 @@ namespace AdServer::Bidding
   OpenRtbBidRequestState::fill_yandex_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
-    const AdServer::Bidding::CampaignManager::
-      RequestParams& request_params,
     const JsonProcessingContext& context,
     const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
@@ -1117,7 +1116,7 @@ namespace AdServer::Bidding
       {
         char bid_id[20];
         size_t len = String::StringManip::int_to_str(
-          request_params.common_info.random, bid_id, sizeof(bid_id));
+          request_info.random, bid_id, sizeof(bid_id));
         root_json.add_string(Response::OpenRtb::BIDID, String::SubString(bid_id, len));
       }
 
@@ -1134,18 +1133,15 @@ namespace AdServer::Bidding
       }
 
       {
-        AdServer::Commons::UserId user_id = CampaignManager::unpack_user_id(
-          request_params.common_info.user_id);
-
-        if(!user_id.is_null())
+        if(request_info.user_id.has_value() && !request_info.user_id->is_null())
         {
           root_json.add_string(
             Response::Yandex::SETUSERDATA,
             AdServer::UserIdController::ssp_uuid_string(
               bid_frontend_->user_id_controller()->ssp_uuid(
-                user_id, request_info.source_id)));
+                *request_info.user_id, request_info.source_id)));
         }
-        else if(some_campaign_selected && request_params.common_info.external_user_id.empty())
+        else if(some_campaign_selected && request_info.external_user_id.empty())
         {
           std::string tmp_ssp_user_id = AdServer::UserIdController::ssp_uuid_string(
             bid_frontend_->user_id_controller()->ssp_uuid(
@@ -1199,12 +1195,12 @@ namespace AdServer::Bidding
                 creative_i < ad_slot_result.selected_creatives.size();
                 ++creative_i)
             {
-              sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+              sum_pub_ecpm += GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
                 ad_slot_result.selected_creatives[creative_i].pub_ecpm);
             }
 
             bid_frontend_->limit_max_cpm_(
-              sum_pub_ecpm, request_params.publisher_account_ids);
+              sum_pub_ecpm, request_info.publisher_account_ids);
 
             // result price in RUB/1000000, ecpm is in 0.01/1000
             CampaignSvcs::RevenueDecimal openrtb_price = CampaignSvcs::RevenueDecimal::mul(
@@ -1461,7 +1457,7 @@ namespace AdServer::Bidding
       for (auto data_it = native_context.data_assets.begin();
         data_it != native_context.data_assets.end(); ++data_it, ++data_i)
       {
-        const AdServer::Bidding::CampaignManager::TokenInfo& token =
+        const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
           ad_slot_result.native_data_tokens[data_i];
         if(!token.value.empty())
         {
@@ -1500,7 +1496,7 @@ namespace AdServer::Bidding
         for (auto image_it = native_context.image_assets.begin();
            image_it != native_context.image_assets.end(); ++image_it, ++image_i)
         {
-          const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+          const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
             ad_slot_result.native_image_tokens[image_i];
           if(!token.value.empty())
           {

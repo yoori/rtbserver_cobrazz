@@ -19,7 +19,7 @@
 #include <String/StringManip.hpp>
 
 #include <Commons/IPCrypter.hpp>
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/SyncCoro.hpp>
 #include <Commons/SecToken.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -251,7 +251,7 @@ namespace AdServer
         std::vector<GeoInfo> location;
       };
 
-      typedef std::map<std::string, std::string> TokenValueMap;
+      typedef AdServer::CampaignSvcs::TokenValueMap TokenValueMap;
 
       struct ClickInfo
       {
@@ -728,7 +728,7 @@ namespace AdServer
       BillingStateContainer::Stats
       billing_server_stats() const noexcept;
 
-      AdServer::Commons::Task<CreativeRequestResultInfo>
+      AdServer::Commons::SyncCoro<CreativeRequestResultInfo>
       co_get_campaign_creative(
         const CreativeRequestInfo& request_params);
 
@@ -753,7 +753,7 @@ namespace AdServer
       get_file(const std::string& file_name)
         /*throw(Exception)*/;
 
-      AdServer::Commons::Task<InstantiateAdResult>
+      AdServer::Commons::SyncCoro<InstantiateAdResult>
       co_instantiate_ad(
         const InstantiateAdInfo& instantiate_ad_info)
         /*throw(Exception, NotReady)*/;
@@ -782,13 +782,13 @@ namespace AdServer
         const PassbackTrackInfo& in)
         /*throw(Exception, NotReady)*/;
 
-      AdServer::Commons::Task<bool>
+      AdServer::Commons::SyncCoro<bool>
       co_get_click_url(
         const ClickInfo& click_info,
         ClickResultInfo& click_result_info)
         /*throw(Exception, NotReady)*/;
 
-      AdServer::Commons::Task<ImpressionResultInfo>
+      AdServer::Commons::SyncCoro<ImpressionResultInfo>
       co_verify_impression(
         const ImpressionInfo& impression_info)
         /*throw(Exception, NotReady)*/;
@@ -817,7 +817,7 @@ namespace AdServer
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_config:1.0
       //
-      CampaignConfig_var
+      ConstCampaignConfigPtr
       get_config(const ConfigRequestInfo& get_config_props)
         /*throw(Exception)*/;
 
@@ -915,9 +915,9 @@ namespace AdServer
         std::string track_pixel_params;
         std::string click_params;
         std::string iurl;
-        std::map<std::string, std::string> tokens;
-        std::map<std::string, std::string> ext_tokens;
-        std::map<std::string, std::string> native_data_tokens;
+        TokenValueMap tokens;
+        TokenValueMap ext_tokens;
+        TokenValueMap native_data_tokens;
         std::map<std::string, ImageToken> native_image_tokens;
       };
 
@@ -1128,8 +1128,10 @@ namespace AdServer
         TokenToParamMap;
 
     private:
-      AdServer::Commons::Task<bool>
+      AdServer::Commons::SyncCoro<bool>
       select_adslot_campaign_creative_(
+        const CampaignIndex& config_index,
+        const CampaignConfig& const_config,
         const CreativeRequestInfo& request_params,
         const TraceAdSlotInfo& ad_slot,
         AdSlotContext& ad_slot_context,
@@ -1158,9 +1160,10 @@ namespace AdServer
         const StringVector& currency_codes)
         const noexcept;
 
-      AdServer::Commons::Task<bool>
+      AdServer::Commons::SyncCoro<bool>
       co_get_adslot_campaign_creative_(
-        const CampaignConfig* campaign_config,
+        const CampaignConfig& campaign_config,
+        const CampaignIndex& config_index,
         AdSlotResultInfo& ad_slot_result,
         AdServer::CampaignSvcs::RevenueDecimal& adsspace_system_cpm,
         const CreativeRequestInfo& core_request_params,
@@ -1179,9 +1182,10 @@ namespace AdServer
         std::string& creative_body)
         /*throw(eh::Exception)*/;
 
-      AdServer::Commons::Task<bool>
+      AdServer::Commons::SyncCoro<bool>
       co_get_site_creative_(
-        CampaignIndex* config_index,
+        const CampaignConfig& config,
+        const CampaignIndex& config_index,
         const Colocation* colocation,
         const Tag* requested_tag,
         const Tag::SizeMap& tag_sizes,
@@ -1243,7 +1247,7 @@ namespace AdServer
       instantiate_passback(
         std::string& mime_format,
         std::string& passback_body,
-        const CampaignConfig* const campaign_config,
+        const CampaignConfig& campaign_config,
         const Colocation* colocation,
         const Tag* tag,
         const char* app_format,
@@ -1256,7 +1260,7 @@ namespace AdServer
       fill_instantiate_request_params_(
         TokenValueMap& request_args,
         AccountIdList* consider_pub_pixel_accounts, // result pub pixel accounts that instantiated
-        const CampaignConfig* const campaign_config,
+        const CampaignConfig& campaign_config,
         const Colocation* colocation,
         const Tag* tag,
         const Tag::Size* tag_size,
@@ -1323,7 +1327,7 @@ namespace AdServer
 
       void
       instantiate_click_url(
-        const CampaignConfig* const campaign_config,
+        const CampaignConfig& campaign_config,
         const OptionValue& click_url,
         std::string& result_click_url,
         const unsigned long* colo_id,
@@ -1383,6 +1387,7 @@ namespace AdServer
         const RequestResultParams& request_result_params,
         const InstantiateParams& inst_params,
         const CreativeInstantiateRule& instantiate_info,
+        const CampaignConfig& campaign_config,
         const CommonAdRequestInfo& request_params,
         const AdSelectionResult& ad_selection_result,
         const AdSlotContext& ad_slot_context,
@@ -1398,7 +1403,7 @@ namespace AdServer
         AdInstantiateType ad_instantiate_type,
         CreativeParamsList& creative_params_list,
         RequestResultParams& request_result_params,
-        const CampaignConfig* const campaign_config,
+        const CampaignConfig& campaign_config,
         const Tag* tag,
         const InstantiateParams& inst_params,
         const CreativeInstantiateRule& instantiate_info,
@@ -1456,7 +1461,7 @@ namespace AdServer
 
       bool instantiate_creative_preview(
         const PreviewCreativeParams& params,
-        const CampaignConfig* const campaign_config,
+        const CampaignConfig& campaign_config,
         const Campaign* campaign,
         const Creative* creative,
         const Tag* tag,
@@ -1505,11 +1510,11 @@ namespace AdServer
         const IdVector& full_freq_caps)
         /*throw(eh::Exception)*/;
 
-      CampaignConfig_var
-      configuration(bool required = false) const
+      ConstCampaignConfigPtr
+      get_campaign_config(bool required = false) const
         /*throw(NotReady, eh::Exception)*/;
 
-      CampaignIndex_var configuration_index() const /*throw(eh::Exception)*/;
+      ConstCampaignIndexPtr get_campaign_index() const /*throw(eh::Exception)*/;
 
       void
       fill_creative_instantiate_args_(
@@ -1598,6 +1603,7 @@ namespace AdServer
 
       bool
       match_geo_channels_(
+        const CampaignConfig& campaign_config,
         const std::vector<GeoInfo>& location,
         const std::vector<GeoCoordInfo>& coord_location,
         ChannelIdList& geo_channels,
@@ -1664,7 +1670,7 @@ namespace AdServer
         const RevenueDecimal& ctr)
         noexcept;
 
-      AdServer::Commons::Task<bool>
+      AdServer::Commons::SyncCoro<bool>
       co_confirm_amounts_(
         const CampaignConfig* config,
         const Generics::Time& now,
@@ -1685,6 +1691,8 @@ namespace AdServer
         noexcept;
 
       std::string trace_campaign_selection_(
+        const CampaignConfig* used_campaign_config,
+        const CampaignIndex* used_campaign_index,
         unsigned long campaign_id,
         const TraceRequestInfo& request_params,
         const TraceAdSlotInfo& ad_slot,
@@ -1712,9 +1720,9 @@ namespace AdServer
 
       mutable SyncPolicy::Mutex lock_;
 
-      CampaignConfig_var configuration_;
+      ConstCampaignConfigPtr configuration_;
       IndexingProgress indexing_progress_;
-      CampaignIndex_var configuration_index_;
+      ConstCampaignIndexPtr configuration_index_;
       PassbackTemplateMap passback_templates_;
 
       Generics::TaskRunner_var task_runner_;
@@ -1730,11 +1738,11 @@ namespace AdServer
     typedef ReferenceCounting::SmartPtr<CampaignManagerCore>
       CampaignManagerCore_var;
   inline
-  CampaignConfig_var
-  CampaignManagerCore::configuration(bool required) const
+  ConstCampaignConfigPtr
+  CampaignManagerCore::get_campaign_config(bool required) const
     /*throw(NotReady, eh::Exception)*/
   {
-    CampaignConfig_var res;
+    ConstCampaignConfigPtr res;
 
     {
       SyncPolicy::ReadGuard guard(lock_);
@@ -1751,8 +1759,8 @@ namespace AdServer
   }
 
   inline
-  CampaignIndex_var
-  CampaignManagerCore::configuration_index() const /*throw(eh::Exception)*/
+  ConstCampaignIndexPtr
+  CampaignManagerCore::get_campaign_index() const /*throw(eh::Exception)*/
   {
     SyncPolicy::ReadGuard guard(lock_);
     return configuration_index_;

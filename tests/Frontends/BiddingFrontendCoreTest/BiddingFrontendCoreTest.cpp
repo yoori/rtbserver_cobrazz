@@ -547,7 +547,7 @@ namespace
   {
   public:
     Generics::SignedUuid verify(
-      const String::SubString&,
+      std::string_view,
       KeyType = PERSISTENT) const override
     {
       throw std::runtime_error("MockUserIdController::verify is not implemented");
@@ -584,7 +584,8 @@ namespace
           callback,
           1,
           "bf-core-test-timeout")),
-        sources(std::make_shared<AdServer::Bidding::SourceMap>()),
+        sources(
+          std::make_shared<AdServer::Bidding::RequestInfoFiller::SourceMap>()),
         account_traits(
           std::make_shared<AdServer::Bidding::RequestInfoFiller::AccountTraitsById>()),
         stats(new AdServer::StatHolder())
@@ -642,8 +643,10 @@ namespace
       params.trace_mapping = false;
       params.enable_profile_referer = true;
 
+      ext_config =
+        new AdServer::Bidding::BiddingFrontendCore::ExtConfig;
       core = std::make_unique<AdServer::Bidding::BiddingFrontendCore>(params);
-      core->set_config(new AdServer::Bidding::BiddingFrontendCore::ExtConfig);
+      core->set_config(ext_config);
 
       bid_workers->activate_object();
       timeout_workers->activate_object();
@@ -664,11 +667,12 @@ namespace
       new MockUserIdController;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers;
     std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers;
-    std::shared_ptr<AdServer::Bidding::SourceMap> sources;
+    std::shared_ptr<AdServer::Bidding::RequestInfoFiller::SourceMap> sources;
     std::shared_ptr<AdServer::Bidding::RequestInfoFiller::AccountTraitsById>
       account_traits;
     AdServer::StatHolder_var stats;
     std::shared_ptr<AdServer::Bidding::RequestInfoFiller> request_info_filler;
+    AdServer::Bidding::BiddingFrontendCore::ExtConfig_var ext_config;
     std::unique_ptr<AdServer::Bidding::BiddingFrontendCore> core;
   };
 

@@ -1,3 +1,5 @@
+#include <string_view>
+
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 
 #include "RequestInfoFiller.hpp"
@@ -360,7 +362,10 @@ namespace AdServer::UserBind
       {
         try
         {
-          request_info.user_id = common_module_->user_id_controller()->verify(request_info.short_external_id).uuid();
+          request_info.user_id = common_module_->user_id_controller()->verify(
+            std::string_view(
+              request_info.short_external_id.data(),
+              request_info.short_external_id.size())).uuid();
           request_info.short_external_id.clear();
           request_info.generate_external_id = true;
         }

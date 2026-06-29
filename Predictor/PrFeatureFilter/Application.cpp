@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <cmath>
+#include <string_view>
 #include <unordered_set>
 
 #include <Generics/AppUtils.hpp>
@@ -171,7 +172,9 @@ Application_::main(int& argc, char** argv)
         if(!line.empty())
         {
           unsigned long feature_id;
-          if(!String::StringManip::str_to_int(line, feature_id))
+          if(!String::StringManip::str_to_int(
+            std::string_view(line.data(), line.size()),
+            feature_id))
           {
             Stream::Error ostr;
             ostr << "can't parse feature '" << line << "'";
@@ -260,5 +263,4 @@ main(int argc, char** argv)
 
   return 0;
 }
-
 

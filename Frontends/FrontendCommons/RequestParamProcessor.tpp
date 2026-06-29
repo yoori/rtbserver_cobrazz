@@ -428,9 +428,9 @@ namespace FrontendCommons
 
   inline
   std::string
-  normalize_ifa(const String::SubString& idfa)
+  normalize_ifa(std::string_view idfa)
   {
-    std::string res = idfa.str();
+    std::string res(idfa);
     String::AsciiStringManip::to_lower(res);
 
     std::string norm_res;

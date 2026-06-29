@@ -296,7 +296,7 @@ namespace CampaignSvcs
     return result;
   }
 
-  CampaignConfig_var
+  CampaignConfigPtr
   CampaignConfigSource::update(const CampaignConfig* old_config)
     /*throw(Exception)*/
   {
@@ -326,7 +326,7 @@ namespace CampaignSvcs
           }
 
           Generics::Time now = Generics::Time::get_time_of_day();
-          CampaignConfig_var new_config = new CampaignConfig();
+          CampaignConfigPtr new_config = std::make_shared<CampaignConfig>();
           ConfigUpdateLinks config_update_links;
 
           for(unsigned long portion = 0; portion < PORTIONS_NUMBER; ++portion)
@@ -490,7 +490,7 @@ namespace CampaignSvcs
       throw Exception(ostr, "ADS-ICON-5000");
     }
 
-    return CampaignConfig_var();
+    return {};
   }
 
   unsigned long

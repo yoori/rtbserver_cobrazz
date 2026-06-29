@@ -15,7 +15,6 @@
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 
 #include "CampaignManagerCore.hpp"
-#include "CreativeTemplate.hpp"
 
 namespace AdServer
 {
@@ -23,41 +22,7 @@ namespace AdServer
   {
     namespace
     {
-      typedef Generics::LastPtr<CampaignConfig> LastCampaignConfig_var;
-      typedef Generics::LastPtr<CampaignIndex> LastCampaignIndex_var;
-
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-      AdServer::CampaignSvcs::CreativeTemplateType
-      adopt_template_type(
-        CreativeTemplateFactory::Handler::Type type_val)
-      {
-        if(type_val == CreativeTemplateFactory::Handler::CTT_TEXT)
-        {
-          return AdServer::CampaignSvcs::CTT_TEXT;
-        }
-        else if(type_val == CreativeTemplateFactory::Handler::CTT_XSLT)
-        {
-          return AdServer::CampaignSvcs::CTT_XSLT;
-        }
-
-        throw Exception("Unknown template type");
-      }
-
-      void
-      pack_option_token_map(
-        AdServer::CampaignSvcs::OptionValueSeq& res,
-        const OptionTokenValueMap& option_values)
-      {
-        res.length(option_values.size());
-        CORBA::ULong i = 0;
-        for(OptionTokenValueMap::const_iterator it = option_values.begin();
-            it != option_values.end(); ++it, ++i)
-        {
-          res[i].option_id = it->second.option_id;
-          res[i].value << it->second.value;
-        }
-      }
     }
 
     void
@@ -103,13 +68,13 @@ namespace AdServer
     {
       static const char* FUN = "CampaignManagerCore::check_config()";
 
-      CampaignIndex_var configuration_index;
-      CampaignConfig_var new_config;
+      CampaignIndexPtr configuration_index;
+      CampaignConfigPtr new_config;
 
       try
       {
-        CampaignConfig_var old_config = configuration();
-        new_config = campaign_config_source_->update(old_config);
+        ConstCampaignConfigPtr old_config = get_campaign_config();
+        new_config = campaign_config_source_->update(old_config.get());
       }
       catch(const eh::Exception& e)
       {
@@ -120,14 +85,14 @@ namespace AdServer
 
       Generics::Time master_stamp;
 
-      if(new_config.in())
+      if(new_config)
       {
         master_stamp = new_config->master_stamp;
       }
       else
       {
-        CampaignConfig_var old_config = configuration();
-        if(old_config.in())
+        ConstCampaignConfigPtr old_config = get_campaign_config();
+        if(old_config)
         {
           master_stamp = old_config->master_stamp;
         }
@@ -152,9 +117,9 @@ namespace AdServer
             master_stamp.get_gm_time();
 
           SyncPolicy::WriteGuard guard(lock_);
-          configuration_index_.swap(configuration_index);
+          configuration_index_.reset();
         }
-        else if(new_config.in())
+        else if(new_config)
         {
           if (logger_->log_level() >= TraceLevel::MIDDLE)
           {
@@ -165,7 +130,8 @@ namespace AdServer
               new_config->tags.size() << " tags.";
           }
 
-          configuration_index = new CampaignIndex(new_config, logger_);
+          configuration_index =
+            std::make_shared<CampaignIndex>(new_config, logger_);
 
           if(configuration_index->index_campaigns(
                &indexing_progress_,
@@ -178,11 +144,11 @@ namespace AdServer
                 ": Campaign index constructed.";
             }
 
-            precalculate_pub_pixel_accounts_(new_config);
+            precalculate_pub_pixel_accounts_(new_config.get());
 
             SyncPolicy::WriteGuard guard(lock_);
-            configuration_index_.swap(configuration_index);
-            configuration_.swap(new_config);
+            configuration_index_ = configuration_index;
+            configuration_ = new_config;
           }
           else if (logger_->log_level() >= TraceLevel::MIDDLE)
           {
@@ -197,15 +163,6 @@ namespace AdServer
         Stream::Error ostr;
         ostr << FUN << ": eh::Exception caught: " << e.what();
         callback_->critical(ostr.str(), "ADS-IMPL-5091");
-      }
-
-      if (configuration_index.in())
-      {
-        LastCampaignIndex_var last_campaign_index(configuration_index.retn());
-      }
-      if (new_config.in())
-      {
-        LastCampaignConfig_var last_campaign_config(new_config.retn());
       }
 
       try
@@ -511,19 +468,20 @@ namespace AdServer
       }
     }
 
-    CampaignConfig_var
+    ConstCampaignConfigPtr
     CampaignManagerCore::get_config(
       const ConfigRequestInfo& get_config_props)
       /*throw(Exception)*/
     {
       static_cast<void>(get_config_props);
 
-      CampaignConfig_var config = configuration();
+      ConstCampaignConfigPtr config = get_campaign_config();
 
-      if(config.in() == 0)
+      if(!config)
       {
-        config = new CampaignConfig();
-        config->cost_limit = RevenueDecimal::ZERO;
+        CampaignConfigPtr new_config = std::make_shared<CampaignConfig>();
+        new_config->cost_limit = RevenueDecimal::ZERO;
+        config = new_config;
       }
 
       return config;

@@ -72,7 +72,7 @@ namespace AdServer
 
   Generics::SignedUuid
   UserIdController::verify(
-    const String::SubString& uid_str,
+    std::string_view uid_str,
     KeyType key_type) const
     /*throw(eh::Exception)*/
   {
@@ -140,7 +140,7 @@ namespace AdServer
   UserIdController::verify_(
     CheckUserIdMap& cache,
     const Generics::SignedUuidVerifier* verifier,
-    const String::SubString& uid_str,
+    std::string_view uid_str,
     const Commons::UserIdBlackList& user_id_black_list,
     bool data_expected)
     /*throw(eh::Exception)*/
@@ -149,14 +149,15 @@ namespace AdServer
     {
       return probe_generator.construct();
     }
-    Generics::StringHashAdapter uid_str_hash(uid_str);
+    const String::SubString uid_substr(uid_str.data(), uid_str.size());
+    Generics::StringHashAdapter uid_str_hash(uid_substr);
     CheckUserIdMap::const_iterator it = cache.find(uid_str_hash);
     if(it != cache.end())
     {
       return it->second;
     }
 
-    Generics::SignedUuid res = verifier->verify(uid_str, data_expected);
+    Generics::SignedUuid res = verifier->verify(uid_substr, data_expected);
     if (user_id_black_list.is_blacklisted(res.uuid()))
     {
       // user_id present in blacklist, return NULL UID.
@@ -241,7 +242,7 @@ namespace AdServer
   Generics::Uuid
   UserIdController::get_by_ssp_user_id(
     const Generics::Uuid& ssp_user_id,
-    const String::SubString& /*source_id*/,
+    std::string_view /*source_id*/,
     uint8_t /*data_marker*/)
     /*throw(eh::Exception)*/
   {
@@ -294,7 +295,7 @@ namespace AdServer
   Generics::Uuid
   UserIdController::get_by_ssp_user_id_v0_(
     const Generics::Uuid& uuid,
-    const String::SubString& source_id)
+    std::string_view source_id)
     /*throw(eh::Exception)*/
   {
     uint32_t seed = Generics::CRC::quick(

@@ -2,6 +2,7 @@
 
 #include <memory_resource>
 #include <string>
+#include <string_view>
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -25,7 +26,7 @@ namespace FrontendCommons
 
   inline
   std::string
-  normalize_ifa(const String::SubString& idfa);
+  normalize_ifa(std::string_view idfa);
 
   template<typename RequestInfoType>
   struct RequestParamProcessor:

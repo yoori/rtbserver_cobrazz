@@ -56,9 +56,7 @@ namespace AdServer::UserInfoSvcs
 namespace AdServer::Bidding
 {
   class BidRequestState;
-  class RequestParamsHolder;
-  typedef ReferenceCounting::SmartPtr<BidRequestState>
-    BidRequestState_var;
+  using BidRequestState_var = std::shared_ptr<BidRequestState>;
   class OpenRtbBidRequestState;
   class GoogleBidRequestState;
 
@@ -271,7 +269,7 @@ namespace AdServer::Bidding
     Configuration_var frontend_config_;
     CommonModule_var common_module_;
     unsigned long colo_id_;
-    std::shared_ptr<SourceMap> sources_;
+    std::shared_ptr<RequestInfoFiller::SourceMap> sources_;
     std::string server_id_;
     std::shared_ptr<RequestInfoFiller> request_info_filler_;
     std::shared_ptr<RequestInfoFiller::AccountTraitsById> account_traits_;

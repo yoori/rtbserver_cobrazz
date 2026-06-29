@@ -1,14 +1,12 @@
 #pragma once
 
 #include <string>
-#include "CampaignManagerTypes.hpp"
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 namespace AdServer::Bidding
 {
-  template<typename StringType>
+  template<typename TokenSeqType, typename StringType>
   inline void add_token(
-    AdServer::Bidding::CampaignManager::TokenSeq& tokens,
+    TokenSeqType& tokens,
     const char* token_name,
     const StringType& token_value)
   {

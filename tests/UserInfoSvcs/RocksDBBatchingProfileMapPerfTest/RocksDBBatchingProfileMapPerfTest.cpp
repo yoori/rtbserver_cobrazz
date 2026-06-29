@@ -12,7 +12,7 @@
 
 #include <sys/resource.h>
 
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/SyncCoro.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/Time.hpp>
@@ -142,7 +142,7 @@ namespace
   }
 
   template<typename ProfileMap>
-  AdServer::Commons::Task<Generics::ConstSmartMemBuf_var>
+  AdServer::Commons::SyncCoro<Generics::ConstSmartMemBuf_var>
   co_read_profile(
     ProfileMap& profile_map,
     const std::string& key)
@@ -151,7 +151,7 @@ namespace
   }
 
   template<typename ProfileMap>
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   co_write_profile(
     ProfileMap& profile_map,
     const std::string& key,

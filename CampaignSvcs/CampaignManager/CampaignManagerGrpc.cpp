@@ -3180,7 +3180,7 @@ namespace AdServer::CampaignSvcs
     {
       CampaignManagerCore::ConfigRequestInfo get_config_info;
       get_config_info.geo_channels = request.geo_channels();
-      CampaignConfig_var core_config = core_->get_config(get_config_info);
+      ConstCampaignConfigPtr core_config = core_->get_config(get_config_info);
       pack_config(
         *core_config,
         get_config_info.geo_channels,

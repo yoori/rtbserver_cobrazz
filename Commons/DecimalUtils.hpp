@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <string_view>
+
 #include <Generics/CommonDecimal.hpp>
 #include <String/SubString.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -27,6 +30,20 @@ namespace Commons
   DecimalType
   extract_decimal(
     const String::SubString& str,
+    Generics::DecimalMulRemainder round_type = Generics::DMR_ROUND,
+    bool check_format = false) /*throw(typename DecimalType::Overflow, typename DecimalType::NotNumber)*/;
+
+  template<typename DecimalType>
+  DecimalType
+  extract_decimal(
+    std::string_view str,
+    Generics::DecimalMulRemainder round_type = Generics::DMR_ROUND,
+    bool check_format = false) /*throw(typename DecimalType::Overflow, typename DecimalType::NotNumber)*/;
+
+  template<typename DecimalType>
+  DecimalType
+  extract_decimal(
+    const std::string& str,
     Generics::DecimalMulRemainder round_type = Generics::DMR_ROUND,
     bool check_format = false) /*throw(typename DecimalType::Overflow, typename DecimalType::NotNumber)*/;
 }
@@ -244,6 +261,34 @@ namespace Commons
     }
 
     return result;
+  }
+
+  template<typename DecimalType>
+  DecimalType
+  extract_decimal(
+    std::string_view str,
+    Generics::DecimalMulRemainder round_type,
+    bool check_format) /*throw(typename DecimalType::Overflow, typename DecimalType::NotNumber)*/
+  {
+    return extract_decimal<DecimalType>(
+      str.empty() ?
+        String::SubString() :
+        String::SubString(str.data(), str.size()),
+      round_type,
+      check_format);
+  }
+
+  template<typename DecimalType>
+  DecimalType
+  extract_decimal(
+    const std::string& str,
+    Generics::DecimalMulRemainder round_type,
+    bool check_format) /*throw(typename DecimalType::Overflow, typename DecimalType::NotNumber)*/
+  {
+    return extract_decimal<DecimalType>(
+      std::string_view(str.data(), str.size()),
+      round_type,
+      check_format);
   }
 }
 }

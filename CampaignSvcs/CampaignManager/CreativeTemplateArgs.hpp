@@ -3,6 +3,8 @@
 #include <list>
 #include <set>
 #include <map>
+#include <functional>
+#include <string_view>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -30,8 +32,9 @@ namespace AdServer::CampaignSvcs
     bool operator==(const TokenMap& right) const noexcept;
   };
 
-  typedef std::map<std::string, OptionValue> OptionTokenValueMap;
-  typedef std::map<std::string, std::string> TokenValueMap;
+  typedef std::map<std::string, OptionValue, std::less<> >
+    OptionTokenValueMap;
+  typedef std::map<std::string, std::string, std::less<> > TokenValueMap;
 
   struct CreativeInstantiateRule
   {
@@ -78,6 +81,32 @@ namespace AdServer::CampaignSvcs
 
   typedef std::set<std::string> TokenSet;
 
+  struct TokenOptionValue
+  {
+    long option_id = 0;
+    std::string_view value;
+  };
+
+  class TokenOptionValueProvider
+  {
+  public:
+    TokenOptionValueProvider(
+      const TokenValueMap& request_args,
+      const OptionTokenValueMap& creative_args)
+      noexcept;
+
+    explicit
+    TokenOptionValueProvider(const OptionTokenValueMap& creative_args)
+      noexcept;
+
+    bool
+    get(std::string_view token, TokenOptionValue& value) const;
+
+  private:
+    const TokenValueMap* request_args_;
+    const OptionTokenValueMap& creative_args_;
+  };
+
   class BaseTokenProcessor: public virtual ReferenceCounting::AtomicImpl
   {
     typedef std::map<long, ReferenceCounting::SmartPtr<BaseTokenProcessor> >
@@ -91,6 +120,16 @@ namespace AdServer::CampaignSvcs
       const char* token_name,
       const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
+
+    virtual bool
+    instantiate(
+      const TokenOptionValueProvider& token_values,
+      const TokenProcessorMap& token_processors,
+      const CreativeInstantiateRule& rule,
+      const CreativeInstantiateArgs& creative_args,
+      std::string& result,
+      int max_depth = TokenTemplateProperties::MAX_TOKEN_DEPTH)
+      const /*throw(eh::Exception)*/;
 
     virtual bool
     instantiate(

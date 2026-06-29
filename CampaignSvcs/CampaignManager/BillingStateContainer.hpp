@@ -9,7 +9,7 @@
 
 #include <Generics/CompositeActiveObject.hpp>
 
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/SyncCoro.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
@@ -65,7 +65,7 @@ namespace AdServer::CampaignSvcs
       unsigned long max_use_count,
       bool optimize_campaign_ctr);
 
-    AdServer::Commons::Task<BidCheckResult>
+    AdServer::Commons::SyncCoro<BidCheckResult>
     co_check_available_bid(
       const Generics::Time& now,
       unsigned long account_id,
@@ -75,7 +75,7 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& ctr,
       const AvailableAndMinCTRSetter* ccg_setter);
 
-    AdServer::Commons::Task<BidCheckResult>
+    AdServer::Commons::SyncCoro<BidCheckResult>
     co_confirm_bid(
       const Generics::Time& now,
       unsigned long account_id,

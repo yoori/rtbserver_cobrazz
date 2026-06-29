@@ -4,6 +4,11 @@
 
 namespace AdServer::Bidding
 {
+  namespace
+  {
+    const std::string REQUIRE_DEBUG_INFO("require-debug-info");
+  }
+
   BidRequestState::BidRequestState(
     BiddingFrontendCore* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
@@ -16,7 +21,6 @@ namespace AdServer::Bidding
       debug_sink_(bid_frontend->server_id()),
       to_interrupt_(0),
       timeout_interrupted_(false),
-      request_params_(new RequestParamsHolder()),
       response_writer_(std::move(response_writer)),
       response_sent_(false)
   {}
@@ -31,7 +35,15 @@ namespace AdServer::Bidding
     }
 
     bid_frontend_->co_process_bid_request_(
-      BidRequestState_var(ReferenceCounting::add_ref(this))).start_detached(nullptr);
+      shared_from_this()).start_detached(nullptr);
+  }
+
+  std::string_view
+  BidRequestState::channel_keywords() const noexcept
+  {
+    return std::string_view(
+      request_info_.keywords.data(),
+      request_info_.keywords.size());
   }
 
   void
@@ -39,17 +51,23 @@ namespace AdServer::Bidding
   {
     try
     {
-      if(request_info_.require_debug_info.empty() && request_holder_.in())
+      String::SubString require_debug_info;
+      if(request_holder_.in())
       {
-        bid_frontend_->request_info_filler()->fill(
-          request_info_,
-          request_holder_->request(),
-          start_processing_time_);
+        const HTTP::ParamList& params = request_holder_->request().params();
+        for(const auto& param : params)
+        {
+          if(param.name == REQUIRE_DEBUG_INFO)
+          {
+            require_debug_info = param.value;
+            break;
+          }
+        }
       }
 
       {
         std::lock_guard lock(debug_sink_mutex_);
-        debug_sink_.set(String::SubString(request_info_.require_debug_info));
+        debug_sink_.set(require_debug_info);
       }
     }
     catch(...)
@@ -371,14 +389,12 @@ namespace AdServer::Bidding
     std::lock_guard lock(debug_sink_mutex_);
     if(debug_sink_.require_debug_info() &&
       !request_debug_info_printed_ &&
-      get_current_stage() != Stage::Initial &&
-      request_params_.in())
+      get_current_stage() != Stage::Initial)
     {
       debug_sink_.print_request_debug_info(
         request_info_,
-        *request_params_,
         resolved_user_id_,
-        keywords_);
+        channel_keywords());
       request_debug_info_printed_ = true;
     }
   }
@@ -402,7 +418,5 @@ namespace AdServer::Bidding
     request_holder_ = FCGI::HttpRequestHolder_var();
     request_info_.reset();
     hostname_.clear();
-    request_params_ = RequestParamsHolder_var();
-    keywords_.clear();
   }
 }

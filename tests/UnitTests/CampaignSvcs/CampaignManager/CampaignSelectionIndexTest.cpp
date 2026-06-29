@@ -277,15 +277,17 @@ namespace Test1
 
   int run()
   {
-    CampaignConfig_var campaign_config(new CampaignConfig());
+    CampaignConfigPtr campaign_config = std::make_shared<CampaignConfig>();
 
     fill(*campaign_config);
 
     Logging::Logger_var logger(
       new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
-    AdServer::CampaignSvcs::CampaignIndex_var campaign_index(
-      new AdServer::CampaignSvcs::CampaignIndex(campaign_config, logger));
+    AdServer::CampaignSvcs::CampaignIndexPtr campaign_index =
+      std::make_shared<AdServer::CampaignSvcs::CampaignIndex>(
+        campaign_config,
+        logger);
 
     campaign_index->index_campaigns();
 //  campaign_index->trace_tree(std::cout);
@@ -335,8 +337,8 @@ namespace Test1
       key.optout = true;
       key.test_request = false;
 
-      CampaignIndex_var trace_campaign_index(
-        new CampaignIndex(*campaign_index, logger));
+      CampaignIndexPtr trace_campaign_index =
+        std::make_shared<CampaignIndex>(*campaign_index, logger);
 
       trace_campaign_index->trace_indexing(
         key,
@@ -561,13 +563,15 @@ void index(const char* name, CampaignConfig* campaign_config)
 */
 using namespace AdServer::CampaignSvcs;
 
-void index_(const char* name, CampaignConfig* campaign_config)
+void index_(const char* name, CampaignConfigPtr campaign_config)
 {
   Logging::Logger_var logger(
     new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
-  CampaignIndex_var config_index(
-    new AdServer::CampaignSvcs::CampaignIndex(campaign_config, logger));
+  CampaignIndexPtr config_index =
+    std::make_shared<AdServer::CampaignSvcs::CampaignIndex>(
+      campaign_config,
+      logger);
 
 #ifdef _MEMUSAGE_TRACE_
   std::cerr << name << " : start heap state: " << std::endl;
@@ -623,35 +627,35 @@ int main() noexcept
 {
 /*
   {
-    CampaignConfig_var campaign_config(new CampaignConfig());
+    CampaignConfigPtr campaign_config = std::make_shared<CampaignConfig>();
     fill_test_campaign_config(*campaign_config, 1, 1, 1);
 //  index("1x1x1", campaign_config);
     index_("1x1x1:2", campaign_config);
   }
 
   {
-    CampaignConfig_var campaign_config(new CampaignConfig());
+    CampaignConfigPtr campaign_config = std::make_shared<CampaignConfig>();
     fill_test_campaign_config(*campaign_config, 1, 1, 100);
 //  index("1x1x100", campaign_config);
     index_("1x1x100:2", campaign_config);
   }
 
   {
-    CampaignConfig_var campaign_config(new CampaignConfig());
+    CampaignConfigPtr campaign_config = std::make_shared<CampaignConfig>();
     fill_test_campaign_config(*campaign_config, 1, 100, 100);
 //  index("1x100x100", campaign_config);
     index_("1x100x100:2", campaign_config);
   }
 
   {
-    CampaignConfig_var campaign_config(new CampaignConfig());
+    CampaignConfigPtr campaign_config = std::make_shared<CampaignConfig>();
     fill_test_campaign_config(*campaign_config, 100, 1, 100);
 //  index("100x1x100", campaign_config);
     index_("100x1x100:2", campaign_config);
   }
 
   {
-    CampaignConfig_var campaign_config(new CampaignConfig());
+    CampaignConfigPtr campaign_config = std::make_shared<CampaignConfig>();
     fill_test_campaign_config(*campaign_config, 100, 100, 100);
 //  index("100x100x100", campaign_config);
     index_("100x100x100:2", campaign_config);

@@ -10,6 +10,7 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Coro/CallbackCoro.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Generics/Rand.hpp>
@@ -251,7 +252,7 @@ namespace AdServer::CampaignSvcs
       unsigned long max_use_count,
       bool optimize_campaign_ctr);
 
-    AdServer::Commons::Task<BidCheckResult>
+    AdServer::Commons::SyncCoro<BidCheckResult>
     co_check_available_bid(
       const Generics::Time& now,
       unsigned long account_id,
@@ -261,7 +262,7 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& ctr,
       const AvailableAndMinCTRSetter* ccg_setter);
 
-    AdServer::Commons::Task<BidCheckResult>
+    AdServer::Commons::SyncCoro<BidCheckResult>
     co_confirm_bid(
       const Generics::Time& now,
       unsigned long account_id,
@@ -308,7 +309,7 @@ namespace AdServer::CampaignSvcs
     template<typename CallType,
       typename CallResultType,
       typename CallArgType>
-    AdServer::Commons::Task<bool>
+    AdServer::Commons::SyncCoro<bool>
     co_billing_server_call_(
       CallResultType& call_result,
       unsigned long service_index,
@@ -462,7 +463,7 @@ namespace AdServer::CampaignSvcs
 
   BillingStateContainer::~BillingStateContainer() noexcept = default;
 
-  AdServer::Commons::Task<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
   BillingStateContainer::co_check_available_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -482,7 +483,7 @@ namespace AdServer::CampaignSvcs
       ccg_setter);
   }
 
-  AdServer::Commons::Task<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
   BillingStateContainer::co_confirm_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -565,7 +566,7 @@ namespace AdServer::CampaignSvcs
     return result;
   }
 
-  AdServer::Commons::Task<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
   BillingStateContainer::Impl::co_check_available_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -712,7 +713,7 @@ namespace AdServer::CampaignSvcs
     co_return result;
   }
 
-  AdServer::Commons::Task<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
   BillingStateContainer::Impl::co_confirm_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -971,7 +972,7 @@ namespace AdServer::CampaignSvcs
   template<typename CallType,
     typename CallResultType,
     typename CallArgType>
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   BillingStateContainer::Impl::co_billing_server_call_(
     CallResultType& call_result,
     unsigned long service_index,

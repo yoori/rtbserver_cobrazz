@@ -4,6 +4,8 @@
 #include "KeywordFormatter.hpp"
 #include "ClickStarBidRequestState.hpp"
 
+#include <Commons/GrpcAlgs.hpp>
+
 namespace AdServer::Bidding
 {
   namespace
@@ -15,28 +17,28 @@ namespace AdServer::Bidding
 
     namespace Response::Header
     {
-        const String::SubString CONTENT_TYPE("Content-Type");
-      }
+      const std::string CONTENT_TYPE("Content-Type");
+    }
 
     namespace Response::Type
-      {
-        const String::SubString JSON("application/json");
-      }
+    {
+      const std::string JSON("application/json");
+    }
 
     namespace Response::Json
-      {
-        const String::SubString CPC_PRICE("bid");
-        const String::SubString TITLE("title");
-        const String::SubString DESCRIPTION("description");
-        const String::SubString IMAGE("image");
-        const String::SubString ICON("icon");
-        const String::SubString CLICK_URL("click_url");
-        const String::SubString TTL("ttl");
-        const unsigned long TTL_VALUE = 86400;
-      }
+    {
+      const std::string CPC_PRICE("bid");
+      const std::string TITLE("title");
+      const std::string DESCRIPTION("description");
+      const std::string IMAGE("image");
+      const std::string ICON("icon");
+      const std::string CLICK_URL("click_url");
+      const std::string TTL("ttl");
+      const unsigned long TTL_VALUE = 86400;
+    }
 
-    const String::SubString CLICKSTAR_CLIENT("directnative");
-    const String::SubString CLICKSTAR_SIZE("492x328");
+    const std::string CLICKSTAR_CLIENT("directnative");
+    const std::string CLICKSTAR_SIZE("492x328");
     const CampaignSvcs::RevenueDecimal EXPECTED_CTR("0.002");
   }
 
@@ -66,9 +68,7 @@ namespace AdServer::Bidding
       const FCGI::HttpRequest& request = request_holder_->request();
 
       bid_frontend_->request_info_filler()->adxml_request_info_filler()->fill_by_request(
-        *request_params_,
         request_info_,
-        keywords_,
         request,
         true, // require icon
         CLICKSTAR_CLIENT,
@@ -101,15 +101,11 @@ namespace AdServer::Bidding
   {
     //static const char* FUN = "ClickStarBidRequestState::write_response()";
 
-    AdServer::Bidding::CampaignManager::RequestParams& request_params =
-      *request_params_;
-
     std::ostringstream response_ostr;
 
     fill_response_(
       response_ostr,
-      request_info(),
-      request_params,
+      request_info_,
       campaign_match_result);
 
     // write response
@@ -166,7 +162,6 @@ namespace AdServer::Bidding
   ClickStarBidRequestState::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
-    const AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
     const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
@@ -215,7 +210,7 @@ namespace AdServer::Bidding
     CampaignSvcs::RevenueDecimal cpc_price =
       CampaignSvcs::RevenueDecimal::div(
         CampaignSvcs::RevenueDecimal::div(
-          CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             ad_slot_result.selected_creatives[0].pub_ecpm),
           EXPECTED_CTR),
         CampaignSvcs::RevenueDecimal(false, 100000, 0));
@@ -224,7 +219,7 @@ namespace AdServer::Bidding
 
     if(ad_slot_result.native_data_tokens.size() >= 1)
     {
-      const AdServer::Bidding::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[0];
       root_json.add_string(
         Response::Json::TITLE,
@@ -233,7 +228,7 @@ namespace AdServer::Bidding
 
     if(ad_slot_result.native_data_tokens.size() >= 2)
     {
-      const AdServer::Bidding::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[1];
       root_json.add_string(
         Response::Json::DESCRIPTION,
@@ -243,7 +238,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_image_tokens.size() >= 1)
     {
       // NITE_MAIN
-      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
       root_json.add_string(
         Response::Json::IMAGE,
@@ -253,7 +248,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_image_tokens.size() >= 2)
     {
       // NITE_ICON
-      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
         ad_slot_result.native_image_tokens[1];
       root_json.add_string(
         Response::Json::ICON,

@@ -213,7 +213,7 @@ namespace AdServer
 
     public:
       CampaignIndex(
-        const CampaignConfig* campaign_config,
+        ConstCampaignConfigPtr campaign_config,
         Logging::Logger* logger)
         noexcept;
 
@@ -228,8 +228,8 @@ namespace AdServer
         Generics::ActiveObject* interrupter = 0)
         /*throw(eh::Exception)*/;
 
-      ConstCampaignConfig_var
-      configuration() const /*throw(eh::Exception)*/;
+      ConstCampaignConfigPtr
+      get_campaign_config() const /*throw(eh::Exception)*/;
 
       struct Key
       {
@@ -391,7 +391,7 @@ namespace AdServer
         noexcept;
 
       void
-      trace_tree(std::ostream& ostr) noexcept;
+      trace_tree(std::ostream& ostr) const noexcept;
 
       void
       trace_indexing(
@@ -423,10 +423,6 @@ namespace AdServer
         bool filter_empty_destination,
         std::ostream& ostr)
         /*throw(Exception, eh::Exception)*/;
-
-    protected:
-      virtual
-      ~CampaignIndex() noexcept = default;
 
     private:
       typedef ReferenceCounting::SmartPtr<const Campaign> ConstCampaign_var;
@@ -685,7 +681,7 @@ namespace AdServer
 
       Logging::Logger_var logger_;
 
-      ConstCampaignConfig_var campaign_config_;
+      ConstCampaignConfigPtr campaign_config_;
       OrderedCampaignMap ordered_campaigns_;
 
       // indexing temporary helpers
@@ -695,8 +691,8 @@ namespace AdServer
       CampaignCellListHolder_var campaign_cell_holder_;
     };
 
-    typedef ReferenceCounting::SmartPtr<CampaignIndex>
-      CampaignIndex_var;
+    using CampaignIndexPtr = std::shared_ptr<CampaignIndex>;
+    using ConstCampaignIndexPtr = std::shared_ptr<const CampaignIndex>;
   }
 }
 
@@ -888,8 +884,8 @@ namespace AdServer
 
     // CampaignIndex
     inline
-    ConstCampaignConfig_var
-    CampaignIndex::configuration() const /*throw(eh::Exception)*/
+    ConstCampaignConfigPtr
+    CampaignIndex::get_campaign_config() const /*throw(eh::Exception)*/
     {
       return campaign_config_;
     }

@@ -87,7 +87,7 @@ namespace AdServer::UserInfoSvcs
   UserBindContainer::~UserBindContainer() noexcept
   {}
 
-  AdServer::Commons::Task<UserBindContainer::UserInfo>
+  AdServer::Commons::SyncCoro<UserBindContainer::UserInfo>
   UserBindContainer::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
@@ -106,7 +106,7 @@ namespace AdServer::UserInfoSvcs
       for_set_cookie);
   }
 
-  AdServer::Commons::Task<UserBindContainer::UserInfo>
+  AdServer::Commons::SyncCoro<UserBindContainer::UserInfo>
   UserBindContainer::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,

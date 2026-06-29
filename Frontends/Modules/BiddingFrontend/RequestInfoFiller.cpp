@@ -181,14 +181,14 @@ namespace CreativeCategory
 
 namespace GooglePlay
 {
-  const std::string_view STORE_HOST("play.google.com");
-  const std::string_view STORE_PATH("/store/apps/details");
-  const std::string_view STORE_APP_ID("id");
+  const std::string STORE_HOST("play.google.com");
+  const std::string STORE_PATH("/store/apps/details");
+  const std::string STORE_APP_ID("id");
 }
 
 namespace AppStore
 {
-  const std::string_view STORE_HOST("itunes.apple.com");
+  const std::string STORE_HOST("itunes.apple.com");
 }
 
 namespace AdServer::Commons
@@ -209,7 +209,8 @@ namespace AdServer::Bidding
     const std::string_view APPLICATION_VERSION("1");
     const std::string_view APP_FORMAT("html");
 
-    // https://storage.googleapis.com/adx-rtb-dictionaries/publisher-excludable-creative-attributes.txt
+    // https://storage.googleapis.com/adx-rtb-dictionaries/
+    // publisher-excludable-creative-attributes.txt
     //
     const google::protobuf::int32 UP_EXPANDING[] =
     {
@@ -336,12 +337,6 @@ namespace AdServer::Bidding
       return lhs == rhs;
     }
 
-    String::SubString
-    to_sub_string(std::string_view value) noexcept
-    {
-      return String::SubString(value.data(), value.size());
-    }
-
     std::string_view
     to_string_view(const String::SubString& value) noexcept
     {
@@ -449,12 +444,12 @@ namespace AdServer::Bidding
     }
 
     void fill_token(
-      AdServer::Bidding::CampaignManager::NativeDataToken&,
+      AdServer::Bidding::RequestInfo::NativeDataToken&,
       const NativeData&)
     {}
 
     void fill_token(
-      AdServer::Bidding::CampaignManager::NativeImageToken& res_token,
+      AdServer::Bidding::RequestInfo::NativeImageToken& res_token,
       const NativeImage& image_asset)
     {
       res_token.width = image_asset.width;
@@ -495,7 +490,7 @@ namespace AdServer::Bidding
           }
           else
           {
-            CampaignManager::assign_string(res_seq[i].name, dict[asset_type]);
+            res_seq[i].name = dict[asset_type];
             res_seq[i].required = it->required;
             fill_token(res_seq[i], *it);
             i++;
@@ -513,7 +508,7 @@ namespace AdServer::Bidding
     void
     fill_video_size(
       KeywordFormatter& kw_fmt,
-      AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request,
+      AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request,
       unsigned long width,
       unsigned long height)
     {
@@ -576,7 +571,7 @@ namespace AdServer::Bidding
       result += "{\"ssp_tag_id\":\"";
       String::StringManip::json_escape_append(
         result,
-        to_sub_string(additional_info.tagid));
+        std::string_view(additional_info.tagid));
       result += '"';
 
       auto add_optional_metric =
@@ -781,9 +776,15 @@ namespace AdServer::Bidding
         {5, "Interstitial"}
       })
   {
-    source_mapping_.emplace(Generics::SubStringHashAdapter(to_sub_string("MegafonID")), "megafon-stableid");
-    source_mapping_.emplace(Generics::SubStringHashAdapter(to_sub_string("quietmedia")), "megafon-stableid");
-    source_mapping_.emplace(Generics::SubStringHashAdapter(to_sub_string("const.uno")), "megafon-stableid");
+    source_mapping_.emplace(
+      Generics::SubStringHashAdapter(String::SubString("MegafonID")),
+      "megafon-stableid");
+    source_mapping_.emplace(
+      Generics::SubStringHashAdapter(String::SubString("quietmedia")),
+      "megafon-stableid");
+    source_mapping_.emplace(
+      Generics::SubStringHashAdapter(String::SubString("const.uno")),
+      "megafon-stableid");
 
     if(user_agent_filter_path[0])
     {
@@ -823,7 +824,7 @@ namespace AdServer::Bidding
 
     unsigned long si;
     if(!String::StringManip::str_to_int(
-      to_sub_string(name.substr(adslot_length, dot_pos - adslot_length)), si))
+      name.substr(adslot_length, dot_pos - adslot_length), si))
     {
       return false;
     }
@@ -880,26 +881,24 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::fill_by_google_request(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
-    std::string& keywords,
     GoogleAdSlotContextArray& as_slots_context,
     const ::Google::BidRequest& bid_request) const
     /*throw(InvalidParamException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::fill_by_google_request()";
-
-    CampaignManager::assign_string(request_params.context_info.client, Google::APPLICATION);
-    CampaignManager::assign_string(request_params.context_info.client_version, Google::APPLICATION_VERSION);
-    request_params.common_info.request_type = AdServer::CampaignSvcs::AR_GOOGLE;
+    RequestInfo::PmrString& keywords = request_info.keywords;
+    request_info.client = Google::APPLICATION;
+    request_info.client_version = Google::APPLICATION_VERSION;
+    request_info.request_type = AdServer::CampaignSvcs::AR_GOOGLE;
 
     // Common data
 
-    init_request_param(request_params, request_info);
+    init_request_param(request_info);
 
     std::string ip_str;
 
-    if (bid_request.has_ip() && bid_request.ip().size() == 3)
+    if(bid_request.has_ip() && bid_request.ip().size() == 3)
     {
       const std::string& ip = bid_request.ip();
       unsigned ip_byte1 = static_cast<unsigned char>(ip[0]);
@@ -914,16 +913,15 @@ namespace AdServer::Bidding
       ip_str += ".0";
     }
 
-      fill_by_ip(
-        request_info,
-        request_params,
-        ip_str);
+    fill_by_ip(
+      request_info,
+      ip_str);
 
-    request_params.common_info.user_status = static_cast<std::size_t>(
+    request_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
 
     bool application = false;
-    if (bid_request.has_mobile())
+    if(bid_request.has_mobile())
     {
       const ::Google::BidRequest_Mobile& mobile = bid_request.mobile();
       application = mobile.has_is_app() && mobile.is_app();
@@ -932,7 +930,6 @@ namespace AdServer::Bidding
     if(bid_request.has_user_agent() || application)
     {
       fill_by_user_agent(
-        request_params,
         request_info,
         bid_request.user_agent(),
         request_info.filter_request,
@@ -1032,18 +1029,16 @@ namespace AdServer::Bidding
       catch(eh::Exception&)
       {}
 
-      fill_by_referer(request_params, request_info.search_words, url);
+      fill_by_referer(request_info, request_info.search_words, url);
     }
 
-    if(request_params.common_info.referer.empty())
+    if(request_info.referer.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
 
-    CampaignManager::assign_string(request_params.search_words, request_info.search_words);
-
     // Test data
-    request_params.common_info.log_as_test =
+    request_info.log_as_test =
       bid_request.has_is_test() && bid_request.is_test();
 
     // User id
@@ -1063,15 +1058,15 @@ namespace AdServer::Bidding
 
     if (bid_request.has_hosted_match_data())
     {
-      verify_user_id_(bid_request.hosted_match_data(), request_info.source_id, request_params);
+      verify_user_id_(bid_request.hosted_match_data(), request_info.source_id, request_info);
     }
     else if(!external_user_id.empty() && use_external_user_id_(external_user_id))
     {
-      CampaignManager::assign_string(request_params.common_info.external_user_id, (
+      request_info.external_user_id = (
         !request_info.source_id.empty() ?
           std::string(request_info.source_id.data(), request_info.source_id.size()) +
             "/" + external_user_id :
-        external_user_id));
+        external_user_id);
     }
 
     bool is_video = false;
@@ -1097,16 +1092,16 @@ namespace AdServer::Bidding
     }
 
     as_slots_context.resize(bid_request.adslot_size());
-    request_params.ad_slots.clear();
-    request_params.ad_slots.reserve(bid_request.adslot_size());
+    request_info.ad_slots.clear();
+    request_info.ad_slots.reserve(bid_request.adslot_size());
     for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
     {
-      request_params.ad_slots.emplace_back(request_params.arena_.get());
+      request_info.ad_slots.emplace_back(request_info.resource());
     }
     for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
     {
-      AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
-        request_params.ad_slots[slot_i];
+      AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request =
+        request_info.ad_slots[slot_i];
 
       init_adslot(ad_slot_request);
 
@@ -1170,25 +1165,27 @@ namespace AdServer::Bidding
           const ::Google::BidRequest_Video& video = bid_request.video();
           // https://developers.google.com/authorized-buyers/rtb/adx-video-guide
           // define that all INSTREAM support vpaid
-          if(!((video.has_placement() && video.placement() == ::Google::BidRequest_Video_Placement_INSTREAM) ||
+          if(!((video.has_placement() &&
+              video.placement() ==
+                ::Google::BidRequest_Video_Placement_INSTREAM) ||
             test_value_in_list(
               video.allowed_video_formats(),
               ::Google::BidRequest_Video_VideoFormat_VPAID_JS)))
           {
-            CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID1);
-            CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID2);
+            ad_slot_request.exclude_categories[res_cat_i++] = CreativeCategory::VPAID1;
+            ad_slot_request.exclude_categories[res_cat_i++] = CreativeCategory::VPAID2;
           }
         }
         else
         {
-          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID1);
-          CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], CreativeCategory::VPAID2);
+          ad_slot_request.exclude_categories[res_cat_i++] = CreativeCategory::VPAID1;
+          ad_slot_request.exclude_categories[res_cat_i++] = CreativeCategory::VPAID2;
         }
       }
 
       if (flash_exclude_size)
       {
-        CampaignManager::assign_string(ad_slot_request.exclude_categories[res_cat_i++], Google::CREATIVETYPE_FLASH_STR);
+        ad_slot_request.exclude_categories[res_cat_i++] = Google::CREATIVETYPE_FLASH_STR;
       }
 
       for(int cat_i = 0;
@@ -1199,9 +1196,7 @@ namespace AdServer::Bidding
           adslot.excluded_sensitive_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          CampaignManager::assign_string(
-            ad_slot_request.exclude_categories[res_cat_i],
-            std::string_view(cat_str, len));
+          ad_slot_request.exclude_categories[res_cat_i] = std::string_view(cat_str, len);
           ++res_cat_i;
         }
       }
@@ -1214,9 +1209,7 @@ namespace AdServer::Bidding
           adslot.excluded_product_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          CampaignManager::assign_string(
-            ad_slot_request.exclude_categories[res_cat_i],
-            std::string_view(cat_str, len));
+          ad_slot_request.exclude_categories[res_cat_i] = std::string_view(cat_str, len);
           ++res_cat_i;
         }
       }
@@ -1226,9 +1219,9 @@ namespace AdServer::Bidding
       // Video
       if(slot_is_video)
       {
-        CampaignManager::assign_string(ad_slot_request.format, OPENRTB_VAST_APP_FORMAT);
+        ad_slot_request.format = OPENRTB_VAST_APP_FORMAT;
         ad_slot_request.sizes.resize(1);
-        CampaignManager::assign_string(ad_slot_request.sizes[0], VAST_PROTOCOL_SIZE);
+        ad_slot_request.sizes[0] = VAST_PROTOCOL_SIZE;
 
         int video_max_duration = 0;
         int video_skippable_max_duration = 0;
@@ -1279,7 +1272,7 @@ namespace AdServer::Bidding
           video_min_duration / 1000;
 
         fill_vast_instantiate_type_(
-          request_params,
+          request_info,
           request_info.source_id);
 
         fill_video_size(
@@ -1290,7 +1283,7 @@ namespace AdServer::Bidding
       // Banners
       else
       {
-        CampaignManager::assign_string(ad_slot_request.format, Google::APP_FORMAT);
+        ad_slot_request.format = Google::APP_FORMAT;
 
         ad_slot_request.video_min_duration = 0;
         ad_slot_request.video_max_duration = -1;
@@ -1303,14 +1296,12 @@ namespace AdServer::Bidding
         if (size_it != debug_sizes.end())
         {
           ad_slot_request.sizes.resize(1);
-          CampaignManager::assign_string(
-            ad_slot_request.sizes[0],
-            std::string(size_it->second));
+          ad_slot_request.sizes[0] = std::string(size_it->second);
         }
         else if (!request_info.default_debug_size.empty())
         {
           ad_slot_request.sizes.resize(1);
-          CampaignManager::assign_string(ad_slot_request.sizes[0], request_info.default_debug_size);
+          ad_slot_request.sizes[0] = request_info.default_debug_size;
         }
         else if (adslot.width_size())
         {
@@ -1347,9 +1338,7 @@ namespace AdServer::Bidding
             ad_slot_context.height = adslot.height(max_size_i);
 
             ad_slot_request.sizes.resize(1);
-            CampaignManager::assign_string(
-              ad_slot_request.sizes[0],
-              make_size_string(ad_slot_context.width, ad_slot_context.height));
+            ad_slot_request.sizes[0] = make_size_string(ad_slot_context.width, ad_slot_context.height);
           }
         }
       }
@@ -1380,8 +1369,10 @@ namespace AdServer::Bidding
             ad_data.direct_deal(deal_i);
 
           if (
-            (deal.deal_type() == ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal::PREFERRED_DEAL ||
-              deal.deal_type() == ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal::PRIVATE_AUCTION) &&
+            (deal.deal_type() ==
+                ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal::PREFERRED_DEAL ||
+              deal.deal_type() ==
+                ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal::PRIVATE_AUCTION) &&
             deal.has_direct_deal_id() && deal.direct_deal_id() > 1 &&
             deal.has_fixed_cpm_micros() && deal.fixed_cpm_micros() >= 0 &&
             deal.fixed_cpm_micros() < ad_slot_context.fixed_cpm_micros)
@@ -1406,7 +1397,7 @@ namespace AdServer::Bidding
             Google::BIDFLOOR_MULTIPLIER,
             Generics::DMR_ROUND));
 
-        ad_slot_request.min_ecpm = CampaignManager::pack_decimal(min_ecpm);
+        ad_slot_request.min_ecpm = min_ecpm;
       }
       catch (const Generics::DecimalException& e)
       {
@@ -1422,8 +1413,7 @@ namespace AdServer::Bidding
             Aspect::BIDDING_FRONTEND);
         }
 
-        ad_slot_request.min_ecpm =
-          CampaignManager::pack_decimal(CampaignSvcs::RevenueDecimal::ZERO);
+        ad_slot_request.min_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
 
         ad_slot_request.passback = true;
       }
@@ -1475,17 +1465,15 @@ namespace AdServer::Bidding
       std::string ext_tag_id = std::to_string(seller_id);
       ext_tag_id += '-';
       ext_tag_id += anonymous_id.empty() ? "0" : anonymous_id;
-      CampaignManager::assign_string(
-        ad_slot_request.ext_tag_id,
-        normalize_ext_tag_id_(ext_tag_id));
+      ad_slot_request.ext_tag_id = normalize_ext_tag_id_(ext_tag_id);
 
       ad_slot_request.debug_ccg = 0;
 
       // fill creative_instantiate_type if was not filled by fill_by_referer_
       if(test_value_in_set(excluded_attributes, Google::NON_SECURE) &&
-           request_params.common_info.creative_instantiate_type[0] == '\0')
+           request_info.creative_instantiate_type[0] == '\0')
       {
-        CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
+        request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
       }
 
       if(adslot.has_viewability())
@@ -1506,7 +1494,8 @@ namespace AdServer::Bidding
       }
       else if(mobile.has_encrypted_advertising_id())
       {
-        if(mobile.encrypted_advertising_id().size() == 36 && !request_info.publisher_account_ids.empty())
+        if(mobile.encrypted_advertising_id().size() == 36 &&
+          !request_info.publisher_account_ids.empty())
         {
           for(auto p_account_it = request_info.publisher_account_ids.begin();
             p_account_it != request_info.publisher_account_ids.end(); ++p_account_it)
@@ -1541,9 +1530,9 @@ namespace AdServer::Bidding
     }
 
     // fill creative_instantiate_type if was not filled by fill_by_referer_
-    if(request_params.common_info.creative_instantiate_type[0] == '\0')
+    if(request_info.creative_instantiate_type[0] == '\0')
     {
-      CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::UNSECURE_INSTANTIATE_TYPE);
+      request_info.creative_instantiate_type = FrontendCommons::UNSECURE_INSTANTIATE_TYPE;
     }
 
     if(!request_info.idfa.empty() || !request_info.advertising_id.empty())
@@ -1571,15 +1560,15 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::fill_vast_instantiate_type_(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    RequestInfo& request_info,
     std::string_view source_id) const
     noexcept
   {
     SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
     if(source_it != sources_.end())
     {
-      request_params.ad_instantiate_type = source_it->second.vast_instantiate_type;
-      request_params.context_info.enabled_notice = (
+      request_info.ad_instantiate_type = source_it->second.vast_instantiate_type;
+      request_info.enabled_notice = (
         source_it->second.vast_notice_instantiate_type != SourceTraits::NIT_NONE) &&
         source_it->second.notice_url.empty();
     }
@@ -1587,14 +1576,14 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::fill_native_instantiate_type_(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    RequestInfo& request_info,
     std::string_view source_id) const
     noexcept
   {
     SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
     if(source_it != sources_.end())
     {
-      request_params.context_info.enabled_notice = (
+      request_info.enabled_notice = (
         source_it->second.native_notice_instantiate_type != SourceTraits::NIT_NONE);
     }
   }
@@ -1602,7 +1591,6 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::fill_request_type_(
     RequestInfo& request_info,
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     std::string_view source_id) const
     noexcept
   {
@@ -1611,22 +1599,23 @@ namespace AdServer::Bidding
     {
       if (request_info.publisher_account_ids.empty())
       {
-        request_params.publisher_account_ids.resize(1);
-        request_params.publisher_account_ids[0] = *(source_it->second.default_account_id);
+        request_info.publisher_account_ids.resize(1);
+        request_info.publisher_account_ids[0] = *(source_it->second.default_account_id);
       }
 
       if(source_it->second.request_type.present())
       {
-        request_params.common_info.request_type = *(source_it->second.request_type);
+        request_info.request_type = *(source_it->second.request_type);
       }
 
-      request_params.ad_instantiate_type = source_it->second.instantiate_type;
+      request_info.ad_instantiate_type = source_it->second.instantiate_type;
 
       request_info.notice_instantiate_type = source_it->second.notice_instantiate_type;
       request_info.vast_notice_instantiate_type = source_it->second.vast_notice_instantiate_type;
-      request_info.native_notice_instantiate_type = source_it->second.native_notice_instantiate_type;
+      request_info.native_notice_instantiate_type =
+        source_it->second.native_notice_instantiate_type;
 
-      request_params.context_info.enabled_notice = (
+      request_info.enabled_notice = (
         source_it->second.notice_instantiate_type != SourceTraits::NIT_NONE) &&
         source_it->second.notice_url.empty();
       request_info.seat = source_it->second.seat;
@@ -1646,8 +1635,8 @@ namespace AdServer::Bidding
     }
     else
     {
-      request_params.ad_instantiate_type = AdServer::CampaignSvcs::AIT_BODY;
-      request_params.context_info.enabled_notice = false;
+      request_info.ad_instantiate_type = AdServer::CampaignSvcs::AIT_BODY;
+      request_info.enabled_notice = false;
     }
   }
 
@@ -1691,42 +1680,39 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::fill_by_openrtb_request(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
-    std::string& keywords,
     JsonProcessingContext& context,
     std::string&& bid_request) const
     /*throw(InvalidParamException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
-
-    CampaignManager::assign_string(request_params.context_info.client, OPENRTB_APPLICATION);
-    CampaignManager::assign_string(request_params.context_info.client_version, OPENRTB_APPLICATION_VERSION);
-    request_params.common_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
-    request_params.common_info.user_status = static_cast<std::size_t>(
+    RequestInfo::PmrString& keywords = request_info.keywords;
+    request_info.client = OPENRTB_APPLICATION;
+    request_info.client_version = OPENRTB_APPLICATION_VERSION;
+    request_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
+    request_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
 
-    init_request_param(request_params, request_info);
+    init_request_param(request_info);
     request_info.additional_info.clear();
 
-    if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_URL)
+    if(request_info.ad_instantiate_type == AdServer::CampaignSvcs::AIT_URL)
     {
       // notice can't be enabled for openrtb with url instantiate type
       // because both uses nurl response parameter
-      request_params.context_info.enabled_notice = false;
+      request_info.enabled_notice = false;
     }
 
-    if(request_params.common_info.request_type ==
+    if(request_info.request_type ==
        AdServer::CampaignSvcs::AR_YANDEX)
     {
-      request_params.fill_track_pixel = true;
+      request_info.fill_track_pixel = true;
     }
 
     std::string& held_bid_request = request_info.hold_string(
       std::move(bid_request));
 
     parse_openrtb_request_(
-      request_params,
       request_info,
       context,
       std::string_view(held_bid_request.data(), held_bid_request.size()));
@@ -1768,7 +1754,11 @@ namespace AdServer::Bidding
       for(auto it = context.segments.begin(); it != context.segments.end(); ++it)
       {
         // add <id>x<value with replaced chars>
-        std::string keyword(std::string("rtbsegment") + norm_keyword_(it->id) + "x" + norm_keyword_(it->value));
+        std::string keyword(
+          std::string("rtbsegment") +
+          norm_keyword_(it->id) +
+          "x" +
+          norm_keyword_(it->value));
         //std::cerr << "keyword : <" << keyword << ">" << std::endl;
         kw_fmt.add_keyword(keyword);
       }
@@ -1817,7 +1807,7 @@ namespace AdServer::Bidding
       request_info.additional_info.viewability.has_value() ||
       request_info.additional_info.vtr.has_value())
     {
-      CampaignManager::assign_string(request_params.additional_info, make_additional_info_json_(request_info.additional_info));
+      request_info.campaign_additional_info = make_additional_info_json_(request_info.additional_info);
     }
 
     if(context.site_content || context.app_content)
@@ -1858,8 +1848,8 @@ namespace AdServer::Bidding
     kw_fmt.add_cat_list(context.app_cat, true);
 
     if(context.external_user_id.empty() && (
-         request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
-         (request_params.common_info.request_type == AdServer::CampaignSvcs::AR_YANDEX &&
+         request_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
+         (request_info.request_type == AdServer::CampaignSvcs::AR_YANDEX &&
           !context.user_id.empty() &&
           context.user_id[0] == '~'))
       )
@@ -1888,19 +1878,15 @@ namespace AdServer::Bidding
         external_user_id.append(
           context.external_user_id.data(),
           context.external_user_id.size());
-        CampaignManager::assign_string(
-          request_params.common_info.external_user_id,
-          external_user_id);
+        request_info.external_user_id = external_user_id;
       }
       else
       {
-        CampaignManager::assign_string(
-          request_params.common_info.external_user_id,
-          context.external_user_id);
+        request_info.external_user_id = context.external_user_id;
       }
     }
 
-    if(request_params.common_info.external_user_id.empty() &&
+    if(request_info.external_user_id.empty() &&
        context.user_id.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NO_ID);
@@ -1914,11 +1900,11 @@ namespace AdServer::Bidding
     // Possible IPMatcher and code in CampaignManager not support IPv6
     if (!context.ipv6.empty())
     {
-      fill_by_ip(request_info, request_params, context.ipv6);
+      fill_by_ip(request_info, context.ipv6);
     }
     else
     {
-      fill_by_ip(request_info, request_params, context.ip);
+      fill_by_ip(request_info, context.ip);
     }
 
     if(!context.ip.empty())
@@ -1932,9 +1918,9 @@ namespace AdServer::Bidding
     }
 
     // don't use buyer_id if external_user_id defined
-    if(request_params.common_info.external_user_id[0] == 0)
+    if(request_info.external_user_id[0] == 0)
     {
-      verify_user_id_(context.user_id, request_info.source_id, request_params);
+      verify_user_id_(context.user_id, request_info.source_id, request_info);
     }
 
     request_info.is_app = context.app;
@@ -1942,7 +1928,6 @@ namespace AdServer::Bidding
       context.ssp_devicetype);
 
     fill_by_user_agent(
-      request_params,
       request_info,
       context.user_agent,
       request_info.filter_request,
@@ -1963,13 +1948,13 @@ namespace AdServer::Bidding
         context.site_referer.secure() ||
         context.site_rereferer.secure())
       {
-        CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
+        request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
       }
 
-      select_referer_(request_params, context, selected_referer);
+      select_referer_(request_info, context, selected_referer);
 
       fill_by_referer(
-        request_params,
+        request_info,
         request_info.search_words,
         selected_referer,
         true, // fill_search_words
@@ -1978,7 +1963,7 @@ namespace AdServer::Bidding
     }
     else if(context.app)
     {
-      request_params.context_info.profile_referer = enable_profile_referer_;
+      request_info.profile_referer = enable_profile_referer_;
       ext_tag_id = openrtb_ext_tag_id(
         context.publisher_id, context.app_id,
         context.publisher_name, context.app_name);
@@ -1988,7 +1973,9 @@ namespace AdServer::Bidding
       try
       {
         // workaround: some SSP provide url with spaces at beginning
-        String::SubString url_sstr = to_sub_string(context.app_bundle);
+        String::SubString url_sstr(
+          context.app_bundle.data(),
+          context.app_bundle.size());
         String::StringManip::trim(url_sstr);
         request_info.application_id = url_sstr.str();
         app_bundle_url = HTTP::BrowserAddress(url_sstr).url();
@@ -1998,27 +1985,23 @@ namespace AdServer::Bidding
 
       if(!app_bundle_url.empty())
       {
-        CampaignManager::assign_string(
-          request_params.common_info.referer,
-          std::move(app_bundle_url));
+        request_info.referer = std::move(app_bundle_url);
       }
       else
       {
         if(!context.app_domain.url().empty() && (
            context.app_store_url.url().empty() || (
-            context.app_domain.host().compare(to_sub_string(GooglePlay::STORE_HOST)) != 0 &&
-            context.app_domain.host().compare(to_sub_string(AppStore::STORE_HOST)) != 0)
+            context.app_domain.host().compare(GooglePlay::STORE_HOST) != 0 &&
+            context.app_domain.host().compare(AppStore::STORE_HOST) != 0)
             )
           )
         {
-          CampaignManager::assign_string(request_params.common_info.referer, FrontendCommons::normalize_abs_url(context.app_domain));
+          request_info.referer = FrontendCommons::normalize_abs_url(context.app_domain);
         }
         else if(!context.app_store_url.url().empty())
         {
-          CampaignManager::assign_string(
-            request_params.common_info.referer,
-            adapt_app_store_url_(
-              FrontendCommons::normalize_abs_url(context.app_store_url)));
+          request_info.referer = adapt_app_store_url_(
+              FrontendCommons::normalize_abs_url(context.app_store_url));
         }
       }
     }
@@ -2034,7 +2017,7 @@ namespace AdServer::Bidding
         if (context.site_ref.url() != selected_referer.url())
         {
           fill_additional_url_(
-            request_params,
+            request_info,
             request_info.search_words,
             context.site_ref);
         }
@@ -2043,7 +2026,7 @@ namespace AdServer::Bidding
       {}
     }
 
-    if(request_params.common_info.referer.empty())
+    if(request_info.referer.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
@@ -2058,15 +2041,13 @@ namespace AdServer::Bidding
       request_info.search_words += context.site_search;
     }
 
-    CampaignManager::assign_string(request_params.search_words, request_info.search_words);
+    request_info.log_as_test = context.test;
 
-    request_params.common_info.log_as_test = context.test;
-
-    request_params.ad_slots.clear();
-    request_params.ad_slots.reserve(context.ad_slots.size());
+    request_info.ad_slots.clear();
+    request_info.ad_slots.reserve(context.ad_slots.size());
     for(std::size_t i = 0; i < context.ad_slots.size(); ++i)
     {
-      request_params.ad_slots.emplace_back(request_params.arena_.get());
+      request_info.ad_slots.emplace_back(request_info.resource());
     }
     std::size_t slot_i = 0;
     for(JsonAdSlotProcessingContextList::iterator slot_it =
@@ -2263,12 +2244,12 @@ namespace AdServer::Bidding
         if(serve_video && slot_it == context.ad_slots.begin())
         {
           fill_vast_instantiate_type_(
-            request_params,
+            request_info,
             request_info.source_id);
         }
 
-        AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
-          request_params.ad_slots[slot_i];
+        AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request =
+          request_info.ad_slots[slot_i];
 
         init_adslot(ad_slot_request);
 
@@ -2297,14 +2278,14 @@ namespace AdServer::Bidding
           context.required_category != "0")
         {
           ad_slot_request.required_categories.resize(1);
-          CampaignManager::assign_string(ad_slot_request.required_categories[0], context.required_category);
+          ad_slot_request.required_categories[0] = context.required_category;
         }
 
         unsigned long pos = 0;
 
         if(!request_info.format.empty())
         {
-          CampaignManager::assign_string(ad_slot_request.format, request_info.format);
+          ad_slot_request.format = request_info.format;
         }
 
         if(serve_video || (!slot_it->native && slot_it->banners.empty() &&
@@ -2313,11 +2294,11 @@ namespace AdServer::Bidding
           // push skipped vast into stats if banner can't be shown
           if(ad_slot_request.format.empty())
           {
-            CampaignManager::assign_string(ad_slot_request.format, OPENRTB_VAST_APP_FORMAT);
+            ad_slot_request.format = OPENRTB_VAST_APP_FORMAT;
           }
 
           ad_slot_request.sizes.resize(1);
-          CampaignManager::assign_string(ad_slot_request.sizes[0], VAST_PROTOCOL_SIZE);
+          ad_slot_request.sizes[0] = VAST_PROTOCOL_SIZE;
 
           if(serve_video)
           {
@@ -2364,14 +2345,16 @@ namespace AdServer::Bidding
             ad_slot_request.video_skippable_max_duration =
               ad_slot_request.video_max_duration;
           }
-          String::StringManip::str_to_int(to_sub_string(slot_it->video_pos), pos);
+          String::StringManip::str_to_int(slot_it->video_pos, pos);
           slot_it->banners.clear();
 
           fill_video_size(
             kw_fmt,
             ad_slot_request,
-            slot_it->video_width.present() ? static_cast<unsigned long>(*slot_it->video_width) : 0,
-            slot_it->video_height.present() ? static_cast<unsigned long>(*slot_it->video_height) : 0);
+            slot_it->video_width.present() ?
+              static_cast<unsigned long>(*slot_it->video_width) : 0,
+            slot_it->video_height.present() ?
+              static_cast<unsigned long>(*slot_it->video_height) : 0);
         }
         else if (slot_it->native)
         {
@@ -2395,10 +2378,10 @@ namespace AdServer::Bidding
 
           if(ad_slot_request.format.empty())
           {
-            CampaignManager::assign_string(ad_slot_request.format, OPENRTB_NATIVE_APP_FORMAT);
+            ad_slot_request.format = OPENRTB_NATIVE_APP_FORMAT;
           }
 
-          request_params.fill_track_pixel = true;
+          request_info.fill_track_pixel = true;
           ad_slot_request.fill_track_html =
             request_info.native_ads_impression_tracker_type == AdServer::CampaignSvcs::NAITT_JS;
           ad_slot_request.native_ads_impression_tracker_type =
@@ -2421,7 +2404,7 @@ namespace AdServer::Bidding
             if (serve_native)
             {
               ad_slot_request.sizes.resize(1);
-              CampaignManager::assign_string(ad_slot_request.sizes[0], VAST_PROTOCOL_SIZE);
+              ad_slot_request.sizes[0] = VAST_PROTOCOL_SIZE;
 
               if (video.max_duration.present())
               {
@@ -2447,22 +2430,20 @@ namespace AdServer::Bidding
             const auto size_it = debug_sizes.find(slot_i);
             if (size_it != debug_sizes.end() || !request_info.default_debug_size.empty())
             {
-              CampaignManager::assign_string(ad_slot_request.sizes[0], (
+              ad_slot_request.sizes[0] = (
                 size_it != debug_sizes.end() ?
                 std::string(size_it->second.data(), size_it->second.size()) :
                 std::string(
                   request_info.default_debug_size.data(),
-                  request_info.default_debug_size.size())));
+                  request_info.default_debug_size.size()));
             }
             else if(main_image_found)
             {
-              CampaignManager::assign_string(
-                ad_slot_request.sizes[0],
-                make_size_string(main_image.width, main_image.height));
+              ad_slot_request.sizes[0] = make_size_string(main_image.width, main_image.height);
             }
             else
             {
-              CampaignManager::assign_string(ad_slot_request.sizes[0], NATIVE_TEXT_SIZE);
+              ad_slot_request.sizes[0] = NATIVE_TEXT_SIZE;
             }
           }
 
@@ -2489,7 +2470,7 @@ namespace AdServer::Bidding
           if(serve_native)
           {
             fill_native_instantiate_type_(
-              request_params,
+              request_info,
               request_info.source_id);
           }
 
@@ -2499,21 +2480,21 @@ namespace AdServer::Bidding
         {
           if(ad_slot_request.format.empty())
           {
-            CampaignManager::assign_string(ad_slot_request.format, OPENRTB_APP_FORMAT);
+            ad_slot_request.format = OPENRTB_APP_FORMAT;
           }
 
           ad_slot_request.passback = request_info.filter_request;
 
           if(!slot_it->banners.empty())
           {
-            request_params.common_info.hpos = slot_it->banners.begin()->ext_hpos;
+            request_info.hpos = slot_it->banners.begin()->ext_hpos;
             String::StringManip::str_to_int(
-              to_sub_string(slot_it->banners.begin()->pos),
+              slot_it->banners.begin()->pos,
               pos);
           }
           else
           {
-            request_params.common_info.hpos = 0;
+            request_info.hpos = 0;
           }
 
           bool skip_sizes = false;
@@ -2551,31 +2532,39 @@ namespace AdServer::Bidding
                 if((banner_format.width == "2" && banner_format.height == "2") ||
                   banner_format.ext_type == "20")
                 {
-                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_SIZE);
+                  ad_slot_request.sizes[size_i++] = RM_SIZE;
                   slot_it->size_banner.insert(std::make_pair(
                     RM_SIZE,
-                    JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
+                    JsonAdSlotProcessingContext::BannerFormatHolder(
+                      &*banner_it,
+                      &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "popup")
                 {
-                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], POPUP_SIZE);
+                  ad_slot_request.sizes[size_i++] = POPUP_SIZE;
                   slot_it->size_banner.insert(std::make_pair(
                     POPUP_SIZE,
-                    JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
+                    JsonAdSlotProcessingContext::BannerFormatHolder(
+                      &*banner_it,
+                      &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "overlay")
                 {
-                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_DTO_SIZE);
+                  ad_slot_request.sizes[size_i++] = RM_DTO_SIZE;
                   slot_it->size_banner.insert(std::make_pair(
                     RM_DTO_SIZE,
-                    JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
+                    JsonAdSlotProcessingContext::BannerFormatHolder(
+                      &*banner_it,
+                      &*banner_format_it)));
                 }
                 else if (banner_format.ext_format == "rich")
                 {
-                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], RM_RICH_SIZE);
+                  ad_slot_request.sizes[size_i++] = RM_RICH_SIZE;
                   slot_it->size_banner.insert(std::make_pair(
                     RM_RICH_SIZE,
-                    JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
+                    JsonAdSlotProcessingContext::BannerFormatHolder(
+                      &*banner_it,
+                      &*banner_format_it)));
                 }
                 else if(!banner_format.width.empty() && !banner_format.height.empty())
                 {
@@ -2604,12 +2593,14 @@ namespace AdServer::Bidding
                       request_info.default_debug_size.data(),
                       request_info.default_debug_size.size());
                   }
-                  CampaignManager::assign_string(ad_slot_request.sizes[size_i++], res_size);
+                  ad_slot_request.sizes[size_i++] = res_size;
                   const std::string_view res_size_view =
                     request_info.hold_string(std::move(res_size));
                   slot_it->size_banner.insert(std::make_pair(
                     res_size_view,
-                    JsonAdSlotProcessingContext::BannerFormatHolder(&*banner_it, &*banner_format_it)));
+                    JsonAdSlotProcessingContext::BannerFormatHolder(
+                      &*banner_it,
+                      &*banner_format_it)));
                 }
               }
             }
@@ -2682,23 +2673,23 @@ namespace AdServer::Bidding
         // Unit is 1.00 / 1000 imps for OpenRTB, 1.00 / 1M for Yandex
 
         const AdServer::CampaignSvcs::RevenueDecimal& min_ecpm_multiplier = (
-          request_params.common_info.request_type !=
+          request_info.request_type !=
             AdServer::CampaignSvcs::AR_YANDEX ?
             OPENRTB_BIDFLOOR_MULTIPLIER :
             YANDEX_BIDFLOOR_MULTIPLIER);
 
         try
         {
-          ad_slot_request.min_ecpm = CampaignManager::pack_decimal(
+          ad_slot_request.min_ecpm =
             AdServer::CampaignSvcs::RevenueDecimal::mul(
               slot_it->min_cpm_price,
               min_ecpm_multiplier,
-              Generics::DMR_ROUND));
+              Generics::DMR_ROUND);
         }
         catch(const AdServer::CampaignSvcs::RevenueDecimal::Overflow&)
         {
-          ad_slot_request.min_ecpm = CampaignManager::pack_decimal(
-            AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
+          ad_slot_request.min_ecpm =
+            AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM;
         }
 
         if(!context.currencies.empty())
@@ -2709,9 +2700,7 @@ namespace AdServer::Bidding
           {
             std::string currency_holder(currency);
             String::AsciiStringManip::to_lower(currency_holder);
-            CampaignManager::assign_string(
-              ad_slot_request.currency_codes[currency_i++],
-              currency_holder);
+            ad_slot_request.currency_codes[currency_i++] = currency_holder;
           }
         }
         else if(!slot_it->min_cpm_price_currency_code.empty())
@@ -2719,22 +2708,18 @@ namespace AdServer::Bidding
           ad_slot_request.currency_codes.resize(1);
           std::string currency_holder(slot_it->min_cpm_price_currency_code);
           String::AsciiStringManip::to_lower(currency_holder);
-          CampaignManager::assign_string(
-            ad_slot_request.currency_codes[0],
-            currency_holder);
+          ad_slot_request.currency_codes[0] = currency_holder;
         }
 
         if(!slot_it->min_cpm_price_currency_code.empty())
         {
           std::string currency_holder(slot_it->min_cpm_price_currency_code);
           String::AsciiStringManip::to_lower(currency_holder);
-          CampaignManager::assign_string(
-            ad_slot_request.min_ecpm_currency_code,
-            currency_holder);
+          ad_slot_request.min_ecpm_currency_code = currency_holder;
         }
         else
         {
-          CampaignManager::assign_string(ad_slot_request.min_ecpm_currency_code, Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY);
+          ad_slot_request.min_ecpm_currency_code = Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY;
         }
 
         ad_slot_request.up_expand_space = -1;
@@ -2744,7 +2729,7 @@ namespace AdServer::Bidding
 
         ad_slot_request.debug_ccg = 0;
 
-        CampaignManager::assign_string(ad_slot_request.ext_tag_id, ext_tag_id);
+        ad_slot_request.ext_tag_id = ext_tag_id;
 
         // add deal id's as keywords
         for(auto deal_it = slot_it->deals.begin(); deal_it != slot_it->deals.end(); ++deal_it)
@@ -2768,23 +2753,23 @@ namespace AdServer::Bidding
       }
     }
 
-    request_params.ad_slots.resize(slot_i);
+    request_info.ad_slots.resize(slot_i);
 
     if((!context.ad_slots.empty() &&
          context.ad_slots.front().secure) ||
        context.secure)
     {
-      CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
+      request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
     }
-    else if(request_params.common_info.creative_instantiate_type.empty())
+    else if(request_info.creative_instantiate_type.empty())
     {
       // was not filled by fill_by_referer_ and later
-      CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::UNSECURE_INSTANTIATE_TYPE);
+      request_info.creative_instantiate_type = FrontendCommons::UNSECURE_INSTANTIATE_TYPE;
     }
 
     // fill idfa or advertising_id by ifa depends on device
     context.ifa = request_info.hold_string(
-      FrontendCommons::normalize_ifa(to_sub_string(context.ifa)));
+      FrontendCommons::normalize_ifa(context.ifa));
 
     if(!context.ifa.empty())
     {
@@ -2816,7 +2801,7 @@ namespace AdServer::Bidding
         ext_track_params += "puid1=";
         std::string mimed_puid1;
         String::StringManip::mime_url_encode(
-          to_sub_string(context.puid1),
+          context.puid1,
           mimed_puid1);
         ext_track_params += mimed_puid1;
       }
@@ -2830,14 +2815,12 @@ namespace AdServer::Bidding
         ext_track_params += "puid2=";
         std::string mimed_puid2;
         String::StringManip::mime_url_encode(
-          to_sub_string(context.puid2),
+          context.puid2,
           mimed_puid2);
         ext_track_params += mimed_puid2;
       }
 
-      CampaignManager::assign_string(
-        request_params.common_info.ext_track_params,
-        std::move(ext_track_params));
+      request_info.ext_track_params = std::move(ext_track_params);
     }
 
     if(!request_info.idfa.empty() || !request_info.advertising_id.empty())
@@ -2859,9 +2842,7 @@ namespace AdServer::Bidding
     ssp_location.append(context.ssp_region.data(), context.ssp_region.size());
     ssp_location += '/';
     ssp_location.append(context.ssp_city.data(), context.ssp_city.size());
-    CampaignManager::assign_string(
-      request_params.ssp_location,
-      std::move(ssp_location));
+    request_info.ssp_location = std::move(ssp_location);
 
     // push eids to request_info
     for(auto it = context.user_eids.begin(); it != context.user_eids.end(); ++it)
@@ -2968,13 +2949,12 @@ namespace AdServer::Bidding
     noexcept
   {
     param_processors_.insert(std::make_pair(
-      to_sub_string(name),
+      String::SubString(name.data(), name.size()),
       RequestInfoParamProcessor_var(processor)));
   }
 
   void
   RequestInfoFiller::fill_by_user_agent(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
     std::string_view user_agent,
     bool filter_request,
@@ -2984,7 +2964,7 @@ namespace AdServer::Bidding
   {
     static const char* FUN = "RequestInfoFiller::fill_by_user_agent()";
 
-    request_params.common_info.set_cookie = !application;
+    request_info.set_cookie = !application;
 
     if(!user_agent.empty())
     {
@@ -2999,7 +2979,7 @@ namespace AdServer::Bidding
         {
           web_browser_matcher->match(
             web_browser,
-            to_sub_string(user_agent));
+            user_agent);
         }
         catch(const eh::Exception& ex)
         {
@@ -3013,10 +2993,8 @@ namespace AdServer::Bidding
         }
       }
 
-      CampaignManager::assign_string(request_params.common_info.user_agent, user_agent);
-      CampaignManager::assign_string(
-        request_params.context_info.web_browser,
-        std::move(web_browser));
+      request_info.user_agent = user_agent;
+      request_info.web_browser = std::move(web_browser);
     }
 
     if (!user_agent.empty() || application)
@@ -3037,7 +3015,7 @@ namespace AdServer::Bidding
             &request_info.platform_names,
             platform,
             full_platform,
-            to_sub_string(user_agent),
+            user_agent,
             application);
         }
         catch(const eh::Exception& ex)
@@ -3052,23 +3030,19 @@ namespace AdServer::Bidding
         }
       }
 
-      CampaignManager::assign_string(
-        request_params.context_info.platform,
-        std::move(platform));
-      CampaignManager::assign_string(
-        request_params.context_info.full_platform,
-        std::move(full_platform));
+      request_info.platform = std::move(platform);
+      request_info.full_platform = std::move(full_platform);
       CampaignManager::fill_sequence(
         platform_ids.begin(),
         platform_ids.end(),
-        request_params.context_info.platform_ids);
+        request_info.platform_ids);
     }
   }
 
   template<typename StringType>
   void
   RequestInfoFiller::fill_by_referer(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    RequestInfo& request_info,
     StringType& search_words,
     const HTTP::HTTPAddress& referer,
     bool fill_search_words,
@@ -3082,22 +3056,20 @@ namespace AdServer::Bidding
       {
         if(fill_instantiate_type && referer.secure())
         {
-          CampaignManager::assign_string(request_params.common_info.creative_instantiate_type, FrontendCommons::SECURE_INSTANTIATE_TYPE);
+          request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
         }
 
         std::string normalized_referer =
           FrontendCommons::normalize_abs_url(referer);
-        request_params.context_info.full_referer_hash =
+        request_info.full_referer_hash =
            FrontendCommons::referer_hash(normalized_referer);
-        request_params.context_info.short_referer_hash =
+        request_info.short_referer_hash =
           FrontendCommons::short_referer_hash(normalized_referer);
-        CampaignManager::assign_string(
-          request_params.common_info.referer,
-          std::move(normalized_referer));
+        request_info.referer = std::move(normalized_referer);
 
         if (fill_search_words)
         {
-          fill_search_words_(request_params, search_words, referer);
+          fill_search_words_(request_info, search_words, referer);
         }
       }
       catch(...)
@@ -3108,7 +3080,7 @@ namespace AdServer::Bidding
   template<typename StringType>
   void
   RequestInfoFiller::fill_additional_url_(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    RequestInfo& request_info,
     StringType& search_words,
     const HTTP::HTTPAddress& add_url)
     const
@@ -3120,13 +3092,11 @@ namespace AdServer::Bidding
       {
         std::string normalized_add_url =
           FrontendCommons::normalize_abs_url(add_url);
-        std::size_t pos = request_params.common_info.urls.size();
-        request_params.common_info.urls.resize(pos + 1);
-        CampaignManager::assign_string(
-          request_params.common_info.urls[pos],
-          std::move(normalized_add_url));
+        std::size_t pos = request_info.urls.size();
+        request_info.urls.resize(pos + 1);
+        request_info.urls[pos] = std::move(normalized_add_url);
 
-        fill_search_words_(request_params, search_words, add_url);
+        fill_search_words_(request_info, search_words, add_url);
       }
       catch(...)
       {}
@@ -3136,7 +3106,7 @@ namespace AdServer::Bidding
   template<typename StringType>
   void
   RequestInfoFiller::fill_search_words_(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    RequestInfo& request_info,
     StringType& search_words,
     const HTTP::HTTPAddress& url)
     const
@@ -3161,19 +3131,23 @@ namespace AdServer::Bidding
              segmentor))
         {
           // don't override search_engine_id got by referer parsing
-          if(request_params.search_engine_id == 0)
+          if(request_info.search_engine_id == 0)
           {
-            request_params.search_engine_id = search_engine_id;
+            request_info.search_engine_id = search_engine_id;
           }
 
           if(search_words.empty())
           {
-            search_words.assign(search_words_value.data(), search_words_value.size());
+            search_words.assign(
+              search_words_value.data(),
+              search_words_value.size());
           }
           else
           {
             search_words += "\n";
-            search_words.append(search_words_value.data(), search_words_value.size());
+            search_words.append(
+              search_words_value.data(),
+              search_words_value.size());
           }
         }
       }
@@ -3183,17 +3157,16 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::fill_by_ip(
     RequestInfo& request_info,
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     std::string_view ip)
     const
     noexcept
   {
     if(request_info.location)
     {
-      request_params.common_info.location.resize(1);
-      CampaignManager::assign_string(request_params.common_info.location[0].country, request_info.location->country);
-      CampaignManager::assign_string(request_params.common_info.location[0].region, request_info.location->region);
-      CampaignManager::assign_string(request_params.common_info.location[0].city, request_info.location->city);
+      request_info.geo_location.resize(1);
+      request_info.geo_location[0].country = request_info.location->country;
+      request_info.geo_location[0].region = request_info.location->region;
+      request_info.geo_location[0].city = request_info.location->city;
     }
     else
     {
@@ -3201,15 +3174,13 @@ namespace AdServer::Bidding
 
       if(!ip.empty())
       {
-        CampaignManager::assign_string(request_params.common_info.peer_ip, ip);
+        request_info.peer_ip = ip;
 
         if(ip_logging_enabled_)
         {
           std::string ip_hash;
-          FrontendCommons::ip_hash(ip_hash, to_sub_string(ip), ip_salt_);
-          CampaignManager::assign_string(
-            request_params.context_info.ip_hash,
-            std::move(ip_hash));
+          FrontendCommons::ip_hash(ip_hash, ip, ip_salt_);
+          request_info.ip_hash = std::move(ip_hash);
         }
 
         if(ip_map_.get())
@@ -3228,16 +3199,10 @@ namespace AdServer::Bidding
               request_info.location->city = geo_location.city.str();
               request_info.location->normalize();
 
-              request_params.common_info.location.resize(1);
-              CampaignManager::assign_string(
-                request_params.common_info.location[0].country,
-                request_info.location->country);
-              CampaignManager::assign_string(
-                request_params.common_info.location[0].region,
-                request_info.location->region);
-              CampaignManager::assign_string(
-                request_params.common_info.location[0].city,
-                request_info.location->city);
+              request_info.geo_location.resize(1);
+              request_info.geo_location[0].country = request_info.location->country;
+              request_info.geo_location[0].region = request_info.location->region;
+              request_info.geo_location[0].city = request_info.location->city;
             }
           }
           catch(const eh::Exception&)
@@ -3272,7 +3237,7 @@ namespace AdServer::Bidding
   RequestInfoFiller::verify_user_id_(
     std::string_view signed_user_id,
     std::string_view source_id,
-    AdServer::Bidding::CampaignManager::RequestParams& request_params)
+    RequestInfo& request_info)
     const noexcept
   {
     static const size_t UNSIGNED_SSP_USER_ID_LEN = 22;
@@ -3290,7 +3255,7 @@ namespace AdServer::Bidding
           std::string ssp_id_buf;
           String::StringManip::base64mod_decode(
             ssp_id_buf,
-            to_sub_string(signed_user_id),
+            signed_user_id,
             false,
             &ssp_uid_marker);
           ssp_uid = Generics::Uuid(ssp_id_buf.begin(), ssp_id_buf.end());
@@ -3299,7 +3264,7 @@ namespace AdServer::Bidding
         {
           Generics::SignedUuid signed_ssp_uid =
             common_module_->user_id_controller()->verify(
-              to_sub_string(signed_user_id),
+              signed_user_id,
               UserIdController::SSP);
           ssp_uid = signed_ssp_uid.uuid();
           ssp_uid_marker = signed_ssp_uid.data();
@@ -3308,30 +3273,29 @@ namespace AdServer::Bidding
 
         const Generics::Uuid uid =
           UserIdController::get_by_ssp_user_id(
-            ssp_uid, to_sub_string(source_id), ssp_uid_marker);
+            ssp_uid, source_id, ssp_uid_marker);
 
         if (uid.is_null())
         {
           // for google: keep undefined state.
           // Set it in in case openrtb.
-          request_params.common_info.user_status = static_cast<std::size_t>(
+          request_info.user_status = static_cast<std::size_t>(
             AdServer::CampaignSvcs::US_UNDEFINED);
           return;
         }
 
-        request_params.common_info.user_id = CampaignManager::pack_user_id(uid);
-        request_params.common_info.track_user_id =
-          request_params.common_info.user_id;
+        request_info.user_id = uid;
+        request_info.track_user_id = uid;
 
         if(std::string_view(AdServer::Commons::PROBE_USER_ID.to_string()) ==
           signed_user_id)
         {
-          request_params.common_info.user_status = static_cast<std::size_t>(
+          request_info.user_status = static_cast<std::size_t>(
             AdServer::CampaignSvcs::US_PROBE);
           return;
         }
 
-        request_params.common_info.user_status = static_cast<std::size_t>(
+        request_info.user_status = static_cast<std::size_t>(
           AdServer::CampaignSvcs::US_OPTIN);
       }
       catch(...)
@@ -3342,7 +3306,7 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::select_referer_(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    RequestInfo& request_info,
     const JsonProcessingContext& context,
     HTTP::HTTPAddress& referer) const
     /*throw(eh::Exception)*/
@@ -3455,7 +3419,7 @@ namespace AdServer::Bidding
         {
           std::string search_words; // ignore search words value (push to match only)
           fill_additional_url_(
-            request_params,
+            request_info,
             search_words,
             *URL_FIELDS[url_i]);
         }
@@ -3470,9 +3434,9 @@ namespace AdServer::Bidding
       if(selected_referer_field != SR_NAME && !context.site_name.empty())
       {
         std::string search_words; // ignore search words value (push to match only)
-        HTTP::BrowserAddress site_name_url(to_sub_string(context.site_name));
+        HTTP::BrowserAddress site_name_url(context.site_name);
         fill_additional_url_(
-          request_params,
+          request_info,
           search_words,
           site_name_url);
       }
@@ -3488,7 +3452,9 @@ namespace AdServer::Bidding
     /*throw(eh::Exception)*/
   {
     std::string domain;
-    common_module_->domain_parser()->specific_domain(to_sub_string(host), domain);
+    common_module_->domain_parser()->specific_domain(
+      String::SubString(host.data(), host.size()),
+      domain);
     const std::size_t pos = domain.find('.');
 
     if (pos != std::string::npos)
@@ -3504,7 +3470,7 @@ namespace AdServer::Bidding
     noexcept
   {
     String::SubString res;
-    const String::SubString src_sub_string = to_sub_string(src);
+    const String::SubString src_sub_string(src.data(), src.size());
     if(String::StringManip::utf8_substr(src_sub_string, EXT_TAG_ID_MAX_LENGTH, res))
     {
       return res.str();
@@ -3518,7 +3484,7 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::init_adslot(
-    AdServer::Bidding::CampaignManager::AdSlotInfo& adslot_info)
+    AdServer::Bidding::RequestInfo::AdSlotInfo& adslot_info)
     noexcept
   {
     adslot_info.video_allow_skippable = true;
@@ -3528,46 +3494,32 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::init_request_param(
-    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info) const noexcept
   {
-    CampaignManager::fill_sequence(
-      request_info.publisher_account_ids.begin(),
-      request_info.publisher_account_ids.end(),
-      request_params.publisher_account_ids);
+    request_info.time = request_info.current_time;
 
-    request_params.publisher_site_id = request_info.publisher_site_id;
+    request_info.profile_referer = true;
+    request_info.full_referer_hash = 0;
+    request_info.short_referer_hash = 0;
+    request_info.page_load_id = 0;
 
-    CampaignManager::assign_string(request_params.common_info.source_id, request_info.source_id);
-    request_params.common_info.time = CampaignManager::pack_time(request_info.current_time);
+    request_info.fill_track_pixel = false;
+    request_info.fill_iurl = request_info.flag & 0x01;
 
-    request_params.context_info.profile_referer = true;
-    request_params.context_info.full_referer_hash = 0;
-    request_params.context_info.short_referer_hash = 0;
-    request_params.context_info.page_load_id = 0;
+    request_info.request_id =
+      AdServer::Commons::RequestId::create_random_based();
 
-    request_params.fill_track_pixel = false;
-    request_params.fill_iurl = request_info.flag & 0x01;
+    request_info.colo_id = colo_id_;
+    request_info.search_engine_id = 0;
+    request_info.page_keywords_present = false;
+    request_info.need_debug_info = false;
+    request_info.only_display_ad = true;
+    request_info.test_request = false;
+    request_info.preview_ccid = 0;
+    request_info.campaign_additional_info = "{}";
+    request_info.hpos = CampaignSvcs::UNDEFINED_PUB_POSITION_BOTTOM;
 
-    request_params.common_info.request_id = CampaignManager::pack_request_id(
-      AdServer::Commons::RequestId::create_random_based());
-
-    request_params.common_info.colo_id = colo_id_;
-    request_params.search_engine_id = 0;
-    request_params.page_keywords_present = false;
-    request_params.profiling_available = true;
-    request_params.fraud = false;
-    request_params.disable_fraud_detection = false;
-    request_params.common_info.random = request_info.random;
-    request_params.required_passback = false;
-    request_params.need_debug_info = false;
-    request_params.only_display_ad = true;
-    request_params.common_info.test_request = false;
-    request_params.preview_ccid = 0;
-    request_params.additional_info = "{}";
-    request_params.common_info.hpos = CampaignSvcs::UNDEFINED_PUB_POSITION_BOTTOM;
-
-    fill_request_type_(request_info, request_params, request_info.source_id);
+    fill_request_type_(request_info, request_info.source_id);
   }
 
   std::string
@@ -3619,13 +3571,13 @@ namespace AdServer::Bidding
     std::string_view store_url_str)
     /*throw(eh::Exception)*/
   {
-    HTTP::BrowserAddress store_url(to_sub_string(store_url_str));
+    HTTP::BrowserAddress store_url(store_url_str);
 
-    if(store_url.host().compare(to_sub_string(GooglePlay::STORE_HOST)) == 0 &&
+    if(store_url.host().compare(GooglePlay::STORE_HOST) == 0 &&
       store_url.path().compare(
         0,
         GooglePlay::STORE_PATH.size(),
-        to_sub_string(GooglePlay::STORE_PATH)) == 0)
+        GooglePlay::STORE_PATH) == 0)
     {
       const String::SubString args = store_url.query();
 
@@ -3633,7 +3585,7 @@ namespace AdServer::Bidding
       FCGI::HttpRequest::parse_params(args, params);
       for(auto param_it = params.begin(); param_it != params.end(); ++param_it)
       {
-        if(to_sub_string(GooglePlay::STORE_APP_ID) == param_it->name)
+        if(GooglePlay::STORE_APP_ID == param_it->name)
         {
           try
           {
@@ -3647,7 +3599,7 @@ namespace AdServer::Bidding
         }
       }
     }
-    else if(store_url.host().compare(to_sub_string(AppStore::STORE_HOST)) == 0)
+    else if(store_url.host().compare(AppStore::STORE_HOST) == 0)
     {
       // example : https://itunes.apple.com/us/app/youcam-perfect/id768469908
       String::StringManip::Splitter<String::AsciiStringManip::SepSlash>
@@ -3698,9 +3650,10 @@ namespace AdServer::Bidding
     return simplified_kw;
   }
 
+  template<typename StringType>
   void
-  RequestInfoFiller::add_special_keywords_(
-    std::string& keywords,
+  RequestInfoFiller::add_special_keywords_impl_(
+    StringType& keywords,
     const RequestInfo& request_info,
     const JsonProcessingContext* context,
     std::string_view alt_app_id)
@@ -3756,6 +3709,38 @@ namespace AdServer::Bidding
     }
   }
 
+  void
+  RequestInfoFiller::add_special_keywords_(
+    std::string& keywords,
+    const RequestInfo& request_info,
+    const JsonProcessingContext* context,
+    std::string_view alt_app_id)
+    const
+    noexcept
+  {
+    add_special_keywords_impl_(
+      keywords,
+      request_info,
+      context,
+      alt_app_id);
+  }
+
+  void
+  RequestInfoFiller::add_special_keywords_(
+    RequestInfo::PmrString& keywords,
+    const RequestInfo& request_info,
+    const JsonProcessingContext* context,
+    std::string_view alt_app_id)
+    const
+    noexcept
+  {
+    add_special_keywords_impl_(
+      keywords,
+      request_info,
+      context,
+      alt_app_id);
+  }
+
   std::string
   RequestInfoFiller::openrtb_devicetype_to_string_(unsigned int devicetype)
     const
@@ -3785,7 +3770,6 @@ namespace AdServer::Bidding
   {
     using FastJsonParser = AdServer::Commons::FastJsonParser;
     using ValueProcessor = FastJsonParser::ValueProcessor;
-    using RequestParams = AdServer::Bidding::CampaignManager::RequestParams;
     using AdSlotContext = JsonAdSlotProcessingContext;
     using Banner = AdSlotContext::Banner;
     using BannerFormat = AdSlotContext::BannerFormat;
@@ -3794,7 +3778,6 @@ namespace AdServer::Bidding
 
     struct FastOpenRtbState
     {
-      RequestParams* request_params = nullptr;
       RequestInfo* request_info = nullptr;
       JsonProcessingContext* context = nullptr;
       AdSlotContext* ad_slot = nullptr;
@@ -3875,7 +3858,7 @@ namespace AdServer::Bidding
       try
       {
         return AdServer::Commons::extract_decimal<DecimalType>(
-          to_sub_string(value),
+          value,
           round_type);
       }
       catch(const typename DecimalType::Exception&)
@@ -5280,8 +5263,16 @@ namespace AdServer::Bidding
         parser,
         std::string(base) + ".format.h",
         std::make_shared<BannerSizeProcessor<false>>());
-      add_string(parser, std::string(base) + ".format.ext.type", banner_format_context, &BannerFormat::ext_type);
-      add_string(parser, std::string(base) + ".format.ext.fmt", banner_format_context, &BannerFormat::ext_format);
+      add_string(
+        parser,
+        std::string(base) + ".format.ext.type",
+        banner_format_context,
+        &BannerFormat::ext_type);
+      add_string(
+        parser,
+        std::string(base) + ".format.ext.fmt",
+        banner_format_context,
+        &BannerFormat::ext_format);
     }
 
     void
@@ -5650,7 +5641,11 @@ namespace AdServer::Bidding
       {
         return state.ad_slot ? &state.ad_slot->video_reward : nullptr;
       });
-    add_optional_long(*parser, "imp.video.placement", ad_slot_context, &AdSlotContext::video_placement);
+    add_optional_long(
+      *parser,
+      "imp.video.placement",
+      ad_slot_context,
+      &AdSlotContext::video_placement);
     add_state_value_number(
       *parser,
       "imp.video.ext.adtype",
@@ -5679,28 +5674,57 @@ namespace AdServer::Bidding
     add_string_array(
       *parser,
       "site.pagecat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->site_pagecat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->site_pagecat, value);
+      });
     add_string_array(
       *parser,
       "site.sectioncat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->site_sectioncat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->site_sectioncat, value);
+      });
     add_string_array(
       *parser,
       "site.cat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->site_cat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->site_cat, value);
+      });
     add_bool(*parser, "site.ext.ssl_enabled", root_context, &JsonProcessingContext::secure);
     add_string(*parser, "site.ext.puid1", root_context, &JsonProcessingContext::puid1);
     add_string(*parser, "site.ext.puid2", root_context, &JsonProcessingContext::puid2);
-    add_object_processor(*parser, "site.content", [](FastOpenRtbState& state) { state.context->site_content = true; });
-    add_string(*parser, "site.content.keywords", root_context, &JsonProcessingContext::content_keywords);
+    add_object_processor(
+      *parser,
+      "site.content",
+      [](FastOpenRtbState& state)
+      {
+        state.context->site_content = true;
+      });
+    add_string(
+      *parser,
+      "site.content.keywords",
+      root_context,
+      &JsonProcessingContext::content_keywords);
     add_string(*parser, "site.content.title", root_context, &JsonProcessingContext::content_title);
-    add_string(*parser, "site.content.series", root_context, &JsonProcessingContext::content_series);
-    add_string(*parser, "site.content.season", root_context, &JsonProcessingContext::content_season);
-    add_string_array(*parser, "site.content.cat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->content_cat, value); });
+    add_string(
+      *parser,
+      "site.content.series",
+      root_context,
+      &JsonProcessingContext::content_series);
+    add_string(
+      *parser,
+      "site.content.season",
+      root_context,
+      &JsonProcessingContext::content_season);
+    add_string_array(
+      *parser,
+      "site.content.cat",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->content_cat, value);
+      });
     add_object_processor(*parser, "site.content.producer",
       [](FastOpenRtbState& state) { state.context->site_content_producer = true; });
     add_string_array(
@@ -5712,13 +5736,19 @@ namespace AdServer::Bidding
       });
     add_object_processor(*parser, "site.publisher",
       [](FastOpenRtbState& state) { state.context->site_publisher = true; });
-    add_string(*parser, "site.publisher.name", root_context, &JsonProcessingContext::publisher_name);
+    add_string(
+      *parser,
+      "site.publisher.name",
+      root_context,
+      &JsonProcessingContext::publisher_name);
     add_string(*parser, "site.publisher.id", root_context, &JsonProcessingContext::publisher_id);
     add_string_array(
       *parser,
       "site.publisher.cat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->publisher_cat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->publisher_cat, value);
+      });
 
     add_object_processor(
       *parser,
@@ -5733,28 +5763,46 @@ namespace AdServer::Bidding
     add_string_array(
       *parser,
       "app.pagecat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->app_pagecat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->app_pagecat, value);
+      });
     add_string_array(
       *parser,
       "app.sectioncat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->app_sectioncat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->app_sectioncat, value);
+      });
     add_string_array(
       *parser,
       "app.cat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->app_cat, value); }
-    );
-    add_object_processor(*parser, "app.content", [](FastOpenRtbState& state) { state.context->app_content = true; });
-    add_string(*parser, "app.content.keywords", root_context, &JsonProcessingContext::content_keywords);
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->app_cat, value);
+      });
+    add_object_processor(
+      *parser,
+      "app.content",
+      [](FastOpenRtbState& state)
+      {
+        state.context->app_content = true;
+      });
+    add_string(
+      *parser,
+      "app.content.keywords",
+      root_context,
+      &JsonProcessingContext::content_keywords);
     add_string(*parser, "app.content.title", root_context, &JsonProcessingContext::content_title);
     add_string(*parser, "app.content.series", root_context, &JsonProcessingContext::content_series);
     add_string(*parser, "app.content.season", root_context, &JsonProcessingContext::content_season);
     add_string_array(
       *parser,
       "app.content.cat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->content_cat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->content_cat, value);
+      });
     add_object_processor(
       *parser,
       "app.content.producer",
@@ -5778,8 +5826,10 @@ namespace AdServer::Bidding
     add_string_array(
       *parser,
       "app.publisher.cat",
-      [](FastOpenRtbState& state, std::string_view value) { append_string(state.context->publisher_cat, value); }
-    );
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        append_string(state.context->publisher_cat, value);
+      });
 
     add_string(*parser, "device.ip", root_context, &JsonProcessingContext::ip);
     add_string(*parser, "device.ipv6", root_context, &JsonProcessingContext::ipv6);
@@ -5799,7 +5849,13 @@ namespace AdServer::Bidding
     add_string(*parser, "device.geo.region", root_context, &JsonProcessingContext::ssp_region);
     add_string(*parser, "device.geo.city", root_context, &JsonProcessingContext::ssp_city);
 
-    add_object_processor(*parser, "user", [](FastOpenRtbState& state) { state.context->user = true; });
+    add_object_processor(
+      *parser,
+      "user",
+      [](FastOpenRtbState& state)
+      {
+        state.context->user = true;
+      });
     add_string(*parser, "user.id", root_context, &JsonProcessingContext::external_user_id);
     add_string(*parser, "user.buyeruid", root_context, &JsonProcessingContext::user_id);
     add_string(*parser, "user.buyerid", root_context, &JsonProcessingContext::user_id);
@@ -5811,22 +5867,46 @@ namespace AdServer::Bidding
       "user.data.segment",
       start_segment,
       [](FastOpenRtbState&) {});
-    add_string(*parser, "user.data.segment.id", segment_context, &JsonProcessingContext::Segment::id);
-    add_string(*parser, "user.data.segment.name", segment_context, &JsonProcessingContext::Segment::name);
-    add_string(*parser, "user.data.segment.value", segment_context, &JsonProcessingContext::Segment::value);
+    add_string(
+      *parser,
+      "user.data.segment.id",
+      segment_context,
+      &JsonProcessingContext::Segment::id);
+    add_string(
+      *parser,
+      "user.data.segment.name",
+      segment_context,
+      &JsonProcessingContext::Segment::name);
+    add_string(
+      *parser,
+      "user.data.segment.value",
+      segment_context,
+      &JsonProcessingContext::Segment::value);
     add_object_processor(
       *parser,
       "user.ext.eids",
       start_user_eid,
       [](FastOpenRtbState&) {});
-    add_string(*parser, "user.ext.eids.source", user_eid_context, &JsonProcessingContext::UserEid::source);
+    add_string(
+      *parser,
+      "user.ext.eids.source",
+      user_eid_context,
+      &JsonProcessingContext::UserEid::source);
     add_object_processor(
       *parser,
       "user.ext.eids.uids",
       start_user_eid_uid,
       [](FastOpenRtbState&) {});
-    add_string(*parser, "user.ext.eids.uids.id", user_eid_uid_context, &JsonProcessingContext::UserEidUid::id);
-    add_string(*parser, "user.ext.eids.uids.stableid", user_eid_uid_context, &JsonProcessingContext::UserEidUid::stable_id);
+    add_string(
+      *parser,
+      "user.ext.eids.uids.id",
+      user_eid_uid_context,
+      &JsonProcessingContext::UserEidUid::id);
+    add_string(
+      *parser,
+      "user.ext.eids.uids.stableid",
+      user_eid_uid_context,
+      &JsonProcessingContext::UserEidUid::stable_id);
 
     add_bool(*parser, "regs.coppa", root_context, &JsonProcessingContext::regs_coppa);
 
@@ -5835,7 +5915,6 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::parse_openrtb_request_(
-    RequestParams& request_params,
     RequestInfo& request_info,
     JsonProcessingContext& context,
     std::string_view bid_request) const
@@ -5843,7 +5922,6 @@ namespace AdServer::Bidding
     static const char* FUN = "RequestInfoFiller::parse_openrtb_request_()";
 
     FastOpenRtbState state;
-    state.request_params = &request_params;
     state.request_info = &request_info;
     state.context = &context;
 

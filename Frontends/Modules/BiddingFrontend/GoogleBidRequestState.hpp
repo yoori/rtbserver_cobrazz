@@ -48,7 +48,6 @@ namespace AdServer::Bidding
     virtual void
     clear() noexcept;
 
-  protected:
     virtual
     ~GoogleBidRequestState() noexcept = default;
 

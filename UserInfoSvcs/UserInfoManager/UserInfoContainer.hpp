@@ -93,7 +93,7 @@ namespace AdServer
         UserFreqCapProfile::CampaignFreqs& campaign_freqs)
         /*throw(ChunkNotFound, UserIsFraud, Exception)*/;
 
-      AdServer::Commons::Task<bool>
+      AdServer::Commons::SyncCoro<bool>
       co_get_full_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
@@ -115,7 +115,7 @@ namespace AdServer
         AdServer::ProfilingCommons::OperationPriority op_priority)
         /*throw(NotReady, ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_update_freq_caps(
+      AdServer::Commons::SyncCoro<bool> co_update_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
         const Commons::RequestId& request_id,
@@ -135,7 +135,7 @@ namespace AdServer
         const std::set<unsigned long>& exclude_pubpixel_accounts)
         /*throw(NotReady, ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_confirm_freq_caps(
+      AdServer::Commons::SyncCoro<bool> co_confirm_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
         const Commons::RequestId& request_id,
@@ -150,7 +150,7 @@ namespace AdServer
         SmartMemBuf_var* mb_fc_profile_out = 0)
         /*throw(ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_get_user_profile(
+      AdServer::Commons::SyncCoro<bool> co_get_user_profile(
         const UserId& user_id,
         bool temporary,
         SmartMemBuf_var* mb_base_profile_out,
@@ -162,7 +162,7 @@ namespace AdServer
         const UserId& user_id)
         /*throw(ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_remove_user_profile(
+      AdServer::Commons::SyncCoro<bool> co_remove_user_profile(
         const UserId& user_id);
 
       virtual void exchange_merge(
@@ -185,7 +185,7 @@ namespace AdServer
         UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0)
         /*throw(NotReady, ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_merge(
+      AdServer::Commons::SyncCoro<bool> co_merge(
         const RequestMatchParams& request_params,
         const Generics::MemBuf& merge_base_profile,
         Generics::MemBuf& merge_add_profile,
@@ -203,7 +203,7 @@ namespace AdServer
         const Generics::Time& now)
         /*throw(NotReady, ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_fraud_user(
+      AdServer::Commons::SyncCoro<bool> co_fraud_user(
         const UserId& user_id,
         const Generics::Time& now);
 
@@ -214,7 +214,7 @@ namespace AdServer
         std::list<unsigned long>& optin_publishers)
         /*throw(ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_get_optin_publishers(
+      AdServer::Commons::SyncCoro<bool> co_get_optin_publishers(
         const UserId& user_id,
         const Generics::Time& publishers_optin_timeout,
         std::list<unsigned long>& optin_publishers);
@@ -246,7 +246,7 @@ namespace AdServer
         UniqueChannelsResult* unique_channels_result = 0)
         /*throw(NotReady, ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_match(
+      AdServer::Commons::SyncCoro<bool> co_match(
         const RequestMatchParams& request_params,
         long last_colo_id,
         long current_placement_colo_id,
@@ -266,7 +266,7 @@ namespace AdServer
         AdServer::ProfilingCommons::OperationPriority op_priority)
         /*throw(ChunkNotFound, Exception)*/;
 
-      AdServer::Commons::Task<bool> co_consider_publishers_optin(
+      AdServer::Commons::SyncCoro<bool> co_consider_publishers_optin(
         const UserId& user_id,
         const std::set<unsigned long>& publisher_account_ids,
         const Generics::Time& now,

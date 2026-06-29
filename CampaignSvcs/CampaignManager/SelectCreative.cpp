@@ -184,7 +184,7 @@ namespace AdServer
           ad_instantiate_type,
           creative_params_list,
           request_result_params,
-          config,
+          *config,
           ad_selection_result.tag,
           instantiate_params,
           instantiate_info,

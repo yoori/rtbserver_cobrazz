@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -32,8 +33,16 @@ namespace AdServer
 
     virtual Generics::SignedUuid
     verify(
-      const String::SubString& uid_str,
+      std::string_view uid_str,
       KeyType key_type = PERSISTENT) const = 0;
+
+    Generics::SignedUuid
+    verify(
+      const String::SubString& uid_str,
+      KeyType key_type = PERSISTENT) const
+    {
+      return verify(std::string_view(uid_str.data(), uid_str.size()), key_type);
+    }
 
     virtual bool
     null_blacklisted(AdServer::Commons::UserId& user_id) const
@@ -57,6 +66,7 @@ namespace AdServer
   {
   public:
     DECLARE_EXCEPTION(Exception, UserIdControllerBase::Exception);
+    using UserIdControllerBase::verify;
 
   public:
     UserIdController(
@@ -74,7 +84,7 @@ namespace AdServer
 
     Generics::SignedUuid
     verify(
-      const String::SubString& uid_str,
+      std::string_view uid_str,
       KeyType key_type = PERSISTENT) const
       override
       /*throw(eh::Exception)*/;
@@ -112,7 +122,7 @@ namespace AdServer
     static Generics::Uuid
     get_by_ssp_user_id(
       const Generics::Uuid& uuid,
-      const String::SubString& source_id,
+      std::string_view source_id,
       uint8_t data_marker)
       /*throw(eh::Exception)*/;
 
@@ -142,7 +152,7 @@ namespace AdServer
     static Generics::SignedUuid verify_(
       CheckUserIdMap& cache,
       const Generics::SignedUuidVerifier* verifier,
-      const String::SubString& uid_str,
+      std::string_view uid_str,
       const Commons::UserIdBlackList& user_id_black_list,
       bool data_expected)
       /*throw(eh::Exception)*/;
@@ -156,7 +166,7 @@ namespace AdServer
     Generics::Uuid
     get_by_ssp_user_id_v0_(
       const Generics::Uuid& uuid,
-      const String::SubString& source_id)
+      std::string_view source_id)
       /*throw(eh::Exception)*/;
 
   private:

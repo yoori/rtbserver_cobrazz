@@ -27,6 +27,9 @@ namespace AdServer::Bidding
     virtual bool
     read_request() noexcept;
 
+    std::string_view
+    channel_keywords() const noexcept override;
+
     /*
     virtual bool
     fill_request_info(std::string& keywords)
@@ -48,19 +51,18 @@ namespace AdServer::Bidding
     virtual void
     clear() noexcept;
 
+    virtual
+    ~OpenRtbBidRequestState() noexcept = default;
+
   public:
     //std::string bid_response;
     const std::string uri;
 
   protected:
-    virtual
-    ~OpenRtbBidRequestState() noexcept = default;
-
     void
     fill_openrtb_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const JsonProcessingContext& context,
       const AdServer::Bidding::CampaignManager::RequestCreativeResult& campaign_match_result,
       bool fill_yandex_attributes)
@@ -70,8 +72,6 @@ namespace AdServer::Bidding
     fill_yandex_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::Bidding::CampaignManager::
-        RequestParams& request_params,
       const JsonProcessingContext& context,
       const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)

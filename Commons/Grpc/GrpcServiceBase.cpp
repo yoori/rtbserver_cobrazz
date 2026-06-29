@@ -1,6 +1,7 @@
 #include "GrpcServiceBase.hpp"
 
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/Utils.hpp>
+#include <Commons/Coro/CoroSet.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -42,7 +43,7 @@ namespace AdServer::Grpc
   }
 
   void
-  GrpcCoroutine::start(Completion completion)
+  GrpcCoroutine::start(Completion completion) const
   {
     handle_.promise().completion = std::move(completion);
     AdServer::Commons::resume_coroutine(handle_);
@@ -118,73 +119,6 @@ namespace AdServer::Grpc
   GrpcCoroutine::promise_type::unhandled_exception() noexcept
   {
     exception = std::current_exception();
-  }
-
-  GrpcCoroutineAll::GrpcCoroutineAll(std::vector<GrpcCoroutine> operations)
-    : state_(std::make_shared<State>())
-  {
-    state_->operations = std::move(operations);
-  }
-
-  bool
-  GrpcCoroutineAll::await_ready() const noexcept
-  {
-    return state_->operations.empty();
-  }
-
-  bool
-  GrpcCoroutineAll::await_suspend(std::coroutine_handle<> continuation)
-  {
-    state_->continuation = continuation;
-    state_->remaining = state_->operations.size();
-
-    for (auto& operation : state_->operations)
-    {
-      operation.start([state = state_](std::exception_ptr exception) mutable {
-        bool resume = false;
-        {
-          std::lock_guard<std::mutex> guard(state->lock);
-          if (exception && !state->exception)
-          {
-            state->exception = exception;
-          }
-
-          if (--state->remaining == 0)
-          {
-            resume = state->suspended;
-          }
-        }
-
-        if (resume)
-        {
-          AdServer::Commons::resume_coroutine(state->continuation);
-        }
-      });
-    }
-
-    std::lock_guard<std::mutex> guard(state_->lock);
-    if (state_->remaining == 0)
-    {
-      return false;
-    }
-
-    state_->suspended = true;
-    return true;
-  }
-
-  void
-  GrpcCoroutineAll::await_resume()
-  {
-    if (state_->exception)
-    {
-      std::rethrow_exception(state_->exception);
-    }
-  }
-
-  GrpcCoroutineAll
-  when_all(std::vector<GrpcCoroutine> operations)
-  {
-    return GrpcCoroutineAll(std::move(operations));
   }
 
 #ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
@@ -500,7 +434,8 @@ namespace AdServer::Grpc
         std::move(lane)));
     }
 
-    co_await when_all(std::move(operations));
+    co_await AdServer::Commons::CoroSet<GrpcCoroutine>(
+      std::move(operations));
 
     if (response_arena)
     {

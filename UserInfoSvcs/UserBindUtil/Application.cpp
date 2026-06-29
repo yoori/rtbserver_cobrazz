@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string_view>
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/Time.hpp>
@@ -86,7 +87,7 @@ divide_file_to_chunks(
       if(hash_type == HT_VALUE)
       {
         if(!String::StringManip::str_to_int(
-          external_id,
+          std::string_view(external_id.data(), external_id.size()),
           distrib_hash))
         {
           Stream::Error ostr;

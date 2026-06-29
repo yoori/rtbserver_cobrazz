@@ -411,16 +411,19 @@ namespace FrontendCommons
 
   const PlatformMatcher::MatchElement*
   PlatformMatcher::CategoryMatcher::match(
-    const String::SubString& user_agent) const
+    std::string_view user_agent) const
     /*throw(eh::Exception, String::RegEx::Exception)*/
   {
     OnMatch on_match(max_priority_);
-    matcher_.match(user_agent, on_match);
+    const String::SubString user_agent_substr(
+      user_agent.data(),
+      user_agent.size());
+    matcher_.match(user_agent_substr, on_match);
 
     for (auto it = empty_marker_elements_.begin();
          it != empty_marker_elements_.end(); ++it)
     {
-      if (on_match({user_agent, &*it}))
+      if (on_match({user_agent_substr, &*it}))
       {
         break;
       }
@@ -481,7 +484,7 @@ namespace FrontendCommons
     PlatformIdSet* platform_ids,
     std::string& platform,
     std::string& full_platform,
-    const String::SubString& user_agent,
+    std::string_view user_agent,
     bool application) const
     /*throw(eh::Exception)*/
   {
@@ -500,11 +503,11 @@ namespace FrontendCommons
     PlatformNameSet* platform_names,
     std::string& platform,
     std::string& full_platform,
-    const String::SubString& user_agent,
+    std::string_view user_agent,
     bool application) const
     /*throw(eh::Exception)*/
   {
-    std::string low_user_agent(user_agent.str());
+    std::string low_user_agent(user_agent);
     String::AsciiStringManip::to_lower(low_user_agent);
 
     bool res = match_(
@@ -555,7 +558,7 @@ namespace FrontendCommons
     std::string* platform,
     std::string* full_platform,
     const CategoryMatcher& matchers,
-    const String::SubString& user_agent) const
+    std::string_view user_agent) const
     /*throw(eh::Exception)*/
   {
     const MatchElement* element = matchers.match(user_agent);
@@ -581,9 +584,12 @@ namespace FrontendCommons
       {
         *full_platform = element->full_name;
         String::RegEx::Result output_sub_strs;
+        const String::SubString user_agent_substr(
+          user_agent.data(),
+          user_agent.size());
 
         if (element->output_regexp.get() &&
-            element->output_regexp->search(output_sub_strs, user_agent) &&
+            element->output_regexp->search(output_sub_strs, user_agent_substr) &&
             !output_sub_strs.empty())
         {
           for (String::RegEx::Result::iterator sit = ++output_sub_strs.begin();
@@ -674,7 +680,7 @@ namespace FrontendCommons
    *  WebBrowserMatcher implementation
    */
   WebBrowserMatcher::OnMatch::OnMatch(
-    const String::SubString& user_agent,
+    std::string_view user_agent,
     unsigned long max_priority)
     noexcept
     : user_agent_(user_agent),
@@ -734,8 +740,11 @@ namespace FrontendCommons
     const MatchElement* element)
     /*throw(String::RegEx::Exception)*/
   {
+    const String::SubString user_agent(
+      user_agent_.data(),
+      user_agent_.size());
     return (!element->regexp.get() ||
-            element->regexp->search(sub_strs_, user_agent_) ||
+            element->regexp->search(sub_strs_, user_agent) ||
             !element->regexp_required);
   }
 
@@ -748,16 +757,19 @@ namespace FrontendCommons
   bool
   WebBrowserMatcher::match(
     std::string& browser,
-    const String::SubString& user_agent) const
+    std::string_view user_agent) const
     /*throw(eh::Exception)*/
   {
+    const String::SubString user_agent_substr(
+      user_agent.data(),
+      user_agent.size());
     OnMatch on_match(user_agent, max_priority_);
-    matcher_.match(user_agent, on_match);
+    matcher_.match(user_agent_substr, on_match);
 
     for (auto it = empty_marker_elements_.begin();
          it != empty_marker_elements_.end(); ++it)
     {
-      if (on_match({user_agent, &*it}))
+      if (on_match({user_agent_substr, &*it}))
       {
         break;
       }

@@ -3,6 +3,8 @@
 #include "KeywordFormatter.hpp"
 #include "AdXmlBidRequestState.hpp"
 
+#include <Commons/GrpcAlgs.hpp>
+
 namespace AdServer::Bidding
 {
   namespace
@@ -14,16 +16,16 @@ namespace AdServer::Bidding
 
     namespace Response::Header
     {
-        const String::SubString CONTENT_TYPE("Content-Type");
-      }
+      const std::string CONTENT_TYPE("Content-Type");
+    }
 
     namespace Response::Type
-      {
-        const String::SubString TEXT_XML("text/xml");
-      }
+    {
+      const std::string TEXT_XML("text/xml");
+    }
 
-    const String::SubString ADXML_CLIENT("adxml");
-    const String::SubString ADXML_SIZE("300x300");
+    const std::string ADXML_CLIENT("adxml");
+    const std::string ADXML_SIZE("300x300");
   }
 
   AdXmlBidRequestState::AdXmlBidRequestState(
@@ -52,9 +54,7 @@ namespace AdServer::Bidding
       const FCGI::HttpRequest& request = request_holder_->request();
 
       bid_frontend_->request_info_filler()->adxml_request_info_filler()->fill_by_request(
-        *request_params_,
         request_info_,
-        keywords_,
         request,
         false,
         ADXML_CLIENT,
@@ -87,15 +87,11 @@ namespace AdServer::Bidding
   {
     //static const char* FUN = "AdXmlBidRequestState::write_response()";
 
-    AdServer::Bidding::CampaignManager::RequestParams& request_params =
-      *request_params_;
-
     std::ostringstream response_ostr;
 
     fill_response_(
       response_ostr,
-      request_info(),
-      request_params,
+      request_info_,
       campaign_match_result);
 
     // write response
@@ -152,7 +148,6 @@ namespace AdServer::Bidding
   AdXmlBidRequestState::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
-    const AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
     const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
@@ -199,7 +194,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_data_tokens.size() >= 1)
     {
       // NDTE_TITLE
-      const AdServer::Bidding::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[0];
       add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
@@ -208,7 +203,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_data_tokens.size() >= 2)
     {
       // NDTE_DESC
-      const AdServer::Bidding::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[1];
       add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
@@ -220,7 +215,7 @@ namespace AdServer::Bidding
 
     // result price in USD/1000, ecpm is in 0.01/1000
     CampaignSvcs::RevenueDecimal adxml_price = CampaignSvcs::RevenueDecimal::div(
-      CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm),
       CampaignSvcs::RevenueDecimal(false, 100, 0));
 
@@ -229,7 +224,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_image_tokens.size() > 0)
     {
       // NITE_MAIN
-      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
       add_xml_escaped_string_(response_ostr, token.value.c_str());
     }

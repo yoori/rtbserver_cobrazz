@@ -185,7 +185,7 @@ namespace AdServer
       const CTR::CTRProvider* ctr_provider,
       const CTR::CTRProvider* conv_rate_provider)
       : campaign_selection_index_(campaign_selection_index),
-        campaign_config_(campaign_selection_index->configuration()),
+        campaign_config_(campaign_selection_index->get_campaign_config()),
         ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
         conv_rate_provider_(ReferenceCounting::add_ref(conv_rate_provider))
     {}

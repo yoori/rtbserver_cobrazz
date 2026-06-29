@@ -1,4 +1,5 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/JsonFormatter.hpp>
 
 #include "KeywordFormatter.hpp"
@@ -15,31 +16,31 @@ namespace AdServer::Bidding
 
     namespace Response::Header
     {
-        const String::SubString CONTENT_TYPE("Content-Type");
-      }
+      const std::string CONTENT_TYPE("Content-Type");
+    }
 
     namespace Response::Type
-      {
-        const String::SubString TEXT_XML("text/xml");
-      }
+    {
+      const std::string TEXT_XML("text/xml");
+    }
 
     namespace Response::AdJson
-      {
-        const String::SubString CRID("creative_id");
-        const String::SubString TTL_CLICK("ttl_click");
-        const String::SubString MODE("mode");
-        const String::SubString COST("cost");
-        const String::SubString TITLE("title");
-        const String::SubString TEXT("text");
-        const String::SubString NURL("nurl");
-        const String::SubString CLICK_URL("link");
-        const String::SubString ICON("icon");
-        const String::SubString IMP_TRACKERS("pixels");
-        const String::SubString IMAGE("image");
-      }
+    {
+      const std::string CRID("creative_id");
+      const std::string TTL_CLICK("ttl_click");
+      const std::string MODE("mode");
+      const std::string COST("cost");
+      const std::string TITLE("title");
+      const std::string TEXT("text");
+      const std::string NURL("nurl");
+      const std::string CLICK_URL("link");
+      const std::string ICON("icon");
+      const std::string IMP_TRACKERS("pixels");
+      const std::string IMAGE("image");
+    }
 
-    const String::SubString ADJSON_CLIENT("adjson");
-    const String::SubString ADJSON_SIZE("492x328");
+    const std::string ADJSON_CLIENT("adjson");
+    const std::string ADJSON_SIZE("492x328");
   }
 
   AdJsonBidRequestState::AdJsonBidRequestState(
@@ -68,9 +69,7 @@ namespace AdServer::Bidding
       const FCGI::HttpRequest& request = request_holder_->request();
 
       bid_frontend_->request_info_filler()->adxml_request_info_filler()->fill_by_request(
-        *request_params_,
         request_info_,
-        keywords_,
         request,
         true, // require icon
         ADJSON_CLIENT,
@@ -103,15 +102,11 @@ namespace AdServer::Bidding
   {
     //static const char* FUN = "AdJsonBidRequestState::write_response()";
 
-    AdServer::Bidding::CampaignManager::RequestParams& request_params =
-      *request_params_;
-
     std::ostringstream response_ostr;
 
     fill_response_(
       response_ostr,
-      request_info(),
-      request_params,
+      request_info_,
       campaign_match_result);
 
     // write response
@@ -167,8 +162,7 @@ namespace AdServer::Bidding
   void
   AdJsonBidRequestState::fill_response_(
     std::ostream& response_ostr,
-    const RequestInfo& /*request_info*/,
-    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    const RequestInfo& request_info,
     const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
@@ -188,11 +182,11 @@ namespace AdServer::Bidding
       const AdServer::Bidding::CampaignManager::
         AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[0];
 
-      CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      CampaignSvcs::RevenueDecimal sum_pub_ecpm = GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm);
 
-      bid_frontend_->limit_max_cpm_(
-        sum_pub_ecpm, request_params.publisher_account_ids);
+        bid_frontend_->limit_max_cpm_(
+          sum_pub_ecpm, request_info.publisher_account_ids);
 
       root_json.add_string(
         Response::AdJson::CRID,
@@ -209,7 +203,7 @@ namespace AdServer::Bidding
       if(ad_slot_result.native_data_tokens.size() >= 1)
       {
         // NDTE_TITLE
-        const AdServer::Bidding::CampaignManager::TokenInfo& token =
+        const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
           ad_slot_result.native_data_tokens[0];
         // title
         root_json.add_escaped_string(
@@ -236,7 +230,7 @@ namespace AdServer::Bidding
       // icon
       if(ad_slot_result.native_image_tokens.size() > 1)
       {
-        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+        const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
         root_json.add_escaped_string(
           Response::AdJson::ICON,
@@ -252,7 +246,7 @@ namespace AdServer::Bidding
       // image
       if(ad_slot_result.native_image_tokens.size() > 0)
       {
-        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+        const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];
         root_json.add_escaped_string(
           Response::AdJson::IMAGE, String::SubString(token.value));
@@ -281,7 +275,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_data_tokens.size() >= 1)
     {
       // NDTE_TITLE
-      const AdServer::Bidding::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[0];
       add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
@@ -290,7 +284,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_data_tokens.size() >= 2)
     {
       // NDTE_DESC
-      const AdServer::Bidding::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[1];
       add_xml_escaped_string_(response_ostr, token.value.c_str());
     }
@@ -302,7 +296,7 @@ namespace AdServer::Bidding
 
     // result price in USD/1000, ecpm is in 0.01/1000
     CampaignSvcs::RevenueDecimal adxml_price = CampaignSvcs::RevenueDecimal::div(
-      CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+      GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm),
       CampaignSvcs::RevenueDecimal(false, 100, 0));
 
@@ -311,7 +305,7 @@ namespace AdServer::Bidding
     if(ad_slot_result.native_image_tokens.size() > 0)
     {
       // NITE_MAIN
-      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
       add_xml_escaped_string_(response_ostr, token.value.c_str());
     }

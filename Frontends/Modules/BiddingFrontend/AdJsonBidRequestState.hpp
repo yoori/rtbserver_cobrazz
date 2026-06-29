@@ -45,6 +45,9 @@ namespace AdServer::Bidding
     virtual void
     clear() noexcept;
 
+    virtual
+    ~AdJsonBidRequestState() noexcept = default;
+
   public:
     //std::string bid_response;
     const std::string uri;
@@ -53,14 +56,9 @@ namespace AdServer::Bidding
     struct Context;
 
   protected:
-    virtual
-    ~AdJsonBidRequestState() noexcept = default;
-
     void
     fill_by_adjson_request_(
-      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
-      std::string& keywords,
       const FCGI::HttpRequest& request)
       noexcept;
 
@@ -68,7 +66,6 @@ namespace AdServer::Bidding
     fill_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
       noexcept;

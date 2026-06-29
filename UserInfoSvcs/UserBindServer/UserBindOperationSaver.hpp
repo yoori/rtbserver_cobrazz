@@ -29,7 +29,7 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& flush_period,
       UserBindProcessor* next_processor);
 
-    AdServer::Commons::Task<UserInfo>
+    AdServer::Commons::SyncCoro<UserInfo>
     co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
@@ -38,7 +38,7 @@ namespace AdServer::UserInfoSvcs
       bool ignore_bad_event) override
       /*throw(ChunkNotFound, UserBindProcessor::Exception)*/;
 
-    AdServer::Commons::Task<UserInfo>
+    AdServer::Commons::SyncCoro<UserInfo>
     co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,

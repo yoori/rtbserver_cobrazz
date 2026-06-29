@@ -338,7 +338,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_get_full_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -475,7 +475,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_update_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -615,7 +615,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_confirm_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -765,7 +765,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_get_user_profile(
     const UserId& user_id,
     bool temporary,
@@ -870,7 +870,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_remove_user_profile(const UserId& user_id)
   {
     static const char* FUN = "UserInfoContainer::co_remove_user_profile()";
@@ -1451,7 +1451,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_merge(
     const RequestMatchParams& request_params,
     const Generics::MemBuf& merge_base_profile_buf,
@@ -1931,7 +1931,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_fraud_user(
     const UserId& user_id,
     const Generics::Time& now)
@@ -2022,7 +2022,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_get_optin_publishers(
     const UserId& user_id,
     const Generics::Time& publishers_optin_timeout,
@@ -2419,7 +2419,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_match(
     const RequestMatchParams& request_params,
     long last_colo_id,
@@ -3059,7 +3059,7 @@ namespace UserInfoSvcs
     }
   }
 
-  AdServer::Commons::Task<bool>
+  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_consider_publishers_optin(
     const UserId& user_id,
     const std::set<unsigned long>& publisher_account_ids,

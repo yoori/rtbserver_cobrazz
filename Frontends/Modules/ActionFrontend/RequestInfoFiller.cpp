@@ -631,7 +631,8 @@ namespace AdServer::Action
 
         if(!ifa_str.empty())
         {
-          request_info.ifa = FrontendCommons::normalize_ifa(ifa_str);
+          request_info.ifa = FrontendCommons::normalize_ifa(
+            std::string_view(ifa_str.data(), ifa_str.size()));
         }
       }
     }

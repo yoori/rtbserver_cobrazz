@@ -1,5 +1,7 @@
 #include "GoogleBidRequestState.hpp"
 
+#include <Commons/GrpcAlgs.hpp>
+
 
 namespace AdServer::Bidding
 {
@@ -12,83 +14,83 @@ namespace AdServer::Bidding
 
     namespace Response::Type
     {
-        const String::SubString OCTET_STREAM("application/octet-stream");
+      const std::string OCTET_STREAM("application/octet-stream");
+    }
+
+    // https://storage.googleapis.com/adx-rtb-dictionaries/buyer-declarable-creative-attributes.txt
+    namespace Response::Google
+    {
+      const ::google::protobuf::int32 CREATIVE_ATTR[] =
+      {
+        8, // CookieTargeting: IsCookieTargeted
+        9, // UserInterestTargeting: IsUserInterestTargeted
       };
 
-      // https://storage.googleapis.com/adx-rtb-dictionaries/buyer-declarable-creative-attributes.txt
-      namespace Response::Google
+      // RichMediaCapabilityType: RichMediaCapabilitySSL
+      const ::google::protobuf::int32 CREATIVE_SECURE = 47;
+
+      // Expanding attributes
+      //   ExpandingDirection: ExpandingNone
+      const ::google::protobuf::int32 CREATIVE_EXPAND_NONE = 12;
+      //   ExpandingDirection: ExpandingUp
+      const ::google::protobuf::int32 CREATIVE_EXPAND_UP = 13;
+      //   ExpandingDirection: ExpandingDown
+      const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN = 14;
+      //   ExpandingDirection: ExpandingLeft
+      const ::google::protobuf::int32 CREATIVE_EXPAND_LEFT = 15;
+      //   ExpandingDirection: ExpandingRight
+      const ::google::protobuf::int32 CREATIVE_EXPAND_RIGHT = 16;
+      //   ExpandingDirection: ExpandingUpLeft
+      const ::google::protobuf::int32 CREATIVE_EXPAND_UP_LEFT = 17;
+      //   ExpandingDirection: ExpandingUpRight
+      const ::google::protobuf::int32 CREATIVE_EXPAND_UP_RIGHT = 18;
+      //   ExpandingDirection: ExpandingDownLeft
+      const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN_LEFT = 19;
+      //   ExpandingDirection: ExpandingDownRight
+      const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN_RIGHT = 20;
+      //   ExpandingDirection: ExpandingUpOrDown
+      const ::google::protobuf::int32 CREATIVE_EXPAND_UP_OR_DOWN = 25;
+      //   ExpandingDirection: ExpandingLeftOrRight
+      const ::google::protobuf::int32 CREATIVE_EXPAND_LEFT_OR_RIGHT = 26;
+      //   ExpandingDirection: ExpandingAnyDiagonal
+      const ::google::protobuf::int32 CREATIVE_EXPAND_ANY_DIAGONAL = 27;
+
+      const ::google::protobuf::int32 CREATIVE_EXPAND_MAP[] =
       {
-        const ::google::protobuf::int32 CREATIVE_ATTR[] =
-        {
-          8, // CookieTargeting: IsCookieTargeted
-          9, // UserInterestTargeting: IsUserInterestTargeted
-        };
-
-        // RichMediaCapabilityType: RichMediaCapabilitySSL
-        const ::google::protobuf::int32 CREATIVE_SECURE = 47;
-
-        // Expanding attributes
-        //   ExpandingDirection: ExpandingNone
-        const ::google::protobuf::int32 CREATIVE_EXPAND_NONE = 12;
-        //   ExpandingDirection: ExpandingUp
-        const ::google::protobuf::int32 CREATIVE_EXPAND_UP = 13;
-        //   ExpandingDirection: ExpandingDown
-        const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN = 14;
-        //   ExpandingDirection: ExpandingLeft
-        const ::google::protobuf::int32 CREATIVE_EXPAND_LEFT = 15;
-        //   ExpandingDirection: ExpandingRight
-        const ::google::protobuf::int32 CREATIVE_EXPAND_RIGHT = 16;
-        //   ExpandingDirection: ExpandingUpLeft
-        const ::google::protobuf::int32 CREATIVE_EXPAND_UP_LEFT = 17;
-        //   ExpandingDirection: ExpandingUpRight
-        const ::google::protobuf::int32 CREATIVE_EXPAND_UP_RIGHT = 18;
-        //   ExpandingDirection: ExpandingDownLeft
-        const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN_LEFT = 19;
-        //   ExpandingDirection: ExpandingDownRight
-        const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN_RIGHT = 20;
-        //   ExpandingDirection: ExpandingUpOrDown
-        const ::google::protobuf::int32 CREATIVE_EXPAND_UP_OR_DOWN = 25;
-        //   ExpandingDirection: ExpandingLeftOrRight
-        const ::google::protobuf::int32 CREATIVE_EXPAND_LEFT_OR_RIGHT = 26;
-        //   ExpandingDirection: ExpandingAnyDiagonal
-        const ::google::protobuf::int32 CREATIVE_EXPAND_ANY_DIAGONAL = 27;
-
-        const ::google::protobuf::int32 CREATIVE_EXPAND_MAP[] =
-        {
-          // expanding = 0
-          CREATIVE_EXPAND_NONE,
-          // expanding = 1 - CREATIVE_EXPANDING_LEFT
-          CREATIVE_EXPAND_LEFT,
-          // expanding = 2 - CREATIVE_EXPANDING_RIGHT
-          CREATIVE_EXPAND_RIGHT,
-          // expanding = 3 - CREATIVE_EXPANDING_RIGHT | CREATIVE_EXPANDING_LEFT
-          CREATIVE_EXPAND_LEFT_OR_RIGHT,
-          // expanding = 4 - CREATIVE_EXPANDING_UP
-          CREATIVE_EXPAND_UP,
-          // expanding = 5 - CREATIVE_EXPANDING_UP | CREATIVE_EXPANDING_LEFT
-          CREATIVE_EXPAND_UP_LEFT,
-          // expanding = 6 - CREATIVE_EXPANDING_UP | CREATIVE_EXPANDING_RIGHT
-          CREATIVE_EXPAND_UP_RIGHT,
-          // expanding = 7 - CREATIVE_EXPANDING_UP | CREATIVE_EXPANDING_RIGHT | CREATIVE_EXPANDING_LEFT
-          -1,
-          // expanding = 8 - CREATIVE_EXPANDING_DOWN
-          CREATIVE_EXPAND_DOWN,
-          // expanding = 9 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_LEFT
-          CREATIVE_EXPAND_DOWN_LEFT,
-          // expanding = 10 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_RIGHT
-          CREATIVE_EXPAND_DOWN_RIGHT,
-          // expanding = 11 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_RIGHT | CREATIVE_EXPANDING_LEFT
-          -1,
-          // expanding = 12 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_TOP
-          CREATIVE_EXPAND_UP_OR_DOWN,
-          // expanding = 13 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_TOP | CREATIVE_EXPANDING_LEFT
-          -1,
-          // expanding = 14 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_TOP | CREATIVE_EXPANDING_RIGHT
-          -1,
-          // expanding = 15 - ALL
-          CREATIVE_EXPAND_ANY_DIAGONAL,
-        };
-      }
+        // expanding = 0
+        CREATIVE_EXPAND_NONE,
+        // expanding = 1 - CREATIVE_EXPANDING_LEFT
+        CREATIVE_EXPAND_LEFT,
+        // expanding = 2 - CREATIVE_EXPANDING_RIGHT
+        CREATIVE_EXPAND_RIGHT,
+        // expanding = 3 - CREATIVE_EXPANDING_RIGHT | CREATIVE_EXPANDING_LEFT
+        CREATIVE_EXPAND_LEFT_OR_RIGHT,
+        // expanding = 4 - CREATIVE_EXPANDING_UP
+        CREATIVE_EXPAND_UP,
+        // expanding = 5 - CREATIVE_EXPANDING_UP | CREATIVE_EXPANDING_LEFT
+        CREATIVE_EXPAND_UP_LEFT,
+        // expanding = 6 - CREATIVE_EXPANDING_UP | CREATIVE_EXPANDING_RIGHT
+        CREATIVE_EXPAND_UP_RIGHT,
+        // expanding = 7 - CREATIVE_EXPANDING_UP | CREATIVE_EXPANDING_RIGHT | CREATIVE_EXPANDING_LEFT
+        -1,
+        // expanding = 8 - CREATIVE_EXPANDING_DOWN
+        CREATIVE_EXPAND_DOWN,
+        // expanding = 9 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_LEFT
+        CREATIVE_EXPAND_DOWN_LEFT,
+        // expanding = 10 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_RIGHT
+        CREATIVE_EXPAND_DOWN_RIGHT,
+        // expanding = 11 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_RIGHT | CREATIVE_EXPANDING_LEFT
+        -1,
+        // expanding = 12 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_TOP
+        CREATIVE_EXPAND_UP_OR_DOWN,
+        // expanding = 13 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_TOP | CREATIVE_EXPANDING_LEFT
+        -1,
+        // expanding = 14 - CREATIVE_EXPANDING_DOWN | CREATIVE_EXPANDING_TOP | CREATIVE_EXPANDING_RIGHT
+        -1,
+        // expanding = 15 - ALL
+        CREATIVE_EXPAND_ANY_DIAGONAL,
+      };
+    }
 
     template <typename T, size_t Size, typename Function>
     void for_range(
@@ -100,8 +102,7 @@ namespace AdServer::Bidding
 
     template <typename AddRepeatedFn>
     void categories_to_repeated(
-      const AdServer::Bidding::CampaignManager::
-        ExternalCreativeCategoryIdSeq& categories,
+      const std::pmr::vector<std::string>& categories,
       AddRepeatedFn fn)
     {
       for(std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)
@@ -190,9 +191,7 @@ namespace AdServer::Bidding
       */
 
       bid_frontend_->request_info_filler()->fill_by_google_request(
-        *request_params_,
         request_info_,
-        keywords_,
         ad_slots_context_,
         bid_request_);
 
@@ -235,8 +234,8 @@ namespace AdServer::Bidding
   {
     try
     {
-      AdServer::Bidding::CampaignManager::RequestParams& request_params =
-        *request_params_;
+      const RequestInfo& request_info =
+        request_info_;
 
       Google::BidResponse bid_response;
 
@@ -263,7 +262,7 @@ namespace AdServer::Bidding
               creative_i < ad_slot_result.selected_creatives.size();
               ++creative_i)
           {
-            sum_pub_ecpm += CampaignManager::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            sum_pub_ecpm += GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
               ad_slot_result.selected_creatives[creative_i].pub_ecpm);
 
             ad->add_click_through_url(
@@ -275,7 +274,7 @@ namespace AdServer::Bidding
             std::bind1st(
               std::mem_fun(&Google::BidResponse_Ad::add_category), ad));
 
-          bid_frontend_->limit_max_cpm_(sum_pub_ecpm, request_params.publisher_account_ids);
+          bid_frontend_->limit_max_cpm_(sum_pub_ecpm, request_info.publisher_account_ids);
 
           CampaignSvcs::ExtRevenueDecimal google_price = CampaignSvcs::ExtRevenueDecimal::mul(
             CampaignSvcs::ExtRevenueDecimal(sum_pub_ecpm.str()),
@@ -375,7 +374,7 @@ namespace AdServer::Bidding
           }
 
           // Video
-          if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL &&
+          if(request_info.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL &&
              !ad_slot_result.creative_url.empty())
           {
             ad->set_video_url(ad_slot_result.creative_url);

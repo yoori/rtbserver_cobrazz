@@ -1,6 +1,7 @@
 #include "ExecutorPool.hpp"
 
-#include <Commons/Coro.hpp>
+#include <Commons/Coro/ScopedCoroutineResumeScheduler.hpp>
+#include <Commons/Coro/Utils.hpp>
 #include <Commons/ThreadName.hpp>
 
 namespace AdServer::Commons
