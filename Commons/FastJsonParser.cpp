@@ -396,8 +396,11 @@ namespace AdServer::Commons
 #endif
   }
 
-  struct FastJsonParser::Impl
+  template<typename StringType>
+  struct FastJsonParser<StringType>::Impl
   {
+    using StringCreator = StringType (*)(void*);
+
     struct JsonTreeProcessor
     {
       JsonTreeProcessor() = default;
@@ -427,7 +430,7 @@ namespace AdServer::Commons
     struct StringToken
     {
       std::string_view value;
-      std::string unescaped;
+      StringType unescaped;
       bool escaped = false;
     };
 
@@ -459,7 +462,10 @@ namespace AdServer::Commons
     class Cursor
     {
     public:
-      explicit Cursor(std::string_view json);
+      Cursor(
+        std::string_view json,
+        StringCreator string_creator,
+        void* string_creator_context);
 
       bool
       eof() const noexcept;
@@ -536,7 +542,7 @@ namespace AdServer::Commons
       hex_to_int_(char c) noexcept;
 
       void
-      parse_string_tail_(std::string& out);
+      parse_string_tail_(StringType& out);
 
       void
       append_escape_(char*& out);
@@ -567,6 +573,8 @@ namespace AdServer::Commons
       const char* begin_;
       const char* pos_;
       const char* end_;
+      StringCreator string_creator_;
+      void* string_creator_context_;
     };
 
     explicit
@@ -579,14 +587,20 @@ namespace AdServer::Commons
       bool as_string);
 
     void
-    parse(std::string_view json, void* context) const;
+    parse(
+      std::string_view json,
+      void* context,
+      StringCreator string_creator,
+      void* string_creator_context) const;
 
     template<bool Strict, bool UseSimd>
     static void
     parse_(
       const Impl& impl,
       std::string_view json,
-      void* context);
+      void* context,
+      StringCreator string_creator,
+      void* string_creator_context);
 
     template<bool Strict, bool UseSimd>
     void
@@ -615,28 +629,33 @@ namespace AdServer::Commons
     using ParseHandler = void (*)(
       const Impl& impl,
       std::string_view json,
-      void* context);
+      void* context,
+      StringCreator string_creator,
+      void* string_creator_context);
 
     ParseHandler parse_handler = nullptr;
     JsonTreeProcessor root_processor;
   };
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::object_started(
+  FastJsonParser<StringType>::ValueProcessor::object_started(
     std::string_view,
     void*) const
   {}
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::array_started(
+  FastJsonParser<StringType>::ValueProcessor::array_started(
     std::string_view path,
     void*) const
   {
     throw UnexpectedType("unexpected array in " + std::string(path));
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_integer(
+  FastJsonParser<StringType>::ValueProcessor::process_integer(
     int64_t,
     std::string_view path,
     void*) const
@@ -644,8 +663,9 @@ namespace AdServer::Commons
     throw UnexpectedType("unexpected integer in " + std::string(path));
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_float(
+  FastJsonParser<StringType>::ValueProcessor::process_float(
     double,
     std::string_view path,
     void*) const
@@ -653,8 +673,9 @@ namespace AdServer::Commons
     throw UnexpectedType("unexpected float in " + std::string(path));
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_number(
+  FastJsonParser<StringType>::ValueProcessor::process_number(
     std::string_view value,
     bool is_float,
     std::string_view path,
@@ -703,26 +724,31 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_string(
+  FastJsonParser<StringType>::ValueProcessor::process_string(
     std::string_view value,
     std::string_view path,
     void* context) const
   {
-    process_string(std::string(value), path, context);
+    StringType string_value;
+    string_value.assign(value.data(), value.size());
+    process_string(std::move(string_value), path, context);
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_string(
-    std::string&&,
+  FastJsonParser<StringType>::ValueProcessor::process_string(
+    StringType&&,
     std::string_view path,
     void*) const
   {
     throw UnexpectedType("unexpected string in " + std::string(path));
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_bool(
+  FastJsonParser<StringType>::ValueProcessor::process_bool(
     bool,
     std::string_view path,
     void*) const
@@ -730,22 +756,26 @@ namespace AdServer::Commons
     throw UnexpectedType("unexpected bool in " + std::string(path));
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::ValueProcessor::process_null(
+  FastJsonParser<StringType>::ValueProcessor::process_null(
     std::string_view path,
     void*) const
   {
     throw UnexpectedType("unexpected null in " + std::string(path));
   }
 
-  FastJsonParser::FastJsonParser(bool strict)
+  template<typename StringType>
+  FastJsonParser<StringType>::FastJsonParser(bool strict)
     : impl_(std::make_unique<Impl>(strict, simd_supported_()))
   {}
 
-  FastJsonParser::~FastJsonParser() noexcept = default;
+  template<typename StringType>
+  FastJsonParser<StringType>::~FastJsonParser() noexcept = default;
 
+  template<typename StringType>
   void
-  FastJsonParser::add_processor(
+  FastJsonParser<StringType>::add_processor(
     std::string_view path,
     std::shared_ptr<ValueProcessor> processor,
     bool as_string)
@@ -753,19 +783,43 @@ namespace AdServer::Commons
     impl_->add_processor(path, std::move(processor), as_string);
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::parse(std::string_view json, void* context) const
+  FastJsonParser<StringType>::parse(std::string_view json, void* context) const
   {
-    impl_->parse(json, context);
+    parse(
+      json,
+      context,
+      []()
+      {
+        return StringType();
+      });
   }
 
-  FastJsonParser::Impl::JsonTreeProcessor::JsonTreeProcessor(
+  template<typename StringType>
+  void
+  FastJsonParser<StringType>::parse_(
+    std::string_view json,
+    void* context,
+    typename FastJsonParser<StringType>::StringCreator string_creator,
+    void* string_creator_context) const
+  {
+    impl_->parse(
+      json,
+      context,
+      string_creator,
+      string_creator_context);
+  }
+
+  template<typename StringType>
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::JsonTreeProcessor(
     std::string path_val)
     : path(std::move(path_val))
   {}
 
+  template<typename StringType>
   inline std::uint64_t
-  FastJsonParser::Impl::JsonTreeProcessor::short_key_(
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::short_key_(
     std::string_view key) noexcept
   {
     const auto* data = reinterpret_cast<const unsigned char*>(key.data());
@@ -820,8 +874,9 @@ namespace AdServer::Commons
     }
   }
 
-  FastJsonParser::Impl::JsonTreeProcessor*
-  FastJsonParser::Impl::JsonTreeProcessor::find_sub_processor(
+  template<typename StringType>
+  typename FastJsonParser<StringType>::Impl::JsonTreeProcessor*
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::find_sub_processor(
     std::string_view key,
     bool escaped)
   {
@@ -839,8 +894,9 @@ namespace AdServer::Commons
     return it != sub_processors.end() ? it->second.get() : nullptr;
   }
 
-  const FastJsonParser::Impl::JsonTreeProcessor*
-  FastJsonParser::Impl::JsonTreeProcessor::find_sub_processor(
+  template<typename StringType>
+  const typename FastJsonParser<StringType>::Impl::JsonTreeProcessor*
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::find_sub_processor(
     std::string_view key,
     bool escaped) const
   {
@@ -858,7 +914,8 @@ namespace AdServer::Commons
     return it != sub_processors.end() ? it->second.get() : nullptr;
   }
 
-  FastJsonParser::Impl::Impl(bool strict_val, bool use_simd_val)
+  template<typename StringType>
+  FastJsonParser<StringType>::Impl::Impl(bool strict_val, bool use_simd_val)
   {
     if(strict_val)
     {
@@ -874,8 +931,9 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::Impl::add_processor(
+  FastJsonParser<StringType>::Impl::add_processor(
     std::string_view path,
     std::shared_ptr<ValueProcessor> processor,
     bool as_string)
@@ -936,27 +994,36 @@ namespace AdServer::Commons
     current->as_string = as_string;
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE
-  FastJsonParser::Impl::Cursor::Cursor(std::string_view json)
+  FastJsonParser<StringType>::Impl::Cursor::Cursor(
+    std::string_view json,
+    typename FastJsonParser<StringType>::Impl::StringCreator string_creator,
+    void* string_creator_context)
     : begin_(json.data()),
       pos_(json.data()),
-      end_(json.data() + json.size())
+      end_(json.data() + json.size()),
+      string_creator_(string_creator),
+      string_creator_context_(string_creator_context)
   {}
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE bool
-  FastJsonParser::Impl::Cursor::eof() const noexcept
+  FastJsonParser<StringType>::Impl::Cursor::eof() const noexcept
   {
     return pos_ == end_;
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE char
-  FastJsonParser::Impl::Cursor::peek() const
+  FastJsonParser<StringType>::Impl::Cursor::peek() const
   {
     return *pos_;
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE char
-  FastJsonParser::Impl::Cursor::get()
+  FastJsonParser<StringType>::Impl::Cursor::get()
   {
     if(eof())
     {
@@ -965,20 +1032,23 @@ namespace AdServer::Commons
     return *pos_++;
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE char
-  FastJsonParser::Impl::Cursor::get_unchecked() noexcept
+  FastJsonParser<StringType>::Impl::Cursor::get_unchecked() noexcept
   {
     return *pos_++;
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::skip_char() noexcept
+  FastJsonParser<StringType>::Impl::Cursor::skip_char() noexcept
   {
     ++pos_;
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::expect(char expected)
+  FastJsonParser<StringType>::Impl::Cursor::expect(char expected)
   {
     if(eof() || *pos_ != expected)
     {
@@ -987,9 +1057,10 @@ namespace AdServer::Commons
     ++pos_;
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::skip_spaces() noexcept
+  FastJsonParser<StringType>::Impl::Cursor::skip_spaces() noexcept
   {
     if(pos_ == end_ || !is_space_(*pos_))
     {
@@ -998,8 +1069,9 @@ namespace AdServer::Commons
     pos_ = find_non_space_<UseSimd>(pos_ + 1, end_);
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::consume_literal(std::string_view literal)
+  FastJsonParser<StringType>::Impl::Cursor::consume_literal(std::string_view literal)
   {
     if(static_cast<std::size_t>(end_ - pos_) < literal.size() ||
       std::string_view(pos_, literal.size()) != literal)
@@ -1013,9 +1085,10 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool UseSimd>
-  AD_FAST_JSON_ALWAYS_INLINE FastJsonParser::Impl::StringToken
-  FastJsonParser::Impl::Cursor::parse_string()
+  AD_FAST_JSON_ALWAYS_INLINE typename FastJsonParser<StringType>::Impl::StringToken
+  FastJsonParser<StringType>::Impl::Cursor::parse_string()
   {
     skip_char();
     const char* const value_begin = pos_;
@@ -1035,17 +1108,20 @@ namespace AdServer::Commons
         false};
     }
 
-    StringToken token;
-    token.escaped = true;
+    StringToken token{
+      {},
+      string_creator_(string_creator_context_),
+      true};
     token.unescaped.assign(value_begin, special - value_begin);
     parse_string_tail_(token.unescaped);
     token.value = token.unescaped;
     return token;
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::skip_string()
+  FastJsonParser<StringType>::Impl::Cursor::skip_string()
   {
     skip_char();
 
@@ -1068,24 +1144,27 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::skip_string_rough()
+  FastJsonParser<StringType>::Impl::Cursor::skip_string_rough()
   {
     skip_char();
     skip_string_rough_after_quote_<UseSimd>();
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::Cursor::skip_unquoted_value_rough()
+  FastJsonParser<StringType>::Impl::Cursor::skip_unquoted_value_rough()
   {
     pos_ = find_unquoted_delimiter_<UseSimd>(pos_, end_);
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   inline void
-  FastJsonParser::Impl::Cursor::skip_string_rough_after_quote_()
+  FastJsonParser<StringType>::Impl::Cursor::skip_string_rough_after_quote_()
   {
     while(pos_ < end_)
     {
@@ -1111,23 +1190,26 @@ namespace AdServer::Commons
     throw_error("bad string");
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   inline void
-  FastJsonParser::Impl::Cursor::skip_object_rough()
+  FastJsonParser<StringType>::Impl::Cursor::skip_object_rough()
   {
     skip_compound_rough_<UseSimd>('{', "unexpected end of object");
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   inline void
-  FastJsonParser::Impl::Cursor::skip_array_rough()
+  FastJsonParser<StringType>::Impl::Cursor::skip_array_rough()
   {
     skip_compound_rough_<UseSimd>('[', "unexpected end of array");
   }
 
+  template<typename StringType>
   template<bool UseSimd>
   inline void
-  FastJsonParser::Impl::Cursor::skip_compound_rough_(
+  FastJsonParser<StringType>::Impl::Cursor::skip_compound_rough_(
     char open,
     const char* error_message)
   {
@@ -1178,8 +1260,9 @@ namespace AdServer::Commons
     throw_error(error_message);
   }
 
-  AD_FAST_JSON_ALWAYS_INLINE FastJsonParser::Impl::NumberToken
-  FastJsonParser::Impl::Cursor::parse_number()
+  template<typename StringType>
+  AD_FAST_JSON_ALWAYS_INLINE typename FastJsonParser<StringType>::Impl::NumberToken
+  FastJsonParser<StringType>::Impl::Cursor::parse_number()
   {
     const char* const number_begin = pos_;
     bool is_float = false;
@@ -1243,8 +1326,9 @@ namespace AdServer::Commons
     return {std::string_view(number_begin, pos_ - number_begin), is_float};
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE std::string_view
-  FastJsonParser::Impl::Cursor::scan_number_literal()
+  FastJsonParser<StringType>::Impl::Cursor::scan_number_literal()
   {
     const char* const number_begin = pos_;
 
@@ -1305,41 +1389,47 @@ namespace AdServer::Commons
     return std::string_view(number_begin, pos_ - number_begin);
   }
 
+  template<typename StringType>
   inline void
-  FastJsonParser::Impl::Cursor::throw_error(
+  FastJsonParser<StringType>::Impl::Cursor::throw_error(
     const std::string& message) const
   {
     throw ParseError(
       message + " at pos " + std::to_string(pos_ - begin_));
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE bool
-  FastJsonParser::Impl::Cursor::is_space_(char c) noexcept
+  FastJsonParser<StringType>::Impl::Cursor::is_space_(char c) noexcept
   {
     return c == ' ' || static_cast<unsigned>(c - '\t') <= ('\r' - '\t');
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE bool
-  FastJsonParser::Impl::Cursor::is_delimiter_(char c) noexcept
+  FastJsonParser<StringType>::Impl::Cursor::is_delimiter_(char c) noexcept
   {
     return c == ',' || c == ':' || c == ']' || c == '}' || is_space_(c);
   }
 
+  template<typename StringType>
   AD_FAST_JSON_ALWAYS_INLINE bool
-  FastJsonParser::Impl::Cursor::is_dec_(char c) noexcept
+  FastJsonParser<StringType>::Impl::Cursor::is_dec_(char c) noexcept
   {
     return static_cast<unsigned>(c - '0') <= 9;
   }
 
+  template<typename StringType>
   inline bool
-  FastJsonParser::Impl::Cursor::is_hex_(char c) noexcept
+  FastJsonParser<StringType>::Impl::Cursor::is_hex_(char c) noexcept
   {
     return is_dec_(c) ||
       static_cast<unsigned>((c | 0x20) - 'a') <= ('f' - 'a');
   }
 
+  template<typename StringType>
   inline int
-  FastJsonParser::Impl::Cursor::hex_to_int_(char c) noexcept
+  FastJsonParser<StringType>::Impl::Cursor::hex_to_int_(char c) noexcept
   {
     if(c >= 'a')
     {
@@ -1352,8 +1442,9 @@ namespace AdServer::Commons
     return c - '0';
   }
 
+  template<typename StringType>
   inline void
-  FastJsonParser::Impl::Cursor::parse_string_tail_(std::string& out)
+  FastJsonParser<StringType>::Impl::Cursor::parse_string_tail_(StringType& out)
   {
     const std::size_t prefix_size = out.size();
     out.resize(prefix_size + static_cast<std::size_t>(end_ - pos_));
@@ -1384,8 +1475,9 @@ namespace AdServer::Commons
     throw_error("bad string");
   }
 
+  template<typename StringType>
   inline void
-  FastJsonParser::Impl::Cursor::append_escape_(char*& out)
+  FastJsonParser<StringType>::Impl::Cursor::append_escape_(char*& out)
   {
     if(pos_ == end_)
     {
@@ -1423,8 +1515,9 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   inline void
-  FastJsonParser::Impl::Cursor::skip_escape_()
+  FastJsonParser<StringType>::Impl::Cursor::skip_escape_()
   {
     if(pos_ == end_)
     {
@@ -1451,8 +1544,9 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   inline uint32_t
-  FastJsonParser::Impl::Cursor::parse_unicode_escape_()
+  FastJsonParser<StringType>::Impl::Cursor::parse_unicode_escape_()
   {
     uint32_t code = 0;
     for(int i = 0; i < 4; ++i)
@@ -1466,8 +1560,9 @@ namespace AdServer::Commons
     return code;
   }
 
+  template<typename StringType>
   inline void
-  FastJsonParser::Impl::Cursor::skip_unicode_escape_()
+  FastJsonParser<StringType>::Impl::Cursor::skip_unicode_escape_()
   {
     for(int i = 0; i < 4; ++i)
     {
@@ -1479,8 +1574,9 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   inline void
-  FastJsonParser::Impl::Cursor::append_unicode_escape_(char*& out)
+  FastJsonParser<StringType>::Impl::Cursor::append_unicode_escape_(char*& out)
   {
     const uint32_t code = parse_unicode_escape_();
     if(code < 0x80)
@@ -1500,13 +1596,14 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool Strict, bool UseSimd>
   inline void
-  FastJsonParser::Impl::skip_object_(Cursor& cursor) const
+  FastJsonParser<StringType>::Impl::skip_object_(Cursor& cursor) const
   {
     if constexpr(!Strict)
     {
-      cursor.skip_object_rough<UseSimd>();
+      cursor.template skip_object_rough<UseSimd>();
       return;
     }
 
@@ -1519,18 +1616,18 @@ namespace AdServer::Commons
 
     for(;;)
     {
-      cursor.skip_spaces<UseSimd>();
+      cursor.template skip_spaces<UseSimd>();
       if(cursor.eof() || cursor.peek() != '"')
       {
         cursor.throw_error("object key expected");
       }
 
-      cursor.skip_string<UseSimd>();
-      cursor.skip_spaces<UseSimd>();
+      cursor.template skip_string<UseSimd>();
+      cursor.template skip_spaces<UseSimd>();
       cursor.expect(':');
       skip_value_<Strict, UseSimd>(cursor);
 
-      cursor.skip_spaces<UseSimd>();
+      cursor.template skip_spaces<UseSimd>();
       if(cursor.eof())
       {
         cursor.throw_error("unexpected end of object");
@@ -1550,13 +1647,14 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool Strict, bool UseSimd>
   inline void
-  FastJsonParser::Impl::skip_array_(Cursor& cursor) const
+  FastJsonParser<StringType>::Impl::skip_array_(Cursor& cursor) const
   {
     if constexpr(!Strict)
     {
-      cursor.skip_array_rough<UseSimd>();
+      cursor.template skip_array_rough<UseSimd>();
       return;
     }
 
@@ -1569,10 +1667,10 @@ namespace AdServer::Commons
 
     for(;;)
     {
-      cursor.skip_spaces<UseSimd>();
+      cursor.template skip_spaces<UseSimd>();
       skip_value_<Strict, UseSimd>(cursor);
 
-      cursor.skip_spaces<UseSimd>();
+      cursor.template skip_spaces<UseSimd>();
       if(cursor.eof())
       {
         cursor.throw_error("unexpected end of array");
@@ -1592,11 +1690,12 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool Strict, bool UseSimd>
   AD_FAST_JSON_ALWAYS_INLINE void
-  FastJsonParser::Impl::skip_value_(Cursor& cursor) const
+  FastJsonParser<StringType>::Impl::skip_value_(Cursor& cursor) const
   {
-    cursor.skip_spaces<UseSimd>();
+    cursor.template skip_spaces<UseSimd>();
     if(cursor.eof())
     {
       cursor.throw_error("unexpected end of JSON");
@@ -1615,16 +1714,16 @@ namespace AdServer::Commons
     {
       if constexpr(Strict)
       {
-        cursor.skip_string<UseSimd>();
+        cursor.template skip_string<UseSimd>();
       }
       else
       {
-        cursor.skip_string_rough<UseSimd>();
+        cursor.template skip_string_rough<UseSimd>();
       }
     }
     else if constexpr(!Strict)
     {
-      cursor.skip_unquoted_value_rough<UseSimd>();
+      cursor.template skip_unquoted_value_rough<UseSimd>();
     }
     else if(c == '-' || (c >= '0' && c <= '9'))
     {
@@ -1648,15 +1747,16 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool Strict, bool UseSimd>
   inline void
-  FastJsonParser::Impl::parse_value_iterative_(
+  FastJsonParser<StringType>::Impl::parse_value_iterative_(
     Cursor& cursor,
     const JsonTreeProcessor& processor,
     void* context,
     std::pmr::vector<ParseFrame>& frames) const
   {
-    cursor.skip_spaces<UseSimd>();
+    cursor.template skip_spaces<UseSimd>();
     if(cursor.eof())
     {
       cursor.throw_error("unexpected end of JSON");
@@ -1693,7 +1793,7 @@ namespace AdServer::Commons
     {
       if(processor.value_processor)
       {
-        StringToken token = cursor.parse_string<UseSimd>();
+        StringToken token = cursor.template parse_string<UseSimd>();
         if(token.escaped)
         {
           processor.value_processor->process_string(
@@ -1711,7 +1811,7 @@ namespace AdServer::Commons
       }
       else
       {
-        cursor.skip_string<UseSimd>();
+        cursor.template skip_string<UseSimd>();
       }
     }
     else if(c == '-' || (c >= '0' && c <= '9'))
@@ -1802,9 +1902,10 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   template<bool Strict, bool UseSimd>
   inline void
-  FastJsonParser::Impl::parse_iterative_(
+  FastJsonParser<StringType>::Impl::parse_iterative_(
     Cursor& cursor,
     void* context) const
   {
@@ -1824,7 +1925,7 @@ namespace AdServer::Commons
     while(!frames.empty())
     {
       ParseFrame& frame = frames.back();
-      cursor.skip_spaces<UseSimd>();
+      cursor.template skip_spaces<UseSimd>();
       if(cursor.eof())
       {
         cursor.throw_error(
@@ -1881,14 +1982,14 @@ namespace AdServer::Commons
           cursor.throw_error("object key expected");
         }
 
-        StringToken key = cursor.parse_string<UseSimd>();
-        cursor.skip_spaces<UseSimd>();
+        StringToken key = cursor.template parse_string<UseSimd>();
+        cursor.template skip_spaces<UseSimd>();
         if(cursor.eof() || cursor.peek() != ':')
         {
           cursor.throw_error("expected ':'");
         }
         cursor.skip_char();
-        cursor.skip_spaces<UseSimd>();
+        cursor.template skip_spaces<UseSimd>();
 
         const JsonTreeProcessor* const child_processor =
           frame.processor->find_sub_processor(key.value, key.escaped);
@@ -1925,21 +2026,34 @@ namespace AdServer::Commons
     }
   }
 
+  template<typename StringType>
   void
-  FastJsonParser::Impl::parse(std::string_view json, void* context) const
+  FastJsonParser<StringType>::Impl::parse(
+    std::string_view json,
+    void* context,
+    typename FastJsonParser<StringType>::Impl::StringCreator string_creator,
+    void* string_creator_context) const
   {
-    parse_handler(*this, json, context);
+    parse_handler(
+      *this,
+      json,
+      context,
+      string_creator,
+      string_creator_context);
   }
 
+  template<typename StringType>
   template<bool Strict, bool UseSimd>
   void
-  FastJsonParser::Impl::parse_(
-    const Impl& impl,
+  FastJsonParser<StringType>::Impl::parse_(
+    const typename FastJsonParser<StringType>::Impl& impl,
     std::string_view json,
-    void* context)
+    void* context,
+    typename FastJsonParser<StringType>::Impl::StringCreator string_creator,
+    void* string_creator_context)
   {
-    Cursor cursor(json);
-    cursor.skip_spaces<UseSimd>();
+    Cursor cursor(json, string_creator, string_creator_context);
+    cursor.template skip_spaces<UseSimd>();
 
     if(cursor.eof() || cursor.peek() != '{')
     {
@@ -1947,13 +2061,16 @@ namespace AdServer::Commons
     }
 
     impl.parse_iterative_<Strict, UseSimd>(cursor, context);
-    cursor.skip_spaces<UseSimd>();
+    cursor.template skip_spaces<UseSimd>();
 
     if(!cursor.eof())
     {
       cursor.throw_error("unexpected trailing character");
     }
   }
+
+  template class FastJsonParser<std::string>;
+  template class FastJsonParser<std::pmr::string>;
 }
 
 #undef AD_FAST_JSON_ALWAYS_INLINE

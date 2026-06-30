@@ -394,20 +394,6 @@ namespace AdServer::CampaignSvcs
     void check_creative_template_files_(CampaignConfig& new_config)
       noexcept;
 
-    void preinstantiate_creative_tokens_(CampaignConfig& new_config) noexcept;
-
-    void fill_default_tokens_(
-      const Campaign& for_campaign,
-      const Creative* creative,
-      TokenValueMap& system_tokens)
-      /*throw(eh::Exception)*/;
-
-    void
-    fill_clickurl_tokens_(
-      const Campaign& campaign,
-      TokenValueMap& system_tokens)
-      /*throw(eh::Exception)*/;
-
     static void link_url_categories_(
       Creative::CategorySet& target_creative_categories,
       const String::SubString& url,

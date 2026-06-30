@@ -7,7 +7,8 @@
 #include <Generics/DirSelector.hpp>
 #include <Generics/BitAlgs.hpp>
 #include <String/RegEx.hpp>
-#include <Commons/JsonParamProcessor.hpp>
+#include <Commons/DecimalUtils.hpp>
+#include <Commons/FastJsonParser.hpp>
 #include <ProfilingCommons/PlainStorage3/FileReader.hpp>
 
 #include "CTR/CTRFeatureCalculators.hpp"
@@ -140,7 +141,7 @@ namespace AdServer::CampaignSvcs::CTR
       ConfigDescriptor_var;
 
   public:
-    ConfigParser() noexcept;
+    ConfigParser();
 
     ConfigDescriptor_var
     parse(const char* file) /*throw(InvalidConfig)*/;
@@ -149,81 +150,8 @@ namespace AdServer::CampaignSvcs::CTR
     virtual
     ~ConfigParser() noexcept = default;
 
-    typedef Commons::JsonParamProcessor<ModelDescriptor>
-      JsonModelParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonModelParamProcessor>
-      JsonModelParamProcessor_var;
-
-    typedef Commons::JsonParamProcessor<AlgorithmDescriptor>
-      JsonAlgorithmParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonAlgorithmParamProcessor>
-      JsonAlgorithmParamProcessor_var;
-
-    typedef Commons::JsonParamProcessor<ConfigDescriptor>
-      JsonConfigParamProcessor;
-    typedef ReferenceCounting::SmartPtr<JsonConfigParamProcessor>
-      JsonConfigParamProcessor_var;
-
-    class JsonBasicFeatureProcessor:
-      public JsonModelParamProcessor,
-      protected FeatureNameResolver
-    {
-    public:
-      JsonBasicFeatureProcessor();
-
-      virtual void
-      process(ModelDescriptor& model_descriptor,
-        const JsonValue& value) const
-        /*throw(InvalidConfig)*/;
-
-    protected:
-      virtual
-      ~JsonBasicFeatureProcessor() noexcept = default;
-    };
-
-    class JsonFeatureArrayProcessor:
-      public Commons::JsonArrayParamProcessor<ModelDescriptor>
-    {
-    public:
-      JsonFeatureArrayProcessor();
-
-      virtual void
-      process(
-        ModelDescriptor& model_descriptor,
-        const JsonValue& value) const
-        /*throw(InvalidConfig)*/;
-
-    protected:
-      virtual
-      ~JsonFeatureArrayProcessor() noexcept = default;
-    };
-
-    struct AddAlgorithm: public std::unary_function<
-      ConfigDescriptor&,
-      AlgorithmDescriptor&>
-    {
-      result_type
-      operator() (argument_type config_descriptor) const noexcept
-      {
-        config_descriptor.algorithms.push_back(AlgorithmDescriptor());
-        return config_descriptor.algorithms.back();
-      }
-    };
-
-    struct AddModel: public std::unary_function<
-      AlgorithmDescriptor&,
-      ModelDescriptor&>
-    {
-      result_type
-      operator()(argument_type alg_descriptor) const noexcept
-      {
-        alg_descriptor.models.push_back(ModelDescriptor());
-        return alg_descriptor.models.back();
-      }
-    };
-
-  protected:
-    JsonConfigParamProcessor_var root_processor_;
+  private:
+    std::unique_ptr<Commons::FastJsonParser<>> parser_;
   };
 
   class RemoveConfigTask:
@@ -277,191 +205,424 @@ namespace AdServer::CampaignSvcs::CTR
     }
   }
 
-  // CTRProvider::ConfigParser::JsonBasicFeatureProcessor
-  CTRProvider::ConfigParser::
-  JsonBasicFeatureProcessor::JsonBasicFeatureProcessor()
-  {}
-
-  void
-  CTRProvider::ConfigParser::
-  JsonBasicFeatureProcessor::process(
-    ModelDescriptor& model_descriptor,
-    const JsonValue& value) const /*throw(InvalidConfig)*/
+  namespace
   {
-    // value is array of strings
-    if(value.getTag() != JSON_TAG_STRING)
+    using FastJsonParser = Commons::FastJsonParser<>;
+    using ValueProcessor = FastJsonParser::ValueProcessor;
+
+    struct CtrConfigParseState
     {
-      Stream::Error ostr;
-      ostr << "Invalid feature type";
-      throw InvalidConfig(ostr);
+      void* config = nullptr;
+      void* algorithm = nullptr;
+      void* model = nullptr;
+      bool algorithms_array_started = false;
+      bool algorithm_models_array_started = false;
+      bool model_features_array_started = false;
+    };
+
+    CtrConfigParseState&
+    ctr_parse_state(void* context)
+    {
+      return *static_cast<CtrConfigParseState*>(context);
     }
 
-    std::string feature_name;
-    value.toString(feature_name);
-
-    BasicFeature basic_feature;
-
-    if(basic_feature_by_name(basic_feature, feature_name))
+    template<typename Context, typename NumberType>
+    class CtrIntegerProcessor final: public ValueProcessor
     {
-      model_descriptor.features.back().basic_features.insert(
-        basic_feature);
-    }
-    else
+    public:
+      CtrIntegerProcessor(
+        Context* (*get_context)(CtrConfigParseState&),
+        NumberType Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view path, void* context)
+        const override
+      {
+        if(value < 0 ||
+          static_cast<uint64_t>(value) >
+            static_cast<uint64_t>(std::numeric_limits<NumberType>::max()))
+        {
+          Stream::Error ostr;
+          ostr << "Invalid integer value in " << path;
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+
+        if(Context* target = get_context_(ctr_parse_state(context)))
+        {
+          target->*field_ = static_cast<NumberType>(value);
+        }
+      }
+
+    private:
+      Context* (*get_context_)(CtrConfigParseState&);
+      NumberType Context::* field_;
+    };
+
+    template<typename Context>
+    class CtrStringProcessor final: public ValueProcessor
     {
-      Stream::Error ostr;
-      ostr << "Invalid feature name '" << feature_name << "'";
-      throw InvalidConfig(ostr);
+    public:
+      CtrStringProcessor(
+        Context* (*get_context)(CtrConfigParseState&),
+        std::string Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        if(Context* target = get_context_(ctr_parse_state(context)))
+        {
+          (target->*field_).assign(value);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        if(Context* target = get_context_(ctr_parse_state(context)))
+        {
+          target->*field_ = std::move(value);
+        }
+      }
+
+    private:
+      Context* (*get_context_)(CtrConfigParseState&);
+      std::string Context::* field_;
+    };
+
+    template<typename Context, typename DecimalType>
+    class CtrDecimalProcessor final: public ValueProcessor
+    {
+    public:
+      CtrDecimalProcessor(
+        Context* (*get_context)(CtrConfigParseState&),
+        DecimalType Context::* field)
+        : get_context_(get_context),
+          field_(field)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view path, void* context)
+        const override
+      {
+        try
+        {
+          if(Context* target = get_context_(ctr_parse_state(context)))
+          {
+            target->*field_ = Commons::extract_decimal<DecimalType>(
+              value,
+              Generics::DMR_ROUND);
+          }
+        }
+        catch(const typename DecimalType::Exception& ex)
+        {
+          Stream::Error ostr;
+          ostr << "Invalid decimal value in " << path << ": " << ex.what();
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view path, void* context)
+        const override
+      {
+        process_string(std::string_view(value), path, context);
+      }
+
+    private:
+      Context* (*get_context_)(CtrConfigParseState&);
+      DecimalType Context::* field_;
+    };
+
+    template<typename ConfigDescriptor, typename AlgorithmDescriptor>
+    class CtrAlgorithmProcessor final: public ValueProcessor
+    {
+    public:
+      void
+      object_started(std::string_view, void* context) const override
+      {
+        CtrConfigParseState& state = ctr_parse_state(context);
+        if(!state.algorithms_array_started)
+        {
+          Stream::Error ostr;
+          ostr << "Algorithm descriptor outside algorithms array";
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+
+        auto* config = static_cast<ConfigDescriptor*>(state.config);
+        config->algorithms.push_back(AlgorithmDescriptor());
+        state.algorithm = &config->algorithms.back();
+        state.model = nullptr;
+        state.algorithm_models_array_started = false;
+      }
+
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        ctr_parse_state(context).algorithms_array_started = true;
+      }
+    };
+
+    template<typename AlgorithmDescriptor, typename ModelDescriptor>
+    class CtrModelProcessor final: public ValueProcessor
+    {
+    public:
+      void
+      object_started(std::string_view, void* context) const override
+      {
+        CtrConfigParseState& state = ctr_parse_state(context);
+        if(state.algorithm == nullptr)
+        {
+          Stream::Error ostr;
+          ostr << "Model descriptor without algorithm";
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+        if(!state.algorithm_models_array_started)
+        {
+          Stream::Error ostr;
+          ostr << "Model descriptor outside models array";
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+
+        auto* algorithm = static_cast<AlgorithmDescriptor*>(state.algorithm);
+        algorithm->models.push_back(ModelDescriptor());
+        state.model = &algorithm->models.back();
+        state.model_features_array_started = false;
+      }
+
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        ctr_parse_state(context).algorithm_models_array_started = true;
+      }
+    };
+
+    template<typename ModelDescriptor>
+    class CtrFeaturesProcessor final:
+      public ValueProcessor,
+      protected FeatureNameResolver
+    {
+    public:
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        CtrConfigParseState& state = ctr_parse_state(context);
+        if(state.model == nullptr)
+        {
+          Stream::Error ostr;
+          ostr << "Features descriptor without model";
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+
+        if(!state.model_features_array_started)
+        {
+          state.model_features_array_started = true;
+        }
+        else
+        {
+          static_cast<ModelDescriptor*>(state.model)->features.push_back(Feature());
+        }
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        CtrConfigParseState& state = ctr_parse_state(context);
+        auto* model = static_cast<ModelDescriptor*>(state.model);
+        if(model == nullptr || model->features.empty())
+        {
+          Stream::Error ostr;
+          ostr << "Invalid feature type";
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+
+        BasicFeature basic_feature;
+        const String::SubString feature_name(value.data(), value.size());
+        if(basic_feature_by_name(basic_feature, feature_name))
+        {
+          model->features.back().basic_features.insert(basic_feature);
+        }
+        else
+        {
+          Stream::Error ostr;
+          ostr << "Invalid feature name '" << value << "'";
+          throw CTRProvider::InvalidConfig(ostr);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view path, void* context)
+        const override
+      {
+        process_string(std::string_view(value), path, context);
+      }
+    };
+
+    template<typename ProcessorType>
+    void
+    add_ctr_processor(
+      FastJsonParser& parser,
+      std::string_view path,
+      std::shared_ptr<ProcessorType> processor,
+      bool as_string = false)
+    {
+      parser.add_processor(path, std::move(processor), as_string);
     }
-  }
 
-  // ConfigParser::JsonFeatureArrayProcessor
-  CTRProvider::ConfigParser::
-  JsonFeatureArrayProcessor::JsonFeatureArrayProcessor()
-    : Commons::JsonArrayParamProcessor<ModelDescriptor>(
-        ReferenceCounting::SmartPtr<Commons::JsonParamProcessor<ModelDescriptor> >(
-          new JsonBasicFeatureProcessor()))
-  {}
+    template<typename Context, typename NumberType>
+    void
+    add_ctr_integer(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(CtrConfigParseState&),
+      NumberType Context::* field)
+    {
+      add_ctr_processor(
+        parser,
+        path,
+        std::make_shared<CtrIntegerProcessor<Context, NumberType>>(
+          get_context,
+          field));
+    }
 
-  void
-  CTRProvider::ConfigParser::
-  JsonFeatureArrayProcessor::process(
-    ModelDescriptor& model_descriptor,
-    const JsonValue& value) const /*throw(InvalidConfig)*/
-  {
-    // value is array of strings
-    model_descriptor.features.push_back(Feature());
+    template<typename Context>
+    void
+    add_ctr_string(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(CtrConfigParseState&),
+      std::string Context::* field)
+    {
+      add_ctr_processor(
+        parser,
+        path,
+        std::make_shared<CtrStringProcessor<Context>>(
+          get_context,
+          field),
+        true);
+    }
 
-    Commons::JsonArrayParamProcessor<ModelDescriptor>::process(
-      model_descriptor,
-      value);
+    template<typename Context, typename DecimalType>
+    void
+    add_ctr_decimal(
+      FastJsonParser& parser,
+      std::string_view path,
+      Context* (*get_context)(CtrConfigParseState&),
+      DecimalType Context::* field)
+    {
+      add_ctr_processor(
+        parser,
+        path,
+        std::make_shared<CtrDecimalProcessor<Context, DecimalType>>(
+          get_context,
+          field),
+        true);
+    }
   }
 
   // ConfigParser
-  CTRProvider::ConfigParser::ConfigParser() noexcept
+  CTRProvider::ConfigParser::ConfigParser()
+    : parser_(std::make_unique<Commons::FastJsonParser<>>())
   {
-    ReferenceCounting::SmartPtr<
-      Commons::JsonCompositeParamProcessor<ConfigDescriptor> >
-        root_processor =
-          new Commons::JsonCompositeParamProcessor<ConfigDescriptor>();
+    ConfigDescriptor* (*get_config_descriptor)(CtrConfigParseState&) =
+      [](CtrConfigParseState& state) {
+      return static_cast<ConfigDescriptor*>(state.config);
+    };
+    AlgorithmDescriptor* (*get_algorithm_descriptor)(CtrConfigParseState&) =
+      [](CtrConfigParseState& state) {
+      return static_cast<AlgorithmDescriptor*>(state.algorithm);
+    };
+    ModelDescriptor* (*get_model_descriptor)(CtrConfigParseState&) =
+      [](CtrConfigParseState& state) {
+      return static_cast<ModelDescriptor*>(state.model);
+    };
 
-    root_processor->add_processor(
-      Config::DEFAULT_WEIGHT,
-      JsonConfigParamProcessor_var(
-        new Commons::JsonNumberParamProcessor<ConfigDescriptor, unsigned long>(
-          &ConfigDescriptor::default_weight)));
+    add_ctr_integer(
+      *parser_,
+      "default_weight",
+      get_config_descriptor,
+      &ConfigDescriptor::default_weight);
+    add_ctr_integer(
+      *parser_,
+      "version",
+      get_config_descriptor,
+      &ConfigDescriptor::version);
+    add_ctr_string(
+      *parser_,
+      "feature_mapping_file",
+      get_config_descriptor,
+      &ConfigDescriptor::feature_mapping_file);
 
-    root_processor->add_processor(
-      Config::VERSION,
-      JsonConfigParamProcessor_var(
-        new Commons::JsonNumberParamProcessor<ConfigDescriptor, unsigned long>(
-          &ConfigDescriptor::version)));
+    add_ctr_processor(
+      *parser_,
+      "algorithms",
+      std::make_shared<CtrAlgorithmProcessor<
+        ConfigDescriptor,
+        AlgorithmDescriptor>>());
+    add_ctr_string(
+      *parser_,
+      "algorithms.id",
+      get_algorithm_descriptor,
+      &AlgorithmDescriptor::id);
+    add_ctr_integer(
+      *parser_,
+      "algorithms.weight",
+      get_algorithm_descriptor,
+      &AlgorithmDescriptor::weight);
+    add_ctr_decimal(
+      *parser_,
+      "algorithms.threshold",
+      get_algorithm_descriptor,
+      &AlgorithmDescriptor::threshold);
+    add_ctr_string(
+      *parser_,
+      "algorithms.params.campaigns_whitelist_file",
+      get_algorithm_descriptor,
+      &AlgorithmDescriptor::campaigns_whitelist_file);
+    add_ctr_string(
+      *parser_,
+      "algorithms.params.campaigns_blacklist_file",
+      get_algorithm_descriptor,
+      &AlgorithmDescriptor::campaigns_blacklist_file);
 
-    root_processor->add_processor(
-      Config::FEATURE_MAPPING_FILE,
-      JsonConfigParamProcessor_var(
-        new Commons::JsonStringParamProcessor<ConfigDescriptor>(
-          &ConfigDescriptor::feature_mapping_file)));
-
-    {
-      ReferenceCounting::SmartPtr<
-        Commons::JsonCompositeParamProcessor<ModelDescriptor> >
-          model_processor =
-            new Commons::JsonCompositeParamProcessor<ModelDescriptor>();
-
-      // fill model processor
-      model_processor->add_processor(
-        Config::ALGORITHM_MODEL_FEATURES_SIZE,
-        JsonModelParamProcessor_var(
-          new Commons::JsonNumberParamProcessor<ModelDescriptor, unsigned long>(
-            &ModelDescriptor::features_size)));
-
-      model_processor->add_processor(
-        Config::ALGORITHM_MODEL_WEIGHT,
-        JsonModelParamProcessor_var(
-          new Commons::JsonDecimalParamProcessor<ModelDescriptor, RevenueDecimal>(
-            &ModelDescriptor::weight)));
-
-      model_processor->add_processor(
-        Config::ALGORITHM_MODEL_METHOD,
-        JsonModelParamProcessor_var(
-          new Commons::JsonStringParamProcessor<ModelDescriptor>(
-            &ModelDescriptor::method)));
-
-      model_processor->add_processor(
-        Config::ALGORITHM_MODEL_FILE,
-        JsonModelParamProcessor_var(
-          new Commons::JsonStringParamProcessor<ModelDescriptor>(
-            &ModelDescriptor::file)));
-
-      // features processor
-      model_processor->add_processor(
-        Config::ALGORITHM_MODEL_FEATURES,
-        JsonModelParamProcessor_var(
-          new Commons::JsonArrayParamProcessor<ModelDescriptor>(
-            JsonModelParamProcessor_var(
-              new JsonFeatureArrayProcessor()))));
-
-      // create algorithm processor
-      ReferenceCounting::SmartPtr<
-        Commons::JsonCompositeParamProcessor<AlgorithmDescriptor> >
-          alg_processor =
-            new Commons::JsonCompositeParamProcessor<AlgorithmDescriptor>();
-
-      alg_processor->add_processor(
-        Config::ALGORITHM_ID,
-        JsonAlgorithmParamProcessor_var(
-          new Commons::JsonStringParamProcessor<AlgorithmDescriptor>(
-            &AlgorithmDescriptor::id)));
-
-      alg_processor->add_processor(
-        Config::ALGORITHM_WEIGHT,
-        JsonAlgorithmParamProcessor_var(
-          new Commons::JsonNumberParamProcessor<AlgorithmDescriptor, unsigned long>(
-            &AlgorithmDescriptor::weight)));
-
-      alg_processor->add_processor(
-        Config::ALGORITHM_THRESHOLD,
-        JsonAlgorithmParamProcessor_var(
-          new Commons::JsonDecimalParamProcessor<AlgorithmDescriptor, RevenueDecimal>(
-            &AlgorithmDescriptor::threshold)));
-
-      alg_processor->add_processor(
-        Config::ALGORITHM_MODELS,
-        JsonAlgorithmParamProcessor_var(
-          new Commons::JsonArrayParamProcessor<
-            AlgorithmDescriptor, AddModel>(model_processor)));
-
-      {
-        ReferenceCounting::SmartPtr<
-          Commons::JsonCompositeParamProcessor<AlgorithmDescriptor> >
-            params_processor =
-              new Commons::JsonCompositeParamProcessor<AlgorithmDescriptor>();
-
-        params_processor->add_processor(
-          Config::ALGORITHM_PARAMS_CAMPAIGNS_WHITELIST_FILE,
-          JsonAlgorithmParamProcessor_var(
-            new Commons::JsonStringParamProcessor<AlgorithmDescriptor>(
-              &AlgorithmDescriptor::campaigns_whitelist_file)));
-
-        params_processor->add_processor(
-          Config::ALGORITHM_PARAMS_CAMPAIGNS_BLACKLIST_FILE,
-          JsonAlgorithmParamProcessor_var(
-            new Commons::JsonStringParamProcessor<AlgorithmDescriptor>(
-              &AlgorithmDescriptor::campaigns_blacklist_file)));
-
-        alg_processor->add_processor(
-          Config::ALGORITHM_PARAMS,
-          params_processor);
-      }
-
-      root_processor->add_processor(
-        Config::ALGORITHMS,
-        JsonConfigParamProcessor_var(
-          new Commons::JsonArrayParamProcessor<
-            ConfigDescriptor, AddAlgorithm>(alg_processor)));
-    }
-
-    root_processor_ = root_processor;
+    add_ctr_processor(
+      *parser_,
+      "algorithms.models",
+      std::make_shared<CtrModelProcessor<
+        AlgorithmDescriptor,
+        ModelDescriptor>>());
+    add_ctr_integer(
+      *parser_,
+      "algorithms.models.features_size",
+      get_model_descriptor,
+      &ModelDescriptor::features_size);
+    add_ctr_decimal(
+      *parser_,
+      "algorithms.models.weight",
+      get_model_descriptor,
+      &ModelDescriptor::weight);
+    add_ctr_string(
+      *parser_,
+      "algorithms.models.method",
+      get_model_descriptor,
+      &ModelDescriptor::method);
+    add_ctr_string(
+      *parser_,
+      "algorithms.models.file",
+      get_model_descriptor,
+      &ModelDescriptor::file);
+    add_ctr_processor(
+      *parser_,
+      "algorithms.models.features",
+      std::make_shared<CtrFeaturesProcessor<ModelDescriptor>>());
   }
 
   CTRProvider::ConfigParser::ConfigDescriptor_var
@@ -472,46 +633,15 @@ namespace AdServer::CampaignSvcs::CTR
 
     try
     {
-      JsonValue root_value;
-      JsonAllocator json_allocator;
       Generics::MMapFile mmap_file(file);
-      Generics::ArrayAutoPtr<char> json_holder(mmap_file.length() + 1);
-      ::memcpy(json_holder.get(), mmap_file.memory(), mmap_file.length());
-      json_holder.get()[mmap_file.length()] = 0;
-      char* parse_end;
-      JsonParseStatus status = json_parse(
-        json_holder.get(),
-        &parse_end,
-        &root_value,
-        json_allocator);
-
-      if(status != JSON_PARSE_OK)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": parsing error '" <<
-          json_parse_error(status) << "' at pos : ";
-        if(parse_end)
-        {
-          ostr << std::string(parse_end, 20);
-        }
-        else
-        {
-          ostr << "null";
-        }
-        throw InvalidConfig(ostr);
-      }
-
-      JsonTag root_tag = root_value.getTag();
-
-      if(root_tag != JSON_TAG_OBJECT)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": incorrect root tag type";
-        throw InvalidConfig(ostr);
-      }
-
       ConfigDescriptor_var result = new ConfigDescriptor();
-      root_processor_->process(*result, root_value);
+      CtrConfigParseState state;
+      state.config = result.in();
+      parser_->parse(
+        std::string_view(
+          static_cast<const char*>(mmap_file.memory()),
+          mmap_file.length()),
+        &state);
 
       if(result->version != 2)
       {
@@ -526,6 +656,12 @@ namespace AdServer::CampaignSvcs::CTR
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't open file '" << file << "': " << ex.what();
+      throw InvalidConfig(ostr);
+    }
+    catch(const Commons::FastJsonParser<>::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": parsing error: " << ex.what();
       throw InvalidConfig(ostr);
     }
   }

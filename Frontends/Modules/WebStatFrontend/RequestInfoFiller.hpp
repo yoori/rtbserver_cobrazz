@@ -123,7 +123,7 @@ namespace AdServer::WebStat
     ParamProcessorMap param_processors_;
     ParamProcessorMap cookie_processors_;
 
-    std::unique_ptr<AdServer::Commons::FastJsonParser>
+    std::unique_ptr<AdServer::Commons::FastJsonParser<>>
       yn_json_parser_;
 
     std::unordered_map<int, std::string> yn_reasons_;

@@ -227,7 +227,7 @@ namespace AdServer::WebStat
 
   namespace
   {
-    using FastJsonParser = AdServer::Commons::FastJsonParser;
+    using FastJsonParser = AdServer::Commons::FastJsonParser<>;
     using ValueProcessor = FastJsonParser::ValueProcessor;
 
     YandexNotificationProcessingContext&

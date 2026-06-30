@@ -28,6 +28,12 @@ namespace FrontendCommons
   std::string
   normalize_ifa(std::string_view idfa);
 
+  inline
+  std::pmr::string
+  normalize_ifa(
+    std::string_view idfa,
+    std::pmr::memory_resource* resource);
+
   template<typename RequestInfoType>
   struct RequestParamProcessor:
     public ReferenceCounting::AtomicImpl

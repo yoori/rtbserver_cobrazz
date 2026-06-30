@@ -191,16 +191,6 @@ namespace AppStore
   const std::string STORE_HOST("itunes.apple.com");
 }
 
-namespace AdServer::Commons
-{
-  std::ostream&
-  operator <<(std::ostream& os, const Optional<long>& ov)
-    /*throw(eh::Exception)*/
-  {
-    return os << (ov.present() ? *ov : 0);
-  }
-}
-
 namespace AdServer::Bidding
 {
   namespace Google
@@ -343,13 +333,46 @@ namespace AdServer::Bidding
       return std::string_view(value.data(), value.size());
     }
 
-    std::string
-    make_size_string(unsigned long width, unsigned long height)
+    std::string_view
+    hold_size_string(
+      RequestInfo::AdSlotInfo& ad_slot_request,
+      unsigned long width,
+      unsigned long height)
     {
-      std::string result = std::to_string(width);
-      result += 'x';
-      result += std::to_string(height);
-      return result;
+      RequestInfo::PmrString result(ad_slot_request.resource());
+      result.resize(64);
+      char* ptr = result.data();
+      char* const end = ptr + result.size();
+
+      const auto width_result = std::to_chars(ptr, end, width);
+      ptr = width_result.ptr;
+      *ptr++ = 'x';
+      const auto height_result = std::to_chars(ptr, end, height);
+      result.resize(static_cast<std::size_t>(height_result.ptr - result.data()));
+      const RequestInfo::PmrString& held_result =
+        ad_slot_request.hold_string(std::move(result));
+      return std::string_view(held_result.data(), held_result.size());
+    }
+
+    std::string_view
+    hold_lowercase_string(
+      RequestInfo::AdSlotInfo& ad_slot_request,
+      std::string_view value)
+    {
+      RequestInfo::PmrString result(ad_slot_request.resource());
+      result.reserve(value.size());
+      for(char ch : value)
+      {
+        if(ch >= 'A' && ch <= 'Z')
+        {
+          ch += 'a' - 'A';
+        }
+        result += ch;
+      }
+
+      const RequestInfo::PmrString& held_result =
+        ad_slot_request.hold_string(std::move(result));
+      return std::string_view(held_result.data(), held_result.size());
     }
 
     bool caseless_compare(
@@ -505,9 +528,10 @@ namespace AdServer::Bidding
 
     // REQ-3939
     // Player VAST size
+    template<typename KeywordFormatterType>
     void
     fill_video_size(
-      KeywordFormatter& kw_fmt,
+      KeywordFormatterType& kw_fmt,
       AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request,
       unsigned long width,
       unsigned long height)
@@ -562,16 +586,60 @@ namespace AdServer::Bidding
       return true;
     }
 
-    std::string
+    void
+    json_escape_append_(
+      RequestInfo::PmrString& result,
+      std::string_view value)
+    {
+      static constexpr std::string_view REPL[] =
+      {
+        "\\u0000", "\\u0001", "\\u0002", "\\u0003",
+        "\\u0004", "\\u0005", "\\u0006", "\\u0007",
+        "\\b", "\\t", "\\n", "\\u000B",
+        "\\f", "\\r", "\\u000E", "\\u000F",
+        "\\u0010", "\\u0011", "\\u0012", "\\u0013",
+        "\\u0014", "\\u0015", "\\u0016", "\\u0017",
+        "\\u0018", "\\u0019", "\\u001A", "\\u001B",
+        "\\u001C", "\\u001D", "\\u001E", "\\u001F"
+      };
+
+      std::size_t chunk_begin = 0;
+      for(std::size_t pos = 0; pos < value.size(); ++pos)
+      {
+        const unsigned char ch = value[pos];
+        if(ch < 0x20 || ch == '"' || ch == '\\')
+        {
+          result.append(value.data() + chunk_begin, pos - chunk_begin);
+          if(ch == '"')
+          {
+            result += "\\\"";
+          }
+          else if(ch == '\\')
+          {
+            result += "\\\\";
+          }
+          else
+          {
+            const std::string_view repl = REPL[ch];
+            result.append(repl.data(), repl.size());
+          }
+
+          chunk_begin = pos + 1;
+        }
+      }
+
+      result.append(value.data() + chunk_begin, value.size() - chunk_begin);
+    }
+
+    void
     make_additional_info_json_(
+      RequestInfo::PmrString& result,
       const RequestInfo::AdditionalInfo& additional_info)
     {
-      std::string result;
+      result.clear();
       result.reserve(additional_info.tagid.size() + 64);
       result += "{\"ssp_tag_id\":\"";
-      String::StringManip::json_escape_append(
-        result,
-        std::string_view(additional_info.tagid));
+      json_escape_append_(result, additional_info.tagid);
       result += '"';
 
       auto add_optional_metric =
@@ -603,8 +671,6 @@ namespace AdServer::Bidding
       add_optional_metric("viewability", additional_info.viewability);
       add_optional_metric("vtr", additional_info.vtr);
       result += '}';
-
-      return result;
     }
   }
 
@@ -913,9 +979,14 @@ namespace AdServer::Bidding
       ip_str += ".0";
     }
 
-    fill_by_ip(
-      request_info,
-      ip_str);
+    if(!ip_str.empty())
+    {
+      fill_by_ip(request_info, request_info.hold_string(std::move(ip_str)));
+    }
+    else
+    {
+      fill_by_ip(request_info, std::string_view());
+    }
 
     request_info.user_status = static_cast<std::size_t>(
       AdServer::CampaignSvcs::US_UNDEFINED);
@@ -929,9 +1000,16 @@ namespace AdServer::Bidding
 
     if(bid_request.has_user_agent() || application)
     {
+      std::string_view user_agent;
+      if(bid_request.has_user_agent())
+      {
+        user_agent = request_info.hold_string(std::string(
+          bid_request.user_agent()));
+      }
+
       fill_by_user_agent(
         request_info,
-        bid_request.user_agent(),
+        user_agent,
         request_info.filter_request,
         application);
     }
@@ -954,38 +1032,7 @@ namespace AdServer::Bidding
       kw_fmt.add_dict_keyword(MatchKeywords::REQ, std::string_view());
     }
 
-    /*
-    if(bid_request.has_user_demographic())
-    {
-      const ::Google::BidRequest_UserDemographic& user_demographic =
-        bid_request.user_demographic();
-
-      if (user_demographic.has_gender() &&
-        user_demographic.gender() !=
-          ::Google::BidRequest_UserDemographic::UNKNOWN )
-      {
-        std::string gender = (
-          bid_request.user_demographic().gender() ==
-            ::Google::BidRequest_UserDemographic::MALE ?
-          "male" : "female");
-        kw_fmt.add_gender(gender);
-      }
-
-      if (user_demographic.age_high() - user_demographic.age_low() <= 10)
-      {
-        for (int age = user_demographic.age_low();
-          age <= user_demographic.age_high();
-             age++)
-        {
-          kw_fmt.add_age(age);
-        }
-      }
-    }
-    */
-
-    for(int vt_kw_i = 0;
-      vt_kw_i < bid_request.detected_vertical_size();
-        ++vt_kw_i)
+    for(int vt_kw_i = 0; vt_kw_i < bid_request.detected_vertical_size(); ++vt_kw_i)
     {
       kw_fmt.add_dict_keyword(
         MatchKeywords::VT,
@@ -993,9 +1040,7 @@ namespace AdServer::Bidding
     }
 
 
-    for(int dcl_kw_i = 0;
-      dcl_kw_i < bid_request.detected_content_label_size();
-        ++dcl_kw_i)
+    for(int dcl_kw_i = 0; dcl_kw_i < bid_request.detected_content_label_size(); ++dcl_kw_i)
     {
       kw_fmt.add_dict_keyword(
         MatchKeywords::DCL,
@@ -1098,6 +1143,7 @@ namespace AdServer::Bidding
     {
       request_info.ad_slots.emplace_back(request_info.resource());
     }
+
     for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
     {
       AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request =
@@ -1146,10 +1192,8 @@ namespace AdServer::Bidding
 
       // Excluded categories
 
-      int flash_exclude_size =
-        test_value_in_set(
-          excluded_attributes,
-            Google::CREATIVETYPE_FLASH)? 1: 0;
+      int flash_exclude_size = test_value_in_set(
+        excluded_attributes, Google::CREATIVETYPE_FLASH) ? 1: 0;
 
       ad_slot_request.exclude_categories.resize(
         adslot.excluded_sensitive_category_size() +
@@ -1188,28 +1232,34 @@ namespace AdServer::Bidding
         ad_slot_request.exclude_categories[res_cat_i++] = Google::CREATIVETYPE_FLASH_STR;
       }
 
-      for(int cat_i = 0;
-          cat_i < adslot.excluded_sensitive_category_size(); ++cat_i)
+      for(int cat_i = 0; cat_i < adslot.excluded_sensitive_category_size(); ++cat_i)
       {
         char cat_str[20];
         size_t len = String::StringManip::int_to_str(
           adslot.excluded_sensitive_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          ad_slot_request.exclude_categories[res_cat_i] = std::string_view(cat_str, len);
+          ad_slot_request.exclude_categories[res_cat_i] =
+            ad_slot_request.hold_string(RequestInfo::PmrString(
+              cat_str,
+              len,
+              ad_slot_request.resource()));
           ++res_cat_i;
         }
       }
 
-      for(int cat_i = 0;
-          cat_i < adslot.excluded_product_category_size(); ++cat_i)
+      for(int cat_i = 0; cat_i < adslot.excluded_product_category_size(); ++cat_i)
       {
         char cat_str[20];
         size_t len = String::StringManip::int_to_str(
           adslot.excluded_product_category(cat_i), cat_str, sizeof(cat_str));
         if(len > 0)
         {
-          ad_slot_request.exclude_categories[res_cat_i] = std::string_view(cat_str, len);
+          ad_slot_request.exclude_categories[res_cat_i] =
+            ad_slot_request.hold_string(RequestInfo::PmrString(
+              cat_str,
+              len,
+              ad_slot_request.resource()));
           ++res_cat_i;
         }
       }
@@ -1271,9 +1321,7 @@ namespace AdServer::Bidding
         ad_slot_request.video_min_duration =
           video_min_duration / 1000;
 
-        fill_vast_instantiate_type_(
-          request_info,
-          request_info.source_id);
+        fill_vast_instantiate_type_(request_info, request_info.source_id);
 
         fill_video_size(
           kw_fmt, ad_slot_request,
@@ -1296,12 +1344,16 @@ namespace AdServer::Bidding
         if (size_it != debug_sizes.end())
         {
           ad_slot_request.sizes.resize(1);
-          ad_slot_request.sizes[0] = std::string(size_it->second);
+          ad_slot_request.sizes[0] = std::string_view(
+            size_it->second.data(),
+            size_it->second.size());
         }
         else if (!request_info.default_debug_size.empty())
         {
           ad_slot_request.sizes.resize(1);
-          ad_slot_request.sizes[0] = request_info.default_debug_size;
+          ad_slot_request.sizes[0] = std::string_view(
+            request_info.default_debug_size.data(),
+            request_info.default_debug_size.size());
         }
         else if (adslot.width_size())
         {
@@ -1338,7 +1390,10 @@ namespace AdServer::Bidding
             ad_slot_context.height = adslot.height(max_size_i);
 
             ad_slot_request.sizes.resize(1);
-            ad_slot_request.sizes[0] = make_size_string(ad_slot_context.width, ad_slot_context.height);
+            ad_slot_request.sizes[0] = hold_size_string(
+              ad_slot_request,
+              ad_slot_context.width,
+              ad_slot_context.height);
           }
         }
       }
@@ -1414,7 +1469,6 @@ namespace AdServer::Bidding
         }
 
         ad_slot_request.min_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
-
         ad_slot_request.passback = true;
       }
 
@@ -1471,7 +1525,7 @@ namespace AdServer::Bidding
 
       // fill creative_instantiate_type if was not filled by fill_by_referer_
       if(test_value_in_set(excluded_attributes, Google::NON_SECURE) &&
-           request_info.creative_instantiate_type[0] == '\0')
+        request_info.creative_instantiate_type.empty())
       {
         request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
       }
@@ -1530,7 +1584,7 @@ namespace AdServer::Bidding
     }
 
     // fill creative_instantiate_type if was not filled by fill_by_referer_
-    if(request_info.creative_instantiate_type[0] == '\0')
+    if(request_info.creative_instantiate_type.empty())
     {
       request_info.creative_instantiate_type = FrontendCommons::UNSECURE_INSTANTIATE_TYPE;
     }
@@ -1603,7 +1657,7 @@ namespace AdServer::Bidding
         request_info.publisher_account_ids[0] = *(source_it->second.default_account_id);
       }
 
-      if(source_it->second.request_type.present())
+      if(source_it->second.request_type)
       {
         request_info.request_type = *(source_it->second.request_type);
       }
@@ -1624,7 +1678,7 @@ namespace AdServer::Bidding
 
       request_info.native_ads_instantiate_type =
         source_it->second.native_ads_instantiate_type;
-      if(source_it->second.native_ads_impression_tracker_type.present())
+      if(source_it->second.native_ads_impression_tracker_type)
       {
         request_info.native_ads_impression_tracker_type =
           *source_it->second.native_ads_impression_tracker_type;
@@ -1703,26 +1757,20 @@ namespace AdServer::Bidding
       request_info.enabled_notice = false;
     }
 
-    if(request_info.request_type ==
-       AdServer::CampaignSvcs::AR_YANDEX)
+    if(request_info.request_type == AdServer::CampaignSvcs::AR_YANDEX)
     {
       request_info.fill_track_pixel = true;
     }
 
-    std::string& held_bid_request = request_info.hold_string(
+    const std::string_view held_bid_request = request_info.hold_string(
       std::move(bid_request));
 
     parse_openrtb_request_(
       request_info,
       context,
-      std::string_view(held_bid_request.data(), held_bid_request.size()));
+      held_bid_request);
 
-    request_info.bid_publisher_id = context.publisher_id;
-    request_info.bid_site_id = context.site_id;
-    request_info.bid_request_id = context.request_id;
-
-    //context.print(std::cerr);
-    KeywordFormatter kw_fmt(request_info.source_id);
+    PmrKeywordFormatter kw_fmt(request_info.source_id, request_info.resource());
 
     kw_fmt.add_keyword(MatchKeywords::FULL_REQ);
 
@@ -1754,18 +1802,20 @@ namespace AdServer::Bidding
       for(auto it = context.segments.begin(); it != context.segments.end(); ++it)
       {
         // add <id>x<value with replaced chars>
-        std::string keyword(
-          std::string("rtbsegment") +
-          norm_keyword_(it->id) +
-          "x" +
-          norm_keyword_(it->value));
+        const std::string_view id = norm_keyword_ext_(request_info, it->id);
+        const std::string_view value = norm_keyword_ext_(request_info, it->value);
+        std::string keyword;
+        keyword.reserve(10 + id.size() + 1 + value.size());
+        keyword += "rtbsegment";
+        keyword.append(id.data(), id.size());
+        keyword += 'x';
+        keyword.append(value.data(), value.size());
         //std::cerr << "keyword : <" << keyword << ">" << std::endl;
         kw_fmt.add_keyword(keyword);
       }
     }
 
-    for (auto ad_slot_it = context.ad_slots.begin();
-      ad_slot_it != context.ad_slots.end();
+    for (auto ad_slot_it = context.ad_slots.begin(); ad_slot_it != context.ad_slots.end();
       ++ad_slot_it)
     {
       if(request_info.additional_info.tagid.empty() && !ad_slot_it->tagid.empty())
@@ -1773,15 +1823,18 @@ namespace AdServer::Bidding
         request_info.additional_info.tagid = ad_slot_it->tagid;
       }
 
-      for (auto metric_it = ad_slot_it->metrics.begin();
-        metric_it != ad_slot_it->metrics.end();
+      for (auto metric_it = ad_slot_it->metrics.begin(); metric_it != ad_slot_it->metrics.end();
         ++metric_it)
       {
-        kw_fmt.add_keyword(
-          std::string("rtbmetric") +
-          norm_keyword_(metric_it->type) +
-          "x" +
-          norm_keyword_(metric_it->value));
+        const std::string_view type = norm_keyword_ext_(request_info, metric_it->type);
+        const std::string_view value = norm_keyword_ext_(request_info, metric_it->value);
+        std::string keyword;
+        keyword.reserve(9 + type.size() + 1 + value.size());
+        keyword += "rtbmetric";
+        keyword.append(type.data(), type.size());
+        keyword += 'x';
+        keyword.append(value.data(), value.size());
+        kw_fmt.add_keyword(keyword);
 
         float metric_value = 0.0f;
         if(try_parse_float_(metric_value, metric_it->value))
@@ -1807,7 +1860,9 @@ namespace AdServer::Bidding
       request_info.additional_info.viewability.has_value() ||
       request_info.additional_info.vtr.has_value())
     {
-      request_info.campaign_additional_info = make_additional_info_json_(request_info.additional_info);
+      make_additional_info_json_(
+        request_info.campaign_additional_info,
+        request_info.additional_info);
     }
 
     if(context.site_content || context.app_content)
@@ -1829,12 +1884,22 @@ namespace AdServer::Bidding
 
     if(!context.language.empty())
     {
-      kw_fmt.add_keyword(std::string("rtblanguage") + norm_keyword_(context.language));
+      const std::string_view language = norm_keyword_ext_(request_info, context.language);
+      std::string keyword;
+      keyword.reserve(11 + language.size());
+      keyword += "rtblanguage";
+      keyword.append(language.data(), language.size());
+      kw_fmt.add_keyword(keyword);
     }
 
     if(!context.carrier.empty())
     {
-      kw_fmt.add_keyword(std::string("rtbcarrier") + norm_keyword_(context.carrier));
+      const std::string_view carrier = norm_keyword_ext_(request_info, context.carrier);
+      std::string keyword;
+      keyword.reserve(10 + carrier.size());
+      keyword += "rtbcarrier";
+      keyword.append(carrier.data(), carrier.size());
+      kw_fmt.add_keyword(keyword);
     }
 
     kw_fmt.add_keyword(context.site_keywords);
@@ -1859,25 +1924,19 @@ namespace AdServer::Bidding
 
     if (context.external_user_id.empty())
     {
-      context.external_user_id = request_info.hold_string(
-        make_ssp_uid_by_device_(context));
+      context.external_user_id = make_ssp_uid_by_device_(context);
     }
 
-    if(!context.external_user_id.empty() &&
-      use_external_user_id_(context.external_user_id))
+    if(!context.external_user_id.empty() && use_external_user_id_(context.external_user_id))
     {
       if(!request_info.source_id.empty())
       {
         std::string external_user_id;
         external_user_id.reserve(
           request_info.source_id.size() + 1 + context.external_user_id.size());
-        external_user_id.append(
-          request_info.source_id.data(),
-          request_info.source_id.size());
+        external_user_id.append(request_info.source_id.data(), request_info.source_id.size());
         external_user_id += '/';
-        external_user_id.append(
-          context.external_user_id.data(),
-          context.external_user_id.size());
+        external_user_id.append(context.external_user_id.data(), context.external_user_id.size());
         request_info.external_user_id = external_user_id;
       }
       else
@@ -1886,8 +1945,7 @@ namespace AdServer::Bidding
       }
     }
 
-    if(request_info.external_user_id.empty() &&
-       context.user_id.empty())
+    if(request_info.external_user_id.empty() && context.user_id.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NO_ID);
 
@@ -1904,12 +1962,12 @@ namespace AdServer::Bidding
     }
     else
     {
-      fill_by_ip(request_info, context.ip);
+      fill_by_ip(request_info, request_info.peer_ip);
     }
 
-    if(!context.ip.empty())
+    if(!request_info.peer_ip.empty())
     {
-      kw_fmt.add_ip(context.ip);
+      kw_fmt.add_ip(request_info.peer_ip);
     }
 
     if (context.regs_coppa)
@@ -1924,12 +1982,9 @@ namespace AdServer::Bidding
     }
 
     request_info.is_app = context.app;
-    request_info.ssp_devicetype_str = openrtb_devicetype_to_string_(
-      context.ssp_devicetype);
-
     fill_by_user_agent(
       request_info,
-      context.user_agent,
+      request_info.user_agent,
       request_info.filter_request,
       context.app);
 
@@ -1939,8 +1994,10 @@ namespace AdServer::Bidding
     if(context.site)
     {
       ext_tag_id = openrtb_ext_tag_id(
-        context.publisher_id, context.site_id,
-        context.publisher_name, context.site_name);
+        request_info.bid_publisher_id,
+        request_info.bid_site_id,
+        context.publisher_name,
+        context.site_name);
 
       if(context.site_page.secure() ||
         context.site_domain.secure() ||
@@ -1965,17 +2022,17 @@ namespace AdServer::Bidding
     {
       request_info.profile_referer = enable_profile_referer_;
       ext_tag_id = openrtb_ext_tag_id(
-        context.publisher_id, context.app_id,
-        context.publisher_name, context.app_name);
+        request_info.bid_publisher_id,
+        context.app_id,
+        context.publisher_name,
+        context.app_name);
 
       std::string app_bundle_url;
 
       try
       {
         // workaround: some SSP provide url with spaces at beginning
-        String::SubString url_sstr(
-          context.app_bundle.data(),
-          context.app_bundle.size());
+        String::SubString url_sstr(context.app_bundle.data(), context.app_bundle.size());
         String::StringManip::trim(url_sstr);
         request_info.application_id = url_sstr.str();
         app_bundle_url = HTTP::BrowserAddress(url_sstr).url();
@@ -2001,7 +2058,7 @@ namespace AdServer::Bidding
         else if(!context.app_store_url.url().empty())
         {
           request_info.referer = adapt_app_store_url_(
-              FrontendCommons::normalize_abs_url(context.app_store_url));
+            FrontendCommons::normalize_abs_url(context.app_store_url));
         }
       }
     }
@@ -2016,10 +2073,7 @@ namespace AdServer::Bidding
         // ADSC-10103
         if (context.site_ref.url() != selected_referer.url())
         {
-          fill_additional_url_(
-            request_info,
-            request_info.search_words,
-            context.site_ref);
+          fill_additional_url_(request_info, request_info.search_words, context.site_ref);
         }
       }
       catch(eh::Exception&)
@@ -2050,8 +2104,7 @@ namespace AdServer::Bidding
       request_info.ad_slots.emplace_back(request_info.resource());
     }
     std::size_t slot_i = 0;
-    for(JsonAdSlotProcessingContextList::iterator slot_it =
-          context.ad_slots.begin();
+    for(std::pmr::list<JsonAdSlotProcessingContext>::iterator slot_it = context.ad_slots.begin();
         slot_it != context.ad_slots.end(); )
     {
       const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
@@ -2091,10 +2144,6 @@ namespace AdServer::Bidding
           if(logger_->log_level() >= Logging::Logger::NOTICE)
           {
             Stream::Error ostr;
-            /*
-            ostr << FUN << "Error in format or allowed values video_protocols, "
-              "video_playbackmethods, video_start_delay, video_linearity, video_adtype";
-            */
             ostr << FUN << "Error in format " <<
               (slot_it->video_protocols.fail() ? ", video_protocols fail" : "") <<
               (slot_it->video_playbackmethods.fail() ? ", video_playbackmethods fail" : "") <<
@@ -2109,10 +2158,7 @@ namespace AdServer::Bidding
               ((slot_it->video_linearity).good() && (*(slot_it->video_linearity) != 1) &&
                (*(slot_it->video_linearity) != 2) ? ", video_linearity check" : "");
 
-            logger_->log(
-              ostr.str(),
-              Logging::Logger::NOTICE,
-              Aspect::BIDDING_FRONTEND);
+            logger_->log(ostr.str(), Logging::Logger::NOTICE, Aspect::BIDDING_FRONTEND);
           }
 
           parse_request_error_flag = true;
@@ -2140,7 +2186,7 @@ namespace AdServer::Bidding
          // ADSC-10919
           kw_fmt.add_dict_keyword(
             MatchKeywords::PLACEMENT,
-            slot_it->video_placement.present()?
+            slot_it->video_placement ?
               get_value_from_seq(
                 Request::OpenRtb::VIDEO_PLACEMENTS,
                 *slot_it->video_placement) :
@@ -2148,7 +2194,7 @@ namespace AdServer::Bidding
 
           kw_fmt.add_dict_keyword(
             MatchKeywords::PLACEMENT,
-            slot_it->video_placement.present() ?
+            slot_it->video_placement ?
               get_value_from_seq(
                 Request::OpenRtb::VIDEO_PLACEMENTS,
                 *slot_it->video_placement) :
@@ -2243,9 +2289,7 @@ namespace AdServer::Bidding
 
         if(serve_video && slot_it == context.ad_slots.begin())
         {
-          fill_vast_instantiate_type_(
-            request_info,
-            request_info.source_id);
+          fill_vast_instantiate_type_(request_info, request_info.source_id);
         }
 
         AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request =
@@ -2303,32 +2347,24 @@ namespace AdServer::Bidding
           if(serve_video)
           {
             // process api
-            std::vector<std::string> excluded_api_categories;
-
             if(slot_it->video_api.fail())
             {
-              excluded_api_categories.push_back(CreativeCategory::VPAID1);
-              excluded_api_categories.push_back(CreativeCategory::VPAID2);
+              ad_slot_request.exclude_categories.push_back(CreativeCategory::VPAID1);
+              ad_slot_request.exclude_categories.push_back(CreativeCategory::VPAID2);
             }
             else
             {
               if(slot_it->video_api->find(1) == slot_it->video_api->end() &&
                 slot_it->video_api->find(2) == slot_it->video_api->end())
               {
-                excluded_api_categories.push_back(CreativeCategory::VPAID1);
+                ad_slot_request.exclude_categories.push_back(CreativeCategory::VPAID1);
               }
 
               if(slot_it->video_api->find(2) == slot_it->video_api->end())
               {
-                excluded_api_categories.push_back(CreativeCategory::VPAID2);
+                ad_slot_request.exclude_categories.push_back(CreativeCategory::VPAID2);
               }
             }
-
-            CampaignManager::fill_sequence(
-              excluded_api_categories.begin(),
-              excluded_api_categories.end(),
-              ad_slot_request.exclude_categories,
-              true);
 
             CampaignManager::fill_sequence(
               slot_it->video_exclude_categories.begin(),
@@ -2345,6 +2381,7 @@ namespace AdServer::Bidding
             ad_slot_request.video_skippable_max_duration =
               ad_slot_request.video_max_duration;
           }
+
           String::StringManip::str_to_int(slot_it->video_pos, pos);
           slot_it->banners.clear();
 
@@ -2366,14 +2403,14 @@ namespace AdServer::Bidding
             MatchKeywords::NATIVE_PLACEMENT,
             get_value_from_seq(
               Request::OpenRtb::NATIVE_PLACEMENTS,
-              slot_it->native->placement.present() ?
+              slot_it->native->placement ?
                 *slot_it->native->placement: 0));
 
           kw_fmt.add_dict_keyword(
             MatchKeywords::NATIVE_PLACEMENT,
             get_value_from_seq(
               Request::OpenRtb::NATIVE_PLACEMENTS,
-              slot_it->native->placement.present() ?
+              slot_it->native->placement ?
                 *slot_it->native->placement: 0), false);
 
           if(ad_slot_request.format.empty())
@@ -2416,8 +2453,7 @@ namespace AdServer::Bidding
 
               slot_it->banners.clear();
 
-              fill_video_size(
-                kw_fmt, ad_slot_request, 0, 0);
+              fill_video_size(kw_fmt, ad_slot_request, 0, 0);
             }
           }
           else if(serve_native)
@@ -2432,14 +2468,17 @@ namespace AdServer::Bidding
             {
               ad_slot_request.sizes[0] = (
                 size_it != debug_sizes.end() ?
-                std::string(size_it->second.data(), size_it->second.size()) :
-                std::string(
+                std::string_view(size_it->second.data(), size_it->second.size()) :
+                std::string_view(
                   request_info.default_debug_size.data(),
                   request_info.default_debug_size.size()));
             }
             else if(main_image_found)
             {
-              ad_slot_request.sizes[0] = make_size_string(main_image.width, main_image.height);
+              ad_slot_request.sizes[0] = hold_size_string(
+                ad_slot_request,
+                main_image.width,
+                main_image.height);
             }
             else
             {
@@ -2469,9 +2508,7 @@ namespace AdServer::Bidding
 
           if(serve_native)
           {
-            fill_native_instantiate_type_(
-              request_info,
-              request_info.source_id);
+            fill_native_instantiate_type_(request_info, request_info.source_id);
           }
 
           ad_slot_request.passback = request_info.filter_request || !serve_native;
@@ -2488,9 +2525,7 @@ namespace AdServer::Bidding
           if(!slot_it->banners.empty())
           {
             request_info.hpos = slot_it->banners.begin()->ext_hpos;
-            String::StringManip::str_to_int(
-              slot_it->banners.begin()->pos,
-              pos);
+            String::StringManip::str_to_int(slot_it->banners.begin()->pos, pos);
           }
           else
           {
@@ -2501,7 +2536,7 @@ namespace AdServer::Bidding
 
           unsigned long banner_format_count = 0;
           for(auto banner_it = slot_it->banners.rbegin();
-              banner_it != slot_it->banners.rend(); ++banner_it)
+            banner_it != slot_it->banners.rend(); ++banner_it)
           {
             banner_format_count += banner_it->formats.size();
           }
@@ -2510,7 +2545,7 @@ namespace AdServer::Bidding
           std::size_t size_i = 0;
 
           for(auto banner_it = slot_it->banners.rbegin();
-              banner_it != slot_it->banners.rend(); ++banner_it)
+            banner_it != slot_it->banners.rend(); ++banner_it)
           {
             const JsonAdSlotProcessingContext::Banner& banner = *banner_it;
 
@@ -2524,7 +2559,7 @@ namespace AdServer::Bidding
             if(!skip_sizes)
             {
               for(auto banner_format_it = banner.formats.begin();
-                  banner_format_it != banner.formats.end(); ++banner_format_it)
+                banner_format_it != banner.formats.end(); ++banner_format_it)
               {
                 const JsonAdSlotProcessingContext::BannerFormat& banner_format =
                   *banner_format_it;
@@ -2533,50 +2568,53 @@ namespace AdServer::Bidding
                   banner_format.ext_type == "20")
                 {
                   ad_slot_request.sizes[size_i++] = RM_SIZE;
-                  slot_it->size_banner.insert(std::make_pair(
+                  slot_it->size_banner.emplace(
                     RM_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(
                       &*banner_it,
-                      &*banner_format_it)));
+                      &*banner_format_it));
                 }
                 else if (banner_format.ext_format == "popup")
                 {
                   ad_slot_request.sizes[size_i++] = POPUP_SIZE;
-                  slot_it->size_banner.insert(std::make_pair(
+                  slot_it->size_banner.emplace(
                     POPUP_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(
                       &*banner_it,
-                      &*banner_format_it)));
+                      &*banner_format_it));
                 }
                 else if (banner_format.ext_format == "overlay")
                 {
                   ad_slot_request.sizes[size_i++] = RM_DTO_SIZE;
-                  slot_it->size_banner.insert(std::make_pair(
+                  slot_it->size_banner.emplace(
                     RM_DTO_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(
                       &*banner_it,
-                      &*banner_format_it)));
+                      &*banner_format_it));
                 }
                 else if (banner_format.ext_format == "rich")
                 {
                   ad_slot_request.sizes[size_i++] = RM_RICH_SIZE;
-                  slot_it->size_banner.insert(std::make_pair(
+                  slot_it->size_banner.emplace(
                     RM_RICH_SIZE,
                     JsonAdSlotProcessingContext::BannerFormatHolder(
                       &*banner_it,
-                      &*banner_format_it)));
+                      &*banner_format_it));
                 }
                 else if(!banner_format.width.empty() && !banner_format.height.empty())
                 {
                   const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
                   const auto size_it = debug_sizes.find(slot_i);
-                  std::string res_size;
+                  std::string_view res_size_view;
                   if(size_it != debug_sizes.end())
                   {
-                    res_size.assign(size_it->second.data(), size_it->second.size());
+                    res_size_view = std::string_view(
+                      size_it->second.data(),
+                      size_it->second.size());
                   }
                   else if(request_info.default_debug_size.empty())
                   {
+                    RequestInfo::PmrString res_size(ad_slot_request.resource());
                     res_size.reserve(
                       banner_format.width.size() + 1 + banner_format.height.size());
                     res_size.append(
@@ -2586,21 +2624,24 @@ namespace AdServer::Bidding
                     res_size.append(
                       banner_format.height.data(),
                       banner_format.height.size());
+                    const RequestInfo::PmrString& held_res_size =
+                      ad_slot_request.hold_string(std::move(res_size));
+                    res_size_view = std::string_view(
+                      held_res_size.data(),
+                      held_res_size.size());
                   }
                   else
                   {
-                    res_size.assign(
+                    res_size_view = std::string_view(
                       request_info.default_debug_size.data(),
                       request_info.default_debug_size.size());
                   }
-                  ad_slot_request.sizes[size_i++] = res_size;
-                  const std::string_view res_size_view =
-                    request_info.hold_string(std::move(res_size));
-                  slot_it->size_banner.insert(std::make_pair(
+                  ad_slot_request.sizes[size_i++] = res_size_view;
+                  slot_it->size_banner.emplace(
                     res_size_view,
                     JsonAdSlotProcessingContext::BannerFormatHolder(
                       &*banner_it,
-                      &*banner_format_it)));
+                      &*banner_format_it));
                 }
               }
             }
@@ -2638,7 +2679,7 @@ namespace AdServer::Bidding
           bool min_price_present = false;
           AdServer::CampaignSvcs::RevenueDecimal min_price =
             AdServer::CampaignSvcs::RevenueDecimal::ZERO;
-          const JsonString* min_deal_id = nullptr;
+          const std::string_view* min_deal_id = nullptr;
 
           if (slot_it->min_cpm_price != AdServer::CampaignSvcs::RevenueDecimal::ZERO)
           {
@@ -2646,8 +2687,7 @@ namespace AdServer::Bidding
             min_price = slot_it->min_cpm_price;
           }
 
-          for (auto it = slot_it->deals.begin(); it != slot_it->deals.end();
-               ++it)
+          for (auto it = slot_it->deals.begin(); it != slot_it->deals.end(); ++it)
           {
             if (caseless_compare(it->currency_code, currency_code))
             {
@@ -2698,24 +2738,23 @@ namespace AdServer::Bidding
           std::size_t currency_i = 0;
           for(const std::string_view currency : context.currencies)
           {
-            std::string currency_holder(currency);
-            String::AsciiStringManip::to_lower(currency_holder);
-            ad_slot_request.currency_codes[currency_i++] = currency_holder;
+            ad_slot_request.currency_codes[currency_i++] =
+              hold_lowercase_string(ad_slot_request, currency);
           }
         }
         else if(!slot_it->min_cpm_price_currency_code.empty())
         {
           ad_slot_request.currency_codes.resize(1);
-          std::string currency_holder(slot_it->min_cpm_price_currency_code);
-          String::AsciiStringManip::to_lower(currency_holder);
-          ad_slot_request.currency_codes[0] = currency_holder;
+          ad_slot_request.currency_codes[0] = hold_lowercase_string(
+            ad_slot_request,
+            slot_it->min_cpm_price_currency_code);
         }
 
         if(!slot_it->min_cpm_price_currency_code.empty())
         {
-          std::string currency_holder(slot_it->min_cpm_price_currency_code);
-          String::AsciiStringManip::to_lower(currency_holder);
-          ad_slot_request.min_ecpm_currency_code = currency_holder;
+          ad_slot_request.min_ecpm_currency_code = hold_lowercase_string(
+            ad_slot_request,
+            slot_it->min_cpm_price_currency_code);
         }
         else
         {
@@ -2755,9 +2794,7 @@ namespace AdServer::Bidding
 
     request_info.ad_slots.resize(slot_i);
 
-    if((!context.ad_slots.empty() &&
-         context.ad_slots.front().secure) ||
-       context.secure)
+    if ((!context.ad_slots.empty() && context.ad_slots.front().secure) || context.secure)
     {
       request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
     }
@@ -2768,8 +2805,9 @@ namespace AdServer::Bidding
     }
 
     // fill idfa or advertising_id by ifa depends on device
-    context.ifa = request_info.hold_string(
-      FrontendCommons::normalize_ifa(context.ifa));
+    context.ifa = context.hold_string(FrontendCommons::normalize_ifa(
+      context.ifa,
+      context.resource()));
 
     if(!context.ifa.empty())
     {
@@ -2800,9 +2838,7 @@ namespace AdServer::Bidding
       {
         ext_track_params += "puid1=";
         std::string mimed_puid1;
-        String::StringManip::mime_url_encode(
-          context.puid1,
-          mimed_puid1);
+        String::StringManip::mime_url_encode(context.puid1, mimed_puid1);
         ext_track_params += mimed_puid1;
       }
 
@@ -2814,9 +2850,7 @@ namespace AdServer::Bidding
         }
         ext_track_params += "puid2=";
         std::string mimed_puid2;
-        String::StringManip::mime_url_encode(
-          context.puid2,
-          mimed_puid2);
+        String::StringManip::mime_url_encode(context.puid2, mimed_puid2);
         ext_track_params += mimed_puid2;
       }
 
@@ -2833,7 +2867,8 @@ namespace AdServer::Bidding
 
     add_special_keywords_(keywords, request_info, &context, context.app_id);
 
-    std::string ssp_location;
+    RequestInfo::PmrString& ssp_location = request_info.ssp_location;
+    ssp_location.clear();
     ssp_location.reserve(
       context.ssp_country.size() + context.ssp_region.size() +
       context.ssp_city.size() + 2);
@@ -2842,7 +2877,6 @@ namespace AdServer::Bidding
     ssp_location.append(context.ssp_region.data(), context.ssp_region.size());
     ssp_location += '/';
     ssp_location.append(context.ssp_city.data(), context.ssp_city.size());
-    request_info.ssp_location = std::move(ssp_location);
 
     // push eids to request_info
     for(auto it = context.user_eids.begin(); it != context.user_eids.end(); ++it)
@@ -2860,6 +2894,7 @@ namespace AdServer::Bidding
             request_info.source_id.data(),
             request_info.source_id.size());
         }
+
         auto source_mapping_it = source_mapping_.find(source);
         if(source_mapping_it != source_mapping_.end())
         {
@@ -2891,8 +2926,7 @@ namespace AdServer::Bidding
   }
 
   void
-  RequestInfoFiller::init_param_processors_()
-    noexcept
+  RequestInfoFiller::init_param_processors_() noexcept
   {
     add_param_processor_(
       Request::Context::RANDOM,
@@ -2977,9 +3011,7 @@ namespace AdServer::Bidding
       {
         try
         {
-          web_browser_matcher->match(
-            web_browser,
-            user_agent);
+          web_browser_matcher->match(web_browser, user_agent);
         }
         catch(const eh::Exception& ex)
         {
@@ -3114,21 +3146,15 @@ namespace AdServer::Bidding
   {
     if(!url.url().empty())
     {
-      FrontendCommons::UrlMatcher_var url_matcher =
-        common_module_->url_matcher();
+      FrontendCommons::UrlMatcher_var url_matcher = common_module_->url_matcher();
       if(url_matcher.in())
       {
         unsigned long search_engine_id;
         std::string search_words_value;
 
-        Language::Segmentor::SegmentorInterface_var segmentor =
-          common_module_->segmentor();
+        Language::Segmentor::SegmentorInterface_var segmentor = common_module_->segmentor();
 
-        if(url_matcher->match(
-             search_engine_id,
-             search_words_value,
-             url,
-             segmentor))
+        if(url_matcher->match(search_engine_id, search_words_value, url, segmentor))
         {
           // don't override search_engine_id got by referer parsing
           if(request_info.search_engine_id == 0)
@@ -3138,16 +3164,12 @@ namespace AdServer::Bidding
 
           if(search_words.empty())
           {
-            search_words.assign(
-              search_words_value.data(),
-              search_words_value.size());
+            search_words.assign(search_words_value.data(), search_words_value.size());
           }
           else
           {
             search_words += "\n";
-            search_words.append(
-              search_words_value.data(),
-              search_words_value.size());
+            search_words.append(search_words_value.data(), search_words_value.size());
           }
         }
       }
@@ -3155,10 +3177,7 @@ namespace AdServer::Bidding
   }
 
   void
-  RequestInfoFiller::fill_by_ip(
-    RequestInfo& request_info,
-    std::string_view ip)
-    const
+  RequestInfoFiller::fill_by_ip(RequestInfo& request_info, std::string_view ip) const
     noexcept
   {
     if(request_info.location)
@@ -3192,8 +3211,7 @@ namespace AdServer::Bidding
                  geo_location,
                  false))
             {
-              request_info.location =
-                std::make_shared<FrontendCommons::Location>();
+              request_info.location = std::make_shared<FrontendCommons::Location>();
               request_info.location->country = geo_location.country_code.str();
               geo_location.region.assign_to(request_info.location->region);
               request_info.location->city = geo_location.city.str();
@@ -3210,13 +3228,12 @@ namespace AdServer::Bidding
         }
       }
 
-      FrontendCommons::CountryFilter_var country_filter =
-        common_module_->country_filter();
+      FrontendCommons::CountryFilter_var country_filter = common_module_->country_filter();
 
       if(country_filter.in())
       {
         if(geo_location.country_code.empty() ||
-           !country_filter->enabled(geo_location.country_code))
+          !country_filter->enabled(geo_location.country_code))
         {
           request_info.filter_request = true;
         }
@@ -3225,12 +3242,9 @@ namespace AdServer::Bidding
   }
 
   bool
-  RequestInfoFiller::use_external_user_id_(
-    std::string_view external_user_id)
-    const noexcept
+  RequestInfoFiller::use_external_user_id_(std::string_view external_user_id) const noexcept
   {
-    return skip_external_ids_.find(std::string(external_user_id)) ==
-      skip_external_ids_.end();
+    return skip_external_ids_.find(std::string(external_user_id)) == skip_external_ids_.end();
   }
 
   void
@@ -3271,9 +3285,8 @@ namespace AdServer::Bidding
         }
         // Don't check for empty ssp_uid (UserIdBlackList)
 
-        const Generics::Uuid uid =
-          UserIdController::get_by_ssp_user_id(
-            ssp_uid, source_id, ssp_uid_marker);
+        const Generics::Uuid uid = UserIdController::get_by_ssp_user_id(
+          ssp_uid, source_id, ssp_uid_marker);
 
         if (uid.is_null())
         {
@@ -3287,16 +3300,13 @@ namespace AdServer::Bidding
         request_info.user_id = uid;
         request_info.track_user_id = uid;
 
-        if(std::string_view(AdServer::Commons::PROBE_USER_ID.to_string()) ==
-          signed_user_id)
+        if(std::string_view(AdServer::Commons::PROBE_USER_ID.to_string()) == signed_user_id)
         {
-          request_info.user_status = static_cast<std::size_t>(
-            AdServer::CampaignSvcs::US_PROBE);
+          request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_PROBE);
           return;
         }
 
-        request_info.user_status = static_cast<std::size_t>(
-          AdServer::CampaignSvcs::US_OPTIN);
+        request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN);
       }
       catch(...)
       {
@@ -3333,15 +3343,13 @@ namespace AdServer::Bidding
 
     if (!context.site_page.url().empty())
     {
-      const std::string site_page =
-        first_significant_domain_part_(
-          to_string_view(context.site_page.host()));
+      const std::string site_page = first_significant_domain_part_(
+        to_string_view(context.site_page.host()));
 
       if (!context.site_domain.url().empty())
       {
-        const std::string site_domain =
-          first_significant_domain_part_(
-            to_string_view(context.site_domain.host()));
+        const std::string site_domain = first_significant_domain_part_(
+          to_string_view(context.site_domain.host()));
 
         if (site_page == site_domain)
         {
@@ -3352,13 +3360,10 @@ namespace AdServer::Bidding
 
       if (referer.url().empty() && !context.site_name.empty())
       {
-        fill_json_url(
-          context.site_name,
-          site_name_url);
+        fill_json_url(context.site_name, site_name_url);
 
-        const std::string site_name =
-          first_significant_domain_part_(
-            to_string_view(site_name_url.host()));
+        const std::string site_name = first_significant_domain_part_(
+          to_string_view(site_name_url.host()));
 
         if (site_page == site_name)
         {
@@ -3381,9 +3386,7 @@ namespace AdServer::Bidding
       {
         if(!site_name_url_initialized)
         {
-          fill_json_url(
-            context.site_name,
-            site_name_url);
+          fill_json_url(context.site_name, site_name_url);
           site_name_url_initialized = true;
         }
 
@@ -3418,14 +3421,12 @@ namespace AdServer::Bidding
         if(selected_referer_field != url_i && !URL_FIELDS[url_i]->url().empty())
         {
           std::string search_words; // ignore search words value (push to match only)
-          fill_additional_url_(
-            request_info,
-            search_words,
-            *URL_FIELDS[url_i]);
+          fill_additional_url_(request_info, search_words, *URL_FIELDS[url_i]);
         }
       }
       catch(const eh::Exception&)
-      {//ignory bad url
+      {
+        // ignory bad url
       }
     }
 
@@ -3435,20 +3436,17 @@ namespace AdServer::Bidding
       {
         std::string search_words; // ignore search words value (push to match only)
         HTTP::BrowserAddress site_name_url(context.site_name);
-        fill_additional_url_(
-          request_info,
-          search_words,
-          site_name_url);
+        fill_additional_url_(request_info, search_words, site_name_url);
       }
     }
     catch(const eh::Exception&)
-    {//ignory bad url
+    {
+      // ignory bad url
     }
   }
 
   std::string
-  RequestInfoFiller::first_significant_domain_part_(
-    std::string_view host) const
+  RequestInfoFiller::first_significant_domain_part_(std::string_view host) const
     /*throw(eh::Exception)*/
   {
     std::string domain;
@@ -3483,8 +3481,7 @@ namespace AdServer::Bidding
   }
 
   void
-  RequestInfoFiller::init_adslot(
-    AdServer::Bidding::RequestInfo::AdSlotInfo& adslot_info)
+  RequestInfoFiller::init_adslot(AdServer::Bidding::RequestInfo::AdSlotInfo& adslot_info)
     noexcept
   {
     adslot_info.video_allow_skippable = true;
@@ -3493,8 +3490,7 @@ namespace AdServer::Bidding
   }
 
   void
-  RequestInfoFiller::init_request_param(
-    RequestInfo& request_info) const noexcept
+  RequestInfoFiller::init_request_param(RequestInfo& request_info) const noexcept
   {
     request_info.time = request_info.current_time;
 
@@ -3506,8 +3502,7 @@ namespace AdServer::Bidding
     request_info.fill_track_pixel = false;
     request_info.fill_iurl = request_info.flag & 0x01;
 
-    request_info.request_id =
-      AdServer::Commons::RequestId::create_random_based();
+    request_info.request_id = AdServer::Commons::RequestId::create_random_based();
 
     request_info.colo_id = colo_id_;
     request_info.search_engine_id = 0;
@@ -3516,68 +3511,51 @@ namespace AdServer::Bidding
     request_info.only_display_ad = true;
     request_info.test_request = false;
     request_info.preview_ccid = 0;
-    request_info.campaign_additional_info = "{}";
     request_info.hpos = CampaignSvcs::UNDEFINED_PUB_POSITION_BOTTOM;
 
     fill_request_type_(request_info, request_info.source_id);
   }
 
-  std::string
+  std::string_view
   RequestInfoFiller::make_ssp_uid_by_device_(const JsonProcessingContext& ctx)
     /*throw(std::exception)*/
   {
-    const auto to_string = [](std::string_view value)
-    {
-      return std::string(value.data(), value.size());
-    };
-
-    /*
-    if (!ctx.ifa.empty())
-    {
-      return to_string(ctx.ifa);
-    }
-    */
-
     if (!ctx.didmd5.empty())
     {
-      return to_string(ctx.didmd5);
+      return ctx.didmd5;
     }
 
     if (!ctx.didsha1.empty())
     {
-      return to_string(ctx.didsha1);
+      return ctx.didsha1;
     }
 
     if (!ctx.dpidmd5.empty())
     {
-      return to_string(ctx.dpidmd5);
+      return ctx.dpidmd5;
     }
 
     if (!ctx.dpisha1.empty())
     {
-      return to_string(ctx.dpisha1);
+      return ctx.dpisha1;
     }
 
     if (!ctx.macsha1.empty())
     {
-      return to_string(ctx.macsha1);
+      return ctx.macsha1;
     }
 
-    return to_string(ctx.macmd5);
+    return ctx.macmd5;
   }
 
   std::string
-  RequestInfoFiller::adapt_app_store_url_(
-    std::string_view store_url_str)
+  RequestInfoFiller::adapt_app_store_url_(std::string_view store_url_str)
     /*throw(eh::Exception)*/
   {
     HTTP::BrowserAddress store_url(store_url_str);
 
     if(store_url.host().compare(GooglePlay::STORE_HOST) == 0 &&
-      store_url.path().compare(
-        0,
-        GooglePlay::STORE_PATH.size(),
-        GooglePlay::STORE_PATH) == 0)
+      store_url.path().compare(0, GooglePlay::STORE_PATH.size(), GooglePlay::STORE_PATH) == 0)
     {
       const String::SubString args = store_url.query();
 
@@ -3623,18 +3601,32 @@ namespace AdServer::Bidding
     return std::string(store_url_str);
   }
 
-  std::string
-  RequestInfoFiller::norm_keyword_(std::string_view kw) noexcept
+  std::string_view
+  RequestInfoFiller::norm_keyword_ext_(RequestInfo& request_info, std::string_view kw) noexcept
   {
+    bool changed = false;
+    for(const char ch_ref : kw)
+    {
+      const unsigned char ch = ch_ref;
+      if(ch >= 0x80 || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
+      {
+        continue;
+      }
+
+      changed = true;
+      break;
+    }
+
+    if(!changed)
+    {
+      return kw;
+    }
+
     std::string simplified_kw(kw);
     for(auto& ch_ref : simplified_kw)
     {
       const unsigned char ch = ch_ref;
-      if(ch >= 0x80)
-      {
-        continue;
-      }
-      else if((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
+      if(ch >= 0x80 || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
       {
         continue;
       }
@@ -3647,64 +3639,72 @@ namespace AdServer::Bidding
         ch_ref = 'x';
       }
     }
-    return simplified_kw;
+
+    return request_info.hold_string(std::move(simplified_kw));
   }
 
   template<typename StringType>
   void
   RequestInfoFiller::add_special_keywords_impl_(
     StringType& keywords,
-    const RequestInfo& request_info,
+    RequestInfo& request_info,
     const JsonProcessingContext* context,
     std::string_view alt_app_id)
     const
     noexcept
   {
-    KeywordFormatter kw_fmt(request_info.source_id);
+    PmrKeywordFormatter kw_fmt(request_info.source_id, request_info.resource());
 
     for(auto platform_name_it = request_info.platform_names.begin();
       platform_name_it != request_info.platform_names.end();
       ++platform_name_it)
     {
-      kw_fmt.add_keyword(std::string("rtbplatform") + norm_keyword_(*platform_name_it));
+      const std::string_view platform = norm_keyword_ext_(request_info, *platform_name_it);
+      std::string keyword;
+      keyword.reserve(11 + platform.size());
+      keyword += "rtbplatform";
+      keyword.append(platform.data(), platform.size());
+      kw_fmt.add_keyword(keyword);
     }
 
     if(request_info.is_app)
     {
-      std::string app_id = norm_keyword_(request_info.application_id);
+      std::string_view app_id = norm_keyword_ext_(request_info, request_info.application_id);
       if(!app_id.empty())
       {
-        kw_fmt.add_keyword(std::string("rtbapp") + app_id);
+        std::string keyword;
+        keyword.reserve(6 + app_id.size());
+        keyword += "rtbapp";
+        keyword.append(app_id.data(), app_id.size());
+        kw_fmt.add_keyword(keyword);
       }
 
       if(!alt_app_id.empty())
       {
-        app_id = norm_keyword_(alt_app_id);
+        app_id = norm_keyword_ext_(request_info, alt_app_id);
         if(!app_id.empty())
         {
-          kw_fmt.add_keyword(std::string("rtbapp") + app_id);
+          std::string keyword;
+          keyword.reserve(6 + app_id.size());
+          keyword += "rtbapp";
+          keyword.append(app_id.data(), app_id.size());
+          kw_fmt.add_keyword(keyword);
         }
       }
     }
 
-    std::string special_keywords;
-    kw_fmt.assign_to(special_keywords);
-
-    if(!special_keywords.empty())
-    {
-      if(!keywords.empty())
-      {
-        keywords += "\n";
-      }
-
-      keywords += special_keywords;
-    }
+    kw_fmt.assign_to(keywords);
 
     if(context)
     {
       if(!context->language.empty())
       {
-        kw_fmt.add_keyword(std::string("rtblanguage") + norm_keyword_(context->language));
+        const std::string_view language = norm_keyword_ext_(request_info, context->language);
+        std::string keyword;
+        keyword.reserve(11 + language.size());
+        keyword += "rtblanguage";
+        keyword.append(language.data(), language.size());
+        kw_fmt.add_keyword(keyword);
       }
     }
   }
@@ -3712,38 +3712,29 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::add_special_keywords_(
     std::string& keywords,
-    const RequestInfo& request_info,
+    RequestInfo& request_info,
     const JsonProcessingContext* context,
     std::string_view alt_app_id)
     const
     noexcept
   {
-    add_special_keywords_impl_(
-      keywords,
-      request_info,
-      context,
-      alt_app_id);
+    add_special_keywords_impl_(keywords, request_info, context, alt_app_id);
   }
 
   void
   RequestInfoFiller::add_special_keywords_(
     RequestInfo::PmrString& keywords,
-    const RequestInfo& request_info,
+    RequestInfo& request_info,
     const JsonProcessingContext* context,
     std::string_view alt_app_id)
     const
     noexcept
   {
-    add_special_keywords_impl_(
-      keywords,
-      request_info,
-      context,
-      alt_app_id);
+    add_special_keywords_impl_(keywords, request_info, context, alt_app_id);
   }
 
-  std::string
-  RequestInfoFiller::openrtb_devicetype_to_string_(unsigned int devicetype)
-    const
+  std::string_view
+  RequestInfoFiller::openrtb_devicetype_to_string_(unsigned int devicetype) const
   {
     auto it = openrtb_devicetype_mapping_.find(devicetype);
     if (it != openrtb_devicetype_mapping_.end())
@@ -3751,10 +3742,10 @@ namespace AdServer::Bidding
       return it->second;
     }
 
-    return std::string();
+    return {};
   }
 
-  std::string
+  std::string_view
   RequestInfoFiller::openrtb_video_placement_to_string_(unsigned int video_placement_type)
     const
   {
@@ -3764,11 +3755,12 @@ namespace AdServer::Bidding
       return it->second;
     }
 
-    return std::string();
+    return {};
   }
+
   namespace
   {
-    using FastJsonParser = AdServer::Commons::FastJsonParser;
+    using FastJsonParser = AdServer::Commons::FastJsonParser<std::pmr::string>;
     using ValueProcessor = FastJsonParser::ValueProcessor;
     using AdSlotContext = JsonAdSlotProcessingContext;
     using Banner = AdSlotContext::Banner;
@@ -3800,41 +3792,31 @@ namespace AdServer::Bidding
       bool matching_ad_processed = false;
     };
 
-    template<typename Target>
-    void
-    assign_string(Target& target, std::string_view value)
-    {
-      target.assign(value.data(), value.size());
-    }
-
-    void
-    assign_string(std::string_view& target, std::string_view value)
-    {
-      target = value;
-    }
-
-    std::string_view
-    hold_string(FastOpenRtbState& state, std::string&& value)
-    {
-      std::string& held_value = state.request_info->hold_string(std::move(value));
-      return std::string_view(held_value.data(), held_value.size());
-    }
-
-    std::string
-    integer_to_string(int64_t value)
+    std::pmr::string
+    integer_to_string(FastOpenRtbState& state, int64_t value)
     {
       char buf[32];
       const auto result = std::to_chars(buf, buf + sizeof(buf), value);
-      return std::string(buf, result.ptr);
+      return std::pmr::string(
+        buf,
+        result.ptr,
+        state.context->resource());
     }
 
-    std::string
-    float_to_string(double value)
+    std::pmr::string
+    float_to_string(FastOpenRtbState& state, double value)
     {
       char buf[64];
       const int size = std::snprintf(buf, sizeof(buf), "%.17g", value);
-      return size > 0 ? std::string(buf, static_cast<std::size_t>(size)) :
-        std::string();
+      if(size <= 0)
+      {
+        return std::pmr::string(state.context->resource());
+      }
+
+      return std::pmr::string(
+        buf,
+        static_cast<std::size_t>(size),
+        state.context->resource());
     }
 
     template<typename NumberType>
@@ -3919,15 +3901,11 @@ namespace AdServer::Bidding
     void
     fill_url(std::string_view value, HTTP::HTTPAddress& target)
     {
-      fill_json_url(
-        value,
-        target);
+      fill_json_url(value, target);
     }
 
     void
-    set_state_number(
-      AdSlotContext::ULValueStateHolder& target,
-      std::string_view value)
+    set_state_number(AdSlotContext::ULValueStateHolder& target, std::string_view value)
     {
       unsigned long result = 0;
       if(parse_integer(value, result))
@@ -3971,9 +3949,7 @@ namespace AdServer::Bidding
     }
 
     void
-    set_state_number(
-      AdSlotContext::LValueStateHolder& target,
-      std::string_view value)
+    set_state_number(AdSlotContext::LValueStateHolder& target, std::string_view value)
     {
       long result = 0;
       if(parse_integer(value, result))
@@ -4087,7 +4063,7 @@ namespace AdServer::Bidding
       {}
 
       void
-      process_string(std::string&&, std::string_view, void*) const override
+      process_string(std::pmr::string&&, std::string_view, void*) const override
       {}
 
       void
@@ -4100,15 +4076,15 @@ namespace AdServer::Bidding
     };
 
     template<typename ProcessorType>
-  void
-  add_processor(
-    FastJsonParser& parser,
-    std::string_view path,
-    std::shared_ptr<ProcessorType> processor,
-    bool as_string = false)
-  {
-    parser.add_processor(path, std::move(processor), as_string);
-  }
+    void
+    add_processor(
+      FastJsonParser& parser,
+      std::string_view path,
+      std::shared_ptr<ProcessorType> processor,
+      bool as_string = false)
+    {
+      parser.add_processor(path, std::move(processor), as_string);
+    }
 
     template<typename Context, typename Field>
     class StringFieldProcessor final: public IgnoringValueProcessor
@@ -4127,18 +4103,18 @@ namespace AdServer::Bidding
       {
         if(Context* target = get_context_(state_from_context(context)))
         {
-          assign_string(target->*field_, value);
+          target->*field_ = value;
         }
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
         if(Context* target = get_context_(state))
         {
-          assign_string(target->*field_, hold_string(state, std::move(value)));
+          target->*field_ = state.context->hold_string(std::move(value));
         }
       }
 
@@ -4205,7 +4181,7 @@ namespace AdServer::Bidding
     public:
       OptionalLongFieldProcessor(
         Context* (*get_context)(FastOpenRtbState&),
-        AdServer::Commons::Optional<long> Context::* field)
+        std::optional<long> Context::* field)
         : get_context_(get_context),
           field_(field)
       {}
@@ -4222,7 +4198,7 @@ namespace AdServer::Bidding
 
     private:
       Context* (*get_context_)(FastOpenRtbState&);
-      AdServer::Commons::Optional<long> Context::* field_;
+      std::optional<long> Context::* field_;
     };
 
     template<typename Context>
@@ -4287,7 +4263,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         parse_(value, context);
@@ -4404,7 +4380,7 @@ namespace AdServer::Bidding
       FastJsonParser& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
-      AdServer::Commons::Optional<long> Context::* field)
+      std::optional<long> Context::* field)
     {
       add_processor(
         parser,
@@ -4763,11 +4739,11 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        append_(state, hold_string(state, std::move(value)));
+        append_(state, state.context->hold_string(std::move(value)));
       }
 
       void
@@ -4775,14 +4751,14 @@ namespace AdServer::Bidding
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        append_(state, hold_string(state, integer_to_string(value)));
+        append_(state, state.context->hold_string(integer_to_string(state, value)));
       }
 
       void
       process_float(double value, std::string_view, void* context) const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        append_(state, hold_string(state, float_to_string(value)));
+        append_(state, state.context->hold_string(float_to_string(state, value)));
       }
 
     private:
@@ -4825,7 +4801,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         process_string_(value, context);
@@ -4881,7 +4857,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         process_string_(value, context);
@@ -4918,11 +4894,59 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        handler_(state, hold_string(state, std::move(value)));
+        handler_(state, state.context->hold_string(std::move(value)));
+      }
+
+    private:
+      Handler handler_;
+    };
+
+    template<typename Handler>
+    class RequestStringHandlerProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      explicit
+      RequestStringHandlerProcessor(Handler handler)
+        : handler_(std::move(handler))
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        handler_(state_from_context(context), value);
+      }
+
+      void
+      process_string(std::pmr::string&& value, std::string_view, void* context)
+        const override
+      {
+        FastOpenRtbState& state = state_from_context(context);
+        handler_(state, state.request_info->hold_string(std::move(value)));
+      }
+
+    private:
+      Handler handler_;
+    };
+
+    template<typename Handler>
+    class IntegerHandlerProcessor final: public IgnoringValueProcessor
+    {
+    public:
+      explicit
+      IntegerHandlerProcessor(Handler handler)
+        : handler_(std::move(handler))
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        handler_(state_from_context(context), value);
       }
 
     private:
@@ -4946,11 +4970,11 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        process_(hold_string(state, std::move(value)), context);
+        process_(state.context->hold_string(std::move(value)), context);
       }
 
       void
@@ -4958,14 +4982,14 @@ namespace AdServer::Bidding
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        process_(hold_string(state, integer_to_string(value)), context);
+        process_(state.context->hold_string(integer_to_string(state, value)), context);
       }
 
       void
       process_float(double value, std::string_view, void* context) const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        process_(hold_string(state, float_to_string(value)), context);
+        process_(state.context->hold_string(float_to_string(state, value)), context);
       }
 
     private:
@@ -4975,7 +4999,7 @@ namespace AdServer::Bidding
         FastOpenRtbState& state = state_from_context(context);
         if(state.banner && !state.matching_ad_processed)
         {
-          assign_string(state.banner->matching_ad, value);
+          state.banner->matching_ad = value;
           state.matching_ad_processed = true;
         }
       }
@@ -4993,11 +5017,11 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        process_(hold_string(state, std::move(value)), context);
+        process_(state.context->hold_string(std::move(value)), context);
       }
 
       void
@@ -5005,7 +5029,7 @@ namespace AdServer::Bidding
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
-        process_(hold_string(state, integer_to_string(value)), context);
+        process_(state.context->hold_string(integer_to_string(state, value)), context);
       }
 
     private:
@@ -5016,11 +5040,11 @@ namespace AdServer::Bidding
         {
           if constexpr(Width)
           {
-            assign_string(format->width, value);
+            format->width = value;
           }
           else
           {
-            assign_string(format->height, value);
+            format->height = value;
           }
         }
       }
@@ -5088,18 +5112,18 @@ namespace AdServer::Bidding
       {
         if(AdSlotContext::Metric* metric = state_from_context(context).metric)
         {
-          assign_string(metric->value, value);
+          metric->value = value;
         }
       }
 
       void
-      process_string(std::string&& value, std::string_view, void* context)
+      process_string(std::pmr::string&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
         if(AdSlotContext::Metric* metric = state.metric)
         {
-          assign_string(metric->value, hold_string(state, std::move(value)));
+          metric->value = state.context->hold_string(std::move(value));
         }
       }
 
@@ -5125,11 +5149,10 @@ namespace AdServer::Bidding
           char buf[64];
           const int size = std::snprintf(buf, sizeof(buf), "%.3f", value);
           FastOpenRtbState& state = state_from_context(context);
-          assign_string(
-            metric->value,
-            hold_string(
-              state,
-              std::string(buf, static_cast<std::size_t>(size))));
+          metric->value = state.context->hold_string(std::pmr::string(
+            buf,
+            static_cast<std::size_t>(size),
+            state.context->resource()));
         }
       }
     };
@@ -5165,10 +5188,7 @@ namespace AdServer::Bidding
 
     template<typename Append>
     void
-    add_string_array(
-      FastJsonParser& parser,
-      std::string_view path,
-      Append append)
+    add_string_array(FastJsonParser& parser, std::string_view path, Append append)
     {
       add_processor(
         parser,
@@ -5176,12 +5196,31 @@ namespace AdServer::Bidding
         std::make_shared<StringArrayProcessor<Append>>(std::move(append)));
     }
 
+    template<typename Handler>
+    void
+    add_request_string_handler(FastJsonParser& parser, std::string_view path, Handler handler)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<RequestStringHandlerProcessor<Handler>>(
+          std::move(handler)),
+        true);
+    }
+
+    template<typename Handler>
+    void
+    add_integer_handler(FastJsonParser& parser, std::string_view path, Handler handler)
+    {
+      add_processor(
+        parser,
+        path,
+        std::make_shared<IntegerHandlerProcessor<Handler>>(std::move(handler)));
+    }
+
     template<typename HolderGetter>
     void
-    add_state_value_number(
-      FastJsonParser& parser,
-      std::string_view path,
-      HolderGetter get_holder)
+    add_state_value_number(FastJsonParser& parser, std::string_view path, HolderGetter get_holder)
     {
       add_processor(
         parser,
@@ -5192,10 +5231,7 @@ namespace AdServer::Bidding
 
     template<typename HolderGetter>
     void
-    add_state_number_set(
-      FastJsonParser& parser,
-      std::string_view path,
-      HolderGetter get_holder)
+    add_state_number_set(FastJsonParser& parser, std::string_view path, HolderGetter get_holder)
     {
       add_processor(
         parser,
@@ -5237,7 +5273,8 @@ namespace AdServer::Bidding
       add_processor(
         parser,
         std::string(base) + ".ext.matching_ad_id",
-        std::make_shared<MatchingAdProcessor>());
+        std::make_shared<MatchingAdProcessor>(),
+        true);
 
       add_object_processor(parser, std::string(base) + ".format", start_banner_format);
       add_object_processor(
@@ -5249,20 +5286,24 @@ namespace AdServer::Bidding
       add_processor(
         parser,
         std::string(base) + ".w",
-        std::make_shared<BannerSizeProcessor<true>>());
+        std::make_shared<BannerSizeProcessor<true>>(),
+        true);
       add_processor(
         parser,
         std::string(base) + ".h",
-        std::make_shared<BannerSizeProcessor<false>>());
+        std::make_shared<BannerSizeProcessor<false>>(),
+        true);
 
       add_processor(
         parser,
         std::string(base) + ".format.w",
-        std::make_shared<BannerSizeProcessor<true>>());
+        std::make_shared<BannerSizeProcessor<true>>(),
+        true);
       add_processor(
         parser,
         std::string(base) + ".format.h",
-        std::make_shared<BannerSizeProcessor<false>>());
+        std::make_shared<BannerSizeProcessor<false>>(),
+        true);
       add_string(
         parser,
         std::string(base) + ".format.ext.type",
@@ -5415,7 +5456,13 @@ namespace AdServer::Bidding
       FastJsonParser native_parser(false);
       init_native_payload_processors(native_parser, "");
       init_native_payload_processors(native_parser, "native");
-      native_parser.parse(value, &state);
+      native_parser.parse(
+        value,
+        &state,
+        [&state]()
+        {
+          return std::pmr::string(state.request_info->resource());
+        });
     }
 
     void
@@ -5439,7 +5486,13 @@ namespace AdServer::Bidding
   {
     auto parser = std::make_unique<FastJsonParser>(false);
 
-    add_string(*parser, "id", root_context, &JsonProcessingContext::request_id);
+    add_request_string_handler(
+      *parser,
+      "id",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        state.request_info->bid_request_id = value;
+      });
     add_string_array(
       *parser,
       "cur",
@@ -5665,7 +5718,13 @@ namespace AdServer::Bidding
     add_url(*parser, "site.page", root_context, &JsonProcessingContext::site_page);
     add_string(*parser, "site.name", root_context, &JsonProcessingContext::site_name);
     add_url(*parser, "site.domain", root_context, &JsonProcessingContext::site_domain);
-    add_string(*parser, "site.id", root_context, &JsonProcessingContext::site_id);
+    add_request_string_handler(
+      *parser,
+      "site.id",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        state.request_info->bid_site_id = value;
+      });
     add_string(*parser, "site.search", root_context, &JsonProcessingContext::site_search);
     add_url(*parser, "site.ref", root_context, &JsonProcessingContext::site_ref);
     add_url(*parser, "site.referer", root_context, &JsonProcessingContext::site_referer);
@@ -5741,7 +5800,13 @@ namespace AdServer::Bidding
       "site.publisher.name",
       root_context,
       &JsonProcessingContext::publisher_name);
-    add_string(*parser, "site.publisher.id", root_context, &JsonProcessingContext::publisher_id);
+    add_request_string_handler(
+      *parser,
+      "site.publisher.id",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        state.request_info->bid_publisher_id = value;
+      });
     add_string_array(
       *parser,
       "site.publisher.cat",
@@ -5822,7 +5887,13 @@ namespace AdServer::Bidding
       [](FastOpenRtbState& state) { state.context->app_publisher = true; }
     );
     add_string(*parser, "app.publisher.name", root_context, &JsonProcessingContext::publisher_name);
-    add_string(*parser, "app.publisher.id", root_context, &JsonProcessingContext::publisher_id);
+    add_request_string_handler(
+      *parser,
+      "app.publisher.id",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        state.request_info->bid_publisher_id = value;
+      });
     add_string_array(
       *parser,
       "app.publisher.cat",
@@ -5831,9 +5902,21 @@ namespace AdServer::Bidding
         append_string(state.context->publisher_cat, value);
       });
 
-    add_string(*parser, "device.ip", root_context, &JsonProcessingContext::ip);
+    add_request_string_handler(
+      *parser,
+      "device.ip",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        state.request_info->peer_ip = value;
+      });
     add_string(*parser, "device.ipv6", root_context, &JsonProcessingContext::ipv6);
-    add_string(*parser, "device.ua", root_context, &JsonProcessingContext::user_agent);
+    add_request_string_handler(
+      *parser,
+      "device.ua",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        state.request_info->user_agent = value;
+      });
     add_string(*parser, "device.userdata", root_context, &JsonProcessingContext::user_id);
     add_string(*parser, "device.ifa", root_context, &JsonProcessingContext::ifa);
     add_string(*parser, "device.didmd5", root_context, &JsonProcessingContext::didmd5);
@@ -5844,7 +5927,19 @@ namespace AdServer::Bidding
     add_string(*parser, "device.macmd5", root_context, &JsonProcessingContext::macmd5);
     add_string(*parser, "device.language", root_context, &JsonProcessingContext::language);
     add_string(*parser, "device.carrier", root_context, &JsonProcessingContext::carrier);
-    add_integer(*parser, "device.devicetype", root_context, &JsonProcessingContext::ssp_devicetype);
+    add_integer_handler(
+      *parser,
+      "device.devicetype",
+      [this](FastOpenRtbState& state, int64_t value)
+      {
+        if(value >= 0 &&
+          static_cast<uint64_t>(value) <=
+            static_cast<uint64_t>(std::numeric_limits<unsigned int>::max()))
+        {
+          state.request_info->ssp_devicetype_str =
+            openrtb_devicetype_to_string_(static_cast<unsigned int>(value));
+        }
+      });
     add_string(*parser, "device.geo.country", root_context, &JsonProcessingContext::ssp_country);
     add_string(*parser, "device.geo.region", root_context, &JsonProcessingContext::ssp_region);
     add_string(*parser, "device.geo.city", root_context, &JsonProcessingContext::ssp_city);
@@ -5927,7 +6022,13 @@ namespace AdServer::Bidding
 
     try
     {
-      fast_json_parser_->parse(bid_request, &state);
+      fast_json_parser_->parse(
+        bid_request,
+        &state,
+        [&request_info]()
+        {
+          return std::pmr::string(request_info.resource());
+        });
     }
     catch(const eh::Exception& e)
     {

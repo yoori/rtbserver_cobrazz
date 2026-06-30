@@ -1,9 +1,10 @@
 #pragma once
 
+#include <memory_resource>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
-#include <String/SubString.hpp>
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
 
@@ -33,40 +34,62 @@ namespace AdServer::Bidding
     const std::string VIEWABILITY("viewability");
   };
 
-  class KeywordFormatter
+  template<typename StringType = std::string>
+  class BasicKeywordFormatter
   {
   public:
     // short_rtb_name == source_id
-    KeywordFormatter(std::string_view source_id)
-      : keywords_non_empty_(false),
-        short_rtb_name_(source_id)
+    explicit BasicKeywordFormatter(
+      std::string_view source_id,
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : resource_(resource),
+        keywords_osrt_(make_string_(std::string_view(), resource_)),
+        keywords_non_empty_(false),
+        short_rtb_name_(make_string_(source_id, resource_))
     {
       keywords_osrt_.reserve(1024);
     }
 
     template<std::size_t Size>
-    KeywordFormatter(const char (&source_id)[Size])
-      : KeywordFormatter(std::string_view(source_id, Size - 1))
+    explicit BasicKeywordFormatter(
+      const char (&source_id)[Size],
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : BasicKeywordFormatter(std::string_view(source_id, Size - 1), resource)
     {}
 
-    template<typename StringType>
-    KeywordFormatter(const StringType& source_id)
-      : KeywordFormatter(std::string_view(source_id.data(), source_id.size()))
+    template<typename SourceIdType>
+    explicit BasicKeywordFormatter(
+      const SourceIdType& source_id,
+      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      : BasicKeywordFormatter(
+          std::string_view(source_id.data(), source_id.size()),
+          resource)
     {}
 
     template<typename Traits, typename Allocator>
     void
     assign_to(std::basic_string<char, Traits, Allocator>& kw) const
     {
+      if(empty())
+      {
+        return;
+      }
+
       if(kw.empty())
       {
-        kw = keywords_osrt_;
+        kw.append(keywords_osrt_.data(), keywords_osrt_.size());
       }
       else
       {
         kw += '\n';
-        kw += keywords_osrt_;
+        kw.append(keywords_osrt_.data(), keywords_osrt_.size());
       }
+    }
+
+    bool
+    empty() const noexcept
+    {
+      return !keywords_non_empty_;
     }
 
     void
@@ -77,15 +100,14 @@ namespace AdServer::Bidding
         return;
       }
 
-      const String::SubString cat_sub_string(cat.data(), cat.size());
       if (open_rtb)
       {
-        add_(String::SubString(), String::SubString(), cat_sub_string);
+        add_(std::string_view(), std::string_view(), cat);
       }
 
       if (!open_rtb || !short_rtb_name_.empty())
       {
-        add_(String::SubString(), short_rtb_name_, cat_sub_string);
+        add_(std::string_view(), short_rtb_name_, cat);
       }
     }
 
@@ -133,10 +155,10 @@ namespace AdServer::Bidding
 
       if(norm_gender_holder == "male" || norm_gender_holder == "female")
       {
-        add_(String::SubString(), String::SubString(),  norm_gender_holder);
+        add_(std::string_view(), std::string_view(), norm_gender_holder);
         if(!short_rtb_name_.empty())
         {
-          add_(String::SubString(), short_rtb_name_, norm_gender_holder);
+          add_(std::string_view(), short_rtb_name_, norm_gender_holder);
         }
       }
     }
@@ -145,7 +167,7 @@ namespace AdServer::Bidding
     void
     add_yob(const ValueType& yob)
     {
-      add_(MatchKeywords::YOB, String::SubString(), yob);
+      add_(MatchKeywords::YOB, std::string_view(), yob);
       if(!short_rtb_name_.empty())
       {
         add_(MatchKeywords::YOB, short_rtb_name_, yob);
@@ -156,7 +178,7 @@ namespace AdServer::Bidding
     void
     add_age(const ValueType& age)
     {
-      add_(MatchKeywords::AGE, String::SubString(), age);
+      add_(MatchKeywords::AGE, std::string_view(), age);
       if(!short_rtb_name_.empty())
       {
         add_(MatchKeywords::AGE, short_rtb_name_, age);
@@ -166,41 +188,50 @@ namespace AdServer::Bidding
     void
     add_ip(std::string_view addr_value)
     {
-      const String::SubString addr(addr_value.data(), addr_value.size());
-      String::StringManip::Splitter<String::AsciiStringManip::SepPeriod> tokenizer(addr);
-      String::SubString token1;
-      String::SubString token2;
-      String::SubString token3;
-      String::SubString token4;
-      if(tokenizer.get_token(token1) &&
-        tokenizer.get_token(token2) &&
-        tokenizer.get_token(token3) &&
-        tokenizer.get_token(token4))
+      const auto dot1 = addr_value.find('.');
+      if(dot1 == std::string_view::npos)
       {
-        std::string res_keyword_ip3;
-        res_keyword_ip3 += token1.str();
-        res_keyword_ip3 += 'x';
-        res_keyword_ip3 += token2.str();
-        res_keyword_ip3 += 'x';
-        res_keyword_ip3 += token3.str();
+        return;
+      }
 
-        std::string res_keyword_ip4(res_keyword_ip3);
-        res_keyword_ip4 += 'x';
-        res_keyword_ip4 += token4.str();
+      const auto dot2 = addr_value.find('.', dot1 + 1);
+      if(dot2 == std::string_view::npos)
+      {
+        return;
+      }
 
-        add_(MatchKeywords::IP, String::SubString(), res_keyword_ip3);
-        add_(MatchKeywords::IP, String::SubString(), res_keyword_ip4);
-        if(!short_rtb_name_.empty())
-        {
-          add_(MatchKeywords::IP, short_rtb_name_, res_keyword_ip3);
-          add_(MatchKeywords::IP, short_rtb_name_, res_keyword_ip4);
-        }
+      const auto dot3 = addr_value.find('.', dot2 + 1);
+      if(dot3 == std::string_view::npos)
+      {
+        return;
+      }
+
+      StringType res_keyword_ip3 = make_string_(std::string_view(), resource_);
+      res_keyword_ip3.reserve(addr_value.size());
+      res_keyword_ip3.append(addr_value.data(), dot1);
+      res_keyword_ip3 += 'x';
+      res_keyword_ip3.append(addr_value.data() + dot1 + 1, dot2 - dot1 - 1);
+      res_keyword_ip3 += 'x';
+      res_keyword_ip3.append(addr_value.data() + dot2 + 1, dot3 - dot2 - 1);
+
+      StringType res_keyword_ip4(res_keyword_ip3);
+      res_keyword_ip4 += 'x';
+      res_keyword_ip4.append(
+        addr_value.data() + dot3 + 1,
+        addr_value.size() - dot3 - 1);
+
+      add_(MatchKeywords::IP, std::string_view(), res_keyword_ip3);
+      add_(MatchKeywords::IP, std::string_view(), res_keyword_ip4);
+      if(!short_rtb_name_.empty())
+      {
+        add_(MatchKeywords::IP, short_rtb_name_, res_keyword_ip3);
+        add_(MatchKeywords::IP, short_rtb_name_, res_keyword_ip4);
       }
     }
 
-    template<typename StringType>
+    template<typename ValueType>
     void
-    add_ip(const StringType& addr)
+    add_ip(const ValueType& addr)
     {
       add_ip(std::string_view(addr.data(), addr.size()));
     }
@@ -208,7 +239,7 @@ namespace AdServer::Bidding
     template <typename ValueType>
     void
     add_dict_keyword(
-      const String::SubString& dict_name,
+      std::string_view dict_name,
       const ValueType& keyword,
       bool add_rtb_prefix = true)
     {
@@ -218,33 +249,30 @@ namespace AdServer::Bidding
       }
       else
       {
-        add_(dict_name, String::SubString(), keyword);
+        add_(dict_name, std::string_view(), keyword);
       }
     }
 
     void
     add_dict_keyword(
-      const String::SubString& dict_name,
+      std::string_view dict_name,
       std::string_view keyword,
       bool add_rtb_prefix = true)
     {
-      const String::SubString keyword_sub_string(
-        keyword.data(),
-        keyword.size());
       if (add_rtb_prefix)
       {
-        add_(dict_name, short_rtb_name_, keyword_sub_string);
+        add_(dict_name, short_rtb_name_, keyword);
       }
       else
       {
-        add_(dict_name, String::SubString(), keyword_sub_string);
+        add_(dict_name, std::string_view(), keyword);
       }
     }
 
     void
     add_dict_keyword_norm_spaces(
-      const String::SubString& dict_name,
-      const String::SubString& keyword,
+      std::string_view dict_name,
+      std::string_view keyword,
       bool add_rtb_prefix = true)
     {
       if (add_rtb_prefix)
@@ -253,26 +281,14 @@ namespace AdServer::Bidding
       }
       else
       {
-        add_norm_spaces_(dict_name, String::SubString(), keyword);
+        add_norm_spaces_(dict_name, std::string_view(), keyword);
       }
-    }
-
-    void
-    add_dict_keyword_norm_spaces(
-      const String::SubString& dict_name,
-      std::string_view keyword,
-      bool add_rtb_prefix = true)
-    {
-      add_dict_keyword_norm_spaces(
-        dict_name,
-        String::SubString(keyword.data(), keyword.size()),
-        add_rtb_prefix);
     }
 
     template <typename ValueType>
     void
     add_rtb_keyword(
-      const String::SubString& dict_name,
+      std::string_view dict_name,
       const ValueType& keyword)
     {
       if(!short_rtb_name_.empty())
@@ -280,17 +296,17 @@ namespace AdServer::Bidding
         add_(dict_name, short_rtb_name_, keyword, true);
       }
 
-      add_(dict_name, String::SubString(), keyword, true);
+      add_(dict_name, std::string_view(), keyword, true);
     }
 
-    template<typename StringType>
+    template<typename ValueType>
     void
-    add_keyword(const StringType& kw)
+    add_keyword(const ValueType& kw)
     {
       add_(
-        String::SubString(),
-        String::SubString(),
-        String::SubString(kw.data(), kw.size()),
+        std::string_view(),
+        std::string_view(),
+        std::string_view(kw.data(), kw.size()),
         false);
     }
 
@@ -302,18 +318,24 @@ namespace AdServer::Bidding
         return;
       }
 
-      std::string keyword_holder(keyword);
-      add_keyword(keyword_holder);
+      add_keyword(keyword);
 
       if (!short_rtb_name_.empty())
       {
-        static const std::string RTB_PREFIX_VALUE("rtb");
-        std::string source_keyword(RTB_PREFIX_VALUE);
-        source_keyword += short_rtb_name_;
-        source_keyword +=
-          keyword_holder.compare(0, RTB_PREFIX_VALUE.size(), RTB_PREFIX_VALUE) == 0 ?
-            keyword_holder.substr(RTB_PREFIX_VALUE.size()) :
-            keyword_holder;
+        StringType source_keyword = make_string_(RTB_PREFIX, resource_);
+        source_keyword.append(
+          short_rtb_name_.data(),
+          short_rtb_name_.size());
+        if(keyword.compare(0, RTB_PREFIX.size(), RTB_PREFIX) == 0)
+        {
+          source_keyword.append(
+            keyword.data() + RTB_PREFIX.size(),
+            keyword.size() - RTB_PREFIX.size());
+        }
+        else
+        {
+          source_keyword.append(keyword.data(), keyword.size());
+        }
         add_keyword(source_keyword);
       }
     }
@@ -335,8 +357,8 @@ namespace AdServer::Bidding
   protected:
     void
     add_(
-      const String::SubString& param_name,
-      const String::SubString& short_rtb_name,
+      std::string_view param_name,
+      std::string_view short_rtb_name,
       unsigned long value,
       bool add_rtb_prefix = true)
     {
@@ -347,15 +369,32 @@ namespace AdServer::Bidding
       add_(
         param_name,
         short_rtb_name,
-        String::SubString(value_str, value_str_size),
+        std::string_view(value_str, value_str_size),
+        add_rtb_prefix);
+    }
+
+    template<
+      typename ValueType,
+      typename = std::enable_if_t<!std::is_arithmetic_v<ValueType>>>
+    void
+    add_(
+      std::string_view param_name,
+      std::string_view short_rtb_name,
+      const ValueType& value,
+      bool add_rtb_prefix = true)
+    {
+      add_(
+        param_name,
+        short_rtb_name,
+        std::string_view(value.data(), value.size()),
         add_rtb_prefix);
     }
 
     void
     add_(
-      const String::SubString& param_name,
-      const String::SubString& short_rtb_name,
-      const String::SubString& value,
+      std::string_view param_name,
+      std::string_view short_rtb_name,
+      std::string_view value,
       bool add_rtb_prefix = true)
     {
       if(param_name.empty() && value.empty())
@@ -365,26 +404,26 @@ namespace AdServer::Bidding
 
       if(keywords_non_empty_)
       {
-        keywords_osrt_ += CUSTOM_KEYWORD_SEPARATOR;
+        append_(keywords_osrt_, CUSTOM_KEYWORD_SEPARATOR);
       }
 
       if(add_rtb_prefix)
       {
-        keywords_osrt_ += RTB_PREFIX;
+        append_(keywords_osrt_, RTB_PREFIX);
       }
 
-      short_rtb_name.append_to(keywords_osrt_);
-      param_name.append_to(keywords_osrt_);
-      value.append_to(keywords_osrt_);
+      append_(keywords_osrt_, short_rtb_name);
+      append_(keywords_osrt_, param_name);
+      append_(keywords_osrt_, value);
 
       keywords_non_empty_ = true;
     }
 
     void
     add_norm_spaces_(
-      const String::SubString& param_name,
-      const String::SubString& short_rtb_name,
-      const String::SubString& value,
+      std::string_view param_name,
+      std::string_view short_rtb_name,
+      std::string_view value,
       bool add_rtb_prefix = true)
     {
       if(param_name.empty() && value.empty())
@@ -394,17 +433,17 @@ namespace AdServer::Bidding
 
       if(keywords_non_empty_)
       {
-        keywords_osrt_ += CUSTOM_KEYWORD_SEPARATOR;
+        append_(keywords_osrt_, CUSTOM_KEYWORD_SEPARATOR);
       }
 
       if(add_rtb_prefix)
       {
-        keywords_osrt_ += RTB_PREFIX;
+        append_(keywords_osrt_, RTB_PREFIX);
       }
 
-      short_rtb_name.append_to(keywords_osrt_);
-      param_name.append_to(keywords_osrt_);
-      for(String::SubString::ConstPointer value_it = value.begin();
+      append_(keywords_osrt_, short_rtb_name);
+      append_(keywords_osrt_, param_name);
+      for(std::string_view::const_iterator value_it = value.begin();
           value_it != value.end(); ++value_it)
       {
         const unsigned char ch = *value_it;
@@ -429,10 +468,35 @@ namespace AdServer::Bidding
       keywords_non_empty_ = true;
     }
 
-    std::string keywords_osrt_;
+    static StringType
+    make_string_(
+      std::string_view value,
+      std::pmr::memory_resource* resource)
+    {
+      if constexpr (std::is_same_v<StringType, std::pmr::string>)
+      {
+        return StringType(value.data(), value.size(), resource);
+      }
+      else
+      {
+        return StringType(value.data(), value.size());
+      }
+    }
+
+    static void
+    append_(StringType& target, std::string_view value)
+    {
+      target.append(value.data(), value.size());
+    }
+
+    std::pmr::memory_resource* const resource_;
+    StringType keywords_osrt_;
     bool keywords_non_empty_;
-    const std::string short_rtb_name_;
-    const static std::string CUSTOM_KEYWORD_SEPARATOR;
-    const static std::string RTB_PREFIX;
+    const StringType short_rtb_name_;
+    inline static constexpr std::string_view CUSTOM_KEYWORD_SEPARATOR = "\n";
+    inline static constexpr std::string_view RTB_PREFIX = "rtb";
   };
+
+  using KeywordFormatter = BasicKeywordFormatter<>;
+  using PmrKeywordFormatter = BasicKeywordFormatter<std::pmr::string>;
 }

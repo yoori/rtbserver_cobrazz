@@ -276,8 +276,8 @@ namespace
   {
     hash_string_value(seed, ad_slot.id);
     hash_string(seed, ad_slot.min_cpm_price.str());
-    hash_combine(seed, ad_slot.private_auction.present());
-    if(ad_slot.private_auction.present())
+    hash_combine(seed, ad_slot.private_auction.has_value());
+    if(ad_slot.private_auction)
     {
       hash_combine(seed, *ad_slot.private_auction);
     }
@@ -291,7 +291,7 @@ namespace
     hash_string_sequence(seed, ad_slot.video_mimes);
     hash_combine(seed, ad_slot.video_width.present());
     hash_combine(seed, ad_slot.video_height.present());
-    hash_combine(seed, ad_slot.video_placement.present());
+    hash_combine(seed, ad_slot.video_placement.has_value());
     hash_string_value(seed, ad_slot.imp_ext_type);
 
     hash_combine(seed, ad_slot.deals.size());
@@ -331,8 +331,8 @@ namespace
     {
       const auto& native = *ad_slot.native;
       hash_string_value(seed, native.version);
-      hash_combine(seed, native.placement.present());
-      if(native.placement.present())
+      hash_combine(seed, native.placement.has_value());
+      if(native.placement)
       {
         hash_combine(seed, *native.placement);
       }
@@ -378,21 +378,19 @@ namespace
     hash_string(seed, request_info.bid_site_id);
     hash_string(seed, request_info.bid_publisher_id);
 
-    hash_string_value(seed, context.request_id);
     hash_string_sequence(seed, context.currencies);
     hash_string_sequence(seed, context.exclude_categories);
     hash_string_value(seed, context.required_category);
     hash_string_value(seed, context.external_user_id);
     hash_string_value(seed, context.user_id);
-    hash_string_value(seed, context.ip);
+    hash_string_value(seed, request_info.peer_ip);
     hash_string_value(seed, context.ipv6);
-    hash_string_value(seed, context.user_agent);
+    hash_string_value(seed, request_info.user_agent);
     hash_string_value(seed, context.ifa);
     hash_string_value(seed, context.language);
     hash_string_value(seed, context.carrier);
-    hash_combine(seed, context.ssp_devicetype);
+    hash_string_value(seed, request_info.ssp_devicetype_str);
     hash_combine(seed, context.site);
-    hash_string_value(seed, context.site_id);
     hash_string_value(seed, context.site_name);
     hash_string_value(seed, context.site_keywords);
     hash_string_value(seed, context.site_search);
@@ -419,7 +417,6 @@ namespace
     hash_string_value(seed, context.content_season);
     hash_string_sequence(seed, context.content_cat);
     hash_string_value(seed, context.publisher_name);
-    hash_string_value(seed, context.publisher_id);
     hash_string_sequence(seed, context.publisher_cat);
     hash_string_sequence(seed, context.content_producer_name);
     hash_string_value(seed, context.puid1);

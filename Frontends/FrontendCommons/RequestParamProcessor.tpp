@@ -3,6 +3,51 @@
 
 namespace FrontendCommons
 {
+  inline
+  std::pmr::string
+  normalize_ifa_impl_(
+    std::string_view idfa,
+    std::pmr::memory_resource* resource)
+  {
+    std::pmr::string res(idfa.data(), idfa.size(), resource);
+    String::AsciiStringManip::to_lower(res.begin(), res.end());
+
+    std::pmr::string norm_res(resource);
+    norm_res.reserve(32);
+
+    const String::SubString res_sub_string(res.data(), res.size());
+    String::StringManip::Splitter<String::AsciiStringManip::SepMinus> tokenizer(
+      res_sub_string);
+    String::SubString token;
+    while(tokenizer.get_token(token))
+    {
+      norm_res.append(token.data(), token.size());
+    }
+
+    if(norm_res.size() == 32 &&
+      String::AsciiStringManip::HEX_NUMBER.find_nonowned(
+        norm_res.data(),
+        norm_res.data() + norm_res.size()) ==
+          norm_res.data() + norm_res.size())
+    {
+      std::pmr::string minus_norm_res(resource);
+      minus_norm_res.reserve(36);
+      minus_norm_res.append(norm_res.data(), 8);
+      minus_norm_res += '-';
+      minus_norm_res.append(norm_res.data() + 8, 4);
+      minus_norm_res += '-';
+      minus_norm_res.append(norm_res.data() + 12, 4);
+      minus_norm_res += '-';
+      minus_norm_res.append(norm_res.data() + 16, 4);
+      minus_norm_res += '-';
+      minus_norm_res.append(norm_res.data() + 20, 12);
+
+      return minus_norm_res;
+    }
+
+    return std::pmr::string(resource);
+  }
+
   template<typename RequestInfoType, typename StringType>
   StringParamProcessor<RequestInfoType, StringType>::StringParamProcessor(
     StringType RequestInfoType::* field,
@@ -430,37 +475,17 @@ namespace FrontendCommons
   std::string
   normalize_ifa(std::string_view idfa)
   {
-    std::string res(idfa);
-    String::AsciiStringManip::to_lower(res);
+    std::pmr::monotonic_buffer_resource resource;
+    const std::pmr::string result = normalize_ifa_impl_(idfa, &resource);
+    return std::string(result.data(), result.size());
+  }
 
-    std::string norm_res;
-    norm_res.reserve(32);
-    String::StringManip::Splitter<String::AsciiStringManip::SepMinus> tokenizer(res);
-    String::SubString token;
-    while(tokenizer.get_token(token))
-    {
-      norm_res += token.str();
-    }
-
-    if(norm_res.size() == 32 &&
-      String::AsciiStringManip::HEX_NUMBER.find_nonowned(
-        norm_res.data(), norm_res.data() + norm_res.size()) == norm_res.data() + norm_res.size())
-    {
-      std::string minus_norm_res;
-      minus_norm_res.reserve(36);
-      minus_norm_res += norm_res.substr(0, 8);
-      minus_norm_res += '-';
-      minus_norm_res += norm_res.substr(8, 4);
-      minus_norm_res += '-';
-      minus_norm_res += norm_res.substr(12, 4);
-      minus_norm_res += '-';
-      minus_norm_res += norm_res.substr(16, 4);
-      minus_norm_res += '-';
-      minus_norm_res += norm_res.substr(20, 12);
-
-      return minus_norm_res;
-    }
-
-    return std::string();
+  inline
+  std::pmr::string
+  normalize_ifa(
+    std::string_view idfa,
+    std::pmr::memory_resource* resource)
+  {
+    return normalize_ifa_impl_(idfa, resource);
   }
 }

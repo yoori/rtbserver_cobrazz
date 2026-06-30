@@ -2,13 +2,16 @@
 
 #include <cstdint>
 #include <memory>
+#include <memory_resource>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include <eh/Exception.hpp>
 
 namespace AdServer::Commons
 {
+  template<typename StringType = std::string>
   class FastJsonParser
   {
   public:
@@ -54,7 +57,7 @@ namespace AdServer::Commons
 
       virtual void
       process_string(
-        std::string&& value,
+        StringType&& value,
         std::string_view path,
         void* context) const;
 
@@ -87,9 +90,52 @@ namespace AdServer::Commons
     void
     parse(std::string_view json, void* context) const;
 
+    template<typename StringCreatorType>
+    void
+    parse(
+      std::string_view json,
+      void* context,
+      StringCreatorType&& string_creator) const;
+
   private:
     struct Impl;
+    using StringCreator = StringType (*)(void*);
+
+    template<typename StringCreatorType>
+    static StringType
+    create_string_(void* string_creator);
+
+    void
+    parse_(
+      std::string_view json,
+      void* context,
+      StringCreator string_creator,
+      void* string_creator_context) const;
 
     std::unique_ptr<Impl> impl_;
   };
+
+  template<typename StringType>
+  template<typename StringCreatorType>
+  void
+  FastJsonParser<StringType>::parse(
+    std::string_view json,
+    void* context,
+    StringCreatorType&& string_creator) const
+  {
+    using Creator = std::remove_reference_t<StringCreatorType>;
+    parse_(
+      json,
+      context,
+      &create_string_<Creator>,
+      &string_creator);
+  }
+
+  template<typename StringType>
+  template<typename StringCreatorType>
+  StringType
+  FastJsonParser<StringType>::create_string_(void* string_creator)
+  {
+    return (*static_cast<StringCreatorType*>(string_creator))();
+  }
 }

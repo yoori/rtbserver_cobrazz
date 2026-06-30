@@ -4,6 +4,7 @@
 #include <list>
 #include <memory_resource>
 #include <new>
+#include <optional>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <set>
 #include <string>
@@ -20,9 +21,8 @@
 namespace AdServer::Bidding
 {
   typedef std::pmr::string PmrString;
-  typedef std::string_view JsonString;
-  typedef std::pmr::vector<JsonString> StringArray;
-  typedef std::set<unsigned long> ULongSet;
+  typedef std::pmr::vector<std::string_view> StringArray;
+  typedef std::pmr::set<unsigned long> ULongSet;
 
   struct TransparentStringLess
   {
@@ -39,11 +39,7 @@ namespace AdServer::Bidding
 
   struct JsonAdSlotProcessingContext
   {
-    typedef std::set<
-      JsonString,
-      TransparentStringLess,
-      std::pmr::polymorphic_allocator<JsonString>>
-      StringSet;
+    typedef std::pmr::set<std::string_view, TransparentStringLess> StringSet;
     typedef Commons::ValueStateHolder<long> LValueStateHolder;
     typedef Commons::ValueStateHolder<unsigned long> ULValueStateHolder;
     typedef Commons::ValueStateHolder<ULongSet> ULSetStateHolder;
@@ -69,10 +65,10 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString width;
-      JsonString height;
-      JsonString ext_type;
-      JsonString ext_format;
+      std::string_view width;
+      std::string_view height;
+      std::string_view ext_type;
+      std::string_view ext_format;
     };
 
     typedef std::pmr::vector<BannerFormat> BannerFormatArray;
@@ -103,8 +99,8 @@ namespace AdServer::Bidding
       BannerFormatArray formats;
       BannerFormat default_format;
 
-      JsonString pos;
-      JsonString matching_ad;
+      std::string_view pos;
+      std::string_view matching_ad;
       StringArray exclude_categories;
 
       unsigned long ext_hpos;
@@ -130,11 +126,11 @@ namespace AdServer::Bidding
     };
 
     typedef std::map<
-      JsonString,
+      std::string_view,
       BannerFormatHolder,
       TransparentStringLess,
       std::pmr::polymorphic_allocator<
-        std::pair<const JsonString, BannerFormatHolder>>>
+        std::pair<const std::string_view, BannerFormatHolder>>>
       SizeBannerMap;
 
     struct Deal
@@ -157,9 +153,9 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString id;
+      std::string_view id;
       AdServer::CampaignSvcs::RevenueDecimal cpm_price;
-      JsonString currency_code;
+      std::string_view currency_code;
     };
 
     struct Metric
@@ -181,8 +177,8 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString type;
-      JsonString value;
+      std::string_view type;
+      std::string_view value;
     };
 
     typedef std::pmr::list<Deal> DealList;
@@ -284,6 +280,10 @@ namespace AdServer::Bidding
         explicit Video(
           std::pmr::memory_resource* resource = std::pmr::get_default_resource())
           : Asset(resource),
+            protocols(
+              ULSetStateHolder::S_NOT_INITED,
+              std::less<unsigned long>(),
+              resource),
             mimes(resource)
         {}
 
@@ -294,8 +294,6 @@ namespace AdServer::Bidding
 
         virtual ~Video() noexcept = default;
       };
-
-      typedef std::pmr::vector<Video> VideoArray;
 
       explicit Native(
         std::pmr::memory_resource* resource = std::pmr::get_default_resource())
@@ -313,11 +311,11 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString version;
-      Commons::Optional<long> placement;
+      std::string_view version;
+      std::optional<long> placement;
       DataArray data_assets;
       ImageArray image_assets;
-      VideoArray video_assets;
+      std::pmr::vector<Video> video_assets;
 
     protected:
       virtual ~Native() noexcept = default;
@@ -342,6 +340,18 @@ namespace AdServer::Bidding
         video(false),
         video_pos(),
         video_mimes(resource),
+        video_protocols(
+          ULSetStateHolder::S_NOT_INITED,
+          std::less<unsigned long>(),
+          resource),
+        video_playbackmethods(
+          ULSetStateHolder::S_NOT_INITED,
+          std::less<unsigned long>(),
+          resource),
+        video_api(
+          ULSetStateHolder::S_NOT_INITED,
+          std::less<unsigned long>(),
+          resource),
         video_exclude_categories(resource),
         imp_ext_type()
     {}
@@ -357,14 +367,14 @@ namespace AdServer::Bidding
 
     std::pmr::memory_resource* resource_;
 
-    JsonString id;
+    std::string_view id;
     AdServer::CampaignSvcs::RevenueDecimal min_cpm_price;
-    Commons::Optional<long> private_auction;
-    JsonString deal_id;
+    std::optional<long> private_auction;
+    std::string_view deal_id;
     DealList deals;
     MetricList metrics;
-    JsonString tagid;
-    JsonString min_cpm_price_currency_code;
+    std::string_view tagid;
+    std::string_view min_cpm_price_currency_code;
 
     bool secure;
     BannerArray banners;
@@ -373,7 +383,7 @@ namespace AdServer::Bidding
     bool video;
     ULValueStateHolder video_width;
     ULValueStateHolder video_height;
-    JsonString video_pos;
+    std::string_view video_pos;
     StringSet video_mimes;
     ULValueStateHolder video_min_duration;
     ULValueStateHolder video_max_duration;
@@ -393,15 +403,12 @@ namespace AdServer::Bidding
     StringArray video_exclude_categories;
 
     // v 2.5 video .placement
-    Commons::Optional<long> video_placement;
+    std::optional<long> video_placement;
 
     Native_var native;
 
-    JsonString imp_ext_type;
+    std::string_view imp_ext_type;
   };
-
-  typedef std::pmr::list<JsonAdSlotProcessingContext>
-    JsonAdSlotProcessingContextList;
 
   struct JsonProcessingContext
   {
@@ -425,9 +432,9 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString id;
-      JsonString name;
-      JsonString value;
+      std::string_view id;
+      std::string_view name;
+      std::string_view value;
     };
 
     typedef std::pmr::list<Segment> SegmentList;
@@ -451,8 +458,8 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString id;
-      JsonString stable_id;
+      std::string_view id;
+      std::string_view stable_id;
     };
 
     typedef std::pmr::vector<UserEidUid> UserEidUidArray;
@@ -476,7 +483,7 @@ namespace AdServer::Bidding
       }
 
       std::pmr::memory_resource* resource_;
-      JsonString source;
+      std::string_view source;
       UserEidUidArray uids;
     };
 
@@ -487,16 +494,14 @@ namespace AdServer::Bidding
           std::make_unique<std::pmr::monotonic_buffer_resource>())
     {}
 
-      explicit JsonProcessingContext(
-        std::unique_ptr<std::pmr::monotonic_buffer_resource> arena) noexcept
+    explicit JsonProcessingContext(
+      std::unique_ptr<std::pmr::monotonic_buffer_resource> arena) noexcept
       : arena_(std::move(arena)),
         resource_(arena_.get()),
         external_user_id(),
         user_id(),
         user_eids(resource_),
-        ip(),
         ipv6(),
-        user_agent(),
         ifa(),
         didmd5(),
         didsha1(),
@@ -506,8 +511,6 @@ namespace AdServer::Bidding
         macmd5(),
         language(),
         carrier(),
-        ssp_devicetype(0),
-        request_id(),
         currencies(resource_),
         required_category(),
         exclude_categories(resource_),
@@ -516,7 +519,6 @@ namespace AdServer::Bidding
         segments(resource_),
         ad_slots(resource_),
         site(false),
-        site_id(),
         site_name(),
         site_pagecat(resource_),
         site_sectioncat(resource_),
@@ -548,7 +550,6 @@ namespace AdServer::Bidding
         site_publisher(false),
         publisher_cat(resource_),
         publisher_name(),
-        publisher_id(),
         app_content_producer(false),
         site_content_producer(false),
         content_producer_name(resource_),
@@ -558,7 +559,8 @@ namespace AdServer::Bidding
         regs_coppa(false),
         ssp_country(),
         ssp_region(),
-        ssp_city()
+        ssp_city(),
+        string_holders_(resource_)
     {}
 
     JsonProcessingContext(const JsonProcessingContext&) = delete;
@@ -580,72 +582,82 @@ namespace AdServer::Bidding
       return resource_;
     }
 
+    std::string_view
+    hold_string(std::string&& value)
+    {
+      PmrString& held_value = string_holders_.emplace_back();
+      held_value.assign(value.data(), value.size());
+      return std::string_view(held_value.data(), held_value.size());
+    }
+
+    std::string_view
+    hold_string(std::pmr::string&& value)
+    {
+      PmrString& held_value = string_holders_.emplace_back(std::move(value));
+      return std::string_view(held_value.data(), held_value.size());
+    }
+
     std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;
     std::pmr::memory_resource* resource_;
 
-    JsonString external_user_id;
-    JsonString user_id;
+    std::string_view external_user_id;
+    std::string_view user_id;
     UserEidList user_eids;
 
     // Device object
-    JsonString ip;
-    JsonString ipv6;
-    JsonString user_agent;
-    JsonString ifa;
-    JsonString didmd5;
-    JsonString didsha1;
-    JsonString dpidmd5;
-    JsonString dpisha1;
-    JsonString macsha1;
-    JsonString macmd5;
-    JsonString language;
-    JsonString carrier;
-    unsigned int ssp_devicetype;
+    std::string_view ipv6;
+    std::string_view ifa;
+    std::string_view didmd5;
+    std::string_view didsha1;
+    std::string_view dpidmd5;
+    std::string_view dpisha1;
+    std::string_view macsha1;
+    std::string_view macmd5;
+    std::string_view language;
+    std::string_view carrier;
 
-    JsonString request_id;
-    StringArray currencies;
-    JsonString required_category;
-    StringArray exclude_categories;
+    std::pmr::vector<std::string_view> currencies;
+    std::string_view required_category;
+    std::pmr::vector<std::string_view> exclude_categories;
 
-    JsonString gender;
-    JsonString age;
+    std::string_view gender;
+    std::string_view age;
     SegmentList segments;
 
     std::set<unsigned long> member_ids;
-    JsonAdSlotProcessingContextList ad_slots;
+    std::pmr::list<JsonAdSlotProcessingContext> ad_slots;
 
     bool site;
-    JsonString site_id;
-    JsonString site_name;
+    std::string_view site_name;
     HTTP::HTTPAddress site_page;
     HTTP::HTTPAddress site_domain;
-    StringArray site_pagecat;
-    StringArray site_sectioncat;
-    StringArray site_cat;
-    JsonString site_keywords;
-    JsonString site_search;
+    std::pmr::vector<std::string_view> site_pagecat;
+    std::pmr::vector<std::string_view> site_sectioncat;
+    std::pmr::vector<std::string_view> site_cat;
+    std::string_view site_keywords;
+    std::string_view site_search;
     HTTP::HTTPAddress site_ref;
     HTTP::HTTPAddress site_referer;
     HTTP::HTTPAddress site_rereferer;
 
     bool app;
-    JsonString app_id;
-    JsonString app_name;
-    JsonString app_bundle;
+    std::string_view app_id;
+    std::string_view app_name;
+    std::string_view app_bundle;
     HTTP::HTTPAddress app_domain;
     HTTP::HTTPAddress app_store_url;
-    StringArray app_pagecat;
-    StringArray app_sectioncat;
-    StringArray app_cat;
-    JsonString app_keywords;
+    std::pmr::vector<std::string_view> app_pagecat;
+    std::pmr::vector<std::string_view> app_sectioncat;
+    std::pmr::vector<std::string_view> app_cat;
+    std::string_view app_keywords;
 
     bool secure;
     bool test;
 
     bool user;
-    JsonString user_keywords;
+    std::string_view user_keywords;
     unsigned long user_yob;
-    JsonString user_gender;
+    std::string_view user_gender;
 
     // Only one of app or site object can present in bid request for OpenRtb.
     //   content and publisher presents in content and app objects.
@@ -655,35 +667,34 @@ namespace AdServer::Bidding
     // content
     bool site_content;
     bool app_content;
-    JsonString content_keywords;
-    JsonString content_title;
-    JsonString content_series;
-    JsonString content_season;
-    StringArray content_cat;
+    std::string_view content_keywords;
+    std::string_view content_title;
+    std::string_view content_series;
+    std::string_view content_season;
+    std::pmr::vector<std::string_view> content_cat;
 
     // publisher from site or app
     bool app_publisher;
     bool site_publisher;
-    StringArray publisher_cat;
-    JsonString publisher_name;
-    JsonString publisher_id;
+    std::pmr::vector<std::string_view> publisher_cat;
+    std::string_view publisher_name;
 
     bool app_content_producer;
     bool site_content_producer;
     // collect here all names from all producer objects
-    StringArray content_producer_name;
+    std::pmr::vector<std::string_view> content_producer_name;
 
-    JsonString allyessitetype; //ALLYES specific in site object
+    std::string_view allyessitetype; //ALLYES specific in site object
 
     // ext
-    JsonString puid1;
-    JsonString puid2;
+    std::string_view puid1;
+    std::string_view puid2;
 
     bool regs_coppa;
 
-    JsonString ssp_country;
-    JsonString ssp_region;
-    JsonString ssp_city;
+    std::string_view ssp_country;
+    std::string_view ssp_region;
+    std::string_view ssp_city;
 
     template <typename ContType>
     void
@@ -700,13 +711,9 @@ namespace AdServer::Bidding
     void
     print(std::ostream& out) const
     {
-      out << "ip = " << ip << std::endl <<
-        "ipv6 = " << ipv6 << std::endl <<
-        "user_agent = " << user_agent << std::endl <<
-        "request_id = " << request_id << std::endl <<
+      out << "ipv6 = " << ipv6 << std::endl <<
         "site_page = " << site_page.url() << std::endl <<
         "site_name = " << site_name << std::endl <<
-        "site_id = " << site_id << std::endl <<
         "site_domain = " << site_domain.url() << std::endl <<
         "user_yob = " << user_yob << std::endl <<
         "user_gender = " << user_gender << std::endl <<
@@ -735,7 +742,7 @@ namespace AdServer::Bidding
       print(out, site_sectioncat, "site_sectioncat");
       print(out, site_cat, "site_cat");
 
-      for(JsonAdSlotProcessingContextList::const_iterator slot_it =
+      for(std::pmr::list<JsonAdSlotProcessingContext>::const_iterator slot_it =
             ad_slots.begin();
           slot_it != ad_slots.end(); ++slot_it)
       {
@@ -759,7 +766,7 @@ namespace AdServer::Bidding
         }
 
         out << "], min_cpm_price = " << slot_it->min_cpm_price;
-        if (slot_it->private_auction.present())
+        if(slot_it->private_auction)
         {
           out << "private_auction = " << *(slot_it->private_auction) << ",";
         }
@@ -780,6 +787,9 @@ namespace AdServer::Bidding
         out << "] }";
       }
     }
+
+  private:
+    std::pmr::list<PmrString> string_holders_;
   };
 
   inline std::string

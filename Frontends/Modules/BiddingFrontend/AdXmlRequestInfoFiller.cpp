@@ -109,7 +109,7 @@ namespace AdServer::Bidding
       context.keywords.data(),
       context.keywords.size());
 
-    request_info.client = client.str();
+    request_info.client = request_info.hold_string(client.str());
     //request_info.client_version;
     request_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
     request_info.user_status = static_cast<std::size_t>(
@@ -138,22 +138,29 @@ namespace AdServer::Bidding
 
       if(!request_info.source_id.empty())
       {
-        kw_fmt.add_dict_keyword(MatchKeywords::NO_ID, String::SubString());
+        kw_fmt.add_dict_keyword(MatchKeywords::NO_ID, std::string_view());
       }
     }
 
-    request_info_filler_->fill_by_ip(
-      request_info,
-      context.ip);
-
     if(!context.ip.empty())
     {
-      kw_fmt.add_ip(context.ip);
+      const std::string_view ip = request_info.hold_string(
+        std::move(context.ip));
+      request_info_filler_->fill_by_ip(
+        request_info,
+        ip);
+      kw_fmt.add_ip(ip);
+    }
+    else
+    {
+      request_info_filler_->fill_by_ip(
+        request_info,
+        std::string_view());
     }
 
     request_info_filler_->fill_by_user_agent(
       request_info,
-      context.user_agent,
+      request_info.hold_string(std::move(context.user_agent)),
       request_info.filter_request,
       false);
 
@@ -189,7 +196,10 @@ namespace AdServer::Bidding
     request_info.fill_track_pixel = true;
     ad_slot_request.native_ads_impression_tracker_type = AdServer::CampaignSvcs::NAITT_RESOURCES;
     ad_slot_request.sizes.resize(1);
-    ad_slot_request.sizes[0] = size.str();
+    ad_slot_request.sizes[0] = ad_slot_request.hold_string(RequestInfo::PmrString(
+      size.data(),
+      size.size(),
+      ad_slot_request.resource()));
     ad_slot_request.passback = request_info.filter_request;
     ad_slot_request.tag_visibility = 100;
     ad_slot_request.tag_predicted_viewability = 100;

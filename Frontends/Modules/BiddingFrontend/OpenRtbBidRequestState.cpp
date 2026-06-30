@@ -643,7 +643,7 @@ namespace AdServer::Bidding
         AdServer::Commons::JsonFormatter root_json(response);
       root_json.add_escaped_string(
         Response::OpenRtb::ID,
-        to_sub_string(context.request_id));
+        to_sub_string(request_info.bid_request_id));
       if(fill_yandex_attributes)
       {
         root_json.add_number(Response::Yandex::UNITS, 2);
@@ -668,7 +668,9 @@ namespace AdServer::Bidding
         AdServer::Commons::JsonObject seatbid_obj(seatbid_array.add_object());
         if(!request_info.seat.empty())
         {
-          seatbid_obj.add_string(Response::OpenRtb::SEAT, request_info.seat);
+          seatbid_obj.add_string(
+            Response::OpenRtb::SEAT,
+            to_sub_string(request_info.seat));
         }
         AdServer::Commons::JsonObject bid_array(seatbid_obj.add_array(Response::OpenRtb::BID));
 
@@ -682,7 +684,7 @@ namespace AdServer::Bidding
           assert(false);
         }
 
-        JsonAdSlotProcessingContextList::const_iterator slot_it =
+        std::pmr::list<JsonAdSlotProcessingContext>::const_iterator slot_it =
           context.ad_slots.begin();
 
         for(std::size_t ad_slot_i = 0;
@@ -899,7 +901,10 @@ namespace AdServer::Bidding
               {
                 if(!request_info.notice_url.empty())
                 {
-                  add_response_notice_(bid_object, request_info.notice_url, notice_instantiate_type);
+                  add_response_notice_(
+                    bid_object,
+                    to_sub_string(request_info.notice_url),
+                    notice_instantiate_type);
                 }
                 else if(!ad_slot_result.notice_url.empty())
                 {
@@ -1104,8 +1109,8 @@ namespace AdServer::Bidding
 
     try
     {
-      std::string escaped_request_id =
-        String::StringManip::json_escape(to_sub_string(context.request_id));
+      std::string escaped_request_id = String::StringManip::json_escape(
+        to_sub_string(request_info.bid_request_id));
 
       std::string response;
       {
@@ -1171,7 +1176,7 @@ namespace AdServer::Bidding
           assert(false);
         }
 
-        JsonAdSlotProcessingContextList::const_iterator slot_it =
+        std::pmr::list<JsonAdSlotProcessingContext>::const_iterator slot_it =
           context.ad_slots.begin();
 
         for(std::size_t ad_slot_i = 0;
@@ -1260,7 +1265,10 @@ namespace AdServer::Bidding
 
             if(!request_info.notice_url.empty())
             {
-              add_response_notice_(bid_object, request_info.notice_url, notice_instantiate_type);
+              add_response_notice_(
+                bid_object,
+                to_sub_string(request_info.notice_url),
+                notice_instantiate_type);
             }
             else if(!ad_slot_result.notice_url.empty())
             {

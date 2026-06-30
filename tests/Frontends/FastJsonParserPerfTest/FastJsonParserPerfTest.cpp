@@ -79,7 +79,7 @@ extern "C"
   __attribute__((noinline))
   std::uint64_t
   fast_json_parser_run_benchmark(
-    const AdServer::Commons::FastJsonParser& parser,
+    const AdServer::Commons::FastJsonParser<>& parser,
     std::uint64_t count,
     const std::string& request_body)
   {
@@ -104,7 +104,7 @@ main(int argc, char** argv)
 
     const Options options = parse_options(argc, argv);
     const std::string request_body = read_request_body(options.request_file);
-    const AdServer::Commons::FastJsonParser parser(!options.non_strict);
+    const AdServer::Commons::FastJsonParser<> parser(!options.non_strict);
 
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();
