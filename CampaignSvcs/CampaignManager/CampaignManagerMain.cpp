@@ -755,7 +755,7 @@ CampaignManagerApp_::read_logger_config(
 
 void
 CampaignManagerApp_::read_creative_config(
-  AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate&
+  AdServer::CampaignSvcs::CreativeInstantiator::CreativeInstantiate&
     creative_instantiate,
   const xsd::AdServer::Configuration::CampaignManagerCreative&
     xsd_creative_description)
@@ -779,7 +779,7 @@ CampaignManagerApp_::read_creative_config(
      it != xsd_creative_description.SourceRule().end();
      ++it)
   {
-    AdServer::CampaignSvcs::CampaignManagerCore::
+    AdServer::CampaignSvcs::CreativeInstantiator::
       CreativeInstantiate::SourceRule source_rule;
 
     if(it->click_prefix().present())

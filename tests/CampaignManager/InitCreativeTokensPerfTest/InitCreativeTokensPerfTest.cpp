@@ -108,7 +108,7 @@ namespace
     const std::string& key,
     const std::string& value)
   {
-    values[key] = value;
+    values.set_value(key, value);
   }
 
   AdServer::CampaignSvcs::CreativeInstantiateRule

@@ -77,7 +77,6 @@ add_library(CampaignConfig SHARED
 target_link_libraries(CampaignConfig
   Generics
   HTTP
-  XslTransformer
   ExpressionChannel
 )
 
@@ -140,7 +139,7 @@ add_executable(CampaignManager
   CampaignManagerCore.cpp
   CampaignManagerGrpc.cpp
   CampaignManagerMain.cpp
-  InstantiateCreative.cpp
+  CreativeInstantiator.cpp
   CreativeTextGenerator.cpp
   ConfigManips.cpp
   SelectCreative.cpp
@@ -157,7 +156,6 @@ target_link_libraries(CampaignManager
   HttpServer
   CORBACommons
   Commons
-  XslTransformer
   Gason
   PlainStorage3
 

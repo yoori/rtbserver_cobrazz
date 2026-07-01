@@ -53,11 +53,10 @@ namespace AdServer
       DECLARE_EXCEPTION(InvalidTemplate, Exception);
       DECLARE_EXCEPTION(ImplementationException, Exception);
 
-      virtual void
+      virtual std::string
       instantiate(
         const TemplateParams* request_params,
-        const TemplateParamsList& creative_params,
-        std::ostream& ostr)
+        const TemplateParamsList& creative_params)
         /*throw(InvalidParams,
           InvalidTemplate,
           ImplementationException)*/ = 0;
@@ -89,8 +88,7 @@ namespace AdServer
         enum Type
         {
           CTT_NULL,
-          CTT_TEXT,
-          CTT_XSLT
+          CTT_TEXT
         };
 
         Handler(): type(CTT_NULL) {}

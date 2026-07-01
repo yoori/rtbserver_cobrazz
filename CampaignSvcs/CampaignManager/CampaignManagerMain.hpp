@@ -15,6 +15,7 @@
 #include <CampaignSvcs/DomainConfig.hpp>
 
 #include "CampaignManagerGrpc.hpp"
+#include "CreativeInstantiator.hpp"
 
 /**
  * Parses command line parameters, loads configuration file,
@@ -44,7 +45,7 @@ private:
     std::string out_logs_dir;
     std::string pid_file;
 
-    AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate
+    AdServer::CampaignSvcs::CreativeInstantiator::CreativeInstantiate
       creative_instantiate;
 
     std::string campaigns_types;
@@ -60,7 +61,7 @@ private:
     /*throw(Exception, eh::Exception)*/;
 
   void read_creative_config(
-    AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate&
+    AdServer::CampaignSvcs::CreativeInstantiator::CreativeInstantiate&
       creative_instantiate,
     const xsd::AdServer::Configuration::CampaignManagerCreative&
       xsd_creative_description)

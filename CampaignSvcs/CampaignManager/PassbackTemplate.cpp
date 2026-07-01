@@ -15,9 +15,8 @@ namespace AdServer
         TextTemplate(const char* file)
           /*throw(PassbackTemplate::FileNotExists, Exception)*/;
 
-        virtual void
+        virtual std::string
         instantiate(
-          std::ostream& ostr,
           const TokenValueMap& args)
           /*throw(InvalidParams,
             InvalidTemplate,
@@ -57,9 +56,8 @@ namespace AdServer
         }
       }
 
-      void
+      std::string
       TextTemplate::instantiate(
-        std::ostream& ostr,
         const TokenValueMap& args)
         /*throw(InvalidParams,
           InvalidTemplate,
@@ -67,11 +65,9 @@ namespace AdServer
       {
         try
         {
-          String::TextTemplate::ArgsContainer<TokenValueMap,
-            String::TextTemplate::ArgsContainerStringAdapter> args_cont(&args);
-          String::TextTemplate::DefaultValue default_cont(&args_cont);
+          String::TextTemplate::DefaultValue default_cont(&args);
           String::TextTemplate::ArgsEncoder encoder(&default_cont);
-          ostr << text_template_.instantiate(encoder);
+          return text_template_.instantiate(encoder);
         }
         catch(const String::TextTemplate::UnknownName& ex)
         {

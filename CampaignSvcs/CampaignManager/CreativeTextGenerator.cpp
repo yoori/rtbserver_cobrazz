@@ -40,7 +40,7 @@ namespace CampaignSvcs
         rule,
         creative_instantiate_args,
         res);
-      result_creative_args[it->first].swap(res);
+      result_creative_args.set_value(it->first, std::move(res));
     }
   }
 }

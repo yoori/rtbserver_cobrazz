@@ -1056,10 +1056,6 @@ namespace AdServer::CampaignSvcs
       {
         return CTT_TEXT;
       }
-      if(type == CreativeTemplateFactory::Handler::CTT_XSLT)
-      {
-        return CTT_XSLT;
-      }
       Stream::Error ostr;
       ostr << "Unknown template type: " << type;
       throw CampaignManagerCore::Exception(ostr);
@@ -2940,7 +2936,7 @@ namespace AdServer::CampaignSvcs
       info.ctr = unpack_revenue_decimal(source.ctr());
       for(const auto& token : source.tokens())
       {
-        info.tokens[token.name()] = token.value();
+        info.tokens.set_value(token.name(), token.value());
       }
 
       CampaignManagerCore::ClickResultInfo result;

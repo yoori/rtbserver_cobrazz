@@ -34,7 +34,53 @@ namespace AdServer::CampaignSvcs
 
   typedef std::map<std::string, OptionValue, std::less<> >
     OptionTokenValueMap;
-  typedef std::map<std::string, std::string, std::less<> > TokenValueMap;
+  class TokenValueMap:
+    public String::TextTemplate::ArgsCallback
+  {
+  private:
+    using Container = std::map<std::string, std::string, std::less<> >;
+
+  public:
+    void
+    set_value(std::string_view name, std::string&& value);
+
+    void
+    set_value(std::string_view name, const std::string& value);
+
+    void
+    set_value(std::string_view name, std::string_view value);
+
+    void
+    set_value(std::string_view name, const char* value);
+
+    bool
+    get_argument(
+      const String::SubString& key,
+      std::string& result,
+      bool value = true) const override;
+
+    bool
+    empty() const noexcept;
+
+    std::size_t
+    size() const noexcept;
+
+    void
+    clear() noexcept;
+
+    template<typename Functor>
+    void
+    for_each(Functor&& functor) const
+    {
+      for(const auto& value : values_)
+      {
+        functor(value.first, value.second);
+      }
+    }
+
+  private:
+    Container values_;
+  };
 
   struct CreativeInstantiateRule
   {
@@ -84,7 +130,7 @@ namespace AdServer::CampaignSvcs
   struct TokenOptionValue
   {
     long option_id = 0;
-    std::string_view value;
+    std::string value;
   };
 
   class TokenOptionValueProvider

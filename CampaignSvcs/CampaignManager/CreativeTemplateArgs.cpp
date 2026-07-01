@@ -9,6 +9,71 @@ namespace AdServer
 {
 namespace CampaignSvcs
 {
+  void
+  TokenValueMap::set_value(std::string_view name, std::string&& value)
+  {
+    values_[std::string(name)] = std::move(value);
+  }
+
+  void
+  TokenValueMap::set_value(std::string_view name, const std::string& value)
+  {
+    values_[std::string(name)] = value;
+  }
+
+  void
+  TokenValueMap::set_value(std::string_view name, std::string_view value)
+  {
+    values_[std::string(name)] = std::string(value);
+  }
+
+  void
+  TokenValueMap::set_value(std::string_view name, const char* value)
+  {
+    values_[std::string(name)] = value ? value : "";
+  }
+
+  bool
+  TokenValueMap::get_argument(
+    const String::SubString& key,
+    std::string& result,
+    bool value) const
+  {
+    if(!value)
+    {
+      result.assign(key.data(), key.size());
+      return true;
+    }
+
+    const std::string_view name(key.data(), key.size());
+    const auto it = values_.find(name);
+    if(it == values_.end())
+    {
+      return false;
+    }
+
+    result = it->second;
+    return true;
+  }
+
+  bool
+  TokenValueMap::empty() const noexcept
+  {
+    return values_.empty();
+  }
+
+  std::size_t
+  TokenValueMap::size() const noexcept
+  {
+    return values_.size();
+  }
+
+  void
+  TokenValueMap::clear() noexcept
+  {
+    values_.clear();
+  }
+
   bool CreativeInstantiateRule::instantiate_relative_protocol_url(
     std::string& url) const noexcept
   {
@@ -135,11 +200,13 @@ namespace CampaignSvcs
 
     if(request_args_)
     {
-      TokenValueMap::const_iterator request_it = request_args_->find(token);
-      if(request_it != request_args_->end())
+      std::string request_value;
+      if(request_args_->get_argument(
+          String::SubString(token.data(), token.size()),
+          request_value))
       {
         value.option_id = 0;
-        value.value = request_it->second;
+        value.value = request_value;
         return true;
       }
     }

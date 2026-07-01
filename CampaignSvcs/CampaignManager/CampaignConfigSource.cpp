@@ -93,10 +93,6 @@ namespace CampaignSvcs
       {
         return CreativeTemplateFactory::Handler::CTT_TEXT;
       }
-      else if(type_val == AdServer::CampaignSvcs::CTT_XSLT)
-      {
-        return CreativeTemplateFactory::Handler::CTT_XSLT;
-      }
 
       throw Exception("Unknown template type");
     }
@@ -2000,6 +1996,11 @@ namespace CampaignSvcs
       {
         const CreativeTemplateFileInfo& ctf_info =
           cr_templ_info.files[ctf_i];
+
+        if(ctf_info.type == AdServer::CampaignSvcs::CTT_XSLT)
+        {
+          continue;
+        }
 
         std::string templ_path;
 

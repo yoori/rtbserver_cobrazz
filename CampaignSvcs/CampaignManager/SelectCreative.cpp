@@ -7,12 +7,33 @@
 #include <Commons/CorbaAlgs.hpp>
 
 #include "CampaignManagerCore.hpp"
+#include "CreativeInstantiator.hpp"
 #include "CampaignSelector.hpp"
 
 namespace
 {
   const char EQL[] = "*eql*";
   const String::SubString NATIVE_FORMAT("native");
+
+  AdServer::CampaignSvcs::CreativeInstantiator::Config
+  make_creative_instantiator_config(
+    const AdServer::CampaignSvcs::CampaignManagerCore::CampaignManagerConfig&
+      config)
+  {
+    AdServer::CampaignSvcs::CreativeInstantiator::Config result;
+    result.service_index = config.service_index().c_str();
+    result.post_instantiate_script_mime_format =
+      config.Creative().post_instantiate_script_mime_format();
+    result.post_instantiate_iframe_mime_format =
+      config.Creative().post_instantiate_iframe_mime_format();
+    result.post_instantiate_script_template_file =
+      config.Creative().post_instantiate_script_template_file();
+    result.post_instantiate_iframe_template_file =
+      config.Creative().post_instantiate_iframe_template_file();
+    result.instantiate_track_html_file =
+      config.Creative().instantiate_track_html_file();
+    return result;
+  }
 }
 
 namespace AdServer
@@ -99,7 +120,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerCore::instantiate_creative_body_(
+    CreativeInstantiator::instantiate_creative_body(
       const AdInstantiateType ad_instantiate_type,
       const CreativeRequestInfo& request_params,
       const CampaignConfig* config,
@@ -133,7 +154,7 @@ namespace AdServer
               AdInstantiateRule::SECURE.str() :
               request_params.common_info.creative_instantiate_type);
 
-      CreativeInstantiateRuleMap::iterator rule_it =
+      CreativeInstantiateRuleMap::const_iterator rule_it =
         creative_instantiate_.creative_rules.find(inst_rule);
 
       if(rule_it == creative_instantiate_.creative_rules.end())
@@ -162,7 +183,7 @@ namespace AdServer
 
       if(ad_instantiate_type == AIT_BODY || is_native)
       {
-        instantiate_creative_(
+        instantiate_creative(
           request_params.common_info,
           config,
           colocation,
@@ -395,7 +416,16 @@ namespace AdServer
         AdInstantiateType ad_instantiate_type =
           static_cast<AdInstantiateType>(request_params.ad_instantiate_type);
 
-        instantiate_creative_body_(
+        CreativeInstantiator creative_instantiator(
+          make_creative_instantiator_config(campaign_manager_config_),
+          creative_instantiate_,
+          passback_templates_,
+          token_to_parameters_,
+          ip_crypter_,
+          rid_signer_,
+          logger_,
+          country_whitelist_);
+        creative_instantiator.instantiate_creative_body(
           ad_instantiate_type,
           request_params,
           config,
@@ -539,7 +569,16 @@ namespace AdServer
         AdInstantiateType ad_instantiate_type =
           static_cast<AdInstantiateType>(request_params.ad_instantiate_type);
 
-        instantiate_creative_body_(
+        CreativeInstantiator creative_instantiator(
+          make_creative_instantiator_config(campaign_manager_config_),
+          creative_instantiate_,
+          passback_templates_,
+          token_to_parameters_,
+          ip_crypter_,
+          rid_signer_,
+          logger_,
+          country_whitelist_);
+        creative_instantiator.instantiate_creative_body(
           ad_instantiate_type,
           request_params,
           config,

@@ -34,6 +34,7 @@
 #include "CampaignSelector.hpp"
 #include "CampaignManagerLogger.hpp"
 #include "CampaignConfigSource.hpp"
+#include "CreativeInstantiatorTypes.hpp"
 #include "PassbackTemplate.hpp"
 #include "BillingStateContainer.hpp"
 
@@ -68,7 +69,6 @@ namespace AdServer
       DECLARE_EXCEPTION(CreativeOptionsProblem, CreativeInstantiateProblem);
 
     public:
-      struct CreativeInstantiate;
       struct CreativeParams;
 
       typedef std::vector<unsigned char> ByteArray;
@@ -719,7 +719,8 @@ namespace AdServer
         Generics::ActiveObjectCallback* callback,
         Logging::Logger* logger,
         CampaignManagerLogger* campaign_manager_logger,
-        const CreativeInstantiate& creative_instantiate,
+        const CreativeInstantiatorTypes::CreativeInstantiate&
+          creative_instantiate,
         const char* campaigns_types)
         /*throw(InvalidArgument, Exception, eh::Exception)*/;
 
@@ -865,29 +866,6 @@ namespace AdServer
       ~CampaignManagerCore() noexcept {}
 
     public:
-      struct CreativeInstantiate
-      {
-        struct SourceRule
-        {
-          Commons::Optional<std::string> click_prefix;
-          std::string mime_encoded_click_prefix;
-
-          std::string preclick;
-          std::string mime_encoded_preclick;
-
-          std::string vast_preclick;
-          std::string mime_encoded_vast_preclick;
-        };
-
-        typedef std::map<std::string, SourceRule>
-          SourceRuleMap;
-
-        CreativeInstantiateRuleMap creative_rules;
-        SourceRuleMap source_rules;
-        std::string template_local_prefix;
-        std::string creative_template_dir;
-      };
-
       struct ImageToken
       {
         std::string value;
@@ -1039,6 +1017,7 @@ namespace AdServer
 
       typedef Sync::Policy::PosixThread SyncPolicy;
 
+    public:
       struct InstantiateParams
       {
         InstantiateParams(
@@ -1243,259 +1222,6 @@ namespace AdServer
         AdSlotContext& ad_slot_context)
         /*throw(eh::Exception)*/;
 
-      bool
-      instantiate_passback(
-        std::string& mime_format,
-        std::string& passback_body,
-        const CampaignConfig& campaign_config,
-        const Colocation* colocation,
-        const Tag* tag,
-        const char* app_format,
-        const CreativeRequestInfo& request_params,
-        const AdSlotContext& ad_slot_context,
-        const String::SubString& ext_tag_id)
-        /*throw(eh::Exception)*/;
-
-      void
-      fill_instantiate_request_params_(
-        TokenValueMap& request_args,
-        AccountIdList* consider_pub_pixel_accounts, // result pub pixel accounts that instantiated
-        const CampaignConfig& campaign_config,
-        const Colocation* colocation,
-        const Tag* tag,
-        const Tag::Size* tag_size,
-        const char* app_format,
-        const CommonAdRequestInfo& request_params,
-        const AccountIdList* pubpixel_accounts, // use predefined pub pixel accounts
-        const IdVector* exclude_pubpixel_accounts,
-        const CreativeInstantiateRule& instantiate_info,
-        const AdSlotContext& ad_slot_context,
-        const String::SubString& ext_tag_id)
-        /*throw(eh::Exception)*/;
-
-      void
-      fill_instantiate_passback_params_(
-        TokenValueMap& request_args,
-        const CampaignConfig* const campaign_config,
-        const Tag* tag,
-        const InstantiateParams& inst_params,
-        const CommonAdRequestInfo& request_params,
-        const CreativeInstantiateRule& instantiate_info,
-        const AdSlotContext& ad_slot_context,
-        const AccountIdList* consider_pub_pixel_accounts)
-        /*throw(eh::Exception)*/;
-
-      void
-      fill_instantiate_params_(
-        const CommonAdRequestInfo& request_params,
-        const CampaignConfig* const campaign_config,
-        const Colocation* const colocation,
-        const CreativeTemplate& template_descr,
-        const Template* creative_template,
-        const InstantiateParams& inst_params,
-        const CreativeInstantiateRule& instantiate_info,
-        const char* app_format,
-        AdSelectionResult& ad_selection_result,
-        RequestResultParams& request_result_params,
-        CreativeParamsList& creative_params_list,
-        TemplateParams_var& request_template_params,
-        TemplateParamsList& creative_template_params,
-        const AdSlotContext& ad_slot_context,
-        const IdVector* exclude_pubpixel_accounts)
-        /*throw(eh::Exception)*/;
-
-      static void
-      fill_iurl_(
-        std::string& iurl,
-        const CampaignConfig* const campaign_config,
-        const CreativeInstantiateRule& instantiate_info,
-        const CommonAdRequestInfo& request_params,
-        const Creative* creative,
-        const Size* size)
-        noexcept;
-
-      void
-      fill_track_urls_(
-        const AdSelectionResult& ad_selection_result,
-        RequestResultParams& request_result_params,
-        const CommonAdRequestInfo& request_params,
-        bool track_impressions,
-        const InstantiateParams& inst_params,
-        const CreativeInstantiateRule& instantiate_info,
-        const AccountIdList* consider_pub_pixel_accounts)
-        noexcept;
-
-      void
-      instantiate_click_url(
-        const CampaignConfig& campaign_config,
-        const OptionValue& click_url,
-        std::string& result_click_url,
-        const unsigned long* colo_id,
-        const Tag* tag,
-        const Tag::Size* tag_size,
-        const Creative* creative,
-        const CampaignKeywordBase* ckw,
-        const TokenValueMap& tokens)
-        /*throw(CreativeOptionsProblem, eh::Exception)*/;
-
-      void
-      instantiate_creative_(
-        const CommonAdRequestInfo& request_params,
-        const CampaignConfig* const campaign_config,
-        const Colocation* const colocation,
-        const InstantiateParams& inst_params,
-        const char* format,
-        AdSelectionResult& ad_selection_result,
-        RequestResultParams& request_result_params,
-        CreativeParamsList& creative_instantiate_info,
-        std::string& creative_body,
-        const AdSlotContext& ad_slot_context,
-        const IdVector* exclude_pubpixel_accounts)
-        /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
-
-      void
-      instantiate_creative_body_(
-        const AdInstantiateType ad_instantiate_type,
-        const CreativeRequestInfo& request_params,
-        const CampaignConfig* config,
-        const Colocation* const colocation,
-        const char* cr_size,
-        const TraceAdSlotInfo& ad_slot,
-        AdSelectionResult& ad_selection_result,
-        RequestResultParams& request_result_params,
-        CreativeParamsList& creative_params_list,
-        std::string& creative_body,
-        std::string& creative_url,
-        const AdSlotContext& ad_slot_context,
-        const String::SubString& ext_tag_id)
-        /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
-
-      void
-      instantiate_url_creative_(
-        std::string& creative_body,
-        RequestResultParams& request_result_params,
-        const AdSelectionResult& ad_selection_result,
-        const String::SubString& instantiate_url,
-        AdInstantiateType ad_instantiate_type)
-        /*throw(CreativeTemplateProblem)*/;
-
-      void
-      fill_instantiate_url_(
-        std::string& instantiate_url,
-        AdInstantiateType ad_instantiate_type,
-        CreativeParamsList& creative_params_list,
-        const RequestResultParams& request_result_params,
-        const InstantiateParams& inst_params,
-        const CreativeInstantiateRule& instantiate_info,
-        const CampaignConfig& campaign_config,
-        const CommonAdRequestInfo& request_params,
-        const AdSelectionResult& ad_selection_result,
-        const AdSlotContext& ad_slot_context,
-        const char* app_format,
-        const AccountIdList& pub_pixel_accounts,
-        bool fill_auction_price,
-        bool fill_creative_params)
-        /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
-
-      void
-      init_instantiate_url_(
-        std::string& instantiate_url,
-        AdInstantiateType ad_instantiate_type,
-        CreativeParamsList& creative_params_list,
-        RequestResultParams& request_result_params,
-        const CampaignConfig& campaign_config,
-        const Tag* tag,
-        const InstantiateParams& inst_params,
-        const CreativeInstantiateRule& instantiate_info,
-        const CommonAdRequestInfo& request_params,
-        const AdSelectionResult& ad_selection_result,
-        const AdSlotContext& ad_slot_context,
-        const char* app_format,
-        const IdVector& exclude_pubpixel_accounts,
-        bool fill_auction_price = true)
-        /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
-
-      void
-      init_yandex_tokens_(
-        const CampaignConfig* campaign_config,
-        const CreativeInstantiateRule& instantiate_info,
-        RequestResultParams& request_result_params,
-        const CommonAdRequestInfo& request_params,
-        const AdSlotContext& ad_slot_context,
-        const Creative* creative)
-        /*throw(CreativeInstantiateProblem)*/;
-
-      void
-      init_track_pixels_(
-        const CampaignConfig* campaign_config,
-        RequestResultParams& request_result_params,
-        const CommonAdRequestInfo& request_params,
-        const AdSlotContext& ad_slot_context,
-        const Creative* creative,
-        const CreativeInstantiateRule& instantiate_info,
-        bool need_absolute_urls);
-
-      void
-      init_native_tokens_(
-        const CampaignConfig* campaign_config,
-        const CreativeInstantiateRule& instantiate_info,
-        RequestResultParams& request_result_params,
-        const CommonAdRequestInfo& request_params,
-        const TraceAdSlotInfo& ad_slot,
-        const AdSlotContext& ad_slot_context,
-        const Creative* creative)
-        /*throw(CreativeInstantiateProblem)*/;
-
-      void
-      fill_yandex_track_params_(
-        std::string& yandex_track_params,
-        const CommonAdRequestInfo& request_params,
-        const AdSlotContext& ad_slot_context)
-        noexcept;
-
-      void
-      init_vast_tokens_(
-        RequestResultParams& request_result_params,
-        const Creative* creative)
-        /*throw(CreativeInstantiateProblem)*/;
-
-      bool instantiate_creative_preview(
-        const PreviewCreativeParams& params,
-        const CampaignConfig& campaign_config,
-        const Campaign* campaign,
-        const Creative* creative,
-        const Tag* tag,
-        const Tag::Size& tag_size,
-        std::string& creative_body)
-        /*throw(eh::Exception)*/;
-
-      /*partly init click params*/
-      std::string
-      init_click_params0_(
-        const AdServer::Commons::RequestId& request_id,
-        const Colocation* colocation,
-        const Creative* creative,
-        const Tag* tag,
-        const Tag::Size* tag_size,
-        const CampaignKeyword* campaign_keyword,
-        const RevenueDecimal& ctr,
-        const InstantiateParams& inst_params,
-        const CommonAdRequestInfo& request_params,
-        const AdSlotContext& ad_slot_context)
-        noexcept;
-
-      void
-      init_click_url_(
-        ClickParams& click_params,
-        const Colocation* colocation,
-        const Tag* tag,
-        const Tag::Size* tag_size,
-        const InstantiateParams& inst_params,
-        const CommonAdRequestInfo& request_params,
-        const AdSlotContext& ad_slot_context,
-        const CampaignSelectionData& select_params,
-        const std::string& base_click_url);
-
       bool check_request_constraints(
         const String::SubString& referer,
         const String::SubString& original_url,
@@ -1515,15 +1241,6 @@ namespace AdServer
         /*throw(NotReady, eh::Exception)*/;
 
       ConstCampaignIndexPtr get_campaign_index() const /*throw(eh::Exception)*/;
-
-      void
-      fill_creative_instantiate_args_(
-        CreativeInstantiateArgs& creative_instantiate_args,
-        const CreativeInstantiateRule& creative_instantiate_rule,
-        const Creative* creative,
-        const ClickParams& click_params,
-        unsigned long random)
-        noexcept;
 
       // task methods
       void check_config() noexcept;
@@ -1708,7 +1425,7 @@ namespace AdServer
       DomainParser_var domain_parser_;
       CampaignManagerLogger_var campaign_manager_logger_;
 
-      CreativeInstantiate creative_instantiate_;
+      CreativeInstantiatorTypes::CreativeInstantiate creative_instantiate_;
       TokenToParamMap token_to_parameters_;
 
       CampaignConfigSource_var campaign_config_source_;

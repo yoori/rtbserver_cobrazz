@@ -24,9 +24,8 @@ namespace AdServer
       DECLARE_EXCEPTION(InvalidTemplate, Exception);
       DECLARE_EXCEPTION(ImplementationException, Exception);
 
-      virtual void
+      virtual std::string
       instantiate(
-        std::ostream& ostr,
         const TokenValueMap& tokens)
         /*throw(InvalidParams,
           InvalidTemplate,

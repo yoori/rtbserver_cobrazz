@@ -1,2 +1,3 @@
 ADD_SUBDIRECTORY(CampaignManagerLoggerPerfTest)
 ADD_SUBDIRECTORY(InitCreativeTokensPerfTest)
+ADD_SUBDIRECTORY(CampaignManagerInstantiateCreativeTest)
