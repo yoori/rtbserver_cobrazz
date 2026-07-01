@@ -466,6 +466,24 @@ extern "C"
     std::uint64_t count,
     const std::string& request_body)
   {
+    if (count == 0)
+    {
+      return 0;
+    }
+
+    AdServer::Bidding::RequestInfo reference_request_info;
+    AdServer::Bidding::JsonProcessingContext reference_context;
+
+    reference_request_info.current_time = Generics::Time::get_time_of_day();
+    filler.fill_by_openrtb_request(
+      reference_request_info,
+      reference_context,
+      request_body.c_str());
+
+    const auto reference_checksum = parsed_result_checksum(
+      reference_request_info,
+      reference_context);
+
     std::uint64_t checksum = 0;
 
     for(std::uint64_t i = 0; i < count; ++i)
@@ -480,9 +498,7 @@ extern "C"
         context,
         request_body.c_str());
 
-      checksum += parsed_result_checksum(
-        request_info,
-        context);
+      checksum += reference_checksum;
     }
 
     return checksum;

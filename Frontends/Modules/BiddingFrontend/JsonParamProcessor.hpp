@@ -489,15 +489,12 @@ namespace AdServer::Bidding
 
     typedef std::pmr::list<UserEid> UserEidList;
 
-    JsonProcessingContext()
-      : JsonProcessingContext(
-          std::make_unique<std::pmr::monotonic_buffer_resource>())
-    {}
-
     explicit JsonProcessingContext(
-      std::unique_ptr<std::pmr::monotonic_buffer_resource> arena) noexcept
-      : arena_(std::move(arena)),
-        resource_(arena_.get()),
+      std::pmr::memory_resource* resource = nullptr)
+      : arena_(resource ?
+          nullptr :
+          std::make_unique<std::pmr::monotonic_buffer_resource>()),
+        resource_(resource ? resource : arena_.get()),
         external_user_id(),
         user_id(),
         user_eids(resource_),
@@ -571,9 +568,9 @@ namespace AdServer::Bidding
     void
     clear()
     {
-      auto arena = std::make_unique<std::pmr::monotonic_buffer_resource>();
+      std::pmr::memory_resource* resource = arena_ ? nullptr : resource_;
       this->~JsonProcessingContext();
-      new(this) JsonProcessingContext(std::move(arena));
+      new(this) JsonProcessingContext(resource);
     }
 
     std::pmr::memory_resource*

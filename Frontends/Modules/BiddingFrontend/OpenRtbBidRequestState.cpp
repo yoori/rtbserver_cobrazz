@@ -264,7 +264,8 @@ namespace AdServer::Bidding
         std::move(request_holder),
         std::move(response_writer),
         start_processing_time),
-      uri_(request_holder_->request().uri().str())
+      uri_(request_holder_->request().uri().str()),
+      context_(request_info_.resource())
   {}
 
   bool
@@ -456,9 +457,9 @@ namespace AdServer::Bidding
   void
   OpenRtbBidRequestState::clear() noexcept
   {
-    BidRequestState::clear();
     uri_.clear();
     context_.clear();
+    BidRequestState::clear();
   }
 
   void
