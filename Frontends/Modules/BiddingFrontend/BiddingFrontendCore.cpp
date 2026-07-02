@@ -2185,6 +2185,45 @@ namespace AdServer::Bidding
         }
       }
 
+      request_params_pb.clear_trigger_match_result();
+      if (trigger_match_result)
+      {
+        const auto& matched_channels = trigger_match_result->matched_channels();
+        auto* trigger_match_pb = request_params_pb.mutable_trigger_match_result();
+
+        const auto pack_channel_trigger_matches = [](const auto& source, auto* target)
+        {
+          target->Reserve(source.size());
+          for (int i = 0; i < source.size(); ++i)
+          {
+            const auto& src = source[i];
+            auto* dst = target->Add();
+            dst->set_channel_id(src.id());
+            dst->set_channel_trigger_id(src.trigger_channel_id());
+          }
+        };
+
+        pack_channel_trigger_matches(
+          matched_channels.url_channels(),
+          trigger_match_pb->mutable_url_channels());
+        pack_channel_trigger_matches(
+          matched_channels.page_channels(),
+          trigger_match_pb->mutable_pkw_channels());
+        pack_channel_trigger_matches(
+          matched_channels.search_channels(),
+          trigger_match_pb->mutable_skw_channels());
+        pack_channel_trigger_matches(
+          matched_channels.url_keyword_channels(),
+          trigger_match_pb->mutable_ukw_channels());
+
+        auto* trigger_uid_channels = trigger_match_pb->mutable_uid_channels();
+        trigger_uid_channels->Reserve(matched_channels.uid_channels_size());
+        for (int i = 0; i < matched_channels.uid_channels_size(); ++i)
+        {
+          trigger_uid_channels->Add(matched_channels.uid_channels(i));
+        }
+      }
+
       // Fill CCG keywords
       if(ccg_keywords)
       {
