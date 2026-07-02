@@ -560,8 +560,7 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
             profile_cache_,
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->TempUserChunksConfig()),
-            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig()),
-            true
+            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
             );
 
           add_child_object(temp_user_trigger_match_container.in(), true);
@@ -624,8 +623,7 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
             profile_cache_,
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig()),
-            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig()),
-            true
+            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
             );
 
           add_child_object(user_trigger_match_container.in(), true);

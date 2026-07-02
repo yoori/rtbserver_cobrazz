@@ -143,8 +143,7 @@ namespace RequestInfoSvcs
       unsigned long max_trigger_visits,
       ProfilingCommons::ProfileMapFactory::Cache* cache,
       const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-      const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits,
-      bool use_rocksdb_user_map)
+      const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits)
       /*throw(Exception)*/;
 
     void config(Config* config) noexcept;

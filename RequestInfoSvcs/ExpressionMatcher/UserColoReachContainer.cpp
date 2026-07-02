@@ -1,7 +1,6 @@
 #include <Logger/ActiveObjectCallback.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfile.hpp>
-#include "Compatibility/UserColoReachProfileAdapter.hpp"
 
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 #include "UserColoReachContainer.hpp"
@@ -12,6 +11,11 @@ namespace AdServer
 {
   namespace RequestInfoSvcs
   {
+    namespace
+    {
+      const unsigned long CURRENT_USER_COLO_REACH_PROFILE_VERSION = 34;
+    }
+
     UserColoReachContainer::UserColoReachContainer(
       Logging::Logger* logger,
       ColoReachProcessor* colo_reach_processor,
@@ -30,48 +34,19 @@ namespace AdServer
 
       try
       {
-        typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserColoReachProfileAdapter>
-          AdaptUserColoReachProfile;
-
-        if(HOUSEHOLD_)
-        {
-          auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
-            open_rocksdb_chunked_map<
-              AdServer::Commons::UserId,
-              AdServer::ProfilingCommons::UserIdAccessor,
-              unsigned long (*)(const Generics::Uuid& uuid)>(
-                common_chunks_number,
-                chunk_folders,
-                file_prefix,
-                AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-                  user_level_map_traits.expire_time),
-                AdServer::Commons::uuid_distribution_hash);
-          user_map_ = user_map.first;
-          add_child_object(user_map.second);
-        }
-        else
-        {
-          user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-            open_chunked_map<
-              AdServer::Commons::UserId,
-              AdServer::ProfilingCommons::UserIdAccessor,
-              unsigned long (*)(const Generics::Uuid& uuid),
-              AdaptUserColoReachProfile>(
-                common_chunks_number,
-                chunk_folders,
-                file_prefix,
-                user_level_map_traits,
-                *this,
-                Generics::ActiveObjectCallback_var(
-                  new Logging::ActiveObjectCallbackImpl(
-                    logger_,
-                    "UserColoReachContainer",
-                    "ExpressionMatcher",
-                    "ADS-IMPL-4024")),
-                AdServer::Commons::uuid_distribution_hash,
-                nullptr // file controller
-                );
-        }
+        auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
+          open_rocksdb_chunked_map<
+            AdServer::Commons::UserId,
+            AdServer::ProfilingCommons::UserIdAccessor,
+            unsigned long (*)(const Generics::Uuid& uuid)>(
+              common_chunks_number,
+              chunk_folders,
+              file_prefix,
+              AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+                user_level_map_traits.expire_time),
+              AdServer::Commons::uuid_distribution_hash);
+        user_map_ = user_map.first;
+        add_child_object(user_map.second);
       }
       catch(const eh::Exception& ex)
       {

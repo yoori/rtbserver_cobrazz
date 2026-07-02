@@ -7,8 +7,6 @@
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserTriggerMatchProfile.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestTriggerMatchProfile.hpp>
-#include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserTriggerMatchProfileAdapter.hpp>
-#include <RequestInfoSvcs/ExpressionMatcher/Compatibility/RequestTriggerMatchProfileAdapter.hpp>
 
 namespace Aspect
 {
@@ -27,6 +25,9 @@ namespace RequestInfoSvcs
 
   namespace
   {
+    const unsigned long CURRENT_USER_TRIGGER_MATCH_PROFILE_VERSION = 330;
+    const unsigned long CURRENT_REQUEST_TRIGGER_MATCH_PROFILE_VERSION = 360;
+
     const Generics::Time IMPRESSION_EXPIRE_TIME = Generics::Time::ONE_DAY;
     const unsigned long MAX_IMPRESSIONS_KEEP = 10;
 
@@ -842,8 +843,7 @@ namespace RequestInfoSvcs
     unsigned long max_trigger_visits,
     ProfilingCommons::ProfileMapFactory::Cache* /*cache*/,
     const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-    const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits,
-    bool use_rocksdb_user_map)
+    const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       processor_(ReferenceCounting::add_ref(processor)),
@@ -863,48 +863,19 @@ namespace RequestInfoSvcs
 
     try
     {
-      if(use_rocksdb_user_map)
-      {
-        auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
-          open_rocksdb_chunked_map<
-            AdServer::Commons::UserId,
-            AdServer::ProfilingCommons::UserIdAccessor,
-            unsigned long (*)(const Generics::Uuid& uuid)>(
-              common_chunks_number,
-              chunk_folders,
-              user_file_prefix,
-              AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-                user_level_map_traits.expire_time),
-              AdServer::Commons::uuid_distribution_hash);
-        user_map_ = user_map.first;
-        add_child_object(user_map.second);
-      }
-      else
-      {
-        typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserTriggerMatchProfileAdapter>
-          AdaptUserTriggerMatchProfile;
-
-        user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-          open_chunked_map<
-            AdServer::Commons::UserId,
-            AdServer::ProfilingCommons::UserIdAccessor,
-            unsigned long (*)(const Generics::Uuid& uuid),
-            AdaptUserTriggerMatchProfile>(
-              common_chunks_number,
-              chunk_folders,
-              user_file_prefix,
-              user_level_map_traits,
-              *this,
-              Generics::ActiveObjectCallback_var(
-                new Logging::ActiveObjectCallbackImpl(
-                  logger_,
-                  "UserTriggerMatchContainer",
-                  "ExpressionMatcher",
-                  "ADS-IMPL-4024")),
-              AdServer::Commons::uuid_distribution_hash,
-              nullptr // file controller
-              );
-      }
+      auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
+        open_rocksdb_chunked_map<
+          AdServer::Commons::UserId,
+          AdServer::ProfilingCommons::UserIdAccessor,
+          unsigned long (*)(const Generics::Uuid& uuid)>(
+            common_chunks_number,
+            chunk_folders,
+            user_file_prefix,
+            AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+              user_level_map_traits.expire_time),
+            AdServer::Commons::uuid_distribution_hash);
+      user_map_ = user_map.first;
+      add_child_object(user_map.second);
     }
     catch(const eh::Exception& ex)
     {
@@ -917,26 +888,22 @@ namespace RequestInfoSvcs
     {
       try
       {
-        Generics::ActiveObject_var active_object;
+        typedef AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
+          AdServer::Commons::RequestId,
+          AdServer::ProfilingCommons::KeyAccessorStringAdapter<
+            AdServer::ProfilingCommons::RequestIdAccessor>>
+          RocksDBRequestProfileMap;
 
-        request_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-          open_adapt_transaction_level_map<
-            AdServer::Commons::RequestId,
-            AdServer::ProfilingCommons::RequestIdAccessor,
-            RequestTriggerMatchProfileAdapter>(
-              active_object,
-              Generics::ActiveObjectCallback_var(
-                new Logging::ActiveObjectCallbackImpl(
-                  logger_,
-                  "UserTriggerMatchContainer",
-                  "ExpressionMatcher",
-                  "ADS-IMPL-4024")),
-              request_file_base_path,
-              request_file_prefix,
-              request_level_map_traits,
-              RequestTriggerMatchProfileAdapter());
+        const std::string rocksdb_path =
+          std::string(request_file_base_path) + "/" +
+          request_file_prefix + ".rocksdb";
+        ReferenceCounting::SmartPtr<RocksDBRequestProfileMap> rocksdb_map =
+          new RocksDBRequestProfileMap(
+            String::SubString(rocksdb_path.c_str()),
+            request_level_map_traits.expire_time);
 
-        add_child_object(active_object);
+        request_map_ = new RequestProfileMap(rocksdb_map);
+        add_child_object(rocksdb_map.in());
       }
       catch(const eh::Exception& ex)
       {

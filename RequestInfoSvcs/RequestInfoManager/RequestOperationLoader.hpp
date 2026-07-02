@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Generics/ActiveObject.hpp>
-#include <ProfilingCommons/PlainStorage3/FileReader.hpp>
+#include <ProfilingCommons/FileReader.hpp>
 
 #include "RequestOperationProcessor.hpp"
 
