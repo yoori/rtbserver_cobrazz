@@ -1,10 +1,19 @@
 #pragma once
 
+#include <memory>
+
 #include "CampaignManagerCore.hpp"
 #include "CreativeInstantiatorTypes.hpp"
 
 namespace AdServer::CampaignSvcs
 {
+  namespace InstantiateAd
+  {
+    class InstantiateAdCommonCreativeArgsManager;
+    class InstantiateAdCreativeArgsManager;
+    class InstantiateAdRequestArgsManager;
+  }
+
   class CreativeInstantiator:
     public CreativeInstantiatorTypes
   {
@@ -66,7 +75,9 @@ namespace AdServer::CampaignSvcs
       CreativeParamsList& creative_instantiate_info,
       std::string& creative_body,
       const AdSlotContext& ad_slot_context,
-      const IdVector* exclude_pubpixel_accounts)
+      const IdVector* exclude_pubpixel_accounts,
+      std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out =
+        nullptr)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
     void
@@ -123,11 +134,46 @@ namespace AdServer::CampaignSvcs
       const TokenValueMap& tokens)
       /*throw(CreativeOptionsProblem, eh::Exception)*/;
 
+    void
+    fill_instantiate_url_(
+      std::string& instantiate_url,
+      AdInstantiateType ad_instantiate_type,
+      CreativeParamsList& creative_params_list,
+      const RequestResultParams& request_result_params,
+      const InstantiateParams& inst_params,
+      const CreativeInstantiateRule& instantiate_info,
+      const CampaignConfig& campaign_config,
+      const CommonAdRequestInfo& request_params,
+      const AdSelectionResult& ad_selection_result,
+      const AdSlotContext& ad_slot_context,
+      const char* app_format,
+      const AccountIdList& pub_pixel_accounts,
+      bool fill_auction_price,
+      bool fill_creative_params)
+      /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
+
+    void
+    get_inst_optin_pub_pixel_account_ids_(
+      AccountIdList& result_account_ids,
+      const CampaignConfig* campaign_config,
+      const Tag* tag,
+      const CommonAdRequestInfo& request_params,
+      const IdVector& exclude_pubpixel_accounts)
+      noexcept;
+
+    PubPixelAccountMap::const_iterator
+    find_pub_pixel_accounts_(
+      const CampaignConfig* campaign_config,
+      const char* country,
+      UserStatus user_status) const
+      noexcept;
+
   private:
     void
-    fill_instantiate_request_params_(
+    fill_passback_request_params_(
       TokenValueMap& request_args,
       AccountIdList* consider_pub_pixel_accounts,
+      bool fill_pub_pixels,
       const CampaignConfig& campaign_config,
       const Colocation* colocation,
       const Tag* tag,
@@ -141,20 +187,8 @@ namespace AdServer::CampaignSvcs
       const String::SubString& ext_tag_id)
       /*throw(eh::Exception)*/;
 
-    void
-    fill_instantiate_passback_params_(
-      TokenValueMap& request_args,
-      const CampaignConfig* campaign_config,
-      const Tag* tag,
-      const InstantiateParams& inst_params,
-      const CommonAdRequestInfo& request_params,
-      const CreativeInstantiateRule& instantiate_info,
-      const AdSlotContext& ad_slot_context,
-      const AccountIdList* consider_pub_pixel_accounts)
-      /*throw(eh::Exception)*/;
-
-    void
-    fill_instantiate_params_(
+    std::shared_ptr<String::TextTemplate::ArgsCallback>
+    fill_instantiate_creative_args_(
       const CommonAdRequestInfo& request_params,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
@@ -166,8 +200,6 @@ namespace AdServer::CampaignSvcs
       AdSelectionResult& ad_selection_result,
       RequestResultParams& request_result_params,
       CreativeParamsList& creative_params_list,
-      TemplateParams_var& request_template_params,
-      TemplateParamsList& creative_template_params,
       const AdSlotContext& ad_slot_context,
       const IdVector* exclude_pubpixel_accounts)
       /*throw(eh::Exception)*/;
@@ -193,6 +225,10 @@ namespace AdServer::CampaignSvcs
       const AccountIdList* consider_pub_pixel_accounts)
       noexcept;
 
+    TemplateParams_var
+    fill_creatives_json_(
+      const TemplateParamsList& creative_template_params) const;
+
     void
     instantiate_url_creative_(
       std::string& creative_body,
@@ -201,24 +237,6 @@ namespace AdServer::CampaignSvcs
       const String::SubString& instantiate_url,
       AdInstantiateType ad_instantiate_type)
       /*throw(CreativeTemplateProblem)*/;
-
-    void
-    fill_instantiate_url_(
-      std::string& instantiate_url,
-      AdInstantiateType ad_instantiate_type,
-      CreativeParamsList& creative_params_list,
-      const RequestResultParams& request_result_params,
-      const InstantiateParams& inst_params,
-      const CreativeInstantiateRule& instantiate_info,
-      const CampaignConfig& campaign_config,
-      const CommonAdRequestInfo& request_params,
-      const AdSelectionResult& ad_selection_result,
-      const AdSlotContext& ad_slot_context,
-      const char* app_format,
-      const AccountIdList& pub_pixel_accounts,
-      bool fill_auction_price,
-      bool fill_creative_params)
-      /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
     void
     init_instantiate_url_(
@@ -266,7 +284,8 @@ namespace AdServer::CampaignSvcs
       const CommonAdRequestInfo& request_params,
       const TraceAdSlotInfo& ad_slot,
       const AdSlotContext& ad_slot_context,
-      const Creative* creative)
+      const Creative* creative,
+      const String::TextTemplate::ArgsCallback& instantiate_args)
       /*throw(CreativeInstantiateProblem)*/;
 
     void
@@ -327,22 +346,6 @@ namespace AdServer::CampaignSvcs
       unsigned long limit)
       noexcept;
 
-    void
-    get_inst_optin_pub_pixel_account_ids_(
-      AccountIdList& result_account_ids,
-      const CampaignConfig* campaign_config,
-      const Tag* tag,
-      const CommonAdRequestInfo& request_params,
-      const IdVector& exclude_pubpixel_accounts)
-      noexcept;
-
-    PubPixelAccountMap::const_iterator
-    find_pub_pixel_accounts_(
-      const CampaignConfig* campaign_config,
-      const char* country,
-      UserStatus user_status) const
-      noexcept;
-
   private:
     const Config config_;
     const CreativeInstantiate& creative_instantiate_;
@@ -352,5 +355,12 @@ namespace AdServer::CampaignSvcs
     const Generics::SignedUuidGenerator& rid_signer_;
     Logging::Logger_var logger_;
     const CountryList& country_whitelist_;
+    const std::shared_ptr<
+      const InstantiateAd::InstantiateAdCommonCreativeArgsManager>
+      common_creative_args_manager_;
+    const std::shared_ptr<const InstantiateAd::InstantiateAdCreativeArgsManager>
+      creative_args_manager_;
+    const std::shared_ptr<const InstantiateAd::InstantiateAdRequestArgsManager>
+      request_args_manager_;
   };
 }

@@ -137,6 +137,11 @@ namespace AdServer::CampaignSvcs
   {
   public:
     TokenOptionValueProvider(
+      const String::TextTemplate::ArgsCallback* request_args,
+      const OptionTokenValueMap& creative_args)
+      noexcept;
+
+    TokenOptionValueProvider(
       const TokenValueMap& request_args,
       const OptionTokenValueMap& creative_args)
       noexcept;
@@ -149,7 +154,7 @@ namespace AdServer::CampaignSvcs
     get(std::string_view token, TokenOptionValue& value) const;
 
   private:
-    const TokenValueMap* request_args_;
+    const String::TextTemplate::ArgsCallback* request_args_;
     const OptionTokenValueMap& creative_args_;
   };
 

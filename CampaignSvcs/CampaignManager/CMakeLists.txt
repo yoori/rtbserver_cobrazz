@@ -112,6 +112,29 @@ target_link_libraries(CreativeTemplateArgs
   Commons
 )
 
+add_library(InstantiateAdArgs STATIC
+  InstantiateAd/CacheArgs.cpp
+  InstantiateAd/InstantiateAdAdvertiserCreativeArgs.cpp
+  InstantiateAd/InstantiateAdCommonCreativeArgs.cpp
+  InstantiateAd/InstantiateAdContext.cpp
+  InstantiateAd/InstantiateAdCreativeArgs.cpp
+  InstantiateAd/InstantiateAdNoPassbackArgs.cpp
+  InstantiateAd/InstantiateAdRequestArgs.cpp
+  InstantiateAd/ProcessorArgs.cpp
+  InstantiateAd/TokenProcessorArgs.cpp
+  InstantiateAd/UnionArgs.cpp
+)
+
+target_link_libraries(InstantiateAdArgs
+  Generics
+  CreativeTemplateArgs
+)
+
+target_include_directories(InstantiateAdArgs
+  PUBLIC
+    /opt/foros/vanga/include
+)
+
 add_library(SecToken
   SecToken.cpp
 )
@@ -157,7 +180,6 @@ target_link_libraries(CampaignManager
   CORBACommons
   Commons
   Gason
-  PlainStorage3
 
   AdServerCommonsXSD
   CampaignManagerConfigXSD
@@ -169,6 +191,7 @@ target_link_libraries(CampaignManager
   ExpressionChannelIndex
   ExpressionChannel
   CreativeTemplateArgs
+  InstantiateAdArgs
   CampaignConfig
   CampaignIndex
   DomainParser

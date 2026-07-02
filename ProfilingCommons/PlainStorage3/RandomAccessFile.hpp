@@ -11,7 +11,7 @@
 #include <sys/types.h>
 
 #include <eh/Exception.hpp>
-#include "FileController.hpp"
+#include <ProfilingCommons/FileController.hpp>
 
 /**
  * Wrappers over low-level system functions

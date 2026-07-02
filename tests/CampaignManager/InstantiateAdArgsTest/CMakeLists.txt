@@ -1,5 +1,5 @@
-add_executable(CampaignManagerInstantiateCreativeTest
-  CampaignManagerInstantiateCreativeTest.cpp
+add_executable(InstantiateAdArgsTest
+  InstantiateAdArgsTest.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CampaignManagerCore.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CreativeInstantiator.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CreativeTextGenerator.cpp
@@ -9,7 +9,7 @@ add_executable(CampaignManagerInstantiateCreativeTest
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/BillingStateContainer.cpp
 )
 
-target_link_libraries(CampaignManagerInstantiateCreativeTest
+target_link_libraries(InstantiateAdArgsTest
   PRIVATE
     jemalloc
 
@@ -40,14 +40,16 @@ target_link_libraries(CampaignManagerInstantiateCreativeTest
     PassbackTemplate
     SecToken
 
+    CTRProvider
     BidRateProvider
     DomainConfigXSD
     StatInfoIDL
     CampaignManagerGrpc
     BillingServerGrpcClient
+    Generics
 )
 
-target_include_directories(CampaignManagerInstantiateCreativeTest
+target_include_directories(InstantiateAdArgsTest
   PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${Protobuf_INCLUDE_DIRS}

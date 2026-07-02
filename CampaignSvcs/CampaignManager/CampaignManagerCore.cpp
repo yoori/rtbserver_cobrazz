@@ -31,6 +31,73 @@
 
 namespace AdServer::CampaignSvcs
 {
+  CampaignManagerCore::CampaignManagerTaskMessage::CampaignManagerTaskMessage(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : TaskBase(task_runner),
+      manager_(manager)
+  {}
+
+  CampaignManagerCore::FlushLogsTaskMessage::FlushLogsTaskMessage(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : CampaignManagerTaskMessage(manager, task_runner)
+  {}
+
+  void
+  CampaignManagerCore::FlushLogsTaskMessage::execute() noexcept
+  {
+    manager_->flush_logs();
+  }
+
+  CampaignManagerCore::CheckConfigTaskMessage::CheckConfigTaskMessage(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : CampaignManagerTaskMessage(manager, task_runner)
+  {}
+
+  void
+  CampaignManagerCore::CheckConfigTaskMessage::execute() noexcept
+  {
+    manager_->check_config();
+  }
+
+  CampaignManagerCore::UpdateCTRProviderTask::UpdateCTRProviderTask(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : CampaignManagerTaskMessage(manager, task_runner)
+  {}
+
+  void
+  CampaignManagerCore::UpdateCTRProviderTask::execute() noexcept
+  {
+    manager_->update_ctr_provider();
+  }
+
+  CampaignManagerCore::UpdateConvRateProviderTask::UpdateConvRateProviderTask(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : CampaignManagerTaskMessage(manager, task_runner)
+  {}
+
+  void
+  CampaignManagerCore::UpdateConvRateProviderTask::execute() noexcept
+  {
+    manager_->update_conv_rate_provider();
+  }
+
+  CampaignManagerCore::UpdateBidCostProviderTask::UpdateBidCostProviderTask(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : CampaignManagerTaskMessage(manager, task_runner)
+  {}
+
+  void
+  CampaignManagerCore::UpdateBidCostProviderTask::execute() noexcept
+  {
+    manager_->update_bid_cost_provider();
+  }
+
   namespace
   {
     const RevenueDecimal TOP_ALLOWABLE_LOSE_WIN_PERCENTAGE(

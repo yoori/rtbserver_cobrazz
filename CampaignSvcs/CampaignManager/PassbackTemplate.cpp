@@ -22,6 +22,13 @@ namespace AdServer
             InvalidTemplate,
             ImplementationException)*/;
 
+        std::string
+        instantiate(
+          const String::TextTemplate::ArgsCallback& args)
+          /*throw(InvalidParams,
+            InvalidTemplate,
+            ImplementationException)*/;
+
       protected:
         String::TextTemplate::IStream text_template_;
       };
@@ -59,6 +66,17 @@ namespace AdServer
       std::string
       TextTemplate::instantiate(
         const TokenValueMap& args)
+        /*throw(InvalidParams,
+          InvalidTemplate,
+          ImplementationException)*/
+      {
+        return instantiate(
+          static_cast<const String::TextTemplate::ArgsCallback&>(args));
+      }
+
+      std::string
+      TextTemplate::instantiate(
+        const String::TextTemplate::ArgsCallback& args)
         /*throw(InvalidParams,
           InvalidTemplate,
           ImplementationException)*/

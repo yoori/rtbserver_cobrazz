@@ -134,6 +134,16 @@ namespace AdServer
         const OptionTokenValueMap& creative_args,
         TokenValueMap& result_creative_args)
         /*throw(eh::Exception)*/;
+
+      static void
+      init_creative_tokens(
+        const CreativeInstantiateRule& rule,
+        const CreativeInstantiateArgs& creative_instantiate_args,
+        const TokenProcessorMap& token_processors,
+        const String::TextTemplate::ArgsCallback& request_args,
+        const OptionTokenValueMap& creative_args,
+        TokenValueMap& result_creative_args)
+        /*throw(eh::Exception)*/;
     };
   }
 }

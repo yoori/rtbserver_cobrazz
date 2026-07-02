@@ -189,7 +189,7 @@ namespace
 
     out
       << "request=##REQUESTID##\n"
-      << "global=##GREQUESTID##\n"
+      //<< "global=##GREQUESTID##\n"
       << "ccid=##CCID##\n"
       << "cid=##CID##\n"
       << "tag=##TAGID##\n"

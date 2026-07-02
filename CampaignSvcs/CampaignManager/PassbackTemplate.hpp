@@ -31,6 +31,13 @@ namespace AdServer
           InvalidTemplate,
           ImplementationException)*/ = 0;
 
+      virtual std::string
+      instantiate(
+        const String::TextTemplate::ArgsCallback& tokens)
+        /*throw(InvalidParams,
+          InvalidTemplate,
+          ImplementationException)*/ = 0;
+
     protected:
       virtual ~PassbackTemplate() noexcept {};
     };

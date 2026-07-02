@@ -113,7 +113,6 @@ add_library(RequestOperationSaver SHARED
 
 target_link_libraries(RequestOperationSaver
   Generics
-  PlainStorage3
   PrivacyFilter
   Commons
   LogCommons

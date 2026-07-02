@@ -12,7 +12,7 @@
 #include <xsd/Utils/CTRGeneratorDataConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CsvReader.hpp>
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 #include <LogCommons/CsvUtils.hpp>
 #include <CampaignSvcs/CampaignManager/CTR/XGBoostPredictor.hpp>
 

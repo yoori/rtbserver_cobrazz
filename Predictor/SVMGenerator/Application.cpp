@@ -9,7 +9,7 @@
 #include <xsd/Utils/SVMGeneratorConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CsvReader.hpp>
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 #include <LogCommons/CsvUtils.hpp>
 
 #include "HashCalculator.hpp"

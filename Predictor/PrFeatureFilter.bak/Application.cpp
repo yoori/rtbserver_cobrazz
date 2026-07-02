@@ -14,7 +14,7 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CsvReader.hpp>
 #include <Commons/Algs.hpp>
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 
 //#include "CTRGenerator.hpp"
 #include "Application.hpp"

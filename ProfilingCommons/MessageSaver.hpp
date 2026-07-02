@@ -13,7 +13,7 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Sync/SyncPolicy.hpp>
 
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 
 namespace AdServer
 {

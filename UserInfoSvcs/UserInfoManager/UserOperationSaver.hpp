@@ -2,8 +2,8 @@
 
 #include <string>
 #include <Commons/LockMap.hpp>
-#include <ProfilingCommons/PlainStorage3/FileController.hpp>
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileController.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 
 #include "UserOperationProcessor.hpp"
 

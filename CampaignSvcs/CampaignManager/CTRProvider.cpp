@@ -9,7 +9,7 @@
 #include <String/RegEx.hpp>
 #include <Commons/DecimalUtils.hpp>
 #include <Commons/FastJsonParser.hpp>
-#include <ProfilingCommons/PlainStorage3/FileReader.hpp>
+#include <ProfilingCommons/FileReader.hpp>
 
 #include "CTR/CTRFeatureCalculators.hpp"
 

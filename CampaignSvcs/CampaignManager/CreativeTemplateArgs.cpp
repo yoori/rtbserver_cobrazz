@@ -170,6 +170,14 @@ namespace CampaignSvcs
   };
 
   TokenOptionValueProvider::TokenOptionValueProvider(
+    const String::TextTemplate::ArgsCallback* request_args,
+    const OptionTokenValueMap& creative_args)
+    noexcept
+    : request_args_(request_args),
+      creative_args_(creative_args)
+  {}
+
+  TokenOptionValueProvider::TokenOptionValueProvider(
     const TokenValueMap& request_args,
     const OptionTokenValueMap& creative_args)
     noexcept

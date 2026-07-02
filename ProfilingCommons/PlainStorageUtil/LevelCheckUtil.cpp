@@ -8,8 +8,8 @@
 #include <TestCommons/ActiveObjectCallback.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
 
-#include <ProfilingCommons/PlainStorage3/FileReader.hpp>
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileReader.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 #include <ProfilingCommons/PlainStorage3/FileLevel.hpp>
 #include <ProfilingCommons/PlainStorage3/ReadMemLevel.hpp>
 #include <ProfilingCommons/PlainStorage3/RWMemLevel.hpp>

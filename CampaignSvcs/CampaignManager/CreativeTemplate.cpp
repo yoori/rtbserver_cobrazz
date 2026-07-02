@@ -79,8 +79,7 @@ namespace CampaignSvcs
       /*throw(Template::FileNotExists, Exception)*/;
 
     virtual std::string instantiate(
-      const TemplateParams* request_params,
-      const TemplateParamsList& creative_params)
+      const String::TextTemplate::ArgsCallback& args)
       /*throw(InvalidParams,
             InvalidTemplate,
             ImplementationException)*/;
@@ -140,29 +139,39 @@ namespace CampaignSvcs
   }
 
   std::string
-  TextTemplate::instantiate(
+  Template::instantiate(
     const TemplateParams* request_params,
     const TemplateParamsList& params)
     /*throw(InvalidParams,
       InvalidTemplate,
       ImplementationException)*/
   {
+    const TokenValueMap* creative_args = nullptr;
+    TemplateParamsList::const_iterator cr_it = params.begin();
+    if(cr_it != params.end())
+    {
+      TemplateParamsList::const_iterator next_it = cr_it;
+      ++next_it;
+      if(next_it == params.end())
+      {
+        creative_args = (*cr_it).in();
+      }
+    }
+
+    TemplateArgsCallback args_cont(*request_params, creative_args);
+    return instantiate(args_cont);
+  }
+
+  std::string
+  TextTemplate::instantiate(
+    const String::TextTemplate::ArgsCallback& args)
+    /*throw(InvalidParams,
+      InvalidTemplate,
+      ImplementationException)*/
+  {
     try
     {
-      const TokenValueMap* creative_args = nullptr;
-      TemplateParamsList::const_iterator cr_it = params.begin();
-      if(cr_it != params.end())
-      {
-        TemplateParamsList::const_iterator next_it = cr_it;
-        ++next_it;
-        if(next_it == params.end())
-        {
-          creative_args = (*cr_it).in();
-        }
-      }
-
-      TemplateArgsCallback args_cont(*request_params, creative_args);
-      String::TextTemplate::DefaultValue default_cont(&args_cont);
+      String::TextTemplate::DefaultValue default_cont(&args);
       String::TextTemplate::ArgsEncoder encoder(&default_cont);
       return text_template_.instantiate(encoder);
     }

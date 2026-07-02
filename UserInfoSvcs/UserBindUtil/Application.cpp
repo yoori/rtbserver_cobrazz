@@ -10,8 +10,8 @@
 #include <Generics/DirSelector.hpp>
 
 #include <LogCommons/LogCommons.hpp>
-#include <ProfilingCommons/PlainStorage3/FileReader.hpp>
-#include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
+#include <ProfilingCommons/FileReader.hpp>
+#include <ProfilingCommons/FileWriter.hpp>
 #include <Commons/PathManip.hpp>
 
 namespace
