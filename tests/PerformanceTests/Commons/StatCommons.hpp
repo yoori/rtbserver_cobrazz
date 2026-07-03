@@ -27,13 +27,6 @@ struct AdvertiserResponse
   std::string click_url;
 
   /**
-   * @brief Action URL
-   *
-   * Action URL from advertising response
-   */
-  std::string action_adv_url;
-
-  /**
    * @brief Passback URL
    *
    * Passback URL from advertising response
@@ -116,7 +109,6 @@ struct AdvertiserResponse
   AdvertiserResponse(
     unsigned long ccid,
     const char* click_url,
-    const char* action_adv_url,
     const char* passback_url,
     unsigned long trigger_channels_count,
     unsigned long history_channels_count,

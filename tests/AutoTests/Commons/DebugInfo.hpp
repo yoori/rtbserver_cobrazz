@@ -667,11 +667,6 @@ namespace AutoTest
       SimpleValue  ecpm_bid;
 
       /**
-       * @brief To keep triggered_expression attribute's value.
-       */
-      ParenthesesValue  triggered_expression;
-
-      /**
        * @brief To keep click_url attribute's value.
        */
       SimpleValue  click_url;
@@ -680,11 +675,6 @@ namespace AutoTest
        * @brief To keep html_url attribute's value.
        */
       SimpleValue  html_url;
-
-      /**
-       * @brief To keep action_adv_url attribute's value.
-       */
-      SimpleValue  action_adv_url;
 
       /**
        * @brief To keep revenue attribute's value.
@@ -842,7 +832,6 @@ namespace AutoTest
       Money                        cpm_threshold_value;
       StringListValue              total_ccg_appear;
       StringListValue              trigger_channels;
-      SimpleValue                  triggered_expression;
       SimpleValue                  uid;
 
       TimeValue                    trigger_match_time;
@@ -857,7 +846,6 @@ namespace AutoTest
       SimpleValue                  click_url;
       SimpleValue                  html_url;
       SimpleValue                  track_pixel_url;
-      SimpleValue                  action_adv_url;
       SimpleValue                  creative_request_id;
 
       /**

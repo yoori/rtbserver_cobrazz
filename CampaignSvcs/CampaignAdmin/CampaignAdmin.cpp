@@ -2256,18 +2256,12 @@ main(int argc, char** argv)
       }
 
       const auto& result_slot = response.request_result().ad_slots(0);
-      const auto& debug_info = result_slot.debug_info();
       for(int i = 0; i < result_slot.selected_creatives_size(); ++i)
       {
         const auto& creative = result_slot.selected_creatives(i);
         std::cout << "\nccid : " << creative.ccid() <<
           "\ncreative_size : " << creative.creative_size() <<
           "\ncampaign_id : " << creative.cmp_id();
-        if(i < debug_info.selected_creatives_size())
-        {
-          std::cout << "\ntriggered_expression : " <<
-            debug_info.selected_creatives(i).triggered_expression();
-        }
         std::cout << "\nclick_url : " << creative.click_url();
       }
       std::cout << "\ncreative :\n" << result_slot.creative_body() << '\n';

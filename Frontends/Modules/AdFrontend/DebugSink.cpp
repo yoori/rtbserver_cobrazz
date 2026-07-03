@@ -531,7 +531,6 @@ namespace AdServer
     else if (require_short_header())
     {
       debug_info_str_ << "fc_click_url = " << sep_ <<
-        "fc_action_url = " << sep_ <<
         "passback_url = " << sep_ <<
         "ccids = 0" << sep_;
       return;
@@ -573,8 +572,6 @@ namespace AdServer
       const int dc_count = debug_selected_creatives.size();
       debug_info_str_ << "fc_click_url = " <<
         (dc_count ? selected_creatives.Get(0).click_url() : "") << sep_ <<
-        "fc_action_url = " <<
-          (dc_count ? debug_selected_creatives.Get(0).action_adv_url() : "") << sep_ <<
         "passback_url = " << passback_info.url << sep_ <<
         "ccids = " << creative_count << sep_;
       return;
@@ -664,16 +661,12 @@ namespace AdServer
         OFFSET << "ccid = " << creative.ccid() << sep_ <<
         OFFSET << "cmp_id = " << creative.cmp_id() << sep_ <<
         OFFSET << "order_set_id = " << creative.order_set_id() << sep_ <<
-        OFFSET << "triggered_expression = " <<
-          debug_creative.triggered_expression() << sep_ <<
         OFFSET << "ecpm = " << GrpcAlgs::unpack_decimal<
           AdServer::CampaignSvcs::RevenueDecimal>(creative.ecpm().value()) << sep_ <<
         OFFSET << "ecpm_bid = " << GrpcAlgs::unpack_decimal<
           AdServer::CampaignSvcs::RevenueDecimal>(debug_creative.ecpm_bid().value()) << sep_ <<
         OFFSET << "click_url = " << creative.click_url() << sep_ <<
         OFFSET << "html_url = " << debug_creative.html_url() << sep_ <<
-        OFFSET << "action_adv_url = " <<
-          debug_creative.action_adv_url() << sep_ <<
         OFFSET << "revenue = " <<
           GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             creative.revenue().value()) << sep_ <<

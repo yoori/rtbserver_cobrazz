@@ -68,13 +68,6 @@ AdServerClientBase::on_response(
                                   ad_response->click_url.c_str());
       check_passback = false;
     }
-    if (!ad_response->action_adv_url.empty())
-    {
-      storage_->push_request_pair(FrontendType::action,
-                                  this,
-                                  ad_response->action_adv_url.c_str());
-      check_passback = false;
-    }
     if (check_passback && !ad_response->passback_url.empty())
     {
       storage_->push_request_pair(FrontendType::passback,

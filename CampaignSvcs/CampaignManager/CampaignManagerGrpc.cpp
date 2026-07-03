@@ -657,10 +657,7 @@ namespace AdServer::CampaignSvcs
       pack_revenue_decimal(source.click_revenue, *target.mutable_click_revenue());
       pack_revenue_decimal(source.action_revenue, *target.mutable_action_revenue());
       pack_revenue_decimal(source.ecpm_bid, *target.mutable_ecpm_bid());
-      target.set_action_adv_url(source.action_adv_url);
       target.set_html_url(source.html_url);
-      target.set_triggered_expression(source.triggered_expression);
-      target.set_full_expression(source.full_expression);
     }
 
     void

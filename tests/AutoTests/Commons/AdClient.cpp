@@ -563,13 +563,12 @@ namespace AutoTest
               }
               case NON_EMPTY_ACTION:
               {
-                if (!creative->action_adv_url.empty())
-                {
-                  urls.push_back(
-                    UrlAction(
-                      creative->action_adv_url,
-                      action->time));
-                }
+                urls.push_back(
+                  UrlAction(
+                    AutoTest::ActionRequest().
+                    cid(creative->cmp_id).
+                    url(),
+                    action->time));
                 break;
               }
 
@@ -1007,4 +1006,3 @@ namespace AutoTest
     return unit_->get_local_params();
   }
 }
-

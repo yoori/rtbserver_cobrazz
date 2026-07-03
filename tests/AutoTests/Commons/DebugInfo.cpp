@@ -460,10 +460,8 @@ namespace AutoTest
       map["cmp_id"]               = &cmp_id;
       map["ecpm"]                 = &ecpm;
       map["ecpm_bid"]             = &ecpm_bid;
-      map["triggered_expression"] = &triggered_expression;
       map["click_url"]            = &click_url;
       map["html_url"]             = &html_url;
-      map["action_adv_url"]       = &action_adv_url;
       map["revenue"]              = &revenue;
       map["imp_revenue"]          = &imp_revenue;
       map["click_revenue"]        = &click_revenue;
@@ -477,7 +475,6 @@ namespace AutoTest
     {
       click_url.clear();
       html_url.clear();
-      action_adv_url.clear();
 
       SelectedCreativesList::const_iterator it = selected_creatives.begin();
       SelectedCreativesList::const_iterator end = selected_creatives.end();
@@ -488,8 +485,6 @@ namespace AutoTest
         {
           click_url = it->click_url;
           html_url = it->html_url;
-          action_adv_url = it->action_adv_url;
-          triggered_expression = it->triggered_expression;
           creative_request_id = it->request_id;
           break;
         }
@@ -547,7 +542,6 @@ namespace AutoTest
       map["cpm_threshold"]               = &cpm_threshold;
       map["total_ccg_appear"]            = &total_ccg_appear;
       map["trigger_channels"]            = &trigger_channels;
-      map["triggered_expression"]        = &triggered_expression;
       map["triggers"]                    = &triggers;
       map["uid"]                         = &uid;
 
@@ -563,7 +557,6 @@ namespace AutoTest
       map["track_pixel_url"]             = &track_pixel_url;
       map["click_url"]                   = &click_url;
       map["html_url"]                    = &html_url;
-      map["action_adv_url"]              = &action_adv_url;
       map["creative_request_id"]         = &creative_request_id;
     }
   }

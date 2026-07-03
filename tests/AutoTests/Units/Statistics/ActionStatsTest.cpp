@@ -360,11 +360,6 @@ ActionStatsTest::base_case_part_1_(
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-    "must have debug_info.action_adv_url");
-
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
       !client.debug_info.track_pixel_url.empty()),
     "must got track_pixel_url");
 
@@ -392,11 +387,6 @@ ActionStatsTest::base_case_part_1_(
       !client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-    "must have debug_info.action_adv_url");
-
   // Save URLs
   clicks.push_back(client.debug_info.click_url);
 
@@ -419,11 +409,6 @@ ActionStatsTest::base_case_part_1_(
     AutoTest::predicate_checker(
       !client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
-
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-    "must have debug_info.action_adv_url");
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(

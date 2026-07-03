@@ -60,18 +60,15 @@ UidWithPlusTest::run_test()
       AutoTest::predicate_checker(
         !debug_info.selected_creatives.empty()),
       "must has selected creatives");
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !debug_info.selected_creatives.first().action_adv_url.empty()),
-      "must has action_adv_url");
-
     client.process_request(debug_info.track_pixel_url);
     client.process_request(debug_info.click_url);
-    client.process_request(debug_info.selected_creatives.first().action_adv_url);
+    client.process_request(
+      AutoTest::ActionRequest().
+        cid(debug_info.cmpid.value()).
+        url());
 
     --count;
   }
 
   return true;
 }
-

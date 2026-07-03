@@ -1095,8 +1095,6 @@ namespace AdServer::Bidding
         offset << "creative_id = " << creative.creative_id << sep_ <<
         offset << "creative_version_id = " << creative.creative_version_id << sep_ <<
         offset << "creative_size = " << creative.creative_size << sep_ <<
-        offset << "triggered_expression = " <<
-          (debug_creative ? debug_creative->triggered_expression : "") << sep_ <<
         offset << "ecpm = " << GrpcAlgs::unpack_decimal<
           CampaignSvcs::RevenueDecimal>(creative.ecpm) << sep_ <<
         offset << "pub_ecpm = " << GrpcAlgs::unpack_decimal<
@@ -1108,8 +1106,6 @@ namespace AdServer::Bidding
         offset << "destination_url = " << creative.destination_url << sep_ <<
         offset << "html_url = " <<
           (debug_creative ? debug_creative->html_url : "") << sep_ <<
-        offset << "action_adv_url = " <<
-          (debug_creative ? debug_creative->action_adv_url : "") << sep_ <<
         offset << "revenue = " <<
           GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
             creative.revenue) << sep_ <<

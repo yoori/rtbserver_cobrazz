@@ -42,8 +42,7 @@ namespace AdServer::CampaignSvcs
     CampaignSelectionData& select_params,
     const ChannelIdHashSet& simple_channels,
     const Campaign* campaign_candidate,
-    const CampaignKeyword* campaign_keyword,
-    CreativeSelectDebugInfo* creative_debug_info)
+    const CampaignKeyword* campaign_keyword)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "CampaignManagerCore::select_creative()";
@@ -70,9 +69,9 @@ namespace AdServer::CampaignSvcs
             std::string responded_expression;
 
             if (campaign_candidate->stat_channel.in() &&
-                campaign_candidate->stat_channel->triggered_expression(
-                  responded_expression,
-                  simple_channels))
+              campaign_candidate->stat_channel->triggered_expression(
+                responded_expression,
+                simple_channels))
             {
               select_params.responded_expression = std::move(responded_expression);
             }
@@ -98,19 +97,6 @@ namespace AdServer::CampaignSvcs
         select_params.campaign_keyword->channel_id);
       select_params.responded_expression =
         std::to_string(select_params.campaign_keyword->channel_id);
-    }
-
-    if (creative_debug_info)
-    {
-      /* fill triggered expression in debug info */
-      creative_debug_info->triggered_expression = select_params.responded_expression;
-
-      if(campaign_candidate->channel.in())
-      {
-        std::string full_expr;
-        print(full_expr, campaign_candidate->channel);
-        creative_debug_info->full_expression = std::move(full_expr);
-      }
     }
   }
 
@@ -140,12 +126,9 @@ namespace AdServer::CampaignSvcs
     assert(campaign_candidate);
     assert(creative_candidate);
 
-    CreativeSelectDebugInfo* creative_debug_info = 0;
-
     if(ad_slot_debug_info)
     {
       ad_slot_debug_info->selected_creatives.resize(1);
-      creative_debug_info = &ad_slot_debug_info->selected_creatives[0];
     }
 
     ad_selection_result.tag = weighted_campaign.tag;
@@ -169,8 +152,7 @@ namespace AdServer::CampaignSvcs
       select_params,
       simple_channels,
       campaign_candidate,
-      0, // campaign keyword
-      creative_debug_info);
+      0); // campaign keyword
 
     ad_selection_result.selected_campaigns.push_back(select_params);
 
@@ -209,8 +191,7 @@ namespace AdServer::CampaignSvcs
       assert(!creative_params_list.empty());
 
       CreativeParams& upd_creative_params = *creative_params_list.begin();
-      ad_selection_result.selected_campaigns.front().click_url =
-        upd_creative_params.click_url;
+      ad_selection_result.selected_campaigns.front().click_url = upd_creative_params.click_url;
 
       if(ad_slot_debug_info)
       {
@@ -218,22 +199,8 @@ namespace AdServer::CampaignSvcs
           ad_selection_result.tag_pricing ? ad_selection_result.tag_pricing->site_rate_id : 0;
       }
 
-      if(creative_debug_info)
-      {
-        if(campaign_candidate->track_actions())
-        {
-          std::ostringstream action_adv_url;
-          action_adv_url <<
-            upd_creative_params.action_adv_url <<
-            "/cid" << EQL << campaign_candidate->campaign_id;
-          creative_debug_info->action_adv_url = action_adv_url.str();
-        }
-      }
-
-      ad_selection_result.selected_campaigns.front().campaign =
-        campaign_candidate;
-      ad_selection_result.selected_campaigns.front().creative =
-        creative_candidate;
+      ad_selection_result.selected_campaigns.front().campaign = campaign_candidate;
+      ad_selection_result.selected_campaigns.front().creative = creative_candidate;
       creative_params = *creative_params_list.begin();
 
       return true;
@@ -283,12 +250,9 @@ namespace AdServer::CampaignSvcs
       ad_slot_debug_info->selected_creatives.resize(campaign_keywords.size());
     }
 
-    CORBA::ULong i = 0;
-
-    for(CampaignSelector::WeightedCampaignKeywordList::
-          const_iterator kw_it = campaign_keywords.begin();
-        kw_it != campaign_keywords.end();
-        ++kw_it)
+    for(CampaignSelector::WeightedCampaignKeywordList::const_iterator kw_it =
+        campaign_keywords.begin();
+      kw_it != campaign_keywords.end(); ++kw_it)
     {
       CampaignSelectionData select_params;
 
@@ -300,13 +264,6 @@ namespace AdServer::CampaignSvcs
       select_params.campaign = campaign_candidate;
       select_params.creative = creative_candidate;
       select_params.campaign_keyword = kw_it->campaign_keyword;
-
-      CreativeSelectDebugInfo* creative_debug_info = 0;
-
-      if(ad_slot_debug_info)
-      {
-        creative_debug_info = &ad_slot_debug_info->selected_creatives[i++];
-      }
 
       select_params.ecpm_bid = kw_it->actual_ecpm;
       select_params.ecpm = kw_it->ecpm;
@@ -320,8 +277,7 @@ namespace AdServer::CampaignSvcs
         select_params,
         simple_channels,
         campaign_candidate,
-        kw_it->campaign_keyword,
-        creative_debug_info);
+        kw_it->campaign_keyword);
 
       select_params.actual_cpc = kw_it->actual_cpc;
       select_params.track_impr = true;
@@ -361,40 +317,20 @@ namespace AdServer::CampaignSvcs
 
       if(ad_slot_debug_info)
       {
-        assert(ad_selection_result.selected_campaigns.size() ==
-          creative_params_list.size());
+        assert(ad_selection_result.selected_campaigns.size() == creative_params_list.size());
 
         CampaignSelectionDataList::iterator select_params_it =
           ad_selection_result.selected_campaigns.begin();
 
         CORBA::ULong i = 0;
 
-        for(CreativeParamsList::iterator creative_params_it =
-              creative_params_list.begin();
-            creative_params_it != creative_params_list.end();
-            ++creative_params_it, ++select_params_it, ++i)
+        for(CreativeParamsList::iterator creative_params_it = creative_params_list.begin();
+          creative_params_it != creative_params_list.end();
+          ++creative_params_it, ++select_params_it, ++i)
         {
-          const Campaign* campaign_candidate = select_params_it->campaign;
           const CreativeParams& creative_params = *creative_params_it;
 
-          CreativeSelectDebugInfo& creative_debug_info =
-            ad_slot_debug_info->selected_creatives[i];
-
           select_params_it->click_url = creative_params.click_url;
-
-          /*
-          creative_debug_info.click_url <<
-            creative_params.click_url;
-          */
-
-          if(campaign_candidate->track_actions())
-          {
-            std::ostringstream action_adv_url;
-            action_adv_url <<
-              creative_params.action_adv_url <<
-              "/cid" << EQL << campaign_candidate->campaign_id;
-            creative_debug_info.action_adv_url = action_adv_url.str();
-          }
         }
       }
 

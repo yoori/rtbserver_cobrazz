@@ -16,7 +16,6 @@ Generics::Time time_from_str(const char* time_str) /*throw(Generics::Time::Excep
 AdvertiserResponse::AdvertiserResponse(
   unsigned long ccid_,
   const char* click_url_,
-  const char* action_adv_url_,
   const char* passback_url_,
   unsigned long trigger_channels_count_,
   unsigned long history_channels_count_,
@@ -29,7 +28,6 @@ AdvertiserResponse::AdvertiserResponse(
   /*throw(Generics::Time::Exception, eh::Exception)*/ :
   ccid(ccid_),
   click_url(click_url_),
-  action_adv_url(action_adv_url_),
   passback_url(passback_url_),
   trigger_channels_count(trigger_channels_count_),
   history_channels_count(history_channels_count_),

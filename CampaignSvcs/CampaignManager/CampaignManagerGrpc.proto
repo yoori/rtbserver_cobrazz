@@ -473,10 +473,7 @@ message CreativeSelectDebugInfo {
   DecimalInfo click_revenue = 2;
   DecimalInfo action_revenue = 3;
   DecimalInfo ecpm_bid = 4;
-  string action_adv_url = 5;
   string html_url = 6;
-  string triggered_expression = 7;
-  string full_expression = 8;
 }
 
 message AdSlotDebugInfo {

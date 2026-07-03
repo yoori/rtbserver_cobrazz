@@ -579,10 +579,7 @@ namespace AdServer
         RevenueDecimal click_revenue = RevenueDecimal::ZERO;
         RevenueDecimal action_revenue = RevenueDecimal::ZERO;
         RevenueDecimal ecpm_bid = RevenueDecimal::ZERO;
-        std::string action_adv_url;
         std::string html_url;
-        std::string triggered_expression;
-        std::string full_expression;
       };
 
       struct CreativeSelectResultInfo
@@ -902,7 +899,6 @@ namespace AdServer
       struct CreativeParams
       {
         std::string click_url;
-        std::string action_adv_url; // TODO: remove - required only in debug info
       };
 
       typedef std::list<CreativeParams> CreativeParamsList;
@@ -1285,8 +1281,7 @@ namespace AdServer
         CampaignSelectionData& select_params,
         const ChannelIdHashSet& simple_channels,
         const Campaign* campaign_candidate,
-        const CampaignKeyword* campaign_keyword,
-        CreativeSelectDebugInfo* debug_info)
+        const CampaignKeyword* campaign_keyword)
         /*throw(eh::Exception)*/;
 
       bool

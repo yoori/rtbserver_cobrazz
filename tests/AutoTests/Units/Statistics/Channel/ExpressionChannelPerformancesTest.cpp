@@ -1298,7 +1298,9 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
 
     std::string imp_url = client.debug_info.track_pixel_url;
     std::string click_url = client.debug_info.click_url;
-    std::string action_url = client.debug_info.action_adv_url;
+    std::string action_url = AutoTest::ActionRequest().
+      cid(client.debug_info.cmpid.value()).
+      url();
 
     FAIL_CONTEXT(
       SelectedCreativesCheck(
@@ -1349,11 +1351,6 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
 
     if (test.check_url & CUE_Action)
     {
-      FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !action_url.empty()),
-        "must have valid action_adv_url");
-
       if (i % 5 == 4)
       {
         client.process_request(action_url, "Action");

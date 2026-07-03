@@ -101,14 +101,11 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
       !client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-    "must have debug_info.action_adv_url");
-
   //save URLs
   std::string click_url = client.debug_info.click_url;
-  std::string action_adv_url = client.debug_info.selected_creatives.first().action_adv_url;
+  std::string action_url = AutoTest::ActionRequest().
+    cid(client.debug_info.cmpid.value()).
+    url();
   std::string track_pixel_url = client.debug_info.track_pixel_url;
 
   crack_cookie( cookie_name, pos, extStr, replacing );
@@ -143,7 +140,7 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
     "Check click response");
 
   //ActionServer request
-  client.process_request(action_adv_url);
+  client.process_request(action_url);
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       200,
@@ -371,5 +368,3 @@ void InvalidCookiesTest::opt_out_after_crack_test_case()
       !client.has_cookie("uid")),
     "must not has uid");
 }
-
-

@@ -433,9 +433,11 @@ ChannelImpInventoryTest::do_case_requests_(
       client.debug_info.selected_creatives.size()  == 0 ? "":
       client.debug_info.selected_creatives.first().click_url.value();
 
-    std::string action_adv_url =
+    std::string action_url =
       client.debug_info.selected_creatives.size() == 0 ? "":
-      client.debug_info.selected_creatives.first().action_adv_url.value();
+      AutoTest::ActionRequest().
+        cid(client.debug_info.selected_creatives.first().cmp_id.value()).
+        url();
 
     if (flags & SEND_TRACK)
     {
@@ -467,11 +469,11 @@ ChannelImpInventoryTest::do_case_requests_(
     {
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
-          !action_adv_url.empty()),
-        "response must have valid action_adv_url: " + prefix);
+          !action_url.empty()),
+        "response must have valid action url: " + prefix);
       if (i % 5 == 4)
       {
-        client.process_request(action_adv_url,
+        client.process_request(action_url,
           (prefix + ": Activate action adv url").c_str());
       }
     }
@@ -526,6 +528,4 @@ ChannelImpInventoryTest::colo_case()
     AutoTest::stats_diff_checker(
       pq_conn_, diffs, stats));
 }
-
-
 

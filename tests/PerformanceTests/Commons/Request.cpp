@@ -349,12 +349,7 @@ NSLookupRequest::_process_response(
   unsigned long ccid = atoi(debug_info_.ccid.value().c_str());
   HTTP::HeaderList location;
   data.find_headers("Location", location);
-  std::string action_url("");
   std::string passback_url("");
-  if(!debug_info_.selected_creatives.empty())
-  {
-    action_url = debug_info_.selected_creatives.first().action_adv_url.value();
-  }
   if (!location.empty())
   {
     passback_url = location.front().value;
@@ -365,7 +360,6 @@ NSLookupRequest::_process_response(
       new AdvertiserResponse(
         ccid,
         debug_info_.click_url.value().c_str(),
-        action_url.c_str(),
         passback_url.c_str(),
         debug_info_.trigger_channels.size() != 0?
           debug_info_.trigger_channels.size():
@@ -653,7 +647,6 @@ OpenRTBRequest::_on_response(
         AdvertiserResponse_var(
           new AdvertiserResponse(
             ccid,
-            "",
             "",
             "",
             0,

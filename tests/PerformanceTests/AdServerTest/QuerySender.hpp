@@ -234,7 +234,6 @@ private:
   void _schedule_child_requests(unsigned long client_id,
                                 bool is_opted_out,
                                 const char* click_url,
-                                const char* action_adv_url,
                                 const char* passback_url);
   unsigned long _send_queued_requests(unsigned long max_requests);
 

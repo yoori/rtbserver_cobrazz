@@ -171,12 +171,9 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
         !client.debug_info.click_url.empty()),
       "must have debug_info.click_url");
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-      "must have debug_info.action_adv_url");
-
-    std::string action_adv_url = client.debug_info.selected_creatives.first().action_adv_url;
+    std::string action_url = AutoTest::ActionRequest().
+      cid(client.debug_info.cmpid.value()).
+      url();
     std::string click_url = client.debug_info.click_url;
 
     if (i % 3 == 2)
@@ -186,7 +183,7 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
 
     if (i % 5 == 4)
     {
-      client.process_request(action_adv_url);
+      client.process_request(action_url);
     }
 
     client.process_request(zero_request);
@@ -467,17 +464,13 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
       AutoTest::predicate_checker(
         !client.debug_info.selected_creatives.empty()),
       "Server has returned selected creatives");
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-      "must have debug_info.action_adv_url");
-
-    std::string action_adv_url = client.debug_info.selected_creatives.first().action_adv_url;
-    action_adv_url += "*amp*debug-time*eql*" + request.debug_time.str();
+    AutoTest::ActionRequest action_request;
+    action_request.cid = client.debug_info.cmpid.value();
+    action_request.debug_time = request.debug_time;
 
     client.process_request(client.debug_info.click_url);
 
-    client.process_request(action_adv_url);
+    client.process_request(action_request);
   }
 
   {

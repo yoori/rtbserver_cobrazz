@@ -190,10 +190,6 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
       AutoTest::predicate_checker(
         !client.debug_info.click_url.empty()),
       "response must have valid click_url debug info value");
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.first().action_adv_url.empty()),
-      "response must have valid action_adv_url debug info value");
   }
   make_request_series(client, 4, action1, LU, REFERER1, base_time);
 

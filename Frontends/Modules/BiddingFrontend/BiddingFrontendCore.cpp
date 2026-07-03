@@ -433,11 +433,7 @@ namespace AdServer::Bidding
             src_debug_creative.action_revenue().value();
           dst_debug_creative.ecpm_bid =
             src_debug_creative.ecpm_bid().value();
-          dst_debug_creative.action_adv_url = src_debug_creative.action_adv_url();
           dst_debug_creative.html_url = src_debug_creative.html_url();
-          dst_debug_creative.triggered_expression =
-            src_debug_creative.triggered_expression();
-          dst_debug_creative.full_expression = src_debug_creative.full_expression();
         }
         dst_debug.trace_ccg = src_debug.trace_ccg();
 

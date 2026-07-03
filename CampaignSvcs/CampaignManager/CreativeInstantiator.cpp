@@ -1517,10 +1517,6 @@ namespace AdServer::CampaignSvcs
         creative_params_list.push_back(CreativeParams());
         CreativeParams& creative_params = creative_params_list.back();
         creative_params.click_url = instantiate_info.click_url;
-        creative_params.action_adv_url =
-          instantiate_info.action_pixel_url.substr(
-            0,
-            instantiate_info.action_pixel_url.find_last_of("/"));
 
         ClickParams click_params;
         std::string* click_url = 0;

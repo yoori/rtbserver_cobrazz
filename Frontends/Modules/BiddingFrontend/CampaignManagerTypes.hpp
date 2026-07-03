@@ -60,10 +60,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string click_revenue;
     std::string action_revenue;
     std::string ecpm_bid;
-    std::string action_adv_url;
     std::string html_url;
-    std::string triggered_expression;
-    std::string full_expression;
   };
 
   using CreativeSelectDebugInfoSeq = std::pmr::vector<CreativeSelectDebugInfo>;

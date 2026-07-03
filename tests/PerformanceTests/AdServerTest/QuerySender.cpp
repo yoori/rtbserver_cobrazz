@@ -165,7 +165,6 @@ void QuerySender::on_response(
     _schedule_child_requests(client_id,
                              is_opted_out,
                              ad_response->click_url.c_str(),
-                             ad_response->action_adv_url.c_str(),
                              ad_response->passback_url.c_str());
   }
 }
@@ -422,7 +421,6 @@ void QuerySender::_process_request(BaseRequest* request)
 //                       duration,
 //                       ccid, debug_info_.click_url.value().c_str(),
 //                       debug_info_.action_pixel_url.value().c_str(),
-//                       debug_info_.action_adv_url.value().c_str());
 //         }
 //       else
 //         {
@@ -508,7 +506,6 @@ void QuerySender::_schedule_request(BaseRequest* request,
 void QuerySender::_schedule_child_requests(unsigned long client_id,
                                            bool is_opted_out,
                                            const char* click_url,
-                                           const char* action_adv_url,
                                            const char* passback_url)
 {
   std::string server;
@@ -522,16 +519,6 @@ void QuerySender::_schedule_child_requests(unsigned long client_id,
                                              is_opted_out,
                                              cfg_.client_config()->click_request(),
                                              click_url);
-    _schedule_request(request, 0);
-  }
-  if (url_not_empty(action_adv_url) &&
-      need_send(action_count_++,  cfg_.client_config()->action_rate))
-  {
-    ActionRequest* request = new ActionRequest(this,
-                                               client_id,
-                                               is_opted_out,
-                                               cfg_.client_config()->action_request(),
-                                               action_adv_url);
     _schedule_request(request, 0);
   }
   if (url_not_empty(passback_url) &&
@@ -576,8 +563,6 @@ unsigned long QuerySender::_send_queued_requests(unsigned long max_requests)
     }
   return max_requests;
 }
-
-
 
 
 
