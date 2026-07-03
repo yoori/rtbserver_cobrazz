@@ -402,6 +402,8 @@ namespace
       "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) "
       "Gecko/20100101 Firefox/73.0";
     fixture.request_info.user_status = US_OPTIN;
+    fixture.request_info.tokens.push_back(
+      CampaignManagerCore::TokenInfo{CreativeTokens::TAGID, "bad-tag"});
 
     fixture.instantiate_params.generate_pubpixel_accounts = true;
     fixture.instantiate_params.publisher_account_id = 9803;
@@ -458,7 +460,14 @@ namespace
       fixture.ad_slot_context,
       &fixture.exclude_pubpixel_accounts);
 
-    //std::cout << "===" << std::endl << creative_body << std::endl << "===" << std::endl;
+    const std::string expected_tag_token =
+      std::string("tag=") + String::StringManip::IntToStr(
+        fixture.tag->tag_id).str().str() + "\n";
+    if(creative_body.find(expected_tag_token) == std::string::npos)
+    {
+      throw std::runtime_error(
+        "system TAGID token was overridden by request token");
+    }
 
     checksum.fetch_add(
       creative_body.size() + request_result_params.mime_format.size(),

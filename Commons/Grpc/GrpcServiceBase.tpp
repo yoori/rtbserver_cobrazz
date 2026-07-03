@@ -218,7 +218,7 @@ namespace AdServer::Grpc
           auto* response =
             google::protobuf::Arena::CreateMessage<Response>(&response_arena);
           ::grpc::Status status;
-          co_await handler(*request, *response, status);
+          co_await handler(std::move(*request), *response, status);
 
           batch_response.set_status_code(status.error_code());
           batch_response.set_status_message(status.error_message());
@@ -283,11 +283,11 @@ namespace AdServer::Grpc
         service_impl,
         handler = call.handler
       ](
-        const Request& request,
+        Request&& request,
         Response& response,
         ::grpc::Status& status) -> GrpcCoroutine
       {
-        co_await (service_impl->*handler)(request, response, status);
+        co_await (service_impl->*handler)(std::move(request), response, status);
       },
       call.batch_hash,
       call.distributed_batch);
@@ -812,7 +812,7 @@ namespace AdServer::Grpc
     {
       operation_.emplace(
         (service_impl_->*handler_rpc_)(
-          *this->request_,
+          std::move(*this->request_),
           this->response_,
           status_));
     }

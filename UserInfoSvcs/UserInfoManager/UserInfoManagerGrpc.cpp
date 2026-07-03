@@ -568,67 +568,67 @@ namespace AdServer::UserInfoSvcs
     }
 
     AdServer::Grpc::GrpcCoroutine co_get_source(
-      const adserver::user_info_svcs::user_info_manager::GetSourceRequest&,
+      adserver::user_info_svcs::user_info_manager::GetSourceRequest&&,
       adserver::user_info_svcs::user_info_manager::GetSourceResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_master_stamp(
-      const adserver::user_info_svcs::user_info_manager::GetMasterStampRequest&,
+      adserver::user_info_svcs::user_info_manager::GetMasterStampRequest&&,
       adserver::user_info_svcs::user_info_manager::GetMasterStampResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_user_profile(
-      const adserver::user_info_svcs::user_info_manager::GetUserProfileRequest& request,
+      adserver::user_info_svcs::user_info_manager::GetUserProfileRequest&& request,
       adserver::user_info_svcs::user_info_manager::GetUserProfileResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_match(
-      const adserver::user_info_svcs::user_info_manager::MatchRequest& request,
+      adserver::user_info_svcs::user_info_manager::MatchRequest&& request,
       adserver::user_info_svcs::user_info_manager::MatchResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_update_user_freq_caps(
-      const adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest& request,
+      adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest&& request,
       adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_confirm_user_freq_caps(
-      const adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest& request,
+      adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest&& request,
       adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_fraud_user(
-      const adserver::user_info_svcs::user_info_manager::FraudUserRequest& request,
+      adserver::user_info_svcs::user_info_manager::FraudUserRequest&& request,
       adserver::user_info_svcs::user_info_manager::FraudUserResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_remove_user_profile(
-      const adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest& request,
+      adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest&& request,
       adserver::user_info_svcs::user_info_manager::RemoveUserProfileResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_merge(
-      const adserver::user_info_svcs::user_info_manager::MergeRequest& request,
+      adserver::user_info_svcs::user_info_manager::MergeRequest&& request,
       adserver::user_info_svcs::user_info_manager::MergeResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_consider_publishers_optin(
-      const adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest& request,
+      adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest&& request,
       adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_uim_ready(
-      const adserver::user_info_svcs::user_info_manager::UimReadyRequest&,
+      adserver::user_info_svcs::user_info_manager::UimReadyRequest&&,
       adserver::user_info_svcs::user_info_manager::UimReadyResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_progress(
-      const adserver::user_info_svcs::user_info_manager::GetProgressRequest&,
+      adserver::user_info_svcs::user_info_manager::GetProgressRequest&&,
       adserver::user_info_svcs::user_info_manager::GetProgressResponse& response,
       grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_clear_expired(
-      const adserver::user_info_svcs::user_info_manager::ClearExpiredRequest& request,
+      adserver::user_info_svcs::user_info_manager::ClearExpiredRequest&& request,
       adserver::user_info_svcs::user_info_manager::ClearExpiredResponse& response,
       grpc::Status& result_status) const;
 
@@ -729,7 +729,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_get_source(
-    const adserver::user_info_svcs::user_info_manager::GetSourceRequest&,
+    adserver::user_info_svcs::user_info_manager::GetSourceRequest&&,
     adserver::user_info_svcs::user_info_manager::GetSourceResponse& response,
     grpc::Status& result_status) const
   {
@@ -759,7 +759,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_get_master_stamp(
-    const adserver::user_info_svcs::user_info_manager::GetMasterStampRequest&,
+    adserver::user_info_svcs::user_info_manager::GetMasterStampRequest&&,
     adserver::user_info_svcs::user_info_manager::GetMasterStampResponse& response,
     grpc::Status& result_status) const
   {
@@ -786,7 +786,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_get_user_profile(
-    const adserver::user_info_svcs::user_info_manager::GetUserProfileRequest& request,
+    adserver::user_info_svcs::user_info_manager::GetUserProfileRequest&& request,
     adserver::user_info_svcs::user_info_manager::GetUserProfileResponse& response,
     grpc::Status& result_status) const
   {
@@ -825,7 +825,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_match(
-    const adserver::user_info_svcs::user_info_manager::MatchRequest& request,
+    adserver::user_info_svcs::user_info_manager::MatchRequest&& request,
     adserver::user_info_svcs::user_info_manager::MatchResponse& response,
     grpc::Status& result_status) const
   {
@@ -874,7 +874,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_update_user_freq_caps(
-    const adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest& request,
+    adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest&& request,
     adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse& response,
     grpc::Status& result_status) const
   {
@@ -918,7 +918,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_confirm_user_freq_caps(
-    const adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest& request,
+    adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest&& request,
     adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse& response,
     grpc::Status& result_status) const
   {
@@ -957,7 +957,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_fraud_user(
-    const adserver::user_info_svcs::user_info_manager::FraudUserRequest& request,
+    adserver::user_info_svcs::user_info_manager::FraudUserRequest&& request,
     adserver::user_info_svcs::user_info_manager::FraudUserResponse& response,
     grpc::Status& result_status) const
   {
@@ -993,7 +993,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_remove_user_profile(
-    const adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest& request,
+    adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest&& request,
     adserver::user_info_svcs::user_info_manager::RemoveUserProfileResponse& response,
     grpc::Status& result_status) const
   {
@@ -1028,7 +1028,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_merge(
-    const adserver::user_info_svcs::user_info_manager::MergeRequest& request,
+    adserver::user_info_svcs::user_info_manager::MergeRequest&& request,
     adserver::user_info_svcs::user_info_manager::MergeResponse& response,
     grpc::Status& result_status) const
   {
@@ -1079,7 +1079,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_consider_publishers_optin(
-    const adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest& request,
+    adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest&& request,
     adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinResponse&,
     grpc::Status& result_status) const
   {
@@ -1116,7 +1116,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_uim_ready(
-    const adserver::user_info_svcs::user_info_manager::UimReadyRequest&,
+    adserver::user_info_svcs::user_info_manager::UimReadyRequest&&,
     adserver::user_info_svcs::user_info_manager::UimReadyResponse& response,
     grpc::Status& result_status) const
   {
@@ -1131,7 +1131,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_get_progress(
-    const adserver::user_info_svcs::user_info_manager::GetProgressRequest&,
+    adserver::user_info_svcs::user_info_manager::GetProgressRequest&&,
     adserver::user_info_svcs::user_info_manager::GetProgressResponse& response,
     grpc::Status& result_status) const
   {
@@ -1146,7 +1146,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserInfoManagerGrpc::ServiceImpl::co_clear_expired(
-    const adserver::user_info_svcs::user_info_manager::ClearExpiredRequest& request,
+    adserver::user_info_svcs::user_info_manager::ClearExpiredRequest&& request,
     adserver::user_info_svcs::user_info_manager::ClearExpiredResponse&,
     grpc::Status& result_status) const
   {

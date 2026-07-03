@@ -16,6 +16,7 @@
 #include <Generics/Rand.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <BillingServerGrpc.grpc-client.hpp>
+#include <google/protobuf/arena.h>
 
 #include "AvailableAndMinCTRSetter.hpp"
 #include "BillingStateContainer.hpp"
@@ -306,12 +307,11 @@ namespace AdServer::CampaignSvcs
       const AvailableAndMinCTRSetter* ccg_setter)
       noexcept;
 
-    template<typename CallType,
-      typename CallResultType,
+    template<typename CallResultType,
+      typename CallType,
       typename CallArgType>
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::SyncCoro<AdServer::Grpc::ResponseHolder<CallResultType>>
     co_billing_server_call_(
-      CallResultType& call_result,
       unsigned long service_index,
       CallType call,
       CallArgType&& call_arg);
@@ -576,9 +576,11 @@ namespace AdServer::CampaignSvcs
     const RevenueDecimal& ctr,
     const AvailableAndMinCTRSetter* ccg_setter)
   {
-    Proto::CheckBidRequest check_bid_info;
+    google::protobuf::Arena request_arena;
+    auto* check_bid_info = google::protobuf::Arena::CreateMessage<
+      Proto::CheckBidRequest>(&request_arena);
     fill_bid_(
-      *check_bid_info.mutable_bid(),
+      *check_bid_info->mutable_bid(),
       now,
       account_id,
       advertiser_id,
@@ -636,8 +638,6 @@ namespace AdServer::CampaignSvcs
 
       assert(static_cast<unsigned long>(res_service_index) < billing_servers_.size());
 
-      Proto::BidResultResponse check_available_bid_result;
-
       billing_request_params = check_available_bid_request_params_(
         res_service_index,
         nullptr,
@@ -649,27 +649,29 @@ namespace AdServer::CampaignSvcs
         ctr,
         optimize_campaign_ctr_);
 
-      const bool success_called = co_await co_billing_server_call_(
-        check_available_bid_result,
+      auto check_available_bid_result =
+        co_await co_billing_server_call_<Proto::BidResultResponse>(
         res_service_index,
         &BillingServerGrpcAsyncClient::check_available_bid,
-        check_bid_info);
+        *check_bid_info);
 
       if(DEBUG_BILLING_SERVER_CALL_)
       {
         std::cerr << "check_available_bid call (server #" << res_service_index <<
-          "): success_called = " << success_called <<
+          "): success_called = " << static_cast<bool>(check_available_bid_result) <<
           ", check_available_bid_result = " <<
-          (success_called ? check_available_bid_result.available() : false) << std::endl;
+          (check_available_bid_result ?
+            check_available_bid_result->available() :
+            false) << std::endl;
       }
 
-      if(!success_called ||
-        !check_available_bid_result.available())
+      if(!check_available_bid_result ||
+        !check_available_bid_result->available())
       {
         SyncPolicy::WriteGuard lock(lock_);
         cache_[ccg_id].disabled_indexes.insert(
           std::make_pair(res_service_index, now));
-        if(!success_called)
+        if(!check_available_bid_result)
         {
           some_call_failed = true;
         }
@@ -678,7 +680,7 @@ namespace AdServer::CampaignSvcs
       {
         available = true;
         goal_ctr = unpack_revenue_decimal_(
-          check_available_bid_result.goal_ctr());
+          check_available_bid_result->goal_ctr());
         break;
       }
 
@@ -727,9 +729,11 @@ namespace AdServer::CampaignSvcs
     const ImpRevenueDecimal& clicks,
     const AvailableAndMinCTRSetter* ccg_setter)
   {
-    Proto::ConfirmBidInfo confirm_bid_info;
+    google::protobuf::Arena request_arena;
+    auto* confirm_bid_info = google::protobuf::Arena::CreateMessage<
+      Proto::ConfirmBidInfo>(&request_arena);
     fill_bid_(
-      *confirm_bid_info.mutable_bid(),
+      *confirm_bid_info->mutable_bid(),
       now,
       account_id,
       advertiser_id,
@@ -738,12 +742,14 @@ namespace AdServer::CampaignSvcs
       ctr,
       optimize_campaign_ctr_);
 
-    confirm_bid_info.set_account_spent_budget(GrpcAlgs::pack_decimal(account_spent_amount));
-    confirm_bid_info.set_spent_budget(GrpcAlgs::pack_decimal(spent_amount));
-    confirm_bid_info.set_reserved_budget(GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
-    confirm_bid_info.set_imps(GrpcAlgs::pack_decimal(imps));
-    confirm_bid_info.set_clicks(GrpcAlgs::pack_decimal(clicks));
-    confirm_bid_info.set_forced(false);
+    confirm_bid_info->set_account_spent_budget(
+      GrpcAlgs::pack_decimal(account_spent_amount));
+    confirm_bid_info->set_spent_budget(GrpcAlgs::pack_decimal(spent_amount));
+    confirm_bid_info->set_reserved_budget(
+      GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
+    confirm_bid_info->set_imps(GrpcAlgs::pack_decimal(imps));
+    confirm_bid_info->set_clicks(GrpcAlgs::pack_decimal(clicks));
+    confirm_bid_info->set_forced(false);
 
     DisabledIndexMap bad_indexes;
     bool available = false;
@@ -756,12 +762,12 @@ namespace AdServer::CampaignSvcs
         nullptr,
         now,
         ccg_id,
-        confirm_bid_info.forced() ? &bad_indexes : nullptr,
+        confirm_bid_info->forced() ? &bad_indexes : nullptr,
         nullptr);
 
       if(res_service_index == -1)
       {
-        if(confirm_bid_info.forced())
+        if(confirm_bid_info->forced())
         {
           billing_request_params = confirm_bid_request_params_(
             res_service_index,
@@ -772,17 +778,17 @@ namespace AdServer::CampaignSvcs
             campaign_id,
             ccg_id,
             ctr,
-            confirm_bid_info);
+            *confirm_bid_info);
           break;
         }
 
-        confirm_bid_info.set_forced(true);
+        confirm_bid_info->set_forced(true);
         continue;
       }
 
-      Proto::ConfirmBidRequest confirm_bid_request;
-      *confirm_bid_request.mutable_bid() = confirm_bid_info;
-      Proto::ConfirmBidResponse confirm_bid_response;
+      auto* confirm_bid_request = google::protobuf::Arena::CreateMessage<
+        Proto::ConfirmBidRequest>(&request_arena);
+      *confirm_bid_request->mutable_bid() = *confirm_bid_info;
 
       billing_request_params = confirm_bid_request_params_(
         res_service_index,
@@ -793,46 +799,48 @@ namespace AdServer::CampaignSvcs
         campaign_id,
         ccg_id,
         ctr,
-        confirm_bid_info);
+        *confirm_bid_info);
 
-      const bool success_called = co_await co_billing_server_call_(
-        confirm_bid_response,
+      auto confirm_bid_response =
+        co_await co_billing_server_call_<Proto::ConfirmBidResponse>(
         res_service_index,
         &BillingServerGrpcAsyncClient::confirm_bid,
-        confirm_bid_request);
+        *confirm_bid_request);
 
       if(DEBUG_BILLING_SERVER_CALL_)
       {
         std::cerr << "confirm_bid call (server #" << res_service_index <<
-          "): success_called = " << success_called <<
-          ", confirm_bid_result = " << (success_called ? confirm_bid_response.result().available() : false) <<
-          ", forced = " << confirm_bid_info.forced() << std::endl;
+          "): success_called = " << static_cast<bool>(confirm_bid_response) <<
+          ", confirm_bid_result = " <<
+          (confirm_bid_response ?
+            confirm_bid_response->result().available() :
+            false) <<
+          ", forced = " << confirm_bid_info->forced() << std::endl;
       }
 
-      if(!success_called || (!confirm_bid_info.forced() && !confirm_bid_response.has_result()))
+      if(!confirm_bid_response ||
+        (!confirm_bid_info->forced() && !confirm_bid_response->has_result()))
       {
-        if(confirm_bid_info.forced())
+        if(confirm_bid_info->forced())
         {
-          bad_indexes.insert(
-            std::make_pair(res_service_index, now));
+          bad_indexes.insert(std::make_pair(res_service_index, now));
         }
         else
         {
           SyncPolicy::WriteGuard lock(lock_);
-          cache_[ccg_id].disabled_indexes.insert(
-            std::make_pair(res_service_index, now));
+          cache_[ccg_id].disabled_indexes.insert(std::make_pair(res_service_index, now));
         }
       }
       else
       {
-        if(confirm_bid_response.has_bid())
+        if(confirm_bid_response->has_bid())
         {
-          confirm_bid_info = confirm_bid_response.bid();
+          *confirm_bid_info = confirm_bid_response->bid();
         }
 
-        available = confirm_bid_response.result().available();
+        available = confirm_bid_response->result().available();
         goal_ctr = unpack_revenue_decimal_(
-          confirm_bid_response.result().goal_ctr());
+          confirm_bid_response->result().goal_ctr());
         break;
       }
     }
@@ -969,12 +977,11 @@ namespace AdServer::CampaignSvcs
     return ++serv_index % billing_servers_.size();
   }
 
-  template<typename CallType,
-    typename CallResultType,
+  template<typename CallResultType,
+    typename CallType,
     typename CallArgType>
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::SyncCoro<AdServer::Grpc::ResponseHolder<CallResultType>>
   BillingStateContainer::Impl::co_billing_server_call_(
-    CallResultType& call_result,
     unsigned long service_index,
     CallType call,
     CallArgType&& call_arg)
@@ -1011,11 +1018,10 @@ namespace AdServer::CampaignSvcs
             Logging::Logger::EMERGENCY,
           Aspect::BILLING_STATE_CONTAINER,
           "ADS-ICON-4003");
-        co_return false;
+        co_return AdServer::Grpc::ResponseHolder<CallResultType>();
       }
 
-      call_result = response_holder.get();
-      co_return true;
+      co_return std::move(response_holder);
     }
     catch(const eh::Exception& ex)
     {
@@ -1038,7 +1044,7 @@ namespace AdServer::CampaignSvcs
         "ADS-ICON-4003");
     }
 
-    co_return false;
+    co_return AdServer::Grpc::ResponseHolder<CallResultType>();
   }
 
   void

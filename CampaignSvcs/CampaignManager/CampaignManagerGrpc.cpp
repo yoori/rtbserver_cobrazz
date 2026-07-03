@@ -1658,122 +1658,122 @@ namespace AdServer::CampaignSvcs
     }
 
     AdServer::Grpc::GrpcCoroutine co_ready(
-      const pb::ReadyRequest& request,
+      pb::ReadyRequest&& request,
       pb::ReadyResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_progress_comment(
-      const pb::ProgressCommentRequest& request,
+      pb::ProgressCommentRequest&& request,
       pb::ProgressCommentResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_match_geo_channels(
-      const pb::MatchGeoChannelsRequest& request,
+      pb::MatchGeoChannelsRequest&& request,
       pb::MatchGeoChannelsResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_file(
-      const pb::GetFileRequest& request,
+      pb::GetFileRequest&& request,
       pb::GetFileResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_campaign_creative(
-      const pb::GetCampaignCreativeRequest& request,
+      pb::GetCampaignCreativeRequest&& request,
       pb::GetCampaignCreativeResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_process_match_request(
-      const pb::ProcessMatchRequestRequest& request,
+      pb::ProcessMatchRequestRequest&& request,
       pb::ProcessMatchRequestResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_process_anonymous_request(
-      const pb::ProcessAnonymousRequestRequest& request,
+      pb::ProcessAnonymousRequestRequest&& request,
       pb::ProcessAnonymousRequestResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_instantiate_ad(
-      const pb::InstantiateAdRequest& request,
+      pb::InstantiateAdRequest&& request,
       pb::InstantiateAdResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_trace_campaign_selection_index(
-      const pb::TraceCampaignSelectionIndexRequest& request,
+      pb::TraceCampaignSelectionIndexRequest&& request,
       pb::TraceCampaignSelectionIndexResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_trace_campaign_selection(
-      const pb::TraceCampaignSelectionRequest& request,
+      pb::TraceCampaignSelectionRequest&& request,
       pb::TraceCampaignSelectionResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_campaign_creative_by_ccid(
-      const pb::GetCampaignCreativeByCcidRequest& request,
+      pb::GetCampaignCreativeByCcidRequest&& request,
       pb::GetCampaignCreativeByCcidResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_channel_links(
-      const pb::GetChannelLinksRequest& request,
+      pb::GetChannelLinksRequest&& request,
       pb::GetChannelLinksResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_discover_channels(
-      const pb::GetDiscoverChannelsRequest& request,
+      pb::GetDiscoverChannelsRequest&& request,
       pb::GetDiscoverChannelsResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_category_channels(
-      const pb::GetCategoryChannelsRequest& request,
+      pb::GetCategoryChannelsRequest&& request,
       pb::GetCategoryChannelsResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_colocation_flags(
-      const pb::GetColocationFlagsRequest& request,
+      pb::GetColocationFlagsRequest&& request,
       pb::GetColocationFlagsResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_pub_pixels(
-      const pb::GetPubPixelsRequest& request,
+      pb::GetPubPixelsRequest&& request,
       pb::GetPubPixelsResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_consider_passback(
-      const pb::ConsiderPassbackRequest& request,
+      pb::ConsiderPassbackRequest&& request,
       pb::ConsiderPassbackResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_consider_passback_track(
-      const pb::ConsiderPassbackTrackRequest& request,
+      pb::ConsiderPassbackTrackRequest&& request,
       pb::ConsiderPassbackTrackResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_click_url(
-      const pb::GetClickUrlRequest& request,
+      pb::GetClickUrlRequest&& request,
       pb::GetClickUrlResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_verify_impression(
-      const pb::VerifyImpressionRequest& request,
+      pb::VerifyImpressionRequest&& request,
       pb::VerifyImpressionResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_action_taken(
-      const pb::ActionTakenRequest& request,
+      pb::ActionTakenRequest&& request,
       pb::ActionTakenResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_verify_opt_operation(
-      const pb::VerifyOptOperationRequest& request,
+      pb::VerifyOptOperationRequest&& request,
       pb::VerifyOptOperationResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_consider_web_operation(
-      const pb::ConsiderWebOperationRequest& request,
+      pb::ConsiderWebOperationRequest&& request,
       pb::ConsiderWebOperationResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_config(
-      const pb::GetConfigRequest& request,
+      pb::GetConfigRequest&& request,
       pb::GetConfigResponse& response,
       ::grpc::Status& result_status) const;
 
@@ -1963,7 +1963,7 @@ namespace AdServer::CampaignSvcs
 #define DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(MethodName, RequestType, ResponseType) \
   AdServer::Grpc::GrpcCoroutine \
   CampaignManagerGrpc::ServiceImpl::co_##MethodName( \
-    const RequestType& request, \
+    RequestType&& request, \
     ResponseType& response, \
     ::grpc::Status& result_status) const \
   { \
@@ -2217,7 +2217,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   CampaignManagerGrpc::ServiceImpl::co_get_campaign_creative(
-    const pb::GetCampaignCreativeRequest& request,
+    pb::GetCampaignCreativeRequest&& request,
     pb::GetCampaignCreativeResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -2234,8 +2234,9 @@ namespace AdServer::CampaignSvcs
     try
     {
 
+      auto core_request_params = unpack_request_params(request.request_params());
       const auto result = co_await core_->co_get_campaign_creative(
-        unpack_request_params(request.request_params()));
+        std::move(core_request_params));
 
       response.set_hostname(result.hostname);
       response.mutable_request_result()->set_process_time(
@@ -2386,7 +2387,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   CampaignManagerGrpc::ServiceImpl::co_instantiate_ad(
-    const pb::InstantiateAdRequest& request,
+    pb::InstantiateAdRequest&& request,
     pb::InstantiateAdResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -2895,7 +2896,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   CampaignManagerGrpc::ServiceImpl::co_get_click_url(
-    const pb::GetClickUrlRequest& request,
+    pb::GetClickUrlRequest&& request,
     pb::GetClickUrlResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -2965,7 +2966,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   CampaignManagerGrpc::ServiceImpl::co_verify_impression(
-    const pb::VerifyImpressionRequest& request,
+    pb::VerifyImpressionRequest&& request,
     pb::VerifyImpressionResponse& response,
     ::grpc::Status& result_status) const
   {

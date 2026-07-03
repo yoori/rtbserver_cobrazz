@@ -731,7 +731,7 @@ namespace AdServer
 
       AdServer::Commons::SyncCoro<CreativeRequestResultInfo>
       co_get_campaign_creative(
-        const CreativeRequestInfo& request_params);
+        CreativeRequestInfo&& request_params);
 
       void
       match_geo_channels(

@@ -232,27 +232,27 @@ namespace AdServer::UserInfoSvcs
       adserver::grpc::BatchResponse& batch_response) const override;
 
     AdServer::Grpc::GrpcCoroutine co_get_bind_request(
-      const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
+      adserver::user_info_svcs::user_bind::GetBindRequestRequest&& request,
       adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_add_bind_request(
-      const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
+      adserver::user_info_svcs::user_bind::AddBindRequestRequest&& request,
       adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_user_id(
-      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
+      adserver::user_info_svcs::user_bind::GetUserIdRequest&& request,
       adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_add_user_id(
-      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
+      adserver::user_info_svcs::user_bind::AddUserIdRequest&& request,
       adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_source(
-      const adserver::user_info_svcs::user_bind::GetSourceRequest& request,
+      adserver::user_info_svcs::user_bind::GetSourceRequest&& request,
       adserver::user_info_svcs::user_bind::GetSourceResponse& response,
       ::grpc::Status& result_status) const;
 
@@ -322,7 +322,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserBindServerGrpc::ServiceImpl::co_get_bind_request(
-    const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
+    adserver::user_info_svcs::user_bind::GetBindRequestRequest&& request,
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -377,7 +377,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserBindServerGrpc::ServiceImpl::co_add_bind_request(
-    const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
+    adserver::user_info_svcs::user_bind::AddBindRequestRequest&& request,
     adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -437,7 +437,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserBindServerGrpc::ServiceImpl::co_get_user_id(
-    const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
+    adserver::user_info_svcs::user_bind::GetUserIdRequest&& request,
     adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -506,7 +506,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserBindServerGrpc::ServiceImpl::co_add_user_id(
-    const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
+    adserver::user_info_svcs::user_bind::AddUserIdRequest&& request,
     adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -566,7 +566,7 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Grpc::GrpcCoroutine
   UserBindServerGrpc::ServiceImpl::co_get_source(
-    const adserver::user_info_svcs::user_bind::GetSourceRequest& request,
+    adserver::user_info_svcs::user_bind::GetSourceRequest&& request,
     adserver::user_info_svcs::user_bind::GetSourceResponse& response,
     ::grpc::Status& result_status) const
   {

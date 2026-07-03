@@ -283,22 +283,22 @@ namespace AdServer::CampaignSvcs
       adserver::grpc::BatchResponse& batch_response) const override;
 
     AdServer::Grpc::GrpcCoroutine co_check_available_bid(
-      const Proto::CheckBidRequest& request,
+      Proto::CheckBidRequest&& request,
       Proto::BidResultResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_reserve_bid(
-      const Proto::ReserveBidRequest& request,
+      Proto::ReserveBidRequest&& request,
       Proto::ReserveBidResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_confirm_bid(
-      const Proto::ConfirmBidRequest& request,
+      Proto::ConfirmBidRequest&& request,
       Proto::ConfirmBidResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_add_amount(
-      const Proto::AddAmountRequest& request,
+      Proto::AddAmountRequest&& request,
       Proto::AddAmountResponse& response,
       ::grpc::Status& result_status) const;
 
@@ -358,7 +358,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   BillingServerGrpc::ServiceImpl::co_check_available_bid(
-    const Proto::CheckBidRequest& request,
+    Proto::CheckBidRequest&& request,
     Proto::BidResultResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -391,7 +391,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   BillingServerGrpc::ServiceImpl::co_reserve_bid(
-    const Proto::ReserveBidRequest& request,
+    Proto::ReserveBidRequest&& request,
     Proto::ReserveBidResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -423,7 +423,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   BillingServerGrpc::ServiceImpl::co_confirm_bid(
-    const Proto::ConfirmBidRequest& request,
+    Proto::ConfirmBidRequest&& request,
     Proto::ConfirmBidResponse& response,
     ::grpc::Status& result_status) const
   {
@@ -456,7 +456,7 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Grpc::GrpcCoroutine
   BillingServerGrpc::ServiceImpl::co_add_amount(
-    const Proto::AddAmountRequest& request,
+    Proto::AddAmountRequest&& request,
     Proto::AddAmountResponse& response,
     ::grpc::Status& result_status) const
   {

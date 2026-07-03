@@ -1466,9 +1466,9 @@ namespace AdServer::CampaignSvcs
       request_args_manager_->create_provider(request_context);
 
     ArgsLayerBuilder request_args_builder;
-    request_args_builder.add_provider(request_args_provider);
     request_args_builder.add_provider(
       make_template_params_args_provider(request_args_ptr.in()));
+    request_args_builder.add_provider(request_args_provider);
     request_args_builder.add_provider(
       common_creative_args_manager_->create_provider(request_context));
     const std::shared_ptr<String::TextTemplate::ArgsCallback>

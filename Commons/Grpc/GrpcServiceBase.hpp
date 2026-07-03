@@ -193,7 +193,7 @@ namespace AdServer::Grpc
       ::grpc::ServerCompletionQueue*,
       void*);
     using Handler = GrpcCoroutine (ServiceImplType::*)(
-      const Request&,
+      Request&&,
       Response&,
       ::grpc::Status&) const;
     using BatchHandler = void (ServiceImplType::*)(
@@ -674,7 +674,7 @@ namespace AdServer::Grpc
       ::grpc::ServerCompletionQueue*,
       void*);
     using Handler = GrpcCoroutine (ServiceImplType::*)(
-      const Request&,
+      Request&&,
       Response&,
       ::grpc::Status&) const;
 
