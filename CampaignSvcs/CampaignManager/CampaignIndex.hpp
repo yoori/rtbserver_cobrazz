@@ -279,7 +279,7 @@ namespace AdServer
 
       static bool
       check_tag_domain_exclusion(
-        const String::SubString& url,
+        std::string_view url,
         const Tag* tag)
         noexcept;
 

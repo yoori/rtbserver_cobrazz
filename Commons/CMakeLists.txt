@@ -43,15 +43,6 @@ target_link_libraries(Commons
   CorbaObjectRefIDL
 )
 
-
-add_library(Gason SHARED
-  Gason.cpp
-)
-
-target_link_libraries(Gason Generics)
-
-
-
 add_library(ProcessControlVars SHARED
   ProcessControlVarsImpl.cpp
 )
@@ -77,4 +68,4 @@ ADD_SUBDIRECTORY(Postgres)
 ADD_SUBDIRECTORY(Xslt)
 
 
-#install(TARGETS CampaignFreqIDL CookieInfoPackIDL CorbaTypesIDL FreqCapInfoIDL Commons Gason ProcessControlVars   DESTINATION ${INSTALL_DIR})
+#install(TARGETS CampaignFreqIDL CookieInfoPackIDL CorbaTypesIDL FreqCapInfoIDL Commons ProcessControlVars   DESTINATION ${INSTALL_DIR})

@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include "ExpressionChannel.hpp"
 
 namespace AdServer
@@ -54,7 +52,7 @@ namespace CampaignSvcs
 
   bool
   ExpressionChannelHolder::triggered_expression(
-    std::ostream& responded_expr,
+    std::string& responded_expr,
     const ChannelIdHashSet& triggered_channels)
     const
     /*throw(Exception, eh::Exception)*/
@@ -198,14 +196,14 @@ namespace CampaignSvcs
 
   bool
   SimpleChannel::triggered_expression(
-    std::ostream& responded_expr,
+    std::string& responded_expr,
     const ChannelIdHashSet& triggered_channels)
     const
     /*throw(Exception, eh::Exception)*/
   {
     if(triggered(&triggered_channels, 0))
     {
-      responded_expr << channel_params_.channel_id;
+      responded_expr += std::to_string(channel_params_.channel_id);
       return true;
     }
 
@@ -572,7 +570,7 @@ namespace CampaignSvcs
 
   bool
   ExpressionChannel::triggered_expression(
-    std::ostream& responded_expr,
+    std::string& responded_expr,
     const ChannelIdHashSet& triggered_channels)
     const
     /*throw(Exception, eh::Exception)*/
@@ -582,7 +580,7 @@ namespace CampaignSvcs
 
   bool
   ExpressionChannel::triggered_expression_(
-    std::ostream& responded_expr,
+    std::string& responded_expr,
     const Expression& expr,
     const ChannelIdHashSet& triggered_channels)
     const
@@ -602,7 +600,7 @@ namespace CampaignSvcs
       {
         if(params().channel_id || expr.channel->params().type == 'V')
         {
-          responded_expr << expr.channel->params().channel_id;
+          responded_expr += std::to_string(expr.channel->params().channel_id);
           return true;
         }
         else
@@ -622,14 +620,14 @@ namespace CampaignSvcs
 
     case AND:
       {
-        std::ostringstream sub_expr;
+        std::string sub_expr;
         for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
              ch_it != end_it;
              ++ch_it)
         {
           if(ch_it != expr.sub_channels.begin())
           {
-            sub_expr << " & ";
+            sub_expr += " & ";
           }
 
           if(!triggered_expression_(sub_expr, *ch_it, triggered_channels))
@@ -638,22 +636,28 @@ namespace CampaignSvcs
           }
         }
 
-        responded_expr << '(' << sub_expr.str() << ')';
+        responded_expr += '(';
+        responded_expr += sub_expr;
+        responded_expr += ')';
         return true;
       }
 
     case OR:
       {
-        std::ostringstream sub_expr;
+        std::string sub_expr;
         unsigned int count = 0;
         for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
              ch_it != expr.sub_channels.end();
              ++ch_it)
         {
-          std::ostringstream ss_expr;
+          std::string ss_expr;
           if (triggered_expression_(ss_expr, *ch_it, triggered_channels))
           {
-            sub_expr << (count ? " | " : "") << ss_expr.str();
+            if(count)
+            {
+              sub_expr += " | ";
+            }
+            sub_expr += ss_expr;
             ++count;
           }
         }
@@ -663,8 +667,15 @@ namespace CampaignSvcs
           return false;
         }
 
-        responded_expr << (count > 1 ? "(" : "") << sub_expr.str() <<
-          (count > 1 ? ")" : "");
+        if(count > 1)
+        {
+          responded_expr += '(';
+        }
+        responded_expr += sub_expr;
+        if(count > 1)
+        {
+          responded_expr += ')';
+        }
 
         return true;
       }
@@ -1048,33 +1059,35 @@ namespace CampaignSvcs
     get_all_channels_(channels, expr_);
   }
 
-  std::ostream&
+  std::string&
   FastExpressionChannel::print_(
-    std::ostream& os,
+    std::string& out,
     const Expression& expr)
     /*throw(eh::Exception)*/
   {
     if (expr.op == ExpressionChannel::NOP)
     {
-      os << expr.channel_id;
+      out += std::to_string(expr.channel_id);
     }
     else if (expr.op == ExpressionChannel::TRUE)
     {
-      os << 'T';
+      out += 'T';
     }
     else
     {
-      os << '(';
+      out += '(';
       bool first_argument_flag = true;
 
       for (auto it = expr.simple.begin(); it != expr.simple.end(); ++it)
       {
         if (!first_argument_flag)
         {
-          os << ' ' << static_cast<char>(expr.op) << ' ';
+          out += ' ';
+          out += static_cast<char>(expr.op);
+          out += ' ';
         }
 
-        os << *it;
+        out += std::to_string(*it);
         first_argument_flag = false;
       }
 
@@ -1082,23 +1095,25 @@ namespace CampaignSvcs
       {
         if (!first_argument_flag)
         {
-          os << ' ' << (char)expr.op << ' ';
+          out += ' ';
+          out += static_cast<char>(expr.op);
+          out += ' ';
         }
 
-        print_(os, *it);
+        print_(out, *it);
         first_argument_flag = false;
       }
 
-      os << ')';
+      out += ')';
     }
 
-    return os;
+    return out;
   }
 
-  std::ostream&
-  FastExpressionChannel::print(std::ostream& os) const /*throw(eh::Exception)*/
+  std::string&
+  FastExpressionChannel::print(std::string& out) const /*throw(eh::Exception)*/
   {
-    return print_(os, expr_);
+    return print_(out, expr_);
   }
 
   bool

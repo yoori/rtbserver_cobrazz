@@ -61,7 +61,6 @@ link_directories(/opt/foros/vanga/lib)
 target_link_libraries(CTRProvider
   Generics
   PlainStorage3
-  Gason
   CampaignConfig
   pcre
   xgboost
@@ -161,6 +160,7 @@ target_link_libraries(CampaignManagerLogger
 add_executable(CampaignManager
   CampaignManagerCore.cpp
   CampaignManagerGrpc.cpp
+  CampaignManagerLogAdapter.cpp
   CampaignManagerMain.cpp
   CreativeInstantiator.cpp
   CreativeTextGenerator.cpp
@@ -179,7 +179,6 @@ target_link_libraries(CampaignManager
   HttpServer
   CORBACommons
   Commons
-  Gason
 
   AdServerCommonsXSD
   CampaignManagerConfigXSD

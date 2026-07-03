@@ -35,137 +35,284 @@ namespace
   }
 }
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  void
+  CampaignManagerCore::get_channel_targeting_info_(
+    CampaignSelectionData& select_params,
+    const ChannelIdHashSet& simple_channels,
+    const Campaign* campaign_candidate,
+    const CampaignKeyword* campaign_keyword,
+    CreativeSelectDebugInfo* creative_debug_info)
+    /*throw(eh::Exception)*/
   {
-    void
-    CampaignManagerCore::get_channel_targeting_info_(
-      CampaignSelectionData& select_params,
-      const ChannelIdHashSet& simple_channels,
-      const Campaign* campaign_candidate,
-      const CampaignKeyword* campaign_keyword,
-      CreativeSelectDebugInfo* creative_debug_info)
-      /*throw(eh::Exception)*/
+    static const char* FUN = "CampaignManagerCore::select_creative()";
+
+    if(campaign_candidate->targeted())
     {
-      static const char* FUN = "CampaignManagerCore::select_creative()";
-
-      if(campaign_candidate->targeted())
+      try
       {
-        try
-        {
-          select_params.responded_channels.clear();
-
-          if(campaign_candidate->channel.in())
-          {
-            ChannelIdSet responded_channels;
-            campaign_candidate->channel->triggered_named_channels(
-              responded_channels,
-              simple_channels);
-
-            std::copy(responded_channels.begin(),
-              responded_channels.end(),
-              std::back_inserter(select_params.responded_channels));
-
-            if(!campaign_keyword)
-            {
-              std::ostringstream responded_expression;
-
-              if (campaign_candidate->stat_channel.in() &&
-                  campaign_candidate->stat_channel->triggered_expression(
-                    responded_expression,
-                    simple_channels))
-              {
-                select_params.responded_expression = responded_expression.str();
-              }
-            }
-          }
-        }
-        catch (const ExpressionChannelBase::Exception& e)
-        {
-          logger_->sstream(Logging::Logger::WARNING,
-            Aspect::CAMPAIGN_MANAGER,
-            "ADS-IMPL-186") <<
-            FUN << ": Caught ExpressionChannelBase::Exception while triing "
-            "to get_triggered_channel_info"
-            " (cmpid: " << campaign_candidate->campaign_id << "). "
-            "responded_expression and responded_channels "
-            "will be left empty. : " << e.what();
-        }
-      }
-
-      if(campaign_keyword)
-      {
-        select_params.responded_channels.push_back(
-          select_params.campaign_keyword->channel_id);
-        std::ostringstream responded_expression;
-        responded_expression << select_params.campaign_keyword->channel_id;
-        select_params.responded_expression = responded_expression.str();
-      }
-
-      if (creative_debug_info)
-      {
-        /* fill triggered expression in debug info */
-        creative_debug_info->triggered_expression =
-          select_params.responded_expression;
+        select_params.responded_channels.clear();
 
         if(campaign_candidate->channel.in())
         {
-          std::ostringstream full_expr;
-          print(full_expr, campaign_candidate->channel);
-          creative_debug_info->full_expression = full_expr.str();
+          ChannelIdSet responded_channels;
+          campaign_candidate->channel->triggered_named_channels(
+            responded_channels,
+            simple_channels);
+
+          std::copy(responded_channels.begin(),
+            responded_channels.end(),
+            std::back_inserter(select_params.responded_channels));
+
+          if(!campaign_keyword)
+          {
+            std::string responded_expression;
+
+            if (campaign_candidate->stat_channel.in() &&
+                campaign_candidate->stat_channel->triggered_expression(
+                  responded_expression,
+                  simple_channels))
+            {
+              select_params.responded_expression = std::move(responded_expression);
+            }
+          }
         }
+      }
+      catch (const ExpressionChannelBase::Exception& e)
+      {
+        logger_->sstream(Logging::Logger::WARNING,
+          Aspect::CAMPAIGN_MANAGER,
+          "ADS-IMPL-186") <<
+          FUN << ": Caught ExpressionChannelBase::Exception while triing "
+          "to get_triggered_channel_info"
+          " (cmpid: " << campaign_candidate->campaign_id << "). "
+          "responded_expression and responded_channels "
+          "will be left empty. : " << e.what();
       }
     }
 
-    bool
-    CampaignManagerCore::instantiate_display_creative(
-      const CampaignConfig* config,
-      const Colocation* colocation,
-      const CreativeRequestInfo& request_params,
-      const TraceAdSlotInfo& ad_slot,
-      const CampaignSelector::WeightedCampaign& weighted_campaign,
-      AdSelectionResult& ad_selection_result,
-      RequestResultParams& request_result_params,
-      CreativeParams& creative_params,
-      AdSlotDebugInfo* ad_slot_debug_info,
-      std::string& creative_body,
-      std::string& creative_url,
-      AdSlotContext& ad_slot_context)
-      /*throw(eh::Exception)*/
+    if(campaign_keyword)
     {
-      static const char* FUN = "CampaignManagerCore::instantiate_display_creative()";
+      select_params.responded_channels.push_back(
+        select_params.campaign_keyword->channel_id);
+      select_params.responded_expression =
+        std::to_string(select_params.campaign_keyword->channel_id);
+    }
 
-      assert(weighted_campaign.tag_size);
+    if (creative_debug_info)
+    {
+      /* fill triggered expression in debug info */
+      creative_debug_info->triggered_expression = select_params.responded_expression;
 
-      const Campaign* campaign_candidate = weighted_campaign.campaign;
-      const Creative* creative_candidate = weighted_campaign.creative;
+      if(campaign_candidate->channel.in())
+      {
+        std::string full_expr;
+        print(full_expr, campaign_candidate->channel);
+        creative_debug_info->full_expression = std::move(full_expr);
+      }
+    }
+  }
 
-      assert(campaign_candidate);
+  bool
+  CampaignManagerCore::instantiate_display_creative(
+    const CampaignConfig* config,
+    const Colocation* colocation,
+    const CreativeRequestInfo& request_params,
+    const TraceAdSlotInfo& ad_slot,
+    const CampaignSelector::WeightedCampaign& weighted_campaign,
+    AdSelectionResult& ad_selection_result,
+    RequestResultParams& request_result_params,
+    CreativeParams& creative_params,
+    AdSlotDebugInfo* ad_slot_debug_info,
+    std::string& creative_body,
+    std::string& creative_url,
+    AdSlotContext& ad_slot_context)
+    /*throw(eh::Exception)*/
+  {
+    static const char* FUN = "CampaignManagerCore::instantiate_display_creative()";
+
+    assert(weighted_campaign.tag_size);
+
+    const Campaign* campaign_candidate = weighted_campaign.campaign;
+    const Creative* creative_candidate = weighted_campaign.creative;
+
+    assert(campaign_candidate);
+    assert(creative_candidate);
+
+    CreativeSelectDebugInfo* creative_debug_info = 0;
+
+    if(ad_slot_debug_info)
+    {
+      ad_slot_debug_info->selected_creatives.resize(1);
+      creative_debug_info = &ad_slot_debug_info->selected_creatives[0];
+    }
+
+    ad_selection_result.tag = weighted_campaign.tag;
+    ad_selection_result.tag_size = weighted_campaign.tag_size;
+    ad_selection_result.tag_pricing = weighted_campaign.tag_pricing;
+
+    CampaignSelectionData select_params;
+    select_params.campaign = campaign_candidate;
+    select_params.creative = creative_candidate;
+    select_params.ecpm_bid = weighted_campaign.ecpm;
+    select_params.ecpm = weighted_campaign.ecpm;
+    select_params.ctr = weighted_campaign.ctr;
+    select_params.conv_rate = weighted_campaign.conv_rate;
+    select_params.request_id = Commons::RequestId::create_random_based();
+
+    // Find responded expression and responded channels
+    ChannelIdHashSet simple_channels(
+      request_params.channels.begin(),
+      request_params.channels.end());
+    get_channel_targeting_info_(
+      select_params,
+      simple_channels,
+      campaign_candidate,
+      0, // campaign keyword
+      creative_debug_info);
+
+    ad_selection_result.selected_campaigns.push_back(select_params);
+
+    // instantiating creative
+    try
+    {
+      CreativeParamsList creative_params_list;
+
+      AdInstantiateType ad_instantiate_type =
+        static_cast<AdInstantiateType>(request_params.ad_instantiate_type);
+
+      CreativeInstantiator creative_instantiator(
+        make_creative_instantiator_config(campaign_manager_config_),
+        creative_instantiate_,
+        passback_templates_,
+        token_to_parameters_,
+        ip_crypter_,
+        rid_signer_,
+        logger_,
+        country_whitelist_);
+      creative_instantiator.instantiate_creative_body(
+        ad_instantiate_type,
+        request_params,
+        config,
+        colocation,
+        weighted_campaign.tag_size->size->protocol_name.c_str(),
+        ad_slot,
+        ad_selection_result,
+        request_result_params,
+        creative_params_list,
+        creative_body,
+        creative_url,
+        ad_slot_context,
+        String::SubString(ad_slot.ext_tag_id));
+
+      assert(!creative_params_list.empty());
+
+      CreativeParams& upd_creative_params = *creative_params_list.begin();
+      ad_selection_result.selected_campaigns.front().click_url =
+        upd_creative_params.click_url;
+
+      if(ad_slot_debug_info)
+      {
+        ad_slot_debug_info->site_rate_id =
+          ad_selection_result.tag_pricing ? ad_selection_result.tag_pricing->site_rate_id : 0;
+      }
+
+      if(creative_debug_info)
+      {
+        if(campaign_candidate->track_actions())
+        {
+          std::ostringstream action_adv_url;
+          action_adv_url <<
+            upd_creative_params.action_adv_url <<
+            "/cid" << EQL << campaign_candidate->campaign_id;
+          creative_debug_info->action_adv_url = action_adv_url.str();
+        }
+      }
+
+      ad_selection_result.selected_campaigns.front().campaign =
+        campaign_candidate;
+      ad_selection_result.selected_campaigns.front().creative =
+        creative_candidate;
+      creative_params = *creative_params_list.begin();
+
+      return true;
+    }
+    catch(const CreativeTemplateProblem& ex)
+    {
+      logger_->sstream(Logging::Logger::ERROR,
+        Aspect::TRAFFICKING_PROBLEM,
+        "ADS-TF-7") <<
+        FUN << ": Can't instantiate creative ccid: " <<
+        creative_candidate->ccid << ". Caught CreativeTemplateProblem: " <<
+        ex.what();
+    }
+    catch(const CreativeInstantiateProblem& ex)
+    {
+      logger_->sstream(Logging::Logger::ERROR,
+        Aspect::TRAFFICKING_PROBLEM,
+        "ADS-TF-1000") <<
+        FUN << ": Can't instantiate creative ccid: " <<
+        creative_candidate->ccid << ". Caught CreativeInstantiateProblem: " <<
+        ex.what();
+    }
+
+    return false;
+  }
+
+  bool
+  CampaignManagerCore::instantiate_text_creatives(
+    const CampaignConfig* config,
+    const Colocation* const colocation,
+    const CreativeRequestInfo& request_params,
+    const TraceAdSlotInfo& ad_slot,
+    const CampaignSelector::WeightedCampaignKeywordList& campaign_keywords,
+    AdSelectionResult& ad_selection_result,
+    RequestResultParams& request_result_params,
+    CreativeParamsList& creative_params_list,
+    AdSlotDebugInfo* ad_slot_debug_info,
+    std::string& creative_body,
+    std::string& creative_url,
+    AdSlotContext& ad_slot_context)
+    /*throw(eh::Exception)*/
+  {
+    static const char* FUN = "CampaignManagerCore::instantiate_text_creatives()";
+
+    if(ad_slot_debug_info)
+    {
+      ad_slot_debug_info->selected_creatives.resize(campaign_keywords.size());
+    }
+
+    CORBA::ULong i = 0;
+
+    for(CampaignSelector::WeightedCampaignKeywordList::
+          const_iterator kw_it = campaign_keywords.begin();
+        kw_it != campaign_keywords.end();
+        ++kw_it)
+    {
+      CampaignSelectionData select_params;
+
+      const Campaign* campaign_candidate = kw_it->campaign;
+      const Creative* creative_candidate = kw_it->creative;
+
       assert(creative_candidate);
+
+      select_params.campaign = campaign_candidate;
+      select_params.creative = creative_candidate;
+      select_params.campaign_keyword = kw_it->campaign_keyword;
 
       CreativeSelectDebugInfo* creative_debug_info = 0;
 
       if(ad_slot_debug_info)
       {
-        ad_slot_debug_info->selected_creatives.resize(1);
-        creative_debug_info = &ad_slot_debug_info->selected_creatives[0];
+        creative_debug_info = &ad_slot_debug_info->selected_creatives[i++];
       }
 
-      ad_selection_result.tag = weighted_campaign.tag;
-      ad_selection_result.tag_size = weighted_campaign.tag_size;
-      ad_selection_result.tag_pricing = weighted_campaign.tag_pricing;
+      select_params.ecpm_bid = kw_it->actual_ecpm;
+      select_params.ecpm = kw_it->ecpm;
+      select_params.ctr = kw_it->ctr;
+      select_params.conv_rate = kw_it->conv_rate;
 
-      CampaignSelectionData select_params;
-      select_params.campaign = campaign_candidate;
-      select_params.creative = creative_candidate;
-      select_params.ecpm_bid = weighted_campaign.ecpm;
-      select_params.ecpm = weighted_campaign.ecpm;
-      select_params.ctr = weighted_campaign.ctr;
-      select_params.conv_rate = weighted_campaign.conv_rate;
-      select_params.request_id = Commons::RequestId::create_random_based();
-
-      // Find responded expression and responded channels
       ChannelIdHashSet simple_channels(
         request_params.channels.begin(),
         request_params.channels.end());
@@ -173,248 +320,96 @@ namespace AdServer
         select_params,
         simple_channels,
         campaign_candidate,
-        0, // campaign keyword
+        kw_it->campaign_keyword,
         creative_debug_info);
 
+      select_params.actual_cpc = kw_it->actual_cpc;
+      select_params.track_impr = true;
+      select_params.request_id = Commons::RequestId::create_random_based();
+
       ad_selection_result.selected_campaigns.push_back(select_params);
+    }
 
-      // instantiating creative
-      try
+    try
+    {
+      AdInstantiateType ad_instantiate_type =
+        static_cast<AdInstantiateType>(request_params.ad_instantiate_type);
+
+      CreativeInstantiator creative_instantiator(
+        make_creative_instantiator_config(campaign_manager_config_),
+        creative_instantiate_,
+        passback_templates_,
+        token_to_parameters_,
+        ip_crypter_,
+        rid_signer_,
+        logger_,
+        country_whitelist_);
+      creative_instantiator.instantiate_creative_body(
+        ad_instantiate_type,
+        request_params,
+        config,
+        colocation,
+        ad_selection_result.tag_size->size->protocol_name.c_str(),
+        ad_slot,
+        ad_selection_result,
+        request_result_params,
+        creative_params_list,
+        creative_body,
+        creative_url,
+        ad_slot_context,
+        String::SubString(ad_slot.ext_tag_id));
+
+      if(ad_slot_debug_info)
       {
-        CreativeParamsList creative_params_list;
+        assert(ad_selection_result.selected_campaigns.size() ==
+          creative_params_list.size());
 
-        AdInstantiateType ad_instantiate_type =
-          static_cast<AdInstantiateType>(request_params.ad_instantiate_type);
+        CampaignSelectionDataList::iterator select_params_it =
+          ad_selection_result.selected_campaigns.begin();
 
-        CreativeInstantiator creative_instantiator(
-          make_creative_instantiator_config(campaign_manager_config_),
-          creative_instantiate_,
-          passback_templates_,
-          token_to_parameters_,
-          ip_crypter_,
-          rid_signer_,
-          logger_,
-          country_whitelist_);
-        creative_instantiator.instantiate_creative_body(
-          ad_instantiate_type,
-          request_params,
-          config,
-          colocation,
-          weighted_campaign.tag_size->size->protocol_name.c_str(),
-          ad_slot,
-          ad_selection_result,
-          request_result_params,
-          creative_params_list,
-          creative_body,
-          creative_url,
-          ad_slot_context,
-          String::SubString(ad_slot.ext_tag_id));
+        CORBA::ULong i = 0;
 
-        assert(!creative_params_list.empty());
-
-        CreativeParams& upd_creative_params = *creative_params_list.begin();
-        ad_selection_result.selected_campaigns.front().click_url =
-          upd_creative_params.click_url;
-
-        if(ad_slot_debug_info)
+        for(CreativeParamsList::iterator creative_params_it =
+              creative_params_list.begin();
+            creative_params_it != creative_params_list.end();
+            ++creative_params_it, ++select_params_it, ++i)
         {
-          ad_slot_debug_info->site_rate_id =
-            ad_selection_result.tag_pricing ? ad_selection_result.tag_pricing->site_rate_id : 0;
-        }
+          const Campaign* campaign_candidate = select_params_it->campaign;
+          const CreativeParams& creative_params = *creative_params_it;
 
-        if(creative_debug_info)
-        {
+          CreativeSelectDebugInfo& creative_debug_info =
+            ad_slot_debug_info->selected_creatives[i];
+
+          select_params_it->click_url = creative_params.click_url;
+
+          /*
+          creative_debug_info.click_url <<
+            creative_params.click_url;
+          */
+
           if(campaign_candidate->track_actions())
           {
             std::ostringstream action_adv_url;
             action_adv_url <<
-              upd_creative_params.action_adv_url <<
+              creative_params.action_adv_url <<
               "/cid" << EQL << campaign_candidate->campaign_id;
-            creative_debug_info->action_adv_url = action_adv_url.str();
+            creative_debug_info.action_adv_url = action_adv_url.str();
           }
         }
-
-        ad_selection_result.selected_campaigns.front().campaign =
-          campaign_candidate;
-        ad_selection_result.selected_campaigns.front().creative =
-          creative_candidate;
-        creative_params = *creative_params_list.begin();
-
-        return true;
-      }
-      catch(const CreativeTemplateProblem& ex)
-      {
-        logger_->sstream(Logging::Logger::ERROR,
-          Aspect::TRAFFICKING_PROBLEM,
-          "ADS-TF-7") <<
-          FUN << ": Can't instantiate creative ccid: " <<
-          creative_candidate->ccid << ". Caught CreativeTemplateProblem: " <<
-          ex.what();
-      }
-      catch(const CreativeInstantiateProblem& ex)
-      {
-        logger_->sstream(Logging::Logger::ERROR,
-          Aspect::TRAFFICKING_PROBLEM,
-          "ADS-TF-1000") <<
-          FUN << ": Can't instantiate creative ccid: " <<
-          creative_candidate->ccid << ". Caught CreativeInstantiateProblem: " <<
-          ex.what();
       }
 
-      return false;
+      return true;
     }
-
-    bool
-    CampaignManagerCore::instantiate_text_creatives(
-      const CampaignConfig* config,
-      const Colocation* const colocation,
-      const CreativeRequestInfo& request_params,
-      const TraceAdSlotInfo& ad_slot,
-      const CampaignSelector::WeightedCampaignKeywordList& campaign_keywords,
-      AdSelectionResult& ad_selection_result,
-      RequestResultParams& request_result_params,
-      CreativeParamsList& creative_params_list,
-      AdSlotDebugInfo* ad_slot_debug_info,
-      std::string& creative_body,
-      std::string& creative_url,
-      AdSlotContext& ad_slot_context)
-      /*throw(eh::Exception)*/
+    catch(const CreativeInstantiateProblem& ex)
     {
-      static const char* FUN = "CampaignManagerCore::instantiate_text_creatives()";
-
-      if(ad_slot_debug_info)
-      {
-        ad_slot_debug_info->selected_creatives.resize(campaign_keywords.size());
-      }
-
-      CORBA::ULong i = 0;
-
-      for(CampaignSelector::WeightedCampaignKeywordList::
-            const_iterator kw_it = campaign_keywords.begin();
-          kw_it != campaign_keywords.end();
-          ++kw_it)
-      {
-        CampaignSelectionData select_params;
-
-        const Campaign* campaign_candidate = kw_it->campaign;
-        const Creative* creative_candidate = kw_it->creative;
-
-        assert(creative_candidate);
-
-        select_params.campaign = campaign_candidate;
-        select_params.creative = creative_candidate;
-        select_params.campaign_keyword = kw_it->campaign_keyword;
-
-        CreativeSelectDebugInfo* creative_debug_info = 0;
-
-        if(ad_slot_debug_info)
-        {
-          creative_debug_info = &ad_slot_debug_info->selected_creatives[i++];
-        }
-
-        select_params.ecpm_bid = kw_it->actual_ecpm;
-        select_params.ecpm = kw_it->ecpm;
-        select_params.ctr = kw_it->ctr;
-        select_params.conv_rate = kw_it->conv_rate;
-
-        ChannelIdHashSet simple_channels(
-          request_params.channels.begin(),
-          request_params.channels.end());
-        get_channel_targeting_info_(
-          select_params,
-          simple_channels,
-          campaign_candidate,
-          kw_it->campaign_keyword,
-          creative_debug_info);
-
-        select_params.actual_cpc = kw_it->actual_cpc;
-        select_params.track_impr = true;
-        select_params.request_id = Commons::RequestId::create_random_based();
-
-        ad_selection_result.selected_campaigns.push_back(select_params);
-      }
-
-      try
-      {
-        AdInstantiateType ad_instantiate_type =
-          static_cast<AdInstantiateType>(request_params.ad_instantiate_type);
-
-        CreativeInstantiator creative_instantiator(
-          make_creative_instantiator_config(campaign_manager_config_),
-          creative_instantiate_,
-          passback_templates_,
-          token_to_parameters_,
-          ip_crypter_,
-          rid_signer_,
-          logger_,
-          country_whitelist_);
-        creative_instantiator.instantiate_creative_body(
-          ad_instantiate_type,
-          request_params,
-          config,
-          colocation,
-          ad_selection_result.tag_size->size->protocol_name.c_str(),
-          ad_slot,
-          ad_selection_result,
-          request_result_params,
-          creative_params_list,
-          creative_body,
-          creative_url,
-          ad_slot_context,
-          String::SubString(ad_slot.ext_tag_id));
-
-        if(ad_slot_debug_info)
-        {
-          assert(ad_selection_result.selected_campaigns.size() ==
-            creative_params_list.size());
-
-          CampaignSelectionDataList::iterator select_params_it =
-            ad_selection_result.selected_campaigns.begin();
-
-          CORBA::ULong i = 0;
-
-          for(CreativeParamsList::iterator creative_params_it =
-                creative_params_list.begin();
-              creative_params_it != creative_params_list.end();
-              ++creative_params_it, ++select_params_it, ++i)
-          {
-            const Campaign* campaign_candidate = select_params_it->campaign;
-            const CreativeParams& creative_params = *creative_params_it;
-
-            CreativeSelectDebugInfo& creative_debug_info =
-              ad_slot_debug_info->selected_creatives[i];
-
-            select_params_it->click_url = creative_params.click_url;
-
-            /*
-            creative_debug_info.click_url <<
-              creative_params.click_url;
-            */
-
-            if(campaign_candidate->track_actions())
-            {
-              std::ostringstream action_adv_url;
-              action_adv_url <<
-                creative_params.action_adv_url <<
-                "/cid" << EQL << campaign_candidate->campaign_id;
-              creative_debug_info.action_adv_url = action_adv_url.str();
-            }
-          }
-        }
-
-        return true;
-      }
-      catch(const CreativeInstantiateProblem& ex)
-      {
-        logger_->sstream(Logging::Logger::WARNING,
-          Aspect::TRAFFICKING_PROBLEM,
-          "ADS-TF-1001") <<
-          FUN << ": Can't instantiate text creative. "
-          "Caught CreativeInstantiateProblem: " <<
-          ex.what();
-      }
-
-      return false;
+      logger_->sstream(Logging::Logger::WARNING,
+        Aspect::TRAFFICKING_PROBLEM,
+        "ADS-TF-1001") <<
+        FUN << ": Can't instantiate text creative. "
+        "Caught CreativeInstantiateProblem: " <<
+        ex.what();
     }
-  } // namespace CampaignSvcs
-} // namespace AdServer
+
+    return false;
+  }
+} // namespace AdServer::CampaignSvcs

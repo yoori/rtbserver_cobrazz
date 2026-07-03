@@ -1034,7 +1034,9 @@ namespace CampaignSvcs
           if(expand)
           {
             out << "  " << ech_it->channel_id << ": ";
-            ech_it->channel->print(out);
+            std::string channel_expr;
+            ech_it->channel->print(channel_expr);
+            out << channel_expr;
             out << std::endl;
           }
           else

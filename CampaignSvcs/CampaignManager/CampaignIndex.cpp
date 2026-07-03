@@ -1451,7 +1451,7 @@ namespace AdServer
 
     bool
     CampaignIndex::check_tag_domain_exclusion(
-      const String::SubString& url_val,
+      std::string_view url_val,
       const Tag* tag)
       noexcept
     {
@@ -2273,9 +2273,9 @@ namespace AdServer
           "    fast expr = ";
         if(campaign->fast_channel)
         {
-          campaign->fast_channel->print(trace_params.trace_stream);
-          //campaign->fast_channel->print(trace_params.trace_stream);
-          //print(trace_params.trace_stream, campaign->fast_channel, true);
+          std::string fast_channel_expr;
+          campaign->fast_channel->print(fast_channel_expr);
+          trace_params.trace_stream << fast_channel_expr;
         }
         else
         {
@@ -2285,7 +2285,9 @@ namespace AdServer
           "    expr = ";
         if(campaign->channel)
         {
-          print(trace_params.trace_stream, campaign->channel, true);
+          std::string channel_expr;
+          print(channel_expr, campaign->channel, true);
+          trace_params.trace_stream << channel_expr;
         }
         else
         {

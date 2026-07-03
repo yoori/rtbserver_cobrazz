@@ -217,7 +217,7 @@ namespace AdServer
 
       virtual bool
       triggered_expression(
-        std::ostream& responded_expr,
+        std::string& responded_expr,
         const ChannelIdHashSet& triggered_channels)
         const
         /*throw(Exception, eh::Exception)*/ = 0;
@@ -254,10 +254,10 @@ namespace AdServer
         return ReferenceCounting::add_ref(this);
       };
 
-      virtual std::ostream&
-      print(std::ostream& os) const /*throw(eh::Exception)*/
+      virtual std::string&
+      print(std::string& out) const /*throw(eh::Exception)*/
       {
-        return os;
+        return out;
       }
 
     protected:
@@ -317,7 +317,7 @@ namespace AdServer
 
       virtual bool
       triggered_expression(
-        std::ostream& responded_expr,
+        std::string& responded_expr,
         const ChannelIdHashSet& triggered_channels)
         const
         /*throw(Exception, eh::Exception)*/;
@@ -431,7 +431,7 @@ namespace AdServer
 
       virtual bool
       triggered_expression(
-        std::ostream& responded_expr,
+        std::string& responded_expr,
         const ChannelIdHashSet& triggered_channels)
         const
         /*throw(Exception, eh::Exception)*/;
@@ -469,7 +469,7 @@ namespace AdServer
       ~SimpleChannel() noexcept = default;
     };
 
-    void print(std::ostream& out, const ExpressionChannelBase* channel, bool expand = false)
+    void print(std::string& out, const ExpressionChannelBase* channel, bool expand = false)
       noexcept;
 
     class ExpressionChannel:
@@ -477,7 +477,7 @@ namespace AdServer
       public ReferenceCounting::AtomicCopyImpl
     {
     public:
-      friend void print(std::ostream& out, const ExpressionChannelBase* channel, bool expand)
+      friend void print(std::string& out, const ExpressionChannelBase* channel, bool expand)
         noexcept;
 
       enum Operation
@@ -576,7 +576,7 @@ namespace AdServer
 
       virtual bool
       triggered_expression(
-        std::ostream& responded_expr,
+        std::string& responded_expr,
         const ChannelIdHashSet& triggered_channels)
         const
         /*throw(Exception, eh::Exception)*/;
@@ -670,7 +670,7 @@ namespace AdServer
         noexcept;
 
       bool triggered_expression_(
-        std::ostream& responded_expr,
+        std::string& responded_expr,
         const Expression& expr,
         const ChannelIdHashSet& triggered_channels)
         const
@@ -740,7 +740,7 @@ namespace AdServer
 
       virtual bool
       triggered_expression(
-        std::ostream&,
+        std::string&,
         const ChannelIdHashSet&) const
         /*throw(Exception, eh::Exception)*/
       {
@@ -765,8 +765,8 @@ namespace AdServer
         ChannelIdSet& channels)
         noexcept;
 
-      virtual std::ostream&
-      print(std::ostream& os) const /*throw(eh::Exception)*/;
+      virtual std::string&
+      print(std::string& out) const /*throw(eh::Exception)*/;
 
     protected:
       struct Expression
@@ -834,9 +834,9 @@ namespace AdServer
       make_cell_(const ExpressionChannel::Expression& expr)
         /*throw(eh::Exception)*/;
 
-      static std::ostream&
+      static std::string&
       print_(
-        std::ostream& os,
+        std::string& out,
         const Expression& expr)
         /*throw(eh::Exception)*/;
 
@@ -931,7 +931,7 @@ namespace AdServer
     }
 
     inline
-    void print_expression(std::ostream& out,
+    void print_expression(std::string& out,
       const ExpressionChannel::Expression& expr,
       bool expand)
       noexcept
@@ -944,39 +944,43 @@ namespace AdServer
         }
         else
         {
-          out << "NULL";
+          out += "NULL";
         }
       }
       else if(expr.op == ExpressionChannel::TRUE)
       {
-        out << "TRUE";
+        out += "TRUE";
       }
       else
       {
-        out << "(";
+        out += '(';
         for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expr.sub_channels.begin();
             eit != expr.sub_channels.end(); ++eit)
         {
           if(eit != expr.sub_channels.begin())
           {
-            out << " " << static_cast<char>(expr.op) << " ";
+            out += ' ';
+            out += static_cast<char>(expr.op);
+            out += ' ';
           }
 
           print_expression(out, *eit, expand);
         }
-        out << ")";
+        out += ')';
       }
     }
 
     inline
-    void print(std::ostream& out, const ExpressionChannelBase* channel, bool expand)
+    void print(std::string& out, const ExpressionChannelBase* channel, bool expand)
       noexcept
     {
       ConstSimpleChannel_var simple_channel = channel->simple_channel();
       if(simple_channel.in())
       {
-        out << "[" << simple_channel->params().channel_id << "]";
+        out += '[';
+        out += std::to_string(simple_channel->params().channel_id);
+        out += ']';
       }
       else
       {
@@ -988,7 +992,7 @@ namespace AdServer
         }
         else
         {
-          out << "NULL"; // non intialized holder
+          out += "NULL"; // non intialized holder
         }
       }
     }

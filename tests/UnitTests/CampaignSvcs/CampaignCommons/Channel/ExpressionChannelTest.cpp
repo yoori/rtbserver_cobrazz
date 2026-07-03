@@ -16,6 +16,28 @@ using namespace AdServer::CampaignSvcs;
 
 typedef std::unordered_map<unsigned long, ExpressionChannelHolder_var> ChannelCont;
 
+namespace
+{
+  void
+  print_channel(
+    std::ostream& out,
+    const ExpressionChannelBase* channel,
+    bool expand = false)
+  {
+    std::string expression;
+    print(expression, channel, expand);
+    out << expression;
+  }
+
+  void
+  print_channel(std::ostream& out, const ExpressionChannelBase_var& channel)
+  {
+    std::string expression;
+    channel->print(expression);
+    out << expression;
+  }
+}
+
 ExpressionChannelBase_var
 parse_for_channel(
   const char* expression,
@@ -90,7 +112,7 @@ int check_parse() noexcept
     if(triggered)
     {
       std::cerr << "channel triggered when non expected, channel: " << std::endl;
-      print(std::cerr, ch);
+      print_channel(std::cerr, ch);
       std::cerr << std::endl;
     }
   }
@@ -102,7 +124,7 @@ int check_parse() noexcept
     if(!triggered)
     {
       std::cerr << "channel not triggered when expected, channel: " << std::endl;
-      print(std::cerr, ch);
+      print_channel(std::cerr, ch);
       std::cerr << std::endl;
     }
   }
@@ -192,7 +214,7 @@ int check_parse_2() noexcept
     if(triggered)
     {
       std::cerr << "channel triggered when non expected, channel: " << std::endl;
-      print(std::cerr, ch);
+      print_channel(std::cerr, ch);
       std::cerr << std::endl;
     }
   }
@@ -205,7 +227,7 @@ int check_parse_2() noexcept
     if(!triggered)
     {
       std::cerr << "channel not triggered when expected, channel: " << std::endl;
-      print(std::cerr, ch);
+      print_channel(std::cerr, ch);
       std::cerr << std::endl;
     }
   }
@@ -573,11 +595,11 @@ check_fast_channel()
   ExpressionChannelBase_var ch = parse_for_channel(EXPR.c_str(), ChannelParams(1), channels);
 
   std::cout << "==================================" << std::endl;
-  print(std::cout, ch, true);
+  print_channel(std::cout, ch, true);
   std::cout << std::endl << "==================================" << std::endl;
 
   ExpressionChannelBase_var fast_channel = new FastExpressionChannel(ch);
-  fast_channel->print(std::cout);
+  print_channel(std::cout, fast_channel);
   std::cout << std::endl;
 
   ChannelWeightMap tt;
@@ -688,11 +710,11 @@ check_fast_channel2()
   ExpressionChannelBase_var ch = parse_for_channel(EXPR.c_str(), ChannelParams(1), channels);
 
   std::cout << "==================================" << std::endl;
-  print(std::cout, ch, true);
+  print_channel(std::cout, ch, true);
   std::cout << std::endl << "==================================" << std::endl;
 
   ExpressionChannelBase_var fast_channel = new FastExpressionChannel(ch);
-  fast_channel->print(std::cout);
+  print_channel(std::cout, fast_channel);
   std::cout << std::endl;
 
   ChannelWeightMap tt;
@@ -771,11 +793,11 @@ check_rand_spoof_fast_channel()
   ExpressionChannelBase_var ch = parse_for_channel(EXPR.c_str(), ChannelParams(1), channels);
 
   std::cout << "==================================" << std::endl;
-  print(std::cout, ch, true);
+  print_channel(std::cout, ch, true);
   std::cout << std::endl << "==================================" << std::endl;
 
   ExpressionChannelBase_var fast_channel = new FastExpressionChannel(ch);
-  fast_channel->print(std::cout);
+  print_channel(std::cout, fast_channel);
   std::cout << std::endl;
 
   ChannelWeightMap tt;

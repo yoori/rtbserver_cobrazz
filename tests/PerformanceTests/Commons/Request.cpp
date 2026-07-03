@@ -1,7 +1,6 @@
 
 #include "Request.hpp"
 #include <tests/AutoTests/Commons/Checkers/ServerResponseCheckers/OpenRTBResponseChecker.hpp>
-#include <Commons/Gason.hpp>
 
 namespace
 {
@@ -734,4 +733,3 @@ OpenRTBRequest::_get_param_idx(
   }
   return -1;
 }
-

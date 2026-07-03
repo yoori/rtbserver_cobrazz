@@ -1,6 +1,11 @@
 
 #include "RTBWinPriceNotificationTest.hpp"
 
+#include <list>
+#include <memory>
+
+#include <Commons/FastJsonParser.hpp>
+
 REFLECT_UNIT(RTBWinPriceNotificationTest) (
   "CreativeSelection",
   AUTO_TEST_SLOW );
@@ -10,6 +15,58 @@ namespace
   typedef AutoTest::UserBindRequest UserBindRequest;
   typedef AutoTest::OpenRTBRequest OpenRTBRequest;
   typedef AutoTest::AdClient AdClient;
+
+  struct CreativeClickParseContext
+  {
+    std::list<std::string>* stored_requests;
+    const char* click_macro;
+  };
+
+  class CreativeClickProcessor final:
+    public AdServer::Commons::FastJsonParser<>::ValueProcessor
+  {
+  public:
+    void
+    process_string(std::string_view value, std::string_view, void* context)
+      const override
+    {
+      process_string_impl_(std::string(value), context);
+    }
+
+    void
+    process_string(std::string&& value, std::string_view, void* context)
+      const override
+    {
+      process_string_impl_(value, context);
+    }
+
+  private:
+    static void
+    process_string_impl_(const std::string& value, void* context)
+    {
+      auto* parse_context = static_cast<CreativeClickParseContext*>(context);
+      std::string url;
+      String::StringManip::replace(
+        value,
+        url,
+        String::SubString(parse_context->click_macro),
+        String::SubString());
+      String::StringManip::mime_url_decode(url);
+      parse_context->stored_requests->push_back(url);
+    }
+  };
+
+  const AdServer::Commons::FastJsonParser<>&
+  creative_click_parser()
+  {
+    static const AdServer::Commons::FastJsonParser<>* parser = [] {
+      auto* result = new AdServer::Commons::FastJsonParser<>();
+      result->add_processor("CLICK", std::make_shared<CreativeClickProcessor>());
+      return result;
+    }();
+
+    return *parser;
+  }
 
   class OpenRTB;
   class OpenX;
@@ -446,27 +503,22 @@ RTBWinPriceNotificationTest::process_requests_(
       FAIL_CONTEXT(AutoTest::predicate_checker(get_token_value(ad_instance, "CREATIVES_JSON", creatives)),
                    "Can't get CREATIVES_JSON token value from response");
 
-      JsonValue root_value;
-      JsonAllocator json_allocator;
-      char* parse_end = 0;
-
       js_decode(creatives);
-      FAIL_CONTEXT(AutoTest::predicate_checker(json_parse(&creatives[0], &parse_end, &root_value, json_allocator) == JSON_PARSE_OK),
-                   "Can't parse CREATIVES_JSON token value from response");
-
       size_t size = stored_requests.size();
-      for (JsonIterator it1 = begin(root_value); it1 != end(root_value); ++it1)
+
+      CreativeClickParseContext context = {
+        &stored_requests,
+        RTBMacro<RTB>::click_macro
+      };
+
+      try
       {
-        for (JsonIterator it2 = begin(it1->value); it2 != end(it1->value); ++it2)
-        {
-          if (std::string(it2->key) == "CLICK")
-          {
-            std::string url;
-            String::StringManip::replace(it2->value.toString(), url, String::SubString(RTBMacro<RTB>::click_macro), String::SubString());
-            String::StringManip::mime_url_decode(url);
-            stored_requests.push_back(url);
-          }
-        }
+        creative_click_parser().parse(creatives, &context);
+      }
+      catch(const eh::Exception&)
+      {
+        FAIL_CONTEXT(AutoTest::predicate_checker(false),
+                     "Can't parse CREATIVES_JSON token value from response");
       }
 
       FAIL_CONTEXT(AutoTest::predicate_checker(stored_requests.size() != size),

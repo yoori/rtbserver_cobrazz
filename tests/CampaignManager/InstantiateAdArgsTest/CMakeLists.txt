@@ -1,6 +1,7 @@
 add_executable(InstantiateAdArgsTest
   InstantiateAdArgsTest.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CampaignManagerCore.cpp
+  ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CampaignManagerLogAdapter.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CreativeInstantiator.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CreativeTextGenerator.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/ConfigManips.cpp
@@ -20,7 +21,6 @@ target_link_libraries(InstantiateAdArgsTest
     CORBACommons
     Commons
     XslTransformer
-    Gason
 
     AdServerCommonsXSD
     CampaignManagerConfigXSD

@@ -1011,7 +1011,7 @@ namespace AdServer::CampaignSvcs
         try
         {
           HTTP::BrowserAddress referer_url =
-            HTTP::BrowserAddress(String::SubString(referer));
+            HTTP::BrowserAddress(std::string_view(referer));
           std::string domain_value = referer_url.host().str();
           request_args.set_value(CreativeTokens::REFERER_DOMAIN, domain_value);
           request_args.set_value(
@@ -2108,7 +2108,7 @@ namespace AdServer::CampaignSvcs
     {
       try
       {
-        HTTP::BrowserAddress referer_url =HTTP::BrowserAddress(String::SubString(referer));
+        HTTP::BrowserAddress referer_url = HTTP::BrowserAddress(std::string_view(referer));
         ostr_click_url << LOCAL_AMP << "t." << CreativeTokens::REFERER_DOMAIN << LOCAL_EQL <<
           referer_url.host();
       }

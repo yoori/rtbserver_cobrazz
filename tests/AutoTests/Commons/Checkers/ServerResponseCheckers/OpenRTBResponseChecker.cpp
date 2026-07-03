@@ -1,215 +1,612 @@
 
 #include <algorithm>
+#include <charconv>
+#include <cctype>
+#include <cstring>
+
+#include <Commons/FastJsonParser.hpp>
+
 #include "OpenRTBResponseChecker.hpp"
 
 namespace AutoTest
 {
   namespace
   {
-    // Utils
-    void
-    json_serialize(std::ostream& ostr, JsonNode* node);
+    using FastJsonParser = AdServer::Commons::FastJsonParser<>;
+    using ValueProcessor = FastJsonParser::ValueProcessor;
 
-    void
-    json_serialize(std::ostream& ostr, const JsonValue& value)
+    struct ParseContext
     {
-      if(value.getTag() == JSON_TAG_NUMBER)
+      std::string id;
+      std::string currency;
+      OpenRTBResponse::Bids bids;
+      OpenRTBResponse::Bid* bid = 0;
+    };
+
+    std::string
+    to_string(std::string_view value)
+    {
+      return std::string(value.data(), value.size());
+    }
+
+    template<typename T>
+    void
+    parse_integer(std::string_view value, T& result)
+    {
+      T parsed = T();
+      const auto parse_result = std::from_chars(
+        value.data(),
+        value.data() + value.size(),
+        parsed);
+      if(parse_result.ec == std::errc() &&
+        parse_result.ptr == value.data() + value.size())
       {
-        ostr << value.toNumber();
-      }
-      else if(value.getTag() == JSON_TAG_STRING)
-      {
-        std::string escaped_str =
-          String::StringManip::json_escape(String::SubString(value.toString()));
-        ostr << "\"" << escaped_str << "\"";
-      }
-      else if(value.getTag() == JSON_TAG_BOOL)
-      {
-        ostr << (value.toBool() ? "true" : "false");
-      }
-      else if(value.getTag() == JSON_TAG_ARRAY)
-      {
-        ostr << "[";
-        for(JsonIterator arr_it = begin(value); arr_it != end(value); ++arr_it)
-        {
-          if(arr_it != begin(value))
-          {
-            ostr << ", ";
-          }
-          json_serialize(ostr, arr_it->value);
-        }
-        ostr << "]";
-      }
-      else if(value.getTag() == JSON_TAG_OBJECT)
-      {
-        ostr << "{";
-        for(JsonIterator arr_it = begin(value); arr_it != end(value); ++arr_it)
-        {
-          if(arr_it != begin(value))
-          {
-            ostr << ", ";
-          }
-          json_serialize(ostr, *arr_it);
-        }
-        ostr << "}";
-      }
-      else if(value.getTag() == JSON_TAG_NULL)
-      {
-        ostr << "null";
+        result = parsed;
       }
     }
 
+    template<typename T>
     void
-    json_serialize(std::ostream& ostr, JsonNode* node)
+    assign_integer(int64_t value, T& result)
     {
-      ostr << "\"" << node->key << "\": ";
-      json_serialize(ostr, node->value);
+      result = static_cast<T>(value);
     }
 
-    void
-    process_json_object_as_string(
-      JsonIterator iterator,
-      const char* name,
+    class StartBidProcessor final: public ValueProcessor
+    {
+    public:
+      void
+      array_started(std::string_view, void*) const override
+      {}
+
+      void
+      object_started(std::string_view, void* context) const override
+      {
+        auto* parse_context = static_cast<ParseContext*>(context);
+        parse_context->bids.push_back(OpenRTBResponse::Bid());
+        parse_context->bid = &parse_context->bids.back();
+      }
+    };
+
+    class ResponseStringProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      ResponseStringProcessor(std::string ParseContext::* field)
+        : field_(field)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        static_cast<ParseContext*>(context)->*field_ = to_string(value);
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        static_cast<ParseContext*>(context)->*field_ = std::move(value);
+      }
+
+    private:
+      std::string ParseContext::* field_;
+    };
+
+    class BidStringProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidStringProcessor(std::string OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          bid->*field_ = to_string(value);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          bid->*field_ = std::move(value);
+        }
+      }
+
+    private:
+      std::string OpenRTBResponse::Bid::* field_;
+    };
+
+    template<typename T>
+    class BidIntegerProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidIntegerProcessor(T OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          assign_integer(value, bid->*field_);
+        }
+      }
+
+      void
+      process_number(std::string_view value, bool, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          parse_integer(value, bid->*field_);
+        }
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          parse_integer(value, bid->*field_);
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view path, void* context)
+        const override
+      {
+        process_string(std::string_view(value), path, context);
+      }
+
+    private:
+      T OpenRTBResponse::Bid::* field_;
+    };
+
+    class BidMoneyProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidMoneyProcessor(Money OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      process_float(double value, std::string_view, void* context) const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          bid->*field_ = value;
+        }
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          bid->*field_ = value;
+        }
+      }
+
+      void
+      process_number(std::string_view value, bool, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          double parsed = 0;
+          Stream::Parser strm(String::SubString(value.data(), value.size()));
+          strm >> parsed;
+          bid->*field_ = parsed;
+        }
+      }
+
+    private:
+      Money OpenRTBResponse::Bid::* field_;
+    };
+
+    class BidStringListProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidStringListProcessor(std::list<std::string> OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      array_started(std::string_view, void*) const override
+      {}
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_).push_back(to_string(value));
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_).push_back(std::move(value));
+        }
+      }
+
+    private:
+      std::list<std::string> OpenRTBResponse::Bid::* field_;
+    };
+
+    class BidOptionalStringListProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidOptionalStringListProcessor(
+        ExpValue<std::list<std::string> > OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_).is_set(true);
+        }
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_)->push_back(to_string(value));
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_)->push_back(std::move(value));
+        }
+      }
+
+    private:
+      ExpValue<std::list<std::string> > OpenRTBResponse::Bid::* field_;
+    };
+
+    template<typename T>
+    class BidOptionalIntegerListProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidOptionalIntegerListProcessor(
+        ExpValue<std::list<T> > OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      array_started(std::string_view, void* context) const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_).is_set(true);
+        }
+      }
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          (bid->*field_)->push_back(static_cast<T>(value));
+        }
+      }
+
+      void
+      process_number(std::string_view value, bool, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          T result = T();
+          parse_integer(value, result);
+          (bid->*field_)->push_back(result);
+        }
+      }
+
+    private:
+      ExpValue<std::list<T> > OpenRTBResponse::Bid::* field_;
+    };
+
+    class BidOptionalIntegerProcessor final: public ValueProcessor
+    {
+    public:
+      explicit
+      BidOptionalIntegerProcessor(ExpValue<unsigned long> OpenRTBResponse::Bid::* field)
+        : field_(field)
+      {}
+
+      void
+      process_integer(int64_t value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          bid->*field_ = static_cast<unsigned long>(value);
+        }
+      }
+
+      void
+      process_number(std::string_view value, bool, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          unsigned long result = 0;
+          parse_integer(value, result);
+          bid->*field_ = result;
+        }
+      }
+
+      void
+      process_string(std::string_view value, std::string_view, void* context)
+        const override
+      {
+        auto* bid = static_cast<ParseContext*>(context)->bid;
+        if(bid)
+        {
+          unsigned long result = 0;
+          parse_integer(value, result);
+          bid->*field_ = result;
+        }
+      }
+
+      void
+      process_string(std::string&& value, std::string_view path, void* context)
+        const override
+      {
+        process_string(std::string_view(value), path, context);
+      }
+
+    private:
+      ExpValue<unsigned long> OpenRTBResponse::Bid::* field_;
+    };
+
+    std::string
+    normalize_json_spacing(std::string_view value)
+    {
+      std::string result;
+      result.reserve(value.size() + 8);
+
+      bool in_string = false;
+      bool escaped = false;
+      for(char ch : value)
+      {
+        result += ch;
+        if(escaped)
+        {
+          escaped = false;
+        }
+        else if(in_string && ch == '\\')
+        {
+          escaped = true;
+        }
+        else if(ch == '"')
+        {
+          in_string = !in_string;
+        }
+        else if(!in_string && (ch == ':' || ch == ','))
+        {
+          result += ' ';
+        }
+      }
+
+      return result;
+    }
+
+    bool
+    extract_json_object_value(
+      std::string_view json,
+      std::string_view name,
+      std::size_t& pos,
       std::string& value)
     {
-      if (iterator->value.getTag() == JSON_TAG_OBJECT &&
-        strcmp(name,iterator->key) == 0)
+      const std::string pattern = "\"" + std::string(name) + "\"";
+      while((pos = json.find(pattern, pos)) != std::string_view::npos)
       {
-        std::ostringstream ostr;
-        json_serialize(ostr, iterator->value);
-        value = ostr.str();;
-      }
-    }
-
-    void
-    process_json_string(
-      JsonIterator iterator,
-      const char* name,
-      std::string& value)
-    {
-      if (iterator->value.getTag() == JSON_TAG_STRING &&
-        strcmp(name,iterator->key) == 0)
-      {
-        value = iterator->value.toString();
-      }
-    }
-
-
-    template <typename T>
-    void
-    process_json_int(
-      JsonIterator iterator,
-      const char* name,
-      T& value)
-    {
-      if (strcmp(name,iterator->key) == 0)
-      {
-        switch (iterator->value.getTag())
+        std::size_t value_pos = pos + pattern.size();
+        while(value_pos < json.size() && std::isspace(
+          static_cast<unsigned char>(json[value_pos])))
         {
-          case JSON_TAG_STRING:
-          {
-            Stream::Parser strm(iterator->value.toString());
-            strm >> value;
-            break;
-          }
-          case JSON_TAG_NUMBER:
-          {
-            value = iterator->value.toNumber();
-            break;
-          }
-          default: break;
+          ++value_pos;
         }
-      }
-    }
-
-    void
-    process_json_money(
-      JsonIterator iterator,
-      const char* name,
-      Money& value)
-    {
-      if (iterator->value.getTag() == JSON_TAG_NUMBER &&
-        strcmp(name,iterator->key) == 0)
-      {
-        value = iterator->value.toNumber();
-      }
-    }
-
-    void
-    string_to_opt_list(
-      ExpValue< std::list<std::string> >* list,
-      JsonIterator iterator)
-    {
-      if (iterator->value.getTag() == JSON_TAG_STRING)
-      {
-        (*list)->push_back(iterator->value.toString());
-      }
-    }
-
-    void
-    string_to_list(
-      std::list<std::string>* list,
-      JsonIterator iterator)
-    {
-      if (iterator->value.getTag() == JSON_TAG_STRING)
-      {
-        list->push_back(iterator->value.toString());
-      }
-    }
-
-    template<typename T>
-    void int_to_opt_list(
-      ExpValue< std::list<T> >* list,
-      JsonIterator iterator)
-    {
-      if (iterator->value.getTag() == JSON_TAG_NUMBER)
-      {
-        (*list)->push_back(iterator->value.toNumber());
-      }
-    }
-
-    template<typename T>
-    void int_to_list(
-      std::list<T>* list,
-      JsonIterator iterator)
-    {
-      if (iterator->value.getTag() == JSON_TAG_NUMBER)
-      {
-        list->push_back(iterator->value.toNumber());
-      }
-    }
-
-    template<typename T>
-    void
-    set_array_exist(T)
-    { }
-
-    template<typename T>
-    void
-    set_array_exist(ExpValue<T>* array)
-    {
-      array->is_set(true);
-    }
-
-    template<typename Parser, typename T>
-    void
-    parse_array(
-      JsonIterator iterator,
-      const char* name,
-      Parser parser,
-      T value)
-    {
-      if (iterator->value.getTag() == JSON_TAG_ARRAY &&
-        strcmp(name,iterator->key) == 0)
-      {
-        for(JsonIterator it = begin(iterator->value);
-            it != end(iterator->value); ++it)
+        if(value_pos == json.size() || json[value_pos] != ':')
         {
-          auto fp = std::bind(parser, value, it);
-          fp();
+          pos = value_pos;
+          continue;
         }
-        set_array_exist(value);
+        ++value_pos;
+        while(value_pos < json.size() && std::isspace(
+          static_cast<unsigned char>(json[value_pos])))
+        {
+          ++value_pos;
+        }
+        if(value_pos == json.size() || json[value_pos] != '{')
+        {
+          pos = value_pos;
+          continue;
+        }
+
+        bool in_string = false;
+        bool escaped = false;
+        int depth = 0;
+        for(std::size_t end_pos = value_pos; end_pos < json.size(); ++end_pos)
+        {
+          const char ch = json[end_pos];
+          if(escaped)
+          {
+            escaped = false;
+          }
+          else if(in_string && ch == '\\')
+          {
+            escaped = true;
+          }
+          else if(ch == '"')
+          {
+            in_string = !in_string;
+          }
+          else if(!in_string && ch == '{')
+          {
+            ++depth;
+          }
+          else if(!in_string && ch == '}')
+          {
+            --depth;
+            if(depth == 0)
+            {
+              value = normalize_json_spacing(
+                json.substr(value_pos, end_pos - value_pos + 1));
+              pos = end_pos + 1;
+              return true;
+            }
+          }
+        }
+
+        return false;
       }
+
+      return false;
+    }
+
+    void
+    fill_raw_ext_objects(std::string_view body, OpenRTBResponse::Bids& bids)
+    {
+      std::size_t matching_ad_id_pos = 0;
+      std::size_t nurl_pos = 0;
+      for(auto& bid : bids)
+      {
+        extract_json_object_value(
+          body,
+          "matching_ad_id",
+          matching_ad_id_pos,
+          bid.matching_ad_id);
+        extract_json_object_value(body, "nurl", nurl_pos, bid.nurl);
+      }
+    }
+
+    FastJsonParser&
+    openrtb_response_parser()
+    {
+      static FastJsonParser* parser = [] {
+        auto* result = new FastJsonParser();
+
+        result->add_processor(
+          "id",
+          std::make_shared<ResponseStringProcessor>(&ParseContext::id));
+        result->add_processor(
+          "cur",
+          std::make_shared<ResponseStringProcessor>(&ParseContext::currency));
+        result->add_processor(
+          "seatbid.bid",
+          std::make_shared<StartBidProcessor>());
+
+        result->add_processor(
+          "seatbid.bid.id",
+          std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::id));
+        result->add_processor(
+          "seatbid.bid.impid",
+          std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::impid));
+        result->add_processor(
+          "seatbid.bid.price",
+          std::make_shared<BidMoneyProcessor>(&OpenRTBResponse::Bid::price));
+        result->add_processor(
+          "seatbid.bid.adid",
+          std::make_shared<BidIntegerProcessor<unsigned long> >(
+            &OpenRTBResponse::Bid::adid),
+          true);
+        result->add_processor(
+          "seatbid.bid.crid",
+          std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::crid));
+        result->add_processor(
+          "seatbid.bid.adomain",
+          std::make_shared<BidStringListProcessor>(
+            &OpenRTBResponse::Bid::adomain));
+        result->add_processor(
+          "seatbid.bid.adm",
+          std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::adm));
+        result->add_processor(
+          "seatbid.bid.nurl",
+          std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::nurl));
+        result->add_processor(
+          "seatbid.bid.cid",
+          std::make_shared<BidIntegerProcessor<unsigned long> >(
+            &OpenRTBResponse::Bid::cid),
+          true);
+        result->add_processor(
+          "seatbid.bid.attr",
+          std::make_shared<BidOptionalIntegerListProcessor<unsigned long> >(
+            &OpenRTBResponse::Bid::attr));
+        result->add_processor(
+          "seatbid.bid.fmt",
+          std::make_shared<BidOptionalIntegerProcessor>(
+            &OpenRTBResponse::Bid::fmt),
+          true);
+        result->add_processor(
+          "seatbid.bid.cat",
+          std::make_shared<BidOptionalStringListProcessor>(
+            &OpenRTBResponse::Bid::cat));
+        result->add_processor(
+          "seatbid.bid.ext.ad_ox_cats",
+          std::make_shared<BidOptionalIntegerListProcessor<unsigned long> >(
+            &OpenRTBResponse::Bid::ad_ox_cats));
+
+        return result;
+      }();
+
+      return *parser;
     }
 
     template<typename Exp, typename Got>
@@ -310,127 +707,22 @@ namespace AutoTest
 
   // OpenRTBResponse
 
-  void
-  OpenRTBResponse::parse_ext_(
-    JsonIterator iterator,
-    Bid& bid)
-  {
-    if (iterator->value.getTag() == JSON_TAG_OBJECT &&
-        strcmp(iterator->key, "ext") == 0)
-    {
-      for (JsonIterator it = begin(iterator->value);
-              it != end(iterator->value); ++it)
-      {
-        parse_array(
-          it,
-          "ad_ox_cats",
-          std::ptr_fun(
-            &int_to_opt_list<unsigned long>),
-          &bid.ad_ox_cats);
-        process_json_object_as_string(it, "matching_ad_id", bid.matching_ad_id);
-        process_json_object_as_string(it, "nurl", bid.nurl);
-      }
-    }
-  }
-
-
-  void
-  OpenRTBResponse::parse_bid_(
-    JsonIterator iterator)
-  {
-    if (iterator->value.getTag() == JSON_TAG_OBJECT)
-    {
-      Bid bid;
-      for(JsonIterator it = begin(iterator->value);
-          it != end(iterator->value); ++it)
-      {
-        process_json_string(it, "id", bid.id);
-        process_json_string(it, "impid", bid.impid);
-        process_json_money(it, "price", bid.price);
-        process_json_int(it, "adid", bid.adid);
-        process_json_string(it, "crid", bid.crid);
-        parse_array(
-          it,
-          "adomain",
-          std::ptr_fun(
-            &string_to_list),
-          &bid.adomain);
-        process_json_string(it, "adm", bid.adm);
-        process_json_string(it, "nurl", bid.nurl);
-        process_json_int(it, "cid", bid.cid);
-        parse_array(
-          it,
-          "attr",
-          std::ptr_fun(
-            &int_to_opt_list<unsigned long>),
-          &bid.attr);
-        process_json_int(it, "fmt", bid.fmt);
-        parse_array(
-          it,
-          "cat",
-          std::ptr_fun(
-            &string_to_opt_list),
-          &bid.cat);
-        parse_ext_(it, bid);
-      }
-      bids_.push_back(bid);
-    }
-  }
-
-  void
-  OpenRTBResponse::parse_seatbid_(
-    JsonIterator iterator)
-  {
-    if (iterator->value.getTag() == JSON_TAG_OBJECT)
-    {
-      for(JsonIterator it = begin(iterator->value);
-          it != end(iterator->value); ++it)
-      {
-        parse_array(
-          it,
-          "bid",
-          std::mem_fun(
-            &OpenRTBResponse::parse_bid_),
-          this);
-      }
-    }
-  }
-
-  void
-  OpenRTBResponse::parse_(
-    const JsonValue& value)
-  {
-    if (value.getTag() == JSON_TAG_OBJECT)
-    {
-      for(JsonIterator it = begin(value); it != end(value); ++it)
-      {
-        process_json_string(it, "id", id_);
-        process_json_string(it, "cur", currency_);
-        parse_array(
-          it,
-          "seatbid",
-          std::mem_fun(
-            &OpenRTBResponse::parse_seatbid_),
-          this);
-      }
-    }
-  }
-
   OpenRTBResponse::OpenRTBResponse(
     const std::string& body)
+    : status_(JSON_PARSE_OK)
   {
-    JsonValue root_value;
-    JsonAllocator json_allocator;
-    Generics::ArrayAutoPtr<char> body_holder(body.length() + 1);
-    char* parse_end;
-    strcpy(body_holder.get(), body.c_str());
-
-    status_ = json_parse(
-      body_holder.get(), &parse_end, &root_value, json_allocator);
-
-    if (status_ == JSON_PARSE_OK)
+    try
     {
-        parse_(root_value);
+      ParseContext context;
+      openrtb_response_parser().parse(body, &context);
+      fill_raw_ext_objects(body, context.bids);
+      id_ = std::move(context.id);
+      currency_ = std::move(context.currency);
+      bids_ = std::move(context.bids);
+    }
+    catch(const eh::Exception&)
+    {
+      status_ = JSON_PARSE_ERROR;
     }
   }
 
@@ -537,4 +829,3 @@ namespace AutoTest
     return result;
   }
 }
-

@@ -5,7 +5,12 @@
 #include <tests/AutoTests/Commons/Checkers/CompositeCheckers.hpp>
 #include <tests/AutoTests/Commons/Checkers/ExpectedValue.hpp>
 #include <tests/AutoTests/Commons/AdClient.hpp>
-#include <Commons/Gason.hpp>
+
+enum JsonParseStatus
+{
+  JSON_PARSE_OK = 0,
+  JSON_PARSE_ERROR = 1
+};
 
 namespace AutoTest
 {
@@ -98,43 +103,6 @@ namespace AutoTest
     JsonParseStatus status() const;
 
   private:
-
-    /**
-     * @brief Parse json bid::ext structure.
-     *
-     * @param bid::ext iterator.
-     */
-    void
-    parse_ext_(
-      JsonIterator iterator,
-      Bid& bid);
-
-    /**
-     * @brief Parse json bid structure.
-     *
-     * @param bid iterator.
-     */
-    void
-    parse_bid_(
-      JsonIterator iterator);
-
-    /**
-     * @brief Parse json seatbid structure.
-     *
-     * @param seatbid iterator.
-     */
-    void
-    parse_seatbid_(
-      JsonIterator iterator);
-
-    /**
-     * @brief Parse json content.
-     *
-     * @param json root value.
-     */
-    void
-    parse_(
-      const JsonValue& value);
 
     std::string id_;
     std::string currency_;
