@@ -6,13 +6,14 @@
 #include <algorithm>
 #include <string>
 #include <unistd.h>
-#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 #include <Generics/Time.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
 
@@ -278,56 +279,62 @@ namespace AdServer::ChannelSvcs
   public:
     ServiceImpl(
       ChannelServerCorePtr core,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::shared_ptr<AtomicStats> stats,
       std::size_t max_split);
 
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CALL(
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::MatchRequest,
           adserver::channel_svcs::channel_server::MatchResponse,
-          match),
-        MAKE_GRPC_CALL(
+          match,
+          co_match),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::GetCcgTraitsRequest,
           adserver::channel_svcs::channel_server::GetCcgTraitsResponse,
-          get_ccg_traits),
-        MAKE_GRPC_CALL(
+          get_ccg_traits,
+          co_get_ccg_traits),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::CheckConfigurationRequest,
           adserver::channel_svcs::channel_server::CheckConfigurationResponse,
-          check_configuration),
-        MAKE_GRPC_CALL(
+          check_configuration,
+          co_check_configuration),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::SetSourcesRequest,
           adserver::channel_svcs::channel_server::SetSourcesResponse,
-          set_sources),
-        MAKE_GRPC_CALL(
+          set_sources,
+          co_set_sources),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::SetProxySourcesRequest,
           adserver::channel_svcs::channel_server::SetProxySourcesResponse,
-          set_proxy_sources));
+          set_proxy_sources,
+          co_set_proxy_sources));
     }
 
-    void match(
-      const adserver::channel_svcs::channel_server::MatchRequest& request,
+    AdServer::Grpc::GrpcCoroutine co_match(
+      adserver::channel_svcs::channel_server::MatchRequest&& request,
       adserver::channel_svcs::channel_server::MatchResponse& response,
       ::grpc::Status& result_status) const;
 
-    void get_ccg_traits(
-      const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
+    AdServer::Grpc::GrpcCoroutine co_get_ccg_traits(
+      adserver::channel_svcs::channel_server::GetCcgTraitsRequest&& request,
       adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
       ::grpc::Status& result_status) const;
 
-    void check_configuration(
-      const adserver::channel_svcs::channel_server::CheckConfigurationRequest& request,
+    AdServer::Grpc::GrpcCoroutine co_check_configuration(
+      adserver::channel_svcs::channel_server::CheckConfigurationRequest&& request,
       adserver::channel_svcs::channel_server::CheckConfigurationResponse& response,
       ::grpc::Status& result_status) const;
 
-    void set_sources(
-      const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+    AdServer::Grpc::GrpcCoroutine co_set_sources(
+      adserver::channel_svcs::channel_server::SetSourcesRequest&& request,
       adserver::channel_svcs::channel_server::SetSourcesResponse& response,
       ::grpc::Status& result_status) const;
 
-    void set_proxy_sources(
-      const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
+    AdServer::Grpc::GrpcCoroutine co_set_proxy_sources(
+      adserver::channel_svcs::channel_server::SetProxySourcesRequest&& request,
       adserver::channel_svcs::channel_server::SetProxySourcesResponse& response,
       ::grpc::Status& result_status) const;
 
@@ -370,6 +377,7 @@ namespace AdServer::ChannelSvcs
   private:
     ProcessControlService process_control_service_;
     ChannelServerCorePtr core_;
+    const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<AtomicStats> stats_;
     const std::size_t max_batch_split_;
   };
@@ -409,10 +417,12 @@ namespace AdServer::ChannelSvcs
 
   ChannelServerGrpc::ServiceImpl::ServiceImpl(
     ChannelServerCorePtr core,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::shared_ptr<AtomicStats> stats,
     std::size_t max_split)
     : process_control_service_(*this),
       core_(std::move(core)),
+      executor_pool_(std::move(executor_pool)),
       stats_(std::move(stats)),
       max_batch_split_(max_split)
   {
@@ -511,12 +521,13 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  void
-  ChannelServerGrpc::ServiceImpl::match(
-    const adserver::channel_svcs::channel_server::MatchRequest& request,
+  AdServer::Grpc::GrpcCoroutine
+  ChannelServerGrpc::ServiceImpl::co_match(
+    adserver::channel_svcs::channel_server::MatchRequest&& request,
     adserver::channel_svcs::channel_server::MatchResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->match_in_progress);
@@ -568,14 +579,16 @@ namespace AdServer::ChannelSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+    co_return;
   }
 
-  void
-  ChannelServerGrpc::ServiceImpl::get_ccg_traits(
-    const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
+  AdServer::Grpc::GrpcCoroutine
+  ChannelServerGrpc::ServiceImpl::co_get_ccg_traits(
+    adserver::channel_svcs::channel_server::GetCcgTraitsRequest&& request,
     adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->get_ccg_traits_in_progress);
@@ -615,28 +628,32 @@ namespace AdServer::ChannelSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+    co_return;
   }
 
-  void
-  ChannelServerGrpc::ServiceImpl::check_configuration(
-    const adserver::channel_svcs::channel_server::CheckConfigurationRequest&,
+  AdServer::Grpc::GrpcCoroutine
+  ChannelServerGrpc::ServiceImpl::co_check_configuration(
+    adserver::channel_svcs::channel_server::CheckConfigurationRequest&&,
     adserver::channel_svcs::channel_server::CheckConfigurationResponse& response,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->check_configuration_in_progress);
 
     response.set_check_sum(core_->check_configuration());
     result_status = ::grpc::Status::OK;
+    co_return;
   }
 
-  void
-  ChannelServerGrpc::ServiceImpl::set_sources(
-    const adserver::channel_svcs::channel_server::SetSourcesRequest& request,
+  AdServer::Grpc::GrpcCoroutine
+  ChannelServerGrpc::ServiceImpl::co_set_sources(
+    adserver::channel_svcs::channel_server::SetSourcesRequest&& request,
     adserver::channel_svcs::channel_server::SetSourcesResponse&,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->set_sources_in_progress);
@@ -645,7 +662,7 @@ namespace AdServer::ChannelSvcs
         core_->check_configuration() == request.check_sum())
     {
       result_status = ::grpc::Status::OK;
-      return;
+      co_return;
     }
 
     try
@@ -678,14 +695,16 @@ namespace AdServer::ChannelSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+    co_return;
   }
 
-  void
-  ChannelServerGrpc::ServiceImpl::set_proxy_sources(
-    const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
+  AdServer::Grpc::GrpcCoroutine
+  ChannelServerGrpc::ServiceImpl::co_set_proxy_sources(
+    adserver::channel_svcs::channel_server::SetProxySourcesRequest&& request,
     adserver::channel_svcs::channel_server::SetProxySourcesResponse&,
     ::grpc::Status& result_status) const
   {
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_in_progress,
       stats_->set_proxy_sources_in_progress);
@@ -694,7 +713,7 @@ namespace AdServer::ChannelSvcs
         core_->check_configuration() == request.check_sum())
     {
       result_status = ::grpc::Status::OK;
-      return;
+      co_return;
     }
 
     try
@@ -745,6 +764,7 @@ namespace AdServer::ChannelSvcs
         ::grpc::StatusCode::INTERNAL,
         error.c_str());
     }
+    co_return;
   }
 
   ChannelServerGrpc::ChannelServerGrpc(
@@ -752,20 +772,31 @@ namespace AdServer::ChannelSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t grpc_threads,
+    std::size_t process_threads,
+    std::size_t cq_threads,
     std::size_t max_split)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
+      executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
+        Generics::ActiveObjectCallback_var(
+          new Logging::ActiveObjectCallbackImpl(
+            logger,
+            "",
+            channel_server_grpc_aspect)),
+        std::max<std::size_t>(1, process_threads),
+        "cs-grpc-pool")),
       impl_(std::make_shared<Impl>(
         logger,
         channel_server_grpc_aspect,
         bind_address_,
-        grpc_threads,
+        cq_threads != 0 ? cq_threads : 16,
         std::make_unique<ServiceImpl>(
           std::move(core),
+          executor_pool_,
           stats_,
-          resolve_max_batch_split(max_split, grpc_threads))))
+          resolve_max_batch_split(max_split, process_threads))))
   {
+    add_child_object(executor_pool_);
     add_child_object(impl_);
   }
 

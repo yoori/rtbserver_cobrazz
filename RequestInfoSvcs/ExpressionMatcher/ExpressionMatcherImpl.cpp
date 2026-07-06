@@ -1062,7 +1062,11 @@ namespace RequestInfoSvcs
               AdServer::CampaignSvcs::ChannelFlags::TARGETED))
           {
             ChannelIdSet modify_channels;
-            ch_it->second->channel->get_all_channels(modify_channels);
+            AdServer::CampaignSvcs::ChannelIdSet campaign_modify_channels;
+            ch_it->second->channel->get_all_channels(campaign_modify_channels);
+            modify_channels.insert(
+              campaign_modify_channels.begin(),
+              campaign_modify_channels.end());
             for(ChannelIdSet::const_iterator mch_id_it = modify_channels.begin();
               mch_id_it != modify_channels.end(); ++mch_id_it)
             {
@@ -1138,11 +1142,15 @@ namespace RequestInfoSvcs
         {
           // process only new appeared channels or all if date changed
           ChannelIdSet appear_channels_holder;
-          const ChannelIdSet* use_appear_channels = &new_config->all_channels;
+          appear_channels_holder.insert(
+            new_config->all_channels.begin(),
+            new_config->all_channels.end());
+          const ChannelIdSet* use_appear_channels = &appear_channels_holder;
 
           if(old_config.in() &&
              now_date == old_config->fill_time.get_gm_time().get_date())
           {
+            appear_channels_holder.clear();
             std::set_difference(
               new_config->all_channels.begin(),
               new_config->all_channels.end(),
@@ -1458,13 +1466,17 @@ namespace RequestInfoSvcs
             record.match_request().get().history_channels().begin(),
             record.match_request().get().history_channels().end());
           CampaignSvcs::ChannelIdSet result_channels;
+          CampaignSvcs::ChannelIdSet cpm_expression_channels;
 
           channel_matcher_->process_request(
             history_channels,
             result_channels,
-            &match_info.triggered_cpm_expression_channels,
+            &cpm_expression_channels,
             &match_info.channel_actions);
 
+          match_info.triggered_cpm_expression_channels.insert(
+            cpm_expression_channels.begin(),
+            cpm_expression_channels.end());
           match_info.triggered_expression_channels.fill();
           match_info.triggered_expression_channels->assign(
             result_channels.begin(), result_channels.end());
@@ -2061,7 +2073,7 @@ namespace RequestInfoSvcs
       history_match_request,
       history_match_response);
 
-    ChannelIdSet history_channels;
+    CampaignSvcs::ChannelIdSet history_channels;
 
     UserInventoryInfoContainer::InventoryDailyMatchInfo daily_match_info;
 

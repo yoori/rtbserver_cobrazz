@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory_resource>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -68,8 +70,6 @@ namespace AdServer::CampaignSvcs
     RevenueDecimal conv_rate;
     unsigned long campaign_imps;
 
-    std::string responded_expression;
-    ChannelIdList responded_channels;
     bool count_impression; // FIXME: redundant, always equals !track_impr
     bool track_impr; // FIXME: should be moved to AdSelectionResult level
     bool selection_done;
@@ -77,10 +77,11 @@ namespace AdServer::CampaignSvcs
     std::string click_url;
   };
 
-  typedef std::list<CampaignSelectionData> CampaignSelectionDataList;
+  using CampaignSelectionDataList =
+    std::pmr::list<CampaignSelectionData>;
 
-  typedef std::multimap<unsigned long, CampaignKeyword_var>
-    CampaignKeywordMap;
+  using CampaignKeywordMap =
+    std::pmr::multimap<unsigned long, CampaignKeyword_var>;
 
   typedef std::list<const Campaign*> ConstCampaignPtrList;
 
@@ -89,17 +90,41 @@ namespace AdServer::CampaignSvcs
 
   struct AdSelectionResult
   {
-    AdSelectionResult()
+    explicit AdSelectionResult(
+      std::pmr::memory_resource* memory_resource = std::pmr::get_default_resource())
       : text_campaigns(false),
-	min_no_adv_ecpm(RevenueDecimal::ZERO),
-	min_text_ecpm(RevenueDecimal::ZERO),
-	cpm_threshold(RevenueDecimal::ZERO),
-	tag(0),
-	tag_pricing(0),
-	tag_size(0),
-	walled_garden(false),
-	household_based(false),
-	auction_type(AT_RANDOM)
+        min_no_adv_ecpm(RevenueDecimal::ZERO),
+        min_text_ecpm(RevenueDecimal::ZERO),
+        cpm_threshold(RevenueDecimal::ZERO),
+        tag(0),
+        tag_pricing(0),
+        tag_size(0),
+        selected_campaigns(memory_resource),
+        freq_caps(memory_resource),
+        uc_freq_caps(memory_resource),
+        walled_garden(false),
+        household_based(false),
+        auction_type(AT_RANDOM)
+    {}
+
+    AdSelectionResult(
+      const AdSelectionResult& init,
+      std::pmr::memory_resource* memory_resource)
+      : text_campaigns(init.text_campaigns),
+        min_no_adv_ecpm(init.min_no_adv_ecpm),
+        min_text_ecpm(init.min_text_ecpm),
+        cpm_threshold(init.cpm_threshold),
+        tag(init.tag),
+        tag_pricing(init.tag_pricing),
+        tag_size(init.tag_size),
+        ctr_calculation(init.ctr_calculation),
+        conv_rate_calculation(init.conv_rate_calculation),
+        selected_campaigns(init.selected_campaigns, memory_resource),
+        freq_caps(init.freq_caps, memory_resource),
+        uc_freq_caps(init.uc_freq_caps, memory_resource),
+        walled_garden(init.walled_garden),
+        household_based(init.household_based),
+        auction_type(init.auction_type)
     {}
 
     bool text_campaigns;

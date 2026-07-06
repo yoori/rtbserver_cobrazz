@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cstring>
+#include <memory_resource>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include <eh/Exception.hpp>
@@ -22,24 +24,93 @@
 #include "CampaignManagerDeclarations.hpp"
 
 #include "CreativeInstantiator.hpp"
-#include "CampaignManagerLogAdapter.hpp"
 #include "CampaignManagerLogger.hpp"
 
 #include "DomainParser.hpp"
 
 namespace AdServer::CampaignSvcs
 {
-  CampaignManagerCore::CampaignManagerTaskMessage::CampaignManagerTaskMessage(
+  class CampaignManagerCore::TaskMessage: public Generics::TaskGoal
+  {
+  public:
+    TaskMessage(
+      CampaignManagerCore* manager,
+      Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+  protected:
+    virtual
+    ~TaskMessage() noexcept = default;
+
+    CampaignManagerCore* manager_;
+  };
+
+  class CampaignManagerCore::FlushLogsTaskMessage: public TaskMessage
+  {
+  public:
+    FlushLogsTaskMessage(
+      CampaignManagerCore* manager,
+      Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+    virtual void execute() noexcept;
+  };
+
+  class CampaignManagerCore::CheckConfigTaskMessage: public TaskMessage
+  {
+  public:
+    CheckConfigTaskMessage(
+      CampaignManagerCore* manager,
+      Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+    virtual void execute() noexcept;
+  };
+
+  class CampaignManagerCore::UpdateCTRProviderTask: public TaskMessage
+  {
+  public:
+    UpdateCTRProviderTask(
+      CampaignManagerCore* manager,
+      Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+    virtual void execute() noexcept;
+  };
+
+  class CampaignManagerCore::UpdateConvRateProviderTask: public TaskMessage
+  {
+  public:
+    UpdateConvRateProviderTask(
+      CampaignManagerCore* manager,
+      Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+    virtual void execute() noexcept;
+  };
+
+  class CampaignManagerCore::UpdateBidCostProviderTask: public TaskMessage
+  {
+  public:
+    UpdateBidCostProviderTask(
+      CampaignManagerCore* manager,
+      Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+    virtual void execute() noexcept;
+  };
+
+  CampaignManagerCore::TaskMessage::TaskMessage(
     CampaignManagerCore* manager,
     Generics::TaskRunner* task_runner)
-    : TaskBase(task_runner),
+    : Generics::TaskGoal(task_runner),
       manager_(manager)
   {}
 
   CampaignManagerCore::FlushLogsTaskMessage::FlushLogsTaskMessage(
     CampaignManagerCore* manager,
     Generics::TaskRunner* task_runner)
-    : CampaignManagerTaskMessage(manager, task_runner)
+    : TaskMessage(manager, task_runner)
   {}
 
   void
@@ -51,49 +122,122 @@ namespace AdServer::CampaignSvcs
   CampaignManagerCore::CheckConfigTaskMessage::CheckConfigTaskMessage(
     CampaignManagerCore* manager,
     Generics::TaskRunner* task_runner)
-    : CampaignManagerTaskMessage(manager, task_runner)
+    : TaskMessage(manager, task_runner)
   {}
 
   void
   CampaignManagerCore::CheckConfigTaskMessage::execute() noexcept
   {
-    manager_->check_config();
+    static const char* FUN =
+      "CampaignManagerCore::CheckConfigTaskMessage::execute()";
+
+    try
+    {
+      const Generics::Time tm = manager_->check_config();
+      TaskMessage_var msg =
+        new CheckConfigTaskMessage(manager_, manager_->update_task_runner_);
+      manager_->scheduler_->schedule(msg, tm);
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN <<
+        ": Exception caught while enqueueing CheckConfig task: " << e.what();
+      manager_->callback_->critical(ostr.str(), "ADS-IMPL-5092");
+    }
   }
 
   CampaignManagerCore::UpdateCTRProviderTask::UpdateCTRProviderTask(
     CampaignManagerCore* manager,
     Generics::TaskRunner* task_runner)
-    : CampaignManagerTaskMessage(manager, task_runner)
+    : TaskMessage(manager, task_runner)
   {}
 
   void
   CampaignManagerCore::UpdateCTRProviderTask::execute() noexcept
   {
-    manager_->update_ctr_provider();
+    static const char* FUN =
+      "CampaignManagerCore::UpdateCTRProviderTask::execute()";
+
+    try
+    {
+      const Generics::Time tm = manager_->update_ctr_provider();
+      if (tm != Generics::Time::ZERO)
+      {
+        TaskMessage_var msg =
+          new UpdateCTRProviderTask(manager_, manager_->task_runner_);
+        manager_->scheduler_->schedule(msg, tm);
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN <<
+        ": exception caught while enqueueing update CTR task: " << e.what();
+      manager_->callback_->critical(ostr.str(), "ADS-IMPL-5092");
+    }
   }
 
   CampaignManagerCore::UpdateConvRateProviderTask::UpdateConvRateProviderTask(
     CampaignManagerCore* manager,
     Generics::TaskRunner* task_runner)
-    : CampaignManagerTaskMessage(manager, task_runner)
+    : TaskMessage(manager, task_runner)
   {}
 
   void
   CampaignManagerCore::UpdateConvRateProviderTask::execute() noexcept
   {
-    manager_->update_conv_rate_provider();
+    static const char* FUN =
+      "CampaignManagerCore::UpdateConvRateProviderTask::execute()";
+
+    try
+    {
+      const Generics::Time tm = manager_->update_conv_rate_provider();
+      if (tm != Generics::Time::ZERO)
+      {
+        TaskMessage_var msg =
+          new UpdateConvRateProviderTask(manager_, manager_->task_runner_);
+        manager_->scheduler_->schedule(msg, tm);
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN <<
+        ": exception caught while enqueueing update ConvRate task: " << e.what();
+      manager_->callback_->critical(ostr.str(), "ADS-IMPL-5092");
+    }
   }
 
   CampaignManagerCore::UpdateBidCostProviderTask::UpdateBidCostProviderTask(
     CampaignManagerCore* manager,
     Generics::TaskRunner* task_runner)
-    : CampaignManagerTaskMessage(manager, task_runner)
+    : TaskMessage(manager, task_runner)
   {}
 
   void
   CampaignManagerCore::UpdateBidCostProviderTask::execute() noexcept
   {
-    manager_->update_bid_cost_provider();
+    static const char* FUN =
+      "CampaignManagerCore::UpdateBidCostProviderTask::execute()";
+
+    try
+    {
+      const Generics::Time tm = manager_->update_bid_cost_provider();
+      if (tm != Generics::Time::ZERO)
+      {
+        TaskMessage_var msg =
+          new UpdateBidCostProviderTask(manager_, manager_->task_runner_);
+        manager_->scheduler_->schedule(msg, tm);
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN <<
+        ": exception caught while enqueueing update BidCost task: " << e.what();
+      manager_->callback_->critical(ostr.str(), "ADS-IMPL-5092");
+    }
   }
 
   namespace
@@ -135,18 +279,18 @@ namespace AdServer::CampaignSvcs
 
     namespace PlatformNames
     {
-      const std::string APPLE_IPADS("apple ipads");
-      const std::string APPLE_IPHONES("apple iphones");
-      const std::string ANDROID_TABLETS("android tablets");
-      const std::string ANDROID_SMARTPHONES("android smartphones");
-      const std::string WINDOWS_MOBILE("windows mobile");
-      const std::string SMARTTV("smarttv");
-      const std::string DVR("dvr");
-      const std::string NON_MOBILE_DEVICES("non-mobile devices");
+      constexpr std::string_view APPLE_IPADS("apple ipads");
+      constexpr std::string_view APPLE_IPHONES("apple iphones");
+      constexpr std::string_view ANDROID_TABLETS("android tablets");
+      constexpr std::string_view ANDROID_SMARTPHONES("android smartphones");
+      constexpr std::string_view WINDOWS_MOBILE("windows mobile");
+      constexpr std::string_view SMARTTV("smarttv");
+      constexpr std::string_view DVR("dvr");
+      constexpr std::string_view NON_MOBILE_DEVICES("non-mobile devices");
     }
 
     void
-    append(FreqCapIdSet& freq_caps, const CampaignManagerCore::IdVector& cap_seq)
+    append(FreqCapIdSet& freq_caps, const CampaignManagerCore::IdArray& cap_seq)
       /*throw(eh::Exception)*/
     {
       std::copy(cap_seq.begin(), cap_seq.end(), std::inserter(freq_caps, freq_caps.end()));
@@ -193,8 +337,7 @@ namespace AdServer::CampaignSvcs
         fill_contract_info(res_contract.contract_info, *cur_contract);
         if (cur_contract->parent_contract)
         {
-          res_contract.parent_contract_id =
-            cur_contract->parent_contract->ord_contract_id;
+          res_contract.parent_contract_id = cur_contract->parent_contract->ord_contract_id;
         }
         contracts.emplace_back(std::move(res_contract));
         cur_contract = cur_contract->parent_contract;
@@ -245,8 +388,7 @@ namespace AdServer::CampaignSvcs
            !HTTP::HTTP_PREFIX.start(passback_url) &&
            !HTTP::HTTPS_PREFIX.start(passback_url))
         {
-          passback_url =
-            creative_instantiate_rule.local_passback_prefix + passback_url;
+          passback_url = creative_instantiate_rule.local_passback_prefix + passback_url;
         }
       }
     }
@@ -310,16 +452,14 @@ namespace AdServer::CampaignSvcs
       process_integer(int64_t value, std::string_view, void* context)
         const override
       {
-        static_cast<CampaignSelectParams*>(context)->*field_ =
-          static_cast<float>(value);
+        static_cast<CampaignSelectParams*>(context)->*field_ = static_cast<float>(value);
       }
 
       void
       process_float(double value, std::string_view, void* context)
         const override
       {
-        static_cast<CampaignSelectParams*>(context)->*field_ =
-          static_cast<float>(value);
+        static_cast<CampaignSelectParams*>(context)->*field_ = static_cast<float>(value);
       }
 
       void process_string(std::string_view, std::string_view, void*) const override {}
@@ -379,9 +519,9 @@ namespace AdServer::CampaignSvcs
 
     void
     fill_request_platform_debug_info(
-      CampaignManagerCore::AdRequestDebugInfo& debug_info,
+      CampaignManagerCore::GetAdDebugResult& debug_info,
       const CampaignConfig* campaign_config,
-      const CampaignManagerCore::ContextAdRequestInfo& context_info)
+      const CampaignManagerCore::ContextAdRequest& context_info)
       noexcept
     {
       if(!campaign_config)
@@ -391,14 +531,10 @@ namespace AdServer::CampaignSvcs
       }
 
       ChannelIdHashSet platform_channels;
-      platform_channels.insert(
-        context_info.platform_ids.begin(),
-        context_info.platform_ids.end());
+      platform_channels.insert(context_info.platform_ids.begin(), context_info.platform_ids.end());
 
       ChannelIdSet matched_platform_channels;
-      campaign_config->platform_channels->match(
-        matched_platform_channels,
-        platform_channels);
+      campaign_config->platform_channels->match(matched_platform_channels, platform_channels);
 
       debug_info.platform_channels.assign(
         matched_platform_channels.begin(),
@@ -414,8 +550,7 @@ namespace AdServer::CampaignSvcs
         CampaignConfig::PlatformChannelPriorityMap::const_iterator pr_it =
           campaign_config->platform_channel_priorities.find(*pch_it);
         if(pr_it != campaign_config->platform_channel_priorities.end() &&
-          (debug_info.last_platform_channel_id == 0 ||
-            cur_priority < pr_it->second.priority))
+          (debug_info.last_platform_channel_id == 0 || cur_priority < pr_it->second.priority))
         {
           cur_priority = pr_it->second.priority;
           debug_info.last_platform_channel_id = *pch_it;
@@ -451,19 +586,6 @@ namespace AdServer::CampaignSvcs
     const Campaign* campaign_;
   };
 
-  /** CampaignManagerCore::AdSlotMinCpm */
-  CampaignManagerCore::AdSlotMinCpm::AdSlotMinCpm() noexcept
-    : min_pub_ecpm(RevenueDecimal::ZERO),
-      min_pub_ecpm_system(RevenueDecimal::ZERO)
-  {}
-
-  /** CampaignManagerCore::AdSlotContext */
-  CampaignManagerCore::AdSlotContext::AdSlotContext() noexcept
-    : test_request(false),
-      request_blacklisted(false),
-      publisher_account_id(0)
-  {}
-
   CampaignManagerCore::CampaignManagerCore(
     const CampaignManagerConfig& configuration,
     const DomainParser::DomainConfig& domain_config,
@@ -477,8 +599,7 @@ namespace AdServer::CampaignSvcs
       callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
       domain_parser_(new DomainParser(domain_config)),
-      campaign_manager_logger_(
-        ReferenceCounting::add_ref(campaign_manager_logger)),
+      campaign_manager_logger_(ReferenceCounting::add_ref(campaign_manager_logger)),
       creative_instantiate_(creative_instantiate),
       task_runner_(new Generics::TaskRunner(callback_, PARALLEL_TASKS_COUNT)),
       update_task_runner_(new Generics::TaskRunner(callback_, UPDATE_TASKS_COUNT)),
@@ -634,17 +755,17 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      CampaignManagerTaskMessage_var msg =
+      TaskMessage_var msg =
         new CheckConfigTaskMessage(this, update_task_runner_);
       update_task_runner_->enqueue_task(msg);
 
-      update_task_runner_->enqueue_task(CampaignManagerTaskMessage_var(
+      update_task_runner_->enqueue_task(TaskMessage_var(
         new UpdateCTRProviderTask(this, update_task_runner_)));
 
-      update_task_runner_->enqueue_task(CampaignManagerTaskMessage_var(
+      update_task_runner_->enqueue_task(TaskMessage_var(
         new UpdateConvRateProviderTask(this, update_task_runner_)));
 
-      update_task_runner_->enqueue_task(CampaignManagerTaskMessage_var(
+      update_task_runner_->enqueue_task(TaskMessage_var(
         new UpdateBidCostProviderTask(this, update_task_runner_)));
 
       msg = new FlushLogsTaskMessage(this, task_runner_);
@@ -675,6 +796,9 @@ namespace AdServer::CampaignSvcs
       throw Exception(ostr);
     }
   }
+
+  CampaignManagerCore::~CampaignManagerCore() noexcept
+  {}
 
   bool CampaignManagerCore::ready() /*throw(eh::Exception)*/
   {
@@ -733,56 +857,27 @@ namespace AdServer::CampaignSvcs
     return false;
   }
 
-  void
-  CampaignManagerCore::match_geo_channels(
-    const std::vector<GeoInfo>& location,
-    const std::vector<GeoCoordInfo>& coord_location,
-    IdVector& geo_channels_result,
-    IdVector& coord_channels_result)
-    /*throw(NotReady, Exception)*/
-  {
-    // static const char* FUN = "CampaignManagerCore::match_geo_channels()";
-
-    ConstCampaignConfigPtr campaign_config = get_campaign_config();
-    if (!campaign_config)
-    {
-      throw NotReady("Campaign configuration isn't loaded");
-    }
-
-    ChannelIdList geo_channels;
-    ChannelIdSet coord_channels;
-
-    match_geo_channels_(
-      *campaign_config,
-      location,
-      coord_location,
-      geo_channels,
-      coord_channels);
-
-    geo_channels_result.assign(geo_channels.begin(), geo_channels.end());
-    coord_channels_result.assign(coord_channels.begin(), coord_channels.end());
-  }
-
-  AdServer::Commons::SyncCoro<CampaignManagerCore::CreativeRequestResultInfo>
-  CampaignManagerCore::co_get_campaign_creative(CreativeRequestInfo&& core_request_params)
+  AdServer::Commons::SyncCoro<CampaignManagerCore::GetAdResult>
+  CampaignManagerCore::co_get_campaign_creative(GetAdRequest&& core_request_params)
   {
     static const char* FUN = "CampaignManagerCore::get_campaign_creative()";
 
     try
     {
-      CreativeRequestResultInfo result;
+      std::pmr::monotonic_buffer_resource memory_resource;
+      GetAdResult result;
       result.hostname = campaign_manager_config_.host();
 
       Generics::Timer process_timer;
       process_timer.start();
 
-      AdRequestDebugInfo debug_info;
-      AdRequestDebugInfo* request_debug_info =
+      GetAdDebugResult debug_info;
+      GetAdDebugResult* request_debug_info =
         core_request_params.need_debug_info ? &debug_info : 0;
 
       if (request_debug_info)
       {
-        request_debug_info->colo_id = core_request_params.common_info.colo_id;
+        request_debug_info->colo_id = core_request_params.common_info->colo_id;
         request_debug_info->user_group_id = 0;
       }
 
@@ -802,29 +897,29 @@ namespace AdServer::CampaignSvcs
       const Colocation* colocation = 0;
 
       // check input colo
-      if (core_request_params.common_info.colo_id == 0 ||
-         (core_request_params.common_info.colo_id != campaign_manager_config_.colocation_id() &&
-         campaign_config->colocations.find(core_request_params.common_info.colo_id) ==
+      if (core_request_params.common_info->colo_id == 0 ||
+         (core_request_params.common_info->colo_id != campaign_manager_config_.colocation_id() &&
+         campaign_config->colocations.find(core_request_params.common_info->colo_id) ==
            campaign_config->colocations.end()))
       {
-        core_request_params.common_info.colo_id = campaign_manager_config_.colocation_id();
+        core_request_params.common_info->colo_id = campaign_manager_config_.colocation_id();
       }
 
       CampaignConfig::ColocationMap::const_iterator colo_it =
-        campaign_config->colocations.find(core_request_params.common_info.colo_id);
+        campaign_config->colocations.find(core_request_params.common_info->colo_id);
 
       if (colo_it != campaign_config->colocations.end())
       {
         colocation = colo_it->second;
-        core_request_params.common_info.test_request |= colo_it->second->is_test();
+        core_request_params.common_info->test_request |= colo_it->second->is_test();
       }
 
       ChannelIdList geo_channels;
-      ChannelIdSet coord_channels;
+      ChannelIdSet coord_channels(&memory_resource);
       match_geo_channels_(
         *campaign_config,
-        core_request_params.common_info.location,
-        core_request_params.common_info.coord_location,
+        core_request_params.common_info->location,
+        core_request_params.common_info->coord_location,
         geo_channels,
         coord_channels);
 
@@ -835,29 +930,25 @@ namespace AdServer::CampaignSvcs
 
       if (!geo_channels.empty())
       {
-        core_request_params.context_info.geo_channels.insert(
-          core_request_params.context_info.geo_channels.end(),
+        core_request_params.context_info->geo_channels.insert(
+          core_request_params.context_info->geo_channels.end(),
           geo_channels.begin(),
           geo_channels.end());
       }
 
       core_request_params.channels.insert(
         core_request_params.channels.end(),
-        core_request_params.context_info.geo_channels.begin(),
-        core_request_params.context_info.geo_channels.end());
+        core_request_params.context_info->geo_channels.begin(),
+        core_request_params.context_info->geo_channels.end());
       core_request_params.channels.insert(
         core_request_params.channels.end(),
-        core_request_params.context_info.platform_ids.begin(),
-        core_request_params.context_info.platform_ids.end());
+        core_request_params.context_info->platform_ids.begin(),
+        core_request_params.context_info->platform_ids.end());
 
-      ChannelIdHashSet matched_channels(
+      ChannelIdHashSet matched_channels(&memory_resource);
+      matched_channels.insert(
         core_request_params.channels.begin(),
         core_request_params.channels.end());
-
-      unsigned long request_tag_id = 0;
-
-      AdServer::CampaignSvcs::RevenueDecimal adsspace_system_cpm =
-        AdServer::CampaignSvcs::RevenueDecimal(false, 100000, 0);
 
       if (!core_request_params.ad_slots.empty())
       {
@@ -870,24 +961,23 @@ namespace AdServer::CampaignSvcs
 
         if (request_blacklisted)
         {
-          core_request_params.common_info.user_status = static_cast<unsigned long>(US_BLACKLISTED);
+          core_request_params.common_info->user_status = static_cast<unsigned long>(US_BLACKLISTED);
 
           for (auto& ad_slot : core_request_params.ad_slots)
           {
-            ad_slot.passback = true;
+            ad_slot->passback = true;
           }
         }
 
         // ad request
-        CreativeInstantiateRuleMap::iterator rule_it =
-          creative_instantiate_.creative_rules.find(
-            core_request_params.common_info.creative_instantiate_type);
+        CreativeInstantiateRuleMap::iterator rule_it = creative_instantiate_.creative_rules.find(
+          core_request_params.common_info->creative_instantiate_type);
 
         if (rule_it == creative_instantiate_.creative_rules.end())
         {
           Stream::Error err;
           err << FUN << ": cannot find creative instantiate rule with name = '" <<
-            core_request_params.common_info.creative_instantiate_type << "'.";
+            core_request_params.common_info->creative_instantiate_type << "'.";
           throw Exception(err);
         }
 
@@ -897,70 +987,143 @@ namespace AdServer::CampaignSvcs
 
         const Generics::Time session_start = core_request_params.session_start;
 
-        AdSlotContext ad_slot_context;
-        ad_slot_context.request_blacklisted = request_blacklisted;
-        ad_slot_context.test_request = core_request_params.common_info.test_request;
-        append(ad_slot_context.full_freq_caps, core_request_params.full_freq_caps);
+        FreqCapIdSet accumulated_full_freq_caps;
+        append(accumulated_full_freq_caps, core_request_params.full_freq_caps);
+        unsigned long request_tag_id = 0;
+        RevenueDecimal adsspace_system_cpm(false, 100000, 0);
+        bool accumulated_request_blacklisted = request_blacklisted;
+        bool accumulated_test_request = core_request_params.common_info->test_request;
 
-        result.ad_slots.reserve(core_request_params.ad_slots.size());
+        auto request_params =
+          std::make_shared<GetAdRequest>(std::move(core_request_params));
 
-        for (std::size_t ad_slot_i = 0; ad_slot_i < core_request_params.ad_slots.size();
+        result.ad_slots.reserve(request_params->ad_slots.size());
+        CampaignManagerLogger::AdRequestSlotLogArray ad_request_logs;
+        ad_request_logs.reserve(request_params->ad_slots.size());
+
+        for (std::size_t ad_slot_i = 0; ad_slot_i < request_params->ad_slots.size();
           ++ad_slot_i)
         {
-          AdSlotResultInfo ad_slot_result;
-          ad_slot_context.passback_url.clear();
+          GetAdSlotResult ad_slot_result;
+          AdSlotContext ad_slot_context;
+          ad_slot_context.request_blacklisted = accumulated_request_blacklisted;
+          ad_slot_context.test_request = accumulated_test_request;
+          ad_slot_context.full_freq_caps = accumulated_full_freq_caps;
+          ad_slot_context.request_tag_id = request_tag_id;
+          ad_slot_context.adsspace_system_cpm = adsspace_system_cpm;
+
+          const Tag* log_tag = 0;
+          bool log_request_without_tag = false;
+          bool log_ad_request = false;
+          AdSelectionResult ad_selection_result(&memory_resource);
+          AdSlotMinCpm ad_slot_min_cpm;
+          Tag::SizeMap tag_sizes;
 
           co_await co_get_adslot_campaign_creative_(
+            log_tag,
+            log_request_without_tag,
+            log_ad_request,
+            ad_selection_result,
+            ad_slot_min_cpm,
+            tag_sizes,
+            ad_slot_result,
+            ad_slot_context,
             *campaign_config,
             *config_index,
-            ad_slot_result,
-            adsspace_system_cpm,
-            core_request_params,
+            *request_params,
             session_start,
             colocation,
-            core_request_params.ad_slots[ad_slot_i],
+            *request_params->ad_slots[ad_slot_i],
             rule_it->second,
             request_debug_info,
-            ad_slot_context,
             matched_channels,
-            request_tag_id);
+            &memory_resource);
+
+          FreqCapIdSet additional_full_freq_caps;
+          additional_full_freq_caps.swap(ad_slot_context.result_full_freq_caps);
+          request_tag_id = ad_slot_context.request_tag_id;
+          adsspace_system_cpm = ad_slot_context.adsspace_system_cpm;
+          accumulated_request_blacklisted = ad_slot_context.request_blacklisted;
+          accumulated_test_request = ad_slot_context.test_request;
+
+          if (log_ad_request)
+          {
+            CampaignManagerLogger::AdRequestSlotLog ad_request_log;
+            ad_request_log.ad_slot = request_params->ad_slots[ad_slot_i];
+            ad_request_log.tag = ReferenceCounting::add_ref(log_tag);
+            ad_request_log.ad_selection_result = std::move(ad_selection_result);
+            ad_request_log.ad_slot_context = std::move(ad_slot_context);
+            ad_request_log.ad_slot_min_cpm = ad_slot_min_cpm;
+            ad_request_log.tag_sizes = std::move(tag_sizes);
+            ad_request_log.disable_impression_tracking = false;
+            ad_request_logs.emplace_back(std::move(ad_request_log));
+          }
+          else if (log_request_without_tag)
+          {
+            campaign_manager_logger_->process_request(
+              colocation,
+              request_params,
+              std::move(ad_slot_context));
+          }
+
+          accumulated_full_freq_caps.insert(
+            additional_full_freq_caps.begin(),
+            additional_full_freq_caps.end());
 
           result.ad_slots.emplace_back(std::move(ad_slot_result));
+        }
+
+        if(!ad_request_logs.empty())
+        {
+          try
+          {
+            campaign_manager_logger_->process_ad_request(
+              colocation,
+              request_params->common_info,
+              request_params->context_info,
+              request_params->log_request,
+              request_params->channels,
+              request_params->required_passback,
+              std::move(ad_request_logs));
+          }
+          catch (const CampaignManagerLogger::Exception& e)
+          {
+            logger_->sstream(Logging::Logger::EMERGENCY,
+              Aspect::CAMPAIGN_MANAGER,
+              "ADS-IMPL-177") << FUN << ": "
+              "eh::Exception caught while logging request: " << e.what();
+          }
         }
       }
       else
       {
         // profiling request
-        auto request_info = std::make_shared<CampaignManagerLogger::RequestInfo>();
-        AdSlotContext ad_slot_context;
-        ad_slot_context.test_request = core_request_params.common_info.test_request;
-
         if(request_debug_info)
         {
           fill_request_platform_debug_info(
             *request_debug_info,
             campaign_config.get(),
-            core_request_params.context_info);
+            *core_request_params.context_info);
         }
 
-        CampaignManagerLogAdapter::fill_request_info(
-          *request_info,
-          campaign_config.get(),
-          colocation,
-          core_request_params.common_info,
-          core_request_params.context_info,
-          &core_request_params,
-          ad_slot_context);
+        AdSlotContext ad_slot_context;
+        ad_slot_context.test_request = core_request_params.common_info->test_request;
+        const unsigned long profiling_type =
+          core_request_params.log_request.profiling_type;
+        auto request_params =
+          std::make_shared<GetAdRequest>(std::move(core_request_params));
 
         campaign_manager_logger_->process_request(
-          request_info,
-          core_request_params.profiling_type);
+          colocation,
+          request_params,
+          std::move(ad_slot_context),
+          profiling_type);
       }
 
       // fill request level debug info
       if (request_debug_info)
       {
-        request_debug_info->geo_channels = core_request_params.context_info.geo_channels;
+        request_debug_info->geo_channels = debug_info.geo_channels;
       }
 
       process_timer.stop();
@@ -1046,9 +1209,7 @@ namespace AdServer::CampaignSvcs
       std::copy(
         match_request_info.match_info.hid_channels.begin(),
         match_request_info.match_info.hid_channels.end(),
-        std::inserter(
-          mri.match_info.hid_channels,
-          mri.match_info.hid_channels.begin()));
+        std::inserter(mri.match_info.hid_channels, mri.match_info.hid_channels.begin()));
 
       CampaignConfig::ColocationMap::const_iterator colo_it =
         match_request_info.match_info.colo_id <= 0 ?
@@ -1062,82 +1223,6 @@ namespace AdServer::CampaignSvcs
       campaign_manager_logger_->process_match_request(mri);
     }
     catch (const NotReady&)
-    {
-      throw;
-    }
-    catch (const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << e.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  CampaignManagerCore::process_anonymous_request(const AnonymousRequestInfo& anon_request_info)
-    /*throw(Exception, NotReady)*/
-  {
-    static const char* FUN = "CampaignManagerCore::process_anonymous_request()";
-
-    try
-    {
-      ConstCampaignConfigPtr campaign_config = get_campaign_config();
-
-      if (!campaign_config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
-
-      CampaignManagerLogger::AnonymousRequestInfo logger_info;
-      logger_info.colo_id = anon_request_info.colo_id;
-
-      if (anon_request_info.colo_id == 0 ||
-         (anon_request_info.colo_id != campaign_manager_config_.colocation_id() &&
-         campaign_config->colocations.find(anon_request_info.colo_id) ==
-           campaign_config->colocations.end()))
-      {
-        logger_info.colo_id = campaign_manager_config_.colocation_id();
-      }
-
-      logger_info.time = anon_request_info.time;
-      logger_info.user_status = static_cast<UserStatus>(anon_request_info.user_status);
-      logger_info.log_as_test = anon_request_info.test_request;
-      logger_info.search_engine_id = anon_request_info.search_engine_id;
-      logger_info.client_app = anon_request_info.client;
-      logger_info.client_app_version = anon_request_info.client_version;
-      logger_info.web_browser = anon_request_info.web_browser;
-      logger_info.full_platform = anon_request_info.full_platform;
-
-      if (!anon_request_info.user_agent.empty())
-      {
-        logger_info.user_agent = new Commons::StringHolder(anon_request_info.user_agent);
-      }
-
-      logger_info.search_engine_host = anon_request_info.search_engine_host;
-      logger_info.country_code = anon_request_info.country_code;
-      logger_info.page_keywords_present = anon_request_info.page_keywords_present;
-      std::copy(
-        anon_request_info.platform_ids.begin(),
-        anon_request_info.platform_ids.end(),
-        std::inserter(logger_info.platforms, logger_info.platforms.begin()));
-
-      campaign_config->platform_channels->match(
-        logger_info.platform_channels,
-        logger_info.platforms);
-      logger_info.search_words = new Commons::StringHolder(anon_request_info.search_words);
-
-      CampaignConfig::ColocationMap::const_iterator colo_it =
-        campaign_config->colocations.find(anon_request_info.colo_id);
-
-      if (colo_it != campaign_config->colocations.end())
-      {
-        logger_info.isp_time_offset = colo_it->second->account->time_offset;
-        logger_info.isp_time = logger_info.time + colo_it->second->account->time_offset;
-      }
-
-      campaign_manager_logger_->process_anon_request(logger_info);
-    }
-    catch(const NotReady&)
     {
       throw;
     }
@@ -1171,24 +1256,24 @@ namespace AdServer::CampaignSvcs
   }
 
   AdServer::Commons::SyncCoro<CampaignManagerCore::InstantiateAdResult>
-  CampaignManagerCore::co_instantiate_ad(const InstantiateAdInfo& core_info)
+  CampaignManagerCore::co_instantiate_ad(InstantiateAdRequest&& core_info)
     /*throw(Exception, NotReady)*/
   {
     static const char* FUN = "CampaignManagerCore::instantiate_ad()";
 
     try
     {
-      const InstantiateAdInfo& instantiate_ad_info = core_info;
+      InstantiateAdRequest& instantiate_ad_info = core_info;
 
       ConstCampaignConfigPtr campaign_config = get_campaign_config();
       const Colocation* colocation = 0;
       const Tag* tag = 0;
       const Tag::Size* tag_size = 0;
 
-      if (instantiate_ad_info.common_info.colo_id)
+      if (instantiate_ad_info.common_info->colo_id)
       {
         CampaignConfig::ColocationMap::const_iterator colo_it =
-          campaign_config->colocations.find(instantiate_ad_info.common_info.colo_id);
+          campaign_config->colocations.find(instantiate_ad_info.common_info->colo_id);
 
         if (colo_it != campaign_config->colocations.end())
         {
@@ -1197,7 +1282,7 @@ namespace AdServer::CampaignSvcs
       }
 
       if (!colocation &&
-        instantiate_ad_info.common_info.colo_id != campaign_manager_config_.colocation_id())
+        instantiate_ad_info.common_info->colo_id != campaign_manager_config_.colocation_id())
       {
         CampaignConfig::ColocationMap::const_iterator colo_it =
           campaign_config->colocations.find(campaign_manager_config_.colocation_id());
@@ -1220,17 +1305,6 @@ namespace AdServer::CampaignSvcs
       }
 
       const Creative* creative = 0;
-
-      if (instantiate_ad_info.creative_id)
-      {
-        // determine size by creative
-        CreativeMap::const_iterator cr_it = campaign_config->creatives.find(
-          instantiate_ad_info.creative_id);
-        if (cr_it != campaign_config->creatives.end())
-        {
-          creative = cr_it->second.in();
-        }
-      }
 
       if (instantiate_ad_info.tag_id)
       {
@@ -1306,21 +1380,21 @@ namespace AdServer::CampaignSvcs
       }
 
       AdSlotContext ad_slot_context;
-      ad_slot_context.test_request = instantiate_ad_info.common_info.test_request;
+      ad_slot_context.test_request = instantiate_ad_info.common_info->test_request;
       if (instantiate_ad_info.pub_imp_revenue)
       {
         ad_slot_context.pub_imp_revenue = *instantiate_ad_info.pub_imp_revenue;
       }
 
       CreativeInstantiateRuleMap::iterator rule_it = creative_instantiate_.creative_rules.find(
-        instantiate_ad_info.common_info.creative_instantiate_type);
+        instantiate_ad_info.common_info->creative_instantiate_type);
 
       if (rule_it == creative_instantiate_.creative_rules.end())
       {
         Stream::Error err;
         err << FUN <<
           ": cannot find creative instantiate rule with name = '" <<
-          instantiate_ad_info.common_info.creative_instantiate_type << "'.";
+          instantiate_ad_info.common_info->creative_instantiate_type << "'.";
 
         throw Exception(err);
       }
@@ -1413,7 +1487,7 @@ namespace AdServer::CampaignSvcs
       }
 
       RequestResultParams request_result_params;
-      request_result_params.request_id = instantiate_ad_info.common_info.request_id;
+      request_result_params.request_id = instantiate_ad_info.common_info->request_id;
 
       CreativeParamsList creative_params_list;
       InstantiateParams inst_params(instantiate_ad_info.user_id_hash_mod);
@@ -1444,7 +1518,7 @@ namespace AdServer::CampaignSvcs
         logger_,
         country_whitelist_);
       creative_instantiator.instantiate_creative(
-        instantiate_ad_info.common_info,
+        *instantiate_ad_info.common_info,
         campaign_config.get(),
         colocation,
         inst_params,
@@ -1470,19 +1544,31 @@ namespace AdServer::CampaignSvcs
         }
       }
 
+      ConfirmCreativeAmountArray confirm_creatives;
+      if (instantiate_ad_info.consider_request && instantiate_ad_info.emulate_click)
+      {
+        for (auto it = ad_selection_result.selected_campaigns.begin();
+          it != ad_selection_result.selected_campaigns.end(); ++it)
+        {
+          confirm_creatives.push_back(ConfirmCreativeAmount(it->creative->ccid, it->ctr));
+        }
+      }
+
       if (instantiate_ad_info.consider_request)
       {
         // TODO: use empty user id
         assert(instantiate_ad_info.context_info.size() == 1);
 
+        const bool reset_request_user = core_info.context_info[0]->enabled_notice;
+        const Generics::Time confirm_time = core_info.common_info->time;
         ChannelIdList geo_channels;
 
         {
           ChannelIdSet coord_channels;
           match_geo_channels_(
             *campaign_config,
-            instantiate_ad_info.common_info.location,
-            instantiate_ad_info.common_info.coord_location,
+            instantiate_ad_info.common_info->location,
+            instantiate_ad_info.common_info->coord_location,
             geo_channels,
             coord_channels);
 
@@ -1492,33 +1578,7 @@ namespace AdServer::CampaignSvcs
         }
 
         // emulate campaign selection
-        auto request_info = std::make_shared<CampaignManagerLogger::RequestInfo>();
-        CampaignManagerLogger::AdRequestSelectionInfo ad_request_selection_info;
-
-        CampaignManagerLogAdapter::fill_request_info(
-          *request_info,
-          campaign_config.get(),
-          colocation,
-          core_info.common_info,
-          core_info.context_info[0],
-          0, // request_params
-          ad_slot_context
-          );
-
-        if (core_info.context_info[0].enabled_notice)
-        {
-          request_info->request_user_id = AdServer::Commons::UserId();
-          request_info->request_user_status = US_UNDEFINED;
-        }
-
-        std::copy(geo_channels.begin(),
-          geo_channels.end(),
-          std::back_inserter(request_info->geo_channels));
-        std::copy(geo_channels.begin(),
-          geo_channels.end(),
-          std::inserter(request_info->history_channels, request_info->history_channels.end()));
-
-        TraceAdSlotInfo ad_slot_info;
+        AdSlotRequest ad_slot_info;
         ad_slot_info.ad_slot_id = 0;
         ad_slot_info.format = core_info.format;
         ad_slot_info.tag_id = core_info.tag_id;
@@ -1536,41 +1596,60 @@ namespace AdServer::CampaignSvcs
         ad_slot_info.video_allow_skippable = true;
         ad_slot_info.video_allow_unskippable = true;
 
-        CampaignManagerLogAdapter::fill_ad_request_selection_info(
-          ad_request_selection_info,
-          campaign_config.get(),
-          colocation,
-          core_info.common_info,
-          core_info.context_info[0],
-          0, // request_params
-          ad_slot_info,
-          tag,
-          ad_selection_result,
-          ad_slot_context,
-          AdSlotMinCpm(),
-          tag->sizes, // log all sizes, no blacklisting on inst
-          instantiate_ad_info.emulate_click);
-
-        campaign_manager_logger_->process_ad_request(request_info, ad_request_selection_info);
-      }
-
-      if (instantiate_ad_info.consider_request && instantiate_ad_info.emulate_click)
-      {
-        ConfirmCreativeAmountArray confirm_creatives;
-
-        const Generics::Time time = core_info.common_info.time;
-
-        for (auto it = ad_selection_result.selected_campaigns.begin();
-          it != ad_selection_result.selected_campaigns.end(); ++it)
+        auto request_params = std::make_shared<GetAdRequest>();
+        request_params->common_info = core_info.common_info;
+        request_params->context_info = core_info.context_info[0];
+        request_params->publisher_site_id = core_info.publisher_site_id;
+        if (core_info.publisher_account_id)
         {
-          confirm_creatives.push_back(ConfirmCreativeAmount(it->creative->ccid, it->ctr));
+          request_params->publisher_account_ids.emplace_back(
+            core_info.publisher_account_id);
         }
+        request_params->log_request.merged_user_id = core_info.merged_user_id;
+        request_params->ad_slots.emplace_back(
+          std::make_shared<AdSlotRequest>(std::move(ad_slot_info)));
 
-        // confirm imps
-        co_await co_confirm_amounts_(campaign_config.get(), time, confirm_creatives, CR_CPM);
+        auto geo_channels_ptr = std::make_shared<ChannelIdList>(std::move(geo_channels));
+        CampaignManagerLogger::AdRequestSlotLogArray ad_request_logs;
+        CampaignManagerLogger::AdRequestSlotLog ad_request_log;
+        ad_request_log.ad_slot = request_params->ad_slots.back();
+        ad_request_log.tag = ReferenceCounting::add_ref(tag);
+        ad_request_log.ad_selection_result = std::move(ad_selection_result);
+        ad_request_log.ad_slot_context = std::move(ad_slot_context);
+        ad_request_log.ad_slot_min_cpm = AdSlotMinCpm();
+        ad_request_log.tag_sizes =
+          Tag::SizeMap(tag->sizes); // log all sizes, no blacklisting on inst
+        ad_request_log.disable_impression_tracking =
+          instantiate_ad_info.emulate_click;
+        ad_request_logs.emplace_back(std::move(ad_request_log));
 
-        // confirm clicks
-        co_await co_confirm_amounts_(campaign_config.get(), time, confirm_creatives, CR_CPC);
+        campaign_manager_logger_->process_ad_request(
+          colocation,
+          request_params->common_info,
+          request_params->context_info,
+          std::move(request_params->log_request),
+          std::move(request_params->channels),
+          request_params->required_passback,
+          std::move(ad_request_logs),
+          std::move(geo_channels_ptr),
+          reset_request_user);
+
+        if (instantiate_ad_info.emulate_click)
+        {
+          // confirm imps
+          co_await co_confirm_amounts_(
+            campaign_config.get(),
+            confirm_time,
+            confirm_creatives,
+            CR_CPM);
+
+          // confirm clicks
+          co_await co_confirm_amounts_(
+            campaign_config.get(),
+            confirm_time,
+            confirm_creatives,
+            CR_CPC);
+        }
       }
 
       co_return result;
@@ -1601,11 +1680,11 @@ namespace AdServer::CampaignSvcs
     unsigned long request_type,
     unsigned long random,
     unsigned long publisher_site_id,
-    const IdVector& publisher_account_ids,
+    const IdArray& publisher_account_ids,
     const CampaignConfig& campaign_config,
     unsigned long tag_id,
-    const StringVector& sizes,
-    const StringVector& currency_codes)
+    const StringArray& sizes,
+    const StringArray& currency_codes)
     const noexcept
   {
     if (request_type == AR_NORMAL)
@@ -1642,13 +1721,13 @@ namespace AdServer::CampaignSvcs
 
       if (!currency_codes.empty())
       {
-        for (IdVector::const_iterator account_id_it = publisher_account_ids.begin();
+        for (IdArray::const_iterator account_id_it = publisher_account_ids.begin();
           account_id_it != publisher_account_ids.end(); ++account_id_it)
         {
           auto account_it = campaign_config.accounts.find(*account_id_it);
           if (account_it != campaign_config.accounts.end())
           {
-            for (StringVector::const_iterator currency_it = currency_codes.begin();
+            for (StringArray::const_iterator currency_it = currency_codes.begin();
               currency_it != currency_codes.end(); ++currency_it)
             {
               if (account_it->second->currency->currency_code == *currency_it)
@@ -1669,7 +1748,7 @@ namespace AdServer::CampaignSvcs
       {
         const unsigned long res_publisher_account_id = *acc_it;
 
-        for (StringVector::const_iterator size_it = sizes.begin();
+        for (StringArray::const_iterator size_it = sizes.begin();
           size_it != sizes.end(); ++size_it)
         {
           const CampaignConfig::IdTagMap::const_iterator acc_tag_it =
@@ -1705,26 +1784,34 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Commons::SyncCoro<bool>
   CampaignManagerCore::co_get_adslot_campaign_creative_(
+    const Tag*& log_tag,
+    bool& log_request_without_tag,
+    bool& log_ad_request,
+    AdSelectionResult& ad_selection_result,
+    AdSlotMinCpm& ad_slot_min_cpm,
+    Tag::SizeMap& tag_sizes,
+    GetAdSlotResult& ad_slot_result,
+    AdSlotContext& ad_slot_context,
     const CampaignConfig& campaign_config,
     const CampaignIndex& config_index,
-    AdSlotResultInfo& ad_slot_result,
-    AdServer::CampaignSvcs::RevenueDecimal& adsspace_system_cpm,
-    const CreativeRequestInfo& core_request_params,
+    const GetAdRequest& core_request_params,
     const Generics::Time& session_start,
     const Colocation* colocation,
-    const TraceAdSlotInfo& core_ad_slot,
+    const AdSlotRequest& core_ad_slot,
     const CreativeInstantiateRule& creative_instantiate_rule,
-    AdRequestDebugInfo* ad_request_debug_info,
-    AdSlotContext& ad_slot_context,
+    GetAdDebugResult* ad_request_debug_info,
     const ChannelIdHashSet& matched_channels,
-    unsigned long& request_tag_id)
+    std::pmr::memory_resource* memory_resource)
   {
     //static const char* FUN = "CampaignManagerCore::get_adslot_campaign_creative_()";
 
     bool passback = core_ad_slot.passback;
     bool process_request = true;
+    log_tag = 0;
+    log_request_without_tag = false;
+    log_ad_request = false;
     ad_slot_result.ad_slot_id = core_ad_slot.ad_slot_id;
-    AdSlotDebugInfo* ad_slot_debug_info = core_request_params.need_debug_info ?
+    AdSlotDebugResult* ad_slot_debug_info = core_request_params.need_debug_info ?
       &ad_slot_result.debug_info : 0;
 
     if (ad_slot_debug_info)
@@ -1735,8 +1822,8 @@ namespace AdServer::CampaignSvcs
     const Tag* tag = resolve_tag(
       &ad_slot_context.tag_size,
       &ad_slot_context.publisher_account_id,
-      core_request_params.common_info.request_type,
-      core_request_params.common_info.random,
+      core_request_params.common_info->request_type,
+      core_request_params.common_info->random,
       core_request_params.publisher_site_id,
       core_request_params.publisher_account_ids,
       campaign_config,
@@ -1746,16 +1833,18 @@ namespace AdServer::CampaignSvcs
 
     if (tag)
     {
-      if (!request_tag_id)
+      log_tag = tag;
+
+      if (!ad_slot_context.request_tag_id)
       {
-        request_tag_id = tag->tag_id;
+        ad_slot_context.request_tag_id = tag->tag_id;
       }
       ad_slot_result.pub_currency_code = tag->site->account->currency->currency_code;
     }
 
-    if (!core_request_params.common_info.passback_url.empty())
+    if (!core_request_params.common_info->passback_url.empty())
     {
-      ad_slot_context.passback_url = core_request_params.common_info.passback_url;
+      ad_slot_context.passback_url = core_request_params.common_info->passback_url;
       creative_instantiate_rule.instantiate_relative_protocol_url(
         ad_slot_context.passback_url);
     }
@@ -1779,8 +1868,6 @@ namespace AdServer::CampaignSvcs
       if (process_request)
       {
         // Check & fill min_ecpm
-        AdSlotMinCpm ad_slot_min_cpm;
-
         if (!fill_ad_slot_min_cpm_(
           ad_slot_min_cpm,
           &campaign_config,
@@ -1793,26 +1880,32 @@ namespace AdServer::CampaignSvcs
         }
         else
         {
-          adsspace_system_cpm = std::min(adsspace_system_cpm, ad_slot_min_cpm.min_pub_ecpm_system);
+          ad_slot_context.adsspace_system_cpm = std::min(
+            ad_slot_context.adsspace_system_cpm,
+            ad_slot_min_cpm.min_pub_ecpm_system);
         }
 
         try
         {
           co_await select_adslot_campaign_creative_(
+            ad_selection_result,
+            tag_sizes,
+            ad_slot_result,
+            ad_slot_context,
             config_index,
             campaign_config,
             core_request_params,
             core_ad_slot,
-            ad_slot_context,
             ad_slot_min_cpm,
             session_start,
-            ad_slot_result,
             tag,
             colocation,
             passback,
             ad_request_debug_info,
             ad_slot_debug_info,
-            matched_channels);
+            matched_channels,
+            memory_resource);
+          log_ad_request = true;
         }
         catch(const eh::Exception& ex)
         {
@@ -1838,31 +1931,19 @@ namespace AdServer::CampaignSvcs
 
       if (ad_request_debug_info)
       {
-        ad_request_debug_info->geo_channels = core_request_params.context_info.geo_channels;
+        ad_request_debug_info->geo_channels = core_request_params.context_info->geo_channels;
       }
     }
     else
     {
-      auto request_info = std::make_shared<CampaignManagerLogger::RequestInfo>();
-
+      log_request_without_tag = true;
       if(ad_request_debug_info)
       {
         fill_request_platform_debug_info(
           *ad_request_debug_info,
           &campaign_config,
-          core_request_params.context_info);
+          *core_request_params.context_info);
       }
-
-      CampaignManagerLogAdapter::fill_request_info(
-        *request_info,
-        &campaign_config,
-        colocation,
-        core_request_params.common_info,
-        core_request_params.context_info,
-        &core_request_params,
-        ad_slot_context);
-
-      campaign_manager_logger_->process_request(request_info);
     }
 
     passback |= ad_slot_result.selected_creatives.empty();
@@ -1877,7 +1958,7 @@ namespace AdServer::CampaignSvcs
     if (passback && core_request_params.required_passback)
     {
       if (!ad_slot_context.passback_url.empty() &&
-         core_request_params.common_info.passback_type == "redir")
+         core_request_params.common_info->passback_type == "redir")
       {
         std::ostringstream passback_imp_url_ostr;
         std::string mime_passback_url;
@@ -1886,19 +1967,19 @@ namespace AdServer::CampaignSvcs
           ad_slot_context.passback_url, mime_passback_url);
 
         passback_imp_url_ostr << creative_instantiate_rule.passback_pixel_url <<
-          "?requestid=" << core_request_params.common_info.request_id.to_string() <<
-          "&random=" << core_request_params.common_info.random <<
+          "?requestid=" << core_request_params.common_info->request_id.to_string() <<
+          "&random=" << core_request_params.common_info->random <<
           "&passback=" << mime_passback_url;
 
         AdServer::Commons::UserId user_id =
-          core_request_params.common_info.user_id;
+          core_request_params.common_info->user_id;
         if (!user_id.is_null())
         {
           passback_imp_url_ostr << "&h=" <<
             AdServer::LogProcessing::user_id_distribution_hash(user_id);
         }
 
-        if (core_request_params.common_info.log_as_test)
+        if (core_request_params.common_info->log_as_test)
         {
           passback_imp_url_ostr << "&testrequest=1";
         }
@@ -1933,268 +2014,12 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    /* trace campaign if need */
-    if (ad_slot_debug_info && core_ad_slot.debug_ccg)
-    {
-      TraceRequestInfo trace_request;
-      trace_request.common_info = core_request_params.common_info;
-      trace_request.context_info = core_request_params.context_info;
-      trace_request.publisher_site_id = core_request_params.publisher_site_id;
-      trace_request.publisher_account_ids = core_request_params.publisher_account_ids;
-      trace_request.profiling_available = core_request_params.profiling_available;
-      trace_request.full_freq_caps = core_request_params.full_freq_caps;
-      trace_request.channels = core_request_params.channels;
-      trace_request.hid_channels = core_request_params.hid_channels;
-      trace_request.client_create_time = core_request_params.client_create_time;
-      trace_request.tag_delivery_factor = core_request_params.tag_delivery_factor;
-      trace_request.ccg_delivery_factor = core_request_params.ccg_delivery_factor;
-
-      const std::string trace_out = trace_campaign_selection_(
-        &campaign_config,
-        &config_index,
-        core_ad_slot.debug_ccg,
-        trace_request,
-        core_ad_slot,
-        ad_slot_debug_info->auction_type,
-        ad_slot_context.test_request);
-
-      ad_slot_debug_info->trace_ccg = trace_out;
-    }
-
     if (!ad_slot_result.selected_creatives.empty())
     {
       ad_slot_result.tag_size = ad_slot_context.tag_size;
     }
 
     co_return true;
-  }
-
-  std::string
-  CampaignManagerCore::trace_campaign_selection(
-    unsigned long campaign_id,
-    const TraceRequestInfo& core_request_params,
-    const TraceAdSlotInfo& core_ad_slot,
-    unsigned long auction_type,
-    bool test_request)
-    /*throw(Exception)*/
-  {
-    ConstCampaignConfigPtr used_campaign_config = get_campaign_config();
-    ConstCampaignIndexPtr used_campaign_index = get_campaign_index();
-
-    return trace_campaign_selection_(
-      used_campaign_config.get(),
-      used_campaign_index.get(),
-      campaign_id,
-      core_request_params,
-      core_ad_slot,
-      auction_type,
-      test_request);
-  }
-
-  std::string
-  CampaignManagerCore::trace_campaign_selection_(
-    const CampaignConfig* used_campaign_config,
-    const CampaignIndex* used_campaign_index,
-    unsigned long campaign_id,
-    const TraceRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
-    unsigned long auction_type,
-    bool test_request)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "CampaignManagerCore::trace_campaign_selection()";
-
-    try
-    {
-      if (!used_campaign_config || !used_campaign_index)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Can't get the configuration.";
-
-        logger_->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::CAMPAIGN_MANAGER,
-          "ADS-IMPL-172");
-
-        throw Exception(ostr);
-      }
-
-      std::ostringstream trace_stream;
-      trace_stream << "<request>" << std::endl;
-
-      const Tag* tag = resolve_tag(
-        0,
-        0, // out publisher account id
-        request_params.common_info.request_type,
-        request_params.common_info.random,
-        request_params.publisher_site_id,
-        request_params.publisher_account_ids,
-        *used_campaign_config,
-        ad_slot.tag_id,
-        ad_slot.sizes,
-        ad_slot.currency_codes);
-
-      Generics::Time current_time = request_params.common_info.time;
-
-      if (tag)
-      {
-        Campaign_var campaign;
-
-        auto it = used_campaign_config->campaigns.find(campaign_id);
-
-        if (it != used_campaign_config->campaigns.end())
-        {
-          campaign = it->second;
-        }
-
-        if (campaign.in())
-        {
-          CampaignIndexPtr config_index =
-            std::make_shared<CampaignIndex>(*used_campaign_index, logger_);
-
-          CampaignIndex::Key key(tag);
-
-          key.country_code = request_params.common_info.location.empty() ?
-            "" : request_params.common_info.location[0].country;
-          key.format = ad_slot.format;
-          key.user_status = static_cast<UserStatus>(request_params.common_info.user_status);
-          key.test_request = test_request;
-          key.tag_delivery_factor = request_params.tag_delivery_factor;
-          key.ccg_delivery_factor = request_params.ccg_delivery_factor;
-
-          // for trace we use uid & hid channels union
-          ChannelIdHashSet triggered_channels;
-          triggered_channels.insert(
-            request_params.channels.begin(),
-            request_params.channels.end());
-          triggered_channels.insert(
-            request_params.hid_channels.begin(),
-            request_params.hid_channels.end());
-          triggered_channels.insert(
-            request_params.context_info.geo_channels.begin(),
-            request_params.context_info.geo_channels.end());
-          triggered_channels.emplace(TRUE_CHANNEL_ID);
-
-          FreqCapIdSet full_freq_caps;
-          std::copy(
-            request_params.full_freq_caps.begin(),
-            request_params.full_freq_caps.end(),
-            std::inserter(full_freq_caps, full_freq_caps.begin()));
-
-          CreativeCategoryIdSet exclude_categories;
-
-          convert_external_categories_(
-            exclude_categories,
-            *used_campaign_config,
-            request_params.common_info.request_type,
-            ad_slot.exclude_categories);
-
-          CreativeCategoryIdSet required_categories;
-
-          convert_external_categories_(
-            required_categories,
-            *used_campaign_config,
-            request_params.common_info.request_type,
-            ad_slot.required_categories);
-
-          if (!ad_slot.required_categories.empty() && required_categories.empty())
-          {
-            // some category can't be resolved
-            required_categories.insert(0);
-          }
-
-          AdSlotMinCpm ad_slot_min_cpm;
-
-          fill_ad_slot_min_cpm_(
-            ad_slot_min_cpm,
-            used_campaign_config,
-            tag,
-            String::SubString(ad_slot.min_ecpm_currency_code),
-            ad_slot.min_ecpm);
-
-          std::set<unsigned long> allowed_durations;
-          allowed_durations.insert(
-            ad_slot.allowed_durations.begin(),
-            ad_slot.allowed_durations.end());
-
-          config_index->trace_indexing(
-            key,
-            current_time,
-            request_params.profiling_available,
-            full_freq_caps,
-            request_params.common_info.colo_id,
-            request_params.client_create_time,
-            triggered_channels,
-            request_params.common_info.user_id,
-            campaign,
-            ad_slot_min_cpm.min_pub_ecpm_system,
-            ad_slot.up_expand_space >= 0 ?
-              static_cast<unsigned long>(ad_slot.up_expand_space) : 0,
-            ad_slot.right_expand_space >= 0 ?
-              static_cast<unsigned long>(ad_slot.right_expand_space) : 0,
-            ad_slot.down_expand_space >= 0 ?
-              static_cast<unsigned long>(ad_slot.down_expand_space) : 0,
-            ad_slot.left_expand_space >= 0 ?
-              static_cast<unsigned long>(ad_slot.left_expand_space) : 0,
-            ad_slot.tag_visibility,
-            ad_slot.video_min_duration,
-            ad_slot.video_max_duration >= 0 ?
-              AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration) :
-              AdServer::Commons::Optional<unsigned long>(),
-            ad_slot.video_skippable_max_duration >= 0 ?
-              AdServer::Commons::Optional<unsigned long>(ad_slot.video_skippable_max_duration) :
-              AdServer::Commons::Optional<unsigned long>(),
-            ad_slot.video_allow_skippable,
-            ad_slot.video_allow_unskippable,
-            allowed_durations,
-            exclude_categories,
-            required_categories,
-            AuctionType(auction_type),
-            (String::SubString(request_params.common_info.creative_instantiate_type) ==
-              AdInstantiateRule::SECURE),
-            (request_params.common_info.request_type == AR_GOOGLE),
-            trace_stream);
-        }
-        else
-        {
-          trace_stream << "  <message>can't find campaign</message>" << std::endl;
-        }
-      }
-      else
-      {
-        trace_stream << "  <message>can't find tag: "
-          "tag_id = " << ad_slot.tag_id <<
-          ", sizes = ";
-        for (StringVector::const_iterator it = ad_slot.sizes.begin();
-          it != ad_slot.sizes.end(); ++it)
-        {
-          trace_stream << (it != ad_slot.sizes.begin() ? "," : "") << *it;
-        }
-        trace_stream << ", publisher_account_id = ";
-        for (IdVector::const_iterator it = request_params.publisher_account_ids.begin();
-          it != request_params.publisher_account_ids.end(); ++it)
-        {
-          trace_stream <<
-            (it != request_params.publisher_account_ids.begin() ? "," : "") << *it;
-        }
-        trace_stream << "</message>" << std::endl;
-      }
-
-      trace_stream << "</request>" << std::endl;
-
-      return trace_stream.str();
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << ex.what();
-
-      logger_->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::CAMPAIGN_MANAGER,
-        "ADS-IMPL-174");
-      throw Exception(ostr);
-    }
   }
 
   std::string
@@ -2345,45 +2170,44 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Commons::SyncCoro<bool>
   CampaignManagerCore::select_adslot_campaign_creative_(
+    AdSelectionResult& ad_selection_result,
+    Tag::SizeMap& tag_sizes,
+    GetAdSlotResult& ad_slot_result,
+    AdSlotContext& ad_slot_context,
     const CampaignIndex& config_index,
     const CampaignConfig& const_config,
-    const CreativeRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
-    AdSlotContext& ad_slot_context,
+    const GetAdRequest& request_params,
+    const AdSlotRequest& ad_slot,
     const AdSlotMinCpm& ad_slot_min_cpm,
     const Generics::Time& session_start,
-    AdSlotResultInfo& ad_slot_result,
     const Tag* tag,
     const Colocation* colocation,
     bool passback,
-    AdRequestDebugInfo* ad_request_debug_info,
-    AdSlotDebugInfo* ad_slot_debug_info,
-    const ChannelIdHashSet& matched_channels)
+    GetAdDebugResult* ad_request_debug_info,
+    AdSlotDebugResult* ad_slot_debug_info,
+    const ChannelIdHashSet& matched_channels,
+    std::pmr::memory_resource* memory_resource)
     /*throw(eh::Exception)*/
   {
-    static const char* FUN = "CampaignManagerCore::select_adslot_campaign_creative_()";
-
     /* configuring response by input parameters */
     if (ad_request_debug_info)
     {
-      ad_request_debug_info->colo_id = request_params.common_info.colo_id;
+      ad_request_debug_info->colo_id = request_params.common_info->colo_id;
       ad_request_debug_info->user_group_id =
-        request_params.common_info.user_id.hash() % MAX_TARGET_USERS_GROUPS;
+        request_params.common_info->user_id.hash() % MAX_TARGET_USERS_GROUPS;
     }
 
     /* checking noads_timeout period */
     if (tag->site->noads_timeout != 0 &&
-      session_start + tag->site->noads_timeout > request_params.common_info.time)
+      session_start + tag->site->noads_timeout > request_params.common_info->time)
     {
       passback = true;
     }
 
-    AdSelectionResult ad_selection_result;
-    RequestResultParams request_result_params;
+    RequestResultParams request_result_params(memory_resource);
 
-    request_result_params.request_id = request_params.common_info.request_id;
+    request_result_params.request_id = request_params.common_info->request_id;
 
-    Tag::SizeMap tag_sizes;
     if (!ad_slot_context.request_blacklisted)
     {
       for (auto tag_size_it = tag->sizes.begin(); tag_size_it != tag->sizes.end(); ++tag_size_it)
@@ -2432,7 +2256,7 @@ namespace AdServer::CampaignSvcs
       // fill tokens
       if (!is_preview_ccid)
       {
-        SeqOrderMap seq_orders;
+        SeqOrderMap seq_orders(memory_resource);
 
         for (const auto& core_seq_order : request_params.seq_orders)
         {
@@ -2458,7 +2282,8 @@ namespace AdServer::CampaignSvcs
           creative_body,
           creative_url,
           ad_request_debug_info,
-          ad_slot_debug_info);
+          ad_slot_debug_info,
+          memory_resource);
       }
 
       ad_slot_result.creative_body = creative_body;
@@ -2500,12 +2325,11 @@ namespace AdServer::CampaignSvcs
         }
       }
 
-      // filtering campaign/creative selection by freq caps,
-      // which presents in previously processed slots
-      ad_slot_context.full_freq_caps.insert(
+      // Freq caps selected in this slot are applied to following slots by caller.
+      ad_slot_context.result_full_freq_caps.insert(
         ad_selection_result.freq_caps.begin(),
         ad_selection_result.freq_caps.end());
-      ad_slot_context.full_freq_caps.insert(
+      ad_slot_context.result_full_freq_caps.insert(
         ad_selection_result.uc_freq_caps.begin(),
         ad_selection_result.uc_freq_caps.end());
 
@@ -2604,7 +2428,7 @@ namespace AdServer::CampaignSvcs
         get_bid_costs_(
           low_predicted_pub_ecpm_system,
           top_predicted_pub_ecpm_system,
-          String::SubString(request_params.common_info.referer),
+          String::SubString(request_params.common_info->referer),
           tag,
           ad_slot_min_cpm.min_pub_ecpm_system,
           ad_selection_result.selected_campaigns);
@@ -2641,7 +2465,7 @@ namespace AdServer::CampaignSvcs
 
           it->count_impression = it->creative && !it->track_impr;
 
-          CreativeSelectResultInfo& cs_result = ad_slot_result.selected_creatives[i];
+          CreativeSelectResult& cs_result = ad_slot_result.selected_creatives[i];
 
           cs_result.request_id = it->request_id;
           cs_result.cmp_id = it->campaign->campaign_id;
@@ -2664,7 +2488,7 @@ namespace AdServer::CampaignSvcs
             //RevenueDecimal orig_ecpm_bid = it->ecpm_bid;
 
             // set random cost for 10% bids
-            if (request_params.common_info.random % 10 == 0 && it->ecpm_bid > slot_pub_ecpm)
+            if (request_params.common_info->random % 10 == 0 && it->ecpm_bid > slot_pub_ecpm)
             {
               RevenueDecimal c = slot_pub_ecpm + RevenueDecimal::div(
                 RevenueDecimal::mul(
@@ -2716,7 +2540,7 @@ namespace AdServer::CampaignSvcs
           cs_result.destination_url = destination_url;
 
           AdRequestType request_type = reduce_request_type_(
-            request_params.common_info.request_type);
+            request_params.common_info->request_type);
 
           auto size_it = it->creative->sizes.find(ad_selection_result.tag_size->size->size_id);
 
@@ -2760,7 +2584,7 @@ namespace AdServer::CampaignSvcs
 
           if (ad_slot_debug_info)
           {
-            CreativeSelectDebugInfo& cs_debug = ad_slot_debug_info->selected_creatives[i];
+            CreativeSelectDebugResult& cs_debug = ad_slot_debug_info->selected_creatives[i];
             cs_debug.ecpm_bid = it->ecpm_bid;
             cs_debug.imp_revenue = it->campaign->imp_revenue;
             cs_debug.click_revenue =
@@ -2783,51 +2607,12 @@ namespace AdServer::CampaignSvcs
       }
     } // !passback
 
-    try
+    if(ad_request_debug_info)
     {
-      auto request_info = std::make_shared<CampaignManagerLogger::RequestInfo>();
-      CampaignManagerLogger::AdRequestSelectionInfo ad_request_selection_info;
-
-      if(ad_request_debug_info)
-      {
-        fill_request_platform_debug_info(
-          *ad_request_debug_info,
-          &const_config,
-          request_params.context_info);
-      }
-
-      CampaignManagerLogAdapter::fill_request_info(
-        *request_info,
+      fill_request_platform_debug_info(
+        *ad_request_debug_info,
         &const_config,
-        colocation,
-        request_params.common_info,
-        request_params.context_info,
-        &request_params,
-        ad_slot_context);
-
-      CampaignManagerLogAdapter::fill_ad_request_selection_info(
-        ad_request_selection_info,
-        &const_config,
-        colocation,
-        request_params.common_info,
-        request_params.context_info,
-        &request_params,
-        ad_slot,
-        tag,
-        ad_selection_result,
-        ad_slot_context,
-        ad_slot_min_cpm,
-        tag_sizes,
-        false);
-
-      campaign_manager_logger_->process_ad_request(request_info, ad_request_selection_info);
-    }
-    catch (const CampaignManagerLogger::Exception& e)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::CAMPAIGN_MANAGER,
-        "ADS-IMPL-177") << FUN << ": "
-        "eh::Exception caught while logging request: " << e.what();
+        *request_params.context_info);
     }
 
     co_return true;
@@ -2943,7 +2728,7 @@ namespace AdServer::CampaignSvcs
       1 : 0;
   }
 
-  void CampaignManagerCore::consider_passback(const PassbackInfo& in)
+  void CampaignManagerCore::consider_passback(const PassbackRequest& in)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerCore::consider_passback()";
@@ -2964,7 +2749,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void CampaignManagerCore::consider_passback_track(const PassbackTrackInfo& in)
+  void CampaignManagerCore::consider_passback_track(const PassbackTrackRequest& in)
     /*throw(Exception, NotReady)*/
   {
     static const char* FUN = "CampaignManagerCore::consider_passback_track()";
@@ -3010,8 +2795,8 @@ namespace AdServer::CampaignSvcs
 
   AdServer::Commons::SyncCoro<bool>
   CampaignManagerCore::co_get_click_url(
-    const ClickInfo& click_info,
-    ClickResultInfo& click_result_info)
+    const ClickRequest& click_info,
+    ClickResult& click_result_info)
     /*throw(Exception, NotReady)*/
   {
     static const char* FUN = "CampaignManagerCore::get_click_url()";
@@ -3248,8 +3033,8 @@ namespace AdServer::CampaignSvcs
   CampaignManagerCore::log_incoming_request(
     unsigned long tag_id,
     const String::SubString& referer,
-    const IdVector& channels,
-    const IdVector& full_freq_caps)
+    const IdArray& channels,
+    const IdArray& full_freq_caps)
     /*throw(eh::Exception)*/
   {
     std::ostringstream ostr;
@@ -3262,7 +3047,7 @@ namespace AdServer::CampaignSvcs
     ostr << "  full freq caps: ";
     Algs::print(ostr, full_freq_caps.begin(), full_freq_caps.end());
 
-    logger_->log(ostr.str(), TraceLevel::MIDDLE, Aspect::CAMPAIGN_MANAGER);
+    logger_->log(ostr.str(), Logging::Logger::TRACE + 1, Aspect::CAMPAIGN_MANAGER);
   }
 
   const Tag::Size*
@@ -3292,8 +3077,8 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* config,
     const Colocation* colocation,
     const Tag* tag,
-    const CreativeRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
+    const GetAdRequest& request_params,
+    const AdSlotRequest& ad_slot,
     AdSlotContext& ad_slot_context,
     RequestResultParams& request_result_params,
     AdSelectionResult& select_result,
@@ -3339,8 +3124,8 @@ namespace AdServer::CampaignSvcs
 
     CreativeParamsList creative_params_list;
     InstantiateParams inst_params(
-      request_params.common_info.user_id,
-      request_params.context_info.enabled_notice);
+      request_params.common_info->user_id,
+      request_params.context_info->enabled_notice);
     inst_params.ext_tag_id = String::SubString(ad_slot.ext_tag_id);
 
     inst_params.video_width = ad_slot.video_width;
@@ -3358,7 +3143,7 @@ namespace AdServer::CampaignSvcs
       logger_,
       country_whitelist_);
     creative_instantiator.instantiate_creative(
-      request_params.common_info,
+      *request_params.common_info,
       config,
       colocation,
       inst_params,
@@ -3386,8 +3171,8 @@ namespace AdServer::CampaignSvcs
     const Colocation* colocation,
     const Tag* tag,
     const Tag::SizeMap& tag_sizes,
-    const CreativeRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
+    const GetAdRequest& request_params,
+    const AdSlotRequest& ad_slot,
     AdSlotContext& ad_slot_context,
     const AdSlotMinCpm& ad_slot_min_cpm,
     const FreqCapIdSet& full_freq_caps,
@@ -3396,8 +3181,9 @@ namespace AdServer::CampaignSvcs
     AdSelectionResult& select_result,
     std::string& creative_body,
     std::string& creative_url,
-    AdRequestDebugInfo* ad_request_debug_info,
-    AdSlotDebugInfo* ad_slot_debug_info)
+    GetAdDebugResult* ad_request_debug_info,
+    AdSlotDebugResult* ad_slot_debug_info,
+    std::pmr::memory_resource* memory_resource)
   {
     (void)ad_request_debug_info;
 
@@ -3405,30 +3191,30 @@ namespace AdServer::CampaignSvcs
     std::string original_url_str;
 
     // logging incoming request
-    if (logger_ && logger_->log_level() >= TraceLevel::MIDDLE)
+    if (logger_ && logger_->log_level() >= Logging::Logger::TRACE + 1)
     {
       log_incoming_request(
         ad_slot.tag_id,
-        String::SubString(request_params.common_info.referer),
+        String::SubString(request_params.common_info->referer),
         request_params.channels,
         request_params.full_freq_caps);
     }
 
     if (!check_request_constraints(
-          String::SubString(request_params.common_info.referer),
-          String::SubString(request_params.common_info.original_url),
+          String::SubString(request_params.common_info->referer),
+          String::SubString(request_params.common_info->original_url),
           referer_hostname_str,
           original_url_str))
     {
       co_return true;
     }
 
-    if (logger_->log_level() >= TraceLevel::MIDDLE)
+    if (logger_->log_level() >= Logging::Logger::TRACE + 1)
     {
       logger_->log(
         String::SubString(
           "CampaignManagerCore::get_creative(): Weightening campaigns: \n"),
-        TraceLevel::MIDDLE,
+        Logging::Logger::TRACE + 1,
         Aspect::CAMPAIGN_MANAGER);
     }
 
@@ -3459,7 +3245,10 @@ namespace AdServer::CampaignSvcs
     CampaignSelector::WeightedCampaignKeywordListPtr weighted_campaign_keywords;
 
     CampaignSelector campaign_selector(
-      &config_index, ctr_provider_.get(), conv_rate_provider_.get());
+      &config_index,
+      ctr_provider_.get(),
+      conv_rate_provider_.get(),
+      memory_resource);
     CampaignSelectParams_var campaign_select_params_ptr(new CampaignSelectParams(
       request_params.profiling_available,
       full_freq_caps,
@@ -3467,32 +3256,33 @@ namespace AdServer::CampaignSvcs
       colocation,
       tag,
       tag_sizes,
-      request_params.common_info.request_type == AR_GOOGLE,
+      request_params.common_info->request_type == AR_GOOGLE,
       ad_slot.tag_visibility,
-      ad_slot.tag_predicted_viewability));
+      ad_slot.tag_predicted_viewability,
+      memory_resource));
 
     CampaignSelectParams& campaign_select_params = *campaign_select_params_ptr;
 
     {
-      ChannelIdHashSet triggered_channels(
+      campaign_select_params.channels.insert(
         request_params.channels.begin(),
         request_params.channels.end());
-      triggered_channels.emplace(TRUE_CHANNEL_ID);
+      campaign_select_params.channels.emplace(TRUE_CHANNEL_ID);
 
       campaign_select_params.user_id =
-        request_params.common_info.user_id;
+        request_params.common_info->user_id;
       campaign_select_params.country_code =
-        !request_params.common_info.location.empty() ?
-        request_params.common_info.location[0].country : "";
+        !request_params.common_info->location.empty() ?
+        request_params.common_info->location[0].country : "";
       campaign_select_params.format = ad_slot.format;
       campaign_select_params.referer_hostname = referer_hostname_str;
       campaign_select_params.original_url = original_url_str;
       campaign_select_params.user_status = static_cast<UserStatus>(
-        request_params.common_info.user_status);
+        request_params.common_info->user_status);
       campaign_select_params.test_request = ad_slot_context.test_request;
-      campaign_select_params.time = request_params.common_info.time;
+      campaign_select_params.time = request_params.common_info->time;
       campaign_select_params.tag_delivery_factor = request_params.tag_delivery_factor;
-      campaign_select_params.random = request_params.common_info.random;
+      campaign_select_params.random = request_params.common_info->random;
       campaign_select_params.random2 = Generics::safe_rand(RANDOM_PARAM_MAX);
       campaign_select_params.up_expand_space = ad_slot.up_expand_space >= 0 ?
         static_cast<unsigned long>(ad_slot.up_expand_space) : 0;
@@ -3524,13 +3314,13 @@ namespace AdServer::CampaignSvcs
       convert_external_categories_(
         campaign_select_params.exclude_categories,
         config,
-        request_params.common_info.request_type,
+        request_params.common_info->request_type,
         ad_slot.exclude_categories);
 
       convert_external_categories_(
         campaign_select_params.required_categories,
         config,
-        request_params.common_info.request_type,
+        request_params.common_info->request_type,
         ad_slot.required_categories);
 
       if (!ad_slot.required_categories.empty() &&
@@ -3544,9 +3334,8 @@ namespace AdServer::CampaignSvcs
       campaign_select_params.ext_tag_id = ad_slot.ext_tag_id;
       fill_ssp_features_from_additional_info(
         campaign_select_params,
-        request_params.additional_info);
-      campaign_select_params.short_referer_hash = request_params.context_info.short_referer_hash;
-      campaign_select_params.channels = triggered_channels;
+        request_params.context_info->additional_info);
+      campaign_select_params.short_referer_hash = request_params.context_info->short_referer_hash;
 
       campaign_select_params.last_platform_channel_id = 0;
       campaign_select_params.time_hour = campaign_select_params.time.get_gm_time().tm_hour;
@@ -3554,10 +3343,10 @@ namespace AdServer::CampaignSvcs
         campaign_select_params.time /
         Generics::Time::ONE_DAY.tv_sec).tv_sec + 3) % 7;
       campaign_select_params.geo_channels.insert(
-        request_params.context_info.geo_channels.begin(),
-        request_params.context_info.geo_channels.end());
+        request_params.context_info->geo_channels.begin(),
+        request_params.context_info->geo_channels.end());
       campaign_select_params.secure =
-        (request_params.common_info.creative_instantiate_type == AdInstantiateRule::SECURE);
+        (request_params.common_info->creative_instantiate_type == AdInstantiateRule::SECURE);
       for (const auto& campaign_freq : request_params.campaign_freqs)
       {
         campaign_select_params.campaign_imps.insert(
@@ -3568,15 +3357,17 @@ namespace AdServer::CampaignSvcs
               100ul)));
       }
 
-      StringSet norm_platform_names;
-
-      // TODO: remove equal block from CampaignManagerLogAdapter
-      ChannelIdSet platform_channels;
-      ChannelIdHashSet platforms(
-        request_params.context_info.platform_ids.begin(),
-        request_params.context_info.platform_ids.end());
+      // TODO: remove duplicated platform matching block.
+      ChannelIdSet platform_channels(memory_resource);
+      ChannelIdHashSet platforms(memory_resource);
+      platforms.insert(
+        request_params.context_info->platform_ids.begin(),
+        request_params.context_info->platform_ids.end());
 
       config.platform_channels->match(platform_channels, platforms);
+
+      std::pmr::unordered_set<std::string_view> norm_platform_names(memory_resource);
+      norm_platform_names.reserve(platforms.size() + platform_channels.size());
 
       for (auto platform_id_it = platforms.begin(); platform_id_it != platforms.end();
         ++platform_id_it)
@@ -3614,7 +3405,7 @@ namespace AdServer::CampaignSvcs
         ad_slot_context.tns_counter_device_type,
         norm_platform_names);
 
-      for (TokenVector::const_iterator token_it = ad_slot.tokens.begin();
+      for (TokenArray::const_iterator token_it = ad_slot.tokens.begin();
           token_it != ad_slot.tokens.end(); ++token_it)
       {
         ad_slot_context.tokens.set_value(token_it->name, token_it->value);
@@ -3665,7 +3456,7 @@ namespace AdServer::CampaignSvcs
         auction_type,
         second_auction_type,
         campaign_select_params_ptr,
-        triggered_channels,
+        campaign_select_params.channels,
         request_result_params.hit_keywords,
         false, // lost auction collection removed
         weighted_campaign_keywords,
@@ -3757,7 +3548,8 @@ namespace AdServer::CampaignSvcs
         ad_slot_debug_info,
         creative_body,
         creative_url,
-        ad_slot_context);
+        ad_slot_context,
+        memory_resource);
 
       if (!text_creative_selected)
       {
@@ -3776,7 +3568,9 @@ namespace AdServer::CampaignSvcs
       while (!display_creative_selected && display_try_number++ < 2)
       {
         CreativeParams creative_params;
-        AdSelectionResult display_ad_selection_result(select_result);
+        AdSelectionResult display_ad_selection_result(
+          select_result,
+          memory_resource);
 
         display_creative_selected |= instantiate_display_creative(
           &config,
@@ -3790,7 +3584,8 @@ namespace AdServer::CampaignSvcs
           ad_slot_debug_info,
           creative_body,
           creative_url,
-          ad_slot_context);
+          ad_slot_context,
+          memory_resource);
 
         if (display_creative_selected)
         {
@@ -3889,7 +3684,7 @@ namespace AdServer::CampaignSvcs
 
     logger_->log(
       String::SubString("flush logs"),
-      TraceLevel::MIDDLE,
+      Logging::Logger::TRACE + 1,
       Aspect::CAMPAIGN_MANAGER);
 
     Generics::Time next_flush;
@@ -3911,13 +3706,13 @@ namespace AdServer::CampaignSvcs
         "ADS-IMPL-250");
     }
 
-    if (logger_->log_level() >= TraceLevel::MIDDLE)
+    if (logger_->log_level() >= Logging::Logger::TRACE + 1)
     {
       Stream::Error ostr;
       ostr << FUN << ": logs flushed, next flush at " << next_flush.get_gm_time();
       logger_->log(
         ostr.str(),
-        TraceLevel::MIDDLE,
+        Logging::Logger::TRACE + 1,
         Aspect::CAMPAIGN_MANAGER);
     }
 
@@ -3925,7 +3720,7 @@ namespace AdServer::CampaignSvcs
     {
       try
       {
-        CampaignManagerTaskMessage_var task = new FlushLogsTaskMessage(this, task_runner_);
+        TaskMessage_var task = new FlushLogsTaskMessage(this, task_runner_);
         scheduler_->schedule(task, next_flush);
       }
       catch (const eh::Exception &ex)
@@ -3943,7 +3738,7 @@ namespace AdServer::CampaignSvcs
 
   std::vector<CampaignManagerCore::ChannelSearchResult>
   CampaignManagerCore::get_channel_links(
-    const IdVector& channels,
+    const IdArray& channels,
     bool match)
     /*throw(Exception)*/
   {
@@ -4034,109 +3829,6 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  std::vector<CampaignManagerCore::DiscoverChannelResult>
-  CampaignManagerCore::get_discover_channels(
-    const std::vector<ChannelWeight>& channels,
-    const std::string& country,
-    const std::string& language,
-    bool all)
-    /*throw(NotReady, Exception)*/
-  {
-    static const char* FUN = "CampaignManagerCore::get_discover_channels()";
-
-    try
-    {
-      ConstCampaignConfigPtr config = get_campaign_config();
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
-
-      std::vector<DiscoverChannelResult> result;
-      result.reserve(config->discover_channels.size());
-
-      ChannelWeightMap triggered_channels;
-      fill_triggered_channels_(triggered_channels, channels);
-
-      for (CampaignConfig::ChannelMap::const_iterator ch_it = config->discover_channels.begin();
-          ch_it != config->discover_channels.end(); ++ch_it)
-      {
-        unsigned long weight;
-
-        if ((weight = ch_it->second->triggered(0, &triggered_channels)) || (
-              all && ch_it->second->params().status == 'A'))
-        {
-          const ChannelParams& ch_params = ch_it->second->params();
-
-          if ((country.empty() || ch_params.country == country) &&
-             ch_params.common_params.in() &&
-             (language.empty() ||
-              ch_params.common_params->language == language))
-          {
-            DiscoverChannelResult item;
-            item.channel_id = ch_it->first;
-            item.weight = weight;
-            item.country_code = ch_params.country;
-            item.language = ch_params.common_params->language;
-
-            if (ch_params.descriptive_params.in())
-            {
-              item.name = ch_params.descriptive_params->name;
-            }
-
-            item.query = ch_params.discover_params->query;
-            item.annotation = ch_params.discover_params->annotation;
-
-            CampaignConfig::SimpleChannelMap::const_iterator sit =
-              config->simple_channels.find(ch_it->first);
-            if (sit != config->simple_channels.end())
-            {
-              item.categories.assign(
-                sit->second->categories.begin(),
-                sit->second->categories.end());
-            }
-
-            result.emplace_back(std::move(item));
-          }
-        }
-      }
-
-      if (logger_->log_level() >= Logging::Logger::TRACE)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": result for (";
-        for (std::size_t i = 0; i < channels.size(); ++i)
-        {
-          ostr << (i == 0 ? "" : ",") << channels[i].channel_id << ":" << channels[i].weight;
-        }
-        ostr << "): ";
-        for (std::size_t i = 0; i < result.size(); ++i)
-        {
-          if (i != 0) ostr << ", ";
-          ostr << result[i].channel_id << "->" << result[i].weight;
-        }
-
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::CAMPAIGN_MANAGER);
-      }
-
-      return result;
-    }
-    catch (const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << e.what();
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CAMPAIGN_MANAGER,
-        "ADS-IMPL-181");
-      throw Exception(ostr);
-    }
-  }
-
   std::vector<CampaignManagerCore::CategoryChannelNodeInfo>
   CampaignManagerCore::get_category_channels(const std::string& language)
     /*throw(NotReady, Exception)*/
@@ -4181,8 +3873,8 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<CampaignManagerCore::ImpressionResultInfo>
-  CampaignManagerCore::co_verify_impression(const ImpressionInfo& impression_info)
+  AdServer::Commons::SyncCoro<CampaignManagerCore::VerifyImpressionResult>
+  CampaignManagerCore::co_verify_impression(const VerifyImpressionRequest& impression_info)
     /*throw(Exception, NotReady)*/
   {
     static const char* FUN = "CampaignManagerCore::verify_impression()";
@@ -4225,7 +3917,7 @@ namespace AdServer::CampaignSvcs
       pub_non_first_slot_revenue = pub_first_slot_revenue;
     }
 
-    ImpressionResultInfo impression_result_info;
+    VerifyImpressionResult impression_result_info;
     impression_result_info.resize(impression_info.creatives.size());
 
     for (std::size_t i = 0; i < impression_info.creatives.size(); ++i)
@@ -4315,7 +4007,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerCore::action_taken(const ActionInfo& action_info)
+  CampaignManagerCore::action_taken(const ActionRequest& action_info)
     /*throw(Exception, NotReady)*/
   {
     static const char* FUN = "CampaignManagerCore::action_taken()";
@@ -4531,7 +4223,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void CampaignManagerCore::consider_web_operation(
-    const WebOperationInfo& web_op_info)
+    const WebOperationRequest& web_op_info)
     /*throw(InvalidArgument, NotReady)*/
   {
     static const char* FUN = "CampaignManagerCore::consider_web_operation()";
@@ -4776,7 +4468,7 @@ namespace AdServer::CampaignSvcs
     CreativeCategoryIdSet& exclude_categories,
     const CampaignConfig& config,
     unsigned long request_type,
-    const StringVector& categories)
+    const StringArray& categories)
     noexcept
   {
     AdRequestType reduced_request_type = reduce_request_type_(request_type);
@@ -4789,7 +4481,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig::ExternalCategoryNameMap& ext_categories =
         req_ext_cat_it->second;
 
-      for (StringVector::const_iterator ext_cat_name_it = categories.begin();
+      for (StringArray::const_iterator ext_cat_name_it = categories.begin();
         ext_cat_name_it != categories.end(); ++ext_cat_name_it)
       {
         CampaignConfig::ExternalCategoryNameMap::const_iterator ext_cat_it =
@@ -4809,12 +4501,12 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     CampaignKeywordMap& result_keywords,
-    const CCGKeywordVector& keywords,
+    const CCGKeywordArray& keywords,
     bool profiling_available,
     const FreqCapIdSet& full_freq_caps)
     noexcept
   {
-    for (CCGKeywordVector::const_iterator kw_it = keywords.begin();
+    for (CCGKeywordArray::const_iterator kw_it = keywords.begin();
       kw_it != keywords.end(); ++kw_it)
     {
       const CCGKeywordInfo& src_keyword = *kw_it;
@@ -4940,11 +4632,11 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  CampaignManagerCore::StringVector
+  CampaignManagerCore::StringArray
   CampaignManagerCore::get_pub_pixels(
     const std::string& country,
     unsigned long user_status,
-    const IdVector& publisher_account_ids)
+    const IdArray& publisher_account_ids)
     /*throw(NotReady, Exception)*/
   {
     static const char* FUN = "CampaignServerBaseImpl::get_pub_pixels()";
@@ -4958,7 +4650,7 @@ namespace AdServer::CampaignSvcs
         throw NotReady("Campaign configuration isn't loaded");
       }
 
-      StringVector result;
+      StringArray result;
       AccountArray result_accounts;
 
       if (!publisher_account_ids.empty())
@@ -4973,7 +4665,7 @@ namespace AdServer::CampaignSvcs
         {
           Account_var test_account = new AccountDef;
 
-          for (IdVector::const_iterator id_it = publisher_account_ids.begin();
+          for (IdArray::const_iterator id_it = publisher_account_ids.begin();
             id_it != publisher_account_ids.end(); ++id_it)
           {
             test_account->account_id = *id_it;
@@ -5076,8 +4768,8 @@ namespace AdServer::CampaignSvcs
     AccountIdList& result_account_ids,
     const CampaignConfig* campaign_config,
     const Tag* tag,
-    const CommonAdRequestInfo& request_params,
-    const IdVector& exclude_pubpixel_accounts_seq)
+    const CommonAdRequest& request_params,
+    const IdArray& exclude_pubpixel_accounts_seq)
     noexcept
   {
     AccountIdSet exclude_pubpixel_accounts(
@@ -5269,32 +4961,40 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerCore::fill_tns_counter_device_type_(
     std::string& tns_counter_device_type,
-    const StringSet& norm_platform_names)
+    const std::pmr::unordered_set<std::string_view>& norm_platform_names)
     noexcept
   {
-    if (norm_platform_names.find(PlatformNames::APPLE_IPADS) != norm_platform_names.end() ||
-      norm_platform_names.find(PlatformNames::APPLE_IPHONES) != norm_platform_names.end())
+    if (norm_platform_names.find(PlatformNames::APPLE_IPADS) !=
+        norm_platform_names.end() ||
+      norm_platform_names.find(PlatformNames::APPLE_IPHONES) !=
+        norm_platform_names.end())
     {
       tns_counter_device_type = "2";
     }
-    else if (norm_platform_names.find(PlatformNames::ANDROID_TABLETS) != norm_platform_names.end() ||
-      norm_platform_names.find(PlatformNames::ANDROID_SMARTPHONES) != norm_platform_names.end())
+    else if (norm_platform_names.find(PlatformNames::ANDROID_TABLETS) !=
+        norm_platform_names.end() ||
+      norm_platform_names.find(PlatformNames::ANDROID_SMARTPHONES) !=
+        norm_platform_names.end())
     {
       tns_counter_device_type = "3";
     }
-    else if (norm_platform_names.find(PlatformNames::WINDOWS_MOBILE) != norm_platform_names.end())
+    else if (norm_platform_names.find(PlatformNames::WINDOWS_MOBILE) !=
+      norm_platform_names.end())
     {
       tns_counter_device_type = "4";
     }
-    else if (norm_platform_names.find(PlatformNames::SMARTTV) != norm_platform_names.end())
+    else if (norm_platform_names.find(PlatformNames::SMARTTV) !=
+      norm_platform_names.end())
     {
       tns_counter_device_type = "5";
     }
-    else if (norm_platform_names.find(PlatformNames::DVR) != norm_platform_names.end())
+    else if (norm_platform_names.find(PlatformNames::DVR) !=
+      norm_platform_names.end())
     {
       tns_counter_device_type = "6";
     }
-    else if (norm_platform_names.find(PlatformNames::NON_MOBILE_DEVICES) != norm_platform_names.end())
+    else if (norm_platform_names.find(PlatformNames::NON_MOBILE_DEVICES) !=
+      norm_platform_names.end())
     {
       tns_counter_device_type = "1";
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory_resource>
 #include <string>
 #include <Commons/Containers.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -14,7 +15,7 @@ namespace CampaignSvcs
 {
   using namespace AdInstances;
 
-  typedef std::multiset<unsigned long> FreqCapIdSet;
+  using FreqCapIdSet = std::pmr::multiset<unsigned long>;
 
   struct SeqOrder
   {
@@ -22,12 +23,12 @@ namespace CampaignSvcs
     unsigned long imps;
   };
 
-  typedef std::map<unsigned long, SeqOrder> SeqOrderMap;
+  using SeqOrderMap = std::pmr::map<unsigned long, SeqOrder>;
 
   struct CampaignSelectParams: public ReferenceCounting::DefaultImpl<>
   {
-    typedef std::map<unsigned long, unsigned long>
-      CampaignImpsMap;
+    using CampaignImpsMap =
+      std::pmr::map<unsigned long, unsigned long>;
 
     CampaignSelectParams(
       bool profiling_available_val,
@@ -38,10 +39,11 @@ namespace CampaignSvcs
       const Tag::SizeMap& tag_sizes_val,
       bool filter_dest,
       int tag_visibility_val,
-      int tag_predicted_viewability_val)
+      int tag_predicted_viewability_val,
+      std::pmr::memory_resource* memory_resource = std::pmr::get_default_resource())
       : profiling_available(profiling_available_val),
-        full_freq_caps(full_freq_caps_val),
-        seq_orders(seq_orders_val),
+        full_freq_caps(full_freq_caps_val, memory_resource),
+        seq_orders(seq_orders_val, memory_resource),
         colocation(colocation_val),
         tag(tag_val),
         tag_sizes(tag_sizes_val),
@@ -59,11 +61,17 @@ namespace CampaignSvcs
         random(0),
         random2(0),
         only_display_ad(false),
+        exclude_categories(memory_resource),
+        required_categories(memory_resource),
         time_hour(0),
         time_week_day(0),
+        channels(memory_resource),
         last_platform_channel_id(0),
+        geo_channels(memory_resource),
         secure(false),
         filter_empty_destination(filter_dest),
+        allowed_durations(memory_resource),
+        campaign_imps(memory_resource),
         tag_visibility(tag_visibility_val),
         tag_predicted_viewability(tag_predicted_viewability_val)
     {}

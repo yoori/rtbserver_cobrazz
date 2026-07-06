@@ -1,7 +1,6 @@
 add_executable(CampaignManagerInstantiateCreativeTest
   CampaignManagerInstantiateCreativeTest.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CampaignManagerCore.cpp
-  ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CampaignManagerLogAdapter.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CreativeInstantiator.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CreativeTextGenerator.cpp
   ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/ConfigManips.cpp

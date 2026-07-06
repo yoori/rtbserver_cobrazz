@@ -258,6 +258,14 @@ namespace AdServer::Bidding
       target.set_page_load_id(source.page_load_id);
       target.set_full_referer_hash(source.full_referer_hash);
       target.set_short_referer_hash(source.short_referer_hash);
+      if(source.campaign_additional_info.empty())
+      {
+        target.set_additional_info("{}");
+      }
+      else
+      {
+        target.set_additional_info(source.campaign_additional_info);
+      }
     }
 
     void pack_request_params(
@@ -332,15 +340,6 @@ namespace AdServer::Bidding
       target.set_need_debug_info(source.need_debug_info);
       target.set_page_keywords(source.page_keywords);
       target.set_url_keywords(source.url_keywords);
-      target.set_ssp_location(source.ssp_location);
-      if(source.campaign_additional_info.empty())
-      {
-        target.set_additional_info("{}");
-      }
-      else
-      {
-        target.set_additional_info(source.campaign_additional_info);
-      }
     }
 
     void unpack_request_creative_result(

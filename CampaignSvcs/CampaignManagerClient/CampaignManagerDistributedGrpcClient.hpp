@@ -62,10 +62,6 @@ namespace AdServer::CampaignSvcs
       const adserver::campaign_svcs::campaign_manager::ProgressCommentRequest& request,
       ProgressCommentCallback callback) override;
 
-    void match_geo_channels(
-      const adserver::campaign_svcs::campaign_manager::MatchGeoChannelsRequest& request,
-      MatchGeoChannelsCallback callback) override;
-
     void get_file(
       const adserver::campaign_svcs::campaign_manager::GetFileRequest& request,
       GetFileCallback callback) override;
@@ -78,10 +74,6 @@ namespace AdServer::CampaignSvcs
       const adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest& request,
       ProcessMatchRequestCallback callback) override;
 
-    void process_anonymous_request(
-      const adserver::campaign_svcs::campaign_manager::ProcessAnonymousRequestRequest& request,
-      ProcessAnonymousRequestCallback callback) override;
-
     void instantiate_ad(
       const adserver::campaign_svcs::campaign_manager::InstantiateAdRequest& request,
       InstantiateAdCallback callback) override;
@@ -90,10 +82,6 @@ namespace AdServer::CampaignSvcs
       const adserver::campaign_svcs::campaign_manager::TraceCampaignSelectionIndexRequest& request,
       TraceCampaignSelectionIndexCallback callback) override;
 
-    void trace_campaign_selection(
-      const adserver::campaign_svcs::campaign_manager::TraceCampaignSelectionRequest& request,
-      TraceCampaignSelectionCallback callback) override;
-
     void get_campaign_creative_by_ccid(
       const adserver::campaign_svcs::campaign_manager::GetCampaignCreativeByCcidRequest& request,
       GetCampaignCreativeByCcidCallback callback) override;
@@ -101,10 +89,6 @@ namespace AdServer::CampaignSvcs
     void get_channel_links(
       const adserver::campaign_svcs::campaign_manager::GetChannelLinksRequest& request,
       GetChannelLinksCallback callback) override;
-
-    void get_discover_channels(
-      const adserver::campaign_svcs::campaign_manager::GetDiscoverChannelsRequest& request,
-      GetDiscoverChannelsCallback callback) override;
 
     void get_category_channels(
       const adserver::campaign_svcs::campaign_manager::GetCategoryChannelsRequest& request,

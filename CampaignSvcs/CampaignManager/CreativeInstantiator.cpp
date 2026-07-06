@@ -442,8 +442,8 @@ namespace AdServer::CampaignSvcs
     AccountIdList& result_account_ids,
     const CampaignConfig* campaign_config,
     const Tag* tag,
-    const CommonAdRequestInfo& request_params,
-    const IdVector& exclude_pubpixel_accounts_seq)
+    const CommonAdRequest& request_params,
+    const IdArray& exclude_pubpixel_accounts_seq)
     noexcept
   {
     AccountIdSet exclude_pubpixel_accounts(
@@ -895,9 +895,9 @@ namespace AdServer::CampaignSvcs
     const Tag* tag,
     const Tag::Size* tag_size,
     const char* app_format,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AccountIdList* pubpixel_accounts,
-    const IdVector* exclude_pubpixel_accounts,
+    const IdArray* exclude_pubpixel_accounts,
     const CreativeInstantiateRule& instantiate_info,
     const AdSlotContext& ad_slot_context,
     const String::SubString& ext_tag_id)
@@ -1103,7 +1103,7 @@ namespace AdServer::CampaignSvcs
   CreativeInstantiator::fill_track_urls_(
     const AdSelectionResult& ad_selection_result,
     RequestResultParams& request_result_params,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     bool fill_track_url,
     const InstantiateParams& inst_params,
     const CreativeInstantiateRule& instantiate_info,
@@ -1299,7 +1299,7 @@ namespace AdServer::CampaignSvcs
     std::string& iurl,
     const CampaignConfig* const campaign_config,
     const CreativeInstantiateRule& instantiate_info,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const Creative* creative,
     const Size* size)
     noexcept
@@ -1398,7 +1398,7 @@ namespace AdServer::CampaignSvcs
   /* CreativeInstantiator::fill_instantiate_creative_args_(..) */
   std::shared_ptr<String::TextTemplate::ArgsCallback>
   CreativeInstantiator::fill_instantiate_creative_args_(
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const CampaignConfig* const campaign_config,
     const Colocation* const colocation,
     const CreativeTemplate& template_descr,
@@ -1410,7 +1410,7 @@ namespace AdServer::CampaignSvcs
     RequestResultParams& request_result_params,
     CreativeParamsList& creative_params_list,
     const AdSlotContext& ad_slot_context,
-    const IdVector* exclude_pubpixel_accounts)
+    const IdArray* exclude_pubpixel_accounts)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "CreativeInstantiator::fill_instantiate_creative_args_()";
@@ -2012,7 +2012,7 @@ namespace AdServer::CampaignSvcs
     const CampaignKeyword* campaign_keyword,
     const RevenueDecimal& ctr,
     const InstantiateParams& inst_params,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSlotContext& ad_slot_context)
     noexcept
   {
@@ -2122,7 +2122,7 @@ namespace AdServer::CampaignSvcs
     const Tag* tag,
     const Tag::Size* tag_size,
     const InstantiateParams& inst_params,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSlotContext& ad_slot_context,
     const CampaignSelectionData& select_params,
     const std::string& base_click_url)
@@ -2240,7 +2240,7 @@ namespace AdServer::CampaignSvcs
     const InstantiateParams& inst_params,
     const CreativeInstantiateRule& instantiate_info,
     const CampaignConfig& campaign_config,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSelectionResult& ad_selection_result,
     const AdSlotContext& ad_slot_context,
     const char* app_format,
@@ -2733,11 +2733,11 @@ namespace AdServer::CampaignSvcs
     const Tag* tag,
     const InstantiateParams& inst_params,
     const CreativeInstantiateRule& instantiate_info,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSelectionResult& ad_selection_result,
     const AdSlotContext& ad_slot_context,
     const char* app_format,
-    const IdVector& exclude_pubpixel_accounts,
+    const IdArray& exclude_pubpixel_accounts,
     bool fill_auction_price)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
@@ -2877,11 +2877,11 @@ namespace AdServer::CampaignSvcs
   void
   CreativeInstantiator::instantiate_creative_body(
     const AdInstantiateType ad_instantiate_type,
-    const CreativeRequestInfo& request_params,
+    const GetAdRequest& request_params,
     const CampaignConfig* config,
     const Colocation* const colocation,
     const char* cr_size,
-    const TraceAdSlotInfo& ad_slot,
+    const AdSlotRequest& ad_slot,
     AdSelectionResult& ad_selection_result,
     RequestResultParams& request_result_params,
     CreativeParamsList& creative_params_list,
@@ -2892,8 +2892,8 @@ namespace AdServer::CampaignSvcs
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
     InstantiateParams instantiate_params(
-      request_params.common_info.user_id,
-      request_params.context_info.enabled_notice);
+      request_params.common_info->user_id,
+      request_params.context_info->enabled_notice);
     instantiate_params.generate_pubpixel_accounts = true;
     instantiate_params.ext_tag_id = ext_tag_id;
 
@@ -2904,12 +2904,12 @@ namespace AdServer::CampaignSvcs
       ad_slot_context.publisher_account_id;
 
     std::string inst_rule(
-      request_params.common_info.request_type == AR_GOOGLE &&
+      request_params.common_info->request_type == AR_GOOGLE &&
         !ad_selection_result.selected_campaigns.empty() &&
         ad_selection_result.selected_campaigns.front().
           creative->https_safe_flag ?
           AdInstantiateRule::SECURE.str() :
-          request_params.common_info.creative_instantiate_type);
+          request_params.common_info->creative_instantiate_type);
 
     CreativeInstantiateRuleMap::const_iterator rule_it =
       creative_instantiate_.creative_rules.find(inst_rule);
@@ -2932,7 +2932,7 @@ namespace AdServer::CampaignSvcs
         request_result_params.iurl,
         config,
         instantiate_info,
-        request_params.common_info,
+        *request_params.common_info,
         ad_selection_result.selected_campaigns.front().creative,
         ad_selection_result.tag_size->size);
     }
@@ -2944,7 +2944,7 @@ namespace AdServer::CampaignSvcs
     if(ad_instantiate_type == AIT_BODY || is_native)
     {
       instantiate_creative(
-        request_params.common_info,
+        *request_params.common_info,
         config,
         colocation,
         instantiate_params,
@@ -2970,12 +2970,12 @@ namespace AdServer::CampaignSvcs
         ad_selection_result.tag,
         instantiate_params,
         instantiate_info,
-        request_params.common_info,
+        *request_params.common_info,
         ad_selection_result,
         ad_slot_context,
         ad_slot.format.c_str(),
         request_params.exclude_pubpixel_accounts,
-        !request_params.context_info.enabled_notice);
+        !request_params.context_info->enabled_notice);
 
       creative_url = instantiate_url; // REVIEW
 
@@ -3036,9 +3036,9 @@ namespace AdServer::CampaignSvcs
       fill_track_pixel &= track_impression;
 
       // fill track pixel & notice
-      if(request_params.context_info.enabled_notice || fill_track_pixel)
+      if(request_params.context_info->enabled_notice || fill_track_pixel)
       {
-        bool fill_notice_url = request_params.context_info.enabled_notice;
+        bool fill_notice_url = request_params.context_info->enabled_notice;
 
         if(fill_notice_url || fill_track_pixel)
         {
@@ -3048,10 +3048,10 @@ namespace AdServer::CampaignSvcs
           fill_track_urls_(
             ad_selection_result,
             request_result_params,
-            request_params.common_info,
+            *request_params.common_info,
             fill_track_pixel,
             InstantiateParams(
-              request_params.common_info.user_id,
+              request_params.common_info->user_id,
               fill_notice_url),
             instantiate_info,
             0 // consider_pub_pixel_accounts
@@ -3060,13 +3060,13 @@ namespace AdServer::CampaignSvcs
       }
 
       // fill specific tokens (TODO: fill overlay_width, overlay_height here)
-      if(request_params.common_info.request_type == AR_YANDEX)
+      if(request_params.common_info->request_type == AR_YANDEX)
       {
         init_yandex_tokens_(
           config,
           instantiate_info,
           request_result_params,
-          request_params.common_info,
+          *request_params.common_info,
           ad_slot_context,
           ad_selection_result.selected_campaigns.front().creative);
 
@@ -3079,7 +3079,7 @@ namespace AdServer::CampaignSvcs
           nullptr,
           ad_selection_result.selected_campaigns.front().ctr,
           instantiate_params,
-          request_params.common_info,
+          *request_params.common_info,
           ad_slot_context);
       }
     }
@@ -3093,7 +3093,7 @@ namespace AdServer::CampaignSvcs
         config,
         instantiate_info,
         request_result_params,
-        request_params.common_info,
+        *request_params.common_info,
         ad_slot,
         ad_slot_context,
         ad_selection_result.selected_campaigns.front().creative,
@@ -3112,7 +3112,7 @@ namespace AdServer::CampaignSvcs
 
   void
   CreativeInstantiator::instantiate_creative(
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const CampaignConfig* const campaign_config,
     const Colocation* const colocation,
     const InstantiateParams& inst_params,
@@ -3122,7 +3122,7 @@ namespace AdServer::CampaignSvcs
     CreativeParamsList& creative_params_list,
     std::string& creative_body,
     const AdSlotContext& ad_slot_context,
-    const IdVector* exclude_pubpixel_accounts,
+    const IdArray* exclude_pubpixel_accounts,
     std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
@@ -3258,7 +3258,7 @@ namespace AdServer::CampaignSvcs
     const Colocation* colocation,
     const Tag* tag,
     const char* app_format,
-    const CreativeRequestInfo& request_params,
+    const GetAdRequest& request_params,
     const AdSlotContext& ad_slot_context,
     const String::SubString& ext_tag_id)
     /*throw(eh::Exception)*/
@@ -3269,7 +3269,7 @@ namespace AdServer::CampaignSvcs
     {
       CreativeInstantiateRuleMap::const_iterator rule_it =
         creative_instantiate_.creative_rules.find(
-          request_params.common_info.creative_instantiate_type);
+          request_params.common_info->creative_instantiate_type);
 
       if(rule_it == creative_instantiate_.creative_rules.end())
       {
@@ -3304,7 +3304,7 @@ namespace AdServer::CampaignSvcs
             tag,
             tag_size,
             app_format,
-            request_params.common_info,
+            *request_params.common_info,
             0, // pubpixel_accounts
             &request_params.exclude_pubpixel_accounts,
             instantiate_info,
@@ -3312,13 +3312,13 @@ namespace AdServer::CampaignSvcs
             ext_tag_id);
 
           InstantiateParams passback_inst_params(
-            request_params.common_info.user_id,
+            request_params.common_info->user_id,
             false); // enabled_notice : don't used here
           RequestResultParams request_result_params;
           auto request_context =
             std::make_shared<InstantiateAd::InstantiateAdContext>();
 
-          request_context->request_params = &request_params.common_info;
+          request_context->request_params = request_params.common_info.get();
           request_context->request_result_params = &request_result_params;
           request_context->inst_params = &passback_inst_params;
           request_context->creative_instantiator = this;
@@ -3335,7 +3335,7 @@ namespace AdServer::CampaignSvcs
           request_context->signed_request_id_provider =
             [this, &request_params]() {
               return rid_signer_.sign(
-                request_params.common_info.request_id).str();
+                request_params.common_info->request_id).str();
             };
 
           ArgsLayerBuilder passback_args_builder;
@@ -3350,7 +3350,7 @@ namespace AdServer::CampaignSvcs
 
           if(tag)
           {
-            if(request_params.common_info.passback_url.empty())
+            if(request_params.common_info->passback_url.empty())
             {
               passback_args_builder.add_token_processor_layer(
                 make_option_token_values(tag->passback_tokens),
@@ -3461,7 +3461,7 @@ namespace AdServer::CampaignSvcs
   void
   CreativeInstantiator::fill_yandex_track_params_(
     std::string& yandex_track_params,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSlotContext& ad_slot_context)
     noexcept
   {
@@ -3530,7 +3530,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const CreativeInstantiateRule& instantiate_info,
     RequestResultParams& request_result_params,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSlotContext& ad_slot_context,
     const Creative* creative)
     /*throw(CreativeInstantiateProblem)*/
@@ -3583,7 +3583,7 @@ namespace AdServer::CampaignSvcs
   CreativeInstantiator::init_track_pixels_(
     const CampaignConfig* campaign_config,
     RequestResultParams& request_result_params,
-    const CommonAdRequestInfo& request_params,
+    const CommonAdRequest& request_params,
     const AdSlotContext& ad_slot_context,
     const Creative* creative,
     const CreativeInstantiateRule& instantiate_info,
@@ -3666,8 +3666,8 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const CreativeInstantiateRule& instantiate_info,
     RequestResultParams& request_result_params,
-    const CommonAdRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
+    const CommonAdRequest& request_params,
+    const AdSlotRequest& ad_slot,
     const AdSlotContext& ad_slot_context,
     const Creative* creative,
     const String::TextTemplate::ArgsCallback& instantiate_args)

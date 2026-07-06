@@ -3,6 +3,8 @@
 #include <string>
 #include <set>
 #include <list>
+#include <memory_resource>
+#include <unordered_set>
 #include <vector>
 
 #include <eh/Exception.hpp>
@@ -33,8 +35,8 @@ namespace AdServer
      *   for each sequence element call CorbaChannelConverter
      */
     typedef unsigned long ChannelId;
-    typedef std::unordered_set<ChannelId> ChannelIdHashSet;
-    typedef std::set<ChannelId> ChannelIdSet;
+    using ChannelIdHashSet = std::pmr::unordered_set<ChannelId>;
+    using ChannelIdSet = std::pmr::set<ChannelId>;
     typedef std::map<ChannelId, unsigned long> ChannelWeightMap;
 
     struct ChannelHolder;

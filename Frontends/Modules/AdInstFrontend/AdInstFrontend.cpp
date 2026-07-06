@@ -669,10 +669,13 @@ namespace AdServer::Instantiate
       click_info.set_colo_id(request_info.colo_id);
       click_info.set_tag_id(request_info.tag_id);
       click_info.set_tag_size_id(request_info.tag_size_id);
-      click_info.set_creative_id(request_info.creative_id);
       click_info.set_log_click(request_info.consider_request);
       click_info.set_ccid(first_creative.ccid);
       click_info.set_ccg_keyword_id(first_creative.ccg_keyword_id);
+      if(request_info.creative_id)
+      {
+        click_info.set_creative_id(request_info.creative_id);
+      }
       click_info.mutable_ctr()->set_value(
         GrpcAlgs::pack_decimal(first_creative.ctr));
 
@@ -885,7 +888,6 @@ namespace AdServer::Instantiate
       inst_ad_info.set_format(request_info.format);
       inst_ad_info.set_tag_id(request_info.tag_id);
       inst_ad_info.set_tag_size_id(request_info.tag_size_id);
-      inst_ad_info.set_creative_id(request_info.creative_id);
       inst_ad_info.set_ext_tag_id(request_info.ext_tag_id);
       inst_ad_info.set_video_width(request_info.video_width);
       inst_ad_info.set_video_height(request_info.video_height);
@@ -899,6 +901,10 @@ namespace AdServer::Instantiate
         auto* creative = inst_ad_info.add_creatives();
         creative->set_ccid(creative_it->ccid);
         creative->set_ccg_keyword_id(creative_it->ccg_keyword_id);
+        if(request_info.creative_id)
+        {
+          creative->set_creative_id(request_info.creative_id);
+        }
         creative->mutable_ctr()->set_value(
           GrpcAlgs::pack_decimal(creative_it->ctr));
         if(request_id_it != request_info.request_ids.end())

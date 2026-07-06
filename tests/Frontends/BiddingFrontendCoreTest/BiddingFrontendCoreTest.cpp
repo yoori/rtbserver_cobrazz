@@ -495,26 +495,18 @@ namespace
     { print_mock_call("CampaignManager.ready"); callback(grpc::Status::OK, make_response_holder(CM::ReadyResponse{})); }
     void progress_comment(const CM::ProgressCommentRequest&, ProgressCommentCallback callback) override
     { print_mock_call("CampaignManager.progress_comment"); callback(grpc::Status::OK, make_response_holder(CM::ProgressCommentResponse{})); }
-    void match_geo_channels(const CM::MatchGeoChannelsRequest&, MatchGeoChannelsCallback callback) override
-    { print_mock_call("CampaignManager.match_geo_channels"); callback(grpc::Status::OK, make_response_holder(CM::MatchGeoChannelsResponse{})); }
     void get_file(const CM::GetFileRequest&, GetFileCallback callback) override
     { print_mock_call("CampaignManager.get_file"); callback(grpc::Status::OK, make_response_holder(CM::GetFileResponse{})); }
     void process_match_request(const CM::ProcessMatchRequestRequest&, ProcessMatchRequestCallback callback) override
     { print_mock_call("CampaignManager.process_match_request"); callback(grpc::Status::OK, make_response_holder(CM::ProcessMatchRequestResponse{})); }
-    void process_anonymous_request(const CM::ProcessAnonymousRequestRequest&, ProcessAnonymousRequestCallback callback) override
-    { print_mock_call("CampaignManager.process_anonymous_request"); callback(grpc::Status::OK, make_response_holder(CM::ProcessAnonymousRequestResponse{})); }
     void instantiate_ad(const CM::InstantiateAdRequest&, InstantiateAdCallback callback) override
     { print_mock_call("CampaignManager.instantiate_ad"); callback(grpc::Status::OK, make_response_holder(CM::InstantiateAdResponse{})); }
     void trace_campaign_selection_index(const CM::TraceCampaignSelectionIndexRequest&, TraceCampaignSelectionIndexCallback callback) override
     { print_mock_call("CampaignManager.trace_campaign_selection_index"); callback(grpc::Status::OK, make_response_holder(CM::TraceCampaignSelectionIndexResponse{})); }
-    void trace_campaign_selection(const CM::TraceCampaignSelectionRequest&, TraceCampaignSelectionCallback callback) override
-    { print_mock_call("CampaignManager.trace_campaign_selection"); callback(grpc::Status::OK, make_response_holder(CM::TraceCampaignSelectionResponse{})); }
     void get_campaign_creative_by_ccid(const CM::GetCampaignCreativeByCcidRequest&, GetCampaignCreativeByCcidCallback callback) override
     { print_mock_call("CampaignManager.get_campaign_creative_by_ccid"); callback(grpc::Status::OK, make_response_holder(CM::GetCampaignCreativeByCcidResponse{})); }
     void get_channel_links(const CM::GetChannelLinksRequest&, GetChannelLinksCallback callback) override
     { print_mock_call("CampaignManager.get_channel_links"); callback(grpc::Status::OK, make_response_holder(CM::GetChannelLinksResponse{})); }
-    void get_discover_channels(const CM::GetDiscoverChannelsRequest&, GetDiscoverChannelsCallback callback) override
-    { print_mock_call("CampaignManager.get_discover_channels"); callback(grpc::Status::OK, make_response_holder(CM::GetDiscoverChannelsResponse{})); }
     void get_category_channels(const CM::GetCategoryChannelsRequest&, GetCategoryChannelsCallback callback) override
     { print_mock_call("CampaignManager.get_category_channels"); callback(grpc::Status::OK, make_response_holder(CM::GetCategoryChannelsResponse{})); }
     void get_colocation_flags(const CM::GetColocationFlagsRequest&, GetColocationFlagsCallback callback) override

@@ -386,9 +386,6 @@ namespace
       "[--referer=<url>] [--peer_ip=<ip>] [--country=<code>] "
       "[--channels=1,2] [--colo_id=<id>] [--random=<n>] [--optout]\n"
     "  trace_index\n"
-    "  trace_weight --id=<campaign_id> [--tag_id=<id>] [--format=<format>] "
-      "[--referer=<url>] [--country=<code>] [--channels=1,2] "
-      "[--colo_id=<id>] [--optout] [--testrequest=<0|1>]\n"
     "  preview --id=<ccid> [--tag_id=<id>] [--format=<format>] "
       "[--referer=<url>] [--peer_ip=<ip>]\n"
     "  colocation_flags\n"
@@ -396,8 +393,6 @@ namespace
       "[--publisher_account_ids=1,2]\n"
     "  category_channels [--language=<lang>]\n"
     "  channel_links --channels=1,2 [--match]\n"
-    "  discover_channels --channels=1[:weight],2[:weight] "
-      "[--country=<code>] [--language=<lang>] [--all]\n"
     "  get_file --file=<name> [--service_index=<index>]\n"
     "  get_config [--geo_channels]\n\n"
     "Options:\n"
@@ -601,29 +596,6 @@ namespace
         channel.child_category_channels(),
         prefix + "  ");
     }
-  }
-
-  void
-  add_discover_channel(
-    const std::string& token,
-    cm::GetDiscoverChannelsRequest& request)
-  {
-    const auto pos = token.find(':');
-    const std::string id_part = token.substr(0, pos);
-    const std::string weight_part =
-      pos == std::string::npos ? std::string("1") : token.substr(pos + 1);
-
-    unsigned long id = 0;
-    unsigned long weight = 0;
-    if(!String::StringManip::str_to_int(id_part, id) ||
-      !String::StringManip::str_to_int(weight_part, weight))
-    {
-      throw std::runtime_error("invalid channel[:weight]: " + token);
-    }
-
-    auto* channel = request.add_channels();
-    channel->set_channel_id(id);
-    channel->set_weight(weight);
   }
 
   std::string
@@ -2121,7 +2093,6 @@ main(int argc, char** argv)
     Generics::AppUtils::StringOption platform;
     Generics::AppUtils::StringOption browser;
     Generics::AppUtils::CheckOption match;
-    Generics::AppUtils::CheckOption all;
     Generics::AppUtils::CheckOption geo_channels;
     Generics::AppUtils::CheckOption optout;
     Generics::AppUtils::Option<unsigned long> ccid(0);
@@ -2155,7 +2126,6 @@ main(int argc, char** argv)
     args.add(Generics::AppUtils::equal_name("platform"), platform);
     args.add(Generics::AppUtils::equal_name("browser"), browser);
     args.add(Generics::AppUtils::equal_name("match"), match);
-    args.add(Generics::AppUtils::equal_name("all"), all);
     args.add(Generics::AppUtils::equal_name("geo_channels"), geo_channels);
     args.add(Generics::AppUtils::equal_name("optout"), optout);
     args.add(
@@ -2274,48 +2244,6 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::trace_campaign_selection_index);
       std::cout << response.trace_xml() << '\n';
     }
-    else if(command == "trace_weight")
-    {
-      cm::TraceCampaignSelectionRequest request;
-      request.set_campaign_id(*ccid);
-      request.set_auction_type(0);
-      request.set_test_request(
-        testrequest.installed() && *testrequest != 0);
-
-      const Generics::Time now = Generics::Time::get_time_of_day();
-      auto* params = request.mutable_request_params();
-      fill_common_request(
-        *params->mutable_common_info(),
-        now,
-        uid,
-        referer,
-        peer_ip,
-        country,
-        *colo_id,
-        *random,
-        optout.enabled());
-      params->mutable_common_info()->set_test_request(request.test_request());
-      params->mutable_common_info()->set_log_as_test(true);
-      params->set_profiling_available(true);
-      params->set_disable_fraud_detection(true);
-      fill_channels(channels, params->mutable_channels());
-      params->set_client_create_time(::GrpcAlgs::pack_time(now));
-
-      auto* ad_slot = request.mutable_ad_slot();
-      ad_slot->set_format(*format);
-      ad_slot->set_tag_id(*tag_id);
-      ad_slot->set_passback(false);
-      ad_slot->set_up_expand_space(0xFFFFFFFF);
-      ad_slot->set_right_expand_space(0xFFFFFFFF);
-      ad_slot->set_down_expand_space(0xFFFFFFFF);
-      ad_slot->set_left_expand_space(0xFFFFFFFF);
-
-      const auto response = call<cm::TraceCampaignSelectionResponse>(
-        client,
-        request,
-        &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::trace_campaign_selection);
-      std::cout << response.trace_xml() << '\n';
-    }
     else if(command == "preview")
     {
       cm::GetCampaignCreativeByCcidRequest request;
@@ -2396,37 +2324,6 @@ main(int argc, char** argv)
           channel.use_count() << '\t' <<
           channel.language() << '\t' <<
           channel.discover_query() << '\n';
-      }
-    }
-    else if(command == "discover_channels")
-    {
-      if(!channels.installed())
-      {
-        throw std::runtime_error("'channels' option is required");
-      }
-      cm::GetDiscoverChannelsRequest request;
-      String::StringManip::SplitComma tokenizer(*channels);
-      String::SubString token;
-      while(tokenizer.get_token(token))
-      {
-        add_discover_channel(token.str(), request);
-      }
-      request.set_country(*country);
-      request.set_language(*language);
-      request.set_all(all.enabled());
-      const auto response = call<cm::GetDiscoverChannelsResponse>(
-        client,
-        request,
-        &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_discover_channels);
-      std::cout << "channel_id\tweight\tcountry\tlanguage\tname\tquery\n";
-      for(const auto& channel : response.channels())
-      {
-        std::cout << channel.channel_id() << '\t' <<
-          channel.weight() << '\t' <<
-          channel.country_code() << '\t' <<
-          channel.language() << '\t' <<
-          channel.name() << '\t' <<
-          channel.query() << '\n';
       }
     }
     else if(command == "get_file")

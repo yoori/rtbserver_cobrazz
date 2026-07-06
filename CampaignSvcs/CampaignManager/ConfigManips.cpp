@@ -15,6 +15,7 @@
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 
 #include "CampaignManagerCore.hpp"
+#include "CampaignManagerLogger.hpp"
 
 namespace AdServer
 {
@@ -63,7 +64,7 @@ namespace AdServer
       }
     }
 
-    void
+    Generics::Time
     CampaignManagerCore::check_config() noexcept
     {
       static const char* FUN = "CampaignManagerCore::check_config()";
@@ -116,14 +117,14 @@ namespace AdServer
             ": Config expired - disable ad showing: config timestamp = " <<
             master_stamp.get_gm_time();
 
-          SyncPolicy::WriteGuard guard(lock_);
+          std::lock_guard<std::mutex> guard(lock_);
           configuration_index_.reset();
         }
         else if(new_config)
         {
-          if (logger_->log_level() >= TraceLevel::MIDDLE)
+          if (logger_->log_level() >= Logging::Logger::TRACE + 1)
           {
-            logger_->stream(TraceLevel::MIDDLE,
+            logger_->stream(Logging::Logger::TRACE + 1,
               Aspect::CAMPAIGN_MANAGER) << FUN <<
               ": To construct campaign index for " <<
               new_config->campaigns.size() << " campaigns, " <<
@@ -137,22 +138,26 @@ namespace AdServer
                &indexing_progress_,
                this))
           {
-            if (logger_->log_level() >= TraceLevel::MIDDLE)
+            if (logger_->log_level() >= Logging::Logger::TRACE + 1)
             {
-              logger_->stream(TraceLevel::MIDDLE,
+              logger_->stream(Logging::Logger::TRACE + 1,
                 Aspect::CAMPAIGN_MANAGER) << FUN <<
                 ": Campaign index constructed.";
             }
 
             precalculate_pub_pixel_accounts_(new_config.get());
 
-            SyncPolicy::WriteGuard guard(lock_);
-            configuration_index_ = configuration_index;
-            configuration_ = new_config;
+            {
+              std::lock_guard<std::mutex> guard(lock_);
+              configuration_index_ = configuration_index;
+              configuration_ = new_config;
+            }
+
+            campaign_manager_logger_->set_campaign_config(new_config);
           }
-          else if (logger_->log_level() >= TraceLevel::MIDDLE)
+          else if (logger_->log_level() >= Logging::Logger::TRACE + 1)
           {
-            logger_->stream(TraceLevel::MIDDLE,
+            logger_->stream(Logging::Logger::TRACE + 1,
               Aspect::CAMPAIGN_MANAGER) << FUN <<
               ": Campaign indexing interrupted.";
           }
@@ -165,24 +170,8 @@ namespace AdServer
         callback_->critical(ostr.str(), "ADS-IMPL-5091");
       }
 
-      try
-      {
-        CampaignManagerTaskMessage_var msg =
-          new CheckConfigTaskMessage(this, update_task_runner_);
-
-        Generics::Time tm = Generics::Time::get_time_of_day() +
-          campaign_manager_config_.config_update_period();
-
-        scheduler_->schedule(msg, tm);
-      }
-      catch(const eh::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN <<
-          ": Exception caught while enqueueing CheckConfig task: " << e.what();
-
-        callback_->critical(ostr.str(), "ADS-IMPL-5092");
-      }
+      return Generics::Time::get_time_of_day() +
+        campaign_manager_config_.config_update_period();
     }
 
     template<typename PredProviderType>
@@ -340,7 +329,7 @@ namespace AdServer
       return ReferenceCounting::add_ref(old_ctr_provider);
     }
 
-    void
+    Generics::Time
     CampaignManagerCore::update_ctr_provider() noexcept
     {
       static const char* FUN = "CampaignManagerCore::update_ctr_provider()";
@@ -362,27 +351,14 @@ namespace AdServer
           callback_->critical(ostr.str(), "ADS-IMPL-5091");
         }
 
-        try
-        {
-          CampaignManagerTaskMessage_var msg =
-            new UpdateCTRProviderTask(this, task_runner_);
-
-          Generics::Time tm = Generics::Time::get_time_of_day() +
-            campaign_manager_config_.CTRConfig()->check_period();
-
-          scheduler_->schedule(msg, tm);
-        }
-        catch(const eh::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN <<
-            ": exception caught while enqueueing update CTR task: " << e.what();
-          callback_->critical(ostr.str(), "ADS-IMPL-5092");
-        }
+        return Generics::Time::get_time_of_day() +
+          campaign_manager_config_.CTRConfig()->check_period();
       }
+
+      return Generics::Time::ZERO;
     }
 
-    void
+    Generics::Time
     CampaignManagerCore::update_conv_rate_provider() noexcept
     {
       static const char* FUN = "CampaignManagerCore::update_conv_rate_provider()";
@@ -404,27 +380,14 @@ namespace AdServer
           callback_->critical(ostr.str(), "ADS-IMPL-5091");
         }
 
-        try
-        {
-          CampaignManagerTaskMessage_var msg =
-            new UpdateConvRateProviderTask(this, task_runner_);
-
-          Generics::Time tm = Generics::Time::get_time_of_day() +
-            campaign_manager_config_.ConvRateConfig()->check_period();
-
-          scheduler_->schedule(msg, tm);
-        }
-        catch(const eh::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN <<
-            ": exception caught while enqueueing update ConvRate task: " << e.what();
-          callback_->critical(ostr.str(), "ADS-IMPL-5092");
-        }
+        return Generics::Time::get_time_of_day() +
+          campaign_manager_config_.ConvRateConfig()->check_period();
       }
+
+      return Generics::Time::ZERO;
     }
 
-    void
+    Generics::Time
     CampaignManagerCore::update_bid_cost_provider() noexcept
     {
       static const char* FUN = "CampaignManagerCore::update_bid_cost_provider()";
@@ -448,24 +411,11 @@ namespace AdServer
           callback_->critical(ostr.str(), "ADS-IMPL-5091");
         }
 
-        try
-        {
-          CampaignManagerTaskMessage_var msg =
-            new UpdateBidCostProviderTask(this, task_runner_);
-
-          Generics::Time tm = Generics::Time::get_time_of_day() +
-            campaign_manager_config_.BidCostConfig()->check_period();
-
-          scheduler_->schedule(msg, tm);
-        }
-        catch(const eh::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN <<
-            ": exception caught while enqueueing update CTR task: " << e.what();
-          callback_->critical(ostr.str(), "ADS-IMPL-5092");
-        }
+        return Generics::Time::get_time_of_day() +
+          campaign_manager_config_.BidCostConfig()->check_period();
       }
+
+      return Generics::Time::ZERO;
     }
 
     ConstCampaignConfigPtr

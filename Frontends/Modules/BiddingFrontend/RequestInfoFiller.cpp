@@ -2867,17 +2867,6 @@ namespace AdServer::Bidding
 
     add_special_keywords_(keywords, request_info, &context, context.app_id);
 
-    RequestInfo::PmrString& ssp_location = request_info.ssp_location;
-    ssp_location.clear();
-    ssp_location.reserve(
-      context.ssp_country.size() + context.ssp_region.size() +
-      context.ssp_city.size() + 2);
-    ssp_location.append(context.ssp_country.data(), context.ssp_country.size());
-    ssp_location += '/';
-    ssp_location.append(context.ssp_region.data(), context.ssp_region.size());
-    ssp_location += '/';
-    ssp_location.append(context.ssp_city.data(), context.ssp_city.size());
-
     // push eids to request_info
     for(auto it = context.user_eids.begin(); it != context.user_eids.end(); ++it)
     {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <memory_resource>
 #include <set>
 #include <map>
 #include <vector>
@@ -40,7 +41,7 @@ namespace AdServer
 
     typedef std::vector<unsigned long> ChannelIdArray;
     typedef std::list<unsigned long> ChannelIdList;
-    typedef std::set<unsigned long> ChannelIdSet;
+    using ChannelIdSet = std::pmr::set<unsigned long>;
 
     struct ChannelIdSortedArray: protected std::vector<unsigned long>
     {
@@ -309,7 +310,7 @@ namespace AdServer
       RVT_CUSTOM
     };
 
-    typedef std::set<unsigned long> AllowedDurationSet;
+    using AllowedDurationSet = std::pmr::set<unsigned long>;
 
     typedef Commons::Interval<unsigned long> PriceRange;
     typedef Commons::IntervalSet<unsigned long> PriceRangeSet;

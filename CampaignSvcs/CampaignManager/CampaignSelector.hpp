@@ -114,17 +114,17 @@ namespace AdServer
         RevenueDecimal conv_rate;
       };
 
-      typedef std::list<WeightedCampaignKeyword>
-        WeightedCampaignKeywordList;
+      using WeightedCampaignKeywordList =
+        std::pmr::list<WeightedCampaignKeyword>;
 
       typedef std::unique_ptr<WeightedCampaignKeywordList>
         WeightedCampaignKeywordListPtr;
 
-      typedef std::vector<WeightedCampaignKeyword*>
-        WeightedCampaignKeywordPtrArray;
+      using WeightedCampaignKeywordPtrArray =
+        std::pmr::vector<WeightedCampaignKeyword*>;
 
-      typedef std::list<WeightedCampaignKeywordPtrArray>
-        WeightedCampaignKeywordGroupList;
+      using WeightedCampaignKeywordGroupList =
+        std::pmr::list<WeightedCampaignKeywordPtrArray>;
 
       class ExpectedEcpm
       {
@@ -146,7 +146,9 @@ namespace AdServer
       CampaignSelector(
         const CampaignIndex* campaign_index,
         const CTR::CTRProvider* ctr_provider,
-        const CTR::CTRProvider* conv_rate_provider);
+        const CTR::CTRProvider* conv_rate_provider,
+        std::pmr::memory_resource* memory_resource =
+          std::pmr::get_default_resource());
 
       /* facade that do all ops */
       void
@@ -162,19 +164,27 @@ namespace AdServer
         AdSelectionResult& select_result);
 
     protected:
-      typedef std::map<RevenueDecimal, WeightedCampaignKeywordList>
-        CPCKeywordMap;
+      using CPCKeywordMap =
+        std::pmr::map<RevenueDecimal, WeightedCampaignKeywordList>;
 
-      typedef std::list<WeightedCampaignPtr> WeightedCampaignList;
+      using WeightedCampaignList = std::pmr::list<WeightedCampaignPtr>;
 
-      typedef std::multimap<RevenueDecimal, WeightedCampaignKeywordPtrArray>
-        ExpRevWeightedCampaignKeywordMap;
+      using ExpRevWeightedCampaignKeywordMap =
+        std::pmr::multimap<RevenueDecimal, WeightedCampaignKeywordPtrArray>;
 
-      typedef std::map<unsigned long, WeightedCampaignKeywordPtrArray>
-        IdWeightedCampaignKeywordMap;
+      using IdWeightedCampaignKeywordMap =
+        std::pmr::map<unsigned long, WeightedCampaignKeywordPtrArray>;
 
       struct IdWeightedCampaignKeywordMaps
       {
+        explicit IdWeightedCampaignKeywordMaps(
+          std::pmr::memory_resource* memory_resource =
+            std::pmr::get_default_resource())
+          : account_campaigns(memory_resource),
+            advertiser_campaigns(memory_resource),
+            ccg_campaigns(memory_resource)
+        {}
+
         IdWeightedCampaignKeywordMap account_campaigns;
         IdWeightedCampaignKeywordMap advertiser_campaigns;
         IdWeightedCampaignKeywordMap ccg_campaigns;
@@ -530,6 +540,7 @@ namespace AdServer
       ConstCampaignConfigPtr campaign_config_;
       CTR::ConstCTRProvider_var ctr_provider_;
       CTR::ConstCTRProvider_var conv_rate_provider_;
+      std::pmr::memory_resource* memory_resource_;
     };
   }
 }

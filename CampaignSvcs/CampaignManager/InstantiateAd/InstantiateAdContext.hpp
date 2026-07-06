@@ -39,7 +39,7 @@ namespace AdServer::CampaignSvcs
         std::optional<std::string> preclick0_url_f;
       };
 
-      const CampaignManagerCore::CommonAdRequestInfo* request_params = nullptr;
+      const CampaignManagerCore::CommonAdRequest* request_params = nullptr;
       const CampaignManagerCore::RequestResultParams* request_result_params =
         nullptr;
       const CampaignManagerCore::InstantiateParams* inst_params = nullptr;
@@ -52,7 +52,7 @@ namespace AdServer::CampaignSvcs
       const AdSelectionResult* ad_selection_result = nullptr;
       const CreativeInstantiateRule* instantiate_info = nullptr;
       const CampaignManagerCore::AdSlotContext* ad_slot_context = nullptr;
-      const CampaignManagerCore::IdVector* exclude_pubpixel_accounts = nullptr;
+      const CampaignManagerCore::IdArray* exclude_pubpixel_accounts = nullptr;
       const char* app_format = "";
       bool force_generate_pubpixel_accounts = false;
       SignedRequestIdProvider signed_request_id_provider;

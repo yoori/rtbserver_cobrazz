@@ -150,17 +150,27 @@ add_dependencies(DomainParser DomainConfigXSD)
 
 add_library(CampaignManagerLogger SHARED
   CampaignManagerLogger.cpp
+  CampaignManagerLogAdapter.cpp
 )
 
 target_link_libraries(CampaignManagerLogger
   Generics
   LogCommons
+  CreativeTemplateArgs
+  CampaignConfig
+  CTRProvider
+  ExpressionChannelIndex
+)
+
+target_include_directories(CampaignManagerLogger
+  PUBLIC
+    /opt/foros/vanga/include
+    ${CMAKE_SOURCE_DIR}/Utils/Predictor
 )
 
 add_executable(CampaignManager
   CampaignManagerCore.cpp
   CampaignManagerGrpc.cpp
-  CampaignManagerLogAdapter.cpp
   CampaignManagerMain.cpp
   CreativeInstantiator.cpp
   CreativeTextGenerator.cpp

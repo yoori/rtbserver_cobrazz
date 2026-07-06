@@ -401,19 +401,6 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerDistributedGrpcClient::match_geo_channels(
-    const pb::MatchGeoChannelsRequest& request,
-    MatchGeoChannelsCallback callback)
-  {
-    call_<pb::MatchGeoChannelsRequest, pb::MatchGeoChannelsResponse>(
-      request,
-      std::move(callback),
-      [](const ClientPtr& client, const auto& request, auto callback) {
-        client->match_geo_channels(request, std::move(callback));
-      });
-  }
-
-  void
   CampaignManagerDistributedGrpcClient::get_file(
     const pb::GetFileRequest& request,
     GetFileCallback callback)
@@ -523,21 +510,6 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerDistributedGrpcClient::process_anonymous_request(
-    const pb::ProcessAnonymousRequestRequest& request,
-    ProcessAnonymousRequestCallback callback)
-  {
-    call_<
-      pb::ProcessAnonymousRequestRequest,
-      pb::ProcessAnonymousRequestResponse>(
-      request,
-      std::move(callback),
-      [](const ClientPtr& client, const auto& request, auto callback) {
-        client->process_anonymous_request(request, std::move(callback));
-      });
-  }
-
-  void
   CampaignManagerDistributedGrpcClient::instantiate_ad(
     const pb::InstantiateAdRequest& request,
     InstantiateAdCallback callback)
@@ -567,21 +539,6 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerDistributedGrpcClient::trace_campaign_selection(
-    const pb::TraceCampaignSelectionRequest& request,
-    TraceCampaignSelectionCallback callback)
-  {
-    call_<
-      pb::TraceCampaignSelectionRequest,
-      pb::TraceCampaignSelectionResponse>(
-      request,
-      std::move(callback),
-      [](const ClientPtr& client, const auto& request, auto callback) {
-        client->trace_campaign_selection(request, std::move(callback));
-      });
-  }
-
-  void
   CampaignManagerDistributedGrpcClient::get_campaign_creative_by_ccid(
     const pb::GetCampaignCreativeByCcidRequest& request,
     GetCampaignCreativeByCcidCallback callback)
@@ -606,19 +563,6 @@ namespace AdServer::CampaignSvcs
       std::move(callback),
       [](const ClientPtr& client, const auto& request, auto callback) {
         client->get_channel_links(request, std::move(callback));
-      });
-  }
-
-  void
-  CampaignManagerDistributedGrpcClient::get_discover_channels(
-    const pb::GetDiscoverChannelsRequest& request,
-    GetDiscoverChannelsCallback callback)
-  {
-    call_<pb::GetDiscoverChannelsRequest, pb::GetDiscoverChannelsResponse>(
-      request,
-      std::move(callback),
-      [](const ClientPtr& client, const auto& request, auto callback) {
-        client->get_discover_channels(request, std::move(callback));
       });
   }
 

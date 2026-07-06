@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <memory>
 #include <sstream>
+#include <utility>
+#include <vector>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -19,6 +21,7 @@
 #include <LogCommons/RequestBasicChannels.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <Commons/LogReferrerUtils.hpp>
+#include "CampaignManagerCore.hpp"
 #include "CampaignConfig.hpp"
 
 namespace AdServer::CampaignSvcs
@@ -554,14 +557,59 @@ namespace AdServer::CampaignSvcs
       /*throw(Exception)*/;
 
     void
+    set_campaign_config(AdInstances::ConstCampaignConfigPtr campaign_config);
+
+    void
     process_request(
       std::shared_ptr<const RequestInfo> request_info,
       unsigned long profiling_type = PT_ALL)
       /*throw(Exception)*/;
 
+    void
+    process_request(
+      const Colocation* colocation,
+      std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params,
+      CampaignManagerCore::AdSlotContext&& ad_slot_context,
+      unsigned long profiling_type = PT_ALL,
+      std::shared_ptr<const ChannelIdList> geo_channels = {},
+      bool reset_request_user = false)
+      /*throw(Exception)*/;
+
+    void
+    process_request(
+      const Colocation* colocation,
+      CampaignManagerCore::CommonAdRequest&& common_info,
+      CampaignManagerCore::ContextAdRequest&& context_info,
+      std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params,
+      CampaignManagerCore::AdSlotContext&& ad_slot_context,
+      unsigned long profiling_type = PT_ALL,
+      std::shared_ptr<const ChannelIdList> geo_channels = {},
+      bool reset_request_user = false)
+      /*throw(Exception)*/;
+
+    struct AdRequestSlotLog
+    {
+      ReferenceCounting::ConstPtr<Tag> tag;
+      Tag::SizeMap tag_sizes;
+      CampaignManagerCore::AdSlotContext ad_slot_context;
+      CampaignManagerCore::AdSlotMinCpm ad_slot_min_cpm;
+      bool disable_impression_tracking = false;
+      std::shared_ptr<const CampaignManagerCore::AdSlotRequest> ad_slot;
+      AdSelectionResult ad_selection_result;
+    };
+
+    using AdRequestSlotLogArray = std::vector<AdRequestSlotLog>;
+
     void process_ad_request(
-      std::shared_ptr<const RequestInfo> request_info,
-      const AdRequestSelectionInfo& ad_request_selection_info)
+      const Colocation* colocation,
+      std::shared_ptr<const CampaignManagerCore::CommonAdRequest> common_info,
+      std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info,
+      CampaignManagerCore::LogAdRequest log_request,
+      CampaignManagerCore::IdArray channels,
+      bool required_passback,
+      AdRequestSlotLogArray&& ad_slots,
+      std::shared_ptr<const ChannelIdList> geo_channels = {},
+      bool reset_request_user = false)
       /*throw(Exception)*/;
 
     void process_impression(const ImpressionInfo& action_info)
@@ -612,6 +660,11 @@ namespace AdServer::CampaignSvcs
     ~CampaignManagerLogger() noexcept;
 
   private:
+    void process_ad_request_(
+      std::shared_ptr<const RequestInfo> request_info,
+      const AdRequestSelectionInfo& ad_request_selection_info)
+      /*throw(Exception)*/;
+
     class Impl;
 
   private:

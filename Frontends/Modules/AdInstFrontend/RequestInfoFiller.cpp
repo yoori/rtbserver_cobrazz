@@ -121,15 +121,15 @@ namespace AdServer::Instantiate
       typedef String::StringManip::Splitter<
         String::AsciiStringManip::SepColon, true> SplitColonEmpty;
 
-      String::StringManip::Splitter<ListParameterSepCategory> tokenizer(value);
-      String::SubString cur;
-      while (tokenizer.get_token(cur))
-      {
-        RequestInfo::CreativeInfo creative_info;
+        String::StringManip::Splitter<ListParameterSepCategory> tokenizer(value);
+        String::SubString cur;
+        while (tokenizer.get_token(cur))
+        {
+          RequestInfo::CreativeInfo creative_info;
 
-        SplitColonEmpty sub_tokenizer(cur);
-        String::SubString ccid_str;
-        String::SubString ccg_keyword_id_str;
+          SplitColonEmpty sub_tokenizer(cur);
+          String::SubString ccid_str;
+          String::SubString ccg_keyword_id_str;
         String::SubString ctr_str;
         sub_tokenizer.get_token(ccid_str);
         sub_tokenizer.get_token(ccg_keyword_id_str);
@@ -716,20 +716,24 @@ namespace AdServer::Instantiate
     {
       throw;
     }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
-      throw Exception(ostr);
-    }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": "
+          "Can't fill request info. Caught eh::Exception: " <<
+          ex.what();
+        throw Exception(ostr);
+      }
 
     // do specific parameters adaptation
     if(!request_info.creatives.empty())
     {
       // ad override crid
       request_info.creative_id = 0;
+    }
+    else
+    {
+      request_info.creatives.push_back(RequestInfo::CreativeInfo());
     }
   }
 } // Instantiate

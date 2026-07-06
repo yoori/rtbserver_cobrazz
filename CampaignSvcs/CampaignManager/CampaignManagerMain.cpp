@@ -405,9 +405,6 @@ namespace
       append_stat(
         "progress_comment_in_progress",
         stats.progress_comment_in_progress);
-      append_stat(
-        "match_geo_channels_in_progress",
-        stats.match_geo_channels_in_progress);
       append_stat("get_file_in_progress", stats.get_file_in_progress);
       append_stat(
         "get_campaign_creative_in_progress",
@@ -416,26 +413,17 @@ namespace
         "process_match_request_in_progress",
         stats.process_match_request_in_progress);
       append_stat(
-        "process_anonymous_request_in_progress",
-        stats.process_anonymous_request_in_progress);
-      append_stat(
         "instantiate_ad_in_progress",
         stats.instantiate_ad_in_progress);
       append_stat(
         "trace_campaign_selection_index_in_progress",
         stats.trace_campaign_selection_index_in_progress);
       append_stat(
-        "trace_campaign_selection_in_progress",
-        stats.trace_campaign_selection_in_progress);
-      append_stat(
         "get_campaign_creative_by_ccid_in_progress",
         stats.get_campaign_creative_by_ccid_in_progress);
       append_stat(
         "get_channel_links_in_progress",
         stats.get_channel_links_in_progress);
-      append_stat(
-        "get_discover_channels_in_progress",
-        stats.get_discover_channels_in_progress);
       append_stat(
         "get_category_channels_in_progress",
         stats.get_category_channels_in_progress);
@@ -476,17 +464,13 @@ namespace
 
       APPEND_RPC_TOTAL_TIME_(ready);
       APPEND_RPC_TOTAL_TIME_(progress_comment);
-      APPEND_RPC_TOTAL_TIME_(match_geo_channels);
       APPEND_RPC_TOTAL_TIME_(get_file);
       APPEND_RPC_TOTAL_TIME_(get_campaign_creative);
       APPEND_RPC_TOTAL_TIME_(process_match_request);
-      APPEND_RPC_TOTAL_TIME_(process_anonymous_request);
       APPEND_RPC_TOTAL_TIME_(instantiate_ad);
       APPEND_RPC_TOTAL_TIME_(trace_campaign_selection_index);
-      APPEND_RPC_TOTAL_TIME_(trace_campaign_selection);
       APPEND_RPC_TOTAL_TIME_(get_campaign_creative_by_ccid);
       APPEND_RPC_TOTAL_TIME_(get_channel_links);
-      APPEND_RPC_TOTAL_TIME_(get_discover_channels);
       APPEND_RPC_TOTAL_TIME_(get_category_channels);
       APPEND_RPC_TOTAL_TIME_(get_colocation_flags);
       APPEND_RPC_TOTAL_TIME_(get_pub_pixels);

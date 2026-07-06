@@ -166,17 +166,17 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_ids(
-      const CampaignManagerCore::IdVector& source,
+      const CampaignManagerCore::IdArray& source,
       google::protobuf::RepeatedField<google::protobuf::uint64>* target)
     {
       target->Add(source.begin(), source.end());
     }
 
-    CampaignManagerCore::IdVector
+    CampaignManagerCore::IdArray
     unpack_ids(
       const google::protobuf::RepeatedField<google::protobuf::uint64>& source)
     {
-      CampaignManagerCore::IdVector result;
+      CampaignManagerCore::IdArray result;
       result.reserve(source.size());
       for(const auto id : source)
       {
@@ -188,7 +188,7 @@ namespace AdServer::CampaignSvcs
     void
     unpack_strings(
       const google::protobuf::RepeatedPtrField<std::string>& source,
-      CampaignManagerCore::StringVector& target)
+      CampaignManagerCore::StringArray& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -200,7 +200,7 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_strings(
-      const CampaignManagerCore::StringVector& source,
+      const CampaignManagerCore::StringArray& source,
       google::protobuf::RepeatedPtrField<std::string>* target)
     {
       for(const auto& item : source)
@@ -212,7 +212,7 @@ namespace AdServer::CampaignSvcs
     void
     unpack_tokens(
       const google::protobuf::RepeatedPtrField<pb::TokenInfo>& source,
-      CampaignManagerCore::TokenVector& target)
+      CampaignManagerCore::TokenArray& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -224,7 +224,7 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_tokens(
-      const CampaignManagerCore::TokenVector& source,
+      const CampaignManagerCore::TokenArray& source,
       google::protobuf::RepeatedPtrField<pb::TokenInfo>* target)
     {
       for(const auto& item : source)
@@ -237,7 +237,7 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_token_images(
-      const CampaignManagerCore::TokenImageVector& source,
+      const CampaignManagerCore::TokenImageArray& source,
       google::protobuf::RepeatedPtrField<pb::TokenImageInfo>* target)
     {
       for(const auto& item : source)
@@ -321,21 +321,6 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    pack_discover_channel_result(
-      const CampaignManagerCore::DiscoverChannelResult& source,
-      pb::DiscoverChannelResult& target)
-    {
-      target.set_channel_id(source.channel_id);
-      target.set_name(source.name);
-      target.set_query(source.query);
-      target.set_annotation(source.annotation);
-      target.set_weight(source.weight);
-      pack_ids(source.categories, target.mutable_categories());
-      target.set_country_code(source.country_code);
-      target.set_language(source.language);
-    }
-
-    void
     pack_category_channel_node(
       const CampaignManagerCore::CategoryChannelNodeInfo& source,
       pb::CategoryChannelNode& target)
@@ -359,7 +344,7 @@ namespace AdServer::CampaignSvcs
     void
     unpack_channel_trigger_matches(
       const google::protobuf::RepeatedPtrField<pb::ChannelTriggerMatchInfo>& source,
-      CampaignManagerCore::ChannelTriggerMatchVector& target)
+      CampaignManagerCore::ChannelTriggerMatchArray& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -385,7 +370,7 @@ namespace AdServer::CampaignSvcs
     void
     unpack_ccg_keywords(
       const google::protobuf::RepeatedPtrField<pb::CcgKeywordInfo>& source,
-      CampaignManagerCore::CCGKeywordVector& target)
+      CampaignManagerCore::CCGKeywordArray& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -402,13 +387,14 @@ namespace AdServer::CampaignSvcs
         source.ccid(),
         source.ccg_keyword_id(),
         unpack_request_id(source.request_id()),
+        source.creative_id(),
         unpack_revenue_decimal(source.ctr())};
     }
 
     void
     unpack_track_creatives(
       const google::protobuf::RepeatedPtrField<pb::TrackCreativeInfo>& source,
-      CampaignManagerCore::TrackCreativeVector& target)
+      CampaignManagerCore::TrackCreativeArray& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -421,7 +407,7 @@ namespace AdServer::CampaignSvcs
     void
     unpack_common_ad_request_info(
       const pb::CommonAdRequestInfo& source,
-      CampaignManagerCore::CommonAdRequestInfo& target)
+      CampaignManagerCore::CommonAdRequest& target)
     {
       target.time = unpack_time(source.time());
       target.request_id = unpack_request_id(source.request_id());
@@ -459,10 +445,10 @@ namespace AdServer::CampaignSvcs
       target.passback_url = source.passback_url();
     }
 
-    CampaignManagerCore::ContextAdRequestInfo
+    CampaignManagerCore::ContextAdRequest
     unpack_context_ad_request_info(const pb::ContextAdRequestInfo& source)
     {
-      CampaignManagerCore::ContextAdRequestInfo target;
+      CampaignManagerCore::ContextAdRequest target;
       target.enabled_notice = source.enabled_notice();
       target.client = source.client();
       target.client_version = source.client_version();
@@ -476,13 +462,14 @@ namespace AdServer::CampaignSvcs
       target.page_load_id = source.page_load_id();
       target.full_referer_hash = source.full_referer_hash();
       target.short_referer_hash = source.short_referer_hash();
+      target.additional_info = source.additional_info();
       return target;
     }
 
-    CampaignManagerCore::TraceAdSlotInfo
+    CampaignManagerCore::AdSlotRequest
     unpack_ad_slot_info(const pb::AdSlotInfo& source)
     {
-      CampaignManagerCore::TraceAdSlotInfo target;
+      CampaignManagerCore::AdSlotRequest target;
       target.ad_slot_id = source.ad_slot_id();
       target.format = source.format();
       target.tag_id = source.tag_id();
@@ -530,12 +517,15 @@ namespace AdServer::CampaignSvcs
       return target;
     }
 
-    CampaignManagerCore::CreativeRequestInfo
+    CampaignManagerCore::GetAdRequest
     unpack_request_params(const pb::RequestParams& source)
     {
-      CampaignManagerCore::CreativeRequestInfo target;
-      unpack_common_ad_request_info(source.common_info(), target.common_info);
-      target.context_info = unpack_context_ad_request_info(source.context_info());
+      CampaignManagerCore::GetAdRequest target;
+      target.common_info =
+        std::make_shared<CampaignManagerCore::CommonAdRequest>();
+      unpack_common_ad_request_info(source.common_info(), *target.common_info);
+      target.context_info = std::make_shared<CampaignManagerCore::ContextAdRequest>(
+        unpack_context_ad_request_info(source.context_info()));
       target.publisher_site_id = source.publisher_site_id();
       target.publisher_account_ids = unpack_ids(source.publisher_account_ids());
       target.fill_track_pixel = source.fill_track_pixel();
@@ -558,30 +548,27 @@ namespace AdServer::CampaignSvcs
           campaign_freq.campaign_id(),
           campaign_freq.imps()});
       }
-      target.household_id = unpack_user_id(source.household_id());
-      target.merged_user_id = unpack_user_id(source.merged_user_id());
-      target.search_engine_id = source.search_engine_id();
-      target.search_words = source.search_words();
-      target.page_keywords_present = source.page_keywords_present();
+      target.log_request.merged_user_id = unpack_user_id(source.merged_user_id());
+      target.log_request.search_engine_id = source.search_engine_id();
+      target.log_request.search_words = source.search_words();
+      target.log_request.page_keywords_present = source.page_keywords_present();
       target.profiling_available = source.profiling_available();
-      target.fraud = source.fraud();
+      target.log_request.fraud = source.fraud();
       target.channels = unpack_ids(source.channels());
-      target.hid_channels = unpack_ids(source.hid_channels());
       unpack_ccg_keywords(source.ccg_keywords(), target.ccg_keywords);
-      unpack_ccg_keywords(source.hid_ccg_keywords(), target.hid_ccg_keywords);
       unpack_channel_trigger_matches(
         source.trigger_match_result().url_channels(),
-        target.trigger_match_result.url_channels);
+        target.log_request.trigger_match_result.url_channels);
       unpack_channel_trigger_matches(
         source.trigger_match_result().pkw_channels(),
-        target.trigger_match_result.pkw_channels);
+        target.log_request.trigger_match_result.pkw_channels);
       unpack_channel_trigger_matches(
         source.trigger_match_result().skw_channels(),
-        target.trigger_match_result.skw_channels);
+        target.log_request.trigger_match_result.skw_channels);
       unpack_channel_trigger_matches(
         source.trigger_match_result().ukw_channels(),
-        target.trigger_match_result.ukw_channels);
-      target.trigger_match_result.uid_channels =
+        target.log_request.trigger_match_result.ukw_channels);
+      target.log_request.trigger_match_result.uid_channels =
         unpack_ids(source.trigger_match_result().uid_channels());
       target.client_create_time = unpack_time(source.client_create_time());
       target.session_start = unpack_time(source.session_start());
@@ -593,40 +580,23 @@ namespace AdServer::CampaignSvcs
       target.ad_slots.reserve(source.ad_slots_size());
       for(const auto& ad_slot : source.ad_slots())
       {
-        target.ad_slots.push_back(unpack_ad_slot_info(ad_slot));
+        target.ad_slots.emplace_back(
+          std::make_shared<CampaignManagerCore::AdSlotRequest>(
+            unpack_ad_slot_info(ad_slot)));
       }
       target.required_passback = source.required_passback();
-      target.profiling_type = source.profiling_type();
-      target.disable_fraud_detection = source.disable_fraud_detection();
+      target.log_request.profiling_type = source.profiling_type();
+      target.log_request.disable_fraud_detection =
+        source.disable_fraud_detection();
       target.need_debug_info = source.need_debug_info();
-      target.page_keywords = source.page_keywords();
-      target.url_keywords = source.url_keywords();
-      target.ssp_location = source.ssp_location();
-      target.additional_info = source.additional_info();
-      return target;
-    }
-
-    CampaignManagerCore::TraceRequestInfo
-    unpack_trace_request_params(const pb::RequestParams& source)
-    {
-      CampaignManagerCore::TraceRequestInfo target;
-      unpack_common_ad_request_info(source.common_info(), target.common_info);
-      target.context_info = unpack_context_ad_request_info(source.context_info());
-      target.publisher_site_id = source.publisher_site_id();
-      target.publisher_account_ids = unpack_ids(source.publisher_account_ids());
-      target.profiling_available = source.profiling_available();
-      target.full_freq_caps = unpack_ids(source.full_freq_caps());
-      target.channels = unpack_ids(source.channels());
-      target.hid_channels = unpack_ids(source.hid_channels());
-      target.client_create_time = unpack_time(source.client_create_time());
-      target.tag_delivery_factor = source.tag_delivery_factor();
-      target.ccg_delivery_factor = source.ccg_delivery_factor();
+      target.log_request.page_keywords = source.page_keywords();
+      target.log_request.url_keywords = source.url_keywords();
       return target;
     }
 
     void
     pack_creative_select_result(
-      const CampaignManagerCore::CreativeSelectResultInfo& source,
+      const CampaignManagerCore::CreativeSelectResult& source,
       pb::CreativeSelectResult& target)
     {
       target.set_request_id(pack_request_id(source.request_id));
@@ -650,7 +620,7 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_creative_select_debug_info(
-      const CampaignManagerCore::CreativeSelectDebugInfo& source,
+      const CampaignManagerCore::CreativeSelectDebugResult& source,
       pb::CreativeSelectDebugInfo& target)
     {
       pack_revenue_decimal(source.imp_revenue, *target.mutable_imp_revenue());
@@ -662,7 +632,7 @@ namespace AdServer::CampaignSvcs
 
     void
     pack_ad_slot_result(
-      const CampaignManagerCore::AdSlotResultInfo& source,
+      const CampaignManagerCore::GetAdSlotResult& source,
       pb::AdSlotResult& target)
     {
       target.set_ad_slot_id(source.ad_slot_id);
@@ -1446,9 +1416,6 @@ namespace AdServer::CampaignSvcs
     std::atomic<std::uint64_t> progress_comment_in_progress{0};
     std::atomic<std::uint64_t> progress_comment_total{0};
     std::atomic<std::uint64_t> progress_comment_time{0};
-    std::atomic<std::uint64_t> match_geo_channels_in_progress{0};
-    std::atomic<std::uint64_t> match_geo_channels_total{0};
-    std::atomic<std::uint64_t> match_geo_channels_time{0};
     std::atomic<std::uint64_t> get_file_in_progress{0};
     std::atomic<std::uint64_t> get_file_total{0};
     std::atomic<std::uint64_t> get_file_time{0};
@@ -1458,27 +1425,18 @@ namespace AdServer::CampaignSvcs
     std::atomic<std::uint64_t> process_match_request_in_progress{0};
     std::atomic<std::uint64_t> process_match_request_total{0};
     std::atomic<std::uint64_t> process_match_request_time{0};
-    std::atomic<std::uint64_t> process_anonymous_request_in_progress{0};
-    std::atomic<std::uint64_t> process_anonymous_request_total{0};
-    std::atomic<std::uint64_t> process_anonymous_request_time{0};
     std::atomic<std::uint64_t> instantiate_ad_in_progress{0};
     std::atomic<std::uint64_t> instantiate_ad_total{0};
     std::atomic<std::uint64_t> instantiate_ad_time{0};
     std::atomic<std::uint64_t> trace_campaign_selection_index_in_progress{0};
     std::atomic<std::uint64_t> trace_campaign_selection_index_total{0};
     std::atomic<std::uint64_t> trace_campaign_selection_index_time{0};
-    std::atomic<std::uint64_t> trace_campaign_selection_in_progress{0};
-    std::atomic<std::uint64_t> trace_campaign_selection_total{0};
-    std::atomic<std::uint64_t> trace_campaign_selection_time{0};
     std::atomic<std::uint64_t> get_campaign_creative_by_ccid_in_progress{0};
     std::atomic<std::uint64_t> get_campaign_creative_by_ccid_total{0};
     std::atomic<std::uint64_t> get_campaign_creative_by_ccid_time{0};
     std::atomic<std::uint64_t> get_channel_links_in_progress{0};
     std::atomic<std::uint64_t> get_channel_links_total{0};
     std::atomic<std::uint64_t> get_channel_links_time{0};
-    std::atomic<std::uint64_t> get_discover_channels_in_progress{0};
-    std::atomic<std::uint64_t> get_discover_channels_total{0};
-    std::atomic<std::uint64_t> get_discover_channels_time{0};
     std::atomic<std::uint64_t> get_category_channels_in_progress{0};
     std::atomic<std::uint64_t> get_category_channels_total{0};
     std::atomic<std::uint64_t> get_category_channels_time{0};
@@ -1543,11 +1501,6 @@ namespace AdServer::CampaignSvcs
           progress_comment,
           co_progress_comment),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::MatchGeoChannelsRequest,
-          pb::MatchGeoChannelsResponse,
-          match_geo_channels,
-          co_match_geo_channels),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetFileRequest,
           pb::GetFileResponse,
           get_file,
@@ -1563,11 +1516,6 @@ namespace AdServer::CampaignSvcs
           process_match_request,
           co_process_match_request),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::ProcessAnonymousRequestRequest,
-          pb::ProcessAnonymousRequestResponse,
-          process_anonymous_request,
-          co_process_anonymous_request),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::InstantiateAdRequest,
           pb::InstantiateAdResponse,
           instantiate_ad,
@@ -1578,11 +1526,6 @@ namespace AdServer::CampaignSvcs
           trace_campaign_selection_index,
           co_trace_campaign_selection_index),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::TraceCampaignSelectionRequest,
-          pb::TraceCampaignSelectionResponse,
-          trace_campaign_selection,
-          co_trace_campaign_selection),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetCampaignCreativeByCcidRequest,
           pb::GetCampaignCreativeByCcidResponse,
           get_campaign_creative_by_ccid,
@@ -1592,11 +1535,6 @@ namespace AdServer::CampaignSvcs
           pb::GetChannelLinksResponse,
           get_channel_links,
           co_get_channel_links),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::GetDiscoverChannelsRequest,
-          pb::GetDiscoverChannelsResponse,
-          get_discover_channels,
-          co_get_discover_channels),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetCategoryChannelsRequest,
           pb::GetCategoryChannelsResponse,
@@ -1664,11 +1602,6 @@ namespace AdServer::CampaignSvcs
       pb::ProgressCommentResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_match_geo_channels(
-      pb::MatchGeoChannelsRequest&& request,
-      pb::MatchGeoChannelsResponse& response,
-      ::grpc::Status& result_status) const;
-
     AdServer::Grpc::GrpcCoroutine co_get_file(
       pb::GetFileRequest&& request,
       pb::GetFileResponse& response,
@@ -1684,11 +1617,6 @@ namespace AdServer::CampaignSvcs
       pb::ProcessMatchRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_process_anonymous_request(
-      pb::ProcessAnonymousRequestRequest&& request,
-      pb::ProcessAnonymousRequestResponse& response,
-      ::grpc::Status& result_status) const;
-
     AdServer::Grpc::GrpcCoroutine co_instantiate_ad(
       pb::InstantiateAdRequest&& request,
       pb::InstantiateAdResponse& response,
@@ -1699,11 +1627,6 @@ namespace AdServer::CampaignSvcs
       pb::TraceCampaignSelectionIndexResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_trace_campaign_selection(
-      pb::TraceCampaignSelectionRequest&& request,
-      pb::TraceCampaignSelectionResponse& response,
-      ::grpc::Status& result_status) const;
-
     AdServer::Grpc::GrpcCoroutine co_get_campaign_creative_by_ccid(
       pb::GetCampaignCreativeByCcidRequest&& request,
       pb::GetCampaignCreativeByCcidResponse& response,
@@ -1712,11 +1635,6 @@ namespace AdServer::CampaignSvcs
     AdServer::Grpc::GrpcCoroutine co_get_channel_links(
       pb::GetChannelLinksRequest&& request,
       pb::GetChannelLinksResponse& response,
-      ::grpc::Status& result_status) const;
-
-    AdServer::Grpc::GrpcCoroutine co_get_discover_channels(
-      pb::GetDiscoverChannelsRequest&& request,
-      pb::GetDiscoverChannelsResponse& response,
       ::grpc::Status& result_status) const;
 
     AdServer::Grpc::GrpcCoroutine co_get_category_channels(
@@ -1785,11 +1703,6 @@ namespace AdServer::CampaignSvcs
       pb::ProgressCommentResponse& response,
       ::grpc::Status& result_status) const;
 
-    void match_geo_channels(
-      const pb::MatchGeoChannelsRequest& request,
-      pb::MatchGeoChannelsResponse& response,
-      ::grpc::Status& result_status) const;
-
     void get_file(
       const pb::GetFileRequest& request,
       pb::GetFileResponse& response,
@@ -1800,19 +1713,9 @@ namespace AdServer::CampaignSvcs
       pb::ProcessMatchRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    void process_anonymous_request(
-      const pb::ProcessAnonymousRequestRequest& request,
-      pb::ProcessAnonymousRequestResponse& response,
-      ::grpc::Status& result_status) const;
-
     void trace_campaign_selection_index(
       const pb::TraceCampaignSelectionIndexRequest& request,
       pb::TraceCampaignSelectionIndexResponse& response,
-      ::grpc::Status& result_status) const;
-
-    void trace_campaign_selection(
-      const pb::TraceCampaignSelectionRequest& request,
-      pb::TraceCampaignSelectionResponse& response,
       ::grpc::Status& result_status) const;
 
     void get_campaign_creative_by_ccid(
@@ -1823,11 +1726,6 @@ namespace AdServer::CampaignSvcs
     void get_channel_links(
       const pb::GetChannelLinksRequest& request,
       pb::GetChannelLinksResponse& response,
-      ::grpc::Status& result_status) const;
-
-    void get_discover_channels(
-      const pb::GetDiscoverChannelsRequest& request,
-      pb::GetDiscoverChannelsResponse& response,
       ::grpc::Status& result_status) const;
 
     void get_category_channels(
@@ -1978,10 +1876,6 @@ namespace AdServer::CampaignSvcs
     pb::ProgressCommentRequest,
     pb::ProgressCommentResponse)
   DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    match_geo_channels,
-    pb::MatchGeoChannelsRequest,
-    pb::MatchGeoChannelsResponse)
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
     get_file,
     pb::GetFileRequest,
     pb::GetFileResponse)
@@ -1990,17 +1884,9 @@ namespace AdServer::CampaignSvcs
     pb::ProcessMatchRequestRequest,
     pb::ProcessMatchRequestResponse)
   DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    process_anonymous_request,
-    pb::ProcessAnonymousRequestRequest,
-    pb::ProcessAnonymousRequestResponse)
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
     trace_campaign_selection_index,
     pb::TraceCampaignSelectionIndexRequest,
     pb::TraceCampaignSelectionIndexResponse)
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    trace_campaign_selection,
-    pb::TraceCampaignSelectionRequest,
-    pb::TraceCampaignSelectionResponse)
   DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
     get_campaign_creative_by_ccid,
     pb::GetCampaignCreativeByCcidRequest,
@@ -2009,10 +1895,6 @@ namespace AdServer::CampaignSvcs
     get_channel_links,
     pb::GetChannelLinksRequest,
     pb::GetChannelLinksResponse)
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    get_discover_channels,
-    pb::GetDiscoverChannelsRequest,
-    pb::GetDiscoverChannelsResponse)
   DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
     get_category_channels,
     pb::GetCategoryChannelsRequest,
@@ -2099,53 +1981,6 @@ namespace AdServer::CampaignSvcs
       core_->progress_comment(comment);
       response.set_comment(std::move(comment));
       result_status = ::grpc::Status::OK;
-    }
-    catch(const eh::Exception& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
-    }
-  }
-
-  void
-  CampaignManagerGrpc::ServiceImpl::match_geo_channels(
-    const pb::MatchGeoChannelsRequest& request,
-    pb::MatchGeoChannelsResponse& response,
-    ::grpc::Status& result_status) const
-  {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->match_geo_channels_in_progress,
-      stats_->match_geo_channels_total,
-      stats_->match_geo_channels_time);
-
-    try
-    {
-      std::vector<CampaignManagerCore::GeoInfo> location;
-      std::vector<CampaignManagerCore::GeoCoordInfo> coord_location;
-      unpack_geo_info_seq(request.location(), location);
-      unpack_geo_coord_info_seq(request.coord_location(), coord_location);
-
-      CampaignManagerCore::IdVector geo_channels;
-      CampaignManagerCore::IdVector coord_channels;
-      core_->match_geo_channels(
-        location,
-        coord_location,
-        geo_channels,
-        coord_channels);
-
-      pack_ids(geo_channels, response.mutable_geo_channels());
-      pack_ids(coord_channels, response.mutable_coord_channels());
-      result_status = ::grpc::Status::OK;
-    }
-    catch(const CampaignManagerCore::NotReady& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
     }
     catch(const eh::Exception& ex)
     {
@@ -2331,57 +2166,6 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  CampaignManagerGrpc::ServiceImpl::process_anonymous_request(
-    const pb::ProcessAnonymousRequestRequest& request,
-    pb::ProcessAnonymousRequestResponse&,
-    ::grpc::Status& result_status) const
-  {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->process_anonymous_request_in_progress,
-      stats_->process_anonymous_request_total,
-      stats_->process_anonymous_request_time);
-
-    try
-    {
-      const auto& source = request.anonymous_request_info();
-      CampaignManagerCore::AnonymousRequestInfo info;
-      info.time = unpack_time(source.time());
-      info.colo_id = source.colo_id();
-      info.user_status = source.user_status();
-      info.test_request = source.test_request();
-      info.search_engine_id = source.search_engine_id();
-      info.search_words = source.search_words();
-      info.client = source.client();
-      info.client_version = source.client_version();
-      info.platform_ids = unpack_ids(source.platform_ids());
-      info.full_platform = source.full_platform();
-      info.web_browser = source.web_browser();
-      info.user_agent = source.user_agent();
-      info.search_engine_host = source.search_engine_host();
-      info.country_code = source.country_code();
-      info.page_keywords_present = source.page_keywords_present();
-
-      core_->process_anonymous_request(info);
-      result_status = ::grpc::Status::OK;
-    }
-    catch(const CampaignManagerCore::NotReady& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
-    }
-    catch(const eh::Exception& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
-    }
-  }
-
   AdServer::Grpc::GrpcCoroutine
   CampaignManagerGrpc::ServiceImpl::co_instantiate_ad(
     pb::InstantiateAdRequest&& request,
@@ -2403,12 +2187,16 @@ namespace AdServer::CampaignSvcs
     try
     {
       const auto& source = request.instantiate_ad_info();
-      CampaignManagerCore::InstantiateAdInfo info;
-      unpack_common_ad_request_info(source.common_info(), info.common_info);
+      CampaignManagerCore::InstantiateAdRequest info;
+      info.common_info =
+        std::make_shared<CampaignManagerCore::CommonAdRequest>();
+      unpack_common_ad_request_info(source.common_info(), *info.common_info);
       info.context_info.reserve(source.context_info_size());
       for(const auto& context : source.context_info())
       {
-        info.context_info.push_back(unpack_context_ad_request_info(context));
+        info.context_info.emplace_back(
+          std::make_shared<CampaignManagerCore::ContextAdRequest>(
+            unpack_context_ad_request_info(context)));
       }
       info.format = source.format();
       info.publisher_site_id = source.publisher_site_id();
@@ -2416,7 +2204,6 @@ namespace AdServer::CampaignSvcs
       info.tag_id = source.tag_id();
       info.tag_size_id = source.tag_size_id();
       unpack_track_creatives(source.creatives(), info.creatives);
-      info.creative_id = source.creative_id();
       if(source.has_user_id_hash_mod())
       {
         set_optional_uint64(source.user_id_hash_mod(), info.user_id_hash_mod);
@@ -2438,7 +2225,7 @@ namespace AdServer::CampaignSvcs
         info.pub_imp_revenue = unpack_revenue_decimal(source.pub_imp_revenue());
       }
 
-      const auto result = co_await core_->co_instantiate_ad(info);
+      const auto result = co_await core_->co_instantiate_ad(std::move(info));
       auto* target = response.mutable_instantiate_ad_result();
       target->set_creative_body(result.creative_body);
       target->set_mime_format(result.mime_format);
@@ -2462,38 +2249,6 @@ namespace AdServer::CampaignSvcs
     }
 
     co_return;
-  }
-
-  void
-  CampaignManagerGrpc::ServiceImpl::trace_campaign_selection(
-    const pb::TraceCampaignSelectionRequest& request,
-    pb::TraceCampaignSelectionResponse& response,
-    ::grpc::Status& result_status) const
-  {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->trace_campaign_selection_in_progress,
-      stats_->trace_campaign_selection_total,
-      stats_->trace_campaign_selection_time);
-
-    try
-    {
-      response.set_trace_xml(core_->trace_campaign_selection(
-        request.campaign_id(),
-        unpack_trace_request_params(request.request_params()),
-        unpack_ad_slot_info(request.ad_slot()),
-        request.auction_type(),
-        request.test_request()));
-      result_status = ::grpc::Status::OK;
-    }
-    catch(const eh::Exception& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
-    }
   }
 
   void
@@ -2559,56 +2314,6 @@ namespace AdServer::CampaignSvcs
       }
 
       result_status = ::grpc::Status::OK;
-    }
-    catch(const eh::Exception& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
-    }
-  }
-
-  void
-  CampaignManagerGrpc::ServiceImpl::get_discover_channels(
-    const pb::GetDiscoverChannelsRequest& request,
-    pb::GetDiscoverChannelsResponse& response,
-    ::grpc::Status& result_status) const
-  {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_discover_channels_in_progress,
-      stats_->get_discover_channels_total,
-      stats_->get_discover_channels_time);
-
-    try
-    {
-      std::vector<CampaignManagerCore::ChannelWeight> channels;
-      channels.reserve(request.channels_size());
-      for(const auto& channel : request.channels())
-      {
-        channels.push_back({channel.channel_id(), channel.weight()});
-      }
-
-      const auto result = core_->get_discover_channels(
-        channels,
-        request.country(),
-        request.language(),
-        request.all());
-
-      for(const auto& channel : result)
-      {
-        pack_discover_channel_result(channel, *response.add_channels());
-      }
-
-      result_status = ::grpc::Status::OK;
-    }
-    catch(const CampaignManagerCore::NotReady& ex)
-    {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
     }
     catch(const eh::Exception& ex)
     {
@@ -2761,7 +2466,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      CampaignManagerCore::PassbackInfo info;
+      CampaignManagerCore::PassbackRequest info;
       info.request_id = CorbaAlgs::unpack_request_id(
         unpack_oct_seq(request.request_id()));
       info.time = unpack_time(request.time());
@@ -2801,7 +2506,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      CampaignManagerCore::PassbackTrackInfo info;
+      CampaignManagerCore::PassbackTrackRequest info;
       info.time = unpack_time(request.time());
       info.country = request.country();
       info.colo_id = request.colo_id();
@@ -2912,7 +2617,7 @@ namespace AdServer::CampaignSvcs
     try
     {
       const auto& source = request.click_info();
-      CampaignManagerCore::ClickInfo info;
+      CampaignManagerCore::ClickRequest info;
       info.time = unpack_time(source.time());
       info.bid_time = unpack_time(source.bid_time());
       info.colo_id = source.colo_id();
@@ -2937,7 +2642,7 @@ namespace AdServer::CampaignSvcs
         info.tokens.set_value(token.name(), token.value());
       }
 
-      CampaignManagerCore::ClickResultInfo result;
+      CampaignManagerCore::ClickResult result;
       response.set_found(co_await core_->co_get_click_url(info, result));
       auto* target = response.mutable_click_result_info();
       target->set_url(result.url);
@@ -2982,7 +2687,7 @@ namespace AdServer::CampaignSvcs
     try
     {
       const auto& source = request.impression_info();
-      CampaignManagerCore::ImpressionInfo info;
+      CampaignManagerCore::VerifyImpressionRequest info;
       info.time = unpack_time(source.time());
       info.bid_time = unpack_time(source.bid_time());
       if(source.has_user_id_hash_mod())
@@ -3044,7 +2749,7 @@ namespace AdServer::CampaignSvcs
     try
     {
       const auto& source = request.action_info();
-      CampaignManagerCore::ActionInfo info;
+      CampaignManagerCore::ActionRequest info;
       info.time = unpack_time(source.time());
       info.test_request = source.test_request();
       info.log_as_test = source.log_as_test();
@@ -3104,7 +2809,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      CampaignManagerCore::WebOperationInfo info;
+      CampaignManagerCore::WebOperationRequest info;
       info.time = unpack_time(request.time());
       info.colo_id = request.colo_id();
       info.tag_id = request.tag_id();
@@ -3244,9 +2949,6 @@ namespace AdServer::CampaignSvcs
     LOAD_STAT_(progress_comment_in_progress);
     LOAD_STAT_(progress_comment_total);
     LOAD_STAT_(progress_comment_time);
-    LOAD_STAT_(match_geo_channels_in_progress);
-    LOAD_STAT_(match_geo_channels_total);
-    LOAD_STAT_(match_geo_channels_time);
     LOAD_STAT_(get_file_in_progress);
     LOAD_STAT_(get_file_total);
     LOAD_STAT_(get_file_time);
@@ -3256,27 +2958,18 @@ namespace AdServer::CampaignSvcs
     LOAD_STAT_(process_match_request_in_progress);
     LOAD_STAT_(process_match_request_total);
     LOAD_STAT_(process_match_request_time);
-    LOAD_STAT_(process_anonymous_request_in_progress);
-    LOAD_STAT_(process_anonymous_request_total);
-    LOAD_STAT_(process_anonymous_request_time);
     LOAD_STAT_(instantiate_ad_in_progress);
     LOAD_STAT_(instantiate_ad_total);
     LOAD_STAT_(instantiate_ad_time);
     LOAD_STAT_(trace_campaign_selection_index_in_progress);
     LOAD_STAT_(trace_campaign_selection_index_total);
     LOAD_STAT_(trace_campaign_selection_index_time);
-    LOAD_STAT_(trace_campaign_selection_in_progress);
-    LOAD_STAT_(trace_campaign_selection_total);
-    LOAD_STAT_(trace_campaign_selection_time);
     LOAD_STAT_(get_campaign_creative_by_ccid_in_progress);
     LOAD_STAT_(get_campaign_creative_by_ccid_total);
     LOAD_STAT_(get_campaign_creative_by_ccid_time);
     LOAD_STAT_(get_channel_links_in_progress);
     LOAD_STAT_(get_channel_links_total);
     LOAD_STAT_(get_channel_links_time);
-    LOAD_STAT_(get_discover_channels_in_progress);
-    LOAD_STAT_(get_discover_channels_total);
-    LOAD_STAT_(get_discover_channels_time);
     LOAD_STAT_(get_category_channels_in_progress);
     LOAD_STAT_(get_category_channels_total);
     LOAD_STAT_(get_category_channels_time);

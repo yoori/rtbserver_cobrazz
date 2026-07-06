@@ -1,10 +1,6 @@
 
 #include <eh/Exception.hpp>
 #include <Logger/Logger.hpp>
-#include <Generics/Uuid.hpp>
-#include <String/StringManip.hpp>
-#include <Generics/RandomSelect.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "CampaignManagerCore.hpp"
 #include "CreativeInstantiator.hpp"
@@ -12,8 +8,6 @@
 
 namespace
 {
-  const char EQL[] = "*eql*";
-
   AdServer::CampaignSvcs::CreativeInstantiator::Config
   make_creative_instantiator_config(
     const AdServer::CampaignSvcs::CampaignManagerCore::CampaignManagerConfig&
@@ -37,85 +31,24 @@ namespace
 
 namespace AdServer::CampaignSvcs
 {
-  void
-  CampaignManagerCore::get_channel_targeting_info_(
-    CampaignSelectionData& select_params,
-    const ChannelIdHashSet& simple_channels,
-    const Campaign* campaign_candidate,
-    const CampaignKeyword* campaign_keyword)
-    /*throw(eh::Exception)*/
-  {
-    static const char* FUN = "CampaignManagerCore::select_creative()";
-
-    if(campaign_candidate->targeted())
-    {
-      try
-      {
-        select_params.responded_channels.clear();
-
-        if(campaign_candidate->channel.in())
-        {
-          ChannelIdSet responded_channels;
-          campaign_candidate->channel->triggered_named_channels(
-            responded_channels,
-            simple_channels);
-
-          std::copy(responded_channels.begin(),
-            responded_channels.end(),
-            std::back_inserter(select_params.responded_channels));
-
-          if(!campaign_keyword)
-          {
-            std::string responded_expression;
-
-            if (campaign_candidate->stat_channel.in() &&
-              campaign_candidate->stat_channel->triggered_expression(
-                responded_expression,
-                simple_channels))
-            {
-              select_params.responded_expression = std::move(responded_expression);
-            }
-          }
-        }
-      }
-      catch (const ExpressionChannelBase::Exception& e)
-      {
-        logger_->sstream(Logging::Logger::WARNING,
-          Aspect::CAMPAIGN_MANAGER,
-          "ADS-IMPL-186") <<
-          FUN << ": Caught ExpressionChannelBase::Exception while triing "
-          "to get_triggered_channel_info"
-          " (cmpid: " << campaign_candidate->campaign_id << "). "
-          "responded_expression and responded_channels "
-          "will be left empty. : " << e.what();
-      }
-    }
-
-    if(campaign_keyword)
-    {
-      select_params.responded_channels.push_back(
-        select_params.campaign_keyword->channel_id);
-      select_params.responded_expression =
-        std::to_string(select_params.campaign_keyword->channel_id);
-    }
-  }
-
   bool
   CampaignManagerCore::instantiate_display_creative(
     const CampaignConfig* config,
     const Colocation* colocation,
-    const CreativeRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
+    const GetAdRequest& request_params,
+    const AdSlotRequest& ad_slot,
     const CampaignSelector::WeightedCampaign& weighted_campaign,
     AdSelectionResult& ad_selection_result,
     RequestResultParams& request_result_params,
     CreativeParams& creative_params,
-    AdSlotDebugInfo* ad_slot_debug_info,
+    AdSlotDebugResult* ad_slot_debug_info,
     std::string& creative_body,
     std::string& creative_url,
-    AdSlotContext& ad_slot_context)
+    AdSlotContext& ad_slot_context,
+    std::pmr::memory_resource* memory_resource)
     /*throw(eh::Exception)*/
   {
+    (void)memory_resource;
     static const char* FUN = "CampaignManagerCore::instantiate_display_creative()";
 
     assert(weighted_campaign.tag_size);
@@ -143,16 +76,6 @@ namespace AdServer::CampaignSvcs
     select_params.ctr = weighted_campaign.ctr;
     select_params.conv_rate = weighted_campaign.conv_rate;
     select_params.request_id = Commons::RequestId::create_random_based();
-
-    // Find responded expression and responded channels
-    ChannelIdHashSet simple_channels(
-      request_params.channels.begin(),
-      request_params.channels.end());
-    get_channel_targeting_info_(
-      select_params,
-      simple_channels,
-      campaign_candidate,
-      0); // campaign keyword
 
     ad_selection_result.selected_campaigns.push_back(select_params);
 
@@ -231,18 +154,20 @@ namespace AdServer::CampaignSvcs
   CampaignManagerCore::instantiate_text_creatives(
     const CampaignConfig* config,
     const Colocation* const colocation,
-    const CreativeRequestInfo& request_params,
-    const TraceAdSlotInfo& ad_slot,
+    const GetAdRequest& request_params,
+    const AdSlotRequest& ad_slot,
     const CampaignSelector::WeightedCampaignKeywordList& campaign_keywords,
     AdSelectionResult& ad_selection_result,
     RequestResultParams& request_result_params,
     CreativeParamsList& creative_params_list,
-    AdSlotDebugInfo* ad_slot_debug_info,
+    AdSlotDebugResult* ad_slot_debug_info,
     std::string& creative_body,
     std::string& creative_url,
-    AdSlotContext& ad_slot_context)
+    AdSlotContext& ad_slot_context,
+    std::pmr::memory_resource* memory_resource)
     /*throw(eh::Exception)*/
   {
+    (void)memory_resource;
     static const char* FUN = "CampaignManagerCore::instantiate_text_creatives()";
 
     if(ad_slot_debug_info)
@@ -269,15 +194,6 @@ namespace AdServer::CampaignSvcs
       select_params.ecpm = kw_it->ecpm;
       select_params.ctr = kw_it->ctr;
       select_params.conv_rate = kw_it->conv_rate;
-
-      ChannelIdHashSet simple_channels(
-        request_params.channels.begin(),
-        request_params.channels.end());
-      get_channel_targeting_info_(
-        select_params,
-        simple_channels,
-        campaign_candidate,
-        kw_it->campaign_keyword);
 
       select_params.actual_cpc = kw_it->actual_cpc;
       select_params.track_impr = true;

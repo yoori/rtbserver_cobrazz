@@ -11,24 +11,17 @@ package adserver.campaign_svcs.campaign_manager;
 service CampaignManagerGrpc {
   rpc ready(ReadyRequest) returns (ReadyResponse);
   rpc progress_comment(ProgressCommentRequest) returns (ProgressCommentResponse);
-  rpc match_geo_channels(MatchGeoChannelsRequest) returns (MatchGeoChannelsResponse);
   rpc get_file(GetFileRequest) returns (GetFileResponse);
   rpc get_campaign_creative(GetCampaignCreativeRequest)
     returns (GetCampaignCreativeResponse);
   rpc process_match_request(ProcessMatchRequestRequest)
     returns (ProcessMatchRequestResponse);
-  rpc process_anonymous_request(ProcessAnonymousRequestRequest)
-    returns (ProcessAnonymousRequestResponse);
   rpc instantiate_ad(InstantiateAdRequest) returns (InstantiateAdResponse);
   rpc trace_campaign_selection_index(TraceCampaignSelectionIndexRequest)
     returns (TraceCampaignSelectionIndexResponse);
-  rpc trace_campaign_selection(TraceCampaignSelectionRequest)
-    returns (TraceCampaignSelectionResponse);
   rpc get_campaign_creative_by_ccid(GetCampaignCreativeByCcidRequest)
     returns (GetCampaignCreativeByCcidResponse);
   rpc get_channel_links(GetChannelLinksRequest) returns (GetChannelLinksResponse);
-  rpc get_discover_channels(GetDiscoverChannelsRequest)
-    returns (GetDiscoverChannelsResponse);
   rpc get_category_channels(GetCategoryChannelsRequest)
     returns (GetCategoryChannelsResponse);
   rpc get_colocation_flags(GetColocationFlagsRequest)
@@ -71,16 +64,6 @@ message GeoCoordInfo {
   bytes longitude = 1;
   bytes latitude = 2;
   bytes accuracy = 3;
-}
-
-message MatchGeoChannelsRequest {
-  repeated GeoInfo location = 1;
-  repeated GeoCoordInfo coord_location = 2;
-}
-
-message MatchGeoChannelsResponse {
-  repeated uint64 geo_channels = 1;
-  repeated uint64 coord_channels = 2;
 }
 
 message GetFileRequest {
@@ -128,33 +111,6 @@ message ChannelSearchResult {
 
 message GetChannelLinksResponse {
   repeated ChannelSearchResult channels = 1;
-}
-
-message ChannelWeight {
-  uint64 channel_id = 1;
-  uint64 weight = 2;
-}
-
-message GetDiscoverChannelsRequest {
-  repeated ChannelWeight channels = 1;
-  string country = 2;
-  string language = 3;
-  bool all = 4;
-}
-
-message DiscoverChannelResult {
-  uint64 channel_id = 1;
-  string name = 2;
-  string query = 3;
-  string annotation = 4;
-  uint64 weight = 5;
-  repeated uint64 categories = 6;
-  string country_code = 7;
-  string language = 8;
-}
-
-message GetDiscoverChannelsResponse {
-  repeated DiscoverChannelResult channels = 1;
 }
 
 message GetCategoryChannelsRequest {
@@ -348,9 +304,13 @@ message ContextAdRequestInfo {
   uint64 page_load_id = 11;
   uint64 full_referer_hash = 12;
   uint64 short_referer_hash = 13;
+  string additional_info = 14;
 }
 
 message RequestParams {
+  reserved 37;
+  reserved 38;
+
   CommonAdRequestInfo common_info = 1;
   ContextAdRequestInfo context_info = 2;
   uint64 publisher_site_id = 3;
@@ -387,26 +347,6 @@ message RequestParams {
   bool need_debug_info = 34;
   string page_keywords = 35;
   string url_keywords = 36;
-  string ssp_location = 37;
-  string additional_info = 38;
-}
-
-message AnonymousRequestInfo {
-  bytes time = 1;
-  uint64 colo_id = 2;
-  uint64 user_status = 3;
-  bool test_request = 4;
-  uint64 search_engine_id = 5;
-  string search_words = 6;
-  string client = 7;
-  string client_version = 8;
-  repeated uint64 platform_ids = 9;
-  string full_platform = 10;
-  string web_browser = 11;
-  string user_agent = 12;
-  string search_engine_host = 13;
-  string country_code = 14;
-  bool page_keywords_present = 15;
 }
 
 message TrackCreativeInfo {
@@ -414,6 +354,7 @@ message TrackCreativeInfo {
   uint64 ccg_keyword_id = 2;
   bytes request_id = 3;
   DecimalInfo ctr = 4;
+  uint64 creative_id = 5;
 }
 
 message InstantiateAdInfo {
@@ -425,7 +366,7 @@ message InstantiateAdInfo {
   uint64 tag_id = 6;
   uint64 tag_size_id = 7;
   repeated TrackCreativeInfo creatives = 8;
-  uint64 creative_id = 9;
+  reserved 9;
   OptionalUInt64 user_id_hash_mod = 10;
   bytes merged_user_id = 11;
   repeated uint64 pubpixel_accounts = 12;
@@ -741,12 +682,6 @@ message ProcessMatchRequestResponse {
   string hostname = 1;
 }
 
-message ProcessAnonymousRequestRequest {
-  AnonymousRequestInfo anonymous_request_info = 1;
-}
-
-message ProcessAnonymousRequestResponse {}
-
 message InstantiateAdRequest {
   InstantiateAdInfo instantiate_ad_info = 1;
   string service_index = 2;
@@ -755,18 +690,6 @@ message InstantiateAdRequest {
 message InstantiateAdResponse {
   InstantiateAdResult instantiate_ad_result = 1;
   string hostname = 2;
-}
-
-message TraceCampaignSelectionRequest {
-  uint64 campaign_id = 1;
-  RequestParams request_params = 2;
-  AdSlotInfo ad_slot = 3;
-  uint64 auction_type = 4;
-  bool test_request = 5;
-}
-
-message TraceCampaignSelectionResponse {
-  string trace_xml = 1;
 }
 
 message GetClickUrlRequest {

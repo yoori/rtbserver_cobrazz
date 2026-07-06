@@ -24,9 +24,12 @@ namespace AdServer::CampaignSvcs
       CampaignManagerLogger::RequestInfo& request_info,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
-      const CampaignManagerCore::CommonAdRequestInfo& common_info,
-      const CampaignManagerCore::ContextAdRequestInfo& context_info,
-      const CampaignManagerCore::CreativeRequestInfo* request_params,
+      const CampaignManagerCore::CommonAdRequest& common_info,
+      const CampaignManagerCore::ContextAdRequest& context_info,
+      const CampaignManagerCore::LogAdRequest* log_request,
+      const CampaignManagerCore::IdArray* channels,
+      bool is_ad_request,
+      bool track_passback,
       const CampaignManagerCore::AdSlotContext& ad_slot_context)
       /*throw(Exception)*/;
 
@@ -35,10 +38,10 @@ namespace AdServer::CampaignSvcs
       CampaignManagerLogger::AdRequestSelectionInfo& ad_request_selection_info,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
-      const CampaignManagerCore::CommonAdRequestInfo& common_info,
-      const CampaignManagerCore::ContextAdRequestInfo& context_info,
-      const CampaignManagerCore::CreativeRequestInfo* request_params,
-      const CampaignManagerCore::TraceAdSlotInfo& ad_slot,
+      const CampaignManagerCore::CommonAdRequest& common_info,
+      const CampaignManagerCore::ContextAdRequest& context_info,
+      const CampaignManagerCore::IdArray* channels,
+      const CampaignManagerCore::AdSlotRequest& ad_slot,
       const Tag* tag,
       const AdSelectionResult& ad_selection_request,
       const CampaignManagerCore::AdSlotContext& ad_slot_context,
@@ -90,9 +93,9 @@ namespace AdServer::CampaignSvcs
       DataPricing& data_pricing,
       const CampaignConfig* campaign_config,
       const Colocation* colocation,
-      const CampaignManagerCore::CommonAdRequestInfo& common_info,
-      const CampaignManagerCore::ContextAdRequestInfo& context_info,
-      const CampaignManagerCore::CreativeRequestInfo* request_params,
+      const CampaignManagerCore::CommonAdRequest& common_info,
+      const CampaignManagerCore::ContextAdRequest& context_info,
+      const CampaignManagerCore::IdArray* channels,
       const Tag* tag,
       const Tag::TagPricing* tag_pricing,
       const AdSelectionResult& ad_selection_result,
@@ -102,24 +105,32 @@ namespace AdServer::CampaignSvcs
       /*throw(Exception)*/;
 
     static void
+    fill_responded_channel_info_(
+      CampaignManagerLogger::AdSelectionInfo& ad_info,
+      const CampaignSelectionData& cs_data,
+      const CampaignManagerCore::IdArray* channels)
+      noexcept;
+
+    static void
     convert_channel_ids_(
       ChannelIdHashSet& all_channels,
       ChannelIdHashSet& channels,
       CampaignManagerLogger::TriggerChannelMap& triggers,
-      const CampaignManagerCore::ChannelTriggerMatchVector& behav_params)
+      const CampaignManagerCore::ChannelTriggerMatchArray& behav_params)
       noexcept;
 
     static void
     fill_request_info_by_profiling_(
       CampaignManagerLogger::RequestInfo& request_info,
-      const CampaignManagerCore::CreativeRequestInfo& request_params,
-      const CampaignManagerCore::CommonAdRequestInfo& common_info)
+      const CampaignManagerCore::LogAdRequest& log_request,
+      const CampaignManagerCore::IdArray& channels,
+      const CampaignManagerCore::CommonAdRequest& common_info)
       /*throw(Exception)*/;
 
     static void
     fill_request_info_by_common_info_(
       CampaignManagerLogger::RequestInfo& request_info,
-      const CampaignManagerCore::CommonAdRequestInfo& common_info)
+      const CampaignManagerCore::CommonAdRequest& common_info)
       /*throw(Exception)*/;
   };
 }

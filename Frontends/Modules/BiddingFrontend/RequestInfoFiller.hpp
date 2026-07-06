@@ -333,7 +333,6 @@ namespace AdServer::Bidding
         ad_slots(request_arena_.get()),
         page_keywords(request_arena_.get()),
         url_keywords(request_arena_.get()),
-        ssp_location(request_arena_.get()),
         campaign_additional_info(request_arena_.get()),
         moved_string_holders_(),
         string_holders_(request_arena_.get())
@@ -477,7 +476,6 @@ namespace AdServer::Bidding
     bool need_debug_info = false;
     PmrString page_keywords;
     PmrString url_keywords;
-    PmrString ssp_location;
     PmrString campaign_additional_info;
 
   private:

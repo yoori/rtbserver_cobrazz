@@ -36,8 +36,8 @@ namespace AdServer
       const Creative* creative;
     };
 
-    typedef std::list<CampaignKeywordCreative>
-      CampaignKeywordCreativeList;
+    using CampaignKeywordCreativeList =
+      std::pmr::list<CampaignKeywordCreative>;
 
     struct CampaignSelectorPmrBuffer
     {
@@ -60,26 +60,40 @@ namespace AdServer
       std::pmr::monotonic_buffer_resource resource;
     };
 
-    typedef std::map<RevenueDecimal, CampaignKeywordCreativeList>
-      CPCKeywordCreativeMap;
+    using CPCKeywordCreativeMap =
+      std::pmr::map<RevenueDecimal, CampaignKeywordCreativeList>;
 
     struct TextSelectionBySize
     {
+      explicit TextSelectionBySize(
+        std::pmr::memory_resource* memory_resource =
+          std::pmr::get_default_resource())
+        : campaign_candidates(memory_resource)
+      {}
+
       Tag::SizeMap tag_sizes;
       RevenueDecimal expected_ecpm;
       CampaignSelector::WeightedCampaignKeywordList campaign_candidates;
     };
 
-    typedef std::list<TextSelectionBySize> TextSelectionBySizeList;
+    using TextSelectionBySizeList = std::pmr::list<TextSelectionBySize>;
 
     struct RandomTextSelectionBySize
     {
+      explicit RandomTextSelectionBySize(
+        std::pmr::memory_resource* memory_resource =
+          std::pmr::get_default_resource())
+        : campaign_candidates(memory_resource),
+          grouped_campaign_candidates(memory_resource)
+      {}
+
       Tag::SizeMap tag_sizes;
       CampaignSelector::WeightedCampaignKeywordList campaign_candidates;
       CampaignSelector::WeightedCampaignKeywordGroupList grouped_campaign_candidates;
     };
 
-    typedef std::list<RandomTextSelectionBySize> RandomTextSelectionBySizeList;
+    using RandomTextSelectionBySizeList =
+      std::pmr::list<RandomTextSelectionBySize>;
 
     struct SizedCreativeHolder
     {
@@ -97,17 +111,21 @@ namespace AdServer
       RevenueDecimal conv_rate;
     };
 
-    typedef std::list<SizedCreativeHolder> SizedCreativeHolderList;
+    using SizedCreativeHolderList = std::pmr::list<SizedCreativeHolder>;
 
     struct CTRWeightedCampaignHolder
     {
       CTRWeightedCampaignHolder(
-        CampaignSelector::WeightedCampaignPtr&& weighted_campaign_val)
-          : weighted_campaign(std::move(weighted_campaign_val))
+        CampaignSelector::WeightedCampaignPtr&& weighted_campaign_val,
+        std::pmr::memory_resource* memory_resource =
+          std::pmr::get_default_resource())
+          : weighted_campaign(std::move(weighted_campaign_val)),
+            cur_creatives(memory_resource)
       {}
 
       CTRWeightedCampaignHolder(CTRWeightedCampaignHolder&& init)
-        : weighted_campaign(std::move(init.weighted_campaign))
+        : weighted_campaign(std::move(init.weighted_campaign)),
+          cur_creatives(init.cur_creatives.get_allocator().resource())
       {
         cur_creatives.swap(init.cur_creatives);
       }
@@ -116,7 +134,8 @@ namespace AdServer
       SizedCreativeHolderList cur_creatives;
     };
 
-    typedef std::list<CTRWeightedCampaignHolder> CTRWeightedCampaignHolderList;
+    using CTRWeightedCampaignHolderList =
+      std::pmr::list<CTRWeightedCampaignHolder>;
 
     /**
      * Weighted function that calculate weights in list for random_select method.
@@ -183,11 +202,13 @@ namespace AdServer
     CampaignSelector::CampaignSelector(
       const CampaignIndex* campaign_selection_index,
       const CTR::CTRProvider* ctr_provider,
-      const CTR::CTRProvider* conv_rate_provider)
+      const CTR::CTRProvider* conv_rate_provider,
+      std::pmr::memory_resource* memory_resource)
       : campaign_selection_index_(campaign_selection_index),
         campaign_config_(campaign_selection_index->get_campaign_config()),
         ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
-        conv_rate_provider_(ReferenceCounting::add_ref(conv_rate_provider))
+        conv_rate_provider_(ReferenceCounting::add_ref(conv_rate_provider)),
+        memory_resource_(memory_resource)
     {}
 
     RevenueDecimal
@@ -533,8 +554,8 @@ namespace AdServer
 
       assert(ctr_calculation);
 
-      CTRWeightedCampaignHolderList unknown_ctr_campaign_candidates;
-      CTRWeightedCampaignHolderList known_ctr_campaign_candidates;
+      CTRWeightedCampaignHolderList unknown_ctr_campaign_candidates(memory_resource_);
+      CTRWeightedCampaignHolderList known_ctr_campaign_candidates(memory_resource_);
       CampaignSelectorPmrBuffer pmr_buffer;
 
       // step 1: filter all campaigns without ecpm checking
@@ -572,9 +593,8 @@ namespace AdServer
             if((*cmp_it)->campaign->use_ctr() ||
               (*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL)
             {
-              unknown_ctr_campaign_candidates.push_back(
-                std::move(CTRWeightedCampaignHolder(
-                  std::move(WeightedCampaignPtr(new WeightedCampaign(
+              unknown_ctr_campaign_candidates.emplace_back(
+                WeightedCampaignPtr(new WeightedCampaign(
                     tag,
                     (*cmp_it)->tag_pricing,
                     0, // tag_size
@@ -584,7 +604,8 @@ namespace AdServer
                     RevenueDecimal::ZERO,
                     RevenueDecimal::ZERO, // ctr will be inited after
                     RevenueDecimal::ZERO // conv rate will be inited after
-                    ))))));
+                    )),
+                memory_resource_);
             }
             else
             {
@@ -605,7 +626,7 @@ namespace AdServer
 
               try
               {
-                known_ctr_campaign_candidates.push_back(
+                known_ctr_campaign_candidates.emplace_back(
                   WeightedCampaignPtr(new WeightedCampaign(
                     tag,
                     (*cmp_it)->tag_pricing,
@@ -616,7 +637,8 @@ namespace AdServer
                     current_ecpm,
                     (*cmp_it)->campaign->ctr,
                     RevenueDecimal::ZERO // conv rate will be inited after
-                    )));
+                    )),
+                  memory_resource_);
               }
               catch(const RevenueDecimal::Overflow&)
               {}
@@ -1014,7 +1036,7 @@ namespace AdServer
       const
       noexcept
     {
-      CampaignKeywordMap filtered_campaign_keywords;
+      CampaignKeywordMap filtered_campaign_keywords(memory_resource_);
       ConstCampaignPtrList filtered_text_campaigns;
       CampaignSelectorPmrBuffer pmr_buffer;
 
@@ -1178,7 +1200,7 @@ namespace AdServer
     {
       if(ctr_calculation == 0 && auction_type == AT_MAX_ECPM)
       {
-        WeightedCampaignList random_select_campaigns;
+        WeightedCampaignList random_select_campaigns(memory_resource_);
 
         get_max_display_campaign_candidates_(
           random_select_campaigns,
@@ -1212,7 +1234,7 @@ namespace AdServer
       }
       else
       {
-        WeightedCampaignList random_select_campaigns;
+        WeightedCampaignList random_select_campaigns(memory_resource_);
 
         get_all_display_campaign_candidates_(
           random_select_campaigns,
@@ -1474,10 +1496,12 @@ namespace AdServer
     {
       RevenueDecimal selected_ecpm_sum = RevenueDecimal::ZERO;
 
+      std::pmr::memory_resource* memory_resource =
+        result_text_campaigns.get_allocator().resource();
       WeightedCampaignKeywordList text_campaign_candidates(
-        text_campaign_candidates_val);
-
-      IdWeightedCampaignKeywordMaps campaigns_maps;
+        text_campaign_candidates_val,
+        memory_resource);
+      IdWeightedCampaignKeywordMaps campaigns_maps(memory_resource);
       fill_id_weighted_campaigns_keyword_maps(campaigns_maps, text_campaign_candidates);
 
       for(unsigned long select_i = 0;
@@ -1488,7 +1512,7 @@ namespace AdServer
           tag_min_ecpm - selected_ecpm_sum,
           RevenueDecimal(false, max_text_creatives - select_i, 0));
 
-        WeightedCampaignKeywordPtrArray filtered_text_campaign_candidates;
+        WeightedCampaignKeywordPtrArray filtered_text_campaign_candidates(memory_resource);
 
         for(WeightedCampaignKeywordList::iterator it =
               text_campaign_candidates.begin();
@@ -1515,7 +1539,7 @@ namespace AdServer
         }
 
         RevenueDecimal cur_ecpm_sum;
-        ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates;
+        ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(memory_resource);
 
         group_text_campaigns_(
           grouped_text_campaign_candidates,
@@ -1658,7 +1682,7 @@ namespace AdServer
       tag_sizes.insert(std::make_pair(
         tag_size->size->size_id, ReferenceCounting::add_ref(tag_size)));
 
-      CPCKeywordCreativeMap filtered_cpc_keyword_map;
+      CPCKeywordCreativeMap filtered_cpc_keyword_map(memory_resource_);
       unsigned long selected_keywords = 0;
       CampaignSelectorPmrBuffer pmr_buffer;
 
@@ -2163,8 +2187,7 @@ namespace AdServer
             campaigns.begin();
           group_it != campaigns.end(); ++group_it)
       {
-        text_campaign_map.push_back(WeightedCampaignKeywordPtrArray());
-        text_campaign_map.back().swap(group_it->second);
+        text_campaign_map.emplace_back(std::move(group_it->second));
       }
     }
 
@@ -2288,7 +2311,8 @@ namespace AdServer
       WeightedCampaignKeywordList& text_campaign_candidates)
       noexcept
     {
-      IdWeightedCampaignKeywordMaps campsigns_maps;
+      IdWeightedCampaignKeywordMaps campsigns_maps(
+        text_campaign_map.get_allocator().resource());
       fill_id_weighted_campaigns_keyword_maps(campsigns_maps, text_campaign_candidates);
 
       group_id_map_(text_campaign_map, expected_ecpm, campsigns_maps.ccg_campaigns);
@@ -2305,9 +2329,11 @@ namespace AdServer
     {
       ecpm_sum = RevenueDecimal::ZERO;
 
-      IdWeightedCampaignKeywordMap account_campaigns;
-      IdWeightedCampaignKeywordMap advertiser_campaigns;
-      IdWeightedCampaignKeywordMap ccg_campaigns;
+      std::pmr::memory_resource* memory_resource =
+        text_campaign_map.get_allocator().resource();
+      IdWeightedCampaignKeywordMap account_campaigns(memory_resource);
+      IdWeightedCampaignKeywordMap advertiser_campaigns(memory_resource);
+      IdWeightedCampaignKeywordMap ccg_campaigns(memory_resource);
 
       for(WeightedCampaignKeywordPtrArray::iterator cmp_it =
             text_campaign_candidates.begin();
@@ -2343,7 +2369,8 @@ namespace AdServer
       WeightedCampaignKeywordList& text_campaign_candidates)
       noexcept
     {
-      IdWeightedCampaignKeywordMaps campsigns_maps;
+      IdWeightedCampaignKeywordMaps campsigns_maps(
+        text_campaign_map.get_allocator().resource());
       fill_id_weighted_campaigns_keyword_maps(campsigns_maps, text_campaign_candidates);
 
       group_id_map_(text_campaign_map, campsigns_maps.ccg_campaigns);
@@ -2603,7 +2630,7 @@ namespace AdServer
         keyword_check_campaigns);
 
       // get WG display candidates (have priority over all other campaigns)
-      WeightedCampaignList wg_display_campaign_candidates;
+      WeightedCampaignList wg_display_campaign_candidates(memory_resource_);
 
       get_all_display_campaign_candidates_(
         wg_display_campaign_candidates,
@@ -2639,7 +2666,7 @@ namespace AdServer
          )
       {
         // get OIX display candidates
-        WeightedCampaignList display_campaign_candidates;
+        WeightedCampaignList display_campaign_candidates(memory_resource_);
 
         get_all_display_campaign_candidates_(
           display_campaign_candidates,
@@ -2655,7 +2682,7 @@ namespace AdServer
           );
 
         // get text candidates
-        RandomTextSelectionBySizeList text_selections;
+        RandomTextSelectionBySizeList text_selections(memory_resource_);
         unsigned long text_count = 0;
 
         if(!request_params.only_display_ad)
@@ -2672,7 +2699,7 @@ namespace AdServer
             text_tag_pricing->cpm,
             request_params.min_ecpm);
 
-          WeightedCampaignKeywordList text_campaign_candidates;
+          WeightedCampaignKeywordList text_campaign_candidates(memory_resource_);
 
           get_text_campaign_candidates_(
             text_campaign_candidates,
@@ -2710,7 +2737,7 @@ namespace AdServer
                   tag_size_it->second);
               }
 
-              WeightedCampaignKeywordList filtered_text_campaign_candidates;
+              WeightedCampaignKeywordList filtered_text_campaign_candidates(memory_resource_);
 
               filter_text_campaign_candidates_(
                 filtered_text_campaign_candidates,
@@ -2724,7 +2751,7 @@ namespace AdServer
 
               if(!filtered_text_campaign_candidates.empty())
               {
-                text_selections.push_back(RandomTextSelectionBySize());
+                text_selections.emplace_back(memory_resource_);
                 RandomTextSelectionBySize& text_selection = text_selections.back();
                 text_selection.campaign_candidates.swap(filtered_text_campaign_candidates);
                 text_selection.tag_sizes.insert(
@@ -2822,7 +2849,8 @@ namespace AdServer
 
           const Tag::Size* tag_size = ts_it->tag_sizes.begin()->second;
           select_result.tag_size = tag_size;
-          result_text_campaigns.reset(new WeightedCampaignKeywordList());
+          result_text_campaigns.reset(
+            new WeightedCampaignKeywordList(memory_resource_));
 
           select_text_campaigns_randomly_(
             *result_text_campaigns,
@@ -2871,7 +2899,7 @@ namespace AdServer
         collect_lost ? &lost_campaigns : 0);
 
       // get WG display candidates (have priority over all other campaigns)
-      WeightedCampaignList wg_display_campaign_candidates;
+      WeightedCampaignList wg_display_campaign_candidates(memory_resource_);
 
       get_all_display_campaign_candidates_(
         wg_display_campaign_candidates,
@@ -2909,7 +2937,7 @@ namespace AdServer
          )
       {
         // get OIX display candidates
-        WeightedCampaignList display_campaign_candidates;
+        WeightedCampaignList display_campaign_candidates(memory_resource_);
 
         get_all_display_campaign_candidates_(
           display_campaign_candidates,
@@ -2932,14 +2960,14 @@ namespace AdServer
           // 'all' ccg rates targeting
           );
 
-        TextSelectionBySizeList text_selections;
-        TextSelectionBySizeList text_selections_zero_ecpm;
+        TextSelectionBySizeList text_selections(memory_resource_);
+        TextSelectionBySizeList text_selections_zero_ecpm(memory_resource_);
         RevenueDecimal text_selections_ecpm_sum = RevenueDecimal::ZERO;
 
         // get text candidates
         if(!request_params.only_display_ad)
         {
-          WeightedCampaignKeywordList text_campaign_candidates;
+          WeightedCampaignKeywordList text_campaign_candidates(memory_resource_);
 
           get_text_campaign_candidates_(
             text_campaign_candidates,
@@ -2975,7 +3003,7 @@ namespace AdServer
             }
 
             RevenueDecimal max_text_ecpm_sum = RevenueDecimal::ZERO;
-            WeightedCampaignKeywordList filtered_text_campaign_candidates;
+            WeightedCampaignKeywordList filtered_text_campaign_candidates(memory_resource_);
 
             filter_text_campaign_candidates_(
               filtered_text_campaign_candidates,
@@ -2987,7 +3015,7 @@ namespace AdServer
               ctr_calculation_context,
               conv_rate_calculation_context);
 
-            ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates;
+            ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(memory_resource_);
             ExpectedEcpm expected_ecpm;
 
             group_text_campaigns_(
@@ -3011,7 +3039,7 @@ namespace AdServer
 
             if(max_text_ecpm_sum >= text_tag_pricing->cpm)
             {
-              TextSelectionBySize text_selection;
+              TextSelectionBySize text_selection(memory_resource_);
               text_selection.tag_sizes.insert(
                 std::make_pair(tag_size_it->second->size->size_id, tag_size_it->second));
               text_selection.expected_ecpm = text_expected_ecpm;
@@ -3020,11 +3048,11 @@ namespace AdServer
               if (text_expected_ecpm != RevenueDecimal::ZERO)
               {
                 text_selections_ecpm_sum += text_expected_ecpm;
-                text_selections.push_back(text_selection);
+                text_selections.push_back(std::move(text_selection));
               }
               else
               {
-                text_selections_zero_ecpm.push_back(text_selection);
+                text_selections_zero_ecpm.push_back(std::move(text_selection));
               }
             }
           }
@@ -3150,7 +3178,8 @@ namespace AdServer
         else if (result_text_selection &&
                  !result_text_selection->campaign_candidates.empty())
         {
-          result_text_campaigns.reset(new WeightedCampaignKeywordList());
+          result_text_campaigns.reset(
+            new WeightedCampaignKeywordList(memory_resource_));
           const Tag::Size* tag_size = result_text_selection->tag_sizes.begin()->second;
           select_result.tag_size = tag_size;
 
@@ -3250,10 +3279,10 @@ namespace AdServer
               select_result.min_text_ecpm, weighted_campaign->ecpm);
           }
 
-          TextSelectionBySizeList text_selections;
+          TextSelectionBySizeList text_selections(memory_resource_);
           RevenueDecimal max_sum_ecpm = RevenueDecimal::ZERO;
 
-          WeightedCampaignKeywordList text_campaign_candidates;
+          WeightedCampaignKeywordList text_campaign_candidates(memory_resource_);
 
           get_text_campaign_candidates_(
             text_campaign_candidates,
@@ -3286,7 +3315,7 @@ namespace AdServer
                   tag_size_it->second);
               }
 
-              WeightedCampaignKeywordList filtered_text_campaign_candidates;
+              WeightedCampaignKeywordList filtered_text_campaign_candidates(memory_resource_);
 
               filter_text_campaign_candidates_(
                 filtered_text_campaign_candidates,
@@ -3312,7 +3341,7 @@ namespace AdServer
               */
 
               // order text campaigns by cpc with using text_campaign_candidates
-              CPCKeywordMap cpc_keyword_map;
+              CPCKeywordMap cpc_keyword_map(memory_resource_);
 
               convert_text_candidates_to_cpc_map_(
                 cpc_keyword_map,
@@ -3339,7 +3368,7 @@ namespace AdServer
               }
               */
 
-              WeightedCampaignKeywordList step_weighted_campaign_keywords;
+              WeightedCampaignKeywordList step_weighted_campaign_keywords(memory_resource_);
 
               if(select_campaign_keywords_n_(
                    key,
@@ -3371,7 +3400,7 @@ namespace AdServer
                     text_selections.clear();
                   }
 
-                  text_selections.push_back(TextSelectionBySize());
+                  text_selections.emplace_back(memory_resource_);
                   TextSelectionBySize& text_selection = text_selections.back();
                   text_selection.tag_sizes.insert(
                     std::make_pair(tag_size_it->second->size->size_id, tag_size_it->second));
@@ -3398,7 +3427,7 @@ namespace AdServer
             assert(ts_it->tag_sizes.size() == 1);
             select_result.tag_size = ts_it->tag_sizes.begin()->second;
             result_weighted_campaign_keywords.reset(
-              new WeightedCampaignKeywordList());
+              new WeightedCampaignKeywordList(memory_resource_));
             result_weighted_campaign_keywords->swap(
               ts_it->campaign_candidates);
 
