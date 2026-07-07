@@ -410,18 +410,14 @@ namespace FrontendCommons
   }
 
   const PlatformMatcher::MatchElement*
-  PlatformMatcher::CategoryMatcher::match(
-    std::string_view user_agent) const
+  PlatformMatcher::CategoryMatcher::match(std::string_view user_agent) const
     /*throw(eh::Exception, String::RegEx::Exception)*/
   {
     OnMatch on_match(max_priority_);
-    const String::SubString user_agent_substr(
-      user_agent.data(),
-      user_agent.size());
+    const String::SubString user_agent_substr(user_agent.data(), user_agent.size());
     matcher_.match(user_agent_substr, on_match);
 
-    for (auto it = empty_marker_elements_.begin();
-         it != empty_marker_elements_.end(); ++it)
+    for (auto it = empty_marker_elements_.begin(); it != empty_marker_elements_.end(); ++it)
     {
       if (on_match({user_agent_substr, &*it}))
       {
@@ -736,18 +732,14 @@ namespace FrontendCommons
   }
 
   bool
-  WebBrowserMatcher::OnMatch::match_(
-    const MatchElement* element)
+  WebBrowserMatcher::OnMatch::match_(const MatchElement* element)
     /*throw(String::RegEx::Exception)*/
   {
-    const String::SubString user_agent(
-      user_agent_.data(),
-      user_agent_.size());
+    const String::SubString user_agent(user_agent_.data(), user_agent_.size());
     return (!element->regexp.get() ||
-            element->regexp->search(sub_strs_, user_agent) ||
-            !element->regexp_required);
+      element->regexp->search(sub_strs_, user_agent) ||
+      !element->regexp_required);
   }
-
 
   WebBrowserMatcher::WebBrowserMatcher() noexcept
     : max_priority_(std::numeric_limits<unsigned long>::min()),

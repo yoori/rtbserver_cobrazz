@@ -2367,31 +2367,20 @@ namespace AdServer::Bidding
 
     if (logger()->log_level() >= Logging::Logger::TRACE)
     {
-      Stream::Error ostr;
-      ostr << fun << ": request processing timed out(" << timeout << "):"
-        << std::endl;
+      std::string ostr(fun);
+      ostr += ": interrupted at ";
+      ostr += convert_stage_to_string(stage).str();
+      ostr += ", after";
 
-      request_task->print_request(ostr);
-
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::BIDDING_FRONTEND);
+      logger()->sstream(
+        Logging::Logger::ERROR,
+        Aspect::BIDDING_FRONTEND,
+        "ADS-IMPL-7600") <<
+        ostr << " on " <<
+        (!request_task->hostname().empty() ?
+          request_task->hostname().c_str() : "Undefined host") <<
+        ", timeout = " << timeout;
     }
-
-    std::string ostr(fun);
-    ostr += ": interrupted at ";
-    ostr += convert_stage_to_string(stage).str();
-    ostr += ", after";
-
-    logger()->sstream(
-      Logging::Logger::ERROR,
-      Aspect::BIDDING_FRONTEND,
-      "ADS-IMPL-7600") <<
-      ostr << " on " <<
-      (!request_task->hostname().empty() ?
-        request_task->hostname().c_str() : "Undefined host") <<
-      ", timeout = " << timeout;
   }
 
   bool

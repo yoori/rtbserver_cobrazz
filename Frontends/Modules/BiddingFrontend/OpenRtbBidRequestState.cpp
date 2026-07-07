@@ -279,15 +279,14 @@ namespace AdServer::Bidding
     {
       const FCGI::HttpRequest& request = request_holder_->request();
 
-      Stream::BinaryStreamReader request_reader(
-        &request.get_input_stream());
+      auto& input_stream = request.get_input_stream();
 
       char buf[1024];
 
-      while(!request_reader.eof() && !request_reader.bad())
+      while(!input_stream.eof() && !input_stream.bad())
       {
-        request_reader.read(buf, sizeof(buf));
-        bid_request.append(buf, request_reader.gcount());
+        input_stream.read(buf, sizeof(buf));
+        bid_request.append(buf, input_stream.gcount());
       }
 
       // check gzip

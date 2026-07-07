@@ -13,6 +13,8 @@
 
 namespace
 {
+  constexpr std::size_t FCGI_RESPONSE_BUFFER_SIZE = 128 * 1024;
+
   const std::string REQUEST_URI("REQUEST_URI");
   const std::string REQUEST_METHOD("REQUEST_METHOD");
   const std::string QUERY_STRING("QUERY_STRING");
@@ -257,9 +259,7 @@ namespace Frontends
     handle_write_(const boost::system::error_code& error);
 
     void
-    send_response(
-      FCGI::HttpResponse_var response,
-      std::vector<std::string>&& response_chunks)
+    send_response(std::unique_ptr<char[]>&& response_buf, std::size_t response_size)
       noexcept;
 
     SocketType&
@@ -276,9 +276,7 @@ namespace Frontends
 
       SendBuf(SendBuf&& init);
 
-      //std::vector<char> wbuf;
-      FCGI::HttpResponse_var response; // hold buffers ownership
-      std::vector<std::string> response_chunks;
+      std::unique_ptr<char[]> response_buf;
       std::vector<boost::asio::const_buffer> bufs;
     };
 
@@ -340,18 +338,32 @@ namespace Frontends
     {
       if(sent_response_.exchange_and_add(1) == 0)
       {
+        auto prepared_response = make_fcgi_response_(response_ptr);
         conn_->send_response(
-          response_ptr,
-          make_fcgi_response_(response_ptr));
+          std::move(prepared_response.response_buf),
+          prepared_response.response_size);
       }
     }
 
   private:
-    static std::vector<std::string>
+    struct PreparedResponse
+    {
+      std::unique_ptr<char[]> response_buf;
+      std::size_t response_size = 0;
+    };
+
+    static std::size_t
+    fcgi_record_size_(std::size_t payload_size) noexcept
+    {
+      return
+        sizeof(FCGI_Header) +
+        payload_size +
+        ((8 - (payload_size % 8)) % 8);
+    }
+
+    static PreparedResponse
     make_fcgi_response_(const FCGI::HttpResponse_var& response)
     {
-      std::vector<std::string> result;
-
       const int status = response->status() == 0 ? 200 : response->status();
       std::string status_text;
       switch(status)
@@ -369,72 +381,136 @@ namespace Frontends
         default: status_text = "";
       }
 
-      std::vector<char> status_buf(4096);
-      tinyfcgi::message status_msg(1, status_buf.data(), status_buf.size());
       const std::string status_line = std::to_string(status) + " ";
-      status_msg.append(FCGI_STDOUT, STATUS_HEADER)
-        .append(FCGI_STDOUT, status_line)
-        .append(FCGI_STDOUT, status_text.empty() ? String::SubString(status_line) : String::SubString(status_text))
-        .append(FCGI_STDOUT, CRLF)
-        .clear_padding();
-      auto status_chunk = status_msg.str();
-      result.emplace_back(status_chunk.data(), status_chunk.size());
+      const String::SubString status_text_ref =
+        status_text.empty() ? String::SubString(status_line) : String::SubString(status_text);
 
-      std::vector<char> header_buf(32 * 1024);
-      tinyfcgi::message headers_msg(1, header_buf.data(), header_buf.size());
+      std::size_t status_payload_size =
+        STATUS_HEADER.size() +
+        status_line.size() +
+        status_text_ref.size() +
+        CRLF.size();
+
+      std::size_t headers_payload_size = 0;
       for(const auto& header : response->headers())
       {
-        headers_msg.append(FCGI_STDOUT, header.name)
-          .append(FCGI_STDOUT, HEADER_SEPARATOR)
-          .append(FCGI_STDOUT, header.value)
-          .append(FCGI_STDOUT, CRLF);
+        headers_payload_size +=
+          header.name.size() +
+          HEADER_SEPARATOR.size() +
+          header.value.size() +
+          CRLF.size();
       }
       for(const auto& cookie : response->cookies())
       {
-        headers_msg.append(FCGI_STDOUT, SET_COOKIE_HEADER)
-          .append(FCGI_STDOUT, cookie)
-          .append(FCGI_STDOUT, CRLF);
+        headers_payload_size +=
+          SET_COOKIE_HEADER.size() +
+          cookie.size() +
+          CRLF.size();
       }
       const std::string content_length = std::to_string(response->body().size());
-      headers_msg.append(FCGI_STDOUT, CONTENT_LENGTH_HEADER)
-        .append(FCGI_STDOUT, content_length)
-        .append(FCGI_STDOUT, CRLF)
-        .append(FCGI_STDOUT, CRLF)
-        .clear_padding();
-      auto header_chunk = headers_msg.str();
-      result.emplace_back(header_chunk.data(), header_chunk.size());
+      headers_payload_size +=
+        CONTENT_LENGTH_HEADER.size() +
+        content_length.size() +
+        CRLF.size() +
+        CRLF.size();
 
       const std::string& body = response->body();
-      size_t offset = 0;
-      while(offset < body.size())
+      std::size_t total_response_size =
+        fcgi_record_size_(status_payload_size) +
+        fcgi_record_size_(headers_payload_size) +
+        fcgi_record_size_(0) +
+        fcgi_record_size_(sizeof(FCGI_EndRequestBody));
+
+      for(std::size_t body_offset = 0; body_offset < body.size();)
       {
-        std::vector<char> body_buf(64 * 1024);
-        tinyfcgi::message body_msg(1, body_buf.data(), body_buf.size());
-        const size_t chunk_size = std::min(
-          body.size() - offset,
-          body_msg.capacity() - body_msg.size());
-        body_msg.append(FCGI_STDOUT, String::SubString(body.data() + offset, chunk_size))
-          .clear_padding();
-        auto body_chunk = body_msg.str();
-        result.emplace_back(body_chunk.data(), body_chunk.size());
-        offset += chunk_size;
+        const std::size_t chunk_size = std::min<std::size_t>(
+          body.size() - body_offset,
+          std::numeric_limits<std::uint16_t>::max());
+        total_response_size += fcgi_record_size_(chunk_size);
+        body_offset += chunk_size;
       }
 
-      std::vector<char> stdout_end_buf(256);
-      tinyfcgi::message stdout_end_msg(
-        1,
-        stdout_end_buf.data(),
-        stdout_end_buf.size());
-      stdout_end_msg.end_stream(FCGI_STDOUT);
-      auto stdout_end_chunk = stdout_end_msg.str();
-      result.emplace_back(stdout_end_chunk.data(), stdout_end_chunk.size());
+      PreparedResponse result;
+      const std::size_t response_buf_size =
+        std::max<std::size_t>(FCGI_RESPONSE_BUFFER_SIZE, total_response_size);
+      result.response_buf.reset(new char[response_buf_size]);
 
-      std::vector<char> end_buf(256);
-      tinyfcgi::message end_msg(1, end_buf.data(), end_buf.size());
-      end_msg.end_request(0, FCGI_REQUEST_COMPLETE);
-      auto end_chunk = end_msg.str();
-      result.emplace_back(end_chunk.data(), end_chunk.size());
+      std::size_t offset = 0;
+      {
+        tinyfcgi::message status_msg(
+          1,
+          result.response_buf.get() + offset,
+          response_buf_size - offset);
+        status_msg.append(FCGI_STDOUT, STATUS_HEADER)
+          .append(FCGI_STDOUT, status_line)
+          .append(FCGI_STDOUT, status_text_ref)
+          .append(FCGI_STDOUT, CRLF)
+          .clear_padding();
+        offset += status_msg.size();
+      }
 
+      {
+        tinyfcgi::message headers_msg(
+          1,
+          result.response_buf.get() + offset,
+          response_buf_size - offset);
+        for(const auto& header : response->headers())
+        {
+          headers_msg.append(FCGI_STDOUT, header.name)
+            .append(FCGI_STDOUT, HEADER_SEPARATOR)
+            .append(FCGI_STDOUT, header.value)
+            .append(FCGI_STDOUT, CRLF);
+        }
+        for(const auto& cookie : response->cookies())
+        {
+          headers_msg.append(FCGI_STDOUT, SET_COOKIE_HEADER)
+            .append(FCGI_STDOUT, cookie)
+            .append(FCGI_STDOUT, CRLF);
+        }
+        headers_msg.append(FCGI_STDOUT, CONTENT_LENGTH_HEADER)
+          .append(FCGI_STDOUT, content_length)
+          .append(FCGI_STDOUT, CRLF)
+          .append(FCGI_STDOUT, CRLF)
+          .clear_padding();
+        offset += headers_msg.size();
+      }
+
+      for(std::size_t body_offset = 0; body_offset < body.size();)
+      {
+        tinyfcgi::message body_msg(
+          1,
+          result.response_buf.get() + offset,
+          response_buf_size - offset);
+        const std::size_t chunk_size = std::min<std::size_t>(
+          body.size() - body_offset,
+          std::numeric_limits<std::uint16_t>::max());
+        body_msg.append(
+            FCGI_STDOUT,
+            String::SubString(body.data() + body_offset, chunk_size))
+          .clear_padding();
+        offset += body_msg.size();
+        body_offset += chunk_size;
+      }
+
+      {
+        tinyfcgi::message stdout_end_msg(
+          1,
+          result.response_buf.get() + offset,
+          response_buf_size - offset);
+        stdout_end_msg.end_stream(FCGI_STDOUT);
+        offset += stdout_end_msg.size();
+      }
+
+      {
+        tinyfcgi::message end_msg(
+          1,
+          result.response_buf.get() + offset,
+          response_buf_size - offset);
+        end_msg.end_request(0, FCGI_REQUEST_COMPLETE);
+        offset += end_msg.size();
+      }
+
+      result.response_size = offset;
       return result;
     }
 
@@ -458,9 +534,7 @@ namespace Frontends
   // FCGIAcceptor::Connection::SendBuf
   FCGIAcceptor::Connection::SendBuf::SendBuf(SendBuf&& init)
   {
-    //wbuf.swap(init.wbuf);
-    response.swap(init.response);
-    response_chunks.swap(init.response_chunks);
+    response_buf.swap(init.response_buf);
     bufs.swap(init.bufs);
   }
 
@@ -758,20 +832,13 @@ namespace Frontends
 
   void
   FCGIAcceptor::Connection::send_response(
-    FCGI::HttpResponse_var response_ptr,
-    std::vector<std::string>&& response_chunks)
+    std::unique_ptr<char[]>&& response_buf,
+    std::size_t response_size)
     noexcept
   {
-    FCGI::HttpResponse_var response(std::move(response_ptr));
-
     std::unique_ptr<SendBuf> send_buf(new SendBuf());
-    send_buf->response.swap(response);
-    send_buf->response_chunks = std::move(response_chunks);
-    send_buf->bufs.reserve(send_buf->response_chunks.size());
-    for(const auto& chunk : send_buf->response_chunks)
-    {
-      send_buf->bufs.push_back(boost::asio::const_buffer(chunk.data(), chunk.size()));
-    }
+    send_buf->response_buf = std::move(response_buf);
+    send_buf->bufs.emplace_back(send_buf->response_buf.get(), response_size);
 
     {
       WriteBufSyncPolicy::WriteGuard lock(send_bufs_lock_);
