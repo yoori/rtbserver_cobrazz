@@ -1096,12 +1096,12 @@ namespace AdServer::ChannelSvcs
         ChannelMatchInfo_var info = container_->get_active();
         for(const auto id : ids)
         {
-          ChannelMatchInfo::const_iterator it = info->find(id);
-          if(it != info->end())
+          const Channel* channel = info->find(id);
+          if(channel)
           {
             for(std::vector<CCGKeyword_var>::const_iterator it_id =
-                it->second.ccg_keywords.begin();
-                it_id != it->second.ccg_keywords.end(); ++it_id)
+                channel->ccg_keywords.begin();
+                it_id != channel->ccg_keywords.end(); ++it_id)
             {
               const ::AdServer::ChannelSvcs::CCGKeyword& keyword = **it_id;
               if(!keyword.original_keyword.empty() &&

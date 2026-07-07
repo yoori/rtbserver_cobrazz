@@ -264,13 +264,12 @@ namespace ChannelSvcs
     unsigned int mask = ChannelChunk::get_active_options(flags);
     for(auto match_it = atom.begin(); match_it != atom.end(); ++match_it)
     {
-      ChannelMatchInfo::const_iterator it = cinfo.find(match_it->channel_id);
-      if(it != cinfo.end())
+      const Channel* channel = cinfo.find(match_it->channel_id);
+      if(channel)
       {
-        const Channel& channel = it->second;
         //check active mask, existing BH for channel and BL flag
-        if((channel.match_mask(mask) && channel.match(type) &&
-             (flags & MF_BLACK_LIST || !channel.match_mask(MF_BLACK_LIST))) ||
+        if((channel->match_mask(mask) && channel->match(type) &&
+             (flags & MF_BLACK_LIST || !channel->match_mask(MF_BLACK_LIST))) ||
            (flags & MF_NONSTRICTKW))
         {
           TriggerMatchItem& item = res[match_it->channel_id];
@@ -283,9 +282,9 @@ namespace ChannelSvcs
           {
             item.trigger_ids[type].push_back(match_it->channel_trigger_id);
             ++count_new_ids;
-            if(channel.match(Channel::CT_WEIGHT) && channel.weight_[type] > 0)
+            if(channel->match(Channel::CT_WEIGHT) && channel->weight_[type] > 0)
             {
-              item.weight += channel.weight_[type];
+              item.weight += channel->weight_[type];
             }
           }
         }
@@ -326,8 +325,7 @@ namespace ChannelSvcs
           break;
       }
 
-      for (SoftVector::const_iterator i(soft_vector.begin());
-        i != soft_vector.end(); ++i)
+      for (SoftVector::const_iterator i(soft_vector.begin()); i != soft_vector.end(); ++i)
       {
         const SoftMatcher* matcher = i->matcher.in();
 
@@ -336,17 +334,21 @@ namespace ChannelSvcs
           continue;
         }
         bool match = matcher->match(words, (flags & MF_NONSTRICTKW ? true : false));
+
         if (exact_words && !match)
         {
           match |= matcher->match_exact(*exact_words);
         }
+
         if(must_match)
-        {//additional soft matching
+        {
+          // additional soft matching
           if(must_match->erase(i->matcher) > 0)
           {
             match = true;
           }
         }
+
         if(match)
         {
           res.count_channels[type] += match_cell_(

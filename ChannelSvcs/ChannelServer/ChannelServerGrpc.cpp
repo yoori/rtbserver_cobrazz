@@ -124,6 +124,7 @@ namespace AdServer::ChannelSvcs
       google::protobuf::RepeatedPtrField<
         adserver::channel_svcs::channel_server::ChannelAtom>* target)
     {
+      target->Reserve(source.size());
       for (const auto& source_atom : source)
       {
         auto* atom = target->Add();
@@ -150,10 +151,13 @@ namespace AdServer::ChannelSvcs
         source.matched_channels.url_keyword_channels,
         matched_channels->mutable_url_keyword_channels());
 
+      matched_channels->mutable_uid_channels()->Reserve(
+        source.matched_channels.uid_channels.size());
       matched_channels->mutable_uid_channels()->Add(
         source.matched_channels.uid_channels.begin(),
         source.matched_channels.uid_channels.end());
 
+      target.mutable_content_channels()->Reserve(source.content_channels.size());
       for (const auto& source_channel : source.content_channels)
       {
         auto* content_channel = target.add_content_channels();
@@ -171,6 +175,7 @@ namespace AdServer::ChannelSvcs
       const ChannelServerCore::TraitsResult& source,
       adserver::channel_svcs::channel_server::GetCcgTraitsResponse& target)
     {
+      target.mutable_ccg_keywords()->Reserve(source.ccg_keywords.size());
       for (const auto& source_keyword : source.ccg_keywords)
       {
         auto* keyword = target.add_ccg_keywords();
@@ -187,6 +192,7 @@ namespace AdServer::ChannelSvcs
         keyword->set_original_keyword(source_keyword.original_keyword);
       }
 
+      target.mutable_neg_ccg()->Reserve(source.neg_ccg.size());
       target.mutable_neg_ccg()->Add(
         source.neg_ccg.begin(),
         source.neg_ccg.end());

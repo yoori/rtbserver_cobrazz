@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <iostream>
 #include <eh/Exception.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -259,8 +260,7 @@ namespace ChannelSvcs
     Generics::Time db_stamp;//time stamp
   };
 
-  typedef std::map<unsigned int, MatchInfo>
-    MatchInfoContainerType;
+  using MatchInfoContainerType = std::map<unsigned int, MatchInfo>;
 
   class ChannelIdToMatchInfo:
     public ReferenceCounting::AtomicImpl,
@@ -279,18 +279,69 @@ namespace ChannelSvcs
   typedef ReferenceCounting::SmartPtr<ChannelIdToMatchInfo>
     ChannelIdToMatchInfo_var;
 
-  typedef std::map<unsigned int, Channel>
-    ChannelMatchInfoContainerType;
-
   class ChannelMatchInfo:
-    public ChannelMatchInfoContainerType,
     public ReferenceCounting::AtomicImpl
   {
   public:
-    ChannelMatchInfo() noexcept {};
+    using value_type = std::map<unsigned int, Channel>::value_type;
+    using iterator = std::map<unsigned int, Channel>::iterator;
+    using const_iterator = std::map<unsigned int, Channel>::const_iterator;
+
+    ChannelMatchInfo() noexcept
+    {}
+
     ChannelMatchInfo(const ChannelIdToMatchInfo& info)
       noexcept;
+
+    iterator begin() noexcept
+    {
+      return ordered_container_.begin();
+    }
+
+    const_iterator begin() const noexcept
+    {
+      return ordered_container_.begin();
+    }
+
+    iterator end() noexcept
+    {
+      return ordered_container_.end();
+    }
+
+    const_iterator end() const noexcept
+    {
+      return ordered_container_.end();
+    }
+
+    Channel* find(unsigned int id) noexcept
+    {
+      auto it = find_container_.find(id);
+      return it != find_container_.end() ? &it->second : nullptr;
+    }
+
+    const Channel* find(unsigned int id) const noexcept
+    {
+      auto it = find_container_.find(id);
+      return it != find_container_.end() ? &it->second : nullptr;
+    }
+
+    const_iterator lower_bound(unsigned int id) const noexcept
+    {
+      return ordered_container_.lower_bound(id);
+    }
+
+    std::size_t size() const noexcept
+    {
+      return ordered_container_.size();
+    }
+
   private:
+    using ContainerType = std::map<unsigned int, Channel>;
+    using FindContainerType = std::unordered_map<unsigned int, Channel>;
+
+    ContainerType ordered_container_;
+    FindContainerType find_container_;
+
     virtual
     ~ChannelMatchInfo() noexcept
     {
@@ -773,13 +824,14 @@ namespace ChannelSvcs
   inline
   ChannelMatchInfo::ChannelMatchInfo(const ChannelIdToMatchInfo& info) noexcept
   {
+    find_container_.reserve(info.size());
     for(ChannelIdToMatchInfo::const_iterator i = info.begin();
         i != info.end(); ++i)
     {
-      (*this)[i->first] = i->second.channel;
+      ordered_container_.emplace(i->first, i->second.channel);
+      find_container_.emplace(i->first, i->second.channel);
     }
   }
 
 }
 }
-
