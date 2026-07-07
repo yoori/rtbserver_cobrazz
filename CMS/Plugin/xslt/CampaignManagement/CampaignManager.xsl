@@ -176,6 +176,10 @@
     <xsl:variable name="campaign-manager-grpc-port">
       <xsl:value-of select="$campaign-manager-port + 500"/>
     </xsl:variable>
+    <xsl:variable name="campaign-manager-grpc-process-threads">
+      <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_process_threads"/>
+      <xsl:if test="count($campaign-manager-config/cfg:networkParams/@grpc_process_threads) = 0">128</xsl:if>
+    </xsl:variable>
     <xsl:variable name="campaign-manager-monitoring-port">
       <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@monitoring_port"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@monitoring_port) = 0">
@@ -297,7 +301,10 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <cfg:GrpcConfig cq_threads="16" max_split="16">
+    <cfg:GrpcConfig
+      process_threads="{$campaign-manager-grpc-process-threads}"
+      cq_threads="16"
+      max_split="16">
       <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
     </cfg:GrpcConfig>
 
