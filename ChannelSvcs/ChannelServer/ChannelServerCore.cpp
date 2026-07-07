@@ -1417,6 +1417,7 @@ namespace AdServer::ChannelSvcs
   void ChannelServerCore::get_stats(ChannelServerStats& stats) noexcept
   {
     container_->get_stats(stats);
+    stats.total_requests = queries_counter_.load(std::memory_order_relaxed);
     if(state_ !=  UpdateData::US_ZERO)
     {
       ChannelServerVariantBasePtr variant_server = get_source_of_data_();

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <eh/Exception.hpp>
 
 namespace AdServer
@@ -23,7 +25,8 @@ namespace ChannelSvcs
       PARAMS_MAX
     };
     static const char* param_name[PARAMS_MAX];
-    size_t params[PARAMS_MAX];
+    size_t params[PARAMS_MAX] = {};
+    std::uint64_t total_requests = 0;
     std::string configuration;
     Generics::Time configuration_date;
   };
@@ -37,4 +40,3 @@ namespace ChannelSvcs
 
 }
 }
-

@@ -297,9 +297,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
 
           std::string body = "{";
           body += "\"total_requests\":";
-          body += std::to_string(
-            stats.params[
-              AdServer::ChannelSvcs::ChannelServerStats::MATCHINGS_COUNT]);
+          body += std::to_string(stats.total_requests);
           for (std::size_t i = 0;
             i < AdServer::ChannelSvcs::ChannelServerStats::PARAMS_MAX;
             ++i)
