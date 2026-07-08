@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 #include <eh/Exception.hpp>
 
@@ -71,8 +72,39 @@ namespace AdServer::Commons
       process_null(std::string_view path, void* context) const;
     };
 
+    class ProcessorSet
+    {
+    public:
+      ProcessorSet() = default;
+
+      ProcessorSet(const ProcessorSet&) = delete;
+      ProcessorSet& operator=(const ProcessorSet&) = delete;
+      ProcessorSet(ProcessorSet&&) = default;
+      ProcessorSet& operator=(ProcessorSet&&) = default;
+
+      void
+      add_processor(
+        std::string_view path,
+        std::shared_ptr<ValueProcessor> processor,
+        bool as_string = false);
+
+    private:
+      friend class FastJsonParser;
+
+      struct Entry
+      {
+        std::string path;
+        std::shared_ptr<ValueProcessor> processor;
+        bool as_string = false;
+      };
+
+      std::vector<Entry> entries_;
+    };
+
     explicit
     FastJsonParser(bool strict = true);
+
+    FastJsonParser(ProcessorSet&& processors, bool strict = true);
 
     ~FastJsonParser() noexcept;
 
@@ -80,12 +112,6 @@ namespace AdServer::Commons
     FastJsonParser& operator=(const FastJsonParser&) = delete;
     FastJsonParser(FastJsonParser&&) = delete;
     FastJsonParser& operator=(FastJsonParser&&) = delete;
-
-    void
-    add_processor(
-      std::string_view path,
-      std::shared_ptr<ValueProcessor> processor,
-      bool as_string = false);
 
     void
     parse(std::string_view json, void* context) const;

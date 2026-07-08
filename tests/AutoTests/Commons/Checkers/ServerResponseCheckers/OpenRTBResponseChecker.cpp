@@ -541,69 +541,69 @@ namespace AutoTest
     openrtb_response_parser()
     {
       static FastJsonParser* parser = [] {
-        auto* result = new FastJsonParser();
+        FastJsonParser::ProcessorSet processors;
 
-        result->add_processor(
+        processors.add_processor(
           "id",
           std::make_shared<ResponseStringProcessor>(&ParseContext::id));
-        result->add_processor(
+        processors.add_processor(
           "cur",
           std::make_shared<ResponseStringProcessor>(&ParseContext::currency));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid",
           std::make_shared<StartBidProcessor>());
 
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.id",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::id));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.impid",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::impid));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.price",
           std::make_shared<BidMoneyProcessor>(&OpenRTBResponse::Bid::price));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.adid",
           std::make_shared<BidIntegerProcessor<unsigned long> >(
             &OpenRTBResponse::Bid::adid),
           true);
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.crid",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::crid));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.adomain",
           std::make_shared<BidStringListProcessor>(
             &OpenRTBResponse::Bid::adomain));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.adm",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::adm));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.nurl",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::nurl));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.cid",
           std::make_shared<BidIntegerProcessor<unsigned long> >(
             &OpenRTBResponse::Bid::cid),
           true);
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.attr",
           std::make_shared<BidOptionalIntegerListProcessor<unsigned long> >(
             &OpenRTBResponse::Bid::attr));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.fmt",
           std::make_shared<BidOptionalIntegerProcessor>(
             &OpenRTBResponse::Bid::fmt),
           true);
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.cat",
           std::make_shared<BidOptionalStringListProcessor>(
             &OpenRTBResponse::Bid::cat));
-        result->add_processor(
+        processors.add_processor(
           "seatbid.bid.ext.ad_ox_cats",
           std::make_shared<BidOptionalIntegerListProcessor<unsigned long> >(
             &OpenRTBResponse::Bid::ad_ox_cats));
 
-        return result;
+        return new FastJsonParser(std::move(processors));
       }();
 
       return *parser;

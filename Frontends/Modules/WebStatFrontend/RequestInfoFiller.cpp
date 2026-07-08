@@ -451,35 +451,36 @@ namespace AdServer::WebStat
 
     // init yandex notification filler
     {
-      auto parser = std::make_unique<FastJsonParser>();
+      FastJsonParser::ProcessorSet processors;
       const std::string base_path =
         std::string(YandexNotificationRequest::NOTIFICATIONS.str());
-      parser->add_processor(
+      processors.add_processor(
         base_path,
         std::make_shared<YandexNotificationsProcessor>());
-      parser->add_processor(
+      processors.add_processor(
         base_path + "." + YandexNotificationRequest::CR_ID.str(),
         std::make_shared<YandexNotificationStringProcessor>(
           &YandexNotificationProcessingElementContext::cr_id));
-      parser->add_processor(
+      processors.add_processor(
         base_path + "." + YandexNotificationRequest::REQUEST_ID.str(),
         std::make_shared<YandexNotificationStringProcessor>(
           &YandexNotificationProcessingElementContext::request_id));
-      parser->add_processor(
+      processors.add_processor(
         base_path + "." + YandexNotificationRequest::IMPRESSION_ID.str(),
         std::make_shared<YandexNotificationStringProcessor>(
           &YandexNotificationProcessingElementContext::imp_id));
-      parser->add_processor(
+      processors.add_processor(
         base_path + "." + YandexNotificationRequest::STATUS.str(),
         std::make_shared<YandexNotificationStatusProcessor>());
-      parser->add_processor(
+      processors.add_processor(
         base_path + "." + YandexNotificationRequest::REASONS.str(),
         std::make_shared<YandexNotificationReasonsProcessor>());
-      parser->add_processor(
+      processors.add_processor(
         base_path + "." + YandexNotificationRequest::PAYLOAD.str(),
         std::make_shared<YandexNotificationStringProcessor>(
           &YandexNotificationProcessingElementContext::payload));
-      yn_json_parser_ = std::move(parser);
+      yn_json_parser_ = std::make_unique<FastJsonParser>(
+        std::move(processors));
     }
   }
 

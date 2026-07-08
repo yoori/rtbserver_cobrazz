@@ -469,18 +469,18 @@ namespace AdServer::CampaignSvcs::CTR
     template<typename ProcessorType>
     void
     add_ctr_processor(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& processors,
       std::string_view path,
       std::shared_ptr<ProcessorType> processor,
       bool as_string = false)
     {
-      parser.add_processor(path, std::move(processor), as_string);
+      processors.add_processor(path, std::move(processor), as_string);
     }
 
     template<typename Context, typename NumberType>
     void
     add_ctr_integer(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(CtrConfigParseState&),
       NumberType Context::* field)
@@ -496,7 +496,7 @@ namespace AdServer::CampaignSvcs::CTR
     template<typename Context>
     void
     add_ctr_string(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(CtrConfigParseState&),
       std::string Context::* field)
@@ -513,7 +513,7 @@ namespace AdServer::CampaignSvcs::CTR
     template<typename Context, typename DecimalType>
     void
     add_ctr_decimal(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(CtrConfigParseState&),
       DecimalType Context::* field)
@@ -530,8 +530,9 @@ namespace AdServer::CampaignSvcs::CTR
 
   // ConfigParser
   CTRProvider::ConfigParser::ConfigParser()
-    : parser_(std::make_unique<Commons::FastJsonParser<>>())
+    : parser_()
   {
+    Commons::FastJsonParser<>::ProcessorSet processors;
     ConfigDescriptor* (*get_config_descriptor)(CtrConfigParseState&) =
       [](CtrConfigParseState& state) {
       return static_cast<ConfigDescriptor*>(state.config);
@@ -546,83 +547,85 @@ namespace AdServer::CampaignSvcs::CTR
     };
 
     add_ctr_integer(
-      *parser_,
+      processors,
       "default_weight",
       get_config_descriptor,
       &ConfigDescriptor::default_weight);
     add_ctr_integer(
-      *parser_,
+      processors,
       "version",
       get_config_descriptor,
       &ConfigDescriptor::version);
     add_ctr_string(
-      *parser_,
+      processors,
       "feature_mapping_file",
       get_config_descriptor,
       &ConfigDescriptor::feature_mapping_file);
 
     add_ctr_processor(
-      *parser_,
+      processors,
       "algorithms",
       std::make_shared<CtrAlgorithmProcessor<
         ConfigDescriptor,
         AlgorithmDescriptor>>());
     add_ctr_string(
-      *parser_,
+      processors,
       "algorithms.id",
       get_algorithm_descriptor,
       &AlgorithmDescriptor::id);
     add_ctr_integer(
-      *parser_,
+      processors,
       "algorithms.weight",
       get_algorithm_descriptor,
       &AlgorithmDescriptor::weight);
     add_ctr_decimal(
-      *parser_,
+      processors,
       "algorithms.threshold",
       get_algorithm_descriptor,
       &AlgorithmDescriptor::threshold);
     add_ctr_string(
-      *parser_,
+      processors,
       "algorithms.params.campaigns_whitelist_file",
       get_algorithm_descriptor,
       &AlgorithmDescriptor::campaigns_whitelist_file);
     add_ctr_string(
-      *parser_,
+      processors,
       "algorithms.params.campaigns_blacklist_file",
       get_algorithm_descriptor,
       &AlgorithmDescriptor::campaigns_blacklist_file);
 
     add_ctr_processor(
-      *parser_,
+      processors,
       "algorithms.models",
       std::make_shared<CtrModelProcessor<
         AlgorithmDescriptor,
         ModelDescriptor>>());
     add_ctr_integer(
-      *parser_,
+      processors,
       "algorithms.models.features_size",
       get_model_descriptor,
       &ModelDescriptor::features_size);
     add_ctr_decimal(
-      *parser_,
+      processors,
       "algorithms.models.weight",
       get_model_descriptor,
       &ModelDescriptor::weight);
     add_ctr_string(
-      *parser_,
+      processors,
       "algorithms.models.method",
       get_model_descriptor,
       &ModelDescriptor::method);
     add_ctr_string(
-      *parser_,
+      processors,
       "algorithms.models.file",
       get_model_descriptor,
       &ModelDescriptor::file);
     add_ctr_processor(
-      *parser_,
+      processors,
       "algorithms.models.features",
       std::make_shared<CtrFeaturesProcessor<ModelDescriptor>>());
+    parser_ = std::make_unique<Commons::FastJsonParser<>>(
+      std::move(processors));
   }
 
   CTRProvider::ConfigParser::ConfigDescriptor_var

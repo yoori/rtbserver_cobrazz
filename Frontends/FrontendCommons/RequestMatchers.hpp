@@ -574,7 +574,10 @@ namespace FrontendCommons
     /*throw(String::RegEx::Exception)*/
       : name(name_val.str()),
       marker(marker_val),
-      regexp(re[0] ? new String::RegEx(String::SubString(re)) : 0),
+      regexp(
+        re[0] ?
+          new String::RegEx(String::SubString(re), PCRE_CASELESS) :
+          0),
       regexp_required(regexp_required_val),
       priority(priority_val)
   {}

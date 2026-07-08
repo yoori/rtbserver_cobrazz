@@ -1,14 +1,13 @@
-
 #include <vector>
 #include <map>
 #include <eh/Exception.hpp>
 #include <Stream/MemoryStream.hpp>
-#include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 #include <String/Tokenizer.hpp>
 #include <Logger/Logger.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+
 #include <Commons/Constants.hpp>
 #include <ChannelSvcs/ChannelCommons/Serialization.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
@@ -16,19 +15,8 @@
 #include "ChannelChunk.hpp"
 #include "ChannelContainer.hpp"
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
-  namespace
-  {
-    std::ostream& operator<<(std::ostream& os, const PositiveAtom& atom)
-    {
-      os << '(' << atom.channel_id << ',' << atom.channel_trigger_id << ')';
-      return os;
-    }
-  }
-
   struct MatchingEntityLess
   {
     struct Holder
@@ -325,7 +313,7 @@ namespace ChannelSvcs
           break;
       }
 
-      for (SoftVector::const_iterator i(soft_vector.begin()); i != soft_vector.end(); ++i)
+      for (SoftVector::const_iterator i = soft_vector.begin(); i != soft_vector.end(); ++i)
       {
         const SoftMatcher* matcher = i->matcher.in();
 
@@ -333,14 +321,15 @@ namespace ChannelSvcs
         {
           continue;
         }
-        bool match = matcher->match(words, (flags & MF_NONSTRICTKW ? true : false));
+
+        bool match = matcher->match(words, flags & MF_NONSTRICTKW ? true : false);
 
         if (exact_words && !match)
         {
           match |= matcher->match_exact(*exact_words);
         }
 
-        if(must_match)
+        if (must_match)
         {
           // additional soft matching
           if(must_match->erase(i->matcher) > 0)
@@ -349,7 +338,7 @@ namespace ChannelSvcs
           }
         }
 
-        if(match)
+        if (match)
         {
           res.count_channels[type] += match_cell_(
             *match_info_ptr_,
@@ -357,7 +346,8 @@ namespace ChannelSvcs
             type,
             flags,
             res,
-            (flags & MF_NEGATIVE ? false : matcher->negative()));
+            flags & MF_NEGATIVE ? false : matcher->negative()
+          );
         }
       }
     }
@@ -940,11 +930,4 @@ namespace ChannelSvcs
       stats.params[i] += params_[i];
     }
   }
-
-  /*
-   * end
-   * ChannelChunk implementation
-   *
-   * */
-}
 }

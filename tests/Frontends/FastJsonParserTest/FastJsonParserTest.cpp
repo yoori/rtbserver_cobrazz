@@ -149,13 +149,14 @@ namespace
 
 TEST(streaming_path_dispatch)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("imp", std::make_shared<ObjectArrayProcessor>());
-  parser.add_processor("imp.id", std::make_shared<StringProcessor>());
-  parser.add_processor("imp.w", std::make_shared<IntegerProcessor>());
-  parser.add_processor("imp.price", std::make_shared<FloatProcessor>());
-  parser.add_processor("test", std::make_shared<BoolProcessor>());
-  parser.add_processor("optional", std::make_shared<NullProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("imp", std::make_shared<ObjectArrayProcessor>());
+  processors.add_processor("imp.id", std::make_shared<StringProcessor>());
+  processors.add_processor("imp.w", std::make_shared<IntegerProcessor>());
+  processors.add_processor("imp.price", std::make_shared<FloatProcessor>());
+  processors.add_processor("test", std::make_shared<BoolProcessor>());
+  processors.add_processor("optional", std::make_shared<NullProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   Context context;
   const std::string json =
@@ -191,8 +192,9 @@ TEST(streaming_path_dispatch)
 
 TEST(array_of_scalars)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("cur", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("cur", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   Context context;
   parser.parse(R"({"cur":["RUB","USD"]})", &context);
@@ -204,9 +206,10 @@ TEST(array_of_scalars)
 
 TEST(string_unescape_is_lazy)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("plain", std::make_shared<StringProcessor>());
-  parser.add_processor("escaped", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("plain", std::make_shared<StringProcessor>());
+  processors.add_processor("escaped", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   Context context;
   std::string json =
@@ -226,8 +229,9 @@ TEST(string_unescape_is_lazy)
 
 TEST(default_string_processor_copies_view)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("id", std::make_shared<DefaultStringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<DefaultStringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   Context context;
   parser.parse(R"({"id":"plain"})", &context);
@@ -239,10 +243,11 @@ TEST(default_string_processor_copies_view)
 
 TEST(as_string_passes_scalar_literals_without_conversion)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("price", std::make_shared<StringProcessor>(), true);
-  parser.add_processor("enabled", std::make_shared<StringProcessor>(), true);
-  parser.add_processor("optional", std::make_shared<StringProcessor>(), true);
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("price", std::make_shared<StringProcessor>(), true);
+  processors.add_processor("enabled", std::make_shared<StringProcessor>(), true);
+  processors.add_processor("optional", std::make_shared<StringProcessor>(), true);
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   Context context;
   parser.parse(R"({"price":1.2300,"enabled":false,"optional":null})", &context);
@@ -259,8 +264,9 @@ TEST(as_string_passes_scalar_literals_without_conversion)
 
 TEST(skips_unregistered_subtrees)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   Context context;
   parser.parse(
@@ -273,8 +279,9 @@ TEST(skips_unregistered_subtrees)
 
 TEST(strict_skip_validates_unregistered_object)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   try
   {
@@ -288,8 +295,9 @@ TEST(strict_skip_validates_unregistered_object)
 
 TEST(strict_skip_validates_unregistered_array)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   try
   {
@@ -303,8 +311,9 @@ TEST(strict_skip_validates_unregistered_array)
 
 TEST(strict_skip_validates_unregistered_string)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   try
   {
@@ -318,8 +327,9 @@ TEST(strict_skip_validates_unregistered_string)
 
 TEST(non_strict_skip_scans_object_to_closing_brace)
 {
-  AdServer::Commons::FastJsonParser<> parser(false);
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors), false);
 
   Context context;
   parser.parse(
@@ -333,8 +343,9 @@ TEST(non_strict_skip_scans_object_to_closing_brace)
 
 TEST(non_strict_skip_scans_array_to_closing_bracket)
 {
-  AdServer::Commons::FastJsonParser<> parser(false);
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors), false);
 
   Context context;
   parser.parse(
@@ -347,8 +358,9 @@ TEST(non_strict_skip_scans_array_to_closing_bracket)
 
 TEST(non_strict_skip_scans_string_to_unescaped_quote)
 {
-  AdServer::Commons::FastJsonParser<> parser(false);
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors), false);
 
   Context context;
   parser.parse(R"({"ignored":"bad\q \" not close","id":"ok"})", &context);
@@ -359,8 +371,9 @@ TEST(non_strict_skip_scans_string_to_unescaped_quote)
 
 TEST(parse_errors)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("id", std::make_shared<StringProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   try
   {
@@ -383,8 +396,9 @@ TEST(parse_errors)
 
 TEST(unexpected_type)
 {
-  AdServer::Commons::FastJsonParser<> parser;
-  parser.add_processor("items", std::make_shared<UnexpectedArrayProcessor>());
+  AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+  processors.add_processor("items", std::make_shared<UnexpectedArrayProcessor>());
+  AdServer::Commons::FastJsonParser<> parser(std::move(processors));
 
   try
   {

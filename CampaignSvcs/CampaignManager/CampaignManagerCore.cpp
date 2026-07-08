@@ -475,22 +475,22 @@ namespace AdServer::CampaignSvcs
     ssp_features_parser()
     {
       static const FastJsonParser* parser = [] {
-        auto* result = new FastJsonParser();
-        result->add_processor(
+        FastJsonParser::ProcessorSet processors;
+        processors.add_processor(
           "ssp_tag_id",
           std::make_shared<SspTagIdProcessor>(),
           true);
-        result->add_processor(
+        processors.add_processor(
           "ctr",
           std::make_shared<SspFloatProcessor>(&CampaignSelectParams::ssp_ctr));
-        result->add_processor(
+        processors.add_processor(
           "viewability",
           std::make_shared<SspFloatProcessor>(
             &CampaignSelectParams::ssp_viewability));
-        result->add_processor(
+        processors.add_processor(
           "vtr",
           std::make_shared<SspFloatProcessor>(&CampaignSelectParams::ssp_vtr));
-        return result;
+        return new FastJsonParser(std::move(processors));
       }();
 
       return *parser;

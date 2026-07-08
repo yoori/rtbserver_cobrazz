@@ -562,7 +562,7 @@ namespace AdServer::Bidding
         oss.append(buf, buf_size);
       }
 
-      kw_fmt.add_keyword(oss);
+      kw_fmt.add_keyword_owned(std::move(oss));
     }
 
     bool
@@ -1739,7 +1739,7 @@ namespace AdServer::Bidding
     std::string&& bid_request) const
     /*throw(InvalidParamException, Exception)*/
   {
-    static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
+    // static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
     RequestInfo::PmrString& keywords = request_info.keywords;
     request_info.client = OPENRTB_APPLICATION;
     request_info.client_version = OPENRTB_APPLICATION_VERSION;
@@ -1811,7 +1811,7 @@ namespace AdServer::Bidding
         keyword += 'x';
         keyword.append(value.data(), value.size());
         //std::cerr << "keyword : <" << keyword << ">" << std::endl;
-        kw_fmt.add_keyword(keyword);
+        kw_fmt.add_keyword_owned(std::move(keyword));
       }
     }
 
@@ -1834,7 +1834,7 @@ namespace AdServer::Bidding
         keyword.append(type.data(), type.size());
         keyword += 'x';
         keyword.append(value.data(), value.size());
-        kw_fmt.add_keyword(keyword);
+        kw_fmt.add_keyword_owned(std::move(keyword));
 
         float metric_value = 0.0f;
         if(try_parse_float_(metric_value, metric_it->value))
@@ -1889,7 +1889,7 @@ namespace AdServer::Bidding
       keyword.reserve(11 + language.size());
       keyword += "rtblanguage";
       keyword.append(language.data(), language.size());
-      kw_fmt.add_keyword(keyword);
+      kw_fmt.add_keyword_owned(std::move(keyword));
     }
 
     if(!context.carrier.empty())
@@ -1899,7 +1899,7 @@ namespace AdServer::Bidding
       keyword.reserve(10 + carrier.size());
       keyword += "rtbcarrier";
       keyword.append(carrier.data(), carrier.size());
-      kw_fmt.add_keyword(keyword);
+      kw_fmt.add_keyword_owned(std::move(keyword));
     }
 
     kw_fmt.add_keyword(context.site_keywords);
@@ -2141,6 +2141,7 @@ namespace AdServer::Bidding
               (*(slot_it->video_linearity) != 1) &&
               (*(slot_it->video_linearity) != 2))) // linearity allowed values 1 and 2 only
         {
+          /*
           if(logger_->log_level() >= Logging::Logger::NOTICE)
           {
             Stream::Error ostr;
@@ -2160,6 +2161,7 @@ namespace AdServer::Bidding
 
             logger_->log(ostr.str(), Logging::Logger::NOTICE, Aspect::BIDDING_FRONTEND);
           }
+          */
 
           parse_request_error_flag = true;
         }
@@ -3653,7 +3655,7 @@ namespace AdServer::Bidding
       keyword.reserve(11 + platform.size());
       keyword += "rtbplatform";
       keyword.append(platform.data(), platform.size());
-      kw_fmt.add_keyword(keyword);
+      kw_fmt.add_keyword_owned(std::move(keyword));
     }
 
     if(request_info.is_app)
@@ -3665,7 +3667,7 @@ namespace AdServer::Bidding
         keyword.reserve(6 + app_id.size());
         keyword += "rtbapp";
         keyword.append(app_id.data(), app_id.size());
-        kw_fmt.add_keyword(keyword);
+        kw_fmt.add_keyword_owned(std::move(keyword));
       }
 
       if(!alt_app_id.empty())
@@ -3677,7 +3679,7 @@ namespace AdServer::Bidding
           keyword.reserve(6 + app_id.size());
           keyword += "rtbapp";
           keyword.append(app_id.data(), app_id.size());
-          kw_fmt.add_keyword(keyword);
+          kw_fmt.add_keyword_owned(std::move(keyword));
         }
       }
     }
@@ -3693,7 +3695,7 @@ namespace AdServer::Bidding
         keyword.reserve(11 + language.size());
         keyword += "rtblanguage";
         keyword.append(language.data(), language.size());
-        kw_fmt.add_keyword(keyword);
+        kw_fmt.add_keyword_owned(std::move(keyword));
       }
     }
   }
@@ -4067,12 +4069,12 @@ namespace AdServer::Bidding
     template<typename ProcessorType>
     void
     add_processor(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& processors,
       std::string_view path,
       std::shared_ptr<ProcessorType> processor,
       bool as_string = false)
     {
-      parser.add_processor(path, std::move(processor), as_string);
+      processors.add_processor(path, std::move(processor), as_string);
     }
 
     template<typename Context, typename Field>
@@ -4319,7 +4321,7 @@ namespace AdServer::Bidding
     template<typename Context, typename Field>
     void
     add_string(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
       Field Context::* field)
@@ -4336,7 +4338,7 @@ namespace AdServer::Bidding
     template<typename Context, typename Field>
     void
     add_url(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
       Field Context::* field)
@@ -4350,7 +4352,7 @@ namespace AdServer::Bidding
     template<typename Context, typename NumberType>
     void
     add_integer(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
       NumberType Context::* field)
@@ -4366,7 +4368,7 @@ namespace AdServer::Bidding
     template<typename Context>
     void
     add_optional_long(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
       std::optional<long> Context::* field)
@@ -4380,7 +4382,7 @@ namespace AdServer::Bidding
     template<typename Context>
     void
     add_bool(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
       bool Context::* field)
@@ -4394,7 +4396,7 @@ namespace AdServer::Bidding
     template<typename Context, typename DecimalType>
     void
     add_decimal(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       Context* (*get_context)(FastOpenRtbState&),
       DecimalType Context::* field,
@@ -5162,7 +5164,7 @@ namespace AdServer::Bidding
     template<typename ObjectHandler, typename ArrayHandler = EmptyStateHandler>
     void
     add_object_processor(
-      FastJsonParser& parser,
+      FastJsonParser::ProcessorSet& parser,
       std::string_view path,
       ObjectHandler object_handler,
       ArrayHandler array_handler = {})
@@ -5177,7 +5179,7 @@ namespace AdServer::Bidding
 
     template<typename Append>
     void
-    add_string_array(FastJsonParser& parser, std::string_view path, Append append)
+    add_string_array(FastJsonParser::ProcessorSet& parser, std::string_view path, Append append)
     {
       add_processor(
         parser,
@@ -5187,7 +5189,7 @@ namespace AdServer::Bidding
 
     template<typename Handler>
     void
-    add_request_string_handler(FastJsonParser& parser, std::string_view path, Handler handler)
+    add_request_string_handler(FastJsonParser::ProcessorSet& parser, std::string_view path, Handler handler)
     {
       add_processor(
         parser,
@@ -5199,7 +5201,7 @@ namespace AdServer::Bidding
 
     template<typename Handler>
     void
-    add_integer_handler(FastJsonParser& parser, std::string_view path, Handler handler)
+    add_integer_handler(FastJsonParser::ProcessorSet& parser, std::string_view path, Handler handler)
     {
       add_processor(
         parser,
@@ -5209,7 +5211,7 @@ namespace AdServer::Bidding
 
     template<typename HolderGetter>
     void
-    add_state_value_number(FastJsonParser& parser, std::string_view path, HolderGetter get_holder)
+    add_state_value_number(FastJsonParser::ProcessorSet& parser, std::string_view path, HolderGetter get_holder)
     {
       add_processor(
         parser,
@@ -5220,7 +5222,7 @@ namespace AdServer::Bidding
 
     template<typename HolderGetter>
     void
-    add_state_number_set(FastJsonParser& parser, std::string_view path, HolderGetter get_holder)
+    add_state_number_set(FastJsonParser::ProcessorSet& parser, std::string_view path, HolderGetter get_holder)
     {
       add_processor(
         parser,
@@ -5230,7 +5232,7 @@ namespace AdServer::Bidding
     }
 
     void
-    init_banner_processors(FastJsonParser& parser, std::string_view base)
+    init_banner_processors(FastJsonParser::ProcessorSet& parser, std::string_view base)
     {
       add_object_processor(parser, base, start_banner, [](FastOpenRtbState&) {});
       add_string(parser, std::string(base) + ".pos", banner_context, &Banner::pos);
@@ -5306,7 +5308,7 @@ namespace AdServer::Bidding
     }
 
     void
-    init_native_payload_processors(FastJsonParser& parser, std::string_view prefix)
+    init_native_payload_processors(FastJsonParser::ProcessorSet& parser, std::string_view prefix)
     {
       add_string(parser, make_path(prefix, "ver"), native_context, &Native::version);
       add_optional_long(
@@ -5442,9 +5444,10 @@ namespace AdServer::Bidding
         return;
       }
 
-      FastJsonParser native_parser(false);
-      init_native_payload_processors(native_parser, "");
-      init_native_payload_processors(native_parser, "native");
+      FastJsonParser::ProcessorSet processors;
+      init_native_payload_processors(processors, "");
+      init_native_payload_processors(processors, "native");
+      FastJsonParser native_parser(std::move(processors), false);
       native_parser.parse(
         value,
         &state,
@@ -5455,7 +5458,7 @@ namespace AdServer::Bidding
     }
 
     void
-    init_native_processors(FastJsonParser& parser, std::string_view base)
+    init_native_processors(FastJsonParser::ProcessorSet& parser, std::string_view base)
     {
       add_object_processor(parser, base, start_native);
 
@@ -5473,101 +5476,101 @@ namespace AdServer::Bidding
   void
   RequestInfoFiller::init_fast_json_processors_()
   {
-    auto parser = std::make_unique<FastJsonParser>(false);
+    FastJsonParser::ProcessorSet parser;
 
     add_request_string_handler(
-      *parser,
+      parser,
       "id",
       [](FastOpenRtbState& state, std::string_view value)
       {
         state.request_info->bid_request_id = value;
       });
     add_string_array(
-      *parser,
+      parser,
       "cur",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->currencies, value);
       });
     add_string_array(
-      *parser,
+      parser,
       "bcat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->exclude_categories, value);
       });
-    add_bool(*parser, "test", root_context, &JsonProcessingContext::test);
-    add_bool(*parser, "ext.is_test", root_context, &JsonProcessingContext::test);
-    add_bool(*parser, "ext.secure", root_context, &JsonProcessingContext::secure);
-    add_string(*parser, "ext.category", root_context, &JsonProcessingContext::required_category);
-    add_string(*parser, "ext.udi.idfa", root_context, &JsonProcessingContext::ifa);
-    add_string(*parser, "ext.udi.gaid", root_context, &JsonProcessingContext::ifa);
+    add_bool(parser, "test", root_context, &JsonProcessingContext::test);
+    add_bool(parser, "ext.is_test", root_context, &JsonProcessingContext::test);
+    add_bool(parser, "ext.secure", root_context, &JsonProcessingContext::secure);
+    add_string(parser, "ext.category", root_context, &JsonProcessingContext::required_category);
+    add_string(parser, "ext.udi.idfa", root_context, &JsonProcessingContext::ifa);
+    add_string(parser, "ext.udi.gaid", root_context, &JsonProcessingContext::ifa);
 
     add_object_processor(
-      *parser,
+      parser,
       "imp",
       start_ad_slot,
       [](FastOpenRtbState&) {});
-    add_string(*parser, "imp.id", ad_slot_context, &AdSlotContext::id);
+    add_string(parser, "imp.id", ad_slot_context, &AdSlotContext::id);
     add_decimal(
-      *parser,
+      parser,
       "imp.bidfloor",
       ad_slot_context,
       &AdSlotContext::min_cpm_price,
       Generics::DMR_CEIL,
       AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
     add_string(
-      *parser,
+      parser,
       "imp.bidfloorcur",
       ad_slot_context,
       &AdSlotContext::min_cpm_price_currency_code);
-    add_bool(*parser, "imp.secure", ad_slot_context, &AdSlotContext::secure);
-    add_string(*parser, "imp.tagid", ad_slot_context, &AdSlotContext::tagid);
-    add_string(*parser, "imp.ext.type", ad_slot_context, &AdSlotContext::imp_ext_type);
+    add_bool(parser, "imp.secure", ad_slot_context, &AdSlotContext::secure);
+    add_string(parser, "imp.tagid", ad_slot_context, &AdSlotContext::tagid);
+    add_string(parser, "imp.ext.type", ad_slot_context, &AdSlotContext::imp_ext_type);
     add_optional_long(
-      *parser,
+      parser,
       "imp.pmp.private_auction",
       ad_slot_context,
       &AdSlotContext::private_auction);
     add_object_processor(
-      *parser,
+      parser,
       "imp.pmp.deals",
       start_deal,
       [](FastOpenRtbState&) {});
-    add_string(*parser, "imp.pmp.deals.id", deal_context, &AdSlotContext::Deal::id);
+    add_string(parser, "imp.pmp.deals.id", deal_context, &AdSlotContext::Deal::id);
     add_decimal(
-      *parser,
+      parser,
       "imp.pmp.deals.bidfloor",
       deal_context,
       &AdSlotContext::Deal::cpm_price,
       Generics::DMR_CEIL,
       AdServer::CampaignSvcs::RevenueDecimal::MAXIMUM);
     add_string(
-      *parser,
+      parser,
       "imp.pmp.deals.bidfloorcur",
       deal_context,
       &AdSlotContext::Deal::currency_code);
 
     add_object_processor(
-      *parser,
+      parser,
       "imp.metric",
       start_metric,
       [](FastOpenRtbState&) {});
-    add_string(*parser, "imp.metric.type", metric_context, &AdSlotContext::Metric::type);
+    add_string(parser, "imp.metric.type", metric_context, &AdSlotContext::Metric::type);
     add_processor(
-      *parser,
+      parser,
       "imp.metric.value",
       std::make_shared<MetricValueProcessor>());
 
-    init_banner_processors(*parser, "imp.banner");
-    init_banner_processors(*parser, "imp.banners");
+    init_banner_processors(parser, "imp.banner");
+    init_banner_processors(parser, "imp.banners");
 
     add_processor(
-      *parser,
+      parser,
       "imp.video",
       std::make_shared<VideoStartedProcessor>());
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.w",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5575,16 +5578,16 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_width : nullptr;
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.h",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
       {
         return state.ad_slot ? &state.ad_slot->video_height : nullptr;
       });
-    add_string(*parser, "imp.video.pos", ad_slot_context, &AdSlotContext::video_pos);
+    add_string(parser, "imp.video.pos", ad_slot_context, &AdSlotContext::video_pos);
     add_string_array(
-      *parser,
+      parser,
       "imp.video.mimes",
       [](FastOpenRtbState& state, std::string_view value)
       {
@@ -5594,7 +5597,7 @@ namespace AdServer::Bidding
         }
       });
     add_string_array(
-      *parser,
+      parser,
       "imp.video.battr",
       [](FastOpenRtbState& state, std::string_view value)
       {
@@ -5604,7 +5607,7 @@ namespace AdServer::Bidding
         }
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.minduration",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5612,7 +5615,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_min_duration : nullptr;
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.maxduration",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5620,7 +5623,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_max_duration : nullptr;
       });
     add_state_number_set(
-      *parser,
+      parser,
       "imp.video.protocol",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULSetStateHolder*
@@ -5628,7 +5631,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_protocols : nullptr;
       });
     add_state_number_set(
-      *parser,
+      parser,
       "imp.video.protocols",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULSetStateHolder*
@@ -5636,7 +5639,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_protocols : nullptr;
       });
     add_state_number_set(
-      *parser,
+      parser,
       "imp.video.playbackmethod",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULSetStateHolder*
@@ -5644,7 +5647,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_playbackmethods : nullptr;
       });
     add_state_number_set(
-      *parser,
+      parser,
       "imp.video.api",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULSetStateHolder*
@@ -5652,7 +5655,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_api : nullptr;
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.startdelay",
       [](FastOpenRtbState& state)
         -> AdSlotContext::LValueStateHolder*
@@ -5660,7 +5663,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_start_delay : nullptr;
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.linearity",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5668,7 +5671,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_linearity : nullptr;
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.skip",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5676,7 +5679,7 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_skip : nullptr;
       });
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.reward",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5684,12 +5687,12 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_reward : nullptr;
       });
     add_optional_long(
-      *parser,
+      parser,
       "imp.video.placement",
       ad_slot_context,
       &AdSlotContext::video_placement);
     add_state_value_number(
-      *parser,
+      parser,
       "imp.video.ext.adtype",
       [](FastOpenRtbState& state)
         -> AdSlotContext::ULValueStateHolder*
@@ -5697,107 +5700,107 @@ namespace AdServer::Bidding
         return state.ad_slot ? &state.ad_slot->video_adtype : nullptr;
       });
 
-    init_native_processors(*parser, "imp.native");
+    init_native_processors(parser, "imp.native");
 
     add_object_processor(
-      *parser,
+      parser,
       "site",
       [](FastOpenRtbState& state) { state.context->site = true; }
     );
-    add_url(*parser, "site.page", root_context, &JsonProcessingContext::site_page);
-    add_string(*parser, "site.name", root_context, &JsonProcessingContext::site_name);
-    add_url(*parser, "site.domain", root_context, &JsonProcessingContext::site_domain);
+    add_url(parser, "site.page", root_context, &JsonProcessingContext::site_page);
+    add_string(parser, "site.name", root_context, &JsonProcessingContext::site_name);
+    add_url(parser, "site.domain", root_context, &JsonProcessingContext::site_domain);
     add_request_string_handler(
-      *parser,
+      parser,
       "site.id",
       [](FastOpenRtbState& state, std::string_view value)
       {
         state.request_info->bid_site_id = value;
       });
-    add_string(*parser, "site.search", root_context, &JsonProcessingContext::site_search);
-    add_url(*parser, "site.ref", root_context, &JsonProcessingContext::site_ref);
-    add_url(*parser, "site.referer", root_context, &JsonProcessingContext::site_referer);
-    add_url(*parser, "site.rereferer", root_context, &JsonProcessingContext::site_rereferer);
-    add_string(*parser, "site.keywords", root_context, &JsonProcessingContext::site_keywords);
+    add_string(parser, "site.search", root_context, &JsonProcessingContext::site_search);
+    add_url(parser, "site.ref", root_context, &JsonProcessingContext::site_ref);
+    add_url(parser, "site.referer", root_context, &JsonProcessingContext::site_referer);
+    add_url(parser, "site.rereferer", root_context, &JsonProcessingContext::site_rereferer);
+    add_string(parser, "site.keywords", root_context, &JsonProcessingContext::site_keywords);
     add_string_array(
-      *parser,
+      parser,
       "site.pagecat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->site_pagecat, value);
       });
     add_string_array(
-      *parser,
+      parser,
       "site.sectioncat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->site_sectioncat, value);
       });
     add_string_array(
-      *parser,
+      parser,
       "site.cat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->site_cat, value);
       });
-    add_bool(*parser, "site.ext.ssl_enabled", root_context, &JsonProcessingContext::secure);
-    add_string(*parser, "site.ext.puid1", root_context, &JsonProcessingContext::puid1);
-    add_string(*parser, "site.ext.puid2", root_context, &JsonProcessingContext::puid2);
+    add_bool(parser, "site.ext.ssl_enabled", root_context, &JsonProcessingContext::secure);
+    add_string(parser, "site.ext.puid1", root_context, &JsonProcessingContext::puid1);
+    add_string(parser, "site.ext.puid2", root_context, &JsonProcessingContext::puid2);
     add_object_processor(
-      *parser,
+      parser,
       "site.content",
       [](FastOpenRtbState& state)
       {
         state.context->site_content = true;
       });
     add_string(
-      *parser,
+      parser,
       "site.content.keywords",
       root_context,
       &JsonProcessingContext::content_keywords);
-    add_string(*parser, "site.content.title", root_context, &JsonProcessingContext::content_title);
+    add_string(parser, "site.content.title", root_context, &JsonProcessingContext::content_title);
     add_string(
-      *parser,
+      parser,
       "site.content.series",
       root_context,
       &JsonProcessingContext::content_series);
     add_string(
-      *parser,
+      parser,
       "site.content.season",
       root_context,
       &JsonProcessingContext::content_season);
     add_string_array(
-      *parser,
+      parser,
       "site.content.cat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->content_cat, value);
       });
-    add_object_processor(*parser, "site.content.producer",
+    add_object_processor(parser, "site.content.producer",
       [](FastOpenRtbState& state) { state.context->site_content_producer = true; });
     add_string_array(
-      *parser,
+      parser,
       "site.content.producer.name",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->content_producer_name, value);
       });
-    add_object_processor(*parser, "site.publisher",
+    add_object_processor(parser, "site.publisher",
       [](FastOpenRtbState& state) { state.context->site_publisher = true; });
     add_string(
-      *parser,
+      parser,
       "site.publisher.name",
       root_context,
       &JsonProcessingContext::publisher_name);
     add_request_string_handler(
-      *parser,
+      parser,
       "site.publisher.id",
       [](FastOpenRtbState& state, std::string_view value)
       {
         state.request_info->bid_publisher_id = value;
       });
     add_string_array(
-      *parser,
+      parser,
       "site.publisher.cat",
       [](FastOpenRtbState& state, std::string_view value)
       {
@@ -5805,65 +5808,65 @@ namespace AdServer::Bidding
       });
 
     add_object_processor(
-      *parser,
+      parser,
       "app",
       [](FastOpenRtbState& state) { state.context->app = true; });
-    add_string(*parser, "app.id", root_context, &JsonProcessingContext::app_id);
-    add_string(*parser, "app.name", root_context, &JsonProcessingContext::app_name);
-    add_string(*parser, "app.bundle", root_context, &JsonProcessingContext::app_bundle);
-    add_url(*parser, "app.domain", root_context, &JsonProcessingContext::app_domain);
-    add_url(*parser, "app.storeurl", root_context, &JsonProcessingContext::app_store_url);
-    add_string(*parser, "app.keywords", root_context, &JsonProcessingContext::app_keywords);
+    add_string(parser, "app.id", root_context, &JsonProcessingContext::app_id);
+    add_string(parser, "app.name", root_context, &JsonProcessingContext::app_name);
+    add_string(parser, "app.bundle", root_context, &JsonProcessingContext::app_bundle);
+    add_url(parser, "app.domain", root_context, &JsonProcessingContext::app_domain);
+    add_url(parser, "app.storeurl", root_context, &JsonProcessingContext::app_store_url);
+    add_string(parser, "app.keywords", root_context, &JsonProcessingContext::app_keywords);
     add_string_array(
-      *parser,
+      parser,
       "app.pagecat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->app_pagecat, value);
       });
     add_string_array(
-      *parser,
+      parser,
       "app.sectioncat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->app_sectioncat, value);
       });
     add_string_array(
-      *parser,
+      parser,
       "app.cat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->app_cat, value);
       });
     add_object_processor(
-      *parser,
+      parser,
       "app.content",
       [](FastOpenRtbState& state)
       {
         state.context->app_content = true;
       });
     add_string(
-      *parser,
+      parser,
       "app.content.keywords",
       root_context,
       &JsonProcessingContext::content_keywords);
-    add_string(*parser, "app.content.title", root_context, &JsonProcessingContext::content_title);
-    add_string(*parser, "app.content.series", root_context, &JsonProcessingContext::content_series);
-    add_string(*parser, "app.content.season", root_context, &JsonProcessingContext::content_season);
+    add_string(parser, "app.content.title", root_context, &JsonProcessingContext::content_title);
+    add_string(parser, "app.content.series", root_context, &JsonProcessingContext::content_series);
+    add_string(parser, "app.content.season", root_context, &JsonProcessingContext::content_season);
     add_string_array(
-      *parser,
+      parser,
       "app.content.cat",
       [](FastOpenRtbState& state, std::string_view value)
       {
         append_string(state.context->content_cat, value);
       });
     add_object_processor(
-      *parser,
+      parser,
       "app.content.producer",
       [](FastOpenRtbState& state) { state.context->app_content_producer = true; }
     );
     add_string_array(
-      *parser,
+      parser,
       "app.content.producer.name",
       [](FastOpenRtbState& state, std::string_view value)
       {
@@ -5871,20 +5874,20 @@ namespace AdServer::Bidding
       }
     );
     add_object_processor(
-      *parser,
+      parser,
       "app.publisher",
       [](FastOpenRtbState& state) { state.context->app_publisher = true; }
     );
-    add_string(*parser, "app.publisher.name", root_context, &JsonProcessingContext::publisher_name);
+    add_string(parser, "app.publisher.name", root_context, &JsonProcessingContext::publisher_name);
     add_request_string_handler(
-      *parser,
+      parser,
       "app.publisher.id",
       [](FastOpenRtbState& state, std::string_view value)
       {
         state.request_info->bid_publisher_id = value;
       });
     add_string_array(
-      *parser,
+      parser,
       "app.publisher.cat",
       [](FastOpenRtbState& state, std::string_view value)
       {
@@ -5892,32 +5895,32 @@ namespace AdServer::Bidding
       });
 
     add_request_string_handler(
-      *parser,
+      parser,
       "device.ip",
       [](FastOpenRtbState& state, std::string_view value)
       {
         state.request_info->peer_ip = value;
       });
-    add_string(*parser, "device.ipv6", root_context, &JsonProcessingContext::ipv6);
+    add_string(parser, "device.ipv6", root_context, &JsonProcessingContext::ipv6);
     add_request_string_handler(
-      *parser,
+      parser,
       "device.ua",
       [](FastOpenRtbState& state, std::string_view value)
       {
         state.request_info->user_agent = value;
       });
-    add_string(*parser, "device.userdata", root_context, &JsonProcessingContext::user_id);
-    add_string(*parser, "device.ifa", root_context, &JsonProcessingContext::ifa);
-    add_string(*parser, "device.didmd5", root_context, &JsonProcessingContext::didmd5);
-    add_string(*parser, "device.didsha1", root_context, &JsonProcessingContext::didsha1);
-    add_string(*parser, "device.dpidmd5", root_context, &JsonProcessingContext::dpidmd5);
-    add_string(*parser, "device.dpisha1", root_context, &JsonProcessingContext::dpisha1);
-    add_string(*parser, "device.macsha1", root_context, &JsonProcessingContext::macsha1);
-    add_string(*parser, "device.macmd5", root_context, &JsonProcessingContext::macmd5);
-    add_string(*parser, "device.language", root_context, &JsonProcessingContext::language);
-    add_string(*parser, "device.carrier", root_context, &JsonProcessingContext::carrier);
+    add_string(parser, "device.userdata", root_context, &JsonProcessingContext::user_id);
+    add_string(parser, "device.ifa", root_context, &JsonProcessingContext::ifa);
+    add_string(parser, "device.didmd5", root_context, &JsonProcessingContext::didmd5);
+    add_string(parser, "device.didsha1", root_context, &JsonProcessingContext::didsha1);
+    add_string(parser, "device.dpidmd5", root_context, &JsonProcessingContext::dpidmd5);
+    add_string(parser, "device.dpisha1", root_context, &JsonProcessingContext::dpisha1);
+    add_string(parser, "device.macsha1", root_context, &JsonProcessingContext::macsha1);
+    add_string(parser, "device.macmd5", root_context, &JsonProcessingContext::macmd5);
+    add_string(parser, "device.language", root_context, &JsonProcessingContext::language);
+    add_string(parser, "device.carrier", root_context, &JsonProcessingContext::carrier);
     add_integer_handler(
-      *parser,
+      parser,
       "device.devicetype",
       [this](FastOpenRtbState& state, int64_t value)
       {
@@ -5929,72 +5932,72 @@ namespace AdServer::Bidding
             openrtb_devicetype_to_string_(static_cast<unsigned int>(value));
         }
       });
-    add_string(*parser, "device.geo.country", root_context, &JsonProcessingContext::ssp_country);
-    add_string(*parser, "device.geo.region", root_context, &JsonProcessingContext::ssp_region);
-    add_string(*parser, "device.geo.city", root_context, &JsonProcessingContext::ssp_city);
+    add_string(parser, "device.geo.country", root_context, &JsonProcessingContext::ssp_country);
+    add_string(parser, "device.geo.region", root_context, &JsonProcessingContext::ssp_region);
+    add_string(parser, "device.geo.city", root_context, &JsonProcessingContext::ssp_city);
 
     add_object_processor(
-      *parser,
+      parser,
       "user",
       [](FastOpenRtbState& state)
       {
         state.context->user = true;
       });
-    add_string(*parser, "user.id", root_context, &JsonProcessingContext::external_user_id);
-    add_string(*parser, "user.buyeruid", root_context, &JsonProcessingContext::user_id);
-    add_string(*parser, "user.buyerid", root_context, &JsonProcessingContext::user_id);
-    add_string(*parser, "user.keywords", root_context, &JsonProcessingContext::user_keywords);
-    add_string(*parser, "user.gender", root_context, &JsonProcessingContext::user_gender);
-    add_integer(*parser, "user.yob", root_context, &JsonProcessingContext::user_yob);
+    add_string(parser, "user.id", root_context, &JsonProcessingContext::external_user_id);
+    add_string(parser, "user.buyeruid", root_context, &JsonProcessingContext::user_id);
+    add_string(parser, "user.buyerid", root_context, &JsonProcessingContext::user_id);
+    add_string(parser, "user.keywords", root_context, &JsonProcessingContext::user_keywords);
+    add_string(parser, "user.gender", root_context, &JsonProcessingContext::user_gender);
+    add_integer(parser, "user.yob", root_context, &JsonProcessingContext::user_yob);
     add_object_processor(
-      *parser,
+      parser,
       "user.data.segment",
       start_segment,
       [](FastOpenRtbState&) {});
     add_string(
-      *parser,
+      parser,
       "user.data.segment.id",
       segment_context,
       &JsonProcessingContext::Segment::id);
     add_string(
-      *parser,
+      parser,
       "user.data.segment.name",
       segment_context,
       &JsonProcessingContext::Segment::name);
     add_string(
-      *parser,
+      parser,
       "user.data.segment.value",
       segment_context,
       &JsonProcessingContext::Segment::value);
     add_object_processor(
-      *parser,
+      parser,
       "user.ext.eids",
       start_user_eid,
       [](FastOpenRtbState&) {});
     add_string(
-      *parser,
+      parser,
       "user.ext.eids.source",
       user_eid_context,
       &JsonProcessingContext::UserEid::source);
     add_object_processor(
-      *parser,
+      parser,
       "user.ext.eids.uids",
       start_user_eid_uid,
       [](FastOpenRtbState&) {});
     add_string(
-      *parser,
+      parser,
       "user.ext.eids.uids.id",
       user_eid_uid_context,
       &JsonProcessingContext::UserEidUid::id);
     add_string(
-      *parser,
+      parser,
       "user.ext.eids.uids.stableid",
       user_eid_uid_context,
       &JsonProcessingContext::UserEidUid::stable_id);
 
-    add_bool(*parser, "regs.coppa", root_context, &JsonProcessingContext::regs_coppa);
+    add_bool(parser, "regs.coppa", root_context, &JsonProcessingContext::regs_coppa);
 
-    fast_json_parser_ = std::move(parser);
+    fast_json_parser_ = std::make_unique<FastJsonParser>(std::move(parser), false);
   }
 
   void

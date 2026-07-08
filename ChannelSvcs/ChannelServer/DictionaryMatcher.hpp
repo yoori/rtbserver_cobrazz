@@ -1,8 +1,9 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
-#include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 //#include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/DictionaryProvider/DictionaryProvider.hpp>
@@ -28,7 +29,20 @@ namespace ChannelSvcs
     virtual size_t add_trigger(MergeAtom& merge_atom);
     */
 
-    typedef Generics::GnuHashTable<Generics::StringHashAdapter, Lexeme_var> LexemeCache;
+    struct StringHashAdapterHash
+    {
+      size_t
+      operator()(const Generics::StringHashAdapter& key) const noexcept
+      {
+        return key.hash();
+      }
+    };
+
+    typedef std::unordered_map<
+      Generics::StringHashAdapter,
+      Lexeme_var,
+      StringHashAdapterHash>
+      LexemeCache;
 
     void get_lexemes(
       const char* lang,

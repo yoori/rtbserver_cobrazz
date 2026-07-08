@@ -60,9 +60,12 @@ namespace
   creative_click_parser()
   {
     static const AdServer::Commons::FastJsonParser<>* parser = [] {
-      auto* result = new AdServer::Commons::FastJsonParser<>();
-      result->add_processor("CLICK", std::make_shared<CreativeClickProcessor>());
-      return result;
+      AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
+      processors.add_processor(
+        "CLICK",
+        std::make_shared<CreativeClickProcessor>());
+      return new AdServer::Commons::FastJsonParser<>(
+        std::move(processors));
     }();
 
     return *parser;

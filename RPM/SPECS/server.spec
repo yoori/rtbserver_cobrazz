@@ -89,7 +89,7 @@ Conflicts: foros-server-remote-debuginfo > %{version}
 %if "%{?buildType}" == "nb" 
 BuildRequires: valgrind-devel
 %endif
-BuildRequires: pcre-devel >= 8.42
+BuildRequires: pcre2-devel >= 10.32
 #BuildRequires: prelink
 BuildRequires: selinux-policy
 BuildRequires: xerces-c-devel = 3.2.5-1.el8

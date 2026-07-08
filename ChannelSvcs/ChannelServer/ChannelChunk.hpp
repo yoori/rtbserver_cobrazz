@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <eh/Exception.hpp>
-#include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
@@ -22,10 +21,18 @@
 #include "ContainerMatchers.hpp"
 #include "SoftMatcher.hpp"
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
+  template<typename Key>
+  struct HashAdapterHash
+  {
+    size_t
+    operator()(const Key& key) const noexcept
+    {
+      return key.hash();
+    }
+  };
+
   struct MatchingEntity: public PositiveContainerType
   {
     MatchingEntity() noexcept
@@ -62,25 +69,20 @@ namespace ChannelSvcs
     }
 
     SoftMatcher_var matcher;
-
-  /*
-  private:
-    MatchingEntity(const MatchingEntity&);
-  */
   };
 
-  typedef CORBA::ULong MatchType;
-  typedef std::vector<MatchingEntity> SoftVector;
+  using MatchType = unsigned long;
+  using SoftVector = std::vector<MatchingEntity>;
 
   enum MatchingFlags
   {
     MF_NONE = 0,
-    MF_NONSTRICTKW = 1,//non strict keyword matching
-    MF_NONSTRICTURL = 2,//non strict url matching
-    MF_ACTIVE = 4,//match active channels
-    MF_INACTIVE = 8,//match inactive channels
-    MF_NEGATIVE = 16,//return negative channel with trigger
-    MF_BLACK_LIST = 32 //match black list channels and special
+    MF_NONSTRICTKW = 1, // non strict keyword matching
+    MF_NONSTRICTURL = 2, // non strict url matching
+    MF_ACTIVE = 4, // match active channels
+    MF_INACTIVE = 8, // match inactive channels
+    MF_NEGATIVE = 16, // return negative channel with trigger
+    MF_BLACK_LIST = 32 // match black list channels and special
   };
 
   struct TriggerAtom:
@@ -122,10 +124,16 @@ namespace ChannelSvcs
     std::string postfix;
   };
 
-  typedef Generics::GnuHashTable<Generics::SubStringHashAdapter, TriggerAtom_var>
+  typedef std::unordered_map<
+    Generics::SubStringHashAdapter,
+    TriggerAtom_var,
+    HashAdapterHash<Generics::SubStringHashAdapter>>
     TriggerMapType;
 
-  typedef Generics::GnuHashTable<Generics::Uuid, UidAtom_var>
+  typedef std::unordered_map<
+    Generics::Uuid,
+    UidAtom_var,
+    HashAdapterHash<Generics::Uuid>>
     UidMapType;
 
   class TriggerMap:
@@ -165,7 +173,6 @@ namespace ChannelSvcs
     }
 
   public:
-
     bool operator==(const CCGKeyword& cp) const noexcept
     {
       return ccg_keyword_id == cp.ccg_keyword_id &&
@@ -203,7 +210,7 @@ namespace ChannelSvcs
     }
   };
 
-  typedef ReferenceCounting::SmartPtr<CCGMap> CCGMap_var;
+  using CCGMap_var = ReferenceCounting::SmartPtr<CCGMap>;
 
   struct Channel
   {
@@ -276,11 +283,9 @@ namespace ChannelSvcs
     }
   };
 
-  typedef ReferenceCounting::SmartPtr<ChannelIdToMatchInfo>
-    ChannelIdToMatchInfo_var;
+  using ChannelIdToMatchInfo_var = ReferenceCounting::SmartPtr<ChannelIdToMatchInfo>;
 
-  class ChannelMatchInfo:
-    public ReferenceCounting::AtomicImpl
+  class ChannelMatchInfo: public ReferenceCounting::AtomicImpl
   {
   public:
     using value_type = std::map<unsigned int, Channel>::value_type;
@@ -348,11 +353,9 @@ namespace ChannelSvcs
     }
   };
 
-  typedef ReferenceCounting::SmartPtr<ChannelMatchInfo>
-    ChannelMatchInfo_var;
+  using ChannelMatchInfo_var = ReferenceCounting::SmartPtr<ChannelMatchInfo>;
 
-
-  typedef std::map<unsigned long, unsigned int> WeightMap;
+  using WeightMap = std::map<unsigned long, unsigned int>;
 
   class ChannelContainer;
 
@@ -390,7 +393,6 @@ namespace ChannelSvcs
     public ReferenceCounting::AtomicImpl
   {
   public:
-
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
     /* info - channel information, which usualy shared
@@ -399,12 +401,10 @@ namespace ChannelSvcs
     ChannelChunk(ChannelMatchInfo* info)
       /*throw(eh::Exception)*/;
 
-    typedef std::map<String::SubString, SoftVector> AddItemMap;
-    typedef std::map<Generics::Uuid, IdSet> AddUidMap;
+    using AddItemMap = std::map<String::SubString, SoftVector>;
+    using AddUidMap = std::map<Generics::Uuid, IdSet>;
 
   public:
-
-    /*match urls */
     void match_url(
       const MatchUrl& url,
       unsigned int flags,
@@ -524,7 +524,6 @@ namespace ChannelSvcs
       noexcept;
 
   private:
-
     /* add new and remove old triggers from map */
     static void apply_map_update_(
       TriggerMap& res,
@@ -545,11 +544,11 @@ namespace ChannelSvcs
     const TriggerMap&
     get_trigger_map_(MatchType type) const
     {
-      if(type == CT_PAGE)
+      if (type == CT_PAGE)
       {
         return *page_keyword_map_;
       }
-      else if(type == CT_URL_KEYWORDS)
+      else if (type == CT_URL_KEYWORDS)
       {
         return *url_keyword_map_;
       }
@@ -560,15 +559,15 @@ namespace ChannelSvcs
     const TriggerMap&
     get_trigger_map_(char type) const
     {
-      if(type == 'U')
+      if (type == 'U')
       {
         return *url_map_var_;
       }
-      else if(type == 'P')
+      else if (type == 'P')
       {
         return *page_keyword_map_;
       }
-      else if(type == 'R')
+      else if (type == 'R')
       {
         return *url_keyword_map_;
       }
@@ -579,15 +578,15 @@ namespace ChannelSvcs
     TriggerMap&
     get_trigger_map_(char type)
     {
-      if(type == 'U')
+      if (type == 'U')
       {
         return *url_map_var_;
       }
-      else if(type == 'P')
+      else if (type == 'P')
       {
         return *page_keyword_map_;
       }
-      else if(type == 'R')
+      else if (type == 'R')
       {
         return *url_keyword_map_;
       }
@@ -598,15 +597,15 @@ namespace ChannelSvcs
     RemovedType&
     get_removed_ids_(char type)
     {
-      if(type == 'U')
+      if (type == 'U')
       {
         return removed_url_ids_;
       }
-      else if(type == 'P')
+      else if (type == 'P')
       {
         return removed_page_keyword_ids_;
       }
-      else if(type == 'R')
+      else if (type == 'R')
       {
         return removed_url_keyword_ids_;
       }
@@ -617,15 +616,15 @@ namespace ChannelSvcs
     AddItemMap&
     get_add_map_(char type)
     {
-      if(type == 'U')
+      if (type == 'U')
       {
         return add_item_url_map_;
       }
-      else if(type == 'P')
+      else if (type == 'P')
       {
         return add_item_page_keyword_map_;
       }
-      else if(type == 'R')
+      else if (type == 'R')
       {
         return add_item_url_keyword_map_;
       }
@@ -642,9 +641,8 @@ namespace ChannelSvcs
     TriggerMap_var url_keyword_map_;
     TriggerMap_var search_keyword_map_;
 
-    //TriggerMap_var trigger_map_var_;//map triggers to TriggerAtom
-    UidMap_var uid_map_var_;//map uids to UidAtom
-    UrlMap_var url_map_var_;//map name to UrlMatcher
+    UidMap_var uid_map_var_; // map uids to UidAtom
+    UrlMap_var url_map_var_; // map name to UrlMatcher
 
     ChannelMatchInfo_var match_info_ptr_;//
     volatile sig_atomic_t terminated_;
@@ -669,7 +667,7 @@ namespace ChannelSvcs
     size_t params_[ChannelServerStats::NS_KW_COUNT];
   };
 
-  typedef ReferenceCounting::SmartPtr<ChannelChunk> ChannelChunk_var;
+  using ChannelChunk_var = ReferenceCounting::SmartPtr<ChannelChunk>;
 
   class ChannelChunkArray:
     public ReferenceCounting::AtomicImpl,
@@ -682,31 +680,11 @@ namespace ChannelSvcs
     }
   };
 
-  typedef ReferenceCounting::SmartPtr<ChannelChunkArray> ChannelChunkArray_var;
-
-
-  /*
-  class TriggerMatchRes
-  {
-  public:
-    typedef std::set<unsigned long> value_type;
-    typedef std::vector<PositiveAtom> value_type2;
-
-  public:
-    value_type2 channel_ids[CT_MAX];
-    value_type negative_channels;
-    IdVector uid_channels;
-    WeightMap weights;
-  };*/
-
-}
+  using ChannelChunkArray_var = ReferenceCounting::SmartPtr<ChannelChunkArray>;
 }
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
-
   inline
   void ChannelChunk::set_info(ChannelMatchInfo* a_info)
     /*throw(eh::Exception)*/
@@ -725,11 +703,11 @@ namespace ChannelSvcs
   ChannelChunk::get_active_options(unsigned int flags) noexcept
   {
     unsigned int active = 0;
-    if(flags & MF_ACTIVE)
+    if (flags & MF_ACTIVE)
     {
       active |= (Channel::CH_ACTIVE | Channel::CH_WAIT);
     }
-    if(flags & MF_INACTIVE)
+    if (flags & MF_INACTIVE)
     {
       active |= Channel::CH_INACTIVE;
     }
@@ -747,7 +725,7 @@ namespace ChannelSvcs
     const ChannelIdToMatchInfo& in)
     /*throw(eh::Exception)*/
   {
-    if(&in != this)
+    if (&in != this)
     {
       MatchInfoContainerType::operator=(in);
     }
@@ -777,7 +755,7 @@ namespace ChannelSvcs
   inline
   bool Channel::match(unsigned int type) const noexcept
   {
-    return ((flags_ & (1<<type)) != 0);
+    return ((flags_ & (1 << type)) != 0);
   }
 
   inline
@@ -789,7 +767,7 @@ namespace ChannelSvcs
   inline
   void Channel::mark_type(unsigned int type) noexcept
   {
-    flags_ |= (1<<type);
+    flags_ |= (1 << type);
   }
 
   inline
@@ -832,6 +810,4 @@ namespace ChannelSvcs
       find_container_.emplace(i->first, i->second.channel);
     }
   }
-
-}
 }

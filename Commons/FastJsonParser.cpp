@@ -1,11 +1,12 @@
 #include "FastJsonParser.hpp"
 
+#include <algorithm>
 #include <charconv>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <list>
 #include <memory_resource>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -24,6 +25,181 @@ namespace AdServer::Commons
 {
   namespace
   {
+    template<typename KeyType, typename ValueType>
+    class MapHelper
+    {
+    public:
+      enum Mode
+      {
+        SINGLE_ELEMENT_STORAGE,
+        VECTOR_STORAGE,
+        HASH_STORAGE
+      };
+
+      explicit
+      MapHelper(
+        std::pmr::memory_resource* memory_resource =
+          std::pmr::get_default_resource())
+        : vector_storage_(memory_resource),
+          hash_storage_(memory_resource)
+      {}
+
+      void
+      emplace(KeyType&& key, ValueType&& value)
+      {
+        if(size_ == 0)
+        {
+          single_element_storage_.emplace(
+            std::move(key),
+            std::move(value));
+          mode_ = SINGLE_ELEMENT_STORAGE;
+          size_ = 1;
+          return;
+        }
+
+        if(mode_ == SINGLE_ELEMENT_STORAGE)
+        {
+          if(single_element_storage_->first == key)
+          {
+            return;
+          }
+
+          vector_storage_.emplace_back(
+            std::move(single_element_storage_->first),
+            std::move(single_element_storage_->second));
+          single_element_storage_.reset();
+          mode_ = VECTOR_STORAGE;
+        }
+
+        if(mode_ == VECTOR_STORAGE)
+        {
+          if(vector_storage_.size() + 1 < HASH_STORAGE_MIN_SIZE)
+          {
+            auto it = lower_bound_(key);
+            if(it != vector_storage_.end() && it->first == key)
+            {
+              return;
+            }
+
+            vector_storage_.emplace(
+              it,
+              std::move(key),
+              std::move(value));
+            ++size_;
+            return;
+          }
+
+          hash_storage_.reserve(vector_storage_.size() + 1);
+          for(auto& item : vector_storage_)
+          {
+            hash_storage_.emplace(
+              std::move(item.first),
+              std::move(item.second));
+          }
+          vector_storage_.clear();
+          mode_ = HASH_STORAGE;
+        }
+
+        const auto inserted = hash_storage_.emplace(
+          std::move(key),
+          std::move(value));
+        if(inserted.second)
+        {
+          ++size_;
+        }
+      }
+
+      ValueType*
+      find(const KeyType& key)
+      {
+        switch(mode_)
+        {
+        case SINGLE_ELEMENT_STORAGE:
+          return single_element_storage_ && single_element_storage_->first == key ?
+            &single_element_storage_->second :
+            nullptr;
+        case VECTOR_STORAGE:
+          {
+            auto it = lower_bound_(key);
+            return it != vector_storage_.end() && it->first == key ?
+              &it->second :
+              nullptr;
+          }
+        case HASH_STORAGE:
+          {
+            auto it = hash_storage_.find(key);
+            return it != hash_storage_.end() ? &it->second : nullptr;
+          }
+        }
+
+        return nullptr;
+      }
+
+      const ValueType*
+      find(const KeyType& key) const
+      {
+        switch(mode_)
+        {
+        case SINGLE_ELEMENT_STORAGE:
+          return single_element_storage_ && single_element_storage_->first == key ?
+            &single_element_storage_->second :
+            nullptr;
+        case VECTOR_STORAGE:
+          {
+            auto it = lower_bound_(key);
+            return it != vector_storage_.end() && it->first == key ?
+              &it->second :
+              nullptr;
+          }
+        case HASH_STORAGE:
+          {
+            auto it = hash_storage_.find(key);
+            return it != hash_storage_.end() ? &it->second : nullptr;
+          }
+        }
+
+        return nullptr;
+      }
+
+    private:
+      using Pair = std::pair<KeyType, ValueType>;
+      using Vector = std::pmr::vector<Pair>;
+
+      static constexpr std::size_t HASH_STORAGE_MIN_SIZE = 8;
+
+      typename Vector::iterator
+      lower_bound_(const KeyType& key)
+      {
+        return std::lower_bound(
+          vector_storage_.begin(),
+          vector_storage_.end(),
+          key,
+          [] (const Pair& left, const KeyType& right)
+          {
+            return left.first < right;
+          });
+      }
+
+      typename Vector::const_iterator
+      lower_bound_(const KeyType& key) const
+      {
+        return std::lower_bound(
+          vector_storage_.begin(),
+          vector_storage_.end(),
+          key,
+          [] (const Pair& left, const KeyType& right)
+          {
+            return left.first < right;
+          });
+      }
+
+      Mode mode_ = SINGLE_ELEMENT_STORAGE;
+      std::size_t size_ = 0;
+      std::optional<Pair> single_element_storage_;
+      Vector vector_storage_;
+      std::pmr::unordered_map<KeyType, ValueType> hash_storage_;
+    };
+
     bool
     simd_supported_() noexcept
     {
@@ -403,13 +579,20 @@ namespace AdServer::Commons
 
     struct JsonTreeProcessor
     {
-      JsonTreeProcessor() = default;
-
       explicit
-      JsonTreeProcessor(std::string path_val);
+      JsonTreeProcessor(
+        std::pmr::memory_resource* memory_resource =
+          std::pmr::get_default_resource());
+
+      JsonTreeProcessor(
+        std::string path_val,
+        std::pmr::memory_resource* memory_resource);
 
       static std::uint64_t
       short_key_(std::string_view key) noexcept;
+
+      JsonTreeProcessor*
+      get_or_add_sub_processor(std::string_view key);
 
       JsonTreeProcessor*
       find_sub_processor(std::string_view key, bool escaped);
@@ -417,11 +600,24 @@ namespace AdServer::Commons
       const JsonTreeProcessor*
       find_sub_processor(std::string_view key, bool escaped) const;
 
-      std::list<std::string> key_holder;
-      std::unordered_map<
-        std::string_view,
-        std::unique_ptr<JsonTreeProcessor> > sub_processors;
-      std::unordered_map<std::uint64_t, JsonTreeProcessor*> short_processors;
+      struct ChildProcessor
+      {
+        ChildProcessor(
+          std::string_view key_val,
+          std::unique_ptr<JsonTreeProcessor>&& processor_val,
+          std::pmr::memory_resource* memory_resource);
+
+        std::pmr::string key;
+        std::unique_ptr<JsonTreeProcessor> processor;
+      };
+
+      void
+      build_sub_processors_();
+
+      std::pmr::memory_resource* memory_resource;
+      std::pmr::vector<ChildProcessor> child_processors;
+      MapHelper<std::string_view, JsonTreeProcessor*> sub_processors;
+      MapHelper<std::uint64_t, JsonTreeProcessor*> short_processors;
       std::shared_ptr<ValueProcessor> value_processor;
       std::string path;
       bool as_string = false;
@@ -578,10 +774,13 @@ namespace AdServer::Commons
     };
 
     explicit
-    Impl(bool strict_val, bool use_simd_val);
+    Impl(
+      typename FastJsonParser<StringType>::ProcessorSet&& processors,
+      bool strict_val,
+      bool use_simd_val);
 
     void
-    add_processor(
+    add_processor_(
       std::string_view path,
       std::shared_ptr<ValueProcessor> processor,
       bool as_string);
@@ -633,9 +832,23 @@ namespace AdServer::Commons
       StringCreator string_creator,
       void* string_creator_context);
 
-    ParseHandler parse_handler = nullptr;
+    std::pmr::unsynchronized_pool_resource processor_memory_resource;
     JsonTreeProcessor root_processor;
+    ParseHandler parse_handler = nullptr;
   };
+
+  template<typename StringType>
+  void
+  FastJsonParser<StringType>::ProcessorSet::add_processor(
+    std::string_view path,
+    std::shared_ptr<ValueProcessor> processor,
+    bool as_string)
+  {
+    entries_.push_back({
+      std::string(path),
+      std::move(processor),
+      as_string});
+  }
 
   template<typename StringType>
   void
@@ -767,21 +980,21 @@ namespace AdServer::Commons
 
   template<typename StringType>
   FastJsonParser<StringType>::FastJsonParser(bool strict)
-    : impl_(std::make_unique<Impl>(strict, simd_supported_()))
+    : FastJsonParser(ProcessorSet(), strict)
+  {}
+
+  template<typename StringType>
+  FastJsonParser<StringType>::FastJsonParser(
+    ProcessorSet&& processors,
+    bool strict)
+    : impl_(std::make_unique<Impl>(
+        std::move(processors),
+        strict,
+        simd_supported_()))
   {}
 
   template<typename StringType>
   FastJsonParser<StringType>::~FastJsonParser() noexcept = default;
-
-  template<typename StringType>
-  void
-  FastJsonParser<StringType>::add_processor(
-    std::string_view path,
-    std::shared_ptr<ValueProcessor> processor,
-    bool as_string)
-  {
-    impl_->add_processor(path, std::move(processor), as_string);
-  }
 
   template<typename StringType>
   void
@@ -813,8 +1026,29 @@ namespace AdServer::Commons
 
   template<typename StringType>
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::JsonTreeProcessor(
-    std::string path_val)
-    : path(std::move(path_val))
+    std::pmr::memory_resource* memory_resource_val)
+    : memory_resource(memory_resource_val),
+      child_processors(memory_resource),
+      sub_processors(memory_resource),
+      short_processors(memory_resource)
+  {}
+
+  template<typename StringType>
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::JsonTreeProcessor(
+    std::string path_val,
+    std::pmr::memory_resource* memory_resource_val)
+    : JsonTreeProcessor(memory_resource_val)
+  {
+    path = std::move(path_val);
+  }
+
+  template<typename StringType>
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::ChildProcessor::ChildProcessor(
+    std::string_view key_val,
+    std::unique_ptr<JsonTreeProcessor>&& processor_val,
+    std::pmr::memory_resource* memory_resource)
+    : key(key_val, memory_resource),
+      processor(std::move(processor_val))
   {}
 
   template<typename StringType>
@@ -876,22 +1110,72 @@ namespace AdServer::Commons
 
   template<typename StringType>
   typename FastJsonParser<StringType>::Impl::JsonTreeProcessor*
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::get_or_add_sub_processor(
+    std::string_view key)
+  {
+    for(auto& child : child_processors)
+    {
+      if(std::string_view(child.key.data(), child.key.size()) == key)
+      {
+        return child.processor.get();
+      }
+    }
+
+    std::string child_path = path.empty() ?
+      std::string(key) :
+      path + "." + std::string(key);
+
+    auto child = std::make_unique<JsonTreeProcessor>(
+      std::move(child_path),
+      memory_resource);
+    JsonTreeProcessor* const child_processor = child.get();
+    child_processors.emplace_back(
+      key,
+      std::move(child),
+      memory_resource);
+    return child_processor;
+  }
+
+  template<typename StringType>
+  void
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::build_sub_processors_()
+  {
+    for(auto& child : child_processors)
+    {
+      const std::string_view key(child.key.data(), child.key.size());
+      child.processor->build_sub_processors_();
+      sub_processors.emplace(
+        std::string_view(key),
+        child.processor.get());
+
+      if(key.size() <= sizeof(std::uint64_t))
+      {
+        short_processors.emplace(
+          short_key_(key),
+          child.processor.get());
+      }
+    }
+  }
+
+  template<typename StringType>
+  typename FastJsonParser<StringType>::Impl::JsonTreeProcessor*
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::find_sub_processor(
     std::string_view key,
     bool escaped)
   {
     if(!escaped && key.size() <= sizeof(std::uint64_t))
     {
-      const auto short_it = short_processors.find(short_key_(key));
-      if(short_it != short_processors.end())
+      JsonTreeProcessor** const processor =
+        short_processors.find(short_key_(key));
+      if(processor != nullptr)
       {
-        return short_it->second;
+        return *processor;
       }
       return nullptr;
     }
 
-    const auto it = sub_processors.find(key);
-    return it != sub_processors.end() ? it->second.get() : nullptr;
+    JsonTreeProcessor** const processor = sub_processors.find(key);
+    return processor != nullptr ? *processor : nullptr;
   }
 
   template<typename StringType>
@@ -902,21 +1186,35 @@ namespace AdServer::Commons
   {
     if(!escaped && key.size() <= sizeof(std::uint64_t))
     {
-      const auto short_it = short_processors.find(short_key_(key));
-      if(short_it != short_processors.end())
+      JsonTreeProcessor* const* const processor =
+        short_processors.find(short_key_(key));
+      if(processor != nullptr)
       {
-        return short_it->second;
+        return *processor;
       }
       return nullptr;
     }
 
-    const auto it = sub_processors.find(key);
-    return it != sub_processors.end() ? it->second.get() : nullptr;
+    JsonTreeProcessor* const* const processor = sub_processors.find(key);
+    return processor != nullptr ? *processor : nullptr;
   }
 
   template<typename StringType>
-  FastJsonParser<StringType>::Impl::Impl(bool strict_val, bool use_simd_val)
+  FastJsonParser<StringType>::Impl::Impl(
+    typename FastJsonParser<StringType>::ProcessorSet&& processors,
+    bool strict_val,
+    bool use_simd_val)
+    : root_processor(&processor_memory_resource)
   {
+    for(auto& entry : processors.entries_)
+    {
+      add_processor_(
+        entry.path,
+        std::move(entry.processor),
+        entry.as_string);
+    }
+    root_processor.build_sub_processors_();
+
     if(strict_val)
     {
       parse_handler = use_simd_val ?
@@ -933,7 +1231,7 @@ namespace AdServer::Commons
 
   template<typename StringType>
   void
-  FastJsonParser<StringType>::Impl::add_processor(
+  FastJsonParser<StringType>::Impl::add_processor_(
     std::string_view path,
     std::shared_ptr<ValueProcessor> processor,
     bool as_string)
@@ -959,29 +1257,7 @@ namespace AdServer::Commons
         throw ParseError("empty path element in '" + std::string(path) + "'");
       }
 
-      JsonTreeProcessor* child_processor =
-        current->find_sub_processor(key, false);
-      if(child_processor == nullptr)
-      {
-        current->key_holder.emplace_back(key);
-        const std::string_view stored_key(current->key_holder.back());
-        std::string child_path = current->path.empty() ?
-          std::string(stored_key) :
-          current->path + "." + std::string(stored_key);
-
-        auto child = std::make_unique<JsonTreeProcessor>(
-          std::move(child_path));
-        child_processor = child.get();
-        current->sub_processors.emplace(stored_key, std::move(child));
-        if(stored_key.size() <= sizeof(std::uint64_t))
-        {
-          current->short_processors.emplace(
-            JsonTreeProcessor::short_key_(stored_key),
-            child_processor);
-        }
-      }
-
-      current = child_processor;
+      current = current->get_or_add_sub_processor(key);
 
       if(next_pos == std::string_view::npos)
       {
