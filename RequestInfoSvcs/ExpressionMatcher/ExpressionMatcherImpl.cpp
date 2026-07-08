@@ -1894,15 +1894,16 @@ namespace RequestInfoSvcs
     }
     catch (const eh::Exception &ex)
     {
+      const size_t users_left = state.in() ? state->users.size() : 0;
       logger()->sstream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_DAILY_CHECK,
         "ADS-IMPL-4020") << FUN <<
         ": Can't finish daily processing - " <<
-        state->users.size() << " users left"
+        users_left << " users left"
         ": eh::Exception caught: " << ex.what();
     }
 
-    if(!state->unprocessed_users.empty())
+    if(state.in() && !state->unprocessed_users.empty())
     {
       logger()->sstream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_DAILY_CHECK,

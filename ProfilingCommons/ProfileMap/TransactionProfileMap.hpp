@@ -154,6 +154,10 @@ namespace ProfilingCommons
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     void
+    clear_expired(const Generics::Time& expire_time)
+      /*throw(typename ProfileMap<KeyType>::Exception)*/ override;
+
+    void
     check_profile_async(
       const KeyType& key,
       typename AsyncProfileMap<KeyType>::CheckCallback callback) const
@@ -463,6 +467,31 @@ namespace ProfilingCommons
   {
     return dynamic_cast<AsyncProfileMap<KeyType>*>(
       this->no_add_ref_delegate_map_());
+  }
+
+  template <typename KeyType>
+  void
+  TransactionProfileMap<KeyType>::clear_expired(
+    const Generics::Time& expire_time)
+    /*throw(typename ProfileMap<KeyType>::Exception)*/
+  {
+    if(auto* async_map = async_delegate_map_())
+    {
+      std::promise<void> promise;
+      std::future<void> future = promise.get_future();
+
+      async_map->clear_expired_async(
+        expire_time,
+        [&promise]()
+        {
+          promise.set_value();
+        });
+
+      future.get();
+      return;
+    }
+
+    DelegateProfileMap<KeyType>::clear_expired(expire_time);
   }
 
   template <typename KeyType>
