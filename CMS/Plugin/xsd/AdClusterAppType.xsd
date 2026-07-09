@@ -1299,6 +1299,13 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="CpuAffinityModeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="auto"/>
+      <xsd:enumeration value="disabled"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="ClusterEnvironmentType">
     <xsd:attribute name="workspace_root" type="NoLeadingTrailingSpaces" use="optional">
       <xsd:annotation>
@@ -1361,6 +1368,13 @@
       <xsd:annotation>
         <xsd:documentation>
           Path to mib files of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="cpu_affinity" type="CpuAffinityModeType" use="optional" default="disabled">
+      <xsd:annotation>
+        <xsd:documentation>
+          Controls thread affinity preload for selected DACS-managed services.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

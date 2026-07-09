@@ -42,9 +42,12 @@ namespace AdServer::UserInfoSvcs
     using ControllerGrpc =
       adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc;
 
-    explicit ControllerClient(const std::string& endpoint)
+    explicit ControllerClient(
+      const std::string& endpoint,
+      const std::size_t partition_index)
       : endpoint(endpoint),
         name(endpoint),
+        partition_index(partition_index),
         channel(AdServer::Grpc::create_channel(
           this->endpoint,
           grpc::InsecureChannelCredentials())),
@@ -61,6 +64,7 @@ namespace AdServer::UserInfoSvcs
 
     const std::string endpoint;
     const std::string name;
+    const std::size_t partition_index;
     std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<ControllerGrpc::Stub> stub;
   };
@@ -85,7 +89,7 @@ namespace AdServer::UserInfoSvcs
       {
         return resolve_partition_(controller_client);
       },
-      &partition_index_,
+      &partition_hash_,
       &chunk_index_,
       DEFAULT_POOL_TIMEOUT,
       DEFAULT_RESOLVE_PERIOD);
@@ -365,12 +369,9 @@ namespace AdServer::UserInfoSvcs
       GrpcAlgs::unpack_user_id(user_id)) % chunks_number;
   }
 
-  unsigned long
-  UserInfoDistributedGrpcClient::partition_index_(
-    const std::string& user_id,
-    unsigned long partitions_number)
+  std::uint64_t
+  UserInfoDistributedGrpcClient::partition_hash_(const std::string& user_id)
   {
-    return (GrpcAlgs::unpack_user_id(user_id).hash() >> 8) %
-      partitions_number;
+    return GrpcAlgs::unpack_user_id(user_id).hash();
   }
 }

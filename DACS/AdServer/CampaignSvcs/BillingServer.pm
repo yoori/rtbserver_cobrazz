@@ -17,7 +17,7 @@ sub start
       "pid=`cat $pid_file`; " .
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
-    "setsid -f \${VALGRIND_PREFIX} BillingServer " .
+    "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} BillingServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/BillingServer.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}BillingServer.out 2>&1 < /dev/null";
 

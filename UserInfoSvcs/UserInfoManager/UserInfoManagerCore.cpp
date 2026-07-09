@@ -165,7 +165,7 @@ namespace AdServer::UserInfoSvcs
       out << "]\n";
     }
 
-    void
+    [[maybe_unused]] void
     debug_print_match_input(
       const char* function_name,
       const UserInfoManagerCore::UserInfo& user_info,

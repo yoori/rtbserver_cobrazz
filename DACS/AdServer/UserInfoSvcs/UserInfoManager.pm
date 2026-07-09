@@ -30,7 +30,7 @@ sub start
    "ulimit -n 16000 && " .
    "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
    "{ ".
-     "setsid -f \${VALGRIND_PREFIX} UserInfoManager " .
+     "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} UserInfoManager " .
        "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserInfoManagerConfig.xml > " .
        "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}UserInfoManager.out 2>&1 < /dev/null ; " .
    "}";

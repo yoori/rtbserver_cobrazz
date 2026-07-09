@@ -51,21 +51,21 @@ namespace AdServer::Grpc
   public:
     ResolvePartitionTask(
       DistributedPartitionPool* owner,
-      unsigned long partition_num) noexcept
+      unsigned long partition_index) noexcept
       : owner_(owner),
-        partition_num_(partition_num)
+        partition_index_(partition_index)
     {}
 
     void execute() noexcept override
     {
-      owner_->resolve_partition_(partition_num_);
+      owner_->resolve_partition_(partition_index_);
     }
 
   private:
     ~ResolvePartitionTask() noexcept override = default;
 
     DistributedPartitionPool* owner_;
-    const unsigned long partition_num_;
+    const unsigned long partition_index_;
   };
 
   template<typename ClientType, typename ControllerClientType>
@@ -146,7 +146,7 @@ namespace AdServer::Grpc
       refs.reserve(controller_refs_[i].size());
       for (const auto& controller_ref : controller_refs_[i])
       {
-        refs.emplace_back(std::make_shared<ControllerClient>(controller_ref));
+        refs.emplace_back(std::make_shared<ControllerClient>(controller_ref, i));
       }
       auto controller_pool = std::make_shared<ControllerPool>(
         std::move(refs),
@@ -255,8 +255,8 @@ namespace AdServer::Grpc
       const auto primary_partition = partition_index_(key, partitions_number);
       for (unsigned long i = 0; i < partitions_number; ++i)
       {
-        const auto partition_num = (primary_partition + i) % partitions_number;
-        auto partition = get_partition_(partition_num);
+        const auto partition_index = (primary_partition + i) % partitions_number;
+        auto partition = get_partition_(partition_index);
         if (!partition)
         {
           continue;
@@ -266,7 +266,7 @@ namespace AdServer::Grpc
         const auto it = partition->chunk_pools.find(chunk_id);
         if (it == partition->chunk_pools.end() || !it->second)
         {
-          try_to_reresolve_partition(partition_num);
+          try_to_reresolve_partition(partition_index);
           continue;
         }
 
@@ -329,8 +329,8 @@ namespace AdServer::Grpc
       const auto primary_partition = partition_index_(key, partitions_number);
       for (unsigned long i = 0; i < partitions_number; ++i)
       {
-        const auto partition_num = (primary_partition + i) % partitions_number;
-        auto partition = get_partition_(partition_num);
+        const auto partition_index = (primary_partition + i) % partitions_number;
+        auto partition = get_partition_(partition_index);
         if (partition && partition->max_chunk_number)
         {
           return chunk_index_(key, partition->max_chunk_number);
@@ -347,9 +347,9 @@ namespace AdServer::Grpc
   template<typename ClientType, typename ControllerClientType>
   void
   DistributedPartitionPool<ClientType, ControllerClientType>::try_to_reresolve_partition(
-    unsigned long partition_num) noexcept
+    unsigned long partition_index) noexcept
   {
-    schedule_reresolve_partition_(partition_num, false);
+    schedule_reresolve_partition_(partition_index, false);
   }
 
   template<typename ClientType, typename ControllerClientType>
@@ -398,11 +398,11 @@ namespace AdServer::Grpc
   template<typename ClientType, typename ControllerClientType>
   void
   DistributedPartitionPool<ClientType, ControllerClientType>::schedule_reresolve_partition_(
-    unsigned long partition_num,
+    unsigned long partition_index,
     bool force) noexcept
   {
-    if (partition_num >= partition_holders_.size() ||
-      !begin_resolve_partition_(partition_num, force))
+    if (partition_index >= partition_holders_.size() ||
+      !begin_resolve_partition_(partition_index, force))
     {
       return;
     }
@@ -410,20 +410,20 @@ namespace AdServer::Grpc
     try
     {
       task_runner_->enqueue_task(
-        Generics::Task_var(new ResolvePartitionTask(this, partition_num)));
+        Generics::Task_var(new ResolvePartitionTask(this, partition_index)));
     }
     catch (...)
     {
-      finish_resolve_partition_(partition_num, false);
+      finish_resolve_partition_(partition_index, false);
     }
   }
 
   template<typename ClientType, typename ControllerClientType>
   void
   DistributedPartitionPool<ClientType, ControllerClientType>::resolve_partition_(
-    unsigned long partition_num) noexcept
+    unsigned long partition_index) noexcept
   {
-    if (partition_num >= partition_holders_.size())
+    if (partition_index >= partition_holders_.size())
     {
       return;
     }
@@ -432,15 +432,15 @@ namespace AdServer::Grpc
     std::optional<typename ControllerPool::Ref> controller_ref;
     try
     {
-      controller_ref = controller_pools_[partition_num]->get_object();
+      controller_ref = controller_pools_[partition_index]->get_object();
       if (!controller_ref)
       {
         record_resolve_error_(
-          partition_num,
+          partition_index,
           "no available controller refs: " +
-            controller_pools_[partition_num]->unavailable_description(),
+            controller_pools_[partition_index]->unavailable_description(),
           "controller_resolve");
-        finish_resolve_partition_(partition_num, false);
+        finish_resolve_partition_(partition_index, false);
         return;
       }
 
@@ -452,11 +452,11 @@ namespace AdServer::Grpc
           Generics::Time::get_time_of_day() + pool_timeout_,
           "controller returned no partition refs");
         record_resolve_error_(
-          partition_num,
+          partition_index,
           "controller returned no partition refs",
           "controller_resolve",
           (*controller_ref)->endpoint);
-        finish_resolve_partition_(partition_num, false);
+        finish_resolve_partition_(partition_index, false);
         return;
       }
 
@@ -491,7 +491,7 @@ namespace AdServer::Grpc
           ex.what());
       }
       record_resolve_error_(
-        partition_num,
+        partition_index,
         ex.what(),
         "controller_resolve",
         controller_ref ? (*controller_ref)->endpoint : std::string());
@@ -502,10 +502,10 @@ namespace AdServer::Grpc
           name_.c_str(),
           "ADS-IMPL-72") <<
           "Can't resolve controller '" <<
-          controller_pools_[partition_num]->unavailable_description() <<
+          controller_pools_[partition_index]->unavailable_description() <<
           "': " << ex.what();
       }
-      finish_resolve_partition_(partition_num, false);
+      finish_resolve_partition_(partition_index, false);
       return;
     }
     catch (...)
@@ -517,37 +517,37 @@ namespace AdServer::Grpc
           "unknown controller resolve exception");
       }
       record_resolve_error_(
-        partition_num,
+        partition_index,
         "unknown controller resolve exception",
         "controller_resolve",
         controller_ref ? (*controller_ref)->endpoint : std::string());
-      finish_resolve_partition_(partition_num, false);
+      finish_resolve_partition_(partition_index, false);
       return;
     }
 
     if (refs.empty())
     {
       record_resolve_error_(
-        partition_num,
+        partition_index,
         "controller returned empty partition refs",
         "controller_resolve",
         controller_ref ? (*controller_ref)->endpoint : std::string());
-      finish_resolve_partition_(partition_num, false);
+      finish_resolve_partition_(partition_index, false);
       return;
     }
 
     bool state_unchanged = false;
     {
       std::shared_lock<std::shared_mutex> lock(
-        partition_holders_[partition_num]->lock);
+        partition_holders_[partition_index]->lock);
       state_unchanged =
-        partition_holders_[partition_num]->partition &&
-        partition_holders_[partition_num]->partition->state == refs;
+        partition_holders_[partition_index]->partition &&
+        partition_holders_[partition_index]->partition->state == refs;
     }
 
     if (state_unchanged)
     {
-      finish_resolve_partition_(partition_num, true);
+      finish_resolve_partition_(partition_index, true);
       return;
     }
 
@@ -562,11 +562,11 @@ namespace AdServer::Grpc
       if (!ref_holder)
       {
         record_resolve_error_(
-          partition_num,
+          partition_index,
           "can't create grpc client ref holder",
           "controller_resolve",
           controller_ref ? (*controller_ref)->endpoint : std::string());
-        finish_resolve_partition_(partition_num, false);
+        finish_resolve_partition_(partition_index, false);
         return;
       }
 
@@ -587,11 +587,11 @@ namespace AdServer::Grpc
     if (chunk_refs.empty())
     {
       record_resolve_error_(
-        partition_num,
+        partition_index,
         "controller returned partition refs without chunks",
         "controller_resolve",
         controller_ref ? (*controller_ref)->endpoint : std::string());
-      finish_resolve_partition_(partition_num, false);
+      finish_resolve_partition_(partition_index, false);
       return;
     }
 
@@ -612,11 +612,11 @@ namespace AdServer::Grpc
     bool installed = false;
     {
       std::unique_lock<std::shared_mutex> lock(
-        partition_holders_[partition_num]->lock);
+        partition_holders_[partition_index]->lock);
       if (!deactivated_.load(std::memory_order_acquire))
       {
-        old_partition = std::move(partition_holders_[partition_num]->partition);
-        partition_holders_[partition_num]->partition = std::move(new_partition);
+        old_partition = std::move(partition_holders_[partition_index]->partition);
+        partition_holders_[partition_index]->partition = std::move(new_partition);
         installed = true;
       }
     }
@@ -626,25 +626,25 @@ namespace AdServer::Grpc
     {
       deactivate_partition_pools_(new_partition);
     }
-    finish_resolve_partition_(partition_num, installed);
+    finish_resolve_partition_(partition_index, installed);
   }
 
   template<typename ClientType, typename ControllerClientType>
   void
   DistributedPartitionPool<ClientType, ControllerClientType>::record_resolve_error_(
-    unsigned long partition_num,
+    unsigned long partition_index,
     const std::string& message,
     const char* source,
     std::string endpoint) noexcept
   {
-    if (partition_num >= controller_refs_.size())
+    if (partition_index >= controller_refs_.size())
     {
       return;
     }
 
     if (endpoint.empty())
     {
-      for (const auto& controller_ref : controller_refs_[partition_num])
+      for (const auto& controller_ref : controller_refs_[partition_index])
       {
         if (!endpoint.empty())
         {
@@ -663,7 +663,7 @@ namespace AdServer::Grpc
   template<typename ClientType, typename ControllerClientType>
   bool
   DistributedPartitionPool<ClientType, ControllerClientType>::begin_resolve_partition_(
-    unsigned long partition_num,
+    unsigned long partition_index,
     bool force) noexcept
   {
     if (deactivated_.load(std::memory_order_acquire))
@@ -673,59 +673,58 @@ namespace AdServer::Grpc
 
     const auto now = Generics::Time::get_time_of_day();
     std::unique_lock<std::shared_mutex> lock(
-      partition_holders_[partition_num]->lock);
-    if (partition_holders_[partition_num]->resolve_in_progress)
+      partition_holders_[partition_index]->lock);
+    if (partition_holders_[partition_index]->resolve_in_progress)
     {
       return false;
     }
 
     if (!force &&
-      now < partition_holders_[partition_num]->last_try_to_resolve +
+      now < partition_holders_[partition_index]->last_try_to_resolve +
         pool_timeout_)
     {
       return false;
     }
 
-    partition_holders_[partition_num]->resolve_in_progress = true;
+    partition_holders_[partition_index]->resolve_in_progress = true;
     return true;
   }
 
   template<typename ClientType, typename ControllerClientType>
   void
   DistributedPartitionPool<ClientType, ControllerClientType>::finish_resolve_partition_(
-    unsigned long partition_num,
+    unsigned long partition_index,
     bool installed) noexcept
   {
-    if (partition_num >= partition_holders_.size())
+    if (partition_index >= partition_holders_.size())
     {
       return;
     }
 
     std::unique_lock<std::shared_mutex> lock(
-      partition_holders_[partition_num]->lock);
+      partition_holders_[partition_index]->lock);
     if (!installed)
     {
-      partition_holders_[partition_num]->last_try_to_resolve =
+      partition_holders_[partition_index]->last_try_to_resolve =
         Generics::Time::get_time_of_day();
     }
-    partition_holders_[partition_num]->resolve_in_progress = false;
+    partition_holders_[partition_index]->resolve_in_progress = false;
   }
 
   template<typename ClientType, typename ControllerClientType>
   typename DistributedPartitionPool<ClientType, ControllerClientType>::PartitionPtr
   DistributedPartitionPool<ClientType, ControllerClientType>::get_partition_(
-    unsigned long partition_num) noexcept
+    unsigned long partition_index) noexcept
   {
     PartitionPtr result;
     {
-      std::shared_lock<std::shared_mutex> lock(
-        partition_holders_[partition_num]->lock);
-      result = partition_holders_[partition_num]->partition;
+      std::shared_lock<std::shared_mutex> lock(partition_holders_[partition_index]->lock);
+      result = partition_holders_[partition_index]->partition;
     }
 
     if (!result)
     {
-      try_to_reresolve_partition(partition_num);
+      try_to_reresolve_partition(partition_index);
     }
 
     return result;

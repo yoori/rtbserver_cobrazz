@@ -31,13 +31,17 @@ namespace AdServer::Grpc
 {
   struct BasicControllerRefHolder
   {
-    explicit BasicControllerRefHolder(std::string endpoint_val)
+    explicit BasicControllerRefHolder(
+      std::string endpoint_val,
+      std::size_t partition_index_val = 0)
       : endpoint(std::move(endpoint_val)),
-        name(endpoint)
+        name(endpoint),
+        partition_index(partition_index_val)
     {}
 
     const std::string endpoint;
     const std::string name;
+    const std::size_t partition_index;
   };
 
   template<
@@ -122,7 +126,7 @@ namespace AdServer::Grpc
     std::optional<Ref> get_ref(const std::string& key) noexcept;
     std::optional<Ref> get_any_ref() noexcept;
     std::optional<unsigned long> chunk_index(const std::string& key) noexcept;
-    void try_to_reresolve_partition(unsigned long partition_num) noexcept;
+    void try_to_reresolve_partition(unsigned long partition_index) noexcept;
 
   private:
     class ResolvePartitionTask;
@@ -155,21 +159,21 @@ namespace AdServer::Grpc
     void periodic_resolve_loop_() noexcept;
     void wait_next_resolve_() noexcept;
     void schedule_reresolve_partition_(
-      unsigned long partition_num,
+      unsigned long partition_index,
       bool force) noexcept;
-    void resolve_partition_(unsigned long partition_num) noexcept;
+    void resolve_partition_(unsigned long partition_index) noexcept;
     void record_resolve_error_(
-      unsigned long partition_num,
+      unsigned long partition_index,
       const std::string& message,
       const char* source,
       std::string endpoint = {}) noexcept;
     bool begin_resolve_partition_(
-      unsigned long partition_num,
+      unsigned long partition_index,
       bool force) noexcept;
     void finish_resolve_partition_(
-      unsigned long partition_num,
+      unsigned long partition_index,
       bool installed) noexcept;
-    PartitionPtr get_partition_(unsigned long partition_num) noexcept;
+    PartitionPtr get_partition_(unsigned long partition_index) noexcept;
     RefHolderPtr get_or_create_ref_holder_(const std::string& endpoint);
     void deactivate_partitions_() noexcept;
     static void deactivate_partition_pools_(const PartitionPtr& partition) noexcept;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -11,8 +12,8 @@
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
 
+#include <Commons/Grpc/BalancedDistributedPartitionPool.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
-#include <Commons/Grpc/DistributedPartitionPool.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
@@ -101,7 +102,7 @@ namespace AdServer::UserInfoSvcs
     using Client = UserInfoManagerGrpcAsyncBatchingClient;
     struct ControllerClient;
     using Pool =
-      AdServer::Grpc::DistributedPartitionPool<Client, ControllerClient>;
+      AdServer::Grpc::BalancedDistributedPartitionPool<Client, ControllerClient>;
     using PoolPtr = std::shared_ptr<Pool>;
 
     std::optional<Pool::Ref> get_ref_(const std::string& user_id) noexcept;
@@ -112,9 +113,7 @@ namespace AdServer::UserInfoSvcs
     static unsigned long chunk_index_(
       const std::string& user_id,
       unsigned long chunks_number);
-    static unsigned long partition_index_(
-      const std::string& user_id,
-      unsigned long partitions_number);
+    static std::uint64_t partition_hash_(const std::string& user_id);
 
   private:
     PoolPtr pool_;

@@ -22,7 +22,7 @@ sub start
        "fi && " .
        "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
        "{ ".
-         "setsid -f \${VALGRIND_PREFIX} ChannelServer " .
+         "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} ChannelServer " .
            "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServer.xml > " .
            "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ChannelServer.out 2>&1 < /dev/null ; " .
    "}";

@@ -24,7 +24,7 @@ sub start
      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
    "fi && " .
    "{ " .
-   "setsid -f \${VALGRIND_PREFIX} UserBindServer " .
+   "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} UserBindServer " .
      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindServer.xml > " .
      "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}UserBindServer.out 2>&1 < /dev/null ; " .
    "}";

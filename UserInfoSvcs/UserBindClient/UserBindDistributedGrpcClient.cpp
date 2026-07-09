@@ -1,6 +1,7 @@
 #include "UserBindDistributedGrpcClient.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -9,7 +10,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include <Commons/Grpc/DistributedPartitionPool.hpp>
+#include <Commons/Grpc/BalancedDistributedPartitionPool.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -41,9 +42,12 @@ namespace AdServer::UserInfoSvcs
       adserver::user_info_svcs::user_bind_controller::UserBindControllerGrpc;
     struct ControllerClient
     {
-      explicit ControllerClient(const std::string& endpoint)
+      explicit ControllerClient(
+        const std::string& endpoint,
+        const std::size_t partition_index)
         : endpoint(endpoint),
           name(endpoint),
+          partition_index(partition_index),
           channel(AdServer::Grpc::create_channel(
             this->endpoint,
             grpc::InsecureChannelCredentials())),
@@ -60,11 +64,14 @@ namespace AdServer::UserInfoSvcs
 
       const std::string endpoint;
       const std::string name;
+      const std::size_t partition_index;
       std::shared_ptr<grpc::Channel> channel;
       std::unique_ptr<ControllerGrpc::Stub> stub;
     };
     using Pool =
-      AdServer::Grpc::DistributedPartitionPool<ServerClient, ControllerClient>;
+      AdServer::Grpc::BalancedDistributedPartitionPool<
+        ServerClient,
+        ControllerClient>;
 
     Distributor(
       Logging::Logger* logger,
@@ -85,7 +92,7 @@ namespace AdServer::UserInfoSvcs
           {
             return resolve_partition_(controller_client);
           },
-          &partition_index_,
+          &partition_hash_,
           &chunk_index_,
           DEFAULT_POOL_TIMEOUT,
           DEFAULT_RESOLVE_PERIOD))
@@ -247,16 +254,14 @@ namespace AdServer::UserInfoSvcs
     {
       grpc::ClientContext context;
       set_deadline_(context);
-      adserver::user_info_svcs::user_bind_controller::
-        GetSessionDescriptionRequest request;
-      adserver::user_info_svcs::user_bind_controller::
-        GetSessionDescriptionResponse response;
+      adserver::user_info_svcs::user_bind_controller::GetSessionDescriptionRequest request;
+      adserver::user_info_svcs::user_bind_controller::GetSessionDescriptionResponse response;
 
-      const auto status =
-        controller_client.stub->get_session_description(
-          &context,
-          request,
-          &response);
+      const auto status = controller_client.stub->get_session_description(
+        &context,
+        request,
+        &response);
+
       if (!status.ok())
       {
         controller_client.reset();
@@ -291,13 +296,10 @@ namespace AdServer::UserInfoSvcs
       return refs;
     }
 
-    static unsigned long partition_index_(
-      const std::string& user_id,
-      unsigned long partitions_number)
+    static std::uint64_t partition_hash_(const std::string& user_id)
     {
-      return (
-        AdServer::Commons::external_id_distribution_hash(
-          String::SubString(user_id)) >> 8) % partitions_number;
+      return AdServer::Commons::external_id_distribution_hash(
+        String::SubString(user_id));
     }
 
     static unsigned long chunk_index_(
