@@ -1265,7 +1265,7 @@ namespace AdServer::UserInfoSvcs
             "",
             user_info_manager_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
-        "uim-grpc-p")),
+        "ca:uim-grpc-p")),
       stats_counters_(std::make_shared<StatsCounters>()),
       impl_(std::make_shared<Impl>(
         logger,

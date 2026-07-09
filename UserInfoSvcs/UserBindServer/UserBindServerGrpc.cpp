@@ -658,7 +658,7 @@ namespace AdServer::UserInfoSvcs
             "",
             user_bind_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
-        "ub-grpc-p")),
+        "ca:ub-grpc-p")),
       impl_(std::make_shared<Impl>(
         logger,
         user_bind_server_grpc_aspect,

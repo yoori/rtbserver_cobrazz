@@ -221,7 +221,7 @@ namespace AdServer
           request_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
             request_threads,
-            "bid-request");
+            "ca:bid-request");
         }
 
         unsigned long interrupt_threads = 0;
