@@ -1908,14 +1908,14 @@ namespace RequestInfoSvcs
 
     auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
       1,
-      "request-info-billing-grpc");
+      "rim-bs-grpc");
     auto coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         callback,
         std::make_shared<boost::asio::io_service>(),
         1,
         128 * 1024,
-        "request-info-billing-coalesce");
+        "rim-bs-coal");
 
     add_child_object(grpc_executor);
     add_child_object(coalesce_runner);

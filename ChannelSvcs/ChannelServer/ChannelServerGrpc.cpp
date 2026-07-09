@@ -790,7 +790,7 @@ namespace AdServer::ChannelSvcs
             "",
             channel_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
-        "cs-grpc-pool")),
+        "cs-grpc-p")),
       impl_(std::make_shared<Impl>(
         logger,
         channel_server_grpc_aspect,

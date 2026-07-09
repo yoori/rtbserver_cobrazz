@@ -22,7 +22,7 @@ namespace AdServer::Commons
       std::shared_ptr<IoService> io_service,
       unsigned long threads,
       unsigned long stack_size = 128 * 1024,
-      std::string thread_name = "grpc-asio-pool")
+      std::string thread_name = "grpc-asio-p")
       /*throw(Gears::Exception)*/;
 
     ~BoostAsioContextRunActiveObject() noexcept override;

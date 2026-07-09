@@ -394,14 +394,14 @@ namespace AdServer::CampaignSvcs
       scheduler_(new Generics::Planner(callback)),
       grpc_executor_(std::make_shared<AdServer::Grpc::GrpcExecutor>(
         4,
-        "billing-grpc")),
+        "bs-grpc")),
       coalesce_runner_(
         std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
           callback,
           std::make_shared<boost::asio::io_service>(),
           1,
           128 * 1024,
-          "billing-grpc-coalesce")),
+          "bs-grpc-c")),
       max_use_count_(static_cast<long>(max_use_count)),
       max_try_count_(10),
       optimize_campaign_ctr_(optimize_campaign_ctr),

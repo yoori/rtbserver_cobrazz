@@ -53,7 +53,7 @@ namespace AdServer::Grpc
 
     explicit GrpcExecutor(
       std::size_t workers_number,
-      std::string thread_name = "grpc-asio-pool");
+      std::string thread_name = "grpc-asio-p");
 
     std::shared_ptr<CQ> queue(unsigned int index) noexcept;
 

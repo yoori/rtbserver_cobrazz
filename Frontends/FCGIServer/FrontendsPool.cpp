@@ -221,7 +221,7 @@ namespace AdServer
           request_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
             request_threads,
-            "bidding-request");
+            "bid-request");
         }
 
         unsigned long interrupt_threads = 0;
@@ -252,7 +252,7 @@ namespace AdServer
           timeout_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
             interrupt_threads,
-            "bidding-timeout");
+            "bid-timeout");
         }
 
         for(auto module_it = modules_.begin(); module_it != modules_.end(); ++module_it)

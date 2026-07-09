@@ -122,14 +122,14 @@ namespace
 
     auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
       1,
-      "billing-admin-grpc");
+      "bsa-grpc");
     auto coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         callback,
         std::make_shared<boost::asio::io_service>(),
         1,
         128 * 1024,
-        "billing-admin-coalesce");
+        "bsa-coal");
     auto billing_server =
       std::make_shared<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient>(
         *opt_reference,

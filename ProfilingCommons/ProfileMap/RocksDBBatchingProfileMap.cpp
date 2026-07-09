@@ -432,7 +432,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::worker_loop_() noexcept
   {
-    AdServer::Commons::set_current_thread_name("rocksdb-batching");
+    AdServer::Commons::set_current_thread_name("rdb-batch");
 
     Operations batch;
     BatchScratch scratch;

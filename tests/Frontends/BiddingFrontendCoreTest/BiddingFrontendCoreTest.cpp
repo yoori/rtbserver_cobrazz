@@ -571,11 +571,11 @@ namespace
         bid_workers(std::make_shared<AdServer::Commons::ExecutorPool>(
           callback,
           1,
-          "bf-core-test-bid")),
+          "bf-test-bid")),
         timeout_workers(std::make_shared<AdServer::Commons::ExecutorPool>(
           callback,
           1,
-          "bf-core-test-timeout")),
+          "bf-test-time")),
         sources(
           std::make_shared<AdServer::Bidding::RequestInfoFiller::SourceMap>()),
         account_traits(

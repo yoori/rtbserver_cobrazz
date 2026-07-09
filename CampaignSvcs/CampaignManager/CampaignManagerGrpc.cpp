@@ -2917,7 +2917,7 @@ namespace AdServer::CampaignSvcs
             "",
             campaign_manager_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
-        "cm-grpc-pool")),
+        "cm-grpc-p")),
       impl_(std::make_shared<Impl>(
         logger,
         campaign_manager_grpc_aspect,

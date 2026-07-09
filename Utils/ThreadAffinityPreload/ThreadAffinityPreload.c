@@ -41,10 +41,14 @@ typedef int (*PthreadCreate)(
   void* (*)(void*),
   void*);
 
+typedef int (*PthreadSetname)(pthread_t, const char*);
+
 static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 static struct Config config;
 static uint64_t next_cpu_index = 0;
+static __thread int current_thread_cpu = -1;
 static PthreadCreate real_pthread_create = NULL;
+static PthreadSetname real_pthread_setname = NULL;
 
 static int
 is_enabled_value(const char* value)
@@ -286,6 +290,9 @@ init_config()
   shuffle_auto_cpus();
 
   real_pthread_create = (PthreadCreate)dlsym(RTLD_NEXT, "pthread_create");
+  real_pthread_setname = (PthreadSetname)dlsym(
+    RTLD_NEXT,
+    "pthread_setname_np");
 
   if(config.verbose)
   {
@@ -326,6 +333,10 @@ pin_current_thread()
     pthread_self(),
     sizeof(cpu_set),
     &cpu_set);
+  if(result == 0)
+  {
+    current_thread_cpu = cpu;
+  }
 
   if(config.verbose)
   {
@@ -398,6 +409,50 @@ pthread_create(
   }
 
   return result;
+}
+
+int
+pthread_setname_np(pthread_t thread, const char* name)
+{
+  pthread_once(&init_once, init_config);
+
+  if(!real_pthread_setname)
+  {
+    real_pthread_setname = (PthreadSetname)dlsym(
+      RTLD_NEXT,
+      "pthread_setname_np");
+    if(!real_pthread_setname)
+    {
+      return ENOSYS;
+    }
+  }
+
+  if(config.mode != MODE_ROUND_ROBIN ||
+    current_thread_cpu < 0 ||
+    !pthread_equal(thread, pthread_self()))
+  {
+    return real_pthread_setname(thread, name);
+  }
+
+  char suffix[16];
+  const int suffix_size = snprintf(
+    suffix,
+    sizeof(suffix),
+    ":c%d",
+    current_thread_cpu);
+  if(suffix_size <= 0 || suffix_size >= 15)
+  {
+    return real_pthread_setname(thread, name);
+  }
+
+  char thread_name[16];
+  const size_t max_prefix_size = 15 - (size_t)suffix_size;
+  const size_t prefix_size = strnlen(name, max_prefix_size);
+  memcpy(thread_name, name, prefix_size);
+  memcpy(thread_name + prefix_size, suffix, (size_t)suffix_size);
+  thread_name[prefix_size + (size_t)suffix_size] = '\0';
+
+  return real_pthread_setname(thread, thread_name);
 }
 
 __attribute__((constructor)) static void
