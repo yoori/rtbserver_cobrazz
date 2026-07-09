@@ -89,6 +89,38 @@ current_tid()
   return syscall(SYS_gettid);
 }
 
+static uint64_t
+mix_uint64(uint64_t value)
+{
+  value += 0x9e3779b97f4a7c15ULL;
+  value = (value ^ (value >> 30)) * 0xbf58476d1ce4e5b9ULL;
+  value = (value ^ (value >> 27)) * 0x94d049bb133111ebULL;
+  return value ^ (value >> 31);
+}
+
+static void
+shuffle_auto_cpus()
+{
+  if(!config.auto_cpus || config.cpu_count < 2)
+  {
+    return;
+  }
+
+  uint64_t state =
+    ((uint64_t)getpid() << 32) ^
+    (uint64_t)current_tid() ^
+    (uintptr_t)&config;
+
+  for(unsigned int i = config.cpu_count - 1; i > 0; --i)
+  {
+    state = mix_uint64(state);
+    const unsigned int j = (unsigned int)(state % (i + 1));
+    const int cpu = config.cpus[i];
+    config.cpus[i] = config.cpus[j];
+    config.cpus[j] = cpu;
+  }
+}
+
 static const char*
 skip_spaces(const char* pos)
 {
@@ -251,10 +283,7 @@ init_config()
   config.mode = MODE_ROUND_ROBIN;
   config.verbose = is_enabled_value(getenv("ADS_THREAD_AFFINITY_VERBOSE"));
   parse_cpu_list(getenv("ADS_THREAD_AFFINITY_CPUS"));
-  if(config.auto_cpus && config.cpu_count != 0)
-  {
-    next_cpu_index = (uint64_t)getpid() % config.cpu_count;
-  }
+  shuffle_auto_cpus();
 
   real_pthread_create = (PthreadCreate)dlsym(RTLD_NEXT, "pthread_create");
 
@@ -269,8 +298,6 @@ init_config()
       }
       write_uint((unsigned int)config.cpus[i]);
     }
-    write_literal(" start_index=");
-    write_uint(next_cpu_index);
     write_literal("\n");
   }
 }
