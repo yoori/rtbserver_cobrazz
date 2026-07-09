@@ -25,6 +25,8 @@ struct Config
   enum Mode mode;
   int cpus[CPU_SETSIZE];
   unsigned int cpu_count;
+  cpu_set_t original_cpu_set;
+  int original_cpu_set_available;
   int auto_cpus;
   int verbose;
 };
@@ -277,6 +279,12 @@ parse_cpu_list(const char* value)
 static void
 init_config()
 {
+  if(sched_getaffinity(0, sizeof(config.original_cpu_set),
+    &config.original_cpu_set) == 0)
+  {
+    config.original_cpu_set_available = 1;
+  }
+
   const char* mode = getenv("ADS_THREAD_AFFINITY");
   if(!is_enabled_value(mode))
   {
@@ -344,6 +352,40 @@ pin_current_thread()
     write_uint((uint64_t)current_tid());
     write_literal(" cpu=");
     write_uint((uint64_t)cpu);
+    if(result != 0)
+    {
+      write_literal(" error=");
+      write_uint((uint64_t)result);
+    }
+    write_literal("\n");
+  }
+}
+
+static void
+release_current_thread_affinity()
+{
+  pthread_once(&init_once, init_config);
+
+  if(!config.original_cpu_set_available)
+  {
+    current_thread_cpu = -1;
+    return;
+  }
+
+  const int result = pthread_setaffinity_np(
+    pthread_self(),
+    sizeof(config.original_cpu_set),
+    &config.original_cpu_set);
+  if(result == 0)
+  {
+    current_thread_cpu = -1;
+  }
+
+  if(config.verbose)
+  {
+    write_literal("thread-affinity-preload: tid=");
+    write_uint((uint64_t)current_tid());
+    write_literal(" no-affinity");
     if(result != 0)
     {
       write_literal(" error=");
@@ -427,11 +469,22 @@ pthread_setname_np(pthread_t thread, const char* name)
     }
   }
 
+  const int no_affinity =
+    name[0] == 'n' && name[1] == 'a' && name[2] == ':';
+  const char* effective_name = no_affinity ? name + 3 : name;
+  if(no_affinity &&
+    config.mode == MODE_ROUND_ROBIN &&
+    pthread_equal(thread, pthread_self()))
+  {
+    release_current_thread_affinity();
+    return real_pthread_setname(thread, effective_name);
+  }
+
   if(config.mode != MODE_ROUND_ROBIN ||
     current_thread_cpu < 0 ||
     !pthread_equal(thread, pthread_self()))
   {
-    return real_pthread_setname(thread, name);
+    return real_pthread_setname(thread, effective_name);
   }
 
   char suffix[16];
@@ -442,13 +495,13 @@ pthread_setname_np(pthread_t thread, const char* name)
     current_thread_cpu);
   if(suffix_size <= 0 || suffix_size >= 15)
   {
-    return real_pthread_setname(thread, name);
+    return real_pthread_setname(thread, effective_name);
   }
 
   char thread_name[16];
   const size_t max_prefix_size = 15 - (size_t)suffix_size;
-  const size_t prefix_size = strnlen(name, max_prefix_size);
-  memcpy(thread_name, name, prefix_size);
+  const size_t prefix_size = strnlen(effective_name, max_prefix_size);
+  memcpy(thread_name, effective_name, prefix_size);
   memcpy(thread_name + prefix_size, suffix, (size_t)suffix_size);
   thread_name[prefix_size + (size_t)suffix_size] = '\0';
 
