@@ -1133,6 +1133,7 @@ namespace AdServer::UserInfoSvcs
       UserFreqCapProfile::FreqCapIdArray virtual_freq_caps;
       UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
+      std::vector<unsigned long> optin_publishers;
       bool freq_caps_user_is_fraud = false;
 
       auto match_operation = user_operation_processor->co_match(
@@ -1148,26 +1149,34 @@ namespace AdServer::UserInfoSvcs
         &ho_info,
         &unique_channels_result);
 
-      if (match_params.ret_freq_caps)
+      const bool run_pre_bid_process =
+        match_params.ret_freq_caps ||
+        match_params.publishers_optin_timeout != Generics::Time::ZERO;
+
+      if (run_pre_bid_process)
       {
-        struct FreqCapsResult
+        struct PreBidProcessResult
         {
           bool user_is_fraud = false;
           std::exception_ptr exception;
         };
 
-        auto freq_caps_operation = [&]() -> AdServer::Commons::SyncCoro<FreqCapsResult>
+        auto pre_bid_operation =
+          [&]() -> AdServer::Commons::SyncCoro<PreBidProcessResult>
         {
           try
           {
-            co_await user_info_container->co_get_full_freq_caps(
-              user_info.user_id,
-              user_info.time,
+            co_await user_info_container->co_pre_bid_process(
               freq_caps,
               virtual_freq_caps,
               seq_orders,
-              campaign_freqs);
-            co_return FreqCapsResult{};
+              campaign_freqs,
+              optin_publishers,
+              user_info.user_id,
+              user_info.time,
+              match_params.ret_freq_caps,
+              match_params.publishers_optin_timeout);
+            co_return PreBidProcessResult{};
           }
           catch (const UserInfoContainer::UserIsFraud& ex)
           {
@@ -1175,25 +1184,26 @@ namespace AdServer::UserInfoSvcs
             ostr << "User '" << user_id << "' is fraud: " << ex.what();
             logger()->log(ostr.str(), Logging::Logger::INFO,
               Aspect::USER_INFO_MANAGER, "ADS-IMPL-0000");
-            co_return FreqCapsResult{true, nullptr};
+            co_return PreBidProcessResult{true, nullptr};
           }
           catch (...)
           {
-            co_return FreqCapsResult{false, std::current_exception()};
+            co_return PreBidProcessResult{false, std::current_exception()};
           }
         };
 
-        auto [unused_match_result, freq_caps_result] = co_await AdServer::Commons::CoroTuple(
-          std::move(match_operation),
-          freq_caps_operation());
+        auto [unused_match_result, pre_bid_result] =
+          co_await AdServer::Commons::CoroTuple(
+            std::move(match_operation),
+            pre_bid_operation());
         (void)unused_match_result;
 
-        if (freq_caps_result.exception)
+        if (pre_bid_result.exception)
         {
-          std::rethrow_exception(freq_caps_result.exception);
+          std::rethrow_exception(pre_bid_result.exception);
         }
 
-        freq_caps_user_is_fraud = freq_caps_result.user_is_fraud;
+        freq_caps_user_is_fraud = pre_bid_result.user_is_fraud;
       }
       else
       {
@@ -1226,16 +1236,10 @@ namespace AdServer::UserInfoSvcs
           geo_data.latitude, geo_data.longitude, geo_data.accuracy});
       }
 
-      if (match_params.publishers_optin_timeout != Generics::Time::ZERO)
+      if (!optin_publishers.empty())
       {
-        std::vector<unsigned long> publishers;
-
-        co_await user_info_container->co_get_optin_publishers(
-          user_info.user_id, match_params.publishers_optin_timeout,
-          publishers);
-
         match_result.exclude_pubpixel_accounts.assign(
-          publishers.begin(), publishers.end());
+          optin_publishers.begin(), optin_publishers.end());
       }
 
       if (match_params.ret_freq_caps)

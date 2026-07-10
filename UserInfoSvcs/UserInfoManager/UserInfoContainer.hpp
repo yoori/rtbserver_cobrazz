@@ -81,13 +81,16 @@ namespace AdServer::UserInfoSvcs
       /*throw(Exception)*/;
 
     AdServer::Commons::SyncCoro<bool>
-    co_get_full_freq_caps(
-      const UserId& user_id,
-      const Generics::Time& now,
+    co_pre_bid_process(
       UserFreqCapProfile::FreqCapIdArray& freq_caps,
       UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
       UserFreqCapProfile::SeqOrderArray& seq_orders,
-      UserFreqCapProfile::CampaignFreqs& campaign_freqs);
+      UserFreqCapProfile::CampaignFreqs& campaign_freqs,
+      std::vector<unsigned long>& optin_publishers,
+      const UserId& user_id,
+      const Generics::Time& now,
+      bool fill_full_freq_caps,
+      const Generics::Time& publishers_optin_timeout);
 
     virtual AdServer::Commons::SyncCoro<bool> co_update_freq_caps(
       const UserId& user_id,
@@ -145,11 +148,6 @@ namespace AdServer::UserInfoSvcs
       const UserId& user_id,
       const Generics::Time& now)
       override;
-
-    AdServer::Commons::SyncCoro<bool> co_get_optin_publishers(
-      const UserId& user_id,
-      const Generics::Time& publishers_optin_timeout,
-      std::vector<unsigned long>& optin_publishers);
 
     virtual AdServer::Commons::SyncCoro<bool> co_match(
       const RequestMatchParams& request_params,

@@ -6,9 +6,7 @@
 #include <rocksdb/write_batch.h>
 
 #include <algorithm>
-#include <fstream>
 #include <future>
-#include <iomanip>
 #include <string_view>
 
 #include <Stream/MemoryStream.hpp>
@@ -32,33 +30,6 @@ namespace AdServer::ProfilingCommons
 
   namespace
   {
-    void
-    write_debug_timestamp_(std::ostream& out)
-    {
-      const Generics::Time now = Generics::Time::get_time_of_day();
-      out << now.tv_sec << '.'
-        << std::setw(6) << std::setfill('0') << now.tv_usec
-        << std::setfill(' ');
-    }
-
-    void
-    debug_profile_operation_(
-      const char* operation,
-      const std::string& path,
-      const std::string& key,
-      const Generics::ConstSmartMemBuf* profile = nullptr)
-    {
-      std::ofstream out("/tmp/uim_profile_ops.log", std::ios::app);
-      write_debug_timestamp_(out);
-      out << ' ' << operation << ' '
-        << path << " key_size=" << key.size();
-      if(profile)
-      {
-        out << " profile_size=" << profile->membuf().size();
-      }
-      out << '\n';
-    }
-
     auto
     find_key_index(
       const std::vector<std::pair<std::string_view, std::size_t>>& indexes,
@@ -287,8 +258,6 @@ namespace AdServer::ProfilingCommons
 
     check_background_error_();
 
-    debug_profile_operation_("READ", path_, key);
-
     Operation operation;
     operation.type = OT_GET;
     operation.key = key;
@@ -313,8 +282,6 @@ namespace AdServer::ProfilingCommons
     static_cast<void>(last_access_time);
 
     check_background_error_();
-
-    debug_profile_operation_("READ_OWN", path_, key);
 
     Operation operation;
     operation.type = OT_GET;
@@ -367,8 +334,6 @@ namespace AdServer::ProfilingCommons
     static const char* FUN = "RocksDBBatchingProfileMapImpl::save_profile_async()";
 
     check_background_error_();
-
-    debug_profile_operation_("SAVE", path_, key, profile);
 
     if(!profile)
     {
@@ -429,8 +394,6 @@ namespace AdServer::ProfilingCommons
     RemoveCallback callback)
   {
     check_background_error_();
-
-    debug_profile_operation_("REMOVE", path_, key);
 
     Operation operation;
     operation.type = OT_REMOVE;

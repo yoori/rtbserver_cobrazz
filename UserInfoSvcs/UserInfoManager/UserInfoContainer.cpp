@@ -1,6 +1,4 @@
 #include <cstring>
-#include <fstream>
-#include <iomanip>
 
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
@@ -35,46 +33,6 @@ namespace
   const char HISTORY_CHUNK_PREFIX[] = "History";
   const char TEMP_HISTORY_CHUNK_PREFIX[] = "TempHistory";
   const char FREQCAP_CHUNK_PREFIX[] = "FreqCap";
-
-  void
-  write_debug_timestamp_(std::ostream& out)
-  {
-    const Generics::Time now = Generics::Time::get_time_of_day();
-    out << now.tv_sec << '.'
-      << std::setw(6) << std::setfill('0') << now.tv_usec
-      << std::setfill(' ');
-  }
-
-  void
-  debug_match_operation_(const char* operation, const Generics::Uuid& user_id)
-  {
-    std::ofstream out("/tmp/uim_profile_ops.log", std::ios::app);
-    write_debug_timestamp_(out);
-    out << ' ' << operation << " user_id=" << user_id.to_string() << '\n';
-  }
-
-  class DebugProfileOperationGuard
-  {
-  public:
-    DebugProfileOperationGuard(
-      const char* start_operation,
-      const char* end_operation,
-      const Generics::Uuid& user_id)
-      : end_operation_(end_operation),
-        user_id_(user_id)
-    {
-      debug_match_operation_(start_operation, user_id_);
-    }
-
-    ~DebugProfileOperationGuard()
-    {
-      debug_match_operation_(end_operation_, user_id_);
-    }
-
-  private:
-    const char* end_operation_;
-    const Generics::Uuid& user_id_;
-  };
 
   struct UserIdRocksDBAccessor
   {
@@ -195,26 +153,29 @@ namespace AdServer::UserInfoSvcs
   }
 
   AdServer::Commons::SyncCoro<bool>
-  UserInfoContainer::co_get_full_freq_caps(
-    const UserId& user_id,
-    const Generics::Time& now,
+  UserInfoContainer::co_pre_bid_process(
     UserFreqCapProfile::FreqCapIdArray& freq_caps,
     UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
     UserFreqCapProfile::SeqOrderArray& seq_orders,
-    UserFreqCapProfile::CampaignFreqs& campaign_freqs)
+    UserFreqCapProfile::CampaignFreqs& campaign_freqs,
+    std::vector<unsigned long>& optin_publishers,
+    const UserId& user_id,
+    const Generics::Time& now,
+    bool fill_full_freq_caps,
+    const Generics::Time& publishers_optin_timeout)
     /*throw(ChunkNotFound, UserIsFraud, Exception)*/
   {
-    static const char* FUN = "UserInfoContainer::co_get_full_freq_caps()";
-
-    DebugProfileOperationGuard debug_guard(
-      "GET_FULL_FREQ_CAPS_START",
-      "GET_FULL_FREQ_CAPS_END",
-      user_id);
+    static const char* FUN = "UserInfoContainer::co_pre_bid_process()";
 
     FreqCapConfig_var freq_cap_config = get_freq_cap_config_();
 
     try
     {
+      if (!fill_full_freq_caps && publishers_optin_timeout == Generics::Time::ZERO)
+      {
+        co_return true;
+      }
+
       UserProfileMap::Transaction_var fc_profile_trans =
         co_await freq_cap_profiles_->co_get_transaction(
           user_id,
@@ -223,13 +184,25 @@ namespace AdServer::UserInfoSvcs
       SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
       UserFreqCapProfile profile(fc_mem_buf, true);
 
-      if(profile.full(
-        freq_caps,
-        &virtual_freq_caps,
-        seq_orders,
-        campaign_freqs,
-        now,
-        *freq_cap_config))
+      bool profile_changed = false;
+
+      if (fill_full_freq_caps)
+      {
+        profile_changed = profile.full(
+          freq_caps,
+          &virtual_freq_caps,
+          seq_orders,
+          campaign_freqs,
+          now,
+          *freq_cap_config);
+      }
+
+      if (publishers_optin_timeout != Generics::Time::ZERO)
+      {
+        profile.get_optin_publishers(optin_publishers, publishers_optin_timeout);
+      }
+
+      if (profile_changed)
       {
         fc_profile_trans->save_profile_async(profile.transfer_membuf(), now);
       }
@@ -244,9 +217,14 @@ namespace AdServer::UserInfoSvcs
     }
     catch(const UserFreqCapProfile::Invalid& ex)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught UserFreqCapProfile::Invalid: " << ex.what();
-      throw UserIsFraud(ostr);
+      if(fill_full_freq_caps)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Caught UserFreqCapProfile::Invalid: " << ex.what();
+        throw UserIsFraud(ostr);
+      }
+
+      co_return true;
     }
     catch(const eh::Exception& ex)
     {
@@ -270,11 +248,6 @@ namespace AdServer::UserInfoSvcs
     AdServer::ProfilingCommons::OperationPriority op_priority)
   {
     static const char* FUN = "UserInfoContainer::co_update_freq_caps()";
-
-    DebugProfileOperationGuard debug_guard(
-      "UPDATE_FREQ_CAPS_START",
-      "UPDATE_FREQ_CAPS_END",
-      user_id);
 
     FreqCapConfig_var freq_cap_config = get_freq_cap_config_();
 
@@ -1083,53 +1056,6 @@ namespace AdServer::UserInfoSvcs
   }
 
   AdServer::Commons::SyncCoro<bool>
-  UserInfoContainer::co_get_optin_publishers(
-    const UserId& user_id,
-    const Generics::Time& publishers_optin_timeout,
-    std::vector<unsigned long>& optin_publishers)
-    /*throw(ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::co_get_optin_publishers()";
-
-    DebugProfileOperationGuard debug_guard(
-      "GET_OPTIN_PUBLISHERS_START",
-      "GET_OPTIN_PUBLISHERS_STOP",
-      user_id);
-
-    try
-    {
-      if (publishers_optin_timeout != Generics::Time::ZERO)
-      {
-        SmartMemBuf_var fc_mem_buf =
-          co_await freq_cap_profiles_->co_get_own_profile(user_id);
-
-        if(fc_mem_buf.in() && fc_mem_buf->membuf().size() > 0)
-        {
-          UserFreqCapProfile profile(fc_mem_buf, true);
-
-          profile.get_optin_publishers(optin_publishers, publishers_optin_timeout);
-        }
-      }
-
-      co_return true;
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const UserFreqCapProfile::Invalid&)
-    {}
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_match(
     const RequestMatchParams& request_params,
     long last_colo_id,
@@ -1159,7 +1085,6 @@ namespace AdServer::UserInfoSvcs
       Generics::Time current_time_offset = time_offset();
 
       const UserId& user_id = request_params.user_id;
-      debug_match_operation_("MATCH_START", user_id);
 
       bool temporary = request_params.temporary;
       Generics::Time match_time = request_params.current_time;
@@ -1482,8 +1407,6 @@ namespace AdServer::UserInfoSvcs
           Logging::Logger::TRACE,
           Aspect::USER_INFO_CONTAINER);
       }
-
-      debug_match_operation_("MATCH_END", user_id);
 
       co_return true;
     }
