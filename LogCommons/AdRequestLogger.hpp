@@ -4,6 +4,7 @@
 #include <iosfwd>
 #include <string>
 #include <ostream>
+#include <utility>
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -86,7 +87,7 @@ class AdvertiserActionData_V_3_3_1
   OptionalUlong action_id_;
   OptionalUlong device_channel_id_;
   OptionalValue<RequestId> action_request_id_;
-  NumberList ccg_ids_;
+  NumberArray ccg_ids_;
   StringIoWrapperOptional referrer_;
   StringIoWrapperOptional order_id_;
   StringIoWrapperOptional ip_address_;
@@ -123,7 +124,7 @@ public:
     return action_request_id_;
   }
 
-  const NumberList&
+  const NumberArray&
   ccg_ids() const noexcept
   {
     return ccg_ids_;
@@ -161,7 +162,7 @@ public:
     const OptionalUlong& action_id_val,
     const OptionalUlong& device_channel_id_val,
     const OptionalValue<RequestId>& action_request_id_val,
-    const NumberList& ccg_ids_val,
+    NumberArray ccg_ids_val,
     const StringIoWrapperOptional& referrer_val,
     const StringIoWrapperOptional& order_id_val,
     const StringIoWrapperOptional& ip_address_val,
@@ -173,7 +174,7 @@ public:
     action_id_(action_id_val),
     device_channel_id_(device_channel_id_val),
     action_request_id_(action_request_id_val),
-    ccg_ids_(ccg_ids_val),
+    ccg_ids_(std::move(ccg_ids_val)),
     referrer_(referrer_val),
     order_id_(order_id_val),
     ip_address_(ip_address_val),
@@ -217,7 +218,7 @@ class AdvertiserActionData
   OptionalUlong action_id_;
   OptionalUlong device_channel_id_;
   OptionalValue<RequestId> action_request_id_;
-  NumberList ccg_ids_;
+  NumberArray ccg_ids_;
   StringIoWrapperOptional referrer_;
   StringIoWrapperOptional order_id_;
   StringIoWrapperOptional ip_address_;
@@ -260,7 +261,7 @@ public:
     return action_request_id_;
   }
 
-  const NumberList&
+  const NumberArray&
   ccg_ids() const noexcept
   {
     return ccg_ids_;
@@ -299,7 +300,7 @@ public:
     const OptionalUlong& action_id_val,
     const OptionalUlong& device_channel_id_val,
     const OptionalValue<RequestId>& action_request_id_val,
-    const NumberList& ccg_ids_val,
+    NumberArray ccg_ids_val,
     const StringIoWrapperOptional& referrer_val,
     const StringIoWrapperOptional& order_id_val,
     const StringIoWrapperOptional& ip_address_val,
@@ -312,7 +313,7 @@ public:
     action_id_(action_id_val),
     device_channel_id_(device_channel_id_val),
     action_request_id_(action_request_id_val),
-    ccg_ids_(ccg_ids_val),
+    ccg_ids_(std::move(ccg_ids_val)),
     referrer_(referrer_val),
     order_id_(order_id_val),
     ip_address_(ip_address_val),

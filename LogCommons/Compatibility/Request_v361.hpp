@@ -7,7 +7,6 @@
 #include <LogCommons/CsvUtils.hpp>
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
 #include <LogCommons/Compatibility/Request_Base.hpp>
-#include <LogCommons/Compatibility/Request_v360.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace AdServer {
@@ -18,17 +17,15 @@ class RequestData_V_3_6_1
 public:
   DECLARE_EXCEPTION(InvalidSystemRevenue, eh::DescriptiveException);
 
-  typedef RequestData_V_3_6 PrevVersion;
-
-  typedef RequestData_V_3_6::DeliveryThresholdT DeliveryThresholdT;
-  typedef RequestData_V_3_6::DeviceChannelIdOptional
+  typedef RequestData_V_3_4::DeliveryThresholdT DeliveryThresholdT;
+  typedef RequestData_V_3_4::DeviceChannelIdOptional
     DeviceChannelIdOptional;
 
-  typedef RequestData_V_3_6::CmpChannel CmpChannel;
+  typedef RequestData_V_3_4::CmpChannel CmpChannel;
 
-  typedef RequestData_V_3_6::CmpChannelList CmpChannelList;
+  typedef RequestData_V_3_4::CmpChannelList CmpChannelList;
 
-  typedef RequestData_V_3_6::Revenue Revenue;
+  typedef RequestData_V_3_4::Revenue Revenue;
 
   typedef OptionalValue<unsigned long> OptionalUlong;
 
@@ -191,91 +188,6 @@ public:
         conv_rate,
         tag_predicted_viewability,
         model_ctrs
-      )
-    )
-  {
-  }
-
-  //Conversion from 3.6.0
-  RequestData_V_3_6_1(const PrevVersion& data)
-  :
-    holder_(
-      new DataHolder(
-        data.time(),
-        data.isp_time(),
-        data.pub_time(),
-        data.adv_time(),
-        data.request_id(),
-        data.global_request_id(),
-        data.user_id(),
-        data.household_id(),
-        data.test_request(),
-        data.colo_id(),
-        data.site_id(),
-        data.tag_id(),
-        data.ext_tag_id(),
-        data.publisher_account_id(),
-        data.country_code(),
-        data.ip_address(),
-        data.adv_account_id(),
-        data.advertiser_id(),
-        data.cc_id(),
-        data.cmp_id(),
-        data.ccg_id(),
-        data.delivery_threshold(),
-        data.has_custom_actions(),
-        data.currency_exchange_id(),
-        data.user_props(),
-        data.adv_revenue(),
-        data.pub_revenue(),
-        data.isp_revenue(),
-        data.adv_comm_revenue(),
-        data.adv_payable_comm_amount(),
-        data.pub_comm_revenue(),
-        data.channel_list(),
-        data.history_channel_list(),
-        data.channel_expression(),
-        data.cmp_channel_list(),
-        data.ccg_keyword_id(),
-        data.keyword_id(),
-        data.keyword_page_match(),
-        data.keyword_search_match(),
-        data.num_shown(),
-        data.position(),
-        data.enabled_notice(),
-        data.enabled_impression_tracking(),
-        data.enabled_action_tracking(),
-        data.disable_fraud_detection(),
-        data.walled_garden(),
-        data.ccg_type(),
-        data.user_status(),
-        data.lost_auction_ccgs(),
-        data.geo_channels(),
-        data.device_channel_id(),
-        data.tag_size(),
-        data.size_id(),
-        data.hid_profile(),
-        data.tag_visibility(),
-        data.tag_top_offset(),
-        data.tag_left_offset(),
-        data.ctr_reset_id(),
-        data.campaign_freq(),
-        data.referer(),
-        data.adv_currency_rate(),
-        data.pub_currency_rate(),
-        data.pub_commission(),
-        data.isp_currency_rate(),
-        data.isp_revenue_share(),
-        data.ecpm(),
-        data.floor_cost(),
-        data.ctr_algorithm_id(),
-        data.ctr(),
-        data.full_referer_hash(),
-        data.auction_type(),
-        data.conv_rate_algorithm_id(),
-        data.conv_rate(),
-        -1, // tag_predicted_viewability
-        FixedNumberList() // model_ctrs
       )
     )
   {
@@ -998,21 +910,21 @@ private:
       if (!ccg_type_is_valid())
       {
         Stream::Error es;
-        es << "RequestData_V_3_6::DataHolder::invariant(): ccg_type "
+        es << "RequestData_V_3_6_1::DataHolder::invariant(): ccg_type "
            "has invalid value '" << ccg_type << '\'';
         throw ConstraintViolation(es);
       }
       if (!is_valid_user_status(user_status))
       {
         Stream::Error es;
-        es << "RequestData_V_3_6::DataHolder::invariant(): user_status "
+        es << "RequestData_V_3_6_1::DataHolder::invariant(): user_status "
            "has invalid value '" << user_status << '\'';
         throw ConstraintViolation(es);
       }
       if (!delivery_threshold_is_valid())
       {
         Stream::Error es;
-        es << "RequestData_V_3_6::DataHolder::invariant(): delivery_threshold "
+        es << "RequestData_V_3_6_1::DataHolder::invariant(): delivery_threshold "
            "has invalid value '" << delivery_threshold << '\'';
         throw ConstraintViolation(es);
       }

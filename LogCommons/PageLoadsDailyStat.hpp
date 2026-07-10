@@ -116,7 +116,7 @@ public:
     return holder_->country.get();
   }
 
-  const NumberList& tags() const
+  const NumberArray& tags() const
   {
     return holder_->tags;
   }
@@ -175,10 +175,9 @@ private:
     {
       Generics::Murmur64Hash hasher(hash);
       hash_add(hasher, site_id);
-      for (NumberList::const_iterator it = tags.begin();
-        it != tags.end(); ++it)
+      for (const auto tag : tags)
       {
-        hash_add(hasher, *it);
+        hash_add(hasher, tag);
       }
       country.hash_add(hasher);
     }
@@ -199,7 +198,7 @@ private:
 
     unsigned long site_id;
     OptionalStringT country;
-    NumberList tags;
+    NumberArray tags;
     size_t hash;
 
   protected:

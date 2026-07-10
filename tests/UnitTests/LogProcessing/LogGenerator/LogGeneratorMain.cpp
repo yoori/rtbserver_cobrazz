@@ -28,7 +28,6 @@
 #include <LogCommons/ColoUsers.hpp>
 #include <LogCommons/CreativeStat.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
-#include <LogCommons/HistoryMatch.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/Request.hpp>
@@ -208,7 +207,7 @@ struct Filler
       OptionalUlong(),
       OptionalUlong(),
       RequestId(),
-      NumberList(),
+      NumberArray(),
       "",
       "",
       "",
@@ -619,38 +618,13 @@ struct Filler
   }
 
   void
-  operator ()(HistoryMatchCollector& collector)
-  {
-    for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
-    {
-      collector.add(HistoryMatchData(
-        TEST_TIME,
-        TEST_USER_ID,
-        0,
-        i,
-        654,
-        987,
-        SEARCH_CHANNELS,
-        PAGE_CHANNELS,
-        URL_CHANNELS));
-    }
-  }
-
-  static void
-  distribute_save(HistoryMatchCollector& collector,
-    Generics::Time& time, Generics::Time& time_abs)
-  {
-    distribute_save_def_<HistoryMatchTraits>(collector, time, time_abs);
-  }
-
-  void
   operator ()(PageLoadsDailyStatCollector& collector)
   {
     PageLoadsDailyStatCollector::KeyT key1(TEST_TIME, 21);
     PageLoadsDailyStatCollector::KeyT key2(TEST_TIME, 22);
     PageLoadsDailyStatCollector::DataT data;
     PageLoadsDailyStatCollector::DataT::DataT inner_data(111, 222);
-    NumberList tags;
+    NumberArray tags;
     tags.push_back(1);
     tags.push_back(2);
     tags.push_back(3);
@@ -1482,7 +1456,6 @@ namespace
     new LogIoTester<ColoUsersTraits>,
     new LogIoTester<CreativeStatTraits>,
     new LogIoTester<ExpressionPerformanceTraits>,
-    new LogIoTester<HistoryMatchTraits>,
     new LogIoTester<ImpressionTraits>,
     new LogIoTester<PageLoadsDailyStatTraits>,
     new LogIoTester<PassbackImpressionTraits>,

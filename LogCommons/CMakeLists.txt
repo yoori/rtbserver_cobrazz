@@ -35,7 +35,6 @@ add_library(LogCommons SHARED
   DiscoverFeedState.cpp
   ExpressionPerformance.cpp
   FileReceiver.cpp
-  HistoryMatch.cpp
   KeywordHitStat.cpp
   LogCommons.cpp
   PageLoadsDailyStat.cpp
@@ -43,8 +42,6 @@ add_library(LogCommons SHARED
   Request.cpp
   RequestBasicChannels.cpp
   Request_Base.cpp
-  #Request_v354.cpp
-  #Request_v360.cpp
   RequestStatsHourlyExtStat.cpp
   ResearchLogs.cpp
   ResearchProfStat.cpp
@@ -76,8 +73,6 @@ target_link_libraries(LogCommons
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
-
 
 
 

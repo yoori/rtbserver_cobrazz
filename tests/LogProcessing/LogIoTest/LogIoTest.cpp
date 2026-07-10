@@ -35,7 +35,6 @@
 #include <LogCommons/RequestStatsHourlyExtStat.hpp>
 #include <LogCommons/DeviceChannelCountStat.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
-#include <LogCommons/HistoryMatch.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/Request.hpp>
 #include <LogCommons/TagAuctionStat.hpp>
@@ -1899,47 +1898,6 @@ int main(int argc, char **argv)
 
   try
   {
-    HistoryMatchCollector collector;
-    NumberList search_channels, page_channels, url_channels;
-    search_channels.push_back(111);
-    search_channels.push_back(222);
-    search_channels.push_back(333);
-    search_channels.push_back(444);
-    search_channels.push_back(555);
-    page_channels.push_back(111);
-    page_channels.push_back(222);
-    page_channels.push_back(333);
-    page_channels.push_back(444);
-    page_channels.push_back(555);
-    url_channels.push_back(444);
-    url_channels.push_back(333);
-    url_channels.push_back(111);
-    url_channels.push_back(222);
-    url_channels.push_back(555);
-    HistoryMatchData data(
-      Generics::Time::get_time_of_day(),
-      UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      0,
-      321,
-      654,
-      987,
-      search_channels,
-      page_channels,
-      url_channels);
-    collector.add(data);
-    LogIoTester<HistoryMatchTraits>(dump_on_fail).test(collector);
-#if 0
-    HistoryMatchCollector collector1 = collector, collector2 = collector;
-    typedef LogIoProxy<HistoryMatchTraits> LogIoProxyT;
-    LogIoProxyT::save(collector, ".", 2);
-    LogIoProxyT::save(collector1, ".", 5);
-    LogIoProxyT::save(collector2, ".", 4);
-#endif
-  }
-  HANDLE_EXCEPTIONS(exitcode, 1);
-
-  try
-  {
     CmpStatCollector collector;
     CmpStatCollector::KeyT key1(TEST_TIME, TEST_TIME, 123);
     CmpStatCollector::KeyT key2(TEST_TIME, TEST_TIME, 321);
@@ -2032,7 +1990,7 @@ int main(int argc, char **argv)
     PageLoadsDailyStatCollector::KeyT key2(TEST_TIME, 22);
     PageLoadsDailyStatCollector::DataT data;
     PageLoadsDailyStatCollector::DataT::DataT inner_data(111, 222);
-    NumberList tags;
+    NumberArray tags;
     tags.push_back(1);
     tags.push_back(2);
     tags.push_back(3);

@@ -2541,6 +2541,9 @@ namespace RequestInfoSvcs
       try
       {
         const AdvExActionInfo& info = adv_custom_action_info;
+        LogProcessing::NumberArray ccg_ids;
+        ccg_ids.reserve(info.ccg_ids.size());
+        ccg_ids.assign(info.ccg_ids.begin(), info.ccg_ids.end());
 
         add_record(
           CollectorT::DataT(
@@ -2550,7 +2553,7 @@ namespace RequestInfoSvcs
             info.action_id,
             info.device_channel_id,
             info.action_request_id,
-            info.ccg_ids,
+            std::move(ccg_ids),
             info.referer,
             info.order_id,
             info.ip_address,

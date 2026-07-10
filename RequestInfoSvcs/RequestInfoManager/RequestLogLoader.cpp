@@ -833,8 +833,7 @@ namespace RequestInfoSvcs
         adv_action_info.user_id = req.user_id();
         adv_action_info.time = req.time().time();
 
-        for(AdServer::LogProcessing::NumberList::const_iterator ccg_it =
-              req.ccg_ids().begin();
+        for(auto ccg_it = req.ccg_ids().begin();
             ccg_it != req.ccg_ids().end(); ++ccg_it)
         {
           adv_action_info.ccg_id = *ccg_it;

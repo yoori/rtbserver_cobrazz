@@ -19,12 +19,6 @@ const char UP_SEP2 = '=';
 
 } // namespace
 
-const RequestData_V_3_5_4::DeliveryThresholdT
-  RequestData_V_3_5_4::DataHolder::max_delivery_threshold_value_("1.00000");
-
-const RequestData_V_3_6::DeliveryThresholdT
-  RequestData_V_3_6::DataHolder::max_delivery_threshold_value_("1.00000");
-
 const RequestData::DeliveryThresholdT
   RequestData::DataHolder::max_delivery_threshold_value_("1.00000");
 
@@ -47,24 +41,5 @@ operator<<(std::ostream& os, const RequestData& data)
   return os;
 }
 
-FixedBufStream<TabCategory>&
-operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_5_4& data)
-  /*throw(eh::Exception)*/
-{
-  data.holder_ = new RequestData_V_3_5_4::DataHolder;
-  TokenizerInputArchive<> ia(is);
-  ia >> *data.holder_;
-  return is;
-}
-
-FixedBufStream<TabCategory>&
-operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_6& data)
-  /*throw(eh::Exception)*/
-{
-  data.holder_ = new RequestData_V_3_6::DataHolder;
-  TokenizerInputArchive<> ia(is);
-  ia >> *data.holder_;
-  return is;
-}
 } // namespace LogProcessing
 } // namespace AdServer
