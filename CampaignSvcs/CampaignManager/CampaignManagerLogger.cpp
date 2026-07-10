@@ -397,7 +397,7 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogger::Params::Params()
     : profiling_research_record_limit(5000),
       profiling_log_sampling(0),
-      threads(1)
+      threads(8)
   {}
 
   CampaignManagerLogger::TriggeredChannels::~TriggeredChannels() noexcept
