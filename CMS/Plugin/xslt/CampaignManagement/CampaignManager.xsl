@@ -304,7 +304,7 @@
     <cfg:GrpcConfig
       process_threads="{$campaign-manager-grpc-process-threads}"
       cq_threads="16"
-      max_split="16">
+      max_split="32">
       <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
     </cfg:GrpcConfig>
 

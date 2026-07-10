@@ -59,7 +59,7 @@
     </xsl:variable>
     <xsl:variable name="user-bind-server-grpc-max-split">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_max_split"/>
-      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_max_split) = 0">16</xsl:if>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_max_split) = 0">32</xsl:if>
     </xsl:variable>
     <xsl:variable name="user-bind-server-monitoring-port">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>

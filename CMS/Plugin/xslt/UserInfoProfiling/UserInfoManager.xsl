@@ -115,7 +115,7 @@
     </xsl:variable>
     <xsl:variable name="user-info-manager-grpc-max-split">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_max_split"/>
-      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_max_split) = 0">16</xsl:if>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_max_split) = 0">32</xsl:if>
     </xsl:variable>
     <xsl:variable name="user-info-manager-monitoring-port">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@monitoring_port"/>
@@ -300,13 +300,6 @@
       <xsl:attribute name="unprocessed_dir"><xsl:value-of
         select="concat($workspace-root, '/log/UserInfoManager/Out/UserOp_', $cluster_id)"/></xsl:attribute>
     </cfg:UserOperationsLoad>
-
-    <cfg:ExternalUserOperationsLoad file_prefix="UserOp" check_period="60" threads="1">
-      <xsl:attribute name="dir"><xsl:value-of
-        select="concat($workspace-root, '/log/UserInfoManager/In/ExternalUserOp')"/></xsl:attribute>
-      <xsl:attribute name="unprocessed_dir"><xsl:value-of
-        select="concat($workspace-root, '/log/UserInfoManager/Out/ExternalUserOp')"/></xsl:attribute>
-    </cfg:ExternalUserOperationsLoad>
 
     <cfg:FreqCaps>
       <xsl:attribute name="confirm_timeout"><xsl:if

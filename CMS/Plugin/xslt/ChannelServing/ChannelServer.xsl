@@ -134,7 +134,7 @@
     <cfg:GrpcConfig
       process_threads="{$channel-server-grpc-process-threads}"
       cq_threads="16"
-      max_split="16">
+      max_split="32">
       <cfg:Endpoint host="*" port="{$channel-server-grpc-port}"/>
     </cfg:GrpcConfig>
 
