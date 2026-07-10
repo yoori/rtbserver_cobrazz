@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 #include <String/SubString.hpp>
@@ -284,9 +285,14 @@ public:
     system(rm_cmd.c_str());
     system(mkdir_cmd.c_str());
 
-    CollectorT tmp_collector;
-    collector.deep_copy(tmp_collector);
-    LogIoProxy<Traits>::save(tmp_collector, dir_name);
+    CollectorT expected_collector;
+    {
+      std::ostringstream ostr;
+      ostr << collector;
+      std::istringstream istr(ostr.str());
+      istr >> expected_collector;
+    }
+    LogIoProxy<Traits>::save(collector, dir_name);
 
     if (file_generator_mode)
     {
@@ -323,7 +329,7 @@ public:
       LogIoProxy<Traits>::load(restored_collector, ifs);
     }
 
-    if (EqualityTester<LOG_TYPE_TRAITS_>()(collector, restored_collector))
+    if (EqualityTester<LOG_TYPE_TRAITS_>()(expected_collector, restored_collector))
     {
       system(rm_cmd.c_str());
       std::cout << "SUCCEEDED" << std::endl;
@@ -995,13 +1001,15 @@ int main(int argc, char **argv)
 
     ad_request_opt = ad_request;
 
-    RequestBasicChannelsCollector::DataT::DataT::Match match_request(
+    auto make_match_request = [&]()
+    {
+      return RequestBasicChannelsCollector::DataT::DataT::Match(
         history_channels,
         page_trigger_channels,
         search_trigger_channels,
         url_trigger_channels,
-        url_keyword_trigger_channels
-    );
+        url_keyword_trigger_channels);
+    };
 
     RequestBasicChannelsCollector::DataT::DataT
       inner_data1(
@@ -1019,7 +1027,7 @@ int main(int argc, char **argv)
 //        UserId("hSUsEk05T-m8PafRng8v6w.."),
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
-        match_request,
+        make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional()
       );
 
@@ -1028,7 +1036,7 @@ int main(int argc, char **argv)
         'A',
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         UserId("hSUsEk05T-m8PafRng8v6w.."),
-        match_request,
+        make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt)
       );
 
@@ -1519,71 +1527,77 @@ int main(int argc, char **argv)
 
     opt_in_sect_opt = opt_in_sect;
 
-    TagRequestCollector::DataT data1(
-      Generics::Time::get_time_of_day(),
-      Generics::Time::get_time_of_day(), // isp_time
-      false, // test_request
-      1,
-      2,
-      11,
-      "",
-      "www.referer1.com",
-      777,
-      'I',
-      "RUS",
-      RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      FixedNumber("123.123"),
-      StringList { "URL_1", "URL_2" },
-      TagRequestCollector::DataT::OptInSectionOptional()
-    );
+    auto make_data1 = []()
+    {
+      return TagRequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        Generics::Time::get_time_of_day(), // isp_time
+        false, // test_request
+        1,
+        2,
+        11,
+        "",
+        "www.referer1.com",
+        777,
+        'I',
+        "RUS",
+        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        FixedNumber("123.123"),
+        StringList { "URL_1", "URL_2" },
+        TagRequestCollector::DataT::OptInSectionOptional());
+    };
 
-    TagRequestCollector::DataT data2(
-      Generics::Time::get_time_of_day(),
-      Generics::Time::get_time_of_day(), // isp_time
-      true, // test_request
-      1,
-      2,
-      OptionalUlong(),
-      "EXT TAG ID #1",
-      "www.referer2.com",
-      987,
-      'O',
-      "RUS",
-      RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      FixedNumber("0"),
-      {},
-      opt_in_sect_opt
-    );
+    auto make_data2 = [&opt_in_sect_opt]()
+    {
+      return TagRequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        Generics::Time::get_time_of_day(), // isp_time
+        true, // test_request
+        1,
+        2,
+        OptionalUlong(),
+        "EXT TAG ID #1",
+        "www.referer2.com",
+        987,
+        'O',
+        "RUS",
+        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        FixedNumber("0"),
+        {},
+        opt_in_sect_opt);
+    };
 
-    TagRequestCollector::DataT data3(
-      Generics::Time::get_time_of_day(),
-      Generics::Time::get_time_of_day(), // isp_time
-      false, // test_request
-      1,
-      2,
-      22,
-      "EXT_TAG_ID_#2",
-      "www.referer3.com",
-      111,
-      'U',
-      "RUS",
-      RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      FixedNumber("123.321"),
-      StringList { "URL_1", "URL_2", "URL_3" },
-      opt_in_sect_opt
-    );
+    auto make_data3 = [&opt_in_sect_opt]()
+    {
+      return TagRequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        Generics::Time::get_time_of_day(), // isp_time
+        false, // test_request
+        1,
+        2,
+        22,
+        "EXT_TAG_ID_#2",
+        "www.referer3.com",
+        111,
+        'U',
+        "RUS",
+        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        FixedNumber("123.321"),
+        StringList { "URL_1", "URL_2", "URL_3" },
+        opt_in_sect_opt);
+    };
 
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      collector.add(data1);
-      collector.add(data2);
-      collector.add(data3);
+      collector.add(make_data1());
+      collector.add(make_data2());
+      collector.add(make_data3());
     }
 #else
-    collector.add(data1);
-    collector.add(data2);
-    collector.add(data3);
+    collector.add(make_data1());
+    collector.add(make_data2());
+    collector.add(make_data3());
 #endif
     LogIoTester<TagRequestTraits>(dump_on_fail).test(collector);
 #if 0

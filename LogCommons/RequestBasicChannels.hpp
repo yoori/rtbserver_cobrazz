@@ -2,6 +2,7 @@
 
 
 #include <iosfwd>
+#include <utility>
 #include <vector>
 #include <Generics/Time.hpp>
 #include <Generics/Rand.hpp>
@@ -1498,17 +1499,17 @@ public:
       }
 
       Data(
-        const NumberList& history_channels_val,
-        const TriggerMatchArray& page_trigger_channels_val,
-        const TriggerMatchArray& search_trigger_channels_val,
-        const TriggerMatchArray& url_trigger_channels_val,
-        const TriggerMatchArray& url_keyword_trigger_channels_val
+        NumberList history_channels_val,
+        TriggerMatchArray page_trigger_channels_val,
+        TriggerMatchArray search_trigger_channels_val,
+        TriggerMatchArray url_trigger_channels_val,
+        TriggerMatchArray url_keyword_trigger_channels_val
         )
-        : history_channels(history_channels_val),
-          page_trigger_channels(page_trigger_channels_val),
-          search_trigger_channels(search_trigger_channels_val),
-          url_trigger_channels(url_trigger_channels_val),
-          url_keyword_trigger_channels(url_keyword_trigger_channels_val)
+        : history_channels(std::move(history_channels_val)),
+          page_trigger_channels(std::move(page_trigger_channels_val)),
+          search_trigger_channels(std::move(search_trigger_channels_val)),
+          url_trigger_channels(std::move(url_trigger_channels_val)),
+          url_keyword_trigger_channels(std::move(url_keyword_trigger_channels_val))
       {}
 
       bool operator==(const Data& rhs) const
@@ -1546,19 +1547,24 @@ public:
   public:
     Match() noexcept {}
 
+    Match(const Match&) = delete;
+    Match& operator=(const Match&) = delete;
+    Match(Match&&) noexcept = default;
+    Match& operator=(Match&&) noexcept = default;
+
     Match(
-      const NumberList& history_channels,
-      const TriggerMatchArray& page_trigger_channels,
-      const TriggerMatchArray& search_trigger_channels,
-      const TriggerMatchArray& url_trigger_channels,
-      const TriggerMatchArray& url_keyword_trigger_channels
+      NumberList history_channels,
+      TriggerMatchArray page_trigger_channels,
+      TriggerMatchArray search_trigger_channels,
+      TriggerMatchArray url_trigger_channels,
+      TriggerMatchArray url_keyword_trigger_channels
       )
       : data_(new Data(
-          history_channels,
-          page_trigger_channels,
-          search_trigger_channels,
-          url_trigger_channels,
-          url_keyword_trigger_channels))
+          std::move(history_channels),
+          std::move(page_trigger_channels),
+          std::move(search_trigger_channels),
+          std::move(url_trigger_channels),
+          std::move(url_keyword_trigger_channels)))
     {}
 
     bool operator==(const Match& rhs) const
@@ -1615,7 +1621,7 @@ public:
     char user_type,
     const UserId& user_id,
     const UserId& temporary_user_id,
-    const MatchOptional& match_request,
+    MatchOptional&& match_request,
     const AdRequestPropsOptional& ad_request
   )
   :
@@ -1624,7 +1630,7 @@ public:
         user_type,
         user_id,
         temporary_user_id,
-        match_request,
+        std::move(match_request),
         ad_request,
         Generics::safe_rand()
       )
@@ -1750,7 +1756,7 @@ private:
       char user_type_val,
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
-      const MatchOptional& match_request_val,
+      MatchOptional&& match_request_val,
       const AdRequestPropsOptional& ad_request_val,
       unsigned long random_val
     )
@@ -1758,7 +1764,7 @@ private:
       user_type(user_type_val),
       user_id(user_id_val),
       temporary_user_id(temporary_user_id_val),
-      match_request(match_request_val),
+      match_request(std::move(match_request_val)),
       ad_request(ad_request_val),
       random(random_val)
     {
@@ -1772,11 +1778,11 @@ private:
       char user_type_val,
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
-      const NumberList& history_channels_val,
-      const TriggerMatchArray& page_trigger_channels_val,
-      const TriggerMatchArray& search_trigger_channels_val,
-      const TriggerMatchArray& url_trigger_channels_val,
-      const TriggerMatchArray& url_keyword_trigger_channels_val,
+      NumberList history_channels_val,
+      TriggerMatchArray page_trigger_channels_val,
+      TriggerMatchArray search_trigger_channels_val,
+      TriggerMatchArray url_trigger_channels_val,
+      TriggerMatchArray url_keyword_trigger_channels_val,
       const AdRequestPropsOptional& ad_request_val,
       unsigned long random_val
     )
@@ -1784,9 +1790,12 @@ private:
       user_type(user_type_val),
       user_id(user_id_val),
       temporary_user_id(temporary_user_id_val),
-      match_request(Match(history_channels_val, page_trigger_channels_val,
-        search_trigger_channels_val, url_trigger_channels_val,
-          url_keyword_trigger_channels_val)),
+      match_request(Match(
+        std::move(history_channels_val),
+        std::move(page_trigger_channels_val),
+        std::move(search_trigger_channels_val),
+        std::move(url_trigger_channels_val),
+        std::move(url_keyword_trigger_channels_val))),
       ad_request(ad_request_val),
       random(random_val)
     {
@@ -1800,11 +1809,11 @@ private:
       char user_type_val,
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
-      const NumberList& history_channels_val,
-      const TriggerMatchArray& page_trigger_channels_val,
-      const TriggerMatchArray& search_trigger_channels_val,
-      const TriggerMatchArray& url_trigger_channels_val,
-      const TriggerMatchArray& url_keyword_trigger_channels_val,
+      NumberList history_channels_val,
+      TriggerMatchArray page_trigger_channels_val,
+      TriggerMatchArray search_trigger_channels_val,
+      TriggerMatchArray url_trigger_channels_val,
+      TriggerMatchArray url_keyword_trigger_channels_val,
       const RequestBasicChannelsInnerData_V_2_7::AdRequestPropsOptional&
         ad_request_val,
       unsigned long random_val
@@ -1813,9 +1822,12 @@ private:
       user_type(user_type_val),
       user_id(user_id_val),
       temporary_user_id(temporary_user_id_val),
-      match_request(Match(history_channels_val, page_trigger_channels_val,
-        search_trigger_channels_val, url_trigger_channels_val,
-          url_keyword_trigger_channels_val)),
+      match_request(Match(
+        std::move(history_channels_val),
+        std::move(page_trigger_channels_val),
+        std::move(search_trigger_channels_val),
+        std::move(url_trigger_channels_val),
+        std::move(url_keyword_trigger_channels_val))),
       ad_request(ad_request_val),
       random(random_val)
     {
@@ -1829,11 +1841,11 @@ private:
       char user_type_val,
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
-      const NumberList& history_channels_val,
-      const TriggerMatchArray& page_trigger_channels_val,
-      const TriggerMatchArray& search_trigger_channels_val,
-      const TriggerMatchArray& url_trigger_channels_val,
-      const TriggerMatchArray& url_keyword_trigger_channels_val,
+      NumberList history_channels_val,
+      TriggerMatchArray page_trigger_channels_val,
+      TriggerMatchArray search_trigger_channels_val,
+      TriggerMatchArray url_trigger_channels_val,
+      TriggerMatchArray url_keyword_trigger_channels_val,
       const RequestBasicChannelsInnerData_V_3_1::AdRequestPropsOptional&
         ad_request_val,
       unsigned long random_val
@@ -1842,9 +1854,12 @@ private:
       user_type(user_type_val),
       user_id(user_id_val),
       temporary_user_id(temporary_user_id_val),
-      match_request(Match(history_channels_val, page_trigger_channels_val,
-        search_trigger_channels_val, url_trigger_channels_val,
-          url_keyword_trigger_channels_val)),
+      match_request(Match(
+        std::move(history_channels_val),
+        std::move(page_trigger_channels_val),
+        std::move(search_trigger_channels_val),
+        std::move(url_trigger_channels_val),
+        std::move(url_keyword_trigger_channels_val))),
       ad_request(ad_request_val),
       random(random_val)
     {
@@ -2341,6 +2356,11 @@ public:
   public:
     Match() noexcept {}
 
+    Match(const Match&) = delete;
+    Match& operator=(const Match&) = delete;
+    Match(Match&&) noexcept = default;
+    Match& operator=(Match&&) noexcept = default;
+
     Match(
       NumberArray history_channels,
       TriggerMatchArray page_trigger_channels,
@@ -2431,8 +2451,8 @@ public:
         user_type,
         user_id,
         temporary_user_id,
-        match_request,
-        ad_request,
+        std::move(match_request),
+        std::move(ad_request),
         Generics::safe_rand()
       )
     )
@@ -2560,7 +2580,7 @@ private:
       char user_type_val,
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
-      const MatchOptional& match_request_val,
+      MatchOptional&& match_request_val,
       const AdRequestPropsOptional& ad_request_val,
       unsigned long random_val
     )
@@ -2568,7 +2588,7 @@ private:
       user_type(user_type_val),
       user_id(user_id_val),
       temporary_user_id(temporary_user_id_val),
-      match_request(match_request_val),
+      match_request(std::move(match_request_val)),
       ad_request(ad_request_val),
       random(random_val)
     {
@@ -2583,11 +2603,11 @@ private:
       char user_type_val,
       const UserId& user_id_val,
       const UserId& temporary_user_id_val,
-      const NumberArray& history_channels_val,
-      const TriggerMatchArray& page_trigger_channels_val,
-      const TriggerMatchArray& search_trigger_channels_val,
-      const TriggerMatchArray& url_trigger_channels_val,
-      const TriggerMatchArray& url_keyword_trigger_channels_val,
+      NumberArray history_channels_val,
+      TriggerMatchArray page_trigger_channels_val,
+      TriggerMatchArray search_trigger_channels_val,
+      TriggerMatchArray url_trigger_channels_val,
+      TriggerMatchArray url_keyword_trigger_channels_val,
       const AdRequestPropsOptional_ANY& ad_request_val,
       unsigned long random_val
     )
@@ -2595,9 +2615,12 @@ private:
       user_type(user_type_val),
       user_id(user_id_val),
       temporary_user_id(temporary_user_id_val),
-      match_request(Match(history_channels_val, page_trigger_channels_val,
-        search_trigger_channels_val, url_trigger_channels_val,
-          url_keyword_trigger_channels_val)),
+      match_request(Match(
+        std::move(history_channels_val),
+        std::move(page_trigger_channels_val),
+        std::move(search_trigger_channels_val),
+        std::move(url_trigger_channels_val),
+        std::move(url_keyword_trigger_channels_val))),
       ad_request(ad_request_val),
       random(random_val)
     {

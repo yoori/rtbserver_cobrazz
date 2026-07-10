@@ -116,8 +116,6 @@
       <xsd:element name="CMPStat" type="LogProcessingParamsDeferrableCSVType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="CreativeStat" type="LogProcessingParamsDeferrableCSVType" minOccurs="0" maxOccurs="1"/>
 
-      <xsd:element name="WebwiseDiscoverItemStat" type="LogProcessingParamsXSearchType" minOccurs="0" maxOccurs="1"/>
-
       <xsd:element name="SearchTermStat" type="LogProcessingParamsHFType" minOccurs="0" maxOccurs="1"/>
 
 <!-- CSV only writers -->
@@ -143,8 +141,6 @@
       <xsd:element name="ActionRequest" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ActionStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ColoUpdateStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
-      <xsd:element name="WebwiseDiscoverItems" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
-      <xsd:element name="WebwiseDiscoverTagStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="CCGSelectionFailureStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ChannelHitStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ChannelImpInventory" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>

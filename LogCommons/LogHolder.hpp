@@ -2,6 +2,7 @@
 
 #include <string>
 #include <list>
+#include <utility>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -163,20 +164,15 @@ namespace AdServer
         const SavePolicy& save_policy = SavePolicy())
         /*throw(eh::Exception)*/;
 
-      void add_record(
-        typename LogHolderImpl<LogTraitsType, SavePolicy>::
-          CollectorT::DataT data)
+      template<typename... Args>
+      void add_record(Args&&... args)
         /*throw(eh::Exception)*/;
 
       Generics::Time flush_if_required(
         const Generics::Time& now) /*throw(eh::Exception)*/;
 
       ~LogHolderLimitedDataAdd() noexcept;
-    protected:
-      void add_record_i_(
-        typename LogHolderImpl<LogTraitsType, SavePolicy>::
-          CollectorT::DataT&& data)
-        /*throw(eh::Exception)*/;
+
     };
 
     class CompositeLogHolder:
@@ -288,22 +284,21 @@ namespace AdServer
       class PoolObject: public Base::PoolObjectBase
       {
       public:
-        template<typename Mediator>
+        template<typename... Args>
         void
-        add_record(
-          typename CollectorT::KeyT key,
-          Mediator data)
+        add_record(Args&&... args)
         {
           (*this->holders_.begin())->collector.add(
-            std::move(key),
-            std::move(data));
+            std::forward<Args>(args)...);
         }
 
       protected:
         friend PoolObject_var LogHolderPool::get_object();
 
         PoolObject(const typename Base::ContainerHolder_var& container_holder):
-          Base::PoolObjectBase(container_holder) {}
+          Base::PoolObjectBase(container_holder)
+        {}
+
         virtual
         ~PoolObject() noexcept = default;
       };
@@ -312,16 +307,15 @@ namespace AdServer
         const LogFlushTraits& flush_traits,
         const SavePolicy& save_policy = SavePolicy())
         /*throw(eh::Exception)*/:
-          LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy) {}
+          LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy)
+      {}
 
-      template<typename Mediator>
+      template<typename... Args>
       void
-      add_record(
-        typename CollectorT::KeyT key,
-        Mediator data)
+      add_record(Args&&... args)
       {
         PoolObject_var pool_object = get_object();
-        pool_object->add_record(std::move(key), std::move(data));
+        pool_object->add_record(std::forward<Args>(args)...);
       }
 
       PoolObject_var
@@ -376,7 +370,6 @@ namespace AdServer
           typename CollectorT::DataT inner_data;
           inner_data.add(inner_it->first, inner_it->second);
           unsigned long portion_i = inner_it->first.hash() % portions_num_;
-          //std::cout << "EVAL portion for hash = " << inner_it->first.hash() << ", portions_num_ = " << portions_num_ << ", portion_i = " << portion_i << std::endl;
 
           SyncPolicy::WriteGuard guard(portions_[portion_i]->lock);
           portions_[portion_i]->collector.add(key, std::move(inner_data));
@@ -384,8 +377,7 @@ namespace AdServer
       }
 
       Generics::Time
-      flush_if_required(
-        const Generics::Time& now) /*throw(eh::Exception)*/;
+      flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
 
     protected:
       typedef Sync::Policy::PosixThread SyncPolicy;
@@ -462,10 +454,12 @@ namespace AdServer
       class PoolObject: public Base::PoolObjectBase
       {
       public:
+        template<typename... Args>
         void
-        add_record(typename CollectorT::DataT data)
+        add_record(Args&&... args)
         {
-          (*this->holders_.begin())->collector.add(std::move(data));
+          (*this->holders_.begin())->collector.add(
+            std::forward<Args>(args)...);
         }
 
       protected:
@@ -483,11 +477,12 @@ namespace AdServer
         /*throw(eh::Exception)*/:
           LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy) {}
 
+      template<typename... Args>
       void
-      add_record(typename CollectorT::DataT data)
+      add_record(Args&&... args)
       {
         PoolObject_var pool_object = get_object();
-        pool_object->add_record(std::move(data));
+        pool_object->add_record(std::forward<Args>(args)...);
       }
 
       PoolObject_var

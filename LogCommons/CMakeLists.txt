@@ -32,7 +32,6 @@ add_library(LogCommons SHARED
   CreativeStat.cpp
   DeviceChannelCountStat.cpp
   DiscoverChannelState.cpp
-  DiscoverFeedState.cpp
   ExpressionPerformance.cpp
   FileReceiver.cpp
   KeywordHitStat.cpp
@@ -58,9 +57,6 @@ add_library(LogCommons SHARED
   UserAgentStat.cpp
   UserProperties.cpp
   WebStat.cpp
-  WebwiseDiscoverItemStat.cpp
-  WebwiseDiscoverItems.cpp
-  WebwiseDiscoverTagStat.cpp
 
 )
 
@@ -73,8 +69,6 @@ target_link_libraries(LogCommons
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
-
 
 
 

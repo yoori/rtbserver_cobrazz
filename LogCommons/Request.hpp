@@ -41,14 +41,9 @@ public:
 
   RequestData() noexcept {}
 
-  RequestData(const RequestData& init) noexcept
-    : holder_(init.holder_)
-  {}
+  RequestData(const RequestData& init) noexcept = default;
 
-  RequestData(RequestData&& init) noexcept
-  {
-    holder_.swap(init.holder_);
-  }
+  RequestData(RequestData&& init) noexcept = default;
 
   RequestData(
     const SecondsTimestamp& time,

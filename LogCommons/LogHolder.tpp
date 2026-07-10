@@ -227,27 +227,17 @@ namespace LogProcessing
   {}
 
   template<typename LogTraitsType, typename SavePolicy>
-  void
-  LogHolderLimitedDataAdd<LogTraitsType, SavePolicy>::add_record_i_(
-    typename LogHolderImpl<LogTraitsType, SavePolicy>::
-      CollectorT::DataT&& data)
-    /*throw(eh::Exception)*/
-  {
-    this->collector_.add(std::move(data));
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
+  template<typename... Args>
   void
   LogHolderLimitedDataAdd<LogTraitsType, SavePolicy>::add_record(
-    typename LogHolderImpl<LogTraitsType, SavePolicy>::
-      CollectorT::DataT data)
+    Args&&... args)
     /*throw(eh::Exception)*/
   {
     typename LogHolderImpl<LogTraitsType, SavePolicy>::
       SyncPolicy::WriteGuard lock(this->mutex_());
     if (count_ < limit_)
     {
-      add_record_i_(std::move(data));
+      this->collector_.add(std::forward<Args>(args)...);
       ++count_;
     }
     else

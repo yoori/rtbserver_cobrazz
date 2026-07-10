@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/DirSelector.hpp>
@@ -1025,13 +1026,15 @@ struct Filler
 
     ad_request_opt = ad_request;
 
-    RequestBasicChannelsCollector::DataT::DataT::Match match_request(
+    auto make_match_request = [&]()
+    {
+      return RequestBasicChannelsCollector::DataT::DataT::Match(
         history_channels,
         page_trigger_channels,
         search_trigger_channels,
         url_trigger_channels,
-        url_keyword_trigger_channels
-    );
+        url_keyword_trigger_channels);
+    };
 
     RequestBasicChannelsCollector::DataT::DataT
       inner_data1(
@@ -1047,7 +1050,7 @@ struct Filler
         'H',
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
-        match_request,
+        make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional()
       );
 
@@ -1135,51 +1138,55 @@ struct Filler
 
     opt_in_sect_opt = opt_in_sect;
 
-    TagRequestCollector::DataT data1(
-      Generics::Time::get_time_of_day(),
-      TEST_TIME,
-      false, // test_request
-      1,
-      2,
-      11,
-      "",
-      "www.referer1.com",
-      777,
-      'U',
-      "US",
-      TEST_REQUEST_ID,
-      FixedNumber("123.321"),
-      StringList { "URL_1", "URL_2" },
-      TagRequestCollector::DataT::OptInSectionOptional()
-    );
+    auto make_data1 = []()
+    {
+      return TagRequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        TEST_TIME,
+        false, // test_request
+        1,
+        2,
+        11,
+        "",
+        "www.referer1.com",
+        777,
+        'U',
+        "US",
+        TEST_REQUEST_ID,
+        FixedNumber("123.321"),
+        StringList { "URL_1", "URL_2" },
+        TagRequestCollector::DataT::OptInSectionOptional());
+    };
 
-    TagRequestCollector::DataT data2(
-      Generics::Time::get_time_of_day(),
-      TEST_TIME,
-      false, // test_request
-      1,
-      2,
-      22,
-      "EXT_TAG_ID",
-      "www.referer1.com",
-      987,
-      'U',
-      "US",
-      TEST_REQUEST_ID,
-      FixedNumber("123.321"),
-      StringList { "URL_1", "URL_2" },
-      opt_in_sect_opt
-    );
+    auto make_data2 = [&opt_in_sect_opt]()
+    {
+      return TagRequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        TEST_TIME,
+        false, // test_request
+        1,
+        2,
+        22,
+        "EXT_TAG_ID",
+        "www.referer1.com",
+        987,
+        'U',
+        "US",
+        TEST_REQUEST_ID,
+        FixedNumber("123.321"),
+        StringList { "URL_1", "URL_2" },
+        opt_in_sect_opt);
+    };
 
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
       if(i % 2 == 0)
       {
-        collector.add(data1);
+        collector.add(make_data1());
       }
       else
       {
-        collector.add(data2);
+        collector.add(make_data2());
       }
     }
   }
@@ -1188,7 +1195,38 @@ struct Filler
   distribute_save(TagRequestCollector& collector,
     Generics::Time& time, Generics::Time& time_abs)
   {
-    distribute_save_def_<TagRequestTraits>(collector, time, time_abs);
+    std::ostringstream dump_ostr;
+    dump_ostr << collector;
+    const std::string collector_dump = dump_ostr.str();
+
+    auto load_collector = [&collector_dump]()
+    {
+      TagRequestCollector result;
+      std::istringstream dump_istr(collector_dump);
+      dump_istr >> result;
+      return result;
+    };
+
+    TagRequestCollector collector0 = load_collector();
+    TagRequestCollector collector1 = load_collector();
+    TagRequestCollector collector2 = load_collector();
+
+    TagRequestCollector expected0 = load_collector();
+    TagRequestCollector expected1 = load_collector();
+    TagRequestCollector expected2 = load_collector();
+
+    collector.merge(expected0);
+    collector.merge(expected1);
+    collector.merge(expected2);
+
+    const std::string DIR_NAME = (root_path.installed() ? root_path :
+      std::string("./") + TagRequestTraits::log_base_name());
+
+    Generics::ScopedTimer distrib_save_timer_abs(time_abs);
+    Generics::ScopedCPUTimer distrib_save_timer(time);
+    LogIoProxy<TagRequestTraits>::save(collector0, DIR_NAME, 2);
+    LogIoProxy<TagRequestTraits>::save(collector1, DIR_NAME, 5);
+    LogIoProxy<TagRequestTraits>::save(collector2, DIR_NAME, 4);
   }
 
   void
@@ -1851,8 +1889,15 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
   }
 
   {
-    CollectorType tmp_collector;
-    collector.deep_copy(tmp_collector);
+    CollectorType expected_collector;
+    if (!generate_distrib_list.installed())
+    {
+      std::ostringstream dump_ostr;
+      dump_ostr << collector;
+      std::istringstream dump_istr(dump_ostr.str());
+      dump_istr >> expected_collector;
+    }
+
     if (generate_distrib_list.installed())
     {
       Filler::distribute_save(collector,
@@ -1862,99 +1907,102 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
     {
       Generics::ScopedTimer save_timer_abs(save_time_abs);
       Generics::ScopedCPUTimer save_timer(save_time);
-      LogIoProxy<LogTraits>::save(tmp_collector, dir_name_);
+      LogIoProxy<LogTraits>::save(collector, dir_name_);
     }
-  }
 
-  std::string rm_cmd("rm -rf ");
-  rm_cmd += dir_name_;
-  if (file_generator_mode)
-  {
-    if (print_time.enabled() && !debug.enabled())
+    std::string rm_cmd("rm -rf ");
+    rm_cmd += dir_name_;
+    if (file_generator_mode)
+    {
+      if (print_time.enabled() && !debug.enabled())
+      {
+        system(rm_cmd.c_str());
+      }
+      else if (!no_commit_files.enabled())
+      {
+        typedef std::list<std::string> FileList;
+        FileList files;
+
+        read_dir(dir_name_ , files);
+        for (FileList::const_iterator ci = files.begin();
+             ci != files.end(); ++ci)
+        {
+          const std::string file_name(*ci + ".C");
+          ::rename(ci->c_str(), file_name.c_str());
+          std::ofstream ofs(
+            std::string(dir_name_ + "/~" + *ci + ".commit").c_str());
+        }
+      }
+
+      return;
+    }
+
+    LogSortingMap log_sorting_map;
+    search_for_files(dir_name_, name(), log_sorting_map);
+
+    CollectorType restored_collector;
+
+    for (LogSortingMap::const_iterator it = log_sorting_map.begin();
+      it != log_sorting_map.end(); ++it)
+    {
+      Generics::ScopedTimer load_timer_abs(load_time_abs);
+      Generics::ScopedCPUTimer load_timer(load_time);
+      std::ifstream ifs(it->second.c_str());
+      typename LogTraits::HeaderType log_header;
+      if (!(ifs >> log_header))
+      {
+        Stream::Error ostr;
+        ostr << "LogIoTester<" << name()
+          << ">: Failed to read log header";
+        throw Exception(ostr);
+      }
+      if (log_header.version() != LogTraits::current_version())
+      {
+        Stream::Error ostr;
+        ostr << "LogIoTester<" << name()
+          << ">: Invalid log header version: "
+          << log_header.version();
+        throw Exception(ostr);
+      }
+      LogIoProxy<LogTraits>::load(restored_collector, ifs);
+    }
+
+    const CollectorType& expected_collector_ref =
+      generate_distrib_list.installed() ? collector : expected_collector;
+
+    if (expected_collector_ref == restored_collector)
     {
       system(rm_cmd.c_str());
-    }
-    else if (!no_commit_files.enabled())
-    {
-      typedef std::list<std::string> FileList;
-      FileList files;
-
-      read_dir(dir_name_ , files);
-      for (FileList::const_iterator ci = files.begin();
-           ci != files.end(); ++ci)
+      if (!print_time.enabled())
       {
-        const std::string file_name(*ci + ".C");
-        ::rename(ci->c_str(), file_name.c_str());
-        std::ofstream ofs(
-          std::string(dir_name_ + "/~" + *ci + ".commit").c_str());
+        std::cout << "SUCCESS" << std::endl;
       }
-    }
-
-    return;
-  }
-
-  LogSortingMap log_sorting_map;
-  search_for_files(dir_name_, name(), log_sorting_map);
-
-  CollectorType restored_collector;
-
-  for (LogSortingMap::const_iterator it = log_sorting_map.begin();
-    it != log_sorting_map.end(); ++it)
-  {
-    Generics::ScopedTimer load_timer_abs(load_time_abs);
-    Generics::ScopedCPUTimer load_timer(load_time);
-    std::ifstream ifs(it->second.c_str());
-    typename LogTraits::HeaderType log_header;
-    if (!(ifs >> log_header))
-    {
-      Stream::Error ostr;
-      ostr << "LogIoTester<" << name()
-        << ">: Failed to read log header";
-      throw Exception(ostr);
-    }
-    if (log_header.version() != LogTraits::current_version())
-    {
-      Stream::Error ostr;
-      ostr << "LogIoTester<" << name()
-        << ">: Invalid log header version: "
-        << log_header.version();
-      throw Exception(ostr);
-    }
-    LogIoProxy<LogTraits>::load(restored_collector, ifs);
-  }
-
-  if (collector == restored_collector)
-  {
-    system(rm_cmd.c_str());
-    if (!print_time.enabled())
-    {
-      std::cout << "SUCCESS" << std::endl;
-    }
-  }
-  else
-  {
-    if (debug.enabled())
-    {
-      std::ostringstream mv_orig_dir_cmd_oss;
-      mv_orig_dir_cmd_oss << "mv " << dir_name_ << ' ' <<
-        name() << "_Original" << std::endl;
-      system(mv_orig_dir_cmd_oss.str().c_str());
-
-      const std::string DUMP_DIR_NAME =
-        dir_name_ + "_Restored";
-      system(("mkdir -p " + DUMP_DIR_NAME).c_str());
-
-      LogIoProxy<LogTraits>::save(restored_collector, DUMP_DIR_NAME);
     }
     else
     {
-      system(rm_cmd.c_str());
-    }
+      if (debug.enabled())
+      {
+        std::ostringstream mv_orig_dir_cmd_oss;
+        mv_orig_dir_cmd_oss << "mv " << dir_name_ << ' ' <<
+          name() << "_Original" << std::endl;
+        system(mv_orig_dir_cmd_oss.str().c_str());
 
-    std::cout << "FAILED" << std::endl;
-    Stream::Error ostr;
-    ostr << "LogIoTester<" << name()
-      << ">: Restored collector is not equal to the original collector";
-    throw Exception(ostr);
+        const std::string DUMP_DIR_NAME =
+          dir_name_ + "_Restored";
+        system(("mkdir -p " + DUMP_DIR_NAME).c_str());
+
+        LogIoProxy<LogTraits>::save(restored_collector, DUMP_DIR_NAME);
+      }
+      else
+      {
+        system(rm_cmd.c_str());
+      }
+
+      std::cout << "FAILED" << std::endl;
+      Stream::Error ostr;
+      ostr << "LogIoTester<" << name()
+        << ">: Restored collector is not equal to the original collector";
+      throw Exception(ostr);
+    }
   }
 }

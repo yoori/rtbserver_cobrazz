@@ -8,6 +8,7 @@
 #include <map>
 #include <list>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <forward_list>
 #include <cmath>
@@ -532,6 +533,12 @@ public:
     this->present_(!VALUE_TYPE_TRAITS_::is_empty(**this));
   }
 
+  OptionalValue(T_&& value)
+    : BaseType(std::move(value), true)
+  {
+    this->present_(!VALUE_TYPE_TRAITS_::is_empty(**this));
+  }
+
   template <typename TYPE_, typename TRAITS_>
   OptionalValue(const OptionalValue<TYPE_, TRAITS_> &value)
     : BaseType(*value, value.present())
@@ -717,6 +724,9 @@ template <class LOG_TYPE_TRAITS_>
 struct DefaultDistributeStrategy;
 
 template <class LOG_TYPE_TRAITS_>
+struct MoveSeqDistributeStrategy;
+
+template <class LOG_TYPE_TRAITS_>
 struct PackedDistributeStrategy;
 
 namespace Detail
@@ -742,6 +752,20 @@ namespace Detail
   struct NestedPackedLoad;
   struct SimpleSafeLoad;
   struct NestedPackedSafeLoad;
+
+  template <typename LogTraits, typename = void>
+  struct DistributeStrategySelector
+  {
+    typedef DefaultDistributeStrategy<LogTraits> Type;
+  };
+
+  template <typename LogTraits>
+  struct DistributeStrategySelector<
+    LogTraits,
+    std::void_t<typename LogTraits::DistributeStrategyType> >
+  {
+    typedef typename LogTraits::DistributeStrategyType Type;
+  };
 
   template <typename CollectorType>
   struct LoadPolicySelector<CollectorType, false>
@@ -811,7 +835,7 @@ namespace Detail
     typedef DistribLogSaverImpl<
       L_T_,
       DefaultSaveStrategy<L_T_>,
-      DefaultDistributeStrategy<L_T_>,
+      typename DistributeStrategySelector<L_T_>::Type,
       false> Type;
   };
 
@@ -831,7 +855,7 @@ namespace Detail
     typedef DistribLogSaverImpl<
       L_T_,
       DefaultSaveStrategy<L_T_>,
-      DefaultDistributeStrategy<L_T_>,
+      typename DistributeStrategySelector<L_T_>::Type,
       true> Type;
   };
 

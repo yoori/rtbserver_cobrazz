@@ -120,7 +120,7 @@ namespace
   const char TAG_AUCTION_STAT_LOGGER[] = "TagAuctionStat";
   const char USER_AGENT_STAT_LOGGER[] = "UserAgentStat";
 
-  typedef Generics::SimpleDecimal<uint64_t, 11, 5> ExDeliveryThresholdDecimal;
+  using ExDeliveryThresholdDecimal = Generics::SimpleDecimal<uint64_t, 11, 5>;
 
   const unsigned long MAX_WEBSTAT_SOURCE_LENGTH = 10;
 
@@ -801,7 +801,7 @@ namespace AdServer::CampaignSvcs
       ~CreativeStatLogger() noexcept = default;
 
     private:
-      typedef CollectorT::DataT::KeyT::DeliveryThresholdT DeliveryThreshold;
+      using DeliveryThreshold = CollectorT::DataT::KeyT::DeliveryThresholdT;
 
     private:
       CollectorT::DataT::KeyT init_no_ad_key_(
@@ -1264,7 +1264,7 @@ namespace AdServer::CampaignSvcs
             account_ccg_count);
 
           data.add(inner_key, STAT_REQUEST_ONE_);
-          add_record(key, data);
+          add_record(std::move(key), std::move(data));
         }
       }
 
@@ -1327,7 +1327,7 @@ namespace AdServer::CampaignSvcs
               request_info.platform_channels.end(),
               request_info.platforms.begin(),
               request_info.platforms.end()));
-          add_record(CollectorT::KeyT(request_info.time), data);
+          add_record(CollectorT::KeyT(request_info.time), std::move(data));
         }
       }
     };
@@ -1445,7 +1445,7 @@ namespace AdServer::CampaignSvcs
               std::inserter(data.channel_list, data.channel_list.begin()));
           }
 
-          add_record(data);
+          add_record(std::move(data));
         }
         catch (const eh::Exception &ex)
         {
@@ -1519,7 +1519,7 @@ namespace AdServer::CampaignSvcs
 
           add_record(
             CollectorT::KeyT(request_info.isp_time, request_info.colo_id),
-            data);
+            std::move(data));
         }
         catch (const eh::Exception &ex)
         {
@@ -1546,7 +1546,7 @@ namespace AdServer::CampaignSvcs
           CollectorT::KeyT(
             match_request_info.time + match_request_info.isp_offset,
             match_request_info.match_info.colo_id),
-          data);
+          std::move(data));
       }
       catch (const eh::Exception &ex)
       {
@@ -1587,7 +1587,7 @@ namespace AdServer::CampaignSvcs
         CollectorT::KeyT(
           match_request_info.time + match_request_info.isp_offset,
           match_request_info.match_info.colo_id),
-        data);
+        std::move(data));
     }
 
     void
@@ -1651,7 +1651,7 @@ namespace AdServer::CampaignSvcs
 
           add_record(
             CollectorT::KeyT(request_info.isp_time, request_info.colo_id),
-            data);
+            std::move(data));
         }
       }
       catch (const eh::Exception &ex)
@@ -1687,7 +1687,7 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-         const CollectorT::KeyT key(
+        CollectorT::KeyT key(
           time,
           time + time_offset,
           colo_id);
@@ -1702,7 +1702,7 @@ namespace AdServer::CampaignSvcs
         CollectorT::DataT data;
         data.add(inner_data);
 
-        add_record(key, data);
+        add_record(std::move(key), std::move(data));
       }
       catch (const eh::Exception &ex)
       {
@@ -1716,8 +1716,7 @@ namespace AdServer::CampaignSvcs
     RequestBasicChannelsLogger::
     process_ad_request(
       const CampaignManagerLogger::RequestInfo& request_info,
-      const CampaignManagerLogger::AdRequestSelectionInfo&
-        ad_request_selection_info)
+      const CampaignManagerLogger::AdRequestSelectionInfo& ad_request_selection_info)
       /*throw(Exception)*/
     {
       if(need_process_request_(request_info, &ad_request_selection_info))
@@ -1735,7 +1734,7 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        const CollectorT::KeyT key(
+        CollectorT::KeyT key(
           match_request_info.time,
           match_request_info.time + match_request_info.isp_offset,
           match_request_info.match_info.colo_id);
@@ -1761,13 +1760,13 @@ namespace AdServer::CampaignSvcs
           'A',
           match_request_info.user_id,
           AdServer::Commons::UserId(), // temporary user id
-          match_request,
+          std::move(match_request),
           CollectorT::DataT::DataT::AdRequestPropsOptional());
 
         CollectorT::DataT data;
         data.add(inner_data);
 
-        add_record(key, data);
+        add_record(std::move(key), std::move(data));
 
         /*
            FIXME: add logging for
@@ -1849,7 +1848,7 @@ namespace AdServer::CampaignSvcs
               'H',
               request_info.household_id,
               null_id_, // temporary user id
-              match_request,
+              std::move(match_request),
               CollectorT::DataT::DataT::AdRequestPropsOptional()));
         }
 
@@ -1959,7 +1958,7 @@ namespace AdServer::CampaignSvcs
             std::move(match_request),
             std::move(ad_request_opt)));
 
-        add_record(key, data);
+        add_record(std::move(key), std::move(data));
       }
       catch (const eh::Exception &ex)
       {
@@ -2002,7 +2001,7 @@ namespace AdServer::CampaignSvcs
           CollectorT::DataT::DataT(1));
         add_record(
           CollectorT::KeyT(web_op.time, web_op.colo_id),
-          data);
+          std::move(data));
       }
       catch (const eh::Exception &ex)
       {
@@ -2050,7 +2049,7 @@ namespace AdServer::CampaignSvcs
           }
           else
           {
-            add_record(data);
+            add_record(std::move(data));
           }
         }
       }
@@ -2249,7 +2248,7 @@ namespace AdServer::CampaignSvcs
               STAT_REQUESTS_DECREMENT_);
           }
 
-          add_record(key, data);
+          add_record(std::move(key), std::move(data));
         }
         catch(const eh::Exception& ex)
         {
@@ -2291,7 +2290,7 @@ namespace AdServer::CampaignSvcs
 
         data.add(inner_key, STAT_REQUESTS_INCREMENT_);
 
-        add_record(key, data);
+        add_record(std::move(key), std::move(data));
       }
       catch(const eh::Exception& ex)
       {
@@ -2309,7 +2308,7 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
       /*throw(Exception)*/
     {
-      typedef CollectorT::DataT::OptionalUlong OptionalUlong;
+      using OptionalUlong = CollectorT::DataT::OptionalUlong;
 
       static const char* FUN = "RequestLogger::process_ad_request()";
 
@@ -2475,7 +2474,7 @@ namespace AdServer::CampaignSvcs
               request_info.additional_info
               );
 
-            add_record(data);
+            add_record(std::move(data));
           }
         }
       }
@@ -2534,7 +2533,7 @@ namespace AdServer::CampaignSvcs
           click_info.referer,
           click_info.user_id_hash_mod);
 
-        add_record(data);
+        add_record(std::move(data));
       }
       catch(const eh::Exception& ex)
       {
@@ -2553,6 +2552,12 @@ namespace AdServer::CampaignSvcs
       static const char* FUN = "AdvertiserActionLogger::process_action()";
       try
       {
+        LogProcessing::NumberArray ccg_ids;
+        ccg_ids.reserve(adv_action_info.ccg_ids.size());
+        ccg_ids.assign(
+          adv_action_info.ccg_ids.begin(),
+          adv_action_info.ccg_ids.end());
+
         CollectorT::DataT data(
           adv_action_info.time,
           adv_action_info.user_id,
@@ -2560,13 +2565,13 @@ namespace AdServer::CampaignSvcs
           adv_action_info.action_id,
           adv_action_info.device_channel_id,
           adv_action_info.action_request_id,
-          adv_action_info.ccg_ids,
+          std::move(ccg_ids),
           adv_action_info.referer,
           adv_action_info.order_id,
           adv_action_info.ip_hash,
           adv_action_info.action_value);
 
-        add_record(data);
+        add_record(std::move(data));
       }
       catch(const eh::Exception& ex)
       {
@@ -2609,7 +2614,7 @@ namespace AdServer::CampaignSvcs
             CollectorT::KeyT(
             adv_action_info.time,
             adv_action_info.colo_id),
-            data);
+            std::move(data));
         }
         catch(const eh::Exception& ex)
         {
@@ -2632,7 +2637,7 @@ namespace AdServer::CampaignSvcs
         CollectorT::DataT data(passback_info.time, passback_info.request_id,
           passback_info.user_id_hash_mod);
 
-        add_record(data);
+        add_record(std::move(data));
       }
       catch(const eh::Exception& ex)
       {
@@ -2665,7 +2670,7 @@ namespace AdServer::CampaignSvcs
               LogProcessing::OptionalUlong()/*FIXME: size_id*/),
             CollectorT::DataT::DataT(1));
 
-          add_record(key, data);
+          add_record(std::move(key), std::move(data));
         }
         catch(const eh::Exception& e)
         {
@@ -2720,9 +2725,9 @@ namespace AdServer::CampaignSvcs
             AdServer::Commons::RequestId(), // passback_request_id
             RevenueDecimal::ZERO, // floor_cost,
             request_info.urls,
-            opt_in);
+            std::move(opt_in));
 
-          add_record(data);
+          add_record(std::move(data));
         }
       }
       catch (const eh::Exception &ex)
@@ -2785,9 +2790,9 @@ namespace AdServer::CampaignSvcs
                 AdServer::Commons::RequestId()),
             ad_ri.floor_cost,
             request_info.urls,
-            opt_in);
+            std::move(opt_in));
 
-          add_record(data);
+          add_record(std::move(data));
         }
       }
       catch (const eh::Exception &ex)
@@ -2825,7 +2830,7 @@ namespace AdServer::CampaignSvcs
               CollectorT::DataT::KeyT::OptionalUlong(),
             ri.log_as_test),
           ONE_REQUEST_);
-        add_record(key, add_data);
+        add_record(std::move(key), std::move(add_data));
       }
       catch (const eh::Exception &ex)
       {
@@ -2842,7 +2847,7 @@ namespace AdServer::CampaignSvcs
         ad_request_selection_info)
       /*throw(Exception)*/
     {
-      typedef std::map<Generics::Time, CollectorT::DataT> AdvDateDataMap;
+      using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
       if(!request_info.log_as_test &&
          !ad_request_selection_info.lost_auction_ccgs.empty())
@@ -2860,13 +2865,11 @@ namespace AdServer::CampaignSvcs
               STAT_LOST_AUCTION_ONE_);
         }
 
-        for(AdvDateDataMap::const_iterator adv_tz_it =
-              adv_date_to_data.begin();
-            adv_tz_it != adv_date_to_data.end(); ++adv_tz_it)
+        for(auto& adv_tz : adv_date_to_data)
         {
           add_record(
-            CollectorT::KeyT(adv_tz_it->first, request_info.colo_id),
-            adv_tz_it->second);
+            CollectorT::KeyT(adv_tz.first, request_info.colo_id),
+            std::move(adv_tz.second));
         }
       }
     }
@@ -2878,7 +2881,7 @@ namespace AdServer::CampaignSvcs
         ad_request_selection_info)
       /*throw(Exception)*/
     {
-      typedef std::map<Generics::Time, CollectorT::DataT> AdvDateDataMap;
+      using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
       if(!request_info.log_as_test &&
          !ad_request_selection_info.lost_auction_creatives.empty())
@@ -2896,13 +2899,11 @@ namespace AdServer::CampaignSvcs
               STAT_LOST_AUCTION_ONE_);
         }
 
-        for(AdvDateDataMap::const_iterator adv_tz_it =
-              adv_date_to_data.begin();
-            adv_tz_it != adv_date_to_data.end(); ++adv_tz_it)
+        for(auto& adv_tz : adv_date_to_data)
         {
           add_record(
-            CollectorT::KeyT(adv_tz_it->first, request_info.colo_id),
-            adv_tz_it->second);
+            CollectorT::KeyT(adv_tz.first, request_info.colo_id),
+            std::move(adv_tz.second));
         }
       }
     }
@@ -2910,8 +2911,7 @@ namespace AdServer::CampaignSvcs
     /** SearchTermStatLogger implementation */
     void
     SearchTermStatLogger::
-    process_request(
-      const CampaignManagerLogger::RequestInfo& request_info)
+    process_request(const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
     {
       add_record_(request_info);
@@ -2919,8 +2919,7 @@ namespace AdServer::CampaignSvcs
 
     void
     SearchTermStatLogger::
-    process_anon_request(
-      const CampaignManagerLogger::AnonymousRequestInfo& request_info)
+    process_anon_request(const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
     {
       add_record_(request_info);
@@ -2928,8 +2927,7 @@ namespace AdServer::CampaignSvcs
 
     void
     SearchTermStatLogger::
-    add_record_(
-      const CampaignManagerLogger::AnonymousRequestInfo& request_info)
+    add_record_(const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
     {
       if (!request_info.log_as_test &&
@@ -2941,15 +2939,14 @@ namespace AdServer::CampaignSvcs
           CollectorT::DataT::KeyT(request_info.search_words->str()),
           STAT_HITS_ONE_);
         add_record(CollectorT::KeyT(request_info.time, request_info.colo_id),
-          data);
+          std::move(data));
       }
     }
 
     /** SearchEngineStatLogger implementation */
     void
     SearchEngineStatLogger::
-    process_request(
-      const CampaignManagerLogger::RequestInfo& request_info)
+    process_request(const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
     {
       add_record_(request_info);
@@ -2957,8 +2954,7 @@ namespace AdServer::CampaignSvcs
 
     void
     SearchEngineStatLogger::
-    process_anon_request(
-      const CampaignManagerLogger::AnonymousRequestInfo& request_info)
+    process_anon_request(const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
     {
       add_record_(request_info);
@@ -2966,8 +2962,7 @@ namespace AdServer::CampaignSvcs
 
     void
     SearchEngineStatLogger::
-    add_record_(
-      const CampaignManagerLogger::AnonymousRequestInfo& request_info)
+    add_record_(const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
     {
       if(!request_info.log_as_test && request_info.search_engine_id)
@@ -2979,59 +2974,37 @@ namespace AdServer::CampaignSvcs
             request_info.search_engine_host),
           request_info.page_keywords_present ?
             STAT_HITS_ONE_ : STAT_EMPTY_PAGE_HITS_ONE_);
-        add_record(CollectorT::KeyT(request_info.time, request_info.colo_id),
-          data);
+        add_record(
+          CollectorT::KeyT(request_info.time, request_info.colo_id),
+          std::move(data));
       }
     }
 
-    typedef ReferenceCounting::SmartPtr<ChannelTriggerStatLogger>
-      ChannelTriggerStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<ChannelHitStatLogger>
-      ChannelHitStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<RequestBasicChannelsLogger>
-      RequestBasicChannelsLogger_var;
-    typedef ReferenceCounting::SmartPtr<WebStatLogger>
-      WebStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<ResearchWebStatLogger>
-      ResearchWebStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<CreativeStatLogger>
-      CreativeStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<RequestLogger>
-      RequestLogger_var;
-    typedef ReferenceCounting::SmartPtr<ImpressionLogger>
-      ImpressionLogger_var;
-    typedef ReferenceCounting::SmartPtr<ClickLogger>
-      ClickLogger_var;
-    typedef ReferenceCounting::SmartPtr<AdvertiserActionLogger>
-      AdvertiserActionLogger_var;
-    typedef ReferenceCounting::SmartPtr<ActionRequestLogger>
-      ActionRequestLogger_var;
-    typedef ReferenceCounting::SmartPtr<PassbackImpressionLogger>
-      PassbackImpressionLogger_var;
-    typedef ReferenceCounting::SmartPtr<TagRequestLogger>
-      TagRequestLogger_var;
-    typedef ReferenceCounting::SmartPtr<TagPositionStatLogger>
-      TagPositionStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<CcgStatLogger>
-      CcgStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<CcStatLogger>
-      CcStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<SearchTermStatLogger>
-      SearchTermStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<SearchEngineStatLogger>
-      SearchEngineStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<TagAuctionStatLogger>
-      TagAuctionStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<PassbackStatLogger>
-      PassbackStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<UserAgentStatLogger>
-      UserAgentStatLogger_var;
-    typedef ReferenceCounting::SmartPtr<ProfilingResearchLogger>
-      ProfilingResearchLogger_var;
+    using ChannelTriggerStatLogger_var = ReferenceCounting::SmartPtr<ChannelTriggerStatLogger>;
+    using ChannelHitStatLogger_var = ReferenceCounting::SmartPtr<ChannelHitStatLogger>;
+    using RequestBasicChannelsLogger_var = ReferenceCounting::SmartPtr<RequestBasicChannelsLogger>;
+    using WebStatLogger_var = ReferenceCounting::SmartPtr<WebStatLogger>;
+    using ResearchWebStatLogger_var = ReferenceCounting::SmartPtr<ResearchWebStatLogger>;
+    using CreativeStatLogger_var = ReferenceCounting::SmartPtr<CreativeStatLogger>;
+    using RequestLogger_var = ReferenceCounting::SmartPtr<RequestLogger>;
+    using ImpressionLogger_var = ReferenceCounting::SmartPtr<ImpressionLogger>;
+    using ClickLogger_var = ReferenceCounting::SmartPtr<ClickLogger>;
+    using AdvertiserActionLogger_var = ReferenceCounting::SmartPtr<AdvertiserActionLogger>;
+    using ActionRequestLogger_var = ReferenceCounting::SmartPtr<ActionRequestLogger>;
+    using PassbackImpressionLogger_var = ReferenceCounting::SmartPtr<PassbackImpressionLogger>;
+    using TagRequestLogger_var = ReferenceCounting::SmartPtr<TagRequestLogger>;
+    using TagPositionStatLogger_var = ReferenceCounting::SmartPtr<TagPositionStatLogger>;
+    using CcgStatLogger_var = ReferenceCounting::SmartPtr<CcgStatLogger>;
+    using CcStatLogger_var = ReferenceCounting::SmartPtr<CcStatLogger>;
+    using SearchTermStatLogger_var = ReferenceCounting::SmartPtr<SearchTermStatLogger>;
+    using SearchEngineStatLogger_var = ReferenceCounting::SmartPtr<SearchEngineStatLogger>;
+    using TagAuctionStatLogger_var = ReferenceCounting::SmartPtr<TagAuctionStatLogger>;
+    using PassbackStatLogger_var = ReferenceCounting::SmartPtr<PassbackStatLogger>;
+    using UserAgentStatLogger_var = ReferenceCounting::SmartPtr<UserAgentStatLogger>;
+    using ProfilingResearchLogger_var = ReferenceCounting::SmartPtr<ProfilingResearchLogger>;
   }
 
-  class CampaignManagerLogger::Impl:
-    public Generics::SimpleActiveObject
+  class CampaignManagerLogger::Impl: public Generics::SimpleActiveObject
   {
   public:
     Impl(

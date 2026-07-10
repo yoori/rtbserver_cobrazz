@@ -8,6 +8,8 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <type_traits>
+#include <utility>
 #include <Generics/GnuHashTable.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <eh/Exception.hpp>
@@ -350,6 +352,48 @@ public:
       ValueOps_::remove_if_excludable(*this, ins_res.first);
     }
 	
+    return *this;
+  }
+
+  template<
+    typename Data,
+    typename std::enable_if<std::is_same<Data, DataT>::value, int>::type = 0>
+  StatCollector&
+  add(const KeyT& key, Data&& data)
+  {
+    auto ins_res = map_impl_->insert(ValueT(key, DataT()));
+
+    if (ins_res.second)
+    {
+      ins_res.first->second = std::move(data);
+    }
+    else
+    {
+      ins_res.first->second += data;
+      ValueOps_::remove_if_excludable(*this, ins_res.first);
+    }
+
+    return *this;
+  }
+
+  template<
+    typename Data,
+    typename std::enable_if<std::is_same<Data, DataT>::value, int>::type = 0>
+  StatCollector&
+  add(KeyT&& key, Data&& data)
+  {
+    auto ins_res = map_impl_->insert(ValueT(std::move(key), DataT()));
+
+    if (ins_res.second)
+    {
+      ins_res.first->second = std::move(data);
+    }
+    else
+    {
+      ins_res.first->second += data;
+      ValueOps_::remove_if_excludable(*this, ins_res.first);
+    }
+
     return *this;
   }
 
@@ -932,6 +976,14 @@ public:
     return *this;
   }
 
+  SeqCollector&
+  add(DATA_&& data)
+  {
+    holder_->push_back(std::move(data));
+    ++(holder_->size_);
+    return *this;
+  }
+
   SeqCollector& operator+=(const SeqCollector& collector)
   {
     if (holder_.in() == collector.holder_.in())
@@ -1073,7 +1125,7 @@ SeqCollector<DATA_, USE_FIXED_BUF_STREAM_, STOP_>::load(std::istream& is)
   {
     value_reader.read(is, value, line_num);
 
-    tmp.add(value);
+    tmp.add(std::move(value));
     if (STOP_ && is.peek() == '\n')
     {
       break;

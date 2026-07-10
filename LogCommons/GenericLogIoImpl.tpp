@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/StatCollector.hpp>
 
@@ -231,6 +233,28 @@ namespace LogProcessing {
           unsigned long distrib_index = ValueTypeDistribHashHelper::get_distrib_hash(*data_it) % distrib_count;
           distrib_data[distrib_index].add(it->first, typename CollectorT::DataT().add(*data_it));
         }
+      }
+    }
+  };
+
+  template <class LOG_TYPE_TRAITS_>
+  struct MoveSeqDistributeStrategy
+  {
+    typedef typename LOG_TYPE_TRAITS_::CollectorType CollectorT;
+    typedef Generics::ArrayAutoPtr<CollectorT> DistribData;
+
+    void
+    distribute(
+      CollectorT& collector,
+      unsigned long distrib_count,
+      DistribData& distrib_data) const
+    {
+      for (typename CollectorT::iterator it = collector.begin();
+        it != collector.end(); ++it)
+      {
+        const unsigned long distrib_index =
+          ValueTypeDistribHashHelper::get_distrib_hash(*it) % distrib_count;
+        distrib_data[distrib_index].add(std::move(*it));
       }
     }
   };

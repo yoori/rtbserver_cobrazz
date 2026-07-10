@@ -33,6 +33,11 @@ namespace AdServer
           val_(val)
       {}
 
+      explicit Optional(ObjectType&& val)
+        : defined_(true),
+          val_(std::move(val))
+      {}
+
       Optional(const ObjectType* val)
         : defined_(val),
           val_(val ? *val : ObjectType())
@@ -80,6 +85,12 @@ namespace AdServer
         defined_ = true;
       }
 
+      void set(ObjectType&& val)
+      {
+        val_ = std::move(val);
+        defined_ = true;
+      }
+
       ObjectType&
       fill()
       {
@@ -91,6 +102,13 @@ namespace AdServer
       operator=(const ObjectType& val)
       {
         set(val);
+        return *this;
+      }
+
+      Optional&
+      operator=(ObjectType&& val)
+      {
+        set(std::move(val));
         return *this;
       }
 
@@ -160,6 +178,10 @@ namespace AdServer
       template <typename CompatibleType>
       Optional(const CompatibleType& val, bool defined)
         : defined_(defined), val_(defined ? ObjectType(val) : ObjectType())
+      {}
+
+      Optional(ObjectType&& val, bool defined)
+        : defined_(defined), val_(defined ? ObjectType(std::move(val)) : ObjectType())
       {}
 
       void
