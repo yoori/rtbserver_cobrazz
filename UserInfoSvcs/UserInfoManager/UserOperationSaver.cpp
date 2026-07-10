@@ -331,16 +331,16 @@ namespace UserInfoSvcs
     add_child_object(dump_thread.in());
   }
 
-  bool
-  UserOperationSaver::remove_user_profile(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_remove_user_profile(
     const UserId& user_id)
     /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/
   {
-    return next_processor_->remove_user_profile(user_id);
+    co_return co_await next_processor_->co_remove_user_profile(user_id);
   }
 
-  void
-  UserOperationSaver::fraud_user(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_fraud_user(
     const UserId& user_id,
     const Generics::Time& now)
     /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/
@@ -354,11 +354,11 @@ namespace UserInfoSvcs
       save_(user_id, fraud_operation_writer);
     }
 
-    next_processor_->fraud_user(user_id, now);
+    co_return co_await next_processor_->co_fraud_user(user_id, now);
   }
 
-  void
-  UserOperationSaver::match(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_match(
     const RequestMatchParams& channel_match_info,
     long last_colo_id,
     long current_placement_colo_id,
@@ -449,7 +449,7 @@ namespace UserInfoSvcs
       save_(channel_match_info.user_id, match_operation_writer);
     }
 
-    next_processor_->match(
+    co_return co_await next_processor_->co_match(
       channel_match_info,
       last_colo_id,
       current_placement_colo_id,
@@ -463,8 +463,8 @@ namespace UserInfoSvcs
       pucr);
   }
 
-  void
-  UserOperationSaver::merge(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_merge(
     const RequestMatchParams& request_params,
     const Generics::MemBuf& merge_base_profile,
     Generics::MemBuf& merge_add_profile,
@@ -512,7 +512,7 @@ namespace UserInfoSvcs
       save_(request_params.user_id, merge_operation_writer);
     }
 
-    next_processor_->merge(
+    co_return co_await next_processor_->co_merge(
       request_params,
       merge_base_profile,
       merge_add_profile,
@@ -525,8 +525,8 @@ namespace UserInfoSvcs
       ho_info);
   }
 
-  void
-  UserOperationSaver::exchange_merge(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_exchange_merge(
     const UserId& user_id,
     const Generics::MemBuf& merge_base_profile,
     const Generics::MemBuf& merge_history_profile,
@@ -556,15 +556,15 @@ namespace UserInfoSvcs
       save_(user_id, merge_operation_writer);
     }
 
-    next_processor_->exchange_merge(
+    co_return co_await next_processor_->co_exchange_merge(
       user_id,
       merge_base_profile,
       merge_history_profile,
       ho_info);
   }
 
-  void
-  UserOperationSaver::update_freq_caps(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_update_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
     const Commons::RequestId& request_id,
@@ -614,7 +614,7 @@ namespace UserInfoSvcs
       save_(user_id, profile_writer);
     }
 
-    next_processor_->update_freq_caps(
+    co_return co_await next_processor_->co_update_freq_caps(
       user_id,
       now,
       request_id,
@@ -627,8 +627,8 @@ namespace UserInfoSvcs
       op_priority);
   }
 
-  void
-  UserOperationSaver::confirm_freq_caps(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_confirm_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
     const Commons::RequestId& request_id,
@@ -651,7 +651,7 @@ namespace UserInfoSvcs
       save_(user_id, profile_writer);
     }
 
-    next_processor_->confirm_freq_caps(
+    co_return co_await next_processor_->co_confirm_freq_caps(
       user_id,
       now,
       request_id,
@@ -669,63 +669,15 @@ namespace UserInfoSvcs
     res.window_time() = fc.window_time.tv_sec;
   }
 
-  void
-  UserOperationSaver::remove_audience_channels(
-    const UserId& user_id,
-    const AudienceChannelSet& audience_channels)
-    /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/
-  {
-    AudienceChannelsOperationWriter profile_writer;
-    profile_writer.operation_type() = REMOVE_AUDIENCE;
-    profile_writer.version() = REMOVE_AUDIENCE_CHANNELS_OPERATION_PROFILE_VERSION;
-    profile_writer.user_id() = user_id.to_string();
-
-    for (auto it = audience_channels.begin(); it != audience_channels.end(); ++it)
-    {
-      AudienceChannelDescriptorWriter channel_writer;
-      channel_writer.channel_id() = it->channel_id;
-      channel_writer.time() = it->time.tv_sec;
-      profile_writer.audience_channels().push_back(channel_writer);
-    }
-
-    save_(user_id, profile_writer);
-
-    next_processor_->remove_audience_channels(user_id, audience_channels);
-  }
-
-  void
-  UserOperationSaver::add_audience_channels(
-    const UserId& user_id,
-    const AudienceChannelSet& audience_channels)
-    /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/
-  {
-    AudienceChannelsOperationWriter profile_writer;
-    profile_writer.operation_type() = ADD_AUDIENCE;
-    profile_writer.version() = ADD_AUDIENCE_CHANNELS_OPERATION_PROFILE_VERSION;
-    profile_writer.user_id() = user_id.to_string();
-
-    for (auto it = audience_channels.begin(); it != audience_channels.end(); ++it)
-    {
-      AudienceChannelDescriptorWriter channel_writer;
-      channel_writer.channel_id() = it->channel_id;
-      channel_writer.time() = it->time.tv_sec;
-      profile_writer.audience_channels().push_back(channel_writer);
-    }
-
-    save_(user_id, profile_writer);
-
-    next_processor_->add_audience_channels(user_id, audience_channels);
-  }
-
-  void
-  UserOperationSaver::consider_publishers_optin(
+  AdServer::Commons::SyncCoro<bool>
+  UserOperationSaver::co_consider_publishers_optin(
     const UserId& user_id,
     const std::set<unsigned long>& publisher_account_ids,
     const Generics::Time& now,
     AdServer::ProfilingCommons::OperationPriority op_priority)
     /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/
   {
-    next_processor_->consider_publishers_optin(
+    co_return co_await next_processor_->co_consider_publishers_optin(
       user_id,
       publisher_account_ids,
       now,

@@ -212,6 +212,42 @@ namespace AdServer::ProfilingCommons
     return result.first;
   }
 
+  Generics::SmartMemBuf_var
+  RocksDBBatchingProfileMapImpl::get_own_profile(
+    const std::string& key,
+    Generics::Time* last_access_time)
+  {
+    static_cast<void>(last_access_time);
+
+    check_background_error_();
+
+    using GetResult = std::pair<
+      Generics::SmartMemBuf_var,
+      std::optional<std::string> >;
+    std::promise<GetResult> promise;
+    std::future<GetResult> future = promise.get_future();
+
+    get_own_profile_async(
+      key,
+      [&promise](
+        Generics::SmartMemBuf_var profile,
+        std::optional<std::string> error)
+      {
+        promise.set_value(std::make_pair(
+          std::move(profile),
+          std::move(error)));
+      },
+      std::nullopt);
+
+    auto result = future.get();
+    if(result.second)
+    {
+      throw ProfileMap<std::string>::Exception(*result.second);
+    }
+
+    return std::move(result.first);
+  }
+
   Generics::ConstSmartMemBuf_var
   RocksDBBatchingProfileMapImpl::get_profile_async(
     const std::string& key,
@@ -235,6 +271,31 @@ namespace AdServer::ProfilingCommons
     }
 
     return Generics::ConstSmartMemBuf_var();
+  }
+
+  Generics::SmartMemBuf_var
+  RocksDBBatchingProfileMapImpl::get_own_profile_async(
+    const std::string& key,
+    GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    static_cast<void>(last_access_time);
+
+    check_background_error_();
+
+    Operation operation;
+    operation.type = OT_GET;
+    operation.key = key;
+    operation.get_own_callback = std::move(callback);
+
+    if(!enqueue_operation_(std::move(operation)))
+    {
+      throw ProfileMap<std::string>::Exception(
+        "RocksDBBatchingProfileMapImpl::get_own_profile_async(): "
+        "object isn't active");
+    }
+
+    return Generics::SmartMemBuf_var();
   }
 
   void
@@ -759,6 +820,29 @@ namespace AdServer::ProfilingCommons
               std::nullopt);
           }
         }
+
+        if(operation.get_own_callback)
+        {
+          if(status.IsNotFound())
+          {
+            (*operation.get_own_callback)(
+              Generics::SmartMemBuf_var(),
+              std::nullopt);
+          }
+          else if(!status.ok())
+          {
+            (*operation.get_own_callback)(
+              Generics::SmartMemBuf_var(),
+              status.ToString());
+          }
+          else
+          {
+            (*operation.get_own_callback)(
+              Generics::SmartMemBuf_var(
+                new Generics::SmartMemBuf(value.data(), value.size())),
+              std::nullopt);
+          }
+        }
       }
       catch(...)
       {}
@@ -867,6 +951,11 @@ namespace AdServer::ProfilingCommons
         if(operation.get_callback)
         {
           (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), error);
+        }
+
+        if(operation.get_own_callback)
+        {
+          (*operation.get_own_callback)(Generics::SmartMemBuf_var(), error);
         }
 
         if(operation.save_callback)

@@ -132,17 +132,6 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ExternalUserOperationsLoad"
-        type="UserOperationsLoadType"
-        minOccurs="0"
-        maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            external user operations uploading parameters
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
       <xsd:element name="FreqCaps" type="FreqCapsConfigType">
         <xsd:annotation>
           <xsd:documentation>Frequency caps config</xsd:documentation>

@@ -208,8 +208,6 @@ namespace AdServer::UserInfoSvcs
       const ProfilesRequest& profile_request,
       UserProfiles& user_profile);
 
-    bool remove_user_profile(const AdServer::Commons::UserId& user_id);
-
     AdServer::Commons::SyncCoro<bool> co_remove_user_profile(
       const AdServer::Commons::UserId& user_id);
 
@@ -407,8 +405,7 @@ namespace AdServer::UserInfoSvcs
 
     void
     update_channels_config_(
-      UserInfoContainer* user_info_container,
-      UserOperationProcessor* user_operation_processor)
+      UserInfoContainer* user_info_container)
       noexcept;
 
     void calc_user_daily_stat_(
@@ -439,7 +436,6 @@ namespace AdServer::UserInfoSvcs
 
     InternalUserOperationLoader_var user_operation_loader_;
     UserOperationSaver_var user_operation_saver_;
-    ExternalUserOperationLoader_var external_user_operation_loader_;
 
     UserOperationProcessorHolder_var user_operation_processor_;
     UserInfoContainerHolder_var user_info_container_;

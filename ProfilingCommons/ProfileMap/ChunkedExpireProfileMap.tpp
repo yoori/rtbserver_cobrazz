@@ -119,6 +119,29 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
+  Generics::SmartMemBuf_var
+  ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
+  get_own_profile(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+    /*throw(ChunkNotFound, Exception)*/
+  {
+    try
+    {
+      return get_chunk(key_hash_(key) % common_chunks_number_)->
+        get_own_profile(key, last_access_time);
+    }
+    catch(const ChunkNotFound&)
+    {
+      throw;
+    }
+    catch(const eh::Exception& ex)
+    {
+      throw Exception(ex.what());
+    }
+  }
+
+  template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   Generics::ConstSmartMemBuf_var
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
   get_profile_async(
@@ -143,6 +166,34 @@ namespace ProfilingCommons
     }
 
     return Generics::ConstSmartMemBuf_var();
+  }
+
+  template<typename KeyType, typename ProfileMapType, typename KeyHashType>
+  Generics::SmartMemBuf_var
+  ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
+  get_own_profile_async(
+    const KeyType& key,
+    typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    try
+    {
+      return get_chunk(key_hash_(key) % common_chunks_number_)->
+        get_own_profile_async(
+          key,
+          std::move(callback),
+          last_access_time);
+    }
+    catch(const ChunkNotFound& ex)
+    {
+      if(callback) callback(Generics::SmartMemBuf_var(), ex.what());
+    }
+    catch(const eh::Exception& ex)
+    {
+      if(callback) callback(Generics::SmartMemBuf_var(), ex.what());
+    }
+
+    return Generics::SmartMemBuf_var();
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>

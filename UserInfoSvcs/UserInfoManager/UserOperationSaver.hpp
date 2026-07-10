@@ -24,8 +24,6 @@ namespace UserInfoSvcs
       UO_MERGE,
       UO_FC_UPDATE,
       UO_FC_CONFIRM,
-      ADD_AUDIENCE,
-      REMOVE_AUDIENCE,
     };
 
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -42,19 +40,21 @@ namespace UserInfoSvcs
       /*throw(Exception)*/;
 
     // UserOperationProcessor interface
-    virtual bool
-    remove_user_profile(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_remove_user_profile(
       const UserId& user_id)
+      override
       /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/;
 
-    virtual void
-    fraud_user(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_fraud_user(
       const UserId& user_id,
       const Generics::Time& now)
+      override
       /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
 
-    virtual void
-    match(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_match(
       const RequestMatchParams& channel_match_info,
       long last_colo_id,
       long current_placement_colo_id,
@@ -66,10 +66,11 @@ namespace UserInfoSvcs
       AdServer::ProfilingCommons::OperationPriority op_priority,
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info,
       UniqueChannelsResult* pucr = 0)
+      override
       /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
 
-    virtual void
-    merge(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_merge(
       const RequestMatchParams& request_params,
       const Generics::MemBuf& merge_base_profile,
       Generics::MemBuf& merge_add_profile,
@@ -80,19 +81,21 @@ namespace UserInfoSvcs
       long current_placement_colo_id,
       AdServer::ProfilingCommons::OperationPriority op_priority,
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0)
+      override
       /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
 
-    virtual void
-    exchange_merge(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_exchange_merge(
       const UserId& user_id,
       const Generics::MemBuf& base_profile_buf,
       const Generics::MemBuf& history_profile_buf,
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info)
+      override
       /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
 
     // user freq caps
-    virtual void
-    update_freq_caps(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_update_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
       const Commons::RequestId& request_id,
@@ -103,34 +106,25 @@ namespace UserInfoSvcs
       const UserFreqCapProfile::CampaignIds& campaign_ids,
       const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
       AdServer::ProfilingCommons::OperationPriority op_priority)
+      override
       /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
 
-    virtual void
-    confirm_freq_caps(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_confirm_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
       const Commons::RequestId& request_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts)
+      override
       /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/;
 
-    virtual void
-    remove_audience_channels(
-      const UserId& user_id,
-      const AudienceChannelSet& audience_channels)
-      /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/;
-
-    virtual void
-    add_audience_channels(
-      const UserId& user_id,
-      const AudienceChannelSet& audience_channels)
-      /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
-
-    virtual void
-    consider_publishers_optin(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_consider_publishers_optin(
       const UserId& user_id,
       const std::set<unsigned long>& publisher_account_ids,
       const Generics::Time& now,
       AdServer::ProfilingCommons::OperationPriority op_priority)
+      override
       /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/;
 
     // ActiveObject interface

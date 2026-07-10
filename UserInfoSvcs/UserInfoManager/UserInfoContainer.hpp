@@ -60,8 +60,6 @@ namespace AdServer
       typedef UserOperationProcessor::Exception Exception;
       DECLARE_EXCEPTION(UserIsFraud, Exception);
 
-      typedef std::list<UserId> UserIdList;
-
     public:
       UserInfoContainer(
         Logging::Logger* logger,
@@ -83,16 +81,6 @@ namespace AdServer
         AdServer::ProfilingCommons::LoadingProgressCallbackBase_var progress_processor_parent)
         /*throw(Exception)*/;
 
-      void
-      get_full_freq_caps(
-        const UserId& user_id,
-        const Generics::Time& now,
-        UserFreqCapProfile::FreqCapIdArray& freq_caps,
-        UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
-        UserFreqCapProfile::SeqOrderArray& seq_orders,
-        UserFreqCapProfile::CampaignFreqs& campaign_freqs)
-        /*throw(ChunkNotFound, UserIsFraud, Exception)*/;
-
       AdServer::Commons::SyncCoro<bool>
       co_get_full_freq_caps(
         const UserId& user_id,
@@ -102,7 +90,7 @@ namespace AdServer
         UserFreqCapProfile::SeqOrderArray& seq_orders,
         UserFreqCapProfile::CampaignFreqs& campaign_freqs);
 
-      virtual void update_freq_caps(
+      virtual AdServer::Commons::SyncCoro<bool> co_update_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
         const Commons::RequestId& request_id,
@@ -113,42 +101,14 @@ namespace AdServer
         const UserFreqCapProfile::CampaignIds& campaign_ids,
         const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
         AdServer::ProfilingCommons::OperationPriority op_priority)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
+        override;
 
-      AdServer::Commons::SyncCoro<bool> co_update_freq_caps(
-        const UserId& user_id,
-        const Generics::Time& now,
-        const Commons::RequestId& request_id,
-        const UserFreqCapProfile::FreqCapIdArray& freq_caps,
-        const UserFreqCapProfile::FreqCapIdArray& uc_freq_caps,
-        const UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
-        const UserFreqCapProfile::SeqOrderArray& seq_orders,
-        const UserFreqCapProfile::CampaignIds& campaign_ids,
-        const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
-        AdServer::ProfilingCommons::OperationPriority op_priority);
-
-      virtual void
-      confirm_freq_caps(
+      virtual AdServer::Commons::SyncCoro<bool> co_confirm_freq_caps(
         const UserId& user_id,
         const Generics::Time& now,
         const Commons::RequestId& request_id,
         const std::set<unsigned long>& exclude_pubpixel_accounts)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
-
-      AdServer::Commons::SyncCoro<bool> co_confirm_freq_caps(
-        const UserId& user_id,
-        const Generics::Time& now,
-        const Commons::RequestId& request_id,
-        const std::set<unsigned long>& exclude_pubpixel_accounts);
-
-      virtual bool get_user_profile(
-        const UserId& user_id,
-        bool temporary,
-        SmartMemBuf_var* mb_base_profile_out,
-        SmartMemBuf_var* mb_add_profile_out,
-        SmartMemBuf_var* mb_history_profile_out,
-        SmartMemBuf_var* mb_fc_profile_out = 0)
-        /*throw(ChunkNotFound, Exception)*/;
+        override;
 
       AdServer::Commons::SyncCoro<bool> co_get_user_profile(
         const UserId& user_id,
@@ -158,21 +118,18 @@ namespace AdServer
         SmartMemBuf_var* mb_history_profile_out,
         SmartMemBuf_var* mb_fc_profile_out = 0);
 
-      virtual bool remove_user_profile(
+      virtual AdServer::Commons::SyncCoro<bool> co_remove_user_profile(
         const UserId& user_id)
-        /*throw(ChunkNotFound, Exception)*/;
+        override;
 
-      AdServer::Commons::SyncCoro<bool> co_remove_user_profile(
-        const UserId& user_id);
-
-      virtual void exchange_merge(
+      virtual AdServer::Commons::SyncCoro<bool> co_exchange_merge(
         const UserId& user_id,
         const Generics::MemBuf& base_profile_buf,
         const Generics::MemBuf& history_profile_buf,
         UserInfoManagerLogger::HistoryOptimizationInfo* ho_info)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
+        override;
 
-      void merge(
+      virtual AdServer::Commons::SyncCoro<bool> co_merge(
         const RequestMatchParams& request_params,
         const Generics::MemBuf& merge_base_profile,
         Generics::MemBuf& merge_add_profile,
@@ -183,55 +140,19 @@ namespace AdServer
         long current_placement_colo_id,
         AdServer::ProfilingCommons::OperationPriority op_priority,
         UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
+        override;
 
-      AdServer::Commons::SyncCoro<bool> co_merge(
-        const RequestMatchParams& request_params,
-        const Generics::MemBuf& merge_base_profile,
-        Generics::MemBuf& merge_add_profile,
-        const Generics::MemBuf& merge_history_profile,
-        const Generics::MemBuf& merge_freq_cap_profile,
-        UserAppearance& user_app,
-        long last_colo_id,
-        long current_placement_colo_id,
-        AdServer::ProfilingCommons::OperationPriority op_priority,
-        UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0);
-
-      virtual void
-      fraud_user(
+      virtual AdServer::Commons::SyncCoro<bool> co_fraud_user(
         const UserId& user_id,
         const Generics::Time& now)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
-
-      AdServer::Commons::SyncCoro<bool> co_fraud_user(
-        const UserId& user_id,
-        const Generics::Time& now);
-
-      virtual void
-      get_optin_publishers(
-        const UserId& user_id,
-        const Generics::Time& publishers_optin_timeout,
-        std::list<unsigned long>& optin_publishers)
-        /*throw(ChunkNotFound, Exception)*/;
+        override;
 
       AdServer::Commons::SyncCoro<bool> co_get_optin_publishers(
         const UserId& user_id,
         const Generics::Time& publishers_optin_timeout,
         std::list<unsigned long>& optin_publishers);
 
-      virtual void
-      remove_audience_channels(
-        const UserId& user_id,
-        const AudienceChannelSet& audience_channels)
-        /*throw(ChunkNotFound, Exception)*/;
-
-      virtual void
-      add_audience_channels(
-        const UserId& user_id,
-        const AudienceChannelSet& audience_channels)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
-
-      virtual void match(
+      virtual AdServer::Commons::SyncCoro<bool> co_match(
         const RequestMatchParams& request_params,
         long last_colo_id,
         long current_placement_colo_id,
@@ -239,42 +160,18 @@ namespace AdServer
         const ChannelIdPack& matched_channels,
         ChannelMatchMap& result_channels,
         UserAppearance& user_app,
-        //PartlyMatchResult& partly_match_result,
         ProfileProperties& properties,
         AdServer::ProfilingCommons::OperationPriority op_priority,
         UserInfoManagerLogger::HistoryOptimizationInfo* ho_info,
         UniqueChannelsResult* unique_channels_result = 0)
-        /*throw(NotReady, ChunkNotFound, Exception)*/;
+        override;
 
-      AdServer::Commons::SyncCoro<bool> co_match(
-        const RequestMatchParams& request_params,
-        long last_colo_id,
-        long current_placement_colo_id,
-        ColoUserId& colo_user_id,
-        const ChannelIdPack& matched_channels,
-        ChannelMatchMap& result_channels,
-        UserAppearance& user_app,
-        ProfileProperties& properties,
-        AdServer::ProfilingCommons::OperationPriority op_priority,
-        UserInfoManagerLogger::HistoryOptimizationInfo* ho_info,
-        UniqueChannelsResult* unique_channels_result = 0);
-
-      void consider_publishers_optin(
+      virtual AdServer::Commons::SyncCoro<bool> co_consider_publishers_optin(
         const UserId& user_id,
         const std::set<unsigned long>& publisher_account_ids,
         const Generics::Time& now,
         AdServer::ProfilingCommons::OperationPriority op_priority)
-        /*throw(ChunkNotFound, Exception)*/;
-
-      AdServer::Commons::SyncCoro<bool> co_consider_publishers_optin(
-        const UserId& user_id,
-        const std::set<unsigned long>& publisher_account_ids,
-        const Generics::Time& now,
-        AdServer::ProfilingCommons::OperationPriority op_priority);
-
-      void dump_colo_users() /*throw(Exception)*/;
-
-      bool dispose_user(const UserId& user_id) noexcept;
+        override;
 
       void config(
         const Generics::Time& time_offset,

@@ -12,6 +12,7 @@
 #include <Generics/MemBuf.hpp>
 
 #include <Commons/UserInfoManip.hpp>
+#include <Commons/Coro/SyncCoro.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMap.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/ChannelMatcher.hpp>
@@ -24,11 +25,6 @@ namespace UserInfoSvcs
 {
   typedef AdServer::Commons::UserId UserId;
 
-  struct ColoUserIds
-  {
-    std::list<std::string> user_id;
-  };
-
   struct ColoUserId
   {
     ColoUserId() noexcept : need_profile(false), colo_id(0)
@@ -38,8 +34,6 @@ namespace UserInfoSvcs
     unsigned long colo_id;
     std::string user_id;
   };
-
-  typedef std::list<ColoUserIds> ColoUserIdList;
 
   /** UserOperationProcessor
    *    interface for user info change
@@ -107,20 +101,20 @@ namespace UserInfoSvcs
     };
 
   public:
-    virtual
-    bool remove_user_profile(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_remove_user_profile(
       const UserId& user_id)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
 
-    virtual
-    void fraud_user(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_fraud_user(
       const UserId& user_id,
       const Generics::Time& now)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
-    virtual
-    void match(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_match(
       const RequestMatchParams& channel_match_info,
       long last_colo_id,
       long current_placement_colo_id,
@@ -134,8 +128,8 @@ namespace UserInfoSvcs
       UniqueChannelsResult* pucr = 0)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
-    virtual void
-    merge(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_merge(
       const RequestMatchParams& request_params,
       const Generics::MemBuf& merge_base_profile,
       Generics::MemBuf& merge_add_profile,
@@ -148,7 +142,8 @@ namespace UserInfoSvcs
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
-    virtual void exchange_merge(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_exchange_merge(
       const UserId& user_id,
       const Generics::MemBuf& base_profile_buf,
       const Generics::MemBuf& history_profile_buf,
@@ -156,8 +151,8 @@ namespace UserInfoSvcs
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
     // user freq caps
-    virtual
-    void update_freq_caps(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_update_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
       const Commons::RequestId& request_id,
@@ -170,28 +165,16 @@ namespace UserInfoSvcs
       AdServer::ProfilingCommons::OperationPriority op_priority)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
-    virtual
-    void confirm_freq_caps(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_confirm_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
       const Commons::RequestId& request_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
-    virtual void
-    remove_audience_channels(
-      const UserId& user_id,
-      const AudienceChannelSet& audience_channels)
-      /*throw(ChunkNotFound, Exception)*/ = 0;
-
-    virtual void
-    add_audience_channels(
-      const UserId& user_id,
-      const AudienceChannelSet& audience_channels)
-      /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
-
-    virtual void
-    consider_publishers_optin(
+    virtual AdServer::Commons::SyncCoro<bool>
+    co_consider_publishers_optin(
       const UserId& user_id,
       const std::set<unsigned long>& publisher_account_ids,
       const Generics::Time& now,

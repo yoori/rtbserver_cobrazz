@@ -51,10 +51,21 @@ namespace ProfilingCommons
       const std::string& key,
       Generics::Time* last_access_time = 0);
 
+    virtual Generics::SmartMemBuf_var
+    get_own_profile(
+      const std::string& key,
+      Generics::Time* last_access_time = 0);
+
     virtual Generics::ConstSmartMemBuf_var
     get_profile_async(
       const std::string& key,
       GetCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt);
+
+    virtual Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const std::string& key,
+      GetOwnCallback callback,
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
     virtual void
@@ -157,10 +168,21 @@ namespace ProfilingCommons
       const KeyType& key,
       Generics::Time* last_access_time = 0);
 
+    virtual Generics::SmartMemBuf_var
+    get_own_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0);
+
     virtual Generics::ConstSmartMemBuf_var
     get_profile_async(
       const KeyType& key,
       typename AsyncProfileMap<KeyType>::GetCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt);
+
+    virtual Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
     virtual void
@@ -260,6 +282,15 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType, typename KeyAdapterType>
+  Generics::SmartMemBuf_var
+  RocksDBProfileMap<KeyType, KeyAdapterType>::get_own_profile(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+  {
+    return impl_->get_own_profile(key_adapter_(key), last_access_time);
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
   Generics::ConstSmartMemBuf_var
   RocksDBProfileMap<KeyType, KeyAdapterType>::get_profile_async(
     const KeyType& key,
@@ -267,6 +298,19 @@ namespace ProfilingCommons
     std::optional<Generics::Time> last_access_time)
   {
     return impl_->get_profile_async(
+      key_adapter_(key),
+      std::move(callback),
+      last_access_time);
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  Generics::SmartMemBuf_var
+  RocksDBProfileMap<KeyType, KeyAdapterType>::get_own_profile_async(
+    const KeyType& key,
+    typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    return impl_->get_own_profile_async(
       key_adapter_(key),
       std::move(callback),
       last_access_time);

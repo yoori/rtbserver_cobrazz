@@ -29,14 +29,14 @@ namespace UserInfoSvcs
   /* BaseOperationRecordFetcher implementation */
   BaseOperationRecordFetcher::BaseOperationRecordFetcher(
     Generics::ActiveObjectCallback* callback,
-    UserOperationProcessor* user_operation_processor,
+    UserInfoContainer* user_info_container,
     const char* folder,
     const char* unprocessed_folder,
     const char* file_prefix,
     const ChunkIdSet& chunk_ids,
     Generics::RefCountableActiveObject* interrupter)
     noexcept
-    : user_operation_processor_(ReferenceCounting::add_ref(user_operation_processor)),
+    : user_info_container_(ReferenceCounting::add_ref(user_info_container)),
       log_errors_(ReferenceCounting::add_ref(callback)),
       DIR_(folder),
       unprocessed_dir_(unprocessed_folder),
@@ -198,7 +198,7 @@ namespace UserInfoSvcs
 
   InternalOperationRecordFetcher::InternalOperationRecordFetcher(
     Generics::ActiveObjectCallback* callback,
-    UserOperationProcessor* user_operation_processor,
+    UserInfoContainer* user_info_container,
     const char* folder,
     const char* unprocessed_folder,
     const char* file_prefix,
@@ -207,81 +207,18 @@ namespace UserInfoSvcs
     noexcept
     : BaseOperationRecordFetcher(
         callback,
-        user_operation_processor,
+        user_info_container,
         folder,
         unprocessed_folder,
         file_prefix,
         chunk_ids,
         interrupter)
-  {}
-
-  ExternalOperationRecordFetcher::ExternalOperationRecordFetcher(
-    Generics::ActiveObjectCallback* callback,
-    UserOperationProcessor* user_operation_processor,
-    const char* folder,
-    const char* unprocessed_folder,
-    const char* file_prefix,
-    const ChunkIdSet& chunk_ids,
-    Generics::RefCountableActiveObject* interrupter)
-    noexcept
-    : BaseOperationRecordFetcher(
-        callback,
-        user_operation_processor,
-        folder,
-        unprocessed_folder,
-        file_prefix,
-        chunk_ids,
-        interrupter)
-  {}
-
-  /** ExternalUserOperationLoader */
-  ExternalUserOperationLoader::ExternalUserOperationLoader(
-    Generics::ActiveObjectCallback* callback,
-    UserOperationProcessor* user_operation_processor,
-    const char* operation_file_in_dir,
-    const char* unprocessed_dir,
-    const char* file_prefix,
-    const BaseOperationRecordFetcher::ChunkIdSet& chunk_ids,
-    const Generics::Time& check_period,
-    std::size_t threads_count)
-    /*throw(Exception)*/
-    : log_errors_callback_(ReferenceCounting::add_ref(callback)),
-      unprocessed_dir_(unprocessed_dir)
-  {
-    Generics::ActiveObject_var interrupter =
-      new AdServer::LogProcessing::FileReceiverInterrupter();
-    add_child_object(interrupter.in());
-
-    operation_fetcher_ =
-      new ExternalOperationRecordFetcher(
-        log_errors_callback_,
-        user_operation_processor,
-        operation_file_in_dir,
-        unprocessed_dir,
-        file_prefix,
-        chunk_ids,
-        interrupter);
-
-    file_thread_processor_ = new AdServer::LogProcessing::FileThreadProcessor(
-      operation_fetcher_,
-      callback,
-      threads_count,
-      (std::string(operation_file_in_dir) + "/Intermediate").c_str(),
-      FETCH_FILES_LIMIT,
-      operation_file_in_dir,
-      file_prefix,
-      check_period);
-
-    add_child_object(file_thread_processor_.in());
-  }
-
-  ExternalUserOperationLoader::~ExternalUserOperationLoader() noexcept
   {}
 
   /** InternalUserOperationLoader */
   InternalUserOperationLoader::InternalUserOperationLoader(
     Generics::ActiveObjectCallback* callback,
-    UserOperationProcessor* user_operation_processor,
+    UserInfoContainer* user_info_container,
     const char* operation_file_in_dir,
     const char* unprocessed_dir,
     const char* file_prefix,
@@ -299,7 +236,7 @@ namespace UserInfoSvcs
     operation_fetcher_ =
       new InternalOperationRecordFetcher(
         log_errors_callback_,
-        user_operation_processor,
+        user_info_container,
         operation_file_in_dir,
         unprocessed_dir,
         file_prefix,
@@ -328,75 +265,6 @@ namespace AdServer
 {
 namespace UserInfoSvcs
 {
-  void
-  ExternalOperationRecordFetcher::read_operation_(
-    Generics::SmartMemBuf* smart_mem_buf)
-    /*throw(eh::Exception)*/
-  {
-    static const char* FUN = "ExternalOperationRecordFetcher::read_operation_()";
-
-    UserOperationTypeReader profile_type_reader(
-      smart_mem_buf->membuf().data(), UserOperationTypeReader::FIXED_SIZE);
-    Generics::MemBuf& mem_buf = smart_mem_buf->membuf();
-
-    if (profile_type_reader.operation_type() == UserOperationSaver::ADD_AUDIENCE)
-    {
-      read_add_audience_operation_(mem_buf);
-    }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::REMOVE_AUDIENCE)
-    {
-      read_remove_audience_operation_(mem_buf);
-    }
-    else
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": unknown operation: " << profile_type_reader.operation_type();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  ExternalOperationRecordFetcher::read_add_audience_operation_(
-    const Generics::MemBuf& mem_buf)
-    /*throw(eh::Exception)*/
-  {
-    AudienceChannelsOperationReader reader(mem_buf.data(), mem_buf.size());
-    const Generics::Uuid uuid(reader.user_id());
-    AudienceChannelSet audience_channels;
-
-    for (auto it = reader.audience_channels().begin();
-         it != reader.audience_channels().end(); ++it)
-    {
-      const AudienceChannelDescriptorReader& channel = *it;
-      audience_channels.insert({ channel.channel_id(), Generics::Time(channel.time()) });
-    }
-
-    user_operation_processor_->add_audience_channels(
-      uuid,
-      audience_channels);
-  }
-
-  void
-  ExternalOperationRecordFetcher::read_remove_audience_operation_(
-    const Generics::MemBuf& mem_buf)
-    /*throw(eh::Exception)*/
-  {
-    AudienceChannelsOperationReader reader(mem_buf.data(), mem_buf.size());
-    const Generics::Uuid uuid(reader.user_id());
-    AudienceChannelSet audience_channels;
-
-    for (auto it = reader.audience_channels().begin();
-         it != reader.audience_channels().end(); ++it)
-    {
-      const AudienceChannelDescriptorReader& channel = *it;
-      audience_channels.insert({ channel.channel_id(), Generics::Time(channel.time()) });
-    }
-
-    user_operation_processor_->remove_audience_channels(
-      uuid,
-      audience_channels);
-  }
-
   void
   InternalOperationRecordFetcher::read_operation_(
     Generics::SmartMemBuf* smart_mem_buf)
@@ -428,14 +296,6 @@ namespace UserInfoSvcs
     {
       read_fc_confirm_operation_(smart_mem_buf);
     }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::ADD_AUDIENCE)
-    {
-      read_add_audience_operation_(mem_buf);
-    }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::REMOVE_AUDIENCE)
-    {
-      read_remove_audience_operation_(mem_buf);
-    }
     else
     {
       Stream::Error ostr;
@@ -451,9 +311,9 @@ namespace UserInfoSvcs
     /*throw(eh::Exception)*/
   {
     UserFraudOperationReader reader(mem_buf.data(), mem_buf.size());
-    user_operation_processor_->fraud_user(
+    user_info_container_->co_fraud_user(
       UserId(reader.user_id()),
-      Generics::Time(reader.fraud_time()));
+      Generics::Time(reader.fraud_time())).sync_wait();
   }
 
   void
@@ -550,7 +410,7 @@ namespace UserInfoSvcs
     UserOperationProcessor::UserAppearance user_app;
     ProfileProperties properties;
 
-    user_operation_processor_->match(
+    user_info_container_->co_match(
       channel_match_params,
       reader.last_colo_id(),
       reader.placement_colo_id(),
@@ -560,12 +420,11 @@ namespace UserInfoSvcs
       user_app,
       properties,
       AdServer::ProfilingCommons::OP_BACKGROUND,
-      0);
+      0).sync_wait();
   }
 
   void
-  InternalOperationRecordFetcher::read_merge_operation_(
-    Generics::SmartMemBuf* smart_mem_buf)
+  InternalOperationRecordFetcher::read_merge_operation_(Generics::SmartMemBuf* smart_mem_buf)
     /*throw(eh::Exception)*/
   {
     UserMergeOperationProfilesAdapter merge_profile_adapter;
@@ -614,7 +473,7 @@ namespace UserInfoSvcs
 
       UserOperationProcessor::UserAppearance user_app;
 
-      user_operation_processor_->merge(
+      user_info_container_->co_merge(
         channel_match_params,
         merge_base_profile,
         merge_add_profile,
@@ -624,15 +483,15 @@ namespace UserInfoSvcs
         0, // last_colo_id
         0, // current_placement_colo_id
         AdServer::ProfilingCommons::OP_BACKGROUND
-        );
+        ).sync_wait();
     }
     else
     {
-      user_operation_processor_->exchange_merge(
+      user_info_container_->co_exchange_merge(
         AdServer::Commons::UserId(reader.user_id()),
         merge_base_profile,
         merge_history_profile,
-        0);
+        0).sync_wait();
     }
   }
 
@@ -686,7 +545,7 @@ namespace UserInfoSvcs
           (*it).imps()));
     }
 
-    user_operation_processor_->update_freq_caps(
+    user_info_container_->co_update_freq_caps(
       AdServer::Commons::UserId(reader.user_id()),
       Generics::Time(reader.time()),
       AdServer::Commons::RequestId(reader.request_id()),
@@ -696,7 +555,7 @@ namespace UserInfoSvcs
       seq_orders,
       campaign_ids,
       uc_campaign_ids,
-      AdServer::ProfilingCommons::OP_BACKGROUND);
+      AdServer::ProfilingCommons::OP_BACKGROUND).sync_wait();
   }
 
   void
@@ -718,11 +577,11 @@ namespace UserInfoSvcs
       reader.publisher_accounts().end(),
       std::inserter(publishers, publishers.begin()));
 
-    user_operation_processor_->confirm_freq_caps(
+    user_info_container_->co_confirm_freq_caps(
       AdServer::Commons::UserId(reader.user_id()),
       Generics::Time(reader.time()),
       AdServer::Commons::RequestId(reader.request_id()),
-      publishers);
+      publishers).sync_wait();
   }
 
   void unpack_freq_cap_info(
@@ -736,46 +595,5 @@ namespace UserInfoSvcs
     res.window_time = Generics::Time(fc.window_time());
   }
 
-  void
-  InternalOperationRecordFetcher::read_add_audience_operation_(
-    const Generics::MemBuf& mem_buf)
-    /*throw(eh::Exception)*/
-  {
-    AudienceChannelsOperationReader reader(mem_buf.data(), mem_buf.size());
-    const Generics::Uuid uuid(reader.user_id());
-    AudienceChannelSet audience_channels;
-
-    for (auto it = reader.audience_channels().begin();
-         it != reader.audience_channels().end(); ++it)
-    {
-      const AudienceChannelDescriptorReader& channel = *it;
-      audience_channels.insert({ channel.channel_id(), Generics::Time(channel.time()) });
-    }
-
-    user_operation_processor_->add_audience_channels(
-      uuid,
-      audience_channels);
-  }
-
-  void
-  InternalOperationRecordFetcher::read_remove_audience_operation_(
-    const Generics::MemBuf& mem_buf)
-    /*throw(eh::Exception)*/
-  {
-    AudienceChannelsOperationReader reader(mem_buf.data(), mem_buf.size());
-    const Generics::Uuid uuid(reader.user_id());
-    AudienceChannelSet audience_channels;
-
-    for (auto it = reader.audience_channels().begin();
-         it != reader.audience_channels().end(); ++it)
-    {
-      const AudienceChannelDescriptorReader& channel = *it;
-      audience_channels.insert({ channel.channel_id(), Generics::Time(channel.time()) });
-    }
-
-    user_operation_processor_->remove_audience_channels(
-      uuid,
-      audience_channels);
-  }
 }
 }

@@ -56,6 +56,12 @@ namespace ProfilingCommons
       Generics::Time* last_access_time = 0)
       /*throw(Exception)*/ = 0;
 
+    virtual Generics::SmartMemBuf_var
+    get_own_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0)
+      /*throw(Exception)*/;
+
     virtual void
     save_profile(
       const KeyType& key,
@@ -103,6 +109,9 @@ namespace ProfilingCommons
     using CheckCallback = std::function<void(bool, std::optional<std::string>)>;
     using GetCallback = std::function<void(
       const Generics::ConstSmartMemBuf_var&,
+      std::optional<std::string> error)>;
+    using GetOwnCallback = std::function<void(
+      Generics::SmartMemBuf_var,
       std::optional<std::string> error)>;
     using SaveCallback = std::function<void(std::optional<std::string> error)>;
     using RemoveCallback = std::function<void(
@@ -169,6 +178,13 @@ namespace ProfilingCommons
       std::optional<Generics::Time> last_access_time = std::nullopt)
       /*throw(Exception)*/ = 0;
 
+    virtual Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const KeyType& key,
+      GetOwnCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt)
+      /*throw(Exception)*/;
+
     virtual void
     save_profile_async(
       const KeyType& key,
@@ -195,6 +211,11 @@ namespace ProfilingCommons
 
     CallbackAwaitable<Generics::ConstSmartMemBuf_var>
     co_get_profile(
+      const KeyType& key,
+      std::optional<Generics::Time> last_access_time = std::nullopt);
+
+    CallbackAwaitable<Generics::SmartMemBuf_var>
+    co_get_own_profile(
       const KeyType& key,
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
@@ -230,6 +251,11 @@ namespace ProfilingCommons
 
     Generics::ConstSmartMemBuf_var
     get_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0) override;
+
+    Generics::SmartMemBuf_var
+    get_own_profile(
       const KeyType& key,
       Generics::Time* last_access_time = 0) override;
 

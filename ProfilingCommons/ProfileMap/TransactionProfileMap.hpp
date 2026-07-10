@@ -47,6 +47,10 @@ namespace ProfilingCommons
     get_profile(Generics::Time* last_access_time = 0)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
+    virtual Generics::SmartMemBuf_var
+    get_own_profile(Generics::Time* last_access_time = 0)
+      /*throw(typename ProfileMap<KeyType>::Exception)*/;
+
     /**
      * Simply delegate to ExpireProfileMap::save_profile
      */
@@ -71,6 +75,10 @@ namespace ProfilingCommons
 
     AdServer::Commons::SyncCoro<Generics::ConstSmartMemBuf_var>
     co_get_profile(
+      std::optional<Generics::Time> last_access_time = std::nullopt);
+
+    AdServer::Commons::SyncCoro<Generics::SmartMemBuf_var>
+    co_get_own_profile(
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
     AdServer::Commons::SyncCoro<bool>
@@ -135,6 +143,12 @@ namespace ProfilingCommons
 
     virtual Generics::ConstSmartMemBuf_var
     get_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0)
+      /*throw(typename ProfileMap<KeyType>::Exception)*/;
+
+    virtual Generics::SmartMemBuf_var
+    get_own_profile(
       const KeyType& key,
       Generics::Time* last_access_time = 0)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
@@ -247,6 +261,12 @@ namespace ProfilingCommons
       Generics::Time* last_access_time)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
+    Generics::SmartMemBuf_var
+    get_own_profile_i_(
+      const KeyType& key,
+      Generics::Time* last_access_time)
+      /*throw(typename ProfileMap<KeyType>::Exception)*/;
+
     void
     save_profile_i_(
       const KeyType& key,
@@ -322,6 +342,15 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
+  Generics::SmartMemBuf_var
+  ProfileTransactionImpl<KeyType>::get_own_profile(
+    Generics::Time* last_access_time)
+    /*throw(typename ProfileMap<KeyType>::Exception)*/
+  {
+    return profile_map_.get_own_profile_i_(key_, last_access_time);
+  }
+
+  template <typename KeyType>
   void
   ProfileTransactionImpl<KeyType>::save_profile(
     const Generics::ConstSmartMemBuf* mem_buf,
@@ -368,6 +397,24 @@ namespace ProfilingCommons
 
     Generics::Time access_time;
     co_return profile_map_.get_profile_i_(
+      key_,
+      last_access_time ? &access_time : nullptr);
+  }
+
+  template <typename KeyType>
+  AdServer::Commons::SyncCoro<Generics::SmartMemBuf_var>
+  ProfileTransactionImpl<KeyType>::co_get_own_profile(
+    std::optional<Generics::Time> last_access_time)
+  {
+    if(auto* async_map = profile_map_.async_delegate_map_())
+    {
+      co_return co_await async_map->co_get_own_profile(
+        key_,
+        last_access_time);
+    }
+
+    Generics::Time access_time;
+    co_return profile_map_.get_own_profile_i_(
       key_,
       last_access_time ? &access_time : nullptr);
   }
@@ -435,6 +482,25 @@ namespace ProfilingCommons
     else
     {
       return this->no_add_ref_delegate_map_()->get_profile(
+        key, last_access_time);
+    }
+  }
+
+  template <typename KeyType>
+  Generics::SmartMemBuf_var
+  TransactionProfileMap<KeyType>::get_own_profile(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+    /*throw(typename ProfileMap<KeyType>::Exception)*/
+  {
+    if(create_transaction_on_get_)
+    {
+      return this->get_transaction(key, false)->get_own_profile(
+        last_access_time);
+    }
+    else
+    {
+      return this->no_add_ref_delegate_map_()->get_own_profile(
         key, last_access_time);
     }
   }
@@ -689,6 +755,17 @@ namespace ProfilingCommons
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
     return this->no_add_ref_delegate_map_()->get_profile(
+      key, last_access_time);
+  }
+
+  template <typename KeyType>
+  Generics::SmartMemBuf_var
+  TransactionProfileMap<KeyType>::get_own_profile_i_(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+    /*throw(typename ProfileMap<KeyType>::Exception)*/
+  {
+    return this->no_add_ref_delegate_map_()->get_own_profile(
       key, last_access_time);
   }
 

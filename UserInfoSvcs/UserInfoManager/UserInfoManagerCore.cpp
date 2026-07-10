@@ -8,6 +8,8 @@
 
 #include <Generics/DirSelector.hpp>
 
+#include <Commons/Coro/CoroTuple.hpp>
+
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
 
 #include "UserInfoContainer.hpp"
@@ -536,7 +538,8 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserInfoContainerAccessor user_info_container = get_user_info_container_();
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
 
       UserFreqCapProfile::FreqCapIdArray fcs;
       UserFreqCapProfile::FreqCapIdArray uc_fcs;
@@ -559,7 +562,7 @@ namespace AdServer::UserInfoSvcs
         seq_orders.push_back(seq_order);
       }
 
-      co_return co_await user_info_container->co_update_freq_caps(
+      co_return co_await user_operation_processor->co_update_freq_caps(
         user_id, time, request_id, fcs, uc_fcs, virtual_fcs, seq_orders,
         campaign_ids, uc_campaign_ids,
         AdServer::ProfilingCommons::OP_RUNTIME);
@@ -595,8 +598,9 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserInfoContainerAccessor user_info_container = get_user_info_container_();
-      co_return co_await user_info_container->co_confirm_freq_caps(
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
+      co_return co_await user_operation_processor->co_confirm_freq_caps(
         user_id,
         time,
         request_id,
@@ -632,8 +636,9 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserInfoContainerAccessor user_info_container = get_user_info_container_();
-      co_return co_await user_info_container->co_consider_publishers_optin(
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
+      co_return co_await user_operation_processor->co_consider_publishers_optin(
         user_id,
         exclude_pubpixel_accounts,
         now,
@@ -660,43 +665,6 @@ namespace AdServer::UserInfoSvcs
         ex.what();
       throw UserInfoManagerCore::Exception(ostr.str());
     }
-  }
-
-  bool
-  UserInfoManagerCore::remove_user_profile(const AdServer::Commons::UserId& user_id)
-  {
-    static const char* FUN = "UserInfoManagerCore::remove_user_profile()";
-
-    try
-    {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
-
-      return user_operation_processor->remove_user_profile(user_id);
-    }
-    catch (const UserInfoContainer::NotReady& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't remove user profile. "
-        "Caught UserInfoContainer::NotReady: " << ex.what();
-      throw UserInfoManagerCore::NotReady(ostr.str());
-    }
-    catch (const UserInfoContainer::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't remove user profile. "
-        "Caught UserInfoContainer::ChunkNotFound: " << ex.what();
-      throw UserInfoManagerCore::ChunkNotFound(ostr.str());
-    }
-    catch (const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't remove user profile. "
-        "Caught eh::Exception: " << ex.what();
-      throw UserInfoManagerCore::Exception(ostr.str());
-    }
-
-    return 0; // never reach
   }
 
   Generics::Time
@@ -829,10 +797,11 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserInfoContainerAccessor user_info_container =
-        get_user_info_container_();
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
 
-      co_return co_await user_info_container->co_remove_user_profile(user_id);
+      co_return co_await user_operation_processor->co_remove_user_profile(
+        user_id);
     }
     catch (const UserInfoContainer::NotReady& ex)
     {
@@ -884,7 +853,8 @@ namespace AdServer::UserInfoSvcs
       bool household = uid.is_null();
       UserId user_id = household ? huid : uid;
 
-      UserInfoContainerAccessor user_info_container = get_user_info_container_();
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
 
       UserInfoContainer::RequestMatchParams request_params(
         user_id,
@@ -931,7 +901,7 @@ namespace AdServer::UserInfoSvcs
 
         UserInfoManagerLogger::HistoryOptimizationInfo ho_info;
 
-        co_await user_info_container->co_merge(
+        co_await user_operation_processor->co_merge(
           request_params, merge_base_profile.membuf(),
           merge_add_profile.membuf(), merge_history_profile.membuf(),
           merge_freq_cap_profile.membuf(), user_app, placement_colo_id,
@@ -969,7 +939,7 @@ namespace AdServer::UserInfoSvcs
 
           UserInfoContainer::UserAppearance hid_user_app;
 
-          co_await user_info_container->co_merge(
+          co_await user_operation_processor->co_merge(
             hid_request_params, merge_base_profile.membuf(),
             merge_add_profile.membuf(), merge_history_profile.membuf(),
             merge_freq_cap_profile.membuf(), hid_user_app, placement_colo_id,
@@ -1023,8 +993,11 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserInfoContainerAccessor user_info_container = get_user_info_container_();
-      co_return co_await user_info_container->co_fraud_user(user_id, time);
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
+      co_return co_await user_operation_processor->co_fraud_user(
+        user_id,
+        time);
     }
     catch (const UserInfoContainer::NotReady& ex)
     {
@@ -1106,6 +1079,8 @@ namespace AdServer::UserInfoSvcs
       }
 
       UserInfoContainerAccessor user_info_container = get_user_info_container_();
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_();
 
       CoordData coord_data;
       if (!match_params.geo_data_seq.empty())
@@ -1154,8 +1129,13 @@ namespace AdServer::UserInfoSvcs
 
       UserInfoManagerLogger::HistoryOptimizationInfo ho_info;
       UniqueChannelsResult unique_channels_result;
+      UserFreqCapProfile::FreqCapIdArray freq_caps;
+      UserFreqCapProfile::FreqCapIdArray virtual_freq_caps;
+      UserFreqCapProfile::SeqOrderArray seq_orders;
+      UserFreqCapProfile::CampaignFreqs campaign_freqs;
+      bool freq_caps_user_is_fraud = false;
 
-      co_await user_info_container->co_match(
+      auto match_operation = user_operation_processor->co_match(
         request_params,
         placement_colo_id,
         placement_colo_id,
@@ -1168,9 +1148,60 @@ namespace AdServer::UserInfoSvcs
         &ho_info,
         &unique_channels_result);
 
+      if (match_params.ret_freq_caps)
+      {
+        struct FreqCapsResult
+        {
+          bool user_is_fraud = false;
+          std::exception_ptr exception;
+        };
+
+        auto freq_caps_operation = [&]() -> AdServer::Commons::SyncCoro<FreqCapsResult>
+        {
+          try
+          {
+            co_await user_info_container->co_get_full_freq_caps(
+              user_info.user_id,
+              user_info.time,
+              freq_caps,
+              virtual_freq_caps,
+              seq_orders,
+              campaign_freqs);
+            co_return FreqCapsResult{};
+          }
+          catch (const UserInfoContainer::UserIsFraud& ex)
+          {
+            Stream::Error ostr;
+            ostr << "User '" << user_id << "' is fraud: " << ex.what();
+            logger()->log(ostr.str(), Logging::Logger::INFO,
+              Aspect::USER_INFO_MANAGER, "ADS-IMPL-0000");
+            co_return FreqCapsResult{true, nullptr};
+          }
+          catch (...)
+          {
+            co_return FreqCapsResult{false, std::current_exception()};
+          }
+        };
+
+        auto [unused_match_result, freq_caps_result] = co_await AdServer::Commons::CoroTuple(
+          std::move(match_operation),
+          freq_caps_operation());
+        (void)unused_match_result;
+
+        if (freq_caps_result.exception)
+        {
+          std::rethrow_exception(freq_caps_result.exception);
+        }
+
+        freq_caps_user_is_fraud = freq_caps_result.user_is_fraud;
+      }
+      else
+      {
+        co_await std::move(match_operation);
+      }
+
       match_result.adv_channel_count = unique_channels_result.simple_channels;
-      match_result.discover_channel_count =
-        unique_channels_result.discover_channels;
+      match_result.discover_channel_count = unique_channels_result.discover_channels;
 
       if (ho_info.isp_date != Generics::Time::ZERO)
       {
@@ -1187,8 +1218,8 @@ namespace AdServer::UserInfoSvcs
       match_result.cohort = profile_properties.cohort;
       match_result.cohort2 = profile_properties.cohort2;
 
-      match_result.geo_data_seq.reserve(
-        profile_properties.geo_data_list.size());
+      match_result.geo_data_seq.reserve(profile_properties.geo_data_list.size());
+
       for (const auto& geo_data : profile_properties.geo_data_list)
       {
         match_result.geo_data_seq.push_back(GeoData{
@@ -1209,21 +1240,12 @@ namespace AdServer::UserInfoSvcs
 
       if (match_params.ret_freq_caps)
       {
-        UserFreqCapProfile::FreqCapIdArray freq_caps;
-        UserFreqCapProfile::FreqCapIdArray virtual_freq_caps;
-        UserFreqCapProfile::SeqOrderArray seq_orders;
-        UserFreqCapProfile::CampaignFreqs campaign_freqs;
-
-        try
+        if (freq_caps_user_is_fraud)
         {
-          co_await user_info_container->co_get_full_freq_caps(
-            user_info.user_id,
-            user_info.time,
-            freq_caps,
-            virtual_freq_caps,
-            seq_orders,
-            campaign_freqs);
-
+          match_result.fraud_request = true;
+        }
+        else
+        {
           match_result.full_freq_caps.assign(
             freq_caps.begin(), freq_caps.end());
           match_result.full_virtual_freq_caps.assign(
@@ -1240,14 +1262,6 @@ namespace AdServer::UserInfoSvcs
             match_result.campaign_freqs.push_back(
               CampaignFreq{campaign_freq.campaign_id, campaign_freq.imps});
           }
-        }
-        catch (const UserInfoContainer::UserIsFraud& ex)
-        {
-          Stream::Error ostr;
-          ostr << "User '" << user_id << "' is fraud: " << ex.what();
-          logger()->log(ostr.str(), Logging::Logger::INFO,
-            Aspect::USER_INFO_MANAGER, "ADS-IMPL-0000");
-          match_result.fraud_request = true;
         }
       }
 
@@ -1705,8 +1719,7 @@ namespace AdServer::UserInfoSvcs
 
   void
   UserInfoManagerCore::update_channels_config_(
-    UserInfoContainer* user_info_container,
-    UserOperationProcessor* user_operation_processor) noexcept
+    UserInfoContainer* user_info_container) noexcept
   {
     static const char* FUN = "UserInfoManagerCore::update_channels_config_()";
 
@@ -1771,30 +1784,6 @@ namespace AdServer::UserInfoSvcs
           add_child_object(user_operation_loader_.in());
         }
 
-        if (user_info_manager_config_.ExternalUserOperationsLoad().present())
-        {
-          std::string op_root =
-            user_info_manager_config_.ExternalUserOperationsLoad()->dir()
-              .c_str();
-
-          external_user_operation_loader_ = new ExternalUserOperationLoader(
-            check_operations_callback_,
-            user_operation_processor,
-            op_root.c_str(),
-            user_info_manager_config_.ExternalUserOperationsLoad()
-              ->unprocessed_dir()
-              .c_str(),
-            user_info_manager_config_.ExternalUserOperationsLoad()
-              ->file_prefix()
-              .c_str(),
-            chunk_ids,
-            Generics::Time(
-              user_info_manager_config_.ExternalUserOperationsLoad()
-                ->check_period()),
-            user_info_manager_config_.ExternalUserOperationsLoad()->threads());
-
-          add_child_object(external_user_operation_loader_.in());
-        }
       }
     }
     catch (const eh::Exception& ex)
@@ -1823,14 +1812,10 @@ namespace AdServer::UserInfoSvcs
 
     UserInfoContainerAccessor user_info_container =
       get_user_info_container_(false);
-    UserOperationProcessorAccessor user_operation_processor =
-      get_user_operation_processor_(false);
-    if (user_info_container.get().in() && user_operation_processor.get().in())
+    if (user_info_container.get().in())
     {
       // user_info_container can be null after deactivation
-      update_channels_config_(
-        user_info_container.get(),
-        user_operation_processor.get());
+      update_channels_config_(user_info_container.get());
     }
 
     try

@@ -342,44 +342,6 @@ namespace UserInfoSvcs
   autoreader FreqCapInfoReader<FreqCapInfoDescriptor>;
   autowriter FreqCapInfoWriter<FreqCapInfoDescriptor>;
 
-  struct AudienceChannelDescriptor
-  {
-    uint channel_id;
-    uint time;
-  };
-
-  autoreader AudienceChannelDescriptorReader<AudienceChannelDescriptor>;
-  autowriter AudienceChannelDescriptorWriter<AudienceChannelDescriptor>;
-
-  struct AudienceChannelsOperationDescriptor
-  {
-    uint operation_type;
-    uint version;
-    string user_id;
-    uint time;
-    array<AudienceChannelDescriptor> audience_channels;
-  };
-
-  reader AudienceChannelsOperationReader<
-    AudienceChannelsOperationDescriptor>
-  {
-    uint operation_type;
-    uint version;
-    string user_id;
-    uint time;
-    array<AudienceChannelDescriptorReader> audience_channels;
-  };
-
-  writer AudienceChannelsOperationWriter<
-    AudienceChannelsOperationDescriptor>
-  {
-    uint operation_type;
-    uint version;
-    string user_id;
-    uint time;
-    array<AudienceChannelDescriptorWriter> audience_channels;
-  };
-
   struct UserOperationTypeDescriptor
   {
     uint operation_type;

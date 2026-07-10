@@ -36,18 +36,6 @@ namespace AdServer
       Generics::TAlloc::ThreadPool<unsigned long, 256> >
     ChannelIdSet;
 
-    struct AudienceChannel
-    {
-      bool operator<(const AudienceChannel& right) const
-      {
-        return channel_id < right.channel_id;
-      }
-
-      unsigned long channel_id;
-      Generics::Time time;
-    };
-    typedef std::set<AudienceChannel> AudienceChannelSet;
-
     struct UniqueChannels
     {
       ChannelIdSet unique_channels;
@@ -251,16 +239,6 @@ namespace AdServer
         /*throw(InvalidProfileException)*/;
 
       bool fraud_user(const Generics::Time& now);
-
-      void add_audience_channels(
-        const AudienceChannelSet& audience_channels,
-        const ChannelDictionary& channels,
-        const Generics::Time& expire_time)
-        /*throw(InvalidProfileException)*/;
-
-      void remove_audience_channels(
-        const AudienceChannelSet& audience_channels)
-        /*throw(InvalidProfileException)*/;
 
       void match(
         ChannelMatchMap& result_channels,

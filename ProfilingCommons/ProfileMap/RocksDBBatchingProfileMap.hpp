@@ -55,6 +55,9 @@ namespace AdServer::ProfilingCommons
     using GetCallback = std::function<void (
       const Generics::ConstSmartMemBuf_var&,
       std::optional<std::string> error)>;
+    using GetOwnCallback = std::function<void (
+      Generics::SmartMemBuf_var,
+      std::optional<std::string> error)>;
     using SaveCallback = std::function<void(std::optional<std::string> error)>;
     using RemoveCallback = std::function<void(
       bool,
@@ -84,12 +87,23 @@ namespace AdServer::ProfilingCommons
       const std::string& key,
       Generics::Time* last_access_time = 0) override;
 
+    Generics::SmartMemBuf_var
+    get_own_profile(
+      const std::string& key,
+      Generics::Time* last_access_time = 0) override;
+
     Generics::ConstSmartMemBuf_var
     get_profile_async(
       const std::string& key,
       GetCallback callback,
       std::optional<Generics::Time> last_access_time = std::nullopt
       ) override;
+
+    Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const std::string& key,
+      GetOwnCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt) override;
 
     void
     save_profile(
@@ -158,6 +172,7 @@ namespace AdServer::ProfilingCommons
       Generics::ConstSmartMemBuf_var profile;
       std::optional<CheckCallback> check_callback;
       std::optional<GetCallback> get_callback;
+      std::optional<GetOwnCallback> get_own_callback;
       std::optional<SaveCallback> save_callback;
       std::optional<RemoveCallback> remove_callback;
     };
@@ -257,12 +272,23 @@ namespace AdServer::ProfilingCommons
       const KeyType& key,
       Generics::Time* last_access_time = 0) override;
 
+    Generics::SmartMemBuf_var
+    get_own_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0) override;
+
     Generics::ConstSmartMemBuf_var
     get_profile_async(
       const KeyType& key,
       std::function<void (
         const Generics::ConstSmartMemBuf_var&,
-        std::optional<std::string> error)> callback,
+      std::optional<std::string> error)> callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt) override;
+
+    Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
       std::optional<Generics::Time> last_access_time = std::nullopt) override;
 
     void
@@ -369,6 +395,15 @@ namespace AdServer::ProfilingCommons
   }
 
   template<typename KeyType, typename KeyAdapterType>
+  Generics::SmartMemBuf_var
+  RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::get_own_profile(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+  {
+    return impl_->get_own_profile(key_adapter_(key), last_access_time);
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
   Generics::ConstSmartMemBuf_var
   RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::get_profile_async(
     const KeyType& key,
@@ -378,6 +413,19 @@ namespace AdServer::ProfilingCommons
     std::optional<Generics::Time> last_access_time)
   {
     return impl_->get_profile_async(
+      key_adapter_(key),
+      std::move(callback),
+      last_access_time);
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  Generics::SmartMemBuf_var
+  RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::get_own_profile_async(
+    const KeyType& key,
+    typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    return impl_->get_own_profile_async(
       key_adapter_(key),
       std::move(callback),
       last_access_time);

@@ -237,6 +237,12 @@ namespace ProfilingCommons
       Generics::Time* last_access_time = 0)
       /*throw(Exception)*/;
 
+    virtual Generics::SmartMemBuf_var
+    get_own_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0)
+      /*throw(Exception)*/;
+
     virtual void
     save_profile(
       const KeyType& key,

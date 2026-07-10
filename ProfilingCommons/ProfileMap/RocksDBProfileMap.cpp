@@ -116,9 +116,23 @@ namespace ProfilingCommons
   Generics::ConstSmartMemBuf_var
   RocksDBProfileMapImpl::get_profile(
     const std::string& key,
+    Generics::Time* last_access_time)
+  {
+    Generics::SmartMemBuf_var profile = get_own_profile(
+      key,
+      last_access_time);
+
+    return profile.in() ?
+      Generics::transfer_membuf(profile) :
+      Generics::ConstSmartMemBuf_var();
+  }
+
+  Generics::SmartMemBuf_var
+  RocksDBProfileMapImpl::get_own_profile(
+    const std::string& key,
     Generics::Time* /*last_access_time*/)
   {
-    static const char* FUN = "RocksDBProfileMapImpl::get_profile()";
+    static const char* FUN = "RocksDBProfileMapImpl::get_own_profile()";
 
     logical_read_operations_.fetch_add(1, std::memory_order_relaxed);
     physical_read_operations_.fetch_add(1, std::memory_order_relaxed);
@@ -128,7 +142,7 @@ namespace ProfilingCommons
 
     if(status.IsNotFound())
     {
-      return Generics::ConstSmartMemBuf_var();
+      return Generics::SmartMemBuf_var();
     }
 
     if(!status.ok())
@@ -138,8 +152,8 @@ namespace ProfilingCommons
       throw Exception(ostr.str());
     }
 
-    return Generics::ConstSmartMemBuf_var(
-      new Generics::ConstSmartMemBuf(value.data(), value.size()));
+    return Generics::SmartMemBuf_var(
+      new Generics::SmartMemBuf(value.data(), value.size()));
   }
 
   Generics::ConstSmartMemBuf_var
@@ -174,6 +188,40 @@ namespace ProfilingCommons
     callback(profile, std::move(error));
 
     return Generics::ConstSmartMemBuf_var();
+  }
+
+  Generics::SmartMemBuf_var
+  RocksDBProfileMapImpl::get_own_profile_async(
+    const std::string& key,
+    GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    if(!callback)
+    {
+      return Generics::SmartMemBuf_var();
+    }
+
+    Generics::SmartMemBuf_var profile;
+    std::optional<std::string> error;
+    try
+    {
+      Generics::Time access_time;
+      profile = get_own_profile(
+        key,
+        last_access_time ? &access_time : nullptr);
+    }
+    catch(const std::exception& ex)
+    {
+      error = ex.what();
+    }
+    catch(...)
+    {
+      error = "unknown get error";
+    }
+
+    callback(std::move(profile), std::move(error));
+
+    return Generics::SmartMemBuf_var();
   }
 
   bool

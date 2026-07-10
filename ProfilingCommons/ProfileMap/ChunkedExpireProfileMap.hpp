@@ -77,6 +77,13 @@ namespace ProfilingCommons
       std::optional<Generics::Time> last_access_time = std::nullopt)
       override;
 
+    Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt)
+      override;
+
     void
     save_profile_async(
       const KeyType& key,
@@ -103,6 +110,12 @@ namespace ProfilingCommons
 
     Generics::ConstSmartMemBuf_var
     get_profile(
+      const KeyType& key,
+      Generics::Time* last_access_time = 0)
+      /*throw(ChunkNotFound, Exception)*/;
+
+    Generics::SmartMemBuf_var
+    get_own_profile(
       const KeyType& key,
       Generics::Time* last_access_time = 0)
       /*throw(ChunkNotFound, Exception)*/;

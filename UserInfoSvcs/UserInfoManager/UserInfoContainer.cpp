@@ -4,6 +4,7 @@
 #include <PrivacyFilter/Filter.hpp>
 
 #include <Commons/Algs.hpp>
+#include <Commons/Coro/CoroTuple.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
@@ -74,6 +75,34 @@ namespace AdServer
 {
 namespace UserInfoSvcs
 {
+  namespace
+  {
+    using CoroutineUserProfileMap =
+      AdServer::ProfilingCommons::ChunkedProfileMap<
+        UserId,
+        AdServer::ProfilingCommons::TransactionProfileMap<UserId>,
+        unsigned long (*)(const Generics::Uuid&)>;
+
+    AdServer::Commons::SyncCoro<CoroutineUserProfileMap::Transaction_var>
+    co_get_profile_transaction_(
+      CoroutineUserProfileMap* profiles,
+      const UserId& user_id,
+      AdServer::ProfilingCommons::OperationPriority op_priority)
+    {
+      co_return co_await profiles->co_get_transaction(
+        user_id,
+        true,
+        op_priority);
+    }
+
+    AdServer::Commons::SyncCoro<SmartMemBuf_var>
+    co_get_own_profile_mem_buf_(
+      CoroutineUserProfileMap::Transaction_var transaction)
+    {
+      co_return co_await transaction->co_get_own_profile();
+    }
+  }
+
   /* UserInfoContainer */
   UserInfoContainer::UserInfoContainer(
     Logging::Logger* logger,
@@ -106,236 +135,49 @@ namespace UserInfoSvcs
       base_profile_expire_time_(base_level_map_traits.expire_time)
   {
     base_profiles_ = open_chunked_map_<UserProfileMap>(
-        common_chunks_number,
-        chunk_folders,
-        BASE_CHUNK_PREFIX,
-        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-          base_level_map_traits.expire_time),
-        max_base_profile_waiters);
+      common_chunks_number,
+      chunk_folders,
+      BASE_CHUNK_PREFIX,
+      AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+        base_level_map_traits.expire_time),
+      max_base_profile_waiters);
 
     temp_profiles_ = open_chunked_map_<UserProfileMap>(
-        common_chunks_number,
-        chunk_folders,
-        TEMP_CHUNK_PREFIX,
-        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-          temp_level_map_traits.expire_time),
-        max_temp_profile_waiters);
+      common_chunks_number,
+      chunk_folders,
+      TEMP_CHUNK_PREFIX,
+      AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+        temp_level_map_traits.expire_time),
+      max_temp_profile_waiters);
 
     add_profiles_ = open_chunked_map_<UserProfileMap>(
-        common_chunks_number,
-        chunk_folders,
-        ADD_CHUNK_PREFIX,
-        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-          add_level_map_traits.expire_time));
+      common_chunks_number,
+      chunk_folders,
+      ADD_CHUNK_PREFIX,
+      AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+        add_level_map_traits.expire_time));
 
     history_profiles_ = open_chunked_map_<UserProfileMap>(
-        common_chunks_number,
-        chunk_folders,
-        HISTORY_CHUNK_PREFIX,
-        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-          history_level_map_traits.expire_time));
+      common_chunks_number,
+      chunk_folders,
+      HISTORY_CHUNK_PREFIX,
+      AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+        history_level_map_traits.expire_time));
 
     temp_history_profiles_ = open_chunked_map_<UserProfileMap>(
-        common_chunks_number,
-        chunk_folders,
-        TEMP_HISTORY_CHUNK_PREFIX,
-        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-          temp_level_map_traits.expire_time));
+      common_chunks_number,
+      chunk_folders,
+      TEMP_HISTORY_CHUNK_PREFIX,
+      AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+        temp_level_map_traits.expire_time));
 
     freq_cap_profiles_ = open_chunked_map_<UserProfileMap>(
-        common_chunks_number,
-        chunk_folders,
-        FREQCAP_CHUNK_PREFIX,
-        AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-          freq_cap_level_map_traits.expire_time),
-        max_freqcap_profile_waiters);
-  }
-
-  void
-  UserInfoContainer::remove_audience_channels(
-    const UserId& user_id,
-    const AudienceChannelSet& audience_channels)
-    /*throw(ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::remove_audience_channels()";
-
-    if (audience_channels.empty())
-    {
-      return;
-    }
-
-    try
-    {
-      UserProfileMap::Transaction_var base_profile_trans =
-        base_profiles_->get_transaction(
-          user_id,
-          true,
-          ProfilingCommons::OP_BACKGROUND // not runtime request have lower priority
-          );
-
-      Generics::Time access_time;
-      SmartMemBuf_var base_mem_buf = Algs::copy_membuf(
-        base_profile_trans->get_profile(&access_time));
-
-      if (base_mem_buf.in() == 0)
-      {
-        return;
-      }
-
-      SmartMemBuf_var add_mem_buf(new SmartMemBuf);
-
-      ChannelsMatcher matching(base_mem_buf.in(), add_mem_buf.in());
-
-      matching.remove_audience_channels(audience_channels);
-
-      base_profile_trans->save_profile(
-        Generics::transfer_membuf(base_mem_buf),
-        access_time);
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  UserInfoContainer::add_audience_channels(
-    const UserId& user_id,
-    const AudienceChannelSet& audience_channels)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::add_audience_channels()";
-
-    if (audience_channels.size() == 0)
-    {
-      return;
-    }
-
-    ChannelDictionary_var channel_rules = channels_config();
-
-    if (channel_rules.in() == 0)
-    {
-      throw NotReady("Unable to get channels configuration.");
-    }
-
-    try
-    {
-      UserProfileMap::Transaction_var base_profile_trans =
-        base_profiles_->get_transaction(
-          user_id,
-          true,
-          ProfilingCommons::OP_BACKGROUND // not runtime request have lower priority
-          );
-
-      SmartMemBuf_var base_mem_buf = Algs::copy_membuf(
-        base_profile_trans->get_profile());
-
-      if (base_mem_buf.in() == 0)
-      {
-        base_mem_buf = new SmartMemBuf;
-      }
-
-      Generics::Time now = Generics::Time::get_time_of_day();
-
-      SmartMemBuf_var add_mem_buf(new SmartMemBuf);
-
-      ChannelsMatcher matching(base_mem_buf.in(), add_mem_buf.in());
-
-      matching.add_audience_channels(
-        audience_channels,
-        *channel_rules,
-        now - base_profile_expire_time_);
-
-      base_profile_trans->save_profile(
-        Generics::transfer_membuf(base_mem_buf),
-        now);
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  UserInfoContainer::get_full_freq_caps(
-    const UserId& user_id,
-    const Generics::Time& now,
-    UserFreqCapProfile::FreqCapIdArray& freq_caps,
-    UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
-    UserFreqCapProfile::SeqOrderArray& seq_orders,
-    UserFreqCapProfile::CampaignFreqs& campaign_freqs)
-    /*throw(ChunkNotFound, UserIsFraud, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::get_full_freq_caps()";
-
-    FreqCapConfig_var freq_cap_config;
-
-    {
-      SyncPolicy::ReadGuard lock(config_lock_);
-      freq_cap_config = freq_cap_config_;
-    }
-
-    if(freq_cap_config.in() == 0)
-    {
-      throw NotReady("Unable to get channels configuration.");
-    }
-
-    try
-    {
-      UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(
-          user_id,
-          true, // check max waiters
-          ProfilingCommons::OP_RUNTIME);
-      UserFreqCapProfile profile(fc_profile_trans->get_profile());
-
-      if(profile.full(
-           freq_caps,
-           &virtual_freq_caps,
-           seq_orders,
-           campaign_freqs,
-           now,
-           *freq_cap_config))
-      {
-        fc_profile_trans->save_profile(
-          profile.transfer_membuf(),
-          now);
-      }
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const UserFreqCapProfile::Invalid& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught UserFreqCapProfile::Invalid: " << ex.what();
-      throw UserIsFraud(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
+      common_chunks_number,
+      chunk_folders,
+      FREQCAP_CHUNK_PREFIX,
+      AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+        freq_cap_level_map_traits.expire_time),
+      max_freqcap_profile_waiters);
   }
 
   AdServer::Commons::SyncCoro<bool>
@@ -369,20 +211,20 @@ namespace UserInfoSvcs
           user_id,
           true, // check max waiters
           ProfilingCommons::OP_RUNTIME);
-      UserFreqCapProfile profile(co_await fc_profile_trans->co_get_profile());
+      SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
+      UserFreqCapProfile profile(fc_mem_buf, true);
 
       if(profile.full(
-           freq_caps,
-           &virtual_freq_caps,
-           seq_orders,
-           campaign_freqs,
-           now,
-           *freq_cap_config))
+        freq_caps,
+        &virtual_freq_caps,
+        seq_orders,
+        campaign_freqs,
+        now,
+        *freq_cap_config))
       {
-        fc_profile_trans->save_profile_async(
-          profile.transfer_membuf(),
-          now);
+        fc_profile_trans->save_profile_async(profile.transfer_membuf(), now);
       }
+
       co_return true;
     }
     catch(const UserProfileMap::ChunkNotFound& ex)
@@ -397,76 +239,6 @@ namespace UserInfoSvcs
       ostr << FUN << ": Caught UserFreqCapProfile::Invalid: " << ex.what();
       throw UserIsFraud(ostr);
     }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  UserInfoContainer::update_freq_caps(
-    const UserId& user_id,
-    const Generics::Time& now,
-    const Commons::RequestId& request_id,
-    const UserFreqCapProfile::FreqCapIdArray& freq_caps,
-    const UserFreqCapProfile::FreqCapIdArray& uc_freq_caps,
-    const UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
-    const UserFreqCapProfile::SeqOrderArray& seq_orders,
-    const UserFreqCapProfile::CampaignIds& campaign_ids,
-    const UserFreqCapProfile::CampaignIds& uc_campaign_ids,
-    AdServer::ProfilingCommons::OperationPriority op_priority)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::update_freq_caps()";
-
-    FreqCapConfig_var freq_cap_config;
-
-    {
-      SyncPolicy::ReadGuard lock(config_lock_);
-      freq_cap_config = freq_cap_config_;
-    }
-
-    if(freq_cap_config.in() == 0)
-    {
-      throw NotReady("Unable to get channels configuration.");
-    }
-
-    try
-    {
-      UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, true, op_priority);
-
-      ConstSmartMemBuf_var fc_mem_buf = fc_profile_trans->get_profile();
-
-      UserFreqCapProfile profile(fc_mem_buf);
-
-      profile.consider(
-        request_id,
-        now,
-        freq_caps,
-        uc_freq_caps,
-        virtual_freq_caps,
-        seq_orders,
-        campaign_ids,
-        uc_campaign_ids,
-        *freq_cap_config);
-
-      fc_profile_trans->save_profile(
-        profile.transfer_membuf(),
-        now);
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const UserFreqCapProfile::Invalid&)
-    {}
-    catch (const MaxWaitersReached&)
-    {}
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
@@ -506,10 +278,8 @@ namespace UserInfoSvcs
       UserProfileMap::Transaction_var fc_profile_trans =
         co_await freq_cap_profiles_->co_get_transaction(user_id, true, op_priority);
 
-      ConstSmartMemBuf_var fc_mem_buf =
-        co_await fc_profile_trans->co_get_profile();
-
-      UserFreqCapProfile profile(fc_mem_buf);
+      SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
+      UserFreqCapProfile profile(fc_mem_buf, true);
       profile.consider(
         request_id,
         now,
@@ -521,9 +291,8 @@ namespace UserInfoSvcs
         uc_campaign_ids,
         *freq_cap_config);
 
-      fc_profile_trans->save_profile_async(
-        profile.transfer_membuf(),
-        now);
+      fc_profile_trans->save_profile_async(profile.transfer_membuf(), now);
+
       co_return true;
     }
     catch(const UserProfileMap::ChunkNotFound& ex)
@@ -540,73 +309,6 @@ namespace UserInfoSvcs
     {
       co_return false;
     }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void UserInfoContainer::confirm_freq_caps(
-    const UserId& user_id,
-    const Generics::Time& now,
-    const Commons::RequestId& request_id,
-    const std::set<unsigned long>& exclude_pubpixel_accounts)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::confirm_freq_caps()";
-
-    FreqCapConfig_var freq_cap_config;
-
-    {
-      SyncPolicy::ReadGuard lock(config_lock_);
-      freq_cap_config = freq_cap_config_;
-    }
-
-    if(freq_cap_config.in() == 0)
-    {
-      throw NotReady("Unable to get freq caps configuration.");
-    }
-
-    try
-    {
-      UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, false);
-
-      ConstSmartMemBuf_var fc_mem_buf = fc_profile_trans->get_profile();
-
-      if(!fc_mem_buf.in())
-      {
-        fc_mem_buf = new ConstSmartMemBuf();
-      }
-
-      UserFreqCapProfile profile(fc_mem_buf.in());
-
-      bool res = profile.consider_publishers_optin(
-        exclude_pubpixel_accounts,
-        now);
-
-      res |= profile.confirm_request(
-        Commons::RequestId(request_id),
-        now,
-        *freq_cap_config);
-
-      if(res)
-      {
-        fc_profile_trans->save_profile(
-          profile.transfer_membuf(),
-          now);
-      }
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const UserFreqCapProfile::Invalid&)
-    {}
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
@@ -640,15 +342,8 @@ namespace UserInfoSvcs
       UserProfileMap::Transaction_var fc_profile_trans =
         co_await freq_cap_profiles_->co_get_transaction(user_id, false);
 
-      ConstSmartMemBuf_var fc_mem_buf =
-        co_await fc_profile_trans->co_get_profile();
-
-      if(!fc_mem_buf.in())
-      {
-        fc_mem_buf = new ConstSmartMemBuf();
-      }
-
-      UserFreqCapProfile profile(fc_mem_buf.in());
+      SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
+      UserFreqCapProfile profile(fc_mem_buf, true);
       bool res = profile.consider_publishers_optin(
         exclude_pubpixel_accounts,
         now);
@@ -659,9 +354,7 @@ namespace UserInfoSvcs
 
       if(res)
       {
-        fc_profile_trans->save_profile_async(
-          profile.transfer_membuf(),
-          now);
+        fc_profile_trans->save_profile_async(profile.transfer_membuf(), now);
       }
 
       co_return true;
@@ -680,87 +373,6 @@ namespace UserInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  bool
-  UserInfoContainer::dispose_user(const UserId& user_id)
-    noexcept
-  {
-    return base_profiles_->dispose_profile(user_id);
-  }
-
-  bool
-  UserInfoContainer::get_user_profile(
-    const UserId& user_id,
-    bool temporary,
-    SmartMemBuf_var* mb_base_profile_out,
-    SmartMemBuf_var* mb_add_profile_out,
-    SmartMemBuf_var* mb_history_profile_out,
-    SmartMemBuf_var* mb_fc_profile_out)
-    /*throw(ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::get_user_profile()";
-
-    try
-    {
-      if(mb_base_profile_out)
-      {
-        if(!temporary)
-        {
-          *mb_base_profile_out = Algs::copy_membuf(
-            base_profiles_->get_profile(user_id));
-        }
-        else
-        {
-          *mb_base_profile_out = Algs::copy_membuf(
-            temp_profiles_->get_profile(user_id));
-        }
-      }
-
-      if(mb_add_profile_out)
-      {
-        *mb_add_profile_out = Algs::copy_membuf(
-          add_profiles_->get_profile(user_id));
-      }
-
-      if(mb_history_profile_out)
-      {
-        if(!temporary)
-        {
-          *mb_history_profile_out = Algs::copy_membuf(
-            history_profiles_->get_profile(user_id));
-        }
-        else
-        {
-          *mb_history_profile_out = Algs::copy_membuf(
-            temp_history_profiles_->get_profile(user_id));
-        }
-      }
-
-      if(mb_fc_profile_out)
-      {
-        Generics::ConstSmartMemBuf_var mb = freq_cap_profiles_->get_profile(user_id);
-
-        if(mb && mb->membuf().size() <= 40*1024*1024)
-        {
-          *mb_fc_profile_out = Algs::copy_membuf(mb);
-        }
-      }
-
-      return true;
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -817,7 +429,7 @@ namespace UserInfoSvcs
         Generics::ConstSmartMemBuf_var mb =
           co_await freq_cap_profiles_->co_get_profile(user_id);
 
-        if(mb && mb->membuf().size() <= 40*1024*1024)
+        if(mb && mb->membuf().size() <= 40 * 1024 * 1024)
         {
           *mb_fc_profile_out = Algs::copy_membuf(mb);
         }
@@ -835,37 +447,6 @@ namespace UserInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  bool
-  UserInfoContainer::remove_user_profile(const UserId& user_id)
-    /*throw(ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::remove_user_profile()";
-
-    try
-    {
-      base_profiles_->remove_profile(user_id);
-      temp_profiles_->remove_profile(user_id);
-      add_profiles_->remove_profile(user_id);
-      history_profiles_->remove_profile(user_id);
-      temp_history_profiles_->remove_profile(user_id);
-      freq_cap_profiles_->remove_profile(user_id);
-
-      return true;
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -900,13 +481,12 @@ namespace UserInfoSvcs
     }
   }
 
-  void
-  UserInfoContainer::exchange_merge(
+  AdServer::Commons::SyncCoro<bool>
+  UserInfoContainer::co_exchange_merge(
     const UserId& user_id,
     const Generics::MemBuf& other_base_profile_buf,
     const Generics::MemBuf& other_history_profile_buf,
     UserInfoManagerLogger::HistoryOptimizationInfo* ho_info)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
   {
     static const char* FUN = "UserInfoContainer::merge_profiles()";
 
@@ -921,19 +501,19 @@ namespace UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var base_profile_trans =
-        base_profiles_->get_transaction(
+        co_await base_profiles_->co_get_transaction(
           user_id,
           true, // check max waiters
           AdServer::ProfilingCommons::OP_BACKGROUND);
 
       UserProfileMap::Transaction_var add_profile_trans =
-        add_profiles_->get_transaction(
+        co_await add_profiles_->co_get_transaction(
           user_id,
           true, // check max waiters
           AdServer::ProfilingCommons::OP_BACKGROUND);
 
-      SmartMemBuf_var add_buf = Algs::copy_membuf(
-        add_profile_trans->get_profile());
+      SmartMemBuf_var add_buf =
+        co_await add_profile_trans->co_get_own_profile();
 
       if(add_buf.in() && !other_base_profile_buf.empty())
       {
@@ -966,8 +546,12 @@ namespace UserInfoSvcs
               get_last_request_(base_profile.in()),
               get_last_request_(add_buf.in())));
 
-          update_history_(base_profile.in(),
-                          history_profile.in(), now, *channel_rules, current_time_offset);
+          update_history_(
+            base_profile.in(),
+            history_profile.in(),
+            now,
+            *channel_rules,
+            current_time_offset);
 
           SmartMemBuf_var empty_buf(new SmartMemBuf);
 
@@ -981,22 +565,20 @@ namespace UserInfoSvcs
             *channel_rules,
             profile_match_params);
 
-          add_profile_trans->remove_profile();
+          co_await add_profile_trans->co_remove_profile();
 
           if (add_buf->membuf().size() != 0)
           {
-            base_profile_trans->save_profile(
-              Generics::transfer_membuf(
-                Algs::copy_membuf(add_buf)),
+            base_profile_trans->save_profile_async(
+              Generics::transfer_membuf(Algs::copy_membuf(add_buf)),
               now);
           }
 
           if (history_profile->membuf().size() != 0)
           {
-            history_profiles_->save_profile(
+            history_profiles_->save_profile_async(
               user_id,
-              Generics::transfer_membuf(
-                Algs::copy_membuf(history_profile)),
+              Generics::transfer_membuf(Algs::copy_membuf(history_profile)),
               now);
           }
 
@@ -1028,426 +610,18 @@ namespace UserInfoSvcs
           throw Exception(ostr);
         }
       }
+
+      co_return true;
     }
     catch(const MaxWaitersReached&)
     {
+      co_return false;
     }
     catch(const UserProfileMap::ChunkNotFound& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
       throw ChunkNotFound(ostr);
-    }
-  }
-
-  void
-  UserInfoContainer::merge(
-    const RequestMatchParams& request_params,
-    const Generics::MemBuf& merge_base_profile_buf,
-    Generics::MemBuf& merge_add_profile_buf,
-    const Generics::MemBuf& merge_history_profile_buf,
-    const Generics::MemBuf& merge_freq_cap_profile_buf,
-    UserAppearance& user_app,
-    long last_colo_id,
-    long current_placement_colo_id,
-    AdServer::ProfilingCommons::OperationPriority op_priority,
-    UserInfoManagerLogger::HistoryOptimizationInfo* ho_info)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::merge()";
-
-    try
-    {
-      ChannelDictionary_var channel_rules = channels_config();
-
-      if (channel_rules.in() == 0)
-      {
-        throw NotReady("Unable to get channels configuration.");
-      }
-
-      FreqCapConfig_var freq_cap_config;
-
-      {
-        SyncPolicy::ReadGuard lock(config_lock_);
-        freq_cap_config = freq_cap_config_;
-      }
-
-      if(freq_cap_config.in() == 0)
-      {
-        throw NotReady("Unable to get freq caps configuration.");
-      }
-
-      Generics::Time current_time_offset = time_offset();
-
-      const UserId& user_id = request_params.user_id;
-      bool temporary = request_params.temporary;
-      bool merge_to_additional = false;
-      UserProfileMap::Transaction_var target_profile_trans;
-      UserProfileMap::Transaction_var target_history_profile_trans;
-      SmartMemBuf_var target_profile;
-      SmartMemBuf_var target_history_profile;
-
-      bool new_user =
-        !temporary && request_params.change_last_request && !request_params.household;
-
-      try
-      {
-        target_profile_trans = temporary ?
-          temp_profiles_->get_transaction(user_id, true, op_priority) :
-          base_profiles_->get_transaction(user_id, true, op_priority);
-
-        UserProfileMap::Transaction_var add_profile_trans =
-          add_profiles_->get_transaction(user_id, true, op_priority);
-
-        target_profile = Algs::copy_membuf(
-          add_profile_trans->get_profile());
-
-        if ((!request_params.use_empty_profile &&
-             last_colo_id != current_placement_colo_id &&
-             last_colo_id != DEFAULT_COLO_ID) ||
-            target_profile.in())
-        {
-          /* if additional profile exist merge buffers to it */
-          target_profile_trans = add_profile_trans;
-
-          merge_to_additional = true;
-        }
-        else
-        {
-          target_profile = Algs::copy_membuf(
-            target_profile_trans->get_profile());
-        }
-      }
-      catch(const MaxWaitersReached&)
-      {
-        return;
-      }
-
-      Generics::SmartMemBuf_var merge_base_profile(
-        new Generics::SmartMemBuf(merge_base_profile_buf));
-      if (merge_base_profile_buf.size() != 0)
-      {
-        BaseProfileAdapter base_adapter;
-        merge_base_profile = Algs::copy_membuf(
-          base_adapter(
-            Generics::transfer_membuf(merge_base_profile)));
-      }
-
-      Generics::SmartMemBuf_var merge_history_profile(
-        new Generics::SmartMemBuf(merge_history_profile_buf));
-      if (merge_history_profile_buf.size() != 0)
-      {
-        HistoryProfileAdapter history_adapter;
-        merge_history_profile = Algs::copy_membuf(
-          history_adapter(
-            Generics::transfer_membuf(merge_history_profile)));
-      }
-
-      Generics::ConstSmartMemBuf_var merge_freq_cap_profile;
-
-      if(!merge_freq_cap_profile_buf.empty())
-      {
-        Generics::SmartMemBuf_var v(new SmartMemBuf(merge_freq_cap_profile_buf));
-        UserFreqCapProfileAdapter freq_cap_adapter;
-        merge_freq_cap_profile = freq_cap_adapter(
-          Generics::transfer_membuf(v));
-      }
-
-      Generics::Time merge_time = request_params.current_time;
-
-      if (target_profile.in() == 0)
-      {
-        target_profile = new SmartMemBuf;
-      }
-      else
-      {
-        user_app.last_request = get_last_request_(target_profile.in());
-        user_app.create_time = get_create_time_(target_profile.in());
-      }
-
-      target_history_profile_trans = temporary ?
-        temp_history_profiles_->get_transaction(user_id, true, op_priority) :
-        history_profiles_->get_transaction(user_id, true, op_priority);
-
-      target_history_profile = Algs::copy_membuf(
-        target_history_profile_trans->get_profile());
-
-      if (target_history_profile.in() == 0)
-      {
-        target_history_profile = new SmartMemBuf;
-      }
-
-      if(logger_->log_level() >= Logging::Logger::TRACE)
-      {
-        std::ostringstream tracing_ostr;
-
-        tracing_ostr <<
-          "Merge Tracing: " << std::endl <<
-          "Merge to " << (merge_to_additional ? "additional" : "base") <<
-          " profile for target user '" <<
-          PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
-          "' before merging: " << std::endl;
-
-        if (target_profile.in())
-        {
-          ChannelsMatcher::print(
-            target_profile->membuf().get<unsigned char>(),
-            target_profile->membuf().size(),
-            tracing_ostr,
-            true,
-            true);
-        }
-        else
-        {
-          tracing_ostr << "Profile is not exist";
-        }
-
-        tracing_ostr << std::endl <<
-          "History profile before merging: " << std::endl;
-
-        if (target_history_profile.in())
-        {
-          ChannelsMatcher::history_print(
-            target_history_profile->membuf().get<unsigned char>(),
-            target_history_profile->membuf().size(),
-            tracing_ostr,
-            true);
-        }
-        else
-        {
-          tracing_ostr << "Profile is not exist";
-        }
-
-        tracing_ostr << std::endl <<
-          "Base profile for merge user: " << std::endl;
-
-        ChannelsMatcher::print(
-          merge_base_profile_buf.get<unsigned char>(),
-          merge_base_profile_buf.size(),
-          tracing_ostr,
-          true,
-          true);
-
-        tracing_ostr << std::endl <<
-          "Additional profile for merge user: " << std::endl;
-
-        ChannelsMatcher::print(
-          merge_add_profile_buf.get<unsigned char>(),
-          merge_add_profile_buf.size(),
-          tracing_ostr,
-          true,
-          true);
-
-        tracing_ostr << std::endl <<
-          "History profile for merge user: " << std::endl;
-
-        ChannelsMatcher::history_print(
-          merge_history_profile_buf.get<unsigned char>(),
-          merge_history_profile_buf.size(),
-          tracing_ostr,
-          true);
-
-        tracing_ostr << std::endl;
-
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
-      }
-
-      SmartMemBuf_var add_mb(new SmartMemBuf);
-
-      ChannelsMatcher user_profile_adapter(
-        target_profile.in(), add_mb.in());
-
-      if (target_profile.in())
-      {
-        update_history_(
-          target_profile.in(),
-          target_history_profile.in(),
-          merge_time,
-          *channel_rules,
-          current_time_offset);
-      }
-
-      if (target_profile.in() == 0)
-      {
-        target_profile = new SmartMemBuf;
-      }
-
-      if (target_history_profile.in() == 0)
-      {
-        target_history_profile = new SmartMemBuf;
-      }
-
-      if ((merge_time + current_time_offset).get_gm_time().get_date() <=
-          (user_app.last_request + current_time_offset).get_gm_time().get_date())
-      {
-        new_user = false;
-      }
-
-      update_history_(
-        merge_base_profile.in(),
-        merge_history_profile.in(),
-        merge_time,
-        *channel_rules,
-        current_time_offset);
-
-      user_profile_adapter.merge(
-        target_history_profile.in(),
-        merge_base_profile->membuf(),
-        merge_history_profile->membuf(),
-        *channel_rules,
-        request_params,
-        merge_time);
-
-      if(merge_add_profile_buf.size() > 0)
-      {
-        SmartMemBuf_var empty_hp(new SmartMemBuf);
-
-        Generics::SmartMemBuf_var merge_add_profile(
-          new Generics::SmartMemBuf(merge_add_profile_buf));
-
-        BaseProfileAdapter add_adapter;
-        merge_add_profile = Algs::copy_membuf(
-          add_adapter(
-            Generics::transfer_membuf(merge_add_profile)));
-
-        user_profile_adapter.merge(
-          target_history_profile.in(),
-          merge_add_profile->membuf(),
-          empty_hp->membuf(),
-          *channel_rules,
-          request_params,
-          merge_time);
-      }
-
-      if (target_history_profile->membuf().size() != 0)
-      {
-        update_history_(
-          target_profile.in(),
-          target_history_profile.in(),
-          merge_time,
-          *channel_rules,
-          current_time_offset,
-          true);
-      }
-
-      UserProfileMap::Transaction_var target_freq_cap_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, true, op_priority);
-
-      ConstSmartMemBuf_var target_freq_cap_profile =
-        target_freq_cap_profile_trans->get_profile();
-
-      if(merge_freq_cap_profile)
-      {
-        try
-        {
-          UserFreqCapProfile freq_cap_profile(target_freq_cap_profile);
-          freq_cap_profile.merge(
-            merge_freq_cap_profile,
-            merge_time,
-            *freq_cap_config);
-          target_freq_cap_profile = freq_cap_profile.transfer_membuf();
-        }
-        catch(const UserFreqCapProfile::Invalid&)
-        {}
-      }
-
-      if(logger_->log_level() >= Logging::Logger::TRACE)
-      {
-        std::ostringstream tracing_ostr;
-
-        tracing_ostr <<
-          "Profile for user '" <<
-          PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
-          "' after merging: " << std::endl;
-
-        user_profile_adapter.print(
-          target_profile->membuf().get<unsigned char>(),
-          target_profile->membuf().size(),
-          tracing_ostr,
-          true,
-          true);
-
-        tracing_ostr << std::endl <<
-          "History profile for user '" <<
-          PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
-          "' after merging: " << std::endl;
-
-        user_profile_adapter.history_print(
-          target_history_profile->membuf().get<unsigned char>(),
-          target_history_profile->membuf().size(),
-          tracing_ostr,
-          true);
-
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
-      }
-
-      if (!merge_to_additional && new_user && ho_info != 0)
-      {
-        UniqueChannelsResult ucr;
-        user_profile_adapter.unique_channels(
-          target_profile->membuf(),
-          target_history_profile->membuf().size() != 0 ?
-            &target_history_profile->membuf() : 0,
-          *channel_rules,
-          ucr);
-
-        ho_info->isp_date = merge_time + current_time_offset;
-        ho_info->adv_channel_count = ucr.simple_channels;
-        ho_info->discover_channel_count = ucr.discover_channels;
-      }
-
-      if (target_history_profile->membuf().size() != 0)
-      {
-        target_history_profile_trans->save_profile(
-          Generics::transfer_membuf(target_history_profile),
-          merge_time);
-      }
-
-      if (target_profile->membuf().size() != 0)
-      {
-        target_profile_trans->save_profile(
-          Generics::transfer_membuf(target_profile),
-          merge_time);
-      }
-
-      if(target_freq_cap_profile && merge_freq_cap_profile)
-      {
-        target_freq_cap_profile_trans->save_profile(
-          target_freq_cap_profile,
-          merge_time);
-      }
-    }
-    catch(const MaxWaitersReached&)
-    {}
-    catch(const ChannelsMatcher::InvalidProfileException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught ChannelsMatcher::InvalidProfileException"
-        " at user '" << request_params.user_id.to_string() <<
-        ": " << ex.what();
-      throw Exception(ostr);
-    }
-    catch(const NotReady& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught NotReady: " << ex.what();
-      throw NotReady(ostr);
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
     }
   }
 
@@ -1521,9 +695,9 @@ namespace UserInfoSvcs
           co_await add_profile_trans->co_get_profile());
 
         if ((!request_params.use_empty_profile &&
-             last_colo_id != current_placement_colo_id &&
-             last_colo_id != DEFAULT_COLO_ID) ||
-            target_profile.in())
+           last_colo_id != current_placement_colo_id &&
+           last_colo_id != DEFAULT_COLO_ID) ||
+          target_profile.in())
         {
           /* if additional profile exist merge buffers to it */
           target_profile_trans = add_profile_trans;
@@ -1882,55 +1056,6 @@ namespace UserInfoSvcs
     }
   }
 
-  void
-  UserInfoContainer::fraud_user(
-    const UserId& user_id,
-    const Generics::Time& now)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::fraud_user()";
-
-    try
-    {
-      UserProfileMap::Transaction_var base_profile_trans =
-        base_profiles_->get_transaction(
-          user_id,
-          true, // check max waiters
-          AdServer::ProfilingCommons::OP_RUNTIME);
-      SmartMemBuf_var base_mem_buf = Algs::copy_membuf(
-        base_profile_trans->get_profile());
-
-      if(base_mem_buf.in() == 0)
-      {
-        base_mem_buf = new SmartMemBuf;
-      }
-
-      SmartMemBuf_var add_mem_buf(new SmartMemBuf);
-      ChannelsMatcher cm(base_mem_buf.in(), add_mem_buf.in());
-
-      if(cm.fraud_user(now))
-      {
-        base_profile_trans->save_profile(
-          Generics::transfer_membuf(base_mem_buf),
-          cm.last_request());
-      }
-    }
-    catch(const MaxWaitersReached&)
-    {}
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
   AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_fraud_user(
     const UserId& user_id,
@@ -1983,45 +1108,6 @@ namespace UserInfoSvcs
     }
   }
 
-  void
-  UserInfoContainer::get_optin_publishers(
-    const UserId& user_id,
-    const Generics::Time& publishers_optin_timeout,
-    std::list<unsigned long>& optin_publishers)
-    /*throw(ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::get_optin_publishers()";
-
-    try
-    {
-      if (publishers_optin_timeout != Generics::Time::ZERO)
-      {
-        ConstSmartMemBuf_var fc_mem_buf = freq_cap_profiles_->get_profile(user_id);
-
-        if(fc_mem_buf.in() && fc_mem_buf->membuf().size() > 0)
-        {
-          UserFreqCapProfile profile(fc_mem_buf);
-
-          profile.get_optin_publishers(optin_publishers, publishers_optin_timeout);
-        }
-      }
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const UserFreqCapProfile::Invalid&)
-    {}
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
   AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_get_optin_publishers(
     const UserId& user_id,
@@ -2035,11 +1121,12 @@ namespace UserInfoSvcs
     {
       if (publishers_optin_timeout != Generics::Time::ZERO)
       {
-        ConstSmartMemBuf_var fc_mem_buf = co_await freq_cap_profiles_->co_get_profile(user_id);
+        SmartMemBuf_var fc_mem_buf =
+          co_await freq_cap_profiles_->co_get_own_profile(user_id);
 
         if(fc_mem_buf.in() && fc_mem_buf->membuf().size() > 0)
         {
-          UserFreqCapProfile profile(fc_mem_buf);
+          UserFreqCapProfile profile(fc_mem_buf, true);
 
           profile.get_optin_publishers(optin_publishers, publishers_optin_timeout);
         }
@@ -2054,363 +1141,6 @@ namespace UserInfoSvcs
     }
     catch(const UserFreqCapProfile::Invalid&)
     {}
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  UserInfoContainer::match(
-    const RequestMatchParams& request_params,
-    long last_colo_id,
-    long current_placement_colo_id,
-    ColoUserId& colo_user_id,
-    const ChannelIdPack& matched_channels,
-    ChannelMatchMap& result_channels,
-    UserAppearance& user_app,
-    ProfileProperties& properties,
-    AdServer::ProfilingCommons::OperationPriority op_priority,
-    UserInfoManagerLogger::HistoryOptimizationInfo* ho_info,
-    UniqueChannelsResult* unique_channels_result)
-    /*throw(NotReady, ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::match()";
-
-    try
-    {
-      bool new_user = false;
-      ChannelDictionary_var channel_rules = channels_config();
-
-      if (channel_rules.in() == 0)
-      {
-        throw NotReady("Unable to get channels configuration.");
-      }
-
-      Generics::Time current_time_offset = time_offset();
-
-      const UserId& user_id = request_params.user_id;
-      bool temporary = request_params.temporary;
-      Generics::Time match_time = request_params.current_time;
-
-      UserProfileMap::Transaction_var base_profile_trans =
-        temporary ?
-        temp_profiles_->get_transaction(user_id, true, op_priority) :
-        base_profiles_->get_transaction(user_id, true, op_priority);
-      UserProfileMap::Transaction_var add_profile_trans =
-        add_profiles_->get_transaction(user_id, true, op_priority);
-
-      SmartMemBuf_var base_mem_buf = Algs::copy_membuf(
-        base_profile_trans->get_profile());
-      SmartMemBuf_var add_mem_buf = Algs::copy_membuf(
-        add_profile_trans->get_profile());
-
-      bool match_to_additional =
-        !request_params.use_empty_profile &&
-        ((last_colo_id != current_placement_colo_id &&
-         last_colo_id != DEFAULT_COLO_ID) ||
-         add_mem_buf.in());
-
-      if (add_mem_buf.in() == 0)
-      {
-        add_mem_buf = new SmartMemBuf;
-
-        if (match_to_additional && logger_->log_level() >= Logging::Logger::TRACE)
-        {
-          std::ostringstream ostr;
-          ostr << "Additional profile for user with uid = " << user_id <<
-            "was created with create_time " <<
-            match_time.get_gm_time();
-
-          logger_->log(
-            ostr.str(),
-            Logging::Logger::TRACE,
-            Aspect::USER_INFO_CONTAINER);
-        }
-      }
-      if (base_mem_buf.in() == 0)
-      {
-        new_user = request_params.change_last_request;
-
-        base_mem_buf = new SmartMemBuf;
-      }
-
-      if (match_to_additional)
-      {
-        new_user = false;
-
-        if (profiles_merged_(
-              request_params,
-              base_mem_buf.in(),
-              add_mem_buf.in(),
-              match_time,
-              profile_request_timeout_))
-        {
-          match_to_additional = false;
-
-          add_profile_trans->remove_profile();
-
-          Stream::Error ostr;
-          ostr << FUN << ": Base profile from other colo did not received. "
-            "Base and additional profiles were merged on current colo "
-            "for uid = " << user_id << ".";
-
-          logger_->log(ostr.str(),
-            Logging::Logger::WARNING,
-            Aspect::USER_INFO_CONTAINER,
-            "ADS-IMPL-76");
-        }
-      }
-
-      ChannelsMatcher matching(base_mem_buf.in(), add_mem_buf.in());
-
-      if(logger_->log_level() >= Logging::Logger::TRACE)
-      {
-        std::ostringstream tracing_ostr;
-        tracing_ostr << "Input match request: " << std::endl;
-
-        trace_match_request_(
-          tracing_ostr,
-          request_params,
-          matched_channels,
-          base_mem_buf->membuf(),
-          &add_mem_buf->membuf());
-
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
-      }
-
-      if(!request_params.use_empty_profile)
-      {
-        if(request_params.request_colo_id != -1)
-        {
-          user_app.last_request = matching.last_request();
-        }
-
-        bool need_history_optimize =
-          matching.need_history_optimization(
-            match_time,
-            history_optimization_period_,
-            current_time_offset);
-
-        new_user =
-          !match_to_additional &&
-          request_params.change_last_request &&
-          !request_params.household &&
-          (new_user ||
-           matching.need_channel_count_stats_logging(
-             match_time, current_time_offset));
-
-        if(need_history_optimize)
-        {
-          /* first request today : history optimization */
-          UserProfileMap::Transaction_var history_profile_trans =
-            temporary ?
-            temp_history_profiles_->get_transaction(user_id, true, op_priority) :
-            history_profiles_->get_transaction(user_id, true, op_priority);
-
-          SmartMemBuf_var hist_mem_buf = Algs::copy_membuf(
-            history_profile_trans->get_profile());
-
-          if (hist_mem_buf.in() == 0)
-          {
-            hist_mem_buf = new SmartMemBuf;
-          }
-
-          if(logger_->log_level() >= Logging::Logger::TRACE)
-          {
-            std::ostringstream ostr;
-            ostr << "To history optimize user '" << user_id << "':" <<
-              std::endl << "  History Profile:" << std::endl;
-
-            matching.history_print(
-              hist_mem_buf->membuf().get<unsigned char>(),
-              hist_mem_buf->membuf().size(),
-              ostr,
-              true);
-
-            logger_->log(
-              ostr.str(),
-              Logging::Logger::TRACE,
-              Aspect::USER_INFO_CONTAINER);
-          }
-
-          bool first_today_history_optimization;
-
-          matching.history_optimize(
-            hist_mem_buf.in(),
-            match_time,
-            current_time_offset,
-            *channel_rules,
-            &first_today_history_optimization);
-
-          if(logger_->log_level() >= Logging::Logger::TRACE)
-          {
-            std::ostringstream ostr;
-            ostr << "From history optimize user '" << user_id << "':" <<
-              std::endl << "  History Profile:" << std::endl;
-
-            matching.history_print(
-              hist_mem_buf->membuf().get<unsigned char>(),
-              hist_mem_buf->membuf().size(), ostr, true);
-
-            logger_->log(ostr.str(),
-              Logging::Logger::TRACE,
-              Aspect::USER_INFO_CONTAINER);
-          }
-
-          if (!request_params.silent_match)
-          {
-            history_profile_trans->save_profile(
-              Generics::transfer_membuf(hist_mem_buf),
-              match_time);
-          }
-        }
-      }
-
-      user_app.session_start = matching.session_start();
-
-      matching.match(
-        result_channels,
-        match_time,
-        matched_channels,
-        *channel_rules,
-        //request_params.request_colo_id,
-        request_params,
-        properties,
-        session_timeout_);
-
-      user_app.create_time = matching.create_time();
-
-      if (last_colo_id != current_placement_colo_id)
-      {
-        user_id.to_string().swap(colo_user_id.user_id);
-        colo_user_id.colo_id = last_colo_id;
-        colo_user_id.need_profile = true;
-      }
-      else
-      {
-        colo_user_id.need_profile = false;
-      }
-
-      if (request_params.provide_channel_count && unique_channels_result != 0)
-      {
-        UserProfileMap::Transaction_var history_profile_trans =
-          history_profiles_->get_transaction(user_id, true, op_priority);
-
-        SmartMemBuf_var hist_mem_buf = Algs::copy_membuf(
-          history_profile_trans->get_profile());
-
-        UniqueChannelsResult ucr;
-        matching.unique_channels(
-          base_mem_buf->membuf(),
-          hist_mem_buf.in() ? &hist_mem_buf->membuf() : 0,
-          *channel_rules,
-          *unique_channels_result);
-      }
-
-      if(!request_params.use_empty_profile && !request_params.silent_match)
-      {
-        user_app.session_start = matching.session_start();
-
-        if (new_user && !temporary && ho_info != 0)
-        {
-          UserProfileMap::Transaction_var history_profile_trans =
-            history_profiles_->get_transaction(user_id, true, op_priority);
-
-          SmartMemBuf_var hist_mem_buf = Algs::copy_membuf(
-            history_profile_trans->get_profile());
-
-          UniqueChannelsResult ucr;
-          matching.unique_channels(
-            base_mem_buf->membuf(),
-            hist_mem_buf.in() ? &hist_mem_buf->membuf() : 0,
-            *channel_rules,
-            ucr);
-
-          ho_info->isp_date = match_time + current_time_offset;
-          ho_info->adv_channel_count = ucr.simple_channels;
-          ho_info->discover_channel_count = ucr.discover_channels;
-        }
-
-        if (match_to_additional)
-        {
-          if(add_mem_buf->membuf().empty())
-          {
-            add_profile_trans->remove_profile();
-          }
-          else
-          {
-            add_profile_trans->save_profile(
-              Generics::transfer_membuf(add_mem_buf),
-              match_time);
-          }
-        }
-
-        /* save profiles */
-        if (base_mem_buf->membuf().size() != 0)
-        {
-          base_profile_trans->save_profile(
-            Generics::transfer_membuf(base_mem_buf),
-            match_time);
-        }
-      }
-
-      filter_channel_thresholds_(result_channels);
-
-      if(logger_->log_level() >= Logging::Logger::TRACE)
-      {
-        std::ostringstream tracing_ostr;
-        tracing_ostr << "Match request result: " << std::endl <<
-          "  Result channels:";
-
-        for(ChannelMatchMap::const_iterator ch_it = result_channels.begin();
-            ch_it != result_channels.end(); ++ch_it)
-        {
-          tracing_ostr << " " << ch_it->first << "->" << ch_it->second;
-        }
-
-        tracing_ostr << std::endl <<
-          " Base user profile after matching: " << std::endl;
-        matching.print(
-          base_mem_buf->membuf().get<unsigned char>(),
-          base_mem_buf->membuf().size(), tracing_ostr, true, true);
-        tracing_ostr << std::endl <<
-          "  Add user profile after matching: " << std::endl;
-        matching.print(
-          add_mem_buf->membuf().get<unsigned char>(),
-          add_mem_buf->membuf().size(), tracing_ostr, true, true);
-
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
-      }
-    }
-    catch(const MaxWaitersReached&)
-    {}
-    catch(const ChannelsMatcher::InvalidProfileException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught ChannelsMatcher::InvalidProfileException"
-        " at user '" << request_params.user_id << ": " <<
-        ex.what();
-      throw Exception(ostr);
-    }
-    catch(const NotReady& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught NotReady: " << ex.what();
-      throw NotReady(ostr);
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
@@ -2452,24 +1182,24 @@ namespace UserInfoSvcs
       bool temporary = request_params.temporary;
       Generics::Time match_time = request_params.current_time;
 
-      UserProfileMap::Transaction_var base_profile_trans;
-      if(temporary)
-      {
-        base_profile_trans = co_await temp_profiles_->co_get_transaction(
-          user_id, true, op_priority);
-      }
-      else
-      {
-        base_profile_trans = co_await base_profiles_->co_get_transaction(
-          user_id, true, op_priority);
-      }
-      UserProfileMap::Transaction_var add_profile_trans =
-        co_await add_profiles_->co_get_transaction(user_id, true, op_priority);
+      CoroutineUserProfileMap* base_profiles =
+        temporary ? temp_profiles_.in() : base_profiles_.in();
 
-      SmartMemBuf_var base_mem_buf = Algs::copy_membuf(
-        co_await base_profile_trans->co_get_profile());
-      SmartMemBuf_var add_mem_buf = Algs::copy_membuf(
-        co_await add_profile_trans->co_get_profile());
+      auto [base_profile_trans, add_profile_trans] =
+        co_await AdServer::Commons::CoroTuple(
+          co_get_profile_transaction_(
+            base_profiles,
+            user_id,
+            op_priority),
+          co_get_profile_transaction_(
+            add_profiles_.in(),
+            user_id,
+            op_priority));
+
+      auto [base_mem_buf, add_mem_buf] =
+        co_await AdServer::Commons::CoroTuple(
+          co_get_own_profile_mem_buf_(base_profile_trans),
+          co_get_own_profile_mem_buf_(add_profile_trans));
 
       bool match_to_additional =
         !request_params.use_empty_profile &&
@@ -3024,41 +1754,6 @@ namespace UserInfoSvcs
     }
   }
 
-  void
-  UserInfoContainer::consider_publishers_optin(
-    const UserId& user_id,
-    const std::set<unsigned long>& publisher_account_ids,
-    const Generics::Time& now,
-    AdServer::ProfilingCommons::OperationPriority op_priority)
-    /*throw(ChunkNotFound, Exception)*/
-  {
-    static const char* FUN = "UserInfoContainer::consider_publishers_optin()";
-
-    try
-    {
-      UserProfileMap::Transaction_var fc_profile_trans =
-        freq_cap_profiles_->get_transaction(user_id, true, op_priority);
-      ConstSmartMemBuf_var fc_mem_buf = fc_profile_trans->get_profile();
-      UserFreqCapProfile profile(fc_mem_buf);
-      profile.consider_publishers_optin(publisher_account_ids, now);
-      fc_profile_trans->save_profile(profile.transfer_membuf(), now);
-    }
-    catch(const UserProfileMap::ChunkNotFound& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
-      throw ChunkNotFound(ostr);
-    }
-    catch(const UserFreqCapProfile::Invalid&)
-    {}
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception: "<< ex.what();
-      throw Exception(ostr);
-    }
-  }
-
   AdServer::Commons::SyncCoro<bool>
   UserInfoContainer::co_consider_publishers_optin(
     const UserId& user_id,
@@ -3073,9 +1768,9 @@ namespace UserInfoSvcs
       UserProfileMap::Transaction_var fc_profile_trans =
         co_await freq_cap_profiles_->co_get_transaction(user_id, true, op_priority);
 
-      ConstSmartMemBuf_var fc_mem_buf =
-        co_await fc_profile_trans->co_get_profile();
-      UserFreqCapProfile profile(fc_mem_buf);
+      SmartMemBuf_var fc_mem_buf =
+        co_await fc_profile_trans->co_get_own_profile();
+      UserFreqCapProfile profile(fc_mem_buf, true);
       profile.consider_publishers_optin(publisher_account_ids, now);
       fc_profile_trans->save_profile_async(
         profile.transfer_membuf(),

@@ -10,12 +10,9 @@
 
 #include <UserInfoSvcs/UserInfoCommons/UserFreqCapProfileDescription.hpp>
 
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-namespace UserInfoSvcs
-{
-  static const unsigned long
-  CURRENT_FREQ_CAP_PROFILE_VERSION = 351;
+  static const unsigned long CURRENT_FREQ_CAP_PROFILE_VERSION = 351;
 
   class UserFreqCapProfile
   {
@@ -55,6 +52,11 @@ namespace UserInfoSvcs
     DECLARE_EXCEPTION(Invalid, eh::DescriptiveException);
 
     UserFreqCapProfile(ConstSmartMemBufPtr plain_profile)
+      /*throw(Invalid)*/;
+
+    UserFreqCapProfile(
+      SmartMemBufPtr plain_profile,
+      bool own = false)
       /*throw(Invalid)*/;
 
     bool
@@ -116,5 +118,4 @@ namespace UserInfoSvcs
   private:
     SmartMemBuf_var plain_profile_;
   };
-}
 }

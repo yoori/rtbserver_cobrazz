@@ -21,6 +21,7 @@ namespace AdServer::Commons
   public:
     struct promise_type;
     using Handle = std::coroutine_handle<promise_type>;
+    using Completion = std::function<void(std::exception_ptr)>;
 
     explicit SyncCoro(Handle handle) noexcept;
     SyncCoro(SyncCoro&& other) noexcept;
@@ -29,6 +30,7 @@ namespace AdServer::Commons
     SyncCoro& operator=(const SyncCoro&) = delete;
     ~SyncCoro();
 
+    void start(Completion completion);
     bool await_ready() const noexcept;
     void await_suspend(std::coroutine_handle<> continuation) noexcept;
     ResultType await_resume();
@@ -100,6 +102,18 @@ namespace AdServer::Commons
   }
 
   template<typename ResultType>
+  void
+  SyncCoro<ResultType>::start(Completion completion)
+  {
+    handle_.promise().completion =
+      [this, completion = std::move(completion)]() mutable
+      {
+        completion(handle_.promise().exception);
+      };
+    resume_coroutine(handle_);
+  }
+
+  template<typename ResultType>
   bool
   SyncCoro<ResultType>::await_ready() const noexcept
   {
@@ -133,7 +147,8 @@ namespace AdServer::Commons
   {
     std::promise<void> promise;
     auto future = promise.get_future();
-    handle_.promise().completion = [&promise]() {
+    handle_.promise().completion = [&promise]()
+    {
       promise.set_value();
     };
     resume_coroutine(handle_);

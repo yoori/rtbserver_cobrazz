@@ -4,6 +4,24 @@ namespace AdServer
 {
 namespace ProfilingCommons
 {
+  namespace ProfileMapDetail
+  {
+    inline Generics::SmartMemBuf_var
+    copy_own_profile_(const Generics::ConstSmartMemBuf* profile)
+    {
+      if(profile)
+      {
+        Generics::SmartMemBuf_var result(new Generics::SmartMemBuf());
+        result->membuf().assign(
+          profile->membuf().data(),
+          profile->membuf().size());
+        return result;
+      }
+
+      return Generics::SmartMemBuf_var();
+    }
+  }
+
   template<typename KeyType>
   void
   ProfileMap<KeyType>::wait_preconditions(
@@ -11,6 +29,17 @@ namespace ProfilingCommons
     OperationPriority) const
     /*throw(Exception)*/
   {}
+
+  template<typename KeyType>
+  Generics::SmartMemBuf_var
+  ProfileMap<KeyType>::get_own_profile(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+    /*throw(Exception)*/
+  {
+    return ProfileMapDetail::copy_own_profile_(
+      get_profile(key, last_access_time));
+  }
 
   template<typename KeyType>
   void
@@ -138,6 +167,38 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType>
+  Generics::SmartMemBuf_var
+  AsyncProfileMap<KeyType>::get_own_profile_async(
+    const KeyType& key,
+    GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+    /*throw(Exception)*/
+  {
+    Generics::ConstSmartMemBuf_var direct_result = get_profile_async(
+      key,
+      [
+        callback = std::move(callback)
+      ](
+        const Generics::ConstSmartMemBuf_var& profile,
+        std::optional<std::string> error) mutable
+      {
+        Generics::SmartMemBuf_var own_profile;
+        if(!error)
+        {
+          own_profile = ProfileMapDetail::copy_own_profile_(profile);
+        }
+
+        if(callback)
+        {
+          callback(std::move(own_profile), std::move(error));
+        }
+      },
+      last_access_time);
+
+    return ProfileMapDetail::copy_own_profile_(direct_result);
+  }
+
+  template<typename KeyType>
   typename AsyncProfileMap<KeyType>::template CallbackAwaitable<
     Generics::ConstSmartMemBuf_var>
   AsyncProfileMap<KeyType>::co_get_profile(
@@ -154,6 +215,31 @@ namespace ProfilingCommons
             GetCallback callback)
           {
             get_profile_async(
+              key,
+              std::move(callback),
+              last_access_time);
+          },
+          key,
+          last_access_time));
+  }
+
+  template<typename KeyType>
+  typename AsyncProfileMap<KeyType>::template CallbackAwaitable<
+    Generics::SmartMemBuf_var>
+  AsyncProfileMap<KeyType>::co_get_own_profile(
+    const KeyType& key,
+    std::optional<Generics::Time> last_access_time)
+  {
+    return CallbackAwaitable<Generics::SmartMemBuf_var>(
+      AdServer::Commons::async_callback<
+        Generics::SmartMemBuf_var,
+        std::optional<std::string> >(
+          [this](
+            const KeyType& key,
+            std::optional<Generics::Time> last_access_time,
+            typename AsyncProfileMap<KeyType>::GetOwnCallback callback)
+          {
+            get_own_profile_async(
               key,
               std::move(callback),
               last_access_time);
@@ -294,6 +380,41 @@ namespace ProfilingCommons
     }
 
     return result.first;
+  }
+
+  template<typename KeyType>
+  Generics::SmartMemBuf_var
+  AsyncProfileMapToProfileMap<KeyType>::get_own_profile(
+    const KeyType& key,
+    Generics::Time* last_access_time)
+  {
+    using Result = std::pair<
+      Generics::SmartMemBuf_var,
+      std::optional<std::string>>;
+    std::promise<Result> promise;
+    std::future<Result> future = promise.get_future();
+
+    async_profile_map_->get_own_profile_async(
+      key,
+      [&promise](
+        Generics::SmartMemBuf_var profile,
+        std::optional<std::string> error)
+      {
+        promise.set_value(std::make_pair(
+          std::move(profile),
+          std::move(error)));
+      },
+      last_access_time ?
+        std::optional<Generics::Time>(*last_access_time) :
+        std::nullopt);
+
+    auto result = future.get();
+    if(result.second)
+    {
+      throw Exception(*result.second);
+    }
+
+    return std::move(result.first);
   }
 
   template<typename KeyType>

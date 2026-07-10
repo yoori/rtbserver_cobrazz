@@ -15,7 +15,7 @@
 #include <Generics/Values.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 
-#include "UserOperationProcessor.hpp"
+#include "UserInfoContainer.hpp"
 
 namespace AdServer
 {
@@ -32,7 +32,7 @@ namespace AdServer
 
       BaseOperationRecordFetcher(
         Generics::ActiveObjectCallback* callback,
-        UserOperationProcessor* user_operation_processor,
+        UserInfoContainer* user_info_container,
         const char* folder,
         const char* unprocessed_folder,
         const char* file_prefix,
@@ -60,7 +60,7 @@ namespace AdServer
         const char* file_name) /*throw(eh::Exception)*/;
 
     protected:
-      UserOperationProcessor_var user_operation_processor_;
+      UserInfoContainer_var user_info_container_;
 
     private:
       Generics::ActiveObjectCallback_var log_errors_;
@@ -77,44 +77,6 @@ namespace AdServer
     typedef ReferenceCounting::AssertPtr<BaseOperationRecordFetcher>::Ptr
       BaseOperationRecordFetcher_var;
 
-    /* ExternalOperationRecordFetcher class */
-    class ExternalOperationRecordFetcher:
-      public BaseOperationRecordFetcher
-    {
-    public:
-      ExternalOperationRecordFetcher(
-        Generics::ActiveObjectCallback* callback,
-        UserOperationProcessor* user_operation_processor,
-        const char* folder,
-        const char* unprocessed_folder,
-        const char* file_prefix,
-        const ChunkIdSet& chunk_ids,
-        Generics::RefCountableActiveObject* interrupter)
-        noexcept;
-
-    protected:
-      virtual
-      ~ExternalOperationRecordFetcher() noexcept
-      {}
-
-      virtual void
-      read_operation_(
-        Generics::SmartMemBuf* smart_mem_buf)
-        /*throw(eh::Exception)*/;
-
-      void
-      read_add_audience_operation_(
-        const Generics::MemBuf& mem_buf)
-        /*throw(eh::Exception)*/;
-
-      void
-      read_remove_audience_operation_(
-        const Generics::MemBuf& mem_buf)
-        /*throw(eh::Exception)*/;
-    };
-    typedef ReferenceCounting::AssertPtr<ExternalOperationRecordFetcher>::Ptr
-      ExternalOperationRecordFetcher_var;
-
     /* InternalOperationRecordFetcher class */
     class InternalOperationRecordFetcher:
       public BaseOperationRecordFetcher
@@ -122,7 +84,7 @@ namespace AdServer
     public:
       InternalOperationRecordFetcher(
         Generics::ActiveObjectCallback* callback,
-        UserOperationProcessor* user_operation_processor,
+        UserInfoContainer* user_info_container,
         const char* folder,
         const char* unprocessed_folder,
         const char* file_prefix,
@@ -160,15 +122,6 @@ namespace AdServer
         Generics::SmartMemBuf* smart_mem_buf)
         /*throw(eh::Exception)*/;
 
-      void
-      read_add_audience_operation_(
-        const Generics::MemBuf& mem_buf)
-        /*throw(eh::Exception)*/;
-
-      void
-      read_remove_audience_operation_(
-        const Generics::MemBuf& mem_buf)
-        /*throw(eh::Exception)*/;
     };
     typedef ReferenceCounting::AssertPtr<InternalOperationRecordFetcher>::Ptr
       InternalOperationRecordFetcher_var;
@@ -182,7 +135,7 @@ namespace AdServer
 
       InternalUserOperationLoader(
         Generics::ActiveObjectCallback* callback,
-        UserOperationProcessor* user_operation_processor,
+        UserInfoContainer* user_info_container,
         const char* operation_file_in_dir,
         const char* unprocessed_dir,
         const char* file_prefix,
@@ -205,36 +158,5 @@ namespace AdServer
     typedef ReferenceCounting::SmartPtr<InternalUserOperationLoader>
       InternalUserOperationLoader_var;
 
-    /* ExternalUserOperationLoader class */
-    class ExternalUserOperationLoader:
-      public virtual Generics::RefCountableCompositeActiveObject
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-      ExternalUserOperationLoader(
-        Generics::ActiveObjectCallback* callback,
-        UserOperationProcessor* user_operation_processor,
-        const char* operation_file_in_dir,
-        const char* unprocessed_dir,
-        const char* file_prefix,
-        const BaseOperationRecordFetcher::ChunkIdSet& chunk_ids,
-        const Generics::Time& check_period,
-        std::size_t threads_count)
-        /*throw(Exception)*/;
-
-    protected:
-      virtual
-      ~ExternalUserOperationLoader() noexcept;
-
-    private:
-      Generics::ActiveObjectCallback_var log_errors_callback_;
-      LogProcessing::FileThreadProcessor_var file_thread_processor_;
-      ExternalOperationRecordFetcher_var operation_fetcher_;
-      std::string unprocessed_dir_;
-    };
-
-    typedef ReferenceCounting::SmartPtr<ExternalUserOperationLoader>
-      ExternalUserOperationLoader_var;
   }
 }

@@ -379,10 +379,28 @@ namespace ProfilingCommons
   MemIndexProfileMap<KeyType, BlockIndexType, MapTraitsType, ContainerType>::
   get_profile(
     const KeyType& key,
+    Generics::Time* last_access_time)
+    /*throw(Exception)*/
+  {
+    Generics::SmartMemBuf_var profile = get_own_profile(
+      key,
+      last_access_time);
+
+    return profile.in() ?
+      Generics::transfer_membuf(profile) :
+      Generics::ConstSmartMemBuf_var();
+  }
+
+  template<typename KeyType, typename BlockIndexType,
+    typename MapTraitsType, template<typename, typename> class ContainerType>
+  Generics::SmartMemBuf_var
+  MemIndexProfileMap<KeyType, BlockIndexType, MapTraitsType, ContainerType>::
+  get_own_profile(
+    const KeyType& key,
     Generics::Time*)
     /*throw(Exception)*/
   {
-    static const char* FUN = "MemIndexProfileMap<>::get_profile()";
+    static const char* FUN = "MemIndexProfileMap<>::get_own_profile()";
 
     try
     {
@@ -391,9 +409,9 @@ namespace ProfilingCommons
       {
         Generics::SmartMemBuf_var ret(new Generics::SmartMemBuf(block->size()));
         block->read(ret->membuf().data(), ret->membuf().size());
-        return Generics::transfer_membuf(ret);
+        return ret;
       }
-      return Generics::ConstSmartMemBuf_var();
+      return Generics::SmartMemBuf_var();
     }
     catch(const eh::Exception& ex)
     {

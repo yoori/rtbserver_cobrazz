@@ -15,9 +15,6 @@ namespace AdServer
     const unsigned long FC_CONFIRM_OPERATION_PROFILE_VERSION = 340;
     const unsigned long PREF_UPDATE_OPERATION_PROFILE_VERSION = 1;
     const unsigned long PROP_UPDATE_OPERATION_PROFILE_VERSION = 1;
-    const unsigned long ADD_AUDIENCE_CHANNELS_OPERATION_PROFILE_VERSION = 1;
-    const unsigned long REMOVE_AUDIENCE_CHANNELS_OPERATION_PROFILE_VERSION = 1;
-
     struct UserFreqCapUpdateOperationProfilesAdapter
     {
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
