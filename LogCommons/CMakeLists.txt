@@ -36,7 +36,6 @@ add_library(LogCommons SHARED
   ExpressionPerformance.cpp
   FileReceiver.cpp
   HistoryMatch.cpp
-  ImpNotify.cpp
   KeywordHitStat.cpp
   LogCommons.cpp
   PageLoadsDailyStat.cpp
@@ -77,7 +76,6 @@ target_link_libraries(LogCommons
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
 
 
 

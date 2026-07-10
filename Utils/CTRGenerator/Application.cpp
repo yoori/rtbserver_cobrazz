@@ -15,6 +15,7 @@
 #include <ProfilingCommons/FileWriter.hpp>
 #include <LogCommons/CsvUtils.hpp>
 #include <CampaignSvcs/CampaignManager/CTR/XGBoostPredictor.hpp>
+#include <CampaignSvcs/CampaignManager/CTRProviderImpl.hpp>
 
 #include "CTRGenerator.hpp"
 #include "CalculateParamsFilter.hpp"
@@ -1108,7 +1109,7 @@ Application_::generate_ctr_(
   out.precision(17);
   */
   CTR::CTRProvider_var ctr_provider(
-    new CTR::CTRProvider(String::SubString(config_dir), Generics::Time::ZERO, nullptr));
+    new CTR::CTRProviderImpl(String::SubString(config_dir), Generics::Time::ZERO, nullptr));
 
   // parse columns
   CTR::FeatureNameResolver feature_name_resolver;
@@ -1330,7 +1331,16 @@ Application_::generate_ctr_(
         if(out_hashes)
         {
           CTR::HashArray hashes;
-          calculation_context->get_xgb_hashes_i(hashes, creative);
+          const auto* impl_calculation_context =
+            dynamic_cast<const CTR::CTRProviderImpl::CalculationContext*>(
+              calculation_context.in());
+          if(!impl_calculation_context)
+          {
+            Stream::Error ostr;
+            ostr << "Unexpected CTR calculation context type";
+            throw Exception(ostr);
+          }
+          impl_calculation_context->get_xgb_hashes_i(hashes, creative);
           std::sort(hashes.begin(), hashes.end());
 
           out << "hashes: ";
@@ -1388,5 +1398,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
-

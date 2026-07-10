@@ -99,9 +99,8 @@ class UserAgentStatInnerData
 {
 public:
   UserAgentStatInnerData()
-  :
-    requests_(),
-    holder_(new DataHolder())
+    : requests_(),
+      holder_(new DataHolder())
   {}
 
   template <typename ChannelInteratorType, typename PlatformIteratorType>
@@ -111,11 +110,9 @@ public:
     ChannelInteratorType channels_end,
     PlatformIteratorType platforms_begin,
     PlatformIteratorType platforms_end
-  )
-  :
-    requests_(requests),
-    holder_(new DataHolder(channels_begin, channels_end,
-      platforms_begin, platforms_end))
+    )
+    : requests_(requests),
+      holder_(new DataHolder(channels_begin, channels_end, platforms_begin, platforms_end))
   {
   }
 
@@ -142,12 +139,12 @@ public:
     return requests_;
   }
 
-  const NumberList& channels() const
+  const NumberArray& channels() const
   {
     return holder_->channels;
   }
 
-  const NumberList& platforms() const
+  const NumberArray& platforms() const
   {
     return holder_->platforms;
   }
@@ -173,10 +170,9 @@ private:
       ChannelIteratorType channels_end,
       PlatformIteratorType platforms_begin,
       PlatformIteratorType platforms_end
-    )
-    :
-      channels(channels_begin, channels_end),
-      platforms(platforms_begin, platforms_end)
+      )
+      : channels(channels_begin, channels_end),
+        platforms(platforms_begin, platforms_end)
     {}
 
     bool operator==(const DataHolder& data) const
@@ -185,16 +181,15 @@ private:
       {
         return true;
       }
-      return channels == data.channels &&
-        platforms == data.platforms;
+      return channels == data.channels && platforms == data.platforms;
     }
 
     void invariant() const /*throw(ConstraintViolation)*/
     {
     }
 
-    NumberList channels;
-    NumberList platforms;
+    NumberArray channels;
+    NumberArray platforms;
 
   private:
     virtual ~DataHolder() noexcept {}

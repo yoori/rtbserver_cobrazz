@@ -186,9 +186,9 @@ namespace AdServer
 
   namespace UserInfoSvcs
   {
-    Generics::ConstSmartMemBuf_var
+    Generics::SmartMemBuf_var
     UserFreqCapProfileAdapter::operator()(
-      const Generics::ConstSmartMemBuf* mem_buf)
+      Generics::SmartMemBuf* mem_buf)
       /*throw(eh::Exception)*/
     {
       static const char* FUN = "UserFreqCapProfileAdapter::operator()";
@@ -232,7 +232,7 @@ namespace AdServer
           throw Exception(ostr);
         }
 
-        return Generics::transfer_membuf(result_mem_buf);
+        return result_mem_buf;
       }
 
       return ReferenceCounting::add_ref(mem_buf);

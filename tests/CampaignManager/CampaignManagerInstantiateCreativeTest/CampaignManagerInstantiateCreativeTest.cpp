@@ -490,7 +490,7 @@ namespace
 
 namespace AdServer::CampaignSvcs::CTR
 {
-  CTRProvider::CTRProvider(
+  CTRProviderImpl::CTRProviderImpl(
     const String::SubString&,
     const Generics::Time& config_timestamp,
     Generics::TaskRunner*)
@@ -498,16 +498,16 @@ namespace AdServer::CampaignSvcs::CTR
       remove_config_files_at_destroy_(false)
   {}
 
-  CTRProvider::~CTRProvider() noexcept = default;
+  CTRProviderImpl::~CTRProviderImpl() noexcept = default;
 
   CTRProvider::Calculation_var
-  CTRProvider::create_calculation(const CampaignSelectParams*) const noexcept
+  CTRProviderImpl::create_calculation(const CampaignSelectParams*) const noexcept
   {
     return nullptr;
   }
 
   Generics::Time
-  CTRProvider::check_config_appearance(
+  CTRProviderImpl::check_config_appearance(
     std::string&,
     const String::SubString&)
   {
@@ -515,35 +515,35 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   void
-  CTRProvider::remove_config_files_at_destroy(bool val) const noexcept
+  CTRProviderImpl::remove_config_files_at_destroy(bool val) const noexcept
   {
     remove_config_files_at_destroy_ = val;
   }
 
-  CTRProvider::Calculation::~Calculation() noexcept = default;
+  CTRProviderImpl::Calculation::~Calculation() noexcept = default;
 
   CTRProvider::CalculationContext_var
-  CTRProvider::Calculation::create_context(const Tag::Size*) const noexcept
+  CTRProviderImpl::Calculation::create_context(const Tag::Size*) const noexcept
   {
     return nullptr;
   }
 
   std::string
-  CTRProvider::Calculation::algorithm_id(const Creative*) const noexcept
+  CTRProviderImpl::Calculation::algorithm_id(const Creative*) const noexcept
   {
     return std::string();
   }
 
-  CTRProvider::CalculationContext::~CalculationContext() noexcept = default;
+  CTRProviderImpl::CalculationContext::~CalculationContext() noexcept = default;
 
   RevenueDecimal
-  CTRProvider::CalculationContext::get_ctr(const Creative*) const
+  CTRProviderImpl::CalculationContext::get_ctr(const Creative*) const
   {
     return RevenueDecimal::ZERO;
   }
 
   bool
-  CTRProvider::CalculationContext::check_rate(
+  CTRProviderImpl::CalculationContext::check_rate(
     const Creative*,
     RevenueDecimal* rate,
     bool* creative_dependent) const
@@ -562,7 +562,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   void
-  CTRProvider::CalculationContext::get_ctr_details(
+  CTRProviderImpl::CalculationContext::get_ctr_details(
     CTRList& ctrs,
     const Creative*) const
   {

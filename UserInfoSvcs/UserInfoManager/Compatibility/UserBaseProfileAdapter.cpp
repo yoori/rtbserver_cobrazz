@@ -94,9 +94,9 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
-    Generics::ConstSmartMemBuf_var
+    Generics::SmartMemBuf_var
     BaseProfileAdapter::operator()(
-      const Generics::ConstSmartMemBuf* mem_buf,
+      Generics::SmartMemBuf* mem_buf,
       bool ignore_future_versions)
       /*throw(Exception)*/
     {
@@ -117,7 +117,7 @@ namespace AdServer
       if(current_version > CURRENT_BASE_PROFILE_VERSION &&
          ignore_future_versions)
       {
-        return Generics::ConstSmartMemBuf_var();
+        return Generics::SmartMemBuf_var();
       }
 
       if(current_version != CURRENT_BASE_PROFILE_VERSION)
@@ -493,7 +493,7 @@ namespace AdServer
           throw Exception(ostr);
         }
 
-        return Generics::transfer_membuf(result_mem_buf);
+        return result_mem_buf;
       }
 
       return ReferenceCounting::add_ref(mem_buf);

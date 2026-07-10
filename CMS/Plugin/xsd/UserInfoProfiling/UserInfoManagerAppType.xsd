@@ -163,6 +163,12 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="use_add_profile_on_match" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="UserInfoManagerStorageType">

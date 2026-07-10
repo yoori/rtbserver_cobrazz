@@ -184,6 +184,13 @@ namespace ProfilingCommons
       std::optional<Generics::Time> last_access_time = std::nullopt)
       override;
 
+    Generics::SmartMemBuf_var
+    get_own_profile_async(
+      const KeyType& key,
+      typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
+      std::optional<Generics::Time> last_access_time = std::nullopt)
+      override;
+
     void
     save_profile_async(
       const KeyType& key,
@@ -629,6 +636,47 @@ namespace ProfilingCommons
     if(callback)
     {
       callback(result, std::move(error));
+    }
+
+    return result;
+  }
+
+  template <typename KeyType>
+  Generics::SmartMemBuf_var
+  TransactionProfileMap<KeyType>::get_own_profile_async(
+    const KeyType& key,
+    typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    if(auto* async_map = async_delegate_map_())
+    {
+      return async_map->get_own_profile_async(
+        key,
+        std::move(callback),
+        last_access_time);
+    }
+
+    Generics::SmartMemBuf_var result;
+    std::optional<std::string> error;
+    try
+    {
+      Generics::Time access_time;
+      result = get_own_profile(
+        key,
+        last_access_time ? &access_time : nullptr);
+    }
+    catch(const std::exception& ex)
+    {
+      error = ex.what();
+    }
+    catch(...)
+    {
+      error = "unknown get own error";
+    }
+
+    if(callback)
+    {
+      callback(std::move(result), std::move(error));
     }
 
     return result;

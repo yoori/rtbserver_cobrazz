@@ -7,6 +7,7 @@
 #include <Generics/AppUtils.hpp>
 #include <Generics/Uuid.hpp>
 
+#include <Commons/Algs.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
@@ -155,7 +156,8 @@ void Application_::print_profile_from_block_(
       if (buf.size() != 0)
       {
         AdServer::UserInfoSvcs::BaseProfileAdapter base_adapter;
-        sm_buf = base_adapter(sm_buf);
+        SmartMemBuf_var base_buf = Algs::copy_membuf(sm_buf);
+        sm_buf = Generics::transfer_membuf(base_adapter(base_buf.in()));
       }
 
       ChannelsMatcher::print(sm_buf->membuf().data(), sm_buf->membuf().size(), std::cout);
@@ -165,7 +167,8 @@ void Application_::print_profile_from_block_(
       if (buf.size() != 0)
       {
         AdServer::UserInfoSvcs::HistoryProfileAdapter history_adapter;
-        sm_buf = history_adapter(sm_buf);
+        SmartMemBuf_var history_buf = Algs::copy_membuf(sm_buf);
+        sm_buf = Generics::transfer_membuf(history_adapter(history_buf.in()));
       }
 
       ChannelsMatcher::history_print(sm_buf->membuf().data(), sm_buf->membuf().size(), std::cout);
@@ -432,4 +435,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-

@@ -157,6 +157,9 @@
         <xsl:value-of select="$def-repeat-trigger-timeout"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="use-add-profile-on-match"><xsl:value-of select="$user-info-manager-config/cfg:matchParams/@use_add_profile_on_match"/>
+      <xsl:if test="count($user-info-manager-config/cfg:matchParams/@use_add_profile_on_match) = 0">false</xsl:if>
+    </xsl:variable>
    <xsl:variable name="history-optimization-period"><xsl:value-of select="$user-info-manager-config/cfg:matchParams/@history_optimization_period"/>
       <xsl:if test="count($user-info-manager-config/cfg:matchParams/@history_optimization_period) = 0">
         <xsl:value-of select="$def-history-optimization-period"/>
@@ -169,6 +172,7 @@
     <xsl:attribute name="channels_update_period"><xsl:value-of select="$channels-update-period"/></xsl:attribute>
     <xsl:attribute name="session_timeout"><xsl:value-of select="$session-timeout"/></xsl:attribute>
     <xsl:attribute name="repeat_trigger_timeout"><xsl:value-of select="$repeat-trigger-timeout"/></xsl:attribute>
+    <xsl:attribute name="use_add_profile_on_match"><xsl:value-of select="$use-add-profile-on-match"/></xsl:attribute>
     <xsl:attribute name="history_optimization_period"><xsl:value-of select="$history-optimization-period"/></xsl:attribute>
     <xsl:attribute name="root_dir"><xsl:value-of select="$root-dir"/></xsl:attribute>
     <xsl:attribute name="colo_id"><xsl:value-of select="$colo-id"/></xsl:attribute>

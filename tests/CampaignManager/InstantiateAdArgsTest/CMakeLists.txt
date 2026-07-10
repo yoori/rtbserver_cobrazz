@@ -40,6 +40,7 @@ target_link_libraries(InstantiateAdArgsTest
     SecToken
 
     CTRProvider
+    CTRProviderImplLib
     BidRateProvider
     DomainConfigXSD
     StatInfoIDL

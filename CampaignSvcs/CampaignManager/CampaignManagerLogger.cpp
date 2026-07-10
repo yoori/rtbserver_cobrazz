@@ -1592,8 +1592,7 @@ namespace AdServer::CampaignSvcs
 
     void
     ChannelHitStatLogger::
-    process_request(
-      const CampaignManagerLogger::RequestInfo& request_info)
+    process_request(const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
     {
       static const char* FUN = "ChannelHitStatLogger::process_request()";
@@ -1816,8 +1815,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    RequestBasicChannelsLogger::
-    add_record_(
+    RequestBasicChannelsLogger::add_record_(
       const CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerLogger::AdRequestSelectionInfo* ad_selection_info)
       /*throw(Exception)*/

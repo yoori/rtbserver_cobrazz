@@ -329,6 +329,152 @@ namespace AdServer
       return ReferenceCounting::add_ref(old_ctr_provider);
     }
 
+    CTR::ConstCTRProviderImpl_var
+    CampaignManagerCore::update_ctr_rate_provider_(
+      const CTR::CTRProviderImpl* old_ctr_provider,
+      const String::SubString& capture_root,
+      const String::SubString& res_root,
+      const Generics::Time& expire_timeout)
+    {
+      static const char* FUN = "CampaignManagerCore::update_ctr_rate_provider_()";
+
+      const Generics::Time now = Generics::Time::get_time_of_day();
+
+      try
+      {
+        std::string new_ctr_config_root;
+        std::string new_ctr_config_root_error;
+
+        bool config_captured = true;
+        Generics::Time new_config_timestamp;
+
+        CTR::ConstCTRProviderImpl_var new_ctr_provider;
+
+        if(!old_ctr_provider)
+        {
+          new_config_timestamp = CTR::CTRProviderImpl::check_config_appearance(
+            new_ctr_config_root,
+            capture_root);
+        }
+
+        if(new_ctr_config_root.empty())
+        {
+          new_config_timestamp = CTR::CTRProviderImpl::check_config_appearance(
+            new_ctr_config_root,
+            res_root);
+          config_captured = false;
+        }
+
+        if(!new_ctr_config_root.empty())
+        {
+          const bool config_not_expired =
+            expire_timeout == Generics::Time::ZERO ||
+            now <= new_config_timestamp + expire_timeout;
+
+          if(config_captured || (
+               (!old_ctr_provider ||
+                new_config_timestamp > old_ctr_provider->config_timestamp()) &&
+               config_not_expired))
+          {
+            std::string new_ctr_config_path;
+            std::string new_ctr_config_name;
+
+            AdServer::PathManip::split_path(
+              new_ctr_config_root.c_str(),
+              &new_ctr_config_path,
+              &new_ctr_config_name,
+              true);
+
+            std::string captured_ctr_config_root = capture_root.str() +
+              "/" + new_ctr_config_name;
+
+            new_ctr_config_root_error = captured_ctr_config_root + ".error";
+
+            if(::access(new_ctr_config_root_error.c_str(), F_OK) != 0)
+            {
+              if(!config_captured)
+              {
+                const int rename_res = ::rename(
+                  new_ctr_config_root.c_str(),
+                  captured_ctr_config_root.c_str());
+
+                if(rename_res && errno != EEXIST)
+                {
+                  eh::throw_errno_exception<CTR::CTRProviderImpl::InvalidConfig>(
+                    "Can't rename file '",
+                    new_ctr_config_root,
+                    "' to '",
+                    captured_ctr_config_root.c_str(),
+                    "'");
+                }
+
+                new_ctr_config_root = captured_ctr_config_root;
+              }
+            }
+            else
+            {
+              new_ctr_config_root.clear();
+            }
+
+            if(!new_ctr_config_root.empty())
+            {
+              try
+              {
+                new_ctr_provider = new CTR::CTRProviderImpl(
+                  new_ctr_config_root,
+                  new_config_timestamp,
+                  task_runner_);
+
+                if(old_ctr_provider)
+                {
+                  old_ctr_provider->remove_config_files_at_destroy(true);
+                }
+
+                return new_ctr_provider;
+              }
+              catch(const eh::Exception& ex)
+              {
+                ::rename(
+                  new_ctr_config_root.c_str(),
+                  new_ctr_config_root_error.c_str());
+
+                Stream::Error ostr;
+                ostr << FUN << ": can't load CTR config '" <<
+                  new_ctr_config_root << "': " << ex.what();
+                throw Exception(ostr);
+              }
+            }
+          }
+        }
+      }
+      catch(const eh::Exception& e)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": eh::Exception caught: " << e.what();
+        callback_->critical(ostr.str(), "ADS-IMPL-5091");
+      }
+
+      if(expire_timeout != Generics::Time::ZERO && old_ctr_provider)
+      {
+        const Generics::Time ctr_config_timestamp =
+          old_ctr_provider->config_timestamp();
+
+        if(now > ctr_config_timestamp + expire_timeout)
+        {
+          old_ctr_provider->remove_config_files_at_destroy(true);
+
+          Stream::Error ostr;
+          ostr << FUN << ": CTR config expired and will be disabled, "
+            "config timestamp = " << ctr_config_timestamp.gm_ft();
+          callback_->warning(ostr.str(), "ADS-IMPL-5091");
+
+          return CTR::ConstCTRProviderImpl_var();
+        }
+      }
+
+      return ReferenceCounting::add_ref(old_ctr_provider);
+    }
+
     Generics::Time
     CampaignManagerCore::update_ctr_provider() noexcept
     {
@@ -338,7 +484,7 @@ namespace AdServer
       {
         try
         {
-          ctr_provider_ = update_rate_provider_(
+          ctr_provider_ = update_ctr_rate_provider_(
             ctr_provider_.get().in(),
             campaign_manager_config_.CTRConfig()->capture_root(),
             campaign_manager_config_.CTRConfig()->root(),
@@ -367,7 +513,7 @@ namespace AdServer
       {
         try
         {
-          conv_rate_provider_ = update_rate_provider_(
+          conv_rate_provider_ = update_ctr_rate_provider_(
             conv_rate_provider_.get().in(),
             campaign_manager_config_.ConvRateConfig()->capture_root(),
             campaign_manager_config_.ConvRateConfig()->root(),

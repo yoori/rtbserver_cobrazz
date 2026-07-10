@@ -1228,7 +1228,7 @@ namespace AdServer::UserInfoSvcs
 
       if (match_params.publishers_optin_timeout != Generics::Time::ZERO)
       {
-        std::list<unsigned long> publishers;
+        std::vector<unsigned long> publishers;
 
         co_await user_info_container->co_get_optin_publishers(
           user_info.user_id, match_params.publishers_optin_timeout,
@@ -1626,6 +1626,7 @@ namespace AdServer::UserInfoSvcs
           user_info_manager_config_.history_optimization_period()),
         provide_channel_counters_,
         Generics::Time(user_info_manager_config_.session_timeout()),
+        user_info_manager_config_.use_add_profile_on_match(),
         user_info_manager_config_.max_base_profile_waiters(),
         user_info_manager_config_.max_temp_profile_waiters(),
         user_info_manager_config_.max_freqcap_profile_waiters(),

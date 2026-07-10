@@ -3,17 +3,13 @@
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
 
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-  namespace UserInfoSvcs
+  struct HistoryProfileAdapter
   {
-    struct HistoryProfileAdapter
-    {
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-      Generics::ConstSmartMemBuf_var
-      operator()(const Generics::ConstSmartMemBuf* mem_buf) /*throw(Exception)*/;
-    };
-
-  }
+    Generics::SmartMemBuf_var
+    operator()(Generics::SmartMemBuf* mem_buf) /*throw(Exception)*/;
+  };
 }

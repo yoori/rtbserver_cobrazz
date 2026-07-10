@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <algorithm>
+#include <deque>
 #include <iosfwd>
 #include <memory>
 #include <map>
@@ -266,7 +268,7 @@ typedef AdServer::Commons::UserId UserId;
 typedef AdServer::Commons::RequestId RequestId;
 typedef Generics::SimpleDecimal<uint64_t, 18, 8> FixedNumber;
 
-typedef std::deque<unsigned long> NumberArray;
+typedef std::vector<unsigned long> NumberArray;
 
 typedef std::list<unsigned long> NumberList;
 

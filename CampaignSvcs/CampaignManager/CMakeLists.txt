@@ -43,14 +43,8 @@ target_link_libraries(BidRateProvider
 
 add_definitions(-D_REENTRANT -D_USE_OCCI -DXSD_CXX11)
 
-add_library(CTRProvider SHARED
+add_library(CTRProviderCore SHARED
   CTRProvider.cpp
-  CTR/XGBoostPredictor.cpp
-  CTR/XGBoostCTREvaluator.cpp
-  CTR/VangaCTREvaluator.cpp
-  CTR/FTRLCTREvaluator.cpp
-  CTR/TrivialCTREvaluator.cpp
-  CTR/CatBoostCTREvaluator.cpp
   CTR/Algorithm.cpp
   CTR/Feature.cpp
   CTR/FeatureDescriptorResolver.cpp
@@ -58,11 +52,29 @@ add_library(CTRProvider SHARED
 
 link_directories(/opt/foros/vanga/lib)
 
-target_link_libraries(CTRProvider
+target_link_libraries(CTRProviderCore
   Generics
   PlainStorage3
   CampaignConfig
   pcre
+)
+
+set_target_properties(CTRProviderCore PROPERTIES OUTPUT_NAME CTRProvider)
+
+add_library(CTRProvider ALIAS CTRProviderCore)
+
+add_library(CTRProviderImplLib SHARED
+  CTRProviderImpl.cpp
+  CTR/FTRLCTREvaluator.cpp
+  CTR/TrivialCTREvaluator.cpp
+  CTR/XGBoostPredictor.cpp
+  CTR/XGBoostCTREvaluator.cpp
+  CTR/VangaCTREvaluator.cpp
+  CTR/CatBoostCTREvaluator.cpp
+)
+
+target_link_libraries(CTRProviderImplLib
+  CTRProviderCore
   xgboost
   /opt/foros/vanga/lib/libVangaDTree.so
   catboost::model
@@ -158,7 +170,7 @@ target_link_libraries(CampaignManagerLogger
   LogCommons
   CreativeTemplateArgs
   CampaignConfig
-  CTRProvider
+  CTRProviderCore
   ExpressionChannelIndex
 )
 
@@ -208,7 +220,8 @@ target_link_libraries(CampaignManager
   PassbackTemplate
   SecToken
 
-  CTRProvider
+  CTRProviderCore
+  CTRProviderImplLib
   BidRateProvider
   DomainConfigXSD
   StatInfoIDL

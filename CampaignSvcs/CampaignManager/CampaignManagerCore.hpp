@@ -43,6 +43,7 @@
 #include "BillingStateContainer.hpp"
 
 #include "CTRProvider.hpp"
+#include "CTRProviderImpl.hpp"
 #include "BidCostProvider.hpp"
 
 namespace AdServer::CampaignSvcs
@@ -1264,6 +1265,13 @@ namespace AdServer::CampaignSvcs
       const String::SubString& res_root,
       const Generics::Time& expire_timeout);
 
+    CTR::ConstCTRProviderImpl_var
+    update_ctr_rate_provider_(
+      const CTR::CTRProviderImpl* old_ctr_provider,
+      const String::SubString& capture_root,
+      const String::SubString& res_root,
+      const Generics::Time& expire_timeout);
+
     bool
     apply_check_available_bid_result_(
       const Campaign* campaign, // change mutable
@@ -1305,8 +1313,8 @@ namespace AdServer::CampaignSvcs
     CampaignConfigSource_var campaign_config_source_;
     BillingStateContainer_var check_billing_state_container_;
     BillingStateContainer_var confirm_billing_state_container_;
-    ReferenceCounting::PtrHolder<CTR::ConstCTRProvider_var> ctr_provider_;
-    ReferenceCounting::PtrHolder<CTR::ConstCTRProvider_var> conv_rate_provider_;
+    ReferenceCounting::PtrHolder<CTR::ConstCTRProviderImpl_var> ctr_provider_;
+    ReferenceCounting::PtrHolder<CTR::ConstCTRProviderImpl_var> conv_rate_provider_;
     ReferenceCounting::PtrHolder<ConstBidCostProvider_var> bid_cost_provider_;
 
     mutable std::mutex lock_;

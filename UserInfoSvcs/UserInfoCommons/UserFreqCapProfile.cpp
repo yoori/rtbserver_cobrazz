@@ -692,50 +692,48 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    void
+    bool
     clean_up_campaign_freqs_(
       UserFreqCapProfileWriter& profile,
       const FreqCapConfig::CampaignIds& campaign_ids)
       /*throw(eh::Exception)*/
     {
-      for (auto it = profile.campaign_freqs().begin();
-           it != profile.campaign_freqs().end();)
+      bool changed = false;
+
+      for (auto it = profile.campaign_freqs().begin(); it != profile.campaign_freqs().end();)
       {
         if (campaign_ids.find((*it).campaign_id()) == campaign_ids.end())
         {
           it = profile.campaign_freqs().erase(it);
+          changed = true;
         }
         else
         {
           ++it;
         }
       }
+
+      return changed;
     }
 
-    void
-    clean_up(
-      UserFreqCapProfileWriter& profile,
-      const Generics::Time& low_bound) noexcept
+    bool
+    clean_up(UserFreqCapProfileWriter& profile, const Generics::Time& low_bound) noexcept
     {
-      typedef std::map<FreqCapDecrease, FreqCapDecreaseCounter> FreqCapDecreaseSet;
+      using FreqCapDecreaseSet = std::map<FreqCapDecrease, FreqCapDecreaseCounter>;
+
+      bool changed = false;
 
       FreqCapDecreaseSet fc_dec_set;
 
-      UserFreqCapProfileWriter::uc_freq_caps_Container&
-        uc_freq_caps = profile.uc_freq_caps();
+      UserFreqCapProfileWriter::uc_freq_caps_Container& uc_freq_caps = profile.uc_freq_caps();
 
-      UserFreqCapProfileWriter::uc_freq_caps_Container::
-        iterator clear_end = uc_freq_caps.begin();
+      auto clear_end = uc_freq_caps.begin();
 
-      while(clear_end != uc_freq_caps.end() &&
-            low_bound.tv_sec > clear_end->time())
+      while(clear_end != uc_freq_caps.end() && low_bound.tv_sec > clear_end->time())
       {
-        const UcFreqCapWriter::freq_cap_ids_Container& fcs =
-          clear_end->freq_cap_ids();
+        const UcFreqCapWriter::freq_cap_ids_Container& fcs = clear_end->freq_cap_ids();
 
-        for (UcFreqCapWriter::freq_cap_ids_Container::const_iterator fc_it =
-              fcs.begin();
-            fc_it != fcs.end(); ++fc_it)
+        for (auto fc_it = fcs.begin(); fc_it != fcs.end(); ++fc_it)
         {
           FreqCapDecrease fc_dec;
           fc_dec.fc_id = *fc_it;
@@ -746,11 +744,14 @@ namespace AdServer::UserInfoSvcs
         ++clear_end;
       }
 
-      uc_freq_caps.erase(uc_freq_caps.begin(), clear_end);
+      if (clear_end != uc_freq_caps.begin())
+      {
+        uc_freq_caps.erase(uc_freq_caps.begin(), clear_end);
+        changed = true;
+      }
 
       // clear counters from freq caps section
-      UserFreqCapProfileWriter::freq_caps_Container::iterator fc_it =
-          profile.freq_caps().begin();
+      auto fc_it = profile.freq_caps().begin();
       FreqCapDecreaseSet::const_iterator fc_dec_it = fc_dec_set.begin();
 
       while(fc_it != profile.freq_caps().end() && fc_dec_it != fc_dec_set.end())
@@ -766,7 +767,7 @@ namespace AdServer::UserInfoSvcs
             uint32_t uc_time = to_uc_timestamp(fc_dec_it->first.time);
 
             FreqCapWriter::last_impressions_Container& imps = fc_it->last_impressions();
-            FreqCapWriter::last_impressions_Container::iterator imp_it = std::lower_bound(
+            auto imp_it = std::lower_bound(
               imps.begin(),
               imps.end(),
               uc_time,
@@ -800,11 +801,15 @@ namespace AdServer::UserInfoSvcs
             {
               profile.freq_caps().erase(fc_it++);
             }
+
+            changed = true;
           }
 
           ++fc_dec_it;
         }
       }
+
+      return changed;
     }
 
     void
@@ -921,9 +926,7 @@ namespace AdServer::UserInfoSvcs
       plain_profile_->membuf().data(),
       plain_profile_->membuf().size());
 
-    for (UserFreqCapProfileReader::seq_orders_Container::
-          const_iterator it = reader.seq_orders().begin();
-        it != reader.seq_orders().end(); ++it)
+    for (auto it = reader.seq_orders().begin(); it != reader.seq_orders().end(); ++it)
     {
       SeqOrder seq_order;
       seq_order.ccg_id = (*it).ccg_id();
@@ -933,15 +936,14 @@ namespace AdServer::UserInfoSvcs
     }
 
     if(!reader.uc_freq_caps().empty() &&
-       fc_config.confirm_timeout + (*reader.uc_freq_caps().begin()).time() <
-         now)
+      fc_config.confirm_timeout + (*reader.uc_freq_caps().begin()).time() < now)
     {
       UserFreqCapProfileWriter writer(
         plain_profile_->membuf().data(),
         plain_profile_->membuf().size());
 
-      clean_up(writer, now - fc_config.confirm_timeout);
-      clean_up_campaign_freqs_(writer, fc_config.campaign_ids);
+      bool changed = clean_up(writer, now - fc_config.confirm_timeout);
+      changed |= clean_up_campaign_freqs_(writer, fc_config.campaign_ids);
 
       Generics::MemBuf mb(writer.size());
       plain_profile_->membuf().assign(mb.data(), mb.size());
@@ -959,6 +961,8 @@ namespace AdServer::UserInfoSvcs
         new_reader);
 
       read_campaign_freqs(campaign_freqs, new_reader);
+
+      return true; // profile changed (need to save)
     }
     else
     {
@@ -970,9 +974,9 @@ namespace AdServer::UserInfoSvcs
         reader);
 
       read_campaign_freqs(campaign_freqs, reader);
-    }
 
-    return true;
+      return false; // no changes
+    }
   }
 
   void
@@ -1397,7 +1401,7 @@ namespace AdServer::UserInfoSvcs
 
   void
   UserFreqCapProfile::get_optin_publishers(
-    std::list<unsigned long>& optin_publishers,
+    std::vector<unsigned long>& optin_publishers,
     const Generics::Time& time)
     /*throw(eh::Exception)*/
   {
@@ -1409,6 +1413,9 @@ namespace AdServer::UserInfoSvcs
     UserFreqCapProfileReader reader(
       plain_profile_->membuf().data(),
       plain_profile_->membuf().size());
+
+    optin_publishers.reserve(
+      optin_publishers.size() + reader.publisher_accounts().size());
 
     for (auto it = reader.publisher_accounts().begin();
       it != reader.publisher_accounts().end(); ++it)

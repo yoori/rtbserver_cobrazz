@@ -185,6 +185,7 @@ namespace
       << " colo_id=\"1\" session_timeout=\"1800\" max_base_profile_waiters=\"0\""
       << " max_temp_profile_waiters=\"0\" max_freqcap_profile_waiters=\"0\""
       << " repeat_trigger_timeout=\"0\" history_optimization_period=\"3600\""
+      << " use_add_profile_on_match=\"false\""
       << " root_dir=\"" << cache_root.string() << "\""
       << " pid_file=\"" << pid_path.string() << "\" service_index=\"0\">\n"
       << "    <cfg:Logger filename=\"" << log_path.string() << "\" log_level=\"3\">\n"

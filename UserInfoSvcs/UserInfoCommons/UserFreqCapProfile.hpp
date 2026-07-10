@@ -99,7 +99,7 @@ namespace AdServer::UserInfoSvcs
 
       void
     get_optin_publishers(
-      std::list<unsigned long>& optin_publishers,
+      std::vector<unsigned long>& optin_publishers,
       const Generics::Time& time)
       /*throw(eh::Exception)*/;
 

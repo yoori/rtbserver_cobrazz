@@ -407,6 +407,7 @@ class UserInfoManager(CORBAProcess):
   max_temp_profile_waiters="8" max_pref_profile_waiters="8" max_freqcap_profile_waiters="8"
   channels_update_period="10" profile_lifetime="3600"
   temp_profile_lifetime="30" session_timeout="30" repeat_trigger_timeout="0"
+  use_add_profile_on_match="false"
   history_optimization_period="3600" root_dir="%(LOGROOT)s" colo_id="%(COLO_ID)i"
   service_index="1">
   <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
@@ -1194,4 +1195,3 @@ class CORBAFunTest(OrbTestSuite.OrbTestSuite):
         break
     #FunTest.tlog(10, 'exp: %s, got: %s' % (expCalls_, gotCalls))
     self.assertHasOrderedItems(expCalls_, gotCalls, 'CORBA calls')
-

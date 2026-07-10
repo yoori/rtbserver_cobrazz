@@ -282,7 +282,7 @@
 
 <!-- default match params -->
 <xsl:variable name="def-session-timeout" select="'30'"/>
-<xsl:variable name="def-history-optimization-period" select="'3600'"/>
+<xsl:variable name="def-history-optimization-period" select="'0'"/>
 <xsl:variable name="def-status-check-period" select="'10'"/>
 <xsl:variable name="def-repeat-trigger-timeout" select="'60'"/>
 

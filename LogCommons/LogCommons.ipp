@@ -12,6 +12,18 @@ namespace Aux_ {
 
   extern const String::AsciiStringManip::CharCategory VALID_USER_STATUSES;
 
+inline std::size_t
+sequence_size_hint(const String::SubString& token, char separator) noexcept
+{
+  if (token.empty() || token == "-")
+  {
+    return 0;
+  }
+
+  return static_cast<std::size_t>(
+    std::count(token.begin(), token.end(), separator)) + 1;
+}
+
 inline bool
 check_null(std::istream& is, char null_marker) /*throw(eh::Exception)*/
 {
@@ -929,6 +941,42 @@ operator >>(FixedBufStream<Category>& is, std::list<ValueType>& values)
 
 template <typename Category, typename ValueType>
 FixedBufStream<Category>&
+operator >>(FixedBufStream<Category>& is, std::vector<ValueType>& values)
+  /*throw(eh::Exception)*/
+{
+  const String::SubString token = is.read_token();
+
+  if (is.good())
+  {
+    if (token == "-")
+    {
+      values.clear();
+      return is;
+    }
+    std::vector<ValueType> container;
+    container.reserve(Aux_::sequence_size_hint(token, ','));
+    FixedBufStream<CommaCategory> list_stream(token);
+    while (true)
+    {
+      ValueType elem = ValueType();
+      list_stream >> elem;
+      if (!list_stream.good())
+      {
+        break;
+      }
+      container.push_back(elem);
+    }
+    is.take_fails(list_stream);
+    if (is.good())
+    {
+      values.swap(container);
+    }
+  }
+  return is;
+}
+
+template <typename Category, typename ValueType>
+FixedBufStream<Category>&
 operator >>(FixedBufStream<Category>& is, std::deque<ValueType>& values)
   /*throw(eh::Exception)*/
 {
@@ -1118,10 +1166,9 @@ read_sequence(std::istream& is, Container& sequence, char separator,
   /*throw(eh::Exception)*/
 {
   Container load_sequence;
-  typename Container::iterator end = load_sequence.end();
   for (typename Container::value_type value; is >> value; is.get())
   {
-    load_sequence.insert(end, value);
+    load_sequence.insert(load_sequence.end(), value);
     if (is.eof())
     {
       break;
@@ -1139,6 +1186,33 @@ read_sequence(std::istream& is, Container& sequence, char separator,
   }
   sequence.swap(load_sequence);
   return is;
+}
+
+template <typename ValueType>
+inline std::istream&
+operator >>(std::istream& is, std::vector<ValueType>& values)
+  /*throw(eh::Exception)*/
+{
+  if (is.good())
+  {
+    if (Aux_::check_null(is, '-'))
+    {
+      values.clear();
+    }
+    else
+    {
+      read_sequence(is, values, ',', Aux_::SpacesAtEnd());
+    }
+  }
+  return is;
+}
+
+template <typename ValueType>
+inline std::ostream&
+operator <<(std::ostream& os, const std::vector<ValueType>& values)
+  /*throw(eh::Exception)*/
+{
+  return values.empty() ? os << '-' : output_sequence(os, values);
 }
 
 template <typename ValueType>

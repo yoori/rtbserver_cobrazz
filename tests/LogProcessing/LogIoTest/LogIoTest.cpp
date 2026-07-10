@@ -36,7 +36,6 @@
 #include <LogCommons/DeviceChannelCountStat.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
 #include <LogCommons/HistoryMatch.hpp>
-#include <LogCommons/ImpNotify.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/Request.hpp>
 #include <LogCommons/TagAuctionStat.hpp>
@@ -2321,24 +2320,6 @@ int main(int argc, char **argv)
 
   try
   {
-    ImpNotifyCollector collector;
-    ImpNotifyData data;
-    data.time = Generics::Time::get_time_of_day();
-    data.user_id = UserId("PPPPPPPPPPPPPPPPPPPPPA..");
-    collector.add(data);
-    data.channels.push_back(111);
-    data.channels.push_back(222);
-    data.channels.push_back(333);
-    data.channels.push_back(444);
-    data.channels.push_back(555);
-    data.revenue = FixedNumber("1234.1020304");
-    collector.add(data);
-    LogIoTester<ImpNotifyTraits>(dump_on_fail).test(collector);
-  }
-  HANDLE_EXCEPTIONS(exitcode, 1);
-
-  try
-  {
     RequestStatsHourlyExtStatCollector collector;
     RequestStatsHourlyExtStatCollector::KeyT key1(TEST_TIME, TEST_TIME);
     RequestStatsHourlyExtStatCollector::KeyT key2(
@@ -2673,4 +2654,3 @@ std::cout << "info.distrib_index = " << info.distrib_index << std::endl;
 
   return exitcode;
 }
-

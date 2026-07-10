@@ -156,7 +156,8 @@
     <xsd:attribute name="max_temp_profile_waiters" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="max_freqcap_profile_waiters" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="repeat_trigger_timeout" type="xsd:nonNegativeInteger" use="required"/>
-    <xsd:attribute name="history_optimization_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="use_add_profile_on_match" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="history_optimization_period" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="root_dir" type="xsd:string" use="required"/>
     <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>

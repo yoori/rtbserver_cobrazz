@@ -11,8 +11,8 @@ namespace AdServer
     {
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-      Generics::ConstSmartMemBuf_var
-      operator()(const Generics::ConstSmartMemBuf* mem_buf,
+      Generics::SmartMemBuf_var
+      operator()(Generics::SmartMemBuf* mem_buf,
         bool ignore_future_versions = false) /*throw(Exception)*/;
     };
 

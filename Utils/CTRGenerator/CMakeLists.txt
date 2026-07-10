@@ -19,4 +19,5 @@ add_executable(CTRGenerator
 
 target_link_libraries(CTRGenerator
   CTRGeneratorLib
+  CTRProviderImplLib
 )

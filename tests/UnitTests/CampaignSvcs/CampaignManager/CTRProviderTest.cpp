@@ -4,6 +4,7 @@
 
 #include <Commons/Algs.hpp>
 #include <CampaignSvcs/CampaignManager/CTRProvider.hpp>
+#include <CampaignSvcs/CampaignManager/CTRProviderImpl.hpp>
 
 using namespace AdServer::CampaignSvcs;
 
@@ -179,7 +180,7 @@ int main(int argc, char** argv) noexcept
 
     if(command == "simple-test")
     {
-      CTRProvider_var ctr_provider(new CTRProvider(config, Generics::Time::ZERO, nullptr));
+      CTRProvider_var ctr_provider(new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
 
       CampaignSelectParams_var request_params_ptr = new CampaignSelectParams(
         true, // profiling_available
@@ -264,7 +265,7 @@ int main(int argc, char** argv) noexcept
         std::cout << "iteration #" << k << std::endl;
         //context->model_path = config;
         //context->xgboost_pool = new CTR::XGBoostPredictorPool(config);
-        context->ctr_provider = new CTRProvider(
+        context->ctr_provider = new CTRProviderImpl(
           config, Generics::Time::ZERO, nullptr);
 
         std::vector<pthread_t> thread_ids;
@@ -286,7 +287,7 @@ int main(int argc, char** argv) noexcept
     else if(command == "csv")
     {
       CTRProvider_var ctr_provider(
-        new CTRProvider(config, Generics::Time::ZERO, nullptr));
+        new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
 
       if(cmd_it == commands.end())
       {
