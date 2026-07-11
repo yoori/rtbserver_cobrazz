@@ -1,6 +1,7 @@
 #include <rocksdb/db.h>
 #include <rocksdb/iterator.h>
 #include <rocksdb/options.h>
+#include <rocksdb/slice.h>
 #include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
@@ -23,7 +24,8 @@ namespace AdServer::ProfilingCommons
     std::vector<std::string_view> unique_keys;
     std::vector<std::pair<std::string_view, std::size_t>> key_indexes;
     std::vector<rocksdb::Slice> keys;
-    std::vector<std::string> values;
+    std::vector<rocksdb::PinnableSlice> values;
+    std::vector<rocksdb::Status> statuses;
     std::vector<Operation*> latest_operations;
     rocksdb::WriteBatch write_batch;
   };
@@ -741,11 +743,13 @@ namespace AdServer::ProfilingCommons
     auto& key_indexes = scratch.key_indexes;
     auto& keys = scratch.keys;
     auto& values = scratch.values;
+    auto& statuses = scratch.statuses;
 
     unique_keys.clear();
     key_indexes.clear();
     keys.clear();
     values.clear();
+    statuses.clear();
 
     unique_keys.reserve(batch.size());
     key_indexes.reserve(batch.size());
@@ -772,7 +776,14 @@ namespace AdServer::ProfilingCommons
     read_options.optimize_multiget_for_io = true;
 
     values.resize(keys.size());
-    const auto statuses = db_->MultiGet(read_options, keys, &values);
+    statuses.resize(keys.size());
+    db_->MultiGet(
+      read_options,
+      db_->DefaultColumnFamily(),
+      keys.size(),
+      keys.data(),
+      values.data(),
+      statuses.data());
 
     for(auto& operation : batch)
     {
