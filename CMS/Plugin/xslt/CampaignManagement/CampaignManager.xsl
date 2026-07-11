@@ -462,7 +462,7 @@
       use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}" >
 
       <xsl:attribute name="threads"><xsl:value-of select="$stat-config/@threads"/>
-        <xsl:if test="count($stat-config/@threads) = 0">1</xsl:if>
+        <xsl:if test="count($stat-config/@threads) = 0">8</xsl:if>
       </xsl:attribute>
 
       <xsl:attribute name="distrib_count"><xsl:value-of select="$colo-config/cfg:inventoryStats/@distrib_count"/>

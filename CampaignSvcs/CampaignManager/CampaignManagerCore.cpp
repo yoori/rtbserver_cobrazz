@@ -881,7 +881,7 @@ namespace AdServer::CampaignSvcs
         request_debug_info->user_group_id = 0;
       }
 
-      ConstCampaignConfigPtr campaign_config = get_campaign_config();
+      ConstCampaignConfigPtr campaign_config = get_campaign_config(true);
 
       if (!campaign_config)
       {
