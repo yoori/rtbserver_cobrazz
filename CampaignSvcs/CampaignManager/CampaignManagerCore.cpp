@@ -946,6 +946,7 @@ namespace AdServer::CampaignSvcs
         core_request_params.context_info->platform_ids.end());
 
       ChannelIdHashSet matched_channels(&memory_resource);
+      matched_channels.reserve(core_request_params.channels.size());
       matched_channels.insert(
         core_request_params.channels.begin(),
         core_request_params.channels.end());
