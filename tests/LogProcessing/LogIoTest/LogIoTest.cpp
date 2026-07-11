@@ -1040,21 +1040,27 @@ int main(int argc, char **argv)
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt)
       );
 
-#if LOGIOTEST_PRODUCE_LARGER_FILES
-    for (unsigned i = 0; i < max_iterations; ++i)
+    auto make_data = [&]()
     {
+      RequestBasicChannelsCollector::DataT data;
+#if LOGIOTEST_PRODUCE_LARGER_FILES
+      for (unsigned i = 0; i < max_iterations; ++i)
+      {
+        data.add(inner_data1);
+        data.add(inner_data2);
+        data.add(inner_data3);
+      }
+#else
       data.add(inner_data1);
       data.add(inner_data2);
       data.add(inner_data3);
-    }
-#else
-    data.add(inner_data1);
-    data.add(inner_data2);
-    data.add(inner_data3);
 #endif
-    collector.add(key1, data);
-    collector.add(key2, data);
-    collector.add(key3, data);
+      return data;
+    };
+
+    collector.add(key1, make_data());
+    collector.add(key2, make_data());
+    collector.add(key3, make_data());
     LogIoTester<RequestBasicChannelsTraits>(dump_on_fail).test(collector);
 #if 0
     RequestBasicChannelsCollector collector1 = collector,
@@ -1269,181 +1275,187 @@ int main(int argc, char **argv)
     model_ctrs2.push_back(AdServer::LogProcessing::FixedNumber(false, 12, 34000000));
     model_ctrs2.push_back(AdServer::LogProcessing::FixedNumber(false, 56, 78000000));
 
-    RequestCollector::DataT data1(
-      Generics::Time::get_time_of_day(),
-      Generics::Time::get_time_of_day() - ONE_HOUR,
-      Generics::Time::get_time_of_day() - 2 * ONE_HOUR,
-      Generics::Time::get_time_of_day() - 3 * ONE_HOUR,
-      RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      UserId(),
-      true, // test_request
-      11111, // colo_id
-      11112, // site_id
-      22222, // tag_id
-      "",
-      77777,
-      "ru",
-      "IP ADDR",
-      88888,
-      99999,
-      33333,
-      55555,
-      66666,
-      RequestCollector::DataT::DeliveryThresholdT::ZERO,
-      false,
-      44444,
-      user_properties,
-      adv_revenue,
-      pub_revenue,
-      isp_revenue,
-      adv_comm_revenue,
-      adv_payable_comm_amount,
-      pub_comm_revenue,
-      channel_list,
-      history_channel_list,
-      "1 & 2 | 2 & 3",
-      cmp_channel_list,
-      55555,
-      333,
-      false,
-      true,
-      6,
-      100, // position
-      false,
-      true,
-      false,
-      true,
-      false,
-      'D',
-      'U',
-      lost_auction_ccgs,
-      geo_channels,
-      OptionalValue<unsigned long>(),
-      "64 x 64",
-      77, // size_id
-      false,
-      OptionalValue<unsigned long>(),
-      2,
-      OptionalValue<unsigned long>(),
-      111,
-      321, // campaign_freq
-      "",
-      RequestData::FixedNum("1111"),
-      RequestData::FixedNum("2222"),
-      RequestData::FixedNum("3333"),
-      RequestData::FixedNum("4444"),
-      RequestData::FixedNum("5555"),
-      RequestData::FixedNum("6666"),
-      RequestData::FixedNum("7777"),
-      "", // ctr_algorithm_id
-      RequestData::FixedNum("11.11"), // ctr
-      1010, // full_referer_hash
-      AdServer::CampaignSvcs::AT_PROPORTIONAL_PROBABILITY,
-      "", // conv_rate_algorithm_id
-      RevenueFixedNum::ZERO,
-      100, // tag_predicted_viewability
-      model_ctrs1,
-      RequestData::FixedNum("0.1"), // self_service_commission
-      RequestData::FixedNum("0.1"), // adv_commission
-      RequestData::FixedNum("0.13"), // pub_cost_coef
-      0, // flags
-      "" // additional_info
-    );
+    auto make_data1 = [&]()
+    {
+      return RequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        Generics::Time::get_time_of_day() - ONE_HOUR,
+        Generics::Time::get_time_of_day() - 2 * ONE_HOUR,
+        Generics::Time::get_time_of_day() - 3 * ONE_HOUR,
+        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        UserId(),
+        true, // test_request
+        11111, // colo_id
+        11112, // site_id
+        22222, // tag_id
+        "",
+        77777,
+        "ru",
+        "IP ADDR",
+        88888,
+        99999,
+        33333,
+        55555,
+        66666,
+        RequestCollector::DataT::DeliveryThresholdT::ZERO,
+        false,
+        44444,
+        user_properties,
+        adv_revenue,
+        pub_revenue,
+        isp_revenue,
+        adv_comm_revenue,
+        adv_payable_comm_amount,
+        pub_comm_revenue,
+        channel_list,
+        history_channel_list,
+        "1 & 2 | 2 & 3",
+        cmp_channel_list,
+        55555,
+        333,
+        false,
+        true,
+        6,
+        100, // position
+        false,
+        true,
+        false,
+        true,
+        false,
+        'D',
+        'U',
+        lost_auction_ccgs,
+        geo_channels,
+        OptionalValue<unsigned long>(),
+        "64 x 64",
+        77, // size_id
+        false,
+        OptionalValue<unsigned long>(),
+        2,
+        OptionalValue<unsigned long>(),
+        111,
+        321, // campaign_freq
+        "",
+        RequestData::FixedNum("1111"),
+        RequestData::FixedNum("2222"),
+        RequestData::FixedNum("3333"),
+        RequestData::FixedNum("4444"),
+        RequestData::FixedNum("5555"),
+        RequestData::FixedNum("6666"),
+        RequestData::FixedNum("7777"),
+        "", // ctr_algorithm_id
+        RequestData::FixedNum("11.11"), // ctr
+        1010, // full_referer_hash
+        AdServer::CampaignSvcs::AT_PROPORTIONAL_PROBABILITY,
+        "", // conv_rate_algorithm_id
+        RevenueFixedNum::ZERO,
+        100, // tag_predicted_viewability
+        model_ctrs1,
+        RequestData::FixedNum("0.1"), // self_service_commission
+        RequestData::FixedNum("0.1"), // adv_commission
+        RequestData::FixedNum("0.13"), // pub_cost_coef
+        0, // flags
+        "" // additional_info
+      );
+    };
 
-    RequestCollector::DataT data2(
-      Generics::Time::get_time_of_day(),
-      Generics::Time::get_time_of_day() - ONE_HOUR,
-      Generics::Time::get_time_of_day() - 2 * ONE_HOUR,
-      Generics::Time::get_time_of_day() - 3 * ONE_HOUR,
-      RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      RequestId(),
-      UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
-      false,
-      11111,
-      11112, // site_id
-      22222,
-      "EXT TAG ID",
-      77777,
-      "ru",
-      "",
-      88888,
-      99999,
-      33333,
-      55555,
-      66666,
-      RequestCollector::DataT::DeliveryThresholdT("0.9999"),
-      false,
-      44444,
-      user_properties,
-      adv_revenue,
-      pub_revenue,
-      isp_revenue,
-      adv_comm_revenue,
-      adv_payable_comm_amount,
-      pub_comm_revenue,
-      channel_list,
-      history_channel_list,
-      "1 & 2 | 2 & 3",
-      cmp_channel_list,
-      0,
-      999,
-      true,
-      false,
-      1,
-      7, // position
-      true,
-      false,
-      true,
-      false,
-      true,
-      'T',
-      'O',
-      lost_auction_ccgs,
-      NumberArray(), // geo_channels
-      3131,
-      "32x32",
-      OptionalUlong(), // size_id
-      true,
-      3,
-      OptionalValue<unsigned long>(),
-      1,
-      111,
-      123, // campaign_freq
-      "test referer",
-      RequestData::FixedNum("1111"),
-      RequestData::FixedNum("0"),
-      RequestData::FixedNum("3333"),
-      RequestData::FixedNum("0"),
-      RequestData::FixedNum("5555"),
-      RequestData::FixedNum("6666"),
-      RequestData::FixedNum("7777"),
-      "ctr algorithm id", // ctr_algorithm_id
-      RequestData::FixedNum("10.111"), // ctr
-      2020, // full_referer_hash
-      AdServer::CampaignSvcs::AT_PROPORTIONAL_PROBABILITY,
-      "", // conv_rate_algorithm_id
-      RevenueFixedNum::ZERO,
-      -1, // tag_predicted_viewability
-      model_ctrs2,
-      RequestData::FixedNum("0.1"), // self_service_commission
-      RequestData::FixedNum("0.1"), // adv_commission
-      RequestData::FixedNum("0.13"), // pub_cost_coef
-      0, // flags
-      "" // additional_info
-    );
+    auto make_data2 = [&]()
+    {
+      return RequestCollector::DataT(
+        Generics::Time::get_time_of_day(),
+        Generics::Time::get_time_of_day() - ONE_HOUR,
+        Generics::Time::get_time_of_day() - 2 * ONE_HOUR,
+        Generics::Time::get_time_of_day() - 3 * ONE_HOUR,
+        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        RequestId(),
+        UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        false,
+        11111,
+        11112, // site_id
+        22222,
+        "EXT TAG ID",
+        77777,
+        "ru",
+        "",
+        88888,
+        99999,
+        33333,
+        55555,
+        66666,
+        RequestCollector::DataT::DeliveryThresholdT("0.9999"),
+        false,
+        44444,
+        user_properties,
+        adv_revenue,
+        pub_revenue,
+        isp_revenue,
+        adv_comm_revenue,
+        adv_payable_comm_amount,
+        pub_comm_revenue,
+        channel_list,
+        history_channel_list,
+        "1 & 2 | 2 & 3",
+        cmp_channel_list,
+        0,
+        999,
+        true,
+        false,
+        1,
+        7, // position
+        true,
+        false,
+        true,
+        false,
+        true,
+        'T',
+        'O',
+        lost_auction_ccgs,
+        NumberArray(), // geo_channels
+        3131,
+        "32x32",
+        OptionalUlong(), // size_id
+        true,
+        3,
+        OptionalValue<unsigned long>(),
+        1,
+        111,
+        123, // campaign_freq
+        "test referer",
+        RequestData::FixedNum("1111"),
+        RequestData::FixedNum("0"),
+        RequestData::FixedNum("3333"),
+        RequestData::FixedNum("0"),
+        RequestData::FixedNum("5555"),
+        RequestData::FixedNum("6666"),
+        RequestData::FixedNum("7777"),
+        "ctr algorithm id", // ctr_algorithm_id
+        RequestData::FixedNum("10.111"), // ctr
+        2020, // full_referer_hash
+        AdServer::CampaignSvcs::AT_PROPORTIONAL_PROBABILITY,
+        "", // conv_rate_algorithm_id
+        RevenueFixedNum::ZERO,
+        -1, // tag_predicted_viewability
+        model_ctrs2,
+        RequestData::FixedNum("0.1"), // self_service_commission
+        RequestData::FixedNum("0.1"), // adv_commission
+        RequestData::FixedNum("0.13"), // pub_cost_coef
+        0, // flags
+        "" // additional_info
+      );
+    };
 
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      collector.add(data1);
-      collector.add(data2);
+      collector.add(make_data1());
+      collector.add(make_data2());
     }
 #else
-    collector.add(data1);
-    collector.add(data2);
+    collector.add(make_data1());
+    collector.add(make_data2());
 #endif
     LogIoTester<RequestTraits>(dump_on_fail).test(collector);
 #if 0
