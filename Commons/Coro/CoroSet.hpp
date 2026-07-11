@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include <Commons/Coro/ScopedCoroutineResumeScheduler.hpp>
 #include <Commons/Coro/Utils.hpp>
 
 namespace AdServer::Commons
@@ -26,6 +27,7 @@ namespace AdServer::Commons
     {
       std::mutex lock;
       std::coroutine_handle<> continuation;
+      CoroutineResumeScheduler resume_scheduler;
       std::exception_ptr exception;
       std::size_t remaining = 0;
       bool suspended = false;
@@ -53,6 +55,10 @@ namespace AdServer::Commons
   CoroSet<CoroutineType>::await_suspend(std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
+    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    {
+      state_->resume_scheduler = *scheduler;
+    }
     state_->remaining = operations_.size();
 
     for(auto& operation : operations_)
@@ -74,7 +80,14 @@ namespace AdServer::Commons
 
         if(resume)
         {
-          AdServer::Commons::resume_coroutine(state->continuation);
+          if(state->resume_scheduler)
+          {
+            state->resume_scheduler(state->continuation);
+          }
+          else
+          {
+            AdServer::Commons::resume_coroutine(state->continuation);
+          }
         }
       });
     }

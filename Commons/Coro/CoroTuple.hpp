@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <Commons/Coro/ScopedCoroutineResumeScheduler.hpp>
 #include <Commons/Coro/Utils.hpp>
 
 namespace AdServer::Commons
@@ -37,6 +38,7 @@ namespace AdServer::Commons
     {
       std::mutex lock;
       std::coroutine_handle<> continuation;
+      CoroutineResumeScheduler resume_scheduler;
       std::exception_ptr exception;
       std::size_t remaining = sizeof...(CoroutineTypes);
       bool suspended = false;
@@ -69,6 +71,10 @@ namespace AdServer::Commons
     std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
+    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    {
+      state_->resume_scheduler = *scheduler;
+    }
 
     [&]<std::size_t... Indexes>(std::index_sequence<Indexes...>)
     {
@@ -145,7 +151,14 @@ namespace AdServer::Commons
 
     if(resume)
     {
-      AdServer::Commons::resume_coroutine(state_->continuation);
+      if(state_->resume_scheduler)
+      {
+        state_->resume_scheduler(state_->continuation);
+      }
+      else
+      {
+        AdServer::Commons::resume_coroutine(state_->continuation);
+      }
     }
   }
 }
