@@ -479,7 +479,7 @@ namespace LogProcessing
 
     while (++it != holders_.end())
     {
-      collector->collector.merge((*it)->collector);
+      collector->collector.merge(std::move((*it)->collector));
       (*it)->collector.clear();
     }
 

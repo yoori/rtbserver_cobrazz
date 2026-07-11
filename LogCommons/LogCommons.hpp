@@ -727,6 +727,12 @@ template <class LOG_TYPE_TRAITS_>
 struct MoveSeqDistributeStrategy;
 
 template <class LOG_TYPE_TRAITS_>
+struct MoveStatDistributeStrategy;
+
+template <class LOG_TYPE_TRAITS_>
+struct MovePackedDistributeStrategy;
+
+template <class LOG_TYPE_TRAITS_>
 struct PackedDistributeStrategy;
 
 namespace Detail
@@ -761,6 +767,20 @@ namespace Detail
 
   template <typename LogTraits>
   struct DistributeStrategySelector<
+    LogTraits,
+    std::void_t<typename LogTraits::DistributeStrategyType> >
+  {
+    typedef typename LogTraits::DistributeStrategyType Type;
+  };
+
+  template <typename LogTraits, typename = void>
+  struct PackedDistributeStrategySelector
+  {
+    typedef PackedDistributeStrategy<LogTraits> Type;
+  };
+
+  template <typename LogTraits>
+  struct PackedDistributeStrategySelector<
     LogTraits,
     std::void_t<typename LogTraits::DistributeStrategyType> >
   {
@@ -845,7 +865,7 @@ namespace Detail
     typedef DistribLogSaverImpl<
       L_T_,
       PackedSaveStrategy<L_T_>,
-      PackedDistributeStrategy<L_T_>,
+      typename PackedDistributeStrategySelector<L_T_>::Type,
       false> Type;
   };
 
@@ -865,7 +885,7 @@ namespace Detail
     typedef DistribLogSaverImpl<
       L_T_,
       PackedSaveStrategy<L_T_>,
-      PackedDistributeStrategy<L_T_>,
+      typename PackedDistributeStrategySelector<L_T_>::Type,
       true> Type;
   };
 }

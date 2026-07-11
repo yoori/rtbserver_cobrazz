@@ -2698,6 +2698,9 @@ typedef LastRBC::InnerCollectorType RequestBasicChannelsInnerCollector;
 struct RequestBasicChannelsTraits:
   LogDefaultTraits<RequestBasicChannelsCollector, true, false>
 {
+  typedef MovePackedDistributeStrategy<RequestBasicChannelsTraits>
+    DistributeStrategyType;
+
   template <class FUNCTOR_>
   static void for_each_old(FUNCTOR_& f) /*throw(eh::Exception)*/
   {

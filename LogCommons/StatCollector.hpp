@@ -361,15 +361,11 @@ public:
   StatCollector&
   add(const KeyT& key, Data&& data)
   {
-    auto ins_res = map_impl_->insert(ValueT(key, DataT()));
+    auto ins_res = map_impl_->try_emplace(key, std::move(data));
 
-    if (ins_res.second)
+    if (!ins_res.second)
     {
-      ins_res.first->second = std::move(data);
-    }
-    else
-    {
-      ins_res.first->second += data;
+      merge_data_(ins_res.first->second, data);
       ValueOps_::remove_if_excludable(*this, ins_res.first);
     }
 
@@ -382,15 +378,11 @@ public:
   StatCollector&
   add(KeyT&& key, Data&& data)
   {
-    auto ins_res = map_impl_->insert(ValueT(std::move(key), DataT()));
+    auto ins_res = map_impl_->try_emplace(std::move(key), std::move(data));
 
-    if (ins_res.second)
+    if (!ins_res.second)
     {
-      ins_res.first->second = std::move(data);
-    }
-    else
-    {
-      ins_res.first->second += data;
+      merge_data_(ins_res.first->second, data);
       ValueOps_::remove_if_excludable(*this, ins_res.first);
     }
 
@@ -404,10 +396,26 @@ public:
     {
       return *this;
     }
-    auto ins_res = map_impl_->insert(ValueT(key, data));
+    auto ins_res = map_impl_->try_emplace(key, std::move(data));
     if (!ins_res.second)
     {
-      ins_res.first->second.merge(data);
+      merge_data_(ins_res.first->second, data);
+      ValueOps_::remove_if_excludable(*this, ins_res.first);
+    }
+    return *this;
+  }
+
+  StatCollector&
+  move_data(KEY_&& key, DATA_& data)
+  {
+    if (ValueOps_::excludable(data))
+    {
+      return *this;
+    }
+    auto ins_res = map_impl_->try_emplace(std::move(key), std::move(data));
+    if (!ins_res.second)
+    {
+      merge_data_(ins_res.first->second, data);
       ValueOps_::remove_if_excludable(*this, ins_res.first);
     }
     return *this;
@@ -425,6 +433,12 @@ public:
       return *this;
     }
     std::for_each(collector.begin(), collector.end(), add_elem(*this));
+    return *this;
+  }
+
+  StatCollector& operator+=(StatCollector&& collector)
+  {
+    merge(std::move(collector));
     return *this;
   }
 
@@ -447,6 +461,39 @@ public:
     *this += collector;
   }
 
+  void
+  merge(StatCollector&& collector)
+  {
+    if (map_impl_ == collector.map_impl_)
+    {
+      return;
+    }
+
+    if (empty())
+    {
+      swap(collector);
+      return;
+    }
+
+    prepare_adding(collector.size());
+    for (auto it = collector.begin(); it != collector.end(); ++it)
+    {
+      if (ValueOps_::excludable(it->second))
+      {
+        continue;
+      }
+
+      auto ins_res = map_impl_->try_emplace(it->first, std::move(it->second));
+      if (!ins_res.second)
+      {
+        merge_data_(ins_res.first->second, it->second);
+        ValueOps_::remove_if_excludable(*this, ins_res.first);
+      }
+    }
+
+    collector.clear();
+  }
+
   void load(std::istream& is) /*throw(eh::Exception, Exception)*/
   {
     StatCollector tmp;
@@ -457,7 +504,7 @@ public:
     }
     else
     {
-      *this += tmp;
+      merge(std::move(tmp));
     }
   }
 
@@ -619,6 +666,22 @@ public:
     return *this;
   }
 
+  StatCollector&
+  add(ValueT&& value)
+  {
+    if (ValueOps_::excludable(value.second))
+    {
+      return *this;
+    }
+    auto ins_res = map_impl_->try_emplace(value.first, std::move(value.second));
+    if (!ins_res.second)
+    {
+      merge_data_(ins_res.first->second, value.second);
+      ValueOps_::remove_if_excludable(*this, ins_res.first);
+    }
+    return *this;
+  }
+
   void
   deep_copy(StatCollector& dest) const
   {
@@ -648,6 +711,40 @@ private:
 
   void load_i_(std::istream& is, StatCollector& dest)
     /*throw(eh::Exception, Exception)*/;
+
+  template <typename Data>
+  static
+  auto
+  merge_data_i_(Data& dest, Data& src, int)
+    -> decltype(dest.merge(std::move(src)), void())
+  {
+    dest.merge(std::move(src));
+  }
+
+  template <typename Data>
+  static
+  auto
+  merge_data_i_(Data& dest, Data& src, long)
+    -> decltype(dest.merge(src), void())
+  {
+    dest.merge(src);
+  }
+
+  template <typename Data>
+  static
+  void
+  merge_data_i_(Data& dest, Data& src, ...)
+  {
+    dest += src;
+  }
+
+  template <typename Data>
+  static
+  void
+  merge_data_(Data& dest, Data& src)
+  {
+    merge_data_i_(dest, src, 0);
+  }
 
   struct add_elem: public std::unary_function<ValueT, void>
   {
@@ -733,7 +830,8 @@ StatCollector<KEY_, DATA_, EX_, FBUF_, STOP_, ORD_>::load_i_(
   for (ValueT value; !is.eof(); ++line_num)
   {
     value_reader.read(is, value, line_num);
-    auto ins_res = dest.map_impl_->insert(value);
+    auto ins_res =
+      dest.map_impl_->try_emplace(value.first, std::move(value.second));
     if (!ins_res.second)
     {
       Stream::Error es;
@@ -968,6 +1066,12 @@ private:
 public:
   SeqCollector() /*throw(eh::Exception)*/: holder_(new Holder) {}
 
+  SeqCollector(const SeqCollector&) = delete;
+  SeqCollector& operator=(const SeqCollector&) = delete;
+
+  SeqCollector(SeqCollector&&) = default;
+  SeqCollector& operator=(SeqCollector&&) = default;
+
   SeqCollector&
   add(const DATA_& data)
   {
@@ -999,11 +1103,29 @@ public:
     return *this;
   }
 
+  SeqCollector& operator+=(SeqCollector&& collector) noexcept
+  {
+    if (holder_.in() != collector.holder_.in())
+    {
+      merge(collector);
+    }
+    return *this;
+  }
+
   void
   merge(SeqCollector& collector) noexcept
   {
     assert(holder_.in() != collector.holder_.in());
     holder_->splice_(*collector.holder_);
+  }
+
+  void
+  merge(SeqCollector&& collector) noexcept
+  {
+    if (holder_.in() != collector.holder_.in())
+    {
+      merge(collector);
+    }
   }
 
   void load(std::istream& is) /*throw(eh::Exception, Exception)*/;

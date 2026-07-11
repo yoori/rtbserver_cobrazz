@@ -41,9 +41,13 @@ public:
 
   RequestData() noexcept {}
 
-  RequestData(const RequestData& init) noexcept = default;
+  RequestData(const RequestData&) = delete;
 
-  RequestData(RequestData&& init) noexcept = default;
+  RequestData& operator=(const RequestData&) = delete;
+
+  RequestData(RequestData&&) noexcept = default;
+
+  RequestData& operator=(RequestData&&) noexcept = default;
 
   RequestData(
     const SecondsTimestamp& time,
@@ -1227,12 +1231,17 @@ struct RequestTraits: LogDefaultTraits<RequestCollector, false, false>
     obj.template support<RequestCollector_V_3_7_1, false>("3.7.1");
   }
 
+  typedef MoveSeqDistributeStrategy<RequestTraits> DistributeStrategyType;
+
   static
-  const RequestCollector
+  RequestCollector
   convert_collector(const RequestCollector_V_3_7_1& old_collector)
   {
     RequestCollector collector;
-    collector.insert(collector.end(), old_collector.begin(), old_collector.end());
+    for (const auto& old_data : old_collector)
+    {
+      collector.add(RequestData(old_data));
+    }
     return collector;
   }
 

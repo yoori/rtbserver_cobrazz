@@ -259,6 +259,61 @@ namespace LogProcessing {
     }
   };
 
+  template <class LOG_TYPE_TRAITS_>
+  struct MoveStatDistributeStrategy
+  {
+    typedef typename LOG_TYPE_TRAITS_::CollectorType CollectorT;
+    typedef Generics::ArrayAutoPtr<CollectorT> DistribData;
+
+    void
+    distribute(
+      CollectorT& collector,
+      unsigned long distrib_count,
+      DistribData& distrib_data) const
+    {
+      for (typename CollectorT::iterator it = collector.begin();
+        it != collector.end(); ++it)
+      {
+        const unsigned long distrib_index =
+          ValueTypeDistribHashHelper::get_distrib_hash(*it) % distrib_count;
+        distrib_data[distrib_index].move_data(it->first, it->second);
+      }
+
+      collector.clear();
+    }
+  };
+
+  template <class LOG_TYPE_TRAITS_>
+  struct MovePackedDistributeStrategy
+  {
+    typedef typename LOG_TYPE_TRAITS_::CollectorType CollectorT;
+    typedef Generics::ArrayAutoPtr<CollectorT> DistribData;
+
+    void
+    distribute(
+      CollectorT& collector,
+      unsigned long distrib_count,
+      DistribData& distrib_data) const
+    {
+      for (typename CollectorT::iterator it = collector.begin();
+        it != collector.end(); ++it)
+      {
+        for (typename CollectorT::DataT::iterator data_it = it->second.begin();
+          data_it != it->second.end(); ++data_it)
+        {
+          const unsigned long distrib_index =
+            ValueTypeDistribHashHelper::get_distrib_hash(*data_it) %
+              distrib_count;
+          typename CollectorT::DataT data;
+          data.add(std::move(*data_it));
+          distrib_data[distrib_index].add(it->first, std::move(data));
+        }
+      }
+
+      collector.clear();
+    }
+  };
+
   template <class LOG_TYPE_TRAITS_, class SaveStrategy>
   StringPair
   GenericLogSaverImplBase<LOG_TYPE_TRAITS_, SaveStrategy>::save_file(
@@ -412,7 +467,7 @@ namespace LogProcessing {
       {
         if (!distrib_data[distrib_index].empty())
         {
-          collector_.merge(distrib_data[distrib_index]);
+          collector_.merge(std::move(distrib_data[distrib_index]));
           distrib_data[distrib_index].clear();
         }
       }
