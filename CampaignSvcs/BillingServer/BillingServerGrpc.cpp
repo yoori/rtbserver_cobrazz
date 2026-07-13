@@ -575,7 +575,8 @@ namespace AdServer::CampaignSvcs
             logger,
             "",
             billing_server_grpc_aspect)),
-        std::max<std::size_t>(1, process_threads))),
+        std::max<std::size_t>(1, process_threads),
+        AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext)),
       impl_(std::make_shared<Impl>(
         logger,
         billing_server_grpc_aspect,

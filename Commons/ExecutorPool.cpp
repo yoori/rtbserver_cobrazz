@@ -12,8 +12,10 @@ namespace AdServer::Commons
   ExecutorPool::ExecutorPool(
     Generics::ActiveObjectCallback* callback,
     unsigned long threads,
+    ResumeStrategy resume_strategy,
     std::string thread_name)
     : DelegateActiveObject(callback, threads ? threads : 1, 1024 * 1024)
+    , resume_strategy_(resume_strategy)
     , thread_name_(std::move(thread_name))
   {
     const auto context_count = threads ? threads : 1;
@@ -34,9 +36,17 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::dispatch(std::function<void()> task)
+  ExecutorPool::dispatch(
+    std::function<void()> task,
+    std::optional<ContextIndex> context_index)
   {
-    if(current_executor_pool_ == this && current_io_service_)
+    if(context_index)
+    {
+      boost::asio::dispatch(
+        io_service(*context_index),
+        std::move(task));
+    }
+    else if(current_executor_pool_ == this && current_io_service_)
     {
       boost::asio::dispatch(*current_io_service_, std::move(task));
     }
@@ -50,6 +60,14 @@ namespace AdServer::Commons
   ExecutorPool::running_in_this_thread() const noexcept
   {
     return current_executor_pool_ == this && current_io_service_;
+  }
+
+  ExecutorPool::ContextIndex
+  ExecutorPool::get_next_context_index() noexcept
+  {
+    return post_index_.fetch_add(
+      1,
+      std::memory_order_relaxed) % contexts_.size();
   }
 
   void
@@ -86,7 +104,13 @@ namespace AdServer::Commons
   ExecutorPool::YieldAwaiter::await_suspend(
     std::coroutine_handle<> handle) noexcept
   {
-    executor_pool_->post([handle]() mutable { resume_coroutine(handle); });
+    const auto context_index = executor_pool_->get_next_context_index();
+    executor_pool_->dispatch(
+      [handle]() mutable
+      {
+        resume_coroutine(handle);
+      },
+      context_index);
   }
 
   void
@@ -111,15 +135,33 @@ namespace AdServer::Commons
     current_executor_pool_ = this;
     current_io_service_ = &io_service;
 
-    CoroutineResumeScheduler resume_scheduler(
-      [this](std::coroutine_handle<> handle)
-      {
-        dispatch(
-          [handle]() mutable
-          {
-            resume_coroutine(handle);
-          });
-      });
+    CoroutineResumeScheduler resume_scheduler;
+    if(resume_strategy_ == ResumeStrategy::CurrentContext)
+    {
+      resume_scheduler =
+        [this, context_index](std::coroutine_handle<> handle)
+        {
+          dispatch(
+            [handle]() mutable
+            {
+              resume_coroutine(handle);
+            },
+            context_index);
+        };
+    }
+    else
+    {
+      resume_scheduler =
+        [this](std::coroutine_handle<> handle)
+        {
+          dispatch(
+            [handle]() mutable
+            {
+              resume_coroutine(handle);
+            });
+        };
+    }
+
     ScopedCoroutineResumeScheduler scheduler_scope(resume_scheduler);
 
     while(active())
@@ -149,9 +191,12 @@ namespace AdServer::Commons
   ExecutorPool::IoService&
   ExecutorPool::next_io_service() noexcept
   {
-    const auto context_index = post_index_.fetch_add(
-      1,
-      std::memory_order_relaxed) % contexts_.size();
+    return io_service(get_next_context_index());
+  }
+
+  ExecutorPool::IoService&
+  ExecutorPool::io_service(ContextIndex context_index) noexcept
+  {
     return *contexts_[context_index].io_service;
   }
 }

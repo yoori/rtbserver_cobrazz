@@ -74,7 +74,10 @@ namespace AdServer::ChannelSvcs
       if (control_sources_)
       {
         source_update_runner_ =
-          std::make_shared<AdServer::Commons::ExecutorPool>(callback, 1);
+          std::make_shared<AdServer::Commons::ExecutorPool>(
+            callback,
+            1,
+            AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext);
         add_child_object(source_update_runner_);
       }
     }

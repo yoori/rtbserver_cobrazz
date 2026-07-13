@@ -463,6 +463,8 @@ namespace AdServer::UserInfoSvcs
     co_return;
 #endif
 
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+
     try
     {
       UserBindServerCore::GetUserRequestInfo req_info;
@@ -528,6 +530,8 @@ namespace AdServer::UserInfoSvcs
     result_status = ::grpc::Status::OK;
     co_return;
 #endif
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
     {
@@ -658,6 +662,7 @@ namespace AdServer::UserInfoSvcs
             "",
             user_bind_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
+        AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
         "ca:ub-grpc-p")),
       impl_(std::make_shared<Impl>(
         logger,

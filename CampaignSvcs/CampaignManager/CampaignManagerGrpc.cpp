@@ -2917,6 +2917,7 @@ namespace AdServer::CampaignSvcs
             "",
             campaign_manager_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
+        AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
         "ca:cm-grpc-p")),
       impl_(std::make_shared<Impl>(
         logger,

@@ -872,8 +872,7 @@ namespace AdServer::CampaignSvcs
       process_timer.start();
 
       GetAdDebugResult debug_info;
-      GetAdDebugResult* request_debug_info =
-        core_request_params.need_debug_info ? &debug_info : 0;
+      GetAdDebugResult* request_debug_info = core_request_params.need_debug_info ? &debug_info : 0;
 
       if (request_debug_info)
       {
@@ -898,9 +897,9 @@ namespace AdServer::CampaignSvcs
 
       // check input colo
       if (core_request_params.common_info->colo_id == 0 ||
-         (core_request_params.common_info->colo_id != campaign_manager_config_.colocation_id() &&
-         campaign_config->colocations.find(core_request_params.common_info->colo_id) ==
-           campaign_config->colocations.end()))
+        (core_request_params.common_info->colo_id != campaign_manager_config_.colocation_id() &&
+        campaign_config->colocations.find(core_request_params.common_info->colo_id) ==
+          campaign_config->colocations.end()))
       {
         core_request_params.common_info->colo_id = campaign_manager_config_.colocation_id();
       }

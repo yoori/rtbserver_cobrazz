@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <atomic>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -18,16 +19,30 @@ namespace AdServer::Commons
     public DelegateActiveObject
   {
   public:
+    using ContextIndex = std::size_t;
+
+    enum class ResumeStrategy
+    {
+      CurrentContext,
+      AnyContext
+    };
+
     ExecutorPool(
       Generics::ActiveObjectCallback* callback,
       unsigned long threads,
+      ResumeStrategy resume_strategy,
       std::string thread_name = "asio-pool");
 
     void
     post(std::function<void()> task);
 
     void
-    dispatch(std::function<void()> task);
+    dispatch(
+      std::function<void()> task,
+      std::optional<ContextIndex> context_index = std::nullopt);
+
+    ContextIndex
+    get_next_context_index() noexcept;
 
     bool
     running_in_this_thread() const noexcept;
@@ -81,9 +96,13 @@ namespace AdServer::Commons
     IoService&
     next_io_service() noexcept;
 
+    IoService&
+    io_service(ContextIndex context_index) noexcept;
+
     std::vector<Context> contexts_;
     std::atomic_size_t post_index_{0};
     std::atomic_size_t work_index_{0};
+    ResumeStrategy resume_strategy_;
     std::string thread_name_;
 
     static thread_local const ExecutorPool* current_executor_pool_;

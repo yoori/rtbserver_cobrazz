@@ -790,6 +790,7 @@ namespace AdServer::ChannelSvcs
             "",
             channel_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
+        AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
         "ca:cs-grpc-p")),
       impl_(std::make_shared<Impl>(
         logger,

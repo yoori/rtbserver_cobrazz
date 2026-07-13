@@ -9,7 +9,7 @@ use vars qw ( $VERSION @ISA @EXPORT );
 
 @ISA = qw(Exporter);
 $VERSION = '1.00';
-@EXPORT = qw(new exists_chunks create move remove divide_chunk merge_chunk);
+@EXPORT = qw(new exists_chunks create move remove divide_chunk chunks_to_merge pack_extra_chunk merge_chunk);
 
 # exists_chunks(host): return exist at host chunk set : %{ index => \ChunkDescription }
 #   detect old format chunks - its migration must be done with using create
@@ -26,6 +26,12 @@ sub remove;
 
 # divide_chunk(chunk)
 sub divide_chunk;
+
+# chunks_to_merge(chunk_index, old_chunk_count, new_chunk_count)
+sub chunks_to_merge;
+
+# pack_extra_chunk(source_chunk, target_chunk_index, target_host)
+sub pack_extra_chunk;
 
 # merge_chunk(host, chunk)
 sub merge_chunk;
@@ -69,9 +75,8 @@ sub new
   $this->{chunks_divide_cmd_} = $environment_cmd .
     "UserBindUtil --chunks-number=" . $chunks_number . " divide-to-chunks";
 
-  # command that merge two chunks
-  # <destination folder with chunk prefix> <source folders with prefixes>
-  $this->{chunks_merge_cmd_} = $environment_cmd . "UserBindUtil merge";
+  $this->{rocksdb_merge_cmd_} = $environment_cmd .
+    "RocksDbMergeUtil --output";
 
   bless($this, $class);
   return $this;
@@ -466,44 +471,65 @@ sub merge_chunk
       die "Can't create directory $new_chunk_host:$merged_chunk_dir";
   }
 
-  # collecting data to merge in format {chunk_prefix => paths}
+  # collecting RocksDB data to merge in format {chunk_prefix => paths}
   my %merge_paths;
   my @chunks_to_merge = $this->{exec_impl_}->list($new_chunk_host, $chunk->path());
   foreach my $chunk_dir(@chunks_to_merge)
   {
     my $chunk_path = $chunk->path() . "/" . $chunk_dir;
     my @chunks_files = $this->{exec_impl_}->list($new_chunk_host, $chunk_path);
-    my %prefixes;
     foreach my $file(@chunks_files)
     {
-      if($file =~ m|^([^.]*)[.].*$| &&
-         !exists($prefixes{$1}))
+      if($file =~ m|^(.*?)[.]rocksdb$|)
       {
-        $prefixes{$1} = 1;
+        push(@{$merge_paths{$1}}, $chunk_path . "/" . $file);
       }
-    }
-
-    foreach my $prefix(keys %prefixes)
-    {
-      push(@{$merge_paths{$prefix}}, $chunk_path);
     }
   }
 
   # merging chunk
   while(my ($prefix, $chunk_dirs) = each(%merge_paths))
   {
-    my @chunk_dirs_with_prefixes;
-    foreach my $chunk_dir(@$chunk_dirs)
+    my @merge_input_paths = @$chunk_dirs;
+    my $merge_output_path = $merged_chunk_dir . "/" . $prefix . ".rocksdb";
+    my $final_output_path = $merge_output_path;
+
+    if($this->{exec_impl_}->dir_exists($new_chunk_host, $final_output_path))
     {
-      push(@chunk_dirs_with_prefixes, $chunk_dir . "/" . $prefix);
+      my @output_files = $this->{exec_impl_}->list(
+        $new_chunk_host,
+        $final_output_path);
+      if(@output_files)
+      {
+        push(@merge_input_paths, $final_output_path);
+        $merge_output_path = $final_output_path . ".merge_tmp_" .
+          $this->random_number_();
+        $this->{exec_impl_}->remove($new_chunk_host, $merge_output_path, 1);
+      }
     }
+
+    $this->{exec_impl_}->mkdir($new_chunk_host, $merge_output_path) &&
+      die "Modifier: Can't create $new_chunk_host:$merge_output_path";
 
     $this->{exec_impl_}->execute_command(
       $new_chunk_host,
-      $this->{chunks_merge_cmd_},
-      Common::ModifierExec::path_wrapper($merged_chunk_dir),
-      Common::ModifierExec::path_wrapper(@chunk_dirs_with_prefixes)) &&
-      die "Modifier: Can't merge chunk: " . $merged_chunk_dir . " at host " . $new_chunk_host;
+      $this->{rocksdb_merge_cmd_},
+      Common::ModifierExec::path_wrapper($merge_output_path),
+      Common::ModifierExec::path_wrapper(@merge_input_paths)) &&
+      die "Modifier: Can't merge RocksDB chunk: " . $merged_chunk_dir .
+        "/" . $prefix . ".rocksdb at host " . $new_chunk_host;
+
+    if($merge_output_path ne $final_output_path)
+    {
+      $this->{exec_impl_}->remove($new_chunk_host, $final_output_path, 1);
+      $this->{exec_impl_}->move(
+        $new_chunk_host,
+        $merge_output_path,
+        $new_chunk_host,
+        $final_output_path) &&
+        die "Modifier: Can't move $new_chunk_host:$merge_output_path to " .
+          "$new_chunk_host:$final_output_path";
+    }
   }
 
   # chunk is merged, just renaming is left
@@ -519,6 +545,90 @@ sub merge_chunk
       " $new_chunk_host:$new_chunk_path";
 
   return $chunk_desc;
+}
+
+sub chunks_to_merge
+{
+  my ($this, $chunk_index, $old_chunk_count, $new_chunk_count) = @_;
+
+  if(!defined($chunk_index) ||
+     !defined($old_chunk_count) ||
+     !defined($new_chunk_count))
+  {
+    die "Modifier: chunks_to_merge: undefined argument";
+  }
+
+  if($old_chunk_count <= 0 || $new_chunk_count <= 0)
+  {
+    die "Modifier: chunks_to_merge: chunks count must be positive";
+  }
+
+  if($chunk_index < 0 || $chunk_index >= $new_chunk_count)
+  {
+    die "Modifier: chunks_to_merge: chunk index $chunk_index is out of " .
+      "new chunks range [0, $new_chunk_count)";
+  }
+
+  my $common_divisor = gcd_($old_chunk_count, $new_chunk_count);
+  my $chunk_remainder = $chunk_index % $common_divisor;
+  my @chunks;
+
+  for(my $old_chunk_index = 0;
+      $old_chunk_index < $old_chunk_count;
+      ++$old_chunk_index)
+  {
+    if($old_chunk_index % $common_divisor == $chunk_remainder)
+    {
+      push(@chunks, $old_chunk_index);
+    }
+  }
+
+  return \@chunks;
+}
+
+sub pack_extra_chunk
+{
+  my ($this, $source_chunk, $target_chunk_index, $target_host) = @_;
+
+  if(!defined($source_chunk) ||
+     !defined($target_chunk_index) ||
+     !defined($target_host))
+  {
+    die "Modifier: pack_extra_chunk: undefined argument";
+  }
+
+  if($this->{verbose_} && defined $this->{logger_})
+  {
+    $this->{logger_}->trace(
+      "Redistribution: packing chunk #" . $source_chunk->index() .
+      " into chunk #" . $target_chunk_index . " on the host " . $target_host);
+  }
+
+  if(defined $this->{dry_run_})
+  {
+    return TO_MERGE_CHUNK_PREFIX . "_" . $target_chunk_index .
+      "_" . $this->{chunks_number_};
+  }
+
+  $this->adapt_chunk_($source_chunk);
+
+  my $new_chunk_root = TO_MERGE_CHUNK_PREFIX . "_" . $target_chunk_index .
+    "_" . $this->{chunks_number_} . "/";
+  my $new_chunk_dir = $new_chunk_root . $this->random_number_();
+
+  $this->{exec_impl_}->mkdir($target_host, $new_chunk_root) &&
+    die "Can't create directory " . $target_host . ":" . $new_chunk_root;
+
+  $this->{exec_impl_}->copy(
+    $source_chunk->host(),
+    $source_chunk->path(),
+    $target_host,
+    $new_chunk_dir) &&
+    die "Modifier: Can't copy " . $source_chunk->host() . ":" .
+      $source_chunk->path() . " to " . $target_host . ":" . $new_chunk_dir;
+
+  return TO_MERGE_CHUNK_PREFIX . "_" . $target_chunk_index .
+    "_" . $this->{chunks_number_};
 }
 
 # upgrade chunk to the latest version
@@ -546,5 +656,18 @@ sub random_number_
   return $random_number; 
 }
 
-1;
+sub gcd_
+{
+  my ($left, $right) = @_;
 
+  while($right != 0)
+  {
+    my $tmp = $left % $right;
+    $left = $right;
+    $right = $tmp;
+  }
+
+  return $left;
+}
+
+1;

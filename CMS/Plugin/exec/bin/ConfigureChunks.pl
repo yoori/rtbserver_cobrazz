@@ -105,6 +105,8 @@ use POSIX qw(ceil floor);
 # sub remove_all
 # sub missed_chunks
 # sub duplicated_chunks
+# sub out_of_range_chunks
+# sub old_chunks_count
 # sub change_chunks_number
 
 # sub as_string
@@ -112,6 +114,7 @@ use POSIX qw(ceil floor);
 
 # sub unref_
 # sub move_
+# sub pack_chunks
 # sub host_is_full_
 # sub find_min_loaded_host_
 # sub find_max_loaded_host_
@@ -245,6 +248,82 @@ sub duplicated_chunks
   }
 
   return \%res;
+}
+
+sub out_of_range_chunks
+{
+  my ($this) = @_;
+
+  my @res;
+
+  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  {
+    if($chunk_index >= $this->{chunks_number_})
+    {
+      push(@res, @$chunks);
+    }
+  }
+
+  while(my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
+  {
+    if($chunk_index >= $this->{chunks_number_})
+    {
+      push(@res, $unmerged_chunk);
+    }
+  }
+
+  while(my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
+  {
+    if($chunk_index >= $this->{chunks_number_})
+    {
+      push(@res, @$chunks);
+    }
+  }
+
+  return sort { $a->index() <=> $b->index() } @res;
+}
+
+sub old_chunks_count
+{
+  my ($this) = @_;
+  my $max_chunk_index = -1;
+  my $old_chunks_count = undef;
+
+  my @chunk_lists;
+  push(@chunk_lists, values(%{$this->{chunks_}}));
+  push(@chunk_lists, values(%{$this->{unfinished_chunks_}}));
+
+  foreach my $unmerged_chunk(values(%{$this->{unmerged_chunks_}}))
+  {
+    push(@chunk_lists, [ $unmerged_chunk ]);
+  }
+
+  foreach my $chunks(@chunk_lists)
+  {
+    foreach my $chunk(@$chunks)
+    {
+      if($chunk->index() > $max_chunk_index)
+      {
+        $max_chunk_index = $chunk->index();
+      }
+
+      if(defined($chunk->total_chunks()))
+      {
+        if(!defined($old_chunks_count))
+        {
+          $old_chunks_count = $chunk->total_chunks();
+        }
+        elsif($old_chunks_count != $chunk->total_chunks())
+        {
+          die LegalException->new(
+            "Different old chunks count suffixes: $old_chunks_count and " .
+            $chunk->total_chunks());
+        }
+      }
+    }
+  }
+
+  return defined($old_chunks_count) ? $old_chunks_count : $max_chunk_index + 1;
 }
 
 sub supply
@@ -418,6 +497,152 @@ sub fill_incomplete_hosts
   return $ret;
 }
 
+sub pack_chunks
+{
+  my ($this, $old_chunks_count, $host_array_ref) = @_;
+
+  if(!$this->{modifier_}->can('chunks_to_merge') ||
+     !$this->{modifier_}->can('pack_extra_chunk'))
+  {
+    die LegalException->new(
+      "Modifier doesn't support chunk packing for chunks count change");
+  }
+
+  my $ret = 0;
+  my %source_chunks;
+  my @source_chunks_to_remove;
+
+  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  {
+    if(@$chunks > 1)
+    {
+      die "UserChunkSet::pack_chunks: chunk #$chunk_index duplicated:\n" .
+        $this->state_as_string("  ");
+    }
+
+    my $chunk = $chunks->[0];
+    $source_chunks{$chunk_index} = $chunk;
+
+    if((defined($chunk->total_chunks()) &&
+        $chunk->total_chunks() != $this->{chunks_number_}) ||
+       $chunk_index >= $this->{chunks_number_})
+    {
+      push(@source_chunks_to_remove, $chunk);
+      delete $this->{host_chunks_}->{$chunk->host()}->{$chunk_index};
+    }
+  }
+
+  foreach my $chunk(@source_chunks_to_remove)
+  {
+    delete $this->{chunks_}->{$chunk->index()};
+  }
+
+  my $chunks_from_removed_hosts = $this->use_hosts($host_array_ref);
+  $ret += $this->add($chunks_from_removed_hosts);
+  $ret += $this->distribute_full_hosts();
+  $ret += $this->fill_incomplete_hosts();
+
+  my %planned_host_chunks;
+  foreach my $host(@$host_array_ref)
+  {
+    $planned_host_chunks{$host} =
+      exists($this->{host_chunks_}->{$host}) ?
+        scalar(keys(%{$this->{host_chunks_}->{$host}})) : 0;
+  }
+
+  my %target_hosts;
+  my %packed_target_hosts;
+  my %packed_target_paths;
+  for(my $chunk_index = 0;
+      $chunk_index < $this->{chunks_number_};
+      ++$chunk_index)
+  {
+    if(exists($this->{chunks_}->{$chunk_index}))
+    {
+      $target_hosts{$chunk_index} = $this->{chunks_}->{$chunk_index}->[0]->host();
+    }
+    else
+    {
+      my $target_host = find_min_loaded_host_in_counts_(\%planned_host_chunks);
+      $target_hosts{$chunk_index} = $target_host;
+      ++$planned_host_chunks{$target_host};
+    }
+  }
+
+  my %packed_source_chunks_to_remove;
+  for(my $target_chunk_index = 0;
+      $target_chunk_index < $this->{chunks_number_};
+      ++$target_chunk_index)
+  {
+    my $source_chunk_indexes = $this->{modifier_}->chunks_to_merge(
+      $target_chunk_index,
+      $old_chunks_count,
+      $this->{chunks_number_});
+
+    foreach my $source_chunk_index(@$source_chunk_indexes)
+    {
+      if(!exists($source_chunks{$source_chunk_index}))
+      {
+        next;
+      }
+
+      my $packed_target_path = $this->{modifier_}->pack_extra_chunk(
+        $source_chunks{$source_chunk_index},
+        $target_chunk_index,
+        $target_hosts{$target_chunk_index});
+      $packed_target_hosts{$target_chunk_index} = $target_hosts{$target_chunk_index};
+      if(defined($packed_target_path))
+      {
+        $packed_target_paths{$target_chunk_index} = $packed_target_path;
+      }
+      ++$ret;
+
+      if($source_chunk_index >= $this->{chunks_number_})
+      {
+        $packed_source_chunks_to_remove{$source_chunk_index} = 1;
+      }
+      elsif(defined($source_chunks{$source_chunk_index}->total_chunks()) &&
+        $source_chunks{$source_chunk_index}->total_chunks() != $this->{chunks_number_})
+      {
+        $packed_source_chunks_to_remove{$source_chunk_index} = 1;
+      }
+    }
+  }
+
+  foreach my $chunk(@source_chunks_to_remove)
+  {
+    if(!exists($packed_source_chunks_to_remove{$chunk->index()}))
+    {
+      die "UserChunkSet::pack_chunks: chunk #" . $chunk->index() .
+        " wasn't packed into any target chunk";
+    }
+
+    $this->{modifier_}->remove($chunk);
+    ++$ret;
+  }
+
+  while(my ($chunk_index, $host) = each(%packed_target_hosts))
+  {
+    if(exists($this->{unmerged_chunks_}->{$chunk_index}))
+    {
+      push(@{$this->{unmerged_chunks_}->{$chunk_index}->hosts()}, $host);
+    }
+    else
+    {
+      $this->{unmerged_chunks_}->{$chunk_index} = new ChunkDescription(
+        index => $chunk_index,
+        total_chunks => $this->{chunks_number_},
+        hosts => [$host],
+        path => defined($packed_target_paths{$chunk_index}) ?
+          $packed_target_paths{$chunk_index} :
+          "to_merge_" . $chunk_index . "_" . $this->{chunks_number_},
+        version => '3.4');
+    }
+  }
+
+  return $ret;
+}
+
 sub is_redistribution_required
 {
   my ($this) = @_;
@@ -549,8 +774,10 @@ sub merge_chunks
   {
     if(exists($this->{chunks_}->{$chunk_index}))
     {
-      $this->{modifier_}->merge_chunk(
+      my $new_chunk_ref = $this->{modifier_}->merge_chunk(
         $this->{chunks_}->{$chunk_index}->[0]->host(), $unmerged_chunk);
+      $this->{chunks_}->{$chunk_index} = [ $new_chunk_ref ];
+      $this->{host_chunks_}->{$new_chunk_ref->host()}->{$chunk_index} = $new_chunk_ref;
       delete $this->{unmerged_chunks_}->{$chunk_index};
       ++$ret;
     }
@@ -709,6 +936,31 @@ sub find_max_loaded_host_
     }
   }
   return $host_with_max_chunks;
+}
+
+sub find_min_loaded_host_in_counts_
+{
+  my ($host_chunks) = @_;
+  my $min_chunks = undef;
+  my $host_with_min_chunks = undef;
+
+  while(my ($host, $chunks_size) = each(%$host_chunks))
+  {
+    if(!defined($min_chunks) ||
+       $chunks_size < $min_chunks ||
+       $chunks_size == $min_chunks && $host lt $host_with_min_chunks)
+    {
+      $min_chunks = $chunks_size;
+      $host_with_min_chunks = $host;
+    }
+  }
+
+  if(!defined($host_with_min_chunks))
+  {
+    die "UserChunkSet::find_min_loaded_host_in_counts_: empty host set";
+  }
+
+  return $host_with_min_chunks;
 }
 
 sub collect_chunks_info_
@@ -1029,6 +1281,40 @@ sub reconfigure_chunks
 
   $logger->trace("Found chunks:\n", $chunk_set->as_string("  "));
 
+  my $old_chunks_count = $chunk_set->old_chunks_count();
+  my $pack_chunks = $old_chunks_count > 0 &&
+    $old_chunks_count != $new_chunks_number &&
+    $chunk_modificator->can('chunks_to_merge') &&
+    $chunk_modificator->can('pack_extra_chunk');
+
+  # check chunks with indexes outside expected range
+  {
+    my @out_of_range_chunks = $chunk_set->out_of_range_chunks();
+    if(!$pack_chunks && scalar @out_of_range_chunks > 0)
+    {
+      my $err = "Chunks with index >= chunks-count ($new_chunks_number): ";
+      my $first = 1;
+      foreach my $chunk(@out_of_range_chunks)
+      {
+        $err .= (defined($first) ? "" : ", ") . "chunk #" . $chunk->index();
+        if(defined($chunk->host()))
+        {
+          $err .= " at " . $chunk->host();
+        }
+        elsif(defined($chunk->hosts()))
+        {
+          $err .= " at " . join(", ", @{$chunk->hosts()});
+        }
+        if(defined($chunk->path()))
+        {
+          $err .= " (" . $chunk->path() . ")";
+        }
+        $first = undef;
+      }
+      die LegalException->new($err);
+    }
+  }
+
   # check missed chunks
   {
     my @missed_chunks = $chunk_set->missed_chunks();
@@ -1063,7 +1349,26 @@ sub reconfigure_chunks
     }
   }
 
-  if($chunk_set->is_redistribution_required())
+  my $chunks_are_packed = 0;
+  if($pack_chunks)
+  {
+    if((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 && $force == 0)
+    {
+      die LegalException->new("Number of chunks is changed. " .
+        "Use 'force' option for create new chunks");
+    }
+
+    $logger->trace(
+      "Packing chunks from $old_chunks_count to $new_chunks_number chunks...");
+    my $local_ret = $chunk_set->pack_chunks($old_chunks_count, $new_hosts_ref);
+    $logger->trace("Packing chunks: chunks are ",
+      ($local_ret > 0 ? "" : "not "),
+      "modified");
+    $ret += $local_ret;
+    $chunks_are_packed = 1;
+    $logger->trace("Found chunks:\n", $chunk_set->as_string("  "));
+  }
+  elsif($chunk_set->is_redistribution_required())
   {
     if((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 && $force == 0)
     {
@@ -1076,9 +1381,13 @@ sub reconfigure_chunks
     $logger->trace("Found chunks:\n", $chunk_set->as_string("  "));
   }
 
-  $logger->trace("To collect chunks at removed hosts...");
-  my $chunks_from_removed_hosts = $chunk_set->use_hosts($new_hosts_ref);
-  $logger->trace("From collect chunks at removed hosts...");
+  my $chunks_from_removed_hosts = [];
+  if(!$chunks_are_packed)
+  {
+    $logger->trace("To collect chunks at removed hosts...");
+    $chunks_from_removed_hosts = $chunk_set->use_hosts($new_hosts_ref);
+    $logger->trace("From collect chunks at removed hosts...");
+  }
 
   $logger->trace("Merging chunks...");
   my $local_ret = $chunk_set->merge_chunks($new_hosts_ref);
@@ -1087,12 +1396,15 @@ sub reconfigure_chunks
     "modified");
   $ret += $local_ret;
 
-  $logger->trace("To move chunks from removed hosts...");
-  $local_ret = $chunk_set->add($chunks_from_removed_hosts);
-  $logger->trace("From move chunks from removed hosts, chunks ",
-    ($local_ret > 0 ? "" : "not "),
-    "modified");
-  $ret += $local_ret;
+  if(!$chunks_are_packed)
+  {
+    $logger->trace("To move chunks from removed hosts...");
+    $local_ret = $chunk_set->add($chunks_from_removed_hosts);
+    $logger->trace("From move chunks from removed hosts, chunks ",
+      ($local_ret > 0 ? "" : "not "),
+      "modified");
+    $ret += $local_ret;
+  }
 
   $logger->trace("To create missing chunks:\n", $chunk_set->as_string("  "));
   $local_ret = $chunk_set->supply();
