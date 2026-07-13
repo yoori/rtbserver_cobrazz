@@ -156,6 +156,14 @@ parse_response()
       for (i = 1; i <= 4; ++i) {
         step = steps[i]
 
+        if (interrupted_order && i > interrupted_order) {
+          continue
+        }
+
+        if (step in started_at) {
+          print "START|" step "|" titles[step] "|" started_at[step]
+        }
+
         if (interrupted_order && i >= interrupted_order) {
           continue
         }
@@ -183,6 +191,14 @@ print_stats()
       } else {
         ++unmetered_requests
       }
+      next
+    }
+
+    $1 == "START" {
+      step = $2
+      title[step] = $3
+      start_sum[step] += $4
+      start_count[step] += 1
       next
     }
 
@@ -228,6 +244,13 @@ print_stats()
         name = title[step] ? title[step] : default_title[step]
         print ""
         print name ":"
+        if (start_count[step]) {
+          printf "average starting time: %.6f sec\n", \
+            start_sum[step] / start_count[step]
+        } else {
+          print "average starting time: n/a"
+        }
+
         if (count[step]) {
           printf "average time: %.6f sec\n", sum[step] / count[step]
           print "completed: " count[step]
