@@ -191,7 +191,7 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info;
       std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params;
       std::shared_ptr<const CampaignManagerCore::LogAdRequest> log_request;
-      CampaignManagerCore::IdArray channels;
+      ChannelIdHashSet channels;
       CampaignManagerCore::AdSlotContext ad_slot_context;
       std::shared_ptr<const ChannelIdList> geo_channels;
       bool is_ad_request = true;
@@ -218,7 +218,7 @@ namespace AdServer::CampaignSvcs
           *context_info;
         const CampaignManagerCore::LogAdRequest* effective_log_request =
           request_params ? &request_params->log_request : log_request.get();
-        const CampaignManagerCore::IdArray* effective_channels =
+        const ChannelIdHashSet* effective_channels =
           request_params ? &request_params->channels : &channels;
         const bool effective_is_ad_request =
           request_params ? !request_params->ad_slots.empty() : is_ad_request;
@@ -277,7 +277,7 @@ namespace AdServer::CampaignSvcs
         const RequestInfoLogSnapshot& request_info,
         const CampaignManagerCore::CommonAdRequest& effective_common_info,
         const CampaignManagerCore::ContextAdRequest& effective_context_info,
-        const CampaignManagerCore::IdArray* effective_channels) const
+        const ChannelIdHashSet* effective_channels) const
       {
         CampaignManagerLogger::AdRequestSelectionInfo ad_request_selection_info;
         CampaignManagerLogAdapter::fill_ad_request_selection_info(
@@ -323,7 +323,7 @@ namespace AdServer::CampaignSvcs
           request_info.request_params ?
           &request_info.request_params->log_request :
           request_info.log_request.get();
-        const CampaignManagerCore::IdArray* effective_channels =
+        const ChannelIdHashSet* effective_channels =
           request_info.request_params ?
           &request_info.request_params->channels :
           &request_info.channels;
@@ -379,7 +379,7 @@ namespace AdServer::CampaignSvcs
           request_info.request_params ?
           *request_info.request_params->context_info :
           *request_info.context_info;
-        const CampaignManagerCore::IdArray* effective_channels =
+        const ChannelIdHashSet* effective_channels =
           request_info.request_params ?
           &request_info.request_params->channels :
           &request_info.channels;
@@ -3427,7 +3427,7 @@ namespace AdServer::CampaignSvcs
     std::shared_ptr<const CampaignManagerCore::CommonAdRequest> common_info,
     std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info,
     CampaignManagerCore::LogAdRequest log_request,
-    CampaignManagerCore::IdArray channels,
+    ChannelIdHashSet channels,
     bool required_passback,
     AdRequestSlotLogArray&& ad_slots,
     std::shared_ptr<const ChannelIdList> geo_channels,

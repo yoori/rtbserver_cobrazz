@@ -35,7 +35,7 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogAdapter::fill_responded_channel_info_(
     CampaignManagerLogger::AdSelectionInfo& ad_info,
     const CampaignSelectionData& cs_data,
-    const CampaignManagerCore::IdArray* channels)
+    const ChannelIdHashSet* channels)
     noexcept
   {
     try
@@ -57,14 +57,10 @@ namespace AdServer::CampaignSvcs
         return;
       }
 
-      ChannelIdHashSet simple_channels(
-        channels->begin(),
-        channels->end());
-
       ChannelIdSet responded_channels;
       cs_data.campaign->channel->triggered_named_channels(
         responded_channels,
-        simple_channels);
+        *channels);
 
       ad_info.channels.insert(
         ad_info.channels.end(),
@@ -76,7 +72,7 @@ namespace AdServer::CampaignSvcs
         std::string responded_expression;
         if(cs_data.campaign->stat_channel->triggered_expression(
           responded_expression,
-          simple_channels))
+          *channels))
         {
           ad_info.expression = std::move(responded_expression);
         }
@@ -90,7 +86,7 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogAdapter::fill_request_info_by_profiling_(
     CampaignManagerLogger::RequestInfo& request_info,
     const CampaignManagerCore::LogAdRequest& log_request,
-    const CampaignManagerCore::IdArray& channels,
+    const ChannelIdHashSet& channels,
     const CampaignManagerCore::CommonAdRequest& common_info)
     /*throw(Exception)*/
   {
@@ -240,7 +236,7 @@ namespace AdServer::CampaignSvcs
     const CampaignManagerCore::CommonAdRequest& common_info,
     const CampaignManagerCore::ContextAdRequest& context_info,
     const CampaignManagerCore::LogAdRequest* log_request,
-    const CampaignManagerCore::IdArray* channels,
+    const ChannelIdHashSet* channels,
     bool is_ad_request,
     bool track_passback,
     const CampaignManagerCore::AdSlotContext& ad_slot_context)
@@ -270,7 +266,8 @@ namespace AdServer::CampaignSvcs
     }
 
     fill_request_info_by_common_info_(request_info, common_info);
-    request_info.additional_info = context_info.additional_info;
+    request_info.additional_info.assign(
+      context_info.additional_info.begin(), context_info.additional_info.end());
 
     Generics::Time request_time = common_info.time;
     request_info.time = request_time;
@@ -301,16 +298,20 @@ namespace AdServer::CampaignSvcs
     {
       request_info.full_referer_hash = context_info.full_referer_hash;
     }
+
     if (context_info.short_referer_hash)
     {
       request_info.short_referer_hash = context_info.short_referer_hash;
     }
 
-    request_info.client_app = context_info.client;
-    request_info.client_app_version = context_info.client_version;
-    request_info.web_browser = context_info.web_browser;
-    request_info.full_platform = context_info.full_platform;
-    request_info.ip_hash = context_info.ip_hash;
+    request_info.client_app.assign(context_info.client.begin(), context_info.client.end());
+    request_info.client_app_version.assign(
+      context_info.client_version.begin(), context_info.client_version.end());
+    request_info.web_browser.assign(
+      context_info.web_browser.begin(), context_info.web_browser.end());
+    request_info.full_platform.assign(
+      context_info.full_platform.begin(), context_info.full_platform.end());
+    request_info.ip_hash.assign(context_info.ip_hash.begin(), context_info.ip_hash.end());
 
     if(!common_info.user_agent.empty())
     {
@@ -319,8 +320,7 @@ namespace AdServer::CampaignSvcs
 
     request_info.platforms.clear();
     request_info.platforms.insert(
-      context_info.platform_ids.begin(),
-      context_info.platform_ids.end());
+      context_info.platform_ids.begin(), context_info.platform_ids.end());
 
     if(campaign_config)
     {
@@ -333,15 +333,14 @@ namespace AdServer::CampaignSvcs
       request_info.last_platform_channel_id = 0;
 
       for(ChannelIdSet::const_iterator pch_it = request_info.platform_channels.begin();
-          pch_it != request_info.platform_channels.end();
-          ++pch_it)
+        pch_it != request_info.platform_channels.end();
+        ++pch_it)
       {
-        CampaignConfig::PlatformChannelPriorityMap::const_iterator pr_it =
-          campaign_config->platform_channel_priorities.find(*pch_it);
+        auto pr_it = campaign_config->platform_channel_priorities.find(*pch_it);
         if(pr_it != campaign_config->platform_channel_priorities.end())
         {
           if(request_info.last_platform_channel_id == 0 ||
-             cur_priority < pr_it->second.priority)
+            cur_priority < pr_it->second.priority)
           {
             cur_priority = pr_it->second.priority;
             request_info.last_platform_channel_id = *pch_it;
@@ -351,8 +350,7 @@ namespace AdServer::CampaignSvcs
     }
 
     request_info.geo_channels.assign(
-      context_info.geo_channels.begin(),
-      context_info.geo_channels.end());
+      context_info.geo_channels.begin(), context_info.geo_channels.end());
   }
 
   void
@@ -362,7 +360,7 @@ namespace AdServer::CampaignSvcs
     const Colocation* colocation,
     const CampaignManagerCore::CommonAdRequest& common_info,
     const CampaignManagerCore::ContextAdRequest& context_info,
-    const CampaignManagerCore::IdArray* channels,
+    const ChannelIdHashSet* channels,
     const CampaignManagerCore::AdSlotRequest& ad_slot,
     const Tag* tag,
     const AdSelectionResult& ad_selection_result,
@@ -442,11 +440,9 @@ namespace AdServer::CampaignSvcs
 
       ad_request_selection_info.site_rate_id = tag_pricing ? tag_pricing->site_rate_id : 0;
       ad_request_selection_info.site_id = tag->site->site_id;
-      ad_request_selection_info.pub_time = request_time +
-        tag->site->account->time_offset;
+      ad_request_selection_info.pub_time = request_time + tag->site->account->time_offset;
       ad_request_selection_info.tag_id = tag->tag_id;
-      ad_request_selection_info.pub_account_id =
-        tag->site->account->account_id;
+      ad_request_selection_info.pub_account_id = tag->site->account->account_id;
       // ADSC-10025: don't log stats for sizes blocked by placement channel.
       //   use filtered in Impl and passed tag_sizes instead tag->sizes below.
       for(Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
@@ -477,12 +473,11 @@ namespace AdServer::CampaignSvcs
       }
 
       RevenueDecimal div_reminder;
-      ad_request_selection_info.cpm_threshold =
-        tag->site->account->currency->from_system_currency(
-          RevenueDecimal::div(
-            ad_selection_result.cpm_threshold,
-            RevenueDecimal(false, 100, 0),
-            div_reminder));
+      ad_request_selection_info.cpm_threshold = tag->site->account->currency->from_system_currency(
+        RevenueDecimal::div(
+          ad_selection_result.cpm_threshold,
+          RevenueDecimal(false, 100, 0),
+          div_reminder));
     }
 
     AdSelectionInfoList& ad_info_list = ad_request_selection_info.ad_selection_info_list;
@@ -579,7 +574,7 @@ namespace AdServer::CampaignSvcs
     const Colocation* colocation,
     const CampaignManagerCore::CommonAdRequest& common_info,
     const CampaignManagerCore::ContextAdRequest& context_info,
-    const CampaignManagerCore::IdArray* channels,
+    const ChannelIdHashSet* channels,
     const Tag* tag,
     const Tag::TagPricing* tag_pricing,
     const AdSelectionResult& ad_selection_result,

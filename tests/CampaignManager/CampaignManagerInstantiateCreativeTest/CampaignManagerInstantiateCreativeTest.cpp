@@ -53,7 +53,7 @@ namespace
     CampaignManagerCore::CommonAdRequest request_info;
     CampaignManagerCore::InstantiateParams instantiate_params;
     CampaignManagerCore::AdSlotContext ad_slot_context;
-    CampaignManagerCore::IdArray exclude_pubpixel_accounts;
+    CampaignManagerCore::PmrIdArray exclude_pubpixel_accounts;
 
     Fixture()
       : instantiate_params(AdServer::Commons::Optional<unsigned long>(12345))

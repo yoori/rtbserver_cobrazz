@@ -27,7 +27,7 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerCore::CommonAdRequest& common_info,
       const CampaignManagerCore::ContextAdRequest& context_info,
       const CampaignManagerCore::LogAdRequest* log_request,
-      const CampaignManagerCore::IdArray* channels,
+      const ChannelIdHashSet* channels,
       bool is_ad_request,
       bool track_passback,
       const CampaignManagerCore::AdSlotContext& ad_slot_context)
@@ -40,7 +40,7 @@ namespace AdServer::CampaignSvcs
       const Colocation* colocation,
       const CampaignManagerCore::CommonAdRequest& common_info,
       const CampaignManagerCore::ContextAdRequest& context_info,
-      const CampaignManagerCore::IdArray* channels,
+      const ChannelIdHashSet* channels,
       const CampaignManagerCore::AdSlotRequest& ad_slot,
       const Tag* tag,
       const AdSelectionResult& ad_selection_request,
@@ -95,7 +95,7 @@ namespace AdServer::CampaignSvcs
       const Colocation* colocation,
       const CampaignManagerCore::CommonAdRequest& common_info,
       const CampaignManagerCore::ContextAdRequest& context_info,
-      const CampaignManagerCore::IdArray* channels,
+      const ChannelIdHashSet* channels,
       const Tag* tag,
       const Tag::TagPricing* tag_pricing,
       const AdSelectionResult& ad_selection_result,
@@ -108,7 +108,7 @@ namespace AdServer::CampaignSvcs
     fill_responded_channel_info_(
       CampaignManagerLogger::AdSelectionInfo& ad_info,
       const CampaignSelectionData& cs_data,
-      const CampaignManagerCore::IdArray* channels)
+      const ChannelIdHashSet* channels)
       noexcept;
 
     static void
@@ -123,7 +123,7 @@ namespace AdServer::CampaignSvcs
     fill_request_info_by_profiling_(
       CampaignManagerLogger::RequestInfo& request_info,
       const CampaignManagerCore::LogAdRequest& log_request,
-      const CampaignManagerCore::IdArray& channels,
+      const ChannelIdHashSet& channels,
       const CampaignManagerCore::CommonAdRequest& common_info)
       /*throw(Exception)*/;
 

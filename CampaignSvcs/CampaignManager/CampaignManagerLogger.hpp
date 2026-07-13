@@ -605,7 +605,7 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::CommonAdRequest> common_info,
       std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info,
       CampaignManagerCore::LogAdRequest log_request,
-      CampaignManagerCore::IdArray channels,
+      ChannelIdHashSet channels,
       bool required_passback,
       AdRequestSlotLogArray&& ad_slots,
       std::shared_ptr<const ChannelIdList> geo_channels = {},

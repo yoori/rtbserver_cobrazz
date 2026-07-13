@@ -185,6 +185,40 @@ namespace AdServer::CampaignSvcs
       return result;
     }
 
+    template<typename IdContainer>
+    void
+    unpack_ids_to(
+      const google::protobuf::RepeatedField<google::protobuf::uint64>& source,
+      IdContainer& target)
+    {
+      target.clear();
+      target.reserve(source.size());
+      for(const auto id : source)
+      {
+        target.push_back(id);
+      }
+    }
+
+    template<typename String>
+    void
+    assign_string(String& target, const std::string& source)
+    {
+      target.assign(source.data(), source.size());
+    }
+
+    void
+    unpack_ids_to(
+      const google::protobuf::RepeatedField<google::protobuf::uint64>& source,
+      ChannelIdHashSet& target)
+    {
+      target.clear();
+      target.reserve(source.size());
+      for(const auto id : source)
+      {
+        target.emplace(id);
+      }
+    }
+
     void
     unpack_strings(
       const google::protobuf::RepeatedPtrField<std::string>& source,
@@ -367,10 +401,11 @@ namespace AdServer::CampaignSvcs
         source.original_keyword()};
     }
 
+    template<typename CCGKeywordContainer>
     void
     unpack_ccg_keywords(
       const google::protobuf::RepeatedPtrField<pb::CcgKeywordInfo>& source,
-      CampaignManagerCore::CCGKeywordArray& target)
+      CCGKeywordContainer& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -446,30 +481,34 @@ namespace AdServer::CampaignSvcs
     }
 
     CampaignManagerCore::ContextAdRequest
-    unpack_context_ad_request_info(const pb::ContextAdRequestInfo& source)
+    unpack_context_ad_request_info(
+      const pb::ContextAdRequestInfo& source,
+      CampaignManagerCore::PmrArenaPtr arena = {})
     {
-      CampaignManagerCore::ContextAdRequest target;
+      CampaignManagerCore::ContextAdRequest target(std::move(arena));
       target.enabled_notice = source.enabled_notice();
-      target.client = source.client();
-      target.client_version = source.client_version();
-      target.platform_ids = unpack_ids(source.platform_ids());
-      target.geo_channels = unpack_ids(source.geo_channels());
-      target.platform = source.platform();
-      target.full_platform = source.full_platform();
-      target.web_browser = source.web_browser();
-      target.ip_hash = source.ip_hash();
+      assign_string(target.client, source.client());
+      assign_string(target.client_version, source.client_version());
+      unpack_ids_to(source.platform_ids(), target.platform_ids);
+      unpack_ids_to(source.geo_channels(), target.geo_channels);
+      assign_string(target.platform, source.platform());
+      assign_string(target.full_platform, source.full_platform());
+      assign_string(target.web_browser, source.web_browser());
+      assign_string(target.ip_hash, source.ip_hash());
       target.profile_referer = source.profile_referer();
       target.page_load_id = source.page_load_id();
       target.full_referer_hash = source.full_referer_hash();
       target.short_referer_hash = source.short_referer_hash();
-      target.additional_info = source.additional_info();
+      assign_string(target.additional_info, source.additional_info());
       return target;
     }
 
     CampaignManagerCore::AdSlotRequest
-    unpack_ad_slot_info(const pb::AdSlotInfo& source)
+    unpack_ad_slot_info(
+      const pb::AdSlotInfo& source,
+      CampaignManagerCore::PmrArenaPtr arena = {})
     {
-      CampaignManagerCore::AdSlotRequest target;
+      CampaignManagerCore::AdSlotRequest target(std::move(arena));
       target.ad_slot_id = source.ad_slot_id();
       target.format = source.format();
       target.tag_id = source.tag_id();
@@ -521,18 +560,17 @@ namespace AdServer::CampaignSvcs
     unpack_request_params(const pb::RequestParams& source)
     {
       CampaignManagerCore::GetAdRequest target;
-      target.common_info =
-        std::make_shared<CampaignManagerCore::CommonAdRequest>();
+      target.common_info = std::make_shared<CampaignManagerCore::CommonAdRequest>(target.arena());
       unpack_common_ad_request_info(source.common_info(), *target.common_info);
       target.context_info = std::make_shared<CampaignManagerCore::ContextAdRequest>(
-        unpack_context_ad_request_info(source.context_info()));
+        unpack_context_ad_request_info(source.context_info(), target.arena()));
       target.publisher_site_id = source.publisher_site_id();
-      target.publisher_account_ids = unpack_ids(source.publisher_account_ids());
+      unpack_ids_to(source.publisher_account_ids(), target.publisher_account_ids);
       target.fill_track_pixel = source.fill_track_pixel();
       target.fill_iurl = source.fill_iurl();
       target.ad_instantiate_type = source.ad_instantiate_type();
       target.only_display_ad = source.only_display_ad();
-      target.full_freq_caps = unpack_ids(source.full_freq_caps());
+      unpack_ids_to(source.full_freq_caps(), target.full_freq_caps);
       target.seq_orders.reserve(source.seq_orders_size());
       for(const auto& seq_order : source.seq_orders())
       {
@@ -554,7 +592,7 @@ namespace AdServer::CampaignSvcs
       target.log_request.page_keywords_present = source.page_keywords_present();
       target.profiling_available = source.profiling_available();
       target.log_request.fraud = source.fraud();
-      target.channels = unpack_ids(source.channels());
+      unpack_ids_to(source.channels(), target.channels);
       unpack_ccg_keywords(source.ccg_keywords(), target.ccg_keywords);
       unpack_channel_trigger_matches(
         source.trigger_match_result().url_channels(),
@@ -572,8 +610,9 @@ namespace AdServer::CampaignSvcs
         unpack_ids(source.trigger_match_result().uid_channels());
       target.client_create_time = unpack_time(source.client_create_time());
       target.session_start = unpack_time(source.session_start());
-      target.exclude_pubpixel_accounts =
-        unpack_ids(source.exclude_pubpixel_accounts());
+      unpack_ids_to(
+        source.exclude_pubpixel_accounts(),
+        target.exclude_pubpixel_accounts);
       target.tag_delivery_factor = source.tag_delivery_factor();
       target.ccg_delivery_factor = source.ccg_delivery_factor();
       target.preview_ccid = source.preview_ccid();
@@ -582,7 +621,7 @@ namespace AdServer::CampaignSvcs
       {
         target.ad_slots.emplace_back(
           std::make_shared<CampaignManagerCore::AdSlotRequest>(
-            unpack_ad_slot_info(ad_slot)));
+            unpack_ad_slot_info(ad_slot, target.arena())));
       }
       target.required_passback = source.required_passback();
       target.log_request.profiling_type = source.profiling_type();
@@ -2187,16 +2226,19 @@ namespace AdServer::CampaignSvcs
     try
     {
       const auto& source = request.instantiate_ad_info();
+      const auto arena =
+        std::make_shared<std::pmr::monotonic_buffer_resource>(
+          CampaignManagerCore::GetAdRequest::ARENA_INITIAL_SIZE);
       CampaignManagerCore::InstantiateAdRequest info;
       info.common_info =
-        std::make_shared<CampaignManagerCore::CommonAdRequest>();
+        std::make_shared<CampaignManagerCore::CommonAdRequest>(arena);
       unpack_common_ad_request_info(source.common_info(), *info.common_info);
       info.context_info.reserve(source.context_info_size());
       for(const auto& context : source.context_info())
       {
         info.context_info.emplace_back(
           std::make_shared<CampaignManagerCore::ContextAdRequest>(
-            unpack_context_ad_request_info(context)));
+            unpack_context_ad_request_info(context, arena)));
       }
       info.format = source.format();
       info.publisher_site_id = source.publisher_site_id();

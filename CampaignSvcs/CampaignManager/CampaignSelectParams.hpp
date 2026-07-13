@@ -27,8 +27,7 @@ namespace CampaignSvcs
 
   struct CampaignSelectParams: public ReferenceCounting::DefaultImpl<>
   {
-    using CampaignImpsMap =
-      std::pmr::map<unsigned long, unsigned long>;
+    using CampaignImpsMap = std::pmr::map<unsigned long, unsigned long>;
 
     CampaignSelectParams(
       bool profiling_available_val,

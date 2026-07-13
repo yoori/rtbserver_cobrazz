@@ -9,6 +9,7 @@
 #include <mutex>
 #include <memory_resource>
 #include <optional>
+#include <utility>
 #include <vector>
 #include <unordered_set>
 
@@ -78,6 +79,9 @@ namespace AdServer::CampaignSvcs
 
     using ByteArray = std::vector<unsigned char>;
     using IdArray = std::vector<unsigned long>;
+    using PmrIdArray = std::pmr::vector<unsigned long>;
+    using PmrString = std::pmr::string;
+    using PmrArenaPtr = std::shared_ptr<std::pmr::monotonic_buffer_resource>;
     using StringArray = std::vector<std::string>;
     using RequestIdArray = std::vector<AdServer::Commons::RequestId>;
 
@@ -311,6 +315,7 @@ namespace AdServer::CampaignSvcs
     };
 
     using CCGKeywordArray = std::vector<CCGKeywordInfo>;
+    using PmrCCGKeywordArray = std::pmr::vector<CCGKeywordInfo>;
 
     struct CommonMatchRequestInfo
     {
@@ -344,11 +349,20 @@ namespace AdServer::CampaignSvcs
     struct CommonAdRequest
     {
       CommonAdRequest() = default;
+
+      explicit CommonAdRequest(PmrArenaPtr arena) noexcept
+        : arena_(std::move(arena))
+      {}
+
       CommonAdRequest(const CommonAdRequest&) = delete;
       CommonAdRequest& operator=(const CommonAdRequest&) = delete;
       CommonAdRequest(CommonAdRequest&&) noexcept = default;
       CommonAdRequest& operator=(CommonAdRequest&&) noexcept = default;
 
+    private:
+      PmrArenaPtr arena_;
+
+    public:
       Generics::Time time;
       AdServer::Commons::RequestId request_id;
       std::string creative_instantiate_type;
@@ -388,25 +402,43 @@ namespace AdServer::CampaignSvcs
     struct ContextAdRequest
     {
       ContextAdRequest() = default;
+
+      explicit ContextAdRequest(PmrArenaPtr arena) noexcept
+        : arena_(std::move(arena)),
+          client(arena_.get()),
+          client_version(arena_.get()),
+          platform_ids(arena_.get()),
+          geo_channels(arena_.get()),
+          platform(arena_.get()),
+          full_platform(arena_.get()),
+          web_browser(arena_.get()),
+          ip_hash(arena_.get()),
+          additional_info(arena_.get())
+      {}
+
       ContextAdRequest(const ContextAdRequest&) = delete;
       ContextAdRequest& operator=(const ContextAdRequest&) = delete;
       ContextAdRequest(ContextAdRequest&&) noexcept = default;
       ContextAdRequest& operator=(ContextAdRequest&&) noexcept = default;
 
+    private:
+      PmrArenaPtr arena_;
+
+    public:
       bool enabled_notice = false;
-      std::string client;
-      std::string client_version;
-      IdArray platform_ids;
-      IdArray geo_channels;
-      std::string platform;
-      std::string full_platform;
-      std::string web_browser;
-      std::string ip_hash;
+      PmrString client;
+      PmrString client_version;
+      PmrIdArray platform_ids;
+      PmrIdArray geo_channels;
+      PmrString platform;
+      PmrString full_platform;
+      PmrString web_browser;
+      PmrString ip_hash;
       bool profile_referer = false;
       unsigned long page_load_id = 0;
       unsigned long full_referer_hash = 0;
       unsigned long short_referer_hash = 0;
-      std::string additional_info;
+      PmrString additional_info;
     };
 
     using CommonAdRequestPtr = std::shared_ptr<CommonAdRequest>;
@@ -449,29 +481,23 @@ namespace AdServer::CampaignSvcs
       RequestIdArray request_ids;
     };
 
-    struct AdRequest
-    {
-      CommonAdRequestPtr common_info;
-      ContextAdRequestPtr context_info;
-      unsigned long publisher_site_id = 0;
-      IdArray publisher_account_ids;
-      bool profiling_available = false;
-      IdArray full_freq_caps;
-      IdArray channels;
-      IdArray hid_channels;
-      Generics::Time client_create_time;
-      unsigned long tag_delivery_factor = 0;
-      unsigned long ccg_delivery_factor = 0;
-    };
-
     struct AdSlotRequest
     {
       AdSlotRequest() = default;
+
+      explicit AdSlotRequest(PmrArenaPtr arena) noexcept
+        : arena_(std::move(arena))
+      {}
+
       AdSlotRequest(const AdSlotRequest&) = delete;
       AdSlotRequest& operator=(const AdSlotRequest&) = delete;
       AdSlotRequest(AdSlotRequest&&) noexcept = default;
       AdSlotRequest& operator=(AdSlotRequest&&) noexcept = default;
 
+    private:
+      PmrArenaPtr arena_;
+
+    public:
       unsigned long ad_slot_id = 0;
       std::string format;
       unsigned long tag_id = 0;
@@ -508,6 +534,7 @@ namespace AdServer::CampaignSvcs
     using AdSlotRequestPtr = std::shared_ptr<AdSlotRequest>;
     using ConstAdSlotRequestPtr = std::shared_ptr<const AdSlotRequest>;
     using AdSlotRequestPtrArray = std::vector<AdSlotRequestPtr>;
+    using PmrAdSlotRequestPtrArray = std::pmr::vector<AdSlotRequestPtr>;
 
     struct ConfigRequestInfo
     {
@@ -543,24 +570,69 @@ namespace AdServer::CampaignSvcs
 
     struct GetAdRequest
     {
+      static constexpr std::size_t ARENA_INITIAL_SIZE = 64 * 1024;
+
+      using SeqOrderArray = std::pmr::vector<SeqOrderInfo>;
+      using CampaignFreqArray = std::pmr::vector<CampaignFreqInfo>;
+
+      GetAdRequest()
+        : GetAdRequest(
+            std::make_shared<std::pmr::monotonic_buffer_resource>(
+              ARENA_INITIAL_SIZE))
+      {}
+
+      explicit GetAdRequest(PmrArenaPtr arena) noexcept
+        : arena_(std::move(arena)),
+          ad_slots(arena_.get()),
+          publisher_account_ids(arena_.get()),
+          channels(arena_.get()),
+          seq_orders(arena_.get()),
+          campaign_freqs(arena_.get()),
+          full_freq_caps(arena_.get()),
+          ccg_keywords(arena_.get()),
+          exclude_pubpixel_accounts(arena_.get())
+      {}
+
+      GetAdRequest(const GetAdRequest&) = delete;
+      GetAdRequest& operator=(const GetAdRequest&) = delete;
+
+      GetAdRequest(GetAdRequest&&) noexcept = default;
+      GetAdRequest& operator=(GetAdRequest&&) = delete;
+
+      std::pmr::memory_resource*
+      resource() const noexcept
+      {
+        return arena_.get();
+      }
+
+      const PmrArenaPtr&
+      arena() const noexcept
+      {
+        return arena_;
+      }
+
+    private:
+      PmrArenaPtr arena_;
+
+    public:
       CommonAdRequestPtr common_info;
       ContextAdRequestPtr context_info;
-      AdSlotRequestPtrArray ad_slots;
+      PmrAdSlotRequestPtrArray ad_slots;
 
       bool need_debug_info = false;
 
       // select and filter ad parameters.
       unsigned long publisher_site_id = 0;
-      IdArray publisher_account_ids;
-      IdArray channels;
-      std::vector<SeqOrderInfo> seq_orders;
-      std::vector<CampaignFreqInfo> campaign_freqs;
-      IdArray full_freq_caps;
+      PmrIdArray publisher_account_ids;
+      ChannelIdHashSet channels;
+      SeqOrderArray seq_orders;
+      CampaignFreqArray campaign_freqs;
+      PmrIdArray full_freq_caps;
       bool only_display_ad = false;
       bool profiling_available = false;
       unsigned long tag_delivery_factor = 0;
       unsigned long ccg_delivery_factor = 0;
-      CCGKeywordArray ccg_keywords;
+      PmrCCGKeywordArray ccg_keywords;
       Generics::Time client_create_time;
       Generics::Time session_start;
 
@@ -569,7 +641,7 @@ namespace AdServer::CampaignSvcs
       bool fill_track_pixel = false;
       bool fill_iurl = false;
       bool required_passback = false;
-      IdArray exclude_pubpixel_accounts;
+      PmrIdArray exclude_pubpixel_accounts;
       unsigned long preview_ccid = 0;
 
       LogAdRequest log_request;
@@ -1018,7 +1090,7 @@ namespace AdServer::CampaignSvcs
       unsigned long request_type,
       unsigned long random,
       unsigned long publisher_site_id,
-      const IdArray& publisher_account_ids,
+      const PmrIdArray& publisher_account_ids,
       const CampaignConfig& campaign_config,
       unsigned long tag_id,
       const StringArray& sizes,
@@ -1126,8 +1198,8 @@ namespace AdServer::CampaignSvcs
     void log_incoming_request(
       unsigned long tag_id,
       const String::SubString& referer,
-      const IdArray& channels,
-      const IdArray& full_freq_caps)
+      const ChannelIdHashSet& channels,
+      const PmrIdArray& full_freq_caps)
       /*throw(eh::Exception)*/;
 
     ConstCampaignConfigPtr
@@ -1156,10 +1228,21 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig* campaign_config,
       const Tag* tag,
       CampaignKeywordMap& result_keywords,
-      const CCGKeywordArray& keywords,
+      const PmrCCGKeywordArray& keywords,
       bool profiling_available,
       const FreqCapIdSet& full_freq_caps)
       noexcept;
+
+    std::string
+    trace_campaign_selection_(
+      const CampaignConfig& campaign_config,
+      const CampaignIndex& campaign_index,
+      unsigned long campaign_id,
+      const GetAdRequest& request_params,
+      const AdSlotRequest& ad_slot,
+      const Colocation* colocation,
+      AuctionType auction_type,
+      bool test_request);
 
     void
     convert_external_categories_(
@@ -1235,7 +1318,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig* campaign_config,
       const Tag* tag,
       const CommonAdRequest& request_params,
-      const IdArray& exclude_pubpixel_accounts)
+      const PmrIdArray& exclude_pubpixel_accounts)
       noexcept;
 
     static bool
