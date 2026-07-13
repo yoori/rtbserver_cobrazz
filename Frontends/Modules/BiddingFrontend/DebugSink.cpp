@@ -330,9 +330,18 @@ namespace AdServer::Bidding
         out << "incomplete";
       }
 
+      if(stage->call_time)
+      {
+        out << " : " << stage->call_time->float_str() << " (call)";
+      }
+
       if(stage->local_time)
       {
         out << " : " << stage->local_time->float_str();
+        if(stage->call_time)
+        {
+          out << " (server)";
+        }
       }
 
       if(stage->error)

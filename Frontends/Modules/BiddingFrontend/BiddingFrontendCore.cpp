@@ -521,6 +521,59 @@ namespace AdServer::Bidding
       Generics::Timer timer_;
     };
 
+    void
+    add_stage_call_time(
+      StageResult* stage,
+      const Generics::Time& started_at)
+      noexcept
+    {
+      if(stage)
+      {
+        const auto elapsed = Generics::Time::get_time_of_day() - started_at;
+        if(stage->call_time)
+        {
+          *stage->call_time += elapsed;
+        }
+        else
+        {
+          stage->call_time = elapsed;
+        }
+      }
+    }
+
+    class StageCallTimeGuard
+    {
+    public:
+      explicit
+      StageCallTimeGuard(StageResult* stage) noexcept
+        : stage_(stage)
+      {
+        if(stage_)
+        {
+          started_at_ = Generics::Time::get_time_of_day();
+        }
+      }
+
+      ~StageCallTimeGuard() noexcept
+      {
+        finish();
+      }
+
+      void
+      finish() noexcept
+      {
+        if(stage_)
+        {
+          add_stage_call_time(stage_, started_at_);
+          stage_ = nullptr;
+        }
+      }
+
+    private:
+      StageResult* stage_;
+      Generics::Time started_at_;
+    };
+
     StageResult*
     start_stage(
       std::optional<StageResult>& stage,
@@ -1090,8 +1143,10 @@ namespace AdServer::Bidding
 
             try
             {
+              StageCallTimeGuard call_time(user_resolving_stage);
               auto get_result = co_await
                 user_bind_client_coro_->get_user_id(*get_request);
+              call_time.finish();
               if(!get_result.status.ok())
               {
                 log_user_bind_grpc_error("get_user_id", get_result.status);
@@ -1171,8 +1226,10 @@ namespace AdServer::Bidding
 
               try
               {
+                StageCallTimeGuard call_time(user_resolving_stage);
                 auto add_result = co_await
                   user_bind_client_coro_->add_user_id(*add_user_request);
+                call_time.finish();
                 if(!add_result.status.ok())
                 {
                   log_user_bind_grpc_error("add_user_id", add_result.status);
@@ -1327,8 +1384,10 @@ namespace AdServer::Bidding
           channel_request->set_uid(
             GrpcAlgs::pack_user_id(request_task->resolved_user_id_));
 
+          StageCallTimeGuard call_time(trigger_match_stage);
           auto channel_result = co_await
             channel_client_coro_->match(*channel_request);
+          call_time.finish();
           if(channel_result.status.ok())
           {
             if(trigger_match_stage)
@@ -1588,8 +1647,10 @@ namespace AdServer::Bidding
               url_keyword_channels);
           }
 
+          StageCallTimeGuard call_time(history_match_stage);
           auto history_result = co_await
             user_info_client_coro_->match(*history_match_request);
+          call_time.finish();
           if(history_result.status.ok())
           {
             profiling_available = true;
@@ -1702,9 +1763,12 @@ namespace AdServer::Bidding
 
       try
       {
+        StageCallTimeGuard call_time(creative_selection_stage);
         auto campaign_result = co_await
           campaign_manager_coro_->get_campaign_creative(
             *campaign_request);
+        call_time.finish();
+
         if(campaign_result.status.ok())
         {
           const auto& response = campaign_result.response;

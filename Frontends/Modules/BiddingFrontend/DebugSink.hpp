@@ -46,6 +46,7 @@ namespace AdServer::Bidding
 
     Generics::Time started_at;
     std::optional<Generics::Time> finished_at;
+    std::optional<Generics::Time> call_time;
     std::optional<Generics::Time> local_time;
     std::optional<Error> error;
     std::string server_id;

@@ -221,6 +221,7 @@ namespace AdServer
           request_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
             request_threads,
+            AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
             "ca:bid-request");
         }
 
@@ -252,6 +253,7 @@ namespace AdServer
           timeout_workers_ = std::make_shared<AdServer::Commons::ExecutorPool>(
             callback_,
             interrupt_threads,
+            AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
             "bid-timeout");
         }
 
