@@ -827,7 +827,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig& campaign_config,
     const std::vector<GeoInfo>& location,
     const std::vector<GeoCoordInfo>& coord_location,
-    ChannelIdList& geo_channels,
+    ChannelIdArray& geo_channels,
     ChannelIdSet& coord_channels)
     /*throw(NotReady, Exception)*/
   {
@@ -913,7 +913,7 @@ namespace AdServer::CampaignSvcs
         core_request_params.common_info->test_request |= colo_it->second->is_test();
       }
 
-      ChannelIdList geo_channels;
+      ChannelIdArray geo_channels;
       ChannelIdSet coord_channels(&memory_resource);
       match_geo_channels_(
         *campaign_config,
@@ -1102,10 +1102,8 @@ namespace AdServer::CampaignSvcs
 
         AdSlotContext ad_slot_context;
         ad_slot_context.test_request = core_request_params.common_info->test_request;
-        const unsigned long profiling_type =
-          core_request_params.log_request.profiling_type;
-        auto request_params =
-          std::make_shared<GetAdRequest>(std::move(core_request_params));
+        const unsigned long profiling_type = core_request_params.log_request.profiling_type;
+        auto request_params = std::make_shared<GetAdRequest>(std::move(core_request_params));
 
         campaign_manager_logger_->process_request(
           colocation,
@@ -1155,7 +1153,7 @@ namespace AdServer::CampaignSvcs
 
       CampaignManagerLogger::MatchRequestInfo mri;
 
-      ChannelIdList geo_channels;
+      ChannelIdArray geo_channels;
       ChannelIdSet coord_channels;
 
       match_geo_channels_(
@@ -1555,7 +1553,7 @@ namespace AdServer::CampaignSvcs
 
         const bool reset_request_user = core_info.context_info[0]->enabled_notice;
         const Generics::Time confirm_time = core_info.common_info->time;
-        ChannelIdList geo_channels;
+        ChannelIdArray geo_channels;
 
         {
           ChannelIdSet coord_channels;
@@ -1603,7 +1601,8 @@ namespace AdServer::CampaignSvcs
         request_params->ad_slots.emplace_back(
           std::make_shared<AdSlotRequest>(std::move(ad_slot_info)));
 
-        auto geo_channels_ptr = std::make_shared<ChannelIdList>(std::move(geo_channels));
+        auto geo_channels_ptr =
+          std::make_shared<ChannelIdArray>(std::move(geo_channels));
         CampaignManagerLogger::AdRequestSlotLogArray ad_request_logs;
         CampaignManagerLogger::AdRequestSlotLog ad_request_log;
         ad_request_log.ad_slot = request_params->ad_slots.back();
@@ -3212,10 +3211,10 @@ namespace AdServer::CampaignSvcs
     }
 
     if (!check_request_constraints(
-          String::SubString(request_params.common_info->referer),
-          String::SubString(request_params.common_info->original_url),
-          referer_hostname_str,
-          original_url_str))
+      String::SubString(request_params.common_info->referer),
+      String::SubString(request_params.common_info->original_url),
+      referer_hostname_str,
+      original_url_str))
     {
       co_return true;
     }
@@ -3280,8 +3279,7 @@ namespace AdServer::CampaignSvcs
         request_params.channels.end());
       campaign_select_params.channels.emplace(TRUE_CHANNEL_ID);
 
-      campaign_select_params.user_id =
-        request_params.common_info->user_id;
+      campaign_select_params.user_id = request_params.common_info->user_id;
       campaign_select_params.country_code =
         !request_params.common_info->location.empty() ?
         request_params.common_info->location[0].country : "";
@@ -3335,7 +3333,7 @@ namespace AdServer::CampaignSvcs
         ad_slot.required_categories);
 
       if (!ad_slot.required_categories.empty() &&
-         campaign_select_params.required_categories.empty())
+        campaign_select_params.required_categories.empty())
       {
         // some category can't be resolved
         campaign_select_params.required_categories.insert(0);
@@ -3360,12 +3358,9 @@ namespace AdServer::CampaignSvcs
         (request_params.common_info->creative_instantiate_type == AdInstantiateRule::SECURE);
       for (const auto& campaign_freq : request_params.campaign_freqs)
       {
-        campaign_select_params.campaign_imps.insert(
-          std::make_pair(
-            campaign_freq.campaign_id,
-            std::min(
-              static_cast<unsigned long>(campaign_freq.imps),
-              100ul)));
+        campaign_select_params.campaign_imps.emplace(
+          campaign_freq.campaign_id,
+          std::min(static_cast<unsigned long>(campaign_freq.imps), 100ul));
       }
 
       // TODO: remove duplicated platform matching block.

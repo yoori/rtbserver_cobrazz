@@ -1,7 +1,5 @@
 #include <rocksdb/db.h>
 #include <rocksdb/iterator.h>
-#include <rocksdb/options.h>
-#include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
 
 #include <exception>
@@ -9,6 +7,7 @@
 #include <Stream/MemoryStream.hpp>
 
 #include "RocksDBProfileMap.hpp"
+#include "RocksDBOptions.hpp"
 
 namespace AdServer
 {
@@ -25,19 +24,7 @@ namespace ProfilingCommons
     static const char* FUN = "RocksDBProfileMapImpl::RocksDBProfileMapImpl()";
 
     rocksdb::Options options;
-    options.IncreaseParallelism();
-    options.OptimizeLevelStyleCompaction();
-    options.create_if_missing = true;
-    options.compression = rocksdb::kNoCompression;
-    // rocksdb : Each next level's file size will be
-    // target_file_size_multiplier bigger than previous one
-    // we set it for decrease number of opened files
-    options.target_file_size_multiplier = 2;
-
-    rocksdb::BlockBasedTableOptions table_options;
-    table_options.checksum = rocksdb::kNoChecksum;
-    options.table_factory.reset(
-      rocksdb::NewBlockBasedTableFactory(table_options));
+    configure_rocksdb_profile_map_options(options);
 
     rocksdb::Status status = rocksdb::DBWithTTL::Open(
       options,
@@ -185,7 +172,7 @@ namespace ProfilingCommons
       error = "unknown get error";
     }
 
-    callback(profile, std::move(error));
+    callback(std::move(profile), std::move(error));
 
     return Generics::ConstSmartMemBuf_var();
   }

@@ -12,13 +12,13 @@ namespace AdServer::Commons
     thread_local std::deque<std::coroutine_handle<>> pending;
 
     pending.push_back(handle);
-    if(draining)
+    if (draining)
     {
       return;
     }
 
     draining = true;
-    while(!pending.empty())
+    while (!pending.empty())
     {
       std::coroutine_handle<> next = pending.front();
       pending.pop_front();

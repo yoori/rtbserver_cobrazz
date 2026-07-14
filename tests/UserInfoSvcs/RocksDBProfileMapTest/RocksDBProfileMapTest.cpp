@@ -637,14 +637,14 @@ main(int argc, char** argv)
               &,
               scenario
             ](
-              const Generics::ConstSmartMemBuf_var& read_buf,
+              Generics::ConstSmartMemBuf_var read_buf,
               std::optional<std::string> error)
             {
               callback_executor.post(
                 [
                   &,
                   scenario,
-                  read_buf,
+                  read_buf = std::move(read_buf),
                   error = std::move(error)
                 ]() mutable
               {

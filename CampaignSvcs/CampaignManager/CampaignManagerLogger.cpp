@@ -193,7 +193,7 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::LogAdRequest> log_request;
       ChannelIdHashSet channels;
       CampaignManagerCore::AdSlotContext ad_slot_context;
-      std::shared_ptr<const ChannelIdList> geo_channels;
+      std::shared_ptr<const ChannelIdArray> geo_channels;
       bool is_ad_request = true;
       bool track_passback = false;
       bool reset_request_user = false;
@@ -3316,7 +3316,7 @@ namespace AdServer::CampaignSvcs
       request_params,
     CampaignManagerCore::AdSlotContext&& ad_slot_context,
     unsigned long profiling_type,
-    std::shared_ptr<const ChannelIdList> geo_channels,
+    std::shared_ptr<const ChannelIdArray> geo_channels,
     bool reset_request_user)
     /*throw(Exception)*/
   {
@@ -3351,7 +3351,7 @@ namespace AdServer::CampaignSvcs
       request_params,
     CampaignManagerCore::AdSlotContext&& ad_slot_context,
     unsigned long profiling_type,
-    std::shared_ptr<const ChannelIdList> geo_channels,
+    std::shared_ptr<const ChannelIdArray> geo_channels,
     bool reset_request_user)
     /*throw(Exception)*/
   {
@@ -3430,7 +3430,7 @@ namespace AdServer::CampaignSvcs
     ChannelIdHashSet channels,
     bool required_passback,
     AdRequestSlotLogArray&& ad_slots,
-    std::shared_ptr<const ChannelIdList> geo_channels,
+    std::shared_ptr<const ChannelIdArray> geo_channels,
     bool reset_request_user)
     /*throw(Exception)*/
   {

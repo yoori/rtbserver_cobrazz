@@ -1127,6 +1127,11 @@
           <xsl:value-of select="'200000'"/>
         </xsl:if>
       </xsl:attribute>
+      <xsl:attribute name="process_coef"><xsl:value-of select="$bidding-module/@process_coef"/>
+        <xsl:if test="count($bidding-module/@process_coef) = 0">
+          <xsl:value-of select="'1'"/>
+        </xsl:if>
+      </xsl:attribute>
       <xsl:attribute name="threads"><xsl:value-of select="$bidding-module/@threads"/>
         <xsl:if test="count($bidding-module/@threads) = 0">
           <xsl:value-of select="$def-bidding-module-threads"/>

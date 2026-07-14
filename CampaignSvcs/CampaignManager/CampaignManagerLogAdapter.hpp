@@ -55,7 +55,7 @@ namespace AdServer::CampaignSvcs
       CampaignManagerLogger::MatchRequestInfo& result_match_request,
       const CampaignConfig* campaign_config,
       const CampaignManagerCore::MatchRequestInfo& match_request_info,
-      const ChannelIdList& geo_channels)
+      const ChannelIdArray& geo_channels)
       /*throw(Exception)*/;
 
   private:

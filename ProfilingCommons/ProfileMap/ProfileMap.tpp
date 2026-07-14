@@ -179,7 +179,7 @@ namespace ProfilingCommons
       [
         callback = std::move(callback)
       ](
-        const Generics::ConstSmartMemBuf_var& profile,
+        Generics::ConstSmartMemBuf_var profile,
         std::optional<std::string> error) mutable
       {
         Generics::SmartMemBuf_var own_profile;
@@ -364,10 +364,10 @@ namespace ProfilingCommons
     async_profile_map_->get_profile_async(
       key,
       [&promise](
-        const Generics::ConstSmartMemBuf_var& profile,
+        Generics::ConstSmartMemBuf_var profile,
         std::optional<std::string> error)
       {
-        promise.set_value(std::make_pair(profile, std::move(error)));
+        promise.set_value(std::make_pair(std::move(profile), std::move(error)));
       },
       last_access_time ?
         std::optional<Generics::Time>(*last_access_time) :

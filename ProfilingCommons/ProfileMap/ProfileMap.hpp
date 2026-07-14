@@ -108,7 +108,7 @@ namespace ProfilingCommons
      */
     using CheckCallback = std::function<void(bool, std::optional<std::string>)>;
     using GetCallback = std::function<void(
-      const Generics::ConstSmartMemBuf_var&,
+      Generics::ConstSmartMemBuf_var,
       std::optional<std::string> error)>;
     using GetOwnCallback = std::function<void(
       Generics::SmartMemBuf_var,

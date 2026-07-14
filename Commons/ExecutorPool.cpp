@@ -101,8 +101,7 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::YieldAwaiter::await_suspend(
-    std::coroutine_handle<> handle) noexcept
+  ExecutorPool::YieldAwaiter::await_suspend(std::coroutine_handle<> handle) noexcept
   {
     const auto context_index = executor_pool_->get_next_context_index();
     executor_pool_->dispatch(

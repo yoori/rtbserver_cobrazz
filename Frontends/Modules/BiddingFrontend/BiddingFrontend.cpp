@@ -555,6 +555,7 @@ namespace AdServer::Bidding
           fill_uri_list(core_params.dao_uris, config_->DAOUriList()->Uri());
         }
         core_params.max_pending_tasks = config_->max_pending_tasks();
+        core_params.process_coef = config_->process_coef();
         core_params.threads = config_->threads();
         core_params.request_timeout = request_timeout;
         core_params.server_id = server_id_;
@@ -611,9 +612,7 @@ namespace AdServer::Bidding
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    core_->handle_request(
-      std::move(request_holder),
-      std::move(response_writer));
+    core_->handle_request(std::move(request_holder), std::move(response_writer));
   }
 
   void

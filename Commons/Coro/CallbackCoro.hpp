@@ -91,8 +91,7 @@ namespace AdServer::Commons
 
   template<typename... CallbackArgs>
   bool
-  CallbackCoro<CallbackArgs...>::await_suspend(
-    std::coroutine_handle<> handle)
+  CallbackCoro<CallbackArgs...>::await_suspend(std::coroutine_handle<> handle)
   {
     state_->handle = handle;
     if(const auto* scheduler = current_coroutine_resume_scheduler())
@@ -106,10 +105,10 @@ namespace AdServer::Commons
         [state = state_](CallbackArgs... callback_args) mutable
         {
           bool resume = false;
+
           {
             std::lock_guard<std::mutex> guard(state->lock);
-            state->result = StoredResult(std::forward<CallbackArgs>(
-              callback_args)...);
+            state->result = StoredResult(std::forward<CallbackArgs>(callback_args)...);
             state->completed = true;
             resume = state->suspended;
           }
@@ -125,7 +124,8 @@ namespace AdServer::Commons
               resume_coroutine(state->handle);
             }
           }
-        });
+        }
+      );
     }
     catch(...)
     {

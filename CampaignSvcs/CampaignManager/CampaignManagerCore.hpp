@@ -1291,7 +1291,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig& campaign_config,
       const std::vector<GeoInfo>& location,
       const std::vector<GeoCoordInfo>& coord_location,
-      ChannelIdList& geo_channels,
+      ChannelIdArray& geo_channels,
       ChannelIdSet& coord_channels)
       /*throw(NotReady, Exception)*/;
 

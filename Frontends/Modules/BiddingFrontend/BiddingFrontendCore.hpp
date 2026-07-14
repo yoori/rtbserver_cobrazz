@@ -36,7 +36,7 @@ namespace AdServer::Bidding
     public ReferenceCounting::AtomicImpl
   {
   public:
-    typedef Sync::Policy::PosixThread MaxPendingSyncPolicy;
+    using MaxPendingSyncPolicy = Sync::Policy::PosixThread;
 
     struct InitParams
     {
@@ -66,6 +66,7 @@ namespace AdServer::Bidding
       UriList clickstar_uris;
       UriList dao_uris;
       unsigned long max_pending_tasks;
+      double process_coef = 1;
       unsigned long threads;
       Generics::Time request_timeout;
       std::string server_id;
@@ -296,6 +297,7 @@ namespace AdServer::Bidding
     UriList clickstar_uris_;
     UriList dao_uris_;
     unsigned long max_pending_tasks_ = 0;
+    double process_coef_ = 1;
     unsigned long threads_ = 0;
     Generics::Time request_timeout_;
     std::string server_id_;

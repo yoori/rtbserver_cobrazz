@@ -57,7 +57,7 @@ namespace CampaignSvcs
 
     /* return channels in priority decreasing order : most accurate at begin */
     void match(
-      ChannelIdList& result_channels,
+      ChannelIdArray& result_channels,
       const String::SubString& country,
       const String::SubString& region,
       const String::SubString& city)
@@ -278,7 +278,7 @@ namespace CampaignSvcs
   inline
   void
   GeoChannelIndex::match(
-    ChannelIdList& result_channels,
+    ChannelIdArray& result_channels,
     const String::SubString& country_val,
     const String::SubString& region_val,
     const String::SubString& city_val)

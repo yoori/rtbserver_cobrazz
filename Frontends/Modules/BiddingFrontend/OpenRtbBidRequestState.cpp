@@ -405,8 +405,7 @@ namespace AdServer::Bidding
 
       if (interrupted())
       {
-        const auto stage =  convert_stage_to_string(
-          get_current_stage());
+        const auto stage =  convert_stage_to_string(get_current_stage());
         response->add_header_nocopy(
           Response::Header::OPENRTB_INTERRUPTED_BID,
           stage);
@@ -431,8 +430,7 @@ namespace AdServer::Bidding
 
     if (interrupted())
     {
-      const auto stage =  convert_stage_to_string(
-        get_current_stage());
+      const auto stage =  convert_stage_to_string(get_current_stage());
       response->add_header_nocopy(
         Response::Header::OPENRTB_INTERRUPTED_BID,
         stage);

@@ -53,7 +53,7 @@ namespace AdServer::ProfilingCommons
   public:
     using CheckCallback = std::function<void(bool, std::optional<std::string>)>;
     using GetCallback = std::function<void (
-      const Generics::ConstSmartMemBuf_var&,
+      Generics::ConstSmartMemBuf_var,
       std::optional<std::string> error)>;
     using GetOwnCallback = std::function<void (
       Generics::SmartMemBuf_var,
@@ -281,8 +281,8 @@ namespace AdServer::ProfilingCommons
     get_profile_async(
       const KeyType& key,
       std::function<void (
-        const Generics::ConstSmartMemBuf_var&,
-      std::optional<std::string> error)> callback,
+        Generics::ConstSmartMemBuf_var,
+        std::optional<std::string> error)> callback,
       std::optional<Generics::Time> last_access_time = std::nullopt) override;
 
     Generics::SmartMemBuf_var
@@ -408,7 +408,7 @@ namespace AdServer::ProfilingCommons
   RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::get_profile_async(
     const KeyType& key,
     std::function<void (
-      const Generics::ConstSmartMemBuf_var&,
+      Generics::ConstSmartMemBuf_var,
       std::optional<std::string> error)> callback,
     std::optional<Generics::Time> last_access_time)
   {

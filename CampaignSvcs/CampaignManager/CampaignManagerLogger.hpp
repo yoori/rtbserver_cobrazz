@@ -253,7 +253,7 @@ namespace AdServer::CampaignSvcs
       bool track_passback;
 
       // geo_channels: ordered in accuracy desc (coord channels after non coord)
-      ChannelIdList geo_channels;
+      ChannelIdArray geo_channels;
 
       // Triggers from channels except discover and keyword channels
       TriggerChannelMap page_triggers;
@@ -571,7 +571,7 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params,
       CampaignManagerCore::AdSlotContext&& ad_slot_context,
       unsigned long profiling_type = PT_ALL,
-      std::shared_ptr<const ChannelIdList> geo_channels = {},
+      std::shared_ptr<const ChannelIdArray> geo_channels = {},
       bool reset_request_user = false)
       /*throw(Exception)*/;
 
@@ -583,7 +583,7 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params,
       CampaignManagerCore::AdSlotContext&& ad_slot_context,
       unsigned long profiling_type = PT_ALL,
-      std::shared_ptr<const ChannelIdList> geo_channels = {},
+      std::shared_ptr<const ChannelIdArray> geo_channels = {},
       bool reset_request_user = false)
       /*throw(Exception)*/;
 
@@ -608,7 +608,7 @@ namespace AdServer::CampaignSvcs
       ChannelIdHashSet channels,
       bool required_passback,
       AdRequestSlotLogArray&& ad_slots,
-      std::shared_ptr<const ChannelIdList> geo_channels = {},
+      std::shared_ptr<const ChannelIdArray> geo_channels = {},
       bool reset_request_user = false)
       /*throw(Exception)*/;
 

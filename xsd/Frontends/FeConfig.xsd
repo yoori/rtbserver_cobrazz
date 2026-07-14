@@ -339,6 +339,13 @@
     <xsd:attribute name="country_code" type="xsd:string" use="required"/>
   </xsd:complexType>
 
+  <xsd:simpleType name="ProcessCoefType">
+    <xsd:restriction base="xsd:float">
+      <xsd:minInclusive value="0"/>
+      <xsd:maxInclusive value="1"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="BidFeConfigurationType">
     <xsd:annotation>
       <xsd:documentation>
@@ -381,6 +388,10 @@
     <xsd:attribute name="max_pending_tasks"
       type="xsd:positiveInteger"
       use="required"/>
+    <xsd:attribute name="process_coef"
+      type="ProcessCoefType"
+      use="optional"
+      default="1"/>
     <xsd:attribute name="interrupted_threads"
       type="xsd:positiveInteger"
       use="optional" default="10"/>

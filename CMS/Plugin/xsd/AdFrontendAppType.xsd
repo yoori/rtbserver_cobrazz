@@ -684,6 +684,13 @@
     </xsd:sequence>
   </xsd:complexType>
 
+  <xsd:simpleType name="ProcessCoefType">
+    <xsd:restriction base="xsd:float">
+      <xsd:minInclusive value="0"/>
+      <xsd:maxInclusive value="1"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="BiddingFrontendConfigType">
     <xsd:sequence>
       <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
@@ -713,6 +720,13 @@
       <xsd:annotation>
         <xsd:documentation>
           Maximum pending bidding request tasks.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="process_coef" type="ProcessCoefType" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Share of bidding requests to process.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

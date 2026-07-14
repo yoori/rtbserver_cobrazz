@@ -1,8 +1,6 @@
 #include <rocksdb/db.h>
 #include <rocksdb/iterator.h>
-#include <rocksdb/options.h>
 #include <rocksdb/slice.h>
-#include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
@@ -15,6 +13,7 @@
 #include <Commons/ThreadName.hpp>
 
 #include "RocksDBBatchingProfileMap.hpp"
+#include "RocksDBOptions.hpp"
 
 namespace AdServer::ProfilingCommons
 {
@@ -64,16 +63,7 @@ namespace AdServer::ProfilingCommons
     static const char* FUN = "RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl()";
 
     rocksdb::Options options;
-    options.IncreaseParallelism();
-    options.OptimizeLevelStyleCompaction();
-    options.create_if_missing = true;
-    options.compression = rocksdb::kNoCompression;
-    options.target_file_size_multiplier = 2;
-
-    rocksdb::BlockBasedTableOptions table_options;
-    table_options.checksum = rocksdb::kNoChecksum;
-    options.table_factory.reset(
-      rocksdb::NewBlockBasedTableFactory(table_options));
+    configure_rocksdb_profile_map_options(options);
 
     rocksdb::DBWithTTL* db = nullptr;
     const auto status = rocksdb::DBWithTTL::Open(
@@ -198,10 +188,10 @@ namespace AdServer::ProfilingCommons
     get_profile_async(
       key,
       [&promise](
-        const Generics::ConstSmartMemBuf_var& profile,
+        Generics::ConstSmartMemBuf_var profile,
         std::optional<std::string> error)
       {
-        promise.set_value(std::make_pair(profile, error));
+        promise.set_value(std::make_pair(std::move(profile), std::move(error)));
       },
       std::nullopt);
 

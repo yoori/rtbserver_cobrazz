@@ -93,7 +93,7 @@ namespace ProfilingCommons
 
           if(callback)
           {
-            callback(result, std::move(error));
+            callback(std::move(result), std::move(error));
           }
         });
 
