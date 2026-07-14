@@ -1257,7 +1257,7 @@ namespace AdServer::CampaignSvcs
     {
       InstantiateAdRequest& instantiate_ad_info = core_info;
 
-      ConstCampaignConfigPtr campaign_config = get_campaign_config();
+      ConstCampaignConfigPtr campaign_config = get_campaign_config(true);
       const Colocation* colocation = 0;
       const Tag* tag = 0;
       const Tag::Size* tag_size = 0;
