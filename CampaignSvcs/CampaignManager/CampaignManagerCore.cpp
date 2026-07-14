@@ -882,11 +882,6 @@ namespace AdServer::CampaignSvcs
 
       ConstCampaignConfigPtr campaign_config = get_campaign_config(true);
 
-      if (!campaign_config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
-
       ConstCampaignIndexPtr config_index = get_campaign_index();
       if (!config_index)
       {
@@ -1144,12 +1139,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr campaign_config = get_campaign_config();
-
-      if (!campaign_config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr campaign_config = get_campaign_config(true);
 
       CampaignManagerLogger::MatchRequestInfo mri;
 
@@ -2764,11 +2754,7 @@ namespace AdServer::CampaignSvcs
   {
     static const char* FUN = "CampaignManagerCore::consider_passback_track()";
 
-    ConstCampaignConfigPtr config = get_campaign_config();
-    if (!config)
-    {
-      throw NotReady("Campaign configuration isn't loaded");
-    }
+    ConstCampaignConfigPtr config = get_campaign_config(true);
 
     TagMap::const_iterator tag_it = config->tags.find(in.tag_id);
     CampaignConfig::ColocationMap::const_iterator colo_it =
@@ -3843,11 +3829,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr config = get_campaign_config();
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr config = get_campaign_config(true);
 
       std::vector<CategoryChannelNodeInfo> result;
       result.reserve(config->category_channel_nodes.size());
@@ -3888,11 +3870,7 @@ namespace AdServer::CampaignSvcs
     const Generics::Time imp_time = impression_info.time;
     const Generics::Time bid_time = impression_info.bid_time;
 
-    ConstCampaignConfigPtr config = get_campaign_config();
-    if (!config)
-    {
-      throw NotReady("Campaign configuration isn't loaded");
-    }
+    ConstCampaignConfigPtr config = get_campaign_config(true);
 
     RevenueType pub_imp_revenue_type = static_cast<RevenueType>(
       impression_info.pub_imp_revenue_type);
@@ -4020,11 +3998,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr config = get_campaign_config();
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr config = get_campaign_config(true);
 
       AdServer::Commons::RequestId ar_id = AdServer::Commons::RequestId::create_random_based();
 
@@ -4133,11 +4107,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr config = get_campaign_config();
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr config = get_campaign_config(true);
 
       CampaignConfig::ColocationMap::const_iterator colo_it =
         colo_id <= 0 ? config->colocations.end() :
@@ -4236,11 +4206,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr config = get_campaign_config();
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr config = get_campaign_config(true);
 
       WebOperationHash::const_iterator web_it = config->web_operations.find(
         WebOperationKey(
@@ -4775,11 +4741,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr config = get_campaign_config();
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr config = get_campaign_config(true);
 
       std::vector<ColocationFlagsInfo> result;
       result.reserve(config->colocations.size());
@@ -4819,12 +4781,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      ConstCampaignConfigPtr config = get_campaign_config();
-
-      if (!config)
-      {
-        throw NotReady("Campaign configuration isn't loaded");
-      }
+      ConstCampaignConfigPtr config = get_campaign_config(true);
 
       StringArray result;
       AccountArray result_accounts;

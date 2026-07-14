@@ -545,8 +545,11 @@ namespace AdServer::CampaignSvcs
   void
   BillingStateContainer::Impl::clear_cache() noexcept
   {
-    SyncPolicy::WriteGuard lock(lock_);
-    cache_.clear();
+    CCGStateMap old_cache;
+    {
+      SyncPolicy::WriteGuard lock(lock_);
+      cache_.swap(old_cache);
+    }
   }
 
   BillingStateContainer::Stats

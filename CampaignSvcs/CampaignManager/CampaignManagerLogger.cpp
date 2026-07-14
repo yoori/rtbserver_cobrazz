@@ -149,29 +149,29 @@ namespace
   char
   adapt_user_status(AdServer::CampaignSvcs::UserStatus user_status)
   {
-    if(user_status == AdServer::CampaignSvcs::US_NOEXTERNALID)
+    if (user_status == AdServer::CampaignSvcs::US_NOEXTERNALID)
     {
       return 'N';
     }
-    else if(user_status == AdServer::CampaignSvcs::US_PROBE ||
+    else if (user_status == AdServer::CampaignSvcs::US_PROBE ||
       user_status == AdServer::CampaignSvcs::US_EXTERNALPROBE)
     {
       return 'P';
     }
-    else if(user_status == AdServer::CampaignSvcs::US_OPTIN ||
+    else if (user_status == AdServer::CampaignSvcs::US_OPTIN ||
       user_status == AdServer::CampaignSvcs::US_TEMPORARY)
     {
       return 'I';
     }
-    else if(user_status == AdServer::CampaignSvcs::US_OPTOUT)
+    else if (user_status == AdServer::CampaignSvcs::US_OPTOUT)
     {
       return 'O';
     }
-    else if(user_status == AdServer::CampaignSvcs::US_FOREIGN)
+    else if (user_status == AdServer::CampaignSvcs::US_FOREIGN)
     {
       return 'F';
     }
-    else if(user_status == AdServer::CampaignSvcs::US_BLACKLISTED)
+    else if (user_status == AdServer::CampaignSvcs::US_BLACKLISTED)
     {
       return 'B';
     }
@@ -237,13 +237,13 @@ namespace AdServer::CampaignSvcs
           effective_track_passback,
           ad_slot_context);
 
-        if(reset_request_user)
+        if (reset_request_user)
         {
           request_info->request_user_id = AdServer::Commons::UserId();
           request_info->request_user_status = US_UNDEFINED;
         }
 
-        if(geo_channels)
+        if (geo_channels)
         {
           request_info->geo_channels.insert(
             request_info->geo_channels.end(),
@@ -345,13 +345,13 @@ namespace AdServer::CampaignSvcs
           ad_slot_context);
         logger_request_info->is_ad_request = true;
 
-        if(request_info.reset_request_user)
+        if (request_info.reset_request_user)
         {
           logger_request_info->request_user_id = AdServer::Commons::UserId();
           logger_request_info->request_user_status = US_UNDEFINED;
         }
 
-        if(request_info.geo_channels)
+        if (request_info.geo_channels)
         {
           logger_request_info->geo_channels.insert(
             logger_request_info->geo_channels.end(),
@@ -1236,7 +1236,7 @@ namespace AdServer::CampaignSvcs
         const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
         /*throw(Exception)*/
       {
-        if(!request_info.log_as_test && ad_ri.auction_type != AT_RANDOM)
+        if (!request_info.log_as_test && ad_ri.auction_type != AT_RANDOM)
         {
           CollectorT::KeyT key(ad_ri.pub_time, request_info.colo_id);
           CollectorT::DataT data;
@@ -1314,7 +1314,7 @@ namespace AdServer::CampaignSvcs
       add_record_(const CampaignManagerLogger::AnonymousRequestInfo& request_info)
         /*throw(Exception)*/
       {
-        if(!request_info.log_as_test &&
+        if (!request_info.log_as_test &&
            request_info.user_agent.in() &&
            request_info.user_status != US_FOREIGN)
         {
@@ -1395,7 +1395,7 @@ namespace AdServer::CampaignSvcs
           // check next
           data.device_channel_id = request_info.last_platform_channel_id;
 
-          if(request_info.user_status == US_TEMPORARY)
+          if (request_info.user_status == US_TEMPORARY)
           {
             // data.uid_hash = "";
             user_id_hash(data.tuid_hash, request_info.user_id);
@@ -1491,7 +1491,7 @@ namespace AdServer::CampaignSvcs
     {
       static const char* FUN = "ChannelTriggerStatLogger::process_request()";
 
-      if(!request_info.log_as_test &&
+      if (!request_info.log_as_test &&
         /* (request_info.user_status == US_OPTIN ||
           request_info.user_status == US_TEMPORARY ||
           request_info.user_status == US_BLACKLISTED) && */ (
@@ -1597,7 +1597,7 @@ namespace AdServer::CampaignSvcs
     {
       static const char* FUN = "ChannelHitStatLogger::process_request()";
 
-      if(request_info.log_as_test || (
+      if (request_info.log_as_test || (
            request_info.user_status != US_OPTIN &&
            request_info.user_status != US_TEMPORARY &&
            request_info.user_status != US_BLACKLISTED))
@@ -1618,7 +1618,7 @@ namespace AdServer::CampaignSvcs
           }
         };
 
-        if(!request_info.triggered_channels.channels.empty())
+        if (!request_info.triggered_channels.channels.empty())
         {
           CollectorT::DataT data;
           data.prepare_adding(
@@ -1668,7 +1668,7 @@ namespace AdServer::CampaignSvcs
     process_request(const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
     {
-      if(need_process_request_(request_info, 0))
+      if (need_process_request_(request_info, 0))
       {
         add_record_(request_info, 0);
       }
@@ -1719,7 +1719,7 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerLogger::AdRequestSelectionInfo& ad_request_selection_info)
       /*throw(Exception)*/
     {
-      if(need_process_request_(request_info, &ad_request_selection_info))
+      if (need_process_request_(request_info, &ad_request_selection_info))
       {
         add_record_(request_info, &ad_request_selection_info);
       }
@@ -1830,7 +1830,7 @@ namespace AdServer::CampaignSvcs
 
         CollectorT::DataT data;
 
-        if(!request_info.household_id.is_null())
+        if (!request_info.household_id.is_null())
         {
           // household record
           CollectorT::DataT::DataT::Match match_request(
@@ -1854,14 +1854,14 @@ namespace AdServer::CampaignSvcs
 
         CollectorT::DataT::DataT::AdRequestPropsOptional ad_request_opt;
 
-        if(ad_selection_info)
+        if (ad_selection_info)
         {
           CollectorT::DataT::DataT::AdSlotImpressionOptional display_ad_shown;
           CollectorT::DataT::DataT::AdBidSlotImpressionList text_ad_shown;
 
           RevenueDecimal cost_threshold;
 
-          if(ad_selection_info->text_campaigns)
+          if (ad_selection_info->text_campaigns)
           {
             for(CampaignManagerLogger::AdSelectionInfoList::const_iterator ad_it =
                   ad_selection_info->ad_selection_info_list.begin();
@@ -1886,7 +1886,7 @@ namespace AdServer::CampaignSvcs
           }
           else
           {
-            if(!ad_selection_info->ad_selection_info_list.empty() &&
+            if (!ad_selection_info->ad_selection_info_list.empty() &&
               ad_selection_info->ad_selection_info_list.front().ad_selected)
             {
               const CampaignManagerLogger::AdSelectionInfo& display_ad_info =
@@ -1920,7 +1920,7 @@ namespace AdServer::CampaignSvcs
 
         AdServer::Commons::UserId user_id;
         AdServer::Commons::UserId temporary_user_id;
-        if(request_info.user_status == US_TEMPORARY)
+        if (request_info.user_status == US_TEMPORARY)
         {
           temporary_user_id = request_info.user_id;
         }
@@ -2021,7 +2021,7 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        if( //(!web_op.global_request_id.is_null() || !web_op.request_ids.empty()) &&
+        if ( //(!web_op.global_request_id.is_null() || !web_op.request_ids.empty()) &&
            !web_op.test_request)
         {
           CollectorT::DataT data;
@@ -2036,7 +2036,7 @@ namespace AdServer::CampaignSvcs
           data.external_user_id = web_op.external_user_id;
           data.user_agent = web_op.user_agent;
 
-          if(!web_op.request_ids.empty())
+          if (!web_op.request_ids.empty())
           {
             for(CampaignManagerLogger::WebOperationInfo::RequestIdList::
               const_iterator request_id_it = web_op.request_ids.begin();
@@ -2075,23 +2075,23 @@ namespace AdServer::CampaignSvcs
   {
     full_time = time_in;
     time = time_in;
-    if(!(flags & LOG_HOUR))
+    if (!(flags & LOG_HOUR))
     {
       time = Algs::round_to_day(time);
     }
-    if(flags & LOG_CT)
+    if (flags & LOG_CT)
     {
       ct = ct_in;
     }
-    if(flags & LOG_CURT)
+    if (flags & LOG_CURT)
     {
       curct = curt_in;
     }
-    if(flags & LOG_BROWSER)
+    if (flags & LOG_BROWSER)
     {
       browser = browser_in;
     }
-    if(flags & LOG_OS)
+    if (flags & LOG_OS)
     {
       os = os_in;
     }
@@ -2224,7 +2224,7 @@ namespace AdServer::CampaignSvcs
     {
       static const char* FUN = "CreativeStatLogger::process_ad_request()";
 
-      if(!ad_request_selection_info.ad_selection_info_list.empty() &&
+      if (!ad_request_selection_info.ad_selection_info_list.empty() &&
          !ad_request_selection_info.ad_selection_info_list.front().ad_selected)
       {
         try
@@ -2241,7 +2241,7 @@ namespace AdServer::CampaignSvcs
             init_no_ad_key_(false, request_info, ad_request_selection_info, ad_info),
             STAT_REQUESTS_INCREMENT_);
 
-          if(request_info.fraud)
+          if (request_info.fraud)
           {
             data.add(
               init_no_ad_key_(true, request_info, ad_request_selection_info, ad_info),
@@ -2321,7 +2321,7 @@ namespace AdServer::CampaignSvcs
         {
           const CampaignManagerLogger::AdSelectionInfo& ad_info = *ad_it;
 
-          if(ad_info.ad_selected)
+          if (ad_info.ad_selected)
           {
             using namespace AdServer::LogProcessing;
 
@@ -2590,7 +2590,7 @@ namespace AdServer::CampaignSvcs
     {
       static const char* FUN = "ActionRequestLogger::process_action()";
 
-      if(!adv_action_info.log_as_test &&
+      if (!adv_action_info.log_as_test &&
          adv_action_info.action_id.present())
       {
         try
@@ -2655,7 +2655,7 @@ namespace AdServer::CampaignSvcs
     {
       static const char* FUN = "PassbackStatLogger::process_passback_track()";
 
-      if(!passback_track_info.log_as_test)
+      if (!passback_track_info.log_as_test)
       {
         try
         {
@@ -2692,11 +2692,11 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        if(!request_info.log_as_test && request_info.profile_referer)
+        if (!request_info.log_as_test && request_info.profile_referer)
         {
           CollectorT::DataT::OptInSectionOptional opt_in;
 
-          if(request_info.user_status == US_OPTIN ||
+          if (request_info.user_status == US_OPTIN ||
              request_info.user_status == US_BLACKLISTED)
           {
             opt_in = CollectorT::DataT::OptInSection(
@@ -2748,14 +2748,14 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        if(!request_info.log_as_test)
+        if (!request_info.log_as_test)
         {
           CollectorT::DataT::OptInSectionOptional opt_in;
 
           const bool ad_shown = !ad_ri.ad_selection_info_list.empty() &&
             ad_ri.ad_selection_info_list.front().ad_selected;
 
-          if(request_info.user_status == US_OPTIN ||
+          if (request_info.user_status == US_OPTIN ||
              request_info.user_status == US_BLACKLISTED ||
              ad_shown)
           {
@@ -2849,7 +2849,7 @@ namespace AdServer::CampaignSvcs
     {
       using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
-      if(!request_info.log_as_test &&
+      if (!request_info.log_as_test &&
          !ad_request_selection_info.lost_auction_ccgs.empty())
       {
         AdvDateDataMap adv_date_to_data;
@@ -2883,7 +2883,7 @@ namespace AdServer::CampaignSvcs
     {
       using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
-      if(!request_info.log_as_test &&
+      if (!request_info.log_as_test &&
          !ad_request_selection_info.lost_auction_creatives.empty())
       {
         AdvDateDataMap adv_date_to_data;
@@ -2965,7 +2965,7 @@ namespace AdServer::CampaignSvcs
     add_record_(const CampaignManagerLogger::AnonymousRequestInfo& request_info)
       /*throw(Exception)*/
     {
-      if(!request_info.log_as_test && request_info.search_engine_id)
+      if (!request_info.log_as_test && request_info.search_engine_id)
       {
         CollectorT::DataT data;
         data.add(
@@ -3176,7 +3176,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      if(params.channel_trigger_stat.period != Generics::Time::ZERO)
+      if (params.channel_trigger_stat.period != Generics::Time::ZERO)
       {
         channel_trigger_stat_logger_ =
           new ChannelTriggerStatLogger(params.channel_trigger_stat);
@@ -3194,7 +3194,7 @@ namespace AdServer::CampaignSvcs
       web_stat_logger_ = new WebStatLogger(params.web_stat);
       owner_.add_child_log_holder(web_stat_logger_);
 
-      if(params.research_web_stat.period != Generics::Time::ZERO)
+      if (params.research_web_stat.period != Generics::Time::ZERO)
       {
         research_web_stat_logger_ = new ResearchWebStatLogger(params.research_web_stat);
         owner_.add_child_log_holder(research_web_stat_logger_);
@@ -3225,7 +3225,7 @@ namespace AdServer::CampaignSvcs
         new PassbackImpressionLogger(params.passback_impression);
       owner_.add_child_log_holder(passback_impression_logger_);
 
-      if(params.search_term_stat.period != Generics::Time::ZERO)
+      if (params.search_term_stat.period != Generics::Time::ZERO)
       {
         search_term_stat_logger_ =
           new SearchTermStatLogger(params.search_term_stat);
@@ -3246,13 +3246,13 @@ namespace AdServer::CampaignSvcs
       tag_position_stat_logger_ = new TagPositionStatLogger(params.tag_position_stat);
       owner_.add_child_log_holder(tag_position_stat_logger_);
 
-      if(params.ccg_stat.period != Generics::Time::ZERO)
+      if (params.ccg_stat.period != Generics::Time::ZERO)
       {
         ccg_stat_logger_ = new CcgStatLogger(params.ccg_stat);
         owner_.add_child_log_holder(ccg_stat_logger_);
       }
 
-      if(params.cc_stat.period != Generics::Time::ZERO)
+      if (params.cc_stat.period != Generics::Time::ZERO)
       {
         cc_stat_logger_ = new CcStatLogger(params.cc_stat);
         owner_.add_child_log_holder(cc_stat_logger_);
@@ -3264,7 +3264,7 @@ namespace AdServer::CampaignSvcs
       user_agent_stat_logger_ = new UserAgentStatLogger(params.user_agent_stat);
       owner_.add_child_log_holder(user_agent_stat_logger_);
 
-      if(params.prof_research.period != Generics::Time::ZERO &&
+      if (params.prof_research.period != Generics::Time::ZERO &&
           params.profiling_log_sampling > 0)
       {
         profiling_research_logger_ = new ProfilingResearchLogger(
@@ -3639,7 +3639,7 @@ namespace AdServer::CampaignSvcs
       queue_cond_.notify_all();
       for(auto& thread : threads_pool_)
       {
-        if(thread.joinable())
+        if (thread.joinable())
         {
           thread.join();
         }
@@ -3669,7 +3669,7 @@ namespace AdServer::CampaignSvcs
 
     for(auto& thread : threads_pool_)
     {
-      if(thread.joinable())
+      if (thread.joinable())
       {
         thread.join();
       }
@@ -3680,18 +3680,18 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerLogger::Impl::worker_loop_() noexcept
   {
-    for(;;)
+    while (true)
     {
       std::deque<std::function<void()>> tasks;
 
       {
         std::unique_lock<std::mutex> guard(queue_mutex_);
         queue_cond_.wait(guard, [this]()
-        {
-          return queue_closed_ || !tasks_.empty();
-        });
+          {
+            return queue_closed_ || !tasks_.empty();
+          });
 
-        if(tasks_.empty() && queue_closed_)
+        if (tasks_.empty() && queue_closed_)
         {
           return;
         }
@@ -3711,23 +3711,21 @@ namespace AdServer::CampaignSvcs
         {
           logger_->sstream(
             Logging::Logger::EMERGENCY,
-            "CampaignManagerLogger")
-            << "CampaignManagerLogger::worker_loop_(): "
-               "caught eh::Exception: " << ex.what();
+            "CampaignManagerLogger") <<
+            "CampaignManagerLogger::worker_loop_(): caught eh::Exception: " << ex.what();
         }
         catch(...)
         {
           logger_->sstream(
             Logging::Logger::EMERGENCY,
-            "CampaignManagerLogger")
-            << "CampaignManagerLogger::worker_loop_(): "
-               "caught unknown exception";
+            "CampaignManagerLogger") <<
+            "CampaignManagerLogger::worker_loop_(): caught unknown exception";
         }
 
         {
           std::lock_guard<std::mutex> guard(queue_mutex_);
           --processing_tasks_;
-          if(processing_tasks_ == 0 && tasks_.empty())
+          if (processing_tasks_ == 0 && tasks_.empty())
           {
             processing_cond_.notify_all();
           }
@@ -3749,15 +3747,15 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogger::Stats
   CampaignManagerLogger::Impl::get_stats() const noexcept
   {
-    std::lock_guard<std::mutex> guard(queue_mutex_);
-
     Stats stats;
+
+    std::lock_guard<std::mutex> guard(queue_mutex_);
     stats.queue_size = tasks_.size();
     stats.queue_total = queue_total_;
     stats.processing_requests = processing_tasks_;
     stats.processing_requests_total = processing_requests_total_;
-    stats.request_in_progress =
-      stats.queue_size + stats.processing_requests;
+    stats.request_in_progress = stats.queue_size + stats.processing_requests;
+
     return stats;
   }
 
@@ -3766,7 +3764,7 @@ namespace AdServer::CampaignSvcs
     AdInstances::ConstCampaignConfigPtr campaign_config)
   {
     std::lock_guard<std::mutex> guard(campaign_config_mutex_);
-    campaign_config_ = std::move(campaign_config);
+    campaign_config_.swap(campaign_config);
   }
 
   AdInstances::ConstCampaignConfigPtr
@@ -3785,11 +3783,10 @@ namespace AdServer::CampaignSvcs
     {
       std::lock_guard<std::mutex> guard(queue_mutex_);
 
-      if(queue_closed_)
+      if (queue_closed_)
       {
         Stream::Error ostr;
-        ostr << "CampaignManagerLogger::enqueue_task(): "
-          "queue is closed";
+        ostr << "CampaignManagerLogger::enqueue_task(): queue is closed";
         throw Exception(ostr);
       }
 
@@ -3798,7 +3795,7 @@ namespace AdServer::CampaignSvcs
       ++queue_total_;
     }
 
-    if(was_empty)
+    if (was_empty)
     {
       queue_cond_.notify_one();
     }
@@ -3810,13 +3807,13 @@ namespace AdServer::CampaignSvcs
     const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
     /*throw(Exception)*/
   {
-    if(channel_trigger_stat_logger_.in())
+    if (channel_trigger_stat_logger_.in())
     {
       channel_trigger_stat_logger_->process_request(ri);
     }
 
     channel_hit_stat_logger_->process_request(ri);
-    if(search_term_stat_logger_.in())
+    if (search_term_stat_logger_.in())
     {
       search_term_stat_logger_->process_request(ri);
     }
@@ -3833,12 +3830,12 @@ namespace AdServer::CampaignSvcs
 
     tag_position_stat_logger_->process_ad_request(ri, ad_ri);
 
-    if(ccg_stat_logger_.in())
+    if (ccg_stat_logger_.in())
     {
       ccg_stat_logger_->process_ad_request(ri, ad_ri);
     }
 
-    if(cc_stat_logger_.in())
+    if (cc_stat_logger_.in())
     {
       cc_stat_logger_->process_ad_request(ri, ad_ri);
     }
@@ -3880,7 +3877,7 @@ namespace AdServer::CampaignSvcs
   {
     if (profiling_type & PT_PROFILING_INFO)
     {
-      if(channel_trigger_stat_logger_.in())
+      if (channel_trigger_stat_logger_.in())
       {
         channel_trigger_stat_logger_->process_request(request_info);
       }
@@ -3893,7 +3890,7 @@ namespace AdServer::CampaignSvcs
     {
       user_agent_stat_logger_->process_request(request_info);
 
-      if(search_term_stat_logger_.in())
+      if (search_term_stat_logger_.in())
       {
         search_term_stat_logger_->process_request(request_info);
       }
@@ -3934,7 +3931,7 @@ namespace AdServer::CampaignSvcs
   {
     user_agent_stat_logger_->process_anon_request(anon_request_info);
 
-    if(search_term_stat_logger_.in())
+    if (search_term_stat_logger_.in())
     {
       search_term_stat_logger_->process_anon_request(anon_request_info);
     }
@@ -4025,7 +4022,7 @@ namespace AdServer::CampaignSvcs
     {
       web_stat_logger_->process_web_operation(web_op_info);
 
-      if(research_web_stat_logger_.in())
+      if (research_web_stat_logger_.in())
       {
         research_web_stat_logger_->process_web_operation(web_op_info);
       }

@@ -1436,8 +1436,7 @@ namespace AdServer::CampaignSvcs
 
     if(required && !res)
     {
-      throw CampaignManagerCore::NotReady(
-        "Campaign configuration isn't loaded");
+      throw CampaignManagerCore::NotReady("Campaign configuration isn't loaded");
     }
 
     return res;

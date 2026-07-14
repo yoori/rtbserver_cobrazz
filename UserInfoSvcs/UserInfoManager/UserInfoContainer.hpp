@@ -305,13 +305,19 @@ namespace AdServer::UserInfoSvcs
     FreqCapConfig* freq_cap_config)
     noexcept
   {
-    SyncPolicy::WriteGuard lock(config_lock_);
+    ChannelDictionary_var new_channels_config =
+      ReferenceCounting::add_ref(channels_config);
+    FreqCapConfig_var new_freq_cap_config =
+      ReferenceCounting::add_ref(freq_cap_config);
 
-    time_offset_ = time_offset;
-    master_stamp_ = master_stamp;
+    {
+      SyncPolicy::WriteGuard lock(config_lock_);
 
-    channels_config_ = ReferenceCounting::add_ref(channels_config);
-    freq_cap_config_ = ReferenceCounting::add_ref(freq_cap_config);
+      time_offset_ = time_offset;
+      master_stamp_ = master_stamp;
+      channels_config_.swap(new_channels_config);
+      freq_cap_config_.swap(new_freq_cap_config);
+    }
   }
 
   inline

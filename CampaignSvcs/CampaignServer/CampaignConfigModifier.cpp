@@ -94,12 +94,13 @@ namespace CampaignSvcs
       // update modify config
       ModifyConfig_var new_modify_config =
         modify_config_source_->update();
+      CModifyConfig_var new_modify_config_ptr = new_modify_config;
 
       SyncPolicy::WriteGuard lock(modify_config_lock_);
 
-      if(new_modify_config.in())
+      if(new_modify_config_ptr.in())
       {
-        modify_config_ = new_modify_config;
+        modify_config_.swap(new_modify_config_ptr);
       }
 
       modify_config = modify_config_;

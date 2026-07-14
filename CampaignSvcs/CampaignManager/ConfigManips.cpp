@@ -117,8 +117,12 @@ namespace AdServer
             ": Config expired - disable ad showing: config timestamp = " <<
             master_stamp.get_gm_time();
 
-          std::lock_guard<std::mutex> guard(lock_);
-          configuration_index_.reset();
+          ConstCampaignIndexPtr old_configuration_index;
+
+          {
+            std::lock_guard<std::mutex> guard(lock_);
+            configuration_index_.swap(old_configuration_index);
+          }
         }
         else if(new_config)
         {
@@ -147,10 +151,13 @@ namespace AdServer
 
             precalculate_pub_pixel_accounts_(new_config.get());
 
+            ConstCampaignIndexPtr new_configuration_index = configuration_index;
+            ConstCampaignConfigPtr new_configuration = new_config;
+
             {
               std::lock_guard<std::mutex> guard(lock_);
-              configuration_index_ = configuration_index;
-              configuration_ = new_config;
+              configuration_index_.swap(new_configuration_index);
+              configuration_.swap(new_configuration);
             }
 
             campaign_manager_logger_->set_campaign_config(new_config);
