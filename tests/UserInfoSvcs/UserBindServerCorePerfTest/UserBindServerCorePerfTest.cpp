@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -24,6 +25,8 @@ namespace
     std::size_t chunk_count = 16;
     std::size_t threads = 1;
     std::uint64_t count = 0;
+    std::optional<Generics::Time> bind_min_age = Generics::Time(10);
+    bool generate_user_id = false;
   };
 
   struct CpuTimes
@@ -40,7 +43,9 @@ namespace
       << "Options:\n"
       << "  --chunk-count <N>  chunks count (default: 16)\n"
       << "  --threads <N>      worker threads count (default: 1)\n"
-      << "  --count <N>        total get_user_id operations\n";
+      << "  --count <N>        total get_user_id operations\n"
+      << "  --min-age <SEC>    bind min age seconds, 0 binds immediately (default: 10)\n"
+      << "  --generate-user-id generate bound user id on eligible misses\n";
   }
 
   Options
@@ -52,6 +57,8 @@ namespace
     Option<unsigned long> opt_chunk_count(16);
     Option<unsigned long> opt_threads(1);
     Option<unsigned long> opt_count(0);
+    Option<unsigned long> opt_min_age(10);
+    CheckOption opt_generate_user_id;
     CheckOption opt_help;
 
     Args args(-1);
@@ -59,6 +66,8 @@ namespace
     args.add(equal_name("chunk-count"), opt_chunk_count);
     args.add(equal_name("threads"), opt_threads);
     args.add(equal_name("count"), opt_count);
+    args.add(equal_name("min-age"), opt_min_age);
+    args.add(equal_name("generate-user-id"), opt_generate_user_id);
     args.add(equal_name("help") || short_name("h"), opt_help);
 
     args.parse(argc - 1, argv + 1);
@@ -74,6 +83,8 @@ namespace
     options.chunk_count = *opt_chunk_count;
     options.threads = *opt_threads;
     options.count = *opt_count;
+    options.bind_min_age = Generics::Time(*opt_min_age);
+    options.generate_user_id = opt_generate_user_id.enabled();
 
     if(options.cache_root.empty())
     {
@@ -139,7 +150,8 @@ namespace
   AdServer::UserInfoSvcs::UserBindServerCore::Config
   make_config(
     const std::filesystem::path& cache_root,
-    const std::size_t chunk_count)
+    const std::size_t chunk_count,
+    std::optional<Generics::Time> bind_min_age)
   {
     AdServer::UserInfoSvcs::UserBindServerCore::Config config;
     config.storage.chunks_root = cache_root.string() + "/";
@@ -157,8 +169,7 @@ namespace
     config.bind_request_storage.expire_time = Generics::Time(259200);
     config.bind_request_storage.portions = 1024;
 
-    config.min_age = Generics::Time::ZERO;
-    config.bind_on_min_age = false;
+    config.bind_min_age = bind_min_age;
     config.max_bad_event = 10000;
     config.partition_index = 0;
     config.partitions_number = 1;
@@ -195,7 +206,10 @@ main(int argc, char** argv)
     const auto cache_root = std::filesystem::absolute(options.cache_root);
 
     prepare_cache_root(cache_root, options.chunk_count);
-    const auto config = make_config(cache_root, options.chunk_count);
+    const auto config = make_config(
+      cache_root,
+      options.chunk_count,
+      options.bind_min_age);
 
     Logging::Logger_var logger(
       new Logging::OStream::Logger(Logging::OStream::Config(std::cerr, 3)));
@@ -237,7 +251,7 @@ main(int argc, char** argv)
               request.id = "UserBindServerCorePerfTest/" + std::to_string(operation_index);
               request.timestamp = timestamp;
               request.create_timestamp = Generics::Time::ZERO;
-              request.generate_user_id = false;
+              request.generate_user_id = options.generate_user_id;
 
               const auto response = core->co_get_user_id(request).sync_wait();
               if(response.created)
@@ -284,6 +298,9 @@ main(int argc, char** argv)
       << "cache_root=" << cache_root.string() << '\n'
       << "chunk_count=" << options.chunk_count << '\n'
       << "threads=" << options.threads << '\n'
+      << "min_age=" <<
+        std::to_string(options.bind_min_age->tv_sec) << '\n'
+      << "generate_user_id=" << options.generate_user_id << '\n'
       << "operations=" << options.count << '\n'
       << "errors=" << errors.load(std::memory_order_relaxed) << '\n'
       << "created=" << created.load(std::memory_order_relaxed) << '\n'

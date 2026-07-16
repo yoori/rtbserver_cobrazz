@@ -20,7 +20,8 @@ namespace AdServer::UserInfoSvcs
     const Commons::UserId& user_id,
     const Generics::Time& now,
     bool resave_if_exists,
-    bool ignore_bad_event)
+    bool ignore_bad_event,
+    bool set_cookie_flag)
     /*throw(ChunkNotFound, UserBindProcessor::Exception)*/
   {
     UserInfo res = co_await next_processor_->co_add_user_id(
@@ -28,7 +29,8 @@ namespace AdServer::UserInfoSvcs
       user_id,
       now,
       resave_if_exists,
-      ignore_bad_event);
+      ignore_bad_event,
+      set_cookie_flag);
 
     // don't mirror invalid operations (slave increase bad events only on mirrored operations)
     if(!res.invalid_operation)

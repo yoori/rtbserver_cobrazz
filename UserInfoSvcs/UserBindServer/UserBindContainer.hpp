@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include <eh/Exception.hpp>
@@ -37,8 +38,7 @@ namespace AdServer::UserInfoSvcs
       const char* bound_file_prefix,
       const Generics::Time& extend_time_period,
       const Generics::Time& bound_extend_time_period,
-      const Generics::Time& min_bind_age,
-      bool bind_at_min_age,
+      std::optional<Generics::Time> bind_min_age,
       unsigned long max_bad_event,
       unsigned long portions_number,
       bool load_slave,
@@ -60,7 +60,8 @@ namespace AdServer::UserInfoSvcs
       const Commons::UserId& user_id,
       const Generics::Time& now,
       bool resave_if_exists,
-      bool ignore_bad_event) override;
+      bool ignore_bad_event,
+      bool set_cookie_flag) override;
 
     AdServer::Commons::SyncCoro<UserInfo>
     co_get_user_id(

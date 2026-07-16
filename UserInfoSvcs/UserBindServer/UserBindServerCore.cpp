@@ -165,10 +165,7 @@ namespace AdServer::UserInfoSvcs
 
       GetUserResponseInfo res;
 
-      if(!user_info.user_id.is_null() ||
-        !request_info.generate_user_id ||
-        user_info.invalid_operation ||
-        user_info.user_found)
+      if(!user_info.user_id.is_null())
       {
         if(user_id_black_list_.is_blacklisted(user_info.user_id))
         {
@@ -179,7 +176,8 @@ namespace AdServer::UserInfoSvcs
             new_user_id,
             request_info.timestamp,
             true,
-            false);
+            false,
+            true);
 
           res.user_id = new_user_id;
           res.created = true;
@@ -198,13 +196,27 @@ namespace AdServer::UserInfoSvcs
         co_return res;
       }
 
+      if(!request_info.generate_user_id ||
+        user_info.invalid_operation ||
+        (user_info.user_found && !user_info.min_age_reached))
+      {
+        res.user_id = user_info.user_id;
+        res.created = false;
+        res.min_age_reached = user_info.min_age_reached;
+        res.invalid_operation = user_info.invalid_operation;
+        res.user_found = user_info.user_found;
+
+        co_return res;
+      }
+
       const Commons::UserId new_user_id = Commons::UserId::create_random_based();
       user_info = co_await user_bind_accessor->co_add_user_id(
         String::SubString(request_info.id),
         new_user_id,
         request_info.timestamp,
         false,
-        false);
+        false,
+        request_info.for_set_cookie);
 
       res.min_age_reached = true;
       res.user_found = user_info.user_found;
@@ -250,7 +262,8 @@ namespace AdServer::UserInfoSvcs
           request_info.user_id,
           request_info.timestamp,
           true,
-          false);
+          false,
+          true);
 
       AddUserResponseInfo res;
       res.merge_user_id = user_info.user_id;
@@ -263,8 +276,8 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  UserBindServerCore::BindRequestInfo
-  UserBindServerCore::get_bind_request(
+  AdServer::Commons::SyncCoro<UserBindServerCore::BindRequestInfo>
+  UserBindServerCore::co_get_bind_request(
     const std::string& id,
     const Generics::Time& timestamp)
   {
@@ -279,16 +292,26 @@ namespace AdServer::UserInfoSvcs
     try
     {
       BindRequestProcessor::BindRequest bind_request =
-        bind_request_accessor->get_bind_request(String::SubString(id), timestamp);
+        co_await bind_request_accessor->co_get_bind_request(
+          String::SubString(id),
+          timestamp);
 
       BindRequestInfo res;
       res.bind_user_ids.swap(bind_request.bind_user_ids);
-      return res;
+      co_return res;
     }
     catch(const BindRequestProcessor::ChunkNotFound& ex)
     {
       throw ChunkNotFound(ex.what());
     }
+  }
+
+  UserBindServerCore::BindRequestInfo
+  UserBindServerCore::get_bind_request(
+    const std::string& id,
+    const Generics::Time& timestamp)
+  {
+    return co_get_bind_request(id, timestamp).sync_wait();
   }
 
   void
@@ -378,15 +401,13 @@ namespace AdServer::UserInfoSvcs
   void
   UserBindServerCore::dump() const
   {
-    const UserBindProcessor_var user_bind_processor =
-      user_bind_container_->get_object();
+    const UserBindProcessor_var user_bind_processor = user_bind_container_->get_object();
     if(user_bind_processor.in())
     {
       user_bind_processor->dump();
     }
 
-    const BindRequestProcessor_var bind_request_processor =
-      bind_request_container_->get_object();
+    const BindRequestProcessor_var bind_request_processor = bind_request_container_->get_object();
     if(bind_request_processor.in())
     {
       bind_request_processor->dump();
@@ -410,8 +431,7 @@ namespace AdServer::UserInfoSvcs
         config_.storage.bound_prefix.c_str(),
         config_.storage.expire_time / 4,
         config_.storage.bound_expire_time / 4,
-        config_.min_age,
-        config_.bind_on_min_age,
+        config_.bind_min_age,
         config_.max_bad_event,
         config_.storage.portions,
         config_.storage.load_slave,

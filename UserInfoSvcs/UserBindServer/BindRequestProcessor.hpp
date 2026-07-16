@@ -2,6 +2,7 @@
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+#include <Commons/Coro/SyncCoro.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -26,7 +27,13 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
-    // create_time : time of user creation, will be used for min age check
+    // return previous bind request state
+    virtual AdServer::Commons::SyncCoro<BindRequest>
+    co_get_bind_request(
+      const String::SubString& external_id,
+      const Generics::Time& now)
+      /*throw(ChunkNotFound, Exception)*/ = 0;
+
     virtual BindRequest
     get_bind_request(
       const String::SubString& external_id,
@@ -41,6 +48,6 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/ = 0;
   };
 
-  typedef ReferenceCounting::SmartPtr<BindRequestProcessor>
-    BindRequestProcessor_var;
+  using BindRequestProcessor_var =
+    ReferenceCounting::SmartPtr<BindRequestProcessor>;
 }

@@ -345,7 +345,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      const auto result = core_->get_bind_request(
+      const auto result = co_await core_->co_get_bind_request(
         request.request_id(),
         GrpcAlgs::unpack_time(request.timestamp()));
 

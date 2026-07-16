@@ -44,11 +44,17 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now)
       noexcept;
 
+    AdServer::Commons::SyncCoro<BindRequest>
+    co_get_bind_request(
+      const String::SubString& external_id,
+      const Generics::Time& now)
+      noexcept override;
+
     BindRequest
     get_bind_request(
       const String::SubString& external_id,
       const Generics::Time& now)
-      noexcept;
+      noexcept override;
 
     void
     clear_expired(const Generics::Time& bound_expire_time)
@@ -58,21 +64,21 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/;
 
   protected:
-    typedef std::shared_mutex SyncMutex;
-    typedef std::shared_lock<SyncMutex> SyncReadGuard;
-    typedef std::unique_lock<SyncMutex> SyncWriteGuard;
+    using SyncMutex = std::shared_mutex;
+    using SyncReadGuard = std::shared_lock<SyncMutex>;
+    using SyncWriteGuard = std::unique_lock<SyncMutex>;
 
-    typedef std::mutex FlushMutex;
-    typedef std::lock_guard<FlushMutex> FlushWriteGuard;
+    using FlushMutex = std::mutex;
+    using FlushWriteGuard = std::lock_guard<FlushMutex>;
 
-    typedef std::mutex ExtendMutex;
-    typedef std::lock_guard<ExtendMutex> ExtendWriteGuard;
+    using ExtendMutex = std::mutex;
+    using ExtendWriteGuard = std::lock_guard<ExtendMutex>;
 
     struct UserLockPolicy
     {
-      typedef std::mutex Mutex;
-      typedef std::lock_guard<Mutex> ReadGuard;
-      typedef std::lock_guard<Mutex> WriteGuard;
+      using Mutex = std::mutex;
+      using ReadGuard = std::lock_guard<Mutex>;
+      using WriteGuard = std::lock_guard<Mutex>;
     };
 
     class BindRequestHolder
@@ -116,12 +122,11 @@ namespace AdServer::UserInfoSvcs
     template<typename HashAdapterType, typename HolderType>
     struct HolderContainer: public ReferenceCounting::AtomicCopyImpl
     {
-      typedef Generics::GnuHashTable<
-        HashAdapterType, HolderType>
-        HolderMap;
+      using HolderMap = Generics::GnuHashTable<
+        HashAdapterType, HolderType>;
 
-      typedef HashAdapterType KeyType;
-      typedef HolderType MappedType;
+      using KeyType = HashAdapterType;
+      using MappedType = HolderType;
 
       struct TimePeriodHolder: public ReferenceCounting::AtomicImpl
       {
@@ -141,11 +146,11 @@ namespace AdServer::UserInfoSvcs
         {}
       };
 
-      typedef ReferenceCounting::SmartPtr<TimePeriodHolder>
-        TimePeriodHolder_var;
+      using TimePeriodHolder_var =
+        ReferenceCounting::SmartPtr<TimePeriodHolder>;
 
-      typedef std::vector<TimePeriodHolder_var>
-        TimePeriodHolderArray;
+      using TimePeriodHolderArray =
+        std::vector<TimePeriodHolder_var>;
 
       // sorted in max_time descending order
       TimePeriodHolderArray time_holders;
@@ -159,8 +164,8 @@ namespace AdServer::UserInfoSvcs
     class HolderContainerGuard
     {
     public:
-      typedef ReferenceCounting::SmartPtr<HolderContainerType>
-        HolderContainer_var;
+      using HolderContainer_var =
+        ReferenceCounting::SmartPtr<HolderContainerType>;
 
     public:
       mutable ExtendMutex extend_lock;
@@ -181,16 +186,15 @@ namespace AdServer::UserInfoSvcs
     };
 
     //
-    typedef HolderContainer<HashHashAdapter, BindRequestHolder>
-      BindRequestHolderContainer;
+    using BindRequestHolderContainer =
+      HolderContainer<HashHashAdapter, BindRequestHolder>;
 
-    typedef ReferenceCounting::SmartPtr<BindRequestHolderContainer>
-      BindRequestHolderContainer_var;
+    using BindRequestHolderContainer_var =
+      ReferenceCounting::SmartPtr<BindRequestHolderContainer>;
 
-    typedef AdServer::Commons::NoAllocLockMap<
+    using UserLockMap = AdServer::Commons::NoAllocLockMap<
       HashHashAdapter,
-      UserLockPolicy>
-      UserLockMap;
+      UserLockPolicy>;
 
     struct Portion: public ReferenceCounting::AtomicImpl
     {
@@ -204,15 +208,13 @@ namespace AdServer::UserInfoSvcs
       {}
     };
 
-    typedef ReferenceCounting::SmartPtr<Portion>
-      Portion_var;
+    using Portion_var = ReferenceCounting::SmartPtr<Portion>;
 
-    typedef std::vector<Portion_var>
-      PortionArray;
+    using PortionArray = std::vector<Portion_var>;
 
-    typedef std::map<std::string, std::string> TempFilePathMap;
+    using TempFilePathMap = std::map<std::string, std::string>;
 
-    typedef std::set<std::string> FileNameSet;
+    using FileNameSet = std::set<std::string>;
 
   protected:
     virtual
@@ -311,8 +313,8 @@ namespace AdServer::UserInfoSvcs
     mutable FlushMutex flush_lock_;
   };
 
-  typedef ReferenceCounting::SmartPtr<BindRequestChunk>
-    BindRequestChunk_var;
+  using BindRequestChunk_var =
+    ReferenceCounting::SmartPtr<BindRequestChunk>;
 
 } /* AdServer::UserInfoSvcs */
 

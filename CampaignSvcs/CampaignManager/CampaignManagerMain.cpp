@@ -51,18 +51,6 @@ namespace DefaultValues
 
 namespace
 {
-  template<typename _T>
-  _T gcd(_T first, _T second)
-  {
-    while (second != 0)
-    {
-      _T t = first % second;
-      first = second;
-      second = t;
-    }
-    return first;
-  }
-
   std::shared_ptr<Generics::ActiveObject>
   non_owning_active_object(Generics::ActiveObject* object)
   {
@@ -142,10 +130,7 @@ namespace
   }
 
   void
-  append_json_field_name(
-    std::string& body,
-    bool& first,
-    const std::string& name)
+  append_json_field_name(std::string& body, bool& first, const std::string& name)
   {
     if(!first)
     {
@@ -157,11 +142,7 @@ namespace
   }
 
   void
-  append_json_stat(
-    std::string& body,
-    bool& first,
-    const std::string& name,
-    std::uint64_t value)
+  append_json_stat(std::string& body, bool& first, const std::string& name, std::uint64_t value)
   {
     append_json_field_name(body, first, name);
     body += std::to_string(value);

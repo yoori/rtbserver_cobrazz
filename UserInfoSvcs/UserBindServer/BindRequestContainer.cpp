@@ -182,15 +182,24 @@ namespace AdServer::UserInfoSvcs
   BindRequestContainer::~BindRequestContainer() noexcept
   {}
 
+  AdServer::Commons::SyncCoro<BindRequestContainer::BindRequest>
+  BindRequestContainer::co_get_bind_request(
+    const String::SubString& id,
+    const Generics::Time& now)
+    /*throw(ChunkNotFound, Exception)*/
+  {
+    co_return co_await get_chunk_(id)->co_get_bind_request(
+      id,
+      now);
+  }
+
   BindRequestContainer::BindRequest
   BindRequestContainer::get_bind_request(
     const String::SubString& id,
     const Generics::Time& now)
     /*throw(ChunkNotFound, Exception)*/
   {
-    return get_chunk_(id)->get_bind_request(
-      id,
-      now);
+    return co_get_bind_request(id, now).sync_wait();
   }
 
   void

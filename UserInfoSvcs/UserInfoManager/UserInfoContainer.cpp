@@ -1732,7 +1732,8 @@ namespace AdServer::UserInfoSvcs
             chunk_prefix,
             profile_map_traits,
             AdServer::Commons::uuid_distribution_hash,
-            max_waiters);
+            max_waiters,
+            true);
       add_child_object(profile_map.second);
       return profile_map.first;
     }

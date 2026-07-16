@@ -1,6 +1,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <vector>
 #include <list>
 #include <sstream>
@@ -125,8 +126,7 @@ get_default_user_bind_container(bool remove_chunks_files)
     "UserBind",                //bound_file_prefix
     Generics::Time::ONE_DAY,   //extend_time_period = 4 days
     Generics::Time::ONE_DAY*2, //bound_extend_time_period = 8 days
-    Generics::Time::ONE_DAY*4, //min_bind_age=4 days
-    true,                      //bind_at_min_age
+    Generics::Time::ONE_DAY*4, //bind_min_age=4 days
     100, // max_bad_event
     1024,                     //portions_number
     true, // load_slave
@@ -148,8 +148,7 @@ performance_test(unsigned long iterations)
       "",
       Generics::Time::ONE_DAY,
       Generics::Time::ONE_DAY * 7,
-      Generics::Time::ZERO,
-      false,
+      std::nullopt,
       100, // max_bad_event
       1024,
       true,
@@ -269,8 +268,7 @@ mt_performance_test(unsigned long iterations, unsigned long threads)
       "",
       Generics::Time::ONE_DAY,
       Generics::Time::ONE_DAY * 7,
-      Generics::Time::ZERO,
-      false,
+      std::nullopt,
       100, // max_bad_event
       1024,
       true,
@@ -315,8 +313,7 @@ int simple_test()
       "",
       Generics::Time::ONE_DAY,
       Generics::Time::ONE_DAY * 7,
-      Generics::Time::ONE_HOUR,
-      true, // optin when min age reached
+      Generics::Time::ONE_HOUR, // optin when min age reached
       100, // max_bad_event
       1024,
       true,
@@ -407,8 +404,7 @@ int expired_test()
       "",
       Generics::Time::ONE_DAY,
       Generics::Time::ONE_DAY * 7,
-      Generics::Time::ONE_HOUR,
-      true, // optin when min age reached
+      Generics::Time::ONE_HOUR, // optin when min age reached
       100, // max_bad_event
       1024,
       true,
@@ -466,8 +462,7 @@ mem_usage_test()
       "UserBind",               //bound_file_prefix
       Generics::Time::ONE_DAY,  //extend_time_period = 4 days
       Generics::Time::ONE_DAY,  //bound_extend_time_period = 4 days
-      Generics::Time::ONE_HOUR, //min_bind_age
-      true,                     //bind_at_min_age
+      Generics::Time::ONE_HOUR, //bind_min_age
       100, // max_bad_event
       1024,                    //portions_number
       true,

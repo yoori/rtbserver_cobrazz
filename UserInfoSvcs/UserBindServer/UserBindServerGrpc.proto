@@ -39,8 +39,8 @@ message AddBindRequestResponse {
 message GetUserIdRequest {
   string id = 1;
   bytes timestamp = 2;
-  bool silent = 3;
-  bool generate_user_id = 4;
+  bool silent = 3; // only read without changes
+  bool generate_user_id = 4; // generate user id if it isn't passed and min age reached
   bool for_set_cookie = 5;
   bytes create_timestamp = 6;
   bytes current_user_id = 7;

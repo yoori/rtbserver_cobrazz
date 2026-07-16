@@ -1554,9 +1554,7 @@ namespace AdServer::CampaignSvcs
             geo_channels,
             coord_channels);
 
-          std::copy(coord_channels.begin(),
-            coord_channels.end(),
-            std::back_inserter(geo_channels));
+          std::copy(coord_channels.begin(), coord_channels.end(), std::back_inserter(geo_channels));
         }
 
         // emulate campaign selection
@@ -1945,7 +1943,7 @@ namespace AdServer::CampaignSvcs
     if (passback && core_request_params.required_passback)
     {
       if (!ad_slot_context.passback_url.empty() &&
-         core_request_params.common_info->passback_type == "redir")
+        core_request_params.common_info->passback_type == "redir")
       {
         std::ostringstream passback_imp_url_ostr;
         std::string mime_passback_url;
@@ -2458,8 +2456,7 @@ namespace AdServer::CampaignSvcs
 
         for (CampaignSelectionDataList::iterator it =
             ad_selection_result.selected_campaigns.begin();
-          it != ad_selection_result.selected_campaigns.end();
-          ++it, ++i)
+          it != ad_selection_result.selected_campaigns.end(); ++it, ++i)
         {
           assert(it->creative && it->campaign);
 
@@ -2485,8 +2482,6 @@ namespace AdServer::CampaignSvcs
           }
           else
           {
-            //RevenueDecimal orig_ecpm_bid = it->ecpm_bid;
-
             // set random cost for 10% bids
             if (request_params.common_info->random % 10 == 0 && it->ecpm_bid > slot_pub_ecpm)
             {
@@ -2552,7 +2547,7 @@ namespace AdServer::CampaignSvcs
           if (request_type != AR_NORMAL)
           {
             for (Creative::CategorySet::const_iterator cat_it = it->creative->categories.begin();
-                cat_it != it->creative->categories.end(); ++cat_it)
+              cat_it != it->creative->categories.end(); ++cat_it)
             {
               CampaignConfig::CreativeCategoryMap::const_iterator ccat_it =
                 const_config.creative_categories.find(*cat_it);
@@ -3427,9 +3422,8 @@ namespace AdServer::CampaignSvcs
             else
             {
               // calculate auction type for second auction
-              auction_offset -=
-                (tag->auction_max_ecpm_share +
-                 tag->auction_prop_probability_share);
+              auction_offset -= (tag->auction_max_ecpm_share + tag->auction_prop_probability_share);
+
               if (RevenueDecimal::div(RevenueDecimal::mul(
                     auction_offset,
                     tag->auction_prop_probability_share +
@@ -3560,9 +3554,7 @@ namespace AdServer::CampaignSvcs
       while (!display_creative_selected && display_try_number++ < 2)
       {
         CreativeParams creative_params;
-        AdSelectionResult display_ad_selection_result(
-          select_result,
-          memory_resource);
+        AdSelectionResult display_ad_selection_result(select_result, memory_resource);
 
         display_creative_selected |= instantiate_display_creative(
           &config,
@@ -3653,11 +3645,7 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    co_await co_confirm_amounts_(
-      &config,
-      campaign_select_params.time,
-      confirm_creatives,
-      CR_CPM);
+    co_await co_confirm_amounts_(&config, campaign_select_params.time, confirm_creatives, CR_CPM);
 
     if (ad_slot_debug_info)
     {

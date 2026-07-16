@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <Generics/HashTableAdapters.hpp>
@@ -23,8 +24,7 @@ namespace AdServer::UserInfoSvcs
       const char* user_bind_path,
       const Generics::Time& expire_time,
       const Generics::Time& bound_expire_time,
-      const Generics::Time& min_bind_age,
-      bool bind_at_min_age,
+      std::optional<Generics::Time> bind_min_age,
       unsigned long max_bad_event);
 
     AdServer::Commons::SyncCoro<UserInfo>
@@ -33,7 +33,8 @@ namespace AdServer::UserInfoSvcs
       const Commons::UserId& user_id,
       const Generics::Time& now,
       bool resave_if_exists,
-      bool ignore_bad_event) override;
+      bool ignore_bad_event,
+      bool set_cookie_flag) override;
 
     AdServer::Commons::SyncCoro<UserInfo>
     co_get_user_id(
@@ -52,34 +53,12 @@ namespace AdServer::UserInfoSvcs
     void
     dump() override;
 
-    AdServer::Commons::SyncCoro<bool>
-    co_migrate_seen_user(
-      const String::SubString& external_id,
-      bool min_age_reached,
-      const Generics::Time& create_time,
-      const Generics::Time& now);
-
-    AdServer::Commons::SyncCoro<bool>
-    co_migrate_bound_user(
-      const String::SubString& external_id,
-      const Commons::UserId& user_id,
-      const Generics::Time& now,
-      bool for_set_cookie);
-
   protected:
     ~UserBindRocksDBChunk() noexcept override;
 
   private:
-    struct Record
+    struct BoundRecord
     {
-      enum Type
-      {
-        RT_NONE,
-        RT_SEEN,
-        RT_BOUND
-      };
-
-      Type type = RT_NONE;
       Generics::Time first_seen_time;
       Generics::Time update_time;
       Commons::UserId user_id;
@@ -88,71 +67,97 @@ namespace AdServer::UserInfoSvcs
       std::uint16_t last_bad_event_day = 0;
     };
 
+    struct SeenRecord
+    {
+      Generics::Time first_seen_time;
+    };
+
     Generics::ConstSmartMemBuf_var
     make_profile_(const std::string& value) const;
 
     std::string
-    serialize_(const Record& record) const;
+    serialize_bound_(const BoundRecord& record) const;
+
+    std::string
+    serialize_seen_(const SeenRecord& record) const;
 
     bool
-    deserialize_(Record& record, const Generics::ConstSmartMemBuf* profile)
+    deserialize_bound_(
+      BoundRecord& record,
+      const Generics::ConstSmartMemBuf* profile)
       const;
 
-    AdServer::Commons::SyncCoro<bool>
-    co_load_record_(Record& record, const String::SubString& external_id);
+    bool
+    deserialize_seen_(
+      SeenRecord& record,
+      const Generics::ConstSmartMemBuf* profile)
+      const;
+
+    AdServer::Commons::SyncCoro<std::optional<BoundRecord>>
+    co_load_bound_record_(
+      const String::SubString& external_id);
+
+    AdServer::Commons::SyncCoro<std::optional<SeenRecord>>
+    co_load_seen_record_(
+      const String::SubString& external_id);
 
     AdServer::Commons::SyncCoro<bool>
-    co_save_record_(
+    co_save_bound_record_(
       const String::SubString& external_id,
-      const Record& record,
+      const BoundRecord& record,
+      const Generics::Time& now);
+
+    AdServer::Commons::SyncCoro<bool>
+    co_save_seen_record_(
+      const String::SubString& external_id,
+      const SeenRecord& record,
       const Generics::Time& now);
 
     UserInfo
     adapt_bound_record_(
-      const Record& record,
+      const BoundRecord& record,
       bool user_id_generated,
       bool user_found,
       bool invalid_operation) const;
 
     UserInfo
     adapt_seen_record_(
-      const Record& record,
+      const SeenRecord& record,
       bool created,
       bool user_found,
       const Generics::Time& now) const;
 
     void
     save_user_id_(
-      Record& record,
+      BoundRecord& record,
       UserInfo& result,
       const Commons::UserId& user_id,
       bool ignore_bad_event,
+      bool set_cookie_flag,
       const Generics::Time& now) const;
 
     void
     rotate_bad_event_count_(
-      Record& record,
+      BoundRecord& record,
       const Generics::Time& now) const noexcept;
 
   private:
     static constexpr unsigned char BF_SETCOOKIE_ = 1;
 
-    typedef AdServer::Commons::AsyncNoAllocLockMap<
-      Generics::StringHashAdapter>
-      UserLockMap;
+    using UserLockMap = AdServer::Commons::AsyncNoAllocLockMap<
+      Generics::StringHashAdapter>;
 
-    const Generics::Time min_bind_age_;
-    const bool bind_at_min_age_;
+    const std::optional<Generics::Time> bind_min_age_;
     const unsigned long max_bad_event_;
 
-    typedef AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>
-      RocksDBMap;
+    using RocksDBMap =
+      AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
 
     std::unique_ptr<RocksDBMap> user_seen_map_;
     std::unique_ptr<RocksDBMap> user_bind_map_;
     UserLockMap user_locks_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindRocksDBChunk>
-    UserBindRocksDBChunk_var;
+  using UserBindRocksDBChunk_var =
+    ReferenceCounting::SmartPtr<UserBindRocksDBChunk>;
 }

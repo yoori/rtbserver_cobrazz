@@ -928,12 +928,10 @@ namespace AdServer::ImprTrack
       get_request->set_silent(true);
       get_request->set_generate_user_id(false);
       get_request->set_for_set_cookie(request_info.set_cookie);
-      get_request->set_create_timestamp(
-        GrpcAlgs::pack_time(Generics::Time::ZERO));
+      get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
       get_request->set_current_user_id(GrpcAlgs::pack_user_id(result.user_id));
 
-      auto get_result = co_await user_bind_client_coro_->get_user_id(
-        *get_request);
+      auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
       if(get_result.status.ok())
       {
         if(get_result.response.invalid_operation())
@@ -999,8 +997,7 @@ namespace AdServer::ImprTrack
     get_request->set_for_set_cookie(request_info.set_cookie);
     get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
-    auto get_result = co_await user_bind_client_coro_->get_user_id(
-      *get_request);
+    auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
     if(!get_result.status.ok())
     {
       co_return result;
@@ -1265,13 +1262,10 @@ namespace AdServer::ImprTrack
       get_request->set_silent(true);
       get_request->set_generate_user_id(false);
       get_request->set_for_set_cookie(false);
-      get_request->set_create_timestamp(
-        GrpcAlgs::pack_time(Generics::Time::ZERO));
-      get_request->set_current_user_id(
-        GrpcAlgs::pack_user_id(state->cookie_user_id));
+      get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
+      get_request->set_current_user_id(GrpcAlgs::pack_user_id(state->cookie_user_id));
 
-      auto get_result = co_await user_bind_client_coro_->get_user_id(
-        *get_request);
+      auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
       if(get_result.status.ok() && !get_result.response.invalid_operation())
       {
         const AdServer::Commons::UserId resolved_user_id =
@@ -1283,8 +1277,7 @@ namespace AdServer::ImprTrack
       }
     }
 
-    const auto& matched_channels =
-      state->trigger_match_result->matched_channels();
+    const auto& matched_channels = state->trigger_match_result->matched_channels();
     if(matched_channels.page_channels_size() == 0)
     {
       finish_match_channels_request_();

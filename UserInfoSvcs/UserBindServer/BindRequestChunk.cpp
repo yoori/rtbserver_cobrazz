@@ -230,8 +230,8 @@ namespace AdServer::UserInfoSvcs
   BindRequestChunk::~BindRequestChunk() noexcept
   {}
 
-  BindRequestProcessor::BindRequest
-  BindRequestChunk::get_bind_request(
+  AdServer::Commons::SyncCoro<BindRequestProcessor::BindRequest>
+  BindRequestChunk::co_get_bind_request(
     const String::SubString& external_id,
     const Generics::Time&)
     noexcept
@@ -274,7 +274,16 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    return res_bind_request;
+    co_return res_bind_request;
+  }
+
+  BindRequestProcessor::BindRequest
+  BindRequestChunk::get_bind_request(
+    const String::SubString& external_id,
+    const Generics::Time& now)
+    noexcept
+  {
+    return co_get_bind_request(external_id, now).sync_wait();
   }
 
   void

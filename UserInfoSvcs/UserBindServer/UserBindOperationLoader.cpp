@@ -332,7 +332,8 @@ namespace AdServer::UserInfoSvcs
       Commons::UserId(reader.user_id()),
       Generics::Time(reader.time()),
       reader.resave_if_exists(),
-      true // ignore_bad_event
+      true, // ignore_bad_event
+      true // set_cookie_flag
       ).sync_wait();
   }
 

@@ -293,8 +293,10 @@ namespace
       core_config.user_id_black_list = config.UserIdBlackList().get();
     }
 
-    core_config.min_age = Generics::Time(config.min_age());
-    core_config.bind_on_min_age = config.bind_on_min_age();
+    if(config.bind_on_min_age())
+    {
+      core_config.bind_min_age = Generics::Time(config.min_age());
+    }
     core_config.max_bad_event = config.max_bad_event();
     core_config.partition_index = config.partition_index();
     core_config.partitions_number = config.partitions_number();

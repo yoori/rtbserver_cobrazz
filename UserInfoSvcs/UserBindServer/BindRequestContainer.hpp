@@ -26,7 +26,7 @@ namespace AdServer::UserInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    typedef std::map<unsigned long, std::string> ChunkPathMap;
+    using ChunkPathMap = std::map<unsigned long, std::string>;
 
   public:
     BindRequestContainer(
@@ -46,11 +46,17 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/;
 
-    virtual BindRequest
+    AdServer::Commons::SyncCoro<BindRequest>
+    co_get_bind_request(
+      const String::SubString& external_id,
+      const Generics::Time& now)
+      /*throw(ChunkNotFound, Exception)*/ override;
+
+    BindRequest
     get_bind_request(
       const String::SubString& external_id,
       const Generics::Time& now)
-      /*throw(ChunkNotFound, Exception)*/;
+      /*throw(ChunkNotFound, Exception)*/ override;
 
     virtual void
     clear_expired(const Generics::Time& expire_time)
@@ -60,7 +66,7 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/;
 
   protected:
-    typedef std::vector<BindRequestChunk_var> ChunkArray;
+    using ChunkArray = std::vector<BindRequestChunk_var>;
 
   protected:
     virtual
@@ -76,7 +82,7 @@ namespace AdServer::UserInfoSvcs
     ChunkArray chunks_;
   };
 
-  typedef ReferenceCounting::SmartPtr<BindRequestContainer>
-    BindRequestContainer_var;
+  using BindRequestContainer_var =
+    ReferenceCounting::SmartPtr<BindRequestContainer>;
 
 } /* namespace AdServer::UserInfoSvcs */

@@ -74,8 +74,7 @@ namespace AdServer::UserInfoSvcs
       std::optional<OperationBackupConfig> operation_backup;
       std::optional<OperationLoadConfig> operation_load;
       std::string user_id_black_list;
-      Generics::Time min_age;
-      bool bind_on_min_age = false;
+      std::optional<Generics::Time> bind_min_age;
       unsigned long max_bad_event = 0;
       unsigned long partition_index = 0;
       unsigned long partitions_number = 1;
@@ -136,15 +135,15 @@ namespace AdServer::UserInfoSvcs
       unsigned long add_user_id_requests = 0;
     };
 
-    typedef AdServer::Commons::AccessActiveObject<UserBindProcessor_var>
-      UserBindProcessorHolder;
-    typedef ReferenceCounting::SmartPtr<UserBindProcessorHolder>
-      UserBindProcessorHolder_var;
+    using UserBindProcessorHolder =
+      AdServer::Commons::AccessActiveObject<UserBindProcessor_var>;
+    using UserBindProcessorHolder_var =
+      ReferenceCounting::SmartPtr<UserBindProcessorHolder>;
 
-    typedef AdServer::Commons::AccessActiveObject<BindRequestProcessor_var>
-      BindRequestProcessorHolder;
-    typedef ReferenceCounting::SmartPtr<BindRequestProcessorHolder>
-      BindRequestProcessorHolder_var;
+    using BindRequestProcessorHolder =
+      AdServer::Commons::AccessActiveObject<BindRequestProcessor_var>;
+    using BindRequestProcessorHolder_var =
+      ReferenceCounting::SmartPtr<BindRequestProcessorHolder>;
 
   public:
     UserBindServerCore(
@@ -152,6 +151,11 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger);
 
     virtual ~UserBindServerCore();
+
+    AdServer::Commons::SyncCoro<BindRequestInfo>
+    co_get_bind_request(
+      const std::string& id,
+      const Generics::Time& timestamp);
 
     BindRequestInfo get_bind_request(
       const std::string& id,
@@ -278,6 +282,6 @@ namespace AdServer::UserInfoSvcs
     mutable std::atomic<unsigned long> add_user_id_requests_{0};
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindServerCore>
-    UserBindServerCore_var;
+  using UserBindServerCore_var =
+    ReferenceCounting::SmartPtr<UserBindServerCore>;
 }

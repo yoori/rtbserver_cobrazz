@@ -109,6 +109,9 @@ namespace AdServer::Bidding
     FrontendCommons::RequestTask
     co_process_bid_request_(BidRequestState_var request_task) noexcept;
 
+    FrontendCommons::RequestTask
+    co_resolve_user_id_(BidRequestState_var request_task) noexcept;
+
     bool
     consider_campaign_selection_(
       const AdServer::Commons::UserId& user_id,
@@ -127,6 +130,13 @@ namespace AdServer::Bidding
         const AdServer::Bidding::CampaignManager::RequestCreativeResult>
           campaign_match_result,
       std::string hostname)
+      noexcept;
+
+    FrontendCommons::RequestTask
+    co_add_user_id_(
+      std::string external_user_id,
+      AdServer::Commons::UserId user_id,
+      Generics::Time time)
       noexcept;
 
     void

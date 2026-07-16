@@ -35,7 +35,8 @@ namespace AdServer::UserInfoSvcs
       const Commons::UserId& user_id,
       const Generics::Time& now,
       bool resave_if_exists,
-      bool ignore_bad_event) override
+      bool ignore_bad_event,
+      bool set_cookie_flag) override
       /*throw(ChunkNotFound, UserBindProcessor::Exception)*/;
 
     AdServer::Commons::SyncCoro<UserInfo>

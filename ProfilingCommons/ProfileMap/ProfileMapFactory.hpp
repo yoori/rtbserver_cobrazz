@@ -443,7 +443,8 @@ namespace ProfilingCommons
       const char* chunk_prefix,
       const ProfileMapTraits& profile_map_traits,
       KeyHashType key_hash,
-      unsigned long max_waiters = 0)
+      unsigned long max_waiters = 0,
+      bool disable_wal = false)
       /*throw(eh::Exception)*/
     {
       typedef ChunkedProfileMap<
@@ -468,7 +469,11 @@ namespace ProfilingCommons
         ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map =
           new RocksDBMap(
             String::SubString(rocksdb_path.c_str()),
-            profile_map_traits.expire_time);
+            profile_map_traits.expire_time,
+            2,
+            128,
+            Generics::Time::ZERO,
+            disable_wal);
 
         ReferenceCounting::SmartPtr<
           AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =

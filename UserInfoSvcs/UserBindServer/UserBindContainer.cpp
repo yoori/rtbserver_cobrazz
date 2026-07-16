@@ -46,8 +46,7 @@ namespace AdServer::UserInfoSvcs
     const char* /*bound_file_prefix*/,
     const Generics::Time& extend_time_period,
     const Generics::Time& bound_extend_time_period,
-    const Generics::Time& min_age,
-    bool bind_at_min_age,
+    std::optional<Generics::Time> bind_min_age,
     unsigned long max_bad_event,
     unsigned long /*portions_number*/,
     bool /*load_slave*/,
@@ -64,10 +63,8 @@ namespace AdServer::UserInfoSvcs
     for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
         chunk_it != chunk_folders.end(); ++chunk_it)
     {
-      const std::string user_seen_path =
-        chunk_it->second + "/UserSeen.rocksdb";
-      const std::string user_bind_path =
-        chunk_it->second + "/UserBind.rocksdb";
+      const std::string user_seen_path = chunk_it->second + "/UserSeen.rocksdb";
+      const std::string user_bind_path = chunk_it->second + "/UserBind.rocksdb";
       make_dir_if_required(user_seen_path);
       make_dir_if_required(user_bind_path);
 
@@ -76,8 +73,7 @@ namespace AdServer::UserInfoSvcs
         user_bind_path.c_str(),
         extend_time_period * 4,
         bound_extend_time_period * 4,
-        min_age,
-        bind_at_min_age,
+        bind_min_age,
         max_bad_event);
 
       chunks_[chunk_it->first] = rocksdb_chunk;
@@ -112,7 +108,8 @@ namespace AdServer::UserInfoSvcs
     const Commons::UserId& user_id,
     const Generics::Time& now,
     bool resave_if_exists,
-    bool ignore_bad_event)
+    bool ignore_bad_event,
+    bool set_cookie_flag)
     /*throw(ChunkNotFound, Exception)*/
   {
     co_return co_await get_chunk_(external_id)->co_add_user_id(
@@ -120,7 +117,8 @@ namespace AdServer::UserInfoSvcs
       user_id,
       now,
       resave_if_exists,
-      ignore_bad_event);
+      ignore_bad_event,
+      set_cookie_flag);
   }
 
   void
