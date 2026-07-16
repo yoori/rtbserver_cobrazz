@@ -171,6 +171,7 @@ performance_test(unsigned long iterations)
         start_time,
         false,
         Generics::Time::ZERO,
+        false,
         false).sync_wait();
     }
 
@@ -216,6 +217,7 @@ public:
         start_time,
         false,
         Generics::Time::ZERO,
+        false,
         false).sync_wait();
     }
 
@@ -329,6 +331,7 @@ int simple_test()
     base_time,
     false,
     Generics::Time::ZERO,
+    false,
     false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
@@ -343,6 +346,7 @@ int simple_test()
     base_time + Generics::Time::ONE_HOUR - 2,
     false,
     Generics::Time::ZERO,
+    false,
     false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
@@ -357,6 +361,7 @@ int simple_test()
     base_time + Generics::Time::ONE_HOUR + 1,
     false,
     Generics::Time::ZERO,
+    false,
     false).sync_wait();
 
   if(user_info.user_id.is_null() || !user_info.min_age_reached)
@@ -376,6 +381,7 @@ int simple_test()
       base_time + Generics::Time::ONE_DAY * (2 + i) + 1,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if(user_info.user_id.is_null() || !user_info.min_age_reached)
@@ -420,6 +426,7 @@ int expired_test()
     base_time,
     false,
     Generics::Time::ZERO,
+    false,
     false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
@@ -438,6 +445,7 @@ int expired_test()
     base_time + Generics::Time::ONE_DAY + 1,
     false,
     Generics::Time::ZERO,
+    false,
     false).sync_wait();
 
   if(!user_info.user_id.is_null() || user_info.min_age_reached)
@@ -485,6 +493,7 @@ mem_usage_test()
       base_date,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (i == j - 1)
@@ -530,6 +539,7 @@ get_get_user_id_test()
     base_date,
     false,
     Generics::Time::ZERO,
+    false,
     false).sync_wait();
 
   if (!check_user_info(expected[0], user_info))
@@ -545,6 +555,7 @@ get_get_user_id_test()
       base_date + Generics::Time::ONE_DAY * (i - 1) + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (!check_user_info(expected[i], user_info))
@@ -580,6 +591,7 @@ save_load_users_test()
       base_date,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
@@ -593,6 +605,7 @@ save_load_users_test()
       base_date + Generics::Time::ONE_DAY + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
@@ -613,6 +626,7 @@ save_load_users_test()
       base_date + Generics::Time::ONE_DAY + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
@@ -626,6 +640,7 @@ save_load_users_test()
       base_date + Generics::Time::ONE_DAY * 4 + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))
@@ -646,6 +661,7 @@ save_load_users_test()
       base_date + Generics::Time::ONE_DAY * 4 + Generics::Time::ONE_SECOND,
       false,
       Generics::Time::ZERO,
+      false,
       false).sync_wait();
 
     if (!check_user_info(expected[index++], user_info))

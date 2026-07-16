@@ -291,7 +291,8 @@ save_load_test()
       root_path->c_str(),
       "Operation",
       32,
-      Generics::Time(100000));
+      Generics::Time(100000),
+      1);
 
     for(unsigned long i = 0; i < 10; ++i)
     {
