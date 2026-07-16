@@ -2,6 +2,8 @@
 
 #include <RequestInfoSvcs/RequestInfoCommons/RequestOperationProfile.hpp>
 
+#include <utility>
+
 #include "Compatibility/RequestOperationImpressionProfileAdapter.hpp"
 #include "RequestOperationLoader.hpp"
 #include "RequestOperationSaver.hpp"
@@ -21,9 +23,16 @@ namespace RequestInfoSvcs
     const char* output_dir,
     const char* output_file_prefix,
     unsigned long chunks_count,
-    const Generics::Time& flush_period)
+    const Generics::Time& flush_period,
+    unsigned long threads_count)
     noexcept
-    : MessageSaver(logger, output_dir, output_file_prefix, chunks_count, flush_period)
+    : MessageSaver(
+        logger,
+        output_dir,
+        output_file_prefix,
+        chunks_count,
+        flush_period,
+        threads_count)
   {}
 
   void
@@ -48,13 +57,13 @@ namespace RequestInfoSvcs
       operation_writer.pub_revenue_type() = AdServer::CampaignSvcs::RT_NONE;
     }
 
-    Generics::SmartMemBuf_var op_mem_buf(new Generics::SmartMemBuf(operation_writer.size()));
-    operation_writer.save(op_mem_buf->membuf().data(), op_mem_buf->membuf().size());
+    Generics::MemBuf op_mem_buf(operation_writer.size());
+    operation_writer.save(op_mem_buf.data(), op_mem_buf.size());
 
     write_operation_(
       impression_info.user_id,
       RequestOperationLoader::OP_IMPRESSION,
-      op_mem_buf->membuf());
+      std::move(op_mem_buf));
   }
 
   void
@@ -71,13 +80,13 @@ namespace RequestInfoSvcs
     operation_writer.time() = time.tv_sec;
     operation_writer.request_id() = request_id.to_string();
     operation_writer.user_id() = user_id.to_string();
-    Generics::SmartMemBuf_var op_mem_buf(new Generics::SmartMemBuf(operation_writer.size()));
-    operation_writer.save(op_mem_buf->membuf().data(), op_mem_buf->membuf().size());
+    Generics::MemBuf op_mem_buf(operation_writer.size());
+    operation_writer.save(op_mem_buf.data(), op_mem_buf.size());
 
     write_operation_(
       user_id,
       RequestOperationLoader::OP_ACTION,
-      op_mem_buf->membuf());
+      std::move(op_mem_buf));
   }
 
   void
@@ -94,13 +103,13 @@ namespace RequestInfoSvcs
     operation_writer.request_id() = request_id.to_string();
     operation_writer.user_id() = user_id.to_string();
     operation_writer.action_name() = request_post_action_info.action_name;
-    Generics::SmartMemBuf_var op_mem_buf(new Generics::SmartMemBuf(operation_writer.size()));
-    operation_writer.save(op_mem_buf->membuf().data(), op_mem_buf->membuf().size());
+    Generics::MemBuf op_mem_buf(operation_writer.size());
+    operation_writer.save(op_mem_buf.data(), op_mem_buf.size());
 
     write_operation_(
       user_id,
       RequestOperationLoader::OP_REQUEST_ACTION,
-      op_mem_buf->membuf());
+      std::move(op_mem_buf));
   }
 
   void
@@ -128,13 +137,13 @@ namespace RequestInfoSvcs
   RequestOperationSaver::write_operation_(
     const AdServer::Commons::UserId& user_id,
     unsigned long op,
-    const Generics::MemBuf& mem_buf)
+    Generics::MemBuf&& mem_buf)
     /*throw(eh::Exception)*/
   {
     write_operation(
       AdServer::LogProcessing::user_id_distribution_hash(user_id),
       op,
-      mem_buf);
+      std::move(mem_buf));
   }
 
   RequestOperationSaver::FileHolderGuard_var

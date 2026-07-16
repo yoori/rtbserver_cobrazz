@@ -249,7 +249,8 @@ namespace RequestInfoSvcs{
           req_op_traits.out_dir.c_str(),
           "RequestOperation",
           req_op_config.chunks_count(),
-          req_op_traits.period);
+          req_op_traits.period,
+          1);
 
         add_child_object(request_operation_saver_.in());
 

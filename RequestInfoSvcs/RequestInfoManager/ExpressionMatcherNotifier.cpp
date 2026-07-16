@@ -29,7 +29,8 @@ namespace RequestInfoSvcs
       action_saver_opts.out_dir.c_str(),
       "ConsiderAction",
       distrib_count,
-      action_saver_opts.period);
+      action_saver_opts.period,
+      1);
     add_child_object(action_saver_.in());
 
     click_saver_ = new ProfilingCommons::MessageSaver(
@@ -37,7 +38,8 @@ namespace RequestInfoSvcs
       click_saver_opts.out_dir.c_str(),
       "ConsiderClick",
       distrib_count,
-      click_saver_opts.period);
+      click_saver_opts.period,
+      1);
     add_child_object(click_saver_.in());
 
     impression_saver_ = new ProfilingCommons::MessageSaver(
@@ -45,7 +47,8 @@ namespace RequestInfoSvcs
       impression_saver_opts.out_dir.c_str(),
       "ConsiderImpression",
       distrib_count,
-      impression_saver_opts.period);
+      impression_saver_opts.period,
+      1);
     add_child_object(impression_saver_.in());
 
     request_saver_ = new ProfilingCommons::MessageSaver(
@@ -53,7 +56,8 @@ namespace RequestInfoSvcs
       request_saver_opts.out_dir.c_str(),
       "ConsiderRequest",
       distrib_count,
-      request_saver_opts.period);
+      request_saver_opts.period,
+      1);
     add_child_object(request_saver_.in());
   }
 

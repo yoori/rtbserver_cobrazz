@@ -23,7 +23,8 @@ namespace RequestInfoSvcs
       const char* output_dir,
       const char* file_prefix,
       unsigned long chunks_count,
-      const Generics::Time& flush_period)
+      const Generics::Time& flush_period,
+      unsigned long threads_count)
       noexcept;
 
     virtual void
@@ -65,7 +66,7 @@ namespace RequestInfoSvcs
     write_operation_(
       const AdServer::Commons::UserId& user_id,
       unsigned long op,
-      const Generics::MemBuf& mem_buf)
+      Generics::MemBuf&& mem_buf)
       /*throw(eh::Exception)*/;
 
     FileHolderGuard_var
@@ -73,7 +74,7 @@ namespace RequestInfoSvcs
       /*throw(eh::Exception)*/;
   };
 
-  typedef ReferenceCounting::SmartPtr<RequestOperationSaver>
-    RequestOperationSaver_var;
+  using RequestOperationSaver_var =
+    ReferenceCounting::SmartPtr<RequestOperationSaver>;
 }
 }
