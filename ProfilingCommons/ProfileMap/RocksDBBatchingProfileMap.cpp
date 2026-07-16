@@ -5,6 +5,7 @@
 #include <rocksdb/write_batch.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <future>
 #include <string_view>
 
@@ -25,12 +26,16 @@ namespace AdServer::ProfilingCommons
     std::vector<rocksdb::Slice> keys;
     std::vector<rocksdb::PinnableSlice> values;
     std::vector<rocksdb::Status> statuses;
+    std::vector<unsigned char> value_expired;
+    std::vector<unsigned char> touch_allowed;
     std::vector<Operation*> latest_operations;
     rocksdb::WriteBatch write_batch;
   };
 
   namespace
   {
+    constexpr std::size_t TTL_TIMESTAMP_SIZE = sizeof(std::uint32_t);
+
     auto
     find_key_index(
       const std::vector<std::pair<std::string_view, std::size_t>>& indexes,
@@ -44,6 +49,82 @@ namespace AdServer::ProfilingCommons
           return index.first == key;
         });
     }
+
+    std::uint32_t
+    decode_fixed32(const char* data) noexcept
+    {
+      const auto* bytes = reinterpret_cast<const unsigned char*>(data);
+      return static_cast<std::uint32_t>(bytes[0]) |
+        (static_cast<std::uint32_t>(bytes[1]) << 8) |
+        (static_cast<std::uint32_t>(bytes[2]) << 16) |
+        (static_cast<std::uint32_t>(bytes[3]) << 24);
+    }
+
+    std::string_view
+    ttl_user_value(const rocksdb::PinnableSlice& value) noexcept
+    {
+      if(value.size() < TTL_TIMESTAMP_SIZE)
+      {
+        return std::string_view(value.data(), value.size());
+      }
+
+      return std::string_view(value.data(), value.size() - TTL_TIMESTAMP_SIZE);
+    }
+
+    std::optional<Generics::Time>
+    ttl_write_time(const rocksdb::PinnableSlice& value) noexcept
+    {
+      if(value.size() < TTL_TIMESTAMP_SIZE)
+      {
+        return std::nullopt;
+      }
+
+      const std::uint32_t timestamp = decode_fixed32(
+        value.data() + value.size() - TTL_TIMESTAMP_SIZE);
+      return Generics::Time(timestamp);
+    }
+
+    bool
+    ttl_expired(
+      const rocksdb::PinnableSlice& value,
+      const Generics::Time& now,
+      const Generics::Time& expire_time) noexcept
+    {
+      if(expire_time <= Generics::Time::ZERO)
+      {
+        return false;
+      }
+
+      const auto write_time = ttl_write_time(value);
+      if(!write_time || *write_time > now)
+      {
+        return false;
+      }
+
+      return *write_time + expire_time <= now;
+    }
+
+    bool
+    should_touch_ttl(
+      const rocksdb::PinnableSlice& value,
+      const Generics::Time& now,
+      const Generics::Time& touch_period) noexcept
+    {
+      if(touch_period <= Generics::Time::ZERO)
+      {
+        return false;
+      }
+
+      const auto write_time = ttl_write_time(value);
+      if(!write_time || *write_time > now)
+      {
+        return false;
+      }
+
+      return write_time->tv_sec / touch_period.tv_sec <
+        now.tv_sec / touch_period.tv_sec;
+    }
+
   }
 
   RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl(
@@ -552,6 +633,13 @@ namespace AdServer::ProfilingCommons
             in_flight_write_keys_.insert(operation.key);
           }
         }
+        else
+        {
+          for(const auto& operation : batch)
+          {
+            in_flight_read_keys_.insert(operation.key);
+          }
+        }
 
         if(max_delay_ == Generics::Time::ZERO ||
           batch.size() >= batch_size_)
@@ -574,6 +662,13 @@ namespace AdServer::ProfilingCommons
             for(const auto& operation : batch)
             {
               in_flight_write_keys_.insert(operation.key);
+            }
+          }
+          else
+          {
+            for(const auto& operation : batch)
+            {
+              in_flight_read_keys_.insert(operation.key);
             }
           }
 
@@ -660,6 +755,13 @@ namespace AdServer::ProfilingCommons
         continue;
       }
 
+      if(!collect_reads && in_flight_read_keys_.find(it->key) !=
+        in_flight_read_keys_.end())
+      {
+        ++it;
+        continue;
+      }
+
       const auto selected_key_it = std::find(
         selected_keys.begin(),
         selected_keys.end(),
@@ -690,6 +792,13 @@ namespace AdServer::ProfilingCommons
       for(const auto& operation : batch)
       {
         in_flight_write_keys_.erase(operation.key);
+      }
+    }
+    else
+    {
+      for(const auto& operation : batch)
+      {
+        in_flight_read_keys_.erase(operation.key);
       }
     }
 
@@ -734,12 +843,16 @@ namespace AdServer::ProfilingCommons
     auto& keys = scratch.keys;
     auto& values = scratch.values;
     auto& statuses = scratch.statuses;
+    auto& value_expired = scratch.value_expired;
+    auto& touch_allowed = scratch.touch_allowed;
 
     unique_keys.clear();
     key_indexes.clear();
     keys.clear();
     values.clear();
     statuses.clear();
+    value_expired.clear();
+    touch_allowed.clear();
 
     unique_keys.reserve(batch.size());
     key_indexes.reserve(batch.size());
@@ -767,13 +880,59 @@ namespace AdServer::ProfilingCommons
 
     values.resize(keys.size());
     statuses.resize(keys.size());
-    db_->MultiGet(
+    rocksdb::DB* const base_db = db_->GetBaseDB();
+    base_db->MultiGet(
       read_options,
-      db_->DefaultColumnFamily(),
+      base_db->DefaultColumnFamily(),
       keys.size(),
       keys.data(),
       values.data(),
       statuses.data());
+
+    value_expired.assign(keys.size(), 0);
+    touch_allowed.assign(keys.size(), 0);
+
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    for(std::size_t key_index = 0; key_index < keys.size(); ++key_index)
+    {
+      if(statuses[key_index].ok() &&
+        ttl_expired(values[key_index], now, expire_time_))
+      {
+        value_expired[key_index] = 1;
+      }
+    }
+
+    for(const auto& operation : batch)
+    {
+      if(operation.get_callback || operation.get_own_callback)
+      {
+        const auto key_index_it =
+          find_key_index(key_indexes, std::string_view(operation.key));
+        touch_allowed[key_index_it->second] = 1;
+      }
+    }
+
+    const Generics::Time touch_period(expire_time_.tv_sec / 4);
+
+    if(touch_period > Generics::Time::ZERO)
+    {
+      for(std::size_t key_index = 0; key_index < keys.size(); ++key_index)
+      {
+        if(touch_allowed[key_index] &&
+          statuses[key_index].ok() &&
+          !value_expired[key_index] &&
+          should_touch_ttl(values[key_index], now, touch_period))
+        {
+          const std::string_view value = ttl_user_value(values[key_index]);
+          Operation touch_operation;
+          touch_operation.type = OT_TOUCH;
+          touch_operation.key.assign(keys[key_index].data(), keys[key_index].size());
+          touch_operation.profile = Generics::ConstSmartMemBuf_var(
+            new Generics::ConstSmartMemBuf(value.data(), value.size()));
+          enqueue_operation_(std::move(touch_operation));
+        }
+      }
+    }
 
     for(auto& operation : batch)
     {
@@ -784,10 +943,12 @@ namespace AdServer::ProfilingCommons
         const std::size_t key_index = key_index_it->second;
         const auto& status = statuses[key_index];
         const auto& value = values[key_index];
+        const bool not_found = status.IsNotFound() || value_expired[key_index];
+        const std::string_view user_value = ttl_user_value(value);
 
         if(operation.check_callback)
         {
-          if(status.IsNotFound())
+          if(not_found)
           {
             (*operation.check_callback)(false, std::nullopt);
           }
@@ -803,7 +964,7 @@ namespace AdServer::ProfilingCommons
 
         if(operation.get_callback)
         {
-          if(status.IsNotFound())
+          if(not_found)
           {
             (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), std::nullopt);
           }
@@ -817,14 +978,16 @@ namespace AdServer::ProfilingCommons
           {
             (*operation.get_callback)(
               Generics::ConstSmartMemBuf_var(
-                new Generics::ConstSmartMemBuf(value.data(), value.size())),
+                new Generics::ConstSmartMemBuf(
+                  user_value.data(),
+                  user_value.size())),
               std::nullopt);
           }
         }
 
         if(operation.get_own_callback)
         {
-          if(status.IsNotFound())
+          if(not_found)
           {
             (*operation.get_own_callback)(
               Generics::SmartMemBuf_var(),
@@ -840,7 +1003,9 @@ namespace AdServer::ProfilingCommons
           {
             (*operation.get_own_callback)(
               Generics::SmartMemBuf_var(
-                new Generics::SmartMemBuf(value.data(), value.size())),
+                new Generics::SmartMemBuf(
+                  user_value.data(),
+                  user_value.size())),
               std::nullopt);
           }
         }
@@ -880,13 +1045,17 @@ namespace AdServer::ProfilingCommons
       }
       else
       {
-        latest_operations[it->second] = &operation;
+        Operation*& current_operation = latest_operations[it->second];
+        if(operation.type != OT_TOUCH || current_operation->type == OT_TOUCH)
+        {
+          current_operation = &operation;
+        }
       }
     }
 
     for(const auto* operation : latest_operations)
     {
-      if(operation->type == OT_SAVE)
+      if(operation->type == OT_SAVE || operation->type == OT_TOUCH)
       {
         write_batch.Put(
           operation->key,
@@ -998,7 +1167,7 @@ namespace AdServer::ProfilingCommons
   bool
   RocksDBBatchingProfileMapImpl::is_write_operation_(OperationType type) noexcept
   {
-    return type == OT_SAVE || type == OT_REMOVE;
+    return type == OT_TOUCH || type == OT_SAVE || type == OT_REMOVE;
   }
 
   void

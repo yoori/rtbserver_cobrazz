@@ -160,6 +160,7 @@ namespace AdServer::ProfilingCommons
     {
       OT_CHECK,
       OT_GET,
+      OT_TOUCH,
       OT_SAVE,
       OT_REMOVE
     };
@@ -233,6 +234,7 @@ namespace AdServer::ProfilingCommons
     mutable Sync::Conditional queue_cond_;
     mutable Operations read_operations_;
     mutable Operations write_operations_;
+    mutable std::unordered_set<std::string> in_flight_read_keys_;
     mutable std::unordered_set<std::string> in_flight_write_keys_;
     mutable std::uint64_t next_operation_sequence_ = 0;
     mutable unsigned long processing_batches_ = 0;
