@@ -228,7 +228,6 @@ namespace ProfilingCommons
     {
       if (pending_operations_.fetch_sub(1, std::memory_order_acq_rel) == 1)
       {
-        std::lock_guard<std::mutex> lock(pending_cond_lock_);
         pending_cond_.notify_all();
       }
       throw;
@@ -478,7 +477,6 @@ namespace ProfilingCommons
              operations_count,
              std::memory_order_acq_rel) == operations_count)
         {
-          std::lock_guard<std::mutex> lock(pending_cond_lock_);
           pending_cond_.notify_all();
         }
       }
