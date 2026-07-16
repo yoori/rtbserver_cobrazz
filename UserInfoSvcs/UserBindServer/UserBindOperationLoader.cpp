@@ -315,7 +315,8 @@ namespace AdServer::UserInfoSvcs
       Generics::Time(reader.time()),
       false,
       Generics::Time::ZERO,
-      false // for_set_cookie
+      false, // for_set_cookie
+      false // generate_user_id
       ).sync_wait();
   }
 

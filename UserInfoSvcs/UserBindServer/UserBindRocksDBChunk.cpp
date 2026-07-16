@@ -23,21 +23,12 @@ namespace AdServer::UserInfoSvcs
   }
 
   UserBindRocksDBChunk::UserBindRocksDBChunk(
-    const char* user_seen_path,
     const char* user_bind_path,
-    const Generics::Time& expire_time,
     const Generics::Time& bound_expire_time,
     std::optional<Generics::Time> bind_min_age,
     unsigned long max_bad_event)
     : bind_min_age_(bind_min_age),
       max_bad_event_(max_bad_event),
-      user_seen_map_(new RocksDBMap(
-        String::SubString(user_seen_path),
-        expire_time,
-        DEFAULT_WORKERS,
-        DEFAULT_BATCH_SIZE,
-        Generics::Time::ZERO,
-        true)),
       user_bind_map_(new RocksDBMap(
         String::SubString(user_bind_path),
         bound_expire_time,
@@ -47,25 +38,14 @@ namespace AdServer::UserInfoSvcs
         true)),
       user_locks_(DEFAULT_LOCKS)
   {
-    user_seen_map_->activate_object();
     user_bind_map_->activate_object();
   }
 
   UserBindRocksDBChunk::~UserBindRocksDBChunk() noexcept
   {
-    if(user_seen_map_)
-    {
-      user_seen_map_->deactivate_object();
-    }
-
     if(user_bind_map_)
     {
       user_bind_map_->deactivate_object();
-    }
-
-    if(user_seen_map_)
-    {
-      user_seen_map_->wait_object();
     }
 
     if(user_bind_map_)
@@ -87,33 +67,14 @@ namespace AdServer::UserInfoSvcs
       Generics::StringHashAdapter(external_id));
 
     const std::optional<BoundRecord> loaded_record = co_await co_load_bound_record_(external_id);
-    const bool found_bound = loaded_record.has_value();
-    BoundRecord record = found_bound ? *loaded_record : BoundRecord();
-
-    if (!found_bound)
-    {
-      record.update_time = now;
-    }
-
-    UserInfo result = adapt_bound_record_(
-      record,
-      false,
-      found_bound,
-      false);
-
-    if (resave_if_exists || !result.user_found)
-    {
-      save_user_id_(
-        record,
-        result,
-        user_id,
-        ignore_bad_event,
-        set_cookie_flag,
-        now);
-      co_await co_save_bound_record_(external_id, record, now);
-    }
-
-    co_return result;
+    co_return co_await co_add_user_id_i_(
+      external_id,
+      user_id,
+      now,
+      resave_if_exists,
+      ignore_bad_event,
+      set_cookie_flag,
+      loaded_record ? &*loaded_record : nullptr);
   }
 
   AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
@@ -123,13 +84,69 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now,
     bool silent,
     const Generics::Time& create_time,
-    bool for_set_cookie)
+    bool for_set_cookie,
+    bool generate_user_id)
   {
     auto user_lock = co_await user_locks_.scoped_lock_async(
       Generics::StringHashAdapter(external_id));
 
     if (std::optional<BoundRecord> bound_record = co_await co_load_bound_record_(external_id))
     {
+      if (bound_record->user_id.is_null())
+      {
+        if (silent)
+        {
+          co_return adapt_unbound_record_(*bound_record, false, now);
+        }
+
+        bool changed = false;
+        const Generics::Time use_create_time =
+          create_time == Generics::Time::ZERO ? now : create_time;
+
+        if (bound_record->first_seen_time == Generics::Time::ZERO)
+        {
+          bound_record->first_seen_time = use_create_time;
+          changed = true;
+        }
+        else if (
+          create_time != Generics::Time::ZERO &&
+          create_time < bound_record->first_seen_time)
+        {
+          bound_record->first_seen_time = create_time;
+          changed = true;
+        }
+
+        UserInfo result = adapt_unbound_record_(*bound_record, false, now);
+        if (
+          generate_user_id &&
+          result.min_age_reached)
+        {
+          const Commons::UserId new_user_id =
+            Commons::UserId::create_random_based();
+          result = co_await co_add_user_id_i_(
+            external_id,
+            new_user_id,
+            now,
+            false,
+            false,
+            for_set_cookie,
+            &*bound_record);
+          if (!result.user_found && !result.invalid_operation)
+          {
+            result.user_id = new_user_id;
+            result.user_id_generated = true;
+            result.created = false;
+            result.min_age_reached = true;
+          }
+        }
+        else if (changed)
+        {
+          co_await co_save_bound_record_(external_id, *bound_record, now);
+        }
+
+        co_return result;
+      }
+
       bool invalid_operation = false;
       if (for_set_cookie)
       {
@@ -162,49 +179,113 @@ namespace AdServer::UserInfoSvcs
       co_return adapt_bound_record_(*bound_record, false, true, invalid_operation);
     }
 
-    // min age checking with seen records usage
-    std::optional<SeenRecord> seen_record;
-    if (!(bind_min_age_ && *bind_min_age_ == Generics::Time::ZERO))
-    {
-      seen_record = co_await co_load_seen_record_(external_id);
-    }
-
-    if (silent)
+    if (!bind_min_age_ || *bind_min_age_ == Generics::Time::ZERO)
     {
       UserInfo result;
-      result.user_found = seen_record.has_value();
-      if (seen_record)
+      result.min_age_reached = true;
+      result.created = false;
+      result.user_found = false;
+      if (generate_user_id && !silent)
       {
-        result = adapt_seen_record_(*seen_record, false, true, now);
+        const Commons::UserId new_user_id =
+          Commons::UserId::create_random_based();
+        result = co_await co_add_user_id_i_(
+          external_id,
+          new_user_id,
+          now,
+          false,
+          false,
+          for_set_cookie,
+          nullptr);
+        if (!result.user_found && !result.invalid_operation)
+        {
+          result.user_id = new_user_id;
+          result.user_id_generated = true;
+          result.created = false;
+          result.min_age_reached = true;
+        }
       }
       co_return result;
     }
 
-    if (bind_min_age_ && *bind_min_age_ == Generics::Time::ZERO)
+    if (silent) // read only mode
     {
-      if (!seen_record.has_value())
+      UserInfo result;
+      result.user_found = false;
+      co_return result;
+    }
+
+    const Generics::Time use_create_time = create_time == Generics::Time::ZERO ? now : create_time;
+    BoundRecord bound_record;
+    bound_record.first_seen_time = use_create_time;
+    bound_record.update_time = now;
+    UserInfo result = adapt_unbound_record_(bound_record, true, now);
+    if (generate_user_id && result.min_age_reached)
+    {
+      const Commons::UserId new_user_id =
+        Commons::UserId::create_random_based();
+      result = co_await co_add_user_id_i_(
+        external_id,
+        new_user_id,
+        now,
+        false,
+        false,
+        for_set_cookie,
+        &bound_record);
+      if (!result.user_found && !result.invalid_operation)
       {
-        seen_record = SeenRecord();
+        result.user_id = new_user_id;
+        result.user_id_generated = true;
+        result.created = true;
+        result.min_age_reached = true;
       }
-      seen_record->first_seen_time = create_time == Generics::Time::ZERO ? now : create_time;
-
-      co_return adapt_seen_record_(*seen_record, !seen_record.has_value(), true, now);
+      co_return result;
     }
 
-    bool created = false;
-    if (!seen_record.has_value())
+    co_await co_save_bound_record_(external_id, bound_record, now);
+
+    co_return result;
+  }
+
+  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
+  UserBindRocksDBChunk::co_add_user_id_i_(
+    const String::SubString& external_id,
+    const Commons::UserId& user_id,
+    const Generics::Time& now,
+    bool resave_if_exists,
+    bool ignore_bad_event,
+    bool set_cookie_flag,
+    const BoundRecord* loaded_record)
+  {
+    const bool found_record = loaded_record != nullptr;
+    BoundRecord record = found_record ? *loaded_record : BoundRecord();
+
+    if (!found_record)
     {
-      seen_record = SeenRecord();
-      seen_record->first_seen_time = create_time == Generics::Time::ZERO ? now : create_time;
-      created = true;
-    }
-    else if (create_time != Generics::Time::ZERO && create_time < seen_record->first_seen_time)
-    {
-      seen_record->first_seen_time = create_time;
+      record.first_seen_time = now;
+      record.update_time = now;
     }
 
-    co_await co_save_seen_record_(external_id, *seen_record, now);
-    co_return adapt_seen_record_(*seen_record, created, true, now);
+    const bool found_bound_user = found_record && !record.user_id.is_null();
+    UserInfo result = adapt_bound_record_(
+      record,
+      false,
+      found_bound_user,
+      false);
+
+    if (resave_if_exists || !result.user_found)
+    {
+      save_user_id_(
+        record,
+        result,
+        user_id,
+        ignore_bad_event,
+        set_cookie_flag,
+        now);
+      co_await co_save_bound_record_(external_id, record, now);
+    }
+
+    co_return result;
   }
 
   void
@@ -240,18 +321,6 @@ namespace AdServer::UserInfoSvcs
     return value;
   }
 
-  std::string
-  UserBindRocksDBChunk::serialize_seen_(const SeenRecord& record) const
-  {
-    UserBindSeenRocksDBRecordWriter writer;
-    writer.version() = PROFILE_VERSION;
-    writer.first_seen_time() = record.first_seen_time.tv_sec;
-
-    std::string value(writer.size(), '\0');
-    writer.save(value.data(), value.size());
-    return value;
-  }
-
   bool
   UserBindRocksDBChunk::deserialize_bound_(
     BoundRecord& record,
@@ -272,47 +341,16 @@ namespace AdServer::UserInfoSvcs
         return false;
       }
 
-      if (reader.user_id()[0] == 0)
-      {
-        return false;
-      }
-
       record.first_seen_time = Generics::Time(reader.first_seen_time());
       record.update_time = Generics::Time(reader.update_time());
-      record.user_id = Commons::UserId(reader.user_id(), strlen(reader.user_id()) == 24);
+      if (reader.user_id()[0] != 0)
+      {
+        record.user_id = Commons::UserId(reader.user_id(), strlen(reader.user_id()) == 24);
+      }
       record.flags = static_cast<unsigned char>(reader.flags());
       record.bad_event_count = static_cast<std::uint8_t>(
         std::min<std::uint32_t>(reader.bad_event_count(), 255));
       record.last_bad_event_day = static_cast<std::uint16_t>(reader.last_bad_event_day());
-
-      return true;
-    }
-    catch(const eh::Exception&)
-    {
-      return false;
-    }
-  }
-
-  bool
-  UserBindRocksDBChunk::deserialize_seen_(
-    SeenRecord& record,
-    const Generics::ConstSmartMemBuf* profile) const
-  {
-    if (!profile)
-    {
-      return false;
-    }
-
-    try
-    {
-      const auto& buffer = profile->membuf();
-      UserBindSeenRocksDBRecordReader reader(buffer.data(), buffer.size());
-      if (reader.version() != PROFILE_VERSION)
-      {
-        return false;
-      }
-
-      record.first_seen_time = Generics::Time(reader.first_seen_time());
 
       return true;
     }
@@ -343,48 +381,13 @@ namespace AdServer::UserInfoSvcs
       std::cout
         << "UserBindRocksDBChunk::co_load_bound_record_():"
         << " key='" << key << "'"
-        << " result=bound"
+        << " result=" << (record.user_id.is_null() ? "marker" : "bound")
         << " flags=" << static_cast<unsigned int>(record.flags)
         << " bad_event_count="
         << static_cast<unsigned int>(record.bad_event_count)
+        << " user_id="
+        << (record.user_id.is_null() ? "<null>" : record.user_id.to_string())
         << std::endl;
-      co_return record;
-    }
-
-    co_return std::nullopt;
-  }
-
-  AdServer::Commons::SyncCoro<
-    std::optional<UserBindRocksDBChunk::SeenRecord>>
-  UserBindRocksDBChunk::co_load_seen_record_(
-    const String::SubString& external_id)
-  {
-    const std::string key = external_id.str();
-
-    if(bind_min_age_ && *bind_min_age_ == Generics::Time::ZERO)
-    {
-      co_return std::nullopt;
-    }
-
-    const auto seen_profile = co_await user_seen_map_->co_get_profile(key);
-    std::cout
-      << "UserBindRocksDBChunk::co_load_seen_record_():"
-      << " key='" << key << "'"
-      << " seen_profile="
-      << (seen_profile.in() ? seen_profile->membuf().size() : 0)
-      << std::endl;
-
-    SeenRecord record;
-    const bool loaded = deserialize_seen_(record, seen_profile.in());
-    std::cout
-      << "UserBindRocksDBChunk::co_load_seen_record_():"
-      << " key='" << key << "'"
-      << " result=" << (loaded ? "seen" : "none")
-      << " first_seen=" << record.first_seen_time.tv_sec
-      << "." << record.first_seen_time.tv_usec
-      << std::endl;
-    if(loaded)
-    {
       co_return record;
     }
 
@@ -416,31 +419,6 @@ namespace AdServer::UserInfoSvcs
       << std::endl;
 
     user_bind_map_->save_profile_async(key, profile.in(), now);
-    co_await user_seen_map_->co_remove_profile(key);
-
-    co_return true;
-  }
-
-  AdServer::Commons::SyncCoro<bool>
-  UserBindRocksDBChunk::co_save_seen_record_(
-    const String::SubString& external_id,
-    const SeenRecord& record,
-    const Generics::Time& now)
-  {
-    const std::string key = external_id.str();
-    const std::string value = serialize_seen_(record);
-    const auto profile = make_profile_(value);
-
-    std::cout
-      << "UserBindRocksDBChunk::co_save_seen_record_():"
-      << " key='" << key << "'"
-      << " value_size=" << value.size()
-      << " now=" << now.tv_sec << "." << now.tv_usec
-      << " first_seen=" << record.first_seen_time.tv_sec
-      << "." << record.first_seen_time.tv_usec
-      << std::endl;
-
-    user_seen_map_->save_profile_async(key, profile.in(), now);
 
     co_return true;
   }
@@ -462,16 +440,15 @@ namespace AdServer::UserInfoSvcs
   }
 
   UserBindProcessor::UserInfo
-  UserBindRocksDBChunk::adapt_seen_record_(
-    const SeenRecord& record,
+  UserBindRocksDBChunk::adapt_unbound_record_(
+    const BoundRecord& record,
     bool created,
-    bool user_found,
     const Generics::Time& now) const
   {
     UserInfo result;
     result.min_age_reached = (bind_min_age_ && record.first_seen_time + *bind_min_age_ <= now);
     result.created = created;
-    result.user_found = user_found;
+    result.user_found = true;
     return result;
   }
 
@@ -514,6 +491,12 @@ namespace AdServer::UserInfoSvcs
     {
       record.user_id = user_id;
     }
+
+    if (record.first_seen_time == Generics::Time::ZERO)
+    {
+      record.first_seen_time = now;
+    }
+    record.update_time = now;
   }
 
   void

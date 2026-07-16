@@ -1,6 +1,8 @@
 #include "UserBindOperationSaver.hpp"
 #include "UserBindOperationProfile.hpp"
 
+#include <utility>
+
 namespace AdServer::UserInfoSvcs
 {
   UserBindOperationSaver::UserBindOperationSaver(
@@ -9,8 +11,15 @@ namespace AdServer::UserInfoSvcs
     const char* output_file_prefix,
     unsigned long chunks_count,
     const Generics::Time& flush_period,
+    unsigned long threads_count,
     UserBindProcessor* next_processor)
-    : MessageSaver(logger, output_dir, output_file_prefix, chunks_count, flush_period),
+    : MessageSaver(
+        logger,
+        output_dir,
+        output_file_prefix,
+        chunks_count,
+        flush_period,
+        threads_count),
       next_processor_(ReferenceCounting::add_ref(next_processor))
   {}
 
@@ -48,7 +57,7 @@ namespace AdServer::UserInfoSvcs
       write_operation(
         AdServer::Commons::external_id_distribution_hash(external_id),
         OP_ADD_USER_ID,
-        op_mem_buf);
+        std::move(op_mem_buf));
     }
 
     co_return res;
@@ -61,7 +70,8 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now,
     bool silent,
     const Generics::Time& create_time,
-    bool for_set_cookie)
+    bool for_set_cookie,
+    bool generate_user_id)
     /*throw(ChunkNotFound, UserBindProcessor::Exception)*/
   {
     UserInfo res = co_await next_processor_->co_get_user_id(
@@ -70,26 +80,10 @@ namespace AdServer::UserInfoSvcs
       now,
       silent,
       create_time,
-      for_set_cookie);
+      for_set_cookie,
+      generate_user_id);
 
-    if(res.user_id_generated)
-    {
-      // create add operation with low priority
-      UserBindAddOperationWriter op_writer;
-      op_writer.version() = 0;
-      op_writer.external_id() = external_id.str();
-      op_writer.user_id() = res.user_id.to_string();
-      op_writer.time() = now.tv_sec;
-      op_writer.resave_if_exists() = 0;
-
-      Generics::MemBuf op_mem_buf(op_writer.size());
-      op_writer.save(op_mem_buf.data(), op_mem_buf.size());
-      write_operation(
-        AdServer::Commons::external_id_distribution_hash(external_id),
-        OP_ADD_USER_ID,
-        op_mem_buf);
-    }
-    else if(res.created)
+    if(res.created)
     {
       UserBindGetOperationWriter op_writer;
       op_writer.version() = 0;
@@ -112,7 +106,25 @@ namespace AdServer::UserInfoSvcs
       write_operation(
         AdServer::Commons::external_id_distribution_hash(external_id),
         OP_GET_USER_ID,
-        op_mem_buf);
+        std::move(op_mem_buf));
+    }
+
+    if(res.user_id_generated)
+    {
+      // create add operation with low priority
+      UserBindAddOperationWriter op_writer;
+      op_writer.version() = 0;
+      op_writer.external_id() = external_id.str();
+      op_writer.user_id() = res.user_id.to_string();
+      op_writer.time() = now.tv_sec;
+      op_writer.resave_if_exists() = 0;
+
+      Generics::MemBuf op_mem_buf(op_writer.size());
+      op_writer.save(op_mem_buf.data(), op_mem_buf.size());
+      write_operation(
+        AdServer::Commons::external_id_distribution_hash(external_id),
+        OP_ADD_USER_ID,
+        std::move(op_mem_buf));
     }
 
     co_return res;

@@ -272,6 +272,7 @@ namespace
       operation_backup.file_prefix = config.OperationBackup()->file_prefix();
       operation_backup.rotate_period =
         Generics::Time(config.OperationBackup()->rotate_period());
+      operation_backup.threads = config.OperationBackup()->threads();
       core_config.operation_backup = std::move(operation_backup);
     }
 

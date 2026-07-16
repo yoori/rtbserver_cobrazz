@@ -161,13 +161,15 @@ namespace AdServer::UserInfoSvcs
           request_info.timestamp,
           request_info.silent,
           request_info.create_timestamp,
-          request_info.for_set_cookie);
+          request_info.for_set_cookie,
+          request_info.generate_user_id);
 
       GetUserResponseInfo res;
 
       if(!user_info.user_id.is_null())
       {
-        if(user_id_black_list_.is_blacklisted(user_info.user_id))
+        if(!user_info.user_id_generated &&
+          user_id_black_list_.is_blacklisted(user_info.user_id))
         {
           const Commons::UserId new_user_id = Commons::UserId::create_random_based();
 
@@ -186,7 +188,7 @@ namespace AdServer::UserInfoSvcs
         else
         {
           res.user_id = user_info.user_id;
-          res.created = false;
+          res.created = user_info.user_id_generated;
           res.min_age_reached = user_info.min_age_reached;
         }
 
@@ -196,42 +198,11 @@ namespace AdServer::UserInfoSvcs
         co_return res;
       }
 
-      if(!request_info.generate_user_id ||
-        user_info.invalid_operation ||
-        (user_info.user_found && !user_info.min_age_reached))
-      {
-        res.user_id = user_info.user_id;
-        res.created = false;
-        res.min_age_reached = user_info.min_age_reached;
-        res.invalid_operation = user_info.invalid_operation;
-        res.user_found = user_info.user_found;
-
-        co_return res;
-      }
-
-      const Commons::UserId new_user_id = Commons::UserId::create_random_based();
-      user_info = co_await user_bind_accessor->co_add_user_id(
-        String::SubString(request_info.id),
-        new_user_id,
-        request_info.timestamp,
-        false,
-        false,
-        request_info.for_set_cookie);
-
-      res.min_age_reached = true;
+      res.user_id = user_info.user_id;
+      res.created = false;
+      res.min_age_reached = user_info.min_age_reached;
+      res.invalid_operation = user_info.invalid_operation;
       res.user_found = user_info.user_found;
-
-      if(!user_info.user_found)
-      {
-        res.user_id = new_user_id;
-        res.invalid_operation = user_info.invalid_operation;
-        res.created = true;
-      }
-      else
-      {
-        res.user_id = user_info.user_id;
-        res.created = false;
-      }
 
       co_return res;
     }
@@ -450,6 +421,7 @@ namespace AdServer::UserInfoSvcs
             operation_backup.file_prefix.c_str(),
             config_.storage.common_chunks_number,
             operation_backup.rotate_period,
+            operation_backup.threads,
             user_bind_processor);
 
         add_child_object(user_bind_operation_saver);

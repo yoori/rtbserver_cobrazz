@@ -20,9 +20,7 @@ namespace AdServer::UserInfoSvcs
   {
   public:
     UserBindRocksDBChunk(
-      const char* user_seen_path,
       const char* user_bind_path,
-      const Generics::Time& expire_time,
       const Generics::Time& bound_expire_time,
       std::optional<Generics::Time> bind_min_age,
       unsigned long max_bad_event);
@@ -43,7 +41,8 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now,
       bool silent,
       const Generics::Time& create_time,
-      bool for_set_cookie) override;
+      bool for_set_cookie,
+      bool generate_user_id) override;
 
     void
     clear_expired(
@@ -67,19 +66,11 @@ namespace AdServer::UserInfoSvcs
       std::uint16_t last_bad_event_day = 0;
     };
 
-    struct SeenRecord
-    {
-      Generics::Time first_seen_time;
-    };
-
     Generics::ConstSmartMemBuf_var
     make_profile_(const std::string& value) const;
 
     std::string
     serialize_bound_(const BoundRecord& record) const;
-
-    std::string
-    serialize_seen_(const SeenRecord& record) const;
 
     bool
     deserialize_bound_(
@@ -87,18 +78,8 @@ namespace AdServer::UserInfoSvcs
       const Generics::ConstSmartMemBuf* profile)
       const;
 
-    bool
-    deserialize_seen_(
-      SeenRecord& record,
-      const Generics::ConstSmartMemBuf* profile)
-      const;
-
     AdServer::Commons::SyncCoro<std::optional<BoundRecord>>
     co_load_bound_record_(
-      const String::SubString& external_id);
-
-    AdServer::Commons::SyncCoro<std::optional<SeenRecord>>
-    co_load_seen_record_(
       const String::SubString& external_id);
 
     AdServer::Commons::SyncCoro<bool>
@@ -107,11 +88,15 @@ namespace AdServer::UserInfoSvcs
       const BoundRecord& record,
       const Generics::Time& now);
 
-    AdServer::Commons::SyncCoro<bool>
-    co_save_seen_record_(
+    AdServer::Commons::SyncCoro<UserInfo>
+    co_add_user_id_i_(
       const String::SubString& external_id,
-      const SeenRecord& record,
-      const Generics::Time& now);
+      const Commons::UserId& user_id,
+      const Generics::Time& now,
+      bool resave_if_exists,
+      bool ignore_bad_event,
+      bool set_cookie_flag,
+      const BoundRecord* loaded_record);
 
     UserInfo
     adapt_bound_record_(
@@ -121,10 +106,9 @@ namespace AdServer::UserInfoSvcs
       bool invalid_operation) const;
 
     UserInfo
-    adapt_seen_record_(
-      const SeenRecord& record,
+    adapt_unbound_record_(
+      const BoundRecord& record,
       bool created,
-      bool user_found,
       const Generics::Time& now) const;
 
     void
@@ -153,7 +137,6 @@ namespace AdServer::UserInfoSvcs
     using RocksDBMap =
       AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
 
-    std::unique_ptr<RocksDBMap> user_seen_map_;
     std::unique_ptr<RocksDBMap> user_bind_map_;
     UserLockMap user_locks_;
   };

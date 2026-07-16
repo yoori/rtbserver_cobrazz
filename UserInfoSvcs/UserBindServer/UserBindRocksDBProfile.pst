@@ -17,15 +17,5 @@ namespace UserInfoSvcs
 
   autoreader UserBindRocksDBRecordReader<UserBindRocksDBRecordDescriptor>;
   autowriter UserBindRocksDBRecordWriter<UserBindRocksDBRecordDescriptor>;
-
-  /* rocksdb user seen record */
-  struct UserBindSeenRocksDBRecordDescriptor
-  {
-    uint version;
-    uint first_seen_time;
-  };
-
-  autoreader UserBindSeenRocksDBRecordReader<UserBindSeenRocksDBRecordDescriptor>;
-  autowriter UserBindSeenRocksDBRecordWriter<UserBindSeenRocksDBRecordDescriptor>;
 }
 }

@@ -56,6 +56,7 @@ namespace AdServer::UserInfoSvcs
       std::string dir;
       std::string file_prefix;
       Generics::Time rotate_period;
+      unsigned long threads = 1;
     };
 
     struct OperationLoadConfig

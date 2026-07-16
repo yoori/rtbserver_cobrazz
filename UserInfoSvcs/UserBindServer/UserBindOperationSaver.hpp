@@ -27,6 +27,7 @@ namespace AdServer::UserInfoSvcs
       const char* output_file_prefix,
       unsigned long chunks_number,
       const Generics::Time& flush_period,
+      unsigned long threads_count,
       UserBindProcessor* next_processor);
 
     AdServer::Commons::SyncCoro<UserInfo>
@@ -46,7 +47,8 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now,
       bool silent,
       const Generics::Time& create_time,
-      bool for_set_cookie) override
+      bool for_set_cookie,
+      bool generate_user_id) override
       /*throw(ChunkNotFound, UserBindProcessor::Exception)*/;
 
     virtual void
@@ -65,6 +67,6 @@ namespace AdServer::UserInfoSvcs
     UserBindProcessor_var next_processor_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindOperationSaver>
-    UserBindOperationSaver_var;
+  using UserBindOperationSaver_var =
+    ReferenceCounting::SmartPtr<UserBindOperationSaver>;
 }

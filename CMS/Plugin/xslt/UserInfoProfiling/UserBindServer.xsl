@@ -153,7 +153,7 @@
     <xsl:if test="count($full-cluster-path/serviceGroup[@descriptor =
                   $fe-cluster-descriptor]) > 1 and
                   $user-bind-keep-mode != 'keep only master'">
-      <cfg:OperationBackup file_prefix="UserBindOp" rotate_period="60">
+      <cfg:OperationBackup file_prefix="UserBindOp" rotate_period="60" threads="10">
         <xsl:attribute name="dir"><xsl:value-of
           select="concat($workspace-root, '/log/UserBindServer/Out/UserBindOp_', $cluster-id mod 2 + 1)"/></xsl:attribute>
       </cfg:OperationBackup>

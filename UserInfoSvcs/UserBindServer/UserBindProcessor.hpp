@@ -51,7 +51,8 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now,
       bool silent,
       const Generics::Time& create_time,
-      bool for_set_cookie)
+      bool for_set_cookie,
+      bool generate_user_id)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
     virtual void
