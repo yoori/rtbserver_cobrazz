@@ -122,7 +122,7 @@ namespace AdServer::ImprTrack
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration not presented.");
       }
@@ -130,7 +130,7 @@ namespace AdServer::ImprTrack
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.ImprTrackFeConfiguration().present())
+      if (!fe_config.ImprTrackFeConfiguration().present())
       {
         throw Exception("ImprTrackFeConfiguration not presented.");
       }
@@ -153,7 +153,7 @@ namespace AdServer::ImprTrack
     bool result = FrontendCommons::find_uri(
       config_->UriList().Uri(), uri, found_uri);
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr << "ImprTrack::Frontend::will_handle(" << uri << "), service: '" <<
@@ -170,7 +170,7 @@ namespace AdServer::ImprTrack
   {
     static const char* FUN = "Frontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
@@ -180,7 +180,7 @@ namespace AdServer::ImprTrack
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
             FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
-        if(config_->match_threads() > 0)
+        if (config_->match_threads() > 0)
         {
           match_workers_ = workers_;
         }
@@ -206,7 +206,7 @@ namespace AdServer::ImprTrack
           std::make_shared<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
             user_bind_client,
             workers_);
-        if(user_bind_client)
+        if (user_bind_client)
         {
           add_child_object(user_bind_client);
         }
@@ -267,7 +267,7 @@ namespace AdServer::ImprTrack
             bind_url_it->template_());
           bind_url_rule->use_keywords = bind_url_it->use_keywords();
 
-          if(bind_url_it->use_keywords())
+          if (bind_url_it->use_keywords())
           {
             String::StringManip::Splitter<String::AsciiStringManip::SepNL> splitter(
               bind_url_it->keywords());
@@ -275,7 +275,7 @@ namespace AdServer::ImprTrack
             while(splitter.get_token(token))
             {
               String::StringManip::trim(token);
-              if(!token.empty())
+              if (!token.empty())
               {
                 bind_url_rule->keywords.insert(Generics::StringHashAdapter(token));
               }
@@ -357,7 +357,7 @@ namespace AdServer::ImprTrack
       RequestInfo request_info;
       request_info_filler_->fill(request_info, request);
 
-      if(logger()->log_level() >= TraceLevel::MIDDLE)
+      if (logger()->log_level() >= TraceLevel::MIDDLE)
       {
         std::ostringstream ostr;
         ostr << FUN << ": " << std::endl <<
@@ -396,7 +396,7 @@ namespace AdServer::ImprTrack
         }
 
         // confirm impression for stats (CampaignManager)
-        if(!request_info.request_ids.empty())
+        if (!request_info.request_ids.empty())
         {
           adserver::campaign_svcs::campaign_manager::ImpressionInfo
             verify_impression_info;
@@ -414,7 +414,7 @@ namespace AdServer::ImprTrack
           verify_impression_info.set_viewability(request_info.viewability);
           verify_impression_info.set_action_name(request_info.action_name);
 
-          if(request_info.user_id_hash_mod.present())
+          if (request_info.user_id_hash_mod.present())
           {
             auto* user_id_hash_mod =
               verify_impression_info.mutable_user_id_hash_mod();
@@ -437,7 +437,7 @@ namespace AdServer::ImprTrack
             // ccg_keyword_id non used now,
             // it can't define specific impression cost (only click)
             cr_info->set_ccg_keyword_id(0);
-            if(cr_it != request_info.creatives.end())
+            if (cr_it != request_info.creatives.end())
             {
               cr_info->set_ccid(cr_it->ccid);
               cr_info->mutable_ctr()->set_value(
@@ -486,7 +486,7 @@ namespace AdServer::ImprTrack
 
       FrontendCommons::CORS::set_headers(request, response);
 
-      if(!request_info.redirect_url.empty())
+      if (!request_info.redirect_url.empty())
       {
         const std::string redirect_url_str = FrontendCommons::normalize_abs_url(
           HTTP::BrowserAddress(request_info.redirect_url),
@@ -496,7 +496,7 @@ namespace AdServer::ImprTrack
 
         http_status = FrontendCommons::redirect(redirect_url_str, response);
       }
-      else if(request_info.verify_type != AdServer::CampaignSvcs::RVT_NOTICE)
+      else if (request_info.verify_type != AdServer::CampaignSvcs::RVT_NOTICE)
         // don't try to make bind redirect on notice calls
       {
         // find templates that match traits
@@ -508,11 +508,11 @@ namespace AdServer::ImprTrack
 
           for(auto bind_rule_it = bind_url_rules_.begin(); bind_rule_it != bind_url_rules_.end(); ++bind_rule_it)
           {
-            if((*bind_rule_it)->use_keywords)
+            if ((*bind_rule_it)->use_keywords)
             {
               for(auto keyword_it = keywords.begin(); keyword_it != keywords.end(); ++keyword_it)
               {
-                if((*bind_rule_it)->keywords.find(*keyword_it) != (*bind_rule_it)->keywords.end())
+                if ((*bind_rule_it)->keywords.find(*keyword_it) != (*bind_rule_it)->keywords.end())
                 {
                   inst_templates.push_back((*bind_rule_it)->url_template);
                   break;
@@ -529,7 +529,7 @@ namespace AdServer::ImprTrack
         std::vector<std::string> bind_urls;
 
         // prepare BINDURL tokens
-        if(!inst_templates.empty())
+        if (!inst_templates.empty())
         {
           char random_str[40];
           unsigned long random = Generics::safe_rand();
@@ -540,7 +540,7 @@ namespace AdServer::ImprTrack
           sub_args_cont[Tokens::RANDOM] = random_str;
           sub_args_cont[Tokens::EXTERNAL_USER_ID] = request_info.external_user_id;
           sub_args_cont[Tokens::SOURCE_ID] = request_info.source_id;
-          if(!request_info.current_user_id.is_null())
+          if (!request_info.current_user_id.is_null())
           {
             sub_args_cont[Tokens::ADD_USER_ID] = request_info.current_user_id.to_string();
           }
@@ -557,7 +557,7 @@ namespace AdServer::ImprTrack
           }
         }
 
-        if(request_info.use_template_file)
+        if (request_info.use_template_file)
         {
           try
           {
@@ -602,7 +602,7 @@ namespace AdServer::ImprTrack
             http_status = 204;
           }
         }
-        else if(!bind_urls.empty())
+        else if (!bind_urls.empty())
         {
           const std::string redirect_url_str = FrontendCommons::normalize_abs_url(
             HTTP::BrowserAddress(*bind_urls.begin()),
@@ -616,7 +616,7 @@ namespace AdServer::ImprTrack
         {
           response.set_content_type_nocopy(track_pixel_content_type_);
 
-          if(common_config_->ResponseHeaders().present())
+          if (common_config_->ResponseHeaders().present())
           {
             FrontendCommons::add_headers(
               *(common_config_->ResponseHeaders()),
@@ -678,7 +678,7 @@ namespace AdServer::ImprTrack
         result_user_id :
         request_info.current_user_id;
 
-      if((!request_info.common_request_id.is_null() ||
+      if ((!request_info.common_request_id.is_null() ||
           !request_info.pubpixel_accounts.empty()) &&
          !freq_cap_user_id.is_null() &&
          user_info_client_coro_)
@@ -712,7 +712,7 @@ namespace AdServer::ImprTrack
         }
       }
 
-      if(request_info.set_cookie &&
+      if (request_info.set_cookie &&
         !invalid_bind_operation &&
         !result_user_id.is_null())
       {
@@ -726,7 +726,7 @@ namespace AdServer::ImprTrack
       }
       FrontendCommons::CORS::set_headers(request, response);
 
-      if(!request_info.redirect_url.empty())
+      if (!request_info.redirect_url.empty())
       {
         const std::string redirect_url_str = FrontendCommons::normalize_abs_url(
           HTTP::BrowserAddress(request_info.redirect_url),
@@ -736,7 +736,7 @@ namespace AdServer::ImprTrack
 
         http_status = FrontendCommons::redirect(redirect_url_str, response);
       }
-      else if(request_info.verify_type != AdServer::CampaignSvcs::RVT_NOTICE)
+      else if (request_info.verify_type != AdServer::CampaignSvcs::RVT_NOTICE)
       {
         TextTemplateArray inst_templates;
 
@@ -748,13 +748,13 @@ namespace AdServer::ImprTrack
             bind_rule_it != bind_url_rules_.end();
             ++bind_rule_it)
           {
-            if((*bind_rule_it)->use_keywords)
+            if ((*bind_rule_it)->use_keywords)
             {
               for(auto keyword_it = keywords.begin();
                 keyword_it != keywords.end();
                 ++keyword_it)
               {
-                if((*bind_rule_it)->keywords.find(*keyword_it) !=
+                if ((*bind_rule_it)->keywords.find(*keyword_it) !=
                   (*bind_rule_it)->keywords.end())
                 {
                   inst_templates.push_back((*bind_rule_it)->url_template);
@@ -771,7 +771,7 @@ namespace AdServer::ImprTrack
 
         std::vector<std::string> bind_urls;
 
-        if(!inst_templates.empty())
+        if (!inst_templates.empty())
         {
           char random_str[40];
           const unsigned long random = Generics::safe_rand();
@@ -786,7 +786,7 @@ namespace AdServer::ImprTrack
           sub_args_cont[Tokens::EXTERNAL_USER_ID] =
             request_info.external_user_id;
           sub_args_cont[Tokens::SOURCE_ID] = request_info.source_id;
-          if(!request_info.current_user_id.is_null())
+          if (!request_info.current_user_id.is_null())
           {
             sub_args_cont[Tokens::ADD_USER_ID] =
               request_info.current_user_id.to_string();
@@ -806,7 +806,7 @@ namespace AdServer::ImprTrack
           }
         }
 
-        if(request_info.use_template_file)
+        if (request_info.use_template_file)
         {
           try
           {
@@ -855,7 +855,7 @@ namespace AdServer::ImprTrack
             http_status = 204;
           }
         }
-        else if(!bind_urls.empty())
+        else if (!bind_urls.empty())
         {
           const std::string redirect_url_str = FrontendCommons::normalize_abs_url(
             HTTP::BrowserAddress(*bind_urls.begin()),
@@ -869,7 +869,7 @@ namespace AdServer::ImprTrack
         {
           response.set_content_type_nocopy(track_pixel_content_type_);
 
-          if(common_config_->ResponseHeaders().present())
+          if (common_config_->ResponseHeaders().present())
           {
             FrontendCommons::add_headers(
               *(common_config_->ResponseHeaders()),
@@ -906,62 +906,25 @@ namespace AdServer::ImprTrack
     ResolveUserBindResult result;
     result.user_id = input_user_id;
 
-    if(request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT)
+    if (request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT)
     {
       result.user_id = AdServer::Commons::UserId();
       co_return result;
     }
 
-    if(!user_bind_client_coro_)
+    if (!user_bind_client_coro_)
     {
       co_return result;
     }
 
-    if(!result.user_id.is_null())
-    {
-      google::protobuf::Arena get_request_arena;
-      auto* get_request = google::protobuf::Arena::CreateMessage<
-        adserver::user_info_svcs::user_bind::GetUserIdRequest>(
-          &get_request_arena);
-      get_request->set_id(std::string("c/") + result.user_id.to_string());
-      get_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
-      get_request->set_silent(true);
-      get_request->set_generate_user_id(false);
-      get_request->set_for_set_cookie(request_info.set_cookie);
-      get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
-      get_request->set_current_user_id(GrpcAlgs::pack_user_id(result.user_id));
-
-      auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
-      if(get_result.status.ok())
-      {
-        if(get_result.response.invalid_operation())
-        {
-          result.invalid_bind_operation = true;
-          report_bad_user_(request_info);
-          co_return result;
-        }
-
-        const AdServer::Commons::UserId resolved_user_id =
-          GrpcAlgs::unpack_user_id(get_result.response.user_id());
-        if(!resolved_user_id.is_null())
-        {
-          result.user_id = resolved_user_id;
-        }
-      }
-
-      if(request_info.current_user_id == result.user_id ||
-        request_info.external_user_id.empty())
-      {
-        co_return result;
-      }
-    }
-    else if(request_info.external_user_id.empty())
+    if (request_info.external_user_id.empty())
     {
       co_return result;
     }
 
-    if(!result.user_id.is_null())
+    if (!result.user_id.is_null())
     {
+      // save request_info.external_user_id => user_id mapping
       google::protobuf::Arena add_user_request_arena;
       auto* add_user_request = google::protobuf::Arena::CreateMessage<
         adserver::user_info_svcs::user_bind::AddUserIdRequest>(
@@ -970,14 +933,13 @@ namespace AdServer::ImprTrack
       add_user_request->set_user_id(GrpcAlgs::pack_user_id(result.user_id));
       add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
 
-      auto add_result = co_await user_bind_client_coro_->add_user_id(
-        *add_user_request);
-      if(!add_result.status.ok())
+      auto add_result = co_await user_bind_client_coro_->add_user_id(*add_user_request);
+      if (!add_result.status.ok())
       {
         co_return result;
       }
 
-      if(add_result.response.invalid_operation())
+      if (add_result.response.invalid_operation())
       {
         result.invalid_bind_operation = true;
         report_bad_user_(request_info);
@@ -986,6 +948,8 @@ namespace AdServer::ImprTrack
       co_return result;
     }
 
+    // request_info.external_user_id isn't empty and user_id isn't defined
+    // resolve user_id by request_info.external_user_id
     google::protobuf::Arena get_request_arena;
     auto* get_request = google::protobuf::Arena::CreateMessage<
       adserver::user_info_svcs::user_bind::GetUserIdRequest>(
@@ -998,12 +962,12 @@ namespace AdServer::ImprTrack
     get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
     auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
-    if(!get_result.status.ok())
+    if (!get_result.status.ok())
     {
       co_return result;
     }
 
-    if(get_result.response.invalid_operation())
+    if (get_result.response.invalid_operation())
     {
       result.invalid_bind_operation = true;
       report_bad_user_(request_info);
@@ -1012,7 +976,7 @@ namespace AdServer::ImprTrack
     {
       const AdServer::Commons::UserId resolved_user_id =
         GrpcAlgs::unpack_user_id(get_result.response.user_id());
-      if(!resolved_user_id.is_null())
+      if (!resolved_user_id.is_null())
       {
         result.user_id = resolved_user_id;
         common_module_->user_id_controller()->null_blacklisted(result.user_id);
@@ -1028,11 +992,11 @@ namespace AdServer::ImprTrack
     std::shared_ptr<MatchScheduleState> match_schedule_state)
     noexcept
   {
-    if(campaign_manager_coro_)
+    if (campaign_manager_coro_)
     {
       auto result = co_await campaign_manager_coro_->verify_impression(
         std::move(request));
-      if(!result.status.ok())
+      if (!result.status.ok())
       {
         Stream::Error ostr;
         ostr << "CampaignManager::verify_impression(): "
@@ -1063,11 +1027,11 @@ namespace AdServer::ImprTrack
       request)
     noexcept
   {
-    if(user_info_client_coro_)
+    if (user_info_client_coro_)
     {
       auto result = co_await user_info_client_coro_->confirm_user_freq_caps(
         std::move(request));
-      if(!result.status.ok())
+      if (!result.status.ok())
       {
         Stream::Error ostr;
         ostr << "UserInfoManagerGrpc::confirm_user_freq_caps(): "
@@ -1094,11 +1058,11 @@ namespace AdServer::ImprTrack
       request)
     noexcept
   {
-    if(campaign_manager_coro_)
+    if (campaign_manager_coro_)
     {
       auto result = co_await campaign_manager_coro_->consider_web_operation(
         std::move(request));
-      if(!result.status.ok() &&
+      if (!result.status.ok() &&
         result.status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
       {
         Stream::Error ostr;
@@ -1122,14 +1086,14 @@ namespace AdServer::ImprTrack
     const std::shared_ptr<MatchScheduleState>& state)
     noexcept
   {
-    if(!state->request_finished ||
+    if (!state->request_finished ||
       !state->verify_finished ||
       state->scheduled)
     {
       return;
     }
 
-    if(!match_workers_ ||
+    if (!match_workers_ ||
       state->impression_result_info.creatives().empty())
     {
       state->scheduled = true;
@@ -1142,7 +1106,7 @@ namespace AdServer::ImprTrack
       state->result_user_id :
       state->request_info.current_user_id;
 
-    if(match_user_id.is_null() ||
+    if (match_user_id.is_null() ||
       match_user_id == AdServer::Commons::PROBE_USER_ID ||
       !channel_client_coro_ ||
       !campaign_manager_coro_)
@@ -1155,7 +1119,7 @@ namespace AdServer::ImprTrack
     unsigned long current = match_tasks_count_.load(std::memory_order_relaxed);
     while(limit == 0 || current < limit)
     {
-      if(match_tasks_count_.compare_exchange_weak(
+      if (match_tasks_count_.compare_exchange_weak(
           current,
           current + 1,
           std::memory_order_relaxed,
@@ -1165,7 +1129,7 @@ namespace AdServer::ImprTrack
       }
     }
 
-    if(limit != 0 && current >= limit)
+    if (limit != 0 && current >= limit)
     {
       state->scheduled = true;
       logger()->log(
@@ -1186,12 +1150,12 @@ namespace AdServer::ImprTrack
     for(const auto& creative :
       state->impression_result_info.creatives())
     {
-      if(creative.campaign_id())
+      if (creative.campaign_id())
       {
         task_state->campaign_ids.push_back(creative.campaign_id());
       }
 
-      if(creative.advertiser_id())
+      if (creative.advertiser_id())
       {
         task_state->advertiser_ids.push_back(creative.advertiser_id());
       }
@@ -1232,7 +1196,7 @@ namespace AdServer::ImprTrack
 
     auto channel_result = co_await channel_client_coro_->match(
       *channel_request);
-    if(!channel_result.status.ok())
+    if (!channel_result.status.ok())
     {
       Stream::Error ostr;
       ostr << "ChannelServer::match(): gRPC call failed: code=" <<
@@ -1249,36 +1213,8 @@ namespace AdServer::ImprTrack
 
     state->trigger_match_result = std::move(channel_result.response_holder);
 
-    if(user_bind_client_coro_ &&
-      !state->cookie_user_id.is_null() &&
-      state->user_id != state->cookie_user_id)
-    {
-      google::protobuf::Arena get_request_arena;
-      auto* get_request = google::protobuf::Arena::CreateMessage<
-        adserver::user_info_svcs::user_bind::GetUserIdRequest>(
-          &get_request_arena);
-      get_request->set_id(std::string("c/") + state->cookie_user_id.to_string());
-      get_request->set_timestamp(GrpcAlgs::pack_time(state->request_info.time));
-      get_request->set_silent(true);
-      get_request->set_generate_user_id(false);
-      get_request->set_for_set_cookie(false);
-      get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
-      get_request->set_current_user_id(GrpcAlgs::pack_user_id(state->cookie_user_id));
-
-      auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
-      if(get_result.status.ok() && !get_result.response.invalid_operation())
-      {
-        const AdServer::Commons::UserId resolved_user_id =
-          GrpcAlgs::unpack_user_id(get_result.response.user_id());
-        if(!resolved_user_id.is_null())
-        {
-          state->resolved_cookie_user_id = resolved_user_id;
-        }
-      }
-    }
-
     const auto& matched_channels = state->trigger_match_result->matched_channels();
-    if(matched_channels.page_channels_size() == 0)
+    if (matched_channels.page_channels_size() == 0)
     {
       finish_match_channels_request_();
       co_return FrontendCommons::RequestResult{};
@@ -1305,8 +1241,7 @@ namespace AdServer::ImprTrack
       match_params->set_provide_persistent_channels(false);
       match_params->set_change_last_request(false);
       match_params->set_filter_contextual_triggers(false);
-      match_params->set_publishers_optin_timeout(
-        GrpcAlgs::pack_time(Generics::Time::ZERO));
+      match_params->set_publishers_optin_timeout(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
       auto* page_channel_ids = match_params->mutable_page_channel_ids();
       for(const auto& channel : page_channels)
@@ -1325,18 +1260,18 @@ namespace AdServer::ImprTrack
       user_info->set_time(state->request_info.time.tv_sec);
     };
 
-    if(user_info_client_coro_)
+    if (user_info_client_coro_)
     {
-      if(state->user_id != AdServer::Commons::PROBE_USER_ID)
+      if (state->user_id != AdServer::Commons::PROBE_USER_ID)
       {
         google::protobuf::Arena history_match_request_arena;
         auto* history_match_request = google::protobuf::Arena::CreateMessage<
           adserver::user_info_svcs::user_info_manager::MatchRequest>(
             &history_match_request_arena);
         fill_history_match_request(*history_match_request, state->user_id);
-        auto match_result = co_await user_info_client_coro_->match(
-          *history_match_request);
-        if(match_result.status.ok())
+        auto match_result = co_await user_info_client_coro_->match(*history_match_request);
+
+        if (match_result.status.ok())
         {
           state->history_match_response = std::move(match_result.response_holder);
           state->history_match_present = state->history_match_response->matched();
@@ -1358,7 +1293,7 @@ namespace AdServer::ImprTrack
         }
       }
 
-      if(state->user_id != state->resolved_cookie_user_id &&
+      if (state->user_id != state->resolved_cookie_user_id &&
         !state->resolved_cookie_user_id.is_null())
       {
         google::protobuf::Arena cookie_match_request_arena;
@@ -1376,12 +1311,12 @@ namespace AdServer::ImprTrack
     auto* request = google::protobuf::Arena::CreateMessage<
       adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(
         &request_arena);
-    fill_match_request_info_(
-      *request->mutable_match_request_info(),
-      *state);
-    auto process_result = co_await campaign_manager_coro_->process_match_request(
-      *request);
-    if(!process_result.status.ok())
+
+    fill_match_request_info_(*request->mutable_match_request_info(), *state);
+
+    auto process_result = co_await campaign_manager_coro_->process_match_request(*request);
+
+    if (!process_result.status.ok())
     {
       Stream::Error ostr;
       ostr << "CampaignManager::process_match_request(): "
@@ -1419,7 +1354,7 @@ namespace AdServer::ImprTrack
       pkw_channel->set_channel_trigger_id(channel.trigger_channel_id());
     }
 
-    if(state.history_match_present)
+    if (state.history_match_present)
     {
       for(const auto& channel :
         state.history_match_response->match_result().channels())
@@ -1428,18 +1363,17 @@ namespace AdServer::ImprTrack
       }
     }
 
-    if(!state.request_info.peer_ip.empty() && ip_map_.get())
+    if (!state.request_info.peer_ip.empty() && ip_map_.get())
     {
       try
       {
         GeoIPMapping::IPMapCity2::CityLocation geo_location;
-        if(ip_map_->city_location_by_addr(
+        if (ip_map_->city_location_by_addr(
              state.request_info.peer_ip.c_str(),
              geo_location,
              false))
         {
-          FrontendCommons::Location_var location =
-            std::make_shared<FrontendCommons::Location>();
+          FrontendCommons::Location_var location = std::make_shared<FrontendCommons::Location>();
           location->country = geo_location.country_code.str();
           geo_location.region.assign_to(location->region);
           location->city = geo_location.city.str();
@@ -1470,25 +1404,25 @@ namespace AdServer::ImprTrack
   {
     RequestInfoFiller::EncryptionKeys_var res = new RequestInfoFiller::EncryptionKeys();
 
-    if(src.openx_encryption_key().present())
+    if (src.openx_encryption_key().present())
     {
       res->openx_encryption_key_size = String::StringManip::hex_decode(
         *src.openx_encryption_key(), res->openx_encryption_key);
     }
 
-    if(src.openx_integrity_key().present())
+    if (src.openx_integrity_key().present())
     {
       res->openx_integrity_key_size = String::StringManip::hex_decode(
         *src.openx_integrity_key(), res->openx_integrity_key);
     }
 
-    if(src.google_encryption_key().present())
+    if (src.google_encryption_key().present())
     {
       res->google_encryption_key_size = String::StringManip::hex_decode(
         *src.google_encryption_key(), res->google_encryption_key);
     }
 
-    if(src.google_integrity_key().present())
+    if (src.google_integrity_key().present())
     {
       res->google_integrity_key_size = String::StringManip::hex_decode(
         *src.google_integrity_key(), res->google_integrity_key);
@@ -1498,9 +1432,7 @@ namespace AdServer::ImprTrack
   }
 
   void
-  Frontend::report_bad_user_(
-    const RequestInfo& request_info)
-    noexcept
+  Frontend::report_bad_user_(const RequestInfo& request_info) noexcept
   {
     try
     {
@@ -1524,5 +1456,4 @@ namespace AdServer::ImprTrack
     catch(const eh::Exception&)
     {}
   }
-
 }

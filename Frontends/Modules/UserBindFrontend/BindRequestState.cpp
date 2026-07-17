@@ -27,7 +27,6 @@ namespace AdServer
       result_user_id_type(RUIT_COOKIE),
       app_request(request_info->external_id.compare(0, 4, "ifa/") == 0),
       opted_out(request_info->user_status == AdServer::CampaignSvcs::US_OPTOUT),
-      cresolve_failed(false),
       create_user_profile(false),
       resolved_ext_user_i(0)
   {
@@ -74,55 +73,7 @@ namespace AdServer
         co_return ProcessRequestResult{http_status, make_bind_result_()};
       }
 
-      if(!result_user_id.is_null() && frontend->has_user_bind_client_())
-      {
-        const std::string cookie_external_id_str =
-          std::string("c/") + result_user_id.to_string();
-
-        google::protobuf::Arena arena;
-        auto* get_request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_bind::GetUserIdRequest>(&arena);
-        get_request->set_id(cookie_external_id_str);
-        get_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
-        get_request->set_silent(true);
-        get_request->set_generate_user_id(false);
-        get_request->set_for_set_cookie(true);
-        get_request->set_create_timestamp(
-          GrpcAlgs::pack_time(Generics::Time::ZERO));
-        get_request->set_current_user_id(
-          GrpcAlgs::pack_user_id(result_user_id));
-
-        auto get_result = co_await frontend->user_bind_client_coro_->get_user_id(
-          *get_request);
-        if(get_result.status.ok())
-        {
-          if(get_result.response.invalid_operation())
-          {
-            cresolve_failed = true;
-          }
-          else
-          {
-            Commons::UserId cresolved_user_id =
-              GrpcAlgs::unpack_user_id(get_result.response.user_id());
-            if(!cresolved_user_id.is_null())
-            {
-              result_user_id = cresolved_user_id;
-              result_user_id_type = RUIT_CRESOLVE;
-            }
-          }
-        }
-        else
-        {
-          cresolve_failed = true;
-          http_status = 500;
-        }
-      }
-      else if(!result_user_id.is_null() && !frontend->has_user_bind_client_())
-      {
-        cresolve_failed = true;
-      }
-
-      if(!cresolve_failed && frontend->has_user_bind_client_())
+      if(frontend->has_user_bind_client_())
       {
         external_ids = {
           ExternalId{request_info->ga_user_id, false, true},
@@ -262,8 +213,7 @@ namespace AdServer
         AdServer::Commons::ExternalUserIdArray user_ids;
         if(!result_user_id.is_null())
         {
-          if(result_user_id_type == RUIT_CRESOLVE ||
-            result_user_id_type == RUIT_EXTIDRESOLVE_NOCOOKIE)
+          if(result_user_id_type == RUIT_EXTIDRESOLVE_NOCOOKIE)
           {
             user_ids.push_back(std::string("/") + result_user_id.to_string());
           }

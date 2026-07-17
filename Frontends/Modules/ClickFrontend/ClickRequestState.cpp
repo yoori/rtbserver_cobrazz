@@ -20,33 +20,13 @@ namespace
   DECLARE_EXCEPTION(GrpcCallException, eh::DescriptiveException);
 
   void
-  throw_grpc_exception_(
-    const char* name,
-    const grpc::Status& status)
+  throw_grpc_exception_(const char* name, const grpc::Status& status)
   {
     Stream::Error ostr;
     ostr << name << ": gRPC call failed: code=" <<
       static_cast<int>(status.error_code()) <<
       ", message=" << status.error_message();
     throw GrpcCallException(ostr);
-  }
-
-  void
-  throw_user_bind_exception_(const grpc::Status& status)
-  {
-    const std::string message = status.error_message();
-    switch(status.error_code())
-    {
-    case grpc::StatusCode::UNAVAILABLE:
-      throw AdServer::UserInfoSvcs::UserBindClient::NotReady(
-        message.c_str());
-    case grpc::StatusCode::NOT_FOUND:
-      throw AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound(
-        message.c_str());
-    default:
-      throw AdServer::UserInfoSvcs::UserBindClient::ImplementationException(
-        message.c_str());
-    }
   }
 
   struct ChannelMatch
@@ -190,58 +170,6 @@ namespace AdServer
       match_history_user_stage_();
       return;
     }
-
-    const std::string cookie_external_id_str =
-      std::string("c/") + cookie_user_id_.to_string();
-
-    adserver::user_info_svcs::user_bind::GetUserIdRequest get_request_info;
-    get_request_info.set_id(cookie_external_id_str);
-    get_request_info.set_timestamp(GrpcAlgs::pack_time(now_));
-    get_request_info.set_silent(true);
-    get_request_info.set_generate_user_id(false);
-    get_request_info.set_for_set_cookie(false);
-    get_request_info.set_create_timestamp(
-      GrpcAlgs::pack_time(Generics::Time::ZERO));
-    get_request_info.set_current_user_id(
-      GrpcAlgs::pack_user_id(cookie_user_id_));
-
-    auto self = shared_from_this();
-    frontend_->user_bind_client_->get_user_id(
-      get_request_info,
-      [self](
-        const grpc::Status& status,
-        AdServer::Grpc::ResponseHolder<
-          adserver::user_info_svcs::user_bind::GetUserIdResponse>&&
-            response_holder)
-      {
-        const auto& response = response_holder.get();
-        self->frontend_->workers_->post(
-          [self, status, response]()
-          {
-            self->resolve_cookie_done_stage_(status, response);
-          });
-      });
-  }
-
-  void
-  ClickRequestState::resolve_cookie_done_stage_(
-    const grpc::Status& status,
-    const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
-  {
-    try
-    {
-      if(!status.ok())
-      {
-        throw_user_bind_exception_(status);
-      }
-      resolved_cookie_user_id_ = GrpcAlgs::unpack_user_id(response.user_id());
-    }
-    catch(const eh::Exception& ex)
-    {
-      log_user_bind_error_(ex);
-    }
-
-    match_history_user_stage_();
   }
 
   void

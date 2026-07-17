@@ -27,7 +27,6 @@ namespace AdServer
     enum ResultUserIdType
     {
       RUIT_COOKIE,
-      RUIT_CRESOLVE,
       RUIT_EXTIDRESOLVE,
       RUIT_EXTIDRESOLVE_NOCOOKIE
     };
@@ -57,7 +56,6 @@ namespace AdServer
     AdServer::Commons::UserId merge_user_id;
     bool app_request;
     bool opted_out;
-    bool cresolve_failed;
     bool create_user_profile;
     std::vector<ExternalId> external_ids;
     std::set<std::string> resolve_failed_external_ids;

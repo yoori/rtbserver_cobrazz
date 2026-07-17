@@ -143,7 +143,7 @@ namespace AdServer::Action
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration not presented.");
       }
@@ -151,7 +151,7 @@ namespace AdServer::Action
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.ActionFeConfiguration().present())
+      if (!fe_config.ActionFeConfiguration().present())
       {
         throw Exception("ActionFeConfiguration not presented.");
       }
@@ -182,7 +182,7 @@ namespace AdServer::Action
         FrontendCommons::find_uri(
           config_->UriList()->Uri(), uri, found_uri));
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr << "Frontend::will_handle(" << uri <<
@@ -199,19 +199,19 @@ namespace AdServer::Action
   {
     static const char* FUN = "Frontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
         parse_config_();
 
-        if(config_->PathUriList().present())
+        if (config_->PathUriList().present())
         {
           for(xsd::AdServer::Configuration::UriListType::Uri_sequence::const_iterator
                 it = config_->PathUriList()->Uri().begin();
               it != config_->PathUriList()->Uri().end(); ++it)
           {
-            if(!it->path().empty())
+            if (!it->path().empty())
             {
               derived_config_.advertiser_service_uri.push_back(
                 xsd::AdServer::Configuration::UriType(it->path()));
@@ -226,7 +226,7 @@ namespace AdServer::Action
             grpc_executor_,
             common_module_->grpc_coalesce_runner(),
             logger());
-        if(user_bind_client)
+        if (user_bind_client)
         {
           user_bind_client_coro_ = std::make_shared<
             AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
@@ -307,7 +307,7 @@ namespace AdServer::Action
             redirect_it->template_());
           redirect_rule->use_keywords = redirect_it->use_keywords();
 
-          if(redirect_it->use_keywords())
+          if (redirect_it->use_keywords())
           {
             String::StringManip::Splitter<String::AsciiStringManip::SepNL> splitter(
               redirect_it->keywords());
@@ -315,7 +315,7 @@ namespace AdServer::Action
             while(splitter.get_token(token))
             {
               String::StringManip::trim(token);
-              if(!token.empty())
+              if (!token.empty())
               {
                 redirect_rule->keywords.insert(Generics::StringHashAdapter(token));
               }
@@ -385,50 +385,7 @@ namespace AdServer::Action
     bool return_html)
     noexcept
   {
-    Commons::UserId cookie_resolved_user_id = request_info.user_id;
-
-    if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
-      (!request_info.external_user_id.empty() ||
-        !cookie_resolved_user_id.is_null()))
-    {
-      const std::string external_id_str =
-        !request_info.external_user_id.empty() ?
-          request_info.external_user_id :
-          std::string("c/") + cookie_resolved_user_id.to_string();
-
-      const ResolveUserIdResult resolve_result =
-        co_await co_resolve_user_id_(
-        external_id_str,
-        cookie_resolved_user_id,
-        request_info.time);
-      if(resolve_result.success && !resolve_result.user_id.is_null())
-      {
-        cookie_resolved_user_id = resolve_result.user_id;
-      }
-    }
-
-    Commons::UserId utm_cookie_resolved_user_id;
-    if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
-      !request_info.utm_cookie_user_id.is_null())
-    {
-      const std::string external_id_str =
-        std::string("c/") + request_info.utm_cookie_user_id.to_string();
-
-      const ResolveUserIdResult resolve_result =
-        co_await co_resolve_user_id_(
-        external_id_str,
-        cookie_resolved_user_id,
-        request_info.time);
-      if(resolve_result.success)
-      {
-        utm_cookie_resolved_user_id =
-          !resolve_result.user_id.is_null() ?
-            resolve_result.user_id :
-            request_info.utm_cookie_user_id;
-      }
-    }
-
-    static const char* FUN = "Action::Frontend::finish_advertiser_request_()";
+    static const char* FUN = "Action::Frontend::process_advertiser_request_()";
 
     int http_status = 500;
     try
@@ -438,8 +395,8 @@ namespace AdServer::Action
         request_holder->request(),
         request_info,
         return_html,
-        cookie_resolved_user_id,
-        utm_cookie_resolved_user_id);
+        request_info.user_id,
+        request_info.utm_cookie_user_id);
     }
     catch(const eh::Exception& e)
     {
@@ -453,10 +410,7 @@ namespace AdServer::Action
         "ADS-IMPL-128");
     }
 
-    co_return FrontendCommons::RequestResult{
-      http_status,
-      response,
-      false};
+    co_return FrontendCommons::RequestResult{http_status, response, false};
   }
 
   int
@@ -489,33 +443,31 @@ namespace AdServer::Action
     // choose user id, that will be used for set into cookie and relink other ids
     Commons::UserId result_user_id;
 
-    if(!request_info.utm_resolved_user_id.is_null())
+    if (!request_info.utm_resolved_user_id.is_null())
     {
       result_user_id = request_info.utm_resolved_user_id;
     }
-    else if(!cookie_resolved_user_id.is_null())
+    else if (!cookie_resolved_user_id.is_null())
     {
       result_user_id = cookie_resolved_user_id;
     }
-    else if(!request_info.user_id.is_null())
+    else if (!request_info.user_id.is_null())
     {
       result_user_id = request_info.user_id;
     }
-    else if(!utm_cookie_resolved_user_id.is_null())
+    else if (!utm_cookie_resolved_user_id.is_null())
     {
       result_user_id = utm_cookie_resolved_user_id;
     }
 
     // relink user ids block
-    // TO CHECK !!!
     // process utm user id (have priority over other identifiers)
-    // result_user_id is user id from cookies or result of resolving c/<cookie user id>
-    // add mapping c/<result_user_id> => <utm user id>
+    // result_user_id is user id from cookies
     //
     // result user id = <utm user id> (set into cookie), that garantee that
     // all actions will be linked to user for that done bid request
     //
-    if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
+    if (request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
       !result_user_id.is_null())
     {
       relink_user_id_all_(
@@ -527,7 +479,7 @@ namespace AdServer::Action
     // fill response
     FrontendCommons::CORS::set_headers(request, response);
 
-    if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT && (
+    if (request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT && (
          !result_user_id.is_null() || config_->set_uid()))
     {
       const Generics::SignedUuid signed_uid =
@@ -542,7 +494,7 @@ namespace AdServer::Action
         signed_uid.str());
     }
 
-    if(common_config_->ResponseHeaders().present())
+    if (common_config_->ResponseHeaders().present())
     {
       FrontendCommons::add_headers(
         *(common_config_->ResponseHeaders()),
@@ -553,7 +505,7 @@ namespace AdServer::Action
     bool redirected = false;
     int http_status = 200;
 
-    if(request_info.redirect)
+    if (request_info.redirect)
     {
       // find redirect rules that match traits
       RedirectRuleArray redirect_rules;
@@ -566,18 +518,18 @@ namespace AdServer::Action
         for(auto redirect_rule_it = redirect_rules_.begin();
           redirect_rule_it != redirect_rules_.end(); ++redirect_rule_it)
         {
-          if((*redirect_rule_it)->use_keywords)
+          if ((*redirect_rule_it)->use_keywords)
           {
             for(auto keyword_it = keywords.begin(); keyword_it != keywords.end(); ++keyword_it)
             {
-              if((*redirect_rule_it)->keywords.find(*keyword_it) != (*redirect_rule_it)->keywords.end())
+              if ((*redirect_rule_it)->keywords.find(*keyword_it) != (*redirect_rule_it)->keywords.end())
               {
                 keyword_redirect_rules.push_back(*redirect_rule_it);
                 break;
               }
             }
           }
-          else if(keyword_redirect_rules.empty())
+          else if (keyword_redirect_rules.empty())
           {
             redirect_rules.push_back(*redirect_rule_it);
           }
@@ -586,18 +538,18 @@ namespace AdServer::Action
 
       RedirectRule_var result_redirect_rule;
 
-      if(!keyword_redirect_rules.empty())
+      if (!keyword_redirect_rules.empty())
       {
         result_redirect_rule = keyword_redirect_rules[
           Generics::safe_rand(keyword_redirect_rules.size())];
       }
-      else if(!redirect_rules.empty())
+      else if (!redirect_rules.empty())
       {
         result_redirect_rule = redirect_rules[
           Generics::safe_rand(redirect_rules.size())];
       }
 
-      if(result_redirect_rule.in())
+      if (result_redirect_rule.in())
       {
         try
         {
@@ -615,7 +567,7 @@ namespace AdServer::Action
           std::string redirect =
             result_redirect_rule->url_template->instantiate(args_with_encoding);
 
-          if(!redirect.empty())
+          if (!redirect.empty())
           {
             const std::string str = FrontendCommons::normalize_abs_url(
               HTTP::BrowserAddress(redirect),
@@ -641,9 +593,9 @@ namespace AdServer::Action
       } // result_redirect_rule.in()
     }
 
-    if(!redirected)
+    if (!redirected)
     {
-      if(return_html)
+      if (return_html)
       {
         write_html(response);
       }
@@ -721,7 +673,7 @@ namespace AdServer::Action
       channel_request.set_statuses("A", 2);
       std::ostringstream keywords_ostr;
       keywords_ostr << "poadcp";
-      if(conv_id)
+      if (conv_id)
       {
         keywords_ostr << ", poadcp" << conv_id;
       }
@@ -731,7 +683,7 @@ namespace AdServer::Action
 
       auto channel_result = co_await channel_client_coro_->match(
         std::move(channel_request));
-      if(!channel_result.status.ok())
+      if (!channel_result.status.ok())
       {
         Stream::Error ostr;
         ostr << "ChannelServer::match(): gRPC call failed: code=" <<
@@ -747,7 +699,7 @@ namespace AdServer::Action
 
       const auto& trigger_match_result = channel_result.response;
       const auto& matched_channels = trigger_match_result.matched_channels();
-      if(matched_channels.page_channels_size() == 0 &&
+      if (matched_channels.page_channels_size() == 0 &&
         matched_channels.url_channels_size() == 0 &&
         matched_channels.url_keyword_channels_size() == 0)
       {
@@ -830,7 +782,7 @@ namespace AdServer::Action
 
       auto user_info_result = co_await user_info_client_coro_->match(
         std::move(history_match_request));
-      if(!user_info_result.status.ok())
+      if (!user_info_result.status.ok())
       {
         Stream::Error ostr;
         ostr << "UserInfoManager::match(): gRPC call failed: code=" <<
@@ -860,7 +812,7 @@ namespace AdServer::Action
       auto process_result =
         co_await campaign_manager_coro_->process_match_request(
           std::move(process_match_request));
-      if(!process_result.status.ok())
+      if (!process_result.status.ok())
       {
         Stream::Error ostr;
         ostr << "CampaignManager::process_match_request(): "
@@ -926,7 +878,7 @@ namespace AdServer::Action
 
       ActionFrontendHTTPConstrain::apply(request);
 
-      if(logger()->log_level() >= TraceLevel::MIDDLE)
+      if (logger()->log_level() >= TraceLevel::MIDDLE)
       {
         std::ostringstream ostr;
         ostr << FUN << ":" << std::endl;
@@ -1005,26 +957,17 @@ namespace AdServer::Action
     {
       const Commons::UserId& relink_user_id = *relink_user_ids[user_i];
 
-      if(!relink_user_id.is_null() &&
+      if (!relink_user_id.is_null() &&
         relink_user_id != AdServer::Commons::PROBE_USER_ID &&
         processed_user_ids.find(relink_user_id) == processed_user_ids.end() &&
         relink_user_id != link_user_id)
       {
         processed_user_ids.insert(relink_user_id);
-
-        if(user_bind_client_coro_)
-        {
-          (void)FUN;
-          co_add_user_id_(
-            std::string("c/") + relink_user_id.to_string(),
-            link_user_id,
-            request_info.time).start_detached(nullptr);
-        }
       }
     }
 
     // link ifa
-    if(user_bind_client_coro_ && !request_info.ifa.empty())
+    if (user_bind_client_coro_ && !request_info.ifa.empty())
     {
       (void)FUN;
       co_add_user_id_(
@@ -1054,14 +997,14 @@ namespace AdServer::Action
     {
       const Commons::UserId& match_user_id = *match_user_ids[user_i];
 
-      if(!match_user_id.is_null() &&
+      if (!match_user_id.is_null() &&
         match_user_id != AdServer::Commons::PROBE_USER_ID &&
         processed_user_ids.find(match_user_id) == processed_user_ids.end())
       {
         const unsigned long current_task_count =
           match_task_count_.exchange_and_add(1) + 1;
 
-        if(config_->match_task_limit() == 0 ||
+        if (config_->match_task_limit() == 0 ||
           current_task_count <= config_->match_task_limit() + config_->threads())
         {
           match_workers_->post(
@@ -1113,7 +1056,7 @@ namespace AdServer::Action
       }
 
       verify_action_info.set_referer(request_info.referer);
-      if(request_info.value.present())
+      if (request_info.value.present())
       {
         verify_action_info.mutable_action_value()->set_value(
           GrpcAlgs::pack_decimal(*request_info.value));
@@ -1121,7 +1064,7 @@ namespace AdServer::Action
 
       verify_action_info.set_order_id(request_info.order_id);
 
-      if(request_info.campaign_id.present())
+      if (request_info.campaign_id.present())
       {
         auto* campaign_id = verify_action_info.mutable_campaign_id();
         campaign_id->set_defined(true);
@@ -1132,7 +1075,7 @@ namespace AdServer::Action
         verify_action_info.mutable_campaign_id()->set_defined(false);
       }
 
-      if(request_info.action_id.present())
+      if (request_info.action_id.present())
       {
         auto* action_id = verify_action_info.mutable_action_id();
         action_id->set_defined(true);
@@ -1143,7 +1086,7 @@ namespace AdServer::Action
         verify_action_info.mutable_action_id()->set_defined(false);
       }
 
-      if(common_config_->ip_logging_enabled())
+      if (common_config_->ip_logging_enabled())
       {
         std::string ip_hash;
         FrontendCommons::ip_hash(ip_hash, request_info.peer_ip, common_config_->ip_salt());
@@ -1169,7 +1112,7 @@ namespace AdServer::Action
       {
         const Commons::UserId& verify_user_id = *verify_user_ids[user_i];
 
-        if(!verify_user_id.is_null() &&
+        if (!verify_user_id.is_null() &&
            verify_user_id != AdServer::Commons::PROBE_USER_ID &&
            processed_user_ids.find(verify_user_id) == processed_user_ids.end())
         {
@@ -1186,7 +1129,7 @@ namespace AdServer::Action
         }
       }
 
-      if(processed_user_ids.empty())
+      if (processed_user_ids.empty())
       {
         // verify action without user id
         verify_action_info.set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
@@ -1223,7 +1166,7 @@ namespace AdServer::Action
     static const char* FUN = "Action::Frontend::co_resolve_user_id_()";
 
     // don't add resolving for generated external ids
-    if(user_bind_client_coro_)
+    if (user_bind_client_coro_)
     {
       try
       {
@@ -1242,7 +1185,7 @@ namespace AdServer::Action
 
         auto get_result = co_await user_bind_client_coro_->get_user_id(
           std::move(get_request_info));
-        if(!get_result.status.ok())
+        if (!get_result.status.ok())
         {
           Stream::Error ostr;
           ostr << FUN << ": UserBindServer::get_user_id(): "
@@ -1298,7 +1241,7 @@ namespace AdServer::Action
 
       auto add_result = co_await user_bind_client_coro_->add_user_id(
         std::move(add_request));
-      if(!add_result.status.ok())
+      if (!add_result.status.ok())
       {
         Stream::Error ostr;
         ostr << FUN << ": UserBindServer::add_user_id(): "
@@ -1315,8 +1258,7 @@ namespace AdServer::Action
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": UserBindServer::add_user_id() scheduling failed: " <<
-        ex.what();
+      ostr << FUN << ": UserBindServer::add_user_id() scheduling failed: " << ex.what();
       logger()->log(
         ostr.str(),
         Logging::Logger::ERROR,
@@ -1338,7 +1280,7 @@ namespace AdServer::Action
       const auto user_status = request.action_info().user_status();
       auto action_result = co_await campaign_manager_coro_->action_taken(
         std::move(request));
-      if(!action_result.status.ok())
+      if (!action_result.status.ok())
       {
         Stream::Error ostr;
         ostr << "CampaignManager::action_taken(): "
@@ -1353,11 +1295,9 @@ namespace AdServer::Action
         co_return FrontendCommons::RequestResult{};
       }
 
-      if(stats_)
+      if (stats_)
       {
-        stats_->consider_request(
-          test_request,
-          user_status);
+        stats_->consider_request(test_request, user_status);
       }
     }
     catch(const eh::Exception& ex)
