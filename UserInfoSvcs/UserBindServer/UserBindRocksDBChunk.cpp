@@ -1,7 +1,6 @@
 #include "UserBindRocksDBChunk.hpp"
 
 #include <algorithm>
-#include <iostream>
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -368,26 +367,10 @@ namespace AdServer::UserInfoSvcs
     const std::string key = external_id.str();
 
     const auto bound_profile = co_await user_bind_map_->co_get_profile(key);
-    std::cout
-      << "UserBindRocksDBChunk::co_load_bound_record_():"
-      << " key='" << key << "'"
-      << " bound_profile="
-      << (bound_profile.in() ? bound_profile->membuf().size() : 0)
-      << std::endl;
 
     BoundRecord record;
     if(bound_profile.in() && deserialize_bound_(record, bound_profile.in()))
     {
-      std::cout
-        << "UserBindRocksDBChunk::co_load_bound_record_():"
-        << " key='" << key << "'"
-        << " result=" << (record.user_id.is_null() ? "marker" : "bound")
-        << " flags=" << static_cast<unsigned int>(record.flags)
-        << " bad_event_count="
-        << static_cast<unsigned int>(record.bad_event_count)
-        << " user_id="
-        << (record.user_id.is_null() ? "<null>" : record.user_id.to_string())
-        << std::endl;
       co_return record;
     }
 
@@ -403,20 +386,6 @@ namespace AdServer::UserInfoSvcs
     const std::string key = external_id.str();
     const std::string value = serialize_bound_(record);
     const auto profile = make_profile_(value);
-
-    std::cout
-      << "UserBindRocksDBChunk::co_save_bound_record_():"
-      << " key='" << key << "'"
-      << " value_size=" << value.size()
-      << " now=" << now.tv_sec << "." << now.tv_usec
-      << " first_seen=" << record.first_seen_time.tv_sec
-      << "." << record.first_seen_time.tv_usec
-      << " update=" << record.update_time.tv_sec
-      << "." << record.update_time.tv_usec
-      << " flags=" << static_cast<unsigned int>(record.flags)
-      << " bad_event_count="
-      << static_cast<unsigned int>(record.bad_event_count)
-      << std::endl;
 
     user_bind_map_->save_profile_async(key, profile.in(), now);
 
