@@ -786,7 +786,6 @@ namespace AdServer::Bidding
           stats_->add_skipped();
         }
 
-        request_task->write_empty_response(0, true);
         return;
       }
 
