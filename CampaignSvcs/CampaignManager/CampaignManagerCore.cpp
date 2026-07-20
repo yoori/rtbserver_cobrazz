@@ -3580,10 +3580,14 @@ namespace AdServer::CampaignSvcs
 
     if (!select_result.selected_campaigns.empty())
     {
+      const auto max_freq_caps = select_result.selected_campaigns.size() * 4;
+      select_result.freq_caps.reserve(select_result.freq_caps.size() + max_freq_caps + 1);
+      select_result.uc_freq_caps.reserve(select_result.uc_freq_caps.size() + max_freq_caps);
+
       // updating freq_caps
       if (tag->site->freq_cap_id)
       {
-        select_result.freq_caps.insert(tag->site->freq_cap_id);
+        select_result.freq_caps.push_back(tag->site->freq_cap_id);
       }
     }
 
@@ -3614,22 +3618,22 @@ namespace AdServer::CampaignSvcs
       }
 
       // updating freq caps
-      FreqCapIdSet& result_fc_set = select_params.track_impr ? select_result.uc_freq_caps :
+      FreqCapIdArray& result_fc_set = select_params.track_impr ? select_result.uc_freq_caps :
         select_result.freq_caps;
 
       if (creative->fc_id)
       {
-        result_fc_set.insert(creative->fc_id);
+        result_fc_set.push_back(creative->fc_id);
       }
 
       if (campaign->fc_id)
       {
-        result_fc_set.insert(campaign->fc_id);
+        result_fc_set.push_back(campaign->fc_id);
       }
 
       if (campaign->group_fc_id)
       {
-        result_fc_set.insert(campaign->group_fc_id);
+        result_fc_set.push_back(campaign->group_fc_id);
       }
 
       if (cs_it->campaign_keyword.in())
@@ -3640,7 +3644,7 @@ namespace AdServer::CampaignSvcs
            ch_it->second->params().common_params.in() &&
            ch_it->second->params().common_params->freq_cap_id)
         {
-          result_fc_set.insert(ch_it->second->params().common_params->freq_cap_id);
+          result_fc_set.push_back(ch_it->second->params().common_params->freq_cap_id);
         }
       }
     }

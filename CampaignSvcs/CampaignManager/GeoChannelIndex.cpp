@@ -300,9 +300,35 @@ namespace CampaignSvcs
 
   // GeoChannelIndex impl
   GeoChannelIndex::GeoChannelIndex() noexcept
+  {}
+
+  GeoChannelIndex::GeoChannelIndex(const GeoChannelIndex& init)
+    : ReferenceCounting::Interface(),
+      ReferenceCounting::AtomicCopyImpl(init),
+      channel_ids_(init.channel_ids_)
   {
-    empty_string_ = new Commons::StringHolder("");
-    all_names_.insert(Commons::StringHolderHashAdapter(empty_string_));
+    all_names_.reserve(init.all_names_.size());
+    channels_.reserve(init.channels_.size());
+
+    for(const auto& channel : init.channels_)
+    {
+      const std::string_view country = resolve_name_(
+        String::SubString(
+          channel.first.country().data(),
+          channel.first.country().size()));
+      const std::string_view region = resolve_name_(
+        String::SubString(
+          channel.first.region().data(),
+          channel.first.region().size()));
+      const std::string_view city = resolve_name_(
+        String::SubString(
+          channel.first.city().data(),
+          channel.first.city().size()));
+
+      channels_.emplace(
+        Key(country, region, city),
+        channel.second);
+    }
   }
 
   GeoChannelIndex::~GeoChannelIndex() noexcept

@@ -658,6 +658,12 @@ namespace AdServer::CampaignSvcs
 
     struct CreativeSelectResult
     {
+      CreativeSelectResult() = default;
+      CreativeSelectResult(const CreativeSelectResult&) = delete;
+      CreativeSelectResult& operator=(const CreativeSelectResult&) = delete;
+      CreativeSelectResult(CreativeSelectResult&&) noexcept = default;
+      CreativeSelectResult& operator=(CreativeSelectResult&&) noexcept = default;
+
       AdServer::Commons::RequestId request_id;
       unsigned long ccid = 0;
       unsigned long cmp_id = 0;
@@ -695,6 +701,12 @@ namespace AdServer::CampaignSvcs
 
     struct ContractInfo
     {
+      ContractInfo() = default;
+      ContractInfo(const ContractInfo&) = delete;
+      ContractInfo& operator=(const ContractInfo&) = delete;
+      ContractInfo(ContractInfo&&) noexcept = default;
+      ContractInfo& operator=(ContractInfo&&) noexcept = default;
+
       unsigned long contract_id = 0;
       std::string number;
       std::string date;

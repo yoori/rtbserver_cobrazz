@@ -1,14 +1,16 @@
 #pragma once
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+
 #include <eh/Exception.hpp>
 #include <Generics/GnuHashTable.hpp>
-#include <Commons/StringHolder.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class GeoChannelIndex: public ReferenceCounting::AtomicCopyImpl
   {
@@ -16,36 +18,58 @@ namespace CampaignSvcs
     struct Key
     {
     public:
-      Key(Commons::StringHolder* country,
-        Commons::StringHolder* region,
-        Commons::StringHolder* city)
+      Key(
+        std::string_view country,
+        std::string_view region,
+        std::string_view city)
         noexcept;
 
       bool operator==(const Key& right) const noexcept;
 
       unsigned long hash() const noexcept;
 
-      const std::string& country() const;
+      std::string_view country() const noexcept;
 
-      const std::string& region() const;
+      std::string_view region() const noexcept;
 
-      const std::string& city() const;
+      std::string_view city() const noexcept;
 
     private:
-      const Commons::StringHolder_var country_;
-      const Commons::StringHolder_var region_;
-      const Commons::StringHolder_var city_;
+      std::string_view country_;
+      std::string_view region_;
+      std::string_view city_;
       unsigned long hash_;
     };
 
-    typedef Generics::GnuHashSet<
-      Generics::NumericHashAdapter<unsigned long> >
-      GeoChannelIdSet;
+    using GeoChannelIdSet = std::unordered_set<unsigned long>;
 
     typedef Generics::GnuHashTable<Key, unsigned long> GeoChannelMap;
 
+    struct NameHash
+    {
+      size_t operator()(
+        const std::unique_ptr<std::string>& value) const noexcept;
+    };
+
+    struct NameEqual
+    {
+      bool operator()(
+        const std::unique_ptr<std::string>& left,
+        const std::unique_ptr<std::string>& right) const noexcept;
+    };
+
+    using NameSet = std::unordered_set<
+      std::unique_ptr<std::string>,
+      NameHash,
+      NameEqual>;
+
+    // all_names_: holds strings for Key string_view references and decreases memory usage.
+    NameSet all_names_;
+
   public:
     GeoChannelIndex() noexcept;
+
+    GeoChannelIndex(const GeoChannelIndex& init);
 
     void add(const String::SubString& country,
       const String::SubString& region,
@@ -72,20 +96,15 @@ namespace CampaignSvcs
     ~GeoChannelIndex() noexcept;
 
   private:
-    Commons::StringHolder_var
+    std::string_view
     resolve_name_(const String::SubString& name) noexcept;
+
+    static std::string_view
+    to_string_view_(const String::SubString& name) noexcept;
 
   private:
     GeoChannelMap channels_;
     GeoChannelIdSet channel_ids_;
-    Commons::StringHolder_var empty_string_;
-
-  public:
-    typedef Generics::GnuHashSet<Commons::StringHolderHashAdapter>
-      NameSet;
-
-    // all_names_: hold strings for SubString references and decrease memory usage
-    NameSet all_names_;
   };
 
   typedef ReferenceCounting::SmartPtr<GeoChannelIndex>
@@ -185,34 +204,32 @@ namespace CampaignSvcs
   typedef ReferenceCounting::SmartPtr<GeoCoordChannelIndex>
     GeoCoordChannelIndex_var;
 }
-}
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   inline
   GeoChannelIndex::Key::Key(
-    Commons::StringHolder* country,
-    Commons::StringHolder* region,
-    Commons::StringHolder* city)
+    std::string_view country,
+    std::string_view region,
+    std::string_view city)
     noexcept
-    : country_(ReferenceCounting::add_ref(country)),
-      region_(ReferenceCounting::add_ref(region)),
-      city_(ReferenceCounting::add_ref(city))
+    : country_(country),
+      region_(region),
+      city_(city),
+      hash_(0)
   {
-    hash_ = Generics::CRC::quick(0, country_->str().data(), country_->str().length());
-    hash_ = Generics::CRC::quick(hash_, region_->str().data(), region_->str().length());
-    hash_ = Generics::CRC::quick(hash_, city_->str().data(), city_->str().length());
+    hash_ = Generics::CRC::quick(0, country_.data(), country_.length());
+    hash_ = Generics::CRC::quick(hash_, region_.data(), region_.length());
+    hash_ = Generics::CRC::quick(hash_, city_.data(), city_.length());
   }
 
   inline
   bool
   GeoChannelIndex::Key::operator==(const Key& right) const noexcept
   {
-    return *country_ == *right.country_ &&
-      *region_ == *right.region_ &&
-      *city_ == *right.city_;
+    return country_ == right.country_ &&
+      region_ == right.region_ &&
+      city_ == right.city_;
   }
 
   inline
@@ -223,33 +240,69 @@ namespace CampaignSvcs
   }
 
   inline
-  const std::string&
-  GeoChannelIndex::Key::country() const
+  std::string_view
+  GeoChannelIndex::Key::country() const noexcept
   {
-    return country_->str();
+    return country_;
   }
 
   inline
-  const std::string&
-  GeoChannelIndex::Key::region() const
+  std::string_view
+  GeoChannelIndex::Key::region() const noexcept
   {
-    return region_->str();
+    return region_;
   }
 
   inline
-  const std::string&
-  GeoChannelIndex::Key::city() const
+  std::string_view
+  GeoChannelIndex::Key::city() const noexcept
   {
-    return city_->str();
+    return city_;
   }
 
   inline
-  Commons::StringHolder_var
+  size_t
+  GeoChannelIndex::NameHash::operator()(
+    const std::unique_ptr<std::string>& value) const noexcept
+  {
+    return std::hash<std::string_view>()(std::string_view(*value));
+  }
+
+  inline
+  bool
+  GeoChannelIndex::NameEqual::operator()(
+    const std::unique_ptr<std::string>& left,
+    const std::unique_ptr<std::string>& right) const noexcept
+  {
+    return *left == *right;
+  }
+
+  inline
+  std::string_view
+  GeoChannelIndex::to_string_view_(const String::SubString& name) noexcept
+  {
+    return name.empty() ?
+      std::string_view() :
+      std::string_view(name.data(), name.size());
+  }
+
+  inline
+  std::string_view
   GeoChannelIndex::resolve_name_(const String::SubString& name)
     noexcept
   {
-    Commons::StringHolder_var str(new Commons::StringHolder(name));
-    return all_names_.insert(Commons::StringHolderHashAdapter(str)).first->value();
+    std::unique_ptr<std::string> name_string;
+    if(name.empty())
+    {
+      name_string = std::make_unique<std::string>();
+    }
+    else
+    {
+      name_string = std::make_unique<std::string>(name.data(), name.length());
+    }
+
+    const auto result = all_names_.emplace(std::move(name_string));
+    return std::string_view(**result.first);
   }
 
   inline
@@ -261,9 +314,9 @@ namespace CampaignSvcs
     unsigned long channel_id)
     noexcept
   {
-    Commons::StringHolder_var packed_country = resolve_name_(country);
-    Commons::StringHolder_var packed_region = resolve_name_(region);
-    Commons::StringHolder_var packed_city = resolve_name_(city);
+    const std::string_view packed_country = resolve_name_(country);
+    const std::string_view packed_region = resolve_name_(region);
+    const std::string_view packed_city = resolve_name_(city);
     channels_[Key(packed_country, packed_region, packed_city)] = channel_id;
     channel_ids_.insert(channel_id);
   }
@@ -272,7 +325,6 @@ namespace CampaignSvcs
   void
   GeoChannelIndex::close() noexcept
   {
-    all_names_.clear();
   }
 
   inline
@@ -284,20 +336,16 @@ namespace CampaignSvcs
     const String::SubString& city_val)
     noexcept
   {
-    Commons::StringHolder_var country =
-      new Commons::StringHolder(country_val);
+    const std::string_view country = to_string_view_(country_val);
+    const std::string_view region = to_string_view_(region_val);
+    const std::string_view city = to_string_view_(city_val);
+    const std::string_view empty;
     GeoChannelMap::const_iterator ind_it;
 
     if(region_val[0] || city_val[0])
     {
-      Commons::StringHolder_var region =
-        new Commons::StringHolder(region_val);
-
       if(city_val[0])
       {
-        Commons::StringHolder_var city =
-          new Commons::StringHolder(city_val);
-
         ind_it = channels_.find(Key(country, region, city));
 
         if(ind_it != channels_.end())
@@ -308,7 +356,7 @@ namespace CampaignSvcs
 
       if(region_val[0])
       {
-        ind_it = channels_.find(Key(country, region, empty_string_));
+        ind_it = channels_.find(Key(country, region, empty));
 
         if(ind_it != channels_.end())
         {
@@ -317,7 +365,7 @@ namespace CampaignSvcs
       }
     }
 
-    ind_it = channels_.find(Key(country, empty_string_, empty_string_));
+    ind_it = channels_.find(Key(country, empty, empty));
     if(ind_it != channels_.end())
     {
       result_channels.push_back(ind_it->second);
@@ -352,5 +400,4 @@ namespace CampaignSvcs
   {
     return channel_ids_;
   }
-}
 }

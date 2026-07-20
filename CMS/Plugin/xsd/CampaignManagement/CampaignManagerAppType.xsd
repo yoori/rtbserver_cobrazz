@@ -24,6 +24,11 @@
         <xsd:documentation>Port to accept monitoring HTTP connections.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_process_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>gRPC request processing threads.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="CampaignManagerThreadParamsType">

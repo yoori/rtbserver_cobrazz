@@ -333,7 +333,7 @@ namespace AdServer
         const CampaignSelectParams& request_params,
         const ChannelIdHashSet& matched_channels,
         const CampaignIndex::CampaignCellPtrArray& campaign_list,
-        ConstCampaignPtrList& filtered_campaigns)
+        ConstCampaignPtrArray& filtered_campaigns)
         const
         noexcept;
 

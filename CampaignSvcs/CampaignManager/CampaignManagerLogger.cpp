@@ -1,6 +1,7 @@
 #include <openssl/md5.h>
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <functional>
@@ -3017,8 +3018,16 @@ namespace AdServer::CampaignSvcs
         queue_total_(0),
         processing_tasks_(0),
         processing_requests_total_(0),
+        pending_tasks_(0),
+        next_queue_(0),
         queue_closed_(true)
-    {}
+    {
+      queue_shards_.reserve(threads_);
+      for(unsigned long i = 0; i < threads_; ++i)
+      {
+        queue_shards_.emplace_back(std::make_unique<QueueShard>());
+      }
+    }
 
     void
     init_loggers(const Params& params)
@@ -3105,9 +3114,24 @@ namespace AdServer::CampaignSvcs
     wait_object_() override;
 
     void
-    worker_loop_() noexcept;
+    worker_loop_(unsigned long queue_i) noexcept;
+
+    void
+    notify_workers_() noexcept;
 
   private:
+    using Task = std::function<void()>;
+
+    struct QueueShard
+    {
+      mutable std::mutex mutex;
+      std::condition_variable cond;
+      std::deque<Task> tasks;
+    };
+
+    using QueueShardPtr = std::unique_ptr<QueueShard>;
+    using QueueShardArray = std::vector<QueueShardPtr>;
+
     CampaignManagerLogger& owner_;
     const Logging::Logger_var logger_;
     const unsigned long threads_;
@@ -3115,15 +3139,18 @@ namespace AdServer::CampaignSvcs
     mutable std::mutex campaign_config_mutex_;
     AdInstances::ConstCampaignConfigPtr campaign_config_;
 
+    QueueShardArray queue_shards_;
     std::vector<std::thread> threads_pool_;
-    mutable std::mutex queue_mutex_;
-    std::condition_variable queue_cond_;
+
+    mutable std::mutex processing_mutex_;
     std::condition_variable processing_cond_;
-    std::deque<std::function<void()>> tasks_;
-    std::uint64_t queue_total_;
-    std::size_t processing_tasks_;
-    std::uint64_t processing_requests_total_;
-    bool queue_closed_;
+
+    std::atomic<std::uint64_t> queue_total_;
+    std::atomic<std::size_t> processing_tasks_;
+    std::atomic<std::uint64_t> processing_requests_total_;
+    std::atomic<std::size_t> pending_tasks_;
+    std::atomic<unsigned long> next_queue_;
+    std::atomic<bool> queue_closed_;
 
     ChannelTriggerStatLogger_var channel_trigger_stat_logger_;
     ChannelHitStatLogger_var channel_hit_stat_logger_;
@@ -3610,10 +3637,7 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerLogger::Impl::activate_object_()
   {
-    {
-      std::lock_guard<std::mutex> guard(queue_mutex_);
-      queue_closed_ = false;
-    }
+    queue_closed_.store(false, std::memory_order_release);
 
     threads_pool_.reserve(threads_);
     try
@@ -3621,22 +3645,18 @@ namespace AdServer::CampaignSvcs
       for(unsigned long i = 0; i < threads_; ++i)
       {
         threads_pool_.emplace_back(
-          [this]()
+          [this, i]()
           {
             AdServer::Commons::set_current_thread_name("cm-logging");
-            worker_loop_();
+            worker_loop_(i);
           }
         );
       }
     }
     catch(...)
     {
-      {
-        std::lock_guard<std::mutex> guard(queue_mutex_);
-        queue_closed_ = true;
-      }
-
-      queue_cond_.notify_all();
+      queue_closed_.store(true, std::memory_order_release);
+      notify_workers_();
       for(auto& thread : threads_pool_)
       {
         if (thread.joinable())
@@ -3660,12 +3680,8 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerLogger::Impl::wait_object_()
   {
-    {
-      std::lock_guard<std::mutex> guard(queue_mutex_);
-      queue_closed_ = true;
-    }
-
-    queue_cond_.notify_all();
+    queue_closed_.store(true, std::memory_order_release);
+    notify_workers_();
 
     for(auto& thread : threads_pool_)
     {
@@ -3678,30 +3694,46 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::worker_loop_() noexcept
+  CampaignManagerLogger::Impl::notify_workers_() noexcept
   {
+    for(auto& queue_shard : queue_shards_)
+    {
+      queue_shard->cond.notify_one();
+    }
+  }
+
+  void
+  CampaignManagerLogger::Impl::worker_loop_(unsigned long queue_i) noexcept
+  {
+    QueueShard& queue_shard = *queue_shards_[queue_i];
+
     while (true)
     {
-      std::deque<std::function<void()>> tasks;
+      std::deque<Task> tasks;
 
       {
-        std::unique_lock<std::mutex> guard(queue_mutex_);
-        queue_cond_.wait(guard, [this]()
+        std::unique_lock<std::mutex> guard(queue_shard.mutex);
+        queue_shard.cond.wait(guard, [this, &queue_shard]()
           {
-            return queue_closed_ || !tasks_.empty();
+            return queue_closed_.load(std::memory_order_acquire) ||
+              !queue_shard.tasks.empty();
           });
 
-        if (tasks_.empty() && queue_closed_)
+        if (queue_shard.tasks.empty() &&
+          queue_closed_.load(std::memory_order_acquire))
         {
           return;
         }
 
-        tasks.swap(tasks_);
-        processing_tasks_ += tasks.size();
-        processing_requests_total_ += tasks.size();
+        tasks.swap(queue_shard.tasks);
       }
 
-      for(auto& task : tasks)
+      processing_tasks_.fetch_add(tasks.size(), std::memory_order_acq_rel);
+      processing_requests_total_.fetch_add(
+        tasks.size(),
+        std::memory_order_relaxed);
+
+      for (auto& task : tasks)
       {
         try
         {
@@ -3722,13 +3754,10 @@ namespace AdServer::CampaignSvcs
             "CampaignManagerLogger::worker_loop_(): caught unknown exception";
         }
 
+        processing_tasks_.fetch_sub(1, std::memory_order_acq_rel);
+        if (pending_tasks_.fetch_sub(1, std::memory_order_acq_rel) == 1)
         {
-          std::lock_guard<std::mutex> guard(queue_mutex_);
-          --processing_tasks_;
-          if (processing_tasks_ == 0 && tasks_.empty())
-          {
-            processing_cond_.notify_all();
-          }
+          processing_cond_.notify_all();
         }
       }
     }
@@ -3737,10 +3766,10 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerLogger::Impl::wait_processing()
   {
-    std::unique_lock<std::mutex> guard(queue_mutex_);
+    std::unique_lock<std::mutex> guard(processing_mutex_);
     processing_cond_.wait(guard, [this]()
     {
-      return tasks_.empty() && processing_tasks_ == 0;
+      return pending_tasks_.load(std::memory_order_acquire) == 0;
     });
   }
 
@@ -3749,11 +3778,17 @@ namespace AdServer::CampaignSvcs
   {
     Stats stats;
 
-    std::lock_guard<std::mutex> guard(queue_mutex_);
-    stats.queue_size = tasks_.size();
-    stats.queue_total = queue_total_;
-    stats.processing_requests = processing_tasks_;
-    stats.processing_requests_total = processing_requests_total_;
+    for(const auto& queue_shard : queue_shards_)
+    {
+      std::lock_guard<std::mutex> guard(queue_shard->mutex);
+      stats.queue_size += queue_shard->tasks.size();
+    }
+
+    stats.queue_total = queue_total_.load(std::memory_order_relaxed);
+    stats.processing_requests =
+      processing_tasks_.load(std::memory_order_relaxed);
+    stats.processing_requests_total =
+      processing_requests_total_.load(std::memory_order_relaxed);
     stats.request_in_progress = stats.queue_size + stats.processing_requests;
 
     return stats;
@@ -3778,26 +3813,48 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogger::Impl::enqueue_task(std::function<void()> task)
     /*throw(Exception)*/
   {
+    if (queue_closed_.load(std::memory_order_acquire))
+    {
+      Stream::Error ostr;
+      ostr << "CampaignManagerLogger::enqueue_task(): queue is closed";
+      throw Exception(ostr);
+    }
+
+    QueueShard& queue_shard = *queue_shards_[
+      next_queue_.fetch_add(1, std::memory_order_relaxed) %
+        queue_shards_.size()];
     bool was_empty = false;
 
     {
-      std::lock_guard<std::mutex> guard(queue_mutex_);
+      std::lock_guard<std::mutex> guard(queue_shard.mutex);
 
-      if (queue_closed_)
+      if (queue_closed_.load(std::memory_order_acquire))
       {
         Stream::Error ostr;
         ostr << "CampaignManagerLogger::enqueue_task(): queue is closed";
         throw Exception(ostr);
       }
 
-      was_empty = tasks_.empty();
-      tasks_.emplace_back(std::move(task));
-      ++queue_total_;
+      pending_tasks_.fetch_add(1, std::memory_order_release);
+      try
+      {
+        was_empty = queue_shard.tasks.empty();
+        queue_shard.tasks.emplace_back(std::move(task));
+        queue_total_.fetch_add(1, std::memory_order_relaxed);
+      }
+      catch(...)
+      {
+        if (pending_tasks_.fetch_sub(1, std::memory_order_acq_rel) == 1)
+        {
+          processing_cond_.notify_all();
+        }
+        throw;
+      }
     }
 
     if (was_empty)
     {
-      queue_cond_.notify_one();
+      queue_shard.cond.notify_one();
     }
   }
 

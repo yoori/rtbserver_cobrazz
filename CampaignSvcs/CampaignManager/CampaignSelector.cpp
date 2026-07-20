@@ -493,10 +493,12 @@ namespace AdServer
       const CampaignSelectParams& request_params,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignCellPtrArray& campaign_list,
-      ConstCampaignPtrList& filtered_campaigns)
+      ConstCampaignPtrArray& filtered_campaigns)
       const
       noexcept
     {
+      filtered_campaigns.reserve(filtered_campaigns.size() + campaign_list.size());
+
       for(CampaignIndex::CampaignCellPtrArray::const_iterator
             cit = campaign_list.begin();
           cit != campaign_list.end(); ++cit)
@@ -1037,7 +1039,7 @@ namespace AdServer
       noexcept
     {
       CampaignKeywordMap filtered_campaign_keywords(memory_resource_);
-      ConstCampaignPtrList filtered_text_campaigns;
+      ConstCampaignPtrArray filtered_text_campaigns;
       CampaignSelectorPmrBuffer pmr_buffer;
 
       cross_campaigns_with_keywords_(
@@ -1125,7 +1127,7 @@ namespace AdServer
         }
       }
 
-      for(ConstCampaignPtrList::const_iterator ch_text_campaign_it =
+      for(ConstCampaignPtrArray::const_iterator ch_text_campaign_it =
             filtered_text_campaigns.begin();
           ch_text_campaign_it != filtered_text_campaigns.end();
           ++ch_text_campaign_it)

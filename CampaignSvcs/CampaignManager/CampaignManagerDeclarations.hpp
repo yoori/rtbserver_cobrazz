@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory_resource>
+#include <vector>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -77,13 +78,13 @@ namespace AdServer::CampaignSvcs
     std::string click_url;
   };
 
-  using CampaignSelectionDataList =
-    std::pmr::list<CampaignSelectionData>;
+  using CampaignSelectionDataList = std::pmr::list<CampaignSelectionData>;
 
-  using CampaignKeywordMap =
-    std::pmr::multimap<unsigned long, CampaignKeyword_var>;
+  using CampaignKeywordMap = std::pmr::multimap<unsigned long, CampaignKeyword_var>;
 
-  typedef std::list<const Campaign*> ConstCampaignPtrList;
+  using FreqCapIdArray = std::pmr::vector<unsigned long>;
+
+  using ConstCampaignPtrArray = std::vector<const Campaign*>;
 
   typedef std::set<const Campaign*> ConstCampaignPtrSet;
   typedef std::set<const Creative*> ConstCreativePtrSet;
@@ -140,8 +141,8 @@ namespace AdServer::CampaignSvcs
     CTR::CTRProvider::Calculation_var conv_rate_calculation;
     CampaignSelectionDataList selected_campaigns;
 
-    FreqCapIdSet freq_caps;
-    FreqCapIdSet uc_freq_caps;
+    FreqCapIdArray freq_caps;
+    FreqCapIdArray uc_freq_caps;
 
     bool walled_garden;
     bool household_based;

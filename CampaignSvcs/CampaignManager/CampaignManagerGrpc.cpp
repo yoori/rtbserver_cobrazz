@@ -1397,10 +1397,13 @@ namespace AdServer::CampaignSvcs
         {
           auto* item = target.add_geo_channels();
           item->set_channel_id(src.second);
-          item->set_country(src.first.country());
+          const std::string_view country = src.first.country();
+          item->set_country(country.data(), country.size());
           auto* geoip_target = item->add_geoip_targets();
-          geoip_target->set_region(src.first.region());
-          geoip_target->set_city(src.first.city());
+          const std::string_view region = src.first.region();
+          geoip_target->set_region(region.data(), region.size());
+          const std::string_view city = src.first.city();
+          geoip_target->set_city(city.data(), city.size());
           item->set_timestamp(pack_time(Generics::Time::ZERO));
         }
         for(const auto& src : source.geo_coord_channels->channels())
