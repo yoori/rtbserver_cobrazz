@@ -298,6 +298,12 @@
       <xsl:value-of select="$def-profiling-log-sampling"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="grpc-max-batch-delay-us"><xsl:value-of
+    select="$frontend-config/@grpc_max_batch_delay_us"/>
+    <xsl:if test="count($frontend-config/@grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="5000"/>
+    </xsl:if>
+  </xsl:variable>
 
   <!-- start config generation -->
   <!-- check that defined all needed parameters -->
@@ -461,10 +467,17 @@
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
       <xsl:with-param name="add-user-info-grpc" select="'true'"/>
+      <xsl:with-param
+        name="grpc-max-batch-delay-us"
+        select="$grpc-max-batch-delay-us"/>
     </xsl:call-template>
 
     <cfg:Channel>
-      <xsl:call-template name="AddGrpcBatchingOptions"/>
+      <xsl:call-template name="AddGrpcBatchingOptions">
+        <xsl:with-param
+          name="grpc-max-batch-delay-us"
+          select="$grpc-max-batch-delay-us"/>
+      </xsl:call-template>
       <xsl:call-template name="AddChannelControllerGroups">
         <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
         <xsl:with-param name="error-prefix" select="AdFrontend"/>
@@ -474,6 +487,9 @@
     <xsl:call-template name="AddUserBindControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
+      <xsl:with-param
+        name="grpc-max-batch-delay-us"
+        select="$grpc-max-batch-delay-us"/>
     </xsl:call-template>
 
     <cfg:Cookies>
@@ -1127,10 +1143,21 @@
           <xsl:value-of select="'200000'"/>
         </xsl:if>
       </xsl:attribute>
-      <xsl:attribute name="process_coef"><xsl:value-of select="$bidding-module/@process_coef"/>
-        <xsl:if test="count($bidding-module/@process_coef) = 0">
-          <xsl:value-of select="'1'"/>
-        </xsl:if>
+      <xsl:attribute name="process_coef">
+        <xsl:choose>
+          <xsl:when test="count($bidding-module/cfg:processCoef/@coef) > 0">
+            <xsl:value-of select="$bidding-module/cfg:processCoef/@coef"/>
+          </xsl:when>
+          <xsl:when test="count($bidding-module/cfg:processCoef) > 0">
+            <xsl:value-of select="'1'"/>
+          </xsl:when>
+          <xsl:when test="count($bidding-module/@process_coef) > 0">
+            <xsl:value-of select="$bidding-module/@process_coef"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="'1'"/>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:attribute>
       <xsl:attribute name="threads"><xsl:value-of select="$bidding-module/@threads"/>
         <xsl:if test="count($bidding-module/@threads) = 0">
@@ -1187,6 +1214,28 @@
         <xsl:with-param name="logger-node" select="$bidding-module/cfg:logging"/>
         <xsl:with-param name="default-log-level" select="$bidding-module-log-level"/>
       </xsl:call-template>
+
+      <cfg:processCoef>
+        <xsl:attribute name="coef">
+          <xsl:choose>
+            <xsl:when test="count($bidding-module/cfg:processCoef/@coef) > 0">
+              <xsl:value-of select="$bidding-module/cfg:processCoef/@coef"/>
+            </xsl:when>
+            <xsl:when test="count($bidding-module/cfg:processCoef) > 0">
+              <xsl:value-of select="'1'"/>
+            </xsl:when>
+            <xsl:when test="count($bidding-module/@process_coef) > 0">
+              <xsl:value-of select="$bidding-module/@process_coef"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="'1'"/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:attribute>
+        <xsl:for-each select="$bidding-module/cfg:processCoef/cfg:interval">
+          <cfg:interval from="{@from}" to="{@to}" coef="{@coef}"/>
+        </xsl:for-each>
+      </cfg:processCoef>
 
       <xsl:for-each select="$colo-config/cfg:coloParams/cfg:RTB/cfg:source">
         <cfg:Source id="{@id}">

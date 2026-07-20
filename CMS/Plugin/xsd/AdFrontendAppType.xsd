@@ -267,6 +267,11 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Frontend gRPC batching max delay, in microseconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="AdFrontendConfigType">
@@ -691,6 +696,25 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="ProcessCoefTimeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="([01][0-9]|2[0-3]):[0-5][0-9]"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="ProcessCoefIntervalType">
+    <xsd:attribute name="from" type="ProcessCoefTimeType" use="required"/>
+    <xsd:attribute name="to" type="ProcessCoefTimeType" use="required"/>
+    <xsd:attribute name="coef" type="ProcessCoefType" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProcessCoefConfigType">
+    <xsd:sequence>
+      <xsd:element name="interval" type="ProcessCoefIntervalType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="coef" type="ProcessCoefType" use="optional" default="1"/>
+  </xsd:complexType>
+
   <xsd:complexType name="BiddingFrontendConfigType">
     <xsd:sequence>
       <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
@@ -700,6 +724,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name="processCoef" type="ProcessCoefConfigType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="source" type="RTBSourceConfigType" minOccurs="0" maxOccurs="unbounded"/>
     </xsd:sequence>
     <xsd:attribute name="max_bid_time" type="xsd:positiveInteger" default="50">

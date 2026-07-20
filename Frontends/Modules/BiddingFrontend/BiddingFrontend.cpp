@@ -63,6 +63,65 @@ namespace AdServer::Bidding
     namespace PB = adserver::campaign_svcs::campaign_manager;
 
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
+
+    unsigned long
+    parse_process_coef_time_(const std::string& value)
+    {
+      if (value.size() != 5 ||
+        value[0] < '0' || value[0] > '2' ||
+        value[1] < '0' || value[1] > '9' ||
+        value[2] != ':' ||
+        value[3] < '0' || value[3] > '5' ||
+        value[4] < '0' || value[4] > '9')
+      {
+        Stream::Error ostr;
+        ostr << "Invalid processCoef time: '" << value << "'";
+        throw Frontend::Exception(ostr);
+      }
+
+      const unsigned long hours =
+        static_cast<unsigned long>(value[0] - '0') * 10 +
+        static_cast<unsigned long>(value[1] - '0');
+      const unsigned long minutes =
+        static_cast<unsigned long>(value[3] - '0') * 10 +
+        static_cast<unsigned long>(value[4] - '0');
+
+      if (hours > 23)
+      {
+        Stream::Error ostr;
+        ostr << "Invalid processCoef time: '" << value << "'";
+        throw Frontend::Exception(ostr);
+      }
+
+      return hours * 60 + minutes;
+    }
+
+    BiddingFrontendCore::ProcessCoefSchedule
+    read_process_coef_config_(
+      const Frontend::BiddingFeConfiguration& config)
+    {
+      BiddingFrontendCore::ProcessCoefSchedule result;
+      result.coef = config.process_coef();
+
+      if (config.processCoef().present())
+      {
+        const auto& process_coef = *config.processCoef();
+        result.coef = process_coef.coef();
+        result.intervals.reserve(process_coef.interval().size());
+
+        for (auto it = process_coef.interval().begin();
+          it != process_coef.interval().end(); ++it)
+        {
+          result.intervals.push_back(
+            BiddingFrontendCore::ProcessCoefInterval{
+              parse_process_coef_time_(it->from()),
+              parse_process_coef_time_(it->to()),
+              it->coef()});
+        }
+      }
+
+      return result;
+    }
   }
 
   class Frontend::UpdateConfigTask: public Generics::TaskGoal
@@ -555,7 +614,7 @@ namespace AdServer::Bidding
           fill_uri_list(core_params.dao_uris, config_->DAOUriList()->Uri());
         }
         core_params.max_pending_tasks = config_->max_pending_tasks();
-        core_params.process_coef = config_->process_coef();
+        core_params.process_coef = read_process_coef_config_(*config_);
         core_params.threads = config_->threads();
         core_params.request_timeout = request_timeout;
         core_params.server_id = server_id_;

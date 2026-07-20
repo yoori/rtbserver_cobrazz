@@ -716,6 +716,36 @@ namespace AdServer::Bidding
     return ext_config_;
   }
 
+  double
+  BiddingFrontendCore::resolve_process_coef_(
+    const Generics::Time& time) const noexcept
+  {
+    const auto gmt_time = time.get_gm_time();
+    const unsigned long minute =
+      static_cast<unsigned long>(gmt_time.tm_hour) * 60 +
+      static_cast<unsigned long>(gmt_time.tm_min);
+
+    for (const auto& interval : process_coef_.intervals)
+    {
+      if (interval.from_minute < interval.to_minute)
+      {
+        if (minute >= interval.from_minute && minute < interval.to_minute)
+        {
+          return interval.coef;
+        }
+      }
+      else if (interval.from_minute > interval.to_minute)
+      {
+        if (minute >= interval.from_minute || minute < interval.to_minute)
+        {
+          return interval.coef;
+        }
+      }
+    }
+
+    return process_coef_.coef;
+  }
+
   void
   BiddingFrontendCore::handle_request(
     FCGI::HttpRequestHolder_var request_holder,
@@ -775,7 +805,7 @@ namespace AdServer::Bidding
 
       request_task->init_debug_info();
 
-      if (skip_by_process_coef(process_coef_))
+      if (skip_by_process_coef(resolve_process_coef_(start_process_time)))
       {
         request_task->set_current_stage(Stage::Skipped);
         request_task->interrupt();

@@ -115,6 +115,11 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
+    <xsd:attribute name="grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>gRPC batching max delay, in microseconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="RequestInfoManagerProfilingParamsType">

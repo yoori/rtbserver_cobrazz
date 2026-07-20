@@ -505,6 +505,7 @@
 <xsl:template name="AddUserBindControllerGroups">
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="error-prefix"/>
+  <xsl:param name="grpc-max-batch-delay-us" select="'5000'"/>
 
   <xsl:if test="count($full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $user-bind-controller-descriptor]) > 0">
     <cfg:UserBind grpc_executor_threads="16">
@@ -515,7 +516,7 @@
         error_on_inflight_reaching="true"
         max_outstanding_requests="0"
         hot_buckets_count="4"
-        max_batch_delay_us="8000"
+        max_batch_delay_us="{$grpc-max-batch-delay-us}"
         enable_grpc_compression="true"
         use_local_subchannel_pool="true"
         reconnect_period="1"/>
@@ -559,6 +560,7 @@
 </xsl:template>
 
 <xsl:template name="AddGrpcBatchingOptions">
+  <xsl:param name="grpc-max-batch-delay-us" select="'5000'"/>
   <cfg:BatchingOptions
     channels_number="16"
     max_batch_size="2000"
@@ -566,7 +568,7 @@
     error_on_inflight_reaching="true"
     max_outstanding_requests="0"
     hot_buckets_count="4"
-    max_batch_delay_us="8000"
+    max_batch_delay_us="{$grpc-max-batch-delay-us}"
     enable_grpc_compression="true"
     use_local_subchannel_pool="true"
     reconnect_period="1"/>
@@ -622,6 +624,7 @@
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="error-prefix"/>
   <xsl:param name="add-user-info-grpc" select="'false'"/>
+  <xsl:param name="grpc-max-batch-delay-us" select="'5000'"/>
 
   <xsl:if test="$add-user-info-grpc = 'true' and count($full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $user-info-controller-descriptor]) > 0">
     <cfg:UserInfo grpc_executor_threads="16">
@@ -632,7 +635,7 @@
         error_on_inflight_reaching="true"
         max_outstanding_requests="0"
         hot_buckets_count="4"
-        max_batch_delay_us="8000"
+        max_batch_delay_us="{$grpc-max-batch-delay-us}"
         enable_grpc_compression="true"
         use_local_subchannel_pool="true"
         reconnect_period="1"/>

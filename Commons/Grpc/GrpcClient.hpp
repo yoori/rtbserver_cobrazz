@@ -60,7 +60,7 @@ namespace AdServer::Grpc
     std::size_t workers_number = 4;
     std::size_t hot_buckets_count = 1;
     std::optional<Generics::Time> max_batch_delay{
-      Generics::Time(0, 3000)};
+      Generics::Time(0, 5000)};
     std::optional<Generics::Time> max_queue_wait;
     std::optional<Generics::Time> stream_start_timeout;
     bool enable_grpc_compression = true;

@@ -32,6 +32,12 @@
       <xsl:value-of select="$def-channel-search-service-port"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="grpc-max-batch-delay-us"><xsl:value-of
+    select="$channel-search-service-config/@grpc_max_batch_delay_us"/>
+    <xsl:if test="count($channel-search-service-config/@grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="5000"/>
+    </xsl:if>
+  </xsl:variable>
 
   <exsl:document href="channelSearchService.port"
     method="text" omit-xml-declaration="yes"
@@ -66,7 +72,11 @@
       <xsl:with-param name="default-log-level" select="$channel-search-service-log-level"/>
     </xsl:call-template>
 
-    <xsl:call-template name="AddGrpcBatchingOptions"/>
+    <xsl:call-template name="AddGrpcBatchingOptions">
+      <xsl:with-param
+        name="grpc-max-batch-delay-us"
+        select="$grpc-max-batch-delay-us"/>
+    </xsl:call-template>
     <xsl:call-template name="AddChannelControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="'ChannelSearchService'"/>

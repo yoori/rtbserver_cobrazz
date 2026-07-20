@@ -38,6 +38,19 @@ namespace AdServer::Bidding
   public:
     using MaxPendingSyncPolicy = Sync::Policy::PosixThread;
 
+    struct ProcessCoefInterval
+    {
+      unsigned long from_minute = 0;
+      unsigned long to_minute = 0;
+      double coef = 1;
+    };
+
+    struct ProcessCoefSchedule
+    {
+      double coef = 1;
+      std::vector<ProcessCoefInterval> intervals;
+    };
+
     struct InitParams
     {
       using UriList = std::vector<std::string>;
@@ -66,7 +79,7 @@ namespace AdServer::Bidding
       UriList clickstar_uris;
       UriList dao_uris;
       unsigned long max_pending_tasks;
-      double process_coef = 1;
+      ProcessCoefSchedule process_coef;
       unsigned long threads;
       Generics::Time request_timeout;
       std::string server_id;
@@ -272,6 +285,9 @@ namespace AdServer::Bidding
     Generics::Time
     get_request_timeout_(const FCGI::HttpRequest& request) const noexcept;
 
+    double
+    resolve_process_coef_(const Generics::Time& time) const noexcept;
+
     mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;
     ExtConfig_var ext_config_;
 
@@ -307,7 +323,7 @@ namespace AdServer::Bidding
     UriList clickstar_uris_;
     UriList dao_uris_;
     unsigned long max_pending_tasks_ = 0;
-    double process_coef_ = 1;
+    ProcessCoefSchedule process_coef_;
     unsigned long threads_ = 0;
     Generics::Time request_timeout_;
     std::string server_id_;

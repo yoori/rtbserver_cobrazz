@@ -41,6 +41,12 @@
   </xsl:variable>
 
   <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
+  <xsl:variable name="grpc-max-batch-delay-us"><xsl:value-of
+    select="$request-info-manager-config/@grpc_max_batch_delay_us"/>
+    <xsl:if test="count($request-info-manager-config/@grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="5000"/>
+    </xsl:if>
+  </xsl:variable>
   <xsl:variable name="request-info-manager-host-port-set">
     <xsl:for-each select="$be-cluster-path/service[@descriptor = $request-info-manager-descriptor]">
       <xsl:variable name="request-info-manager-host-subset">
@@ -372,6 +378,9 @@
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="'RequestInfoManager'"/>
       <xsl:with-param name="add-user-info-grpc" select="'true'"/>
+      <xsl:with-param
+        name="grpc-max-batch-delay-us"
+        select="$grpc-max-batch-delay-us"/>
     </xsl:call-template>
 
   </cfg:RequestInfoManagerConfig>
