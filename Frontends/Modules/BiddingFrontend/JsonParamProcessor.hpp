@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <list>
-#include <memory_resource>
 #include <new>
 #include <optional>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -18,11 +17,12 @@
 #include <Commons/Containers.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
+#include <Commons/MonoAllocator.hpp>
+
 namespace AdServer::Bidding
 {
-  typedef std::pmr::string PmrString;
-  typedef std::pmr::vector<std::string_view> StringArray;
-  typedef std::pmr::set<unsigned long> ULongSet;
+  using StringArray = AdServer::Commons::MonoVector<std::string_view>;
+  using ULongSet = AdServer::Commons::MonoSet<unsigned long>;
 
   struct TransparentStringLess
   {
@@ -39,15 +39,15 @@ namespace AdServer::Bidding
 
   struct JsonAdSlotProcessingContext
   {
-    typedef std::pmr::set<std::string_view, TransparentStringLess> StringSet;
-    typedef Commons::ValueStateHolder<long> LValueStateHolder;
-    typedef Commons::ValueStateHolder<unsigned long> ULValueStateHolder;
-    typedef Commons::ValueStateHolder<ULongSet> ULSetStateHolder;
+    using StringSet = AdServer::Commons::MonoSet<std::string_view, TransparentStringLess>;
+    using LValueStateHolder = Commons::ValueStateHolder<long>;
+    using ULValueStateHolder = Commons::ValueStateHolder<unsigned long>;
+    using ULSetStateHolder = Commons::ValueStateHolder<ULongSet>;
 
     struct BannerFormat
     {
       explicit BannerFormat(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           width(),
           height(),
@@ -58,25 +58,25 @@ namespace AdServer::Bidding
       BannerFormat(BannerFormat&&) noexcept = default;
       BannerFormat& operator=(BannerFormat&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view width;
       std::string_view height;
       std::string_view ext_type;
       std::string_view ext_format;
     };
 
-    typedef std::pmr::vector<BannerFormat> BannerFormatArray;
+    typedef AdServer::Commons::MonoVector<BannerFormat> BannerFormatArray;
 
     struct Banner
     {
       explicit Banner(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           formats(resource),
           default_format(resource),
@@ -89,13 +89,13 @@ namespace AdServer::Bidding
       Banner(Banner&&) noexcept = default;
       Banner& operator=(Banner&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       BannerFormatArray formats;
       BannerFormat default_format;
 
@@ -106,7 +106,7 @@ namespace AdServer::Bidding
       unsigned long ext_hpos;
     };
 
-    typedef std::pmr::vector<Banner> BannerArray;
+    typedef AdServer::Commons::MonoVector<Banner> BannerArray;
 
     struct BannerFormatHolder
     {
@@ -125,18 +125,15 @@ namespace AdServer::Bidding
       const BannerFormat* banner_format;
     };
 
-    typedef std::map<
+    using SizeBannerMap = AdServer::Commons::MonoMap<
       std::string_view,
       BannerFormatHolder,
-      TransparentStringLess,
-      std::pmr::polymorphic_allocator<
-        std::pair<const std::string_view, BannerFormatHolder>>>
-      SizeBannerMap;
+      TransparentStringLess>;
 
     struct Deal
     {
       explicit Deal(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource()) :
+        AdServer::Commons::MonoAllocatorArena* resource) :
         resource_(resource),
         id(),
         cpm_price(AdServer::CampaignSvcs::RevenueDecimal::ZERO),
@@ -146,13 +143,13 @@ namespace AdServer::Bidding
       Deal(Deal&&) noexcept = default;
       Deal& operator=(Deal&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view id;
       AdServer::CampaignSvcs::RevenueDecimal cpm_price;
       std::string_view currency_code;
@@ -161,7 +158,7 @@ namespace AdServer::Bidding
     struct Metric
     {
       explicit Metric(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           type(),
           value()
@@ -170,19 +167,19 @@ namespace AdServer::Bidding
       Metric(Metric&&) noexcept = default;
       Metric& operator=(Metric&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view type;
       std::string_view value;
     };
 
-    typedef std::pmr::list<Deal> DealList;
-    typedef std::pmr::list<Metric> MetricList;
+    typedef AdServer::Commons::MonoList<Deal> DealList;
+    typedef AdServer::Commons::MonoList<Metric> MetricList;
 
     struct Native: public ReferenceCounting::DefaultImpl<>
     {
@@ -190,7 +187,7 @@ namespace AdServer::Bidding
       struct Asset
       {
         explicit Asset(
-          std::pmr::memory_resource* /*resource*/ = std::pmr::get_default_resource())
+          AdServer::Commons::MonoAllocatorArena* /*resource*/)
           : id(0),
             required(false)
         {}
@@ -221,7 +218,7 @@ namespace AdServer::Bidding
       struct Data: Asset
       {
         explicit Data(
-          std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+          AdServer::Commons::MonoAllocatorArena* resource)
           : Asset(resource),
             data_type(NDTE_TITLE),
             len(0)
@@ -233,7 +230,7 @@ namespace AdServer::Bidding
         virtual ~Data() noexcept = default;
       };
 
-      typedef std::pmr::vector<Data> DataArray;
+      typedef AdServer::Commons::MonoVector<Data> DataArray;
 
       enum ImageTypeEnum
       {
@@ -245,7 +242,7 @@ namespace AdServer::Bidding
       struct Image : Asset
       {
         explicit Image(
-          std::pmr::memory_resource* resource = std::pmr::get_default_resource()) :
+          AdServer::Commons::MonoAllocatorArena* resource) :
           Asset(resource),
           image_type(NITE_MAIN),
           height(0),
@@ -273,12 +270,12 @@ namespace AdServer::Bidding
         StringSet mimes;
       };
 
-      typedef std::pmr::vector<Image> ImageArray;
+      typedef AdServer::Commons::MonoVector<Image> ImageArray;
 
       struct Video: Asset
       {
         explicit Video(
-          std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+          AdServer::Commons::MonoAllocatorArena* resource)
           : Asset(resource),
             protocols(
               ULSetStateHolder::S_NOT_INITED,
@@ -296,7 +293,7 @@ namespace AdServer::Bidding
       };
 
       explicit Native(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           version("1.1"),
           data_assets(resource),
@@ -304,18 +301,18 @@ namespace AdServer::Bidding
           video_assets(resource)
       {}
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view version;
       std::optional<long> placement;
       DataArray data_assets;
       ImageArray image_assets;
-      std::pmr::vector<Video> video_assets;
+      AdServer::Commons::MonoVector<Video> video_assets;
 
     protected:
       virtual ~Native() noexcept = default;
@@ -325,7 +322,7 @@ namespace AdServer::Bidding
 
 
     explicit JsonAdSlotProcessingContext(
-      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      AdServer::Commons::MonoAllocatorArena* resource)
       : resource_(resource),
         id(),
         min_cpm_price(AdServer::CampaignSvcs::RevenueDecimal::ZERO),
@@ -359,13 +356,13 @@ namespace AdServer::Bidding
     JsonAdSlotProcessingContext(JsonAdSlotProcessingContext&&) noexcept = default;
     JsonAdSlotProcessingContext& operator=(JsonAdSlotProcessingContext&&) noexcept = default;
 
-    std::pmr::memory_resource*
+    AdServer::Commons::MonoAllocatorArena*
     resource() const noexcept
     {
       return resource_;
     }
 
-    std::pmr::memory_resource* resource_;
+    AdServer::Commons::MonoAllocatorArena* resource_;
 
     std::string_view id;
     AdServer::CampaignSvcs::RevenueDecimal min_cpm_price;
@@ -415,7 +412,7 @@ namespace AdServer::Bidding
     struct Segment
     {
       explicit Segment(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           id(),
           name(),
@@ -425,24 +422,24 @@ namespace AdServer::Bidding
       Segment(Segment&&) noexcept = default;
       Segment& operator=(Segment&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view id;
       std::string_view name;
       std::string_view value;
     };
 
-    typedef std::pmr::list<Segment> SegmentList;
+    typedef AdServer::Commons::MonoList<Segment> SegmentList;
 
     struct UserEidUid
     {
       explicit UserEidUid(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           id(),
           stable_id()
@@ -451,23 +448,23 @@ namespace AdServer::Bidding
       UserEidUid(UserEidUid&&) noexcept = default;
       UserEidUid& operator=(UserEidUid&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view id;
       std::string_view stable_id;
     };
 
-    typedef std::pmr::vector<UserEidUid> UserEidUidArray;
+    typedef AdServer::Commons::MonoVector<UserEidUid> UserEidUidArray;
 
     struct UserEid
     {
       explicit UserEid(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* resource)
         : resource_(resource),
           source(),
           uids(resource)
@@ -476,25 +473,22 @@ namespace AdServer::Bidding
       UserEid(UserEid&&) noexcept = default;
       UserEid& operator=(UserEid&&) noexcept = default;
 
-      std::pmr::memory_resource*
+      AdServer::Commons::MonoAllocatorArena*
       resource() const noexcept
       {
         return resource_;
       }
 
-      std::pmr::memory_resource* resource_;
+      AdServer::Commons::MonoAllocatorArena* resource_;
       std::string_view source;
       UserEidUidArray uids;
     };
 
-    typedef std::pmr::list<UserEid> UserEidList;
+    typedef AdServer::Commons::MonoList<UserEid> UserEidList;
 
     explicit JsonProcessingContext(
-      std::pmr::memory_resource* resource = nullptr)
-      : arena_(resource ?
-          nullptr :
-          std::make_unique<std::pmr::monotonic_buffer_resource>()),
-        resource_(resource ? resource : arena_.get()),
+      AdServer::Commons::MonoAllocatorArena& resource)
+      : resource_(&resource),
         external_user_id(),
         user_id(),
         user_eids(resource_),
@@ -568,12 +562,12 @@ namespace AdServer::Bidding
     void
     clear()
     {
-      std::pmr::memory_resource* resource = arena_ ? nullptr : resource_;
+      AdServer::Commons::MonoAllocatorArena* resource = resource_;
       this->~JsonProcessingContext();
-      new(this) JsonProcessingContext(resource);
+      new(this) JsonProcessingContext(*resource);
     }
 
-    std::pmr::memory_resource*
+    AdServer::Commons::MonoAllocatorArena*
     resource() const noexcept
     {
       return resource_;
@@ -582,20 +576,20 @@ namespace AdServer::Bidding
     std::string_view
     hold_string(std::string&& value)
     {
-      PmrString& held_value = string_holders_.emplace_back();
+      AdServer::Commons::MonoString& held_value =
+        string_holders_.emplace_back(resource_);
       held_value.assign(value.data(), value.size());
       return std::string_view(held_value.data(), held_value.size());
     }
 
     std::string_view
-    hold_string(std::pmr::string&& value)
+    hold_string(AdServer::Commons::MonoString&& value)
     {
-      PmrString& held_value = string_holders_.emplace_back(std::move(value));
+      AdServer::Commons::MonoString& held_value = string_holders_.emplace_back(std::move(value));
       return std::string_view(held_value.data(), held_value.size());
     }
 
-    std::unique_ptr<std::pmr::monotonic_buffer_resource> arena_;
-    std::pmr::memory_resource* resource_;
+    AdServer::Commons::MonoAllocatorArena* resource_;
 
     std::string_view external_user_id;
     std::string_view user_id;
@@ -613,24 +607,24 @@ namespace AdServer::Bidding
     std::string_view language;
     std::string_view carrier;
 
-    std::pmr::vector<std::string_view> currencies;
+    AdServer::Commons::MonoVector<std::string_view> currencies;
     std::string_view required_category;
-    std::pmr::vector<std::string_view> exclude_categories;
+    AdServer::Commons::MonoVector<std::string_view> exclude_categories;
 
     std::string_view gender;
     std::string_view age;
     SegmentList segments;
 
     std::set<unsigned long> member_ids;
-    std::pmr::list<JsonAdSlotProcessingContext> ad_slots;
+    AdServer::Commons::MonoList<JsonAdSlotProcessingContext> ad_slots;
 
     bool site;
     std::string_view site_name;
     HTTP::HTTPAddress site_page;
     HTTP::HTTPAddress site_domain;
-    std::pmr::vector<std::string_view> site_pagecat;
-    std::pmr::vector<std::string_view> site_sectioncat;
-    std::pmr::vector<std::string_view> site_cat;
+    AdServer::Commons::MonoVector<std::string_view> site_pagecat;
+    AdServer::Commons::MonoVector<std::string_view> site_sectioncat;
+    AdServer::Commons::MonoVector<std::string_view> site_cat;
     std::string_view site_keywords;
     std::string_view site_search;
     HTTP::HTTPAddress site_ref;
@@ -643,9 +637,9 @@ namespace AdServer::Bidding
     std::string_view app_bundle;
     HTTP::HTTPAddress app_domain;
     HTTP::HTTPAddress app_store_url;
-    std::pmr::vector<std::string_view> app_pagecat;
-    std::pmr::vector<std::string_view> app_sectioncat;
-    std::pmr::vector<std::string_view> app_cat;
+    AdServer::Commons::MonoVector<std::string_view> app_pagecat;
+    AdServer::Commons::MonoVector<std::string_view> app_sectioncat;
+    AdServer::Commons::MonoVector<std::string_view> app_cat;
     std::string_view app_keywords;
 
     bool secure;
@@ -668,18 +662,18 @@ namespace AdServer::Bidding
     std::string_view content_title;
     std::string_view content_series;
     std::string_view content_season;
-    std::pmr::vector<std::string_view> content_cat;
+    AdServer::Commons::MonoVector<std::string_view> content_cat;
 
     // publisher from site or app
     bool app_publisher;
     bool site_publisher;
-    std::pmr::vector<std::string_view> publisher_cat;
+    AdServer::Commons::MonoVector<std::string_view> publisher_cat;
     std::string_view publisher_name;
 
     bool app_content_producer;
     bool site_content_producer;
     // collect here all names from all producer objects
-    std::pmr::vector<std::string_view> content_producer_name;
+    AdServer::Commons::MonoVector<std::string_view> content_producer_name;
 
     std::string_view allyessitetype; //ALLYES specific in site object
 
@@ -739,7 +733,7 @@ namespace AdServer::Bidding
       print(out, site_sectioncat, "site_sectioncat");
       print(out, site_cat, "site_cat");
 
-      for(std::pmr::list<JsonAdSlotProcessingContext>::const_iterator slot_it =
+      for(AdServer::Commons::MonoList<JsonAdSlotProcessingContext>::const_iterator slot_it =
             ad_slots.begin();
           slot_it != ad_slots.end(); ++slot_it)
       {
@@ -786,7 +780,7 @@ namespace AdServer::Bidding
     }
 
   private:
-    std::pmr::list<PmrString> string_holders_;
+    AdServer::Commons::MonoList<AdServer::Commons::MonoString> string_holders_;
   };
 
   inline std::string

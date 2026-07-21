@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cstring>
-#include <memory_resource>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -290,10 +289,11 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    append(FreqCapIdSet& freq_caps, const CampaignManagerCore::PmrIdArray& cap_seq)
+    append(FreqCapIdSet& freq_caps, const AdServer::Commons::MonoVector<unsigned long>& cap_seq)
       /*throw(eh::Exception)*/
     {
-      std::copy(cap_seq.begin(), cap_seq.end(), std::inserter(freq_caps, freq_caps.end()));
+      freq_caps.reserve(freq_caps.size() + cap_seq.size());
+      freq_caps.insert(cap_seq.begin(), cap_seq.end());
     }
 
     void
@@ -530,7 +530,8 @@ namespace AdServer::CampaignSvcs
         return;
       }
 
-      ChannelIdHashSet platform_channels;
+      AdServer::Commons::MonoAllocatorArena platform_channels_arena;
+      ChannelIdHashSet platform_channels(&platform_channels_arena);
       platform_channels.insert(context_info.platform_ids.begin(), context_info.platform_ids.end());
 
       ChannelIdSet matched_platform_channels;
@@ -864,7 +865,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      std::pmr::monotonic_buffer_resource memory_resource;
+      AdServer::Commons::MonoAllocatorArena arena;
       GetAdResult result;
       result.hostname = campaign_manager_config_.host();
 
@@ -909,7 +910,7 @@ namespace AdServer::CampaignSvcs
       }
 
       ChannelIdArray geo_channels;
-      ChannelIdSet coord_channels(&memory_resource);
+      ChannelIdSet coord_channels;
       match_geo_channels_(
         *campaign_config,
         core_request_params.common_info->location,
@@ -930,6 +931,15 @@ namespace AdServer::CampaignSvcs
           geo_channels.end());
       }
 
+      const std::size_t channels_add_size =
+        core_request_params.context_info->geo_channels.size() +
+        core_request_params.context_info->platform_ids.size();
+      if(channels_add_size)
+      {
+        core_request_params.channels.reserve(
+          core_request_params.channels.size() + channels_add_size);
+      }
+
       core_request_params.channels.insert(
         core_request_params.context_info->geo_channels.begin(),
         core_request_params.context_info->geo_channels.end());
@@ -937,14 +947,12 @@ namespace AdServer::CampaignSvcs
         core_request_params.context_info->platform_ids.begin(),
         core_request_params.context_info->platform_ids.end());
 
-      const ChannelIdHashSet& matched_channels = core_request_params.channels;
-
       if (!core_request_params.ad_slots.empty())
       {
         // check global blacklist channel
         bool request_blacklisted = size_blacklisted_(
           campaign_config.get(),
-          matched_channels,
+          core_request_params.channels,
           0 // global blacklist
           );
 
@@ -971,20 +979,22 @@ namespace AdServer::CampaignSvcs
         }
 
         // fill common params
-        core_request_params.tag_delivery_factor = Generics::safe_rand() % TAG_DELIVERY_MAX;
-        core_request_params.ccg_delivery_factor = Generics::safe_rand() % TAG_DELIVERY_MAX;
+        core_request_params.tag_delivery_factor = Generics::unsafe_rand() % TAG_DELIVERY_MAX;
+        core_request_params.ccg_delivery_factor = Generics::unsafe_rand() % TAG_DELIVERY_MAX;
 
         const Generics::Time session_start = core_request_params.session_start;
 
-        FreqCapIdSet accumulated_full_freq_caps;
-        append(accumulated_full_freq_caps, core_request_params.full_freq_caps);
+        auto request_params =
+          std::make_shared<GetAdRequest>(std::move(core_request_params));
+
+        FreqCapIdSet accumulated_full_freq_caps(request_params->resource());
+        append(accumulated_full_freq_caps, request_params->full_freq_caps);
         unsigned long request_tag_id = 0;
         RevenueDecimal adsspace_system_cpm(false, 100000, 0);
         bool accumulated_request_blacklisted = request_blacklisted;
-        bool accumulated_test_request = core_request_params.common_info->test_request;
+        bool accumulated_test_request = request_params->common_info->test_request;
 
-        auto request_params =
-          std::make_shared<GetAdRequest>(std::move(core_request_params));
+        const ChannelIdHashSet& matched_channels = request_params->channels;
 
         result.ad_slots.reserve(request_params->ad_slots.size());
         CampaignManagerLogger::AdRequestSlotLogArray ad_request_logs;
@@ -994,7 +1004,7 @@ namespace AdServer::CampaignSvcs
           ++ad_slot_i)
         {
           GetAdSlotResult ad_slot_result;
-          AdSlotContext ad_slot_context;
+          AdSlotContext ad_slot_context(request_params->arena());
           ad_slot_context.request_blacklisted = accumulated_request_blacklisted;
           ad_slot_context.test_request = accumulated_test_request;
           ad_slot_context.full_freq_caps = accumulated_full_freq_caps;
@@ -1004,7 +1014,7 @@ namespace AdServer::CampaignSvcs
           const Tag* log_tag = 0;
           bool log_request_without_tag = false;
           bool log_ad_request = false;
-          AdSelectionResult ad_selection_result(&memory_resource);
+          AdSelectionResult ad_selection_result(request_params->arena());
           AdSlotMinCpm ad_slot_min_cpm;
           Tag::SizeMap tag_sizes;
 
@@ -1026,9 +1036,9 @@ namespace AdServer::CampaignSvcs
             rule_it->second,
             request_debug_info,
             matched_channels,
-            &memory_resource);
+            &arena);
 
-          FreqCapIdSet additional_full_freq_caps;
+          FreqCapIdSet additional_full_freq_caps(request_params->resource());
           additional_full_freq_caps.swap(ad_slot_context.result_full_freq_caps);
           request_tag_id = ad_slot_context.request_tag_id;
           adsspace_system_cpm = ad_slot_context.adsspace_system_cpm;
@@ -1055,6 +1065,8 @@ namespace AdServer::CampaignSvcs
               std::move(ad_slot_context));
           }
 
+          accumulated_full_freq_caps.reserve(
+            accumulated_full_freq_caps.size() + additional_full_freq_caps.size());
           accumulated_full_freq_caps.insert(
             additional_full_freq_caps.begin(),
             additional_full_freq_caps.end());
@@ -1068,11 +1080,7 @@ namespace AdServer::CampaignSvcs
           {
             campaign_manager_logger_->process_ad_request(
               colocation,
-              request_params->common_info,
-              request_params->context_info,
-              request_params->log_request,
-              request_params->channels,
-              request_params->required_passback,
+              request_params,
               std::move(ad_request_logs));
           }
           catch (const CampaignManagerLogger::Exception& e)
@@ -1606,11 +1614,7 @@ namespace AdServer::CampaignSvcs
 
         campaign_manager_logger_->process_ad_request(
           colocation,
-          request_params->common_info,
-          request_params->context_info,
-          std::move(request_params->log_request),
-          std::move(request_params->channels),
-          request_params->required_passback,
+          request_params,
           std::move(ad_request_logs),
           std::move(geo_channels_ptr),
           reset_request_user);
@@ -1661,7 +1665,7 @@ namespace AdServer::CampaignSvcs
     unsigned long request_type,
     unsigned long random,
     unsigned long publisher_site_id,
-    const PmrIdArray& publisher_account_ids,
+    const AdServer::Commons::MonoVector<unsigned long>& publisher_account_ids,
     const CampaignConfig& campaign_config,
     unsigned long tag_id,
     const StringArray& sizes,
@@ -1784,7 +1788,7 @@ namespace AdServer::CampaignSvcs
     const CreativeInstantiateRule& creative_instantiate_rule,
     GetAdDebugResult* ad_request_debug_info,
     const ChannelIdHashSet& matched_channels,
-    std::pmr::memory_resource* memory_resource)
+    AdServer::Commons::MonoAllocatorArena* arena)
   {
     //static const char* FUN = "CampaignManagerCore::get_adslot_campaign_creative_()";
 
@@ -1887,7 +1891,7 @@ namespace AdServer::CampaignSvcs
             ad_request_debug_info,
             ad_slot_debug_info,
             matched_channels,
-            memory_resource);
+            arena);
           log_ad_request = true;
         }
         catch(const eh::Exception& ex)
@@ -2184,7 +2188,7 @@ namespace AdServer::CampaignSvcs
     GetAdDebugResult* ad_request_debug_info,
     AdSlotDebugResult* ad_slot_debug_info,
     const ChannelIdHashSet& matched_channels,
-    std::pmr::memory_resource* memory_resource)
+    AdServer::Commons::MonoAllocatorArena* arena)
     /*throw(eh::Exception)*/
   {
     /* configuring response by input parameters */
@@ -2202,7 +2206,7 @@ namespace AdServer::CampaignSvcs
       passback = true;
     }
 
-    RequestResultParams request_result_params(memory_resource);
+    RequestResultParams request_result_params(request_params.arena());
 
     request_result_params.request_id = request_params.common_info->request_id;
 
@@ -2254,7 +2258,7 @@ namespace AdServer::CampaignSvcs
       // fill tokens
       if (!is_preview_ccid)
       {
-        SeqOrderMap seq_orders(memory_resource);
+        SeqOrderMap seq_orders(arena);
 
         for (const auto& core_seq_order : request_params.seq_orders)
         {
@@ -2281,7 +2285,7 @@ namespace AdServer::CampaignSvcs
           creative_url,
           ad_request_debug_info,
           ad_slot_debug_info,
-          memory_resource);
+          arena);
       }
 
       ad_slot_result.creative_body = creative_body;
@@ -2324,6 +2328,8 @@ namespace AdServer::CampaignSvcs
       }
 
       // Freq caps selected in this slot are applied to following slots by caller.
+      ad_slot_context.result_full_freq_caps.reserve(
+        ad_selection_result.freq_caps.size() + ad_selection_result.uc_freq_caps.size());
       ad_slot_context.result_full_freq_caps.insert(
         ad_selection_result.freq_caps.begin(),
         ad_selection_result.freq_caps.end());
@@ -2488,7 +2494,7 @@ namespace AdServer::CampaignSvcs
               RevenueDecimal c = slot_pub_ecpm + RevenueDecimal::div(
                 RevenueDecimal::mul(
                   it->ecpm_bid - slot_pub_ecpm,
-                  RevenueDecimal(false, Generics::safe_rand(100), 0),
+                  RevenueDecimal(false, Generics::unsafe_rand(100), 0),
                   Generics::DMR_FLOOR),
                 RevenueDecimal(false, 100, 0));
               it->ecpm_bid = c;
@@ -3025,7 +3031,7 @@ namespace AdServer::CampaignSvcs
     unsigned long tag_id,
     const String::SubString& referer,
     const ChannelIdHashSet& channels,
-    const PmrIdArray& full_freq_caps)
+    const AdServer::Commons::MonoVector<unsigned long>& full_freq_caps)
     /*throw(eh::Exception)*/
   {
     std::ostringstream ostr;
@@ -3174,7 +3180,7 @@ namespace AdServer::CampaignSvcs
     std::string& creative_url,
     GetAdDebugResult* ad_request_debug_info,
     AdSlotDebugResult* ad_slot_debug_info,
-    std::pmr::memory_resource* memory_resource)
+    AdServer::Commons::MonoAllocatorArena* arena)
   {
     (void)ad_request_debug_info;
 
@@ -3239,7 +3245,7 @@ namespace AdServer::CampaignSvcs
       &config_index,
       ctr_provider_.get(),
       conv_rate_provider_.get(),
-      memory_resource);
+      request_params.resource());
     CampaignSelectParams_var campaign_select_params_ptr(new CampaignSelectParams(
       request_params.profiling_available,
       full_freq_caps,
@@ -3250,7 +3256,7 @@ namespace AdServer::CampaignSvcs
       request_params.common_info->request_type == AR_GOOGLE,
       ad_slot.tag_visibility,
       ad_slot.tag_predicted_viewability,
-      memory_resource));
+      arena));
 
     CampaignSelectParams& campaign_select_params = *campaign_select_params_ptr;
 
@@ -3273,7 +3279,7 @@ namespace AdServer::CampaignSvcs
       campaign_select_params.time = request_params.common_info->time;
       campaign_select_params.tag_delivery_factor = request_params.tag_delivery_factor;
       campaign_select_params.random = request_params.common_info->random;
-      campaign_select_params.random2 = Generics::safe_rand(RANDOM_PARAM_MAX);
+      campaign_select_params.random2 = Generics::unsafe_rand(RANDOM_PARAM_MAX);
       campaign_select_params.up_expand_space = ad_slot.up_expand_space >= 0 ?
         static_cast<unsigned long>(ad_slot.up_expand_space) : 0;
       campaign_select_params.right_expand_space = ad_slot.right_expand_space >= 0 ?
@@ -3345,15 +3351,16 @@ namespace AdServer::CampaignSvcs
       }
 
       // TODO: remove duplicated platform matching block.
-      ChannelIdSet platform_channels(memory_resource);
-      ChannelIdHashSet platforms(memory_resource);
+      ChannelIdSet platform_channels;
+      ChannelIdHashSet platforms(arena);
       platforms.insert(
         request_params.context_info->platform_ids.begin(),
         request_params.context_info->platform_ids.end());
 
       config.platform_channels->match(platform_channels, platforms);
 
-      std::pmr::unordered_set<std::string_view> norm_platform_names(memory_resource);
+      AdServer::Commons::MonoUnorderedSet<std::string_view>
+        norm_platform_names(arena);
       norm_platform_names.reserve(platforms.size() + platform_channels.size());
 
       for (auto platform_id_it = platforms.begin(); platform_id_it != platforms.end();
@@ -3535,7 +3542,7 @@ namespace AdServer::CampaignSvcs
         creative_body,
         creative_url,
         ad_slot_context,
-        memory_resource);
+        arena);
 
       if (!text_creative_selected)
       {
@@ -3554,7 +3561,7 @@ namespace AdServer::CampaignSvcs
       while (!display_creative_selected && display_try_number++ < 2)
       {
         CreativeParams creative_params;
-        AdSelectionResult display_ad_selection_result(select_result, memory_resource);
+        AdSelectionResult display_ad_selection_result(select_result, select_result.arena());
 
         display_creative_selected |= instantiate_display_creative(
           &config,
@@ -3569,7 +3576,7 @@ namespace AdServer::CampaignSvcs
           creative_body,
           creative_url,
           ad_slot_context,
-          memory_resource);
+          arena);
 
         if (display_creative_selected)
         {
@@ -3737,7 +3744,9 @@ namespace AdServer::CampaignSvcs
         throw Exception("Can't receive configuration.");
       }
 
-      ChannelIdHashSet used_simple_channels(channels.begin(), channels.end());
+      AdServer::Commons::MonoAllocatorArena used_simple_channels_arena;
+      ChannelIdHashSet used_simple_channels(&used_simple_channels_arena);
+      used_simple_channels.insert(channels.begin(), channels.end());
       ChannelUseCountMap uc_tbl;
 
       for (CampaignConfig::ChannelMap::const_iterator ch_it =
@@ -4035,7 +4044,9 @@ namespace AdServer::CampaignSvcs
 
       {
         ChannelIdSet platform_channels;
-        ChannelIdHashSet platforms(
+        AdServer::Commons::MonoAllocatorArena platforms_arena;
+        ChannelIdHashSet platforms(&platforms_arena);
+        platforms.insert(
           action_info.platform_ids.begin(),
           action_info.platform_ids.end());
 
@@ -4429,7 +4440,7 @@ namespace AdServer::CampaignSvcs
 
   void
   CampaignManagerCore::convert_external_categories_(
-    CreativeCategoryIdSet& exclude_categories,
+    MonoCreativeCategoryIdSet& exclude_categories,
     const CampaignConfig& config,
     unsigned long request_type,
     const StringArray& categories)
@@ -4465,12 +4476,12 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     CampaignKeywordMap& result_keywords,
-    const PmrCCGKeywordArray& keywords,
+    const AdServer::Commons::MonoVector<CCGKeywordInfo>& keywords,
     bool profiling_available,
     const FreqCapIdSet& full_freq_caps)
     noexcept
   {
-    for (PmrCCGKeywordArray::const_iterator kw_it = keywords.begin();
+    for (AdServer::Commons::MonoVector<CCGKeywordInfo>::const_iterator kw_it = keywords.begin();
       kw_it != keywords.end(); ++kw_it)
     {
       const CCGKeywordInfo& src_keyword = *kw_it;
@@ -4611,7 +4622,8 @@ namespace AdServer::CampaignSvcs
         key.tag_delivery_factor = request_params.tag_delivery_factor;
         key.ccg_delivery_factor = request_params.ccg_delivery_factor;
 
-        ChannelIdHashSet triggered_channels;
+        AdServer::Commons::MonoAllocatorArena trace_arena;
+        ChannelIdHashSet triggered_channels(&trace_arena);
         triggered_channels.insert(
           request_params.channels.begin(),
           request_params.channels.end());
@@ -4620,20 +4632,20 @@ namespace AdServer::CampaignSvcs
           request_params.context_info->geo_channels.end());
         triggered_channels.emplace(TRUE_CHANNEL_ID);
 
-        FreqCapIdSet full_freq_caps;
-        std::copy(
+        FreqCapIdSet full_freq_caps(&trace_arena);
+        full_freq_caps.reserve(request_params.full_freq_caps.size());
+        full_freq_caps.insert(
           request_params.full_freq_caps.begin(),
-          request_params.full_freq_caps.end(),
-          std::inserter(full_freq_caps, full_freq_caps.begin()));
+          request_params.full_freq_caps.end());
 
-        CreativeCategoryIdSet exclude_categories;
+        MonoCreativeCategoryIdSet exclude_categories(&trace_arena);
         convert_external_categories_(
           exclude_categories,
           campaign_config,
           request_params.common_info->request_type,
           ad_slot.exclude_categories);
 
-        CreativeCategoryIdSet required_categories;
+        MonoCreativeCategoryIdSet required_categories(&trace_arena);
         convert_external_categories_(
           required_categories,
           campaign_config,
@@ -4653,7 +4665,7 @@ namespace AdServer::CampaignSvcs
           String::SubString(ad_slot.min_ecpm_currency_code),
           ad_slot.min_ecpm);
 
-        AllowedDurationSet allowed_durations;
+        AllowedDurationSet allowed_durations(&trace_arena);
         allowed_durations.insert(
           ad_slot.allowed_durations.begin(),
           ad_slot.allowed_durations.end());
@@ -4894,7 +4906,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     const CommonAdRequest& request_params,
-    const PmrIdArray& exclude_pubpixel_accounts_seq)
+    const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts_seq)
     noexcept
   {
     AccountIdSet exclude_pubpixel_accounts(
@@ -5086,7 +5098,8 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerCore::fill_tns_counter_device_type_(
     std::string& tns_counter_device_type,
-    const std::pmr::unordered_set<std::string_view>& norm_platform_names)
+    const AdServer::Commons::MonoUnorderedSet<std::string_view>&
+      norm_platform_names)
     noexcept
   {
     if (norm_platform_names.find(PlatformNames::APPLE_IPADS) !=

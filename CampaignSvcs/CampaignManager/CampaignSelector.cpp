@@ -3,7 +3,7 @@
 #include <iostream>
 #include <array>
 #include <cstddef>
-#include <memory_resource>
+#include <tuple>
 
 #include <Generics/GnuHashTable.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -37,38 +37,51 @@ namespace AdServer
     };
 
     using CampaignKeywordCreativeList =
-      std::pmr::list<CampaignKeywordCreative>;
+      AdServer::Commons::MonoList<CampaignKeywordCreative>;
 
-    struct CampaignSelectorPmrBuffer
+    namespace
     {
-      CampaignSelectorPmrBuffer()
+      template<typename MapType, typename Key>
+      typename MapType::mapped_type&
+      get_or_create_mono_mapped_(MapType& map, const Key& key)
+      {
+        const auto emplace_result = map.emplace(
+          std::piecewise_construct,
+          std::forward_as_tuple(key),
+          std::forward_as_tuple(map.get_allocator().arena()));
+        return emplace_result.first->second;
+      }
+    }
+
+    struct CampaignSelectorMonoBuffer
+    {
+      CampaignSelectorMonoBuffer()
         : resource(buffer.data(), buffer.size())
       {}
 
-      std::pmr::memory_resource* memory_resource() noexcept
+      AdServer::Commons::MonoAllocatorArena* arena() noexcept
       {
         return &resource;
       }
 
-      std::pmr::memory_resource* reset_memory_resource()
+      AdServer::Commons::MonoAllocatorArena* reset_arena()
       {
         resource.release();
-        return memory_resource();
+        return arena();
       }
 
       std::array<std::byte, 16 * 1024> buffer;
-      std::pmr::monotonic_buffer_resource resource;
+      AdServer::Commons::MonoAllocatorArena resource;
     };
 
     using CPCKeywordCreativeMap =
-      std::pmr::map<RevenueDecimal, CampaignKeywordCreativeList>;
+      AdServer::Commons::MonoMap<RevenueDecimal, CampaignKeywordCreativeList>;
 
     struct TextSelectionBySize
     {
-      explicit TextSelectionBySize(
-        std::pmr::memory_resource* memory_resource =
-          std::pmr::get_default_resource())
-        : campaign_candidates(memory_resource)
+      explicit TextSelectionBySize(AdServer::Commons::MonoAllocatorArena* arena)
+        : campaign_candidates(AdServer::Commons::mono_allocator<
+            CampaignSelector::WeightedCampaignKeyword>(arena))
       {}
 
       Tag::SizeMap tag_sizes;
@@ -76,15 +89,15 @@ namespace AdServer
       CampaignSelector::WeightedCampaignKeywordList campaign_candidates;
     };
 
-    using TextSelectionBySizeList = std::pmr::list<TextSelectionBySize>;
+    using TextSelectionBySizeList = AdServer::Commons::MonoList<TextSelectionBySize>;
 
     struct RandomTextSelectionBySize
     {
-      explicit RandomTextSelectionBySize(
-        std::pmr::memory_resource* memory_resource =
-          std::pmr::get_default_resource())
-        : campaign_candidates(memory_resource),
-          grouped_campaign_candidates(memory_resource)
+      explicit RandomTextSelectionBySize(AdServer::Commons::MonoAllocatorArena* arena)
+        : campaign_candidates(AdServer::Commons::mono_allocator<
+            CampaignSelector::WeightedCampaignKeyword>(arena)),
+          grouped_campaign_candidates(AdServer::Commons::mono_allocator<
+            CampaignSelector::WeightedCampaignKeywordPtrArray>(arena))
       {}
 
       Tag::SizeMap tag_sizes;
@@ -93,7 +106,7 @@ namespace AdServer
     };
 
     using RandomTextSelectionBySizeList =
-      std::pmr::list<RandomTextSelectionBySize>;
+      AdServer::Commons::MonoList<RandomTextSelectionBySize>;
 
     struct SizedCreativeHolder
     {
@@ -111,31 +124,28 @@ namespace AdServer
       RevenueDecimal conv_rate;
     };
 
-    using SizedCreativeHolderList = std::pmr::list<SizedCreativeHolder>;
+    using SizedCreativeHolderList = AdServer::Commons::MonoList<SizedCreativeHolder>;
 
     struct CTRWeightedCampaignHolder
     {
       CTRWeightedCampaignHolder(
         CampaignSelector::WeightedCampaignPtr&& weighted_campaign_val,
-        std::pmr::memory_resource* memory_resource =
-          std::pmr::get_default_resource())
+        AdServer::Commons::MonoAllocatorArena* arena)
           : weighted_campaign(std::move(weighted_campaign_val)),
-            cur_creatives(memory_resource)
+            cur_creatives(AdServer::Commons::mono_allocator<SizedCreativeHolder>(arena))
       {}
 
       CTRWeightedCampaignHolder(CTRWeightedCampaignHolder&& init)
         : weighted_campaign(std::move(init.weighted_campaign)),
-          cur_creatives(init.cur_creatives.get_allocator().resource())
-      {
-        cur_creatives.swap(init.cur_creatives);
-      }
+          cur_creatives(std::move(init.cur_creatives))
+      {}
 
       CampaignSelector::WeightedCampaignPtr weighted_campaign;
       SizedCreativeHolderList cur_creatives;
     };
 
     using CTRWeightedCampaignHolderList =
-      std::pmr::list<CTRWeightedCampaignHolder>;
+      AdServer::Commons::MonoList<CTRWeightedCampaignHolder>;
 
     /**
      * Weighted function that calculate weights in list for random_select method.
@@ -203,12 +213,12 @@ namespace AdServer
       const CampaignIndex* campaign_selection_index,
       const CTR::CTRProvider* ctr_provider,
       const CTR::CTRProvider* conv_rate_provider,
-      std::pmr::memory_resource* memory_resource)
+      AdServer::Commons::MonoAllocatorArena* arena)
       : campaign_selection_index_(campaign_selection_index),
         campaign_config_(campaign_selection_index->get_campaign_config()),
         ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
         conv_rate_provider_(ReferenceCounting::add_ref(conv_rate_provider)),
-        memory_resource_(memory_resource)
+        arena_(arena)
     {}
 
     RevenueDecimal
@@ -401,7 +411,7 @@ namespace AdServer
       const CampaignSelectParams& request_params,
       const Campaign* campaign,
       const Tag* tag,
-      std::pmr::memory_resource* memory_resource)
+      AdServer::Commons::MonoAllocatorArena* arena)
       const
       /*throw(eh::Exception)*/
     {
@@ -430,7 +440,7 @@ namespace AdServer
         request_params.required_categories,
         request_params.secure,
         request_params.filter_empty_destination,
-        memory_resource,
+        arena,
         0);
     }
 
@@ -483,7 +493,7 @@ namespace AdServer
       assert(!available_sizes.empty());
 
       TagSizePtrList::const_iterator as_it = available_sizes.begin();
-      std::advance(as_it, Generics::safe_rand(available_sizes.size()));
+      std::advance(as_it, Generics::unsafe_rand(available_sizes.size()));
       return *as_it;
     }
 
@@ -556,9 +566,9 @@ namespace AdServer
 
       assert(ctr_calculation);
 
-      CTRWeightedCampaignHolderList unknown_ctr_campaign_candidates(memory_resource_);
-      CTRWeightedCampaignHolderList known_ctr_campaign_candidates(memory_resource_);
-      CampaignSelectorPmrBuffer pmr_buffer;
+      CTRWeightedCampaignHolderList unknown_ctr_campaign_candidates(arena_);
+      CTRWeightedCampaignHolderList known_ctr_campaign_candidates(arena_);
+      CampaignSelectorMonoBuffer mono_buffer;
 
       // step 1: filter all campaigns without ecpm checking
       for(CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
@@ -588,7 +598,7 @@ namespace AdServer
             request_params,
             (*cmp_it)->campaign,
             tag,
-            pmr_buffer.reset_memory_resource());
+            mono_buffer.reset_arena());
 
           if(!available_creatives.empty()) // any creative can be selected
           {
@@ -607,7 +617,7 @@ namespace AdServer
                     RevenueDecimal::ZERO, // ctr will be inited after
                     RevenueDecimal::ZERO // conv rate will be inited after
                     )),
-                memory_resource_);
+                arena_);
             }
             else
             {
@@ -640,7 +650,7 @@ namespace AdServer
                     (*cmp_it)->campaign->ctr,
                     RevenueDecimal::ZERO // conv rate will be inited after
                     )),
-                  memory_resource_);
+                  arena_);
               }
               catch(const RevenueDecimal::Overflow&)
               {}
@@ -840,7 +850,7 @@ namespace AdServer
       const
       noexcept
     {
-      CampaignSelectorPmrBuffer pmr_buffer;
+      CampaignSelectorMonoBuffer mono_buffer;
 
       for(CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
             campaign_list.begin();
@@ -889,7 +899,7 @@ namespace AdServer
             request_params,
             (*cmp_it)->campaign,
             tag,
-            pmr_buffer.reset_memory_resource());
+            mono_buffer.reset_arena());
 
           if(!available_creatives.empty()) // any creative can be selected
           {
@@ -936,7 +946,7 @@ namespace AdServer
 
       CampaignIndex::CampaignSelectionCellPtrList::const_iterator
         cmp_it = campaign_list.begin();
-      CampaignSelectorPmrBuffer pmr_buffer;
+      CampaignSelectorMonoBuffer mono_buffer;
 
       for(; cmp_it != campaign_list.end(); ++cmp_it)
       {
@@ -993,7 +1003,7 @@ namespace AdServer
             request_params,
             (*cmp_it)->campaign,
             tag,
-            pmr_buffer.reset_memory_resource());
+            mono_buffer.reset_arena());
 
           const Creative* result_creative = select_display_creative_(
             available_creatives);
@@ -1038,9 +1048,9 @@ namespace AdServer
       const
       noexcept
     {
-      CampaignKeywordMap filtered_campaign_keywords(memory_resource_);
+      CampaignKeywordMap filtered_campaign_keywords(arena_);
       ConstCampaignPtrArray filtered_text_campaigns;
-      CampaignSelectorPmrBuffer pmr_buffer;
+      CampaignSelectorMonoBuffer mono_buffer;
 
       cross_campaigns_with_keywords_(
         key,
@@ -1098,7 +1108,7 @@ namespace AdServer
             request_params,
             kw_it->second->campaign,
             tag,
-            pmr_buffer.reset_memory_resource());
+            mono_buffer.reset_arena());
 
           const Creative* creative;
 
@@ -1148,7 +1158,7 @@ namespace AdServer
               request_params,
               *ch_text_campaign_it,
               tag,
-              pmr_buffer.reset_memory_resource());
+              mono_buffer.reset_arena());
 
             if(available_creatives.empty())
             {
@@ -1202,7 +1212,7 @@ namespace AdServer
     {
       if(ctr_calculation == 0 && auction_type == AT_MAX_ECPM)
       {
-        WeightedCampaignList random_select_campaigns(memory_resource_);
+        WeightedCampaignList random_select_campaigns(arena_);
 
         get_max_display_campaign_candidates_(
           random_select_campaigns,
@@ -1236,7 +1246,7 @@ namespace AdServer
       }
       else
       {
-        WeightedCampaignList random_select_campaigns(memory_resource_);
+        WeightedCampaignList random_select_campaigns(arena_);
 
         get_all_display_campaign_candidates_(
           random_select_campaigns,
@@ -1383,12 +1393,14 @@ namespace AdServer
         {
           /* insert into random position for mixing
            * campaign positions with one cost */
-          WeightedCampaignKeywordList& lst = cpc_keyword_map[kit->actual_ecpm];
+          WeightedCampaignKeywordList& lst = get_or_create_mono_mapped_(
+            cpc_keyword_map,
+            kit->actual_ecpm);
 
           if(!lst.empty())
           {
             WeightedCampaignKeywordList::iterator it = lst.begin();
-            std::advance(it, Generics::safe_rand(lst.size() + 1));
+            std::advance(it, Generics::unsafe_rand(lst.size() + 1));
             lst.insert(it, *kit);
           }
           else
@@ -1448,7 +1460,7 @@ namespace AdServer
             !grouped_text_campaign_candidates.empty();
           ++select_i)
       {
-        unsigned long up_pos = Generics::safe_rand(
+        unsigned long up_pos = Generics::unsafe_rand(
           grouped_text_campaign_candidates_size);
 
         WeightedCampaignKeywordGroupList::iterator cmp_cell_it =
@@ -1456,7 +1468,7 @@ namespace AdServer
 
         std::advance(cmp_cell_it, up_pos);
 
-        unsigned long sub_pos = Generics::safe_rand(cmp_cell_it->size());
+        unsigned long sub_pos = Generics::unsafe_rand(cmp_cell_it->size());
 
         WeightedCampaignKeywordPtrArray::iterator wcmp_it =
           cmp_cell_it->begin();
@@ -1498,12 +1510,11 @@ namespace AdServer
     {
       RevenueDecimal selected_ecpm_sum = RevenueDecimal::ZERO;
 
-      std::pmr::memory_resource* memory_resource =
-        result_text_campaigns.get_allocator().resource();
+      AdServer::Commons::MonoAllocatorArena* arena = result_text_campaigns.get_allocator().arena();
       WeightedCampaignKeywordList text_campaign_candidates(
         text_campaign_candidates_val,
-        memory_resource);
-      IdWeightedCampaignKeywordMaps campaigns_maps(memory_resource);
+        AdServer::Commons::mono_allocator<WeightedCampaignKeyword>(arena));
+      IdWeightedCampaignKeywordMaps campaigns_maps(arena);
       fill_id_weighted_campaigns_keyword_maps(campaigns_maps, text_campaign_candidates);
 
       for(unsigned long select_i = 0;
@@ -1514,7 +1525,8 @@ namespace AdServer
           tag_min_ecpm - selected_ecpm_sum,
           RevenueDecimal(false, max_text_creatives - select_i, 0));
 
-        WeightedCampaignKeywordPtrArray filtered_text_campaign_candidates(memory_resource);
+        WeightedCampaignKeywordPtrArray filtered_text_campaign_candidates(
+          AdServer::Commons::mono_allocator<WeightedCampaignKeyword*>(arena));
 
         for(WeightedCampaignKeywordList::iterator it =
               text_campaign_candidates.begin();
@@ -1541,7 +1553,9 @@ namespace AdServer
         }
 
         RevenueDecimal cur_ecpm_sum;
-        ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(memory_resource);
+        ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(
+          AdServer::Commons::mono_allocator<
+            ExpRevWeightedCampaignKeywordMap::value_type>(arena));
 
         group_text_campaigns_(
           grouped_text_campaign_candidates,
@@ -1555,7 +1569,7 @@ namespace AdServer
         {
           RevenueDecimal ecpm_offset = RevenueDecimal::mul(
             RevenueDecimal::div(
-              RevenueDecimal(false, Generics::safe_rand(), 0),
+              RevenueDecimal(false, Generics::unsafe_rand(), 0),
               RevenueDecimal(false, RAND_MAX, 0)),
             cur_ecpm_sum,
             Generics::DMR_FLOOR);
@@ -1582,7 +1596,7 @@ namespace AdServer
         else
         {
           // All groups with ecpm == 0. Select randomly.
-          unsigned long offset = Generics::safe_rand(grouped_text_campaign_candidates.size());
+          unsigned long offset = Generics::unsafe_rand(grouped_text_campaign_candidates.size());
           std::advance(group_it, offset);
         }
 
@@ -1603,7 +1617,7 @@ namespace AdServer
         {
           RevenueDecimal campaign_ecpm_offset = RevenueDecimal::mul(
             RevenueDecimal::div(
-              RevenueDecimal(false, Generics::safe_rand(), 0),
+              RevenueDecimal(false, Generics::unsafe_rand(), 0),
               RevenueDecimal(false, RAND_MAX, 0)),
             group_ecpm_sum,
             Generics::DMR_FLOOR);
@@ -1626,7 +1640,7 @@ namespace AdServer
         else
         {
           // Select randomly. All have ecpm == 0
-          unsigned long offset = Generics::safe_rand(cmp_list.size());
+          unsigned long offset = Generics::unsafe_rand(cmp_list.size());
           std::advance(cmp_it, offset);
         }
 
@@ -1684,9 +1698,9 @@ namespace AdServer
       tag_sizes.insert(std::make_pair(
         tag_size->size->size_id, ReferenceCounting::add_ref(tag_size)));
 
-      CPCKeywordCreativeMap filtered_cpc_keyword_map(memory_resource_);
+      CPCKeywordCreativeMap filtered_cpc_keyword_map(arena_);
       unsigned long selected_keywords = 0;
-      CampaignSelectorPmrBuffer pmr_buffer;
+      CampaignSelectorMonoBuffer mono_buffer;
 
       // removing multiple ads from same accounts filters
       AccountIdSet account_filter_ids;
@@ -1765,7 +1779,7 @@ namespace AdServer
                 request_params.required_categories,
                 request_params.secure,
                 request_params.filter_empty_destination,
-                pmr_buffer.reset_memory_resource(),
+                mono_buffer.reset_arena(),
                 0);
 
               {
@@ -1785,7 +1799,9 @@ namespace AdServer
 
             if(creative_candidate)
             {
-              filtered_cpc_keyword_map[cit->first].push_back(
+              get_or_create_mono_mapped_(
+                filtered_cpc_keyword_map,
+                cit->first).push_back(
                 CampaignKeywordCreative(
                   *sub_cit,
                   available_creatives, // clear available_creatives
@@ -2291,17 +2307,21 @@ namespace AdServer
 
         if(ta_type == AccountDef::TA_ALL) // one per CCG
         {
-          campaigns_maps.ccg_campaigns[cmp_it->campaign->campaign_id].push_back(&*cmp_it);
+          get_or_create_mono_mapped_(
+            campaigns_maps.ccg_campaigns,
+            cmp_it->campaign->campaign_id).push_back(&*cmp_it);
         }
         else if(ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
         {
-          campaigns_maps.advertiser_campaigns[
-            cmp_it->campaign->advertiser->account_id].push_back(&*cmp_it);
+          get_or_create_mono_mapped_(
+            campaigns_maps.advertiser_campaigns,
+            cmp_it->campaign->advertiser->account_id).push_back(&*cmp_it);
         }
         else if(ta_type == AccountDef::TA_ONE) // one per account
         {
-          campaigns_maps.account_campaigns[
-            cmp_it->campaign->account->account_id].push_back(&*cmp_it);
+          get_or_create_mono_mapped_(
+            campaigns_maps.account_campaigns,
+            cmp_it->campaign->account->account_id).push_back(&*cmp_it);
         }
       }
     }
@@ -2314,7 +2334,7 @@ namespace AdServer
       noexcept
     {
       IdWeightedCampaignKeywordMaps campsigns_maps(
-        text_campaign_map.get_allocator().resource());
+        text_campaign_map.get_allocator().arena());
       fill_id_weighted_campaigns_keyword_maps(campsigns_maps, text_campaign_candidates);
 
       group_id_map_(text_campaign_map, expected_ecpm, campsigns_maps.ccg_campaigns);
@@ -2331,11 +2351,16 @@ namespace AdServer
     {
       ecpm_sum = RevenueDecimal::ZERO;
 
-      std::pmr::memory_resource* memory_resource =
-        text_campaign_map.get_allocator().resource();
-      IdWeightedCampaignKeywordMap account_campaigns(memory_resource);
-      IdWeightedCampaignKeywordMap advertiser_campaigns(memory_resource);
-      IdWeightedCampaignKeywordMap ccg_campaigns(memory_resource);
+      AdServer::Commons::MonoAllocatorArena* arena = text_campaign_map.get_allocator().arena();
+      IdWeightedCampaignKeywordMap account_campaigns(
+        AdServer::Commons::mono_allocator<
+          IdWeightedCampaignKeywordMap::value_type>(arena));
+      IdWeightedCampaignKeywordMap advertiser_campaigns(
+        AdServer::Commons::mono_allocator<
+          IdWeightedCampaignKeywordMap::value_type>(arena));
+      IdWeightedCampaignKeywordMap ccg_campaigns(
+        AdServer::Commons::mono_allocator<
+          IdWeightedCampaignKeywordMap::value_type>(arena));
 
       for(WeightedCampaignKeywordPtrArray::iterator cmp_it =
             text_campaign_candidates.begin();
@@ -2346,17 +2371,21 @@ namespace AdServer
 
         if(ta_type == AccountDef::TA_ALL) // one per CCG
         {
-          ccg_campaigns[(*cmp_it)->campaign->campaign_id].push_back(*cmp_it);
+          get_or_create_mono_mapped_(
+            ccg_campaigns,
+            (*cmp_it)->campaign->campaign_id).push_back(*cmp_it);
         }
         else if(ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
         {
-          advertiser_campaigns[
-            (*cmp_it)->campaign->advertiser->account_id].push_back(*cmp_it);
+          get_or_create_mono_mapped_(
+            advertiser_campaigns,
+            (*cmp_it)->campaign->advertiser->account_id).push_back(*cmp_it);
         }
         else if(ta_type == AccountDef::TA_ONE) // one per account
         {
-          account_campaigns[
-            (*cmp_it)->campaign->account->account_id].push_back(*cmp_it);
+          get_or_create_mono_mapped_(
+            account_campaigns,
+            (*cmp_it)->campaign->account->account_id).push_back(*cmp_it);
         }
       }
 
@@ -2372,7 +2401,7 @@ namespace AdServer
       noexcept
     {
       IdWeightedCampaignKeywordMaps campsigns_maps(
-        text_campaign_map.get_allocator().resource());
+        text_campaign_map.get_allocator().arena());
       fill_id_weighted_campaigns_keyword_maps(campsigns_maps, text_campaign_candidates);
 
       group_id_map_(text_campaign_map, campsigns_maps.ccg_campaigns);
@@ -2419,7 +2448,7 @@ namespace AdServer
         return campaign_candidates.end();
       }
 
-      unsigned long offset = Generics::safe_rand(campaign_candidates.size());
+      unsigned long offset = Generics::unsafe_rand(campaign_candidates.size());
 
       WeightedCampaignList::iterator it =
         campaign_candidates.begin();
@@ -2445,7 +2474,7 @@ namespace AdServer
       Tag::SizeMap tag_sizes;
       tag_sizes.insert(std::make_pair(
         tag_size->size->size_id, ReferenceCounting::add_ref(tag_size)));
-      CampaignSelectorPmrBuffer pmr_buffer;
+      CampaignSelectorMonoBuffer mono_buffer;
 
       for(WeightedCampaignKeywordList::const_iterator cmp_it =
             text_campaigns.begin();
@@ -2488,7 +2517,7 @@ namespace AdServer
               request_params.required_categories,
               request_params.secure,
               request_params.filter_empty_destination,
-              pmr_buffer.reset_memory_resource(),
+              mono_buffer.reset_arena(),
               0);
 
             if(!available_creatives.empty())
@@ -2632,7 +2661,7 @@ namespace AdServer
         keyword_check_campaigns);
 
       // get WG display candidates (have priority over all other campaigns)
-      WeightedCampaignList wg_display_campaign_candidates(memory_resource_);
+      WeightedCampaignList wg_display_campaign_candidates(arena_);
 
       get_all_display_campaign_candidates_(
         wg_display_campaign_candidates,
@@ -2650,7 +2679,7 @@ namespace AdServer
       if(!wg_display_campaign_candidates.empty())
       {
         // select WG display campaign
-        unsigned long campaign_offset = Generics::safe_rand(
+        unsigned long campaign_offset = Generics::unsafe_rand(
           wg_display_campaign_candidates.size());
 
         WeightedCampaignList::iterator cmp_it =
@@ -2668,7 +2697,7 @@ namespace AdServer
          )
       {
         // get OIX display candidates
-        WeightedCampaignList display_campaign_candidates(memory_resource_);
+        WeightedCampaignList display_campaign_candidates(arena_);
 
         get_all_display_campaign_candidates_(
           display_campaign_candidates,
@@ -2684,7 +2713,7 @@ namespace AdServer
           );
 
         // get text candidates
-        RandomTextSelectionBySizeList text_selections(memory_resource_);
+        RandomTextSelectionBySizeList text_selections(arena_);
         unsigned long text_count = 0;
 
         if(!request_params.only_display_ad)
@@ -2701,7 +2730,7 @@ namespace AdServer
             text_tag_pricing->cpm,
             request_params.min_ecpm);
 
-          WeightedCampaignKeywordList text_campaign_candidates(memory_resource_);
+          WeightedCampaignKeywordList text_campaign_candidates(arena_);
 
           get_text_campaign_candidates_(
             text_campaign_candidates,
@@ -2739,7 +2768,7 @@ namespace AdServer
                   tag_size_it->second);
               }
 
-              WeightedCampaignKeywordList filtered_text_campaign_candidates(memory_resource_);
+              WeightedCampaignKeywordList filtered_text_campaign_candidates(arena_);
 
               filter_text_campaign_candidates_(
                 filtered_text_campaign_candidates,
@@ -2753,7 +2782,7 @@ namespace AdServer
 
               if(!filtered_text_campaign_candidates.empty())
               {
-                text_selections.emplace_back(memory_resource_);
+                text_selections.emplace_back(arena_);
                 RandomTextSelectionBySize& text_selection = text_selections.back();
                 text_selection.campaign_candidates.swap(filtered_text_campaign_candidates);
                 text_selection.tag_sizes.insert(
@@ -2806,7 +2835,7 @@ namespace AdServer
           ++ts_size;
         }
 
-        unsigned long campaign_offset = Generics::safe_rand(
+        unsigned long campaign_offset = Generics::unsafe_rand(
           (text_count > 0 ? sum_max_text_creatives * display_count +
           std::max(text_count * ts_size, sum_max_text_creatives) : display_count));
 
@@ -2830,7 +2859,7 @@ namespace AdServer
         else if(text_count > 0)
         {
           // select text cell
-          unsigned long ts_offset = Generics::safe_rand(sum_max_text_creatives);
+          unsigned long ts_offset = Generics::unsafe_rand(sum_max_text_creatives);
 
           unsigned long cur_sum_max_text_creatives = 0;
           RandomTextSelectionBySizeList::iterator ts_it =
@@ -2852,7 +2881,7 @@ namespace AdServer
           const Tag::Size* tag_size = ts_it->tag_sizes.begin()->second;
           select_result.tag_size = tag_size;
           result_text_campaigns.reset(
-            new WeightedCampaignKeywordList(memory_resource_));
+            new WeightedCampaignKeywordList(arena_));
 
           select_text_campaigns_randomly_(
             *result_text_campaigns,
@@ -2901,7 +2930,7 @@ namespace AdServer
         collect_lost ? &lost_campaigns : 0);
 
       // get WG display candidates (have priority over all other campaigns)
-      WeightedCampaignList wg_display_campaign_candidates(memory_resource_);
+      WeightedCampaignList wg_display_campaign_candidates(arena_);
 
       get_all_display_campaign_candidates_(
         wg_display_campaign_candidates,
@@ -2939,7 +2968,7 @@ namespace AdServer
          )
       {
         // get OIX display candidates
-        WeightedCampaignList display_campaign_candidates(memory_resource_);
+        WeightedCampaignList display_campaign_candidates(arena_);
 
         get_all_display_campaign_candidates_(
           display_campaign_candidates,
@@ -2962,14 +2991,14 @@ namespace AdServer
           // 'all' ccg rates targeting
           );
 
-        TextSelectionBySizeList text_selections(memory_resource_);
-        TextSelectionBySizeList text_selections_zero_ecpm(memory_resource_);
+        TextSelectionBySizeList text_selections(arena_);
+        TextSelectionBySizeList text_selections_zero_ecpm(arena_);
         RevenueDecimal text_selections_ecpm_sum = RevenueDecimal::ZERO;
 
         // get text candidates
         if(!request_params.only_display_ad)
         {
-          WeightedCampaignKeywordList text_campaign_candidates(memory_resource_);
+          WeightedCampaignKeywordList text_campaign_candidates(arena_);
 
           get_text_campaign_candidates_(
             text_campaign_candidates,
@@ -3005,7 +3034,7 @@ namespace AdServer
             }
 
             RevenueDecimal max_text_ecpm_sum = RevenueDecimal::ZERO;
-            WeightedCampaignKeywordList filtered_text_campaign_candidates(memory_resource_);
+            WeightedCampaignKeywordList filtered_text_campaign_candidates(arena_);
 
             filter_text_campaign_candidates_(
               filtered_text_campaign_candidates,
@@ -3017,7 +3046,7 @@ namespace AdServer
               ctr_calculation_context,
               conv_rate_calculation_context);
 
-            ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(memory_resource_);
+            ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(arena_);
             ExpectedEcpm expected_ecpm;
 
             group_text_campaigns_(
@@ -3041,7 +3070,7 @@ namespace AdServer
 
             if(max_text_ecpm_sum >= text_tag_pricing->cpm)
             {
-              TextSelectionBySize text_selection(memory_resource_);
+              TextSelectionBySize text_selection(arena_);
               text_selection.tag_sizes.insert(
                 std::make_pair(tag_size_it->second->size->size_id, tag_size_it->second));
               text_selection.expected_ecpm = text_expected_ecpm;
@@ -3159,7 +3188,7 @@ namespace AdServer
           {
             RevenueDecimal display_ecpm_offset = RevenueDecimal::mul(
               RevenueDecimal::div(
-                RevenueDecimal(false, Generics::safe_rand(), 0),
+                RevenueDecimal(false, Generics::unsafe_rand(), 0),
                 RevenueDecimal(false, RAND_MAX, 0)),
               display_ecpm_sum,
               Generics::DMR_FLOOR);
@@ -3181,7 +3210,7 @@ namespace AdServer
                  !result_text_selection->campaign_candidates.empty())
         {
           result_text_campaigns.reset(
-            new WeightedCampaignKeywordList(memory_resource_));
+            new WeightedCampaignKeywordList(arena_));
           const Tag::Size* tag_size = result_text_selection->tag_sizes.begin()->second;
           select_result.tag_size = tag_size;
 
@@ -3281,10 +3310,10 @@ namespace AdServer
               select_result.min_text_ecpm, weighted_campaign->ecpm);
           }
 
-          TextSelectionBySizeList text_selections(memory_resource_);
+          TextSelectionBySizeList text_selections(arena_);
           RevenueDecimal max_sum_ecpm = RevenueDecimal::ZERO;
 
-          WeightedCampaignKeywordList text_campaign_candidates(memory_resource_);
+          WeightedCampaignKeywordList text_campaign_candidates(arena_);
 
           get_text_campaign_candidates_(
             text_campaign_candidates,
@@ -3317,7 +3346,7 @@ namespace AdServer
                   tag_size_it->second);
               }
 
-              WeightedCampaignKeywordList filtered_text_campaign_candidates(memory_resource_);
+              WeightedCampaignKeywordList filtered_text_campaign_candidates(arena_);
 
               filter_text_campaign_candidates_(
                 filtered_text_campaign_candidates,
@@ -3343,7 +3372,7 @@ namespace AdServer
               */
 
               // order text campaigns by cpc with using text_campaign_candidates
-              CPCKeywordMap cpc_keyword_map(memory_resource_);
+              CPCKeywordMap cpc_keyword_map(arena_);
 
               convert_text_candidates_to_cpc_map_(
                 cpc_keyword_map,
@@ -3370,7 +3399,7 @@ namespace AdServer
               }
               */
 
-              WeightedCampaignKeywordList step_weighted_campaign_keywords(memory_resource_);
+              WeightedCampaignKeywordList step_weighted_campaign_keywords(arena_);
 
               if(select_campaign_keywords_n_(
                    key,
@@ -3402,7 +3431,7 @@ namespace AdServer
                     text_selections.clear();
                   }
 
-                  text_selections.emplace_back(memory_resource_);
+                  text_selections.emplace_back(arena_);
                   TextSelectionBySize& text_selection = text_selections.back();
                   text_selection.tag_sizes.insert(
                     std::make_pair(tag_size_it->second->size->size_id, tag_size_it->second));
@@ -3422,14 +3451,14 @@ namespace AdServer
             if(text_selections_size > 1)
             {
               const unsigned long pos =
-                Generics::safe_rand() % text_selections_size;
+                Generics::unsafe_rand() % text_selections_size;
               std::advance(ts_it, pos);
             }
 
             assert(ts_it->tag_sizes.size() == 1);
             select_result.tag_size = ts_it->tag_sizes.begin()->second;
             result_weighted_campaign_keywords.reset(
-              new WeightedCampaignKeywordList(memory_resource_));
+              new WeightedCampaignKeywordList(arena_));
             result_weighted_campaign_keywords->swap(
               ts_it->campaign_candidates);
 

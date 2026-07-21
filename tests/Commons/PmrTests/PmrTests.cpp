@@ -12,6 +12,7 @@
 
 #include <sys/resource.h>
 
+#include <Commons/MonoAllocator.hpp>
 #include <Generics/AppUtils.hpp>
 
 namespace
@@ -174,6 +175,31 @@ namespace
   }
 
   MeasureResult
+  measure_mono_unordered_set(
+    const std::vector<unsigned long>& ids,
+    unsigned long count,
+    std::size_t arena_initial_size)
+  {
+    return measure([&]() {
+      std::size_t checksum = 0;
+
+      for(unsigned long i = 0; i < count; ++i)
+      {
+        AdServer::Commons::MonoAllocatorArena arena(arena_initial_size);
+        AdServer::Commons::MonoUnorderedSet<unsigned long> values(&arena);
+        values.reserve(ids.size());
+        for(const auto id : ids)
+        {
+          values.emplace(id);
+        }
+        checksum += values.size();
+      }
+
+      return checksum;
+    });
+  }
+
+  MeasureResult
   measure_std_unordered_set(
     const std::vector<unsigned long>& ids,
     unsigned long count)
@@ -228,9 +254,14 @@ main(int argc, char** argv)
       ids,
       options.count,
       options.arena_initial_size);
+    const auto mono_result = measure_mono_unordered_set(
+      ids,
+      options.count,
+      options.arena_initial_size);
     const auto std_result = measure_std_unordered_set(ids, options.count);
 
     print_result("pmr_unordered_set", pmr_result);
+    print_result("mono_unordered_set", mono_result);
     print_result("std_unordered_set", std_result);
 
     return 0;

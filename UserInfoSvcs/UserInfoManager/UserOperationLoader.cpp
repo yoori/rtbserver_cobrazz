@@ -1,4 +1,5 @@
 #include <eh/Errno.hpp>
+#include <memory>
 #include <Commons/PathManip.hpp>
 
 #include <Generics/DirSelector.hpp>
@@ -363,7 +364,8 @@ namespace UserInfoSvcs
 
     channel_match_params.no_result = true;
 
-    ChannelIdPack matched_channels;
+    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    ChannelIdPack matched_channels(arena);
 
     matched_channels.page_channels.reserve(reader.page_channels().size());
 
@@ -406,7 +408,7 @@ namespace UserInfoSvcs
         matched_channels.persistent_channels.begin()));
 
     ColoUserId colo_user_id;
-    ChannelMatchMap result_channels;
+    ChannelMatchMap result_channels(arena.get());
     UserOperationProcessor::UserAppearance user_app;
     ProfileProperties properties;
 

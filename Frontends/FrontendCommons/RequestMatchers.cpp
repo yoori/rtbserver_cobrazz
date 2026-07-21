@@ -21,6 +21,17 @@ namespace FrontendCommons
     const unsigned long FULL_PLATFORM_MAX_SIZE = 1024;
     const unsigned long BROWSER_MAX_SIZE = 1024;
     const char APPLICATION_PLATFORM_DETECTOR_NAME[] = "applications";
+
+    void
+    emplace_platform_name(
+      PlatformMatcher::PlatformNameSet& platform_names,
+      std::string_view name)
+    {
+      platform_names.emplace(
+        name.data(),
+        name.size(),
+        platform_names.get_allocator().arena());
+    }
   }
 
   /* UrlMatcher implementation */
@@ -524,7 +535,7 @@ namespace FrontendCommons
 
           if(platform_names)
           {
-            platform_names->emplace("application");
+            emplace_platform_name(*platform_names, "application");
           }
         }
       }
@@ -568,7 +579,7 @@ namespace FrontendCommons
 
       if(platform_names)
       {
-        platform_names->emplace(element->name);
+        emplace_platform_name(*platform_names, element->name);
       }
 
       if (platform)

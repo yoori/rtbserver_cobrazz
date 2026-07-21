@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <memory_resource>
 #include <string>
 #include <string_view>
 #include <type_traits>

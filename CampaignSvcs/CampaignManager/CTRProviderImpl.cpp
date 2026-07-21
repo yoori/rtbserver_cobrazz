@@ -1202,7 +1202,7 @@ namespace AdServer::CampaignSvcs::CTR
     const CTRProviderImpl* ctr_provider,
     const CampaignSelectParams* request_params)
     noexcept
-    : rand_(Generics::safe_rand(WEIGHT_NORM_SUM)),
+    : rand_(Generics::unsafe_rand(WEIGHT_NORM_SUM)),
       ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
       request_params_(ReferenceCounting::add_ref(request_params))
   {}

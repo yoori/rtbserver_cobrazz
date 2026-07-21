@@ -1117,7 +1117,7 @@ namespace AdServer::UserInfoSvcs
       UserInfoContainer::UserAppearance user_app;
 
       AdServer::UserInfoSvcs::ChannelMatchMap result_channels(
-        match_result.channels.get_allocator().resource());
+        match_result.channels.get_allocator().arena());
 
       ColoUserId colo_user_id;
 

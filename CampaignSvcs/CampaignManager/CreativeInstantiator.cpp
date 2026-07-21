@@ -443,7 +443,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     const CommonAdRequest& request_params,
-    const PmrIdArray& exclude_pubpixel_accounts_seq)
+    const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts_seq)
     noexcept
   {
     AccountIdSet exclude_pubpixel_accounts(
@@ -500,7 +500,7 @@ namespace AdServer::CampaignSvcs
     const std::string& keyword =
       campaign_keyword ? campaign_keyword->original_keyword : std::string();
 
-    unsigned long random = Generics::safe_rand();
+    unsigned long random = Generics::unsafe_rand();
 
     try
     {
@@ -617,7 +617,7 @@ namespace AdServer::CampaignSvcs
   {
     static const char* FUN = "CreativeInstantiator::instantiate_creative_preview()";
 
-    unsigned long random = Generics::safe_rand();
+    unsigned long random = Generics::unsafe_rand();
 
     CreativeInstantiateRuleMap::const_iterator
       instantiate_rule_it = creative_instantiate_.creative_rules.find(
@@ -897,7 +897,7 @@ namespace AdServer::CampaignSvcs
     const char* app_format,
     const CommonAdRequest& request_params,
     const AccountIdList* pubpixel_accounts,
-    const PmrIdArray* exclude_pubpixel_accounts,
+    const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts,
     const CreativeInstantiateRule& instantiate_info,
     const AdSlotContext& ad_slot_context,
     const String::SubString& ext_tag_id)
@@ -1410,7 +1410,7 @@ namespace AdServer::CampaignSvcs
     RequestResultParams& request_result_params,
     CreativeParamsList& creative_params_list,
     const AdSlotContext& ad_slot_context,
-    const PmrIdArray* exclude_pubpixel_accounts)
+    const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "CreativeInstantiator::fill_instantiate_creative_args_()";
@@ -2737,7 +2737,7 @@ namespace AdServer::CampaignSvcs
     const AdSelectionResult& ad_selection_result,
     const AdSlotContext& ad_slot_context,
     const char* app_format,
-    const PmrIdArray& exclude_pubpixel_accounts,
+    const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts,
     bool fill_auction_price)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
@@ -3122,7 +3122,7 @@ namespace AdServer::CampaignSvcs
     CreativeParamsList& creative_params_list,
     std::string& creative_body,
     const AdSlotContext& ad_slot_context,
-    const PmrIdArray* exclude_pubpixel_accounts,
+    const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts,
     std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {

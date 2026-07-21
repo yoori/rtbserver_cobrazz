@@ -10,6 +10,7 @@
 #include <Generics/BitAlgs.hpp>
 #include <xsd/Utils/CTRGeneratorConfig.hpp>
 #include <xsd/Utils/CTRGeneratorDataConfig.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CsvReader.hpp>
 #include <ProfilingCommons/FileWriter.hpp>
@@ -1246,16 +1247,18 @@ Application_::generate_ctr_(
 
     // calc_params(CTRGenerator::CalculateParams) filled
     // convert it to CampaignSelectParams
+    AdServer::Commons::MonoAllocatorArena request_params_arena;
     CampaignSelectParams_var request_params_ptr(new CampaignSelectParams(
       true, // profiling_available
-      FreqCapIdSet(),
-      SeqOrderMap(),
+      FreqCapIdSet(&request_params_arena),
+      SeqOrderMap(&request_params_arena),
       0, // colocation
       0, // tag
       Tag::SizeMap(),
       false,
       -1, // visibility
-      -1 // viewability
+      -1, // viewability
+      &request_params_arena
       ));
 
     CampaignSelectParams& request_params = *request_params_ptr;

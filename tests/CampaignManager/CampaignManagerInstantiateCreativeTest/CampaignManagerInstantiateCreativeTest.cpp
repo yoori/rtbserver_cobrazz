@@ -53,10 +53,13 @@ namespace
     CampaignManagerCore::CommonAdRequest request_info;
     CampaignManagerCore::InstantiateParams instantiate_params;
     CampaignManagerCore::AdSlotContext ad_slot_context;
-    CampaignManagerCore::PmrIdArray exclude_pubpixel_accounts;
+    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena;
+    AdServer::Commons::MonoVector<unsigned long> exclude_pubpixel_accounts;
 
     Fixture()
-      : instantiate_params(AdServer::Commons::Optional<unsigned long>(12345))
+      : instantiate_params(AdServer::Commons::Optional<unsigned long>(12345)),
+        arena(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+        exclude_pubpixel_accounts(arena.get())
     {}
   };
 

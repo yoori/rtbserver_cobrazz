@@ -107,7 +107,8 @@ int check_parse() noexcept
   channels[2]->channel = simple_channel_2;
 
   {
-    ChannelIdHashSet tr_channels;
+    AdServer::Commons::MonoAllocatorArena arena;
+    ChannelIdHashSet tr_channels(&arena);
     bool triggered = ch->triggered(&tr_channels, 0);
     if(triggered)
     {
@@ -118,7 +119,8 @@ int check_parse() noexcept
   }
 
   {
-    ChannelIdHashSet tr_channels;
+    AdServer::Commons::MonoAllocatorArena arena;
+    ChannelIdHashSet tr_channels(&arena);
     tr_channels.insert(1);
     bool triggered = ch->triggered(&tr_channels, 0);
     if(!triggered)
@@ -131,7 +133,8 @@ int check_parse() noexcept
 
   {
     ChannelIdSet triggered_named_channels;
-    ChannelIdHashSet tr_channels;
+    AdServer::Commons::MonoAllocatorArena arena;
+    ChannelIdHashSet tr_channels(&arena);
     tr_channels.insert(1);
     ch->triggered_named_channels(triggered_named_channels, tr_channels);
 
@@ -209,7 +212,8 @@ int check_parse_2() noexcept
   channels[33]->channel = simple_channel_3;
 
   {
-    ChannelIdHashSet tr_channels;
+    AdServer::Commons::MonoAllocatorArena arena;
+    ChannelIdHashSet tr_channels(&arena);
     bool triggered = ch->triggered(&tr_channels, 0);
     if(triggered)
     {
@@ -220,7 +224,8 @@ int check_parse_2() noexcept
   }
 
   {
-    ChannelIdHashSet tr_channels;
+    AdServer::Commons::MonoAllocatorArena arena;
+    ChannelIdHashSet tr_channels(&arena);
     tr_channels.insert(11);
     tr_channels.insert(33);
     bool triggered = ch->triggered(&tr_channels, 0);
@@ -606,7 +611,8 @@ check_fast_channel()
 
   // full fetch match compare
   uint64_t MM = (static_cast<uint64_t>(1) << sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0])) - 1;
-  ChannelIdHashSet match_channels;
+  AdServer::Commons::MonoAllocatorArena match_channels_arena;
+  ChannelIdHashSet match_channels(&match_channels_arena);
 
   for(uint64_t mask = 0; mask < MM; ++mask)
   {
@@ -721,7 +727,8 @@ check_fast_channel2()
 
   // full fetch match compare
   uint64_t MM = (static_cast<uint64_t>(1) << sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0])) - 1;
-  ChannelIdHashSet match_channels;
+  AdServer::Commons::MonoAllocatorArena match_channels_arena;
+  ChannelIdHashSet match_channels(&match_channels_arena);
 
   for(uint64_t mask = 0; mask < MM; ++mask)
   {
@@ -804,7 +811,8 @@ check_rand_spoof_fast_channel()
 
   // full fetch match compare
   uint64_t MM = (static_cast<uint64_t>(1) << sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0])) - 1;
-  ChannelIdHashSet match_channels;
+  AdServer::Commons::MonoAllocatorArena match_channels_arena;
+  ChannelIdHashSet match_channels(&match_channels_arena);
 
   while(true)
   {

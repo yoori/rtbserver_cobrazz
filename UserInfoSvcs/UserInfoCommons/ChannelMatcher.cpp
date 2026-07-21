@@ -55,11 +55,12 @@ namespace AdServer
 
     struct ChannelsMatcher::RequestChannelsDelta
     {
-      explicit RequestChannelsDelta(std::pmr::memory_resource* resource);
+      explicit RequestChannelsDelta(
+        AdServer::Commons::MonoAllocatorArena* resource);
 
-      std::pmr::vector<RequestHTCandidate> ht_candidates;
-      std::pmr::vector<RequestHistoryVisit> history_visits;
-      std::pmr::vector<RequestSessionMatch> session_matches;
+      AdServer::Commons::MonoVector<RequestHTCandidate> ht_candidates;
+      AdServer::Commons::MonoVector<RequestHistoryVisit> history_visits;
+      AdServer::Commons::MonoVector<RequestSessionMatch> session_matches;
     };
 
     namespace
@@ -340,7 +341,7 @@ namespace AdServer
     }
 
     ChannelsMatcher::RequestChannelsDelta::RequestChannelsDelta(
-      std::pmr::memory_resource* resource)
+      AdServer::Commons::MonoAllocatorArena* resource)
       : ht_candidates(resource),
         history_visits(resource),
         session_matches(resource)
@@ -1246,7 +1247,7 @@ namespace AdServer
 
       properties.fraud_request = (now.tv_sec <= base_ignore_fraud_time);
 
-      std::pmr::monotonic_buffer_resource request_delta_resource;
+      AdServer::Commons::MonoAllocatorArena request_delta_resource;
 
       /* fill result profile */
       ChannelsProfileWriter res_upw;
@@ -1683,7 +1684,7 @@ namespace AdServer
       const ChannelsInfoReader* base,
       const ChannelIdArray& channels,
       const ChannelsHashMap& dictionary,
-      std::pmr::memory_resource* request_delta_resource,
+      AdServer::Commons::MonoAllocatorArena* request_delta_resource,
       const Generics::Time& now,
       bool household)
       /*throw(Exception)*/

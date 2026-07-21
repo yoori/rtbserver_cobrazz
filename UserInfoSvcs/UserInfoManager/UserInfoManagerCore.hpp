@@ -3,11 +3,12 @@
 #include <list>
 #include <map>
 #include <memory>
-#include <memory_resource>
 #include <set>
 #include <vector>
 #include <string>
+#include <utility>
 
+#include <Commons/MonoAllocator.hpp>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -75,15 +76,23 @@ namespace AdServer::UserInfoSvcs
     struct MatchParams
     {
       explicit MatchParams(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
-        : matched_channels(resource),
-          geo_data_seq(resource)
+        std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena =
+          nullptr)
+        : arena_(arena ?
+            std::move(arena) :
+            std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+          matched_channels(arena_),
+          geo_data_seq(arena_.get())
       {}
 
+    private:
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+    public:
       ChannelIdPack matched_channels;
       std::string cohort;
       std::string cohort2;
-      std::pmr::vector<GeoData> geo_data_seq;
+      AdServer::Commons::MonoVector<GeoData> geo_data_seq;
       Generics::Time publishers_optin_timeout;
       bool use_empty_profile = false;
       bool filter_contextual_triggers = false;
@@ -129,17 +138,25 @@ namespace AdServer::UserInfoSvcs
     struct MatchResult
     {
       explicit MatchResult(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
-        : geo_data_seq(resource),
-          exclude_pubpixel_accounts(resource),
-          full_freq_caps(resource),
-          full_virtual_freq_caps(resource),
-          seq_orders(resource),
-          campaign_freqs(resource),
-          channels(resource),
-          hid_channels(resource)
+        std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena =
+          nullptr)
+        : arena_(arena ?
+            std::move(arena) :
+            std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+          geo_data_seq(arena_.get()),
+          exclude_pubpixel_accounts(arena_.get()),
+          full_freq_caps(arena_.get()),
+          full_virtual_freq_caps(arena_.get()),
+          seq_orders(arena_.get()),
+          campaign_freqs(arena_.get()),
+          channels(arena_.get()),
+          hid_channels(arena_.get())
       {}
 
+    private:
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+    public:
       unsigned long adv_channel_count = 0;
       unsigned long discover_channel_count = 0;
       long colo_id = -1;
@@ -150,14 +167,14 @@ namespace AdServer::UserInfoSvcs
       bool fraud_request = false;
       std::string cohort;
       std::string cohort2;
-      std::pmr::vector<GeoData> geo_data_seq;
-      std::pmr::vector<unsigned long> exclude_pubpixel_accounts;
-      std::pmr::vector<unsigned long> full_freq_caps;
-      std::pmr::vector<unsigned long> full_virtual_freq_caps;
-      std::pmr::vector<SeqOrder> seq_orders;
-      std::pmr::vector<CampaignFreq> campaign_freqs;
-      std::pmr::vector<ChannelWeight> channels;
-      std::pmr::vector<ChannelWeight> hid_channels;
+      AdServer::Commons::MonoVector<GeoData> geo_data_seq;
+      AdServer::Commons::MonoVector<unsigned long> exclude_pubpixel_accounts;
+      AdServer::Commons::MonoVector<unsigned long> full_freq_caps;
+      AdServer::Commons::MonoVector<unsigned long> full_virtual_freq_caps;
+      AdServer::Commons::MonoVector<SeqOrder> seq_orders;
+      AdServer::Commons::MonoVector<CampaignFreq> campaign_freqs;
+      AdServer::Commons::MonoVector<ChannelWeight> channels;
+      AdServer::Commons::MonoVector<ChannelWeight> hid_channels;
       Generics::Time process_time;
     };
 

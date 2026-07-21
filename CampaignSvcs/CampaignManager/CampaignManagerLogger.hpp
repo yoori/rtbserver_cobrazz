@@ -17,6 +17,7 @@
 #include <Commons/StringHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <LogCommons/LogHolder.hpp>
 #include <LogCommons/RequestBasicChannels.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -112,6 +113,20 @@ namespace AdServer::CampaignSvcs
 
     struct TriggeredChannelsData
     {
+      TriggeredChannelsData()
+        : arena_(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+          channels(arena_.get()),
+          url_channels(arena_.get()),
+          page_channels(arena_.get()),
+          search_channels(arena_.get()),
+          url_keyword_channels(arena_.get()),
+          uid_channels(arena_.get())
+      {}
+
+    private:
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+    public:
       ChannelIdHashSet channels;
       ChannelIdHashSet url_channels;
       ChannelIdHashSet page_channels;
@@ -210,6 +225,15 @@ namespace AdServer::CampaignSvcs
 
     struct AnonymousRequestInfo
     {
+      AnonymousRequestInfo()
+        : arena_(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+          platforms(arena_.get())
+      {}
+
+    private:
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+    public:
       Generics::Time time;
       Generics::Time isp_time;
       Generics::Time isp_time_offset;
@@ -532,6 +556,15 @@ namespace AdServer::CampaignSvcs
 
     struct CommonMatchRequestInfo
     {
+      CommonMatchRequestInfo()
+        : arena_(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+          triggered_page_channels(arena_.get())
+      {}
+
+    private:
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+    public:
       unsigned long colo_id;
 
       ChannelIdSet channels;
@@ -602,11 +635,7 @@ namespace AdServer::CampaignSvcs
 
     void process_ad_request(
       const Colocation* colocation,
-      std::shared_ptr<const CampaignManagerCore::CommonAdRequest> common_info,
-      std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info,
-      CampaignManagerCore::LogAdRequest log_request,
-      ChannelIdHashSet channels,
-      bool required_passback,
+      std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params,
       AdRequestSlotLogArray&& ad_slots,
       std::shared_ptr<const ChannelIdArray> geo_channels = {},
       bool reset_request_user = false)

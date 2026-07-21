@@ -920,7 +920,7 @@ namespace AdServer::CampaignSvcs
     if(ccg_state.use_count == -1)
     {
       // use random index for distribute loading between consumers
-      ccg_state.active_index = Generics::safe_rand(billing_servers_.size());
+      ccg_state.active_index = Generics::unsafe_rand(billing_servers_.size());
       ccg_state.use_count = 0;
       ccg_state.last_server_switch_time = now;
 

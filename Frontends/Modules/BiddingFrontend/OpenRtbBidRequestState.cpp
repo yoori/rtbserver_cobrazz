@@ -238,7 +238,7 @@ namespace AdServer::Bidding
     print_int_category_seq(
       AdServer::Commons::JsonObject& parent,
       const String::SubString& seq_name,
-      const std::pmr::vector<std::string>& categories)
+      const AdServer::Commons::MonoVector<std::string>& categories)
     {
       AdServer::Commons::JsonObject array(parent.add_array(seq_name));
       for(std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)
@@ -265,7 +265,7 @@ namespace AdServer::Bidding
         std::move(response_writer),
         start_processing_time),
       uri_(request_holder_->request().uri().str()),
-      context_(request_info_.resource())
+      context_(*request_info_.resource())
   {}
 
   bool
@@ -682,7 +682,7 @@ namespace AdServer::Bidding
           assert(false);
         }
 
-        std::pmr::list<JsonAdSlotProcessingContext>::const_iterator slot_it =
+        AdServer::Commons::MonoList<JsonAdSlotProcessingContext>::const_iterator slot_it =
           context.ad_slots.begin();
 
         for(std::size_t ad_slot_i = 0;
@@ -1174,7 +1174,7 @@ namespace AdServer::Bidding
           assert(false);
         }
 
-        std::pmr::list<JsonAdSlotProcessingContext>::const_iterator slot_it =
+        AdServer::Commons::MonoList<JsonAdSlotProcessingContext>::const_iterator slot_it =
           context.ad_slots.begin();
 
         for(std::size_t ad_slot_i = 0;

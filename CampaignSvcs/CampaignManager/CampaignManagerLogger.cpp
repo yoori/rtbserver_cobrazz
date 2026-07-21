@@ -192,7 +192,9 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info;
       std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params;
       std::shared_ptr<const CampaignManagerCore::LogAdRequest> log_request;
-      ChannelIdHashSet channels;
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> channels_arena =
+        std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+      ChannelIdHashSet channels{channels_arena.get()};
       CampaignManagerCore::AdSlotContext ad_slot_context;
       std::shared_ptr<const ChannelIdArray> geo_channels;
       bool is_ad_request = true;
@@ -3451,11 +3453,7 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerLogger::process_ad_request(
     const Colocation* colocation,
-    std::shared_ptr<const CampaignManagerCore::CommonAdRequest> common_info,
-    std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info,
-    CampaignManagerCore::LogAdRequest log_request,
-    ChannelIdHashSet channels,
-    bool required_passback,
+    std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params,
     AdRequestSlotLogArray&& ad_slots,
     std::shared_ptr<const ChannelIdArray> geo_channels,
     bool reset_request_user)
@@ -3463,14 +3461,7 @@ namespace AdServer::CampaignSvcs
   {
     AdRequestSelectionLogSnapshot snapshot;
     snapshot.request_info.colocation = ReferenceCounting::add_ref(colocation);
-    snapshot.request_info.common_info = std::move(common_info);
-    snapshot.request_info.context_info = std::move(context_info);
-    snapshot.request_info.log_request =
-      std::make_shared<CampaignManagerCore::LogAdRequest>(
-        std::move(log_request));
-    snapshot.request_info.channels = std::move(channels);
-    snapshot.request_info.is_ad_request = true;
-    snapshot.request_info.track_passback = required_passback;
+    snapshot.request_info.request_params = std::move(request_params);
     snapshot.request_info.geo_channels = std::move(geo_channels);
     snapshot.request_info.reset_request_user = reset_request_user;
     snapshot.ad_slots.reserve(ad_slots.size());

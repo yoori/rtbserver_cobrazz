@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory_resource>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -9,6 +9,8 @@
 
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
+
+#include <Commons/MonoAllocator.hpp>
 
 namespace AdServer::Bidding
 {
@@ -42,29 +44,53 @@ namespace AdServer::Bidding
   public:
     // short_rtb_name == source_id
     explicit BasicKeywordFormatter(
+      std::string_view source_id)
+      : BasicKeywordFormatter(
+          source_id,
+          std::shared_ptr<AdServer::Commons::MonoAllocatorArena>())
+    {}
+
+    BasicKeywordFormatter(
       std::string_view source_id,
-      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
-      : resource_(resource),
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      : arena_(make_arena_(std::move(arena))),
+        parts_(make_part_array_(arena_.get())),
+        owned_parts_(make_owned_part_array_(arena_.get())),
         keywords_non_empty_(false),
-        short_rtb_name_(make_string_(source_id, resource_))
+        short_rtb_name_(make_string_(source_id, arena_.get()))
     {
       parts_.reserve(256);
     }
 
     template<std::size_t Size>
     explicit BasicKeywordFormatter(
+      const char (&source_id)[Size])
+      : BasicKeywordFormatter(std::string_view(source_id, Size - 1))
+    {}
+
+    template<std::size_t Size>
+    BasicKeywordFormatter(
       const char (&source_id)[Size],
-      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
-      : BasicKeywordFormatter(std::string_view(source_id, Size - 1), resource)
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      : BasicKeywordFormatter(
+          std::string_view(source_id, Size - 1),
+          std::move(arena))
     {}
 
     template<typename SourceIdType>
     explicit BasicKeywordFormatter(
+      const SourceIdType& source_id)
+      : BasicKeywordFormatter(
+          std::string_view(source_id.data(), source_id.size()))
+    {}
+
+    template<typename SourceIdType>
+    BasicKeywordFormatter(
       const SourceIdType& source_id,
-      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
       : BasicKeywordFormatter(
           std::string_view(source_id.data(), source_id.size()),
-          resource)
+          std::move(arena))
     {}
 
     template<typename Traits, typename Allocator>
@@ -165,7 +191,7 @@ namespace AdServer::Bidding
       if(norm_gender_holder == "male" || norm_gender_holder == "female")
       {
         const auto norm_gender =
-          store_owned_(make_string_(norm_gender_holder, resource_));
+          store_owned_(make_string_(norm_gender_holder, arena_.get()));
         add_(std::string_view(), std::string_view(), norm_gender);
         if(!short_rtb_name_.empty())
         {
@@ -217,7 +243,7 @@ namespace AdServer::Bidding
         return;
       }
 
-      StringType res_keyword_ip3 = make_string_(std::string_view(), resource_);
+      StringType res_keyword_ip3 = make_string_(std::string_view(), arena_.get());
       res_keyword_ip3.reserve(addr_value.size());
       res_keyword_ip3.append(addr_value.data(), dot1);
       res_keyword_ip3 += 'x';
@@ -338,7 +364,7 @@ namespace AdServer::Bidding
     {
       add_keyword_owned(make_string_(
         std::string_view(kw.data(), kw.size()),
-        resource_));
+        arena_.get()));
     }
 
     void
@@ -353,7 +379,7 @@ namespace AdServer::Bidding
 
       if (!short_rtb_name_.empty())
       {
-        StringType source_keyword = make_string_(RTB_PREFIX, resource_);
+        StringType source_keyword = make_string_(RTB_PREFIX, arena_.get());
         source_keyword.append(
           short_rtb_name_.data(),
           short_rtb_name_.size());
@@ -474,7 +500,7 @@ namespace AdServer::Bidding
 
       add_part_view_(short_rtb_name);
       add_part_view_(param_name);
-      StringType normalized = make_string_(std::string_view(), resource_);
+      StringType normalized = make_string_(std::string_view(), arena_.get());
       normalized.reserve(value.size());
       for(std::string_view::const_iterator value_it = value.begin();
           value_it != value.end(); ++value_it)
@@ -505,15 +531,70 @@ namespace AdServer::Bidding
     static StringType
     make_string_(
       std::string_view value,
-      std::pmr::memory_resource* resource)
+      AdServer::Commons::MonoAllocatorArena* resource)
     {
-      if constexpr (std::is_same_v<StringType, std::pmr::string>)
+      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
       {
         return StringType(value.data(), value.size(), resource);
       }
       else
       {
         return StringType(value.data(), value.size());
+      }
+    }
+
+    using PartArray = std::conditional_t<
+      std::is_same_v<StringType, AdServer::Commons::MonoString>,
+      AdServer::Commons::MonoVector<std::string_view>,
+      std::vector<std::string_view>>;
+
+    using OwnedPartArray = std::conditional_t<
+      std::is_same_v<StringType, AdServer::Commons::MonoString>,
+      std::deque<
+        StringType,
+        AdServer::Commons::MonoAllocator<StringType>>,
+      std::deque<StringType>>;
+
+    static PartArray
+    make_part_array_(AdServer::Commons::MonoAllocatorArena* resource)
+    {
+      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      {
+        return PartArray(resource);
+      }
+      else
+      {
+        (void)resource;
+        return PartArray();
+      }
+    }
+
+    static OwnedPartArray
+    make_owned_part_array_(AdServer::Commons::MonoAllocatorArena* resource)
+    {
+      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      {
+        return OwnedPartArray(resource);
+      }
+      else
+      {
+        (void)resource;
+        return OwnedPartArray();
+      }
+    }
+
+    static std::shared_ptr<AdServer::Commons::MonoAllocatorArena>
+    make_arena_(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> resource)
+    {
+      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      {
+        return resource ?
+          std::move(resource) :
+          std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+      }
+      else
+      {
+        return nullptr;
       }
     }
 
@@ -542,9 +623,9 @@ namespace AdServer::Bidding
       add_part_view_(store_owned_(std::move(value)));
     }
 
-    std::pmr::memory_resource* const resource_;
-    std::pmr::vector<std::string_view> parts_{resource_};
-    std::pmr::deque<StringType> owned_parts_{resource_};
+    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+    PartArray parts_;
+    OwnedPartArray owned_parts_;
     std::size_t total_size_ = 0;
     bool keywords_non_empty_;
     const StringType short_rtb_name_;
@@ -553,5 +634,4 @@ namespace AdServer::Bidding
   };
 
   using KeywordFormatter = BasicKeywordFormatter<>;
-  using PmrKeywordFormatter = BasicKeywordFormatter<std::pmr::string>;
 }

@@ -6,7 +6,7 @@
 #include <array>
 #include <cstddef>
 #include <atomic>
-#include <memory_resource>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/ExecutorPool.hpp>
@@ -252,7 +253,7 @@ namespace AdServer::UserInfoSvcs
     ChannelIdArray
     unpack_channel_ids_(
       const Repeated& src,
-      std::pmr::memory_resource* resource)
+      AdServer::Commons::MonoAllocatorArena* resource)
     {
       ChannelIdArray result(resource);
       result.reserve(src.size());
@@ -267,7 +268,7 @@ namespace AdServer::UserInfoSvcs
     ChannelIdArray
     unpack_channel_id_values_(
       const Repeated& src,
-      std::pmr::memory_resource* resource)
+      AdServer::Commons::MonoAllocatorArena* resource)
     {
       ChannelIdArray result(resource);
       result.reserve(src.size());
@@ -306,19 +307,20 @@ namespace AdServer::UserInfoSvcs
     UserInfoManagerCore::MatchParams
     unpack_match_params_(
       const adserver::user_info_svcs::user_info_manager::MatchParams& src,
-      std::pmr::memory_resource* resource = std::pmr::get_default_resource())
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> resource)
     {
       UserInfoManagerCore::MatchParams dst(resource);
+      auto* const arena = resource.get();
       dst.matched_channels.page_channels =
-        unpack_channel_ids_(src.page_channel_ids(), resource);
+        unpack_channel_ids_(src.page_channel_ids(), arena);
       dst.matched_channels.search_channels =
-        unpack_channel_ids_(src.search_channel_ids(), resource);
+        unpack_channel_ids_(src.search_channel_ids(), arena);
       dst.matched_channels.url_channels =
-        unpack_channel_ids_(src.url_channel_ids(), resource);
+        unpack_channel_ids_(src.url_channel_ids(), arena);
       dst.matched_channels.url_keyword_channels =
-        unpack_channel_ids_(src.url_keyword_channel_ids(), resource);
+        unpack_channel_ids_(src.url_keyword_channel_ids(), arena);
       dst.matched_channels.persistent_channels =
-        unpack_channel_id_values_(src.persistent_channel_ids(), resource);
+        unpack_channel_id_values_(src.persistent_channel_ids(), arena);
       dst.cohort = src.cohort();
       dst.cohort2 = src.cohort2();
       dst.publishers_optin_timeout =
@@ -841,14 +843,15 @@ namespace AdServer::UserInfoSvcs
     try
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
-      std::pmr::monotonic_buffer_resource request_resource(
+      auto request_resource = std::make_shared<
+        AdServer::Commons::MonoAllocatorArena>(
         initial_buffer.data(),
         initial_buffer.size());
       const auto user_info = unpack_user_info_(request.user_info());
       const auto match_params = unpack_match_params_(
         request.match_params(),
-        &request_resource);
-      UserInfoManagerCore::MatchResult match_result(&request_resource);
+        request_resource);
+      UserInfoManagerCore::MatchResult match_result(request_resource);
       const bool matched = co_await user_info_manager_->co_match(
         user_info,
         match_params,
@@ -1043,13 +1046,14 @@ namespace AdServer::UserInfoSvcs
     try
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
-      std::pmr::monotonic_buffer_resource request_resource(
+      auto request_resource = std::make_shared<
+        AdServer::Commons::MonoAllocatorArena>(
         initial_buffer.data(),
         initial_buffer.size());
       const auto user_info = unpack_user_info_(request.user_info());
       const auto match_params = unpack_match_params_(
         request.match_params(),
-        &request_resource);
+        request_resource);
       bool merge_success = false;
       Generics::Time last_request;
       response.set_result(co_await user_info_manager_->co_merge(

@@ -471,8 +471,9 @@ extern "C"
       return 0;
     }
 
+    AdServer::Commons::MonoAllocatorArena reference_arena;
     AdServer::Bidding::RequestInfo reference_request_info;
-    AdServer::Bidding::JsonProcessingContext reference_context;
+    AdServer::Bidding::JsonProcessingContext reference_context(reference_arena);
 
     reference_request_info.current_time = Generics::Time::get_time_of_day();
     filler.fill_by_openrtb_request(
@@ -488,8 +489,9 @@ extern "C"
 
     for(std::uint64_t i = 0; i < count; ++i)
     {
+      AdServer::Commons::MonoAllocatorArena arena;
       AdServer::Bidding::RequestInfo request_info;
-      AdServer::Bidding::JsonProcessingContext context;
+      AdServer::Bidding::JsonProcessingContext context(arena);
 
       request_info.current_time = Generics::Time::get_time_of_day();
 

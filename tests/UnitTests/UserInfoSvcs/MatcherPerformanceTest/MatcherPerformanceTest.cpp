@@ -84,7 +84,8 @@ int size_assumption_test()
       }
 
       tm += 4*3600/ITERATION_COUNT;
-      ChannelMatchMap result;
+      AdServer::Commons::MonoAllocatorArena result_arena;
+      ChannelMatchMap result(&result_arena);
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
       if (cm.need_history_optimization(tm, Generics::Time::ZERO,
@@ -149,7 +150,8 @@ int session_match_performance_test()
     for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       tm += 3;
-      ChannelMatchMap result;
+      AdServer::Commons::MonoAllocatorArena result_arena;
+      ChannelMatchMap result(&result_arena);
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
       cm.match(result, tm, cid, *channel_rules, pmp, pps, session_timeout, false);
     }
@@ -203,7 +205,8 @@ int history_match_performance_test()
     for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       tm += 3;
-      ChannelMatchMap result;
+      AdServer::Commons::MonoAllocatorArena result_arena;
+      ChannelMatchMap result(&result_arena);
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
       cm.match(result, tm, cid, *channel_rules, pmp, pps, session_timeout, false);
     }
@@ -258,7 +261,8 @@ history_today_match_performance_test()
     for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       tm += 3;
-      ChannelMatchMap result;
+      AdServer::Commons::MonoAllocatorArena result_arena;
+      ChannelMatchMap result(&result_arena);
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
       cm.match(result, tm, cid, *channel_rules, pmp, pps, session_timeout, false);
     }
@@ -320,7 +324,8 @@ merge_performance_test()
       for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
       {
         tm += 3;
-        ChannelMatchMap result;
+        AdServer::Commons::MonoAllocatorArena result_arena;
+        ChannelMatchMap result(&result_arena);
         matcher.match(result, tm, cid, *channel_rules, pmp, pps, session_timeout, false);
       }
     }

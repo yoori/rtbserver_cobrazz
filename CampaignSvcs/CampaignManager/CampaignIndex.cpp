@@ -1,5 +1,4 @@
 #include <iostream>
-#include <memory_resource>
 #include <unordered_set>
 
 #include <HTTP/UrlAddress.hpp>
@@ -453,7 +452,7 @@ namespace AdServer
     bool
     CampaignIndex::creative_available_by_exclude_categories_(
       const Creative* creative,
-      const CreativeCategoryIdSet& exclude_categories)
+      const MonoCreativeCategoryIdSet& exclude_categories)
       noexcept
     {
       if(!exclude_categories.empty())
@@ -479,7 +478,7 @@ namespace AdServer
     bool
     CampaignIndex::creative_available_by_required_categories_(
       const Creative* creative,
-      const CreativeCategoryIdSet& required_categories)
+      const MonoCreativeCategoryIdSet& required_categories)
       noexcept
     {
       if(!required_categories.empty())
@@ -1732,11 +1731,11 @@ namespace AdServer
       bool video_allow_skippable,
       bool video_allow_unskippable,
       const AllowedDurationSet& allowed_durations,
-      const CreativeCategoryIdSet& exclude_categories,
-      const CreativeCategoryIdSet& required_categories,
+      const MonoCreativeCategoryIdSet& exclude_categories,
+      const MonoCreativeCategoryIdSet& required_categories,
       bool secure,
       bool filter_empty_destination,
-      std::pmr::memory_resource* memory_resource,
+      AdServer::Commons::MonoAllocatorArena* arena,
       TraceParams* trace_params)
       const
     {
@@ -1829,13 +1828,11 @@ namespace AdServer
         }
         else
         {
-          std::pmr::unordered_set<const Creative*> seen_creatives(
-            memory_resource);
+          AdServer::Commons::MonoUnorderedSet<const Creative*> seen_creatives(arena);
 
-          for(Tag::SizeMap::const_iterator tag_size_it =
-                check_tag_sizes->begin();
-              tag_size_it != check_tag_sizes->end();
-              ++tag_size_it)
+          for(Tag::SizeMap::const_iterator tag_size_it = check_tag_sizes->begin();
+            tag_size_it != check_tag_sizes->end();
+            ++tag_size_it)
           {
             const Campaign::CreativeBySizeMap::const_iterator
               size_creatives_it =
@@ -2228,8 +2225,8 @@ namespace AdServer
       bool video_allow_skippable,
       bool video_allow_unskippable,
       const AllowedDurationSet& allowed_durations,
-      const CreativeCategoryIdSet& exclude_categories,
-      const CreativeCategoryIdSet& required_categories,
+      const MonoCreativeCategoryIdSet& exclude_categories,
+      const MonoCreativeCategoryIdSet& required_categories,
       AuctionType auction_type,
       bool secure,
       bool filter_empty_destination,
@@ -2308,6 +2305,7 @@ namespace AdServer
 
       ConstCreativePtrList available_creatives;
 
+      AdServer::Commons::MonoAllocatorArena arena;
       filter_creatives(
         key,
         key.tag,
@@ -2315,7 +2313,7 @@ namespace AdServer
         campaign,
         profiling_available,
         full_freq_caps,
-        SeqOrderMap(),
+        SeqOrderMap(&arena),
         available_creatives,
         !campaign->keyword_based(),
         up_expand_space,
@@ -2332,7 +2330,7 @@ namespace AdServer
         required_categories,
         secure,
         filter_empty_destination,
-        std::pmr::get_default_resource(),
+        &arena,
         &trace_params);
 
       /*

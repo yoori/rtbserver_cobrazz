@@ -104,6 +104,7 @@ namespace MT
   {
     Campaign_var campaign;
     Creative_var creative;
+    AdServer::Commons::MonoAllocatorArena request_params_arena;
     CampaignSelectParams_var request_params;
 
     CTRProvider_var ctr_provider;
@@ -182,16 +183,18 @@ int main(int argc, char** argv) noexcept
     {
       CTRProvider_var ctr_provider(new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
 
+      AdServer::Commons::MonoAllocatorArena request_params_arena;
       CampaignSelectParams_var request_params_ptr = new CampaignSelectParams(
         true, // profiling_available
-        FreqCapIdSet(),
-        SeqOrderMap(),
+        FreqCapIdSet(&request_params_arena),
+        SeqOrderMap(&request_params_arena),
         0,
         0,
         Tag::SizeMap(),
         false,
         -1, // visibility
-        -1 // viewability
+        -1, // viewability
+        &request_params_arena
         );
 
       CampaignSelectParams& request_params = *request_params_ptr;
@@ -236,14 +239,15 @@ int main(int argc, char** argv) noexcept
 
       context->request_params = new CampaignSelectParams(
         true, // profiling_available
-        FreqCapIdSet(),
-        SeqOrderMap(),
+        FreqCapIdSet(&context->request_params_arena),
+        SeqOrderMap(&context->request_params_arena),
         0,
         0,
         Tag::SizeMap(),
         false,
         -1, // visibility
-        -1 // viewability
+        -1, // viewability
+        &context->request_params_arena
         );
 
       init_campaign_select_params(
@@ -317,16 +321,18 @@ int main(int argc, char** argv) noexcept
           return -1;
         }
 
+        AdServer::Commons::MonoAllocatorArena request_params_arena;
         CampaignSelectParams_var request_params_ptr = new CampaignSelectParams(
           true, // profiling_available
-          FreqCapIdSet(),
-          SeqOrderMap(),
+          FreqCapIdSet(&request_params_arena),
+          SeqOrderMap(&request_params_arena),
           0,
           0,
           Tag::SizeMap(),
           false,
           -1, // visibility
-          -1 // viewability
+          -1, // viewability
+          &request_params_arena
           );
 
         CampaignSelectParams& request_params = *request_params_ptr;

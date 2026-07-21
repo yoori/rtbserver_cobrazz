@@ -1,11 +1,14 @@
 #pragma once
 
-#include <memory_resource>
+#include <list>
+#include <memory>
+#include <set>
 #include <vector>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
+#include <Commons/MonoAllocator.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include "CampaignConfig.hpp"
@@ -78,11 +81,11 @@ namespace AdServer::CampaignSvcs
     std::string click_url;
   };
 
-  using CampaignSelectionDataList = std::pmr::list<CampaignSelectionData>;
+  using CampaignSelectionDataList = AdServer::Commons::MonoList<CampaignSelectionData>;
 
-  using CampaignKeywordMap = std::pmr::multimap<unsigned long, CampaignKeyword_var>;
+  using CampaignKeywordMap = AdServer::Commons::MonoMultiMap<unsigned long, CampaignKeyword_var>;
 
-  using FreqCapIdArray = std::pmr::vector<unsigned long>;
+  using FreqCapIdArray = AdServer::Commons::MonoVector<unsigned long>;
 
   using ConstCampaignPtrArray = std::vector<const Campaign*>;
 
@@ -91,18 +94,22 @@ namespace AdServer::CampaignSvcs
 
   struct AdSelectionResult
   {
-    explicit AdSelectionResult(
-      std::pmr::memory_resource* memory_resource = std::pmr::get_default_resource())
-      : text_campaigns(false),
+    AdSelectionResult()
+      : AdSelectionResult(std::make_shared<AdServer::Commons::MonoAllocatorArena>())
+    {}
+
+    explicit AdSelectionResult(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+        text_campaigns(false),
         min_no_adv_ecpm(RevenueDecimal::ZERO),
         min_text_ecpm(RevenueDecimal::ZERO),
         cpm_threshold(RevenueDecimal::ZERO),
         tag(0),
         tag_pricing(0),
         tag_size(0),
-        selected_campaigns(memory_resource),
-        freq_caps(memory_resource),
-        uc_freq_caps(memory_resource),
+        selected_campaigns(AdServer::Commons::MonoAllocator<CampaignSelectionData>{arena_.get()}),
+        freq_caps(AdServer::Commons::MonoAllocator<unsigned long>{arena_.get()}),
+        uc_freq_caps(AdServer::Commons::MonoAllocator<unsigned long>{arena_.get()}),
         walled_garden(false),
         household_based(false),
         auction_type(AT_RANDOM)
@@ -110,8 +117,9 @@ namespace AdServer::CampaignSvcs
 
     AdSelectionResult(
       const AdSelectionResult& init,
-      std::pmr::memory_resource* memory_resource)
-      : text_campaigns(init.text_campaigns),
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+        text_campaigns(init.text_campaigns),
         min_no_adv_ecpm(init.min_no_adv_ecpm),
         min_text_ecpm(init.min_text_ecpm),
         cpm_threshold(init.cpm_threshold),
@@ -120,14 +128,30 @@ namespace AdServer::CampaignSvcs
         tag_size(init.tag_size),
         ctr_calculation(init.ctr_calculation),
         conv_rate_calculation(init.conv_rate_calculation),
-        selected_campaigns(init.selected_campaigns, memory_resource),
-        freq_caps(init.freq_caps, memory_resource),
-        uc_freq_caps(init.uc_freq_caps, memory_resource),
+        selected_campaigns(
+          init.selected_campaigns,
+          AdServer::Commons::MonoAllocator<CampaignSelectionData>{arena_.get()}),
+        freq_caps(
+          init.freq_caps,
+          AdServer::Commons::MonoAllocator<unsigned long>{arena_.get()}),
+        uc_freq_caps(
+          init.uc_freq_caps,
+          AdServer::Commons::MonoAllocator<unsigned long>{arena_.get()}),
         walled_garden(init.walled_garden),
         household_based(init.household_based),
         auction_type(init.auction_type)
     {}
 
+    const std::shared_ptr<AdServer::Commons::MonoAllocatorArena>&
+    arena() const noexcept
+    {
+      return arena_;
+    }
+
+  private:
+    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+  public:
     bool text_campaigns;
 
     RevenueDecimal min_no_adv_ecpm;

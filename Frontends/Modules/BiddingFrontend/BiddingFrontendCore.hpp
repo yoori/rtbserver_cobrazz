@@ -2,7 +2,6 @@
 
 #include <map>
 #include <memory>
-#include <memory_resource>
 #include <vector>
 
 #include <Logger/Logger.hpp>
@@ -185,7 +184,7 @@ namespace AdServer::Bidding
     void
     limit_max_cpm_(
       AdServer::CampaignSvcs::RevenueDecimal& val,
-      const std::pmr::vector<unsigned long>& account_ids)
+      const AdServer::Commons::MonoVector<unsigned long>& account_ids)
       const noexcept;
 
     RequestInfoFiller*

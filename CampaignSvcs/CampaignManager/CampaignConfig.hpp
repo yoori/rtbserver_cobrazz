@@ -5,7 +5,6 @@
 #include <set>
 #include <map>
 #include <memory>
-#include <memory_resource>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -20,6 +19,7 @@
 
 #include <Commons/StringHolder.hpp>
 #include <Commons/AtomicInt.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 
@@ -443,7 +443,8 @@ namespace CampaignSvcs
     typedef std::vector<Account_var> AccountArray;
     typedef std::map<unsigned long, Account_var> AccountMap;
 
-    using CreativeCategoryIdSet = std::pmr::set<unsigned long>;
+    using CreativeCategoryIdSet = std::set<unsigned long>;
+    using MonoCreativeCategoryIdSet = AdServer::Commons::MonoSet<unsigned long>;
 
     struct
     CompareAccountByID : public std::binary_function <Account_var, Account_var, bool>
@@ -503,7 +504,7 @@ namespace CampaignSvcs
 
     typedef ReferenceCounting::SmartPtr<Site> Site_var;
     typedef std::map<unsigned long, Site_var> SiteMap;
-    using CreativeCategoryIdSet = std::pmr::set<unsigned long>;
+    using CreativeCategoryIdSet = std::set<unsigned long>;
 
     /** Tag */
     class Tag: public virtual ReferenceCounting::AtomicImpl

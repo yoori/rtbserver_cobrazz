@@ -9,10 +9,10 @@
 #include <queue>
 #include <map>
 #include <memory>
-#include <memory_resource>
 #include <string_view>
 
 #include <eh/Exception.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <String/RegEx.hpp>
 #include <String/InterConvertion.hpp>
@@ -148,7 +148,10 @@ namespace FrontendCommons
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
     typedef std::set<unsigned long> PlatformIdSet;
-    typedef std::pmr::set<std::pmr::string, std::less<>> PlatformNameSet;
+    typedef AdServer::Commons::MonoSet<
+      AdServer::Commons::MonoString,
+      std::less<>>
+      PlatformNameSet;
 
     PlatformMatcher() /*throw(eh::Exception)*/;
 

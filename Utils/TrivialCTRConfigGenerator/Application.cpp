@@ -289,7 +289,7 @@ Application_::generate_(
 
   // fetch table
   std::unordered_map<unsigned long, Value> tag_res;
-  unsigned long no_data_records = 0;
+  //unsigned long no_data_records = 0;
   unsigned long gt1000_records = 0;
   unsigned long gt10000_records = 0;
 

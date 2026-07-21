@@ -138,6 +138,8 @@ add_library(InstantiateAdArgs STATIC
 
 target_link_libraries(InstantiateAdArgs
   Generics
+  AdServerCommonsXSD
+  CampaignManagerConfigXSD
   CreativeTemplateArgs
 )
 

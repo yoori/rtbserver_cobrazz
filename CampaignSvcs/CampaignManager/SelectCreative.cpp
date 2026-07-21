@@ -45,10 +45,10 @@ namespace AdServer::CampaignSvcs
     std::string& creative_body,
     std::string& creative_url,
     AdSlotContext& ad_slot_context,
-    std::pmr::memory_resource* memory_resource)
+    AdServer::Commons::MonoAllocatorArena* arena)
     /*throw(eh::Exception)*/
   {
-    (void)memory_resource;
+    (void)arena;
     static const char* FUN = "CampaignManagerCore::instantiate_display_creative()";
 
     assert(weighted_campaign.tag_size);
@@ -164,10 +164,10 @@ namespace AdServer::CampaignSvcs
     std::string& creative_body,
     std::string& creative_url,
     AdSlotContext& ad_slot_context,
-    std::pmr::memory_resource* memory_resource)
+    AdServer::Commons::MonoAllocatorArena* arena)
     /*throw(eh::Exception)*/
   {
-    (void)memory_resource;
+    (void)arena;
     static const char* FUN = "CampaignManagerCore::instantiate_text_creatives()";
 
     if(ad_slot_debug_info)

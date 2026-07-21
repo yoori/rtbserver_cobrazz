@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <memory_resource>
 
 #include "CampaignManagerTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -12,7 +11,6 @@
 namespace AdServer::Bidding
 {
   struct RequestInfo;
-  using PmrString = std::pmr::string;
   class RequestInfoFiller;
 
   class AdXmlRequestInfoFiller

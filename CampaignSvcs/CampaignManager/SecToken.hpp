@@ -73,7 +73,7 @@ namespace AdServer
       virtual uint32_t
       safe_rand() const noexcept
       {
-        return Generics::safe_rand();
+        return Generics::unsafe_rand();
       }
 
     protected:

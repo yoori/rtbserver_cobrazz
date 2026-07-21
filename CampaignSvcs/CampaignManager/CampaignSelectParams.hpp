@@ -1,8 +1,9 @@
 #pragma once
 
-#include <memory_resource>
 #include <string>
+#include <unordered_set>
 #include <Commons/Containers.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -15,7 +16,8 @@ namespace CampaignSvcs
 {
   using namespace AdInstances;
 
-  using FreqCapIdSet = std::pmr::multiset<unsigned long>;
+  using FreqCapIdSet =
+    AdServer::Commons::MonoUnorderedSet<unsigned long>;
 
   struct SeqOrder
   {
@@ -23,11 +25,13 @@ namespace CampaignSvcs
     unsigned long imps;
   };
 
-  using SeqOrderMap = std::pmr::map<unsigned long, SeqOrder>;
+  using SeqOrderMap =
+    AdServer::Commons::MonoMap<unsigned long, SeqOrder>;
 
   struct CampaignSelectParams: public ReferenceCounting::DefaultImpl<>
   {
-    using CampaignImpsMap = std::pmr::map<unsigned long, unsigned long>;
+    using CampaignImpsMap =
+      AdServer::Commons::MonoMap<unsigned long, unsigned long>;
 
     CampaignSelectParams(
       bool profiling_available_val,
@@ -39,10 +43,10 @@ namespace CampaignSvcs
       bool filter_dest,
       int tag_visibility_val,
       int tag_predicted_viewability_val,
-      std::pmr::memory_resource* memory_resource = std::pmr::get_default_resource())
+      AdServer::Commons::MonoAllocatorArena* arena)
       : profiling_available(profiling_available_val),
-        full_freq_caps(full_freq_caps_val, memory_resource),
-        seq_orders(seq_orders_val, memory_resource),
+        full_freq_caps(arena),
+        seq_orders(seq_orders_val, arena),
         colocation(colocation_val),
         tag(tag_val),
         tag_sizes(tag_sizes_val),
@@ -60,20 +64,22 @@ namespace CampaignSvcs
         random(0),
         random2(0),
         only_display_ad(false),
-        exclude_categories(memory_resource),
-        required_categories(memory_resource),
+        exclude_categories(arena),
+        required_categories(arena),
         time_hour(0),
         time_week_day(0),
-        channels(memory_resource),
+        channels(arena),
         last_platform_channel_id(0),
-        geo_channels(memory_resource),
         secure(false),
         filter_empty_destination(filter_dest),
-        allowed_durations(memory_resource),
-        campaign_imps(memory_resource),
+        allowed_durations(arena),
+        campaign_imps(arena),
         tag_visibility(tag_visibility_val),
         tag_predicted_viewability(tag_predicted_viewability_val)
-    {}
+    {
+      full_freq_caps.reserve(full_freq_caps_val.size());
+      full_freq_caps.insert(full_freq_caps_val.begin(), full_freq_caps_val.end());
+    }
 
     bool profiling_available;
     FreqCapIdSet full_freq_caps;
@@ -108,8 +114,8 @@ namespace CampaignSvcs
     // min_ecpm in publisher currency
     RevenueDecimal min_pub_ecpm;
     RevenueDecimal min_ecpm;
-    CreativeCategoryIdSet exclude_categories;
-    CreativeCategoryIdSet required_categories;
+    MonoCreativeCategoryIdSet exclude_categories;
+    MonoCreativeCategoryIdSet required_categories;
 
     unsigned long time_hour;
     unsigned long time_week_day;

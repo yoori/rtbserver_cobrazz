@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <memory>
 #include <vector>
 #include <list>
 
@@ -124,10 +125,11 @@ int session_match_test()
 
     Generics::Time tm = Generics::Time::get_time_of_day();
 
-    ChannelIdPack cid;
+    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    ChannelIdPack cid(arena);
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    ChannelMatchMap result(arena.get());
     PartlyMatchResult partly_result;
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
@@ -171,11 +173,12 @@ int history_today_match_test()
     SmartMemBuf_var add_profile(new SmartMemBuf);
     SmartMemBuf_var history_profile(new SmartMemBuf);
 
-    ChannelIdPack cid;
+    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    ChannelIdPack cid(arena);
     cid.page_channels.push_back(1);
     cid.page_channels.push_back(2);
 
-    ChannelMatchMap result;
+    ChannelMatchMap result(arena.get());
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
@@ -280,10 +283,11 @@ int history_match_test()
     SmartMemBuf_var add_profile(new SmartMemBuf);
     SmartMemBuf_var history_profile(new SmartMemBuf);
 
-    ChannelIdPack cid;
+    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    ChannelIdPack cid(arena);
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    ChannelMatchMap result(arena.get());
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
@@ -305,7 +309,9 @@ int history_match_test()
           *channel_rules);
       }
 
-      ChannelIdPack empty_cid;
+      auto empty_cid_arena =
+        std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+      ChannelIdPack empty_cid(empty_cid_arena);
       cm.match(result, now, empty_cid, *channel_rules, pmp, pps, session_timeout, false);
 
       cm.partly_match(partly_result, now, *channel_rules);

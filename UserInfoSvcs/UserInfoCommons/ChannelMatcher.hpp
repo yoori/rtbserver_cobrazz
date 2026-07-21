@@ -1,11 +1,13 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <vector>
-#include <memory_resource>
 #include <list>
 #include <set>
+#include <utility>
 
+#include <Commons/MonoAllocator.hpp>
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/MemBuf.hpp>
@@ -28,13 +30,13 @@ namespace AdServer
 
     const unsigned long MAX_GEO_DATA = 1;
 
-    typedef std::pmr::vector<unsigned long> ChannelIdArray;
+    using ChannelIdArray =
+      AdServer::Commons::MonoVector<unsigned long>;
 
-    typedef std::set<
+    using ChannelIdSet = std::set<
       unsigned long,
       std::less<unsigned long>,
-      Generics::TAlloc::ThreadPool<unsigned long, 256> >
-    ChannelIdSet;
+      Generics::TAlloc::ThreadPool<unsigned long, 256> >;
 
     struct UniqueChannels
     {
@@ -67,14 +69,22 @@ namespace AdServer
     struct ChannelIdPack
     {
       explicit ChannelIdPack(
-        std::pmr::memory_resource* resource = std::pmr::get_default_resource())
-        : page_channels(resource),
-          search_channels(resource),
-          url_channels(resource),
-          url_keyword_channels(resource),
-          persistent_channels(resource)
+        std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena =
+          nullptr)
+        : arena_(arena ?
+            std::move(arena) :
+            std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+          page_channels(arena_.get()),
+          search_channels(arena_.get()),
+          url_channels(arena_.get()),
+          url_keyword_channels(arena_.get()),
+          persistent_channels(arena_.get())
       {}
 
+    private:
+      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+
+    public:
       ChannelIdArray page_channels;
       ChannelIdArray search_channels;
       ChannelIdArray url_channels;
@@ -450,7 +460,7 @@ namespace AdServer
         const ChannelsInfoReader* base,
         const ChannelIdArray& channels,
         const ChannelsHashMap& dictionary,
-        std::pmr::memory_resource* request_delta_resource,
+        AdServer::Commons::MonoAllocatorArena* request_delta_resource,
         const Generics::Time& now,
         bool household = false) /*throw(Exception)*/;
 

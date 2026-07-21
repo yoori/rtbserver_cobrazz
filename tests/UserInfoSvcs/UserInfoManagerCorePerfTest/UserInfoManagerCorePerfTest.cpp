@@ -363,8 +363,9 @@ main(int argc, char** argv)
               user_info.request_colo_id = 1;
               user_info.current_colo_id = 1;
 
-              std::pmr::monotonic_buffer_resource arena(8 * 1024);
-              AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params(&arena);
+              auto arena =
+                std::make_shared<AdServer::Commons::MonoAllocatorArena>(8 * 1024);
+              AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params(arena);
               match_params.no_result = false;
               match_params.matched_channels.page_channels.reserve(100);
               for(unsigned long channel_id = 1; channel_id <= 100; ++channel_id)
@@ -372,7 +373,7 @@ main(int argc, char** argv)
                 match_params.matched_channels.page_channels.push_back(channel_id);
               }
 
-              AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result(&arena);
+              AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result(arena);
               if(core->co_match(user_info, match_params, match_result).sync_wait())
               {
                 matched.fetch_add(1, std::memory_order_relaxed);

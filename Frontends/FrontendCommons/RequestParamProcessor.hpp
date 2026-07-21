@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory_resource>
 #include <string>
 #include <string_view>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -12,6 +11,7 @@
 #include <Generics/GnuHashTable.hpp>
 
 #include <Commons/Containers.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -29,10 +29,10 @@ namespace FrontendCommons
   normalize_ifa(std::string_view idfa);
 
   inline
-  std::pmr::string
+  AdServer::Commons::MonoString
   normalize_ifa(
     std::string_view idfa,
-    std::pmr::memory_resource* resource);
+    AdServer::Commons::MonoAllocatorArena* resource);
 
   template<typename RequestInfoType>
   struct RequestParamProcessor:

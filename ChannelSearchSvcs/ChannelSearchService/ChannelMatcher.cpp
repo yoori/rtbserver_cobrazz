@@ -1,4 +1,5 @@
 #include <Commons/Algs.hpp>
+#include <Commons/MonoAllocator.hpp>
 #include "ChannelMatcher.hpp"
 
 namespace Aspect
@@ -126,7 +127,9 @@ namespace ChannelSearchSvcs
     for(ChannelIdSet::const_iterator ch_it = history_channels.begin();
         ch_it != history_channels.end(); ++ch_it)
     {
-      AdServer::CampaignSvcs::ChannelIdHashSet local_history_channels;
+      AdServer::Commons::MonoAllocatorArena local_history_channels_arena;
+      AdServer::CampaignSvcs::ChannelIdHashSet local_history_channels(
+        &local_history_channels_arena);
       local_history_channels.insert(*ch_it);
       ChannelIdSet local_result_channels;
       channel_index->match(local_result_channels, local_history_channels);

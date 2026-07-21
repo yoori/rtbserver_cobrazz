@@ -18,6 +18,20 @@ const Generics::Time session_timeout = Generics::Time(30);
 ProfileProperties pps;
 ProfileMatchParams pmp;
 
+struct TestChannelMatchMapArena
+{
+  AdServer::Commons::MonoAllocatorArena arena;
+};
+
+struct TestChannelMatchMap:
+  private TestChannelMatchMapArena,
+  public ChannelMatchMap
+{
+  TestChannelMatchMap()
+    : ChannelMatchMap(&arena)
+  {}
+};
+
 struct ChannelMatchEq
 {
   bool operator()(
@@ -103,7 +117,7 @@ struct MatchWrapper
       */
     }
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     cm.match(result, time, cid, dict, pmp, pps, session_timeout, false);
 /*
@@ -186,15 +200,15 @@ int reverse_order_match_test()
       Generics::Time(String::SubString("2006-10-10 23:59:40"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
     res += matcher.match(
       Generics::Time(String::SubString("2006-10-11 00:00:30"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     //etalon[2] = 2;
 
     res += matcher.match(
@@ -214,15 +228,15 @@ int reverse_order_match_test()
       Generics::Time(String::SubString("2006-10-10 23:59:40"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
     res += matcher.match(
       Generics::Time(String::SubString("2006-10-09 23:59:40"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[2] = 2;
 
     res += matcher.match(
@@ -242,9 +256,9 @@ int reverse_order_match_test()
       Generics::Time(String::SubString("2006-10-10 23:59:40"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[1] = 2;
 
     res += matcher.match(
@@ -264,15 +278,15 @@ int reverse_order_match_test()
       Generics::Time(String::SubString("2006-10-10 23:59:40"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
     res += matcher.match(
       Generics::Time(String::SubString("2006-10-10 00:00:30"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[3] = 2;
 
     res += matcher.match(
@@ -309,7 +323,7 @@ int persistent_match_test()
     cid.persistent_channels.push_back(1);
     cid.persistent_channels.push_back(3);
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[1] = 1;
     etalon[3] = 1;
 
@@ -321,7 +335,7 @@ int persistent_match_test()
     cid.persistent_channels.push_back(1);
     cid.persistent_channels.push_back(2);
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[1] = 1;
     etalon[2] = 1;
     etalon[3] = 1;
@@ -335,7 +349,7 @@ int persistent_match_test()
     cid.persistent_channels.push_back(4);
     cid.persistent_channels.push_back(6);
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[1] = 1;
     etalon[2] = 1;
     etalon[3] = 1;
@@ -350,7 +364,7 @@ int persistent_match_test()
   {
     ChannelMatchPack cid;
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[1] = 1;
     etalon[2] = 1;
     etalon[3] = 1;
@@ -365,7 +379,7 @@ int persistent_match_test()
     cid.persistent_channels.push_back(5);
     cid.persistent_channels.push_back(7);
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[5] = 1;
     etalon[7] = 1;
 
@@ -429,7 +443,7 @@ int session_match_test()
 
     MatchWrapper matcher(*channel_rules, FUN);
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[1] = 2;
 
     res += matcher.match(
@@ -448,15 +462,15 @@ int session_match_test()
       Generics::Time(String::SubString("2006-10-10 10:12:50"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
     res += matcher.match(
       Generics::Time(String::SubString("2006-10-10 10:13:20"),
         "%Y-%m-%d %H:%M:%S"),
       cid,
-      ChannelMatchMap());
+      TestChannelMatchMap());
 
-    ChannelMatchMap etalon;
+    TestChannelMatchMap etalon;
     etalon[2] = 2;
 
     res += matcher.match(
@@ -491,9 +505,9 @@ int session_match_test_2()
     Generics::Time(String::SubString("2006-01-01 12:12:12"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
-  ChannelMatchMap etalon;
+  TestChannelMatchMap etalon;
   etalon[1] = 1;
 
   res += matcher.match(
@@ -529,27 +543,27 @@ int session_match_test_3()
     Generics::Time(String::SubString("2006-10-10 10:10:10"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 10:10:20"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 10:10:30"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 10:10:40"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
-  ChannelMatchMap etalon;
+  TestChannelMatchMap etalon;
   etalon[1] = 2;
 
   res += matcher.match(
@@ -562,13 +576,13 @@ int session_match_test_3()
     Generics::Time(String::SubString("2006-10-10 10:12:50"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 10:13:20"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 10:14:00"),
@@ -603,9 +617,9 @@ int session_match_test_4()
     Generics::Time(String::SubString("2006-10-10 23:59:10"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
-  ChannelMatchMap etalon;
+  TestChannelMatchMap etalon;
   etalon[1] = 2;
 
   res += matcher.match(
@@ -642,15 +656,15 @@ int session_few_intervals_test()
     Generics::Time(String::SubString("2006-10-10 00:00:01"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 00:00:59"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
-  ChannelMatchMap etalon1;
+  TestChannelMatchMap etalon1;
   etalon1[1] = 5;
 
   res += matcher.match(
@@ -659,7 +673,7 @@ int session_few_intervals_test()
     ChannelMatchPack(),
     etalon1);
 
-  ChannelMatchMap etalon2;
+  TestChannelMatchMap etalon2;
   etalon2[1] = 11;
 
   res += matcher.match(
@@ -672,7 +686,7 @@ int session_few_intervals_test()
     Generics::Time(String::SubString("2006-10-10 00:04:00"),
       "%Y-%m-%d %H:%M:%S"),
     ChannelMatchPack(),
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   return res;
 }
@@ -698,7 +712,7 @@ int session_delete_excess_test()
     ChannelMatchPack cid;
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
@@ -791,21 +805,21 @@ int history_today_match_test()
     Generics::Time(String::SubString("2006-10-10 10:10:20"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-10 10:10:20"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
   res += matcher.match(
     Generics::Time(String::SubString("2006-10-11 10:10:20"),
       "%Y-%m-%d %H:%M:%S"),
     ChannelMatchPack(),
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
-  ChannelMatchMap etalon;
+  TestChannelMatchMap etalon;
   etalon[1] = 2;
   etalon[2] = 2;
 
@@ -841,7 +855,7 @@ int history_today_few_intervals_test()
   int res = 0;
   MatchWrapper matcher(*channel_rules, FUN);
 
-  ChannelMatchMap etalon1;
+  TestChannelMatchMap etalon1;
   etalon1[1] = 1;
 
   res += matcher.match(
@@ -850,7 +864,7 @@ int history_today_few_intervals_test()
     cid,
     etalon1);
 
-  ChannelMatchMap etalon2;
+  TestChannelMatchMap etalon2;
   etalon2[1] = 3;
 
   res += matcher.match(
@@ -865,7 +879,7 @@ int history_today_few_intervals_test()
     cid,
     etalon2);
 
-  ChannelMatchMap etalon3;
+  TestChannelMatchMap etalon3;
   etalon3[1] = 7;
 
   res += matcher.match(
@@ -874,7 +888,7 @@ int history_today_few_intervals_test()
     cid,
     etalon3);
 
-  ChannelMatchMap etalon4;
+  TestChannelMatchMap etalon4;
   etalon4[1] = 1 + 4;
 
   res += matcher.match(
@@ -914,9 +928,9 @@ int history_match_test()
     Generics::Time(String::SubString("2010-05-20 04:01:00"),
       "%Y-%m-%d %H:%M:%S"),
     cid,
-    ChannelMatchMap());
+    TestChannelMatchMap());
 
-  ChannelMatchMap etalon;
+  TestChannelMatchMap etalon;
   etalon[1] = 1;
 
   res += matcher.match(
@@ -949,7 +963,7 @@ int history_match_test_2()
     ChannelMatchPack cid;
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
@@ -1027,7 +1041,7 @@ int history_match_test_3()
     ChannelMatchPack cid;
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
@@ -1133,7 +1147,7 @@ int merge_test()
     ChannelMatchPack cid;
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
@@ -1165,7 +1179,7 @@ int merge_test()
     ChannelMatchPack cid;
     cid.page_channels.push_back(1);
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     cm2.match(result, Generics::Time(String::SubString("2006-10-11 00:00:10"),
       "%Y-%m-%d %H:%M:%S"),
@@ -1214,7 +1228,7 @@ int merge_test()
       *channel_rules,
       pmp);
 
-    ChannelMatchMap result;
+    TestChannelMatchMap result;
 
     cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps,
       session_timeout, false);
@@ -1282,7 +1296,7 @@ int session_match_performance_test()
 
     for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
-      ChannelMatchMap result;
+      TestChannelMatchMap result;
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
       cm.match(result, tm, cid, *channel_rules, pmp, pps,
         session_timeout, false);
@@ -1377,7 +1391,7 @@ int unique_channels_test()
   Generics::Time now(String::SubString("2006-10-11 04:01:00"), "%Y-%m-%d %H:%M:%S");
 
   ChannelsMatcher cm(base_profile.in(), add_profile.in());
-  ChannelMatchMap result;
+  TestChannelMatchMap result;
 
   cm.match(result, now, cid, *channel_rules, pmp, pps,
     session_timeout, false);

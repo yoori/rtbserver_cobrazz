@@ -3,10 +3,10 @@
 #include <string>
 #include <set>
 #include <list>
-#include <memory_resource>
 #include <unordered_set>
 #include <vector>
 
+#include <Commons/MonoAllocator.hpp>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -34,10 +34,10 @@ namespace AdServer
      * Filling channel tree from CORBA representation:
      *   for each sequence element call CorbaChannelConverter
      */
-    typedef unsigned long ChannelId;
-    using ChannelIdHashSet = std::pmr::unordered_set<ChannelId>;
-    using ChannelIdSet = std::pmr::set<ChannelId>;
-    typedef std::map<ChannelId, unsigned long> ChannelWeightMap;
+    using ChannelId = unsigned long;
+    using ChannelIdHashSet =
+      AdServer::Commons::MonoUnorderedSet<ChannelId>;
+    using ChannelWeightMap = std::map<ChannelId, unsigned long>;
 
     struct ChannelHolder;
 

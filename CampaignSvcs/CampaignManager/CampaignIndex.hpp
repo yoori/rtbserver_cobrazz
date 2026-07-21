@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory_resource>
-
 #include <eh/Exception.hpp>
 #include <Generics/CRC.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -9,6 +7,7 @@
 #include <Logger/Logger.hpp>
 
 #include <Commons/Containers.hpp>
+#include <Commons/MonoAllocator.hpp>
 
 #include "CampaignManagerDeclarations.hpp"
 #include "CampaignConfig.hpp"
@@ -371,11 +370,11 @@ namespace AdServer
         bool video_allow_skippable,
         bool video_allow_unskippable,
         const AllowedDurationSet& allowed_durations,
-        const CreativeCategoryIdSet& exclude_categories,
-        const CreativeCategoryIdSet& required_categories,
+        const MonoCreativeCategoryIdSet& exclude_categories,
+        const MonoCreativeCategoryIdSet& required_categories,
         bool secure,
         bool filter_empty_destination,
-        std::pmr::memory_resource* memory_resource,
+        AdServer::Commons::MonoAllocatorArena* arena,
         TraceParams* trace_params)
         const;
 
@@ -416,8 +415,8 @@ namespace AdServer
         bool video_allow_skippable,
         bool video_allow_unskippable,
         const AllowedDurationSet& allowed_durations,
-        const CreativeCategoryIdSet& exclude_categories,
-        const CreativeCategoryIdSet& required_categories,
+        const MonoCreativeCategoryIdSet& exclude_categories,
+        const MonoCreativeCategoryIdSet& required_categories,
         AuctionType auction_type,
         bool secure,
         bool filter_empty_destination,
@@ -584,13 +583,13 @@ namespace AdServer
       static bool
       creative_available_by_exclude_categories_(
         const Creative* creative,
-        const CreativeCategoryIdSet& exclude_categories)
+        const MonoCreativeCategoryIdSet& exclude_categories)
         noexcept;
 
       static bool
       creative_available_by_required_categories_(
         const Creative* creative,
-        const CreativeCategoryIdSet& required_categories)
+        const MonoCreativeCategoryIdSet& required_categories)
         noexcept;
 
       static bool

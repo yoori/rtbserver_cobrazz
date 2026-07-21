@@ -345,7 +345,7 @@ namespace AdServer::Bidding
       for (int i = 0; i < source.ad_slots_size(); ++i)
       {
         const auto& src = source.ad_slots(i);
-        auto& dst = target.ad_slots.emplace_back(target.arena_.get());
+        auto& dst = target.ad_slots.emplace_back(target.arena_);
         dst.ad_slot_id = src.ad_slot_id();
         dst.request_id = src.request_id();
         dst.passback = src.passback();
@@ -2400,14 +2400,11 @@ namespace AdServer::Bidding
         }
         else if (history_result && !history_result->cohort().empty())
         {
-          if (request_info.platform_names.find(
-               RequestInfo::PmrString("ipad")) !=
+          if (request_info.platform_names.find(std::string_view("ipad", 4)) !=
               request_info.platform_names.end() ||
-            request_info.platform_names.find(
-              RequestInfo::PmrString("iphone")) !=
+            request_info.platform_names.find(std::string_view("iphone", 6)) !=
               request_info.platform_names.end() ||
-            request_info.platform_names.find(
-              RequestInfo::PmrString("ios")) !=
+            request_info.platform_names.find(std::string_view("ios", 3)) !=
               request_info.platform_names.end())
           {
             add_token(common_info->mutable_tokens(), "IDFA", history_result->cohort());
@@ -2457,7 +2454,7 @@ namespace AdServer::Bidding
   void
   BiddingFrontendCore::limit_max_cpm_(
     AdServer::CampaignSvcs::RevenueDecimal& val,
-    const std::pmr::vector<unsigned long>& account_ids)
+    const AdServer::Commons::MonoVector<unsigned long>& account_ids)
     const noexcept
   {
     for (std::size_t i = 0; i < account_ids.size(); ++i)

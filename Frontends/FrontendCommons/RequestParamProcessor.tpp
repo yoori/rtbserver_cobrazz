@@ -4,15 +4,15 @@
 namespace FrontendCommons
 {
   inline
-  std::pmr::string
+  AdServer::Commons::MonoString
   normalize_ifa_impl_(
     std::string_view idfa,
-    std::pmr::memory_resource* resource)
+    AdServer::Commons::MonoAllocatorArena* resource)
   {
-    std::pmr::string res(idfa.data(), idfa.size(), resource);
+    AdServer::Commons::MonoString res(idfa.data(), idfa.size(), resource);
     String::AsciiStringManip::to_lower(res.begin(), res.end());
 
-    std::pmr::string norm_res(resource);
+    AdServer::Commons::MonoString norm_res(resource);
     norm_res.reserve(32);
 
     const String::SubString res_sub_string(res.data(), res.size());
@@ -30,7 +30,7 @@ namespace FrontendCommons
         norm_res.data() + norm_res.size()) ==
           norm_res.data() + norm_res.size())
     {
-      std::pmr::string minus_norm_res(resource);
+      AdServer::Commons::MonoString minus_norm_res(resource);
       minus_norm_res.reserve(36);
       minus_norm_res.append(norm_res.data(), 8);
       minus_norm_res += '-';
@@ -45,7 +45,7 @@ namespace FrontendCommons
       return minus_norm_res;
     }
 
-    return std::pmr::string(resource);
+    return AdServer::Commons::MonoString(resource);
   }
 
   template<typename RequestInfoType, typename StringType>
@@ -475,16 +475,18 @@ namespace FrontendCommons
   std::string
   normalize_ifa(std::string_view idfa)
   {
-    std::pmr::monotonic_buffer_resource resource;
-    const std::pmr::string result = normalize_ifa_impl_(idfa, &resource);
+    AdServer::Commons::MonoAllocatorArena resource;
+    const AdServer::Commons::MonoString result = normalize_ifa_impl_(
+      idfa,
+      &resource);
     return std::string(result.data(), result.size());
   }
 
   inline
-  std::pmr::string
+  AdServer::Commons::MonoString
   normalize_ifa(
     std::string_view idfa,
-    std::pmr::memory_resource* resource)
+    AdServer::Commons::MonoAllocatorArena* resource)
   {
     return normalize_ifa_impl_(idfa, resource);
   }

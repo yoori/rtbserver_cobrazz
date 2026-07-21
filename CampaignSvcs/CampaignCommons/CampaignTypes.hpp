@@ -1,7 +1,7 @@
 #pragma once
 
 #include <limits>
-#include <memory_resource>
+#include <list>
 #include <set>
 #include <map>
 #include <vector>
@@ -11,6 +11,7 @@
 #include <Commons/Algs.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/Interval.hpp>
+#include <Commons/MonoAllocator.hpp>
 
 namespace AdServer
 {
@@ -39,9 +40,10 @@ namespace AdServer
       static const char FOOTER_URL[] = "AD_FOOTER_URL";
     }
 
-    typedef std::vector<unsigned long> ChannelIdArray;
-    typedef std::list<unsigned long> ChannelIdList;
-    using ChannelIdSet = std::pmr::set<unsigned long>;
+    using ChannelIdArray = std::vector<unsigned long>;
+    using ChannelIdList = std::list<unsigned long>;
+    using ChannelIdSet = std::set<unsigned long>;
+    using MonoChannelIdSet = AdServer::Commons::MonoSet<unsigned long>;
 
     struct ChannelIdSortedArray: protected std::vector<unsigned long>
     {
@@ -310,7 +312,8 @@ namespace AdServer
       RVT_CUSTOM
     };
 
-    using AllowedDurationSet = std::pmr::set<unsigned long>;
+    using AllowedDurationSet =
+      AdServer::Commons::MonoSet<unsigned long>;
 
     typedef Commons::Interval<unsigned long> PriceRange;
     typedef Commons::IntervalSet<unsigned long> PriceRangeSet;
