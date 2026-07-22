@@ -57,7 +57,7 @@ Application_::add_geo_(
       try
       {
         GeoIPMapping::IPMapCity::CityLocation geo_location;
-        ip_map->city_location_by_addr(line.c_str(), geo_location, false);
+        ip_map->city_location_by_addr(line.c_str(), geo_location, false, true);
         loc = geo_location.country_code + "/" +
           geo_location.region + "/" +
           geo_location.city;
@@ -145,5 +145,4 @@ main(int argc, char** argv)
 
   return 0;
 }
-
 
