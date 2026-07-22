@@ -1,5 +1,6 @@
 #include <Generics/Time.hpp>
 #include <array>
+#include <string_view>
 #include <utility>
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -168,16 +169,11 @@ namespace AdServer::WebStat
       else if(FrontendCommons::find_uri(
         config_->YandexNotificationUriList().Uri(), request.uri(), found_uri))
       {
-        Stream::BinaryStreamReader request_reader(
-          &request.get_input_stream());
-
         std::string bid_request;
-        char buf[1024];
-
-        while(!request_reader.eof() && !request_reader.bad())
+        const std::string_view body = request.body();
+        if(!body.empty())
         {
-          request_reader.read(buf, sizeof(buf));
-          bid_request.append(buf, request_reader.gcount());
+          bid_request.assign(body.data(), body.size());
         }
 
         request_info_filler_->fill_by_yandex_notification(

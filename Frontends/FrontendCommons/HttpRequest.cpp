@@ -6,53 +6,19 @@ namespace
 
 namespace FCGI
 {
-InputStream::InputStream() noexcept :
-  pos_(0)
-{}
-
-InputStream::InputStream(const String::SubString& buf) noexcept :
-  buf_(buf),
-  pos_(0)
-{}
-
-void
-InputStream::set_buf(const String::SubString& buf) noexcept
-{
-  buf_ = buf;
-  pos_ = 0;
-}
-
-Stream::BinaryInputStream&
-InputStream::read(char_type* s, streamsize n) /*throw(eh::Exception)*/
-{
-  if (n > buf_.size() - pos_)
-  {
-    n = buf_.size() - pos_;
-    if (n == 0)
-    {
-      setstate(std::ios_base::eofbit | std::ios_base::failbit);
-      gcount_ = 0;
-      return *this;
-    }
-  }
-  memcpy(s, buf_.data() + pos_, n);
-  pos_ += n;
-  gcount_ = n;
-  return *this;
-}
-
-void
-InputStream::has_body(bool /*val*/) noexcept
-{
-}
-
 void
 HttpRequest::parse_params(
-  const String::SubString& str,
+  std::string_view str,
   HTTP::ParamList& params)
   /*throw(String::StringManip::InvalidFormatException, eh::Exception)*/
 {
-  String::StringManip::SplitAmp tokenizer(str);
+  if(str.empty())
+  {
+    return;
+  }
+
+  const String::SubString input(str.data(), str.size());
+  String::StringManip::SplitAmp tokenizer(input);
   String::SubString token;
   while (tokenizer.get_token(token))
   {

@@ -215,7 +215,9 @@ namespace FrontendCommons
     class OnMatch
     {
     public:
-      OnMatch(unsigned long max_priority) noexcept;
+      OnMatch(
+        unsigned long max_priority,
+        String::RegEx::MatchContext& match_context) noexcept;
 
       bool
       operator() (const MultiStringMatcher::MatchDetails& details)
@@ -226,6 +228,7 @@ namespace FrontendCommons
 
     private:
       const unsigned long max_priority_;
+      String::RegEx::MatchContext& match_context_;
       const MatchElement* matched_element_;
     };
 
@@ -235,7 +238,9 @@ namespace FrontendCommons
       CategoryMatcher() noexcept;
 
       const MatchElement*
-      match(std::string_view user_agent) const
+      match(
+        std::string_view user_agent,
+        String::RegEx::MatchContext& match_context) const
         /*throw(eh::Exception, String::RegEx::Exception)*/;
 
       void
@@ -272,7 +277,8 @@ namespace FrontendCommons
       std::string* platform,
       std::string* full_platform,
       const CategoryMatcher& matchers,
-      std::string_view low_user_agent) const
+      std::string_view low_user_agent,
+      String::RegEx::MatchContext& match_context) const
       /*throw(eh::Exception)*/;
 
   private:

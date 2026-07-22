@@ -1371,7 +1371,8 @@ namespace AdServer::ImprTrack
         if (ip_map_->city_location_by_addr(
              state.request_info.peer_ip.c_str(),
              geo_location,
-             false))
+             false,
+             true))
         {
           FrontendCommons::Location_var location = std::make_shared<FrontendCommons::Location>();
           location->country = geo_location.country_code.str();

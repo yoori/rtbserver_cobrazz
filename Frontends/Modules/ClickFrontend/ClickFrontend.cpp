@@ -417,7 +417,8 @@ namespace AdServer
         if(ip_map_->city_location_by_addr(
              peer_ip_val.str().c_str(),
              geo_location,
-             false))
+             false,
+             true))
         {
           FrontendCommons::Location_var location =
             std::make_shared<FrontendCommons::Location>();

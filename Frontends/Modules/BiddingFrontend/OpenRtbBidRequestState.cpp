@@ -26,6 +26,64 @@ namespace AdServer::Bidding
       return String::SubString(value.data(), value.size());
     }
 
+    class GZipUnpacker
+    {
+    public:
+      std::string
+      unpack(std::string_view data) const
+      {
+        if (data.empty())
+        {
+          return {};
+        }
+
+        z_stream stream{};
+        if (::inflateInit2(&stream, 16 + MAX_WBITS) != Z_OK)
+        {
+          return {};
+        }
+
+        struct InflateEndGuard
+        {
+          z_stream& stream;
+
+          ~InflateEndGuard() noexcept
+          {
+            ::inflateEnd(&stream);
+          }
+        } guard{stream};
+
+        stream.avail_in = data.size();
+        stream.next_in = reinterpret_cast<Bytef*>(
+          const_cast<char*>(data.data()));
+
+        std::string result;
+        int err = Z_OK;
+
+        do
+        {
+          const size_t old_size = result.size();
+          result.resize(old_size + OUTPUT_CHUNK_SIZE);
+
+          stream.avail_out = static_cast<uInt>(result.size() - old_size);
+          stream.next_out = reinterpret_cast<Bytef*>(&result[old_size]);
+
+          err = ::inflate(&stream, Z_NO_FLUSH);
+          if (err != Z_OK && err != Z_STREAM_END)
+          {
+            return {};
+          }
+        }
+        while (err != Z_STREAM_END);
+
+        result.resize(result.size() - stream.avail_out);
+        return result;
+      }
+
+    private:
+      static constexpr size_t OUTPUT_CHUNK_SIZE = 32 * 1024;
+    };
+
     namespace Response::Header
     {
       const std::string CONTENT_TYPE("Content-Type");
@@ -278,15 +336,10 @@ namespace AdServer::Bidding
     try
     {
       const FCGI::HttpRequest& request = request_holder_->request();
-
-      auto& input_stream = request.get_input_stream();
-
-      char buf[1024];
-
-      while(!input_stream.eof() && !input_stream.bad())
+      const std::string_view body = request.body();
+      if(!body.empty())
       {
-        input_stream.read(buf, sizeof(buf));
-        bid_request.append(buf, input_stream.gcount());
+        bid_request.assign(body.data(), body.size());
       }
 
       // check gzip
@@ -306,30 +359,15 @@ namespace AdServer::Bidding
 
       if(apply_unzip)
       {
-        std::string res;
-        res.resize(32 * 1024);
-
-        z_stream zs;
-        ::memset(&zs, 0, sizeof(zs));
-        ::inflateInit2(&zs, 16 + MAX_WBITS);
-
-        zs.avail_in = bid_request.size();
-        zs.next_in = (Bytef*)&bid_request[0];
-        zs.avail_out = res.size();
-        zs.next_out = (Bytef*)&res[0];
-
-        int err = ::inflate(&zs, Z_NO_FLUSH);
-        if(!(err == Z_OK || err == Z_STREAM_END))
+        GZipUnpacker unpacker;
+        std::string unpacked_bid_request = unpacker.unpack(bid_request);
+        if(unpacked_bid_request.empty())
         {
           // decompression error
           return false;
         }
 
-        res.resize(res.size() - zs.avail_out);
-
-        ::inflateEnd(&zs);
-
-        bid_request.swap(res);
+        bid_request.swap(unpacked_bid_request);
       }
 
       bid_frontend_->request_info_filler()->fill_by_openrtb_request(

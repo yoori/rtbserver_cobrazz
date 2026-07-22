@@ -1,8 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <string>
+#include <string_view>
 
-#include <Stream/BinaryStream.hpp>
 #include <String/SubString.hpp>
 #include <String/StringManip.hpp>
 
@@ -21,26 +22,6 @@ namespace tinyfcgi
 namespace FCGI
 {
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-  class InputStream: public Stream::BinaryInputStream
-  {
-  public:
-    InputStream() noexcept;
-    InputStream(const String::SubString& buf) noexcept;
-
-    void
-    set_buf(const String::SubString& buf) noexcept;
-
-    virtual Stream::BinaryInputStream&
-    read(char_type* s, streamsize n) /*throw(eh::Exception)*/;
-
-    void
-    has_body(bool val) noexcept;
-
-  private:
-    String::SubString buf_;
-    mutable size_t pos_;
-  };
 
   enum ParseRes
   {
@@ -83,8 +64,25 @@ namespace FCGI
     };
 
     static void
-    parse_params(const String::SubString& str, HTTP::ParamList& params)
+    parse_params(std::string_view str, HTTP::ParamList& params)
       /*throw(String::StringManip::InvalidFormatException, eh::Exception)*/;
+
+    static void
+    parse_params(const std::string& str, HTTP::ParamList& params)
+      /*throw(String::StringManip::InvalidFormatException, eh::Exception)*/
+    {
+      parse_params(std::string_view(str), params);
+    }
+
+    static void
+    parse_params(const String::SubString& str, HTTP::ParamList& params)
+      /*throw(String::StringManip::InvalidFormatException, eh::Exception)*/
+    {
+      parse_params(
+        str.empty() ? std::string_view() :
+          std::string_view(str.data(), str.size()),
+        params);
+    }
 
     HttpRequest() noexcept
       : method_(RM_GET),
@@ -119,14 +117,15 @@ namespace FCGI
     void
     set_headers(HTTP::SubHeaderList&& headers) noexcept;
 
-    const String::SubString&
-    body() const noexcept { return body_; }
+    std::string_view
+    body() const noexcept
+    {
+      return body_.empty() ? std::string_view() :
+        std::string_view(body_.data(), body_.size());
+    }
 
     void
     set_body(const String::SubString& body) noexcept;
-
-    InputStream&
-    get_input_stream() const noexcept { return input_stream_; }
 
     bool
     secure() const noexcept { return secure_; }
@@ -157,7 +156,6 @@ namespace FCGI
     String::SubString query_string_;
     HTTP::ParamList params_;
     HTTP::SubHeaderList headers_;
-    mutable InputStream input_stream_;
     bool header_only_;
     bool secure_;
   };
@@ -243,7 +241,6 @@ namespace FCGI
   HttpRequest::set_body(const String::SubString& body) noexcept
   {
     body_ = body;
-    input_stream_.set_buf(body_);
   }
 
   inline void

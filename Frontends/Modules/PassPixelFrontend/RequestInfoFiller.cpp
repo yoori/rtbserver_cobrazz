@@ -197,7 +197,8 @@ namespace AdServer::PassbackPixel
           if(ip_map_->city_location_by_addr(
                passback_track_info.ip.c_str(),
                loc,
-               false))
+               false,
+               true))
           {
             passback_track_info.country = loc.country_code.str();
           }

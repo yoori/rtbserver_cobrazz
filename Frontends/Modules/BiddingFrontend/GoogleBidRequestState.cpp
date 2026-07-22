@@ -1,5 +1,7 @@
 #include "GoogleBidRequestState.hpp"
 
+#include <string_view>
+
 #include <Commons/GrpcAlgs.hpp>
 
 
@@ -171,10 +173,8 @@ namespace AdServer::Bidding
 
     try
     {
-      Stream::BinaryStreamReader request_reader(
-        &request_holder_->request().get_input_stream());
-
-      bid_request_.ParseFromIstream(&request_reader);
+      const std::string_view body = request_holder_->request().body();
+      bid_request_.ParseFromArray(body.data(), static_cast<int>(body.size()));
 
       /*
       if(bid_frontend_->logger()->log_level() >= Logging::Logger::TRACE)

@@ -165,7 +165,8 @@ namespace AdServer::PubPixel
           if(ip_map_->city_location_by_addr(
                request_info.peer_ip.c_str(),
                geo_location,
-               false))
+               false,
+               true))
           {
             request_info.country = geo_location.country_code.str();
           }

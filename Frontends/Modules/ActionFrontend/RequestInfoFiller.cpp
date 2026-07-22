@@ -352,7 +352,8 @@ namespace AdServer::Action
           ip_map_->city_location_by_addr(
              request_info.peer_ip.c_str(),
              request_info.location,
-             false);
+             false,
+             true);
         }
         catch(const eh::Exception&)
         {}

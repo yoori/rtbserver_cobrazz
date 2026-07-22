@@ -3247,7 +3247,8 @@ namespace AdServer::Bidding
             if(ip_map_->city_location_by_addr(
                  std::string(ip).c_str(),
                  geo_location,
-                 false))
+                 false,
+                 true))
             {
               request_info.location = std::make_shared<FrontendCommons::Location>();
               request_info.location->country = geo_location.country_code.str();

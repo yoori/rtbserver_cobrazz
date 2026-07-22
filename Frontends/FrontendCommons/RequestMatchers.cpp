@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include <algorithm>
+#include <deque>
 
 #include <String/StringManip.hpp>
 #include <String/UTF8Handler.hpp>
@@ -21,6 +22,53 @@ namespace FrontendCommons
     const unsigned long FULL_PLATFORM_MAX_SIZE = 1024;
     const unsigned long BROWSER_MAX_SIZE = 1024;
     const char APPLICATION_PLATFORM_DETECTOR_NAME[] = "applications";
+
+    struct PlatformMatcherMatchContextSlot
+    {
+      std::deque<String::RegEx::MatchContext> contexts;
+      size_t depth = 0;
+    };
+
+    PlatformMatcherMatchContextSlot&
+    platform_matcher_match_context_slot_()
+    {
+      thread_local PlatformMatcherMatchContextSlot slot;
+      return slot;
+    }
+
+    class PlatformMatcherMatchContextGuard
+    {
+    public:
+      PlatformMatcherMatchContextGuard()
+        : slot_(platform_matcher_match_context_slot_()),
+          index_(slot_.depth++)
+      {
+        if (slot_.contexts.size() <= index_)
+        {
+          slot_.contexts.emplace_back();
+        }
+      }
+
+      PlatformMatcherMatchContextGuard(
+        const PlatformMatcherMatchContextGuard&) = delete;
+      PlatformMatcherMatchContextGuard&
+      operator=(const PlatformMatcherMatchContextGuard&) = delete;
+
+      ~PlatformMatcherMatchContextGuard() noexcept
+      {
+        --slot_.depth;
+      }
+
+      String::RegEx::MatchContext&
+      get() noexcept
+      {
+        return slot_.contexts[index_];
+      }
+
+    private:
+      PlatformMatcherMatchContextSlot& slot_;
+      const size_t index_;
+    };
 
     void
     emplace_platform_name(
@@ -384,8 +432,12 @@ namespace FrontendCommons
   /**
    *  PlatformMatcher implementation
    */
-  PlatformMatcher::OnMatch::OnMatch(unsigned long max_priority) noexcept
-    : max_priority_(max_priority), matched_element_(0)
+  PlatformMatcher::OnMatch::OnMatch(
+    unsigned long max_priority,
+    String::RegEx::MatchContext& match_context) noexcept
+    : max_priority_(max_priority),
+      match_context_(match_context),
+      matched_element_(0)
   {}
 
   bool
@@ -399,7 +451,9 @@ namespace FrontendCommons
     }
 
     if (details.tag->match_regexp.get() &&
-      !details.tag->match_regexp->match(details.search_in_string))
+      !details.tag->match_regexp->match(
+        details.search_in_string,
+        match_context_))
     {
       return false;
     }
@@ -421,10 +475,12 @@ namespace FrontendCommons
   }
 
   const PlatformMatcher::MatchElement*
-  PlatformMatcher::CategoryMatcher::match(std::string_view user_agent) const
+  PlatformMatcher::CategoryMatcher::match(
+    std::string_view user_agent,
+    String::RegEx::MatchContext& match_context) const
     /*throw(eh::Exception, String::RegEx::Exception)*/
   {
-    OnMatch on_match(max_priority_);
+    OnMatch on_match(max_priority_, match_context);
     const String::SubString user_agent_substr(user_agent.data(), user_agent.size());
     matcher_.match(user_agent_substr, on_match);
 
@@ -516,6 +572,7 @@ namespace FrontendCommons
   {
     std::string low_user_agent(user_agent);
     String::AsciiStringManip::to_lower(low_user_agent);
+    PlatformMatcherMatchContextGuard match_context;
 
     bool res = match_(
       application ? 0 : platform_ids,
@@ -523,7 +580,8 @@ namespace FrontendCommons
       &platform,
       &full_platform,
       *os_matchers_,
-      low_user_agent);
+      low_user_agent,
+      match_context.get());
 
     if(platform_ids)
     {
@@ -550,7 +608,8 @@ namespace FrontendCommons
             0,
             0,
             *(it->second),
-            low_user_agent);
+            low_user_agent,
+            match_context.get());
         }
       }
     }
@@ -565,10 +624,11 @@ namespace FrontendCommons
     std::string* platform,
     std::string* full_platform,
     const CategoryMatcher& matchers,
-    std::string_view user_agent) const
+    std::string_view user_agent,
+    String::RegEx::MatchContext& match_context) const
     /*throw(eh::Exception)*/
   {
-    const MatchElement* element = matchers.match(user_agent);
+    const MatchElement* element = matchers.match(user_agent, match_context);
 
     if (element)
     {
@@ -596,7 +656,10 @@ namespace FrontendCommons
           user_agent.size());
 
         if (element->output_regexp.get() &&
-            element->output_regexp->search(output_sub_strs, user_agent_substr) &&
+            element->output_regexp->search(
+              output_sub_strs,
+              user_agent_substr,
+              match_context) &&
             !output_sub_strs.empty())
         {
           for (String::RegEx::Result::iterator sit = ++output_sub_strs.begin();
