@@ -268,7 +268,8 @@ namespace AdServer
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            AdServer::Grpc::BatchingOptions(),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(
+              *common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_ = campaign_manager;

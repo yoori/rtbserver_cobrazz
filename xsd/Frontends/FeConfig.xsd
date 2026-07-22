@@ -244,6 +244,10 @@
 
   <xsd:complexType name="CampaignManagerGrpcGroupType">
     <xsd:sequence>
+      <xsd:element name="BatchingOptions"
+        type="GrpcBatchingOptionsType"
+        minOccurs="0"
+        maxOccurs="1"/>
       <xsd:element name="Endpoint"
         type="CampaignManagerGrpcEndpointType"
         minOccurs="1"

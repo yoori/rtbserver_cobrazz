@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include <Commons/ConfigUtils.hpp>
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -34,5 +35,22 @@ namespace FrontendCommons
     }
 
     return result;
+  }
+
+  inline
+  AdServer::Grpc::BatchingOptions
+  read_campaign_manager_grpc_batching_options(
+    const xsd::AdServer::Configuration::CommonFeConfigurationType&
+      common_config)
+  {
+    for(const auto& group : common_config.CampaignManagerGrpcGroup())
+    {
+      if(group.BatchingOptions().present())
+      {
+        return Config::read_xsd_grpc_options(*group.BatchingOptions());
+      }
+    }
+
+    return AdServer::Grpc::BatchingOptions();
   }
 }

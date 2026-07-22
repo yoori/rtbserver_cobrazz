@@ -269,7 +269,27 @@
     </xsd:attribute>
     <xsd:attribute name="grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
       <xsd:annotation>
-        <xsd:documentation>Frontend gRPC batching max delay, in microseconds.</xsd:documentation>
+        <xsd:documentation>Default frontend gRPC batching max delay, in microseconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="campaign_manager_grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>CampaignManager gRPC batching max delay, in microseconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user_info_grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>UserInfo gRPC batching max delay, in microseconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Channel gRPC batching max delay, in microseconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user_bind_grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>UserBind gRPC batching max delay, in microseconds.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>

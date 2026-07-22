@@ -304,6 +304,30 @@
       <xsl:value-of select="5000"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="campaign-manager-grpc-max-batch-delay-us"><xsl:value-of
+    select="$frontend-config/@campaign_manager_grpc_max_batch_delay_us"/>
+    <xsl:if test="count($frontend-config/@campaign_manager_grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="$grpc-max-batch-delay-us"/>
+    </xsl:if>
+  </xsl:variable>
+  <xsl:variable name="user-info-grpc-max-batch-delay-us"><xsl:value-of
+    select="$frontend-config/@user_info_grpc_max_batch_delay_us"/>
+    <xsl:if test="count($frontend-config/@user_info_grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="$grpc-max-batch-delay-us"/>
+    </xsl:if>
+  </xsl:variable>
+  <xsl:variable name="channel-grpc-max-batch-delay-us"><xsl:value-of
+    select="$frontend-config/@channel_grpc_max_batch_delay_us"/>
+    <xsl:if test="count($frontend-config/@channel_grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="$grpc-max-batch-delay-us"/>
+    </xsl:if>
+  </xsl:variable>
+  <xsl:variable name="user-bind-grpc-max-batch-delay-us"><xsl:value-of
+    select="$frontend-config/@user_bind_grpc_max_batch_delay_us"/>
+    <xsl:if test="count($frontend-config/@user_bind_grpc_max_batch_delay_us) = 0">
+      <xsl:value-of select="$grpc-max-batch-delay-us"/>
+    </xsl:if>
+  </xsl:variable>
 
   <!-- start config generation -->
   <!-- check that defined all needed parameters -->
@@ -416,6 +440,11 @@
     <xsl:if test="count($full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]) > 0 or
                   count($full-cluster-path/serviceGroup[@descriptor = 'AdProfilingCluster/FrontendSubCluster']) > 0">
       <cfg:CampaignManagerGrpcGroup>
+        <xsl:call-template name="AddGrpcBatchingOptions">
+          <xsl:with-param
+            name="grpc-max-batch-delay-us"
+            select="$campaign-manager-grpc-max-batch-delay-us"/>
+        </xsl:call-template>
         <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor] |
                               $full-cluster-path/serviceGroup[@descriptor = 'AdProfilingCluster/FrontendSubCluster']">
 
@@ -469,14 +498,14 @@
       <xsl:with-param name="add-user-info-grpc" select="'true'"/>
       <xsl:with-param
         name="grpc-max-batch-delay-us"
-        select="$grpc-max-batch-delay-us"/>
+        select="$user-info-grpc-max-batch-delay-us"/>
     </xsl:call-template>
 
     <cfg:Channel>
       <xsl:call-template name="AddGrpcBatchingOptions">
         <xsl:with-param
           name="grpc-max-batch-delay-us"
-          select="$grpc-max-batch-delay-us"/>
+          select="$channel-grpc-max-batch-delay-us"/>
       </xsl:call-template>
       <xsl:call-template name="AddChannelControllerGroups">
         <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
@@ -489,7 +518,7 @@
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
       <xsl:with-param
         name="grpc-max-batch-delay-us"
-        select="$grpc-max-batch-delay-us"/>
+        select="$user-bind-grpc-max-batch-delay-us"/>
     </xsl:call-template>
 
     <cfg:Cookies>
