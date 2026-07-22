@@ -28,6 +28,9 @@ namespace AdServer::CampaignSvcs
       std::uint64_t call_in_progress = 0;
       std::uint64_t call_total = 0;
       std::uint64_t call_time = 0;
+      std::uint64_t batch_total = 0;
+      std::uint64_t batch_total_time = 0;
+      std::uint64_t batch_in_progress = 0;
       std::uint64_t ready_in_progress = 0;
       std::uint64_t ready_total = 0;
       std::uint64_t ready_time = 0;

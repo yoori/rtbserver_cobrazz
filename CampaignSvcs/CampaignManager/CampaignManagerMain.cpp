@@ -382,6 +382,9 @@ namespace
       append_stat("call_in_progress", stats.call_in_progress);
       append_stat("call_total", stats.call_total);
       append_stat("call_time", stats.call_time);
+      append_stat("batch_total", stats.batch_total);
+      append_stat("batch_total_time", stats.batch_total_time);
+      append_stat("batch_in_progress", stats.batch_in_progress);
       append_stat("ready_in_progress", stats.ready_in_progress);
       append_stat(
         "progress_comment_in_progress",

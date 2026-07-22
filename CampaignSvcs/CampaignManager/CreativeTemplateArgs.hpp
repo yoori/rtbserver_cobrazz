@@ -32,10 +32,9 @@ namespace AdServer::CampaignSvcs
     bool operator==(const TokenMap& right) const noexcept;
   };
 
-  typedef std::map<std::string, OptionValue, std::less<> >
-    OptionTokenValueMap;
-  class TokenValueMap:
-    public String::TextTemplate::ArgsCallback
+  using OptionTokenValueMap = std::map<std::string, OptionValue, std::less<> >;
+
+  class TokenValueMap: public String::TextTemplate::ArgsCallback
   {
   private:
     using Container = std::map<std::string, std::string, std::less<> >;
@@ -125,7 +124,7 @@ namespace AdServer::CampaignSvcs
     std::string last_c_param;
   };
 
-  typedef std::set<std::string> TokenSet;
+  using TokenSet = std::set<std::string>;
 
   struct TokenOptionValue
   {

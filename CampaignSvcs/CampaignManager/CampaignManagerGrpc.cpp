@@ -84,6 +84,39 @@ namespace AdServer::CampaignSvcs
       std::atomic<std::uint64_t>& method_time_;
     };
 
+    class BatchStatsGuard final
+    {
+    public:
+      BatchStatsGuard(
+        std::atomic<std::uint64_t>& total,
+        std::atomic<std::uint64_t>& total_time,
+        std::atomic<std::uint64_t>& in_progress) noexcept
+        : total_(total),
+          total_time_(total_time),
+          in_progress_(in_progress)
+      {
+        total_.fetch_add(1, std::memory_order_relaxed);
+        in_progress_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      ~BatchStatsGuard() noexcept
+      {
+        const auto elapsed_us =
+          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+        in_progress_.fetch_sub(1, std::memory_order_relaxed);
+      }
+
+      BatchStatsGuard(const BatchStatsGuard&) = delete;
+      BatchStatsGuard& operator=(const BatchStatsGuard&) = delete;
+
+    private:
+      std::atomic<std::uint64_t>& total_;
+      std::atomic<std::uint64_t>& total_time_;
+      std::atomic<std::uint64_t>& in_progress_;
+      const Generics::Time start_time_ = Generics::Time::get_time_of_day();
+    };
+
     CORBACommons::OctSeq
     unpack_oct_seq(const std::string& source)
     {
@@ -1452,6 +1485,9 @@ namespace AdServer::CampaignSvcs
     std::atomic<std::uint64_t> call_in_progress{0};
     std::atomic<std::uint64_t> call_total{0};
     std::atomic<std::uint64_t> call_time{0};
+    std::atomic<std::uint64_t> batch_total{0};
+    std::atomic<std::uint64_t> batch_total_time{0};
+    std::atomic<std::uint64_t> batch_in_progress{0};
     std::atomic<std::uint64_t> ready_in_progress{0};
     std::atomic<std::uint64_t> ready_total{0};
     std::atomic<std::uint64_t> ready_time{0};
@@ -1734,6 +1770,12 @@ namespace AdServer::CampaignSvcs
       pb::GetConfigResponse& response,
       ::grpc::Status& result_status) const;
 
+    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response) const override;
+
+    std::size_t distributed_batch_max_split() const noexcept override;
+
   private:
     void ready(
       const pb::ReadyRequest& request,
@@ -1832,8 +1874,6 @@ namespace AdServer::CampaignSvcs
 
     void get_status_(pc::GetStatusResponse& response) const;
 
-    std::size_t distributed_batch_max_split() const noexcept override;
-
   private:
     ProcessControlService process_control_service_;
     CampaignManagerCore_var core_;
@@ -1878,6 +1918,20 @@ namespace AdServer::CampaignSvcs
     return max_batch_split_;
   }
 
+  AdServer::Grpc::GrpcCoroutine
+  CampaignManagerGrpc::ServiceImpl::co_handle_batch_request(
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response) const
+  {
+    BatchStatsGuard in_progress(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
+      batch_request,
+      batch_response);
+  }
+
   void
   CampaignManagerGrpc::ServiceImpl::get_status_(
     pc::GetStatusResponse& response) const
@@ -1904,6 +1958,13 @@ namespace AdServer::CampaignSvcs
     ResponseType& response, \
     ::grpc::Status& result_status) const \
   { \
+    CallStatsGuard call_stats( \
+      stats_->call_in_progress, \
+      stats_->call_total, \
+      stats_->call_time, \
+      stats_->MethodName##_in_progress, \
+      stats_->MethodName##_total, \
+      stats_->MethodName##_time); \
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_); \
     MethodName(request, response, result_status); \
     co_return; \
@@ -1982,14 +2043,6 @@ namespace AdServer::CampaignSvcs
     pb::ReadyResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->ready_in_progress,
-      stats_->ready_total,
-      stats_->ready_time);
-
     try
     {
       response.set_ready(core_->ready());
@@ -2009,14 +2062,6 @@ namespace AdServer::CampaignSvcs
     pb::ProgressCommentResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->progress_comment_in_progress,
-      stats_->progress_comment_total,
-      stats_->progress_comment_time);
-
     try
     {
       std::string comment;
@@ -2038,14 +2083,6 @@ namespace AdServer::CampaignSvcs
     pb::GetFileResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_file_in_progress,
-      stats_->get_file_total,
-      stats_->get_file_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2068,14 +2105,6 @@ namespace AdServer::CampaignSvcs
     pb::TraceCampaignSelectionIndexResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->trace_campaign_selection_index_in_progress,
-      stats_->trace_campaign_selection_index_total,
-      stats_->trace_campaign_selection_index_time);
-
     try
     {
       response.set_trace_xml(core_->trace_campaign_selection_index());
@@ -2095,8 +2124,6 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeResponse& response,
     ::grpc::Status& result_status) const
   {
-    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2104,6 +2131,8 @@ namespace AdServer::CampaignSvcs
       stats_->get_campaign_creative_in_progress,
       stats_->get_campaign_creative_total,
       stats_->get_campaign_creative_time);
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
     {
@@ -2158,14 +2187,6 @@ namespace AdServer::CampaignSvcs
     pb::ProcessMatchRequestResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->process_match_request_in_progress,
-      stats_->process_match_request_total,
-      stats_->process_match_request_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2214,8 +2235,6 @@ namespace AdServer::CampaignSvcs
     pb::InstantiateAdResponse& response,
     ::grpc::Status& result_status) const
   {
-    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2223,6 +2242,8 @@ namespace AdServer::CampaignSvcs
       stats_->instantiate_ad_in_progress,
       stats_->instantiate_ad_total,
       stats_->instantiate_ad_time);
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     response.set_hostname(service_hostname_());
 
@@ -2302,14 +2323,6 @@ namespace AdServer::CampaignSvcs
     pb::GetCampaignCreativeByCcidResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_campaign_creative_by_ccid_in_progress,
-      stats_->get_campaign_creative_by_ccid_total,
-      stats_->get_campaign_creative_by_ccid_time);
-
     try
     {
       CampaignManagerCore::PreviewCreativeParams params;
@@ -2339,14 +2352,6 @@ namespace AdServer::CampaignSvcs
     pb::GetChannelLinksResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_channel_links_in_progress,
-      stats_->get_channel_links_total,
-      stats_->get_channel_links_time);
-
     try
     {
       const auto result = core_->get_channel_links(
@@ -2374,14 +2379,6 @@ namespace AdServer::CampaignSvcs
     pb::GetCategoryChannelsResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_category_channels_in_progress,
-      stats_->get_category_channels_total,
-      stats_->get_category_channels_time);
-
     try
     {
       const auto result = core_->get_category_channels(request.language());
@@ -2412,14 +2409,6 @@ namespace AdServer::CampaignSvcs
     pb::GetColocationFlagsResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_colocation_flags_in_progress,
-      stats_->get_colocation_flags_total,
-      stats_->get_colocation_flags_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2455,14 +2444,6 @@ namespace AdServer::CampaignSvcs
     pb::GetPubPixelsResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_pub_pixels_in_progress,
-      stats_->get_pub_pixels_total,
-      stats_->get_pub_pixels_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2499,14 +2480,6 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderPassbackResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->consider_passback_in_progress,
-      stats_->consider_passback_total,
-      stats_->consider_passback_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2539,14 +2512,6 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderPassbackTrackResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->consider_passback_track_in_progress,
-      stats_->consider_passback_track_total,
-      stats_->consider_passback_track_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2581,14 +2546,6 @@ namespace AdServer::CampaignSvcs
     pb::VerifyOptOperationResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->verify_opt_operation_in_progress,
-      stats_->verify_opt_operation_total,
-      stats_->verify_opt_operation_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2647,8 +2604,6 @@ namespace AdServer::CampaignSvcs
     pb::GetClickUrlResponse& response,
     ::grpc::Status& result_status) const
   {
-    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2656,6 +2611,8 @@ namespace AdServer::CampaignSvcs
       stats_->get_click_url_in_progress,
       stats_->get_click_url_total,
       stats_->get_click_url_time);
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     response.set_hostname(service_hostname_());
 
@@ -2717,8 +2674,6 @@ namespace AdServer::CampaignSvcs
     pb::VerifyImpressionResponse& response,
     ::grpc::Status& result_status) const
   {
-    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-
     CallStatsGuard call_stats(
       stats_->call_in_progress,
       stats_->call_total,
@@ -2726,6 +2681,8 @@ namespace AdServer::CampaignSvcs
       stats_->verify_impression_in_progress,
       stats_->verify_impression_total,
       stats_->verify_impression_time);
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     response.set_hostname(service_hostname_());
 
@@ -2781,14 +2738,6 @@ namespace AdServer::CampaignSvcs
     pb::ActionTakenResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->action_taken_in_progress,
-      stats_->action_taken_total,
-      stats_->action_taken_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2842,14 +2791,6 @@ namespace AdServer::CampaignSvcs
     pb::ConsiderWebOperationResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->consider_web_operation_in_progress,
-      stats_->consider_web_operation_total,
-      stats_->consider_web_operation_time);
-
     response.set_hostname(service_hostname_());
 
     try
@@ -2912,14 +2853,6 @@ namespace AdServer::CampaignSvcs
     pb::GetConfigResponse& response,
     ::grpc::Status& result_status) const
   {
-    CallStatsGuard call_stats(
-      stats_->call_in_progress,
-      stats_->call_total,
-      stats_->call_time,
-      stats_->get_config_in_progress,
-      stats_->get_config_total,
-      stats_->get_config_time);
-
     try
     {
       CampaignManagerCore::ConfigRequestInfo get_config_info;
@@ -2989,6 +2922,9 @@ namespace AdServer::CampaignSvcs
     LOAD_STAT_(call_in_progress);
     LOAD_STAT_(call_total);
     LOAD_STAT_(call_time);
+    LOAD_STAT_(batch_total);
+    LOAD_STAT_(batch_total_time);
+    LOAD_STAT_(batch_in_progress);
     LOAD_STAT_(ready_in_progress);
     LOAD_STAT_(ready_total);
     LOAD_STAT_(ready_time);
