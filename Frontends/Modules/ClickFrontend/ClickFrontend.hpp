@@ -11,6 +11,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/ActiveObject.hpp>
+#include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
@@ -24,7 +25,7 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
-#include <Commons/TextTemplateCache.hpp>
+#include <Commons/TextTemplateAsyncCache.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
@@ -202,7 +203,8 @@ namespace AdServer
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
 
     Generics::StringHashAdapter click_template_file_;
-    Commons::TextTemplateCache_var template_files_;
+    Generics::TaskRunner_var template_file_task_runner_;
+    Commons::TextTemplateCachePtr template_files_;
 
     typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;

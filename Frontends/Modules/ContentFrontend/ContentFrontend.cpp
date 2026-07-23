@@ -1,4 +1,5 @@
 #include <Generics/Time.hpp>
+#include <optional>
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -23,16 +24,57 @@ namespace
     static const unsigned long MAX_LENGTH_PARAM_VALUE = 2000;
   };
 
-  typedef FrontendCommons::DefaultConstrain<
+  using ContentFrontendHTTPConstrain = FrontendCommons::DefaultConstrain<
     FrontendCommons::OnlyGetAllowed,
     FrontendCommons::ParamConstrainDefault,
-    ContentFrontendConstrainTraits>
-    ContentFrontendHTTPConstrain;
+    ContentFrontendConstrainTraits>;
 
   const char SECURE_PROTOCOL_NAME[] = "ssl/tls filter";
 
   const char HANDLE_COMMAND_ERROR[] =
     "ContentFrontend::handle_command: an error occurred";
+
+  using TextTemplateCache = AdServer::Commons::TextTemplateCache;
+
+  using TextTemplateUpdateCallback = TextTemplateCache::FarUpdateCallback;
+
+  const unsigned TEXT_TEMPLATE_LOAD_THREADS = 2;
+
+  FrontendCommons::RequestTask
+  co_update_text_template_(
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
+      campaign_manager_coro,
+    std::string key,
+    std::string service_index,
+    TextTemplateUpdateCallback callback)
+    noexcept
+  {
+    try
+    {
+      adserver::campaign_svcs::campaign_manager::GetFileRequest request;
+      request.set_file_name(key);
+      if(!service_index.empty())
+      {
+        request.set_service_index(service_index);
+      }
+
+      auto result = co_await campaign_manager_coro->get_file(
+        std::move(request));
+      if(!result.status.ok())
+      {
+        callback(std::optional<std::string>());
+        co_return FrontendCommons::RequestResult::written();
+      }
+
+      callback(result.response.file());
+    }
+    catch(...)
+    {
+      callback(std::optional<std::string>());
+    }
+
+    co_return FrontendCommons::RequestResult::written();
+  }
 }
 
 namespace Config
@@ -99,75 +141,6 @@ namespace Tokens
 
 namespace AdServer
 {
-  ContentFrontend::CreativesUpdater::CreativesUpdater(
-    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
-      campaign_manager_coro)
-    noexcept
-    : campaign_manager_coro_(std::move(campaign_manager_coro))
-  {}
-
-  ContentFrontend::CreativesUpdater::~CreativesUpdater() noexcept = default;
-
-  void
-  ContentFrontend::CreativesUpdater::far_update_async(
-    const char* file,
-    const char* service_index,
-    ConfigType::UpdateCallback callback)
-    noexcept
-  {
-    try
-    {
-      adserver::campaign_svcs::campaign_manager::GetFileRequest request;
-      request.set_file_name(file);
-      if(service_index)
-      {
-        request.set_service_index(service_index);
-      }
-
-      co_far_update_(
-        std::move(request),
-        std::move(callback)).start_detached(nullptr);
-    }
-    catch(...)
-    {
-      callback(Holder());
-    }
-  }
-
-  FrontendCommons::RequestTask
-  ContentFrontend::CreativesUpdater::co_far_update_(
-    adserver::campaign_svcs::campaign_manager::GetFileRequest request,
-    ConfigType::UpdateCallback callback)
-    noexcept
-  {
-    try
-    {
-      auto result = co_await campaign_manager_coro_->get_file(
-        std::move(request));
-      if(!result.status.ok())
-      {
-        callback(Holder());
-        co_return FrontendCommons::RequestResult::written();
-      }
-
-      String::SubString file_body(
-        result.response.file().data(),
-        result.response.file().size());
-      Generics::Time now = Generics::Time::get_time_of_day();
-      callback(new ConfigType::TextTemplateHolder(
-        Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
-        now,
-        now,
-        file_body.size()));
-    }
-    catch(...)
-    {
-      callback(Holder());
-    }
-
-    co_return FrontendCommons::RequestResult::written();
-  }
-
   /**
    * ContentFrontend implementation
    */
@@ -195,7 +168,7 @@ namespace AdServer
 
     try
     {
-      typedef Configuration::FeConfig Config;
+      using Config = Configuration::FeConfig;
       const Config& fe_config = frontend_config_->get();
 
       if(!fe_config.ContentFeConfiguration().present())
@@ -226,7 +199,7 @@ namespace AdServer
     {
       parse_configs_();
 
-      typedef Configuration::FeConfig::CommonFeConfiguration_type CommonType;
+      using CommonType = Configuration::FeConfig::CommonFeConfiguration_type;
 
       for(CommonType::TemplateRule_sequence::
             const_iterator rule_it =
@@ -270,12 +243,34 @@ namespace AdServer
           workers_);
       add_child_object(campaign_manager);
 
-      template_files_ = new Commons::TextTemplateCache(
+      template_file_task_runner_ =
+        new Generics::TaskRunner(callback(), TEXT_TEMPLATE_LOAD_THREADS);
+      add_child_object(template_file_task_runner_.in());
+
+      template_files_ = std::make_shared<Commons::TextTemplateCache>(
         config_->TemplateCache().size(),
+        template_file_task_runner_.in(),
         Generics::Time(config_->TemplateCache().timeout()),
-          Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-            Generics::Time::ONE_SECOND,
-            new CreativesUpdater(campaign_manager_coro_)));
+        Generics::Time::ONE_SECOND,
+        [
+          campaign_manager_coro = campaign_manager_coro_
+        ](
+          std::string key,
+          std::string service_index,
+          TextTemplateCache::FarUpdateCallback callback) noexcept
+        {
+          const std::string::size_type slash_pos = key.rfind('/');
+          if(slash_pos != std::string::npos)
+          {
+            key.erase(0, slash_pos + 1);
+          }
+
+          co_update_text_template_(
+            campaign_manager_coro,
+            std::move(key),
+            std::move(service_index),
+            std::move(callback)).start_detached(nullptr);
+        });
     }
     catch(const eh::Exception& ex)
     {
@@ -551,7 +546,7 @@ namespace AdServer
 
       file = config_->TemplateCache().root() + file;
 
-      Commons::TextTemplate_var templ =
+      Commons::TextTemplatePtr templ =
         co_await FrontendCommons::co_get_text_template(
           template_files_,
           workers_,
@@ -568,7 +563,7 @@ namespace AdServer
         {
           http_status = fill_response_(
             *response,
-            templ,
+            templ.get(),
             instantiate_type,
             click_url0,
             pub_preclick_url,
@@ -624,7 +619,7 @@ namespace AdServer
     const std::string& random_str)
     const /*throw(eh::Exception)*/
   {
-    typedef std::map<String::SubString, std::string> ArgMap;
+    using ArgMap = std::map<String::SubString, std::string>;
     ArgMap args_cont;
 
     TemplateRuleMap::const_iterator rule_it = template_rules_.find(instantiate_type);

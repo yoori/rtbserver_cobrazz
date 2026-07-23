@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <unistd.h>
 
@@ -1787,11 +1788,6 @@ namespace AdServer::CampaignSvcs
       pb::ProgressCommentResponse& response,
       ::grpc::Status& result_status) const;
 
-    void get_file(
-      const pb::GetFileRequest& request,
-      pb::GetFileResponse& response,
-      ::grpc::Status& result_status) const;
-
     void process_match_request(
       const pb::ProcessMatchRequestRequest& request,
       pb::ProcessMatchRequestResponse& response,
@@ -1979,10 +1975,6 @@ namespace AdServer::CampaignSvcs
     pb::ProgressCommentRequest,
     pb::ProgressCommentResponse)
   DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    get_file,
-    pb::GetFileRequest,
-    pb::GetFileResponse)
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
     process_match_request,
     pb::ProcessMatchRequestRequest,
     pb::ProcessMatchRequestResponse)
@@ -2077,17 +2069,27 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  CampaignManagerGrpc::ServiceImpl::get_file(
-    const pb::GetFileRequest& request,
+  AdServer::Grpc::GrpcCoroutine
+  CampaignManagerGrpc::ServiceImpl::co_get_file(
+    pb::GetFileRequest&& request,
     pb::GetFileResponse& response,
     ::grpc::Status& result_status) const
   {
+    CallStatsGuard call_stats(
+      stats_->call_in_progress,
+      stats_->call_total,
+      stats_->call_time,
+      stats_->get_file_in_progress,
+      stats_->get_file_total,
+      stats_->get_file_time);
+
+    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+
     response.set_hostname(service_hostname_());
 
     try
     {
-      const auto file = core_->get_file(request.file_name());
+      const auto file = co_await core_->co_get_file(request.file_name());
       response.set_file(file.data(), file.size());
       result_status = ::grpc::Status::OK;
     }
@@ -2097,6 +2099,8 @@ namespace AdServer::CampaignSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+
+    co_return;
   }
 
   void
@@ -2136,7 +2140,6 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-
       auto core_request_params = unpack_request_params(request.request_params());
       const auto result = co_await core_->co_get_campaign_creative(
         std::move(core_request_params));

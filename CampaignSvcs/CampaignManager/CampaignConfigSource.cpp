@@ -1,3 +1,5 @@
+#include <string_view>
+
 #include <Generics/Time.hpp>
 #include <Generics/Proc.hpp>
 #include <String/StringManip.hpp>
@@ -42,6 +44,50 @@ namespace
 {
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
+  bool
+  is_system_creative_token(std::string_view name) noexcept
+  {
+    namespace CreativeTokens = AdServer::CampaignSvcs::CreativeTokens;
+
+    return name == CreativeTokens::REQUEST_ID ||
+      name == CreativeTokens::CCID ||
+      name == CreativeTokens::ADVERTISER_ID ||
+      name == CreativeTokens::CGID ||
+      name == CreativeTokens::CID ||
+      name == CreativeTokens::CREATIVE_SIZE ||
+      name == CreativeTokens::TEMPLATE_FORMAT ||
+      name == CreativeTokens::ACTIONPIXEL;
+  }
+
+  void
+  remove_system_creative_tokens(
+    AdServer::CampaignSvcs::Creative& creative,
+    Logging::Logger* logger)
+    noexcept
+  {
+    for (auto token_it = creative.tokens.begin(); token_it != creative.tokens.end();)
+    {
+      if (is_system_creative_token(token_it->first))
+      {
+        if (logger)
+        {
+          logger->sstream(
+            Logging::Logger::WARNING,
+            Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            "CampaignConfigSource: system creative token '" <<
+            token_it->first <<
+            "' is ignored for ccid=" << creative.ccid;
+        }
+
+        token_it = creative.tokens.erase(token_it);
+      }
+      else
+      {
+        ++token_it;
+      }
+    }
+  }
+
   void
   normalize(const String::SubString& src, std::string& res)
     /*throw(eh::Exception)*/
@@ -73,11 +119,28 @@ namespace
 
     return false;
   }
+
+  void
+  fill_adv_track_pixel_tokens(AdServer::CampaignSvcs::Creative& creative)
+  {
+    creative.adv_track_pixel_tokens.clear();
+
+    for (const auto& token : creative.tokens)
+    {
+      if (token.first.compare(
+          0,
+          AdServer::CampaignSvcs::CreativeTokens::ADV_TRACK_PIXEL.size(),
+          AdServer::CampaignSvcs::CreativeTokens::ADV_TRACK_PIXEL) == 0)
+      {
+        creative.adv_track_pixel_tokens.push_back({
+          token.first,
+          token.second.option_id});
+      }
+    }
+  }
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   namespace
   {
@@ -89,7 +152,7 @@ namespace CampaignSvcs
     CreativeTemplateFactory::Handler::Type
     adopt_template_type(AdServer::CampaignSvcs::CreativeTemplateType type_val)
     {
-      if(type_val == AdServer::CampaignSvcs::CTT_TEXT)
+      if (type_val == AdServer::CampaignSvcs::CTT_TEXT)
       {
         return CreativeTemplateFactory::Handler::CTT_TEXT;
       }
@@ -114,18 +177,18 @@ namespace CampaignSvcs
     void
     rebuild_creative_appformat_index_(CampaignConfig& config) noexcept
     {
-      for(CampaignConfig::CampaignMap::iterator cmp_it =
+      for (CampaignConfig::CampaignMap::iterator cmp_it =
             config.campaigns.begin();
           cmp_it != config.campaigns.end();
           ++cmp_it)
       {
         CreativeList& creatives = cmp_it->second->creatives;
-        for(CreativeList::iterator cr_it = creatives.begin();
+        for (CreativeList::iterator cr_it = creatives.begin();
             cr_it != creatives.end();
             ++cr_it)
         {
           Creative* creative = *cr_it;
-          for(Creative::SizeMap::iterator size_it =
+          for (Creative::SizeMap::iterator size_it =
                 creative->sizes.begin();
               size_it != creative->sizes.end();
               ++size_it)
@@ -134,13 +197,13 @@ namespace CampaignSvcs
               size_it->second.available_appformats;
             available_appformats.clear();
 
-            for(StringSet::const_iterator app_format_it =
+            for (StringSet::const_iterator app_format_it =
                   config.all_template_appformats.begin();
                 app_format_it != config.all_template_appformats.end();
                 ++app_format_it)
             {
               CreativeTemplate creative_template;
-              if(config.creative_templates.get_value(
+              if (config.creative_templates.get_value(
                    CreativeTemplateKey(
                      creative->creative_format.c_str(),
                      size_it->second.size->protocol_name.c_str(),
@@ -241,7 +304,7 @@ namespace CampaignSvcs
 
     std::string short_click_url;
     std::string click_url_domain;
-    if(creative_info.click_url.value[0])
+    if (creative_info.click_url.value[0])
     {
       try
       {
@@ -275,7 +338,7 @@ namespace CampaignSvcs
     result->status = creative_info.status;
     result->order_set_id = creative_info.order_set_id;
 
-    for(CORBA::ULong size_i = 0; size_i < creative_info.sizes.length(); ++size_i)
+    for (CORBA::ULong size_i = 0; size_i < creative_info.sizes.length(); ++size_i)
     {
       Creative::Size& res_size = result->sizes[creative_info.sizes[size_i].size_id];
       res_size.up_expand_space = creative_info.sizes[size_i].up_expand_space;
@@ -325,9 +388,9 @@ namespace CampaignSvcs
           CampaignConfigPtr new_config = std::make_shared<CampaignConfig>();
           ConfigUpdateLinks config_update_links;
 
-          for(unsigned long portion = 0; portion < PORTIONS_NUMBER; ++portion)
+          for (unsigned long portion = 0; portion < PORTIONS_NUMBER; ++portion)
           {
-            if(!active())
+            if (!active())
             {
               throw Interrupted("");
             }
@@ -424,7 +487,7 @@ namespace CampaignSvcs
 
           rebuild_creative_appformat_index_(*new_config);
 
-          if(!old_config ||
+          if (!old_config ||
              old_config->geo_channels.in() != new_config->geo_channels.in())
           {
             new_config->geo_channels->close();
@@ -498,7 +561,7 @@ namespace CampaignSvcs
   {
     Generics::Time now(Generics::Time::get_time_of_day());
 
-    if(new_config.master_stamp == Generics::Time::ZERO)
+    if (new_config.master_stamp == Generics::Time::ZERO)
     {
       new_config.master_stamp = CorbaAlgs::unpack_time(update_info.master_stamp);
     }
@@ -523,7 +586,7 @@ namespace CampaignSvcs
     apply_creative_options_update_(update_info, new_config);
     apply_account_update_(update_info, new_config, config_update_links);
 
-    for(CORBA::ULong i = 0; i < update_info.ecpms.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.ecpms.length(); ++i)
     {
       ConfigUpdateLinks::EcpmHolder ecpm;
       ecpm.ecpm = CorbaAlgs::unpack_decimal<RevenueDecimal>(
@@ -545,12 +608,12 @@ namespace CampaignSvcs
       ai.timestamp = CorbaAlgs::unpack_time(ai_info.timestamp);
 
       CORBA::ULong j = 0;
-      for(; j < ai_info.ccg_ids.length() && ai_info.ccg_ids[j] != 0; ++j)
+      for (; j < ai_info.ccg_ids.length() && ai_info.ccg_ids[j] != 0; ++j)
       {
         ai.ccg_ids.push_back(ai_info.ccg_ids[j]);
       }
 
-      if(j < ai_info.ccg_ids.length())
+      if (j < ai_info.ccg_ids.length())
       {
         CorbaAlgs::unpack_decimal_from_seq(
           ai.cur_value, ai_info.ccg_ids, j + 1);
@@ -582,7 +645,7 @@ namespace CampaignSvcs
     const ConfigUpdateLinks& config_update_links)
     noexcept
   {
-    for(AccountMap::iterator account_it = new_config.accounts.begin();
+    for (AccountMap::iterator account_it = new_config.accounts.begin();
         account_it != new_config.accounts.end(); )
     {
       ConfigUpdateLinks::IdMap::const_iterator currency_link_it =
@@ -593,19 +656,19 @@ namespace CampaignSvcs
       CurrencyMap::const_iterator currency_it = new_config.currencies.find(
         currency_link_it->second);
 
-      if(currency_it != new_config.currencies.end())
+      if (currency_it != new_config.currencies.end())
       {
         account_it->second->currency = currency_it->second;
 
         ConfigUpdateLinks::IdMap::const_iterator account_agency_it =
           config_update_links.account_agencies.find(account_it->first);
 
-        if(account_agency_it != config_update_links.account_agencies.end())
+        if (account_agency_it != config_update_links.account_agencies.end())
         {
           AccountMap::const_iterator agency_it = new_config.accounts.find(
             account_agency_it->second);
 
-          if(agency_it != new_config.accounts.end())
+          if (agency_it != new_config.accounts.end())
           {
             account_it->second->agency_account = agency_it->second;
             ++account_it;
@@ -644,7 +707,7 @@ namespace CampaignSvcs
       ConfigUpdateLinks::DomainExcludeCategoryMap::const_iterator
         domain_categories_it = domain_category_exclusions.find(check_domain);
 
-      if(domain_categories_it != domain_category_exclusions.end())
+      if (domain_categories_it != domain_category_exclusions.end())
       {
         std::copy(domain_categories_it->second.begin(),
          domain_categories_it->second.end(),
@@ -662,7 +725,7 @@ namespace CampaignSvcs
     const ConfigUpdateLinks& config_update_links)
     noexcept
   {
-    for(ConfigUpdateLinks::TemplateOptionsLinkMap::const_iterator it =
+    for (ConfigUpdateLinks::TemplateOptionsLinkMap::const_iterator it =
           config_update_links.template_option_values.begin();
         it != config_update_links.template_option_values.end(); ++it)
     {
@@ -690,10 +753,10 @@ namespace CampaignSvcs
     {
       // link parent contract to contract
       auto parent_contract_link_it = config_update_links.contract_parent_contracts.find(contract_it->first);
-      if(parent_contract_link_it != config_update_links.contract_parent_contracts.end())
+      if (parent_contract_link_it != config_update_links.contract_parent_contracts.end())
       {
         auto parent_contract_it = new_config.contracts.find(parent_contract_link_it->second);
-        if(parent_contract_it != new_config.contracts.end())
+        if (parent_contract_it != new_config.contracts.end())
         {
           contract_it->second->parent_contract = parent_contract_it->second;
         }
@@ -736,7 +799,7 @@ namespace CampaignSvcs
       AccountMap::const_iterator advertiser_it =
         new_config.accounts.find(advertiser_link_it->second);
 
-      if(account_it != new_config.accounts.end() &&
+      if (account_it != new_config.accounts.end() &&
          advertiser_it != new_config.accounts.end())
       {
         assert(account_it->second.in() && advertiser_it->second.in());
@@ -750,7 +813,7 @@ namespace CampaignSvcs
               cmp_it->second->click_revenue,
               cmp_it->second->commision));
 
-        if(ecpm_it != config_update_links.campaign_ecpms.end())
+        if (ecpm_it != config_update_links.campaign_ecpms.end())
         {
           cmp_it->second->ecpm_ = advertiser_it->second->adapt_cost(
             ecpm_it->second.ecpm,
@@ -763,18 +826,18 @@ namespace CampaignSvcs
           cmp_it->second->ctr = RevenueDecimal::ZERO;
         }
 
-        for(CreativeList::iterator cr_it = cmp_it->second->creatives.begin();
+        for (CreativeList::iterator cr_it = cmp_it->second->creatives.begin();
             cr_it != cmp_it->second->creatives.end();
             ++cr_it)
         {
           (*cr_it)->fc_id = filter_not_exist_fc_((*cr_it)->fc_id, new_config.freq_caps);
           (*cr_it)->defined_content_category = cmp_it->second->is_text();
 
-          for(Creative::SizeMap::iterator size_it = (*cr_it)->sizes.begin();
+          for (Creative::SizeMap::iterator size_it = (*cr_it)->sizes.begin();
               size_it != (*cr_it)->sizes.end();)
           {
             SizeMap::const_iterator size_def_it = new_config.sizes.find(size_it->first);
-            if(size_def_it != new_config.sizes.end())
+            if (size_def_it != new_config.sizes.end())
             {
               size_it->second.size = size_def_it->second;
               ++size_it;
@@ -785,28 +848,28 @@ namespace CampaignSvcs
             }
           }
 
-          for(Creative::CategorySet::const_iterator cr_cat_it =
+          for (Creative::CategorySet::const_iterator cr_cat_it =
                 (*cr_it)->categories.begin();
               cr_cat_it != (*cr_it)->categories.end(); ++cr_cat_it)
           {
             CampaignConfig::CreativeCategoryMap::const_iterator cat_it =
               new_config.creative_categories.find(*cr_cat_it);
 
-            if(cat_it != new_config.creative_categories.end())
+            if (cat_it != new_config.creative_categories.end())
             {
-              if(cat_it->second.cct_id == CCT_CONTENT)
+              if (cat_it->second.cct_id == CCT_CONTENT)
               {
                 (*cr_it)->defined_content_category = true;
                 (*cr_it)->content_categories.push_back(*cr_cat_it);
               }
-              else if(cat_it->second.cct_id == CCT_VISUAL)
+              else if (cat_it->second.cct_id == CCT_VISUAL)
               {
                 (*cr_it)->visual_categories.push_back(*cr_cat_it);
               }
             }
           }
 
-          if(!link_option_values_(
+          if (!link_option_values_(
               (*cr_it)->tokens,
               new_config,
               config_update_links.creative_option_values,
@@ -814,19 +877,21 @@ namespace CampaignSvcs
           {
             (*cr_it)->status = 'W';
           }
+          remove_system_creative_tokens(**cr_it, logger_);
+          fill_adv_track_pixel_tokens(**cr_it);
 
           {
             ConfigUpdateLinks::IdCreativeSizeOptionValueMap::
               const_iterator link_tokens_it =
                 config_update_links.creative_size_option_values.find((*cr_it)->ccid);
 
-            if(link_tokens_it == config_update_links.creative_size_option_values.end())
+            if (link_tokens_it == config_update_links.creative_size_option_values.end())
             {
               (*cr_it)->status = 'W';
             }
             else
             {
-              for(Creative::SizeMap::iterator cr_size_it =
+              for (Creative::SizeMap::iterator cr_size_it =
                     (*cr_it)->sizes.begin();
                   cr_size_it != (*cr_it)->sizes.end(); ++cr_size_it)
               {
@@ -834,7 +899,7 @@ namespace CampaignSvcs
                   const_iterator link_size_tokens_it =
                     link_tokens_it->second.find(cr_size_it->first);
 
-                if(link_size_tokens_it == link_tokens_it->second.end() ||
+                if (link_size_tokens_it == link_tokens_it->second.end() ||
                    !link_option_values_(
                      cr_size_it->second.tokens,
                      new_config,
@@ -846,35 +911,35 @@ namespace CampaignSvcs
             }
           }
 
-          if((*cr_it)->status == 'A' && cmp_it->second->is_active())
+          if ((*cr_it)->status == 'A' && cmp_it->second->is_active())
           {
             // link contract to creative
             auto creative_contract_it = config_update_links.creative_contracts.find((*cr_it)->ccid);
-            if(creative_contract_it != config_update_links.creative_contracts.end())
+            if (creative_contract_it != config_update_links.creative_contracts.end())
             {
               auto contract_it = new_config.contracts.find(creative_contract_it->second);
-              if(contract_it != new_config.contracts.end())
+              if (contract_it != new_config.contracts.end())
               {
                 (*cr_it)->initial_contract = contract_it->second;
               }
             }
 
             // link to creative match categories (CCT_TAG)
-            for(unsigned long j = 0;
+            for (unsigned long j = 0;
                 j < sizeof(CHECK_CREATIVE_TOKENS) / sizeof(CHECK_CREATIVE_TOKENS[0]);
                 ++j)
             {
               OptionTokenValueMap::const_iterator tok_it = (*cr_it)->tokens.find(
                 CHECK_CREATIVE_TOKENS[j]);
 
-              if(tok_it != (*cr_it)->tokens.end())
+              if (tok_it != (*cr_it)->tokens.end())
               {
-                for(CampaignConfig::CreativeCategoryMap::const_iterator it =
+                for (CampaignConfig::CreativeCategoryMap::const_iterator it =
                       new_config.creative_categories.begin();
                     it != new_config.creative_categories.end();
                     ++it)
                 {
-                  if(it->second.cct_id == CCT_TAG &&
+                  if (it->second.cct_id == CCT_TAG &&
                      plain_match(it->second.name, tok_it->second.value))
                   {
                     (*cr_it)->categories.insert(it->first);
@@ -885,14 +950,14 @@ namespace CampaignSvcs
 
             // link url categories where this possible,
             // impossible for keyword based creative click url's
-            for(unsigned long j = 0;
+            for (unsigned long j = 0;
                 j < sizeof(CHECK_CREATIVE_URL_TOKENS) / sizeof(CHECK_CREATIVE_URL_TOKENS[0]);
                 ++j)
             {
               OptionTokenValueMap::const_iterator tok_it = (*cr_it)->tokens.find(
                 CHECK_CREATIVE_URL_TOKENS[j]);
 
-              if(tok_it != (*cr_it)->tokens.end())
+              if (tok_it != (*cr_it)->tokens.end())
               {
                 link_url_categories_(
                   (*cr_it)->categories,
@@ -934,7 +999,7 @@ namespace CampaignSvcs
 
               try
               {
-                if(!destination_url.empty())
+                if (!destination_url.empty())
                 {
                   (*cr_it)->destination_url.url(destination_url);
                 }
@@ -971,10 +1036,10 @@ namespace CampaignSvcs
               // fill video_duration
               OptionTokenValueMap::const_iterator video_duration_tok_it =
                 (*cr_it)->tokens.find(CreativeTokens::VIDEO_DURATION);
-              if(video_duration_tok_it != (*cr_it)->tokens.end())
+              if (video_duration_tok_it != (*cr_it)->tokens.end())
               {
                 unsigned long video_duration;
-                if(String::StringManip::str_to_int(
+                if (String::StringManip::str_to_int(
                   video_duration_tok_it->second.value,
                   video_duration))
                 {
@@ -985,10 +1050,10 @@ namespace CampaignSvcs
               // fill video_skip_offset
               OptionTokenValueMap::const_iterator video_skip_offset_tok_it =
                 (*cr_it)->tokens.find(CreativeTokens::VIDEO_SKIP_OFFSET);
-              if(video_skip_offset_tok_it != (*cr_it)->tokens.end())
+              if (video_skip_offset_tok_it != (*cr_it)->tokens.end())
               {
                 unsigned long video_skip_offset;
-                if(String::StringManip::str_to_int(
+                if (String::StringManip::str_to_int(
                   video_skip_offset_tok_it->second.value,
                   video_skip_offset))
                 {
@@ -999,7 +1064,7 @@ namespace CampaignSvcs
 
             Creative& creative = **cr_it;
 
-            if(!drop_https_safe_)
+            if (!drop_https_safe_)
             {
               // fill https_safe_flag
               OptionTokenValueMap::const_iterator https_safe_tok_it =
@@ -1037,13 +1102,13 @@ namespace CampaignSvcs
 
     ChannelChildMap channel_childs;
 
-    for(ExpressionChannelHolderMap::const_iterator ch_it =
+    for (ExpressionChannelHolderMap::const_iterator ch_it =
           config_update_links.platform_channels.begin();
         ch_it != config_update_links.platform_channels.end();
         ++ch_it)
     {
       unsigned long parent_channel_id = 0;
-      if(ch_it->second->params().descriptive_params.in() &&
+      if (ch_it->second->params().descriptive_params.in() &&
          ch_it->second->params().descriptive_params->parent_channel_id &&
          config_update_links.platform_channels.find(
            ch_it->second->params().descriptive_params->parent_channel_id) !=
@@ -1062,14 +1127,14 @@ namespace CampaignSvcs
     {
       ChannelIdList new_root_channels;
 
-      for(ChannelIdList::const_iterator root_ch_it = current_root_channels.begin();
+      for (ChannelIdList::const_iterator root_ch_it = current_root_channels.begin();
           root_ch_it != current_root_channels.end();
           ++root_ch_it)
       {
         ChannelChildMap::iterator ch_it = channel_childs.find(*root_ch_it);
-        if(ch_it != channel_childs.end())
+        if (ch_it != channel_childs.end())
         {
-          for(ChannelIdList::const_iterator cch_it = ch_it->second.begin();
+          for (ChannelIdList::const_iterator cch_it = ch_it->second.begin();
               cch_it != ch_it->second.end(); ++cch_it)
           {
             ExpressionChannelHolderMap::const_iterator ch_it =
@@ -1079,7 +1144,7 @@ namespace CampaignSvcs
 
             std::string norm_name;
 
-            if(ch_it->second->params().descriptive_params.in())
+            if (ch_it->second->params().descriptive_params.in())
             {
               norm_name = ch_it->second->params().descriptive_params->name;
             }
@@ -1107,17 +1172,17 @@ namespace CampaignSvcs
     const ConfigUpdateLinks& config_update_links)
     noexcept
   {
-    for(ConfigUpdateLinks::BlockChannelMap::const_iterator bch_it =
+    for (ConfigUpdateLinks::BlockChannelMap::const_iterator bch_it =
           config_update_links.block_channels.begin();
         bch_it != config_update_links.block_channels.end(); ++bch_it)
     {
-      for(ConfigUpdateLinks::IdList::const_iterator ch_id_it =
+      for (ConfigUpdateLinks::IdList::const_iterator ch_id_it =
             bch_it->second.begin();
           ch_id_it != bch_it->second.end(); ++ch_id_it)
       {
         CampaignConfig::ChannelMap::const_iterator ch_it =
           new_config.expression_channels.find(*ch_id_it);
-        if(ch_it != new_config.expression_channels.end() &&
+        if (ch_it != new_config.expression_channels.end() &&
            ch_it->second->has_params())
         {
           new_config.block_channels[bch_it->first].push_back(
@@ -1140,13 +1205,13 @@ namespace CampaignSvcs
     {
       bool erase_channel = false;
 
-      if(cat_ch_it->second->parent_channel_id)
+      if (cat_ch_it->second->parent_channel_id)
       {
         CampaignConfig::CategoryChannelMap::iterator parent_cat_ch_it =
           new_config.category_channels.find(
             cat_ch_it->second->parent_channel_id);
 
-        if(parent_cat_ch_it != new_config.category_channels.end())
+        if (parent_cat_ch_it != new_config.category_channels.end())
         {
           // check recursion
           std::set<unsigned long> used_channels;
@@ -1157,12 +1222,12 @@ namespace CampaignSvcs
           while(cur_cat_ch &&
             used_channels.find(cur_cat_ch->channel_id) == used_channels.end())
           {
-            if(cur_cat_ch->parent_channel_id)
+            if (cur_cat_ch->parent_channel_id)
             {
               CampaignConfig::CategoryChannelMap::iterator lp_ch_it =
                 new_config.category_channels.find(
                   cur_cat_ch->parent_channel_id);
-              if(lp_ch_it != new_config.category_channels.end())
+              if (lp_ch_it != new_config.category_channels.end())
               {
                 used_channels.insert(cur_cat_ch->channel_id);
                 cur_cat_ch = lp_ch_it->second.in();
@@ -1179,7 +1244,7 @@ namespace CampaignSvcs
             }
           }
 
-          if(cur_cat_ch)
+          if (cur_cat_ch)
           {
             erase_channel = true;
 
@@ -1197,7 +1262,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(erase_channel)
+      if (erase_channel)
       {
         new_config.category_channels.erase(cat_ch_it++);
       }
@@ -1212,16 +1277,16 @@ namespace CampaignSvcs
   CampaignConfigSource::fill_campaign_action_markers_(CampaignConfig& new_config)
     noexcept
   {
-    for(AdvActionMap::const_iterator act_it = new_config.adv_actions.begin();
+    for (AdvActionMap::const_iterator act_it = new_config.adv_actions.begin();
         act_it != new_config.adv_actions.end(); ++act_it)
     {
-      for(AdvActionDef::CCGIdList::const_iterator act_ccg_it =
+      for (AdvActionDef::CCGIdList::const_iterator act_ccg_it =
             act_it->second.ccg_ids.begin();
           act_ccg_it != act_it->second.ccg_ids.end(); ++act_ccg_it)
       {
         CampaignConfig::CampaignMap::iterator ccg_it =
           new_config.campaigns.find(*act_ccg_it);
-        if(ccg_it != new_config.campaigns.end())
+        if (ccg_it != new_config.campaigns.end())
         {
           ccg_it->second->has_custom_actions = true;
         }
@@ -1232,11 +1297,11 @@ namespace CampaignSvcs
   void CampaignConfigSource::enrich_channels_by_geo_channels_(
     CampaignConfig& new_config) noexcept
   {
-    for(CampaignConfig::ChannelMap::iterator ch_it =
+    for (CampaignConfig::ChannelMap::iterator ch_it =
           new_config.expression_channels.begin();
         ch_it != new_config.expression_channels.end(); ++ch_it)
     {
-      if(!ch_it->second->channel.in() &&
+      if (!ch_it->second->channel.in() &&
          new_config.geo_channels->channel_ids().find(ch_it->first) !=
            new_config.geo_channels->channel_ids().end())
       {
@@ -1257,11 +1322,11 @@ namespace CampaignSvcs
     const ChannelIdSet& geo_coord_channel_ids =
       new_config.geo_coord_channels->channel_ids();
 
-    for(CampaignConfig::ChannelMap::iterator ch_it =
+    for (CampaignConfig::ChannelMap::iterator ch_it =
           new_config.expression_channels.begin();
         ch_it != new_config.expression_channels.end(); ++ch_it)
     {
-      if(!ch_it->second->channel.in() &&
+      if (!ch_it->second->channel.in() &&
          geo_coord_channel_ids.find(ch_it->first) !=
            geo_coord_channel_ids.end())
       {
@@ -1278,11 +1343,11 @@ namespace CampaignSvcs
   void CampaignConfigSource::enrich_channels_by_platform_channels_(
     CampaignConfig& new_config) noexcept
   {
-    for(CampaignConfig::ChannelMap::iterator ch_it =
+    for (CampaignConfig::ChannelMap::iterator ch_it =
           new_config.expression_channels.begin();
         ch_it != new_config.expression_channels.end(); ++ch_it)
     {
-      if(!ch_it->second->channel.in() &&
+      if (!ch_it->second->channel.in() &&
          new_config.platforms.find(ch_it->first) !=
            new_config.platforms.end())
       {
@@ -1305,10 +1370,10 @@ namespace CampaignSvcs
 
     const std::string* prev_country_code = 0;
 
-    for(Tag::TagPricings::const_iterator tp_it = tag->tag_pricings.begin();
+    for (Tag::TagPricings::const_iterator tp_it = tag->tag_pricings.begin();
         tp_it != tag->tag_pricings.end(); ++tp_it)
     {
-      if(prev_country_code == 0 ||
+      if (prev_country_code == 0 ||
          tp_it->first.country_code != *prev_country_code)
       {
         const std::string& cur_country_code = tp_it->first.country_code;
@@ -1317,7 +1382,7 @@ namespace CampaignSvcs
         Tag::TagPricings::const_iterator next_tp_it = tp_it;
         ++next_tp_it;
 
-        if((next_tp_it == tag->tag_pricings.end() ||
+        if ((next_tp_it == tag->tag_pricings.end() ||
             next_tp_it->first.country_code != cur_country_code) &&
            tp_it->first.ccg_rate_type == CR_ALL &&
            tp_it->first.ccg_type == CT_ALL)
@@ -1336,12 +1401,12 @@ namespace CampaignSvcs
 
         const Tag::TagPricing* max_tp = 0;
 
-        for(unsigned long ccg_rate_type_i = 0;
+        for (unsigned long ccg_rate_type_i = 0;
             ccg_rate_type_i < sizeof(ALL_CCG_RATE_TYPES) /
               sizeof(ALL_CCG_RATE_TYPES[0]);
             ++ccg_rate_type_i)
         {
-          for(unsigned long ccg_type_i = 0;
+          for (unsigned long ccg_type_i = 0;
               ccg_type_i < sizeof(ALL_CCG_TYPES) / sizeof(ALL_CCG_TYPES[0]);
               ++ccg_type_i)
           {
@@ -1350,14 +1415,14 @@ namespace CampaignSvcs
               ALL_CCG_TYPES[ccg_type_i],
               ALL_CCG_RATE_TYPES[ccg_rate_type_i]);
 
-            if(max_tp == 0 || max_tp->cpm < cur_tp->cpm)
+            if (max_tp == 0 || max_tp->cpm < cur_tp->cpm)
             {
               max_tp = cur_tp;
             }
           }
         }
 
-        if(max_tp)
+        if (max_tp)
         {
           tag->country_tag_pricings.insert(std::make_pair(cur_country_code, *max_tp));
         }
@@ -1377,9 +1442,9 @@ namespace CampaignSvcs
     ConfigUpdateLinks::IdTagSizeOptionValueMap::const_iterator it =
       tag_size_option_values.find(tag_id);
 
-    if(it != tag_size_option_values.end())
+    if (it != tag_size_option_values.end())
     {
-      for(ConfigUpdateLinks::TagSizeOptionValueMap::const_iterator
+      for (ConfigUpdateLinks::TagSizeOptionValueMap::const_iterator
             topt_it = it->second.begin();
           topt_it != it->second.end(); ++topt_it)
       {
@@ -1407,7 +1472,7 @@ namespace CampaignSvcs
 
     CreativeFormatTemplateMap_ creative_format_template_map;
 
-    for(CreativeTemplateMap::KeyMap::const_iterator ct_it =
+    for (CreativeTemplateMap::KeyMap::const_iterator ct_it =
           new_config.creative_templates.begin();
         ct_it != new_config.creative_templates.end(); ++ct_it)
     {
@@ -1457,7 +1522,7 @@ namespace CampaignSvcs
       AccountMap::const_iterator account_it =
         new_config.accounts.find(account_link_it->second);
 
-      if(account_it != new_config.accounts.end())
+      if (account_it != new_config.accounts.end())
       {
         site_it->second->account = account_it->second;
         ++site_it;
@@ -1478,11 +1543,11 @@ namespace CampaignSvcs
     for (TagMap::iterator tag_it = new_config.tags.begin();
          tag_it != new_config.tags.end(); )
     {
-      for(Tag::SizeMap::iterator size_it = tag_it->second->sizes.begin();
+      for (Tag::SizeMap::iterator size_it = tag_it->second->sizes.begin();
           size_it != tag_it->second->sizes.end(); )
       {
         SizeMap::const_iterator size_def_it = new_config.sizes.find(size_it->first);
-        if(size_def_it != new_config.sizes.end())
+        if (size_def_it != new_config.sizes.end())
         {
           Tag::Size_var tag_size = new Tag::Size(*size_it->second);
           tag_size->size = size_def_it->second;
@@ -1516,9 +1581,9 @@ namespace CampaignSvcs
       {
         ConfigUpdateLinks::IdTemplateOptionValueMap::const_iterator it =
           config_update_links.tag_template_option_values.find(tag_it->first);
-        if(it != config_update_links.tag_template_option_values.end())
+        if (it != config_update_links.tag_template_option_values.end())
         {
-          for(ConfigUpdateLinks::TemplateOptionValueMap::const_iterator
+          for (ConfigUpdateLinks::TemplateOptionValueMap::const_iterator
                 topt_it = it->second.begin();
               topt_it != it->second.end(); ++topt_it)
           {
@@ -1552,7 +1617,7 @@ namespace CampaignSvcs
       SiteMap::const_iterator site_it =
         new_config.sites.find(site_link_it->second);
 
-      if(site_it != new_config.sites.end())
+      if (site_it != new_config.sites.end())
       {
         assert(site_it->second->account.in());
 
@@ -1590,7 +1655,7 @@ namespace CampaignSvcs
 
         // fill excluded domains by categories
         // tag level
-        for(CreativeCategoryIdSet::const_iterator rej_cat_it =
+        for (CreativeCategoryIdSet::const_iterator rej_cat_it =
               tag_it->second->rejected_categories.begin();
             rej_cat_it != tag_it->second->rejected_categories.end();
             ++rej_cat_it)
@@ -1598,7 +1663,7 @@ namespace CampaignSvcs
           CampaignConfig::CreativeCategoryMap::const_iterator cat_it =
             new_config.creative_categories.find(*rej_cat_it);
 
-          if(cat_it != new_config.creative_categories.end() &&
+          if (cat_it != new_config.creative_categories.end() &&
              !cat_it->second.exclude_domain.empty())
           {
             tag_it->second->exclude_creative_domains.insert(
@@ -1606,19 +1671,19 @@ namespace CampaignSvcs
           }
         }
 
-        for(CreativeCategoryIdSet::const_iterator rej_cat_it =
+        for (CreativeCategoryIdSet::const_iterator rej_cat_it =
               tag_it->second->site->rejected_creative_categories.begin();
             rej_cat_it != tag_it->second->site->rejected_creative_categories.end();
             ++rej_cat_it)
         {
-          if(tag_it->second->accepted_categories.find(*rej_cat_it) ==
+          if (tag_it->second->accepted_categories.find(*rej_cat_it) ==
              tag_it->second->accepted_categories.end())
           {
             // tag don't override category status
             CampaignConfig::CreativeCategoryMap::const_iterator cat_it =
               new_config.creative_categories.find(*rej_cat_it);
 
-            if(cat_it != new_config.creative_categories.end() &&
+            if (cat_it != new_config.creative_categories.end() &&
                !cat_it->second.exclude_domain.empty())
             {
               tag_it->second->exclude_creative_domains.insert(
@@ -1627,12 +1692,12 @@ namespace CampaignSvcs
           }
         }
 
-        for(Tag::SizeMap::const_iterator tag_size_it =
+        for (Tag::SizeMap::const_iterator tag_size_it =
               tag_it->second->sizes.begin();
             tag_size_it != tag_it->second->sizes.end();
             ++tag_size_it)
         {
-          if(tag_size_it->second->size->protocol_name.compare(0, 2, "rm") == 0)
+          if (tag_size_it->second->size->protocol_name.compare(0, 2, "rm") == 0)
           {
             const char* protocol_name = nullptr;
             if (tag_size_it->second->size->protocol_name.compare(2, 3, "dto") == 0)
@@ -1704,11 +1769,9 @@ namespace CampaignSvcs
       ConfigUpdateLinks::IdMap::const_iterator account_link_it =
         config_update_links.colocation_accounts.find(colo_it->first);
 
-      assert(account_link_it !=
-        config_update_links.colocation_accounts.end());
+      assert(account_link_it != config_update_links.colocation_accounts.end());
 
-      AccountMap::const_iterator account_it =
-        new_config.accounts.find(account_link_it->second);
+      AccountMap::const_iterator account_it = new_config.accounts.find(account_link_it->second);
 
       if (account_it != new_config.accounts.end())
       {
@@ -1720,23 +1783,19 @@ namespace CampaignSvcs
       }
     }
 
-    for(auto colo_it = del_colocations.begin(); colo_it != del_colocations.end();
+    for (auto colo_it = del_colocations.begin(); colo_it != del_colocations.end();
       ++colo_it)
     {
       new_config.colocations.erase(*colo_it);
     }
 
-    for (CampaignConfig::CountryMap::iterator country_it =
-            new_config.countries.begin();
-         country_it != new_config.countries.end();
-         ++country_it)
+    for (CampaignConfig::CountryMap::iterator country_it = new_config.countries.begin();
+       country_it != new_config.countries.end(); ++country_it)
     {
-      ConfigUpdateLinks::CountryOptionValueMap::
-        const_iterator options_it =
-        config_update_links.country_option_values.find(
-          country_it->first);
+      ConfigUpdateLinks::CountryOptionValueMap::const_iterator options_it =
+        config_update_links.country_option_values.find(country_it->first);
 
-      if(options_it != config_update_links.country_option_values.end())
+      if (options_it != config_update_links.country_option_values.end())
       {
         link_option_values_(
           country_it->second->tokens,
@@ -1756,49 +1815,43 @@ namespace CampaignSvcs
     check_category_channels_(new_config);
 
     // fill category channels tree
-    typedef std::map<unsigned long, CategoryChannelNode_var> CategoryIdChannelNodeMap;
+    using CategoryIdChannelNodeMap = std::map<unsigned long, CategoryChannelNode_var>;
     CategoryIdChannelNodeMap all_category_channel_nodes;
-    for(CampaignConfig::CategoryChannelMap::const_iterator ch_it =
-          new_config.category_channels.begin();
-        ch_it != new_config.category_channels.end(); ++ch_it)
+    for (CampaignConfig::CategoryChannelMap::const_iterator ch_it =
+        new_config.category_channels.begin();
+      ch_it != new_config.category_channels.end(); ++ch_it)
     {
       CategoryChannelNode_var node(new CategoryChannelNode());
       node->channel_id = ch_it->second->channel_id;
       node->name = ch_it->second->name;
       node->localizations = ch_it->second->localizations;
       node->flags = ch_it->second->flags;
-      all_category_channel_nodes.insert(
-        std::make_pair(ch_it->second->channel_id, node));
+      all_category_channel_nodes.emplace(ch_it->second->channel_id, node);
     }
 
-    for(CampaignConfig::CategoryChannelMap::const_iterator ch_it =
-          new_config.category_channels.begin();
-        ch_it != new_config.category_channels.end(); ++ch_it)
+    for (CampaignConfig::CategoryChannelMap::const_iterator ch_it =
+        new_config.category_channels.begin();
+      ch_it != new_config.category_channels.end(); ++ch_it)
     {
-      CategoryIdChannelNodeMap::iterator ch_node_it =
-        all_category_channel_nodes.find(
-          ch_it->second->channel_id);
+      CategoryIdChannelNodeMap::iterator ch_node_it = all_category_channel_nodes.find(
+        ch_it->second->channel_id);
 
       assert(ch_node_it != all_category_channel_nodes.end());
 
-      if(ch_it->second->parent_channel_id)
+      if (ch_it->second->parent_channel_id)
       {
         CategoryIdChannelNodeMap::iterator parent_ch_node_it =
-          all_category_channel_nodes.find(
-            ch_it->second->parent_channel_id);
+          all_category_channel_nodes.find(ch_it->second->parent_channel_id);
 
-        if(ch_node_it != all_category_channel_nodes.end())
+        if (ch_node_it != all_category_channel_nodes.end())
         {
-          parent_ch_node_it->second->child_category_channels.insert(
-            std::make_pair(
-              ch_node_it->second->name,
-              ch_node_it->second));
+          parent_ch_node_it->second->child_category_channels.emplace(
+            ch_node_it->second->name, ch_node_it->second);
         }
       }
       else
       {
-        new_config.category_channel_nodes.insert(
-          std::make_pair(ch_node_it->second->name, ch_node_it->second));
+        new_config.category_channel_nodes.emplace(ch_node_it->second->name, ch_node_it->second);
       }
     }
 
@@ -1826,9 +1879,9 @@ namespace CampaignSvcs
     link_block_channel_update_(new_config, config_update_links);
 
     //
-    for(auto it = new_config.campaigns.begin(); it != new_config.campaigns.end(); ++it)
+    for (auto it = new_config.campaigns.begin(); it != new_config.campaigns.end(); ++it)
     {
-      if(it->second->channel.in())
+      if (it->second->channel.in())
       {
         it->second->fast_channel = new FastExpressionChannel(it->second->channel);
       }
@@ -1847,12 +1900,11 @@ namespace CampaignSvcs
     for (CORBA::ULong i = 0; i < update_info.creative_categories.length(); i++)
     {
       const CreativeCategoryInfo& ccat_info = update_info.creative_categories[i];
-      CreativeCategory& ccat =
-        new_config.creative_categories[ccat_info.creative_category_id];
+      CreativeCategory& ccat = new_config.creative_categories[ccat_info.creative_category_id];
       ccat.cct_id = static_cast<
         AdServer::CampaignSvcs::AdInstances::CreativeCategoryType>(ccat_info.cct_id);
       ccat.name = ccat_info.name;
-      for(CORBA::ULong ec_i = 0; ec_i < ccat_info.external_categories.length(); ++ec_i)
+      for (CORBA::ULong ec_i = 0; ec_i < ccat_info.external_categories.length(); ++ec_i)
       {
         CorbaAlgs::convert_sequence(
           ccat_info.external_categories[ec_i].names,
@@ -1864,7 +1916,7 @@ namespace CampaignSvcs
       // ADSC-9551
       // For AppNexus we create artificial mapping by category name for visual categories
       // This trick can be removed when will be filled mapping on DB side.
-      if(ccat.cct_id == CCT_VISUAL)
+      if (ccat.cct_id == CCT_VISUAL)
       {
         ccat.external_categories[AR_APPNEXUS].insert(ccat.name);
       }
@@ -1872,14 +1924,13 @@ namespace CampaignSvcs
       ccat.timestamp = CorbaAlgs::unpack_time(ccat_info.timestamp);
 
       // fill external categories mapping to internal categories
-      for(CreativeCategory::ExternalCategoryMap::const_iterator ext_ccat_it =
-            ccat.external_categories.begin();
-          ext_ccat_it != ccat.external_categories.end(); ++ext_ccat_it)
+      for (CreativeCategory::ExternalCategoryMap::const_iterator ext_ccat_it =
+          ccat.external_categories.begin();
+        ext_ccat_it != ccat.external_categories.end(); ++ext_ccat_it)
       {
-        for(StringSet::const_iterator ext_ccat_name_it =
-              ext_ccat_it->second.begin();
-            ext_ccat_name_it != ext_ccat_it->second.end();
-            ++ext_ccat_name_it)
+        for (StringSet::const_iterator ext_ccat_name_it =
+            ext_ccat_it->second.begin();
+          ext_ccat_name_it != ext_ccat_it->second.end(); ++ext_ccat_name_it)
         {
           new_config.external_creative_categories[
             ext_ccat_it->first][*ext_ccat_name_it].insert(
@@ -1887,8 +1938,7 @@ namespace CampaignSvcs
         }
       }
 
-
-      if(ccat.cct_id == CCT_TAG)
+      if (ccat.cct_id == CCT_TAG)
       {
         try
         {
@@ -1897,7 +1947,7 @@ namespace CampaignSvcs
             url.host().compare(0, 4, "www.") == 0 ? 4 : 0).str();
           String::AsciiStringManip::to_lower(ccat.exclude_domain);
 
-          if(!ccat.exclude_domain.empty())
+          if (!ccat.exclude_domain.empty())
           {
             config_update_links.domain_category_exclusions[
               ccat.exclude_domain].insert(ccat_info.creative_category_id);
@@ -1917,8 +1967,7 @@ namespace CampaignSvcs
   {
     for (CORBA::ULong i = 0; i < update_info.currencies.length(); ++i)
     {
-      const AdServer::CampaignSvcs::CurrencyInfo& currency_info =
-        update_info.currencies[i];
+      const AdServer::CampaignSvcs::CurrencyInfo& currency_info = update_info.currencies[i];
 
       Currency_var p_currency = new Currency();
 
@@ -1943,24 +1992,22 @@ namespace CampaignSvcs
   {
     for (CORBA::ULong i = 0; i < update_info.frequency_caps.length(); i++)
     {
-      const AdServer::CampaignSvcs::FreqCapInfo& freq_cap_info =
-        update_info.frequency_caps[i];
+      const AdServer::CampaignSvcs::FreqCapInfo& freq_cap_info = update_info.frequency_caps[i];
 
       /* filter non active freq caps */
-      if(freq_cap_info.lifelimit ||
-         freq_cap_info.period ||
-         freq_cap_info.window_limit)
+      if (freq_cap_info.lifelimit ||
+        freq_cap_info.period ||
+        freq_cap_info.window_limit)
       {
-        new_config.freq_caps.insert(
-          std::make_pair(
+        new_config.freq_caps.emplace(
+          freq_cap_info.fc_id,
+          FreqCap(
             freq_cap_info.fc_id,
-            FreqCap(
-              freq_cap_info.fc_id,
-              CorbaAlgs::unpack_time(freq_cap_info.timestamp),
-              freq_cap_info.lifelimit,
-              Generics::Time(freq_cap_info.period),
-              freq_cap_info.window_limit,
-              Generics::Time(freq_cap_info.window_time))));
+            CorbaAlgs::unpack_time(freq_cap_info.timestamp),
+            freq_cap_info.lifelimit,
+            Generics::Time(freq_cap_info.period),
+            freq_cap_info.window_limit,
+            Generics::Time(freq_cap_info.window_time)));
       }
     }
   }
@@ -1972,10 +2019,9 @@ namespace CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for(CORBA::ULong i = 0; i < update_info.creative_templates.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.creative_templates.length(); ++i)
     {
-      const CreativeTemplateInfo& cr_templ_info =
-        update_info.creative_templates[i];
+      const CreativeTemplateInfo& cr_templ_info = update_info.creative_templates[i];
 
       ConfigUpdateLinks::TemplateOptionsLink& template_options_link =
         config_update_links.template_option_values[cr_templ_info.id];
@@ -1992,12 +2038,11 @@ namespace CampaignSvcs
         template_options_link.unlinked_hidden_tokens, cr_templ_info.hidden_tokens);
       template_options_link.hidden_tokens_ref = hidden_tokens;
 
-      for(CORBA::ULong ctf_i = 0; ctf_i < cr_templ_info.files.length(); ++ctf_i)
+      for (CORBA::ULong ctf_i = 0; ctf_i < cr_templ_info.files.length(); ++ctf_i)
       {
-        const CreativeTemplateFileInfo& ctf_info =
-          cr_templ_info.files[ctf_i];
+        const CreativeTemplateFileInfo& ctf_info = cr_templ_info.files[ctf_i];
 
-        if(ctf_info.type == AdServer::CampaignSvcs::CTT_XSLT)
+        if (ctf_info.type == AdServer::CampaignSvcs::CTT_XSLT)
         {
           continue;
         }
@@ -2018,8 +2063,7 @@ namespace CampaignSvcs
             hidden_tokens,
             CorbaAlgs::unpack_time(cr_templ_info.timestamp)));
 
-        new_config.all_template_appformats.insert(
-          ctf_info.app_format.in());
+        new_config.all_template_appformats.emplace(ctf_info.app_format.in());
       }
     }
   }
@@ -2040,9 +2084,7 @@ namespace CampaignSvcs
       new_size->height = update_info.sizes[i].height;
       new_size->timestamp = CorbaAlgs::unpack_time(update_info.sizes[i].timestamp);
 
-      new_config.sizes.insert(std::make_pair(
-        update_info.sizes[i].size_id,
-        new_size));
+      new_config.sizes.emplace(update_info.sizes[i].size_id, new_size);
     }
   }
 
@@ -2070,57 +2112,48 @@ namespace CampaignSvcs
     for (CORBA::ULong i = 0; i < update_info.activate_creative_options.length(); i++)
     {
       const CreativeOptionInfo& co_info = update_info.activate_creative_options[i];
-      CreativeOptionDef& co =
-        new_config.creative_options[co_info.option_id];
+      CreativeOptionDef& co = new_config.creative_options[co_info.option_id];
 
       co.token = co_info.token.in();
       co.timestamp = CorbaAlgs::unpack_time(co_info.timestamp);
       co.type = co_info.type;
 
-      CorbaAlgs::convert_sequence(
-        co_info.token_relations, co.token_relations);
+      CorbaAlgs::convert_sequence(co_info.token_relations, co.token_relations);
 
-      if(co.type == 'L')
+      if (co.type == 'L')
       {
-        new_config.token_processors[co_info.option_id] =
-          new LinkTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new LinkTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
-      else if(co.type == 'U')
+      else if (co.type == 'U')
       {
-        new_config.token_processors[co_info.option_id] =
-          new UrlTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new UrlTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
-      else if(co.type == 'F')
+      else if (co.type == 'F')
       {
-        new_config.token_processors[co_info.option_id] =
-          new FileTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new FileTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
-      else if(co.type == 'D')
+      else if (co.type == 'D')
       {
-        new_config.token_processors[co_info.option_id] =
-          new DynamicContentUrlTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new DynamicContentUrlTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
-      else if(co.type == 'u')
+      else if (co.type == 'u')
       {
-        new_config.token_processors[co_info.option_id] =
-          new PublisherUrlTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new PublisherUrlTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
-      else if(co.type == 'f')
+      else if (co.type == 'f')
       {
-        new_config.token_processors[co_info.option_id] =
-          new PublisherFileTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new PublisherFileTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
       else
       {
-        new_config.token_processors[co_info.option_id] =
-          new BaseTokenProcessor(
-            co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id] = new BaseTokenProcessor(
+          co.token.c_str(), co.token_relations);
       }
     }
 
@@ -2136,17 +2169,17 @@ namespace CampaignSvcs
         default_click_token_relations);
 
     // add rule tokens processors
-    for(auto inst_rule_it = creative_rules_.begin();
+    for (auto inst_rule_it = creative_rules_.begin();
       inst_rule_it != creative_rules_.end(); ++inst_rule_it)
     {
-      for(auto token_it = inst_rule_it->second.tokens.begin();
+      for (auto token_it = inst_rule_it->second.tokens.begin();
         token_it != inst_rule_it->second.tokens.end(); ++token_it)
       {
         String::TextTemplate::Keys keys;
         Template::get_keys(keys, token_it->second.value);
 
         TokenSet token_relations;
-        for(auto key_it = keys.begin(); key_it != keys.end(); ++key_it)
+        for (auto key_it = keys.begin(); key_it != keys.end(); ++key_it)
         {
           token_relations.insert(*key_it);
         }
@@ -2181,9 +2214,9 @@ namespace CampaignSvcs
       p_acc->time_offset = CorbaAlgs::unpack_time(acc_info.time_offset);
       p_acc->commision = CorbaAlgs::unpack_decimal<RevenueDecimal>(acc_info.commision);
       p_acc->media_handling_fee = RevenueDecimal::ZERO;
-      for(CORBA::ULong wa_i = 0; wa_i < acc_info.walled_garden_accounts.length(); ++wa_i)
+      for (CORBA::ULong wa_i = 0; wa_i < acc_info.walled_garden_accounts.length(); ++wa_i)
       {
-        if(acc_info.walled_garden_accounts[wa_i] > 4000000000)
+        if (acc_info.walled_garden_accounts[wa_i] > 4000000000)
         {
           p_acc->media_handling_fee = RevenueDecimal::div(
             RevenueDecimal(false, acc_info.walled_garden_accounts[wa_i] - 4000000000, 0),
@@ -2209,17 +2242,17 @@ namespace CampaignSvcs
 
       new_config.accounts[acc_info.account_id] = p_acc;
 
-      if(p_acc->is_active())
+      if (p_acc->is_active())
       {
         // Don't check result inserting accounts into the set
-        if(!p_acc->pub_pixel_optin.empty())
+        if (!p_acc->pub_pixel_optin.empty())
         {
           new_config.pub_pixel_accounts[
             PubPixelAccountKey(p_acc->country.c_str(), US_OPTIN)].insert(
               p_acc);
         }
 
-        if(!p_acc->pub_pixel_optout.empty())
+        if (!p_acc->pub_pixel_optout.empty())
         {
           new_config.pub_pixel_accounts[
             PubPixelAccountKey(p_acc->country.c_str(), US_OPTOUT)].insert(
@@ -2230,7 +2263,7 @@ namespace CampaignSvcs
       config_update_links.account_currencies.insert(
         std::make_pair(acc_info.account_id, acc_info.currency_id));
 
-      if(acc_info.agency_account_id)
+      if (acc_info.agency_account_id)
       {
         config_update_links.account_agencies.insert(
           std::make_pair(acc_info.account_id, acc_info.agency_account_id));
@@ -2248,13 +2281,11 @@ namespace CampaignSvcs
     {
       const CampaignInfo& campaign_info = update_info.campaigns[i];
 
-      config_update_links.campaign_accounts.insert(
-        std::make_pair(
-          campaign_info.campaign_id, campaign_info.account_id));
+      config_update_links.campaign_accounts.emplace(
+          campaign_info.campaign_id, campaign_info.account_id);
 
-      config_update_links.campaign_advertisers.insert(
-        std::make_pair(
-          campaign_info.campaign_id, campaign_info.advertiser_id));
+      config_update_links.campaign_advertisers.emplace(
+          campaign_info.campaign_id, campaign_info.advertiser_id);
 
       Campaign_var campaign = new Campaign();
 
@@ -2277,7 +2308,7 @@ namespace CampaignSvcs
       ExpressionChannel::Expression expr;
       unpack_expression(expr, campaign_info.expression, new_config.expression_channels);
 
-      if(!(expr == ExpressionChannel::Expression::EMPTY))
+      if (!(expr == ExpressionChannel::Expression::EMPTY))
       {
         campaign->channel = new ExpressionChannel(expr);
         //campaign->fast_channel = new FastExpressionChannel(campaign->channel);
@@ -2288,7 +2319,7 @@ namespace CampaignSvcs
         campaign_info.stat_expression,
         new_config.expression_channels);
 
-      if(!(stat_expr == ExpressionChannel::Expression::EMPTY))
+      if (!(stat_expr == ExpressionChannel::Expression::EMPTY))
       {
         campaign->stat_channel = new ExpressionChannel(stat_expr);
       }
@@ -2331,21 +2362,17 @@ namespace CampaignSvcs
         campaign->set_min_ctr_goal(min_ctr);
       }
 
-      convert_interval_sequence(
-        campaign->weekly_run_intervals,
-        campaign_info.weekly_run_intervals);
+      convert_interval_sequence(campaign->weekly_run_intervals, campaign_info.weekly_run_intervals);
 
       CorbaAlgs::convert_sequence(campaign_info.sites, campaign->sites);
 
-      CorbaAlgs::convert_sequence(
-        campaign_info.colocations,
-        campaign->colocations);
+      CorbaAlgs::convert_sequence(campaign_info.colocations, campaign->colocations);
 
       CorbaAlgs::convert_sequence(
         campaign_info.exclude_pub_accounts,
         campaign->exclude_pub_accounts);
 
-      for(CORBA::ULong tag_i = 0; tag_i < campaign_info.exclude_tags.length();
+      for (CORBA::ULong tag_i = 0; tag_i < campaign_info.exclude_tags.length();
           ++tag_i)
       {
         campaign->exclude_tags.insert(std::make_pair(
@@ -2366,7 +2393,7 @@ namespace CampaignSvcs
           OptionValueMap option_values;
           unpack_option_value_map(option_values, creative_info.tokens);
           // TODO: remove from protocol as separate field when will be changed CampaignServer interface
-          if(creative_info.html_url.option_id)
+          if (creative_info.html_url.option_id)
           {
             option_values.insert(
               std::make_pair(creative_info.html_url.option_id, creative_info.html_url.value.in()));
@@ -2374,7 +2401,7 @@ namespace CampaignSvcs
           config_update_links.creative_option_values[
             creative_info.ccid].swap(option_values);
 
-          for(CORBA::ULong size_i = 0; size_i < creative_info.sizes.length(); ++size_i)
+          for (CORBA::ULong size_i = 0; size_i < creative_info.sizes.length(); ++size_i)
           {
             OptionValueMap size_option_values;
             unpack_option_value_map(size_option_values, creative_info.sizes[size_i].tokens);
@@ -2383,16 +2410,15 @@ namespace CampaignSvcs
                 creative_info.sizes[size_i].size_id].swap(size_option_values);
           }
 
-          new_config.campaign_creatives.insert(
-            std::make_pair(cr->ccid, cr));
+          new_config.campaign_creatives.emplace(cr->ccid, cr);
 
           Creative_var& tcr = new_config.creatives[creative_info.creative_id];
-          if(!tcr.in() || cr->ccid < tcr->ccid)
+          if (!tcr.in() || cr->ccid < tcr->ccid)
           {
             tcr = cr;
           }
 
-          if(creative_info.initial_contract_id)
+          if (creative_info.initial_contract_id)
           {
             config_update_links.creative_contracts.emplace(
               creative_info.ccid, creative_info.initial_contract_id);
@@ -2409,8 +2435,7 @@ namespace CampaignSvcs
         }
       }
 
-      new_config.campaigns.insert(
-        std::make_pair(campaign_info.campaign_id, campaign));
+      new_config.campaigns.emplace(campaign_info.campaign_id, campaign);
     }
   }
 
@@ -2447,7 +2472,7 @@ namespace CampaignSvcs
 
       new_config.contracts.emplace(contract_info.contract_id, contract);
 
-      if(contract_info.parent_contract_id)
+      if (contract_info.parent_contract_id)
       {
         config_update_links.contract_parent_contracts.emplace(
           contract_info.contract_id, contract_info.parent_contract_id);
@@ -2472,7 +2497,7 @@ namespace CampaignSvcs
 
       ExpressionChannelHolder_var channel_holder;
 
-      if(ch_it == new_config.expression_channels.end())
+      if (ch_it == new_config.expression_channels.end())
       {
         channel_holder = new ExpressionChannelHolder(new_channel);
 
@@ -2486,14 +2511,14 @@ namespace CampaignSvcs
         channel_holder = ch_it->second;
       }
 
-      if(new_channel->params().type == 'V')
+      if (new_channel->params().type == 'V')
       {
         config_update_links.platform_channels.insert(
           std::make_pair(update_info.expression_channels[i].channel_id,
             channel_holder));
       }
 
-      if(new_channel->params().discover_params.in())
+      if (new_channel->params().discover_params.in())
       {
         new_config.discover_channels.insert(
           std::make_pair(update_info.expression_channels[i].channel_id,
@@ -2512,8 +2537,7 @@ namespace CampaignSvcs
     {
       const SiteInfo& site_info = update_info.sites[i];
 
-      config_update_links.site_accounts.insert(
-        std::make_pair(site_info.site_id, site_info.account_id));
+      config_update_links.site_accounts.emplace(site_info.site_id, site_info.account_id);
 
       Site_var p_site = new Site();
 
@@ -2533,13 +2557,8 @@ namespace CampaignSvcs
         site_info.rejected_creative_categories,
         p_site->rejected_creative_categories);
 
-      CorbaAlgs::convert_sequence(
-        site_info.approved_creatives,
-        p_site->approved_creatives);
-
-      CorbaAlgs::convert_sequence(
-        site_info.rejected_creatives,
-        p_site->rejected_creatives);
+      CorbaAlgs::convert_sequence(site_info.approved_creatives, p_site->approved_creatives);
+      CorbaAlgs::convert_sequence(site_info.rejected_creatives, p_site->rejected_creatives);
 
       new_config.sites[p_site->site_id] = p_site;
     }
@@ -2555,17 +2574,15 @@ namespace CampaignSvcs
     {
       const TagInfo& tag_info = update_info.tags[i];
 
-      config_update_links.tag_sites.insert(
-        std::make_pair(tag_info.tag_id, tag_info.site_id));
+      config_update_links.tag_sites.emplace(tag_info.tag_id, tag_info.site_id);
 
       Tag_var p_tag = new Tag();
 
       p_tag->tag_id = tag_info.tag_id;
-      p_tag->tag_pricings_timestamp = CorbaAlgs::unpack_time(
-        tag_info.tag_pricings_timestamp);
+      p_tag->tag_pricings_timestamp = CorbaAlgs::unpack_time(tag_info.tag_pricings_timestamp);
       p_tag->timestamp = CorbaAlgs::unpack_time(tag_info.timestamp);
 
-      for(CORBA::ULong size_i = 0; size_i < tag_info.sizes.length(); ++size_i)
+      for (CORBA::ULong size_i = 0; size_i < tag_info.sizes.length(); ++size_i)
       {
         Tag::Size_var res_size = new Tag::Size();
         res_size->max_text_creatives = tag_info.sizes[size_i].max_text_creatives;
@@ -2577,8 +2594,7 @@ namespace CampaignSvcs
           config_update_links.tag_size_option_hidden_values[
             p_tag->tag_id][tag_info.sizes[size_i].size_id],
           tag_info.sizes[size_i].hidden_tokens);
-        p_tag->sizes.insert(std::make_pair(
-          tag_info.sizes[size_i].size_id, res_size));
+        p_tag->sizes.emplace(tag_info.sizes[size_i].size_id, res_size);
       }
 
       p_tag->flags = tag_info.flags;
@@ -2588,11 +2604,8 @@ namespace CampaignSvcs
       p_tag->passback = tag_info.passback;
       p_tag->passback_type = tag_info.passback_type;
 
-      p_tag->adjustment = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        tag_info.adjustment);
-
-      p_tag->cost_coef = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        tag_info.cost_coef);
+      p_tag->adjustment = CorbaAlgs::unpack_decimal<RevenueDecimal>(tag_info.adjustment);
+      p_tag->cost_coef = CorbaAlgs::unpack_decimal<RevenueDecimal>(tag_info.cost_coef);
       p_tag->skip_min_ecpm = false;
 
       // fill tag pricings
@@ -2612,7 +2625,7 @@ namespace CampaignSvcs
           REVENUE_ONE + p_tag->cost_coef,
           Generics::DDR_CEIL);
 
-        if(tag_pricing_ref.country_code[0] == 0)
+        if (tag_pricing_ref.country_code[0] == 0)
         {
           default_tag_pricing_found = true;
         }
@@ -2626,7 +2639,7 @@ namespace CampaignSvcs
             tag_pricing));
       }
 
-      if(!p_tag->tag_pricings.empty() && !default_tag_pricing_found)
+      if (!p_tag->tag_pricings.empty() && !default_tag_pricing_found)
       {
         p_tag->tag_pricings.insert(
           std::make_pair(
@@ -2660,16 +2673,13 @@ namespace CampaignSvcs
       OptionValueMap hidden_option_values;
       unpack_option_value_map(hidden_option_values, tag_info.hidden_tokens);
 
-      //std::cerr << tag_info.tag_id << " = " <<
-      //  tag_info.passback_tokens.length() << std::endl;
-
       OptionValueMap passback_option_values;
       unpack_option_value_map(passback_option_values, tag_info.passback_tokens);
 
       // fill min_visibility by specific option (2.5)
       OptionValueMap::const_iterator min_visibility_option_it =
         option_values.find(TAG_MIN_VISIBILITY_OPTION_ID);
-      if(min_visibility_option_it != option_values.end())
+      if (min_visibility_option_it != option_values.end())
       {
         String::StringManip::str_to_int(
           min_visibility_option_it->second,
@@ -2679,10 +2689,9 @@ namespace CampaignSvcs
       // fill max_random_cpm by specific option (3.1)
       OptionValueMap::const_iterator max_random_cpm_option_it =
         option_values.find(MAX_RANDOM_CPM_OPTION_ID);
-      if(max_random_cpm_option_it != option_values.end())
+      if (max_random_cpm_option_it != option_values.end())
       {
-        p_tag->pub_max_random_cpm = RevenueDecimal(
-          max_random_cpm_option_it->second);
+        p_tag->pub_max_random_cpm = RevenueDecimal(max_random_cpm_option_it->second);
       }
       else
       {
@@ -2692,7 +2701,7 @@ namespace CampaignSvcs
       // fill skip_min_ecpm by specific option (3.1)
       OptionValueMap::const_iterator skip_min_ecpm_option_it =
         option_values.find(SKIP_MIN_ECPM_OPTION_ID);
-      if(skip_min_ecpm_option_it != option_values.end())
+      if (skip_min_ecpm_option_it != option_values.end())
       {
         int v;
         String::StringManip::str_to_int(skip_min_ecpm_option_it->second, v);
@@ -2706,8 +2715,8 @@ namespace CampaignSvcs
       p_tag->max_random_cpm = RevenueDecimal::ZERO;
 
       ConfigUpdateLinks::TemplateOptionValueMap template_option_values;
-      for(CORBA::ULong templ_i = 0;
-          templ_i < tag_info.template_tokens.length(); ++templ_i)
+      for (CORBA::ULong templ_i = 0;
+        templ_i < tag_info.template_tokens.length(); ++templ_i)
       {
         unpack_option_value_map(
           template_option_values[tag_info.template_tokens[templ_i].template_name.in()],
@@ -2716,14 +2725,10 @@ namespace CampaignSvcs
 
       new_config.tags[p_tag->tag_id] = p_tag;
 
-      config_update_links.tag_option_values[
-        p_tag->tag_id].swap(option_values);
-      config_update_links.tag_hidden_option_values[
-        p_tag->tag_id].swap(hidden_option_values);
-      config_update_links.tag_passback_option_values[
-        p_tag->tag_id].swap(passback_option_values);
-      config_update_links.tag_template_option_values[
-        p_tag->tag_id].swap(template_option_values);
+      config_update_links.tag_option_values[p_tag->tag_id].swap(option_values);
+      config_update_links.tag_hidden_option_values[p_tag->tag_id].swap(hidden_option_values);
+      config_update_links.tag_passback_option_values[p_tag->tag_id].swap(passback_option_values);
+      config_update_links.tag_template_option_values[p_tag->tag_id].swap(template_option_values);
     }
   }
 
@@ -2754,11 +2759,9 @@ namespace CampaignSvcs
   {
     for (CORBA::ULong i = 0; i < update_info.colocations.length(); ++i)
     {
-      const AdServer::CampaignSvcs::ColocationInfo& colo_info =
-        update_info.colocations[i];
+      const AdServer::CampaignSvcs::ColocationInfo& colo_info = update_info.colocations[i];
 
-      config_update_links.colocation_accounts.insert(
-        std::make_pair(colo_info.colo_id, colo_info.account_id));
+      config_update_links.colocation_accounts.emplace(colo_info.colo_id, colo_info.account_id);
 
       Colocation_var colo = new Colocation();
       colo->colo_id = colo_info.colo_id;
@@ -2770,7 +2773,7 @@ namespace CampaignSvcs
       colo->hid_profile = colo_info.hid_profile;
       colo->timestamp = CorbaAlgs::unpack_time(colo_info.timestamp);
 
-      new_config.colocations.insert(std::make_pair(colo_info.colo_id, colo));
+      new_config.colocations.emplace(colo_info.colo_id, colo);
 
       OptionValueMap option_values;
       unpack_option_value_map(option_values, colo_info.tokens);
@@ -2787,13 +2790,12 @@ namespace CampaignSvcs
   {
     for (CORBA::ULong i = 0; i < update_info.countries.length(); ++i)
     {
-      const AdServer::CampaignSvcs::CountryInfo& country_info =
-        update_info.countries[i];
+      const AdServer::CampaignSvcs::CountryInfo& country_info = update_info.countries[i];
 
       Country_var country = new Country();
       country->timestamp = CorbaAlgs::unpack_time(country_info.timestamp);
 
-      new_config.countries.insert(std::make_pair(country_info.country_code.in(), country));
+      new_config.countries.emplace(country_info.country_code.in(), country);
 
       OptionValueMap option_values;
       unpack_option_value_map(option_values, country_info.tokens);
@@ -2818,16 +2820,14 @@ namespace CampaignSvcs
       category_channel->flags = cc_info.flags;
       category_channel->parent_channel_id = cc_info.parent_channel_id;
 
-      for(CORBA::ULong loc_i = 0; loc_i < cc_info.localizations.length(); ++loc_i)
+      for (CORBA::ULong loc_i = 0; loc_i < cc_info.localizations.length(); ++loc_i)
       {
-        category_channel->localizations.insert(
-          std::make_pair(
-            cc_info.localizations[loc_i].language.in(),
-            cc_info.localizations[loc_i].name.in()));
+        category_channel->localizations.emplace(
+          cc_info.localizations[loc_i].language.in(),
+          cc_info.localizations[loc_i].name.in()) ;
       }
       category_channel->timestamp = CorbaAlgs::unpack_time(cc_info.timestamp);
-      new_config.category_channels.insert(
-        std::make_pair(cc_info.channel_id, category_channel));
+      new_config.category_channels.emplace(cc_info.channel_id, category_channel);
     }
   }
 
@@ -2836,8 +2836,7 @@ namespace CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception, eh::Exception)*/
   {
-    const SimpleChannelKeySeq& updated_simple_channels =
-      update_info.simple_channels;
+    const SimpleChannelKeySeq& updated_simple_channels = update_info.simple_channels;
 
     for (CORBA::ULong i = 0; i < updated_simple_channels.length(); i++)
     {
@@ -2846,8 +2845,7 @@ namespace CampaignSvcs
         updated_simple_channels[i].categories,
         simple_channel->categories);
 
-      new_config.simple_channels[
-        updated_simple_channels[i].channel_id] = simple_channel;
+      new_config.simple_channels[updated_simple_channels[i].channel_id] = simple_channel;
     }
   }
 
@@ -2858,13 +2856,13 @@ namespace CampaignSvcs
     const CampaignConfig* old_config)
     noexcept
   {
-    Generics::Time geo_channels_timestamp = CorbaAlgs::unpack_time(
+    const Generics::Time geo_channels_timestamp = CorbaAlgs::unpack_time(
       update_info.geo_channels_timestamp);
 
-    if(!old_config ||
+    if (!old_config ||
        geo_channels_timestamp > old_config->geo_channels_timestamp)
     {
-      if(!new_config.geo_channels.in())
+      if (!new_config.geo_channels.in())
       {
         // first portion
         new_config.geo_channels = new GeoChannelIndex();
@@ -2872,7 +2870,7 @@ namespace CampaignSvcs
       }
       else
       {
-        if(old_config && new_config.geo_channels == old_config->geo_channels)
+        if (old_config && new_config.geo_channels == old_config->geo_channels)
         {
           // few apply iterations can return equal timestamp
           new_config.geo_channels = new GeoChannelIndex(*old_config->geo_channels);
@@ -2885,11 +2883,11 @@ namespace CampaignSvcs
       {
         const GeoChannelInfo& geo_channel_info = update_info.activate_geo_channels[i];
 
-        if(geo_channel_info.geoip_targets.length())
+        if (geo_channel_info.geoip_targets.length())
         {
-          for(CORBA::ULong geoip_target_i = 0;
-              geoip_target_i < geo_channel_info.geoip_targets.length();
-              ++geoip_target_i)
+          for (CORBA::ULong geoip_target_i = 0;
+            geoip_target_i < geo_channel_info.geoip_targets.length();
+            ++geoip_target_i)
           {
             new_config.geo_channels->add(
               String::SubString(geo_channel_info.country),
@@ -2910,17 +2908,16 @@ namespace CampaignSvcs
     }
     else
     {
-      new_config.geo_channels_timestamp =
-        old_config->geo_channels_timestamp;
+      new_config.geo_channels_timestamp = old_config->geo_channels_timestamp;
       new_config.geo_channels = old_config->geo_channels;
     }
 
-    if(!new_config.geo_coord_channels)
+    if (!new_config.geo_coord_channels)
     {
       new_config.geo_coord_channels = new GeoCoordChannelIndex();
     }
 
-    for(CORBA::ULong geo_channel_i = 0;
+    for (CORBA::ULong geo_channel_i = 0;
         geo_channel_i < update_info.activate_geo_coord_channels.length();
         ++geo_channel_i)
     {
@@ -2929,12 +2926,9 @@ namespace CampaignSvcs
 
       new_config.geo_coord_channels->add(
         GeoCoordChannelIndex::Key(
-          CorbaAlgs::unpack_decimal<CoordDecimal>(
-            coord_channel_info.longitude),
-          CorbaAlgs::unpack_decimal<CoordDecimal>(
-            coord_channel_info.latitude),
-          CorbaAlgs::unpack_decimal<AccuracyDecimal>(
-            coord_channel_info.radius)),
+          CorbaAlgs::unpack_decimal<CoordDecimal>(coord_channel_info.longitude),
+          CorbaAlgs::unpack_decimal<CoordDecimal>(coord_channel_info.latitude),
+          CorbaAlgs::unpack_decimal<AccuracyDecimal>(coord_channel_info.radius)),
         coord_channel_info.channel_id);
     }
   }
@@ -2945,7 +2939,7 @@ namespace CampaignSvcs
     const CampaignConfigUpdateInfo& update_info)
     noexcept
   {
-    for(CORBA::ULong i = 0; i < update_info.platforms.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.platforms.length(); ++i)
     {
       std::string platform_name = update_info.platforms[i].name.in();
       String::AsciiStringManip::to_lower(platform_name);
@@ -2962,7 +2956,7 @@ namespace CampaignSvcs
     const CampaignConfigUpdateInfo& update_info)
     noexcept
   {
-    for(CORBA::ULong i = 0; i < update_info.web_operations.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.web_operations.length(); ++i)
     {
       const WebOperationInfo& op = update_info.web_operations[i];
       WebOperation_var opval = new WebOperation;
@@ -2983,9 +2977,9 @@ namespace CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception, eh::Exception)*/
   {
-    for(CORBA::ULong block_channel_i = 0;
-        block_channel_i < update_info.activate_block_channels.length();
-        ++block_channel_i)
+    for (CORBA::ULong block_channel_i = 0;
+      block_channel_i < update_info.activate_block_channels.length();
+      ++block_channel_i)
     {
       config_update_links.block_channels[
         update_info.activate_block_channels[block_channel_i].size_id].push_back(
@@ -2999,20 +2993,17 @@ namespace CampaignSvcs
     const CampaignConfig& campaign_config,
     const OptionValueMap& option_values)
   {
-    for(OptionValueMap::const_iterator opt_val_it =
-          option_values.begin();
-        opt_val_it != option_values.end(); ++opt_val_it)
+    for (OptionValueMap::const_iterator opt_val_it = option_values.begin();
+      opt_val_it != option_values.end(); ++opt_val_it)
     {
       CreativeOptionMap::const_iterator opt_it =
         campaign_config.creative_options.find(opt_val_it->first);
 
-      if(opt_it != campaign_config.creative_options.end())
+      if (opt_it != campaign_config.creative_options.end())
       {
-        option_token_values.insert(std::make_pair(
+        option_token_values.emplace(
           opt_it->second.token,
-          OptionValue(
-            opt_val_it->first,
-            opt_val_it->second.c_str())));
+          OptionValue(opt_val_it->first, opt_val_it->second.c_str()));
       }
       else
       {
@@ -3031,15 +3022,11 @@ namespace CampaignSvcs
     const ConfigUpdateLinks::IdOptionValueMap& option_values,
     unsigned long id)
   {
-    ConfigUpdateLinks::IdOptionValueMap::
-      const_iterator options_it = option_values.find(id);
+    ConfigUpdateLinks::IdOptionValueMap::const_iterator options_it = option_values.find(id);
 
-    if(options_it != option_values.end())
+    if (options_it != option_values.end())
     {
-      return link_option_values_(
-        option_token_values,
-        campaign_config,
-        options_it->second);
+      return link_option_values_(option_token_values, campaign_config, options_it->second);
     }
 
     return true;
@@ -3050,14 +3037,12 @@ namespace CampaignSvcs
     const Generics::Time& now)
     noexcept
   {
-    for(CampaignConfig::CampaignMap::iterator camp_it =
-          config.campaigns.begin();
-        camp_it != config.campaigns.end();
-        ++camp_it)
+    for (CampaignConfig::CampaignMap::iterator camp_it = config.campaigns.begin();
+      camp_it != config.campaigns.end(); ++camp_it)
     {
       Campaign* cmp = camp_it->second;
 
-      if((cmp->campaign_delivery_limits.date_start != Generics::Time::ZERO &&
+      if ((cmp->campaign_delivery_limits.date_start != Generics::Time::ZERO &&
            now < cmp->campaign_delivery_limits.date_start) ||
          (cmp->campaign_delivery_limits.date_end != Generics::Time::ZERO &&
            now > cmp->campaign_delivery_limits.date_end) ||
@@ -3071,111 +3056,65 @@ namespace CampaignSvcs
     }
   }
 
-  void CampaignConfigSource::check_creative_files_option_(
-    CampaignConfig& new_config) noexcept
+  void CampaignConfigSource::check_creative_files_option_(CampaignConfig& new_config) noexcept
   {
-    /*
-    std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
-      ": check_creative_files_option_ enter" <<
-      std::endl;
-    */
-
-    for(CampaignConfig::CampaignMap::const_iterator camp_it =
-          new_config.campaigns.begin();
-        camp_it != new_config.campaigns.end();
-        ++camp_it)
+    for (CampaignConfig::CampaignMap::const_iterator camp_it = new_config.campaigns.begin();
+      camp_it != new_config.campaigns.end(); ++camp_it)
     {
       std::string path_to_file;
       const CreativeList& creatives = camp_it->second->creatives;
-      for(CreativeList::const_iterator creat_it = creatives.begin();
-          creat_it != creatives.end();
-          ++creat_it)
+      for (auto creat_it = creatives.begin(); creat_it != creatives.end(); ++creat_it)
       {
         Creative* cur_creative = *creat_it;
         bool deactivate = false;
 
-        for(OptionTokenValueMap::const_iterator token_it =
-              cur_creative->tokens.begin();
-            token_it != cur_creative->tokens.end();
-            ++token_it)
+        for (OptionTokenValueMap::const_iterator token_it = cur_creative->tokens.begin();
+          token_it != cur_creative->tokens.end(); ++token_it)
         {
           CreativeOptionMap::const_iterator creat_opt_it =
             new_config.creative_options.find(token_it->second.option_id);
 
           assert(creat_opt_it != new_config.creative_options.end());
 
-          if(!token_it->second.value.empty() &&
-              (creat_opt_it->second.type == 'F' ||
-               ((creat_opt_it->second.type == 'D' ||
-                 creat_opt_it->second.type == 'U') &&
-                token_it->second.value.compare(0, 7, "http://") &&
-                token_it->second.value.compare(0, 8, "https://") &&
-                token_it->second.value.compare(0, 2, "//"))))
+          if (!token_it->second.value.empty() &&
+            (creat_opt_it->second.type == 'F' ||
+             ((creat_opt_it->second.type == 'D' ||
+               creat_opt_it->second.type == 'U') &&
+              token_it->second.value.compare(0, 7, "http://") &&
+              token_it->second.value.compare(0, 8, "https://") &&
+              token_it->second.value.compare(0, 2, "//"))))
           {
             adapt_creative_file_path(token_it->second.value.c_str(), path_to_file);
 
-            if(!file_access_manager_.get(path_to_file.c_str()))
+            if (!file_access_manager_.get(path_to_file.c_str()))
             {
-              /*
-              std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
-                ": file '" << path_to_file << "' not found" <<
-                std::endl;
-              */
               deactivate = true;
               break;
             }
           }
         }
 
-        if(deactivate)
+        if (deactivate)
         {
           cur_creative->status = 'W';
         }
       }
     }
-
-    /*
-    std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
-      ": check_creative_files_option_ exit" <<
-      std::endl;
-    */
   }
 
-  void CampaignConfigSource::check_creative_template_files_(
-    CampaignConfig& new_config) noexcept
+  void CampaignConfigSource::check_creative_template_files_(CampaignConfig& new_config) noexcept
   {
-    /*
-    std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
-      ": check_creative_template_files_ enter" <<
-      std::endl;
-    */
-
-    for(CreativeTemplateMap::iterator it =
-          new_config.creative_templates.begin();
-        it != new_config.creative_templates.end(); ++it)
+    for (CreativeTemplateMap::iterator it = new_config.creative_templates.begin();
+      it != new_config.creative_templates.end(); ++it)
     {
-      if(file_access_manager_.get(it->second.file.c_str()))
+      if (file_access_manager_.get(it->second.file.c_str()))
       {
         it->second.status = 'A';
       }
       else
       {
-        /*
-        std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
-          ": file '" << it->second.file << "' not found" <<
-          std::endl;
-        */
-
         it->second.status = 'W';
       }
     }
-
-    /*
-    std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
-      ": check_creative_template_files_ exit" <<
-      std::endl;
-    */
   }
-
-}
 }

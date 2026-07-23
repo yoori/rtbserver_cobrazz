@@ -1,6 +1,8 @@
 
 #include <coroutine>
+#include <memory>
 #include <sstream>
+#include <string_view>
 
 #include <google/protobuf/arena.h>
 
@@ -64,6 +66,11 @@ namespace Config
 namespace Aspect
 {
   const char IMPR_TRACK_FRONTEND[] = "ImprTrackFrontend";
+}
+
+namespace
+{
+  const unsigned TEXT_TEMPLATE_LOAD_THREADS = 2;
 }
 
 namespace AdServer::ImprTrack
@@ -255,17 +262,24 @@ namespace AdServer::ImprTrack
         {
           site_keys[it->site_id()] = read_keys_(*it);
         }
-        template_files_ = new Commons::TextTemplateCache(
+        template_file_task_runner_ =
+          new Generics::TaskRunner(callback(), TEXT_TEMPLATE_LOAD_THREADS);
+        add_child_object(template_file_task_runner_.in());
+
+        template_files_ = std::make_shared<Commons::TextTemplateCache>(
           static_cast<unsigned long>(-1),
+          template_file_task_runner_.in(),
           Generics::Time::ONE_MINUTE,
-          Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(Generics::Time::ONE_SECOND));
+          Generics::Time::ONE_SECOND);
 
         for(auto bind_url_it = config_->BindURL().begin();
           bind_url_it != config_->BindURL().end(); ++bind_url_it)
         {
           BindURLRule_var bind_url_rule = new BindURLRule();
-          bind_url_rule->url_template = new Commons::TextTemplate(
-            bind_url_it->template_());
+          const auto& template_text = bind_url_it->template_();
+          bind_url_rule->url_template =
+            std::make_shared<Commons::TextTemplate>(
+              std::string_view(template_text.c_str(), template_text.size()));
           bind_url_rule->use_keywords = bind_url_it->use_keywords();
 
           if (bind_url_it->use_keywords())
@@ -468,7 +482,7 @@ namespace AdServer::ImprTrack
         const ResolveUserBindResult bind_result =
           co_await co_resolve_user_bind_(request_info, result_user_id);
 
-        http_status = finish_request_(
+        http_status = co_await finish_request_(
           request,
           response,
           request_info,
@@ -563,7 +577,14 @@ namespace AdServer::ImprTrack
           try
           {
             // instantiate imp template
-            Commons::TextTemplate_var templ = template_files_->get(track_template_file_);
+            Commons::TextTemplatePtr templ =
+              co_await template_files_->co_get(
+                track_template_file_.text(),
+                std::string());
+            if(!templ)
+            {
+              throw Exception("Track template file isn't loaded");
+            }
 
             typedef std::map<String::SubString, std::string> ArgMap;
 
@@ -658,7 +679,7 @@ namespace AdServer::ImprTrack
       false};
   }
 
-  int
+  FrontendCommons::ValueTask<int>
   Frontend::finish_request_(
     const FCGI::HttpRequest& request,
     FCGI::HttpResponse& response,
@@ -811,8 +832,14 @@ namespace AdServer::ImprTrack
         {
           try
           {
-            Commons::TextTemplate_var templ =
-              template_files_->get(track_template_file_);
+            Commons::TextTemplatePtr templ =
+              co_await template_files_->co_get(
+                track_template_file_.text(),
+                std::string());
+            if(!templ)
+            {
+              throw Exception("Track template file isn't loaded");
+            }
 
             typedef std::map<String::SubString, std::string> ArgMap;
             ArgMap args_cont;
@@ -895,7 +922,7 @@ namespace AdServer::ImprTrack
         Aspect::IMPR_TRACK_FRONTEND,
         "ADS-IMPL-134");
     }
-    return http_status;
+    co_return http_status;
   }
 
   Frontend::ResolveUserBindTask

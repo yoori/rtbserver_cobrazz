@@ -26,7 +26,7 @@
 #include <Commons/IPCrypter.hpp>
 #include <Commons/Coro/SyncCoro.hpp>
 #include <Commons/SecToken.hpp>
-#include <Commons/TextTemplateCache.hpp>
+#include <Commons/TextTemplateAsyncCache.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 
 #include <xsd/CampaignSvcs/CampaignManagerConfig.hpp>
@@ -811,8 +811,8 @@ namespace AdServer::CampaignSvcs
     void process_match_request(const MatchRequestInfo& match_request_info)
       /*throw(Exception, NotReady)*/;
 
-    ByteArray
-    get_file(const std::string& file_name)
+    AdServer::Commons::SyncCoro<ByteArray>
+    co_get_file(std::string file_name)
       /*throw(Exception)*/;
 
     AdServer::Commons::SyncCoro<InstantiateAdResult>
@@ -1452,7 +1452,7 @@ namespace AdServer::CampaignSvcs
     Commons::IPCrypter_var ip_crypter_;
     Generics::SignedUuidGenerator rid_signer_;
     CountryList country_whitelist_;
-    Commons::BoundedFileCache_var template_files_;
+    Commons::FileCachePtr template_files_;
   };
 
   using CampaignManagerCore_var = ReferenceCounting::SmartPtr<CampaignManagerCore>;

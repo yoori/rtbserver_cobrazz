@@ -6,6 +6,7 @@
 #include <HTTP/UrlAddress.hpp>
 
 #include <Commons/PathManip.hpp>
+#include <Commons/DelegateTaskGoal.hpp>
 
 #include "DirectoryModule.hpp"
 
@@ -39,6 +40,10 @@ namespace
   };
 
   const unsigned long MAX_TRY_COUNT = 3;
+  const unsigned VERSIONED_FILE_LOAD_THREADS = 2;
+  const std::size_t VERSIONED_FILE_CACHE_SIZE = 10 * 1024 * 1024;
+  const Generics::Time VERSIONED_FILE_CACHE_UPDATE_PERIOD(2);
+  const Generics::Time VERSIONED_FILE_CACHE_MAX_KEEP_TIME(30 * 24 * 60 * 60);
 }
 
 namespace AdServer
@@ -70,33 +75,17 @@ namespace AdServer
     }
   };
 
-  /* DirectoryModule::VersionedFileCacheConfiguration */
-  DirectoryModule::VersionedFileCacheConfiguration::
-  VersionedFileCacheConfiguration(const Generics::Time& check_period)
-    noexcept
-    : check_period_(check_period)
-  {}
-
-  bool
-  DirectoryModule::VersionedFileCacheConfiguration::update_required(
-    const Generics::StringHashAdapter& /*key*/,
-    const Holder& holder)
-    noexcept
+  DirectoryModule::VersionedFileCache::HolderPtr
+  DirectoryModule::load_versioned_file_(
+    const std::string& file_folder,
+    const VersionedFileCache::HolderPtr& old_holder)
   {
-    bool req = holder.timestamp + check_period_ <
-      Generics::Time::get_time_of_day();
-    return req;
-  }
+    static const char* FUN = "DirectoryModule::load_versioned_file_()";
 
-  DirectoryModule::VersionedFileCacheConfiguration::Holder
-  DirectoryModule::VersionedFileCacheConfiguration::update(
-    const Generics::StringHashAdapter& key,
-    const Holder* old_holder)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "VersionedFileCacheConfiguration::update()";
-
-    const std::string& file_folder = key.text();
+    const FileContentPtr old_content =
+      old_holder && old_holder->value ?
+        *old_holder->value :
+        FileContentPtr();
 
     unsigned long try_count = 0;
 
@@ -125,7 +114,7 @@ namespace AdServer
         Stream::Error ostr;
         ostr << FUN << ": can't fetch directory '" << file_folder << "' content: " <<
           ex.what();
-        throw Exception(ostr);
+        throw VersionedFileCacheException(ostr);
       }
 
       // if stat failed recheck directory content - next try
@@ -136,15 +125,17 @@ namespace AdServer
       {
         const std::string& max_file_name = max_file_selector.max_file_name;
 
-        if(old_holder &&
-           max_file_name == old_holder->content->file_name())
+        if(old_content &&
+           max_file_name == old_content->file_name())
         {
-          Holder new_holder(*old_holder);
-          new_holder.timestamp = Generics::Time::get_time_of_day();
-          return new_holder;
+          return std::make_shared<VersionedFileCache::Holder>(
+            old_content,
+            Generics::Time::get_time_of_day(),
+            Generics::Time::ZERO,
+            old_content->file_name().size() + old_content->length() + 2);
         }
 
-        std::string full_file_name = key.text() + "/" + max_file_name;
+        std::string full_file_name = file_folder + "/" + max_file_name;
 
         // reopen file (don't keep file descriptor opened)
         int fd = ::open(full_file_name.c_str(), O_RDONLY, 0666);
@@ -160,23 +151,23 @@ namespace AdServer
             }
             else
             {
-              eh::throw_errno_exception<Exception>(error, "");
+              eh::throw_errno_exception<VersionedFileCacheException>(error, "");
             }
           }
           else
           {
             Generics::MMapFile mmapped_file(fd);
 
-            Holder new_holder;
-
-            new_holder.content = new FileContent(
+            FileContentPtr content = std::make_shared<FileContent>(
               max_file_name.c_str(),
               mmapped_file.memory(),
               mmapped_file.length());
 
-            new_holder.timestamp = Generics::Time::get_time_of_day();
-
-            return new_holder;
+            return std::make_shared<VersionedFileCache::Holder>(
+              content,
+              Generics::Time::get_time_of_day(),
+              Generics::Time::ZERO,
+              content->file_name().size() + content->length() + 2);
           }
         }
         catch(const eh::Exception& ex)
@@ -184,7 +175,7 @@ namespace AdServer
           Stream::Error ostr;
           ostr << FUN << ": can't open file '" << max_file_name << "': " <<
             ex.what();
-          throw Exception(ostr);
+          throw VersionedFileCacheException(ostr);
         }
       }
 
@@ -192,31 +183,73 @@ namespace AdServer
     }
     while(try_count < MAX_TRY_COUNT);
 
-    if(old_holder)
+    if(old_content)
     {
-      return *old_holder;
+      return old_holder;
     }
 
     // if all tries failed and no old holder
     Stream::Error ostr;
-    ostr << FUN << ": can't open file '" << key.text() << "': all tries failed";
-    throw Exception(ostr);
+    ostr << FUN << ": can't open file '" << file_folder << "': all tries failed";
+    throw VersionedFileCacheException(ostr);
   }
 
-  unsigned long
-  DirectoryModule::VersionedFileCacheConfiguration::size(
-    const Holder& holder) const
-    noexcept
+  DirectoryModule::VersionedFileCache::SyncUpdate
+  DirectoryModule::make_versioned_file_sync_update_()
   {
-    return holder.content->file_name().size() + holder.content->length() + 2;
+    return [](
+      const std::string& file_folder,
+      const VersionedFileCache::HolderPtr& old_holder) ->
+        VersionedFileCache::HolderPtr
+    {
+      return load_versioned_file_(file_folder, old_holder);
+    };
   }
 
-  DirectoryModule::FileContent_var
-  DirectoryModule::VersionedFileCacheConfiguration::adapt(
-    const DirectoryModule::VersionedFileCacheConfiguration::Holder& holder) const
-    noexcept
+  DirectoryModule::VersionedFileCache::AsyncUpdate
+  DirectoryModule::make_versioned_file_async_update_(
+    Generics::TaskRunner* task_runner)
   {
-    return holder.content;
+    return [task_runner](
+      std::string file_folder,
+      VersionedFileCache::HolderPtr old_holder,
+      VersionedFileCache::UpdateCallback callback)
+    {
+      try
+      {
+        task_runner->enqueue_task(AdServer::Commons::make_delegate_task(
+          [
+            file_folder = std::move(file_folder),
+            old_holder = std::move(old_holder),
+            callback = std::move(callback)
+          ]() mutable noexcept
+          {
+            VersionedFileCache::HolderPtr holder;
+            try
+            {
+              holder = load_versioned_file_(file_folder, old_holder);
+            }
+            catch(...)
+            {}
+
+            try
+            {
+              callback(std::move(holder));
+            }
+            catch(...)
+            {}
+          }));
+      }
+      catch(...)
+      {
+        try
+        {
+          callback(VersionedFileCache::HolderPtr());
+        }
+        catch(...)
+        {}
+      }
+    };
   }
 
   /* DirectoryModule */
@@ -319,24 +352,58 @@ namespace AdServer
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
-    const FCGI::HttpRequest& request = request_holder->request();
-
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
-    int http_status = process_request_(request, response);
-    co_return FrontendCommons::RequestResult{
-      http_status,
-      response_ptr,
-      false};
+    auto result = co_await process_request_(
+      std::move(request_holder),
+      std::move(response_ptr));
+    co_return std::move(result);
   }
 
   int
+  DirectoryModule::fill_response_(
+    FCGI::HttpResponse& response,
+    const std::string& base_name,
+    const FileContentPtr& file_content)
+    noexcept
+  {
+    try
+    {
+      if(file_content->file_name() >= base_name)
+      {
+        response.add_header_nocopy(
+          Header::CACHE_CONTROL,
+          DirectoryConfig::DEFAULT_REQUESTED_FRESH_OR_OLDEST_VERSION_CACHE_HEADER);
+      }
+      else
+      {
+        response.add_header_nocopy(
+          Header::CACHE_CONTROL,
+          DirectoryConfig::DEFAULT_REQUEST_GREAT_VERSION_CACHE_HEADER);
+      }
+
+      response.set_content_type_nocopy(DirectoryConfig::DEFAULT_CONTENT_TYPE_HEADER);
+
+      response.get_output_stream().write(
+        static_cast<const char*>(file_content->data()),
+        file_content->length());
+    }
+    catch(const eh::Exception&)
+    {
+      return 0;
+    }
+
+    return 0; //OK
+  }
+
+  FrontendCommons::RequestTask
   DirectoryModule::process_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::HttpResponse_var response)
     noexcept
   {
     static const char* FUN = "DirectoryModule::handle_request";
+
+    const FCGI::HttpRequest& request = request_holder->request();
 
     Directory_var dir;
     std::string full_file_name;
@@ -357,7 +424,10 @@ namespace AdServer
 
       if(!AdServer::PathManip::normalize_path(in_dir_path))
       {
-        return 403; // Forbidden
+        co_return FrontendCommons::RequestResult{
+          403,
+          response,
+          false};
       }
 
       full_file_name = dir->root + in_dir_path;
@@ -378,53 +448,34 @@ namespace AdServer
 
     if(!base_name.empty())
     {
-      FileContent_var file_content;
-
-      try
-      {
-        file_content = dir->cache->get(dir_name);
-      }
-      catch(const eh::Exception& ex)
+      FileContentPtr file_content =
+        co_await dir->cache->co_get(workers_, dir_name);
+      if(!file_content)
       {
         if(logger()->log_level() >= Logging::Logger::TRACE)
         {
           Stream::Error ostr;
           ostr << FUN << ": can't open '" << dir_name << "' -> '" <<
-            base_name << "' by '" << full_file_name << "': " <<
-            ex.what();
+            base_name << "' by '" << full_file_name << "'";
           logger()->log(ostr.str(),
             Logging::Logger::TRACE,
             Aspect::DIRECTORY_MODULE);
         }
 
-        return 404; // Not found
+        co_return FrontendCommons::RequestResult{
+          404,
+          response,
+          false};
       }
 
-      try
-      {
-        if(file_content->file_name() >= base_name)
-        {
-          response.add_header_nocopy(
-            Header::CACHE_CONTROL,
-            DirectoryConfig::DEFAULT_REQUESTED_FRESH_OR_OLDEST_VERSION_CACHE_HEADER);
-        }
-        else
-        {
-          response.add_header_nocopy(
-            Header::CACHE_CONTROL,
-            DirectoryConfig::DEFAULT_REQUEST_GREAT_VERSION_CACHE_HEADER);
-        }
-
-        response.set_content_type_nocopy(DirectoryConfig::DEFAULT_CONTENT_TYPE_HEADER);
-
-        response.get_output_stream().write(
-          static_cast<const char*>(file_content->data()),
-          file_content->length());
-      }
-      catch(const eh::Exception& ex)
-      {
-        return 0;
-      }
+      const int http_status = fill_response_(
+        *response,
+        base_name,
+        file_content);
+      co_return FrontendCommons::RequestResult{
+        http_status,
+        response,
+        false};
     }
     else
     {
@@ -438,10 +489,11 @@ namespace AdServer
           Aspect::DIRECTORY_MODULE);
       }
 
-      return 404; // Not found
+      co_return FrontendCommons::RequestResult{
+        404,
+        response,
+        false};
     }
-
-    return 0; //OK
   }
 
   void
@@ -453,15 +505,21 @@ namespace AdServer
 
     parse_configs_();
 
+    versioned_file_task_runner_ =
+      new Generics::TaskRunner(callback(), VERSIONED_FILE_LOAD_THREADS);
+    add_child_object(versioned_file_task_runner_);
+
     for(auto it = config_->DirectoryList().Directory().begin();
         it != config_->DirectoryList().Directory().end(); ++it)
     {
        Directory_var new_directory(new Directory);
        new_directory->root = it->root();
-       new_directory->cache = new VersionedFileCache(
-         10*1024*1024,
-         Generics::Time(1),
-         VersionedFileCacheConfiguration(Generics::Time(2)));
+       new_directory->cache = std::make_shared<VersionedFileCache>(
+         VERSIONED_FILE_CACHE_SIZE,
+         VERSIONED_FILE_CACHE_UPDATE_PERIOD,
+         VERSIONED_FILE_CACHE_MAX_KEEP_TIME,
+         make_versioned_file_sync_update_(),
+         make_versioned_file_async_update_(versioned_file_task_runner_));
        directories_[it->path()] = new_directory;
     }
   }

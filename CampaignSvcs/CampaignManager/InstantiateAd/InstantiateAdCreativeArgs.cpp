@@ -4,6 +4,7 @@
 
 #include <String/StringManip.hpp>
 
+#include <algorithm>
 #include <utility>
 
 namespace AdServer::CampaignSvcs::InstantiateAd
@@ -26,20 +27,6 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       return data ? (*data).*member : std::nullopt;
     }
 
-    bool
-    has_priority_over_ad_slot_tokens(std::string_view name)
-    {
-      namespace CreativeTokens = AdServer::CampaignSvcs::CreativeTokens;
-
-      return name == CreativeTokens::REQUEST_ID ||
-        name == CreativeTokens::CCID ||
-        name == CreativeTokens::ADVERTISER_ID ||
-        name == CreativeTokens::CGID ||
-        name == CreativeTokens::CID ||
-        name == CreativeTokens::CREATIVE_SIZE ||
-        name == CreativeTokens::TEMPLATE_FORMAT ||
-        name == CreativeTokens::ACTIONPIXEL;
-    }
   }
 
   InstantiateAdCreativeArgsProvider::InstantiateAdCreativeArgsProvider(
@@ -59,25 +46,25 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     const std::string_view name(key.data(), key.size());
     const auto& creative_data = context().creative_args_data;
 
-    if(has_priority_over_ad_slot_tokens(name) &&
-      manager_->get_argument(*this, key, result, value))
-    {
-      return true;
-    }
-
-    if(creative_data &&
-      creative_data->creative &&
-      context().request_params &&
+    // Override track pixels for log_as_test mode.
+    if (context().request_params &&
       context().request_params->log_as_test &&
-      name.compare(
-        0,
-        CreativeTokens::ADV_TRACK_PIXEL.size(),
-        CreativeTokens::ADV_TRACK_PIXEL) == 0)
+      creative_data &&
+      creative_data->creative &&
+      name.compare(0, CreativeTokens::ADV_TRACK_PIXEL.size(), CreativeTokens::ADV_TRACK_PIXEL) == 0)
     {
-      const auto token_it = creative_data->creative->tokens.find(name);
-      if(token_it != creative_data->creative->tokens.end())
+      const auto& adv_track_pixel_tokens = creative_data->creative->adv_track_pixel_tokens;
+      const auto token_it = std::find_if (
+        adv_track_pixel_tokens.begin(),
+        adv_track_pixel_tokens.end(),
+        [name](const auto& token)
+        {
+          return std::string_view(token.name) == name;
+        });
+
+      if (token_it != adv_track_pixel_tokens.end())
       {
-        if(!value)
+        if (!value)
         {
           result.assign(key.data(), key.size());
         }
@@ -91,7 +78,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       }
     }
 
-    if(context().ad_slot_context &&
+    if (context().ad_slot_context &&
       context().ad_slot_context->tokens.get_argument(key, result, value))
     {
       return true;
@@ -109,7 +96,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
-        if(!data || data->keyword.empty())
+        if (!data || data->keyword.empty())
         {
           return std::nullopt;
         }
@@ -186,7 +173,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
-        if(!data || !data->select_params)
+        if (!data || !data->select_params)
         {
           return std::nullopt;
         }

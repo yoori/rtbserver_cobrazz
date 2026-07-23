@@ -792,6 +792,13 @@ namespace CampaignSvcs
       OptionValue click_url;
 
       OptionTokenValueMap tokens;
+      struct AdvTrackPixelToken
+      {
+        std::string name;
+        long option_id = 0;
+      };
+      using AdvTrackPixelTokenArray = std::vector<AdvTrackPixelToken>;
+      AdvTrackPixelTokenArray adv_track_pixel_tokens;
 
       CategorySet categories;
       CategorySet click_categories;

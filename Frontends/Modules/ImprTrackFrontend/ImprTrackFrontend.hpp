@@ -13,11 +13,12 @@
 #include <Logger/DistributorLogger.hpp>
 #include <Generics/FileCache.hpp>
 #include <Generics/CompositeActiveObject.hpp>
+#include <Generics/TaskRunner.hpp>
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/ExecutorPool.hpp>
-#include <Commons/TextTemplateCache.hpp>
+#include <Commons/TextTemplateAsyncCache.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -111,7 +112,7 @@ namespace AdServer::ImprTrack
     {
       bool use_keywords;
       Generics::GnuHashSet<Generics::StringHashAdapter> keywords;
-      Commons::TextTemplate_var url_template;
+      Commons::TextTemplatePtr url_template;
 
     protected:
       virtual ~BindURLRule() noexcept
@@ -121,8 +122,7 @@ namespace AdServer::ImprTrack
     typedef ReferenceCounting::SmartPtr<BindURLRule> BindURLRule_var;
     typedef std::vector<BindURLRule_var> BindURLRuleArray;
 
-    typedef std::vector<Commons::TextTemplate_var>
-      TextTemplateArray;
+    using TextTemplateArray = std::vector<Commons::TextTemplatePtr>;
 
     struct ResolveUserBindResult
     {
@@ -141,7 +141,7 @@ namespace AdServer::ImprTrack
     void
     parse_config_() /*throw(Exception)*/;
 
-    int
+    FrontendCommons::ValueTask<int>
     finish_request_(
       const FCGI::HttpRequest& request,
       FCGI::HttpResponse& response,
@@ -239,7 +239,8 @@ namespace AdServer::ImprTrack
     std::atomic<unsigned long> match_tasks_count_{0};
 
     Generics::StringHashAdapter track_template_file_;
-    Commons::TextTemplateCache_var template_files_;
+    Generics::TaskRunner_var template_file_task_runner_;
+    Commons::TextTemplateCachePtr template_files_;
   };
 }
 

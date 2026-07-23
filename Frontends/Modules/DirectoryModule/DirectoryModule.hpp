@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+#include <memory>
 #include <string>
 
 #include <eh/Exception.hpp>
@@ -10,11 +12,13 @@
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
+#include <Generics/ArrayAutoPtr.hpp>
 #include <Generics/MMap.hpp>
+#include <Generics/TaskRunner.hpp>
 #include <HTTP/Http.hpp>
 
+#include <Commons/AsyncCache.hpp>
 #include <Commons/ExecutorPool.hpp>
-#include <FrontendCommons/BoundedCache.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 
@@ -33,7 +37,7 @@ namespace AdServer
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
   public:
     DirectoryModule(
       Configuration* frontend_config_,
@@ -75,7 +79,7 @@ namespace AdServer
     /* versioned files cache
      * requirements: file content can't be changed after creation
      */
-    class FileContent: public ReferenceCounting::AtomicImpl
+    class FileContent
     {
     public:
       FileContent(
@@ -105,8 +109,7 @@ namespace AdServer
         return length_;
       }
 
-    protected:
-      virtual ~FileContent() noexcept {}
+      ~FileContent() noexcept = default;
 
     private:
       const std::string file_name_;
@@ -114,80 +117,63 @@ namespace AdServer
       const unsigned long length_;
     };
 
-    typedef ReferenceCounting::SmartPtr<FileContent>
-      FileContent_var;
+    using FileContentPtr = std::shared_ptr<FileContent>;
 
-    class VersionedFileCacheConfiguration
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(VersionedFileCacheException, eh::DescriptiveException);
 
-      struct Holder
-      {
-        Generics::Time timestamp;
-        FileContent_var content;
-      };
-
-    public:
-      VersionedFileCacheConfiguration(const Generics::Time& check_period =
-        Generics::Time(10)) noexcept;
-
-      bool update_required(
-        const Generics::StringHashAdapter& key,
-        const Holder& file_state) noexcept;
-
-      Holder update(
-        const Generics::StringHashAdapter& key,
-        const Holder* old_holder)
-        /*throw(Exception)*/;
-
-      unsigned long size(const Holder& file_state) const noexcept;
-
-      FileContent_var adapt(const Holder& file_state) const noexcept;
-
-    private:
-      Generics::Time check_period_;
-    };
-
-    typedef BoundedCache<
-      Generics::StringHashAdapter,
-      FileContent_var,
-      VersionedFileCacheConfiguration,
-      AdServer::Commons::RCHash2Args>
-      VersionedFileCache;
-
-    typedef ReferenceCounting::SmartPtr<VersionedFileCache>
-      VersionedFileCache_var;
+    using VersionedFileCache =
+      AdServer::Commons::AsyncCache<std::string, FileContentPtr>;
+    using VersionedFileCachePtr = std::shared_ptr<VersionedFileCache>;
 
     struct Directory: public ReferenceCounting::AtomicImpl
     {
       std::string root;
-      VersionedFileCache_var cache;
+      VersionedFileCachePtr cache;
 
     protected:
       virtual ~Directory() noexcept {}
     };
 
-    typedef ReferenceCounting::SmartPtr<Directory> Directory_var;
+    using Directory_var = ReferenceCounting::SmartPtr<Directory>;
 
-    typedef std::map<std::string, Directory_var> DirAliasMap;
+    using DirAliasMap = std::map<std::string, Directory_var>;
 
-    typedef Configuration::FeConfig::ContentFeConfiguration_type
-      ContentFeConfiguration;
+    using ContentFeConfiguration =
+      Configuration::FeConfig::ContentFeConfiguration_type;
 
-    typedef std::unique_ptr<ContentFeConfiguration> ConfigPtr;
+    using ConfigPtr = std::unique_ptr<ContentFeConfiguration>;
 
   private:
     void
     parse_configs_() /*throw(Exception)*/;
 
     int
-    process_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    fill_response_(
+      FCGI::HttpResponse& response,
+      const std::string& base_name,
+      const FileContentPtr& file_content)
       noexcept;
 
+    FrontendCommons::RequestTask
+    process_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::HttpResponse_var response)
+      noexcept;
+
+    static VersionedFileCache::HolderPtr
+    load_versioned_file_(
+      const std::string& file_folder,
+      const VersionedFileCache::HolderPtr& old_holder);
+
+    static VersionedFileCache::SyncUpdate
+    make_versioned_file_sync_update_();
+
+    static VersionedFileCache::AsyncUpdate
+    make_versioned_file_async_update_(
+      Generics::TaskRunner* task_runner);
+
   private:
+    Generics::TaskRunner_var versioned_file_task_runner_;
     DirAliasMap directories_;
     ConfigPtr config_;
     Configuration_var frontend_config_;

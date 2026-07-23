@@ -1,5 +1,7 @@
 
 #include <sstream>
+#include <memory>
+#include <string_view>
 #include <utility>
 
 #include <HTTP/HTTPCookie.hpp>
@@ -304,8 +306,10 @@ namespace AdServer::Action
           redirect_it != config_->Redirect().end(); ++redirect_it)
         {
           RedirectRule_var redirect_rule = new RedirectRule();
-          redirect_rule->url_template = new Commons::TextTemplate(
-            redirect_it->template_());
+          const auto& template_text = redirect_it->template_();
+          redirect_rule->url_template =
+            std::make_shared<Commons::TextTemplate>(
+              std::string_view(template_text.c_str(), template_text.size()));
           redirect_rule->use_keywords = redirect_it->use_keywords();
 
           if (redirect_it->use_keywords())

@@ -10,12 +10,13 @@
 #include <Logger/DistributorLogger.hpp>
 
 #include <Generics/CompositeActiveObject.hpp>
+#include <Generics/TaskRunner.hpp>
 
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Commons/TextTemplateCache.hpp>
+#include <Commons/TextTemplateAsyncCache.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
@@ -76,8 +77,7 @@ namespace AdServer
       noexcept;
 
   private:
-    using Exception = Commons::TextTemplateCacheConfiguration<
-      Commons::TextTemplate>::Exception;
+    using Exception = Commons::TextTemplateCache::Exception;
 
     struct TraceLevel
     {
@@ -104,41 +104,6 @@ namespace AdServer
 
     using TemplateRuleMap = Generics::GnuHashTable<
       Generics::SubStringHashAdapter, TemplateRule>;
-
-  private:
-    class CreativesUpdater :
-      public Commons::TextTemplateCacheConfiguration<
-        Commons::TextTemplate>::FarUpdater
-    {
-      using ConfigType = Commons::TextTemplateCacheConfiguration<
-        Commons::TextTemplate>;
-      using Holder = ConfigType::Holder;
-
-      ~CreativesUpdater() noexcept override;
-
-      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
-        campaign_manager_coro_;
-
-      FrontendCommons::RequestTask
-      co_far_update_(
-        adserver::campaign_svcs::campaign_manager::GetFileRequest request,
-        ConfigType::UpdateCallback callback)
-        noexcept;
-
-    public:
-
-      CreativesUpdater(
-        std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>
-          campaign_manager_coro)
-        noexcept;
-
-      void
-      far_update_async(
-        const char* file,
-        const char* service_index,
-        ConfigType::UpdateCallback callback)
-        noexcept override;
-    };
 
     ~ContentFrontend() noexcept override = default;
 
@@ -187,7 +152,8 @@ namespace AdServer
       campaign_manager_coro_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers_;
-    Commons::TextTemplateCache_var template_files_;
+    Generics::TaskRunner_var template_file_task_runner_;
+    Commons::TextTemplateCachePtr template_files_;
   };
 
 

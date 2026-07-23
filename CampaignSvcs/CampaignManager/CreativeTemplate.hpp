@@ -143,7 +143,7 @@ namespace AdServer
     class TemplateMap
     {
     protected:
-      typedef Sync::Policy::PosixThread SyncPolicy;
+      typedef Sync::Policy::PosixThreadRW SyncPolicy;
 
     public:
       typedef Generics::GnuHashTable<KeyType, ValueType> KeyMap;
@@ -207,19 +207,22 @@ namespace AdServer
 
         TemplateWithState(const TemplateWithState& init)
           : state(init.state),
-            templ(init.templ)
+            templ(init.templ),
+            update_in_progress(false)
         {}
 
         TemplateWithState(
           const typename FactoryType::State& state_val,
           Template* templ_val)
           : state(state_val),
-            templ(ReferenceCounting::add_ref(templ_val))
+            templ(ReferenceCounting::add_ref(templ_val)),
+            update_in_progress(false)
         {}
 
         typename SyncPolicy::Mutex lock;
         typename FactoryType::State state;
         Template_var templ;
+        bool update_in_progress = false;
       };
 
       typedef std::map<ValueHandlerType, TemplateWithState> ValueMap;
@@ -450,26 +453,28 @@ namespace AdServer
     {
       if(value_map_it == value_map_.end())
       {
-        typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
-        typename FactoryType::State state;
-        Template_var templ = factory_.create(value_map_it->first, state);
-        value_map_.insert(
-          std::make_pair(value_map_it->first, TemplateWithState(state, templ)));
-        return ReferenceCounting::add_ref(templ);
+        return 0;
       }
-      else
-      {
-        {
-          typename SyncPolicy::ReadGuard lock(value_map_it->second.lock);
 
-          if(!(value_map_it->second.templ.in() == 0) &&
-             !factory_.need_update(
-                value_map_it->first, value_map_it->second.state))
+      Template_var current_template;
+      typename FactoryType::State current_state;
+
+      {
+        typename SyncPolicy::ReadGuard lock(value_map_it->second.lock);
+
+        if(value_map_it->second.templ.in() != 0)
+        {
+          if(!factory_.need_update(
+              value_map_it->first,
+              value_map_it->second.state) ||
+            value_map_it->second.update_in_progress)
           {
             return ReferenceCounting::add_ref(value_map_it->second.templ);
           }
         }
+      }
 
+      {
         typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
 
         if(value_map_it->second.templ.in() == 0)
@@ -477,18 +482,48 @@ namespace AdServer
           value_map_it->second.templ = factory_.create(
             value_map_it->first,
             value_map_it->second.state);
-        }
-        else if(factory_.need_update(
-                  value_map_it->first, value_map_it->second.state))
-        {
-          value_map_it->second.templ = factory_.update(
-            value_map_it->second.templ,
-            value_map_it->first,
-            value_map_it->second.state);
+          return ReferenceCounting::add_ref(value_map_it->second.templ);
         }
 
-        return ReferenceCounting::add_ref(value_map_it->second.templ);
+        if(!factory_.need_update(
+             value_map_it->first,
+             value_map_it->second.state))
+        {
+          return ReferenceCounting::add_ref(value_map_it->second.templ);
+        }
+
+        if(value_map_it->second.update_in_progress)
+        {
+          return ReferenceCounting::add_ref(value_map_it->second.templ);
+        }
+
+        current_template = value_map_it->second.templ;
+        current_state = value_map_it->second.state;
+        value_map_it->second.update_in_progress = true;
       }
+
+      Template_var updated_template;
+
+      try
+      {
+        updated_template = factory_.update(
+          current_template,
+          value_map_it->first,
+          current_state);
+      }
+      catch(...)
+      {
+        typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
+        value_map_it->second.state = current_state;
+        value_map_it->second.update_in_progress = false;
+        throw;
+      }
+
+      typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
+      value_map_it->second.templ = updated_template;
+      value_map_it->second.state = current_state;
+      value_map_it->second.update_in_progress = false;
+      return ReferenceCounting::add_ref(value_map_it->second.templ);
     }
 
     template<

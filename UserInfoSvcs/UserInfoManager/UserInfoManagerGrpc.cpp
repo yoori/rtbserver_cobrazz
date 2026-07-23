@@ -12,7 +12,6 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/MonoAllocator.hpp>

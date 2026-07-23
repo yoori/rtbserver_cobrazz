@@ -6,8 +6,7 @@
 
 namespace AdServer::CampaignSvcs::InstantiateAd
 {
-  class TokenProcessorArgs:
-    public String::TextTemplate::ArgsCallback
+  class TokenProcessorArgs: public String::TextTemplate::ArgsCallback
   {
   public:
     TokenProcessorArgs(

@@ -1,6 +1,9 @@
 #include <iostream>
+#include <memory>
 #include <string>
-#include <Commons/TextTemplateCache.hpp>
+#include <Generics/TaskRunner.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Commons/TextTemplateAsyncCache.hpp>
 
 using namespace AdServer;
 
@@ -10,24 +13,30 @@ int main(int /*argc*/, char** /*argv*/)
 {
   ::system("mkdir ~tmp 2>/dev/null ; echo '%%TEST%%' >~tmp/t");
 
-  typedef std::map<String::SubString, std::string> ArgMap;
+  using ArgMap = std::map<String::SubString, std::string>;
   ArgMap args_cont;
   args_cont[String::SubString("TEST")] = "XX";
   String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
+  Logging::ActiveObjectCallbackImpl_var callback(
+    new Logging::ActiveObjectCallbackImpl());
+  Generics::TaskRunner_var task_runner(
+    new Generics::TaskRunner(callback, 1));
 
   {
-    Commons::TextTemplateCache_var cache(new Commons::TextTemplateCache(
-      ONE_MB,
-      Generics::Time::ONE_MINUTE,
-      Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-        Generics::Time::ONE_SECOND)));
+    Commons::TextTemplateCachePtr cache =
+      std::make_shared<Commons::TextTemplateCache>(
+        ONE_MB,
+        task_runner.in(),
+        Generics::Time::ONE_MINUTE,
+        Generics::Time::ONE_SECOND);
 
     Generics::Timer timer;
     timer.start();
 
     for(int i = 0; i < 10000; ++i)
     {
-      Commons::TextTemplate_var t = cache->get("~tmp/t");
+      Commons::TextTemplatePtr t =
+        cache->get_sync(std::string("~tmp/t"), std::string());
       std::string res = t->instantiate(args);
       /*
       std::cout << res << std::endl;
@@ -39,18 +48,20 @@ int main(int /*argc*/, char** /*argv*/)
   }
 
   {
-    Commons::TextTemplateCache_var cache(new Commons::TextTemplateCache(
-      ONE_MB,
-      Generics::Time::ONE_MINUTE,
-      Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-        Generics::Time::ZERO)));
+    Commons::TextTemplateCachePtr cache =
+      std::make_shared<Commons::TextTemplateCache>(
+        ONE_MB,
+        task_runner.in(),
+        Generics::Time::ONE_MINUTE,
+        Generics::Time::ZERO);
 
     Generics::Timer timer;
     timer.start();
 
     for(int i = 0; i < 10000; ++i)
     {
-      Commons::TextTemplate_var t = cache->get("~tmp/t");
+      Commons::TextTemplatePtr t =
+        cache->get_sync(std::string("~tmp/t"), std::string());
       std::string res = t->instantiate(args);
       /*
       std::cout << res << std::endl;

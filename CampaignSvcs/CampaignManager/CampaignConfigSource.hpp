@@ -65,32 +65,30 @@ namespace AdServer::CampaignSvcs
 	RevenueDecimal ctr;
       };
 
-      typedef std::map<unsigned long, unsigned long> IdMap;
-      typedef std::map<unsigned long, EcpmHolder> EcpmMap;
-      typedef std::map<std::string, CreativeCategoryIdSet>
-	DomainExcludeCategoryMap;
-      typedef std::map<unsigned long, OptionValueMap>
-	IdOptionValueMap;
+      using IdMap = std::map<unsigned long, unsigned long>;
 
-      typedef std::map<unsigned long, OptionValueMap>
-	CreativeSizeOptionValueMap;
-      typedef std::map<unsigned long, CreativeSizeOptionValueMap>
-	IdCreativeSizeOptionValueMap;
+      using EcpmMap = std::map<unsigned long, EcpmHolder>;
 
-      typedef std::map<std::string, OptionValueMap>
-	TemplateOptionValueMap;
-      typedef std::map<std::string, OptionValueMap>
-	CountryOptionValueMap;
-      typedef std::map<unsigned long, TemplateOptionValueMap>
-	IdTemplateOptionValueMap;
+      using DomainExcludeCategoryMap = std::map<std::string, CreativeCategoryIdSet>;
 
-      typedef std::map<unsigned long, OptionValueMap>
-	TagSizeOptionValueMap;
-      typedef std::map<unsigned long, TagSizeOptionValueMap>
-	IdTagSizeOptionValueMap;
+      using IdOptionValueMap = std::map<unsigned long, OptionValueMap>;
 
-      typedef ReferenceCounting::SmartPtr<RCOptionTokenValueMap>
-	OptionTokenValueMap_var;
+      using CreativeSizeOptionValueMap = std::map<unsigned long, OptionValueMap>;
+
+      using IdCreativeSizeOptionValueMap = std::map<unsigned long, CreativeSizeOptionValueMap>;
+
+      using TemplateOptionValueMap = std::map<std::string, OptionValueMap>;
+
+      using CountryOptionValueMap = std::map<std::string, OptionValueMap>;
+
+      using IdTemplateOptionValueMap = std::map<unsigned long, TemplateOptionValueMap>;
+
+      using TagSizeOptionValueMap = std::map<unsigned long, OptionValueMap>;
+
+      using IdTagSizeOptionValueMap = std::map<unsigned long, TagSizeOptionValueMap>;
+
+      using OptionTokenValueMap_var = ReferenceCounting::SmartPtr<RCOptionTokenValueMap>;
+
       struct TemplateOptionsLink
       {
 	OptionValueMap unlinked_tokens;
@@ -99,8 +97,7 @@ namespace AdServer::CampaignSvcs
 	OptionTokenValueMap_var hidden_tokens_ref;
       };
 
-      typedef std::map<unsigned long, TemplateOptionsLink>
-	TemplateOptionsLinkMap;
+      using TemplateOptionsLinkMap = std::map<unsigned long, TemplateOptionsLink>;
 
       typedef std::list<unsigned long> IdList;
       typedef std::map<unsigned long, IdList> BlockChannelMap;

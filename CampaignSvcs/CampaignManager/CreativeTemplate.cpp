@@ -258,7 +258,7 @@ namespace CampaignSvcs
     const Handler& /*handler*/, const State& state) const
     /*throw(Template::InvalidTemplate, ImplementationException)*/
   {
-    return Generics::Time(state) - Generics::Time::get_time_of_day() >
+    return Generics::Time::get_time_of_day() - Generics::Time(state) >
       UPDATE_PERIOD;
   }
 

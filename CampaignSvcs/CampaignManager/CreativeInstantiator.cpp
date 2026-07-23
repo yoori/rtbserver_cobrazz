@@ -1786,17 +1786,11 @@ namespace AdServer::CampaignSvcs
 
             if(request_params.log_as_test)
             {
-              auto tok_it =
-                creative->tokens.lower_bound(CreativeTokens::ADV_TRACK_PIXEL);
-              while(tok_it != creative->tokens.end() && tok_it->first.compare(
-                      0,
-                      CreativeTokens::ADV_TRACK_PIXEL.size(),
-                      CreativeTokens::ADV_TRACK_PIXEL) == 0)
+              for(const auto& token : creative->adv_track_pixel_tokens)
               {
-                (*creatives_json_args_ptr)[tok_it->first] = OptionValue(
-                  tok_it->second.option_id,
+                (*creatives_json_args_ptr)[token.name] = OptionValue(
+                  token.option_id,
                   instantiate_info.track_pixel_url);
-                ++tok_it;
               }
             }
           }

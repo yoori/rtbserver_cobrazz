@@ -1,6 +1,7 @@
 
 #include <sstream>
 #include <functional>
+#include <memory>
 
 #include <Generics/Rand.hpp>
 #include <Logger/StreamLogger.hpp>
@@ -68,6 +69,8 @@ namespace
   {
     const char CLICK_FRONTEND[] = "ClickFrontend";
   }
+
+  const unsigned TEXT_TEMPLATE_LOAD_THREADS = 2;
 
   namespace Request::Param
   {
@@ -309,11 +312,15 @@ namespace AdServer
         channel_client_ = channel_client;
         add_child_object(channel_client);
 
-        template_files_ = new Commons::TextTemplateCache(
+        template_file_task_runner_ =
+          new Generics::TaskRunner(callback(), TEXT_TEMPLATE_LOAD_THREADS);
+        add_child_object(template_file_task_runner_.in());
+
+        template_files_ = std::make_shared<Commons::TextTemplateCache>(
           static_cast<unsigned long>(-1),
+          template_file_task_runner_.in(),
           Generics::Time::ONE_MINUTE,
-          Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-            Generics::Time::ONE_SECOND));
+          Generics::Time::ONE_SECOND);
 
         click_template_file_ = config_->template_file();
 
@@ -481,8 +488,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ClickFrontend::process_request_(
-    FCGI::HttpRequestHolder_var request_holder)
+  ClickFrontend::process_request_(FCGI::HttpRequestHolder_var request_holder)
   {
     static const char* FUN = "ClickFrontend::process_request_()";
 
@@ -731,8 +737,14 @@ namespace AdServer
       {
         try
         {
-          Commons::TextTemplate_var templ =
-            template_files_->get(click_template_file_);
+          Commons::TextTemplatePtr templ = co_await template_files_->co_get(
+            click_template_file_.text(),
+            std::string());
+
+          if(!templ)
+          {
+            throw Exception("Click template file isn't loaded");
+          }
 
           typedef std::map<String::SubString, std::string> ArgMap;
           ArgMap args_cont;
@@ -749,16 +761,11 @@ namespace AdServer
 
           String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
           String::TextTemplate::DefaultValue args_with_default(&args);
-          String::TextTemplate::ArgsEncoder args_with_encoding(
-            &args_with_default);
-          std::string response_content = templ->instantiate(
-            args_with_encoding);
+          String::TextTemplate::ArgsEncoder args_with_encoding(&args_with_default);
+          std::string response_content = templ->instantiate(args_with_encoding);
 
-          response.set_content_type_nocopy(
-            FrontendCommons::ContentType::TEXT_HTML);
-          response.get_output_stream().write(
-            response_content.data(),
-            response_content.size());
+          response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
+          response.get_output_stream().write(response_content.data(), response_content.size());
           http_status = 200;
 
           instantiated = true;

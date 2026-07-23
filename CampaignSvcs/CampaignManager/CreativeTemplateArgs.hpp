@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <functional>
+#include <string>
 #include <string_view>
 
 #include <eh/Exception.hpp>
@@ -15,6 +16,7 @@
 #include <Sync/SyncPolicy.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
+#include <Commons/tsl/sparse_map.h>
 
 namespace TokenTemplateProperties
 {
@@ -32,7 +34,65 @@ namespace AdServer::CampaignSvcs
     bool operator==(const TokenMap& right) const noexcept;
   };
 
-  using OptionTokenValueMap = std::map<std::string, OptionValue, std::less<> >;
+  namespace OptionTokenValueMapDetail
+  {
+    inline std::string_view
+    to_string_view(const std::string& value) noexcept
+    {
+      return value;
+    }
+
+    inline std::string_view
+    to_string_view(std::string_view value) noexcept
+    {
+      return value;
+    }
+
+    inline std::string_view
+    to_string_view(const char* value) noexcept
+    {
+      return value ? std::string_view(value) : std::string_view();
+    }
+
+    template<std::size_t Size>
+    std::string_view
+    to_string_view(const char (&value)[Size]) noexcept
+    {
+      return std::string_view(value);
+    }
+  }
+
+  struct TransparentStringHash
+  {
+    using is_transparent = void;
+
+    template<typename Value>
+    std::size_t
+    operator()(const Value& value) const noexcept
+    {
+      return std::hash<std::string_view>()(
+        OptionTokenValueMapDetail::to_string_view(value));
+    }
+  };
+
+  struct TransparentStringEqual
+  {
+    using is_transparent = void;
+
+    template<typename Left, typename Right>
+    bool
+    operator()(const Left& left, const Right& right) const noexcept
+    {
+      return OptionTokenValueMapDetail::to_string_view(left) ==
+        OptionTokenValueMapDetail::to_string_view(right);
+    }
+  };
+
+  using OptionTokenValueMap = tsl::sparse_map<
+    std::string,
+    OptionValue,
+    TransparentStringHash,
+    TransparentStringEqual>;
 
   class TokenValueMap: public String::TextTemplate::ArgsCallback
   {

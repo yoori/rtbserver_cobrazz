@@ -606,10 +606,11 @@ namespace AdServer::CampaignSvcs
       update_task_runner_(new Generics::TaskRunner(callback_, UPDATE_TASKS_COUNT)),
       scheduler_(new Generics::Planner(callback_)),
       rid_signer_(campaign_manager_config_.rid_private_key().c_str()),
-      template_files_(new Commons::BoundedFileCache(
+      template_files_(std::make_shared<Commons::FileCache>(
         campaign_manager_config_.Creative().ContentCache().size(),
+        task_runner_.in(),
         Generics::Time(campaign_manager_config_.Creative().ContentCache().timeout()),
-        Commons::TextTemplateCacheConfiguration<Commons::File>(Generics::Time::ONE_SECOND)))
+        Generics::Time::ONE_SECOND))
   {
     static const char* FUN = "CampaignManagerCore::CampaignManagerCore()";
 
@@ -1224,18 +1225,17 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  CampaignManagerCore::ByteArray
-  CampaignManagerCore::get_file(const std::string& file_name)
-    /*throw(Exception)*/
+  AdServer::Commons::SyncCoro<CampaignManagerCore::ByteArray>
+  CampaignManagerCore::co_get_file(std::string file_name) /*throw(Exception)*/
   {
-    static const char* FUN = "CampaignManagerCore::get_file()";
+    static const char* FUN = "CampaignManagerCore::co_get_file()";
 
     try
     {
       std::string full_file_name(campaign_manager_config_.Creative().ContentCache().root());
-      full_file_name += file_name;
-      const auto file = template_files_->get(full_file_name);
-      return ByteArray(file->begin(), file->end());
+      full_file_name += std::move(file_name);
+      const auto file = co_await template_files_->co_get(std::move(full_file_name), std::string());
+      co_return file ? ByteArray(file->begin(), file->end()) : ByteArray();
     }
     catch(const eh::Exception& e)
     {

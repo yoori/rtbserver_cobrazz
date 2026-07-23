@@ -19,7 +19,7 @@
 #include <Commons/AtomicInt.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
-#include <Commons/TextTemplateCache.hpp>
+#include <Commons/TextTemplateAsyncCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/ValueTask.hpp>
@@ -134,7 +134,7 @@ namespace AdServer::Action
     public:
       bool use_keywords;
       Generics::GnuHashSet<Generics::StringHashAdapter> keywords;
-      Commons::TextTemplate_var url_template;
+      Commons::TextTemplatePtr url_template;
 
     protected:
       virtual
