@@ -37,7 +37,7 @@ namespace AdServer
     };
 
     using CampaignKeywordCreativeList =
-      AdServer::Commons::MonoList<CampaignKeywordCreative>;
+      Generics::MonoList<CampaignKeywordCreative>;
 
     namespace
     {
@@ -59,28 +59,28 @@ namespace AdServer
         : resource(buffer.data(), buffer.size())
       {}
 
-      AdServer::Commons::MonoAllocatorArena* arena() noexcept
+      Generics::MonoAllocatorArena* arena() noexcept
       {
         return &resource;
       }
 
-      AdServer::Commons::MonoAllocatorArena* reset_arena()
+      Generics::MonoAllocatorArena* reset_arena()
       {
         resource.release();
         return arena();
       }
 
       std::array<std::byte, 16 * 1024> buffer;
-      AdServer::Commons::MonoAllocatorArena resource;
+      Generics::MonoAllocatorArena resource;
     };
 
     using CPCKeywordCreativeMap =
-      AdServer::Commons::MonoMap<RevenueDecimal, CampaignKeywordCreativeList>;
+      Generics::MonoMap<RevenueDecimal, CampaignKeywordCreativeList>;
 
     struct TextSelectionBySize
     {
-      explicit TextSelectionBySize(AdServer::Commons::MonoAllocatorArena* arena)
-        : campaign_candidates(AdServer::Commons::mono_allocator<
+      explicit TextSelectionBySize(Generics::MonoAllocatorArena* arena)
+        : campaign_candidates(Generics::mono_allocator<
             CampaignSelector::WeightedCampaignKeyword>(arena))
       {}
 
@@ -89,14 +89,14 @@ namespace AdServer
       CampaignSelector::WeightedCampaignKeywordList campaign_candidates;
     };
 
-    using TextSelectionBySizeList = AdServer::Commons::MonoList<TextSelectionBySize>;
+    using TextSelectionBySizeList = Generics::MonoList<TextSelectionBySize>;
 
     struct RandomTextSelectionBySize
     {
-      explicit RandomTextSelectionBySize(AdServer::Commons::MonoAllocatorArena* arena)
-        : campaign_candidates(AdServer::Commons::mono_allocator<
+      explicit RandomTextSelectionBySize(Generics::MonoAllocatorArena* arena)
+        : campaign_candidates(Generics::mono_allocator<
             CampaignSelector::WeightedCampaignKeyword>(arena)),
-          grouped_campaign_candidates(AdServer::Commons::mono_allocator<
+          grouped_campaign_candidates(Generics::mono_allocator<
             CampaignSelector::WeightedCampaignKeywordPtrArray>(arena))
       {}
 
@@ -106,7 +106,7 @@ namespace AdServer
     };
 
     using RandomTextSelectionBySizeList =
-      AdServer::Commons::MonoList<RandomTextSelectionBySize>;
+      Generics::MonoList<RandomTextSelectionBySize>;
 
     struct SizedCreativeHolder
     {
@@ -124,15 +124,15 @@ namespace AdServer
       RevenueDecimal conv_rate;
     };
 
-    using SizedCreativeHolderList = AdServer::Commons::MonoList<SizedCreativeHolder>;
+    using SizedCreativeHolderList = Generics::MonoList<SizedCreativeHolder>;
 
     struct CTRWeightedCampaignHolder
     {
       CTRWeightedCampaignHolder(
         CampaignSelector::WeightedCampaignPtr&& weighted_campaign_val,
-        AdServer::Commons::MonoAllocatorArena* arena)
+        Generics::MonoAllocatorArena* arena)
           : weighted_campaign(std::move(weighted_campaign_val)),
-            cur_creatives(AdServer::Commons::mono_allocator<SizedCreativeHolder>(arena))
+            cur_creatives(Generics::mono_allocator<SizedCreativeHolder>(arena))
       {}
 
       CTRWeightedCampaignHolder(CTRWeightedCampaignHolder&& init)
@@ -145,7 +145,7 @@ namespace AdServer
     };
 
     using CTRWeightedCampaignHolderList =
-      AdServer::Commons::MonoList<CTRWeightedCampaignHolder>;
+      Generics::MonoList<CTRWeightedCampaignHolder>;
 
     /**
      * Weighted function that calculate weights in list for random_select method.
@@ -213,7 +213,7 @@ namespace AdServer
       const CampaignIndex* campaign_selection_index,
       const CTR::CTRProvider* ctr_provider,
       const CTR::CTRProvider* conv_rate_provider,
-      AdServer::Commons::MonoAllocatorArena* arena)
+      Generics::MonoAllocatorArena* arena)
       : campaign_selection_index_(campaign_selection_index),
         campaign_config_(campaign_selection_index->get_campaign_config()),
         ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
@@ -411,7 +411,7 @@ namespace AdServer
       const CampaignSelectParams& request_params,
       const Campaign* campaign,
       const Tag* tag,
-      AdServer::Commons::MonoAllocatorArena* arena)
+      Generics::MonoAllocatorArena* arena)
       const
       /*throw(eh::Exception)*/
     {
@@ -1510,10 +1510,10 @@ namespace AdServer
     {
       RevenueDecimal selected_ecpm_sum = RevenueDecimal::ZERO;
 
-      AdServer::Commons::MonoAllocatorArena* arena = result_text_campaigns.get_allocator().arena();
+      Generics::MonoAllocatorArena* arena = result_text_campaigns.get_allocator().arena();
       WeightedCampaignKeywordList text_campaign_candidates(
         text_campaign_candidates_val,
-        AdServer::Commons::mono_allocator<WeightedCampaignKeyword>(arena));
+        Generics::mono_allocator<WeightedCampaignKeyword>(arena));
       IdWeightedCampaignKeywordMaps campaigns_maps(arena);
       fill_id_weighted_campaigns_keyword_maps(campaigns_maps, text_campaign_candidates);
 
@@ -1526,7 +1526,7 @@ namespace AdServer
           RevenueDecimal(false, max_text_creatives - select_i, 0));
 
         WeightedCampaignKeywordPtrArray filtered_text_campaign_candidates(
-          AdServer::Commons::mono_allocator<WeightedCampaignKeyword*>(arena));
+          Generics::mono_allocator<WeightedCampaignKeyword*>(arena));
 
         for(WeightedCampaignKeywordList::iterator it =
               text_campaign_candidates.begin();
@@ -1554,7 +1554,7 @@ namespace AdServer
 
         RevenueDecimal cur_ecpm_sum;
         ExpRevWeightedCampaignKeywordMap grouped_text_campaign_candidates(
-          AdServer::Commons::mono_allocator<
+          Generics::mono_allocator<
             ExpRevWeightedCampaignKeywordMap::value_type>(arena));
 
         group_text_campaigns_(
@@ -2351,15 +2351,15 @@ namespace AdServer
     {
       ecpm_sum = RevenueDecimal::ZERO;
 
-      AdServer::Commons::MonoAllocatorArena* arena = text_campaign_map.get_allocator().arena();
+      Generics::MonoAllocatorArena* arena = text_campaign_map.get_allocator().arena();
       IdWeightedCampaignKeywordMap account_campaigns(
-        AdServer::Commons::mono_allocator<
+        Generics::mono_allocator<
           IdWeightedCampaignKeywordMap::value_type>(arena));
       IdWeightedCampaignKeywordMap advertiser_campaigns(
-        AdServer::Commons::mono_allocator<
+        Generics::mono_allocator<
           IdWeightedCampaignKeywordMap::value_type>(arena));
       IdWeightedCampaignKeywordMap ccg_campaigns(
-        AdServer::Commons::mono_allocator<
+        Generics::mono_allocator<
           IdWeightedCampaignKeywordMap::value_type>(arena));
 
       for(WeightedCampaignKeywordPtrArray::iterator cmp_it =

@@ -125,7 +125,7 @@ int session_match_test()
 
     Generics::Time tm = Generics::Time::get_time_of_day();
 
-    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    auto arena = std::make_shared<Generics::MonoAllocatorArena>();
     ChannelIdPack cid(arena);
     cid.page_channels.push_back(1);
 
@@ -173,7 +173,7 @@ int history_today_match_test()
     SmartMemBuf_var add_profile(new SmartMemBuf);
     SmartMemBuf_var history_profile(new SmartMemBuf);
 
-    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    auto arena = std::make_shared<Generics::MonoAllocatorArena>();
     ChannelIdPack cid(arena);
     cid.page_channels.push_back(1);
     cid.page_channels.push_back(2);
@@ -283,7 +283,7 @@ int history_match_test()
     SmartMemBuf_var add_profile(new SmartMemBuf);
     SmartMemBuf_var history_profile(new SmartMemBuf);
 
-    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    auto arena = std::make_shared<Generics::MonoAllocatorArena>();
     ChannelIdPack cid(arena);
     cid.page_channels.push_back(1);
 
@@ -310,7 +310,7 @@ int history_match_test()
       }
 
       auto empty_cid_arena =
-        std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+        std::make_shared<Generics::MonoAllocatorArena>();
       ChannelIdPack empty_cid(empty_cid_arena);
       cm.match(result, now, empty_cid, *channel_rules, pmp, pps, session_timeout, false);
 

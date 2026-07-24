@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -36,7 +36,7 @@ namespace AdServer
      */
     using ChannelId = unsigned long;
     using ChannelIdHashSet =
-      AdServer::Commons::MonoUnorderedSet<ChannelId>;
+      Generics::MonoUnorderedSet<ChannelId>;
     using ChannelWeightMap = std::map<ChannelId, unsigned long>;
 
     struct ChannelHolder;

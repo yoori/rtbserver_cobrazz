@@ -11,7 +11,7 @@
 #include <Generics/GnuHashTable.hpp>
 
 #include <Commons/Containers.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -29,10 +29,10 @@ namespace FrontendCommons
   normalize_ifa(std::string_view idfa);
 
   inline
-  AdServer::Commons::MonoString
+  Generics::MonoString
   normalize_ifa(
     std::string_view idfa,
-    AdServer::Commons::MonoAllocatorArena* resource);
+    Generics::MonoAllocatorArena* resource);
 
   template<typename RequestInfoType>
   struct RequestParamProcessor:

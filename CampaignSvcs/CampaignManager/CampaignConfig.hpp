@@ -19,7 +19,7 @@
 
 #include <Commons/StringHolder.hpp>
 #include <Commons/AtomicInt.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 
@@ -444,7 +444,7 @@ namespace CampaignSvcs
     typedef std::map<unsigned long, Account_var> AccountMap;
 
     using CreativeCategoryIdSet = std::set<unsigned long>;
-    using MonoCreativeCategoryIdSet = AdServer::Commons::MonoSet<unsigned long>;
+    using MonoCreativeCategoryIdSet = Generics::MonoSet<unsigned long>;
 
     struct
     CompareAccountByID : public std::binary_function <Account_var, Account_var, bool>

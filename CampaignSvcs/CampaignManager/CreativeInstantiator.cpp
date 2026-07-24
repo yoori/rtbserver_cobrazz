@@ -443,7 +443,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     const CommonAdRequest& request_params,
-    const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts_seq)
+    const Generics::MonoVector<unsigned long>& exclude_pubpixel_accounts_seq)
     noexcept
   {
     AccountIdSet exclude_pubpixel_accounts(
@@ -897,7 +897,7 @@ namespace AdServer::CampaignSvcs
     const char* app_format,
     const CommonAdRequest& request_params,
     const AccountIdList* pubpixel_accounts,
-    const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts,
+    const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
     const CreativeInstantiateRule& instantiate_info,
     const AdSlotContext& ad_slot_context,
     const String::SubString& ext_tag_id)
@@ -1410,7 +1410,7 @@ namespace AdServer::CampaignSvcs
     RequestResultParams& request_result_params,
     CreativeParamsList& creative_params_list,
     const AdSlotContext& ad_slot_context,
-    const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts)
+    const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "CreativeInstantiator::fill_instantiate_creative_args_()";
@@ -1567,6 +1567,7 @@ namespace AdServer::CampaignSvcs
           click_params,
           request_params.random);
 
+        // TO REMOVE :
         const std::string& keyword = select_params.campaign_keyword.in() ?
           select_params.campaign_keyword->original_keyword :
           std::string();
@@ -1579,7 +1580,7 @@ namespace AdServer::CampaignSvcs
           instantiate_click_url(
             *campaign_config,
             click_url_in,
-            creative_params.click_url, /* out */
+            creative_params.click_url,
             colocation ? &colocation->colo_id : 0,
             tag,
             ad_selection_result.tag_size,
@@ -1587,6 +1588,7 @@ namespace AdServer::CampaignSvcs
             select_params.campaign_keyword.in() ? select_params.campaign_keyword.in() : 0,
             request_result_params.ext_tokens);
         }
+        //< TO REMOVE
 
         {
           Creative::SizeMap::const_iterator cr_size_it =
@@ -1623,9 +1625,9 @@ namespace AdServer::CampaignSvcs
           creative_args_data.select_params = &select_params;
           creative_args_data.creative = creative;
 
-          if (select_params.campaign->keyword_based())
+          if (select_params.campaign->keyword_based() && select_params.campaign_keyword.in())
           {
-            creative_args_data.keyword = keyword;
+            creative_args_data.keyword = select_params.campaign_keyword->original_keyword;
           }
 
           if((request_params.request_type == AR_OPENRTB_WITH_CLICKURL ||
@@ -2731,7 +2733,7 @@ namespace AdServer::CampaignSvcs
     const AdSelectionResult& ad_selection_result,
     const AdSlotContext& ad_slot_context,
     const char* app_format,
-    const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts,
+    const Generics::MonoVector<unsigned long>& exclude_pubpixel_accounts,
     bool fill_auction_price)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
@@ -3116,7 +3118,7 @@ namespace AdServer::CampaignSvcs
     CreativeParamsList& creative_params_list,
     std::string& creative_body,
     const AdSlotContext& ad_slot_context,
-    const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts,
+    const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
     std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {

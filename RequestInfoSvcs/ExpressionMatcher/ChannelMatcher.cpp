@@ -1,5 +1,5 @@
 #include <Generics/BoundedMap.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include "ChannelMatcher.hpp"
 
 namespace Aspect
@@ -363,7 +363,7 @@ namespace RequestInfoSvcs
         ChannelIdSet local_result_channels;
         ChannelIdSet local_result_estimate_channels;
         ChannelActionMap local_result_channel_actions;
-        AdServer::Commons::MonoAllocatorArena history_channels_arena;
+        Generics::MonoAllocatorArena history_channels_arena;
         AdServer::CampaignSvcs::ChannelIdHashSet history_channels_hash(
           &history_channels_arena);
         history_channels_hash.reserve(history_channels.size());
@@ -422,7 +422,7 @@ namespace RequestInfoSvcs
     }
     else
     {
-      AdServer::Commons::MonoAllocatorArena history_channels_arena;
+      Generics::MonoAllocatorArena history_channels_arena;
       AdServer::CampaignSvcs::ChannelIdHashSet history_channels_hash(
         &history_channels_arena);
       history_channels_hash.reserve(history_channels.size());

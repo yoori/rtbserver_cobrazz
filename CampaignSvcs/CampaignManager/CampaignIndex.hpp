@@ -7,7 +7,7 @@
 #include <Logger/Logger.hpp>
 
 #include <Commons/Containers.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 #include "CampaignManagerDeclarations.hpp"
 #include "CampaignConfig.hpp"
@@ -374,7 +374,7 @@ namespace AdServer
         const MonoCreativeCategoryIdSet& required_categories,
         bool secure,
         bool filter_empty_destination,
-        AdServer::Commons::MonoAllocatorArena* arena,
+        Generics::MonoAllocatorArena* arena,
         TraceParams* trace_params)
         const;
 

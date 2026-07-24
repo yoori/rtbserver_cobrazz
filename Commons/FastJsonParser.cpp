@@ -1,6 +1,6 @@
 #include "FastJsonParser.hpp"
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 #include <algorithm>
 #include <charconv>
@@ -31,7 +31,7 @@ namespace AdServer::Commons
     {};
 
     template<>
-    struct HasDefaultStringCreator<MonoString> : std::false_type
+    struct HasDefaultStringCreator<Generics::MonoString> : std::false_type
     {};
 
     template<typename KeyType, typename ValueType>
@@ -46,7 +46,7 @@ namespace AdServer::Commons
       };
 
       explicit
-      MapHelper(MonoAllocatorArena* arena)
+      MapHelper(Generics::MonoAllocatorArena* arena)
         : vector_storage_(arena),
           hash_storage_(arena)
       {}
@@ -170,7 +170,7 @@ namespace AdServer::Commons
 
     private:
       using Pair = std::pair<KeyType, ValueType>;
-      using Vector = MonoVector<Pair>;
+      using Vector = Generics::MonoVector<Pair>;
 
       static constexpr std::size_t HASH_STORAGE_MIN_SIZE = 8;
 
@@ -204,7 +204,7 @@ namespace AdServer::Commons
       std::size_t size_ = 0;
       std::optional<Pair> single_element_storage_;
       Vector vector_storage_;
-      MonoUnorderedMap<KeyType, ValueType> hash_storage_;
+      Generics::MonoUnorderedMap<KeyType, ValueType> hash_storage_;
     };
 
     bool
@@ -587,11 +587,11 @@ namespace AdServer::Commons
     struct JsonTreeProcessor
     {
       explicit
-      JsonTreeProcessor(MonoAllocatorArena* arena);
+      JsonTreeProcessor(Generics::MonoAllocatorArena* arena);
 
       JsonTreeProcessor(
         std::string path_val,
-        MonoAllocatorArena* arena);
+        Generics::MonoAllocatorArena* arena);
 
       static std::uint64_t
       short_key_(std::string_view key) noexcept;
@@ -610,17 +610,17 @@ namespace AdServer::Commons
         ChildProcessor(
           std::string_view key_val,
           std::unique_ptr<JsonTreeProcessor>&& processor_val,
-          MonoAllocatorArena* arena);
+          Generics::MonoAllocatorArena* arena);
 
-        MonoString key;
+        Generics::MonoString key;
         std::unique_ptr<JsonTreeProcessor> processor;
       };
 
       void
       build_sub_processors_();
 
-      MonoAllocatorArena* arena;
-      MonoVector<ChildProcessor> child_processors;
+      Generics::MonoAllocatorArena* arena;
+      Generics::MonoVector<ChildProcessor> child_processors;
       MapHelper<std::string_view, JsonTreeProcessor*> sub_processors;
       MapHelper<std::uint64_t, JsonTreeProcessor*> short_processors;
       std::shared_ptr<ValueProcessor> value_processor;
@@ -816,7 +816,7 @@ namespace AdServer::Commons
       Cursor& cursor,
       const JsonTreeProcessor& processor,
       void* context,
-      MonoVector<ParseFrame>& frames) const;
+      Generics::MonoVector<ParseFrame>& frames) const;
 
     template<bool Strict, bool UseSimd>
     void
@@ -837,7 +837,7 @@ namespace AdServer::Commons
       StringCreator string_creator,
       void* string_creator_context);
 
-    MonoAllocatorArena processor_arena;
+    Generics::MonoAllocatorArena processor_arena;
     JsonTreeProcessor root_processor;
     ParseHandler parse_handler = nullptr;
   };
@@ -1047,7 +1047,7 @@ namespace AdServer::Commons
 
   template<typename StringType>
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::JsonTreeProcessor(
-    MonoAllocatorArena* arena_val)
+    Generics::MonoAllocatorArena* arena_val)
     : arena(arena_val),
       child_processors(arena),
       sub_processors(arena),
@@ -1057,7 +1057,7 @@ namespace AdServer::Commons
   template<typename StringType>
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::JsonTreeProcessor(
     std::string path_val,
-    MonoAllocatorArena* arena_val)
+    Generics::MonoAllocatorArena* arena_val)
     : JsonTreeProcessor(arena_val)
   {
     path = std::move(path_val);
@@ -1067,7 +1067,7 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::ChildProcessor::ChildProcessor(
     std::string_view key_val,
     std::unique_ptr<JsonTreeProcessor>&& processor_val,
-    MonoAllocatorArena* arena)
+    Generics::MonoAllocatorArena* arena)
     : key(key_val.data(), key_val.size(), arena),
       processor(std::move(processor_val))
   {}
@@ -2053,7 +2053,7 @@ namespace AdServer::Commons
     Cursor& cursor,
     const JsonTreeProcessor& processor,
     void* context,
-    MonoVector<ParseFrame>& frames) const
+    Generics::MonoVector<ParseFrame>& frames) const
   {
     cursor.template skip_spaces<UseSimd>();
     if(cursor.eof())
@@ -2209,10 +2209,10 @@ namespace AdServer::Commons
     void* context) const
   {
     alignas(std::max_align_t) char frame_buffer[4096];
-    MonoAllocatorArena frame_arena(
+    Generics::MonoAllocatorArena frame_arena(
       frame_buffer,
       sizeof(frame_buffer));
-    MonoVector<ParseFrame> frames(&frame_arena);
+    Generics::MonoVector<ParseFrame> frames(&frame_arena);
     frames.reserve(32);
 
     cursor.skip_char();
@@ -2369,7 +2369,7 @@ namespace AdServer::Commons
   }
 
   template class FastJsonParser<std::string>;
-  template class FastJsonParser<MonoString>;
+  template class FastJsonParser<Generics::MonoString>;
 }
 
 #undef AD_FAST_JSON_ALWAYS_INLINE

@@ -803,7 +803,7 @@ namespace AdServer::CampaignSvcs
           {
             // fill channel cpm
             ExpressionChannelList cmp_channels;
-            AdServer::Commons::MonoAllocatorArena simple_channels_arena;
+            Generics::MonoAllocatorArena simple_channels_arena;
             ChannelIdHashSet simple_channels(&simple_channels_arena);
             simple_channels.insert(
               channels->begin(),

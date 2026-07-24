@@ -1735,7 +1735,7 @@ namespace AdServer
       const MonoCreativeCategoryIdSet& required_categories,
       bool secure,
       bool filter_empty_destination,
-      AdServer::Commons::MonoAllocatorArena* arena,
+      Generics::MonoAllocatorArena* arena,
       TraceParams* trace_params)
       const
     {
@@ -1828,7 +1828,7 @@ namespace AdServer
         }
         else
         {
-          AdServer::Commons::MonoUnorderedSet<const Creative*> seen_creatives(arena);
+          Generics::MonoUnorderedSet<const Creative*> seen_creatives(arena);
 
           for(Tag::SizeMap::const_iterator tag_size_it = check_tag_sizes->begin();
             tag_size_it != check_tag_sizes->end();
@@ -2305,7 +2305,7 @@ namespace AdServer
 
       ConstCreativePtrList available_creatives;
 
-      AdServer::Commons::MonoAllocatorArena arena;
+      Generics::MonoAllocatorArena arena;
       filter_creatives(
         key,
         key.tag,

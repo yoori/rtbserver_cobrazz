@@ -364,7 +364,7 @@ namespace UserInfoSvcs
 
     channel_match_params.no_result = true;
 
-    auto arena = std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+    auto arena = std::make_shared<Generics::MonoAllocatorArena>();
     ChannelIdPack matched_channels(arena);
 
     matched_channels.page_channels.reserve(reader.page_channels().size());

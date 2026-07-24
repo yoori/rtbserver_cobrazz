@@ -345,7 +345,7 @@ namespace AdServer::CampaignSvcs
     {
       CommonAdRequest() = default;
 
-      explicit CommonAdRequest(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena) noexcept
+      explicit CommonAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena) noexcept
         : arena_(std::move(arena))
       {}
 
@@ -355,7 +355,7 @@ namespace AdServer::CampaignSvcs
       CommonAdRequest& operator=(CommonAdRequest&&) noexcept = default;
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       Generics::Time time;
@@ -398,17 +398,17 @@ namespace AdServer::CampaignSvcs
     {
       ContextAdRequest() = default;
 
-      explicit ContextAdRequest(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
-        : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
-          client(AdServer::Commons::mono_allocator<char>(arena_.get())),
-          client_version(AdServer::Commons::mono_allocator<char>(arena_.get())),
-          platform_ids(AdServer::Commons::mono_allocator<unsigned long>(arena_.get())),
-          geo_channels(AdServer::Commons::mono_allocator<unsigned long>(arena_.get())),
-          platform(AdServer::Commons::mono_allocator<char>(arena_.get())),
-          full_platform(AdServer::Commons::mono_allocator<char>(arena_.get())),
-          web_browser(AdServer::Commons::mono_allocator<char>(arena_.get())),
-          ip_hash(AdServer::Commons::mono_allocator<char>(arena_.get())),
-          additional_info(AdServer::Commons::mono_allocator<char>(arena_.get()))
+      explicit ContextAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena)
+        : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+          client(Generics::mono_allocator<char>(arena_.get())),
+          client_version(Generics::mono_allocator<char>(arena_.get())),
+          platform_ids(Generics::mono_allocator<unsigned long>(arena_.get())),
+          geo_channels(Generics::mono_allocator<unsigned long>(arena_.get())),
+          platform(Generics::mono_allocator<char>(arena_.get())),
+          full_platform(Generics::mono_allocator<char>(arena_.get())),
+          web_browser(Generics::mono_allocator<char>(arena_.get())),
+          ip_hash(Generics::mono_allocator<char>(arena_.get())),
+          additional_info(Generics::mono_allocator<char>(arena_.get()))
       {}
 
       ContextAdRequest(const ContextAdRequest&) = delete;
@@ -417,23 +417,23 @@ namespace AdServer::CampaignSvcs
       ContextAdRequest& operator=(ContextAdRequest&&) noexcept = default;
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       bool enabled_notice = false;
-      AdServer::Commons::MonoString client;
-      AdServer::Commons::MonoString client_version;
-      AdServer::Commons::MonoVector<unsigned long> platform_ids;
-      AdServer::Commons::MonoVector<unsigned long> geo_channels;
-      AdServer::Commons::MonoString platform;
-      AdServer::Commons::MonoString full_platform;
-      AdServer::Commons::MonoString web_browser;
-      AdServer::Commons::MonoString ip_hash;
+      Generics::MonoString client;
+      Generics::MonoString client_version;
+      Generics::MonoVector<unsigned long> platform_ids;
+      Generics::MonoVector<unsigned long> geo_channels;
+      Generics::MonoString platform;
+      Generics::MonoString full_platform;
+      Generics::MonoString web_browser;
+      Generics::MonoString ip_hash;
       bool profile_referer = false;
       unsigned long page_load_id = 0;
       unsigned long full_referer_hash = 0;
       unsigned long short_referer_hash = 0;
-      AdServer::Commons::MonoString additional_info;
+      Generics::MonoString additional_info;
     };
 
     using CommonAdRequestPtr = std::shared_ptr<CommonAdRequest>;
@@ -480,7 +480,7 @@ namespace AdServer::CampaignSvcs
     {
       AdSlotRequest() = default;
 
-      explicit AdSlotRequest(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena) noexcept
+      explicit AdSlotRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena) noexcept
         : arena_(std::move(arena))
       {}
 
@@ -490,7 +490,7 @@ namespace AdServer::CampaignSvcs
       AdSlotRequest& operator=(AdSlotRequest&&) noexcept = default;
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       unsigned long ad_slot_id = 0;
@@ -566,34 +566,34 @@ namespace AdServer::CampaignSvcs
     {
       static constexpr std::size_t ARENA_INITIAL_SIZE = 64 * 1024;
 
-      using SeqOrderArray = AdServer::Commons::MonoVector<SeqOrderInfo>;
-      using CampaignFreqArray = AdServer::Commons::MonoVector<CampaignFreqInfo>;
+      using SeqOrderArray = Generics::MonoVector<SeqOrderInfo>;
+      using CampaignFreqArray = Generics::MonoVector<CampaignFreqInfo>;
 
       GetAdRequest()
         : GetAdRequest(
-            std::make_shared<AdServer::Commons::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
+            std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
       {}
 
-      explicit GetAdRequest(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      explicit GetAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena)
         : arena_(arena ?
             std::move(arena) :
-            std::make_shared<AdServer::Commons::MonoAllocatorArena>(ARENA_INITIAL_SIZE)),
+            std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE)),
           ad_slots(
-            AdServer::Commons::mono_allocator<AdSlotRequestPtr>(arena_.get())),
+            Generics::mono_allocator<AdSlotRequestPtr>(arena_.get())),
           publisher_account_ids(
-            AdServer::Commons::mono_allocator<unsigned long>(arena_.get())),
+            Generics::mono_allocator<unsigned long>(arena_.get())),
           channels(
-            AdServer::Commons::mono_allocator<ChannelId>(arena_.get())),
+            Generics::mono_allocator<ChannelId>(arena_.get())),
           seq_orders(
-            AdServer::Commons::mono_allocator<SeqOrderInfo>(arena_.get())),
+            Generics::mono_allocator<SeqOrderInfo>(arena_.get())),
           campaign_freqs(
-            AdServer::Commons::mono_allocator<CampaignFreqInfo>(arena_.get())),
+            Generics::mono_allocator<CampaignFreqInfo>(arena_.get())),
           full_freq_caps(
-            AdServer::Commons::mono_allocator<unsigned long>(arena_.get())),
+            Generics::mono_allocator<unsigned long>(arena_.get())),
           ccg_keywords(
-            AdServer::Commons::mono_allocator<CCGKeywordInfo>(arena_.get())),
+            Generics::mono_allocator<CCGKeywordInfo>(arena_.get())),
           exclude_pubpixel_accounts(
-            AdServer::Commons::mono_allocator<unsigned long>(arena_.get()))
+            Generics::mono_allocator<unsigned long>(arena_.get()))
       {}
 
       GetAdRequest(const GetAdRequest&) = delete;
@@ -602,40 +602,40 @@ namespace AdServer::CampaignSvcs
       GetAdRequest(GetAdRequest&&) noexcept = default;
       GetAdRequest& operator=(GetAdRequest&&) = delete;
 
-      AdServer::Commons::MonoAllocatorArena*
+      Generics::MonoAllocatorArena*
       resource() const noexcept
       {
         return arena_.get();
       }
 
-      const std::shared_ptr<AdServer::Commons::MonoAllocatorArena>&
+      const std::shared_ptr<Generics::MonoAllocatorArena>&
       arena() const noexcept
       {
         return arena_;
       }
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       CommonAdRequestPtr common_info;
       ContextAdRequestPtr context_info;
-      AdServer::Commons::MonoVector<AdSlotRequestPtr> ad_slots;
+      Generics::MonoVector<AdSlotRequestPtr> ad_slots;
 
       bool need_debug_info = false;
 
       // select and filter ad parameters.
       unsigned long publisher_site_id = 0;
-      AdServer::Commons::MonoVector<unsigned long> publisher_account_ids;
+      Generics::MonoVector<unsigned long> publisher_account_ids;
       ChannelIdHashSet channels;
       SeqOrderArray seq_orders;
       CampaignFreqArray campaign_freqs;
-      AdServer::Commons::MonoVector<unsigned long> full_freq_caps;
+      Generics::MonoVector<unsigned long> full_freq_caps;
       bool only_display_ad = false;
       bool profiling_available = false;
       unsigned long tag_delivery_factor = 0;
       unsigned long ccg_delivery_factor = 0;
-      AdServer::Commons::MonoVector<CCGKeywordInfo> ccg_keywords;
+      Generics::MonoVector<CCGKeywordInfo> ccg_keywords;
       Generics::Time client_create_time;
       Generics::Time session_start;
 
@@ -644,7 +644,7 @@ namespace AdServer::CampaignSvcs
       bool fill_track_pixel = false;
       bool fill_iurl = false;
       bool required_passback = false;
-      AdServer::Commons::MonoVector<unsigned long> exclude_pubpixel_accounts;
+      Generics::MonoVector<unsigned long> exclude_pubpixel_accounts;
       unsigned long preview_ccid = 0;
 
       LogAdRequest log_request;
@@ -908,19 +908,19 @@ namespace AdServer::CampaignSvcs
     struct RequestResultParams
     {
       RequestResultParams()
-        : RequestResultParams(std::make_shared<AdServer::Commons::MonoAllocatorArena>())
+        : RequestResultParams(std::make_shared<Generics::MonoAllocatorArena>())
       {}
 
-      explicit RequestResultParams(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
-        : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
-          hit_keywords(AdServer::Commons::mono_allocator<
+      explicit RequestResultParams(std::shared_ptr<Generics::MonoAllocatorArena> arena)
+        : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+          hit_keywords(Generics::mono_allocator<
             CampaignKeywordMap::value_type>(arena_.get())),
           overlay_width(0),
           overlay_height(0)
       {}
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       Commons::RequestId request_id;
@@ -966,15 +966,15 @@ namespace AdServer::CampaignSvcs
       static constexpr std::size_t ARENA_INITIAL_SIZE = 8 * 1024;
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       explicit AdSlotContext(
-        std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena =
+        std::shared_ptr<Generics::MonoAllocatorArena> arena =
           nullptr)
         : arena_(arena ?
             std::move(arena) :
-            std::make_shared<AdServer::Commons::MonoAllocatorArena>(
+            std::make_shared<Generics::MonoAllocatorArena>(
               ARENA_INITIAL_SIZE)),
           test_request(false),
           full_freq_caps(arena_.get()),
@@ -1118,7 +1118,7 @@ namespace AdServer::CampaignSvcs
       GetAdDebugResult* ad_request_debug_info,
       AdSlotDebugResult* ad_slot_debug_info,
       const ChannelIdHashSet& matched_channels,
-      AdServer::Commons::MonoAllocatorArena* arena)
+      Generics::MonoAllocatorArena* arena)
       /*throw(eh::Exception)*/;
 
     const Tag*
@@ -1128,7 +1128,7 @@ namespace AdServer::CampaignSvcs
       unsigned long request_type,
       unsigned long random,
       unsigned long publisher_site_id,
-      const AdServer::Commons::MonoVector<unsigned long>& publisher_account_ids,
+      const Generics::MonoVector<unsigned long>& publisher_account_ids,
       const CampaignConfig& campaign_config,
       unsigned long tag_id,
       const StringArray& sizes,
@@ -1154,7 +1154,7 @@ namespace AdServer::CampaignSvcs
       const CreativeInstantiateRule& creative_instantiate_rule,
       GetAdDebugResult* debug_info,
       const ChannelIdHashSet& matched_channels,
-      AdServer::Commons::MonoAllocatorArena* arena);
+      Generics::MonoAllocatorArena* arena);
 
     bool
     get_campaign_creative_by_ccid_impl(
@@ -1181,7 +1181,7 @@ namespace AdServer::CampaignSvcs
       std::string& creative_url,
       GetAdDebugResult* ad_request_debug_info,
       AdSlotDebugResult* ad_slot_debug_info,
-      AdServer::Commons::MonoAllocatorArena* arena);
+      Generics::MonoAllocatorArena* arena);
 
     void
     get_bid_costs_(
@@ -1206,7 +1206,7 @@ namespace AdServer::CampaignSvcs
       std::string& creative_body,
       std::string& creative_url,
       AdSlotContext& ad_slot_context,
-      AdServer::Commons::MonoAllocatorArena* arena)
+      Generics::MonoAllocatorArena* arena)
       /*throw(eh::Exception)*/;
 
     bool
@@ -1223,7 +1223,7 @@ namespace AdServer::CampaignSvcs
       std::string& creative_body,
       std::string& creative_url,
       AdSlotContext& ad_slot_context,
-      AdServer::Commons::MonoAllocatorArena* arena)
+      Generics::MonoAllocatorArena* arena)
       /*throw(eh::Exception)*/;
 
     bool check_request_constraints(
@@ -1237,7 +1237,7 @@ namespace AdServer::CampaignSvcs
       unsigned long tag_id,
       const String::SubString& referer,
       const ChannelIdHashSet& channels,
-      const AdServer::Commons::MonoVector<unsigned long>& full_freq_caps)
+      const Generics::MonoVector<unsigned long>& full_freq_caps)
       /*throw(eh::Exception)*/;
 
     ConstCampaignConfigPtr
@@ -1266,7 +1266,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig* campaign_config,
       const Tag* tag,
       CampaignKeywordMap& result_keywords,
-      const AdServer::Commons::MonoVector<CCGKeywordInfo>& keywords,
+      const Generics::MonoVector<CCGKeywordInfo>& keywords,
       bool profiling_available,
       const FreqCapIdSet& full_freq_caps)
       noexcept;
@@ -1356,7 +1356,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig* campaign_config,
       const Tag* tag,
       const CommonAdRequest& request_params,
-      const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts)
+      const Generics::MonoVector<unsigned long>& exclude_pubpixel_accounts)
       noexcept;
 
     static bool
@@ -1410,7 +1410,7 @@ namespace AdServer::CampaignSvcs
     static void
     fill_tns_counter_device_type_(
       std::string& tns_counter_device_type,
-      const AdServer::Commons::MonoUnorderedSet<std::string_view>& norm_platform_names)
+      const Generics::MonoUnorderedSet<std::string_view>& norm_platform_names)
       noexcept;
 
     // config manips

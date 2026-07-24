@@ -517,7 +517,7 @@ namespace AdServer::CampaignSvcs
     CampaignManagerCore::ContextAdRequest
     unpack_context_ad_request_info(
       const pb::ContextAdRequestInfo& source,
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = {})
+      std::shared_ptr<Generics::MonoAllocatorArena> arena = {})
     {
       CampaignManagerCore::ContextAdRequest target(std::move(arena));
       target.enabled_notice = source.enabled_notice();
@@ -540,7 +540,7 @@ namespace AdServer::CampaignSvcs
     CampaignManagerCore::AdSlotRequest
     unpack_ad_slot_info(
       const pb::AdSlotInfo& source,
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = {})
+      std::shared_ptr<Generics::MonoAllocatorArena> arena = {})
     {
       CampaignManagerCore::AdSlotRequest target(std::move(arena));
       target.ad_slot_id = source.ad_slot_id();
@@ -2254,7 +2254,7 @@ namespace AdServer::CampaignSvcs
     {
       const auto& source = request.instantiate_ad_info();
       const auto arena =
-        std::make_shared<AdServer::Commons::MonoAllocatorArena>(
+        std::make_shared<Generics::MonoAllocatorArena>(
           CampaignManagerCore::GetAdRequest::ARENA_INITIAL_SIZE);
       CampaignManagerCore::InstantiateAdRequest info;
       info.common_info =

@@ -104,7 +104,7 @@ namespace AdServer::Bidding
 
     template <typename AddRepeatedFn>
     void categories_to_repeated(
-      const AdServer::Commons::MonoVector<std::string>& categories,
+      const Generics::MonoVector<std::string>& categories,
       AddRepeatedFn fn)
     {
       for(std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)

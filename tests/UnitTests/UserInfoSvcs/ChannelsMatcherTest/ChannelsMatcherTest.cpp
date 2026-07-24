@@ -20,7 +20,7 @@ ProfileMatchParams pmp;
 
 struct TestChannelMatchMapArena
 {
-  AdServer::Commons::MonoAllocatorArena arena;
+  Generics::MonoAllocatorArena arena;
 };
 
 struct TestChannelMatchMap:

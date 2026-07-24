@@ -104,7 +104,7 @@ namespace MT
   {
     Campaign_var campaign;
     Creative_var creative;
-    AdServer::Commons::MonoAllocatorArena request_params_arena;
+    Generics::MonoAllocatorArena request_params_arena;
     CampaignSelectParams_var request_params;
 
     CTRProvider_var ctr_provider;
@@ -183,7 +183,7 @@ int main(int argc, char** argv) noexcept
     {
       CTRProvider_var ctr_provider(new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
 
-      AdServer::Commons::MonoAllocatorArena request_params_arena;
+      Generics::MonoAllocatorArena request_params_arena;
       CampaignSelectParams_var request_params_ptr = new CampaignSelectParams(
         true, // profiling_available
         FreqCapIdSet(&request_params_arena),
@@ -321,7 +321,7 @@ int main(int argc, char** argv) noexcept
           return -1;
         }
 
-        AdServer::Commons::MonoAllocatorArena request_params_arena;
+        Generics::MonoAllocatorArena request_params_arena;
         CampaignSelectParams_var request_params_ptr = new CampaignSelectParams(
           true, // profiling_available
           FreqCapIdSet(&request_params_arena),

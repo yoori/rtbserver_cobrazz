@@ -17,7 +17,7 @@
 #include <Commons/StringHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <LogCommons/LogHolder.hpp>
 #include <LogCommons/RequestBasicChannels.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -114,7 +114,7 @@ namespace AdServer::CampaignSvcs
     struct TriggeredChannelsData
     {
       TriggeredChannelsData()
-        : arena_(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+        : arena_(std::make_shared<Generics::MonoAllocatorArena>()),
           channels(arena_.get()),
           url_channels(arena_.get()),
           page_channels(arena_.get()),
@@ -124,7 +124,7 @@ namespace AdServer::CampaignSvcs
       {}
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       ChannelIdHashSet channels;
@@ -226,12 +226,12 @@ namespace AdServer::CampaignSvcs
     struct AnonymousRequestInfo
     {
       AnonymousRequestInfo()
-        : arena_(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+        : arena_(std::make_shared<Generics::MonoAllocatorArena>()),
           platforms(arena_.get())
       {}
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       Generics::Time time;
@@ -557,12 +557,12 @@ namespace AdServer::CampaignSvcs
     struct CommonMatchRequestInfo
     {
       CommonMatchRequestInfo()
-        : arena_(std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+        : arena_(std::make_shared<Generics::MonoAllocatorArena>()),
           triggered_page_channels(arena_.get())
       {}
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       unsigned long colo_id;

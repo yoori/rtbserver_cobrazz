@@ -7,7 +7,7 @@
 #include <set>
 #include <utility>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/MemBuf.hpp>
@@ -31,7 +31,7 @@ namespace AdServer
     const unsigned long MAX_GEO_DATA = 1;
 
     using ChannelIdArray =
-      AdServer::Commons::MonoVector<unsigned long>;
+      Generics::MonoVector<unsigned long>;
 
     using ChannelIdSet = std::set<
       unsigned long,
@@ -69,11 +69,11 @@ namespace AdServer
     struct ChannelIdPack
     {
       explicit ChannelIdPack(
-        std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena =
+        std::shared_ptr<Generics::MonoAllocatorArena> arena =
           nullptr)
         : arena_(arena ?
             std::move(arena) :
-            std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+            std::make_shared<Generics::MonoAllocatorArena>()),
           page_channels(arena_.get()),
           search_channels(arena_.get()),
           url_channels(arena_.get()),
@@ -82,7 +82,7 @@ namespace AdServer
       {}
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       ChannelIdArray page_channels;
@@ -460,7 +460,7 @@ namespace AdServer
         const ChannelsInfoReader* base,
         const ChannelIdArray& channels,
         const ChannelsHashMap& dictionary,
-        AdServer::Commons::MonoAllocatorArena* request_delta_resource,
+        Generics::MonoAllocatorArena* request_delta_resource,
         const Generics::Time& now,
         bool household = false) /*throw(Exception)*/;
 

@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/ExecutorPool.hpp>
@@ -252,7 +252,7 @@ namespace AdServer::UserInfoSvcs
     ChannelIdArray
     unpack_channel_ids_(
       const Repeated& src,
-      AdServer::Commons::MonoAllocatorArena* resource)
+      Generics::MonoAllocatorArena* resource)
     {
       ChannelIdArray result(resource);
       result.reserve(src.size());
@@ -267,7 +267,7 @@ namespace AdServer::UserInfoSvcs
     ChannelIdArray
     unpack_channel_id_values_(
       const Repeated& src,
-      AdServer::Commons::MonoAllocatorArena* resource)
+      Generics::MonoAllocatorArena* resource)
     {
       ChannelIdArray result(resource);
       result.reserve(src.size());
@@ -306,7 +306,7 @@ namespace AdServer::UserInfoSvcs
     UserInfoManagerCore::MatchParams
     unpack_match_params_(
       const adserver::user_info_svcs::user_info_manager::MatchParams& src,
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> resource)
+      std::shared_ptr<Generics::MonoAllocatorArena> resource)
     {
       UserInfoManagerCore::MatchParams dst(resource);
       auto* const arena = resource.get();
@@ -843,7 +843,7 @@ namespace AdServer::UserInfoSvcs
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
       auto request_resource = std::make_shared<
-        AdServer::Commons::MonoAllocatorArena>(
+        Generics::MonoAllocatorArena>(
         initial_buffer.data(),
         initial_buffer.size());
       const auto user_info = unpack_user_info_(request.user_info());
@@ -1046,7 +1046,7 @@ namespace AdServer::UserInfoSvcs
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
       auto request_resource = std::make_shared<
-        AdServer::Commons::MonoAllocatorArena>(
+        Generics::MonoAllocatorArena>(
         initial_buffer.data(),
         initial_buffer.size());
       const auto user_info = unpack_user_info_(request.user_info());

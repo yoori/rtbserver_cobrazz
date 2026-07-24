@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_set>
 #include <Commons/Containers.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -17,7 +17,7 @@ namespace CampaignSvcs
   using namespace AdInstances;
 
   using FreqCapIdSet =
-    AdServer::Commons::MonoUnorderedSet<unsigned long>;
+    Generics::MonoUnorderedSet<unsigned long>;
 
   struct SeqOrder
   {
@@ -26,12 +26,12 @@ namespace CampaignSvcs
   };
 
   using SeqOrderMap =
-    AdServer::Commons::MonoMap<unsigned long, SeqOrder>;
+    Generics::MonoMap<unsigned long, SeqOrder>;
 
   struct CampaignSelectParams: public ReferenceCounting::DefaultImpl<>
   {
     using CampaignImpsMap =
-      AdServer::Commons::MonoMap<unsigned long, unsigned long>;
+      Generics::MonoMap<unsigned long, unsigned long>;
 
     CampaignSelectParams(
       bool profiling_available_val,
@@ -43,7 +43,7 @@ namespace CampaignSvcs
       bool filter_dest,
       int tag_visibility_val,
       int tag_predicted_viewability_val,
-      AdServer::Commons::MonoAllocatorArena* arena)
+      Generics::MonoAllocatorArena* arena)
       : profiling_available(profiling_available_val),
         full_freq_caps(arena),
         seq_orders(seq_orders_val, arena),

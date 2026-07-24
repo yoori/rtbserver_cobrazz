@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -25,7 +25,7 @@ namespace AdServer
       unsigned long weight = 0;
     };
 
-    typedef AdServer::Commons::MonoUnorderedMap<unsigned long, unsigned long>
+    typedef Generics::MonoUnorderedMap<unsigned long, unsigned long>
       ChannelMatchMap; // channel_id => weight
 
     typedef std::list<unsigned long, Generics::TAlloc::ThreadPool<unsigned long, 256> >

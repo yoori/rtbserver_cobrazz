@@ -12,7 +12,7 @@
 
 #include <sys/resource.h>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/AppUtils.hpp>
 
 namespace
@@ -185,8 +185,8 @@ namespace
 
       for(unsigned long i = 0; i < count; ++i)
       {
-        AdServer::Commons::MonoAllocatorArena arena(arena_initial_size);
-        AdServer::Commons::MonoUnorderedSet<unsigned long> values(&arena);
+        Generics::MonoAllocatorArena arena(arena_initial_size);
+        Generics::MonoUnorderedSet<unsigned long> values(&arena);
         values.reserve(ids.size());
         for(const auto id : ids)
         {

@@ -333,13 +333,13 @@ namespace AdServer::Bidding
       return std::string_view(value.data(), value.size());
     }
 
-    AdServer::Commons::MonoString
-    normalize_ifa(std::string_view idfa, AdServer::Commons::MonoAllocatorArena* resource)
+    Generics::MonoString
+    normalize_ifa(std::string_view idfa, Generics::MonoAllocatorArena* resource)
     {
-      AdServer::Commons::MonoString res(idfa.data(), idfa.size(), resource);
+      Generics::MonoString res(idfa.data(), idfa.size(), resource);
       String::AsciiStringManip::to_lower(res.begin(), res.end());
 
-      AdServer::Commons::MonoString norm_res(resource);
+      Generics::MonoString norm_res(resource);
       norm_res.reserve(32);
 
       const String::SubString res_sub_string(res.data(), res.size());
@@ -357,7 +357,7 @@ namespace AdServer::Bidding
           norm_res.data() + norm_res.size()) ==
             norm_res.data() + norm_res.size())
       {
-        AdServer::Commons::MonoString minus_norm_res(resource);
+        Generics::MonoString minus_norm_res(resource);
         minus_norm_res.reserve(36);
         minus_norm_res.append(norm_res.data(), 8);
         minus_norm_res += '-';
@@ -372,7 +372,7 @@ namespace AdServer::Bidding
         return minus_norm_res;
       }
 
-      return AdServer::Commons::MonoString(resource);
+      return Generics::MonoString(resource);
     }
 
     std::string_view
@@ -381,7 +381,7 @@ namespace AdServer::Bidding
       unsigned long width,
       unsigned long height)
     {
-      AdServer::Commons::MonoString result(ad_slot_request.resource());
+      Generics::MonoString result(ad_slot_request.resource());
       result.resize(64);
       char* ptr = result.data();
       char* const end = ptr + result.size();
@@ -391,7 +391,7 @@ namespace AdServer::Bidding
       *ptr++ = 'x';
       const auto height_result = std::to_chars(ptr, end, height);
       result.resize(static_cast<std::size_t>(height_result.ptr - result.data()));
-      const AdServer::Commons::MonoString& held_result =
+      const Generics::MonoString& held_result =
         ad_slot_request.hold_string(std::move(result));
       return std::string_view(held_result.data(), held_result.size());
     }
@@ -401,7 +401,7 @@ namespace AdServer::Bidding
       RequestInfo::AdSlotInfo& ad_slot_request,
       std::string_view value)
     {
-      AdServer::Commons::MonoString result(ad_slot_request.resource());
+      Generics::MonoString result(ad_slot_request.resource());
       result.reserve(value.size());
       for(char ch : value)
       {
@@ -412,7 +412,7 @@ namespace AdServer::Bidding
         result += ch;
       }
 
-      const AdServer::Commons::MonoString& held_result =
+      const Generics::MonoString& held_result =
         ad_slot_request.hold_string(std::move(result));
       return std::string_view(held_result.data(), held_result.size());
     }
@@ -630,7 +630,7 @@ namespace AdServer::Bidding
 
     void
     json_escape_append_(
-      AdServer::Commons::MonoString& result,
+      Generics::MonoString& result,
       std::string_view value)
     {
       static constexpr std::string_view REPL[] =
@@ -675,7 +675,7 @@ namespace AdServer::Bidding
 
     void
     make_additional_info_json_(
-      AdServer::Commons::MonoString& result,
+      Generics::MonoString& result,
       const RequestInfo::AdditionalInfo& additional_info)
     {
       result.clear();
@@ -941,7 +941,7 @@ namespace AdServer::Bidding
         Request::Debug::AdSlot::SIZE.size(),
         Request::Debug::AdSlot::SIZE) == 0)
     {
-      AdServer::Commons::MonoString debug_size(
+      Generics::MonoString debug_size(
         debug_sizes.get_allocator().arena());
       debug_size.assign(value.data(), value.size());
       debug_sizes.emplace(--si, std::move(debug_size));
@@ -998,7 +998,7 @@ namespace AdServer::Bidding
     /*throw(InvalidParamException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::fill_by_google_request()";
-    AdServer::Commons::MonoString& keywords = request_info.keywords;
+    Generics::MonoString& keywords = request_info.keywords;
     request_info.client = Google::APPLICATION;
     request_info.client_version = Google::APPLICATION_VERSION;
     request_info.request_type = AdServer::CampaignSvcs::AR_GOOGLE;
@@ -1285,7 +1285,7 @@ namespace AdServer::Bidding
         if(len > 0)
         {
           ad_slot_request.exclude_categories[res_cat_i] =
-            ad_slot_request.hold_string(AdServer::Commons::MonoString(
+            ad_slot_request.hold_string(Generics::MonoString(
               cat_str,
               len,
               ad_slot_request.resource()));
@@ -1301,7 +1301,7 @@ namespace AdServer::Bidding
         if(len > 0)
         {
           ad_slot_request.exclude_categories[res_cat_i] =
-            ad_slot_request.hold_string(AdServer::Commons::MonoString(
+            ad_slot_request.hold_string(Generics::MonoString(
               cat_str,
               len,
               ad_slot_request.resource()));
@@ -1785,7 +1785,7 @@ namespace AdServer::Bidding
     /*throw(InvalidParamException, Exception)*/
   {
     // static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
-    AdServer::Commons::MonoString& keywords = request_info.keywords;
+    Generics::MonoString& keywords = request_info.keywords;
     request_info.client = OPENRTB_APPLICATION;
     request_info.client_version = OPENRTB_APPLICATION_VERSION;
     request_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
@@ -1815,7 +1815,7 @@ namespace AdServer::Bidding
       context,
       held_bid_request);
 
-    BasicKeywordFormatter<AdServer::Commons::MonoString> kw_fmt(
+    BasicKeywordFormatter<Generics::MonoString> kw_fmt(
       request_info.source_id,
       request_info.arena());
 
@@ -2151,7 +2151,7 @@ namespace AdServer::Bidding
       request_info.ad_slots.emplace_back(request_info.arena());
     }
     std::size_t slot_i = 0;
-    for(AdServer::Commons::MonoList<JsonAdSlotProcessingContext>::iterator slot_it = context.ad_slots.begin();
+    for(Generics::MonoList<JsonAdSlotProcessingContext>::iterator slot_it = context.ad_slots.begin();
         slot_it != context.ad_slots.end(); )
     {
       const DebugAdSlotSizeMap& debug_sizes = request_info.debug_sizes;
@@ -2663,7 +2663,7 @@ namespace AdServer::Bidding
                   }
                   else if(request_info.default_debug_size.empty())
                   {
-                    AdServer::Commons::MonoString res_size(ad_slot_request.resource());
+                    Generics::MonoString res_size(ad_slot_request.resource());
                     res_size.reserve(
                       banner_format.width.size() + 1 + banner_format.height.size());
                     res_size.append(
@@ -2673,7 +2673,7 @@ namespace AdServer::Bidding
                     res_size.append(
                       banner_format.height.data(),
                       banner_format.height.size());
-                    const AdServer::Commons::MonoString& held_res_size =
+                    const Generics::MonoString& held_res_size =
                       ad_slot_request.hold_string(std::move(res_size));
                     res_size_view = std::string_view(
                       held_res_size.data(),
@@ -2941,7 +2941,7 @@ namespace AdServer::Bidding
 
         if(!sub_it->id.empty() && use_external_user_id_(sub_it->id))
         {
-          AdServer::Commons::MonoString user_id(request_info.resource());
+          Generics::MonoString user_id(request_info.resource());
           user_id.reserve(source.size() + 1 + sub_it->id.size());
           user_id += source;
           user_id += '/';
@@ -2952,7 +2952,7 @@ namespace AdServer::Bidding
         {
           const std::string& use_source =
             !source.empty() ? source : Request::OpenRtb::STABLE_SOURCE;
-          AdServer::Commons::MonoString user_id(request_info.resource());
+          Generics::MonoString user_id(request_info.resource());
           user_id.reserve(use_source.size() + 1 + sub_it->stable_id.size());
           user_id += use_source;
           user_id += '/';
@@ -2986,15 +2986,15 @@ namespace AdServer::Bidding
         &RequestInfo::flag));
     add_param_processor_(
       Request::Context::SOURCE_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo, AdServer::Commons::MonoString>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, Generics::MonoString>(
         &RequestInfo::source_id));
     add_param_processor_(
       Request::Context::FORMAT,
-      new FrontendCommons::StringParamProcessor<RequestInfo, AdServer::Commons::MonoString>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, Generics::MonoString>(
         &RequestInfo::format));
     add_param_processor_(
       Request::Context::REQUIRE_DEBUG_INFO,
-      new FrontendCommons::StringParamProcessor<RequestInfo, AdServer::Commons::MonoString>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, Generics::MonoString>(
         &RequestInfo::require_debug_info));
     add_param_processor_(
       Request::Debug::CURRENT_TIME,
@@ -3010,7 +3010,7 @@ namespace AdServer::Bidding
         &RequestInfo::debug_ccg));
     add_param_processor_(
       Request::Debug::ADSLOTS_SIZE,
-      new FrontendCommons::StringParamProcessor<RequestInfo, AdServer::Commons::MonoString>(
+      new FrontendCommons::StringParamProcessor<RequestInfo, Generics::MonoString>(
         &RequestInfo::default_debug_size));
   }
 
@@ -3692,7 +3692,7 @@ namespace AdServer::Bidding
     const
     noexcept
   {
-    BasicKeywordFormatter<AdServer::Commons::MonoString> kw_fmt(
+    BasicKeywordFormatter<Generics::MonoString> kw_fmt(
       request_info.source_id,
       request_info.arena());
 
@@ -3764,7 +3764,7 @@ namespace AdServer::Bidding
 
   void
   RequestInfoFiller::add_special_keywords_(
-    AdServer::Commons::MonoString& keywords,
+    Generics::MonoString& keywords,
     RequestInfo& request_info,
     const JsonProcessingContext* context,
     std::string_view alt_app_id)
@@ -3801,7 +3801,7 @@ namespace AdServer::Bidding
 
   namespace
   {
-    using FastJsonParser = AdServer::Commons::FastJsonParser<AdServer::Commons::MonoString>;
+    using FastJsonParser = AdServer::Commons::FastJsonParser<Generics::MonoString>;
     using ValueProcessor = FastJsonParser::ValueProcessor;
     using AdSlotContext = JsonAdSlotProcessingContext;
     using Banner = AdSlotContext::Banner;
@@ -3833,28 +3833,28 @@ namespace AdServer::Bidding
       bool matching_ad_processed = false;
     };
 
-    AdServer::Commons::MonoString
+    Generics::MonoString
     integer_to_string(FastOpenRtbState& state, int64_t value)
     {
       char buf[32];
       const auto result = std::to_chars(buf, buf + sizeof(buf), value);
-      return AdServer::Commons::MonoString(
+      return Generics::MonoString(
         buf,
         result.ptr,
         state.context->resource());
     }
 
-    AdServer::Commons::MonoString
+    Generics::MonoString
     float_to_string(FastOpenRtbState& state, double value)
     {
       char buf[64];
       const int size = std::snprintf(buf, sizeof(buf), "%.17g", value);
       if(size <= 0)
       {
-        return AdServer::Commons::MonoString(state.context->resource());
+        return Generics::MonoString(state.context->resource());
       }
 
-      return AdServer::Commons::MonoString(
+      return Generics::MonoString(
         buf,
         static_cast<std::size_t>(size),
         state.context->resource());
@@ -4106,7 +4106,7 @@ namespace AdServer::Bidding
       {}
 
       void
-      process_string(AdServer::Commons::MonoString&&, std::string_view, void*) const override
+      process_string(Generics::MonoString&&, std::string_view, void*) const override
       {}
 
       void
@@ -4151,7 +4151,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -4306,7 +4306,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         parse_(value, context);
@@ -4782,7 +4782,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -4844,7 +4844,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         process_string_(value, context);
@@ -4900,7 +4900,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         process_string_(value, context);
@@ -4937,7 +4937,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -4965,7 +4965,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -5013,7 +5013,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -5060,7 +5060,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -5160,7 +5160,7 @@ namespace AdServer::Bidding
       }
 
       void
-      process_string(AdServer::Commons::MonoString&& value, std::string_view, void* context)
+      process_string(Generics::MonoString&& value, std::string_view, void* context)
         const override
       {
         FastOpenRtbState& state = state_from_context(context);
@@ -5192,7 +5192,7 @@ namespace AdServer::Bidding
           char buf[64];
           const int size = std::snprintf(buf, sizeof(buf), "%.3f", value);
           FastOpenRtbState& state = state_from_context(context);
-          metric->value = state.context->hold_string(AdServer::Commons::MonoString(
+          metric->value = state.context->hold_string(Generics::MonoString(
             buf,
             static_cast<std::size_t>(size),
             state.context->resource()));
@@ -5505,7 +5505,7 @@ namespace AdServer::Bidding
         &state,
         [&state]()
         {
-          return AdServer::Commons::MonoString(state.request_info->resource());
+          return Generics::MonoString(state.request_info->resource());
         });
     }
 
@@ -6071,7 +6071,7 @@ namespace AdServer::Bidding
         &state,
         [&request_info]()
         {
-          return AdServer::Commons::MonoString(request_info.resource());
+          return Generics::MonoString(request_info.resource());
         });
     }
     catch(const eh::Exception& e)

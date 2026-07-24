@@ -192,8 +192,8 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<const CampaignManagerCore::ContextAdRequest> context_info;
       std::shared_ptr<const CampaignManagerCore::GetAdRequest> request_params;
       std::shared_ptr<const CampaignManagerCore::LogAdRequest> log_request;
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> channels_arena =
-        std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+      std::shared_ptr<Generics::MonoAllocatorArena> channels_arena =
+        std::make_shared<Generics::MonoAllocatorArena>();
       ChannelIdHashSet channels{channels_arena.get()};
       CampaignManagerCore::AdSlotContext ad_slot_context;
       std::shared_ptr<const ChannelIdArray> geo_channels;

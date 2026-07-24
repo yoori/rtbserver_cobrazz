@@ -330,7 +330,7 @@ namespace Test1
 
     /*
     {
-      AdServer::Commons::MonoAllocatorArena arena;
+      Generics::MonoAllocatorArena arena;
       CampaignIndex::Key key(1);
       key.country_code = "ru";
       key.format = "test-appformat";
@@ -585,7 +585,7 @@ void index_(const char* name, CampaignConfigPtr campaign_config)
   timer.stop();
 
 /*
-  AdServer::Commons::MonoAllocatorArena arena;
+  Generics::MonoAllocatorArena arena;
   CampaignIndex::Key key(1);
   key.format = "test-appformat";
   key.country = "ru";

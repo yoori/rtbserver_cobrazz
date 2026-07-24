@@ -2454,7 +2454,7 @@ namespace AdServer::Bidding
   void
   BiddingFrontendCore::limit_max_cpm_(
     AdServer::CampaignSvcs::RevenueDecimal& val,
-    const AdServer::Commons::MonoVector<unsigned long>& account_ids)
+    const Generics::MonoVector<unsigned long>& account_ids)
     const noexcept
   {
     for (std::size_t i = 0; i < account_ids.size(); ++i)

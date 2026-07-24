@@ -196,7 +196,7 @@ namespace AdServer::Bidding
     request_info.fill_track_pixel = true;
     ad_slot_request.native_ads_impression_tracker_type = AdServer::CampaignSvcs::NAITT_RESOURCES;
     ad_slot_request.sizes.resize(1);
-    ad_slot_request.sizes[0] = ad_slot_request.hold_string(AdServer::Commons::MonoString(
+    ad_slot_request.sizes[0] = ad_slot_request.hold_string(Generics::MonoString(
       size.data(),
       size.size(),
       ad_slot_request.resource()));

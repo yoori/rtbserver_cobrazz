@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 namespace AdServer::Bidding::CampaignManager
 {
@@ -20,7 +20,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string value;
   };
 
-  using ResultTokenSeq = AdServer::Commons::MonoVector<ResultTokenInfo>;
+  using ResultTokenSeq = Generics::MonoVector<ResultTokenInfo>;
 
   struct ResultTokenImageInfo
   {
@@ -30,7 +30,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned long height = 0;
   };
 
-  using ResultTokenImageSeq = AdServer::Commons::MonoVector<ResultTokenImageInfo>;
+  using ResultTokenImageSeq = Generics::MonoVector<ResultTokenImageInfo>;
 
   struct CreativeSelectResult
   {
@@ -53,7 +53,7 @@ namespace AdServer::Bidding::CampaignManager
     unsigned char expanding = 0;
   };
 
-  using CreativeSelectResultSeq = AdServer::Commons::MonoVector<CreativeSelectResult>;
+  using CreativeSelectResultSeq = Generics::MonoVector<CreativeSelectResult>;
 
   struct CreativeSelectDebugInfo
   {
@@ -64,13 +64,13 @@ namespace AdServer::Bidding::CampaignManager
     std::string html_url;
   };
 
-  using CreativeSelectDebugInfoSeq = AdServer::Commons::MonoVector<CreativeSelectDebugInfo>;
+  using CreativeSelectDebugInfoSeq = Generics::MonoVector<CreativeSelectDebugInfo>;
 
   struct AdSlotDebugInfo
   {
     explicit AdSlotDebugInfo(
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = nullptr)
-      : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+      : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         selected_creatives(arena_.get())
     {}
 
@@ -80,7 +80,7 @@ namespace AdServer::Bidding::CampaignManager
     AdSlotDebugInfo& operator=(AdSlotDebugInfo&&) = default;
 
   private:
-    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+    std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
   public:
     unsigned long tag_id = 0;
@@ -125,13 +125,13 @@ namespace AdServer::Bidding::CampaignManager
     std::string parent_contract_id;
   };
 
-  using ExtContractInfoSeq = AdServer::Commons::MonoVector<ExtContractInfo>;
+  using ExtContractInfoSeq = Generics::MonoVector<ExtContractInfo>;
 
   struct AdSlotResult
   {
     explicit AdSlotResult(
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = nullptr)
-      : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+      : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         track_pixel_urls(arena_.get()),
         selected_creatives(arena_.get()),
         external_visual_categories(arena_.get()),
@@ -147,7 +147,7 @@ namespace AdServer::Bidding::CampaignManager
     {}
 
   private:
-    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+    std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
   public:
     unsigned long ad_slot_id = 0;
@@ -156,7 +156,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string passback_url;
     std::string creative_body;
     std::string notice_url;
-    AdServer::Commons::MonoVector<std::string> track_pixel_urls;
+    Generics::MonoVector<std::string> track_pixel_urls;
     std::string yandex_track_params;
     std::string creative_url;
     std::string track_pixel_params;
@@ -165,8 +165,8 @@ namespace AdServer::Bidding::CampaignManager
     std::string iurl;
     bool test_request = false;
     CreativeSelectResultSeq selected_creatives;
-    AdServer::Commons::MonoVector<std::string> external_visual_categories;
-    AdServer::Commons::MonoVector<std::string> external_content_categories;
+    Generics::MonoVector<std::string> external_visual_categories;
+    Generics::MonoVector<std::string> external_content_categories;
     std::string pub_currency_code;
     unsigned long overlay_width = 0;
     unsigned long overlay_height = 0;
@@ -174,8 +174,8 @@ namespace AdServer::Bidding::CampaignManager
     ResultTokenSeq ext_tokens;
     bool track_impr = false;
     std::string tag_size;
-    AdServer::Commons::MonoVector<unsigned long> freq_caps;
-    AdServer::Commons::MonoVector<unsigned long> uc_freq_caps;
+    Generics::MonoVector<unsigned long> freq_caps;
+    Generics::MonoVector<unsigned long> uc_freq_caps;
     AdSlotDebugInfo debug_info;
     ResultTokenSeq native_data_tokens;
     ResultTokenImageSeq native_image_tokens;
@@ -184,24 +184,24 @@ namespace AdServer::Bidding::CampaignManager
     ExtContractInfoSeq contracts;
   };
 
-  using AdSlotResultSeq = AdServer::Commons::MonoVector<AdSlotResult>;
+  using AdSlotResultSeq = Generics::MonoVector<AdSlotResult>;
 
   struct AdRequestDebugInfo
   {
     explicit AdRequestDebugInfo(
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = nullptr)
-      : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+      : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         geo_channels(arena_.get()),
         platform_channels(arena_.get())
     {}
 
   private:
-    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+    std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
   public:
     unsigned long colo_id = 0;
-    AdServer::Commons::MonoVector<unsigned long> geo_channels;
-    AdServer::Commons::MonoVector<unsigned long> platform_channels;
+    Generics::MonoVector<unsigned long> geo_channels;
+    Generics::MonoVector<unsigned long> platform_channels;
     unsigned long last_platform_channel_id = 0;
     unsigned long user_group_id = 0;
   };
@@ -209,8 +209,8 @@ namespace AdServer::Bidding::CampaignManager
   struct RequestCreativeResult
   {
     explicit RequestCreativeResult(
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = nullptr)
-      : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+      : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         ad_slots(arena_.get()),
         debug_info(arena_)
     {}
@@ -220,7 +220,7 @@ namespace AdServer::Bidding::CampaignManager
     RequestCreativeResult(RequestCreativeResult&&) noexcept = default;
     RequestCreativeResult& operator=(RequestCreativeResult&&) = delete;
 
-    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+    std::shared_ptr<Generics::MonoAllocatorArena> arena_;
     AdSlotResultSeq ad_slots;
     std::string process_time;
     AdRequestDebugInfo debug_info;

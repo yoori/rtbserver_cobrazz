@@ -444,6 +444,7 @@
           <xsl:with-param
             name="grpc-max-batch-delay-us"
             select="$campaign-manager-grpc-max-batch-delay-us"/>
+          <xsl:with-param name="grpc-channels-number" select="'32'"/>
         </xsl:call-template>
         <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor] |
                               $full-cluster-path/serviceGroup[@descriptor = 'AdProfilingCluster/FrontendSubCluster']">

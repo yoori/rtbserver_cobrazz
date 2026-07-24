@@ -4,15 +4,15 @@
 namespace FrontendCommons
 {
   inline
-  AdServer::Commons::MonoString
+  Generics::MonoString
   normalize_ifa_impl_(
     std::string_view idfa,
-    AdServer::Commons::MonoAllocatorArena* resource)
+    Generics::MonoAllocatorArena* resource)
   {
-    AdServer::Commons::MonoString res(idfa.data(), idfa.size(), resource);
+    Generics::MonoString res(idfa.data(), idfa.size(), resource);
     String::AsciiStringManip::to_lower(res.begin(), res.end());
 
-    AdServer::Commons::MonoString norm_res(resource);
+    Generics::MonoString norm_res(resource);
     norm_res.reserve(32);
 
     const String::SubString res_sub_string(res.data(), res.size());
@@ -30,7 +30,7 @@ namespace FrontendCommons
         norm_res.data() + norm_res.size()) ==
           norm_res.data() + norm_res.size())
     {
-      AdServer::Commons::MonoString minus_norm_res(resource);
+      Generics::MonoString minus_norm_res(resource);
       minus_norm_res.reserve(36);
       minus_norm_res.append(norm_res.data(), 8);
       minus_norm_res += '-';
@@ -45,7 +45,7 @@ namespace FrontendCommons
       return minus_norm_res;
     }
 
-    return AdServer::Commons::MonoString(resource);
+    return Generics::MonoString(resource);
   }
 
   template<typename RequestInfoType, typename StringType>
@@ -475,18 +475,18 @@ namespace FrontendCommons
   std::string
   normalize_ifa(std::string_view idfa)
   {
-    AdServer::Commons::MonoAllocatorArena resource;
-    const AdServer::Commons::MonoString result = normalize_ifa_impl_(
+    Generics::MonoAllocatorArena resource;
+    const Generics::MonoString result = normalize_ifa_impl_(
       idfa,
       &resource);
     return std::string(result.data(), result.size());
   }
 
   inline
-  AdServer::Commons::MonoString
+  Generics::MonoString
   normalize_ifa(
     std::string_view idfa,
-    AdServer::Commons::MonoAllocatorArena* resource)
+    Generics::MonoAllocatorArena* resource)
   {
     return normalize_ifa_impl_(idfa, resource);
   }

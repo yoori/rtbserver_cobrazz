@@ -10,7 +10,7 @@
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 namespace AdServer::Bidding
 {
@@ -47,12 +47,12 @@ namespace AdServer::Bidding
       std::string_view source_id)
       : BasicKeywordFormatter(
           source_id,
-          std::shared_ptr<AdServer::Commons::MonoAllocatorArena>())
+          std::shared_ptr<Generics::MonoAllocatorArena>())
     {}
 
     BasicKeywordFormatter(
       std::string_view source_id,
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      std::shared_ptr<Generics::MonoAllocatorArena> arena)
       : arena_(make_arena_(std::move(arena))),
         parts_(make_part_array_(arena_.get())),
         owned_parts_(make_owned_part_array_(arena_.get())),
@@ -71,7 +71,7 @@ namespace AdServer::Bidding
     template<std::size_t Size>
     BasicKeywordFormatter(
       const char (&source_id)[Size],
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      std::shared_ptr<Generics::MonoAllocatorArena> arena)
       : BasicKeywordFormatter(
           std::string_view(source_id, Size - 1),
           std::move(arena))
@@ -87,7 +87,7 @@ namespace AdServer::Bidding
     template<typename SourceIdType>
     BasicKeywordFormatter(
       const SourceIdType& source_id,
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+      std::shared_ptr<Generics::MonoAllocatorArena> arena)
       : BasicKeywordFormatter(
           std::string_view(source_id.data(), source_id.size()),
           std::move(arena))
@@ -531,9 +531,9 @@ namespace AdServer::Bidding
     static StringType
     make_string_(
       std::string_view value,
-      AdServer::Commons::MonoAllocatorArena* resource)
+      Generics::MonoAllocatorArena* resource)
     {
-      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      if constexpr (std::is_same_v<StringType, Generics::MonoString>)
       {
         return StringType(value.data(), value.size(), resource);
       }
@@ -544,21 +544,21 @@ namespace AdServer::Bidding
     }
 
     using PartArray = std::conditional_t<
-      std::is_same_v<StringType, AdServer::Commons::MonoString>,
-      AdServer::Commons::MonoVector<std::string_view>,
+      std::is_same_v<StringType, Generics::MonoString>,
+      Generics::MonoVector<std::string_view>,
       std::vector<std::string_view>>;
 
     using OwnedPartArray = std::conditional_t<
-      std::is_same_v<StringType, AdServer::Commons::MonoString>,
+      std::is_same_v<StringType, Generics::MonoString>,
       std::deque<
         StringType,
-        AdServer::Commons::MonoAllocator<StringType>>,
+        Generics::MonoAllocator<StringType>>,
       std::deque<StringType>>;
 
     static PartArray
-    make_part_array_(AdServer::Commons::MonoAllocatorArena* resource)
+    make_part_array_(Generics::MonoAllocatorArena* resource)
     {
-      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      if constexpr (std::is_same_v<StringType, Generics::MonoString>)
       {
         return PartArray(resource);
       }
@@ -570,9 +570,9 @@ namespace AdServer::Bidding
     }
 
     static OwnedPartArray
-    make_owned_part_array_(AdServer::Commons::MonoAllocatorArena* resource)
+    make_owned_part_array_(Generics::MonoAllocatorArena* resource)
     {
-      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      if constexpr (std::is_same_v<StringType, Generics::MonoString>)
       {
         return OwnedPartArray(resource);
       }
@@ -583,14 +583,14 @@ namespace AdServer::Bidding
       }
     }
 
-    static std::shared_ptr<AdServer::Commons::MonoAllocatorArena>
-    make_arena_(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> resource)
+    static std::shared_ptr<Generics::MonoAllocatorArena>
+    make_arena_(std::shared_ptr<Generics::MonoAllocatorArena> resource)
     {
-      if constexpr (std::is_same_v<StringType, AdServer::Commons::MonoString>)
+      if constexpr (std::is_same_v<StringType, Generics::MonoString>)
       {
         return resource ?
           std::move(resource) :
-          std::make_shared<AdServer::Commons::MonoAllocatorArena>();
+          std::make_shared<Generics::MonoAllocatorArena>();
       }
       else
       {
@@ -623,7 +623,7 @@ namespace AdServer::Bidding
       add_part_view_(store_owned_(std::move(value)));
     }
 
-    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
+    std::shared_ptr<Generics::MonoAllocatorArena> arena_;
     PartArray parts_;
     OwnedPartArray owned_parts_;
     std::size_t total_size_ = 0;

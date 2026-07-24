@@ -364,7 +364,7 @@ main(int argc, char** argv)
               user_info.current_colo_id = 1;
 
               auto arena =
-                std::make_shared<AdServer::Commons::MonoAllocatorArena>(8 * 1024);
+                std::make_shared<Generics::MonoAllocatorArena>(8 * 1024);
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params(arena);
               match_params.no_result = false;
               match_params.matched_channels.page_channels.reserve(100);

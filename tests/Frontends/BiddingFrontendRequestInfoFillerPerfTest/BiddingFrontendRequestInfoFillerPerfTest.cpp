@@ -471,7 +471,7 @@ extern "C"
       return 0;
     }
 
-    AdServer::Commons::MonoAllocatorArena reference_arena;
+    Generics::MonoAllocatorArena reference_arena;
     AdServer::Bidding::RequestInfo reference_request_info;
     AdServer::Bidding::JsonProcessingContext reference_context(reference_arena);
 
@@ -489,7 +489,7 @@ extern "C"
 
     for(std::uint64_t i = 0; i < count; ++i)
     {
-      AdServer::Commons::MonoAllocatorArena arena;
+      Generics::MonoAllocatorArena arena;
       AdServer::Bidding::RequestInfo request_info;
       AdServer::Bidding::JsonProcessingContext context(arena);
 

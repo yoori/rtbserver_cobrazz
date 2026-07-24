@@ -184,7 +184,7 @@ namespace AdServer::Bidding
     void
     limit_max_cpm_(
       AdServer::CampaignSvcs::RevenueDecimal& val,
-      const AdServer::Commons::MonoVector<unsigned long>& account_ids)
+      const Generics::MonoVector<unsigned long>& account_ids)
       const noexcept;
 
     RequestInfoFiller*

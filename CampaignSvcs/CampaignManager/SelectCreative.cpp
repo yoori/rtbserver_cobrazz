@@ -45,7 +45,7 @@ namespace AdServer::CampaignSvcs
     std::string& creative_body,
     std::string& creative_url,
     AdSlotContext& ad_slot_context,
-    AdServer::Commons::MonoAllocatorArena* arena)
+    Generics::MonoAllocatorArena* arena)
     /*throw(eh::Exception)*/
   {
     (void)arena;
@@ -164,7 +164,7 @@ namespace AdServer::CampaignSvcs
     std::string& creative_body,
     std::string& creative_url,
     AdSlotContext& ad_slot_context,
-    AdServer::Commons::MonoAllocatorArena* arena)
+    Generics::MonoAllocatorArena* arena)
     /*throw(eh::Exception)*/
   {
     (void)arena;

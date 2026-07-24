@@ -289,7 +289,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    append(FreqCapIdSet& freq_caps, const AdServer::Commons::MonoVector<unsigned long>& cap_seq)
+    append(FreqCapIdSet& freq_caps, const Generics::MonoVector<unsigned long>& cap_seq)
       /*throw(eh::Exception)*/
     {
       freq_caps.reserve(freq_caps.size() + cap_seq.size());
@@ -530,7 +530,7 @@ namespace AdServer::CampaignSvcs
         return;
       }
 
-      AdServer::Commons::MonoAllocatorArena platform_channels_arena;
+      Generics::MonoAllocatorArena platform_channels_arena;
       ChannelIdHashSet platform_channels(&platform_channels_arena);
       platform_channels.insert(context_info.platform_ids.begin(), context_info.platform_ids.end());
 
@@ -866,7 +866,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      AdServer::Commons::MonoAllocatorArena arena;
+      Generics::MonoAllocatorArena arena;
       GetAdResult result;
       result.hostname = campaign_manager_config_.host();
 
@@ -1665,7 +1665,7 @@ namespace AdServer::CampaignSvcs
     unsigned long request_type,
     unsigned long random,
     unsigned long publisher_site_id,
-    const AdServer::Commons::MonoVector<unsigned long>& publisher_account_ids,
+    const Generics::MonoVector<unsigned long>& publisher_account_ids,
     const CampaignConfig& campaign_config,
     unsigned long tag_id,
     const StringArray& sizes,
@@ -1788,7 +1788,7 @@ namespace AdServer::CampaignSvcs
     const CreativeInstantiateRule& creative_instantiate_rule,
     GetAdDebugResult* ad_request_debug_info,
     const ChannelIdHashSet& matched_channels,
-    AdServer::Commons::MonoAllocatorArena* arena)
+    Generics::MonoAllocatorArena* arena)
   {
     //static const char* FUN = "CampaignManagerCore::get_adslot_campaign_creative_()";
 
@@ -2188,7 +2188,7 @@ namespace AdServer::CampaignSvcs
     GetAdDebugResult* ad_request_debug_info,
     AdSlotDebugResult* ad_slot_debug_info,
     const ChannelIdHashSet& matched_channels,
-    AdServer::Commons::MonoAllocatorArena* arena)
+    Generics::MonoAllocatorArena* arena)
     /*throw(eh::Exception)*/
   {
     /* configuring response by input parameters */
@@ -3031,7 +3031,7 @@ namespace AdServer::CampaignSvcs
     unsigned long tag_id,
     const String::SubString& referer,
     const ChannelIdHashSet& channels,
-    const AdServer::Commons::MonoVector<unsigned long>& full_freq_caps)
+    const Generics::MonoVector<unsigned long>& full_freq_caps)
     /*throw(eh::Exception)*/
   {
     std::ostringstream ostr;
@@ -3180,7 +3180,7 @@ namespace AdServer::CampaignSvcs
     std::string& creative_url,
     GetAdDebugResult* ad_request_debug_info,
     AdSlotDebugResult* ad_slot_debug_info,
-    AdServer::Commons::MonoAllocatorArena* arena)
+    Generics::MonoAllocatorArena* arena)
   {
     (void)ad_request_debug_info;
 
@@ -3359,7 +3359,7 @@ namespace AdServer::CampaignSvcs
 
       config.platform_channels->match(platform_channels, platforms);
 
-      AdServer::Commons::MonoUnorderedSet<std::string_view>
+      Generics::MonoUnorderedSet<std::string_view>
         norm_platform_names(arena);
       norm_platform_names.reserve(platforms.size() + platform_channels.size());
 
@@ -3744,7 +3744,7 @@ namespace AdServer::CampaignSvcs
         throw Exception("Can't receive configuration.");
       }
 
-      AdServer::Commons::MonoAllocatorArena used_simple_channels_arena;
+      Generics::MonoAllocatorArena used_simple_channels_arena;
       ChannelIdHashSet used_simple_channels(&used_simple_channels_arena);
       used_simple_channels.insert(channels.begin(), channels.end());
       ChannelUseCountMap uc_tbl;
@@ -4044,7 +4044,7 @@ namespace AdServer::CampaignSvcs
 
       {
         ChannelIdSet platform_channels;
-        AdServer::Commons::MonoAllocatorArena platforms_arena;
+        Generics::MonoAllocatorArena platforms_arena;
         ChannelIdHashSet platforms(&platforms_arena);
         platforms.insert(
           action_info.platform_ids.begin(),
@@ -4476,12 +4476,12 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     CampaignKeywordMap& result_keywords,
-    const AdServer::Commons::MonoVector<CCGKeywordInfo>& keywords,
+    const Generics::MonoVector<CCGKeywordInfo>& keywords,
     bool profiling_available,
     const FreqCapIdSet& full_freq_caps)
     noexcept
   {
-    for (AdServer::Commons::MonoVector<CCGKeywordInfo>::const_iterator kw_it = keywords.begin();
+    for (Generics::MonoVector<CCGKeywordInfo>::const_iterator kw_it = keywords.begin();
       kw_it != keywords.end(); ++kw_it)
     {
       const CCGKeywordInfo& src_keyword = *kw_it;
@@ -4622,7 +4622,7 @@ namespace AdServer::CampaignSvcs
         key.tag_delivery_factor = request_params.tag_delivery_factor;
         key.ccg_delivery_factor = request_params.ccg_delivery_factor;
 
-        AdServer::Commons::MonoAllocatorArena trace_arena;
+        Generics::MonoAllocatorArena trace_arena;
         ChannelIdHashSet triggered_channels(&trace_arena);
         triggered_channels.insert(
           request_params.channels.begin(),
@@ -4906,7 +4906,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     const CommonAdRequest& request_params,
-    const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts_seq)
+    const Generics::MonoVector<unsigned long>& exclude_pubpixel_accounts_seq)
     noexcept
   {
     AccountIdSet exclude_pubpixel_accounts(
@@ -5098,7 +5098,7 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerCore::fill_tns_counter_device_type_(
     std::string& tns_counter_device_type,
-    const AdServer::Commons::MonoUnorderedSet<std::string_view>&
+    const Generics::MonoUnorderedSet<std::string_view>&
       norm_platform_names)
     noexcept
   {

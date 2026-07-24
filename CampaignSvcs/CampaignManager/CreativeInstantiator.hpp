@@ -75,7 +75,7 @@ namespace AdServer::CampaignSvcs
       CreativeParamsList& creative_instantiate_info,
       std::string& creative_body,
       const AdSlotContext& ad_slot_context,
-      const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts,
+      const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
       std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out =
         nullptr)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
@@ -158,7 +158,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig* campaign_config,
       const Tag* tag,
       const CommonAdRequest& request_params,
-      const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts)
+      const Generics::MonoVector<unsigned long>& exclude_pubpixel_accounts)
       noexcept;
 
     PubPixelAccountMap::const_iterator
@@ -181,7 +181,7 @@ namespace AdServer::CampaignSvcs
       const char* app_format,
       const CommonAdRequest& request_params,
       const AccountIdList* pubpixel_accounts,
-      const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts,
+      const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
       const CreativeInstantiateRule& instantiate_info,
       const AdSlotContext& ad_slot_context,
       const String::SubString& ext_tag_id)
@@ -201,7 +201,7 @@ namespace AdServer::CampaignSvcs
       RequestResultParams& request_result_params,
       CreativeParamsList& creative_params_list,
       const AdSlotContext& ad_slot_context,
-      const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts)
+      const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts)
       /*throw(eh::Exception)*/;
 
     static void
@@ -252,7 +252,7 @@ namespace AdServer::CampaignSvcs
       const AdSelectionResult& ad_selection_result,
       const AdSlotContext& ad_slot_context,
       const char* app_format,
-      const AdServer::Commons::MonoVector<unsigned long>& exclude_pubpixel_accounts,
+      const Generics::MonoVector<unsigned long>& exclude_pubpixel_accounts,
       bool fill_auction_price = true)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 

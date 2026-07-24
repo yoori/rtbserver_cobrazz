@@ -561,8 +561,9 @@
 
 <xsl:template name="AddGrpcBatchingOptions">
   <xsl:param name="grpc-max-batch-delay-us" select="'5000'"/>
+  <xsl:param name="grpc-channels-number" select="'16'"/>
   <cfg:BatchingOptions
-    channels_number="16"
+    channels_number="{$grpc-channels-number}"
     max_batch_size="2000"
     max_inflight="10000"
     error_on_inflight_reaching="true"

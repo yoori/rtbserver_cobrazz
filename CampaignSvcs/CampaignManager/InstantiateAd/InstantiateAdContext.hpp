@@ -52,7 +52,7 @@ namespace AdServer::CampaignSvcs
       const AdSelectionResult* ad_selection_result = nullptr;
       const CreativeInstantiateRule* instantiate_info = nullptr;
       const CampaignManagerCore::AdSlotContext* ad_slot_context = nullptr;
-      const AdServer::Commons::MonoVector<unsigned long>* exclude_pubpixel_accounts = nullptr;
+      const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts = nullptr;
       const char* app_format = "";
       bool force_generate_pubpixel_accounts = false;
       SignedRequestIdProvider signed_request_id_provider;

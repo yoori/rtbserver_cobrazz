@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include <Commons/Containers.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 #include "CampaignManagerDeclarations.hpp"
 #include "CampaignConfig.hpp"
@@ -115,16 +115,16 @@ namespace AdServer
       };
 
       using WeightedCampaignKeywordList =
-        AdServer::Commons::MonoList<WeightedCampaignKeyword>;
+        Generics::MonoList<WeightedCampaignKeyword>;
 
       typedef std::unique_ptr<WeightedCampaignKeywordList>
         WeightedCampaignKeywordListPtr;
 
       using WeightedCampaignKeywordPtrArray =
-        AdServer::Commons::MonoVector<WeightedCampaignKeyword*>;
+        Generics::MonoVector<WeightedCampaignKeyword*>;
 
       using WeightedCampaignKeywordGroupList =
-        AdServer::Commons::MonoList<WeightedCampaignKeywordPtrArray>;
+        Generics::MonoList<WeightedCampaignKeywordPtrArray>;
 
       class ExpectedEcpm
       {
@@ -147,7 +147,7 @@ namespace AdServer
         const CampaignIndex* campaign_index,
         const CTR::CTRProvider* ctr_provider,
         const CTR::CTRProvider* conv_rate_provider,
-        AdServer::Commons::MonoAllocatorArena* arena);
+        Generics::MonoAllocatorArena* arena);
 
       /* facade that do all ops */
       void
@@ -164,24 +164,24 @@ namespace AdServer
 
     protected:
       using CPCKeywordMap =
-        AdServer::Commons::MonoMap<RevenueDecimal, WeightedCampaignKeywordList>;
+        Generics::MonoMap<RevenueDecimal, WeightedCampaignKeywordList>;
 
-      using WeightedCampaignList = AdServer::Commons::MonoList<WeightedCampaignPtr>;
+      using WeightedCampaignList = Generics::MonoList<WeightedCampaignPtr>;
 
       using ExpRevWeightedCampaignKeywordMap =
-        AdServer::Commons::MonoMultiMap<RevenueDecimal, WeightedCampaignKeywordPtrArray>;
+        Generics::MonoMultiMap<RevenueDecimal, WeightedCampaignKeywordPtrArray>;
 
       using IdWeightedCampaignKeywordMap =
-        AdServer::Commons::MonoMap<unsigned long, WeightedCampaignKeywordPtrArray>;
+        Generics::MonoMap<unsigned long, WeightedCampaignKeywordPtrArray>;
 
       struct IdWeightedCampaignKeywordMaps
       {
-        explicit IdWeightedCampaignKeywordMaps(AdServer::Commons::MonoAllocatorArena* arena)
-          : account_campaigns(AdServer::Commons::mono_allocator<
+        explicit IdWeightedCampaignKeywordMaps(Generics::MonoAllocatorArena* arena)
+          : account_campaigns(Generics::mono_allocator<
               IdWeightedCampaignKeywordMap::value_type>(arena)),
-            advertiser_campaigns(AdServer::Commons::mono_allocator<
+            advertiser_campaigns(Generics::mono_allocator<
               IdWeightedCampaignKeywordMap::value_type>(arena)),
-            ccg_campaigns(AdServer::Commons::mono_allocator<
+            ccg_campaigns(Generics::mono_allocator<
               IdWeightedCampaignKeywordMap::value_type>(arena))
         {}
 
@@ -453,7 +453,7 @@ namespace AdServer
         const CampaignSelectParams& request_params,
         const Campaign* campaign,
         const Tag* tag,
-        AdServer::Commons::MonoAllocatorArena* arena) const
+        Generics::MonoAllocatorArena* arena) const
         /*throw(eh::Exception)*/;
 
       static
@@ -540,7 +540,7 @@ namespace AdServer
       ConstCampaignConfigPtr campaign_config_;
       CTR::ConstCTRProvider_var ctr_provider_;
       CTR::ConstCTRProvider_var conv_rate_provider_;
-      AdServer::Commons::MonoAllocatorArena* arena_;
+      Generics::MonoAllocatorArena* arena_;
     };
   }
 }

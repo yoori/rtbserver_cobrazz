@@ -25,7 +25,7 @@
 
 #include <Frontends/CommonModule/CommonModule.hpp>
 
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include "CampaignManagerTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
@@ -90,7 +90,7 @@ namespace AdServer::Bidding
     ERIDReturnType erid_return_type;
   };
 
-  using DebugAdSlotSizeMap = AdServer::Commons::MonoMap<unsigned long, AdServer::Commons::MonoString>;
+  using DebugAdSlotSizeMap = Generics::MonoMap<unsigned long, Generics::MonoString>;
 
   struct GoogleAdSlotContext
   {
@@ -112,7 +112,7 @@ namespace AdServer::Bidding
 
   struct RequestInfo
   {
-    using AccountIdArray = AdServer::Commons::MonoVector<unsigned long>;
+    using AccountIdArray = Generics::MonoVector<unsigned long>;
     static constexpr std::size_t ARENA_INITIAL_SIZE = 64 * 1024;
 
     struct AdditionalInfo
@@ -138,7 +138,7 @@ namespace AdServer::Bidding
       bool required = false;
     };
 
-    using NativeDataTokens = AdServer::Commons::MonoVector<NativeDataToken>;
+    using NativeDataTokens = Generics::MonoVector<NativeDataToken>;
 
     struct NativeImageToken
     {
@@ -148,7 +148,7 @@ namespace AdServer::Bidding
       unsigned long height = 0;
     };
 
-    using NativeImageTokens = AdServer::Commons::MonoVector<NativeImageToken>;
+    using NativeImageTokens = Generics::MonoVector<NativeImageToken>;
 
     struct TokenInfo
     {
@@ -156,7 +156,7 @@ namespace AdServer::Bidding
       std::string value;
     };
 
-    using TokenSeq = AdServer::Commons::MonoVector<TokenInfo>;
+    using TokenSeq = Generics::MonoVector<TokenInfo>;
 
     struct GeoInfo
     {
@@ -165,7 +165,7 @@ namespace AdServer::Bidding
       std::string city;
     };
 
-    using GeoInfoSeq = AdServer::Commons::MonoVector<GeoInfo>;
+    using GeoInfoSeq = Generics::MonoVector<GeoInfo>;
 
     struct GeoCoordInfo
     {
@@ -175,12 +175,12 @@ namespace AdServer::Bidding
         CampaignSvcs::AccuracyDecimal::ZERO;
     };
 
-    using GeoCoordInfoSeq = AdServer::Commons::MonoVector<GeoCoordInfo>;
+    using GeoCoordInfoSeq = Generics::MonoVector<GeoCoordInfo>;
 
     struct AdSlotInfo
     {
-      explicit AdSlotInfo(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena = nullptr)
-        : arena_(arena ? std::move(arena) : std::make_shared<AdServer::Commons::MonoAllocatorArena>()),
+      explicit AdSlotInfo(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+        : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
           string_holders_(arena_.get()),
           sizes(arena_.get()),
           currency_codes(arena_.get()),
@@ -195,32 +195,32 @@ namespace AdServer::Bidding
       AdSlotInfo(AdSlotInfo&&) noexcept = default;
       AdSlotInfo& operator=(AdSlotInfo&&) noexcept = default;
 
-      AdServer::Commons::MonoAllocatorArena*
+      Generics::MonoAllocatorArena*
       resource() const noexcept
       {
         return arena_.get();
       }
 
-      AdServer::Commons::MonoString&
-      hold_string(AdServer::Commons::MonoString&& value)
+      Generics::MonoString&
+      hold_string(Generics::MonoString&& value)
       {
-        AdServer::Commons::MonoString& held_value = string_holders_.emplace_back(std::move(value));
+        Generics::MonoString& held_value = string_holders_.emplace_back(std::move(value));
         return held_value;
       }
 
     private:
-      std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena_;
-      AdServer::Commons::MonoList<AdServer::Commons::MonoString> string_holders_;
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
+      Generics::MonoList<Generics::MonoString> string_holders_;
 
     public:
       unsigned long ad_slot_id = 0;
       std::string_view format;
       unsigned long tag_id = 0;
-      AdServer::Commons::MonoVector<std::string_view> sizes;
+      Generics::MonoVector<std::string_view> sizes;
       std::string ext_tag_id;
       CampaignSvcs::RevenueDecimal min_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
       std::string_view min_ecpm_currency_code;
-      AdServer::Commons::MonoVector<std::string_view> currency_codes;
+      Generics::MonoVector<std::string_view> currency_codes;
       bool passback = false;
       long up_expand_space = -1;
       long right_expand_space = -1;
@@ -235,10 +235,10 @@ namespace AdServer::Bidding
       long video_allow_unskippable = 1;
       unsigned long video_width = 0;
       unsigned long video_height = 0;
-      AdServer::Commons::MonoVector<std::string_view> exclude_categories;
-      AdServer::Commons::MonoVector<std::string_view> required_categories;
+      Generics::MonoVector<std::string_view> exclude_categories;
+      Generics::MonoVector<std::string_view> required_categories;
       unsigned long debug_ccg = 0;
-      AdServer::Commons::MonoVector<unsigned long> allowed_durations;
+      Generics::MonoVector<unsigned long> allowed_durations;
       NativeDataTokens native_data_tokens;
       NativeImageTokens native_image_tokens;
       unsigned long native_ads_impression_tracker_type = 0;
@@ -247,26 +247,26 @@ namespace AdServer::Bidding
 
     };
 
-    using AdSlotArray = AdServer::Commons::MonoVector<AdSlotInfo>;
+    using AdSlotArray = Generics::MonoVector<AdSlotInfo>;
 
   private:
-    std::shared_ptr<AdServer::Commons::MonoAllocatorArena> request_arena_;
+    std::shared_ptr<Generics::MonoAllocatorArena> request_arena_;
 
-    static std::shared_ptr<AdServer::Commons::MonoAllocatorArena>
-    make_arena_(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+    static std::shared_ptr<Generics::MonoAllocatorArena>
+    make_arena_(std::shared_ptr<Generics::MonoAllocatorArena> arena)
     {
       return arena ?
         std::move(arena) :
-        std::make_shared<AdServer::Commons::MonoAllocatorArena>(ARENA_INITIAL_SIZE);
+        std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE);
     }
 
   public:
     RequestInfo()
-      : RequestInfo(std::make_shared<AdServer::Commons::MonoAllocatorArena>(
+      : RequestInfo(std::make_shared<Generics::MonoAllocatorArena>(
           ARENA_INITIAL_SIZE))
     {}
 
-    explicit RequestInfo(std::shared_ptr<AdServer::Commons::MonoAllocatorArena> arena)
+    explicit RequestInfo(std::shared_ptr<Generics::MonoAllocatorArena> arena)
       : request_arena_(make_arena_(std::move(arena))),
         external_user_id(request_arena_.get()),
         geo_location(request_arena_.get()),
@@ -350,13 +350,13 @@ namespace AdServer::Bidding
       new(this) RequestInfo(std::move(arena));
     }
 
-    const std::shared_ptr<AdServer::Commons::MonoAllocatorArena>&
+    const std::shared_ptr<Generics::MonoAllocatorArena>&
     arena() const noexcept
     {
       return request_arena_;
     }
 
-    AdServer::Commons::MonoAllocatorArena*
+    Generics::MonoAllocatorArena*
     resource() const noexcept
     {
       return request_arena_.get();
@@ -370,9 +370,9 @@ namespace AdServer::Bidding
     }
 
     std::string_view
-    hold_string(AdServer::Commons::MonoString&& value)
+    hold_string(Generics::MonoString&& value)
     {
-      AdServer::Commons::MonoString& held_value = string_holders_.emplace_back(std::move(value));
+      Generics::MonoString& held_value = string_holders_.emplace_back(std::move(value));
       return std::string_view(held_value.data(), held_value.size());
     }
 
@@ -383,47 +383,47 @@ namespace AdServer::Bidding
     bool test_request = false;
     bool log_as_test = false;
     unsigned long colo_id = 0;
-    AdServer::Commons::MonoString external_user_id;
+    Generics::MonoString external_user_id;
     GeoInfoSeq geo_location;
     GeoCoordInfoSeq coord_location;
-    AdServer::Commons::MonoString full_referer;
-    AdServer::Commons::MonoString referer;
-    AdServer::Commons::MonoVector<std::string> urls;
-    AdServer::Commons::MonoString security_token;
-    AdServer::Commons::MonoString pub_impr_track_url;
-    AdServer::Commons::MonoString pub_param;
-    AdServer::Commons::MonoString preclick_url;
-    AdServer::Commons::MonoString click_prefix_url;
-    AdServer::Commons::MonoString original_url;
+    Generics::MonoString full_referer;
+    Generics::MonoString referer;
+    Generics::MonoVector<std::string> urls;
+    Generics::MonoString security_token;
+    Generics::MonoString pub_impr_track_url;
+    Generics::MonoString pub_param;
+    Generics::MonoString preclick_url;
+    Generics::MonoString click_prefix_url;
+    Generics::MonoString original_url;
     std::optional<AdServer::Commons::UserId> track_user_id;
     std::optional<AdServer::Commons::UserId> user_id;
     unsigned long user_status = 0;
     std::string_view peer_ip;
     std::string_view user_agent;
-    AdServer::Commons::MonoString cohort;
+    Generics::MonoString cohort;
     unsigned long hpos = 0;
-    AdServer::Commons::MonoString ext_track_params;
+    Generics::MonoString ext_track_params;
     TokenSeq tokens;
     bool set_cookie = false;
-    AdServer::Commons::MonoString passback_type;
-    AdServer::Commons::MonoString passback_url;
+    Generics::MonoString passback_type;
+    Generics::MonoString passback_url;
 
     bool enabled_notice = false;
     std::string_view client;
     std::string_view client_version;
-    AdServer::Commons::MonoVector<unsigned long> platform_ids;
-    AdServer::Commons::MonoVector<unsigned long> geo_channels;
-    AdServer::Commons::MonoString platform;
-    AdServer::Commons::MonoString full_platform;
-    AdServer::Commons::MonoString web_browser;
-    AdServer::Commons::MonoString ip_hash;
+    Generics::MonoVector<unsigned long> platform_ids;
+    Generics::MonoVector<unsigned long> geo_channels;
+    Generics::MonoString platform;
+    Generics::MonoString full_platform;
+    Generics::MonoString web_browser;
+    Generics::MonoString ip_hash;
     bool profile_referer = false;
     unsigned long page_load_id = 0;
     unsigned long full_referer_hash = 0;
     unsigned long short_referer_hash = 0;
 
     Generics::Time current_time;
-    AdServer::Commons::MonoString source_id;
+    Generics::MonoString source_id;
     unsigned long debug_ccg;
     AccountIdArray publisher_account_ids;
     unsigned long publisher_site_id;
@@ -431,20 +431,20 @@ namespace AdServer::Bidding
     unsigned long flag;
     bool filter_request;
     bool skip_ccg_keywords;
-    AdServer::Commons::MonoString search_words;
+    Generics::MonoString search_words;
     std::string_view seat;
     bool truncate_domain;
     bool ipw_extension;
-    AdServer::Commons::MonoString format;
-    AdServer::Commons::MonoString default_debug_size;
+    Generics::MonoString format;
+    Generics::MonoString default_debug_size;
     DebugAdSlotSizeMap debug_sizes;
     Generics::Time user_create_time;
     FrontendCommons::Location_var location;
 
     bool is_app;
-    AdServer::Commons::MonoString application_id;
-    AdServer::Commons::MonoString advertising_id; // ADVERTISING_ID
-    AdServer::Commons::MonoString idfa;
+    Generics::MonoString application_id;
+    Generics::MonoString advertising_id; // ADVERTISING_ID
+    Generics::MonoString idfa;
     std::string_view ssp_devicetype_str;
     std::string_view ssp_video_placementtype_str;
 
@@ -459,14 +459,14 @@ namespace AdServer::Bidding
 
     bool skip_ext_category;
     std::string_view notice_url;
-    AdServer::Commons::MonoString require_debug_info;
+    Generics::MonoString require_debug_info;
 
     std::string_view bid_request_id;
     std::string_view bid_site_id;
     std::string_view bid_publisher_id;
-    AdServer::Commons::MonoVector<AdServer::Commons::MonoString> ext_user_ids;
+    Generics::MonoVector<Generics::MonoString> ext_user_ids;
     AdditionalInfo additional_info;
-    AdServer::Commons::MonoString keywords;
+    Generics::MonoString keywords;
 
     bool fill_track_pixel = false;
     bool fill_iurl = false;
@@ -477,13 +477,13 @@ namespace AdServer::Bidding
     unsigned long preview_ccid = 0;
     AdSlotArray ad_slots;
     bool need_debug_info = false;
-    AdServer::Commons::MonoString page_keywords;
-    AdServer::Commons::MonoString url_keywords;
-    AdServer::Commons::MonoString campaign_additional_info;
+    Generics::MonoString page_keywords;
+    Generics::MonoString url_keywords;
+    Generics::MonoString campaign_additional_info;
 
   private:
     std::list<std::string> moved_string_holders_;
-    AdServer::Commons::MonoList<AdServer::Commons::MonoString> string_holders_;
+    Generics::MonoList<Generics::MonoString> string_holders_;
   };
 
   class RequestInfoFiller: public FrontendCommons::HTTPExceptions
@@ -681,7 +681,7 @@ namespace AdServer::Bidding
 
     void
     add_special_keywords_(
-      AdServer::Commons::MonoString& keywords,
+      Generics::MonoString& keywords,
       RequestInfo& request_info,
       const JsonProcessingContext* context = 0,
       std::string_view alt_app_id = std::string_view())
@@ -785,7 +785,7 @@ namespace AdServer::Bidding
     SourceNameMap source_mapping_;
 
     ParamProcessorMap param_processors_;
-    std::unique_ptr<AdServer::Commons::FastJsonParser<AdServer::Commons::MonoString>>
+    std::unique_ptr<AdServer::Commons::FastJsonParser<Generics::MonoString>>
       fast_json_parser_;
     const SourceMap sources_;
     const bool enable_profile_referer_;

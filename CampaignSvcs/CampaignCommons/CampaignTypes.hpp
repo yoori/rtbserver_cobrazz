@@ -11,7 +11,7 @@
 #include <Commons/Algs.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/Interval.hpp>
-#include <Commons/MonoAllocator.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 namespace AdServer
 {
@@ -43,7 +43,7 @@ namespace AdServer
     using ChannelIdArray = std::vector<unsigned long>;
     using ChannelIdList = std::list<unsigned long>;
     using ChannelIdSet = std::set<unsigned long>;
-    using MonoChannelIdSet = AdServer::Commons::MonoSet<unsigned long>;
+    using MonoChannelIdSet = Generics::MonoSet<unsigned long>;
 
     struct ChannelIdSortedArray: protected std::vector<unsigned long>
     {
@@ -313,7 +313,7 @@ namespace AdServer
     };
 
     using AllowedDurationSet =
-      AdServer::Commons::MonoSet<unsigned long>;
+      Generics::MonoSet<unsigned long>;
 
     typedef Commons::Interval<unsigned long> PriceRange;
     typedef Commons::IntervalSet<unsigned long> PriceRangeSet;
