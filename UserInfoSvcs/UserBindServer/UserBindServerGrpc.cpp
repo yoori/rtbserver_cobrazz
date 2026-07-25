@@ -227,6 +227,9 @@ namespace AdServer::UserInfoSvcs
 
     std::size_t distributed_batch_max_split() const noexcept override;
 
+    std::shared_ptr<AdServer::Commons::ExecutorPool>
+    batch_processing_executor_pool() const noexcept override;
+
     AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
@@ -304,6 +307,13 @@ namespace AdServer::UserInfoSvcs
     const noexcept
   {
     return max_batch_split_;
+  }
+
+  std::shared_ptr<AdServer::Commons::ExecutorPool>
+  UserBindServerGrpc::ServiceImpl::batch_processing_executor_pool()
+    const noexcept
+  {
+    return executor_pool_;
   }
 
   AdServer::Grpc::GrpcCoroutine

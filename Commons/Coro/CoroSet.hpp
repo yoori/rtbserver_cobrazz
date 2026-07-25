@@ -12,11 +12,15 @@
 
 namespace AdServer::Commons
 {
-  template<typename CoroutineType>
+  template<
+    typename CoroutineType,
+    typename Allocator = std::allocator<CoroutineType>>
   class CoroSet final
   {
   public:
-    explicit CoroSet(std::vector<CoroutineType> operations);
+    using Operations = std::vector<CoroutineType, Allocator>;
+
+    explicit CoroSet(Operations operations);
 
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> continuation);
@@ -33,26 +37,27 @@ namespace AdServer::Commons
       bool suspended = false;
     };
 
-    std::vector<CoroutineType> operations_;
+    Operations operations_;
     std::shared_ptr<State> state_;
   };
 
-  template<typename CoroutineType>
-  CoroSet<CoroutineType>::CoroSet(std::vector<CoroutineType> operations)
+  template<typename CoroutineType, typename Allocator>
+  CoroSet<CoroutineType, Allocator>::CoroSet(Operations operations)
     : operations_(std::move(operations)),
       state_(std::make_shared<State>())
   {}
 
-  template<typename CoroutineType>
+  template<typename CoroutineType, typename Allocator>
   bool
-  CoroSet<CoroutineType>::await_ready() const noexcept
+  CoroSet<CoroutineType, Allocator>::await_ready() const noexcept
   {
     return operations_.empty();
   }
 
-  template<typename CoroutineType>
+  template<typename CoroutineType, typename Allocator>
   bool
-  CoroSet<CoroutineType>::await_suspend(std::coroutine_handle<> continuation)
+  CoroSet<CoroutineType, Allocator>::await_suspend(
+    std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
     if(const auto* scheduler = current_coroutine_resume_scheduler())
@@ -102,9 +107,9 @@ namespace AdServer::Commons
     return true;
   }
 
-  template<typename CoroutineType>
+  template<typename CoroutineType, typename Allocator>
   void
-  CoroSet<CoroutineType>::await_resume()
+  CoroSet<CoroutineType, Allocator>::await_resume()
   {
     if(state_->exception)
     {

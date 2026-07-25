@@ -185,8 +185,7 @@ namespace AdServer::CampaignSvcs
     RevenueDecimal
     unpack_revenue_decimal(const pb::DecimalInfo& source)
     {
-      return CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        unpack_oct_seq(source.value()));
+      return CorbaAlgs::unpack_decimal<RevenueDecimal>(unpack_oct_seq(source.value()));
     }
 
     void
@@ -194,8 +193,7 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& source,
       pb::DecimalInfo& target)
     {
-      target.set_value(pack_oct_seq(
-        CorbaAlgs::pack_decimal<RevenueDecimal>(source)));
+      target.set_value(pack_oct_seq(CorbaAlgs::pack_decimal<RevenueDecimal>(source)));
     }
 
     void
@@ -207,8 +205,7 @@ namespace AdServer::CampaignSvcs
     }
 
     CampaignManagerCore::IdArray
-    unpack_ids(
-      const google::protobuf::RepeatedField<google::protobuf::uint64>& source)
+    unpack_ids(const google::protobuf::RepeatedField<google::protobuf::uint64>& source)
     {
       CampaignManagerCore::IdArray result;
       result.reserve(source.size());
@@ -339,12 +336,10 @@ namespace AdServer::CampaignSvcs
     unpack_geo_coord_info(const pb::GeoCoordInfo& source)
     {
       return {
-        CorbaAlgs::unpack_decimal<CoordDecimal>(
-          unpack_oct_seq(source.longitude())),
-        CorbaAlgs::unpack_decimal<CoordDecimal>(
-          unpack_oct_seq(source.latitude())),
-        CorbaAlgs::unpack_decimal<CoordDecimal>(
-          unpack_oct_seq(source.accuracy()))};
+        CorbaAlgs::unpack_decimal<CoordDecimal>(unpack_oct_seq(source.longitude())),
+        CorbaAlgs::unpack_decimal<CoordDecimal>(unpack_oct_seq(source.latitude())),
+        CorbaAlgs::unpack_decimal<CoordDecimal>(unpack_oct_seq(source.accuracy()))
+      };
     }
 
     void
@@ -380,9 +375,7 @@ namespace AdServer::CampaignSvcs
     {
       target.set_channel_id(source.channel_id);
       target.set_use_count(source.use_count);
-      pack_ids(
-        source.matched_simple_channels,
-        target.mutable_matched_simple_channels());
+      pack_ids(source.matched_simple_channels, target.mutable_matched_simple_channels());
       pack_ids(source.ccg_ids, target.mutable_ccg_ids());
       target.set_discover_query(source.discover_query);
       target.set_language(source.language);
@@ -432,7 +425,8 @@ namespace AdServer::CampaignSvcs
         unpack_revenue_decimal(source.max_cpc()),
         unpack_revenue_decimal(source.ctr()),
         source.click_url(),
-        source.original_keyword()};
+        source.original_keyword()
+      };
     }
 
     template<typename CCGKeywordContainer>
@@ -644,9 +638,7 @@ namespace AdServer::CampaignSvcs
         unpack_ids(source.trigger_match_result().uid_channels());
       target.client_create_time = unpack_time(source.client_create_time());
       target.session_start = unpack_time(source.session_start());
-      unpack_ids_to(
-        source.exclude_pubpixel_accounts(),
-        target.exclude_pubpixel_accounts);
+      unpack_ids_to(source.exclude_pubpixel_accounts(), target.exclude_pubpixel_accounts);
       target.tag_delivery_factor = source.tag_delivery_factor();
       target.ccg_delivery_factor = source.ccg_delivery_factor();
       target.preview_ccid = source.preview_ccid();
@@ -659,8 +651,7 @@ namespace AdServer::CampaignSvcs
       }
       target.required_passback = source.required_passback();
       target.log_request.profiling_type = source.profiling_type();
-      target.log_request.disable_fraud_detection =
-        source.disable_fraud_detection();
+      target.log_request.disable_fraud_detection = source.disable_fraud_detection();
       target.need_debug_info = source.need_debug_info();
       target.log_request.page_keywords = source.page_keywords();
       target.log_request.url_keywords = source.url_keywords();
@@ -726,12 +717,8 @@ namespace AdServer::CampaignSvcs
       {
         pack_creative_select_result(creative, *target.add_selected_creatives());
       }
-      pack_strings(
-        source.external_visual_categories,
-        target.mutable_external_visual_categories());
-      pack_strings(
-        source.external_content_categories,
-        target.mutable_external_content_categories());
+      pack_strings(source.external_visual_categories, target.mutable_external_visual_categories());
+      pack_strings(source.external_content_categories, target.mutable_external_content_categories());
       target.set_pub_currency_code(source.pub_currency_code);
       target.set_overlay_width(source.overlay_width);
       target.set_overlay_height(source.overlay_height);
@@ -751,22 +738,16 @@ namespace AdServer::CampaignSvcs
       debug_info->set_min_text_ecpm(source.debug_info.min_text_ecpm);
       debug_info->set_auction_type(source.debug_info.auction_type);
       debug_info->set_track_pixel_url(source.debug_info.track_pixel_url);
-      pack_revenue_decimal(
-        source.debug_info.cpm_threshold,
-        *debug_info->mutable_cpm_threshold());
+      pack_revenue_decimal(source.debug_info.cpm_threshold, *debug_info->mutable_cpm_threshold());
       debug_info->set_walled_garden(source.debug_info.walled_garden);
       for(const auto& creative : source.debug_info.selected_creatives)
       {
-        pack_creative_select_debug_info(
-          creative,
-          *debug_info->add_selected_creatives());
+        pack_creative_select_debug_info(creative, *debug_info->add_selected_creatives());
       }
       debug_info->set_trace_ccg(source.debug_info.trace_ccg);
 
       pack_tokens(source.native_data_tokens, target.mutable_native_data_tokens());
-      pack_token_images(
-        source.native_image_tokens,
-        target.mutable_native_image_tokens());
+      pack_token_images(source.native_image_tokens, target.mutable_native_image_tokens());
       target.set_track_html_body(source.track_html_body);
       target.set_erid(source.erid);
       for(const auto& contract : source.contracts)
@@ -789,16 +770,11 @@ namespace AdServer::CampaignSvcs
           contract.contract_info.parent_contract_id);
         target_contract->set_client_id(contract.contract_info.client_id);
         target_contract->set_client_name(contract.contract_info.client_name);
-        target_contract->set_client_legal_form(
-          contract.contract_info.client_legal_form);
-        target_contract->set_contractor_id(
-          contract.contract_info.contractor_id);
-        target_contract->set_contractor_name(
-          contract.contract_info.contractor_name);
-        target_contract->set_contractor_legal_form(
-          contract.contract_info.contractor_legal_form);
-        target_contract->set_timestamp(
-          pack_time(contract.contract_info.timestamp));
+        target_contract->set_client_legal_form(contract.contract_info.client_legal_form);
+        target_contract->set_contractor_id(contract.contract_info.contractor_id);
+        target_contract->set_contractor_name(contract.contract_info.contractor_name);
+        target_contract->set_contractor_legal_form(contract.contract_info.contractor_legal_form);
+        target_contract->set_timestamp(pack_time(contract.contract_info.timestamp));
       }
     }
 
@@ -894,16 +870,17 @@ namespace AdServer::CampaignSvcs
       {
         pack_revenue_decimal(*source.budget, *target.mutable_budget());
       }
+
       if(source.daily_budget.present())
       {
-        pack_revenue_decimal(
-          *source.daily_budget,
-          *target.mutable_daily_budget());
+        pack_revenue_decimal(*source.daily_budget, *target.mutable_daily_budget());
       }
+
       if(source.imps.present())
       {
         target.set_imps(*source.imps);
       }
+
       if(source.clicks.present())
       {
         target.set_clicks(*source.clicks);
@@ -929,9 +906,7 @@ namespace AdServer::CampaignSvcs
         dst_size->set_right_expand_space(src_size.second.right_expand_space);
         dst_size->set_down_expand_space(src_size.second.down_expand_space);
         dst_size->set_left_expand_space(src_size.second.left_expand_space);
-        pack_config_option_values(
-          src_size.second.tokens,
-          dst_size->mutable_tokens());
+        pack_config_option_values(src_size.second.tokens, dst_size->mutable_tokens());
       }
       target.set_creative_format(source.creative_format);
       pack_config_option_value(source.click_url, *target.mutable_click_url());
@@ -981,9 +956,7 @@ namespace AdServer::CampaignSvcs
       }
       target.set_account_id(source.account->account_id);
       target.set_advertiser_id(source.advertiser->account_id);
-      pack_config_ids(
-        source.exclude_pub_accounts,
-        target.mutable_exclude_pub_accounts());
+      pack_config_ids(source.exclude_pub_accounts, target.mutable_exclude_pub_accounts());
       for(const auto& src_tag : source.exclude_tags)
       {
         auto* dst_tag = target.add_exclude_tags();
@@ -993,9 +966,7 @@ namespace AdServer::CampaignSvcs
       target.set_delivery_coef(source.delivery_coef);
       pack_revenue_decimal(source.imp_revenue, *target.mutable_imp_revenue());
       pack_revenue_decimal(source.click_revenue, *target.mutable_click_revenue());
-      pack_revenue_decimal(
-        source.action_revenue,
-        *target.mutable_action_revenue());
+      pack_revenue_decimal(source.action_revenue, *target.mutable_action_revenue());
       pack_revenue_decimal(source.commision, *target.mutable_commision());
       target.set_ccg_type(static_cast<unsigned char>(source.ccg_type));
       target.set_target_type(static_cast<unsigned char>(source.targeting_type));
@@ -1019,9 +990,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    pack_config_tag(
-      const Tag& source,
-      pb::ConfigTag& target)
+    pack_config_tag(const Tag& source, pb::ConfigTag& target)
     {
       target.set_tag_id(source.tag_id);
       target.set_site_id(source.site->site_id);
@@ -1260,6 +1229,7 @@ namespace AdServer::CampaignSvcs
         }
         item->set_timestamp(pack_time(src.second.timestamp));
       }
+
       for(const auto& src : source.campaigns)
       {
         auto* item = target.add_campaigns();
@@ -1271,6 +1241,7 @@ namespace AdServer::CampaignSvcs
         pack_revenue_decimal(src.second->ecpm_, *item->mutable_ecpm());
         pack_revenue_decimal(src.second->ctr, *item->mutable_ctr());
       }
+
       for(const auto& src : source.sites)
       {
         const auto& site = *src.second;
@@ -1291,6 +1262,7 @@ namespace AdServer::CampaignSvcs
         item->set_account_id(site.account->account_id);
         item->set_timestamp(pack_time(site.timestamp));
       }
+
       for(const auto& src : source.tags)
       {
         auto* item = target.add_tags();
@@ -1300,6 +1272,7 @@ namespace AdServer::CampaignSvcs
           pack_revenue_decimal(pricing.second.cpm, *item->add_cpms());
         }
       }
+
       for(const auto& src : source.currencies)
       {
         const auto& currency = *src.second;
@@ -1312,6 +1285,7 @@ namespace AdServer::CampaignSvcs
         item->set_currency_code(currency.currency_code);
         item->set_timestamp(pack_time(currency.timestamp));
       }
+
       for(const auto& src : source.colocations)
       {
         const auto& colocation = *src.second;
@@ -1329,6 +1303,7 @@ namespace AdServer::CampaignSvcs
         pack_config_option_values(colocation.tokens, item->mutable_tokens());
         item->set_timestamp(pack_time(colocation.timestamp));
       }
+
       for(const auto& src : source.countries)
       {
         auto* item = target.add_countries();
@@ -1336,6 +1311,7 @@ namespace AdServer::CampaignSvcs
         pack_config_option_values(src.second->tokens, item->mutable_tokens());
         item->set_timestamp(pack_time(src.second->timestamp));
       }
+
       for(const auto& src : source.freq_caps)
       {
         const auto& freq_cap = src.second;
@@ -1347,6 +1323,7 @@ namespace AdServer::CampaignSvcs
         item->set_window_time(freq_cap.window_time.tv_sec);
         item->set_timestamp(pack_time(freq_cap.timestamp));
       }
+
       for(const auto& src : source.creative_templates)
       {
         auto* item = target.add_creative_template_files();
@@ -1364,6 +1341,7 @@ namespace AdServer::CampaignSvcs
           item->mutable_hidden_tokens());
         item->set_status(static_cast<unsigned char>(src.second.status));
       }
+
       for(const auto& src : source.ccg_keyword_click_info_map)
       {
         auto* item = target.add_campaign_keywords();
@@ -1372,6 +1350,7 @@ namespace AdServer::CampaignSvcs
         item->set_click_url(src.second.click_url);
         item->set_timestamp(pack_time(Generics::Time::ZERO));
       }
+
       for(const auto& src : source.expression_channels)
       {
         if(src.second->channel.in())
@@ -1381,6 +1360,7 @@ namespace AdServer::CampaignSvcs
             *target.add_expression_channels());
         }
       }
+
       for(const auto& src : source.creative_categories)
       {
         auto* item = target.add_creative_categories();
@@ -1398,6 +1378,7 @@ namespace AdServer::CampaignSvcs
         }
         item->set_timestamp(pack_time(src.second.timestamp));
       }
+
       for(const auto& src : source.adv_actions)
       {
         auto* item = target.add_adv_actions();
@@ -1408,6 +1389,7 @@ namespace AdServer::CampaignSvcs
           item->mutable_ccg_ids(),
           src.second.cur_value);
       }
+
       for(const auto& src : source.category_channels)
       {
         const auto& category_channel = *src.second;
@@ -1425,6 +1407,7 @@ namespace AdServer::CampaignSvcs
         item->set_flags(category_channel.flags);
         item->set_timestamp(pack_time(category_channel.timestamp));
       }
+
       if(geo_channels)
       {
         for(const auto& src : source.geo_channels->channels())
@@ -1440,6 +1423,7 @@ namespace AdServer::CampaignSvcs
           geoip_target->set_city(city.data(), city.size());
           item->set_timestamp(pack_time(Generics::Time::ZERO));
         }
+
         for(const auto& src : source.geo_coord_channels->channels())
         {
           for(const auto channel_id : src.second->channels)
@@ -1453,6 +1437,7 @@ namespace AdServer::CampaignSvcs
           }
         }
       }
+
       for(WebOperationHash::const_iterator it = source.web_operations.begin();
         it != source.web_operations.end(); ++it)
       {
@@ -1464,6 +1449,7 @@ namespace AdServer::CampaignSvcs
         item->set_flags(it->second->flags);
         item->set_timestamp(pack_time(Generics::Time::ZERO));
       }
+
       for(const auto& src : source.contracts)
       {
         pack_config_contract(*src.second, *target.add_contracts());
@@ -1557,6 +1543,10 @@ namespace AdServer::CampaignSvcs
       pb::CampaignManagerGrpc,
       pb::CampaignManagerGrpc::AsyncService>
   {
+    using Base = AdServer::Grpc::GrpcAsyncServiceBase<
+      CampaignManagerGrpc::ServiceImpl,
+      pb::CampaignManagerGrpc,
+      pb::CampaignManagerGrpc::AsyncService>;
     using AsyncService = pb::CampaignManagerGrpc::AsyncService;
 
   public:
@@ -1564,6 +1554,7 @@ namespace AdServer::CampaignSvcs
       CampaignManagerCore* core,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::size_t max_batch_split,
+      std::size_t max_batch_requests_in_progress,
       std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
@@ -1777,6 +1768,9 @@ namespace AdServer::CampaignSvcs
 
     std::size_t distributed_batch_max_split() const noexcept override;
 
+    std::shared_ptr<AdServer::Commons::ExecutorPool>
+    batch_processing_executor_pool() const noexcept override;
+
   private:
     void ready(
       const pb::ReadyRequest& request,
@@ -1897,8 +1891,10 @@ namespace AdServer::CampaignSvcs
     CampaignManagerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::size_t max_batch_split,
+    std::size_t max_batch_requests_in_progress,
     std::shared_ptr<AtomicStats> stats)
-    : process_control_service_(*this),
+    : Base(max_batch_requests_in_progress),
+      process_control_service_(*this),
       core_(ReferenceCounting::add_ref(core)),
       executor_pool_(std::move(executor_pool)),
       max_batch_split_(std::max<std::size_t>(1, max_batch_split)),
@@ -1912,6 +1908,13 @@ namespace AdServer::CampaignSvcs
     const noexcept
   {
     return max_batch_split_;
+  }
+
+  std::shared_ptr<AdServer::Commons::ExecutorPool>
+  CampaignManagerGrpc::ServiceImpl::batch_processing_executor_pool()
+    const noexcept
+  {
+    return executor_pool_;
   }
 
   AdServer::Grpc::GrpcCoroutine
@@ -2042,9 +2045,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -2063,9 +2064,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -2095,9 +2094,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
 
     co_return;
@@ -2116,9 +2113,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -2145,25 +2140,17 @@ namespace AdServer::CampaignSvcs
         std::move(core_request_params));
 
       response.set_hostname(result.hostname);
-      response.mutable_request_result()->set_process_time(
-        pack_time(result.process_time));
+      response.mutable_request_result()->set_process_time(pack_time(result.process_time));
       auto* debug_info = response.mutable_request_result()->mutable_debug_info();
       debug_info->set_colo_id(result.debug_info.colo_id);
-      pack_ids(
-        result.debug_info.geo_channels,
-        debug_info->mutable_geo_channels());
-      pack_ids(
-        result.debug_info.platform_channels,
-        debug_info->mutable_platform_channels());
-      debug_info->set_last_platform_channel_id(
-        result.debug_info.last_platform_channel_id);
+      pack_ids(result.debug_info.geo_channels, debug_info->mutable_geo_channels());
+      pack_ids(result.debug_info.platform_channels, debug_info->mutable_platform_channels());
+      debug_info->set_last_platform_channel_id(result.debug_info.last_platform_channel_id);
       debug_info->set_user_group_id(result.debug_info.user_group_id);
 
       for(const auto& ad_slot : result.ad_slots)
       {
-        pack_ad_slot_result(
-          ad_slot,
-          *response.mutable_request_result()->add_ad_slots());
+        pack_ad_slot_result(ad_slot, *response.mutable_request_result()->add_ad_slots());
       }
 
       result_status = ::grpc::Status::OK;
@@ -2176,9 +2163,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
 
     co_return;
@@ -2257,8 +2242,7 @@ namespace AdServer::CampaignSvcs
         std::make_shared<Generics::MonoAllocatorArena>(
           CampaignManagerCore::GetAdRequest::ARENA_INITIAL_SIZE);
       CampaignManagerCore::InstantiateAdRequest info;
-      info.common_info =
-        std::make_shared<CampaignManagerCore::CommonAdRequest>(arena);
+      info.common_info = std::make_shared<CampaignManagerCore::CommonAdRequest>(arena);
       unpack_common_ad_request_info(source.common_info(), *info.common_info);
       info.context_info.reserve(source.context_info_size());
       for(const auto& context : source.context_info())
@@ -2336,8 +2320,7 @@ namespace AdServer::CampaignSvcs
       params.peer_ip = request.peer_ip();
 
       std::string creative_body;
-      response.set_found(
-        core_->get_campaign_creative_by_ccid(params, creative_body));
+      response.set_found(core_->get_campaign_creative_by_ccid(params, creative_body));
       response.set_creative_body(std::move(creative_body));
       result_status = ::grpc::Status::OK;
     }
@@ -2357,9 +2340,7 @@ namespace AdServer::CampaignSvcs
   {
     try
     {
-      const auto result = core_->get_channel_links(
-        unpack_ids(request.channels()),
-        request.match());
+      const auto result = core_->get_channel_links(unpack_ids(request.channels()), request.match());
 
       for(const auto& channel : result)
       {
@@ -2370,9 +2351,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -2721,15 +2700,11 @@ namespace AdServer::CampaignSvcs
     }
     catch(const CampaignManagerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch(const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
 
     co_return;
@@ -2776,9 +2751,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const CampaignManagerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch(const eh::Exception& ex)
     {
@@ -2909,6 +2882,7 @@ namespace AdServer::CampaignSvcs
           core,
           executor_pool_,
           max_split,
+          std::max<std::size_t>(1, process_threads) * std::max<std::size_t>(1, max_split),
           stats_)))
   {
     add_child_object(executor_pool_);

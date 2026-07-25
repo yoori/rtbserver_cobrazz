@@ -518,35 +518,28 @@ namespace AdServer::CampaignSvcs
 
       if(colo_id)
       {
-        args[CreativeTokens::COLOCATION] = OptionValue(
-          0, IntToStr(*colo_id));
+        args[CreativeTokens::COLOCATION] = OptionValue(0, IntToStr(*colo_id));
       }
 
       if (creative)
       {
         args.insert(creative->tokens.begin(), creative->tokens.end());
 
-        args[CreativeTokens::CCID] = OptionValue(
-          0, IntToStr(creative->ccid));
+        args[CreativeTokens::CCID] = OptionValue(0, IntToStr(creative->ccid));
         args[CreativeTokens::ADVERTISER_ID] = OptionValue(
           0,
           creative->campaign->advertiser ?
             IntToStr(creative->campaign->advertiser->account_id).str() :
             String::SubString());
-        args[CreativeTokens::CGID] = OptionValue(
-          0, IntToStr(creative->campaign->campaign_id));
-        args[CreativeTokens::CID] = OptionValue(
-          0, IntToStr(creative->campaign->campaign_group_id));
+        args[CreativeTokens::CGID] = OptionValue(0, IntToStr(creative->campaign->campaign_id));
+        args[CreativeTokens::CID] = OptionValue(0, IntToStr(creative->campaign->campaign_group_id));
       }
 
       if(tag)
       {
-        args[CreativeTokens::TAGID] = OptionValue(
-          0, IntToStr(tag->tag_id));
-        args[CreativeTokens::SITE_ID] = OptionValue(
-          0, IntToStr(tag->site->site_id));
-        args[CreativeTokens::PUBLISHER_ID] = OptionValue(
-          0, IntToStr(tag->site->account->account_id));
+        args[CreativeTokens::TAGID] = OptionValue(0, IntToStr(tag->tag_id));
+        args[CreativeTokens::SITE_ID] = OptionValue(0, IntToStr(tag->site->site_id));
+        args[CreativeTokens::PUBLISHER_ID] = OptionValue(0, IntToStr(tag->site->account->account_id));
       }
 
       if(tag_size)
@@ -563,8 +556,7 @@ namespace AdServer::CampaignSvcs
 
       BaseTokenProcessor* token_processor = 0;
 
-      const TokenProcessorMap::const_iterator it =
-        campaign_config.token_processors.find(
+      const TokenProcessorMap::const_iterator it = campaign_config.token_processors.find(
         click_url.option_id);
 
       if(it != campaign_config.token_processors.end())
@@ -590,8 +582,7 @@ namespace AdServer::CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      unsigned long ccg_keyword_id =
-        campaign_keyword ? campaign_keyword->ccg_keyword_id : 0;
+      unsigned long ccg_keyword_id = campaign_keyword ? campaign_keyword->ccg_keyword_id : 0;
 
       Stream::Error ostr;
       ostr << "Can't instantiate creative "

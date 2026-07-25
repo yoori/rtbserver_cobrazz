@@ -73,6 +73,27 @@ namespace AdServer::Commons
     static YieldAwaiter
     yield(std::shared_ptr<ExecutorPool> executor_pool);
 
+    class RescheduleAwaiter
+    {
+    public:
+      explicit RescheduleAwaiter(std::shared_ptr<ExecutorPool> executor_pool);
+
+      bool
+      await_ready() const noexcept;
+
+      void
+      await_suspend(std::coroutine_handle<> handle) noexcept;
+
+      void
+      await_resume() const noexcept;
+
+    private:
+      std::shared_ptr<ExecutorPool> executor_pool_;
+    };
+
+    static RescheduleAwaiter
+    reschedule(std::shared_ptr<ExecutorPool> executor_pool);
+
     ~ExecutorPool() noexcept override = default;
 
   private:

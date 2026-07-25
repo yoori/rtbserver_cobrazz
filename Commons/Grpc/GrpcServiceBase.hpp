@@ -3,6 +3,7 @@
 #include <atomic>
 #include <coroutine>
 #include <cstddef>
+#include <deque>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -25,6 +26,7 @@
 
 #include <Commons/ActivityGate.hpp>
 #include <Commons/Grpc/Batch.grpc.pb.h>
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
 
 #define MAKE_GRPC_CALL(RequestType, ResponseType, MethodName) \
@@ -45,6 +47,11 @@
     &AsyncService::Request##MethodName, \
     &ServiceImpl::HandlerName, \
     #MethodName __VA_OPT__(,) __VA_ARGS__)
+
+namespace AdServer::Commons
+{
+  class ExecutorPool;
+}
 
 namespace AdServer::Grpc
 {
@@ -201,7 +208,7 @@ namespace AdServer::Grpc
       Response&,
       ::grpc::Status&) const;
     using BatchHashFn = std::function<std::size_t(
-      const adserver::grpc::BatchRequestItem&)>;
+      const Request&)>;
 
     RequestMethod request_method;
     Handler handler;
@@ -339,6 +346,40 @@ namespace AdServer::Grpc
       std::optional<Generics::Time> min_time_of_request_in_progress_;
     };
 
+    class BatchStreamReadLimiter final
+    {
+    public:
+      explicit BatchStreamReadLimiter(
+        std::size_t max_requests_in_progress = 0) noexcept;
+
+      class Waiter
+      {
+      public:
+        virtual ~Waiter() = default;
+        virtual void start_read_from_limiter() noexcept = 0;
+      };
+      using WaiterPtr = std::shared_ptr<Waiter>;
+
+      bool enabled() const noexcept;
+
+      bool reserve_read_or_enqueue(WaiterPtr waiter);
+      void complete_read_reservation(std::size_t requests) noexcept;
+      void cancel_read_reservation() noexcept;
+      void complete_requests(std::size_t requests) noexcept;
+      void clear_waiters() noexcept;
+
+    private:
+      bool has_capacity_i_() const noexcept;
+      void take_waiters_i_(Generics::MonoVector<WaiterPtr>& result);
+      void grant_waiters_(Generics::MonoVector<WaiterPtr>& waiters) noexcept;
+
+      mutable std::mutex lock_;
+      std::size_t max_requests_in_progress_ = 0;
+      std::size_t requests_in_progress_ = 0;
+      std::size_t read_reservations_ = 0;
+      std::deque<WaiterPtr> waiters_;
+    };
+
     virtual ~GrpcServiceBase() noexcept;
 
     void register_services(::grpc::ServerBuilder& builder);
@@ -354,6 +395,9 @@ namespace AdServer::Grpc
     LifecycleStatsSnapshot lifecycle_stats() const noexcept;
 
   protected:
+    explicit GrpcServiceBase(
+      std::size_t batch_stream_max_requests_in_progress = 0) noexcept;
+
     virtual std::size_t registrations_per_queue() const noexcept;
 
     virtual void register_in_queue(
@@ -410,20 +454,43 @@ namespace AdServer::Grpc
 
     virtual std::size_t distributed_batch_max_split() const noexcept;
 
+    virtual std::shared_ptr<AdServer::Commons::ExecutorPool>
+    batch_processing_executor_pool() const noexcept;
+
   private:
     using BatchDispatchFn = std::function<void(
       const adserver::grpc::BatchRequestItem&,
       adserver::grpc::BatchResponseItem&)>;
-    using BatchCoroDispatchFn = std::function<GrpcCoroutine(
+
+    struct BatchCoroMethod;
+
+    struct PreparedBatchCoroItem
+    {
+      const BatchCoroMethod* method = nullptr;
+      void* request = nullptr;
+      std::size_t hash = 0;
+    };
+
+    struct BatchItemContext
+    {
+      const adserver::grpc::BatchRequestItem* request_item = nullptr;
+      adserver::grpc::BatchResponseItem* response_item = nullptr;
+      PreparedBatchCoroItem coro_item;
+    };
+
+    using BatchCoroPrepareFn = std::function<bool(
       const adserver::grpc::BatchRequestItem&,
+      adserver::grpc::BatchResponseItem&,
+      google::protobuf::Arena&,
+      PreparedBatchCoroItem&)>;
+    using BatchCoroDispatchFn = std::function<GrpcCoroutine(
+      void*,
       adserver::grpc::BatchResponseItem&)>;
-    using BatchHashFn = std::function<std::size_t(
-      const adserver::grpc::BatchRequestItem&)>;
 
     struct BatchCoroMethod
     {
+      BatchCoroPrepareFn prepare;
       BatchCoroDispatchFn dispatch;
-      BatchHashFn hash;
       bool distributed = false;
     };
 
@@ -437,16 +504,26 @@ namespace AdServer::Grpc
       std::size_t max_split) const;
 
     GrpcCoroutine co_handle_batch_lane_(
-      const adserver::grpc::BatchRequest& batch_request,
-      std::vector<adserver::grpc::BatchResponseItem*>& item_responses,
-      std::vector<int> indexes) const;
+      Generics::MonoVector<BatchItemContext> batch_items,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+      bool reschedule) const;
 
     GrpcCoroutine co_handle_batch_item_(
       const adserver::grpc::BatchRequestItem& request_item,
       adserver::grpc::BatchResponseItem& response_item) const;
 
-    std::size_t batch_item_hash_(
-      const adserver::grpc::BatchRequestItem& request_item) const;
+    bool prepare_batch_coro_item_(
+      const BatchCoroMethod& method,
+      const adserver::grpc::BatchRequestItem& request_item,
+      adserver::grpc::BatchResponseItem& response_item,
+      google::protobuf::Arena& request_arena,
+      PreparedBatchCoroItem& coro_item) const;
+
+    GrpcCoroutine co_handle_prepared_batch_coro_item_(
+      PreparedBatchCoroItem& coro_item,
+      adserver::grpc::BatchResponseItem& response_item) const;
+
+    BatchStreamReadLimiter& batch_stream_read_limiter() noexcept;
 
     void add_unary_call_created_() noexcept;
     void add_unary_call_deleted_() noexcept;
@@ -461,6 +538,7 @@ namespace AdServer::Grpc
     std::unordered_map<std::string, BatchCoroMethod> batch_coro_methods_;
     std::vector<::grpc::Service*> grpc_services_;
     AdServer::Commons::ActivityGate grpc_operation_gate_;
+    BatchStreamReadLimiter batch_stream_read_limiter_;
     std::shared_ptr<InprogressStats> inprogress_stats_ =
       std::make_shared<InprogressStats>();
     std::atomic<std::uint64_t> unary_call_created_total_{0};
@@ -479,24 +557,14 @@ namespace AdServer::Grpc
 
   template<
     typename ServiceImplType,
-    typename AsyncServiceType,
-    typename Request,
-    typename Response>
-  void register_grpc_unary_call(
-    ServiceImplType* service_impl,
-    AsyncServiceType* async_service,
-    const GrpcCall<ServiceImplType, AsyncServiceType, Request, Response>& call,
-    ::grpc::ServerCompletionQueue* completion_queue);
-
-  template<
-    typename ServiceImplType,
     typename ServiceType,
     typename AsyncServiceType>
   class GrpcAsyncServiceBase:
     public GrpcServiceBase
   {
   protected:
-    GrpcAsyncServiceBase();
+    explicit GrpcAsyncServiceBase(
+      std::size_t batch_stream_max_requests_in_progress = 0);
 
     template<typename Request, typename Response>
     static GrpcCall<ServiceImplType, AsyncServiceType, Request, Response>
@@ -576,202 +644,10 @@ namespace AdServer::Grpc
     virtual ~GrpcAsyncCall() noexcept = default;
     virtual void proceed(bool ok) = 0;
   };
-
-  template<typename Request, typename Response>
-  class GrpcUnaryCallBase:
-    public GrpcAsyncCall
-  {
-  public:
-    GrpcUnaryCallBase(::grpc::ServerCompletionQueue* completion_queue);
-
-    void proceed(bool ok) override;
-
-  protected:
-    virtual bool request_method_() = 0;
-
-    virtual void spawn_next_() = 0;
-
-    virtual bool process_() = 0;
-
-  protected:
-    ::grpc::ServerCompletionQueue* const completion_queue_;
-    ::grpc::ServerContext context_;
-    google::protobuf::Arena request_arena_;
-    Request* const request_;
-    Response response_;
-    ::grpc::ServerAsyncResponseWriter<Response> responder_;
-
-  private:
-    enum class State
-    {
-      Create,
-      Process,
-      Finish
-    };
-
-    State state_;
-  };
-
-  template<
-    typename ServiceImplType,
-    typename AsyncServiceType,
-    typename Request,
-    typename Response>
-  class GrpcUnaryCall final:
-    public GrpcUnaryCallBase<Request, Response>
-  {
-  public:
-    using Base = GrpcUnaryCallBase<Request, Response>;
-    using RequestMethod = void (AsyncServiceType::*)(
-      ::grpc::ServerContext*,
-      Request*,
-      ::grpc::ServerAsyncResponseWriter<Response>*,
-      ::grpc::CompletionQueue*,
-      ::grpc::ServerCompletionQueue*,
-      void*);
-    using Handler = void (ServiceImplType::*)(
-      const Request&,
-      Response&,
-      ::grpc::Status&) const;
-
-    GrpcUnaryCall(
-      ServiceImplType* service_impl,
-      AsyncServiceType* async_service,
-      RequestMethod request_method,
-      Handler handler,
-      ::grpc::ServerCompletionQueue* completion_queue);
-
-    ~GrpcUnaryCall() noexcept override;
-
-  private:
-    bool request_method_() override;
-    void spawn_next_() override;
-    bool process_() override;
-
-  private:
-    ServiceImplType* const service_impl_;
-    AsyncServiceType* const async_service_;
-    const RequestMethod request_rpc_;
-    const Handler handler_rpc_;
-  };
-
-
-  template<
-    typename ServiceImplType,
-    typename AsyncServiceType,
-    typename Request,
-    typename Response>
-  class GrpcCoroUnaryCall final:
-    public GrpcUnaryCallBase<Request, Response>
-  {
-  public:
-    using Base = GrpcUnaryCallBase<Request, Response>;
-    using RequestMethod = void (AsyncServiceType::*)(
-      ::grpc::ServerContext*,
-      Request*,
-      ::grpc::ServerAsyncResponseWriter<Response>*,
-      ::grpc::CompletionQueue*,
-      ::grpc::ServerCompletionQueue*,
-      void*);
-    using Handler = GrpcCoroutine (ServiceImplType::*)(
-      Request&&,
-      Response&,
-      ::grpc::Status&) const;
-
-    GrpcCoroUnaryCall(
-      ServiceImplType* service_impl,
-      AsyncServiceType* async_service,
-      RequestMethod request_method,
-      Handler handler,
-      ::grpc::ServerCompletionQueue* completion_queue);
-
-    ~GrpcCoroUnaryCall() noexcept override;
-
-  private:
-    bool request_method_() override;
-    void spawn_next_() override;
-    bool process_() override;
-    void finish_();
-
-  private:
-    ServiceImplType* const service_impl_;
-    AsyncServiceType* const async_service_;
-    const RequestMethod request_rpc_;
-    const Handler handler_rpc_;
-    ::grpc::Status status_;
-    std::optional<GrpcCoroutine> operation_;
-    std::optional<AdServer::Commons::ActivityGate::Guard> grpc_operation_guard_;
-  };
-
-  template<
-    typename ServiceImplType,
-    typename AsyncServiceType>
-  class GrpcBatchStreamCall final:
-    public GrpcAsyncCall
-  {
-  public:
-    using Request = adserver::grpc::BatchRequest;
-    using Response = adserver::grpc::BatchResponse;
-    using RequestMethod = void (AsyncServiceType::*)(
-      ::grpc::ServerContext*,
-      ::grpc::ServerAsyncReaderWriter<Response, Request>*,
-      ::grpc::CompletionQueue*,
-      ::grpc::ServerCompletionQueue*,
-      void*);
-
-    GrpcBatchStreamCall(
-      ServiceImplType* service_impl,
-      AsyncServiceType* async_service,
-      RequestMethod request_method,
-      ::grpc::ServerCompletionQueue* completion_queue);
-
-    ~GrpcBatchStreamCall() noexcept override;
-
-    void proceed(bool ok) override;
-
-  private:
-    enum class State
-    {
-      Create,
-      Start,
-      Read,
-      Write,
-      Finish
-    };
-
-  private:
-    bool start_request_();
-    bool read_or_delete_();
-    bool write_or_delete_();
-    void finish_or_delete_();
-    void finish_with_error_(const char* message);
-    void start_inprogress_stats_();
-    void finish_inprogress_stats_() noexcept;
-
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-    using DebugWatchdogState = GrpcBatchStreamDebugWatchdogState;
-
-    void start_debug_response_watchdog_();
-    void finish_debug_response_watchdog_() noexcept;
-#endif
-
-    ServiceImplType* const service_impl_;
-    AsyncServiceType* const async_service_;
-    const RequestMethod request_stream_;
-    ::grpc::ServerCompletionQueue* const completion_queue_;
-    ::grpc::ServerContext context_;
-    ::grpc::ServerAsyncReaderWriter<Response, Request> responder_;
-    Request request_;
-    google::protobuf::Arena response_arena_;
-    Response* response_;
-    std::optional<GrpcCoroutine> batch_operation_;
-    std::optional<AdServer::Commons::ActivityGate::Guard> process_guard_;
-    State state_;
-    std::optional<std::uint64_t> inprogress_stats_receiver_id_;
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-    std::shared_ptr<DebugWatchdogState> debug_response_watchdog_state_;
-#endif
-  };
 }
 
+#include "GrpcUnaryCallBase.hpp"
+#include "GrpcUnaryCall.hpp"
+#include "GrpcCoroUnaryCall.hpp"
+#include "GrpcBatchStreamCall.hpp"
 #include "GrpcServiceBase.tpp"

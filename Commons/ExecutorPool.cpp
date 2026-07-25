@@ -122,6 +122,39 @@ namespace AdServer::Commons
     return YieldAwaiter(std::move(executor_pool));
   }
 
+  ExecutorPool::RescheduleAwaiter::RescheduleAwaiter(
+    std::shared_ptr<ExecutorPool> executor_pool)
+    : executor_pool_(std::move(executor_pool))
+  {}
+
+  bool
+  ExecutorPool::RescheduleAwaiter::await_ready() const noexcept
+  {
+    return false;
+  }
+
+  void
+  ExecutorPool::RescheduleAwaiter::await_suspend(
+    std::coroutine_handle<> handle) noexcept
+  {
+    const auto context_index = executor_pool_->get_next_context_index();
+    executor_pool_->io_service(context_index).post(
+      [handle]() mutable
+      {
+        resume_coroutine(handle);
+      });
+  }
+
+  void
+  ExecutorPool::RescheduleAwaiter::await_resume() const noexcept
+  {}
+
+  ExecutorPool::RescheduleAwaiter
+  ExecutorPool::reschedule(std::shared_ptr<ExecutorPool> executor_pool)
+  {
+    return RescheduleAwaiter(std::move(executor_pool));
+  }
+
   void
   ExecutorPool::work_() noexcept
   {

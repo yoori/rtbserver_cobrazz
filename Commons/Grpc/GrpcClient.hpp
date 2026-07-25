@@ -144,7 +144,9 @@ namespace AdServer::Grpc
 
     void add_queue_timeout_stats() noexcept;
 
-    void add_response_wait_stats(std::uint64_t wait_us) noexcept;
+    void add_response_wait_stats(
+      std::uint64_t wait_us,
+      std::uint64_t count = 1) noexcept;
 
     void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
 
@@ -379,10 +381,12 @@ namespace AdServer::Grpc
   }
 
   inline void
-  Client::add_response_wait_stats(std::uint64_t wait_us) noexcept
+  Client::add_response_wait_stats(
+    std::uint64_t wait_us,
+    std::uint64_t count) noexcept
   {
-    stats_owner_->response_wait_count_.fetch_add(1, std::memory_order_relaxed);
-    stats_owner_->response_wait_sum_us_.fetch_add(wait_us, std::memory_order_relaxed);
+    stats_owner_->response_wait_count_.fetch_add(count, std::memory_order_relaxed);
+    stats_owner_->response_wait_sum_us_.fetch_add(wait_us * count, std::memory_order_relaxed);
     update_max_(stats_owner_->response_wait_max_us_, wait_us);
   }
 

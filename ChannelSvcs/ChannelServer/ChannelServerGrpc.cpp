@@ -350,6 +350,9 @@ namespace AdServer::ChannelSvcs
 
     std::size_t distributed_batch_max_split() const noexcept override;
 
+    std::shared_ptr<AdServer::Commons::ExecutorPool>
+    batch_processing_executor_pool() const noexcept override;
+
   private:
     class ProcessControlService final:
       public pc::ProcessControl::Service
@@ -453,6 +456,13 @@ namespace AdServer::ChannelSvcs
   ChannelServerGrpc::ServiceImpl::distributed_batch_max_split() const noexcept
   {
     return max_batch_split_;
+  }
+
+  std::shared_ptr<AdServer::Commons::ExecutorPool>
+  ChannelServerGrpc::ServiceImpl::batch_processing_executor_pool()
+    const noexcept
+  {
+    return executor_pool_;
   }
 
   void

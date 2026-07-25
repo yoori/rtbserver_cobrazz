@@ -41,11 +41,11 @@ namespace
   void
   print_usage(std::ostream& out)
   {
-    out
-	      << "Usage: MockUserBindServer [OPTIONS]\n"
-	      << "  --grpc-endpoint <host:port|port> gRPC endpoint (default: 0.0.0.0:26528)\n"
-	      << "  --response-sleep-ms <N> response sleep in ms (default: 0)\n"
-	      << "  SIGUSR1 toggles response sleep between 0 and configured value\n";
+    out <<
+      "Usage: MockUserBindServer [OPTIONS]\n" <<
+      "  --grpc-endpoint <host:port|port> gRPC endpoint (default: 0.0.0.0:26528)\n" <<
+      "  --response-sleep-ms <N> response sleep in ms (default: 0)\n" <<
+      "  SIGUSR1 toggles response sleep between 0 and configured value\n";
   }
 }
 
@@ -73,20 +73,20 @@ main(int argc, char** argv)
     const Endpoint endpoint = parse_endpoint(*opt_grpc_endpoint);
 
     sigset_t signals;
-	    sigemptyset(&signals);
-	    sigaddset(&signals, SIGINT);
-	    sigaddset(&signals, SIGTERM);
-	    sigaddset(&signals, SIGUSR1);
-	    pthread_sigmask(SIG_BLOCK, &signals, nullptr);
+    sigemptyset(&signals);
+    sigaddset(&signals, SIGINT);
+    sigaddset(&signals, SIGTERM);
+    sigaddset(&signals, SIGUSR1);
+    pthread_sigmask(SIG_BLOCK, &signals, nullptr);
 
-	    auto response_sleep_ms =
-        std::make_shared<std::atomic_uint>(*opt_response_sleep_ms);
-	    AdServer::UserInfoSvcs::UserBindServerGrpc_var server =
-	      new AdServer::UserInfoSvcs::UserBindServerGrpc(
-	        nullptr,
-	        nullptr,
-	        endpoint.host,
-	        endpoint.port,
+    auto response_sleep_ms =
+      std::make_shared<std::atomic_uint>(*opt_response_sleep_ms);
+    AdServer::UserInfoSvcs::UserBindServerGrpc_var server =
+      new AdServer::UserInfoSvcs::UserBindServerGrpc(
+        nullptr,
+        nullptr,
+        endpoint.host,
+        endpoint.port,
         128,
         0,
         0,
@@ -97,22 +97,22 @@ main(int argc, char** argv)
       endpoint.port << ", response_sleep_ms=" <<
       response_sleep_ms->load(std::memory_order_acquire) << std::endl;
 
-	    for (;;)
-	    {
-	      int signal = 0;
-	      sigwait(&signals, &signal);
-	      if (signal == SIGUSR1)
-	      {
-          const auto current =
-            response_sleep_ms->load(std::memory_order_acquire);
-          const auto next = current == 0 ? *opt_response_sleep_ms : 0;
-	        response_sleep_ms->store(next, std::memory_order_release);
-	        std::cout << "MockUserBindServer response_sleep_ms=" <<
-            next << std::endl;
-	        continue;
-	      }
-	      break;
-	    }
+    for (;;)
+    {
+      int signal = 0;
+      sigwait(&signals, &signal);
+      if (signal == SIGUSR1)
+      {
+        const auto current =
+          response_sleep_ms->load(std::memory_order_acquire);
+        const auto next = current == 0 ? *opt_response_sleep_ms : 0;
+          response_sleep_ms->store(next, std::memory_order_release);
+        std::cout << "MockUserBindServer response_sleep_ms=" <<
+        next << std::endl;
+        continue;
+      }
+      break;
+    }
 
     server->deactivate_object();
     server->wait_object();

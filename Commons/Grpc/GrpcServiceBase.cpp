@@ -2,8 +2,10 @@
 
 #include <Commons/Coro/Utils.hpp>
 #include <Commons/Coro/CoroSet.hpp>
+#include <Commons/ExecutorPool.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -95,9 +97,11 @@ namespace AdServer::Grpc
     Handle handle) const noexcept
   {
     auto& promise = handle.promise();
-    if (promise.completion)
+    auto completion = std::move(promise.completion);
+    auto exception = promise.exception;
+    if (completion)
     {
-      promise.completion(promise.exception);
+      completion(exception);
     }
   }
 
@@ -186,8 +190,7 @@ namespace AdServer::Grpc
   }
 
   void
-  GrpcServiceBase::InprogressStats::remove(
-    const std::uint64_t receiver_id) noexcept
+  GrpcServiceBase::InprogressStats::remove(const std::uint64_t receiver_id) noexcept
   {
     std::lock_guard<std::mutex> lock(lock_);
     const auto it = requests_.find(receiver_id);
@@ -224,7 +227,150 @@ namespace AdServer::Grpc
     }
   }
 
-  GrpcServiceBase::~GrpcServiceBase() noexcept = default;
+  // GrpcServiceBase::BatchStreamReadLimiter impl
+  GrpcServiceBase::BatchStreamReadLimiter::BatchStreamReadLimiter(
+    std::size_t max_requests_in_progress) noexcept
+    : max_requests_in_progress_(max_requests_in_progress)
+  {}
+
+  bool
+  GrpcServiceBase::BatchStreamReadLimiter::enabled() const noexcept
+  {
+    return max_requests_in_progress_ != 0;
+  }
+
+  bool
+  GrpcServiceBase::BatchStreamReadLimiter::reserve_read_or_enqueue(WaiterPtr waiter)
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+    if (!max_requests_in_progress_ || (waiters_.empty() && has_capacity_i_()))
+    {
+      ++read_reservations_;
+      return true;
+    }
+
+    waiters_.emplace_back(std::move(waiter));
+    return false;
+  }
+
+  void
+  GrpcServiceBase::BatchStreamReadLimiter::complete_read_reservation(std::size_t requests) noexcept
+  {
+    std::array<unsigned char, 1024> waiters_buffer;
+    Generics::MonoAllocatorArena waiters_arena(
+      waiters_buffer.data(),
+      waiters_buffer.size());
+    Generics::MonoVector<WaiterPtr> waiters(&waiters_arena);
+
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      if (read_reservations_ > 0)
+      {
+        --read_reservations_;
+      }
+      requests_in_progress_ += requests;
+      take_waiters_i_(waiters);
+    }
+
+    grant_waiters_(waiters);
+  }
+
+  void
+  GrpcServiceBase::BatchStreamReadLimiter::cancel_read_reservation() noexcept
+  {
+    std::array<unsigned char, 1024> waiters_buffer;
+    Generics::MonoAllocatorArena waiters_arena(
+      waiters_buffer.data(),
+      waiters_buffer.size());
+    Generics::MonoVector<WaiterPtr> waiters(&waiters_arena);
+
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      if (read_reservations_ > 0)
+      {
+        --read_reservations_;
+      }
+      take_waiters_i_(waiters);
+    }
+
+    grant_waiters_(waiters);
+  }
+
+  void
+  GrpcServiceBase::BatchStreamReadLimiter::complete_requests(std::size_t requests) noexcept
+  {
+    std::array<unsigned char, 1024> waiters_buffer;
+    Generics::MonoAllocatorArena waiters_arena(
+      waiters_buffer.data(),
+      waiters_buffer.size());
+    Generics::MonoVector<WaiterPtr> waiters(&waiters_arena);
+
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      requests_in_progress_ =
+        requests_in_progress_ > requests ? requests_in_progress_ - requests : 0;
+      take_waiters_i_(waiters);
+    }
+
+    grant_waiters_(waiters);
+  }
+
+  void
+  GrpcServiceBase::BatchStreamReadLimiter::clear_waiters() noexcept
+  {
+    decltype(waiters_) waiters;
+    std::lock_guard<std::mutex> lock(lock_);
+    waiters_.swap(waiters);
+  }
+
+  bool
+  GrpcServiceBase::BatchStreamReadLimiter::has_capacity_i_() const noexcept
+  {
+    return !max_requests_in_progress_ ||
+      requests_in_progress_ + read_reservations_ < max_requests_in_progress_;
+  }
+
+  void
+  GrpcServiceBase::BatchStreamReadLimiter::take_waiters_i_(
+    Generics::MonoVector<WaiterPtr>& result)
+  {
+    if (!waiters_.empty() && has_capacity_i_())
+    {
+      result.reserve(waiters_.size());
+    }
+
+    while (!waiters_.empty() && has_capacity_i_())
+    {
+      auto waiter = std::move(waiters_.front());
+      waiters_.pop_front();
+      ++read_reservations_;
+      result.emplace_back(std::move(waiter));
+    }
+  }
+
+  void
+  GrpcServiceBase::BatchStreamReadLimiter::grant_waiters_(
+    Generics::MonoVector<WaiterPtr>& waiters) noexcept
+  {
+    for (auto& waiter : waiters)
+    {
+      if (waiter)
+      {
+        waiter->start_read_from_limiter();
+      }
+    }
+  }
+
+  // GrpcServiceBase impl
+  GrpcServiceBase::GrpcServiceBase(
+    std::size_t batch_stream_max_requests_in_progress) noexcept
+    : batch_stream_read_limiter_(batch_stream_max_requests_in_progress)
+  {}
+
+  GrpcServiceBase::~GrpcServiceBase() noexcept
+  {
+    batch_stream_read_limiter_.clear_waiters();
+  }
 
   void
   GrpcServiceBase::register_services(::grpc::ServerBuilder& builder)
@@ -255,6 +401,7 @@ namespace AdServer::Grpc
   {
     grpc_operation_gate_.deactivate_object();
     grpc_operation_gate_.wait_object();
+    batch_stream_read_limiter_.clear_waiters();
   }
 
   void
@@ -361,11 +508,19 @@ namespace AdServer::Grpc
     return 1;
   }
 
+  std::shared_ptr<AdServer::Commons::ExecutorPool>
+  GrpcServiceBase::batch_processing_executor_pool() const noexcept
+  {
+    return {};
+  }
+
   GrpcCoroutine
   GrpcServiceBase::co_handle_batch_request_sequential_(
     const adserver::grpc::BatchRequest& batch_request,
     adserver::grpc::BatchResponse& batch_response) const
   {
+    batch_response.mutable_items()->Reserve(batch_request.items_size());
+
     for (int i = 0; i < batch_request.items_size(); ++i)
     {
       const auto& request_item = batch_request.items(i);
@@ -382,21 +537,17 @@ namespace AdServer::Grpc
     adserver::grpc::BatchResponse& batch_response,
     const std::size_t max_split) const
   {
-    const std::size_t batch_size =
-      static_cast<std::size_t>(batch_request.items_size());
+    const std::size_t batch_size = static_cast<std::size_t>(batch_request.items_size());
     const std::size_t split = std::min(max_split, batch_size);
-
-    std::vector<std::vector<int>> lanes(split);
-    for (int i = 0; i < batch_request.items_size(); ++i)
-    {
-      const auto& item = batch_request.items(i);
-      lanes[batch_item_hash_(item) % split].emplace_back(i);
-    }
+    Generics::MonoAllocatorArena batch_arena;
 
     auto* const response_arena = batch_response.GetArena();
-    std::vector<adserver::grpc::BatchResponseItem*> item_responses;
+    Generics::MonoVector<adserver::grpc::BatchResponseItem*> item_responses(
+      &batch_arena);
     item_responses.reserve(batch_size);
-    std::vector<std::unique_ptr<adserver::grpc::BatchResponseItem>> heap_item_responses;
+    Generics::MonoVector<
+      std::unique_ptr<adserver::grpc::BatchResponseItem>>
+      heap_item_responses(&batch_arena);
     if (!response_arena)
     {
       heap_item_responses.reserve(batch_size);
@@ -412,31 +563,89 @@ namespace AdServer::Grpc
       }
       else
       {
-        auto item_response =
-          std::make_unique<adserver::grpc::BatchResponseItem>();
+        auto item_response = std::make_unique<adserver::grpc::BatchResponseItem>();
         item_responses.emplace_back(item_response.get());
         heap_item_responses.emplace_back(std::move(item_response));
       }
     }
 
-    std::vector<GrpcCoroutine> operations;
-    operations.reserve(split);
-    for (auto& lane : lanes)
+    google::protobuf::Arena request_arena;
+    Generics::MonoVector<Generics::MonoVector<BatchItemContext>> lanes(
+      &batch_arena);
+    lanes.reserve(split);
+    const std::size_t lane_reserve = (batch_size + split - 1) / split;
+    for (std::size_t i = 0; i < split; ++i)
     {
+      lanes.emplace_back(
+        Generics::MonoAllocator<BatchItemContext>(&batch_arena));
+      lanes.back().reserve(lane_reserve);
+    }
+
+    for (int i = 0; i < batch_request.items_size(); ++i)
+    {
+      const auto& request_item = batch_request.items(i);
+      auto* response_item = item_responses[static_cast<std::size_t>(i)];
+      response_item->set_request_id(request_item.request_id());
+
+      BatchItemContext batch_item{
+        &request_item,
+        response_item,
+        {}
+      };
+
+      std::size_t hash = static_cast<std::size_t>(request_item.request_id());
+      bool enqueue = true;
+      const auto coro_it = batch_coro_methods_.find(request_item.full_method());
+      if (coro_it != batch_coro_methods_.end())
+      {
+        enqueue = prepare_batch_coro_item_(
+          coro_it->second,
+          request_item,
+          *response_item,
+          request_arena,
+          batch_item.coro_item);
+        if (enqueue && coro_it->second.distributed)
+        {
+          hash = batch_item.coro_item.hash;
+        }
+      }
+
+      if (enqueue)
+      {
+        lanes[hash % split].emplace_back(std::move(batch_item));
+      }
+    }
+
+    const auto executor_pool = batch_processing_executor_pool();
+    Generics::MonoVector<GrpcCoroutine> operations(&batch_arena);
+    operations.reserve(split);
+    for (std::size_t i = 1; i < lanes.size(); ++i)
+    {
+      auto& lane = lanes[i];
       if (lane.empty())
       {
         continue;
       }
 
       operations.emplace_back(co_handle_batch_lane_(
-        batch_request,
-        item_responses,
-        std::move(lane)));
+        std::move(lane),
+        executor_pool,
+        true));
     }
 
-    co_await AdServer::Commons::CoroSet<GrpcCoroutine>(
-      std::move(operations));
+    if (!lanes.empty() && !lanes[0].empty())
+    {
+      operations.emplace_back(co_handle_batch_lane_(
+        std::move(lanes[0]),
+        executor_pool,
+        false));
+    }
 
+    co_await AdServer::Commons::CoroSet<
+      GrpcCoroutine,
+      Generics::MonoAllocator<GrpcCoroutine>>(std::move(operations));
+
+    batch_response.mutable_items()->Reserve(batch_request.items_size());
     if (response_arena)
     {
       for (auto* item_response : item_responses)
@@ -457,15 +666,30 @@ namespace AdServer::Grpc
 
   GrpcCoroutine
   GrpcServiceBase::co_handle_batch_lane_(
-    const adserver::grpc::BatchRequest& batch_request,
-    std::vector<adserver::grpc::BatchResponseItem*>& item_responses,
-    std::vector<int> indexes) const
+    Generics::MonoVector<BatchItemContext> batch_items,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+    bool reschedule) const
   {
-    for (const int index : indexes)
+    if (reschedule && executor_pool)
     {
-      co_await co_handle_batch_item_(
-        batch_request.items(index),
-        *item_responses[static_cast<std::size_t>(index)]);
+      co_await AdServer::Commons::ExecutorPool::reschedule(
+        std::move(executor_pool));
+    }
+
+    for (auto& batch_item : batch_items)
+    {
+      if (batch_item.coro_item.method)
+      {
+        co_await co_handle_prepared_batch_coro_item_(
+          batch_item.coro_item,
+          *batch_item.response_item);
+      }
+      else
+      {
+        co_await co_handle_batch_item_(
+          *batch_item.request_item,
+          *batch_item.response_item);
+      }
     }
 
     co_return;
@@ -481,19 +705,18 @@ namespace AdServer::Grpc
     const auto coro_it = batch_coro_methods_.find(request_item.full_method());
     if (coro_it != batch_coro_methods_.end())
     {
-      try
+      google::protobuf::Arena request_arena;
+      PreparedBatchCoroItem coro_item;
+      if (prepare_batch_coro_item_(
+        coro_it->second,
+        request_item,
+        response_item,
+        request_arena,
+        coro_item))
       {
-        co_await coro_it->second.dispatch(request_item, response_item);
-      }
-      catch (const std::exception& ex)
-      {
-        response_item.set_status_code(::grpc::StatusCode::INTERNAL);
-        response_item.set_status_message(ex.what());
-      }
-      catch (...)
-      {
-        response_item.set_status_code(::grpc::StatusCode::INTERNAL);
-        response_item.set_status_message("Unknown batch handler exception");
+        co_await co_handle_prepared_batch_coro_item_(
+          coro_item,
+          response_item);
       }
 
       co_return;
@@ -525,19 +748,71 @@ namespace AdServer::Grpc
     co_return;
   }
 
-  std::size_t
-  GrpcServiceBase::batch_item_hash_(
-    const adserver::grpc::BatchRequestItem& request_item) const
+  bool
+  GrpcServiceBase::prepare_batch_coro_item_(
+    const BatchCoroMethod& method,
+    const adserver::grpc::BatchRequestItem& request_item,
+    adserver::grpc::BatchResponseItem& response_item,
+    google::protobuf::Arena& request_arena,
+    PreparedBatchCoroItem& coro_item) const
   {
-    const auto coro_it = batch_coro_methods_.find(request_item.full_method());
-    if (coro_it != batch_coro_methods_.end() &&
-      coro_it->second.distributed &&
-      coro_it->second.hash)
+    try
     {
-      return coro_it->second.hash(request_item);
+      if (!method.prepare(
+        request_item,
+        response_item,
+        request_arena,
+        coro_item))
+      {
+        return false;
+      }
+
+      coro_item.method = &method;
+      return true;
+    }
+    catch (const std::exception& ex)
+    {
+      response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+      response_item.set_status_message(ex.what());
+    }
+    catch (...)
+    {
+      response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+      response_item.set_status_message("Unknown batch handler exception");
     }
 
-    return static_cast<std::size_t>(request_item.request_id());
+    return false;
+  }
+
+  GrpcCoroutine
+  GrpcServiceBase::co_handle_prepared_batch_coro_item_(
+    PreparedBatchCoroItem& coro_item,
+    adserver::grpc::BatchResponseItem& response_item) const
+  {
+    try
+    {
+      co_await coro_item.method->dispatch(
+        coro_item.request,
+        response_item);
+    }
+    catch (const std::exception& ex)
+    {
+      response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+      response_item.set_status_message(ex.what());
+    }
+    catch (...)
+    {
+      response_item.set_status_code(::grpc::StatusCode::INTERNAL);
+      response_item.set_status_message("Unknown batch handler exception");
+    }
+
+    co_return;
+  }
+
+  GrpcServiceBase::BatchStreamReadLimiter&
+  GrpcServiceBase::batch_stream_read_limiter() noexcept
+  {
+    return batch_stream_read_limiter_;
   }
 
   AdServer::Commons::ActivityGate::Guard
