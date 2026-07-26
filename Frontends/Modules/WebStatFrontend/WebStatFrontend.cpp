@@ -226,7 +226,7 @@ namespace AdServer::WebStat
 
       for(auto& web_op_info : requests)
       {
-        auto result = co_await campaign_manager_coro_->consider_web_operation(
+        auto result = co_await campaign_manager_coro_->co_consider_web_operation(
           std::move(*web_op_info));
         if(!result.status.ok())
         {

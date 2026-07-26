@@ -631,7 +631,7 @@ namespace AdServer
         try
         {
           const auto click_url_response = co_await
-            campaign_manager_coro_->get_click_url(std::move(click_url_request));
+            campaign_manager_coro_->co_get_click_url(std::move(click_url_request));
 
           if(!click_url_response.status.ok())
           {

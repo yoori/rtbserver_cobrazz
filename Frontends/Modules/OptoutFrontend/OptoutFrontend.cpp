@@ -502,7 +502,7 @@ namespace
   {
     try
     {
-      auto result = co_await campaign_manager_coro_->verify_opt_operation(
+      auto result = co_await campaign_manager_coro_->co_verify_opt_operation(
         std::move(request));
       if(!result.status.ok())
       {

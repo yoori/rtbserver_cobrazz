@@ -686,7 +686,7 @@ namespace AdServer::Action
       channel_request.set_pwords(keywords_ostr.str());
       channel_request.set_first_url(referer);
 
-      auto channel_result = co_await channel_client_coro_->match(
+      auto channel_result = co_await channel_client_coro_->co_match(
         std::move(channel_request));
       if (!channel_result.status.ok())
       {
@@ -785,7 +785,7 @@ namespace AdServer::Action
       user_info->set_temporary(false);
       user_info->set_time(now.tv_sec);
 
-      auto user_info_result = co_await user_info_client_coro_->match(
+      auto user_info_result = co_await user_info_client_coro_->co_match(
         std::move(history_match_request));
       if (!user_info_result.status.ok())
       {
@@ -815,7 +815,7 @@ namespace AdServer::Action
         trigger_match_result);
 
       auto process_result =
-        co_await campaign_manager_coro_->process_match_request(
+        co_await campaign_manager_coro_->co_process_match_request(
           std::move(process_match_request));
       if (!process_result.status.ok())
       {
@@ -1188,7 +1188,7 @@ namespace AdServer::Action
         get_request_info.set_current_user_id(
           GrpcAlgs::pack_user_id(current_user_id));
 
-        auto get_result = co_await user_bind_client_coro_->get_user_id(
+        auto get_result = co_await user_bind_client_coro_->co_get_user_id(
           std::move(get_request_info));
         if (!get_result.status.ok())
         {
@@ -1244,7 +1244,7 @@ namespace AdServer::Action
       add_request.set_user_id(GrpcAlgs::pack_user_id(user_id));
       add_request.set_timestamp(GrpcAlgs::pack_time(time));
 
-      auto add_result = co_await user_bind_client_coro_->add_user_id(
+      auto add_result = co_await user_bind_client_coro_->co_add_user_id(
         std::move(add_request));
       if (!add_result.status.ok())
       {
@@ -1283,7 +1283,7 @@ namespace AdServer::Action
     {
       const bool test_request = request.action_info().test_request();
       const auto user_status = request.action_info().user_status();
-      auto action_result = co_await campaign_manager_coro_->action_taken(
+      auto action_result = co_await campaign_manager_coro_->co_action_taken(
         std::move(request));
       if (!action_result.status.ok())
       {

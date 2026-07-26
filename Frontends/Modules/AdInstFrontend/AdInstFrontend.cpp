@@ -586,7 +586,7 @@ namespace AdServer::Instantiate
       profiles_request->set_pref_profile(false);
 
       auto get_profile_result =
-        co_await user_info_client_coro_->get_user_profile(
+        co_await user_info_client_coro_->co_get_user_profile(
           std::move(get_profile_request));
       if(!get_profile_result.status.ok())
       {
@@ -620,7 +620,7 @@ namespace AdServer::Instantiate
       remove_request.set_user_id(
         GrpcAlgs::pack_user_id(request_info.temp_user_id));
       auto remove_result =
-        co_await user_info_client_coro_->remove_user_profile(
+        co_await user_info_client_coro_->co_remove_user_profile(
           std::move(remove_request));
       if(!remove_result.status.ok())
       {
@@ -717,7 +717,7 @@ namespace AdServer::Instantiate
       *click_url_request.mutable_click_info() = click_info;
       click_url_request.set_service_index(request_info.campaign_manager_index);
 
-      auto click_url_result = co_await campaign_manager_coro_->get_click_url(
+      auto click_url_result = co_await campaign_manager_coro_->co_get_click_url(
         std::move(click_url_request));
       if(!click_url_result.status.ok())
       {
@@ -929,7 +929,7 @@ namespace AdServer::Instantiate
         request_info.campaign_manager_index);
 
       auto instantiate_ad_result =
-        co_await campaign_manager_coro_->instantiate_ad(
+        co_await campaign_manager_coro_->co_instantiate_ad(
           std::move(instantiate_ad_request));
       if(!instantiate_ad_result.status.ok())
       {

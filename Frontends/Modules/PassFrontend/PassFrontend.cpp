@@ -344,7 +344,7 @@ namespace AdServer::Passback
 
     try
     {
-      auto result = co_await campaign_manager_coro_->consider_passback(
+      auto result = co_await campaign_manager_coro_->co_consider_passback(
         std::move(request));
       if(!result.status.ok())
       {
@@ -378,7 +378,7 @@ namespace AdServer::Passback
   {
     try
     {
-      auto result = co_await user_info_client_coro_->confirm_user_freq_caps(
+      auto result = co_await user_info_client_coro_->co_confirm_user_freq_caps(
         std::move(request));
       if(!result.status.ok())
       {

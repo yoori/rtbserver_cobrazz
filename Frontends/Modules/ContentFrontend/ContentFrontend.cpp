@@ -58,7 +58,7 @@ namespace
         request.set_service_index(service_index);
       }
 
-      auto result = co_await campaign_manager_coro->get_file(
+      auto result = co_await campaign_manager_coro->co_get_file(
         std::move(request));
       if(!result.status.ok())
       {

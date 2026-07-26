@@ -793,7 +793,7 @@ namespace AdServer::Bidding
 
     try
     {
-      auto result = co_await campaign_manager_coro_->get_colocation_flags(
+      auto result = co_await campaign_manager_coro_->co_get_colocation_flags(
         PB::GetColocationFlagsRequest());
       if(!result.status.ok())
       {

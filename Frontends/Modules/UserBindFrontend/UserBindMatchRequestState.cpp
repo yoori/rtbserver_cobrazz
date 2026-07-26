@@ -167,7 +167,7 @@ namespace AdServer
       channel_request->set_pwords(keywords_);
       channel_request->set_first_url(referer_);
 
-      auto match_result = co_await frontend_->channel_client_coro_->match(
+      auto match_result = co_await frontend_->channel_client_coro_->co_match(
         *channel_request);
       if(match_result.status.ok())
       {
@@ -216,7 +216,7 @@ namespace AdServer
           &StatHolder::add_user_bind_match_get_profile_request,
           &StatHolder::complete_user_bind_match_get_profile_request);
         auto get_profile_result =
-          co_await frontend_->user_info_client_coro_->get_user_profile(
+          co_await frontend_->user_info_client_coro_->co_get_user_profile(
             *get_profile_request);
         if(!get_profile_result.status.ok())
         {
@@ -243,7 +243,7 @@ namespace AdServer
               &StatHolder::add_user_bind_match_merge_request,
               &StatHolder::complete_user_bind_match_merge_request);
             auto merge_result =
-              co_await frontend_->user_info_client_coro_->merge(
+              co_await frontend_->user_info_client_coro_->co_merge(
                 *merge_request);
             if(!merge_result.status.ok())
             {
@@ -264,7 +264,7 @@ namespace AdServer
               &StatHolder::add_user_bind_match_remove_request,
               &StatHolder::complete_user_bind_match_remove_request);
             auto remove_result =
-              co_await frontend_->user_info_client_coro_->remove_user_profile(
+              co_await frontend_->user_info_client_coro_->co_remove_user_profile(
                 *remove_request);
             if(!remove_result.status.ok())
             {
@@ -284,7 +284,7 @@ namespace AdServer
         frontend_->stats_.in(),
         &StatHolder::add_user_bind_match_history_request,
         &StatHolder::complete_user_bind_match_history_request);
-      auto match_result = co_await frontend_->user_info_client_coro_->match(
+      auto match_result = co_await frontend_->user_info_client_coro_->co_match(
         *history_match_request);
       if(match_result.status.ok())
       {
@@ -323,7 +323,7 @@ namespace AdServer
         &StatHolder::add_user_bind_match_campaign_request,
         &StatHolder::complete_user_bind_match_campaign_request);
       auto campaign_result =
-        co_await frontend_->campaign_manager_coro_->process_match_request(
+        co_await frontend_->campaign_manager_coro_->co_process_match_request(
           *process_match_request);
       if(!campaign_result.status.ok())
       {

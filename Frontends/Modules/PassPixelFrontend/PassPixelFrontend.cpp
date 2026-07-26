@@ -258,7 +258,7 @@ namespace AdServer::PassbackPixel
 
     try
     {
-      auto result = co_await campaign_manager_coro_->consider_passback_track(
+      auto result = co_await campaign_manager_coro_->co_consider_passback_track(
         std::move(request));
       if(!result.status.ok())
       {

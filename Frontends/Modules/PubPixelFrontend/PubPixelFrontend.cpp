@@ -229,7 +229,7 @@ namespace AdServer::PubPixel
           pub_pixels_request->add_publisher_account_ids(publisher_account_id);
         }
 
-        auto pub_pixels_result = co_await campaign_manager_coro_->get_pub_pixels(
+        auto pub_pixels_result = co_await campaign_manager_coro_->co_get_pub_pixels(
           std::move(*pub_pixels_request));
         if(!pub_pixels_result.status.ok())
         {

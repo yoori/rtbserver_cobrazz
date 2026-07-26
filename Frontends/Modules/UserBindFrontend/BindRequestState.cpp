@@ -57,7 +57,7 @@ namespace AdServer
         add_user_request->set_timestamp(
           GrpcAlgs::pack_time(request_info->time));
 
-        auto add_result = co_await frontend->user_bind_client_coro_->add_user_id(
+        auto add_result = co_await frontend->user_bind_client_coro_->co_add_user_id(
           *add_user_request);
         co_return ProcessRequestResult{
           add_result.status.ok() ? 204 : 500,
@@ -104,7 +104,7 @@ namespace AdServer
               GrpcAlgs::pack_time(Generics::Time::ZERO));
 
             auto get_result = co_await
-              frontend->user_bind_client_coro_->get_user_id(*get_request);
+              frontend->user_bind_client_coro_->co_get_user_id(*get_request);
             if(get_result.status.ok())
             {
               if(get_result.response.invalid_operation())
@@ -166,7 +166,7 @@ namespace AdServer
             GrpcAlgs::pack_time(request_info->time));
 
           auto add_result = co_await
-            frontend->user_bind_client_coro_->add_user_id(*add_user_request);
+            frontend->user_bind_client_coro_->co_add_user_id(*add_user_request);
           if(add_result.status.ok())
           {
             if(add_result.response.invalid_operation())
@@ -259,7 +259,7 @@ namespace AdServer
           bind_request->add_bind_user_ids(user_id);
         }
 
-        co_await frontend->user_bind_client_coro_->add_bind_request(
+        co_await frontend->user_bind_client_coro_->co_add_bind_request(
           *bind_request);
       }
 

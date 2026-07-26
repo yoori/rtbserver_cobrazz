@@ -1105,7 +1105,7 @@ namespace AdServer
 
     try
     {
-      auto result = co_await campaign_manager_coro_->consider_web_operation(
+      auto result = co_await campaign_manager_coro_->co_consider_web_operation(
         std::move(request));
       if(!result.status.ok() &&
         result.status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
@@ -1375,7 +1375,7 @@ namespace AdServer
     user_info->set_temporary(false);
     user_info->set_time(Generics::Time::get_time_of_day().tv_sec);
 
-    auto match_result = co_await user_info_client_coro_->match(
+    auto match_result = co_await user_info_client_coro_->co_match(
       *history_match_request);
 
     static const String::SubString JSON_SESSION_ID_NAME("session_id");

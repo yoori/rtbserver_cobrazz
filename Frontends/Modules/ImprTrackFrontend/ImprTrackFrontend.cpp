@@ -961,7 +961,7 @@ namespace AdServer::ImprTrack
       add_user_request->set_user_id(GrpcAlgs::pack_user_id(result.user_id));
       add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
 
-      auto add_result = co_await user_bind_client_coro_->add_user_id(*add_user_request);
+      auto add_result = co_await user_bind_client_coro_->co_add_user_id(*add_user_request);
       if (!add_result.status.ok())
       {
         co_return result;
@@ -989,7 +989,7 @@ namespace AdServer::ImprTrack
     get_request->set_for_set_cookie(request_info.set_cookie);
     get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
-    auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
+    auto get_result = co_await user_bind_client_coro_->co_get_user_id(*get_request);
     if (!get_result.status.ok())
     {
       co_return result;
@@ -1022,7 +1022,7 @@ namespace AdServer::ImprTrack
   {
     if (campaign_manager_coro_)
     {
-      auto result = co_await campaign_manager_coro_->verify_impression(
+      auto result = co_await campaign_manager_coro_->co_verify_impression(
         std::move(request));
       if (!result.status.ok())
       {
@@ -1057,7 +1057,7 @@ namespace AdServer::ImprTrack
   {
     if (user_info_client_coro_)
     {
-      auto result = co_await user_info_client_coro_->confirm_user_freq_caps(
+      auto result = co_await user_info_client_coro_->co_confirm_user_freq_caps(
         std::move(request));
       if (!result.status.ok())
       {
@@ -1088,7 +1088,7 @@ namespace AdServer::ImprTrack
   {
     if (campaign_manager_coro_)
     {
-      auto result = co_await campaign_manager_coro_->consider_web_operation(
+      auto result = co_await campaign_manager_coro_->co_consider_web_operation(
         std::move(request));
       if (!result.status.ok() &&
         result.status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
@@ -1222,7 +1222,7 @@ namespace AdServer::ImprTrack
 
     channel_request->set_pwords(keywords_ostr.str());
 
-    auto channel_result = co_await channel_client_coro_->match(
+    auto channel_result = co_await channel_client_coro_->co_match(
       *channel_request);
     if (!channel_result.status.ok())
     {
@@ -1297,7 +1297,7 @@ namespace AdServer::ImprTrack
           adserver::user_info_svcs::user_info_manager::MatchRequest>(
             &history_match_request_arena);
         fill_history_match_request(*history_match_request, state->user_id);
-        auto match_result = co_await user_info_client_coro_->match(*history_match_request);
+        auto match_result = co_await user_info_client_coro_->co_match(*history_match_request);
 
         if (match_result.status.ok())
         {
@@ -1331,7 +1331,7 @@ namespace AdServer::ImprTrack
         fill_history_match_request(
           *cookie_match_request,
           state->resolved_cookie_user_id);
-        co_await user_info_client_coro_->match(*cookie_match_request);
+        co_await user_info_client_coro_->co_match(*cookie_match_request);
       }
     }
 
@@ -1342,7 +1342,7 @@ namespace AdServer::ImprTrack
 
     fill_match_request_info_(*request->mutable_match_request_info(), *state);
 
-    auto process_result = co_await campaign_manager_coro_->process_match_request(*request);
+    auto process_result = co_await campaign_manager_coro_->co_process_match_request(*request);
 
     if (!process_result.status.ok())
     {

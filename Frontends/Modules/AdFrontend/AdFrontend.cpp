@@ -1142,7 +1142,7 @@ namespace AdServer
     profile_request->set_pref_profile(false);
 
     auto get_profile_result =
-      co_await user_info_client_coro_->get_user_profile(
+      co_await user_info_client_coro_->co_get_user_profile(
         *get_profile_request);
     context->request_time_metering.merge_users_time =
       user_merge_time_metering.consider();
@@ -1189,7 +1189,7 @@ namespace AdServer
           &remove_request_arena);
       remove_request->set_user_id(GrpcAlgs::pack_user_id(merged_uid));
       auto remove_result =
-        co_await user_info_client_coro_->remove_user_profile(
+        co_await user_info_client_coro_->co_remove_user_profile(
           *remove_request);
       if(!remove_result.status.ok())
       {
@@ -1258,7 +1258,7 @@ namespace AdServer
     *merge_request->mutable_merge_user_profile() =
       response.user_profile();
 
-    auto merge_result = co_await user_info_client_coro_->merge(
+    auto merge_result = co_await user_info_client_coro_->co_merge(
       *merge_request);
     if(!merge_result.status.ok())
     {
@@ -1461,7 +1461,7 @@ namespace AdServer
     match_params->set_cohort(request_info.curct);
 
     TimeGuard history_match_time_metering;
-    auto match_result = co_await user_info_client_coro_->match(
+    auto match_result = co_await user_info_client_coro_->co_match(
       *history_match_request);
     if(!match_result.status.ok())
     {
@@ -1632,7 +1632,7 @@ namespace AdServer
     try
     {
       auto update_result = co_await user_info_client_coro_->
-        update_user_freq_caps(std::move(request));
+        co_update_user_freq_caps(std::move(request));
       if(!update_result.status.ok())
       {
         history_post_match_in_progress.add_error();
@@ -1713,7 +1713,7 @@ namespace AdServer
     channel_request.set_swords(request_info.search_words);
     channel_request.set_uid(GrpcAlgs::pack_user_id(request_info.client_id));
 
-    auto channel_result = co_await channel_client_coro_->match(
+    auto channel_result = co_await channel_client_coro_->co_match(
       channel_request);
     if(!channel_result.status.ok())
     {
@@ -2342,7 +2342,7 @@ namespace AdServer
         request->mutable_request_params());
 
       TimeGuard creative_selection_time_metering;
-      auto campaign_result = co_await campaign_manager_coro_->get_campaign_creative(
+      auto campaign_result = co_await campaign_manager_coro_->co_get_campaign_creative(
         *request);
       if(!campaign_result.status.ok())
       {
@@ -2525,7 +2525,7 @@ namespace AdServer
     CM::VerifyOptOperationRequest request)
     noexcept
   {
-    auto opt_result = co_await campaign_manager_coro_->verify_opt_operation(
+    auto opt_result = co_await campaign_manager_coro_->co_verify_opt_operation(
       std::move(request));
     if(!opt_result.status.ok())
     {
@@ -2557,7 +2557,7 @@ namespace AdServer
   {
     CM::GetColocationFlagsRequest request;
     auto colocation_result =
-      co_await campaign_manager_coro_->get_colocation_flags(
+      co_await campaign_manager_coro_->co_get_colocation_flags(
         std::move(request));
     if(!colocation_result.status.ok())
     {

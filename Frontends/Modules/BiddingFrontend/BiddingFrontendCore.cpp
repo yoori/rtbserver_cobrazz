@@ -1075,7 +1075,7 @@ namespace AdServer::Bidding
               get_request->set_current_user_id(GrpcAlgs::pack_user_id(
                 AdServer::Commons::UserId()));
 
-              auto get_result = co_await user_bind_client_coro_->get_user_id(*get_request);
+              auto get_result = co_await user_bind_client_coro_->co_get_user_id(*get_request);
               result.completed = true;
               result.status = std::move(get_result.status);
               if (!result.status.ok())
@@ -1455,7 +1455,7 @@ namespace AdServer::Bidding
           channel_request->set_uid(GrpcAlgs::pack_user_id(request_task->resolved_user_id_));
 
           StageCallTimeGuard call_time(trigger_match_stage);
-          auto channel_result = co_await channel_client_coro_->match(*channel_request);
+          auto channel_result = co_await channel_client_coro_->co_match(*channel_request);
           call_time.finish();
           if (channel_result.status.ok())
           {
@@ -1703,7 +1703,7 @@ namespace AdServer::Bidding
           }
 
           StageCallTimeGuard call_time(history_match_stage);
-          auto history_result = co_await user_info_client_coro_->match(*history_match_request);
+          auto history_result = co_await user_info_client_coro_->co_match(*history_match_request);
           call_time.finish();
           if (history_result.status.ok())
           {
@@ -1813,7 +1813,7 @@ namespace AdServer::Bidding
       try
       {
         StageCallTimeGuard call_time(creative_selection_stage);
-        auto campaign_result = co_await campaign_manager_coro_->get_campaign_creative(
+        auto campaign_result = co_await campaign_manager_coro_->co_get_campaign_creative(
           *campaign_request);
         call_time.finish();
 
@@ -1964,7 +1964,7 @@ namespace AdServer::Bidding
       add_request.set_timestamp(GrpcAlgs::pack_time(time));
       add_request.set_user_id(GrpcAlgs::pack_user_id(user_id));
 
-      auto add_result = co_await user_bind_client_coro_->add_user_id(add_request);
+      auto add_result = co_await user_bind_client_coro_->co_add_user_id(add_request);
       if (!add_result.status.ok())
       {
         logger()->sstream(
@@ -2127,7 +2127,7 @@ namespace AdServer::Bidding
           request->mutable_campaign_ids()->Add(campaign_ids.begin(), campaign_ids.end());
         }
 
-        auto result = co_await user_info_client_coro_->update_user_freq_caps(*request);
+        auto result = co_await user_info_client_coro_->co_update_user_freq_caps(*request);
         if (!result.status.ok())
         {
           logger()->sstream(
