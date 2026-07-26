@@ -49,7 +49,8 @@ namespace AdServer::Grpc
       nullptr,
       std::move(batch_full_method),
       {},
-      false
+      false,
+      true
     };
   }
 
@@ -72,6 +73,7 @@ namespace AdServer::Grpc
       Request,
       Response>::Handler handler,
     std::string batch_full_method,
+    bool use_arena_for_response,
     HashFn hash_fn)
   {
     using Call = GrpcCoroCall<
@@ -91,7 +93,8 @@ namespace AdServer::Grpc
       nullptr,
       std::move(batch_full_method),
       std::move(batch_hash),
-      true
+      true,
+      use_arena_for_response
     };
   }
 
@@ -112,7 +115,8 @@ namespace AdServer::Grpc
       AsyncServiceType,
       Request,
       Response>::Handler handler,
-    std::string batch_full_method)
+    std::string batch_full_method,
+    bool use_arena_for_response)
   {
     return {
       request_method,
@@ -120,7 +124,8 @@ namespace AdServer::Grpc
       nullptr,
       std::move(batch_full_method),
       {},
-      true
+      true,
+      use_arena_for_response
     };
   }
 
@@ -184,7 +189,8 @@ namespace AdServer::Grpc
       GrpcServiceBase,
       Request,
       Response>::BatchHashFn hash,
-    bool distributed)
+    bool distributed,
+    bool use_arena_for_response)
   {
     batch_coro_methods_.emplace(
       std::move(full_method),
@@ -210,22 +216,41 @@ namespace AdServer::Grpc
             static_cast<std::size_t>(batch_request.request_id());
           return true;
         },
-        [handler = std::forward<Handler>(handler)](
+        [
+          handler = std::forward<Handler>(handler),
+          use_arena_for_response
+        ](
           void* request_ptr,
           adserver::grpc::BatchResponseItem& batch_response)
           -> GrpcCoroutine
         {
           auto& request = *static_cast<Request*>(request_ptr);
-          google::protobuf::Arena response_arena;
-          auto* response = google::protobuf::Arena::CreateMessage<Response>(&response_arena);
           ::grpc::Status status;
-          co_await handler(std::move(request), *response, status);
-
-          batch_response.set_status_code(status.error_code());
-          batch_response.set_status_message(status.error_message());
-          if (status.ok())
+          if (use_arena_for_response)
           {
-            response->SerializeToString(batch_response.mutable_payload());
+            google::protobuf::Arena response_arena;
+            auto* response =
+              google::protobuf::Arena::CreateMessage<Response>(&response_arena);
+            co_await handler(std::move(request), *response, status);
+
+            batch_response.set_status_code(status.error_code());
+            batch_response.set_status_message(status.error_message());
+            if (status.ok())
+            {
+              response->SerializeToString(batch_response.mutable_payload());
+            }
+          }
+          else
+          {
+            Response response;
+            co_await handler(std::move(request), response, status);
+
+            batch_response.set_status_code(status.error_code());
+            batch_response.set_status_message(status.error_message());
+            if (status.ok())
+            {
+              response.SerializeToString(batch_response.mutable_payload());
+            }
           }
         },
         distributed
@@ -284,7 +309,8 @@ namespace AdServer::Grpc
         co_await (service_impl->*handler)(std::move(request), response, status);
       },
       call.batch_hash,
-      call.distributed_batch);
+      call.distributed_batch,
+      call.use_arena_for_response);
 
     if (!call.batch_handler)
     {
@@ -376,7 +402,8 @@ namespace AdServer::Grpc
         std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
         std::string(),
       {},
-      false
+      false,
+      true
     };
   }
 
@@ -399,6 +426,7 @@ namespace AdServer::Grpc
         Request,
         Response>::Handler handler,
       const char* batch_method_name,
+      bool use_arena_for_response,
       HashFn hash_fn)
   {
     using Call = GrpcCoroCall<
@@ -420,7 +448,8 @@ namespace AdServer::Grpc
         std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
         std::string(),
       std::move(batch_hash),
-      true
+      true,
+      use_arena_for_response
     };
   }
 
@@ -442,7 +471,8 @@ namespace AdServer::Grpc
         AsyncServiceType,
         Request,
         Response>::Handler handler,
-      const char* batch_method_name)
+      const char* batch_method_name,
+      bool use_arena_for_response)
   {
     return {
       request_method,
@@ -452,7 +482,8 @@ namespace AdServer::Grpc
         std::string("/") + ServiceType::service_full_name() + "/" + batch_method_name :
         std::string(),
       {},
-      true
+      true,
+      use_arena_for_response
     };
   }
 

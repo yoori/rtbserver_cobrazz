@@ -1,4 +1,5 @@
 add_subdirectory(UserBindPerf)
+add_subdirectory(UserBindArenaFillTest)
 add_subdirectory(UserBindServerCorePerfTest)
 add_subdirectory(UserInfoManagerCorePerfTest)
 add_subdirectory(RocksDBProfileMapTest)

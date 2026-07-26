@@ -256,24 +256,28 @@ namespace AdServer::CampaignSvcs
           Proto::BidResultResponse,
           check_available_bid,
           co_check_available_bid,
+          true,
           &ServiceImpl::hash_check_available_bid),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::ReserveBidRequest,
           Proto::ReserveBidResponse,
           reserve_bid,
           co_reserve_bid,
+          true,
           &ServiceImpl::hash_reserve_bid),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::ConfirmBidRequest,
           Proto::ConfirmBidResponse,
           confirm_bid,
           co_confirm_bid,
+          true,
           &ServiceImpl::hash_confirm_bid),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           Proto::AddAmountRequest,
           Proto::AddAmountResponse,
           add_amount,
-          co_add_amount));
+          co_add_amount,
+          true));
     }
 
     std::size_t distributed_batch_max_split() const noexcept override;

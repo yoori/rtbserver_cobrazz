@@ -21,7 +21,7 @@ namespace AdServer::Commons
   public:
     struct promise_type;
     using Handle = std::coroutine_handle<promise_type>;
-    using Completion = std::function<void(std::exception_ptr)>;
+    using Completion = std::function<void(std::optional<std::exception_ptr>)>;
 
     explicit SyncCoro(Handle handle) noexcept;
     SyncCoro(SyncCoro&& other) noexcept;
@@ -63,7 +63,7 @@ namespace AdServer::Commons
     std::coroutine_handle<> continuation;
     std::function<void()> completion;
     std::optional<ResultType> result;
-    std::exception_ptr exception;
+    std::optional<std::exception_ptr> exception;
   };
 
   template<typename ResultType>
@@ -108,7 +108,7 @@ namespace AdServer::Commons
     handle_.promise().completion =
       [this, completion = std::move(completion)]() mutable
       {
-        completion(handle_.promise().exception);
+        completion(std::move(handle_.promise().exception));
       };
     resume_coroutine(handle_);
   }
@@ -135,7 +135,7 @@ namespace AdServer::Commons
   {
     if(handle_.promise().exception)
     {
-      std::rethrow_exception(handle_.promise().exception);
+      std::rethrow_exception(std::move(*handle_.promise().exception));
     }
 
     return std::move(*handle_.promise().result);
@@ -216,6 +216,6 @@ namespace AdServer::Commons
   void
   SyncCoro<ResultType>::promise_type::unhandled_exception() noexcept
   {
-    exception = std::current_exception();
+    exception.emplace(std::current_exception());
   }
 }

@@ -4,12 +4,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <thread>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 
-#include <Generics/HashTableAdapters.hpp>
 #include <Generics/Time.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
@@ -199,30 +199,35 @@ namespace AdServer::UserInfoSvcs
           adserver::user_info_svcs::user_bind::GetBindRequestResponse,
           get_bind_request,
           co_get_bind_request,
+          true,
           &ServiceImpl::hash_get_bind_request),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::AddBindRequestRequest,
           adserver::user_info_svcs::user_bind::AddBindRequestResponse,
           add_bind_request,
           co_add_bind_request,
+          true,
           &ServiceImpl::hash_add_bind_request),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::GetUserIdRequest,
           adserver::user_info_svcs::user_bind::GetUserIdResponse,
           get_user_id,
           co_get_user_id,
+          false,
           &ServiceImpl::hash_get_user_id),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::AddUserIdRequest,
           adserver::user_info_svcs::user_bind::AddUserIdResponse,
           add_user_id,
           co_add_user_id,
+          true,
           &ServiceImpl::hash_add_user_id),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::user_info_svcs::user_bind::GetSourceRequest,
           adserver::user_info_svcs::user_bind::GetSourceResponse,
           get_source,
-          co_get_source));
+          co_get_source,
+          true));
     }
 
     std::size_t distributed_batch_max_split() const noexcept override;
@@ -336,7 +341,9 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
     ::grpc::Status& result_status) const
   {
+#ifndef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+#endif
     InProgressGuard in_progress(
       stats_->call_total,
       stats_->call_total_time,
@@ -392,7 +399,9 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
     (void)response;
+#ifndef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+#endif
     InProgressGuard in_progress(
       stats_->call_total,
       stats_->call_total_time,
@@ -462,7 +471,6 @@ namespace AdServer::UserInfoSvcs
     response.set_hostname(service_hostname_());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     maybe_sleep_mock_response(response_sleep_ms_);
     response.set_user_id(request.current_user_id());
     response.set_min_age_reached(true);
@@ -533,7 +541,6 @@ namespace AdServer::UserInfoSvcs
     response.set_hostname(service_hostname_());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     maybe_sleep_mock_response(response_sleep_ms_);
     response.set_merge_user_id(request.user_id());
     response.set_invalid_operation(false);
@@ -585,7 +592,9 @@ namespace AdServer::UserInfoSvcs
     ::grpc::Status& result_status) const
   {
     (void)request;
+#ifndef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
+#endif
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);
     response.set_chunks_number(1);
@@ -628,28 +637,28 @@ namespace AdServer::UserInfoSvcs
   UserBindServerGrpc::ServiceImpl::hash_get_user_id(
     const adserver::user_info_svcs::user_bind::GetUserIdRequest& request)
   {
-    return Generics::StringHashAdapter(request.id()).hash();
+    return std::hash<std::string>{}(request.id());
   }
 
   std::size_t
   UserBindServerGrpc::ServiceImpl::hash_add_user_id(
     const adserver::user_info_svcs::user_bind::AddUserIdRequest& request)
   {
-    return Generics::StringHashAdapter(request.id()).hash();
+    return std::hash<std::string>{}(request.id());
   }
 
   std::size_t
   UserBindServerGrpc::ServiceImpl::hash_get_bind_request(
     const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request)
   {
-    return Generics::StringHashAdapter(request.request_id()).hash();
+    return std::hash<std::string>{}(request.request_id());
   }
 
   std::size_t
   UserBindServerGrpc::ServiceImpl::hash_add_bind_request(
     const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request)
   {
-    return Generics::StringHashAdapter(request.request_id()).hash();
+    return std::hash<std::string>{}(request.request_id());
   }
 
   // UserBindServerGrpc impl

@@ -336,7 +336,9 @@ namespace AdServer::Grpc
       }
       catch (...)
       {
-        handle_batch_processed_(std::move(context), std::current_exception());
+        handle_batch_processed_(
+          std::move(context),
+          std::optional<std::exception_ptr>(std::current_exception()));
       }
 
       return;
@@ -362,16 +364,20 @@ namespace AdServer::Grpc
     }
     catch (...)
     {
-      handle_batch_processed_(std::move(context), std::current_exception());
+      handle_batch_processed_(
+        std::move(context),
+        std::optional<std::exception_ptr>(std::current_exception()));
       return;
     }
 
     auto owner = this->shared_from_this();
     context->operation->start(
       [owner = std::move(owner), context = std::move(context)](
-        std::exception_ptr exception) mutable
+        std::optional<std::exception_ptr> exception) mutable
       {
-        owner->handle_batch_processed_(std::move(context), exception);
+        owner->handle_batch_processed_(
+          std::move(context),
+          std::move(exception));
       });
   }
 
@@ -379,7 +385,7 @@ namespace AdServer::Grpc
   void
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::handle_batch_processed_(
     BatchContextPtr context,
-    std::exception_ptr exception) noexcept
+    std::optional<std::exception_ptr> exception) noexcept
   {
     if (exception)
     {
@@ -389,7 +395,7 @@ namespace AdServer::Grpc
       std::string status_message;
       try
       {
-        std::rethrow_exception(exception);
+        std::rethrow_exception(*exception);
       }
       catch (const std::exception& ex)
       {

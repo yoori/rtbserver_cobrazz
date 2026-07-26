@@ -42,11 +42,12 @@
     #MethodName)
 
 #define MAKE_DISTRIBUTED_GRPC_CORO_CALL( \
-  RequestType, ResponseType, MethodName, HandlerName, ...) \
+  RequestType, ResponseType, MethodName, HandlerName, UseArenaForResponse, ...) \
   make_distributed_grpc_coro_call<RequestType, ResponseType>( \
     &AsyncService::Request##MethodName, \
     &ServiceImpl::HandlerName, \
-    #MethodName __VA_OPT__(,) __VA_ARGS__)
+    #MethodName, \
+    UseArenaForResponse __VA_OPT__(,) __VA_ARGS__)
 
 namespace AdServer::Commons
 {
@@ -104,7 +105,7 @@ namespace AdServer::Grpc
   public:
     struct promise_type;
     using Handle = std::coroutine_handle<promise_type>;
-    using Completion = std::function<void(std::exception_ptr)>;
+    using Completion = std::function<void(std::optional<std::exception_ptr>)>;
 
     explicit GrpcCoroutine(Handle handle) noexcept;
     GrpcCoroutine(GrpcCoroutine&& other) noexcept;
@@ -139,7 +140,7 @@ namespace AdServer::Grpc
     void unhandled_exception() noexcept;
 
     Completion completion;
-    std::exception_ptr exception;
+    std::optional<std::exception_ptr> exception;
   };
 
   template<
@@ -216,6 +217,7 @@ namespace AdServer::Grpc
     std::string batch_full_method;
     BatchHashFn batch_hash;
     bool distributed_batch = false;
+    bool use_arena_for_response = true;
   };
 
   template<
@@ -256,6 +258,7 @@ namespace AdServer::Grpc
       Request,
       Response>::Handler handler,
     std::string batch_full_method,
+    bool use_arena_for_response,
     HashFn hash_fn);
 
   template<
@@ -275,7 +278,8 @@ namespace AdServer::Grpc
       AsyncServiceType,
       Request,
       Response>::Handler handler,
-    std::string batch_full_method);
+    std::string batch_full_method,
+    bool use_arena_for_response);
 
   class GrpcServiceBase
   {
@@ -422,7 +426,8 @@ namespace AdServer::Grpc
         GrpcServiceBase,
         Request,
         Response>::BatchHashFn hash,
-      bool distributed);
+      bool distributed,
+      bool use_arena_for_response);
 
     template<
       typename ServiceImplType,
@@ -610,6 +615,7 @@ namespace AdServer::Grpc
         Request,
         Response>::Handler handler,
       const char* batch_method_name,
+      bool use_arena_for_response,
       HashFn hash_fn);
 
     template<typename Request, typename Response>
@@ -625,7 +631,8 @@ namespace AdServer::Grpc
         AsyncServiceType,
         Request,
         Response>::Handler handler,
-      const char* batch_method_name = nullptr);
+      const char* batch_method_name = nullptr,
+      bool use_arena_for_response = true);
 
     template<typename Calls>
     void register_batch_methods(const Calls& calls);

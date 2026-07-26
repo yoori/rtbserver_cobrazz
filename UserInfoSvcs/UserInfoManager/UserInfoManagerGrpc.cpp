@@ -497,75 +497,88 @@ namespace AdServer::UserInfoSvcs
           pb::GetSourceRequest,
           pb::GetSourceResponse,
           get_source,
-          co_get_source),
+          co_get_source,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetMasterStampRequest,
           pb::GetMasterStampResponse,
           get_master_stamp,
-          co_get_master_stamp),
+          co_get_master_stamp,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetUserProfileRequest,
           pb::GetUserProfileResponse,
           get_user_profile,
           co_get_user_profile,
+          true,
           &ServiceImpl::hash_get_user_profile),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::MatchRequest,
           pb::MatchResponse,
           match,
           co_match,
+          true,
           &ServiceImpl::hash_match),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::UpdateUserFreqCapsRequest,
           pb::UpdateUserFreqCapsResponse,
           update_user_freq_caps,
           co_update_user_freq_caps,
+          true,
           &ServiceImpl::hash_update_user_freq_caps),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ConfirmUserFreqCapsRequest,
           pb::ConfirmUserFreqCapsResponse,
           confirm_user_freq_caps,
           co_confirm_user_freq_caps,
+          true,
           &ServiceImpl::hash_confirm_user_freq_caps),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::FraudUserRequest,
           pb::FraudUserResponse,
           fraud_user,
           co_fraud_user,
+          true,
           &ServiceImpl::hash_fraud_user),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::RemoveUserProfileRequest,
           pb::RemoveUserProfileResponse,
           remove_user_profile,
           co_remove_user_profile,
+          true,
           &ServiceImpl::hash_remove_user_profile),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::MergeRequest,
           pb::MergeResponse,
           merge,
           co_merge,
+          true,
           &ServiceImpl::hash_merge),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ConsiderPublishersOptinRequest,
           pb::ConsiderPublishersOptinResponse,
           consider_publishers_optin,
           co_consider_publishers_optin,
+          true,
           &ServiceImpl::hash_consider_publishers_optin),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::UimReadyRequest,
           pb::UimReadyResponse,
           uim_ready,
-          co_uim_ready),
+          co_uim_ready,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::GetProgressRequest,
           pb::GetProgressResponse,
           get_progress,
-          co_get_progress),
+          co_get_progress,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ClearExpiredRequest,
           pb::ClearExpiredResponse,
           clear_expired,
-          co_clear_expired));
+          co_clear_expired,
+          true));
     }
 
     AdServer::Grpc::GrpcCoroutine co_get_source(

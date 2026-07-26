@@ -60,7 +60,7 @@ namespace AdServer::Grpc
   void
   GrpcCoroutine::await_suspend(std::coroutine_handle<> continuation)
   {
-    start([continuation](std::exception_ptr) mutable {
+    start([continuation](std::optional<std::exception_ptr>) mutable {
       AdServer::Commons::resume_coroutine(continuation);
     });
   }
@@ -70,7 +70,7 @@ namespace AdServer::Grpc
   {
     if (handle_.promise().exception)
     {
-      std::rethrow_exception(handle_.promise().exception);
+      std::rethrow_exception(*handle_.promise().exception);
     }
   }
 
@@ -98,10 +98,9 @@ namespace AdServer::Grpc
   {
     auto& promise = handle.promise();
     auto completion = std::move(promise.completion);
-    auto exception = promise.exception;
     if (completion)
     {
-      completion(exception);
+      completion(promise.exception);
     }
   }
 
@@ -487,11 +486,30 @@ namespace AdServer::Grpc
     adserver::grpc::BatchResponse& batch_response) const
   {
     const std::size_t max_split = distributed_batch_max_split();
-    if (max_split <= 1 || batch_request.items_size() <= 1)
+    if (batch_request.items_size() <= 1)
     {
       co_await co_handle_batch_request_sequential_(
         batch_request,
         batch_response);
+      co_return;
+    }
+
+    if (max_split <= 1)
+    {
+      if (batch_processing_executor_pool())
+      {
+        co_await co_handle_batch_request_distributed_(
+          batch_request,
+          batch_response,
+          1);
+      }
+      else
+      {
+        co_await co_handle_batch_request_sequential_(
+          batch_request,
+          batch_response);
+      }
+
       co_return;
     }
 
@@ -670,10 +688,18 @@ namespace AdServer::Grpc
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     bool reschedule) const
   {
-    if (reschedule && executor_pool)
+    if (executor_pool)
     {
-      co_await AdServer::Commons::ExecutorPool::reschedule(
-        std::move(executor_pool));
+      if (reschedule)
+      {
+        co_await AdServer::Commons::ExecutorPool::reschedule(
+          std::move(executor_pool));
+      }
+      else
+      {
+        co_await AdServer::Commons::ExecutorPool::yield(
+          std::move(executor_pool));
+      }
     }
 
     for (auto& batch_item : batch_items)

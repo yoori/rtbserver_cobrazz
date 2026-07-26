@@ -31,7 +31,7 @@ namespace AdServer::Commons
     template<std::size_t Index>
     void start_operation_();
 
-    void complete_(std::exception_ptr exception);
+    void complete_(std::optional<std::exception_ptr> exception);
 
   private:
     struct State
@@ -39,7 +39,7 @@ namespace AdServer::Commons
       std::mutex lock;
       std::coroutine_handle<> continuation;
       CoroutineResumeScheduler resume_scheduler;
-      std::exception_ptr exception;
+      std::optional<std::exception_ptr> exception;
       std::size_t remaining = sizeof...(CoroutineTypes);
       bool suspended = false;
     };
@@ -97,7 +97,7 @@ namespace AdServer::Commons
   {
     if(state_->exception)
     {
-      std::rethrow_exception(state_->exception);
+      std::rethrow_exception(std::move(*state_->exception));
     }
 
     return [&]<std::size_t... Indexes>(std::index_sequence<Indexes...>)
@@ -113,7 +113,8 @@ namespace AdServer::Commons
   CoroTuple<CoroutineTypes...>::start_operation_()
   {
     auto& operation = std::get<Index>(operations_);
-    operation.start([this, &operation](std::exception_ptr exception) mutable
+    operation.start(
+      [this, &operation](std::optional<std::exception_ptr> exception) mutable
     {
       if(!exception)
       {
@@ -123,24 +124,25 @@ namespace AdServer::Commons
         }
         catch(...)
         {
-          exception = std::current_exception();
+          exception.emplace(std::current_exception());
         }
       }
 
-      complete_(exception);
+      complete_(std::move(exception));
     });
   }
 
   template<typename... CoroutineTypes>
   void
-  CoroTuple<CoroutineTypes...>::complete_(std::exception_ptr exception)
+  CoroTuple<CoroutineTypes...>::complete_(
+    std::optional<std::exception_ptr> exception)
   {
     bool resume = false;
     {
       std::lock_guard<std::mutex> guard(state_->lock);
       if(exception && !state_->exception)
       {
-        state_->exception = exception;
+        state_->exception = std::move(exception);
       }
 
       if(--state_->remaining == 0)

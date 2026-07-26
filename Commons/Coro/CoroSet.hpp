@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -32,7 +33,7 @@ namespace AdServer::Commons
       std::mutex lock;
       std::coroutine_handle<> continuation;
       CoroutineResumeScheduler resume_scheduler;
-      std::exception_ptr exception;
+      std::optional<std::exception_ptr> exception;
       std::size_t remaining = 0;
       bool suspended = false;
     };
@@ -60,7 +61,7 @@ namespace AdServer::Commons
     std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
-    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    if (const auto* scheduler = current_coroutine_resume_scheduler())
     {
       state_->resume_scheduler = *scheduler;
     }
@@ -68,37 +69,40 @@ namespace AdServer::Commons
 
     for(auto& operation : operations_)
     {
-      operation.start([state = state_](std::exception_ptr exception) mutable {
-        bool resume = false;
+      operation.start(
+        [state = state_](std::optional<std::exception_ptr> exception) mutable
         {
-          std::lock_guard<std::mutex> guard(state->lock);
-          if(exception && !state->exception)
+          bool resume = false;
+
           {
-            state->exception = exception;
+            std::lock_guard<std::mutex> guard(state->lock);
+            if (exception && !state->exception)
+            {
+              state->exception = std::move(exception);
+            }
+
+            if (--state->remaining == 0)
+            {
+              resume = state->suspended;
+            }
           }
 
-          if(--state->remaining == 0)
+          if (resume)
           {
-            resume = state->suspended;
+            if (state->resume_scheduler)
+            {
+              state->resume_scheduler(state->continuation);
+            }
+            else
+            {
+              AdServer::Commons::resume_coroutine(state->continuation);
+            }
           }
-        }
-
-        if(resume)
-        {
-          if(state->resume_scheduler)
-          {
-            state->resume_scheduler(state->continuation);
-          }
-          else
-          {
-            AdServer::Commons::resume_coroutine(state->continuation);
-          }
-        }
-      });
+        });
     }
 
     std::lock_guard<std::mutex> guard(state_->lock);
-    if(state_->remaining == 0)
+    if (state_->remaining == 0)
     {
       return false;
     }
@@ -111,9 +115,9 @@ namespace AdServer::Commons
   void
   CoroSet<CoroutineType, Allocator>::await_resume()
   {
-    if(state_->exception)
+    if (state_->exception)
     {
-      std::rethrow_exception(state_->exception);
+      std::rethrow_exception(std::move(*state_->exception));
     }
   }
 }

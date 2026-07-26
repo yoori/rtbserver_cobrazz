@@ -296,27 +296,32 @@ namespace AdServer::ChannelSvcs
           adserver::channel_svcs::channel_server::MatchRequest,
           adserver::channel_svcs::channel_server::MatchResponse,
           match,
-          co_match),
+          co_match,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::GetCcgTraitsRequest,
           adserver::channel_svcs::channel_server::GetCcgTraitsResponse,
           get_ccg_traits,
-          co_get_ccg_traits),
+          co_get_ccg_traits,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::CheckConfigurationRequest,
           adserver::channel_svcs::channel_server::CheckConfigurationResponse,
           check_configuration,
-          co_check_configuration),
+          co_check_configuration,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::SetSourcesRequest,
           adserver::channel_svcs::channel_server::SetSourcesResponse,
           set_sources,
-          co_set_sources),
+          co_set_sources,
+          true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           adserver::channel_svcs::channel_server::SetProxySourcesRequest,
           adserver::channel_svcs::channel_server::SetProxySourcesResponse,
           set_proxy_sources,
-          co_set_proxy_sources));
+          co_set_proxy_sources,
+          true));
     }
 
     AdServer::Grpc::GrpcCoroutine co_match(

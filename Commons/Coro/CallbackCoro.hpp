@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -61,7 +62,7 @@ namespace AdServer::Commons
       std::mutex lock;
       std::coroutine_handle<> handle;
       StoredResult result;
-      std::exception_ptr exception;
+      std::optional<std::exception_ptr> exception;
       CoroutineResumeScheduler resume_scheduler;
       bool completed = false;
       bool suspended = false;
@@ -113,9 +114,9 @@ namespace AdServer::Commons
             resume = state->suspended;
           }
 
-          if(resume)
+          if (resume)
           {
-            if(state->resume_scheduler)
+            if (state->resume_scheduler)
             {
               state->resume_scheduler(state->handle);
             }
@@ -130,12 +131,12 @@ namespace AdServer::Commons
     catch(...)
     {
       std::lock_guard<std::mutex> guard(state_->lock);
-      state_->exception = std::current_exception();
+      state_->exception.emplace(std::current_exception());
       state_->completed = true;
     }
 
     std::lock_guard<std::mutex> guard(state_->lock);
-    if(state_->completed)
+    if (state_->completed)
     {
       return false;
     }
@@ -148,9 +149,9 @@ namespace AdServer::Commons
   typename CallbackCoro<CallbackArgs...>::Result
   CallbackCoro<CallbackArgs...>::await_resume()
   {
-    if(state_->exception)
+    if (state_->exception)
     {
-      std::rethrow_exception(state_->exception);
+      std::rethrow_exception(std::move(*state_->exception));
     }
 
     if constexpr(sizeof...(CallbackArgs) == 0)
@@ -178,10 +179,7 @@ namespace AdServer::Commons
       ](typename CallbackCoro<CallbackArgs...>::Callback callback)
       mutable
       {
-        std::invoke(
-          std::move(call),
-          std::move(args)...,
-          std::move(callback));
+        std::invoke(std::move(call), std::move(args)..., std::move(callback));
       });
   }
 }

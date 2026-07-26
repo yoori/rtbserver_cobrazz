@@ -140,12 +140,12 @@ namespace AdServer::Grpc
       return true;
     }
 
-    operation_->start([this](std::exception_ptr exception) {
+    operation_->start([this](std::optional<std::exception_ptr> exception) {
       if (exception)
       {
         try
         {
-          std::rethrow_exception(exception);
+          std::rethrow_exception(*exception);
         }
         catch (const std::exception& ex)
         {
