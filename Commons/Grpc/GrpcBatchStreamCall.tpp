@@ -272,7 +272,7 @@ namespace AdServer::Grpc
 
     start_batch_processing_(context);
 
-    if (service_impl_->batch_stream_read_limiter().enabled())
+    if (service_impl_->batch_stream_read_limiter().read_ahead_enabled())
     {
       try_start_read_();
     }

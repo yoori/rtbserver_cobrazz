@@ -1554,7 +1554,6 @@ namespace AdServer::CampaignSvcs
       CampaignManagerCore* core,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::size_t max_batch_split,
-      std::size_t max_batch_requests_in_progress,
       std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
@@ -1911,9 +1910,8 @@ namespace AdServer::CampaignSvcs
     CampaignManagerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::size_t max_batch_split,
-    std::size_t max_batch_requests_in_progress,
     std::shared_ptr<AtomicStats> stats)
-    : Base(max_batch_requests_in_progress),
+    : Base(),
       process_control_service_(*this),
       core_(ReferenceCounting::add_ref(core)),
       executor_pool_(std::move(executor_pool)),
@@ -2902,7 +2900,6 @@ namespace AdServer::CampaignSvcs
           core,
           executor_pool_,
           max_split,
-          std::max<std::size_t>(1, process_threads) * std::max<std::size_t>(1, max_split),
           stats_)))
   {
     add_child_object(executor_pool_);

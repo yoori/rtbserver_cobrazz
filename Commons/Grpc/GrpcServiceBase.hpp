@@ -353,8 +353,23 @@ namespace AdServer::Grpc
     class BatchStreamReadLimiter final
     {
     public:
+      static constexpr std::size_t DEFAULT_MAX_REQUESTS_IN_PROGRESS =
+        16 * 1024;
+
+      struct Options
+      {
+        Options(
+          bool read_ahead_enabled = true,
+          std::size_t max_requests_in_progress =
+            DEFAULT_MAX_REQUESTS_IN_PROGRESS) noexcept;
+
+        bool read_ahead_enabled = true;
+        std::size_t max_requests_in_progress =
+          DEFAULT_MAX_REQUESTS_IN_PROGRESS;
+      };
+
       explicit BatchStreamReadLimiter(
-        std::size_t max_requests_in_progress = 0) noexcept;
+        Options options = {}) noexcept;
 
       class Waiter
       {
@@ -364,7 +379,7 @@ namespace AdServer::Grpc
       };
       using WaiterPtr = std::shared_ptr<Waiter>;
 
-      bool enabled() const noexcept;
+      bool read_ahead_enabled() const noexcept;
 
       bool reserve_read_or_enqueue(WaiterPtr waiter);
       void complete_read_reservation(std::size_t requests) noexcept;
@@ -378,7 +393,9 @@ namespace AdServer::Grpc
       void grant_waiters_(Generics::MonoVector<WaiterPtr>& waiters) noexcept;
 
       mutable std::mutex lock_;
-      std::size_t max_requests_in_progress_ = 0;
+      bool read_ahead_enabled_ = true;
+      std::size_t max_requests_in_progress_ =
+        DEFAULT_MAX_REQUESTS_IN_PROGRESS;
       std::size_t requests_in_progress_ = 0;
       std::size_t read_reservations_ = 0;
       std::deque<WaiterPtr> waiters_;
@@ -399,8 +416,10 @@ namespace AdServer::Grpc
     LifecycleStatsSnapshot lifecycle_stats() const noexcept;
 
   protected:
+    using BatchStreamReadOptions = BatchStreamReadLimiter::Options;
+
     explicit GrpcServiceBase(
-      std::size_t batch_stream_max_requests_in_progress = 0) noexcept;
+      BatchStreamReadOptions batch_stream_read_options = {}) noexcept;
 
     virtual std::size_t registrations_per_queue() const noexcept;
 
@@ -465,7 +484,8 @@ namespace AdServer::Grpc
   private:
     using BatchDispatchFn = std::function<void(
       const adserver::grpc::BatchRequestItem&,
-      adserver::grpc::BatchResponseItem&)>;
+      adserver::grpc::BatchResponseItem&,
+      google::protobuf::Arena&)>;
 
     struct BatchCoroMethod;
 
@@ -490,7 +510,8 @@ namespace AdServer::Grpc
       PreparedBatchCoroItem&)>;
     using BatchCoroDispatchFn = std::function<GrpcCoroutine(
       void*,
-      adserver::grpc::BatchResponseItem&)>;
+      adserver::grpc::BatchResponseItem&,
+      google::protobuf::Arena&)>;
 
     struct BatchCoroMethod
     {
@@ -511,11 +532,13 @@ namespace AdServer::Grpc
     GrpcCoroutine co_handle_batch_lane_(
       Generics::MonoVector<BatchItemContext> batch_items,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-      bool reschedule) const;
+      bool reschedule,
+      google::protobuf::Arena& response_arena) const;
 
     GrpcCoroutine co_handle_batch_item_(
       const adserver::grpc::BatchRequestItem& request_item,
-      adserver::grpc::BatchResponseItem& response_item) const;
+      adserver::grpc::BatchResponseItem& response_item,
+      google::protobuf::Arena& response_arena) const;
 
     bool prepare_batch_coro_item_(
       const BatchCoroMethod& method,
@@ -526,7 +549,8 @@ namespace AdServer::Grpc
 
     GrpcCoroutine co_handle_prepared_batch_coro_item_(
       PreparedBatchCoroItem& coro_item,
-      adserver::grpc::BatchResponseItem& response_item) const;
+      adserver::grpc::BatchResponseItem& response_item,
+      google::protobuf::Arena& response_arena) const;
 
     BatchStreamReadLimiter& batch_stream_read_limiter() noexcept;
 
@@ -569,7 +593,7 @@ namespace AdServer::Grpc
   {
   protected:
     explicit GrpcAsyncServiceBase(
-      std::size_t batch_stream_max_requests_in_progress = 0);
+      BatchStreamReadOptions batch_stream_read_options = {});
 
     template<typename Request, typename Response>
     static GrpcCall<ServiceImplType, AsyncServiceType, Request, Response>

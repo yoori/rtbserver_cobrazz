@@ -151,7 +151,8 @@ namespace AdServer::Grpc
       std::move(full_method),
       [handler = std::forward<Handler>(handler)](
         const adserver::grpc::BatchRequestItem& batch_request,
-        adserver::grpc::BatchResponseItem& batch_response)
+        adserver::grpc::BatchResponseItem& batch_response,
+        google::protobuf::Arena& response_arena)
       {
         google::protobuf::Arena request_arena;
         auto* request = google::protobuf::Arena::CreateMessage<Request>(&request_arena);
@@ -162,7 +163,6 @@ namespace AdServer::Grpc
           return;
         }
 
-        google::protobuf::Arena response_arena;
         auto* response = google::protobuf::Arena::CreateMessage<Response>(&response_arena);
         ::grpc::Status status;
         handler(*request, *response, status);
@@ -219,14 +219,14 @@ namespace AdServer::Grpc
           use_arena_for_response
         ](
           void* request_ptr,
-          adserver::grpc::BatchResponseItem& batch_response)
+          adserver::grpc::BatchResponseItem& batch_response,
+          google::protobuf::Arena& response_arena)
           -> GrpcCoroutine
         {
           auto& request = *static_cast<Request*>(request_ptr);
           ::grpc::Status status;
           if (use_arena_for_response)
           {
-            google::protobuf::Arena response_arena;
             auto* response =
               google::protobuf::Arena::CreateMessage<Response>(&response_arena);
             co_await handler(std::move(request), *response, status);
@@ -334,8 +334,8 @@ namespace AdServer::Grpc
     ServiceImplType,
     ServiceType,
     AsyncServiceType>::GrpcAsyncServiceBase(
-      std::size_t batch_stream_max_requests_in_progress)
-    : GrpcServiceBase(batch_stream_max_requests_in_progress)
+      BatchStreamReadOptions batch_stream_read_options)
+    : GrpcServiceBase(batch_stream_read_options)
   {
     add_grpc_service(&async_service_);
     add_grpc_service(&batch_transport_service_);
