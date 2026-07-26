@@ -692,13 +692,11 @@ namespace AdServer::Grpc
     {
       if (reschedule)
       {
-        co_await AdServer::Commons::ExecutorPool::reschedule(
-          std::move(executor_pool));
+        co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
       }
       else
       {
-        co_await AdServer::Commons::ExecutorPool::yield(
-          std::move(executor_pool));
+        co_await AdServer::Commons::ExecutorPool::yield(std::move(executor_pool));
       }
     }
 
@@ -817,9 +815,7 @@ namespace AdServer::Grpc
   {
     try
     {
-      co_await coro_item.method->dispatch(
-        coro_item.request,
-        response_item);
+      co_await coro_item.method->dispatch(coro_item.request, response_item);
     }
     catch (const std::exception& ex)
     {

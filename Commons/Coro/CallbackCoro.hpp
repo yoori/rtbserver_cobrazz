@@ -1,10 +1,10 @@
 #pragma once
 
+#include <atomic>
 #include <coroutine>
 #include <exception>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <tuple>
 #include <type_traits>
@@ -59,14 +59,22 @@ namespace AdServer::Commons
 
     struct State
     {
-      std::mutex lock;
+      enum class Status
+      {
+        S_RUNNING,
+        S_SUSPENDED,
+        S_COMPLETED
+      };
+
+      std::atomic<Status> status{Status::S_RUNNING};
       std::coroutine_handle<> handle;
       StoredResult result;
       std::optional<std::exception_ptr> exception;
       CoroutineResumeScheduler resume_scheduler;
-      bool completed = false;
-      bool suspended = false;
     };
+
+    static void
+    resume_(const std::shared_ptr<State>& state);
 
     std::shared_ptr<State> state_;
     StartCallback start_callback_;
@@ -94,62 +102,62 @@ namespace AdServer::Commons
   bool
   CallbackCoro<CallbackArgs...>::await_suspend(std::coroutine_handle<> handle)
   {
-    state_->handle = handle;
+    auto state = state_;
+    state->handle = handle;
     if(const auto* scheduler = current_coroutine_resume_scheduler())
     {
-      state_->resume_scheduler = *scheduler;
+      state->resume_scheduler = *scheduler;
     }
 
     try
     {
       start_callback_(
-        [state = state_](CallbackArgs... callback_args) mutable
+        [state](CallbackArgs... callback_args) mutable
         {
-          bool resume = false;
+          state->result = StoredResult(std::forward<CallbackArgs>(callback_args)...);
 
+          const auto previous_status = state->status.exchange(
+            State::Status::S_COMPLETED,
+            std::memory_order_acq_rel);
+          if(previous_status == State::Status::S_SUSPENDED)
           {
-            std::lock_guard<std::mutex> guard(state->lock);
-            state->result = StoredResult(std::forward<CallbackArgs>(callback_args)...);
-            state->completed = true;
-            resume = state->suspended;
-          }
-
-          if (resume)
-          {
-            if (state->resume_scheduler)
-            {
-              state->resume_scheduler(state->handle);
-            }
-            else
-            {
-              resume_coroutine(state->handle);
-            }
+            resume_(state);
           }
         }
       );
     }
     catch(...)
     {
-      std::lock_guard<std::mutex> guard(state_->lock);
-      state_->exception.emplace(std::current_exception());
-      state_->completed = true;
+      state->exception.emplace(std::current_exception());
+      const auto previous_status = state->status.exchange(
+        State::Status::S_COMPLETED,
+        std::memory_order_acq_rel);
+      if(previous_status == State::Status::S_SUSPENDED)
+      {
+        resume_(state);
+      }
     }
 
-    std::lock_guard<std::mutex> guard(state_->lock);
-    if (state_->completed)
+    auto expected_status = State::Status::S_RUNNING;
+    if(state->status.compare_exchange_strong(
+      expected_status,
+      State::Status::S_SUSPENDED,
+      std::memory_order_acq_rel,
+      std::memory_order_acquire))
     {
-      return false;
+      return true;
     }
 
-    state_->suspended = true;
-    return true;
+    return false;
   }
 
   template<typename... CallbackArgs>
   typename CallbackCoro<CallbackArgs...>::Result
   CallbackCoro<CallbackArgs...>::await_resume()
   {
-    if (state_->exception)
+    state_->status.load(std::memory_order_acquire);
+
+    if(state_->exception)
     {
       std::rethrow_exception(std::move(*state_->exception));
     }
@@ -165,6 +173,20 @@ namespace AdServer::Commons
     else
     {
       return std::move(state_->result);
+    }
+  }
+
+  template<typename... CallbackArgs>
+  void
+  CallbackCoro<CallbackArgs...>::resume_(const std::shared_ptr<State>& state)
+  {
+    if(state->resume_scheduler)
+    {
+      state->resume_scheduler(state->handle);
+    }
+    else
+    {
+      resume_coroutine(state->handle);
     }
   }
 

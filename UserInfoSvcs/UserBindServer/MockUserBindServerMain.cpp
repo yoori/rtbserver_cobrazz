@@ -44,6 +44,7 @@ namespace
     out <<
       "Usage: MockUserBindServer [OPTIONS]\n" <<
       "  --grpc-endpoint <host:port|port> gRPC endpoint (default: 0.0.0.0:26528)\n" <<
+      "  --max-split <N> max batch split (default: 1)\n" <<
       "  --response-sleep-ms <N> response sleep in ms (default: 0)\n" <<
       "  SIGUSR1 toggles response sleep between 0 and configured value\n";
   }
@@ -57,10 +58,12 @@ main(int argc, char** argv)
     using namespace Generics::AppUtils;
 
     StringOption opt_grpc_endpoint("0.0.0.0:26528");
+    Option<std::size_t> opt_max_split(1);
     Option<unsigned int> opt_response_sleep_ms(0);
 
     Args args(-1);
     args.add(equal_name("grpc-endpoint") || short_name("g"), opt_grpc_endpoint);
+    args.add(equal_name("max-split"), opt_max_split);
     args.add(equal_name("response-sleep-ms"), opt_response_sleep_ms);
     args.parse(argc - 1, argv + 1);
 
@@ -89,13 +92,14 @@ main(int argc, char** argv)
         endpoint.port,
         128,
         0,
-        1,
+        *opt_max_split,
         response_sleep_ms);
     server->activate_object();
 
     std::cout << "MockUserBindServer listening at " << endpoint.host << ":" <<
       endpoint.port << ", response_sleep_ms=" <<
-      response_sleep_ms->load(std::memory_order_acquire) << std::endl;
+      response_sleep_ms->load(std::memory_order_acquire) <<
+      ", max_split=" << *opt_max_split << std::endl;
 
     for (;;)
     {

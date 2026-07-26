@@ -154,8 +154,7 @@ namespace AdServer::Grpc
         adserver::grpc::BatchResponseItem& batch_response)
       {
         google::protobuf::Arena request_arena;
-        auto* request =
-          google::protobuf::Arena::CreateMessage<Request>(&request_arena);
+        auto* request = google::protobuf::Arena::CreateMessage<Request>(&request_arena);
         if (!request->ParseFromString(batch_request.payload()))
         {
           batch_response.set_status_code(::grpc::StatusCode::INVALID_ARGUMENT);
@@ -164,8 +163,7 @@ namespace AdServer::Grpc
         }
 
         google::protobuf::Arena response_arena;
-        auto* response =
-          google::protobuf::Arena::CreateMessage<Response>(&response_arena);
+        auto* response = google::protobuf::Arena::CreateMessage<Response>(&response_arena);
         ::grpc::Status status;
         handler(*request, *response, status);
 

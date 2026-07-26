@@ -112,6 +112,8 @@ add_executable(MockUserBindServer
 )
 
 target_link_libraries(MockUserBindServer
+  jemalloc
+
   Commons
   UserBindServerGrpc
 )
