@@ -81,89 +81,24 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType>
-  template<typename ResultType>
-  AsyncProfileMap<KeyType>::CallbackAwaitable<ResultType>::CallbackAwaitable(
-    RawAwaitable awaitable)
-    : awaitable_(std::move(awaitable))
-  {}
-
-  template<typename KeyType>
-  template<typename ResultType>
-  bool
-  AsyncProfileMap<KeyType>::CallbackAwaitable<ResultType>::await_ready()
-    const noexcept
-  {
-    return awaitable_.await_ready();
-  }
-
-  template<typename KeyType>
-  template<typename ResultType>
-  bool
-  AsyncProfileMap<KeyType>::CallbackAwaitable<ResultType>::await_suspend(
-    std::coroutine_handle<> handle)
-  {
-    return awaitable_.await_suspend(handle);
-  }
-
-  template<typename KeyType>
-  template<typename ResultType>
-  ResultType
-  AsyncProfileMap<KeyType>::CallbackAwaitable<ResultType>::await_resume()
-  {
-    auto [result, error] = awaitable_.await_resume();
-    if(error)
-    {
-      throw typename ProfileMap<KeyType>::Exception(*error);
-    }
-
-    return std::move(result);
-  }
-
-  template<typename KeyType>
-  AsyncProfileMap<KeyType>::VoidCallbackAwaitable::VoidCallbackAwaitable(
-    RawAwaitable awaitable)
-    : awaitable_(std::move(awaitable))
-  {}
-
-  template<typename KeyType>
-  bool
-  AsyncProfileMap<KeyType>::VoidCallbackAwaitable::await_ready() const noexcept
-  {
-    return awaitable_.await_ready();
-  }
-
-  template<typename KeyType>
-  bool
-  AsyncProfileMap<KeyType>::VoidCallbackAwaitable::await_suspend(
-    std::coroutine_handle<> handle)
-  {
-    return awaitable_.await_suspend(handle);
-  }
-
-  template<typename KeyType>
-  void
-  AsyncProfileMap<KeyType>::VoidCallbackAwaitable::await_resume()
-  {
-    auto error = awaitable_.await_resume();
-    if(error)
-    {
-      throw typename ProfileMap<KeyType>::Exception(*error);
-    }
-  }
-
-  template<typename KeyType>
-  typename AsyncProfileMap<KeyType>::template CallbackAwaitable<bool>
+  AdServer::Commons::Awaitable<bool>
   AsyncProfileMap<KeyType>::co_check_profile(const KeyType& key) const
   {
-    return CallbackAwaitable<bool>(
-      AdServer::Commons::async_callback<
-        bool,
-        std::optional<std::string> >(
-          [this](const KeyType& key, CheckCallback callback)
-          {
-            check_profile_async(key, std::move(callback));
-          },
-          key));
+    auto [result, error] = co_await AdServer::Commons::async_callback<
+      bool,
+      std::optional<std::string> >(
+        [this](const KeyType& key, CheckCallback callback)
+        {
+          check_profile_async(key, std::move(callback));
+        },
+        key);
+
+    if(error)
+    {
+      throw typename ProfileMap<KeyType>::Exception(*error);
+    }
+
+    co_return result;
   }
 
   template<typename KeyType>
@@ -199,57 +134,67 @@ namespace ProfilingCommons
   }
 
   template<typename KeyType>
-  typename AsyncProfileMap<KeyType>::template CallbackAwaitable<
-    Generics::ConstSmartMemBuf_var>
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
   AsyncProfileMap<KeyType>::co_get_profile(
     const KeyType& key,
     std::optional<Generics::Time> last_access_time)
   {
-    return CallbackAwaitable<Generics::ConstSmartMemBuf_var>(
-      AdServer::Commons::async_callback<
-        Generics::ConstSmartMemBuf_var,
-        std::optional<std::string> >(
-          [this](
-            const KeyType& key,
-            std::optional<Generics::Time> last_access_time,
-            GetCallback callback)
-          {
-            get_profile_async(
-              key,
-              std::move(callback),
-              last_access_time);
-          },
-          key,
-          last_access_time));
+    auto [result, error] = co_await AdServer::Commons::async_callback<
+      Generics::ConstSmartMemBuf_var,
+      std::optional<std::string> >(
+        [this](
+          const KeyType& key,
+          std::optional<Generics::Time> last_access_time,
+          GetCallback callback)
+        {
+          get_profile_async(
+            key,
+            std::move(callback),
+            last_access_time);
+        },
+        key,
+        last_access_time);
+
+    if(error)
+    {
+      throw typename ProfileMap<KeyType>::Exception(*error);
+    }
+
+    co_return result;
   }
 
   template<typename KeyType>
-  typename AsyncProfileMap<KeyType>::template CallbackAwaitable<
-    Generics::SmartMemBuf_var>
+  AdServer::Commons::Awaitable<Generics::SmartMemBuf_var>
   AsyncProfileMap<KeyType>::co_get_own_profile(
     const KeyType& key,
     std::optional<Generics::Time> last_access_time)
   {
-    return CallbackAwaitable<Generics::SmartMemBuf_var>(
-      AdServer::Commons::async_callback<
-        Generics::SmartMemBuf_var,
-        std::optional<std::string> >(
-          [this](
-            const KeyType& key,
-            std::optional<Generics::Time> last_access_time,
-            typename AsyncProfileMap<KeyType>::GetOwnCallback callback)
-          {
-            get_own_profile_async(
-              key,
-              std::move(callback),
-              last_access_time);
-          },
-          key,
-          last_access_time));
+    auto [result, error] = co_await AdServer::Commons::async_callback<
+      Generics::SmartMemBuf_var,
+      std::optional<std::string> >(
+        [this](
+          const KeyType& key,
+          std::optional<Generics::Time> last_access_time,
+          typename AsyncProfileMap<KeyType>::GetOwnCallback callback)
+        {
+          get_own_profile_async(
+            key,
+            std::move(callback),
+            last_access_time);
+        },
+        key,
+        last_access_time);
+
+    if(error)
+    {
+      throw typename ProfileMap<KeyType>::Exception(*error);
+    }
+
+    co_return result;
   }
 
   template<typename KeyType>
-  typename AsyncProfileMap<KeyType>::VoidCallbackAwaitable
+  AdServer::Commons::Awaitable<void>
   AsyncProfileMap<KeyType>::co_save_profile(
     const KeyType& key,
     const Generics::ConstSmartMemBuf* mem_buf,
@@ -257,8 +202,8 @@ namespace ProfilingCommons
   {
     Generics::ConstSmartMemBuf_var profile_holder(
       ReferenceCounting::add_ref(mem_buf));
-    return VoidCallbackAwaitable(
-      AdServer::Commons::async_callback<std::optional<std::string> >(
+    auto error = co_await AdServer::Commons::async_callback<
+      std::optional<std::string> >(
         [this](
           const KeyType& key,
           Generics::ConstSmartMemBuf_var profile_holder,
@@ -273,39 +218,52 @@ namespace ProfilingCommons
         },
         key,
         profile_holder,
-        now));
+        now);
+
+    if(error)
+    {
+      throw typename ProfileMap<KeyType>::Exception(*error);
+    }
+
+    co_return;
   }
 
   template<typename KeyType>
-  typename AsyncProfileMap<KeyType>::template CallbackAwaitable<bool>
+  AdServer::Commons::Awaitable<bool>
   AsyncProfileMap<KeyType>::co_remove_profile(
     const KeyType& key,
     OperationPriority op_priority)
   {
-    return CallbackAwaitable<bool>(
-      AdServer::Commons::async_callback<
-        bool,
-        std::optional<std::string> >(
-          [this](
-            const KeyType& key,
-            OperationPriority op_priority,
-            RemoveCallback callback)
-          {
-            remove_profile_async(
-              key,
-              op_priority,
-              std::move(callback));
-          },
-          key,
-          op_priority));
+    auto [result, error] = co_await AdServer::Commons::async_callback<
+      bool,
+      std::optional<std::string> >(
+        [this](
+          const KeyType& key,
+          OperationPriority op_priority,
+          RemoveCallback callback)
+        {
+          remove_profile_async(
+            key,
+            op_priority,
+            std::move(callback));
+        },
+        key,
+        op_priority);
+
+    if(error)
+    {
+      throw typename ProfileMap<KeyType>::Exception(*error);
+    }
+
+    co_return result;
   }
 
   template<typename KeyType>
-  AdServer::Commons::CallbackCoro<>
+  AdServer::Commons::Awaitable<void>
   AsyncProfileMap<KeyType>::co_clear_expired(
     const Generics::Time& expire_time)
   {
-    return AdServer::Commons::async_callback<>(
+    co_await AdServer::Commons::async_callback<>(
       [this](
         const Generics::Time& expire_time,
         CompleteCallback complete)
@@ -315,6 +273,8 @@ namespace ProfilingCommons
           std::move(complete));
       },
       expire_time);
+
+    co_return;
   }
 
   template<typename KeyType>

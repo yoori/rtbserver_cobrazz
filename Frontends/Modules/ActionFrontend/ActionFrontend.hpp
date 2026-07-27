@@ -22,7 +22,7 @@
 #include <Commons/TextTemplateAsyncCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <Frontends/FrontendCommons/ValueTask.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
@@ -213,7 +213,7 @@ namespace AdServer::Action
     };
 
     using ResolveUserIdTask =
-      FrontendCommons::ValueTask<ResolveUserIdResult>;
+      AdServer::Commons::Awaitable<ResolveUserIdResult>;
 
     ResolveUserIdTask
     co_resolve_user_id_(

@@ -31,7 +31,7 @@
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
-#include <Frontends/FrontendCommons/ValueTask.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
@@ -171,7 +171,7 @@ namespace AdServer
       const RequestInfo& request_info)
       noexcept;
 
-    using BoolTask = FrontendCommons::ValueTask<bool>;
+    using BoolTask = AdServer::Commons::Awaitable<bool>;
 
     struct TriggerMatcherResult
     {
@@ -183,7 +183,7 @@ namespace AdServer
     };
 
     using TriggerMatcherTask =
-      FrontendCommons::ValueTask<TriggerMatcherResult>;
+      AdServer::Commons::Awaitable<TriggerMatcherResult>;
 
     struct MergeUsersResult
     {
@@ -192,7 +192,7 @@ namespace AdServer
       std::string error_message;
     };
 
-    using MergeUsersTask = FrontendCommons::ValueTask<MergeUsersResult>;
+    using MergeUsersTask = AdServer::Commons::Awaitable<MergeUsersResult>;
 
     struct UserInfoMatcherResult
     {
@@ -203,7 +203,7 @@ namespace AdServer
     };
 
     using UserInfoMatcherTask =
-      FrontendCommons::ValueTask<UserInfoMatcherResult>;
+      AdServer::Commons::Awaitable<UserInfoMatcherResult>;
 
     BoolTask
     co_acquire_ad_(

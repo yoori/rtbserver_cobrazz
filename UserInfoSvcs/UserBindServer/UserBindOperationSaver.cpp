@@ -23,7 +23,7 @@ namespace AdServer::UserInfoSvcs
       next_processor_(ReferenceCounting::add_ref(next_processor))
   {}
 
-  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
+  AdServer::Commons::StartableAwaitable<UserBindProcessor::UserInfo>
   UserBindOperationSaver::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
@@ -63,7 +63,7 @@ namespace AdServer::UserInfoSvcs
     co_return res;
   }
 
-  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
+  AdServer::Commons::StartableAwaitable<UserBindProcessor::UserInfo>
   UserBindOperationSaver::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,

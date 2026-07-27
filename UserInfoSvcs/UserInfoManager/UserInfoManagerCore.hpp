@@ -20,7 +20,7 @@
 #include <Generics/Time.hpp>
 
 #include <Commons/AccessActiveObject.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
@@ -203,32 +203,32 @@ namespace AdServer::UserInfoSvcs
 
     std::string get_progress() noexcept;
 
-    AdServer::Commons::SyncCoro<bool> co_merge(
+    AdServer::Commons::StartableAwaitable<bool> co_merge(
       const UserInfo& user_info,
       const MatchParams& match_params,
       const UserProfiles& merge_user_profile,
       bool& merge_success,
       Generics::Time& last_request);
 
-    AdServer::Commons::SyncCoro<bool> co_fraud_user(
+    AdServer::Commons::StartableAwaitable<bool> co_fraud_user(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time);
 
-    AdServer::Commons::SyncCoro<bool> co_match(
+    AdServer::Commons::StartableAwaitable<bool> co_match(
       const UserInfo& user_info,
       const MatchParams& match_params,
       MatchResult& match_result);
 
-    AdServer::Commons::SyncCoro<bool> co_get_user_profile(
+    AdServer::Commons::StartableAwaitable<bool> co_get_user_profile(
       const AdServer::Commons::UserId& user_id,
       bool temporary,
       const ProfilesRequest& profile_request,
       UserProfiles& user_profile);
 
-    AdServer::Commons::SyncCoro<bool> co_remove_user_profile(
+    AdServer::Commons::StartableAwaitable<bool> co_remove_user_profile(
       const AdServer::Commons::UserId& user_id);
 
-    AdServer::Commons::SyncCoro<bool> co_update_user_freq_caps(
+    AdServer::Commons::StartableAwaitable<bool> co_update_user_freq_caps(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
       const Generics::Uuid& request_id,
@@ -239,13 +239,13 @@ namespace AdServer::UserInfoSvcs
       const std::vector<unsigned long>& campaign_ids,
       const std::vector<unsigned long>& uc_campaign_ids);
 
-    AdServer::Commons::SyncCoro<bool> co_confirm_user_freq_caps(
+    AdServer::Commons::StartableAwaitable<bool> co_confirm_user_freq_caps(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
       const Generics::Uuid& request_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts);
 
-    AdServer::Commons::SyncCoro<bool> co_consider_publishers_optin(
+    AdServer::Commons::StartableAwaitable<bool> co_consider_publishers_optin(
       const AdServer::Commons::UserId& user_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts,
       const Generics::Time& now);

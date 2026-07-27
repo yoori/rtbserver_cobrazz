@@ -67,7 +67,7 @@ namespace AdServer::UserInfoSvcs
       unsigned int bind_port,
       std::size_t process_threads = 128,
       std::size_t cq_threads = 16,
-      std::size_t max_split = 0);
+      std::size_t max_sequential_ops = 0);
 
     Stats stats() const noexcept;
 
@@ -81,7 +81,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const std::string bind_address_;
-    const std::size_t max_batch_split_;
+    const std::size_t max_sequential_ops_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<StatsCounters> stats_counters_;
     const std::shared_ptr<Impl> impl_;

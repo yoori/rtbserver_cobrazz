@@ -80,7 +80,7 @@ namespace AdServer::UserInfoSvcs
       AdServer::ProfilingCommons::LoadingProgressCallbackBase_var progress_processor_parent)
       /*throw(Exception)*/;
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::StartableAwaitable<bool>
     co_pre_bid_process(
       UserFreqCapProfile::FreqCapIdArray& freq_caps,
       UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
@@ -92,7 +92,7 @@ namespace AdServer::UserInfoSvcs
       bool fill_full_freq_caps,
       const Generics::Time& publishers_optin_timeout);
 
-    virtual AdServer::Commons::SyncCoro<bool> co_update_freq_caps(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_update_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
       const Commons::RequestId& request_id,
@@ -105,14 +105,14 @@ namespace AdServer::UserInfoSvcs
       AdServer::ProfilingCommons::OperationPriority op_priority)
       override;
 
-    virtual AdServer::Commons::SyncCoro<bool> co_confirm_freq_caps(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_confirm_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
       const Commons::RequestId& request_id,
       const std::set<unsigned long>& exclude_pubpixel_accounts)
       override;
 
-    AdServer::Commons::SyncCoro<bool> co_get_user_profile(
+    AdServer::Commons::StartableAwaitable<bool> co_get_user_profile(
       const UserId& user_id,
       bool temporary,
       SmartMemBuf_var* mb_base_profile_out,
@@ -120,18 +120,18 @@ namespace AdServer::UserInfoSvcs
       SmartMemBuf_var* mb_history_profile_out,
       SmartMemBuf_var* mb_fc_profile_out = 0);
 
-    virtual AdServer::Commons::SyncCoro<bool> co_remove_user_profile(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_remove_user_profile(
       const UserId& user_id)
       override;
 
-    virtual AdServer::Commons::SyncCoro<bool> co_exchange_merge(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_exchange_merge(
       const UserId& user_id,
       const Generics::MemBuf& base_profile_buf,
       const Generics::MemBuf& history_profile_buf,
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info)
       override;
 
-    virtual AdServer::Commons::SyncCoro<bool> co_merge(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_merge(
       const RequestMatchParams& request_params,
       const Generics::MemBuf& merge_base_profile,
       Generics::MemBuf& merge_add_profile,
@@ -144,12 +144,12 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0)
       override;
 
-    virtual AdServer::Commons::SyncCoro<bool> co_fraud_user(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_fraud_user(
       const UserId& user_id,
       const Generics::Time& now)
       override;
 
-    virtual AdServer::Commons::SyncCoro<bool> co_match(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_match(
       const RequestMatchParams& request_params,
       long last_colo_id,
       long current_placement_colo_id,
@@ -163,7 +163,7 @@ namespace AdServer::UserInfoSvcs
       UniqueChannelsResult* unique_channels_result = 0)
       override;
 
-    virtual AdServer::Commons::SyncCoro<bool> co_consider_publishers_optin(
+    virtual AdServer::Commons::StartableAwaitable<bool> co_consider_publishers_optin(
       const UserId& user_id,
       const std::set<unsigned long>& publisher_account_ids,
       const Generics::Time& now,

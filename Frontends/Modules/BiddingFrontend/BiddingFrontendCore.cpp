@@ -12,8 +12,8 @@
 #include <google/protobuf/arena.h>
 
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
-#include <Commons/Coro/CoroSet.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/SetAwaitable.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -1068,7 +1068,7 @@ namespace AdServer::Bidding
           };
 
         auto co_get_user_id = [&](std::size_t get_index, bool generate_user_id)
-          -> AdServer::Commons::SyncCoro<bool>
+          -> AdServer::Commons::StartableAwaitable<bool>
           {
             auto& result = user_bind_results[get_index];
 
@@ -1126,14 +1126,14 @@ namespace AdServer::Bidding
           }
           else if (!external_user_ids.empty())
           {
-            std::vector<AdServer::Commons::SyncCoro<bool>> get_operations;
+            std::vector<AdServer::Commons::StartableAwaitable<bool>> get_operations;
             get_operations.reserve(external_user_ids.size());
             for (std::size_t get_index = 0; get_index < external_user_ids.size(); ++get_index)
             {
               get_operations.emplace_back(co_get_user_id(get_index, false));
             }
 
-            co_await AdServer::Commons::CoroSet<AdServer::Commons::SyncCoro<bool>>(
+            co_await AdServer::Commons::SetAwaitable<AdServer::Commons::StartableAwaitable<bool>>(
               std::move(get_operations));
           }
         }

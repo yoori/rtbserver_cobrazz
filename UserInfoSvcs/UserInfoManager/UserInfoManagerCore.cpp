@@ -8,7 +8,7 @@
 
 #include <Generics/DirSelector.hpp>
 
-#include <Commons/Coro/CoroTuple.hpp>
+#include <Commons/Coro/TupleAwaitable.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
 
@@ -522,7 +522,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_update_user_freq_caps(
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& time,
@@ -587,7 +587,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_confirm_user_freq_caps(
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& time,
@@ -626,7 +626,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_consider_publishers_optin(
     const AdServer::Commons::UserId& user_id,
     const std::set<unsigned long>& exclude_pubpixel_accounts,
@@ -700,7 +700,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_get_user_profile(
     const AdServer::Commons::UserId& user_id, bool temporary,
     const ProfilesRequest& profile_request, UserProfiles& user_profile)
@@ -789,7 +789,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_remove_user_profile(
     const AdServer::Commons::UserId& user_id)
   {
@@ -833,7 +833,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_merge(
     const UserInfo& user_info,
     const MatchParams& match_params,
@@ -984,7 +984,7 @@ namespace AdServer::UserInfoSvcs
     co_return merge_success;
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_fraud_user(
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& time)
@@ -1021,7 +1021,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoManagerCore::co_match(
     const UserInfo& user_info,
     const MatchParams& match_params,
@@ -1162,7 +1162,7 @@ namespace AdServer::UserInfoSvcs
         };
 
         auto pre_bid_operation =
-          [&]() -> AdServer::Commons::SyncCoro<PreBidProcessResult>
+          [&]() -> AdServer::Commons::StartableAwaitable<PreBidProcessResult>
         {
           try
           {
@@ -1193,7 +1193,7 @@ namespace AdServer::UserInfoSvcs
         };
 
         auto [unused_match_result, pre_bid_result] =
-          co_await AdServer::Commons::CoroTuple(
+          co_await AdServer::Commons::TupleAwaitable(
             std::move(match_operation),
             pre_bid_operation());
         (void)unused_match_result;

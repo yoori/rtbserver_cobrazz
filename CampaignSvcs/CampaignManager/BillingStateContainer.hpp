@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,7 +10,7 @@
 
 #include <Generics/CompositeActiveObject.hpp>
 
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
@@ -22,6 +23,11 @@ namespace Generics
 namespace Logging
 {
   class Logger;
+}
+
+namespace AdServer::Commons
+{
+  class ExecutorPool;
 }
 
 namespace AdServer::CampaignSvcs
@@ -61,11 +67,13 @@ namespace AdServer::CampaignSvcs
     BillingStateContainer(
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::vector<std::string> billing_server_refs,
+      AdServer::Grpc::BatchingOptions billing_server_batching_options,
       unsigned long max_use_count,
       bool optimize_campaign_ctr);
 
-    AdServer::Commons::SyncCoro<BidCheckResult>
+    AdServer::Commons::Awaitable<BidCheckResult>
     co_check_available_bid(
       const Generics::Time& now,
       unsigned long account_id,
@@ -75,7 +83,7 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& ctr,
       const AvailableAndMinCTRSetter* ccg_setter);
 
-    AdServer::Commons::SyncCoro<BidCheckResult>
+    AdServer::Commons::Awaitable<BidCheckResult>
     co_confirm_bid(
       const Generics::Time& now,
       unsigned long account_id,

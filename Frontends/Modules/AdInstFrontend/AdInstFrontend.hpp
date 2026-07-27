@@ -29,7 +29,7 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/ValueTask.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -140,8 +140,8 @@ namespace AdServer::Instantiate
       std::string error_message;
     };
 
-    using MergeUsersTask = FrontendCommons::ValueTask<MergeUsersResult>;
-    using InstantiateTask = FrontendCommons::ValueTask<int>;
+    using MergeUsersTask = AdServer::Commons::Awaitable<MergeUsersResult>;
+    using InstantiateTask = AdServer::Commons::Awaitable<int>;
 
     MergeUsersTask
     co_merge_users_(

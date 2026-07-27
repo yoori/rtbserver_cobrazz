@@ -374,7 +374,8 @@ main(int argc, char** argv)
               }
 
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result(arena);
-              if(core->co_match(user_info, match_params, match_result).sync_wait())
+              if(AdServer::Commons::sync_wait(
+                core->co_match(user_info, match_params, match_result)))
               {
                 matched.fetch_add(1, std::memory_order_relaxed);
               }

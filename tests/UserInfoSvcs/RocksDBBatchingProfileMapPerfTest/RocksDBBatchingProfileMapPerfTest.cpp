@@ -12,7 +12,7 @@
 
 #include <sys/resource.h>
 
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/Time.hpp>
@@ -142,7 +142,7 @@ namespace
   }
 
   template<typename ProfileMap>
-  AdServer::Commons::SyncCoro<Generics::ConstSmartMemBuf_var>
+  AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
   co_read_profile(
     ProfileMap& profile_map,
     const std::string& key)
@@ -151,7 +151,7 @@ namespace
   }
 
   template<typename ProfileMap>
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   co_write_profile(
     ProfileMap& profile_map,
     const std::string& key,
@@ -216,8 +216,8 @@ main(int argc, char** argv)
 
             try
             {
-              const auto profile =
-                co_read_profile(profile_map, key).sync_wait();
+              const auto profile = AdServer::Commons::sync_wait(
+                co_read_profile(profile_map, key));
               reads.fetch_add(1, std::memory_order_relaxed);
               if(!profile.in())
               {
@@ -226,10 +226,11 @@ main(int argc, char** argv)
 
               const Generics::ConstSmartMemBuf_var new_profile =
                 make_profile(thread_index, operation_index);
-              co_write_profile(
-                profile_map,
-                key,
-                new_profile.in()).sync_wait();
+              AdServer::Commons::sync_wait(
+                co_write_profile(
+                  profile_map,
+                  key,
+                  new_profile.in()));
               writes.fetch_add(1, std::memory_order_relaxed);
             }
             catch(const std::exception& ex)

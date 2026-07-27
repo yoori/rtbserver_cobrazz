@@ -54,7 +54,7 @@ namespace AdServer::UserInfoSvcs
       /*throw(eh::Exception)*/;
 
     // UserBindProcessor impl
-    AdServer::Commons::SyncCoro<UserInfo>
+    AdServer::Commons::StartableAwaitable<UserInfo>
     co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
@@ -63,7 +63,7 @@ namespace AdServer::UserInfoSvcs
       bool ignore_bad_event,
       bool set_cookie_flag) override;
 
-    AdServer::Commons::SyncCoro<UserInfo>
+    AdServer::Commons::StartableAwaitable<UserInfo>
     co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,

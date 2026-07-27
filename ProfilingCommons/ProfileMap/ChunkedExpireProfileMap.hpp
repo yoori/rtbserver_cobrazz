@@ -8,7 +8,7 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 
 /**
  * ChunkedUserMap:
@@ -143,7 +143,7 @@ namespace ProfilingCommons
         typename BaseProfileMap::MaxWaitersReached,
         typename BaseProfileMap::Exception)*/;
 
-    AdServer::Commons::SyncCoro<Transaction_var>
+    AdServer::Commons::StartableAwaitable<Transaction_var>
     co_get_transaction(
       const KeyType& key,
       bool check_max_waiters = true,

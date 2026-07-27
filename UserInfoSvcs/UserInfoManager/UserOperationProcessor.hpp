@@ -12,7 +12,7 @@
 #include <Generics/MemBuf.hpp>
 
 #include <Commons/UserInfoManip.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMap.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/ChannelMatcher.hpp>
@@ -101,19 +101,19 @@ namespace UserInfoSvcs
     };
 
   public:
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_remove_user_profile(
       const UserId& user_id)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
 
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_fraud_user(
       const UserId& user_id,
       const Generics::Time& now)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_match(
       const RequestMatchParams& channel_match_info,
       long last_colo_id,
@@ -128,7 +128,7 @@ namespace UserInfoSvcs
       UniqueChannelsResult* pucr = 0)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_merge(
       const RequestMatchParams& request_params,
       const Generics::MemBuf& merge_base_profile,
@@ -142,7 +142,7 @@ namespace UserInfoSvcs
       UserInfoManagerLogger::HistoryOptimizationInfo* ho_info = 0)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_exchange_merge(
       const UserId& user_id,
       const Generics::MemBuf& base_profile_buf,
@@ -151,7 +151,7 @@ namespace UserInfoSvcs
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
     // user freq caps
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_update_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
@@ -165,7 +165,7 @@ namespace UserInfoSvcs
       AdServer::ProfilingCommons::OperationPriority op_priority)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_confirm_freq_caps(
       const UserId& user_id,
       const Generics::Time& now,
@@ -173,7 +173,7 @@ namespace UserInfoSvcs
       const std::set<unsigned long>& exclude_pubpixel_accounts)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
-    virtual AdServer::Commons::SyncCoro<bool>
+    virtual AdServer::Commons::StartableAwaitable<bool>
     co_consider_publishers_optin(
       const UserId& user_id,
       const std::set<unsigned long>& publisher_account_ids,

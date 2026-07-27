@@ -53,7 +53,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
+  AdServer::Commons::StartableAwaitable<UserBindProcessor::UserInfo>
   UserBindRocksDBChunk::co_add_user_id(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
@@ -76,7 +76,7 @@ namespace AdServer::UserInfoSvcs
       loaded_record ? &*loaded_record : nullptr);
   }
 
-  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
+  AdServer::Commons::StartableAwaitable<UserBindProcessor::UserInfo>
   UserBindRocksDBChunk::co_get_user_id(
     const String::SubString& external_id,
     const Commons::UserId& current_user_id,
@@ -246,7 +246,7 @@ namespace AdServer::UserInfoSvcs
     co_return result;
   }
 
-  AdServer::Commons::SyncCoro<UserBindProcessor::UserInfo>
+  AdServer::Commons::StartableAwaitable<UserBindProcessor::UserInfo>
   UserBindRocksDBChunk::co_add_user_id_i_(
     const String::SubString& external_id,
     const Commons::UserId& user_id,
@@ -359,7 +359,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<
+  AdServer::Commons::StartableAwaitable<
     std::optional<UserBindRocksDBChunk::BoundRecord>>
   UserBindRocksDBChunk::co_load_bound_record_(
     const String::SubString& external_id)
@@ -377,7 +377,7 @@ namespace AdServer::UserInfoSvcs
     co_return std::nullopt;
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserBindRocksDBChunk::co_save_bound_record_(
     const String::SubString& external_id,
     const BoundRecord& record,

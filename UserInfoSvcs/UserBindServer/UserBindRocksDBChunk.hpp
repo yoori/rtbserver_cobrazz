@@ -25,7 +25,7 @@ namespace AdServer::UserInfoSvcs
       std::optional<Generics::Time> bind_min_age,
       unsigned long max_bad_event);
 
-    AdServer::Commons::SyncCoro<UserInfo>
+    AdServer::Commons::StartableAwaitable<UserInfo>
     co_add_user_id(
       const String::SubString& external_id,
       const Commons::UserId& user_id,
@@ -34,7 +34,7 @@ namespace AdServer::UserInfoSvcs
       bool ignore_bad_event,
       bool set_cookie_flag) override;
 
-    AdServer::Commons::SyncCoro<UserInfo>
+    AdServer::Commons::StartableAwaitable<UserInfo>
     co_get_user_id(
       const String::SubString& external_id,
       const Commons::UserId& current_user_id,
@@ -78,17 +78,17 @@ namespace AdServer::UserInfoSvcs
       const Generics::ConstSmartMemBuf* profile)
       const;
 
-    AdServer::Commons::SyncCoro<std::optional<BoundRecord>>
+    AdServer::Commons::StartableAwaitable<std::optional<BoundRecord>>
     co_load_bound_record_(
       const String::SubString& external_id);
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::StartableAwaitable<bool>
     co_save_bound_record_(
       const String::SubString& external_id,
       const BoundRecord& record,
       const Generics::Time& now);
 
-    AdServer::Commons::SyncCoro<UserInfo>
+    AdServer::Commons::StartableAwaitable<UserInfo>
     co_add_user_id_i_(
       const String::SubString& external_id,
       const Commons::UserId& user_id,

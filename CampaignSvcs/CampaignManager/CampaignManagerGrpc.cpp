@@ -3,6 +3,8 @@
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -12,7 +14,6 @@
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 #include <Generics/Time.hpp>
-#include <Logger/ActiveObjectCallback.hpp>
 
 #include <CampaignSvcs/CampaignManager/CampaignManagerGrpc.grpc.pb.h>
 
@@ -1550,11 +1551,11 @@ namespace AdServer::CampaignSvcs
     using AsyncService = pb::CampaignManagerGrpc::AsyncService;
 
   public:
-    ServiceImpl(
-      CampaignManagerCore* core,
-      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-      std::size_t max_batch_split,
-      std::shared_ptr<AtomicStats> stats);
+      ServiceImpl(
+        CampaignManagerCore* core,
+        std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+        std::size_t max_sequential_ops,
+        std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
     {
@@ -1681,111 +1682,118 @@ namespace AdServer::CampaignSvcs
           true));
     }
 
-    AdServer::Grpc::GrpcCoroutine co_ready(
+    AdServer::Commons::StartableAwaitable<void> co_ready(
       pb::ReadyRequest&& request,
       pb::ReadyResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_progress_comment(
+    AdServer::Commons::StartableAwaitable<void> co_progress_comment(
       pb::ProgressCommentRequest&& request,
       pb::ProgressCommentResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_file(
+    AdServer::Commons::StartableAwaitable<void> co_get_file(
       pb::GetFileRequest&& request,
       pb::GetFileResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_campaign_creative(
+    AdServer::Commons::StartableAwaitable<void> co_get_campaign_creative(
       pb::GetCampaignCreativeRequest&& request,
       pb::GetCampaignCreativeResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_process_match_request(
+    AdServer::Commons::StartableAwaitable<void> co_process_match_request(
       pb::ProcessMatchRequestRequest&& request,
       pb::ProcessMatchRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_instantiate_ad(
+    AdServer::Commons::StartableAwaitable<void> co_instantiate_ad(
       pb::InstantiateAdRequest&& request,
       pb::InstantiateAdResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_trace_campaign_selection_index(
+    AdServer::Commons::StartableAwaitable<void> co_trace_campaign_selection_index(
       pb::TraceCampaignSelectionIndexRequest&& request,
       pb::TraceCampaignSelectionIndexResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_campaign_creative_by_ccid(
+    AdServer::Commons::StartableAwaitable<void> co_get_campaign_creative_by_ccid(
       pb::GetCampaignCreativeByCcidRequest&& request,
       pb::GetCampaignCreativeByCcidResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_channel_links(
+    AdServer::Commons::StartableAwaitable<void> co_get_channel_links(
       pb::GetChannelLinksRequest&& request,
       pb::GetChannelLinksResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_category_channels(
+    AdServer::Commons::StartableAwaitable<void> co_get_category_channels(
       pb::GetCategoryChannelsRequest&& request,
       pb::GetCategoryChannelsResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_colocation_flags(
+    AdServer::Commons::StartableAwaitable<void> co_get_colocation_flags(
       pb::GetColocationFlagsRequest&& request,
       pb::GetColocationFlagsResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_pub_pixels(
+    AdServer::Commons::StartableAwaitable<void> co_get_pub_pixels(
       pb::GetPubPixelsRequest&& request,
       pb::GetPubPixelsResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_consider_passback(
+    AdServer::Commons::StartableAwaitable<void> co_consider_passback(
       pb::ConsiderPassbackRequest&& request,
       pb::ConsiderPassbackResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_consider_passback_track(
+    AdServer::Commons::StartableAwaitable<void> co_consider_passback_track(
       pb::ConsiderPassbackTrackRequest&& request,
       pb::ConsiderPassbackTrackResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_click_url(
+    AdServer::Commons::StartableAwaitable<void> co_get_click_url(
       pb::GetClickUrlRequest&& request,
       pb::GetClickUrlResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_verify_impression(
+    AdServer::Commons::StartableAwaitable<void> co_verify_impression(
       pb::VerifyImpressionRequest&& request,
       pb::VerifyImpressionResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_action_taken(
+    AdServer::Commons::StartableAwaitable<void> co_action_taken(
       pb::ActionTakenRequest&& request,
       pb::ActionTakenResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_verify_opt_operation(
+    AdServer::Commons::StartableAwaitable<void> co_verify_opt_operation(
       pb::VerifyOptOperationRequest&& request,
       pb::VerifyOptOperationResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_consider_web_operation(
+    AdServer::Commons::StartableAwaitable<void> co_consider_web_operation(
       pb::ConsiderWebOperationRequest&& request,
       pb::ConsiderWebOperationResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_config(
+    AdServer::Commons::StartableAwaitable<void> co_get_config(
       pb::GetConfigRequest&& request,
       pb::GetConfigResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+    AdServer::Commons::StartableAwaitable<void> co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
 
-    std::size_t distributed_batch_max_split() const noexcept override;
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
+    std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool>
     batch_processing_executor_pool() const noexcept override;
@@ -1887,7 +1895,7 @@ namespace AdServer::CampaignSvcs
     ProcessControlService process_control_service_;
     CampaignManagerCore_var core_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
-    const std::size_t max_batch_split_;
+    const std::size_t max_sequential_ops_;
     const std::shared_ptr<AtomicStats> stats_;
   };
 
@@ -1909,23 +1917,23 @@ namespace AdServer::CampaignSvcs
   CampaignManagerGrpc::ServiceImpl::ServiceImpl(
     CampaignManagerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-    std::size_t max_batch_split,
+    std::size_t max_sequential_ops,
     std::shared_ptr<AtomicStats> stats)
     : Base(),
       process_control_service_(*this),
       core_(ReferenceCounting::add_ref(core)),
       executor_pool_(std::move(executor_pool)),
-      max_batch_split_(std::max<std::size_t>(1, max_batch_split)),
+      max_sequential_ops_(std::max<std::size_t>(1, max_sequential_ops)),
       stats_(std::move(stats))
   {
     add_grpc_service(&process_control_service_);
   }
 
   std::size_t
-  CampaignManagerGrpc::ServiceImpl::distributed_batch_max_split()
+  CampaignManagerGrpc::ServiceImpl::distributed_batch_max_sequential_ops()
     const noexcept
   {
-    return max_batch_split_;
+    return max_sequential_ops_;
   }
 
   std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -1935,7 +1943,7 @@ namespace AdServer::CampaignSvcs
     return executor_pool_;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   CampaignManagerGrpc::ServiceImpl::co_handle_batch_request(
     const adserver::grpc::BatchRequest& batch_request,
     adserver::grpc::BatchResponse& batch_response) const
@@ -1947,6 +1955,34 @@ namespace AdServer::CampaignSvcs
     co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
       batch_request,
       batch_response);
+  }
+
+  void
+  CampaignManagerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
   }
 
   void
@@ -1969,7 +2005,7 @@ namespace AdServer::CampaignSvcs
   }
 
 #define DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(MethodName, RequestType, ResponseType) \
-  AdServer::Grpc::GrpcCoroutine \
+  AdServer::Commons::StartableAwaitable<void> \
   CampaignManagerGrpc::ServiceImpl::co_##MethodName( \
     RequestType&& request, \
     ResponseType& response, \
@@ -2086,7 +2122,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   CampaignManagerGrpc::ServiceImpl::co_get_file(
     pb::GetFileRequest&& request,
     pb::GetFileResponse& response,
@@ -2135,7 +2171,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   CampaignManagerGrpc::ServiceImpl::co_get_campaign_creative(
     pb::GetCampaignCreativeRequest&& request,
     pb::GetCampaignCreativeResponse& response,
@@ -2148,7 +2184,6 @@ namespace AdServer::CampaignSvcs
       stats_->get_campaign_creative_in_progress,
       stats_->get_campaign_creative_total,
       stats_->get_campaign_creative_time);
-
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
     try
@@ -2235,7 +2270,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   CampaignManagerGrpc::ServiceImpl::co_instantiate_ad(
     pb::InstantiateAdRequest&& request,
     pb::InstantiateAdResponse& response,
@@ -2598,7 +2633,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   CampaignManagerGrpc::ServiceImpl::co_get_click_url(
     pb::GetClickUrlRequest&& request,
     pb::GetClickUrlResponse& response,
@@ -2668,7 +2703,7 @@ namespace AdServer::CampaignSvcs
     co_return;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   CampaignManagerGrpc::ServiceImpl::co_verify_impression(
     pb::VerifyImpressionRequest&& request,
     pb::VerifyImpressionResponse& response,
@@ -2875,22 +2910,14 @@ namespace AdServer::CampaignSvcs
   CampaignManagerGrpc::CampaignManagerGrpc(
     CampaignManagerCore* core,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t process_threads,
     std::size_t cq_threads,
-    std::size_t max_split)
+    std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
-      executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
-        Generics::ActiveObjectCallback_var(
-          new Logging::ActiveObjectCallbackImpl(
-            logger,
-            "",
-            campaign_manager_grpc_aspect)),
-        std::max<std::size_t>(1, process_threads),
-        AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
-        "ca:cm-grpc-p")),
+      executor_pool_(std::move(executor_pool)),
       impl_(std::make_shared<Impl>(
         logger,
         campaign_manager_grpc_aspect,
@@ -2899,10 +2926,9 @@ namespace AdServer::CampaignSvcs
         std::make_unique<ServiceImpl>(
           core,
           executor_pool_,
-          max_split,
+          max_sequential_ops,
           stats_)))
   {
-    add_child_object(executor_pool_);
     add_child_object(impl_);
   }
 

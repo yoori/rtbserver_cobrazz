@@ -139,7 +139,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<UserBindServerCore::GetUserResponseInfo>
+  AdServer::Commons::StartableAwaitable<UserBindServerCore::GetUserResponseInfo>
   UserBindServerCore::co_get_user_id(const GetUserRequestInfo& request_info)
   {
     get_user_id_total_requests_.fetch_add(1, std::memory_order_relaxed);
@@ -212,7 +212,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<UserBindServerCore::AddUserResponseInfo>
+  AdServer::Commons::StartableAwaitable<UserBindServerCore::AddUserResponseInfo>
   UserBindServerCore::co_add_user_id(const AddUserRequestInfo& request_info)
   {
     add_user_id_requests_.fetch_add(1, std::memory_order_relaxed);
@@ -247,7 +247,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<UserBindServerCore::BindRequestInfo>
+  AdServer::Commons::StartableAwaitable<UserBindServerCore::BindRequestInfo>
   UserBindServerCore::co_get_bind_request(
     const std::string& id,
     const Generics::Time& timestamp)
@@ -282,7 +282,8 @@ namespace AdServer::UserInfoSvcs
     const std::string& id,
     const Generics::Time& timestamp)
   {
-    return co_get_bind_request(id, timestamp).sync_wait();
+    return AdServer::Commons::sync_wait(
+      co_get_bind_request(id, timestamp));
   }
 
   void

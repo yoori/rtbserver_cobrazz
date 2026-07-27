@@ -24,7 +24,7 @@
 #include <String/StringManip.hpp>
 
 #include <Commons/IPCrypter.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 #include <Commons/SecToken.hpp>
 #include <Commons/TextTemplateAsyncCache.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -45,6 +45,11 @@
 #include "CTRProvider.hpp"
 #include "CTRProviderImpl.hpp"
 #include "BidCostProvider.hpp"
+
+namespace AdServer::Commons
+{
+  class ExecutorPool;
+}
 
 namespace AdServer::CampaignSvcs
 {
@@ -797,6 +802,7 @@ namespace AdServer::CampaignSvcs
       const DomainParser::DomainConfig& domain_config,
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       CampaignManagerLogger* campaign_manager_logger,
       const CreativeInstantiatorTypes::CreativeInstantiate& creative_instantiate,
       const char* campaigns_types)
@@ -805,17 +811,17 @@ namespace AdServer::CampaignSvcs
     BillingStateContainer::Stats
     billing_server_stats() const noexcept;
 
-    AdServer::Commons::SyncCoro<GetAdResult>
+    AdServer::Commons::Awaitable<GetAdResult>
     co_get_campaign_creative(GetAdRequest&& request_params);
 
     void process_match_request(const MatchRequestInfo& match_request_info)
       /*throw(Exception, NotReady)*/;
 
-    AdServer::Commons::SyncCoro<ByteArray>
+    AdServer::Commons::Awaitable<ByteArray>
     co_get_file(std::string file_name)
       /*throw(Exception)*/;
 
-    AdServer::Commons::SyncCoro<InstantiateAdResult>
+    AdServer::Commons::Awaitable<InstantiateAdResult>
     co_instantiate_ad(InstantiateAdRequest&& instantiate_ad_info)
       /*throw(Exception, NotReady)*/;
 
@@ -833,11 +839,11 @@ namespace AdServer::CampaignSvcs
     void consider_passback_track(const PassbackTrackRequest& in)
       /*throw(Exception, NotReady)*/;
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::Awaitable<bool>
     co_get_click_url(const ClickRequest& click_info, ClickResult& click_result_info)
       /*throw(Exception, NotReady)*/;
 
-    AdServer::Commons::SyncCoro<VerifyImpressionResult>
+    AdServer::Commons::Awaitable<VerifyImpressionResult>
     co_verify_impression(const VerifyImpressionRequest& impression_info)
       /*throw(Exception, NotReady)*/;
 
@@ -1093,7 +1099,7 @@ namespace AdServer::CampaignSvcs
       Generics::SubStringHashAdapter, std::string>;
 
   private:
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::Awaitable<bool>
     select_adslot_campaign_creative_(
       AdSelectionResult& ad_selection_result,
       Tag::SizeMap& tag_sizes,
@@ -1128,7 +1134,7 @@ namespace AdServer::CampaignSvcs
       const StringArray& currency_codes)
       const noexcept;
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::Awaitable<bool>
     co_get_adslot_campaign_creative_(
       const Tag*& log_tag,
       bool& log_request_without_tag,
@@ -1155,7 +1161,7 @@ namespace AdServer::CampaignSvcs
       std::string& creative_body)
       /*throw(eh::Exception)*/;
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::Awaitable<bool>
     co_get_site_creative_(
       const CampaignConfig& config,
       const CampaignIndex& config_index,
@@ -1393,7 +1399,7 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& ctr)
       noexcept;
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::Awaitable<bool>
     co_confirm_amounts_(
       const CampaignConfig* config,
       const Generics::Time& now,

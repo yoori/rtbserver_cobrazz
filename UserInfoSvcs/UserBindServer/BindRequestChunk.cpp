@@ -230,7 +230,7 @@ namespace AdServer::UserInfoSvcs
   BindRequestChunk::~BindRequestChunk() noexcept
   {}
 
-  AdServer::Commons::SyncCoro<BindRequestProcessor::BindRequest>
+  AdServer::Commons::StartableAwaitable<BindRequestProcessor::BindRequest>
   BindRequestChunk::co_get_bind_request(
     const String::SubString& external_id,
     const Generics::Time&)
@@ -283,7 +283,8 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now)
     noexcept
   {
-    return co_get_bind_request(external_id, now).sync_wait();
+    return AdServer::Commons::sync_wait(
+      co_get_bind_request(external_id, now));
   }
 
   void

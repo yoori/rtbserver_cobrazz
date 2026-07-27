@@ -452,6 +452,11 @@
         <xsd:documentation></xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="billing_server_grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" default="1000">
+      <xsd:annotation>
+        <xsd:documentation>Max batching delay for BillingServer gRPC client calls.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="CampaignManagerLoggingType">

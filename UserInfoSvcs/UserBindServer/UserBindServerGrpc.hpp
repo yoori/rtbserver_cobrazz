@@ -53,7 +53,7 @@ namespace AdServer::UserInfoSvcs
       unsigned int bind_port,
       std::size_t process_threads = 128,
       std::size_t cq_threads = 16,
-      std::size_t max_split = 0,
+      std::size_t max_sequential_ops = 0,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
     Stats stats() const noexcept;
@@ -69,7 +69,7 @@ namespace AdServer::UserInfoSvcs
     struct AtomicStats;
 
     const std::string bind_address_;
-    const std::size_t max_batch_split_;
+    const std::size_t max_sequential_ops_;
     const std::shared_ptr<AtomicStats> stats_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<Impl> impl_;

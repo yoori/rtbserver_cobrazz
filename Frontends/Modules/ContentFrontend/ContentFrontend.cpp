@@ -4,7 +4,7 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <Commons/PathManip.hpp>
-#include <Frontends/FrontendCommons/TextTemplateTask.hpp>
+#include <Frontends/FrontendCommons/TextTemplateAwaiter.hpp>
 
 #include "ContentFrontend.hpp"
 

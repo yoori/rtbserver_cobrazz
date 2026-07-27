@@ -25,6 +25,7 @@
 #include <google/protobuf/arena.h>
 
 #include <Commons/ActivityGate.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/Grpc/Batch.grpc.pb.h>
 #include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
@@ -100,49 +101,6 @@ namespace AdServer::Grpc
     typename Response>
   class GrpcCoroUnaryCall;
 
-  class GrpcCoroutine
-  {
-  public:
-    struct promise_type;
-    using Handle = std::coroutine_handle<promise_type>;
-    using Completion = std::function<void(std::optional<std::exception_ptr>)>;
-
-    explicit GrpcCoroutine(Handle handle) noexcept;
-    GrpcCoroutine(GrpcCoroutine&& other) noexcept;
-    GrpcCoroutine& operator=(GrpcCoroutine&& other) noexcept;
-    GrpcCoroutine(const GrpcCoroutine&) = delete;
-    GrpcCoroutine& operator=(const GrpcCoroutine&) = delete;
-    ~GrpcCoroutine();
-
-    void start(Completion completion) const;
-    bool await_ready() const noexcept;
-    void await_suspend(std::coroutine_handle<> continuation);
-    void await_resume();
-
-  private:
-    Handle handle_;
-  };
-
-  struct GrpcCoroutine::promise_type
-  {
-    GrpcCoroutine get_return_object() noexcept;
-    std::suspend_always initial_suspend() const noexcept;
-
-    struct FinalAwaiter
-    {
-      bool await_ready() const noexcept;
-      void await_suspend(Handle handle) const noexcept;
-      void await_resume() const noexcept;
-    };
-
-    FinalAwaiter final_suspend() const noexcept;
-    void return_void() const noexcept;
-    void unhandled_exception() noexcept;
-
-    Completion completion;
-    std::optional<std::exception_ptr> exception;
-  };
-
   template<
     typename ServiceImplType,
     typename AsyncServiceType,
@@ -200,7 +158,8 @@ namespace AdServer::Grpc
       ::grpc::CompletionQueue*,
       ::grpc::ServerCompletionQueue*,
       void*);
-    using Handler = GrpcCoroutine (ServiceImplType::*)(
+    using Handler =
+      AdServer::Commons::StartableAwaitable<void> (ServiceImplType::*)(
       Request&&,
       Response&,
       ::grpc::Status&) const;
@@ -300,6 +259,9 @@ namespace AdServer::Grpc
 
   public:
     using CompletionQueues = std::vector<::grpc::ServerCompletionQueue*>;
+    using BatchCompletion =
+      AdServer::Commons::StartableAwaitable<void>::Completion;
+    using BatchProcessingHandle = std::shared_ptr<void>;
 
     struct InprogressStatsSnapshot
     {
@@ -472,11 +434,17 @@ namespace AdServer::Grpc
 
     AdServer::Commons::ActivityGate::Guard enter_grpc_operation() noexcept;
 
-    virtual GrpcCoroutine co_handle_batch_request(
+    virtual AdServer::Commons::StartableAwaitable<void> co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const;
 
-    virtual std::size_t distributed_batch_max_split() const noexcept;
+    virtual void start_handle_batch_request(
+      BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      BatchCompletion completion) const;
+
+    virtual std::size_t distributed_batch_max_sequential_ops() const noexcept;
 
     virtual std::shared_ptr<AdServer::Commons::ExecutorPool>
     batch_processing_executor_pool() const noexcept;
@@ -488,12 +456,14 @@ namespace AdServer::Grpc
       google::protobuf::Arena&)>;
 
     struct BatchCoroMethod;
+    class BatchRequestAwaiter;
 
     struct PreparedBatchCoroItem
     {
       const BatchCoroMethod* method = nullptr;
       void* request = nullptr;
       std::size_t hash = 0;
+      bool hash_present = false;
     };
 
     struct BatchItemContext
@@ -508,10 +478,11 @@ namespace AdServer::Grpc
       adserver::grpc::BatchResponseItem&,
       google::protobuf::Arena&,
       PreparedBatchCoroItem&)>;
-    using BatchCoroDispatchFn = std::function<GrpcCoroutine(
-      void*,
-      adserver::grpc::BatchResponseItem&,
-      google::protobuf::Arena&)>;
+    using BatchCoroDispatchFn = std::function<
+      AdServer::Commons::StartableAwaitable<void>(
+        void*,
+        adserver::grpc::BatchResponseItem&,
+        google::protobuf::Arena&)>;
 
     struct BatchCoroMethod
     {
@@ -520,22 +491,40 @@ namespace AdServer::Grpc
       bool distributed = false;
     };
 
-    GrpcCoroutine co_handle_batch_request_sequential_(
+    AdServer::Commons::StartableAwaitable<void>
+    co_handle_batch_request_sequential_(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const;
 
-    GrpcCoroutine co_handle_batch_request_distributed_(
+    void start_handle_batch_request_i_(
+      BatchProcessingHandle& handle,
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response,
-      std::size_t max_split) const;
+      BatchCompletion completion) const;
 
-    GrpcCoroutine co_handle_batch_lane_(
+    void start_handle_batch_request_sequential_(
+      BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      BatchCompletion completion) const;
+
+    void start_handle_batch_request_distributed_(
+      BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      BatchCompletion completion,
+      std::size_t max_sequential_ops,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool) const;
+
+    AdServer::Commons::StartableAwaitable<void>
+    co_handle_batch_lane_(
       Generics::MonoVector<BatchItemContext> batch_items,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       bool reschedule,
       google::protobuf::Arena& response_arena) const;
 
-    GrpcCoroutine co_handle_batch_item_(
+    AdServer::Commons::StartableAwaitable<void>
+    co_handle_batch_item_(
       const adserver::grpc::BatchRequestItem& request_item,
       adserver::grpc::BatchResponseItem& response_item,
       google::protobuf::Arena& response_arena) const;
@@ -547,7 +536,8 @@ namespace AdServer::Grpc
       google::protobuf::Arena& request_arena,
       PreparedBatchCoroItem& coro_item) const;
 
-    GrpcCoroutine co_handle_prepared_batch_coro_item_(
+    AdServer::Commons::StartableAwaitable<void>
+    co_handle_prepared_batch_coro_item_(
       PreparedBatchCoroItem& coro_item,
       adserver::grpc::BatchResponseItem& response_item,
       google::protobuf::Arena& response_arena) const;

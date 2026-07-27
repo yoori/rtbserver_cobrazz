@@ -11,7 +11,7 @@ namespace AdServer::Grpc
     Request* request = nullptr;
     google::protobuf::Arena response_arena;
     Response* response = nullptr;
-    std::optional<GrpcCoroutine> operation;
+    GrpcServiceBase::BatchProcessingHandle operation_handle;
     std::optional<AdServer::Commons::ActivityGate::Guard> process_guard;
     std::optional<std::uint64_t> inprogress_stats_receiver_id;
     std::size_t items_count = 0;
@@ -268,6 +268,7 @@ namespace AdServer::Grpc
     }
 
     context->items_count = static_cast<std::size_t>(context->request->items_size());
+
     service_impl_->batch_stream_read_limiter().complete_read_reservation(context->items_count);
 
     start_batch_processing_(context);
@@ -357,10 +358,17 @@ namespace AdServer::Grpc
       context->response_arena.Reset();
       context->response = google::protobuf::Arena::CreateMessage<Response>(
         &context->response_arena);
-      context->operation.emplace(
-        service_impl_->co_handle_batch_request(
-          *context->request,
-          *context->response));
+      static_cast<GrpcServiceBase*>(service_impl_)->start_handle_batch_request(
+        context->operation_handle,
+        *context->request,
+        *context->response,
+        [owner = this->shared_from_this(), context](
+          std::optional<std::exception_ptr> exception) mutable
+        {
+          owner->handle_batch_processed_(
+            std::move(context),
+            std::move(exception));
+        });
     }
     catch (...)
     {
@@ -369,16 +377,6 @@ namespace AdServer::Grpc
         std::optional<std::exception_ptr>(std::current_exception()));
       return;
     }
-
-    auto owner = this->shared_from_this();
-    context->operation->start(
-      [owner = std::move(owner), context = std::move(context)](
-        std::optional<std::exception_ptr> exception) mutable
-      {
-        owner->handle_batch_processed_(
-          std::move(context),
-          std::move(exception));
-      });
   }
 
   template<typename ServiceImplType, typename AsyncServiceType>
@@ -610,7 +608,7 @@ namespace AdServer::Grpc
 #endif
     finish_inprogress_stats_(*context);
     context->process_guard.reset();
-    context->operation.reset();
+    context->operation_handle.reset();
     service_impl_->batch_stream_read_limiter().complete_requests(context->items_count);
   }
 

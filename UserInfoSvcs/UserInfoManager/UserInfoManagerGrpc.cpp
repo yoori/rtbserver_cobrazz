@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -455,13 +456,11 @@ namespace AdServer::UserInfoSvcs
     }
 
     std::size_t
-    resolve_max_batch_split_(
-      std::size_t configured,
-      std::size_t process_threads)
+    resolve_max_sequential_ops_(std::size_t configured)
     {
       return std::max<std::size_t>(
         1,
-        configured != 0 ? configured : process_threads);
+        configured != 0 ? configured : 4);
     }
   }
 
@@ -478,13 +477,13 @@ namespace AdServer::UserInfoSvcs
     ServiceImpl(
       UserInfoManagerCorePtr user_info_manager,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-      std::size_t max_batch_split,
+      std::size_t max_sequential_ops,
       std::shared_ptr<StatsCounters> stats_counters)
       : process_control_service_(*this),
         stats_counters_(std::move(stats_counters)),
         user_info_manager_(std::move(user_info_manager)),
         executor_pool_(std::move(executor_pool)),
-        max_batch_split_(max_batch_split)
+        max_sequential_ops_(max_sequential_ops)
     {
       add_grpc_service(&process_control_service_);
     }
@@ -581,74 +580,81 @@ namespace AdServer::UserInfoSvcs
           true));
     }
 
-    AdServer::Grpc::GrpcCoroutine co_get_source(
+    AdServer::Commons::StartableAwaitable<void> co_get_source(
       adserver::user_info_svcs::user_info_manager::GetSourceRequest&&,
       adserver::user_info_svcs::user_info_manager::GetSourceResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_master_stamp(
+    AdServer::Commons::StartableAwaitable<void> co_get_master_stamp(
       adserver::user_info_svcs::user_info_manager::GetMasterStampRequest&&,
       adserver::user_info_svcs::user_info_manager::GetMasterStampResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_user_profile(
+    AdServer::Commons::StartableAwaitable<void> co_get_user_profile(
       adserver::user_info_svcs::user_info_manager::GetUserProfileRequest&& request,
       adserver::user_info_svcs::user_info_manager::GetUserProfileResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_match(
+    AdServer::Commons::StartableAwaitable<void> co_match(
       adserver::user_info_svcs::user_info_manager::MatchRequest&& request,
       adserver::user_info_svcs::user_info_manager::MatchResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_update_user_freq_caps(
+    AdServer::Commons::StartableAwaitable<void> co_update_user_freq_caps(
       adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest&& request,
       adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_confirm_user_freq_caps(
+    AdServer::Commons::StartableAwaitable<void> co_confirm_user_freq_caps(
       adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest&& request,
       adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_fraud_user(
+    AdServer::Commons::StartableAwaitable<void> co_fraud_user(
       adserver::user_info_svcs::user_info_manager::FraudUserRequest&& request,
       adserver::user_info_svcs::user_info_manager::FraudUserResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_remove_user_profile(
+    AdServer::Commons::StartableAwaitable<void> co_remove_user_profile(
       adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest&& request,
       adserver::user_info_svcs::user_info_manager::RemoveUserProfileResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_merge(
+    AdServer::Commons::StartableAwaitable<void> co_merge(
       adserver::user_info_svcs::user_info_manager::MergeRequest&& request,
       adserver::user_info_svcs::user_info_manager::MergeResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_consider_publishers_optin(
+    AdServer::Commons::StartableAwaitable<void> co_consider_publishers_optin(
       adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest&& request,
       adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_uim_ready(
+    AdServer::Commons::StartableAwaitable<void> co_uim_ready(
       adserver::user_info_svcs::user_info_manager::UimReadyRequest&&,
       adserver::user_info_svcs::user_info_manager::UimReadyResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_progress(
+    AdServer::Commons::StartableAwaitable<void> co_get_progress(
       adserver::user_info_svcs::user_info_manager::GetProgressRequest&&,
       adserver::user_info_svcs::user_info_manager::GetProgressResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_clear_expired(
+    AdServer::Commons::StartableAwaitable<void> co_clear_expired(
       adserver::user_info_svcs::user_info_manager::ClearExpiredRequest&& request,
       adserver::user_info_svcs::user_info_manager::ClearExpiredResponse& response,
       grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+    AdServer::Commons::StartableAwaitable<void> co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
+
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
 
   private:
     class ProcessControlService final:
@@ -666,7 +672,7 @@ namespace AdServer::UserInfoSvcs
       const ServiceImpl& owner_;
     };
 
-    std::size_t distributed_batch_max_split() const noexcept override;
+    std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool>
     batch_processing_executor_pool() const noexcept override;
@@ -702,7 +708,7 @@ namespace AdServer::UserInfoSvcs
     std::shared_ptr<StatsCounters> stats_counters_;
     UserInfoManagerCorePtr user_info_manager_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
-    std::size_t max_batch_split_;
+    std::size_t max_sequential_ops_;
   };
 
   UserInfoManagerGrpc::ServiceImpl::ProcessControlService::
@@ -744,7 +750,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_get_source(
     adserver::user_info_svcs::user_info_manager::GetSourceRequest&&,
     adserver::user_info_svcs::user_info_manager::GetSourceResponse& response,
@@ -774,7 +780,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_get_master_stamp(
     adserver::user_info_svcs::user_info_manager::GetMasterStampRequest&&,
     adserver::user_info_svcs::user_info_manager::GetMasterStampResponse& response,
@@ -801,7 +807,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_get_user_profile(
     adserver::user_info_svcs::user_info_manager::GetUserProfileRequest&& request,
     adserver::user_info_svcs::user_info_manager::GetUserProfileResponse& response,
@@ -840,7 +846,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_match(
     adserver::user_info_svcs::user_info_manager::MatchRequest&& request,
     adserver::user_info_svcs::user_info_manager::MatchResponse& response,
@@ -890,7 +896,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_update_user_freq_caps(
     adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest&& request,
     adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsResponse& response,
@@ -934,7 +940,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_confirm_user_freq_caps(
     adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsRequest&& request,
     adserver::user_info_svcs::user_info_manager::ConfirmUserFreqCapsResponse& response,
@@ -973,7 +979,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_fraud_user(
     adserver::user_info_svcs::user_info_manager::FraudUserRequest&& request,
     adserver::user_info_svcs::user_info_manager::FraudUserResponse& response,
@@ -1009,7 +1015,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_remove_user_profile(
     adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest&& request,
     adserver::user_info_svcs::user_info_manager::RemoveUserProfileResponse& response,
@@ -1044,7 +1050,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_merge(
     adserver::user_info_svcs::user_info_manager::MergeRequest&& request,
     adserver::user_info_svcs::user_info_manager::MergeResponse& response,
@@ -1096,7 +1102,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_consider_publishers_optin(
     adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest&& request,
     adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinResponse&,
@@ -1133,7 +1139,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_uim_ready(
     adserver::user_info_svcs::user_info_manager::UimReadyRequest&&,
     adserver::user_info_svcs::user_info_manager::UimReadyResponse& response,
@@ -1148,7 +1154,7 @@ namespace AdServer::UserInfoSvcs
     result_status = grpc::Status::OK;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_get_progress(
     adserver::user_info_svcs::user_info_manager::GetProgressRequest&&,
     adserver::user_info_svcs::user_info_manager::GetProgressResponse& response,
@@ -1163,7 +1169,7 @@ namespace AdServer::UserInfoSvcs
     result_status = grpc::Status::OK;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_clear_expired(
     adserver::user_info_svcs::user_info_manager::ClearExpiredRequest&& request,
     adserver::user_info_svcs::user_info_manager::ClearExpiredResponse&,
@@ -1191,10 +1197,10 @@ namespace AdServer::UserInfoSvcs
   }
 
   std::size_t
-  UserInfoManagerGrpc::ServiceImpl::distributed_batch_max_split()
+  UserInfoManagerGrpc::ServiceImpl::distributed_batch_max_sequential_ops()
     const noexcept
   {
-    return max_batch_split_;
+    return max_sequential_ops_;
   }
 
   std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -1204,7 +1210,7 @@ namespace AdServer::UserInfoSvcs
     return executor_pool_;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserInfoManagerGrpc::ServiceImpl::co_handle_batch_request(
     const adserver::grpc::BatchRequest& batch_request,
     adserver::grpc::BatchResponse& batch_response) const
@@ -1216,6 +1222,34 @@ namespace AdServer::UserInfoSvcs
     co_await AdServer::Grpc::GrpcServiceBase::co_handle_batch_request(
       batch_request,
       batch_response);
+  }
+
+  void
+  UserInfoManagerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<InProgressGuard>(
+      stats_counters_->batch_total,
+      stats_counters_->batch_total_time,
+      stats_counters_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
   }
 
   std::size_t
@@ -1281,9 +1315,10 @@ namespace AdServer::UserInfoSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
-    std::size_t max_split)
+    std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
-      max_batch_split_(resolve_max_batch_split_(max_split, process_threads)),
+      max_sequential_ops_(resolve_max_sequential_ops_(
+        max_sequential_ops)),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
           new Logging::ActiveObjectCallbackImpl(
@@ -1302,7 +1337,7 @@ namespace AdServer::UserInfoSvcs
         std::make_unique<ServiceImpl>(
           std::move(user_info_manager),
           executor_pool_,
-          max_batch_split_,
+          max_sequential_ops_,
           stats_counters_)))
   {
     add_child_object(executor_pool_);

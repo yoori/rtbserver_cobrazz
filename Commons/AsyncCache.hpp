@@ -24,7 +24,7 @@
 namespace AdServer::Commons
 {
   template<typename Cache, typename... Args>
-  class AsyncCacheTask;
+  class AsyncCacheAwaiter;
 
   template<typename Key, typename Value, typename... Args>
   class AsyncCache: public std::enable_shared_from_this<AsyncCache<Key, Value, Args...>>
@@ -71,7 +71,7 @@ namespace AdServer::Commons
     using HolderPtr = std::shared_ptr<Holder>;
     using GetCallback = std::function<void(Value)>;
     using UpdateCallback = std::function<void(HolderPtr)>;
-    using CacheTask = AsyncCacheTask<AsyncCache<Key, Value, Args...>, Args...>;
+    using CacheAwaiter = AsyncCacheAwaiter<AsyncCache<Key, Value, Args...>, Args...>;
     using SyncUpdate = std::function<HolderPtr(
       const Key& key,
       const HolderPtr& old_holder,
@@ -95,13 +95,13 @@ namespace AdServer::Commons
     void
     get_async(const Key& key, GetCallback callback, Args... args) noexcept;
 
-    CacheTask
+    CacheAwaiter
     co_get(
       std::shared_ptr<ExecutorPool> workers,
       Key key,
       Args... args) noexcept;
 
-    CacheTask
+    CacheAwaiter
     co_get(
       Key key,
       Args... args) noexcept;
@@ -193,25 +193,25 @@ namespace AdServer::Commons
   };
 
   template<typename Cache, typename... Args>
-  class AsyncCacheTask
+  class AsyncCacheAwaiter
   {
   public:
     using CachePtr = std::shared_ptr<Cache>;
     using Key = typename Cache::KeyType;
     using Value = typename Cache::ValueType;
 
-    AsyncCacheTask(
+    AsyncCacheAwaiter(
       CachePtr cache,
       std::shared_ptr<ExecutorPool> workers,
       Key key,
       Args... args);
 
-    AsyncCacheTask(const AsyncCacheTask&) = delete;
-    AsyncCacheTask& operator=(const AsyncCacheTask&) = delete;
-    AsyncCacheTask(AsyncCacheTask&&) noexcept = default;
-    AsyncCacheTask& operator=(AsyncCacheTask&&) noexcept = default;
+    AsyncCacheAwaiter(const AsyncCacheAwaiter&) = delete;
+    AsyncCacheAwaiter& operator=(const AsyncCacheAwaiter&) = delete;
+    AsyncCacheAwaiter(AsyncCacheAwaiter&&) noexcept = default;
+    AsyncCacheAwaiter& operator=(AsyncCacheAwaiter&&) noexcept = default;
 
-    ~AsyncCacheTask() noexcept;
+    ~AsyncCacheAwaiter() noexcept;
 
     bool
     await_ready() const noexcept;
@@ -244,10 +244,10 @@ namespace AdServer::Commons
 
   template<typename Cache, typename... Args>
   inline
-  AsyncCacheTask<Cache, Args...>::AsyncCacheTask(
-    typename AsyncCacheTask<Cache, Args...>::CachePtr cache,
+  AsyncCacheAwaiter<Cache, Args...>::AsyncCacheAwaiter(
+    typename AsyncCacheAwaiter<Cache, Args...>::CachePtr cache,
     std::shared_ptr<ExecutorPool> workers,
-    typename AsyncCacheTask<Cache, Args...>::Key key,
+    typename AsyncCacheAwaiter<Cache, Args...>::Key key,
     Args... args)
     : state_(std::make_shared<State>()),
       cache_(std::move(cache)),
@@ -258,7 +258,7 @@ namespace AdServer::Commons
 
   template<typename Cache, typename... Args>
   inline
-  AsyncCacheTask<Cache, Args...>::~AsyncCacheTask() noexcept
+  AsyncCacheAwaiter<Cache, Args...>::~AsyncCacheAwaiter() noexcept
   {
     if (state_)
     {
@@ -270,14 +270,14 @@ namespace AdServer::Commons
 
   template<typename Cache, typename... Args>
   inline bool
-  AsyncCacheTask<Cache, Args...>::await_ready() const noexcept
+  AsyncCacheAwaiter<Cache, Args...>::await_ready() const noexcept
   {
     return false;
   }
 
   template<typename Cache, typename... Args>
   inline bool
-  AsyncCacheTask<Cache, Args...>::await_suspend(std::coroutine_handle<> handle)
+  AsyncCacheAwaiter<Cache, Args...>::await_suspend(std::coroutine_handle<> handle)
   {
     {
       std::lock_guard<std::mutex> guard(state_->lock);
@@ -294,7 +294,7 @@ namespace AdServer::Commons
         [
           state = state_,
           workers = workers_
-        ](typename AsyncCacheTask<Cache, Args...>::Value result) mutable
+        ](typename AsyncCacheAwaiter<Cache, Args...>::Value result) mutable
         {
           auto complete =
             [
@@ -368,8 +368,8 @@ namespace AdServer::Commons
   }
 
   template<typename Cache, typename... Args>
-  inline typename AsyncCacheTask<Cache, Args...>::Value
-  AsyncCacheTask<Cache, Args...>::await_resume()
+  inline typename AsyncCacheAwaiter<Cache, Args...>::Value
+  AsyncCacheAwaiter<Cache, Args...>::await_resume()
   {
     if (state_->exception)
     {
@@ -399,13 +399,13 @@ namespace AdServer::Commons
   {}
 
   template<typename Key, typename Value, typename... Args>
-  inline typename AsyncCache<Key, Value, Args...>::CacheTask
+  inline typename AsyncCache<Key, Value, Args...>::CacheAwaiter
   AsyncCache<Key, Value, Args...>::co_get(
     std::shared_ptr<ExecutorPool> workers,
     Key key,
     Args... args) noexcept
   {
-    return CacheTask(
+    return CacheAwaiter(
       this->shared_from_this(),
       std::move(workers),
       std::move(key),
@@ -413,12 +413,12 @@ namespace AdServer::Commons
   }
 
   template<typename Key, typename Value, typename... Args>
-  inline typename AsyncCache<Key, Value, Args...>::CacheTask
+  inline typename AsyncCache<Key, Value, Args...>::CacheAwaiter
   AsyncCache<Key, Value, Args...>::co_get(
     Key key,
     Args... args) noexcept
   {
-    return CacheTask(
+    return CacheAwaiter(
       this->shared_from_this(),
       std::shared_ptr<ExecutorPool>(),
       std::move(key),

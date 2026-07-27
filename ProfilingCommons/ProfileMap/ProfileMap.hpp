@@ -9,7 +9,8 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <Commons/Coro/CallbackCoro.hpp>
+#include <Commons/Coro/Awaitable.hpp>
+#include <Commons/Coro/CallbackAwaiter.hpp>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -119,52 +120,6 @@ namespace ProfilingCommons
       std::optional<std::string> error)>;
     using CompleteCallback = std::function<void()>;
 
-    template<typename ResultType>
-    class CallbackAwaitable
-    {
-    public:
-      using RawAwaitable = AdServer::Commons::CallbackCoro<
-        ResultType,
-        std::optional<std::string> >;
-
-      explicit
-      CallbackAwaitable(RawAwaitable awaitable);
-
-      bool
-      await_ready() const noexcept;
-
-      bool
-      await_suspend(std::coroutine_handle<> handle);
-
-      ResultType
-      await_resume();
-
-    private:
-      RawAwaitable awaitable_;
-    };
-
-    class VoidCallbackAwaitable
-    {
-    public:
-      using RawAwaitable = AdServer::Commons::CallbackCoro<
-        std::optional<std::string> >;
-
-      explicit
-      VoidCallbackAwaitable(RawAwaitable awaitable);
-
-      bool
-      await_ready() const noexcept;
-
-      bool
-      await_suspend(std::coroutine_handle<> handle);
-
-      void
-      await_resume();
-
-    private:
-      RawAwaitable awaitable_;
-    };
-
     virtual void
     check_profile_async(
       const KeyType& key,
@@ -206,31 +161,31 @@ namespace ProfilingCommons
       CompleteCallback complete = CompleteCallback())
       /*throw(Exception)*/ = 0;
 
-    CallbackAwaitable<bool>
+    AdServer::Commons::Awaitable<bool>
     co_check_profile(const KeyType& key) const;
 
-    CallbackAwaitable<Generics::ConstSmartMemBuf_var>
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
     co_get_profile(
       const KeyType& key,
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
-    CallbackAwaitable<Generics::SmartMemBuf_var>
+    AdServer::Commons::Awaitable<Generics::SmartMemBuf_var>
     co_get_own_profile(
       const KeyType& key,
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
-    VoidCallbackAwaitable
+    AdServer::Commons::Awaitable<void>
     co_save_profile(
       const KeyType& key,
       const Generics::ConstSmartMemBuf* mem_buf,
       const Generics::Time& now = Generics::Time::get_time_of_day());
 
-    CallbackAwaitable<bool>
+    AdServer::Commons::Awaitable<bool>
     co_remove_profile(
       const KeyType& key,
       OperationPriority op_priority = OP_RUNTIME);
 
-    AdServer::Commons::CallbackCoro<>
+    AdServer::Commons::Awaitable<void>
     co_clear_expired(const Generics::Time& expire_time);
   };
 

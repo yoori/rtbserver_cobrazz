@@ -4,6 +4,8 @@
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
+#include <memory>
+#include <optional>
 #include <string>
 #include <unistd.h>
 
@@ -25,13 +27,11 @@ namespace AdServer::ChannelSvcs
     namespace pc = adserver::grpc::process_control;
 
     std::size_t
-    resolve_max_batch_split(
-      std::size_t configured,
-      std::size_t process_threads)
+    resolve_max_sequential_ops(std::size_t configured)
     {
       return std::max<std::size_t>(
         1,
-        configured != 0 ? configured : process_threads);
+        configured != 0 ? configured : 4);
     }
 
     const std::string&
@@ -287,7 +287,7 @@ namespace AdServer::ChannelSvcs
       ChannelServerCorePtr core,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::shared_ptr<AtomicStats> stats,
-      std::size_t max_split);
+      std::size_t max_sequential_ops);
 
     static auto grpc_calls()
     {
@@ -324,36 +324,43 @@ namespace AdServer::ChannelSvcs
           true));
     }
 
-    AdServer::Grpc::GrpcCoroutine co_match(
+    AdServer::Commons::StartableAwaitable<void> co_match(
       adserver::channel_svcs::channel_server::MatchRequest&& request,
       adserver::channel_svcs::channel_server::MatchResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_ccg_traits(
+    AdServer::Commons::StartableAwaitable<void> co_get_ccg_traits(
       adserver::channel_svcs::channel_server::GetCcgTraitsRequest&& request,
       adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_check_configuration(
+    AdServer::Commons::StartableAwaitable<void> co_check_configuration(
       adserver::channel_svcs::channel_server::CheckConfigurationRequest&& request,
       adserver::channel_svcs::channel_server::CheckConfigurationResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_set_sources(
+    AdServer::Commons::StartableAwaitable<void> co_set_sources(
       adserver::channel_svcs::channel_server::SetSourcesRequest&& request,
       adserver::channel_svcs::channel_server::SetSourcesResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_set_proxy_sources(
+    AdServer::Commons::StartableAwaitable<void> co_set_proxy_sources(
       adserver::channel_svcs::channel_server::SetProxySourcesRequest&& request,
       adserver::channel_svcs::channel_server::SetProxySourcesResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+    AdServer::Commons::StartableAwaitable<void> co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
 
-    std::size_t distributed_batch_max_split() const noexcept override;
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
+    std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool>
     batch_processing_executor_pool() const noexcept override;
@@ -393,7 +400,7 @@ namespace AdServer::ChannelSvcs
     ChannelServerCorePtr core_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     const std::shared_ptr<AtomicStats> stats_;
-    const std::size_t max_batch_split_;
+    const std::size_t max_sequential_ops_;
   };
 
   ChannelServerGrpc::ServiceImpl::ProcessControlService::
@@ -433,17 +440,17 @@ namespace AdServer::ChannelSvcs
     ChannelServerCorePtr core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::shared_ptr<AtomicStats> stats,
-    std::size_t max_split)
+    std::size_t max_sequential_ops)
     : process_control_service_(*this),
       core_(std::move(core)),
       executor_pool_(std::move(executor_pool)),
       stats_(std::move(stats)),
-      max_batch_split_(max_split)
+      max_sequential_ops_(max_sequential_ops)
   {
     add_grpc_service(&process_control_service_);
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   ChannelServerGrpc::ServiceImpl::co_handle_batch_request(
     const adserver::grpc::BatchRequest& batch_request,
     adserver::grpc::BatchResponse& batch_response) const
@@ -457,10 +464,38 @@ namespace AdServer::ChannelSvcs
       batch_response);
   }
 
-  std::size_t
-  ChannelServerGrpc::ServiceImpl::distributed_batch_max_split() const noexcept
+  void
+  ChannelServerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
   {
-    return max_batch_split_;
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
+  std::size_t
+  ChannelServerGrpc::ServiceImpl::distributed_batch_max_sequential_ops() const noexcept
+  {
+    return max_sequential_ops_;
   }
 
   std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -542,7 +577,7 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   ChannelServerGrpc::ServiceImpl::co_match(
     adserver::channel_svcs::channel_server::MatchRequest&& request,
     adserver::channel_svcs::channel_server::MatchResponse& response,
@@ -603,7 +638,7 @@ namespace AdServer::ChannelSvcs
     co_return;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   ChannelServerGrpc::ServiceImpl::co_get_ccg_traits(
     adserver::channel_svcs::channel_server::GetCcgTraitsRequest&& request,
     adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response,
@@ -652,7 +687,7 @@ namespace AdServer::ChannelSvcs
     co_return;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   ChannelServerGrpc::ServiceImpl::co_check_configuration(
     adserver::channel_svcs::channel_server::CheckConfigurationRequest&&,
     adserver::channel_svcs::channel_server::CheckConfigurationResponse& response,
@@ -668,7 +703,7 @@ namespace AdServer::ChannelSvcs
     co_return;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   ChannelServerGrpc::ServiceImpl::co_set_sources(
     adserver::channel_svcs::channel_server::SetSourcesRequest&& request,
     adserver::channel_svcs::channel_server::SetSourcesResponse&,
@@ -719,7 +754,7 @@ namespace AdServer::ChannelSvcs
     co_return;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   ChannelServerGrpc::ServiceImpl::co_set_proxy_sources(
     adserver::channel_svcs::channel_server::SetProxySourcesRequest&& request,
     adserver::channel_svcs::channel_server::SetProxySourcesResponse&,
@@ -795,7 +830,7 @@ namespace AdServer::ChannelSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
-    std::size_t max_split)
+    std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
@@ -816,7 +851,7 @@ namespace AdServer::ChannelSvcs
           std::move(core),
           executor_pool_,
           stats_,
-          resolve_max_batch_split(max_split, process_threads))))
+          resolve_max_sequential_ops(max_sequential_ops))))
   {
     add_child_object(executor_pool_);
     add_child_object(impl_);

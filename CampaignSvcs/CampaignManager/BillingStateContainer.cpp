@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <iostream>
 #include <map>
 #include <stdexcept>
 
@@ -10,7 +11,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
-#include <Commons/Coro/CallbackCoro.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Generics/Rand.hpp>
@@ -68,6 +68,46 @@ namespace AdServer::CampaignSvcs
     }
 
     void
+    log_billing_server_grpc_error_(
+      Logging::Logger* logger,
+      const char* fun,
+      unsigned long service_index,
+      const std::string& endpoint,
+      const grpc::Status& status)
+    {
+      Stream::Error ostr;
+      ostr << fun << ": BillingServer gRPC call failed by service index #" <<
+        service_index << ", endpoint=" << endpoint <<
+        ", code=" << status.error_code() <<
+        ", message=" << status.error_message();
+      logger->log(
+        ostr.str(),
+        status.error_code() == grpc::StatusCode::UNAVAILABLE ?
+          Logging::Logger::NOTICE :
+          Logging::Logger::EMERGENCY,
+        Aspect::BILLING_STATE_CONTAINER,
+        "ADS-ICON-4003");
+    }
+
+    void
+    log_billing_server_exception_(
+      Logging::Logger* logger,
+      const char* fun,
+      unsigned long service_index,
+      const std::string& endpoint,
+      const char* what)
+    {
+      Stream::Error ostr;
+      ostr << fun << ": BillingServer gRPC call failed by service index #" <<
+        service_index << ", endpoint=" << endpoint << ": " << what;
+      logger->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::BILLING_STATE_CONTAINER,
+        "ADS-ICON-4003");
+    }
+
+    void
     merge_grpc_stats_(
       AdServer::Grpc::Stats& result,
       const AdServer::Grpc::Stats& source) noexcept
@@ -101,9 +141,9 @@ namespace AdServer::CampaignSvcs
       result.draining_streams += source.draining_streams;
       result.deferred_streams += source.deferred_streams;
 
-      if(source.consumer_stream_write.has_value())
+      if (source.consumer_stream_write.has_value())
       {
-        if(!result.consumer_stream_write.has_value())
+        if (!result.consumer_stream_write.has_value())
         {
           result.consumer_stream_write =
             AdServer::Grpc::Stats::ConsumerStreamWrite();
@@ -136,7 +176,7 @@ namespace AdServer::CampaignSvcs
       Stream::Error ostr;
       ostr << "check_available_bid request params: service_index=" <<
         service_index;
-      if(reason)
+      if (reason)
       {
         ostr << ", reason=" << reason;
       }
@@ -164,7 +204,7 @@ namespace AdServer::CampaignSvcs
     {
       Stream::Error ostr;
       ostr << "confirm_bid request params: service_index=" << service_index;
-      if(reason)
+      if (reason)
       {
         ostr << ", reason=" << reason;
       }
@@ -222,11 +262,55 @@ namespace AdServer::CampaignSvcs
 
     using CCGServerSwitchTimeArray = std::deque<CCGServerSwitchTime>;
 
+    class BillingServerClient final : public Generics::CompositeActiveObject
+    {
+    public:
+      BillingServerClient(
+        const std::string& endpoint,
+        std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+        std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+          coalesce_runner,
+        std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+        const AdServer::Grpc::BatchingOptions& batching_options)
+        : async_client_(
+            std::make_shared<BillingServerGrpcAsyncBatchingClient>(
+              endpoint,
+              std::move(grpc_executor),
+              std::move(coalesce_runner),
+              batching_options)),
+          coro_client_(async_client_, std::move(executor_pool))
+      {
+        add_child_object(async_client_);
+      }
+
+      AdServer::Grpc::Stats
+      stats() const noexcept
+      {
+        return static_cast<const AdServer::Grpc::Client&>(*async_client_).stats();
+      }
+
+      BillingServerGrpcCoroClient::CheckAvailableBidAwaiter
+      co_check_available_bid(const Proto::CheckBidRequest& request)
+      {
+        return coro_client_.co_check_available_bid(request);
+      }
+
+      BillingServerGrpcCoroClient::ConfirmBidAwaiter
+      co_confirm_bid(const Proto::ConfirmBidRequest& request)
+      {
+        return coro_client_.co_confirm_bid(request);
+      }
+
+    private:
+      std::shared_ptr<BillingServerGrpcAsyncBatchingClient> async_client_;
+      BillingServerGrpcCoroClient coro_client_;
+    };
+
     struct BillingServerDescr
     {
       BillingServerDescr(
         std::string endpoint_val,
-        std::shared_ptr<BillingServerGrpcAsyncBatchingClient> client_val)
+        std::shared_ptr<BillingServerClient> client_val)
         : endpoint(std::move(endpoint_val)),
           client(std::move(client_val))
       {}
@@ -237,7 +321,7 @@ namespace AdServer::CampaignSvcs
       operator=(BillingServerDescr&& init) noexcept = default;
 
       std::string endpoint;
-      std::shared_ptr<BillingServerGrpcAsyncBatchingClient> client;
+      std::shared_ptr<BillingServerClient> client;
     };
 
     using BillingServerDescrArray = std::vector<BillingServerDescr>;
@@ -249,11 +333,13 @@ namespace AdServer::CampaignSvcs
       BillingStateContainer& owner,
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       std::vector<std::string> billing_server_refs,
+      AdServer::Grpc::BatchingOptions billing_server_batching_options,
       unsigned long max_use_count,
       bool optimize_campaign_ctr);
 
-    AdServer::Commons::SyncCoro<BidCheckResult>
+    AdServer::Commons::Awaitable<BidCheckResult>
     co_check_available_bid(
       const Generics::Time& now,
       unsigned long account_id,
@@ -263,7 +349,7 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& ctr,
       const AvailableAndMinCTRSetter* ccg_setter);
 
-    AdServer::Commons::SyncCoro<BidCheckResult>
+    AdServer::Commons::Awaitable<BidCheckResult>
     co_confirm_bid(
       const Generics::Time& now,
       unsigned long account_id,
@@ -306,15 +392,6 @@ namespace AdServer::CampaignSvcs
       const DisabledIndexMap* disabled_indexes,
       const AvailableAndMinCTRSetter* ccg_setter)
       noexcept;
-
-    template<typename CallResultType,
-      typename CallType,
-      typename CallArgType>
-    AdServer::Commons::SyncCoro<AdServer::Grpc::ResponseHolder<CallResultType>>
-    co_billing_server_call_(
-      unsigned long service_index,
-      CallType call,
-      CallArgType&& call_arg);
 
     void
     fill_planned_server_switch_time_(
@@ -385,7 +462,9 @@ namespace AdServer::CampaignSvcs
     BillingStateContainer& owner,
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::vector<std::string> billing_server_refs,
+    AdServer::Grpc::BatchingOptions billing_server_batching_options,
     unsigned long max_use_count,
     bool optimize_campaign_ctr)
     : owner_(owner),
@@ -411,15 +490,22 @@ namespace AdServer::CampaignSvcs
 
     assert(max_try_count_ > 0);
     assert(!billing_server_refs.empty());
+    if (!executor_pool)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": executor_pool is null";
+      throw BillingStateContainer::Exception(ostr);
+    }
 
     for(auto& endpoint : billing_server_refs)
     {
-      auto client = std::make_shared<BillingServerGrpcAsyncBatchingClient>(
+      auto client = std::make_shared<BillingServerClient>(
         endpoint,
         grpc_executor_,
         coalesce_runner_,
-        AdServer::Grpc::BatchingOptions());
-      billing_servers_.emplace_back(std::move(endpoint), client);
+        executor_pool,
+        billing_server_batching_options);
+      billing_servers_.emplace_back(std::move(endpoint), std::move(client));
     }
 
     try
@@ -449,21 +535,25 @@ namespace AdServer::CampaignSvcs
   BillingStateContainer::BillingStateContainer(
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     std::vector<std::string> billing_server_refs,
+    AdServer::Grpc::BatchingOptions billing_server_batching_options,
     unsigned long max_use_count,
     bool optimize_campaign_ctr)
     : impl_(std::make_unique<Impl>(
         *this,
         callback,
         logger,
+        std::move(executor_pool),
         std::move(billing_server_refs),
+        std::move(billing_server_batching_options),
         max_use_count,
         optimize_campaign_ctr))
   {}
 
   BillingStateContainer::~BillingStateContainer() noexcept = default;
 
-  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::Awaitable<BillingStateContainer::BidCheckResult>
   BillingStateContainer::co_check_available_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -483,7 +573,7 @@ namespace AdServer::CampaignSvcs
       ccg_setter);
   }
 
-  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::Awaitable<BillingStateContainer::BidCheckResult>
   BillingStateContainer::co_confirm_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -546,10 +636,9 @@ namespace AdServer::CampaignSvcs
   BillingStateContainer::Impl::clear_cache() noexcept
   {
     CCGStateMap old_cache;
-    {
-      SyncPolicy::WriteGuard lock(lock_);
-      cache_.swap(old_cache);
-    }
+
+    SyncPolicy::WriteGuard lock(lock_);
+    cache_.swap(old_cache);
   }
 
   BillingStateContainer::Stats
@@ -560,8 +649,7 @@ namespace AdServer::CampaignSvcs
 
     for(const auto& billing_server : billing_servers_)
     {
-      const auto stats = static_cast<const AdServer::Grpc::Client&>(
-        *billing_server.client).stats();
+      const auto stats = billing_server.client->stats();
       merge_grpc_stats_(result.total, stats);
       result.endpoints.emplace_back(billing_server.endpoint, stats);
     }
@@ -569,7 +657,7 @@ namespace AdServer::CampaignSvcs
     return result;
   }
 
-  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::Awaitable<BillingStateContainer::BidCheckResult>
   BillingStateContainer::Impl::co_check_available_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -579,6 +667,8 @@ namespace AdServer::CampaignSvcs
     const RevenueDecimal& ctr,
     const AvailableAndMinCTRSetter* ccg_setter)
   {
+    static const char* FUN = "BillingStateContainer::Impl::co_check_available_bid()";
+
     google::protobuf::Arena request_arena;
     auto* check_bid_info = google::protobuf::Arena::CreateMessage<
       Proto::CheckBidRequest>(&request_arena);
@@ -608,7 +698,7 @@ namespace AdServer::CampaignSvcs
       ctr,
       optimize_campaign_ctr_);
 
-    while(true)
+    while (true)
     {
       long res_service_index = get_service_index_(
         nullptr,
@@ -617,7 +707,7 @@ namespace AdServer::CampaignSvcs
         nullptr,
         ccg_setter);
 
-      if(res_service_index == -1)
+      if (res_service_index == -1)
       {
         billing_request_params = check_available_bid_request_params_(
           res_service_index,
@@ -634,7 +724,7 @@ namespace AdServer::CampaignSvcs
         break;
       }
 
-      if(try_i >= max_try_count_)
+      if (try_i >= max_try_count_)
       {
         break;
       }
@@ -652,13 +742,47 @@ namespace AdServer::CampaignSvcs
         ctr,
         optimize_campaign_ctr_);
 
-      auto check_available_bid_result =
-        co_await co_billing_server_call_<Proto::BidResultResponse>(
-        res_service_index,
-        &BillingServerGrpcAsyncClient::check_available_bid,
-        *check_bid_info);
+      AdServer::Grpc::ResponseHolder<Proto::BidResultResponse> check_available_bid_result;
+      const BillingServerDescr& billing_server = billing_servers_[res_service_index];
+      try
+      {
+        auto call_result = co_await billing_server.client->co_check_available_bid(
+          *check_bid_info);
 
-      if(DEBUG_BILLING_SERVER_CALL_)
+        if (!call_result.status.ok())
+        {
+          log_billing_server_grpc_error_(
+            logger_.in(),
+            FUN,
+            res_service_index,
+            billing_server.endpoint,
+            call_result.status);
+        }
+        else
+        {
+          check_available_bid_result = std::move(call_result.response_holder);
+        }
+      }
+      catch(const eh::Exception& ex)
+      {
+        log_billing_server_exception_(
+          logger_.in(),
+          FUN,
+          res_service_index,
+          billing_server.endpoint,
+          ex.what());
+      }
+      catch(...)
+      {
+        log_billing_server_exception_(
+          logger_.in(),
+          FUN,
+          res_service_index,
+          billing_server.endpoint,
+          "unknown exception");
+      }
+
+      if (DEBUG_BILLING_SERVER_CALL_)
       {
         std::cerr << "check_available_bid call (server #" << res_service_index <<
           "): success_called = " << static_cast<bool>(check_available_bid_result) <<
@@ -668,13 +792,11 @@ namespace AdServer::CampaignSvcs
             false) << std::endl;
       }
 
-      if(!check_available_bid_result ||
-        !check_available_bid_result->available())
+      if (!check_available_bid_result || !check_available_bid_result->available())
       {
         SyncPolicy::WriteGuard lock(lock_);
-        cache_[ccg_id].disabled_indexes.insert(
-          std::make_pair(res_service_index, now));
-        if(!check_available_bid_result)
+        cache_[ccg_id].disabled_indexes.emplace(res_service_index, now);
+        if (!check_available_bid_result)
         {
           some_call_failed = true;
         }
@@ -682,8 +804,7 @@ namespace AdServer::CampaignSvcs
       else
       {
         available = true;
-        goal_ctr = unpack_revenue_decimal_(
-          check_available_bid_result->goal_ctr());
+        goal_ctr = unpack_revenue_decimal_(check_available_bid_result->goal_ctr());
         break;
       }
 
@@ -691,7 +812,7 @@ namespace AdServer::CampaignSvcs
     }
 
     const bool deactivate_ccg = full_deactivation_check;
-    if(deactivate_ccg)
+    if (deactivate_ccg)
     {
       (void)some_call_failed;
     }
@@ -704,7 +825,7 @@ namespace AdServer::CampaignSvcs
     result.available = available;
     result.goal_ctr = goal_ctr;
 
-    if(deactivate_ccg)
+    if (deactivate_ccg)
     {
       ccg_set_available_(
         ccg_setter,
@@ -718,7 +839,7 @@ namespace AdServer::CampaignSvcs
     co_return result;
   }
 
-  AdServer::Commons::SyncCoro<BillingStateContainer::BidCheckResult>
+  AdServer::Commons::Awaitable<BillingStateContainer::BidCheckResult>
   BillingStateContainer::Impl::co_confirm_bid(
     const Generics::Time& now,
     unsigned long account_id,
@@ -732,6 +853,8 @@ namespace AdServer::CampaignSvcs
     const ImpRevenueDecimal& clicks,
     const AvailableAndMinCTRSetter* ccg_setter)
   {
+    static const char* FUN = "BillingStateContainer::Impl::co_confirm_bid()";
+
     google::protobuf::Arena request_arena;
     auto* confirm_bid_info = google::protobuf::Arena::CreateMessage<
       Proto::ConfirmBidInfo>(&request_arena);
@@ -745,11 +868,9 @@ namespace AdServer::CampaignSvcs
       ctr,
       optimize_campaign_ctr_);
 
-    confirm_bid_info->set_account_spent_budget(
-      GrpcAlgs::pack_decimal(account_spent_amount));
+    confirm_bid_info->set_account_spent_budget(GrpcAlgs::pack_decimal(account_spent_amount));
     confirm_bid_info->set_spent_budget(GrpcAlgs::pack_decimal(spent_amount));
-    confirm_bid_info->set_reserved_budget(
-      GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
+    confirm_bid_info->set_reserved_budget(GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
     confirm_bid_info->set_imps(GrpcAlgs::pack_decimal(imps));
     confirm_bid_info->set_clicks(GrpcAlgs::pack_decimal(clicks));
     confirm_bid_info->set_forced(false);
@@ -759,7 +880,7 @@ namespace AdServer::CampaignSvcs
     RevenueDecimal goal_ctr = RevenueDecimal::ZERO;
     std::string billing_request_params;
 
-    while(true)
+    while (true)
     {
       long res_service_index = get_service_index_(
         nullptr,
@@ -768,9 +889,9 @@ namespace AdServer::CampaignSvcs
         confirm_bid_info->forced() ? &bad_indexes : nullptr,
         nullptr);
 
-      if(res_service_index == -1)
+      if (res_service_index == -1)
       {
-        if(confirm_bid_info->forced())
+        if (confirm_bid_info->forced())
         {
           billing_request_params = confirm_bid_request_params_(
             res_service_index,
@@ -804,13 +925,45 @@ namespace AdServer::CampaignSvcs
         ctr,
         *confirm_bid_info);
 
-      auto confirm_bid_response =
-        co_await co_billing_server_call_<Proto::ConfirmBidResponse>(
-        res_service_index,
-        &BillingServerGrpcAsyncClient::confirm_bid,
-        *confirm_bid_request);
+      AdServer::Grpc::ResponseHolder<Proto::ConfirmBidResponse> confirm_bid_response;
+      const BillingServerDescr& billing_server = billing_servers_[res_service_index];
+      try
+      {
+        auto call_result = co_await billing_server.client->co_confirm_bid(*confirm_bid_request);
+        if (!call_result.status.ok())
+        {
+          log_billing_server_grpc_error_(
+            logger_.in(),
+            FUN,
+            res_service_index,
+            billing_server.endpoint,
+            call_result.status);
+        }
+        else
+        {
+          confirm_bid_response = std::move(call_result.response_holder);
+        }
+      }
+      catch(const eh::Exception& ex)
+      {
+        log_billing_server_exception_(
+          logger_.in(),
+          FUN,
+          res_service_index,
+          billing_server.endpoint,
+          ex.what());
+      }
+      catch(...)
+      {
+        log_billing_server_exception_(
+          logger_.in(),
+          FUN,
+          res_service_index,
+          billing_server.endpoint,
+          "unknown exception");
+      }
 
-      if(DEBUG_BILLING_SERVER_CALL_)
+      if (DEBUG_BILLING_SERVER_CALL_)
       {
         std::cerr << "confirm_bid call (server #" << res_service_index <<
           "): success_called = " << static_cast<bool>(confirm_bid_response) <<
@@ -821,29 +974,28 @@ namespace AdServer::CampaignSvcs
           ", forced = " << confirm_bid_info->forced() << std::endl;
       }
 
-      if(!confirm_bid_response ||
+      if (!confirm_bid_response ||
         (!confirm_bid_info->forced() && !confirm_bid_response->has_result()))
       {
-        if(confirm_bid_info->forced())
+        if (confirm_bid_info->forced())
         {
-          bad_indexes.insert(std::make_pair(res_service_index, now));
+          bad_indexes.emplace(res_service_index, now);
         }
         else
         {
           SyncPolicy::WriteGuard lock(lock_);
-          cache_[ccg_id].disabled_indexes.insert(std::make_pair(res_service_index, now));
+          cache_[ccg_id].disabled_indexes.emplace(res_service_index, now);
         }
       }
       else
       {
-        if(confirm_bid_response->has_bid())
+        if (confirm_bid_response->has_bid())
         {
           *confirm_bid_info = confirm_bid_response->bid();
         }
 
         available = confirm_bid_response->result().available();
-        goal_ctr = unpack_revenue_decimal_(
-          confirm_bid_response->result().goal_ctr());
+        goal_ctr = unpack_revenue_decimal_(confirm_bid_response->result().goal_ctr());
         break;
       }
     }
@@ -856,7 +1008,7 @@ namespace AdServer::CampaignSvcs
     result.available = available;
     result.goal_ctr = goal_ctr;
 
-    if(!available)
+    if (!available)
     {
       ccg_set_available_(
         ccg_setter,
@@ -898,7 +1050,7 @@ namespace AdServer::CampaignSvcs
     const AvailableAndMinCTRSetter* ccg_setter)
     noexcept
   {
-    if(switched)
+    if (switched)
     {
       *switched = false;
     }
@@ -908,7 +1060,7 @@ namespace AdServer::CampaignSvcs
     SyncPolicy::WriteGuard lock(lock_);
     CCGState& ccg_state = cache_[ccg_id];
 
-    if(new_ccg_setter)
+    if (new_ccg_setter)
     {
       ccg_state.ccg_setter.swap(new_ccg_setter);
     }
@@ -917,7 +1069,7 @@ namespace AdServer::CampaignSvcs
       disabled_indexes_in ?
       *disabled_indexes_in : ccg_state.disabled_indexes;
 
-    if(ccg_state.use_count == -1)
+    if (ccg_state.use_count == -1)
     {
       // use random index for distribute loading between consumers
       ccg_state.active_index = Generics::unsafe_rand(billing_servers_.size());
@@ -930,7 +1082,7 @@ namespace AdServer::CampaignSvcs
     bool active_index_is_bad =
       disabled_indexes.find(ccg_state.active_index) != disabled_indexes.end();
 
-    if(active_index_is_bad ||
+    if (active_index_is_bad ||
       ++ccg_state.use_count > max_use_count_ ||
       now > ccg_state.planned_server_switch_time)
     {
@@ -942,19 +1094,19 @@ namespace AdServer::CampaignSvcs
         ccg_state.active_index = next_index_(ccg_state.active_index);
         ccg_state.use_count = 1;
 
-        if(disabled_indexes.find(ccg_state.active_index) == disabled_indexes.end())
+        if (disabled_indexes.find(ccg_state.active_index) == disabled_indexes.end())
         {
-          if(switched)
+          if (switched)
           {
             *switched = true;
           }
 
           // service switched
-          if(ccg_state.last_server_switch_time != Generics::Time::ZERO)
+          if (ccg_state.last_server_switch_time != Generics::Time::ZERO)
           {
             const Generics::Time server_use_time = now - ccg_state.last_server_switch_time;
             ccg_state.server_use_times.push_back(server_use_time);
-            while(ccg_state.server_use_times.size() > MAX_SIZE_SERVER_USE_TIMES)
+            while (ccg_state.server_use_times.size() > MAX_SIZE_SERVER_USE_TIMES)
             {
               ccg_state.server_use_times.pop_front();
             }
@@ -980,76 +1132,6 @@ namespace AdServer::CampaignSvcs
     return ++serv_index % billing_servers_.size();
   }
 
-  template<typename CallResultType,
-    typename CallType,
-    typename CallArgType>
-  AdServer::Commons::SyncCoro<AdServer::Grpc::ResponseHolder<CallResultType>>
-  BillingStateContainer::Impl::co_billing_server_call_(
-    unsigned long service_index,
-    CallType call,
-    CallArgType&& call_arg)
-  {
-    static const char* FUN = "BillingStateContainer::Impl::co_billing_server_call_()";
-
-    try
-    {
-      const BillingServerDescr& billing_server =
-        billing_servers_[service_index];
-
-      auto [status, response_holder] = co_await AdServer::Commons::
-        async_callback<
-          const grpc::Status&,
-          AdServer::Grpc::ResponseHolder<CallResultType>&&>(
-          [&billing_server, call, &call_arg](auto callback)
-          {
-            ((*billing_server.client).*call)(
-              call_arg,
-              std::move(callback));
-          });
-
-      if(!status.ok())
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": BillingServer gRPC call failed by service index #" <<
-          service_index << ", endpoint=" << billing_server.endpoint <<
-          ", code=" << status.error_code() <<
-          ", message=" << status.error_message();
-        logger_->log(
-          ostr.str(),
-          status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-            Logging::Logger::NOTICE :
-            Logging::Logger::EMERGENCY,
-          Aspect::BILLING_STATE_CONTAINER,
-          "ADS-ICON-4003");
-        co_return AdServer::Grpc::ResponseHolder<CallResultType>();
-      }
-
-      co_return std::move(response_holder);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": BillingServer gRPC call failed by service index #" <<
-        service_index << ": " << ex.what();
-      logger_->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::BILLING_STATE_CONTAINER,
-        "ADS-ICON-4003");
-    }
-    catch(...)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": BillingServer gRPC call failed by service index #" <<
-        service_index << ": unknown exception";
-      logger_->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::BILLING_STATE_CONTAINER,
-        "ADS-ICON-4003");
-    }
-
-    co_return AdServer::Grpc::ResponseHolder<CallResultType>();
-  }
-
   void
   BillingStateContainer::Impl::fill_planned_server_switch_time_(
     unsigned long ccg_id,
@@ -1059,7 +1141,7 @@ namespace AdServer::CampaignSvcs
   {
     const Generics::Time last_server_switch_time = ccg_state.last_server_switch_time;
 
-    if(!ccg_state.server_use_times.empty())
+    if (!ccg_state.server_use_times.empty())
     {
       Generics::Time sum_time;
       for(auto time_it = ccg_state.server_use_times.begin();
@@ -1080,10 +1162,10 @@ namespace AdServer::CampaignSvcs
       ccg_state.planned_server_switch_time = now + MAX_SERVER_USE_TIME;
     }
 
-    if(last_server_switch_time != Generics::Time::ZERO)
+    if (last_server_switch_time != Generics::Time::ZERO)
     {
       ccg_state.server_use_times.push_back(now - last_server_switch_time);
-      while(ccg_state.server_use_times.size() > MAX_SIZE_SERVER_USE_TIMES)
+      while (ccg_state.server_use_times.size() > MAX_SIZE_SERVER_USE_TIMES)
       {
         ccg_state.server_use_times.pop_front();
       }
@@ -1117,7 +1199,7 @@ namespace AdServer::CampaignSvcs
       for(auto it = add_recheck_ccgs.begin(); it != add_recheck_ccgs.end(); ++it)
       {
         auto prev_it = recheck_ccgs_.find(it->first);
-        if(prev_it != recheck_ccgs_.end())
+        if (prev_it != recheck_ccgs_.end())
         {
           Generics::Time& target_time = recheck_ccgs_[it->first];
           target_time = std::min(target_time, it->second);
@@ -1128,7 +1210,7 @@ namespace AdServer::CampaignSvcs
         }
       }
 
-      if(DEBUG_BILLING_SERVER_CALL_)
+      if (DEBUG_BILLING_SERVER_CALL_)
       {
         std::cerr << Generics::Time::get_time_of_day().gm_ft() <<
           ": run_recheck_ccgs_: recheck_ccgs_.size() = " <<
@@ -1142,14 +1224,14 @@ namespace AdServer::CampaignSvcs
 
       for(auto it = recheck_ccgs_.begin(); it != recheck_ccgs_.end(); )
       {
-        if(DEBUG_BILLING_SERVER_CALL_)
+        if (DEBUG_BILLING_SERVER_CALL_)
         {
           std::cerr << "BillingStateContainer: pre recheck ccg #" << it->first <<
             ", now = " << now.gm_ft() <<
             ", planned check date = " << it->second.gm_ft() << std::endl;
         }
 
-        if(now >= it->second)
+        if (now >= it->second)
         {
           const unsigned long ccg_id = it->first;
 
@@ -1162,7 +1244,7 @@ namespace AdServer::CampaignSvcs
             for(auto disable_index_it = ccg_state.disabled_indexes.begin();
               disable_index_it != ccg_state.disabled_indexes.end(); )
             {
-              if(disable_index_it->second < reenable_time)
+              if (disable_index_it->second < reenable_time)
               {
                 ccg_state.disabled_indexes.erase(disable_index_it++);
               }
@@ -1173,7 +1255,7 @@ namespace AdServer::CampaignSvcs
             }
           }
 
-          if(DEBUG_BILLING_SERVER_CALL_)
+          if (DEBUG_BILLING_SERVER_CALL_)
           {
             std::cerr << "BillingStateContainer: recheck ccg #" << ccg_id <<
               ", ccg_setter = " << ccg_setter << std::endl;
@@ -1188,7 +1270,7 @@ namespace AdServer::CampaignSvcs
             nullptr // ccg_setter
             );
 
-          if(DEBUG_BILLING_SERVER_CALL_)
+          if (DEBUG_BILLING_SERVER_CALL_)
           {
             std::cerr << "BillingStateContainer: ccg #" << ccg_id <<
               " set available" << std::endl;
@@ -1242,19 +1324,19 @@ namespace AdServer::CampaignSvcs
     const std::string& billing_request_params)
     noexcept
   {
-    if(ccg_setter)
+    if (ccg_setter)
     {
       ccg_setter->set_available(available, goal_ctr);
     }
 
-    if(!available)
+    if (!available)
     {
       bool new_deactivation = false;
       Generics::Time planned_recheck_time;
       {
         SyncPolicy::WriteGuard lock(add_recheck_ccgs_lock_);
         Generics::Time& planned_time = add_recheck_ccgs_[ccg_id];
-        if(planned_time != Generics::Time::ZERO)
+        if (planned_time != Generics::Time::ZERO)
         {
           planned_time = std::min(planned_time, now + REENABLE_INDEX_TIME);
         }
@@ -1266,13 +1348,13 @@ namespace AdServer::CampaignSvcs
         planned_recheck_time = planned_time;
       }
 
-      if(new_deactivation)
+      if (new_deactivation)
       {
         Stream::Error ostr;
         ostr << "BillingStateContainer::Impl::ccg_set_available_(): CCG #" <<
           ccg_id << " deactivated by BillingServer response, goal_ctr = " <<
           goal_ctr << ", recheck planned at " << planned_recheck_time;
-        if(!billing_request_params.empty())
+        if (!billing_request_params.empty())
         {
           ostr << ", " << billing_request_params;
         }

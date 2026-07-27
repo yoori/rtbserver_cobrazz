@@ -253,7 +253,8 @@ main(int argc, char** argv)
               request.create_timestamp = Generics::Time::ZERO;
               request.generate_user_id = options.generate_user_id;
 
-              const auto response = core->co_get_user_id(request).sync_wait();
+              const auto response = AdServer::Commons::sync_wait(
+                core->co_get_user_id(request));
               if(response.created)
               {
                 created.fetch_add(1, std::memory_order_relaxed);

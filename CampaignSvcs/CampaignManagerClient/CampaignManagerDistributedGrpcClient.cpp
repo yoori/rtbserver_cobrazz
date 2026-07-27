@@ -268,15 +268,13 @@ namespace AdServer::CampaignSvcs
 
       result.emplace_back(
         client_holder->endpoint,
-        static_cast<CampaignManagerGrpcAsyncClient*>(
-          client_holder->client.get())->stats());
+        static_cast<CampaignManagerGrpcAsyncClient*>(client_holder->client.get())->stats());
     }
     return result;
   }
 
   CampaignManagerDistributedGrpcClient::PoolPtr
-  CampaignManagerDistributedGrpcClient::get_pool_(
-    const std::string& service_index) const
+  CampaignManagerDistributedGrpcClient::get_pool_(const std::string& service_index) const
   {
     if (!service_index.empty())
     {

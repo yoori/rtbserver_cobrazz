@@ -74,6 +74,11 @@
    </xsl:if>
   </xsl:variable>
 
+  <xsl:variable name="billing-server-grpc-max-sequential-ops">
+    <xsl:value-of select="$billing-server-config/cfg:networkParams/@grpc_max_sequential_ops"/>
+    <xsl:if test="count($billing-server-config/cfg:networkParams/@grpc_max_sequential_ops) = 0">4</xsl:if>
+  </xsl:variable>
+
   <xsl:variable name="billing-server-pid-file">
     <xsl:value-of select="concat($workspace-root, '/run/BillingServer.pid')"/>
   </xsl:variable>
@@ -113,7 +118,7 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <cfg:GrpcConfig cq_threads="16">
+    <cfg:GrpcConfig cq_threads="16" max_sequential_ops="{$billing-server-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*" port="{$billing-server-grpc-port}"/>
     </cfg:GrpcConfig>
 

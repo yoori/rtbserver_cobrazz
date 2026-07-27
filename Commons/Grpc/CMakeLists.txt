@@ -18,7 +18,7 @@ target_sources(GrpcBatch PRIVATE
   BatchingStreamBase.cpp
   BatchingStreamBase.hpp
   GrpcClient.hpp
-  GrpcCoroClient.hpp
+  GrpcUnaryAwaiter.hpp
   GrpcExecutor.cpp
   GrpcExecutor.hpp
   GrpcServer.hpp

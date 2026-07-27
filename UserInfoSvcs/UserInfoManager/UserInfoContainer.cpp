@@ -4,7 +4,7 @@
 #include <PrivacyFilter/Filter.hpp>
 
 #include <Commons/Algs.hpp>
-#include <Commons/Coro/CoroTuple.hpp>
+#include <Commons/Coro/TupleAwaitable.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
@@ -152,7 +152,7 @@ namespace AdServer::UserInfoSvcs
       max_freqcap_profile_waiters);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_pre_bid_process(
     UserFreqCapProfile::FreqCapIdArray& freq_caps,
     UserFreqCapProfile::FreqCapIdArray& virtual_freq_caps,
@@ -234,7 +234,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_update_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -295,7 +295,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_confirm_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -341,7 +341,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_get_user_profile(
     const UserId& user_id,
     bool temporary,
@@ -409,7 +409,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_remove_user_profile(const UserId& user_id)
   {
     static const char* FUN = "UserInfoContainer::co_remove_user_profile()";
@@ -417,13 +417,13 @@ namespace AdServer::UserInfoSvcs
     try
     {
       auto remove_profile = [&user_id](
-        UserProfileMap* profiles) -> AdServer::Commons::SyncCoro<bool>
+        UserProfileMap* profiles) -> AdServer::Commons::StartableAwaitable<bool>
       {
         co_await profiles->co_remove_profile(user_id);
         co_return true;
       };
 
-      co_await AdServer::Commons::CoroTuple(
+      co_await AdServer::Commons::TupleAwaitable(
         remove_profile(base_profiles_.in()),
         remove_profile(temp_profiles_.in()),
         remove_profile(add_profiles_.in()),
@@ -447,7 +447,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_exchange_merge(
     const UserId& user_id,
     const Generics::MemBuf& other_base_profile_buf,
@@ -587,7 +587,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_merge(
     const RequestMatchParams& request_params,
     const Generics::MemBuf& merge_base_profile_buf,
@@ -1004,7 +1004,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_fraud_user(
     const UserId& user_id,
     const Generics::Time& now)
@@ -1055,7 +1055,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_match(
     const RequestMatchParams& request_params,
     long last_colo_id,
@@ -1100,7 +1100,7 @@ namespace AdServer::UserInfoSvcs
       if (use_add_profile_on_match_)
       {
         auto [loaded_base_profile_trans, loaded_add_profile_trans] =
-          co_await AdServer::Commons::CoroTuple(
+          co_await AdServer::Commons::TupleAwaitable(
             base_profiles->co_get_transaction(user_id, true, op_priority),
             add_profiles_->co_get_transaction(user_id, true, op_priority));
 
@@ -1108,7 +1108,7 @@ namespace AdServer::UserInfoSvcs
         add_profile_trans = std::move(loaded_add_profile_trans);
 
         auto [loaded_base_mem_buf, loaded_add_mem_buf] =
-          co_await AdServer::Commons::CoroTuple(
+          co_await AdServer::Commons::TupleAwaitable(
             base_profile_trans->co_get_own_profile(),
             add_profile_trans->co_get_own_profile());
 
@@ -1668,7 +1668,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserInfoContainer::co_consider_publishers_optin(
     const UserId& user_id,
     const std::set<unsigned long>& publisher_account_ids,

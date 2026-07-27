@@ -309,15 +309,16 @@ namespace AdServer::UserInfoSvcs
   {
     UserBindGetOperationReader reader(data_buf, data_size);
 
-    user_bind_processor_->co_get_user_id(
-      String::SubString(reader.external_id()),
-      Commons::UserId(reader.current_user_id()),
-      Generics::Time(reader.time()),
-      false,
-      Generics::Time::ZERO,
-      false, // for_set_cookie
-      false // generate_user_id
-      ).sync_wait();
+    AdServer::Commons::sync_wait(
+      user_bind_processor_->co_get_user_id(
+        String::SubString(reader.external_id()),
+        Commons::UserId(reader.current_user_id()),
+        Generics::Time(reader.time()),
+        false,
+        Generics::Time::ZERO,
+        false, // for_set_cookie
+        false // generate_user_id
+      ));
   }
 
   void
@@ -328,14 +329,15 @@ namespace AdServer::UserInfoSvcs
   {
     UserBindAddOperationReader reader(data_buf, data_size);
 
-    user_bind_processor_->co_add_user_id(
-      String::SubString(reader.external_id()),
-      Commons::UserId(reader.user_id()),
-      Generics::Time(reader.time()),
-      reader.resave_if_exists(),
-      true, // ignore_bad_event
-      true // set_cookie_flag
-      ).sync_wait();
+    AdServer::Commons::sync_wait(
+      user_bind_processor_->co_add_user_id(
+        String::SubString(reader.external_id()),
+        Commons::UserId(reader.user_id()),
+        Generics::Time(reader.time()),
+        reader.resave_if_exists(),
+        true, // ignore_bad_event
+        true // set_cookie_flag
+      ));
   }
 
   // UserBindOperationLoader

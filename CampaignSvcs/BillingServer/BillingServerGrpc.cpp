@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
+#include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -157,8 +159,7 @@ namespace AdServer::CampaignSvcs
     {
       BillingServerCore::ConfirmBidInfo result;
       result.bid = adapt_bid(source.bid());
-      result.account_spent_budget =
-        unpack_revenue_decimal(source.account_spent_budget());
+      result.account_spent_budget = unpack_revenue_decimal(source.account_spent_budget());
       result.spent_budget = unpack_revenue_decimal(source.spent_budget());
       result.reserved_budget = unpack_revenue_decimal(source.reserved_budget());
       result.imps = unpack_imp_revenue_decimal(source.imps());
@@ -173,8 +174,7 @@ namespace AdServer::CampaignSvcs
       const BillingServerCore::ConfirmBidInfo& source)
     {
       fill_bid(*target.mutable_bid(), source.bid);
-      target.set_account_spent_budget(
-        GrpcAlgs::pack_decimal(source.account_spent_budget));
+      target.set_account_spent_budget(GrpcAlgs::pack_decimal(source.account_spent_budget));
       target.set_spent_budget(GrpcAlgs::pack_decimal(source.spent_budget));
       target.set_reserved_budget(GrpcAlgs::pack_decimal(source.reserved_budget));
       target.set_imps(GrpcAlgs::pack_decimal(source.imps));
@@ -201,13 +201,11 @@ namespace AdServer::CampaignSvcs
     }
 
     std::size_t
-    resolve_max_batch_split(
-      std::size_t configured,
-      std::size_t process_threads)
+    resolve_max_sequential_ops(std::size_t configured)
     {
       return std::max<std::size_t>(
         1,
-        configured != 0 ? configured : process_threads);
+        configured != 0 ? configured : 4);
     }
   }
 
@@ -245,7 +243,7 @@ namespace AdServer::CampaignSvcs
     ServiceImpl(
       BillingServerCore* core,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-      std::size_t max_batch_split,
+      std::size_t max_sequential_ops,
       std::shared_ptr<AtomicStats> stats);
 
     static auto grpc_calls()
@@ -280,31 +278,38 @@ namespace AdServer::CampaignSvcs
           true));
     }
 
-    std::size_t distributed_batch_max_split() const noexcept override;
+    std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool>
     batch_processing_executor_pool() const noexcept override;
 
-    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+    AdServer::Commons::StartableAwaitable<void> co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
 
-    AdServer::Grpc::GrpcCoroutine co_check_available_bid(
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
+    AdServer::Commons::StartableAwaitable<void> co_check_available_bid(
       Proto::CheckBidRequest&& request,
       Proto::BidResultResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_reserve_bid(
+    AdServer::Commons::StartableAwaitable<void> co_reserve_bid(
       Proto::ReserveBidRequest&& request,
       Proto::ReserveBidResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_confirm_bid(
+    AdServer::Commons::StartableAwaitable<void> co_confirm_bid(
       Proto::ConfirmBidRequest&& request,
       Proto::ConfirmBidResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_add_amount(
+    AdServer::Commons::StartableAwaitable<void> co_add_amount(
       Proto::AddAmountRequest&& request,
       Proto::AddAmountResponse& response,
       ::grpc::Status& result_status) const;
@@ -327,26 +332,26 @@ namespace AdServer::CampaignSvcs
   private:
     const BillingServerCore_var core_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
-    const std::size_t max_batch_split_;
+    const std::size_t max_sequential_ops_;
     const std::shared_ptr<AtomicStats> stats_;
   };
 
   BillingServerGrpc::ServiceImpl::ServiceImpl(
     BillingServerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-    std::size_t max_batch_split,
+    std::size_t max_sequential_ops,
     std::shared_ptr<AtomicStats> stats)
     : core_(ReferenceCounting::add_ref(core)),
       executor_pool_(std::move(executor_pool)),
-      max_batch_split_(max_batch_split),
+      max_sequential_ops_(max_sequential_ops),
       stats_(std::move(stats))
   {}
 
   std::size_t
-  BillingServerGrpc::ServiceImpl::distributed_batch_max_split()
+  BillingServerGrpc::ServiceImpl::distributed_batch_max_sequential_ops()
     const noexcept
   {
-    return max_batch_split_;
+    return max_sequential_ops_;
   }
 
   std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -356,7 +361,7 @@ namespace AdServer::CampaignSvcs
     return executor_pool_;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   BillingServerGrpc::ServiceImpl::co_handle_batch_request(
     const adserver::grpc::BatchRequest& batch_request,
     adserver::grpc::BatchResponse& batch_response) const
@@ -370,15 +375,41 @@ namespace AdServer::CampaignSvcs
       batch_response);
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  void
+  BillingServerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
+  AdServer::Commons::StartableAwaitable<void>
   BillingServerGrpc::ServiceImpl::co_check_available_bid(
     Proto::CheckBidRequest&& request,
     Proto::BidResultResponse& response,
     ::grpc::Status& result_status) const
   {
-    static const char* FUN =
-      "BillingServerGrpc::ServiceImpl::check_available_bid()";
-
+    static const char* FUN = "BillingServerGrpc::ServiceImpl::check_available_bid()";
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
     InProgressGuard in_progress(
       stats_->call_total,
@@ -392,9 +423,7 @@ namespace AdServer::CampaignSvcs
     {
       BillingServerCore::CheckBidInfo core_request;
       core_request.bid = adapt_bid(request.bid());
-      fill_bid_result(
-        response,
-        core_->check_available_bid(core_request));
+      fill_bid_result(response, core_->check_available_bid(core_request));
       result_status = ::grpc::Status::OK;
     }
     catch(...)
@@ -403,7 +432,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   BillingServerGrpc::ServiceImpl::co_reserve_bid(
     Proto::ReserveBidRequest&& request,
     Proto::ReserveBidResponse& response,
@@ -424,8 +453,7 @@ namespace AdServer::CampaignSvcs
     {
       BillingServerCore::ReserveBidInfo core_request;
       core_request.bid = adapt_bid(request.bid());
-      core_request.reserve_budget =
-        unpack_revenue_decimal(request.reserve_budget());
+      core_request.reserve_budget = unpack_revenue_decimal(request.reserve_budget());
       response.set_reserved(core_->reserve_bid(core_request));
       result_status = ::grpc::Status::OK;
     }
@@ -435,7 +463,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   BillingServerGrpc::ServiceImpl::co_confirm_bid(
     Proto::ConfirmBidRequest&& request,
     Proto::ConfirmBidResponse& response,
@@ -454,10 +482,8 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      BillingServerCore::ConfirmBidInfo core_request =
-        adapt_confirm_bid(request.bid());
-      const BillingServerCore::BidResultInfo result =
-        core_->confirm_bid(core_request);
+      BillingServerCore::ConfirmBidInfo core_request = adapt_confirm_bid(request.bid());
+      const BillingServerCore::BidResultInfo result = core_->confirm_bid(core_request);
       fill_bid_result(*response.mutable_result(), result);
       fill_confirm_bid(*response.mutable_bid(), core_request);
       result_status = ::grpc::Status::OK;
@@ -468,7 +494,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   BillingServerGrpc::ServiceImpl::co_add_amount(
     Proto::AddAmountRequest&& request,
     Proto::AddAmountResponse& response,
@@ -500,8 +526,7 @@ namespace AdServer::CampaignSvcs
 
       for(const BillingServerCore::ConfirmBidRefInfo& source : core_remainders)
       {
-        Proto::ConfirmBidRefInfo* target =
-          response.add_remainder_requests();
+        Proto::ConfirmBidRefInfo* target = response.add_remainder_requests();
         target->set_index(source.index);
         fill_confirm_bid(*target->mutable_confirm_bid(), source.confirm_bid);
       }
@@ -579,9 +604,9 @@ namespace AdServer::CampaignSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
-    std::size_t max_split)
+    std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
-      max_batch_split_(resolve_max_batch_split(max_split, process_threads)),
+      max_sequential_ops_(resolve_max_sequential_ops(max_sequential_ops)),
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
@@ -596,11 +621,7 @@ namespace AdServer::CampaignSvcs
         billing_server_grpc_aspect,
         bind_address_,
         cq_threads != 0 ? cq_threads : 16,
-        std::make_unique<ServiceImpl>(
-          core,
-          executor_pool_,
-          max_batch_split_,
-          stats_)))
+        std::make_unique<ServiceImpl>(core, executor_pool_, max_sequential_ops_, stats_)))
   {
     add_child_object(executor_pool_);
     add_child_object(impl_);

@@ -153,7 +153,7 @@ namespace AdServer::UserInfoSvcs
 
     virtual ~UserBindServerCore();
 
-    AdServer::Commons::SyncCoro<BindRequestInfo>
+    AdServer::Commons::StartableAwaitable<BindRequestInfo>
     co_get_bind_request(
       const std::string& id,
       const Generics::Time& timestamp);
@@ -167,10 +167,10 @@ namespace AdServer::UserInfoSvcs
       const BindRequestInfo& bind_request,
       const Generics::Time& timestamp);
 
-    AdServer::Commons::SyncCoro<GetUserResponseInfo>
+    AdServer::Commons::StartableAwaitable<GetUserResponseInfo>
     co_get_user_id(const GetUserRequestInfo& request_info);
 
-    AdServer::Commons::SyncCoro<AddUserResponseInfo>
+    AdServer::Commons::StartableAwaitable<AddUserResponseInfo>
     co_add_user_id(const AddUserRequestInfo& request_info);
 
     Source get_source() const;

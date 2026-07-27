@@ -24,7 +24,7 @@
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <Frontends/FrontendCommons/ValueTask.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <ChannelServerGrpc.grpc-client.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
@@ -119,7 +119,7 @@ namespace AdServer
     };
 
     using ProcessRequestTask =
-      FrontendCommons::ValueTask<ProcessRequestResult>;
+      AdServer::Commons::Awaitable<ProcessRequestResult>;
 
   protected:
     virtual ~UserBindFrontend() noexcept;

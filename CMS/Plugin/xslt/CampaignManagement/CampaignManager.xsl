@@ -41,6 +41,10 @@
     <xsl:variable name="www-root"><xsl:value-of select="$env-config/@data_root"/>
       <xsl:if test="count($env-config/@data_root) = 0"><xsl:value-of select="$def-data-root"/></xsl:if>
     </xsl:variable>
+    <xsl:variable name="billing-server-grpc-max-batch-delay-us">
+      <xsl:value-of select="$campaign-manager-config/@billing_server_grpc_max_batch_delay_us"/>
+      <xsl:if test="count($campaign-manager-config/@billing_server_grpc_max_batch_delay_us) = 0">1000</xsl:if>
+    </xsl:variable>
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
@@ -180,6 +184,10 @@
       <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_process_threads"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@grpc_process_threads) = 0">128</xsl:if>
     </xsl:variable>
+    <xsl:variable name="campaign-manager-grpc-max-sequential-ops">
+      <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_max_sequential_ops"/>
+      <xsl:if test="count($campaign-manager-config/cfg:networkParams/@grpc_max_sequential_ops) = 0">4</xsl:if>
+    </xsl:variable>
     <xsl:variable name="campaign-manager-monitoring-port">
       <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@monitoring_port"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@monitoring_port) = 0">
@@ -304,7 +312,7 @@
     <cfg:GrpcConfig
       process_threads="{$campaign-manager-grpc-process-threads}"
       cq_threads="16"
-      max_split="32">
+      max_sequential_ops="{$campaign-manager-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
     </cfg:GrpcConfig>
 
@@ -442,7 +450,8 @@
 
     <xsl:if test="$mode = 'AD'">
       <cfg:Billing check_bids="true" confirm_bids="true"
-        optimize_campaign_ctr="false">
+        optimize_campaign_ctr="false"
+        billing_server_grpc_max_batch_delay_us="{$billing-server-grpc-max-batch-delay-us}">
         <xsl:call-template name="BillingServerGrpcRefs">
           <xsl:with-param name="billing-servers"
             select="$full-cluster-path//service[@descriptor = $billing-server-descriptor]"/>

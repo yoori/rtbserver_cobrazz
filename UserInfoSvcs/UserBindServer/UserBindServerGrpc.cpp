@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
+#include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -142,13 +144,11 @@ namespace AdServer::UserInfoSvcs
 #endif
 
     std::size_t
-    resolve_max_batch_split(
-      std::size_t configured,
-      std::size_t process_threads)
+    resolve_max_sequential_ops(std::size_t configured)
     {
       return std::max<std::size_t>(
         1,
-        configured != 0 ? configured : process_threads);
+        configured != 0 ? configured : 4);
     }
   }
 
@@ -187,7 +187,7 @@ namespace AdServer::UserInfoSvcs
     ServiceImpl(
       UserBindServerCore* core,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-      std::size_t max_batch_split,
+      std::size_t max_sequential_ops,
       std::shared_ptr<AtomicStats> stats,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
@@ -230,36 +230,43 @@ namespace AdServer::UserInfoSvcs
           true));
     }
 
-    std::size_t distributed_batch_max_split() const noexcept override;
+    std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool>
     batch_processing_executor_pool() const noexcept override;
 
-    AdServer::Grpc::GrpcCoroutine co_handle_batch_request(
+    AdServer::Commons::StartableAwaitable<void> co_handle_batch_request(
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const override;
 
-    AdServer::Grpc::GrpcCoroutine co_get_bind_request(
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      adserver::grpc::BatchResponse& batch_response,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
+    AdServer::Commons::StartableAwaitable<void> co_get_bind_request(
       adserver::user_info_svcs::user_bind::GetBindRequestRequest&& request,
       adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_add_bind_request(
+    AdServer::Commons::StartableAwaitable<void> co_add_bind_request(
       adserver::user_info_svcs::user_bind::AddBindRequestRequest&& request,
       adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_user_id(
+    AdServer::Commons::StartableAwaitable<void> co_get_user_id(
       adserver::user_info_svcs::user_bind::GetUserIdRequest&& request,
       adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_add_user_id(
+    AdServer::Commons::StartableAwaitable<void> co_add_user_id(
       adserver::user_info_svcs::user_bind::AddUserIdRequest&& request,
       adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
       ::grpc::Status& result_status) const;
 
-    AdServer::Grpc::GrpcCoroutine co_get_source(
+    AdServer::Commons::StartableAwaitable<void> co_get_source(
       adserver::user_info_svcs::user_bind::GetSourceRequest&& request,
       adserver::user_info_svcs::user_bind::GetSourceResponse& response,
       ::grpc::Status& result_status) const;
@@ -279,7 +286,7 @@ namespace AdServer::UserInfoSvcs
   private:
     const UserBindServerCore_var core_;
     const std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
-    const std::size_t max_batch_split_;
+    const std::size_t max_sequential_ops_;
     const std::shared_ptr<AtomicStats> stats_;
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     const std::shared_ptr<std::atomic_uint> response_sleep_ms_;
@@ -290,12 +297,12 @@ namespace AdServer::UserInfoSvcs
   UserBindServerGrpc::ServiceImpl::ServiceImpl(
     UserBindServerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-    std::size_t max_batch_split,
+    std::size_t max_sequential_ops,
     std::shared_ptr<AtomicStats> stats,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : core_(ReferenceCounting::add_ref(core)),
       executor_pool_(std::move(executor_pool)),
-      max_batch_split_(max_batch_split),
+      max_sequential_ops_(max_sequential_ops),
       stats_(std::move(stats))
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
       ,
@@ -308,10 +315,10 @@ namespace AdServer::UserInfoSvcs
   }
 
   std::size_t
-  UserBindServerGrpc::ServiceImpl::distributed_batch_max_split()
+  UserBindServerGrpc::ServiceImpl::distributed_batch_max_sequential_ops()
     const noexcept
   {
-    return max_batch_split_;
+    return max_sequential_ops_;
   }
 
   std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -321,7 +328,7 @@ namespace AdServer::UserInfoSvcs
     return executor_pool_;
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_handle_batch_request(
     const adserver::grpc::BatchRequest& batch_request,
     adserver::grpc::BatchResponse& batch_response) const
@@ -335,7 +342,35 @@ namespace AdServer::UserInfoSvcs
       batch_response);
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  void
+  UserBindServerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    adserver::grpc::BatchResponse& batch_response,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
+  AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_get_bind_request(
     adserver::user_info_svcs::user_bind::GetBindRequestRequest&& request,
     adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
@@ -392,7 +427,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_add_bind_request(
     adserver::user_info_svcs::user_bind::AddBindRequestRequest&& request,
     adserver::user_info_svcs::user_bind::AddBindRequestResponse& response,
@@ -454,7 +489,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_get_user_id(
     adserver::user_info_svcs::user_bind::GetUserIdRequest&& request,
     adserver::user_info_svcs::user_bind::GetUserIdResponse& response,
@@ -534,7 +569,7 @@ namespace AdServer::UserInfoSvcs
     response.set_process_time(GrpcAlgs::pack_time(process_timer.elapsed_time()));
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_add_user_id(
     adserver::user_info_svcs::user_bind::AddUserIdRequest&& request,
     adserver::user_info_svcs::user_bind::AddUserIdResponse& response,
@@ -595,7 +630,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  AdServer::Grpc::GrpcCoroutine
+  AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_get_source(
     adserver::user_info_svcs::user_bind::GetSourceRequest&& request,
     adserver::user_info_svcs::user_bind::GetSourceResponse& response,
@@ -679,10 +714,11 @@ namespace AdServer::UserInfoSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
-    std::size_t max_split,
+    std::size_t max_sequential_ops,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
-      max_batch_split_(resolve_max_batch_split(max_split, process_threads)),
+      max_sequential_ops_(resolve_max_sequential_ops(
+        max_sequential_ops)),
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
@@ -701,7 +737,7 @@ namespace AdServer::UserInfoSvcs
         std::make_unique<ServiceImpl>(
           core,
           executor_pool_,
-          max_batch_split_,
+          max_sequential_ops_,
           stats_,
           std::move(response_sleep_ms))))
   {

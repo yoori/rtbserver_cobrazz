@@ -39,9 +39,9 @@
         <xsd:documentation>UserInfoManager gRPC completion queue threads.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="grpc_max_split" type="xsd:positiveInteger" use="optional">
+    <xsd:attribute name="grpc_max_sequential_ops" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
-        <xsd:documentation>UserInfoManager gRPC maximum server-side batch split.</xsd:documentation>
+        <xsd:documentation>UserInfoManager gRPC maximum sequential operations per lane.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>

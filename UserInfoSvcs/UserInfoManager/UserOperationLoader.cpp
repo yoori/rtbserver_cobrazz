@@ -312,9 +312,10 @@ namespace UserInfoSvcs
     /*throw(eh::Exception)*/
   {
     UserFraudOperationReader reader(mem_buf.data(), mem_buf.size());
-    user_info_container_->co_fraud_user(
-      UserId(reader.user_id()),
-      Generics::Time(reader.fraud_time())).sync_wait();
+    AdServer::Commons::sync_wait(
+      user_info_container_->co_fraud_user(
+        UserId(reader.user_id()),
+        Generics::Time(reader.fraud_time())));
   }
 
   void
@@ -412,17 +413,18 @@ namespace UserInfoSvcs
     UserOperationProcessor::UserAppearance user_app;
     ProfileProperties properties;
 
-    user_info_container_->co_match(
-      channel_match_params,
-      reader.last_colo_id(),
-      reader.placement_colo_id(),
-      colo_user_id,
-      matched_channels,
-      result_channels,
-      user_app,
-      properties,
-      AdServer::ProfilingCommons::OP_BACKGROUND,
-      0).sync_wait();
+    AdServer::Commons::sync_wait(
+      user_info_container_->co_match(
+        channel_match_params,
+        reader.last_colo_id(),
+        reader.placement_colo_id(),
+        colo_user_id,
+        matched_channels,
+        result_channels,
+        user_app,
+        properties,
+        AdServer::ProfilingCommons::OP_BACKGROUND,
+        0));
   }
 
   void
@@ -475,25 +477,27 @@ namespace UserInfoSvcs
 
       UserOperationProcessor::UserAppearance user_app;
 
-      user_info_container_->co_merge(
-        channel_match_params,
-        merge_base_profile,
-        merge_add_profile,
-        merge_history_profile,
-        merge_freq_cap_profile,
-        user_app,
-        0, // last_colo_id
-        0, // current_placement_colo_id
-        AdServer::ProfilingCommons::OP_BACKGROUND
-        ).sync_wait();
+      AdServer::Commons::sync_wait(
+        user_info_container_->co_merge(
+          channel_match_params,
+          merge_base_profile,
+          merge_add_profile,
+          merge_history_profile,
+          merge_freq_cap_profile,
+          user_app,
+          0, // last_colo_id
+          0, // current_placement_colo_id
+          AdServer::ProfilingCommons::OP_BACKGROUND
+        ));
     }
     else
     {
-      user_info_container_->co_exchange_merge(
-        AdServer::Commons::UserId(reader.user_id()),
-        merge_base_profile,
-        merge_history_profile,
-        0).sync_wait();
+      AdServer::Commons::sync_wait(
+        user_info_container_->co_exchange_merge(
+          AdServer::Commons::UserId(reader.user_id()),
+          merge_base_profile,
+          merge_history_profile,
+          0));
     }
   }
 
@@ -547,17 +551,18 @@ namespace UserInfoSvcs
           (*it).imps()));
     }
 
-    user_info_container_->co_update_freq_caps(
-      AdServer::Commons::UserId(reader.user_id()),
-      Generics::Time(reader.time()),
-      AdServer::Commons::RequestId(reader.request_id()),
-      freq_caps,
-      uc_freq_caps,
-      virtual_freq_caps,
-      seq_orders,
-      campaign_ids,
-      uc_campaign_ids,
-      AdServer::ProfilingCommons::OP_BACKGROUND).sync_wait();
+    AdServer::Commons::sync_wait(
+      user_info_container_->co_update_freq_caps(
+        AdServer::Commons::UserId(reader.user_id()),
+        Generics::Time(reader.time()),
+        AdServer::Commons::RequestId(reader.request_id()),
+        freq_caps,
+        uc_freq_caps,
+        virtual_freq_caps,
+        seq_orders,
+        campaign_ids,
+        uc_campaign_ids,
+        AdServer::ProfilingCommons::OP_BACKGROUND));
   }
 
   void
@@ -579,11 +584,12 @@ namespace UserInfoSvcs
       reader.publisher_accounts().end(),
       std::inserter(publishers, publishers.begin()));
 
-    user_info_container_->co_confirm_freq_caps(
-      AdServer::Commons::UserId(reader.user_id()),
-      Generics::Time(reader.time()),
-      AdServer::Commons::RequestId(reader.request_id()),
-      publishers).sync_wait();
+    AdServer::Commons::sync_wait(
+      user_info_container_->co_confirm_freq_caps(
+        AdServer::Commons::UserId(reader.user_id()),
+        Generics::Time(reader.time()),
+        AdServer::Commons::RequestId(reader.request_id()),
+        publishers));
   }
 
   void unpack_freq_cap_info(

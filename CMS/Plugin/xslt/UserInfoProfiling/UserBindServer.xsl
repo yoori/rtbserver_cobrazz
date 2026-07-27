@@ -57,9 +57,9 @@
         <xsl:value-of select="16"/>
       </xsl:if>
     </xsl:variable>
-    <xsl:variable name="user-bind-server-grpc-max-split">
-      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_max_split"/>
-      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_max_split) = 0">32</xsl:if>
+    <xsl:variable name="user-bind-server-grpc-max-sequential-ops">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_max_sequential_ops"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_max_sequential_ops) = 0">4</xsl:if>
     </xsl:variable>
     <xsl:variable name="user-bind-server-monitoring-port">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>
@@ -93,7 +93,7 @@
 
     <cfg:GrpcConfig process_threads="{$user-bind-server-grpc-process-threads}"
       cq_threads="{$user-bind-server-grpc-cq-threads}"
-      max_split="{$user-bind-server-grpc-max-split}">
+      max_sequential_ops="{$user-bind-server-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
       </cfg:Endpoint>

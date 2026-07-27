@@ -14,7 +14,7 @@
 #include <Sync/SyncPolicy.hpp>
 #include <Commons/AtomicInt.hpp>
 #include <Commons/AsyncMutex.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 
 namespace AdServer
 {
@@ -92,7 +92,7 @@ namespace AdServer
         const TransactionArgType& arg = TransactionArgType())
         /*throw(MaxWaitersReached, Exception)*/;
 
-      AdServer::Commons::SyncCoro<Transaction_var>
+      AdServer::Commons::StartableAwaitable<Transaction_var>
       co_get_transaction(
         const KeyType& key,
         bool check_max_waiters = true,
@@ -348,7 +348,7 @@ namespace AdServer
     }
 
     template <typename KeyType, typename TransactionImplType>
-    AdServer::Commons::SyncCoro<
+    AdServer::Commons::StartableAwaitable<
       typename TransactionMap<KeyType, TransactionImplType>::Transaction_var>
     TransactionMap<KeyType, TransactionImplType>::
     co_get_transaction(

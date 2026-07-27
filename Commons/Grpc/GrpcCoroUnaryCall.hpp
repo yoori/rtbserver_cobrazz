@@ -18,7 +18,8 @@ namespace AdServer::Grpc
       ::grpc::CompletionQueue*,
       ::grpc::ServerCompletionQueue*,
       void*);
-    using Handler = GrpcCoroutine (ServiceImplType::*)(
+    using Handler =
+      AdServer::Commons::StartableAwaitable<void> (ServiceImplType::*)(
       Request&&,
       Response&,
       ::grpc::Status&) const;
@@ -44,7 +45,8 @@ namespace AdServer::Grpc
     const RequestMethod request_rpc_;
     const Handler handler_rpc_;
     ::grpc::Status status_;
-    std::optional<GrpcCoroutine> operation_;
+    std::optional<
+      AdServer::Commons::StartableAwaitable<void>> operation_;
     std::optional<AdServer::Commons::ActivityGate::Guard> grpc_operation_guard_;
   };
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <shared_mutex>
 #include <stdexcept>
 #include <utility>
@@ -329,7 +330,6 @@ namespace AdServer::Grpc
     const char* no_active_streams_context) noexcept
   {
     assert(!batch.empty());
-
     StreamHolderPtr stream_holder;
     bool start_connect = false;
     bool fail_batch = false;

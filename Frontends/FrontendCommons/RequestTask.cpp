@@ -23,9 +23,9 @@ namespace FrontendCommons
   RequestTask&
   RequestTask::operator=(RequestTask&& rhs) noexcept
   {
-    if(this != &rhs)
+    if (this != &rhs)
     {
-      if(handle_)
+      if (handle_)
       {
         handle_.destroy();
       }
@@ -38,7 +38,7 @@ namespace FrontendCommons
 
   RequestTask::~RequestTask() noexcept
   {
-    if(handle_)
+    if (handle_)
     {
       handle_.destroy();
     }
@@ -60,12 +60,12 @@ namespace FrontendCommons
   RequestResult
   RequestTask::await_resume()
   {
-    if(handle_ && handle_.promise().exception)
+    if (handle_ && handle_.promise().exception)
     {
       std::rethrow_exception(handle_.promise().exception);
     }
 
-    if(handle_)
+    if (handle_)
     {
       return std::move(handle_.promise().result);
     }
@@ -77,7 +77,7 @@ namespace FrontendCommons
   RequestTask::start_detached(
     FCGI::BaseHttpResponseWriter_var response_writer) noexcept
   {
-    if(handle_)
+    if (handle_)
     {
       handle_.promise().response_writer = std::move(response_writer);
       handle_.promise().detached = true;
@@ -112,7 +112,7 @@ namespace FrontendCommons
   RequestTask::promise_type::FinalAwaiter::await_suspend(Handle handle) noexcept
   {
     auto& promise = handle.promise();
-    if(promise.detached)
+    if (promise.detached)
     {
       auto response_writer = std::move(promise.response_writer);
       auto result = std::move(promise.result);
@@ -120,9 +120,9 @@ namespace FrontendCommons
 
       try
       {
-        if(!result.already_written && response_writer)
+        if (!result.already_written && response_writer)
         {
-          if(exception)
+          if (exception)
           {
             FCGI::HttpResponse_var response(new FCGI::HttpResponse());
             response_writer->write(500, response);
@@ -130,7 +130,7 @@ namespace FrontendCommons
           else
           {
             FCGI::HttpResponse_var response = result.response;
-            if(!response)
+            if (!response)
             {
               response = new FCGI::HttpResponse();
             }
@@ -146,7 +146,7 @@ namespace FrontendCommons
       return std::noop_coroutine();
     }
 
-    if(promise.continuation)
+    if (promise.continuation)
     {
       return promise.continuation;
     }

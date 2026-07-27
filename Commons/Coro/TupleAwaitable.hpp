@@ -15,10 +15,10 @@
 namespace AdServer::Commons
 {
   template<typename... CoroutineTypes>
-  class CoroTuple final
+  class TupleAwaitable final
   {
   public:
-    explicit CoroTuple(CoroutineTypes&&... operations);
+    explicit TupleAwaitable(CoroutineTypes&&... operations);
 
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> continuation);
@@ -48,26 +48,29 @@ namespace AdServer::Commons
     std::tuple<std::optional<ResultType<CoroutineTypes>>...> results_;
     std::shared_ptr<State> state_;
   };
+}
+
+namespace AdServer::Commons
+{
+  template<typename... CoroutineTypes>
+  TupleAwaitable(CoroutineTypes&&...) -> TupleAwaitable<CoroutineTypes...>;
 
   template<typename... CoroutineTypes>
-  CoroTuple(CoroutineTypes&&...) -> CoroTuple<CoroutineTypes...>;
-
-  template<typename... CoroutineTypes>
-  CoroTuple<CoroutineTypes...>::CoroTuple(CoroutineTypes&&... operations)
+  TupleAwaitable<CoroutineTypes...>::TupleAwaitable(CoroutineTypes&&... operations)
     : operations_(std::forward<CoroutineTypes>(operations)...),
       state_(std::make_shared<State>())
   {}
 
   template<typename... CoroutineTypes>
   bool
-  CoroTuple<CoroutineTypes...>::await_ready() const noexcept
+  TupleAwaitable<CoroutineTypes...>::await_ready() const noexcept
   {
     return sizeof...(CoroutineTypes) == 0;
   }
 
   template<typename... CoroutineTypes>
   bool
-  CoroTuple<CoroutineTypes...>::await_suspend(
+  TupleAwaitable<CoroutineTypes...>::await_suspend(
     std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
@@ -93,7 +96,7 @@ namespace AdServer::Commons
 
   template<typename... CoroutineTypes>
   auto
-  CoroTuple<CoroutineTypes...>::await_resume()
+  TupleAwaitable<CoroutineTypes...>::await_resume()
   {
     if(state_->exception)
     {
@@ -110,7 +113,7 @@ namespace AdServer::Commons
   template<typename... CoroutineTypes>
   template<std::size_t Index>
   void
-  CoroTuple<CoroutineTypes...>::start_operation_()
+  TupleAwaitable<CoroutineTypes...>::start_operation_()
   {
     auto& operation = std::get<Index>(operations_);
     operation.start(
@@ -134,7 +137,7 @@ namespace AdServer::Commons
 
   template<typename... CoroutineTypes>
   void
-  CoroTuple<CoroutineTypes...>::complete_(
+  TupleAwaitable<CoroutineTypes...>::complete_(
     std::optional<std::exception_ptr> exception)
   {
     bool resume = false;

@@ -8,10 +8,10 @@
 
 namespace FrontendCommons
 {
-  using TextTemplateTask =
-    AdServer::Commons::TextTemplateCache::CacheTask;
+  using TextTemplateAwaiter =
+    AdServer::Commons::TextTemplateCache::CacheAwaiter;
 
-  inline TextTemplateTask
+  inline TextTemplateAwaiter
   co_get_text_template(
     AdServer::Commons::TextTemplateCachePtr cache,
     std::shared_ptr<AdServer::Commons::ExecutorPool> workers,

@@ -16,12 +16,12 @@ namespace AdServer::Commons
   template<
     typename CoroutineType,
     typename Allocator = std::allocator<CoroutineType>>
-  class CoroSet final
+  class SetAwaitable final
   {
   public:
     using Operations = std::vector<CoroutineType, Allocator>;
 
-    explicit CoroSet(Operations operations);
+    explicit SetAwaitable(Operations operations);
 
     bool await_ready() const noexcept;
     bool await_suspend(std::coroutine_handle<> continuation);
@@ -41,23 +41,26 @@ namespace AdServer::Commons
     Operations operations_;
     std::shared_ptr<State> state_;
   };
+}
 
+namespace AdServer::Commons
+{
   template<typename CoroutineType, typename Allocator>
-  CoroSet<CoroutineType, Allocator>::CoroSet(Operations operations)
+  SetAwaitable<CoroutineType, Allocator>::SetAwaitable(Operations operations)
     : operations_(std::move(operations)),
       state_(std::make_shared<State>())
   {}
 
   template<typename CoroutineType, typename Allocator>
   bool
-  CoroSet<CoroutineType, Allocator>::await_ready() const noexcept
+  SetAwaitable<CoroutineType, Allocator>::await_ready() const noexcept
   {
     return operations_.empty();
   }
 
   template<typename CoroutineType, typename Allocator>
   bool
-  CoroSet<CoroutineType, Allocator>::await_suspend(
+  SetAwaitable<CoroutineType, Allocator>::await_suspend(
     std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
@@ -113,7 +116,7 @@ namespace AdServer::Commons
 
   template<typename CoroutineType, typename Allocator>
   void
-  CoroSet<CoroutineType, Allocator>::await_resume()
+  SetAwaitable<CoroutineType, Allocator>::await_resume()
   {
     if (state_->exception)
     {

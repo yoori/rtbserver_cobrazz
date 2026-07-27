@@ -2,7 +2,7 @@
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include <Commons/Coro/SyncCoro.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -28,7 +28,7 @@ namespace AdServer::UserInfoSvcs
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
     // return previous bind request state
-    virtual AdServer::Commons::SyncCoro<BindRequest>
+    virtual AdServer::Commons::StartableAwaitable<BindRequest>
     co_get_bind_request(
       const String::SubString& external_id,
       const Generics::Time& now)

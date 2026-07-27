@@ -199,7 +199,7 @@
     </xsd:sequence>
     <xsd:attribute name="process_threads" type="xsd:positiveInteger" default="128"/>
     <xsd:attribute name="cq_threads" type="xsd:positiveInteger" default="16"/>
-    <xsd:attribute name="max_split" type="xsd:positiveInteger"/>
+    <xsd:attribute name="max_sequential_ops" type="xsd:positiveInteger" default="4"/>
   </xsd:complexType>
   <!-- GrpcConfigType ends -->
 

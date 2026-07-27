@@ -182,7 +182,7 @@ namespace AdServer::UserInfoSvcs
   BindRequestContainer::~BindRequestContainer() noexcept
   {}
 
-  AdServer::Commons::SyncCoro<BindRequestContainer::BindRequest>
+  AdServer::Commons::StartableAwaitable<BindRequestContainer::BindRequest>
   BindRequestContainer::co_get_bind_request(
     const String::SubString& id,
     const Generics::Time& now)
@@ -199,7 +199,7 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now)
     /*throw(ChunkNotFound, Exception)*/
   {
-    return co_get_bind_request(id, now).sync_wait();
+    return AdServer::Commons::sync_wait(co_get_bind_request(id, now));
   }
 
   void

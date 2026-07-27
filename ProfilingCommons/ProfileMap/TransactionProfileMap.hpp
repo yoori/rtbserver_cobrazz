@@ -73,20 +73,20 @@ namespace ProfilingCommons
     bool remove_profile()
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
-    AdServer::Commons::SyncCoro<Generics::ConstSmartMemBuf_var>
+    AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
     co_get_profile(
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
-    AdServer::Commons::SyncCoro<Generics::SmartMemBuf_var>
+    AdServer::Commons::StartableAwaitable<Generics::SmartMemBuf_var>
     co_get_own_profile(
       std::optional<Generics::Time> last_access_time = std::nullopt);
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::StartableAwaitable<bool>
     co_save_profile(
       const Generics::ConstSmartMemBuf* mem_buf,
       const Generics::Time& now = Generics::Time::get_time_of_day());
 
-    AdServer::Commons::SyncCoro<bool>
+    AdServer::Commons::StartableAwaitable<bool>
     co_remove_profile();
 
   protected:
@@ -222,7 +222,7 @@ namespace ProfilingCommons
       OperationPriority op_priority = ProfilingCommons::OP_RUNTIME)
       /*throw(MaxWaitersReached, Exception)*/;
 
-    AdServer::Commons::SyncCoro<Transaction_var>
+    AdServer::Commons::StartableAwaitable<Transaction_var>
     co_get_transaction(
       const KeyType& key,
       bool check_max_waiters = true,
@@ -393,7 +393,7 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
-  AdServer::Commons::SyncCoro<Generics::ConstSmartMemBuf_var>
+  AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
   ProfileTransactionImpl<KeyType>::co_get_profile(
     std::optional<Generics::Time> last_access_time)
   {
@@ -409,7 +409,7 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
-  AdServer::Commons::SyncCoro<Generics::SmartMemBuf_var>
+  AdServer::Commons::StartableAwaitable<Generics::SmartMemBuf_var>
   ProfileTransactionImpl<KeyType>::co_get_own_profile(
     std::optional<Generics::Time> last_access_time)
   {
@@ -427,7 +427,7 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   ProfileTransactionImpl<KeyType>::co_save_profile(
     const Generics::ConstSmartMemBuf* mem_buf,
     const Generics::Time& now)
@@ -444,7 +444,7 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   ProfileTransactionImpl<KeyType>::co_remove_profile()
   {
     if(auto* async_map = profile_map_.async_delegate_map_())
@@ -780,7 +780,7 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
-  AdServer::Commons::SyncCoro<
+  AdServer::Commons::StartableAwaitable<
     typename TransactionProfileMap<KeyType>::Transaction_var>
   TransactionProfileMap<KeyType>::co_get_transaction(
     const KeyType& key,

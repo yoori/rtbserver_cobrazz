@@ -1,6 +1,7 @@
 
 #include <unistd.h>
 
+#include <algorithm>
 #include <eh/Errno.hpp>
 #include <eh/Exception.hpp>
 
@@ -8,6 +9,7 @@
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/PathManip.hpp>
 #include <Commons/PidFileGuard.hpp>
 #include <Commons/ScopeGuard.hpp>
@@ -577,12 +579,40 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         new AdServer::CampaignSvcs::CampaignManagerLogger(
           configuration_.log_params, logger());
 
+    std::shared_ptr<AdServer::Commons::ExecutorPool>
+      campaign_manager_executor_pool;
+    const bool billing_enabled =
+      campaign_manager_config_->Billing().present() && (
+        campaign_manager_config_->Billing()->check_bids() ||
+        campaign_manager_config_->Billing()->confirm_bids());
+    if(campaign_manager_config_->GrpcConfig().present() || billing_enabled)
+    {
+      stage = "creating CampaignManager executor pool";
+      const std::size_t process_threads =
+        campaign_manager_config_->GrpcConfig().present() ?
+        campaign_manager_config_->GrpcConfig()->process_threads() :
+        1;
+      campaign_manager_executor_pool =
+        std::make_shared<AdServer::Commons::ExecutorPool>(
+          Generics::ActiveObjectCallback_var(
+            new Logging::ActiveObjectCallbackImpl(
+              logger(),
+              "",
+              "CampaignManagerGrpc")),
+          std::max<std::size_t>(
+            1,
+            process_threads),
+          AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
+          "ca:cm-grpc-p");
+    }
+
     AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core =
       new AdServer::CampaignSvcs::CampaignManagerCore(
         *campaign_manager_config_,
         *domain_config_,
         callback(),
         logger(),
+        campaign_manager_executor_pool,
         campaign_manager_logger,
         configuration_.creative_instantiate,
         configuration_.campaigns_types.c_str());
@@ -605,6 +635,10 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     );
 
     active_objects->add_child_object(campaign_manager_logger.in());
+    if(campaign_manager_executor_pool)
+    {
+      active_objects->add_child_object(campaign_manager_executor_pool);
+    }
     active_objects->add_child_object(campaign_manager_core.in());
 
     if(campaign_manager_config_->GrpcConfig().present())
@@ -613,16 +647,14 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       grpc_adapter = new AdServer::CampaignSvcs::CampaignManagerGrpc(
         campaign_manager_core.in(),
         logger(),
+        campaign_manager_executor_pool,
         campaign_manager_config_->GrpcConfig()->Endpoint().host().present() &&
           *(campaign_manager_config_->GrpcConfig()->Endpoint().host()) != "*" ?
           *campaign_manager_config_->GrpcConfig()->Endpoint().host() :
         "0.0.0.0",
         campaign_manager_config_->GrpcConfig()->Endpoint().port(),
-        campaign_manager_config_->GrpcConfig()->process_threads(),
         campaign_manager_config_->GrpcConfig()->cq_threads(),
-        campaign_manager_config_->GrpcConfig()->max_split().present() ?
-          *campaign_manager_config_->GrpcConfig()->max_split() :
-          16);
+        campaign_manager_config_->GrpcConfig()->max_sequential_ops());
       active_objects->add_child_object(non_owning_active_object(
         grpc_adapter.in()));
     }

@@ -16,34 +16,34 @@
 namespace AdServer::Commons
 {
   template<typename... Args>
-  struct CallbackCoroResult
+  struct CallbackAwaiterResult
   {
     using Type = std::tuple<std::decay_t<Args>...>;
   };
 
   template<>
-  struct CallbackCoroResult<>
+  struct CallbackAwaiterResult<>
   {
     using Type = void;
   };
 
   template<typename Arg>
-  struct CallbackCoroResult<Arg>
+  struct CallbackAwaiterResult<Arg>
   {
     using Type = std::decay_t<Arg>;
   };
 
   template<typename... CallbackArgs>
-  class CallbackCoro
+  class CallbackAwaiter
   {
   public:
-    using Result = typename CallbackCoroResult<CallbackArgs...>::Type;
+    using Result = typename CallbackAwaiterResult<CallbackArgs...>::Type;
 
     using Callback = std::function<void(CallbackArgs...)>;
     using StartCallback = std::function<void(Callback)>;
 
     explicit
-    CallbackCoro(StartCallback start_callback);
+    CallbackAwaiter(StartCallback start_callback);
 
     bool
     await_ready() const noexcept;
@@ -79,13 +79,16 @@ namespace AdServer::Commons
     std::shared_ptr<State> state_;
     StartCallback start_callback_;
   };
+}
 
+namespace AdServer::Commons
+{
   template<typename... CallbackArgs, typename Call, typename... Args>
-  CallbackCoro<CallbackArgs...>
+  CallbackAwaiter<CallbackArgs...>
   async_callback(Call&& call, Args&&... args);
 
   template<typename... CallbackArgs>
-  CallbackCoro<CallbackArgs...>::CallbackCoro(
+  CallbackAwaiter<CallbackArgs...>::CallbackAwaiter(
     StartCallback start_callback)
     : state_(std::make_shared<State>()),
       start_callback_(std::move(start_callback))
@@ -93,14 +96,14 @@ namespace AdServer::Commons
 
   template<typename... CallbackArgs>
   bool
-  CallbackCoro<CallbackArgs...>::await_ready() const noexcept
+  CallbackAwaiter<CallbackArgs...>::await_ready() const noexcept
   {
     return false;
   }
 
   template<typename... CallbackArgs>
   bool
-  CallbackCoro<CallbackArgs...>::await_suspend(std::coroutine_handle<> handle)
+  CallbackAwaiter<CallbackArgs...>::await_suspend(std::coroutine_handle<> handle)
   {
     auto state = state_;
     state->handle = handle;
@@ -152,8 +155,8 @@ namespace AdServer::Commons
   }
 
   template<typename... CallbackArgs>
-  typename CallbackCoro<CallbackArgs...>::Result
-  CallbackCoro<CallbackArgs...>::await_resume()
+  typename CallbackAwaiter<CallbackArgs...>::Result
+  CallbackAwaiter<CallbackArgs...>::await_resume()
   {
     state_->status.load(std::memory_order_acquire);
 
@@ -178,7 +181,7 @@ namespace AdServer::Commons
 
   template<typename... CallbackArgs>
   void
-  CallbackCoro<CallbackArgs...>::resume_(const std::shared_ptr<State>& state)
+  CallbackAwaiter<CallbackArgs...>::resume_(const std::shared_ptr<State>& state)
   {
     if(state->resume_scheduler)
     {
@@ -191,14 +194,14 @@ namespace AdServer::Commons
   }
 
   template<typename... CallbackArgs, typename Call, typename... Args>
-  CallbackCoro<CallbackArgs...>
+  CallbackAwaiter<CallbackArgs...>
   async_callback(Call&& call, Args&&... args)
   {
-    return CallbackCoro<CallbackArgs...>(
+    return CallbackAwaiter<CallbackArgs...>(
       [
         call = std::forward<Call>(call),
         ... args = std::forward<Args>(args)
-      ](typename CallbackCoro<CallbackArgs...>::Callback callback)
+      ](typename CallbackAwaiter<CallbackArgs...>::Callback callback)
       mutable
       {
         std::invoke(std::move(call), std::move(args)..., std::move(callback));

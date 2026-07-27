@@ -24,7 +24,7 @@
 
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/ValueTask.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
@@ -131,7 +131,7 @@ namespace AdServer::ImprTrack
     };
 
     using ResolveUserBindTask =
-      FrontendCommons::ValueTask<ResolveUserBindResult>;
+      AdServer::Commons::Awaitable<ResolveUserBindResult>;
 
   private:
     struct MatchScheduleState;
@@ -141,7 +141,7 @@ namespace AdServer::ImprTrack
     void
     parse_config_() /*throw(Exception)*/;
 
-    FrontendCommons::ValueTask<int>
+    AdServer::Commons::Awaitable<int>
     finish_request_(
       const FCGI::HttpRequest& request,
       FCGI::HttpResponse& response,

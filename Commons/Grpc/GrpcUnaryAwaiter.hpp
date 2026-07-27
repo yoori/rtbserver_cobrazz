@@ -20,7 +20,7 @@ namespace AdServer::Grpc
     typename RequestType,
     typename ResponseType,
     typename ResultType>
-  class UnaryCoroAwaiter final
+  class GrpcUnaryAwaiter final
   {
   public:
     using Callback = std::function<void(
@@ -30,7 +30,7 @@ namespace AdServer::Grpc
       const RequestType&,
       Callback);
 
-    UnaryCoroAwaiter(
+    GrpcUnaryAwaiter(
       std::shared_ptr<AsyncClientType> client,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       const RequestType& request,
@@ -67,11 +67,11 @@ namespace AdServer::Grpc
     typename RequestType,
     typename ResponseType,
     typename ResultType>
-  UnaryCoroAwaiter<
+  GrpcUnaryAwaiter<
     AsyncClientType,
     RequestType,
     ResponseType,
-    ResultType>::UnaryCoroAwaiter(
+    ResultType>::GrpcUnaryAwaiter(
       std::shared_ptr<AsyncClientType> client,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       const RequestType& request,
@@ -91,7 +91,7 @@ namespace AdServer::Grpc
     typename ResponseType,
     typename ResultType>
   bool
-  UnaryCoroAwaiter<
+  GrpcUnaryAwaiter<
     AsyncClientType,
     RequestType,
     ResponseType,
@@ -106,7 +106,7 @@ namespace AdServer::Grpc
     typename ResponseType,
     typename ResultType>
   void
-  UnaryCoroAwaiter<
+  GrpcUnaryAwaiter<
     AsyncClientType,
     RequestType,
     ResponseType,
@@ -145,7 +145,7 @@ namespace AdServer::Grpc
     typename ResponseType,
     typename ResultType>
   ResultType
-  UnaryCoroAwaiter<
+  GrpcUnaryAwaiter<
     AsyncClientType,
     RequestType,
     ResponseType,

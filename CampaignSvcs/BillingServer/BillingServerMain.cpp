@@ -217,9 +217,7 @@ BillingServerApp_::main(int argc, char** argv)
         config().GrpcConfig()->Endpoint().port(),
         static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
         static_cast<std::size_t>(config().GrpcConfig()->cq_threads()),
-        config().GrpcConfig()->max_split().present() ?
-          static_cast<std::size_t>(*config().GrpcConfig()->max_split()) :
-          static_cast<std::size_t>(config().GrpcConfig()->process_threads()));
+        static_cast<std::size_t>(config().GrpcConfig()->max_sequential_ops()));
       add_child_object(grpc_adapter);
     }
 

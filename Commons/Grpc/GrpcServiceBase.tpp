@@ -209,9 +209,11 @@ namespace AdServer::Grpc
           }
 
           coro_item.request = request;
-          coro_item.hash = hash ?
-            hash(*request) :
-            static_cast<std::size_t>(batch_request.request_id());
+          if (hash)
+          {
+            coro_item.hash = hash(*request);
+            coro_item.hash_present = true;
+          }
           return true;
         },
         [
@@ -221,7 +223,7 @@ namespace AdServer::Grpc
           void* request_ptr,
           adserver::grpc::BatchResponseItem& batch_response,
           google::protobuf::Arena& response_arena)
-          -> GrpcCoroutine
+          -> AdServer::Commons::StartableAwaitable<void>
         {
           auto& request = *static_cast<Request*>(request_ptr);
           ::grpc::Status status;
@@ -302,7 +304,7 @@ namespace AdServer::Grpc
       [service_impl, handler = call.handler](
         Request&& request,
         Response& response,
-        ::grpc::Status& status) -> GrpcCoroutine
+        ::grpc::Status& status) -> AdServer::Commons::StartableAwaitable<void>
       {
         co_await (service_impl->*handler)(std::move(request), response, status);
       },

@@ -592,6 +592,7 @@ namespace AdServer::CampaignSvcs
     const DomainParser::DomainConfig& domain_config,
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     CampaignManagerLogger* campaign_manager_logger,
     const CreativeInstantiatorTypes::CreativeInstantiate& creative_instantiate,
     const char* campaigns_types)
@@ -728,10 +729,27 @@ namespace AdServer::CampaignSvcs
           billing_server_refs.emplace_back(host + ":" + std::to_string(grpc_ref.port()));
         }
 
+        AdServer::Grpc::BatchingOptions billing_server_batching_options;
+        const unsigned long billing_server_grpc_max_batch_delay_us =
+          campaign_manager_config_.Billing()->
+            billing_server_grpc_max_batch_delay_us();
+        if (billing_server_grpc_max_batch_delay_us > 0)
+        {
+          billing_server_batching_options.max_batch_delay = Generics::Time(
+            billing_server_grpc_max_batch_delay_us / Generics::Time::USEC_MAX,
+            billing_server_grpc_max_batch_delay_us % Generics::Time::USEC_MAX);
+        }
+        else
+        {
+          billing_server_batching_options.max_batch_delay.reset();
+        }
+
         BillingStateContainer_var billing_state_container = new BillingStateContainer(
           callback_,
           logger,
+          executor_pool,
           std::move(billing_server_refs),
+          std::move(billing_server_batching_options),
           100, // max use count
           campaign_manager_config_.Billing()->optimize_campaign_ctr());
 
@@ -859,7 +877,7 @@ namespace AdServer::CampaignSvcs
     return false;
   }
 
-  AdServer::Commons::SyncCoro<CampaignManagerCore::GetAdResult>
+  AdServer::Commons::Awaitable<CampaignManagerCore::GetAdResult>
   CampaignManagerCore::co_get_campaign_creative(GetAdRequest&& core_request_params)
   {
     static const char* FUN = "CampaignManagerCore::get_campaign_creative()";
@@ -1018,7 +1036,6 @@ namespace AdServer::CampaignSvcs
           AdSelectionResult ad_selection_result(request_params->arena());
           AdSlotMinCpm ad_slot_min_cpm;
           Tag::SizeMap tag_sizes;
-
           co_await co_get_adslot_campaign_creative_(
             log_tag,
             log_request_without_tag,
@@ -1108,7 +1125,6 @@ namespace AdServer::CampaignSvcs
         ad_slot_context.test_request = core_request_params.common_info->test_request;
         const unsigned long profiling_type = core_request_params.log_request.profiling_type;
         auto request_params = std::make_shared<GetAdRequest>(std::move(core_request_params));
-
         campaign_manager_logger_->process_request(
           colocation,
           request_params,
@@ -1225,7 +1241,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<CampaignManagerCore::ByteArray>
+  AdServer::Commons::Awaitable<CampaignManagerCore::ByteArray>
   CampaignManagerCore::co_get_file(std::string file_name) /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerCore::co_get_file()";
@@ -1245,7 +1261,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<CampaignManagerCore::InstantiateAdResult>
+  AdServer::Commons::Awaitable<CampaignManagerCore::InstantiateAdResult>
   CampaignManagerCore::co_instantiate_ad(InstantiateAdRequest&& core_info)
     /*throw(Exception, NotReady)*/
   {
@@ -1769,7 +1785,7 @@ namespace AdServer::CampaignSvcs
     return 0;
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::Awaitable<bool>
   CampaignManagerCore::co_get_adslot_campaign_creative_(
     const Tag*& log_tag,
     bool& log_request_without_tag,
@@ -1791,8 +1807,8 @@ namespace AdServer::CampaignSvcs
     Generics::MonoAllocatorArena* arena)
   {
     //static const char* FUN = "CampaignManagerCore::get_adslot_campaign_creative_()";
-
     bool passback = core_ad_slot.passback;
+
     bool process_request = true;
     log_tag = 0;
     log_request_without_tag = false;
@@ -1805,7 +1821,6 @@ namespace AdServer::CampaignSvcs
     {
       ad_slot_debug_info->cpm_threshold = RevenueDecimal::ZERO;
     }
-
     const Tag* tag = resolve_tag(
       &ad_slot_context.tag_size,
       &ad_slot_context.publisher_account_id,
@@ -2020,7 +2035,6 @@ namespace AdServer::CampaignSvcs
     {
       ad_slot_result.tag_size = ad_slot_context.tag_size;
     }
-
     co_return true;
   }
 
@@ -2170,7 +2184,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::Awaitable<bool>
   CampaignManagerCore::select_adslot_campaign_creative_(
     AdSelectionResult& ad_selection_result,
     Tag::SizeMap& tag_sizes,
@@ -2266,7 +2280,6 @@ namespace AdServer::CampaignSvcs
           seq_order.set_id = core_seq_order.set_id;
           seq_order.imps = core_seq_order.imps;
         }
-
         co_await co_get_site_creative_(
           const_config,
           config_index,
@@ -2459,7 +2472,6 @@ namespace AdServer::CampaignSvcs
             Generics::DDR_FLOOR);
           (void)slot_pub_ecpm;
         }
-
         for (CampaignSelectionDataList::iterator it =
             ad_selection_result.selected_campaigns.begin();
           it != ad_selection_result.selected_campaigns.end(); ++it, ++i)
@@ -2607,6 +2619,9 @@ namespace AdServer::CampaignSvcs
         ad_slot_result.track_impr = ad_selection_result.selected_campaigns.front().track_impr;
       }
     } // !passback
+    else
+    {
+    }
 
     if(ad_request_debug_info)
     {
@@ -2615,7 +2630,6 @@ namespace AdServer::CampaignSvcs
         &const_config,
         *request_params.context_info);
     }
-
     co_return true;
   }
 
@@ -2790,7 +2804,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::Awaitable<bool>
   CampaignManagerCore::co_get_click_url(
     const ClickRequest& click_info,
     ClickResult& click_result_info)
@@ -3162,7 +3176,7 @@ namespace AdServer::CampaignSvcs
     return true;
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::Awaitable<bool>
   CampaignManagerCore::co_get_site_creative_(
     const CampaignConfig& config,
     const CampaignIndex& config_index,
@@ -3445,7 +3459,6 @@ namespace AdServer::CampaignSvcs
           }
         }
       }
-
       campaign_selector.select_campaigns(
         auction_type,
         second_auction_type,
@@ -3511,9 +3524,9 @@ namespace AdServer::CampaignSvcs
             weighted_campaign->campaign);
 
         if (!apply_check_available_bid_result_(
-             weighted_campaign->campaign,
-             check_result,
-             weighted_campaign->ctr))
+          weighted_campaign->campaign,
+          check_result,
+          weighted_campaign->ctr))
         {
           weighted_campaign.reset(nullptr);
         }
@@ -3529,7 +3542,6 @@ namespace AdServer::CampaignSvcs
       assert(select_result.tag_size);
 
       CreativeParamsList creative_params_list;
-
       text_creative_selected |= instantiate_text_creatives(
         &config,
         colocation,
@@ -3563,7 +3575,6 @@ namespace AdServer::CampaignSvcs
       {
         CreativeParams creative_params;
         AdSelectionResult display_ad_selection_result(select_result, select_result.arena());
-
         display_creative_selected |= instantiate_display_creative(
           &config,
           colocation,
@@ -3657,7 +3668,11 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    co_await co_confirm_amounts_(&config, campaign_select_params.time, confirm_creatives, CR_CPM);
+    co_await co_confirm_amounts_(
+      &config,
+      campaign_select_params.time,
+      confirm_creatives,
+      CR_CPM);
 
     if (ad_slot_debug_info)
     {
@@ -3863,7 +3878,7 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  AdServer::Commons::SyncCoro<CampaignManagerCore::VerifyImpressionResult>
+  AdServer::Commons::Awaitable<CampaignManagerCore::VerifyImpressionResult>
   CampaignManagerCore::co_verify_impression(const VerifyImpressionRequest& impression_info)
     /*throw(Exception, NotReady)*/
   {
@@ -5004,7 +5019,7 @@ namespace AdServer::CampaignSvcs
     return check_result.available && ctr >= check_result.goal_ctr;
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::Awaitable<bool>
   CampaignManagerCore::co_confirm_amounts_(
     const CampaignConfig* config,
     const Generics::Time& now,

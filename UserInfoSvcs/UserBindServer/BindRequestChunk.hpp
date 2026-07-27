@@ -44,7 +44,7 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now)
       noexcept;
 
-    AdServer::Commons::SyncCoro<BindRequest>
+    AdServer::Commons::StartableAwaitable<BindRequest>
     co_get_bind_request(
       const String::SubString& external_id,
       const Generics::Time& now)

@@ -331,7 +331,7 @@ namespace UserInfoSvcs
     add_child_object(dump_thread.in());
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_remove_user_profile(
     const UserId& user_id)
     /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/
@@ -339,7 +339,7 @@ namespace UserInfoSvcs
     co_return co_await next_processor_->co_remove_user_profile(user_id);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_fraud_user(
     const UserId& user_id,
     const Generics::Time& now)
@@ -357,7 +357,7 @@ namespace UserInfoSvcs
     co_return co_await next_processor_->co_fraud_user(user_id, now);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_match(
     const RequestMatchParams& channel_match_info,
     long last_colo_id,
@@ -463,7 +463,7 @@ namespace UserInfoSvcs
       pucr);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_merge(
     const RequestMatchParams& request_params,
     const Generics::MemBuf& merge_base_profile,
@@ -525,7 +525,7 @@ namespace UserInfoSvcs
       ho_info);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_exchange_merge(
     const UserId& user_id,
     const Generics::MemBuf& merge_base_profile,
@@ -563,7 +563,7 @@ namespace UserInfoSvcs
       ho_info);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_update_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -627,7 +627,7 @@ namespace UserInfoSvcs
       op_priority);
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_confirm_freq_caps(
     const UserId& user_id,
     const Generics::Time& now,
@@ -669,7 +669,7 @@ namespace UserInfoSvcs
     res.window_time() = fc.window_time.tv_sec;
   }
 
-  AdServer::Commons::SyncCoro<bool>
+  AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_consider_publishers_optin(
     const UserId& user_id,
     const std::set<unsigned long>& publisher_account_ids,

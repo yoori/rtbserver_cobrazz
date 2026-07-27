@@ -29,6 +29,11 @@
         <xsd:documentation>Port to accept monitoring HTTP connections.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_max_sequential_ops" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>gRPC maximum sequential operations per lane.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="BillingServerThreadParamsType">

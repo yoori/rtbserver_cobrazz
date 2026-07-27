@@ -29,6 +29,11 @@
         <xsd:documentation>gRPC request processing threads.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_max_sequential_ops" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>gRPC maximum sequential operations per lane.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="CampaignManagerThreadParamsType">
@@ -77,6 +82,11 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
+    <xsd:attribute name="billing_server_grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional" default="1000">
+      <xsd:annotation>
+        <xsd:documentation>Max batching delay for BillingServer gRPC client calls.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="CampaignManagerUpdateParamsType">
