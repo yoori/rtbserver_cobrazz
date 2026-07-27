@@ -344,33 +344,6 @@ namespace
     mutable std::mutex lock_;
     ErrorMap errors_;
   };
-
-  void
-  print_usage()
-  {
-    std::cerr
-      << "Usage: UserBindGrpcPerf [OPTIONS]\n"
-      << "Options:\n"
-      << "  --target <host:port>  grpc endpoint (default: localhost:25728)\n"
-      << "  --count <N>           number of rpc calls (default: 10000000)\n"
-      << "  --threads <N>         test sender threads count (default: 16)\n"
-      << "  --client-threads <N>  client worker/CQ threads (default: 4)\n"
-      << "  --max-streams <N>     maximum async-batch grpc streams (default: --client-threads)\n"
-      << "  --mode <name>         async-batch | distributed-grpc (default: async-batch)\n"
-      << "  --user-bind-controller-grpc-endpoint <host:port> UserBindController grpc endpoint for distributed-grpc mode\n"
-      << "  --max-inflight <N>    soft max in-flight requests, 0 disables limit (default: 0)\n"
-      << "  --error-on-inflight-reaching <0|1> fail request instead of waiting on max-inflight (default: 0)\n"
-      << "  --max-batch-size <N>  maximum batch size for async-batch mode (default: 1024)\n"
-      << "  --max-batch-delay-us <N> maximum time to wait for filling async-batch request, 0 disables delay flush (default: 3000)\n"
-      << "  --max-queue-wait-us <N> maximum queue wait before local request timeout, 0 disables (default: 0)\n"
-      << "  --stream-start-timeout-us <N> maximum stream start wait before cancelling stream, 0 disables (default: 0)\n"
-      << "  --local-subchannel-pool <0|1> use local subchannel pool per channel (default: 1)\n"
-      << "  --grpc-compression <0|1> use grpc compression (default: 1)\n"
-      << "  --print-errors <0|1> print aggregated grpc errors (default: 0)\n"
-      << "  --reconnect-per-request <0|1> create new grpc channel/stub per request (default: 0)\n"
-      << "  --rpc-timeout-ms <N> unary rpc deadline for reconnect-per-request mode (default: 5000)\n"
-      << "  --user-id <id>        fixed id for GetUserIdRequest::id\n";
-  }
 }
 
 int

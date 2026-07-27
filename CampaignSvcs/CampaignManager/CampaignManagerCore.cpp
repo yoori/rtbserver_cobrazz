@@ -3150,8 +3150,9 @@ namespace AdServer::CampaignSvcs
       creative_params_list,
       creative_body,
       ad_slot_context,
-      &request_params.exclude_pubpixel_accounts
-      );
+      &request_params.exclude_pubpixel_accounts,
+      nullptr,
+      true);
 
     if (!select_result.selected_campaigns.empty() && !creative_params_list.empty())
     {

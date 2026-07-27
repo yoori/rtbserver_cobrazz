@@ -810,7 +810,7 @@ namespace AdServer
       {
         redirect_rule = *select_rules.begin();
 
-        unsigned long sel_weight = Generics::safe_rand(sum_weight);
+        unsigned long sel_weight = Generics::unsafe_rand(sum_weight);
         sum_weight = 0;
         for(auto rule_it = select_rules.begin();
           rule_it != select_rules.end();
@@ -877,7 +877,7 @@ namespace AdServer
                 request_info.short_external_id;
               templ_args[TemplateParams::RANDOM] =
                 String::StringManip::IntToStr(
-                  Generics::safe_rand()).str().str();
+                  Generics::unsafe_rand()).str().str();
 
               if(!request_info.passback_url.empty())
               {

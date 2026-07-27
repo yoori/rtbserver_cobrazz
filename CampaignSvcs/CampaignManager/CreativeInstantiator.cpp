@@ -3,7 +3,6 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <sstream>
 #include <string_view>
 #include <vector>
 
@@ -139,10 +138,10 @@ namespace
       bool value = true) const override
     {
       const std::size_t limit = std::min(limit_, providers_->size());
-      for(std::size_t index = limit; index > 0; --index)
+      for (std::size_t index = limit; index > 0; --index)
       {
         const ArgsCallbackPtr& provider = (*providers_)[index - 1];
-        if(provider && provider->get_argument(key, result, value))
+        if (provider && provider->get_argument(key, result, value))
         {
           return true;
         }
@@ -174,7 +173,7 @@ namespace
     add_template_params_layer(
       AdServer::CampaignSvcs::TemplateParams* params)
     {
-      if(params && !params->empty())
+      if (params && !params->empty())
       {
         add_provider(make_template_params_args_provider(params));
       }
@@ -189,7 +188,7 @@ namespace
       const AdServer::CampaignSvcs::CreativeInstantiateArgs&
         creative_instantiate_args)
     {
-      if(!token_values || token_values->empty())
+      if (!token_values || token_values->empty())
       {
         return;
       }
@@ -225,6 +224,36 @@ namespace
     return IntToStr(i).str().str();
   }
 
+  void
+  append_param_prefix(std::string& result, const char* name)
+  {
+    result.push_back('&');
+    result += name;
+    result.push_back('=');
+  }
+
+  template <typename T>
+  void
+  append_param(std::string& result, const char* name, const T& value)
+  {
+    append_param_prefix(result, name);
+    result += to_string(value);
+  }
+
+  void
+  append_param(std::string& result, const char* name, const std::string& value)
+  {
+    append_param_prefix(result, name);
+    result += value;
+  }
+
+  void
+  append_param(std::string& result, const char* name, const char* value)
+  {
+    append_param_prefix(result, name);
+    result += value;
+  }
+
   template<typename Map>
   void
   replace_insert(const Map& source, Map& target) noexcept
@@ -241,7 +270,7 @@ namespace
     const String::SubString& value,
     bool data_encoding = false)
   {
-    if(!data_encoding)
+    if (!data_encoding)
     {
       String::StringManip::mime_url_encode(value, result);
     }
@@ -320,38 +349,16 @@ namespace AdProtocol
 
 namespace AdServer::CampaignSvcs
 {
-  namespace
-  {
-    std::string
-    append_mime_url_encoded(
-      const String::SubString& prefix,
-      const String::SubString& to_encode_suffix)
-      noexcept
-    {
-      if(!prefix.empty())
-      {
-        std::string encoded_suffix;
-        String::StringManip::mime_url_encode(
-          to_encode_suffix,
-          encoded_suffix);
-        return prefix.str() + encoded_suffix;
-      }
-
-      return to_encode_suffix.str();
-    }
-  }
-
   const char* instantiate_user_status(UserStatus user_status) noexcept
   {
-    if (user_status == US_OPTIN ||
-        user_status == US_TEMPORARY)
+    if (user_status == US_OPTIN || user_status == US_TEMPORARY)
     {
       return "1";
     }
 
     if (user_status == US_OPTOUT ||
-        user_status == US_EXTERNALPROBE ||
-        user_status == US_NOEXTERNALID)
+      user_status == US_EXTERNALPROBE ||
+      user_status == US_NOEXTERNALID)
     {
       return "-1";
     }
@@ -404,15 +411,14 @@ namespace AdServer::CampaignSvcs
       AccountIdSet::const_iterator excl_acc_it =
         exclude_publisher_account_ids.begin();
 
-      while(acc_it != it->second.end() &&
-            excl_acc_it != exclude_publisher_account_ids.end())
+      while (acc_it != it->second.end() && excl_acc_it != exclude_publisher_account_ids.end())
       {
-        if((*acc_it)->account_id < *excl_acc_it)
+        if ((*acc_it)->account_id < *excl_acc_it)
         {
           result_account_ids.push_back(*acc_it);
           ++acc_it;
         }
-        else if(*excl_acc_it < (*acc_it)->account_id)
+        else if (*excl_acc_it < (*acc_it)->account_id)
         {
           ++excl_acc_it;
         }
@@ -461,7 +467,7 @@ namespace AdServer::CampaignSvcs
       exclude_pubpixel_accounts,
       MAX_PUBPIXELS_PER_REQUEST);
 
-    for(AccountArray::const_iterator acc_it = result_accounts.begin();
+    for (AccountArray::const_iterator acc_it = result_accounts.begin();
         acc_it != result_accounts.end(); ++acc_it)
     {
       result_account_ids.push_back((*acc_it)->account_id);
@@ -516,7 +522,7 @@ namespace AdServer::CampaignSvcs
           args[name] = OptionValue(0, value);
         });
 
-      if(colo_id)
+      if (colo_id)
       {
         args[CreativeTokens::COLOCATION] = OptionValue(0, IntToStr(*colo_id));
       }
@@ -535,19 +541,19 @@ namespace AdServer::CampaignSvcs
         args[CreativeTokens::CID] = OptionValue(0, IntToStr(creative->campaign->campaign_group_id));
       }
 
-      if(tag)
+      if (tag)
       {
         args[CreativeTokens::TAGID] = OptionValue(0, IntToStr(tag->tag_id));
         args[CreativeTokens::SITE_ID] = OptionValue(0, IntToStr(tag->site->site_id));
         args[CreativeTokens::PUBLISHER_ID] = OptionValue(0, IntToStr(tag->site->account->account_id));
       }
 
-      if(tag_size)
+      if (tag_size)
       {
         args[CreativeTokens::CREATIVE_SIZE] = OptionValue(
           0, tag_size->size->protocol_name);
       }
-      else if(creative && !creative->sizes.empty())
+      else if (creative && !creative->sizes.empty())
       {
         args[CreativeTokens::CREATIVE_SIZE] = OptionValue(
           0,
@@ -559,7 +565,7 @@ namespace AdServer::CampaignSvcs
       const TokenProcessorMap::const_iterator it = campaign_config.token_processors.find(
         click_url.option_id);
 
-      if(it != campaign_config.token_processors.end())
+      if (it != campaign_config.token_processors.end())
       {
         token_processor = it->second;
       }
@@ -614,18 +620,16 @@ namespace AdServer::CampaignSvcs
       instantiate_rule_it = creative_instantiate_.creative_rules.find(
         AdInstantiateRule::UNSECURE.str());
 
-    if(instantiate_rule_it == creative_instantiate_.creative_rules.end())
+    if (instantiate_rule_it == creative_instantiate_.creative_rules.end())
     {
       Stream::Error ostr;
-      ostr << FUN << ": can't find creative instantiate rule: " <<
-        AdInstantiateRule::UNSECURE;
+      ostr << FUN << ": can't find creative instantiate rule: " << AdInstantiateRule::UNSECURE;
       throw Exception(ostr);
     }
 
-    Creative::SizeMap::const_iterator cr_size_it =
-      creative->sizes.find(tag_size.size->size_id);
+    Creative::SizeMap::const_iterator cr_size_it = creative->sizes.find(tag_size.size->size_id);
 
-    if(cr_size_it == creative->sizes.end())
+    if (cr_size_it == creative->sizes.end())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't find creative size: " << tag_size.size->size_id;
@@ -633,30 +637,25 @@ namespace AdServer::CampaignSvcs
     }
 
     const Creative::Size& cr_size = cr_size_it->second;
-    const CreativeInstantiateRule&
-      creative_instantiate_rule = instantiate_rule_it->second;
+    const CreativeInstantiateRule& creative_instantiate_rule = instantiate_rule_it->second;
 
     ClickParams click_params;
 
     // calculating click url
-    std::ostringstream ostr_click_url;
-    ostr_click_url << creative_instantiate_rule.click_url <<
-      "/ccid" << EQL << params.ccid << AMP <<
-      "requestid" << EQL;
+    std::string click_url;
+    click_url.reserve(creative_instantiate_rule.click_url.size() + 64);
+    click_url += creative_instantiate_rule.click_url;
+    click_url += "/ccid";
+    click_url += EQL;
+    click_url += to_string(params.ccid);
+    click_url += AMP;
+    click_url += "requestid";
+    click_url += EQL;
 
-    if(!creative->click_url.value.empty())
+    if (!creative->click_url.value.empty())
     {
-      click_params.click_url = ostr_click_url.str();
+      click_params.click_url = click_url;
     }
-
-    if(!click_params.click_url.empty())
-    {
-      click_params.click_url_f = click_params.click_url + AMP + "m" + EQL + "f";
-    }
-
-    // Always initilize preclick (same in instantiate and preinstantiate)
-    click_params.preclick_url = ostr_click_url.str() + AMP + "relocate" + EQL;
-    click_params.preclick_url_f = ostr_click_url.str() + AMP + "m" + EQL + "f" + AMP + "relocate" + EQL;
 
     CreativeInstantiateArgs creative_instantiate_args;
     fill_creative_instantiate_args_(
@@ -676,7 +675,7 @@ namespace AdServer::CampaignSvcs
 
       Template* creative_template = campaign_config.creative_templates.get(key);
 
-      if(!creative_template)
+      if (!creative_template)
       {
         Stream::Error ostr;
         ostr << "Can't find creative template for (type='" <<
@@ -687,16 +686,14 @@ namespace AdServer::CampaignSvcs
         throw Exception(ostr);
       }
 
-      std::string peer_ip = !params.peer_ip.empty() ?
-        params.peer_ip :
-        "127.0.0.1";
+      std::string peer_ip = !params.peer_ip.empty() ? params.peer_ip : "127.0.0.1";
 
       TemplateParams_var request_args_ptr = new TemplateParams();
 
       {
         TokenValueMap& request_args = *request_args_ptr;
 
-        if(tag)
+        if (tag)
         {
           request_args.set_value(CreativeTokens::TAGWIDTH, to_string(tag_size.size->width));
           request_args.set_value(CreativeTokens::TAGHEIGHT, to_string(tag_size.size->height));
@@ -706,16 +703,16 @@ namespace AdServer::CampaignSvcs
           request_args.set_value(
             CreativeTokens::PUBLISHER_ID,
             to_string(tag->site->account->account_id));
-          for(OptionTokenValueMap::const_iterator token_it = tag->tokens.begin();
+          for (OptionTokenValueMap::const_iterator token_it = tag->tokens.begin();
               token_it != tag->tokens.end(); ++token_it)
           {
             request_args.set_value(token_it->first, token_it->second.value);
           }
 
-          if(!tag->sizes.empty())
+          if (!tag->sizes.empty())
           {
             const Tag::Size* tag_size = tag->sizes.begin()->second;
-            for(auto token_it = tag_size->tokens.begin();
+            for (auto token_it = tag_size->tokens.begin();
               token_it != tag_size->tokens.end(); ++token_it)
             {
               request_args.set_value(token_it->first, token_it->second.value);
@@ -782,7 +779,7 @@ namespace AdServer::CampaignSvcs
         creative_args = creative->tokens;
         replace_insert(cr_size.tokens, creative_args);
 
-        for(auto token_it = creative_instantiate_rule.tokens.begin();
+        for (auto token_it = creative_instantiate_rule.tokens.begin();
           token_it != creative_instantiate_rule.tokens.end(); ++token_it)
         {
           creative_args[token_it->first] = token_it->second;
@@ -801,28 +798,31 @@ namespace AdServer::CampaignSvcs
           0, tag_size.size->protocol_name);
 
         // ##PUBPRECLICK## empty so click0 == click, preclick0 == preclick
-        if(!click_params.click_url.empty())
+        if (!click_params.click_url.empty())
         {
           creative_args[CreativeTokens::CLICKURL] = OptionValue(
             0, click_params.click_url);
           creative_args[CreativeTokens::CLICKF] = OptionValue(
-            0, click_params.click_url_f);
+            0, click_params.click_url + AMP + "m" + EQL + "f");
           creative_args[CreativeTokens::CLICK0] = OptionValue(
             0, click_params.click_url);
           creative_args[CreativeTokens::CLICKF0] = OptionValue(
-            0, click_params.click_url_f);
+            0, click_params.click_url + AMP + "m" + EQL + "f");
         }
 
         // preclick_url not empty.
         {
+          const std::string preclick_url = click_url + AMP + "relocate" + EQL;
+          const std::string preclick_url_f =
+            click_url + AMP + "m" + EQL + "f" + AMP + "relocate" + EQL;
           creative_args[CreativeTokens::PRECLICKURL] = OptionValue(
-            0, click_params.preclick_url);
+            0, preclick_url);
           creative_args[CreativeTokens::PRECLICKF] = OptionValue(
-            0, click_params.preclick_url_f);
+            0, preclick_url_f);
           creative_args[CreativeTokens::PRECLICK0] = OptionValue(
-            0, click_params.preclick_url);
+            0, preclick_url);
           creative_args[CreativeTokens::PRECLICKF0] = OptionValue(
-            0, click_params.preclick_url_f);
+            0, preclick_url_f);
         }
       }
 
@@ -896,7 +896,7 @@ namespace AdServer::CampaignSvcs
   {
     //static const char* FUN = "CreativeInstantiator::fill_passback_request_params_()";
 
-    for(const auto& token : request_params.tokens)
+    for (const auto& token : request_params.tokens)
     {
       request_args.set_value(token.name, token.value);
     }
@@ -905,14 +905,14 @@ namespace AdServer::CampaignSvcs
     const char* const COUNTRY = !request_params.location.empty() ?
       request_params.location[0].country.c_str() : "";
 
-    if(fill_pub_pixels)
+    if (fill_pub_pixels)
     {
       request_args.set_value(CreativeTokens::PUB_PIXELS_OPTIN, "");
 
       const AccountIdList* actual_pubpixel_accounts;
       AccountIdList optin_pubpixel_accounts_holder;
 
-      if(pubpixel_accounts)
+      if (pubpixel_accounts)
       {
         actual_pubpixel_accounts = pubpixel_accounts;
       }
@@ -930,15 +930,15 @@ namespace AdServer::CampaignSvcs
       }
 
       // use empty PUB_PIXELS_OPTIN if all publishers mapped or here no pixels
-      if(!actual_pubpixel_accounts->empty())
+      if (!actual_pubpixel_accounts->empty())
       {
         std::string pub_pixel_url = instantiate_info.pub_pixels_optin;
         pub_pixel_url += "&aid=";
 
-        for(AccountIdList::const_iterator acc_it = actual_pubpixel_accounts->begin();
+        for (AccountIdList::const_iterator acc_it = actual_pubpixel_accounts->begin();
             acc_it != actual_pubpixel_accounts->end(); ++acc_it)
         {
-          if(acc_it != actual_pubpixel_accounts->begin())
+          if (acc_it != actual_pubpixel_accounts->begin())
           {
             pub_pixel_url += ',';
           }
@@ -946,7 +946,7 @@ namespace AdServer::CampaignSvcs
           pub_pixel_url += to_string(*acc_it);
         }
 
-        if(consider_pub_pixel_accounts)
+        if (consider_pub_pixel_accounts)
         {
           *consider_pub_pixel_accounts = *actual_pubpixel_accounts;
         }
@@ -965,17 +965,17 @@ namespace AdServer::CampaignSvcs
 
     {
       AdServer::Commons::ExternalUserIdArray user_ids;
-      if(!request_params.external_user_id.empty())
+      if (!request_params.external_user_id.empty())
       {
         user_ids.push_back(request_params.external_user_id);
       }
 
-      if(!request_params.user_id.is_null())
+      if (!request_params.user_id.is_null())
       {
         user_ids.push_back(std::string("/") + request_params.user_id.to_string());
       }
 
-      if(!user_ids.empty())
+      if (!user_ids.empty())
       {
         std::string dns_enc_str;
         AdServer::Commons::dns_encode_external_user_ids(dns_enc_str, user_ids);
@@ -997,7 +997,7 @@ namespace AdServer::CampaignSvcs
       const std::string& referer = request_params.full_referer.empty() ?
         request_params.referer : request_params.full_referer;
 
-      if(!referer.empty())
+      if (!referer.empty())
       {
         try
         {
@@ -1020,17 +1020,17 @@ namespace AdServer::CampaignSvcs
       AdServer::LogProcessing::undisplayable_mime_encode(etid, ext_tag_id);
       request_args.set_value(CreativeTokens::ETID, std::move(etid));
     }
-    if(!request_params.source_id.empty())
+    if (!request_params.source_id.empty())
     {
       request_args.set_value(CreativeTokens::SOURCE_ID, request_params.source_id);
     }
 
-    if(!request_params.external_user_id.empty())
+    if (!request_params.external_user_id.empty())
     {
       request_args.set_value(CreativeTokens::EXTERNAL_USER_ID, request_params.external_user_id);
     }
 
-    if(!request_params.track_user_id.is_null())
+    if (!request_params.track_user_id.is_null())
     {
       request_args.set_value(CreativeTokens::UNSIGNEDUID, request_params.track_user_id.to_string());
     }
@@ -1048,7 +1048,7 @@ namespace AdServer::CampaignSvcs
     request_args.set_value(
       CreativeTokens::TEST_REQUEST,
       to_string(ad_slot_context.test_request ? 1 : 0));
-    if(!request_params.ext_track_params.empty())
+    if (!request_params.ext_track_params.empty())
     {
       request_args.set_value(CreativeTokens::EXT_TRACK_PARAMS, request_params.ext_track_params);
     }
@@ -1065,7 +1065,7 @@ namespace AdServer::CampaignSvcs
 
     request_args.set_value(CreativeTokens::APP_FORMAT, app_format);
 
-    if(tag)
+    if (tag)
     {
       request_args.set_value(CreativeTokens::TAGID, to_string(tag->tag_id));
       request_args.set_value(CreativeTokens::SITE_ID, to_string(tag->site->site_id));
@@ -1076,7 +1076,7 @@ namespace AdServer::CampaignSvcs
         CreativeTokens::PUBPIXELS,
         tag->site->account->use_pub_pixels ? "1" : "0");
 
-      if(tag_size)
+      if (tag_size)
       {
         request_args.set_value(CreativeTokens::TAGWIDTH, to_string(tag_size->size->width));
         request_args.set_value(CreativeTokens::TAGHEIGHT, to_string(tag_size->size->height));
@@ -1102,9 +1102,9 @@ namespace AdServer::CampaignSvcs
     noexcept
   {
     std::string request_ids;
-    std::ostringstream ad_param_ostr;
+    std::string ad_param;
 
-    for(auto it = ad_selection_result.selected_campaigns.begin();
+    for (auto it = ad_selection_result.selected_campaigns.begin();
       it != ad_selection_result.selected_campaigns.end(); ++it)
     {
       std::string request_id_str;
@@ -1113,175 +1113,197 @@ namespace AdServer::CampaignSvcs
       it->request_id.to_string().swap(request_id_str);
       String::StringManip::mime_url_encode(request_id_str, mime_request_id_str);
 
-      if(it != ad_selection_result.selected_campaigns.begin())
+      if (it != ad_selection_result.selected_campaigns.begin())
       {
         request_ids += ",";
-        ad_param_ostr << ",";
+        if (fill_track_url)
+        {
+          ad_param += ",";
+        }
       }
 
       request_ids += mime_request_id_str;
 
-      if(fill_track_url)
+      if (fill_track_url)
       {
-        ad_param_ostr << it->creative->ccid << ':' << it->ctr;
+        ad_param += to_string(it->creative->ccid);
+        ad_param += ':';
+        ad_param += it->ctr.str();
       }
     }
 
-    if(request_result_params.request_id.is_null())
+    if (request_result_params.request_id.is_null())
     {
       request_result_params.request_id = Commons::RequestId::create_random_based();
     }
 
-    if(!request_ids.empty())
+    if (!request_ids.empty())
     {
-      std::ostringstream ostr;
+      std::string url;
+      url.reserve(1024);
+      url += AdProtocol::REQUEST_ID;
+      url += '=';
+      url += request_ids;
+      url += '&';
+      url += AdProtocol::GLOBAL_REQUEST_ID;
+      url += '=';
+      url += request_result_params.request_id.to_string();
+      url += '&';
+      url += AdProtocol::BID_TIME;
+      url += '=';
+      url += to_string(request_params.time.tv_sec);
 
-      ostr << AdProtocol::REQUEST_ID << "=" << request_ids << "&" <<
-        AdProtocol::GLOBAL_REQUEST_ID << "=" <<
-        request_result_params.request_id.to_string() << "&" <<
-        AdProtocol::BID_TIME << "=" << request_params.time.tv_sec;
-
-      if(inst_params.publisher_site_id)
+      if (inst_params.publisher_site_id)
       {
-        ostr << "&" << AdProtocol::PUBLISHER_SITE_ID << "=" <<
-          inst_params.publisher_site_id;
+        append_param(
+          url,
+          AdProtocol::PUBLISHER_SITE_ID,
+          inst_params.publisher_site_id);
       }
-      else if(inst_params.publisher_account_id)
+      else if (inst_params.publisher_account_id)
       {
-        ostr << "&" << AdProtocol::PUBLISHER_ACCOUNT_ID << "=" <<
-          inst_params.publisher_account_id;
-      }
-
-      if(inst_params.user_id_hash_mod.present())
-      {
-        ostr << "&" << AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<
-          *inst_params.user_id_hash_mod;
-      }
-
-      if(!request_params.track_user_id.is_null())
-      {
-        ostr << "&" << AdProtocol::USER_ID << "=" <<
-          request_params.track_user_id;
-      }
-
-      if(!request_params.set_cookie)
-      {
-        ostr << "&" << AdProtocol::SET_COOKIE << "=0";
+        append_param(
+          url,
+          AdProtocol::PUBLISHER_ACCOUNT_ID,
+          inst_params.publisher_account_id);
       }
 
-      std::ostringstream notice_url_ostr;
-      std::ostringstream* url_for_cost_ostr = &ostr;
+      if (inst_params.user_id_hash_mod.present())
+      {
+        append_param(
+          url,
+          AdProtocol::USER_ID_DISTRIBUTION_HASH,
+          *inst_params.user_id_hash_mod);
+      }
 
-      if(inst_params.enabled_notice)
+      if (!request_params.track_user_id.is_null())
+      {
+        append_param_prefix(url, AdProtocol::USER_ID);
+        url += request_params.track_user_id.to_string();
+      }
+
+      if (!request_params.set_cookie)
+      {
+        append_param(url, AdProtocol::SET_COOKIE, 0);
+      }
+
+      std::string notice_url;
+      std::string* url_for_cost = &url;
+
+      if (inst_params.enabled_notice)
       {
         // fill notice url
-        notice_url_ostr << ostr.str();
-        url_for_cost_ostr = &notice_url_ostr;
+        notice_url = url;
+        url_for_cost = &notice_url;
       }
 
       // add cost delivering
-      if(!inst_params.google_price.empty())
+      if (!inst_params.google_price.empty())
       {
         std::string mime_google_price;
         String::StringManip::mime_url_encode(inst_params.google_price, mime_google_price);
-        *url_for_cost_ostr << "&" << AdProtocol::GOOGLE_SETTLE_PRICE <<
-          "=" << mime_google_price;
+        append_param(*url_for_cost, AdProtocol::GOOGLE_SETTLE_PRICE, mime_google_price);
       }
-      else if(!inst_params.open_price.empty())
+      else if (!inst_params.open_price.empty())
       {
         std::string mime_open_price;
         String::StringManip::mime_url_encode(inst_params.open_price, mime_open_price);
-        *url_for_cost_ostr << "&" << AdProtocol::OPEN_SETTLE_PRICE <<
-          "=" << mime_open_price;
+        append_param(*url_for_cost, AdProtocol::OPEN_SETTLE_PRICE, mime_open_price);
       }
-      else if(!inst_params.openx_price.empty())
+      else if (!inst_params.openx_price.empty())
       {
         std::string mime_openx_price;
         String::StringManip::mime_url_encode(inst_params.openx_price, mime_openx_price);
-        *url_for_cost_ostr << "&" << AdProtocol::OPENX_SETTLE_PRICE <<
-          "=" << mime_openx_price;
+        append_param(*url_for_cost, AdProtocol::OPENX_SETTLE_PRICE, mime_openx_price);
       }
-      else if(!inst_params.liverail_price.empty())
+      else if (!inst_params.liverail_price.empty())
       {
         std::string mime_liverail_price;
         String::StringManip::mime_url_encode(inst_params.liverail_price, mime_liverail_price);
-        *url_for_cost_ostr << "&" << AdProtocol::LIVERAIL_SETTLE_PRICE <<
-          "=" << mime_liverail_price;
+        append_param(
+          *url_for_cost,
+          AdProtocol::LIVERAIL_SETTLE_PRICE,
+          mime_liverail_price);
       }
-      else if(request_params.request_type == AR_GOOGLE)
+      else if (request_params.request_type == AR_GOOGLE)
       {
-        *url_for_cost_ostr << "&" << AdProtocol::GOOGLE_SETTLE_PRICE <<
-          "=%%WINNING_PRICE%%";
+        append_param(
+          *url_for_cost,
+          AdProtocol::GOOGLE_SETTLE_PRICE,
+          "%%WINNING_PRICE%%");
       }
-      else if(request_params.request_type == AR_OPENRTB ||
+      else if (request_params.request_type == AR_OPENRTB ||
         request_params.request_type == AR_OPENRTB_WITH_CLICKURL ||
         request_params.request_type == AR_ADRIVER)
       {
-        *url_for_cost_ostr << "&" << AdProtocol::OPEN_SETTLE_PRICE <<
-          "=${AUCTION_PRICE}";
+        append_param(*url_for_cost, AdProtocol::OPEN_SETTLE_PRICE, "${AUCTION_PRICE}");
       }
-      else if(request_params.request_type == AR_OPENX)
+      else if (request_params.request_type == AR_OPENX)
       {
-        *url_for_cost_ostr << "&" << AdProtocol::OPENX_SETTLE_PRICE <<
-          "={winning_price}";
+        append_param(*url_for_cost, AdProtocol::OPENX_SETTLE_PRICE, "{winning_price}");
       }
-      else if(request_params.request_type == AR_LIVERAIL)
+      else if (request_params.request_type == AR_LIVERAIL)
       {
-        *url_for_cost_ostr << "&" << AdProtocol::LIVERAIL_SETTLE_PRICE <<
-          "=$WINNING_PRICE";
+        append_param(*url_for_cost, AdProtocol::LIVERAIL_SETTLE_PRICE, "$WINNING_PRICE");
       }
-      else if(request_params.request_type == AR_YANDEX)
+      else if (request_params.request_type == AR_YANDEX)
       {
-        *url_for_cost_ostr << "&" << AdProtocol::OPEN_MIL_SETTLE_PRICE <<
-          "=${AUCTION_PRICE}";
+        append_param(
+          *url_for_cost,
+          AdProtocol::OPEN_MIL_SETTLE_PRICE,
+          "${AUCTION_PRICE}");
       }
 
-      if(inst_params.enabled_notice)
+      if (inst_params.enabled_notice)
       {
-        notice_url_ostr << "&" << AdProtocol::VERIFY_TYPE << "=n";
+        append_param(notice_url, AdProtocol::VERIFY_TYPE, "n");
         request_result_params.notice_url =
-          instantiate_info.track_pixel_url + "?" + notice_url_ostr.str();
+          instantiate_info.track_pixel_url + "?" + notice_url;
       }
 
-      if(!request_params.source_id.empty())
+      if (!request_params.source_id.empty())
       {
         std::string mime_source_id;
         String::StringManip::mime_url_encode(
           String::SubString(request_params.source_id),
           mime_source_id);
-        ostr << "&" << AdProtocol::SOURCE_ID << "=" << mime_source_id;
+        append_param(url, AdProtocol::SOURCE_ID, mime_source_id);
       }
 
-      if(!request_params.external_user_id.empty())
+      if (!request_params.external_user_id.empty())
       {
         std::string mime_external_user_id;
         String::StringManip::mime_url_encode(
           String::SubString(request_params.external_user_id),
           mime_external_user_id);
-        ostr << "&" << AdProtocol::EXTERNAL_USER_ID2 << "=" <<
-          mime_external_user_id;
+        append_param(url, AdProtocol::EXTERNAL_USER_ID2, mime_external_user_id);
       }
 
-      if(fill_track_url)
+      if (fill_track_url)
       {
         // if impression tracking disabled confirm amount on selection
-        ostr << "&ad=" << ad_param_ostr.str();
+        append_param(url, "ad", ad_param);
 
-        if(consider_pub_pixel_accounts && !consider_pub_pixel_accounts->empty())
+        if (consider_pub_pixel_accounts && !consider_pub_pixel_accounts->empty())
         {
-          ostr << '&' << AdProtocol::PUB_PIXEL_ACCOUNTS << '=';
-          Algs::print(ostr,
-            consider_pub_pixel_accounts->begin(),
-            consider_pub_pixel_accounts->end(),
-            ",");
+          append_param_prefix(url, AdProtocol::PUB_PIXEL_ACCOUNTS);
+          for (auto it = consider_pub_pixel_accounts->begin();
+            it != consider_pub_pixel_accounts->end(); ++it)
+          {
+            if (it != consider_pub_pixel_accounts->begin())
+            {
+              url += ',';
+            }
+            url += to_string(*it);
+          }
         }
 
         request_result_params.track_pixel_url =
-          instantiate_info.track_pixel_url + "?" + ostr.str();
+          instantiate_info.track_pixel_url + "?" + url;
       } // fill_track_url
 
       request_result_params.track_html_url =
-        instantiate_info.track_pixel_url + "?" + ostr.str() + "&t=b";
+        instantiate_info.track_pixel_url + "?" + url + "&t=b";
     }
   }
 
@@ -1300,27 +1322,27 @@ namespace AdServer::CampaignSvcs
 
     Commons::Optional<OptionValue> adimage_url;
 
-    if(size_it != creative->sizes.end())
+    if (size_it != creative->sizes.end())
     {
       OptionTokenValueMap::const_iterator ad_image_it =
         size_it->second.tokens.find(CreativeTokens::ADIMAGE);
-      if(ad_image_it != size_it->second.tokens.end())
+      if (ad_image_it != size_it->second.tokens.end())
       {
         adimage_url = ad_image_it->second;
       }
     }
 
-    if(!adimage_url.present())
+    if (!adimage_url.present())
     {
       OptionTokenValueMap::const_iterator ad_image_it =
         creative->tokens.find(CreativeTokens::ADIMAGE);
-      if(ad_image_it != creative->tokens.end())
+      if (ad_image_it != creative->tokens.end())
       {
         adimage_url = ad_image_it->second;
       }
     }
 
-    if(adimage_url.present())
+    if (adimage_url.present())
     {
       OptionTokenValueMap args;
       args[CreativeTokens::RANDOM] = OptionValue(0, IntToStr(request_params.random));
@@ -1329,7 +1351,7 @@ namespace AdServer::CampaignSvcs
       const TokenProcessorMap::const_iterator it = campaign_config->token_processors.find(
         adimage_url->option_id);
 
-      if(it != campaign_config->token_processors.end())
+      if (it != campaign_config->token_processors.end())
       {
         try
         {
@@ -1354,7 +1376,7 @@ namespace AdServer::CampaignSvcs
   {
     std::string creatives_json;
     creatives_json.push_back('[');
-    for(auto cr_it = creative_template_params.begin();
+    for (auto cr_it = creative_template_params.begin();
       cr_it != creative_template_params.end(); ++cr_it)
     {
       const TokenValueMap& creative_tokens = **cr_it;
@@ -1401,7 +1423,8 @@ namespace AdServer::CampaignSvcs
     RequestResultParams& request_result_params,
     CreativeParamsList& creative_params_list,
     const AdSlotContext& ad_slot_context,
-    const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts)
+    const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
+    bool fill_click_url_result)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "CreativeInstantiator::fill_instantiate_creative_args_()";
@@ -1411,7 +1434,7 @@ namespace AdServer::CampaignSvcs
     TemplateParams_var request_args_ptr = new TemplateParams();
 
     auto request_context = std::make_shared<InstantiateAd::InstantiateAdContext>();
-    for(const auto& token : request_params.tokens)
+    for (const auto& token : request_params.tokens)
     {
       request_args_ptr->set_value(token.name, token.value);
     }
@@ -1433,7 +1456,7 @@ namespace AdServer::CampaignSvcs
 
     // Init side effects needed independently of template token usage.
     {
-      for(auto it = ad_selection_result.selected_campaigns.begin();
+      for (auto it = ad_selection_result.selected_campaigns.begin();
         it != ad_selection_result.selected_campaigns.end(); ++it)
       {
         it->track_impr = template_descr.track_impressions;
@@ -1465,9 +1488,9 @@ namespace AdServer::CampaignSvcs
     const std::shared_ptr<String::TextTemplate::ArgsCallback>
       base_request_args = request_args_builder.build();
 
-    if(tag)
+    if (tag)
     {
-      if(request_params.passback_url.empty())
+      if (request_params.passback_url.empty())
       {
         request_args_builder.add_token_processor_layer(
           make_option_token_values(tag->passback_tokens),
@@ -1495,7 +1518,7 @@ namespace AdServer::CampaignSvcs
       creative_template->key_used(CreativeTokens::CREATIVES_JSON);
     TemplateParamsList creatives_json_template_params;
 
-    for(auto it = ad_selection_result.selected_campaigns.begin();
+    for (auto it = ad_selection_result.selected_campaigns.begin();
       it != ad_selection_result.selected_campaigns.end();
       ++it, ++position)
     {
@@ -1510,10 +1533,9 @@ namespace AdServer::CampaignSvcs
         creative_params.click_url = instantiate_info.click_url;
 
         ClickParams click_params;
-        std::string* click_url = 0;
         OptionValue adv_click_url;
 
-        if(select_params.campaign_keyword.in() &&
+        if (select_params.campaign_keyword.in() &&
            !select_params.campaign_keyword->click_url.empty())
         {
           adv_click_url = OptionValue(
@@ -1525,9 +1547,9 @@ namespace AdServer::CampaignSvcs
           adv_click_url = creative->click_url;
         }
 
-        {
-          bool init_creative_click_url = !adv_click_url.value.empty();
+        const bool init_creative_click_url = !adv_click_url.value.empty();
 
+        {
           init_click_url_(
             click_params,
             colocation,
@@ -1539,12 +1561,7 @@ namespace AdServer::CampaignSvcs
             select_params,
             creative_params.click_url);
 
-          if(init_creative_click_url)
-          {
-            click_url = &click_params.click_url;
-          }
-
-          if(position == 1)
+          if (position == 1)
           {
             request_result_params.click_params = click_params.params;
           }
@@ -1558,34 +1575,11 @@ namespace AdServer::CampaignSvcs
           click_params,
           request_params.random);
 
-        // TO REMOVE :
-        const std::string& keyword = select_params.campaign_keyword.in() ?
-          select_params.campaign_keyword->original_keyword :
-          std::string();
-
-        if(click_url)
-        {
-          OptionValue click_url_in =
-            OptionValue(creative->click_url.option_id, *click_url);
-
-          instantiate_click_url(
-            *campaign_config,
-            click_url_in,
-            creative_params.click_url,
-            colocation ? &colocation->colo_id : 0,
-            tag,
-            ad_selection_result.tag_size,
-            creative,
-            select_params.campaign_keyword.in() ? select_params.campaign_keyword.in() : 0,
-            request_result_params.ext_tokens);
-        }
-        //< TO REMOVE
-
         {
           Creative::SizeMap::const_iterator cr_size_it =
             creative->sizes.find(ad_selection_result.tag_size->size->size_id);
 
-          if(cr_size_it == creative->sizes.end())
+          if (cr_size_it == creative->sizes.end())
           {
             Stream::Error ostr;
             ostr << FUN << ": Cannot find creative size: " <<
@@ -1599,7 +1593,7 @@ namespace AdServer::CampaignSvcs
           OptionTokenValueMap option_creative_args;
           option_creative_args[CreativeTokens::ADV_CLICK_URL] = adv_click_url;
 
-          if(creatives_json_args_ptr)
+          if (creatives_json_args_ptr)
           {
             *creatives_json_args_ptr = creative->tokens;
             replace_insert(cr_size_it->second.tokens, *creatives_json_args_ptr);
@@ -1621,112 +1615,85 @@ namespace AdServer::CampaignSvcs
             creative_args_data.keyword = select_params.campaign_keyword->original_keyword;
           }
 
-          if((request_params.request_type == AR_OPENRTB_WITH_CLICKURL ||
+          const bool encode_click_urls =
+            (request_params.request_type == AR_OPENRTB_WITH_CLICKURL ||
             request_params.request_type == AR_OPENX) &&
-            position == 1)
+            position == 1;
+          std::string click_url_prefix;
+
+          if (encode_click_urls && !click_params.click_url.empty())
           {
             // init click prefix if it defined in source (preclick can be defined too)
-            std::string click_url_prefix;
+            CreativeInstantiate::SourceRuleMap::const_iterator source_rule_it =
+              creative_instantiate_.source_rules.find(request_params.source_id);
 
-            if(!creative_params.click_url.empty() || !click_params.preclick_url.empty())
+            if (source_rule_it != creative_instantiate_.source_rules.end() &&
+              source_rule_it->second.click_prefix.present())
             {
-              CreativeInstantiate::SourceRuleMap::const_iterator source_rule_it =
-                creative_instantiate_.source_rules.find(request_params.source_id);
-
-              if(source_rule_it != creative_instantiate_.source_rules.end() &&
-                 source_rule_it->second.click_prefix.present())
+              click_url_prefix = *source_rule_it->second.click_prefix;
+            }
+            else
+            {
+              if (request_params.request_type == AR_OPENRTB_WITH_CLICKURL)
               {
-                click_url_prefix = *source_rule_it->second.click_prefix;
+                click_url_prefix = "${CLICK_URL}";
               }
-              else
+              else // AR_OPENX
               {
-                if(request_params.request_type == AR_OPENRTB_WITH_CLICKURL)
-                {
-                  click_url_prefix = "${CLICK_URL}";
-                }
-                else // AR_OPENX
-                {
-                  click_url_prefix = "{clickurl}";
-                }
+                click_url_prefix = "{clickurl}";
               }
             }
-
-            if(click_url && !creative_params.click_url.empty())
-            {
-              creative_args_data.click_url =
-                append_mime_url_encoded(click_url_prefix, click_params.click_url);
-
-              if(!click_params.click_url_f.empty())
-              {
-                creative_args_data.click_url_f =
-                  append_mime_url_encoded(
-                    click_url_prefix,
-                    click_params.click_url_f);
-              }
-
-              if(!click_params.click0_url.empty())
-              {
-                creative_args_data.click0_url =
-                  append_mime_url_encoded(
-                    click_url_prefix,
-                    click_params.click0_url);
-              }
-
-              if(!click_params.click0_url_f.empty())
-              {
-                creative_args_data.click0_url_f =
-                  append_mime_url_encoded(
-                    click_url_prefix,
-                    click_params.click0_url_f);
-              }
-            }
-
-            // click_params.preclick_url and click_params.preclick0_url could not be empty here
-            creative_args_data.preclick_url =
-              append_mime_url_encoded(
-                click_url_prefix,
-                click_params.preclick_url);
-
-            creative_args_data.preclick0_url =
-              append_mime_url_encoded(
-                click_url_prefix,
-                click_params.preclick0_url);
-
-            creative_args_data.preclick0_url_f =
-              append_mime_url_encoded(
-                click_url_prefix,
-                click_params.preclick0_url_f);
           }
-          else
+
+          creative_args_data.encode_click_urls = encode_click_urls;
+          creative_args_data.click_url_prefix = click_url_prefix;
+          creative_args_data.click_params = std::move(click_params);
+
+          if (init_creative_click_url)
           {
-            // position != 1 || AR_NORMAL, AR_OPENRTB, AR_GOOGLE
-            if(click_url)
+            std::optional<unsigned long> colo_id;
+            if (colocation)
             {
-              creative_args_data.click_url = *click_url;
-
-              if(!click_params.click_url_f.empty())
-              {
-                creative_args_data.click_url_f = click_params.click_url_f;
-              }
-
-              if(!click_params.click0_url.empty())
-              {
-                creative_args_data.click0_url = click_params.click0_url;
-              }
-
-              if(!click_params.click0_url_f.empty())
-              {
-                creative_args_data.click0_url_f = click_params.click0_url_f;
-              }
+              colo_id = colocation->colo_id;
             }
+            CampaignKeyword_var campaign_keyword = select_params.campaign_keyword;
+            CreativeParams* const creative_params_ptr = &creative_params;
+            const TokenValueMap* const ext_tokens = &request_result_params.ext_tokens;
+            const Tag::Size* const tag_size = ad_selection_result.tag_size;
 
-            // click_params.preclick_url and click_params.preclick0_url not empty
-            {
-              creative_args_data.preclick_url = click_params.preclick_url;
-              creative_args_data.preclick_url_f = click_params.preclick_url_f;
-              creative_args_data.preclick0_url = click_params.preclick0_url;
-              creative_args_data.preclick0_url_f = click_params.preclick0_url_f;
-            }
+            creative_args_data.click_url_initializer =
+              [this,
+                campaign_config,
+                creative_params_ptr,
+                colo_id,
+                tag,
+                tag_size,
+                creative,
+                campaign_keyword,
+                ext_tokens](InstantiateAd::InstantiateAdContext::CreativeArgsData& data)
+              {
+                assert(data.click_params);
+                const ClickParams& click_params = *data.click_params;
+                OptionValue click_url_in(
+                  creative->click_url.option_id,
+                  click_params.click_url);
+
+                instantiate_click_url(
+                  *campaign_config,
+                  click_url_in,
+                  creative_params_ptr->click_url,
+                  colo_id ? &*colo_id : nullptr,
+                  tag,
+                  tag_size,
+                  creative,
+                  campaign_keyword.in() ? campaign_keyword.in() : nullptr,
+                  *ext_tokens);
+              };
+          }
+
+          if (fill_click_url_result)
+          {
+            creative_args_data.init_click_urls();
           }
 
           std::shared_ptr<String::TextTemplate::ArgsCallback>
@@ -1735,7 +1702,7 @@ namespace AdServer::CampaignSvcs
               creative_context,
               base_request_args);
 
-          if(creatives_json_args_ptr)
+          if (creatives_json_args_ptr)
           {
             const std::string* dynamic_token_names[] = {
               &CreativeTokens::KEYWORD,
@@ -1757,10 +1724,10 @@ namespace AdServer::CampaignSvcs
               &CreativeTokens::ACTIONPIXEL
             };
 
-            for(const std::string* token_name : dynamic_token_names)
+            for (const std::string* token_name : dynamic_token_names)
             {
               std::string token_value;
-              if(creative_args_provider->get_argument(
+              if (creative_args_provider->get_argument(
                   String::SubString(*token_name),
                   token_value))
               {
@@ -1777,9 +1744,9 @@ namespace AdServer::CampaignSvcs
                 (*creatives_json_args_ptr)[name] = OptionValue(0, value);
               });
 
-            if(request_params.log_as_test)
+            if (request_params.log_as_test)
             {
-              for(const auto& token : creative->adv_track_pixel_tokens)
+              for (const auto& token : creative->adv_track_pixel_tokens)
               {
                 (*creatives_json_args_ptr)[token.name] = OptionValue(
                   token.option_id,
@@ -1805,7 +1772,7 @@ namespace AdServer::CampaignSvcs
 
           try
           {
-            if(fill_creatives_json)
+            if (fill_creatives_json)
             {
               TemplateParams_var result_creative_args = new TemplateParams();
               auto creatives_json_token_values =
@@ -1830,7 +1797,7 @@ namespace AdServer::CampaignSvcs
             Tag::TemplateOptionTokenValueMap::const_iterator templ_tokens_it =
               tag->template_tokens.find(creative->creative_format);
 
-            if(templ_tokens_it != tag->template_tokens.end())
+            if (templ_tokens_it != tag->template_tokens.end())
             {
               request_args_builder.add_token_processor_layer(
                 make_option_token_values(templ_tokens_it->second),
@@ -1870,7 +1837,7 @@ namespace AdServer::CampaignSvcs
               instantiate_info,
               CreativeInstantiateArgs());
 
-            if(colocation)
+            if (colocation)
             {
               // colocation tokens have access (recursive substitution) to tag tokens
               request_args_builder.add_token_processor_layer(
@@ -1881,7 +1848,7 @@ namespace AdServer::CampaignSvcs
             }
 
             // ADSC-10601
-            if(!request_params.location.empty())
+            if (!request_params.location.empty())
             {
               // country tokens
 
@@ -1901,12 +1868,12 @@ namespace AdServer::CampaignSvcs
             // fill overlay sizes
             auto request_level_args = request_args_builder.build();
             std::string overlay_width_value;
-            if(request_level_args->get_argument(
+            if (request_level_args->get_argument(
                 String::SubString(CreativeTokens::OVERLAY_WIDTH),
                 overlay_width_value))
             {
               unsigned long overlay_width;
-              if(String::StringManip::str_to_int(
+              if (String::StringManip::str_to_int(
                   overlay_width_value,
                   overlay_width))
               {
@@ -1915,12 +1882,12 @@ namespace AdServer::CampaignSvcs
             }
 
             std::string overlay_height_value;
-            if(request_level_args->get_argument(
+            if (request_level_args->get_argument(
                 String::SubString(CreativeTokens::OVERLAY_HEIGHT),
                 overlay_height_value))
             {
               unsigned long overlay_height;
-              if(String::StringManip::str_to_int(
+              if (String::StringManip::str_to_int(
                   overlay_height_value,
                   overlay_height))
               {
@@ -1955,7 +1922,7 @@ namespace AdServer::CampaignSvcs
     }
 
     // fill CREATIVES_JSON
-    if(creative_template->key_used(CreativeTokens::CREATIVES_JSON))
+    if (creative_template->key_used(CreativeTokens::CREATIVES_JSON))
     {
       TemplateParams_var creatives_json_args =
         fill_creatives_json_(creatives_json_template_params);
@@ -1967,13 +1934,13 @@ namespace AdServer::CampaignSvcs
     auto final_args = std::make_shared<InstantiateAd::UnionArgs>();
     final_args->add_provider(request_level_args);
 
-    if(creative_token_args_sources.size() == 1)
+    if (creative_token_args_sources.size() == 1)
     {
       const CreativeTokenArgsSource& creative_args_source =
         creative_token_args_sources.front();
       ArgsLayerBuilder creative_args_builder;
       creative_args_builder.add_provider(request_level_args);
-      for(const auto& token_values : creative_args_source.token_values)
+      for (const auto& token_values : creative_args_source.token_values)
       {
         creative_args_builder.add_token_processor_layer(
           token_values,
@@ -2003,103 +1970,132 @@ namespace AdServer::CampaignSvcs
     const AdSlotContext& ad_slot_context)
     noexcept
   {
-    const char* LOCAL_EQL = (
-      request_params.request_type == AR_YANDEX ? "=" : EQL);
-    const char* LOCAL_AMP = (
-      request_params.request_type == AR_YANDEX ? "&" : AMP);
+    const char* LOCAL_EQL = (request_params.request_type == AR_YANDEX ? "=" : EQL);
+    const char* LOCAL_AMP = (request_params.request_type == AR_YANDEX ? "&" : AMP);
     std::string mime_request_id_str;
 
-    String::StringManip::mime_url_encode(
-      request_id.to_string(),
-      mime_request_id_str);
+    String::StringManip::mime_url_encode(request_id.to_string(), mime_request_id_str);
 
-    std::ostringstream ostr_click_url;
-    ostr_click_url <<
-      AdProtocol::CC_ID << LOCAL_EQL << creative->ccid << LOCAL_AMP <<
-      AdProtocol::REQUEST_ID << LOCAL_EQL << mime_request_id_str << LOCAL_AMP <<
-      AdProtocol::CAMPAIGN_MANAGER_INDEX << LOCAL_EQL <<
-        config_.service_index << LOCAL_AMP <<
-      AdProtocol::BID_TIME << LOCAL_EQL << request_params.time.tv_sec;
+    std::string click_url;
+    click_url.reserve(512);
 
-    if(colocation)
+    const auto append_click_param_prefix =
+      [&click_url, LOCAL_AMP, LOCAL_EQL](const char* name)
+      {
+        if (!click_url.empty())
+        {
+          click_url += LOCAL_AMP;
+        }
+        click_url += name;
+        click_url += LOCAL_EQL;
+      };
+
+    const auto append_click_param =
+      [&append_click_param_prefix, &click_url](const char* name, const auto& value)
+      {
+        append_click_param_prefix(name);
+        click_url += to_string(value);
+      };
+
+    const auto append_click_string_param =
+      [&append_click_param_prefix, &click_url](
+        const char* name,
+        const auto& value)
+      {
+        append_click_param_prefix(name);
+        click_url.append(value.data(), value.size());
+      };
+
+    append_click_param(AdProtocol::CC_ID, creative->ccid);
+    append_click_string_param(AdProtocol::REQUEST_ID, mime_request_id_str);
+    append_click_string_param(
+      AdProtocol::CAMPAIGN_MANAGER_INDEX,
+      config_.service_index);
+    append_click_param(AdProtocol::BID_TIME, request_params.time.tv_sec);
+
+    if (colocation)
     {
-      ostr_click_url << LOCAL_AMP << AdProtocol::COLO_ID << LOCAL_EQL <<
-        colocation->colo_id;
+      append_click_param(AdProtocol::COLO_ID, colocation->colo_id);
     }
 
-    if(tag)
+    if (tag)
     {
-      ostr_click_url << LOCAL_AMP << AdProtocol::TAG_ID << LOCAL_EQL <<
-        tag->tag_id;
+      append_click_param(AdProtocol::TAG_ID, tag->tag_id);
 
-      if(tag_size)
+      if (tag_size)
       {
-        ostr_click_url << LOCAL_AMP << AdProtocol::TAG_SIZE_ID << LOCAL_EQL <<
-          tag_size->size->size_id;
+        append_click_param(AdProtocol::TAG_SIZE_ID, tag_size->size->size_id);
       }
     }
-    if(inst_params.user_id_hash_mod.present())
+    if (inst_params.user_id_hash_mod.present())
     {
-      ostr_click_url << LOCAL_AMP << AdProtocol::USER_ID_DISTRIBUTION_HASH <<
-        LOCAL_EQL << *inst_params.user_id_hash_mod;
+      append_click_param(
+        AdProtocol::USER_ID_DISTRIBUTION_HASH,
+        *inst_params.user_id_hash_mod);
     }
 
-    if(campaign_keyword)
+    if (campaign_keyword)
     {
-      ostr_click_url << LOCAL_AMP << AdProtocol::CCG_KEYWORD_ID << LOCAL_EQL <<
-        campaign_keyword->ccg_keyword_id;
+      append_click_param(
+        AdProtocol::CCG_KEYWORD_ID,
+        campaign_keyword->ccg_keyword_id);
     }
 
-    ostr_click_url << LOCAL_AMP << AdProtocol::CLICK_RATE << LOCAL_EQL << ctr;
+    append_click_string_param(AdProtocol::CLICK_RATE, ctr.str());
 
     if (!request_params.track_user_id.is_null())
     {
-      ostr_click_url << LOCAL_AMP << AdProtocol::USER_ID << LOCAL_EQL <<
-        request_params.track_user_id;
+      append_click_string_param(
+        AdProtocol::USER_ID,
+        request_params.track_user_id.to_string());
     }
     else if (request_params.user_status == US_OPTIN &&
         !request_params.user_id.is_null())
     {
-      ostr_click_url << LOCAL_AMP << AdProtocol::USER_ID << LOCAL_EQL <<
-        request_params.user_id;
+      append_click_string_param(
+        AdProtocol::USER_ID,
+        request_params.user_id.to_string());
     }
 
-    for(const auto& token : request_params.tokens)
+    for (const auto& token : request_params.tokens)
     {
       std::string mime_token_name;
       String::StringManip::mime_url_encode(String::SubString(token.name), mime_token_name);
       std::string mime_token_value;
       String::StringManip::mime_url_encode(String::SubString(token.value),mime_token_value);
-      ostr_click_url << LOCAL_AMP << "t." << mime_token_name << LOCAL_EQL <<
-        mime_token_value;
+      std::string token_name = "t.";
+      token_name += mime_token_name;
+      append_click_string_param(token_name.c_str(), mime_token_value);
     }
 
-    if(ad_slot_context.tns_counter_device_type[0])
+    if (ad_slot_context.tns_counter_device_type[0])
     {
       std::string mime_token_value;
       String::StringManip::mime_url_encode(
         String::SubString(ad_slot_context.tns_counter_device_type),
         mime_token_value);
-      ostr_click_url << LOCAL_AMP << "t." << CreativeTokens::TNS_COUNTER_DEVICE_TYPE << LOCAL_EQL <<
-        mime_token_value;
+      std::string token_name = "t.";
+      token_name += CreativeTokens::TNS_COUNTER_DEVICE_TYPE;
+      append_click_string_param(token_name.c_str(), mime_token_value);
     }
 
     const std::string& referer = request_params.full_referer.empty() ?
       request_params.referer : request_params.full_referer;
 
-    if(!referer.empty())
+    if (!referer.empty())
     {
       try
       {
         HTTP::BrowserAddress referer_url = HTTP::BrowserAddress(std::string_view(referer));
-        ostr_click_url << LOCAL_AMP << "t." << CreativeTokens::REFERER_DOMAIN << LOCAL_EQL <<
-          referer_url.host();
+        std::string token_name = "t.";
+        token_name += CreativeTokens::REFERER_DOMAIN;
+        append_click_string_param(token_name.c_str(), referer_url.host());
       }
       catch(const eh::Exception&)
       {}
     }
 
-    return ostr_click_url.str();
+    return click_url;
   }
 
   void
@@ -2118,9 +2114,7 @@ namespace AdServer::CampaignSvcs
     const char* LOCAL_AMP = AMP;
 
     const Creative* creative = select_params.creative;
-    std::ostringstream ostr_click_url;
-
-    ostr_click_url << init_click_params0_(
+    std::string click_url_params = init_click_params0_(
       select_params.request_id,
       colocation,
       creative,
@@ -2132,32 +2126,36 @@ namespace AdServer::CampaignSvcs
       request_params,
       ad_slot_context);
 
-    std::string res_click0_url = base_click_url + "/" + ostr_click_url.str();
+    std::string res_click0_url;
+    res_click0_url.reserve(base_click_url.size() + click_url_params.size() + 1);
+    res_click0_url += base_click_url;
+    res_click0_url += '/';
+    res_click0_url += click_url_params;
 
     std::string mime_preclick_url;
 
-    if(!request_params.preclick_url.empty())
+    if (!request_params.preclick_url.empty())
     {
       String::StringManip::mime_url_encode(
         String::SubString(request_params.preclick_url),
         mime_preclick_url);
     }
-    else if(inst_params.init_source_macroses)
+    else if (inst_params.init_source_macroses)
     {
       CreativeInstantiate::SourceRuleMap::const_iterator source_rule_it =
         creative_instantiate_.source_rules.find(request_params.source_id);
 
-      if(source_rule_it != creative_instantiate_.source_rules.end())
+      if (source_rule_it != creative_instantiate_.source_rules.end())
       {
         mime_preclick_url = source_rule_it->second.mime_encoded_preclick;
       }
     }
 
-    if(request_params.request_type == AR_ADRIVER)
+    if (request_params.request_type == AR_ADRIVER)
     {
       std::string adriver_mime_preclick_url = ADRIVER_MIME_CLICKPIXEL;
 
-      if(!mime_preclick_url.empty())
+      if (!mime_preclick_url.empty())
       {
         std::string adriver_mime2_preclick_url;
 
@@ -2173,49 +2171,43 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    if(!mime_preclick_url.empty())
+    if (!mime_preclick_url.empty())
     {
-      ostr_click_url << LOCAL_AMP <<
-        AdProtocol::PRECLICK << LOCAL_EQL << mime_preclick_url;
+      click_url_params += LOCAL_AMP;
+      click_url_params += AdProtocol::PRECLICK;
+      click_url_params += LOCAL_EQL;
+      click_url_params += mime_preclick_url;
     }
 
     if (request_params.request_type == AR_GOOGLE)
     {
-      ostr_click_url << LOCAL_AMP <<
-        AdProtocol::PRECLICK << LOCAL_EQL << "%%CLICK_URL_ESC%%";
+      click_url_params += LOCAL_AMP;
+      click_url_params += AdProtocol::PRECLICK;
+      click_url_params += LOCAL_EQL;
+      click_url_params += "%%CLICK_URL_ESC%%";
     }
 
-    std::string res_click_url = base_click_url + "/" + ostr_click_url.str();
+    std::string res_click_url;
+    res_click_url.reserve(base_click_url.size() + click_url_params.size() + 1);
+    res_click_url += base_click_url;
+    res_click_url += '/';
+    res_click_url += click_url_params;
 
-    if(!request_params.click_prefix_url.empty())
+    if (!request_params.click_prefix_url.empty())
     {
       std::string mimed_click_url;
       std::string mimed_click0_url;
-      String::StringManip::mime_url_encode(
-        res_click_url,
-        mimed_click_url);
-      String::StringManip::mime_url_encode(
-        res_click0_url,
-        mimed_click0_url);
+      String::StringManip::mime_url_encode(res_click_url, mimed_click_url);
+      String::StringManip::mime_url_encode(res_click0_url, mimed_click0_url);
       res_click_url = request_params.click_prefix_url;
       res_click0_url = res_click_url;
       res_click_url += mimed_click_url;
       res_click0_url += mimed_click0_url;
     }
 
-    const std::string f_marker = std::string(LOCAL_AMP) + "m" + LOCAL_EQL + "f";
-    const std::string relocate_suffix = std::string(LOCAL_AMP) + "relocate" + LOCAL_EQL;
-
     click_params.mime_pub_preclick_url.swap(mime_preclick_url);
     click_params.click_url = res_click_url;
-    click_params.click_url_f = res_click_url + f_marker;
-    click_params.preclick_url = res_click_url + relocate_suffix;
-    click_params.preclick_url_f = res_click_url + f_marker + relocate_suffix;
-
     click_params.click0_url = res_click0_url;
-    click_params.click0_url_f = res_click0_url + f_marker;
-    click_params.preclick0_url = res_click0_url + relocate_suffix;
-    click_params.preclick0_url_f = res_click0_url + f_marker + relocate_suffix;
   }
 
   void
@@ -2240,21 +2232,21 @@ namespace AdServer::CampaignSvcs
     url.reserve(1024);
     bool data_encoding = false;
 
-    if(ad_instantiate_type == AIT_URL || ad_instantiate_type == AIT_URL_IN_BODY)
+    if (ad_instantiate_type == AIT_URL || ad_instantiate_type == AIT_URL_IN_BODY)
     {
       url += instantiate_info.direct_instantiate_url;
       url += "format=";
       url += app_format;
       url += '&';
     }
-    else if(ad_instantiate_type == AIT_NONSECURE_URL)
+    else if (ad_instantiate_type == AIT_NONSECURE_URL)
     {
       url += instantiate_info.nonsecure_direct_instantiate_url;
       url += "format=";
       url += app_format;
       url += '&';
     }
-    else if(ad_instantiate_type == AIT_VIDEO_URL ||
+    else if (ad_instantiate_type == AIT_VIDEO_URL ||
       ad_instantiate_type == AIT_VIDEO_URL_IN_BODY)
     {
       url += instantiate_info.video_instantiate_url;
@@ -2262,22 +2254,22 @@ namespace AdServer::CampaignSvcs
       url += app_format;
       url += '&';
     }
-    else if(ad_instantiate_type == AIT_VIDEO_NONSECURE_URL)
+    else if (ad_instantiate_type == AIT_VIDEO_NONSECURE_URL)
     {
       url += instantiate_info.nonsecure_video_instantiate_url;
       url += "format=";
       url += app_format;
       url += '&';
     }
-    else if(ad_instantiate_type == AIT_SCRIPT_WITH_URL)
+    else if (ad_instantiate_type == AIT_SCRIPT_WITH_URL)
     {
       url += instantiate_info.script_instantiate_url;
     }
-    else if(ad_instantiate_type == AIT_IFRAME_WITH_URL)
+    else if (ad_instantiate_type == AIT_IFRAME_WITH_URL)
     {
       url += instantiate_info.iframe_instantiate_url;
     }
-    else if(ad_instantiate_type == AIT_DATA_URL_PARAM ||
+    else if (ad_instantiate_type == AIT_DATA_URL_PARAM ||
       ad_instantiate_type == AIT_DATA_PARAM_VALUE)
     {
       data_encoding = true;
@@ -2302,7 +2294,7 @@ namespace AdServer::CampaignSvcs
     url += "&colo=";
     url += to_string(request_params.colo_id);
 
-    if(!request_params.set_cookie)
+    if (!request_params.set_cookie)
     {
       url += '&';
       url += AdProtocol::SET_COOKIE;
@@ -2325,7 +2317,7 @@ namespace AdServer::CampaignSvcs
       url += to_string(inst_params.video_height);
     }
 
-    if(ip_crypter_ && request_params.request_type != AR_NORMAL)
+    if (ip_crypter_ && request_params.request_type != AR_NORMAL)
     {
       // delegate euip:
       //  - if ip crypter enabled;
@@ -2338,7 +2330,7 @@ namespace AdServer::CampaignSvcs
       url += encrypted_user_ip;
     }
 
-    if(inst_params.user_id_hash_mod.present())
+    if (inst_params.user_id_hash_mod.present())
     {
       url += '&';
       url += AdProtocol::USER_ID_DISTRIBUTION_HASH;
@@ -2346,7 +2338,7 @@ namespace AdServer::CampaignSvcs
       url += to_string(*inst_params.user_id_hash_mod);
     }
 
-    if(!request_params.user_id.is_null())
+    if (!request_params.user_id.is_null())
     {
       url += '&';
       url += AdProtocol::USER_ID;
@@ -2354,15 +2346,15 @@ namespace AdServer::CampaignSvcs
       url += request_params.user_id.to_string();
     }
 
-    if(fill_auction_price)
+    if (fill_auction_price)
     {
-      if(request_params.request_type == AR_GOOGLE)
+      if (request_params.request_type == AR_GOOGLE)
       {
         url += '&';
         url += AdProtocol::GOOGLE_SETTLE_PRICE;
         url += "=%%WINNING_PRICE%%";
       }
-      else if(request_params.request_type == AR_OPENRTB ||
+      else if (request_params.request_type == AR_OPENRTB ||
         request_params.request_type == AR_OPENRTB_WITH_CLICKURL ||
         request_params.request_type == AR_ADRIVER)
       {
@@ -2370,13 +2362,13 @@ namespace AdServer::CampaignSvcs
         url += AdProtocol::OPEN_SETTLE_PRICE;
         url += "=${AUCTION_PRICE}";
       }
-      else if(request_params.request_type == AR_OPENX)
+      else if (request_params.request_type == AR_OPENX)
       {
         url += '&';
         url += AdProtocol::OPENX_SETTLE_PRICE;
         url += "={winning_price}";
       }
-      else if(request_params.request_type == AR_LIVERAIL)
+      else if (request_params.request_type == AR_LIVERAIL)
       {
         url += '&';
         url += AdProtocol::LIVERAIL_SETTLE_PRICE;
@@ -2386,7 +2378,7 @@ namespace AdServer::CampaignSvcs
       // AR_YANDEX can pass price only in notice
     }
 
-    if(!request_params.original_url.empty())
+    if (!request_params.original_url.empty())
     {
       std::string mime_original_url;
       encode_parameter(
@@ -2397,13 +2389,13 @@ namespace AdServer::CampaignSvcs
       url += mime_original_url;
     }
 
-    if(ad_slot_context.test_request || request_params.log_as_test)
+    if (ad_slot_context.test_request || request_params.log_as_test)
     {
       url += "&test=";
       url += ad_slot_context.test_request ? "1" : "2";
     }
 
-    if(!request_params.pub_impr_track_url.empty())
+    if (!request_params.pub_impr_track_url.empty())
     {
       std::string mime_pub_impr_track_url;
       encode_parameter(
@@ -2414,7 +2406,7 @@ namespace AdServer::CampaignSvcs
       url += mime_pub_impr_track_url;
     }
 
-    if(!request_params.ext_track_params.empty())
+    if (!request_params.ext_track_params.empty())
     {
       std::string mime_ext_track_params;
       encode_parameter(
@@ -2425,7 +2417,7 @@ namespace AdServer::CampaignSvcs
       url += mime_ext_track_params;
     }
 
-    if(!request_params.source_id.empty())
+    if (!request_params.source_id.empty())
     {
       std::string mime_source_id;
       encode_parameter(
@@ -2436,7 +2428,7 @@ namespace AdServer::CampaignSvcs
       url += mime_source_id;
     }
 
-    if(!request_params.external_user_id.empty())
+    if (!request_params.external_user_id.empty())
     {
       std::string mime_external_user_id;
       encode_parameter(
@@ -2447,18 +2439,18 @@ namespace AdServer::CampaignSvcs
       url += mime_external_user_id;
     }
 
-    if(inst_params.publisher_site_id)
+    if (inst_params.publisher_site_id)
     {
       url += "&sid=";
       url += to_string(inst_params.publisher_site_id);
     }
-    else if(inst_params.publisher_account_id)
+    else if (inst_params.publisher_account_id)
     {
       url += "&aid=";
       url += to_string(inst_params.publisher_account_id);
     }
 
-    if(!request_params.referer.empty())
+    if (!request_params.referer.empty())
     {
       std::string mime_request_referer;
       encode_parameter(
@@ -2469,7 +2461,7 @@ namespace AdServer::CampaignSvcs
       url += mime_request_referer;
     }
 
-    if(!inst_params.ext_tag_id.empty())
+    if (!inst_params.ext_tag_id.empty())
     {
       std::string mime_ext_tag_id;
       encode_parameter(
@@ -2481,7 +2473,7 @@ namespace AdServer::CampaignSvcs
     }
 
     // pass only passback url defined in parameters
-    if(!request_params.passback_url.empty())
+    if (!request_params.passback_url.empty())
     {
       std::string mime_passback_url;
       encode_parameter(
@@ -2492,7 +2484,7 @@ namespace AdServer::CampaignSvcs
       url += mime_passback_url;
     }
 
-    if(!request_params.passback_type.empty())
+    if (!request_params.passback_type.empty())
     {
       std::string mime_passback_type;
       encode_parameter(
@@ -2504,7 +2496,7 @@ namespace AdServer::CampaignSvcs
     }
 
     url += "&irid=";
-    for(CampaignSelectionDataList::const_iterator cs_it =
+    for (CampaignSelectionDataList::const_iterator cs_it =
           ad_selection_result.selected_campaigns.begin();
         cs_it != ad_selection_result.selected_campaigns.end();
         ++cs_it)
@@ -2541,7 +2533,7 @@ namespace AdServer::CampaignSvcs
         creative_params_list.push_back(creative_params);
       }
 
-      if(cs_it != ad_selection_result.selected_campaigns.begin())
+      if (cs_it != ad_selection_result.selected_campaigns.begin())
       {
         url += ',';
       }
@@ -2549,18 +2541,18 @@ namespace AdServer::CampaignSvcs
     }
 
     url += "&ad=";
-    for(CampaignSelectionDataList::const_iterator cs_it =
+    for (CampaignSelectionDataList::const_iterator cs_it =
           ad_selection_result.selected_campaigns.begin();
       cs_it != ad_selection_result.selected_campaigns.end();
       ++cs_it)
     {
-      if(cs_it != ad_selection_result.selected_campaigns.begin())
+      if (cs_it != ad_selection_result.selected_campaigns.begin())
       {
         url += ',';
       }
       url += to_string(cs_it->creative->ccid);
       url += ':';
-      if(cs_it->campaign_keyword.in())
+      if (cs_it->campaign_keyword.in())
       {
         url += to_string(cs_it->campaign_keyword->ccg_keyword_id);
       }
@@ -2574,15 +2566,15 @@ namespace AdServer::CampaignSvcs
 
     {
       // fill pub optin pixel accounts
-      if(!pub_pixel_accounts.empty())
+      if (!pub_pixel_accounts.empty())
       {
         url += '&';
         url += AdProtocol::PUB_PIXEL_ACCOUNTS;
         url += '=';
-        for(auto it = pub_pixel_accounts.begin();
+        for (auto it = pub_pixel_accounts.begin();
             it != pub_pixel_accounts.end(); ++it)
         {
-          if(it != pub_pixel_accounts.begin())
+          if (it != pub_pixel_accounts.begin())
           {
             url += ',';
           }
@@ -2600,9 +2592,9 @@ namespace AdServer::CampaignSvcs
       url += to_string(request_params.hpos);
     }
 
-    if(!request_params.tokens.empty())
+    if (!request_params.tokens.empty())
     {
-      for(const auto& token : request_params.tokens)
+      for (const auto& token : request_params.tokens)
       {
         std::string mime_enc_tok_value;
 
@@ -2633,12 +2625,12 @@ namespace AdServer::CampaignSvcs
     }
 
     // preclick MUST be last
-    if(request_params.request_type == AR_ADRIVER)
+    if (request_params.request_type == AR_ADRIVER)
     {
       url += "&preclick=";
       url += ADRIVER_MIME_CLICKPIXEL;
     }
-    else if(!request_params.preclick_url.empty() ||
+    else if (!request_params.preclick_url.empty() ||
       request_params.request_type == AR_OPENRTB_WITH_CLICKURL ||
       request_params.request_type == AR_OPENX ||
       request_params.request_type == AR_GOOGLE)
@@ -2652,7 +2644,7 @@ namespace AdServer::CampaignSvcs
       CreativeInstantiate::SourceRuleMap::const_iterator source_rule_it =
         creative_instantiate_.source_rules.find(request_params.source_id);
 
-      if(source_rule_it != creative_instantiate_.source_rules.end())
+      if (source_rule_it != creative_instantiate_.source_rules.end())
       {
         const std::string& mime_encoded_preclick =
           ad_instantiate_type == AIT_VIDEO_URL || ad_instantiate_type == AIT_VIDEO_NONSECURE_URL ||
@@ -2660,12 +2652,12 @@ namespace AdServer::CampaignSvcs
           source_rule_it->second.mime_encoded_vast_preclick :
           source_rule_it->second.mime_encoded_preclick;
 
-        if(!mime_encoded_preclick.empty())
+        if (!mime_encoded_preclick.empty())
         {
           url += "&preclick=";
           url += mime_encoded_preclick;
 
-          if(!source_rule_it->second.mime_encoded_click_prefix.empty())
+          if (!source_rule_it->second.mime_encoded_click_prefix.empty())
           {
             url += '&';
             url += AdProtocol::CLICK_PREFIX;
@@ -2677,15 +2669,15 @@ namespace AdServer::CampaignSvcs
       else
       {
         url += "&preclick=";
-        if(request_params.request_type == AR_OPENRTB_WITH_CLICKURL)
+        if (request_params.request_type == AR_OPENRTB_WITH_CLICKURL)
         {
           url += "${CLICK_URL_ENC}";
         }
-        else if(request_params.request_type == AR_OPENX)
+        else if (request_params.request_type == AR_OPENX)
         {
           url += "{clickurl_enc}";
         }
-        else if(request_params.request_type == AR_GOOGLE)
+        else if (request_params.request_type == AR_GOOGLE)
         {
           url += "%%CLICK_URL_ESC%%";
         }
@@ -2694,11 +2686,11 @@ namespace AdServer::CampaignSvcs
       url += mime_preclick_url;
     }
 
-    if(data_encoding)
+    if (data_encoding)
     {
       std::string url_base64;
       String::StringManip::base64mod_encode(url_base64, url.data(), url.size());
-      if(ad_instantiate_type != AIT_DATA_PARAM_VALUE)
+      if (ad_instantiate_type != AIT_DATA_PARAM_VALUE)
       {
         instantiate_url = "d=";
       }
@@ -2804,10 +2796,10 @@ namespace AdServer::CampaignSvcs
       Stream::Error ostr;
       ostr << FUN << ": caught eh::Exception on instantiate ";
 
-      for(CampaignSelectionDataList::const_iterator cs_it =
-            ad_selection_result.selected_campaigns.begin();
-          cs_it != ad_selection_result.selected_campaigns.end();
-          ++cs_it)
+      for (CampaignSelectionDataList::const_iterator cs_it =
+          ad_selection_result.selected_campaigns.begin();
+        cs_it != ad_selection_result.selected_campaigns.end();
+        ++cs_it)
       {
         ostr << "( " << cs_it->creative->ccid << ", " <<
           cs_it->campaign->campaign_id << ") ";
@@ -2875,7 +2867,8 @@ namespace AdServer::CampaignSvcs
     std::string& creative_body,
     std::string& creative_url,
     const AdSlotContext& ad_slot_context,
-    const String::SubString& ext_tag_id)
+    const String::SubString& ext_tag_id,
+    bool fill_click_url_result)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
     InstantiateParams instantiate_params(
@@ -2901,7 +2894,7 @@ namespace AdServer::CampaignSvcs
     CreativeInstantiateRuleMap::const_iterator rule_it =
       creative_instantiate_.creative_rules.find(inst_rule);
 
-    if(rule_it == creative_instantiate_.creative_rules.end())
+    if (rule_it == creative_instantiate_.creative_rules.end())
     {
       Stream::Error ostr;
       ostr << __func__ <<
@@ -2911,8 +2904,7 @@ namespace AdServer::CampaignSvcs
 
     const CreativeInstantiateRule& instantiate_info = rule_it->second;
 
-    if(request_params.fill_iurl &&
-      !ad_selection_result.selected_campaigns.empty())
+    if (request_params.fill_iurl && !ad_selection_result.selected_campaigns.empty())
     {
       // init iurl independent on instantiate type
       fill_iurl_(
@@ -2928,7 +2920,7 @@ namespace AdServer::CampaignSvcs
 
     std::shared_ptr<String::TextTemplate::ArgsCallback> native_instantiate_args;
 
-    if(ad_instantiate_type == AIT_BODY || is_native)
+    if (ad_instantiate_type == AIT_BODY || is_native)
     {
       instantiate_creative(
         *request_params.common_info,
@@ -2942,7 +2934,8 @@ namespace AdServer::CampaignSvcs
         creative_body,
         ad_slot_context,
         &request_params.exclude_pubpixel_accounts,
-        is_native ? &native_instantiate_args : nullptr);
+        is_native ? &native_instantiate_args : nullptr,
+        fill_click_url_result || is_native);
     }
     else
     {
@@ -2966,13 +2959,13 @@ namespace AdServer::CampaignSvcs
 
       creative_url = instantiate_url; // REVIEW
 
-      if(ad_instantiate_type == AIT_URL_PARAMS ||
+      if (ad_instantiate_type == AIT_URL_PARAMS ||
         ad_instantiate_type == AIT_DATA_URL_PARAM ||
         ad_instantiate_type == AIT_DATA_PARAM_VALUE)
       {
         creative_body = instantiate_url;
       }
-      else if(ad_instantiate_type == AIT_SCRIPT_WITH_URL ||
+      else if (ad_instantiate_type == AIT_SCRIPT_WITH_URL ||
          ad_instantiate_type == AIT_IFRAME_WITH_URL)
       {
         // init post template
@@ -3000,7 +2993,7 @@ namespace AdServer::CampaignSvcs
         Template* creative_template = config->creative_templates.get(
           key, creative_template_descr);
 
-        if(!creative_template)
+        if (!creative_template)
         {
           Stream::Error ostr;
           ostr << "Can't find creative template for (type='" <<
@@ -3013,7 +3006,7 @@ namespace AdServer::CampaignSvcs
         track_impression = creative_template_descr.track_impressions;
       }
 
-      for(CampaignSelectionDataList::iterator it =
+      for (CampaignSelectionDataList::iterator it =
             ad_selection_result.selected_campaigns.begin();
           it != ad_selection_result.selected_campaigns.end(); ++it)
       {
@@ -3023,11 +3016,11 @@ namespace AdServer::CampaignSvcs
       fill_track_pixel &= track_impression;
 
       // fill track pixel & notice
-      if(request_params.context_info->enabled_notice || fill_track_pixel)
+      if (request_params.context_info->enabled_notice || fill_track_pixel)
       {
         bool fill_notice_url = request_params.context_info->enabled_notice;
 
-        if(fill_notice_url || fill_track_pixel)
+        if (fill_notice_url || fill_track_pixel)
         {
           // don't fill pub pixels:
           //   for yandex it can't be confirmed
@@ -3047,7 +3040,7 @@ namespace AdServer::CampaignSvcs
       }
 
       // fill specific tokens (TODO: fill overlay_width, overlay_height here)
-      if(request_params.common_info->request_type == AR_YANDEX)
+      if (request_params.common_info->request_type == AR_YANDEX)
       {
         init_yandex_tokens_(
           config,
@@ -3072,7 +3065,7 @@ namespace AdServer::CampaignSvcs
     }
 
     // ADSC-10918 Native ads
-    if(is_native)
+    if (is_native)
     {
       assert(native_instantiate_args);
 
@@ -3087,7 +3080,7 @@ namespace AdServer::CampaignSvcs
         *native_instantiate_args);
     }
 
-    if(ad_instantiate_type == AIT_VIDEO_URL ||
+    if (ad_instantiate_type == AIT_VIDEO_URL ||
        ad_instantiate_type == AIT_VIDEO_URL_IN_BODY ||
        ad_instantiate_type == AIT_VIDEO_NONSECURE_URL)
     {
@@ -3110,7 +3103,8 @@ namespace AdServer::CampaignSvcs
     std::string& creative_body,
     const AdSlotContext& ad_slot_context,
     const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
-    std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out)
+    std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out,
+    bool fill_click_url_result)
     /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
   {
     static const char* FUN = "CreativeInstantiator::instantiate_creative()";
@@ -3135,7 +3129,7 @@ namespace AdServer::CampaignSvcs
       CreativeInstantiateRuleMap::const_iterator rule_it =
         creative_instantiate_.creative_rules.find(inst_rule);
 
-      if(rule_it == creative_instantiate_.creative_rules.end())
+      if (rule_it == creative_instantiate_.creative_rules.end())
       {
         Stream::Error ostr;
         ostr << "Cannot find creative instantiate rule with name: " << inst_rule;
@@ -3150,7 +3144,7 @@ namespace AdServer::CampaignSvcs
 
       creative_template = campaign_config->creative_templates.get(key, creative_template_descr);
 
-      if(!creative_template.in())
+      if (!creative_template.in())
       {
         Stream::Error ostr;
         ostr << "Cannot find corresponding template for instantiate: "
@@ -3175,11 +3169,12 @@ namespace AdServer::CampaignSvcs
           request_result_params,
           creative_params_list,
           ad_slot_context,
-          exclude_pubpixel_accounts);
+          exclude_pubpixel_accounts,
+          fill_click_url_result);
 
       // try to init current template (but body isn't required)
       creative_body = creative_template->instantiate(*instantiate_args);
-      if(instantiate_args_out)
+      if (instantiate_args_out)
       {
         *instantiate_args_out = instantiate_args;
       }
@@ -3192,7 +3187,7 @@ namespace AdServer::CampaignSvcs
       ostr << FUN << ": Template::InvalidTemplate caught "
         "while instantiating creative (ccid, cmpid): ";
 
-      for(CampaignSelectionDataList::iterator cs_it =
+      for (CampaignSelectionDataList::iterator cs_it =
           ad_selection_result.selected_campaigns.begin();
         cs_it != ad_selection_result.selected_campaigns.end();
         ++cs_it)
@@ -3220,7 +3215,7 @@ namespace AdServer::CampaignSvcs
       Stream::Error ostr;
       ostr << FUN << ": eh::Exception while instantiating creative (ccid, cmp_id): ";
 
-      for(CampaignSelectionDataList::iterator cs_it =
+      for (CampaignSelectionDataList::iterator cs_it =
           ad_selection_result.selected_campaigns.begin();
         cs_it != ad_selection_result.selected_campaigns.end();
         ++cs_it)
@@ -3258,7 +3253,7 @@ namespace AdServer::CampaignSvcs
         creative_instantiate_.creative_rules.find(
           request_params.common_info->creative_instantiate_type);
 
-      if(rule_it == creative_instantiate_.creative_rules.end())
+      if (rule_it == creative_instantiate_.creative_rules.end())
       {
         return false;
       }
@@ -3268,14 +3263,14 @@ namespace AdServer::CampaignSvcs
       // getting passback template
       AppFormatMap::const_iterator app_format_it =
         campaign_config.app_formats.find(app_format);
-      if(app_format_it != campaign_config.app_formats.end())
+      if (app_format_it != campaign_config.app_formats.end())
       {
         Generics::StringHashAdapter key =
           rule_it->second.passback_template_path_prefix + app_format_it->first;
 
         PassbackTemplate_var passback_template = passback_templates_.get(key);
 
-        if(passback_template.in())
+        if (passback_template.in())
         {
           // instantiate passback template
           TokenValueMap request_args;
@@ -3335,9 +3330,9 @@ namespace AdServer::CampaignSvcs
           passback_args_builder.add_provider(
             common_creative_args_manager_->create_provider(request_context));
 
-          if(tag)
+          if (tag)
           {
-            if(request_params.common_info->passback_url.empty())
+            if (request_params.common_info->passback_url.empty())
             {
               passback_args_builder.add_token_processor_layer(
                 make_option_token_values(tag->passback_tokens),
@@ -3357,7 +3352,7 @@ namespace AdServer::CampaignSvcs
               instantiate_info,
               CreativeInstantiateArgs());
 
-            if(tag_size)
+            if (tag_size)
             {
               passback_args_builder.add_token_processor_layer(
                 make_option_token_values(tag_size->tokens),
@@ -3419,7 +3414,7 @@ namespace AdServer::CampaignSvcs
     std::string mime_resource_url_suffix;
     OptionTokenValueMap::const_iterator tok_it = creative->tokens.find(
       "ADIMAGE-PATH-SUFFIX");
-    if(tok_it != creative->tokens.end())
+    if (tok_it != creative->tokens.end())
     {
       String::StringManip::mime_url_encode(
         tok_it->second.value, mime_resource_url_suffix);
@@ -3435,7 +3430,7 @@ namespace AdServer::CampaignSvcs
     url += '=';
     url += config_.service_index;
 
-    if(!click_params.mime_pub_preclick_url.empty())
+    if (!click_params.mime_pub_preclick_url.empty())
     {
       url += "&prck=";
       url += click_params.mime_pub_preclick_url;
@@ -3456,7 +3451,7 @@ namespace AdServer::CampaignSvcs
     yandex_track_params.clear();
 
     std::size_t tok_i = 0;
-    for(; tok_i < request_params.tokens.size(); ++tok_i)
+    for (; tok_i < request_params.tokens.size(); ++tok_i)
     {
       String::SubString tok_name(request_params.tokens[tok_i].name);
       String::SubString param_name = tok_name;
@@ -3468,12 +3463,12 @@ namespace AdServer::CampaignSvcs
         true);
 
       auto tok_map_it = token_to_parameters_.find(tok_name);
-      if(tok_map_it != token_to_parameters_.end())
+      if (tok_map_it != token_to_parameters_.end())
       {
         param_name = tok_map_it->second;
       }
 
-      if(tok_i != 0)
+      if (tok_i != 0)
       {
         yandex_track_params += '&';
       }
@@ -3483,7 +3478,7 @@ namespace AdServer::CampaignSvcs
       yandex_track_params += enc_tok_value;
     }
 
-    if(ad_slot_context.tns_counter_device_type[0])
+    if (ad_slot_context.tns_counter_device_type[0])
     {
       String::SubString tok_name(CreativeTokens::TNS_COUNTER_DEVICE_TYPE);
       String::SubString param_name = tok_name;
@@ -3495,12 +3490,12 @@ namespace AdServer::CampaignSvcs
         true);
 
       auto tok_map_it = token_to_parameters_.find(tok_name);
-      if(tok_map_it != token_to_parameters_.end())
+      if (tok_map_it != token_to_parameters_.end())
       {
         param_name = tok_map_it->second;
       }
 
-      if(tok_i != 0)
+      if (tok_i != 0)
       {
         yandex_track_params += '&';
       }
@@ -3534,20 +3529,19 @@ namespace AdServer::CampaignSvcs
       {"YANDEX_ADM", "adm"}
     };
 
-    for(unsigned long i = 0; i < sizeof(YANDEX_TOKENS) / sizeof(YANDEX_TOKENS[0]); ++i)
+    for (unsigned long i = 0; i < sizeof(YANDEX_TOKENS) / sizeof(YANDEX_TOKENS[0]); ++i)
     {
-      OptionTokenValueMap::const_iterator token_it = creative->tokens.find(
-        YANDEX_TOKENS[i].name);
-      if(token_it == creative->tokens.end() || token_it->second.value.empty())
+      OptionTokenValueMap::const_iterator token_it = creative->tokens.find(YANDEX_TOKENS[i].name);
+
+      if (token_it == creative->tokens.end() || token_it->second.value.empty())
       {
         Stream::Error ostr;
         ostr << "CreativeInstantiator::init_yandex_tokens_(): yandex token " <<
           YANDEX_TOKENS[i].result_name << " has empty value";
         throw CreativeInstantiateProblem(ostr);
       }
-      request_result_params.tokens.set_value(
-        YANDEX_TOKENS[i].result_name,
-        token_it->second.value);
+
+      request_result_params.tokens.set_value(YANDEX_TOKENS[i].result_name, token_it->second.value);
     }
 
     fill_yandex_track_params_(
@@ -3591,13 +3585,11 @@ namespace AdServer::CampaignSvcs
     };
 
     // fill add_track_pixel_urls for fill tracking in banner case
-    for(unsigned long i = 0;
-      i < sizeof(TRACK_TOKENS) / sizeof(TRACK_TOKENS[0]); ++i)
+    for (unsigned long i = 0; i < sizeof(TRACK_TOKENS) / sizeof(TRACK_TOKENS[0]); ++i)
     {
-      OptionTokenValueMap::const_iterator token_it = creative->tokens.find(
-        TRACK_TOKENS[i]);
+      OptionTokenValueMap::const_iterator token_it = creative->tokens.find(TRACK_TOKENS[i]);
       // relative prefix requirement allow to ignore token type 'file'
-      if(token_it != creative->tokens.end() &&
+      if (token_it != creative->tokens.end() &&
         !token_it->second.value.empty()
         // && (need_absolute_urls || RELATIVE_URL_PREFIX.start(token_it->second.value))
         )
@@ -3605,7 +3597,7 @@ namespace AdServer::CampaignSvcs
         OptionTokenValueMap args;
         args[CreativeTokens::RANDOM] = OptionValue(
           0, String::StringManip::IntToStr(request_params.random).str().str().c_str());
-        if(!request_params.ext_track_params.empty())
+        if (!request_params.ext_track_params.empty())
         {
           args[CreativeTokens::EXT_TRACK_PARAMS] = OptionValue(
             0, request_params.ext_track_params.c_str());
@@ -3614,7 +3606,7 @@ namespace AdServer::CampaignSvcs
         args[CreativeTokens::TNS_COUNTER_DEVICE_TYPE] =
           OptionValue(0, ad_slot_context.tns_counter_device_type);
 
-        for(const auto& token : request_params.tokens)
+        for (const auto& token : request_params.tokens)
         {
           args[token.name] = OptionValue(0, token.value.c_str());
         }
@@ -3622,9 +3614,9 @@ namespace AdServer::CampaignSvcs
         args[TRACK_TOKENS[i]] = token_it->second;
 
         const TokenProcessorMap::const_iterator it =
-        campaign_config->token_processors.find(token_it->second.option_id);
+          campaign_config->token_processors.find(token_it->second.option_id);
 
-        if(it != campaign_config->token_processors.end())
+        if (it != campaign_config->token_processors.end())
         {
           try
           {
@@ -3636,8 +3628,7 @@ namespace AdServer::CampaignSvcs
               CreativeInstantiateArgs(),
               track_pixel_url);
 
-            request_result_params.add_track_pixel_urls.push_back(
-              track_pixel_url);
+            request_result_params.add_track_pixel_urls.push_back(track_pixel_url);
           }
           catch(const eh::Exception&)
           {
@@ -3665,14 +3656,12 @@ namespace AdServer::CampaignSvcs
 
     // Data tokens
 
-    for(std::vector<NativeDataTokenInfo>::const_iterator token_it =
-          ad_slot.native_data_tokens.begin();
-        token_it != ad_slot.native_data_tokens.end(); ++token_it)
+    for (std::vector<NativeDataTokenInfo>::const_iterator token_it =
+        ad_slot.native_data_tokens.begin();
+      token_it != ad_slot.native_data_tokens.end(); ++token_it)
     {
       std::string token_value;
-      if(!instantiate_args.get_argument(
-           String::SubString(token_it->name),
-           token_value) ||
+      if (!instantiate_args.get_argument(String::SubString(token_it->name), token_value) ||
          token_value.empty())
       {
         if (token_it->required)
@@ -3692,18 +3681,16 @@ namespace AdServer::CampaignSvcs
     }
 
     // Image tokens
-    for(std::vector<NativeImageTokenInfo>::const_iterator token_it =
-          ad_slot.native_image_tokens.begin();
-        token_it != ad_slot.native_image_tokens.end(); ++token_it)
+    for (std::vector<NativeImageTokenInfo>::const_iterator token_it =
+        ad_slot.native_image_tokens.begin();
+      token_it != ad_slot.native_image_tokens.end(); ++token_it)
     {
       unsigned long width = token_it->width;
       unsigned long height = token_it->height;
 
       std::string image_url_str;
-      if(!instantiate_args.get_argument(
-           String::SubString(token_it->name),
-           image_url_str) ||
-         image_url_str.empty())
+      if (!instantiate_args.get_argument(String::SubString(token_it->name), image_url_str) ||
+        image_url_str.empty())
       {
         if (token_it->required)
         {
@@ -3723,17 +3710,13 @@ namespace AdServer::CampaignSvcs
           height_name += "_HEIGHT";
 
           std::string width_value;
-          if(instantiate_args.get_argument(
-               String::SubString(width_name),
-               width_value))
+          if (instantiate_args.get_argument(String::SubString(width_name), width_value))
           {
             String::StringManip::str_to_int(width_value, width);
           }
 
           std::string height_value;
-          if(instantiate_args.get_argument(
-               String::SubString(height_name),
-               height_value))
+          if (instantiate_args.get_argument(String::SubString(height_name), height_value))
           {
             String::StringManip::str_to_int(height_value, height);
           }
@@ -3760,7 +3743,7 @@ namespace AdServer::CampaignSvcs
           image.height = height;
           image_url_addr.get_view(HTTP::HTTPAddress::VW_FULL, image.value);
 
-          if(ad_slot.native_ads_impression_tracker_type == AdServer::CampaignSvcs::NAITT_RESOURCES)
+          if (ad_slot.native_ads_impression_tracker_type == AdServer::CampaignSvcs::NAITT_RESOURCES)
           {
             std::string mime_image_value;
             String::StringManip::mime_url_encode(image.value, mime_image_value);
@@ -3771,8 +3754,7 @@ namespace AdServer::CampaignSvcs
             image.value.swap(image_value);
           }
 
-          request_result_params.native_image_tokens.insert(
-            std::make_pair(token_it->name, image));
+          request_result_params.native_image_tokens.emplace(token_it->name, image);
         }
         catch(const eh::Exception& ex)
         {
@@ -3815,32 +3797,24 @@ namespace AdServer::CampaignSvcs
   {
     OptionTokenValueMap::const_iterator token_it = creative->tokens.find("MP4_DURATION");
 
-    if(token_it != creative->tokens.end())
+    if (token_it != creative->tokens.end())
     {
       int duration;
-      if(String::StringManip::str_to_int(
-           token_it->second.value,
-           duration))
+      if (String::StringManip::str_to_int(token_it->second.value, duration))
       {
-        request_result_params.ext_tokens.set_value(
-          "duration",
-          token_it->second.value);
+        request_result_params.ext_tokens.set_value("duration", token_it->second.value);
       }
     }
 
     token_it = creative->tokens.find("VIDEO_TYPE");
 
-    if(token_it != creative->tokens.end())
+    if (token_it != creative->tokens.end())
     {
-      request_result_params.ext_tokens.set_value(
-        "crtype",
-        token_it->second.value);
+      request_result_params.ext_tokens.set_value("crtype", token_it->second.value);
     }
     else
     {
-      request_result_params.ext_tokens.set_value(
-        "crtype",
-        "VAST 2.0");
+      request_result_params.ext_tokens.set_value("crtype", "VAST 2.0");
     }
   }
 } // namespace AdServer::CampaignSvcs

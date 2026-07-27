@@ -6,6 +6,7 @@
 #include "OpenRtbBidRequestState.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <set>
 
 #include <google/protobuf/arena.h>
@@ -54,8 +55,19 @@ namespace AdServer::Bidding
         return false;
       }
 
-      return (static_cast<double>(Generics::safe_rand(PROCESS_COEF_RANDOM_MAX)) /
+      return (static_cast<double>(Generics::unsafe_rand(PROCESS_COEF_RANDOM_MAX)) /
         static_cast<double>(PROCESS_COEF_RANDOM_MAX)) > process_coef;
+    }
+
+    std::optional<Generics::Time>
+    unpack_optional_time(const std::string& packed_time)
+    {
+      if (packed_time.size() != Generics::Time::TIME_PACK_LEN)
+      {
+        return std::nullopt;
+      }
+
+      return GrpcAlgs::unpack_time(packed_time);
     }
 
     class InProgressGuard
@@ -1022,8 +1034,10 @@ namespace AdServer::Bidding
           AdServer::Commons::UserId user_id;
           grpc::Status status;
           std::string exception_message;
+          Generics::Time server_time;
           bool completed = false;
           bool response_present = false;
+          bool server_time_present = false;
           bool blacklisted = false;
         };
 
@@ -1046,11 +1060,9 @@ namespace AdServer::Bidding
               user_resolving_debug_info.response_present = true;
               user_resolving_debug_info.user_id = user_id.is_null() ?
                 std::string() : user_id.to_string();
-              user_resolving_debug_info.min_age_reached =
-                result.response->min_age_reached();
+              user_resolving_debug_info.min_age_reached = result.response->min_age_reached();
               user_resolving_debug_info.created = result.response->created();
-              user_resolving_debug_info.invalid_operation =
-                result.response->invalid_operation();
+              user_resolving_debug_info.invalid_operation = result.response->invalid_operation();
               user_resolving_debug_info.user_found = result.response->user_found();
             }
           };
@@ -1085,6 +1097,11 @@ namespace AdServer::Bidding
 
               result.response = std::move(get_result.response_holder);
               result.response_present = true;
+              if (auto server_time = unpack_optional_time(result.response->process_time()))
+              {
+                result.server_time = *server_time;
+                result.server_time_present = true;
+              }
               result.user_id = GrpcAlgs::unpack_user_id(result.response->user_id());
               result.blacklisted = user_id_controller_->null_blacklisted(result.user_id);
             }
@@ -1217,6 +1234,25 @@ namespace AdServer::Bidding
         if (user_resolving_stage && user_bind_info)
         {
           user_resolving_stage->server_id = user_bind_info->hostname();
+        }
+
+        if (user_resolving_stage)
+        {
+          Generics::Time server_time = Generics::Time::ZERO;
+          bool server_time_present = false;
+          for (const auto& result : user_bind_results)
+          {
+            if (result.server_time_present)
+            {
+              server_time += result.server_time;
+              server_time_present = true;
+            }
+          }
+
+          if (server_time_present)
+          {
+            user_resolving_stage->local_time = server_time;
+          }
         }
 
         match_user_id = local_match_user_id;
@@ -1462,6 +1498,11 @@ namespace AdServer::Bidding
             if (trigger_match_stage)
             {
               trigger_match_stage->server_id = channel_result.response.hostname();
+              if (auto server_time =
+                    unpack_optional_time(channel_result.response.match_time()))
+              {
+                trigger_match_stage->local_time = *server_time;
+              }
             }
             trigger_match.result = std::move(channel_result.response_holder);
             trigger_match.present = true;

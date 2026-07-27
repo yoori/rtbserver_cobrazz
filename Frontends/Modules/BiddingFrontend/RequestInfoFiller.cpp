@@ -985,8 +985,7 @@ namespace AdServer::Bidding
 
     if(request_info.random >= CampaignSvcs::RANDOM_PARAM_MAX)
     {
-      request_info.random = Generics::safe_rand(
-        CampaignSvcs::RANDOM_PARAM_MAX);
+      request_info.random = Generics::unsafe_rand(CampaignSvcs::RANDOM_PARAM_MAX);
     }
   }
 

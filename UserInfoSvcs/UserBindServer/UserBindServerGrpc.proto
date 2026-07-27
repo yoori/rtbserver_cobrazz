@@ -53,6 +53,7 @@ message GetUserIdResponse {
   bool invalid_operation = 4;
   bool user_found = 5;
   string hostname = 6;
+  bytes process_time = 7;
 }
 
 message AddUserIdRequest {

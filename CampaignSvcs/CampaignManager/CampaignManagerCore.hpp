@@ -1071,14 +1071,7 @@ namespace AdServer::CampaignSvcs
       std::string mime_pub_preclick_url;
 
       std::string click_url;
-      std::string click_url_f;
-      std::string preclick_url;
-      std::string preclick_url_f;
-
       std::string click0_url; // click_url without pubpreclick
-      std::string click0_url_f;
-      std::string preclick0_url; // preclick_url without pubpreclick
-      std::string preclick0_url_f;
     };
 
     using CountryList = std::list<std::string>;

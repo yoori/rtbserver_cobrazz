@@ -324,7 +324,7 @@ namespace AdServer::Passback
       try
       {
         char random_str[40];
-        unsigned long random = Generics::safe_rand();
+        unsigned long random = Generics::unsafe_rand();
         String::StringManip::int_to_str(random, random_str, sizeof(random_str));
         passback_info.tokens[Tokens::RANDOM] = random_str;
 

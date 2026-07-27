@@ -471,18 +471,26 @@ namespace AdServer::UserInfoSvcs
     response.set_hostname(service_hostname_());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
-    maybe_sleep_mock_response(response_sleep_ms_);
-    response.set_user_id(request.current_user_id());
-    response.set_min_age_reached(true);
-    response.set_created(false);
-    response.set_invalid_operation(false);
-    response.set_user_found(false);
-    result_status = ::grpc::Status::OK;
-    co_return;
+    {
+      Generics::Timer process_timer;
+      process_timer.start();
+      maybe_sleep_mock_response(response_sleep_ms_);
+      response.set_user_id(request.current_user_id());
+      response.set_min_age_reached(true);
+      response.set_created(false);
+      response.set_invalid_operation(false);
+      response.set_user_found(false);
+      process_timer.stop();
+      response.set_process_time(GrpcAlgs::pack_time(process_timer.elapsed_time()));
+      result_status = ::grpc::Status::OK;
+      co_return;
+    }
 #endif
 
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
 
+    Generics::Timer process_timer;
+    process_timer.start();
     try
     {
       UserBindServerCore::GetUserRequestInfo req_info;
@@ -522,6 +530,8 @@ namespace AdServer::UserInfoSvcs
         ::grpc::StatusCode::INTERNAL,
         ex.what());
     }
+    process_timer.stop();
+    response.set_process_time(GrpcAlgs::pack_time(process_timer.elapsed_time()));
   }
 
   AdServer::Grpc::GrpcCoroutine

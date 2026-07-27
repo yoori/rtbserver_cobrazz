@@ -109,7 +109,8 @@ namespace AdServer::CampaignSvcs
         creative_body,
         creative_url,
         ad_slot_context,
-        String::SubString(ad_slot.ext_tag_id));
+        String::SubString(ad_slot.ext_tag_id),
+        ad_slot_debug_info != nullptr);
 
       assert(!creative_params_list.empty());
 
@@ -229,7 +230,8 @@ namespace AdServer::CampaignSvcs
         creative_body,
         creative_url,
         ad_slot_context,
-        String::SubString(ad_slot.ext_tag_id));
+        String::SubString(ad_slot.ext_tag_id),
+        ad_slot_debug_info != nullptr);
 
       if(ad_slot_debug_info)
       {

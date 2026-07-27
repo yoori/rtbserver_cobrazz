@@ -547,7 +547,7 @@ namespace AdServer::ImprTrack
         if (!inst_templates.empty())
         {
           char random_str[40];
-          unsigned long random = Generics::safe_rand();
+          unsigned long random = Generics::unsafe_rand();
           String::StringManip::int_to_str(random, random_str, sizeof(random_str));
 
           typedef std::map<String::SubString, std::string> ArgMap;
@@ -796,7 +796,7 @@ namespace AdServer::ImprTrack
         if (!inst_templates.empty())
         {
           char random_str[40];
-          const unsigned long random = Generics::safe_rand();
+          const unsigned long random = Generics::unsafe_rand();
           String::StringManip::int_to_str(
             random,
             random_str,

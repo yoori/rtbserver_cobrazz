@@ -7,6 +7,21 @@
 
 namespace AdServer::CampaignSvcs::InstantiateAd
 {
+  void
+  InstantiateAdContext::CreativeArgsData::init_click_urls()
+  {
+    if(click_urls_initialized)
+    {
+      return;
+    }
+
+    click_urls_initialized = true;
+    if(click_url_initializer)
+    {
+      click_url_initializer(*this);
+    }
+  }
+
   AccountIdList&
   InstantiateAdContext::consider_pub_pixel_accounts()
   {

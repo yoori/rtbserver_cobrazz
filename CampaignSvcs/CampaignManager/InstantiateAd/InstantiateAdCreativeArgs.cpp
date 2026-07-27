@@ -5,6 +5,7 @@
 #include <String/StringManip.hpp>
 
 #include <algorithm>
+#include <string_view>
 #include <utility>
 
 namespace AdServer::CampaignSvcs::InstantiateAd
@@ -18,15 +19,72 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       return String::StringManip::IntToStr(value).str().str();
     }
 
-    std::optional<std::string>
-    optional_string(
-      const std::optional<InstantiateAdContext::CreativeArgsData>& data,
-      const std::optional<std::string> InstantiateAdContext::CreativeArgsData::*
-        member)
+    constexpr std::string_view CLICK_F_SUFFIX = "*amp*m*eql*f";
+    constexpr std::string_view PRECLICK_SUFFIX = "*amp*relocate*eql*";
+    constexpr std::string_view PRECLICK_F_SUFFIX =
+      "*amp*m*eql*f*amp*relocate*eql*";
+
+    std::string
+    format_click_url(
+      const InstantiateAdContext::CreativeArgsData& data,
+      const std::string& base_url,
+      std::string_view suffix)
     {
-      return data ? (*data).*member : std::nullopt;
+      std::string url;
+      url.reserve(base_url.size() + suffix.size());
+      url += base_url;
+      url.append(suffix.data(), suffix.size());
+
+      if(!data.encode_click_urls || data.click_url_prefix.empty())
+      {
+        return url;
+      }
+
+      std::string encoded_url;
+      String::StringManip::mime_url_encode(url, encoded_url);
+      return data.click_url_prefix + encoded_url;
     }
 
+    std::optional<std::string>
+    optional_creative_click_string(
+      std::optional<InstantiateAdContext::CreativeArgsData>& data,
+      const std::string CampaignManagerCore::ClickParams::* member,
+      std::string_view suffix)
+    {
+      if(!data || !data->click_params || !data->click_url_initializer)
+      {
+        return std::nullopt;
+      }
+
+      data->init_click_urls();
+      const std::string& base_url = (*data->click_params).*member;
+      if(base_url.empty())
+      {
+        return std::nullopt;
+      }
+
+      return format_click_url(*data, base_url, suffix);
+    }
+
+    std::optional<std::string>
+    optional_preclick_string(
+      std::optional<InstantiateAdContext::CreativeArgsData>& data,
+      const std::string CampaignManagerCore::ClickParams::* member,
+      std::string_view suffix)
+    {
+      if(!data || !data->click_params)
+      {
+        return std::nullopt;
+      }
+
+      const std::string& base_url = (*data->click_params).*member;
+      if(base_url.empty())
+      {
+        return std::nullopt;
+      }
+
+      return format_click_url(*data, base_url, suffix);
+    }
   }
 
   InstantiateAdCreativeArgsProvider::InstantiateAdCreativeArgsProvider(
@@ -107,65 +165,73 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     add_processor(
       CreativeTokens::CLICKURL,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_creative_click_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::click_url);
+          &CampaignManagerCore::ClickParams::click_url,
+          {});
       });
 
     add_processor(
       CreativeTokens::CLICKF,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_creative_click_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::click_url_f);
+          &CampaignManagerCore::ClickParams::click_url,
+          CLICK_F_SUFFIX);
       });
 
     add_processor(
       CreativeTokens::CLICK0,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_creative_click_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::click0_url);
+          &CampaignManagerCore::ClickParams::click0_url,
+          {});
       });
 
     add_processor(
       CreativeTokens::CLICKF0,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_creative_click_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::click0_url_f);
+          &CampaignManagerCore::ClickParams::click0_url,
+          CLICK_F_SUFFIX);
       });
 
     add_processor(
       CreativeTokens::PRECLICKURL,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_preclick_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::preclick_url);
+          &CampaignManagerCore::ClickParams::click_url,
+          PRECLICK_SUFFIX);
       });
 
     add_processor(
       CreativeTokens::PRECLICKF,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_preclick_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::preclick_url_f);
+          &CampaignManagerCore::ClickParams::click_url,
+          PRECLICK_F_SUFFIX);
       });
 
     add_processor(
       CreativeTokens::PRECLICK0,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_preclick_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::preclick0_url);
+          &CampaignManagerCore::ClickParams::click0_url,
+          PRECLICK_SUFFIX);
       });
 
     add_processor(
       CreativeTokens::PRECLICKF0,
       [](const InstantiateAdCreativeArgsProvider& provider) {
-        return optional_string(
+        return optional_preclick_string(
           provider.context().creative_args_data,
-          &InstantiateAdContext::CreativeArgsData::preclick0_url_f);
+          &CampaignManagerCore::ClickParams::click0_url,
+          PRECLICK_F_SUFFIX);
       });
 
     add_processor(

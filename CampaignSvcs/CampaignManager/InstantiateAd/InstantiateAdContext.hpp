@@ -26,17 +26,19 @@ namespace AdServer::CampaignSvcs
 
       struct CreativeArgsData
       {
+        using ClickUrlInitializer = std::function<void(CreativeArgsData&)>;
+
+        void
+        init_click_urls();
+
         const CampaignSelectionData* select_params = nullptr;
         const Creative* creative = nullptr;
         std::string keyword;
-        std::optional<std::string> click_url;
-        std::optional<std::string> click_url_f;
-        std::optional<std::string> click0_url;
-        std::optional<std::string> click0_url_f;
-        std::optional<std::string> preclick_url;
-        std::optional<std::string> preclick_url_f;
-        std::optional<std::string> preclick0_url;
-        std::optional<std::string> preclick0_url_f;
+        std::optional<CampaignManagerCore::ClickParams> click_params;
+        std::string click_url_prefix;
+        ClickUrlInitializer click_url_initializer;
+        bool encode_click_urls = false;
+        bool click_urls_initialized = false;
       };
 
       const CampaignManagerCore::CommonAdRequest* request_params = nullptr;

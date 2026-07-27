@@ -77,7 +77,8 @@ namespace AdServer::CampaignSvcs
       const AdSlotContext& ad_slot_context,
       const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
       std::shared_ptr<String::TextTemplate::ArgsCallback>* instantiate_args_out =
-        nullptr)
+        nullptr,
+      bool fill_click_url_result = false)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
     void
@@ -94,7 +95,8 @@ namespace AdServer::CampaignSvcs
       std::string& creative_body,
       std::string& creative_url,
       const AdSlotContext& ad_slot_context,
-      const String::SubString& ext_tag_id)
+      const String::SubString& ext_tag_id,
+      bool fill_click_url_result = false)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
     bool
@@ -201,7 +203,8 @@ namespace AdServer::CampaignSvcs
       RequestResultParams& request_result_params,
       CreativeParamsList& creative_params_list,
       const AdSlotContext& ad_slot_context,
-      const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts)
+      const Generics::MonoVector<unsigned long>* exclude_pubpixel_accounts,
+      bool fill_click_url_result)
       /*throw(eh::Exception)*/;
 
     static void

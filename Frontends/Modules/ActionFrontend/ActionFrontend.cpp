@@ -546,12 +546,12 @@ namespace AdServer::Action
       if (!keyword_redirect_rules.empty())
       {
         result_redirect_rule = keyword_redirect_rules[
-          Generics::safe_rand(keyword_redirect_rules.size())];
+          Generics::unsafe_rand(keyword_redirect_rules.size())];
       }
       else if (!redirect_rules.empty())
       {
         result_redirect_rule = redirect_rules[
-          Generics::safe_rand(redirect_rules.size())];
+          Generics::unsafe_rand(redirect_rules.size())];
       }
 
       if (result_redirect_rule.in())
@@ -562,7 +562,7 @@ namespace AdServer::Action
 
           templ_args[TemplateParams::RANDOM] =
             String::StringManip::IntToStr(
-              Generics::safe_rand()).str().str();
+              Generics::unsafe_rand()).str().str();
 
           // instantiate redirect template
           String::TextTemplate::DefaultValue args_with_default(&templ_args);
