@@ -15,7 +15,9 @@ add_library(LogGeneralizerLib STATIC
 )
 
 target_link_libraries(LogGeneralizerLib
-  LogGeneralizerIDL
+  PUBLIC
+    LogGeneralizerIDL
+    LogCommons
 )
 
 add_executable(LogGeneralizer
@@ -39,4 +41,3 @@ target_link_libraries(LogGeneralizer
 )
 
 #install(TARGETS LogGeneralizerIDL LogGeneralizer DESTINATION ${INSTALL_DIR})
-

@@ -335,7 +335,7 @@ namespace AdServer::Bidding
         page_keywords(request_arena_.get()),
         url_keywords(request_arena_.get()),
         campaign_additional_info(request_arena_.get()),
-        moved_string_holders_(),
+        moved_string_holders_(request_arena_.get()),
         string_holders_(request_arena_.get())
     {}
 
@@ -492,7 +492,7 @@ namespace AdServer::Bidding
     Generics::MonoString campaign_additional_info;
 
   private:
-    std::list<std::string> moved_string_holders_;
+    Generics::MonoList<std::string> moved_string_holders_;
     Generics::MonoList<Generics::MonoString> string_holders_;
   };
 
