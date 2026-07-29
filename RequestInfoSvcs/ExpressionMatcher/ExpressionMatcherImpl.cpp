@@ -36,6 +36,8 @@ namespace
   const char CHANNEL_IMP_INVENTORY_OUT_DIR[] = "ChannelImpInventory";
   const char CHANNEL_PRICE_RANGE_OUT_DIR[] = "ChannelPriceRange";
   const char CHANNEL_PERFORMANCE_OUT_DIR[] = "ChannelPerformance";
+  const char CHANNEL_HIT_STAT_OUT_DIR[] = "ChannelHitStat";
+  const char CHANNEL_TRIGGER_STAT_OUT_DIR[] = "ChannelTriggerStat";
   const char CHANNEL_TRIGGER_IMP_STAT_OUT_DIR[] = "ChannelTriggerImpStat";
   const char GLOBAL_COLO_USER_STAT_OUT_DIR[] = "GlobalColoUserStat";
   const char COLO_USER_STAT_OUT_DIR[] = "ColoUserStat";
@@ -246,6 +248,14 @@ namespace RequestInfoSvcs
         read_flush_policy(
           lp_config.ChannelPerformance(),
           (log_root + CHANNEL_PERFORMANCE_OUT_DIR).c_str(),
+          check_loggers_period_),
+        read_flush_policy(
+          lp_config.ChannelHitStat(),
+          (log_root + CHANNEL_HIT_STAT_OUT_DIR).c_str(),
+          check_loggers_period_),
+        read_flush_policy(
+          lp_config.ChannelTriggerStat(),
+          (log_root + CHANNEL_TRIGGER_STAT_OUT_DIR).c_str(),
           check_loggers_period_),
         read_flush_policy(
           lp_config.ChannelTriggerImpStat(),
@@ -1449,8 +1459,8 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherImpl::process_request_basic_channels_record_()";
 
-    typedef AdServer::LogProcessing::
-      RequestBasicChannelsCollector::DataT::DataT RBCRecord;
+    using RBCRecord = AdServer::LogProcessing::
+      RequestBasicChannelsCollector::DataT::DataT;
 
     try
     {
@@ -1547,21 +1557,33 @@ namespace RequestInfoSvcs
 
         expression_matcher_out_logger_->process_match_request(match_info);
 
+        const auto* match_request =
+          record.match_request().present() ? &record.match_request().get() : nullptr;
+
+        if(match_request)
+        {
+          expression_matcher_out_logger_->process_channel_hit_stat(
+            key.isp_time(),
+            key.colo_id(),
+            *match_request);
+          expression_matcher_out_logger_->process_channel_trigger_stat(
+            key.isp_time(),
+            key.colo_id(),
+            *match_request);
+        }
+
         if((!record.user_id().is_null() && user_trigger_match_container) ||
            (!record.temporary_user_id().is_null() && temp_user_trigger_match_container))
         {
           UserTriggerMatchContainer::RequestInfo request_info;
           request_info.time = match_info.placement_colo_time;
 
-          if(record.match_request().present())
+          if(match_request)
           {
-            const AdServer::LogProcessing::RequestBasicChannelsInnerData::
-              Match& match_request = record.match_request().get();
-
             for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request.page_trigger_channels().begin();
-                cht_it != match_request.page_trigger_channels().end(); ++cht_it)
+                RequestBasicChannelsInnerData::TriggerMatchArray::
+                  const_iterator cht_it = match_request->page_trigger_channels().begin();
+                cht_it != match_request->page_trigger_channels().end(); ++cht_it)
             {
               request_info.page_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
@@ -1569,8 +1591,8 @@ namespace RequestInfoSvcs
 
             for(AdServer::LogProcessing::
                   RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request.search_trigger_channels().begin();
-                cht_it != match_request.search_trigger_channels().end(); ++cht_it)
+                    const_iterator cht_it = match_request->search_trigger_channels().begin();
+                cht_it != match_request->search_trigger_channels().end(); ++cht_it)
             {
               request_info.search_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
@@ -1578,8 +1600,8 @@ namespace RequestInfoSvcs
 
             for(AdServer::LogProcessing::
                   RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request.url_trigger_channels().begin();
-                cht_it != match_request.url_trigger_channels().end(); ++cht_it)
+                    const_iterator cht_it = match_request->url_trigger_channels().begin();
+                cht_it != match_request->url_trigger_channels().end(); ++cht_it)
             {
               request_info.url_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
@@ -1587,8 +1609,8 @@ namespace RequestInfoSvcs
 
             for(AdServer::LogProcessing::
                   RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request.url_keyword_trigger_channels().begin();
-                cht_it != match_request.url_keyword_trigger_channels().end(); ++cht_it)
+                    const_iterator cht_it = match_request->url_keyword_trigger_channels().begin();
+                cht_it != match_request->url_keyword_trigger_channels().end(); ++cht_it)
             {
               request_info.url_keyword_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);

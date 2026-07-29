@@ -714,6 +714,73 @@ namespace AdServer::Bidding
       add_optional_metric("vtr", additional_info.vtr);
       result += '}';
     }
+
+    void
+    fill_openrtb_geo_(
+      RequestInfo& request_info,
+      const JsonProcessingContext& context)
+    {
+      if(!context.ssp_country.empty() ||
+        !context.ssp_region.empty() ||
+        !context.ssp_city.empty())
+      {
+        request_info.location = std::make_shared<FrontendCommons::Location>();
+        request_info.location->country.assign(
+          context.ssp_country.data(),
+          context.ssp_country.size());
+        request_info.location->region.assign(
+          context.ssp_region.data(),
+          context.ssp_region.size());
+        request_info.location->city.assign(
+          context.ssp_city.data(),
+          context.ssp_city.size());
+        request_info.location->normalize();
+
+        request_info.geo_location.resize(1);
+        request_info.geo_location[0].country = request_info.location->country;
+        request_info.geo_location[0].region = request_info.location->region;
+        request_info.geo_location[0].city = request_info.location->city;
+      }
+
+      if(context.ssp_latitude && context.ssp_longitude)
+      {
+        using CoordDecimal = AdServer::CampaignSvcs::CoordDecimal;
+        using AccuracyDecimal = AdServer::CampaignSvcs::AccuracyDecimal;
+
+        static const CoordDecimal MIN_LAT("-90");
+        static const CoordDecimal MAX_LAT("90");
+        static const CoordDecimal MIN_LON("-180");
+        static const CoordDecimal MAX_LON("180");
+        static const AccuracyDecimal MIN_ACCURACY("0");
+        static const AccuracyDecimal MAX_ACCURACY("21000000");
+        static const AccuracyDecimal DEFAULT_ACCURACY("50000");
+
+        if(*context.ssp_latitude < MIN_LAT ||
+          *context.ssp_latitude > MAX_LAT ||
+          *context.ssp_longitude < MIN_LON ||
+          *context.ssp_longitude > MAX_LON)
+        {
+          return;
+        }
+
+        AccuracyDecimal accuracy = context.ssp_accuracy.value_or(
+          DEFAULT_ACCURACY);
+        if(accuracy <= MIN_ACCURACY)
+        {
+          return;
+        }
+
+        if(accuracy > MAX_ACCURACY)
+        {
+          accuracy = MAX_ACCURACY;
+        }
+
+        request_info.coord_location.resize(1);
+        request_info.coord_location[0].latitude = *context.ssp_latitude;
+        request_info.coord_location[0].longitude = *context.ssp_longitude;
+        request_info.coord_location[0].accuracy = accuracy;
+      }
+    }
   }
 
   template<typename StringType>
@@ -2010,6 +2077,8 @@ namespace AdServer::Bidding
     {
       fill_by_ip(request_info, request_info.peer_ip);
     }
+
+    fill_openrtb_geo_(request_info, context);
 
     if(!request_info.peer_ip.empty())
     {
@@ -3886,6 +3955,27 @@ namespace AdServer::Bidding
       catch(const typename DecimalType::Exception&)
       {
         return invalid_value;
+      }
+    }
+
+    template<typename DecimalType>
+    bool
+    try_parse_decimal(
+      DecimalType& result,
+      std::string_view value,
+      Generics::DecimalMulRemainder round_type)
+    {
+      try
+      {
+        result = AdServer::Commons::extract_decimal<DecimalType>(
+          value,
+          round_type,
+          true);
+        return true;
+      }
+      catch(const typename DecimalType::Exception&)
+      {
+        return false;
       }
     }
 
@@ -5986,6 +6076,49 @@ namespace AdServer::Bidding
     add_string(parser, "device.geo.country", root_context, &JsonProcessingContext::ssp_country);
     add_string(parser, "device.geo.region", root_context, &JsonProcessingContext::ssp_region);
     add_string(parser, "device.geo.city", root_context, &JsonProcessingContext::ssp_city);
+    add_request_string_handler(
+      parser,
+      "device.geo.lat",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        AdServer::CampaignSvcs::CoordDecimal latitude;
+        if(try_parse_decimal(latitude, value, Generics::DMR_ROUND))
+        {
+          state.context->ssp_latitude = latitude;
+        }
+      });
+    add_request_string_handler(
+      parser,
+      "device.geo.lon",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        AdServer::CampaignSvcs::CoordDecimal longitude;
+        if(try_parse_decimal(longitude, value, Generics::DMR_ROUND))
+        {
+          state.context->ssp_longitude = longitude;
+        }
+      });
+    add_request_string_handler(
+      parser,
+      "device.geo.accuracy",
+      [](FastOpenRtbState& state, std::string_view value)
+      {
+        AdServer::CampaignSvcs::AccuracyDecimal accuracy;
+        if(try_parse_decimal(accuracy, value, Generics::DMR_ROUND))
+        {
+          state.context->ssp_accuracy = accuracy;
+        }
+      });
+    add_integer_handler(
+      parser,
+      "device.geo.type",
+      [](FastOpenRtbState& state, int64_t value)
+      {
+        if(value >= 0)
+        {
+          state.request_info->ssp_geo_type = integer_to_string(state, value);
+        }
+      });
 
     add_object_processor(
       parser,

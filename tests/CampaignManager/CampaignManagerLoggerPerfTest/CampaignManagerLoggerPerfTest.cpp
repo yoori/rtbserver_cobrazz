@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
@@ -5,6 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <sys/resource.h>
 
@@ -20,6 +22,7 @@ namespace
     unsigned long count = 0;
     unsigned long threads = 1;
     unsigned long profiling_type = AdServer::CampaignSvcs::PT_ALL;
+    unsigned long channel_trigger_id_count = 1000000;
     std::filesystem::path log_root = "/tmp/CampaignManagerLoggerPerfTest";
   };
 
@@ -38,6 +41,8 @@ namespace
       << "  --count <N>           process_request calls count\n"
       << "  --threads <N>         logger worker threads (default: 1)\n"
       << "  --profiling-type <N>  profiling mask (default: PT_ALL)\n"
+      << "  --channel-trigger-id-count <N>\n"
+      << "                        random channel_trigger_id range size (default: 1000000)\n"
       << "  --log-root <path>     output log root (default: /tmp/CampaignManagerLoggerPerfTest)\n";
   }
 
@@ -49,6 +54,7 @@ namespace
     Option<unsigned long> opt_count(0);
     Option<unsigned long> opt_threads(1);
     Option<unsigned long> opt_profiling_type(AdServer::CampaignSvcs::PT_ALL);
+    Option<unsigned long> opt_channel_trigger_id_count(1000000);
     StringOption opt_log_root("/tmp/CampaignManagerLoggerPerfTest");
     CheckOption opt_help;
 
@@ -56,6 +62,7 @@ namespace
     args.add(equal_name("count"), opt_count);
     args.add(equal_name("threads"), opt_threads);
     args.add(equal_name("profiling-type"), opt_profiling_type);
+    args.add(equal_name("channel-trigger-id-count"), opt_channel_trigger_id_count);
     args.add(equal_name("log-root"), opt_log_root);
     args.add(equal_name("help") || short_name("h"), opt_help);
 
@@ -71,6 +78,7 @@ namespace
     options.count = *opt_count;
     options.threads = *opt_threads;
     options.profiling_type = *opt_profiling_type;
+    options.channel_trigger_id_count = *opt_channel_trigger_id_count;
     options.log_root = *opt_log_root;
 
     if(options.count == 0)
@@ -81,6 +89,11 @@ namespace
     if(options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
+    }
+
+    if(options.channel_trigger_id_count == 0)
+    {
+      throw std::runtime_error("--channel-trigger-id-count must be > 0");
     }
 
     return options;
@@ -125,11 +138,6 @@ namespace
   {
     AdServer::CampaignSvcs::CampaignManagerLogger::Params params;
 
-    init_flush_traits(
-      params.channel_trigger_stat,
-      options.log_root,
-      "ChannelTriggerStat");
-    init_flush_traits(params.channel_hit_stat, options.log_root, "ChannelHitStat");
     init_flush_traits(params.request_basic_channels, options.log_root, "RequestBasicChannels");
     init_flush_traits(params.opt_out_stat, options.log_root, "OptOutStat");
     init_flush_traits(params.creative_stat, options.log_root, "CreativeStat");
@@ -182,7 +190,41 @@ namespace
     request_info.triggered_channels.channels.insert(channel_id);
   }
 
-  std::shared_ptr<const AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo>
+  unsigned long
+  next_random_channel_trigger_id(
+    std::uint64_t& random_state,
+    unsigned long channel_trigger_id_count)
+  {
+    random_state = random_state * 2862933555777941757ULL + 3037000493ULL;
+    return 1 + random_state % channel_trigger_id_count;
+  }
+
+  void
+  randomize_channel_trigger_ids(
+    AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo& request_info,
+    std::uint64_t& random_state,
+    unsigned long channel_trigger_id_count)
+  {
+    auto randomize_triggers = [
+      &random_state,
+      channel_trigger_id_count
+    ](AdServer::CampaignSvcs::CampaignManagerLogger::TriggerChannelMap& triggers)
+    {
+      for(auto& trigger : triggers)
+      {
+        trigger.channel_trigger_id = next_random_channel_trigger_id(
+          random_state,
+          channel_trigger_id_count);
+      }
+    };
+
+    randomize_triggers(request_info.page_triggers);
+    randomize_triggers(request_info.search_triggers);
+    randomize_triggers(request_info.url_triggers);
+    randomize_triggers(request_info.url_keyword_triggers);
+  }
+
+  std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo>
   make_request_info()
   {
     using AdServer::CampaignSvcs::CampaignManagerLogger;
@@ -306,7 +348,6 @@ main(int argc, char** argv)
   {
     const auto options = parse_options(argc, argv);
     auto params = make_logger_params(options);
-    auto request_info = make_request_info();
 
     Logging::Logger_var logger(new Logging::Null::Logger);
     AdServer::CampaignSvcs::CampaignManagerLogger_var campaign_logger(
@@ -314,9 +355,34 @@ main(int argc, char** argv)
 
     campaign_logger->activate_object();
 
+    static constexpr unsigned long REQUEST_INFO_POOL_SIZE = 8192;
+    std::vector<
+      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo>>
+        request_infos;
+    request_infos.reserve(
+      options.count < REQUEST_INFO_POOL_SIZE ?
+        options.count :
+        REQUEST_INFO_POOL_SIZE);
+    while(request_infos.size() < request_infos.capacity())
+    {
+      request_infos.emplace_back(make_request_info());
+    }
+
+    std::uint64_t channel_trigger_random_state = 1;
     const auto start_cpu = current_cpu_times();
     for(unsigned long i = 0; i < options.count; ++i)
     {
+      const auto request_info_i = i % request_infos.size();
+      if(request_info_i == 0 && i != 0)
+      {
+        campaign_logger->wait_processing();
+      }
+
+      auto& request_info = request_infos[request_info_i];
+      randomize_channel_trigger_ids(
+        *request_info,
+        channel_trigger_random_state,
+        options.channel_trigger_id_count);
       campaign_logger->process_request(request_info, options.profiling_type);
     }
     campaign_logger->wait_processing();
@@ -338,6 +404,7 @@ main(int argc, char** argv)
       << "completed: " << options.count
       << ", threads: " << options.threads
       << ", profiling_type: " << options.profiling_type
+      << ", channel_trigger_id_count: " << options.channel_trigger_id_count
       << ", process_cpu_time: " <<
         format_float(process_user_cpu + process_sys_cpu) << "s"
       << ", process_user_cpu_time: " <<

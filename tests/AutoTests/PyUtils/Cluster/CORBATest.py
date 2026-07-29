@@ -228,8 +228,8 @@ class CampaignManager(CORBAProcess):
 
   def __init__(  self, info, testName, opts=[]):
     dirs = ['CreativeStat', 'ColoUsers',
-            'OptOutStat', 'ChannelTriggerStat',
-            'ChannelHitStat', 'KeywordStat', 'ActionRequest',
+            'OptOutStat',
+            'KeywordStat', 'ActionRequest',
             'PublisherInventory', 'UserProperties',
             'Request', 'Impression', 'Click',
             'AdvertiserAction', 'PassbackImpression', 'RequestBasicChannels']
@@ -364,8 +364,6 @@ class CampaignManager(CORBAProcess):
    <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
   </cfg:CampaignServerCorbaRef>
   <cfg:Logging inventory_users_percentage="100" distrib_count="4" use_referrer_site_referrer_stats="empty">
-   <cfg:ChannelTriggerStat flush_period="10"/>
-   <cfg:ChannelHitStat flush_period="10"/>
    <cfg:RequestBasicChannels dump_channel_triggers="true" flush_period="10" adrequest_anonymize="false"/>
    <cfg:OptOutStat flush_period="10"/>
    <cfg:CreativeStat flush_period="10"/>
@@ -641,6 +639,8 @@ class ExpressionMatcher(CORBAProcess):
                                      'ChannelInventoryActivity', 'ChannelInventoryActivity_',
                                      'ChannelInventoryEstimationStat', 'ChannelInventoryEstimationStat_',
                                      'ChannelPerformance',  'ChannelPerformance_',
+                                     'ChannelHitStat', 'ChannelHitStat_',
+                                     'ChannelTriggerStat', 'ChannelTriggerStat_',
                                      'ChannelTriggerImpStat', 'ChannelTriggerImpStat_',
                                      'ColoUserStat', 'ColoUserStat_',
                                      'ChannelOverlapUserStat', 'ChannelOverlapUserStat_',
@@ -711,6 +711,8 @@ class ExpressionMatcher(CORBAProcess):
     <cfg:ChannelPriceRange period="10"/>
     <cfg:ChannelInventoryActivity period="3600"/>
     <cfg:ChannelPerformance period="10"/>
+    <cfg:ChannelHitStat period="10"/>
+    <cfg:ChannelTriggerStat period="10"/>
     <cfg:ChannelTriggerImpStat period="10"/>
     <cfg:GlobalColoUserStat period="10"/>
     <cfg:ColoUserStat period="10"/>
@@ -979,12 +981,6 @@ class SyncLogs(CORBAProcess):
       source="%(PFX)s/CampaignManager/Out/OptOutStat/OptOutStat.log_*"
       destination="%(PFX)s/LogGeneralizer/In/OptOutStat"/>
      <cfg:files
-      source="%(PFX)s/CampaignManager/Out/ChannelTriggerStat/ChannelTriggerStat.log_*"
-      destination="%(PFX)s/LogGeneralizer/In/ChannelTriggerStat"/>
-     <cfg:files
-      source="%(PFX)s/CampaignManager/Out/ChannelHitStat/ChannelHitStat.log_*"
-      destination="%(PFX)s/LogGeneralizer/In/ChannelHitStat"/>
-     <cfg:files
       source="%(PFX)s/CampaignManager/Out/SiteReferrerStat/SiteReferrerStat.log_*"
       destination="%(PFX)s/LogGeneralizer/In/SiteReferrerStat"/>
      <cfg:files
@@ -1083,6 +1079,12 @@ class SyncLogs(CORBAProcess):
      <cfg:files
       source="%(PFX)s/ExpressionMatcher/Out/ChannelPriceRange/ChannelPriceRange.log_*"
       destination="%(PFX)s/LogGeneralizer/In/ChannelPriceRange"/>
+     <cfg:files
+      source="%(PFX)s/ExpressionMatcher/Out/ChannelHitStat/ChannelHitStat.log_*"
+      destination="%(PFX)s/LogGeneralizer/In/ChannelHitStat"/>
+     <cfg:files
+      source="%(PFX)s/ExpressionMatcher/Out/ChannelTriggerStat/ChannelTriggerStat.log_*"
+      destination="%(PFX)s/LogGeneralizer/In/ChannelTriggerStat"/>
      <cfg:hosts source="%(HOST)s" destination="%(HOST)s"/>
     </cfg:Route>
    </cfg:FeedRouteGroup>

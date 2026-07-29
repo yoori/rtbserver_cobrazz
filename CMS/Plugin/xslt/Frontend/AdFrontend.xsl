@@ -1245,6 +1245,30 @@
         <xsl:with-param name="default-log-level" select="$bidding-module-log-level"/>
       </xsl:call-template>
 
+      <cfg:Logging log_root="{$workspace-root}/log/FCGIRtbServer/Out/Geo">
+        <cfg:Geo>
+          <xsl:attribute name="period">
+            <xsl:choose>
+              <xsl:when test="count($bidding-module/cfg:Logging/cfg:Geo/@period) > 0">
+                <xsl:value-of select="$bidding-module/cfg:Logging/cfg:Geo/@period"/>
+              </xsl:when>
+              <xsl:when test="count($bidding-module/@flush_period) > 0">
+                <xsl:value-of select="$bidding-module/@flush_period"/>
+              </xsl:when>
+              <xsl:otherwise>10</xsl:otherwise>
+            </xsl:choose>
+          </xsl:attribute>
+          <xsl:attribute name="shards">
+            <xsl:choose>
+              <xsl:when test="count($bidding-module/cfg:Logging/cfg:Geo/@shards) > 0">
+                <xsl:value-of select="$bidding-module/cfg:Logging/cfg:Geo/@shards"/>
+              </xsl:when>
+              <xsl:otherwise>16</xsl:otherwise>
+            </xsl:choose>
+          </xsl:attribute>
+        </cfg:Geo>
+      </cfg:Logging>
+
       <cfg:processCoef>
         <xsl:attribute name="coef">
           <xsl:choose>

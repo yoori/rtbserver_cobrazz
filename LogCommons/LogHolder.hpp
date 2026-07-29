@@ -288,8 +288,7 @@ namespace AdServer
         void
         add_record(Args&&... args)
         {
-          (*this->holders_.begin())->collector.add(
-            std::forward<Args>(args)...);
+          (*this->holders_.begin())->collector.add(std::forward<Args>(args)...);
         }
 
       protected:
@@ -359,9 +358,7 @@ namespace AdServer
 
       template<typename Mediator>
       void
-      add_record(
-        typename CollectorT::KeyT key,
-        Mediator data)
+      add_record(typename CollectorT::KeyT key, Mediator data)
       {
         // now implemented only for two level collectors (key -> (inner_key -> val)
 

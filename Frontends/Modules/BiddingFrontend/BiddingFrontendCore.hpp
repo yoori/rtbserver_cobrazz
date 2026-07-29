@@ -24,6 +24,7 @@
 #include "CampaignManagerTypes.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
+#include "BiddingFrontendLogger.hpp"
 #include "Stage.hpp"
 
 namespace AdServer::Bidding
@@ -63,6 +64,7 @@ namespace AdServer::Bidding
       StatHolder_var stats;
       std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers;
       std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers;
+      BiddingFrontendLogger_var bidding_frontend_logger;
       std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
         user_bind_client;
       std::shared_ptr<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>
@@ -193,6 +195,9 @@ namespace AdServer::Bidding
       return request_info_filler_.get();
     }
 
+    void
+    process_geo(const RequestInfo& request_info) noexcept;
+
     Logging::Logger*
     logger() noexcept
     {
@@ -299,6 +304,7 @@ namespace AdServer::Bidding
     StatHolder_var stats_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers_;
+    BiddingFrontendLogger_var bidding_frontend_logger_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>

@@ -10,6 +10,7 @@
 
 #include <Commons/UserInfoManip.hpp>
 
+#include <LogCommons/RequestBasicChannels.hpp>
 #include <LogCommons/ColoUserStat.hpp>
 #include <LogCommons/LogHolder.hpp>
 
@@ -44,6 +45,8 @@ namespace AdServer
         const AdServer::LogProcessing::LogFlushTraits& channel_price_range_flush,
         const AdServer::LogProcessing::LogFlushTraits& channel_activity_flush,
         const AdServer::LogProcessing::LogFlushTraits& channel_performance_flush,
+        const AdServer::LogProcessing::LogFlushTraits& channel_hit_stat_flush,
+        const AdServer::LogProcessing::LogFlushTraits& channel_trigger_stat_flush,
         const AdServer::LogProcessing::LogFlushTraits& channel_trigger_imp_flush,
         const AdServer::LogProcessing::LogFlushTraits& global_colo_user_stat_flush,
         const AdServer::LogProcessing::LogFlushTraits& colo_user_stat_flush)
@@ -53,6 +56,20 @@ namespace AdServer
       process_match_request(
         const MatchRequestProcessor::MatchInfo& request_info)
         /*throw(MatchRequestProcessor::Exception)*/;
+
+      void
+      process_channel_hit_stat(
+        const Generics::Time& isp_time,
+        unsigned long colo_id,
+        const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
+        /*throw(Exception)*/;
+
+      void
+      process_channel_trigger_stat(
+        const Generics::Time& isp_time,
+        unsigned long colo_id,
+        const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
+        /*throw(Exception)*/;
 
       virtual void
       process_request(const InventoryInfo&)
@@ -128,6 +145,14 @@ namespace AdServer
       class ChannelPerformanceLogger;
       typedef ReferenceCounting::AssertPtr<ChannelPerformanceLogger>::Ptr
         ChannelPerformanceLogger_var;
+
+      class ChannelHitStatLogger;
+      using ChannelHitStatLogger_var =
+        ReferenceCounting::AssertPtr<ChannelHitStatLogger>::Ptr;
+
+      class ChannelTriggerStatLogger;
+      using ChannelTriggerStatLogger_var =
+        ReferenceCounting::AssertPtr<ChannelTriggerStatLogger>::Ptr;
 
       class ChannelTriggerImpLogger;
       typedef ReferenceCounting::AssertPtr<ChannelTriggerImpLogger>::Ptr
@@ -247,6 +272,8 @@ namespace AdServer
       ChannelActivityLogger_var channel_activity_logger_;
       ChannelPriceRangeLogger_var channel_price_range_logger_;
       ChannelPerformanceLogger_var channel_performance_logger_;
+      ChannelHitStatLogger_var channel_hit_stat_logger_;
+      ChannelTriggerStatLogger_var channel_trigger_stat_logger_;
       ChannelTriggerImpLogger_var channel_trigger_imp_logger_;
       GlobalColoUserStatLogger_var global_colo_user_stat_logger_;
       ColoUserStatLogger_var colo_user_stat_logger_;

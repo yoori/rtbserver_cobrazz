@@ -320,6 +320,13 @@ namespace AdServer::Bidding
           control_task_runner_,
           task_scheduler,
           flush_period)->schedule(flush_period);
+        bidding_frontend_logger_ = new BiddingFrontendLogger(
+          callback(),
+          logger(),
+          config_->Logging().log_root(),
+          Generics::Time(config_->Logging().Geo().period()),
+          config_->Logging().Geo().shards());
+        add_child_object(bidding_frontend_logger_.in());
         grpc_executor_ = common_module_->grpc_executor();
 
         auto user_info_client =
@@ -596,6 +603,7 @@ namespace AdServer::Bidding
         core_params.stats = stats_;
         core_params.bid_workers = bid_workers_;
         core_params.timeout_workers = timeout_workers_;
+        core_params.bidding_frontend_logger = bidding_frontend_logger_;
         core_params.user_bind_client = user_bind_client_;
         core_params.user_info_distributed_client = user_info_distributed_client_;
         core_params.user_info_client = user_info_client_;

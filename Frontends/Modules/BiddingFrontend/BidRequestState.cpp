@@ -100,6 +100,8 @@ namespace AdServer::Bidding
       debug_sink_.set(String::SubString(request_info_.require_debug_info));
     }
 
+    bid_frontend_->process_geo(request_info_);
+
     // check interrupt
     if(check_interrupt_(Stage::RequestParsing))
     {

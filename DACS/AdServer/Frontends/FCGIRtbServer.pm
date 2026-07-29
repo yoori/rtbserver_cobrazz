@@ -10,7 +10,7 @@ sub start
   my ($host, $descr) = @_;
 
   my $command =
-    "mkdir -p \${log_root}/FCGIRtbServer \${workspace_root}/run && " .
+    "mkdir -p \${log_root}/FCGIRtbServer/Out/Geo \${workspace_root}/run && " .
     "if test -e $pid_file; then " .
       "pid=`cat $pid_file`; " .
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .

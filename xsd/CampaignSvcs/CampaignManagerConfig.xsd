@@ -461,18 +461,6 @@
 
   <xsd:complexType name="CampaignManagerLoggingType">
     <xsd:sequence>
-      <xsd:element name="ChannelTriggerStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>ChannelTriggerStat verify logger</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
-      <xsd:element name="ChannelHitStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>ChannelHitStat verify logger</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
       <xsd:element name="RequestBasicChannels"
         type="RequestBasicChannelsLoggerType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>

@@ -483,14 +483,9 @@
       <xsl:variable name="predictor-service" 
           select="$full-cluster-path//service[@descriptor = $predictor-descriptor]"/>
 
-      <cfg:ChannelTriggerStat flush_period="{$flush-loggers-period}"/>
-      <cfg:ChannelHitStat flush_period="{$flush-loggers-period}"/>
       <cfg:RequestBasicChannels adrequest_anonymize="{$adrequest-anonymize}"
-        flush_period="{$flush-internal-loggers-period}">
-        <xsl:attribute name="dump_channel_triggers"><xsl:value-of
-          select="$colo-config/cfg:channelTriggerImpStats/@enable"/><xsl:if
-          test="count($colo-config/cfg:channelTriggerImpStats/@enable) = 0">true</xsl:if></xsl:attribute>
-      </cfg:RequestBasicChannels>
+        dump_channel_triggers="true"
+        flush_period="{$flush-internal-loggers-period}"/>
       <cfg:WebStat flush_period="{$flush-loggers-period}"/>
       <xsl:if test="count($predictor-service)> 0 or count($colo-config/cfg:predictorConfig/cfg:ref)> 0">
         <cfg:ResearchWebStat flush_period="{$flush-loggers-period}"/>

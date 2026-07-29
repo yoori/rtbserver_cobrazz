@@ -35,6 +35,10 @@ sub start
     "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelInventoryEstimationStat_ && " .
     "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelPerformance && " .
     "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelPerformance_ && " .
+    "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelHitStat && " .
+    "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelHitStat_ && " .
+    "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelTriggerStat && " .
+    "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelTriggerStat_ && " .
     "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelTriggerImpStat && " .
     "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelTriggerImpStat_ && " .
     "mkdir -p \${log_root}/ExpressionMatcher/Out/GlobalColoUserStat && " .

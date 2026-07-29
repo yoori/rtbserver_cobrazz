@@ -1,9 +1,15 @@
+#include <cstddef>
+#include <utility>
+
 #include <Commons/Algs.hpp>
+#include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
+#include <LogCommons/ChannelHitStat.hpp>
 #include <LogCommons/ChannelImpInventory.hpp>
 #include <LogCommons/ChannelInventory.hpp>
 #include <LogCommons/ChannelPriceRange.hpp>
 #include <LogCommons/ChannelPerformance.hpp>
 #include <LogCommons/ChannelTriggerImpStat.hpp>
+#include <LogCommons/ChannelTriggerStat.hpp>
 
 #include "ExpressionMatcherOutLogger.hpp"
 
@@ -639,6 +645,202 @@ namespace RequestInfoSvcs
   };
 
   /**
+   * ExpressionMatcherOutLogger::ChannelTriggerStatLogger
+   */
+  class ExpressionMatcherOutLogger::ChannelTriggerStatLogger:
+    public AdServer::LogProcessing::LogHolderPool<
+      AdServer::LogProcessing::ChannelTriggerStatTraits>
+  {
+  public:
+    ChannelTriggerStatLogger(
+      const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      /*throw(LoggerException)*/
+      : AdServer::LogProcessing::LogHolderPool<
+          AdServer::LogProcessing::ChannelTriggerStatTraits>(flush_traits)
+    {}
+
+    void
+    process_match_request(
+      const Generics::Time& isp_time,
+      unsigned long colo_id,
+      const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
+      /*throw(eh::Exception)*/
+    {
+      const auto& page_triggers = match_request.page_trigger_channels();
+      const auto& search_triggers = match_request.search_trigger_channels();
+      const auto& url_triggers = match_request.url_trigger_channels();
+      const auto& url_keyword_triggers = match_request.url_keyword_trigger_channels();
+
+      const std::size_t triggers_count =
+        page_triggers.size() +
+        search_triggers.size() +
+        url_triggers.size() +
+        url_keyword_triggers.size();
+
+      if(!triggers_count)
+      {
+        return;
+      }
+
+      CollectorT::DataT data;
+      data.prepare_adding(triggers_count);
+
+      add_hits_(data, 'U', url_triggers);
+      add_hits_(data, 'P', page_triggers);
+      add_hits_(data, 'S', search_triggers);
+      add_hits_(data, 'R', url_keyword_triggers);
+
+      add_record(
+        CollectorT::KeyT(isp_time, colo_id),
+        std::move(data));
+    }
+
+  protected:
+    ~ChannelTriggerStatLogger() noexcept override = default;
+
+  private:
+    static void
+    add_hits_(
+      CollectorT::DataT& data,
+      char type,
+      const AdServer::LogProcessing::RequestBasicChannelsInnerData::TriggerMatchArray& triggers)
+      /*throw(eh::Exception)*/
+    {
+      const CollectorT::DataT::DataT inner_data(1);
+
+      for(const auto& trigger : triggers)
+      {
+        data.add(
+          CollectorT::DataT::KeyT(
+            trigger.channel_trigger_id,
+            trigger.channel_id,
+            type),
+          inner_data);
+      }
+    }
+  };
+
+  /**
+   * ExpressionMatcherOutLogger::ChannelHitStatLogger
+   */
+  class ExpressionMatcherOutLogger::ChannelHitStatLogger:
+    public AdServer::LogProcessing::LogHolderPool<
+      AdServer::LogProcessing::ChannelHitStatTraits>
+  {
+  public:
+    ChannelHitStatLogger(
+      const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      /*throw(LoggerException)*/
+      : AdServer::LogProcessing::LogHolderPool<
+          AdServer::LogProcessing::ChannelHitStatTraits>(flush_traits)
+    {}
+
+    void
+    process_match_request(
+      const Generics::Time& isp_time,
+      unsigned long colo_id,
+      const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
+      /*throw(eh::Exception)*/
+    {
+      const auto& page_triggers = match_request.page_trigger_channels();
+      const auto& search_triggers = match_request.search_trigger_channels();
+      const auto& url_triggers = match_request.url_trigger_channels();
+      const auto& url_keyword_triggers = match_request.url_keyword_trigger_channels();
+
+      const std::size_t triggers_count =
+        page_triggers.size() +
+        search_triggers.size() +
+        url_triggers.size() +
+        url_keyword_triggers.size();
+
+      if(!triggers_count)
+      {
+        return;
+      }
+
+      Generics::MonoAllocatorArena arena;
+      CampaignSvcs::ChannelIdHashSet channels(&arena);
+      CampaignSvcs::ChannelIdHashSet url_channels(&arena);
+      CampaignSvcs::ChannelIdHashSet page_channels(&arena);
+      CampaignSvcs::ChannelIdHashSet search_channels(&arena);
+      CampaignSvcs::ChannelIdHashSet url_keyword_channels(&arena);
+
+      channels.reserve(triggers_count);
+      url_channels.reserve(url_triggers.size());
+      page_channels.reserve(page_triggers.size());
+      search_channels.reserve(search_triggers.size());
+      url_keyword_channels.reserve(url_keyword_triggers.size());
+
+      add_channels_(url_channels, url_triggers);
+      add_channels_(page_channels, page_triggers);
+      add_channels_(search_channels, search_triggers);
+      add_channels_(url_keyword_channels, url_keyword_triggers);
+
+      add_channels_(channels, url_channels);
+      add_channels_(channels, page_channels);
+      add_channels_(channels, search_channels);
+      add_channels_(channels, url_keyword_channels);
+
+      CollectorT::DataT data;
+      data.prepare_adding(
+        channels.size() +
+        url_channels.size() +
+        page_channels.size() +
+        search_channels.size() +
+        url_keyword_channels.size());
+
+      add_hits_(data, channels, CollectorT::DataT::DataT(1, 0, 0, 0, 0));
+      add_hits_(data, url_channels, CollectorT::DataT::DataT(0, 1, 0, 0, 0));
+      add_hits_(data, page_channels, CollectorT::DataT::DataT(0, 0, 1, 0, 0));
+      add_hits_(data, search_channels, CollectorT::DataT::DataT(0, 0, 0, 1, 0));
+      add_hits_(
+        data,
+        url_keyword_channels,
+        CollectorT::DataT::DataT(0, 0, 0, 0, 1));
+
+      add_record(
+        CollectorT::KeyT(isp_time, colo_id),
+        std::move(data));
+    }
+
+  protected:
+    ~ChannelHitStatLogger() noexcept override = default;
+
+  private:
+    static void
+    add_channels_(
+      CampaignSvcs::ChannelIdHashSet& channels,
+      const AdServer::LogProcessing::RequestBasicChannelsInnerData::
+        TriggerMatchArray& triggers)
+    {
+      for(const auto& trigger : triggers)
+      {
+        channels.emplace(trigger.channel_id);
+      }
+    }
+
+    static void
+    add_channels_(
+      CampaignSvcs::ChannelIdHashSet& target,
+      const CampaignSvcs::ChannelIdHashSet& source)
+    {
+      target.insert(source.begin(), source.end());
+    }
+
+    static void
+    add_hits_(
+      CollectorT::DataT& data,
+      const CampaignSvcs::ChannelIdHashSet& channels,
+      const CollectorT::DataT::DataT& hit_data)
+    {
+      for(const auto channel_id : channels)
+      {
+        data.add(CollectorT::DataT::KeyT(channel_id), hit_data);
+      }
+    }
+  };
+
+  /**
    * ExpressionMatcherOutLogger::ChannelTriggerImpLogger
    */
   class ExpressionMatcherOutLogger::ChannelTriggerImpLogger:
@@ -745,6 +947,8 @@ namespace RequestInfoSvcs
     const AdServer::LogProcessing::LogFlushTraits& channel_price_range_flush,
     const AdServer::LogProcessing::LogFlushTraits& channel_activity_flush,
     const AdServer::LogProcessing::LogFlushTraits& channel_performance_flush,
+    const AdServer::LogProcessing::LogFlushTraits& channel_hit_stat_flush,
+    const AdServer::LogProcessing::LogFlushTraits& channel_trigger_stat_flush,
     const AdServer::LogProcessing::LogFlushTraits& channel_trigger_imp_flush,
     const AdServer::LogProcessing::LogFlushTraits& global_colo_user_stat_flush,
     const AdServer::LogProcessing::LogFlushTraits& colo_user_stat_flush)
@@ -795,6 +999,14 @@ namespace RequestInfoSvcs
       channel_performance_flush);
     add_child_log_holder(channel_performance_logger_);
 
+    channel_hit_stat_logger_ = new ChannelHitStatLogger(
+      channel_hit_stat_flush);
+    add_child_log_holder(channel_hit_stat_logger_);
+
+    channel_trigger_stat_logger_ = new ChannelTriggerStatLogger(
+      channel_trigger_stat_flush);
+    add_child_log_holder(channel_trigger_stat_logger_);
+
     channel_trigger_imp_logger_ = new ChannelTriggerImpLogger(
       channel_trigger_imp_flush,
       colo_id);
@@ -818,6 +1030,32 @@ namespace RequestInfoSvcs
     /*throw(MatchRequestProcessor::Exception)*/
   {
     channel_performance_logger_->process_match_request(request_info);
+  }
+
+  void
+  ExpressionMatcherOutLogger::process_channel_hit_stat(
+    const Generics::Time& isp_time,
+    unsigned long colo_id,
+    const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
+    /*throw(Exception)*/
+  {
+    channel_hit_stat_logger_->process_match_request(
+      isp_time,
+      colo_id,
+      match_request);
+  }
+
+  void
+  ExpressionMatcherOutLogger::process_channel_trigger_stat(
+    const Generics::Time& isp_time,
+    unsigned long colo_id,
+    const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
+    /*throw(Exception)*/
+  {
+    channel_trigger_stat_logger_->process_match_request(
+      isp_time,
+      colo_id,
+      match_request);
   }
 
   void

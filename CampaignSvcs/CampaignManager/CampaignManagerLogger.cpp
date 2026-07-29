@@ -20,8 +20,6 @@
 #include <LogCommons/ActionRequest.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/CcgStat.hpp>
-#include <LogCommons/ChannelHitStat.hpp>
-#include <LogCommons/ChannelTriggerStat.hpp>
 #include <LogCommons/CreativeStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/Request.hpp>
@@ -31,7 +29,6 @@
 #include <LogCommons/TagAuctionStat.hpp>
 #include <LogCommons/TagRequest.hpp>
 #include <LogCommons/UserAgentStat.hpp>
-#include <LogCommons/UserProperties.hpp>
 #include <LogCommons/TagPositionStat.hpp>
 #include <LogCommons/WebStat.hpp>
 #include <LogCommons/ResearchWebStat.hpp>
@@ -45,10 +42,6 @@
 #include "CampaignManagerLogAdapter.hpp"
 
 /**
- * ChannelTriggerStatLogger
- *   process_request
- * ChannelHitStatLogger
- *   process_request
  * RequestBasicChannelsLogger
  *   process_request
  *   process_ad_request
@@ -74,8 +67,6 @@
  */
 namespace
 {
-  const char CHANNEL_TRIGGER_STAT_LOGGER[] = "ChannelTriggerStatLogger";
-  const char CHANNEL_HIT_STAT_LOGGER[] = "ChannelHitStatLogger";
   const char WEB_STAT_LOGGER[] = "WebStatLogger";
   const char CREATIVE_STAT_LOGGER[] = "CreativeStatLogger";
 
@@ -598,65 +589,6 @@ namespace AdServer::CampaignSvcs
         ret.adv_click_revenue = in.adv_click_revenue;
         return ret;
       }
-    };
-
-    /** ChannelTriggerStatLogger */
-    class ChannelTriggerStatLogger: public AdServer::LogProcessing::LogHolderPool<
-      AdServer::LogProcessing::ChannelTriggerStatTraits>
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
-
-      ChannelTriggerStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
-        /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::ChannelTriggerStatTraits>(
-              flush_traits)
-      {}
-
-      void process_request(const CampaignManagerLogger::RequestInfo& request_info)
-        /*throw(Exception)*/;
-
-      void process_match_request(
-        const CampaignManagerLogger::MatchRequestInfo& match_request_info)
-        /*throw(Exception)*/;
-
-    protected:
-      virtual
-      ~ChannelTriggerStatLogger() noexcept = default;
-
-    private:
-      void add_hits_(
-        CollectorT::DataT& data,
-        char type,
-        const CampaignManagerLogger::TriggerChannelMap& triggers)
-        /*throw(eh::Exception)*/;
-    };
-
-    /** ChannelHitStatLogger */
-    class ChannelHitStatLogger: public virtual AdServer::LogProcessing::LogHolderPool<
-      AdServer::LogProcessing::ChannelHitStatTraits>
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
-
-      ChannelHitStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
-        /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::ChannelHitStatTraits>(flush_traits)
-      {};
-
-      void process_request(const CampaignManagerLogger::RequestInfo& request_info)
-        /*throw(Exception)*/;
-
-      void process_match_request(
-        const CampaignManagerLogger::MatchRequestInfo& match_request_info)
-        /*throw(Exception)*/;
-
-    protected:
-      virtual
-      ~ChannelHitStatLogger() noexcept = default;
     };
 
     /** RequestBasicChannelsLogger */
@@ -1291,8 +1223,7 @@ namespace AdServer::CampaignSvcs
         const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::UserAgentStatTraits>(
-              flush_traits)
+            AdServer::LogProcessing::UserAgentStatTraits>(flush_traits)
       {}
 
       void
@@ -1318,8 +1249,8 @@ namespace AdServer::CampaignSvcs
         /*throw(Exception)*/
       {
         if (!request_info.log_as_test &&
-           request_info.user_agent.in() &&
-           request_info.user_status != US_FOREIGN)
+          request_info.user_agent.in() &&
+          request_info.user_status != US_FOREIGN)
         {
           CollectorT::DataT data;
           data.add(
@@ -1465,205 +1396,6 @@ namespace AdServer::CampaignSvcs
       virtual
       ~ProfilingResearchLogger() noexcept = default;
     };
-
-
-    /** ChannelTriggerStatLogger implementation */
-    void
-    ChannelTriggerStatLogger::add_hits_(
-      CollectorT::DataT& data,
-      char type,
-      const CampaignManagerLogger::TriggerChannelMap& triggers)
-      /*throw(eh::Exception)*/
-    {
-      CollectorT::DataT::DataT inner_data(1);
-
-      data.prepare_adding(triggers.size());
-
-      for(auto tr_it = triggers.begin(); tr_it != triggers.end(); ++tr_it)
-      {
-        data.add(
-          CollectorT::DataT::KeyT(tr_it->channel_trigger_id, tr_it->channel_id, type),
-          inner_data);
-      }
-    }
-
-    void
-    ChannelTriggerStatLogger::
-    process_request(const CampaignManagerLogger::RequestInfo& request_info)
-      /*throw(Exception)*/
-    {
-      static const char* FUN = "ChannelTriggerStatLogger::process_request()";
-
-      if (!request_info.log_as_test &&
-        /* (request_info.user_status == US_OPTIN ||
-          request_info.user_status == US_TEMPORARY ||
-          request_info.user_status == US_BLACKLISTED) && */ (
-        !request_info.url_triggers.empty() ||
-        !request_info.discover_keyword_url_triggers.empty() ||
-        !request_info.page_triggers.empty() ||
-        !request_info.discover_keyword_page_triggers.empty() ||
-        !request_info.search_triggers.empty() ||
-        !request_info.discover_keyword_search_triggers.empty() ||
-        !request_info.url_keyword_triggers.empty() ||
-        !request_info.discover_keyword_url_keyword_triggers.empty()))
-      {
-        try
-        {
-          CollectorT::DataT data;
-
-          add_hits_(data, 'U', request_info.url_triggers);
-          add_hits_(data, 'U', request_info.discover_keyword_url_triggers);
-          add_hits_(data, 'P', request_info.page_triggers);
-          add_hits_(data, 'P', request_info.discover_keyword_page_triggers);
-          add_hits_(data, 'S', request_info.search_triggers);
-          add_hits_(data, 'S', request_info.discover_keyword_search_triggers);
-          add_hits_(data, 'R', request_info.url_keyword_triggers);
-          add_hits_(data, 'R', request_info.discover_keyword_url_keyword_triggers);
-
-          add_record(
-            CollectorT::KeyT(request_info.isp_time, request_info.colo_id),
-            std::move(data));
-        }
-        catch (const eh::Exception &ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": eh::Exception caught: " << ex.what();
-          throw Exception(ostr);
-        }
-      }
-    }
-
-    void
-    ChannelTriggerStatLogger::
-    process_match_request(const CampaignManagerLogger::MatchRequestInfo& match_request_info)
-      /*throw(Exception)*/
-    {
-      static const char* FUN = "ChannelTriggerStatLogger::process_match_request()";
-
-      try
-      {
-        CollectorT::DataT data;
-        add_hits_(data, 'P', match_request_info.match_info.page_triggers);
-
-        add_record(
-          CollectorT::KeyT(
-            match_request_info.time + match_request_info.isp_offset,
-            match_request_info.match_info.colo_id),
-          std::move(data));
-      }
-      catch (const eh::Exception &ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": eh::Exception: " << ex.what();
-        throw Exception(ostr);
-      }
-    }
-
-    /** ChannelHitStatLogger implementation */
-    void
-    ChannelHitStatLogger::
-    process_match_request(
-      const CampaignManagerLogger::MatchRequestInfo& match_request_info)
-      /*throw(Exception)*/
-    {
-      // static const char* FUN = "ChannelHitStatLogger::process_match_request()";
-
-      CollectorT::DataT data;
-
-      data.prepare_adding(match_request_info.match_info.triggered_page_channels.size());
-
-      for (auto ch_it = match_request_info.match_info.triggered_page_channels.begin();
-        ch_it != match_request_info.match_info.triggered_page_channels.end(); ++ch_it)
-      {
-        data.add(
-          CollectorT::DataT::KeyT(*ch_it),
-          CollectorT::DataT::DataT(
-            1, // hits
-            0, // hits_urls
-            1, // hits_kws
-            0, // hits_search_kws
-            0 // hits_url_kws
-            ));
-      }
-
-      add_record(
-        CollectorT::KeyT(
-          match_request_info.time + match_request_info.isp_offset,
-          match_request_info.match_info.colo_id),
-        std::move(data));
-    }
-
-    void
-    ChannelHitStatLogger::
-    process_request(const CampaignManagerLogger::RequestInfo& request_info)
-      /*throw(Exception)*/
-    {
-      static const char* FUN = "ChannelHitStatLogger::process_request()";
-
-      if (request_info.log_as_test || (
-           request_info.user_status != US_OPTIN &&
-           request_info.user_status != US_TEMPORARY &&
-           request_info.user_status != US_BLACKLISTED))
-      {
-        return;
-      }
-
-      try
-      {
-        auto add_channel_hits = [](
-          CollectorT::DataT& data,
-          const ChannelIdHashSet& channels,
-          const CollectorT::DataT::DataT& hit_data)
-        {
-          for(auto channel_id : channels)
-          {
-            data.add(CollectorT::DataT::KeyT(channel_id), hit_data);
-          }
-        };
-
-        if (!request_info.triggered_channels.channels.empty())
-        {
-          CollectorT::DataT data;
-          data.prepare_adding(
-            request_info.triggered_channels.channels.size() +
-            request_info.triggered_channels.url_channels.size() +
-            request_info.triggered_channels.page_channels.size() +
-            request_info.triggered_channels.search_channels.size() +
-            request_info.triggered_channels.url_keyword_channels.size());
-
-          add_channel_hits(
-            data,
-            request_info.triggered_channels.channels,
-            CollectorT::DataT::DataT(1, 0, 0, 0, 0));
-          add_channel_hits(
-            data,
-            request_info.triggered_channels.url_channels,
-            CollectorT::DataT::DataT(0, 1, 0, 0, 0));
-          add_channel_hits(
-            data,
-            request_info.triggered_channels.page_channels,
-            CollectorT::DataT::DataT(0, 0, 1, 0, 0));
-          add_channel_hits(
-            data,
-            request_info.triggered_channels.search_channels,
-            CollectorT::DataT::DataT(0, 0, 0, 1, 0));
-          add_channel_hits(
-            data,
-            request_info.triggered_channels.url_keyword_channels,
-            CollectorT::DataT::DataT(0, 0, 0, 0, 1));
-
-          add_record(
-            CollectorT::KeyT(request_info.isp_time, request_info.colo_id),
-            std::move(data));
-        }
-      }
-      catch (const eh::Exception &ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": eh::Exception caught: " << ex.what();
-        throw Exception(ostr);
-      }
-    }
 
     /** RequestBasicChannelsLogger implementation */
     void
@@ -1934,9 +1666,7 @@ namespace AdServer::CampaignSvcs
         }
 
         const bool dump_triggers =
-          (ad_selection_info == 0 || !adrequest_anonymize_) &&
-          dump_channel_triggers_ && (
-            !user_id.is_null() || !temporary_user_id.is_null());
+          dump_channel_triggers_;
 
         CollectorT::DataT::DataT::Match match_request(
           request_info.user_status != US_TEMPORARY && need_dump_channels_(request_info) ?
@@ -2853,7 +2583,7 @@ namespace AdServer::CampaignSvcs
       using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
       if (!request_info.log_as_test &&
-         !ad_request_selection_info.lost_auction_ccgs.empty())
+        !ad_request_selection_info.lost_auction_ccgs.empty())
       {
         AdvDateDataMap adv_date_to_data;
 
@@ -2887,7 +2617,7 @@ namespace AdServer::CampaignSvcs
       using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
       if (!request_info.log_as_test &&
-         !ad_request_selection_info.lost_auction_creatives.empty())
+        !ad_request_selection_info.lost_auction_creatives.empty())
       {
         AdvDateDataMap adv_date_to_data;
 
@@ -2983,8 +2713,6 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    using ChannelTriggerStatLogger_var = ReferenceCounting::SmartPtr<ChannelTriggerStatLogger>;
-    using ChannelHitStatLogger_var = ReferenceCounting::SmartPtr<ChannelHitStatLogger>;
     using RequestBasicChannelsLogger_var = ReferenceCounting::SmartPtr<RequestBasicChannelsLogger>;
     using WebStatLogger_var = ReferenceCounting::SmartPtr<WebStatLogger>;
     using ResearchWebStatLogger_var = ReferenceCounting::SmartPtr<ResearchWebStatLogger>;
@@ -3154,8 +2882,6 @@ namespace AdServer::CampaignSvcs
     std::atomic<unsigned long> next_queue_;
     std::atomic<bool> queue_closed_;
 
-    ChannelTriggerStatLogger_var channel_trigger_stat_logger_;
-    ChannelHitStatLogger_var channel_hit_stat_logger_;
     RequestBasicChannelsLogger_var request_basic_channels_logger_;
     WebStatLogger_var web_stat_logger_;
     ResearchWebStatLogger_var research_web_stat_logger_;
@@ -3205,17 +2931,6 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      if (params.channel_trigger_stat.period != Generics::Time::ZERO)
-      {
-        channel_trigger_stat_logger_ =
-          new ChannelTriggerStatLogger(params.channel_trigger_stat);
-        owner_.add_child_log_holder(channel_trigger_stat_logger_);
-      }
-
-      channel_hit_stat_logger_ =
-        new ChannelHitStatLogger(params.channel_hit_stat);
-      owner_.add_child_log_holder(channel_hit_stat_logger_);
-
       request_basic_channels_logger_ =
         new RequestBasicChannelsLogger(params.request_basic_channels);
       owner_.add_child_log_holder(request_basic_channels_logger_);
@@ -3855,12 +3570,6 @@ namespace AdServer::CampaignSvcs
     const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
     /*throw(Exception)*/
   {
-    if (channel_trigger_stat_logger_.in())
-    {
-      channel_trigger_stat_logger_->process_request(ri);
-    }
-
-    channel_hit_stat_logger_->process_request(ri);
     if (search_term_stat_logger_.in())
     {
       search_term_stat_logger_->process_request(ri);
@@ -3925,12 +3634,6 @@ namespace AdServer::CampaignSvcs
   {
     if (profiling_type & PT_PROFILING_INFO)
     {
-      if (channel_trigger_stat_logger_.in())
-      {
-        channel_trigger_stat_logger_->process_request(request_info);
-      }
-
-      channel_hit_stat_logger_->process_request(request_info);
       request_basic_channels_logger_->process_request(request_info);
     }
 
@@ -3993,8 +3696,6 @@ namespace AdServer::CampaignSvcs
     /*throw(Exception)*/
   {
     request_basic_channels_logger_->process_match_request(match_request_info);
-    channel_hit_stat_logger_->process_match_request(match_request_info);
-    channel_trigger_stat_logger_->process_match_request(match_request_info);
   }
 
   void

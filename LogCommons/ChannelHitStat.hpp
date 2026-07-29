@@ -16,9 +16,7 @@ class ChannelHitStatInnerKey
 {
 public:
   explicit
-  ChannelHitStatInnerKey(
-    unsigned long channel_id = 0
-  )
+  ChannelHitStatInnerKey(unsigned long channel_id = 0)
   :
     channel_id_(channel_id)
   {

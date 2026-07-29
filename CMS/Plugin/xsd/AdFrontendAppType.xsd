@@ -735,6 +735,17 @@
     <xsd:attribute name="coef" type="ProcessCoefType" use="optional" default="1"/>
   </xsd:complexType>
 
+  <xsd:complexType name="BiddingFrontendGeoLoggingType">
+    <xsd:attribute name="period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="shards" type="xsd:positiveInteger" use="optional" default="16"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BiddingFrontendLoggingType">
+    <xsd:sequence>
+      <xsd:element name="Geo" type="BiddingFrontendGeoLoggingType" minOccurs="1" maxOccurs="1"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
   <xsd:complexType name="BiddingFrontendConfigType">
     <xsd:sequence>
       <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
@@ -744,6 +755,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name="Logging" type="BiddingFrontendLoggingType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="processCoef" type="ProcessCoefConfigType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="source" type="RTBSourceConfigType" minOccurs="0" maxOccurs="unbounded"/>
     </xsd:sequence>

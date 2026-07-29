@@ -260,7 +260,7 @@
       * 1024 * 1024 * $em-count div $distrib-count), "#")'/>
     </xsl:variable>
 
-    <cfg:ChunksConfig chunks_prefix = "Inventory_"
+    <cfg:ChunksConfig chunks_prefix = "Inventory"
       rw_buffer_size="10485760"
       rwlevel_max_size="{$rwlevel-max-inventory-size}"
       max_undumped_size='{format-number($max-inventory-undumped-size
@@ -279,7 +279,7 @@
         negative_triggers_group_size="{$expression-matcher-config/@negative_triggers_group_size}"
         max_trigger_visits="{$expression-matcher-config/@max_trigger_visits}">
         <cfg:UserChunksConfig
-          chunks_prefix="UserTriggerMatch_"
+          chunks_prefix="UserTriggerMatch"
           rw_buffer_size="10485760"
           rwlevel_max_size="{$rwlevel-max-user-trigger-size}"
           max_undumped_size='{format-number($max-user-trigger-undumped-size
@@ -298,7 +298,7 @@
         </cfg:UserChunksConfig>
 
         <cfg:TempUserChunksConfig
-          chunks_prefix="TempUserTriggerMatch_"
+          chunks_prefix="TempUserTriggerMatch"
           rw_buffer_size="10485760"
           rwlevel_max_size="{$rwlevel-max-size}"
           max_undumped_size="{$max-undumped-size}"
@@ -310,7 +310,7 @@
             test="count($expression-matcher-config/cfg:profilesCleanupParams/@temp_trigger_match_life_time) = 0">3600</xsl:if></xsl:attribute>
         </cfg:TempUserChunksConfig>
 
-        <cfg:RequestChunksConfig chunks_prefix="RequestTriggerMatch_"
+        <cfg:RequestChunksConfig chunks_prefix="RequestTriggerMatch"
           rw_buffer_size="10485760"
           rwlevel_max_size="{$rwlevel-max-size}"
           max_undumped_size="{$max-undumped-size}"
@@ -320,7 +320,7 @@
       </cfg:TriggerImpsConfig>
     </xsl:if>
 
-    <cfg:HouseholdColoReachChunksConfig chunks_prefix="HouseholdColoReach_"
+    <cfg:HouseholdColoReachChunksConfig chunks_prefix="HouseholdColoReach"
       rw_buffer_size="10485760"
       rwlevel_max_size="{$rwlevel-max-size}"
       max_undumped_size="{$max-undumped-size}"
@@ -354,6 +354,8 @@
         <cfg:ChannelPriceRange period="{$inventory-flush-logs-period}"/>
         <cfg:ChannelInventoryActivity period="{$activity-flush-logs-period}"/>
         <cfg:ChannelPerformance period="{$flush-logs-period}"/>
+        <cfg:ChannelHitStat period="{$flush-logs-period}"/>
+        <cfg:ChannelTriggerStat period="{$flush-logs-period}"/>
         <cfg:ChannelTriggerImpStat period="{$flush-logs-period}"/>
         <cfg:GlobalColoUserStat period="{$flush-logs-period}"/>
         <cfg:ColoUserStat period="{$flush-logs-period}"/>

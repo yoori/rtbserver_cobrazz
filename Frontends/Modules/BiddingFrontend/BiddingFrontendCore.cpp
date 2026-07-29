@@ -646,6 +646,7 @@ namespace AdServer::Bidding
       stats_(params.stats),
       bid_workers_(params.bid_workers),
       timeout_workers_(params.timeout_workers),
+      bidding_frontend_logger_(params.bidding_frontend_logger),
       user_bind_client_(params.user_bind_client),
       user_info_distributed_client_(params.user_info_distributed_client),
       user_info_client_(params.user_info_client),
@@ -701,6 +702,42 @@ namespace AdServer::Bidding
           channel_client_,
           bid_workers_);
     }
+  }
+
+  void
+  BiddingFrontendCore::process_geo(const RequestInfo& request_info) noexcept
+  {
+    if (!bidding_frontend_logger_.in())
+    {
+      return;
+    }
+
+    auto to_string_view = [](const auto& value)
+    {
+      return std::string_view(value.data(), value.size());
+    };
+
+    BiddingFrontendLogger::GeoParams params;
+    params.ip = request_info.peer_ip;
+    params.source = to_string_view(request_info.source_id);
+    params.type = to_string_view(request_info.ssp_geo_type);
+
+    if (!request_info.geo_location.empty())
+    {
+      const auto& geo_location = request_info.geo_location.front();
+      params.country = to_string_view(geo_location.country);
+      params.region = to_string_view(geo_location.region);
+      params.city = to_string_view(geo_location.city);
+    }
+
+    if (!request_info.coord_location.empty())
+    {
+      const auto& coord_location = request_info.coord_location.front();
+      params.lat = coord_location.latitude;
+      params.lon = coord_location.longitude;
+    }
+
+    bidding_frontend_logger_->process_geo(params);
   }
 
   unsigned long

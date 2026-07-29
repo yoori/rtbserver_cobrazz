@@ -5,6 +5,7 @@ add_library(BiddingFrontend SHARED
   DebugSink.cpp
   GrpcClientMetricsProvider.cpp
   AdXmlRequestInfoFiller.cpp
+  BiddingFrontendLogger.cpp
   BiddingFrontend.cpp
   BiddingFrontendStat.cpp
   BidRequestState.cpp

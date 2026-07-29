@@ -271,6 +271,7 @@ namespace AdServer::Bidding
         external_user_id(request_arena_.get()),
         geo_location(request_arena_.get()),
         coord_location(request_arena_.get()),
+        ssp_geo_type(request_arena_.get()),
         full_referer(request_arena_.get()),
         referer(request_arena_.get()),
         urls(request_arena_.get()),
@@ -386,6 +387,7 @@ namespace AdServer::Bidding
     Generics::MonoString external_user_id;
     GeoInfoSeq geo_location;
     GeoCoordInfoSeq coord_location;
+    Generics::MonoString ssp_geo_type;
     Generics::MonoString full_referer;
     Generics::MonoString referer;
     Generics::MonoVector<std::string> urls;

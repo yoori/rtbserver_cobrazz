@@ -257,6 +257,8 @@
       <xsd:element name="ChannelPriceRange" type="LogFlushPolicyType"/>
       <xsd:element name="ChannelInventoryActivity" type="LogFlushPolicyType"/>
       <xsd:element name="ChannelPerformance" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelHitStat" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelTriggerStat" type="LogFlushPolicyType"/>
       <xsd:element name="ChannelTriggerImpStat" type="LogFlushPolicyType"/>
       <xsd:element name="GlobalColoUserStat" type="LogFlushPolicyType"/>
       <xsd:element name="ColoUserStat" type="LogFlushPolicyType"/>

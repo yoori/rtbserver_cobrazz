@@ -35,9 +35,9 @@ sub merge_chunk;
 #old_root: ../
 
 use constant PROFILE_FOLDERS_PREFIXES => {
-  "Inventory" => ["Inventory_"],
-  "HouseholdColoReach" => ["HouseholdColoReach_"],
-  "UserTriggerMatch" => ["UserTriggerMatch_", "TempUserTriggerMatch_"],  
+  "Inventory" => ["Inventory"],
+  "HouseholdColoReach" => ["HouseholdColoReach"],
+  "UserTriggerMatch" => ["UserTriggerMatch", "TempUserTriggerMatch"],
   };
 use constant CHUNK_PREFIX => 'Chunk';
 use constant CHUNK_REDISTRIBUTOR => 'LevelCheckUtil';

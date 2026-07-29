@@ -548,6 +548,9 @@ namespace AdServer::Bidding
         puid1(),
         puid2(),
         regs_coppa(false),
+        ssp_latitude(),
+        ssp_longitude(),
+        ssp_accuracy(),
         ssp_country(),
         ssp_region(),
         ssp_city(),
@@ -683,6 +686,9 @@ namespace AdServer::Bidding
 
     bool regs_coppa;
 
+    std::optional<AdServer::CampaignSvcs::CoordDecimal> ssp_latitude;
+    std::optional<AdServer::CampaignSvcs::CoordDecimal> ssp_longitude;
+    std::optional<AdServer::CampaignSvcs::AccuracyDecimal> ssp_accuracy;
     std::string_view ssp_country;
     std::string_view ssp_region;
     std::string_view ssp_city;

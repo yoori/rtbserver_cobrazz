@@ -34,6 +34,7 @@ add_library(LogCommons SHARED
   DiscoverChannelState.cpp
   ExpressionPerformance.cpp
   FileReceiver.cpp
+  GeoLogger.cpp
   KeywordHitStat.cpp
   LogCommons.cpp
   PageLoadsDailyStat.cpp
@@ -69,7 +70,6 @@ target_link_libraries(LogCommons
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
 
 
 

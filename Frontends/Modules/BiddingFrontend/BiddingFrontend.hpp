@@ -40,6 +40,7 @@
 
 #include "GroupLogger.hpp"
 #include "BiddingFrontendCore.hpp"
+#include "BiddingFrontendLogger.hpp"
 #include "CampaignManagerTypes.hpp"
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
@@ -299,6 +300,7 @@ namespace AdServer::Bidding
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers_;
     Generics::TaskRunner_var control_task_runner_;
+    BiddingFrontendLogger_var bidding_frontend_logger_;
     StatHolder_var stats_;
 
     std::unique_ptr<BiddingFrontendCore> core_;

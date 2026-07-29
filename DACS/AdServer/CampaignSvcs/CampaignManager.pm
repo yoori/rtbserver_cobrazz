@@ -22,10 +22,6 @@ sub start
     "mkdir -p \${log_root}/CampaignManager/Out/ResearchWebStat_ && ".
     "mkdir -p \${log_root}/CampaignManager/Out/ResearchProf && ".
     "mkdir -p \${log_root}/CampaignManager/Out/ResearchProf_ && ".
-    "mkdir -p \${log_root}/CampaignManager/Out/ChannelTriggerStat && ".
-    "mkdir -p \${log_root}/CampaignManager/Out/ChannelTriggerStat_ && ".
-    "mkdir -p \${log_root}/CampaignManager/Out/ChannelHitStat && ".
-    "mkdir -p \${log_root}/CampaignManager/Out/ChannelHitStat_ && ".
     "mkdir -p \${log_root}/CampaignManager/Out/CreativeStat && " .
     "mkdir -p \${log_root}/CampaignManager/Out/CreativeStat_ && " .
     "mkdir -p \${log_root}/CampaignManager/Out/ColoUsers && " .

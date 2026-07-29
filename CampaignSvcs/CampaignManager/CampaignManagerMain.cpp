@@ -18,8 +18,6 @@
 #include <LogCommons/ActionRequest.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/CcgStat.hpp>
-#include <LogCommons/ChannelHitStat.hpp>
-#include <LogCommons/ChannelTriggerStat.hpp>
 #include <LogCommons/CreativeStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/Request.hpp>
@@ -876,22 +874,6 @@ CampaignManagerApp_::read_logging_config(
   AdServer::CampaignSvcs::CampaignManagerLogger::Params& log_params)
   /*throw(Exception)*/
 {
-  if (config.ChannelTriggerStat().present())
-  {
-    read_logger_config(
-      AdServer::LogProcessing::ChannelTriggerStatTraits::log_base_name(),
-      config.ChannelTriggerStat().get(),
-      log_params.channel_trigger_stat);
-  }
-
-  if (config.ChannelHitStat().present())
-  {
-    read_logger_config(
-      AdServer::LogProcessing::ChannelHitStatTraits::log_base_name(),
-      config.ChannelHitStat().get(),
-      log_params.channel_hit_stat);
-  }
-
   if (config.RequestBasicChannels().present())
   {
     read_logger_config(

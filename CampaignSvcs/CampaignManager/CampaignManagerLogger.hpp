@@ -61,8 +61,6 @@ namespace AdServer::CampaignSvcs
 
       Commons::LogReferrer::Setting log_referrer_setting;
 
-      AdServer::LogProcessing::LogFlushTraits channel_trigger_stat;
-      AdServer::LogProcessing::LogFlushTraits channel_hit_stat;
       RequestBasicChannelsFlushTraits request_basic_channels;
       AdServer::LogProcessing::LogFlushTraits opt_out_stat;
       AdServer::LogProcessing::LogFlushTraits creative_stat;
@@ -279,16 +277,11 @@ namespace AdServer::CampaignSvcs
       // geo_channels: ordered in accuracy desc (coord channels after non coord)
       ChannelIdArray geo_channels;
 
-      // Triggers from channels except discover and keyword channels
+      // Triggers from matched channels
       TriggerChannelMap page_triggers;
       TriggerChannelMap search_triggers;
       TriggerChannelMap url_triggers;
       TriggerChannelMap url_keyword_triggers;
-      // Same triggers as above, but got for discover and keyword channels only
-      TriggerChannelMap discover_keyword_page_triggers;
-      TriggerChannelMap discover_keyword_search_triggers;
-      TriggerChannelMap discover_keyword_url_triggers;
-      TriggerChannelMap discover_keyword_url_keyword_triggers;
       TriggeredChannelsData triggered_channels; // union of unique triggered channels
 
       ChannelIdArray hid_history_channels;

@@ -426,8 +426,6 @@
             <dir>CreativeStat</dir>
             <dir>OptOutStat</dir>
             <dir>WebStat</dir>
-            <dir>ChannelTriggerStat</dir>
-            <dir>ChannelHitStat</dir>
             <dir>ActionRequest</dir>
             <dir>PublisherInventory</dir>
             <dir>UserProperties</dir>
@@ -593,6 +591,8 @@
             <dir>ChannelPriceRange</dir>
             <dir>ChannelInventoryEstimationStat</dir>
             <dir>ChannelPerformance</dir>
+            <dir>ChannelHitStat</dir>
+            <dir>ChannelTriggerStat</dir>
             <dir>ChannelTriggerImpStat</dir>
             <dir>GlobalColoUserStat</dir>
             <dir>ColoUserStat</dir>
