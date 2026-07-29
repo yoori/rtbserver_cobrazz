@@ -10,7 +10,7 @@
 #include <map>
 #include <type_traits>
 #include <utility>
-#include <Generics/GnuHashTable.hpp>
+#include <absl/container/flat_hash_map.h>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <eh/Exception.hpp>
 
@@ -39,6 +39,16 @@ public:
 };
 
 namespace StatCollectorImplDefs_ {
+
+template <class Key>
+struct HashAdapter
+{
+  size_t
+  operator()(const Key& value) const
+  {
+    return static_cast<size_t>(value.hash());
+  }
+};
 
 template <class STAT_COLLECTOR_, bool IS_NESTED_>
 struct CopyImpl;
@@ -361,12 +371,15 @@ public:
   StatCollector&
   add(const KeyT& key, Data&& data)
   {
-    auto ins_res = map_impl_->try_emplace(key, std::move(data));
-
-    if (!ins_res.second)
+    auto it = map_impl_->find(key);
+    if (it == map_impl_->end())
     {
-      merge_data_(ins_res.first->second, data);
-      ValueOps_::remove_if_excludable(*this, ins_res.first);
+      map_impl_->emplace(key, std::move(data));
+    }
+    else
+    {
+      merge_data_(it->second, data);
+      ValueOps_::remove_if_excludable(*this, it);
     }
 
     return *this;
@@ -378,12 +391,15 @@ public:
   StatCollector&
   add(KeyT&& key, Data&& data)
   {
-    auto ins_res = map_impl_->try_emplace(std::move(key), std::move(data));
-
-    if (!ins_res.second)
+    auto it = map_impl_->find(key);
+    if (it == map_impl_->end())
     {
-      merge_data_(ins_res.first->second, data);
-      ValueOps_::remove_if_excludable(*this, ins_res.first);
+      map_impl_->emplace(std::move(key), std::move(data));
+    }
+    else
+    {
+      merge_data_(it->second, data);
+      ValueOps_::remove_if_excludable(*this, it);
     }
 
     return *this;
@@ -396,11 +412,15 @@ public:
     {
       return *this;
     }
-    auto ins_res = map_impl_->try_emplace(key, std::move(data));
-    if (!ins_res.second)
+    auto it = map_impl_->find(key);
+    if (it == map_impl_->end())
     {
-      merge_data_(ins_res.first->second, data);
-      ValueOps_::remove_if_excludable(*this, ins_res.first);
+      map_impl_->emplace(key, std::move(data));
+    }
+    else
+    {
+      merge_data_(it->second, data);
+      ValueOps_::remove_if_excludable(*this, it);
     }
     return *this;
   }
@@ -412,11 +432,15 @@ public:
     {
       return *this;
     }
-    auto ins_res = map_impl_->try_emplace(std::move(key), std::move(data));
-    if (!ins_res.second)
+    auto it = map_impl_->find(key);
+    if (it == map_impl_->end())
     {
-      merge_data_(ins_res.first->second, data);
-      ValueOps_::remove_if_excludable(*this, ins_res.first);
+      map_impl_->emplace(std::move(key), std::move(data));
+    }
+    else
+    {
+      merge_data_(it->second, data);
+      ValueOps_::remove_if_excludable(*this, it);
     }
     return *this;
   }
@@ -483,11 +507,15 @@ public:
         continue;
       }
 
-      auto ins_res = map_impl_->try_emplace(it->first, std::move(it->second));
-      if (!ins_res.second)
+      auto dest_it = map_impl_->find(it->first);
+      if (dest_it == map_impl_->end())
       {
-        merge_data_(ins_res.first->second, it->second);
-        ValueOps_::remove_if_excludable(*this, ins_res.first);
+        map_impl_->emplace(it->first, std::move(it->second));
+      }
+      else
+      {
+        merge_data_(dest_it->second, it->second);
+        ValueOps_::remove_if_excludable(*this, dest_it);
       }
     }
 
@@ -570,12 +598,16 @@ private:
   template <class M_KEY_, class M_DATA_>
   struct MapImplTypedefHelper<M_KEY_, M_DATA_, false>
   {
-    struct Type: public Generics::GnuHashTable<M_KEY_, M_DATA_>
+    struct Type:
+      public absl::flat_hash_map<
+        M_KEY_,
+        M_DATA_,
+        StatCollectorImplDefs_::HashAdapter<M_KEY_>>
     {
       void
       prepare_adding(unsigned long add_size)
       {
-        this->rehash(this->size() + add_size);
+        this->reserve(this->size() + add_size);
       }
     };
   };
@@ -673,11 +705,15 @@ public:
     {
       return *this;
     }
-    auto ins_res = map_impl_->try_emplace(value.first, std::move(value.second));
-    if (!ins_res.second)
+    auto it = map_impl_->find(value.first);
+    if (it == map_impl_->end())
     {
-      merge_data_(ins_res.first->second, value.second);
-      ValueOps_::remove_if_excludable(*this, ins_res.first);
+      map_impl_->emplace(value.first, std::move(value.second));
+    }
+    else
+    {
+      merge_data_(it->second, value.second);
+      ValueOps_::remove_if_excludable(*this, it);
     }
     return *this;
   }
@@ -830,15 +866,14 @@ StatCollector<KEY_, DATA_, EX_, FBUF_, STOP_, ORD_>::load_i_(
   for (ValueT value; !is.eof(); ++line_num)
   {
     value_reader.read(is, value, line_num);
-    auto ins_res =
-      dest.map_impl_->try_emplace(value.first, std::move(value.second));
-    if (!ins_res.second)
+    if (dest.map_impl_->find(value.first) != dest.map_impl_->end())
     {
       Stream::Error es;
       es << __PRETTY_FUNCTION__
          << ": Malformed file (duplicate key found), line " << line_num;
       throw Exception(es);
     }
+    dest.map_impl_->emplace(value.first, std::move(value.second));
     char peek_sym = is.peek();
     if (STOP_ && peek_sym == '\n')
     {

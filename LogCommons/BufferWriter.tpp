@@ -1,50 +1,13 @@
 #pragma once
 
+#if defined(__GNUC__)
+#define AD_BUFFER_WRITER_ALWAYS_INLINE inline __attribute__((always_inline))
+#else
+#define AD_BUFFER_WRITER_ALWAYS_INLINE inline
+#endif
+
 namespace AdServer::LogProcessing
 {
-  inline void
-  BufferWriter::append(char value)
-  {
-    flush_if_required_(1);
-    buffer_.push_back(value);
-  }
-
-  inline void
-  BufferWriter::append_number(unsigned long value)
-  {
-    append_integer_(value);
-  }
-
-  inline void
-  BufferWriter::append_number(long value)
-  {
-    append_integer_(value);
-  }
-
-  inline void
-  BufferWriter::append_number(unsigned long long value)
-  {
-    append_integer_(value);
-  }
-
-  inline void
-  BufferWriter::append_number(long long value)
-  {
-    append_integer_(value);
-  }
-
-  inline void
-  BufferWriter::append_number(unsigned int value)
-  {
-    append_integer_(value);
-  }
-
-  inline void
-  BufferWriter::append_number(int value)
-  {
-    append_integer_(value);
-  }
-
   inline void
   BufferWriter::flush_if_required_(std::size_t append_size)
   {
@@ -57,15 +20,65 @@ namespace AdServer::LogProcessing
   }
 
   template<typename Integer>
-  void
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
   BufferWriter::append_integer_(Integer value)
   {
     char buffer[32];
-    const auto result = std::to_chars(
-      buffer,
-      buffer + sizeof(buffer),
-      value);
-    append(std::string_view(buffer, result.ptr - buffer));
+    const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value);
+    const auto append_size = static_cast<std::size_t>(result.ptr - buffer);
+
+    if (file_ && buffer_limit_ != 0 && append_size >= buffer_limit_)
+    {
+      flush();
+      write_direct_(buffer, append_size);
+      return;
+    }
+
+    flush_if_required_(append_size);
+    buffer_.append(buffer, append_size);
+  }
+
+  inline void
+  BufferWriter::append(char value)
+  {
+    flush_if_required_(1);
+    buffer_.push_back(value);
+  }
+
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
+  BufferWriter::append_number(unsigned long value)
+  {
+    append_integer_(value);
+  }
+
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
+  BufferWriter::append_number(long value)
+  {
+    append_integer_(value);
+  }
+
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
+  BufferWriter::append_number(unsigned long long value)
+  {
+    append_integer_(value);
+  }
+
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
+  BufferWriter::append_number(long long value)
+  {
+    append_integer_(value);
+  }
+
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
+  BufferWriter::append_number(unsigned int value)
+  {
+    append_integer_(value);
+  }
+
+  AD_BUFFER_WRITER_ALWAYS_INLINE void
+  BufferWriter::append_number(int value)
+  {
+    append_integer_(value);
   }
 
   inline BufferWriter&
@@ -250,3 +263,5 @@ namespace AdServer::LogProcessing
     return out;
   }
 }
+
+#undef AD_BUFFER_WRITER_ALWAYS_INLINE

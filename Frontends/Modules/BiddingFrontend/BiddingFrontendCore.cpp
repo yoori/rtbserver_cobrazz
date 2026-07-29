@@ -712,32 +712,39 @@ namespace AdServer::Bidding
       return;
     }
 
-    auto to_string_view = [](const auto& value)
-    {
-      return std::string_view(value.data(), value.size());
-    };
-
     BiddingFrontendLogger::GeoParams params;
-    params.ip = request_info.peer_ip;
-    params.source = to_string_view(request_info.source_id);
-    params.type = to_string_view(request_info.ssp_geo_type);
+    params.ip.assign(request_info.peer_ip.data(), request_info.peer_ip.size());
+    params.source.assign(
+      request_info.source_id.data(),
+      request_info.source_id.size());
+    params.country.assign(
+      request_info.ssp_geo_country.data(),
+      request_info.ssp_geo_country.size());
+    params.region.assign(
+      request_info.ssp_geo_region.data(),
+      request_info.ssp_geo_region.size());
+    params.city.assign(
+      request_info.ssp_geo_city.data(),
+      request_info.ssp_geo_city.size());
+    params.type.assign(
+      request_info.ssp_geo_type.data(),
+      request_info.ssp_geo_type.size());
 
-    if (!request_info.geo_location.empty())
+    if (params.ip.empty() &&
+      params.country.empty() &&
+      params.region.empty() &&
+      params.city.empty())
     {
-      const auto& geo_location = request_info.geo_location.front();
-      params.country = to_string_view(geo_location.country);
-      params.region = to_string_view(geo_location.region);
-      params.city = to_string_view(geo_location.city);
+      return;
     }
 
-    if (!request_info.coord_location.empty())
+    if (request_info.ssp_latitude && request_info.ssp_longitude)
     {
-      const auto& coord_location = request_info.coord_location.front();
-      params.lat = coord_location.latitude;
-      params.lon = coord_location.longitude;
+      params.lat = *request_info.ssp_latitude;
+      params.lon = *request_info.ssp_longitude;
     }
 
-    bidding_frontend_logger_->process_geo(params);
+    bidding_frontend_logger_->process_geo(std::move(params));
   }
 
   unsigned long

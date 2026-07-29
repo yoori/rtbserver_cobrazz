@@ -14,6 +14,16 @@ namespace AdServer::Bidding
     const Generics::Time RESCHEDULE_AFTER_ERROR(10);
   }
 
+  BiddingFrontendLogger::GeoParams::GeoParams()
+    : arena(arena_buffer.data(), arena_buffer.size()),
+      ip(&arena),
+      source(&arena),
+      type(&arena),
+      country(&arena),
+      region(&arena),
+      city(&arena)
+  {}
+
   BiddingFrontendLogger::BiddingFrontendLogger(
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
@@ -42,9 +52,12 @@ namespace AdServer::Bidding
   }
 
   void
-  BiddingFrontendLogger::process_geo(const GeoParams& params) noexcept
+  BiddingFrontendLogger::process_geo(GeoParams&& params) noexcept
   {
-    if (params.ip.empty())
+    if (params.ip.empty() &&
+      params.country.empty() &&
+      params.region.empty() &&
+      params.city.empty())
     {
       return;
     }
@@ -63,7 +76,9 @@ namespace AdServer::Bidding
       data.region.assign(params.region.data(), params.region.size());
       data.city.assign(params.city.data(), params.city.size());
 
-      GeoLogHolder& geo_logger = *geo_loggers_[key.hash() % geo_loggers_.size()];
+      GeoLogHolder& geo_logger = *geo_loggers_[
+        next_geo_logger_.fetch_add(1, std::memory_order_relaxed) %
+          geo_loggers_.size()];
       geo_logger.add_record(std::move(key), std::move(data));
     }
     catch (const eh::Exception& ex)

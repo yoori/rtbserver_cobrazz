@@ -61,18 +61,20 @@ add_library(LogCommons SHARED
 
 )
 
+target_compile_options(LogCommons
+  PUBLIC
+    -msse2
+)
+
 target_link_libraries(LogCommons
-  Generics
-  # ExceptionHandling
-  Commons
-  # LogCommons
-  CorbaTypesIDL
+  PUBLIC
+    Generics
+    Commons
+    CorbaTypesIDL
+    absl::flat_hash_map
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
-
-
 
 
 

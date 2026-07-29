@@ -720,26 +720,26 @@ namespace AdServer::Bidding
       RequestInfo& request_info,
       const JsonProcessingContext& context)
     {
-      if(!context.ssp_country.empty() ||
-        !context.ssp_region.empty() ||
-        !context.ssp_city.empty())
+      // OpenRTB device.geo is GeoStats input; selection geo is filled by IP.
+      if(!context.ssp_country.empty())
       {
-        request_info.location = std::make_shared<FrontendCommons::Location>();
-        request_info.location->country.assign(
+        request_info.ssp_geo_country.assign(
           context.ssp_country.data(),
           context.ssp_country.size());
-        request_info.location->region.assign(
+      }
+
+      if(!context.ssp_region.empty())
+      {
+        request_info.ssp_geo_region.assign(
           context.ssp_region.data(),
           context.ssp_region.size());
-        request_info.location->city.assign(
+      }
+
+      if(!context.ssp_city.empty())
+      {
+        request_info.ssp_geo_city.assign(
           context.ssp_city.data(),
           context.ssp_city.size());
-        request_info.location->normalize();
-
-        request_info.geo_location.resize(1);
-        request_info.geo_location[0].country = request_info.location->country;
-        request_info.geo_location[0].region = request_info.location->region;
-        request_info.geo_location[0].city = request_info.location->city;
       }
 
       if(context.ssp_latitude && context.ssp_longitude)
@@ -752,8 +752,6 @@ namespace AdServer::Bidding
         static const CoordDecimal MIN_LON("-180");
         static const CoordDecimal MAX_LON("180");
         static const AccuracyDecimal MIN_ACCURACY("0");
-        static const AccuracyDecimal MAX_ACCURACY("21000000");
-        static const AccuracyDecimal DEFAULT_ACCURACY("50000");
 
         if(*context.ssp_latitude < MIN_LAT ||
           *context.ssp_latitude > MAX_LAT ||
@@ -763,24 +761,16 @@ namespace AdServer::Bidding
           return;
         }
 
-        AccuracyDecimal accuracy = context.ssp_accuracy.value_or(
-          DEFAULT_ACCURACY);
-        if(accuracy <= MIN_ACCURACY)
+        if(context.ssp_accuracy && *context.ssp_accuracy <= MIN_ACCURACY)
         {
           return;
         }
 
-        if(accuracy > MAX_ACCURACY)
-        {
-          accuracy = MAX_ACCURACY;
-        }
-
-        request_info.coord_location.resize(1);
-        request_info.coord_location[0].latitude = *context.ssp_latitude;
-        request_info.coord_location[0].longitude = *context.ssp_longitude;
-        request_info.coord_location[0].accuracy = accuracy;
+        request_info.ssp_latitude = context.ssp_latitude;
+        request_info.ssp_longitude = context.ssp_longitude;
       }
     }
+
   }
 
   template<typename StringType>

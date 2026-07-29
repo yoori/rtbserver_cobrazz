@@ -1,10 +1,13 @@
 #pragma once
 
-#include <string_view>
+#include <array>
+#include <atomic>
+#include <string>
 #include <vector>
 
 #include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Logger/Logger.hpp>
@@ -27,16 +30,27 @@ namespace AdServer::Bidding
 
     struct GeoParams
     {
-      std::string_view ip;
-      std::string_view source;
+      GeoParams();
+
+      GeoParams(const GeoParams&) = delete;
+      GeoParams& operator=(const GeoParams&) = delete;
+      GeoParams(GeoParams&&) = delete;
+      GeoParams& operator=(GeoParams&&) = delete;
+
+      static constexpr std::size_t ARENA_SIZE = 512;
+
+      std::array<unsigned char, ARENA_SIZE> arena_buffer;
+      Generics::MonoAllocatorArena arena;
+      Generics::MonoString ip;
+      Generics::MonoString source;
       AdServer::CampaignSvcs::CoordDecimal lat =
         AdServer::CampaignSvcs::CoordDecimal::ZERO;
       AdServer::CampaignSvcs::CoordDecimal lon =
         AdServer::CampaignSvcs::CoordDecimal::ZERO;
-      std::string_view type;
-      std::string_view country;
-      std::string_view region;
-      std::string_view city;
+      Generics::MonoString type;
+      Generics::MonoString country;
+      Generics::MonoString region;
+      Generics::MonoString city;
     };
 
     BiddingFrontendLogger(
@@ -47,7 +61,7 @@ namespace AdServer::Bidding
       unsigned long geo_shards);
 
     void
-    process_geo(const GeoParams& params) noexcept;
+    process_geo(GeoParams&& params) noexcept;
 
   protected:
     virtual
@@ -67,6 +81,7 @@ namespace AdServer::Bidding
   private:
     Logging::Logger_var logger_;
     GeoLogHolderArray geo_loggers_;
+    std::atomic<unsigned long> next_geo_logger_{0};
     Generics::Planner_var scheduler_;
     Generics::TaskRunner_var task_runner_;
   };
