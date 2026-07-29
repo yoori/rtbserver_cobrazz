@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <utility>
 #include <absl/container/flat_hash_map.h>
+#include <Generics/MonoAllocator.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <eh/Exception.hpp>
 
@@ -48,6 +49,11 @@ struct HashAdapter
   {
     return static_cast<size_t>(value.hash());
   }
+};
+
+struct MonoFlatHashMapArenaHolder
+{
+  Generics::MonoAllocatorArena arena;
 };
 
 template <class STAT_COLLECTOR_, bool IS_NESTED_>
@@ -563,7 +569,7 @@ public:
 
   void swap(StatCollector& other)
   {
-    map_impl_->swap(*other.map_impl_);
+    map_impl_.swap(other.map_impl_);
   }
 
   bool is_null() const
@@ -598,12 +604,32 @@ private:
   template <class M_KEY_, class M_DATA_>
   struct MapImplTypedefHelper<M_KEY_, M_DATA_, false>
   {
+    typedef StatCollectorImplDefs_::MonoFlatHashMapArenaHolder ArenaHolder_;
+
+    typedef Generics::MonoAllocator<std::pair<const M_KEY_, M_DATA_>>
+      Allocator_;
+
+    typedef absl::flat_hash_map<
+      M_KEY_,
+      M_DATA_,
+      StatCollectorImplDefs_::HashAdapter<M_KEY_>,
+      std::equal_to<M_KEY_>,
+      Allocator_>
+      Base_;
+
     struct Type:
-      public absl::flat_hash_map<
-        M_KEY_,
-        M_DATA_,
-        StatCollectorImplDefs_::HashAdapter<M_KEY_>>
+      private ArenaHolder_,
+      public Base_
     {
+      Type()
+        : ArenaHolder_(),
+          Base_(
+            0,
+            StatCollectorImplDefs_::HashAdapter<M_KEY_>(),
+            std::equal_to<M_KEY_>(),
+            Allocator_(this->arena))
+      {}
+
       void
       prepare_adding(unsigned long add_size)
       {
