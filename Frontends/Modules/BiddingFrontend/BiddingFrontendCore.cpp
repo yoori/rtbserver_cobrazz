@@ -6,6 +6,7 @@
 #include "OpenRtbBidRequestState.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <optional>
 #include <set>
 
@@ -57,6 +58,21 @@ namespace AdServer::Bidding
 
       return (static_cast<double>(Generics::unsafe_rand(PROCESS_COEF_RANDOM_MAX)) /
         static_cast<double>(PROCESS_COEF_RANDOM_MAX)) > process_coef;
+    }
+
+    void
+    atomic_update_max(
+      std::atomic<unsigned long>& value,
+      const unsigned long candidate) noexcept
+    {
+      unsigned long current = value.load(std::memory_order_relaxed);
+      while(current < candidate &&
+        !value.compare_exchange_weak(
+          current,
+          candidate,
+          std::memory_order_relaxed,
+          std::memory_order_relaxed))
+      {}
     }
 
     std::optional<Generics::Time>
@@ -750,10 +766,7 @@ namespace AdServer::Bidding
   unsigned long
   BiddingFrontendCore::reset_reached_max_pending_tasks() noexcept
   {
-    MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
-    const unsigned long result = reached_max_pending_tasks_;
-    reached_max_pending_tasks_ = 0;
-    return result;
+    return reached_max_pending_tasks_.exchange(0, std::memory_order_relaxed);
   }
 
   void
@@ -881,10 +894,7 @@ namespace AdServer::Bidding
       {
         bid_task_count_ += -1;
 
-        {
-          MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
-          reached_max_pending_tasks_ = std::max(reached_max_pending_tasks_, cur_task_count);
-        }
+        atomic_update_max(reached_max_pending_tasks_, cur_task_count);
 
         if (stats_.in())
         {

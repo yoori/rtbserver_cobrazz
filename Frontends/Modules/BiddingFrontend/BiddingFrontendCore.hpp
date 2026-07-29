@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <vector>
@@ -36,8 +37,6 @@ namespace AdServer::Bidding
     public ReferenceCounting::AtomicImpl
   {
   public:
-    using MaxPendingSyncPolicy = Sync::Policy::PosixThread;
-
     struct ProcessCoefInterval
     {
       unsigned long from_minute = 0;
@@ -336,7 +335,6 @@ namespace AdServer::Bidding
     bool trace_mapping_ = false;
     bool enable_profile_referer_ = false;
     Generics::AtomicInt bid_task_count_;
-    mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
-    unsigned long reached_max_pending_tasks_ = 0;
+    std::atomic<unsigned long> reached_max_pending_tasks_{0};
   };
 }

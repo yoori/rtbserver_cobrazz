@@ -823,7 +823,6 @@ namespace Frontends
       logger_i_()->info(String::SubString("invalid FCGI header id"), Aspect::WORKER);
       return false;
     case FCGI::PARSE_FRAGMENTED_STDIN:
-      logger_i_()->info(String::SubString("fragmented stdin"), Aspect::WORKER);
       return false;
     }
 

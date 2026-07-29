@@ -3096,10 +3096,16 @@ namespace AdServer::Bidding
 
     request_info.set_cookie = !application;
 
+    CommonModule::Matchers matchers;
+    if(!user_agent.empty() || application)
+    {
+      matchers = common_module_->matchers();
+    }
+
     if(!user_agent.empty())
     {
       FrontendCommons::WebBrowserMatcher_var web_browser_matcher =
-        common_module_->web_browser_matcher();
+        matchers.web_browser_matcher;
 
       std::string web_browser;
 
@@ -3128,7 +3134,7 @@ namespace AdServer::Bidding
     if (!user_agent.empty() || application)
     {
       FrontendCommons::PlatformMatcher_var platform_matcher =
-        common_module_->platform_matcher();
+        matchers.platform_matcher;
 
       std::string platform;
       std::string full_platform;

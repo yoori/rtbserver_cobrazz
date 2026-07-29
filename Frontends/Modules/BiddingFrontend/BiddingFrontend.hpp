@@ -13,18 +13,14 @@
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
-#include <Generics/AtomicInt.hpp>
 #include "Generics/CompositeMetricsProvider.hpp"
 
 //#include <UServerUtils/MetricsHTTPProvider.hpp>
 //#include <UServerUtils/metrics_raii.hpp>
 
-#include <Sync/PosixLock.hpp>
-
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <Commons/AtomicInt.hpp>
 #include <Commons/Interval.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
@@ -183,12 +179,6 @@ namespace AdServer::Bidding
       return campaign_manager_coro_;
     }
 
-    Generics::AtomicInt&
-    bid_task_count() noexcept
-    {
-      return bid_task_count_;
-    }
-
     Logging::Logger*
     logger() noexcept
     {
@@ -214,9 +204,6 @@ namespace AdServer::Bidding
 
     class UpdateConfigTask;
     class FlushStateTask;
-
-    typedef Sync::Policy::PosixThread
-      MaxPendingSyncPolicy;
 
   private:
     void
@@ -304,11 +291,6 @@ namespace AdServer::Bidding
     StatHolder_var stats_;
 
     std::unique_ptr<BiddingFrontendCore> core_;
-
-    Generics::AtomicInt bid_task_count_;
-
-    mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
-    unsigned long reached_max_pending_tasks_;
 
   private:
     const Generics::CompositeMetricsProvider_var composite_metrics_provider_;

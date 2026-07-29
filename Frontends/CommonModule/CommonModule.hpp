@@ -47,6 +47,16 @@ namespace AdServer
     UserIdController_var
     user_id_controller() const noexcept;
 
+    struct Matchers
+    {
+      FrontendCommons::UrlMatcher_var url_matcher;
+      FrontendCommons::WebBrowserMatcher_var web_browser_matcher;
+      FrontendCommons::PlatformMatcher_var platform_matcher;
+    };
+
+    Matchers
+    matchers() const noexcept;
+
     FrontendCommons::UrlMatcher_var
     url_matcher() const noexcept;
 
@@ -84,11 +94,6 @@ namespace AdServer
     set_grpc_coalesce_runner(
       std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
         grpc_coalesce_runner)
-      noexcept;
-
-    void
-    set_grpc_executor(
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
       noexcept;
 
     AdServer::CampaignSvcs::ColocationFlagsSeq_var
@@ -209,13 +214,4 @@ namespace AdServer
     grpc_coalesce_runner_ = std::move(grpc_coalesce_runner);
   }
 
-  inline
-  void
-  CommonModule::set_grpc_executor(
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor)
-    noexcept
-  {
-    Sync::PosixGuard lock(grpc_executor_lock_);
-    grpc_executor_ = std::move(grpc_executor);
-  }
 } // namespace AdServer

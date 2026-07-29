@@ -197,8 +197,6 @@ namespace AdServer::Bidding
       bid_workers_(std::move(request_workers)),
       timeout_workers_(std::move(timeout_workers)),
       stats_(ReferenceCounting::add_ref(stats)),
-      bid_task_count_(0),
-      reached_max_pending_tasks_(0),
       composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {
     if(!timeout_workers_)

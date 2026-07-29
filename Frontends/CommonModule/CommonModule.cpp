@@ -482,6 +482,16 @@ namespace AdServer
     }
   }
 
+  CommonModule::Matchers
+  CommonModule::matchers() const noexcept
+  {
+    SyncPolicy::ReadGuard lock(matchers_lock_);
+    return Matchers{
+      url_matcher_,
+      web_browser_matcher_,
+      platform_matcher_};
+  }
+
   FrontendCommons::UrlMatcher_var
   CommonModule::url_matcher() const noexcept
   {

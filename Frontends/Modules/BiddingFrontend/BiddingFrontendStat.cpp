@@ -256,15 +256,30 @@ namespace AdServer
   void
   StatHolder::add_selected_bid(unsigned long ccg_id) noexcept
   {
-    std::lock_guard lock(selected_bids_lock_);
-    ++selected_bids_[ccg_id];
+    static std::atomic<std::size_t> next_shard{0};
+    static thread_local const std::size_t shard_i =
+      next_shard.fetch_add(1, std::memory_order_relaxed) %
+        SELECTED_BIDS_SHARDS_SIZE;
+
+    auto& shard = selected_bids_shards_[shard_i];
+    std::lock_guard lock(shard.lock);
+    ++shard.bids[ccg_id];
   }
 
   std::map<unsigned long, unsigned long>
   StatHolder::selected_bids() noexcept
   {
-    std::lock_guard lock(selected_bids_lock_);
-    return selected_bids_;
+    std::map<unsigned long, unsigned long> result;
+    for(auto& shard : selected_bids_shards_)
+    {
+      std::lock_guard lock(shard.lock);
+      for(const auto& [ccg_id, count] : shard.bids)
+      {
+        result[ccg_id] += count;
+      }
+    }
+
+    return result;
   }
 
   void

@@ -243,8 +243,16 @@ namespace AdServer
     std::atomic<unsigned long> user_bind_match_campaign_requests_{0};
     std::array<std::atomic<unsigned long>, TIMEOUT_COUNTERS_SIZE>
       timeout_counters_{};
-    std::mutex selected_bids_lock_;
-    std::map<unsigned long, unsigned long> selected_bids_;
+    struct SelectedBidsShard
+    {
+      std::mutex lock;
+      std::map<unsigned long, unsigned long> bids;
+    };
+
+    static constexpr std::size_t SELECTED_BIDS_SHARDS_SIZE = 64;
+
+    std::array<SelectedBidsShard, SELECTED_BIDS_SHARDS_SIZE>
+      selected_bids_shards_;
   };
 
   typedef ReferenceCounting::SmartPtr<StatHolder>
