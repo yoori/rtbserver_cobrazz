@@ -23,24 +23,24 @@ namespace FrontendCommons
     const unsigned long BROWSER_MAX_SIZE = 1024;
     const char APPLICATION_PLATFORM_DETECTOR_NAME[] = "applications";
 
-    struct PlatformMatcherMatchContextSlot
+    struct RegExMatchContextSlot
     {
       std::deque<String::RegEx::MatchContext> contexts;
       size_t depth = 0;
     };
 
-    PlatformMatcherMatchContextSlot&
-    platform_matcher_match_context_slot_()
+    RegExMatchContextSlot&
+    regex_match_context_slot_()
     {
-      thread_local PlatformMatcherMatchContextSlot slot;
+      thread_local RegExMatchContextSlot slot;
       return slot;
     }
 
-    class PlatformMatcherMatchContextGuard
+    class RegExMatchContextGuard
     {
     public:
-      PlatformMatcherMatchContextGuard()
-        : slot_(platform_matcher_match_context_slot_()),
+      RegExMatchContextGuard()
+        : slot_(regex_match_context_slot_()),
           index_(slot_.depth++)
       {
         if (slot_.contexts.size() <= index_)
@@ -49,12 +49,12 @@ namespace FrontendCommons
         }
       }
 
-      PlatformMatcherMatchContextGuard(
-        const PlatformMatcherMatchContextGuard&) = delete;
-      PlatformMatcherMatchContextGuard&
-      operator=(const PlatformMatcherMatchContextGuard&) = delete;
+      RegExMatchContextGuard(
+        const RegExMatchContextGuard&) = delete;
+      RegExMatchContextGuard&
+      operator=(const RegExMatchContextGuard&) = delete;
 
-      ~PlatformMatcherMatchContextGuard() noexcept
+      ~RegExMatchContextGuard() noexcept
       {
         --slot_.depth;
       }
@@ -66,7 +66,7 @@ namespace FrontendCommons
       }
 
     private:
-      PlatformMatcherMatchContextSlot& slot_;
+      RegExMatchContextSlot& slot_;
       const size_t index_;
     };
 
@@ -201,14 +201,21 @@ namespace FrontendCommons
   {
     static const char* FUN = "UrlMatcher::match_list_()";
 
+    String::RegEx::Result sub_strs;
+    RegExMatchContextGuard match_context;
+
     for(UrlMatchElementList::const_iterator it = match_elements.begin();
         it != match_elements.end(); ++it)
     {
       try
       {
-        String::RegEx::Result sub_strs;
+        sub_strs.clear();
 
-        if((*it)->regexp.search(sub_strs, path_and_query) && (sub_strs.size() > 1))
+        if((*it)->regexp.search(
+             sub_strs,
+             path_and_query,
+             match_context.get()) &&
+           sub_strs.size() > 1)
         {
           try
           {
@@ -572,7 +579,7 @@ namespace FrontendCommons
   {
     std::string low_user_agent(user_agent);
     String::AsciiStringManip::to_lower(low_user_agent);
-    PlatformMatcherMatchContextGuard match_context;
+    RegExMatchContextGuard match_context;
 
     bool res = match_(
       application ? 0 : platform_ids,
@@ -751,10 +758,12 @@ namespace FrontendCommons
    */
   WebBrowserMatcher::OnMatch::OnMatch(
     std::string_view user_agent,
-    unsigned long max_priority)
+    unsigned long max_priority,
+    String::RegEx::MatchContext& match_context)
     noexcept
     : user_agent_(user_agent),
       max_priority_(max_priority),
+      match_context_(match_context),
       matched_element_(0)
   {}
 
@@ -811,7 +820,7 @@ namespace FrontendCommons
   {
     const String::SubString user_agent(user_agent_.data(), user_agent_.size());
     return (!element->regexp.get() ||
-      element->regexp->search(sub_strs_, user_agent) ||
+      element->regexp->search(sub_strs_, user_agent, match_context_) ||
       !element->regexp_required);
   }
 
@@ -829,7 +838,8 @@ namespace FrontendCommons
     const String::SubString user_agent_substr(
       user_agent.data(),
       user_agent.size());
-    OnMatch on_match(user_agent, max_priority_);
+    RegExMatchContextGuard match_context;
+    OnMatch on_match(user_agent, max_priority_, match_context.get());
     matcher_.match(user_agent_substr, on_match);
 
     for (auto it = empty_marker_elements_.begin();

@@ -10,7 +10,7 @@
 #include <map>
 #include <type_traits>
 #include <utility>
-#include <absl/container/flat_hash_map.h>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <Generics/MonoAllocator.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <eh/Exception.hpp>
@@ -51,7 +51,7 @@ struct HashAdapter
   }
 };
 
-struct MonoFlatHashMapArenaHolder
+struct MonoUnorderedFlatMapArenaHolder
 {
   Generics::MonoAllocatorArena arena;
 };
@@ -604,12 +604,13 @@ private:
   template <class M_KEY_, class M_DATA_>
   struct MapImplTypedefHelper<M_KEY_, M_DATA_, false>
   {
-    typedef StatCollectorImplDefs_::MonoFlatHashMapArenaHolder ArenaHolder_;
+    typedef StatCollectorImplDefs_::MonoUnorderedFlatMapArenaHolder
+      ArenaHolder_;
 
     typedef Generics::MonoAllocator<std::pair<const M_KEY_, M_DATA_>>
       Allocator_;
 
-    typedef absl::flat_hash_map<
+    typedef boost::unordered_flat_map<
       M_KEY_,
       M_DATA_,
       StatCollectorImplDefs_::HashAdapter<M_KEY_>,
@@ -1053,8 +1054,7 @@ class SeqCollector
   typedef std::list<DATA_> Base;
 
   friend
-  class SeqCollectorImplDefs_::CopyImpl<SeqCollector,
-    IsCollector<DATA_>::value>;
+  class SeqCollectorImplDefs_::CopyImpl<SeqCollector, IsCollector<DATA_>::value>;
 
   typedef class SeqCollectorImplDefs_::CopyImpl<SeqCollector,
     IsCollector<DATA_>::value>

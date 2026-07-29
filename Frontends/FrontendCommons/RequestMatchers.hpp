@@ -340,8 +340,10 @@ namespace FrontendCommons
     class OnMatch
     {
     public:
-      OnMatch(std::string_view user_agent,
-        unsigned long max_priority) noexcept;
+      OnMatch(
+        std::string_view user_agent,
+        unsigned long max_priority,
+        String::RegEx::MatchContext& match_context) noexcept;
 
       bool
       operator() (const MultiStringMatcher::MatchDetails& details)
@@ -356,6 +358,7 @@ namespace FrontendCommons
     private:
       std::string_view user_agent_;
       unsigned long max_priority_;
+      String::RegEx::MatchContext& match_context_;
       const MatchElement* matched_element_;
       String::RegEx::Result sub_strs_;
       typedef std::multimap<unsigned long, const MatchElement*> MatchElements;

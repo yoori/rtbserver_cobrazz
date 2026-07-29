@@ -3,7 +3,11 @@
 set -euo pipefail
 
 VERSION=${1:-2024.01.08.00}
-RELEASE=${RELEASE:-ssv1}
+RELEASE=${RELEASE:-ssv2}
+BOOST_PACKAGE_NAME=${BOOST_PACKAGE_NAME:-boost185}
+BOOST_DEVEL_PACKAGE_NAME=${BOOST_DEVEL_PACKAGE_NAME:-${BOOST_PACKAGE_NAME}-devel}
+BOOST_PREFIX=${BOOST_PREFIX:-/opt/foros/${BOOST_PACKAGE_NAME}}
+BOOST_CMAKE_DIR=${BOOST_CMAKE_DIR:-${BOOST_PREFIX}/lib64/cmake/Boost-1.85.0}
 
 # Optional offline inputs:
 #   FOLLY_SOURCE_DIR=/path/to/folly ./RPM/build-folly.sh 2024.01.08.00
@@ -27,7 +31,7 @@ fi
 sudo yum -y "${YUM_REPO_ARGS[@]}" install \
   spectool yum-utils rpmdevtools redhat-rpm-config rpm-build \
   cmake ninja-build gcc-c++ gcc-toolset-10-gcc-c++ \
-  boost176-devel bzip2-devel double-conversion-devel fmt-devel \
+  "$BOOST_DEVEL_PACKAGE_NAME" bzip2-devel double-conversion-devel fmt-devel \
   gflags-devel glog-devel libevent-devel libsodium-devel \
   libzstd-devel lz4-devel openssl-devel zlib-devel \
   || \
@@ -62,7 +66,7 @@ License: Apache-2.0
 URL:     https://github.com/facebook/folly
 Source0: https://github.com/facebook/folly/archive/refs/tags/v%{version}.tar.gz
 
-BuildRequires: boost176-devel
+BuildRequires: %{_boost_devel_package_name}
 BuildRequires: bzip2-devel
 BuildRequires: cmake
 BuildRequires: double-conversion-devel
@@ -79,7 +83,7 @@ BuildRequires: ninja-build
 BuildRequires: openssl-devel
 BuildRequires: zlib-devel
 
-Requires: boost176
+Requires: %{_boost_package_name}
 Requires: double-conversion
 Requires: fmt
 Requires: gflags
@@ -96,7 +100,7 @@ Folly is a library of C++ components used at Facebook.
 Summary: Folly development files
 Group:   Development/Libraries/C and C++
 Requires: %{name} = %{version}-%{release}
-Requires: boost176-devel
+Requires: %{_boost_devel_package_name}
 Requires: double-conversion-devel
 Requires: fmt-devel
 Requires: gflags-devel
@@ -124,6 +128,13 @@ FOLLY_CMAKE_ARGS=(
   -DCMAKE_INSTALL_LIBDIR=lib64
   -DLIB_INSTALL_DIR=lib64
   -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+  -DBOOST_ROOT=%{_boost_prefix}
+  -DBoost_ROOT=%{_boost_prefix}
+  -DBOOST_INCLUDEDIR=%{_boost_prefix}/include
+  -DBOOST_LIBRARYDIR=%{_boost_prefix}/lib64
+  -DBoost_DIR=%{_boost_cmake_dir}
+  -DBoost_NO_SYSTEM_PATHS=ON
+  -DCMAKE_PREFIX_PATH=%{_boost_prefix}
   -DBUILD_TESTS=OFF
   -DFOLLY_BUILD_TESTS=OFF
   -DFOLLY_HAVE_INT128_T=ON
@@ -163,6 +174,10 @@ EOF_SPEC
 ${SUDO_PREFIX:-sudo} yum-builddep -y "${YUM_REPO_ARGS[@]}" \
   --define "_version $VERSION" \
   --define "_release $RELEASE" \
+  --define "_boost_package_name $BOOST_PACKAGE_NAME" \
+  --define "_boost_devel_package_name $BOOST_DEVEL_PACKAGE_NAME" \
+  --define "_boost_prefix $BOOST_PREFIX" \
+  --define "_boost_cmake_dir $BOOST_CMAKE_DIR" \
   "$SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
 
@@ -170,6 +185,10 @@ if [ ! -f "$SOURCE_ARCHIVE" ]; then
   spectool --force -g -R \
     --define "_version $VERSION" \
     --define "_release $RELEASE" \
+    --define "_boost_package_name $BOOST_PACKAGE_NAME" \
+    --define "_boost_devel_package_name $BOOST_DEVEL_PACKAGE_NAME" \
+    --define "_boost_prefix $BOOST_PREFIX" \
+    --define "_boost_cmake_dir $BOOST_CMAKE_DIR" \
     "$SPEC_FILE" || \
     { echo "can't download sources" >&2 ; exit 1 ; }
 fi
@@ -177,6 +196,10 @@ fi
 rpmbuild --force -ba \
   --define "_version $VERSION" \
   --define "_release $RELEASE" \
+  --define "_boost_package_name $BOOST_PACKAGE_NAME" \
+  --define "_boost_devel_package_name $BOOST_DEVEL_PACKAGE_NAME" \
+  --define "_boost_prefix $BOOST_PREFIX" \
+  --define "_boost_cmake_dir $BOOST_CMAKE_DIR" \
   --define "debug_package %{nil}" \
   "$SPEC_FILE" || \
   { echo "can't build folly RPM" >&2 ; exit 1 ; }

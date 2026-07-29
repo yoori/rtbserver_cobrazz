@@ -6,6 +6,13 @@
 # create build/RPMS folder - all built packages will be duplicated here
 RES_TMP=build/TMP/
 RES_RPMS=build/RPMS/
+VERSION=${VERSION:-11.1.1}
+RELEASE=${RELEASE:-ssv4}
+BOOST_PACKAGE_NAME=${BOOST_PACKAGE_NAME:-boost185}
+BOOST_DEVEL_PACKAGE_NAME=${BOOST_DEVEL_PACKAGE_NAME:-${BOOST_PACKAGE_NAME}-devel}
+BOOST_PREFIX=${BOOST_PREFIX:-/opt/foros/${BOOST_PACKAGE_NAME}}
+FOLLY_PACKAGE_NAME=${FOLLY_PACKAGE_NAME:-folly}
+FOLLY_DEVEL_PACKAGE_NAME=${FOLLY_DEVEL_PACKAGE_NAME:-${FOLLY_PACKAGE_NAME}-devel}
 rm -rf "$RES_TMP"
 
 mkdir -p $RES_TMP
@@ -19,7 +26,9 @@ sudo yum -y install \
   || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
 
-sudo yum -y install libzstd-devel zlib-devel folly-devel liburing-devel || \
+sudo yum -y install \
+  libzstd-devel zlib-devel "$FOLLY_DEVEL_PACKAGE_NAME" \
+  "$BOOST_DEVEL_PACKAGE_NAME" liburing-devel || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
 
 # create folders for RPM build environment
@@ -37,7 +46,7 @@ ROCKSDB_SPEC_FILE=`rpm -E %_specdir`/rocksdb.spec
 cat << 'EOF' > $ROCKSDB_SPEC_FILE
 Name:    rocksdb
 Version: %{_version}
-Release: ssv3%{?dist}
+Release: %{_release}%{?dist}
 %global debug_package %{nil}
 Summary: A Persistent Key-Value Store for Flash and RAM Storage
 Group:   Development/Libraries/C and C++
@@ -49,9 +58,10 @@ BuildRequires: autoconf automake libtool curl make
 BuildRequires: gcc-c++
 BuildRequires: gcc-toolset-10-gcc-c++
 BuildRequires: libzstd-devel bzip2-devel snappy liburing-devel
-BuildRequires: folly-devel
+BuildRequires: %{_folly_devel_package_name}
+BuildRequires: %{_boost_devel_package_name}
 Requires: zlib libstdc++ libzstd
-Requires: folly liburing
+Requires: %{_folly_package_name} %{_boost_package_name} liburing
 
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-%{release}-XXXXXX)
 %define __product protobuf
@@ -105,8 +115,8 @@ env \
     DISABLE_WARNING_AS_ERROR=1 \
     DEBUG_LEVEL=0 \
     PORTABLE=1 \
-    EXTRA_CXXFLAGS='-std=gnu++20 -fPIC' \
-    EXTRA_LDFLAGS='-lfolly'
+    EXTRA_CXXFLAGS='-std=gnu++20 -fPIC -I%{_boost_prefix}/include' \
+    EXTRA_LDFLAGS='-L%{_boost_prefix}/lib64 -lfolly'
 
 %install
 rm -rf %{buildroot}
@@ -126,8 +136,8 @@ Name: rocksdb
 Description: An embeddable persistent key-value store for fast storage
 Version: %{version}
 Libs: -L\${libdir} -lrocksdb
-Libs.private: -lfolly -luring -lzstd -lz -lbz2 -lsnappy -llz4 -pthread -lrt -ldl
-Cflags: -I\${includedir} -std=c++20
+Libs.private: -L%{_boost_prefix}/lib64 -lfolly -luring -lzstd -lz -lbz2 -lsnappy -llz4 -pthread -lrt -ldl
+Cflags: -I\${includedir} -I%{_boost_prefix}/include -std=c++20
 PC_EOF
 mkdir -p %{buildroot}%{_libdir}/cmake/rocksdb
 cat > %{buildroot}%{_libdir}/cmake/rocksdb/RocksDBConfig.cmake <<'CMAKE_EOF'
@@ -136,7 +146,7 @@ include(CMakeFindDependencyMacro)
 add_library(RocksDB::rocksdb STATIC IMPORTED)
 set_target_properties(RocksDB::rocksdb PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../librocksdb.a"
-  INTERFACE_INCLUDE_DIRECTORIES "/usr/include"
+  INTERFACE_INCLUDE_DIRECTORIES "/usr/include;%{_boost_prefix}/include"
   INTERFACE_COMPILE_FEATURES cxx_std_20
   INTERFACE_LINK_LIBRARIES
     "folly;uring;zstd;z;bz2;snappy;lz4;pthread;rt;dl")
@@ -160,16 +170,42 @@ rm -rf %{buildroot}
 
 EOF
 
-VERSION=11.1.1
-
-$SUDO_PREFIX yum-builddep -y "$ROCKSDB_SPEC_FILE" || \
+${SUDO_PREFIX:-sudo} yum-builddep -y \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  --define "_folly_package_name $FOLLY_PACKAGE_NAME" \
+  --define "_folly_devel_package_name $FOLLY_DEVEL_PACKAGE_NAME" \
+  --define "_boost_package_name $BOOST_PACKAGE_NAME" \
+  --define "_boost_devel_package_name $BOOST_DEVEL_PACKAGE_NAME" \
+  --define "_boost_prefix $BOOST_PREFIX" \
+  "$ROCKSDB_SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
 
-spectool --force -g -R --define "_version $VERSION" "$ROCKSDB_SPEC_FILE" || \
+spectool --force -g -R \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  --define "_folly_package_name $FOLLY_PACKAGE_NAME" \
+  --define "_folly_devel_package_name $FOLLY_DEVEL_PACKAGE_NAME" \
+  --define "_boost_package_name $BOOST_PACKAGE_NAME" \
+  --define "_boost_devel_package_name $BOOST_DEVEL_PACKAGE_NAME" \
+  --define "_boost_prefix $BOOST_PREFIX" \
+  "$ROCKSDB_SPEC_FILE" || \
   { echo "can't download rocksdb source RPM" >&2 ; exit 1 ; }
 
-rpmbuild --force -ba --define "_version $VERSION" "$ROCKSDB_SPEC_FILE" || \
+rpmbuild --force -ba \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  --define "_folly_package_name $FOLLY_PACKAGE_NAME" \
+  --define "_folly_devel_package_name $FOLLY_DEVEL_PACKAGE_NAME" \
+  --define "_boost_package_name $BOOST_PACKAGE_NAME" \
+  --define "_boost_devel_package_name $BOOST_DEVEL_PACKAGE_NAME" \
+  --define "_boost_prefix $BOOST_PREFIX" \
+  "$ROCKSDB_SPEC_FILE" || \
   { echo "can't build rocksdbf RPM" >&2 ; exit 1 ; }
 
-# install librdkafka
-cp $BIN_RPM_FOLDER/rocksdb*.rpm $RES_RPMS/
+cp "$BIN_RPM_FOLDER"/rocksdb-"$VERSION"-"$RELEASE".*.rpm "$RES_RPMS"/
+cp "$BIN_RPM_FOLDER"/rocksdb-devel-"$VERSION"-"$RELEASE".*.rpm "$RES_RPMS"/
+
+echo "Built packages:"
+ls -1 "$RES_RPMS"/rocksdb-"$VERSION"-"$RELEASE".*.rpm
+ls -1 "$RES_RPMS"/rocksdb-devel-"$VERSION"-"$RELEASE".*.rpm

@@ -32,9 +32,11 @@
 #define __open_ssl_ver_req      1.0.1e-42.el7
 %define __open_ssl_ver_req      1.1.1k-7
 %define __vanga_ver_req         1.0.0.21
-%define __rocksdb_ver_req       11.1.1
+%define __rocksdb_ver_req       11.1.1-ssv4.el8
+%define __folly_ver_req         2024.01.08.00-ssv2.el8
 %define __jemalloc_ver_req      5.3.0-ssv1.el8
-%define __boost_suffix          176
+%define __boost_package         boost185
+%define __boost_ver_req         1.85.0-ssv1.el8
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
@@ -111,6 +113,8 @@ BuildRequires: bison >= 3.0.4-10
 BuildRequires: zeromq-devel = %__zeromq_ver_req
 BuildRequires: librdkafka-devel = %__librdkafka_ver_req
 BuildRequires: vanga-devel = %__vanga_ver_req
+BuildRequires: %{__boost_package}-devel = %__boost_ver_req
+BuildRequires: folly-devel = %__folly_ver_req
 BuildRequires: rocksdb-devel = %__rocksdb_ver_req
 Requires: postgresql94-libs >= %{__postgresql_ver_req}
 Requires: openssl >= %{__open_ssl_ver_req}
@@ -148,6 +152,8 @@ Requires: foros-dictionaries
 Requires: zeromq = %__zeromq_ver_req
 Requires: librdkafka1 = %__librdkafka_ver_req
 Requires: vanga = %__vanga_ver_req
+Requires: %{__boost_package} = %__boost_ver_req
+Requires: folly = %__folly_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 1:2.1.2-8.el8
 Requires: cryptopp libatomic libev
@@ -167,10 +173,6 @@ Requires: python3.12
 Requires: python3.12-aiohttp python3.12-psycopg2
 Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect
 
-#Requires: libicu = 50.2-4
-#BuildRequires: libicu-devel = 50.2-4
-BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
-Requires: boost%{__boost_suffix} = 1.76.0
 BuildRequires: xgboost-devel
 Requires: xgboost
 BuildRequires: gtest-devel = 1.12.1
