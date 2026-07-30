@@ -144,24 +144,23 @@ namespace
     noexcept
   {
     freq_cap_config.confirm_timeout = confirm_timeout;
+    const CORBA::ULong freq_caps_length = freq_cap_config_info.freq_caps.length();
+    freq_cap_config.freq_caps.reserve(freq_caps_length);
 
-    for (CORBA::ULong i = 0; i < freq_cap_config_info.freq_caps.length(); ++i)
+    for (CORBA::ULong i = 0; i < freq_caps_length; ++i)
     {
-      const AdServer::CampaignSvcs_v360::FreqCapInfo& fc =
-        freq_cap_config_info.freq_caps[i];
+      const AdServer::CampaignSvcs_v360::FreqCapInfo& fc = freq_cap_config_info.freq_caps[i];
       AdServer::Commons::FreqCap freq_cap;
       freq_cap.fc_id = fc.fc_id;
       freq_cap.lifelimit = fc.lifelimit;
       freq_cap.period = Generics::Time(fc.period);
       freq_cap.window_limit = fc.window_limit;
       freq_cap.window_time = Generics::Time(fc.window_time);
-      freq_cap_config.freq_caps.insert(
-        std::make_pair(freq_cap.fc_id, freq_cap));
+      freq_cap_config.freq_caps.emplace(freq_cap.fc_id, freq_cap);
     }
 
-    CorbaAlgs::convert_sequence(
-      freq_cap_config_info.campaign_ids,
-      freq_cap_config.campaign_ids);
+    freq_cap_config.campaign_ids.reserve(freq_cap_config_info.campaign_ids.length());
+    CorbaAlgs::convert_sequence(freq_cap_config_info.campaign_ids, freq_cap_config.campaign_ids);
   }
 
   AdServer::UserInfoSvcs::UserInfoConfigSourcePtr
@@ -232,8 +231,7 @@ namespace AdServer::UserInfoSvcs
       service_index_(service_index),
       confirm_timeout_(confirm_timeout)
   {
-    State::CampaignServerPoolConfig pool_config(
-      state_->corba_client_adapter.in());
+    State::CampaignServerPoolConfig pool_config(state_->corba_client_adapter.in());
     pool_config.timeout = Generics::Time(10); // 10 sec
 
     for (const auto& campaign_server_ref : campaign_server_refs)
@@ -274,12 +272,10 @@ namespace AdServer::UserInfoSvcs
         config.channels_config = new ChannelDictionary();
         config.freq_cap_config = new FreqCapConfig();
 
-        typedef std::map<BehavIdTypeKey, ChannelIntervalsPack_var>
-          BehavIdChannelIntervalMap;
+        using BehavIdChannelIntervalMap = std::map<BehavIdTypeKey, ChannelIntervalsPack_var>;
         BehavIdChannelIntervalMap behav_channel_interval_map;
 
-        typedef std::map<StrBehavIdTypeKey, ChannelIntervalsPack_var>
-          StrBehavIdChannelIntervalMap;
+        using StrBehavIdChannelIntervalMap = std::map<StrBehavIdTypeKey, ChannelIntervalsPack_var>;
         StrBehavIdChannelIntervalMap str_behav_channel_interval_map;
 
         SimpleChannelPropertiesList channel_properties_list;
@@ -297,11 +293,13 @@ namespace AdServer::UserInfoSvcs
           CampaignSvcs::BriefSimpleChannelAnswer_var channels_to_load =
             campaign_server->brief_simple_channels(settings);
 
-          res_length += channels_to_load->simple_channels.length();
+          const CORBA::ULong simple_channels_length = channels_to_load->simple_channels.length();
+          res_length += simple_channels_length;
+          config.channels_config->channel_features.reserve(
+            config.channels_config->channel_features.size() +
+            simple_channels_length);
 
-          for (CORBA::ULong i = 0;
-            i < channels_to_load->simple_channels.length();
-            ++i)
+          for (CORBA::ULong i = 0; i < simple_channels_length; ++i)
           {
             const CampaignSvcs::BriefSimpleChannelKey& channel =
               channels_to_load->simple_channels[i];
@@ -321,8 +319,7 @@ namespace AdServer::UserInfoSvcs
               ChannelFeatures(channel.discover, channel.threshold)));
           }
 
-          for (CORBA::ULong i = 0; i < channels_to_load->behav_params.length();
-            ++i)
+          for (CORBA::ULong i = 0; i < channels_to_load->behav_params.length(); ++i)
           {
             const CampaignSvcs::BriefBehavParamInfo& bpi =
               channels_to_load->behav_params[i];
@@ -332,8 +329,7 @@ namespace AdServer::UserInfoSvcs
               ChannelIntervalsPack_var page_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var search_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var url_cip = new ChannelIntervalsPack();
-              ChannelIntervalsPack_var url_keyword_cip =
-                new ChannelIntervalsPack();
+              ChannelIntervalsPack_var url_keyword_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var audience_cip = new ChannelIntervalsPack();
 
               for (CORBA::ULong j = 0; j < bpi.bp_seq.length(); ++j)
@@ -369,8 +365,7 @@ namespace AdServer::UserInfoSvcs
                 {
                   if (bp.trigger_type == AUDIENCE_CHANNEL)
                   {
-                    if (bp.time_from != 0 || bp.time_to == 0 ||
-                      bp.min_visits != 1)
+                    if (bp.time_from != 0 || bp.time_to == 0 || bp.min_visits != 1)
                     {
                       logger_->stream(
                         Logging::Logger::WARNING,
@@ -467,8 +462,7 @@ namespace AdServer::UserInfoSvcs
               ChannelIntervalsPack_var page_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var search_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var url_cip = new ChannelIntervalsPack();
-              ChannelIntervalsPack_var url_keyword_cip =
-                new ChannelIntervalsPack();
+              ChannelIntervalsPack_var url_keyword_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var audience_cip = new ChannelIntervalsPack();
 
               for (CORBA::ULong j = 0; j < kbpi.bp_seq.length(); ++j)
@@ -590,8 +584,7 @@ namespace AdServer::UserInfoSvcs
           }
         }
 
-        for (SimpleChannelPropertiesList::const_iterator it =
-            channel_properties_list.begin();
+        for (SimpleChannelPropertiesList::const_iterator it = channel_properties_list.begin();
           it != channel_properties_list.end(); ++it)
         {
           const SimpleChannelProperties& key = *it;
@@ -612,8 +605,7 @@ namespace AdServer::UserInfoSvcs
 
             if (it != behav_channel_interval_map.end())
             {
-              config.channels_config->search_channels[key.channel_id] =
-                it->second;
+              config.channels_config->search_channels[key.channel_id] = it->second;
             }
 
             it = behav_channel_interval_map.find(
@@ -629,8 +621,7 @@ namespace AdServer::UserInfoSvcs
 
             if (it != behav_channel_interval_map.end())
             {
-              config.channels_config->url_keyword_channels[key.channel_id] =
-                it->second;
+              config.channels_config->url_keyword_channels[key.channel_id] = it->second;
             }
 
             it = behav_channel_interval_map.find(
@@ -638,8 +629,7 @@ namespace AdServer::UserInfoSvcs
 
             if (it != behav_channel_interval_map.end())
             {
-              config.channels_config->audience_channels[key.channel_id] =
-                it->second;
+              config.channels_config->audience_channels[key.channel_id] = it->second;
             }
           }
           else if (!key.str_behav_param_list_id.empty())
@@ -658,8 +648,7 @@ namespace AdServer::UserInfoSvcs
 
             if (it != str_behav_channel_interval_map.end())
             {
-              config.channels_config->search_channels[key.channel_id] =
-                it->second;
+              config.channels_config->search_channels[key.channel_id] = it->second;
             }
 
             it = str_behav_channel_interval_map.find(StrBehavIdTypeKey(
@@ -675,8 +664,7 @@ namespace AdServer::UserInfoSvcs
 
             if (it != str_behav_channel_interval_map.end())
             {
-              config.channels_config->url_keyword_channels[key.channel_id] =
-                it->second;
+              config.channels_config->url_keyword_channels[key.channel_id] = it->second;
             }
 
             it = str_behav_channel_interval_map.find(StrBehavIdTypeKey(
@@ -684,8 +672,7 @@ namespace AdServer::UserInfoSvcs
 
             if (it != str_behav_channel_interval_map.end())
             {
-              config.channels_config->audience_channels[key.channel_id] =
-                it->second;
+              config.channels_config->audience_channels[key.channel_id] = it->second;
             }
           }
         }
@@ -699,13 +686,9 @@ namespace AdServer::UserInfoSvcs
             "ADS-IMPL-55");
         }
 
-        CampaignSvcs::FreqCapConfigInfo_var freq_cap_config_info =
-          campaign_server->freq_caps();
+        CampaignSvcs::FreqCapConfigInfo_var freq_cap_config_info = campaign_server->freq_caps();
 
-        apply_freq_caps_(
-          *config.freq_cap_config,
-          *freq_cap_config_info,
-          confirm_timeout_);
+        apply_freq_caps_(*config.freq_cap_config, *freq_cap_config_info, confirm_timeout_);
 
         return config;
       }
@@ -716,21 +699,16 @@ namespace AdServer::UserInfoSvcs
         logger_->sstream(
           Logging::Logger::NOTICE,
           Aspect::USER_INFO_MANAGER,
-          "ADS-ICON-10")
-          << FUN
-          << ": Can't update channels configuration. "
-            "Campaign Server is not ready. "
-            "Caught CampaignServer::NotReady: "
-          << ex.description;
+          "ADS-ICON-10") << FUN << ": Can't update channels configuration. "
+          "Campaign Server is not ready. Caught CampaignServer::NotReady: " <<
+          ex.description;
       }
       catch (const CampaignSvcs::CampaignServer::
         ImplementationException& exc)
       {
         Stream::Error ostr;
-        ostr << FUN
-          << ": Can't update channels configuration. "
-            "Caught CampaignServer::ImplementationException: "
-          << exc.description;
+        ostr << FUN << ": Can't update channels configuration. "
+          "Caught CampaignServer::ImplementationException: " << exc.description;
         campaign_server.release_bad(ostr.str());
         logger_->log(
           ostr.str(),
@@ -741,10 +719,8 @@ namespace AdServer::UserInfoSvcs
       catch (const CORBA::SystemException& ex)
       {
         Stream::Error ostr;
-        ostr << FUN
-          << ": Can't update channels configuration. "
-            "Caught CORBA::SystemException: "
-          << ex;
+        ostr << FUN << ": Can't update channels configuration. "
+          "Caught CORBA::SystemException: " << ex;
         campaign_server.release_bad(ostr.str());
         logger_->log(
           ostr.str(),

@@ -407,32 +407,14 @@ namespace AdServer::CampaignSvcs
 
     if (it != campaign_config->pub_pixel_accounts.end())
     {
-      AccountSet::const_iterator acc_it = it->second.begin();
-      AccountIdSet::const_iterator excl_acc_it =
-        exclude_publisher_account_ids.begin();
-
-      while (acc_it != it->second.end() && excl_acc_it != exclude_publisher_account_ids.end())
+      for(AccountSet::const_iterator acc_it = it->second.begin();
+          acc_it != it->second.end(); ++acc_it)
       {
-        if ((*acc_it)->account_id < *excl_acc_it)
+        if(exclude_publisher_account_ids.find((*acc_it)->account_id) ==
+          exclude_publisher_account_ids.end())
         {
           result_account_ids.push_back(*acc_it);
-          ++acc_it;
         }
-        else if (*excl_acc_it < (*acc_it)->account_id)
-        {
-          ++excl_acc_it;
-        }
-        else
-        {
-          ++acc_it;
-          ++excl_acc_it;
-        }
-      }
-
-      while(acc_it != it->second.end())
-      {
-        result_account_ids.push_back(*acc_it);
-        ++acc_it;
       }
     }
 

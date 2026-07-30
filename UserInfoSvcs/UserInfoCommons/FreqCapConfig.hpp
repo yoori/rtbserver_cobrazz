@@ -1,9 +1,10 @@
 #pragma once
 
+#include <boost/unordered/unordered_flat_map.hpp>
+#include <boost/unordered/unordered_flat_set.hpp>
+
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include <Generics/GnuHashTable.hpp>
-#include <Generics/HashTableAdapters.hpp>
 
 #include <Commons/FreqCap.hpp>
 
@@ -13,12 +14,11 @@ namespace UserInfoSvcs
 {
   struct FreqCapConfig: public virtual ReferenceCounting::AtomicImpl
   {
-    typedef Generics::GnuHashTable<
-      Generics::NumericHashAdapter<unsigned long>,
-      Commons::FreqCap>
-      FreqCapMap;
+    using FreqCapMap =
+      boost::unordered_flat_map<unsigned long, Commons::FreqCap>;
 
-    typedef std::set<unsigned long> CampaignIds;
+    using CampaignIds =
+      boost::unordered_flat_set<unsigned long>;
 
     Generics::Time confirm_timeout;
     FreqCapMap freq_caps;

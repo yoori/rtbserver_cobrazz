@@ -5,10 +5,10 @@
 #include <set>
 #include <map>
 #include <memory>
-#include <unordered_set>
 
 #include <boost/functional/hash.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
+#include <boost/unordered/unordered_flat_set.hpp>
 
 #include <eh/Exception.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -34,9 +34,12 @@
 namespace AdServer::CampaignSvcs::AdInstances
 {
   typedef Generics::Time Timestamp;
-  typedef std::set<std::string> StringSet;
+  using StringSet = boost::unordered_flat_set<
+    std::string,
+    TransparentStringHash,
+    TransparentStringEqual>;
   typedef std::list<std::string> StringList;
-  typedef std::set<unsigned long> AccountIdSet;
+  using AccountIdSet = boost::unordered_flat_set<unsigned long>;
   typedef std::list<unsigned long> AccountIdList;
   //typedef std::vector<unsigned long> AccountIdArray;
   typedef std::map<unsigned long, std::string> PlatformMap;
@@ -438,17 +441,24 @@ namespace AdServer::CampaignSvcs::AdInstances
   typedef std::vector<Account_var> AccountArray;
   typedef std::map<unsigned long, Account_var> AccountMap;
 
-  using CreativeCategoryIdSet = std::set<unsigned long>;
+  using CreativeCategoryIdSet = boost::unordered_flat_set<unsigned long>;
   using MonoCreativeCategoryIdSet = Generics::MonoSet<unsigned long>;
 
-  struct
-  CompareAccountByID : public std::binary_function <Account_var, Account_var, bool>
+  struct AccountHashById
   {
-    bool operator()(
-      const Account_var& a1,
-      const Account_var& a2) const
+    std::size_t
+    operator()(const Account_var& account) const noexcept
     {
-      return (a1->account_id < a2->account_id);
+      return std::hash<unsigned long>()(account->account_id);
+    }
+  };
+
+  struct AccountEqualById
+  {
+    bool
+    operator()(const Account_var& left, const Account_var& right) const noexcept
+    {
+      return left->account_id == right->account_id;
     }
   };
 
@@ -464,7 +474,7 @@ namespace AdServer::CampaignSvcs::AdInstances
       TAG_EXCLUSION_FLAG = 0x400
     };
 
-    typedef std::set<unsigned long> CreativeIdSet;
+    using CreativeIdSet = boost::unordered_flat_set<unsigned long>;
 
   public:
     unsigned long site_id;
@@ -499,7 +509,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
   typedef ReferenceCounting::SmartPtr<Site> Site_var;
   typedef std::map<unsigned long, Site_var> SiteMap;
-  using CreativeCategoryIdSet = std::set<unsigned long>;
+  using CreativeCategoryIdSet = boost::unordered_flat_set<unsigned long>;
 
   /** Tag */
   class Tag: public virtual ReferenceCounting::AtomicImpl
@@ -737,7 +747,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   {
   public:
     typedef std::vector<unsigned long> CategoryIdArray;
-    typedef std::set<unsigned long> CategorySet;
+    using CategorySet = boost::unordered_flat_set<unsigned long>;
 
     struct Size
     {
@@ -821,9 +831,9 @@ namespace AdServer::CampaignSvcs::AdInstances
   using CreativeMap = std::map<unsigned long, Creative_var>;
   using CcidMap = boost::unordered_flat_map<unsigned long, Creative_var>;
 
-  typedef std::set<unsigned long> ColoIdSet;
+  using ColoIdSet = boost::unordered_flat_set<unsigned long>;
 
-  typedef std::set<unsigned long> SiteIdSet;
+  using SiteIdSet = boost::unordered_flat_set<unsigned long>;
 
   struct Campaign:
     public AvailableAndMinCTRSetter,
@@ -831,7 +841,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   {
   public:
     typedef std::set<unsigned long> OrderSetIdSet;
-    using SizeIdSet = std::unordered_set<unsigned long>;
+    using SizeIdSet = boost::unordered_flat_set<unsigned long>;
 
     struct CreativeBySizeKey
     {
@@ -1133,7 +1143,10 @@ namespace AdServer::CampaignSvcs::AdInstances
     size_t hash_;
   };
 
-  typedef std::set<Account_var, CompareAccountByID> AccountSet;
+  using AccountSet = boost::unordered_flat_set<
+    Account_var,
+    AccountHashById,
+    AccountEqualById>;
 
   using PubPixelAccountMap = boost::unordered_flat_map<
     PubPixelAccountKey,

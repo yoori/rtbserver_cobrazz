@@ -1,13 +1,13 @@
 #pragma once
 
 #include <list>
-#include <set>
 #include <map>
 #include <functional>
 #include <string>
 #include <string_view>
 
 #include <boost/unordered/unordered_flat_map.hpp>
+#include <boost/unordered/unordered_flat_set.hpp>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -244,7 +244,10 @@ namespace AdServer::CampaignSvcs
     std::string last_c_param;
   };
 
-  using TokenSet = std::set<std::string>;
+  using TokenSet = boost::unordered_flat_set<
+    std::string,
+    TransparentStringHash,
+    TransparentStringEqual>;
 
   struct TokenOptionValue
   {
