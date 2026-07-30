@@ -1704,7 +1704,7 @@ namespace AdServer::Bidding
   bool
   RequestInfoFiller::fill_adid(std::string_view source_id) const noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
+    auto source_it = sources_.find(source_id);
     if(source_it != sources_.end())
     {
       return source_it->second.fill_adid;
@@ -1719,7 +1719,7 @@ namespace AdServer::Bidding
     std::string_view source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
+    auto source_it = sources_.find(source_id);
     if(source_it != sources_.end())
     {
       request_info.ad_instantiate_type = source_it->second.vast_instantiate_type;
@@ -1735,7 +1735,7 @@ namespace AdServer::Bidding
     std::string_view source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
+    auto source_it = sources_.find(source_id);
     if(source_it != sources_.end())
     {
       request_info.enabled_notice = (
@@ -1749,7 +1749,7 @@ namespace AdServer::Bidding
     std::string_view source_id) const
     noexcept
   {
-    SourceMap::const_iterator source_it = sources_.find(std::string(source_id));
+    auto source_it = sources_.find(source_id);
     if(source_it != sources_.end())
     {
       if (request_info.publisher_account_ids.empty())

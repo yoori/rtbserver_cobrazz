@@ -1,7 +1,6 @@
 #include <sstream>
 #include <algorithm>
 #include <iostream>
-#include <map>
 #include <set>
 #include <utility>
 #include <vector>
@@ -15,8 +14,6 @@
 #include <String/AsciiStringManip.hpp>
 
 #include <Generics/Uuid.hpp>
-#include <Generics/GnuHashTable.hpp>
-#include <Generics/HashTableAdapters.hpp>
 #include "Generics/CompositeMetricsProvider.hpp"
 
 #include <Commons/UserInfoManip.hpp>

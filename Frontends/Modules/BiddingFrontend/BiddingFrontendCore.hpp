@@ -1,9 +1,10 @@
 #pragma once
 
 #include <atomic>
-#include <map>
 #include <memory>
 #include <vector>
+
+#include <boost/unordered/unordered_flat_map.hpp>
 
 #include <Logger/Logger.hpp>
 #include <Generics/AtomicInt.hpp>
@@ -95,7 +96,8 @@ namespace AdServer::Bidding
         unsigned long flags;
       };
 
-      using ColocationMap = std::map<unsigned long, Colocation>;
+      using ColocationMap =
+        boost::unordered_flat_map<unsigned long, Colocation>;
 
       ColocationMap colocations;
 

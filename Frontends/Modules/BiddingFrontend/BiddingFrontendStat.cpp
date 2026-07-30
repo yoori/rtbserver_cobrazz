@@ -4,8 +4,6 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-#include <map>
-
 namespace
 {
   const Generics::Values::Key BF_REQ_COUNT        = "rtb_request_total";
@@ -266,13 +264,14 @@ namespace AdServer
     ++shard.bids[ccg_id];
   }
 
-  std::map<unsigned long, unsigned long>
+  StatHolder::SelectedBidsMap
   StatHolder::selected_bids() noexcept
   {
-    std::map<unsigned long, unsigned long> result;
+    SelectedBidsMap result;
     for(auto& shard : selected_bids_shards_)
     {
       std::lock_guard lock(shard.lock);
+      result.reserve(result.size() + shard.bids.size());
       for(const auto& [ccg_id, count] : shard.bids)
       {
         result[ccg_id] += count;

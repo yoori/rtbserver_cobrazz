@@ -4,8 +4,8 @@
 #include <eh/Exception.hpp>
 #include <atomic>
 #include <array>
-#include <map>
 #include <mutex>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/MetricsProvider.hpp>
 #include <Generics/Values.hpp>
@@ -88,7 +88,10 @@ namespace AdServer
     void
     add_selected_bid(unsigned long ccg_id) noexcept;
 
-    std::map<unsigned long, unsigned long>
+    using SelectedBidsMap =
+      boost::unordered_flat_map<unsigned long, unsigned long>;
+
+    SelectedBidsMap
     selected_bids() noexcept;
 
     void
@@ -246,7 +249,7 @@ namespace AdServer
     struct SelectedBidsShard
     {
       std::mutex lock;
-      std::map<unsigned long, unsigned long> bids;
+      SelectedBidsMap bids;
     };
 
     static constexpr std::size_t SELECTED_BIDS_SHARDS_SIZE = 64;

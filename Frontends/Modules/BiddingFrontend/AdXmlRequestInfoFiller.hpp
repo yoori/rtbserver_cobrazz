@@ -8,6 +8,8 @@
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 
+#include "HashMaps.hpp"
+
 namespace AdServer::Bidding
 {
   struct RequestInfo;
@@ -36,9 +38,8 @@ namespace AdServer::Bidding
       RequestParamProcessor;
     typedef ReferenceCounting::SmartPtr<RequestParamProcessor>
       RequestParamProcessor_var;
-    typedef Generics::GnuHashTable<
-      Generics::SubStringHashAdapter, RequestParamProcessor_var>
-      ParamProcessorMap;
+    using ParamProcessorMap =
+      SubStringHashAdapterFlatMap<RequestParamProcessor_var>;
 
   protected:
     void

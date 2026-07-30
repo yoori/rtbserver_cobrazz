@@ -9,7 +9,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Generics/GnuHashTable.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>

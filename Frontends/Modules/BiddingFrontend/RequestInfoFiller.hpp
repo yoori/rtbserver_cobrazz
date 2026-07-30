@@ -7,11 +7,12 @@
 #include <string_view>
 #include <memory>
 
+#include <boost/unordered/unordered_flat_map.hpp>
+
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Uuid.hpp>
-#include <Generics/GnuHashTable.hpp>
 
 #include <HTTP/Http.hpp>
 
@@ -26,6 +27,7 @@
 #include <Frontends/CommonModule/CommonModule.hpp>
 
 #include <Generics/MonoAllocator.hpp>
+#include "HashMaps.hpp"
 #include "CampaignManagerTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
@@ -501,7 +503,7 @@ namespace AdServer::Bidding
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    using SourceMap = std::map<std::string, SourceTraits>;
+    using SourceMap = StringFlatMap<SourceTraits>;
 
     using ExternalUserIdSet = std::set<std::string>;
 
@@ -537,7 +539,10 @@ namespace AdServer::Bidding
     };
 
     typedef ReferenceCounting::SmartPtr<AccountTraits> AccountTraits_var;
-    typedef std::unordered_map<unsigned long, AccountTraits_var> AccountTraitsById;
+    using AccountTraitsById =
+      boost::unordered_flat_map<unsigned long, AccountTraits_var>;
+    using OpenRtbEnumNameMap =
+      boost::unordered_flat_map<unsigned int, std::string>;
 
   public:
     RequestInfoFiller(
@@ -624,16 +629,14 @@ namespace AdServer::Bidding
 
     typedef std::shared_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
-    typedef Generics::GnuHashTable<Generics::SubStringHashAdapter, std::string>
-      SourceNameMap;
+    using SourceNameMap = SubStringHashAdapterFlatMap<std::string>;
 
     typedef FrontendCommons::RequestParamProcessor<RequestInfo>
       RequestInfoParamProcessor;
     typedef ReferenceCounting::SmartPtr<RequestInfoParamProcessor>
       RequestInfoParamProcessor_var;
-    typedef Generics::GnuHashTable<
-      Generics::SubStringHashAdapter, RequestInfoParamProcessor_var>
-      ParamProcessorMap;
+    using ParamProcessorMap =
+      SubStringHashAdapterFlatMap<RequestInfoParamProcessor_var>;
 
   protected:
     bool
@@ -803,10 +806,8 @@ namespace AdServer::Bidding
 
     std::unique_ptr<AdXmlRequestInfoFiller> adxml_request_info_filler_;
 
-    const std::unordered_map<unsigned int, std::string>
-      openrtb_devicetype_mapping_;
-    const std::unordered_map<unsigned int, std::string>
-      openrtb_video_placement_mapping_;
+    const OpenRtbEnumNameMap openrtb_devicetype_mapping_;
+    const OpenRtbEnumNameMap openrtb_video_placement_mapping_;
   };
 }
 
