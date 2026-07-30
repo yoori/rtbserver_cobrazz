@@ -581,7 +581,7 @@ namespace
     fixture.campaign_config->creatives[fixture.creative->creative_id] =
       fixture.creative;
     fixture.campaign_config->campaign_creatives.emplace(
-      Generics::NumericHashAdapter<unsigned long>(fixture.creative->ccid),
+      fixture.creative->ccid,
       fixture.creative);
 
     ReferenceCounting::SmartPtr<RCOptionTokenValueMap> template_tokens(
