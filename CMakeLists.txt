@@ -22,45 +22,34 @@ set(CMAKE_MODULE_PATH
 )
 
 set(FOROS_BOOST_ROOT "/opt/foros/boost185" CACHE PATH "Boost installation root")
-if(EXISTS "${FOROS_BOOST_ROOT}/include/boost/version.hpp")
-  set(BOOST_ROOT "${FOROS_BOOST_ROOT}" CACHE PATH "Boost root" FORCE)
-  set(Boost_ROOT "${FOROS_BOOST_ROOT}" CACHE PATH "Boost root" FORCE)
-  set(Boost_DIR
-    "${FOROS_BOOST_ROOT}/lib64/cmake/Boost-1.85.0"
-    CACHE PATH "Boost CMake config directory"
-    FORCE)
-  set(BOOST_INCLUDEDIR
-    "${FOROS_BOOST_ROOT}/include"
-    CACHE PATH "Boost include directory"
-    FORCE)
-  set(Boost_INCLUDE_DIR
-    "${FOROS_BOOST_ROOT}/include"
-    CACHE PATH "Boost include directory"
-    FORCE)
-  set(BOOST_LIBRARYDIR
-    "${FOROS_BOOST_ROOT}/lib64"
-    CACHE PATH "Boost library directory"
-    FORCE)
-  set(Boost_LIBRARY_DIR_DEBUG
-    "${FOROS_BOOST_ROOT}/lib64"
-    CACHE PATH "Boost debug library directory"
-    FORCE)
-  set(Boost_LIBRARY_DIR_RELEASE
-    "${FOROS_BOOST_ROOT}/lib64"
-    CACHE PATH "Boost release library directory"
-    FORCE)
-  set(Boost_THREAD_LIBRARY_DEBUG
-    "${FOROS_BOOST_ROOT}/lib64/libboost_thread.so"
-    CACHE FILEPATH "Boost thread debug library"
-    FORCE)
-  set(Boost_THREAD_LIBRARY_RELEASE
-    "${FOROS_BOOST_ROOT}/lib64/libboost_thread.so"
-    CACHE FILEPATH "Boost thread release library"
-    FORCE)
-  set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Use only configured Boost root" FORCE)
-  include_directories(SYSTEM "${FOROS_BOOST_ROOT}/include")
-  link_directories("${FOROS_BOOST_ROOT}/lib64")
+if(NOT EXISTS "${FOROS_BOOST_ROOT}/include/boost/version.hpp")
+  message(FATAL_ERROR "Boost headers not found in ${FOROS_BOOST_ROOT}")
 endif()
+
+set(Boost_DIR
+  "${FOROS_BOOST_ROOT}/lib64/cmake/Boost-1.85.0"
+  CACHE PATH "Boost CMake config directory"
+  FORCE)
+
+find_package(Boost 1.85.0 CONFIG REQUIRED COMPONENTS system thread)
+
+if(NOT TARGET Boost::headers)
+  message(FATAL_ERROR "Boost::headers target not found")
+endif()
+
+get_target_property(
+  BOOST_HEADERS_COMPILE_OPTIONS
+  Boost::headers
+  INTERFACE_COMPILE_OPTIONS)
+if(NOT BOOST_HEADERS_COMPILE_OPTIONS)
+  set(BOOST_HEADERS_COMPILE_OPTIONS)
+endif()
+if(NOT "-msse2" IN_LIST BOOST_HEADERS_COMPILE_OPTIONS)
+  set_property(TARGET Boost::headers APPEND PROPERTY INTERFACE_COMPILE_OPTIONS -msse2)
+endif()
+unset(BOOST_HEADERS_COMPILE_OPTIONS)
+
+link_libraries(Boost::headers)
 
 find_package(ACE REQUIRED)
 find_package(OpenSSL REQUIRED)

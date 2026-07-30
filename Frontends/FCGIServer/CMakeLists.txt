@@ -8,6 +8,7 @@ add_library(FrontendServerCommons
 
 target_link_libraries(FrontendServerCommons
   FCGI
+  Boost::headers
 )
 
 add_executable(FCGIServer
@@ -51,6 +52,6 @@ target_link_libraries(FCGIServer
   Generics
   SecToken
 
-  boost_system
+  Boost::system
   nghttp2
 )

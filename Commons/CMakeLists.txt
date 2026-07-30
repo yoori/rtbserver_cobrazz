@@ -43,6 +43,7 @@ target_link_libraries(Commons
   TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
   zmq  pthread ACE Logger Sync
   CorbaObjectRefIDL
+  Boost::headers
 )
 
 set(fast_json_parser_x86 OFF)

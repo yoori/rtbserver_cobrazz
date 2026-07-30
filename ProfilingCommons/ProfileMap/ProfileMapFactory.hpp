@@ -4,7 +4,6 @@
 #include <string>
 #include <utility>
 
-#include <Commons/ExecutorPool.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <ProfilingCommons/PlainStorage3/LevelProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ExpireProfileMap.hpp>

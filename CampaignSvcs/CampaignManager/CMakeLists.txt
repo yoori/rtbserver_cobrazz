@@ -89,6 +89,7 @@ target_link_libraries(CampaignConfig
   Generics
   HTTP
   ExpressionChannel
+  Boost::headers
 )
 
 add_library(CampaignConfigSource
@@ -112,6 +113,7 @@ target_link_libraries(CampaignIndex
   Generics
   CampaignConfig
   CreativeTemplateArgs
+  Boost::headers
 )
 
 add_library( CreativeTemplateArgs SHARED
@@ -121,6 +123,7 @@ add_library( CreativeTemplateArgs SHARED
 target_link_libraries(CreativeTemplateArgs
   Generics
   Commons
+  Boost::headers
 )
 
 add_library(InstantiateAdArgs STATIC
@@ -156,6 +159,10 @@ add_library(PassbackTemplate
   PassbackTemplate.cpp
 )
 
+target_link_libraries(PassbackTemplate
+  CreativeTemplateArgs
+)
+
 add_library(DomainParser
   DomainParser.cpp
 )
@@ -174,6 +181,7 @@ target_link_libraries(CampaignManagerLogger
   CampaignConfig
   CTRProviderCore
   ExpressionChannelIndex
+  Boost::headers
 )
 
 target_include_directories(CampaignManagerLogger
@@ -229,6 +237,7 @@ target_link_libraries(CampaignManager
   StatInfoIDL
   CampaignManagerGrpc
   BillingServerGrpcClient
+  Boost::headers
 )
 
 target_include_directories(CampaignManager PRIVATE

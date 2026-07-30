@@ -24,6 +24,7 @@ target_link_libraries(BiddingFrontend
   Stream
   Geoip
   Commons
+  Boost::headers
   ChannelGrpcClient
   UserInfoManagerGrpcClient
   UserBindClient

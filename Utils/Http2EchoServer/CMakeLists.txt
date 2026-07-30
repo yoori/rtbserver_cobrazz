@@ -8,6 +8,6 @@ target_link_libraries(Http2EchoServer
   Commons
   FCGI
   FrontendServerCommons
-  boost_system
+  Boost::system
   nghttp2
 )

@@ -20,6 +20,7 @@ target_link_libraries(FCGI
   Commons
   Stream
   FeConfigXSD
+  Boost::headers
 )
 
 add_library(ProcessingTemplates SHARED

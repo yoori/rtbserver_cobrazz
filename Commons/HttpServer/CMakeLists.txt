@@ -7,4 +7,5 @@ target_link_libraries(HttpServer
   Generics
   Sync
   pthread
+  Boost::headers
 )
