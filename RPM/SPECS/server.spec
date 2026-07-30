@@ -331,6 +331,11 @@ rm -f %{__cms_plugin_dst_dir}/%{__cms_plugin_name}.zip ||:
 
 %ifnarch noarch
 %pre
+if ! grep -qE '(^|[[:space:]])sse2([[:space:]]|$)' /proc/cpuinfo; then
+  echo "CPU with SSE2 support is required by %{name}" >&2
+  exit 1
+fi
+
 # for clean upgrade from previous version
 [ -h %__inst_root ] && rm  %__inst_root ||:
 

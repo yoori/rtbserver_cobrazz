@@ -223,7 +223,7 @@ namespace AdServer::Bidding
         ad_slot_result.native_data_tokens[0];
       root_json.add_string(
         Response::Json::TITLE,
-        String::SubString(token.value));
+        token.value);
     }
 
     if(ad_slot_result.native_data_tokens.size() >= 2)
@@ -232,7 +232,7 @@ namespace AdServer::Bidding
         ad_slot_result.native_data_tokens[1];
       root_json.add_string(
         Response::Json::DESCRIPTION,
-        String::SubString(token.value));
+        token.value);
     }
 
     if(ad_slot_result.native_image_tokens.size() >= 1)
@@ -242,7 +242,7 @@ namespace AdServer::Bidding
         ad_slot_result.native_image_tokens[0];
       root_json.add_string(
         Response::Json::IMAGE,
-        String::SubString(token.value));
+        token.value);
     }
 
     if(ad_slot_result.native_image_tokens.size() >= 2)
@@ -252,12 +252,12 @@ namespace AdServer::Bidding
         ad_slot_result.native_image_tokens[1];
       root_json.add_string(
         Response::Json::ICON,
-        String::SubString(token.value));
+        token.value);
     }
 
     root_json.add_string(
       Response::Json::CLICK_URL,
-      String::SubString(ad_slot_result.selected_creatives[0].click_url));
+      ad_slot_result.selected_creatives[0].click_url);
 
     root_json.add_number(Response::Json::TTL, Response::Json::TTL_VALUE);
     }

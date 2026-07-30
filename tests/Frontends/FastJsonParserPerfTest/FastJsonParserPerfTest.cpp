@@ -14,8 +14,57 @@ namespace
   {
     std::uint64_t count = 1000000;
     bool non_strict = false;
+    AdServer::Commons::FastJsonParserSimdLevel simd_level =
+      AdServer::Commons::FastJsonParserSimdLevel::AUTO;
     std::string request_file;
   };
+
+  const char*
+  simd_level_name(AdServer::Commons::FastJsonParserSimdLevel level) noexcept
+  {
+    switch(level)
+    {
+    case AdServer::Commons::FastJsonParserSimdLevel::AUTO:
+      return "auto";
+    case AdServer::Commons::FastJsonParserSimdLevel::SCALAR:
+      return "scalar";
+    case AdServer::Commons::FastJsonParserSimdLevel::SSE2:
+      return "sse2";
+    case AdServer::Commons::FastJsonParserSimdLevel::AVX2:
+      return "avx2";
+    case AdServer::Commons::FastJsonParserSimdLevel::AVX512BW:
+      return "avx512bw";
+    }
+
+    return "unknown";
+  }
+
+  AdServer::Commons::FastJsonParserSimdLevel
+  parse_simd_level(const std::string& value)
+  {
+    if(value == "auto")
+    {
+      return AdServer::Commons::FastJsonParserSimdLevel::AUTO;
+    }
+    if(value == "scalar")
+    {
+      return AdServer::Commons::FastJsonParserSimdLevel::SCALAR;
+    }
+    if(value == "sse2")
+    {
+      return AdServer::Commons::FastJsonParserSimdLevel::SSE2;
+    }
+    if(value == "avx2")
+    {
+      return AdServer::Commons::FastJsonParserSimdLevel::AVX2;
+    }
+    if(value == "avx512" || value == "avx512bw")
+    {
+      return AdServer::Commons::FastJsonParserSimdLevel::AVX512BW;
+    }
+
+    throw std::runtime_error("unexpected --simd value '" + value + "'");
+  }
 
   void
   print_usage()
@@ -25,6 +74,7 @@ namespace
       << "Options:\n"
       << "  --count <N>         parse calls count (default: 1000000)\n"
       << "  --request-file <P>  file with OpenRTB request body\n"
+      << "  --simd <MODE>       auto|scalar|sse2|avx2|avx512bw (default: auto)\n"
       << "  --non-strict        use non-strict skipped subtree parsing\n"
       << "  --help, -h          print this help\n";
   }
@@ -63,6 +113,14 @@ namespace
           throw std::runtime_error("--request-file requires value");
         }
         options.request_file = argv[i];
+      }
+      else if(arg == "--simd")
+      {
+        if(++i == argc)
+        {
+          throw std::runtime_error("--simd requires value");
+        }
+        options.simd_level = parse_simd_level(argv[i]);
       }
       else
       {
@@ -104,7 +162,9 @@ main(int argc, char** argv)
 
     const Options options = parse_options(argc, argv);
     const std::string request_body = read_request_body(options.request_file);
-    const AdServer::Commons::FastJsonParser<> parser(!options.non_strict);
+    const AdServer::Commons::FastJsonParser<> parser(
+      !options.non_strict,
+      options.simd_level);
 
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();
@@ -126,6 +186,9 @@ main(int argc, char** argv)
     std::cout
       << "count=" << options.count << '\n'
       << "strict=" << (options.non_strict ? "false" : "true") << '\n'
+      << "simd=" << simd_level_name(parser.simd_level()) << '\n'
+      << "available_simd=" << simd_level_name(
+        AdServer::Commons::FastJsonParser<>::available_simd_level()) << '\n'
       << "elapsed_sec=" << format_float(elapsed) << '\n'
       << "rate_per_sec=" << format_float(rate) << '\n'
       << "user_cpu_sec=" << format_float(user_cpu) << '\n'

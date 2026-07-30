@@ -11,6 +11,15 @@
 
 namespace AdServer::Commons
 {
+  enum class FastJsonParserSimdLevel
+  {
+    AUTO,
+    SCALAR,
+    SSE2,
+    AVX2,
+    AVX512BW
+  };
+
   template<typename StringType = std::string>
   class FastJsonParser
   {
@@ -101,9 +110,14 @@ namespace AdServer::Commons
     };
 
     explicit
-    FastJsonParser(bool strict = true);
+    FastJsonParser(
+      bool strict = true,
+      FastJsonParserSimdLevel simd_level = FastJsonParserSimdLevel::AUTO);
 
-    FastJsonParser(ProcessorSet&& processors, bool strict = true);
+    FastJsonParser(
+      ProcessorSet&& processors,
+      bool strict = true,
+      FastJsonParserSimdLevel simd_level = FastJsonParserSimdLevel::AUTO);
 
     ~FastJsonParser() noexcept;
 
@@ -114,6 +128,12 @@ namespace AdServer::Commons
 
     void
     parse(std::string_view json, void* context) const;
+
+    FastJsonParserSimdLevel
+    simd_level() const noexcept;
+
+    static FastJsonParserSimdLevel
+    available_simd_level() noexcept;
 
     template<typename StringCreatorType>
     void

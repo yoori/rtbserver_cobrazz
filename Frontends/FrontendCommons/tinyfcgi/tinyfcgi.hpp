@@ -104,6 +104,7 @@ Server:
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <string_view>
 
 #if HAVE_BOOST_STRING_REF
 // this makes our life easier..
@@ -279,6 +280,7 @@ public:
   message& end_request(unsigned int app_status, unsigned char proto_status);
 
   message& append(unsigned char type, const string_ref& str);
+  message& append(unsigned char type, std::string_view str);
   message& clear_padding();
   message& end_stream(unsigned char type);
 
@@ -580,6 +582,11 @@ message& message::append(unsigned char type, const string_ref& str) {
     }
   }
   return *this;
+}
+
+inline
+message& message::append(unsigned char type, std::string_view str) {
+  return append(type, string_ref(str.data(), str.size()));
 }
 
 inline

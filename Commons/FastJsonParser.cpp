@@ -1,6 +1,8 @@
 #include "FastJsonParser.hpp"
+#include "FastJsonParserSimd.hpp"
 
 #include <Generics/MonoAllocator.hpp>
+#include <Generics/SimdCapabilities.hpp>
 
 #include <algorithm>
 #include <charconv>
@@ -11,14 +13,16 @@
 #include <type_traits>
 #include <utility>
 
-#if defined(__x86_64__) || defined(__SSE2__)
-#include <emmintrin.h>
-#endif
-
 #if defined(__GNUC__)
 #define AD_FAST_JSON_ALWAYS_INLINE inline __attribute__((always_inline))
 #else
 #define AD_FAST_JSON_ALWAYS_INLINE inline
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW) || \
+  defined(AD_FAST_JSON_PARSER_HAS_AVX2) || \
+  defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+#define AD_FAST_JSON_PARSER_HAS_ANY_SIMD 1
 #endif
 
 namespace AdServer::Commons
@@ -208,18 +212,121 @@ namespace AdServer::Commons
     };
 
     bool
-    simd_supported_() noexcept
+    simd_level_available_(FastJsonParserSimd::Level level) noexcept
     {
-#if defined(__x86_64__)
-      return true;
-#elif defined(__i386__) && defined(__GNUC__)
-      __builtin_cpu_init();
-      return __builtin_cpu_supports("sse2");
-#elif defined(__SSE2__)
-      return true;
+      namespace Simd = Generics::Simd;
+
+      switch(level)
+      {
+      case FastJsonParserSimd::Level::SCALAR:
+        return true;
+      case FastJsonParserSimd::Level::SSE2:
+#if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+        return Simd::has(Simd::SSE2);
 #else
-      return false;
+        return false;
 #endif
+      case FastJsonParserSimd::Level::AVX2:
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        return Simd::has(Simd::AVX2);
+#else
+        return false;
+#endif
+      case FastJsonParserSimd::Level::AVX512BW:
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW) && \
+  defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        return Simd::has(
+          Simd::AVX512F |
+          Simd::AVX512BW |
+          Simd::AVX2);
+#else
+        return false;
+#endif
+      }
+
+      return false;
+    }
+
+    FastJsonParserSimd::Level
+    select_default_simd_level_() noexcept
+    {
+      if(simd_level_available_(FastJsonParserSimd::Level::AVX2))
+      {
+        return FastJsonParserSimd::Level::AVX2;
+      }
+
+      if(simd_level_available_(FastJsonParserSimd::Level::AVX512BW))
+      {
+        return FastJsonParserSimd::Level::AVX512BW;
+      }
+
+      if(simd_level_available_(FastJsonParserSimd::Level::SSE2))
+      {
+        return FastJsonParserSimd::Level::SSE2;
+      }
+
+      return FastJsonParserSimd::Level::SCALAR;
+    }
+
+    const FastJsonParserSimd::Level FAST_JSON_PARSER_DEFAULT_SIMD_LEVEL =
+      select_default_simd_level_();
+
+    FastJsonParserSimd::Level
+    to_internal_simd_level_(FastJsonParserSimdLevel level) noexcept
+    {
+      switch(level)
+      {
+      case FastJsonParserSimdLevel::AUTO:
+        return FAST_JSON_PARSER_DEFAULT_SIMD_LEVEL;
+      case FastJsonParserSimdLevel::SCALAR:
+        return FastJsonParserSimd::Level::SCALAR;
+      case FastJsonParserSimdLevel::SSE2:
+        return FastJsonParserSimd::Level::SSE2;
+      case FastJsonParserSimdLevel::AVX2:
+        return FastJsonParserSimd::Level::AVX2;
+      case FastJsonParserSimdLevel::AVX512BW:
+        return FastJsonParserSimd::Level::AVX512BW;
+      }
+
+      return FastJsonParserSimd::Level::SCALAR;
+    }
+
+    FastJsonParserSimdLevel
+    to_public_simd_level_(FastJsonParserSimd::Level level) noexcept
+    {
+      switch(level)
+      {
+      case FastJsonParserSimd::Level::SCALAR:
+        return FastJsonParserSimdLevel::SCALAR;
+      case FastJsonParserSimd::Level::SSE2:
+        return FastJsonParserSimdLevel::SSE2;
+      case FastJsonParserSimd::Level::AVX2:
+        return FastJsonParserSimdLevel::AVX2;
+      case FastJsonParserSimd::Level::AVX512BW:
+        return FastJsonParserSimdLevel::AVX512BW;
+      }
+
+      return FastJsonParserSimdLevel::SCALAR;
+    }
+
+    const char*
+    simd_level_name_(FastJsonParserSimdLevel level) noexcept
+    {
+      switch(level)
+      {
+      case FastJsonParserSimdLevel::AUTO:
+        return "auto";
+      case FastJsonParserSimdLevel::SCALAR:
+        return "scalar";
+      case FastJsonParserSimdLevel::SSE2:
+        return "sse2";
+      case FastJsonParserSimdLevel::AVX2:
+        return "avx2";
+      case FastJsonParserSimdLevel::AVX512BW:
+        return "avx512bw";
+      }
+
+      return "unknown";
     }
 
     bool
@@ -290,183 +397,45 @@ namespace AdServer::Commons
       return pos;
     }
 
-#if defined(__x86_64__) || defined(__SSE2__)
-#if defined(__GNUC__)
-    __attribute__((target("sse2")))
-#endif
-    const char*
-    find_non_space_simd_(const char* pos, const char* end) noexcept
-    {
-      const __m128i space = _mm_set1_epi8(' ');
-      const __m128i tab = _mm_set1_epi8('\t');
-      const __m128i line_feed = _mm_set1_epi8('\n');
-      const __m128i vertical_tab = _mm_set1_epi8('\v');
-      const __m128i form_feed = _mm_set1_epi8('\f');
-      const __m128i carriage_return = _mm_set1_epi8('\r');
-
-      while(static_cast<std::size_t>(end - pos) >= 16)
-      {
-        const __m128i bytes = _mm_loadu_si128(
-          reinterpret_cast<const __m128i*>(pos));
-        const __m128i blank_matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, space),
-          _mm_cmpeq_epi8(bytes, tab));
-        const __m128i line_matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, line_feed),
-          _mm_cmpeq_epi8(bytes, carriage_return));
-        const __m128i other_matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, vertical_tab),
-          _mm_cmpeq_epi8(bytes, form_feed));
-        const unsigned space_mask = static_cast<unsigned>(
-          _mm_movemask_epi8(
-            _mm_or_si128(blank_matches, _mm_or_si128(line_matches, other_matches))));
-        if(space_mask != 0xFFFFu)
-        {
-          return pos + __builtin_ctz((~space_mask) & 0xFFFFu);
-        }
-
-        pos += 16;
-      }
-
-      return find_non_space_scalar_(pos, end);
-    }
-
-#if defined(__GNUC__)
-    __attribute__((target("sse2")))
-#endif
-    const char*
-    find_string_special_simd_(const char* pos, const char* end) noexcept
-    {
-      const __m128i quote = _mm_set1_epi8('"');
-      const __m128i backslash = _mm_set1_epi8('\\');
-
-      while(static_cast<std::size_t>(end - pos) >= 16)
-      {
-        const __m128i bytes = _mm_loadu_si128(
-          reinterpret_cast<const __m128i*>(pos));
-        const __m128i matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, quote),
-          _mm_cmpeq_epi8(bytes, backslash));
-        const unsigned mask = static_cast<unsigned>(
-          _mm_movemask_epi8(matches));
-        if(mask != 0)
-        {
-          return pos + __builtin_ctz(mask);
-        }
-
-        pos += 16;
-      }
-
-      return find_string_special_scalar_(pos, end);
-    }
-
-#if defined(__GNUC__)
-    __attribute__((target("sse2")))
-#endif
-    const char*
-    find_quote_simd_(const char* pos, const char* end) noexcept
-    {
-      const __m128i quote = _mm_set1_epi8('"');
-
-      while(static_cast<std::size_t>(end - pos) >= 16)
-      {
-        const __m128i bytes = _mm_loadu_si128(
-          reinterpret_cast<const __m128i*>(pos));
-        const unsigned mask = static_cast<unsigned>(
-          _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, quote)));
-        if(mask != 0)
-        {
-          return pos + __builtin_ctz(mask);
-        }
-
-        pos += 16;
-      }
-
-      return find_quote_scalar_(pos, end);
-    }
-
-#if defined(__GNUC__)
-    __attribute__((target("sse2")))
-#endif
-    const char*
-    find_compound_special_simd_(const char* pos, const char* end) noexcept
-    {
-      const __m128i quote = _mm_set1_epi8('"');
-      const __m128i object_open = _mm_set1_epi8('{');
-      const __m128i object_close = _mm_set1_epi8('}');
-      const __m128i array_open = _mm_set1_epi8('[');
-      const __m128i array_close = _mm_set1_epi8(']');
-
-      while(static_cast<std::size_t>(end - pos) >= 16)
-      {
-        const __m128i bytes = _mm_loadu_si128(
-          reinterpret_cast<const __m128i*>(pos));
-        const __m128i object_matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, object_open),
-          _mm_cmpeq_epi8(bytes, object_close));
-        const __m128i array_matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, array_open),
-          _mm_cmpeq_epi8(bytes, array_close));
-        const __m128i matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, quote),
-          _mm_or_si128(object_matches, array_matches));
-        const unsigned mask = static_cast<unsigned>(
-          _mm_movemask_epi8(matches));
-        if(mask != 0)
-        {
-          return pos + __builtin_ctz(mask);
-        }
-
-        pos += 16;
-      }
-
-      while(pos != end && !is_compound_special_(*pos))
-      {
-        ++pos;
-      }
-
-      return pos;
-    }
-
-#if defined(__GNUC__)
-    __attribute__((target("sse2")))
-#endif
-    const char*
-    find_unquoted_delimiter_simd_(const char* pos, const char* end) noexcept
-    {
-      const __m128i comma = _mm_set1_epi8(',');
-      const __m128i array_close = _mm_set1_epi8(']');
-      const __m128i object_close = _mm_set1_epi8('}');
-
-      while(static_cast<std::size_t>(end - pos) >= 16)
-      {
-        const __m128i bytes = _mm_loadu_si128(
-          reinterpret_cast<const __m128i*>(pos));
-        const __m128i matches = _mm_or_si128(
-          _mm_cmpeq_epi8(bytes, comma),
-          _mm_or_si128(
-            _mm_cmpeq_epi8(bytes, array_close),
-            _mm_cmpeq_epi8(bytes, object_close)));
-        const unsigned mask = static_cast<unsigned>(
-          _mm_movemask_epi8(matches));
-        if(mask != 0)
-        {
-          return pos + __builtin_ctz(mask);
-        }
-
-        pos += 16;
-      }
-
-      return find_unquoted_delimiter_scalar_(pos, end);
-    }
-
     template<bool UseSimd>
     const char*
-    find_non_space_(const char* pos, const char* end) noexcept
+    find_non_space_(
+      const char* pos,
+      const char* end,
+      FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
-        return find_non_space_simd_(pos, end);
+#if defined(AD_FAST_JSON_PARSER_HAS_ANY_SIMD)
+        const std::size_t size = static_cast<std::size_t>(end - pos);
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
+        if(simd_level ==
+          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        {
+          return FastJsonParserSimd::find_non_space_avx512bw(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        if((simd_level ==
+            FastJsonParserSimd::Level::AVX512BW ||
+            simd_level ==
+              FastJsonParserSimd::Level::AVX2) &&
+          size >= 32)
+        {
+          return FastJsonParserSimd::find_non_space_avx2(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+        if(simd_level !=
+          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        {
+          return FastJsonParserSimd::find_non_space_sse2(pos, end);
+        }
+#endif
       }
 
       return find_non_space_scalar_(pos, end);
@@ -474,11 +443,43 @@ namespace AdServer::Commons
 
     template<bool UseSimd>
     const char*
-    find_string_special_(const char* pos, const char* end) noexcept
+    find_string_special_(
+      const char* pos,
+      const char* end,
+      FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
-        return find_string_special_simd_(pos, end);
+#if defined(AD_FAST_JSON_PARSER_HAS_ANY_SIMD)
+        const std::size_t size = static_cast<std::size_t>(end - pos);
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
+        if(simd_level ==
+          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        {
+          return FastJsonParserSimd::find_string_special_avx512bw(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        if((simd_level ==
+            FastJsonParserSimd::Level::AVX512BW ||
+            simd_level ==
+              FastJsonParserSimd::Level::AVX2) &&
+          size >= 32)
+        {
+          return FastJsonParserSimd::find_string_special_avx2(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+        if(simd_level !=
+          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        {
+          return FastJsonParserSimd::find_string_special_sse2(pos, end);
+        }
+#endif
       }
 
       return find_string_special_scalar_(pos, end);
@@ -486,11 +487,43 @@ namespace AdServer::Commons
 
     template<bool UseSimd>
     const char*
-    find_quote_(const char* pos, const char* end) noexcept
+    find_quote_(
+      const char* pos,
+      const char* end,
+      FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
-        return find_quote_simd_(pos, end);
+#if defined(AD_FAST_JSON_PARSER_HAS_ANY_SIMD)
+        const std::size_t size = static_cast<std::size_t>(end - pos);
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
+        if(simd_level ==
+          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        {
+          return FastJsonParserSimd::find_quote_avx512bw(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        if((simd_level ==
+            FastJsonParserSimd::Level::AVX512BW ||
+            simd_level ==
+              FastJsonParserSimd::Level::AVX2) &&
+          size >= 32)
+        {
+          return FastJsonParserSimd::find_quote_avx2(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+        if(simd_level !=
+          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        {
+          return FastJsonParserSimd::find_quote_sse2(pos, end);
+        }
+#endif
       }
 
       return find_quote_scalar_(pos, end);
@@ -498,11 +531,43 @@ namespace AdServer::Commons
 
     template<bool UseSimd>
     const char*
-    find_compound_special_(const char* pos, const char* end) noexcept
+    find_compound_special_(
+      const char* pos,
+      const char* end,
+      FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
-        return find_compound_special_simd_(pos, end);
+#if defined(AD_FAST_JSON_PARSER_HAS_ANY_SIMD)
+        const std::size_t size = static_cast<std::size_t>(end - pos);
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
+        if(simd_level ==
+          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        {
+          return FastJsonParserSimd::find_compound_special_avx512bw(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        if((simd_level ==
+            FastJsonParserSimd::Level::AVX512BW ||
+            simd_level ==
+              FastJsonParserSimd::Level::AVX2) &&
+          size >= 32)
+        {
+          return FastJsonParserSimd::find_compound_special_avx2(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+        if(simd_level !=
+          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        {
+          return FastJsonParserSimd::find_compound_special_sse2(pos, end);
+        }
+#endif
       }
 
       while(pos != end && !is_compound_special_(*pos))
@@ -515,68 +580,49 @@ namespace AdServer::Commons
 
     template<bool UseSimd>
     const char*
-    find_unquoted_delimiter_(const char* pos, const char* end) noexcept
+    find_unquoted_delimiter_(
+      const char* pos,
+      const char* end,
+      FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
-        return find_unquoted_delimiter_simd_(pos, end);
-      }
-
-      return find_unquoted_delimiter_scalar_(pos, end);
-    }
-
-#else
-    template<bool UseSimd>
-    const char*
-    find_non_space_(const char* pos, const char* end) noexcept
-    {
-      static_cast<void>(UseSimd);
-      return find_non_space_scalar_(pos, end);
-    }
-
-    template<bool UseSimd>
-    const char*
-    find_string_special_(const char* pos, const char* end) noexcept
-    {
-      static_cast<void>(UseSimd);
-      return find_string_special_scalar_(pos, end);
-    }
-
-    template<bool UseSimd>
-    const char*
-    find_quote_(const char* pos, const char* end) noexcept
-    {
-      static_cast<void>(UseSimd);
-      return find_quote_scalar_(pos, end);
-    }
-
-    template<bool UseSimd>
-    const char*
-    find_compound_special_(const char* pos, const char* end) noexcept
-    {
-      static_cast<void>(UseSimd);
-      while(pos != end &&
-        *pos != '"' &&
-        *pos != '{' &&
-        *pos != '}' &&
-        *pos != '[' &&
-        *pos != ']')
-      {
-        ++pos;
-      }
-
-      return pos;
-    }
-
-    template<bool UseSimd>
-    const char*
-    find_unquoted_delimiter_(const char* pos, const char* end) noexcept
-    {
-      static_cast<void>(UseSimd);
-      return find_unquoted_delimiter_scalar_(pos, end);
-    }
-
+#if defined(AD_FAST_JSON_PARSER_HAS_ANY_SIMD)
+        const std::size_t size = static_cast<std::size_t>(end - pos);
 #endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
+        if(simd_level ==
+          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        {
+          return FastJsonParserSimd::find_unquoted_delimiter_avx512bw(
+            pos,
+            end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
+        if((simd_level ==
+            FastJsonParserSimd::Level::AVX512BW ||
+            simd_level ==
+              FastJsonParserSimd::Level::AVX2) &&
+          size >= 32)
+        {
+          return FastJsonParserSimd::find_unquoted_delimiter_avx2(pos, end);
+        }
+#endif
+
+#if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
+        if(simd_level !=
+          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        {
+          return FastJsonParserSimd::find_unquoted_delimiter_sse2(pos, end);
+        }
+#endif
+      }
+
+      return find_unquoted_delimiter_scalar_(pos, end);
+    }
   }
 
   template<typename StringType>
@@ -666,7 +712,8 @@ namespace AdServer::Commons
       Cursor(
         std::string_view json,
         StringCreator string_creator,
-        void* string_creator_context);
+        void* string_creator_context,
+        FastJsonParserSimd::Level simd_level);
 
       bool
       eof() const noexcept;
@@ -776,13 +823,14 @@ namespace AdServer::Commons
       const char* end_;
       StringCreator string_creator_;
       void* string_creator_context_;
+      FastJsonParserSimd::Level simd_level_;
     };
 
     explicit
     Impl(
       typename FastJsonParser<StringType>::ProcessorSet&& processors,
       bool strict_val,
-      bool use_simd_val);
+      FastJsonParserSimd::Level simd_level_val);
 
     void
     add_processor_(
@@ -840,6 +888,7 @@ namespace AdServer::Commons
     Generics::MonoAllocatorArena processor_arena;
     JsonTreeProcessor root_processor;
     ParseHandler parse_handler = nullptr;
+    FastJsonParserSimd::Level simd_level = FastJsonParserSimd::Level::SCALAR;
   };
 
   template<typename StringType>
@@ -991,22 +1040,52 @@ namespace AdServer::Commons
   }
 
   template<typename StringType>
-  FastJsonParser<StringType>::FastJsonParser(bool strict)
-    : FastJsonParser(ProcessorSet(), strict)
+  FastJsonParser<StringType>::FastJsonParser(
+    bool strict,
+    FastJsonParserSimdLevel simd_level)
+    : FastJsonParser(ProcessorSet(), strict, simd_level)
   {}
 
   template<typename StringType>
   FastJsonParser<StringType>::FastJsonParser(
     ProcessorSet&& processors,
-    bool strict)
-    : impl_(std::make_unique<Impl>(
-        std::move(processors),
-        strict,
-        simd_supported_()))
-  {}
+    bool strict,
+    FastJsonParserSimdLevel simd_level)
+  {
+    const FastJsonParserSimd::Level resolved_simd_level =
+      to_internal_simd_level_(simd_level);
+    if(!simd_level_available_(resolved_simd_level))
+    {
+      throw Exception(
+        std::string("requested FastJsonParser SIMD level '") +
+        simd_level_name_(simd_level) + "' isn't available, available level is '" +
+        simd_level_name_(
+          to_public_simd_level_(FAST_JSON_PARSER_DEFAULT_SIMD_LEVEL)) +
+        "'");
+    }
+
+    impl_ = std::make_unique<Impl>(
+      std::move(processors),
+      strict,
+      resolved_simd_level);
+  }
 
   template<typename StringType>
   FastJsonParser<StringType>::~FastJsonParser() noexcept = default;
+
+  template<typename StringType>
+  FastJsonParserSimdLevel
+  FastJsonParser<StringType>::simd_level() const noexcept
+  {
+    return to_public_simd_level_(impl_->simd_level);
+  }
+
+  template<typename StringType>
+  FastJsonParserSimdLevel
+  FastJsonParser<StringType>::available_simd_level() noexcept
+  {
+    return to_public_simd_level_(FAST_JSON_PARSER_DEFAULT_SIMD_LEVEL);
+  }
 
   template<typename StringType>
   void
@@ -1224,8 +1303,9 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::Impl(
     typename FastJsonParser<StringType>::ProcessorSet&& processors,
     bool strict_val,
-    bool use_simd_val)
-    : root_processor(&processor_arena)
+    FastJsonParserSimd::Level simd_level_val)
+    : root_processor(&processor_arena),
+      simd_level(simd_level_val)
   {
     for(auto& entry : processors.entries_)
     {
@@ -1238,13 +1318,13 @@ namespace AdServer::Commons
 
     if(strict_val)
     {
-      parse_handler = use_simd_val ?
+      parse_handler = simd_level != FastJsonParserSimd::Level::SCALAR ?
         &Impl::parse_<true, true> :
         &Impl::parse_<true, false>;
     }
     else
     {
-      parse_handler = use_simd_val ?
+      parse_handler = simd_level != FastJsonParserSimd::Level::SCALAR ?
         &Impl::parse_<false, true> :
         &Impl::parse_<false, false>;
     }
@@ -1296,12 +1376,14 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::Cursor::Cursor(
     std::string_view json,
     typename FastJsonParser<StringType>::Impl::StringCreator string_creator,
-    void* string_creator_context)
+    void* string_creator_context,
+    FastJsonParserSimd::Level simd_level)
     : begin_(json.data()),
       pos_(json.data()),
       end_(json.data() + json.size()),
       string_creator_(string_creator),
-      string_creator_context_(string_creator_context)
+      string_creator_context_(string_creator_context),
+      simd_level_(simd_level)
   {}
 
   template<typename StringType>
@@ -1363,7 +1445,7 @@ namespace AdServer::Commons
     {
       return;
     }
-    pos_ = find_non_space_<UseSimd>(pos_ + 1, end_);
+    pos_ = find_non_space_<UseSimd>(pos_ + 1, end_, simd_level_);
   }
 
   template<typename StringType>
@@ -1389,7 +1471,8 @@ namespace AdServer::Commons
   {
     skip_char();
     const char* const value_begin = pos_;
-    const char* const special = find_string_special_<UseSimd>(pos_, end_);
+    const char* const special =
+      find_string_special_<UseSimd>(pos_, end_, simd_level_);
     if(special == end_)
     {
       pos_ = end_;
@@ -1426,7 +1509,8 @@ namespace AdServer::Commons
 
     for(;;)
     {
-      const char* const special = find_string_special_<UseSimd>(pos_, end_);
+      const char* const special =
+        find_string_special_<UseSimd>(pos_, end_, simd_level_);
       if(special == end_)
       {
         pos_ = end_;
@@ -1457,7 +1541,7 @@ namespace AdServer::Commons
   AD_FAST_JSON_ALWAYS_INLINE void
   FastJsonParser<StringType>::Impl::Cursor::skip_unquoted_value_rough()
   {
-    pos_ = find_unquoted_delimiter_<UseSimd>(pos_, end_);
+    pos_ = find_unquoted_delimiter_<UseSimd>(pos_, end_, simd_level_);
   }
 
   template<typename StringType>
@@ -1467,7 +1551,7 @@ namespace AdServer::Commons
   {
     while(pos_ < end_)
     {
-      const char* const quote = find_quote_<UseSimd>(pos_, end_);
+      const char* const quote = find_quote_<UseSimd>(pos_, end_, simd_level_);
       if(quote == end_)
       {
         break;
@@ -1519,7 +1603,8 @@ namespace AdServer::Commons
 
     while(pos_ != end_)
     {
-      const char* const special = find_compound_special_<UseSimd>(pos_, end_);
+      const char* const special =
+        find_compound_special_<UseSimd>(pos_, end_, simd_level_);
       if(special == end_)
       {
         pos_ = end_;
@@ -2351,7 +2436,7 @@ namespace AdServer::Commons
     typename FastJsonParser<StringType>::Impl::StringCreator string_creator,
     void* string_creator_context)
   {
-    Cursor cursor(json, string_creator, string_creator_context);
+    Cursor cursor(json, string_creator, string_creator_context, impl.simd_level);
     cursor.template skip_spaces<UseSimd>();
 
     if(cursor.eof() || cursor.peek() != '{')

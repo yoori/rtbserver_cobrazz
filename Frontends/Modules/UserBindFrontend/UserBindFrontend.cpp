@@ -1,6 +1,7 @@
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
+#include <string_view>
 #include <utility>
 #include <Generics/Uuid.hpp>
 
@@ -1378,9 +1379,9 @@ namespace AdServer
     auto match_result = co_await user_info_client_coro_->co_match(
       *history_match_request);
 
-    static const String::SubString JSON_SESSION_ID_NAME("session_id");
-    static const String::SubString JSON_CL_ID_NAME("cl_id");
-    static const String::SubString JSON_SEGMENTS_NAME("segments");
+    static constexpr std::string_view JSON_SESSION_ID_NAME = "session_id";
+    static constexpr std::string_view JSON_CL_ID_NAME = "cl_id";
+    static constexpr std::string_view JSON_SEGMENTS_NAME = "segments";
 
     if(!match_result.status.ok())
     {

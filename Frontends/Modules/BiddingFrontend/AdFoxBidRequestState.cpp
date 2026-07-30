@@ -166,7 +166,7 @@ namespace AdServer::Bidding
       // link
       root_json.add_string(
         Response::AdJson::CLICK_URL,
-        String::SubString(ad_slot_result.selected_creatives[0].click_url));
+        ad_slot_result.selected_creatives[0].click_url);
 
       // icon
       if(ad_slot_result.native_image_tokens.size() > 1)
@@ -175,7 +175,7 @@ namespace AdServer::Bidding
           ad_slot_result.native_image_tokens[1];
         root_json.add_escaped_string(
           Response::AdJson::ICON,
-          String::SubString(token.value));
+          token.value);
       }
 
       // image
@@ -184,7 +184,8 @@ namespace AdServer::Bidding
         const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];
         root_json.add_escaped_string(
-          Response::AdJson::IMAGE, String::SubString(token.value));
+          Response::AdJson::IMAGE,
+          token.value);
       }
       }
       }

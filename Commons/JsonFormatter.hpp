@@ -1,15 +1,55 @@
 #pragma once
 
+#include <cstddef>
+#include <limits>
 #include <string>
-#include <String/SubString.hpp>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 #include <String/StringManip.hpp>
 #include <Stream/MemoryStream.hpp>
 #include <Generics/Function.hpp>
 
-namespace AdServer
+namespace AdServer::Commons
 {
-namespace Commons
-{
+  namespace JsonFormatterDetail
+  {
+    template<typename Value, typename = void>
+    struct HasStrMethod: std::false_type
+    {};
+
+    template<typename Value>
+    struct HasStrMethod<
+      Value,
+      std::void_t<decltype(std::declval<const Value&>().str())>>:
+      std::true_type
+    {};
+
+    template<typename Value, typename = void>
+    struct HasAppendToMethod: std::false_type
+    {};
+
+    template<typename Value>
+    struct HasAppendToMethod<
+      Value,
+      std::void_t<decltype(
+        std::declval<const Value&>().append_to(std::declval<std::string&>()))>>:
+      std::true_type
+    {};
+
+    template<typename Value>
+    constexpr bool dependent_false = false;
+
+    inline constexpr std::string_view SIMPLE_OBJECT_BEGIN{"{"};
+    inline constexpr std::string_view SIMPLE_OBJECT_END{"}"};
+    inline constexpr std::string_view ARRAY_BEGIN{"["};
+    inline constexpr std::string_view ARRAY_END{"]"};
+    inline constexpr std::string_view COMMA_SEPARATOR{", "};
+    inline constexpr std::string_view NAME_SEPARATOR{"\": "};
+    inline constexpr std::string_view TRUE_VALUE{"true"};
+    inline constexpr std::string_view FALSE_VALUE{"false"};
+  }
+
   // Write Bid Response in JSON format into string on the fly.
 
   // Possible split JsonObject to JsonObject and JsonArray
@@ -34,43 +74,45 @@ namespace Commons
 
     // Add attributes into JsonObject
     JsonObject&
-    add_boolean(const String::SubString& name, bool value);
+    add_boolean(std::string_view name, bool value);
 
     JsonObject&
-    add_string(const String::SubString& name, const String::SubString& value);
+    add_string(std::string_view name, std::string_view value);
 
     template<typename AsStringOutType>
     JsonObject&
-    add_as_string(const String::SubString& name, const AsStringOutType& value);
+    add_as_string(std::string_view name, const AsStringOutType& value);
 
     JsonObject&
-    add_escaped_string(const String::SubString& name, const String::SubString& value);
+    add_escaped_string(std::string_view name, std::string_view value);
 
     JsonObject&
-    add_escaped_string_if_non_empty(const String::SubString& name, const String::SubString& value);
+    add_escaped_string_if_non_empty(
+      std::string_view name,
+      std::string_view value);
 
     JsonObject&
     add_opt_escaped_string(
-      const String::SubString& name,
-      const String::SubString& value,
+      std::string_view name,
+      std::string_view value,
       bool need_escape);
 
     template<typename NumberType>
     JsonObject&
-    add_number(const String::SubString& name, const NumberType& value);
+    add_number(std::string_view name, const NumberType& value);
 
     // Use for in RunTime PreFormattedType (YandexFormatter)
     //   added in BiddingFrontend only in object, not array
     template<typename PreFormattedType>
     JsonObject&
-    add(const String::SubString& name, const PreFormattedType& value);
+    add(std::string_view name, const PreFormattedType& value);
 
     JsonObjectDelegate
-    add_object(const String::SubString& name);
+    add_object(std::string_view name);
 
     // Array functions
     JsonObjectDelegate
-    add_array(const String::SubString& name);
+    add_array(std::string_view name);
 
     // Add elements into JsonArray
     template<typename NumberType>
@@ -78,14 +120,14 @@ namespace Commons
     add_number(const NumberType& value);
 
     JsonObject&
-    add_string(const String::SubString& value);
+    add_string(std::string_view value);
 
     JsonObject&
-    add_escaped_string(const String::SubString& value);
+    add_escaped_string(std::string_view value);
 
     JsonObject&
     add_opt_escaped_string(
-      const String::SubString& value,
+      std::string_view value,
       bool need_escape);
 
     JsonObjectDelegate
@@ -112,7 +154,7 @@ namespace Commons
 
     // Check on add elements into object
     void
-    check_(const String::SubString& name);
+    check_(std::string_view name);
 
     // Check on add elements into array
     void
@@ -122,16 +164,17 @@ namespace Commons
     comma_();
 
     void
-    name_(const String::SubString& name);
+    name_(std::string_view name);
 
+    template<std::size_t Size>
     void
-    append_(const char* value);
+    append_(const char (&value)[Size]);
 
     void
     append_(char value);
 
     void
-    append_(const String::SubString& value);
+    append_(std::string_view value);
 
     template<typename Value>
     void
@@ -150,45 +193,45 @@ namespace Commons
   public:
     JsonFormatter(std::string& out);
   };
-}
-}
+} // namespace AdServer::Commons
 
 // Impl
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   inline
   JsonObject::JsonObjectDelegate::JsonObjectDelegate(JsonObject& jo, bool array)
-  : j_obj_(&jo), array_(array)
+    : j_obj_(&jo), array_(array)
   {}
 
   inline
   JsonFormatter::JsonFormatter(std::string& out)
-  : JsonObject(out)
+    : JsonObject(out)
   {}
 
   inline
   JsonObject::JsonObject(JsonObjectDelegate&& delegate)
-  : type_(delegate.array_ ? OT_ARRAY : OT_SIMPLE_OBJECT),
-    out_string_(delegate.j_obj_->out_string_),
-    empty_(true),
-    opened_child_object_(0),
-    parent_(delegate.j_obj_)
+    : type_(delegate.array_ ? OT_ARRAY : OT_SIMPLE_OBJECT),
+      out_string_(delegate.j_obj_->out_string_),
+      empty_(true),
+      opened_child_object_(0),
+      parent_(delegate.j_obj_)
   {
     ++parent_->opened_child_object_;
-    append_(type_ == OT_SIMPLE_OBJECT ? "{" : "[");
+    append_(
+      type_ == OT_SIMPLE_OBJECT ?
+        JsonFormatterDetail::SIMPLE_OBJECT_BEGIN :
+        JsonFormatterDetail::ARRAY_BEGIN);
   }
 
   inline
   JsonObject::JsonObject(std::string& out)
-  : type_(OT_SIMPLE_OBJECT),
-    out_string_(&out),
-    empty_(true),
-    opened_child_object_(0),
-    parent_(0)
+    : type_(OT_SIMPLE_OBJECT),
+      out_string_(&out),
+      empty_(true),
+      opened_child_object_(0),
+      parent_(0)
   {
-    append_("{");
+    append_(JsonFormatterDetail::SIMPLE_OBJECT_BEGIN);
   }
 
   inline
@@ -198,12 +241,15 @@ namespace Commons
     {
       --parent_->opened_child_object_;
     }
-    append_(type_ == OT_SIMPLE_OBJECT ? "}" : "]");
+    append_(
+      type_ == OT_SIMPLE_OBJECT ?
+        JsonFormatterDetail::SIMPLE_OBJECT_END :
+        JsonFormatterDetail::ARRAY_END);
   }
 
   inline
   void
-  JsonObject::check_(const String::SubString& name)
+  JsonObject::check_(std::string_view name)
   {
     if (opened_child_object_)
     {
@@ -259,25 +305,26 @@ namespace Commons
   {
     if (!empty_)
     {
-      append_(", ");
+      append_(JsonFormatterDetail::COMMA_SEPARATOR);
     }
     empty_ = false;
   }
 
   inline
   void
-  JsonObject::name_(const String::SubString& name)
+  JsonObject::name_(std::string_view name)
   {
     append_('"');
     append_(name);
-    append_("\": ");
+    append_(JsonFormatterDetail::NAME_SEPARATOR);
   }
 
+  template<std::size_t Size>
   inline
   void
-  JsonObject::append_(const char* value)
+  JsonObject::append_(const char (&value)[Size])
   {
-    out_string_->append(value);
+    out_string_->append(value, Size - 1);
   }
 
   inline
@@ -289,7 +336,7 @@ namespace Commons
 
   inline
   void
-  JsonObject::append_(const String::SubString& value)
+  JsonObject::append_(std::string_view value)
   {
     out_string_->append(value.data(), value.size());
   }
@@ -299,15 +346,46 @@ namespace Commons
   void
   JsonObject::append_value_(const Value& value)
   {
-    Stream::Dynamic out;
-    out << value;
-    const String::SubString str = out.str();
-    append_(str);
+    using ValueType = std::decay_t<Value>;
+
+    if constexpr (
+      std::is_integral_v<ValueType> &&
+      !std::is_same_v<ValueType, bool>)
+    {
+      char buf[std::numeric_limits<ValueType>::digits10 + 3];
+      const std::size_t len = String::StringManip::int_to_str(
+        value,
+        buf,
+        sizeof(buf));
+      append_(std::string_view(buf, len));
+    }
+    else if constexpr (std::is_enum_v<ValueType>)
+    {
+      append_value_(static_cast<std::underlying_type_t<ValueType>>(value));
+    }
+    else if constexpr (JsonFormatterDetail::HasAppendToMethod<ValueType>::value)
+    {
+      value.append_to(*out_string_);
+    }
+    else if constexpr (std::is_convertible_v<const Value&, std::string_view>)
+    {
+      append_(std::string_view(value));
+    }
+    else if constexpr (JsonFormatterDetail::HasStrMethod<ValueType>::value)
+    {
+      append_value_(value.str());
+    }
+    else
+    {
+      static_assert(
+        JsonFormatterDetail::dependent_false<ValueType>,
+        "Unsupported JsonFormatter value type");
+    }
   }
 
   inline
   JsonObject::JsonObjectDelegate
-  JsonObject::add_object(const String::SubString& name)
+  JsonObject::add_object(std::string_view name)
   {
     check_(name);
     comma_();
@@ -317,7 +395,7 @@ namespace Commons
 
   inline
   JsonObject::JsonObjectDelegate
-  JsonObject::add_array(const String::SubString& name)
+  JsonObject::add_array(std::string_view name)
   {
     check_(name);
     comma_();
@@ -328,18 +406,25 @@ namespace Commons
   // Add into object
   inline
   JsonObject&
-  JsonObject::add_boolean(const String::SubString& name, bool value)
+  JsonObject::add_boolean(std::string_view name, bool value)
   {
     check_(name);
     comma_();
     name_(name);
-    append_(value ? "true" : "false");
+    if (value)
+    {
+      append_(JsonFormatterDetail::TRUE_VALUE);
+    }
+    else
+    {
+      append_(JsonFormatterDetail::FALSE_VALUE);
+    }
     return *this;
   }
 
   inline
   JsonObject&
-  JsonObject::add_string(const String::SubString& name, const String::SubString& value)
+  JsonObject::add_string(std::string_view name, std::string_view value)
   {
     check_(name);
     comma_();
@@ -353,7 +438,7 @@ namespace Commons
   template<typename AsStringOutType>
   inline
   JsonObject&
-  JsonObject::add_as_string(const String::SubString& name, const AsStringOutType& value)
+  JsonObject::add_as_string(std::string_view name, const AsStringOutType& value)
   {
     check_(name);
     comma_();
@@ -366,7 +451,7 @@ namespace Commons
 
   inline
   JsonObject&
-  JsonObject::add_escaped_string(const String::SubString& name, const String::SubString& value)
+  JsonObject::add_escaped_string(std::string_view name, std::string_view value)
   {
     check_(name);
     comma_();
@@ -380,9 +465,10 @@ namespace Commons
   inline
   JsonObject&
   JsonObject::add_escaped_string_if_non_empty(
-    const String::SubString& name, const String::SubString& value)
+    std::string_view name,
+    std::string_view value)
   {
-    if(!value.empty())
+    if (!value.empty())
     {
       add_escaped_string(name, value);
     }
@@ -393,18 +479,17 @@ namespace Commons
   inline
   JsonObject&
   JsonObject::add_opt_escaped_string(
-    const String::SubString& name,
-    const String::SubString& value,
+    std::string_view name,
+    std::string_view value,
     bool need_escape)
   {
-    return need_escape ? add_escaped_string(name, value) :
-      add_string(name, value);
+    return need_escape ? add_escaped_string(name, value) : add_string(name, value);
   }
 
   template<typename Number>
   inline
   JsonObject&
-  JsonObject::add_number(const String::SubString& name, const Number& value)
+  JsonObject::add_number(std::string_view name, const Number& value)
   {
     check_(name);
     comma_();
@@ -416,7 +501,7 @@ namespace Commons
   template<typename PreFormattedType>
   inline
   JsonObject&
-  JsonObject::add(const String::SubString& name, const PreFormattedType& value)
+  JsonObject::add(std::string_view name, const PreFormattedType& value)
   {
     // Same code
     return add_number(name, value);
@@ -425,7 +510,7 @@ namespace Commons
   // Add into array
   inline
   JsonObject&
-  JsonObject::add_string(const String::SubString& value)
+  JsonObject::add_string(std::string_view value)
   {
     check_(OT_STRING_ARRAY);
     comma_();
@@ -437,7 +522,7 @@ namespace Commons
 
   inline
   JsonObject&
-  JsonObject::add_escaped_string(const String::SubString& value)
+  JsonObject::add_escaped_string(std::string_view value)
   {
     check_(OT_ESCAPED_STRING_ARRAY);
     comma_();
@@ -450,12 +535,10 @@ namespace Commons
   inline
   JsonObject&
   JsonObject::add_opt_escaped_string(
-    const String::SubString& value,
+    std::string_view value,
     bool need_escape)
   {
-    return need_escape?
-      add_escaped_string(value):
-        add_string(value);
+    return need_escape ? add_escaped_string(value) : add_string(value);
   }
 
   template<typename Number>
@@ -477,6 +560,4 @@ namespace Commons
     comma_();
     return JsonObjectDelegate(*this, false);
   }
-
-}
-}
+} // namespace AdServer::Commons

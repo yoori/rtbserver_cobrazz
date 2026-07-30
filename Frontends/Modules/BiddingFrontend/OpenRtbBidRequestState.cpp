@@ -26,6 +26,12 @@ namespace AdServer::Bidding
       return String::SubString(value.data(), value.size());
     }
 
+    std::string_view
+    to_string_view(const String::SubString& value) noexcept
+    {
+      return std::string_view(value.data(), value.size());
+    }
+
     class GZipUnpacker
     {
     public:
@@ -263,39 +269,43 @@ namespace AdServer::Bidding
 
     struct YandexIdFormatter
     {
-      const String::SubString id_str;
+      const std::string_view id_str;
 
-      YandexIdFormatter(const String::SubString& id_str_val)
-      : id_str(id_str_val)
+      YandexIdFormatter(std::string_view id_str_val)
+        : id_str(id_str_val)
       {}
+
+      void
+      append_to(std::string& out) const
+      {
+        const char* const END = id_str.end();
+        const bool only_digits =
+          String::AsciiStringManip::NUMBER.find_nonowned(
+            id_str.begin(),
+            END) == END;
+
+        const bool is_number =
+          !id_str.empty() &&
+          id_str[0] != '0' &&
+          only_digits;
+
+        if (is_number)
+        {
+          out.append(id_str.data(), id_str.size());
+        }
+        else
+        {
+          out.push_back('"');
+          out.append(id_str.data(), id_str.size());
+          out.push_back('"');
+        }
+      }
     };
-
-    std::ostream& operator<<(std::ostream& os, const YandexIdFormatter& fmt)
-    {
-      const char* const END = fmt.id_str.end();
-      bool only_digits =
-        String::AsciiStringManip::NUMBER.find_nonowned(fmt.id_str.begin(), END) == END;
-
-      bool is_number =
-        (!fmt.id_str.empty()) &&
-        (fmt.id_str[0] != '0') &&
-        only_digits;
-
-      if (is_number)
-      {
-        os << fmt.id_str;
-      }
-      else
-      {
-        os << "\"" << fmt.id_str << "\"";
-      }
-      return os;
-    }
 
     void
     print_int_category_seq(
       AdServer::Commons::JsonObject& parent,
-      const String::SubString& seq_name,
+      std::string_view seq_name,
       const Generics::MonoVector<std::string>& categories)
     {
       AdServer::Commons::JsonObject array(parent.add_array(seq_name));
@@ -408,14 +418,14 @@ namespace AdServer::Bidding
       campaign_match_result)
     noexcept
   {
-    std::ostringstream response_ostr;
+    std::string bid_response;
     bool first_is_native = context_.ad_slots.empty() ? false : (context_.ad_slots.begin()->native != 0);
 
     if(request_info_.request_type != AdServer::CampaignSvcs::AR_YANDEX || first_is_native)
     {
       // standard OpenRTB, OpenX, Yandex native
       fill_openrtb_response_(
-        response_ostr,
+        bid_response,
         request_info_,
         context_,
         campaign_match_result,
@@ -423,15 +433,14 @@ namespace AdServer::Bidding
     }
     else
     {
+      std::ostringstream response_ostr;
       fill_yandex_response_(
         response_ostr,
         request_info_,
         context_,
         campaign_match_result);
+      bid_response = response_ostr.str();
     }
-
-    // write response
-    const std::string bid_response = response_ostr.str();
 
     if(!bid_response.empty())
     {
@@ -506,7 +515,7 @@ namespace AdServer::Bidding
   void
   OpenRtbBidRequestState::add_response_notice_(
     AdServer::Commons::JsonObject& bid_object,
-    const String::SubString& url,
+    std::string_view url,
     SourceTraits::NoticeInstantiateType notice_instantiate_type)
   {
     if(notice_instantiate_type != SourceTraits::NIT_NURL_AND_BURL)
@@ -531,7 +540,8 @@ namespace AdServer::Bidding
     noexcept
   {
     nroa_obj.add_escaped_string_if_non_empty(
-      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+      Response::OpenRtb::NROA_ERID,
+      ad_slot_result.erid);
 
     if(ad_slot_result.contracts.size() > 0)
     {
@@ -542,23 +552,32 @@ namespace AdServer::Bidding
         const AdServer::Bidding::CampaignManager::ExtContractInfo& contract = ad_slot_result.contracts[contract_i];
         AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.contract_info.ord_contract_id));
+          Response::OpenRtb::CONTRACT_ORD_ID,
+          contract.contract_info.ord_contract_id);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_ORD_ADO_ID, String::SubString(contract.contract_info.ord_ado_id));
+          Response::OpenRtb::CONTRACT_ORD_ADO_ID,
+          contract.contract_info.ord_ado_id);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_NUMBER, String::SubString(contract.contract_info.number));
+          Response::OpenRtb::CONTRACT_NUMBER,
+          contract.contract_info.number);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_DATE, String::SubString(contract.contract_info.date));
+          Response::OpenRtb::CONTRACT_DATE,
+          contract.contract_info.date);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_TYPE, String::SubString(contract.contract_info.type));
+          Response::OpenRtb::CONTRACT_TYPE,
+          contract.contract_info.type);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_CLIENT_ID, String::SubString(contract.contract_info.client_id));
+          Response::OpenRtb::CONTRACT_CLIENT_ID,
+          contract.contract_info.client_id);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_CLIENT_NAME, String::SubString(contract.contract_info.client_name));
+          Response::OpenRtb::CONTRACT_CLIENT_NAME,
+          contract.contract_info.client_name);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_CONTRACTOR_ID, String::SubString(contract.contract_info.contractor_id));
+          Response::OpenRtb::CONTRACT_CONTRACTOR_ID,
+          contract.contract_info.contractor_id);
         contract_obj.add_escaped_string_if_non_empty(
-          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME, String::SubString(contract.contract_info.contractor_name));
+          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME,
+          contract.contract_info.contractor_name);
       }
     }
   }
@@ -571,31 +590,31 @@ namespace AdServer::Bidding
   {
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_SIGNDATE,
-      String::SubString(ext_contract_info.contract_info.date));
+      ext_contract_info.contract_info.date);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_NUMBER,
-      String::SubString(ext_contract_info.contract_info.number));
+      ext_contract_info.contract_info.number);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_TYPE,
-      String::SubString(ext_contract_info.contract_info.type));
+      ext_contract_info.contract_info.type);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_SUBJECTTYPE,
-      String::SubString(ext_contract_info.contract_info.subject_type));
+      ext_contract_info.contract_info.subject_type);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_ACTIONTYPE,
-      String::SubString(ext_contract_info.contract_info.action_type));
+      ext_contract_info.contract_info.action_type);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_ID,
-      String::SubString(ext_contract_info.contract_info.ord_contract_id));
+      ext_contract_info.contract_info.ord_contract_id);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_ADOID,
-      String::SubString(ext_contract_info.contract_info.ord_ado_id));
+      ext_contract_info.contract_info.ord_ado_id);
     contract_obj.add_boolean(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_VATINCLUDED,
       ext_contract_info.contract_info.vat_included);
     contract_obj.add_escaped_string_if_non_empty(
       Response::OpenRtb::BuzSapeNroa::CONTRACT_PARENTCONTRACTID,
-      String::SubString(ext_contract_info.parent_contract_id));
+      ext_contract_info.parent_contract_id);
   }
 
   void
@@ -606,7 +625,8 @@ namespace AdServer::Bidding
     noexcept
   {
     nroa_obj.add_escaped_string_if_non_empty(
-      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+      Response::OpenRtb::NROA_ERID,
+      ad_slot_result.erid);
     nroa_obj.add_number(
       Response::OpenRtb::BuzSapeNroa::HASNROAMARKUP, 1);
 
@@ -619,13 +639,13 @@ namespace AdServer::Bidding
         AdServer::Commons::JsonObject contractor_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CONTRACTOR));
         contractor_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::BuzSapeNroa::CONTRACTOR_INN,
-          String::SubString(initial_contract.contract_info.contractor_id));
+          initial_contract.contract_info.contractor_id);
         contractor_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::BuzSapeNroa::CONTRACTOR_NAME,
-          String::SubString(initial_contract.contract_info.contractor_name));
+          initial_contract.contract_info.contractor_name);
         contractor_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::BuzSapeNroa::CONTRACTOR_LEGALFORM,
-          String::SubString(initial_contract.contract_info.contractor_legal_form));
+          initial_contract.contract_info.contractor_legal_form);
       }
 
       // client
@@ -633,13 +653,13 @@ namespace AdServer::Bidding
         AdServer::Commons::JsonObject client_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CLIENT));
         client_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::BuzSapeNroa::CLIENT_INN,
-          String::SubString(initial_contract.contract_info.client_id));
+          initial_contract.contract_info.client_id);
         client_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::BuzSapeNroa::CLIENT_NAME,
-          String::SubString(initial_contract.contract_info.client_name));
+          initial_contract.contract_info.client_name);
         client_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::BuzSapeNroa::CLIENT_LEGALFORM,
-          String::SubString(initial_contract.contract_info.client_legal_form));
+          initial_contract.contract_info.client_legal_form);
       }
 
       {
@@ -663,7 +683,7 @@ namespace AdServer::Bidding
 
   void
   OpenRtbBidRequestState::fill_openrtb_response_(
-    std::ostream& response_ostr,
+    std::string& response,
     const RequestInfo& request_info,
     const JsonProcessingContext& context,
     const AdServer::Bidding::CampaignManager::RequestCreativeResult& campaign_match_result,
@@ -674,12 +694,12 @@ namespace AdServer::Bidding
 
     try
     {
-      std::string response;
+      std::string local_response;
       {
-        AdServer::Commons::JsonFormatter root_json(response);
+        AdServer::Commons::JsonFormatter root_json(local_response);
       root_json.add_escaped_string(
         Response::OpenRtb::ID,
-        to_sub_string(request_info.bid_request_id));
+        request_info.bid_request_id);
       if(fill_yandex_attributes)
       {
         root_json.add_number(Response::Yandex::UNITS, 2);
@@ -689,13 +709,15 @@ namespace AdServer::Bidding
         char bid_id[20];
         size_t len = String::StringManip::int_to_str(
           request_info.random, bid_id, sizeof(bid_id));
-        root_json.add_string(Response::OpenRtb::BIDID, String::SubString(bid_id, len));
+        root_json.add_string(
+          Response::OpenRtb::BIDID,
+          std::string_view(bid_id, len));
       }
 
       if (request_info.ipw_extension)
       {
         AdServer::Commons::JsonObject ext_obj(root_json.add_object(Response::OpenRtb::EXT));
-        ext_obj.add_string(Response::OpenRtb::PROTOCOL, String::SubString("4.0"));
+        ext_obj.add_string(Response::OpenRtb::PROTOCOL, "4.0");
       }
 
       std::string pub_currency_code;
@@ -706,7 +728,7 @@ namespace AdServer::Bidding
         {
           seatbid_obj.add_string(
             Response::OpenRtb::SEAT,
-            to_sub_string(request_info.seat));
+            request_info.seat);
         }
         AdServer::Commons::JsonObject bid_array(seatbid_obj.add_array(Response::OpenRtb::BID));
 
@@ -780,7 +802,7 @@ namespace AdServer::Bidding
 
             bid_object.add_escaped_string(
               Response::OpenRtb::IMPID,
-              to_sub_string(slot_it->id));
+              slot_it->id);
             bid_object.add_number(Response::OpenRtb::PRICE, openrtb_price);
 
             if (bid_frontend_->request_info_filler()->fill_adid(
@@ -815,7 +837,7 @@ namespace AdServer::Bidding
 
                   if (!host.empty())
                   {
-                    adomain_obj.add_escaped_string(host);
+                    adomain_obj.add_escaped_string(to_string_view(host));
                   }
                 }
                 catch (const HTTP::URLAddress::InvalidURL& ex)
@@ -939,14 +961,14 @@ namespace AdServer::Bidding
                 {
                   add_response_notice_(
                     bid_object,
-                    to_sub_string(request_info.notice_url),
+                    request_info.notice_url,
                     notice_instantiate_type);
                 }
                 else if(!ad_slot_result.notice_url.empty())
                 {
                   add_response_notice_(
                     bid_object,
-                    String::SubString(ad_slot_result.notice_url),
+                    ad_slot_result.notice_url,
                     notice_instantiate_type);
                 }
               }
@@ -1018,7 +1040,7 @@ namespace AdServer::Bidding
                           String::SubString(ad_slot_result.ext_tokens[token_i].name));
 
                         ext_obj.add_escaped_string(escaped_name,
-                          String::SubString(ad_slot_result.ext_tokens[token_i].value));
+                          ad_slot_result.ext_tokens[token_i].value);
                       }
                     }
                   }
@@ -1028,7 +1050,7 @@ namespace AdServer::Bidding
                 {
                   ext_obj.add_escaped_string(
                     Response::OpenRtb::ADVERTISER_NAME,
-                    String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
+                    ad_slot_result.selected_creatives[0].advertiser_name);
 
                   need_ipw_extension = false;
                 }
@@ -1081,7 +1103,7 @@ namespace AdServer::Bidding
                     AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
                     if(!ad_slot_result.erid.empty())
                     {
-                      array.add_escaped_string(String::SubString(ad_slot_result.erid));
+                      array.add_escaped_string(ad_slot_result.erid);
                     }
                   }
                   else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT0)
@@ -1095,7 +1117,8 @@ namespace AdServer::Bidding
                   else // SourceTraits::ERIDRT_SINGLE
                   {
                     nroa_obj.add_escaped_string_if_non_empty(
-                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+                      Response::OpenRtb::NROA_ERID,
+                      ad_slot_result.erid);
                   }
                 } // fill_nroa
               }
@@ -1105,7 +1128,7 @@ namespace AdServer::Bidding
             {
               bid_object.add_escaped_string(
                 Response::OpenRtb::IURL,
-                String::SubString(ad_slot_result.iurl));
+                ad_slot_result.iurl);
             }
 
             bid_object.add_as_string(
@@ -1116,7 +1139,7 @@ namespace AdServer::Bidding
       }
       root_json.add_string(Response::OpenRtb::CUR, pub_currency_code);
       }
-      response_ostr << response;
+      response.swap(local_response);
     }
     catch(const AdServer::Commons::JsonObject::Exception& ex)
     {
@@ -1158,7 +1181,9 @@ namespace AdServer::Bidding
         char bid_id[20];
         size_t len = String::StringManip::int_to_str(
           request_info.random, bid_id, sizeof(bid_id));
-        root_json.add_string(Response::OpenRtb::BIDID, String::SubString(bid_id, len));
+        root_json.add_string(
+          Response::OpenRtb::BIDID,
+          std::string_view(bid_id, len));
       }
 
       bool some_campaign_selected = false;
@@ -1272,7 +1297,7 @@ namespace AdServer::Bidding
             AdServer::Commons::JsonObject bid_object(bidarray.add_object());
 
             bid_object.add(Response::Yandex::ID,
-              YandexIdFormatter(to_sub_string(slot_it->id)));
+              YandexIdFormatter(slot_it->id));
             bid_object.add_number(Response::Yandex::PRICE,
               openrtb_price.integer<unsigned long>());
             // Always add adid for yandex (don't check source_id)
@@ -1289,7 +1314,7 @@ namespace AdServer::Bidding
                 i < ad_slot_result.track_pixel_urls.size(); ++i)
               {
                 track_pixel_urls.add_escaped_string(
-                  String::SubString(ad_slot_result.track_pixel_urls[i]));
+                  ad_slot_result.track_pixel_urls[i]);
               }
             }
 
@@ -1303,14 +1328,14 @@ namespace AdServer::Bidding
             {
               add_response_notice_(
                 bid_object,
-                to_sub_string(request_info.notice_url),
+                request_info.notice_url,
                 notice_instantiate_type);
             }
             else if(!ad_slot_result.notice_url.empty())
             {
               add_response_notice_(
                 bid_object,
-                String::SubString(ad_slot_result.notice_url),
+                ad_slot_result.notice_url,
                 notice_instantiate_type);
             }
 
@@ -1362,7 +1387,7 @@ namespace AdServer::Bidding
                 String::SubString(ad_slot_result.tokens[token_i].name));
 
               bid_object.add_escaped_string(escaped_name,
-                String::SubString(ad_slot_result.tokens[token_i].value));
+                ad_slot_result.tokens[token_i].value);
             }
             //} //
           } // if(ad_slot_result.selected_creatives.size() > 0)
@@ -1434,8 +1459,7 @@ namespace AdServer::Bidding
           native_obj.add_object(Response::OpenRtb::NATIVE_LINK));
         link_obj.add_opt_escaped_string(
           Response::OpenRtb::NATIVE_LINK_URL,
-          String::SubString(
-            ad_slot_result.selected_creatives[0].click_url),
+          ad_slot_result.selected_creatives[0].click_url,
           need_escape);
       }
 
@@ -1445,7 +1469,7 @@ namespace AdServer::Bidding
         {
           native_obj.add_opt_escaped_string(
             Response::OpenRtb::NATIVE_JS_TRACKER,
-            String::SubString(ad_slot_result.track_html_body),
+            ad_slot_result.track_html_body,
             need_escape);
         }
 
@@ -1466,7 +1490,7 @@ namespace AdServer::Bidding
               event_obj.add_number(Response::OpenRtb::EVENT_METHOD, 1);
               event_obj.add_string(
                 Response::OpenRtb::EVENT_URL,
-                String::SubString(ad_slot_result.track_pixel_urls[i]));
+                ad_slot_result.track_pixel_urls[i]);
             }
           }
           else
@@ -1478,7 +1502,7 @@ namespace AdServer::Bidding
               i < ad_slot_result.track_pixel_urls.size(); ++i)
             {
               imp_trackers_obj.add_opt_escaped_string(
-                String::SubString(ad_slot_result.track_pixel_urls[i]),
+                ad_slot_result.track_pixel_urls[i],
                 need_escape);
             }
           }
@@ -1528,7 +1552,7 @@ namespace AdServer::Bidding
           data_asset.add_opt_escaped_string(
             is_title ? Response::OpenRtb::NATIVE_ASSET_TITLE_TEXT :
               Response::OpenRtb::NATIVE_ASSET_DATA_VALUE,
-            res_text,
+            to_string_view(res_text),
             need_escape);
         }
       }
@@ -1562,7 +1586,7 @@ namespace AdServer::Bidding
 
             image_asset.add_opt_escaped_string(
               Response::OpenRtb::NATIVE_ASSET_IMG_URL,
-              String::SubString(token.value),
+              token.value,
               need_escape);
 
             image_asset.add_number(
@@ -1594,7 +1618,7 @@ namespace AdServer::Bidding
 
           video_asset.add_opt_escaped_string(
             Response::OpenRtb::NATIVE_ASSET_VIDEO_TAG,
-            String::SubString(ad_slot_result.creative_body),
+            ad_slot_result.creative_body,
             need_escape);
         }
       }

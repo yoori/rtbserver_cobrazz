@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <string_view>
 
 #include <Commons/JsonFormatter.hpp>
 
@@ -61,7 +62,7 @@ namespace AdServer::Bidding
   protected:
     void
     fill_openrtb_response_(
-      std::ostream& response_ostr,
+      std::string& response,
       const RequestInfo& request_info,
       const JsonProcessingContext& context,
       const AdServer::Bidding::CampaignManager::RequestCreativeResult& campaign_match_result,
@@ -89,7 +90,7 @@ namespace AdServer::Bidding
     void
     add_response_notice_(
       AdServer::Commons::JsonObject& bid_object,
-      const String::SubString& url,
+      std::string_view url,
       SourceTraits::NoticeInstantiateType notice_instantiate_type);
 
     static void

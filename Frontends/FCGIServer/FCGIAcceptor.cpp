@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <charconv>
 #include <iostream>
+#include <limits>
+#include <string_view>
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
@@ -29,21 +32,50 @@ namespace
   std::string PASS_SECURE("secure");
   std::string PASS_SECURE_VALUE("1");
 
-  std::string CRLF("\r\n");
-  const String::SubString STATUS_HEADER("Status: ");
-  const String::SubString HEADER_SEPARATOR(": ");
-  const String::SubString SET_COOKIE_HEADER("Set-Cookie: ");
-  const String::SubString CONTENT_LENGTH_HEADER("Content-Length: ");
-  std::string STATUS_200("OK");
-  std::string STATUS_204("No Content");
-  std::string STATUS_301("Moved Permanently");
-  std::string STATUS_302("Found");
-  std::string STATUS_303("See Other");
-  std::string STATUS_307("Temporary Redirect");
-  std::string STATUS_400("Bad Request");
-  std::string STATUS_403("Forbidden");
-  std::string STATUS_404("Not Found");
-  std::string STATUS_500("Internal Server Error");
+  constexpr std::string_view CRLF = "\r\n";
+  constexpr std::string_view STATUS_HEADER = "Status: ";
+  constexpr std::string_view HEADER_SEPARATOR = ": ";
+  constexpr std::string_view SET_COOKIE_HEADER = "Set-Cookie: ";
+  constexpr std::string_view CONTENT_LENGTH_HEADER = "Content-Length: ";
+  constexpr std::string_view STATUS_200 = "OK";
+  constexpr std::string_view STATUS_204 = "No Content";
+  constexpr std::string_view STATUS_301 = "Moved Permanently";
+  constexpr std::string_view STATUS_302 = "Found";
+  constexpr std::string_view STATUS_303 = "See Other";
+  constexpr std::string_view STATUS_307 = "Temporary Redirect";
+  constexpr std::string_view STATUS_400 = "Bad Request";
+  constexpr std::string_view STATUS_403 = "Forbidden";
+  constexpr std::string_view STATUS_404 = "Not Found";
+  constexpr std::string_view STATUS_500 = "Internal Server Error";
+
+  std::string_view
+  status_text_ref(int status) noexcept
+  {
+    switch (status)
+    {
+      case 200: return STATUS_200;
+      case 204: return STATUS_204;
+      case 301: return STATUS_301;
+      case 302: return STATUS_302;
+      case 303: return STATUS_303;
+      case 307: return STATUS_307;
+      case 400: return STATUS_400;
+      case 403: return STATUS_403;
+      case 404: return STATUS_404;
+      case 500: return STATUS_500;
+    }
+
+    return std::string_view();
+  }
+
+  template<typename Number>
+  std::string_view
+  to_chars_ref(char* buf, std::size_t size, Number value) noexcept
+  {
+    const std::to_chars_result result = std::to_chars(buf, buf + size, value);
+    return std::string_view(buf, result.ptr - buf);
+  }
+
 }
 
 namespace FCGI
@@ -365,30 +397,22 @@ namespace Frontends
     make_fcgi_response_(const FCGI::HttpResponse_var& response)
     {
       const int status = response->status() == 0 ? 200 : response->status();
-      std::string status_text;
-      switch(status)
-      {
-        case 200: status_text = STATUS_200; break;
-        case 204: status_text = STATUS_204; break;
-        case 301: status_text = STATUS_301; break;
-        case 302: status_text = STATUS_302; break;
-        case 303: status_text = STATUS_303; break;
-        case 307: status_text = STATUS_307; break;
-        case 400: status_text = STATUS_400; break;
-        case 403: status_text = STATUS_403; break;
-        case 404: status_text = STATUS_404; break;
-        case 500: status_text = STATUS_500; break;
-        default: status_text = "";
-      }
+      char status_line_buf[std::numeric_limits<int>::digits10 + 3];
+      std::string_view status_line = to_chars_ref(
+        status_line_buf,
+        sizeof(status_line_buf) - 1,
+        status);
+      status_line_buf[status_line.size()] = ' ';
+      status_line = std::string_view(status_line_buf, status_line.size() + 1);
 
-      const std::string status_line = std::to_string(status) + " ";
-      const String::SubString status_text_ref =
-        status_text.empty() ? String::SubString(status_line) : String::SubString(status_text);
+      const std::string_view status_text = status_text_ref(status);
+      const std::string_view status_text_out =
+        status_text.empty() ? status_line : status_text;
 
       std::size_t status_payload_size =
         STATUS_HEADER.size() +
         status_line.size() +
-        status_text_ref.size() +
+        status_text_out.size() +
         CRLF.size();
 
       std::size_t headers_payload_size = 0;
@@ -400,6 +424,7 @@ namespace Frontends
           header.value.size() +
           CRLF.size();
       }
+
       for(const auto& cookie : response->cookies())
       {
         headers_payload_size +=
@@ -407,7 +432,11 @@ namespace Frontends
           cookie.size() +
           CRLF.size();
       }
-      const std::string content_length = std::to_string(response->body().size());
+      char content_length_buf[std::numeric_limits<std::size_t>::digits10 + 2];
+      const std::string_view content_length = to_chars_ref(
+        content_length_buf,
+        sizeof(content_length_buf),
+        response->body().size());
       headers_payload_size +=
         CONTENT_LENGTH_HEADER.size() +
         content_length.size() +
@@ -443,7 +472,7 @@ namespace Frontends
           response_buf_size - offset);
         status_msg.append(FCGI_STDOUT, STATUS_HEADER)
           .append(FCGI_STDOUT, status_line)
-          .append(FCGI_STDOUT, status_text_ref)
+          .append(FCGI_STDOUT, status_text_out)
           .append(FCGI_STDOUT, CRLF)
           .clear_padding();
         offset += status_msg.size();
@@ -464,7 +493,7 @@ namespace Frontends
         for(const auto& cookie : response->cookies())
         {
           headers_msg.append(FCGI_STDOUT, SET_COOKIE_HEADER)
-            .append(FCGI_STDOUT, cookie)
+            .append(FCGI_STDOUT, std::string_view(cookie))
             .append(FCGI_STDOUT, CRLF);
         }
         headers_msg.append(FCGI_STDOUT, CONTENT_LENGTH_HEADER)
@@ -485,8 +514,8 @@ namespace Frontends
           body.size() - body_offset,
           std::numeric_limits<std::uint16_t>::max());
         body_msg.append(
-            FCGI_STDOUT,
-            String::SubString(body.data() + body_offset, chunk_size))
+          FCGI_STDOUT,
+          String::SubString(body.data() + body_offset, chunk_size))
           .clear_padding();
         offset += body_msg.size();
         body_offset += chunk_size;
