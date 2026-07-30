@@ -1,6 +1,5 @@
 #pragma once
 
-#include <map>
 #include <string>
 
 #include <Commons/Containers.hpp>
@@ -26,7 +25,7 @@ namespace AdServer::CampaignSvcs
         std::string mime_encoded_vast_preclick;
       };
 
-      using SourceRuleMap = std::map<std::string, SourceRule>;
+      using SourceRuleMap = StringFlatMap<SourceRule>;
 
       CreativeInstantiateRuleMap creative_rules;
       SourceRuleMap source_rules;

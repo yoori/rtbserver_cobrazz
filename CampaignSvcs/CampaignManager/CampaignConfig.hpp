@@ -5,10 +5,10 @@
 #include <set>
 #include <map>
 #include <memory>
-#include <unordered_map>
 #include <unordered_set>
 
 #include <boost/functional/hash.hpp>
+#include <boost/unordered/unordered_flat_map.hpp>
 
 #include <eh/Exception.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -68,7 +68,7 @@ namespace CampaignSvcs
       Timestamp timestamp;
     };
 
-    typedef std::map<std::string, AppFormatDef> AppFormatMap;
+    using AppFormatMap = StringFlatMap<AppFormatDef>;
 
     class Size: public virtual ReferenceCounting::AtomicImpl
     {
@@ -170,8 +170,7 @@ namespace CampaignSvcs
     typedef ReferenceCounting::SmartPtr<Currency> Currency_var;
     typedef ReferenceCounting::SmartPtr<const Currency> ConstCurrency_var;
     typedef std::map<unsigned long, Currency_var> CurrencyMap;
-    typedef Generics::GnuHashTable<Generics::StringHashAdapter, Currency_var>
-      CurrencyCodeMap;
+    using CurrencyCodeMap = StringFlatMap<Currency_var>;
 
     /**
      * Holds frequency cap data. Frequency caps associated with creatives
@@ -572,8 +571,8 @@ namespace CampaignSvcs
       typedef std::map<TagPricingKey, TagPricing> TagPricings;
       typedef std::map<std::string, TagPricing> CountryTagPricingMap;
       typedef std::map<std::string, const TagPricing*> CountryTagPricingPtrMap;
-      typedef std::map<std::string, OptionTokenValueMap>
-        TemplateOptionTokenValueMap;
+      using TemplateOptionTokenValueMap =
+        StringFlatMap<OptionTokenValueMap>;
       typedef ReferenceCounting::SmartPtr<Size> Size_var;
       typedef ReferenceCounting::ConstPtr<Size> ConstSize_var;
       typedef std::map<unsigned long, ConstSize_var> SizeMap;
@@ -757,7 +756,7 @@ namespace CampaignSvcs
         StringSet available_appformats;
       };
 
-      typedef std::unordered_map<unsigned long, Size> SizeMap;
+      using SizeMap = boost::unordered_flat_map<unsigned long, Size>;
 
       Creative(
         const Campaign* campaign_val,
@@ -828,9 +827,7 @@ namespace CampaignSvcs
 
     typedef std::map<unsigned long, Creative_var>
       CreativeMap;
-    typedef Generics::GnuHashTable<
-      Generics::NumericHashAdapter<unsigned long>, Creative_var>
-      CcidMap;
+    using CcidMap = boost::unordered_flat_map<unsigned long, Creative_var>;
 
     typedef std::set<unsigned long> ColoIdSet;
 
@@ -842,7 +839,7 @@ namespace CampaignSvcs
     {
     public:
       typedef std::set<unsigned long> OrderSetIdSet;
-      typedef std::unordered_set<unsigned long> SizeIdSet;
+      using SizeIdSet = std::unordered_set<unsigned long>;
 
       struct CreativeBySizeKey
       {
@@ -872,11 +869,10 @@ namespace CampaignSvcs
       };
 
       typedef std::vector<CreativeBySizeEntry> CreativeBySizeArray;
-      typedef std::unordered_map<
+      using CreativeBySizeMap = boost::unordered_flat_map<
         CreativeBySizeKey,
         CreativeBySizeArray,
-        CreativeBySizeKeyHash>
-        CreativeBySizeMap;
+        CreativeBySizeKeyHash>;
 
       Campaign() noexcept;
 
@@ -1147,8 +1143,10 @@ namespace CampaignSvcs
 
     typedef std::set<Account_var, CompareAccountByID> AccountSet;
 
-    typedef Generics::GnuHashTable<PubPixelAccountKey, AccountSet>
-      PubPixelAccountMap;
+    using PubPixelAccountMap = boost::unordered_flat_map<
+      PubPixelAccountKey,
+      AccountSet,
+      HashByHashMethod>;
 
     class WebOperation: public ReferenceCounting::AtomicImpl
     {
@@ -1210,8 +1208,10 @@ namespace CampaignSvcs
       size_t hash_;
     };
 
-    typedef Generics::GnuHashTable<WebOperationKey, WebOperation_var>
-      WebOperationHash;
+    using WebOperationHash = boost::unordered_flat_map<
+      WebOperationKey,
+      WebOperation_var,
+      HashByHashMethod>;
 
     struct IdTagKey
     {
@@ -1269,27 +1269,33 @@ namespace CampaignSvcs
 
       typedef std::map<unsigned long, CreativeCategory> CreativeCategoryMap;
 
-      typedef std::unordered_map<unsigned long, Campaign_var> CampaignMap;
-      typedef std::unordered_map<unsigned long, Colocation_var> ColocationMap;
-      typedef std::map<std::string, Country_var> CountryMap;
+      using CampaignMap =
+        boost::unordered_flat_map<unsigned long, Campaign_var>;
+      using ColocationMap =
+        boost::unordered_flat_map<unsigned long, Colocation_var>;
+      using CountryMap = StringFlatMap<Country_var>;
       typedef std::map<unsigned long, CategoryChannel_var> CategoryChannelMap;
       typedef std::map<unsigned long, SimpleChannelCategories_var> SimpleChannelMap;
       typedef ExpressionChannelHolderMap ChannelMap;
 
-      typedef std::unordered_map<unsigned long, PlatformChannelHolder> PlatformChannelPriorityMap;
-      typedef std::unordered_map<std::string, Tag_var> SizeTagMap;
+      using PlatformChannelPriorityMap =
+        boost::unordered_flat_map<unsigned long, PlatformChannelHolder>;
+      using SizeTagMap = StringFlatMap<Tag_var>;
       typedef std::map<AdRequestType, Account_var> AdRequestTypeAccountMap;
       typedef std::map<AdRequestType, SizeTagMap> AdRequestTypeTagMap;
-      typedef Generics::GnuHashTable<IdTagKey, std::vector<Tag_var> > IdTagMap;
+      using IdTagMap = boost::unordered_flat_map<
+        IdTagKey,
+        std::vector<Tag_var>,
+        HashByHashMethod>;
 
       typedef std::list<ExpressionChannelHolder_var> ExpressionChannelHolderList;
       typedef std::map<unsigned long, ExpressionChannelHolderList> BlockChannelMap;
 
-      typedef Generics::GnuHashTable<Generics::StringHashAdapter, CreativeCategoryIdSet>
-        ExternalCategoryNameMap;
+      using ExternalCategoryNameMap = StringFlatMap<CreativeCategoryIdSet>;
       typedef std::map<AdRequestType, ExternalCategoryNameMap>
         ExternalCategoryMap;
-      typedef std::unordered_map<unsigned long, Contract_var> ContractMap;
+      using ContractMap =
+        boost::unordered_flat_map<unsigned long, Contract_var>;
 
     public:
       CampaignConfig() noexcept;

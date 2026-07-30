@@ -2,9 +2,10 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 #include <String/TextTemplate.hpp>
+
+#include "../CreativeTemplateArgs.hpp"
 
 namespace AdServer::CampaignSvcs::InstantiateAd
 {
@@ -23,6 +24,6 @@ namespace AdServer::CampaignSvcs::InstantiateAd
 
   private:
     std::shared_ptr<String::TextTemplate::ArgsCallback> source_;
-    mutable std::unordered_map<std::string, std::string> cached_values_;
+    mutable StringFlatMap<std::string> cached_values_;
   };
 }

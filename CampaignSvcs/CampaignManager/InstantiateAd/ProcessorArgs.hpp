@@ -5,10 +5,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 
 #include <String/TextTemplate.hpp>
 
+#include "../CreativeTemplateArgs.hpp"
 #include "InstantiateAdContext.hpp"
 
 namespace AdServer::CampaignSvcs::InstantiateAd
@@ -47,7 +47,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     bool
     has_processor(std::string_view name) const
     {
-      return processors_.find(std::string(name)) != processors_.end();
+      return processors_.find(name) != processors_.end();
     }
 
     bool
@@ -57,7 +57,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       std::string& result,
       bool value) const
     {
-      const std::string name(key.data(), key.size());
+      const std::string_view name(key.data(), key.size());
       const auto it = processors_.find(name);
       if(it != processors_.end())
       {
@@ -81,6 +81,6 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     }
 
   private:
-    std::unordered_map<std::string, ArgFun> processors_;
+    StringFlatMap<ArgFun> processors_;
   };
 }

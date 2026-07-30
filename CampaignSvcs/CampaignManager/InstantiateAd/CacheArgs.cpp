@@ -25,7 +25,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       return source_->get_argument(key, result, false);
     }
 
-    const std::string name(key.data(), key.size());
+    const std::string_view name(key.data(), key.size());
     const auto it = cached_values_.find(name);
     if(it != cached_values_.end())
     {
@@ -38,7 +38,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       return false;
     }
 
-    cached_values_.emplace(name, result);
+    cached_values_.emplace(std::string(name), result);
     return true;
   }
 }

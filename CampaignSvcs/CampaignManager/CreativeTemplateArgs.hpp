@@ -7,16 +7,18 @@
 #include <string>
 #include <string_view>
 
+#include <boost/unordered/unordered_flat_map.hpp>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+#include <Generics/HashTableAdapters.hpp>
 #include <Generics/Time.hpp>
 #include <String/TextTemplate.hpp>
 #include <Sync/SyncPolicy.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
-#include <Commons/tsl/sparse_map.h>
 
 namespace TokenTemplateProperties
 {
@@ -54,9 +56,21 @@ namespace AdServer::CampaignSvcs
       return value ? std::string_view(value) : std::string_view();
     }
 
-    template<std::size_t Size>
+    inline std::string_view
+    to_string_view(const String::SubString& value) noexcept
+    {
+      return std::string_view(value.data(), value.size());
+    }
+
+    inline std::string_view
+    to_string_view(const Generics::SubStringHashAdapter& value) noexcept
+    {
+      return std::string_view(value);
+    }
+
+    template<typename Value>
     std::string_view
-    to_string_view(const char (&value)[Size]) noexcept
+    to_string_view(const Value& value) noexcept
     {
       return std::string_view(value);
     }
@@ -88,7 +102,53 @@ namespace AdServer::CampaignSvcs
     }
   };
 
-  using OptionTokenValueMap = tsl::sparse_map<
+  struct SubStringHashAdapterHash
+  {
+    using is_transparent = void;
+
+    std::size_t
+    operator()(const Generics::SubStringHashAdapter& value) const noexcept
+    {
+      return value.hash();
+    }
+
+    std::size_t
+    operator()(const String::SubString& value) const noexcept
+    {
+      return Generics::SubStringHashAdapter(value).hash();
+    }
+
+    std::size_t
+    operator()(std::string_view value) const noexcept
+    {
+      return operator()(String::SubString(value.data(), value.size()));
+    }
+
+    std::size_t
+    operator()(const std::string& value) const noexcept
+    {
+      return operator()(std::string_view(value));
+    }
+  };
+
+  struct HashByHashMethod
+  {
+    template<typename Value>
+    std::size_t
+    operator()(const Value& value) const noexcept
+    {
+      return value.hash();
+    }
+  };
+
+  template<typename Value>
+  using StringFlatMap = boost::unordered_flat_map<
+    std::string,
+    Value,
+    TransparentStringHash,
+    TransparentStringEqual>;
+
+  using OptionTokenValueMap = boost::unordered_flat_map<
     std::string,
     OptionValue,
     TransparentStringHash,
@@ -97,7 +157,7 @@ namespace AdServer::CampaignSvcs
   class TokenValueMap: public String::TextTemplate::ArgsCallback
   {
   private:
-    using Container = std::map<std::string, std::string, std::less<> >;
+    using Container = StringFlatMap<std::string>;
 
   public:
     void
@@ -219,8 +279,9 @@ namespace AdServer::CampaignSvcs
 
   class BaseTokenProcessor: public virtual ReferenceCounting::AtomicImpl
   {
-    typedef std::map<long, ReferenceCounting::SmartPtr<BaseTokenProcessor> >
-      TokenProcessorMap;
+    using TokenProcessorMap = boost::unordered_flat_map<
+      long,
+      ReferenceCounting::SmartPtr<BaseTokenProcessor>>;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -268,7 +329,8 @@ namespace AdServer::CampaignSvcs
     TokenSet insert_restrictions_;
   };
 
-  typedef ReferenceCounting::SmartPtr<BaseTokenProcessor> BaseTokenProcessor_var;
+  using BaseTokenProcessor_var =
+    ReferenceCounting::SmartPtr<BaseTokenProcessor>;
 
   class LinkTokenProcessor: public BaseTokenProcessor
   {
@@ -372,9 +434,10 @@ namespace AdServer::CampaignSvcs
     virtual ~DynamicContentUrlTokenProcessor() noexcept {}
   };
 
-  typedef std::map<long, BaseTokenProcessor_var> TokenProcessorMap;
+  using TokenProcessorMap =
+    boost::unordered_flat_map<long, BaseTokenProcessor_var>;
 
-  typedef std::map<std::string, CreativeInstantiateRule>
-    CreativeInstantiateRuleMap;
+  using CreativeInstantiateRuleMap =
+    StringFlatMap<CreativeInstantiateRule>;
 
 } // namespace AdServer::CampaignSvcs

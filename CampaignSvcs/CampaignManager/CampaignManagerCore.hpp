@@ -12,6 +12,8 @@
 #include <vector>
 #include <unordered_set>
 
+#include <boost/unordered/unordered_flat_map.hpp>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -946,7 +948,7 @@ namespace AdServer::CampaignSvcs
       TokenValueMap tokens;
       TokenValueMap ext_tokens;
       TokenValueMap native_data_tokens;
-      std::map<std::string, ImageToken> native_image_tokens;
+      StringFlatMap<ImageToken> native_image_tokens;
     };
 
     struct CreativeParams
@@ -1095,8 +1097,11 @@ namespace AdServer::CampaignSvcs
 
     using ConfirmCreativeAmountArray = std::vector<ConfirmCreativeAmount>;
 
-    using TokenToParamMap = Generics::GnuHashTable<
-      Generics::SubStringHashAdapter, std::string>;
+    using TokenToParamMap = boost::unordered_flat_map<
+      Generics::SubStringHashAdapter,
+      std::string,
+      SubStringHashAdapterHash,
+      TransparentStringEqual>;
 
   private:
     AdServer::Commons::Awaitable<bool>

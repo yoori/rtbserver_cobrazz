@@ -2,9 +2,10 @@
 
 #include <eh/Exception.hpp>
 #include <Generics/CRC.hpp>
-#include <Generics/GnuHashTable.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Logger/Logger.hpp>
+
+#include <boost/unordered/unordered_flat_map.hpp>
 
 #include <Commons/Containers.hpp>
 #include <Generics/MonoAllocator.hpp>
@@ -474,8 +475,10 @@ namespace AdServer
         unsigned long hash_;
       };
 
-      typedef Generics::GnuHashTable<
-        KeyHashAdapter, IndexNode> OrderedCampaignMap;
+      using OrderedCampaignMap = boost::unordered_flat_map<
+        KeyHashAdapter,
+        IndexNode,
+        HashByHashMethod>;
 
       struct TagCampaignApprove
       {
