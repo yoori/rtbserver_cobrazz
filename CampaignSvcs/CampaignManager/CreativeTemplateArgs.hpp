@@ -142,17 +142,9 @@ namespace AdServer::CampaignSvcs
   };
 
   template<typename Value>
-  using StringFlatMap = boost::unordered_flat_map<
-    std::string,
-    Value,
-    TransparentStringHash,
-    TransparentStringEqual>;
+  using StringFlatMap = std::map<std::string, Value, std::less<>>;
 
-  using OptionTokenValueMap = boost::unordered_flat_map<
-    std::string,
-    OptionValue,
-    TransparentStringHash,
-    TransparentStringEqual>;
+  using OptionTokenValueMap = std::map<std::string, OptionValue, std::less<>>;
 
   class TokenValueMap: public String::TextTemplate::ArgsCallback
   {
@@ -438,6 +430,6 @@ namespace AdServer::CampaignSvcs
     boost::unordered_flat_map<long, BaseTokenProcessor_var>;
 
   using CreativeInstantiateRuleMap =
-    StringFlatMap<CreativeInstantiateRule>;
+    std::map<std::string, CreativeInstantiateRule, std::less<>>;
 
 } // namespace AdServer::CampaignSvcs

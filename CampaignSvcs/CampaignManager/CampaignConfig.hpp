@@ -5,6 +5,7 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <boost/functional/hash.hpp>
@@ -756,7 +757,7 @@ namespace CampaignSvcs
         StringSet available_appformats;
       };
 
-      using SizeMap = boost::unordered_flat_map<unsigned long, Size>;
+      using SizeMap = std::unordered_map<unsigned long, Size>;
 
       Creative(
         const Campaign* campaign_val,
@@ -827,7 +828,7 @@ namespace CampaignSvcs
 
     typedef std::map<unsigned long, Creative_var>
       CreativeMap;
-    using CcidMap = boost::unordered_flat_map<unsigned long, Creative_var>;
+    using CcidMap = std::unordered_map<unsigned long, Creative_var>;
 
     typedef std::set<unsigned long> ColoIdSet;
 
@@ -869,7 +870,7 @@ namespace CampaignSvcs
       };
 
       typedef std::vector<CreativeBySizeEntry> CreativeBySizeArray;
-      using CreativeBySizeMap = boost::unordered_flat_map<
+      using CreativeBySizeMap = std::unordered_map<
         CreativeBySizeKey,
         CreativeBySizeArray,
         CreativeBySizeKeyHash>;
@@ -1143,7 +1144,7 @@ namespace CampaignSvcs
 
     typedef std::set<Account_var, CompareAccountByID> AccountSet;
 
-    using PubPixelAccountMap = boost::unordered_flat_map<
+    using PubPixelAccountMap = std::unordered_map<
       PubPixelAccountKey,
       AccountSet,
       HashByHashMethod>;
@@ -1208,7 +1209,7 @@ namespace CampaignSvcs
       size_t hash_;
     };
 
-    using WebOperationHash = boost::unordered_flat_map<
+    using WebOperationHash = std::unordered_map<
       WebOperationKey,
       WebOperation_var,
       HashByHashMethod>;
@@ -1270,20 +1271,20 @@ namespace CampaignSvcs
       typedef std::map<unsigned long, CreativeCategory> CreativeCategoryMap;
 
       using CampaignMap =
-        boost::unordered_flat_map<unsigned long, Campaign_var>;
+        std::unordered_map<unsigned long, Campaign_var>;
       using ColocationMap =
-        boost::unordered_flat_map<unsigned long, Colocation_var>;
+        std::unordered_map<unsigned long, Colocation_var>;
       using CountryMap = StringFlatMap<Country_var>;
       typedef std::map<unsigned long, CategoryChannel_var> CategoryChannelMap;
       typedef std::map<unsigned long, SimpleChannelCategories_var> SimpleChannelMap;
       typedef ExpressionChannelHolderMap ChannelMap;
 
       using PlatformChannelPriorityMap =
-        boost::unordered_flat_map<unsigned long, PlatformChannelHolder>;
+        std::unordered_map<unsigned long, PlatformChannelHolder>;
       using SizeTagMap = StringFlatMap<Tag_var>;
       typedef std::map<AdRequestType, Account_var> AdRequestTypeAccountMap;
       typedef std::map<AdRequestType, SizeTagMap> AdRequestTypeTagMap;
-      using IdTagMap = boost::unordered_flat_map<
+      using IdTagMap = std::unordered_map<
         IdTagKey,
         std::vector<Tag_var>,
         HashByHashMethod>;
@@ -1295,7 +1296,7 @@ namespace CampaignSvcs
       typedef std::map<AdRequestType, ExternalCategoryNameMap>
         ExternalCategoryMap;
       using ContractMap =
-        boost::unordered_flat_map<unsigned long, Contract_var>;
+        std::unordered_map<unsigned long, Contract_var>;
 
     public:
       CampaignConfig() noexcept;
