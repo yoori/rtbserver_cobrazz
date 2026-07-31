@@ -15,13 +15,12 @@ namespace AdServer::Bidding
   }
 
   BiddingFrontendLogger::GeoParams::GeoParams()
-    : arena(arena_buffer.data(), arena_buffer.size()),
-      ip(&arena),
-      source(&arena),
-      type(&arena),
-      country(&arena),
-      region(&arena),
-      city(&arena)
+    : ip(arena.arena()),
+      source(arena.arena()),
+      type(arena.arena()),
+      country(arena.arena()),
+      region(arena.arena()),
+      city(arena.arena())
   {}
 
   BiddingFrontendLogger::BiddingFrontendLogger(
@@ -64,9 +63,9 @@ namespace AdServer::Bidding
 
     try
     {
-      AdServer::LogProcessing::GeoLoggerKey key;
-      key.ip.assign(params.ip.data(), params.ip.size());
-      key.source.assign(params.source.data(), params.source.size());
+      AdServer::LogProcessing::GeoLoggerKey key(
+        std::string(params.ip.data(), params.ip.size()),
+        std::string(params.source.data(), params.source.size()));
 
       AdServer::LogProcessing::GeoLoggerData data;
       data.lat = params.lat;

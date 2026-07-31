@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <utility>
+
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
 #include <LogCommons/CsvUtils.hpp>
@@ -8,6 +11,21 @@ namespace AdServer::LogProcessing
 {
   struct GeoLoggerKey
   {
+    GeoLoggerKey() = default;
+    GeoLoggerKey(const GeoLoggerKey&) = default;
+    GeoLoggerKey& operator=(const GeoLoggerKey&) = default;
+    GeoLoggerKey(GeoLoggerKey&&) noexcept = default;
+    GeoLoggerKey& operator=(GeoLoggerKey&&) noexcept = default;
+
+    GeoLoggerKey(
+      std::string&& ip_val,
+      std::string&& source_val)
+      : ip(std::move(ip_val)),
+        source(std::move(source_val))
+    {
+      calc_hash_();
+    }
+
     std::string ip;
     std::string source;
 
@@ -20,16 +38,30 @@ namespace AdServer::LogProcessing
     size_t
     hash() const
     {
-      size_t hash_value = 0;
-      Generics::Murmur64Hash hasher(hash_value);
+      return hash_;
+    }
+
+  private:
+    void
+    calc_hash_()
+    {
+      hash_ = 0;
+      Generics::Murmur64Hash hasher(hash_);
       hash_add(hasher, ip);
       hash_add(hasher, source);
-      return hash_value;
     }
+
+    size_t hash_ = 0;
   };
 
   struct GeoLoggerData
   {
+    GeoLoggerData() = default;
+    GeoLoggerData(const GeoLoggerData&) = default;
+    GeoLoggerData& operator=(const GeoLoggerData&) = default;
+    GeoLoggerData(GeoLoggerData&&) noexcept = default;
+    GeoLoggerData& operator=(GeoLoggerData&&) noexcept = default;
+
     FixedNumber lat = FixedNumber::ZERO;
     FixedNumber lon = FixedNumber::ZERO;
     std::string type;
@@ -46,8 +78,7 @@ namespace AdServer::LogProcessing
 
   typedef StatCollector<GeoLoggerKey, GeoLoggerData> GeoLoggerCollector;
 
-  struct GeoLoggerTraits:
-    LogDefaultTraits<GeoLoggerCollector, false, true>
+  struct GeoLoggerTraits: LogDefaultTraits<GeoLoggerCollector, false, true>
   {
     static const char* csv_base_name() { return "GeoLogger"; }
 

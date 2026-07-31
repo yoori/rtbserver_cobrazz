@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -223,6 +224,7 @@ namespace AdServer::Grpc
           google::protobuf::Arena::CreateMessage<Response>(arena.get());
         if (status.ok() && !response->ParseFromString(batch_response.payload()))
         {
+          assert(false && "Unable to parse grpc response");
           const auto message = AdServer::Grpc::Detail::make_parse_error_message_(
             parse_error_message,
             full_method,

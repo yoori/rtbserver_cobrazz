@@ -96,8 +96,7 @@ namespace AdServer::Bidding
         unsigned long flags;
       };
 
-      using ColocationMap =
-        boost::unordered_flat_map<unsigned long, Colocation>;
+      using ColocationMap = boost::unordered_flat_map<unsigned long, Colocation>;
 
       ColocationMap colocations;
 

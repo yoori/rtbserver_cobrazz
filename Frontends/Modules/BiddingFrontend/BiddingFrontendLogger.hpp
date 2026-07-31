@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <string>
 #include <vector>
@@ -39,8 +38,7 @@ namespace AdServer::Bidding
 
       static constexpr std::size_t ARENA_SIZE = 512;
 
-      std::array<unsigned char, ARENA_SIZE> arena_buffer;
-      Generics::MonoAllocatorArena arena;
+      Generics::MonoAllocatorFixedArena<ARENA_SIZE> arena;
       Generics::MonoString ip;
       Generics::MonoString source;
       AdServer::CampaignSvcs::CoordDecimal lat =
