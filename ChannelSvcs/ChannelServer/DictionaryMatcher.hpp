@@ -1,33 +1,24 @@
 #pragma once
 
-#include <unordered_map>
+#include <boost/unordered/unordered_flat_map.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
 #include <Generics/HashTableAdapters.hpp>
-//#include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/DictionaryProvider/DictionaryProvider.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   class DictionaryMatcher
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    DictionaryMatcher(
-      const CORBACommons::CorbaClientAdapter& adapter,
-      CORBACommons::CorbaObjectRefList& dictionary_server_refs,
-      Logging::Logger* logger)
-      /*throw(Exception)*/;
+    using DictionaryProviderPoolConfig = CORBACommons::ObjectPoolRefConfiguration;
 
-    virtual ~DictionaryMatcher() noexcept {};
-
-    /*
-    virtual size_t add_trigger(MergeAtom& merge_atom);
-    */
+    using DictionaryProviderPool = CORBACommons::ObjectPool<
+      AdServer::ChannelSvcs::DictionaryProvider, DictionaryProviderPoolConfig>;
+    using DictionaryProviderPoolPtr = std::unique_ptr<DictionaryProviderPool>;
 
     struct StringHashAdapterHash
     {
@@ -38,15 +29,19 @@ namespace ChannelSvcs
       }
     };
 
-    typedef std::unordered_map<
-      Generics::StringHashAdapter,
-      Lexeme_var,
-      StringHashAdapterHash>
-      LexemeCache;
+    using LexemeCache = boost::unordered_flat_map<
+      Generics::StringHashAdapter, Lexeme_var, StringHashAdapterHash>;
 
-    void get_lexemes(
-      const char* lang,
-      LexemeCache& lexemes)
+  public:
+    DictionaryMatcher(
+      const CORBACommons::CorbaClientAdapter& adapter,
+      CORBACommons::CorbaObjectRefList& dictionary_server_refs,
+      Logging::Logger* logger)
+      /*throw(Exception)*/;
+
+    virtual ~DictionaryMatcher() noexcept {};
+
+    void get_lexemes(const char* lang, LexemeCache& lexemes)
       /*throw(Exception)*/;
 
     virtual bool ready() const noexcept;
@@ -54,20 +49,7 @@ namespace ChannelSvcs
     static bool
     is_lexemized(const char* trigger) noexcept;
 
-
-    typedef CORBACommons::ObjectPoolRefConfiguration
-      DictionaryProviderPoolConfig;
-
-    typedef
-      CORBACommons::ObjectPool<
-        AdServer::ChannelSvcs::DictionaryProvider,
-        DictionaryProviderPoolConfig>
-      DictionaryProviderPool;
-    typedef std::unique_ptr<DictionaryProviderPool> DictionaryProviderPoolPtr;
-
   private:
-    static const char* ASPECT;
-
     AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
     query_dictionary_words_(
       const char* lang,
@@ -78,23 +60,19 @@ namespace ChannelSvcs
       noexcept;
 
   private:
+    static const char* ASPECT;
     const CORBACommons::CorbaClientAdapter& c_adapter_;
     DictionaryProviderPoolPtr dictionary_pool_;
     Logging::Logger* logger_;
   };
-
-}
 }
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
-    inline
-    bool DictionaryMatcher::is_lexemized(const char* trigger) noexcept
-    {
-      char trigger_type = Serialization::trigger_type(trigger);
-      return (trigger_type != 'U' && trigger_type != 'D');
-    }
-}
+  inline
+  bool DictionaryMatcher::is_lexemized(const char* trigger) noexcept
+  {
+    char trigger_type = Serialization::trigger_type(trigger);
+    return (trigger_type != 'U' && trigger_type != 'D');
+  }
 }

@@ -675,7 +675,7 @@ namespace AdServer::CampaignSvcs
           }
           else
           {
-            new_config.accounts.erase(account_it++);
+            account_it = new_config.accounts.erase(account_it);
           }
         }
         else
@@ -685,7 +685,7 @@ namespace AdServer::CampaignSvcs
       }
       else
       {
-        new_config.accounts.erase(account_it++);
+        account_it = new_config.accounts.erase(account_it);
       }
     }
   }
@@ -1088,7 +1088,7 @@ namespace AdServer::CampaignSvcs
       else
       {
         new_config.inconsistent_campaigns.push_front(cmp_it->second);
-        new_config.campaigns.erase(cmp_it++);
+        cmp_it = new_config.campaigns.erase(cmp_it);
       }
     }
   }
@@ -1264,7 +1264,7 @@ namespace AdServer::CampaignSvcs
 
       if (erase_channel)
       {
-        new_config.category_channels.erase(cat_ch_it++);
+        cat_ch_it = new_config.category_channels.erase(cat_ch_it);
       }
       else
       {
@@ -1529,7 +1529,7 @@ namespace AdServer::CampaignSvcs
       }
       else
       {
-        new_config.sites.erase(site_it++);
+        site_it = new_config.sites.erase(site_it);
       }
     }
 
@@ -1750,7 +1750,7 @@ namespace AdServer::CampaignSvcs
       }
       else
       {
-        new_config.tags.erase(tag_it++);
+        tag_it = new_config.tags.erase(tag_it);
       }
     }
 

@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <map>
-#include <unordered_map>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <iostream>
 #include <eh/Exception.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -124,17 +124,13 @@ namespace AdServer::ChannelSvcs
     std::string postfix;
   };
 
-  typedef std::unordered_map<
+  using TriggerMapType = boost::unordered_flat_map<
     Generics::SubStringHashAdapter,
     TriggerAtom_var,
-    HashAdapterHash<Generics::SubStringHashAdapter>>
-    TriggerMapType;
+    HashAdapterHash<Generics::SubStringHashAdapter>>;
 
-  typedef std::unordered_map<
-    Generics::Uuid,
-    UidAtom_var,
-    HashAdapterHash<Generics::Uuid>>
-    UidMapType;
+  using UidMapType = boost::unordered_flat_map<
+    Generics::Uuid, UidAtom_var, HashAdapterHash<Generics::Uuid>>;
 
   class TriggerMap:
     public TriggerMapType,
@@ -228,16 +224,16 @@ namespace AdServer::ChannelSvcs
 
     enum
     {
-      CH_URL = 1<<CT_URL,//1
-      CH_PAGE = 1<<CT_PAGE,//2
-      CH_SEARCH = 1<<CT_SEARCH,//4
-      CH_URL_KEYWORDS = 1<<CT_URL_KEYWORDS,//8
-      CH_UIDS = 1 <<CT_UIDS, // 16
-      CH_BLACK_LIST = 1 <<CT_BLACK_LIST, //32
-      CH_WEIGHT = 1<<CT_WEIGHT,//64
-      CH_ACTIVE = 1<<CT_ACTIVE,//128
-      CH_INACTIVE = 1<<CT_INACTIVE,//256
-      CH_WAIT = 1<<CT_WAIT//512
+      CH_URL = 1 << CT_URL,//1
+      CH_PAGE = 1 << CT_PAGE,//2
+      CH_SEARCH = 1 << CT_SEARCH,//4
+      CH_URL_KEYWORDS = 1 << CT_URL_KEYWORDS,//8
+      CH_UIDS = 1 << CT_UIDS, // 16
+      CH_BLACK_LIST = 1 << CT_BLACK_LIST, //32
+      CH_WEIGHT = 1 << CT_WEIGHT,//64
+      CH_ACTIVE = 1 << CT_ACTIVE,//128
+      CH_INACTIVE = 1 << CT_INACTIVE,//256
+      CH_WAIT = 1 << CT_WAIT//512
     };
 
     Channel(ChannelIdType id_ = 0) noexcept;
@@ -342,7 +338,7 @@ namespace AdServer::ChannelSvcs
 
   private:
     using ContainerType = std::map<unsigned int, Channel>;
-    using FindContainerType = std::unordered_map<unsigned int, Channel>;
+    using FindContainerType = boost::unordered_flat_map<unsigned int, Channel>;
 
     ContainerType ordered_container_;
     FindContainerType find_container_;

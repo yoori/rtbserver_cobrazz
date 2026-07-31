@@ -13,7 +13,6 @@
 #include <Commons/AtomicInt.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindContainer.hpp>
-#include <UserInfoSvcs/UserBindServer/FetchableHashTable.hpp>
 
 using namespace AdServer::UserInfoSvcs;
 
@@ -689,58 +688,6 @@ save_load_users_test()
   return 0;
 }
 
-int
-fetchable_hash_test()
-{
-  AdServer::UserInfoSvcs::bit_deque s;
-  s.push_back(true);
-  assert(s[0]);
-  s.push_back(true);
-  assert(s[0]);
-  assert(s[1]);
-
-  typedef AdServer::UserInfoSvcs::FetchableHashTable<
-    Generics::NumericHashAdapter<int>,
-    int,
-    UnorderedSet> FetchableHashTableType;
-
-  FetchableHashTableType f;
-
-  f.set(1, 1);
-  f.set(2, 2);
-  int t = 0;
-  bool ret = f.get(t, 1);
-  assert(ret);
-  assert(t == 1);
-  f.erase(1);
-  ret = f.get(t, 1);
-  assert(!ret);
-  ret = f.get(t, 2);
-  assert(ret);
-  assert(t == 2);
-
-  ret = f.get(t, 0);
-  assert(!ret);
-
-  auto fetcher = f.fetcher();
-  FetchableHashTableType::FetchArray fetch_array;
-  while(true)
-  {
-    bool fin = !fetcher.get(fetch_array, 2);
-    //std::cout << "fs = " << fetch_array.size() << std::endl;
-    for(auto it = fetch_array.begin(); it != fetch_array.end(); ++it)
-    {
-      std::cout << it->first.value() << "=>" << it->second << std::endl;
-    }
-
-    if(fin)
-    {
-      break;
-    }
-  }
-  return 0;
-}
-
 int main() noexcept
 {
   const unsigned long ITERATIONS = 10000000;
@@ -756,7 +703,6 @@ int main() noexcept
     ret += mem_usage_test();
     */
 
-    ret += fetchable_hash_test();
     /*
     ret += get_get_user_id_test();
     ret += save_load_users_test();

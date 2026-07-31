@@ -41,8 +41,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   typedef std::list<std::string> StringList;
   using AccountIdSet = boost::unordered_flat_set<unsigned long>;
   typedef std::list<unsigned long> AccountIdList;
-  //typedef std::vector<unsigned long> AccountIdArray;
-  typedef std::map<unsigned long, std::string> PlatformMap;
+  using PlatformMap = boost::unordered_flat_map<unsigned long, std::string>;
 
   enum CreativeCategoryType
   {
@@ -86,7 +85,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
   typedef ReferenceCounting::SmartPtr<Size> Size_var;
   typedef ReferenceCounting::SmartPtr<const Size> ConstSize_var;
-  typedef std::map<unsigned long, Size_var> SizeMap;
+  using SizeMap = boost::unordered_flat_map<unsigned long, Size_var>;
 
   struct CreativeOptionDef
   {
@@ -100,11 +99,11 @@ namespace AdServer::CampaignSvcs::AdInstances
     BaseTokenProcessor_var token_processor;
   };
 
-  typedef std::map<long, CreativeOptionDef> CreativeOptionMap;
+  using CreativeOptionMap = boost::unordered_flat_map<long, CreativeOptionDef>;
 
   struct CreativeCategory
   {
-    typedef std::map<AdRequestType, StringSet> ExternalCategoryMap;
+    using ExternalCategoryMap = boost::unordered_flat_map<AdRequestType, StringSet>;
 
     Timestamp timestamp;
     std::string name;
@@ -168,7 +167,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
   typedef ReferenceCounting::SmartPtr<Currency> Currency_var;
   typedef ReferenceCounting::SmartPtr<const Currency> ConstCurrency_var;
-  typedef std::map<unsigned long, Currency_var> CurrencyMap;
+  using CurrencyMap = boost::unordered_flat_map<unsigned long, Currency_var>;
   using CurrencyCodeMap = StringFlatMap<Currency_var>;
 
   /**
@@ -195,7 +194,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     const Generics::Time window_time; /**< Window length */
   };
 
-  typedef std::map<unsigned long, FreqCap> FreqCapMap;
+  using FreqCapMap = boost::unordered_flat_map<unsigned long, FreqCap>;
 
   class AccountDef: public virtual ReferenceCounting::AtomicImpl
   {
@@ -439,7 +438,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   typedef ReferenceCounting::SmartPtr<AccountDef> Account_var;
   typedef ReferenceCounting::SmartPtr<const AccountDef> ConstAccount_var;
   typedef std::vector<Account_var> AccountArray;
-  typedef std::map<unsigned long, Account_var> AccountMap;
+  using AccountMap = boost::unordered_flat_map<unsigned long, Account_var>;
 
   using CreativeCategoryIdSet = boost::unordered_flat_set<unsigned long>;
   using MonoCreativeCategoryIdSet = Generics::MonoSet<unsigned long>;
@@ -508,7 +507,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   };
 
   typedef ReferenceCounting::SmartPtr<Site> Site_var;
-  typedef std::map<unsigned long, Site_var> SiteMap;
+  using SiteMap = boost::unordered_flat_map<unsigned long, Site_var>;
   using CreativeCategoryIdSet = boost::unordered_flat_set<unsigned long>;
 
   /** Tag */
@@ -657,7 +656,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   };
 
   typedef ReferenceCounting::SmartPtr<Tag> Tag_var;
-  typedef std::map<unsigned long, Tag_var> TagMap;
+  using TagMap = boost::unordered_flat_map<unsigned long, Tag_var>;
 
   /** Stores configuration of the ad campaign service. */
 
@@ -828,7 +827,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
   typedef std::list<Creative_var> CreativeList;
 
-  using CreativeMap = std::map<unsigned long, Creative_var>;
+  using CreativeMap = boost::unordered_flat_map<unsigned long, Creative_var>;
   using CcidMap = boost::unordered_flat_map<unsigned long, Creative_var>;
 
   using ColoIdSet = boost::unordered_flat_set<unsigned long>;
@@ -872,9 +871,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
     typedef std::vector<CreativeBySizeEntry> CreativeBySizeArray;
     using CreativeBySizeMap = boost::unordered_flat_map<
-      CreativeBySizeKey,
-      CreativeBySizeArray,
-      CreativeBySizeKeyHash>;
+      CreativeBySizeKey, CreativeBySizeArray, CreativeBySizeKeyHash>;
 
     Campaign() noexcept;
 
@@ -1029,8 +1026,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     std::string original_keyword;
   };
 
-  typedef std::map<unsigned long, CampaignKeywordBase>
-    CCGKeywordPostClickInfoMap;
+  using CCGKeywordPostClickInfoMap = boost::unordered_flat_map<unsigned long, CampaignKeywordBase>;
 
   struct AdvActionDef
   {
@@ -1042,12 +1038,12 @@ namespace AdServer::CampaignSvcs::AdInstances
     CCGIdList ccg_ids;
   };
 
-  typedef std::map<unsigned long, AdvActionDef> AdvActionMap;
+  using AdvActionMap = boost::unordered_flat_map<unsigned long, AdvActionDef>;
 
   class CategoryChannel: public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    typedef std::map<std::string, std::string> LocalizationMap;
+    using LocalizationMap = StringFlatMap<std::string>;
 
     unsigned long channel_id;
     std::string name;
@@ -1272,30 +1268,27 @@ namespace AdServer::CampaignSvcs::AdInstances
 
     typedef std::list<Campaign_var> CampaignList;
 
-    typedef std::map<unsigned long, CreativeCategory> CreativeCategoryMap;
+    using CreativeCategoryMap = boost::unordered_flat_map<unsigned long, CreativeCategory>;
 
     using CampaignMap = boost::unordered_flat_map<unsigned long, Campaign_var>;
     using ColocationMap = boost::unordered_flat_map<unsigned long, Colocation_var>;
     using CountryMap = StringFlatMap<Country_var>;
-    typedef std::map<unsigned long, CategoryChannel_var> CategoryChannelMap;
-    typedef std::map<unsigned long, SimpleChannelCategories_var> SimpleChannelMap;
+    using CategoryChannelMap = boost::unordered_flat_map<unsigned long, CategoryChannel_var>;
+    using SimpleChannelMap = boost::unordered_flat_map<unsigned long, SimpleChannelCategories_var>;
     typedef ExpressionChannelHolderMap ChannelMap;
 
-    using PlatformChannelPriorityMap =
-      boost::unordered_flat_map<unsigned long, PlatformChannelHolder>;
+    using PlatformChannelPriorityMap = boost::unordered_flat_map<
+      unsigned long, PlatformChannelHolder>;
     using SizeTagMap = StringFlatMap<Tag_var>;
-    typedef std::map<AdRequestType, Account_var> AdRequestTypeAccountMap;
-    typedef std::map<AdRequestType, SizeTagMap> AdRequestTypeTagMap;
-    using IdTagMap = boost::unordered_flat_map<
-      IdTagKey,
-      std::vector<Tag_var>,
-      HashByHashMethod>;
+    using AdRequestTypeAccountMap = boost::unordered_flat_map<AdRequestType, Account_var>;
+    using AdRequestTypeTagMap = boost::unordered_flat_map<AdRequestType, SizeTagMap>;
+    using IdTagMap = boost::unordered_flat_map<IdTagKey, std::vector<Tag_var>, HashByHashMethod>;
 
     typedef std::list<ExpressionChannelHolder_var> ExpressionChannelHolderList;
-    typedef std::map<unsigned long, ExpressionChannelHolderList> BlockChannelMap;
+    using BlockChannelMap = boost::unordered_flat_map<unsigned long, ExpressionChannelHolderList>;
 
     using ExternalCategoryNameMap = StringFlatMap<CreativeCategoryIdSet>;
-    using ExternalCategoryMap = std::map<AdRequestType, ExternalCategoryNameMap>;
+    using ExternalCategoryMap = boost::unordered_flat_map<AdRequestType, ExternalCategoryNameMap>;
     using ContractMap = boost::unordered_flat_map<unsigned long, Contract_var>;
 
   public:
