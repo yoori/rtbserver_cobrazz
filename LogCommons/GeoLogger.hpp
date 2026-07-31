@@ -1,66 +1,48 @@
 #pragma once
 
+#include <iosfwd>
 #include <string>
-#include <utility>
 
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
-#include <LogCommons/CsvUtils.hpp>
 
 namespace AdServer::LogProcessing
 {
   struct GeoLoggerKey
   {
-    GeoLoggerKey() = default;
-    GeoLoggerKey(const GeoLoggerKey&) = default;
-    GeoLoggerKey& operator=(const GeoLoggerKey&) = default;
-    GeoLoggerKey(GeoLoggerKey&&) noexcept = default;
-    GeoLoggerKey& operator=(GeoLoggerKey&&) noexcept = default;
+    GeoLoggerKey();
+    GeoLoggerKey(const GeoLoggerKey&);
+    GeoLoggerKey& operator=(const GeoLoggerKey&);
+    GeoLoggerKey(GeoLoggerKey&&) noexcept;
+    GeoLoggerKey& operator=(GeoLoggerKey&&) noexcept;
 
     GeoLoggerKey(
       std::string&& ip_val,
-      std::string&& source_val)
-      : ip(std::move(ip_val)),
-        source(std::move(source_val))
-    {
-      calc_hash_();
-    }
+      std::string&& source_val);
 
     std::string ip;
     std::string source;
 
     bool
-    operator==(const GeoLoggerKey& rhs) const
-    {
-      return ip == rhs.ip && source == rhs.source;
-    }
+    operator==(const GeoLoggerKey& rhs) const;
 
     size_t
-    hash() const
-    {
-      return hash_;
-    }
+    hash() const;
 
   private:
     void
-    calc_hash_()
-    {
-      hash_ = 0;
-      Generics::Murmur64Hash hasher(hash_);
-      hash_add(hasher, ip);
-      hash_add(hasher, source);
-    }
+    calc_hash_();
 
     size_t hash_ = 0;
   };
 
   struct GeoLoggerData
   {
-    GeoLoggerData() = default;
-    GeoLoggerData(const GeoLoggerData&) = default;
-    GeoLoggerData& operator=(const GeoLoggerData&) = default;
-    GeoLoggerData(GeoLoggerData&&) noexcept = default;
-    GeoLoggerData& operator=(GeoLoggerData&&) noexcept = default;
+    GeoLoggerData();
+    GeoLoggerData(const GeoLoggerData&);
+    GeoLoggerData& operator=(const GeoLoggerData&);
+    GeoLoggerData(GeoLoggerData&&) noexcept;
+    GeoLoggerData& operator=(GeoLoggerData&&) noexcept;
 
     FixedNumber lat = FixedNumber::ZERO;
     FixedNumber lon = FixedNumber::ZERO;
@@ -70,40 +52,24 @@ namespace AdServer::LogProcessing
     std::string city;
 
     GeoLoggerData&
-    operator+=(const GeoLoggerData&)
-    {
-      return *this;
-    }
+    operator+=(const GeoLoggerData&);
   };
 
   typedef StatCollector<GeoLoggerKey, GeoLoggerData> GeoLoggerCollector;
 
   struct GeoLoggerTraits: LogDefaultTraits<GeoLoggerCollector, false, true>
   {
-    static const char* csv_base_name() { return "GeoLogger"; }
+    static const char*
+    csv_base_name();
 
-    static const char* csv_header()
-    {
-      return "IP,Source,Latitude,Longitude,Type,Country,Region,City";
-    }
+    static const char*
+    csv_header();
 
     static std::ostream&
     write_as_csv(
       std::ostream& os,
       const BaseTraits::CollectorType::KeyT& key,
-      const BaseTraits::CollectorType::DataT& data
-    )
-    {
-      write_string_as_csv(os, key.ip) << ',';
-      write_string_as_csv(os, key.source) << ',';
-      os << data.lat << ',';
-      os << data.lon << ',';
-      write_string_as_csv(os, data.type) << ',';
-      write_string_as_csv(os, data.country) << ',';
-      write_string_as_csv(os, data.region) << ',';
-      write_string_as_csv(os, data.city);
-      return os;
-    }
+      const BaseTraits::CollectorType::DataT& data);
   };
 
 } // namespace AdServer::LogProcessing
