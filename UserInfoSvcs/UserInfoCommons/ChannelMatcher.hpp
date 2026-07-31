@@ -143,7 +143,7 @@ namespace AdServer
 
     struct ProfileProperties
     {
-      bool fraud_request;
+      bool fraud_request = false;
       std::string cohort;
       std::string cohort2;
 

@@ -16,9 +16,7 @@ namespace AdServer::LogProcessing
     GeoLoggerKey(GeoLoggerKey&&) noexcept;
     GeoLoggerKey& operator=(GeoLoggerKey&&) noexcept;
 
-    GeoLoggerKey(
-      std::string&& ip_val,
-      std::string&& source_val);
+    GeoLoggerKey(std::string&& ip_val, std::string&& source_val);
 
     std::string ip;
     std::string source;

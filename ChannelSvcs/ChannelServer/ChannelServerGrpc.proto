@@ -37,14 +37,14 @@ message ContentChannelAtom {
 
 message MatchRequest {
   string request_id = 1;
-  string first_url = 2;
-  string first_url_words = 3;
-  string urls = 4;
-  string urls_words = 5;
-  string pwords = 6;
-  string swords = 7;
+  bytes first_url = 2;
+  bytes first_url_words = 3;
+  bytes urls = 4;
+  bytes urls_words = 5;
+  bytes pwords = 6;
+  bytes swords = 7;
   bytes uid = 8;
-  string statuses = 9;
+  bytes statuses = 9;
   bool non_strict_word_match = 10;
   bool non_strict_url_match = 11;
   bool return_negative = 12;
