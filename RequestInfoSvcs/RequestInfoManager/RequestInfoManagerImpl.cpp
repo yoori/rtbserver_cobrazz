@@ -164,13 +164,7 @@ namespace RequestInfoSvcs{
       scheduler_(new Generics::Planner(callback_)),
       task_runner_(new Generics::TaskRunner(callback_, 7)),
       request_info_manager_config_(request_info_manager_config),
-      rim_stats_impl_(rim_stats_impl),
-      profile_cache_(
-        request_info_manager_config.LogProcessing().cache_blocks() > 0 ?
-        ProfilingCommons::ProfileMapFactory::Cache_var(
-          new ProfilingCommons::ProfileMapFactory::Cache(
-            request_info_manager_config.LogProcessing().cache_blocks())) :
-        ProfilingCommons::ProfileMapFactory::Cache_var())
+      rim_stats_impl_(rim_stats_impl)
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 
@@ -857,17 +851,18 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserFraudProtectionChunksConfig();
 
-          std::string chunks_root_dir = chunks_config.chunks_root();
-          std::string chunks_prefix = chunks_config.chunks_prefix();
+          const std::string user_fraud_protection_rocksdb_path =
+            chunks_config.chunks_root();
 
           UserFraudProtectionContainer_var user_fraud_protection_container =
             new UserFraudProtectionContainer(
               logger_,
               0, // will be linked to request_info_container_.get()->proxy()
               user_fraud_deactivator_,
-              chunks_root_dir.c_str(),
-              chunks_prefix.c_str(),
-              profile_cache_);
+              user_fraud_protection_rocksdb_path.c_str(),
+              chunks_config.expire_time().present() ?
+                Generics::Time(*chunks_config.expire_time()) :
+                DEFAULT_FRAUD_PROFILE_EXPIRE_TIME);
 
           UserFraudProtectionContainer::Config_var fraud_config(
             new UserFraudProtectionContainer::Config());
@@ -911,19 +906,20 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserActionChunksConfig();
 
-          std::string user_action_info_chunks_root_dir = chunks_config.chunks_root();
-          std::string user_action_info_chunks_prefix = chunks_config.chunks_prefix();
+          const std::string user_action_info_rocksdb_path =
+            chunks_config.chunks_root();
 
           UserActionInfoContainer_var user_action_info_container =
             new UserActionInfoContainer(
               logger_,
               0, // will be linked to request_info_container_.get()->proxy(),
-              user_action_info_chunks_root_dir.c_str(),
-              user_action_info_chunks_prefix.c_str(),
+              user_action_info_rocksdb_path.c_str(),
               request_info_manager_config_.action_ignore_time().present() ?
                 Generics::Time(*request_info_manager_config_.action_ignore_time()) :
                 DEFAULT_ACTION_IGNORE_TIME,
-              profile_cache_);
+              chunks_config.expire_time().present() ?
+                Generics::Time(*chunks_config.expire_time()) :
+                DEFAULT_ACTION_PROFILE_EXPIRE_TIME);
 
           processing_distributor_->add_child_processor(
             user_action_info_container->request_processor());
@@ -968,16 +964,17 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserCampaignReachChunksConfig();
 
-          std::string user_campaign_reach_chunks_root_dir = chunks_config.chunks_root();
-          std::string user_campaign_reach_chunks_prefix = chunks_config.chunks_prefix();
+          const std::string user_campaign_reach_rocksdb_path =
+            chunks_config.chunks_root();
 
           UserCampaignReachContainer_var user_campaign_reach_container =
             new UserCampaignReachContainer(
               logger_,
               request_out_logger_.in(),
-              user_campaign_reach_chunks_root_dir.c_str(),
-              user_campaign_reach_chunks_prefix.c_str(),
-              profile_cache_);
+              user_campaign_reach_rocksdb_path.c_str(),
+              chunks_config.expire_time().present() ?
+                Generics::Time(*chunks_config.expire_time()) :
+                USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME);
 
           user_campaign_reach_container_ = user_campaign_reach_container;
 
@@ -1014,28 +1011,25 @@ namespace RequestInfoSvcs{
             "Loading of request chunks started.";
         }
 
-        xsd::AdServer::Configuration::ChunksConfigType&
+        const xsd::AdServer::Configuration::ChunksConfigType&
           chunks_config = request_info_manager_config_.ChunksConfig();
 
-        xsd::AdServer::Configuration::ChunksConfigType* bid_chunks_config = 0;
-
-        if(request_info_manager_config_.BidChunksConfig().present())
+        if(!request_info_manager_config_.BidChunksConfig().present())
         {
-          bid_chunks_config = &*request_info_manager_config_.BidChunksConfig();
+          throw Exception("BidChunksConfig is required for request profile storage");
         }
+
+        const xsd::AdServer::Configuration::ChunksConfigType&
+          bid_chunks_config = *request_info_manager_config_.BidChunksConfig();
 
         RequestInfoContainer_var request_info_container =
           new RequestInfoContainer(
             logger_,
             processing_distributor_.in(),
             request_operation_distributor_,
-            chunks_config.chunks_root().c_str(),
-            chunks_config.chunks_prefix().c_str(),
-            bid_chunks_config ? String::SubString(bid_chunks_config->chunks_root()) :
-              String::SubString(),
-            bid_chunks_config ? String::SubString(bid_chunks_config->chunks_prefix()) :
-              String::SubString(),
-            profile_cache_,
+            String::SubString(bid_chunks_config.chunks_root()),
+            bid_chunks_config.expire_time().present() ?
+              Generics::Time(*bid_chunks_config.expire_time()) :
             chunks_config.expire_time().present() ?
               Generics::Time(*chunks_config.expire_time()) :
               RequestInfoContainer::DEFAULT_EXPIRE_TIME);
@@ -1082,8 +1076,6 @@ namespace RequestInfoSvcs{
               logger_,
               request_out_logger_.in(),
               chunks_config.chunks_root().c_str(),
-              chunks_config.chunks_prefix().c_str(),
-              profile_cache_,
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
                 PassbackContainer::DEFAULT_EXPIRE_TIME);
@@ -1131,16 +1123,17 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserSiteReachChunksConfig();
 
-          std::string user_site_reach_chunks_root_dir = chunks_config.chunks_root();
-          std::string user_site_reach_chunks_prefix = chunks_config.chunks_prefix();
+          const std::string user_site_reach_rocksdb_path =
+            chunks_config.chunks_root();
 
           UserSiteReachContainer_var user_site_reach_container =
             new UserSiteReachContainer(
               logger_,
               request_out_logger_.in(),
-              user_site_reach_chunks_root_dir.c_str(),
-              user_site_reach_chunks_prefix.c_str(),
-              profile_cache_);
+              user_site_reach_rocksdb_path.c_str(),
+              chunks_config.expire_time().present() ?
+                Generics::Time(*chunks_config.expire_time()) :
+                USER_SITE_REACH_DEFAULT_EXPIRE_TIME);
 
           user_site_reach_container_ = user_site_reach_container;
 
@@ -1196,8 +1189,9 @@ namespace RequestInfoSvcs{
               request_out_logger_.in(),
               Generics::Time(config.merge_time_bound()),
               config.chunks_root().c_str(),
-              config.chunks_prefix().c_str(),
-              profile_cache_);
+              config.expire_time().present() ?
+                Generics::Time(*config.expire_time()) :
+                UserTagRequestMergeContainer::DEFAULT_EXPIRE_TIME);
 
           user_tag_request_merge_container_ = user_tag_request_merge_container;
 

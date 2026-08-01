@@ -70,17 +70,12 @@ struct TestBase: public ReferenceCounting::AtomicImpl
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserTagRequestMergeContainer_var container(
         new UserTagRequestMergeContainer(
           logger,
           processor,
           MERGE_TIME_BOUND,
-          (*root_path + TEST_FOLDER).c_str(),
-          "TagGroups",
-          cache));
+          (*root_path + TEST_FOLDER).c_str()));
 
       run_impl(container);
 

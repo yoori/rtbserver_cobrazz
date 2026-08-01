@@ -69,7 +69,7 @@ target_link_libraries(ExpressionMatcher
 
   LogCommons
   Commons
-  PlainStorage3
+  ProfilingCommons
   SNMPAgent
   ProfileMap
   ProfileMapRocksDB

@@ -9,7 +9,6 @@ target_link_libraries(UserInfoManagerCorePerfTest
   PRIVATE
     LogCommons
     Commons
-    PlainStorage2
     PrivacyFilter
     ProfileMap
     ProfileMapRocksDB

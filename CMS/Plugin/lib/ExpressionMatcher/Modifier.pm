@@ -40,7 +40,6 @@ use constant PROFILE_FOLDERS_PREFIXES => {
   "UserTriggerMatch" => ["UserTriggerMatch", "TempUserTriggerMatch"],
   };
 use constant CHUNK_PREFIX => 'Chunk';
-use constant CHUNK_REDISTRIBUTOR => 'LevelCheckUtil';
 
 ## Constructor
 #  exec_impl : ModifierExec implementation:
@@ -69,19 +68,6 @@ sub new
     dry_run_ => defined $dry_run && $dry_run > 0 ? 1 : undef,
     chunks_number_ => $chunks_number,
     };
-
-  my $chunks_options = " --rw-level-max-size=104857600 --max-undumped-size=262144000" .
-    " --max-levels0=20 --chunks-number=" . $chunks_number;
-
-  # command that divide existing chunk
-  # <source folder with file prefix> <destination folder with chunk prefix>
-  $this->{chunks_divide_cmd_} = $environment_cmd . CHUNK_REDISTRIBUTOR .
-    " divide-to-chunks" . $chunks_options;
-
-  # command that merge two chunks
-  # <destination folder with chunk prefix> <source folders with prefixes>
-  $this->{chunks_merge_cmd_} = $environment_cmd . CHUNK_REDISTRIBUTOR .
-    " merge" . $chunks_options;
 
   bless($this, $class);
   return $this;
@@ -326,42 +312,8 @@ sub divide_chunk
   # dividing chunk into temp directory
   if(!defined($chunk->divided()))
   {
-    $this->adapt_chunk_($chunk);
-
-    my $temp_chunk_root = "temp_" . $chunk->index() . "/";
-
-    $this->{exec_impl_}->remove($chunk->host(), $temp_chunk_root, 1);
-    $this->{exec_impl_}->mkdir($chunk->host(), $temp_chunk_root);
-
-    while(my ($folder, $prefixes) = each(%{PROFILE_FOLDERS_PREFIXES()}))
-    {
-      if (!$this->{exec_impl_}->dir_exists($chunk->host(), $chunk->path() . "/" . $folder))
-      {
-        next;
-      }
-
-      $this->{exec_impl_}->mkdir($chunk->host(), $temp_chunk_root. "/" . $folder);
-
-      foreach my $prefix(@$prefixes)
-      {
-        $this->{exec_impl_}->execute_command(
-          $chunk->host(),
-          $this->{chunks_divide_cmd_},
-          Common::ModifierExec::path_wrapper($chunk->path() . "/" . $folder . "/" . $prefix),
-          Common::ModifierExec::path_wrapper($temp_chunk_root. "/" . $folder . "/")) &&
-          die "Modifier: Can't divide chunk: " . $chunk->path();
-      }
-    }
-
-    $this->{exec_impl_}->remove($chunk->host(), $divided_chunk_root, 1);
-
-    $this->{exec_impl_}->move(
-      $chunk->host(),
-      $temp_chunk_root,
-      $chunk->host(),
-      $divided_chunk_root);
-
-    $this->{exec_impl_}->remove($chunk->host(), $chunk->path(), 1);
+    die "Modifier: dividing ExpressionMatcher legacy chunk " .
+      $chunk->path() . " is unsupported";
   }
 
   # collecting divided chunk data in to_merge folder
@@ -547,18 +499,8 @@ sub merge_chunk
 
     while(my ($prefix, $chunk_dirs) = each(%merge_paths))
     {
-      my @chunk_dirs_with_prefixes;
-      foreach my $chunk_dir(@$chunk_dirs)
-      {
-        push(@chunk_dirs_with_prefixes, $chunk_dir . "/" . $prefix);
-      }
-
-      $this->{exec_impl_}->execute_command(
-        $new_chunk_host,
-        $this->{chunks_merge_cmd_},
-        Common::ModifierExec::path_wrapper(@chunk_dirs_with_prefixes),
-        Common::ModifierExec::path_wrapper($merged_chunk_folder . "/" . $chunk_folder . "/" . $prefix)) &&
-        die "Modifier: Can't merge chunk: " . $chunk->path() . "/" . $1;
+      die "Modifier: merging ExpressionMatcher legacy chunk " .
+        $chunk->path() . " is unsupported";
     }
   }
 

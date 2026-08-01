@@ -308,9 +308,6 @@ public:
         chunk_folders,
         (std::string(root_path) + TEST_FOLDER).c_str());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
       CollTriggerActionProcessor_var processor =
         new CollTriggerActionProcessor();
 
@@ -327,7 +324,6 @@ public:
           POSITIVE_TRIGGERS_GROUP_SIZE,
           NEGATIVE_TRIGGERS_GROUP_SIZE,
           MAX_TRIGGER_VISITS,
-          cache,
           AdServer::ProfilingCommons::LevelMapTraits(
             AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
             10*1024*1024,
@@ -362,7 +358,6 @@ public:
           POSITIVE_TRIGGERS_GROUP_SIZE,
           NEGATIVE_TRIGGERS_GROUP_SIZE,
           MAX_TRIGGER_VISITS,
-          cache,
           AdServer::ProfilingCommons::LevelMapTraits(
             AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
             10*1024*1024,

@@ -351,7 +351,6 @@ namespace AdServer
       RequestOutLogger_var request_out_logger_;
       ExpressionMatcherNotifier_var expression_matcher_notifier_;
       UserFraudDeactivator_var user_fraud_deactivator_;
-      ProfilingCommons::ProfileMapFactory::Cache_var profile_cache_;
 
       // delay initialization processors
       ReferenceCounting::PtrHolder<UserCampaignReachContainer_var>

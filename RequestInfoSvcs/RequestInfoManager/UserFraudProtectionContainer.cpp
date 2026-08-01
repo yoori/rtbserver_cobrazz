@@ -5,6 +5,7 @@
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserFraudProtectionProfile.hpp>
 
+#include "RocksDBProfileMapUtils.hpp"
 #include "UserFraudProtectionContainer.hpp"
 
 namespace Aspect
@@ -289,11 +290,8 @@ namespace RequestInfoSvcs
     Logging::Logger* logger,
     RequestContainerProcessor* request_container_processor,
     Callback* callback,
-    const char* file_base_path,
-    const char* file_prefix,
-    ProfilingCommons::ProfileMapFactory::Cache* cache,
-    const Generics::Time& expire_time,
-    const Generics::Time& extend_time_period)
+    const char* rocksdb_path,
+    const Generics::Time& expire_time)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -302,28 +300,19 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserFraudProtectionContainer::UserFraudProtectionContainer()";
 
-    Generics::Time extend_time_period_val(extend_time_period);
-
-    if(extend_time_period_val == Generics::Time::ZERO)
-    {
-      extend_time_period_val = expire_time / 4;
-    }
-
     try
     {
-      user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-        open_transaction_expire_map<
-          AdServer::Commons::UserId,
-          ProfilingCommons::UserIdAccessor>(
-          file_base_path,
-          file_prefix,
-          extend_time_period_val,
-          cache);
+      user_map_ = open_rocksdb_transaction_profile_map<
+        AdServer::Commons::UserId,
+        UserIdToString>(
+          rocksdb_path,
+          expire_time_);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't init ProfileMap. Caught eh::Exception: " <<
+      ostr << FUN << ": Can't init ProfileMap at '" << rocksdb_path <<
+        "'. Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }

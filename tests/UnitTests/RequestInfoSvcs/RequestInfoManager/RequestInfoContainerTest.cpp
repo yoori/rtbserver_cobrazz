@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <map>
+#include <string>
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/Uuid.hpp>
@@ -1147,9 +1148,6 @@ request_info_container_test()
     system(("rm -r " + *root_path + TEST_FOLDER +
       " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
 
-    AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-      new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
     Logging::Logger_var logger(new Logging::Null::Logger);
 
     // tests check aggregated result of local and delegate processor's
@@ -1160,18 +1158,20 @@ request_info_container_test()
     TestRequestActionProcessorImpl_var local_action_processor(
       new TestRequestActionProcessorImpl(action_processor, "local"));
 
+    const std::string delegate_request_path =
+      *root_path + TEST_FOLDER + "/DelegateRequest";
+    const std::string request_path =
+      *root_path + TEST_FOLDER + "/Request";
+    const std::string self_delegate_request_path =
+      *root_path + TEST_FOLDER + "/SDRequest";
+
     RequestInfoContainer_var delegate_request_info_container(
       new RequestInfoContainer(
         logger,
         delegate_action_processor, // delegate_action_processor,
         0,
-        (*root_path + TEST_FOLDER).c_str(),
-        "DelegateRequest",
-        String::SubString(),
-        String::SubString(),
-        cache,
-        Generics::Time(10), // expire time (sec)
-        Generics::Time(2)));
+        String::SubString(delegate_request_path),
+        Generics::Time(10))); // expire time (sec)
 
     RequestInfoContainer_var normal_request_info_container(
       new RequestInfoContainer(
@@ -1180,13 +1180,8 @@ request_info_container_test()
         RequestOperationProcessor_var(
           new CheckRequestOperationProcessor(
             delegate_request_info_container->request_operation_proxy())),
-        (*root_path + TEST_FOLDER).c_str(),
-        "Request",
-        (*root_path + TEST_FOLDER),
-        String::SubString("Bid"),
-        cache,
-        Generics::Time(10), // expire time (sec)
-        Generics::Time(2)));
+        String::SubString(request_path),
+        Generics::Time(10))); // expire time (sec)
 
     CompositeRequestOperationProcessor_var
       self_delegate_request_operation_processor(
@@ -1199,13 +1194,8 @@ request_info_container_test()
         RequestOperationProcessor_var(
           new CheckRequestOperationProcessor(
             self_delegate_request_operation_processor)),
-        (*root_path + TEST_FOLDER).c_str(),
-        "SDRequest",
-        String::SubString(),
-        String::SubString(),
-        cache,
-        Generics::Time(10), // expire time (sec)
-        Generics::Time(2)));
+        String::SubString(self_delegate_request_path),
+        Generics::Time(10))); // expire time (sec)
 
     self_delegate_request_operation_processor->add_child_processor(
       delegate_request_info_container->request_operation_proxy());

@@ -17,11 +17,10 @@ add_library(PassbackContainer SHARED
 target_link_libraries(PassbackContainer
   pcre
   Generics
-  PlainStorage2
   PrivacyFilter
   Commons
   PassbackProfilePST
-  RequestInfoManagerCompatibility
+  ProfileMapRocksDB
 )
 
 add_library(RequestInfoContainer SHARED
@@ -31,7 +30,6 @@ add_library(RequestInfoContainer SHARED
 target_link_libraries(RequestInfoContainer
   pcre
   Generics
-  PlainStorage2
   PrivacyFilter
   Commons
   ProfileMap
@@ -83,7 +81,6 @@ target_link_libraries(RequestInfoManager
   UserFraudProtectionContainer
   UserSiteReachContainer
   UserTagRequestMergeContainer
-  PlainStorage2
 )
 
 add_library(RequestLogLoader SHARED
@@ -97,7 +94,7 @@ target_link_libraries(RequestLogLoader
   Logger
   String
   LogCommons
-  PlainStorage3
+  ProfilingCommons
   RequestOperationProfilePST
   RequestInfoManagerCompatibility
   LogGeneralizerIDL
@@ -146,6 +143,7 @@ add_library(UserActionInfoContainer STATIC
 target_link_libraries(UserActionInfoContainer
   UserActionProfilePST
   LogCommons
+  ProfileMapRocksDB
 )
 
 add_library(UserCampaignReachContainer STATIC
@@ -155,6 +153,7 @@ add_library(UserCampaignReachContainer STATIC
 target_link_libraries(UserCampaignReachContainer
   UserCampaignReachProfilePST
   LogCommons
+  ProfileMapRocksDB
   pcre
 )
 
@@ -165,6 +164,7 @@ add_library(UserFraudProtectionContainer STATIC
 target_link_libraries(UserFraudProtectionContainer
   UserFraudProtectionProfilePST
   LogCommons
+  ProfileMapRocksDB
 )
 
 add_library(UserSiteReachContainer STATIC
@@ -174,6 +174,7 @@ add_library(UserSiteReachContainer STATIC
 target_link_libraries(UserSiteReachContainer
   UserSiteReachProfilePST
   LogCommons
+  ProfileMapRocksDB
 )
 
 add_library(UserTagRequestMergeContainer STATIC
@@ -183,4 +184,5 @@ add_library(UserTagRequestMergeContainer STATIC
 target_link_libraries(UserTagRequestMergeContainer
   UserTagRequestMergeProfilePST
   LogCommons
+  ProfileMapRocksDB
 )

@@ -1,9 +1,45 @@
 #include <iostream>
 #include <tr1/array>
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 using namespace AdServer::LogProcessing;
 typedef OptionalValue<FixedNumber> Optional;
+
+struct EmptyFirstField
+{
+  std::string first;
+  std::string second;
+};
+
+bool
+operator==(const EmptyFirstField& left, const EmptyFirstField& right)
+{
+  return left.first == right.first && left.second == right.second;
+}
+
+FixedBufStream<TabCategory>&
+operator>>(FixedBufStream<TabCategory>& is, EmptyFirstField& value)
+{
+  is >> value.first;
+  is >> value.second;
+  return is;
+}
+
+std::ostream&
+operator<<(std::ostream& os, const EmptyFirstField& value)
+{
+  os << value.first << '\t' << value.second;
+  return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const EmptyFirstField& value)
+{
+  out << value.first << '\t' << value.second;
+  return out;
+}
+
 struct TestCase
 {
   const char* stream;
@@ -56,6 +92,36 @@ stress_read_test(const char* input, const char* standard)
       << ostr.str() << ", but standard:" << standard << std::endl;
     return 1;
   }
+  return 0;
+}
+
+int
+test_buffer_writer_optional_empty_first_field()
+{
+  using OptionalStruct = OptionalValue<EmptyFirstField>;
+
+  OptionalStruct value(EmptyFirstField{"", "value"});
+  BufferWriter out(64);
+  out << value;
+
+  if (out.str() != "@\tvalue")
+  {
+    std::cerr << "BufferWriter optional empty first field write failed: '"
+      << out.str() << '\'' << std::endl;
+    return 1;
+  }
+
+  FixedBufStream<TabCategory> stream(out.str());
+  OptionalStruct restored;
+  stream >> restored;
+
+  if (!stream.good() || !restored.present() || !(restored.get() == value.get()))
+  {
+    std::cerr << "BufferWriter optional empty first field read failed"
+      << std::endl;
+    return 1;
+  }
+
   return 0;
 }
 
@@ -309,6 +375,7 @@ main()
     fails += test_optional_strings();
     fails += test_sequences_io();
     fails += test_optional_value();
+    fails += test_buffer_writer_optional_empty_first_field();
     fails += test_empty_objects();
     if (fails)
     {

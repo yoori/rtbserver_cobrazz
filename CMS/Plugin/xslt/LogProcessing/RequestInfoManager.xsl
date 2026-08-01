@@ -106,17 +106,17 @@
   </xsl:variable>
 
   <xsl:variable name="user-action-info-chunks-root"
-    select="concat($cache-root, '/', $user-action-dir-name, '/')"/>
+    select="concat($cache-root, '/RequestInfoManager/', $user-action-dir-name)"/>
   <xsl:variable name="user-campaign-reach-chunks-root"
-    select="concat($cache-root, '/', $user-campaign-reach-dir-name, '/')"/>
+    select="concat($cache-root, '/RequestInfoManager/', $user-campaign-reach-dir-name)"/>
   <xsl:variable name="passback-chunks-root"
-    select="concat($cache-root, '/', $passback-dir-name, '/')"/>
+    select="concat($cache-root, '/RequestInfoManager/', $passback-dir-name)"/>
   <xsl:variable name="request-chunks-root"
     select="concat($cache-root, '/', $request-dir-name, '/')"/>
   <xsl:variable name="bid-chunks-root"
     select="concat($cache-root, '/Bid/')"/>
   <xsl:variable name="user-fraud-protection-chunks-root"
-    select="concat($cache-root, '/', $user-fraud-protection-dir-name, '/')"/>
+    select="concat($cache-root, '/RequestInfoManager/', $user-fraud-protection-dir-name)"/>
 
   <xsl:variable name="processing-config" select="$request-info-manager-config/cfg:processing"/>
   <xsl:variable name="processing-threads">
@@ -206,13 +206,13 @@
     </cfg:PassbackChunksConfig>
 
     <cfg:UserSiteReachChunksConfig chunks_prefix="{$user-site-reach-prefix}"
-      chunks_root="{concat($cache-root, '/', $user-site-reach-chunks-root, '/')}"/>
+      chunks_root="{concat($cache-root, '/RequestInfoManager/', $user-site-reach-chunks-root)}"/>
 
     <xsl:if test="count($colo-config/cfg:tagGroupStats/@enable) = 0 or
       $colo-config/cfg:tagGroupStats/@enable = 'true' or
       $colo-config/cfg:tagGroupStats/@enable = '1'">
       <cfg:TagRequestGroupingConfig merge_time_bound="1" chunks_prefix="{$user-tag-request-group-prefix}"
-        chunks_root="{concat($cache-root, '/', $user-tag-request-group-chunks-root, '/')}"/>
+        chunks_root="{concat($cache-root, '/RequestInfoManager/', $user-tag-request-group-chunks-root)}"/>
     </xsl:if>
 
     <cfg:ChunksConfig chunks_prefix="{$request-prefix}"

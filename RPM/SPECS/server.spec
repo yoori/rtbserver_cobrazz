@@ -299,9 +299,6 @@ for f in $(find -L %{buildroot} %{buildroot}%{__inst_root} -type f) ; do
   res=`find $test_dir -type f -name $binary`
     if [ -n "$res" ] || \
       [ "$binary" = "ChannelTest" ] || \
-      [ "$binary" = "ProfileDump" ] || \
-      [ "$binary" = "ExtractMatchedChannels.pl" ] || \
-      [ "$binary" = "ExtractCampaignClick.pl" ] || \
       [ "$binary" = "XslTransformAdmin" ] ; then
       echo "$inst_name" >> tests.list
     else

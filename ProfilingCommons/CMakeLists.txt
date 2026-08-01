@@ -1,20 +1,25 @@
-ADD_SUBDIRECTORY(PlainStorage)
+add_library(ProfilingCommons SHARED
+  FileController.cpp
+  FileReader.cpp
+  FileWriter.cpp
+)
+
+target_link_libraries(ProfilingCommons
+  Generics
+  Commons
+)
+
 ADD_SUBDIRECTORY(PlainStorage3)
-ADD_SUBDIRECTORY(PlainStorageUtil)
 ADD_SUBDIRECTORY(ProfileMap)
 
 add_library(MessageSaver SHARED
   MessageSaver.cpp
-
-
 )
+
 target_link_libraries(MessageSaver
   Generics
-  PlainStorage3
+  ProfilingCommons
   PrivacyFilter
   Commons
   LogCommons
 )
-#install(TARGETS MessageSaver  DESTINATION ${INSTALL_DIR})
-
-

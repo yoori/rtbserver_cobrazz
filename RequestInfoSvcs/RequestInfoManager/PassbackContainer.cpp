@@ -4,8 +4,8 @@
 #include <eh/Exception.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/PassbackProfile.hpp>
 
-#include "Compatibility/PassbackProfileAdapter.hpp"
 #include "PassbackContainer.hpp"
+#include "RocksDBProfileMapUtils.hpp"
 
 namespace Aspect
 {
@@ -16,17 +16,19 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
+  namespace
+  {
+    const unsigned long CURRENT_PASSBACK_PROFILE_VERSION = 33;
+  }
+
   const Generics::Time
   PassbackContainer::DEFAULT_EXPIRE_TIME = Generics::Time::ONE_HOUR * 2;
 
   PassbackContainer::PassbackContainer(
     Logging::Logger* logger,
     PassbackProcessor* passback_processor,
-    const char* passbackfile_base_path,
-    const char* passbackfile_prefix,
-    ProfilingCommons::ProfileMapFactory::Cache* cache,
-    const Generics::Time& expire_time,
-    const Generics::Time& extend_time_period)
+    const char* passback_rocksdb_path,
+    const Generics::Time& expire_time)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -34,29 +36,19 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "PassbackContainer::PassbackContainer()";
 
-    Generics::Time extend_time_period_val(extend_time_period);
-
-    if(extend_time_period_val == Generics::Time::ZERO)
-    {
-      extend_time_period_val = expire_time / 4;
-    }
-
     try
     {
-      passback_map_ = ProfilingCommons::ProfileMapFactory::
-        open_transaction_packed_expire_map<
-          ProfilingCommons::RequestIdPackHashAdapter,
-          ProfilingCommons::RequestIdAccessor,
-          PassbackProfileAdapter>(
-          passbackfile_base_path,
-          passbackfile_prefix,
-          extend_time_period_val,
-          cache);
+      passback_map_ = open_rocksdb_transaction_profile_map<
+        RequestIdTransactionHashAdapter,
+        RequestIdToString>(
+          passback_rocksdb_path,
+          expire_time_);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't init PassbackMap. Caught eh::Exception: " <<
+      ostr << FUN << ": Can't init PassbackMap at '" <<
+        passback_rocksdb_path << "'. Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }

@@ -7,7 +7,7 @@
 #include <RequestInfoSvcs/RequestInfoCommons/UserCampaignReachProfile.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 
-#include "Compatibility/UserCampaignReachProfileAdapter.hpp"
+#include "RocksDBProfileMapUtils.hpp"
 #include "UserCampaignReachContainer.hpp"
 
 namespace Aspect
@@ -19,17 +19,19 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
+  namespace
+  {
+    const unsigned long CURRENT_CAMPAIGN_REACH_PROFILE_VERSION = 24;
+  }
+
   /**
    * UserCampaignReachContainer
    */
   UserCampaignReachContainer::UserCampaignReachContainer(
     Logging::Logger* logger,
     CampaignReachProcessor* campaign_reach_processor,
-    const char* user_campaign_reach_file_base_path,
-    const char* user_campaign_reach_file_prefix,
-    ProfilingCommons::ProfileMapFactory::Cache* cache,
-    const Generics::Time& expire_time,
-    const Generics::Time& extend_time_period)
+    const char* user_campaign_reach_rocksdb_path,
+    const Generics::Time& expire_time)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -38,30 +40,19 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserCampaignReachContainer::UserCampaignReachContainer()";
 
-    Generics::Time extend_time_period_val(extend_time_period);
-
-    if(extend_time_period_val == Generics::Time::ZERO)
-    {
-      extend_time_period_val = std::max(expire_time / 4, Generics::Time(1));
-    }
-
     try
     {
-      user_map_ = ProfilingCommons::ProfileMapFactory::
-        open_transaction_expire_map<
-          Commons::UserId,
-          ProfilingCommons::UserIdAccessor,
-          UserCampaignReachProfileAdapter>(
-          user_campaign_reach_file_base_path,
-          user_campaign_reach_file_prefix,
-          extend_time_period_val,
-          UserCampaignReachProfileAdapter(),
-          cache);
+      user_map_ = open_rocksdb_transaction_profile_map<
+        Commons::UserId,
+        UserIdToString>(
+          user_campaign_reach_rocksdb_path,
+          expire_time_);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't init UserCampaignReachMap. Caught eh::Exception: " <<
+      ostr << FUN << ": Can't init UserCampaignReachMap at '" <<
+        user_campaign_reach_rocksdb_path << "'. Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }

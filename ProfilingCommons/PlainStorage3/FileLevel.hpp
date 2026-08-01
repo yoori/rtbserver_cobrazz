@@ -7,7 +7,6 @@
 #include "RandomAccessFile.hpp"
 #include <ProfilingCommons/FileReader.hpp>
 #include <ProfilingCommons/FileWriter.hpp>
-#include "LoadingProgressCallbackBase.hpp"
 
 namespace AdServer
 {
@@ -85,8 +84,7 @@ namespace ProfilingCommons
       const char* file_name,
       unsigned long read_buf_size,
       bool disable_caching_on_fetch,
-      FileController* file_controller = nullptr,
-      LoadingProgressCallbackBase_var progress_checker_parent = nullptr)
+      FileController* file_controller = nullptr)
       /*throw(typename ReadBaseLevel<KeyType>::Exception)*/;
 
     // save data into file

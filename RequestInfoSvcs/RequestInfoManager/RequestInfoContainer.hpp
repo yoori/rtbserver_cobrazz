@@ -8,8 +8,8 @@
 
 #include <Generics/MemBuf.hpp>
 
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
+#include <String/SubString.hpp>
 
 #include "RequestActionProcessor.hpp"
 #include "RequestOperationProcessor.hpp"
@@ -21,19 +21,10 @@ namespace AdServer
   {
     class RequestInfoProfileWriter;
 
-    typedef ProfilingCommons::TransactionProfileMap<
-      ProfilingCommons::RequestIdPackHashAdapter>
-      RequestInfoMap;
+    using RequestProfileMap = ProfilingCommons::TransactionProfileMap<
+      AdServer::Commons::RequestId>;
 
-    typedef ReferenceCounting::SmartPtr<RequestInfoMap>
-      RequestInfoMap_var;
-
-    typedef ProfilingCommons::TransactionProfileMap<
-      AdServer::Commons::RequestId>
-      BidProfileMap;
-
-    typedef ReferenceCounting::SmartPtr<BidProfileMap>
-      BidProfileMap_var;
+    using RequestProfileMap_var = ReferenceCounting::SmartPtr<RequestProfileMap>;
 
     /**
      * RequestInfoContainer
@@ -53,13 +44,8 @@ namespace AdServer
         Logging::Logger* logger,
         RequestActionProcessor* request_processor,
         RequestOperationProcessor* request_operation_processor,
-        const char* requestfile_base_path,
-        const char* requestfile_prefix,
-        const String::SubString& bidfile_base_path,
-        const String::SubString& bidfile_prefix,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
-        const Generics::Time& expire_time = DEFAULT_EXPIRE_TIME,
-        const Generics::Time& extend_time_period = Generics::Time::ZERO)
+        const String::SubString& request_profile_path,
+        const Generics::Time& expire_time = DEFAULT_EXPIRE_TIME)
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
@@ -105,11 +91,11 @@ namespace AdServer
 
     protected:
       class ProxyImpl;
-      typedef ReferenceCounting::SmartPtr<ProxyImpl> ProxyImpl_var;
+      using ProxyImpl_var = ReferenceCounting::SmartPtr<ProxyImpl>;
 
       class RequestOperationProxy;
-      typedef ReferenceCounting::SmartPtr<RequestOperationProxy>
-        RequestOperationProxy_var;
+      using RequestOperationProxy_var =
+        ReferenceCounting::SmartPtr<RequestOperationProxy>;
 
       struct MoveActionInfo
       {
@@ -176,9 +162,7 @@ namespace AdServer
       class Transaction: public ReferenceCounting::AtomicImpl
       {
       public:
-        Transaction(
-          BidProfileMap::Transaction* transaction,
-          RequestInfoMap::Transaction* old_transaction);
+        explicit Transaction(RequestProfileMap::Transaction* transaction);
 
         virtual
         Generics::ConstSmartMemBuf_var
@@ -190,12 +174,10 @@ namespace AdServer
           const Generics::Time& now = Generics::Time::get_time_of_day());
 
       protected:
-        BidProfileMap::Transaction_var transaction_;
-        RequestInfoMap::Transaction_var old_transaction_;
+        RequestProfileMap::Transaction_var transaction_;
       };
 
-      typedef ReferenceCounting::SmartPtr<Transaction>
-        Transaction_var;
+      using Transaction_var = ReferenceCounting::SmartPtr<Transaction>;
 
     protected:
       virtual
@@ -373,8 +355,7 @@ namespace AdServer
     protected:
       Logging::Logger_var logger_;
       Generics::Time expire_time_;
-      RequestInfoMap_var request_map_;
-      BidProfileMap_var bid_profile_map_;
+      RequestProfileMap_var profile_map_;
 
       ProxyImpl_var proxy_;
       RequestOperationProxy_var request_operation_proxy_;
@@ -382,9 +363,8 @@ namespace AdServer
       RequestOperationProcessor_var request_operation_processor_;
     };
 
-    typedef
-      ReferenceCounting::SmartPtr<RequestInfoContainer>
-      RequestInfoContainer_var;
+    using RequestInfoContainer_var =
+      ReferenceCounting::SmartPtr<RequestInfoContainer>;
   } /* RequestInfoSvcs */
 } /* AdServer */
 

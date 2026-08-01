@@ -84,14 +84,7 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/ConsiderRequest_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/BidCostStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/BidCostStat_ && " .
-    "mkdir -p \${cache_root}/UserActions && " .
-    "mkdir -p \${cache_root}/UserCampaignReach && " .
-    "mkdir -p \${cache_root}/Requests && " .
     "mkdir -p \${cache_root}/Bid && " .
-    "mkdir -p \${cache_root}/Passback && " .
-    "mkdir -p \${cache_root}/UserFraudProtection && " .
-    "mkdir -p \${cache_root}/UserSiteReach && " .
-    "mkdir -p \${cache_root}/UserTagRequestGroup && " .
     "mkdir -p \${cache_root}/RequestInfoManager && " .
     # compatibility 2.3 block (SyncLogs try to move files from these folders)
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteStat && " .

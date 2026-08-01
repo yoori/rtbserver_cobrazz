@@ -841,7 +841,6 @@ namespace RequestInfoSvcs
     unsigned long positive_triggers_group_size,
     unsigned long negative_triggers_group_size,
     unsigned long max_trigger_visits,
-    ProfilingCommons::ProfileMapFactory::Cache* /*cache*/,
     const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
     const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits)
     /*throw(Exception)*/

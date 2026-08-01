@@ -9,8 +9,8 @@
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
 
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <Commons/UserInfoManip.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
 #include "TagRequestProcessor.hpp"
 
@@ -51,7 +51,8 @@ namespace AdServer
       virtual ~PassbackProcessor() noexcept {}
     };
 
-    typedef ReferenceCounting::SmartPtr<PassbackProcessor> PassbackProcessor_var;
+    using PassbackProcessor_var =
+      ReferenceCounting::SmartPtr<PassbackProcessor>;
 
     struct PassbackVerificationProcessor:
       public virtual ReferenceCounting::Interface
@@ -68,8 +69,25 @@ namespace AdServer
       virtual ~PassbackVerificationProcessor() noexcept {}
     };
 
-    typedef ReferenceCounting::SmartPtr<PassbackVerificationProcessor>
-      PassbackVerificationProcessor_var;
+    using PassbackVerificationProcessor_var =
+      ReferenceCounting::SmartPtr<PassbackVerificationProcessor>;
+
+    struct RequestIdTransactionHashAdapter:
+      public AdServer::Commons::RequestId
+    {
+      RequestIdTransactionHashAdapter() = default;
+
+      RequestIdTransactionHashAdapter(
+        const AdServer::Commons::RequestId& request_id)
+        : AdServer::Commons::RequestId(request_id)
+      {}
+
+      unsigned long
+      hash() const noexcept
+      {
+        return AdServer::Commons::uuid_distribution_hash(*this) % 100000;
+      }
+    };
 
     /** PassbackContainer
      * merge input passback requests:
@@ -91,12 +109,9 @@ namespace AdServer
       PassbackContainer(
         Logging::Logger* logger,
         PassbackProcessor* passback_processor,
-        const char* passbackfile_base_path,
-        const char* passbackfile_prefix,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
+        const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(DEFAULT_EXPIRE_TIME),
-        const Generics::Time& extend_time_period = Generics::Time::ZERO)
+          Generics::Time(DEFAULT_EXPIRE_TIME))
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
@@ -119,12 +134,10 @@ namespace AdServer
       virtual ~PassbackContainer() noexcept {}
 
     private:
-      typedef ProfilingCommons::TransactionProfileMap<
-        ProfilingCommons::RequestIdPackHashAdapter>
-        PassbackMap;
+      using PassbackMap = ProfilingCommons::TransactionProfileMap<
+        RequestIdTransactionHashAdapter>;
 
-      typedef ReferenceCounting::SmartPtr<PassbackMap>
-        PassbackMap_var;
+      using PassbackMap_var = ReferenceCounting::SmartPtr<PassbackMap>;
 
     private:
       void process_tag_request_trans_(
@@ -140,8 +153,8 @@ namespace AdServer
       PassbackProcessor_var passback_processor_;
     };
 
-    typedef ReferenceCounting::SmartPtr<PassbackContainer>
-      PassbackContainer_var;
+    using PassbackContainer_var =
+      ReferenceCounting::SmartPtr<PassbackContainer>;
   }
 }
 

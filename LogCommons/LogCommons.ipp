@@ -885,11 +885,6 @@ operator >>(
     }
     if (token[0] == OptionalValueTraits::PRESENT_MARKER)
     {
-      if (token.length() == 1)
-      {
-        is.setstate(std::ios_base::badbit);
-        return is;
-      }
       is.push_back(token.substr(1)); // skip PRESENT_MARKER
     }
     else

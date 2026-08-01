@@ -29,8 +29,6 @@
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
 
-#include <ProfilingCommons/PlainStorage3/LoadingProgressCallbackBase.hpp>
-
 #include "FileRWStats.hpp"
 #include "UserInfoConfigSource.hpp"
 #include "UserInfoContainer.hpp"
@@ -49,6 +47,7 @@ namespace AdServer::UserInfoSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(NotReady, Exception);
     DECLARE_EXCEPTION(ChunkNotFound, Exception);
+    DECLARE_EXCEPTION(ResourceExhausted, Exception);
 
     typedef xsd::AdServer::Configuration::UserInfoManagerConfigType
       UserInfoManagerConfig;
@@ -277,22 +276,6 @@ namespace AdServer::UserInfoSvcs
     typedef Generics::TaskGoal TaskBase;
     typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
 
-    class LoadingProgressProcessor
-      : public AdServer::ProfilingCommons::LoadingProgressCallbackBase
-    {
-    public:
-      LoadingProgressProcessor(double range) noexcept;
-      virtual void post_progress(double value) noexcept;
-      std::string get_progress_in_percents() noexcept;
-
-    private:
-      double range_;
-      double progress_;
-      SyncPolicy::Mutex progress_lock_;
-    };
-    typedef ReferenceCounting::SmartPtr<LoadingProgressProcessor>
-      LoadingProgressProcessor_var;
-
     class FlushLogsTask: public TaskBase
     {
     public:
@@ -480,7 +463,6 @@ namespace AdServer::UserInfoSvcs
 
     Generics::ActiveObjectCallback_var check_operations_callback_;
 
-    LoadingProgressProcessor_var loading_progress_processor_;
     ReferenceCounting::SmartPtr<FileRWStats> file_rw_stats_;
   };
 

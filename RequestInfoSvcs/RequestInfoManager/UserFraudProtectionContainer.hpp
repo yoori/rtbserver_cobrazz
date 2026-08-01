@@ -12,8 +12,7 @@
 
 #include <Generics/MemBuf.hpp>
 
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
 #include "CompositeRequestContainerProcessor.hpp"
 
@@ -43,7 +42,7 @@ namespace AdServer
           noexcept = 0;
       };
 
-      typedef ReferenceCounting::SmartPtr<Callback> Callback_var;
+      using Callback_var = ReferenceCounting::SmartPtr<Callback>;
 
       struct Config: public ReferenceCounting::AtomicImpl
       {
@@ -53,7 +52,7 @@ namespace AdServer
           Generics::Time period;
         };
 
-        typedef std::list<FraudRule> FraudRuleList;
+        using FraudRuleList = std::list<FraudRule>;
 
         class FraudRuleSet
         {
@@ -79,21 +78,18 @@ namespace AdServer
         {}
       };
 
-      typedef ReferenceCounting::SmartPtr<Config> Config_var;
+      using Config_var = ReferenceCounting::SmartPtr<Config>;
 
-      typedef std::list<AdServer::Commons::RequestId> RequestIdList;
+      using RequestIdList = std::list<AdServer::Commons::RequestId>;
 
     public:
       UserFraudProtectionContainer(
         Logging::Logger* logger,
         RequestContainerProcessor* request_container_processor,
         Callback* callback,
-        const char* file_base_path,
-        const char* file_prefix,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
+        const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME),
-        const Generics::Time& extend_time_period = Generics::Time::ZERO)
+          Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME))
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
@@ -137,14 +133,12 @@ namespace AdServer
       {};
 
     private:
-      typedef ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::UserId>
-        ProfileMap;
+      using ProfileMap = ProfilingCommons::TransactionProfileMap<
+        AdServer::Commons::UserId>;
 
-      typedef ReferenceCounting::SmartPtr<ProfileMap>
-        ProfileMap_var;
+      using ProfileMap_var = ReferenceCounting::SmartPtr<ProfileMap>;
 
-      typedef Sync::Policy::PosixThread SyncPolicy;
+      using SyncPolicy = Sync::Policy::PosixThread;
 
     protected:
       virtual ~UserFraudProtectionContainer() noexcept;
@@ -187,8 +181,8 @@ namespace AdServer
       ReferenceCounting::PtrHolder<Config_var> config_;
     };
 
-    typedef ReferenceCounting::SmartPtr<UserFraudProtectionContainer>
-      UserFraudProtectionContainer_var;
+    using UserFraudProtectionContainer_var =
+      ReferenceCounting::SmartPtr<UserFraudProtectionContainer>;
 
   } // RequestInfoSvcs
 } // AdServer

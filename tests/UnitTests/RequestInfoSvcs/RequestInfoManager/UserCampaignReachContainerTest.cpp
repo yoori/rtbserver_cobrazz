@@ -44,16 +44,11 @@ struct TestBase: public ReferenceCounting::AtomicImpl
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserCampaignReachContainer_var reach_container(
         new UserCampaignReachContainer(
           logger,
           reach_processor,
-          (*root_path + TEST_FOLDER).c_str(),
-          "Reach",
-          cache));
+          (*root_path + TEST_FOLDER).c_str()));
 
       run_impl(reach_container);
 
@@ -362,9 +357,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
           new UserCampaignReachContainer(
             logger,
             reach_processor,
-            (*root_path + TEST_FOLDER).c_str(),
-            "Reach",
-            0));
+            (*root_path + TEST_FOLDER).c_str()));
 
         reach_processor->clear();
 
@@ -859,9 +852,7 @@ main(int argc, char* argv[]) noexcept
         new UserCampaignReachContainer(
           logger,
           reach_processor,
-          (*root_path + TEST_FOLDER).c_str(),
-          "Reach",
-          0));
+          (*root_path + TEST_FOLDER).c_str()));
 
       TestIt test_it;
       test_it.reach_container = reach_container.in();

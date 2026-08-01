@@ -9,7 +9,6 @@
 #include <ProfilingCommons/ProfileMap/ProfileMap.hpp>
 #include "BaseLevel.hpp"
 #include "RWMemLevel.hpp"
-#include "LoadingProgressCallbackBase.hpp"
 #include <ProfilingCommons/FileController.hpp>
 
 namespace AdServer
@@ -70,8 +69,7 @@ namespace ProfilingCommons
       Generics::ActiveObjectCallback* callback,
       const char* directory,
       const char* file_prefix,
-      const LevelMapTraits& traits,
-      LoadingProgressCallbackBase* progress_checker_parent = nullptr)
+      const LevelMapTraits& traits)
       /*throw(eh::Exception)*/;
 
     virtual void
@@ -213,7 +211,6 @@ namespace ProfilingCommons
     void
     add_level_(
       MapHolder* map_holder,
-      LoadingProgressCallbackBase_var progress_checker_parent,
       const char* directory,
       const char* file_name)
       /*throw(Exception)*/;

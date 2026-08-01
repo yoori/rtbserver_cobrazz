@@ -267,32 +267,6 @@ namespace AdServer::UserInfoSvcs
   }
 
   /**
-   * UserInfoManagerCore::LoadingProgressProcessor
-   */
-  UserInfoManagerCore::LoadingProgressProcessor::LoadingProgressProcessor(
-    double range) noexcept
-    : range_(range), progress_(0.0)
-  {
-  }
-
-  void
-  UserInfoManagerCore::LoadingProgressProcessor::post_progress(
-    double value) noexcept
-  {
-    SyncPolicy::WriteGuard lock(progress_lock_);
-    progress_ += value;
-  }
-
-  std::string
-  UserInfoManagerCore::LoadingProgressProcessor::get_progress_in_percents() noexcept
-  {
-    std::stringstream progress_str;
-    SyncPolicy::ReadGuard lock(progress_lock_);
-    progress_str << (progress_ / range_) * 100 << "%";
-    return progress_str.str();
-  }
-
-  /**
    * UserInfoManagerCore
    */
   UserInfoManagerCore::UserInfoManagerCore(
@@ -326,8 +300,7 @@ namespace AdServer::UserInfoSvcs
       campaignserver_ready_(false), current_day_(0), daily_users_(0),
       check_operations_callback_(new Logging::ActiveObjectCallbackImpl(
         logger_, "UserInfoManagerCore::check_operations_()",
-        Aspect::USER_INFO_MANAGER, "ADS-IMPL-82")),
-      loading_progress_processor_(new LoadingProgressProcessor(1.0))
+        Aspect::USER_INFO_MANAGER, "ADS-IMPL-82"))
   {
     static const char* FUN = "UserInfoManagerCore::UserInfoManagerCore()";
 
@@ -484,7 +457,7 @@ namespace AdServer::UserInfoSvcs
     std::stringstream str;
     if (!user_info_container.get().in())
     {
-      str << "chunks: " << loading_progress_processor_->get_progress_in_percents();
+      str << "chunks loading...";
     }
     else if (!user_info_container->channels_config().in())
     {
@@ -1192,11 +1165,14 @@ namespace AdServer::UserInfoSvcs
           }
         };
 
-        auto [unused_match_result, pre_bid_result] =
+        auto [match_result_ready, pre_bid_result] =
           co_await AdServer::Commons::TupleAwaitable(
             std::move(match_operation),
             pre_bid_operation());
-        (void)unused_match_result;
+        if (!match_result_ready)
+        {
+          throw ResourceExhausted("UserInfoContainer::co_match(): max waiters reached");
+        }
 
         if (pre_bid_result.exception)
         {
@@ -1207,7 +1183,10 @@ namespace AdServer::UserInfoSvcs
       }
       else
       {
-        co_await std::move(match_operation);
+        if (!co_await std::move(match_operation))
+        {
+          throw ResourceExhausted("UserInfoContainer::co_match(): max waiters reached");
+        }
       }
 
       match_result.adv_channel_count = unique_channels_result.simple_channels;
@@ -1295,21 +1274,32 @@ namespace AdServer::UserInfoSvcs
     catch (const UserInfoContainer::NotReady& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't match user. "
+      ostr << FUN << ": Can't match user '" << user_info.user_id << "'. "
         "Caught UserInfoContainer::NotReady: " << ex.what();
       throw UserInfoManagerCore::NotReady(ostr.str());
     }
     catch (const UserInfoContainer::ChunkNotFound& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't match user. "
+      ostr << FUN << ": Can't match user '" << user_info.user_id << "'. "
         "Caught UserInfoContainer::ChunkNotFound: " << ex.what();
       throw UserInfoManagerCore::ChunkNotFound(ostr.str());
+    }
+    catch (const UserInfoContainer::ResourceExhausted& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't match user '" << user_info.user_id << "'. "
+        "Caught UserInfoContainer::ResourceExhausted: " << ex.what();
+      throw UserInfoManagerCore::ResourceExhausted(ostr.str());
+    }
+    catch (const UserInfoManagerCore::ResourceExhausted&)
+    {
+      throw;
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't match user. "
+      ostr << FUN << ": Can't match user '" << user_info.user_id << "'. "
         "Caught eh::Exception: " << ex.what();
       throw UserInfoManagerCore::Exception(ostr.str());
     }
@@ -1633,8 +1623,7 @@ namespace AdServer::UserInfoSvcs
         user_info_manager_config_.use_add_profile_on_match(),
         user_info_manager_config_.max_base_profile_waiters(),
         user_info_manager_config_.max_temp_profile_waiters(),
-        user_info_manager_config_.max_freqcap_profile_waiters(),
-        loading_progress_processor_);
+        user_info_manager_config_.max_freqcap_profile_waiters());
 
       user_info_container->activate_object();
 

@@ -6,8 +6,7 @@
 #include <Logger/Logger.hpp>
 
 #include <Commons/UserInfoManip.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
 #include "TagRequestProcessor.hpp"
 #include "TagRequestGroupProcessor.hpp"
@@ -28,16 +27,13 @@ namespace RequestInfoSvcs
 
     static const Generics::Time DEFAULT_EXPIRE_TIME;
 
-    UserTagRequestMergeContainer(
-      Logging::Logger* logger,
-      TagRequestGroupProcessor* tag_request_group_processor,
-      const Generics::Time& time_merge_bound,
-      const char* file_base_path,
-      const char* file_prefix,
-      ProfilingCommons::ProfileMapFactory::Cache* cache,
-      const Generics::Time& expire_time =
-        Generics::Time(DEFAULT_EXPIRE_TIME),
-      const Generics::Time& extend_time_period = Generics::Time::ZERO)
+      UserTagRequestMergeContainer(
+        Logging::Logger* logger,
+        TagRequestGroupProcessor* tag_request_group_processor,
+        const Generics::Time& time_merge_bound,
+        const char* rocksdb_path,
+        const Generics::Time& expire_time =
+          Generics::Time(DEFAULT_EXPIRE_TIME))
       /*throw(Exception)*/;
 
     Generics::ConstSmartMemBuf_var
@@ -54,11 +50,10 @@ namespace RequestInfoSvcs
     virtual ~UserTagRequestMergeContainer() noexcept {}
 
   private:
-    typedef ProfilingCommons::TransactionProfileMap<
-      AdServer::Commons::UserId>
-      UserMap;
+    using UserMap = ProfilingCommons::TransactionProfileMap<
+      AdServer::Commons::UserId>;
 
-    typedef ReferenceCounting::SmartPtr<UserMap> UserMap_var;
+    using UserMap_var = ReferenceCounting::SmartPtr<UserMap>;
 
   private:
     void process_tag_request_trans_(
@@ -75,7 +70,7 @@ namespace RequestInfoSvcs
     UserMap_var user_map_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserTagRequestMergeContainer>
-    UserTagRequestMergeContainer_var;
+  using UserTagRequestMergeContainer_var =
+    ReferenceCounting::SmartPtr<UserTagRequestMergeContainer>;
 }
 }

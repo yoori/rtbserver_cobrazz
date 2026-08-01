@@ -1677,19 +1677,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time::ZERO, // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &= no_action_test(act_container, act_processor);
       result &= action_direct_order_test(act_container, act_processor);
@@ -1707,19 +1701,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time::ZERO, // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &=
         custom_action_direct_order_test(act_container, act_processor);
@@ -1728,19 +1716,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time::ZERO, // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &=
         custom_two_action_direct_order_test(act_container, act_processor);
@@ -1749,19 +1731,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time::ZERO, // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &=
         custom_imp_before_two_action_test(act_container, act_processor);
@@ -1770,19 +1746,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time::ZERO, // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &=
         custom_imp_between_two_action_test(act_container, act_processor);
@@ -1791,19 +1761,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time(10), // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &= custom_action_timeout_test(act_container, act_processor);
     }
@@ -1811,19 +1775,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time(10), // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       result &= ADSC_2051(act_container, act_processor);
     }
@@ -1831,19 +1789,13 @@ main(int argc, char* argv[]) noexcept
     {
       TestProcessor_var act_processor(new TestProcessor());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserActionInfoContainer_var act_container(
         new UserActionInfoContainer(
           logger,
           act_processor,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
           Generics::Time::ZERO, // action_ignore_time
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       TestIt test_it;
       test_it.act_container = act_container.in();

@@ -1481,34 +1481,15 @@ namespace RequestInfoSvcs {
 
   // RequestInfoContainer::Transaction
   RequestInfoContainer::Transaction::Transaction(
-    BidProfileMap::Transaction* transaction,
-    RequestInfoMap::Transaction* old_transaction)
-    : transaction_(ReferenceCounting::add_ref(transaction)),
-      old_transaction_(ReferenceCounting::add_ref(old_transaction))
+    RequestProfileMap::Transaction* transaction)
+    : transaction_(ReferenceCounting::add_ref(transaction))
   {}
 
   Generics::ConstSmartMemBuf_var
   RequestInfoContainer::Transaction::get_profile(
     Generics::Time* last_access_time)
   {
-    Generics::ConstSmartMemBuf_var new_profile;
-
-    if(transaction_)
-    {
-      new_profile = transaction_->get_profile(last_access_time);
-    }
-
-    if(new_profile)
-    {
-      return new_profile;
-    }
-
-    if(old_transaction_)
-    {
-      return old_transaction_->get_profile(last_access_time);
-    }
-
-    return Generics::ConstSmartMemBuf_var();
+    return transaction_->get_profile(last_access_time);
   }
 
   void
@@ -1516,18 +1497,7 @@ namespace RequestInfoSvcs {
     const Generics::ConstSmartMemBuf* mem_buf,
     const Generics::Time& now)
   {
-    if(transaction_)
-    {
-      transaction_->save_profile(mem_buf, now);
-    }
-    else if(old_transaction_)
-    {
-      old_transaction_->save_profile(mem_buf, now);
-    }
-    else
-    {
-      assert(false);
-    }
+    transaction_->save_profile(mem_buf, now);
   }
 
   /** RequestInfoContainer */
@@ -1535,13 +1505,8 @@ namespace RequestInfoSvcs {
     Logging::Logger* logger,
     RequestActionProcessor* request_processor,
     RequestOperationProcessor* request_operation_processor,
-    const char* requestfile_base_path,
-    const char* requestfile_prefix,
-    const String::SubString& bidfile_base_path,
-    const String::SubString& /*bidfile_prefix*/,
-    ProfilingCommons::ProfileMapFactory::Cache* cache,
-    const Generics::Time& expire_time,
-    const Generics::Time& extend_time_period)
+    const String::SubString& request_profile_path,
+    const Generics::Time& expire_time)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -1552,56 +1517,26 @@ namespace RequestInfoSvcs {
   {
     static const char* FUN = "RequestInfoContainer::RequestInfoContainer()";
 
-    Generics::Time extend_time_period_val(extend_time_period);
-
-    if(extend_time_period_val.tv_sec == 0)
-    {
-      extend_time_period_val = expire_time / 2;
-    }
-
     try
     {
-      request_map_ = ProfilingCommons::ProfileMapFactory::
-        open_transaction_packed_expire_map<
-          ProfilingCommons::RequestIdPackHashAdapter,
-          ProfilingCommons::RequestIdAccessor,
-          RequestProfileAdapter>(
-          requestfile_base_path,
-          requestfile_prefix,
-          extend_time_period_val,
-          cache);
+      ReferenceCounting::SmartPtr<
+        AdServer::ProfilingCommons::RocksDBProfileMap<
+        AdServer::Commons::RequestId, UuidToString> >
+        profile_map_impl(
+          new AdServer::ProfilingCommons::RocksDBProfileMap<
+          AdServer::Commons::RequestId, UuidToString>(
+            request_profile_path,
+            expire_time_));
+
+      profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<
+        AdServer::Commons::RequestId>(profile_map_impl);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't init RequestInfoMap. "
+      ostr << FUN << ": Can't init RequestProfileMap(rocksdb). "
         "Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
-    }
-
-    if(!bidfile_base_path.empty())
-    {
-      try
-      {
-        ReferenceCounting::SmartPtr<
-          AdServer::ProfilingCommons::RocksDBProfileMap<
-          AdServer::Commons::RequestId, UuidToString> >
-          bid_map_impl(
-            new AdServer::ProfilingCommons::RocksDBProfileMap<
-            AdServer::Commons::RequestId, UuidToString>(
-              bidfile_base_path,
-              expire_time_));
-
-        bid_profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<
-          AdServer::Commons::RequestId>(bid_map_impl);
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Can't init RequestInfoMap(rocksdb). "
-          "Caught eh::Exception: " << ex.what();
-        throw Exception(ostr);
-      }
     }
   }
 
@@ -2183,7 +2118,7 @@ namespace RequestInfoSvcs {
     /*throw(Exception)*/
   {
     Generics::Time now = Generics::Time::get_time_of_day();
-    request_map_->clear_expired(now - expire_time_);
+    profile_map_->clear_expired(now - expire_time_);
   }
 
   void
@@ -2429,17 +2364,7 @@ namespace RequestInfoSvcs {
   RequestInfoContainer::get_profile_(
     const AdServer::Commons::RequestId& request_id)
   {
-    Generics::ConstSmartMemBuf_var res;
-
-    if(bid_profile_map_)
-    {
-      res = bid_profile_map_->get_profile(request_id);
-    }
-
-    if(!res && request_map_)
-    {
-      res = request_map_->get_profile(request_id);
-    }
+    Generics::ConstSmartMemBuf_var res = profile_map_->get_profile(request_id);
 
     if(res.in())
     {
@@ -2486,21 +2411,7 @@ namespace RequestInfoSvcs {
   RequestInfoContainer::get_transaction_(
     const AdServer::Commons::RequestId& request_id)
   {
-    BidProfileMap::Transaction_var new_transaction;
-
-    if(bid_profile_map_)
-    {
-      new_transaction = bid_profile_map_->get_transaction(request_id);
-    }
-
-    RequestInfoMap::Transaction_var old_transaction;
-
-    if(request_map_)
-    {
-      old_transaction = request_map_->get_transaction(request_id);
-    }
-
-    return new Transaction(new_transaction, old_transaction);
+    return new Transaction(profile_map_->get_transaction(request_id));
   }
 
   bool

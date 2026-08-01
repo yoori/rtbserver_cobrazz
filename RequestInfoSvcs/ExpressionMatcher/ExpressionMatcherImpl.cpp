@@ -169,12 +169,6 @@ namespace RequestInfoSvcs
       daily_processing_task_runner_(new Generics::TaskRunner(callback_,
         expression_matcher_config_.DailyProcessing().thread_pool_size())),
       scheduler_(new Generics::Planner(callback_)),
-      profile_cache_(
-        expression_matcher_config.LogProcessing().cache_blocks() > 0 ?
-        ProfilingCommons::ProfileMapFactory::Cache_var(
-          new ProfilingCommons::ProfileMapFactory::Cache(
-            expression_matcher_config.LogProcessing().cache_blocks())) :
-        ProfilingCommons::ProfileMapFactory::Cache_var()),
       proc_stat_impl_(ReferenceCounting::add_ref(proc_stat_impl))
   {
     static const char* FUN = "ExpressionMatcherImpl::ExpressionMatcherImpl()";
@@ -517,7 +511,6 @@ namespace RequestInfoSvcs
           expression_matcher_config_.ChunksConfig().chunks_number(),
           chunk_inventory_folders,
           expression_matcher_config_.ChunksConfig().chunks_prefix().c_str(),
-          profile_cache_,
           fill_level_map_traits_(expression_matcher_config_.ChunksConfig())
           );
 
@@ -568,7 +561,6 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->positive_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
-            profile_cache_,
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->TempUserChunksConfig()),
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
             );
@@ -631,7 +623,6 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->positive_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
-            profile_cache_,
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig()),
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
             );
@@ -667,7 +658,6 @@ namespace RequestInfoSvcs
           expression_matcher_config_.ChunksConfig().chunks_number(),
           chunk_colo_reach_folders,
           expression_matcher_config_.HouseholdColoReachChunksConfig().chunks_prefix().c_str(),
-          profile_cache_,
           fill_level_map_traits_(expression_matcher_config_.HouseholdColoReachChunksConfig())
           );
 

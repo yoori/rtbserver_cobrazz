@@ -1219,19 +1219,13 @@ main(int argc, char* argv[]) noexcept
       TestProcessor_var test_processor(new TestProcessor());
       TestCallback_var test_callback(new TestCallback());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserFraudProtectionContainer_var fraud_container(
         new UserFraudProtectionContainer(
           logger,
           test_processor,
           test_callback,
           (*root_path + TEST_FOLDER).c_str(),
-          "Actions",
-          cache,
-          Generics::Time(10), // expire time (sec)
-          Generics::Time(2)));
+          Generics::Time(10))); // expire time (sec)
 
       /*
       result &= simple_test(fraud_container, test_processor);

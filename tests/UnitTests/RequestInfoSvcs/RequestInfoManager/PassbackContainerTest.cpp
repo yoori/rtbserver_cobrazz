@@ -245,18 +245,12 @@ passback_container_test(const char* test_folder) noexcept
     TestPassbackProcessorImpl_var passback_processor(
       new TestPassbackProcessorImpl());
 
-    AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-      new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
     PassbackContainer_var passback_container(
       new PassbackContainer(
         logger,
         passback_processor,
         test_folder,
-        "Passback",
-        cache,
-        Generics::Time(10), // expire time (sec)
-        Generics::Time(2)));
+        Generics::Time(10))); // expire time (sec)
 
     TestBaseList tests;
     tests.push_back(TestBase_var(new VerificationOfNonExistsPassbackTest()));

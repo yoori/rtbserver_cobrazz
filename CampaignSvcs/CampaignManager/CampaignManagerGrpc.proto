@@ -51,13 +51,13 @@ message ReadyResponse {
 message ProgressCommentRequest {}
 
 message ProgressCommentResponse {
-  string comment = 1;
+  bytes comment = 1;
 }
 
 message GeoInfo {
-  string country = 1;
-  string region = 2;
-  string city = 3;
+  bytes country = 1;
+  bytes region = 2;
+  bytes city = 3;
 }
 
 message GeoCoordInfo {
@@ -67,32 +67,32 @@ message GeoCoordInfo {
 }
 
 message GetFileRequest {
-  string file_name = 1;
-  string service_index = 2;
+  bytes file_name = 1;
+  bytes service_index = 2;
 }
 
 message GetFileResponse {
   bytes file = 1;
-  string hostname = 2;
+  bytes hostname = 2;
 }
 
 message TraceCampaignSelectionIndexRequest {}
 
 message TraceCampaignSelectionIndexResponse {
-  string trace_xml = 1;
+  bytes trace_xml = 1;
 }
 
 message GetCampaignCreativeByCcidRequest {
   uint64 ccid = 1;
   uint64 tag_id = 2;
-  string format = 3;
-  string original_url = 4;
-  string peer_ip = 5;
+  bytes format = 3;
+  bytes original_url = 4;
+  bytes peer_ip = 5;
 }
 
 message GetCampaignCreativeByCcidResponse {
   bool found = 1;
-  string creative_body = 2;
+  bytes creative_body = 2;
 }
 
 message GetChannelLinksRequest {
@@ -105,8 +105,8 @@ message ChannelSearchResult {
   uint64 use_count = 2;
   repeated uint64 matched_simple_channels = 3;
   repeated uint64 ccg_ids = 4;
-  string discover_query = 5;
-  string language = 6;
+  bytes discover_query = 5;
+  bytes language = 6;
 }
 
 message GetChannelLinksResponse {
@@ -114,12 +114,12 @@ message GetChannelLinksResponse {
 }
 
 message GetCategoryChannelsRequest {
-  string language = 1;
+  bytes language = 1;
 }
 
 message CategoryChannelNode {
   uint64 channel_id = 1;
-  string name = 2;
+  bytes name = 2;
   uint64 flags = 3;
   repeated CategoryChannelNode child_category_channels = 4;
 }
@@ -138,18 +138,18 @@ message ColocationFlags {
 
 message GetColocationFlagsResponse {
   repeated ColocationFlags colocations = 1;
-  string hostname = 2;
+  bytes hostname = 2;
 }
 
 message GetPubPixelsRequest {
-  string country = 1;
+  bytes country = 1;
   uint64 user_status = 2;
   repeated uint64 publisher_account_ids = 3;
 }
 
 message GetPubPixelsResponse {
-  repeated string pixels = 1;
-  string hostname = 2;
+  repeated bytes pixels = 1;
+  bytes hostname = 2;
 }
 
 message OptionalUInt64 {
@@ -162,13 +162,13 @@ message DecimalInfo {
 }
 
 message TokenInfo {
-  string name = 1;
-  string value = 2;
+  bytes name = 1;
+  bytes value = 2;
 }
 
 message TokenImageInfo {
-  string name = 1;
-  string value = 2;
+  bytes name = 1;
+  bytes value = 2;
   uint64 width = 3;
   uint64 height = 4;
 }
@@ -192,8 +192,8 @@ message CcgKeywordInfo {
   uint64 channel_id = 3;
   DecimalInfo max_cpc = 4;
   DecimalInfo ctr = 5;
-  string click_url = 6;
-  string original_keyword = 7;
+  bytes click_url = 6;
+  bytes original_keyword = 7;
 }
 
 message SeqOrderInfo {
@@ -208,12 +208,12 @@ message CampaignFreq {
 }
 
 message NativeDataToken {
-  string name = 1;
+  bytes name = 1;
   bool required = 2;
 }
 
 message NativeImageToken {
-  string name = 1;
+  bytes name = 1;
   bool required = 2;
   uint64 width = 3;
   uint64 height = 4;
@@ -221,13 +221,13 @@ message NativeImageToken {
 
 message AdSlotInfo {
   uint64 ad_slot_id = 1;
-  string format = 2;
+  bytes format = 2;
   uint64 tag_id = 3;
-  repeated string sizes = 4;
-  string ext_tag_id = 5;
+  repeated bytes sizes = 4;
+  bytes ext_tag_id = 5;
   DecimalInfo min_ecpm = 6;
-  string min_ecpm_currency_code = 7;
-  repeated string currency_codes = 8;
+  bytes min_ecpm_currency_code = 7;
+  repeated bytes currency_codes = 8;
   bool passback = 9;
   int64 up_expand_space = 10;
   int64 right_expand_space = 11;
@@ -242,8 +242,8 @@ message AdSlotInfo {
   int64 video_allow_unskippable = 20;
   uint64 video_width = 21;
   uint64 video_height = 22;
-  repeated string exclude_categories = 23;
-  repeated string required_categories = 24;
+  repeated bytes exclude_categories = 23;
+  repeated bytes required_categories = 24;
   uint64 debug_ccg = 25;
   repeated uint64 allowed_durations = 26;
   repeated NativeDataToken native_data_tokens = 27;
@@ -256,55 +256,55 @@ message AdSlotInfo {
 message CommonAdRequestInfo {
   bytes time = 1;
   bytes request_id = 2;
-  string creative_instantiate_type = 3;
+  bytes creative_instantiate_type = 3;
   uint64 request_type = 4;
   uint64 random = 5;
   bool test_request = 6;
   bool log_as_test = 7;
   uint64 colo_id = 8;
-  string external_user_id = 9;
-  string source_id = 10;
+  bytes external_user_id = 9;
+  bytes source_id = 10;
   repeated GeoInfo location = 11;
   repeated GeoCoordInfo coord_location = 12;
-  string full_referer = 13;
-  string referer = 14;
-  repeated string urls = 15;
-  string security_token = 16;
-  string pub_impr_track_url = 17;
-  string pub_param = 18;
-  string preclick_url = 19;
-  string click_prefix_url = 20;
-  string original_url = 21;
+  bytes full_referer = 13;
+  bytes referer = 14;
+  repeated bytes urls = 15;
+  bytes security_token = 16;
+  bytes pub_impr_track_url = 17;
+  bytes pub_param = 18;
+  bytes preclick_url = 19;
+  bytes click_prefix_url = 20;
+  bytes original_url = 21;
   bytes track_user_id = 22;
   bytes user_id = 23;
   uint64 user_status = 24;
-  string signed_user_id = 25;
-  string peer_ip = 26;
-  string user_agent = 27;
-  string cohort = 28;
+  bytes signed_user_id = 25;
+  bytes peer_ip = 26;
+  bytes user_agent = 27;
+  bytes cohort = 28;
   uint64 hpos = 29;
-  string ext_track_params = 30;
+  bytes ext_track_params = 30;
   repeated TokenInfo tokens = 31;
   bool set_cookie = 32;
-  string passback_type = 33;
-  string passback_url = 34;
+  bytes passback_type = 33;
+  bytes passback_url = 34;
 }
 
 message ContextAdRequestInfo {
   bool enabled_notice = 1;
-  string client = 2;
-  string client_version = 3;
+  bytes client = 2;
+  bytes client_version = 3;
   repeated uint64 platform_ids = 4;
   repeated uint64 geo_channels = 5;
-  string platform = 6;
-  string full_platform = 7;
-  string web_browser = 8;
-  string ip_hash = 9;
+  bytes platform = 6;
+  bytes full_platform = 7;
+  bytes web_browser = 8;
+  bytes ip_hash = 9;
   bool profile_referer = 10;
   uint64 page_load_id = 11;
   uint64 full_referer_hash = 12;
   uint64 short_referer_hash = 13;
-  string additional_info = 14;
+  bytes additional_info = 14;
 }
 
 message RequestParams {
@@ -325,7 +325,7 @@ message RequestParams {
   bytes household_id = 12;
   bytes merged_user_id = 13;
   uint64 search_engine_id = 14;
-  string search_words = 15;
+  bytes search_words = 15;
   bool page_keywords_present = 16;
   bool profiling_available = 17;
   bool fraud = 18;
@@ -345,8 +345,8 @@ message RequestParams {
   uint64 profiling_type = 32;
   bool disable_fraud_detection = 33;
   bool need_debug_info = 34;
-  string page_keywords = 35;
-  string url_keywords = 36;
+  bytes page_keywords = 35;
+  bytes url_keywords = 36;
 }
 
 message TrackCreativeInfo {
@@ -360,7 +360,7 @@ message TrackCreativeInfo {
 message InstantiateAdInfo {
   CommonAdRequestInfo common_info = 1;
   repeated ContextAdRequestInfo context_info = 2;
-  string format = 3;
+  bytes format = 3;
   uint64 publisher_site_id = 4;
   uint64 publisher_account_id = 5;
   uint64 tag_id = 6;
@@ -370,11 +370,11 @@ message InstantiateAdInfo {
   OptionalUInt64 user_id_hash_mod = 10;
   bytes merged_user_id = 11;
   repeated uint64 pubpixel_accounts = 12;
-  string open_price = 13;
-  string openx_price = 14;
-  string liverail_price = 15;
-  string google_price = 16;
-  string ext_tag_id = 17;
+  bytes open_price = 13;
+  bytes openx_price = 14;
+  bytes liverail_price = 15;
+  bytes google_price = 16;
+  bytes ext_tag_id = 17;
   uint64 video_width = 18;
   uint64 video_height = 19;
   bool consider_request = 20;
@@ -384,8 +384,8 @@ message InstantiateAdInfo {
 }
 
 message InstantiateAdResult {
-  string creative_body = 1;
-  string mime_format = 2;
+  bytes creative_body = 1;
+  bytes mime_format = 2;
   repeated bytes request_ids = 3;
 }
 
@@ -396,14 +396,14 @@ message CreativeSelectResult {
   uint64 campaign_group_id = 4;
   uint64 order_set_id = 5;
   uint64 advertiser_id = 6;
-  string advertiser_name = 7;
-  string creative_size = 8;
+  bytes advertiser_name = 7;
+  bytes creative_size = 8;
   DecimalInfo revenue = 9;
   DecimalInfo ecpm = 10;
   DecimalInfo pub_ecpm = 11;
-  string click_url = 12;
-  string destination_url = 13;
-  string creative_version_id = 14;
+  bytes click_url = 12;
+  bytes destination_url = 13;
+  bytes creative_version_id = 14;
   uint64 creative_id = 15;
   bool https_safe_flag = 16;
   uint32 expanding = 17;
@@ -414,7 +414,7 @@ message CreativeSelectDebugInfo {
   DecimalInfo click_revenue = 2;
   DecimalInfo action_revenue = 3;
   DecimalInfo ecpm_bid = 4;
-  string html_url = 6;
+  bytes html_url = 6;
 }
 
 message AdSlotDebugInfo {
@@ -425,33 +425,33 @@ message AdSlotDebugInfo {
   uint64 min_no_adv_ecpm = 5;
   uint64 min_text_ecpm = 6;
   uint64 auction_type = 7;
-  string track_pixel_url = 8;
+  bytes track_pixel_url = 8;
   DecimalInfo cpm_threshold = 9;
   bool walled_garden = 10;
   repeated CreativeSelectDebugInfo selected_creatives = 11;
-  string trace_ccg = 12;
+  bytes trace_ccg = 12;
 }
 
 message ExtContractInfo {
   bytes contract_info = 1;
-  string parent_contract_id = 2;
+  bytes parent_contract_id = 2;
   uint64 contract_id = 3;
-  string number = 4;
-  string date = 5;
-  string type = 6;
+  bytes number = 4;
+  bytes date = 5;
+  bytes type = 6;
   bool vat_included = 7;
-  string ord_contract_id = 8;
-  string ord_ado_id = 9;
-  string subject_type = 10;
-  string action_type = 11;
+  bytes ord_contract_id = 8;
+  bytes ord_ado_id = 9;
+  bytes subject_type = 10;
+  bytes action_type = 11;
   bool agent_acting_for_publisher = 12;
   uint64 contract_parent_contract_id = 13;
-  string client_id = 14;
-  string client_name = 15;
-  string client_legal_form = 16;
-  string contractor_id = 17;
-  string contractor_name = 18;
-  string contractor_legal_form = 19;
+  bytes client_id = 14;
+  bytes client_name = 15;
+  bytes client_legal_form = 16;
+  bytes contractor_id = 17;
+  bytes contractor_name = 18;
+  bytes contractor_legal_form = 19;
   bytes timestamp = 20;
 }
 
@@ -459,34 +459,34 @@ message AdSlotResult {
   uint64 ad_slot_id = 1;
   bytes request_id = 2;
   bool passback = 3;
-  string passback_url = 4;
-  string creative_body = 5;
-  string notice_url = 6;
-  repeated string track_pixel_urls = 7;
-  string yandex_track_params = 8;
-  string creative_url = 9;
-  string track_pixel_params = 10;
-  string click_params = 11;
-  string mime_format = 12;
-  string iurl = 13;
+  bytes passback_url = 4;
+  bytes creative_body = 5;
+  bytes notice_url = 6;
+  repeated bytes track_pixel_urls = 7;
+  bytes yandex_track_params = 8;
+  bytes creative_url = 9;
+  bytes track_pixel_params = 10;
+  bytes click_params = 11;
+  bytes mime_format = 12;
+  bytes iurl = 13;
   bool test_request = 14;
   repeated CreativeSelectResult selected_creatives = 15;
-  repeated string external_visual_categories = 16;
-  repeated string external_content_categories = 17;
-  string pub_currency_code = 18;
+  repeated bytes external_visual_categories = 16;
+  repeated bytes external_content_categories = 17;
+  bytes pub_currency_code = 18;
   uint64 overlay_width = 19;
   uint64 overlay_height = 20;
   repeated TokenInfo tokens = 21;
   repeated TokenInfo ext_tokens = 22;
   bool track_impr = 23;
-  string tag_size = 24;
+  bytes tag_size = 24;
   repeated uint64 freq_caps = 25;
   repeated uint64 uc_freq_caps = 26;
   AdSlotDebugInfo debug_info = 27;
   repeated TokenInfo native_data_tokens = 28;
   repeated TokenImageInfo native_image_tokens = 29;
-  string track_html_body = 30;
-  string erid = 31;
+  bytes track_html_body = 30;
+  bytes erid = 31;
   repeated ExtContractInfo contracts = 32;
 }
 
@@ -511,7 +511,7 @@ message CommonMatchRequestInfo {
   uint64 colo_id = 4;
   repeated GeoInfo location = 5;
   repeated GeoCoordInfo coord_location = 6;
-  string full_referer = 7;
+  bytes full_referer = 7;
 }
 
 message MatchRequestInfo {
@@ -519,7 +519,7 @@ message MatchRequestInfo {
   bytes household_id = 2;
   bytes request_time = 3;
   CommonMatchRequestInfo match_info = 4;
-  string source = 5;
+  bytes source = 5;
 }
 
 message ClickInfo {
@@ -535,8 +535,8 @@ message ClickInfo {
   bytes cookie_user_id = 10;
   bytes request_id = 11;
   OptionalUInt64 user_id_hash_mod = 12;
-  string relocate = 13;
-  string referer = 14;
+  bytes relocate = 13;
+  bytes referer = 14;
   bool log_click = 15;
   DecimalInfo ctr = 16;
   repeated TokenInfo tokens = 17;
@@ -557,9 +557,9 @@ message ImpressionInfo {
   uint64 request_type = 7;
   uint64 verify_type = 8;
   bytes user_id = 9;
-  string referer = 10;
+  bytes referer = 10;
   int64 viewability = 11;
-  string action_name = 12;
+  bytes action_name = 12;
 }
 
 message ImpressionResultInfo {
@@ -567,7 +567,7 @@ message ImpressionResultInfo {
 }
 
 message ClickResultInfo {
-  string url = 1;
+  bytes url = 1;
   uint64 campaign_id = 2;
   uint64 advertiser_id = 3;
 }
@@ -578,14 +578,14 @@ message ActionInfo {
   bool log_as_test = 3;
   OptionalUInt64 campaign_id = 4;
   OptionalUInt64 action_id = 5;
-  string order_id = 6;
+  bytes order_id = 6;
   DecimalInfo action_value = 8;
-  string referer = 9;
+  bytes referer = 9;
   uint64 user_status = 10;
   bytes user_id = 11;
-  string ip_hash = 12;
+  bytes ip_hash = 12;
   repeated uint64 platform_ids = 13;
-  string peer_ip = 14;
+  bytes peer_ip = 14;
   repeated GeoInfo location = 15;
 }
 
@@ -596,19 +596,19 @@ message ConsiderPassbackRequest {
 }
 
 message ConsiderPassbackResponse {
-  string hostname = 1;
+  bytes hostname = 1;
 }
 
 message ConsiderPassbackTrackRequest {
   bytes time = 1;
-  string country = 2;
+  bytes country = 2;
   uint64 colo_id = 3;
   uint64 tag_id = 4;
   uint64 user_status = 5;
 }
 
 message ConsiderPassbackTrackResponse {
-  string hostname = 1;
+  bytes hostname = 1;
 }
 
 enum OptOperation {
@@ -621,20 +621,20 @@ enum OptOperation {
 message VerifyOptOperationRequest {
   uint64 time = 1;
   int64 colo_id = 2;
-  string referer = 3;
+  bytes referer = 3;
   OptOperation operation = 4;
   uint64 status = 5;
   uint64 user_status = 6;
   bool log_as_test = 7;
-  string browser = 8;
-  string os = 9;
-  string ct = 10;
-  string curct = 11;
+  bytes browser = 8;
+  bytes os = 9;
+  bytes ct = 10;
+  bytes curct = 11;
   bytes user_id = 12;
 }
 
 message VerifyOptOperationResponse {
-  string hostname = 1;
+  bytes hostname = 1;
 }
 
 message ConsiderWebOperationRequest {
@@ -642,27 +642,27 @@ message ConsiderWebOperationRequest {
   uint64 colo_id = 2;
   uint64 tag_id = 3;
   uint64 cc_id = 4;
-  string ct = 5;
-  string curct = 6;
-  string browser = 7;
-  string os = 8;
-  string app = 9;
-  string source = 10;
-  string operation = 11;
-  string user_bind_src = 12;
+  bytes ct = 5;
+  bytes curct = 6;
+  bytes browser = 7;
+  bytes os = 8;
+  bytes app = 9;
+  bytes source = 10;
+  bytes operation = 11;
+  bytes user_bind_src = 12;
   uint32 result = 13;
   uint64 user_status = 14;
   bool test_request = 15;
   repeated bytes request_ids = 16;
   bytes global_request_id = 17;
-  string referer = 18;
-  string ip_address = 19;
-  string external_user_id = 20;
-  string user_agent = 21;
+  bytes referer = 18;
+  bytes ip_address = 19;
+  bytes external_user_id = 20;
+  bytes user_agent = 21;
 }
 
 message ConsiderWebOperationResponse {
-  string hostname = 1;
+  bytes hostname = 1;
 }
 
 message GetCampaignCreativeRequest {
@@ -670,7 +670,7 @@ message GetCampaignCreativeRequest {
 }
 
 message GetCampaignCreativeResponse {
-  string hostname = 1;
+  bytes hostname = 1;
   RequestCreativeResult request_result = 2;
 }
 
@@ -679,28 +679,28 @@ message ProcessMatchRequestRequest {
 }
 
 message ProcessMatchRequestResponse {
-  string hostname = 1;
+  bytes hostname = 1;
 }
 
 message InstantiateAdRequest {
   InstantiateAdInfo instantiate_ad_info = 1;
-  string service_index = 2;
+  bytes service_index = 2;
 }
 
 message InstantiateAdResponse {
   InstantiateAdResult instantiate_ad_result = 1;
-  string hostname = 2;
+  bytes hostname = 2;
 }
 
 message GetClickUrlRequest {
   ClickInfo click_info = 1;
-  string service_index = 2;
+  bytes service_index = 2;
 }
 
 message GetClickUrlResponse {
   bool found = 1;
   ClickResultInfo click_result_info = 2;
-  string hostname = 3;
+  bytes hostname = 3;
 }
 
 message VerifyImpressionRequest {
@@ -709,7 +709,7 @@ message VerifyImpressionRequest {
 
 message VerifyImpressionResponse {
   ImpressionResultInfo impression_result_info = 1;
-  string hostname = 2;
+  bytes hostname = 2;
 }
 
 message ActionTakenRequest {
@@ -717,7 +717,7 @@ message ActionTakenRequest {
 }
 
 message ActionTakenResponse {
-  string hostname = 1;
+  bytes hostname = 1;
 }
 
 message GetConfigRequest {
@@ -726,23 +726,23 @@ message GetConfigRequest {
 
 message ConfigOptionValue {
   int64 option_id = 1;
-  string value = 2;
+  bytes value = 2;
 }
 
 message ConfigExternalCategory {
   uint64 ad_request_type = 1;
-  repeated string names = 2;
+  repeated bytes names = 2;
 }
 
 message ConfigAppFormat {
-  string app_format = 1;
-  string mime_format = 2;
+  bytes app_format = 1;
+  bytes mime_format = 2;
   bytes timestamp = 3;
 }
 
 message ConfigSize {
   uint64 size_id = 1;
-  string protocol_name = 2;
+  bytes protocol_name = 2;
   uint64 size_type_id = 3;
   uint64 width = 4;
   uint64 height = 5;
@@ -751,14 +751,14 @@ message ConfigSize {
 
 message ConfigCreativeOption {
   int64 option_id = 1;
-  string token = 2;
+  bytes token = 2;
   uint32 type = 3;
-  repeated string token_relations = 4;
+  repeated bytes token_relations = 4;
   bytes timestamp = 5;
 }
 
 message ConfigCountry {
-  string country_code = 1;
+  bytes country_code = 1;
   repeated ConfigOptionValue tokens = 2;
   bytes timestamp = 3;
 }
@@ -766,7 +766,7 @@ message ConfigCountry {
 message ConfigCreativeCategory {
   uint64 creative_category_id = 1;
   uint64 cct_id = 2;
-  string name = 3;
+  bytes name = 3;
   repeated ConfigExternalCategory external_categories = 4;
   bytes timestamp = 5;
 }
@@ -786,7 +786,7 @@ message ConfigCreative {
   uint64 fc_id = 3;
   uint64 weight = 4;
   repeated ConfigCreativeSize sizes = 5;
-  string creative_format = 6;
+  bytes creative_format = 6;
   ConfigOptionValue click_url = 7;
   ConfigOptionValue html_url = 8;
   uint64 order_set_id = 9;
@@ -794,7 +794,7 @@ message ConfigCreative {
   repeated uint64 categories = 11;
   repeated ConfigOptionValue tokens = 12;
   uint32 status = 13;
-  string version_id = 14;
+  bytes version_id = 14;
 }
 
 message ConfigExpression {
@@ -805,20 +805,20 @@ message ConfigExpression {
 
 message ConfigExpressionChannel {
   uint64 channel_id = 1;
-  string name = 2;
+  bytes name = 2;
   uint64 account_id = 3;
-  string country_code = 4;
+  bytes country_code = 4;
   uint64 flags = 5;
   uint32 status = 6;
   uint32 type = 7;
   bool is_public = 8;
-  string language = 9;
+  bytes language = 9;
   uint64 freq_cap_id = 10;
   uint64 parent_channel_id = 11;
   uint64 action_id = 12;
   bytes timestamp = 13;
-  string discover_query = 14;
-  string discover_annotation = 15;
+  bytes discover_query = 14;
+  bytes discover_annotation = 15;
   uint64 channel_rate_id = 16;
   DecimalInfo imp_revenue = 17;
   DecimalInfo click_revenue = 18;
@@ -848,22 +848,22 @@ message ConfigTagDelivery {
 
 message ConfigContract {
   uint64 contract_id = 1;
-  string number = 2;
-  string date = 3;
-  string type = 4;
+  bytes number = 2;
+  bytes date = 3;
+  bytes type = 4;
   bool vat_included = 5;
-  string ord_contract_id = 6;
-  string ord_ado_id = 7;
-  string subject_type = 8;
-  string action_type = 9;
+  bytes ord_contract_id = 6;
+  bytes ord_ado_id = 7;
+  bytes subject_type = 8;
+  bytes action_type = 9;
   bool agent_acting_for_publisher = 10;
   uint64 parent_contract_id = 11;
-  string client_id = 12;
-  string client_name = 13;
-  string client_legal_form = 14;
-  string contractor_id = 15;
-  string contractor_name = 16;
-  string contractor_legal_form = 17;
+  bytes client_id = 12;
+  bytes client_name = 13;
+  bytes client_legal_form = 14;
+  bytes contractor_id = 15;
+  bytes contractor_name = 16;
+  bytes contractor_legal_form = 17;
   bytes timestamp = 18;
 }
 
@@ -879,7 +879,7 @@ message ConfigCampaign {
   uint32 marketplace = 9;
   ConfigExpression expression = 10;
   ConfigExpression stat_expression = 11;
-  string country = 12;
+  bytes country = 12;
   repeated uint64 sites = 13;
   uint32 status = 14;
   uint32 eval_status = 15;
@@ -927,7 +927,7 @@ message ConfigCampaignEcpm {
 }
 
 message ConfigTagPricing {
-  string country_code = 1;
+  bytes country_code = 1;
   uint32 ccg_type = 2;
   uint32 ccg_rate_type = 3;
   uint64 site_rate_id = 4;
@@ -936,7 +936,7 @@ message ConfigTagPricing {
 }
 
 message ConfigTemplateOptions {
-  string template_name = 1;
+  bytes template_name = 1;
   repeated ConfigOptionValue tokens = 2;
 }
 
@@ -952,9 +952,9 @@ message ConfigTag {
   uint64 site_id = 2;
   uint32 status = 3;
   repeated ConfigTagSize sizes = 4;
-  string imp_track_pixel = 5;
-  string passback = 6;
-  string passback_type = 7;
+  bytes imp_track_pixel = 5;
+  bytes passback = 6;
+  bytes passback_type = 7;
   uint64 flags = 8;
   uint32 marketplace = 9;
   DecimalInfo adjustment = 10;
@@ -995,7 +995,7 @@ message ConfigSite {
 
 message ConfigColocation {
   uint64 colo_id = 1;
-  string colo_name = 2;
+  bytes colo_name = 2;
   uint64 colo_rate_id = 3;
   uint64 at_flags = 4;
   uint64 ad_serving = 5;
@@ -1016,13 +1016,13 @@ message ConfigFreqCap {
 }
 
 message ConfigCreativeTemplateFile {
-  string creative_format = 1;
-  string creative_size = 2;
-  string app_format = 3;
-  string mime_format = 4;
+  bytes creative_format = 1;
+  bytes creative_size = 2;
+  bytes app_format = 3;
+  bytes mime_format = 4;
   bool track_impr = 5;
   uint32 type = 6;
-  string template_file = 7;
+  bytes template_file = 7;
   bytes timestamp = 8;
   repeated ConfigOptionValue tokens = 9;
   repeated ConfigOptionValue hidden_tokens = 10;
@@ -1035,14 +1035,14 @@ message ConfigCurrency {
   uint64 currency_exchange_id = 3;
   uint64 effective_date = 4;
   uint64 fraction_digits = 5;
-  string currency_code = 6;
+  bytes currency_code = 6;
   bytes timestamp = 7;
 }
 
 message ConfigCampaignKeyword {
   uint64 ccg_keyword_id = 1;
-  string original_keyword = 2;
-  string click_url = 3;
+  bytes original_keyword = 2;
+  bytes click_url = 3;
   bytes timestamp = 4;
 }
 
@@ -1057,12 +1057,12 @@ message ConfigAccount {
   uint64 agency_account_id = 2;
   uint64 internal_account_id = 3;
   uint64 role_id = 4;
-  string legal_name = 5;
+  bytes legal_name = 5;
   uint64 flags = 6;
   uint64 at_flags = 7;
   uint32 text_adserving = 8;
   uint64 currency_id = 9;
-  string country = 10;
+  bytes country = 10;
   bytes time_offset = 11;
   DecimalInfo commision = 12;
   DecimalInfo budget = 13;
@@ -1070,8 +1070,8 @@ message ConfigAccount {
   repeated uint64 walled_garden_accounts = 15;
   uint64 auction_rate = 16;
   bool use_pub_pixels = 17;
-  string pub_pixel_optin = 18;
-  string pub_pixel_optout = 19;
+  bytes pub_pixel_optin = 18;
+  bytes pub_pixel_optout = 19;
   DecimalInfo self_service_commission = 20;
   uint32 status = 21;
   uint32 eval_status = 22;
@@ -1079,14 +1079,14 @@ message ConfigAccount {
 }
 
 message ConfigCategoryChannelLocalization {
-  string language = 1;
-  string name = 2;
+  bytes language = 1;
+  bytes name = 2;
 }
 
 message ConfigCategoryChannel {
   uint64 channel_id = 1;
-  string name = 2;
-  string newsgate_name = 3;
+  bytes name = 2;
+  bytes newsgate_name = 3;
   repeated ConfigCategoryChannelLocalization localizations = 4;
   uint64 parent_channel_id = 5;
   uint64 flags = 6;
@@ -1094,13 +1094,13 @@ message ConfigCategoryChannel {
 }
 
 message ConfigGeoIpRegionCity {
-  string region = 1;
-  string city = 2;
+  bytes region = 1;
+  bytes city = 2;
 }
 
 message ConfigGeoChannel {
   uint64 channel_id = 1;
-  string country = 2;
+  bytes country = 2;
   repeated ConfigGeoIpRegionCity geoip_targets = 3;
   bytes timestamp = 4;
 }
@@ -1115,9 +1115,9 @@ message ConfigGeoCoordChannel {
 
 message ConfigWebOperation {
   uint64 id = 1;
-  string app = 2;
-  string source = 3;
-  string operation = 4;
+  bytes app = 2;
+  bytes source = 3;
+  bytes operation = 4;
   uint64 flags = 5;
   bytes timestamp = 6;
 }

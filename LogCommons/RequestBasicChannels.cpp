@@ -672,7 +672,7 @@ operator<<(
   os << match_request.data_->page_trigger_channels << '\t';
   os << match_request.data_->search_trigger_channels << '\t';
   os << match_request.data_->url_trigger_channels << '\t';
-  os << match_request.data_->url_keyword_trigger_channels << '\t';
+  os << match_request.data_->url_keyword_trigger_channels;
   return os;
 }
 
@@ -686,7 +686,7 @@ operator<<(
     << match_request.page_trigger_channels() << '\t'
     << match_request.search_trigger_channels() << '\t'
     << match_request.url_trigger_channels() << '\t'
-    << match_request.url_keyword_trigger_channels() << '\t';
+    << match_request.url_keyword_trigger_channels();
   return out;
 }
 

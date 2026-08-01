@@ -39,7 +39,6 @@ namespace AdServer
         unsigned long common_chunks_number,
         const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
         const char* file_prefix,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
         const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
         /*throw(Exception)*/;
 

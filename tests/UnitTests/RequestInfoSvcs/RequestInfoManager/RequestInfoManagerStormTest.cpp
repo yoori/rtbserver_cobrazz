@@ -23,8 +23,6 @@ using AdServer::Commons::RequestId;
  * its performance
  */
 
-Generics::AppUtils::Option<unsigned long> opt_cache_blocks(0);
-
 namespace
 {
   const char USAGE[] =
@@ -36,13 +34,9 @@ namespace
     "  -h, --help : show this message.\n";
 
   const char USER_CAMPAIGN_REACH_CHUNKS_ROOT[] = "/UserCampaignReach/";
-  const char USER_CAMPAIGN_REACH_CHUNKS_PREFIX[] = "UserCampaignReach";
   const char REQUEST_CHUNKS_ROOT[] = "/Request/";
-  const char REQUEST_CHUNKS_PREFIX[] = "Request";
   const char USER_ACTION_INFO_CHUNKS_ROOT[] = "/UserActionInfo/";
-  const char USER_ACTION_INFO_CHUNKS_PREFIX[] = "UserActionInfo";
   const char PASSBACK_CHUNKS_ROOT[] = "/Passback/";
-  const char PASSBACK_CHUNKS_PREFIX[] = "Passback";
 
   const char DEFAULT_ROOT_PATH[] = "./";
   const unsigned long DEFAULT_USERS_COUNT = 10;
@@ -291,16 +285,11 @@ request_info_manager_storm_test(
 
     if(processing_traits.ccg_reach_container)
     {
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(*opt_cache_blocks));
-
       UserCampaignReachContainer_var user_campaign_reach_container =
         new UserCampaignReachContainer(
           logger,
           test_processor,
           (std::string(root_path) + USER_CAMPAIGN_REACH_CHUNKS_ROOT).c_str(),
-          USER_CAMPAIGN_REACH_CHUNKS_PREFIX,
-          cache,
           Generics::Time(24*60*60));
 
       processing_distributor->add_child_processor(
@@ -309,19 +298,15 @@ request_info_manager_storm_test(
 
     processing_distributor->add_child_processor(test_processor);
 
-    AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-      new AdServer::ProfilingCommons::ProfileMapFactory::Cache(*opt_cache_blocks));
+    const std::string request_chunks_path =
+      std::string(root_path) + REQUEST_CHUNKS_ROOT;
 
     RequestInfoContainer_var request_info_container =
       new RequestInfoContainer(
         logger,
         processing_distributor,
         0,
-        (std::string(root_path) + REQUEST_CHUNKS_ROOT).c_str(),
-        REQUEST_CHUNKS_PREFIX,
-        (std::string(root_path) + REQUEST_CHUNKS_ROOT),
-        String::SubString("Bid"),
-        cache,
+        String::SubString(request_chunks_path),
         Generics::Time(60*60*4));
 
     UserActionInfoContainer_var user_action_info_container;
@@ -333,11 +318,8 @@ request_info_manager_storm_test(
           logger,
           request_info_container,
           (std::string(root_path) + USER_ACTION_INFO_CHUNKS_ROOT).c_str(),
-          USER_ACTION_INFO_CHUNKS_PREFIX,
           Generics::Time::ZERO,
-          0, // cache
-          Generics::Time(10),
-          Generics::Time(24*60*60));
+          Generics::Time(10));
 
       processing_distributor->add_child_processor(
         user_action_info_container->request_processor());
@@ -504,19 +486,11 @@ request_info_manager_passback_storm_test(
     NullPassbackProcessorImpl_var test_processor(
       new NullPassbackProcessorImpl());
 
-    AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache;
-    if(*opt_cache_blocks > 0)
-    {
-      cache = new AdServer::ProfilingCommons::ProfileMapFactory::Cache(*opt_cache_blocks);
-    }
-
     PassbackContainer_var passback_container =
       new PassbackContainer(
         logger,
         test_processor,
         (std::string(root_path) + PASSBACK_CHUNKS_ROOT).c_str(),
-        PASSBACK_CHUNKS_PREFIX,
-        cache,
         Generics::Time::ONE_HOUR * 2 * 10);
 
     /* start loop */
@@ -582,7 +556,6 @@ main(int argc, char* argv[]) noexcept
     args.add(equal_name("runs") || short_name("r"), run_count);
     args.add(equal_name("users") || short_name("u"), users_count);
     args.add(equal_name("help") || short_name("h"), opt_help);
-    args.add(equal_name("cache") || short_name("c"), opt_cache_blocks);
     args.add(equal_name("threads") || short_name("t"), opt_threads_count);
 
     args.parse(argc - 1, argv + 1);

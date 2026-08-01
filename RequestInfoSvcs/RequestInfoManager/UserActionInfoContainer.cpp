@@ -3,11 +3,12 @@
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserActionProfile.hpp>
 
-#include "Compatibility/UserActionProfileAdapter.hpp"
+#include "RocksDBProfileMapUtils.hpp"
 #include "UserActionInfoContainer.hpp"
 
 namespace
 {
+  const unsigned long CURRENT_ACTION_INFO_PROFILE_VERSION = 330;
   const Generics::Time TIME_SYNC_PRECISION(2); // 2 sec
   const Generics::Time WAIT_ACTION_EXPIRE_TIME = Generics::Time::ONE_HOUR;
 
@@ -508,12 +509,9 @@ namespace RequestInfoSvcs
   UserActionInfoContainer::UserActionInfoContainer(
     Logging::Logger* logger,
     RequestContainerProcessor* request_container_processor,
-    const char* useractionfile_base_path,
-    const char* useractionfile_prefix,
+    const char* user_action_rocksdb_path,
     const Generics::Time& action_ignore_time,
-    ProfilingCommons::ProfileMapFactory::Cache* cache,
-    const Generics::Time& expire_time,
-    const Generics::Time& extend_time_period)
+    const Generics::Time& expire_time)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       action_ignore_time_(action_ignore_time),
@@ -524,30 +522,19 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserActionInfoContainer::UserActionInfoContainer()";
 
-    Generics::Time extend_time_period_val(extend_time_period);
-
-    if(extend_time_period_val == Generics::Time::ZERO)
-    {
-      extend_time_period_val = std::max(expire_time / 4, Generics::Time(1));
-    }
-
     try
     {
-      user_map_ = ProfilingCommons::ProfileMapFactory::
-        open_transaction_expire_map<
-          Commons::UserId,
-          ProfilingCommons::UserIdAccessor,
-          UserActionProfileAdapter>(
-          useractionfile_base_path,
-          useractionfile_prefix,
-          extend_time_period_val,
-          UserActionProfileAdapter(),
-          cache);
+      user_map_ = open_rocksdb_transaction_profile_map<
+        Commons::UserId,
+        UserIdToString>(
+          user_action_rocksdb_path,
+          expire_time_);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't init UserActionInfoMap. Caught eh::Exception: " <<
+      ostr << FUN << ": Can't init UserActionInfoMap at '" <<
+        user_action_rocksdb_path << "'. Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }

@@ -23,7 +23,6 @@ namespace AdServer
       unsigned long common_chunks_number,
       const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
       const char* file_prefix,
-      ProfilingCommons::ProfileMapFactory::Cache* /*cache*/,
       const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
       /*throw(Exception)*/
       : logger_(ReferenceCounting::add_ref(logger)),
@@ -44,7 +43,10 @@ namespace AdServer
               file_prefix,
               AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
                 user_level_map_traits.expire_time),
-              AdServer::Commons::uuid_distribution_hash);
+              AdServer::Commons::uuid_distribution_hash,
+              0,
+              false,
+              HOUSEHOLD_ ? "" : ".rocksdb");
         user_map_ = user_map.first;
         add_child_object(user_map.second);
       }

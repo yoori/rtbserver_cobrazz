@@ -1,5 +1,4 @@
 #include <Generics/Rand.hpp>
-#include "LoadingProgressCallback.hpp"
 
 namespace AdServer
 {
@@ -181,8 +180,7 @@ namespace ProfilingCommons
     const char* body_file_name,
     unsigned long read_buf_size,
     bool disable_caching_on_fetch,
-    FileController* file_controller,
-    LoadingProgressCallbackBase_var progress_checker_parent)
+    FileController* file_controller)
     /*throw(typename ReadBaseLevel<KeyType>::Exception)*/
     : key_serializer_(KeySerializerType()),
       disable_caching_on_fetch_(disable_caching_on_fetch),
@@ -226,17 +224,6 @@ namespace ProfilingCommons
         true, // don't cache index file
         file_controller_);
 
-      LoadingProgressCallbackBase_var progress_checker;
-      if (progress_checker_parent.in())
-      {
-        progress_checker =
-          new LoadingProgressCallback(progress_checker_parent, reader.file_size());
-      }
-      else
-      {
-        progress_checker = new LoadingProgressCallbackBase();
-      }
-
       // read head
       reader.read(&index_version, sizeof(index_version));
       reader.read(&index_uniq_id, sizeof(index_uniq_id));
@@ -245,7 +232,6 @@ namespace ProfilingCommons
 
       Generics::MemBuf key_buf;
       unsigned long key_i = 0;
-      unsigned long cur_pos = 0;
       ActualProfileRef prev_profile_ref;
       prev_profile_ref.pos = 0;
 
@@ -295,8 +281,6 @@ namespace ProfilingCommons
         area_size_ += profile_ref.area_size();
         profiles_.push_back(profile_ref);
         ++rec_index;
-        progress_checker->post_progress(reader.pos() - cur_pos);
-        cur_pos = reader.pos();
 
         prev_profile_ref = profile_ref;
       }
@@ -320,8 +304,6 @@ namespace ProfilingCommons
           reader.pos() << ", found keys = " << key_i;
         throw typename ReadBaseLevel<KeyType>::Exception(ostr);
       }
-
-      progress_checker->loading_is_finished();
 
       // read body file head
       uint32_t body_version;

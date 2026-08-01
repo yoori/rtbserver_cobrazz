@@ -18,7 +18,6 @@
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorage3/LoadingProgressCallbackBase.hpp>
 
 
 #include <UserInfoSvcs/UserInfoCommons/ChannelDictionary.hpp>
@@ -57,6 +56,7 @@ namespace AdServer::UserInfoSvcs
   public:
     typedef UserOperationProcessor::Exception Exception;
     DECLARE_EXCEPTION(UserIsFraud, Exception);
+    DECLARE_EXCEPTION(ResourceExhausted, Exception);
 
   public:
     UserInfoContainer(
@@ -76,8 +76,7 @@ namespace AdServer::UserInfoSvcs
       bool use_add_profile_on_match,
       unsigned long max_base_profile_waiters,
       unsigned long max_temp_profile_waiters,
-      unsigned long max_freqcap_profile_waiters,
-      AdServer::ProfilingCommons::LoadingProgressCallbackBase_var progress_processor_parent)
+      unsigned long max_freqcap_profile_waiters)
       /*throw(Exception)*/;
 
     AdServer::Commons::StartableAwaitable<bool>

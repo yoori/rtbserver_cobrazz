@@ -995,11 +995,21 @@ int main(int argc, char **argv)
     RequestBasicChannelsCollector::DataT::DataT::AdRequestProps
       ad_request(sizes, "RUS", 20, FixedNum("30"),
         ad_imp_opt, text_ad_shown, ad_select, AdServer::CampaignSvcs::AT_MAX_ECPM);
+    StringList empty_sizes;
+    RequestBasicChannelsCollector::DataT::DataT::AdRequestProps
+      ad_request_empty_sizes(empty_sizes, "RU", 4, FixedNum("0.00002"),
+        RequestBasicChannelsCollector::DataT::DataT::AdSlotImpressionOptional(),
+        RequestBasicChannelsCollector::DataT::DataT::AdBidSlotImpressionList(),
+        RequestBasicChannelsCollector::DataT::DataT::AdSelectPropsOptional(),
+        AdServer::CampaignSvcs::AT_MAX_ECPM);
 
     RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional
       ad_request_opt;
+    RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional
+      ad_request_empty_sizes_opt;
 
     ad_request_opt = ad_request;
+    ad_request_empty_sizes_opt = ad_request_empty_sizes;
 
     auto make_match_request = [&]()
     {
@@ -1039,6 +1049,15 @@ int main(int argc, char **argv)
         make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt)
       );
+    RequestBasicChannelsCollector::DataT::DataT
+      inner_data4(
+        'A',
+        UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
+        UserId("hSUsEk05T-m8PafRng8v6w.."),
+        make_match_request(),
+        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(
+          ad_request_empty_sizes_opt)
+      );
 
     auto make_data = [&]()
     {
@@ -1054,6 +1073,7 @@ int main(int argc, char **argv)
       data.add(inner_data1);
       data.add(inner_data2);
       data.add(inner_data3);
+      data.add(inner_data4);
 #endif
       return data;
     };

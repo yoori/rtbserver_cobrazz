@@ -13,7 +13,6 @@
 #include <Generics/CompositeActiveObject.hpp>
 
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
 
 #include "RequestActionProcessor.hpp"
 

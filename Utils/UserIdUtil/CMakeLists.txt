@@ -5,7 +5,7 @@ add_executable(UserIdUtil
 )
 target_link_libraries(UserIdUtil
   Generics
-  PlainStorage2
+  Commons
 
   UtilCommons
 

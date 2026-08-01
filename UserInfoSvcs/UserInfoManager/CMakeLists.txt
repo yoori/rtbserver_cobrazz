@@ -39,8 +39,7 @@ target_link_libraries(UserInfoContainer
   PrivacyFilter
   Commons
   Allocator
-  PlainStorage2
-  PlainStorage3
+  ProfilingCommons
   ProfileMap
   ProfileMapRocksDB
 
@@ -74,7 +73,6 @@ target_link_libraries(UserInfoManager
   HttpServer
   Commons
   AdServerCommonsXSD
-  PlainStorage2
   PrivacyFilter
   ProfileMap
   ProfileMapRocksDB

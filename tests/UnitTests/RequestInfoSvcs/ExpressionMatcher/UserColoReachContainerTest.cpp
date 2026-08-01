@@ -119,9 +119,6 @@ struct TestBase : public ReferenceCounting::AtomicImpl
         chunk_folders,
         (*root_path + TEST_FOLDER).c_str());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var profile_cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
       UserColoReachContainer_var reach_container(
         new UserColoReachContainer(
           logger,
@@ -130,7 +127,6 @@ struct TestBase : public ReferenceCounting::AtomicImpl
           chunk_folders.size(), // chunks_number
           chunk_folders,
           "ColoReach", // prefix
-          profile_cache,
           AdServer::ProfilingCommons::LevelMapTraits(
             AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
             10*1024*1024,
@@ -483,5 +479,4 @@ int main(int argc, char** argv) noexcept
 
   return -1;
 }
-
 

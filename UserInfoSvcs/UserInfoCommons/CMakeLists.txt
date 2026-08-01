@@ -16,7 +16,6 @@ add_library(ChannelMatcher SHARED
 )
 target_link_libraries(ChannelMatcher
   Generics
-  PlainStorage2
 
   UtilCommons
   UserChannelBaseProfilePST

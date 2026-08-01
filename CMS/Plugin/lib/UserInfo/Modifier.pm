@@ -38,8 +38,6 @@ sub pack_extra_chunk;
 sub merge_chunk;
 
 use constant USER_CHUNK_PREFIX => 'UserChunk';
-use constant CHUNK_3_3_UPDATER => 'PlainStorageUtil';
-use constant CHUNK_REDISTRIBUTOR => 'LevelCheckUtil';
 
 use constant OLD_PROFILE_FOLDER_PREFIXES => {
   add      => "AddChunk_",
@@ -78,18 +76,6 @@ sub new
     dry_run_ => defined $dry_run && $dry_run > 0 ? 1 : undef,
     chunks_number_ => $chunks_number
     };
-
-  $this->{chunk_3_3_update_cmd_} = $environment_cmd . CHUNK_3_3_UPDATER .
-    " --rw-level-max-size=104857600 --max-undumped-size=262144000".
-    " --max-levels0=20 convert-mem-to-level ";
-
-  my $chunks_options = " --rw-level-max-size=104857600 --max-undumped-size=262144000" .
-    " --max-levels0=20 --chunks-number=" . $chunks_number;
-
-  # command that divide existing chunk
-  # <source folder with file prefix> <destination folder with chunk prefix>
-  $this->{chunks_divide_cmd_} = $environment_cmd . CHUNK_REDISTRIBUTOR .
-    " divide-to-chunks" . $chunks_options;
 
   $this->{rocksdb_merge_cmd_} = $environment_cmd .
     "RocksDbMergeUtil --output";
@@ -364,43 +350,8 @@ sub divide_chunk
   # dividing chunk into temp directory
   if(!defined($chunk->divided()))
   {
-    $this->adapt_chunk_($chunk);
-
-    my $temp_chunk_root = "temp_" . $chunk->index() . "/";
-
-    $this->{exec_impl_}->remove($chunk->host(), $temp_chunk_root, 1);
-    $this->{exec_impl_}->mkdir($chunk->host(), $temp_chunk_root);
-
-    my @chunk_files = $this->{exec_impl_}->list($chunk->host(), $chunk->path());
-    my %processed_prefixes;
-    foreach my $file(@chunk_files)
-    {
-      if($file !~ m|^(.*?)\..*\.index$| ||
-         exists($processed_prefixes{$1}))
-      {
-        next;
-      }
-
-      my $prefix = $1;
-
-      $this->{exec_impl_}->execute_command(
-        $chunk->host(),
-        $this->{chunks_divide_cmd_},
-        Common::ModifierExec::path_wrapper($chunk->path() . "/" . $prefix),
-        Common::ModifierExec::path_wrapper($temp_chunk_root)) &&
-        die "Modifier: Can't divide chunk: " . $chunk->path();
-      $processed_prefixes{$prefix} = 1;
-    }
-
-    $this->{exec_impl_}->remove($chunk->host(), $divided_chunk_root, 1);
-
-    $this->{exec_impl_}->move(
-      $chunk->host(),
-      $temp_chunk_root,
-      $chunk->host(),
-      $divided_chunk_root);
-
-    $this->{exec_impl_}->remove($chunk->host(), $chunk->path(), 1);
+    die "Modifier: dividing UserInfo legacy chunk " . $chunk->path() .
+      " is unsupported";
   }
 
   # collecting divided chunk data in to_merge folder
@@ -700,20 +651,17 @@ sub adapt_chunk_
   {
     if($chunk->version() eq '1.12')
     {
-      $this->migrate_1_12_($chunk);
-      $res = 1;
+      die "Modifier: migration of UserInfo legacy chunk version 1.12 is unsupported";
     }
 
     if($chunk->version() eq '2.3')
     {
-      $this->migrate_2_3_($chunk);
-      $res = 1;
+      die "Modifier: migration of UserInfo legacy chunk version 2.3 is unsupported";
     }
 
     if($chunk->version() eq '2.4')
     {
-      $this->migrate_3_4_($chunk);
-      $res = 1;
+      die "Modifier: migration of UserInfo legacy chunk version 2.4 is unsupported";
     }
   }
 
@@ -841,86 +789,8 @@ sub migrate_3_4_
 {
   my ($this, $chunk) = @_;
 
-  my $dst_host = $chunk->host();
-  my $new_chunk_root = $this->get_chunk_path_($chunk->index());
-
-  if($this->{verbose_} && defined $this->{logger_})
-  {
-    $this->{logger_}->trace(
-      "Modifier: to migrate chunk #" .
-      $chunk->index() . ": 2.4 => 3.4 at '$dst_host'");
-  }
-
-  if(!defined $this->{dry_run_})
-  {
-    my $chunk_root = USER_CHUNK_PREFIX . "_" . $chunk->index();
-    my $temp_chunk_root = USER_CHUNK_PREFIX . "_" . $chunk->index() . ".temp";
-    my $back_chunk_root = USER_CHUNK_PREFIX . "_" . $chunk->index() . ".back";
-
-    $this->{exec_impl_}->remove($dst_host, $temp_chunk_root, 1) &&
-          die "Modifier: Can't remove $dst_host:$temp_chunk_root";
-
-    $this->{exec_impl_}->copy(
-      $dst_host,
-      $chunk_root,
-      $dst_host,
-      $temp_chunk_root) &&
-      die "Modifier: Can't copy $dst_host:$chunk_root to $dst_host:$temp_chunk_root";
-
-    my %processed;
-    my @chunk_files = $this->{exec_impl_}->list($dst_host, $temp_chunk_root);
-    foreach my $file(@chunk_files)
-    {
-      if($file =~ m|^(.*?)\..*$| && 
-         !($file =~ m|^.*\.index$| || $file =~ m|^.*\.data$|))
-      {
-        my $prefix = $1;
-        if(!exists($processed{$prefix}))
-        {
-          $this->{exec_impl_}->execute_command(
-            $dst_host,
-            $this->{chunk_3_3_update_cmd_},
-            Common::ModifierExec::path_wrapper($temp_chunk_root),
-            $prefix,
-            Common::ModifierExec::path_wrapper($temp_chunk_root),
-            $prefix) &&
-            die "Modifier: Can't update file $dst_host:$temp_chunk_root/$file";
-
-          $processed{$prefix} = 1;
-        }
-
-        $this->{exec_impl_}->remove($dst_host, $temp_chunk_root . "/" . $file) &&
-          die "Modifier: Can't remove $dst_host:$temp_chunk_root/$file";
-      }
-    }
-
-    $this->{exec_impl_}->remove($dst_host, $back_chunk_root, 1) &&
-          die "Modifier: Can't remove $dst_host:$back_chunk_root";
-
-    $this->{exec_impl_}->move(
-      $dst_host,
-      $chunk_root,
-      $dst_host,
-      $back_chunk_root) &&
-      die "Modifier: Can't move $dst_host:$chunk_root to $dst_host:$back_chunk_root";
-
-    $this->{exec_impl_}->move(
-      $dst_host,
-      $temp_chunk_root,
-      $dst_host,
-      $new_chunk_root) &&
-      die "Modifier: Can't move $dst_host:$temp_chunk_root to $dst_host:$new_chunk_root";
-  }  
-
-  if($this->{verbose_} && defined $this->{logger_})
-  {
-    $this->{logger_}->trace(
-      "Modifier: migrated chunk #" .
-      $chunk->index() . ": 2.4 => 3.4 at '$dst_host'");
-  }
-
-  $chunk->version('3.4');
-  $chunk->path($new_chunk_root);
+  die "Modifier: migration of UserInfo legacy chunk #" . $chunk->index() .
+    " from version 2.4 is unsupported";
 }
 
 sub chunks_root_v23_prefix_

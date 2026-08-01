@@ -10,7 +10,7 @@ target_link_libraries(UserBindUtil
 
   LogCommons
   Commons
-  PlainStorage3
+  ProfilingCommons
 
 
 )

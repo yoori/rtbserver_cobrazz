@@ -28,6 +28,15 @@ namespace AdServer::UserInfoSvcs
       context.set_deadline(std::chrono::system_clock::now() + DEFAULT_RPC_TIMEOUT);
     }
 
+    bool should_mark_as_bad_(const grpc::Status& status)
+    {
+      return !AdServer::Grpc::is_request_specific_error(status) &&
+        !AdServer::Grpc::is_transport_timeout(status) &&
+        !AdServer::Grpc::is_no_active_batching_streams(status) &&
+        !AdServer::Grpc::is_queue_wait_timeout(status) &&
+        status.error_code() != grpc::StatusCode::RESOURCE_EXHAUSTED;
+    }
+
     template<typename Response, typename Callback>
     void finish_with_unavailable_(Callback callback, const char* message)
     {
@@ -153,7 +162,7 @@ namespace AdServer::UserInfoSvcs
         AdServer::Grpc::ResponseHolder<response_type>&& response_holder) \
       mutable \
       { \
-        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status)) \
+        if (!status.ok() && should_mark_as_bad_(status)) \
         { \
           pool_ref.mark_as_bad( \
             Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \
@@ -198,7 +207,7 @@ namespace AdServer::UserInfoSvcs
         AdServer::Grpc::ResponseHolder<response_type>&& response_holder) \
       mutable \
       { \
-        if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status)) \
+        if (!status.ok() && should_mark_as_bad_(status)) \
         { \
           pool_ref.mark_as_bad( \
             Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT); \

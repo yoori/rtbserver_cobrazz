@@ -702,11 +702,8 @@ Application_::print_user_action_from_file(
         logger,
         act_processor,
         file,
-        "UserAction_",
         Generics::Time::ZERO, // action_ignore_time
-        0, // cache
-        Generics::Time(1000000), // expire time (sec)
-        Generics::Time(200000)));
+        Generics::Time(1000000))); // expire time (sec)
 
     Generics::ConstSmartMemBuf_var buf = act_container->get_profile(user_id);
 

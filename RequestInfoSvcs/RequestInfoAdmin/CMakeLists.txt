@@ -16,11 +16,9 @@ target_link_libraries(RequestInfoAdmin
   RequestInfoManagerIDL
   UserActionInfoContainer
   pcre
-  PlainStorage2
   RequestInfoManagerCompatibility
 
 
 )
 #install(TARGETS RequestInfoAdmin  DESTINATION ${INSTALL_DIR})
-
 

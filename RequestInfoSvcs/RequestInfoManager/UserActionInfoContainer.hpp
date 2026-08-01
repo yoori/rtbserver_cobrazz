@@ -10,8 +10,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
 
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
 #include "RequestActionProcessor.hpp"
 
@@ -36,12 +35,9 @@ namespace AdServer
       UserActionInfoContainer(
         Logging::Logger* logger,
         RequestContainerProcessor* request_processor,
-        const char* useractionfile_base_path,
-        const char* useractionfile_prefix,
+        const char* rocksdb_path,
         const Generics::Time& action_ignore_time,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
-        const Generics::Time& expire_time = DEFAULT_ACTION_PROFILE_EXPIRE_TIME,
-        const Generics::Time& extend_time_period = Generics::Time::ZERO)
+        const Generics::Time& expire_time = DEFAULT_ACTION_PROFILE_EXPIRE_TIME)
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
@@ -74,14 +70,13 @@ namespace AdServer
       class RequestActionProcessorImpl;
       friend class RequestActionProcessorImpl;
 
-      typedef std::list<AdServer::Commons::RequestId> RequestIdList;
+      using RequestIdList = std::list<AdServer::Commons::RequestId>;
 
-      typedef ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::UserId>
-        UserActionInfoMap;
+      using UserActionInfoMap = ProfilingCommons::TransactionProfileMap<
+        AdServer::Commons::UserId>;
 
-      typedef ReferenceCounting::SmartPtr<UserActionInfoMap>
-        UserActionInfoMap_var;
+      using UserActionInfoMap_var =
+        ReferenceCounting::SmartPtr<UserActionInfoMap>;
 
       struct DelegateCustomActionInfo:
         public AdvCustomActionInfo
@@ -89,8 +84,8 @@ namespace AdServer
         AdServer::Commons::RequestId request_id;
       };
 
-      typedef std::list<DelegateCustomActionInfo>
-        DelegateCustomActionInfoList;
+      using DelegateCustomActionInfoList =
+        std::list<DelegateCustomActionInfo>;
 
     private:
       void
@@ -135,8 +130,8 @@ namespace AdServer
       RequestActionProcessor_var request_processor_;
     };
 
-    typedef ReferenceCounting::SmartPtr<UserActionInfoContainer>
-      UserActionInfoContainer_var;
+    using UserActionInfoContainer_var =
+      ReferenceCounting::SmartPtr<UserActionInfoContainer>;
 
   } // RequestInfoSvcs
 } // AdServer

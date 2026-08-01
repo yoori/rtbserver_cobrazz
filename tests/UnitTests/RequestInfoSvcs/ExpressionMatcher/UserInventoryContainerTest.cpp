@@ -121,9 +121,6 @@ public:
       AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
       prepare_test_folders(chunk_folders);
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
       UserInventoryInfoContainer_var inv_container(
         new UserInventoryInfoContainer(
           logger,
@@ -134,7 +131,6 @@ public:
           chunk_folders.size(), // chunks_number
           chunk_folders,
           "Inv",
-          cache,
           AdServer::ProfilingCommons::LevelMapTraits(
             AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
             10*1024*1024,
@@ -1139,9 +1135,6 @@ perf_test()
     AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
     prepare_test_folders(chunk_folders);
 
-    AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-      new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
     UserInventoryInfoContainer_var inv_container(
       new UserInventoryInfoContainer(
         logger,
@@ -1152,7 +1145,6 @@ perf_test()
         chunk_folders.size(), // chunks_number
         chunk_folders,
         "Inv",
-        cache,
         AdServer::ProfilingCommons::LevelMapTraits(
           AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
           10*1024*1024,
@@ -1215,9 +1207,6 @@ perf_test2()
     AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
     prepare_test_folders(chunk_folders);
 
-    AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-      new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
     UserInventoryInfoContainer_var inv_container(
       new UserInventoryInfoContainer(
         logger,
@@ -1228,7 +1217,6 @@ perf_test2()
         chunk_folders.size(), // chunks_number
         chunk_folders,
         "Inv",
-        cache,
         AdServer::ProfilingCommons::LevelMapTraits(
           AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
           10*1024*1024,
@@ -1299,9 +1287,6 @@ main(int argc, char** argv) noexcept
       AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
       prepare_test_folders(chunk_folders);
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(1));
-
       UserInventoryInfoContainer_var inv_container(
         new UserInventoryInfoContainer(
           logger,
@@ -1312,7 +1297,6 @@ main(int argc, char** argv) noexcept
           chunk_folders.size(), // chunks_number
           chunk_folders,
           "Inv",
-          cache,
           AdServer::ProfilingCommons::LevelMapTraits(
             AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
             10*1024*1024,

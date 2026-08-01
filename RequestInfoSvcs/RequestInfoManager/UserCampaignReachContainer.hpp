@@ -17,8 +17,7 @@
 #include <Generics/MemBuf.hpp>
 
 #include <Commons/Algs.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 
 #include "RequestActionProcessor.hpp"
@@ -63,8 +62,8 @@ namespace AdServer
       virtual ~CampaignReachProcessor() noexcept {}
     };
 
-    typedef ReferenceCounting::SmartPtr<CampaignReachProcessor>
-      CampaignReachProcessor_var;
+    using CampaignReachProcessor_var =
+      ReferenceCounting::SmartPtr<CampaignReachProcessor>;
 
     const Generics::Time USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME =
       Generics::Time::ONE_DAY * 180; // 180 days
@@ -86,12 +85,9 @@ namespace AdServer
       UserCampaignReachContainer(
         Logging::Logger* logger,
         CampaignReachProcessor* campaign_reach_processor,
-        const char* requestfile_base_path,
-        const char* requestfile_prefix,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
+        const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME),
-        const Generics::Time& extend_time_period = Generics::Time::ZERO)
+          Generics::Time(USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME))
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
@@ -130,12 +126,11 @@ namespace AdServer
       virtual ~UserCampaignReachContainer() noexcept;
 
     private:
-      typedef ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::UserId>
-        UserCampaignReachMap;
+      using UserCampaignReachMap = ProfilingCommons::TransactionProfileMap<
+        AdServer::Commons::UserId>;
 
-      typedef ReferenceCounting::SmartPtr<UserCampaignReachMap>
-        UserCampaignReachMap_var;
+      using UserCampaignReachMap_var =
+        ReferenceCounting::SmartPtr<UserCampaignReachMap>;
 
     private:
       void process_ad_impression_(
@@ -148,8 +143,8 @@ namespace AdServer
       CampaignReachProcessor_var campaign_reach_processor_;
     };
 
-    typedef ReferenceCounting::SmartPtr<UserCampaignReachContainer>
-      UserCampaignReachContainer_var;
+    using UserCampaignReachContainer_var =
+      ReferenceCounting::SmartPtr<UserCampaignReachContainer>;
 
   } /* RequestInfoSvcs */
 } /* AdServer */

@@ -14,8 +14,7 @@
 #include <Generics/MemBuf.hpp>
 
 #include <Commons/Algs.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
-#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 
 #include "TagRequestProcessor.hpp"
@@ -41,8 +40,8 @@ namespace AdServer
         /*throw(Exception)*/ = 0;
     };
 
-    typedef ReferenceCounting::SmartPtr<SiteReachProcessor>
-      SiteReachProcessor_var;
+    using SiteReachProcessor_var =
+      ReferenceCounting::SmartPtr<SiteReachProcessor>;
 
     const Generics::Time USER_SITE_REACH_DEFAULT_EXPIRE_TIME(180*24*60*60); // 180 days
 
@@ -63,12 +62,9 @@ namespace AdServer
       UserSiteReachContainer(
         Logging::Logger* logger,
         SiteReachProcessor* site_reach_processor,
-        const char* file_base_path,
-        const char* file_prefix,
-        ProfilingCommons::ProfileMapFactory::Cache* cache,
+        const char* rocksdb_path,
         const Generics::Time& expire_time =
-          USER_SITE_REACH_DEFAULT_EXPIRE_TIME,
-        const Generics::Time& extend_time_period = Generics::Time::ZERO)
+          USER_SITE_REACH_DEFAULT_EXPIRE_TIME)
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
@@ -85,12 +81,11 @@ namespace AdServer
       virtual ~UserSiteReachContainer() noexcept;
 
     private:
-      typedef ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::UserId>
-        UserSiteReachMap;
+      using UserSiteReachMap = ProfilingCommons::TransactionProfileMap<
+        AdServer::Commons::UserId>;
 
-      typedef ReferenceCounting::SmartPtr<UserSiteReachMap>
-        UserSiteReachMap_var;
+      using UserSiteReachMap_var =
+        ReferenceCounting::SmartPtr<UserSiteReachMap>;
 
     private:
       void process_tag_request_(
@@ -103,8 +98,8 @@ namespace AdServer
       SiteReachProcessor_var site_reach_processor_;
     };
 
-    typedef ReferenceCounting::SmartPtr<UserSiteReachContainer>
-      UserSiteReachContainer_var;
+    using UserSiteReachContainer_var =
+      ReferenceCounting::SmartPtr<UserSiteReachContainer>;
 
   } /* RequestInfoSvcs */
 } /* AdServer */

@@ -91,8 +91,7 @@ namespace AdServer::UserInfoSvcs
     bool use_add_profile_on_match,
     unsigned long max_base_profile_waiters,
     unsigned long max_temp_profile_waiters,
-    unsigned long max_freqcap_profile_waiters,
-    AdServer::ProfilingCommons::LoadingProgressCallbackBase_var /*progress_processor_parent*/)
+    unsigned long max_freqcap_profile_waiters)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
@@ -214,6 +213,12 @@ namespace AdServer::UserInfoSvcs
       Stream::Error ostr;
       ostr << FUN << ": caught UserProfileMap::ChunkNotFound: " << ex.what();
       throw ChunkNotFound(ostr);
+    }
+    catch(const MaxWaitersReached& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught MaxWaitersReached: " << ex.what();
+      throw ResourceExhausted(ostr);
     }
     catch(const UserFreqCapProfile::Invalid& ex)
     {

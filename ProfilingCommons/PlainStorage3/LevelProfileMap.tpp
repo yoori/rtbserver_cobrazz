@@ -25,13 +25,11 @@ namespace ProfilingCommons
     LevelAssigner(
       LevelProfileMap<KeyType, KeySerializerType>& level_profile_map,
       typename LevelProfileMap<KeyType, KeySerializerType>::MapHolder* map_holder,
-      LoadingProgressCallbackBase_var progress_checker,
       const char* file_directory,
       const char* file_prefix)
       noexcept
       : level_profile_map_(level_profile_map),
         map_holder_(ReferenceCounting::add_ref(map_holder)),
-        progress_checker_(progress_checker),
         file_directory_(file_directory),
         file_prefix_(file_prefix)
     {}
@@ -45,7 +43,6 @@ namespace ProfilingCommons
       {
         level_profile_map_.add_level_(
           map_holder_,
-          progress_checker_,
           file_directory_.c_str(),
           file_path);
       }
@@ -57,7 +54,6 @@ namespace ProfilingCommons
     LevelProfileMap<KeyType, KeySerializerType>& level_profile_map_;
     typename LevelProfileMap<KeyType, KeySerializerType>::
       MapHolder_var map_holder_;
-    LoadingProgressCallbackBase_var progress_checker_;
     const std::string file_directory_;
     const std::string file_prefix_;
   };
@@ -273,39 +269,6 @@ namespace ProfilingCommons
   {
   }
 
-  class IndexFileChecker
-  {
-  public:
-    IndexFileChecker(
-      unsigned int& index_number,
-      const std::string& file_prefix)
-      noexcept
-      : index_number_(index_number),
-        file_prefix_(file_prefix)
-    {}
-
-    bool
-    operator()(const char* file_path, const struct stat& /*st*/)
-      noexcept
-    {
-      if(::strncmp(file_path,
-        file_prefix_.c_str(), file_prefix_.size()) == 0)
-      {
-        if(::strncmp(file_path + (::strlen(file_path) - ::strlen(".index")),
-            ".index", ::strlen(".index")) == 0)
-        {
-          ++index_number_;
-        }
-      }
-
-      return true;
-    }
-
-  private:
-    unsigned int& index_number_;
-    const std::string file_prefix_;
-  };
-
   // LevelProfileMap::LevelHolder
   template<typename KeyType, typename KeySerializerType>
   LevelProfileMap<KeyType, KeySerializerType>::LevelHolder::LevelHolder()
@@ -352,8 +315,7 @@ namespace ProfilingCommons
     Generics::ActiveObjectCallback* callback,
     const char* directory,
     const char* file_prefix,
-    const LevelMapTraits& traits,
-    LoadingProgressCallbackBase* progress_checker_parent)
+    const LevelMapTraits& traits)
     /*throw (eh::Exception)*/
     : file_directory_(directory),
       file_prefix_(file_prefix),
@@ -382,27 +344,9 @@ namespace ProfilingCommons
 
     MapHolder_var map_holder = new MapHolder();
 
-    LoadingProgressCallbackBase_var progress_checker;
-    unsigned int index_number = 0;
-    if (progress_checker_parent)
-    {
-      IndexFileChecker index_checker(index_number, file_prefix_ + ".");
-      Generics::DirSelect::directory_selector(
-        directory,
-        Generics::DirSelect::wrap_functor(index_checker, true));
-      progress_checker = new LoadingProgressCallback(
-        progress_checker_parent,
-        index_number);
-    }
-    else
-    {
-      progress_checker = new LoadingProgressCallbackBase();
-    }
-
     LevelAssigner level_assigner(
       *this,
       map_holder,
-      progress_checker,
       directory,
       (file_prefix_ + ".").c_str());
 
@@ -421,7 +365,6 @@ namespace ProfilingCommons
       task_runner_->enqueue_task(merge_task);
     }
 
-    progress_checker->loading_is_finished();
   }
 
   template<typename KeyType, typename KeySerializerType>
@@ -952,7 +895,6 @@ namespace ProfilingCommons
   void
   LevelProfileMap<KeyType, KeySerializerType>::add_level_(
     MapHolder* map_holder,
-    LoadingProgressCallbackBase_var progress_checker,
     const char* /*directory*/,
     const char* index_file_name)
     /*throw(Exception)*/
@@ -1013,8 +955,7 @@ namespace ProfilingCommons
             full_body_file_name.c_str(),
             rw_buffer_size_,
             true, // disable caching for all levels for case when we open file on init
-            file_controller_,
-            progress_checker);
+            file_controller_);
 
         if(index == 0)
         {

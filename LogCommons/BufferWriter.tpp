@@ -223,7 +223,7 @@ namespace AdServer::LogProcessing
   {
     if (value.present() && !OptionalValueTraits::is_empty(value.get()))
     {
-      out << value.get();
+      out << OptionalValueTraits::PRESENT_MARKER << value.get();
     }
     else
     {

@@ -432,7 +432,6 @@ namespace AdServer
       Generics::TaskRunner_var task_runner_;
       Generics::TaskRunner_var daily_processing_task_runner_;
       Generics::Planner_var scheduler_;
-      ProfilingCommons::ProfileMapFactory::Cache_var profile_cache_;
 
       ProcStatImpl_var proc_stat_impl_;
       StatsCounters stats_;

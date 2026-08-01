@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>

@@ -455,6 +455,13 @@ namespace AdServer::UserInfoSvcs
         ex.what());
     }
 
+    grpc::Status to_status_(const UserInfoManagerCore::ResourceExhausted& ex)
+    {
+      return AdServer::Grpc::error_status(
+        grpc::StatusCode::RESOURCE_EXHAUSTED,
+        ex.what());
+    }
+
     std::size_t
     resolve_max_sequential_ops_(std::size_t configured)
     {
@@ -837,6 +844,10 @@ namespace AdServer::UserInfoSvcs
       result_status = to_status_(ex);
     }
     catch (const UserInfoManagerCore::ChunkNotFound& ex)
+    {
+      result_status = to_status_(ex);
+    }
+    catch (const UserInfoManagerCore::ResourceExhausted& ex)
     {
       result_status = to_status_(ex);
     }

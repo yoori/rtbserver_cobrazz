@@ -71,16 +71,11 @@ struct TestBase: public ReferenceCounting::AtomicImpl
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
 
-      AdServer::ProfilingCommons::ProfileMapFactory::Cache_var cache(
-        new AdServer::ProfilingCommons::ProfileMapFactory::Cache(3));
-
       UserSiteReachContainer_var reach_container(
         new UserSiteReachContainer(
           logger,
           reach_processor,
-          (*root_path + TEST_FOLDER).c_str(),
-          "Reach",
-          cache));
+          (*root_path + TEST_FOLDER).c_str()));
 
       run_impl(reach_container);
 

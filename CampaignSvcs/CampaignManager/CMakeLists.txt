@@ -54,7 +54,6 @@ link_directories(/opt/foros/vanga/lib)
 
 target_link_libraries(CTRProviderCore
   Generics
-  PlainStorage3
   CampaignConfig
   pcre
 )
@@ -75,6 +74,7 @@ add_library(CTRProviderImplLib SHARED
 
 target_link_libraries(CTRProviderImplLib
   CTRProviderCore
+  ProfilingCommons
   xgboost
   /opt/foros/vanga/lib/libVangaDTree.so
   catboost::model
