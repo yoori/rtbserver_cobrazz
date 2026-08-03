@@ -7,6 +7,7 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Logger/Logger.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
 
@@ -26,7 +27,7 @@ namespace AdServer
      * contains logic of requests processing
      */
     class UserActionInfoContainer:
-      public virtual ReferenceCounting::AtomicImpl,
+      public virtual Generics::RefCountableCompositeActiveObject,
       public virtual AdvActionProcessor
     {
     public:
@@ -51,9 +52,17 @@ namespace AdServer
         const AdvActionInfo& adv_action_info)
         /*throw(AdvActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_adv_action(
+        const AdvActionInfo& adv_action_info);
+
       virtual void process_custom_action(
         const AdvExActionInfo& adv_custom_action_info)
         /*throw(AdvActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_custom_action(
+        const AdvExActionInfo& adv_custom_action_info);
 
       void
       request_container_processor(
@@ -95,20 +104,41 @@ namespace AdServer
         const RequestInfo& request_info)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      AdServer::Commons::Awaitable<void>
+      co_process_click_trans_(
+        unsigned long& delegate_process_actions,
+        AdvCustomActionInfoList& delegate_process_custom_actions,
+        const RequestInfo& request_info);
+
       void process_impression_trans_(
         AdvCustomActionInfoList& delegate_process_custom_actions,
         const RequestInfo& request_info)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_process_impression_trans_(
+        AdvCustomActionInfoList& delegate_process_custom_actions,
+        const RequestInfo& request_info);
 
       void process_adv_action_trans_(
         RequestIdList& delegate_process_actions,
         const AdvActionInfo& adv_action_info)
         /*throw(AdvActionProcessor::Exception)*/;
 
+      AdServer::Commons::Awaitable<void>
+      co_process_adv_action_trans_(
+        RequestIdList& delegate_process_actions,
+        const AdvActionInfo& adv_action_info);
+
       void process_custom_action_trans_(
         DelegateCustomActionInfoList& delegate_custom_actions,
         const AdvExActionInfo& adv_ex_action_info)
         /*throw(AdvActionProcessor::Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_process_custom_action_trans_(
+        DelegateCustomActionInfoList& delegate_custom_actions,
+        const AdvExActionInfo& adv_ex_action_info);
 
       void process_impression_(
         const RequestInfo& request_info,
@@ -116,10 +146,21 @@ namespace AdServer
         const RequestActionProcessor::ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      AdServer::Commons::Awaitable<void>
+      co_process_impression_(
+        const RequestInfo& request_info,
+        const ImpressionInfo& imp_info,
+        const RequestActionProcessor::ProcessingState& processing_state);
+
       void process_click_(
         const RequestInfo& request_info,
         const RequestActionProcessor::ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_process_click_(
+        const RequestInfo& request_info,
+        const RequestActionProcessor::ProcessingState& processing_state);
 
     private:
       Logging::Logger_var logger_;

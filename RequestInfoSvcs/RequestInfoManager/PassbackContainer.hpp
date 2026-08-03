@@ -6,9 +6,11 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
 
+#include <Commons/Coro/Awaitable.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
@@ -65,6 +67,11 @@ namespace AdServer
         const Generics::Time& impression_time)
         /*throw(Exception)*/ = 0;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_passback_request(
+        const AdServer::Commons::RequestId& request_id,
+        const Generics::Time& impression_time);
+
     protected:
       virtual ~PassbackVerificationProcessor() noexcept {}
     };
@@ -98,7 +105,7 @@ namespace AdServer
     class PassbackContainer:
       public virtual TagRequestProcessor,
       public virtual PassbackVerificationProcessor,
-      public virtual ReferenceCounting::AtomicImpl
+      public virtual Generics::RefCountableCompositeActiveObject
     {
     public:
       static const Generics::Time DEFAULT_EXPIRE_TIME; // 2 hours
@@ -122,11 +129,19 @@ namespace AdServer
       process_tag_request(const TagRequestInfo&)
         /*throw(TagRequestProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_tag_request(const TagRequestInfo&);
+
       virtual void
       process_passback_request(
         const AdServer::Commons::RequestId& request_id,
         const Generics::Time& impression_time)
         /*throw(PassbackVerificationProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_passback_request(
+        const AdServer::Commons::RequestId& request_id,
+        const Generics::Time& impression_time);
 
       void clear_expired_requests() /*throw(Exception)*/;
 
@@ -162,6 +177,15 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
+  inline AdServer::Commons::Awaitable<void>
+  PassbackVerificationProcessor::co_process_passback_request(
+    const AdServer::Commons::RequestId& request_id,
+    const Generics::Time& impression_time)
+  {
+    process_passback_request(request_id, impression_time);
+    co_return;
+  }
+
   inline
   bool
   PassbackProcessor::PassbackInfo::operator==(

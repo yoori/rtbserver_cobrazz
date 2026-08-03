@@ -34,6 +34,11 @@ namespace AdServer
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_request(
+        const RequestInfo&,
+        const ProcessingState& processing_state);
+
       virtual void
       process_impression(
         const RequestInfo&,
@@ -41,25 +46,47 @@ namespace AdServer
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression(
+        const RequestInfo&,
+        const ImpressionInfo& imp_info,
+        const ProcessingState& processing_state);
+
       virtual void
       process_click(
         const RequestInfo&,
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_click(
+        const RequestInfo&,
+        const ProcessingState& processing_state);
+
       virtual void
       process_action(const RequestInfo&)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_action(const RequestInfo&);
 
       virtual void
       process_custom_action(
         const RequestInfo&, const AdvCustomActionInfo&)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_custom_action(
+        const RequestInfo&, const AdvCustomActionInfo&);
+
       virtual void
       process_request_post_action(
         const RequestInfo&, const RequestPostActionInfo&)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_request_post_action(
+        const RequestInfo&, const RequestPostActionInfo&);
 
     protected:
       virtual ~CompositeRequestActionProcessor() noexcept {}
@@ -89,6 +116,11 @@ namespace AdServer
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_request(
+        const RequestInfo&,
+        const ProcessingState& processing_state);
+
       virtual void
       process_impression(
         const RequestInfo&,
@@ -96,25 +128,47 @@ namespace AdServer
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression(
+        const RequestInfo&,
+        const ImpressionInfo& imp_info,
+        const ProcessingState& processing_state);
+
       virtual void
       process_click(
         const RequestInfo&,
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_click(
+        const RequestInfo&,
+        const ProcessingState& processing_state);
+
       virtual void
       process_action(const RequestInfo&)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_action(const RequestInfo&);
 
       virtual void
       process_custom_action(
         const RequestInfo&, const AdvCustomActionInfo&)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_custom_action(
+        const RequestInfo&, const AdvCustomActionInfo&);
+
       virtual void
       process_request_post_action(
         const RequestInfo&, const RequestPostActionInfo&)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_request_post_action(
+        const RequestInfo&, const RequestPostActionInfo&);
 
     protected:
       RequestActionProcessor_var delegate_processor_;
@@ -168,6 +222,19 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestActionProcessor::co_process_request(
+    const RequestInfo& request_info,
+    const ProcessingState& processing_state)
+  {
+    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_request(request_info, processing_state);
+    }
+  }
+
   inline void
   CompositeRequestActionProcessor::process_impression(
     const RequestInfo& request_info,
@@ -180,6 +247,23 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_impression(request_info, imp_info, processing_state);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestActionProcessor::co_process_impression(
+    const RequestInfo& request_info,
+    const ImpressionInfo& imp_info,
+    const ProcessingState& processing_state)
+  {
+    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_impression(
+        request_info,
+        imp_info,
+        processing_state);
     }
   }
 
@@ -197,6 +281,19 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestActionProcessor::co_process_click(
+    const RequestInfo& request_info,
+    const ProcessingState& processing_state)
+  {
+    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_click(request_info, processing_state);
+    }
+  }
+
   inline void
   CompositeRequestActionProcessor::process_action(
     const RequestInfo& request_info)
@@ -207,6 +304,18 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_action(request_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestActionProcessor::co_process_action(
+    const RequestInfo& request_info)
+  {
+    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_action(request_info);
     }
   }
 
@@ -224,6 +333,21 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestActionProcessor::co_process_custom_action(
+    const RequestInfo& request_info,
+    const AdvCustomActionInfo& adv_custom_action_info)
+  {
+    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_custom_action(
+        request_info,
+        adv_custom_action_info);
+    }
+  }
+
   inline void
   CompositeRequestActionProcessor::process_request_post_action(
     const RequestInfo& request_info,
@@ -235,6 +359,21 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_request_post_action(request_info, request_post_action_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestActionProcessor::co_process_request_post_action(
+    const RequestInfo& request_info,
+    const RequestPostActionInfo& request_post_action_info)
+  {
+    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_request_post_action(
+        request_info,
+        request_post_action_info);
     }
   }
 
@@ -263,6 +402,20 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  FilterRequestActionProcessor::co_process_request(
+    const RequestInfo& request_info,
+    const ProcessingState& processing_state)
+  {
+    if(processing_state.state >= min_request_state_ &&
+      processing_state.state <= max_request_state_)
+    {
+      co_await delegate_processor_->co_process_request(
+        request_info,
+        processing_state);
+    }
+  }
+
   inline void
   FilterRequestActionProcessor::process_impression(
     const RequestInfo& request_info,
@@ -274,6 +427,22 @@ namespace RequestInfoSvcs
       processing_state.state <= max_request_state_)
     {
       delegate_processor_->process_impression(request_info, imp_info, processing_state);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  FilterRequestActionProcessor::co_process_impression(
+    const RequestInfo& request_info,
+    const ImpressionInfo& imp_info,
+    const ProcessingState& processing_state)
+  {
+    if(processing_state.state >= min_request_state_ &&
+      processing_state.state <= max_request_state_)
+    {
+      co_await delegate_processor_->co_process_impression(
+        request_info,
+        imp_info,
+        processing_state);
     }
   }
 
@@ -290,12 +459,33 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  FilterRequestActionProcessor::co_process_click(
+    const RequestInfo& request_info,
+    const ProcessingState& processing_state)
+  {
+    if(processing_state.state >= min_request_state_ &&
+      processing_state.state <= max_request_state_)
+    {
+      co_await delegate_processor_->co_process_click(
+        request_info,
+        processing_state);
+    }
+  }
+
   inline void
   FilterRequestActionProcessor::process_action(
     const RequestInfo& request_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
     delegate_processor_->process_action(request_info);
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  FilterRequestActionProcessor::co_process_action(
+    const RequestInfo& request_info)
+  {
+    co_await delegate_processor_->co_process_action(request_info);
   }
 
   inline void
@@ -307,6 +497,16 @@ namespace RequestInfoSvcs
     delegate_processor_->process_custom_action(request_info, adv_custom_action_info);
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  FilterRequestActionProcessor::co_process_custom_action(
+    const RequestInfo& request_info,
+    const AdvCustomActionInfo& adv_custom_action_info)
+  {
+    co_await delegate_processor_->co_process_custom_action(
+      request_info,
+      adv_custom_action_info);
+  }
+
   inline void
   FilterRequestActionProcessor::process_request_post_action(
     const RequestInfo& request_info,
@@ -314,6 +514,16 @@ namespace RequestInfoSvcs
     /*throw(RequestActionProcessor::Exception)*/
   {
     delegate_processor_->process_request_post_action(request_info, request_post_action_info);
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  FilterRequestActionProcessor::co_process_request_post_action(
+    const RequestInfo& request_info,
+    const RequestPostActionInfo& request_post_action_info)
+  {
+    co_await delegate_processor_->co_process_request_post_action(
+      request_info,
+      request_post_action_info);
   }
 }
 }

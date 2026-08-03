@@ -31,6 +31,15 @@ namespace RequestInfoSvcs
         impression_info);
   }
 
+  AdServer::Commons::Awaitable<void>
+  RequestOperationDistributor::co_process_impression(
+    const ImpressionInfo& impression_info)
+  {
+    co_await get_request_operation_processor_(
+      impression_info.user_id)->co_process_impression(
+        impression_info);
+  }
+
   void
   RequestOperationDistributor::process_action(
     const AdServer::Commons::UserId& new_user_id,
@@ -40,6 +49,20 @@ namespace RequestInfoSvcs
     /*throw(RequestOperationProcessor::Exception)*/
   {
     get_request_operation_processor_(new_user_id)->process_action(
+      new_user_id,
+      action_type,
+      time,
+      request_id);
+  }
+
+  AdServer::Commons::Awaitable<void>
+  RequestOperationDistributor::co_process_action(
+    const AdServer::Commons::UserId& new_user_id,
+    RequestContainerProcessor::ActionType action_type,
+    const Generics::Time& time,
+    const AdServer::Commons::RequestId& request_id)
+  {
+    co_await get_request_operation_processor_(new_user_id)->co_process_action(
       new_user_id,
       action_type,
       time,
@@ -59,6 +82,19 @@ namespace RequestInfoSvcs
       request_post_action_info);
   }
 
+  AdServer::Commons::Awaitable<void>
+  RequestOperationDistributor::co_process_impression_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const RequestPostActionInfo& request_post_action_info)
+  {
+    co_await get_request_operation_processor_(new_user_id)->
+      co_process_impression_post_action(
+        new_user_id,
+        request_id,
+        request_post_action_info);
+  }
+
   void
   RequestOperationDistributor::change_request_user_id(
     const AdServer::Commons::UserId& new_user_id,
@@ -70,6 +106,19 @@ namespace RequestInfoSvcs
       new_user_id,
       request_id,
       request_profile);
+  }
+
+  AdServer::Commons::Awaitable<void>
+  RequestOperationDistributor::co_change_request_user_id(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const Generics::ConstSmartMemBuf* request_profile)
+  {
+    co_await get_request_operation_processor_(new_user_id)->
+      co_change_request_user_id(
+        new_user_id,
+        request_id,
+        request_profile);
   }
 
   RequestOperationProcessor_var

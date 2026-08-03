@@ -9,7 +9,6 @@ target_link_libraries(ProfilingCommons
   Commons
 )
 
-ADD_SUBDIRECTORY(PlainStorage3)
 ADD_SUBDIRECTORY(ProfileMap)
 
 add_library(MessageSaver SHARED

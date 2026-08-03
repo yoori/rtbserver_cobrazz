@@ -9,6 +9,7 @@
 
 #include <Logger/Logger.hpp>
 #include <Sync/SyncPolicy.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 
 #include <Generics/MemBuf.hpp>
@@ -53,7 +54,7 @@ namespace AdServer
      */
     class UserSiteReachContainer:
       public virtual TagRequestProcessor,
-      public virtual ReferenceCounting::AtomicImpl
+      public virtual Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -77,6 +78,10 @@ namespace AdServer
         const TagRequestInfo& request_info)
         /*throw(TagRequestProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_tag_request(
+        const TagRequestInfo& request_info);
+
     protected:
       virtual ~UserSiteReachContainer() noexcept;
 
@@ -90,6 +95,10 @@ namespace AdServer
     private:
       void process_tag_request_(
         const TagRequestInfo& request_info) /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_process_tag_request_(
+        const TagRequestInfo& request_info);
 
     private:
       Logging::Logger_var logger_;

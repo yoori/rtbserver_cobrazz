@@ -7,8 +7,11 @@
 #include <Generics/Values.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 
+#include <Commons/ExecutorPool.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <LogCommons/FileReceiverFacade.hpp>
+
+#include <memory>
 
 #include "RequestActionProcessor.hpp"
 #include "PassbackContainer.hpp"
@@ -48,6 +51,7 @@ namespace AdServer
 
     struct InLogs
     {
+      std::size_t fetch_threads = 10;
       InLog request;
       InLog impression;
       InLog click;
@@ -107,7 +111,7 @@ namespace AdServer
         RequestOperationProcessor* request_operation_processor,
         const Generics::Time& check_period,
         const Generics::Time& max_process_time,
-        std::size_t threads_count,
+        std::size_t process_threads_count,
         RequestInfoManagerStatsImpl* process_stats_values)
         /*throw(Exception)*/;
 
@@ -201,6 +205,7 @@ namespace AdServer
 
       Generics::Planner_var scheduler_;
       Generics::TaskRunner_var log_fetch_runner_;
+      std::shared_ptr<Commons::ExecutorPool> processing_executor_pool_;
 
       FileReceiverFacade_var file_receiver_facade_;
       LogFetchers log_fetchers_;

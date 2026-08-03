@@ -24,6 +24,10 @@ namespace RequestInfoSvcs
       const ImpressionInfo& impression_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression(
+      const ImpressionInfo& impression_info);
+
     virtual void
     process_action(
       const AdServer::Commons::UserId& new_user_id,
@@ -32,6 +36,13 @@ namespace RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id)
       /*throw(RequestOperationProcessor::Exception)*/;
 
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_action(
+      const AdServer::Commons::UserId& new_user_id,
+      RequestContainerProcessor::ActionType action_type,
+      const Generics::Time& time,
+      const AdServer::Commons::RequestId& request_id);
+
     virtual void
     process_impression_post_action(
       const AdServer::Commons::UserId& user_id,
@@ -39,12 +50,24 @@ namespace RequestInfoSvcs
       const RequestPostActionInfo& request_post_action_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression_post_action(
+      const AdServer::Commons::UserId& user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const RequestPostActionInfo& request_post_action_info);
+
     virtual void
     change_request_user_id(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
       const Generics::ConstSmartMemBuf* request_profile)
       /*throw(Exception)*/;
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_change_request_user_id(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const Generics::ConstSmartMemBuf* request_profile);
 
     void
     request_operation_processor(

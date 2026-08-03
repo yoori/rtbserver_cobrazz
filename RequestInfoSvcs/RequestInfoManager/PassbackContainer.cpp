@@ -38,11 +38,13 @@ namespace RequestInfoSvcs
 
     try
     {
-      passback_map_ = open_rocksdb_transaction_profile_map<
+      auto passback_map = open_rocksdb_transaction_profile_map<
         RequestIdTransactionHashAdapter,
         RequestIdToString>(
           passback_rocksdb_path,
           expire_time_);
+      passback_map_ = passback_map.map;
+      add_child_object(passback_map.active_object);
     }
     catch(const eh::Exception& ex)
     {
@@ -90,6 +92,127 @@ namespace RequestInfoSvcs
         passback_info,
         delegate_passback_processing,
         tag_request_info);
+
+      if(delegate_passback_processing)
+      {
+        try
+        {
+          passback_processor_->process_passback(passback_info);
+        }
+        catch(const eh::Exception& ex)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": Caught eh::Exception: " << ex.what();
+          throw PassbackProcessor::Exception(ostr);
+        }
+      }
+
+      if(logger_->log_level() >= Logging::Logger::TRACE)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Processed passback marker: " << std::endl;
+        tag_request_info.print(ostr, "  ");
+
+        logger_->log(ostr.str(),
+          Logging::Logger::TRACE,
+          Aspect::PASSBACK_CONTAINER);
+      }
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  PassbackContainer::co_process_tag_request(
+    const TagRequestInfo& tag_request_info)
+  {
+    static const char* FUN = "PassbackContainer::co_process_tag_request()";
+
+    if(!tag_request_info.request_id.is_null() &&
+       tag_request_info.tag_id)
+    {
+      PassbackProcessor::PassbackInfo passback_info;
+      bool delegate_passback_processing = false;
+
+      try
+      {
+        PassbackMap::Transaction_var transaction =
+          co_await passback_map_->co_get_transaction(
+            tag_request_info.request_id);
+
+        Generics::ConstSmartMemBuf_var mem_buf =
+          co_await transaction->co_get_profile();
+
+        bool save_required = true;
+        PassbackInfoWriter passback_writer;
+
+        if(mem_buf.in())
+        {
+          passback_writer.init(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size());
+
+          if(passback_writer.verified() && !passback_writer.done())
+          {
+            delegate_passback_processing = true;
+            passback_info.time = tag_request_info.time;
+            passback_info.user_status = tag_request_info.user_status;
+            passback_info.colo_id = tag_request_info.colo_id;
+            passback_info.country = tag_request_info.country;
+            passback_info.tag_id = tag_request_info.tag_id;
+            passback_info.size_id = tag_request_info.size_id;
+            passback_info.ext_tag_id = tag_request_info.ext_tag_id;
+            passback_info.referer = tag_request_info.referer;
+            passback_info.time = Generics::Time(passback_writer.time());
+
+            passback_writer.done() = 1;
+            passback_writer.time() = tag_request_info.time.tv_sec;
+
+            passback_writer.user_status() = tag_request_info.user_status;
+            passback_writer.tag_id() = tag_request_info.tag_id;
+            passback_writer.size_id() = tag_request_info.size_id;
+            passback_writer.ext_tag_id() = tag_request_info.ext_tag_id;
+            passback_writer.colo_id() = tag_request_info.colo_id;
+            passback_writer.country() = tag_request_info.country;
+            passback_writer.referer() = tag_request_info.referer;
+          }
+          else
+          {
+            save_required = false;
+          }
+        }
+        else
+        {
+          passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
+          passback_writer.request_id() =
+            tag_request_info.request_id.to_string();
+          passback_writer.user_status() = tag_request_info.user_status;
+          passback_writer.tag_id() = tag_request_info.tag_id;
+          passback_writer.size_id() = tag_request_info.size_id;
+          passback_writer.ext_tag_id() = tag_request_info.ext_tag_id;
+          passback_writer.colo_id() = tag_request_info.colo_id;
+          passback_writer.country() = tag_request_info.country;
+          passback_writer.time() = tag_request_info.time.tv_sec;
+          passback_writer.referer() = tag_request_info.referer;
+          passback_writer.done() = 0;
+          passback_writer.verified() = 0;
+        }
+
+        if(save_required)
+        {
+          unsigned long sz = passback_writer.size();
+          Generics::SmartMemBuf_var new_mem_buf(
+            new Generics::SmartMemBuf(sz));
+          passback_writer.save(new_mem_buf->membuf().data(), sz);
+          co_await transaction->co_save_profile(
+            Generics::transfer_membuf(new_mem_buf),
+            tag_request_info.time);
+        }
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Caught eh::Exception: " << ex.what();
+        throw TagRequestProcessor::Exception(ostr);
+      }
 
       if(delegate_passback_processing)
       {
@@ -279,6 +402,94 @@ namespace RequestInfoSvcs
         passback_writer.save(new_mem_buf->membuf().data(), sz);
 
         transaction->save_profile(
+          Generics::transfer_membuf(new_mem_buf),
+          impression_time);
+      }
+
+      if(process_passback)
+      {
+        passback_processor_->process_passback(process_passback_info);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw PassbackVerificationProcessor::Exception(ostr);
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed passback request: " << request_id;
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::PASSBACK_CONTAINER);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  PassbackContainer::co_process_passback_request(
+    const AdServer::Commons::RequestId& request_id,
+    const Generics::Time& impression_time)
+  {
+    static const char* FUN =
+      "PassbackContainer::co_process_passback_request()";
+
+    try
+    {
+      bool process_passback = false;
+      PassbackProcessor::PassbackInfo process_passback_info;
+
+      {
+        PassbackMap::Transaction_var transaction =
+          co_await passback_map_->co_get_transaction(request_id);
+        Generics::ConstSmartMemBuf_var mem_buf =
+          co_await transaction->co_get_profile();
+
+        PassbackInfoWriter passback_writer;
+
+        if(mem_buf.in())
+        {
+          passback_writer.init(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size());
+
+          if(!passback_writer.verified())
+          {
+            process_passback = true;
+            process_passback_info.user_status = passback_writer.user_status();
+            process_passback_info.time = impression_time;
+            process_passback_info.colo_id = passback_writer.colo_id();
+            process_passback_info.country = passback_writer.country();
+            process_passback_info.tag_id = passback_writer.tag_id();
+            process_passback_info.size_id = passback_writer.size_id();
+            process_passback_info.ext_tag_id = passback_writer.ext_tag_id();
+            process_passback_info.referer = passback_writer.referer();
+
+            passback_writer.verified() = 1;
+          }
+        }
+        else
+        {
+          passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
+          passback_writer.request_id() = request_id.to_string();
+          passback_writer.user_status() = '-';
+          passback_writer.tag_id() = 0;
+          passback_writer.size_id() = 0;
+          passback_writer.colo_id() = 0;
+          passback_writer.time() = impression_time.tv_sec;
+          passback_writer.done() = 0;
+          passback_writer.verified() = 1;
+        }
+
+        unsigned long sz = passback_writer.size();
+        Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+        passback_writer.save(new_mem_buf->membuf().data(), sz);
+
+        co_await transaction->co_save_profile(
           Generics::transfer_membuf(new_mem_buf),
           impression_time);
       }

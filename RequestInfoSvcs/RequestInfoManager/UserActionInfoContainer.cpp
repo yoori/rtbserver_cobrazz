@@ -493,6 +493,18 @@ namespace RequestInfoSvcs
       owner_->process_impression_(ri, imp_info, processing_state);
     }
 
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression(
+      const RequestInfo& ri,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state)
+    {
+      co_await owner_->co_process_impression_(
+        ri,
+        imp_info,
+        processing_state);
+    }
+
     virtual void
     process_click(
       const RequestInfo& ri,
@@ -500,6 +512,14 @@ namespace RequestInfoSvcs
       /*throw(Exception)*/
     {
       owner_->process_click_(ri, processing_state);
+    }
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_click(
+      const RequestInfo& ri,
+      const ProcessingState& processing_state)
+    {
+      co_await owner_->co_process_click_(ri, processing_state);
     }
 
   private:
@@ -524,11 +544,13 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = open_rocksdb_transaction_profile_map<
+      auto user_map = open_rocksdb_transaction_profile_map<
         Commons::UserId,
         UserIdToString>(
           user_action_rocksdb_path,
           expire_time_);
+      user_map_ = user_map.map;
+      add_child_object(user_map.active_object);
     }
     catch(const eh::Exception& ex)
     {
@@ -600,6 +622,60 @@ namespace RequestInfoSvcs
       try
       {
         request_container_processor_->process_custom_action(
+          request_info.request_id, *it);
+      }
+      catch(const RequestContainerProcessor::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
+          ex.what();
+        throw RequestActionProcessor::Exception(ostr);
+      }
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed action marker: " << std::endl;
+      request_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_ACTION_INFO_CONTAINER);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_impression_(
+    const RequestInfo& request_info,
+    const ImpressionInfo&,
+    const RequestActionProcessor::ProcessingState& processing_state)
+  {
+    static const char* FUN =
+      "UserActionInfoContainer::co_process_impression_()";
+
+    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+      request_info.user_id == OPTOUT_USER_ID ||
+      request_info.user_id.is_null() ||
+      processing_state.state != RequestInfo::RS_NORMAL ||
+      !request_info.has_custom_actions)
+    {
+      co_return;
+    }
+
+    AdvCustomActionInfoList delegate_process_custom_actions;
+
+    co_await co_process_impression_trans_(
+      delegate_process_custom_actions,
+      request_info);
+
+    for(AdvCustomActionInfoList::const_iterator
+          it = delegate_process_custom_actions.begin();
+        it != delegate_process_custom_actions.end(); ++it)
+    {
+      try
+      {
+        co_await request_container_processor_->co_process_custom_action(
           request_info.request_id, *it);
       }
       catch(const RequestContainerProcessor::Exception& ex)
@@ -697,6 +773,78 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_click_(
+    const RequestInfo& request_info,
+    const RequestActionProcessor::ProcessingState& processing_state)
+  {
+    static const char* FUN = "UserActionInfoContainer::co_process_click_()";
+
+    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+      request_info.user_id == OPTOUT_USER_ID ||
+      request_info.user_id.is_null() ||
+      processing_state.state != RequestInfo::RS_NORMAL ||
+      (!request_info.enabled_action_tracking && !request_info.has_custom_actions))
+    {
+      co_return;
+    }
+
+    unsigned long delegate_process_actions;
+    AdvCustomActionInfoList delegate_process_custom_actions;
+
+    co_await co_process_click_trans_(
+      delegate_process_actions,
+      delegate_process_custom_actions,
+      request_info);
+
+    for(unsigned long i = 0; i < delegate_process_actions; ++i)
+    {
+      try
+      {
+        co_await request_container_processor_->co_process_action(
+          RequestContainerProcessor::AT_ACTION,
+          Generics::Time::get_time_of_day(),
+          request_info.request_id);
+      }
+      catch(const RequestContainerProcessor::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
+          ex.what();
+        throw RequestActionProcessor::Exception(ostr);
+      }
+    }
+
+    for(AdvCustomActionInfoList::const_iterator
+          it = delegate_process_custom_actions.begin();
+        it != delegate_process_custom_actions.end(); ++it)
+    {
+      try
+      {
+        co_await request_container_processor_->co_process_custom_action(
+          request_info.request_id, *it);
+      }
+      catch(const RequestContainerProcessor::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
+          ex.what();
+        throw RequestActionProcessor::Exception(ostr);
+      }
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed action marker: " << std::endl;
+      request_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_ACTION_INFO_CONTAINER);
+    }
+  }
+
   void
   UserActionInfoContainer::process_adv_action(
     const AdvActionInfo& adv_action_info)
@@ -740,6 +888,74 @@ namespace RequestInfoSvcs
       try
       {
         request_container_processor_->process_action(
+          RequestContainerProcessor::AT_ACTION,
+          Generics::Time::get_time_of_day(),
+          *req_it);
+      }
+      catch(const RequestContainerProcessor::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
+          ex.what();
+        throw AdvActionProcessor::Exception(ostr);
+      }
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed adv action: " << std::endl;
+      adv_action_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_ACTION_INFO_CONTAINER);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_adv_action(
+    const AdvActionInfo& adv_action_info)
+  {
+    static const char* FUN =
+      "UserActionInfoContainer::co_process_adv_action()";
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": To process adv action: " << std::endl;
+      adv_action_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_ACTION_INFO_CONTAINER);
+    }
+
+    RequestIdList delegate_process_actions;
+
+    co_await co_process_adv_action_trans_(
+      delegate_process_actions,
+      adv_action_info);
+
+    for(RequestIdList::const_iterator req_it =
+          delegate_process_actions.begin();
+        req_it != delegate_process_actions.end(); ++req_it)
+    {
+      if(logger_->log_level() >= Logging::Logger::TRACE)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Action done: " << std::endl;
+        adv_action_info.print(ostr, "  ");
+
+        logger_->log(
+          ostr.str(),
+          Logging::Logger::TRACE,
+          Aspect::USER_ACTION_INFO_CONTAINER);
+      }
+
+      try
+      {
+        co_await request_container_processor_->co_process_action(
           RequestContainerProcessor::AT_ACTION,
           Generics::Time::get_time_of_day(),
           *req_it);
@@ -835,6 +1051,76 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_custom_action(
+    const AdvExActionInfo& adv_ex_action_info)
+  {
+    static const char* FUN =
+      "UserActionInfoContainer::co_process_custom_action()";
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": To process adv custom action: " << std::endl;
+      adv_ex_action_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_ACTION_INFO_CONTAINER);
+    }
+
+    if(adv_ex_action_info.user_id.is_null())
+    {
+      co_return;
+    }
+
+    DelegateCustomActionInfoList delegate_custom_actions;
+
+    co_await co_process_custom_action_trans_(
+      delegate_custom_actions,
+      adv_ex_action_info);
+
+    for(DelegateCustomActionInfoList::const_iterator act_it =
+          delegate_custom_actions.begin();
+        act_it != delegate_custom_actions.end(); ++act_it)
+    {
+      if(logger_->log_level() >= Logging::Logger::TRACE)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Custom action done: " << std::endl;
+        act_it->print(ostr, "  ");
+
+        logger_->log(
+          ostr.str(),
+          Logging::Logger::TRACE,
+          Aspect::USER_ACTION_INFO_CONTAINER);
+      }
+
+      try
+      {
+        co_await request_container_processor_->co_process_custom_action(
+          act_it->request_id, *act_it);
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Caught eh::Exception: " << ex.what();
+        throw AdvActionProcessor::Exception(ostr);
+      }
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed adv custom action: " << std::endl;
+      adv_ex_action_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_ACTION_INFO_CONTAINER);
+    }
+  }
+
   void
   UserActionInfoContainer::clear_expired_actions()
     /*throw(Exception)*/
@@ -898,6 +1184,67 @@ namespace RequestInfoSvcs
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
       transaction->save_profile(
+        Generics::transfer_membuf(new_mem_buf),
+        request_info.imp_time);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw RequestActionProcessor::Exception(ostr);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_impression_trans_(
+    AdvCustomActionInfoList& delegate_process_custom_actions,
+    const RequestInfo& request_info)
+  {
+    static const char* FUN =
+      "UserActionInfoContainer::co_process_impression_trans_()";
+
+    try
+    {
+      UserActionProfileWriter user_profile_writer;
+      std::unique_ptr<UserActionProfileReader> user_profile_reader;
+
+      UserActionInfoMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(request_info.user_id);
+
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        user_profile_writer.init(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+
+        user_profile_reader.reset(
+          new UserActionProfileReader(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size()));
+      }
+      else
+      {
+        user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
+      }
+
+      process_request_for_at2(
+        delegate_process_custom_actions,
+        user_profile_writer,
+        request_info,
+        user_profile_reader.get(),
+        true);
+
+      clear_expired_at2(user_profile_writer, request_info.imp_time);
+
+      const unsigned long sz = user_profile_writer.size();
+      Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+      user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+      co_await transaction->co_save_profile(
         Generics::transfer_membuf(new_mem_buf),
         request_info.imp_time);
     }
@@ -975,6 +1322,81 @@ namespace RequestInfoSvcs
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
       transaction->save_profile(
+        Generics::transfer_membuf(new_mem_buf),
+        request_info.imp_time);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw RequestActionProcessor::Exception(ostr);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_click_trans_(
+    unsigned long& delegate_process_actions,
+    AdvCustomActionInfoList& delegate_process_custom_actions,
+    const RequestInfo& request_info)
+  {
+    static const char* FUN = "UserActionInfoContainer::co_process_click_trans_()";
+
+    delegate_process_actions = 0;
+
+    try
+    {
+      UserActionProfileWriter user_profile_writer;
+      std::unique_ptr<UserActionProfileReader> user_profile_reader;
+
+      UserActionInfoMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(request_info.user_id);
+
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        user_profile_writer.init(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+
+        user_profile_reader.reset(
+          new UserActionProfileReader(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size()));
+      }
+      else
+      {
+        user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
+      }
+
+      if(request_info.enabled_action_tracking)
+      {
+        process_click_for_at1(
+          delegate_process_actions,
+          user_profile_writer,
+          request_info,
+          user_profile_reader.get());
+      }
+
+      if(request_info.has_custom_actions)
+      {
+        process_request_for_at2(
+          delegate_process_custom_actions,
+          user_profile_writer,
+          request_info,
+          user_profile_reader.get(),
+          false);
+      }
+
+      clear_expired_at2(user_profile_writer, request_info.imp_time);
+
+      const unsigned long sz = user_profile_writer.size();
+      Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+      user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+      co_await transaction->co_save_profile(
         Generics::transfer_membuf(new_mem_buf),
         request_info.imp_time);
     }
@@ -1113,6 +1535,141 @@ namespace RequestInfoSvcs
         user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
         transaction->save_profile(
+          Generics::transfer_membuf(new_mem_buf),
+          adv_action_info.time);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw AdvActionProcessor::Exception(ostr);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_adv_action_trans_(
+    RequestIdList& delegate_process_actions,
+    const AdvActionInfo& adv_action_info)
+  {
+    static const char* FUN =
+      "UserActionInfoContainer::co_process_adv_action_trans_()";
+
+    try
+    {
+      bool found = false;
+
+      UserActionInfoMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(adv_action_info.user_id);
+
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        UserActionProfileReader user_profile_reader(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+
+        UserActionProfileReader::action_markers_Container::const_iterator it =
+          std::lower_bound(
+            user_profile_reader.action_markers().begin(),
+            user_profile_reader.action_markers().end(),
+            adv_action_info.ccg_id,
+            ActionMarkerLess());
+
+        UserActionProfileReader::action_markers_Container::const_iterator max_it =
+          user_profile_reader.action_markers().end();
+
+        for(; it != user_profile_reader.action_markers().end() &&
+              (*it).ccg_id() == adv_action_info.ccg_id; ++it)
+        {
+          if(max_it == user_profile_reader.action_markers().end() ||
+             (*it).time() > (*max_it).time())
+          {
+            max_it = it;
+          }
+        }
+
+        if(max_it != user_profile_reader.action_markers().end())
+        {
+          delegate_process_actions.push_back(
+            AdServer::Commons::RequestId((*max_it).request_id()));
+
+          found = true;
+        }
+      }
+
+      if(!found)
+      {
+        UserActionProfileWriter user_profile_writer;
+
+        if(mem_buf.in())
+        {
+          user_profile_writer.init(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size());
+        }
+        else
+        {
+          user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
+        }
+
+        std::list<WaitActionWriter>::iterator wit =
+          user_profile_writer.wait_actions().begin();
+
+        while(wit != user_profile_writer.wait_actions().end() &&
+           wit->ccg_id() < adv_action_info.ccg_id)
+        {
+          ++wit;
+        }
+
+        if(wit != user_profile_writer.wait_actions().end() &&
+           wit->ccg_id() == adv_action_info.ccg_id)
+        {
+          const Generics::Time clear_actions_time =
+            adv_action_info.time - WAIT_ACTION_EXPIRE_TIME;
+
+          std::list<WaitActionWriter>::iterator erase_begin = wit;
+
+          while(wit != user_profile_writer.wait_actions().end() &&
+            wit->ccg_id() == adv_action_info.ccg_id &&
+            wit->time() < clear_actions_time.tv_sec)
+          {
+            ++wit;
+          }
+
+          user_profile_writer.wait_actions().erase(erase_begin, wit);
+        }
+
+        while(wit != user_profile_writer.wait_actions().end() &&
+          wit->ccg_id() == adv_action_info.ccg_id &&
+          wit->time() < adv_action_info.time.tv_sec)
+        {
+          ++wit;
+        }
+
+        if(wit != user_profile_writer.wait_actions().end() &&
+          wit->ccg_id() == adv_action_info.ccg_id &&
+          wit->time() == adv_action_info.time.tv_sec)
+        {
+          wit->count()++;
+        }
+        else
+        {
+          WaitActionWriter wait_action;
+          wait_action.ccg_id() = adv_action_info.ccg_id;
+          wait_action.count() = 1;
+          wait_action.time() = adv_action_info.time.tv_sec;
+          user_profile_writer.wait_actions().insert(wit, wait_action);
+        }
+
+        const unsigned long sz = user_profile_writer.size();
+        Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+        user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+        co_await transaction->co_save_profile(
           Generics::transfer_membuf(new_mem_buf),
           adv_action_info.time);
       }
@@ -1284,6 +1841,179 @@ namespace RequestInfoSvcs
         user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
         transaction->save_profile(
+          Generics::transfer_membuf(new_mem_buf),
+          adv_ex_action_info.time);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw AdvActionProcessor::Exception(ostr);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_process_custom_action_trans_(
+    DelegateCustomActionInfoList& delegate_custom_actions,
+    const AdvExActionInfo& adv_ex_action_info)
+  {
+    static const char* FUN =
+      "UserActionInfoContainer::co_process_custom_action_trans_()";
+
+    try
+    {
+      bool ignore_action = false;
+
+      UserActionInfoMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(adv_ex_action_info.user_id);
+
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        UserActionProfileReader user_profile_reader(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+
+        ignore_action = check_action_time_bounds_(
+          user_profile_reader.custom_done_actions(),
+          adv_ex_action_info,
+          action_ignore_time_);
+
+        if(!ignore_action)
+        {
+          Generics::Time check_low_req_time(
+            adv_ex_action_info.time + TIME_SYNC_PRECISION);
+
+          DelegateCustomActionInfo base_adv_custom_action_info;
+          base_adv_custom_action_info.time = adv_ex_action_info.time;
+          base_adv_custom_action_info.action_id = adv_ex_action_info.action_id;
+          base_adv_custom_action_info.action_request_id =
+            adv_ex_action_info.action_request_id;
+          base_adv_custom_action_info.referer = adv_ex_action_info.referer;
+          base_adv_custom_action_info.order_id = adv_ex_action_info.order_id;
+          base_adv_custom_action_info.action_value =
+            adv_ex_action_info.action_value;
+
+          for(AdvExActionInfo::CCGIdList::const_iterator ccg_it =
+                adv_ex_action_info.ccg_ids.begin();
+              ccg_it != adv_ex_action_info.ccg_ids.end(); ++ccg_it)
+          {
+            UserActionProfileReader::done_impressions_Container::
+              const_iterator imp_it = std::lower_bound(
+                user_profile_reader.done_impressions().begin(),
+                user_profile_reader.done_impressions().end(),
+                *ccg_it,
+                DoneImpressionLess());
+
+            while(imp_it != user_profile_reader.done_impressions().end() &&
+              (*imp_it).ccg_id() == *ccg_it &&
+              (*imp_it).time() <= check_low_req_time.tv_sec)
+            {
+              DelegateCustomActionInfo adv_custom_action_info(
+                base_adv_custom_action_info);
+              adv_custom_action_info.request_id =
+                AdServer::Commons::RequestId((*imp_it).request_id());
+              delegate_custom_actions.push_back(adv_custom_action_info);
+              ++imp_it;
+            }
+          }
+        }
+      }
+
+      if(!ignore_action)
+      {
+        UserActionProfileWriter user_profile_writer;
+
+        if(mem_buf.in())
+        {
+          user_profile_writer.init(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size());
+        }
+        else
+        {
+          user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
+        }
+
+        {
+          UserActionProfileWriter::custom_action_markers_Container::iterator wit =
+            user_profile_writer.custom_action_markers().begin();
+
+          while(wit != user_profile_writer.custom_action_markers().end() &&
+            wit->time() < adv_ex_action_info.time.tv_sec)
+          {
+            ++wit;
+          }
+
+          while(wit != user_profile_writer.custom_action_markers().end() &&
+            wit->time() == adv_ex_action_info.time.tv_sec &&
+            wit->action_id() < adv_ex_action_info.action_id)
+          {
+            ++wit;
+          }
+
+          CustomActionMarkerWriter action_marker_writer;
+          action_marker_writer.action_id() = adv_ex_action_info.action_id;
+          action_marker_writer.action_request_id() =
+            adv_ex_action_info.action_request_id.to_string();
+          action_marker_writer.time() = adv_ex_action_info.time.tv_sec;
+          action_marker_writer.referer() = adv_ex_action_info.referer;
+          action_marker_writer.order_id() = adv_ex_action_info.order_id;
+          action_marker_writer.action_value() =
+            adv_ex_action_info.action_value.str();
+          std::copy(
+            adv_ex_action_info.ccg_ids.begin(),
+            adv_ex_action_info.ccg_ids.end(),
+            std::back_inserter(action_marker_writer.ccg_ids()));
+
+          user_profile_writer.custom_action_markers().insert(
+            wit,
+            action_marker_writer);
+        }
+
+        {
+          unsigned long am_count = 0;
+          for(UserActionProfileWriter::custom_action_markers_Container::
+                reverse_iterator wit =
+                  user_profile_writer.custom_action_markers().rbegin();
+              wit != user_profile_writer.custom_action_markers().rend(); )
+          {
+            if(wit->action_id() == adv_ex_action_info.action_id)
+            {
+              if(am_count >= MAX_KEEP_CUSTOM_ACTION_MARKERS)
+              {
+                UserActionProfileWriter::custom_action_markers_Container::
+                  reverse_iterator tmp = wit;
+                user_profile_writer.custom_action_markers().erase((++tmp).base());
+              }
+              else
+              {
+                ++am_count;
+                ++wit;
+              }
+            }
+            else
+            {
+              ++wit;
+            }
+          }
+        }
+
+        insert_done_action_(
+          user_profile_writer.custom_done_actions(),
+          adv_ex_action_info);
+
+        clear_expired_at2(user_profile_writer, adv_ex_action_info.time);
+
+        const unsigned long sz = user_profile_writer.size();
+        Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+        user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+        co_await transaction->co_save_profile(
           Generics::transfer_membuf(new_mem_buf),
           adv_ex_action_info.time);
       }

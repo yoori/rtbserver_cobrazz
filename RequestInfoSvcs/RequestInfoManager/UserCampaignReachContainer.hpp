@@ -12,6 +12,7 @@
 
 #include <Logger/Logger.hpp>
 #include <Sync/SyncPolicy.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 
 #include <Generics/MemBuf.hpp>
@@ -76,7 +77,7 @@ namespace AdServer
      * delegate request processing to request_processor
      */
     class UserCampaignReachContainer:
-      public virtual ReferenceCounting::AtomicImpl,
+      public virtual Generics::RefCountableCompositeActiveObject,
       public virtual RequestActionProcessor
     {
     public:
@@ -102,6 +103,12 @@ namespace AdServer
         const ImpressionInfo& imp_info,
         const ProcessingState& processing_state)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression(
+        const RequestInfo& request_info,
+        const ImpressionInfo& imp_info,
+        const ProcessingState& processing_state);
 
       virtual void
       process_request(
@@ -135,6 +142,10 @@ namespace AdServer
     private:
       void process_ad_impression_(
         const RequestInfo& request_info) /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_process_ad_impression_(
+        const RequestInfo& request_info);
 
     private:
       Logging::Logger_var logger_;

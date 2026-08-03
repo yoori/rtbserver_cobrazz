@@ -26,9 +26,15 @@ namespace AdServer
       process_request(const RequestInfo& request_info)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_request(const RequestInfo& request_info);
+
       virtual void
       process_impression(const ImpressionInfo& impression_info)
         /*throw(RequestContainerProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression(const ImpressionInfo& impression_info);
 
       virtual void
       process_action(
@@ -37,17 +43,33 @@ namespace AdServer
         const AdServer::Commons::RequestId& request_id)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_action(
+        ActionType action_type,
+        const Generics::Time& time,
+        const AdServer::Commons::RequestId& request_id);
+
       virtual void
       process_custom_action(
         const AdServer::Commons::RequestId& request_id,
         const AdvCustomActionInfo& adv_custom_action_info)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_custom_action(
+        const AdServer::Commons::RequestId& request_id,
+        const AdvCustomActionInfo& adv_custom_action_info);
+
       virtual void
       process_impression_post_action(
         const AdServer::Commons::RequestId& request_id,
         const RequestPostActionInfo& request_post_action_info)
         /*throw(RequestContainerProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression_post_action(
+        const AdServer::Commons::RequestId& request_id,
+        const RequestPostActionInfo& request_post_action_info);
 
     protected:
       virtual ~CompositeRequestContainerProcessor() noexcept {}
@@ -90,6 +112,18 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestContainerProcessor::co_process_request(
+    const RequestInfo& request_info)
+  {
+    for(RequestContainerProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_request(request_info);
+    }
+  }
+
   inline
   void CompositeRequestContainerProcessor::process_impression(
     const ImpressionInfo& impression_info)
@@ -100,6 +134,18 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_impression(impression_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestContainerProcessor::co_process_impression(
+    const ImpressionInfo& impression_info)
+  {
+    for(RequestContainerProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_impression(impression_info);
     }
   }
 
@@ -118,6 +164,20 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestContainerProcessor::co_process_action(
+    ActionType action_type,
+    const Generics::Time& time,
+    const AdServer::Commons::RequestId& request_id)
+  {
+    for(RequestContainerProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_action(action_type, time, request_id);
+    }
+  }
+
   inline
   void CompositeRequestContainerProcessor::process_custom_action(
     const AdServer::Commons::RequestId& request_id,
@@ -132,6 +192,21 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestContainerProcessor::co_process_custom_action(
+    const AdServer::Commons::RequestId& request_id,
+    const AdvCustomActionInfo& adv_custom_action_info)
+  {
+    for(RequestContainerProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_custom_action(
+        request_id,
+        adv_custom_action_info);
+    }
+  }
+
   inline void
   CompositeRequestContainerProcessor::process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
@@ -143,6 +218,21 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_impression_post_action(request_id, request_post_action_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestContainerProcessor::co_process_impression_post_action(
+    const AdServer::Commons::RequestId& request_id,
+    const RequestPostActionInfo& request_post_action_info)
+  {
+    for(RequestContainerProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_impression_post_action(
+        request_id,
+        request_post_action_info);
     }
   }
 }

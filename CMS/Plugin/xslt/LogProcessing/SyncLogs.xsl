@@ -413,7 +413,7 @@
         <xsl:value-of select="$workspace-root"/>/run/ExpressionMatcherDistribution.xml</xsl:variable>
 
       <cfg:FeedRouteGroup
-        pool_threads="50"
+        pool_threads="10"
         local_copy_command_type="rsync"
         remote_copy_command_type="rsync"
         tries_per_file="2"

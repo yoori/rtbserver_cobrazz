@@ -2,6 +2,7 @@
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
 
@@ -20,7 +21,7 @@ namespace RequestInfoSvcs
    */
   class UserTagRequestMergeContainer:
     public virtual TagRequestProcessor,
-    public virtual ReferenceCounting::AtomicImpl
+    public virtual Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -44,6 +45,9 @@ namespace RequestInfoSvcs
     process_tag_request(const TagRequestInfo&)
       /*throw(TagRequestProcessor::Exception)*/;
 
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_tag_request(const TagRequestInfo&);
+
     void clear_expired() /*throw(Exception)*/;
 
   protected:
@@ -61,6 +65,12 @@ namespace RequestInfoSvcs
         tag_request_group_info_list,
       const TagRequestInfo& tag_request_info)
       /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_tag_request_trans_(
+      TagRequestGroupProcessor::TagRequestGroupInfoList&
+        tag_request_group_info_list,
+      const TagRequestInfo& tag_request_info);
 
   private:
     Logging::FLogger_var logger_;

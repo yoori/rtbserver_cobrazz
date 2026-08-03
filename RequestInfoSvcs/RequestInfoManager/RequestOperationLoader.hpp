@@ -2,6 +2,7 @@
 
 #include <Generics/ActiveObject.hpp>
 #include <ProfilingCommons/FileReader.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 
 #include "RequestOperationProcessor.hpp"
 
@@ -34,6 +35,12 @@ namespace RequestInfoSvcs
       Generics::ActiveObject* interrupter)
       /*throw(Exception)*/;
 
+    Commons::Awaitable<bool>
+    co_process_file(
+      unsigned long& processed_lines_count,
+      const char* file,
+      Generics::ActiveObject* interrupter);
+
   protected:
     virtual
     ~RequestOperationLoader() noexcept
@@ -46,6 +53,11 @@ namespace RequestInfoSvcs
       Generics::MemBuf& membuf)
       /*throw(Exception)*/;
 
+    Commons::Awaitable<void>
+    co_read_change_request_user_id_(
+      ProfilingCommons::FileReader& file_reader,
+      Generics::MemBuf& membuf);
+
     void
     skip_change_request_user_id_(
       ProfilingCommons::FileReader& file_reader)
@@ -57,17 +69,32 @@ namespace RequestInfoSvcs
       Generics::MemBuf& membuf)
       /*throw(Exception)*/;
 
+    Commons::Awaitable<void>
+    co_read_impression_(
+      ProfilingCommons::FileReader& file_reader,
+      Generics::MemBuf& membuf);
+
     void
     read_action_(
       ProfilingCommons::FileReader& file_reader,
       Generics::MemBuf& membuf)
       /*throw(Exception)*/;
 
+    Commons::Awaitable<void>
+    co_read_action_(
+      ProfilingCommons::FileReader& file_reader,
+      Generics::MemBuf& membuf);
+
     void
     read_request_action_(
       ProfilingCommons::FileReader& file_reader,
       Generics::MemBuf& membuf)
       /*throw(Exception)*/;
+
+    Commons::Awaitable<void>
+    co_read_request_action_(
+      ProfilingCommons::FileReader& file_reader,
+      Generics::MemBuf& membuf);
 
     void
     skip_single_buffer_operation_(

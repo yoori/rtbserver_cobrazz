@@ -302,11 +302,13 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = open_rocksdb_transaction_profile_map<
+      auto user_map = open_rocksdb_transaction_profile_map<
         AdServer::Commons::UserId,
         UserIdToString>(
           rocksdb_path,
           expire_time_);
+      user_map_ = user_map.map;
+      add_child_object(user_map.active_object);
     }
     catch(const eh::Exception& ex)
     {
@@ -401,6 +403,68 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<void>
+  UserFraudProtectionContainer::co_process_impression(
+    const RequestInfo& request_info,
+    const ImpressionInfo&,
+    const ProcessingState& processing_state)
+  {
+    static const char* FUN =
+      "UserFraudProtectionContainer::co_process_impression()";
+
+    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+      request_info.user_id == OPTOUT_USER_ID ||
+      request_info.user_id.is_null() ||
+      processing_state.state != RequestInfo::RS_NORMAL ||
+      request_info.disable_fraud_detection)
+    {
+      co_return;
+    }
+
+    RequestIdList fraud_impressions;
+    Generics::Time user_deactivate_time;
+
+    co_await co_process_impression_trans_(
+      fraud_impressions,
+      user_deactivate_time,
+      request_info);
+
+    try
+    {
+      for(RequestIdList::const_iterator it = fraud_impressions.begin();
+          it != fraud_impressions.end(); ++it)
+      {
+        co_await request_container_processor_->co_process_action(
+          RequestContainerProcessor::AT_FRAUD_ROLLBACK,
+          Generics::Time::get_time_of_day(),
+          *it);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": caught eh::Exception: " << ex.what();
+      throw RequestActionProcessor::Exception(ostr);
+    }
+
+    if(user_deactivate_time != Generics::Time::ZERO &&
+       callback_.in())
+    {
+      callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed impression: " << std::endl;
+      request_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
+    }
+  }
+
   void
   UserFraudProtectionContainer::process_click(
     const RequestInfo& request_info,
@@ -443,6 +507,67 @@ namespace RequestInfoSvcs
           it != fraud_impressions.end(); ++it)
       {
         request_container_processor_->process_action(
+          RequestContainerProcessor::AT_FRAUD_ROLLBACK,
+          Generics::Time::get_time_of_day(),
+          *it);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": caught eh::Exception: " << ex.what();
+      throw RequestActionProcessor::Exception(ostr);
+    }
+
+    if(user_deactivate_time != Generics::Time::ZERO &&
+       callback_.in())
+    {
+      callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed click: " << std::endl;
+      request_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserFraudProtectionContainer::co_process_click(
+    const RequestInfo& request_info,
+    const ProcessingState& processing_state)
+  {
+    static const char* FUN =
+      "UserFraudProtectionContainer::co_process_click()";
+
+    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+      request_info.user_id == OPTOUT_USER_ID ||
+      request_info.user_id.is_null() ||
+      processing_state.state != RequestInfo::RS_NORMAL ||
+      request_info.disable_fraud_detection)
+    {
+      co_return;
+    }
+
+    RequestIdList fraud_impressions;
+    Generics::Time user_deactivate_time;
+
+    co_await co_process_click_trans_(
+      fraud_impressions,
+      user_deactivate_time,
+      request_info);
+
+    try
+    {
+      for(RequestIdList::const_iterator it = fraud_impressions.begin();
+          it != fraud_impressions.end(); ++it)
+      {
+        co_await request_container_processor_->co_process_action(
           RequestContainerProcessor::AT_FRAUD_ROLLBACK,
           Generics::Time::get_time_of_day(),
           *it);
@@ -591,6 +716,126 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<void>
+  UserFraudProtectionContainer::co_process_impression_trans_(
+    RequestIdList& fraud_impressions,
+    Generics::Time& user_deactivate_time,
+    const RequestInfo& request_info)
+    /*throw(RequestActionProcessor::Exception)*/
+  {
+    static const char* FUN =
+      "UserFraudProtectionContainer::co_process_impression_trans_()";
+
+    user_deactivate_time = Generics::Time::ZERO;
+
+    Config_var config = get_config_();
+
+    try
+    {
+      UserFraudProtectionProfileWriter user_profile_writer;
+      std::unique_ptr<UserFraudProtectionProfileReader> user_profile_reader;
+
+      ProfileMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(request_info.user_id);
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        user_profile_writer.init(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+
+        user_profile_reader.reset(
+          new UserFraudProtectionProfileReader(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size()));
+      }
+      else
+      {
+        user_profile_writer.version() =
+          CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION;
+        user_profile_writer.fraud_time() = 0;
+      }
+
+      Generics::Time fraud_start_time;
+      Generics::Time fraud_end_time;
+
+      bool fraud = request_info.time <
+        Generics::Time(user_profile_writer.fraud_time());
+
+      if(config.in())
+      {
+        if(user_profile_reader.get() &&
+           request_info.position == 1)
+        {
+          fraud |= user_motions_is_fraud(
+            fraud_start_time,
+            fraud_end_time,
+            request_info.time,
+            1,
+            user_profile_reader->requests(),
+            config->imp_rules);
+        }
+
+        clear_excess_motions(
+          user_profile_writer.requests(),
+          request_info.time - config->imp_rules.max_period());
+        clear_excess_motions(
+          user_profile_writer.rollback_requests(),
+          request_info.time - std::max(
+            config->imp_rules.max_period(), config->click_rules.max_period()));
+        clear_excess_motions(
+          user_profile_writer.clicks(),
+          request_info.time - config->click_rules.max_period());
+      }
+
+      if(request_info.position == 1)
+      {
+        add_user_motion(user_profile_writer.requests(),
+          request_info.request_id, request_info.time);
+      }
+
+      if(!fraud)
+      {
+        add_user_motion(user_profile_writer.rollback_requests(),
+          request_info.request_id, request_info.time);
+      }
+      else
+      {
+        fraud_impressions.push_back(request_info.request_id);
+
+        if(fraud_end_time != Generics::Time::ZERO)
+        {
+          user_deactivate_time = fraud_end_time +
+            config->deactivate_period;
+          user_profile_writer.fraud_time() =
+            user_deactivate_time.tv_sec;
+        }
+
+        pop_rollback_requests(fraud_impressions,
+          user_profile_writer.rollback_requests(),
+          fraud_start_time,
+          user_deactivate_time);
+      }
+
+      unsigned long sz = user_profile_writer.size();
+      Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+      user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+      co_await transaction->co_save_profile(
+        Generics::transfer_membuf(new_mem_buf),
+        request_info.time);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw RequestActionProcessor::Exception(ostr);
+    }
+  }
+
   void
   UserFraudProtectionContainer::process_click_trans_(
     RequestIdList& fraud_impressions,
@@ -687,6 +932,115 @@ namespace RequestInfoSvcs
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
       transaction->save_profile(
+        Generics::transfer_membuf(new_mem_buf),
+        request_info.time);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw RequestActionProcessor::Exception(ostr);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserFraudProtectionContainer::co_process_click_trans_(
+    RequestIdList& fraud_impressions,
+    Generics::Time& user_deactivate_time,
+    const RequestInfo& request_info)
+    /*throw(RequestActionProcessor::Exception)*/
+  {
+    static const char* FUN =
+      "UserFraudProtectionContainer::co_process_click_trans_()";
+
+    user_deactivate_time = Generics::Time::ZERO;
+
+    Config_var config = get_config_();
+
+    try
+    {
+      UserFraudProtectionProfileWriter user_profile_writer;
+      std::unique_ptr<UserFraudProtectionProfileReader> user_profile_reader;
+
+      ProfileMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(request_info.user_id);
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        user_profile_writer.init(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+
+        user_profile_reader.reset(
+          new UserFraudProtectionProfileReader(
+            mem_buf->membuf().data(),
+            mem_buf->membuf().size()));
+      }
+      else
+      {
+        user_profile_writer.version() =
+          CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION;
+        user_profile_writer.fraud_time() = 0;
+      }
+
+      Generics::Time fraud_start_time;
+      Generics::Time fraud_end_time;
+      bool fraud = request_info.click_time <
+        Generics::Time(user_profile_writer.fraud_time());
+
+      if(config.in())
+      {
+        if(user_profile_reader.get() && !fraud)
+        {
+          fraud |= user_motions_is_fraud(
+            fraud_start_time,
+            fraud_end_time,
+            request_info.time,
+            1,
+            user_profile_reader->clicks(),
+            config->click_rules);
+        }
+
+        clear_excess_motions(
+          user_profile_writer.requests(),
+          request_info.time - config->imp_rules.max_period());
+        clear_excess_motions(
+          user_profile_writer.rollback_requests(),
+          request_info.time - std::max(
+            config->imp_rules.max_period(), config->click_rules.max_period()));
+        clear_excess_motions(
+          user_profile_writer.clicks(),
+          request_info.time - config->click_rules.max_period());
+      }
+
+      if(fraud)
+      {
+        if(fraud_end_time != Generics::Time::ZERO)
+        {
+          user_deactivate_time = fraud_end_time +
+            config->deactivate_period;
+          user_profile_writer.fraud_time() =
+            user_deactivate_time.tv_sec;
+        }
+
+        pop_rollback_requests(
+          fraud_impressions,
+          user_profile_writer.rollback_requests(),
+          fraud_start_time,
+          user_deactivate_time);
+      }
+
+      add_user_motion(user_profile_writer.clicks(),
+        request_info.request_id, request_info.time);
+
+      unsigned long sz = user_profile_writer.size();
+      Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+      user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+      co_await transaction->co_save_profile(
         Generics::transfer_membuf(new_mem_buf),
         request_info.time);
     }

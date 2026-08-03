@@ -28,6 +28,7 @@ namespace AdServer::Commons
     ~StartableAwaitable();
 
     void start(Completion completion);
+    void start_detached(Completion completion);
     bool await_ready() const noexcept;
     void await_suspend(std::coroutine_handle<> continuation) noexcept;
     ResultType await_resume();
@@ -52,6 +53,7 @@ namespace AdServer::Commons
     ~StartableAwaitable();
 
     void start(Completion completion);
+    void start_detached(Completion completion);
     bool await_ready() const noexcept;
     void await_suspend(std::coroutine_handle<> continuation) noexcept;
     void await_resume();
@@ -84,6 +86,7 @@ namespace AdServer::Commons
     Completion completion;
     std::optional<ResultType> result;
     std::optional<std::exception_ptr> exception;
+    bool destroy_on_completion = false;
   };
 
   struct StartableAwaitable<void>::promise_type
@@ -105,6 +108,7 @@ namespace AdServer::Commons
     std::coroutine_handle<> continuation;
     Completion completion;
     std::optional<std::exception_ptr> exception;
+    bool destroy_on_completion = false;
   };
 
   template<typename ResultType>
@@ -156,6 +160,16 @@ namespace AdServer::Commons
   {
     handle_.promise().completion = std::move(completion);
     resume_coroutine(handle_);
+  }
+
+  template<typename ResultType>
+  inline void
+  StartableAwaitable<ResultType>::start_detached(Completion completion)
+  {
+    const Handle handle = std::exchange(handle_, {});
+    handle.promise().completion = std::move(completion);
+    handle.promise().destroy_on_completion = true;
+    resume_coroutine(handle);
   }
 
   template<typename ResultType>
@@ -218,14 +232,21 @@ namespace AdServer::Commons
   StartableAwaitable<ResultType>::promise_type::FinalAwaiter::await_suspend(
     Handle handle) const noexcept
   {
-    auto completion = std::move(handle.promise().completion);
+    auto& promise = handle.promise();
+    const bool destroy_on_completion = promise.destroy_on_completion;
+    auto completion = std::move(promise.completion);
     if(completion)
     {
-      completion(std::move(handle.promise().exception));
+      completion(std::move(promise.exception));
     }
-    else if(handle.promise().continuation)
+    else if(promise.continuation)
     {
-      resume_coroutine(handle.promise().continuation);
+      resume_coroutine(promise.continuation);
+    }
+
+    if(destroy_on_completion)
+    {
+      handle.destroy();
     }
   }
 
@@ -311,6 +332,15 @@ namespace AdServer::Commons
     resume_coroutine(handle_);
   }
 
+  inline void
+  StartableAwaitable<void>::start_detached(Completion completion)
+  {
+    const Handle handle = std::exchange(handle_, {});
+    handle.promise().completion = std::move(completion);
+    handle.promise().destroy_on_completion = true;
+    resume_coroutine(handle);
+  }
+
   inline bool
   StartableAwaitable<void>::await_ready() const noexcept
   {
@@ -357,14 +387,21 @@ namespace AdServer::Commons
   StartableAwaitable<void>::promise_type::FinalAwaiter::await_suspend(
     Handle handle) const noexcept
   {
-    auto completion = std::move(handle.promise().completion);
+    auto& promise = handle.promise();
+    const bool destroy_on_completion = promise.destroy_on_completion;
+    auto completion = std::move(promise.completion);
     if(completion)
     {
-      completion(std::move(handle.promise().exception));
+      completion(std::move(promise.exception));
     }
-    else if(handle.promise().continuation)
+    else if(promise.continuation)
     {
-      resume_coroutine(handle.promise().continuation);
+      resume_coroutine(promise.continuation);
+    }
+
+    if(destroy_on_completion)
+    {
+      handle.destroy();
     }
   }
 

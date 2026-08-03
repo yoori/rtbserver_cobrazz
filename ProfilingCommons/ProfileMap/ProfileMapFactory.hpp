@@ -3,10 +3,10 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <map>
 
 #include <Generics/CompositeActiveObject.hpp>
-#include <ProfilingCommons/PlainStorage3/LevelProfileMap.hpp>
-#include <ProfilingCommons/ProfileMap/AdaptProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/LevelMapTraits.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
@@ -15,35 +15,6 @@ namespace AdServer
 {
 namespace ProfilingCommons
 {
-  template<typename OptType>
-  struct OptionalProfileAdapter
-  {
-    static const bool DEFINED = true;
-
-    typedef OptType AdapterType;
-
-    AdapterType adapter;
-  };
-
-  struct NullProfileAdapter
-  {
-    static const bool DEFINED = false;
-
-    struct AdapterType
-    {
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-      Generics::ConstSmartMemBuf_var
-      operator()(const Generics::ConstSmartMemBuf*) /*throw(Exception)*/
-      {
-        assert(0);
-        return Generics::ConstSmartMemBuf_var();
-      }
-    };
-
-    AdapterType adapter;
-  };
-
   template<typename KeyAccessorType>
   struct KeyAccessorStringAdapter
   {
@@ -89,141 +60,6 @@ namespace ProfilingCommons
       const char* chunks_root,
       const char* chunks_prefix = "Chunk")
       /*throw(eh::Exception)*/;
-
-    template<typename KeyType,
-      typename KeyAccessorType,
-      typename ProfileAdapterType>
-    static
-    typename ReferenceCounting::SmartPtr<
-      AdServer::ProfilingCommons::TransactionProfileMap<KeyType> >
-    open_adapt_transaction_level_map(
-      Generics::ActiveObject_var& active_object,
-      Generics::ActiveObjectCallback* callback,
-      const char* root,
-      const char* prefix,
-      const LevelMapTraits& level_map_traits,
-      const ProfileAdapterType& profile_adapter = ProfileAdapterType(),
-      unsigned long max_waiters = 0)
-      /*throw(eh::Exception)*/
-    {
-      ReferenceCounting::SmartPtr<LevelProfileMap<KeyType, KeyAccessorType> > ex_map =
-        new LevelProfileMap<KeyType, KeyAccessorType>(
-          callback,
-          root,
-          prefix,
-          level_map_traits);
-
-      active_object = ex_map;
-
-      ReferenceCounting::SmartPtr<ProfileMap<KeyType> > base_map(
-        new AdaptProfileMap<KeyType, ProfileAdapterType>(
-          ex_map, profile_adapter));
-
-      return new AdServer::ProfilingCommons::TransactionProfileMap<
-        KeyType>(base_map, max_waiters);
-    }
-
-    template<typename KeyType,
-      typename KeyAccessorType>
-    static
-    typename ReferenceCounting::SmartPtr<
-      AdServer::ProfilingCommons::TransactionProfileMap<KeyType> >
-    open_transaction_level_map(
-      Generics::ActiveObject_var& active_object,
-      Generics::ActiveObjectCallback* callback,
-      const char* root,
-      const char* prefix,
-      const LevelMapTraits& level_map_traits,
-      unsigned long max_waiters = 0)
-      /*throw(eh::Exception)*/
-    {
-      ReferenceCounting::SmartPtr<LevelProfileMap<KeyType, KeyAccessorType> > ex_map =
-        new LevelProfileMap<KeyType, KeyAccessorType>(
-          callback,
-          root,
-          prefix,
-          level_map_traits);
-
-      active_object = ex_map;
-
-      return new AdServer::ProfilingCommons::TransactionProfileMap<
-        KeyType>(ex_map, max_waiters);
-    }
-
-    template<typename KeyType,
-      typename KeyAccessorType,
-      typename KeyHashType,
-      typename AdapterOptionalType>
-    static
-    ReferenceCounting::SmartPtr<
-      AdServer::ProfilingCommons::ChunkedProfileMap<
-        KeyType, AdServer::ProfilingCommons::TransactionProfileMap<KeyType>, KeyHashType> >
-    open_chunked_map(
-      unsigned long common_chunks_number,
-      const ChunkPathMap& chunk_folders,
-      const char* chunk_prefix,
-      const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-      Generics::CompositeActiveObject& parent_container,
-      Generics::ActiveObjectCallback_var callback,
-      KeyHashType key_hash,
-      unsigned long max_waiters = 0,
-      const AdapterOptionalType& optional_adapter = AdapterOptionalType())
-      /*throw(eh::Exception)*/
-    {
-      typedef ChunkedProfileMap<
-        KeyType,
-        AdServer::ProfilingCommons::TransactionProfileMap<KeyType>,
-        KeyHashType> ProfileMapType;
-
-      typename ProfileMapType::ChunkIdToProfileMap chunks;
-
-      for(ChunkPathMap::const_iterator chunk_folder_it =
-            chunk_folders.begin();
-          chunk_folder_it != chunk_folders.end(); ++chunk_folder_it)
-      {
-        ReferenceCounting::SmartPtr<
-          AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map;
-
-        Generics::ActiveObject_var active_object;
-
-        if(AdapterOptionalType::DEFINED)
-        {
-          base_map = AdServer::ProfilingCommons::ProfileMapFactory::
-            open_adapt_transaction_level_map<
-              KeyType,
-              KeyAccessorType,
-              typename AdapterOptionalType::AdapterType>(
-                active_object,
-                callback,
-                chunk_folder_it->second.c_str(),
-                chunk_prefix,
-                user_level_map_traits,
-                optional_adapter.adapter,
-                max_waiters);
-        }
-        else
-        {
-          base_map = AdServer::ProfilingCommons::ProfileMapFactory::
-            open_transaction_level_map<
-              KeyType,
-              KeyAccessorType>(
-                active_object,
-                callback,
-                chunk_folder_it->second.c_str(),
-                chunk_prefix,
-                user_level_map_traits,
-                max_waiters);
-        }
-
-        parent_container.add_child_object(active_object);
-        chunks.insert(std::make_pair(chunk_folder_it->first, base_map));
-      }
-
-      return new ProfileMapType(
-        common_chunks_number,
-        chunks,
-        key_hash);
-    }
 
     template<typename KeyType,
       typename KeyAccessorType,

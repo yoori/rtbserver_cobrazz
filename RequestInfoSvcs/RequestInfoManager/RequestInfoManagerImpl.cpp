@@ -867,6 +867,8 @@ namespace RequestInfoSvcs{
           UserFraudProtectionContainer::Config_var fraud_config(
             new UserFraudProtectionContainer::Config());
 
+          add_child_object(user_fraud_protection_container.in());
+
           processing_distributor_->add_child_processor(
             user_fraud_protection_container);
 
@@ -920,6 +922,8 @@ namespace RequestInfoSvcs{
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
                 DEFAULT_ACTION_PROFILE_EXPIRE_TIME);
+
+          add_child_object(user_action_info_container.in());
 
           processing_distributor_->add_child_processor(
             user_action_info_container->request_processor());
@@ -976,10 +980,12 @@ namespace RequestInfoSvcs{
                 Generics::Time(*chunks_config.expire_time()) :
                 USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME);
 
-          user_campaign_reach_container_ = user_campaign_reach_container;
+          add_child_object(user_campaign_reach_container.in());
 
           processing_distributor_->add_child_processor(
-            user_campaign_reach_container_.get());
+            user_campaign_reach_container);
+
+          user_campaign_reach_container_ = user_campaign_reach_container;
         }
       }
       catch(const eh::Exception& ex)
@@ -1034,6 +1040,8 @@ namespace RequestInfoSvcs{
               Generics::Time(*chunks_config.expire_time()) :
               RequestInfoContainer::DEFAULT_EXPIRE_TIME);
 
+        add_child_object(request_info_container.in());
+
         request_operation_distributor_->request_operation_processor(
           request_info_container->request_operation_proxy());
 
@@ -1079,6 +1087,8 @@ namespace RequestInfoSvcs{
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
                 PassbackContainer::DEFAULT_EXPIRE_TIME);
+
+          add_child_object(passback_container.in());
 
           passback_container_ = passback_container;
 
@@ -1134,6 +1144,8 @@ namespace RequestInfoSvcs{
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
                 USER_SITE_REACH_DEFAULT_EXPIRE_TIME);
+
+          add_child_object(user_site_reach_container.in());
 
           user_site_reach_container_ = user_site_reach_container;
 
@@ -1192,6 +1204,8 @@ namespace RequestInfoSvcs{
               config.expire_time().present() ?
                 Generics::Time(*config.expire_time()) :
                 UserTagRequestMergeContainer::DEFAULT_EXPIRE_TIME);
+
+          add_child_object(user_tag_request_merge_container.in());
 
           user_tag_request_merge_container_ = user_tag_request_merge_container;
 
@@ -1627,6 +1641,8 @@ namespace RequestInfoSvcs{
     const char REQUEST_OPERATION_IN_DIR[] = "RequestOperation";
 
     const std::string log_root = lp_config.log_root();
+
+    in_logs.fetch_threads = lp_config.fetch_threads();
 
     init_(lp_config.Request(), log_root, REQUEST_IN_DIR, in_logs.request);
     init_(lp_config.Impression(), log_root, IMPRESSION_IN_DIR, in_logs.impression);

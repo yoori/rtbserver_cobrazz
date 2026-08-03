@@ -243,11 +243,13 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = open_rocksdb_transaction_profile_map<
+      auto user_map = open_rocksdb_transaction_profile_map<
         AdServer::Commons::UserId,
         UserIdToString>(
           rocksdb_path,
           expire_time_);
+      user_map_ = user_map.map;
+      add_child_object(user_map.active_object);
     }
     catch(const eh::Exception& ex)
     {
@@ -335,6 +337,66 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<void>
+  UserTagRequestMergeContainer::co_process_tag_request(
+    const TagRequestInfo& tag_request_info)
+  {
+    static const char* FUN =
+      "UserTagRequestMergeContainer::co_process_tag_request()";
+
+    if(tag_request_info.user_id.is_null() ||
+       !tag_request_info.tag_id)
+    {
+      co_return;
+    }
+
+    TagRequestGroupProcessor::TagRequestGroupInfoList
+      tag_request_group_info_list;
+
+    if(!tag_request_info.referer_hash.present() &&
+       !tag_request_info.page_load_id.present())
+    {
+      tag_request_group_info_list.push_back(
+        TagRequestGroupProcessor::TagRequestGroupInfo());
+      fill_tag_group_info(
+        *tag_request_group_info_list.rbegin(),
+        tag_request_info);
+    }
+    else
+    {
+      co_await co_process_tag_request_trans_(
+        tag_request_group_info_list,
+        tag_request_info);
+    }
+
+    try
+    {
+      for(TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
+            tag_request_group_info_list.begin();
+          it != tag_request_group_info_list.end(); ++it)
+      {
+        tag_request_group_processor_->process_tag_request_group(*it);
+      }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": caught eh::Exception: " << ex.what();
+      throw TagRequestProcessor::Exception(ostr);
+    }
+
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Processed request: " << std::endl;
+      tag_request_info.print(ostr, "  ");
+
+      logger_->log(ostr.str(),
+        Logging::Logger::TRACE,
+        Aspect::TAG_REQUEST_MERGE_CONTAINER);
+    }
+  }
+
   void UserTagRequestMergeContainer::process_tag_request_trans_(
     TagRequestGroupProcessor::TagRequestGroupInfoList& tag_request_group_info_list,
     const TagRequestInfo& tag_request_info)
@@ -379,6 +441,64 @@ namespace RequestInfoSvcs
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
       transaction->save_profile(
+        Generics::transfer_membuf(new_mem_buf),
+        tag_request_info.time);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw UserTagRequestMergeContainer::Exception(ostr);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserTagRequestMergeContainer::co_process_tag_request_trans_(
+    TagRequestGroupProcessor::TagRequestGroupInfoList&
+      tag_request_group_info_list,
+    const TagRequestInfo& tag_request_info)
+    /*throw(Exception)*/
+  {
+    static const char* FUN =
+      "UserTagRequestMergeContainer::co_process_tag_request_trans_()";
+
+    try
+    {
+      UserTagRequestMergeProfileWriter user_profile_writer;
+
+      UserMap::Transaction_var transaction =
+        co_await user_map_->co_get_transaction(tag_request_info.user_id);
+      Generics::ConstSmartMemBuf_var mem_buf =
+        co_await transaction->co_get_profile();
+
+      if(mem_buf.in())
+      {
+        user_profile_writer.init(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
+      }
+      else
+      {
+        user_profile_writer.version() =
+          CURRENT_USER_TAG_REQUEST_PROFILE_VERSION;
+      }
+
+      insert_tag_request(
+        tag_request_group_info_list,
+        user_profile_writer.tag_groups(),
+        tag_request_info,
+        time_merge_bound_);
+
+      clear_excess_tag_request_groups(
+        user_profile_writer.tag_groups(),
+        tag_request_info.time - KEEP_GROUP_TIME);
+
+      unsigned long sz = user_profile_writer.size();
+      Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
+
+      user_profile_writer.save(new_mem_buf->membuf().data(), sz);
+
+      co_await transaction->co_save_profile(
         Generics::transfer_membuf(new_mem_buf),
         tag_request_info.time);
     }

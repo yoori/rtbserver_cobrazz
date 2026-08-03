@@ -25,6 +25,9 @@ namespace RequestInfoSvcs
     void process_tag_request(const TagRequestInfo& tag_request_info)
       /*throw(TagRequestProcessor::Exception)*/;
 
+    AdServer::Commons::Awaitable<void>
+    co_process_tag_request(const TagRequestInfo& tag_request_info) override;
+
   protected:
     virtual ~CompositeTagRequestProcessor() noexcept {}
 
@@ -65,6 +68,18 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_tag_request(tag_request_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeTagRequestProcessor::co_process_tag_request(
+    const TagRequestInfo& tag_request_info)
+  {
+    for(TagRequestProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_tag_request(tag_request_info);
     }
   }
 }

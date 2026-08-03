@@ -1,5 +1,9 @@
 #include "ProfileMapFactory.hpp"
 
+#include <Generics/DirSelector.hpp>
+#include <String/AsciiStringManip.hpp>
+#include <String/Tokenizer.hpp>
+
 namespace AdServer
 {
 namespace ProfilingCommons

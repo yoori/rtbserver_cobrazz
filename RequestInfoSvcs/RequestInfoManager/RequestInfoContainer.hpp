@@ -7,9 +7,12 @@
 #include <Generics/Time.hpp>
 
 #include <Generics/MemBuf.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <String/SubString.hpp>
+
+#include <Commons/Coro/StartableAwaitable.hpp>
 
 #include "RequestActionProcessor.hpp"
 #include "RequestOperationProcessor.hpp"
@@ -31,7 +34,7 @@ namespace AdServer
      * contains logic of requests processing
      */
     class RequestInfoContainer:
-      public ReferenceCounting::AtomicImpl,
+      public Generics::RefCountableCompositeActiveObject,
       public RequestContainerProcessor
     {
     public:
@@ -60,9 +63,15 @@ namespace AdServer
       process_request(const RequestInfo& request_info)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_request(const RequestInfo& request_info);
+
       virtual void
       process_impression(const ImpressionInfo& impression_info)
         /*throw(RequestContainerProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression(const ImpressionInfo& impression_info);
 
       virtual void
       process_action(
@@ -71,17 +80,33 @@ namespace AdServer
         const AdServer::Commons::RequestId& request_id)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_action(
+        ActionType action_type,
+        const Generics::Time& time,
+        const AdServer::Commons::RequestId& request_id);
+
       virtual void
       process_custom_action(
         const AdServer::Commons::RequestId& request_id,
         const AdvCustomActionInfo& adv_custom_action_info)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_custom_action(
+        const AdServer::Commons::RequestId& request_id,
+        const AdvCustomActionInfo& adv_custom_action_info);
+
       virtual void
       process_impression_post_action(
         const AdServer::Commons::RequestId& request_id,
         const RequestPostActionInfo& request_post_action_info)
         /*throw(RequestContainerProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression_post_action(
+        const AdServer::Commons::RequestId& request_id,
+        const RequestPostActionInfo& request_post_action_info);
 
       RequestContainerProcessor_var
       proxy() noexcept;
@@ -168,8 +193,16 @@ namespace AdServer
         Generics::ConstSmartMemBuf_var
         get_profile(Generics::Time* last_access_time = 0);
 
+        AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
+        co_get_profile();
+
         virtual void
         save_profile(
+          const Generics::ConstSmartMemBuf* mem_buf,
+          const Generics::Time& now = Generics::Time::get_time_of_day());
+
+        AdServer::Commons::StartableAwaitable<void>
+        co_save_profile(
           const Generics::ConstSmartMemBuf* mem_buf,
           const Generics::Time& now = Generics::Time::get_time_of_day());
 
@@ -188,6 +221,10 @@ namespace AdServer
         const RequestProcessDelegate& request_process_gelegate)
         /*throw(Exception)*/;
 
+      AdServer::Commons::Awaitable<void>
+      co_delegate_processing_(
+        const RequestProcessDelegate& request_process_gelegate);
+
       static void
       throw_request_processing_exception_(
         const char* fun,
@@ -201,6 +238,11 @@ namespace AdServer
         bool move_enabled)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression_(
+        const ImpressionInfo& impression_info,
+        bool move_enabled);
+
       virtual void
       process_action_(
         ActionType action_type,
@@ -209,12 +251,25 @@ namespace AdServer
         bool move_enabled)
         /*throw(RequestContainerProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_action_(
+        ActionType action_type,
+        const Generics::Time& time,
+        const AdServer::Commons::RequestId& request_id,
+        bool move_enabled);
+
       virtual void
       process_impression_post_action_(
         const AdServer::Commons::RequestId& request_id,
         const RequestPostActionInfo& request_post_action_info,
         bool move_enabled)
         /*throw(Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression_post_action_(
+        const AdServer::Commons::RequestId& request_id,
+        const RequestPostActionInfo& request_post_action_info,
+        bool move_enabled);
 
       bool
       process_request_buf_(
@@ -296,6 +351,10 @@ namespace AdServer
       get_profile_(
         Transaction* transaction);
 
+      static AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile_(
+        Transaction* transaction);
+
       Generics::ConstSmartMemBuf_var
       get_profile_(const AdServer::Commons::RequestId& request_id);
 
@@ -305,8 +364,18 @@ namespace AdServer
         const Generics::ConstSmartMemBuf* mem_buf,
         const Generics::Time& time);
 
+      static AdServer::Commons::Awaitable<void>
+      co_save_profile_(
+        Transaction* transaction,
+        const Generics::ConstSmartMemBuf* mem_buf,
+        const Generics::Time& time);
+
       Transaction_var
       get_transaction_(
+        const AdServer::Commons::RequestId& request_id);
+
+      AdServer::Commons::Awaitable<Transaction_var>
+      co_get_transaction_(
         const AdServer::Commons::RequestId& request_id);
 
       void
@@ -315,6 +384,12 @@ namespace AdServer
         const AdServer::Commons::RequestId& request_id,
         const Generics::ConstSmartMemBuf* request_profile)
         /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_change_request_user_id_(
+        const AdServer::Commons::UserId& new_user_id,
+        const AdServer::Commons::RequestId& request_id,
+        const Generics::ConstSmartMemBuf* request_profile);
 
       void
       convert_impression_info_to_request_writer(

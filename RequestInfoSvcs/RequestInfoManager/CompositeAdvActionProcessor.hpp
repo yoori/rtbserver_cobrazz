@@ -27,9 +27,17 @@ namespace AdServer
         const AdvActionInfo& adv_action_info)
         /*throw(AdvActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_adv_action(
+        const AdvActionInfo& adv_action_info);
+
       virtual void process_custom_action(
         const AdvExActionInfo& adv_custom_action_info)
         /*throw(AdvActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_custom_action(
+        const AdvExActionInfo& adv_custom_action_info);
 
     protected:
       virtual ~CompositeAdvActionProcessor() noexcept {}
@@ -73,6 +81,18 @@ namespace RequestInfoSvcs
     }
   }
 
+  inline AdServer::Commons::Awaitable<void>
+  CompositeAdvActionProcessor::co_process_adv_action(
+    const AdvActionInfo& adv_action_info)
+  {
+    for(AdvActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_adv_action(adv_action_info);
+    }
+  }
+
   inline
   void CompositeAdvActionProcessor::process_custom_action(
     const AdvExActionInfo& adv_custom_action_info)
@@ -83,6 +103,18 @@ namespace RequestInfoSvcs
         ++it)
     {
       (*it)->process_custom_action(adv_custom_action_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeAdvActionProcessor::co_process_custom_action(
+    const AdvExActionInfo& adv_custom_action_info)
+  {
+    for(AdvActionProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_custom_action(adv_custom_action_info);
     }
   }
 }

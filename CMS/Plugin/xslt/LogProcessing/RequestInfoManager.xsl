@@ -125,6 +125,12 @@
       <xsl:value-of select="$request-info-manager-processing-threads"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="fetch-threads">
+    <xsl:value-of select="$processing-config/@fetch_threads"/>
+    <xsl:if test="count($processing-config/@fetch_threads) = 0">
+      <xsl:value-of select="$request-info-manager-fetch-threads"/>
+    </xsl:if>
+  </xsl:variable>
 
   <xsl:variable name="in-logs-dir" select="concat($workspace-root, '/log/RequestInfoManager/In/')"/>
   <xsl:variable name="out-logs-dir" select="concat($workspace-root, '/log/RequestInfoManager/Out/')"/>
@@ -293,7 +299,8 @@
         <xsl:if test="count($processing-config/@cache_blocks) = 0">1000</xsl:if>
       </xsl:attribute>
 
-      <cfg:InLogs threads="{$processing-threads}" log_root="{$in-logs-dir}"
+      <cfg:InLogs threads="{$processing-threads}" fetch_threads="{$fetch-threads}"
+        log_root="{$in-logs-dir}"
         check_logs_period="{$check-logs-period}">
 
         <cfg:Request priority="2"/>

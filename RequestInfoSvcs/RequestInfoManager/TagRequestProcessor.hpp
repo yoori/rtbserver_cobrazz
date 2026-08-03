@@ -3,6 +3,7 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/Time.hpp>
+#include <Commons/Coro/Awaitable.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/StringHolder.hpp>
@@ -55,6 +56,9 @@ namespace RequestInfoSvcs
 
     virtual void process_tag_request(const TagRequestInfo&) /*throw(Exception)*/ = 0;
 
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_tag_request(const TagRequestInfo&);
+
   protected:
     virtual ~TagRequestProcessor() noexcept {}
   };
@@ -68,6 +72,14 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
+  inline AdServer::Commons::Awaitable<void>
+  TagRequestProcessor::co_process_tag_request(
+    const TagRequestInfo& tag_request_info)
+  {
+    process_tag_request(tag_request_info);
+    co_return;
+  }
+
   inline
   void TagRequestInfo::
   print(std::ostream& out, const char* offset) const noexcept

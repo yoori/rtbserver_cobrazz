@@ -8,6 +8,7 @@
 #include <ReferenceCounting/PtrHolder.hpp>
 
 #include <Logger/Logger.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Time.hpp>
 
 #include <Generics/MemBuf.hpp>
@@ -27,7 +28,7 @@ namespace AdServer
      * UserFraudProtectionContainer
      */
     class UserFraudProtectionContainer:
-      public virtual ReferenceCounting::AtomicImpl,
+      public virtual Generics::RefCountableCompositeActiveObject,
       public virtual RequestActionProcessor
     {
     public:
@@ -121,11 +122,22 @@ namespace AdServer
         const ProcessingState&)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_impression(
+        const RequestInfo&,
+        const ImpressionInfo&,
+        const ProcessingState&);
+
       virtual void
       process_click(
         const RequestInfo&,
         const ProcessingState&)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      virtual AdServer::Commons::Awaitable<void>
+      co_process_click(
+        const RequestInfo&,
+        const ProcessingState&);
 
       virtual void
       process_action(const RequestInfo&)
@@ -151,12 +163,24 @@ namespace AdServer
         const RequestInfo& request_info)
         /*throw(RequestActionProcessor::Exception)*/;
 
+      AdServer::Commons::Awaitable<void>
+      co_process_click_trans_(
+        RequestIdList& fraud_impressions,
+        Generics::Time& user_deactivate_time,
+        const RequestInfo& request_info);
+
       void
       process_impression_trans_(
         RequestIdList& fraud_impressions,
         Generics::Time& user_deactivate_time,
         const RequestInfo& request_info)
         /*throw(RequestActionProcessor::Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_process_impression_trans_(
+        RequestIdList& fraud_impressions,
+        Generics::Time& user_deactivate_time,
+        const RequestInfo& request_info);
 
       void
       process_click_(
