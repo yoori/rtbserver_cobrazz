@@ -14,6 +14,7 @@ sub start
   my $command =
     "mkdir -p \${workspace_root}/run && " .
     "mkdir -p \${workspace_root}/log/ClickhouseUploader/Error && " .
+    "mkdir -p \${workspace_root}/log/Predictor/ResearchLogs/RActionClickhouse && " .
     "if test -e $pid_file; then " .
       "pid=`cat $pid_file`; " .
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .

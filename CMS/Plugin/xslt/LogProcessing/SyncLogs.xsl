@@ -986,10 +986,6 @@
               <xsl:attribute name="destination"><![CDATA[/]]>ResearchClick</xsl:attribute>
             </cfg:files>
             <cfg:files>
-              <xsl:attribute name="source">RequestInfoManager/Out/ResearchAction/RAction_*</xsl:attribute>
-              <xsl:attribute name="destination"><![CDATA[/]]>ResearchAction</xsl:attribute>
-            </cfg:files>
-            <cfg:files>
               <xsl:attribute name="source">RequestInfoManager/Out/BidCostStat/BidCostStat.2*</xsl:attribute>
               <xsl:attribute name="destination"><![CDATA[/]]>BidCostStat</xsl:attribute>
             </cfg:files>
@@ -1009,6 +1005,38 @@
             </cfg:files>
             <cfg:hosts destination="-non-used-hostname">
               <xsl:attribute name="source"><xsl:value-of select="$campaign-manager-hosts"/></xsl:attribute>
+            </cfg:hosts>
+          </cfg:Route>
+        </cfg:FeedRouteGroup>
+
+        <!--
+          RAction: keep Predictor inbox (ResearchAction) intact, and side-copy
+          into RActionClickhouse for ClickhouseUploader (delete-after-upload).
+          Pixels with action_id already reach ResearchActionLogger via
+          process_custom_action (RequestLogLoader) — no FE AdvertiserAction dual-copy.
+        -->
+        <cfg:FeedRouteGroup
+          local_copy_command="/bin/echo"
+          local_copy_command_type="rsync"
+          remote_copy_command_type="rsync"
+          tries_per_file="2">
+          <xsl:attribute name="remote_copy_command"><xsl:value-of
+            select="concat(
+              $colo-config-root,
+              '/synclogs_rsync_side_copy.sh ##SRC_PATH## rsync://',
+              $predictor-sync-logs-host, ':',
+              $predictor-sync-logs-port, '/',
+              $research-stat-receiver-path, '##DST_PATH## rsync://',
+              $predictor-sync-logs-host, ':',
+              $predictor-sync-logs-port, '/',
+              $research-stat-receiver-path, '/RActionClickhouse/')"/></xsl:attribute>
+          <cfg:Route type="RoundRobin">
+            <cfg:files>
+              <xsl:attribute name="source">RequestInfoManager/Out/ResearchAction/RAction_*</xsl:attribute>
+              <xsl:attribute name="destination"><![CDATA[/]]>ResearchAction</xsl:attribute>
+            </cfg:files>
+            <cfg:hosts destination="-non-used-hostname">
+              <xsl:attribute name="source"><xsl:value-of select="$request-info-manager-hosts"/></xsl:attribute>
             </cfg:hosts>
           </cfg:Route>
         </cfg:FeedRouteGroup>

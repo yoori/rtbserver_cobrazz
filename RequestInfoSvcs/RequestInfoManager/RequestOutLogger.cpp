@@ -2529,7 +2529,14 @@ namespace RequestInfoSvcs
     process_adv_action(
       const AdvActionInfo& /*adv_action_info*/)
       /*throw(AdvActionProcessor::Exception)*/
-    {}
+    {
+      // Intentionally empty.
+      // AdvertiserAction rows WITH action_id are dispatched as
+      // process_custom_action() from RequestLogLoader (full AdvExActionInfo),
+      // and those are written to RAction below.
+      // AdvActionInfo (no action_id) only has time/user_id/ccg_id — not enough
+      // for ResearchActionTraits CSV; leaving a stub avoids misleading partial rows.
+    }
 
     virtual void
     process_custom_action(
