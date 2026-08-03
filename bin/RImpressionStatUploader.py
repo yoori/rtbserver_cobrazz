@@ -148,6 +148,46 @@ class RClickUploader(object) :
         ", command_line = '" + command_line + "'")
 
 
+"""
+RActionUploader: upload research action logs (pixel/custom with action_id).
+Reads side-copy inbox RActionClickhouse only — never deletes Predictor ResearchAction.
+"""
+class RActionUploader(object) :
+  clickhouse_conn : str
+  command_line_templ : jinja2.Template
+  logger = None
+
+  def __init__(self, config, logger = None) :
+    self.clickhouse_conn = config.clickhouse_conn
+    self.command_line_templ = jinja2.Template(
+      "RActionClickhouseAdapter.py {{ process_files|join(' ') }} | "
+      "clickhouse-client {{clickhouse_conn}} "
+      '--query="INSERT INTO RAction FORMAT CSVWithNames"')
+    self.logger = logger
+
+  def process(self, process_files) :
+    command_line = self.command_line_templ.render({
+      'clickhouse_conn' : self.clickhouse_conn,
+      'process_files' : process_files
+    })
+    try :
+      self.logger.debug("To upload " + " ".join(process_files))
+      ret_code = os.system(command_line)
+      self.logger.debug("From upload " + " ".join(process_files) + ": " + str(ret_code))
+      if ret_code == 0 :
+        for process_file in process_files:
+          os.unlink(process_file)
+      else :
+        raise Exception(
+          "Error on upload " + " ".join(process_files) +
+          ": command_line = '" + command_line + "'")
+    except Exception as e :
+      self.logger.exception(
+        "Exception on upload " + " ".join(process_files) + ": " +
+        str(e) + ", command_line = '" + command_line + "'")
+      raise
+
+
 def check_stat_files(
     interrupter,
     config = None,
@@ -231,6 +271,7 @@ def main() :
   processors = {}
   processors['RImpression'] = RImpressionUploader(config, logger = logger)
   processors['RClick'] = RClickUploader(config, logger = logger)
+  processors['RAction'] = RActionUploader(config, logger = logger)
 
   with SignalInterruptHandler(
     [ signal.SIGINT, signal.SIGUSR1, signal.SIGHUP ],

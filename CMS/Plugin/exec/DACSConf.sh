@@ -81,6 +81,11 @@ cp $EXEC/rsync_immutable.sh $OUT_DIR/../rsync_immutable.sh
 
 let "EXIT_CODE|=$?"
 
+cp $EXEC/synclogs_rsync_side_copy.sh $OUT_DIR/../synclogs_rsync_side_copy.sh
+chmod +x $OUT_DIR/../synclogs_rsync_side_copy.sh
+
+let "EXIT_CODE|=$?"
+
 $EXEC/ProcessHostFiles.sh \
   --plugin-root $PLUGIN_ROOT \
   --app-xml $APP_XML \
