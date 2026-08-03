@@ -31,28 +31,30 @@ This change:
 | `DACS/.../ClickhouseUploader.pm` | mkdir inbox |
 | `docs/sql/2026-08-03_raction_clickhouse.sql` | CH DDL |
 | `docs/sql/2026-08-03_fix_android_osversion_regexp.sql` | Android regex fix |
+| `bin/validate_raction_clickhouse_pr.py` | local smoke checks (adapter/xsl/regex/side-copy) |
 
 ## Deploy (minimal)
 
 1. `clickhouse-client -h click00 --multiquery < docs/sql/2026-08-03_raction_clickhouse.sql`
 2. On Postgres `stat`: run `docs/sql/2026-08-03_fix_android_osversion_regexp.sql`  
-   Verify: `match_regexp` is exactly `android N[._]` (no double backslash before `s`).
+   Verify: `match_regexp` is exactly `android N([._;]|$)` and contains **no** `\`.
 3. Regenerate CMS configs; ensure `synclogs_rsync_side_copy.sh` next to `copy_and_backup.sh`.
 4. Restart ClickhouseUploader (adbe00), then SyncLogs on RIM hosts.
 5. Check `…/RActionClickhouse` files appear and disappear; `SELECT count() FROM RAction WHERE time > now() - 1 HOUR`.
 6. Confirm `…/ResearchAction` still receives files (Predictor path).
+7. Optional local checks (no C++ build): `python3 bin/validate_raction_clickhouse_pr.py`
 
 ### Android regex check (before COMMIT)
 
 ```sql
 SELECT p.name, pd.match_regexp,
-       position('\' in pd.match_regexp) AS first_bs
+       position(E'\\' IN pd.match_regexp) AS first_bs
 FROM platformdetector pd
 JOIN platform p ON p.platform_id = pd.platform_id
 WHERE p.name = 'Android 8';
 ```
 
-After fix: `match_regexp = android 8[._]`, `first_bs = 0`.
+After fix: `match_regexp = android 8([._;]|$)`, `first_bs = 0`.
 
 ## Known limits
 
