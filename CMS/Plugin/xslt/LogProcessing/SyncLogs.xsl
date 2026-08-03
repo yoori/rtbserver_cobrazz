@@ -484,7 +484,6 @@
             <dir>Request</dir>
             <dir>Impression</dir>
             <dir>Click</dir>
-            <dir>AdvertiserAction</dir>
             <dir>PassbackOpportunity</dir>
             <dir>PassbackImpression</dir>
             <dir>TagRequest</dir>
@@ -680,6 +679,79 @@
             </cfg:hosts>
           </cfg:Route>
         </xsl:for-each>
+      </cfg:FeedRouteGroup>
+
+      <!--
+        AdvertiserAction is a separate FeedRouteGroup so we can dual-copy to
+        ClickHouseUploader inbox without touching the high-volume rsync path
+        used by Request/Impression/Click. Primary destination remains RIM.
+        Side-copy is best-effort (see synclogs_rsync_adv_action_ch.sh).
+      -->
+      <xsl:variable name="adv-action-ch-dst">
+        <xsl:if test="string-length($predictor-sync-logs-host) > 0">
+          <xsl:value-of select="concat(
+            ' rsync://',
+            $predictor-sync-logs-host, ':',
+            $predictor-sync-logs-port, '/',
+            $research-stat-receiver-path, '/AdvertiserAction/')"/>
+        </xsl:if>
+      </xsl:variable>
+
+      <xsl:variable name="adv-action-remote-copy-command">
+        <xsl:choose>
+          <xsl:when test="string-length($predictor-sync-logs-host) > 0">
+            <xsl:value-of select="concat(
+              $backup-command-prefix,
+              $colo-config-root, '/synclogs_rsync_adv_action_ch.sh ##SRC_PATH## rsync://##DST_HOST##:',
+              $remote-dest-port, '/ad-logs##DST_PATH##',
+              $adv-action-ch-dst,
+              $backup-command-postfix)"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$remote-copy-command"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+
+      <xsl:variable name="adv-action-local-copy-command">
+        <xsl:choose>
+          <xsl:when test="string-length($predictor-sync-logs-host) > 0">
+            <xsl:value-of select="concat(
+              $backup-command-prefix,
+              $colo-config-root, '/synclogs_rsync_adv_action_ch.sh ##SRC_PATH## ',
+              $log-files-root-dir, '##DST_PATH##',
+              $adv-action-ch-dst,
+              $backup-command-postfix)"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$local-copy-command"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+
+      <cfg:FeedRouteGroup
+        pool_threads="10"
+        local_copy_command_type="rsync"
+        remote_copy_command_type="rsync"
+        tries_per_file="2"
+        local_copy_command="{$adv-action-local-copy-command}"
+        remote_copy_command="{$adv-action-remote-copy-command}">
+
+        <xsl:variable name="advertiser-action-route">
+          <dirs>
+            <dir>AdvertiserAction</dir>
+          </dirs>
+        </xsl:variable>
+
+        <xsl:call-template name="Route">
+          <xsl:with-param name="type" select="'Hash'"/>
+          <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
+          <xsl:with-param name="destination-path-base" select="'/RequestInfoManager/In/'"/>
+          <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
+          <xsl:with-param name="destination-hosts" select="$request-info-manager-hosts"/>
+          <xsl:with-param name="dirs" select="$advertiser-action-route"/>
+          <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
+        </xsl:call-template>
       </cfg:FeedRouteGroup>
 
 

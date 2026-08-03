@@ -16,6 +16,7 @@ sub start
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchImpression && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchClick && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchAction && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/AdvertiserAction && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchWebStat && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchProf && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/BidCostStat && " .
