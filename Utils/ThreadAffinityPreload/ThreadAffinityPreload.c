@@ -53,10 +53,10 @@ is_enabled_value(const char* value)
 static void
 write_literal(const char* text)
 {
-  if(text)
+  if (text)
   {
     const size_t size = strlen(text);
-    while(write(STDERR_FILENO, text, size) == -1 && errno == EINTR)
+    while (write(STDERR_FILENO, text, size) == -1 && errno == EINTR)
     {}
   }
 }
@@ -72,7 +72,8 @@ write_uint(uint64_t value)
     *--pos = (char)('0' + value % 10);
     value /= 10;
   }
-  while(value != 0);
+  while (value != 0);
+
   write_literal(pos);
 }
 
@@ -94,17 +95,14 @@ mix_uint64(uint64_t value)
 static void
 shuffle_auto_cpus()
 {
-  if(!config.auto_cpus || config.cpu_count < 2)
+  if (!config.auto_cpus || config.cpu_count < 2)
   {
     return;
   }
 
-  uint64_t state =
-    ((uint64_t)getpid() << 32) ^
-    (uint64_t)current_tid() ^
-    (uintptr_t)&config;
+  uint64_t state = ((uint64_t)getpid() << 32) ^ (uint64_t)current_tid() ^ (uintptr_t)&config;
 
-  for(unsigned int i = config.cpu_count - 1; i > 0; --i)
+  for (unsigned int i = config.cpu_count - 1; i > 0; --i)
   {
     state = mix_uint64(state);
     const unsigned int j = (unsigned int)(state % (i + 1));
@@ -117,7 +115,7 @@ shuffle_auto_cpus()
 static const char*
 skip_spaces(const char* pos)
 {
-  while(pos && isspace((unsigned char)*pos))
+  while (pos && isspace((unsigned char)*pos))
   {
     ++pos;
   }
@@ -128,16 +126,16 @@ static int
 parse_uint_value(const char** pos_ptr, int* value)
 {
   const char* pos = skip_spaces(*pos_ptr);
-  if(!pos || !isdigit((unsigned char)*pos))
+  if (!pos || !isdigit((unsigned char)*pos))
   {
     return 0;
   }
 
   unsigned int result = 0;
-  while(isdigit((unsigned char)*pos))
+  while (isdigit((unsigned char)*pos))
   {
     result = result * 10 + (unsigned int)(*pos - '0');
-    if(result >= CPU_SETSIZE)
+    if (result >= CPU_SETSIZE)
     {
       return 0;
     }
@@ -152,20 +150,20 @@ parse_uint_value(const char** pos_ptr, int* value)
 static void
 add_cpu(int cpu)
 {
-  if(cpu < 0 || cpu >= CPU_SETSIZE)
+  if (cpu < 0 || cpu >= CPU_SETSIZE)
   {
     return;
   }
 
-  for(unsigned int i = 0; i < config.cpu_count; ++i)
+  for (unsigned int i = 0; i < config.cpu_count; ++i)
   {
-    if(config.cpus[i] == cpu)
+    if (config.cpus[i] == cpu)
     {
       return;
     }
   }
 
-  if(config.cpu_count < CPU_SETSIZE)
+  if (config.cpu_count < CPU_SETSIZE)
   {
     config.cpus[config.cpu_count++] = cpu;
   }
@@ -175,29 +173,29 @@ static void
 init_auto_cpus()
 {
   cpu_set_t cpu_set;
-  if(sched_getaffinity(0, sizeof(cpu_set), &cpu_set) == 0)
+  if (sched_getaffinity(0, sizeof(cpu_set), &cpu_set) == 0)
   {
-    for(int cpu = 0; cpu < CPU_SETSIZE; ++cpu)
+    for (int cpu = 0; cpu < CPU_SETSIZE; ++cpu)
     {
-      if(CPU_ISSET(cpu, &cpu_set))
+      if (CPU_ISSET(cpu, &cpu_set))
       {
         add_cpu(cpu);
       }
     }
 
-    if(config.cpu_count != 0)
+    if (config.cpu_count != 0)
     {
       return;
     }
   }
 
   long cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
-  if(cpu_count <= 0 || cpu_count > CPU_SETSIZE)
+  if (cpu_count <= 0 || cpu_count > CPU_SETSIZE)
   {
     cpu_count = CPU_SETSIZE;
   }
 
-  for(int cpu = 0; cpu < cpu_count; ++cpu)
+  for (int cpu = 0; cpu < cpu_count; ++cpu)
   {
     add_cpu(cpu);
   }
@@ -206,8 +204,7 @@ init_auto_cpus()
 static void
 parse_cpu_list(const char* value)
 {
-  if(!value || *skip_spaces(value) == '\0' ||
-    strcmp(skip_spaces(value), "auto") == 0)
+  if (!value || *skip_spaces(value) == '\0' || strcmp(skip_spaces(value), "auto") == 0)
   {
     config.auto_cpus = 1;
     init_auto_cpus();
@@ -215,10 +212,10 @@ parse_cpu_list(const char* value)
   }
 
   const char* pos = value;
-  while(1)
+  while (1)
   {
     int begin = 0;
-    if(!parse_uint_value(&pos, &begin))
+    if (!parse_uint_value(&pos, &begin))
     {
       config.cpu_count = 0;
       init_auto_cpus();
@@ -227,10 +224,10 @@ parse_cpu_list(const char* value)
 
     int end = begin;
     pos = skip_spaces(pos);
-    if(*pos == '-')
+    if (*pos == '-')
     {
       ++pos;
-      if(!parse_uint_value(&pos, &end) || end < begin)
+      if (!parse_uint_value(&pos, &end) || end < begin)
       {
         config.cpu_count = 0;
         init_auto_cpus();
@@ -238,17 +235,18 @@ parse_cpu_list(const char* value)
       }
     }
 
-    for(int cpu = begin; cpu <= end; ++cpu)
+    for (int cpu = begin; cpu <= end; ++cpu)
     {
       add_cpu(cpu);
     }
 
     pos = skip_spaces(pos);
-    if(*pos == '\0')
+    if (*pos == '\0')
     {
       break;
     }
-    if(*pos != ',')
+
+    if (*pos != ',')
     {
       config.cpu_count = 0;
       init_auto_cpus();
@@ -257,7 +255,7 @@ parse_cpu_list(const char* value)
     ++pos;
   }
 
-  if(config.cpu_count == 0)
+  if (config.cpu_count == 0)
   {
     init_auto_cpus();
   }
@@ -266,14 +264,13 @@ parse_cpu_list(const char* value)
 static void
 init_config()
 {
-  if(sched_getaffinity(0, sizeof(config.original_cpu_set),
-    &config.original_cpu_set) == 0)
+  if (sched_getaffinity(0, sizeof(config.original_cpu_set), &config.original_cpu_set) == 0)
   {
     config.original_cpu_set_available = 1;
   }
 
   const char* mode = getenv("ADS_THREAD_AFFINITY");
-  if(!is_enabled_value(mode))
+  if (!is_enabled_value(mode))
   {
     config.mode = MODE_DISABLED;
     return;
@@ -284,16 +281,14 @@ init_config()
   parse_cpu_list(getenv("ADS_THREAD_AFFINITY_CPUS"));
   shuffle_auto_cpus();
 
-  real_pthread_setname = (PthreadSetname)dlsym(
-    RTLD_NEXT,
-    "pthread_setname_np");
+  real_pthread_setname = (PthreadSetname)dlsym(RTLD_NEXT, "pthread_setname_np");
 
-  if(config.verbose)
+  if (config.verbose)
   {
     write_literal("thread-affinity-preload: mode=round_robin cpus=");
-    for(unsigned int i = 0; i < config.cpu_count; ++i)
+    for (unsigned int i = 0; i < config.cpu_count; ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         write_literal(",");
       }
@@ -308,42 +303,36 @@ apply_current_thread_affinity()
 {
   pthread_once(&init_once, init_config);
 
-  if(config.mode != MODE_ROUND_ROBIN || config.cpu_count == 0)
+  if (config.mode != MODE_ROUND_ROBIN || config.cpu_count == 0)
   {
     return 0;
   }
 
-  if(current_thread_cpu >= 0)
+  if (current_thread_cpu >= 0)
   {
     return 1;
   }
 
-  const uint64_t index = __atomic_fetch_add(
-    &next_cpu_index,
-    1,
-    __ATOMIC_RELAXED);
+  const uint64_t index = __atomic_fetch_add(&next_cpu_index, 1, __ATOMIC_RELAXED);
   const int cpu = config.cpus[index % config.cpu_count];
 
   cpu_set_t cpu_set;
   CPU_ZERO(&cpu_set);
   CPU_SET(cpu, &cpu_set);
 
-  const int result = pthread_setaffinity_np(
-    pthread_self(),
-    sizeof(cpu_set),
-    &cpu_set);
-  if(result == 0)
+  const int result = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
+  if (result == 0)
   {
     current_thread_cpu = cpu;
   }
 
-  if(config.verbose)
+  if (config.verbose)
   {
     write_literal("thread-affinity-preload: tid=");
     write_uint((uint64_t)current_tid());
     write_literal(" cpu=");
     write_uint((uint64_t)cpu);
-    if(result != 0)
+    if (result != 0)
     {
       write_literal(" error=");
       write_uint((uint64_t)result);
@@ -359,7 +348,7 @@ release_current_thread_affinity()
 {
   pthread_once(&init_once, init_config);
 
-  if(!config.original_cpu_set_available)
+  if (!config.original_cpu_set_available)
   {
     current_thread_cpu = -1;
     return;
@@ -369,17 +358,17 @@ release_current_thread_affinity()
     pthread_self(),
     sizeof(config.original_cpu_set),
     &config.original_cpu_set);
-  if(result == 0)
+  if (result == 0)
   {
     current_thread_cpu = -1;
   }
 
-  if(config.verbose)
+  if (config.verbose)
   {
     write_literal("thread-affinity-preload: tid=");
     write_uint((uint64_t)current_tid());
     write_literal(" no-affinity");
-    if(result != 0)
+    if (result != 0)
     {
       write_literal(" error=");
       write_uint((uint64_t)result);
@@ -393,12 +382,11 @@ pthread_setname_np(pthread_t thread, const char* name)
 {
   pthread_once(&init_once, init_config);
 
-  if(!real_pthread_setname)
+  if (!real_pthread_setname)
   {
-    real_pthread_setname = (PthreadSetname)dlsym(
-      RTLD_NEXT,
-      "pthread_setname_np");
-    if(!real_pthread_setname)
+    real_pthread_setname = (PthreadSetname)dlsym(RTLD_NEXT, "pthread_setname_np");
+
+    if (!real_pthread_setname)
     {
       return ENOSYS;
     }
@@ -406,10 +394,9 @@ pthread_setname_np(pthread_t thread, const char* name)
 
   const int no_affinity = strncmp(name, "na:", 3) == 0;
   const int apply_affinity = strncmp(name, "ca:", 3) == 0;
-  const char* effective_name =
-    no_affinity || apply_affinity ? name + 3 : name;
+  const char* effective_name = no_affinity || apply_affinity ? name + 3 : name;
 
-  if(no_affinity &&
+  if (no_affinity &&
     config.mode == MODE_ROUND_ROBIN &&
     pthread_equal(thread, pthread_self()))
   {
@@ -417,12 +404,12 @@ pthread_setname_np(pthread_t thread, const char* name)
     return real_pthread_setname(thread, effective_name);
   }
 
-  if(apply_affinity && pthread_equal(thread, pthread_self()))
+  if (apply_affinity && pthread_equal(thread, pthread_self()))
   {
     apply_current_thread_affinity();
   }
 
-  if(config.mode != MODE_ROUND_ROBIN ||
+  if (config.mode != MODE_ROUND_ROBIN ||
     current_thread_cpu < 0 ||
     !apply_affinity ||
     !pthread_equal(thread, pthread_self()))
@@ -431,12 +418,9 @@ pthread_setname_np(pthread_t thread, const char* name)
   }
 
   char suffix[16];
-  const int suffix_size = snprintf(
-    suffix,
-    sizeof(suffix),
-    ":c%d",
-    current_thread_cpu);
-  if(suffix_size <= 0 || suffix_size >= 15)
+  const int suffix_size = snprintf(suffix, sizeof(suffix), ":c%d", current_thread_cpu);
+
+  if (suffix_size <= 0 || suffix_size >= 15)
   {
     return real_pthread_setname(thread, effective_name);
   }

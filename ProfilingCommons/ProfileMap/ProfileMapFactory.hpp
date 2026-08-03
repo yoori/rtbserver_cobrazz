@@ -78,7 +78,8 @@ namespace ProfilingCommons
       KeyHashType key_hash,
       unsigned long max_waiters = 0,
       bool disable_wal = false,
-      const char* rocksdb_path_suffix = ".rocksdb")
+      const char* rocksdb_path_suffix = ".rocksdb",
+      unsigned long workers_count = 2)
       /*throw(eh::Exception)*/
     {
       typedef ChunkedProfileMap<
@@ -107,7 +108,7 @@ namespace ProfilingCommons
           new RocksDBMap(
             String::SubString(rocksdb_path.c_str()),
             profile_map_traits.expire_time,
-            2,
+            workers_count,
             128,
             Generics::Time::ZERO,
             disable_wal);

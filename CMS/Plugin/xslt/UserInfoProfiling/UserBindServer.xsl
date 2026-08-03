@@ -49,12 +49,12 @@
     </xsl:variable>
     <xsl:variable name="user-bind-server-grpc-process-threads">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_process_threads"/>
-      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_process_threads) = 0">128</xsl:if>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_process_threads) = 0">32</xsl:if>
     </xsl:variable>
     <xsl:variable name="user-bind-server-grpc-cq-threads">
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_cq_threads"/>
       <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_cq_threads) = 0">
-        <xsl:value-of select="16"/>
+        <xsl:value-of select="4"/>
       </xsl:if>
     </xsl:variable>
     <xsl:variable name="user-bind-server-grpc-max-sequential-ops">
@@ -122,6 +122,10 @@
         <xsl:value-of select="$user-bind-server-scale-chunks"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="rocksdb-batching-threads">
+      <xsl:value-of select="$user-bind-server-config/@rocksdb_batching_threads"/>
+      <xsl:if test="count($user-bind-server-config/@rocksdb_batching_threads) = 0">2</xsl:if>
+    </xsl:variable>
 
     <cfg:Storage portions="1024"
       chunks_root="{$chunks-root}"
@@ -130,7 +134,8 @@
       bound_prefix="UserBind"
       dump_period="{$user-bind-server-config/@user_dump_period}"
       expire_time="{$user-bind-server-config/@user_seen_expire_time}"
-      bound_expire_time="{$user-bind-server-config/@user_expire_time}">
+      bound_expire_time="{$user-bind-server-config/@user_expire_time}"
+      rocksdb_batching_threads="{$rocksdb-batching-threads}">
       <xsl:attribute name="user_bind_keep_mode">
         <xsl:value-of select="$colo-config/cfg:userProfiling/@user_bind_keep_mode"/>
         <xsl:if test="count($colo-config/cfg:userProfiling/@user_bind_keep_mode)

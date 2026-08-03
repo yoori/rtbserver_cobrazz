@@ -91,7 +91,8 @@ namespace AdServer::UserInfoSvcs
     bool use_add_profile_on_match,
     unsigned long max_base_profile_waiters,
     unsigned long max_temp_profile_waiters,
-    unsigned long max_freqcap_profile_waiters)
+    unsigned long max_freqcap_profile_waiters,
+    unsigned long rocksdb_batching_threads)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
@@ -111,7 +112,8 @@ namespace AdServer::UserInfoSvcs
       BASE_CHUNK_PREFIX,
       AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
         base_level_map_traits.expire_time),
-      max_base_profile_waiters);
+      max_base_profile_waiters,
+      rocksdb_batching_threads);
 
     temp_profiles_ = open_chunked_map_<UserProfileMap>(
       common_chunks_number,
@@ -119,28 +121,35 @@ namespace AdServer::UserInfoSvcs
       TEMP_CHUNK_PREFIX,
       AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
         temp_level_map_traits.expire_time),
-      max_temp_profile_waiters);
+      max_temp_profile_waiters,
+      rocksdb_batching_threads);
 
     add_profiles_ = open_chunked_map_<UserProfileMap>(
       common_chunks_number,
       chunk_folders,
       ADD_CHUNK_PREFIX,
       AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-        add_level_map_traits.expire_time));
+        add_level_map_traits.expire_time),
+      0,
+      rocksdb_batching_threads);
 
     history_profiles_ = open_chunked_map_<UserProfileMap>(
       common_chunks_number,
       chunk_folders,
       HISTORY_CHUNK_PREFIX,
       AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-        history_level_map_traits.expire_time));
+        history_level_map_traits.expire_time),
+      0,
+      rocksdb_batching_threads);
 
     temp_history_profiles_ = open_chunked_map_<UserProfileMap>(
       common_chunks_number,
       chunk_folders,
       TEMP_HISTORY_CHUNK_PREFIX,
       AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
-        temp_level_map_traits.expire_time));
+        temp_level_map_traits.expire_time),
+      0,
+      rocksdb_batching_threads);
 
     freq_cap_profiles_ = open_chunked_map_<UserProfileMap>(
       common_chunks_number,
@@ -148,7 +157,8 @@ namespace AdServer::UserInfoSvcs
       FREQCAP_CHUNK_PREFIX,
       AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
         freq_cap_level_map_traits.expire_time),
-      max_freqcap_profile_waiters);
+      max_freqcap_profile_waiters,
+      rocksdb_batching_threads);
   }
 
   AdServer::Commons::StartableAwaitable<bool>
@@ -1719,7 +1729,8 @@ namespace AdServer::UserInfoSvcs
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* chunk_prefix,
     const AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits& profile_map_traits,
-    unsigned long max_waiters)
+    unsigned long max_waiters,
+    unsigned long rocksdb_batching_threads)
     /*throw(Exception)*/
   {
     static const char* FUN = "open_chunked_map_()";
@@ -1738,7 +1749,9 @@ namespace AdServer::UserInfoSvcs
             profile_map_traits,
             AdServer::Commons::uuid_distribution_hash,
             max_waiters,
-            true);
+            true,
+            ".rocksdb",
+            rocksdb_batching_threads);
       add_child_object(profile_map.second);
       return profile_map.first;
     }

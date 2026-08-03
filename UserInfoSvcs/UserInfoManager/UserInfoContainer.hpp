@@ -76,7 +76,8 @@ namespace AdServer::UserInfoSvcs
       bool use_add_profile_on_match,
       unsigned long max_base_profile_waiters,
       unsigned long max_temp_profile_waiters,
-      unsigned long max_freqcap_profile_waiters)
+      unsigned long max_freqcap_profile_waiters,
+      unsigned long rocksdb_batching_threads)
       /*throw(Exception)*/;
 
     AdServer::Commons::StartableAwaitable<bool>
@@ -246,7 +247,8 @@ namespace AdServer::UserInfoSvcs
       const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
       const char* chunk_prefix,
       const AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits& profile_map_traits,
-      unsigned long max_waiters = 0)
+      unsigned long max_waiters = 0,
+      unsigned long rocksdb_batching_threads = 2)
       /*throw(Exception)*/;
 
     void trace_match_request_(

@@ -252,6 +252,8 @@ namespace
         Generics::Time(*config.Storage().dump_period());
     }
     core_config.storage.portions = config.Storage().portions();
+    core_config.storage.rocksdb_batching_threads =
+      config.Storage().rocksdb_batching_threads();
     core_config.storage.load_slave =
       config.Storage().user_bind_keep_mode() == "keep slave";
 

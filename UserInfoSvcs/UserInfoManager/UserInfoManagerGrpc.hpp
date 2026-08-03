@@ -65,7 +65,7 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port,
-      std::size_t process_threads = 128,
+      std::size_t process_threads = 16,
       std::size_t cq_threads = 16,
       std::size_t max_sequential_ops = 0);
 

@@ -43,7 +43,8 @@ namespace AdServer::UserInfoSvcs
       unsigned long portions_number,
       bool load_slave,
       unsigned long partition_index, // instance partition number (first or second part of cluster)
-      unsigned long partitions_number)
+      unsigned long partitions_number,
+      unsigned long rocksdb_batching_threads = 2)
       /*throw(Exception)*/;
 
     static void

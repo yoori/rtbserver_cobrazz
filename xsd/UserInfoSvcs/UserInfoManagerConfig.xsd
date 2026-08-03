@@ -158,6 +158,7 @@
     <xsd:attribute name="repeat_trigger_timeout" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="use_add_profile_on_match" type="xsd:boolean" use="required"/>
     <xsd:attribute name="history_optimization_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="2"/>
     <xsd:attribute name="root_dir" type="xsd:string" use="required"/>
     <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>

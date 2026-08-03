@@ -134,6 +134,7 @@
     <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="bound_expire_time" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="portions" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="2"/>
 
     <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
     <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>

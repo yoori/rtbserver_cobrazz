@@ -1623,7 +1623,8 @@ namespace AdServer::UserInfoSvcs
         user_info_manager_config_.use_add_profile_on_match(),
         user_info_manager_config_.max_base_profile_waiters(),
         user_info_manager_config_.max_temp_profile_waiters(),
-        user_info_manager_config_.max_freqcap_profile_waiters());
+        user_info_manager_config_.max_freqcap_profile_waiters(),
+        user_info_manager_config_.rocksdb_batching_threads());
 
       user_info_container->activate_object();
 

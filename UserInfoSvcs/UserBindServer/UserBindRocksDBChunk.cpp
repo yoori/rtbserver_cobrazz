@@ -14,7 +14,6 @@ namespace AdServer::UserInfoSvcs
 {
   namespace
   {
-    constexpr unsigned long DEFAULT_WORKERS = 2;
     constexpr unsigned long DEFAULT_BATCH_SIZE = 128;
     constexpr unsigned long DEFAULT_LOCKS = 1000;
     constexpr std::uint32_t PROFILE_VERSION = 1;
@@ -25,13 +24,14 @@ namespace AdServer::UserInfoSvcs
     const char* user_bind_path,
     const Generics::Time& bound_expire_time,
     std::optional<Generics::Time> bind_min_age,
-    unsigned long max_bad_event)
+    unsigned long max_bad_event,
+    unsigned long workers_count)
     : bind_min_age_(bind_min_age),
       max_bad_event_(max_bad_event),
       user_bind_map_(new RocksDBMap(
         String::SubString(user_bind_path),
         bound_expire_time,
-        DEFAULT_WORKERS,
+        workers_count,
         DEFAULT_BATCH_SIZE,
         Generics::Time::ZERO,
         true)),

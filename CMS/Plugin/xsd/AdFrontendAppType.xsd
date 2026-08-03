@@ -177,6 +177,7 @@
 
   <xsd:complexType name="FCGIGrpcConfigType">
     <xsd:attribute name="threads" type="xsd:positiveInteger" default="64"/>
+    <xsd:attribute name="grpc_coalesce_threads" type="xsd:positiveInteger" default="16"/>
   </xsd:complexType>
 
   <xsd:complexType name="AdFrontendCommonConfigType">
@@ -942,7 +943,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="server_limit" type="xsd:positiveInteger" default="1">
+    <xsd:attribute name="server_limit" type="xsd:positiveInteger" default="16">
       <xsd:annotation>
         <xsd:documentation>
           Upper limit on configurable number of frontend processes.

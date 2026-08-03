@@ -35,8 +35,8 @@
       <xsl:value-of select="concat($config-root,'/',$out-dir,'/FeConfig.xml')"/>
     </xsl:attribute>
     <xsl:attribute name="grpc_coalesce_threads">
-      <xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbConfig/@threads"/>
-      <xsl:if test="count($fcgi-rtbserver-config/cfg:rtbConfig/@threads) = 0">64</xsl:if>
+      <xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbConfig/@grpc_coalesce_threads"/>
+      <xsl:if test="count($fcgi-rtbserver-config/cfg:rtbConfig/@grpc_coalesce_threads) = 0">16</xsl:if>
     </xsl:attribute>
     <xsl:attribute name="service_index">
       <xsl:choose>

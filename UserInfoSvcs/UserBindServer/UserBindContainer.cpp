@@ -51,7 +51,8 @@ namespace AdServer::UserInfoSvcs
     unsigned long /*portions_number*/,
     bool /*load_slave*/,
     unsigned long /*partition_index*/, // instance partition number (first or second part of cluster)
-    unsigned long /*partitions_number*/)
+    unsigned long /*partitions_number*/,
+    unsigned long rocksdb_batching_threads)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       common_chunks_number_(common_chunks_number)
@@ -70,7 +71,8 @@ namespace AdServer::UserInfoSvcs
         user_bind_path.c_str(),
         bound_extend_time_period * 4,
         bind_min_age,
-        max_bad_event);
+        max_bad_event,
+        rocksdb_batching_threads);
 
       chunks_[chunk_it->first] = rocksdb_chunk;
     }

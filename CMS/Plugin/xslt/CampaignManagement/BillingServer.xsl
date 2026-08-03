@@ -118,7 +118,7 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <cfg:GrpcConfig cq_threads="16" max_sequential_ops="{$billing-server-grpc-max-sequential-ops}">
+    <cfg:GrpcConfig cq_threads="4" max_sequential_ops="{$billing-server-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*" port="{$billing-server-grpc-port}"/>
     </cfg:GrpcConfig>
 

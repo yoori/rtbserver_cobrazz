@@ -40,6 +40,7 @@ namespace AdServer::UserInfoSvcs
       Generics::Time bound_expire_time;
       std::optional<Generics::Time> dump_period;
       unsigned long portions = 0;
+      unsigned long rocksdb_batching_threads = 2;
       bool load_slave = false;
     };
 
