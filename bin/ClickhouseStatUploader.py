@@ -13,6 +13,20 @@ import atexit
 import jinja2
 
 
+R_ACTION_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS RAction ("
+  "timestamp DateTime, "
+  "device String, "
+  "ip String, "
+  "uid String, "
+  "url String, "
+  "action_id String, "
+  "order_id String, "
+  "order_value Decimal(18, 8)"
+  ") ENGINE = MergeTree ORDER BY (timestamp, uid, action_id)"
+)
+
+
 class Config(object):
   clickhouse_conn: str = None
   pid_file: str = None
@@ -78,55 +92,53 @@ class SignalInterruptHandler(object):
 
 
 """
-RImpressionUploader: uploaded for RImpression logs.
+ClickhouseCsvUploader: uploaded CSV logs to ClickHouse.
 """
-class RImpressionUploader(object) :
+class ClickhouseCsvUploader(object) :
   clickhouse_conn : str
   command_line_templ : jinja2.Template
+  create_table_command_line_templ : jinja2.Template
+  create_table_query : str
   logger = None
+  raise_on_upload_error : bool
 
-  def __init__(self, config, logger = None) :
+  def __init__(
+      self,
+      config,
+      adapter_script,
+      target_table,
+      logger = None,
+      create_table_query = None,
+      raise_on_upload_error = True,
+  ) :
     self.clickhouse_conn = config.clickhouse_conn
+    self.create_table_query = create_table_query
     self.command_line_templ = jinja2.Template(
-      "RImpressionClickhouseAdapter.py {{ process_files|join(' ') }} | clickhouse-client {{clickhouse_conn}} " +
-      '--query="INSERT INTO RImpression FORMAT CSV"')
+      adapter_script + " {{ process_files|join(' ') }} | clickhouse-client {{clickhouse_conn}} " +
+      '--query="INSERT INTO ' + target_table + ' FORMAT CSV"')
+    self.create_table_command_line_templ = jinja2.Template(
+      'clickhouse-client {{clickhouse_conn}} --query="{{create_table_query}}"')
     self.logger = logger
+    self.raise_on_upload_error = raise_on_upload_error
 
-  def process(self, process_files) :
-    # init sql for upload
-    command_line = self.command_line_templ.render({
+  def init_storage(self) :
+    if not self.create_table_query:
+      return
+
+    command_line = self.create_table_command_line_templ.render({
       'clickhouse_conn' : self.clickhouse_conn,
-      'process_files' : process_files
+      'create_table_query' : self.create_table_query,
     })
     try :
-      self.logger.debug("To upload " + " ".join(process_files))
+      self.logger.debug("To create target table: " + command_line)
       ret_code = os.system(command_line)
-      self.logger.debug("From upload " + " ".join(process_files) + "': " + str(ret_code))
-      if ret_code == 0 :
-        for process_file in process_files:
-          os.unlink(process_file)
-      else :
-        raise Exception("Error on upload " + " ".join(process_files) + ": command_line = '" + command_line + "'")
+      self.logger.debug("From create target table: " + str(ret_code))
+      if ret_code != 0 :
+        raise Exception("Error on create target table: command_line = '" + command_line + "'")
     except Exception as e :
-      self.logger.exception("Exception on upload " + " ".join(process_files) + ": " +
+      self.logger.exception("Exception on create target table: " +
         str(e) + ", command_line = '" + command_line + "'")
       raise
-
-
-"""
-RClickUploader: uploaded for RImpression logs.
-"""
-class RClickUploader(object) :
-  clickhouse_conn : str
-  command_line_templ : jinja2.Template
-  logger = None
-
-  def __init__(self, config, logger = None) :
-    self.clickhouse_conn = config.clickhouse_conn
-    self.command_line_templ = jinja2.Template(
-      "RClickClickhouseAdapter.py {{ process_files|join(' ') }} | clickhouse-client {{clickhouse_conn}} " +
-      '--query="INSERT INTO RImpression FORMAT CSV"')
-    self.logger = logger
 
   def process(self, process_files) :
     # init sql for upload
@@ -142,10 +154,57 @@ class RClickUploader(object) :
         for process_file in process_files:
           os.unlink(process_file)
       else :
-        self.logger.error("Error on upload " + " ".join(process_files) + ": command_line = '" + command_line + "'")
+        message = "Error on upload " + " ".join(process_files) + ": command_line = '" + command_line + "'"
+        if self.raise_on_upload_error:
+          raise Exception(message)
+        else :
+          self.logger.error(message)
     except Exception as e :
-      self.logger.error("Exception on upload " + " ".join(process_files) + "': " + str(e) +
-        ", command_line = '" + command_line + "'")
+      if self.raise_on_upload_error:
+        self.logger.exception("Exception on upload " + " ".join(process_files) + ": " +
+          str(e) + ", command_line = '" + command_line + "'")
+        raise
+      else :
+        self.logger.error("Exception on upload " + " ".join(process_files) + ": " + str(e) +
+          ", command_line = '" + command_line + "'")
+
+
+"""
+RImpressionUploader: uploaded for RImpression logs.
+"""
+class RImpressionUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'RImpressionClickhouseAdapter.py',
+      'RImpression',
+      logger = logger)
+
+
+"""
+RClickUploader: uploaded for RImpression logs.
+"""
+class RClickUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'RClickClickhouseAdapter.py',
+      'RImpression',
+      logger = logger,
+      raise_on_upload_error = False)
+
+
+"""
+RActionUploader: uploaded for RAction logs.
+"""
+class RActionUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'RActionClickhouseAdapter.py',
+      'RAction',
+      logger = logger,
+      create_table_query = R_ACTION_CREATE_TABLE_QUERY)
 
 
 def check_stat_files(
@@ -156,6 +215,10 @@ def check_stat_files(
 ) :
   for check_root in config.check_roots :
     logger.debug("Check root '" + check_root + "'")
+    if not os.path.isdir(check_root):
+      logger.debug("Skip missing root '" + check_root + "'")
+      continue
+
     check_files = [ x for x in os.listdir(check_root) ]
 
     processing_groups: typing.Dict[str, typing.List] = {}
@@ -195,7 +258,7 @@ def check_stat_files(
 
 
 def main() :
-  parser = argparse.ArgumentParser(description = 'RImpressionStatUploader.')
+  parser = argparse.ArgumentParser(description = 'ClickhouseStatUploader.')
   parser.add_argument("-c", "--config", type = str, default = "./rimpressionStatUploader.conf")
   args = parser.parse_args()
   config = Config()
@@ -231,6 +294,10 @@ def main() :
   processors = {}
   processors['RImpression'] = RImpressionUploader(config, logger = logger)
   processors['RClick'] = RClickUploader(config, logger = logger)
+  processors['RAction'] = RActionUploader(config, logger = logger)
+
+  for processor in processors.values():
+    processor.init_storage()
 
   with SignalInterruptHandler(
     [ signal.SIGINT, signal.SIGUSR1, signal.SIGHUP ],

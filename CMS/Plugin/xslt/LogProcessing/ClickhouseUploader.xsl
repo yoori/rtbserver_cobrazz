@@ -50,7 +50,8 @@
   "clickhouse_conn": "<xsl:value-of select="$clickhouse-conn"/>",
   "check_roots": [
     "<xsl:value-of select="concat($workspace-root, '/log/Predictor/ResearchLogs/ResearchImpression')"/>",
-    "<xsl:value-of select="concat($workspace-root, '/log/Predictor/ResearchLogs/ResearchClick')"/>"
+    "<xsl:value-of select="concat($workspace-root, '/log/Predictor/ResearchLogs/ResearchClick')"/>",
+    "<xsl:value-of select="concat($workspace-root, '/log/Predictor/ResearchLogs/ResearchAction')"/>"
   ],
   "error_root": "<xsl:value-of select="concat($workspace-root, '/log/ClickhouseUploader/Error')"/>",
   "batch": <xsl:value-of select="$batch"/>

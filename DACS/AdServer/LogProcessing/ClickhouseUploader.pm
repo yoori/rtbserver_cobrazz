@@ -19,7 +19,7 @@ sub start
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
     "{ " .
-      "setsid -f RImpressionStatUploader.py " .
+      "setsid -f ClickhouseStatUploader.py " .
         "-c \${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ClickhouseUploaderConfig.json " .
         " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ClickhouseUploader.out 2>&1 < /dev/null ; " .
     "}";
