@@ -78,6 +78,7 @@ sub start
     "fi && " .
     "ulimit -n 4096 && " .
     "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
+    "ADS_THREAD_AFFINITY=round_robin_all " .
     "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} CampaignManager " .
     #"{ scl enable devtoolset-8 -- valgrind --tool=callgrind CampaignManager " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CampaignManagerConfig.xml " .

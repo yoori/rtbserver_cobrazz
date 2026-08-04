@@ -17,7 +17,8 @@
 enum Mode
 {
   MODE_DISABLED,
-  MODE_ROUND_ROBIN
+  MODE_ROUND_ROBIN,
+  MODE_ROUND_ROBIN_ALL
 };
 
 struct Config
@@ -31,12 +32,25 @@ struct Config
   int verbose;
 };
 
+struct StartContext
+{
+  void* (*start_routine)(void*);
+  void* arg;
+};
+
+typedef int (*PthreadCreate)(
+  pthread_t*,
+  const pthread_attr_t*,
+  void* (*)(void*),
+  void*);
+
 typedef int (*PthreadSetname)(pthread_t, const char*);
 
 static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 static struct Config config;
 static uint64_t next_cpu_index = 0;
 static __thread int current_thread_cpu = -1;
+static PthreadCreate real_pthread_create = NULL;
 static PthreadSetname real_pthread_setname = NULL;
 
 static int
@@ -270,22 +284,33 @@ init_config()
   }
 
   const char* mode = getenv("ADS_THREAD_AFFINITY");
-  if (!is_enabled_value(mode))
+  if (mode && strcmp(mode, "round_robin_all") == 0)
+  {
+    config.mode = MODE_ROUND_ROBIN_ALL;
+  }
+  else if (is_enabled_value(mode))
+  {
+    config.mode = MODE_ROUND_ROBIN;
+  }
+  else
   {
     config.mode = MODE_DISABLED;
     return;
   }
 
-  config.mode = MODE_ROUND_ROBIN;
   config.verbose = is_enabled_value(getenv("ADS_THREAD_AFFINITY_VERBOSE"));
   parse_cpu_list(getenv("ADS_THREAD_AFFINITY_CPUS"));
   shuffle_auto_cpus();
 
+  real_pthread_create = (PthreadCreate)dlsym(RTLD_NEXT, "pthread_create");
   real_pthread_setname = (PthreadSetname)dlsym(RTLD_NEXT, "pthread_setname_np");
 
   if (config.verbose)
   {
-    write_literal("thread-affinity-preload: mode=round_robin cpus=");
+    write_literal("thread-affinity-preload: mode=");
+    write_literal(
+      config.mode == MODE_ROUND_ROBIN_ALL ? "round_robin_all" : "round_robin");
+    write_literal(" cpus=");
     for (unsigned int i = 0; i < config.cpu_count; ++i)
     {
       if (i != 0)
@@ -303,7 +328,7 @@ apply_current_thread_affinity()
 {
   pthread_once(&init_once, init_config);
 
-  if (config.mode != MODE_ROUND_ROBIN || config.cpu_count == 0)
+  if (config.mode == MODE_DISABLED || config.cpu_count == 0)
   {
     return 0;
   }
@@ -377,6 +402,63 @@ release_current_thread_affinity()
   }
 }
 
+static void*
+thread_start_wrapper(void* arg)
+{
+  struct StartContext* context = (struct StartContext*)arg;
+  void* (*start_routine)(void*) = context->start_routine;
+  void* start_arg = context->arg;
+  free(context);
+
+  apply_current_thread_affinity();
+  return start_routine(start_arg);
+}
+
+int
+pthread_create(
+  pthread_t* thread,
+  const pthread_attr_t* attr,
+  void* (*start_routine)(void*),
+  void* arg)
+{
+  pthread_once(&init_once, init_config);
+
+  if (!real_pthread_create)
+  {
+    real_pthread_create = (PthreadCreate)dlsym(RTLD_NEXT, "pthread_create");
+    if (!real_pthread_create)
+    {
+      return EAGAIN;
+    }
+  }
+
+  if (config.mode != MODE_ROUND_ROBIN_ALL)
+  {
+    return real_pthread_create(thread, attr, start_routine, arg);
+  }
+
+  struct StartContext* context = malloc(sizeof(struct StartContext));
+  if (!context)
+  {
+    return real_pthread_create(thread, attr, start_routine, arg);
+  }
+
+  context->start_routine = start_routine;
+  context->arg = arg;
+
+  const int result = real_pthread_create(
+    thread,
+    attr,
+    thread_start_wrapper,
+    context);
+  if (result != 0)
+  {
+    free(context);
+  }
+
+  return result;
+}
+
 int
 pthread_setname_np(pthread_t thread, const char* name)
 {
@@ -394,24 +476,26 @@ pthread_setname_np(pthread_t thread, const char* name)
 
   const int no_affinity = strncmp(name, "na:", 3) == 0;
   const int apply_affinity = strncmp(name, "ca:", 3) == 0;
+  const int affinity_by_default = config.mode == MODE_ROUND_ROBIN_ALL;
   const char* effective_name = no_affinity || apply_affinity ? name + 3 : name;
 
   if (no_affinity &&
-    config.mode == MODE_ROUND_ROBIN &&
+    config.mode != MODE_DISABLED &&
     pthread_equal(thread, pthread_self()))
   {
     release_current_thread_affinity();
     return real_pthread_setname(thread, effective_name);
   }
 
-  if (apply_affinity && pthread_equal(thread, pthread_self()))
+  if ((apply_affinity || affinity_by_default) &&
+    pthread_equal(thread, pthread_self()))
   {
     apply_current_thread_affinity();
   }
 
-  if (config.mode != MODE_ROUND_ROBIN ||
+  if (config.mode == MODE_DISABLED ||
     current_thread_cpu < 0 ||
-    !apply_affinity ||
+    (!apply_affinity && !affinity_by_default) ||
     !pthread_equal(thread, pthread_self()))
   {
     return real_pthread_setname(thread, effective_name);
@@ -433,4 +517,14 @@ pthread_setname_np(pthread_t thread, const char* name)
   thread_name[prefix_size + (size_t)suffix_size] = '\0';
 
   return real_pthread_setname(thread, thread_name);
+}
+
+__attribute__((constructor)) static void
+thread_affinity_preload_init()
+{
+  pthread_once(&init_once, init_config);
+  if (config.mode == MODE_ROUND_ROBIN_ALL)
+  {
+    apply_current_thread_affinity();
+  }
 }
