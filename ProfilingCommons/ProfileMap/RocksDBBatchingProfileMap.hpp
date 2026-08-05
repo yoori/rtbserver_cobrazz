@@ -1,11 +1,15 @@
 #pragma once
 
 #include <atomic>
+#include <boost/intrusive/set.hpp>
+#include <condition_variable>
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 #include <String/SubString.hpp>
 
@@ -24,7 +28,6 @@ namespace rocksdb
 namespace AdServer::ProfilingCommons
 {
   class RocksDBProfileMapProcessor;
-  struct RocksDBProfileMapProcessorQueue;
 
   struct DefaultRocksDBBatchingKeyAdapter
   {
@@ -164,8 +167,6 @@ namespace AdServer::ProfilingCommons
 
   private:
     friend class RocksDBProfileMapProcessor;
-    friend struct RocksDBProfileMapProcessorQueue;
-
     enum OperationType
     {
       OT_CHECK,
@@ -189,6 +190,39 @@ namespace AdServer::ProfilingCommons
     };
 
     using Operations = std::list<Operation>;
+
+    struct ProcessorQueue final
+    {
+      using InFlightKeys = std::unordered_map<std::string, unsigned long>;
+      using ReadyHook = boost::intrusive::set_member_hook<
+        boost::intrusive::link_mode<boost::intrusive::safe_link>>;
+
+      ProcessorQueue(
+        RocksDBBatchingProfileMapImpl& map_impl,
+        unsigned long batch_size,
+        const Generics::Time& max_delay);
+
+      RocksDBBatchingProfileMapImpl& map_impl;
+      const unsigned long batch_size;
+      const Generics::Time max_delay;
+
+      mutable std::mutex lock;
+      mutable std::condition_variable drain_condition;
+      Operations read_operations;
+      Operations write_operations;
+      InFlightKeys in_flight_read_keys;
+      InFlightKeys in_flight_write_keys;
+      std::atomic<unsigned long> active_workers{0};
+      bool registered = false;
+      bool accepting = false;
+
+      Generics::Time oldest_operation_time;
+      Generics::Time ready_time;
+      bool ready_write_operations = false;
+      std::atomic<bool> ready_indexed{false};
+      ReadyHook ready_hook;
+    };
+
     struct BatchScratch;
 
     static std::shared_ptr<BatchScratch> create_batch_scratch_();
@@ -218,7 +252,7 @@ namespace AdServer::ProfilingCommons
     const bool disable_wal_;
 
     const std::shared_ptr<RocksDBProfileMapProcessor> processor_;
-    std::shared_ptr<RocksDBProfileMapProcessorQueue> processor_queue_;
+    mutable ProcessorQueue processor_queue_;
     bool owns_processor_;
 
     std::unique_ptr<rocksdb::DBWithTTL> db_;

@@ -330,6 +330,48 @@ main()
     first->deactivate_object();
     first->wait_object();
     first.reset();
+
+    constexpr unsigned long lifecycle_maps = 20;
+    constexpr unsigned long lifecycle_operations = 200;
+    for(unsigned long map_index = 0; map_index < lifecycle_maps; ++map_index)
+    {
+      auto map = std::make_unique<ProfileMap>(
+        processor,
+        String::SubString(
+          (root / ("lifecycle-" + std::to_string(map_index))).string()),
+        Generics::Time::ZERO,
+        8,
+        Generics::Time(1),
+        true);
+      map->activate_object();
+
+      auto lifecycle_done = std::make_shared<std::atomic<unsigned long>>(0);
+      for(unsigned long i = 0; i < lifecycle_operations; ++i)
+      {
+        auto lifecycle_profile = make_profile("lifecycle-value");
+        map->save_profile_async(
+          "key-" + std::to_string(i),
+          lifecycle_profile.in(),
+          Generics::Time::get_time_of_day(),
+          [&, lifecycle_done](std::optional<std::string> error)
+          {
+            if(error)
+            {
+              errors.fetch_add(1, std::memory_order_relaxed);
+            }
+            lifecycle_done->fetch_add(1, std::memory_order_relaxed);
+          });
+      }
+
+      map->deactivate_object();
+      map->wait_object();
+      if(lifecycle_done->load(std::memory_order_relaxed) != lifecycle_operations)
+      {
+        throw std::runtime_error(
+          "map destroyed while selected workers were still active");
+      }
+    }
+
     processor->deactivate_object();
     processor->wait_object();
 

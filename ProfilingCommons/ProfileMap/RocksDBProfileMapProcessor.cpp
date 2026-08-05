@@ -6,15 +6,6 @@
 
 namespace AdServer::ProfilingCommons
 {
-  RocksDBProfileMapProcessorQueue::RocksDBProfileMapProcessorQueue(
-    ProfileMapImpl* map_impl_val,
-    unsigned long batch_size_val,
-    const Generics::Time& max_delay_val)
-    : map_impl(map_impl_val),
-      batch_size(std::max(1UL, batch_size_val)),
-      max_delay(max_delay_val)
-  {}
-
   bool
   RocksDBProfileMapProcessor::ReadyCompare::operator()(
     const MapQueue& left,
@@ -30,9 +21,9 @@ namespace AdServer::ProfilingCommons
 
   RocksDBProfileMapProcessor::~RocksDBProfileMapProcessor() noexcept
   {
-    for(auto& [_, map_queue] : map_queues_)
+    while(!ready_.empty())
     {
-      remove_from_ready_(*map_queue);
+      remove_from_ready_i_(*ready_.begin());
     }
   }
 
@@ -73,29 +64,9 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapProcessor::deactivate_object_()
   {
-    std::vector<MapQueuePtr> map_queues;
     {
       std::lock_guard guard(ready_lock_);
       accepting_.store(false, std::memory_order_release);
-      map_queues.reserve(map_queues_.size());
-      for(const auto& [_, map_queue] : map_queues_)
-      {
-        map_queues.emplace_back(map_queue);
-      }
-    }
-
-    for(const auto& map_queue : map_queues)
-    {
-      {
-        std::lock_guard guard(map_queue->lock);
-        map_queue->accepting = false;
-        update_ready_(*map_queue, oldest_ready_operation_(*map_queue));
-      }
-      map_queue->drain_condition.notify_all();
-    }
-
-    {
-      std::lock_guard guard(ready_lock_);
       stopping_.store(true, std::memory_order_release);
     }
     ready_cond_.notify_all();
@@ -112,41 +83,43 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  RocksDBProfileMapProcessor::register_map_(
-    ProfileMapImpl& map_impl,
-    unsigned long batch_size,
-    const Generics::Time& max_delay)
+  RocksDBProfileMapProcessor::register_map_(ProfileMapImpl& map_impl)
   {
-    std::lock_guard guard(ready_lock_);
+    MapQueue& map_queue = map_impl.processor_queue_;
+    std::lock_guard map_guard(map_queue.lock);
+    std::lock_guard ready_guard(ready_lock_);
+
     if (!accepting_.load(std::memory_order_acquire))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBProfileMapProcessor::register_map_(): processor isn't active");
     }
 
-    auto map_queue = std::make_shared<MapQueue>(&map_impl, batch_size, max_delay);
-    const auto [_, inserted] = map_queues_.emplace(&map_impl, map_queue);
-
-    if (!inserted)
+    if (map_queue.registered)
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBProfileMapProcessor::register_map_(): map is already registered");
     }
 
-    map_impl.processor_queue_ = std::move(map_queue);
+    map_queue.registered = true;
+    map_queue.accepting = true;
   }
 
   void
   RocksDBProfileMapProcessor::unregister_map_(ProfileMapImpl& map_impl) noexcept
   {
-    MapQueue& map_queue = *map_impl.processor_queue_;
+    MapQueue& map_queue = map_impl.processor_queue_;
 
     bool signal_worker = false;
 
     {
       std::lock_guard guard(map_queue.lock);
+      if (!map_queue.registered)
+      {
+        return;
+      }
       map_queue.accepting = false;
-      signal_worker = update_ready_(map_queue, oldest_ready_operation_(map_queue));
+      signal_worker = update_ready_(map_queue, oldest_ready_operation_i_(map_queue));
     }
 
     map_queue.drain_condition.notify_all();
@@ -160,41 +133,46 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapProcessor::wait_unregister_map_(ProfileMapImpl& map_impl)
   {
-    const MapQueuePtr map_queue = map_impl.processor_queue_;
+    MapQueue& map_queue = map_impl.processor_queue_;
 
     bool signal_worker = false;
 
     {
-      std::lock_guard map_guard(map_queue->lock);
-      map_queue->accepting = false;
-      signal_worker = update_ready_(*map_queue, oldest_ready_operation_(*map_queue));
+      std::lock_guard map_guard(map_queue.lock);
+      if (!map_queue.registered)
+      {
+        return;
+      }
+      map_queue.accepting = false;
+      signal_worker = update_ready_(map_queue, oldest_ready_operation_i_(map_queue));
     }
 
-    map_queue->drain_condition.notify_all();
+    map_queue.drain_condition.notify_all();
 
     if (signal_worker)
     {
       ready_cond_.notify_all();
     }
 
-    std::unique_lock map_guard(map_queue->lock);
+    std::unique_lock map_guard(map_queue.lock);
     while (true)
     {
-      while (!empty_(*map_queue) || map_queue->processing_batches != 0)
+      while (!empty_i_(map_queue) ||
+        map_queue.active_workers.load(std::memory_order_relaxed) != 0)
       {
-        map_queue->drain_condition.wait(map_guard);
+        map_queue.drain_condition.wait(map_guard);
       }
 
       {
         std::lock_guard guard(ready_lock_);
-        const auto it = map_queues_.find(&map_impl);
-        if (it == map_queues_.end() || it->second != map_queue)
+        if (!empty_i_(map_queue) ||
+          map_queue.active_workers.load(std::memory_order_relaxed) != 0)
         {
-          return;
+          continue;
         }
 
-        remove_from_ready_(*map_queue);
-        map_queues_.erase(it);
+        remove_from_ready_i_(map_queue);
+        map_queue.registered = false;
         return;
       }
     }
@@ -202,24 +180,24 @@ namespace AdServer::ProfilingCommons
 
   bool
   RocksDBProfileMapProcessor::enqueue_operation_(
-    const ProfileMapImpl& map_impl,
-    Operation&& operation)
+    const ProfileMapImpl& map_impl, Operation&& operation)
   {
     Operations new_operations;
     new_operations.emplace_back(std::move(operation));
 
-    MapQueue* const map_queue = map_impl.processor_queue_.get();
-    if (!map_queue || !accepting_.load(std::memory_order_acquire))
+    MapQueue& map_queue = map_impl.processor_queue_;
+    if (!accepting_.load(std::memory_order_acquire))
     {
       return false;
     }
 
     bool signal_worker = false;
-    const auto now = Generics::Time::get_time_of_day();
+    const Generics::Time now = Generics::Time::get_time_of_day();
 
     {
-      std::lock_guard map_guard(map_queue->lock);
-      if (!map_queue->accepting || !accepting_.load(std::memory_order_acquire))
+      std::lock_guard map_guard(map_queue.lock);
+      if (!map_queue.registered || !map_queue.accepting ||
+        !accepting_.load(std::memory_order_acquire))
       {
         return false;
       }
@@ -228,21 +206,21 @@ namespace AdServer::ProfilingCommons
       operation_ref.enqueue_time = now;
       const bool write_operation = ProfileMapImpl::is_write_operation_(operation_ref.type);
       Operations& queue = write_operation ?
-        map_queue->write_operations :
-        map_queue->read_operations;
+        map_queue.write_operations :
+        map_queue.read_operations;
       const bool fills_batch =
-        queue.size() + 1 >= map_queue->batch_size &&
-        queue.size() < map_queue->batch_size;
-      const bool was_empty = empty_(*map_queue);
+        queue.size() + 1 >= map_queue.batch_size &&
+        queue.size() < map_queue.batch_size;
+      const bool was_empty = empty_i_(map_queue);
 
       queue.splice(queue.end(), new_operations);
       if (was_empty)
       {
-        signal_worker = update_ready_(*map_queue, &operation_ref);
+        signal_worker = update_ready_(map_queue, &operation_ref);
       }
       else if (fills_batch)
       {
-        signal_worker = promote_ready_(*map_queue, write_operation);
+        signal_worker = promote_ready_(map_queue, write_operation);
       }
     }
 
@@ -259,42 +237,42 @@ namespace AdServer::ProfilingCommons
   {
     AdServer::Commons::set_current_thread_name("rdb-batch");
 
-    MapQueuePtr map_queue;
+    MapQueue* map_queue = nullptr;
     Operations batch;
     SelectedKeys selected_keys;
     const auto scratch = ProfileMapImpl::create_batch_scratch_();
 
     while (pop_batch_(map_queue, batch, selected_keys))
     {
-      ProfileMapImpl* const map_impl = map_queue->map_impl;
+      ProfileMapImpl& map_impl = map_queue->map_impl;
       try
       {
-        map_impl->process_batch_(batch, *scratch);
+        map_impl.process_batch_(batch, *scratch);
       }
       catch(const eh::Exception& ex)
       {
-        map_impl->notify_failed_operations_(batch, ex.what());
+        map_impl.notify_failed_operations_(batch, ex.what());
 
-        Sync::PosixGuard guard(map_impl->error_lock_);
-        if (map_impl->background_error_.empty())
+        Sync::PosixGuard guard(map_impl.error_lock_);
+        if (map_impl.background_error_.empty())
         {
-          map_impl->background_error_ = ex.what();
+          map_impl.background_error_ = ex.what();
         }
       }
       catch(...)
       {
-        map_impl->notify_failed_operations_(batch, "unknown background error");
+        map_impl.notify_failed_operations_(batch, "unknown background error");
 
-        Sync::PosixGuard guard(map_impl->error_lock_);
-        if (map_impl->background_error_.empty())
+        Sync::PosixGuard guard(map_impl.error_lock_);
+        if (map_impl.background_error_.empty())
         {
-          map_impl->background_error_ = "unknown background error";
+          map_impl.background_error_ = "unknown background error";
         }
       }
 
       complete_batch_(*map_queue, batch);
 
-      map_queue.reset();
+      map_queue = nullptr;
 
       selected_keys.clear();
       selected_keys.reserve(batch.size());
@@ -305,7 +283,7 @@ namespace AdServer::ProfilingCommons
 
   bool
   RocksDBProfileMapProcessor::pop_batch_(
-    MapQueuePtr& map_queue, Operations& batch, SelectedKeys& selected_keys) noexcept
+    MapQueue*& map_queue, Operations& batch, SelectedKeys& selected_keys) noexcept
   {
     while (true)
     {
@@ -339,15 +317,9 @@ namespace AdServer::ProfilingCommons
             }
           }
 
-          const auto it = map_queues_.find(selected_queue.map_impl);
-          if (it == map_queues_.end())
-          {
-            remove_from_ready_(selected_queue);
-            continue;
-          }
-
-          map_queue = it->second;
-          remove_from_ready_(*map_queue);
+          map_queue = &selected_queue;
+          map_queue->active_workers.fetch_add(1, std::memory_order_relaxed);
+          remove_from_ready_i_(*map_queue);
           break;
         }
       }
@@ -365,10 +337,19 @@ namespace AdServer::ProfilingCommons
           {
             ++in_flight_keys[operation.key];
           }
-          ++map_queue->processing_batches;
         }
 
-        signal_worker = update_ready_(*map_queue, oldest_ready_operation_(*map_queue));
+        signal_worker = update_ready_(*map_queue, oldest_ready_operation_i_(*map_queue));
+
+        if (batch.empty())
+        {
+          const bool last_active_worker =
+            map_queue->active_workers.fetch_sub(1, std::memory_order_relaxed) == 1;
+          if (last_active_worker && empty_i_(*map_queue))
+          {
+            map_queue->drain_condition.notify_all();
+          }
+        }
       }
 
       if (signal_worker)
@@ -381,7 +362,7 @@ namespace AdServer::ProfilingCommons
         return true;
       }
 
-      map_queue.reset();
+      map_queue = nullptr;
     }
   }
 
@@ -389,7 +370,7 @@ namespace AdServer::ProfilingCommons
   RocksDBProfileMapProcessor::collect_batch_i_(
     MapQueue& map_queue, Operations& batch, SelectedKeys& selected_keys) noexcept
   {
-    if (empty_(map_queue))
+    if (empty_i_(map_queue))
     {
       return;
     }
@@ -406,7 +387,7 @@ namespace AdServer::ProfilingCommons
     }
     else
     {
-      const Operation* operation = oldest_ready_operation_(map_queue);
+      const Operation* operation = oldest_ready_operation_i_(map_queue);
       if (operation)
       {
         collect_from_queue_(
@@ -475,9 +456,9 @@ namespace AdServer::ProfilingCommons
     {
       std::lock_guard map_guard(map_queue.lock);
 
-      const Operation* const oldest_before = oldest_ready_operation_(map_queue);
+      const Operation* const oldest_before = oldest_ready_operation_i_(map_queue);
       const Generics::Time ready_time_before = oldest_before ?
-        operation_ready_time_(map_queue, *oldest_before) : Generics::Time::ZERO;
+        operation_ready_time_i_(map_queue, *oldest_before) : Generics::Time::ZERO;
       const bool write_operations_before = oldest_before &&
         ProfileMapImpl::is_write_operation_(oldest_before->type);
       const bool ready_indexed = map_queue.ready_indexed.load(std::memory_order_acquire);
@@ -495,14 +476,9 @@ namespace AdServer::ProfilingCommons
         }
       }
 
-      if (map_queue.processing_batches > 0)
-      {
-        --map_queue.processing_batches;
-      }
-
-      const Operation* const oldest_after = oldest_ready_operation_(map_queue);
+      const Operation* const oldest_after = oldest_ready_operation_i_(map_queue);
       const Generics::Time ready_time_after = oldest_after ?
-        operation_ready_time_(map_queue, *oldest_after) : Generics::Time::ZERO;
+        operation_ready_time_i_(map_queue, *oldest_after) : Generics::Time::ZERO;
       const bool write_operations_after = oldest_after &&
         ProfileMapImpl::is_write_operation_(oldest_after->type);
       if ((oldest_after && !ready_indexed) ||
@@ -512,9 +488,15 @@ namespace AdServer::ProfilingCommons
       {
         signal_worker = update_ready_(map_queue, oldest_after);
       }
+
+      const bool last_active_worker =
+        map_queue.active_workers.fetch_sub(1, std::memory_order_relaxed) == 1;
+      if (last_active_worker && empty_i_(map_queue))
+      {
+        map_queue.drain_condition.notify_all();
+      }
     }
 
-    map_queue.drain_condition.notify_all();
     if (signal_worker)
     {
       ready_cond_.notify_all();
@@ -531,7 +513,7 @@ namespace AdServer::ProfilingCommons
     if (operation)
     {
       write_operations = ProfileMapImpl::is_write_operation_(operation->type);
-      ready_time = operation_ready_time_(map_queue, *operation);
+      ready_time = operation_ready_time_i_(map_queue, *operation);
     }
 
     const Generics::Time now = Generics::Time::get_time_of_day();
@@ -542,7 +524,7 @@ namespace AdServer::ProfilingCommons
     const bool was_immediately_ready = was_indexed && map_queue.ready_time <= now;
     const Generics::Time previous_first_time = had_ready ?
       ready_.begin()->ready_time : Generics::Time::ZERO;
-    remove_from_ready_(map_queue);
+    remove_from_ready_i_(map_queue);
     if (operation)
     {
       map_queue.oldest_operation_time = operation->enqueue_time;
@@ -569,7 +551,7 @@ namespace AdServer::ProfilingCommons
       return false;
     }
 
-    remove_from_ready_(map_queue);
+    remove_from_ready_i_(map_queue);
     map_queue.ready_time = map_queue.oldest_operation_time;
     ready_.insert(map_queue);
     map_queue.ready_indexed.store(true, std::memory_order_release);
@@ -578,7 +560,7 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  RocksDBProfileMapProcessor::remove_from_ready_(MapQueue& map_queue) noexcept
+  RocksDBProfileMapProcessor::remove_from_ready_i_(MapQueue& map_queue) noexcept
   {
     if (map_queue.ready_hook.is_linked())
     {
@@ -589,7 +571,7 @@ namespace AdServer::ProfilingCommons
   }
 
   const RocksDBProfileMapProcessor::Operation*
-  RocksDBProfileMapProcessor::oldest_ready_operation_(const MapQueue& map_queue) noexcept
+  RocksDBProfileMapProcessor::oldest_ready_operation_i_(const MapQueue& map_queue) noexcept
   {
     const Operation* read_operation = nullptr;
     for(const auto& operation : map_queue.read_operations)
@@ -626,7 +608,7 @@ namespace AdServer::ProfilingCommons
   }
 
   Generics::Time
-  RocksDBProfileMapProcessor::operation_ready_time_(
+  RocksDBProfileMapProcessor::operation_ready_time_i_(
     const MapQueue& map_queue,
     const Operation& operation) noexcept
   {
@@ -640,7 +622,7 @@ namespace AdServer::ProfilingCommons
   }
 
   bool
-  RocksDBProfileMapProcessor::empty_(const MapQueue& map_queue) noexcept
+  RocksDBProfileMapProcessor::empty_i_(const MapQueue& map_queue) noexcept
   {
     return map_queue.read_operations.empty() && map_queue.write_operations.empty();
   }
@@ -648,12 +630,14 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapProcessor::wait_pending_operations_(ProfileMapImpl& map_impl)
   {
-    const MapQueuePtr map_queue = map_impl.processor_queue_;
+    MapQueue& map_queue = map_impl.processor_queue_;
 
-    std::unique_lock guard(map_queue->lock);
-    while (map_queue->accepting && (!empty_(*map_queue) || map_queue->processing_batches != 0))
+    std::unique_lock guard(map_queue.lock);
+    while (map_queue.accepting &&
+      (!empty_i_(map_queue) ||
+        map_queue.active_workers.load(std::memory_order_relaxed) != 0))
     {
-      map_queue->drain_condition.wait(guard);
+      map_queue.drain_condition.wait(guard);
     }
   }
 }

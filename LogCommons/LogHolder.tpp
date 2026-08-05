@@ -355,17 +355,15 @@ namespace LogProcessing
 
   inline
   Generics::Time
-  CompositeLogHolder::flush_if_required(
-    const Generics::Time& now) /*throw(eh::Exception)*/
+  CompositeLogHolder::flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/
   {
     Generics::Time next_flush_time;
     SyncPolicy::ReadGuard guard(lock_);
     for(LogHolderList::iterator it = child_log_holders_.begin();
-        it != child_log_holders_.end();
-        ++it)
+      it != child_log_holders_.end(); ++it)
     {
       Generics::Time local_next_flush_time = (*it)->flush_if_required(now);
-      if(local_next_flush_time != Generics::Time::ZERO)
+      if (local_next_flush_time != Generics::Time::ZERO)
       {
         next_flush_time = (next_flush_time == Generics::Time::ZERO ?
           local_next_flush_time :
@@ -518,8 +516,8 @@ namespace LogProcessing
 
   template<typename LogTraitsType, typename SavePolicy>
   Generics::Time
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::flush_if_required(
-    const Generics::Time& now) /*throw(eh::Exception)*/
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::flush_if_required(const Generics::Time& now)
+    /*throw(eh::Exception)*/
   {
     try
     {

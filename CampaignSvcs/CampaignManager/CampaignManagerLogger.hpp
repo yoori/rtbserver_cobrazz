@@ -27,8 +27,7 @@
 
 namespace AdServer::CampaignSvcs
 {
-  struct RequestBasicChannelsFlushTraits:
-    public AdServer::LogProcessing::LogFlushTraits
+  struct RequestBasicChannelsFlushTraits: public AdServer::LogProcessing::LogFlushTraits
   {
     double inventory_users_percentage;
     unsigned long distrib_count;
