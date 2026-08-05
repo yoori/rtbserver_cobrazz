@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -19,6 +20,11 @@
 #include <Commons/Containers.hpp>
 
 #include "UserBindProcessor.hpp"
+
+namespace AdServer::ProfilingCommons
+{
+  class RocksDBProfileMapProcessor;
+}
 
 namespace AdServer::UserInfoSvcs
 {
@@ -96,6 +102,7 @@ namespace AdServer::UserInfoSvcs
   private:
     const Logging::Logger_var logger_;
     const unsigned long common_chunks_number_;
+    std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor_;
     UserBindProcessorArray chunks_;
   };
 

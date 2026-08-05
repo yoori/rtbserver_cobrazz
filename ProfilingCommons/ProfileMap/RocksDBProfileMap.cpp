@@ -9,9 +9,7 @@
 #include "RocksDBProfileMap.hpp"
 #include "RocksDBOptions.hpp"
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   RocksDBProfileMapImpl::RocksDBProfileMapImpl(
     const String::SubString& path,
@@ -73,9 +71,7 @@ namespace ProfilingCommons
   }
 
   void
-  RocksDBProfileMapImpl::check_profile_async(
-    const std::string& key,
-    CheckCallback callback) const
+  RocksDBProfileMapImpl::check_profile_async(const std::string& key, CheckCallback callback) const
   {
     if(!callback)
     {
@@ -101,9 +97,7 @@ namespace ProfilingCommons
   }
 
   Generics::ConstSmartMemBuf_var
-  RocksDBProfileMapImpl::get_profile(
-    const std::string& key,
-    Generics::Time* last_access_time)
+  RocksDBProfileMapImpl::get_profile(const std::string& key, Generics::Time* last_access_time)
   {
     Generics::SmartMemBuf_var profile = get_own_profile(
       key,
@@ -212,9 +206,7 @@ namespace ProfilingCommons
   }
 
   bool
-  RocksDBProfileMapImpl::remove_profile(
-    const std::string& key,
-    OperationPriority)
+  RocksDBProfileMapImpl::remove_profile(const std::string& key, OperationPriority)
   {
     logical_write_operations_.fetch_add(1, std::memory_order_relaxed);
     physical_write_operations_.fetch_add(1, std::memory_order_relaxed);
@@ -228,15 +220,6 @@ namespace ProfilingCommons
     {
       return false;
     }
-
-    /*
-    if(!status.ok())
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": can't read record from DB: " << path_;
-      throw Exception(ostr.str());
-    }
-    */
 
     return true;
   }
@@ -269,9 +252,7 @@ namespace ProfilingCommons
   }
 
   void
-  RocksDBProfileMapImpl::clear_expired_async(
-    const Generics::Time&,
-    CompleteCallback complete)
+  RocksDBProfileMapImpl::clear_expired_async(const Generics::Time&, CompleteCallback complete)
   {
     if(complete)
     {
@@ -405,5 +386,4 @@ namespace ProfilingCommons
       throw Exception(ostr.str());
     }
   }
-}
 }

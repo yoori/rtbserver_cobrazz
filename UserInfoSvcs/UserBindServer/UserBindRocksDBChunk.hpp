@@ -26,6 +26,13 @@ namespace AdServer::UserInfoSvcs
       unsigned long max_bad_event,
       unsigned long workers_count);
 
+    UserBindRocksDBChunk(
+      std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor> processor,
+      const char* user_bind_path,
+      const Generics::Time& bound_expire_time,
+      std::optional<Generics::Time> bind_min_age,
+      unsigned long max_bad_event);
+
     AdServer::Commons::StartableAwaitable<UserInfo>
     co_add_user_id(
       const String::SubString& external_id,

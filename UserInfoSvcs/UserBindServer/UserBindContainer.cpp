@@ -7,6 +7,7 @@
 #include <Generics/DirSelector.hpp>
 #include <Generics/Rand.hpp>
 #include <String/RegEx.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
 #include <Commons/Algs.hpp>
 #include <LogCommons/LogCommons.hpp>
@@ -55,31 +56,49 @@ namespace AdServer::UserInfoSvcs
     unsigned long rocksdb_batching_threads)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
-      common_chunks_number_(common_chunks_number)
+      common_chunks_number_(common_chunks_number),
+      rocksdb_processor_(std::make_shared<
+        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(rocksdb_batching_threads))
   {
-    chunks_.resize(common_chunks_number);
+    rocksdb_processor_->activate_object();
 
-    // load chunks
-    // TODO : concurrent loading - local taskrunner with destroy
-    for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
-        chunk_it != chunk_folders.end(); ++chunk_it)
+    try
     {
-      const std::string user_bind_path = chunk_it->second + "/UserBind.rocksdb";
-      make_dir_if_required(user_bind_path);
+      chunks_.resize(common_chunks_number);
 
-      UserBindRocksDBChunk_var rocksdb_chunk = new UserBindRocksDBChunk(
-        user_bind_path.c_str(),
-        bound_extend_time_period * 4,
-        bind_min_age,
-        max_bad_event,
-        rocksdb_batching_threads);
+      // load chunks
+      // TODO : concurrent loading - local taskrunner with destroy
+      for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
+          chunk_it != chunk_folders.end(); ++chunk_it)
+      {
+        const std::string user_bind_path = chunk_it->second + "/UserBind.rocksdb";
+        make_dir_if_required(user_bind_path);
 
-      chunks_[chunk_it->first] = rocksdb_chunk;
+        UserBindRocksDBChunk_var rocksdb_chunk = new UserBindRocksDBChunk(
+          rocksdb_processor_,
+          user_bind_path.c_str(),
+          bound_extend_time_period * 4,
+          bind_min_age,
+          max_bad_event);
+
+        chunks_[chunk_it->first] = rocksdb_chunk;
+      }
+    }
+    catch(...)
+    {
+      chunks_.clear();
+      rocksdb_processor_->deactivate_object();
+      rocksdb_processor_->wait_object();
+      throw;
     }
   }
 
   UserBindContainer::~UserBindContainer() noexcept
-  {}
+  {
+    chunks_.clear();
+    rocksdb_processor_->deactivate_object();
+    rocksdb_processor_->wait_object();
+  }
 
   AdServer::Commons::StartableAwaitable<UserBindContainer::UserInfo>
   UserBindContainer::co_get_user_id(

@@ -4,17 +4,13 @@
 #include <cstdint>
 #include <list>
 #include <memory>
-#include <string>
-#include <thread>
-#include <unordered_set>
-#include <vector>
 #include <optional>
+#include <string>
 
 #include <String/SubString.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include <Sync/Condition.hpp>
 #include <Sync/PosixLock.hpp>
 #include <Generics/ActiveObject.hpp>
 
@@ -27,6 +23,9 @@ namespace rocksdb
 
 namespace AdServer::ProfilingCommons
 {
+  class RocksDBProfileMapProcessor;
+  struct RocksDBProfileMapProcessorQueue;
+
   struct DefaultRocksDBBatchingKeyAdapter
   {
     template<typename Type>
@@ -68,6 +67,14 @@ namespace AdServer::ProfilingCommons
       const String::SubString& path,
       const Generics::Time& expire_time,
       unsigned long workers_count = 2,
+      unsigned long batch_size = 128,
+      const Generics::Time& max_delay = Generics::Time::ZERO,
+      bool disable_wal = false);
+
+    RocksDBBatchingProfileMapImpl(
+      std::shared_ptr<RocksDBProfileMapProcessor> processor,
+      const String::SubString& path,
+      const Generics::Time& expire_time,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false);
@@ -156,6 +163,9 @@ namespace AdServer::ProfilingCommons
     void wait_object_() override;
 
   private:
+    friend class RocksDBProfileMapProcessor;
+    friend struct RocksDBProfileMapProcessorQueue;
+
     enum OperationType
     {
       OT_CHECK,
@@ -168,7 +178,7 @@ namespace AdServer::ProfilingCommons
     struct Operation final
     {
       OperationType type;
-      std::uint64_t sequence = 0;
+      Generics::Time enqueue_time;
       std::string key;
       Generics::ConstSmartMemBuf_var profile;
       std::optional<CheckCallback> check_callback;
@@ -181,26 +191,11 @@ namespace AdServer::ProfilingCommons
     using Operations = std::list<Operation>;
     struct BatchScratch;
 
-    bool enqueue_operation_(Operation&& operation) const;
-    void worker_loop_() noexcept;
-    bool pop_batch_(
-      Operations& batch,
-      BatchScratch& scratch) noexcept;
-    void collect_batch_(
-      Operations& batch,
-      BatchScratch& scratch) noexcept;
-    void collect_from_queue_(
-      Operations& source,
-      Operations& batch,
-      BatchScratch& scratch) noexcept;
-    void complete_batch_(Operations& batch) noexcept;
-    void process_batch_(
-      Operations& batch,
-      BatchScratch& scratch);
+    static std::shared_ptr<BatchScratch> create_batch_scratch_();
 
-    void process_read_batch_(
-      Operations& batch,
-      BatchScratch& scratch);
+    void process_batch_(Operations& batch, BatchScratch& scratch);
+
+    void process_read_batch_(Operations& batch, BatchScratch& scratch);
 
     void process_write_batch_(
       Operations& batch,
@@ -214,15 +209,17 @@ namespace AdServer::ProfilingCommons
     static bool is_write_operation_(OperationType type) noexcept;
 
     void check_background_error_() const;
-    void wait_pending_operations_() const;
 
   private:
     const std::string path_;
     const Generics::Time expire_time_;
-    const unsigned long workers_count_;
     const unsigned long batch_size_;
     const Generics::Time max_delay_;
     const bool disable_wal_;
+
+    const std::shared_ptr<RocksDBProfileMapProcessor> processor_;
+    std::shared_ptr<RocksDBProfileMapProcessorQueue> processor_queue_;
+    bool owns_processor_;
 
     std::unique_ptr<rocksdb::DBWithTTL> db_;
     mutable std::atomic<std::uint64_t> logical_read_operations_{0};
@@ -230,20 +227,16 @@ namespace AdServer::ProfilingCommons
     mutable std::atomic<std::uint64_t> physical_read_operations_{0};
     mutable std::atomic<std::uint64_t> physical_write_operations_{0};
 
-    mutable Sync::PosixMutex queue_lock_;
-    mutable Sync::Conditional queue_cond_;
-    mutable Operations read_operations_;
-    mutable Operations write_operations_;
-    mutable std::unordered_set<std::string> in_flight_read_keys_;
-    mutable std::unordered_set<std::string> in_flight_write_keys_;
-    mutable std::uint64_t next_operation_sequence_ = 0;
-    mutable unsigned long processing_batches_ = 0;
-
     mutable Sync::PosixMutex error_lock_;
     std::string background_error_;
-
-    std::vector<std::thread> workers_;
   };
+
+  inline bool
+  RocksDBBatchingProfileMapImpl::is_write_operation_(
+    OperationType type) noexcept
+  {
+    return type == OT_TOUCH || type == OT_SAVE || type == OT_REMOVE;
+  }
 
   template<typename KeyType, typename KeyAdapterType = DefaultRocksDBBatchingKeyAdapter>
   class RocksDBBatchingProfileMap:
@@ -257,6 +250,14 @@ namespace AdServer::ProfilingCommons
       const String::SubString& path,
       const Generics::Time& expire_time,
       unsigned long workers_count = 2,
+      unsigned long batch_size = 128,
+      const Generics::Time& max_delay = Generics::Time::ZERO,
+      bool disable_wal = false);
+
+    RocksDBBatchingProfileMap(
+      std::shared_ptr<RocksDBProfileMapProcessor> processor,
+      const String::SubString& path,
+      const Generics::Time& expire_time,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false);
@@ -366,6 +367,23 @@ namespace AdServer::ProfilingCommons
         path,
         expire_time,
         workers_count,
+        batch_size,
+        max_delay,
+        disable_wal))
+  {}
+
+  template<typename KeyType, typename KeyAdapterType>
+  RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::RocksDBBatchingProfileMap(
+    std::shared_ptr<RocksDBProfileMapProcessor> processor,
+    const String::SubString& path,
+    const Generics::Time& expire_time,
+    unsigned long batch_size,
+    const Generics::Time& max_delay,
+    bool disable_wal)
+    : impl_(new RocksDBBatchingProfileMapImpl(
+        std::move(processor),
+        path,
+        expire_time,
         batch_size,
         max_delay,
         disable_wal))

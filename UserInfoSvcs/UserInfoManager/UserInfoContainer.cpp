@@ -97,6 +97,9 @@ namespace AdServer::UserInfoSvcs
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
       profile_request_timeout_(profile_request_timeout),
+      rocksdb_processor_(std::make_shared<
+        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(
+          rocksdb_batching_threads)),
       time_offset_(Generics::Time::ZERO),
       profile_avg_statistic_(avg_statistic),
       ad_channels_count_(0),
@@ -106,6 +109,8 @@ namespace AdServer::UserInfoSvcs
       use_add_profile_on_match_(use_add_profile_on_match),
       base_profile_expire_time_(base_level_map_traits.expire_time)
   {
+    add_child_object(rocksdb_processor_);
+
     base_profiles_ = open_chunked_map_<UserProfileMap>(
       common_chunks_number,
       chunk_folders,
@@ -1751,7 +1756,8 @@ namespace AdServer::UserInfoSvcs
             max_waiters,
             true,
             ".rocksdb",
-            rocksdb_batching_threads);
+            rocksdb_batching_threads,
+            rocksdb_processor_);
       add_child_object(profile_map.second);
       return profile_map.first;
     }

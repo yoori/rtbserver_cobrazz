@@ -20,6 +20,7 @@ add_library(ProfileMapRocksDB SHARED
   RocksDBBatchingProfileMap.cpp
   RocksDBOptions.cpp
   RocksDBProfileMap.cpp
+  RocksDBProfileMapProcessor.cpp
 )
 
 target_link_libraries(ProfileMapRocksDB

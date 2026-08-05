@@ -265,6 +265,9 @@ namespace AdServer::UserInfoSvcs
     const unsigned long colo_id_;
     const Generics::Time profile_request_timeout_;
 
+    std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
+      rocksdb_processor_;
+
     UserProfileMap_var base_profiles_;
     UserProfileMap_var temp_profiles_;
     UserProfileMap_var add_profiles_;

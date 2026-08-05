@@ -8,19 +8,18 @@
 #include <cstdint>
 #include <future>
 #include <string_view>
+#include <vector>
 
 #include <Stream/MemoryStream.hpp>
 
-#include <Commons/ThreadName.hpp>
-
 #include "RocksDBBatchingProfileMap.hpp"
 #include "RocksDBOptions.hpp"
+#include "RocksDBProfileMapProcessor.hpp"
 
 namespace AdServer::ProfilingCommons
 {
   struct RocksDBBatchingProfileMapImpl::BatchScratch final
   {
-    std::vector<std::string_view> selected_keys;
     std::vector<std::string_view> unique_keys;
     std::vector<std::pair<std::string_view, std::size_t>> key_indexes;
     std::vector<rocksdb::Slice> keys;
@@ -31,6 +30,12 @@ namespace AdServer::ProfilingCommons
     std::vector<Operation*> latest_operations;
     rocksdb::WriteBatch write_batch;
   };
+
+  std::shared_ptr<RocksDBBatchingProfileMapImpl::BatchScratch>
+  RocksDBBatchingProfileMapImpl::create_batch_scratch_()
+  {
+    return std::make_shared<BatchScratch>();
+  }
 
   namespace
   {
@@ -134,14 +139,39 @@ namespace AdServer::ProfilingCommons
     unsigned long batch_size,
     const Generics::Time& max_delay,
     bool disable_wal)
+    : RocksDBBatchingProfileMapImpl(
+        std::make_shared<RocksDBProfileMapProcessor>(workers_count),
+        path,
+        expire_time,
+        batch_size,
+        max_delay,
+        disable_wal)
+  {
+    owns_processor_ = true;
+  }
+
+  RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl(
+    std::shared_ptr<RocksDBProfileMapProcessor> processor,
+    const String::SubString& path,
+    const Generics::Time& expire_time,
+    unsigned long batch_size,
+    const Generics::Time& max_delay,
+    bool disable_wal)
     : path_(path.str()),
       expire_time_(expire_time),
-      workers_count_(std::max(1UL, workers_count)),
       batch_size_(std::max(1UL, batch_size)),
       max_delay_(max_delay),
-      disable_wal_(disable_wal)
+      disable_wal_(disable_wal),
+      processor_(std::move(processor)),
+      owns_processor_(false)
   {
     static const char* FUN = "RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl()";
+
+    if(!processor_)
+    {
+      throw ProfileMap<std::string>::Exception(
+        "RocksDBBatchingProfileMapImpl: null RocksDBProfileMapProcessor");
+    }
 
     rocksdb::Options options;
     configure_rocksdb_profile_map_options(options);
@@ -173,38 +203,44 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::activate_object_()
   {
-    workers_.reserve(workers_count_);
-
-    for(unsigned long i = 0; i < workers_count_; ++i)
+    if(owns_processor_)
     {
-      workers_.emplace_back(&RocksDBBatchingProfileMapImpl::worker_loop_, this);
+      processor_->activate_object();
+    }
+
+    try
+    {
+      processor_->register_map_(*this, batch_size_, max_delay_);
+    }
+    catch(...)
+    {
+      if(owns_processor_)
+      {
+        processor_->deactivate_object();
+        processor_->wait_object();
+      }
+      throw;
     }
   }
 
   void
   RocksDBBatchingProfileMapImpl::deactivate_object_()
   {
-    queue_cond_.broadcast();
+    processor_->unregister_map_(*this);
+    if(owns_processor_)
+    {
+      processor_->deactivate_object();
+    }
   }
 
   void
   RocksDBBatchingProfileMapImpl::wait_object_()
   {
-    for(auto& worker : workers_)
+    processor_->wait_unregister_map_(*this);
+    if(owns_processor_)
     {
-      worker.join();
+      processor_->wait_object();
     }
-
-    workers_.clear();
-
-    Operations rest;
-    {
-      Sync::PosixGuard guard(queue_lock_);
-      rest.splice(rest.end(), read_operations_);
-      rest.splice(rest.end(), write_operations_);
-    }
-
-    notify_failed_operations_(rest, "RocksDBBatchingProfileMapImpl stopped");
     check_background_error_();
   }
 
@@ -245,7 +281,7 @@ namespace AdServer::ProfilingCommons
     operation.key = key;
     operation.check_callback = std::move(callback);
 
-    if(!enqueue_operation_(std::move(operation)))
+    if(!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::check_profile_async(): "
@@ -336,7 +372,7 @@ namespace AdServer::ProfilingCommons
     operation.key = key;
     operation.get_callback = std::move(callback);
 
-    if(!enqueue_operation_(std::move(operation)))
+    if(!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::get_profile_async(): "
@@ -361,7 +397,7 @@ namespace AdServer::ProfilingCommons
     operation.key = key;
     operation.get_own_callback = std::move(callback);
 
-    if(!enqueue_operation_(std::move(operation)))
+    if(!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::get_own_profile_async(): "
@@ -424,7 +460,7 @@ namespace AdServer::ProfilingCommons
       operation.save_callback = std::move(callback);
     }
 
-    if(!enqueue_operation_(std::move(operation)))
+    if(!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::save_profile_async(): "
@@ -476,7 +512,7 @@ namespace AdServer::ProfilingCommons
       operation.remove_callback = std::move(callback);
     }
 
-    if(!enqueue_operation_(std::move(operation)))
+    if(!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::remove_profile_async(): "
@@ -504,7 +540,7 @@ namespace AdServer::ProfilingCommons
     static const char* FUN = "RocksDBBatchingProfileMapImpl::process_keys()";
 
     check_background_error_();
-    wait_pending_operations_();
+    processor_->wait_pending_operations_(*this);
 
     std::unique_ptr<rocksdb::Iterator> it(
       db_->NewIterator(rocksdb::ReadOptions()));
@@ -526,288 +562,6 @@ namespace AdServer::ProfilingCommons
     {
       process_complete();
     }
-  }
-
-  bool
-  RocksDBBatchingProfileMapImpl::enqueue_operation_(Operation&& operation) const
-  {
-    Operations new_operations;
-    new_operations.emplace_back(std::move(operation));
-
-    {
-      Sync::PosixGuard guard(queue_lock_);
-      if(!active())
-      {
-        return false;
-      }
-
-      Operation& operation_ref = new_operations.front();
-      operation_ref.sequence = next_operation_sequence_++;
-
-      const bool was_empty =
-        read_operations_.empty() && write_operations_.empty();
-      Operations& queue = is_write_operation_(operation_ref.type) ?
-        write_operations_ :
-        read_operations_;
-      const bool fills_batch =
-        queue.size() + 1 >= batch_size_ && queue.size() < batch_size_;
-      queue.splice(queue.end(), new_operations);
-
-      if(!was_empty && !fills_batch)
-      {
-        return true;
-      }
-    }
-
-    queue_cond_.signal();
-    return true;
-  }
-
-  void
-  RocksDBBatchingProfileMapImpl::worker_loop_() noexcept
-  {
-    AdServer::Commons::set_current_thread_name("rdb-batch");
-
-    Operations batch;
-    BatchScratch scratch;
-
-    while(pop_batch_(batch, scratch))
-    {
-      try
-      {
-        process_batch_(batch, scratch);
-      }
-      catch(const eh::Exception& ex)
-      {
-        notify_failed_operations_(batch, ex.what());
-
-        Sync::PosixGuard guard(error_lock_);
-        if(background_error_.empty())
-        {
-          background_error_ = ex.what();
-        }
-      }
-      catch(...)
-      {
-        notify_failed_operations_(batch, "unknown background error");
-
-        Sync::PosixGuard guard(error_lock_);
-        if(background_error_.empty())
-        {
-          background_error_ = "unknown background error";
-        }
-      }
-
-      complete_batch_(batch);
-      batch.clear();
-    }
-  }
-
-  bool
-  RocksDBBatchingProfileMapImpl::pop_batch_(
-    Operations& batch,
-    BatchScratch& scratch) noexcept
-  {
-    Sync::PosixGuard guard(queue_lock_);
-
-    while(true)
-    {
-      while(read_operations_.empty() && write_operations_.empty() && active())
-      {
-        queue_cond_.wait(queue_lock_);
-      }
-
-      if(read_operations_.empty() && write_operations_.empty() && !active())
-      {
-        return false;
-      }
-
-      collect_batch_(batch, scratch);
-      if(!batch.empty())
-      {
-        const bool write_batch = is_write_operation_(batch.front().type);
-        if(write_batch)
-        {
-          for(const auto& operation : batch)
-          {
-            in_flight_write_keys_.insert(operation.key);
-          }
-        }
-        else
-        {
-          for(const auto& operation : batch)
-          {
-            in_flight_read_keys_.insert(operation.key);
-          }
-        }
-
-        if(max_delay_ == Generics::Time::ZERO ||
-          batch.size() >= batch_size_)
-        {
-          ++processing_batches_;
-          return true;
-        }
-
-        const Generics::Time deadline =
-          Generics::Time::get_time_of_day() + max_delay_;
-        while(batch.size() < batch_size_)
-        {
-          const bool signaled = queue_cond_.timed_wait(
-            queue_lock_,
-            &deadline,
-            false);
-          collect_batch_(batch, scratch);
-          if(write_batch)
-          {
-            for(const auto& operation : batch)
-            {
-              in_flight_write_keys_.insert(operation.key);
-            }
-          }
-          else
-          {
-            for(const auto& operation : batch)
-            {
-              in_flight_read_keys_.insert(operation.key);
-            }
-          }
-
-          if(batch.size() >= batch_size_ || !signaled)
-          {
-            break;
-          }
-        }
-
-        ++processing_batches_;
-        return true;
-      }
-
-      queue_cond_.wait(queue_lock_);
-    }
-  }
-
-  void
-  RocksDBBatchingProfileMapImpl::collect_batch_(
-    Operations& batch,
-    BatchScratch& scratch) noexcept
-  {
-    if(batch.empty())
-    {
-      scratch.selected_keys.clear();
-      scratch.selected_keys.reserve(batch_size_);
-    }
-
-    if(read_operations_.empty() && write_operations_.empty())
-    {
-      return;
-    }
-
-    if(!batch.empty())
-    {
-      collect_from_queue_(
-        is_write_operation_(batch.front().type) ?
-          write_operations_ :
-          read_operations_,
-        batch,
-        scratch);
-    }
-    else if(read_operations_.empty())
-    {
-      collect_from_queue_(write_operations_, batch, scratch);
-    }
-    else if(write_operations_.empty())
-    {
-      collect_from_queue_(read_operations_, batch, scratch);
-    }
-    else
-    {
-      Operation& read_head = read_operations_.front();
-      Operation& write_head = write_operations_.front();
-
-      if(read_head.sequence < write_head.sequence)
-      {
-        collect_from_queue_(read_operations_, batch, scratch);
-      }
-      else
-      {
-        collect_from_queue_(write_operations_, batch, scratch);
-      }
-    }
-  }
-
-  void
-  RocksDBBatchingProfileMapImpl::collect_from_queue_(
-    Operations& source,
-    Operations& batch,
-    BatchScratch& scratch) noexcept
-  {
-    auto it = source.begin();
-    auto& selected_keys = scratch.selected_keys;
-    const bool collect_reads = &source == &read_operations_;
-
-    while(it != source.end())
-    {
-      const std::string_view key(it->key);
-      if(collect_reads && in_flight_write_keys_.find(it->key) !=
-        in_flight_write_keys_.end())
-      {
-        ++it;
-        continue;
-      }
-
-      if(!collect_reads && in_flight_read_keys_.find(it->key) !=
-        in_flight_read_keys_.end())
-      {
-        ++it;
-        continue;
-      }
-
-      const auto selected_key_it = std::find(
-        selected_keys.begin(),
-        selected_keys.end(),
-        key);
-      if(selected_key_it == selected_keys.end())
-      {
-        if(selected_keys.size() >= batch_size_)
-        {
-          ++it;
-          continue;
-        }
-
-        selected_keys.emplace_back(key);
-      }
-
-      auto current = it++;
-      batch.splice(batch.end(), source, current);
-    }
-  }
-
-  void
-  RocksDBBatchingProfileMapImpl::complete_batch_(Operations& batch) noexcept
-  {
-    Sync::PosixGuard guard(queue_lock_);
-
-    if(!batch.empty() && is_write_operation_(batch.front().type))
-    {
-      for(const auto& operation : batch)
-      {
-        in_flight_write_keys_.erase(operation.key);
-      }
-    }
-    else
-    {
-      for(const auto& operation : batch)
-      {
-        in_flight_read_keys_.erase(operation.key);
-      }
-    }
-
-    if(processing_batches_ > 0)
-    {
-      --processing_batches_;
-    }
-
-    queue_cond_.broadcast();
   }
 
   void
@@ -929,7 +683,7 @@ namespace AdServer::ProfilingCommons
           touch_operation.key.assign(keys[key_index].data(), keys[key_index].size());
           touch_operation.profile = Generics::ConstSmartMemBuf_var(
             new Generics::ConstSmartMemBuf(value.data(), value.size()));
-          enqueue_operation_(std::move(touch_operation));
+          processor_->enqueue_operation_(*this, std::move(touch_operation));
         }
       }
     }
@@ -1164,12 +918,6 @@ namespace AdServer::ProfilingCommons
     return true;
   }
 
-  bool
-  RocksDBBatchingProfileMapImpl::is_write_operation_(OperationType type) noexcept
-  {
-    return type == OT_TOUCH || type == OT_SAVE || type == OT_REMOVE;
-  }
-
   void
   RocksDBBatchingProfileMapImpl::check_background_error_() const
   {
@@ -1179,19 +927,6 @@ namespace AdServer::ProfilingCommons
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl background error: " +
         background_error_);
-    }
-  }
-
-  void
-  RocksDBBatchingProfileMapImpl::wait_pending_operations_() const
-  {
-    Sync::PosixGuard guard(queue_lock_);
-    while(active() &&
-      (!read_operations_.empty() ||
-        !write_operations_.empty() ||
-        processing_batches_ != 0))
-    {
-      queue_cond_.wait(queue_lock_);
     }
   }
 

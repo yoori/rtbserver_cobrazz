@@ -10,6 +10,7 @@
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
 namespace AdServer
 {
@@ -79,7 +80,8 @@ namespace ProfilingCommons
       unsigned long max_waiters = 0,
       bool disable_wal = false,
       const char* rocksdb_path_suffix = ".rocksdb",
-      unsigned long workers_count = 2)
+      unsigned long workers_count = 2,
+      std::shared_ptr<RocksDBProfileMapProcessor> processor = {})
       /*throw(eh::Exception)*/
     {
       typedef ChunkedProfileMap<
@@ -95,6 +97,12 @@ namespace ProfilingCommons
       Generics::CompositeActiveObject_var composite_active_object =
         new Generics::RefCountableCompositeActiveObject(false, false);
 
+      if(!processor)
+      {
+        processor = std::make_shared<RocksDBProfileMapProcessor>(workers_count);
+        composite_active_object->add_child_object(processor);
+      }
+
       for(ChunkPathMap::const_iterator chunk_folder_it =
             chunk_folders.begin();
           chunk_folder_it != chunk_folders.end(); ++chunk_folder_it)
@@ -106,9 +114,9 @@ namespace ProfilingCommons
         }
         ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map =
           new RocksDBMap(
+            processor,
             String::SubString(rocksdb_path.c_str()),
             profile_map_traits.expire_time,
-            workers_count,
             128,
             Generics::Time::ZERO,
             disable_wal);

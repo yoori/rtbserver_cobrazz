@@ -40,6 +40,26 @@ namespace AdServer::UserInfoSvcs
     user_bind_map_->activate_object();
   }
 
+  UserBindRocksDBChunk::UserBindRocksDBChunk(
+    std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor> processor,
+    const char* user_bind_path,
+    const Generics::Time& bound_expire_time,
+    std::optional<Generics::Time> bind_min_age,
+    unsigned long max_bad_event)
+    : bind_min_age_(bind_min_age),
+      max_bad_event_(max_bad_event),
+      user_bind_map_(new RocksDBMap(
+        std::move(processor),
+        String::SubString(user_bind_path),
+        bound_expire_time,
+        DEFAULT_BATCH_SIZE,
+        Generics::Time::ZERO,
+        true)),
+      user_locks_(DEFAULT_LOCKS)
+  {
+    user_bind_map_->activate_object();
+  }
+
   UserBindRocksDBChunk::~UserBindRocksDBChunk() noexcept
   {
     if(user_bind_map_)
