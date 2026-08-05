@@ -503,20 +503,6 @@
         <xsl:with-param name="service-type" select="'AdServer::HttpFrontend'"/>
       </xsl:call-template>
 
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $http-frontend-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('tr', $pos, '-HttpFrontend2')"/>
-        <xsl:with-param name="service-type" select="'AdServer::HttpFrontend2'"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $http-frontend-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('tr', $pos, '-HttpFrontend3')"/>
-        <xsl:with-param name="service-type" select="'AdServer::HttpFrontend3'"/>
-      </xsl:call-template>
-
     </xsl:for-each>
 
     <!--proxy cluster services-->
@@ -1895,7 +1881,7 @@
       <xsl:variable name="fe-services">
         <xsl:if test="count($fe-cluster-path/service[@descriptor = $http-frontend-descriptor]) > 0">
           <xsl:value-of select="$fcgi-dep"/><xsl:value-of
-             select="'AdServer::HttpFrontend AdServer::HttpFrontend2 '"/>
+             select="'AdServer::HttpFrontend '"/>
         </xsl:if>
       </xsl:variable>
       <xsl:variable name="campaign-manager-dep">
@@ -2041,7 +2027,7 @@
               <xsl:value-of select="'AdServer::Frontends::FCGITrackServer '"/>
             </xsl:with-param>
             <xsl:with-param name="slaves"
-              select="'AdServer::HttpFrontend AdServer::HttpFrontend2 AdServer::HttpFrontend3'"/>
+              select="'AdServer::HttpFrontend'"/>
           </xsl:call-template>
         </xsl:if>
         <xsl:call-template name="PhormZoneCommonDependencies">
@@ -2143,7 +2129,7 @@
         <xsl:call-template name="AddDependence">
           <xsl:with-param name="masters" select="$fcgi-dep"/>
           <xsl:with-param name="slaves"
-            select="'AdServer::HttpFrontend AdServer::HttpFrontend2 AdServer::HttpFrontend3'"/>
+            select="'AdServer::HttpFrontend'"/>
         </xsl:call-template>
 
       </xsl:if>

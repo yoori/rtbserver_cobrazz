@@ -1048,13 +1048,6 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="nginx_index" type="xsd:positiveInteger" default="1">
-      <xsd:annotation>
-        <xsd:documentation>
-          Index of http server that process virtual server.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="SecureVirtualServerType">
@@ -1183,13 +1176,6 @@
       <xsd:annotation>
         <xsd:documentation>
           Enable PROXY protocol on endpoint.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="nginx_index" type="xsd:positiveInteger" default="1">
-      <xsd:annotation>
-        <xsd:documentation>
-          Index of http server that process virtual server.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

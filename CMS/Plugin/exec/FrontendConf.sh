@@ -48,32 +48,6 @@ $EXEC/ServiceConf.sh \
 
 let "EXIT_CODE|=$?"
 
-$EXEC/ServiceConf.sh \
-  --services-xpath "$FRONTEND_XPATH" \
-  --app-xml $APP_XML \
-  --out-dir-suffix "$OUT_DIR_SUFFIX" \
-  --xsl $XSLT_ROOT/Frontend/nginx/nginx.conf.xsl \
-  --out-file conf2/nginx.conf \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT \
-  --var NGINX_INDEX 2 \
-  --var CONF_TYPE $CONF_TYPE
-
-let "EXIT_CODE|=$?"
-
-$EXEC/ServiceConf.sh \
-  --services-xpath "$FRONTEND_XPATH" \
-  --app-xml $APP_XML \
-  --out-dir-suffix "$OUT_DIR_SUFFIX" \
-  --xsl $XSLT_ROOT/Frontend/nginx/nginx.conf.xsl \
-  --out-file conf3/nginx.conf \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT \
-  --var NGINX_INDEX 3 \
-  --var CONF_TYPE $CONF_TYPE
-
-let "EXIT_CODE|=$?"
-
 for (( i=1; i<=FRONTEND_COUNT; i++ ))
 do
   FRONTEND_HOSTS=`$EXEC/GetHosts.sh --app-xml $APP_XML --host-service-xpath "$FRONTEND_XPATH[$i]" --plugin-root $PLUGIN_ROOT`
@@ -87,8 +61,6 @@ do
     <allow-http-request-headers-from domain=\"*\" headers=\"*\" secure=\"false\"/>\n\
   </cross-domain-policy>" > $OUT_DIR/$host/"$CONF_SUFFIX"conf1/crossdomain.xml
 
-  cp "$OUT_DIR/$host/"$CONF_SUFFIX"conf1/crossdomain.xml" "$OUT_DIR/$host/"$CONF_SUFFIX"conf2/crossdomain.xml"
-  cp "$OUT_DIR/$host/"$CONF_SUFFIX"conf1/crossdomain.xml" "$OUT_DIR/$host/"$CONF_SUFFIX"conf3/crossdomain.xml"
   done
 done
 
@@ -126,10 +98,6 @@ $EXEC/ProcessHostFiles.sh \
    --cmd "echo \$host > \$HOST_DIR/$CONF_SUFFIX/http/htdocs/ready" \
    --cmd "mkdir -p \$HOST_DIR/\"$CONF_SUFFIX\"conf1" \
    --cmd "touch \$HOST_DIR/\"$CONF_SUFFIX\"conf1/empty" \
-   --cmd "mkdir -p \$HOST_DIR/\"$CONF_SUFFIX\"conf2" \
-   --cmd "touch \$HOST_DIR/\"$CONF_SUFFIX\"conf2/empty" \
-   --cmd "mkdir -p \$HOST_DIR/\"$CONF_SUFFIX\"conf3" \
-   --cmd "touch \$HOST_DIR/\"$CONF_SUFFIX\"conf3/empty" \
    --cmd "cp $OUT_DIR/frontend_cert/* \$HOST_DIR/cert"
 let "EXIT_CODE|=$?"
 

@@ -103,7 +103,7 @@
 
   <xsl:variable name="virtual-servers-raw">
     <xsl:for-each select="$colo-config/cfg:coloParams/cfg:virtualServer[
-      ((count(@nginx_index) = 0 and $nginx-index = 1) or (@nginx_index = $nginx-index)) and (count(@enable) = 0 or @enable='true')]">
+      count(@enable) = 0 or @enable='true']">
        <xsl:copy-of select="."/>
     </xsl:for-each>
   </xsl:variable>
@@ -112,7 +112,7 @@
 
   <xsl:variable name="secure-virtual-servers-raw">
     <xsl:for-each select="$colo-config/cfg:coloParams/cfg:secureVirtualServer[
-       ((count(@nginx_index) = 0 and $nginx-index = 1) or (@nginx_index = $nginx-index)) and (count(@enable) = 0 or @enable='true')]">
+       count(@enable) = 0 or @enable='true']">
        <xsl:copy-of select="."/>
     </xsl:for-each>
   </xsl:variable>
