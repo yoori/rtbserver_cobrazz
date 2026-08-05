@@ -67,6 +67,10 @@ public:
   operator<<(std::ostream& os, const TagAuctionStatInnerKey& key)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const TagAuctionStatInnerKey& key)
+    /*throw(eh::Exception)*/;
+
 private:
   void
   calc_hash_()
@@ -116,6 +120,10 @@ public:
   friend
   std::ostream&
   operator<<(std::ostream& os, const TagAuctionStatInnerData& data)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const TagAuctionStatInnerData& data)
     /*throw(eh::Exception)*/;
 
 private:
@@ -171,6 +179,10 @@ public:
   friend
   std::ostream&
   operator<<(std::ostream& os, const TagAuctionStatKey& key)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const TagAuctionStatKey& key)
     /*throw(eh::Exception)*/;
 
 private:

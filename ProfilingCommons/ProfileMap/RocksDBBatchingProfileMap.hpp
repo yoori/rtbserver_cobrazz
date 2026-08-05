@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <boost/intrusive/set.hpp>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <condition_variable>
 #include <cstdint>
 #include <list>
@@ -9,7 +10,6 @@
 #include <mutex>
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 #include <String/SubString.hpp>
 
@@ -31,6 +31,12 @@ namespace AdServer::ProfilingCommons
 
   struct DefaultRocksDBBatchingKeyAdapter
   {
+    const std::string&
+    operator()(const std::string& key) const noexcept
+    {
+      return key;
+    }
+
     template<typename Type>
     std::string
     operator()(const Type& key) const
@@ -193,7 +199,7 @@ namespace AdServer::ProfilingCommons
 
     struct ProcessorQueue final
     {
-      using InFlightKeys = std::unordered_map<std::string, unsigned long>;
+      using InFlightKeys = boost::unordered_flat_map<std::string, unsigned long>;
       using ReadyHook = boost::intrusive::set_member_hook<
         boost::intrusive::link_mode<boost::intrusive::safe_link>>;
 

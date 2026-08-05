@@ -21,8 +21,6 @@ namespace
 {
   const char TRIGGER_MATCH_SEP = ':';
 
-  const char PHM_SEP = ':';
-
   const char ASI_SEP1 = ':';
   const char ASI_SEP2 = '/';
 
@@ -159,43 +157,6 @@ operator>>(
       values.swap(container);
     }
   }
-  return is;
-}
-
-FixedBufStream<CommaCategory>&
-operator>>(
-  FixedBufStream<CommaCategory>& is,
-  RequestBasicChannelsInnerData_V_2_7::PartlyHistoryMatch& match
-)
-{
-  const String::SubString token = is.read_token();
-  if (is.good())
-  {
-    FixedBufStream<SemiCategory> stream(token);
-    stream >> match.channel_id;
-    stream >> match.visits;
-    stream >> match.minimum_visits;
-    is.take_fails(stream);
-  }
-  return is;
-}
-
-FixedBufStream<TabCategory>&
-operator>>(
-  FixedBufStream<TabCategory>& is,
-  RequestBasicChannelsInnerData_V_2_7::AdRequestProps& value
-)
-{
-  // inplace loading from stream
-  value.data_ =
-    new RequestBasicChannelsInnerData_V_2_7::AdRequestProps::Data;
-  is >> value.data_->size;
-  is >> value.data_->country_code;
-  is >> value.data_->max_text_ads;
-  is >> value.data_->text_ad_cost_threshold;
-  is >> value.data_->display_ad_shown;
-  is >> value.data_->text_ad_shown;
-  value.normalize();
   return is;
 }
 
@@ -408,24 +369,6 @@ operator>>(std::istream& is, RequestBasicChannelsInnerData& data)
   /*throw(eh::Exception)*/
 {
   data.holder_ = new RequestBasicChannelsInnerData::DataHolder();
-  std::string record;
-  record.reserve(1024);
-  read_until_eol(is, record);
-  if (is.good())
-  {
-    FixedBufStream<TabCategory> fixed_buf_stream(record);
-    TokenizerInputArchive<> ia(fixed_buf_stream);
-    ia >> *data.holder_;
-    fixed_buf_stream.transfer_state(is);
-  }
-  return is;
-}
-
-std::istream&
-operator>>(std::istream& is, RequestBasicChannelsInnerData_V_2_7& data)
-  /*throw(eh::Exception)*/
-{
-  data.holder_ = new RequestBasicChannelsInnerData_V_2_7::DataHolder();
   std::string record;
   record.reserve(1024);
   read_until_eol(is, record);

@@ -351,6 +351,10 @@ public:
   operator<<(std::ostream& os, const WebStatInnerKey& key)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const WebStatInnerKey& key)
+    /*throw(eh::Exception)*/;
+
 private:
   void calc_hash_()
   {
@@ -438,6 +442,10 @@ public:
   operator<<(std::ostream& os, const WebStatInnerData& data)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const WebStatInnerData& data)
+    /*throw(eh::Exception)*/;
+
 private:
   unsigned long count_;
 };
@@ -490,6 +498,10 @@ public:
   friend
   std::ostream&
   operator<<(std::ostream& os, const WebStatKey& key)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const WebStatKey& key)
     /*throw(eh::Exception)*/;
 
 private:

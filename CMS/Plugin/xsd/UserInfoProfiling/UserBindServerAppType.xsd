@@ -91,7 +91,7 @@
       </xsd:annotation>
     </xsd:attribute>
 
-    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="2">
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16">
       <xsd:annotation>
         <xsd:documentation>
           UserBind RocksDB batching worker threads.

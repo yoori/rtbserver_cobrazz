@@ -5,7 +5,9 @@
 #include <rocksdb/write_batch.h>
 
 #include <algorithm>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <cstdint>
+#include <functional>
 #include <future>
 #include <string_view>
 #include <vector>
@@ -29,8 +31,14 @@ namespace AdServer::ProfilingCommons
 
   struct RocksDBBatchingProfileMapImpl::BatchScratch final
   {
-    std::vector<std::string_view> unique_keys;
-    std::vector<std::pair<std::string_view, std::size_t>> key_indexes;
+    using KeyIndexMap = boost::unordered_flat_map<
+      std::string_view,
+      std::size_t,
+      std::hash<std::string_view>,
+      std::equal_to<std::string_view>>;
+
+    KeyIndexMap key_indexes;
+    std::vector<std::size_t> operation_key_indexes;
     std::vector<rocksdb::Slice> keys;
     std::vector<rocksdb::PinnableSlice> values;
     std::vector<rocksdb::Status> statuses;
@@ -50,20 +58,6 @@ namespace AdServer::ProfilingCommons
   {
     constexpr std::size_t TTL_TIMESTAMP_SIZE = sizeof(std::uint32_t);
 
-    auto
-    find_key_index(
-      const std::vector<std::pair<std::string_view, std::size_t>>& indexes,
-      const std::string_view key) noexcept
-    {
-      return std::find_if(
-        indexes.begin(),
-        indexes.end(),
-        [key](const auto& index)
-        {
-          return index.first == key;
-        });
-    }
-
     std::uint32_t
     decode_fixed32(const char* data) noexcept
     {
@@ -77,7 +71,7 @@ namespace AdServer::ProfilingCommons
     std::string_view
     ttl_user_value(const rocksdb::PinnableSlice& value) noexcept
     {
-      if(value.size() < TTL_TIMESTAMP_SIZE)
+      if (value.size() < TTL_TIMESTAMP_SIZE)
       {
         return std::string_view(value.data(), value.size());
       }
@@ -88,7 +82,7 @@ namespace AdServer::ProfilingCommons
     std::optional<Generics::Time>
     ttl_write_time(const rocksdb::PinnableSlice& value) noexcept
     {
-      if(value.size() < TTL_TIMESTAMP_SIZE)
+      if (value.size() < TTL_TIMESTAMP_SIZE)
       {
         return std::nullopt;
       }
@@ -104,13 +98,13 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& now,
       const Generics::Time& expire_time) noexcept
     {
-      if(expire_time <= Generics::Time::ZERO)
+      if (expire_time <= Generics::Time::ZERO)
       {
         return false;
       }
 
       const auto write_time = ttl_write_time(value);
-      if(!write_time || *write_time > now)
+      if (!write_time || *write_time > now)
       {
         return false;
       }
@@ -124,21 +118,19 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& now,
       const Generics::Time& touch_period) noexcept
     {
-      if(touch_period <= Generics::Time::ZERO)
+      if (touch_period <= Generics::Time::ZERO)
       {
         return false;
       }
 
       const auto write_time = ttl_write_time(value);
-      if(!write_time || *write_time > now)
+      if (!write_time || *write_time > now)
       {
         return false;
       }
 
-      return write_time->tv_sec / touch_period.tv_sec <
-        now.tv_sec / touch_period.tv_sec;
+      return write_time->tv_sec / touch_period.tv_sec < now.tv_sec / touch_period.tv_sec;
     }
-
   }
 
   RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl(
@@ -177,7 +169,7 @@ namespace AdServer::ProfilingCommons
   {
     static const char* FUN = "RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl()";
 
-    if(!processor_)
+    if (!processor_)
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl: null RocksDBProfileMapProcessor");
@@ -192,7 +184,7 @@ namespace AdServer::ProfilingCommons
       path_.c_str(),
       &db,
       expire_time.tv_sec);
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't open DB: " << path_;
@@ -204,7 +196,7 @@ namespace AdServer::ProfilingCommons
 
   RocksDBBatchingProfileMapImpl::~RocksDBBatchingProfileMapImpl() noexcept
   {
-    if(db_)
+    if (db_)
     {
       db_->Close();
     }
@@ -213,7 +205,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::activate_object_()
   {
-    if(owns_processor_)
+    if (owns_processor_)
     {
       processor_->activate_object();
     }
@@ -224,7 +216,7 @@ namespace AdServer::ProfilingCommons
     }
     catch(...)
     {
-      if(owns_processor_)
+      if (owns_processor_)
       {
         processor_->deactivate_object();
         processor_->wait_object();
@@ -237,7 +229,7 @@ namespace AdServer::ProfilingCommons
   RocksDBBatchingProfileMapImpl::deactivate_object_()
   {
     processor_->unregister_map_(*this);
-    if(owns_processor_)
+    if (owns_processor_)
     {
       processor_->deactivate_object();
     }
@@ -247,7 +239,7 @@ namespace AdServer::ProfilingCommons
   RocksDBBatchingProfileMapImpl::wait_object_()
   {
     processor_->wait_unregister_map_(*this);
-    if(owns_processor_)
+    if (owns_processor_)
     {
       processor_->wait_object();
     }
@@ -271,7 +263,7 @@ namespace AdServer::ProfilingCommons
       });
 
     const auto result = future.get();
-    if(result.second)
+    if (result.second)
     {
       throw ProfileMap<std::string>::Exception(*result.second);
     }
@@ -291,7 +283,7 @@ namespace AdServer::ProfilingCommons
     operation.key = key;
     operation.check_callback = std::move(callback);
 
-    if(!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::check_profile_async(): "
@@ -323,7 +315,7 @@ namespace AdServer::ProfilingCommons
       std::nullopt);
 
     const auto result = future.get();
-    if(result.second)
+    if (result.second)
     {
       throw ProfileMap<std::string>::Exception(*result.second);
     }
@@ -340,26 +332,20 @@ namespace AdServer::ProfilingCommons
 
     check_background_error_();
 
-    using GetResult = std::pair<
-      Generics::SmartMemBuf_var,
-      std::optional<std::string> >;
+    using GetResult = std::pair<Generics::SmartMemBuf_var, std::optional<std::string> >;
     std::promise<GetResult> promise;
     std::future<GetResult> future = promise.get_future();
 
     get_own_profile_async(
       key,
-      [&promise](
-        Generics::SmartMemBuf_var profile,
-        std::optional<std::string> error)
+      [&promise](Generics::SmartMemBuf_var profile, std::optional<std::string> error)
       {
-        promise.set_value(std::make_pair(
-          std::move(profile),
-          std::move(error)));
+        promise.set_value(std::make_pair(std::move(profile), std::move(error)));
       },
       std::nullopt);
 
     auto result = future.get();
-    if(result.second)
+    if (result.second)
     {
       throw ProfileMap<std::string>::Exception(*result.second);
     }
@@ -382,7 +368,7 @@ namespace AdServer::ProfilingCommons
     operation.key = key;
     operation.get_callback = std::move(callback);
 
-    if(!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::get_profile_async(): "
@@ -407,7 +393,7 @@ namespace AdServer::ProfilingCommons
     operation.key = key;
     operation.get_own_callback = std::move(callback);
 
-    if(!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::get_own_profile_async(): "
@@ -437,7 +423,7 @@ namespace AdServer::ProfilingCommons
       });
 
     const auto error = future.get();
-    if(error)
+    if (error)
     {
       throw ProfileMap<std::string>::Exception(*error);
     }
@@ -454,7 +440,7 @@ namespace AdServer::ProfilingCommons
 
     check_background_error_();
 
-    if(!profile)
+    if (!profile)
     {
       Stream::Error ostr;
       ostr << FUN << ": null profile for key='" << key << "'";
@@ -465,12 +451,12 @@ namespace AdServer::ProfilingCommons
     operation.type = OT_SAVE;
     operation.key = key;
     operation.profile = ReferenceCounting::add_ref(profile);
-    if(callback)
+    if (callback)
     {
       operation.save_callback = std::move(callback);
     }
 
-    if(!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::save_profile_async(): "
@@ -479,9 +465,7 @@ namespace AdServer::ProfilingCommons
   }
 
   bool
-  RocksDBBatchingProfileMapImpl::remove_profile(
-    const std::string& key,
-    OperationPriority)
+  RocksDBBatchingProfileMapImpl::remove_profile(const std::string& key, OperationPriority)
   {
     check_background_error_();
 
@@ -498,7 +482,7 @@ namespace AdServer::ProfilingCommons
       });
 
     const auto result = future.get();
-    if(result.second)
+    if (result.second)
     {
       throw ProfileMap<std::string>::Exception(*result.second);
     }
@@ -517,12 +501,12 @@ namespace AdServer::ProfilingCommons
     Operation operation;
     operation.type = OT_REMOVE;
     operation.key = key;
-    if(callback)
+    if (callback)
     {
       operation.remove_callback = std::move(callback);
     }
 
-    if(!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (!processor_->enqueue_operation_(*this, std::move(operation)))
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::remove_profile_async(): "
@@ -535,7 +519,7 @@ namespace AdServer::ProfilingCommons
     const Generics::Time&,
     CompleteCallback complete)
   {
-    if(complete)
+    if (complete)
     {
       complete();
     }
@@ -552,39 +536,35 @@ namespace AdServer::ProfilingCommons
     check_background_error_();
     processor_->wait_pending_operations_(*this);
 
-    std::unique_ptr<rocksdb::Iterator> it(
-      db_->NewIterator(rocksdb::ReadOptions()));
-    for(it->SeekToFirst(); it->Valid(); it->Next())
+    std::unique_ptr<rocksdb::Iterator> it(db_->NewIterator(rocksdb::ReadOptions()));
+    for (it->SeekToFirst(); it->Valid(); it->Next())
     {
       process_key(it->key().ToString());
     }
 
     const auto status = it->status();
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
-      ostr << FUN << ": can't iterate DB '" << path_ << "': " <<
-        status.ToString();
+      ostr << FUN << ": can't iterate DB '" << path_ << "': " << status.ToString();
       throw ProfileMap<std::string>::Exception(ostr.str());
     }
 
-    if(process_complete)
+    if (process_complete)
     {
       process_complete();
     }
   }
 
   void
-  RocksDBBatchingProfileMapImpl::process_batch_(
-    Operations& batch,
-    BatchScratch& scratch)
+  RocksDBBatchingProfileMapImpl::process_batch_(Operations& batch, BatchScratch& scratch)
   {
-    if(batch.empty())
+    if (batch.empty())
     {
       return;
     }
 
-    if(is_write_operation_(batch.front().type))
+    if (is_write_operation_(batch.front().type))
     {
       process_write_batch_(batch, scratch);
     }
@@ -595,47 +575,46 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  RocksDBBatchingProfileMapImpl::process_read_batch_(
-    Operations& batch,
-    BatchScratch& scratch)
+  RocksDBBatchingProfileMapImpl::process_read_batch_(Operations& batch, BatchScratch& scratch)
   {
     logical_read_operations_.fetch_add(batch.size(), std::memory_order_relaxed);
     physical_read_operations_.fetch_add(1, std::memory_order_relaxed);
 
-    auto& unique_keys = scratch.unique_keys;
     auto& key_indexes = scratch.key_indexes;
+    // map batch input index to MultiGet request index
+    auto& operation_key_indexes = scratch.operation_key_indexes;
     auto& keys = scratch.keys;
     auto& values = scratch.values;
     auto& statuses = scratch.statuses;
     auto& value_expired = scratch.value_expired;
     auto& touch_allowed = scratch.touch_allowed;
 
-    unique_keys.clear();
     key_indexes.clear();
+    operation_key_indexes.clear();
     keys.clear();
     values.clear();
     statuses.clear();
     value_expired.clear();
     touch_allowed.clear();
 
-    unique_keys.reserve(batch.size());
     key_indexes.reserve(batch.size());
+    operation_key_indexes.reserve(batch.size());
+    keys.reserve(batch.size());
 
-    for(const auto& operation : batch)
+    for (auto& operation : batch)
     {
       const std::string_view key(operation.key);
-      const auto it = find_key_index(key_indexes, key);
-      if(it == key_indexes.end())
+      const std::size_t next_key_index = keys.size();
+      const auto [it, inserted] = key_indexes.emplace(key, next_key_index);
+      if (inserted)
       {
-        key_indexes.emplace_back(key, unique_keys.size());
-        unique_keys.emplace_back(key);
+        operation_key_indexes.emplace_back(next_key_index);
+        keys.emplace_back(key.data(), key.size());
       }
-    }
-
-    keys.reserve(unique_keys.size());
-    for(const auto& key : unique_keys)
-    {
-      keys.emplace_back(key.data(), key.size());
+      else
+      {
+        operation_key_indexes.emplace_back(it->second);
+      }
     }
 
     rocksdb::ReadOptions read_options;
@@ -657,32 +636,33 @@ namespace AdServer::ProfilingCommons
     touch_allowed.assign(keys.size(), 0);
 
     const Generics::Time now = Generics::Time::get_time_of_day();
-    for(std::size_t key_index = 0; key_index < keys.size(); ++key_index)
+    for (std::size_t key_index = 0; key_index < keys.size(); ++key_index)
     {
-      if(statuses[key_index].ok() &&
-        ttl_expired(values[key_index], now, expire_time_))
+      if (statuses[key_index].ok() && ttl_expired(values[key_index], now, expire_time_))
       {
         value_expired[key_index] = 1;
       }
     }
 
-    for(const auto& operation : batch)
+    auto operation_key_index_it = operation_key_indexes.begin();
+    for (const auto& operation : batch)
     {
-      if(operation.get_callback || operation.get_own_callback)
+      if (operation.get_callback || operation.get_own_callback)
       {
-        const auto key_index_it =
-          find_key_index(key_indexes, std::string_view(operation.key));
-        touch_allowed[key_index_it->second] = 1;
+        touch_allowed[*operation_key_index_it] = 1;
       }
+      ++operation_key_index_it;
     }
 
     const Generics::Time touch_period(expire_time_.tv_sec / 4);
 
-    if(touch_period > Generics::Time::ZERO)
+    if (touch_period > Generics::Time::ZERO)
     {
-      for(std::size_t key_index = 0; key_index < keys.size(); ++key_index)
+      Operations touch_operations;
+
+      for (std::size_t key_index = 0; key_index < keys.size(); ++key_index)
       {
-        if(touch_allowed[key_index] &&
+        if (touch_allowed[key_index] &&
           statuses[key_index].ok() &&
           !value_expired[key_index] &&
           should_touch_ttl(values[key_index], now, touch_period))
@@ -693,30 +673,31 @@ namespace AdServer::ProfilingCommons
           touch_operation.key.assign(keys[key_index].data(), keys[key_index].size());
           touch_operation.profile = Generics::ConstSmartMemBuf_var(
             new Generics::ConstSmartMemBuf(value.data(), value.size()));
-          processor_->enqueue_operation_(*this, std::move(touch_operation));
+          touch_operations.emplace_back(std::move(touch_operation));
         }
       }
+
+      processor_->enqueue_operations_(*this, std::move(touch_operations));
     }
 
-    for(auto& operation : batch)
+    operation_key_index_it = operation_key_indexes.begin();
+    for (auto& operation : batch)
     {
       try
       {
-        const auto key_index_it =
-          find_key_index(key_indexes, std::string_view(operation.key));
-        const std::size_t key_index = key_index_it->second;
+        const std::size_t key_index = *operation_key_index_it;
         const auto& status = statuses[key_index];
         const auto& value = values[key_index];
         const bool not_found = status.IsNotFound() || value_expired[key_index];
         const std::string_view user_value = ttl_user_value(value);
 
-        if(operation.check_callback)
+        if (operation.check_callback)
         {
-          if(not_found)
+          if (not_found)
           {
             (*operation.check_callback)(false, std::nullopt);
           }
-          else if(!status.ok())
+          else if (!status.ok())
           {
             (*operation.check_callback)(false, status.ToString());
           }
@@ -726,63 +707,53 @@ namespace AdServer::ProfilingCommons
           }
         }
 
-        if(operation.get_callback)
+        if (operation.get_callback)
         {
-          if(not_found)
+          if (not_found)
           {
             (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), std::nullopt);
           }
-          else if(!status.ok())
+          else if (!status.ok())
           {
-            (*operation.get_callback)(
-              Generics::ConstSmartMemBuf_var(),
-              status.ToString());
+            (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), status.ToString());
           }
           else
           {
             (*operation.get_callback)(
               Generics::ConstSmartMemBuf_var(
-                new Generics::ConstSmartMemBuf(
-                  user_value.data(),
-                  user_value.size())),
+                new Generics::ConstSmartMemBuf(user_value.data(), user_value.size())),
               std::nullopt);
           }
         }
 
-        if(operation.get_own_callback)
+        if (operation.get_own_callback)
         {
-          if(not_found)
+          if (not_found)
           {
-            (*operation.get_own_callback)(
-              Generics::SmartMemBuf_var(),
-              std::nullopt);
+            (*operation.get_own_callback)(Generics::SmartMemBuf_var(), std::nullopt);
           }
-          else if(!status.ok())
+          else if (!status.ok())
           {
-            (*operation.get_own_callback)(
-              Generics::SmartMemBuf_var(),
-              status.ToString());
+            (*operation.get_own_callback)(Generics::SmartMemBuf_var(), status.ToString());
           }
           else
           {
             (*operation.get_own_callback)(
               Generics::SmartMemBuf_var(
-                new Generics::SmartMemBuf(
-                  user_value.data(),
-                  user_value.size())),
+                new Generics::SmartMemBuf(user_value.data(), user_value.size())),
               std::nullopt);
           }
         }
       }
       catch(...)
       {}
+
+      ++operation_key_index_it;
     }
   }
 
   void
-  RocksDBBatchingProfileMapImpl::process_write_batch_(
-    Operations& batch,
-    BatchScratch& scratch)
+  RocksDBBatchingProfileMapImpl::process_write_batch_(Operations& batch, BatchScratch& scratch)
   {
     logical_write_operations_.fetch_add(batch.size(), std::memory_order_relaxed);
     physical_write_operations_.fetch_add(1, std::memory_order_relaxed);
@@ -798,28 +769,27 @@ namespace AdServer::ProfilingCommons
     latest_operations.reserve(batch.size());
     key_indexes.reserve(batch.size());
 
-    for(auto& operation : batch)
+    for (auto& operation : batch)
     {
       const std::string_view key(operation.key);
-      const auto it = find_key_index(key_indexes, key);
-      if(it == key_indexes.end())
+      const auto [it, inserted] = key_indexes.emplace(key, latest_operations.size());
+      if (inserted)
       {
-        key_indexes.emplace_back(key, latest_operations.size());
         latest_operations.emplace_back(&operation);
       }
       else
       {
         Operation*& current_operation = latest_operations[it->second];
-        if(operation.type != OT_TOUCH || current_operation->type == OT_TOUCH)
+        if (operation.type != OT_TOUCH || current_operation->type == OT_TOUCH)
         {
           current_operation = &operation;
         }
       }
     }
 
-    for(const auto* operation : latest_operations)
+    for (const auto* operation : latest_operations)
     {
-      if(operation->type == OT_SAVE || operation->type == OT_TOUCH)
+      if (operation->type == OT_SAVE || operation->type == OT_TOUCH)
       {
         write_batch.Put(
           operation->key,
@@ -827,7 +797,7 @@ namespace AdServer::ProfilingCommons
             static_cast<const char*>(operation->profile->membuf().data()),
             operation->profile->membuf().size()));
       }
-      else if(operation->type == OT_REMOVE)
+      else if (operation->type == OT_REMOVE)
       {
         write_batch.Delete(operation->key);
       }
@@ -837,16 +807,16 @@ namespace AdServer::ProfilingCommons
     write_options.disableWAL = disable_wal_;
 
     const auto status = db_->Write(write_options, &write_batch);
-    if(!status.ok())
+    if (!status.ok())
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::process_write_batch_(): " +
         status.ToString());
     }
 
-    for(auto& operation : batch)
+    for (auto& operation : batch)
     {
-      if(operation.save_callback)
+      if (operation.save_callback)
       {
         try
         {
@@ -856,7 +826,7 @@ namespace AdServer::ProfilingCommons
         {}
       }
 
-      if(operation.remove_callback)
+      if (operation.remove_callback)
       {
         try
         {
@@ -873,31 +843,31 @@ namespace AdServer::ProfilingCommons
     Operations& operations,
     const std::string& error) noexcept
   {
-    for(auto& operation : operations)
+    for (auto& operation : operations)
     {
       try
       {
-        if(operation.check_callback)
+        if (operation.check_callback)
         {
           (*operation.check_callback)(false, error);
         }
 
-        if(operation.get_callback)
+        if (operation.get_callback)
         {
           (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), error);
         }
 
-        if(operation.get_own_callback)
+        if (operation.get_own_callback)
         {
           (*operation.get_own_callback)(Generics::SmartMemBuf_var(), error);
         }
 
-        if(operation.save_callback)
+        if (operation.save_callback)
         {
           (*operation.save_callback)(error);
         }
 
-        if(operation.remove_callback)
+        if (operation.remove_callback)
         {
           (*operation.remove_callback)(false, error);
         }
@@ -913,12 +883,12 @@ namespace AdServer::ProfilingCommons
     std::string value;
     const auto status = db_->Get(rocksdb::ReadOptions(), key, &value);
 
-    if(status.IsNotFound())
+    if (status.IsNotFound())
     {
       return false;
     }
 
-    if(!status.ok())
+    if (!status.ok())
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl::direct_check_profile_(): " +
@@ -932,7 +902,7 @@ namespace AdServer::ProfilingCommons
   RocksDBBatchingProfileMapImpl::check_background_error_() const
   {
     Sync::PosixGuard guard(error_lock_);
-    if(!background_error_.empty())
+    if (!background_error_.empty())
     {
       throw ProfileMap<std::string>::Exception(
         "RocksDBBatchingProfileMapImpl background error: " +

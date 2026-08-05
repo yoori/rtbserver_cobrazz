@@ -274,6 +274,26 @@ BuildRoot: <xsl:value-of select="$BUILD_ROOT"/>
   select="$isp-private-key-defined or
   string-length($isp-zone-config/@public_key) != 0"/>
 <xsl:variable name="public-key-defined" select="$foros-public-key-defined or $isp-public-key-defined"/>
+<xsl:variable name="campaign-manager-path"
+  select="$app-path/serviceGroup[@descriptor = $ad-cluster-descriptor]/
+    serviceGroup[@descriptor = $fe-cluster-descriptor]/
+    service[@descriptor = $campaign-manager-descriptor]"/>
+<xsl:variable name="campaign-manager-service-config"
+  select="$campaign-manager-path/configuration/cfg:campaignManager"/>
+<xsl:variable name="campaign-manager-group-config"
+  select="$campaign-manager-path/../configuration/cfg:campaignManager"/>
+<xsl:variable name="campaign-manager-config"
+  select="$campaign-manager-service-config[count($campaign-manager-service-config) &gt; 0] |
+    $campaign-manager-group-config[count($campaign-manager-service-config) = 0]"/>
+<xsl:variable name="ram-size"
+  select="string(($campaign-manager-config/cfg:statLogging/@use_ram)[1])"/>
+<xsl:variable name="ram-fs"
+  select="string(($app-path/serviceGroup[@descriptor = $ad-cluster-descriptor]/
+    configuration/cfg:cluster/cfg:environment/@ram_fs |
+    $campaign-manager-path/../configuration/cfg:frontendCluster/
+      cfg:environment/@ram_fs)[1])"/>
+<xsl:variable name="ram-enabled"
+  select="number($ram-size) &gt; 0 and string-length($ram-fs) &gt; 0"/>
 
 <xsl:variable name="requires">
   <xsl:choose>
@@ -297,6 +317,12 @@ BuildRoot: <xsl:value-of select="$BUILD_ROOT"/>
 
 <xsl:if test="string-length($requires) > 0">
 Requires: <xsl:value-of select="$requires"/>
+</xsl:if>
+
+<xsl:if test="$ram-enabled">
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
 </xsl:if>
 
 <xsl:if test="$autorestart = 'true' or $autorestart = '1'">
@@ -335,6 +361,72 @@ mkdir -p %{buildroot}/etc/sysctl.d/
 mkdir -p %{buildroot}/etc/security/limits.d/
 install --mode 644 %{__plugin_root}/data/Config/adserver_sysctl.conf %{buildroot}/etc/sysctl.d/adserver.conf
 install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/security/limits.d/91-aduser.conf
+
+<xsl:if test="$ram-enabled">
+mkdir -p %{buildroot}%{__workspace_dir}/log/CampaignManager/Out
+for log_name in \
+  RequestBasicChannels WebStat ResearchWebStat ResearchProf CreativeStat \
+  ActionRequest PassbackStat UserAgentStat Request Impression Click \
+  AdvertiserAction PassbackImpression UserProperties TagRequest \
+  TagPositionStat CCGStat CCStat SearchTermStat SearchEngineStat TagAuctionStat; do
+  mkdir -p "%{buildroot}%{__workspace_dir}/log/CampaignManager/Out/${log_name}.ram_"
+  ln -s -f -T "/dev/<xsl:value-of select="$ram-fs"/>/log/CampaignManager/Out/${log_name}" \
+    "%{buildroot}%{__workspace_dir}/log/CampaignManager/Out/${log_name}.ram"
+done
+
+mkdir -p %{buildroot}/usr/lib/systemd/system
+mkdir -p %{buildroot}/usr/lib/tmpfiles.d
+mkdir -p %{buildroot}/usr/libexec
+
+<![CDATA[cat > %{buildroot}/usr/lib/systemd/system/dev-]]><xsl:value-of select="$ram-fs"/><![CDATA[.mount <<'EOF'
+[Unit]
+Description=CampaignManager RAM filesystem
+
+[Mount]
+What=]]><xsl:value-of select="$ram-fs"/><![CDATA[
+Where=/dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[
+Type=tmpfs
+Options=size=]]><xsl:value-of select="$ram-size"/><![CDATA[,mode=0755,uid=506,gid=506
+
+[Install]
+WantedBy=local-fs.target
+EOF
+
+cat > %{buildroot}/usr/lib/tmpfiles.d/]]><xsl:value-of select="$ram-fs"/><![CDATA[.conf <<'EOF'
+d /dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[ 0755 root root -
+EOF
+
+cat > %{buildroot}/usr/libexec/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup <<'EOF'
+#!/bin/bash
+set -eu
+
+base=/dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[/log/CampaignManager/Out
+install -d -m 0755 -o ]]><xsl:value-of select="$user-name"/><![CDATA[ -g ]]><xsl:value-of select="$user-group"/><![CDATA[ "$base"
+for log_name in \
+  RequestBasicChannels WebStat ResearchWebStat ResearchProf CreativeStat \
+  ActionRequest PassbackStat UserAgentStat Request Impression Click \
+  AdvertiserAction PassbackImpression UserProperties TagRequest \
+  TagPositionStat CCGStat CCStat SearchTermStat SearchEngineStat TagAuctionStat; do
+  install -d -m 0755 -o ]]><xsl:value-of select="$user-name"/><![CDATA[ -g ]]><xsl:value-of select="$user-group"/><![CDATA[ "$base/$log_name"
+done
+EOF
+chmod 755 %{buildroot}/usr/libexec/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup
+
+cat > %{buildroot}/usr/lib/systemd/system/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup.service <<'EOF'
+[Unit]
+Description=Create CampaignManager directories on RAM filesystem
+Requires=dev-]]><xsl:value-of select="$ram-fs"/><![CDATA[.mount
+After=dev-]]><xsl:value-of select="$ram-fs"/><![CDATA[.mount
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF]]>
+</xsl:if>
 
 %files
 %defattr(-, %{__user}, %{__group})
@@ -610,11 +702,31 @@ install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/
 %defattr(-, root, root)
 /etc/sysctl.d/adserver.conf
 /etc/security/limits.d/91-aduser.conf
+<xsl:if test="$ram-enabled">
+/usr/lib/systemd/system/dev-<xsl:value-of select="$ram-fs"/>.mount
+/usr/lib/systemd/system/rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service
+/usr/lib/tmpfiles.d/<xsl:value-of select="$ram-fs"/>.conf
+/usr/libexec/rtbserver-<xsl:value-of select="$ram-fs"/>-setup
+</xsl:if>
+
+%preun
+<xsl:if test="$ram-enabled">
+if [ "$1" -eq 0 ]; then
+  systemctl disable --now rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service &gt;/dev/null 2&gt;&amp;1 ||:
+  systemctl disable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
+fi
+</xsl:if>
 
 %postun
 <xsl:if test="$public-key-defined">
 # change authorized_keys back
 sed -i '/%{__begin_tag}/,/%{__end_tag}/d' /home/%{__user}/.ssh/authorized_keys 2&gt;/dev/null ||:
+</xsl:if>
+<xsl:if test="$ram-enabled">
+systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:
+if [ "$1" -eq 0 ]; then
+  rmdir /dev/<xsl:value-of select="$ram-fs"/> &gt;/dev/null 2&gt;&amp;1 ||:
+fi
 </xsl:if>
 
 %clean
@@ -628,6 +740,22 @@ rm -rf %{buildroot}
 %post
 
 USER=<xsl:value-of select="$user-name"/>
+
+<xsl:if test="$ram-enabled">
+systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:
+systemd-tmpfiles --create /usr/lib/tmpfiles.d/<xsl:value-of select="$ram-fs"/>.conf &gt;/dev/null 2&gt;&amp;1 ||:
+if mountpoint -q /dev/<xsl:value-of select="$ram-fs"/>; then
+  if [ "$(findmnt -n -o FSTYPE --target /dev/<xsl:value-of select="$ram-fs"/>)" = tmpfs ]; then
+    mount -o remount,size=<xsl:value-of select="$ram-size"/> /dev/<xsl:value-of select="$ram-fs"/> ||:
+  else
+    echo '/dev/<xsl:value-of select="$ram-fs"/> is already mounted and is not tmpfs' &gt;&amp;2
+  fi
+else
+  systemctl enable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
+fi
+systemctl enable rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service &gt;/dev/null 2&gt;&amp;1 ||:
+systemctl restart rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service &gt;/dev/null 2&gt;&amp;1 ||:
+</xsl:if>
 
 <xsl:if test="$public-key-defined">
 sed -i '/%{__begin_tag}/,/%{__end_tag}/d' /home/%{__user}/.ssh/authorized_keys 2&gt;/dev/null ||:

@@ -166,7 +166,7 @@
       </xsl:if>
     </xsl:variable>
     <xsl:variable name="rocksdb-batching-threads"><xsl:value-of select="$user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads"/>
-      <xsl:if test="count($user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads) = 0">2</xsl:if>
+      <xsl:if test="count($user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads) = 0">16</xsl:if>
     </xsl:variable>
 
     <xsl:variable name="global-secure-params" select="$colo-config/cfg:secureParams"/>

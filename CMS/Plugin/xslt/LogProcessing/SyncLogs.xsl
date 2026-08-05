@@ -54,6 +54,7 @@
   <xsl:param name="destination-hosts"/>
   <xsl:param name="dirs"/>
   <xsl:param name="pattern"/>
+  <xsl:param name="dir-suffix" select="''"/>
 
   <xsl:if test="string-length($source-hosts) > 0">
     <cfg:Route post_command="touch ##SRC_DIR##/~##FILE_NAME##.commit.##DST_HOST##"
@@ -62,7 +63,7 @@
       <xsl:for-each select="exsl:node-set($dirs)//dir">
         <xsl:variable name="dir" select="text()"/>
         <xsl:variable name="source"
-          select="concat($source-path-base, 'Out/', $dir, '/', $dir, '.2*')"/>
+          select="concat($source-path-base, 'Out/', $dir, $dir-suffix, '/', $dir, '.2*')"/>
         <xsl:variable name="destination"
           select="concat($destination-path-base, $dir)"/>
 
@@ -83,7 +84,7 @@
       <xsl:for-each select="exsl:node-set($dirs)//dir">
         <xsl:variable name="dir" select="text()"/>
         <xsl:variable name="source"
-          select="concat($source-path-base, 'Out/', $dir, '/~', $dir, '.2*.commit.*')"/>
+          select="concat($source-path-base, 'Out/', $dir, $dir-suffix, '/~', $dir, '.2*.commit.*')"/>
         <xsl:variable name="destination"
           select="concat($destination-path-base, $dir)"/>
 
@@ -172,6 +173,18 @@
 
     <xsl:variable name="log-root-dir" select="concat($workspace-root, '/log/SyncLogs')"/>
     <xsl:variable name="log-files-root-dir" select="concat($workspace-root, '/log')"/>
+    <xsl:variable name="campaign-manager-path"
+      select="$fe-cluster-path/service[@descriptor = $campaign-manager-descriptor]"/>
+    <xsl:variable name="campaign-manager-service-config"
+      select="$campaign-manager-path/configuration/cfg:campaignManager"/>
+    <xsl:variable name="campaign-manager-group-config"
+      select="$campaign-manager-path/../configuration/cfg:campaignManager"/>
+    <xsl:variable name="campaign-manager-config"
+      select="$campaign-manager-service-config[count($campaign-manager-service-config) &gt; 0] |
+        $campaign-manager-group-config[count($campaign-manager-service-config) = 0]"/>
+    <xsl:variable name="campaign-manager-ram-enabled"
+      select="number($campaign-manager-config/cfg:statLogging/@use_ram) &gt; 0 and
+        string-length($env-config/@ram_fs) &gt; 0"/>
 
   <cfg:SyncLogsConfig
     log_root="{$log-root-dir}"
@@ -215,6 +228,18 @@
     <xsl:variable name="remote-copy-command">
       <xsl:value-of select="concat($backup-command-prefix,
         '/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
+        $remote-dest-port, '/ad-logs##DST_PATH##', $backup-command-postfix)"/>
+    </xsl:variable>
+
+    <xsl:variable name="ram-local-copy-command"><xsl:value-of
+        select="concat($backup-command-prefix,
+        '/usr/bin/rsync -t --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
+        $log-files-root-dir, '##DST_PATH##', $backup-command-postfix)"/>
+    </xsl:variable>
+
+    <xsl:variable name="ram-remote-copy-command">
+      <xsl:value-of select="concat($backup-command-prefix,
+        '/usr/bin/rsync -t --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
         $remote-dest-port, '/ad-logs##DST_PATH##', $backup-command-postfix)"/>
     </xsl:variable>
 
@@ -682,6 +707,83 @@
         </xsl:for-each>
       </cfg:FeedRouteGroup>
 
+      <xsl:if test="$campaign-manager-ram-enabled">
+        <cfg:FeedRouteGroup
+          pool_threads="10"
+          check_logs_period="1"
+          local_copy_command_type="rsync"
+          remote_copy_command_type="rsync"
+          tries_per_file="2"
+          local_copy_command="{$ram-local-copy-command}"
+          remote_copy_command="{$ram-remote-copy-command}">
+
+          <xsl:variable name="campaign-manager-ram-route1">
+            <dirs>
+              <dir>CreativeStat</dir>
+              <dir>WebStat</dir>
+              <dir>ActionRequest</dir>
+              <dir>UserProperties</dir>
+              <dir>CCGStat</dir>
+              <dir>CCStat</dir>
+              <dir>TagAuctionStat</dir>
+              <dir>TagPositionStat</dir>
+              <dir>PassbackStat</dir>
+              <dir>SearchEngineStat</dir>
+              <dir>UserAgentStat</dir>
+            </dirs>
+          </xsl:variable>
+
+          <xsl:call-template name="Route">
+            <xsl:with-param name="type" select="'RoundRobin'"/>
+            <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
+            <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+            <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
+            <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
+            <xsl:with-param name="dirs" select="$campaign-manager-ram-route1"/>
+            <xsl:with-param name="dir-suffix" select="'.ram'"/>
+          </xsl:call-template>
+
+          <xsl:variable name="campaign-manager-ram-search-term-route">
+            <dirs>
+              <dir>SearchTermStat</dir>
+            </dirs>
+          </xsl:variable>
+
+          <xsl:call-template name="Route">
+            <xsl:with-param name="type" select="'Hash'"/>
+            <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
+            <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+            <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
+            <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
+            <xsl:with-param name="dirs" select="$campaign-manager-ram-search-term-route"/>
+            <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
+            <xsl:with-param name="dir-suffix" select="'.ram'"/>
+          </xsl:call-template>
+
+          <xsl:variable name="campaign-manager-ram-request-route">
+            <dirs>
+              <dir>Request</dir>
+              <dir>Impression</dir>
+              <dir>Click</dir>
+              <dir>AdvertiserAction</dir>
+              <dir>PassbackImpression</dir>
+              <dir>TagRequest</dir>
+            </dirs>
+          </xsl:variable>
+
+          <xsl:call-template name="Route">
+            <xsl:with-param name="type" select="'Hash'"/>
+            <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
+            <xsl:with-param name="destination-path-base" select="'/RequestInfoManager/In/'"/>
+            <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
+            <xsl:with-param name="destination-hosts" select="$request-info-manager-hosts"/>
+            <xsl:with-param name="dirs" select="$campaign-manager-ram-request-route"/>
+            <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
+            <xsl:with-param name="dir-suffix" select="'.ram'"/>
+          </xsl:call-template>
+        </cfg:FeedRouteGroup>
+      </xsl:if>
+
 
       <xsl:variable name="rbc-backup-command-prefix"><xsl:choose>
         <xsl:when test="count($logs-backup) > 0 and
@@ -704,6 +806,18 @@
       <xsl:variable name="rbc-remote-copy-command">
         <xsl:value-of select="concat($rbc-backup-command-prefix,
           '/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
+          $remote-dest-port, '/ad-logs##DST_PATH##', $rbc-backup-command-postfix)"/>
+      </xsl:variable>
+
+      <xsl:variable name="rbc-ram-local-copy-command"><xsl:value-of
+        select="concat($rbc-backup-command-prefix,
+        '/usr/bin/rsync -t --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
+        $log-files-root-dir, '##DST_PATH##', $rbc-backup-command-postfix)"/>
+      </xsl:variable>
+
+      <xsl:variable name="rbc-ram-remote-copy-command">
+        <xsl:value-of select="concat($rbc-backup-command-prefix,
+          '/usr/bin/rsync -t --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
           $remote-dest-port, '/ad-logs##DST_PATH##', $rbc-backup-command-postfix)"/>
       </xsl:variable>
 
@@ -732,6 +846,35 @@
         </xsl:call-template>
 
       </cfg:FeedRouteGroup>
+
+      <xsl:if test="$campaign-manager-ram-enabled">
+        <cfg:FeedRouteGroup
+          pool_threads="20"
+          check_logs_period="1"
+          local_copy_command_type="rsync"
+          remote_copy_command_type="rsync"
+          tries_per_file="2"
+          local_copy_command="{$rbc-ram-local-copy-command}"
+          remote_copy_command="{$rbc-ram-remote-copy-command}">
+
+          <xsl:variable name="ram-to-expression-matcher-route">
+            <dirs>
+              <dir>RequestBasicChannels</dir>
+            </dirs>
+          </xsl:variable>
+
+          <xsl:call-template name="Route">
+            <xsl:with-param name="type" select="'DefiniteHash'"/>
+            <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
+            <xsl:with-param name="destination-path-base" select="'/ExpressionMatcher/In/'"/>
+            <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
+            <xsl:with-param name="destination-hosts" select="$expression-matcher-distribution"/>
+            <xsl:with-param name="dirs" select="$ram-to-expression-matcher-route"/>
+            <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
+            <xsl:with-param name="dir-suffix" select="'.ram'"/>
+          </xsl:call-template>
+        </cfg:FeedRouteGroup>
+      </xsl:if>
 
       <!-- copy ad-content from local proxy (remote) or source host (central) to campaign manager hosts -->
       <xsl:variable name="data-source-host">
@@ -1007,6 +1150,37 @@
               <xsl:attribute name="source">CampaignManager/Out/ResearchProf/RProf_*</xsl:attribute>
               <xsl:attribute name="destination"><![CDATA[/]]>ResearchProf</xsl:attribute>
             </cfg:files>
+            <cfg:hosts destination="-non-used-hostname">
+              <xsl:attribute name="source"><xsl:value-of select="$campaign-manager-hosts"/></xsl:attribute>
+            </cfg:hosts>
+          </cfg:Route>
+        </cfg:FeedRouteGroup>
+      </xsl:if>
+
+      <xsl:if test="count($predictor-sync-logs-host) &gt; 0 and $campaign-manager-ram-enabled">
+        <cfg:FeedRouteGroup
+          pool_threads="4"
+          check_logs_period="1"
+          local_copy_command="/bin/echo"
+          local_copy_command_type="rsync"
+          remote_copy_command_type="rsync"
+          tries_per_file="2">
+          <xsl:attribute name="remote_copy_command"><xsl:value-of
+            select="$research-command-prefix"/><xsl:for-each
+            select="$colo-config/cfg:predictorConfig/cfg:auxiliaryRef"><![CDATA[(/usr/bin/rsync -av -t --log-format=%f ##SRC_PATH## rsync://]]><xsl:value-of
+            select="@host"/>:<xsl:value-of select="@port"/><xsl:if
+            test="count(@port) = 0"><xsl:value-of
+            select="$def-research-stat-receiver-port"/></xsl:if><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/><![CDATA[##DST_PATH## || true) && ]]></xsl:for-each><xsl:if test="$predictor-path//cfg:syncServer/@enable_backup = 'true' or
+          $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[(/usr/bin/rsync -a -t --timeout=55 --log-format=%f ##SRC_PATH##  rsync://]]><xsl:value-of
+              select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -a -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
+              select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/>##DST_PATH##<xsl:value-of
+              select="$research-command-postfix"/></xsl:attribute>
+
+          <cfg:Route type="RoundRobin">
+            <cfg:files source="CampaignManager/Out/ResearchWebStat.ram/RWebStat_*"
+              destination="/ResearchWebStat"/>
+            <cfg:files source="CampaignManager/Out/ResearchProf.ram/RProf_*"
+              destination="/ResearchProf"/>
             <cfg:hosts destination="-non-used-hostname">
               <xsl:attribute name="source"><xsl:value-of select="$campaign-manager-hosts"/></xsl:attribute>
             </cfg:hosts>

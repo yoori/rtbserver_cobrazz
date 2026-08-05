@@ -1,5 +1,6 @@
 
 #include "ActionRequest.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -30,6 +31,14 @@ operator<<(std::ostream& os, const ActionRequestKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const ActionRequestKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, ActionRequestInnerKey& key)
   /*throw(eh::Exception)*/
@@ -50,6 +59,15 @@ operator<<(std::ostream& os, const ActionRequestInnerKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const ActionRequestInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  BufferTabOutputArchive archive(out);
+  archive << *key.holder_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, ActionRequestInnerData& data)
 {
@@ -66,6 +84,12 @@ operator<<(std::ostream& os, const ActionRequestInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const ActionRequestInnerData& data)
+{
+  out << data.action_request_count_ << '\t' << data.cur_value_;
+  return out;
+}
+
 } // namespace LogProcessing
 } // namespace AdServer
-

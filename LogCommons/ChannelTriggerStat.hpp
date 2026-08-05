@@ -1,127 +1,11 @@
 #pragma once
 
 #include <iosfwd>
-#include <String/AsciiStringManip.hpp>
-#include <Commons/StringHolder.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
 
 namespace AdServer::LogProcessing
 {
-  class ChannelTriggerStatInnerKey_V_1_2
-  {
-  public:
-    ChannelTriggerStatInnerKey_V_1_2()
-    :
-      channel_id_(),
-      type_(),
-      trigger_(),
-      hash_()
-    {
-    }
-
-    ChannelTriggerStatInnerKey_V_1_2(
-      unsigned long channel_id,
-      char type,
-      AdServer::Commons::StringHolder* trigger
-    )
-    :
-      channel_id_(channel_id),
-      type_(type),
-      trigger_(ReferenceCounting::add_ref(trigger)),
-      hash_()
-    {
-      calc_hash_();
-    }
-
-    bool operator==(const ChannelTriggerStatInnerKey_V_1_2& rhs) const
-    {
-      if (&rhs == this)
-      {
-        return true;
-      }
-      return channel_id_ == rhs.channel_id_ &&
-        type_ == rhs.type_ &&
-        trigger_->str() == rhs.trigger_->str();
-    }
-
-    unsigned long channel_id() const
-    {
-      return channel_id_;
-    }
-
-    char type() const
-    {
-      return type_;
-    }
-
-    const std::string& trigger() const
-    {
-      return trigger_->str();
-    }
-
-    size_t hash() const
-    {
-      return hash_;
-    }
-
-    friend FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is,
-      ChannelTriggerStatInnerKey_V_1_2& key)
-      /*throw(eh::Exception)*/;
-
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerStatInnerKey_V_1_2& key)
-      /*throw(eh::Exception)*/;
-
-  private:
-    void calc_hash_()
-    {
-      Generics::Murmur64Hash hasher(hash_);
-      hash_add(hasher, channel_id_);
-      hash_add(hasher, trigger_->str());
-      hash_add(hasher, type_);
-    }
-
-    bool type_is_valid_() const
-    {
-      return type_ == 'C' || type_ == 'P' || type_ == 'S' || type_ == 'U';
-    }
-
-    void invariant() const /*throw(eh::Exception)*/
-    {
-      const String::AsciiStringManip::Char1Category<'\n'> illegal_chars;
-
-      if (!type_is_valid_())
-      {
-        Stream::Error es;
-        es << "ChannelTriggerStatInnerKey_V_1_2::invariant(): type_ "
-           << "has invalid value '" << type_ << '\'';
-        throw ConstraintViolation(es);
-      }
-      String::SubString tr(trigger_->str());
-      if (tr.empty())
-      {
-        throw ConstraintViolation("ChannelTriggerStatInnerKey_V_1_2::"
-          "invariant(): trigger_ must be non-empty");
-      }
-      const char* ptr = illegal_chars.find_owned(tr.begin(), tr.end());
-      if (ptr != tr.end())
-      {
-        Stream::Error es;
-        es << "ChannelTriggerStatInnerKey_V_1_2::invariant(): trigger_ contains "
-           << "illegal char with code " << std::showbase << std::hex
-           << unsigned(*ptr);
-        throw ConstraintViolation(es);
-      }
-    }
-
-    unsigned long channel_id_;
-    char type_;
-    AdServer::Commons::StringHolder_var trigger_;
-    size_t hash_;
-  };
-
   class ChannelTriggerStatInnerKey_V_2_4
   {
   public:
@@ -433,16 +317,6 @@ namespace AdServer::LogProcessing
     unsigned long colo_id_;
     size_t hash_;
   };
-
-  typedef StatCollector<
-      ChannelTriggerStatKey,
-      StatCollector<
-        ChannelTriggerStatInnerKey_V_1_2,
-        ChannelTriggerStatInnerData,
-        false,
-        true
-      >
-    > ChannelTriggerStatCollector_V_1_2;
 
   typedef StatCollector<
       ChannelTriggerStatKey,

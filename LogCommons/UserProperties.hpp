@@ -26,11 +26,11 @@ namespace AdServer::LogProcessing
     UserPropertiesKey(const UserPropertiesKey& init)
       : sdate_(init.sdate_),
         isp_sdate_(init.isp_sdate_),
-      colo_id_(init.colo_id_),
-      user_status_(init.user_status_),
-      property_name_(init.property_name_),
-      property_value_(init.property_value_),
-      hash_(init.hash_)
+        colo_id_(init.colo_id_),
+        user_status_(init.user_status_),
+        property_name_(init.property_name_),
+        property_value_(init.property_value_),
+        hash_(init.hash_)
     {}
 
     UserPropertiesKey(UserPropertiesKey&& init)

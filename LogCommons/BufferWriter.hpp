@@ -105,6 +105,34 @@ namespace AdServer::LogProcessing
     bool good_ = true;
   };
 
+  template <
+    typename InvariantsChecker = Aux_::OwnInvariants,
+    char Separator = '\t'>
+  class BufferOutputArchive
+  {
+  public:
+    explicit
+    BufferOutputArchive(BufferWriter& writer) noexcept;
+
+    template <typename Field>
+    BufferOutputArchive&
+    operator&(const Field& field);
+
+    template <typename Field>
+    BufferOutputArchive&
+    operator^(const Field& field);
+
+    template <typename Data>
+    BufferOutputArchive&
+    operator<<(const Data& data);
+
+  private:
+    BufferWriter& writer_;
+  };
+
+  using BufferTabOutputArchive = BufferOutputArchive<Aux_::OwnInvariants, '\t'>;
+  using SimpleBufferTabOutputArchive = BufferOutputArchive<Aux_::NoInvariants, '\t'>;
+
   BufferWriter&
   operator<<(BufferWriter& out, char value);
 
@@ -137,6 +165,12 @@ namespace AdServer::LogProcessing
 
   BufferWriter&
   operator<<(BufferWriter& out, int value);
+
+  BufferWriter&
+  operator<<(BufferWriter& out, unsigned short value);
+
+  BufferWriter&
+  operator<<(BufferWriter& out, short value);
 
   template <typename Convertor, const char STRING_SEPARATOR>
   BufferWriter&

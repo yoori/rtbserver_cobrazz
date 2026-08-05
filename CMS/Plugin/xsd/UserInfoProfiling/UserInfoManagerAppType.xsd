@@ -169,7 +169,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="2"/>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserInfoManagerStorageType">

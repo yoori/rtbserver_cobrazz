@@ -61,35 +61,6 @@ operator<<(std::ostream& os, const ChannelTriggerStatInnerKey& key)
 FixedBufStream<TabCategory>&
 operator>>(
   FixedBufStream<TabCategory>& is,
-  ChannelTriggerStatInnerKey_V_1_2& key
-)
-  /*throw(eh::Exception)*/
-{
-  is >> key.channel_id_;
-  is >> key.type_;
-  Aux_::StringIoWrapper trigger_wrapper;
-  is >> trigger_wrapper;
-  key.trigger_ =
-    new AdServer::Commons::StringHolder(std::move(trigger_wrapper));
-  key.invariant();
-  key.calc_hash_();
-  return is;
-}
-
-std::ostream&
-operator<<(std::ostream& os, const ChannelTriggerStatInnerKey_V_1_2& key)
-  /*throw(eh::Exception)*/
-{
-  key.invariant();
-  os << key.channel_id_ << '\t';
-  os << key.type_ << '\t';
-  os << Aux_::StringIoWrapper(key.trigger_->str());
-  return os;
-}
-
-FixedBufStream<TabCategory>&
-operator>>(
-  FixedBufStream<TabCategory>& is,
   ChannelTriggerStatInnerKey_V_2_4& key
 )
   /*throw(eh::Exception)*/
@@ -127,4 +98,3 @@ operator<<(std::ostream& os, const ChannelTriggerStatInnerData& data)
 
 } // namespace LogProcessing
 } // namespace AdServer
-

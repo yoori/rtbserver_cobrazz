@@ -67,6 +67,9 @@ public:
   std::ostream&
   operator<<(std::ostream& os, const ReachStatInnerKey& key);
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const ReachStatInnerKey& key);
+
 private:
   unsigned long id_;
 };
@@ -218,6 +221,9 @@ struct ReachStatKey
   friend
   std::ostream&
   operator<<(std::ostream& os, const ReachStatKey& key);
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const ReachStatKey& key);
 
 private:
   void calc_hash_()
@@ -395,6 +401,9 @@ public:
   friend
   std::ostream&
   operator<<(std::ostream& os, const CcgStatInnerData& data);
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const CcgStatInnerData& data);
 
 private:
   unsigned long auctions_lost_;
@@ -616,6 +625,9 @@ public:
   friend
   std::ostream&
   operator<<(std::ostream& os, const CcStatInnerData& data);
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const CcStatInnerData& data);
 
 private:
   unsigned long auctions_lost_;

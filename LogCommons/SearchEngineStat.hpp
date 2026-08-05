@@ -68,6 +68,10 @@ public:
   operator<<(std::ostream& os, const SearchEngineStatInnerKey& key)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const SearchEngineStatInnerKey& key)
+    /*throw(eh::Exception)*/;
+
 private:
   void calc_hash_()
   {
@@ -147,6 +151,10 @@ public:
   operator<<(std::ostream& os, const SearchEngineStatInnerData& data)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const SearchEngineStatInnerData& data)
+    /*throw(eh::Exception)*/;
+
 private:
   unsigned long hits_;
   unsigned long hits_empty_page_;
@@ -200,6 +208,10 @@ struct SearchEngineStatKey
   friend
   std::ostream&
   operator<<(std::ostream& os, const SearchEngineStatKey& key)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const SearchEngineStatKey& key)
     /*throw(eh::Exception)*/;
 
 private:

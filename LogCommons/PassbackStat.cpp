@@ -1,5 +1,6 @@
 
 #include "PassbackStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -30,6 +31,14 @@ operator<<(std::ostream& os, const PassbackStatKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const PassbackStatKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, PassbackStatInnerKey& key)
   /*throw(eh::Exception)*/
@@ -56,6 +65,18 @@ operator<<(std::ostream& os, const PassbackStatInnerKey& key)
   os << key.tag_id_ << '\t';
   os << key.size_id_;
   return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const PassbackStatInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  key.invariant();
+  out << key.user_status_ << '\t'
+    << key.country_code_ << '\t'
+    << key.tag_id_ << '\t'
+    << key.size_id_;
+  return out;
 }
 
 FixedBufStream<TabCategory>&
@@ -89,6 +110,13 @@ operator<<(std::ostream& os, const PassbackStatInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const PassbackStatInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  out << data.requests_;
+  return out;
+}
+
 } // namespace LogProcessing
 } // namespace AdServer
-

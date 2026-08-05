@@ -8,6 +8,43 @@
 
 namespace AdServer::LogProcessing
 {
+  template <typename InvariantsChecker, char Separator>
+  BufferOutputArchive<InvariantsChecker, Separator>::BufferOutputArchive(
+    BufferWriter& writer) noexcept
+    : writer_(writer)
+  {}
+
+  template <typename InvariantsChecker, char Separator>
+  template <typename Field>
+  BufferOutputArchive<InvariantsChecker, Separator>&
+  BufferOutputArchive<InvariantsChecker, Separator>::operator&(
+    const Field& field)
+  {
+    writer_ << field << Separator;
+    return *this;
+  }
+
+  template <typename InvariantsChecker, char Separator>
+  template <typename Field>
+  BufferOutputArchive<InvariantsChecker, Separator>&
+  BufferOutputArchive<InvariantsChecker, Separator>::operator^(
+    const Field& field)
+  {
+    writer_ << field;
+    return *this;
+  }
+
+  template <typename InvariantsChecker, char Separator>
+  template <typename Data>
+  BufferOutputArchive<InvariantsChecker, Separator>&
+  BufferOutputArchive<InvariantsChecker, Separator>::operator<<(
+    const Data& data)
+  {
+    InvariantsChecker::invariant(data);
+    const_cast<Data&>(data).serialize(*this);
+    return *this;
+  }
+
   inline void
   BufferWriter::flush_if_required_(std::size_t append_size)
   {
@@ -134,6 +171,20 @@ namespace AdServer::LogProcessing
   operator<<(BufferWriter& out, int value)
   {
     out.append_number(value);
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, unsigned short value)
+  {
+    out.append_number(static_cast<unsigned int>(value));
+    return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, short value)
+  {
+    out.append_number(static_cast<int>(value));
     return out;
   }
 

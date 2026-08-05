@@ -461,6 +461,12 @@
 
   <xsd:complexType name="CampaignManagerLoggingType">
     <xsd:sequence>
+      <xsd:element name="PrimaryDump" type="PrimaryDumpType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Optional primary filesystem for log dumps.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="RequestBasicChannels"
         type="RequestBasicChannelsLoggerType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
@@ -633,6 +639,12 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="PrimaryDumpType">
+    <xsd:attribute name="check_space_filesystem" type="xsd:string" use="required"/>
+    <xsd:attribute name="min_free_space" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="suffix" type="xsd:string" use="required"/>
   </xsd:complexType>
 
   <!-- CampaignManagerLogger -->

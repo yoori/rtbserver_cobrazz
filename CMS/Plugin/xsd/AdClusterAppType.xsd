@@ -1292,6 +1292,12 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="RamFileSystemNameType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[A-Za-z0-9_]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="ClusterEnvironmentType">
     <xsd:attribute name="workspace_root" type="NoLeadingTrailingSpaces" use="optional">
       <xsd:annotation>
@@ -1362,6 +1368,11 @@
         <xsd:documentation>
           Controls thread affinity preload for selected DACS-managed services.
         </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ram_fs" type="RamFileSystemNameType" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Name of the tmpfs used for service RAM dumps.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>

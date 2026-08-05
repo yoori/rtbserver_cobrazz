@@ -6,6 +6,83 @@ namespace AdServer
 {
 namespace LogProcessing
 {
+  inline
+  LogHolder::~LogHolder() noexcept = default;
+
+  inline
+  LogFlushTraits::LogFlushTraits()
+  {}
+
+  inline
+  LogFlushTraits::LogFlushTraits(
+    const Generics::Time& period_val,
+    const char* out_dir_val)
+    : period(period_val),
+      out_dir(out_dir_val)
+  {}
+
+  template<typename SavePolicy, typename Collector>
+  void
+  save_log(
+    const LogFlushTraits& flush_traits,
+    SavePolicy& save_policy,
+    Collector& collector)
+    /*throw(eh::Exception)*/
+  {
+    if (flush_traits.primary_dump && flush_traits.primary_dump->available())
+    {
+      try
+      {
+        const std::string primary_output_dir =
+          flush_traits.primary_dump->output_dir(flush_traits.out_dir);
+        save_policy.save(collector, primary_output_dir.c_str());
+        return;
+      }
+      catch (const eh::Exception&)
+      {
+        flush_traits.primary_dump->disable();
+      }
+    }
+
+    save_policy.save(collector, flush_traits.out_dir.c_str());
+  }
+
+  template<typename LogTraitsType>
+  void
+  DefaultSavePolicy<LogTraitsType>::save(
+    typename LogTraitsType::CollectorType& collector,
+    const char* out_dir)
+    /*throw(eh::Exception)*/
+  {
+    IoHelperT(collector).save(out_dir);
+  }
+
+  template<typename LogTraitsType>
+  DistributionSavePolicy<LogTraitsType>::DistributionSavePolicy(
+    unsigned long distrib_count)
+    : distrib_count_(distrib_count)
+  {}
+
+  template<typename LogTraitsType>
+  void
+  DistributionSavePolicy<LogTraitsType>::save(
+    typename LogTraitsType::CollectorType& collector,
+    const char* out_dir)
+    /*throw(eh::Exception)*/
+  {
+    LogIoProxy<LogTraitsType>::save(collector, out_dir, distrib_count_);
+  }
+
+  template<typename LogTraitsType>
+  void
+  SimpleCsvSavePolicy<LogTraitsType>::save(
+    typename LogTraitsType::CollectorType& collector,
+    const char* out_dir)
+    /*throw(eh::Exception)*/
+  {
+    SimpleLogSaver_var(new CsvSaverT(collector, out_dir))->save();
+  }
+
   template<typename LogTraitsType, typename SavePolicy>
   LogHolderImpl<LogTraitsType, SavePolicy>::LogHolderImpl(
     const LogFlushTraits& flush_traits,
@@ -22,7 +99,7 @@ namespace LogProcessing
     {
       try
       {
-        save_policy_.save(collector_, flush_traits_.out_dir.c_str());
+        save_log(flush_traits_, save_policy_, collector_);
       }
       catch (const eh::Exception& ex)
       {
@@ -68,7 +145,7 @@ namespace LogProcessing
 
       if (flush)
       {
-        save_policy_.save(tmp_collector, flush_traits_.out_dir.c_str());
+        save_log(flush_traits_, save_policy_, tmp_collector);
       }
 
       return now + flush_traits_.period;
@@ -94,6 +171,57 @@ namespace LogProcessing
 
   /* LogHolderPortioned */
   template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPortioned<LogTraitsType, SavePolicy>::LogHolderPortioned(
+    const LogFlushTraits& flush_traits,
+    const SavePolicy& save_policy,
+    Generics::TaskRunner* task_runner,
+    unsigned long portions_num)
+    /*throw(eh::Exception)*/
+    : flush_traits_(flush_traits),
+      save_policy_(save_policy),
+      task_runner_(ReferenceCounting::add_ref(task_runner)),
+      portions_num_(portions_num)
+  {
+    init_portions_(portions_);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  template<typename Mediator>
+  void
+  LogHolderPortioned<LogTraitsType, SavePolicy>::add_record(
+    typename CollectorT::KeyT key,
+    Mediator data)
+  {
+    // Implemented only for two-level collectors: key -> (inner_key -> value).
+    for(auto inner_it = data.begin(); inner_it != data.end(); ++inner_it)
+    {
+      typename CollectorT::DataT inner_data;
+      inner_data.add(inner_it->first, inner_it->second);
+      const unsigned long portion_i =
+        inner_it->first.hash() % portions_num_;
+
+      SyncPolicy::WriteGuard guard(portions_[portion_i]->lock);
+      portions_[portion_i]->collector.add(key, std::move(inner_data));
+    }
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPortioned<LogTraitsType, SavePolicy>::~LogHolderPortioned() noexcept =
+    default;
+
+  template<typename LogTraitsType, typename SavePolicy>
+  void
+  LogHolderPortioned<LogTraitsType, SavePolicy>::init_portions_(
+    PortionArray& portions) noexcept
+  {
+    portions.resize(portions_num_);
+    for(auto it = portions.begin(); it != portions.end(); ++it)
+    {
+      *it = new Portion();
+    }
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
   LogHolderPortioned<LogTraitsType, SavePolicy>::DumpTask::DumpTask(
     LogHolderPortioned<LogTraitsType, SavePolicy>* log_holder,
     Portion_var portion,
@@ -118,7 +246,10 @@ namespace LogProcessing
   {
     if(!portion_->collector.empty())
     {
-      log_holder_->save_policy_.save(portion_->collector, log_holder_->flush_traits_.out_dir.c_str());
+      save_log(
+        log_holder_->flush_traits_,
+        log_holder_->save_policy_,
+        portion_->collector);
     }
 
     portion_ = Portion_var();
@@ -184,7 +315,7 @@ namespace LogProcessing
         {
           if(!(*portion_it)->collector.empty())
           {
-            save_policy_.save((*portion_it)->collector, flush_traits_.out_dir.c_str());
+            save_log(flush_traits_, save_policy_, (*portion_it)->collector);
           }
         }        
       }
@@ -306,7 +437,7 @@ namespace LogProcessing
 
       if (flush)
       {
-        Base::save_policy_.save(tmp_collector, Base::flush_traits_.out_dir.c_str());
+        save_log(Base::flush_traits_, Base::save_policy_, tmp_collector);
 
         if (skipped_val &&
             logger_ && logger_->log_level() >= Logging::Logger::WARNING)
@@ -345,6 +476,9 @@ namespace LogProcessing
 
   /* CompositeLogHolder */
   inline
+  CompositeLogHolder::~CompositeLogHolder() noexcept = default;
+
+  inline
   void
   CompositeLogHolder::add_child_log_holder(LogHolder* log_holder)
     /*throw(eh::Exception)*/
@@ -379,7 +513,7 @@ namespace LogProcessing
     public Generics::Last<ReferenceCounting::AtomicImpl>
   {
   public:
-    ContainerHolder(): index_(0) {}
+    ContainerHolder();
 
     void
     get_object(LogHolderList& holders);
@@ -388,16 +522,13 @@ namespace LogProcessing
     release_object(LogHolderList& holders);
 
     bool
-    empty() const
-    {
-      return holders_.empty();
-    }
+    empty() const;
 
     LogHolderPoolObject_var
     collect();
 
   protected:
-    virtual ~ContainerHolder() noexcept {}
+    virtual ~ContainerHolder() noexcept;
 
   protected:
     typedef Sync::Policy::PosixThread SyncPolicy;
@@ -414,14 +545,65 @@ namespace LogProcessing
   public:
     typedef typename LogTraitsType::CollectorType CollectorT;
 
-    LogHolderPoolObject(int index_): index(index_) {}
+    LogHolderPoolObject(int index_val);
 
     const int index;
     CollectorT collector;
 
   protected:
-    virtual ~LogHolderPoolObject() noexcept {}
+    virtual ~LogHolderPoolObject() noexcept;
   };
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::
+  ContainerHolder()
+    : index_(0)
+  {}
+
+  template<typename LogTraitsType, typename SavePolicy>
+  bool
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::empty() const
+  {
+    return holders_.empty();
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::
+  ~ContainerHolder() noexcept = default;
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject::
+  LogHolderPoolObject(int index_val)
+    : index(index_val)
+  {}
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject::
+  ~LogHolderPoolObject() noexcept = default;
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::PoolObjectBase::PoolObjectBase(
+    const ContainerHolder_var& container_holder)
+    : container_holder_(container_holder)
+  {
+    container_holder_->get_object(holders_);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolBase<LogTraitsType, SavePolicy>::PoolObjectBase::
+  ~PoolObjectBase() noexcept
+  {
+    try
+    {
+      container_holder_->release_object(holders_);
+    }
+    catch (const eh::Exception& e)
+    {
+      std::cerr << "PoolObjectBase::~PoolObjectBase<'" <<
+        LogTraitsType::log_base_name() << "'>(): " <<
+        "eh::Exception caught: " << e.what() << std::endl;
+    }
+  }
 
   template<typename LogTraitsType, typename SavePolicy>
   inline
@@ -503,7 +685,7 @@ namespace LogProcessing
       if (!container_holder_->empty())
       {
         LogHolderPoolObject_var collector = container_holder_->collect();
-        save_policy_.save(collector->collector, flush_traits_.out_dir.c_str());
+        save_log(flush_traits_, save_policy_, collector->collector);
       }
     }
     catch (const eh::Exception& ex)
@@ -548,7 +730,7 @@ namespace LogProcessing
         return Generics::Time::ZERO;
       }
 
-      save_policy_.save(collector->collector, flush_traits_.out_dir.c_str());
+      save_log(flush_traits_, save_policy_, collector->collector);
 
       return now + flush_traits_.period;
     }
@@ -579,5 +761,98 @@ namespace LogProcessing
     typename SyncPolicy::ReadGuard guard(this->lock_);
     return this->container_holder_;
   }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  template<typename... Args>
+  void
+  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::add_record(
+    Args&&... args)
+  {
+    (*this->holders_.begin())->collector.add(std::forward<Args>(args)...);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::PoolObject(
+    const typename Base::ContainerHolder_var& container_holder)
+    : Base::PoolObjectBase(container_holder)
+  {}
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::~PoolObject() noexcept =
+    default;
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPool<LogTraitsType, SavePolicy>::LogHolderPool(
+    const LogFlushTraits& flush_traits,
+    const SavePolicy& save_policy)
+    /*throw(eh::Exception)*/
+    : LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy)
+  {}
+
+  template<typename LogTraitsType, typename SavePolicy>
+  template<typename... Args>
+  void
+  LogHolderPool<LogTraitsType, SavePolicy>::add_record(Args&&... args)
+  {
+    PoolObject_var pool_object = get_object();
+    pool_object->add_record(std::forward<Args>(args)...);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  typename LogHolderPool<LogTraitsType, SavePolicy>::PoolObject_var
+  LogHolderPool<LogTraitsType, SavePolicy>::get_object()
+  {
+    return new PoolObject(this->get_container_holder_());
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPool<LogTraitsType, SavePolicy>::~LogHolderPool() noexcept = default;
+
+  template<typename LogTraitsType, typename SavePolicy>
+  template<typename... Args>
+  void
+  LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject::add_record(
+    Args&&... args)
+  {
+    (*this->holders_.begin())->collector.add(std::forward<Args>(args)...);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject::PoolObject(
+    const typename Base::ContainerHolder_var& container_holder)
+    : Base::PoolObjectBase(container_holder)
+  {}
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject::~PoolObject()
+    noexcept = default;
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolData<LogTraitsType, SavePolicy>::LogHolderPoolData(
+    const LogFlushTraits& flush_traits,
+    const SavePolicy& save_policy)
+    /*throw(eh::Exception)*/
+    : LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy)
+  {}
+
+  template<typename LogTraitsType, typename SavePolicy>
+  template<typename... Args>
+  void
+  LogHolderPoolData<LogTraitsType, SavePolicy>::add_record(Args&&... args)
+  {
+    PoolObject_var pool_object = get_object();
+    pool_object->add_record(std::forward<Args>(args)...);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  typename LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject_var
+  LogHolderPoolData<LogTraitsType, SavePolicy>::get_object()
+  {
+    return new PoolObject(this->get_container_holder_());
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  LogHolderPoolData<LogTraitsType, SavePolicy>::~LogHolderPoolData() noexcept =
+    default;
 }
 }

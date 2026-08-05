@@ -199,6 +199,10 @@ public:
   operator<<(std::ostream& os, const TagPositionStatInnerKey& key)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const TagPositionStatInnerKey& key)
+    /*throw(eh::Exception)*/;
+
 private:
   void calc_hash_()
   {
@@ -286,6 +290,10 @@ public:
   operator<<(std::ostream& os, const TagPositionStatInnerData& data)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const TagPositionStatInnerData& data)
+    /*throw(eh::Exception)*/;
+
 private:
   unsigned long requests_;
   unsigned long imps_;
@@ -340,6 +348,10 @@ struct TagPositionStatKey
   friend
   std::ostream&
   operator<<(std::ostream& os, const TagPositionStatKey& key)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const TagPositionStatKey& key)
     /*throw(eh::Exception)*/;
 
 private:

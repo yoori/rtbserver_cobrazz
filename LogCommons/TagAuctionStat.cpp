@@ -1,6 +1,7 @@
 /// @file  TagAuctionStat.cpp
 
 #include "TagAuctionStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -32,6 +33,14 @@ operator<<(std::ostream& os, const TagAuctionStatKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const TagAuctionStatKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.pub_sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerKey& key)
   /*throw(eh::Exception)*/
@@ -51,6 +60,14 @@ operator<<(std::ostream& os, const TagAuctionStatInnerKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const TagAuctionStatInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.tag_id_ << '\t' << key.auction_ccg_count_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerData& data)
   /*throw(eh::Exception)*/
@@ -67,6 +84,13 @@ operator<<(std::ostream& os, const TagAuctionStatInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const TagAuctionStatInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  out << data.requests_;
+  return out;
+}
+
 } // namespace LogProcessing
 } // namespace AdServer
-

@@ -216,6 +216,12 @@
       </xsl:if>
     </xsl:variable>
     <xsl:variable name="stat-config" select="$campaign-manager-config/cfg:statLogging"/>
+    <xsl:variable name="ram-size"><xsl:value-of select="$stat-config/@use_ram"/>
+      <xsl:if test="count($stat-config/@use_ram) = 0">0</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="ram-min-free-space"><xsl:value-of select="$stat-config/@min_free_space"/>
+      <xsl:if test="count($stat-config/@min_free_space) = 0">0</xsl:if>
+    </xsl:variable>
     <xsl:variable name="flush-loggers-period"><xsl:value-of select="$stat-config/@flush_period"/>
       <xsl:if test="count($stat-config/@flush_period) = 0">
         <xsl:value-of select="$campaign-manager-flush-loggers-period"/>
@@ -226,6 +232,15 @@
         <xsl:value-of select="$campaign-manager-flush-internal-loggers-period"/>
       </xsl:if>
     </xsl:variable>
+
+    <xsl:choose>
+      <xsl:when test="number($ram-size) &gt; 0 and string-length($env-config/@ram_fs) = 0">
+        <xsl:message terminate="yes">CampaignManager: statLogging/@use_ram requires environment/@ram_fs</xsl:message>
+      </xsl:when>
+      <xsl:when test="number($ram-min-free-space) &gt;= number($ram-size) and number($ram-size) &gt; 0">
+        <xsl:message terminate="yes">CampaignManager: statLogging/@min_free_space must be less than @use_ram</xsl:message>
+      </xsl:when>
+    </xsl:choose>
 
     <xsl:variable name="campaigns-update-timeout">
       <xsl:choose>
@@ -479,6 +494,13 @@
           <xsl:value-of select="$default-distrib-count"/>
         </xsl:if>
       </xsl:attribute>
+
+      <xsl:if test="number($ram-size) &gt; 0">
+        <cfg:PrimaryDump
+          check_space_filesystem="{concat('/dev/', $env-config/@ram_fs)}"
+          min_free_space="{$ram-min-free-space}"
+          suffix=".ram"/>
+      </xsl:if>
 
       <xsl:variable name="predictor-service" 
           select="$full-cluster-path//service[@descriptor = $predictor-descriptor]"/>

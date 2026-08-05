@@ -591,7 +591,7 @@ namespace AdServer::CampaignSvcs
     class RequestBasicChannelsLogger: public virtual AdServer::LogProcessing::LogHolderPool<
       AdServer::LogProcessing::RequestBasicChannelsTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
-        AdServer::LogProcessing::RequestBasicChannelsTraits> >
+        AdServer::LogProcessing::RequestBasicChannelsTraits>>
     {
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);

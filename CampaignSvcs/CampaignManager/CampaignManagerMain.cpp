@@ -745,6 +745,7 @@ CampaignManagerApp_::read_logger_config(
 {
   logger_params.out_dir = configuration_.out_logs_dir;
   AdServer::PathManip::create_path(logger_params.out_dir, log_dir_name);
+  logger_params.primary_dump = configuration_.primary_dump;
 
   logger_params.period = Generics::Time(
     xsd_logger.flush_period().present() ?
@@ -874,6 +875,16 @@ CampaignManagerApp_::read_logging_config(
   AdServer::CampaignSvcs::CampaignManagerLogger::Params& log_params)
   /*throw(Exception)*/
 {
+  if (config.PrimaryDump().present())
+  {
+    const auto& primary_dump = *config.PrimaryDump();
+    configuration_.primary_dump =
+      std::make_shared<AdServer::LogProcessing::PrimaryDump>(
+        primary_dump.check_space_filesystem(),
+        primary_dump.min_free_space(),
+        primary_dump.suffix());
+  }
+
   if (config.RequestBasicChannels().present())
   {
     read_logger_config(

@@ -29,6 +29,7 @@
 #include <LogCommons/ColoUsers.hpp>
 #include <LogCommons/CreativeStat.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
+#include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/Request.hpp>
@@ -1931,9 +1932,9 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
     CollectorType expected_collector;
     if (!generate_distrib_list.installed())
     {
-      std::ostringstream dump_ostr;
-      dump_ostr << collector;
-      std::istringstream dump_istr(dump_ostr.str());
+      BufferWriter writer;
+      BufferWriterDump::write_value(writer, collector);
+      std::istringstream dump_istr(writer.str());
       dump_istr >> expected_collector;
     }
 

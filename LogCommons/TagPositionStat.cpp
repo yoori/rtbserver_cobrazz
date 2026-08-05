@@ -1,5 +1,6 @@
 
 #include "TagPositionStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -31,6 +32,14 @@ operator<<(std::ostream& os, const TagPositionStatKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const TagPositionStatKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, TagPositionStatInnerKey& key)
   /*throw(eh::Exception)*/
@@ -56,6 +65,18 @@ operator<<(std::ostream& os, const TagPositionStatInnerKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const TagPositionStatInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.tag_id_ << '\t'
+    << key.top_offset_ << '\t'
+    << key.left_offset_ << '\t'
+    << key.visibility_ << '\t'
+    << key.test_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, TagPositionStatInnerData& data)
   /*throw(eh::Exception)*/
@@ -76,6 +97,16 @@ operator<<(std::ostream& os, const TagPositionStatInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const TagPositionStatInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  out << data.requests_ << '\t'
+    << data.imps_ << '\t'
+    << data.clicks_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, TagPositionStatInnerKey_V_2_7& key)
   /*throw(eh::Exception)*/
@@ -90,4 +121,3 @@ operator>>(FixedBufStream<TabCategory>& is, TagPositionStatInnerKey_V_2_7& key)
 
 } // namespace LogProcessing
 } // namespace AdServer
-

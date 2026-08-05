@@ -39,6 +39,7 @@ add_library(LogCommons SHARED
   LogCommons.cpp
   PageLoadsDailyStat.cpp
   PassbackStat.cpp
+  PrimaryDump.cpp
   Request.cpp
   RequestBasicChannels.cpp
   Request_Base.cpp
@@ -71,7 +72,6 @@ target_link_libraries(LogCommons
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
 
 
 

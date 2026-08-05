@@ -1,5 +1,6 @@
 
 #include "SearchEngineStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -32,6 +33,14 @@ operator<<(std::ostream& os, const SearchEngineStatKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const SearchEngineStatKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, SearchEngineStatInnerKey& key)
   /*throw(eh::Exception)*/
@@ -53,6 +62,15 @@ operator<<(std::ostream& os, const SearchEngineStatInnerKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const SearchEngineStatInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  key.invariant_();
+  out << key.search_engine_id_ << '\t' << key.host_name_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, SearchEngineStatInnerData& data)
   /*throw(eh::Exception)*/
@@ -71,6 +89,13 @@ operator<<(std::ostream& os, const SearchEngineStatInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const SearchEngineStatInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  out << data.hits_ << '\t' << data.hits_empty_page_;
+  return out;
+}
+
 } // namespace LogProcessing
 } // namespace AdServer
-

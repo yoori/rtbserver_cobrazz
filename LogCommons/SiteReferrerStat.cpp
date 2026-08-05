@@ -102,17 +102,6 @@ operator<<(std::ostream& os, const SiteReferrerStatInnerData& data)
 FixedBufStream<TabCategory>&
 operator>>(
   FixedBufStream<TabCategory>& is,
-  SiteReferrerStatInnerData_V_1_1& data
-)
-  /*throw(eh::Exception)*/
-{
-  is >> data.requests_;
-  return is;
-}
-
-FixedBufStream<TabCategory>&
-operator>>(
-  FixedBufStream<TabCategory>& is,
   SiteReferrerStatInnerKey_V_3_1& key
 )
   /*throw(eh::Exception)*/
@@ -157,4 +146,3 @@ operator>>(
 
 } // namespace LogProcessing
 } // namespace AdServer
-

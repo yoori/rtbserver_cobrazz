@@ -1,4 +1,5 @@
 #include "WebStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -29,6 +30,15 @@ operator<<(std::ostream& os, const WebStatKey& key)
   key.invariant_();
   os << key.sdate_ << '\n' << key.colo_id_;
   return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const WebStatKey& key)
+  /*throw(eh::Exception)*/
+{
+  key.invariant_();
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
 }
 
 FixedBufStream<TabCategory>&
@@ -95,6 +105,25 @@ operator<<(std::ostream& os, const WebStatInnerKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const WebStatInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  key.invariant_();
+  out << key.ct_ << '\t'
+    << key.curct_ << '\t'
+    << key.browser_ << '\t'
+    << key.os_ << '\t'
+    << key.source_ << '\t'
+    << key.web_operation_id_ << '\t'
+    << key.result_ << '\t'
+    << key.user_status_ << '\t'
+    << key.test_ << '\t'
+    << key.tag_id_ << '\t'
+    << key.cc_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, WebStatInnerData& data)
   /*throw(eh::Exception)*/
@@ -111,6 +140,13 @@ operator<<(std::ostream& os, const WebStatInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const WebStatInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  out << data.count_;
+  return out;
+}
+
 } // namespace LogProcessing
 } // namespace AdServer
-

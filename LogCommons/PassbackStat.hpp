@@ -195,6 +195,10 @@ public:
   operator<<(std::ostream& os, const PassbackStatInnerKey& key)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const PassbackStatInnerKey& key)
+    /*throw(eh::Exception)*/;
+
 private:
   void calc_hash_()
   {
@@ -268,6 +272,10 @@ public:
   operator<<(std::ostream& os, const PassbackStatInnerData& data)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const PassbackStatInnerData& data)
+    /*throw(eh::Exception)*/;
+
 private:
   unsigned long requests_;
 };
@@ -320,6 +328,10 @@ public:
   friend
   std::ostream&
   operator<<(std::ostream& os, const PassbackStatKey& key)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const PassbackStatKey& key)
     /*throw(eh::Exception)*/;
 
 private:

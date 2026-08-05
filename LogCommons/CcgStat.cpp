@@ -1,5 +1,6 @@
 
 #include "CcgStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/CollectorBundle.hpp>
 #include <LogCommons/LogCommons.ipp>
 
@@ -45,6 +46,13 @@ operator<<(std::ostream& os, const ReachStatKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const ReachStatKey& key)
+{
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, ReachStatInnerKey& key)
 {
@@ -57,6 +65,13 @@ operator<<(std::ostream& os, const ReachStatInnerKey& key)
 {
   os << key.id_;
   return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const ReachStatInnerKey& key)
+{
+  out << key.id_;
+  return out;
 }
 
 FixedBufStream<TabCategory>&
@@ -80,6 +95,13 @@ operator<<(std::ostream& os, const CcgStatInnerData& data)
 {
   os << data.auctions_lost_;
   return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const CcgStatInnerData& data)
+{
+  out << data.auctions_lost_;
+  return out;
 }
 
 FixedBufStream<TabCategory>&
@@ -128,6 +150,13 @@ operator<<(std::ostream& os, const CcStatInnerData& data)
 {
   os << data.auctions_lost_;
   return os;
+}
+
+BufferWriter&
+operator<<(BufferWriter& out, const CcStatInnerData& data)
+{
+  out << data.auctions_lost_;
+  return out;
 }
 
 FixedBufStream<TabCategory>&
@@ -360,4 +389,3 @@ AdvertiserUserStat_V_1_0_To_CurrentLoader::load(
 
 } // namespace LogProcessing
 } // namespace AdServer
-

@@ -122,6 +122,16 @@
   </xsd:simpleType>
 
   <xsd:complexType name="CampaignManagerStatLoggingType">
+    <xsd:attribute name="use_ram" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>Maximum tmpfs size in bytes. Zero disables RAM dumps.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="min_free_space" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>Free tmpfs bytes reserved before switching dumps to disk.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="flush_period" type="xsd:positiveInteger" default="10">
       <xsd:annotation>
         <xsd:documentation>

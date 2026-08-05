@@ -77,6 +77,10 @@ private:
   operator<<(std::ostream& os, const ActionRequestInnerKey& key)
     /*throw(eh::Exception)*/;
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const ActionRequestInnerKey& key)
+    /*throw(eh::Exception)*/;
+
   class DataHolder: public ReferenceCounting::AtomicImpl
   {
   public:
@@ -225,6 +229,9 @@ public:
   std::ostream&
   operator<<(std::ostream& os, const ActionRequestInnerData& data);
 
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const ActionRequestInnerData& data);
+
 private:
   unsigned long action_request_count_;
   FixedNum cur_value_;
@@ -277,6 +284,10 @@ struct ActionRequestKey
   friend
   std::ostream&
   operator<<(std::ostream& os, const ActionRequestKey& key)
+    /*throw(eh::Exception)*/;
+
+  friend BufferWriter&
+  operator<<(BufferWriter& out, const ActionRequestKey& key)
     /*throw(eh::Exception)*/;
 
 private:

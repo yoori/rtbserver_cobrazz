@@ -182,8 +182,19 @@ namespace AdServer::ProfilingCommons
   RocksDBProfileMapProcessor::enqueue_operation_(
     const ProfileMapImpl& map_impl, Operation&& operation)
   {
-    Operations new_operations;
-    new_operations.emplace_back(std::move(operation));
+    Operations operations;
+    operations.emplace_back(std::move(operation));
+    return enqueue_operations_(map_impl, std::move(operations));
+  }
+
+  bool
+  RocksDBProfileMapProcessor::enqueue_operations_(
+    const ProfileMapImpl& map_impl, Operations&& operations)
+  {
+    if (operations.empty())
+    {
+      return true;
+    }
 
     MapQueue& map_queue = map_impl.processor_queue_;
     if (!accepting_.load(std::memory_order_acquire))
@@ -193,6 +204,18 @@ namespace AdServer::ProfilingCommons
 
     bool signal_worker = false;
     const Generics::Time now = Generics::Time::get_time_of_day();
+    Operations read_operations;
+    Operations write_operations;
+
+    auto operation_it = operations.begin();
+    while (operation_it != operations.end())
+    {
+      auto current_it = operation_it++;
+      current_it->enqueue_time = now;
+      Operations& target = ProfileMapImpl::is_write_operation_(current_it->type) ?
+        write_operations : read_operations;
+      target.splice(target.end(), operations, current_it);
+    }
 
     {
       std::lock_guard map_guard(map_queue.lock);
@@ -202,25 +225,31 @@ namespace AdServer::ProfilingCommons
         return false;
       }
 
-      Operation& operation_ref = new_operations.front();
-      operation_ref.enqueue_time = now;
-      const bool write_operation = ProfileMapImpl::is_write_operation_(operation_ref.type);
-      Operations& queue = write_operation ?
-        map_queue.write_operations :
-        map_queue.read_operations;
-      const bool fills_batch =
-        queue.size() + 1 >= map_queue.batch_size &&
-        queue.size() < map_queue.batch_size;
       const bool was_empty = empty_i_(map_queue);
+      const bool fills_read_batch =
+        map_queue.read_operations.size() < map_queue.batch_size &&
+        map_queue.read_operations.size() + read_operations.size() >= map_queue.batch_size;
+      const bool fills_write_batch =
+        map_queue.write_operations.size() < map_queue.batch_size &&
+        map_queue.write_operations.size() + write_operations.size() >= map_queue.batch_size;
 
-      queue.splice(queue.end(), new_operations);
+      map_queue.read_operations.splice(map_queue.read_operations.end(), read_operations);
+      map_queue.write_operations.splice(map_queue.write_operations.end(), write_operations);
+
       if (was_empty)
       {
-        signal_worker = update_ready_(map_queue, &operation_ref);
+        signal_worker = update_ready_(map_queue, oldest_ready_operation_i_(map_queue));
       }
-      else if (fills_batch)
+      else
       {
-        signal_worker = promote_ready_(map_queue, write_operation);
+        if (fills_read_batch)
+        {
+          signal_worker = promote_ready_(map_queue, false);
+        }
+        if (fills_write_batch)
+        {
+          signal_worker = promote_ready_(map_queue, true) || signal_worker;
+        }
       }
     }
 

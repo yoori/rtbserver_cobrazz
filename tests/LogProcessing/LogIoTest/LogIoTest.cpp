@@ -287,9 +287,9 @@ public:
 
     CollectorT expected_collector;
     {
-      std::ostringstream ostr;
-      ostr << collector;
-      std::istringstream istr(ostr.str());
+      BufferWriter writer;
+      BufferWriterDump::write_value(writer, collector);
+      std::istringstream istr(writer.str());
       istr >> expected_collector;
     }
     LogIoProxy<Traits>::save(collector, dir_name);

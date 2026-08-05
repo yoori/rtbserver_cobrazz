@@ -1,5 +1,6 @@
 
 #include "SearchTermStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer {
@@ -33,6 +34,14 @@ operator<<(std::ostream& os, const SearchTermStatKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const SearchTermStatKey& key)
+  /*throw(eh::Exception)*/
+{
+  out << key.sdate_ << '\n' << key.colo_id_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, SearchTermStatInnerKey& key)
   /*throw(eh::Exception)*/
@@ -52,6 +61,15 @@ operator<<(std::ostream& os, const SearchTermStatInnerKey& key)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const SearchTermStatInnerKey& key)
+  /*throw(eh::Exception)*/
+{
+  key.invariant_();
+  out << key.search_term_;
+  return out;
+}
+
 FixedBufStream<TabCategory>&
 operator>>(FixedBufStream<TabCategory>& is, SearchTermStatInnerData& data)
   /*throw(eh::Exception)*/
@@ -68,6 +86,13 @@ operator<<(std::ostream& os, const SearchTermStatInnerData& data)
   return os;
 }
 
+BufferWriter&
+operator<<(BufferWriter& out, const SearchTermStatInnerData& data)
+  /*throw(eh::Exception)*/
+{
+  out << data.hits_;
+  return out;
+}
+
 } // namespace LogProcessing
 } // namespace AdServer
-

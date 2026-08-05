@@ -44,6 +44,7 @@ private:
     std::string log_root;
     std::string out_logs_dir;
     std::string pid_file;
+    AdServer::LogProcessing::PrimaryDumpPtr primary_dump;
 
     AdServer::CampaignSvcs::CreativeInstantiator::CreativeInstantiate
       creative_instantiate;

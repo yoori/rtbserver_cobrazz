@@ -1,4 +1,5 @@
 #include "UserAgentStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -29,6 +30,15 @@ namespace AdServer::LogProcessing
     return os;
   }
 
+  BufferWriter&
+  operator<<(BufferWriter& out, const UserAgentStatInnerKey& key)
+    /*throw(eh::Exception)*/
+  {
+    key.invariant();
+    out << Aux_::StringIoWrapper(key.user_agent_->str());
+    return out;
+  }
+
   FixedBufStream<TabCategory>&
   operator>>(FixedBufStream<TabCategory>& is, UserAgentStatInnerData& data)
     /*throw(eh::Exception)*/
@@ -49,5 +59,14 @@ namespace AdServer::LogProcessing
     os << data.holder_->platforms;
     return os;
   }
-} // namespace AdServer::LogProcessing
 
+  BufferWriter&
+  operator<<(BufferWriter& out, const UserAgentStatInnerData& data)
+    /*throw(eh::Exception)*/
+  {
+    out << data.requests_ << '\t'
+      << data.holder_->channels << '\t'
+      << data.holder_->platforms;
+    return out;
+  }
+} // namespace AdServer::LogProcessing
