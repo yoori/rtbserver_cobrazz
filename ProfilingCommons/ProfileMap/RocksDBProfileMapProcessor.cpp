@@ -27,6 +27,22 @@ namespace AdServer::ProfilingCommons
     }
   }
 
+  RocksDBProfileMapProcessor::Stats
+  RocksDBProfileMapProcessor::stats() const noexcept
+  {
+    return {
+      check_total_.load(std::memory_order_relaxed),
+      get_total_.load(std::memory_order_relaxed),
+      touch_total_.load(std::memory_order_relaxed),
+      save_total_.load(std::memory_order_relaxed),
+      remove_total_.load(std::memory_order_relaxed),
+      read_batch_total_.load(std::memory_order_relaxed),
+      read_batch_total_time_.load(std::memory_order_relaxed),
+      write_batch_total_.load(std::memory_order_relaxed),
+      write_batch_total_time_.load(std::memory_order_relaxed)
+    };
+  }
+
   void
   RocksDBProfileMapProcessor::activate_object_()
   {
@@ -206,12 +222,31 @@ namespace AdServer::ProfilingCommons
     const Generics::Time now = Generics::Time::get_time_of_day();
     Operations read_operations;
     Operations write_operations;
+    Stats enqueued_stats;
 
     auto operation_it = operations.begin();
     while (operation_it != operations.end())
     {
       auto current_it = operation_it++;
       current_it->enqueue_time = now;
+      switch (current_it->type)
+      {
+        case ProfileMapImpl::OT_CHECK:
+          ++enqueued_stats.check_total;
+          break;
+        case ProfileMapImpl::OT_GET:
+          ++enqueued_stats.get_total;
+          break;
+        case ProfileMapImpl::OT_TOUCH:
+          ++enqueued_stats.touch_total;
+          break;
+        case ProfileMapImpl::OT_SAVE:
+          ++enqueued_stats.save_total;
+          break;
+        case ProfileMapImpl::OT_REMOVE:
+          ++enqueued_stats.remove_total;
+          break;
+      }
       Operations& target = ProfileMapImpl::is_write_operation_(current_it->type) ?
         write_operations : read_operations;
       target.splice(target.end(), operations, current_it);
@@ -253,9 +288,30 @@ namespace AdServer::ProfilingCommons
       }
     }
 
+    if (enqueued_stats.check_total)
+    {
+      check_total_.fetch_add(enqueued_stats.check_total, std::memory_order_relaxed);
+    }
+    if (enqueued_stats.get_total)
+    {
+      get_total_.fetch_add(enqueued_stats.get_total, std::memory_order_relaxed);
+    }
+    if (enqueued_stats.touch_total)
+    {
+      touch_total_.fetch_add(enqueued_stats.touch_total, std::memory_order_relaxed);
+    }
+    if (enqueued_stats.save_total)
+    {
+      save_total_.fetch_add(enqueued_stats.save_total, std::memory_order_relaxed);
+    }
+    if (enqueued_stats.remove_total)
+    {
+      remove_total_.fetch_add(enqueued_stats.remove_total, std::memory_order_relaxed);
+    }
+
     if (signal_worker)
     {
-      ready_cond_.notify_all();
+      ready_cond_.notify_one();
     }
 
     return true;
@@ -274,6 +330,19 @@ namespace AdServer::ProfilingCommons
     while (pop_batch_(map_queue, batch, selected_keys))
     {
       ProfileMapImpl& map_impl = map_queue->map_impl;
+      const bool write_batch =
+        ProfileMapImpl::is_write_operation_(batch.front().type);
+      if (write_batch)
+      {
+        write_batch_total_.fetch_add(1, std::memory_order_relaxed);
+      }
+      else
+      {
+        read_batch_total_.fetch_add(1, std::memory_order_relaxed);
+      }
+
+      Generics::Timer batch_timer;
+      batch_timer.start();
       try
       {
         map_impl.process_batch_(batch, *scratch);
@@ -297,6 +366,17 @@ namespace AdServer::ProfilingCommons
         {
           map_impl.background_error_ = "unknown background error";
         }
+      }
+      batch_timer.stop();
+
+      const std::uint64_t elapsed_us = batch_timer.elapsed_time().microseconds();
+      if (write_batch)
+      {
+        write_batch_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
+      }
+      else
+      {
+        read_batch_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
       }
 
       complete_batch_(*map_queue, batch);
@@ -528,7 +608,7 @@ namespace AdServer::ProfilingCommons
 
     if (signal_worker)
     {
-      ready_cond_.notify_all();
+      ready_cond_.notify_one();
     }
   }
 

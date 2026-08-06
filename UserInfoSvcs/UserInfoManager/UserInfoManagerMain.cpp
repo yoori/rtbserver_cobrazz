@@ -83,6 +83,28 @@ namespace
       "grpc_debug_watchdog_live",
       stats.debug_watchdog_live);
   }
+
+  void
+  append_rocksdb_stats(
+    std::string& body,
+    const AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats& stats)
+  {
+    append_json_stat(body, "rdb_check_total", stats.check_total);
+    append_json_stat(body, "rdb_get_total", stats.get_total);
+    append_json_stat(body, "rdb_touch_total", stats.touch_total);
+    append_json_stat(body, "rdb_save_total", stats.save_total);
+    append_json_stat(body, "rdb_remove_total", stats.remove_total);
+    append_json_stat(body, "rdb_read_batch_total", stats.read_batch_total);
+    append_json_stat(
+      body,
+      "rdb_read_batch_total_time",
+      stats.read_batch_total_time);
+    append_json_stat(body, "rdb_write_batch_total", stats.write_batch_total);
+    append_json_stat(
+      body,
+      "rdb_write_batch_total_time",
+      stats.write_batch_total_time);
+  }
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
@@ -204,7 +226,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         4);
       http_server->add_handler(
         "/stats",
-        [grpc_adapter](
+        [user_info_manager_core = user_info_manager_core_, grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           const auto stats = grpc_adapter ?
@@ -275,6 +297,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               min_time_of_request_in_progress;
 
           append_grpc_lifecycle_stats(body, stats.grpc_lifecycle_stats);
+          append_rocksdb_stats(body, user_info_manager_core->rocksdb_stats());
 
           body +=
               ",\"async_mutex_lock_attempts\":" +

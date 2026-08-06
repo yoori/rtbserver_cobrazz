@@ -257,6 +257,9 @@ namespace AdServer::UserInfoSvcs
     UserStat get_stats()
       /*throw(NotReady, eh::Exception)*/;
 
+    AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+    rocksdb_stats() noexcept;
+
     void
     get_controllable_chunks(
       ChunkIdList& chunk_ids,

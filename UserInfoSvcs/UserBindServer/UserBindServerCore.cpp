@@ -97,12 +97,14 @@ namespace AdServer::UserInfoSvcs
           new Logging::ActiveObjectCallbackImpl(logger_, "", "UserBindServerCore")),
         2)),
       user_bind_container_(new UserBindProcessorHolder()),
+      rocksdb_stats_container_(new UserBindContainerHolder()),
       bind_request_container_(new BindRequestProcessorHolder()),
       chunks_number_(config.storage.common_chunks_number)
   {
     add_child_object(task_runner_);
     add_child_object(scheduler_);
     add_child_object(user_bind_container_);
+    add_child_object(rocksdb_stats_container_);
     add_child_object(bind_request_container_);
 
     AdServer::ProfilingCommons::ProfileMapFactory::fetch_chunk_folders(
@@ -346,6 +348,16 @@ namespace AdServer::UserInfoSvcs
     };
   }
 
+  AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+  UserBindServerCore::rocksdb_stats() const noexcept
+  {
+    UserBindContainerHolder::Accessor container =
+      rocksdb_stats_container_->get_accessor();
+    return container.get() ?
+      container->rocksdb_stats() :
+      AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats{};
+  }
+
   const UserBindContainer::ChunkPathMap&
   UserBindServerCore::chunks() const noexcept
   {
@@ -395,7 +407,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserBindProcessor_var user_bind_processor = new UserBindContainer(
+      UserBindContainer_var user_bind_container = new UserBindContainer(
         logger_,
         config_.storage.common_chunks_number,
         chunks_,
@@ -410,6 +422,7 @@ namespace AdServer::UserInfoSvcs
         config_.partition_index,
         config_.partitions_number,
         config_.storage.rocksdb_batching_threads);
+      UserBindProcessor_var user_bind_processor = user_bind_container;
 
       UserBindProcessor_var result_user_bind_processor;
 
@@ -462,6 +475,7 @@ namespace AdServer::UserInfoSvcs
         add_child_object(user_bind_operation_loader);
       }
 
+      *rocksdb_stats_container_ = user_bind_container;
       *user_bind_container_ = result_user_bind_processor;
       reschedule = false;
     }

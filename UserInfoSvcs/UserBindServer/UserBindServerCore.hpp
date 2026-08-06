@@ -142,6 +142,11 @@ namespace AdServer::UserInfoSvcs
     using UserBindProcessorHolder_var =
       ReferenceCounting::SmartPtr<UserBindProcessorHolder>;
 
+    using UserBindContainerHolder =
+      AdServer::Commons::AccessActiveObject<UserBindContainer_var>;
+    using UserBindContainerHolder_var =
+      ReferenceCounting::SmartPtr<UserBindContainerHolder>;
+
     using BindRequestProcessorHolder =
       AdServer::Commons::AccessActiveObject<BindRequestProcessor_var>;
     using BindRequestProcessorHolder_var =
@@ -177,6 +182,9 @@ namespace AdServer::UserInfoSvcs
     Source get_source() const;
 
     Stats stats() const noexcept;
+
+    AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+    rocksdb_stats() const noexcept;
 
     const UserBindContainer::ChunkPathMap&
     chunks() const noexcept;
@@ -275,6 +283,7 @@ namespace AdServer::UserInfoSvcs
     Generics::FixedPlanner_var scheduler_;
     Generics::FixedTaskRunner_var task_runner_;
     const UserBindProcessorHolder_var user_bind_container_;
+    const UserBindContainerHolder_var rocksdb_stats_container_;
     const BindRequestProcessorHolder_var bind_request_container_;
 
     UserBindContainer::ChunkPathMap chunks_;

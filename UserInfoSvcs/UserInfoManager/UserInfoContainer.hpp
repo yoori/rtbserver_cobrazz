@@ -184,6 +184,9 @@ namespace AdServer::UserInfoSvcs
 
     UserStat get_stats() const /*throw(eh::Exception)*/;
 
+    AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+    rocksdb_stats() const noexcept;
+
     void delete_old_profiles(
       const Generics::Time& persistent_lifetime)
       /*throw(NotReady, Exception)*/;

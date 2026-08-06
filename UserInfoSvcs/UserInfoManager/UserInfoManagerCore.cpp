@@ -1901,4 +1901,14 @@ namespace AdServer::UserInfoSvcs
     return user_stat;
   }
 
+  AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+  UserInfoManagerCore::rocksdb_stats() noexcept
+  {
+    UserInfoContainerAccessor user_info_container =
+      get_user_info_container_(false);
+    return user_info_container.get().in() ?
+      user_info_container->rocksdb_stats() :
+      AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats{};
+  }
+
 } // namespace AdServer::UserInfoSvcs

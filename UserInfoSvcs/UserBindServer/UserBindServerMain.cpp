@@ -109,6 +109,31 @@ namespace
       stats.debug_watchdog_live);
   }
 
+  void
+  append_rocksdb_stats(
+    std::string& body,
+    bool& first,
+    const AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats& stats)
+  {
+    append_json_stat(body, first, "rdb_check_total", stats.check_total);
+    append_json_stat(body, first, "rdb_get_total", stats.get_total);
+    append_json_stat(body, first, "rdb_touch_total", stats.touch_total);
+    append_json_stat(body, first, "rdb_save_total", stats.save_total);
+    append_json_stat(body, first, "rdb_remove_total", stats.remove_total);
+    append_json_stat(body, first, "rdb_read_batch_total", stats.read_batch_total);
+    append_json_stat(
+      body,
+      first,
+      "rdb_read_batch_total_time",
+      stats.read_batch_total_time);
+    append_json_stat(body, first, "rdb_write_batch_total", stats.write_batch_total);
+    append_json_stat(
+      body,
+      first,
+      "rdb_write_batch_total_time",
+      stats.write_batch_total_time);
+  }
+
   void fill_shutdown_signals_(sigset_t& signals)
   {
     sigemptyset(&signals);
@@ -325,6 +350,7 @@ namespace
       first,
       "add_user_id_request_total",
       stats.add_user_id_requests);
+    append_rocksdb_stats(body, first, user_bind_server_core->rocksdb_stats());
 
     if(grpc_adapter != 0)
     {

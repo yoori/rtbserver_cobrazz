@@ -18,13 +18,9 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/LockMap.hpp>
 #include <Commons/Containers.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
 #include "UserBindProcessor.hpp"
-
-namespace AdServer::ProfilingCommons
-{
-  class RocksDBProfileMapProcessor;
-}
 
 namespace AdServer::UserInfoSvcs
 {
@@ -88,6 +84,9 @@ namespace AdServer::UserInfoSvcs
 
     virtual void
     dump() /*throw(Exception)*/;
+
+    AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+    rocksdb_stats() const noexcept;
 
   protected:
     typedef std::vector<UserBindProcessor_var> UserBindProcessorArray;

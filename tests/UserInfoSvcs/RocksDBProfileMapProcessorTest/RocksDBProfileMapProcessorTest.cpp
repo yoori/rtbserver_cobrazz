@@ -252,12 +252,36 @@ main()
       "third",
       profile.in(),
       Generics::Time::get_time_of_day());
+    if(!third->check_profile("third"))
+    {
+      throw std::runtime_error("saved profile wasn't found");
+    }
+    if(!third->remove_profile("third"))
+    {
+      throw std::runtime_error("saved profile wasn't removed");
+    }
     third->deactivate_object();
     third->wait_object();
     third.reset();
 
     processor->deactivate_object();
     processor->wait_object();
+
+    const auto first_processor_stats = processor->stats();
+    if(first_processor_stats.check_total != 1 ||
+      first_processor_stats.get_total != 1 ||
+      first_processor_stats.touch_total != 0 ||
+      first_processor_stats.save_total != 2 * operations_per_map + 4 ||
+      first_processor_stats.remove_total != 1 ||
+      first_processor_stats.read_batch_total != 2 ||
+      first_processor_stats.read_batch_total_time == 0 ||
+      first_processor_stats.write_batch_total == 0 ||
+      first_processor_stats.write_batch_total >
+        first_processor_stats.save_total + first_processor_stats.remove_total ||
+      first_processor_stats.write_batch_total_time == 0)
+    {
+      throw std::runtime_error("first processor stats mismatch");
+    }
 
     processor = std::make_shared<Processor>(4);
     processor->activate_object();
@@ -374,6 +398,23 @@ main()
 
     processor->deactivate_object();
     processor->wait_object();
+
+    const auto second_processor_stats = processor->stats();
+    if(second_processor_stats.check_total != 0 ||
+      second_processor_stats.get_total != same_key_operations ||
+      second_processor_stats.touch_total != 0 ||
+      second_processor_stats.save_total !=
+        same_key_operations + lifecycle_maps * lifecycle_operations ||
+      second_processor_stats.remove_total != 0 ||
+      second_processor_stats.read_batch_total == 0 ||
+      second_processor_stats.read_batch_total > second_processor_stats.get_total ||
+      second_processor_stats.read_batch_total_time == 0 ||
+      second_processor_stats.write_batch_total == 0 ||
+      second_processor_stats.write_batch_total > second_processor_stats.save_total ||
+      second_processor_stats.write_batch_total_time == 0)
+    {
+      throw std::runtime_error("second processor stats mismatch");
+    }
 
     if(errors.load(std::memory_order_relaxed) != 0)
     {

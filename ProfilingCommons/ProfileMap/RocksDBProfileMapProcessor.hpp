@@ -4,6 +4,7 @@
 #include <boost/intrusive/set.hpp>
 #include <boost/unordered/unordered_flat_set.hpp>
 #include <condition_variable>
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <string_view>
@@ -19,9 +20,24 @@ namespace AdServer::ProfilingCommons
   class RocksDBProfileMapProcessor final: public Generics::SimpleActiveObject
   {
   public:
+    struct Stats
+    {
+      std::uint64_t check_total = 0;
+      std::uint64_t get_total = 0;
+      std::uint64_t touch_total = 0;
+      std::uint64_t save_total = 0;
+      std::uint64_t remove_total = 0;
+      std::uint64_t read_batch_total = 0;
+      std::uint64_t read_batch_total_time = 0;
+      std::uint64_t write_batch_total = 0;
+      std::uint64_t write_batch_total_time = 0;
+    };
+
     explicit RocksDBProfileMapProcessor(unsigned long workers_count = 2);
 
     ~RocksDBProfileMapProcessor() noexcept override;
+
+    Stats stats() const noexcept;
 
   private:
     friend class RocksDBBatchingProfileMapImpl;
@@ -103,6 +119,16 @@ namespace AdServer::ProfilingCommons
     ReadyIndex ready_;
     std::atomic<bool> accepting_{false};
     std::atomic<bool> stopping_{true};
+
+    std::atomic<std::uint64_t> check_total_{0};
+    std::atomic<std::uint64_t> get_total_{0};
+    std::atomic<std::uint64_t> touch_total_{0};
+    std::atomic<std::uint64_t> save_total_{0};
+    std::atomic<std::uint64_t> remove_total_{0};
+    std::atomic<std::uint64_t> read_batch_total_{0};
+    std::atomic<std::uint64_t> read_batch_total_time_{0};
+    std::atomic<std::uint64_t> write_batch_total_{0};
+    std::atomic<std::uint64_t> write_batch_total_time_{0};
 
     std::vector<std::thread> workers_;
   };

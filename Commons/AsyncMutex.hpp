@@ -8,6 +8,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <Commons/Coro/ScopedCoroutineResumeScheduler.hpp>
+
 namespace AdServer::Commons
 {
   class AsyncMutex final
@@ -48,6 +50,7 @@ namespace AdServer::Commons
             boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
       {
         std::coroutine_handle<> handle;
+        CoroutineResumeScheduler resume_scheduler;
       };
 
       explicit ScopedLockAwaiter(AsyncMutex& mutex) noexcept;

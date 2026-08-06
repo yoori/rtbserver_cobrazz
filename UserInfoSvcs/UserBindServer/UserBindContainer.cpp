@@ -100,6 +100,12 @@ namespace AdServer::UserInfoSvcs
     rocksdb_processor_->wait_object();
   }
 
+  AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+  UserBindContainer::rocksdb_stats() const noexcept
+  {
+    return rocksdb_processor_->stats();
+  }
+
   AdServer::Commons::StartableAwaitable<UserBindContainer::UserInfo>
   UserBindContainer::co_get_user_id(
     const String::SubString& external_id,

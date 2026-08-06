@@ -129,10 +129,14 @@ namespace AdServer::Commons
     }
 
     waiter.handle = handle;
+    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    {
+      waiter.resume_scheduler = *scheduler;
+    }
     waiters_.push_back(waiter);
     contended_locks_.fetch_add(1, std::memory_order_relaxed);
     const auto waiters =
-      current_waiters_.fetch_add(1, std::memory_order_acq_rel) + 1;
+      current_waiters_.fetch_add(1, std::memory_order_relaxed) + 1;
     update_max_waiters_(waiters);
     return true;
   }
@@ -144,7 +148,7 @@ namespace AdServer::Commons
     if(waiter.is_linked())
     {
       waiter.unlink();
-      current_waiters_.fetch_sub(1, std::memory_order_acq_rel);
+      current_waiters_.fetch_sub(1, std::memory_order_relaxed);
     }
   }
 
@@ -152,26 +156,38 @@ namespace AdServer::Commons
   AsyncMutex::unlock_() noexcept
   {
     std::coroutine_handle<> next;
+    CoroutineResumeScheduler resume_scheduler;
     {
       std::lock_guard<std::mutex> guard(mutex_);
-      while(!waiters_.empty())
+      if(!waiters_.empty())
       {
         ScopedLockAwaiter::Waiter& waiter = waiters_.front();
         waiter.unlink();
-        current_waiters_.fetch_sub(1, std::memory_order_acq_rel);
+        current_waiters_.fetch_sub(1, std::memory_order_relaxed);
         next = waiter.handle;
-        break;
+        resume_scheduler = std::move(waiter.resume_scheduler);
       }
 
       if(!next)
       {
         locked_ = false;
-        condition_.notify_one();
-        return;
       }
     }
 
-    resume_coroutine(next);
+    if(!next)
+    {
+      condition_.notify_one();
+      return;
+    }
+
+    if(resume_scheduler)
+    {
+      resume_scheduler(next);
+    }
+    else
+    {
+      resume_coroutine(next);
+    }
   }
 
   void

@@ -1559,6 +1559,12 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
+  AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
+  UserInfoContainer::rocksdb_stats() const noexcept
+  {
+    return rocksdb_processor_->stats();
+  }
+
   bool
   UserInfoContainer::profiles_merged_(
     const RequestMatchParams& request_params,
