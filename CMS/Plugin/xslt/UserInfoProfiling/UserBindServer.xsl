@@ -29,6 +29,9 @@
   <xsl:param name="user-bind-server-config"/>
 
   <cfg:UserBindServerConfig partition_index="0" partitions_number="1">
+    <xsl:if test="string-length($user-bind-server-config/@numa_node) &gt; 0">
+      <xsl:attribute name="numa_node"><xsl:value-of select="$user-bind-server-config/@numa_node"/></xsl:attribute>
+    </xsl:if>
     <xsl:variable name="config-root"><xsl:value-of select="$env-config/@config_root[1]"/>
       <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-config-root"/></xsl:if>
     </xsl:variable>

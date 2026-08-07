@@ -80,6 +80,9 @@
     max_freqcap_profile_waiters="8"
     pid_file="{concat($workspace-root, '/run/UserInfoManager.pid')}"
     service_index="{$SERVICE_ID}">
+    <xsl:if test="string-length($user-info-manager-config/@numa_node) &gt; 0">
+      <xsl:attribute name="numa_node"><xsl:value-of select="$user-info-manager-config/@numa_node"/></xsl:attribute>
+    </xsl:if>
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 

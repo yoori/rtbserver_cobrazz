@@ -19,12 +19,14 @@ sub start
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchWebStat && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchProf && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/BidCostStat && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/Geo && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchBid && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchImpression && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchClick && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchAction && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchWebStat && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchProf && " .
+    "mkdir -p \${log_root}/Predictor/Backup/Geo && " .
     "mkdir -p \${workspace_root}/run && " .
     "{ rm -f \${workspace_root}/run/predictor_synclogsserver.pid && ".
     "/usr/bin/rsync --daemon --config=\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/conf/predictor_synclogs_server.conf " .

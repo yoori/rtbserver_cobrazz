@@ -118,6 +118,9 @@
     log_root="{concat($workspace-root, '/log/ChannelServer/Out')}"
     pid_file="{concat($workspace-root, '/run/ChannelServer.pid')}"
     service_index="{$SERVICE_ID}">
+    <xsl:if test="string-length($channel-server-config/@numa_node) &gt; 0">
+      <xsl:attribute name="numa_node"><xsl:value-of select="$channel-server-config/@numa_node"/></xsl:attribute>
+    </xsl:if>
 
     <cfg:CorbaConfig>
       <xsl:attribute name="threading-pool"><xsl:value-of select="$channel-server-config/cfg:threadParams/@min"/>

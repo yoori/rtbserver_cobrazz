@@ -107,6 +107,7 @@
       </xsd:element>
 
     </xsd:sequence>
+    <xsd:attribute name="numa_node" type="xsd:nonNegativeInteger" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="ProfilesCleanupParamsType">

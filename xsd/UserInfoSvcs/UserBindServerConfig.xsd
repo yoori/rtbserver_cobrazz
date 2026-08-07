@@ -110,6 +110,7 @@
     <xsd:attribute name="partition_index" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="partitions_number" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
+    <xsd:attribute name="numa_node" type="xsd:nonNegativeInteger" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserIdBlackListType">

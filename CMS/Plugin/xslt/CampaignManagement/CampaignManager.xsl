@@ -306,6 +306,9 @@
     service_index="{concat($cluster-id, '_', $service-id)}"
     rid_private_key="{concat($config-root, '/rid_private_key.der')}"
     >
+    <xsl:if test="string-length($campaign-manager-config/@numa_node) &gt; 0">
+      <xsl:attribute name="numa_node"><xsl:value-of select="$campaign-manager-config/@numa_node"/></xsl:attribute>
+    </xsl:if>
 
     <!-- check that defined all needed parameters -->
     <xsl:choose>

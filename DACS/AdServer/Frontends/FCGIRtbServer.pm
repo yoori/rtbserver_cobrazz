@@ -18,7 +18,9 @@ sub start
     "ulimit -s 100000 && " .
     "ulimit -n 256000 && " .
     "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
-    "ADS_THREAD_AFFINITY=round_robin_all " .
+    AdServer::Functions::thread_affinity_env(
+      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServerConfig.xml",
+      "FCGIServerConfig") .
     "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} FCGIServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/FCGIRtbServerConfig.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}FCGIRtbServer.out 2>&1 < /dev/null";

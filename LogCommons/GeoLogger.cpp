@@ -7,7 +7,7 @@
 namespace AdServer::LogProcessing
 {
   template <> const char*
-  GeoLoggerTraits::B::base_name_ = "GeoLogger";
+  GeoLoggerTraits::B::base_name_ = "Geo";
 
   template <> const char*
   GeoLoggerTraits::B::signature_ = "<UNDEFINED>";
@@ -78,7 +78,7 @@ namespace AdServer::LogProcessing
   const char*
   GeoLoggerTraits::csv_base_name()
   {
-    return "GeoLogger";
+    return "Geo";
   }
 
   const char*

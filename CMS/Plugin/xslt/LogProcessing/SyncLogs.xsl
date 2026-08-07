@@ -386,6 +386,14 @@
         </xsl:call-template>
       </xsl:variable>
 
+      <xsl:variable name="http-frontend-hosts">
+        <xsl:call-template name="HostsStringGenerator">
+          <xsl:with-param name="service-path"
+            select="$fe-cluster-path/service[@descriptor = $http-frontend-descriptor]"/>
+          <xsl:with-param name="error-prefix" select="'HttpFrontend hosts resolving'"/>
+        </xsl:call-template>
+      </xsl:variable>
+
       <xsl:variable name="campaign-server-hosts">
         <xsl:call-template name="HostsStringGenerator">
           <xsl:with-param name="service-path"
@@ -1140,6 +1148,17 @@
               <xsl:attribute name="source"><xsl:value-of select="$request-info-manager-hosts"/></xsl:attribute>
             </cfg:hosts>
           </cfg:Route>
+
+          <xsl:if test="string-length($http-frontend-hosts) > 0">
+            <cfg:Route type="RoundRobin">
+              <cfg:files source="FCGIRtbServer/Out/Geo/Geo_*"
+                destination="/Geo"/>
+              <cfg:hosts destination="-non-used-hostname">
+                <xsl:attribute name="source"><xsl:value-of
+                  select="$http-frontend-hosts"/></xsl:attribute>
+              </cfg:hosts>
+            </cfg:Route>
+          </xsl:if>
 
           <cfg:Route type="RoundRobin">
             <cfg:files>

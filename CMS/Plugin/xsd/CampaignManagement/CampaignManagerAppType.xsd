@@ -87,6 +87,7 @@
         <xsd:documentation>Max batching delay for BillingServer gRPC client calls.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="numa_node" type="xsd:nonNegativeInteger" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="CampaignManagerUpdateParamsType">

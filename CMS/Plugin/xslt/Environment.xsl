@@ -67,11 +67,10 @@
   log_root=$workspace_root/log
   CONTROL_CPU_AFFINITY=
   ADS_THREAD_AFFINITY=
-  ADS_THREAD_AFFINITY_CPUS=
   <xsl:if test="$env-config/@cpu_affinity = 'auto' and not($devel-params/@valgrind)">
   CONTROL_CPU_AFFINITY="env LD_PRELOAD=libThreadAffinityPreload.so${LD_PRELOAD:+:$LD_PRELOAD}"
   ADS_THREAD_AFFINITY=round_robin
-  ADS_THREAD_AFFINITY_CPUS=${CONTROL_CPU_AFFINITY_CPUS:-auto}
+  ADS_THREAD_AFFINITY_CPUS=${ADS_THREAD_AFFINITY_CPUS:-auto}
   </xsl:if>
   export server_root
   export server_bin_root

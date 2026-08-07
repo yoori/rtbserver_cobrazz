@@ -28,6 +28,9 @@
   <xsl:param name="server-root"/>
 
   <cfg:FCGIServerConfig>
+    <xsl:if test="string-length($fcgi-rtbserver-config/cfg:rtbConfig/@numa_node) &gt; 0">
+      <xsl:attribute name="numa_node"><xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbConfig/@numa_node"/></xsl:attribute>
+    </xsl:if>
     <xsl:variable name="config-root"><xsl:value-of select="$env-config/@config_root"/>
       <xsl:if test="count($env-config/@config_root) = 0"><xsl:value-of select="$def-config-root"/></xsl:if>
     </xsl:variable>

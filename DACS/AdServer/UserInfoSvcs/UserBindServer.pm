@@ -24,7 +24,9 @@ sub start
      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
    "fi && " .
    "{ " .
-   "ADS_THREAD_AFFINITY=round_robin_all " .
+   AdServer::Functions::thread_affinity_env(
+     "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindServerConfig.xml",
+     "UserBindServerConfig") .
    "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} UserBindServer " .
      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindServer.xml > " .
      "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}UserBindServer.out 2>&1 < /dev/null ; " .

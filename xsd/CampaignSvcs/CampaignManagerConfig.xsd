@@ -119,6 +119,7 @@
     </xsd:sequence>
 
     <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="numa_node" type="xsd:nonNegativeInteger" use="optional"/>
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>
     <xsd:attribute name="output_logs_dir" type="xsd:string" use="optional"/>
     <xsd:attribute name="pid_file" type="xsd:string" use="required"/>

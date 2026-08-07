@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdint.h>
@@ -18,8 +19,11 @@ enum Mode
 {
   MODE_DISABLED,
   MODE_ROUND_ROBIN,
-  MODE_ROUND_ROBIN_ALL
+  MODE_ROUND_ROBIN_ALL,
+  MODE_ROUND_ROBIN_BY_NAME
 };
+
+#define THREAD_TYPE_STATE_COUNT 128
 
 struct Config
 {
@@ -29,7 +33,20 @@ struct Config
   cpu_set_t original_cpu_set;
   int original_cpu_set_available;
   int auto_cpus;
+  int restrict_to_original_cpu_set;
+  int numa_node;
+  int numa_node_set;
   int verbose;
+};
+
+struct ThreadTypeState
+{
+  int used;
+  pid_t pid;
+  int numa_node;
+  char name[16];
+  uint64_t base;
+  uint64_t next;
 };
 
 struct StartContext
@@ -49,6 +66,8 @@ typedef int (*PthreadSetname)(pthread_t, const char*);
 static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 static struct Config config;
 static uint64_t next_cpu_index = 0;
+static pthread_mutex_t thread_type_states_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct ThreadTypeState thread_type_states[THREAD_TYPE_STATE_COUNT];
 static __thread int current_thread_cpu = -1;
 static PthreadCreate real_pthread_create = NULL;
 static PthreadSetname real_pthread_setname = NULL;
@@ -61,7 +80,8 @@ is_enabled_value(const char* value)
       strcmp(value, "yes") == 0 ||
       strcmp(value, "true") == 0 ||
       strcmp(value, "on") == 0 ||
-      strcmp(value, "round_robin") == 0);
+      strcmp(value, "round_robin") == 0 ||
+      strcmp(value, "round_robin_by_name") == 0);
 }
 
 static void
@@ -104,6 +124,18 @@ mix_uint64(uint64_t value)
   value = (value ^ (value >> 30)) * 0xbf58476d1ce4e5b9ULL;
   value = (value ^ (value >> 27)) * 0x94d049bb133111ebULL;
   return value ^ (value >> 31);
+}
+
+static uint64_t
+hash_name(const char* name)
+{
+  uint64_t result = 1469598103934665603ULL;
+  while (name && *name)
+  {
+    result ^= (unsigned char)*name++;
+    result *= 1099511628211ULL;
+  }
+  return result;
 }
 
 static void
@@ -169,6 +201,13 @@ add_cpu(int cpu)
     return;
   }
 
+  if (config.restrict_to_original_cpu_set &&
+    config.original_cpu_set_available &&
+    !CPU_ISSET(cpu, &config.original_cpu_set))
+  {
+    return;
+  }
+
   for (unsigned int i = 0; i < config.cpu_count; ++i)
   {
     if (config.cpus[i] == cpu)
@@ -215,14 +254,15 @@ init_auto_cpus()
   }
 }
 
-static void
-parse_cpu_list(const char* value)
+static int
+parse_cpu_list_into(
+  const char* value,
+  int* cpus,
+  unsigned int* cpu_count)
 {
   if (!value || *skip_spaces(value) == '\0' || strcmp(skip_spaces(value), "auto") == 0)
   {
-    config.auto_cpus = 1;
-    init_auto_cpus();
-    return;
+    return 0;
   }
 
   const char* pos = value;
@@ -231,9 +271,7 @@ parse_cpu_list(const char* value)
     int begin = 0;
     if (!parse_uint_value(&pos, &begin))
     {
-      config.cpu_count = 0;
-      init_auto_cpus();
-      return;
+      return 0;
     }
 
     int end = begin;
@@ -243,15 +281,29 @@ parse_cpu_list(const char* value)
       ++pos;
       if (!parse_uint_value(&pos, &end) || end < begin)
       {
-        config.cpu_count = 0;
-        init_auto_cpus();
-        return;
+        return 0;
       }
     }
 
     for (int cpu = begin; cpu <= end; ++cpu)
     {
-      add_cpu(cpu);
+      int already_added = 0;
+      for (unsigned int i = 0; i < *cpu_count; ++i)
+      {
+        if (cpus[i] == cpu)
+        {
+          already_added = 1;
+          break;
+        }
+      }
+      if (!already_added)
+      {
+        if (*cpu_count >= CPU_SETSIZE)
+        {
+          return 0;
+        }
+        cpus[(*cpu_count)++] = cpu;
+      }
     }
 
     pos = skip_spaces(pos);
@@ -262,17 +314,283 @@ parse_cpu_list(const char* value)
 
     if (*pos != ',')
     {
-      config.cpu_count = 0;
-      init_auto_cpus();
-      return;
+      return 0;
     }
     ++pos;
   }
 
-  if (config.cpu_count == 0)
+  return *cpu_count != 0;
+}
+
+static int
+parse_cpu_list_value(const char* value)
+{
+  int cpus[CPU_SETSIZE];
+  unsigned int cpu_count = 0;
+  if (!parse_cpu_list_into(value, cpus, &cpu_count))
   {
-    init_auto_cpus();
+    return 0;
   }
+
+  for (unsigned int i = 0; i < cpu_count; ++i)
+  {
+    add_cpu(cpus[i]);
+  }
+
+  return config.cpu_count != 0;
+}
+
+static int
+load_numa_cpus(int node, const char* cpu_filter)
+{
+  char path[128];
+  const int path_size = snprintf(
+    path,
+    sizeof(path),
+    "/sys/devices/system/node/node%d/cpulist",
+    node);
+  if (path_size <= 0 || (size_t)path_size >= sizeof(path))
+  {
+    return 0;
+  }
+
+  const int fd = open(path, O_RDONLY | O_CLOEXEC);
+  if (fd == -1)
+  {
+    return 0;
+  }
+
+  char value[4096];
+  const ssize_t size = read(fd, value, sizeof(value) - 1);
+  close(fd);
+  if (size <= 0)
+  {
+    return 0;
+  }
+
+  value[size] = '\0';
+  int node_cpus[CPU_SETSIZE];
+  unsigned int node_cpu_count = 0;
+  if (!parse_cpu_list_into(value, node_cpus, &node_cpu_count))
+  {
+    return 0;
+  }
+
+  int selected_cpus[CPU_SETSIZE];
+  unsigned int selected_cpu_count = 0;
+  if (cpu_filter && *skip_spaces(cpu_filter) != '\0')
+  {
+    if (!parse_cpu_list_into(cpu_filter, selected_cpus, &selected_cpu_count))
+    {
+      return 0;
+    }
+  }
+
+  for (unsigned int i = 0; i < node_cpu_count; ++i)
+  {
+    if (!cpu_filter || *skip_spaces(cpu_filter) == '\0')
+    {
+      add_cpu(node_cpus[i]);
+      continue;
+    }
+
+    for (unsigned int j = 0; j < selected_cpu_count; ++j)
+    {
+      if (selected_cpus[j] == (int)i)
+      {
+        add_cpu(node_cpus[i]);
+        break;
+      }
+    }
+  }
+
+  return config.cpu_count != 0;
+}
+
+static int
+parse_affinity_cpus(const char* value)
+{
+  char expression[4096];
+  const char* begin = skip_spaces(value);
+  if (!begin || *begin == '\0' || strcmp(begin, "auto") == 0)
+  {
+    config.auto_cpus = 1;
+    init_auto_cpus();
+    return config.cpu_count != 0;
+  }
+
+  const size_t value_size = strlen(begin);
+  if (value_size >= sizeof(expression))
+  {
+    return 0;
+  }
+  memcpy(expression, begin, value_size + 1);
+
+  char* end = expression + value_size;
+  while (end > expression && isspace((unsigned char)end[-1]))
+  {
+    --end;
+  }
+  *end = '\0';
+  const size_t expression_size = strlen(expression);
+  if (expression[0] == '(')
+  {
+    if (expression_size <= 1 || expression[expression_size - 1] != ')')
+    {
+      return 0;
+    }
+    expression[expression_size - 1] = '\0';
+    memmove(expression, expression + 1, strlen(expression));
+  }
+
+  char* node_spec = NULL;
+  char* cpu_spec = NULL;
+  char* segment = expression;
+  while (segment)
+  {
+    char* next = strchr(segment, ';');
+    if (next)
+    {
+      *next = '\0';
+    }
+
+    segment = (char*)skip_spaces(segment);
+    if (strncmp(segment, "n:", 2) == 0 && !node_spec)
+    {
+      node_spec = segment + 2;
+    }
+    else if (strncmp(segment, "c:", 2) == 0 && !cpu_spec)
+    {
+      cpu_spec = segment + 2;
+    }
+    else if (strchr(segment, ':') != NULL)
+    {
+      return 0;
+    }
+    else if (*segment != '\0')
+    {
+      cpu_spec = segment;
+    }
+
+    segment = next ? next + 1 : NULL;
+  }
+
+  config.cpu_count = 0;
+  if (node_spec)
+  {
+    int nodes[CPU_SETSIZE];
+    unsigned int node_count = 0;
+    if (*skip_spaces(node_spec) != '\0' &&
+      !parse_cpu_list_into(node_spec, nodes, &node_count))
+    {
+      return 0;
+    }
+
+    config.restrict_to_original_cpu_set = 1;
+    config.numa_node_set = 1;
+    config.numa_node = node_count == 1 ? nodes[0] : -2;
+    if (node_count == 0)
+    {
+      unsigned int loaded_nodes = 0;
+      for (int node = 0; node < CPU_SETSIZE; ++node)
+      {
+        char path[128];
+        const int path_size = snprintf(
+          path,
+          sizeof(path),
+          "/sys/devices/system/node/node%d/cpulist",
+          node);
+        if (path_size > 0 && (size_t)path_size < sizeof(path) &&
+          access(path, R_OK) == 0)
+        {
+          if (!load_numa_cpus(node, cpu_spec))
+          {
+            return 0;
+          }
+          ++loaded_nodes;
+        }
+      }
+      return loaded_nodes != 0 && config.cpu_count != 0;
+    }
+
+    for (unsigned int i = 0; i < node_count; ++i)
+    {
+      if (!load_numa_cpus(nodes[i], cpu_spec))
+      {
+        return 0;
+      }
+    }
+    return config.cpu_count != 0;
+  }
+
+  return cpu_spec ? parse_cpu_list_value(cpu_spec) : 0;
+}
+
+static struct ThreadTypeState*
+get_thread_type_state(const char* name, int numa_node)
+{
+  const pid_t pid = getpid();
+  const size_t name_size = strnlen(name ? name : "", 15);
+  const uint64_t name_hash = hash_name(name);
+
+  pthread_mutex_lock(&thread_type_states_lock);
+
+  struct ThreadTypeState* free_state = NULL;
+  for (unsigned int i = 0; i < THREAD_TYPE_STATE_COUNT; ++i)
+  {
+    struct ThreadTypeState* state = &thread_type_states[i];
+    if (!state->used)
+    {
+      if (!free_state)
+      {
+        free_state = state;
+      }
+      continue;
+    }
+
+    if (state->pid == pid &&
+      state->numa_node == numa_node &&
+      strncmp(state->name, name ? name : "", sizeof(state->name)) == 0)
+    {
+      pthread_mutex_unlock(&thread_type_states_lock);
+      return state;
+    }
+  }
+
+  if (!free_state)
+  {
+    pthread_mutex_unlock(&thread_type_states_lock);
+    return NULL;
+  }
+
+  free_state->used = 1;
+  free_state->pid = pid;
+  free_state->numa_node = numa_node;
+  memcpy(free_state->name, name ? name : "", name_size);
+  free_state->name[name_size] = '\0';
+  free_state->base = mix_uint64(
+    ((uint64_t)(uint32_t)pid << 32) ^
+    name_hash ^
+    ((uint64_t)(uint32_t)(numa_node + 1) << 48) ^
+    (uintptr_t)free_state);
+  free_state->next = 0;
+
+  pthread_mutex_unlock(&thread_type_states_lock);
+  return free_state;
+}
+
+static uint64_t
+next_cpu_index_for_name(const char* name)
+{
+  const int numa_node = config.numa_node_set ? config.numa_node : -1;
+  struct ThreadTypeState* state = get_thread_type_state(name, numa_node);
+  if (!state)
+  {
+    return __atomic_fetch_add(&next_cpu_index, 1, __ATOMIC_RELAXED);
+  }
+
+  return state->base +
+    __atomic_fetch_add(&state->next, 1, __ATOMIC_RELAXED);
 }
 
 static void
@@ -288,6 +606,10 @@ init_config()
   {
     config.mode = MODE_ROUND_ROBIN_ALL;
   }
+  else if (mode && strcmp(mode, "round_robin_by_name") == 0)
+  {
+    config.mode = MODE_ROUND_ROBIN_BY_NAME;
+  }
   else if (is_enabled_value(mode))
   {
     config.mode = MODE_ROUND_ROBIN;
@@ -299,7 +621,13 @@ init_config()
   }
 
   config.verbose = is_enabled_value(getenv("ADS_THREAD_AFFINITY_VERBOSE"));
-  parse_cpu_list(getenv("ADS_THREAD_AFFINITY_CPUS"));
+
+  if (!parse_affinity_cpus(getenv("ADS_THREAD_AFFINITY_CPUS")))
+  {
+    config.cpu_count = 0;
+    config.auto_cpus = 1;
+    init_auto_cpus();
+  }
   shuffle_auto_cpus();
 
   real_pthread_create = (PthreadCreate)dlsym(RTLD_NEXT, "pthread_create");
@@ -308,8 +636,18 @@ init_config()
   if (config.verbose)
   {
     write_literal("thread-affinity-preload: mode=");
-    write_literal(
-      config.mode == MODE_ROUND_ROBIN_ALL ? "round_robin_all" : "round_robin");
+    if (config.mode == MODE_ROUND_ROBIN_ALL)
+    {
+      write_literal("round_robin_all");
+    }
+    else if (config.mode == MODE_ROUND_ROBIN_BY_NAME)
+    {
+      write_literal("round_robin_by_name");
+    }
+    else
+    {
+      write_literal("round_robin");
+    }
     write_literal(" cpus=");
     for (unsigned int i = 0; i < config.cpu_count; ++i)
     {
@@ -324,7 +662,7 @@ init_config()
 }
 
 static int
-apply_current_thread_affinity()
+apply_current_thread_affinity(const char* thread_name)
 {
   pthread_once(&init_once, init_config);
 
@@ -338,7 +676,9 @@ apply_current_thread_affinity()
     return 1;
   }
 
-  const uint64_t index = __atomic_fetch_add(&next_cpu_index, 1, __ATOMIC_RELAXED);
+  const uint64_t index = config.mode == MODE_ROUND_ROBIN_BY_NAME ?
+    next_cpu_index_for_name(thread_name) :
+    __atomic_fetch_add(&next_cpu_index, 1, __ATOMIC_RELAXED);
   const int cpu = config.cpus[index % config.cpu_count];
 
   cpu_set_t cpu_set;
@@ -410,7 +750,10 @@ thread_start_wrapper(void* arg)
   void* start_arg = context->arg;
   free(context);
 
-  apply_current_thread_affinity();
+  if (config.mode != MODE_ROUND_ROBIN_BY_NAME)
+  {
+    apply_current_thread_affinity("");
+  }
   return start_routine(start_arg);
 }
 
@@ -476,7 +819,9 @@ pthread_setname_np(pthread_t thread, const char* name)
 
   const int no_affinity = strncmp(name, "na:", 3) == 0;
   const int apply_affinity = strncmp(name, "ca:", 3) == 0;
-  const int affinity_by_default = config.mode == MODE_ROUND_ROBIN_ALL;
+  const int affinity_by_default =
+    config.mode == MODE_ROUND_ROBIN_ALL ||
+    config.mode == MODE_ROUND_ROBIN_BY_NAME;
   const char* effective_name = no_affinity || apply_affinity ? name + 3 : name;
 
   if (no_affinity &&
@@ -490,7 +835,7 @@ pthread_setname_np(pthread_t thread, const char* name)
   if ((apply_affinity || affinity_by_default) &&
     pthread_equal(thread, pthread_self()))
   {
-    apply_current_thread_affinity();
+    apply_current_thread_affinity(effective_name);
   }
 
   if (config.mode == MODE_DISABLED ||
@@ -525,6 +870,6 @@ thread_affinity_preload_init()
   pthread_once(&init_once, init_config);
   if (config.mode == MODE_ROUND_ROBIN_ALL)
   {
-    apply_current_thread_affinity();
+    apply_current_thread_affinity("");
   }
 }

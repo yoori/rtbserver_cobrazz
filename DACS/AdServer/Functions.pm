@@ -78,4 +78,17 @@ sub execute_command
   }
 }
 
+sub thread_affinity_env
+{
+  my ($config_file, $config_element) = @_;
+
+  return
+    "ADS_THREAD_AFFINITY=round_robin_by_name " .
+    "ADS_THREAD_AFFINITY_CPUS=\"(n:\$(sed -n 's/.*<cfg:" .
+      $config_element .
+      "[^>]*numa_node=\"\\([0-9][0-9]*\\)\".*/\\1/p' " .
+      $config_file .
+      " | head -1)\" ";
+}
+
 1;
