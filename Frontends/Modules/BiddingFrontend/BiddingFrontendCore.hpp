@@ -14,6 +14,8 @@
 
 #include <HTTP/Http.hpp>
 
+#include <Commons/FastScheduler.hpp>
+
 #include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <ChannelServerGrpc.grpc-client.hpp>
@@ -63,7 +65,7 @@ namespace AdServer::Bidding
       std::shared_ptr<const RequestInfoFiller::AccountTraitsById> account_traits;
       StatHolder_var stats;
       std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers;
-      std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers;
+      std::shared_ptr<AdServer::Commons::FastScheduler> timeout_scheduler;
       BiddingFrontendLogger_var bidding_frontend_logger;
       std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
         user_bind_client;
@@ -303,7 +305,7 @@ namespace AdServer::Bidding
     std::shared_ptr<const RequestInfoFiller::AccountTraitsById> account_traits_;
     StatHolder_var stats_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers_;
-    std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers_;
+    std::shared_ptr<AdServer::Commons::FastScheduler> timeout_scheduler_;
     BiddingFrontendLogger_var bidding_frontend_logger_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;

@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <optional>
 #include <set>
 
 #include <google/protobuf/arena.h>
@@ -661,7 +660,7 @@ namespace AdServer::Bidding
       account_traits_(params.account_traits),
       stats_(params.stats),
       bid_workers_(params.bid_workers),
-      timeout_workers_(params.timeout_workers),
+      timeout_scheduler_(params.timeout_scheduler),
       bidding_frontend_logger_(params.bidding_frontend_logger),
       user_bind_client_(params.user_bind_client),
       user_info_distributed_client_(params.user_info_distributed_client),
@@ -905,11 +904,15 @@ namespace AdServer::Bidding
       }
       else
       {
-        timeout_workers_->schedule(
-          request_timeout,
-          [request_task]()
+        const auto timeout = request_timeout > Generics::Time::ZERO ?
+          request_timeout : Generics::Time::ZERO;
+        timeout_scheduler_->schedule(
+          request_task->timeout_task_,
+          Generics::Time::get_time_of_day() + timeout,
+          request_task,
+          [](BidRequestState& request) noexcept
           {
-            request_task->interrupt();
+            request.interrupt();
           });
 
         bid_workers_->post(

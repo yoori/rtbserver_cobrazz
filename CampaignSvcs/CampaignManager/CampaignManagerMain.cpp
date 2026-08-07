@@ -496,15 +496,6 @@ namespace
       append_stat(
         "grpc_batch_stream_call_live",
         lifecycle_stats.batch_stream_call_live);
-      append_stat(
-        "grpc_debug_watchdog_scheduled_total",
-        lifecycle_stats.debug_watchdog_scheduled_total);
-      append_stat(
-        "grpc_debug_watchdog_finished_total",
-        lifecycle_stats.debug_watchdog_finished_total);
-      append_stat(
-        "grpc_debug_watchdog_live",
-        lifecycle_stats.debug_watchdog_live);
     }
 
     const auto logger_stats = campaign_manager_logger->get_stats();

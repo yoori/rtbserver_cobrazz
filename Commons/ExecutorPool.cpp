@@ -71,14 +71,11 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::schedule(
-    const Generics::Time& timeout,
-    std::function<void()> task)
+  ExecutorPool::schedule(const Generics::Time& timeout, std::function<void()> task)
   {
     const auto timeout_us = timeout.microseconds();
     auto timer = std::make_shared<SteadyTimer>(next_io_service());
-    timer->expires_after(
-      std::chrono::microseconds(timeout_us > 0 ? timeout_us : 0));
+    timer->expires_after(std::chrono::microseconds(timeout_us > 0 ? timeout_us : 0));
     timer->async_wait(
       [timer, task = std::move(task)](const boost::system::error_code& error)
       {

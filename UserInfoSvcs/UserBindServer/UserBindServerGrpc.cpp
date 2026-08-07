@@ -10,13 +10,13 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <unistd.h>
 
 #include <Generics/Time.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Hostname.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
 #include <Commons/Grpc/Batch.grpc.pb.h>
@@ -29,22 +29,6 @@ namespace AdServer::UserInfoSvcs
   namespace
   {
     constexpr const char user_bind_server_grpc_aspect[] = "UserBindServerGrpc";
-
-    const std::string&
-    service_hostname_()
-    {
-      static const std::string hostname = []()
-      {
-        char buffer[256];
-        if (::gethostname(buffer, sizeof(buffer)) != 0)
-        {
-          return std::string();
-        }
-        buffer[sizeof(buffer) - 1] = 0;
-        return std::string(buffer);
-      }();
-      return hostname;
-    }
 
     class InProgressGuard final
     {
@@ -246,6 +230,13 @@ namespace AdServer::UserInfoSvcs
       AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
       const override;
 
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
     AdServer::Commons::StartableAwaitable<void> co_get_bind_request(
       adserver::user_info_svcs::user_bind::GetBindRequestRequest&& request,
       adserver::user_info_svcs::user_bind::GetBindRequestResponse& response,
@@ -370,6 +361,34 @@ namespace AdServer::UserInfoSvcs
       });
   }
 
+  void
+  UserBindServerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      response_publisher,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
   AdServer::Commons::StartableAwaitable<void>
   UserBindServerGrpc::ServiceImpl::co_get_bind_request(
     adserver::user_info_svcs::user_bind::GetBindRequestRequest&& request,
@@ -387,7 +406,7 @@ namespace AdServer::UserInfoSvcs
       stats_->get_bind_request_total_time,
       stats_->get_bind_request_in_progress);
 
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);
@@ -445,7 +464,7 @@ namespace AdServer::UserInfoSvcs
       stats_->add_bind_request_total_time,
       stats_->add_bind_request_in_progress);
 
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);
@@ -503,7 +522,7 @@ namespace AdServer::UserInfoSvcs
       stats_->get_user_id_total_time,
       stats_->get_user_id_in_progress);
 
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     {
@@ -583,7 +602,7 @@ namespace AdServer::UserInfoSvcs
       stats_->add_user_id_total_time,
       stats_->add_user_id_in_progress);
 
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     maybe_sleep_mock_response(response_sleep_ms_);

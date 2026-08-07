@@ -294,6 +294,13 @@ namespace AdServer::CampaignSvcs
       AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
       const override;
 
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
     AdServer::Commons::StartableAwaitable<void> co_check_available_bid(
       Proto::CheckBidRequest&& request,
       Proto::BidResultResponse& response,
@@ -390,6 +397,34 @@ namespace AdServer::CampaignSvcs
       handle,
       batch_request,
       batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
+  void
+  BillingServerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      response_publisher,
       [
         in_progress = std::move(in_progress),
         completion = std::move(completion)

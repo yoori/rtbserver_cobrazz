@@ -16,6 +16,8 @@ add_library(Commons  SHARED
   CorbaConfig.cpp
   SignalActiveObject.cpp
   HostDistribution.cpp
+  Hostname.cpp
+  Hostname.hpp
   PathManip.cpp
   PidFileGuard.cpp
   ActivityGate.cpp
@@ -29,6 +31,8 @@ add_library(Commons  SHARED
   ExternalUserIdUtils.cpp
   BoostAsioContextRunActiveObject.cpp
   ExecutorPool.cpp
+  FastScheduler.cpp
+  FastScheduler.hpp
   ZmqSocketHolder.cpp
   SecToken.cpp
   FastJsonParser.cpp

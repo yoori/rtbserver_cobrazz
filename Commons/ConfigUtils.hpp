@@ -67,15 +67,13 @@ namespace Config
         if (it->size_span().present())
         {
           log_policies.push_back(
-            new Logging::File::Policies::SizeSpanPolicy(
-              it->size_span().get()));
+            new Logging::File::Policies::SizeSpanPolicy(it->size_span().get()));
         }
 
         if (it->time_span().present())
         {
           log_policies.push_back(
-            new Logging::File::Policies::TimeSpanPolicy(
-              Generics::Time(it->time_span().get())));
+            new Logging::File::Policies::TimeSpanPolicy(Generics::Time(it->time_span().get())));
         }
 
         Logging::File::Config config(
@@ -84,8 +82,7 @@ namespace Config
           xml_logger_config.log_level() > it->max_log_level() ?
             it->max_log_level() : xml_logger_config.log_level());
 
-        Logging::QLogger_var file_logger(
-          new Logging::File::Logger(std::move(config)));
+        Logging::QLogger_var file_logger(new Logging::File::Logger(std::move(config)));
 
         if (it->min_log_level().present())
         {
@@ -96,8 +93,7 @@ namespace Config
         else
         {
           loggers.push_back(Logging::QLogger_var(
-            new Logging::SeveritySelectorLogger(
-              it->max_log_level(), file_logger)));
+            new Logging::SeveritySelectorLogger(it->max_log_level(), file_logger)));
         }
       }
 
@@ -125,8 +121,7 @@ namespace Config
         return loggers[0];
       }
 
-      return Logging::Logger_var(
-        new Logging::DistributorLogger(loggers.begin(), loggers.end()));
+      return Logging::Logger_var(new Logging::DistributorLogger(loggers.begin(), loggers.end()));
     }
     catch (const eh::Exception& ex)
     {
@@ -147,8 +142,7 @@ namespace Config
     conn.db = db_conn_config.db();
     conn.user_name = db_conn_config.user();
     conn.password = db_conn_config.password();
-    conn.schema = db_conn_config.schema().present() ?
-      db_conn_config.schema()->c_str() : "";
+    conn.schema = db_conn_config.schema().present() ? db_conn_config.schema()->c_str() : "";
     conn.statement_timeout = db_conn_config.statement_timeout().present() ?
       Generics::Time(*db_conn_config.statement_timeout()) :
       Generics::Time::ZERO;
@@ -156,8 +150,7 @@ namespace Config
 
   inline
   AdServer::Grpc::BatchingOptions
-  read_xsd_grpc_options(
-    const xsd::AdServer::Configuration::GrpcBatchingOptionsType& config)
+  read_xsd_grpc_options(const xsd::AdServer::Configuration::GrpcBatchingOptionsType& config)
   {
     AdServer::Grpc::BatchingOptions options;
     options.channels_number = config.channels_number();
@@ -171,6 +164,13 @@ namespace Config
     options.error_on_inflight_reaching = config.error_on_inflight_reaching();
     options.workers_number = config.workers_number();
     options.hot_buckets_count = config.hot_buckets_count();
+    options.response_time_steps_us.reserve(config.ResponseTimeStepUs().size());
+
+    for (const auto step : config.ResponseTimeStepUs())
+    {
+      options.response_time_steps_us.emplace_back(step);
+    }
+
     if (config.max_batch_delay_us().present())
     {
       options.max_batch_delay = *config.max_batch_delay_us() > 0 ?

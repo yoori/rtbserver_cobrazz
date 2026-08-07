@@ -6,18 +6,45 @@ namespace AdServer::Grpc
 {
   template<typename ServiceImplType, typename AsyncServiceType>
   struct GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::BatchContext
+    : GrpcServiceBase::BatchResponsePublisher,
+      std::enable_shared_from_this<BatchContext>
   {
+    google::protobuf::Arena& response_arena() noexcept override
+    {
+      return response_arena_storage;
+    }
+
+    std::shared_ptr<GrpcServiceBase::BatchResponsePublisher> retain()
+      noexcept override
+    {
+      return this->shared_from_this();
+    }
+
+    Response* create_response() override
+    {
+      return google::protobuf::Arena::CreateMessage<Response>(
+        &response_arena_storage);
+    }
+
+    void publish_response(Response* response) noexcept override
+    {
+      if (auto owner_ptr = owner.lock())
+      {
+        owner_ptr->publish_batch_response_(this->shared_from_this(), response);
+      }
+    }
+
+    std::weak_ptr<GrpcBatchStreamCall> owner;
     google::protobuf::Arena request_arena;
     Request* request = nullptr;
-    google::protobuf::Arena response_arena;
-    Response* response = nullptr;
+    google::protobuf::Arena response_arena_storage;
     GrpcServiceBase::BatchProcessingHandle operation_handle;
     std::optional<AdServer::Commons::ActivityGate::Guard> process_guard;
     std::optional<std::uint64_t> inprogress_stats_receiver_id;
     std::size_t items_count = 0;
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-    std::shared_ptr<DebugWatchdogState> debug_response_watchdog_state;
-#endif
+    std::size_t pending_writes = 0;
+    bool processing_done = false;
+    bool released = false;
   };
 
   template<typename ServiceImplType, typename AsyncServiceType>
@@ -235,9 +262,9 @@ namespace AdServer::Grpc
     }
 
     auto context = std::make_shared<BatchContext>();
+    context->owner = this->shared_from_this();
     context->request_arena.Reset();
-    context->request = google::protobuf::Arena::CreateMessage<Request>(
-      &context->request_arena);
+    context->request = google::protobuf::Arena::CreateMessage<Request>(&context->request_arena);
     auto* tag = new ReadTag(this->shared_from_this(), context);
     responder_.Read(context->request, tag);
     return true;
@@ -285,9 +312,6 @@ namespace AdServer::Grpc
     BatchContextPtr context) noexcept
   {
     start_inprogress_stats_(*context);
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-    start_debug_response_watchdog_(*context);
-#endif
 
     auto process_guard = service_impl_->enter_grpc_operation();
     if (!process_guard)
@@ -300,9 +324,10 @@ namespace AdServer::Grpc
       maybe_finish_or_delete_();
       return;
     }
-    context->process_guard.emplace(std::move(process_guard));
 
+    context->process_guard.emplace(std::move(process_guard));
     bool drop = false;
+
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       if (closing_)
@@ -355,19 +380,14 @@ namespace AdServer::Grpc
   {
     try
     {
-      context->response_arena.Reset();
-      context->response = google::protobuf::Arena::CreateMessage<Response>(
-        &context->response_arena);
       static_cast<GrpcServiceBase*>(service_impl_)->start_handle_batch_request(
         context->operation_handle,
         *context->request,
-        *context->response,
-        [owner = this->shared_from_this(), context](
-          std::optional<std::exception_ptr> exception) mutable
+        *context,
+        [owner = this->shared_from_this(), context](std::optional<std::exception_ptr> exception)
+          mutable
         {
-          owner->handle_batch_processed_(
-            std::move(context),
-            std::move(exception));
+          owner->handle_batch_processed_(std::move(context), std::move(exception));
         });
     }
     catch (...)
@@ -387,9 +407,8 @@ namespace AdServer::Grpc
   {
     if (exception)
     {
-      context->response_arena.Reset();
-      context->response = google::protobuf::Arena::CreateMessage<Response>(
-        &context->response_arena);
+      auto* response = context->create_response();
+      response->set_batch_id(context->request->batch_id());
       std::string status_message;
       try
       {
@@ -406,11 +425,13 @@ namespace AdServer::Grpc
 
       for (const auto& request_item : context->request->items())
       {
-        auto* response_item = context->response->add_items();
+        auto* response_item = response->add_items();
         response_item->set_request_id(request_item.request_id());
         response_item->set_status_code(::grpc::StatusCode::INTERNAL);
         response_item->set_status_message(status_message);
       }
+
+      context->publish_response(response);
     }
 
     bool drop = false;
@@ -422,13 +443,49 @@ namespace AdServer::Grpc
         --processing_count_;
       }
 
-      if (closing_)
+      context->processing_done = true;
+      if (context->pending_writes == 0 && !context->released)
       {
+        context->released = true;
         drop = true;
+      }
+    }
+
+    if (drop)
+    {
+      drop_context_(std::move(context));
+    }
+
+    maybe_finish_or_delete_();
+  }
+
+  template<typename ServiceImplType, typename AsyncServiceType>
+  void
+  GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::publish_batch_response_(
+    BatchContextPtr context,
+    Response* response) noexcept
+  {
+    if (!context || !response || response->items_size() == 0)
+    {
+      return;
+    }
+
+    bool drop = false;
+
+    {
+      std::lock_guard<std::mutex> lock(state_lock_);
+      if (closing_ || context->released)
+      {
+        if (context->processing_done && context->pending_writes == 0 && !context->released)
+        {
+          context->released = true;
+          drop = true;
+        }
       }
       else
       {
-        ready_responses_.emplace_back(context);
+        ++context->pending_writes;
+        ready_responses_.push_back(ReadyResponse{context, response});
       }
     }
 
@@ -440,15 +497,13 @@ namespace AdServer::Grpc
     {
       try_start_write_();
     }
-
-    maybe_finish_or_delete_();
   }
 
   template<typename ServiceImplType, typename AsyncServiceType>
   void
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::try_start_write_() noexcept
   {
-    BatchContextPtr context;
+    ReadyResponse ready_response;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       if (write_in_flight_ ||
@@ -459,12 +514,12 @@ namespace AdServer::Grpc
         return;
       }
 
-      context = std::move(ready_responses_.front());
+      ready_response = std::move(ready_responses_.front());
       ready_responses_.pop_front();
       write_in_flight_ = true;
     }
 
-    if (!start_write_i_(std::move(context)))
+    if (!start_write_i_(std::move(ready_response)))
     {
       maybe_finish_or_delete_();
     }
@@ -472,24 +527,46 @@ namespace AdServer::Grpc
 
   template<typename ServiceImplType, typename AsyncServiceType>
   bool
-  GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::start_write_i_(BatchContextPtr context)
+  GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::start_write_i_(
+    ReadyResponse ready_response)
     noexcept
   {
     auto grpc_operation_guard = service_impl_->enter_grpc_operation();
     if (!grpc_operation_guard)
     {
+      bool drop = false;
+
       {
         std::lock_guard<std::mutex> lock(state_lock_);
         write_in_flight_ = false;
         closing_ = true;
+
+        if (ready_response.context && ready_response.context->pending_writes > 0)
+        {
+          --ready_response.context->pending_writes;
+        }
+
+        if (ready_response.context &&
+          ready_response.context->processing_done &&
+          ready_response.context->pending_writes == 0 &&
+          !ready_response.context->released)
+        {
+          ready_response.context->released = true;
+          drop = true;
+        }
       }
-      drop_context_(std::move(context));
+
+      if (drop)
+      {
+        drop_context_(std::move(ready_response.context));
+      }
+
       drop_ready_responses_();
       return false;
     }
 
-    auto* tag = new WriteTag(this->shared_from_this(), context);
-    responder_.Write(*context->response, tag);
+    auto* tag = new WriteTag(this->shared_from_this(), ready_response.context);
+    responder_.Write(*ready_response.response, tag);
     return true;
   }
 
@@ -499,6 +576,8 @@ namespace AdServer::Grpc
     bool ok,
     BatchContextPtr context) noexcept
   {
+    bool drop = false;
+
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       write_in_flight_ = false;
@@ -506,9 +585,23 @@ namespace AdServer::Grpc
       {
         closing_ = true;
       }
+
+      if (context->pending_writes > 0)
+      {
+        --context->pending_writes;
+      }
+
+      if (context->processing_done && context->pending_writes == 0 && !context->released)
+      {
+        context->released = true;
+        drop = true;
+      }
     }
 
-    drop_context_(std::move(context));
+    if (drop)
+    {
+      drop_context_(std::move(context));
+    }
 
     if (ok)
     {
@@ -527,10 +620,8 @@ namespace AdServer::Grpc
   void
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::handle_finish_completion_(bool) noexcept
   {
-    {
-      std::lock_guard<std::mutex> lock(state_lock_);
-      finish_in_flight_ = false;
-    }
+    std::lock_guard<std::mutex> lock(state_lock_);
+    finish_in_flight_ = false;
   }
 
   template<typename ServiceImplType, typename AsyncServiceType>
@@ -580,11 +671,32 @@ namespace AdServer::Grpc
   void
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::drop_ready_responses_() noexcept
   {
-    std::deque<BatchContextPtr> contexts;
+    std::deque<ReadyResponse> responses;
+    std::vector<BatchContextPtr> contexts;
 
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      contexts.swap(ready_responses_);
+      responses.swap(ready_responses_);
+      for (auto& response : responses)
+      {
+        auto& context = response.context;
+
+        if (!context)
+        {
+          continue;
+        }
+
+        if (context->pending_writes > 0)
+        {
+          --context->pending_writes;
+        }
+
+        if (context->processing_done && context->pending_writes == 0 && !context->released)
+        {
+          context->released = true;
+          contexts.emplace_back(context);
+        }
+      }
     }
 
     for (auto& context : contexts)
@@ -603,9 +715,6 @@ namespace AdServer::Grpc
       return;
     }
 
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-    finish_debug_response_watchdog_(*context);
-#endif
     finish_inprogress_stats_(*context);
     context->process_guard.reset();
     context->operation_handle.reset();
@@ -617,6 +726,7 @@ namespace AdServer::Grpc
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::maybe_finish_or_delete_() noexcept
   {
     bool start_finish = false;
+
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       if (read_in_flight_ ||
@@ -651,6 +761,7 @@ namespace AdServer::Grpc
   GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::start_read_from_limiter() noexcept
   {
     bool was_waiting = false;
+
     {
       std::lock_guard<std::mutex> lock(state_lock_);
       was_waiting = waiting_for_read_grant_;
@@ -666,40 +777,4 @@ namespace AdServer::Grpc
       service_impl_->batch_stream_read_limiter().cancel_read_reservation();
     }
   }
-
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-  template<typename ServiceImplType, typename AsyncServiceType>
-  void
-  GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::start_debug_response_watchdog_(
-    BatchContext& context)
-  {
-    finish_debug_response_watchdog_(context);
-
-    auto state = std::make_shared<DebugWatchdogState>();
-    state->peer = context_.peer();
-    state->items_size = context.request->items_size();
-    if (state->items_size > 0)
-    {
-      state->first_method = context.request->items(0).full_method();
-    }
-
-    context.debug_response_watchdog_state = state;
-
-    service_impl_->add_debug_watchdog_scheduled_();
-    GrpcBatchStreamDebugTimerService::instance().schedule(std::move(state));
-  }
-
-  template<typename ServiceImplType, typename AsyncServiceType>
-  void
-  GrpcBatchStreamCall<ServiceImplType, AsyncServiceType>::finish_debug_response_watchdog_(
-    BatchContext& context) noexcept
-  {
-    if (context.debug_response_watchdog_state)
-    {
-      context.debug_response_watchdog_state->done.store(true, std::memory_order_release);
-      context.debug_response_watchdog_state.reset();
-      service_impl_->add_debug_watchdog_finished_();
-    }
-  }
-#endif
 }

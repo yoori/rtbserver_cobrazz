@@ -205,6 +205,13 @@
 
   <!-- GrpcBatchingOptionsType -->
   <xsd:complexType name="GrpcBatchingOptionsType">
+    <xsd:sequence>
+      <xsd:element
+        name="ResponseTimeStepUs"
+        type="xsd:unsignedInt"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
     <xsd:attribute name="channels_number" type="xsd:positiveInteger" default="16"/>
     <xsd:attribute name="max_batch_size" type="xsd:positiveInteger" default="1024"/>
     <xsd:attribute name="max_inflight" type="xsd:nonNegativeInteger" use="optional"/>

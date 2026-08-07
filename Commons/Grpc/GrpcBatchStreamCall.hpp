@@ -40,6 +40,12 @@ namespace AdServer::Grpc
     struct BatchContext;
     using BatchContextPtr = std::shared_ptr<BatchContext>;
 
+    struct ReadyResponse
+    {
+      BatchContextPtr context;
+      Response* response = nullptr;
+    };
+
     struct StartTag;
     struct ReadTag;
     struct WriteTag;
@@ -55,8 +61,11 @@ namespace AdServer::Grpc
     void handle_batch_processed_(
       BatchContextPtr context,
       std::optional<std::exception_ptr> exception) noexcept;
+    void publish_batch_response_(
+      BatchContextPtr context,
+      Response* response) noexcept;
     void try_start_write_() noexcept;
-    bool start_write_i_(BatchContextPtr context) noexcept;
+    bool start_write_i_(ReadyResponse ready_response) noexcept;
     void handle_write_completion_(
       bool ok,
       BatchContextPtr context) noexcept;
@@ -67,13 +76,6 @@ namespace AdServer::Grpc
     void drop_ready_responses_() noexcept;
     void drop_context_(BatchContextPtr context) noexcept;
     void maybe_finish_or_delete_() noexcept;
-
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-    using DebugWatchdogState = GrpcBatchStreamDebugWatchdogState;
-
-    void start_debug_response_watchdog_(BatchContext& context);
-    void finish_debug_response_watchdog_(BatchContext& context) noexcept;
-#endif
 
     ServiceImplType* const service_impl_;
     AsyncServiceType* const async_service_;
@@ -89,7 +91,7 @@ namespace AdServer::Grpc
     bool closing_ = false;
     bool waiting_for_read_grant_ = false;
     std::size_t processing_count_ = 0;
-    std::deque<BatchContextPtr> ready_responses_;
+    std::deque<ReadyResponse> ready_responses_;
   };
 }
 

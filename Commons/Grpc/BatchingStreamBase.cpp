@@ -35,11 +35,9 @@ namespace AdServer::Grpc
       const auto result = to - from;
       return result < Generics::Time::ZERO ? Generics::Time::ZERO : result;
     }
-
   } // namespace
 
-  struct BatchingStreamBase::Impl
-    : std::enable_shared_from_this<BatchingStreamBase::Impl>
+  struct BatchingStreamBase::Impl: std::enable_shared_from_this<BatchingStreamBase::Impl>
   {
     using BatchResponseItem = BatchingStreamBase::BatchResponseItem;
     using BatchRequest = BatchingStreamBase::BatchRequest;
@@ -126,25 +124,92 @@ namespace AdServer::Grpc
     public:
       struct BatchGuard
       {
+        static constexpr std::size_t COMPLETION_ARENA_SIZE = 256;
+
         BatchGuard(std::uint64_t id_val, PendingBatch batch_val)
           : id(id_val),
-            batch(std::move(batch_val))
-        {}
-
-        PendingBatch claim_payload()
+            batch(std::move(batch_val)),
+            completion_words_count((batch.size() + 63) / 64),
+            completion_words(
+              Generics::MonoAllocator<std::atomic<std::uint64_t>>(
+                completion_arena.arena()).allocate(completion_words_count))
         {
-          if (claimed.exchange(true, std::memory_order_acq_rel))
+          for (std::size_t i = 0; i < completion_words_count; ++i)
           {
-            return {};
+            std::construct_at(completion_words + i, 0);
           }
-          return std::move(batch);
+        }
+
+        ~BatchGuard()
+        {
+          std::destroy_n(completion_words, completion_words_count);
+        }
+
+        PendingBatch claim_remaining()
+        {
+          PendingBatch result;
+          result.reserve(batch.size() - std::min(
+            finished_count.load(std::memory_order_acquire),
+            batch.size()));
+          for (std::size_t index = 0; index < batch.size(); ++index)
+          {
+            if (claim_item(index))
+            {
+              result.emplace_back(std::move(batch[index]));
+            }
+          }
+          return result;
+        }
+
+        bool claim_item(const std::size_t index) noexcept
+        {
+          const std::uint64_t mask = std::uint64_t{1} << (index % 64);
+          const auto previous = completion_words[index / 64].fetch_or(
+            mask,
+            std::memory_order_acq_rel);
+          if (previous & mask)
+          {
+            return false;
+          }
+
+          return true;
+        }
+
+        bool finish_item() noexcept
+        {
+          return finished_count.fetch_add(1, std::memory_order_acq_rel) + 1 == batch.size();
+        }
+
+        bool completed() const noexcept
+        {
+          return finished_count.load(std::memory_order_acquire) == batch.size();
+        }
+
+        std::size_t remaining() const noexcept
+        {
+          return batch.size() - std::min(
+            finished_count.load(std::memory_order_acquire),
+            batch.size());
+        }
+
+        std::size_t size() const noexcept
+        {
+          return batch.size();
+        }
+
+        PendingRequest& request(const std::size_t index) noexcept
+        {
+          return batch[index];
         }
 
         const std::uint64_t id;
 
       private:
-        std::atomic<bool> claimed{false};
         PendingBatch batch;
+        const std::size_t completion_words_count;
+        Generics::MonoAllocatorFixedArena<COMPLETION_ARENA_SIZE> completion_arena;
+        std::atomic<std::uint64_t>* const completion_words;
+        std::atomic<std::size_t> finished_count{0};
       };
 
       using BatchGuardPtr = std::shared_ptr<BatchGuard>;
@@ -154,14 +219,11 @@ namespace AdServer::Grpc
         std::uint64_t batch_id = 0;
         Generics::Time write_time;
         BatchGuardPtr guard;
-        std::vector<std::uint64_t> request_ids;
       };
 
       BatchGuardPtr register_batch(
-        PendingBatch& batch,
-        std::uint64_t batch_id,
-        Generics::Time write_time,
-        std::vector<std::uint64_t> request_ids);
+        PendingBatch& batch, std::uint64_t batch_id, Generics::Time write_time);
+      std::optional<BatchRecord> find_batch(std::uint64_t batch_id) const;
       std::optional<BatchRecord> take_batch(std::uint64_t batch_id);
       void close();
       std::vector<PendingBatch> drain_all();
@@ -193,22 +255,16 @@ namespace AdServer::Grpc
       bool ok,
       std::unique_ptr<google::protobuf::Arena> response_arena,
       BatchResponse* response);
-    void process_write_completion_cq_(
-      bool ok,
-      std::uint64_t batch_id);
+    void process_write_completion_cq_(bool ok, std::uint64_t batch_id);
     void process_start_completion_cq_(bool ok);
     void process_writes_done_completion_cq_(bool ok);
     void process_finish_completion_cq_(bool ok);
-    void finish_with_error_(
-      grpc::StatusCode status_code,
-      const char* status_message);
+    void finish_with_error_(grpc::StatusCode status_code, const char* status_message);
     void finish_requests_with_error_(
       std::vector<PendingRequest>& requests,
       grpc::StatusCode status_code,
       const char* status_message);
-    void fail_inflight_with_error_(
-      grpc::StatusCode status_code,
-      const char* status_message);
+    void fail_inflight_with_error_(grpc::StatusCode status_code, const char* status_message);
     void record_last_error_(
       grpc::StatusCode status_code,
       const char* status_message,
@@ -225,9 +281,7 @@ namespace AdServer::Grpc
     void add_read_stats(std::uint64_t batches, std::uint64_t items) noexcept;
     void add_queue_wait_stats(std::uint64_t wait_us) noexcept;
     void add_queue_timeout_stats() noexcept;
-    void add_response_wait_stats(
-      std::uint64_t wait_us,
-      std::uint64_t count = 1) noexcept;
+    void add_response_wait_stats(std::uint64_t wait_us, std::uint64_t count = 1) noexcept;
     void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
 
   private:
@@ -266,8 +320,7 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::DetachedBatchStorage::register_batch(
     PendingBatch& batch,
     std::uint64_t batch_id,
-    Generics::Time write_time,
-    std::vector<std::uint64_t> request_ids)
+    Generics::Time write_time)
   {
     if (batch.empty())
     {
@@ -286,10 +339,23 @@ namespace AdServer::Grpc
     batch_records_.emplace(batch_id, BatchRecord{
       batch_id,
       write_time,
-      batch_guard,
-      std::move(request_ids)});
+      batch_guard});
 
     return batch_guard;
+  }
+
+  std::optional<BatchingStreamBase::Impl::DetachedBatchStorage::BatchRecord>
+  BatchingStreamBase::Impl::DetachedBatchStorage::find_batch(
+    const std::uint64_t batch_id) const
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+    const auto it = batch_records_.find(batch_id);
+    if (it == batch_records_.end())
+    {
+      return std::nullopt;
+    }
+
+    return it->second;
   }
 
   std::optional<BatchingStreamBase::Impl::DetachedBatchStorage::BatchRecord>
@@ -324,6 +390,7 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::DetachedBatchStorage::drain_all()
   {
     decltype(batches_) batches;
+
     {
       std::lock_guard<std::mutex> lock(lock_);
       batches.swap(batches_);
@@ -334,7 +401,7 @@ namespace AdServer::Grpc
     result.reserve(batches.size());
     for (auto& [_, batch] : batches)
     {
-      auto pending_batch = batch->claim_payload();
+      auto pending_batch = batch->claim_remaining();
       if (!pending_batch.empty())
       {
         result.emplace_back(std::move(pending_batch));
@@ -351,8 +418,12 @@ namespace AdServer::Grpc
     std::uint64_t result = 0;
     for (const auto& [_, batch_record] : batch_records_)
     {
-      result += batch_record.request_ids.size();
+      if (batch_record.guard)
+      {
+        result += batch_record.guard->remaining();
+      }
     }
+
     return result;
   }
 
@@ -500,7 +571,7 @@ namespace AdServer::Grpc
     AdServer::Grpc::BatchingOptions options)
     : owner_(owner),
       endpoint_(std::move(endpoint)),
-      options_(options),
+      options_(std::move(options)),
       batch_stream_full_method_(
         options_.batch_stream_full_method.empty() ?
           default_batch_stream_full_method :
@@ -513,17 +584,34 @@ namespace AdServer::Grpc
       queue_index_(queue_index)
   {
     completion_tags_gate_.activate_object();
+
     if (!grpc_executor_)
     {
       throw std::runtime_error("BatchingStreamBase requires GrpcExecutor");
     }
+
     if (!batching_queue_)
     {
       throw std::runtime_error("BatchingStreamBase requires BatchingQueue");
     }
+
     if (!channel)
     {
       throw std::runtime_error("BatchingStreamBase requires grpc Channel");
+    }
+
+    if (!std::is_sorted(
+      options_.response_time_steps_us.begin(),
+      options_.response_time_steps_us.end()) ||
+      std::adjacent_find(
+        options_.response_time_steps_us.begin(),
+        options_.response_time_steps_us.end()) != options_.response_time_steps_us.end() ||
+      (!options_.response_time_steps_us.empty() &&
+        options_.response_time_steps_us.front() == 0))
+    {
+      throw std::invalid_argument(
+        "BatchingStreamBase response time steps must be positive and "
+        "strictly increasing");
     }
 
     batch_stub_ = std::make_unique<BatchTransport>(std::move(channel));
@@ -579,9 +667,7 @@ namespace AdServer::Grpc
   BatchingStreamBase::last_error_message() const noexcept
   {
     const auto current_stats = stats();
-    return current_stats.last_error.has_value() ?
-      current_stats.last_error->message :
-      std::string();
+    return current_stats.last_error.has_value() ? current_stats.last_error->message : std::string();
   }
 
   bool
@@ -637,8 +723,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::add_queue_wait_stats(
-    std::uint64_t wait_us) noexcept
+  BatchingStreamBase::Impl::add_queue_wait_stats(std::uint64_t wait_us) noexcept
   {
     owner_.add_queue_wait_stats(wait_us);
   }
@@ -658,8 +743,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::add_consumer_stream_write_stats(
-    std::uint64_t wait_us) noexcept
+  BatchingStreamBase::Impl::add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept
   {
     owner_.add_consumer_stream_write_stats(wait_us);
   }
@@ -725,6 +809,7 @@ namespace AdServer::Grpc
         mark_shutdown_complete_i_();
       }
     }
+
     release_grpc_resources_i_();
 
     notify_closed_if_needed_();
@@ -795,6 +880,7 @@ namespace AdServer::Grpc
           "grpc operation gate rejected stream start",
           "stream_start");
       }
+
       notify_closed_if_needed_();
       complete_drain_if_ready_();
       return false;
@@ -815,14 +901,15 @@ namespace AdServer::Grpc
       {
         *failed_batch = std::move(pending_batch);
       }
+
       return false;
     }
 
     bool write_started = false;
+
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      if (stream_state_.load() == StreamState::Open &&
-        write_state_ == WriteState::Idle)
+      if (stream_state_.load() == StreamState::Open && write_state_ == WriteState::Idle)
       {
         write_state_ = WriteState::Writing;
         write_started = true;
@@ -835,13 +922,11 @@ namespace AdServer::Grpc
       {
         *failed_batch = std::move(pending_batch);
       }
+
       return false;
     }
 
-    return start_write_(
-      std::move(pending_batch),
-      measure_consumer_stream_write,
-      failed_batch);
+    return start_write_(std::move(pending_batch), measure_consumer_stream_write, failed_batch);
   }
 
   bool
@@ -897,26 +982,20 @@ namespace AdServer::Grpc
     }
 
     write_arena_.Reset();
-    auto* write_batch =
-      google::protobuf::Arena::CreateMessage<BatchRequest>(&write_arena_);
+    auto* write_batch = google::protobuf::Arena::CreateMessage<BatchRequest>(&write_arena_);
     std::vector<PendingRequest> accepted_requests;
-    std::vector<std::uint64_t> request_ids;
     accepted_requests.reserve(pending_batch.size());
-    request_ids.reserve(pending_batch.size());
-    std::optional<std::vector<std::pair<PendingRequest, Generics::Time>>>
-      timed_out_requests;
+    std::optional<std::vector<std::pair<PendingRequest, Generics::Time>>> timed_out_requests;
     const auto write_time = Generics::Time::get_time_of_day();
-    auto request_id = next_request_id_.fetch_add(
-      pending_batch.size(),
-      std::memory_order_relaxed);
+    auto request_id = next_request_id_.fetch_add(pending_batch.size(), std::memory_order_relaxed);
     std::uint64_t batch_id = 0;
 
     for (auto& pending : pending_batch)
     {
-      const auto current_request_id = request_id++;
       const auto wait_time = duration_time(pending.enqueue_time, write_time);
       const auto wait_us = wait_time.microseconds();
       add_queue_wait_stats(wait_us);
+
       if (options_.max_queue_wait && wait_time > *options_.max_queue_wait)
       {
         add_queue_timeout_stats();
@@ -928,6 +1007,8 @@ namespace AdServer::Grpc
         continue;
       }
 
+      const auto current_request_id = request_id++;
+
       if (batch_id == 0)
       {
         batch_id = current_request_id;
@@ -938,7 +1019,6 @@ namespace AdServer::Grpc
       item->set_full_method(pending.request->full_method);
       item->set_payload(pending.request->payload);
 
-      request_ids.emplace_back(current_request_id);
       accepted_requests.emplace_back(std::move(pending));
     }
 
@@ -960,9 +1040,7 @@ namespace AdServer::Grpc
               std::to_string(options_.max_queue_wait->microseconds());
         BatchResponseItem item;
         item.set_status_code(grpc::StatusCode::RESOURCE_EXHAUSTED);
-        item.set_status_message(message_with_endpoint(
-          status_message,
-          endpoint_));
+        item.set_status_message(message_with_endpoint(status_message, endpoint_));
         request.request->complete(item);
       }
     }
@@ -984,6 +1062,7 @@ namespace AdServer::Grpc
           action = plan_shutdown_i_();
         }
       }
+
       write_slot_guard.release();
       execute_stream_action_(action);
 
@@ -995,11 +1074,16 @@ namespace AdServer::Grpc
       return true;
     }
 
+    write_batch->set_batch_id(batch_id);
+    for (const auto response_time_step_us : options_.response_time_steps_us)
+    {
+      write_batch->add_response_time_steps_us(response_time_step_us);
+    }
+
     auto batch_guard = detached_batch_storage_.register_batch(
       accepted_requests,
       batch_id,
-      write_time,
-      std::move(request_ids));
+      write_time);
 
     if (!batch_guard)
     {
@@ -1053,6 +1137,7 @@ namespace AdServer::Grpc
             duration_time(start, Generics::Time::get_time_of_day()).microseconds();
           add_consumer_stream_write_stats(wait_us);
         }
+
         return true;
       });
 
@@ -1060,6 +1145,7 @@ namespace AdServer::Grpc
     {
       bool shutdown_completed = false;
       const bool grpc_queue_shutdown = !operation_start.has_value();
+
       {
         std::lock_guard<std::mutex> lock(state_lock_);
         write_state_ = WriteState::Idle;
@@ -1072,6 +1158,7 @@ namespace AdServer::Grpc
           shutdown_completed = mark_shutdown_complete_i_();
         }
       }
+
       write_slot_guard.release();
 
       if (shutdown_completed)
@@ -1089,7 +1176,7 @@ namespace AdServer::Grpc
 
       auto failed_batch_record = detached_batch_storage_.take_batch(batch_id);
       auto failed_requests = failed_batch_record && failed_batch_record->guard ?
-        failed_batch_record->guard->claim_payload() : PendingBatch{};
+        failed_batch_record->guard->claim_remaining() : PendingBatch{};
       if (failed_batch && !failed_requests.empty())
       {
         failed_batch->reserve(failed_batch->size() + failed_requests.size());
@@ -1118,8 +1205,7 @@ namespace AdServer::Grpc
       bool ready;
     };
 
-    constexpr auto state_count =
-      static_cast<std::size_t>(StreamState::Finished) + 1;
+    constexpr auto state_count = static_cast<std::size_t>(StreamState::Finished) + 1;
     constexpr std::array<StateTransition, state_count> success_transitions = {{
       {StreamState::Open, true},       // Starting
       {StreamState::Open, true},       // Open
@@ -1152,8 +1238,7 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::StreamAction
   BatchingStreamBase::Impl::plan_start_read_i_()
   {
-    if (stream_state_.load() != StreamState::Open ||
-      read_state_ == ReadState::Reading)
+    if (stream_state_.load() != StreamState::Open || read_state_ == ReadState::Reading)
     {
       return StreamAction::None;
     }
@@ -1187,6 +1272,7 @@ namespace AdServer::Grpc
     {
       bool shutdown_completed = false;
       const bool grpc_queue_shutdown = !operation_start.has_value();
+
       {
         std::lock_guard<std::mutex> lock(state_lock_);
         read_state_ = ReadState::Idle;
@@ -1226,8 +1312,7 @@ namespace AdServer::Grpc
       return StreamAction::None;
     }
 
-    if (stream_state == StreamState::Closing &&
-      write_state_ == WriteState::Idle)
+    if (stream_state == StreamState::Closing && write_state_ == WriteState::Idle)
     {
       write_state_ = WriteState::WritesDoneInFlight;
       return StreamAction::StartWritesDone;
@@ -1264,6 +1349,7 @@ namespace AdServer::Grpc
     {
       bool shutdown_completed = false;
       const bool grpc_queue_shutdown = !operation_start.has_value();
+
       {
         std::lock_guard<std::mutex> lock(state_lock_);
         if (grpc_queue_shutdown)
@@ -1311,6 +1397,7 @@ namespace AdServer::Grpc
     {
       bool shutdown_completed = false;
       const bool grpc_queue_shutdown = !operation_start.has_value();
+
       {
         std::lock_guard<std::mutex> lock(state_lock_);
         if (grpc_queue_shutdown)
@@ -1415,10 +1502,7 @@ namespace AdServer::Grpc
     // response points into response_arena.
     (void)response_arena;
 
-    PendingBatch completed_requests;
-    std::vector<const BatchResponseItem*> completed_items;
     bool protocol_error = false;
-    bool has_missing_item = false;
 
     if (ok)
     {
@@ -1430,13 +1514,19 @@ namespace AdServer::Grpc
       }
       else
       {
-        std::uint64_t batch_id = response->items(0).request_id();
-        for (int i = 1; i < response->items_size(); ++i)
+        std::uint64_t batch_id = response->batch_id();
+        if (batch_id == 0)
         {
-          batch_id = std::min<std::uint64_t>(batch_id, response->items(i).request_id());
+          batch_id = response->items(0).request_id();
+          for (int i = 1; i < response->items_size(); ++i)
+          {
+            batch_id = std::min<std::uint64_t>(
+              batch_id,
+              response->items(i).request_id());
+          }
         }
 
-        auto completed_batch = detached_batch_storage_.take_batch(batch_id);
+        const auto completed_batch = detached_batch_storage_.find_batch(batch_id);
 
         if (!completed_batch || !completed_batch->guard)
         {
@@ -1444,60 +1534,53 @@ namespace AdServer::Grpc
         }
         else
         {
-          completed_requests = completed_batch->guard->claim_payload();
+          const auto response_time = Generics::Time::get_time_of_day();
+          const auto wait_us = duration_time(
+            completed_batch->write_time,
+            response_time).microseconds();
+          std::size_t completed_items_count = 0;
 
-          if (!completed_requests.empty())
+          for (const auto& item : response->items())
           {
-            completed_items.resize(completed_requests.size());
-            std::size_t response_items_errors_count = 0;
-            const auto request_ids_size = completed_batch->request_ids.size();
-            Generics::MonoAllocatorArena request_index_arena(
-              std::max<std::size_t>(
-                Generics::MonoAllocatorArena::DEFAULT_INITIAL_SIZE,
-                request_ids_size * 64));
-            Generics::MonoUnorderedMap<std::uint64_t, std::size_t> request_index(
-              &request_index_arena);
-            request_index.reserve(request_ids_size);
-            for (std::size_t i = 0; i < request_ids_size; ++i)
-            {
-              request_index.emplace(completed_batch->request_ids[i], i);
-            }
-
-            const auto response_time = Generics::Time::get_time_of_day();
-            const auto wait_us = duration_time(
-              completed_batch->write_time, response_time).microseconds();
-            const auto response_items_size = response->items_size();
-            for (int i = 0; i < response_items_size; ++i)
-            {
-              const auto& item = response->items(i);
-              const auto index_it = request_index.find(item.request_id());
-              if (index_it == request_index.end())
-              {
-                protocol_error = true;
-                ++response_items_errors_count;
-                continue;
-              }
-
-              auto*& completed_item = completed_items[index_it->second];
-              if (completed_item != nullptr)
-              {
-                protocol_error = true;
-                ++response_items_errors_count;
-                continue;
-              }
-
-              completed_item = &item;
-            }
-
-            const auto completed_items_count = static_cast<std::size_t>(response_items_size) -
-              response_items_errors_count;
-            add_response_wait_stats(wait_us, completed_items_count);
-
-            if (completed_items_count != completed_items.size())
+            if (item.request_id() < batch_id)
             {
               protocol_error = true;
-              has_missing_item = true;
+              continue;
             }
+
+            const auto index = static_cast<std::size_t>(item.request_id() - batch_id);
+            if (index >= completed_batch->guard->size() ||
+              !completed_batch->guard->claim_item(index))
+            {
+              protocol_error = true;
+              continue;
+            }
+
+            ++completed_items_count;
+            auto& request = completed_batch->guard->request(index);
+            try
+            {
+              if (request.request)
+              {
+                request.request->complete(item);
+              }
+            }
+            catch (...)
+            {
+              if (completed_batch->guard->finish_item())
+              {
+                detached_batch_storage_.take_batch(batch_id);
+              }
+              throw;
+            }
+            completed_batch->guard->finish_item();
+          }
+
+          add_response_wait_stats(wait_us, completed_items_count);
+
+          if (completed_batch->guard->completed())
+          {
+            detached_batch_storage_.take_batch(batch_id);
           }
         }
       }
@@ -1531,23 +1614,6 @@ namespace AdServer::Grpc
         grpc::StatusCode::INTERNAL, "batch response protocol error", "stream_read");
     }
 
-    BatchResponseItem missing_item;
-    if (has_missing_item)
-    {
-      missing_item.set_status_code(grpc::StatusCode::INTERNAL);
-      missing_item.set_status_message(message_with_endpoint(
-        "batch response missing item", endpoint_));
-    }
-
-    for (std::size_t i = 0; i < completed_requests.size(); ++i)
-    {
-      auto& request = completed_requests[i];
-      if (request.request)
-      {
-        request.request->complete(completed_items[i] ? *completed_items[i] : missing_item);
-      }
-    }
-
     if (!ok)
     {
       record_last_error_(grpc::StatusCode::UNAVAILABLE, "stream read failed", "stream_read");
@@ -1563,9 +1629,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::process_write_completion_cq_(
-    bool ok,
-    std::uint64_t batch_id)
+  BatchingStreamBase::Impl::process_write_completion_cq_(bool ok, std::uint64_t batch_id)
   {
     write_arena_.Reset();
 
@@ -1604,16 +1668,14 @@ namespace AdServer::Grpc
 
       if (failed_batch && failed_batch->guard)
       {
-        auto failed_requests = failed_batch->guard->claim_payload();
+        auto failed_requests = failed_batch->guard->claim_remaining();
         finish_requests_with_error_(
           failed_requests,
           grpc::StatusCode::UNAVAILABLE,
           "stream write failed");
       }
 
-      fail_inflight_with_error_(
-        grpc::StatusCode::UNAVAILABLE,
-        "stream write failed");
+      fail_inflight_with_error_(grpc::StatusCode::UNAVAILABLE, "stream write failed");
       notify_closed_if_needed_();
       complete_drain_if_ready_();
       return;
@@ -1683,6 +1745,7 @@ namespace AdServer::Grpc
     const auto message = message_with_endpoint(
       status_message ? status_message : "",
       endpoint_);
+
     for (auto& request : requests)
     {
       BatchResponseItem item;
@@ -1693,6 +1756,7 @@ namespace AdServer::Grpc
         request.request->complete(item);
       }
     }
+
     requests.clear();
   }
 
@@ -1830,8 +1894,6 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::accepts_requests_i_() const noexcept
   {
     const auto stream_state = stream_state_.load();
-    return stream_state == StreamState::Starting ||
-      stream_state == StreamState::Open;
+    return stream_state == StreamState::Starting || stream_state == StreamState::Open;
   }
-
 } // namespace AdServer::Grpc

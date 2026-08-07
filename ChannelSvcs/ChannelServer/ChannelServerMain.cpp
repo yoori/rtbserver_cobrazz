@@ -122,18 +122,6 @@ namespace
       body,
       "grpc_batch_stream_call_live",
       stats.batch_stream_call_live);
-    append_json_stat_(
-      body,
-      "grpc_debug_watchdog_scheduled_total",
-      stats.debug_watchdog_scheduled_total);
-    append_json_stat_(
-      body,
-      "grpc_debug_watchdog_finished_total",
-      stats.debug_watchdog_finished_total);
-    append_json_stat_(
-      body,
-      "grpc_debug_watchdog_live",
-      stats.debug_watchdog_live);
   }
 }
 

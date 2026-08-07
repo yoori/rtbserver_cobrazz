@@ -1,6 +1,7 @@
 #include "DebugSink.hpp"
 
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Hostname.hpp>
 
 namespace AdServer
 {
@@ -154,14 +155,7 @@ namespace AdServer
         debug_info_str_ << "\n" << Debug::REQUEST_INFO_HEAD << "\n";
       }
 
-      {
-        char hostname[HOST_NAME_MAX + 1];
-        if (gethostname(hostname, sizeof(hostname)) == -1)
-        {
-          *hostname = 0;
-        }
-        debug_info_str_ << "server-id = " << hostname << sep_;
-      }
+      debug_info_str_ << "server-id = " << Commons::hostname() << sep_;
 
       const char* user_status_str = 0;
 

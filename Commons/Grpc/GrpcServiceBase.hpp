@@ -15,12 +15,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-#include <thread>
-
-#include <boost/asio.hpp>
-#endif
-
 #include <grpcpp/grpcpp.h>
 #include <google/protobuf/arena.h>
 
@@ -53,37 +47,11 @@
 namespace AdServer::Commons
 {
   class ExecutorPool;
+  class FastScheduler;
 }
 
 namespace AdServer::Grpc
 {
-#ifdef ADS_GRPC_BATCH_STREAM_DEBUG_TIMEOUT
-  struct GrpcBatchStreamDebugWatchdogState
-  {
-    std::atomic_bool done{false};
-    std::string peer;
-    std::string first_method;
-    int items_size = 0;
-  };
-
-  class GrpcBatchStreamDebugTimerService final
-  {
-  public:
-    using WatchdogState = GrpcBatchStreamDebugWatchdogState;
-
-    static GrpcBatchStreamDebugTimerService& instance();
-
-    void schedule(std::shared_ptr<WatchdogState> state);
-
-  private:
-    GrpcBatchStreamDebugTimerService();
-
-    boost::asio::io_service io_service_;
-    boost::asio::io_service::work work_;
-    std::thread thread_;
-  };
-#endif
-
   template<typename ServiceImplType, typename AsyncServiceType>
   class GrpcBatchStreamCall;
 
@@ -115,10 +83,7 @@ namespace AdServer::Grpc
       ::grpc::CompletionQueue*,
       ::grpc::ServerCompletionQueue*,
       void*);
-    using Handler = void (ServiceImplType::*)(
-      const Request&,
-      Response&,
-      ::grpc::Status&) const;
+    using Handler = void (ServiceImplType::*)(const Request&, Response&, ::grpc::Status&) const;
 
     RequestMethod request_method;
     Handler handler;
@@ -167,8 +132,7 @@ namespace AdServer::Grpc
       const Request&,
       Response&,
       ::grpc::Status&) const;
-    using BatchHashFn = std::function<std::size_t(
-      const Request&)>;
+    using BatchHashFn = std::function<std::size_t(const Request&)>;
 
     RequestMethod request_method;
     Handler handler;
@@ -259,9 +223,22 @@ namespace AdServer::Grpc
 
   public:
     using CompletionQueues = std::vector<::grpc::ServerCompletionQueue*>;
-    using BatchCompletion =
-      AdServer::Commons::StartableAwaitable<void>::Completion;
+    using BatchCompletion = AdServer::Commons::StartableAwaitable<void>::Completion;
     using BatchProcessingHandle = std::shared_ptr<void>;
+
+    class BatchResponsePublisher
+    {
+    public:
+      virtual ~BatchResponsePublisher() = default;
+
+      virtual google::protobuf::Arena& response_arena() noexcept = 0;
+
+      virtual std::shared_ptr<BatchResponsePublisher> retain() noexcept = 0;
+
+      virtual adserver::grpc::BatchResponse* create_response() = 0;
+
+      virtual void publish_response(adserver::grpc::BatchResponse* response) noexcept = 0;
+    };
 
     struct InprogressStatsSnapshot
     {
@@ -280,9 +257,6 @@ namespace AdServer::Grpc
       std::uint64_t batch_stream_call_created_total = 0;
       std::uint64_t batch_stream_call_deleted_total = 0;
       std::uint64_t batch_stream_call_live = 0;
-      std::uint64_t debug_watchdog_scheduled_total = 0;
-      std::uint64_t debug_watchdog_finished_total = 0;
-      std::uint64_t debug_watchdog_live = 0;
     };
 
     class InprogressStats final
@@ -315,23 +289,19 @@ namespace AdServer::Grpc
     class BatchStreamReadLimiter final
     {
     public:
-      static constexpr std::size_t DEFAULT_MAX_REQUESTS_IN_PROGRESS =
-        16 * 1024;
+      static constexpr std::size_t DEFAULT_MAX_REQUESTS_IN_PROGRESS = 16 * 1024;
 
       struct Options
       {
         Options(
           bool read_ahead_enabled = true,
-          std::size_t max_requests_in_progress =
-            DEFAULT_MAX_REQUESTS_IN_PROGRESS) noexcept;
+          std::size_t max_requests_in_progress = DEFAULT_MAX_REQUESTS_IN_PROGRESS) noexcept;
 
         bool read_ahead_enabled = true;
-        std::size_t max_requests_in_progress =
-          DEFAULT_MAX_REQUESTS_IN_PROGRESS;
+        std::size_t max_requests_in_progress = DEFAULT_MAX_REQUESTS_IN_PROGRESS;
       };
 
-      explicit BatchStreamReadLimiter(
-        Options options = {}) noexcept;
+      explicit BatchStreamReadLimiter(Options options = {}) noexcept;
 
       class Waiter
       {
@@ -339,6 +309,7 @@ namespace AdServer::Grpc
         virtual ~Waiter() = default;
         virtual void start_read_from_limiter() noexcept = 0;
       };
+
       using WaiterPtr = std::shared_ptr<Waiter>;
 
       bool read_ahead_enabled() const noexcept;
@@ -354,10 +325,10 @@ namespace AdServer::Grpc
       void take_waiters_i_(Generics::MonoVector<WaiterPtr>& result);
       void grant_waiters_(Generics::MonoVector<WaiterPtr>& waiters) noexcept;
 
+    private:
       mutable std::mutex lock_;
       bool read_ahead_enabled_ = true;
-      std::size_t max_requests_in_progress_ =
-        DEFAULT_MAX_REQUESTS_IN_PROGRESS;
+      std::size_t max_requests_in_progress_ = DEFAULT_MAX_REQUESTS_IN_PROGRESS;
       std::size_t requests_in_progress_ = 0;
       std::size_t read_reservations_ = 0;
       std::deque<WaiterPtr> waiters_;
@@ -380,20 +351,16 @@ namespace AdServer::Grpc
   protected:
     using BatchStreamReadOptions = BatchStreamReadLimiter::Options;
 
-    explicit GrpcServiceBase(
-      BatchStreamReadOptions batch_stream_read_options = {}) noexcept;
+    explicit GrpcServiceBase(BatchStreamReadOptions batch_stream_read_options = {}) noexcept;
 
     virtual std::size_t registrations_per_queue() const noexcept;
 
-    virtual void register_in_queue(
-      ::grpc::ServerCompletionQueue* completion_queue) = 0;
+    virtual void register_in_queue(::grpc::ServerCompletionQueue* completion_queue) = 0;
 
     void add_grpc_service(::grpc::Service* service);
 
     template<typename ServiceImplType, typename Calls>
-    void register_batch_methods(
-      ServiceImplType* service_impl,
-      const Calls& calls);
+    void register_batch_methods(ServiceImplType* service_impl, const Calls& calls);
 
     template<typename Request, typename Response, typename Handler>
     void register_batch_method(std::string full_method, Handler&& handler);
@@ -444,6 +411,12 @@ namespace AdServer::Grpc
       adserver::grpc::BatchResponse& batch_response,
       BatchCompletion completion) const;
 
+    virtual void start_handle_batch_request(
+      BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      BatchResponsePublisher& response_publisher,
+      BatchCompletion completion) const;
+
     virtual std::size_t distributed_batch_max_sequential_ops() const noexcept;
 
     virtual std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -456,6 +429,7 @@ namespace AdServer::Grpc
       google::protobuf::Arena&)>;
 
     struct BatchCoroMethod;
+    struct PublishedBatchState;
     class BatchRequestAwaiter;
 
     struct PreparedBatchCoroItem
@@ -496,7 +470,7 @@ namespace AdServer::Grpc
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response) const;
 
-    void start_handle_batch_request_i_(
+    void dispatch_batch_request_(
       BatchProcessingHandle& handle,
       const adserver::grpc::BatchRequest& batch_request,
       adserver::grpc::BatchResponse& batch_response,
@@ -516,12 +490,27 @@ namespace AdServer::Grpc
       std::size_t max_sequential_ops,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool) const;
 
+    void start_publish_batch_request_distributed_(
+      BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      BatchResponsePublisher& response_publisher,
+      BatchCompletion completion,
+      std::size_t max_sequential_ops,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool) const;
+
     AdServer::Commons::StartableAwaitable<void>
     co_handle_batch_lane_(
       Generics::MonoVector<BatchItemContext> batch_items,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       bool reschedule,
       google::protobuf::Arena& response_arena) const;
+
+    AdServer::Commons::StartableAwaitable<void>
+    co_handle_publish_batch_lane_(
+      std::shared_ptr<PublishedBatchState> state,
+      std::size_t lane_index,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+      bool reschedule) const;
 
     AdServer::Commons::StartableAwaitable<void>
     co_handle_batch_item_(
@@ -550,16 +539,14 @@ namespace AdServer::Grpc
     void add_coro_unary_call_deleted_() noexcept;
     void add_batch_stream_call_created_() noexcept;
     void add_batch_stream_call_deleted_() noexcept;
-    void add_debug_watchdog_scheduled_() noexcept;
-    void add_debug_watchdog_finished_() noexcept;
 
     std::unordered_map<std::string, BatchDispatchFn> batch_methods_;
     std::unordered_map<std::string, BatchCoroMethod> batch_coro_methods_;
     std::vector<::grpc::Service*> grpc_services_;
     AdServer::Commons::ActivityGate grpc_operation_gate_;
     BatchStreamReadLimiter batch_stream_read_limiter_;
-    std::shared_ptr<InprogressStats> inprogress_stats_ =
-      std::make_shared<InprogressStats>();
+    std::unique_ptr<AdServer::Commons::FastScheduler> response_time_scheduler_;
+    std::shared_ptr<InprogressStats> inprogress_stats_ = std::make_shared<InprogressStats>();
     std::atomic<std::uint64_t> unary_call_created_total_{0};
     std::atomic<std::uint64_t> unary_call_deleted_total_{0};
     std::atomic<std::uint64_t> unary_call_live_{0};
@@ -569,21 +556,13 @@ namespace AdServer::Grpc
     std::atomic<std::uint64_t> batch_stream_call_created_total_{0};
     std::atomic<std::uint64_t> batch_stream_call_deleted_total_{0};
     std::atomic<std::uint64_t> batch_stream_call_live_{0};
-    std::atomic<std::uint64_t> debug_watchdog_scheduled_total_{0};
-    std::atomic<std::uint64_t> debug_watchdog_finished_total_{0};
-    std::atomic<std::uint64_t> debug_watchdog_live_{0};
   };
 
-  template<
-    typename ServiceImplType,
-    typename ServiceType,
-    typename AsyncServiceType>
-  class GrpcAsyncServiceBase:
-    public GrpcServiceBase
+  template<typename ServiceImplType, typename ServiceType, typename AsyncServiceType>
+  class GrpcAsyncServiceBase: public GrpcServiceBase
   {
   protected:
-    explicit GrpcAsyncServiceBase(
-      BatchStreamReadOptions batch_stream_read_options = {});
+    explicit GrpcAsyncServiceBase(BatchStreamReadOptions batch_stream_read_options = {});
 
     template<typename Request, typename Response>
     static GrpcCall<ServiceImplType, AsyncServiceType, Request, Response>
@@ -652,8 +631,7 @@ namespace AdServer::Grpc
     void register_batch_methods(const Calls& calls);
 
   private:
-    void register_in_queue(
-      ::grpc::ServerCompletionQueue* completion_queue) override;
+    void register_in_queue(::grpc::ServerCompletionQueue* completion_queue) override;
 
   private:
     AsyncServiceType async_service_;

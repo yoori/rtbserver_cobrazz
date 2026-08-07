@@ -20,6 +20,8 @@ message BatchRequestItem {
 
 message BatchRequest {
   repeated BatchRequestItem items = 1;
+  uint64 batch_id = 2;
+  repeated uint32 response_time_steps_us = 3;
 }
 
 message BatchResponseItem {
@@ -31,4 +33,5 @@ message BatchResponseItem {
 
 message BatchResponse {
   repeated BatchResponseItem items = 1;
+  uint64 batch_id = 2;
 }

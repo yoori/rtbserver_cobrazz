@@ -6,6 +6,10 @@ add_executable(DistributedPartitionPoolTest
   DistributedPartitionPoolTest.cpp
 )
 
+add_executable(BatchPartialResponseTest
+  BatchPartialResponseTest.cpp
+)
+
 target_link_libraries(RefPoolTest
   PRIVATE
   Commons
@@ -19,12 +23,24 @@ target_link_libraries(DistributedPartitionPoolTest
   Logger
 )
 
+target_link_libraries(BatchPartialResponseTest
+  PRIVATE
+  Commons
+  Generics
+  GrpcBatch
+)
+
 target_include_directories(RefPoolTest
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../../..
 )
 
 target_include_directories(DistributedPartitionPoolTest
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+)
+
+target_include_directories(BatchPartialResponseTest
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../../..
 )

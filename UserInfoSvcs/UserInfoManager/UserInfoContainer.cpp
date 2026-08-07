@@ -1430,9 +1430,11 @@ namespace AdServer::UserInfoSvcs
 
       co_return true;
     }
-    catch(const MaxWaitersReached&)
+    catch(const MaxWaitersReached& ex)
     {
-      co_return false;
+      Stream::Error ostr;
+      ostr << FUN << ": Caught MaxWaitersReached: " << ex.what();
+      throw ResourceExhausted(ostr);
     }
     catch(const ChannelsMatcher::InvalidProfileException& ex)
     {

@@ -519,7 +519,10 @@
         max_batch_delay_us="{$grpc-max-batch-delay-us}"
         enable_grpc_compression="true"
         use_local_subchannel_pool="true"
-        reconnect_period="1"/>
+        reconnect_period="1">
+        <cfg:ResponseTimeStepUs>20000</cfg:ResponseTimeStepUs>
+        <cfg:ResponseTimeStepUs>40000</cfg:ResponseTimeStepUs>
+      </cfg:BatchingOptions>
       <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
         <cfg:UserBindControllerGroup>
           <xsl:for-each select="./service[@descriptor = $user-bind-controller-descriptor]">
@@ -639,7 +642,10 @@
         max_batch_delay_us="{$grpc-max-batch-delay-us}"
         enable_grpc_compression="true"
         use_local_subchannel_pool="true"
-        reconnect_period="1"/>
+        reconnect_period="1">
+        <cfg:ResponseTimeStepUs>20000</cfg:ResponseTimeStepUs>
+        <cfg:ResponseTimeStepUs>40000</cfg:ResponseTimeStepUs>
+      </cfg:BatchingOptions>
       <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
         <cfg:UserInfoControllerGroup>
           <xsl:for-each select="./service[@descriptor = $user-info-controller-descriptor]">

@@ -573,11 +573,8 @@ namespace
           1,
           AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
           "bf-test-bid")),
-        timeout_workers(std::make_shared<AdServer::Commons::ExecutorPool>(
-          callback,
-          1,
-          AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
-          "bf-test-time")),
+        timeout_scheduler(
+          std::make_shared<AdServer::Commons::FastScheduler>(1)),
         sources(
           std::make_shared<AdServer::Bidding::RequestInfoFiller::SourceMap>()),
         account_traits(
@@ -620,7 +617,7 @@ namespace
       params.account_traits = account_traits;
       params.stats = stats;
       params.bid_workers = bid_workers;
-      params.timeout_workers = timeout_workers;
+      params.timeout_scheduler = timeout_scheduler;
       params.user_bind_client = user_bind_client;
       params.user_info_client = user_info_client;
       params.campaign_manager = campaign_manager;
@@ -643,14 +640,11 @@ namespace
       core->set_config(ext_config);
 
       bid_workers->activate_object();
-      timeout_workers->activate_object();
     }
 
     ~TestContext()
     {
-      timeout_workers->deactivate_object();
       bid_workers->deactivate_object();
-      timeout_workers->wait_object();
       bid_workers->wait_object();
     }
 
@@ -660,7 +654,7 @@ namespace
     AdServer::UserIdControllerBase_var user_id_controller =
       new MockUserIdController;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers;
-    std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers;
+    std::shared_ptr<AdServer::Commons::FastScheduler> timeout_scheduler;
     std::shared_ptr<AdServer::Bidding::RequestInfoFiller::SourceMap> sources;
     std::shared_ptr<AdServer::Bidding::RequestInfoFiller::AccountTraitsById>
       account_traits;

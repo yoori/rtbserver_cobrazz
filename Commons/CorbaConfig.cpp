@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "CorbaConfig.hpp"
+#include "Hostname.hpp"
 
 typedef std::list<std::string> CertificateSeq;
 
@@ -46,10 +47,7 @@ namespace Config
       if(!xml_endpoint_config.host().present())
       {
         // default: use canonical host name
-        char canonical_host_name[MAXHOSTNAMELEN + 1];
-        ::gethostname(canonical_host_name, MAXHOSTNAMELEN);
-
-        endpoint_config.host = canonical_host_name;
+        endpoint_config.host = AdServer::Commons::hostname();
       }
       else
       {

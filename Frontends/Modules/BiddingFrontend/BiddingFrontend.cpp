@@ -5,7 +5,6 @@
 #include <utility>
 #include <vector>
 #include <zlib.h>
-#include <unistd.h>
 
 #include <google/protobuf/arena.h>
 
@@ -21,6 +20,7 @@
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
+#include <Commons/Hostname.hpp>
 
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
@@ -50,8 +50,8 @@ namespace Aspect
 
 namespace Response::Header
 {
-    const std::string CONTENT_TYPE("Content-Type");
-  }
+  const std::string CONTENT_TYPE("Content-Type");
+}
 
 namespace AdServer::Bidding
 {
@@ -62,7 +62,7 @@ namespace AdServer::Bidding
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
 
     unsigned long
-    parse_process_coef_time_(const std::string& value)
+    parse_process_coef_time(const std::string& value)
     {
       if (value.size() != 5 ||
         value[0] < '0' || value[0] > '2' ||
@@ -94,8 +94,7 @@ namespace AdServer::Bidding
     }
 
     BiddingFrontendCore::ProcessCoefSchedule
-    read_process_coef_config_(
-      const Frontend::BiddingFeConfiguration& config)
+    read_process_coef_config(const Frontend::BiddingFeConfiguration& config)
     {
       BiddingFrontendCore::ProcessCoefSchedule result;
       result.coef = config.process_coef();
@@ -106,14 +105,12 @@ namespace AdServer::Bidding
         result.coef = process_coef.coef();
         result.intervals.reserve(process_coef.interval().size());
 
-        for (auto it = process_coef.interval().begin();
-          it != process_coef.interval().end(); ++it)
+        for (auto it = process_coef.interval().begin(); it != process_coef.interval().end(); ++it)
         {
-          result.intervals.push_back(
-            BiddingFrontendCore::ProcessCoefInterval{
-              parse_process_coef_time_(it->from()),
-              parse_process_coef_time_(it->to()),
-              it->coef()});
+          result.intervals.push_back(BiddingFrontendCore::ProcessCoefInterval{
+            parse_process_coef_time(it->from()),
+            parse_process_coef_time(it->to()),
+            it->coef()});
         }
       }
 
@@ -124,9 +121,7 @@ namespace AdServer::Bidding
   class Frontend::UpdateConfigTask: public Generics::TaskGoal
   {
   public:
-    UpdateConfigTask(
-      Frontend* bid_frontend,
-      Generics::TaskRunner* task_runner)
+    UpdateConfigTask(Frontend* bid_frontend, Generics::TaskRunner* task_runner)
       /*throw(eh::Exception)*/
       : Generics::TaskGoal(task_runner),
         bid_frontend_(bid_frontend)
@@ -145,9 +140,7 @@ namespace AdServer::Bidding
   class Frontend::FlushStateTask: public Generics::TaskGoal
   {
   public:
-    FlushStateTask(
-      Frontend* bid_frontend,
-      Generics::TaskRunner* task_runner)
+    FlushStateTask(Frontend* bid_frontend, Generics::TaskRunner* task_runner)
       /*throw(eh::Exception)*/
       : Generics::TaskGoal(task_runner),
         bid_frontend_(bid_frontend)
@@ -173,7 +166,7 @@ namespace AdServer::Bidding
     StatHolder* stats,
     Generics::CompositeMetricsProvider* composite_metrics_provider,
     std::shared_ptr<AdServer::Commons::ExecutorPool> request_workers,
-    std::shared_ptr<AdServer::Commons::ExecutorPool> timeout_workers,
+    std::shared_ptr<AdServer::Commons::FastScheduler> timeout_scheduler,
     unsigned long service_index) /*throw(eh::Exception)*/
     : GroupLogger(
         Logging::Logger_var(
@@ -188,26 +181,23 @@ namespace AdServer::Bidding
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
       sources_(std::make_shared<RequestInfoFiller::SourceMap>()),
-      account_traits_(
-        std::make_shared<RequestInfoFiller::AccountTraitsById>()),
+      account_traits_(std::make_shared<RequestInfoFiller::AccountTraitsById>()),
       campaign_manager_(),
       bid_workers_(std::move(request_workers)),
-      timeout_workers_(std::move(timeout_workers)),
+      timeout_scheduler_(std::move(timeout_scheduler)),
       stats_(ReferenceCounting::add_ref(stats)),
       composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {
-    if(!timeout_workers_)
+    if (!timeout_scheduler_)
     {
-      timeout_workers_ = bid_workers_;
+      timeout_scheduler_ = std::make_shared<AdServer::Commons::FastScheduler>(1);
     }
 
-    char hostname[256];
-    if(gethostname(hostname, sizeof(hostname)) == 0)
+    const auto& hostname = AdServer::Commons::hostname();
+    if (!hostname.empty())
     {
-      hostname[sizeof(hostname) - 1] = 0;
-      server_id_ = std::string(hostname) + "." + std::to_string(service_index);
+      server_id_ = hostname + "." + std::to_string(service_index);
     }
-
   }
 
   bool
@@ -219,23 +209,18 @@ namespace AdServer::Bidding
     if (!uri.empty())
     {
       result =
-        FrontendCommons::find_uri(
-          config_->GoogleUriList().Uri(), uri, found_uri) ||
-        FrontendCommons::find_uri(
-          config_->OpenRtbUriList().Uri(), uri, found_uri) ||
+        FrontendCommons::find_uri(config_->GoogleUriList().Uri(), uri, found_uri) ||
+        FrontendCommons::find_uri(config_->OpenRtbUriList().Uri(), uri, found_uri) ||
         (config_->AdXmlUriList().present() &&
-         FrontendCommons::find_uri(
-           config_->AdXmlUriList()->Uri(), uri, found_uri)) ||
+         FrontendCommons::find_uri(config_->AdXmlUriList()->Uri(), uri, found_uri)) ||
         (config_->ClickStarUriList().present() &&
-         FrontendCommons::find_uri(
-           config_->ClickStarUriList()->Uri(), uri, found_uri)) ||
+         FrontendCommons::find_uri(config_->ClickStarUriList()->Uri(), uri, found_uri)) ||
         (config_->DAOUriList().present() &&
-         FrontendCommons::find_uri(
-           config_->DAOUriList()->Uri(), uri, found_uri))
+         FrontendCommons::find_uri(config_->DAOUriList()->Uri(), uri, found_uri))
         ;
     }
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr << "Bidding::Frontend::will_handle(" << uri <<
@@ -258,23 +243,21 @@ namespace AdServer::Bidding
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration isn't present");
       }
 
-      common_config_.reset(
-        new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
+      common_config_.reset(new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
       colo_id_ = common_config_->colo_id();
 
-      if(!fe_config.BidFeConfiguration().present())
+      if (!fe_config.BidFeConfiguration().present())
       {
         throw Exception("BidFeConfiguration isn't present");
       }
 
-      config_.reset(
-        new BiddingFeConfiguration(*fe_config.BidFeConfiguration()));
+      config_.reset(new BiddingFeConfiguration(*fe_config.BidFeConfiguration()));
 
       fill_account_traits_();
     }
@@ -291,7 +274,7 @@ namespace AdServer::Bidding
   {
     static const char* FUN = "Bidding::Frontend::init()";
 
-    if(true) // module_used()
+    if (true) // module_used()
     {
       try
       {
@@ -339,13 +322,11 @@ namespace AdServer::Bidding
         add_child_object(user_info_client);
 
         auto campaign_manager_client =
-          std::make_shared<
-              AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-              FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-              FrontendCommons::read_campaign_manager_grpc_batching_options(
-                *common_config_),
-              grpc_executor_,
-              common_module_->grpc_coalesce_runner());
+          std::make_shared<AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
+            grpc_executor_,
+            common_module_->grpc_coalesce_runner());
         campaign_manager_ = campaign_manager_client;
         campaign_manager_coro_ = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
@@ -353,13 +334,12 @@ namespace AdServer::Bidding
             bid_workers_);
         add_child_object(campaign_manager_client);
 
-        auto user_bind_client =
-          AdServer::UserInfoSvcs::create_distributed_user_bind_client(
-            *common_config_,
-            grpc_executor_,
-            common_module_->grpc_coalesce_runner(),
-            logger());
-        if(user_bind_client)
+        auto user_bind_client = AdServer::UserInfoSvcs::create_distributed_user_bind_client(
+          *common_config_,
+          grpc_executor_,
+          common_module_->grpc_coalesce_runner(),
+          logger());
+        if (user_bind_client)
         {
           user_bind_client_ = user_bind_client;
           user_bind_client_coro_ = std::make_shared<
@@ -369,48 +349,40 @@ namespace AdServer::Bidding
           add_child_object(user_bind_client);
         }
 
-        auto channel_client =
-          AdServer::ChannelSvcs::create_distributed_channel_client(
-            *common_config_,
-            grpc_executor_,
-            common_module_->grpc_coalesce_runner(),
-            logger());
+        auto channel_client = AdServer::ChannelSvcs::create_distributed_channel_client(
+          *common_config_,
+          grpc_executor_,
+          common_module_->grpc_coalesce_runner(),
+          logger());
         channel_client_ = channel_client;
-        channel_client_coro_ = std::make_shared<
-          AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
-            channel_client_,
-            bid_workers_);
+        channel_client_coro_ = std::make_shared<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
+          channel_client_,
+          bid_workers_);
         add_child_object(channel_client);
 
         {
           std::vector<GrpcClientMetricsProvider::ClientSource> client_sources;
-          auto add_client_source =
-            [&client_sources](const char* prefix, const auto& client)
+          auto add_client_source = [&client_sources](const char* prefix, const auto& client) {
+            if (client)
             {
-              if (client)
-              {
-                client_sources.push_back(GrpcClientMetricsProvider::ClientSource{
-                  prefix,
-                  std::static_pointer_cast<AdServer::Grpc::Client>(client)
-                });
-              }
-            };
+              client_sources.push_back(GrpcClientMetricsProvider::ClientSource{
+                prefix,
+                std::static_pointer_cast<AdServer::Grpc::Client>(client)
+              });
+            }
+          };
 
           add_client_source("user_bind_client", user_bind_client_);
           add_client_source("user_info_client", user_info_client_);
           add_client_source("channel_client", channel_client_);
           add_client_source("campaign_client", campaign_manager_);
 
-          ReferenceCounting::SmartPtr<Generics::MetricsProvider>
-            grpc_client_metrics_provider(
-              new GrpcClientMetricsProvider(std::move(client_sources)));
-          composite_metrics_provider_->add_provider(
-            grpc_client_metrics_provider.in());
+          ReferenceCounting::SmartPtr<Generics::MetricsProvider> grpc_client_metrics_provider(
+            new GrpcClientMetricsProvider(std::move(client_sources)));
+          composite_metrics_provider_->add_provider(grpc_client_metrics_provider.in());
         }
 
-        for(BiddingFeConfiguration::Source_sequence::const_iterator
-              it = config_->Source().begin();
-            it != config_->Source().end(); ++it)
+        for (auto it = config_->Source().begin(); it != config_->Source().end(); ++it)
         {
           SourceTraits source_traits;
           if (it->default_account_id().present())
@@ -422,30 +394,29 @@ namespace AdServer::Bidding
           // banner notice : disable notice if notice_url defined
           source_traits.notice_instantiate_type = SourceTraits::NIT_NONE;
           std::string notice_instantiate_type = it->notice();
-          if(notice_instantiate_type == "nurl")
+          if (notice_instantiate_type == "nurl")
           {
             source_traits.notice_instantiate_type = SourceTraits::NIT_NURL;
           }
-          else if(notice_instantiate_type == "burl")
+          else if (notice_instantiate_type == "burl")
           {
             source_traits.notice_instantiate_type = SourceTraits::NIT_BURL;
           }
-          else if(notice_instantiate_type == "nurl and burl")
+          else if (notice_instantiate_type == "nurl and burl")
           {
             source_traits.notice_instantiate_type = SourceTraits::NIT_NURL_AND_BURL;
           }
 
-          source_traits.vast_instantiate_type =
-            AdServer::CampaignSvcs::AIT_BODY;
+          source_traits.vast_instantiate_type = AdServer::CampaignSvcs::AIT_BODY;
 
           // vast notice
           source_traits.vast_notice_instantiate_type = SourceTraits::NIT_NONE;
           std::string vast_notice_instantiate_type = it->vast_notice();
-          if(vast_notice_instantiate_type == "nurl")
+          if (vast_notice_instantiate_type == "nurl")
           {
             source_traits.vast_notice_instantiate_type = SourceTraits::NIT_NURL;
           }
-          else if(vast_notice_instantiate_type == "burl")
+          else if (vast_notice_instantiate_type == "burl")
           {
             source_traits.vast_notice_instantiate_type = SourceTraits::NIT_BURL;
           }
@@ -453,15 +424,15 @@ namespace AdServer::Bidding
           // native notice
           source_traits.native_notice_instantiate_type = SourceTraits::NIT_NONE;
           std::string native_notice_instantiate_type = it->native_notice();
-          if(native_notice_instantiate_type == "nurl")
+          if (native_notice_instantiate_type == "nurl")
           {
             source_traits.native_notice_instantiate_type = SourceTraits::NIT_NURL;
           }
-          else if(native_notice_instantiate_type == "burl")
+          else if (native_notice_instantiate_type == "burl")
           {
             source_traits.native_notice_instantiate_type = SourceTraits::NIT_BURL;
           }
-          else if(native_notice_instantiate_type == "nurl and burl")
+          else if (native_notice_instantiate_type == "nurl and burl")
           {
             source_traits.native_notice_instantiate_type = SourceTraits::NIT_NURL_AND_BURL;
           }
@@ -469,42 +440,41 @@ namespace AdServer::Bidding
           source_traits.ipw_extension = it->ipw_extension();
           source_traits.truncate_domain = it->truncate_domain();
           source_traits.fill_adid = it->fill_adid();
-          if(it->seat().present())
+          if (it->seat().present())
           {
             source_traits.seat = *(it->seat());
           }
 
-          if(it->request_type().present())
+          if (it->request_type().present())
           {
             std::string type = *(it->request_type());
-            if(type == "openrtb")
+            if (type == "openrtb")
             {
               source_traits.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
             }
-            else if(type == "openrtb with click url")
+            else if (type == "openrtb with click url")
             {
               source_traits.request_type = AdServer::CampaignSvcs::AR_OPENRTB_WITH_CLICKURL;
             }
-            else if(type == "openx")
+            else if (type == "openx")
             {
               source_traits.request_type = AdServer::CampaignSvcs::AR_OPENX;
             }
-            else if(type == "liverail")
+            else if (type == "liverail")
             {
               source_traits.request_type = AdServer::CampaignSvcs::AR_LIVERAIL;
             }
-            else if(type == "adriver")
+            else if (type == "adriver")
             {
               source_traits.request_type = AdServer::CampaignSvcs::AR_ADRIVER;
             }
-            else if(type == "yandex")
+            else if (type == "yandex")
             {
               source_traits.request_type = AdServer::CampaignSvcs::AR_YANDEX;
             }
           }
 
-          source_traits.instantiate_type = adapt_instantiate_type_(
-            it->instantiate_type());
+          source_traits.instantiate_type = adapt_instantiate_type_(it->instantiate_type());
           source_traits.vast_instantiate_type = adapt_instantiate_type_(
             it->vast_instantiate_type());
           source_traits.native_ads_instantiate_type = adapt_native_ads_instantiate_type_(
@@ -512,21 +482,19 @@ namespace AdServer::Bidding
           if (it->native_impression_tracker_type().present())
           {
             source_traits.native_ads_impression_tracker_type =
-              adapt_native_ads_impression_tracker_type_(
-                *it->native_impression_tracker_type());
+              adapt_native_ads_impression_tracker_type_(*it->native_impression_tracker_type());
           }
 
-          source_traits.erid_return_type = adapt_erid_return_type_(
-            it->erid_return_type());
+          source_traits.erid_return_type = adapt_erid_return_type_(it->erid_return_type());
 
-          if(it->max_bid_time().present())
+          if (it->max_bid_time().present())
           {
             source_traits.max_bid_time = Generics::Time(*(it->max_bid_time()));
             (*source_traits.max_bid_time) /= 1000;
           }
 
           source_traits.skip_ext_category = it->skip_ext_category();
-          if(it->notice_url().present())
+          if (it->notice_url().present())
           {
             source_traits.notice_url = *(it->notice_url());
           }
@@ -538,15 +506,13 @@ namespace AdServer::Bidding
 
         if (common_config_->SkipExternalIds().present())
         {
-          for(CommonFeConfiguration::SkipExternalIds_type::Id_sequence::const_iterator
-                it = common_config_->SkipExternalIds()->Id().begin();
-              it != common_config_->SkipExternalIds()->Id().end(); ++it)
+          for (auto it = common_config_->SkipExternalIds()->Id().begin();
+            it != common_config_->SkipExternalIds()->Id().end(); ++it)
           {
             skip_external_ids.insert(it->value());
           }
 
-          String::SubString skip_ids =
-            common_config_->SkipExternalIds()->skip_external_ids();
+          String::SubString skip_ids = common_config_->SkipExternalIds()->skip_external_ids();
 
           if (!skip_ids.empty())
           {
@@ -559,37 +525,35 @@ namespace AdServer::Bidding
         }
 
         request_info_filler_ = std::make_shared<RequestInfoFiller>(
-            logger(),
-            common_config_->colo_id(),
-            common_module_.in(),
-            common_module_->ip_mapper(),
-            "", //user_agent_filter_path.c_str()
-            skip_external_ids,
-            common_config_->ip_logging_enabled(),
-            common_config_->ip_salt().c_str(),
-            *sources_,
-            config_->enable_profile_referer(),
-            *account_traits_);
+          logger(),
+          common_config_->colo_id(),
+          common_module_.in(),
+          common_module_->ip_mapper(),
+          "", //user_agent_filter_path.c_str()
+          skip_external_ids,
+          common_config_->ip_logging_enabled(),
+          common_config_->ip_salt().c_str(),
+          *sources_,
+          config_->enable_profile_referer(),
+          *account_traits_);
 
         Generics::Time request_timeout;
-        if(config_->request_timeout().present())
+        if (config_->request_timeout().present())
         {
           request_timeout = Generics::Time(*(config_->request_timeout()));
           request_timeout /= 1000;
         }
 
-        auto fill_uri_list = [](auto& dst, const auto& src)
-        {
+        auto fill_uri_list = [](auto& dst, const auto& src) {
           dst.reserve(src.size());
-          for(auto it = src.begin(); it != src.end(); ++it)
+          for (auto it = src.begin(); it != src.end(); ++it)
           {
             dst.emplace_back(it->path());
           }
         };
 
         BiddingFrontendCore::InitParams core_params;
-        core_params.logger = Logging::Logger_var(
-          ReferenceCounting::add_ref(logger()));
+        core_params.logger = Logging::Logger_var(ReferenceCounting::add_ref(logger()));
         core_params.common_module = common_module_;
         core_params.user_id_controller = common_module_->user_id_controller();
         core_params.request_info_filler = request_info_filler_;
@@ -597,7 +561,7 @@ namespace AdServer::Bidding
         core_params.account_traits = account_traits_;
         core_params.stats = stats_;
         core_params.bid_workers = bid_workers_;
-        core_params.timeout_workers = timeout_workers_;
+        core_params.timeout_scheduler = timeout_scheduler_;
         core_params.bidding_frontend_logger = bidding_frontend_logger_;
         core_params.user_bind_client = user_bind_client_;
         core_params.user_info_distributed_client = user_info_distributed_client_;
@@ -605,20 +569,23 @@ namespace AdServer::Bidding
         core_params.campaign_manager = campaign_manager_;
         core_params.channel_client = channel_client_;
         fill_uri_list(core_params.google_uris, config_->GoogleUriList().Uri());
-        if(config_->AdXmlUriList().present())
+        if (config_->AdXmlUriList().present())
         {
           fill_uri_list(core_params.adxml_uris, config_->AdXmlUriList()->Uri());
         }
-        if(config_->ClickStarUriList().present())
+
+        if (config_->ClickStarUriList().present())
         {
           fill_uri_list(core_params.clickstar_uris, config_->ClickStarUriList()->Uri());
         }
-        if(config_->DAOUriList().present())
+
+        if (config_->DAOUriList().present())
         {
           fill_uri_list(core_params.dao_uris, config_->DAOUriList()->Uri());
         }
+
         core_params.max_pending_tasks = config_->max_pending_tasks();
-        core_params.process_coef = read_process_coef_config_(*config_);
+        core_params.process_coef = read_process_coef_config(*config_);
         core_params.threads = config_->threads();
         core_params.request_timeout = request_timeout;
         core_params.server_id = server_id_;
@@ -640,8 +607,8 @@ namespace AdServer::Bidding
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-          "Bidding::Frontend::init(): frontend is running ..."),
+      logger()->log(
+        String::SubString("Bidding::Frontend::init(): frontend is running ..."),
         Logging::Logger::INFO,
         Aspect::BIDDING_FRONTEND);
     }
@@ -657,13 +624,9 @@ namespace AdServer::Bidding
       clear();
 
       Stream::Error ostr;
-      ostr << "Bidding::Frontend::shutdown(): frontend terminated (pid = " <<
-        ::getpid() << ").";
+      ostr << "Bidding::Frontend::shutdown(): frontend terminated (pid = " << ::getpid() << ").";
 
-      logger()->log(ostr.str(),
-        Logging::Logger::INFO,
-        Aspect::BIDDING_FRONTEND);
-
+      logger()->log(ostr.str(), Logging::Logger::INFO, Aspect::BIDDING_FRONTEND);
     }
     catch(...)
     {}
@@ -705,14 +668,12 @@ namespace AdServer::Bidding
   {
     static const char* FUN = "Frontend::flush_state_()";
 
-    const unsigned long reached_max_pending_tasks =
-      core_->reset_reached_max_pending_tasks();
+    const unsigned long reached_max_pending_tasks = core_->reset_reached_max_pending_tasks();
 
-    if(reached_max_pending_tasks > 0)
+    if (reached_max_pending_tasks > 0)
     {
       Stream::Error ostr;
-      ostr << FUN << ": reached max pending tasks: " <<
-        reached_max_pending_tasks;
+      ostr << FUN << ": reached max pending tasks: " << reached_max_pending_tasks;
 
       logger()->log(ostr.str(),
         Logging::Logger::WARNING,
@@ -739,20 +700,20 @@ namespace AdServer::Bidding
   void
   Frontend::fill_account_traits_() noexcept
   {
-    for(auto account_it = config_->Account().begin();
+    for (auto account_it = config_->Account().begin();
       account_it != config_->Account().end(); ++account_it)
     {
       RequestInfoFiller::AccountTraits_var& target_account_ptr =
         (*account_traits_)[account_it->account_id()];
 
-      if(!target_account_ptr.in())
+      if (!target_account_ptr.in())
       {
         target_account_ptr = new RequestInfoFiller::AccountTraits();
       }
 
       RequestInfoFiller::AccountTraits& target_account = *target_account_ptr;
 
-      if(account_it->max_cpm_value().present())
+      if (account_it->max_cpm_value().present())
       {
         CampaignSvcs::RevenueDecimal limit = CampaignSvcs::RevenueDecimal::mul(
           AdServer::Commons::extract_decimal<CampaignSvcs::RevenueDecimal>(
@@ -763,24 +724,24 @@ namespace AdServer::Bidding
         target_account.max_cpm = limit;
       }
 
-      if(account_it->display_billing_id().present())
+      if (account_it->display_billing_id().present())
       {
         target_account.display_billing_id = *(account_it->display_billing_id());
       }
 
-      if(account_it->video_billing_id().present())
+      if (account_it->video_billing_id().present())
       {
         target_account.video_billing_id = *(account_it->video_billing_id());
       }
 
-      if(account_it->google_encryption_key().present())
+      if (account_it->google_encryption_key().present())
       {
         target_account.google_encryption_key_size = String::StringManip::hex_decode(
           *(account_it->google_encryption_key()),
           target_account.google_encryption_key);
       }
 
-      if(account_it->google_integrity_key().present())
+      if (account_it->google_integrity_key().present())
       {
         target_account.google_integrity_key_size = String::StringManip::hex_decode(
           *(account_it->google_integrity_key()),
@@ -798,7 +759,7 @@ namespace AdServer::Bidding
     {
       auto result = co_await campaign_manager_coro_->co_get_colocation_flags(
         PB::GetColocationFlagsRequest());
-      if(!result.status.ok())
+      if (!result.status.ok())
       {
         logger()->sstream(
           Logging::Logger::CRITICAL,
@@ -812,14 +773,11 @@ namespace AdServer::Bidding
 
       ExtConfig_var new_config(new ExtConfig());
 
-      for(const auto& colocation_info : result.response.colocations())
+      for (const auto& colocation_info : result.response.colocations())
       {
         ExtConfig::Colocation colocation;
         colocation.flags = colocation_info.flags();
-        new_config->colocations.insert(
-          ExtConfig::ColocationMap::value_type(
-            colocation_info.colo_id(),
-            colocation));
+        new_config->colocations.emplace(colocation_info.colo_id(), colocation);
       }
 
       set_ext_config_(new_config);
@@ -840,51 +798,51 @@ namespace AdServer::Bidding
   Frontend::adapt_instantiate_type_(const std::string& inst_type_str)
     /*throw(Exception)*/
   {
-    if(inst_type_str == "url")
+    if (inst_type_str == "url")
     {
       return AdServer::CampaignSvcs::AIT_URL;
     }
-    else if(inst_type_str == "nonsecure url")
+    else if (inst_type_str == "nonsecure url")
     {
       return AdServer::CampaignSvcs::AIT_NONSECURE_URL;
     }
-    else if(inst_type_str == "url in body")
+    else if (inst_type_str == "url in body")
     {
       return AdServer::CampaignSvcs::AIT_URL_IN_BODY;
     }
-    else if(inst_type_str == "video url")
+    else if (inst_type_str == "video url")
     {
       return AdServer::CampaignSvcs::AIT_VIDEO_URL;
     }
-    else if(inst_type_str == "nonsecure video url")
+    else if (inst_type_str == "nonsecure video url")
     {
       return AdServer::CampaignSvcs::AIT_VIDEO_NONSECURE_URL;
     }
-    else if(inst_type_str == "video url in body")
+    else if (inst_type_str == "video url in body")
     {
       return AdServer::CampaignSvcs::AIT_VIDEO_URL_IN_BODY;
     }
-    else if(inst_type_str == "body")
+    else if (inst_type_str == "body")
     {
       return AdServer::CampaignSvcs::AIT_BODY;
     }
-    else if(inst_type_str == "script with url")
+    else if (inst_type_str == "script with url")
     {
       return AdServer::CampaignSvcs::AIT_SCRIPT_WITH_URL;
     }
-    else if(inst_type_str == "iframe with url")
+    else if (inst_type_str == "iframe with url")
     {
       return AdServer::CampaignSvcs::AIT_IFRAME_WITH_URL;
     }
-    else if(inst_type_str == "url parameters")
+    else if (inst_type_str == "url parameters")
     {
       return AdServer::CampaignSvcs::AIT_URL_PARAMS;
     }
-    else if(inst_type_str == "encoded url parameters")
+    else if (inst_type_str == "encoded url parameters")
     {
       return AdServer::CampaignSvcs::AIT_DATA_URL_PARAM;
     }
-    else if(inst_type_str == "data parameter value")
+    else if (inst_type_str == "data parameter value")
     {
       return AdServer::CampaignSvcs::AIT_DATA_PARAM_VALUE;
     }
@@ -898,35 +856,35 @@ namespace AdServer::Bidding
   Frontend::adapt_native_ads_instantiate_type_(const std::string& inst_type_str)
     /*throw(Exception)*/
   {
-    if(inst_type_str == "none")
+    if (inst_type_str == "none")
     {
       return SourceTraits::NAIT_NONE;
     }
-    else if(inst_type_str == "adm")
+    else if (inst_type_str == "adm")
     {
       return SourceTraits::NAIT_ADM;
     }
-    else if(inst_type_str == "adm_native")
+    else if (inst_type_str == "adm_native")
     {
       return SourceTraits::NAIT_ADM_NATIVE;
     }
-    else if(inst_type_str == "ext")
+    else if (inst_type_str == "ext")
     {
       return SourceTraits::NAIT_EXT;
     }
-    else if(inst_type_str == "escape_slash_adm")
+    else if (inst_type_str == "escape_slash_adm")
     {
       return SourceTraits::NAIT_ESCAPE_SLASH_ADM;
     }
-    else if(inst_type_str == "native_as_element-1.2")
+    else if (inst_type_str == "native_as_element-1.2")
     {
       return SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2;
     }
-    else if(inst_type_str == "adm-1.2")
+    else if (inst_type_str == "adm-1.2")
     {
       return SourceTraits::NAIT_ADM_1_2;
     }
-    else if(inst_type_str == "adm_native-1.2")
+    else if (inst_type_str == "adm_native-1.2")
     {
       return SourceTraits::NAIT_ADM_NATIVE_1_2;
     }
@@ -937,22 +895,21 @@ namespace AdServer::Bidding
   }
 
   SourceTraits::ERIDReturnType
-  Frontend::adapt_erid_return_type_(
-    const std::string& erid_type_str)
+  Frontend::adapt_erid_return_type_(const std::string& erid_type_str)
   {
-    if(erid_type_str == "single")
+    if (erid_type_str == "single")
     {
       return SourceTraits::ERIDRT_SINGLE;
     }
-    else if(erid_type_str == "array")
+    else if (erid_type_str == "array")
     {
       return SourceTraits::ERIDRT_ARRAY;
     }
-    else if(erid_type_str == "ext0")
+    else if (erid_type_str == "ext0")
     {
       return SourceTraits::ERIDRT_EXT0;
     }
-    else if(erid_type_str == "buzsape")
+    else if (erid_type_str == "buzsape")
     {
       return SourceTraits::ERIDRT_EXT_BUZSAPE;
     }
@@ -966,24 +923,23 @@ namespace AdServer::Bidding
   Frontend::adapt_native_ads_impression_tracker_type_(const std::string& imp_type_str)
     /*throw(Exception)*/
   {
-    if(imp_type_str == "imp")
+    if (imp_type_str == "imp")
     {
       return AdServer::CampaignSvcs::NAITT_IMP;
     }
 
-    if(imp_type_str == "js")
+    if (imp_type_str == "js")
     {
       return AdServer::CampaignSvcs::NAITT_JS;
     }
 
-    if(imp_type_str == "resources")
+    if (imp_type_str == "resources")
     {
       return AdServer::CampaignSvcs::NAITT_RESOURCES;
     }
 
     Stream::Error ostr;
-    ostr << "unknown native ads impression tracker type '" <<
-      imp_type_str << "'";
+    ostr << "unknown native ads impression tracker type '" << imp_type_str << "'";
     throw Exception(ostr);
   }
 }

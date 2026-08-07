@@ -7,11 +7,11 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Hostname.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
 #include <Generics/Time.hpp>
@@ -32,22 +32,6 @@ namespace AdServer::ChannelSvcs
       return std::max<std::size_t>(
         1,
         configured != 0 ? configured : 4);
-    }
-
-    const std::string&
-    service_hostname_()
-    {
-      static const std::string hostname = []()
-      {
-        char buffer[256];
-        if (::gethostname(buffer, sizeof(buffer)) != 0)
-        {
-          return std::string();
-        }
-        buffer[sizeof(buffer) - 1] = 0;
-        return std::string(buffer);
-      }();
-      return hostname;
     }
 
     class InProgressGuard final
@@ -360,6 +344,13 @@ namespace AdServer::ChannelSvcs
       AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
       const override;
 
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
     std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
     std::shared_ptr<AdServer::Commons::ExecutorPool>
@@ -492,6 +483,34 @@ namespace AdServer::ChannelSvcs
       });
   }
 
+  void
+  ChannelServerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<BatchStatsGuard>(
+      stats_->batch_total,
+      stats_->batch_total_time,
+      stats_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      response_publisher,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
   std::size_t
   ChannelServerGrpc::ServiceImpl::distributed_batch_max_sequential_ops() const noexcept
   {
@@ -588,7 +607,7 @@ namespace AdServer::ChannelSvcs
       stats_->call_in_progress,
       stats_->match_in_progress);
 
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
 
     try
     {
@@ -649,7 +668,7 @@ namespace AdServer::ChannelSvcs
       stats_->call_in_progress,
       stats_->get_ccg_traits_in_progress);
 
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
 
     try
     {

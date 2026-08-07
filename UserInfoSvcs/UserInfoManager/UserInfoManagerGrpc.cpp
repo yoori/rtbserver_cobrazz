@@ -12,11 +12,11 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <unistd.h>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Generics/MonoAllocator.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Hostname.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -64,22 +64,6 @@ namespace AdServer::UserInfoSvcs
     constexpr const char user_info_manager_grpc_aspect[] =
       "UserInfoManagerGrpc";
     namespace pc = adserver::grpc::process_control;
-
-    const std::string&
-    service_hostname_()
-    {
-      static const std::string hostname = []()
-      {
-        char buffer[256];
-        if (::gethostname(buffer, sizeof(buffer)) != 0)
-        {
-          return std::string();
-        }
-        buffer[sizeof(buffer) - 1] = 0;
-        return std::string(buffer);
-      }();
-      return hostname;
-    }
 
     class InProgressGuard final
     {
@@ -663,6 +647,13 @@ namespace AdServer::UserInfoSvcs
       AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
       const override;
 
+    void start_handle_batch_request(
+      AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+      const adserver::grpc::BatchRequest& batch_request,
+      AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+      AdServer::Grpc::GrpcServiceBase::BatchCompletion completion)
+      const override;
+
   private:
     class ProcessControlService final:
       public pc::ProcessControl::Service
@@ -825,7 +816,7 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->call_total,
       stats_counters_->call_total_time,
       stats_counters_->call_in_progress);
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
     try
     {
       UserInfoManagerCore::UserProfiles user_profile;
@@ -871,7 +862,7 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->match_total,
       stats_counters_->match_total_time,
       stats_counters_->match_in_progress);
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
     try
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
@@ -901,6 +892,10 @@ namespace AdServer::UserInfoSvcs
     {
       result_status = to_status_(ex);
     }
+    catch (const UserInfoManagerCore::ResourceExhausted& ex)
+    {
+      result_status = to_status_(ex);
+    }
     catch (const UserInfoManagerCore::Exception& ex)
     {
       result_status = to_status_(ex);
@@ -921,7 +916,7 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->update_user_freq_caps_total,
       stats_counters_->update_user_freq_caps_total_time,
       stats_counters_->update_user_freq_caps_in_progress);
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
     try
     {
       co_await user_info_manager_->co_update_user_freq_caps(
@@ -965,7 +960,7 @@ namespace AdServer::UserInfoSvcs
       stats_counters_->confirm_user_freq_caps_total,
       stats_counters_->confirm_user_freq_caps_total_time,
       stats_counters_->confirm_user_freq_caps_in_progress);
-    response.set_hostname(service_hostname_());
+    response.set_hostname(AdServer::Commons::hostname());
     try
     {
       co_await user_info_manager_->co_confirm_user_freq_caps(
@@ -1250,6 +1245,34 @@ namespace AdServer::UserInfoSvcs
       handle,
       batch_request,
       batch_response,
+      [
+        in_progress = std::move(in_progress),
+        completion = std::move(completion)
+      ](std::optional<std::exception_ptr> exception) mutable
+      {
+        in_progress.reset();
+        if (completion)
+        {
+          completion(std::move(exception));
+        }
+      });
+  }
+
+  void
+  UserInfoManagerGrpc::ServiceImpl::start_handle_batch_request(
+    AdServer::Grpc::GrpcServiceBase::BatchProcessingHandle& handle,
+    const adserver::grpc::BatchRequest& batch_request,
+    AdServer::Grpc::GrpcServiceBase::BatchResponsePublisher& response_publisher,
+    AdServer::Grpc::GrpcServiceBase::BatchCompletion completion) const
+  {
+    auto in_progress = std::make_shared<InProgressGuard>(
+      stats_counters_->batch_total,
+      stats_counters_->batch_total_time,
+      stats_counters_->batch_in_progress);
+    AdServer::Grpc::GrpcServiceBase::start_handle_batch_request(
+      handle,
+      batch_request,
+      response_publisher,
       [
         in_progress = std::move(in_progress),
         completion = std::move(completion)

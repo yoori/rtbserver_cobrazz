@@ -8,6 +8,8 @@
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
 
+#include <Commons/FastScheduler.hpp>
+
 #include "BiddingFrontendCore.hpp"
 #include "DebugSink.hpp"
 #include "Stage.hpp"
@@ -195,6 +197,7 @@ namespace AdServer::Bidding
     std::mutex debug_sink_mutex_;
 
   private:
+    AdServer::Commons::FastScheduler::Task timeout_task_;
     FCGI::BaseHttpResponseWriter_var response_writer_;
     bool response_sent_;
     bool request_debug_info_printed_ = false;
