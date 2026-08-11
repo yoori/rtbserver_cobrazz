@@ -14,6 +14,7 @@
 #include <random>
 #include <queue>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -78,6 +79,53 @@ namespace
     }
 
     return std::nullopt;
+  }
+
+  std::vector<std::uint32_t>
+  parse_response_time_steps(const std::string& value)
+  {
+    std::vector<std::uint32_t> result;
+    if (value.empty())
+    {
+      return result;
+    }
+
+    std::size_t begin = 0;
+    while (begin < value.size())
+    {
+      const auto end = value.find(',', begin);
+      const auto token = value.substr(
+        begin,
+        end == std::string::npos ? std::string::npos : end - begin);
+      if (token.empty())
+      {
+        throw std::invalid_argument(
+          "--response-time-steps-us contains an empty value");
+      }
+
+      std::size_t parsed = 0;
+      const auto step = std::stoull(token, &parsed);
+      if (parsed != token.size() || step == 0 || step > 0xffffffffULL)
+      {
+        throw std::invalid_argument(
+          "--response-time-steps-us values must be positive uint32");
+      }
+
+      if (!result.empty() && step <= result.back())
+      {
+        throw std::invalid_argument(
+          "--response-time-steps-us values must be strictly increasing");
+      }
+      result.push_back(static_cast<std::uint32_t>(step));
+
+      if (end == std::string::npos)
+      {
+        break;
+      }
+      begin = end + 1;
+    }
+
+    return result;
   }
 
   std::string
@@ -372,6 +420,8 @@ main(int argc, char** argv)
     Generics::AppUtils::Option<unsigned int> opt_print_errors(0);
     Generics::AppUtils::Option<unsigned int> opt_reconnect_per_request(0);
     Generics::AppUtils::Option<unsigned long> opt_rpc_timeout_ms(5000);
+    Generics::AppUtils::Option<unsigned int> opt_delayed_percent(0);
+    StringOption opt_response_time_steps_us;
     StringOption opt_user_id;
 
     Args args(-1);
@@ -396,6 +446,8 @@ main(int argc, char** argv)
     args.add(equal_name("print-errors"), opt_print_errors);
     args.add(equal_name("reconnect-per-request"), opt_reconnect_per_request);
     args.add(equal_name("rpc-timeout-ms"), opt_rpc_timeout_ms);
+    args.add(equal_name("delayed-percent"), opt_delayed_percent);
+    args.add(equal_name("response-time-steps-us"), opt_response_time_steps_us);
     args.add(equal_name("user-id"), opt_user_id);
 
     args.parse(argc - 1, argv + 1);
@@ -440,8 +492,47 @@ main(int argc, char** argv)
       return 1;
     }
 
-    const auto client_threads = *opt_client_threads;
+    if (*opt_delayed_percent > 100)
+    {
+      std::cerr << "--delayed-percent must be in range 0..100" << std::endl;
+      return 1;
+    }
+
+    std::vector<std::uint32_t> response_time_steps_us;
+    try
+    {
+      response_time_steps_us = parse_response_time_steps(
+        *opt_response_time_steps_us);
+    }
+    catch (const std::exception& e)
+    {
+      std::cerr << e.what() << std::endl;
+      return 1;
+    }
+
     const bool reconnect_per_request = *opt_reconnect_per_request != 0;
+    if (*opt_delayed_percent != 0 && response_time_steps_us.empty())
+    {
+      std::cerr << "--response-time-steps-us is required with "
+        "--delayed-percent" << std::endl;
+      return 1;
+    }
+
+    if (!response_time_steps_us.empty() && *mode != Mode::AsyncBatch)
+    {
+      std::cerr << "response time steps are supported only in async-batch mode"
+        << std::endl;
+      return 1;
+    }
+
+    if (!response_time_steps_us.empty() && reconnect_per_request)
+    {
+      std::cerr << "response time steps require persistent async-batch clients"
+        << std::endl;
+      return 1;
+    }
+
+    const auto client_threads = *opt_client_threads;
     const auto max_streams =
       *opt_max_streams == 0 ? client_threads : *opt_max_streams;
     const auto max_inflight =
@@ -472,6 +563,7 @@ main(int argc, char** argv)
 
     Generics::ActiveObjectSet_var async_batch_active_objects = new Generics::ActiveObjectSet();
     std::shared_ptr<BatchClient> batch_client;
+    std::shared_ptr<BatchClient> delayed_batch_client;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>
       distributed_client;
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient* client = nullptr;
@@ -491,6 +583,10 @@ main(int argc, char** argv)
         make_time_option(*opt_stream_start_timeout_us);
       options.enable_grpc_compression = *opt_grpc_compression != 0;
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
+      if (!response_time_steps_us.empty() && *opt_delayed_percent == 100)
+      {
+        options.response_time_steps_us = response_time_steps_us;
+      }
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
         std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
       auto coalesce_runner =
@@ -507,6 +603,22 @@ main(int argc, char** argv)
       async_batch_active_objects->add_child_object(coalesce_runner);
       async_batch_active_objects->add_child_object(batch_client);
       client = batch_client.get();
+
+      if (!response_time_steps_us.empty() && *opt_delayed_percent != 100)
+      {
+        options.response_time_steps_us = response_time_steps_us;
+        delayed_batch_client = std::make_shared<BatchClient>(
+          *opt_user_bind_grpc_endpoint,
+          grpc_executor,
+          coalesce_runner,
+          options);
+        async_batch_active_objects->add_child_object(delayed_batch_client);
+      }
+
+      if (delayed_batch_client && *opt_delayed_percent == 100)
+      {
+        client = delayed_batch_client.get();
+      }
     }
     else if (!reconnect_per_request && *mode == Mode::DistributedGrpc)
     {
@@ -737,6 +849,17 @@ main(int argc, char** argv)
           request.set_create_timestamp(GrpcAlgs::pack_time(now));
           request.set_current_user_id(GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
 
+          auto* request_client = client;
+          if (delayed_batch_client && *opt_delayed_percent != 0 &&
+            *opt_delayed_percent != 100)
+          {
+            std::uniform_int_distribution<unsigned int> delayed_dist(1, 100);
+            if (delayed_dist(gen) <= *opt_delayed_percent)
+            {
+              request_client = delayed_batch_client.get();
+            }
+          }
+
           const auto start = std::chrono::steady_clock::now();
           const auto complete_request =
             [
@@ -800,7 +923,7 @@ main(int argc, char** argv)
           }
           else
           {
-            client->get_user_id(
+            request_client->get_user_id(
               request,
               [complete_request](const grpc::Status& status, const auto&) {
                 complete_request(status);
