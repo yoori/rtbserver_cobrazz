@@ -147,11 +147,8 @@ namespace FrontendCommons
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    typedef std::set<unsigned long> PlatformIdSet;
-    typedef Generics::MonoSet<
-      Generics::MonoString,
-      std::less<>>
-      PlatformNameSet;
+    using PlatformIdSet = std::set<unsigned long>;
+    using PlatformNameSet = Generics::MonoSet<Generics::MonoString, std::less<>>;
 
     PlatformMatcher() /*throw(eh::Exception)*/;
 
@@ -210,7 +207,7 @@ namespace FrontendCommons
       unsigned long priority;
     };
 
-    typedef AhoCorasik<const MatchElement*> MultiStringMatcher;
+    using MultiStringMatcher = AhoCorasik<const MatchElement*>;
 
     class OnMatch
     {
@@ -282,7 +279,10 @@ namespace FrontendCommons
       /*throw(eh::Exception)*/;
 
   private:
-    typedef std::map<std::string, CategoryMatcher_var> CategoryMatcherMap;
+    using CategoryMatcherMap = std::map<std::string, CategoryMatcher_var>;
+
+  private:
+    const std::vector<std::string> ALLOWED_APP_TYPES_;
     CategoryMatcherMap matchers_;
     CategoryMatcher_var os_matchers_;
     unsigned long application_platform_id_;

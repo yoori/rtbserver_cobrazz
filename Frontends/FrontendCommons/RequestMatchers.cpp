@@ -532,7 +532,8 @@ namespace FrontendCommons
   }
 
   PlatformMatcher::PlatformMatcher() /*throw(eh::Exception)*/
-    : os_matchers_(new CategoryMatcher()),
+    : ALLOWED_APP_TYPES_{"OSVERSION", "DEVICE-VENDOR", "DEVICE-SMARTPHONE", "DEVICE-TABLET"},
+      os_matchers_(new CategoryMatcher()),
       application_platform_id_(0)
   {}
 
@@ -588,6 +589,24 @@ namespace FrontendCommons
           if (platform_names)
           {
             emplace_platform_name(*platform_names, "application");
+          }
+        }
+
+        // match type's that is compatible with application
+        for (auto allowed_app_type : ALLOWED_APP_TYPES_)
+        {
+          auto type_matchers_it = matchers_.find(allowed_app_type);
+
+          if (type_matchers_it != matchers_.end())
+          {
+            res |= match_(
+              platform_ids,
+              platform_names,
+              0,
+              0,
+              *(type_matchers_it->second),
+              low_user_agent,
+              match_context.get());
           }
         }
       }
