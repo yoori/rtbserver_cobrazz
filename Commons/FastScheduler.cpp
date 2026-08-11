@@ -100,6 +100,7 @@ namespace AdServer::Commons
 
         if (wakeup_ticks == 0 || deadline_ticks < wakeup_ticks)
         {
+          std::lock_guard<std::mutex> lock(wait_lock_);
           wait_condition_.notify_one();
         }
       }
