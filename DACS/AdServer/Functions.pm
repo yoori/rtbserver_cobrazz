@@ -88,7 +88,7 @@ sub thread_affinity_env
       $config_element .
       "[^>]*numa_node=\"\\([0-9][0-9]*\\)\".*/\\1/p' " .
       $config_file .
-      " | head -1)\" ";
+      " | head -1))\" ";
 }
 
 1;

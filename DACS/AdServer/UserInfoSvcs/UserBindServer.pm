@@ -25,7 +25,7 @@ sub start
    "fi && " .
    "{ " .
    AdServer::Functions::thread_affinity_env(
-     "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindServerConfig.xml",
+     "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindServer.xml",
      "UserBindServerConfig") .
    "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} UserBindServer " .
      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindServer.xml > " .

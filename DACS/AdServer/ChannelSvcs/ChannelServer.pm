@@ -23,7 +23,7 @@ sub start
        "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
        "{ ".
          AdServer::Functions::thread_affinity_env(
-           "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServerConfig.xml",
+           "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServer.xml",
            "ChannelServerConfig") .
          "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} ChannelServer " .
            "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServer.xml > " .
