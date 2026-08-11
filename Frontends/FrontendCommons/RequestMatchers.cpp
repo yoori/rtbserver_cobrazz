@@ -16,8 +16,7 @@ namespace FrontendCommons
 {
   namespace
   {
-    typedef String::AsciiStringManip::Char1Category<'.'>
-      DotCharCategory;
+    using DotCharCategory = String::AsciiStringManip::Char1Category<'.'>;
 
     const unsigned long FULL_PLATFORM_MAX_SIZE = 1024;
     const unsigned long BROWSER_MAX_SIZE = 1024;
@@ -29,8 +28,7 @@ namespace FrontendCommons
       size_t depth = 0;
     };
 
-    RegExMatchContextSlot&
-    regex_match_context_slot_()
+    RegExMatchContextSlot& regex_match_context_slot_()
     {
       thread_local RegExMatchContextSlot slot;
       return slot;
@@ -49,8 +47,8 @@ namespace FrontendCommons
         }
       }
 
-      RegExMatchContextGuard(
-        const RegExMatchContextGuard&) = delete;
+      RegExMatchContextGuard(const RegExMatchContextGuard&) = delete;
+
       RegExMatchContextGuard&
       operator=(const RegExMatchContextGuard&) = delete;
 
@@ -59,8 +57,7 @@ namespace FrontendCommons
         --slot_.depth;
       }
 
-      String::RegEx::MatchContext&
-      get() noexcept
+      String::RegEx::MatchContext& get() noexcept
       {
         return slot_.contexts[index_];
       }
@@ -75,10 +72,7 @@ namespace FrontendCommons
       PlatformMatcher::PlatformNameSet& platform_names,
       std::string_view name)
     {
-      platform_names.emplace(
-        name.data(),
-        name.size(),
-        platform_names.get_allocator().arena());
+      platform_names.emplace(name.data(), name.size(), platform_names.get_allocator().arena());
     }
   }
 
@@ -119,11 +113,7 @@ namespace FrontendCommons
     const Language::Segmentor::SegmentorInterface* segmentor) const
     /*throw(eh::Exception)*/
   {
-    return match(
-      search_engine_id,
-      match_result,
-      HTTP::BrowserAddress(url),
-      segmentor);
+    return match(search_engine_id, match_result, HTTP::BrowserAddress(url), segmentor);
   }
 
   bool
@@ -136,7 +126,7 @@ namespace FrontendCommons
     const Language::Segmentor::SegmentorInterface* segmentor)
     /*throw(Exception)*/
   {
-    if(!hostname.empty())
+    if (!hostname.empty())
     {
       String::SubString::SizeType hostname_pos = hostname.rfind('.');
 
@@ -151,9 +141,9 @@ namespace FrontendCommons
       HostnameMatcher::HostnameMatchMap::const_iterator hm_it =
         hostname_matcher->hostname_matchers.find(hostname_part);
 
-      if(hm_it != hostname_matcher->hostname_matchers.end())
+      if (hm_it != hostname_matcher->hostname_matchers.end())
       {
-        if(match_hostname_(
+        if (match_hostname_(
              search_engine_id,
              match_result,
              hm_it->second,
@@ -167,9 +157,9 @@ namespace FrontendCommons
 
       hm_it = hostname_matcher->hostname_matchers.find("");
 
-      if(hm_it != hostname_matcher->hostname_matchers.end())
+      if (hm_it != hostname_matcher->hostname_matchers.end())
       {
-        if(match_hostname_(
+        if (match_hostname_(
              search_engine_id,
              match_result,
              hm_it->second,
@@ -204,17 +194,14 @@ namespace FrontendCommons
     String::RegEx::Result sub_strs;
     RegExMatchContextGuard match_context;
 
-    for(UrlMatchElementList::const_iterator it = match_elements.begin();
-        it != match_elements.end(); ++it)
+    for (UrlMatchElementList::const_iterator it = match_elements.begin();
+      it != match_elements.end(); ++it)
     {
       try
       {
         sub_strs.clear();
 
-        if((*it)->regexp.search(
-             sub_strs,
-             path_and_query,
-             match_context.get()) &&
+        if ((*it)->regexp.search(sub_strs, path_and_query, match_context.get()) &&
            sub_strs.size() > 1)
         {
           try
@@ -234,15 +221,13 @@ namespace FrontendCommons
             }
 
             // should decode here specific encoding if parsed string isn't UTF-8
-            if(String::UTF8Handler::is_correct_utf8_string(
-                match_result.c_str()) != 0)
+            if (String::UTF8Handler::is_correct_utf8_string(match_result.c_str()) != 0)
             {
-              if(!(*it)->charset.empty())
+              if (!(*it)->charset.empty())
               {
                 std::string buf;
                 // need make encoding
-                String::International::Convertion
-                  conv("UTF-8", (*it)->charset.c_str());
+                String::International::Convertion conv("UTF-8", (*it)->charset.c_str());
                 conv.encode(match_result.c_str(), match_result.size(), buf);
                 buf.swap(match_result);
               }
@@ -251,8 +236,9 @@ namespace FrontendCommons
                 continue;
               }
             }
+
             // should decode special case
-            switch((*it)->special_way)
+            switch ((*it)->special_way)
             {
               case UrlMatchElement::SC_JS:
                 {
@@ -265,7 +251,7 @@ namespace FrontendCommons
               case UrlMatchElement::SC_HTML:
                 {
                   std::string buf;
-                  if(html_unicode_decode(match_result, buf))
+                  if (html_unicode_decode(match_result, buf))
                   {
                     buf.swap(match_result);
                   }
@@ -274,11 +260,12 @@ namespace FrontendCommons
               default:
               break;
             }
+
             try
             {
               std::string buf;
               Language::Trigger::normalize_phrase(match_result, buf, segmentor);
-              if(String::UTF8Handler::is_correct_utf8_string(buf.c_str()) == 0)
+              if (String::UTF8Handler::is_correct_utf8_string(buf.c_str()) == 0)
               {
                 match_result.swap(buf);
                 return true;
@@ -288,22 +275,22 @@ namespace FrontendCommons
                 match_result.clear();
               }
             }
-            catch(...)
+            catch (...)
             {
               match_result.clear();
             }
           }
-          catch(const String::International::Convertion::Exception&)
+          catch (const String::International::Convertion::Exception&)
           {}
         }
       }
-      catch(const String::RegEx::Exception& e)
+      catch (const String::RegEx::Exception& e)
       {
         Stream::Error ostr;
         ostr << FUN << ": caught String::RegEx::Exception: " << e.what();
         throw Exception(ostr);
       }
-      catch(const eh::Exception& e)
+      catch (const eh::Exception& e)
       {
         Stream::Error ostr;
         ostr << FUN << ": caught eh::Exception: " << e.what();
@@ -314,39 +301,40 @@ namespace FrontendCommons
     return false;
   }
 
-  bool UrlMatcher::html_unicode_decode(
-    const String::SubString& in,
-    std::string& buf)
+  bool UrlMatcher::html_unicode_decode(const String::SubString& in, std::string& buf)
     /*throw(eh::Exception)*/
   {
     static const char* html_seq = "&#";
+
     bool ret_value = false;
     String::SubString::SizeType pos, prev_pos = 0;
     do
     {
       pos  = in.find(html_seq, prev_pos, 2);
-      if(pos != String::SubString::NPOS)
+      if (pos != String::SubString::NPOS)
       {
-        if(!ret_value)
+        if (!ret_value)
         {
           buf.clear();
           buf.reserve(in.size());
           ret_value = true;
         }
-        if(prev_pos != pos)
+
+        if (prev_pos != pos)
         {
           buf.append(in.begin() + prev_pos, pos - prev_pos);
         }
+
         pos += 2;
         int base = 10;
-        if(in.at(pos) == 'x')//16-based
+        if (in.at(pos) == 'x')//16-based
         {
           base = 16;
           pos++;
         }
         char* last;
         long long int code = strtoll(in.begin() + pos, &last, base);
-        if(!errno && *last == ';')//ignore erros and strange sequence
+        if (!errno && *last == ';')//ignore erros and strange sequence
         {
           String::UnicodeSymbol symbol(code);
           buf.append(symbol.c_str(), symbol.length());
@@ -356,13 +344,15 @@ namespace FrontendCommons
       }
       else
       {
-        if(ret_value && prev_pos != in.size())
+        if (ret_value && prev_pos != in.size())
         {
           buf.append(in.begin() + prev_pos, in.size() - prev_pos);
         }
         break;
       }
-    } while(pos < in.size());
+    }
+    while(pos < in.size());
+
     return ret_value;
   }
 
@@ -388,21 +378,20 @@ namespace FrontendCommons
 
       do
       {
-        std::string::size_type pos =
-          host_postfix.rfind('.', prev_pos);
+        std::string::size_type pos = host_postfix.rfind('.', prev_pos);
 
         std::string hostname_part =
           pos == std::string::npos ?
           host_postfix.substr(0, prev_pos + 1) :
           host_postfix.substr(pos + 1, prev_pos - pos);
 
-        if(hostname_part == "*")
+        if (hostname_part == "*")
         {
           hostname_part.clear();
         }
 
         HostnameMatcher_var& matcher = target_matcher->hostname_matchers[hostname_part];
-        if(!matcher.in())
+        if (!matcher.in())
         {
           matcher = new HostnameMatcher();
         }
@@ -458,9 +447,7 @@ namespace FrontendCommons
     }
 
     if (details.tag->match_regexp.get() &&
-      !details.tag->match_regexp->match(
-        details.search_in_string,
-        match_context_))
+      !details.tag->match_regexp->match(details.search_in_string, match_context_))
     {
       return false;
     }
@@ -590,15 +577,15 @@ namespace FrontendCommons
       low_user_agent,
       match_context.get());
 
-    if(platform_ids)
+    if (platform_ids)
     {
-      if(application)
+      if (application)
       {
-        if(application_platform_id_)
+        if (application_platform_id_)
         {
           platform_ids->insert(application_platform_id_);
 
-          if(platform_names)
+          if (platform_names)
           {
             emplace_platform_name(*platform_names, "application");
           }
@@ -606,8 +593,7 @@ namespace FrontendCommons
       }
       else
       {
-        for (CategoryMatcherMap::const_iterator it = matchers_.begin();
-             it != matchers_.end(); ++it)
+        for (CategoryMatcherMap::const_iterator it = matchers_.begin(); it != matchers_.end(); ++it)
         {
           res |= match_(
             platform_ids,
@@ -644,7 +630,7 @@ namespace FrontendCommons
         platform_ids->insert(element->platform_id);
       }
 
-      if(platform_names)
+      if (platform_names)
       {
         emplace_platform_name(*platform_names, element->name);
       }
@@ -658,21 +644,16 @@ namespace FrontendCommons
       {
         *full_platform = element->full_name;
         String::RegEx::Result output_sub_strs;
-        const String::SubString user_agent_substr(
-          user_agent.data(),
-          user_agent.size());
+        const String::SubString user_agent_substr(user_agent.data(), user_agent.size());
 
         if (element->output_regexp.get() &&
-            element->output_regexp->search(
-              output_sub_strs,
-              user_agent_substr,
-              match_context) &&
-            !output_sub_strs.empty())
+          element->output_regexp->search(output_sub_strs, user_agent_substr, match_context) &&
+          !output_sub_strs.empty())
         {
           for (String::RegEx::Result::iterator sit = ++output_sub_strs.begin();
-               sit != output_sub_strs.end(); ++sit)
+            sit != output_sub_strs.end(); ++sit)
           {
-            if(!sit->empty())
+            if (!sit->empty())
             {
               *full_platform += " ";
               std::string t(sit->str());
@@ -682,7 +663,7 @@ namespace FrontendCommons
           }
         }
 
-        if(full_platform->size() > FULL_PLATFORM_MAX_SIZE)
+        if (full_platform->size() > FULL_PLATFORM_MAX_SIZE)
         {
           full_platform->resize(FULL_PLATFORM_MAX_SIZE);
         }
@@ -711,7 +692,7 @@ namespace FrontendCommons
     std::string low_marker(marker);
     String::AsciiStringManip::to_lower(low_marker);
 
-    if(strcmp(type, "APPLICATION") == 0)
+    if (strcmp(type, "APPLICATION") == 0)
     {
       application_platform_id_ = platform_id;
     }
@@ -720,7 +701,7 @@ namespace FrontendCommons
       std::string low_marker(marker);
       String::AsciiStringManip::to_lower(low_marker);
 
-      if(type[0] == 0)
+      if (type[0] == 0)
       {
         os_matchers_->add_rule(
           platform_id,
@@ -768,8 +749,7 @@ namespace FrontendCommons
   {}
 
   bool
-  WebBrowserMatcher::OnMatch::operator() (
-    const MultiStringMatcher::MatchDetails& details)
+  WebBrowserMatcher::OnMatch::operator() (const MultiStringMatcher::MatchDetails& details)
     /*throw(String::RegEx::Exception)*/
   {
     if (details.tag->priority == max_priority_)
@@ -795,7 +775,7 @@ namespace FrontendCommons
     if (!matched_element_)
     {
       for (MatchElements::const_reverse_iterator ci = candidates_.rbegin();
-           ci != candidates_.rend(); ++ci)
+         ci != candidates_.rend(); ++ci)
       {
         if (match_(ci->second))
         {
@@ -830,20 +810,15 @@ namespace FrontendCommons
   {}
 
   bool
-  WebBrowserMatcher::match(
-    std::string& browser,
-    std::string_view user_agent) const
+  WebBrowserMatcher::match(std::string& browser, std::string_view user_agent) const
     /*throw(eh::Exception)*/
   {
-    const String::SubString user_agent_substr(
-      user_agent.data(),
-      user_agent.size());
+    const String::SubString user_agent_substr(user_agent.data(), user_agent.size());
     RegExMatchContextGuard match_context;
     OnMatch on_match(user_agent, max_priority_, match_context.get());
     matcher_.match(user_agent_substr, on_match);
 
-    for (auto it = empty_marker_elements_.begin();
-         it != empty_marker_elements_.end(); ++it)
+    for (auto it = empty_marker_elements_.begin(); it != empty_marker_elements_.end(); ++it)
     {
       if (on_match({user_agent_substr, &*it}))
       {
@@ -871,7 +846,7 @@ namespace FrontendCommons
         }
       }
 
-      if(browser.size() > FULL_PLATFORM_MAX_SIZE)
+      if (browser.size() > FULL_PLATFORM_MAX_SIZE)
       {
         browser.resize(FULL_PLATFORM_MAX_SIZE);
       }
@@ -928,28 +903,22 @@ namespace FrontendCommons
 
   inline
   bool
-  IPMatcher::CohortMaskHashAdapter::operator==(
-    const CohortMaskHashAdapter& right) const
+  IPMatcher::CohortMaskHashAdapter::operator==(const CohortMaskHashAdapter& right) const
     noexcept
   {
-    return cohort == right.cohort &&
-      ip_mask == right.ip_mask;
+    return cohort == right.cohort && ip_mask == right.ip_mask;
   }
 
   struct IPMatcher::BitsMaskMatcherLess
   {
     bool
-    operator()(const BitsMaskMatcher& left, uint32_t right)
-      const
-      noexcept
+    operator()(const BitsMaskMatcher& left, uint32_t right) const noexcept
     {
       return left.bits_mask < right;
     }
 
     bool
-    operator()(uint32_t left, const BitsMaskMatcher& right)
-      const
-      noexcept
+    operator()(uint32_t left, const BitsMaskMatcher& right) const noexcept
     {
       return left < right.bits_mask;
     }
@@ -971,14 +940,12 @@ namespace FrontendCommons
 
     CohortList cohort_list;
 
-    if(!cohorts.empty())
+    if (!cohorts.empty())
     {
       String::StringManip::SplitNL tokenizer(cohorts);
       for (String::SubString cohort; tokenizer.get_token(cohort);)
       {
-        const std::string& cohort_holder =
-          *cohorts_holder_.insert(cohort.str()).first;
-
+        const std::string& cohort_holder = *cohorts_holder_.insert(cohort.str()).first;
         cohort_list.push_back(cohort_holder);
       }
     }
@@ -994,7 +961,7 @@ namespace FrontendCommons
 
       // parse ip_mask
       String::SubString::SizeType pos = ip_mask.find('/');
-      if(pos == String::SubString::NPOS)
+      if (pos == String::SubString::NPOS)
       {
         Stream::Error ostr;
         ostr << FUN << ": invalid ip mask '" << ip_mask << "'";
@@ -1003,29 +970,27 @@ namespace FrontendCommons
 
       {
         uint32_t bits_in_mask;
-        if(!String::StringManip::str_to_int(
-             String::SubString(ip_mask.begin() + pos + 1, ip_mask.end()),
-             bits_in_mask))
+        if (!String::StringManip::str_to_int(
+          String::SubString(ip_mask.begin() + pos + 1, ip_mask.end()),
+          bits_in_mask))
         {
           Stream::Error ostr;
           ostr << FUN << ": invalid mask bits value in mask '" << ip_mask << "'";
           throw InvalidParameter(ostr.str());
         }
 
-        if(bits_in_mask > 0)
+        if (bits_in_mask > 0)
         {
-          bits_mask = bits_in_mask < 32 ?
-            (0xFFFFFFFF << (32 - bits_in_mask)) : 0xFFFFFFFF;
+          bits_mask = bits_in_mask < 32 ? (0xFFFFFFFF << (32 - bits_in_mask)) : 0xFFFFFFFF;
         }
       }
 
       bits_mask = htonl(bits_mask); // ip have network byte order
 
-      uint32_t int_ip_mask = str_to_ip_(
-        String::SubString(ip_mask.begin(), ip_mask.begin() + pos));
+      uint32_t int_ip_mask = str_to_ip_(String::SubString(ip_mask.begin(), ip_mask.begin() + pos));
 
-      for(CohortList::const_iterator cohort_it = cohort_list.begin();
-          cohort_it != cohort_list.end(); ++cohort_it)
+      for (CohortList::const_iterator cohort_it = cohort_list.begin();
+        cohort_it != cohort_list.end(); ++cohort_it)
       {
         BitsMaskMatcherArray::iterator bits_matcher_it = std::lower_bound(
           bits_mask_matchers_.begin(),
@@ -1035,7 +1000,7 @@ namespace FrontendCommons
 
         BitsMaskMatcher* bits_mask_matcher;
 
-        if(bits_matcher_it == bits_mask_matchers_.end() ||
+        if (bits_matcher_it == bits_mask_matchers_.end() ||
            bits_matcher_it->bits_mask != bits_mask)
         {
           BitsMaskMatcherArray::iterator ins_it =
@@ -1048,10 +1013,9 @@ namespace FrontendCommons
           bits_mask_matcher = &*bits_matcher_it;
         }
 
-        bits_mask_matcher->cohort_masks.insert(
-          std::make_pair(
-            CohortMaskHashAdapter(*cohort_it, int_ip_mask),
-            match_result));
+        bits_mask_matcher->cohort_masks.emplace(
+          CohortMaskHashAdapter(*cohort_it, int_ip_mask),
+          match_result);
       }
     }
   }
@@ -1068,31 +1032,27 @@ namespace FrontendCommons
     // split cohort by dot
     std::vector<String::SubString> cohorts;
     cohorts.reserve(cohort.size());
-    String::StringManip::Splitter<
-      String::AsciiStringManip::SepPeriod> splitter(cohort);
+    String::StringManip::Splitter<String::AsciiStringManip::SepPeriod> splitter(cohort);
     String::SubString token;
-    while(splitter.get_token(token))
+    while (splitter.get_token(token))
     {
       cohorts.push_back(token);
     }
 
-    if(!cohorts.empty())
+    if (!cohorts.empty())
     {
-      for(BitsMaskMatcherArray::const_iterator
-            bits_mask_matcher_it = bits_mask_matchers_.begin();
-          bits_mask_matcher_it != bits_mask_matchers_.end();
-          ++bits_mask_matcher_it)
+      for (BitsMaskMatcherArray::const_iterator bits_mask_matcher_it = bits_mask_matchers_.begin();
+        bits_mask_matcher_it != bits_mask_matchers_.end(); ++bits_mask_matcher_it)
       {
         uint32_t masked_ip = int_ip & bits_mask_matcher_it->bits_mask;
 
-        for(std::vector<String::SubString>::const_iterator cohort_it =
-              cohorts.begin();
-            cohort_it != cohorts.end(); ++cohort_it)
+        for(std::vector<String::SubString>::const_iterator cohort_it = cohorts.begin();
+          cohort_it != cohorts.end(); ++cohort_it)
         {
           CohortMaskMap::const_iterator cohort_mask_it =
             bits_mask_matcher_it->cohort_masks.find(
               CohortMaskHashAdapter(*cohort_it, masked_ip));
-          if(cohort_mask_it != bits_mask_matcher_it->cohort_masks.end())
+          if (cohort_mask_it != bits_mask_matcher_it->cohort_masks.end())
           {
             result = cohort_mask_it->second;
             return true;
@@ -1101,17 +1061,15 @@ namespace FrontendCommons
       }
     }
 
-    for(BitsMaskMatcherArray::const_iterator
-          bits_mask_matcher_it = bits_mask_matchers_.begin();
-        bits_mask_matcher_it != bits_mask_matchers_.end();
-        ++bits_mask_matcher_it)
+    for (BitsMaskMatcherArray::const_iterator bits_mask_matcher_it = bits_mask_matchers_.begin();
+      bits_mask_matcher_it != bits_mask_matchers_.end(); ++bits_mask_matcher_it)
     {
       uint32_t masked_ip = int_ip & bits_mask_matcher_it->bits_mask;
 
       CohortMaskMap::const_iterator cohort_mask_it =
         bits_mask_matcher_it->cohort_masks.find(
           CohortMaskHashAdapter(String::SubString(), masked_ip));
-      if(cohort_mask_it != bits_mask_matcher_it->cohort_masks.end())
+      if (cohort_mask_it != bits_mask_matcher_it->cohort_masks.end())
       {
         result = cohort_mask_it->second;
         return true;
@@ -1128,7 +1086,7 @@ namespace FrontendCommons
     static const char* FUN = "IPMatcher::str_to_ip_()";
 
     in_addr addr;
-    if(::inet_pton(AF_INET, ip.str().c_str(), &addr) <= 0)
+    if (::inet_pton(AF_INET, ip.str().c_str(), &addr) <= 0)
     {
       Stream::Error ostr;
       ostr << FUN << ": invalid ip value '" <<
@@ -1144,11 +1102,9 @@ namespace FrontendCommons
   {}
 
   bool
-  CountryFilter::enabled(
-    const String::SubString& country_code) const
-    noexcept
+  CountryFilter::enabled(const String::SubString& country_code) const noexcept
   {
-    if(enabled_countries_.empty())
+    if (enabled_countries_.empty())
     {
       return true;
     }
@@ -1157,9 +1113,7 @@ namespace FrontendCommons
   }
 
   void
-  CountryFilter::enable_country(
-    const String::SubString& country)
-    noexcept
+  CountryFilter::enable_country(const String::SubString& country) noexcept
   {
     std::string country_str = country.str();
     String::AsciiStringManip::to_lower(country_str);
