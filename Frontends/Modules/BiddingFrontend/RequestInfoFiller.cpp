@@ -1924,6 +1924,9 @@ namespace AdServer::Bidding
       if(request_info.additional_info.tagid.empty() && !ad_slot_it->tagid.empty())
       {
         request_info.additional_info.tagid = ad_slot_it->tagid;
+        kw_fmt.add_dict_keyword_norm_spaces(
+          MatchKeywords::SSP_TAG_ID,
+          request_info.additional_info.tagid);
       }
 
       for (auto metric_it = ad_slot_it->metrics.begin(); metric_it != ad_slot_it->metrics.end();

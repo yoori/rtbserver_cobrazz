@@ -28,6 +28,7 @@ namespace AdServer::Bidding
     inline constexpr std::string_view NO_ID = "noid";
     inline constexpr std::string_view NATIVE_PLACEMENT = "nativeplacement";
     inline constexpr std::string_view DEAL_ID = "dealid";
+    inline constexpr std::string_view SSP_TAG_ID = "ssptagid";
 
     inline constexpr std::string_view FULL_NOREF = "poadnoref";
     inline constexpr std::string_view FULL_IDFA = "rtbidfa";
