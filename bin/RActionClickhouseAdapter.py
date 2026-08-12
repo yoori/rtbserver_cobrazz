@@ -11,14 +11,14 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   field_filling = [  # < Order of fields in clickhouse table RAction.
-    ('timestamp', 0),
-    ('device', 1),
-    ('ip', 2),
-    ('uid', 3),
-    ('url', 4),
-    ('action_id', 5),
-    ('order_id', 6),
-    ('order_value', 7),
+    ('timestamp', 0, False),
+    ('device', 1, True),
+    ('ip', 2, False),
+    ('uid', 3, False),
+    ('url', 4, False),
+    ('action_id', 5, True),
+    ('order_id', 6, False),
+    ('order_value', 7, False),
   ]
 
   writer = csv.writer(sys.stdout)
@@ -29,6 +29,7 @@ if __name__ == "__main__":
       next(it)  # skip header
       for row in it:
         writer.writerow([
-          row[field_index] if field_index < len(row) else ''
-          for _, field_index in field_filling
+          ('\\N' if nullable and (field_index >= len(row) or not row[field_index]) else
+           row[field_index] if field_index < len(row) else '')
+          for _, field_index, nullable in field_filling
         ])

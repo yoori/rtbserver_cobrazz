@@ -16,14 +16,15 @@ import jinja2
 R_ACTION_CREATE_TABLE_QUERY = (
   "CREATE TABLE IF NOT EXISTS RAction ("
   "timestamp DateTime, "
-  "device String, "
+  "device Nullable(UInt64), "
   "ip String, "
   "uid String, "
   "url String, "
-  "action_id String, "
+  "action_id Nullable(UInt64), "
   "order_id String, "
   "order_value Decimal(18, 8)"
-  ") ENGINE = MergeTree ORDER BY (timestamp, uid, action_id)"
+  ") ENGINE = MergeTree "
+  "ORDER BY (timestamp, uid, ifNull(action_id, 0))"
 )
 
 
