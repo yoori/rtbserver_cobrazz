@@ -28,6 +28,21 @@ R_ACTION_CREATE_TABLE_QUERY = (
 )
 
 
+R_GEO_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS RGeo ("
+  "ip String, "
+  "source String, "
+  "latitude Decimal(18, 8), "
+  "longitude Decimal(18, 8), "
+  "type String, "
+  "country String, "
+  "region String, "
+  "city String"
+  ") ENGINE = MergeTree "
+  "ORDER BY (ip, source, type, country, region, city)"
+)
+
+
 class Config(object):
   clickhouse_conn: str = None
   pid_file: str = None
@@ -208,6 +223,19 @@ class RActionUploader(ClickhouseCsvUploader) :
       create_table_query = R_ACTION_CREATE_TABLE_QUERY)
 
 
+"""
+GeoUploader: uploads Geo logs to RGeo.
+"""
+class GeoUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'GeoClickhouseAdapter.py',
+      'RGeo',
+      logger = logger,
+      create_table_query = R_GEO_CREATE_TABLE_QUERY)
+
+
 def check_stat_files(
     interrupter,
     config = None,
@@ -296,6 +324,7 @@ def main() :
   processors['RImpression'] = RImpressionUploader(config, logger = logger)
   processors['RClick'] = RClickUploader(config, logger = logger)
   processors['RAction'] = RActionUploader(config, logger = logger)
+  processors['Geo'] = GeoUploader(config, logger = logger)
 
   for processor in processors.values():
     processor.init_storage()

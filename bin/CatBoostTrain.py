@@ -1,37 +1,15 @@
-import sys
 import argparse
 import pathlib
 import numpy as np
-import pandas as pd
 import sklearn.model_selection
 from catboost import CatBoostClassifier, Pool, sum_models
-from sklearn.metrics import accuracy_score
-from sklearn.datasets import load_svmlight_file
-import sklearn.model_selection
 
-
-# Decrease features dimension (features_size should be passed to features_size in model for predict)
-def mod_features(data, features_size):
-  transformed_rows = []
-  for row_i, row in enumerate(data):
-    transformed_row = np.zeros((features_size))
-    for col_i, col in enumerate(row):
-      if col > 0.000001:
-        transformed_row[col_i % features_size] = col
-    transformed_rows.append(transformed_row)
-  return np.vstack(transformed_rows)
+from rtbserver_utils.CatBoostFeatures import load_catboost_svm
 
 
 def train(train_svm_file, test_svm_file, features_size):
-  train_data_sm, train_label_sm = load_svmlight_file(train_svm_file)
-  train_data = train_data_sm.toarray()
-  train_label = train_label_sm
-  train_data = mod_features(train_data, features_size)
-
-  test_data_sm, test_label_sm = load_svmlight_file(test_svm_file)
-  test_data = test_data_sm.toarray()
-  test_data = mod_features(test_data, features_size)
-  test_label = test_label_sm
+  train_data, train_label = load_catboost_svm(train_svm_file, features_size)
+  test_data, test_label = load_catboost_svm(test_svm_file, features_size)
 
   categorical_features_indices = []
   train_pool = Pool(train_data, train_label, cat_features=categorical_features_indices)
@@ -75,33 +53,28 @@ def train_by_chunks(svm_dir, chunk_size = 1000000, features_size = 1024):
     prev_agg_val_data = None
     prev_agg_val_label = None
     for svm_file_i, svm_file in enumerate(svm_files):
-      loaded_data_sm, loaded_label_sm = load_svmlight_file(str(svm_file))
-      loaded_data = loaded_data_sm.toarray()
-      loaded_label = loaded_label_sm
-      adapted_data = mod_features(loaded_data, features_size)
-      adapted_label = loaded_label
+      adapted_data, adapted_label = load_catboost_svm(
+        str(svm_file),
+        features_size)
+      adapted_data = adapted_data.toarray()
       cur_data_rows += adapted_data.shape[0]
 
       # div each file separatly for garantee that test set contains equal rows between rows.
-      train_data, test_val_data, train_label, test_val_label = sklearn.model_selection.train_test_split(
-        adapted_data,
-        adapted_label,
-        test_size=0.5,
-        shuffle=False,
-        random_state=0,
-      )
+      train_data, test_val_data, train_label, test_val_label = (
+        sklearn.model_selection.train_test_split(
+          adapted_data,
+          adapted_label,
+          test_size=0.5,
+          shuffle=False,
+          random_state=0))
 
-      del loaded_data_sm, loaded_label_sm
-      del loaded_data, loaded_label
-      del adapted_data, adapted_label
-
-      test_data, val_data, test_label, val_label = sklearn.model_selection.train_test_split(
-        test_val_data,
-        test_val_label,
-        test_size=0.5,
-        shuffle=False,
-        random_state=0,
-      )
+      test_data, val_data, test_label, val_label = (
+        sklearn.model_selection.train_test_split(
+          test_val_data,
+          test_val_label,
+          test_size=0.5,
+          shuffle=False,
+          random_state=0))
 
       del test_val_data, test_val_label
 

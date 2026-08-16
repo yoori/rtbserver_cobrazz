@@ -236,7 +236,7 @@ Application_::main(int& argc, char** argv)
     if(++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
-      ostr << "generate-ctr: xgb model not defined";
+      ostr << "generate-ctr: feature columns not defined";
       throw Exception(ostr);
     }
 
@@ -1353,7 +1353,7 @@ Application_::generate_ctr_(
             {
               out << ",";
             }
-            out << hash_it->second;
+            out << hash_it->first << ':' << hash_it->second;
           }
           out << std::endl;
         }
