@@ -722,7 +722,7 @@ namespace AdServer::Bidding
   void
   BiddingFrontendCore::process_geo(const RequestInfo& request_info) noexcept
   {
-    if (!bidding_frontend_logger_.in())
+    if (!bidding_frontend_logger_.in() || request_info.peer_ip.empty())
     {
       return;
     }
@@ -744,14 +744,6 @@ namespace AdServer::Bidding
     params.type.assign(
       request_info.ssp_geo_type.data(),
       request_info.ssp_geo_type.size());
-
-    if (params.ip.empty() &&
-      params.country.empty() &&
-      params.region.empty() &&
-      params.city.empty())
-    {
-      return;
-    }
 
     if (request_info.ssp_latitude && request_info.ssp_longitude)
     {

@@ -53,10 +53,7 @@ namespace AdServer::Bidding
   void
   BiddingFrontendLogger::process_geo(GeoParams&& params) noexcept
   {
-    if (params.ip.empty() &&
-      params.country.empty() &&
-      params.region.empty() &&
-      params.city.empty())
+    if (params.ip.empty())
     {
       return;
     }
