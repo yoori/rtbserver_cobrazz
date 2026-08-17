@@ -52,19 +52,26 @@ namespace AdServer::RequestInfoSvcs
   RocksDBTransactionProfileMapHolder<KeyType>
   open_rocksdb_transaction_profile_map(
     const char* path,
-    const Generics::Time& expire_time)
+    const Generics::Time& expire_time,
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> processor = {})
   {
     using RocksDBMap =
       ProfilingCommons::RocksDBBatchingProfileMap<KeyType, KeyAdapterType>;
     using TransactionMap = ProfilingCommons::TransactionProfileMap<KeyType>;
 
-    ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map(
+    ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map = processor ?
+      new RocksDBMap(
+        std::move(processor),
+        String::SubString(path),
+        expire_time,
+        128,
+        Generics::Time::ZERO) :
       new RocksDBMap(
         String::SubString(path),
         expire_time,
         2,
         128,
-        Generics::Time::ZERO));
+        Generics::Time::ZERO);
 
     RocksDBTransactionProfileMapHolder<KeyType> holder;
     holder.map = new TransactionMap(rocksdb_map.in());

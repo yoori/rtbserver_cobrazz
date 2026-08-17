@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Commons/Coro/StartableAwaitable.hpp>
+
 #include "InventoryActionProcessor.hpp"
 
 namespace AdServer
@@ -13,19 +15,17 @@ namespace AdServer
       ~ConsiderInterface() noexcept
       {}
 
-      virtual void
-      consider_click(
+      virtual AdServer::Commons::StartableAwaitable<void>
+      co_consider_click(
         const AdServer::Commons::RequestId& request_id,
-        const Generics::Time& time)
-        noexcept = 0;
+        const Generics::Time& time) = 0;
 
-      virtual void
-      consider_impression(
+      virtual AdServer::Commons::StartableAwaitable<void>
+      co_consider_impression(
         const AdServer::Commons::UserId& user_id,
         const AdServer::Commons::RequestId& request_id,
         const Generics::Time& time,
-        const ChannelIdSet& channels)
-        noexcept = 0;
+        const ChannelIdSet& channels) = 0;
     };
   }
 }

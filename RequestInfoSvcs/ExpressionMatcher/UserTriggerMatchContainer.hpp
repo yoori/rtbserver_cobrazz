@@ -12,7 +12,9 @@
 #include <Generics/MemBuf.hpp>
 
 #include <Commons/UserInfoManip.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
 
 #include "TriggerActionProcessor.hpp"
@@ -27,10 +29,8 @@ namespace RequestInfoSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    virtual
-    Generics::ConstSmartMemBuf_var
-    get_user_profile(const AdServer::Commons::UserId& user_id)
-      /*throw(Exception)*/ = 0;
+    virtual AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_user_profile(const AdServer::Commons::UserId& user_id) = 0;
 
   protected:
     virtual
@@ -142,28 +142,32 @@ namespace RequestInfoSvcs
       unsigned long negative_triggers_group_size,
       unsigned long max_trigger_visits,
       const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-      const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits)
+      const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits,
+      std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
+        rocksdb_processor = {})
       /*throw(Exception)*/;
 
     void config(Config* config) noexcept;
 
     Config_var config() const noexcept;
 
-    void process_request(const RequestInfo& request_info)
-      /*throw(NotReady, Exception)*/;
+    AdServer::Commons::StartableAwaitable<void>
+    co_process_request(const RequestInfo& request_info);
 
-    void process_impression(
-      const ImpressionInfo& imp_info)
-      /*throw(NotReady, Exception)*/;
+    AdServer::Commons::StartableAwaitable<void>
+    co_process_impression(const ImpressionInfo& imp_info);
 
-    void process_click(
-      const Commons::RequestId& imp_info,
-      const Generics::Time& time)
-      /*throw(Exception)*/;
+    AdServer::Commons::StartableAwaitable<void>
+    co_process_click(
+      const Commons::RequestId& request_id,
+      const Generics::Time& time);
 
     Generics::ConstSmartMemBuf_var
     get_user_profile(const AdServer::Commons::UserId& user_id)
       /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_user_profile(const AdServer::Commons::UserId& user_id);
 
     Generics::ConstSmartMemBuf_var
     get_request_profile(const AdServer::Commons::RequestId& request_id)
@@ -200,20 +204,20 @@ namespace RequestInfoSvcs
   private:
     Config_var current_config_() const /*throw(NotReady)*/;
 
-    void process_request_trans_(
+    AdServer::Commons::Awaitable<void> co_process_request_trans_(
       TriggersMatchInfoList& delegate_imps,
       TriggersMatchInfoList& delegate_clicks,
       const RequestInfo& request_info)
       /*throw(Exception)*/;
 
-    void process_impression_trans_(
+    AdServer::Commons::Awaitable<void> co_process_impression_trans_(
       bool& delegate_impression,
       bool& delegate_click,
       TriggerActionProcessor::TriggersMatchInfo& imp_matches_info,
       const ImpressionInfo& imp_info)
       /*throw(Exception)*/;
 
-    void process_click_trans_(
+    AdServer::Commons::Awaitable<void> co_process_click_trans_(
       bool& delegate_click,
       TriggerActionProcessor::TriggersMatchInfo& click_matches_info,
       const Commons::RequestId& request_id,
@@ -221,7 +225,7 @@ namespace RequestInfoSvcs
       /*throw(Exception)*/;
 
     template<typename TransactionType, typename ProfileWriterType>
-    void save_profile_(
+    AdServer::Commons::Awaitable<void> co_save_profile_(
       TransactionType* transaction,
       const ProfileWriterType& profile_writer,
       const Generics::Time& time)

@@ -23,7 +23,9 @@ namespace AdServer
       unsigned long common_chunks_number,
       const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
       const char* file_prefix,
-      const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
+      const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+      std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
+        rocksdb_processor)
       /*throw(Exception)*/
       : logger_(ReferenceCounting::add_ref(logger)),
         colo_reach_processor_(ReferenceCounting::add_ref(colo_reach_processor)),
@@ -46,7 +48,9 @@ namespace AdServer
               AdServer::Commons::uuid_distribution_hash,
               0,
               false,
-              HOUSEHOLD_ ? "" : ".rocksdb");
+              HOUSEHOLD_ ? "" : ".rocksdb",
+              2,
+              std::move(rocksdb_processor));
         user_map_ = user_map.first;
         add_child_object(user_map.second);
       }
@@ -86,12 +90,11 @@ namespace AdServer
       user_map_->clear_expired(now - expire_time_);
     }
 
-    void
-    UserColoReachContainer::process_request(
+    AdServer::Commons::StartableAwaitable<void>
+    UserColoReachContainer::co_process_request(
       const RequestInfo& request_info)
-      /*throw(Exception)*/
     {
-      static const char* FUN = "UserColoReachContainer::process_request()";
+      static const char* FUN = "UserColoReachContainer::co_process_request()";
 
       if(!request_info.user_id.is_null())
       {
@@ -100,7 +103,7 @@ namespace AdServer
 
         try
         {
-          process_request_trans_(
+          co_await co_process_request_trans_(
             gmt_colo_reach_info_list,
             isp_colo_reach_info_list,
             request_info);
@@ -142,8 +145,8 @@ namespace AdServer
       }
     }
 
-    void
-    UserColoReachContainer::process_request_trans_(
+    AdServer::Commons::Awaitable<void>
+    UserColoReachContainer::co_process_request_trans_(
       ColoReachInfoList& gmt_colo_reach_info_list,
       ColoReachInfoList& isp_colo_reach_info_list,
       const RequestInfo& request_info)
@@ -162,9 +165,9 @@ namespace AdServer
 
         try
         {
-          transaction = user_map_->get_transaction(request_info.user_id);
+          transaction = co_await user_map_->co_get_transaction(request_info.user_id);
 
-          mem_buf = transaction->get_profile();
+          mem_buf = co_await transaction->co_get_profile();
         }
         catch(const eh::Exception& ex)
         {
@@ -463,7 +466,7 @@ namespace AdServer
           profile_writer.save(
             new_mem_buf->membuf().data(), new_mem_buf->membuf().size());
 
-          transaction->save_profile(
+          co_await transaction->co_save_profile(
             Generics::transfer_membuf(new_mem_buf),
             request_info.time);
         }

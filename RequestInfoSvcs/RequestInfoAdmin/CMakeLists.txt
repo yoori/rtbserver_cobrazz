@@ -8,7 +8,6 @@ target_link_libraries(RequestInfoAdmin
   CORBACommons
   UtilCommons
 
-  ExpressionMatcherIDL
   pthread
   ProcessControlIDL
   UserActionProfilePST
@@ -21,4 +20,3 @@ target_link_libraries(RequestInfoAdmin
 
 )
 #install(TARGETS RequestInfoAdmin  DESTINATION ${INSTALL_DIR})
-

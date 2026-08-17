@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -17,6 +19,11 @@
 
 namespace AdServer
 {
+  namespace ProfilingCommons
+  {
+    class RocksDBProfileMapProcessor;
+  }
+
   namespace RequestInfoSvcs
   {
     const Generics::Time DEFAULT_ACTION_IGNORE_TIME(30); // 30 seconds
@@ -38,7 +45,9 @@ namespace AdServer
         RequestContainerProcessor* request_processor,
         const char* rocksdb_path,
         const Generics::Time& action_ignore_time,
-        const Generics::Time& expire_time = DEFAULT_ACTION_PROFILE_EXPIRE_TIME)
+        const Generics::Time& expire_time = DEFAULT_ACTION_PROFILE_EXPIRE_TIME,
+        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var

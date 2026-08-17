@@ -232,7 +232,8 @@ namespace RequestInfoSvcs
     TagRequestGroupProcessor* tag_request_group_processor,
     const Generics::Time& time_merge_bound,
     const char* rocksdb_path,
-    const Generics::Time& expire_time)
+    const Generics::Time& expire_time,
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       tag_request_group_processor_(ReferenceCounting::add_ref(tag_request_group_processor)),
@@ -247,7 +248,8 @@ namespace RequestInfoSvcs
         AdServer::Commons::UserId,
         UserIdToString>(
           rocksdb_path,
-          expire_time_);
+          expire_time_,
+          std::move(rocksdb_processor));
       user_map_ = user_map.map;
       add_child_object(user_map.active_object);
     }

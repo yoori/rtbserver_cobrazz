@@ -1727,7 +1727,8 @@ namespace RequestInfoSvcs {
     RequestActionProcessor* request_processor,
     RequestOperationProcessor* request_operation_processor,
     const String::SubString& request_profile_path,
-    const Generics::Time& expire_time)
+    const Generics::Time& expire_time,
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -1740,17 +1741,24 @@ namespace RequestInfoSvcs {
 
     try
     {
-      ReferenceCounting::SmartPtr<
-        AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
-        AdServer::Commons::RequestId, UuidToString> >
-        profile_map_impl(
-          new AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
-          AdServer::Commons::RequestId, UuidToString>(
+      using RocksDBMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
+        AdServer::Commons::RequestId,
+        UuidToString>;
+
+      ReferenceCounting::SmartPtr<RocksDBMap> profile_map_impl =
+        rocksdb_processor ?
+          new RocksDBMap(
+            std::move(rocksdb_processor),
+            request_profile_path,
+            expire_time_,
+            128,
+            Generics::Time::ZERO) :
+          new RocksDBMap(
             request_profile_path,
             expire_time_,
             2,
             128,
-            Generics::Time::ZERO));
+            Generics::Time::ZERO);
 
       profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<
         AdServer::Commons::RequestId>(profile_map_impl);

@@ -6,7 +6,6 @@
 #include <eh/Exception.hpp>
 #include <XMLUtility/Utility.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PidFileGuard.hpp>
@@ -17,7 +16,6 @@
 namespace
 {
   const char ASPECT[] = "ExpressionMatcher";
-  const char EXPRESSION_MATCHER_OBJ_KEY[] = "ExpressionMatcher";
 }
 
 ExpressionMatcherApp_::ExpressionMatcherApp_()
@@ -121,35 +119,6 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(configuration_->pid_file()));
 
-    /* fill corba_config */
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        config().CorbaConfig(),
-        corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't read Corba Config. : "
-        << e.what();
-      throw Exception(ostr, "ADS-IMPL-4002");
-    }
-
-    try
-    {
-      /* init CORBA Server */
-      corba_server_adapter_ =
-        new CORBACommons::CorbaServerAdapter(corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << "Can't init CorbaServerAdapter. : "
-        << e.what();
-      throw Exception(ostr, "ADS-IMPL-4003");
-    }
-
     AdServer::RequestInfoSvcs::ProcStatImpl_var proc_stat_impl;
     if (configuration_->SNMPConfig().present())
     {
@@ -189,13 +158,20 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
         config(),
         proc_stat_impl);
 
-    corba_server_adapter_->add_binding(
-      EXPRESSION_MATCHER_OBJ_KEY, expression_matcher_impl_.in());
+    grpc_adapter_ = new AdServer::RequestInfoSvcs::ExpressionMatcherGrpc(
+      expression_matcher_impl_,
+      logger(),
+      config().GrpcConfig().Endpoint().host().present() &&
+        *config().GrpcConfig().Endpoint().host() != "*" ?
+        *config().GrpcConfig().Endpoint().host() :
+        "0.0.0.0",
+      config().GrpcConfig().Endpoint().port(),
+      config().GrpcConfig().cq_threads());
 
     active_objects_ =
       std::make_shared<Generics::CompositeActiveObject>(false, false);
     active_objects_->add_child_object(expression_matcher_impl_.in());
-    active_objects_->add_child_object(corba_server_adapter_.in());
+    active_objects_->add_child_object(grpc_adapter_.in());
 
     AdServer::Commons::SignalActiveObject signal_active_object;
     active_objects_->activate_object();
@@ -205,6 +181,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
     active_objects_->deactivate_object();
     active_objects_->wait_object();
 
+    grpc_adapter_.reset();
     expression_matcher_impl_.reset();
 
     configuration_.reset();
@@ -217,15 +194,6 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
       << "ExpressionMatcherApp_::main(): "
         "Got UserInfoManagerApp_::Exception. : \n"
       << e.what();
-  }
-  catch (const CORBA::SystemException& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                      ASPECT,
-                      "ADS-IMPL-4004")
-      << "ExpressionMatcherApp_::main(): "
-        "Got CORBA::SystemException. : \n"
-      << e;
   }
   catch (const eh::Exception& e)
   {

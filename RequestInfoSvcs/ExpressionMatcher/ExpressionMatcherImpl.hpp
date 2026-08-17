@@ -12,7 +12,6 @@
 #include <Generics/TaskRunner.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ServantImpl.hpp>
 #include <CORBACommons/ObjectPool.hpp>
 
 #include <Commons/CorbaConfig.hpp>
@@ -23,8 +22,6 @@
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 
 #include <LogCommons/RequestBasicChannels.hpp>
-
-#include "ExpressionMatcher_s.hpp"
 
 #include "ChannelMatcher.hpp"
 #include "UserInventoryContainer.hpp"
@@ -44,6 +41,12 @@ namespace AdServer::Grpc
   class GrpcExecutor;
 }
 
+namespace AdServer::Commons
+{
+  class BoostAsioContextRunActiveObject;
+  class ExecutorPool;
+}
+
 namespace AdServer
 {
   namespace RequestInfoSvcs
@@ -57,16 +60,14 @@ namespace AdServer
      *         ProcessRequestBasicChannelsTask (in loop)
      */
     class ExpressionMatcherImpl :
-      public virtual CORBACommons::ReferenceCounting::
-        ServantImpl<POA_AdServer::RequestInfoSvcs::ExpressionMatcher>,
-      public virtual Generics::RefCountableActiveObject,
-      public virtual Generics::CompositeActiveObject,
+      public Generics::RefCountableCompositeActiveObject,
       private RequestBasicChannelsProcessor,
       private ConsiderInterface
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(InvalidArgument, Exception);
+      DECLARE_EXCEPTION(NotReady, Exception);
 
       typedef xsd::AdServer::Configuration::ExpressionMatcherConfigType
         ExpressionMatcherConfig;
@@ -78,58 +79,37 @@ namespace AdServer
         ProcStatImpl* proc_stat_impl)
         /*throw(Exception)*/;
 
-      virtual CORBA::Boolean
+      Generics::ConstSmartMemBuf_var
       get_inventory_profile(
-        const char* user_id,
-        AdServer::RequestInfoSvcs::UserInventoryProfile_out inv_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-          AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/;
+        const AdServer::Commons::UserId& user_id);
 
-      virtual CORBA::Boolean
+      Generics::ConstSmartMemBuf_var
       get_user_trigger_match_profile(
-        const char* user_id,
-        bool temporary_user,
-        AdServer::RequestInfoSvcs::UserTriggerMatchProfile_out profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-          AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/;
+        const AdServer::Commons::UserId& user_id,
+        bool temporary_user);
 
-      virtual CORBA::Boolean
+      Generics::ConstSmartMemBuf_var
       get_request_trigger_match_profile(
-        const char* request_id,
-        AdServer::RequestInfoSvcs::RequestTriggerMatchProfile_out profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-          AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/;
+        const AdServer::Commons::RequestId& request_id);
 
-      virtual CORBA::Boolean
+      Generics::ConstSmartMemBuf_var
       get_household_colo_reach_profile(
-        const char* request_id,
-        AdServer::RequestInfoSvcs::HouseholdColoReachProfile_out profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-          AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/;
+        const AdServer::Commons::UserId& user_id);
 
-      virtual void
-      run_daily_processing(bool sync)
-        /*throw(
-          AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-          AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/;
+      void
+      run_daily_processing(bool sync);
 
-      virtual void
-      consider_click(
+      AdServer::Commons::StartableAwaitable<void>
+      co_consider_click(
         const AdServer::Commons::RequestId& request_id,
-        const Generics::Time& time)
-        noexcept;
+        const Generics::Time& time) override;
 
-      virtual void
-      consider_impression(
+      AdServer::Commons::StartableAwaitable<void>
+      co_consider_impression(
         const AdServer::Commons::UserId& user_id,
         const AdServer::Commons::RequestId& request_id,
         const Generics::Time& time,
-        const ChannelIdSet& channels)
-        noexcept;
+        const ChannelIdSet& channels) override;
 
     protected:
       virtual
@@ -313,15 +293,12 @@ namespace AdServer
         typename ContainerPtrHolderType,
         typename KeyType,
         typename GetProfileAdapterType>
-      bool
+      Generics::ConstSmartMemBuf_var
       get_profile_(
-        CORBACommons::OctSeq_out result_profile,
         const char* FUN,
         const ContainerPtrHolderType& container_ptr_holder,
         const KeyType& id,
-        const GetProfileAdapterType& get_profile_adapter)
-        /*throw(AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-          AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/;
+        const GetProfileAdapterType& get_profile_adapter);
 
       void
       load_data_() noexcept;
@@ -370,16 +347,18 @@ namespace AdServer
       void
       update_stats_() noexcept;
 
-      virtual bool
-      process_requests(
-        LogProcessing::FileReceiver::FileGuard* file_ptr,
-        std::size_t& processed_lines_count)
-        /*throw(eh::Exception)*/;
+      AdServer::Commons::StartableAwaitable<void>
+      co_process_request_basic_channels_record(
+        const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+        const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record) override;
+
+      void
+      request_basic_channels_file_processed(const Generics::Time& timestamp) noexcept override;
 
       bool
       check_sampling_(const UserId& user_id) const noexcept;
 
-      void
+      AdServer::Commons::Awaitable<void>
       process_request_basic_channels_record_(
         UserInventoryInfoContainer* user_inventory_container,
         UserTriggerMatchContainer* user_trigger_match_container,
@@ -415,6 +394,8 @@ namespace AdServer
       bool daily_processing_loop_started_;
 
       ProfilingCommons::FileController_var file_controller_;
+      std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+        rocksdb_processor_;
       ChannelMatcher_var channel_matcher_;
       ReferenceCounting::PtrHolder<UserInventoryInfoContainer_var>
         user_inventory_container_;
@@ -429,6 +410,9 @@ namespace AdServer
 
       Logging::ActiveObjectCallbackImpl_var callback_;
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+        grpc_coalesce_runner_;
+      std::shared_ptr<AdServer::Commons::ExecutorPool> processing_executor_pool_;
       Generics::TaskRunner_var task_runner_;
       Generics::TaskRunner_var daily_processing_task_runner_;
       Generics::Planner_var scheduler_;

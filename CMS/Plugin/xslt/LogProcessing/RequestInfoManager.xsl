@@ -47,6 +47,10 @@
       <xsl:value-of select="5000"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="rocksdb-batching-threads"><xsl:value-of
+    select="$request-info-manager-config/@rocksdb_batching_threads"/>
+    <xsl:if test="count($request-info-manager-config/@rocksdb_batching_threads) = 0">16</xsl:if>
+  </xsl:variable>
   <xsl:variable name="request-info-manager-host-port-set">
     <xsl:for-each select="$be-cluster-path/service[@descriptor = $request-info-manager-descriptor]">
       <xsl:variable name="request-info-manager-host-subset">
@@ -154,6 +158,7 @@
       $request-info-manager-host-port-sorted-set)/host)}"
     distrib_count="24"
     action_ignore_time="{$ignore-action-time-value}"
+    rocksdb_batching_threads="{$rocksdb-batching-threads}"
     use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}">
 
     <cfg:CorbaConfig>

@@ -291,7 +291,8 @@ namespace RequestInfoSvcs
     RequestContainerProcessor* request_container_processor,
     Callback* callback,
     const char* rocksdb_path,
-    const Generics::Time& expire_time)
+    const Generics::Time& expire_time,
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -306,7 +307,8 @@ namespace RequestInfoSvcs
         AdServer::Commons::UserId,
         UserIdToString>(
           rocksdb_path,
-          expire_time_);
+          expire_time_,
+          std::move(rocksdb_processor));
       user_map_ = user_map.map;
       add_child_object(user_map.active_object);
     }

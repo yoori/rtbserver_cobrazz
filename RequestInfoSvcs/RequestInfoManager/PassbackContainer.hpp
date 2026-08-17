@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -18,6 +20,11 @@
 
 namespace AdServer
 {
+  namespace ProfilingCommons
+  {
+    class RocksDBProfileMapProcessor;
+  }
+
   namespace RequestInfoSvcs
   {
     struct PassbackProcessor: public virtual ReferenceCounting::Interface
@@ -118,7 +125,9 @@ namespace AdServer
         PassbackProcessor* passback_processor,
         const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(DEFAULT_EXPIRE_TIME))
+          Generics::Time(DEFAULT_EXPIRE_TIME),
+        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var

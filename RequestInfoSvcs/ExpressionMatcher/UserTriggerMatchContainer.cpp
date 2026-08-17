@@ -842,7 +842,9 @@ namespace RequestInfoSvcs
     unsigned long negative_triggers_group_size,
     unsigned long max_trigger_visits,
     const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
-    const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits)
+    const AdServer::ProfilingCommons::LevelMapTraits& request_level_map_traits,
+    std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
+      rocksdb_processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       processor_(ReferenceCounting::add_ref(processor)),
@@ -872,7 +874,12 @@ namespace RequestInfoSvcs
             user_file_prefix,
             AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
               user_level_map_traits.expire_time),
-            AdServer::Commons::uuid_distribution_hash);
+            AdServer::Commons::uuid_distribution_hash,
+            0,
+            false,
+            ".rocksdb",
+            2,
+            rocksdb_processor);
       user_map_ = user_map.first;
       add_child_object(user_map.second);
     }
@@ -897,9 +904,14 @@ namespace RequestInfoSvcs
           std::string(request_file_base_path) + "/" +
           request_file_prefix + ".rocksdb";
         ReferenceCounting::SmartPtr<RocksDBRequestProfileMap> rocksdb_map =
-          new RocksDBRequestProfileMap(
-            String::SubString(rocksdb_path.c_str()),
-            request_level_map_traits.expire_time);
+          rocksdb_processor ?
+            new RocksDBRequestProfileMap(
+              std::move(rocksdb_processor),
+              String::SubString(rocksdb_path.c_str()),
+              request_level_map_traits.expire_time) :
+            new RocksDBRequestProfileMap(
+              String::SubString(rocksdb_path.c_str()),
+              request_level_map_traits.expire_time);
 
         request_map_ = new RequestProfileMap(rocksdb_map);
         add_child_object(rocksdb_map.in());
@@ -947,6 +959,24 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  UserTriggerMatchContainer::co_get_user_profile(
+    const AdServer::Commons::UserId& user_id)
+  {
+    static const char* FUN = "UserTriggerMatchContainer::co_get_user_profile()";
+
+    try
+    {
+      co_return co_await user_map_->co_get_profile(user_id);
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << e.what();
+      throw Exception(ostr);
+    }
+  }
+
   Generics::ConstSmartMemBuf_var
   UserTriggerMatchContainer::get_request_profile(
     const AdServer::Commons::RequestId& request_id)
@@ -984,13 +1014,12 @@ namespace RequestInfoSvcs
     }
   }
 
-  void
-  UserTriggerMatchContainer::process_request(
+  AdServer::Commons::StartableAwaitable<void>
+  UserTriggerMatchContainer::co_process_request(
     const RequestInfo& request_info)
-    /*throw(NotReady, Exception)*/
   {
     /* save new matches, clear excess matches (by min visits) */
-    static const char* FUN = "UserTriggerMatchContainer::process_request()";
+    static const char* FUN = "UserTriggerMatchContainer::co_process_request()";
 
     if(request_info.page_matches.empty() &&
        request_info.search_matches.empty() &&
@@ -998,7 +1027,7 @@ namespace RequestInfoSvcs
        request_info.url_keyword_matches.empty() &&
        request_info.merge_user_id.is_null())
     {
-      return;
+      co_return;
     }
 
     try
@@ -1006,7 +1035,7 @@ namespace RequestInfoSvcs
       TriggersMatchInfoList delegate_imps;
       TriggersMatchInfoList delegate_clicks;
 
-      process_request_trans_(
+      co_await co_process_request_trans_(
         delegate_imps,
         delegate_clicks,
         request_info);
@@ -1034,12 +1063,11 @@ namespace RequestInfoSvcs
     }
   }
 
-  void
-  UserTriggerMatchContainer::process_impression(
+  AdServer::Commons::StartableAwaitable<void>
+  UserTriggerMatchContainer::co_process_impression(
     const ImpressionInfo& imp_info)
-    /*throw(NotReady, Exception)*/
   {
-    static const char* FUN = "UserTriggerMatchContainer::process_impression()";
+    static const char* FUN = "UserTriggerMatchContainer::co_process_impression()";
 
     try
     {
@@ -1047,7 +1075,7 @@ namespace RequestInfoSvcs
       bool delegate_click;
       TriggerActionProcessor::TriggersMatchInfo triggers_match_info;
 
-      process_impression_trans_(
+      co_await co_process_impression_trans_(
         delegate_impression,
         delegate_click,
         triggers_match_info,
@@ -1072,19 +1100,18 @@ namespace RequestInfoSvcs
     }
   }
 
-  void
-  UserTriggerMatchContainer::process_click(
+  AdServer::Commons::StartableAwaitable<void>
+  UserTriggerMatchContainer::co_process_click(
     const Commons::RequestId& request_id,
     const Generics::Time& time)
-    /*throw(Exception)*/
   {
-    static const char* FUN = "UserTriggerMatchContainer::process_click()";
+    static const char* FUN = "UserTriggerMatchContainer::co_process_click()";
 
     try
     {
       bool delegate_click;
       TriggerActionProcessor::TriggersMatchInfo triggers_match_info;
-      process_click_trans_(
+      co_await co_process_click_trans_(
         delegate_click,
         triggers_match_info,
         request_id,
@@ -1118,8 +1145,8 @@ namespace RequestInfoSvcs
   }
 
   template<typename TransactionType, typename ProfileWriterType>
-  void
-  UserTriggerMatchContainer::save_profile_(
+  AdServer::Commons::Awaitable<void>
+  UserTriggerMatchContainer::co_save_profile_(
     TransactionType* transaction,
     const ProfileWriterType& profile_writer,
     const Generics::Time& time)
@@ -1131,11 +1158,12 @@ namespace RequestInfoSvcs
       new Generics::SmartMemBuf(profile_size));
 
     profile_writer.save(new_mem_buf->membuf().data(), profile_size);
-    transaction->save_profile(Generics::transfer_membuf(new_mem_buf), time);
+    co_await transaction->co_save_profile(
+      Generics::transfer_membuf(new_mem_buf), time);
   }
 
-  void
-  UserTriggerMatchContainer::process_request_trans_(
+  AdServer::Commons::Awaitable<void>
+  UserTriggerMatchContainer::co_process_request_trans_(
     TriggersMatchInfoList& delegate_imps,
     TriggersMatchInfoList& delegate_clicks,
     const RequestInfo& request_info)
@@ -1153,8 +1181,8 @@ namespace RequestInfoSvcs
         // merge temporary profile
         try
         {
-          temp_mem_buf =
-            merge_profile_provider_->get_user_profile(request_info.merge_user_id);
+          temp_mem_buf = co_await merge_profile_provider_->co_get_user_profile(
+            request_info.merge_user_id);
         }
         catch(const eh::Exception& ex)
         {
@@ -1168,9 +1196,9 @@ namespace RequestInfoSvcs
       }
 
       UserProfileMap::Transaction_var transaction =
-        user_map_->get_transaction(request_info.user_id);
+        co_await user_map_->co_get_transaction(request_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
       UserTriggerMatchWriter user_profile_writer;
 
@@ -1258,9 +1286,10 @@ namespace RequestInfoSvcs
               imp_it != user_profile_writer.impressions().end(); ++imp_it)
           {
             RequestProfileMap::Transaction_var change_request_trans =
-              request_map_->get_transaction(Commons::RequestId((*imp_it).request_id()));
+              co_await request_map_->co_get_transaction(
+                Commons::RequestId((*imp_it).request_id()));
             Generics::ConstSmartMemBuf_var change_request_mem_buf =
-              change_request_trans->get_profile();
+              co_await change_request_trans->co_get_profile();
 
             if(change_request_mem_buf.in())
             {
@@ -1341,7 +1370,7 @@ namespace RequestInfoSvcs
                 change_request_profile_writer.url_keyword_match_counters(),
                 replace_match_info.url_keyword_matches);
 
-              save_profile_(
+              co_await co_save_profile_(
                 change_request_trans.in(),
                 change_request_profile_writer,
                 request_info.time);
@@ -1350,7 +1379,7 @@ namespace RequestInfoSvcs
         }
       }
 
-      transaction->save_profile(
+      co_await transaction->co_save_profile(
         Generics::transfer_membuf(new_user_mem_buf),
         request_info.time);
     }
@@ -1363,8 +1392,8 @@ namespace RequestInfoSvcs
     }
   }
 
-  void
-  UserTriggerMatchContainer::process_impression_trans_(
+  AdServer::Commons::Awaitable<void>
+  UserTriggerMatchContainer::co_process_impression_trans_(
     bool& delegate_impression,
     bool& delegate_click,
     TriggerActionProcessor::TriggersMatchInfo& imp_matches_info,
@@ -1385,11 +1414,12 @@ namespace RequestInfoSvcs
       delegate_impression = false;
       delegate_click = false;
 
-      UserProfileMap::Transaction_var user_trans = user_map_->get_transaction(
-        imp_info.user_id);
-      RequestProfileMap::Transaction_var request_trans = request_map_->get_transaction(
-        imp_info.request_id);
-      Generics::ConstSmartMemBuf_var request_mem_buf = request_trans->get_profile();
+      UserProfileMap::Transaction_var user_trans =
+        co_await user_map_->co_get_transaction(imp_info.user_id);
+      RequestProfileMap::Transaction_var request_trans =
+        co_await request_map_->co_get_transaction(imp_info.request_id);
+      Generics::ConstSmartMemBuf_var request_mem_buf =
+        co_await request_trans->co_get_profile();
 
       if(request_mem_buf.in())
       {
@@ -1399,11 +1429,12 @@ namespace RequestInfoSvcs
         if(request_profile_reader.impression_done())
         {
           // double impression
-          return;
+          co_return;
         }
       }
 
-      Generics::ConstSmartMemBuf_var user_mem_buf = user_trans->get_profile();
+      Generics::ConstSmartMemBuf_var user_mem_buf =
+        co_await user_trans->co_get_profile();
       UserTriggerMatchWriter user_profile_writer;
 
       // collect matches
@@ -1494,7 +1525,8 @@ namespace RequestInfoSvcs
         imp_matches_info.url_keyword_matches);
 
       // save request profile
-      save_profile_(request_trans.in(), request_profile_writer, imp_info.time);
+      co_await co_save_profile_(
+        request_trans.in(), request_profile_writer, imp_info.time);
 
       // save request marker for user
       clear_expired_impressions(
@@ -1513,7 +1545,7 @@ namespace RequestInfoSvcs
 
       user_profile_writer.impressions().insert(ins_it, new_impression);
 
-      save_profile_(user_trans.in(), user_profile_writer, imp_info.time);
+      co_await co_save_profile_(user_trans.in(), user_profile_writer, imp_info.time);
     }
     catch(const eh::Exception& ex)
     {
@@ -1524,8 +1556,8 @@ namespace RequestInfoSvcs
     }
   }
 
-  void
-  UserTriggerMatchContainer::process_click_trans_(
+  AdServer::Commons::Awaitable<void>
+  UserTriggerMatchContainer::co_process_click_trans_(
     bool& delegate_click,
     TriggerActionProcessor::TriggersMatchInfo& click_matches_info,
     const Commons::RequestId& request_id,
@@ -1544,9 +1576,9 @@ namespace RequestInfoSvcs
     try
     {
       RequestProfileMap::Transaction_var request_trans =
-        request_map_->get_transaction(request_id);
+        co_await request_map_->co_get_transaction(request_id);
       Generics::ConstSmartMemBuf_var request_mem_buf =
-        request_trans->get_profile();
+        co_await request_trans->co_get_profile();
 
       if(request_mem_buf.in())
       {
@@ -1557,7 +1589,7 @@ namespace RequestInfoSvcs
         {
           // double click
           delegate_click = false;
-          return;
+          co_return;
         }
       }
 
@@ -1596,7 +1628,7 @@ namespace RequestInfoSvcs
 
       request_profile_writer.click_done() = 1;
 
-      save_profile_(request_trans.in(), request_profile_writer, time);
+      co_await co_save_profile_(request_trans.in(), request_profile_writer, time);
     }
     catch(const eh::Exception& ex)
     {

@@ -30,10 +30,10 @@
     </xsd:annotation>
 
     <xsd:sequence>
-      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+      <xsd:element name="GrpcConfig" type="GrpcConfigType">
         <xsd:annotation>
           <xsd:documentation>
-            Corba interface configuration.
+            gRPC interface configuration.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -62,7 +62,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ExpressionMatcherGroup" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="ExpressionMatcherGroup" type="ExpressionMatcherGrpcGroupType"/>
 
       <xsd:element name="UserInfo" type="ExpressionMatcherUserInfoType"/>
 
@@ -155,6 +155,17 @@
     <xsd:attribute name="enable_channel_overlap_stats" type="xsd:boolean" use="optional" default="true"/>
     <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="service_host_name" type="xsd:string" use="required"/>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherGrpcGroupType">
+    <xsd:sequence>
+      <xsd:element
+        name="ExpressionMatcherGrpcRef"
+        type="GrpcEndpointConfigType"
+        minOccurs="1"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
   <xsd:complexType name="ExpressionMatcherUserInfoType">
@@ -224,6 +235,7 @@
     </xsd:sequence>
 
     <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="process_threads" type="xsd:positiveInteger" default="20"/>
     <xsd:attribute name="adrequest_anonymize" type="xsd:boolean" use="required"/>
     <xsd:attribute name="cache_blocks" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="channel_match_cache_size" type="xsd:nonNegativeInteger" use="optional" default="4294967296">

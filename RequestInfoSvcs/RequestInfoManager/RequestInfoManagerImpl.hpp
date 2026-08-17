@@ -28,6 +28,7 @@
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager_s.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
 #include "CompositeRequestActionProcessor.hpp"
 #include "UserCampaignReachContainer.hpp"
@@ -343,6 +344,8 @@ namespace AdServer
 
       Generics::Planner_var scheduler_;
       Generics::TaskRunner_var task_runner_;
+      std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+        rocksdb_processor_;
 
       RequestInfoManagerConfig request_info_manager_config_;
 

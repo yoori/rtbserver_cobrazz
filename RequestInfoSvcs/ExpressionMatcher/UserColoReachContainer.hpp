@@ -8,7 +8,9 @@
 #include <Generics/MemBuf.hpp>
 
 #include <Commons/Algs.hpp>
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
 
 #include "ColoReachProcessor.hpp"
@@ -39,16 +41,17 @@ namespace AdServer
         unsigned long common_chunks_number,
         const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
         const char* file_prefix,
-        const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
+        const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+        std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var
       get_profile(const AdServer::Commons::UserId& user_id)
         /*throw(Exception)*/;
 
-      virtual void
-      process_request(const RequestInfo& request_info)
-        /*throw(Exception)*/;
+      AdServer::Commons::StartableAwaitable<void>
+      co_process_request(const RequestInfo& request_info);
 
       void clear_expired() /*throw(Exception)*/;
 
@@ -60,8 +63,8 @@ namespace AdServer
       virtual ~UserColoReachContainer() noexcept
       {}
 
-      void
-      process_request_trans_(
+      AdServer::Commons::Awaitable<void>
+      co_process_request_trans_(
         ColoReachInfoList& gmt_colo_reach_info_list,
         ColoReachInfoList& isp_colo_reach_info_list,
         const RequestInfo& request_info)

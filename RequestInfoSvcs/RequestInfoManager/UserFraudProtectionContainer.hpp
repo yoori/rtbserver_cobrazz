@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
@@ -19,6 +21,11 @@
 
 namespace AdServer
 {
+  namespace ProfilingCommons
+  {
+    class RocksDBProfileMapProcessor;
+  }
+
   namespace RequestInfoSvcs
   {
     const Generics::Time DEFAULT_FRAUD_PROFILE_EXPIRE_TIME =
@@ -90,7 +97,9 @@ namespace AdServer
         Callback* callback,
         const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME))
+          Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME),
+        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var

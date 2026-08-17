@@ -10,7 +10,6 @@
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
-#include <RequestInfoSvcs/ExpressionMatcher/ExpressionMatcher.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
@@ -163,6 +162,8 @@ namespace RequestInfoSvcs{
         "ADS-IMPL-3015")),
       scheduler_(new Generics::Planner(callback_)),
       task_runner_(new Generics::TaskRunner(callback_, 7)),
+      rocksdb_processor_(std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
+        request_info_manager_config.rocksdb_batching_threads())),
       request_info_manager_config_(request_info_manager_config),
       rim_stats_impl_(rim_stats_impl)
   {
@@ -187,6 +188,7 @@ namespace RequestInfoSvcs{
     {
       add_child_object(task_runner_.in());
       add_child_object(scheduler_.in());
+      add_child_object(rocksdb_processor_);
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
@@ -862,7 +864,8 @@ namespace RequestInfoSvcs{
               user_fraud_protection_rocksdb_path.c_str(),
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
-                DEFAULT_FRAUD_PROFILE_EXPIRE_TIME);
+                DEFAULT_FRAUD_PROFILE_EXPIRE_TIME,
+              rocksdb_processor_);
 
           UserFraudProtectionContainer::Config_var fraud_config(
             new UserFraudProtectionContainer::Config());
@@ -921,7 +924,8 @@ namespace RequestInfoSvcs{
                 DEFAULT_ACTION_IGNORE_TIME,
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
-                DEFAULT_ACTION_PROFILE_EXPIRE_TIME);
+                DEFAULT_ACTION_PROFILE_EXPIRE_TIME,
+              rocksdb_processor_);
 
           add_child_object(user_action_info_container.in());
 
@@ -978,7 +982,8 @@ namespace RequestInfoSvcs{
               user_campaign_reach_rocksdb_path.c_str(),
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
-                USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME);
+                USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME,
+              rocksdb_processor_);
 
           add_child_object(user_campaign_reach_container.in());
 
@@ -1038,7 +1043,8 @@ namespace RequestInfoSvcs{
               Generics::Time(*bid_chunks_config.expire_time()) :
             chunks_config.expire_time().present() ?
               Generics::Time(*chunks_config.expire_time()) :
-              RequestInfoContainer::DEFAULT_EXPIRE_TIME);
+              RequestInfoContainer::DEFAULT_EXPIRE_TIME,
+            rocksdb_processor_);
 
         add_child_object(request_info_container.in());
 
@@ -1086,7 +1092,8 @@ namespace RequestInfoSvcs{
               chunks_config.chunks_root().c_str(),
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
-                PassbackContainer::DEFAULT_EXPIRE_TIME);
+                PassbackContainer::DEFAULT_EXPIRE_TIME,
+              rocksdb_processor_);
 
           add_child_object(passback_container.in());
 
@@ -1143,7 +1150,8 @@ namespace RequestInfoSvcs{
               user_site_reach_rocksdb_path.c_str(),
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
-                USER_SITE_REACH_DEFAULT_EXPIRE_TIME);
+                USER_SITE_REACH_DEFAULT_EXPIRE_TIME,
+              rocksdb_processor_);
 
           add_child_object(user_site_reach_container.in());
 
@@ -1203,7 +1211,8 @@ namespace RequestInfoSvcs{
               config.chunks_root().c_str(),
               config.expire_time().present() ?
                 Generics::Time(*config.expire_time()) :
-                UserTagRequestMergeContainer::DEFAULT_EXPIRE_TIME);
+                UserTagRequestMergeContainer::DEFAULT_EXPIRE_TIME,
+              rocksdb_processor_);
 
           add_child_object(user_tag_request_merge_container.in());
 

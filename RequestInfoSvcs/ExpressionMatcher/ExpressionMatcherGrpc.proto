@@ -1,0 +1,39 @@
+edition = "2023";
+
+option features.field_presence = IMPLICIT;
+option features.enum_type = OPEN;
+option features.repeated_field_encoding = PACKED;
+option features.utf8_validation = NONE;
+option features.json_format = ALLOW;
+
+package adserver.request_info_svcs.expression_matcher;
+
+service ExpressionMatcherGrpc {
+  rpc get_inventory_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_trigger_match_profile(UserTriggerMatchProfileRequest)
+    returns (ProfileResponse);
+  rpc get_request_trigger_match_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_household_colo_reach_profile(ProfileRequest) returns (ProfileResponse);
+  rpc run_daily_processing(RunDailyProcessingRequest)
+    returns (RunDailyProcessingResponse);
+}
+
+message ProfileRequest {
+  string id = 1;
+}
+
+message UserTriggerMatchProfileRequest {
+  string user_id = 1;
+  bool temporary_user = 2;
+}
+
+message ProfileResponse {
+  bool found = 1;
+  bytes profile = 2;
+}
+
+message RunDailyProcessingRequest {
+  bool synchronous = 1;
+}
+
+message RunDailyProcessingResponse {}

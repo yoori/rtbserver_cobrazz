@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -14,7 +16,12 @@
 
 namespace AdServer
 {
-namespace RequestInfoSvcs
+  namespace ProfilingCommons
+  {
+    class RocksDBProfileMapProcessor;
+  }
+
+  namespace RequestInfoSvcs
 {
   /** UserTagRequestMergeContainer
    * merge input tag requests into groups
@@ -34,7 +41,9 @@ namespace RequestInfoSvcs
         const Generics::Time& time_merge_bound,
         const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(DEFAULT_EXPIRE_TIME))
+          Generics::Time(DEFAULT_EXPIRE_TIME),
+        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
       /*throw(Exception)*/;
 
     Generics::ConstSmartMemBuf_var

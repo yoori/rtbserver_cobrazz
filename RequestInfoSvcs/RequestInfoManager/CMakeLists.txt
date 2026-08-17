@@ -66,7 +66,6 @@ target_link_libraries(RequestInfoManager
   BillingProcessor
   PassbackContainer
   RequestInfoContainer
-  ExpressionMatcherIDL
   UserInfoClient
   CampaignServerIDL
   LogCommons

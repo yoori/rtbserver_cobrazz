@@ -5,7 +5,10 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 
+#include <Commons/Coro/StartableAwaitable.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <LogCommons/FileReceiverFacade.hpp>
+#include <LogCommons/RequestBasicChannels.hpp>
 
 #include "ConsiderInterface.hpp"
 
@@ -20,11 +23,13 @@ namespace AdServer
       ~RequestBasicChannelsProcessor() noexcept
       {}
 
-      virtual bool
-      process_requests(
-        LogProcessing::FileReceiver::FileGuard* file_ptr,
-        std::size_t& processed_lines_count)
-        /*throw(eh::Exception)*/ = 0;
+      virtual AdServer::Commons::StartableAwaitable<void>
+      co_process_request_basic_channels_record(
+        const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+        const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record) = 0;
+
+      virtual void
+      request_basic_channels_file_processed(const Generics::Time& timestamp) noexcept = 0;
     };
 
     class ExpressionMatcherLogLoader :
@@ -68,7 +73,8 @@ namespace AdServer
         Generics::Planner* scheduler,
         Logging::Logger* logger,
         Generics::ActiveObjectCallback* callback,
-        unsigned threads_number,
+        unsigned file_threads_number,
+        std::shared_ptr<Commons::ExecutorPool> processing_executor_pool,
         LogReadTraitsList log_read_traits,
         unsigned long check_logs_period)
         noexcept;
@@ -79,10 +85,6 @@ namespace AdServer
       typedef ReferenceCounting::SmartPtr<FileReceiverFacade>
         FileReceiverFacade_var;
 
-      typedef void (ExpressionMatcherLogLoader::*ConsiderAction) (
-        const Generics::MemBuf&, uint32_t);
-
-    private:
       ConsiderInterface* consider_interface_;
       RequestBasicChannelsProcessor* request_basic_channels_processor_;
       Generics::TaskRunner_var task_runner_;
@@ -90,6 +92,7 @@ namespace AdServer
       Logging::Logger_var logger_;
       FileReceiverFacade_var file_receiver_facade_;
       LogReadTraitsList log_read_traits_;
+      std::shared_ptr<Commons::ExecutorPool> processing_executor_pool_;
 
     private:
       virtual
@@ -113,21 +116,17 @@ namespace AdServer
         noexcept;
 
       bool
-      process_binary_file_(
+      process_request_basic_channels_file_(
         LogProcessing::FileReceiver::FileGuard* file_ptr,
-        ConsiderAction action,
         std::size_t& processed_lines_count)
         /*throw(eh::Exception)*/;
 
-      void
-      consider_click_(
-        const Generics::MemBuf& membuf,
-        uint32_t size) noexcept;
-
-      void
-      consider_impression_(
-        const Generics::MemBuf& membuf,
-        uint32_t size) noexcept;
+      bool
+      process_binary_file_(
+        LogProcessing::FileReceiver::FileGuard* file_ptr,
+        LogType log_type,
+        std::size_t& processed_lines_count)
+        /*throw(eh::Exception)*/;
 
       const LogReadTraits&
       find_log_read_traits_(LogType log_type) /*throw(Exception)*/;

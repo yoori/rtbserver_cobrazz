@@ -1,5 +1,32 @@
 ADD_SUBDIRECTORY(Compatibility)
 
+set(EXPRESSION_MATCHER_GRPC_PROTO_DIR ${PB_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher)
+set(EXPRESSION_MATCHER_GRPC_PROTO ExpressionMatcherGrpc.proto)
+
+add_grpc_sources(
+  ExpressionMatcherGrpcProto
+  ${EXPRESSION_MATCHER_GRPC_PROTO}
+  ${EXPRESSION_MATCHER_GRPC_PROTO_DIR}
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(ExpressionMatcherGrpcProto protobuf::libprotobuf GrpcBatch)
+
+add_library(ExpressionMatcherGrpcClient STATIC)
+
+add_adserver_grpc_client_sources(
+  ExpressionMatcherGrpcClient
+  ${CMAKE_SOURCE_DIR}/RequestInfoSvcs/ExpressionMatcher/ExpressionMatcherGrpc.proto
+  ${CMAKE_CURRENT_BINARY_DIR}
+  AdServer::RequestInfoSvcs
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(ExpressionMatcherGrpcClient
+  PUBLIC
+  Commons
+  ExpressionMatcherGrpcProto
+  GrpcBatch
+  gRPC::grpc++)
+
 add_library(ExpressionChannelMatcher STATIC
   ChannelMatcher.cpp
 )
@@ -25,17 +52,8 @@ add_library(UserColoReachContainer STATIC
 
 add_dependencies(UserColoReachContainer UserChannelInventoryProfilePST)
 
-add_idl(ExpressionMatcherIDL
-  ExpressionMatcher.idl
-  ${IDL_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher
-)
-
-target_link_libraries(ExpressionMatcherIDL
-  CORBACommons
-  CorbaTypesIDL
-)
-
 add_executable(ExpressionMatcher
+  ExpressionMatcherGrpc.cpp
   ExpressionMatcherLogLoader.cpp
   ExpressionMatcherImpl.cpp
   ExpressionMatcherMain.cpp
@@ -52,7 +70,9 @@ target_link_libraries(ExpressionMatcher
   ExpressionChannelMatcher
   ExpressionChannelIndex
 
-  ExpressionMatcherIDL
+  ExpressionMatcherGrpcClient
+  ExpressionMatcherGrpcProto
+
   CampaignServerIDL
   CORBACommons
 

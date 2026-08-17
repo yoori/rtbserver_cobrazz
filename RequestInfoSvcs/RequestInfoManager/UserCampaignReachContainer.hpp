@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <list>
 #include <string>
 
@@ -25,6 +27,11 @@
 
 namespace AdServer
 {
+  namespace ProfilingCommons
+  {
+    class RocksDBProfileMapProcessor;
+  }
+
   namespace RequestInfoSvcs
   {
     struct CampaignReachProcessor: public virtual ReferenceCounting::Interface
@@ -88,7 +95,9 @@ namespace AdServer
         CampaignReachProcessor* campaign_reach_processor,
         const char* rocksdb_path,
         const Generics::Time& expire_time =
-          Generics::Time(USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME))
+          Generics::Time(USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME),
+        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var

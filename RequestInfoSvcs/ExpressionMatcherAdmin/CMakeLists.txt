@@ -5,14 +5,11 @@ add_executable(ExpressionMatcherAdmin
 target_link_libraries(ExpressionMatcherAdmin
   String
   Generics
-  CORBACommons
   UtilCommons
 
-  ExpressionMatcherIDL
+  ExpressionMatcherGrpcProto
+  gRPC::grpc++
   pthread
-  ProcessControlIDL
-  UserActionProfilePST
-  UserActionProfile_v321PST
 
 )
 

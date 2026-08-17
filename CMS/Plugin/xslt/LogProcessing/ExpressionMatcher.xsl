@@ -57,6 +57,10 @@
         <xsl:value-of select="5000"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="rocksdb-batching-threads"><xsl:value-of
+      select="$expression-matcher-config/@rocksdb_batching_threads"/>
+      <xsl:if test="count($expression-matcher-config/@rocksdb_batching_threads) = 0">16</xsl:if>
+    </xsl:variable>
 
     <exsl:document href="expressionMatcher.port"
       method="text" omit-xml-declaration="yes"
@@ -74,6 +78,12 @@
       <xsl:value-of select="$processing-config/@threads"/>
       <xsl:if test="count($processing-config/@threads) = 0">
         <xsl:value-of select="$expression-matcher-processing-threads"/>
+      </xsl:if>
+    </xsl:variable>
+    <xsl:variable name="process-threads">
+      <xsl:value-of select="$processing-config/@process_threads"/>
+      <xsl:if test="count($processing-config/@process_threads) = 0">
+        <xsl:value-of select="$processing-threads"/>
       </xsl:if>
     </xsl:variable>
 
@@ -144,22 +154,21 @@
     pid_file="{concat($workspace-root, '/run/ExpressionMatcher.pid')}"
     update_period="{$update-period}"
     inventory_users_percentage="{$inventory-users-percentage-value}"
+    rocksdb_batching_threads="{$rocksdb-batching-threads}"
     colo_id="{$colo-id}"
     service_index="{count(exsl:node-set(
       $expression-matcher-host-port-sorted-set)/host[. = $HOST]/preceding-sibling::host)}"
     service_host_name="{$HOST}">
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$expression-matcher-config/cfg:threadParams/@min"/>
+    <cfg:GrpcConfig>
+      <xsl:attribute name="cq_threads"><xsl:value-of select="$expression-matcher-config/cfg:threadParams/@min"/>
         <xsl:if test="count($expression-matcher-config/cfg:threadParams/@min) = 0">
           <xsl:value-of select="$def-expression-matcher-threads"/>
         </xsl:if>
       </xsl:attribute>
 
-      <cfg:Endpoint host="*" port="{$expression-matcher-port}">
-        <cfg:Object servant="ExpressionMatcher" name="ExpressionMatcher"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
+      <cfg:Endpoint host="*" port="{$expression-matcher-port}"/>
+    </cfg:GrpcConfig>
 
     <xsl:variable name="snmp-stats-enabled">
       <xsl:if test="count($colo-config/cfg:snmpStats) > 0">
@@ -198,7 +207,7 @@
 
     <cfg:ExpressionMatcherGroup>
       <xsl:for-each select="exsl:node-set($expression-matcher-host-port-sorted-set)/host">
-        <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':', @port, '/ExpressionMatcher')}"/>
+        <cfg:ExpressionMatcherGrpcRef host="{.}" port="{@port}"/>
       </xsl:for-each>
     </cfg:ExpressionMatcherGroup>
 
@@ -330,6 +339,7 @@
       expire_time="5184000"/>
 
     <cfg:LogProcessing threads="{$processing-threads}"
+      process_threads="{$process-threads}"
       channel_match_cache_size="{$expression-matcher-config/@channel_match_cache_size}">
 
       <xsl:attribute name="adrequest_anonymize"><xsl:choose>

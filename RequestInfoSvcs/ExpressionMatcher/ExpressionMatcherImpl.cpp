@@ -9,7 +9,9 @@
 #include <Commons/Algs.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
+#include <Commons/ExecutorPool.hpp>
 #include <Commons/GrpcAlgs.hpp>
 
 #include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
@@ -23,12 +25,9 @@
 
 namespace
 {
-  const char DEFAULT_REQUEST_BASIC_CHANNELS_BASE_NAME[] =
-    "RequestBasicChannels";
-  const char DEFAULT_CONSIDER_CLICK_BASE_NAME[] =
-    "ConsiderClick";
-  const char DEFAULT_CONSIDER_IMPRESSION_BASE_NAME[] =
-    "ConsiderImpression";
+  const char DEFAULT_REQUEST_BASIC_CHANNELS_BASE_NAME[] = "RequestBasicChannels";
+  const char DEFAULT_CONSIDER_CLICK_BASE_NAME[] = "ConsiderClick";
+  const char DEFAULT_CONSIDER_IMPRESSION_BASE_NAME[] = "ConsiderImpression";
 
   const char DEFAULT_ERROR_DIR[] = "Error";
 
@@ -48,10 +47,7 @@ namespace
   typedef const String::AsciiStringManip::Char1Category<','> Sep;
 
   bool
-  check_percentage_sampling_(
-    unsigned long hash,
-    double percentage)
-    noexcept
+  check_percentage_sampling_(unsigned long hash, double percentage) noexcept
   {
     if (percentage >= 100)
     {
@@ -63,9 +59,8 @@ namespace
       return false;
     }
 
-    return hash % SAMPLING_RESOLUTION <
-      static_cast<unsigned long>(
-        percentage * (SAMPLING_RESOLUTION / 100.0));
+    return hash % SAMPLING_RESOLUTION < static_cast<unsigned long>(
+      percentage * (SAMPLING_RESOLUTION / 100.0));
   }
 }
 
@@ -75,9 +70,7 @@ namespace Aspect
   const char EXPRESSION_MATCHER_DAILY_CHECK[] = "ExpressionMatcher:DailyCheck";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -101,12 +94,9 @@ namespace RequestInfoSvcs
       const char* prefix)
       /*throw(eh::Exception)*/
     {
-      const std::string in_dir =
-        AdServer::LogProcessing::FileReceiverConfig::make_path(
-          log_root,
-          log_type_config.path().present() ?
-            log_type_config.path()->c_str() :
-            prefix);
+      const std::string in_dir = AdServer::LogProcessing::FileReceiverConfig::make_path(
+        log_root,
+        log_type_config.path().present() ? log_type_config.path()->c_str() : prefix);
 
       return ExpressionMatcherLogLoader::LogReadTraits(
         log_type,
@@ -120,16 +110,13 @@ namespace RequestInfoSvcs
 
   AdServer::LogProcessing::LogFlushTraits
   read_flush_policy(
-    const xsd::AdServer::Configuration::LogFlushPolicyType&
-      log_flush_policy,
+    const xsd::AdServer::Configuration::LogFlushPolicyType& log_flush_policy,
     const char* default_path,
     Generics::Time& check_loggers_period)
   {
-    check_loggers_period.tv_sec =
-      ( check_loggers_period.tv_sec == 0 ?
-        log_flush_policy.period() :
-        gcd((unsigned long)check_loggers_period.tv_sec,
-            (unsigned long)log_flush_policy.period()));
+    check_loggers_period.tv_sec = (
+      check_loggers_period.tv_sec == 0 ? log_flush_policy.period() :
+      gcd((unsigned long)check_loggers_period.tv_sec, (unsigned long)log_flush_policy.period()));
 
     AdServer::LogProcessing::LogFlushTraits res;
     res.period = Generics::Time(log_flush_policy.period());
@@ -160,11 +147,27 @@ namespace RequestInfoSvcs
       file_controller_(new ProfilingCommons::PosixFileController(0,
         expression_matcher_config.Storage().min_free_space().present() ?
           *expression_matcher_config.Storage().min_free_space() : 0)),
+      rocksdb_processor_(
+        std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
+          expression_matcher_config.rocksdb_batching_threads())),
       callback_(new Logging::ActiveObjectCallbackImpl(init_logger,
         "AdServer::CampaignSvcs::ExpressionMatcherImpl",
         Aspect::EXPRESSION_MATCHER, "ADS-IMPL-4016")),
       grpc_executor_(std::make_shared<AdServer::Grpc::GrpcExecutor>(
         expression_matcher_config.UserInfo().grpc_executor_threads())),
+      grpc_coalesce_runner_(
+        std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+          callback_,
+          std::make_shared<boost::asio::io_service>(),
+          1,
+          128 * 1024,
+          "em-grpc-c")),
+      processing_executor_pool_(
+        std::make_shared<AdServer::Commons::ExecutorPool>(
+          callback_,
+          expression_matcher_config_.LogProcessing().process_threads(),
+          AdServer::Commons::ExecutorPool::ResumeStrategy::AnyContext,
+          "em-log-proc")),
       task_runner_(new Generics::TaskRunner(callback_, 3)),
       daily_processing_task_runner_(new Generics::TaskRunner(callback_,
         expression_matcher_config_.DailyProcessing().thread_pool_size())),
@@ -173,11 +176,10 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherImpl::ExpressionMatcherImpl()";
 
-    if(logger() == 0)
+    if (logger() == 0)
     {
       throw Exception(
-        "ExpressionMatcherImpl::ExpressionMatcherImpl(): "
-        "Logger must be defined.");
+        "ExpressionMatcherImpl::ExpressionMatcherImpl(): Logger must be defined.");
     }
 
     try
@@ -186,12 +188,14 @@ namespace RequestInfoSvcs
       add_child_object(daily_processing_task_runner_.in());
       add_child_object(scheduler_.in());
       add_child_object(grpc_executor_);
+      add_child_object(grpc_coalesce_runner_);
+      add_child_object(processing_executor_pool_);
+      add_child_object(rocksdb_processor_);
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": CompositeActiveObject::Exception caught: " <<
-        ex.what();
+      ostr << FUN << ": CompositeActiveObject::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -264,11 +268,10 @@ namespace RequestInfoSvcs
           (log_root + COLO_USER_STAT_OUT_DIR).c_str(),
           check_loggers_period_));
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't init ExpressionMatcherOutLogger. eh::Exception caught: " <<
+      ostr << FUN << ": Can't init ExpressionMatcherOutLogger. eh::Exception caught: " <<
         ex.what();
       throw Exception(ostr);
     }
@@ -278,11 +281,10 @@ namespace RequestInfoSvcs
       Generics::Task_var load_data_msg(new LoadDataTask(this, task_runner_));
       task_runner_->enqueue_task(load_data_msg);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": "
-        "Can't set task for UserInfoManagerSession resolving."
+      ostr << FUN << ": Can't set task for UserInfoManagerSession resolving."
         "Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
@@ -301,9 +303,7 @@ namespace RequestInfoSvcs
     catch (eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": "
-        "Can't resolve campaign server."
-        "Caught eh::Exception: " <<
+      ostr << FUN << ": Can't resolve campaign server. Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }
@@ -349,141 +349,98 @@ namespace RequestInfoSvcs
     typename ContainerPtrHolderType,
     typename KeyType,
     typename GetProfileAdapterType>
-  bool
+  Generics::ConstSmartMemBuf_var
   ExpressionMatcherImpl::get_profile_(
-    CORBACommons::OctSeq_out result_profile,
     const char* FUN,
     const ContainerPtrHolderType& container_ptr_holder,
     const KeyType& id,
     const GetProfileAdapterType& get_profile_adapter)
-    /*throw(AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-      AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/
   {
     try
     {
       auto container = container_ptr_holder.get();
 
-      if(!container.in())
+      if (!container.in())
       {
-        AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady exc;
-        exc.description = "Container is not ready";
-        throw exc;
+        throw NotReady("Container is not ready");
       }
 
-      result_profile = new CORBACommons::OctSeq();
-
-      Generics::ConstSmartMemBuf_var mb_profile = get_profile_adapter(container.in(), id);
-
-      if(mb_profile.in())
-      {
-        CorbaAlgs::convert_mem_buf(*result_profile, mb_profile->membuf());
-        return true;
-      }
-
-      return false;
+      return get_profile_adapter(container.in(), id);
+    }
+    catch(const NotReady&)
+    {
+      throw;
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN <<
         ": Can't get profile. Caught eh::Exception: " << ex.what();
-
-      CORBACommons::throw_desc<
-        RequestInfoSvcs::ExpressionMatcher::ImplementationException>(
-          ostr.str());
+      throw Exception(ostr);
     }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't get profile. Caught CORBA::SystemException: " << e;
-
-      CORBACommons::throw_desc<
-        RequestInfoSvcs::ExpressionMatcher::ImplementationException>(
-          ostr.str());
-    }
-    return 0; // never reach
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   ExpressionMatcherImpl::get_inventory_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::UserInventoryProfile_out inv_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-      AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
-    static const char* FUN = "ExpressionMatcherImpl::get_profile()";
+    static const char* FUN = "ExpressionMatcherImpl::get_inventory_profile()";
 
     return get_profile_(
-      inv_profile,
       FUN,
       user_inventory_container_,
-      AdServer::Commons::UserId(user_id),
+      user_id,
       GetProfileAdapter());
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   ExpressionMatcherImpl::get_user_trigger_match_profile(
-    const char* user_id,
-    bool temporary_user,
-    AdServer::RequestInfoSvcs::UserTriggerMatchProfile_out user_trigger_profile)
-    /*throw(AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-      AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id,
+    bool temporary_user)
   {
     static const char* FUN = "ExpressionMatcherImpl::get_user_trigger_match_profile()";
 
-    if(!temporary_user)
+    if (!temporary_user)
     {
       return get_profile_(
-        user_trigger_profile,
         FUN,
         user_trigger_match_container_,
-        AdServer::Commons::UserId(user_id),
+        user_id,
         GetUserProfileAdapter());
     }
     else
     {
       return get_profile_(
-        user_trigger_profile,
         FUN,
         temp_user_trigger_match_container_,
-        AdServer::Commons::UserId(user_id),
+        user_id,
         GetUserProfileAdapter());
     }
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   ExpressionMatcherImpl::get_request_trigger_match_profile(
-    const char* request_id,
-    AdServer::RequestInfoSvcs::RequestTriggerMatchProfile_out request_trigger_profile)
-    /*throw(AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-      AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/
+    const AdServer::Commons::RequestId& request_id)
   {
     static const char* FUN = "ExpressionMatcherImpl::get_request_trigger_match_profile()";
 
     return get_profile_(
-      request_trigger_profile,
       FUN,
       user_trigger_match_container_,
-      AdServer::Commons::RequestId(request_id),
+      request_id,
       GetRequestProfileAdapter());
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   ExpressionMatcherImpl::get_household_colo_reach_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::HouseholdColoReachProfile_out profile)
-    /*throw(AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-      AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "ExpressionMatcherImpl::get_household_colo_reach_profile()";
 
     return get_profile_(
-      profile,
       FUN,
       household_colo_reach_container_,
-      AdServer::Commons::RequestId(user_id),
+      user_id,
       GetProfileAdapter());
   }
 
@@ -500,7 +457,7 @@ namespace RequestInfoSvcs
         expression_matcher_config_.ChunksConfig().chunks_root().c_str(),
         "Chunk");
 
-      if(!user_inventory_container_.get().in())
+      if (!user_inventory_container_.get().in())
       {
         UserInventoryInfoContainer_var user_inventory_container = new UserInventoryInfoContainer(
           logger(),
@@ -511,7 +468,8 @@ namespace RequestInfoSvcs
           expression_matcher_config_.ChunksConfig().chunks_number(),
           chunk_inventory_folders,
           expression_matcher_config_.ChunksConfig().chunks_prefix().c_str(),
-          fill_level_map_traits_(expression_matcher_config_.ChunksConfig())
+          fill_level_map_traits_(expression_matcher_config_.ChunksConfig()),
+          rocksdb_processor_
           );
 
         add_child_object(user_inventory_container.in(), true);
@@ -527,7 +485,7 @@ namespace RequestInfoSvcs
         ": caught Exception on creating UserInventoryInfoContainer: " << ex.what();
     }
 
-    if(expression_matcher_config_.TriggerImpsConfig().present())
+    if (expression_matcher_config_.TriggerImpsConfig().present())
     {
       AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_trigger_folders;
       try
@@ -547,7 +505,7 @@ namespace RequestInfoSvcs
 
       try
       {
-        if(!temp_user_trigger_match_container_.get().in())
+        if (!temp_user_trigger_match_container_.get().in())
         {
           UserTriggerMatchContainer_var temp_user_trigger_match_container = new UserTriggerMatchContainer(
             logger(),
@@ -562,31 +520,44 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->TempUserChunksConfig()),
-            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
+            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig()),
+            rocksdb_processor_
             );
 
           add_child_object(temp_user_trigger_match_container.in(), true);
 
           temp_user_trigger_match_container_ = temp_user_trigger_match_container;
 
-          // init UserTriggerMatchProfileProvider
-          CORBACommons::CorbaObjectRefList expression_matcher_refs;
-
-          Config::CorbaConfigReader::read_multi_corba_ref(
-            expression_matcher_config_.ExpressionMatcherGroup(),
-            expression_matcher_refs);
+          UserTriggerMatchProfileProviderImpl::EndpointByHost
+            expression_matcher_endpoints;
+          for(const auto& grpc_ref :
+                expression_matcher_config_.ExpressionMatcherGroup().
+                  ExpressionMatcherGrpcRef())
+          {
+            if(grpc_ref.host().present())
+            {
+              expression_matcher_endpoints.emplace(
+                *grpc_ref.host(),
+                *grpc_ref.host() + ":" + std::to_string(grpc_ref.port()));
+            }
+          }
 
           Commons::HostDistributionFile_var host_distr = new Commons::HostDistributionFile(
             expression_matcher_config_.ChunksDistribution().distribution_file_path().c_str(),
             expression_matcher_config_.ChunksDistribution().distribution_file_schema().c_str());
 
-          user_trigger_match_profile_provider_ = new UserTriggerMatchProfileProviderImpl(
-            corba_client_adapter_.in(),
-            expression_matcher_refs,
+          UserTriggerMatchProfileProviderImpl_var profile_provider =
+            new UserTriggerMatchProfileProviderImpl(
+            expression_matcher_endpoints,
             host_distr,
             expression_matcher_config_.service_host_name().c_str(),
             temp_user_trigger_match_container_.get(),
-            expression_matcher_config_.ChunksConfig().chunks_number());
+            expression_matcher_config_.ChunksConfig().chunks_number(),
+            grpc_executor_,
+            grpc_coalesce_runner_,
+            processing_executor_pool_);
+          add_child_object(profile_provider.in());
+          user_trigger_match_profile_provider_ = profile_provider;
         }
       }
       catch(const Commons::HostDistributionFile::InvalidFile& ex)
@@ -595,8 +566,8 @@ namespace RequestInfoSvcs
           Aspect::EXPRESSION_MATCHER,
           "ADS-IMPL-4023") << FUN <<
           ": HostDistributionFile::InvalidFile: '" <<
-          expression_matcher_config_.ChunksDistribution().distribution_file_path()
-          << "': " << ex.what();
+          expression_matcher_config_.ChunksDistribution().distribution_file_path() << "': " <<
+          ex.what();
       }
       catch(const UserTriggerMatchContainer::Exception& ex)
       {
@@ -608,7 +579,7 @@ namespace RequestInfoSvcs
 
       try
       {
-        if(user_trigger_match_profile_provider_.in() &&
+        if (user_trigger_match_profile_provider_.in() &&
            !user_trigger_match_container_.get().in())
         {
           UserTriggerMatchContainer_var user_trigger_match_container = new UserTriggerMatchContainer(
@@ -624,7 +595,8 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig()),
-            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
+            fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig()),
+            rocksdb_processor_
             );
 
           add_child_object(user_trigger_match_container.in(), true);
@@ -649,7 +621,7 @@ namespace RequestInfoSvcs
         expression_matcher_config_.HouseholdColoReachChunksConfig().chunks_root().c_str(),
         "Chunk");
 
-      if(!household_colo_reach_container_.get().in())
+      if (!household_colo_reach_container_.get().in())
       {
         UserColoReachContainer_var household_colo_reach_container = new UserColoReachContainer(
           logger(),
@@ -658,7 +630,8 @@ namespace RequestInfoSvcs
           expression_matcher_config_.ChunksConfig().chunks_number(),
           chunk_colo_reach_folders,
           expression_matcher_config_.HouseholdColoReachChunksConfig().chunks_prefix().c_str(),
-          fill_level_map_traits_(expression_matcher_config_.HouseholdColoReachChunksConfig())
+          fill_level_map_traits_(expression_matcher_config_.HouseholdColoReachChunksConfig()),
+          rocksdb_processor_
           );
 
         add_child_object(household_colo_reach_container.in(), true);
@@ -674,7 +647,7 @@ namespace RequestInfoSvcs
         ": caught Exception on creating UserInventoryInfoContainer: " << ex.what();
     }
 
-    if(!user_inventory_container_.get().in() ||
+    if (!user_inventory_container_.get().in() ||
        (expression_matcher_config_.TriggerImpsConfig().present() && (
          !user_trigger_match_container_.get().in() ||
          !temp_user_trigger_match_container_.get().in())))
@@ -745,33 +718,31 @@ namespace RequestInfoSvcs
         user_info_controller_refs;
 
       const auto& user_info_config = expression_matcher_config_.UserInfo();
-      if(user_info_config.BatchingOptions().present())
+      if (user_info_config.BatchingOptions().present())
       {
-        batching_options =
-          Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
+        batching_options = Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
       }
 
-      for(const auto& group : user_info_config.UserInfoControllerGroup())
+      for (const auto& group : user_info_config.UserInfoControllerGroup())
       {
         AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient::
           UserInfoControllerRefGroup user_info_controller_ref_group;
-        for(const auto& endpoint : group.Endpoint())
+        for (const auto& endpoint : group.Endpoint())
         {
           user_info_controller_ref_group.emplace_back(endpoint);
         }
-        if(!user_info_controller_ref_group.empty())
+
+        if (!user_info_controller_ref_group.empty())
         {
-          user_info_controller_refs.emplace_back(
-            std::move(user_info_controller_ref_group));
+          user_info_controller_refs.emplace_back(std::move(user_info_controller_ref_group));
         }
       }
 
-      auto client =
-        std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
-          user_info_controller_refs,
-          batching_options,
-          grpc_executor_,
-          callback_->logger());
+      auto client = std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
+        user_info_controller_refs,
+        batching_options,
+        grpc_executor_,
+        callback_->logger());
 
       user_info_manager_session_ = client;
       add_child_object(client);
@@ -811,16 +782,15 @@ namespace RequestInfoSvcs
           configuration.in() &&
           !daily_processing_loop_started_;
 
-        if(need_start)
+        if (need_start)
         {
           daily_processing_loop_started_ = true;
         }
       }
 
-      if(need_start)
+      if (need_start)
       {
-        Generics::Task_var clear_expired_msg(new ClearExpiredUsersTask(
-          this, task_runner_, true));
+        Generics::Task_var clear_expired_msg(new ClearExpiredUsersTask(this, task_runner_, true));
         task_runner_->enqueue_task(clear_expired_msg);
 
         Generics::Task_var msg(new DailyCheckTask(this, task_runner_, true));
@@ -887,9 +857,9 @@ namespace RequestInfoSvcs
             expression_matcher_config_.TriggerImpsConfig().present();
           request_settings.provide_overlap_channel_ids = false;
 
-          for(unsigned long portion = 0;
-              portion < PORTIONS_NUMBER && !(interrupted = !active());
-              ++portion)
+          for (unsigned long portion = 0;
+            portion < PORTIONS_NUMBER && !(interrupted = !active());
+            ++portion)
           {
             // update expressions
             CampaignSvcs::ExpressionChannelsInfo_var expression_channels_info;
@@ -901,7 +871,7 @@ namespace RequestInfoSvcs
             const CampaignSvcs::ExpressionChannelSeq& expression_channels =
               expression_channels_info->expression_channels;
 
-            for(CORBA::ULong i = 0; i < expression_channels.length(); ++i)
+            for (CORBA::ULong i = 0; i < expression_channels.length(); ++i)
             {
               CampaignSvcs::ExpressionChannelBase_var new_channel =
                 CampaignSvcs::unpack_channel(
@@ -913,7 +883,7 @@ namespace RequestInfoSvcs
               ChannelMatcher::ChannelMap::iterator ch_it =
                 new_config->expression_channels.find(CHANNEL_ID);
 
-              if(ch_it != new_config->expression_channels.end())
+              if (ch_it != new_config->expression_channels.end())
               {
                 ch_it->second->channel = new_channel;
               }
@@ -931,9 +901,9 @@ namespace RequestInfoSvcs
             const CampaignSvcs::ChannelTriggersSeq& channels =
               expression_channels_info->activate_channel_triggers;
 
-            for(CORBA::ULong i = 0; i < channels.length(); ++i)
+            for (CORBA::ULong i = 0; i < channels.length(); ++i)
             {
-              if(channels[i].page_triggers.length() ||
+              if (channels[i].page_triggers.length() ||
                  channels[i].search_triggers.length() ||
                  channels[i].url_triggers.length() ||
                  channels[i].url_keyword_triggers.length())
@@ -971,7 +941,7 @@ namespace RequestInfoSvcs
                   channels[i].url_keyword_triggers.get_buffer() + channels[i].url_keyword_triggers.length(),
                   std::back_inserter(channel->url_keyword_triggers));
 
-                if(load_trigger_match_config)
+                if (load_trigger_match_config)
                 {
                   new_trigger_match_config->channels.insert(
                     std::make_pair(channels[i].channel_id, channel));
@@ -979,19 +949,18 @@ namespace RequestInfoSvcs
               }
             }
 
-            if(load_trigger_match_config)
+            if (load_trigger_match_config)
             {
               const CampaignSvcs::DeletedIdSeq& delete_simple_channels =
                 expression_channels_info->delete_simple_channels;
 
-              for(CORBA::ULong del_i = 0; del_i < delete_simple_channels.length(); ++del_i)
+              for (CORBA::ULong del_i = 0; del_i < delete_simple_channels.length(); ++del_i)
               {
-                new_trigger_match_config->channels.erase(
-                  delete_simple_channels[del_i].id);
+                new_trigger_match_config->channels.erase(delete_simple_channels[del_i].id);
               }
             }
 
-            if(logger()->log_level() >= Logging::Logger::TRACE)
+            if (logger()->log_level() >= Logging::Logger::TRACE)
             {
               logger()->stream(Logging::Logger::TRACE,
                 Aspect::EXPRESSION_MATCHER) <<
@@ -1050,15 +1019,15 @@ namespace RequestInfoSvcs
         }
       } // for (;;)
 
-      if(!interrupted)
+      if (!interrupted)
       {
         // spread target flag in depth
-        for(auto ch_it = new_config->expression_channels.begin();
+        for (auto ch_it = new_config->expression_channels.begin();
           ch_it != new_config->expression_channels.end(); ++ch_it)
         {
-          if(ch_it->second->has_params() &&
+          if (ch_it->second->has_params() &&
             ch_it->second->params().common_params.in() &&
-             (ch_it->second->params().common_params->flags &
+            (ch_it->second->params().common_params->flags &
               AdServer::CampaignSvcs::ChannelFlags::TARGETED))
           {
             ChannelIdSet modify_channels;
@@ -1067,11 +1036,11 @@ namespace RequestInfoSvcs
             modify_channels.insert(
               campaign_modify_channels.begin(),
               campaign_modify_channels.end());
-            for(ChannelIdSet::const_iterator mch_id_it = modify_channels.begin();
+            for (ChannelIdSet::const_iterator mch_id_it = modify_channels.begin();
               mch_id_it != modify_channels.end(); ++mch_id_it)
             {
               auto mch_it = new_config->expression_channels.find(*mch_id_it);
-              if(mch_it != new_config->expression_channels.end() &&
+              if (mch_it != new_config->expression_channels.end() &&
                 mch_it->second->has_params() &&
                  mch_it->second->params().common_params.in())
               {
@@ -1083,14 +1052,14 @@ namespace RequestInfoSvcs
           }
         }
 
-        if(load_trigger_match_config)
+        if (load_trigger_match_config)
         {
-          for(auto ch_it = new_trigger_match_config->channels.begin();
+          for (auto ch_it = new_trigger_match_config->channels.begin();
             ch_it != new_trigger_match_config->channels.end();
             ++ch_it)
           {
             auto mch_it = new_config->expression_channels.find(ch_it->first);
-            if(mch_it == new_config->expression_channels.end() ||
+            if (mch_it == new_config->expression_channels.end() ||
               !mch_it->second->has_params() ||
               !mch_it->second->params().common_params.in() ||
               !(mch_it->second->params().common_params->flags &
@@ -1108,11 +1077,11 @@ namespace RequestInfoSvcs
         // fill used, but not loaded from CampaignServer channels
         // as simple channels (Geo or Platform)
         //
-        for(ChannelMatcher::ChannelMap::iterator ch_it =
+        for (ChannelMatcher::ChannelMap::iterator ch_it =
               new_config->expression_channels.begin();
             ch_it != new_config->expression_channels.end(); ++ch_it)
         {
-          if(!ch_it->second->channel.in())
+          if (!ch_it->second->channel.in())
           {
             AdServer::CampaignSvcs::ChannelParams channel_params(ch_it->first);
             channel_params.type = 'G';
@@ -1121,7 +1090,7 @@ namespace RequestInfoSvcs
           }
         }
 
-        if(load_trigger_match_config)
+        if (load_trigger_match_config)
         {
           user_trigger_match_container_.get()->config(new_trigger_match_config);
           temp_user_trigger_match_container_.get()->config(new_trigger_match_config);
@@ -1132,7 +1101,7 @@ namespace RequestInfoSvcs
         new_config->fill_time = now;
         channel_matcher_->config(new_config);
 
-        if(logger()->log_level() >= Logging::Logger::TRACE)
+        if (logger()->log_level() >= Logging::Logger::TRACE)
         {
           logger()->stream(Logging::Logger::TRACE,
             Aspect::EXPRESSION_MATCHER) <<
@@ -1147,7 +1116,7 @@ namespace RequestInfoSvcs
             new_config->all_channels.end());
           const ChannelIdSet* use_appear_channels = &appear_channels_holder;
 
-          if(old_config.in() &&
+          if (old_config.in() &&
              now_date == old_config->fill_time.get_gm_time().get_date())
           {
             appear_channels_holder.clear();
@@ -1167,7 +1136,7 @@ namespace RequestInfoSvcs
             *use_appear_channels);
         }
 
-        if(old_config.in() == 0)
+        if (old_config.in() == 0)
         {
           const xsd::AdServer::Configuration::InLogsType&
             lp_config = expression_matcher_config_.LogProcessing().InLogs();
@@ -1176,19 +1145,19 @@ namespace RequestInfoSvcs
 
           log_read_traits.emplace_back(
             make_log_read_traits(
-                ExpressionMatcherLogLoader::LogType::RequestBasicChannels,
+              ExpressionMatcherLogLoader::LogType::RequestBasicChannels,
               lp_config.log_root().c_str(),
               lp_config.RequestBasicChannels(),
               DEFAULT_REQUEST_BASIC_CHANNELS_BASE_NAME));
           log_read_traits.emplace_back(
             make_log_read_traits(
-                ExpressionMatcherLogLoader::LogType::ConsiderClick,
+              ExpressionMatcherLogLoader::LogType::ConsiderClick,
               lp_config.log_root().c_str(),
               lp_config.ConsiderClick(),
               DEFAULT_CONSIDER_CLICK_BASE_NAME));
           log_read_traits.emplace_back(
             make_log_read_traits(
-                ExpressionMatcherLogLoader::LogType::ConsiderImpression,
+              ExpressionMatcherLogLoader::LogType::ConsiderImpression,
               lp_config.log_root().c_str(),
               lp_config.ConsiderImpression(),
               DEFAULT_CONSIDER_IMPRESSION_BASE_NAME));
@@ -1201,6 +1170,7 @@ namespace RequestInfoSvcs
             logger(),
             callback_,
             expression_matcher_config_.LogProcessing().threads(),
+            processing_executor_pool_,
             log_read_traits,
             expression_matcher_config_.LogProcessing().InLogs().check_logs_period());
 
@@ -1208,9 +1178,7 @@ namespace RequestInfoSvcs
 
           /* start processing loop */
           Commons::make_goal_task(
-            std::bind(
-              &ExpressionMatcherImpl::update_stats_,
-              this),
+            std::bind(&ExpressionMatcherImpl::update_stats_, this),
             task_runner_,
             scheduler_,
             Generics::Time(expression_matcher_config_.LogProcessing().InLogs().check_logs_period())
@@ -1248,22 +1216,21 @@ namespace RequestInfoSvcs
     try_start_daily_processing_loop_();
   }
 
-  void
-  ExpressionMatcherImpl::consider_impression(
+  AdServer::Commons::StartableAwaitable<void>
+  ExpressionMatcherImpl::co_consider_impression(
     const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::RequestId& request_id,
     const Generics::Time& time,
     const ChannelIdSet& channels)
-    noexcept
   {
-    static const char* FUN = "ExpressionMatcherImpl::consider_impression()";
+    static const char* FUN = "ExpressionMatcherImpl::co_consider_impression()";
 
     try
     {
       UserTriggerMatchContainer_var user_trigger_match_container =
         user_trigger_match_container_.get();
 
-      if(!channels.empty() && user_trigger_match_container.in())
+      if (!channels.empty() && user_trigger_match_container.in())
       {
         UserTriggerMatchContainer::ImpressionInfo triggers_imp;
         triggers_imp.user_id = user_id;
@@ -1271,7 +1238,7 @@ namespace RequestInfoSvcs
         triggers_imp.time = time + placement_colo_.get()->time_offset;
         triggers_imp.channels = channels;
 
-        user_trigger_match_container->process_impression(triggers_imp);
+        co_await user_trigger_match_container->co_process_impression(triggers_imp);
       }
     }
     catch(const eh::Exception& ex)
@@ -1282,22 +1249,21 @@ namespace RequestInfoSvcs
     }
   }
 
-  void
-  ExpressionMatcherImpl::consider_click(
+  AdServer::Commons::StartableAwaitable<void>
+  ExpressionMatcherImpl::co_consider_click(
     const AdServer::Commons::RequestId& request_id,
     const Generics::Time& time)
-    noexcept
   {
-    static const char* FUN = "ExpressionMatcherImpl::consider_click()";
+    static const char* FUN = "ExpressionMatcherImpl::co_consider_click()";
 
     try
     {
       UserTriggerMatchContainer_var user_trigger_match_container =
         user_trigger_match_container_.get();
 
-      if(user_trigger_match_container.in())
+      if (user_trigger_match_container.in())
       {
-        user_trigger_match_container->process_click(
+        co_await user_trigger_match_container->co_process_click(
           request_id,
           time + placement_colo_.get()->time_offset);
       }
@@ -1312,8 +1278,6 @@ namespace RequestInfoSvcs
 
   void
   ExpressionMatcherImpl::run_daily_processing(bool sync)
-    /*throw(AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady,
-      AdServer::RequestInfoSvcs::ExpressionMatcher::ImplementationException)*/
   {
     static const char* FUN = "ExpressionMatcherImpl::run_daily_processing()";
 
@@ -1330,13 +1294,13 @@ namespace RequestInfoSvcs
           configuration = channel_matcher_->config();
         }
 
-        if(!(user_info_manager_session && configuration.in()))
+        if (!(user_info_manager_session && configuration.in()))
         {
-          throw AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady();
+          throw NotReady("ExpressionMatcher isn't ready");
         }
       }
 
-      if(sync)
+      if (sync)
       {
         clear_expired_users_(false);
         daily_check_users_impl_(0);
@@ -1351,25 +1315,23 @@ namespace RequestInfoSvcs
         task_runner_->enqueue_task(msg);
       }
     }
+    catch(const NotReady&)
+    {
+      throw;
+    }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      CORBACommons::throw_desc<
-        RequestInfoSvcs::ExpressionMatcher::ImplementationException>(
-          ostr.str());
+      throw Exception(ostr);
     }
   }
 
-  bool
-  ExpressionMatcherImpl::process_requests(
-    LogProcessing::FileReceiver::FileGuard* file_ptr,
-    std::size_t& processed_lines_count)
-    /*throw(eh::Exception)*/
+  AdServer::Commons::StartableAwaitable<void>
+  ExpressionMatcherImpl::co_process_request_basic_channels_record(
+    const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+    const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
   {
-    LogProcessing::FileReceiver::FileGuard_var file(ReferenceCounting::add_ref(file_ptr));
-    const std::string file_name = file->full_path();
-
     UserTriggerMatchContainer_var user_trigger_match_container =
       user_trigger_match_container_.get();
     UserTriggerMatchContainer_var temp_user_trigger_match_container =
@@ -1380,71 +1342,38 @@ namespace RequestInfoSvcs
     UserColoReachContainer_var household_colo_reach_container =
       household_colo_reach_container_.get();
 
-    AdServer::LogProcessing::RequestBasicChannelsCollector req_collector;
+    co_await process_request_basic_channels_record_(
+      user_inventory_container,
+      user_trigger_match_container,
+      temp_user_trigger_match_container,
+      household_colo_reach_container,
+      key,
+      record);
+  }
 
-    /* load requests file */
-    std::ifstream ifs(file_name.c_str());
-    AdServer::LogProcessing::RequestBasicChannelsTraits::IoHelperType(
-      req_collector).load(ifs);
-
-    AdServer::LogProcessing::LogFileNameInfo name_info;
-    parse_log_file_name(file->file_name().c_str(), name_info);
-
-    /* process requests collector */
-    if (!req_collector.empty())
-    {
-      for(AdServer::LogProcessing::RequestBasicChannelsCollector::const_iterator
-            coll_it = req_collector.begin();
-          coll_it != req_collector.end(); ++coll_it)
-      {
-        for(AdServer::LogProcessing::
-              RequestBasicChannelsInnerCollector::const_iterator req_it =
-                coll_it->second.begin();
-            req_it != coll_it->second.end(); ++req_it, ++processed_lines_count)
-        {
-          if (processed_lines_count >= name_info.processed_lines_count)
-          {
-            if (!active())
-            {
-              return true;
-            }
-
-            // configuration pointer copy life time must be short
-            process_request_basic_channels_record_(
-              user_inventory_container,
-              user_trigger_match_container,
-              temp_user_trigger_match_container,
-              household_colo_reach_container,
-              coll_it->first,
-              *req_it);
-          }
-        }
-      }
-    }
-
-    stats_.set_last_processed_timestamp(name_info.timestamp);
-    return false;
+  void
+  ExpressionMatcherImpl::request_basic_channels_file_processed(const Generics::Time& timestamp)
+    noexcept
+  {
+    stats_.set_last_processed_timestamp(timestamp);
   }
 
   bool
   ExpressionMatcherImpl::check_sampling_(const UserId& user_id) const noexcept
   {
-    return (user_id.is_null() ||
-      check_percentage_sampling_(
-        user_id.hash(),
-        expression_matcher_config_.inventory_users_percentage()));
+    return user_id.is_null() || check_percentage_sampling_(
+      user_id.hash(),
+      expression_matcher_config_.inventory_users_percentage());
   }
 
-  void
+  AdServer::Commons::Awaitable<void>
   ExpressionMatcherImpl::process_request_basic_channels_record_(
     UserInventoryInfoContainer* user_inventory_container,
     UserTriggerMatchContainer* user_trigger_match_container,
     UserTriggerMatchContainer* temp_user_trigger_match_container,
     UserColoReachContainer* household_colo_reach_container,
-    const AdServer::LogProcessing::
-      RequestBasicChannelsCollector::KeyT& key,
-    const AdServer::LogProcessing::
-      RequestBasicChannelsCollector::DataT::DataT& record)
+    const AdServer::LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+    const AdServer::LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
     /*throw(Exception)*/
   {
     static const char* FUN = "ExpressionMatcherImpl::process_request_basic_channels_record_()";
@@ -1454,13 +1383,13 @@ namespace RequestInfoSvcs
 
     try
     {
-      if(record.user_type() != 'H')
+      if (record.user_type() != 'H')
       {
         /* process one request */
         MatchRequestProcessor::MatchInfo match_info;
         const bool sampling_flag = check_sampling_(record.user_id());
 
-        if(record.match_request().present() && sampling_flag)
+        if (record.match_request().present() && sampling_flag)
         {
           const CampaignSvcs::ChannelIdSet history_channels(
             record.match_request().get().history_channels().begin(),
@@ -1491,7 +1420,7 @@ namespace RequestInfoSvcs
         match_info.colo_id = key.colo_id();
         match_info.max_text_ads = 0;
 
-        if(record.ad_request().present())
+        if (record.ad_request().present())
         {
           match_info.ad_request = true;
           const RBCRecord::AdRequestProps& ad_request_props = record.ad_request().get();
@@ -1515,7 +1444,7 @@ namespace RequestInfoSvcs
 
           if (sampling_flag)
           {
-            if(ad_request_props.display_ad_shown().present())
+            if (ad_request_props.display_ad_shown().present())
             {
               MatchRequestProcessor::MatchInfo::AdSlot display_ad;
               display_ad.avg_revenue = ad_request_props.display_ad_shown().get().revenue();
@@ -1526,7 +1455,7 @@ namespace RequestInfoSvcs
               match_info.display_ad = display_ad;
             }
 
-            for(RBCRecord::AdBidSlotImpressionList::const_iterator text_imp_it =
+            for (RBCRecord::AdBidSlotImpressionList::const_iterator text_imp_it =
                   ad_request_props.text_ad_shown().begin();
                 text_imp_it != ad_request_props.text_ad_shown().end();
                 ++text_imp_it)
@@ -1543,14 +1472,14 @@ namespace RequestInfoSvcs
           }
         }
 
-        user_inventory_container->process_match_request(match_info);
+        co_await user_inventory_container->co_process_match_request(match_info);
 
         expression_matcher_out_logger_->process_match_request(match_info);
 
         const auto* match_request =
           record.match_request().present() ? &record.match_request().get() : nullptr;
 
-        if(match_request)
+        if (match_request)
         {
           expression_matcher_out_logger_->process_channel_hit_stat(
             key.isp_time(),
@@ -1562,62 +1491,54 @@ namespace RequestInfoSvcs
             *match_request);
         }
 
-        if((!record.user_id().is_null() && user_trigger_match_container) ||
+        if ((!record.user_id().is_null() && user_trigger_match_container) ||
            (!record.temporary_user_id().is_null() && temp_user_trigger_match_container))
         {
           UserTriggerMatchContainer::RequestInfo request_info;
           request_info.time = match_info.placement_colo_time;
 
-          if(match_request)
+          if (match_request)
           {
-            for(AdServer::LogProcessing::
-                RequestBasicChannelsInnerData::TriggerMatchArray::
-                  const_iterator cht_it = match_request->page_trigger_channels().begin();
-                cht_it != match_request->page_trigger_channels().end(); ++cht_it)
+            for (auto cht_it = match_request->page_trigger_channels().begin();
+              cht_it != match_request->page_trigger_channels().end(); ++cht_it)
             {
               request_info.page_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
             }
 
-            for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request->search_trigger_channels().begin();
-                cht_it != match_request->search_trigger_channels().end(); ++cht_it)
+            for (auto cht_it = match_request->search_trigger_channels().begin();
+              cht_it != match_request->search_trigger_channels().end(); ++cht_it)
             {
               request_info.search_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
             }
 
-            for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request->url_trigger_channels().begin();
-                cht_it != match_request->url_trigger_channels().end(); ++cht_it)
+            for (auto cht_it = match_request->url_trigger_channels().begin();
+              cht_it != match_request->url_trigger_channels().end(); ++cht_it)
             {
               request_info.url_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
             }
 
-            for(AdServer::LogProcessing::
-                  RequestBasicChannelsInnerData::TriggerMatchArray::
-                    const_iterator cht_it = match_request->url_keyword_trigger_channels().begin();
-                cht_it != match_request->url_keyword_trigger_channels().end(); ++cht_it)
+            for (auto cht_it = match_request->url_keyword_trigger_channels().begin();
+              cht_it != match_request->url_keyword_trigger_channels().end(); ++cht_it)
             {
               request_info.url_keyword_matches[cht_it->channel_id].push_back(
                 cht_it->channel_trigger_id);
             }
           }
 
-          if(!record.user_id().is_null())
+          if (!record.user_id().is_null())
           {
             request_info.user_id = record.user_id();
             request_info.merge_user_id = record.temporary_user_id();
-            user_trigger_match_container->process_request(request_info);
+            co_await user_trigger_match_container->co_process_request(request_info);
             stats_.inc_persistent_user_processed();
           }
           else
           {
             request_info.user_id = record.temporary_user_id();
-            temp_user_trigger_match_container->process_request(request_info);
+            co_await temp_user_trigger_match_container->co_process_request(request_info);
             stats_.inc_temporary_user_processed();
           }
         }
@@ -1626,7 +1547,7 @@ namespace RequestInfoSvcs
           stats_.inc_not_optedin_user_processed();
         }
       }
-      else if(household_colo_reach_container &&
+      else if (household_colo_reach_container &&
          !record.user_id().is_null())
       {
         UserColoReachContainer::RequestInfo request_info;
@@ -1635,7 +1556,7 @@ namespace RequestInfoSvcs
         request_info.isp_time = key.isp_time();
         request_info.colo_id = key.colo_id();
 
-        household_colo_reach_container->process_request(request_info);
+        co_await household_colo_reach_container->co_process_request(request_info);
       }
     }
     catch(const eh::Exception& ex)
@@ -1712,11 +1633,9 @@ namespace RequestInfoSvcs
     static const char* FUN = "ExpressionMatcherImpl::clear_expired_users_()";
 
     logger()->sstream(Logging::Logger::INFO,
-      Aspect::EXPRESSION_MATCHER) << FUN <<
-      ": Cleanup of expired users started";
+      Aspect::EXPRESSION_MATCHER) << FUN << ": Cleanup of expired users started";
 
-    UserInventoryInfoContainer_var user_inventory_container =
-      user_inventory_container_.get();
+    UserInventoryInfoContainer_var user_inventory_container = user_inventory_container_.get();
     UserTriggerMatchContainer_var user_trigger_match_container =
       user_trigger_match_container_.get();
     UserTriggerMatchContainer_var temp_user_trigger_match_container =
@@ -1724,7 +1643,7 @@ namespace RequestInfoSvcs
     UserColoReachContainer_var household_colo_reach_container =
       household_colo_reach_container_.get();
 
-    if(user_inventory_container.in())
+    if (user_inventory_container.in())
     {
       try
       {
@@ -1740,7 +1659,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(user_trigger_match_container.in())
+    if (user_trigger_match_container.in())
     {
       try
       {
@@ -1756,7 +1675,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(temp_user_trigger_match_container.in())
+    if (temp_user_trigger_match_container.in())
     {
       try
       {
@@ -1772,7 +1691,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(household_colo_reach_container.in())
+    if (household_colo_reach_container.in())
     {
       try
       {
@@ -1789,10 +1708,9 @@ namespace RequestInfoSvcs
     }
 
     logger()->sstream(Logging::Logger::INFO,
-      Aspect::EXPRESSION_MATCHER) << FUN <<
-      ": Cleanup of expired users finished";
+      Aspect::EXPRESSION_MATCHER) << FUN << ": Cleanup of expired users finished";
 
-    if(reschedule)
+    if (reschedule)
     {
       try
       {
@@ -1804,7 +1722,7 @@ namespace RequestInfoSvcs
 
         Generics::Time cleanup_period;
 
-        if(expression_matcher_config_.TriggerImpsConfig().present())
+        if (expression_matcher_config_.TriggerImpsConfig().present())
         {
           cleanup_period = std::min(
             Generics::Time(std::max(
@@ -1833,8 +1751,7 @@ namespace RequestInfoSvcs
   }
 
   ExpressionMatcherImpl::DailyCheckState_var
-  ExpressionMatcherImpl::daily_check_users_impl_(
-    DailyCheckState* initial_state) noexcept
+  ExpressionMatcherImpl::daily_check_users_impl_(DailyCheckState* initial_state) noexcept
   {
     static const char* FUN = "ExpressionMatcherImpl::daily_check_users_impl_()";
 
@@ -1851,7 +1768,7 @@ namespace RequestInfoSvcs
     UserInventoryInfoContainer_var user_inventory_container =
       user_inventory_container_.get();
 
-    if(!user_inventory_container.in())
+    if (!user_inventory_container.in())
     {
       return state;
     }
@@ -1865,7 +1782,7 @@ namespace RequestInfoSvcs
 
       const Generics::Time now(Generics::Time::get_time_of_day());
 
-      if(!state.in())
+      if (!state.in())
       {
         state = new DailyCheckState;
         state->start_time = Generics::Time::get_time_of_day();
@@ -1915,7 +1832,7 @@ namespace RequestInfoSvcs
         ": eh::Exception caught: " << ex.what();
     }
 
-    if(state.in() && !state->unprocessed_users.empty())
+    if (state.in() && !state->unprocessed_users.empty())
     {
       logger()->sstream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_DAILY_CHECK,
@@ -1925,7 +1842,7 @@ namespace RequestInfoSvcs
         " users (lost connection to some UIM's)";
     }
 
-    if(logger()->log_level() >= Logging::Logger::INFO)
+    if (logger()->log_level() >= Logging::Logger::INFO)
     {
       size_t users_left = state.in() ? state->users.size() : 0;
       Stream::Error ostr;
@@ -1934,7 +1851,7 @@ namespace RequestInfoSvcs
         " finished: " <<
         users_count - users_left << " users processed, ";
 
-      if(state.in())
+      if (state.in())
       {
         ostr << users_left;
       }
@@ -1975,14 +1892,13 @@ namespace RequestInfoSvcs
 
     unsigned long processed_user_count = 0;
 
-    for(UserIdList::iterator user_it = users.users.begin();
-        user_it != users.users.end() && this->active();
-        ++processed_user_count)
+    for (UserIdList::iterator user_it = users.users.begin();
+      user_it != users.users.end() && this->active(); ++processed_user_count)
     {
       try
       {
-        if((processed_user_count + 1) % 1000 == 0 &&
-           logger()->log_level() >= Logging::Logger::INFO)
+        if ((processed_user_count + 1) % 1000 == 0 &&
+          logger()->log_level() >= Logging::Logger::INFO)
         {
           logger()->stream(Logging::Logger::INFO,
             Aspect::EXPRESSION_MATCHER_DAILY_CHECK) << FUN <<
@@ -1998,7 +1914,7 @@ namespace RequestInfoSvcs
             *user_it, last_process_time) &&
           (last_process_time.get_gm_time().get_date() != now_date);
 
-        if(need_process)
+        if (need_process)
         {
           try
           {
@@ -2059,8 +1975,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherImpl::daily_check_user_impl_()";
 
-    adserver::user_info_svcs::user_info_manager::MatchRequest
-      history_match_request;
+    adserver::user_info_svcs::user_info_manager::MatchRequest history_match_request;
     auto* match_params = history_match_request.mutable_match_params();
     match_params->set_use_empty_profile(false);
     match_params->set_silent_match(true);
@@ -2070,8 +1985,7 @@ namespace RequestInfoSvcs
     match_params->set_provide_channel_count(false);
     match_params->set_provide_persistent_channels(true);
     match_params->set_filter_contextual_triggers(false);
-    match_params->set_publishers_optin_timeout(
-      ::GrpcAlgs::pack_time(Generics::Time::ZERO));
+    match_params->set_publishers_optin_timeout(::GrpcAlgs::pack_time(Generics::Time::ZERO));
     auto* user_info = history_match_request.mutable_user_info();
     user_info->set_user_id(::GrpcAlgs::pack_user_id(user_id));
     user_info->set_last_colo_id(-1);
@@ -2079,8 +1993,8 @@ namespace RequestInfoSvcs
     user_info->set_request_colo_id(-1);
     user_info->set_temporary(false);
     user_info->set_time(now.tv_sec);
-    adserver::user_info_svcs::user_info_manager::MatchResponse
-      history_match_response;
+
+    adserver::user_info_svcs::user_info_manager::MatchResponse history_match_response;
     AdServer::UserInfoSvcs::GrpcAlgs::history_match(
       *user_info_manager_session_,
       history_match_request,
@@ -2095,15 +2009,13 @@ namespace RequestInfoSvcs
       history_channels.insert(channel.channel_id());
     }
 
-    if(logger()->log_level() >= Logging::Logger::TRACE)
+    if (logger()->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Result of history match for '" << user_id << "': ";
       Algs::print(ostr, history_channels.begin(), history_channels.end());
 
-      logger()->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::EXPRESSION_MATCHER);
+      logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::EXPRESSION_MATCHER);
     }
 
     daily_match_info.user_id = user_id;
@@ -2111,8 +2023,7 @@ namespace RequestInfoSvcs
     daily_match_info.colo_id = expression_matcher_config_.colo_id();
 
     CampaignSvcs::ChannelIdSet tr_channels;
-    channel_matcher_->process_request(
-      history_channels, tr_channels);
+    channel_matcher_->process_request(history_channels, tr_channels);
 
     std::copy(tr_channels.begin(),
       tr_channels.end(),
@@ -2131,7 +2042,7 @@ namespace RequestInfoSvcs
 
     DailyCheckState_var state = daily_check_users_impl_(prev_state);
 
-    if(set_next_task)
+    if (set_next_task)
     {
       try
       {
@@ -2142,14 +2053,14 @@ namespace RequestInfoSvcs
         Generics::Time tm;
         DailyCheckState_var next_state;
 
-        if(!state.in() || !state->users.empty())
+        if (!state.in() || !state->users.empty())
         {
           tm = now + Generics::Time::ONE_MINUTE;
           next_state = state;
         }
         // some users isn't processed due to errors
         // process only these users after hour if day will not be changed
-        else if(!state->unprocessed_users.empty() &&
+        else if (!state->unprocessed_users.empty() &&
           state->start_time.get_gm_time().get_date() ==
             (now + Generics::Time::ONE_HOUR).get_gm_time().get_date())
         {
@@ -2167,11 +2078,11 @@ namespace RequestInfoSvcs
           Generics::ExtendedTime start_date(state->start_time.get_gm_time().get_date());
           Generics::ExtendedTime now_date(now.get_gm_time().get_date());
 
-          if(start_date == now_date)
+          if (start_date == now_date)
           {
             tm = start_date + daily_time + Generics::Time::ONE_DAY;
           }
-          else if(now < now_date + daily_time)
+          else if (now < now_date + daily_time)
           {
             tm = now_date + daily_time;
           }
@@ -2197,7 +2108,7 @@ namespace RequestInfoSvcs
           (state ? state->start_time :
            Generics::Time::ZERO).get_gm_time() << "'";
       }
-      catch (const eh::Exception &ex)
+      catch (const eh::Exception& ex)
       {
         logger()->sstream(Logging::Logger::EMERGENCY,
           Aspect::EXPRESSION_MATCHER,
@@ -2256,5 +2167,4 @@ namespace RequestInfoSvcs
       state.unprocessed_users.splice(state.unprocessed_users.end(), it->unprocessed_users);
     }
   }
-} /*LogProcessing*/
-} /*AdServer*/
+} /*AdServer::LogProcessing*/

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -20,6 +22,11 @@
 
 namespace AdServer
 {
+  namespace ProfilingCommons
+  {
+    class RocksDBProfileMapProcessor;
+  }
+
   namespace RequestInfoSvcs
   {
     class RequestInfoProfileWriter;
@@ -48,7 +55,9 @@ namespace AdServer
         RequestActionProcessor* request_processor,
         RequestOperationProcessor* request_operation_processor,
         const String::SubString& request_profile_path,
-        const Generics::Time& expire_time = DEFAULT_EXPIRE_TIME)
+        const Generics::Time& expire_time = DEFAULT_EXPIRE_TIME,
+        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+          rocksdb_processor = {})
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var

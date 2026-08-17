@@ -28,7 +28,8 @@ namespace RequestInfoSvcs
     Logging::Logger* logger,
     PassbackProcessor* passback_processor,
     const char* passback_rocksdb_path,
-    const Generics::Time& expire_time)
+    const Generics::Time& expire_time,
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
@@ -42,7 +43,8 @@ namespace RequestInfoSvcs
         RequestIdTransactionHashAdapter,
         RequestIdToString>(
           passback_rocksdb_path,
-          expire_time_);
+          expire_time_,
+          std::move(rocksdb_processor));
       passback_map_ = passback_map.map;
       add_child_object(passback_map.active_object);
     }

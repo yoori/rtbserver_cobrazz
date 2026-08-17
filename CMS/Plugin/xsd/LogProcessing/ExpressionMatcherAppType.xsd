@@ -29,7 +29,7 @@
   <xsd:complexType name="ExpressionMatcherThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>gRPC completion queue threads.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -38,6 +38,11 @@
     <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="20">
       <xsd:annotation>
         <xsd:documentation>Sets threads number for log processing.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="process_threads" type="xsd:positiveInteger" use="optional" default="20">
+      <xsd:annotation>
+        <xsd:documentation>Sets threads number for coroutine record processing.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute name="cache_blocks" type="xsd:nonNegativeInteger" default="1000">
@@ -68,7 +73,7 @@
       <xsd:element name="threadParams" type="ExpressionMatcherThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            gRPC completion queue threads.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element> 
@@ -148,6 +153,7 @@
         <xsd:documentation>gRPC batching max delay, in microseconds.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
   </xsd:complexType>
 
   <xsd:complexType name="ExpressionMatcherStatLoggingType">

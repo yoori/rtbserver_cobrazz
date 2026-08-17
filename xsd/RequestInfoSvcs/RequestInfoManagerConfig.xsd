@@ -171,6 +171,7 @@
     <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="services_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
   </xsd:complexType>
 
   <xsd:complexType name="ChunksConfigType">

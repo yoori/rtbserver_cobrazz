@@ -11,9 +11,8 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
 #include "ExpressionMatcherImpl.hpp"
+#include "ExpressionMatcherGrpc.hpp"
 #include "ExpressionMatcherStats.hpp"
 
 class ExpressionMatcherApp_ :
@@ -44,11 +43,9 @@ private:
   typedef std::unique_ptr<Configuration> ConfigPtr;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-  CORBACommons::CorbaConfig corba_config_;
-
   AdServer::RequestInfoSvcs::ExpressionMatcherImpl_var
     expression_matcher_impl_;
+  AdServer::RequestInfoSvcs::ExpressionMatcherGrpc_var grpc_adapter_;
   std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
 
   ConfigPtr configuration_;

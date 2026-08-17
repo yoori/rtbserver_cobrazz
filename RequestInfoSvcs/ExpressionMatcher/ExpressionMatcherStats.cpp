@@ -25,7 +25,9 @@ namespace AdServer
       set_<UnsignedInt>(OPTIN_USER, stats.processed_matches_optin_user);
       set_<UnsignedInt>(TEMPORARY_USER, stats.processed_matches_temporary_user);
       set_<UnsignedInt>(NOT_OPTIN_USER, stats.processed_matches_non_optin_user);
-      set_(LAST_PROCESSED_TIMESTAMP, stats.last_processed_file_timestamp.as_double());
+      set_(
+        LAST_PROCESSED_TIMESTAMP,
+        stats.last_processed_file_timestamp().as_double());
    }
 
   }

@@ -18,7 +18,18 @@ namespace AdServer
       Algs::AtomicInt processed_matches_optin_user;
       Algs::AtomicInt processed_matches_temporary_user;
       Algs::AtomicInt processed_matches_non_optin_user;
-      Generics::Time last_processed_file_timestamp;
+
+      void
+      set_last_processed_file_timestamp(const Generics::Time& time) noexcept;
+
+      Generics::Time
+      last_processed_file_timestamp() const noexcept;
+
+    private:
+      using SyncPolicy = Sync::Policy::PosixThread;
+
+      mutable SyncPolicy::Mutex lock_;
+      Generics::Time last_processed_file_timestamp_;
     };
 
     class StatsCounters : private Stats
@@ -73,6 +84,20 @@ namespace AdServer
     {}
 
     inline void
+    Stats::set_last_processed_file_timestamp(const Generics::Time& time) noexcept
+    {
+      SyncPolicy::WriteGuard guard(lock_);
+      last_processed_file_timestamp_ = time;
+    }
+
+    inline Generics::Time
+    Stats::last_processed_file_timestamp() const noexcept
+    {
+      SyncPolicy::ReadGuard guard(lock_);
+      return last_processed_file_timestamp_;
+    }
+
+    inline void
     StatsCounters::inc_not_optedin_user_processed() noexcept
     {
       processed_matches_optin_user += 1;
@@ -94,7 +119,7 @@ namespace AdServer
     StatsCounters::set_last_processed_timestamp(const Generics::Time& time)
       noexcept
     {
-      last_processed_file_timestamp = time;
+      set_last_processed_file_timestamp(time);
     }
 
     inline const Stats&

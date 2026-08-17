@@ -125,6 +125,7 @@
         <xsd:documentation>gRPC batching max delay, in microseconds.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
   </xsd:complexType>
 
   <xsd:complexType name="RequestInfoManagerProfilingParamsType">

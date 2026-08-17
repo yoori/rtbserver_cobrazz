@@ -14,9 +14,7 @@ namespace Aspect
   const char USER_INVENTORY_CONTAINER[] = "UserInventoryContainer";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /*
    * get_inv_day(...) : get profile day specific section
@@ -75,8 +73,7 @@ namespace RequestInfoSvcs
         date,
         DateCompare());
 
-    if(day_it == profile_writer.days().end() ||
-      date != Generics::Time(day_it->date()))
+    if (day_it == profile_writer.days().end() || date != Generics::Time(day_it->date()))
     {
       profile_changed = true;
 
@@ -114,17 +111,17 @@ namespace RequestInfoSvcs
 
     unsigned long check_ecpm = 0;
 
-    if(inv_request_info.display_ad.present())
+    if (inv_request_info.display_ad.present())
     {
       check_ecpm = RevenueDecimal::mul(
         inv_request_info.display_ad->avg_revenue,
         CPM_FACTOR,
         Generics::DMR_FLOOR).ceil(0).integer<unsigned long>();
     }
-    else if(!inv_request_info.text_ads.empty())
+    else if (!inv_request_info.text_ads.empty())
     {
       RevenueDecimal sum_max_avg_revenue = RevenueDecimal::ZERO;
-      for(MatchRequestProcessor::MatchInfo::AdBidSlotList::
+      for (MatchRequestProcessor::MatchInfo::AdBidSlotList::
             const_iterator text_ad_it = inv_request_info.text_ads.begin();
           text_ad_it != inv_request_info.text_ads.end(); ++text_ad_it)
       {
@@ -148,14 +145,14 @@ namespace RequestInfoSvcs
 
     SizeChannelSet size_channels;
 
-    for(StringSet::const_iterator size_it = inv_request_info.sizes.begin();
+    for (StringSet::const_iterator size_it = inv_request_info.sizes.begin();
         size_it != inv_request_info.sizes.end(); ++size_it)
     {
       size_channels[*size_it] = inv_request_info.triggered_cpm_expression_channels;
     }
 
     // fill disappear channels and erase channels
-    for(std::list<ChInvByCMPCellWriter>::iterator
+    for (std::list<ChInvByCMPCellWriter>::iterator
           it = profile_writer.channel_price_ranges().begin();
         it != profile_writer.channel_price_ranges().end(); )
     {
@@ -164,7 +161,7 @@ namespace RequestInfoSvcs
         SizeChannelSet::iterator size_it =
           size_channels.find(Commons::ImmutableString((*it).tag_size()));
 
-        if(size_it != size_channels.end())
+        if (size_it != size_channels.end())
         {
           // cell found
           ChInvByCMPCellWriter::channel_list_Container& channels =
@@ -173,15 +170,15 @@ namespace RequestInfoSvcs
           // remove_if semantics
           auto result_it = channels.begin();
 
-          for(ChInvByCMPCellWriter::channel_list_Container::const_iterator
+          for (ChInvByCMPCellWriter::channel_list_Container::const_iterator
                 ch_it = channels.begin();
               ch_it != channels.end(); ++ch_it)
           {
             ChannelIdSet::iterator fit = size_it->second.find(*ch_it);
 
-            if(fit != size_it->second.end())
+            if (fit != size_it->second.end())
             {
-              if(check_ecpm < it->ecpm())
+              if (check_ecpm < it->ecpm())
               {
                 profile_changed = true;
 
@@ -205,12 +202,12 @@ namespace RequestInfoSvcs
           }
 
           // remove empty cells
-          if(size_it->second.empty())
+          if (size_it->second.empty())
           {
             size_channels.erase(size_it);
           }
 
-          if(channels.empty())
+          if (channels.empty())
           {
             profile_changed = true;
 
@@ -223,13 +220,13 @@ namespace RequestInfoSvcs
       ++it;
     }
 
-    if(!size_channels.empty())
+    if (!size_channels.empty())
     {
-      for(SizeChannelSet::const_iterator size_it = size_channels.begin();
+      for (SizeChannelSet::const_iterator size_it = size_channels.begin();
           size_it != size_channels.end();
           ++size_it)
       {
-        for(ChannelIdSet::const_iterator ch_it = size_it->second.begin();
+        for (ChannelIdSet::const_iterator ch_it = size_it->second.begin();
             ch_it != size_it->second.end(); ++ch_it)
         {
           inv_info.appear_channel_ecpms.push_back(
@@ -238,18 +235,18 @@ namespace RequestInfoSvcs
       }
 
       // search cells with equal PK(country, tag, ecpm) and update
-      for(std::list<ChInvByCMPCellWriter>::iterator
+      for (std::list<ChInvByCMPCellWriter>::iterator
             it = profile_writer.channel_price_ranges().begin();
           it != profile_writer.channel_price_ranges().end();
           ++it)
       {
-        if(inv_request_info.country_code.str() == (*it).country() &&
+        if (inv_request_info.country_code.str() == (*it).country() &&
            check_ecpm == (*it).ecpm())
         {
           SizeChannelSet::iterator size_it =
             size_channels.find(Commons::ImmutableString((*it).tag_size()));
 
-          if(size_it != size_channels.end())
+          if (size_it != size_channels.end())
           {
             (*it).channel_list().reserve(
               (*it).channel_list().size() + size_it->second.size());
@@ -264,12 +261,12 @@ namespace RequestInfoSvcs
         }
       }
 
-      if(!size_channels.empty())
+      if (!size_channels.empty())
       {
         profile_changed = true;
       }
 
-      for(SizeChannelSet::const_iterator size_it = size_channels.begin();
+      for (SizeChannelSet::const_iterator size_it = size_channels.begin();
           size_it != size_channels.end();
           ++size_it)
       {
@@ -312,47 +309,44 @@ namespace RequestInfoSvcs
       ChannelInventoryDayWriter::display_impop_no_imp_channel_list_Container::
         const_iterator impop_no_imp_channel_list_it = res_impop_no_imp_channel_list.begin();
 
-      for(auto ch_it = triggered_channels.begin();
-          ch_it != triggered_channels.end(); ++ch_it)
+      for (auto ch_it = triggered_channels.begin(); ch_it != triggered_channels.end(); ++ch_it)
       {
-        while(imp_channel_list_it != res_imp_channel_list.end() &&
+        while (imp_channel_list_it != res_imp_channel_list.end() &&
           *imp_channel_list_it < *ch_it)
         {
           ++imp_channel_list_it;
         }
 
-        while(imp_other_channel_list_it != res_imp_other_channel_list.end() &&
+        while (imp_other_channel_list_it != res_imp_other_channel_list.end() &&
           *imp_other_channel_list_it < *ch_it)
         {
           ++imp_other_channel_list_it;
         }
 
-        while(impop_no_imp_channel_list_it != res_impop_no_imp_channel_list.end() &&
-            *impop_no_imp_channel_list_it < *ch_it)
+        while (impop_no_imp_channel_list_it != res_impop_no_imp_channel_list.end() &&
+          *impop_no_imp_channel_list_it < *ch_it)
         {
           ++impop_no_imp_channel_list_it;
         }
 
-        if((imp_channel_list_it == res_imp_channel_list.end() ||
-             *imp_channel_list_it != *ch_it) &&
-           (imp_other_channel_list_it == res_imp_other_channel_list.end() ||
-             *imp_other_channel_list_it != *ch_it) &&
-           (impop_no_imp_channel_list_it == res_impop_no_imp_channel_list.end() ||
-             *impop_no_imp_channel_list_it != *ch_it))
+        if ((imp_channel_list_it == res_imp_channel_list.end() ||
+            *imp_channel_list_it != *ch_it) &&
+          (imp_other_channel_list_it == res_imp_other_channel_list.end() ||
+            *imp_other_channel_list_it != *ch_it) &&
+          (impop_no_imp_channel_list_it == res_impop_no_imp_channel_list.end() ||
+            *impop_no_imp_channel_list_it != *ch_it))
         {
           appears.impop_appear_channels.push_back(*ch_it);
         }
       }
     }
 
-    if(impression)
+    if (impression)
     {
       {
         // fill appears.imp_appear_channels and res_imp_channel_list
         const ChannelInventoryDayWriter::display_imp_channel_list_Container&
           imp_channel_list = res_imp_channel_list;
-        //ChannelInventoryDayWriter::display_imp_channel_list_Container::
-        //  const_iterator imp_channel_list_it = imp_channel_list.begin();
 
         ChannelIdArray imp_appear_channels;
         imp_appear_channels.reserve(impression_channels.size());
@@ -364,7 +358,7 @@ namespace RequestInfoSvcs
           imp_channel_list.end(),
           std::back_inserter(imp_appear_channels));
 
-        if(!imp_appear_channels.empty())
+        if (!imp_appear_channels.empty())
         {
           ChannelInventoryDayWriter::display_imp_channel_list_Container
             new_imp_channel_list;
@@ -390,8 +384,6 @@ namespace RequestInfoSvcs
       {
         const ChannelInventoryDayWriter::display_imp_other_channel_list_Container&
           imp_other_channel_list = res_imp_other_channel_list;
-        //ChannelInventoryDayWriter::display_imp_other_channel_list_Container::
-        //  const_iterator imp_other_channel_list_it = imp_other_channel_list.begin();
 
         ChannelInventoryDayWriter::display_imp_other_channel_list_Container
           new_imp_other_channel_list;
@@ -418,7 +410,7 @@ namespace RequestInfoSvcs
           imp_other_channel_list.end(),
           std::back_inserter(imp_other_appear_channels));
 
-        if(!imp_other_appear_channels.empty())
+        if (!imp_other_appear_channels.empty())
         {
           ChannelInventoryDayWriter::display_imp_other_channel_list_Container
             new_imp_other_channel_list;
@@ -458,13 +450,12 @@ namespace RequestInfoSvcs
         impop_no_imp_channel_list.end(),
         std::back_inserter(impop_no_imp_appear_channels));
 
-      if(!impop_no_imp_appear_channels.empty())
+      if (!impop_no_imp_appear_channels.empty())
       {
         ChannelInventoryDayWriter::display_impop_no_imp_channel_list_Container
           new_impop_no_imp_channel_list;
         new_impop_no_imp_channel_list.reserve(
-          impop_no_imp_channel_list.size() +
-          appears.impop_no_imp_appear_channels.size());
+          impop_no_imp_channel_list.size() + appears.impop_no_imp_appear_channels.size());
         std::merge(
           impop_no_imp_channel_list.begin(),
           impop_no_imp_channel_list.end(),
@@ -509,10 +500,9 @@ namespace RequestInfoSvcs
           std::back_inserter(inv_info.active_appear_channels));
       }
 
-      if(!inv_info.active_appear_channels.empty())
+      if (!inv_info.active_appear_channels.empty())
       {
-        ChannelInventoryDayWriter::active_channel_list_Container
-          new_active_channel_list;
+        ChannelInventoryDayWriter::active_channel_list_Container new_active_channel_list;
         active_channel_list.reserve(
           active_channel_list.size() + inv_info.active_appear_channels.size());
         std::merge(
@@ -526,7 +516,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(!inv_info.active_appear_channels.empty())
+    if (!inv_info.active_appear_channels.empty())
     {
       // used, that active channels always is subset of total channels
       // and as result: total appear is subset of active appear
@@ -543,7 +533,7 @@ namespace RequestInfoSvcs
         total_channel_list.end(),
         std::back_inserter(inv_info.total_appear_channels));
 
-      if(!inv_info.total_appear_channels.empty())
+      if (!inv_info.total_appear_channels.empty())
       {
         ChannelInventoryDayWriter::total_channel_list_Container
           new_total_channel_list;
@@ -565,7 +555,7 @@ namespace RequestInfoSvcs
       inv_request_info.triggered_expression_channels.present() ?
       *inv_request_info.triggered_expression_channels : triggered_expr_holder;
 
-    if(!inv_request_info.tag_size.empty()) // impop
+    if (!inv_request_info.tag_size.empty()) // impop
     {
       fill_channel_typed_appears(
         profile_changed,
@@ -576,15 +566,13 @@ namespace RequestInfoSvcs
         triggered_expression_channels,
         inv_request_info.display_ad.present() ?
           inv_request_info.display_ad->imp_channels : ChannelIdSet(),
-        inv_request_info.display_ad.present() ||
-          !inv_request_info.text_ads.empty());
+        inv_request_info.display_ad.present() || !inv_request_info.text_ads.empty());
 
       // TO OPTIMIZE
       MatchRequestProcessor::MatchInfo::AdBidSlotList::
         const_iterator text_ad_it = inv_request_info.text_ads.begin();
 
-      for(unsigned long text_i = 0;
-          text_i < inv_request_info.max_text_ads; ++text_i)
+      for (unsigned long text_i = 0; text_i < inv_request_info.max_text_ads; ++text_i)
       {
         fill_channel_typed_appears(
           profile_changed,
@@ -595,10 +583,9 @@ namespace RequestInfoSvcs
           triggered_expression_channels,
           text_ad_it != inv_request_info.text_ads.end() ?
             text_ad_it->imp_channels : ChannelIdSet(),
-          inv_request_info.display_ad.present() ||
-            text_ad_it != inv_request_info.text_ads.end());
+          inv_request_info.display_ad.present() || text_ad_it != inv_request_info.text_ads.end());
 
-        if(text_ad_it != inv_request_info.text_ads.end())
+        if (text_ad_it != inv_request_info.text_ads.end())
         {
           ++text_ad_it;
         }
@@ -614,19 +601,11 @@ namespace RequestInfoSvcs
     InventoryActionProcessor::InventoryInfo& inv_info)
     /*throw(eh::Exception, PlainTypes::CorruptedStruct)*/
   {
-    fill_channel_appears(
-      profile_changed,
-      inv_info,
-      profile_writer,
-      inv_request_info);
+    fill_channel_appears(profile_changed, inv_info, profile_writer, inv_request_info);
 
-    if(!inv_request_info.tag_size.empty())
+    if (!inv_request_info.tag_size.empty())
     {
-      fill_channel_ecpms(
-        profile_changed,
-        inv_info,
-        profile_writer,
-        inv_request_info);
+      fill_channel_ecpms(profile_changed, inv_info, profile_writer, inv_request_info);
     }
     else
     {
@@ -644,20 +623,16 @@ namespace RequestInfoSvcs
   {
     typedef UserChannelInventoryProfileWriter::days_Container DayList;
 
-    DayList::iterator day_erase_it =
-      std::upper_bound(
-        profile_writer.days().begin(),
-        profile_writer.days().end(),
-        date - days_to_keep,
-        DateCompare());
+    DayList::iterator day_erase_it = std::upper_bound(
+      profile_writer.days().begin(),
+      profile_writer.days().end(),
+      date - days_to_keep,
+      DateCompare());
 
-    if(day_erase_it != profile_writer.days().begin())
+    if (day_erase_it != profile_writer.days().begin())
     {
       profile_changed = true;
-
-      profile_writer.days().erase(
-        profile_writer.days().begin(),
-        day_erase_it);
+      profile_writer.days().erase(profile_writer.days().begin(), day_erase_it);
     }
   }
 
@@ -676,28 +651,25 @@ namespace RequestInfoSvcs
     const Generics::Time request_date =
       inv_request_info.placement_colo_time.get_gm_time().get_date();
 
-    if(profile_writer.days().empty() ||
+    if (profile_writer.days().empty() ||
        request_date > Generics::Time(
          profile_writer.days().back().date()).get_gm_time().get_date() - days_to_keep)
     {
-      if(profile_writer.last_request_time() < request_date.tv_sec)
+      if (profile_writer.last_request_time() < request_date.tv_sec)
       {
         profile_changed = true;
         profile_writer.last_request_time() = request_date.tv_sec;
       }
 
-      if(profile_writer.last_daily_processing_time() < request_date.tv_sec &&
+      if (profile_writer.last_daily_processing_time() < request_date.tv_sec &&
          inv_request_info.triggered_expression_channels.present())
       {
         profile_changed = true;
-        profile_writer.last_daily_processing_time() =
-          inv_request_info.placement_colo_time.tv_sec;
+        profile_writer.last_daily_processing_time() = inv_request_info.placement_colo_time.tv_sec;
       }
 
       ChannelInventoryDayWriter& new_writer = get_inv_day(
-        profile_changed,
-        profile_writer,
-        request_date);
+        profile_changed, profile_writer, request_date);
 
       fill_inv_info_by_day(
         profile_changed,
@@ -724,7 +696,9 @@ namespace RequestInfoSvcs
     unsigned long common_chunks_number,
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* inv_prefix,
-    const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
+    const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+    std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
+      rocksdb_processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       days_to_keep_(days_to_keep),
@@ -750,11 +724,13 @@ namespace RequestInfoSvcs
             AdServer::Commons::uuid_distribution_hash,
             0,
             false,
-            "");
+            "",
+            2,
+            std::move(rocksdb_processor));
       user_map_ = user_map.first;
       add_child_object(user_map.second);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init UserInventoryInfoMap. Caught eh::Exception: " <<
@@ -767,8 +743,7 @@ namespace RequestInfoSvcs
   {}
 
   Generics::ConstSmartMemBuf_var
-  UserInventoryInfoContainer::get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserInventoryInfoContainer::get_profile(const AdServer::Commons::UserId& user_id)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserInventoryInfoContainer::get_profile()";
@@ -777,21 +752,18 @@ namespace RequestInfoSvcs
     {
       return user_map_->get_profile(user_id);
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't get profile. Caught eh::Exception: " <<
-        e.what();
+      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << e.what();
       throw Exception(ostr);
     }
   }
 
-  void
-  UserInventoryInfoContainer::process_match_request(
-    const MatchInfo& request_info)
-    /*throw(MatchRequestProcessor::Exception)*/
+  AdServer::Commons::StartableAwaitable<void>
+  UserInventoryInfoContainer::co_process_match_request(const MatchInfo& request_info)
   {
-    static const char* FUN = "UserInventoryInfoContainer::process_match_request()";
+    static const char* FUN = "UserInventoryInfoContainer::co_process_match_request()";
 
     bool delegate_inventory_processing = false;
     InventoryActionProcessor::InventoryInfo inv_info;
@@ -800,9 +772,9 @@ namespace RequestInfoSvcs
 
     try
     {
-      if(!request_info.user_id.is_null())
+      if (!request_info.user_id.is_null())
       {
-        process_request_trans_(
+        co_await co_process_request_trans_(
           delegate_inventory_processing,
           inv_info,
           gmt_colo_reach_info_list,
@@ -814,7 +786,7 @@ namespace RequestInfoSvcs
         delegate_inventory_processing = init_inv_info_(inv_info, request_info);
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Process inventory request: " << std::endl <<
@@ -823,51 +795,47 @@ namespace RequestInfoSvcs
         ostr << std::endl << "Inventory info: " << std::endl;
         inv_info.print(ostr, "  ");
 
-        logger_->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INVENTORY_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_INVENTORY_CONTAINER);
       }
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Caught eh::Exception "
-        "on processing request transaction: " << e.what();
+      ostr << FUN << ": Caught eh::Exception on processing request transaction: " << e.what();
       throw MatchRequestProcessor::Exception(ostr);
     }
 
-    if(delegate_inventory_processing)
+    if (delegate_inventory_processing)
     {
       try
       {
         inventory_processor_->process_request(inv_info);
       }
-      catch(const eh::Exception& e)
+      catch (const eh::Exception& e)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Caught eh::Exception "
-          "on request processing delegate: " << e.what();
+        ostr << FUN << ": Caught eh::Exception on request processing delegate: " << e.what();
         throw MatchRequestProcessor::Exception(ostr);
       }
     }
 
-    if(colo_reach_processor_.in())
+    if (colo_reach_processor_.in())
     {
       try
       {
-        for(ColoReachInfoList::const_iterator it = gmt_colo_reach_info_list.begin();
-            it != gmt_colo_reach_info_list.end(); ++it)
+        for (ColoReachInfoList::const_iterator it = gmt_colo_reach_info_list.begin();
+          it != gmt_colo_reach_info_list.end(); ++it)
         {
           colo_reach_processor_->process_gmt_colo_reach(*it);
         }
 
-        for(ColoReachInfoList::const_iterator it = isp_colo_reach_info_list.begin();
-            it != isp_colo_reach_info_list.end(); ++it)
+        for (ColoReachInfoList::const_iterator it = isp_colo_reach_info_list.begin();
+          it != isp_colo_reach_info_list.end(); ++it)
         {
           colo_reach_processor_->process_isp_colo_reach(*it);
         }
       }
-      catch(const eh::Exception& e)
+      catch (const eh::Exception& e)
       {
         Stream::Error ostr;
         ostr << FUN << ": Caught eh::Exception "
@@ -883,14 +851,13 @@ namespace RequestInfoSvcs
     Generics::Time& last_daily_processing_time)
     /*throw(Exception)*/
   {
-    static const char* FUN =
-      "UserInventoryInfoContainer::get_last_daily_processing_time()";
+    static const char* FUN = "UserInventoryInfoContainer::get_last_daily_processing_time()";
 
     try
     {
       Generics::ConstSmartMemBuf_var mem_buf = get_profile(user_id);
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserChannelInventoryProfileReader profile_reader(
           mem_buf->membuf().data(),
@@ -904,14 +871,14 @@ namespace RequestInfoSvcs
 
       return false;
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       try
       {
         // corrupted profile - remove it
         user_map_->remove_profile(user_id);
       }
-      catch(...)
+      catch (...)
       {}
 
       Stream::Error ostr;
@@ -922,8 +889,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  UserInventoryInfoContainer::process_user(
-    const InventoryDailyMatchInfo& inv_daily_match_info)
+  UserInventoryInfoContainer::process_user(const InventoryDailyMatchInfo& inv_daily_match_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserInventoryInfoContainer::process_user()";
@@ -933,13 +899,13 @@ namespace RequestInfoSvcs
 
     process_user_trans_(delegate_processing, inv_info, inv_daily_match_info);
 
-    if(delegate_processing)
+    if (delegate_processing)
     {
       try
       {
         inventory_processor_->process_user(inv_info);
       }
-      catch(const eh::Exception& e)
+      catch (const eh::Exception& e)
       {
         Stream::Error ostr;
         ostr << FUN << ": Caught eh::Exception "
@@ -983,17 +949,16 @@ namespace RequestInfoSvcs
     {
       user_map_->save_profile(user_id, profile, time);
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't save profile. Caught eh::Exception: " <<
-        e.what();
+      ostr << FUN << ": Can't save profile. Caught eh::Exception: " << e.what();
       throw Exception(ostr);
     }
   }
 
-  void
-  UserInventoryInfoContainer::process_request_trans_(
+  AdServer::Commons::Awaitable<void>
+  UserInventoryInfoContainer::co_process_request_trans_(
     bool& delegate_inventory_processing,
     InventoryActionProcessor::InventoryInfo& inv_info,
     ColoReachInfoList& gmt_colo_reach_info_list,
@@ -1016,11 +981,10 @@ namespace RequestInfoSvcs
 
       try
       {
-        transaction = user_map_->get_transaction(request_info.user_id);
-
-        mem_buf = transaction->get_profile();
+        transaction = co_await user_map_->co_get_transaction(request_info.user_id);
+        mem_buf = co_await transaction->co_get_profile();
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN << ": on read, for user_id = " << request_info.user_id.to_string() <<
@@ -1044,25 +1008,22 @@ namespace RequestInfoSvcs
       bool colo_merge_appeared = false;
       bool isp_colo_merge_appeared = false;
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserChannelInventoryProfileReader profile_reader(
           mem_buf->membuf().data(),
           mem_buf->membuf().size());
 
-        profile_writer.init(mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         Generics::Time old_isp_time;
-        const bool old_isp_time_found =
-          get_time_by_id(
-            profile_reader.isp_colo_create_time().begin(),
-            profile_reader.isp_colo_create_time().end(),
-            request_info.colo_id,
-            old_isp_time);
+        const bool old_isp_time_found = get_time_by_id(
+          profile_reader.isp_colo_create_time().begin(),
+          profile_reader.isp_colo_create_time().end(),
+          request_info.colo_id,
+          old_isp_time);
 
-        const Generics::Time old_gmt_time =
-          Generics::Time(profile_reader.create_time());
+        const Generics::Time old_gmt_time = Generics::Time(profile_reader.create_time());
 
         const bool changed_create_time = (time < old_gmt_time);
         // changed_create_time: revert and resave all data,
@@ -1071,10 +1032,9 @@ namespace RequestInfoSvcs
         // If none of create_time or isp_create_time changed for passed id.
         //   (possible) insert new colo id, update appearance
 
-        const bool changed_isp_create_time = old_isp_time_found &&
-          (isp_time < old_isp_time);
+        const bool changed_isp_create_time = old_isp_time_found && isp_time < old_isp_time;
 
-        if(changed_isp_create_time || changed_create_time)
+        if (changed_isp_create_time || changed_create_time)
         {
           save_colo = true;
 
@@ -1083,12 +1043,10 @@ namespace RequestInfoSvcs
           ColoReachProcessor::ColoReachInfo& revert_gmt_colo_reach_info =
             gmt_colo_reach_info_list.back();
 
-          revert_gmt_colo_reach_info.create_time =
-            Generics::Time(profile_reader.create_time());
+          revert_gmt_colo_reach_info.create_time = Generics::Time(profile_reader.create_time());
           revert_gmt_colo_reach_info.household = false;
 
-          ColoReachProcessor::ColoReachInfo
-            revert_tmp_collector, resave_tmp_collector;
+          ColoReachProcessor::ColoReachInfo revert_tmp_collector, resave_tmp_collector;
 
           // collect old records
           collect_all_appearance(
@@ -1135,7 +1093,7 @@ namespace RequestInfoSvcs
             BaseAppearanceIdGetter());
 
           // resave all appearances
-          if(changed_create_time)
+          if (changed_create_time)
           {
             profile_writer.create_time() = time.tv_sec;
 
@@ -1210,7 +1168,7 @@ namespace RequestInfoSvcs
               false);
           }
 
-          if(changed_isp_create_time && !changed_create_time)
+          if (changed_isp_create_time && !changed_create_time)
           {
             // Here we revert and resave only data for current colo_id
             // Only TZ for colo_id changed,
@@ -1244,7 +1202,7 @@ namespace RequestInfoSvcs
           }
         }
 
-        if(profile_reader.create_time() == 0)
+        if (profile_reader.create_time() == 0)
         {
           profile_writer.create_time() = date.tv_sec;
         }
@@ -1252,12 +1210,11 @@ namespace RequestInfoSvcs
         {
           // Possible add new colo_id in isp_colo_create_time
           Generics::Time new_isp_time;
-          const bool new_isp_time_found =
-            get_time_by_id(
-              profile_writer.isp_colo_create_time().begin(),
-              profile_writer.isp_colo_create_time().end(),
-              request_info.colo_id,
-              new_isp_time);
+          const bool new_isp_time_found = get_time_by_id(
+            profile_writer.isp_colo_create_time().begin(),
+            profile_writer.isp_colo_create_time().end(),
+            request_info.colo_id,
+            new_isp_time);
 
           if (!new_isp_time_found || new_isp_time == Generics::Time::ZERO)
           {
@@ -1289,7 +1246,7 @@ namespace RequestInfoSvcs
           isp_date,
           BaseAppearanceLess());
 
-        if(request_info.ad_request)
+        if (request_info.ad_request)
         {
           // ad request (excluding inventory requests)
           colo_ad_appeared = collect_appearance(
@@ -1309,7 +1266,7 @@ namespace RequestInfoSvcs
             BaseAppearanceLess());
         }
 
-        if(request_info.merge_request)
+        if (request_info.merge_request)
         {
           // merge request
           colo_merge_appeared = collect_appearance(
@@ -1354,7 +1311,7 @@ namespace RequestInfoSvcs
           request_info.colo_id,
           isp_date);
 
-        if(request_info.ad_request)
+        if (request_info.ad_request)
         {
           add_total_appearance(
             gmt_colo_reach_info.ad_colocations,
@@ -1370,7 +1327,7 @@ namespace RequestInfoSvcs
           isp_colo_ad_appeared = true;
         }
 
-        if(request_info.merge_request)
+        if (request_info.merge_request)
         {
           add_total_appearance(
             gmt_colo_reach_info.merge_colocations,
@@ -1387,12 +1344,11 @@ namespace RequestInfoSvcs
         }
       }
 
-      delegate_inventory_processing = init_inv_info_(
-        inv_info, request_info);
+      delegate_inventory_processing = init_inv_info_(inv_info, request_info);
 
       bool profile_changed = false;
 
-      if(!adrequest_anonymize_ || request_info.tag_size.empty())
+      if (!adrequest_anonymize_ || request_info.tag_size.empty())
       {
 
         fill_inv_info(
@@ -1404,18 +1360,14 @@ namespace RequestInfoSvcs
           days_to_keep_);
       }
 
-      if(save_colo ||
-         colo_appeared ||
-         isp_colo_appeared ||
-         colo_ad_appeared ||
-         isp_colo_ad_appeared ||
-         colo_merge_appeared ||
-         isp_colo_merge_appeared)
+      if (save_colo ||
+        colo_appeared || isp_colo_appeared ||
+        colo_ad_appeared || isp_colo_ad_appeared ||
+        colo_merge_appeared || isp_colo_merge_appeared)
       {
         profile_changed = true;
 
-        gmt_colo_reach_info.create_time =
-          Generics::Time(profile_writer.create_time());
+        gmt_colo_reach_info.create_time = Generics::Time(profile_writer.create_time());
         gmt_colo_reach_info.household = false;
 
         Generics::Time isp_create_time;
@@ -1442,7 +1394,7 @@ namespace RequestInfoSvcs
         gmt_colo_reach_info_list.push_back(gmt_colo_reach_info);
         isp_colo_reach_info_list.push_back(isp_colo_reach_info);
 
-        if(colo_appeared)
+        if (colo_appeared)
         {
           update_appearance(
             profile_writer.colo_appears(),
@@ -1452,7 +1404,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<ColoIdAppearanceWriter>());
         }
 
-        if(isp_colo_appeared)
+        if (isp_colo_appeared)
         {
           update_appearance(
             profile_writer.isp_colo_appears(),
@@ -1462,7 +1414,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<ColoIdAppearanceWriter>());
         }
 
-        if(colo_ad_appeared)
+        if (colo_ad_appeared)
         {
           update_appearance(
             profile_writer.colo_ad_appears(),
@@ -1472,7 +1424,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<ColoIdAppearanceWriter>());
         }
 
-        if(isp_colo_ad_appeared)
+        if (isp_colo_ad_appeared)
         {
           update_appearance(
             profile_writer.isp_colo_ad_appears(),
@@ -1482,7 +1434,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<ColoIdAppearanceWriter>());
         }
 
-        if(colo_merge_appeared)
+        if (colo_merge_appeared)
         {
           update_appearance(
             profile_writer.colo_merge_appears(),
@@ -1492,7 +1444,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<ColoIdAppearanceWriter>());
         }
 
-        if(isp_colo_merge_appeared)
+        if (isp_colo_merge_appeared)
         {
           update_appearance(
             profile_writer.isp_colo_merge_appears(),
@@ -1504,7 +1456,7 @@ namespace RequestInfoSvcs
       }
 
       // save profile
-      if(profile_changed)
+      if (profile_changed)
       {
         try
         {
@@ -1514,11 +1466,11 @@ namespace RequestInfoSvcs
           profile_writer.save(
             new_mem_buf->membuf().data(), new_mem_buf->membuf().size());
 
-          transaction->save_profile(
+          co_await transaction->co_save_profile(
             Generics::transfer_membuf(new_mem_buf),
             request_info.time);
         }
-        catch(const eh::Exception& ex)
+        catch (const eh::Exception& ex)
         {
           Stream::Error ostr;
           ostr << FUN << ": on save, caught eh::Exception: " << ex.what();
@@ -1526,7 +1478,7 @@ namespace RequestInfoSvcs
         }
       }
     }
-    catch(const PlainTypes::CorruptedStruct& ex)
+    catch (const PlainTypes::CorruptedStruct& ex)
     {
       transaction->remove_profile();
 
@@ -1544,8 +1496,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserInventoryInfoContainer::process_user_trans_()";
 
-    typedef ChannelInventoryDayWriter::total_channel_list_Container
-      ChannelIdWriteList;
+    using ChannelIdWriteList = ChannelInventoryDayWriter::total_channel_list_Container;
 
     delegate_processing = false;
 
@@ -1561,7 +1512,7 @@ namespace RequestInfoSvcs
 
         mem_buf = transaction->get_profile();
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN << ": on read, for user_id = " << inv_daily_match_info.user_id.to_string() <<
@@ -1569,7 +1520,7 @@ namespace RequestInfoSvcs
         throw Exception(ostr);
       }
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserChannelInventoryProfileReader profile_reader(
           mem_buf->membuf().data(),
@@ -1581,14 +1532,13 @@ namespace RequestInfoSvcs
         const Generics::Time processing_date =
           Generics::Time(inv_daily_match_info.time.get_gm_time().get_date());
 
-        if(last_daily_processing_time < processing_date)
+        if (last_daily_processing_time < processing_date)
         {
           UserChannelInventoryProfileWriter profile_writer(
             mem_buf->membuf().data(),
             mem_buf->membuf().size());
 
-          profile_writer.last_daily_processing_time() =
-            processing_date.tv_sec;
+          profile_writer.last_daily_processing_time() = processing_date.tv_sec;
 
           bool unused_profile_changed = false;
 
@@ -1623,7 +1573,7 @@ namespace RequestInfoSvcs
             processing_date,
             days_to_keep_);
 
-          if(!total_appear_expression_channels.empty())
+          if (!total_appear_expression_channels.empty())
           {
             delegate_processing = true;
 
@@ -1653,7 +1603,7 @@ namespace RequestInfoSvcs
               Generics::transfer_membuf(new_mem_buf),
               last_request_time);
           }
-          catch(const eh::Exception& ex)
+          catch (const eh::Exception& ex)
           {
             Stream::Error ostr;
             ostr << FUN << ": on save, caught eh::Exception: " << ex.what();
@@ -1662,7 +1612,7 @@ namespace RequestInfoSvcs
         } // last_daily_processing_time < processing_date
       }
     }
-    catch(const PlainTypes::CorruptedStruct& ex)
+    catch (const PlainTypes::CorruptedStruct& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Caught PlainTypes::CorruptedStruct: " << ex.what();
@@ -1689,33 +1639,31 @@ namespace RequestInfoSvcs
       request_info.triggered_expression_channels.present() ?
       *request_info.triggered_expression_channels : triggered_expr_holder;
 
-    if(!request_info.tag_size.empty())
+    if (!request_info.tag_size.empty())
     {
       RevenueDecimal sum_request_revenue = RevenueDecimal::ZERO;
 
-      if(request_info.display_ad.present())
+      if (request_info.display_ad.present())
       {
         try
         {
           sum_request_revenue = request_info.display_ad->avg_revenue;
         }
-        catch(...)
+        catch (...)
         {
           assert(0);
         }
       }
       else
       {
-        for(MatchInfo::AdBidSlotList::
-              const_iterator text_ad_it = request_info.text_ads.begin();
-            text_ad_it != request_info.text_ads.end();
-            ++text_ad_it)
+        for (auto text_ad_it = request_info.text_ads.begin();
+          text_ad_it != request_info.text_ads.end(); ++text_ad_it)
         {
           try
           {
             sum_request_revenue += text_ad_it->avg_revenue;
           }
-          catch(...)
+          catch (...)
           {
             assert(0);
           }
@@ -1723,15 +1671,14 @@ namespace RequestInfoSvcs
       }
 
       // impression opportunity
-      if(request_info.display_ad.present())
+      if (request_info.display_ad.present())
       {
         inv_info.display_imps.imp_channels.reserve(request_info.display_ad->imp_channels.size());
 
         // selected display ad
-        for(ChannelIdSet::const_iterator imp_ch_it =
-              request_info.display_ad->imp_channels.begin();
-            imp_ch_it != request_info.display_ad->imp_channels.end();
-            ++imp_ch_it)
+        for (auto imp_ch_it = request_info.display_ad->imp_channels.begin();
+          imp_ch_it != request_info.display_ad->imp_channels.end();
+          ++imp_ch_it)
         {
           inv_info.display_imps.imp_channels.emplace_back(
             *imp_ch_it,
@@ -1741,11 +1688,11 @@ namespace RequestInfoSvcs
         inv_info.display_imps.imp_other_channels.reserve(triggered_expression_channels.size());
         inv_info.text_imps.imp_other_channels.reserve(triggered_expression_channels.size());
 
-        for(auto ch_it = triggered_expression_channels.begin();
-            ch_it != triggered_expression_channels.end(); ++ch_it)
+        for (auto ch_it = triggered_expression_channels.begin();
+          ch_it != triggered_expression_channels.end(); ++ch_it)
         {
-          if(request_info.display_ad->imp_channels.find(*ch_it) ==
-             request_info.display_ad->imp_channels.end())
+          if (request_info.display_ad->imp_channels.find(*ch_it) ==
+            request_info.display_ad->imp_channels.end())
           {
             inv_info.display_imps.imp_other_channels.emplace_back(
               *ch_it,
@@ -1753,7 +1700,7 @@ namespace RequestInfoSvcs
                  1, sum_request_revenue));
           }
 
-          if(request_info.max_text_ads != 0)
+          if (request_info.max_text_ads != 0)
           {
             inv_info.text_imps.imp_other_channels.emplace_back(
               *ch_it,
@@ -1763,14 +1710,14 @@ namespace RequestInfoSvcs
           }
         }
       }
-      else if(!request_info.text_ads.empty())
+      else if (!request_info.text_ads.empty())
       {
         inv_info.display_imps.imp_other_channels.reserve(triggered_expression_channels.size());
         inv_info.text_imps.imp_other_channels.reserve(triggered_expression_channels.size());
 
         // text ads selected
-        for(auto ch_it = triggered_expression_channels.begin();
-            ch_it != triggered_expression_channels.end(); ++ch_it)
+        for (auto ch_it = triggered_expression_channels.begin();
+          ch_it != triggered_expression_channels.end(); ++ch_it)
         {
           inv_info.display_imps.imp_other_channels.emplace_back(
             *ch_it,
@@ -1778,18 +1725,14 @@ namespace RequestInfoSvcs
               1, sum_request_revenue));
         }
 
-        InventoryActionProcessor::InventoryInfo::
-          ChannelImpCounterMap text_imp_channels;
+        InventoryActionProcessor::InventoryInfo::ChannelImpCounterMap text_imp_channels;
 
-        for(MatchInfo::AdBidSlotList::
-              const_iterator text_ad_it = request_info.text_ads.begin();
-            text_ad_it != request_info.text_ads.end();
-            ++text_ad_it)
+        for (auto text_ad_it = request_info.text_ads.begin();
+          text_ad_it != request_info.text_ads.end(); ++text_ad_it)
         {
-          for(ChannelIdSet::const_iterator imp_ch_it =
-                text_ad_it->imp_channels.begin();
-              imp_ch_it != text_ad_it->imp_channels.end();
-              ++imp_ch_it)
+          for (ChannelIdSet::const_iterator imp_ch_it = text_ad_it->imp_channels.begin();
+            imp_ch_it != text_ad_it->imp_channels.end();
+            ++imp_ch_it)
           {
             text_imp_channels[*imp_ch_it] +=
               InventoryActionProcessor::InventoryInfo::ChannelImpCounter(
@@ -1810,18 +1753,17 @@ namespace RequestInfoSvcs
         const unsigned long text_ads_imps = request_info.text_ads.size();
         inv_info.text_imps.impop_no_imp_channels.reserve(triggered_expression_channels.size());
 
-        for(auto ch_it = triggered_expression_channels.begin();
-            ch_it != triggered_expression_channels.end(); ++ch_it)
+        for (auto ch_it = triggered_expression_channels.begin();
+          ch_it != triggered_expression_channels.end(); ++ch_it)
         {
           const auto ch_cnt_it = text_imp_channels.find(*ch_it);
 
-          const unsigned long imps = (
-            ch_cnt_it != text_imp_channels.end() ?
+          const unsigned long imps = (ch_cnt_it != text_imp_channels.end() ?
             ch_cnt_it->second.imps : 0);
 
           const unsigned long other_imps = text_ads_imps - imps;
 
-          if(other_imps != 0)
+          if (other_imps != 0)
           {
             const RevenueDecimal other_revenue = (
               ch_cnt_it != text_imp_channels.end() ?
@@ -1836,7 +1778,7 @@ namespace RequestInfoSvcs
 
           unsigned long impops = request_info.max_text_ads - text_ads_imps;
 
-          if(impops != 0)
+          if (impops != 0)
           {
             try
             {
@@ -1856,7 +1798,7 @@ namespace RequestInfoSvcs
                 InventoryActionProcessor::InventoryInfo::ChannelImpCounter(
                   impops, impop_revenue));
             }
-            catch(...)
+            catch (...)
             {
               assert(0);
             }
@@ -1869,15 +1811,15 @@ namespace RequestInfoSvcs
         inv_info.text_imps.impop_no_imp_channels.reserve(triggered_expression_channels.size());
 
         // impression opportunity, but display or text ads isn't selected
-        for(auto ch_it = triggered_expression_channels.begin();
-            ch_it != triggered_expression_channels.end(); ++ch_it)
+        for (auto ch_it = triggered_expression_channels.begin();
+          ch_it != triggered_expression_channels.end(); ++ch_it)
         {
           inv_info.display_imps.impop_no_imp_channels.emplace_back(
             *ch_it,
             InventoryActionProcessor::InventoryInfo::ChannelImpCounter(
               1, request_info.cost_threshold));
 
-          if(request_info.max_text_ads != 0)
+          if (request_info.max_text_ads != 0)
           {
             inv_info.text_imps.impop_no_imp_channels.emplace_back(
               *ch_it,
@@ -1891,5 +1833,4 @@ namespace RequestInfoSvcs
 
     return !inv_info.display_imps.empty() || !inv_info.text_imps.empty();
   }
-} /* namespace RequestInfoSvcs */
-} /* namespace AdServer */
+} /* namespace AdServer::RequestInfoSvcs */
