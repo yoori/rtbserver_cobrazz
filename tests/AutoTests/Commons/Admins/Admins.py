@@ -493,7 +493,7 @@ Admin('FreqCapProfileAdmin',
 # @brief ExpressionMatcherAdmin with aspect 'print'.
 # ExpressionMatcherAdmin call string:
 # ExpressionMatcherAdmin print '<UUID>' \
-#     -r corbaloc::$expression_matcher_host:$expression_matcher_port/ExpressionMatcher
+#     -r $expression_matcher_host:$expression_matcher_port
 
 Admin('InventoryProfileAdmin',
       Cmd('ExpressionMatcher', 'print',

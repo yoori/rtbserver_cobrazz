@@ -660,12 +660,9 @@ class ExpressionMatcher(CORBAProcess):
  <cfg:ExpressionMatcherConfig log_root="%(LOGROOT)s"
   update_period="10" inventory_users_percentage="100"
   colo_id="%(COLO_ID)i" service_index="0">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(EXPRESSIONMATCHER_PORT)i">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="ExpressionMatcher" name="ExpressionMatcher"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
+  <cfg:GrpcConfig cq_threads="%(THREADING_POOL)i">
+   <cfg:Endpoint host="*" port="%(EXPRESSIONMATCHER_PORT)i"/>
+  </cfg:GrpcConfig>
   <cfg:Logger filename="%(LOGROOT)s/ExpressionMatcher.log" log_level="%(LOGLEVEL)i">
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
@@ -673,8 +670,8 @@ class ExpressionMatcher(CORBAProcess):
   <cfg:CampaignServerCorbaRef name="CampaignServer">
     <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/CampaignServer_v340"/>
   </cfg:CampaignServerCorbaRef>
-   <cfg:ExpressionMatcherGroup distrib_count="4">
-      <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(EXPRESSIONMATCHER_PORT)i/ExpressionMatcher"/>
+   <cfg:ExpressionMatcherGroup>
+      <cfg:ExpressionMatcherGrpcRef host="%(HOST)s" port="%(EXPRESSIONMATCHER_PORT)i"/>
     </cfg:ExpressionMatcherGroup>
   <cfg:UserInfoManagerControllerGroup name="UserInfoManagerControllers">
       <cfg:Ref ref="corbaloc:iiop::%(HOST)s:%(USERINFOCTRL_PORT)i/UserInfoManagerController"/>
