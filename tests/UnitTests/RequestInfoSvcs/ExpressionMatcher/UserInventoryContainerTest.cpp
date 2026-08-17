@@ -27,6 +27,16 @@ namespace
 
   const AdServer::Commons::UserId TEST_UID("BAAAAAAAAAAAAAAAAAAAAA..");
 
+  template<typename Container>
+  void
+  process_match_request(
+    const Container& container,
+    const MatchRequestProcessor::MatchInfo& match_info)
+  {
+    AdServer::Commons::sync_wait(
+      container->co_process_match_request(match_info));
+  }
+
   void prepare_test_folders(
     AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders)
   {
@@ -337,7 +347,7 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_cpm_expression_channels.insert(1);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     { // #1
@@ -354,7 +364,7 @@ public:
       match_info.triggered_cpm_expression_channels.insert(1);
       match_info.triggered_cpm_expression_channels.insert(2);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     { // #2
@@ -369,7 +379,7 @@ public:
       match_info.triggered_cpm_expression_channels.insert(2);
       match_info.triggered_cpm_expression_channels.insert(3);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     { // #3
@@ -391,7 +401,7 @@ public:
       match_info.triggered_cpm_expression_channels.insert(2);
       match_info.triggered_cpm_expression_channels.insert(3);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
   }
 
@@ -537,7 +547,7 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_cpm_expression_channels.insert(1);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     {
@@ -553,7 +563,7 @@ public:
       match_info.triggered_cpm_expression_channels.insert(1);
       match_info.triggered_cpm_expression_channels.insert(2);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
   }
 
@@ -648,7 +658,7 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_cpm_expression_channels.insert(1);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     { // #1
@@ -668,7 +678,7 @@ public:
       match_info.triggered_cpm_expression_channels.insert(1);
       match_info.triggered_cpm_expression_channels.insert(2);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     { // #2
@@ -688,7 +698,7 @@ public:
       match_info.triggered_cpm_expression_channels.insert(1);
       match_info.triggered_cpm_expression_channels.insert(2);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
   }
 
@@ -798,7 +808,7 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_cpm_expression_channels.insert(1);
 
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     UserIdList all_users;
@@ -902,7 +912,7 @@ public:
       MatchRequestProcessor::MatchInfo match_info(
         simple_match_info("2008-01-05"));
       match_info.triggered_expression_channels->push_back(1);
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     for(int i = 0; i < 2; ++i)
@@ -920,14 +930,14 @@ public:
       MatchRequestProcessor::MatchInfo match_info(
         simple_match_info("2008-01-05"));
       match_info.triggered_expression_channels->push_back(1);
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     {
       MatchRequestProcessor::MatchInfo match_info(
         simple_match_info("2008-01-08"));
       match_info.triggered_expression_channels->push_back(1);
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     {
@@ -1023,7 +1033,7 @@ public:
       display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
       display_ad.imp_channels.insert(1);
       match_info.display_ad = display_ad;
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
       date += Generics::Time::ONE_DAY;
     }
 
@@ -1034,7 +1044,7 @@ public:
     display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
     display_ad.imp_channels.insert(2);
     match_info.display_ad = display_ad;
-    cont->process_match_request(match_info);
+    process_match_request(cont, match_info);
 
     Generics::ConstSmartMemBuf_var mem_buf = cont->get_profile(TEST_UID);
     UserChannelInventoryProfileReader profile_reader(
@@ -1094,14 +1104,14 @@ public:
       display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
       display_ad.imp_channels.insert(1);
       match_info.display_ad = display_ad;
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
 
     {
       match_info.time = base_date - Generics::Time::ONE_DAY * 31;
       match_info.isp_time = match_info.time;
       match_info.placement_colo_time = match_info.time;
-      cont->process_match_request(match_info);
+      process_match_request(cont, match_info);
     }
   }
 
@@ -1173,7 +1183,7 @@ perf_test()
 
     for(int i = 0; i < 10000; ++i)
     {
-      inv_container->process_match_request(match_info);
+      process_match_request(inv_container, match_info);
     }
 
     timer.stop();
@@ -1253,7 +1263,7 @@ perf_test2()
 
     for(int i = 0; i < 10000; ++i)
     {
-      inv_container->process_match_request(match_info_array[i % MATCH_INFO_ARRAY_SIZE]);
+      process_match_request(inv_container, match_info_array[i % MATCH_INFO_ARRAY_SIZE]);
     }
 
     timer.stop();
@@ -1321,7 +1331,7 @@ main(int argc, char** argv) noexcept
         match_info.triggered_expression_channels->push_back(1);
         match_info.triggered_cpm_expression_channels.insert(1);
 
-        inv_container->process_match_request(match_info);
+        process_match_request(inv_container, match_info);
       }
 
       inv_container->deactivate_object();

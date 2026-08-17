@@ -249,14 +249,12 @@ public:
     : container_(ReferenceCounting::add_ref(container))
   {}
 
-  virtual
-  Generics::ConstSmartMemBuf_var
-  get_user_profile(const AdServer::Commons::UserId& user_id)
-    /*throw(Exception)*/
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  co_get_user_profile(const AdServer::Commons::UserId& user_id) override
   {
     try
     {
-      return container_->get_user_profile(user_id);
+      co_return co_await container_->co_get_user_profile(user_id);
     }
     catch(const UserTriggerMatchContainer::Exception& ex)
     {
