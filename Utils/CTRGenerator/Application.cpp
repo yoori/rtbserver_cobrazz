@@ -30,7 +30,8 @@ namespace
   const char USAGE[] =
     "\nUsage: \n"
     "CTRGenerator generate-model <CONFIG FILE> <CONFIG DATA FILE> <RESULT WEIGHT FILE>\n"
-    "CTRGenerator generate-svm <CONFIG DATA FILE> <FEATURE COLUMNS>\n"
+    "CTRGenerator generate-svm <CONFIG DATA FILE> <FEATURE COLUMNS> "
+      "[--model=xgboost|catboost]\n"
     "\n"
     "CTRGenerator generate-xgb-ctr <XGB MODEL FILE> <CONFIG FILE> <FEATURE COLUMNS>\n"
     "CTRGenerator generate-ctr <CONFIG DIR> <FEATURE COLUMNS> [LINE]\n";
@@ -54,6 +55,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::StringOption opt_cc_to_ccg_dictionary;
   Generics::AppUtils::StringOption opt_cc_to_campaign_dictionary;
   Generics::AppUtils::StringOption opt_tag_to_publisher_dictionary;
+  Generics::AppUtils::StringOption opt_model("xgboost");
   Generics::AppUtils::CheckOption opt_out_hashes;
   Generics::AppUtils::Args args(-1);
 
@@ -89,6 +91,10 @@ Application_::main(int& argc, char** argv)
   args.add(
     Generics::AppUtils::equal_name("hashes"),
     opt_out_hashes);
+
+  args.add(
+    Generics::AppUtils::equal_name("model"),
+    opt_model);
 
   args.parse(argc - 1, argv + 1);
 
@@ -165,6 +171,22 @@ Application_::main(int& argc, char** argv)
       std::getline(std::cin, feature_columns);
     }
 
+    bool catboost_model;
+    if(*opt_model == "catboost")
+    {
+      catboost_model = true;
+    }
+    else if(*opt_model == "xgboost")
+    {
+      catboost_model = false;
+    }
+    else
+    {
+      Stream::Error ostr;
+      ostr << "generate-svm: unsupported model '" << *opt_model << "'";
+      throw Exception(ostr);
+    }
+
     generate_svm_(
       std::cout,
       std::cin,
@@ -174,7 +196,8 @@ Application_::main(int& argc, char** argv)
       opt_cc_to_campaign_dictionary->c_str(),
       opt_tag_to_publisher_dictionary->c_str(),
       opt_dictionary->c_str(),
-      opt_name_dictionary->c_str());
+      opt_name_dictionary->c_str(),
+      catboost_model);
   }
   else if(command == "generate-xgb-ctr")
   {
@@ -503,7 +526,8 @@ Application_::generate_svm_(
   const char* cc_to_campaign_dictionary_file_path,
   const char* tag_to_publisher_dictionary_file_path,
   const char* dictionary_file_path,
-  const char* name_dictionary_file_path)
+  const char* name_dictionary_file_path,
+  bool catboost_model)
 {
   using namespace xsd::AdServer;
 
@@ -556,6 +580,7 @@ Application_::generate_svm_(
   // parse model config
   unsigned long dimension = config->Model().features_dimension();
   unsigned long index_shifter = sizeof(uint32_t)*8 - dimension;
+  const unsigned long features_size = 1UL << dimension;
 
   CTRGenerator::FeatureList result_features;
   CTR::FeatureNameResolver feature_name_resolver;
@@ -636,7 +661,7 @@ Application_::generate_svm_(
   }
 
   // fetch input (values)
-  CTRGenerator ctr_generator(result_features, true);
+  CTRGenerator ctr_generator(result_features, !catboost_model);
   CalculateParamsFiller calc_params_filler;
 
   unsigned long line_i = 0;
@@ -755,8 +780,17 @@ Application_::generate_svm_(
     for(auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
     {
-      unsigned long index = hash_it->first >> index_shifter;
-      ordered_hashes.insert(std::make_pair(index + 1, hash_it->second));
+      const unsigned long index = catboost_model ?
+        hash_it->first % features_size :
+        hash_it->first >> index_shifter;
+      if(catboost_model)
+      {
+        ordered_hashes[index + 1] = hash_it->second;
+      }
+      else
+      {
+        ordered_hashes.insert(std::make_pair(index + 1, hash_it->second));
+      }
     }
 
     for(auto hash_it = ordered_hashes.begin();
@@ -782,7 +816,10 @@ Application_::generate_svm_(
     std::ofstream dictionary_file(dictionary_file_path, std::ios_base::out);
     for(auto it = dict_table->begin(); it != dict_table->end(); ++it)
     {
-      dictionary_file << ((it->first >> index_shifter) + 1) << ",";
+      const unsigned long index = catboost_model ?
+        it->first % features_size :
+        it->first >> index_shifter;
+      dictionary_file << (index + 1) << ",";
       if(!it->second.empty())
       {
         std::string res = it->second;

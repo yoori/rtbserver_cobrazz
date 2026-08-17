@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 #include "CTRGenerator.hpp"
 
@@ -13,6 +14,32 @@ namespace CampaignSvcs
 
   namespace
   {
+    int
+    feature_level(const CTR::BasicFeatureSet& basic_features) noexcept
+    {
+      for(const auto basic_feature : basic_features)
+      {
+        if(basic_feature >= CTR::BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID ||
+           (basic_feature >= CTR::BF_CANDIDATE_LEVEL_FIRST_ID &&
+            basic_feature < CTR::BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
+        {
+          return 2;
+        }
+      }
+
+      for(const auto basic_feature : basic_features)
+      {
+        if(basic_feature >= CTR::BF_ARRAY_AUCTION_LEVEL_FIRST_ID ||
+           (basic_feature >= CTR::BF_AUCTION_LEVEL_FIRST_ID &&
+            basic_feature < CTR::BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
+        {
+          return 1;
+        }
+      }
+
+      return 0;
+    }
+
     template<typename Type>
     std::string
     value_to_string(const Type& val)
@@ -797,6 +824,7 @@ namespace CampaignSvcs
 
         FeatureHolder feature_holder;
         feature_holder.hash_seed = eval_feature_hash_seed_(*fit);
+        feature_holder.basic_features = fit->basic_features;
 
         FeatureHashCalculator_var feature_hash_calculator =
           create_final_feature_hash_calculator_(
@@ -816,6 +844,23 @@ namespace CampaignSvcs
         feature_holders_.push_back(feature_holder);
       }
     }
+
+    feature_holders_.sort(
+      [](const FeatureHolder& left, const FeatureHolder& right)
+      {
+        const int left_level = feature_level(left.basic_features);
+        const int right_level = feature_level(right.basic_features);
+        if(left_level != right_level)
+        {
+          return left_level < right_level;
+        }
+
+        return std::lexicographical_compare(
+          left.basic_features.begin(),
+          left.basic_features.end(),
+          right.basic_features.begin(),
+          right.basic_features.end());
+      });
   };
 
   void
@@ -838,22 +883,26 @@ namespace CampaignSvcs
 
     if(push_hour_)
     {
-      calculation.hashes.insert(std::make_pair(CTR::BF_HOUR, calc_params.hour));
+      calculation.hashes.emplace_back(CTR::BF_HOUR, calc_params.hour);
     }
 
     if(push_week_day_)
     {
-      calculation.hashes.insert(std::make_pair(CTR::BF_WEEK_DAY, calc_params.wd));
+      calculation.hashes.emplace_back(CTR::BF_WEEK_DAY, calc_params.wd);
     }
 
     if(push_campaign_freq_)
     {
-      calculation.hashes.insert(std::make_pair(CTR::BF_CAMPAIGN_FREQ_ID, calc_params.campaign_freq));
+      calculation.hashes.emplace_back(
+        CTR::BF_CAMPAIGN_FREQ_ID,
+        calc_params.campaign_freq);
     }
 
     if(push_campaign_freq_log_)
     {
-      calculation.hashes.insert(std::make_pair(CTR::BF_CAMPAIGN_FREQ_LOG_ID, calc_params.campaign_freq_log));
+      calculation.hashes.emplace_back(
+        CTR::BF_CAMPAIGN_FREQ_LOG_ID,
+        calc_params.campaign_freq_log);
     }
   }
 

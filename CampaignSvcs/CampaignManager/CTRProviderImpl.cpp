@@ -195,13 +195,13 @@ namespace AdServer::CampaignSvcs::CTR
   void
   RemoveConfigTask::execute() noexcept
   {
-    for(FileList::const_iterator fit = config_files_.begin();
+    for (FileList::const_iterator fit = config_files_.begin();
       fit != config_files_.end(); ++fit)
     {
       ::unlink(fit->c_str());
     }
 
-    for(FileList::const_iterator fit = config_directories_.begin();
+    for (FileList::const_iterator fit = config_directories_.begin();
       fit != config_directories_.end(); ++fit)
     {
       ::rmdir(fit->c_str());
@@ -244,7 +244,7 @@ namespace AdServer::CampaignSvcs::CTR
       process_integer(int64_t value, std::string_view path, void* context)
         const override
       {
-        if(value < 0 ||
+        if (value < 0 ||
           static_cast<uint64_t>(value) >
             static_cast<uint64_t>(std::numeric_limits<NumberType>::max()))
         {
@@ -253,7 +253,7 @@ namespace AdServer::CampaignSvcs::CTR
           throw CTRProviderImpl::InvalidConfig(ostr);
         }
 
-        if(Context* target = get_context_(ctr_parse_state(context)))
+        if (Context* target = get_context_(ctr_parse_state(context)))
         {
           target->*field_ = static_cast<NumberType>(value);
         }
@@ -279,7 +279,7 @@ namespace AdServer::CampaignSvcs::CTR
       process_string(std::string_view value, std::string_view, void* context)
         const override
       {
-        if(Context* target = get_context_(ctr_parse_state(context)))
+        if (Context* target = get_context_(ctr_parse_state(context)))
         {
           (target->*field_).assign(value);
         }
@@ -289,7 +289,7 @@ namespace AdServer::CampaignSvcs::CTR
       process_string(std::string&& value, std::string_view, void* context)
         const override
       {
-        if(Context* target = get_context_(ctr_parse_state(context)))
+        if (Context* target = get_context_(ctr_parse_state(context)))
         {
           target->*field_ = std::move(value);
         }
@@ -317,7 +317,7 @@ namespace AdServer::CampaignSvcs::CTR
       {
         try
         {
-          if(Context* target = get_context_(ctr_parse_state(context)))
+          if (Context* target = get_context_(ctr_parse_state(context)))
           {
             target->*field_ = Commons::extract_decimal<DecimalType>(
               value,
@@ -352,7 +352,7 @@ namespace AdServer::CampaignSvcs::CTR
       object_started(std::string_view, void* context) const override
       {
         CtrConfigParseState& state = ctr_parse_state(context);
-        if(!state.algorithms_array_started)
+        if (!state.algorithms_array_started)
         {
           Stream::Error ostr;
           ostr << "Algorithm descriptor outside algorithms array";
@@ -381,13 +381,13 @@ namespace AdServer::CampaignSvcs::CTR
       object_started(std::string_view, void* context) const override
       {
         CtrConfigParseState& state = ctr_parse_state(context);
-        if(state.algorithm == nullptr)
+        if (state.algorithm == nullptr)
         {
           Stream::Error ostr;
           ostr << "Model descriptor without algorithm";
           throw CTRProviderImpl::InvalidConfig(ostr);
         }
-        if(!state.algorithm_models_array_started)
+        if (!state.algorithm_models_array_started)
         {
           Stream::Error ostr;
           ostr << "Model descriptor outside models array";
@@ -417,14 +417,14 @@ namespace AdServer::CampaignSvcs::CTR
       array_started(std::string_view, void* context) const override
       {
         CtrConfigParseState& state = ctr_parse_state(context);
-        if(state.model == nullptr)
+        if (state.model == nullptr)
         {
           Stream::Error ostr;
           ostr << "Features descriptor without model";
           throw CTRProviderImpl::InvalidConfig(ostr);
         }
 
-        if(!state.model_features_array_started)
+        if (!state.model_features_array_started)
         {
           state.model_features_array_started = true;
         }
@@ -440,7 +440,7 @@ namespace AdServer::CampaignSvcs::CTR
       {
         CtrConfigParseState& state = ctr_parse_state(context);
         auto* model = static_cast<ModelDescriptor*>(state.model);
-        if(model == nullptr || model->features.empty())
+        if (model == nullptr || model->features.empty())
         {
           Stream::Error ostr;
           ostr << "Invalid feature type";
@@ -449,7 +449,7 @@ namespace AdServer::CampaignSvcs::CTR
 
         BasicFeature basic_feature;
         const String::SubString feature_name(value.data(), value.size());
-        if(basic_feature_by_name(basic_feature, feature_name))
+        if (basic_feature_by_name(basic_feature, feature_name))
         {
           model->features.back().basic_features.insert(basic_feature);
         }
@@ -649,7 +649,7 @@ namespace AdServer::CampaignSvcs::CTR
           mmap_file.length()),
         &state);
 
-      if(result->version != 2)
+      if (result->version != 2)
       {
         Stream::Error ostr;
         ostr << FUN << ": unsupported version = " << result->version;
@@ -693,17 +693,17 @@ namespace AdServer::CampaignSvcs::CTR
     operator ()(const char* full_path, const struct stat& file_stat)
       noexcept
     {
-      if(S_ISDIR(file_stat.st_mode))
+      if (S_ISDIR(file_stat.st_mode))
       {
         String::RegEx::Result sub_strs;
 
         String::SubString file_name(
           Generics::DirSelect::file_name(full_path));
 
-        if(reg_exp_.search(sub_strs, file_name) &&
+        if (reg_exp_.search(sub_strs, file_name) &&
           (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
         {
-          if(result_folder < file_name)
+          if (result_folder < file_name)
           {
             file_name.assign_to(result_folder);
           }
@@ -723,7 +723,7 @@ namespace AdServer::CampaignSvcs::CTR
   void
   CTRProviderImpl::AlgsRef::print(std::ostream& out) const noexcept
   {
-    for(auto it = algs.begin(); it != algs.end(); ++it)
+    for (auto it = algs.begin(); it != algs.end(); ++it)
     {
       out << "[" << it->first << "," << it->second << "]";
     }
@@ -754,7 +754,7 @@ namespace AdServer::CampaignSvcs::CTR
     const
     noexcept
   {
-    if(model.feature_set_indexes[feature_type] == 0)
+    if (model.feature_set_indexes[feature_type] == 0)
     {
       return HashArrayHolder_var();
     }
@@ -766,7 +766,7 @@ namespace AdServer::CampaignSvcs::CTR
         model.feature_set_indexes[feature_type]) :
       HashArrayHolder_var();
 
-    if(res_hashes)
+    if (res_hashes)
     {
       return res_hashes;
     }
@@ -783,12 +783,12 @@ namespace AdServer::CampaignSvcs::CTR
       creative);
 
     // push direct feature hashes: wd, hour
-    if(model.push_hour)
+    if (model.push_hour)
     {
       res_hashes->push_back(std::make_pair(BF_HOUR, request_params.time_hour));
     }
 
-    if(model.push_week_day)
+    if (model.push_week_day)
     {
       res_hashes->push_back(std::make_pair(BF_WEEK_DAY, request_params.time_week_day));
     }
@@ -816,26 +816,26 @@ namespace AdServer::CampaignSvcs::CTR
   {
     HashArrayHolder_var res;
 
-    if(feature_type == FT_AUCTION)
+    if (feature_type == FT_AUCTION)
     {
       auto it = feature_set_level_eval_hashes_.find(feature_set_index);
 
-      if(it != feature_set_level_eval_hashes_.end())
+      if (it != feature_set_level_eval_hashes_.end())
       {
         res = it->second;
       }
     }
-    else if(feature_type == FT_REQUEST)
+    else if (feature_type == FT_REQUEST)
     {
       auto it = calculation_->feature_set_level_eval_hashes_.find(feature_set_index);
 
-      if(it != calculation_->feature_set_level_eval_hashes_.end())
+      if (it != calculation_->feature_set_level_eval_hashes_.end())
       {
         res = it->second;
       }
     }
 
-    if(DEBUG_CTR_CALCULATION_)
+    if (DEBUG_CTR_CALCULATION_)
     {
       std::cout << "CTR DEBUG(): check_feature_set_level_eval_hashes_("
         "feature_set_index = " << feature_set_index <<
@@ -855,12 +855,12 @@ namespace AdServer::CampaignSvcs::CTR
     const
     noexcept
   {
-    if(feature_type == FT_AUCTION)
+    if (feature_type == FT_AUCTION)
     {
       feature_set_level_eval_hashes_[feature_set_index] =
         ReferenceCounting::add_ref(hashes);
     }
-    else if(feature_type == FT_REQUEST)
+    else if (feature_type == FT_REQUEST)
     {
       calculation_->feature_set_level_eval_hashes_[feature_set_index] =
         ReferenceCounting::add_ref(hashes);
@@ -874,21 +874,21 @@ namespace AdServer::CampaignSvcs::CTR
     const
     noexcept
   {
-    if(feature_type == FT_AUCTION)
+    if (feature_type == FT_AUCTION)
     {
       auto it = feature_set_level_eval_weights_.find(feature_type);
 
-      if(it != feature_set_level_eval_weights_.end())
+      if (it != feature_set_level_eval_weights_.end())
       {
         weight = it->second;
         return true;
       }
     }
-    else if(feature_type == FT_REQUEST)
+    else if (feature_type == FT_REQUEST)
     {
       auto it = calculation_->feature_set_level_eval_weights_.find(feature_type);
 
-      if(it != calculation_->feature_set_level_eval_weights_.end())
+      if (it != calculation_->feature_set_level_eval_weights_.end())
       {
         weight = it->second;
         return true;
@@ -905,11 +905,11 @@ namespace AdServer::CampaignSvcs::CTR
     const
     noexcept
   {
-    if(feature_type == FT_AUCTION)
+    if (feature_type == FT_AUCTION)
     {
       feature_set_level_eval_weights_[feature_type] = weight;
     }
-    else if(feature_type == FT_REQUEST)
+    else if (feature_type == FT_REQUEST)
     {
       calculation_->feature_set_level_eval_weights_[feature_type] = weight;
     }
@@ -925,12 +925,12 @@ namespace AdServer::CampaignSvcs::CTR
 
     const long alg_index = calculation_->select_alg_index_(creative);
 
-    if(alg_index >= 0)
+    if (alg_index >= 0)
     {
       const Algorithm* algorithm =
         calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-      for(ModelList::const_iterator model_it = algorithm->models.begin();
+      for (ModelList::const_iterator model_it = algorithm->models.begin();
         model_it != algorithm->models.end();
         ++model_it)
       {
@@ -942,7 +942,7 @@ namespace AdServer::CampaignSvcs::CTR
           tag_size_.in(),
           creative);
 
-        if(local_hashes)
+        if (local_hashes)
         {
           res.insert(res.end(), local_hashes->begin(), local_hashes->end());
         }
@@ -961,14 +961,14 @@ namespace AdServer::CampaignSvcs::CTR
     // check cached ctr
     auto model_ctr_it = calculation_->model_ctrs_.find(model.model_id);
 
-    if(model_ctr_it != calculation_->model_ctrs_.end())
+    if (model_ctr_it != calculation_->model_ctrs_.end())
     {
       return model_ctr_it->second;
     }
 
     model_ctr_it = model_ctrs_.find(model.model_id);
 
-    if(model_ctr_it != model_ctrs_.end())
+    if (model_ctr_it != model_ctrs_.end())
     {
       return model_ctr_it->second;
     }
@@ -1020,24 +1020,24 @@ namespace AdServer::CampaignSvcs::CTR
     HashArray opt_hashes;
 
     // push candidate level direct features
-    if(model.push_campaign_freq || model.push_campaign_freq_log)
+    if (model.push_campaign_freq || model.push_campaign_freq_log)
     {
       uint32_t imps = 0;
 
       CampaignSelectParams::CampaignImpsMap::const_iterator it =
         calculation_->request_params_->campaign_imps.find(
           creative->campaign->campaign_group_id);
-      if(it != calculation_->request_params_->campaign_imps.end())
+      if (it != calculation_->request_params_->campaign_imps.end())
       {
         imps = it->second;
       }
 
-      if(model.push_campaign_freq)
+      if (model.push_campaign_freq)
       {
         opt_hashes.emplace_back(std::make_pair(BF_CAMPAIGN_FREQ_ID, imps));
       }
 
-      if(model.push_campaign_freq_log)
+      if (model.push_campaign_freq_log)
       {
         opt_hashes.emplace_back(
           std::make_pair(
@@ -1057,13 +1057,13 @@ namespace AdServer::CampaignSvcs::CTR
 
     assert((model_ctr.is_zero(), true));
 
-    if(model.max_feature_type.has_value() && *model.max_feature_type < FT_CANDIDATE)
+    if (model.max_feature_type.has_value() && *model.max_feature_type < FT_CANDIDATE)
     {
-      if(*model.max_feature_type == FT_AUCTION)
+      if (*model.max_feature_type == FT_AUCTION)
       {
         model_ctrs_.insert(std::make_pair(model.model_id, model_ctr));
       }
-      else if(*model.max_feature_type == FT_REQUEST)
+      else if (*model.max_feature_type == FT_REQUEST)
       {
         calculation_->model_ctrs_.insert(std::make_pair(model.model_id, model_ctr));
       }
@@ -1081,7 +1081,7 @@ namespace AdServer::CampaignSvcs::CTR
     // find algorithms(indexes) that can be applied for this campaign
     const long alg_index = calculation_->select_alg_index_(creative);
 
-    if(alg_index < 0)
+    if (alg_index < 0)
     {
       // default algorithm
       return std::make_pair(creative->campaign->ctr, nullptr);
@@ -1097,7 +1097,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     bool res_creative_dependent = false;
 
-    for(ModelList::const_iterator model_it = algorithm->models.begin();
+    for (ModelList::const_iterator model_it = algorithm->models.begin();
       model_it != algorithm->models.end();
       ++model_it, ++model_count)
     {
@@ -1113,7 +1113,7 @@ namespace AdServer::CampaignSvcs::CTR
         (*model_it)->weight,
         Generics::DMR_FLOOR);
 
-      if(DEBUG_CTR_CALCULATION_)
+      if (DEBUG_CTR_CALCULATION_)
       {
         std::cout << "CTR DEBUG(" << (*model_it)->method_name << "): "
           "ctr = " << model_ctr <<
@@ -1125,12 +1125,12 @@ namespace AdServer::CampaignSvcs::CTR
       ctr_sum += ctr_fee;
     }
 
-    if(creative_dependent)
+    if (creative_dependent)
     {
       *creative_dependent = res_creative_dependent;
     }
 
-    if(DEBUG_CTR_CALCULATION_)
+    if (DEBUG_CTR_CALCULATION_)
     {
       std::cout << "CTR DEBUG: result ctr for ccg_id = " <<
         creative->campaign->campaign_id <<
@@ -1157,12 +1157,12 @@ namespace AdServer::CampaignSvcs::CTR
   {
     const long alg_index = calculation_->select_alg_index_(creative);
 
-    if(alg_index >= 0) // empty list for default algo
+    if (alg_index >= 0) // empty list for default algo
     {
       const Algorithm* algorithm =
         calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-      for(ModelList::const_iterator model_it = algorithm->models.begin();
+      for (ModelList::const_iterator model_it = algorithm->models.begin();
         model_it != algorithm->models.end();
         ++model_it)
       {
@@ -1185,9 +1185,9 @@ namespace AdServer::CampaignSvcs::CTR
   {
     std::pair<RevenueDecimal, const Algorithm*> ctr_alg = get_ctr_(
       creative, creative_dependent);
-    if(!ctr_alg.second || ctr_alg.first >= ctr_alg.second->threshold)
+    if (!ctr_alg.second || ctr_alg.first >= ctr_alg.second->threshold)
     {
-      if(rate)
+      if (rate)
       {
         *rate = !ctr_alg.second ? RevenueDecimal::ZERO : ctr_alg.first;
       }
@@ -1227,7 +1227,7 @@ namespace AdServer::CampaignSvcs::CTR
     noexcept
   {
     const long alg_index = select_alg_index_(creative);
-    if(alg_index < 0)
+    if (alg_index < 0)
     {
       return std::string();
     }
@@ -1240,7 +1240,7 @@ namespace AdServer::CampaignSvcs::CTR
     unsigned long rand)
     noexcept
   {
-    if(!alg_ref.algs.empty())
+    if (!alg_ref.algs.empty())
     {
       AlgIdMap::const_iterator alg_id_it =
         alg_ref.algs.upper_bound(rand);
@@ -1266,7 +1266,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     unsigned long alg_index;
 
-    if(algs_ref_it != ctr_provider_->campaign_algs_.end())
+    if (algs_ref_it != ctr_provider_->campaign_algs_.end())
     {
       alg_index = select_alg_(algs_ref_it->second, rand_);
     }
@@ -1277,12 +1277,12 @@ namespace AdServer::CampaignSvcs::CTR
         rand_);
     }
 
-    if(DEBUG_CTR_CALCULATION_)
+    if (DEBUG_CTR_CALCULATION_)
     {
       std::cout << "CTR DEBUG: get_ctr, select alg for campaign id #" <<
         campaign_id << ": result alg index = " << alg_index <<
         ", candidate algs (";
-      for(AlgIdMap::const_iterator alg_it = algs_ref_it->second.algs.begin();
+      for (AlgIdMap::const_iterator alg_it = algs_ref_it->second.algs.begin();
           alg_it != algs_ref_it->second.algs.end(); ++alg_it)
       {
         std::cout << (alg_it != algs_ref_it->second.algs.begin() ? "," : "") <<
@@ -1306,12 +1306,12 @@ namespace AdServer::CampaignSvcs::CTR
     const
     noexcept
   {
-    for(FeatureArray::const_iterator feature_it =
+    for (FeatureArray::const_iterator feature_it =
           model.features[feature_type].begin();
         feature_it != model.features[feature_type].end();
         ++feature_it)
     {
-      if(DEBUG_CTR_CALCULATION_)
+      if (DEBUG_CTR_CALCULATION_)
       {
         std::cout << "CTR DEBUG: to eval request feature hashes: ";
         feature_it->print(std::cout);
@@ -1329,10 +1329,10 @@ namespace AdServer::CampaignSvcs::CTR
         );
     }
 
-    if(DEBUG_CTR_CALCULATION_)
+    if (DEBUG_CTR_CALCULATION_)
     {
       std::cout << "CTR DEBUG: eval_features_hashes_ hashes: ";
-      for(auto it = hashes.begin(); it != hashes.end(); ++it)
+      for (auto it = hashes.begin(); it != hashes.end(); ++it)
       {
         std::cout << (it != hashes.begin() ? ", " : "") << it->first;
       }
@@ -1344,7 +1344,7 @@ namespace AdServer::CampaignSvcs::CTR
   CTRProviderImpl::Calculation::adapt_ctr_(double ctr)
     /*throw(Overflow)*/
   {
-    if(ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
+    if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
     {
       return RevenueDecimal::ZERO;
     }
@@ -1412,7 +1412,7 @@ namespace AdServer::CampaignSvcs::CTR
       "*",
       Generics::DirSelect::DSF_NON_RECURSIVE | Generics::DirSelect::DSF_ALL_FILES);
 
-    if(!ctr_config_selector.result_folder.empty())
+    if (!ctr_config_selector.result_folder.empty())
     {
       config_root = check_root_s + "/" + ctr_config_selector.result_folder;
       try
@@ -1435,7 +1435,7 @@ namespace AdServer::CampaignSvcs::CTR
   {
     // parse campaign list file
     std::ifstream campaigns_file(campaigns_file_path.str().c_str());
-    if(!campaigns_file.is_open())
+    if (!campaigns_file.is_open())
     {
       Stream::Error ostr;
       ostr << "Can't open '" << campaigns_file_path << "'";
@@ -1447,7 +1447,7 @@ namespace AdServer::CampaignSvcs::CTR
       std::string str;
       std::getline(campaigns_file, str);
       unsigned long campaign_id;
-      if(String::StringManip::str_to_int(str, campaign_id))
+      if (String::StringManip::str_to_int(str, campaign_id))
       {
         campaigns.insert(campaign_id);
       }
@@ -1457,14 +1457,13 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   std::unique_ptr<HashMap>
-  CTRProviderImpl::load_hash_mapping_(
-    const String::SubString& hash_file_path)
+  CTRProviderImpl::load_hash_mapping_(const String::SubString& hash_file_path)
     /*throw(InvalidConfig)*/
   {
     std::unique_ptr<HashMap> res(new HashMap());
 
     std::ifstream hash_file(hash_file_path.str().c_str());
-    if(!hash_file.is_open())
+    if (!hash_file.is_open())
     {
       Stream::Error ostr;
       ostr << "Can't open '" << hash_file_path << "'";
@@ -1476,7 +1475,7 @@ namespace AdServer::CampaignSvcs::CTR
       std::string line;
       std::getline(hash_file, line);
 
-      if(!line.empty())
+      if (!line.empty())
       {
         String::StringManip::Splitter<
           String::AsciiStringManip::SepComma> tokenizer(line);
@@ -1486,7 +1485,7 @@ namespace AdServer::CampaignSvcs::CTR
         uint32_t orig_hash;
         uint32_t result_hash;
 
-        if(!tokenizer.get_token(orig_hash_str) ||
+        if (!tokenizer.get_token(orig_hash_str) ||
           !tokenizer.get_token(result_hash_str) ||
           !String::StringManip::str_to_int(orig_hash_str, orig_hash) ||
           !String::StringManip::str_to_int(result_hash_str, result_hash))
@@ -1525,7 +1524,7 @@ namespace AdServer::CampaignSvcs::CTR
           return left.first < right;
         });
 
-      if(it != hash_array_.end() && it->first == feature_id)
+      if (it != hash_array_.end() && it->first == feature_id)
       {
         return std::make_pair(true, 1);
       }
@@ -1550,7 +1549,7 @@ namespace AdServer::CampaignSvcs::CTR
       remove_config_files_at_destroy = remove_config_files_at_destroy_;
     }
 
-    if(remove_config_files_at_destroy && task_runner_)
+    if (remove_config_files_at_destroy && task_runner_)
     {
       task_runner_->enqueue_task(Generics::Task_var(
         new RemoveConfigTask(
@@ -1559,9 +1558,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   void
-  CTRProviderImpl::load_(
-    const String::SubString& directory,
-    const String::SubString& file)
+  CTRProviderImpl::load_(const String::SubString& directory, const String::SubString& file)
     /*throw(InvalidConfig, Exception)*/
   {
     // preindex feature weight calculator creators
@@ -1580,13 +1577,13 @@ namespace AdServer::CampaignSvcs::CTR
     config_files_.push_back(config_file);
 
     // load data files
-    if(config_descriptor->default_weight > 0)
+    if (config_descriptor->default_weight > 0)
     {
       non_campaign_algs_.algs.insert(
         std::make_pair(config_descriptor->default_weight, -1));
     }
 
-    if(!config_descriptor->feature_mapping_file.empty())
+    if (!config_descriptor->feature_mapping_file.empty())
     {
       hash_mapping_ = load_hash_mapping_(
         directory_str + "/" + config_descriptor->feature_mapping_file);
@@ -1594,44 +1591,51 @@ namespace AdServer::CampaignSvcs::CTR
 
     unsigned long global_model_id = 0;
 
-    for(ConfigParser::AlgorithmDescriptorList::const_iterator alg_it =
-          config_descriptor->algorithms.begin();
-        alg_it != config_descriptor->algorithms.end(); ++alg_it)
+    for (ConfigParser::AlgorithmDescriptorList::const_iterator alg_it =
+        config_descriptor->algorithms.begin();
+      alg_it != config_descriptor->algorithms.end(); ++alg_it)
     {
-      if(alg_it->weight > 0)
+      if (alg_it->weight > 0)
       {
         Algorithm_var alg(new Algorithm());
         alg->id = alg_it->id;
         alg->threshold = alg_it->threshold;
 
-        for(ConfigParser::ModelDescriptorList::const_iterator model_it =
-              alg_it->models.begin();
-            model_it != alg_it->models.end(); ++model_it)
+        for (ConfigParser::ModelDescriptorList::const_iterator model_it = alg_it->models.begin();
+          model_it != alg_it->models.end(); ++model_it)
         {
           Model_var model(new Model(++global_model_id));
           model->method_name = model_it->method;
           model->weight = model_it->weight;
 
-          if(model_it->method == "ftrl" || model_it->method.empty())
+          if (model_it->method == "ftrl" || model_it->method.empty())
           {
             model->method_name = "ftrl";
             model->method = MM_FTRL;
           }
-          else if(model_it->method == "xgboost")
+          else if (model_it->method == "xgboost")
           {
             model->method = MM_XGBOOST;
           }
-          else if(model_it->method == "vanga")
+          else if (model_it->method == "vanga")
           {
             model->method = MM_VANGA;
           }
-          else if(model_it->method == "trivial")
+          else if (model_it->method == "trivial")
           {
             model->method = MM_TRIVIAL;
           }
-          else if(model_it->method == "catboost")
+          else if (model_it->method == "catboost")
           {
             model->method = MM_CATBOOST;
+            if (model_it->features_size <= 1)
+            {
+              Stream::Error ostr;
+              ostr << "incorrect CatBoost features_size = " <<
+                model_it->features_size;
+              throw InvalidConfig(ostr);
+            }
+            model->features_size = model_it->features_size;
           }
           else
           {
@@ -1651,37 +1655,36 @@ namespace AdServer::CampaignSvcs::CTR
 
           bool creative_dependent = false;
 
-          for(FeatureArray::const_iterator feature_it = model_it->features.begin();
-              feature_it != model_it->features.end(); ++feature_it)
+          for (FeatureArray::const_iterator feature_it = model_it->features.begin();
+            feature_it != model_it->features.end(); ++feature_it)
           {
-            if(!feature_it->basic_features.empty()) // skip feature
+            if (!feature_it->basic_features.empty()) // skip feature
             {
-              for(auto basic_feature_it = feature_it->basic_features.begin();
+              for (auto basic_feature_it = feature_it->basic_features.begin();
                 basic_feature_it != feature_it->basic_features.end(); ++basic_feature_it)
               {
                 creative_dependent |= (
-                  *basic_feature_it == BF_CREATIVE_ID ||
-                  *basic_feature_it == BF_CC_ID);
+                  *basic_feature_it == BF_CREATIVE_ID || *basic_feature_it == BF_CC_ID);
               }
 
               // optimize basic feature order for calculation
-              if(model->method == MM_XGBOOST && feature_it->basic_features.size() == 1)
+              if (model->method == MM_XGBOOST && feature_it->basic_features.size() == 1)
               {
                 // preprocess direct features
                 auto feature_id = *feature_it->basic_features.begin();
-                if(feature_id == BF_HOUR)
+                if (feature_id == BF_HOUR)
                 {
                   model->push_hour = true;
                 }
-                else if(feature_id == BF_WEEK_DAY)
+                else if (feature_id == BF_WEEK_DAY)
                 {
                   model->push_week_day = true;
                 }
-                else if(feature_id == BF_CAMPAIGN_FREQ_ID)
+                else if (feature_id == BF_CAMPAIGN_FREQ_ID)
                 {
                   model->push_campaign_freq = true;
                 }
-                else if(feature_id == BF_CAMPAIGN_FREQ_LOG_ID)
+                else if (feature_id == BF_CAMPAIGN_FREQ_LOG_ID)
                 {
                   model->push_campaign_freq_log = true;
                 }
@@ -1702,16 +1705,15 @@ namespace AdServer::CampaignSvcs::CTR
                   feature_descriptor->calculator_creator->create_final();
               }
 
-              for(BasicFeatureSet::const_reverse_iterator fit =
-                    ++feature_it->basic_features.rbegin();
-                  fit != feature_it->basic_features.rend(); ++fit)
+              for (BasicFeatureSet::const_reverse_iterator fit =
+                  ++feature_it->basic_features.rbegin();
+                fit != feature_it->basic_features.rend(); ++fit)
               {
                 const FeatureDescriptor* feature_descriptor =
                   FeatureDescriptorResolver::instance().resolve(*fit);
                 assert(feature_descriptor); // feature must be validated before
-                feature_calculator =
-                  feature_descriptor->calculator_creator->create_delegate(
-                    feature_calculator);
+                feature_calculator = feature_descriptor->calculator_creator->create_delegate(
+                  feature_calculator);
               }
 
               new_feature.feature_calculator = feature_calculator;
@@ -1729,15 +1731,15 @@ namespace AdServer::CampaignSvcs::CTR
           model->creative_dependent = creative_dependent;
 
           // normalize feature sets
-          for(int i = 0; i < FT_MAX; ++i)
+          for (int i = 0; i < FT_MAX; ++i)
           {
             std::sort(model->features[i].begin(), model->features[i].end());
           }
 
           // eval max feature type
-          for(int i = FT_MAX - 1; i >= 0; --i)
+          for (int i = FT_MAX - 1; i >= 0; --i)
           {
-            if(!model->features[i].empty())
+            if (!model->features[i].empty())
             {
               model->max_feature_type = static_cast<FeatureType>(i);
               break;
@@ -1745,7 +1747,7 @@ namespace AdServer::CampaignSvcs::CTR
           }
 
           // eval feature_set_indexes
-          for(int i = 0; i < FT_MAX; ++i)
+          for (int i = 0; i < FT_MAX; ++i)
           {
             model->feature_set_indexes[i] = eval_feature_set_index_(model->features[i]);
           }
@@ -1757,13 +1759,12 @@ namespace AdServer::CampaignSvcs::CTR
 
         unsigned long alg_index = ctr_algorithms_.size() - 1;
 
-        if(alg_it->campaigns_whitelist_file.empty())
+        if (alg_it->campaigns_whitelist_file.empty())
         {
           AlgsRef& algs_ref = non_campaign_algs_;
-          if(algs_ref.algs.empty())
+          if (algs_ref.algs.empty())
           {
-            algs_ref.algs.insert(
-              std::make_pair(alg_it->weight, alg_index));
+            algs_ref.algs.insert(std::make_pair(alg_it->weight, alg_index));
           }
           else
           {
@@ -1779,15 +1780,14 @@ namespace AdServer::CampaignSvcs::CTR
             enabled_campaigns,
             directory_str + "/" + alg_it->campaigns_whitelist_file);
 
-          for(CampaignIdSet::const_iterator cmp_it = enabled_campaigns.begin();
-              cmp_it != enabled_campaigns.end(); ++cmp_it)
+          for (CampaignIdSet::const_iterator cmp_it = enabled_campaigns.begin();
+            cmp_it != enabled_campaigns.end(); ++cmp_it)
           {
             AlgsRef& algs_ref = campaign_algs_[*cmp_it];
 
-            if(algs_ref.algs.empty())
+            if (algs_ref.algs.empty())
             {
-              algs_ref.algs.insert(
-                std::make_pair(alg_it->weight, alg_index));
+              algs_ref.algs.insert(std::make_pair(alg_it->weight, alg_index));
             }
             else
             {
@@ -1800,16 +1800,14 @@ namespace AdServer::CampaignSvcs::CTR
       }
     }
 
-    for(AlgsRefByCampaignIdMap::iterator alg_ref_it =
-          campaign_algs_.begin();
-        alg_ref_it != campaign_algs_.end(); ++alg_ref_it)
+    for (AlgsRefByCampaignIdMap::iterator alg_ref_it = campaign_algs_.begin();
+      alg_ref_it != campaign_algs_.end(); ++alg_ref_it)
     {
       assert(!alg_ref_it->second.algs.empty());
       unsigned long sum_weight = alg_ref_it->second.algs.rbegin()->first;
 
-      for(AlgIdMap::const_iterator nalg_ref_it =
-            non_campaign_algs_.algs.begin();
-          nalg_ref_it != non_campaign_algs_.algs.end(); ++nalg_ref_it)
+      for (AlgIdMap::const_iterator nalg_ref_it = non_campaign_algs_.algs.begin();
+        nalg_ref_it != non_campaign_algs_.algs.end(); ++nalg_ref_it)
       {
         alg_ref_it->second.algs.insert(std::make_pair(
           sum_weight + nalg_ref_it->first,
@@ -1820,12 +1818,12 @@ namespace AdServer::CampaignSvcs::CTR
     // remove disabled campaigns from alg lists
     long alg_index = 0;
 
-    for(ConfigParser::AlgorithmDescriptorList::const_iterator alg_it =
-          config_descriptor->algorithms.begin();
-        alg_it != config_descriptor->algorithms.end();
-        ++alg_it, ++alg_index)
+    for (ConfigParser::AlgorithmDescriptorList::const_iterator alg_it =
+        config_descriptor->algorithms.begin();
+      alg_it != config_descriptor->algorithms.end();
+      ++alg_it, ++alg_index)
     {
-      if(alg_it->weight > 0 && !alg_it->campaigns_blacklist_file.empty())
+      if (alg_it->weight > 0 && !alg_it->campaigns_blacklist_file.empty())
       {
         CampaignIdSet disabled_campaigns;
 
@@ -1833,12 +1831,12 @@ namespace AdServer::CampaignSvcs::CTR
           disabled_campaigns,
           directory_str + "/" + alg_it->campaigns_blacklist_file);
 
-        for(CampaignIdSet::const_iterator dcmp_it = disabled_campaigns.begin();
+        for (CampaignIdSet::const_iterator dcmp_it = disabled_campaigns.begin();
             dcmp_it != disabled_campaigns.end(); ++dcmp_it)
         {
           unsigned long campaign_id = *dcmp_it;
           AlgsRefByCampaignIdMap::iterator alg_ref_it = campaign_algs_.find(campaign_id);
-          if(alg_ref_it == campaign_algs_.end())
+          if (alg_ref_it == campaign_algs_.end())
           {
             // create node with all algs excluding current
             alg_ref_it = campaign_algs_.insert(
@@ -1849,13 +1847,12 @@ namespace AdServer::CampaignSvcs::CTR
           std::list<std::pair<unsigned long, unsigned long> > change_algs;
           AlgsRef& args_ref = alg_ref_it->second;
 
-          for(AlgIdMap::iterator it = args_ref.algs.begin();
-            it != args_ref.algs.end(); ++it)
+          for (AlgIdMap::iterator it = args_ref.algs.begin(); it != args_ref.algs.end(); ++it)
           {
-            if(it->second == alg_index)
+            if (it->second == alg_index)
             {
               sub_weight = it->first;
-              if(it != args_ref.algs.begin())
+              if (it != args_ref.algs.begin())
               {
                 sub_weight -= (--AlgIdMap::const_iterator(it))->first;
               }
@@ -1866,7 +1863,7 @@ namespace AdServer::CampaignSvcs::CTR
             }
           }
 
-          for(auto it = change_algs.begin(); it != change_algs.end(); ++it)
+          for (auto it = change_algs.begin(); it != change_algs.end(); ++it)
           {
             args_ref.algs.insert(std::make_pair(it->first - sub_weight, it->second));
           }
@@ -1875,9 +1872,8 @@ namespace AdServer::CampaignSvcs::CTR
     }
 
     // normalize alg ref arrays for common sum weight base
-    for(AlgsRefByCampaignIdMap::iterator alg_ref_it =
-          campaign_algs_.begin();
-        alg_ref_it != campaign_algs_.end(); ++alg_ref_it)
+    for (AlgsRefByCampaignIdMap::iterator alg_ref_it = campaign_algs_.begin();
+      alg_ref_it != campaign_algs_.end(); ++alg_ref_it)
     {
       normalize_algs_ref_(alg_ref_it->second);
     }
@@ -1889,33 +1885,21 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   void
-  CTRProviderImpl::normalize_algs_ref_(AlgsRef& algs_ref)
-    noexcept
+  CTRProviderImpl::normalize_algs_ref_(AlgsRef& algs_ref) noexcept
   {
-    if(!algs_ref.algs.empty())
+    if (!algs_ref.algs.empty())
     {
       unsigned long max_weight = algs_ref.algs.rbegin()->first;
       assert(max_weight != 0);
 
       AlgIdMap new_algs;
-      for(AlgIdMap::const_iterator it = algs_ref.algs.begin();
-          it != algs_ref.algs.end(); ++it)
+      for (AlgIdMap::const_iterator it = algs_ref.algs.begin(); it != algs_ref.algs.end(); ++it)
       {
-        unsigned long new_weight = static_cast<uint64_t>(it->first) *
-          WEIGHT_NORM_SUM / max_weight;
+        unsigned long new_weight = static_cast<uint64_t>(it->first) * WEIGHT_NORM_SUM / max_weight;
 
-        if(new_weight > 0)
+        if (new_weight > 0)
         {
-          if(!new_algs.empty())
-          {
-            new_algs.insert(std::make_pair(
-              new_weight,
-              it->second));
-          }
-          else
-          {
-            new_algs.insert(std::make_pair(new_weight, it->second));
-          }
+          new_algs.emplace(new_weight, it->second);
         }
       }
 
@@ -1924,24 +1908,23 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   FeatureType
-  CTRProviderImpl::feature_type_(
-    const Feature& feature) noexcept
+  CTRProviderImpl::feature_type_(const Feature& feature) noexcept
   {
-    for(BasicFeatureSet::const_iterator fit = feature.basic_features.begin();
-        fit != feature.basic_features.end(); ++fit)
+    for (BasicFeatureSet::const_iterator fit = feature.basic_features.begin();
+      fit != feature.basic_features.end(); ++fit)
     {
-      if(*fit >= BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID ||
-         (*fit >= BF_CANDIDATE_LEVEL_FIRST_ID && *fit < BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
+      if (*fit >= BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID ||
+        (*fit >= BF_CANDIDATE_LEVEL_FIRST_ID && *fit < BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
       {
         return FT_CANDIDATE;
       }
     }
 
-    for(BasicFeatureSet::const_iterator fit = feature.basic_features.begin();
-        fit != feature.basic_features.end(); ++fit)
+    for (BasicFeatureSet::const_iterator fit = feature.basic_features.begin();
+      fit != feature.basic_features.end(); ++fit)
     {
-      if(*fit >= BF_ARRAY_AUCTION_LEVEL_FIRST_ID ||
-         (*fit >= BF_AUCTION_LEVEL_FIRST_ID && *fit < BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
+      if (*fit >= BF_ARRAY_AUCTION_LEVEL_FIRST_ID ||
+        (*fit >= BF_AUCTION_LEVEL_FIRST_ID && *fit < BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
       {
         return FT_AUCTION;
       }
@@ -1951,16 +1934,14 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   std::size_t
-  CTRProviderImpl::eval_feature_hash_seed_(
-    const Feature& feature) noexcept
+  CTRProviderImpl::eval_feature_hash_seed_(const Feature& feature) noexcept
   {
     std::size_t res_hash;
 
     {
       Generics::Murmur32v3Hash hash(res_hash);
-      for(BasicFeatureSet::const_iterator fit =
-            feature.basic_features.begin();
-          fit != feature.basic_features.end(); ++fit)
+      for (BasicFeatureSet::const_iterator fit = feature.basic_features.begin();
+        fit != feature.basic_features.end(); ++fit)
       {
         hash_add(hash, static_cast<unsigned char>(*fit));
       }
@@ -1970,24 +1951,22 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   uint64_t
-  CTRProviderImpl::eval_feature_set_index_(const FeatureArray& features)
-    noexcept
+  CTRProviderImpl::eval_feature_set_index_(const FeatureArray& features) noexcept
   {
-    if(features.empty())
+    if (features.empty())
     {
       return 0;
     }
 
     auto feature_set_it = feature_set_indexes_.find(features);
-    if(feature_set_it != feature_set_indexes_.end())
+    if (feature_set_it != feature_set_indexes_.end())
     {
       return feature_set_it->second;
     }
     else
     {
       unsigned long new_index = feature_set_indexes_.size() + 1;
-      feature_set_indexes_.insert(
-        std::make_pair(features, new_index));
+      feature_set_indexes_.insert(std::make_pair(features, new_index));
       return new_index;
     }
   }

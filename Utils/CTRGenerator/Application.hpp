@@ -40,7 +40,8 @@ protected:
     const char* cc_to_campaign_dictionary_file_path,
     const char* tag_to_publisher_dictionary_file_path,
     const char* dictionary_file,
-    const char* name_dictionary_file);
+    const char* name_dictionary_file,
+    bool catboost_model);
 
   void
   generate_ctr_(

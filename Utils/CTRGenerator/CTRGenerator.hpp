@@ -55,7 +55,7 @@ namespace CampaignSvcs
 
     struct Calculation
     {
-      std::map<unsigned long, unsigned long> hashes;
+      CTR::HashArray hashes;
     };
 
     typedef std::map<unsigned long, std::string>
@@ -104,6 +104,7 @@ namespace CampaignSvcs
     struct FeatureHolder
     {
       unsigned long hash_seed;
+      CTR::BasicFeatureSet basic_features;
       FeatureHashCalculator_var feature_calculator;
     };
 

@@ -57,6 +57,7 @@ def generate_model(config: Config):
         'CTRGenerator',
         'generate-svm',
         str(config.features_config_file),
+        '--model=catboost',
       ],
       check=True,
       stdin=csv_file,

@@ -82,6 +82,7 @@ def run_generate_svm(args, output_file):
     args.ctr_generator,
     'generate-svm',
     args.feature_config,
+    '--model=catboost',
     *dictionary_options(args),
   ]
   with open(args.input) as input_file, open(output_file, 'w') as output:
