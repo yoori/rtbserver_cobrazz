@@ -712,7 +712,8 @@ namespace AdServer::Frontends
     auto self = shared_from_this();
     socket_.async_read_some(
       boost::asio::buffer(read_buf_.data(), read_buf_.size()),
-      strand_.wrap(
+      boost::asio::bind_executor(
+        strand_,
         [self](const boost::system::error_code& error, size_t bytes_transferred)
         {
           self->handle_read_(error, bytes_transferred);
@@ -816,7 +817,8 @@ namespace AdServer::Frontends
     boost::asio::async_write(
       socket_,
       boost::asio::buffer(send_queue_.front()),
-      strand_.wrap(
+      boost::asio::bind_executor(
+        strand_,
         [self](const boost::system::error_code& error, size_t /*bytes_transferred*/)
         {
           self->handle_write_(error);

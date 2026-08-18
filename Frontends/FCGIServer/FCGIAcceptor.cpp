@@ -711,7 +711,8 @@ namespace Frontends
       auto self = shared_from_this();
       socket_.async_read_some(
         boost::asio::buffer(&rbuf_[0], READ_BUF_SIZE_),
-        strand_.wrap(
+        boost::asio::bind_executor(
+          strand_,
           [self](
             const boost::system::error_code& error,
             size_t bytes_transferred)
@@ -767,7 +768,8 @@ namespace Frontends
           boost::asio::async_write(
             socket_,
             buffer_seq,
-            strand_.wrap(
+            boost::asio::bind_executor(
+              strand_,
               [self](
                 const boost::system::error_code& error,
                 size_t /*bytes_transferred*/)
@@ -780,7 +782,8 @@ namespace Frontends
           boost::asio::async_write(
             socket_,
             (*ordered_send_bufs_.begin())->bufs,
-            strand_.wrap(
+            boost::asio::bind_executor(
+              strand_,
               [self](
                 const boost::system::error_code& error,
                 size_t /*bytes_transferred*/)
