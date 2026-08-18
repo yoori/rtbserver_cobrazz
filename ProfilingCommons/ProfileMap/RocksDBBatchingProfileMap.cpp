@@ -57,6 +57,7 @@ namespace AdServer::ProfilingCommons
   namespace
   {
     constexpr std::size_t TTL_TIMESTAMP_SIZE = sizeof(std::uint32_t);
+    const Generics::Time BACKGROUND_ERROR_RETRY_PERIOD = Generics::Time::ONE_MINUTE;
 
     std::uint32_t
     decode_fixed32(const char* data) noexcept
@@ -249,8 +250,6 @@ namespace AdServer::ProfilingCommons
   bool
   RocksDBBatchingProfileMapImpl::check_profile(const std::string& key) const
   {
-    check_background_error_();
-
     using CheckResult = std::pair<bool, std::optional<std::string> >;
     std::promise<CheckResult> promise;
     std::future<CheckResult> future = promise.get_future();
@@ -298,8 +297,6 @@ namespace AdServer::ProfilingCommons
   {
     static_cast<void>(last_access_time);
 
-    check_background_error_();
-
     using GetResult = std::pair<Generics::ConstSmartMemBuf_var, std::optional<std::string> >;
     std::promise<GetResult> promise;
     std::future<GetResult> future = promise.get_future();
@@ -329,8 +326,6 @@ namespace AdServer::ProfilingCommons
     Generics::Time* last_access_time)
   {
     static_cast<void>(last_access_time);
-
-    check_background_error_();
 
     using GetResult = std::pair<Generics::SmartMemBuf_var, std::optional<std::string> >;
     std::promise<GetResult> promise;
@@ -467,8 +462,6 @@ namespace AdServer::ProfilingCommons
   bool
   RocksDBBatchingProfileMapImpl::remove_profile(const std::string& key, OperationPriority)
   {
-    check_background_error_();
-
     using RemoveResult = std::pair<bool, std::optional<std::string>>;
     std::promise<RemoveResult> promise;
     std::future<RemoveResult> future = promise.get_future();
@@ -901,12 +894,73 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::check_background_error_() const
   {
-    Sync::PosixGuard guard(error_lock_);
-    if (!background_error_.empty())
+    if (!has_background_error_.load(std::memory_order_acquire))
     {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl background error: " +
-        background_error_);
+      return;
+    }
+
+    std::uint64_t error_generation;
+
+    {
+      Sync::PosixGuard guard(error_lock_);
+      if (!has_background_error_.load(std::memory_order_relaxed))
+      {
+        return;
+      }
+
+      if (background_error_probe_in_progress_ ||
+        Generics::Time::get_time_of_day() < background_error_retry_at_)
+      {
+        throw ProfileMap<std::string>::Exception(
+          "RocksDBBatchingProfileMapImpl background error: " +
+          background_error_);
+      }
+
+      background_error_probe_in_progress_ = true;
+      error_generation = background_error_generation_;
+    }
+
+    const auto resume_status = db_->Resume();
+    std::string error;
+
+    {
+      Sync::PosixGuard guard(error_lock_);
+      if (error_generation == background_error_generation_ && resume_status.ok())
+      {
+        background_error_.clear();
+        background_error_probe_in_progress_ = false;
+        has_background_error_.store(false, std::memory_order_release);
+        return;
+      }
+
+      background_error_probe_in_progress_ = false;
+      background_error_retry_at_ =
+        Generics::Time::get_time_of_day() + BACKGROUND_ERROR_RETRY_PERIOD;
+      error = background_error_;
+    }
+
+    if (!resume_status.ok())
+    {
+      error += "; RocksDB DB::Resume(): " + resume_status.ToString();
+    }
+
+    throw ProfileMap<std::string>::Exception(
+      "RocksDBBatchingProfileMapImpl background error: " + error);
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::set_background_error_(const std::string& error) noexcept
+  {
+    Sync::PosixGuard guard(error_lock_);
+    if (!has_background_error_.load(std::memory_order_relaxed) ||
+      background_error_probe_in_progress_)
+    {
+      background_error_ = error;
+      background_error_retry_at_ =
+        Generics::Time::get_time_of_day() + BACKGROUND_ERROR_RETRY_PERIOD;
+      ++background_error_generation_;
+      background_error_probe_in_progress_ = false;
+      has_background_error_.store(true, std::memory_order_release);
     }
   }
 

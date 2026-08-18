@@ -250,6 +250,8 @@ namespace AdServer::ProfilingCommons
 
     void check_background_error_() const;
 
+    void set_background_error_(const std::string& error) noexcept;
+
   private:
     const std::string path_;
     const Generics::Time expire_time_;
@@ -267,8 +269,12 @@ namespace AdServer::ProfilingCommons
     mutable std::atomic<std::uint64_t> physical_read_operations_{0};
     mutable std::atomic<std::uint64_t> physical_write_operations_{0};
 
+    mutable std::atomic<bool> has_background_error_{false};
     mutable Sync::PosixMutex error_lock_;
-    std::string background_error_;
+    mutable std::string background_error_;
+    mutable Generics::Time background_error_retry_at_;
+    mutable std::uint64_t background_error_generation_ = 0;
+    mutable bool background_error_probe_in_progress_ = false;
   };
 
   inline bool

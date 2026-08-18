@@ -350,22 +350,12 @@ namespace AdServer::ProfilingCommons
       catch(const eh::Exception& ex)
       {
         map_impl.notify_failed_operations_(batch, ex.what());
-
-        Sync::PosixGuard guard(map_impl.error_lock_);
-        if (map_impl.background_error_.empty())
-        {
-          map_impl.background_error_ = ex.what();
-        }
+        map_impl.set_background_error_(ex.what());
       }
       catch(...)
       {
         map_impl.notify_failed_operations_(batch, "unknown background error");
-
-        Sync::PosixGuard guard(map_impl.error_lock_);
-        if (map_impl.background_error_.empty())
-        {
-          map_impl.background_error_ = "unknown background error";
-        }
+        map_impl.set_background_error_("unknown background error");
       }
       batch_timer.stop();
 
