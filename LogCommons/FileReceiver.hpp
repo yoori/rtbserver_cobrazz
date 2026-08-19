@@ -38,7 +38,7 @@ namespace AdServer
       {
         friend class FileReceiver;
 
-        FileGuard(const char* file_name) /*throw(eh::Exception)*/;
+        FileGuard(const char* full_path) /*throw(eh::Exception)*/;
 
         const std::string&
         full_path() const noexcept;

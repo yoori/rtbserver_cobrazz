@@ -119,10 +119,10 @@ namespace AdServer
     // FileReceiver::FileGuard
     //
     FileReceiver::FileGuard::FileGuard(
-      const char* file_name)
+      const char* full_path)
       /*throw(eh::Exception)*/
-      : file_name_(file_name),
-        full_path_(file_name)
+      : file_name_(Generics::DirSelect::file_name(full_path)),
+        full_path_(full_path)
     {}
 
     FileReceiver::FileGuard::FileGuard(

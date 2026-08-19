@@ -444,7 +444,7 @@ namespace AdServer::LogProcessing
       FileEntryListCreator list_creator(files_in_dir);
       Generics::DirSelect::directory_selector(
         src_dir_.c_str(), list_creator, file_mask_.c_str(),
-        Generics::DirSelect::DSF_FILE_NAME_ONLY);
+        Generics::DirSelect::DSF_DEFAULT);
       files_in_dir.sort(FileEntryLess());
     }
 
