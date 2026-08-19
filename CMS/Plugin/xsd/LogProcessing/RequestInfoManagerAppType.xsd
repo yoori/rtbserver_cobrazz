@@ -35,7 +35,7 @@
   </xsd:complexType>
 
   <xsd:complexType name="RequestInfoManagerProcessingParamsType">
-    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="10">
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="16">
       <xsd:annotation>
         <xsd:documentation>Sets threads number for coroutine log processing.</xsd:documentation>
       </xsd:annotation>

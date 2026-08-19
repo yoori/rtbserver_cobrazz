@@ -78,6 +78,26 @@ sub execute_command
   }
 }
 
+sub prepare_ram_log_dirs
+{
+  my ($service, @log_names) = @_;
+
+  my $command =
+    "if test -n \"\${ram_fs_root:-}\"; then " .
+      "mountpoint -q \"\${ram_fs_root}\" && " .
+      "ram_log_root=\"\${ram_fs_root}/log/$service/Out\" && " .
+      "mkdir -p \"\${log_root}/$service/Out\" \"\$ram_log_root\" && ";
+
+  foreach my $log_name (@log_names)
+  {
+    $command .=
+      "mkdir -p \"\$ram_log_root/$log_name\" \"\${log_root}/$service/Out/$log_name.ram_\" && " .
+      "ln -sfnT \"\$ram_log_root/$log_name\" \"\${log_root}/$service/Out/$log_name.ram\" && ";
+  }
+
+  return $command . "true; fi";
+}
+
 sub thread_affinity_env
 {
   my ($config_file, $config_element) = @_;

@@ -1,8 +1,13 @@
 #pragma once
 
+#include <atomic>
+#include <cstddef>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <list>
 #include <utility>
+#include <vector>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -33,9 +38,7 @@ namespace AdServer::LogProcessing
   {
     LogFlushTraits();
 
-    LogFlushTraits(
-      const Generics::Time& period_val,
-      const char* out_dir_val);
+    LogFlushTraits(const Generics::Time& period_val, const char* out_dir_val);
 
     Generics::Time period;
     std::string out_dir;
@@ -79,9 +82,7 @@ namespace AdServer::LogProcessing
   template<typename LogTraitsType>
   struct SimpleCsvSavePolicy
   {
-    typedef
-      AdServer::LogProcessing::SimpleLogCsvSaverImpl<LogTraitsType>
-      CsvSaverT;
+    using CsvSaverT = AdServer::LogProcessing::SimpleLogCsvSaverImpl<LogTraitsType>;
 
     void save(
       typename LogTraitsType::CollectorType& collector,
@@ -109,8 +110,7 @@ namespace AdServer::LogProcessing
       const SavePolicy& save_policy = SavePolicy())
       /*throw(eh::Exception)*/;
 
-    Generics::Time flush_if_required(
-      const Generics::Time& now) /*throw(eh::Exception)*/;
+    Generics::Time flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
 
   protected:
     virtual
@@ -137,8 +137,7 @@ namespace AdServer::LogProcessing
     typename LogTraitsType,
     typename SavePolicy = DefaultSavePolicy<LogTraitsType>
   >
-  class LogHolderLimitedDataAdd:
-    public LogHolderImpl<LogTraitsType, SavePolicy>
+  class LogHolderLimitedDataAdd: public LogHolderImpl<LogTraitsType, SavePolicy>
   {
   private:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -160,8 +159,7 @@ namespace AdServer::LogProcessing
     void add_record(Args&&... args)
       /*throw(eh::Exception)*/;
 
-    Generics::Time flush_if_required(
-      const Generics::Time& now) /*throw(eh::Exception)*/;
+    Generics::Time flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
 
     ~LogHolderLimitedDataAdd() noexcept;
 
@@ -197,8 +195,7 @@ namespace AdServer::LogProcessing
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    virtual Generics::Time flush_if_required(
-      const Generics::Time& now) /*throw(eh::Exception)*/;
+    virtual Generics::Time flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
 
   protected:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -230,11 +227,9 @@ namespace AdServer::LogProcessing
       const SavePolicy& save_policy = SavePolicy())
       /*throw(eh::Exception)*/;
 
-    virtual
-    ~LogHolderPoolBase() noexcept;
+    virtual ~LogHolderPoolBase() noexcept;
 
-    ContainerHolder_var
-    get_container_holder_() const /*throw(eh::Exception)*/;
+    ContainerHolder_var get_container_holder_() const /*throw(eh::Exception)*/;
 
   protected:
     const LogFlushTraits flush_traits_;
@@ -247,8 +242,7 @@ namespace AdServer::LogProcessing
   template <
     typename LogTraitsType,
     typename SavePolicy = DefaultSavePolicy<LogTraitsType> >
-  class LogHolderPool:
-    public LogHolderPoolBase<LogTraitsType, SavePolicy>
+  class LogHolderPool: public LogHolderPoolBase<LogTraitsType, SavePolicy>
   {
   public:
     class PoolObject;
@@ -279,11 +273,9 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     template<typename... Args>
-    void
-    add_record(Args&&... args);
+    void add_record(Args&&... args);
 
-    PoolObject_var
-    get_object();
+    PoolObject_var get_object();
 
   protected:
     virtual ~LogHolderPool() noexcept;
@@ -330,7 +322,7 @@ namespace AdServer::LogProcessing
     typedef ReferenceCounting::SmartPtr<Portion> Portion_var;
     typedef std::vector<Portion_var> PortionArray;
 
-    class DumpTask :
+    class DumpTask:
       public Generics::Task,
       public ReferenceCounting::AtomicImpl
     {
@@ -369,51 +361,55 @@ namespace AdServer::LogProcessing
     PortionArray portions_;
   };
 
-  // LogHolderPoolData
+  // LogHolderSharded
   template <
     typename LogTraitsType,
     typename SavePolicy = DefaultSavePolicy<LogTraitsType> >
-  class LogHolderPoolData:
-    public LogHolderPoolBase<LogTraitsType, SavePolicy>
+  class LogHolderSharded:
+    public virtual LogHolder,
+    public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    class PoolObject;
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    typedef typename LogTraitsType::CollectorType CollectorT;
-    typedef LogHolderPoolBase<LogTraitsType, SavePolicy> Base;
-    typedef ReferenceCounting::SmartPtr<PoolObject> PoolObject_var;
+    using CollectorT = typename LogTraitsType::CollectorType;
 
-    class PoolObject: public Base::PoolObjectBase
+    struct Shard
     {
-    public:
-      template<typename... Args>
-      void
-      add_record(Args&&... args);
-
-    protected:
-      friend PoolObject_var LogHolderPoolData::get_object();
-
-      PoolObject(const typename Base::ContainerHolder_var& container_holder);
-
-      virtual
-      ~PoolObject() noexcept;
+      mutable std::mutex lock;
+      CollectorT collector;
     };
 
-    LogHolderPoolData(
+    typedef std::shared_ptr<Shard> Shard_var;
+    typedef std::vector<Shard_var> ShardArray;
+
+    LogHolderSharded(
       const LogFlushTraits& flush_traits,
-      const SavePolicy& save_policy = SavePolicy())
+      const SavePolicy& save_policy = SavePolicy(),
+      unsigned long pool_shards = 16)
       /*throw(eh::Exception)*/;
 
     template<typename... Args>
     void
     add_record(Args&&... args);
 
-    PoolObject_var
-    get_object();
+    Generics::Time
+    flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
 
   protected:
+    Shard_var
+    get_shard_() const noexcept;
+
     virtual
-    ~LogHolderPoolData() noexcept;
+    ~LogHolderSharded() noexcept;
+
+  private:
+    const LogFlushTraits flush_traits_;
+    SavePolicy save_policy_;
+    mutable std::mutex lock_;
+    Generics::Time flush_time_;
+    ShardArray shards_;
+    mutable std::atomic<std::size_t> next_shard_{0};
   };
 }
 

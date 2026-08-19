@@ -58,8 +58,7 @@ namespace LogProcessing
   }
 
   template<typename LogTraitsType>
-  DistributionSavePolicy<LogTraitsType>::DistributionSavePolicy(
-    unsigned long distrib_count)
+  DistributionSavePolicy<LogTraitsType>::DistributionSavePolicy(unsigned long distrib_count)
     : distrib_count_(distrib_count)
   {}
 
@@ -112,8 +111,7 @@ namespace LogProcessing
 
   template<typename LogTraitsType, typename SavePolicy>
   LogHolderImpl<LogTraitsType, SavePolicy>::SyncPolicy::Mutex&
-  LogHolderImpl<LogTraitsType, SavePolicy>::mutex_()
-    noexcept
+  LogHolderImpl<LogTraitsType, SavePolicy>::mutex_() noexcept
   {
     return lock_;
   }
@@ -121,8 +119,7 @@ namespace LogProcessing
   template<typename LogTraitsType, typename SavePolicy>
   Generics::Time
   LogHolderImpl<LogTraitsType, SavePolicy>::
-  flush_if_required(const Generics::Time& now)
-    /*throw(eh::Exception)*/
+  flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/
   {
     try
     {
@@ -131,8 +128,7 @@ namespace LogProcessing
 
       {
         SyncPolicy::WriteGuard guard(this->mutex_());
-        if ((flush = (flush_time_ + flush_traits_.period < now &&
-          !collector_.empty())))
+        if ((flush = (flush_time_ + flush_traits_.period < now && !collector_.empty())))
         {
           collector_.swap(tmp_collector);
           flush_time_ = now;
@@ -674,8 +670,7 @@ namespace LogProcessing
     : flush_traits_(flush_traits),
       save_policy_(save_policy),
       container_holder_(new ContainerHolder())
-  {
-  }
+  {}
 
   template<typename LogTraitsType, typename SavePolicy>
   LogHolderPoolBase<LogTraitsType, SavePolicy>::~LogHolderPoolBase() noexcept
@@ -809,50 +804,163 @@ namespace LogProcessing
   LogHolderPool<LogTraitsType, SavePolicy>::~LogHolderPool() noexcept = default;
 
   template<typename LogTraitsType, typename SavePolicy>
-  template<typename... Args>
-  void
-  LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject::add_record(
-    Args&&... args)
-  {
-    (*this->holders_.begin())->collector.add(std::forward<Args>(args)...);
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject::PoolObject(
-    const typename Base::ContainerHolder_var& container_holder)
-    : Base::PoolObjectBase(container_holder)
-  {}
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject::~PoolObject()
-    noexcept = default;
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolData<LogTraitsType, SavePolicy>::LogHolderPoolData(
+  LogHolderSharded<LogTraitsType, SavePolicy>::LogHolderSharded(
     const LogFlushTraits& flush_traits,
-    const SavePolicy& save_policy)
+    const SavePolicy& save_policy,
+    unsigned long pool_shards)
     /*throw(eh::Exception)*/
-    : LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy)
-  {}
+    : flush_traits_(flush_traits),
+      save_policy_(save_policy)
+  {
+    const unsigned long shards_count = pool_shards ? pool_shards : 1;
+    shards_.reserve(shards_count);
+    for (unsigned long i = 0; i < shards_count; ++i)
+    {
+      shards_.emplace_back(std::make_shared<Shard>());
+    }
+  }
 
   template<typename LogTraitsType, typename SavePolicy>
   template<typename... Args>
   void
-  LogHolderPoolData<LogTraitsType, SavePolicy>::add_record(Args&&... args)
+  LogHolderSharded<LogTraitsType, SavePolicy>::add_record(Args&&... args)
   {
-    PoolObject_var pool_object = get_object();
-    pool_object->add_record(std::forward<Args>(args)...);
+    Shard_var shard = get_shard_();
+    std::lock_guard<std::mutex> guard(shard->lock);
+    shard->collector.add(std::forward<Args>(args)...);
   }
 
   template<typename LogTraitsType, typename SavePolicy>
-  typename LogHolderPoolData<LogTraitsType, SavePolicy>::PoolObject_var
-  LogHolderPoolData<LogTraitsType, SavePolicy>::get_object()
+  typename LogHolderSharded<LogTraitsType, SavePolicy>::Shard_var
+  LogHolderSharded<LogTraitsType, SavePolicy>::get_shard_() const noexcept
   {
-    return new PoolObject(this->get_container_holder_());
+    const std::size_t shard_index =
+      next_shard_.fetch_add(1, std::memory_order_relaxed) % shards_.size();
+    return shards_[shard_index];
   }
 
   template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolData<LogTraitsType, SavePolicy>::~LogHolderPoolData() noexcept =
-    default;
+  LogHolderSharded<LogTraitsType, SavePolicy>::~LogHolderSharded() noexcept
+  {
+    try
+    {
+      CollectorT collector;
+      bool has_data = false;
+
+      for (auto& shard : shards_)
+      {
+        {
+          CollectorT local_collector;
+          {
+            std::lock_guard<std::mutex> guard(shard->lock);
+            if (shard->collector.empty())
+            {
+              continue;
+            }
+            local_collector.swap(shard->collector);
+          }
+
+          if (!has_data)
+          {
+            collector.swap(local_collector);
+            has_data = true;
+          }
+          else
+          {
+            collector.merge(std::move(local_collector));
+          }
+        }
+      }
+
+      if (has_data)
+      {
+        save_log(flush_traits_, save_policy_, collector);
+      }
+    }
+    catch (const eh::Exception& ex)
+    {
+      std::cerr << "LogHolderSharded::~LogHolderSharded<'" <<
+        LogTraitsType::log_base_name() << "'>(): " <<
+        "eh::Exception caught: " << ex.what() << std::endl;
+    }
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  Generics::Time
+  LogHolderSharded<LogTraitsType, SavePolicy>::flush_if_required(
+    const Generics::Time& now)
+    /*throw(eh::Exception)*/
+  {
+    try
+    {
+      {
+        std::lock_guard<std::mutex> guard(lock_);
+
+        if (flush_time_ + flush_traits_.period > now)
+        {
+          return flush_time_ + flush_traits_.period;
+        }
+
+        flush_time_ = now;
+      }
+
+      CollectorT collector;
+      bool has_data = false;
+
+      for (auto& shard : shards_)
+      {
+        CollectorT local_collector;
+        {
+          std::lock_guard<std::mutex> guard(shard->lock);
+          if (shard->collector.empty())
+          {
+            continue;
+          }
+          local_collector.swap(shard->collector);
+        }
+
+        if (!has_data)
+        {
+          collector.swap(local_collector);
+          has_data = true;
+        }
+        else
+        {
+          collector.merge(std::move(local_collector));
+        }
+      }
+
+      if (!has_data)
+      {
+        return now + flush_traits_.period;
+      }
+
+      if (flush_traits_.out_dir.empty())
+      {
+        return Generics::Time::ZERO;
+      }
+
+      save_log(flush_traits_, save_policy_, collector);
+
+      return now + flush_traits_.period;
+    }
+    catch (const AdServer::LogProcessing::LogSaver::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << "LogHolderSharded::flush_if_required<'" <<
+        LogTraitsType::log_base_name() << "'>(): " <<
+        "AdServer::LogProcessing::LogSaver::Exception caught: " <<
+        ex.what();
+      throw Exception(ostr);
+    }
+    catch (const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << "LogHolderSharded::flush_if_required<'" <<
+        LogTraitsType::log_base_name() << "'>(): " <<
+        "eh::Exception caught: " << ex.what();
+      throw Exception(ostr);
+    }
+  }
 }
 }

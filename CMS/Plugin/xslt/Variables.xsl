@@ -235,8 +235,8 @@
 <xsl:variable name="def-ignore-action-time" select="'30'"/>
 
 <!-- processing specific params -->
-<xsl:variable name="expression-matcher-processing-threads" select="'20'"/>
-<xsl:variable name="request-info-manager-processing-threads" select="'10'"/>
+<xsl:variable name="expression-matcher-processing-threads" select="'16'"/>
+<xsl:variable name="request-info-manager-processing-threads" select="'16'"/>
 <xsl:variable name="request-info-manager-fetch-threads" select="'10'"/>
 
 <!-- environment specific params -->

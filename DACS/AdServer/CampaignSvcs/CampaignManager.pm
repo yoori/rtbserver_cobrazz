@@ -11,6 +11,14 @@ sub start
   my ($host, $descr) = @_;
 
   my $command =
+    AdServer::Functions::prepare_ram_log_dirs(
+      "CampaignManager",
+      qw(
+        RequestBasicChannels WebStat ResearchWebStat ResearchProf CreativeStat
+        ActionRequest PassbackStat UserAgentStat Request Impression Click
+        AdvertiserAction PassbackImpression UserProperties TagRequest
+        TagPositionStat CCGStat CCStat SearchTermStat SearchEngineStat
+        TagAuctionStat)) . " && " .
     "mkdir -p \${workspace_root}/run && ".
     "mkdir -p \${log_root}/CampaignManager/Out/RequestBasicChannels && ".
     "mkdir -p \${log_root}/CampaignManager/Out/RequestBasicChannels_ && ".

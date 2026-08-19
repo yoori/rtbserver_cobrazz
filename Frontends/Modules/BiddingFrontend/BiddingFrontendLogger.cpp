@@ -33,13 +33,10 @@ namespace AdServer::Bidding
       scheduler_(new Generics::Planner(callback)),
       task_runner_(new Generics::TaskRunner(callback, 1))
   {
-    const unsigned long geo_shards_count = std::max<unsigned long>(geo_shards, 1);
-    geo_loggers_.reserve(geo_shards_count);
-    for (unsigned long i = 0; i < geo_shards_count; ++i)
-    {
-      geo_loggers_.emplace_back(new GeoLogHolder(
-        AdServer::LogProcessing::LogFlushTraits(geo_period, log_root.c_str())));
-    }
+    geo_logger_ = new GeoLogHolder(
+      AdServer::LogProcessing::LogFlushTraits(geo_period, log_root.c_str()),
+      GeoSavePolicy(),
+      geo_shards);
 
     add_child_object(scheduler_.in());
     add_child_object(task_runner_.in());
@@ -72,10 +69,7 @@ namespace AdServer::Bidding
       data.region.assign(params.region.data(), params.region.size());
       data.city.assign(params.city.data(), params.city.size());
 
-      GeoLogHolder& geo_logger = *geo_loggers_[
-        next_geo_logger_.fetch_add(1, std::memory_order_relaxed) %
-          geo_loggers_.size()];
-      geo_logger.add_record(std::move(key), std::move(data));
+      geo_logger_->add_record(std::move(key), std::move(data));
     }
     catch (const eh::Exception& ex)
     {
@@ -95,21 +89,7 @@ namespace AdServer::Bidding
     try
     {
       const Generics::Time now = Generics::Time::get_time_of_day();
-      Generics::Time next_flush;
-
-      for (auto& geo_logger : geo_loggers_)
-      {
-        const Generics::Time local_next_flush =
-          geo_logger->flush_if_required(now);
-        if (local_next_flush != Generics::Time::ZERO)
-        {
-          next_flush = next_flush == Generics::Time::ZERO ?
-            local_next_flush :
-            std::min(next_flush, local_next_flush);
-        }
-      }
-
-      return next_flush;
+      return geo_logger_->flush_if_required(now);
     }
     catch (const eh::Exception& ex)
     {

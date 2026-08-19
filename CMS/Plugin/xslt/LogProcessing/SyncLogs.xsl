@@ -173,6 +173,17 @@
 
     <xsl:variable name="log-root-dir" select="concat($workspace-root, '/log/SyncLogs')"/>
     <xsl:variable name="log-files-root-dir" select="concat($workspace-root, '/log')"/>
+    <xsl:variable name="frontend-service-hosts">
+      <xsl:call-template name="HostsStringGenerator">
+        <xsl:with-param name="service-path" select="$fe-cluster-path/service"/>
+        <xsl:with-param name="error-prefix" select="'Frontend service hosts resolving'"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:variable name="is-frontend-service-host" select="contains(
+      concat(',', $frontend-service-hosts, ','), concat(',', $HOST, ','))"/>
+    <xsl:variable name="rsync-compression-option">
+      <xsl:if test="not($is-frontend-service-host)"><xsl:text> -z</xsl:text></xsl:if>
+    </xsl:variable>
     <xsl:variable name="campaign-manager-path"
       select="$fe-cluster-path/service[@descriptor = $campaign-manager-descriptor]"/>
     <xsl:variable name="campaign-manager-service-config"
@@ -221,13 +232,15 @@
 
     <xsl:variable name="local-copy-command"><xsl:value-of
         select="concat($backup-command-prefix,
-        '/usr/bin/rsync -t -z --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
+        '/usr/bin/rsync -t', $rsync-compression-option,
+        ' --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
         $log-files-root-dir, '##DST_PATH##', $backup-command-postfix)"/>
     </xsl:variable>
 
     <xsl:variable name="remote-copy-command">
       <xsl:value-of select="concat($backup-command-prefix,
-        '/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
+        '/usr/bin/rsync -t', $rsync-compression-option,
+        ' --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
         $remote-dest-port, '/ad-logs##DST_PATH##', $backup-command-postfix)"/>
     </xsl:variable>
 
@@ -807,13 +820,15 @@
 
       <xsl:variable name="rbc-local-copy-command"><xsl:value-of
         select="concat($rbc-backup-command-prefix,
-        '/usr/bin/rsync -t -z --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
+        '/usr/bin/rsync -t', $rsync-compression-option,
+        ' --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
         $log-files-root-dir, '##DST_PATH##', $rbc-backup-command-postfix)"/>
       </xsl:variable>
 
       <xsl:variable name="rbc-remote-copy-command">
         <xsl:value-of select="concat($rbc-backup-command-prefix,
-          '/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
+          '/usr/bin/rsync -t', $rsync-compression-option,
+          ' --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
           $remote-dest-port, '/ad-logs##DST_PATH##', $rbc-backup-command-postfix)"/>
       </xsl:variable>
 
@@ -934,7 +949,8 @@
           unlink_source="false"
           interruptible="true"
           check_logs_period="{$internal-content-check-period}">
-          <xsl:variable name="copy_command"><![CDATA[/usr/bin/rsync --partial -avz -t --timeout=55 --log-format=%f --delete-after rsync://##DST_HOST##:]]><xsl:value-of
+          <xsl:variable name="copy_command"><![CDATA[/usr/bin/rsync --partial -av]]><xsl:if
+            test="not($is-frontend-service-host)">z</xsl:if><![CDATA[ -t --timeout=55 --log-format=%f --delete-after rsync://##DST_HOST##:]]><xsl:value-of
             select="$data-source-port"/>/<xsl:value-of
             select="$data-source-path"/><![CDATA[/##SRC_PATH## ##DST_PATH##]]></xsl:variable>
           <xsl:attribute name="remote_copy_command"><xsl:value-of select="$copy_command"/></xsl:attribute>
@@ -974,7 +990,8 @@
           remote_copy_command_type="rsync"
           tries_per_file="2">
           <xsl:attribute name="remote_copy_command"><xsl:value-of
-            select="$backup-command-prefix"/><![CDATA[/usr/bin/rsync -avz -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
+            select="$backup-command-prefix"/><![CDATA[/usr/bin/rsync -av]]><xsl:if
+            test="not($is-frontend-service-host)">z</xsl:if><![CDATA[ -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
             select="$stat-files-ref/@host"/>:<xsl:value-of select="$stat-files-ref/@port"/><xsl:if
             test="count($stat-files-ref/@port) = 0"><xsl:value-of select="$def-stat-files-receiver-port"/></xsl:if>##DST_PATH##<xsl:value-of
             select="$backup-command-postfix"/></xsl:attribute>
@@ -1114,12 +1131,15 @@
         tries_per_file="2">
         <xsl:attribute name="remote_copy_command"><xsl:value-of
           select="$research-command-prefix"/><xsl:for-each 
-          select="$colo-config/cfg:predictorConfig/cfg:auxiliaryRef"><![CDATA[(/usr/bin/rsync -avz -t --log-format=%f ##SRC_PATH## rsync://]]><xsl:value-of
+          select="$colo-config/cfg:predictorConfig/cfg:auxiliaryRef"><![CDATA[(/usr/bin/rsync -av]]><xsl:if
+          test="not($is-frontend-service-host)">z</xsl:if><![CDATA[ -t --log-format=%f ##SRC_PATH## rsync://]]><xsl:value-of
           select="@host"/>:<xsl:value-of select="@port"/><xsl:if
           test="count(@port) = 0"><xsl:value-of 
           select="$def-research-stat-receiver-port"/></xsl:if><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/><![CDATA[##DST_PATH## || true) && ]]></xsl:for-each><xsl:if test="$predictor-path//cfg:syncServer/@enable_backup = 'true' or 
-        $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[(/usr/bin/rsync -az -t --timeout=55 --log-format=%f ##SRC_PATH##  rsync://]]><xsl:value-of
-            select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -az -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
+        $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[(/usr/bin/rsync -a]]><xsl:if
+            test="not($is-frontend-service-host)">z</xsl:if><![CDATA[ -t --timeout=55 --log-format=%f ##SRC_PATH##  rsync://]]><xsl:value-of
+            select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -a]]><xsl:if
+            test="not($is-frontend-service-host)">z</xsl:if><![CDATA[ -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
             select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/>##DST_PATH##<xsl:value-of
             select="$research-command-postfix"/></xsl:attribute>
 
@@ -1151,8 +1171,10 @@
 
           <xsl:if test="string-length($http-frontend-hosts) > 0">
             <cfg:Route type="RoundRobin">
-              <cfg:files source="FCGIRtbServer/Out/Geo/Geo_*"
-                destination="/Geo"/>
+              <cfg:files destination="/Geo">
+                <xsl:attribute name="source">FCGIRtbServer/Out/Geo<xsl:if
+                  test="$campaign-manager-ram-enabled">.ram</xsl:if>/Geo_*</xsl:attribute>
+              </cfg:files>
               <cfg:hosts destination="-non-used-hostname">
                 <xsl:attribute name="source"><xsl:value-of
                   select="$http-frontend-hosts"/></xsl:attribute>
@@ -1221,7 +1243,7 @@
           </xsl:call-template>
         </xsl:variable>
         <cfg:FeedRouteGroup
-          local_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ##DST_PATH##"
+          local_copy_command="/usr/bin/rsync -t{$rsync-compression-option} --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ##DST_PATH##"
           local_copy_command_type="rsync"
           remote_copy_command_type="rsync"
           tries_per_file="2"
@@ -1229,7 +1251,8 @@
 
           <xsl:attribute name="remote_copy_command"><xsl:value-of
             select="$backup-command-prefix"/>/usr/bin/rsync -t<xsl:if
-              test="$stunnel-client-config/@compress = 'true'"><![CDATA[ -z]]></xsl:if><![CDATA[ --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## rsync://]]><xsl:value-of
+              test="$stunnel-client-config/@compress = 'true' and
+                not($is-frontend-service-host)"><![CDATA[ -z]]></xsl:if><![CDATA[ --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## rsync://]]><xsl:value-of
             select="$stunnel-host"/>:<xsl:value-of select="$stunnel-port"/>/ad-logs##DST_PATH##<xsl:value-of
             select="$backup-command-postfix"/></xsl:attribute>
 
@@ -1306,7 +1329,8 @@
           pool_threads="50"
           check_logs_period="{$content-check-period}">
           <xsl:attribute name="remote_copy_command">/usr/bin/rsync --partial -av<xsl:if
-            test="$stunnel-client-config/@compress = 'true'">z</xsl:if><![CDATA[ -t --timeout=55 --log-format=%f --delete-after rsync://]]><xsl:value-of
+            test="$stunnel-client-config/@compress = 'true' and
+              not($is-frontend-service-host)">z</xsl:if><![CDATA[ -t --timeout=55 --log-format=%f --delete-after rsync://]]><xsl:value-of
             select="$stunnel-host"/>:<xsl:value-of select="$stunnel-port"/><![CDATA[/ad-content##SRC_PATH## ##DST_PATH##]]></xsl:attribute>
 
           <cfg:Route type="RoundRobin">

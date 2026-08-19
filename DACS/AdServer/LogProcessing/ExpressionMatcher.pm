@@ -57,7 +57,7 @@ sub start
       "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
     "fi && " .
     "ulimit -n 4096 && " .
-    "export MALLOC_ARENA_MAX=2 && " .
+    "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
     "{ " .
       "setsid -f \${VALGRIND_PREFIX} ExpressionMatcher " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ExpressionMatcherConfig.xml " .

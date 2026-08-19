@@ -10,6 +10,7 @@ sub start
   my ($host, $descr) = @_;
 
   my $command =
+    AdServer::Functions::prepare_ram_log_dirs("FCGIRtbServer", "Geo") . " && " .
     "mkdir -p \${log_root}/FCGIRtbServer/Out/Geo \${workspace_root}/run && " .
     "if test -e $pid_file; then " .
       "pid=`cat $pid_file`; " .

@@ -2509,7 +2509,7 @@ namespace RequestInfoSvcs
    */
   class ResearchActionLogger:
     public virtual AdvActionProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPoolData<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ResearchActionTraits,
       AdServer::LogProcessing::SimpleCsvSavePolicy<
         AdServer::LogProcessing::ResearchActionTraits> >,
@@ -2518,7 +2518,7 @@ namespace RequestInfoSvcs
   public:
     ResearchActionLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPoolData<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ResearchActionTraits,
           AdServer::LogProcessing::SimpleCsvSavePolicy<
             AdServer::LogProcessing::ResearchActionTraits>
@@ -2599,7 +2599,7 @@ namespace RequestInfoSvcs
    */
   class ResearchBidLogger:
     public virtual RequestContainerProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPoolData<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ResearchBidTraits,
       AdServer::LogProcessing::SimpleCsvSavePolicy<
         AdServer::LogProcessing::ResearchBidTraits> >,
@@ -2610,7 +2610,7 @@ namespace RequestInfoSvcs
       const LogProcessing::LogFlushTraits& flush_traits,
       Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPoolData<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ResearchBidTraits,
           AdServer::LogProcessing::SimpleCsvSavePolicy<
             AdServer::LogProcessing::ResearchBidTraits>
@@ -2762,7 +2762,7 @@ namespace RequestInfoSvcs
    */
   class ResearchImpressionLogger:
     public virtual RequestActionProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPoolData<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ResearchImpressionTraits,
       AdServer::LogProcessing::SimpleCsvSavePolicy<
         AdServer::LogProcessing::ResearchImpressionTraits> >,
@@ -2773,7 +2773,7 @@ namespace RequestInfoSvcs
       const LogProcessing::LogFlushTraits& flush_traits,
       Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPoolData<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ResearchImpressionTraits,
           AdServer::LogProcessing::SimpleCsvSavePolicy<
             AdServer::LogProcessing::ResearchImpressionTraits>
@@ -2888,7 +2888,7 @@ namespace RequestInfoSvcs
    */
   class ResearchClickLogger:
     public virtual UnmergedClickProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPoolData<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ResearchClickTraits,
       AdServer::LogProcessing::SimpleCsvSavePolicy<
         AdServer::LogProcessing::ResearchClickTraits> >,
@@ -2897,7 +2897,7 @@ namespace RequestInfoSvcs
   public:
     ResearchClickLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPoolData<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ResearchClickTraits,
           AdServer::LogProcessing::SimpleCsvSavePolicy<
             AdServer::LogProcessing::ResearchClickTraits>

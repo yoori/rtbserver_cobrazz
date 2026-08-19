@@ -54,6 +54,8 @@ add_executable(RequestInfoManager
 )
 
 target_link_libraries(RequestInfoManager
+  jemalloc
+
   pcre
   CORBACommons
   PrivacyFilter

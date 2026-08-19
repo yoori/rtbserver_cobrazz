@@ -683,7 +683,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** ResearchWebStatLogger */
-    class ResearchWebStatLogger: public AdServer::LogProcessing::LogHolderPoolData<
+    class ResearchWebStatLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ResearchWebStatTraits,
       AdServer::LogProcessing::SimpleCsvSavePolicy<AdServer::LogProcessing::ResearchWebStatTraits> >
     {
@@ -693,7 +693,7 @@ namespace AdServer::CampaignSvcs
       ResearchWebStatLogger(
         const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::ResearchWebStatTraits,
             AdServer::LogProcessing::SimpleCsvSavePolicy<
               AdServer::LogProcessing::ResearchWebStatTraits> >(flush_traits)
@@ -766,7 +766,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** RequestLogger */
-    class RequestLogger: public virtual AdServer::LogProcessing::LogHolderPoolData<
+    class RequestLogger: public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::RequestTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
         AdServer::LogProcessing::RequestTraits> > // log distribution enabled
@@ -776,7 +776,7 @@ namespace AdServer::CampaignSvcs
 
       RequestLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::RequestTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::RequestTraits> >(flush_traits)
@@ -793,7 +793,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** ImpressionLogger */
-    class ImpressionLogger: public AdServer::LogProcessing::LogHolderPoolData<
+    class ImpressionLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ImpressionTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
         AdServer::LogProcessing::ImpressionTraits> > // log distribution enabled
@@ -803,7 +803,7 @@ namespace AdServer::CampaignSvcs
 
       ImpressionLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::ImpressionTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::ImpressionTraits> >(flush_traits)
@@ -819,7 +819,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** ClickLogger */
-    class ClickLogger: public AdServer::LogProcessing::LogHolderPoolData<
+    class ClickLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ClickTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
         AdServer::LogProcessing::ClickTraits> > // log distribution enabled
@@ -829,7 +829,7 @@ namespace AdServer::CampaignSvcs
 
       ClickLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::ClickTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::ClickTraits> >(flush_traits)
@@ -846,7 +846,7 @@ namespace AdServer::CampaignSvcs
 
     /** AdvertiserActionLogger */
     class AdvertiserActionLogger:
-      public AdServer::LogProcessing::LogHolderPoolData<
+      public AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::AdvertiserActionTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
           AdServer::LogProcessing::AdvertiserActionTraits> > // log distribution enabled
@@ -856,7 +856,7 @@ namespace AdServer::CampaignSvcs
 
       AdvertiserActionLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::AdvertiserActionTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::AdvertiserActionTraits> >(flush_traits)
@@ -894,7 +894,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** PassbackImpressionLogger */
-    class PassbackImpressionLogger: public AdServer::LogProcessing::LogHolderPoolData<
+    class PassbackImpressionLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::PassbackImpressionTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
         AdServer::LogProcessing::PassbackImpressionTraits> >
@@ -904,7 +904,7 @@ namespace AdServer::CampaignSvcs
 
       PassbackImpressionLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::PassbackImpressionTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::PassbackImpressionTraits> >(
@@ -943,7 +943,7 @@ namespace AdServer::CampaignSvcs
 
     /** TagRequestLogger */
     class TagRequestLogger:
-      public virtual AdServer::LogProcessing::LogHolderPoolData<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::TagRequestTraits,
         AdServer::LogProcessing::DistributionSavePolicy<
           AdServer::LogProcessing::TagRequestTraits> >
@@ -954,7 +954,7 @@ namespace AdServer::CampaignSvcs
       TagRequestLogger(
         const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPoolData<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::TagRequestTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::TagRequestTraits> >(flush_traits),

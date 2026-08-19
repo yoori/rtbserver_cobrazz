@@ -1,8 +1,6 @@
 #pragma once
 
-#include <atomic>
 #include <string>
-#include <vector>
 
 #include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -66,20 +64,19 @@ namespace AdServer::Bidding
     ~BiddingFrontendLogger() noexcept = default;
 
   private:
-    using GeoLogHolder = AdServer::LogProcessing::LogHolderPoolData<
+    using GeoSavePolicy = AdServer::LogProcessing::SimpleCsvSavePolicy<
+      AdServer::LogProcessing::GeoLoggerTraits>;
+    using GeoLogHolder = AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::GeoLoggerTraits,
-      AdServer::LogProcessing::SimpleCsvSavePolicy<
-        AdServer::LogProcessing::GeoLoggerTraits>>;
+      GeoSavePolicy>;
     using GeoLogHolder_var = ReferenceCounting::SmartPtr<GeoLogHolder>;
-    using GeoLogHolderArray = std::vector<GeoLogHolder_var>;
 
     Generics::Time
     flush_logs_() noexcept;
 
   private:
     Logging::Logger_var logger_;
-    GeoLogHolderArray geo_loggers_;
-    std::atomic<unsigned long> next_geo_logger_{0};
+    GeoLogHolder_var geo_logger_;
     Generics::Planner_var scheduler_;
     Generics::TaskRunner_var task_runner_;
   };

@@ -64,6 +64,8 @@ add_executable(ExpressionMatcher
 )
 
 target_link_libraries(ExpressionMatcher
+  jemalloc
+
   UserColoReachContainer
   UserInventoryContainer
   UserTriggerMatchContainer

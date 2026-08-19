@@ -231,7 +231,7 @@
 
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>
     <xsd:attribute name="check_logs_period" type="xsd:positiveInteger" use="required"/>
-    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="10"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="16"/>
     <xsd:attribute name="fetch_threads" type="xsd:positiveInteger" use="optional" default="10"/>
   </xsd:complexType>
 

@@ -238,6 +238,7 @@
   <xsl:param name="unixcommons-root"/>
   <xsl:param name="env-config"/>
   <xsl:param name="colo-config"/>
+  <xsl:param name="geo-ram-enabled"/>
 
   <xsl:param name="campaign-servers"/>
   <xsl:param name="user-bind-servers"/>
@@ -1245,7 +1246,10 @@
         <xsl:with-param name="default-log-level" select="$bidding-module-log-level"/>
       </xsl:call-template>
 
-      <cfg:Logging log_root="{$workspace-root}/log/FCGIRtbServer/Out/Geo">
+      <cfg:Logging>
+        <xsl:attribute name="log_root"><xsl:value-of
+          select="concat($workspace-root, '/log/FCGIRtbServer/Out/Geo')"/><xsl:if
+          test="$geo-ram-enabled">.ram</xsl:if></xsl:attribute>
         <cfg:Geo>
           <xsl:attribute name="period">
             <xsl:choose>
@@ -1602,6 +1606,17 @@
     name="env-config"
     select="$fe-config/cfg:environment | $colo-config/cfg:environment"/>
 
+  <xsl:variable name="campaign-manager-service-config"
+    select="$campaign-managers/configuration/cfg:campaignManager"/>
+  <xsl:variable name="campaign-manager-group-config"
+    select="$fe-cluster-path/configuration/cfg:campaignManager"/>
+  <xsl:variable name="campaign-manager-config"
+    select="$campaign-manager-service-config[count($campaign-manager-service-config) &gt; 0] |
+      $campaign-manager-group-config[count($campaign-manager-service-config) = 0]"/>
+  <xsl:variable name="geo-ram-enabled"
+    select="number($campaign-manager-config/cfg:statLogging/@use_ram) &gt; 0 and
+      string-length($env-config/@ram_fs) &gt; 0"/>
+
   <xsl:variable
     name="campaign-servers"
     select="$be-cluster-path/service[@descriptor = $campaign-server-descriptor] |
@@ -1650,6 +1665,7 @@
       <xsl:with-param name="unixcommons-root" select="$unixcommons-root"/>
       <xsl:with-param name="env-config" select="$env-config"/>
       <xsl:with-param name="colo-config" select="$colo-config"/>
+      <xsl:with-param name="geo-ram-enabled" select="$geo-ram-enabled"/>
 
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
       <xsl:with-param name="user-bind-servers" select="$user-bind-servers"/>

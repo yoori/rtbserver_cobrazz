@@ -18,6 +18,7 @@
 
 <xsl:template name="EnvironmentConfigGenerator">
   <xsl:param name="app-path"/>
+  <xsl:param name="full-cluster-path"/>
   <xsl:param name="colo-config"/>
   <xsl:param name="env-config"/>
 
@@ -44,6 +45,19 @@
   <xsl:variable name="mib-root"><xsl:value-of select="$env-config/@mib_root"/>
     <xsl:if test="count($env-config/@mib_root) = 0"><xsl:value-of select="$server-root"/>/mibs</xsl:if>
   </xsl:variable>
+  <xsl:variable name="campaign-manager-path"
+    select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/
+      service[@descriptor = $campaign-manager-descriptor]"/>
+  <xsl:variable name="campaign-manager-service-config"
+    select="$campaign-manager-path/configuration/cfg:campaignManager"/>
+  <xsl:variable name="campaign-manager-group-config"
+    select="$campaign-manager-path/../configuration/cfg:campaignManager"/>
+  <xsl:variable name="campaign-manager-config"
+    select="$campaign-manager-service-config[count($campaign-manager-service-config) &gt; 0] |
+      $campaign-manager-group-config[count($campaign-manager-service-config) = 0]"/>
+  <xsl:variable name="ram-enabled"
+    select="number(($campaign-manager-config/cfg:statLogging/@use_ram)[1]) &gt; 0 and
+      string-length($env-config/@ram_fs) &gt; 0"/>
   <xsl:choose>
     <xsl:when test="count($env-config/@unixcommons_root) > 0">
   unix_commons_root=<xsl:value-of select="$env-config/@unixcommons_root"/>
@@ -65,6 +79,10 @@
   workspace_root=<xsl:value-of select="$workspace-root"/>
   data_root=<xsl:value-of select="$data-root"/>
   log_root=$workspace_root/log
+  <xsl:if test="$ram-enabled">
+  ram_fs_root=/dev/<xsl:value-of select="$env-config/@ram_fs"/>
+  export ram_fs_root
+  </xsl:if>
   CONTROL_CPU_AFFINITY=
   ADS_THREAD_AFFINITY=
   <xsl:if test="$env-config/@cpu_affinity = 'auto' and not($devel-params/@valgrind)">
@@ -165,6 +183,7 @@
 
   <xsl:call-template name="EnvironmentConfigGenerator">
     <xsl:with-param name="app-path" select="$app-path"/>
+    <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
     <xsl:with-param name="env-config" select="$env-config"/>
     <xsl:with-param name="colo-config" select="$colo-config"/>
   </xsl:call-template>

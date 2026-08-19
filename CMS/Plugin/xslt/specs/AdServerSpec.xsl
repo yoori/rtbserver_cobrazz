@@ -363,24 +363,12 @@ install --mode 644 %{__plugin_root}/data/Config/adserver_sysctl.conf %{buildroot
 install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/security/limits.d/91-aduser.conf
 
 <xsl:if test="$ram-enabled">
-mkdir -p %{buildroot}%{__workspace_dir}/log/CampaignManager/Out
-for log_name in \
-  RequestBasicChannels WebStat ResearchWebStat ResearchProf CreativeStat \
-  ActionRequest PassbackStat UserAgentStat Request Impression Click \
-  AdvertiserAction PassbackImpression UserProperties TagRequest \
-  TagPositionStat CCGStat CCStat SearchTermStat SearchEngineStat TagAuctionStat; do
-  mkdir -p "%{buildroot}%{__workspace_dir}/log/CampaignManager/Out/${log_name}.ram_"
-  ln -s -f -T "/dev/<xsl:value-of select="$ram-fs"/>/log/CampaignManager/Out/${log_name}" \
-    "%{buildroot}%{__workspace_dir}/log/CampaignManager/Out/${log_name}.ram"
-done
-
 mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}/usr/lib/tmpfiles.d
-mkdir -p %{buildroot}/usr/libexec
 
 <![CDATA[cat > %{buildroot}/usr/lib/systemd/system/dev-]]><xsl:value-of select="$ram-fs"/><![CDATA[.mount <<'EOF'
 [Unit]
-Description=CampaignManager RAM filesystem
+Description=RTBServer RAM filesystem
 
 [Mount]
 What=]]><xsl:value-of select="$ram-fs"/><![CDATA[
@@ -394,37 +382,6 @@ EOF
 
 cat > %{buildroot}/usr/lib/tmpfiles.d/]]><xsl:value-of select="$ram-fs"/><![CDATA[.conf <<'EOF'
 d /dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[ 0755 root root -
-EOF
-
-cat > %{buildroot}/usr/libexec/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup <<'EOF'
-#!/bin/bash
-set -eu
-
-base=/dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[/log/CampaignManager/Out
-install -d -m 0755 -o ]]><xsl:value-of select="$user-name"/><![CDATA[ -g ]]><xsl:value-of select="$user-group"/><![CDATA[ "$base"
-for log_name in \
-  RequestBasicChannels WebStat ResearchWebStat ResearchProf CreativeStat \
-  ActionRequest PassbackStat UserAgentStat Request Impression Click \
-  AdvertiserAction PassbackImpression UserProperties TagRequest \
-  TagPositionStat CCGStat CCStat SearchTermStat SearchEngineStat TagAuctionStat; do
-  install -d -m 0755 -o ]]><xsl:value-of select="$user-name"/><![CDATA[ -g ]]><xsl:value-of select="$user-group"/><![CDATA[ "$base/$log_name"
-done
-EOF
-chmod 755 %{buildroot}/usr/libexec/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup
-
-cat > %{buildroot}/usr/lib/systemd/system/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup.service <<'EOF'
-[Unit]
-Description=Create CampaignManager directories on RAM filesystem
-Requires=dev-]]><xsl:value-of select="$ram-fs"/><![CDATA[.mount
-After=dev-]]><xsl:value-of select="$ram-fs"/><![CDATA[.mount
-
-[Service]
-Type=oneshot
-ExecStart=/usr/libexec/rtbserver-]]><xsl:value-of select="$ram-fs"/><![CDATA[-setup
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
 EOF]]>
 </xsl:if>
 
@@ -704,15 +661,12 @@ EOF]]>
 /etc/security/limits.d/91-aduser.conf
 <xsl:if test="$ram-enabled">
 /usr/lib/systemd/system/dev-<xsl:value-of select="$ram-fs"/>.mount
-/usr/lib/systemd/system/rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service
 /usr/lib/tmpfiles.d/<xsl:value-of select="$ram-fs"/>.conf
-/usr/libexec/rtbserver-<xsl:value-of select="$ram-fs"/>-setup
 </xsl:if>
 
 %preun
 <xsl:if test="$ram-enabled">
 if [ "$1" -eq 0 ]; then
-  systemctl disable --now rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service &gt;/dev/null 2&gt;&amp;1 ||:
   systemctl disable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
 fi
 </xsl:if>
@@ -753,8 +707,6 @@ if mountpoint -q /dev/<xsl:value-of select="$ram-fs"/>; then
 else
   systemctl enable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
 fi
-systemctl enable rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service &gt;/dev/null 2&gt;&amp;1 ||:
-systemctl restart rtbserver-<xsl:value-of select="$ram-fs"/>-setup.service &gt;/dev/null 2&gt;&amp;1 ||:
 </xsl:if>
 
 <xsl:if test="$public-key-defined">

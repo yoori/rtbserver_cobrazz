@@ -17,7 +17,7 @@ namespace RequestInfoSvcs
 
   // ConversionProcessor::ConvLogger
   class ConversionProcessor::ConvLogger:
-    public AdServer::LogProcessing::LogHolderPoolData<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ConvTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
         AdServer::LogProcessing::ConvTraits> > // log distribution enabled
@@ -27,7 +27,7 @@ namespace RequestInfoSvcs
 
     ConvLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPoolData<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ConvTraits,
           AdServer::LogProcessing::DistributionSavePolicy<
             AdServer::LogProcessing::ConvTraits> >(
