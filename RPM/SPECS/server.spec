@@ -40,7 +40,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv615%{?dist}
+Release: ssv616%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -134,7 +134,7 @@ BuildRequires: jemalloc-devel = %__jemalloc_ver_req
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: jemalloc = %__jemalloc_ver_req
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
-Requires: rsync >= 3.0.7-3.el6
+Requires: rsync >= 3.1.3-21.el8_10
 Requires: stunnel >= 4.29
 Requires: perl-Template-Toolkit
 #Requires: perl-Path-Iterator-Rule
