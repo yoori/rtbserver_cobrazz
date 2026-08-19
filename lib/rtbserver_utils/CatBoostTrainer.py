@@ -119,15 +119,15 @@ class CatBoostTrainer(object):
         '%Y%m%d.%H%M%S')
 
     output_dir = pathlib.Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     result_dir = output_dir / timestamp
     if result_dir.exists():
       raise FileExistsError("Model directory already exists: '" +
                             str(result_dir) + "'")
 
+    output_dir.mkdir(parents=True, exist_ok=True)
     staging_dir = pathlib.Path(tempfile.mkdtemp(
-      prefix='.' + output_dir.name + '.' + timestamp + '.',
-      dir=str(output_dir.parent)))
+      prefix='~' + timestamp + '.',
+      dir=str(output_dir)))
     try:
       model.save_model(str(staging_dir / 'model.cbm'))
       features, features_importance = self.model_traits_(

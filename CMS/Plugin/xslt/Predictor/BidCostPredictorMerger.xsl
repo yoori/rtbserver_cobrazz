@@ -95,7 +95,7 @@
 
   <xsl:variable
     name="bidcost-predictor-config"
-    select="$bidcost-predictor-path/configuration/cfg:predictor"/>
+    select="$bidcost-predictor-path/configuration/cfg:bidCostPredictModelGenerator"/>
 
   <xsl:call-template name="MergerConfigGenerator">
     <xsl:with-param name="env-config" select="$env-config"/>

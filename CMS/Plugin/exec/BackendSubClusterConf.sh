@@ -188,16 +188,17 @@ $EXEC/CurrentEnvGen.sh \
 
 let "EXIT_CODE|=$?"
 
-## configure Predictor
-PREDICTOR_DESCR=$BACKEND_CLUSTER/Predictor
-PREDICTOR_XPATH="$CLUSTER_XPATH/service[@descriptor = '$PREDICTOR_DESCR']"
-PREDICTOR_COUNT_EXP="count($PREDICTOR_XPATH)"
-PREDICTOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath "$PREDICTOR_COUNT_EXP" --plugin-root $PLUGIN_ROOT`
+## configure predictor services
+CLICKHOUSE_UPLOADER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CLICKHOUSE_UPLOADER_DESCR']"
+CTR_MODEL_GENERATOR_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/CTRPredictModelGenerator']"
+BIDCOST_PREDICTOR_MERGER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/BidCostPredictModelGenerator']"
 
-if [ $PREDICTOR_COUNT -ne 0 ]
+CLICKHOUSE_UPLOADER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
+  "count($CLICKHOUSE_UPLOADER_XPATH)" --plugin-root $PLUGIN_ROOT`
+if [ $CLICKHOUSE_UPLOADER_COUNT -ne 0 ]
 then
   $EXEC/ServiceConf.sh \
-    --services-xpath "$PREDICTOR_XPATH" \
+    --services-xpath "$CLICKHOUSE_UPLOADER_XPATH" \
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Predictor/SyncLogsServer.xsl \
     --out-file conf/predictor_synclogs_server.conf \
@@ -205,36 +206,28 @@ then
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"
 
+fi
+
+CTR_MODEL_GENERATOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
+  "count($CTR_MODEL_GENERATOR_XPATH)" --plugin-root $PLUGIN_ROOT`
+if [ $CTR_MODEL_GENERATOR_COUNT -ne 0 ]
+then
   $EXEC/ServiceConf.sh \
-    --services-xpath "$PREDICTOR_XPATH" \
+    --services-xpath "$CTR_MODEL_GENERATOR_XPATH" \
     --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Predictor/Merger.xsl \
-    --out-file PredictorMergerConfig.xml \
+    --xsl $XSLT_ROOT/Predictor/CTRPredictModelGenerator.xsl \
+    --out-file CTRPredictModelGeneratorConfig.json \
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"
+fi
 
+BIDCOST_PREDICTOR_MERGER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
+  "count($BIDCOST_PREDICTOR_MERGER_XPATH)" --plugin-root $PLUGIN_ROOT`
+if [ $BIDCOST_PREDICTOR_MERGER_COUNT -ne 0 ]
+then
   $EXEC/ServiceConf.sh \
-    --services-xpath "$PREDICTOR_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Predictor/SVMGenerator.xsl \
-    --out-file CTRPredictorSVMGeneratorConfig.xml \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
-  let "EXIT_CODE|=$?"
-
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "svm_generator" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --search-xpath "configuration/cfg:predictor/cfg:svmGenerator" \
-    --services-xpath "$PREDICTOR_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/be.sh
-  let "EXIT_CODE|=$?"
-
-  $EXEC/ServiceConf.sh \
-    --services-xpath "$PREDICTOR_XPATH" \
+    --services-xpath "$BIDCOST_PREDICTOR_MERGER_XPATH" \
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Predictor/BidCostPredictorMerger.xsl \
     --out-file BidCostPredictorMergerConfig.xml \

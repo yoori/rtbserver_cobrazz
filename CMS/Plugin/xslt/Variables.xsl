@@ -58,8 +58,6 @@
 <xsl:variable name="log-processing-descriptor" select="'AdCluster/BackendSubCluster/LogProcessing'"/>
 <xsl:variable name="local-proxy-descriptor" select="'AdCluster/BackendSubCluster/LocalProxy'"/>
 <xsl:variable name="user-profiling-descriptor" select="'AdCluster/BackendSubCluster/UserInfoProfiling'"/>
-<xsl:variable name="predictor-descriptor" select="'AdCluster/BackendSubCluster/Predictor'"/>
-
 <xsl:variable name="campaign-server-descriptor"
   select="'AdCluster/BackendSubCluster/CampaignServer'"/>
 
@@ -85,6 +83,10 @@
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
 <xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
+<xsl:variable name="ctr-predict-model-generator-descriptor"
+  select="'AdCluster/BackendSubCluster/CTRPredictModelGenerator'"/>
+<xsl:variable name="bidcost-predictor-merger-descriptor"
+  select="'AdCluster/BackendSubCluster/BidCostPredictModelGenerator'"/>
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
 
 <xsl:variable name="campaign-manager-descriptor" select="'AdCluster/FrontendSubCluster/CampaignManager'"/>

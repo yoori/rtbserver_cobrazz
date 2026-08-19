@@ -252,30 +252,28 @@
           <xsl:with-param name="service-type" select="'AdServer::LogProcessing::SyncLogsServer'"/>
         </xsl:call-template>
 
-        <xsl:if test="count($be-cluster-path/service[@descriptor = $predictor-descriptor]) > 0">
+        <xsl:if test="count($be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]) > 0">
           <xsl:call-template name="AddOneOnHostService">
             <xsl:with-param name="serv-path"
-              select="$be-cluster-path/service[@descriptor = $predictor-descriptor]"/>
+              select="$be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]"/>
             <xsl:with-param name="service-name" select="'be-Predictor-SyncLogsServer'"/>
             <xsl:with-param name="service-type" select="'AdServer::Predictor::SyncLogsServer'"/>
           </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="count($be-cluster-path/service[@descriptor = $ctr-predict-model-generator-descriptor]) > 0">
           <xsl:call-template name="AddOneOnHostService">
             <xsl:with-param name="serv-path"
-              select="$be-cluster-path/service[@descriptor = $predictor-descriptor]"/>
-            <xsl:with-param name="service-name" select="'be-Predictor-Merger'"/>
-            <xsl:with-param name="service-type" select="'AdServer::Predictor::Merger'"/>
+              select="$be-cluster-path/service[@descriptor = $ctr-predict-model-generator-descriptor]"/>
+            <xsl:with-param name="service-name" select="'be-Predictor-CTRPredictModelGenerator'"/>
+            <xsl:with-param name="service-type" select="'AdServer::Predictor::CTRPredictModelGenerator'"/>
           </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="count($be-cluster-path/service[@descriptor = $bidcost-predictor-merger-descriptor]) > 0">
           <xsl:call-template name="AddOneOnHostService">
             <xsl:with-param name="serv-path"
-              select="$be-cluster-path/service[@descriptor = $predictor-descriptor]"/>
-            <xsl:with-param name="service-name" select="'be-Predictor-SVMGenerator'"/>
-            <xsl:with-param name="service-type" select="'AdServer::Predictor::SVMGenerator'"/>
-          </xsl:call-template>
-          <xsl:call-template name="AddOneOnHostService">
-            <xsl:with-param name="serv-path"
-              select="$be-cluster-path/service[@descriptor = $predictor-descriptor]"/>
-            <xsl:with-param name="service-name" select="'be-BidCost-Predictor-Merger'"/>
-            <xsl:with-param name="service-type" select="'AdServer::Predictor::BidCostPredictorMerger'"/>
+              select="$be-cluster-path/service[@descriptor = $bidcost-predictor-merger-descriptor]"/>
+            <xsl:with-param name="service-name" select="'be-Predictor-BidCostPredictModelGenerator'"/>
+            <xsl:with-param name="service-type" select="'AdServer::Predictor::BidCostPredictModelGenerator'"/>
           </xsl:call-template>
         </xsl:if>
       </xsl:if>
@@ -1900,7 +1898,7 @@
 
       <xsl:variable name="sync-logs-dep">
         <xsl:choose>
-          <xsl:when test="count($be-cluster-path/service[@descriptor = $predictor-descriptor]) > 0">
+          <xsl:when test="count($be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]) > 0">
             <xsl:value-of select="'AdServer::LogProcessing::SyncLogsServer
               AdServer::LogProcessing::ExpressionMatcherChecker
               AdServer::Predictor::SyncLogsServer'"/>
@@ -2009,16 +2007,6 @@
             <xsl:with-param name="masters" select="$sync-logs-dep"/>
             <xsl:with-param name="slaves" select= "'AdServer::LogProcessing::SyncLogs'"/>
           </xsl:call-template>
-          <xsl:if test="count($be-cluster-path/service[@descriptor = $predictor-descriptor]) > 0">
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="masters" select="'AdServer::Predictor::SyncLogsServer'"/>
-              <xsl:with-param name="slaves" select= "'AdServer::Predictor::Merger'"/>
-            </xsl:call-template>
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="masters" select="'AdServer::Predictor::Merger'"/>
-              <xsl:with-param name="slaves" select= "'AdServer::Predictor::SVMGenerator'"/>
-            </xsl:call-template>
-          </xsl:if>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters"><xsl:value-of select="'AdServer::Frontends::FCGIAdServer
               AdServer::Frontends::FCGIUserBindServer '"/>
@@ -2083,16 +2071,6 @@
           <xsl:with-param name="masters" select="$sync-logs-dep"/>
           <xsl:with-param name="slaves" select= "'AdServer::LogProcessing::SyncLogs'"/>
         </xsl:call-template>
-        <xsl:if test="count($be-cluster-path/service[@descriptor = $predictor-descriptor]) > 0">
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::Predictor::SyncLogsServer'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::Predictor::Merger'"/>
-          </xsl:call-template>
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::Predictor::Merger'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::Predictor::SVMGenerator'"/>
-          </xsl:call-template>
-        </xsl:if>
       </xsl:if>
       <xsl:call-template name="PhormZoneCommonDependencies">
         <xsl:with-param name="proxycluster-path" select="$proxycluster-path"/>

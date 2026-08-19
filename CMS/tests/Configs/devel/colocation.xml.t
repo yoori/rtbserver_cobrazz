@@ -297,6 +297,17 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       </serviceGroup>
 
       <service
+        descriptor="AdCluster/BackendSubCluster/ClickhouseUploader"
+        name="ClickhouseUploader$NAME_POSTFIX"
+        host="$HOST">
+        <configuration>
+          <clickhouseUploader
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            clickhouse_conn="-h 127.0.0.1"/>
+        </configuration>
+      </service>
+
+      <service
         descriptor="AdCluster/BackendSubCluster/CampaignServer"
         name="CampaignServer$NAME_POSTFIX"
         host="$HOST">
@@ -374,18 +385,30 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       </service>
 
       <service
-        descriptor="AdCluster/BackendSubCluster/Predictor"
-        name="Predictor"
+        descriptor="AdCluster/BackendSubCluster/CTRPredictModelGenerator"
+        name="CTRPredictModelGenerator$NAME_POSTFIX"
         host="$HOST">
         <configuration>
-          <predictor xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <ctrPredictModelGenerator
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            generate_period="86400"
+            train_rows="1000000"/>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdCluster/BackendSubCluster/BidCostPredictModelGenerator"
+        name="BidCostPredictModelGenerator$NAME_POSTFIX"
+        host="$HOST">
+        <configuration>
+          <bidCostPredictModelGenerator xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <logging log_level="7" sys_log="false"/>
             <merger max_timeout="600">
               <impression from="0" to="-1"/>
               <click from="-1" to="4"/>
               <action from="-1" to="5"/>
             </merger>
-          </predictor>
+          </bidCostPredictModelGenerator>
         </configuration>
       </service>
 

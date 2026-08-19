@@ -69,6 +69,7 @@ class CatBoostTrainerTest(unittest.TestCase):
         traits = json.load(input_file)
       self.assertEqual({'features_importance': []}, traits)
       self.assertEqual([], list(temp_path.glob('.CTRConfig.*')))
+      self.assertEqual([], list(output_dir.glob('~*')))
 
   def test_dictionary_filters_features_and_generates_traits(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -134,6 +135,7 @@ class CatBoostTrainerTest(unittest.TestCase):
 
       self.assertFalse((output_dir / '20260819.120000').exists())
       self.assertEqual([], list(temp_path.glob('.CTRConfig.*')))
+      self.assertEqual([], list(output_dir.glob('~*')))
 
   def test_rejects_feature_size_mismatch(self):
     with tempfile.TemporaryDirectory() as temp_dir:
