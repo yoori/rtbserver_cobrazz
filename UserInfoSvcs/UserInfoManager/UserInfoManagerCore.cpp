@@ -334,7 +334,7 @@ namespace AdServer::UserInfoSvcs
     {
       AdServer::LogProcessing::LogFlushTraits lft;
 
-      lft.period = Generics::Time(60); // TO FIX
+      lft.period = Generics::Time(600);
       lft.out_dir = user_info_manager_config_.root_dir();
 
       if (user_info_manager_config_.Logging().present())
@@ -356,7 +356,7 @@ namespace AdServer::UserInfoSvcs
 
           lft.period = Generics::Time(xsd_logger.flush_period().present()
             ? xsd_logger.flush_period().get()
-            : 60);
+            : 600);
         }
       }
 

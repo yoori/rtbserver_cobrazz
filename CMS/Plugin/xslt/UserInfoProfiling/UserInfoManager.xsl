@@ -206,7 +206,7 @@
 
     <cfg:Logging>
       <cfg:ChannelCountStat>
-        <xsl:attribute name="flush_period">30</xsl:attribute>
+        <xsl:attribute name="flush_period">600</xsl:attribute>
       </cfg:ChannelCountStat>
     </cfg:Logging>
 
