@@ -132,6 +132,9 @@
   PERL5LIB=$PERL5LIB:$server_root/lib
   export PERL5LIB
 
+  PYTHONPATH=$PYTHONPATH:$server_root/lib
+  export PYTHONPATH
+
   LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$server_root/lib
   LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$server_root/build/lib
   LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$unix_commons_root/build/lib

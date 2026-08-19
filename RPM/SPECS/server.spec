@@ -172,7 +172,7 @@ Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Ru
 
 Requires: python3.12
 Requires: python3.12-aiohttp python3.12-psycopg2
-Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect python3.12-scikit-learn
+Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect python3.12-scikit-learn python3.12-jinja2
 Requires: clickhouse-client = %{__clickhouse_ver_req}
 
 BuildRequires: xgboost-devel

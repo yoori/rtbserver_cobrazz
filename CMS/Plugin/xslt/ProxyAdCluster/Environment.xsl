@@ -81,6 +81,8 @@
   export PERL5LIB=$PERL5LIB:$config_root/<xsl:value-of select="$out-dir"/>/DACS
   export PERL5LIB=$PERL5LIB:$dacs_root
 
+  export PYTHONPATH=$PYTHONPATH:$server_root/lib
+
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$server_root/lib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$server_root/build/lib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$unix_commons_root/build/lib

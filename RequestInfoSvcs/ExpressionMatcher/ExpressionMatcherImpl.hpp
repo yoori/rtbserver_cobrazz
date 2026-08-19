@@ -304,6 +304,9 @@ namespace AdServer
       void
       load_data_() noexcept;
 
+      void
+      load_data_impl_();
+
       bool
       resolve_user_info_manager_session_() noexcept;
 

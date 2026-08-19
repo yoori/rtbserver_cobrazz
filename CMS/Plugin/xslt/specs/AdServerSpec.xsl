@@ -707,6 +707,9 @@ if mountpoint -q /dev/<xsl:value-of select="$ram-fs"/>; then
 else
   systemctl enable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
 fi
+if test -d /dev/<xsl:value-of select="$ram-fs"/>/log; then
+  chown %{__user}:%{__group} /dev/<xsl:value-of select="$ram-fs"/>/log ||:
+fi
 </xsl:if>
 
 <xsl:if test="$public-key-defined">
