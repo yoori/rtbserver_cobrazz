@@ -64,6 +64,7 @@ namespace CampaignSvcs
         random(0),
         random2(0),
         only_display_ad(false),
+        need_debug_info(false),
         exclude_categories(arena),
         required_categories(arena),
         time_hour(0),
@@ -110,6 +111,7 @@ namespace CampaignSvcs
     unsigned long random2;
     Generics::Time user_create_time;
     bool only_display_ad;
+    bool need_debug_info;
 
     // min_ecpm in publisher currency
     RevenueDecimal min_pub_ecpm;

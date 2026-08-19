@@ -2,6 +2,7 @@
 
 #include <ProfilingCommons/FileReader.hpp>
 
+#include "FeatureHash.hpp"
 #include "FTRLCTREvaluator.hpp"
 
 namespace AdServer::CampaignSvcs::CTR
@@ -77,8 +78,10 @@ namespace AdServer::CampaignSvcs::CTR
 
     for (const auto& [hash_index, _]: auction_hashes)
     {
-      auto index = hash_index % feature_weights_.size();
-      res_weight += feature_weights_[index - 1];
+      const uint32_t index = feature_hash_index(
+        hash_index,
+        feature_weights_.size());
+      res_weight += feature_weights_[index];
     }
 
     return res_weight;

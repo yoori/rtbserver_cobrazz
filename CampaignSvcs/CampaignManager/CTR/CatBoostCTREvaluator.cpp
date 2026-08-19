@@ -3,6 +3,7 @@
 #include <catboost/model_interface/wrapped_calcer.h>
 
 #include "CatBoostCTREvaluator.hpp"
+#include "FeatureHash.hpp"
 
 namespace AdServer::CampaignSvcs::CTR
 {
@@ -17,7 +18,7 @@ namespace AdServer::CampaignSvcs::CTR
         {
           for (const auto& [feature_index, feature_value] : *hashes)
           {
-            (*this)[feature_index % size()] = feature_value;
+            (*this)[feature_hash_index(feature_index, size())] = feature_value;
           }
         }
       }
@@ -28,7 +29,7 @@ namespace AdServer::CampaignSvcs::CTR
         {
           for (const auto& [feature_index, _] : *hashes)
           {
-            (*this)[feature_index % size()] = 0.0;
+            (*this)[feature_hash_index(feature_index, size())] = 0.0;
           }
         }
       }

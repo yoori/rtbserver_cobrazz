@@ -20,19 +20,19 @@ class Config :
   clickhouse_conn: str = None
   pid_file: str = None
   tmp_dir: str = None
+  output_dir: str = None
   generate_period: float = 3600.0
   train_rows: int = 1000000
   features_config_file: str = None
-  features_dimension: int = 14
 
   def init_json(self, config_json) :
     self.pid_file = config_json.get('pid_file', None)
     self.clickhouse_conn = config_json.get('clickhouse_conn', '')
     self.tmp_dir = config_json.get('tmp_dir', None)
+    self.output_dir = config_json.get('output_dir', self.tmp_dir)
     self.generate_period = float(config_json.get('generate_period', 3600.0))
     self.train_rows = int(config_json.get('train_rows', 1000000))
     self.features_config_file = config_json.get('features_config_file', None)
-    self.features_dimension = int(config_json.get('features_dimension', 14))
 
 
 def count_lines(file_path: str):
@@ -45,6 +45,7 @@ def generate_model(config: Config):
   tmp_dir = pathlib.Path(config.tmp_dir or '/tmp')
   tmp_csv_file = tmp_dir / 'RImpressionTrain.csv'
   tmp_svm_file = tmp_dir / 'RImpressionTrain.libsvm'
+  tmp_dictionary_file = tmp_dir / 'RImpressionTrain.features'
 
   logger.debug("To load data from clickhouse")
   exporter = RImpressionTrainExporter(config.clickhouse_conn, logger)
@@ -58,6 +59,7 @@ def generate_model(config: Config):
         'generate-svm',
         str(config.features_config_file),
         '--model=catboost',
+        '--dictionary=' + str(tmp_dictionary_file),
       ],
       check=True,
       stdin=csv_file,
@@ -67,10 +69,14 @@ def generate_model(config: Config):
   process_rows = count_lines(tmp_svm_file)
   logger.debug("Train on " + str(process_rows) + " rows")
 
-  model_file = tmp_dir / 'model.cbm'
-  trainer = CatBoostTrainer(features_dimension=config.features_dimension)
+  trainer = CatBoostTrainer(features_config_file=config.features_config_file)
   model = trainer.split_and_train(tmp_svm_file)
-  model.save_model(str(model_file))
+  result_dir = trainer.save_campaign_manager_model(
+    model,
+    config.output_dir or tmp_dir,
+    feature_dictionary_file=tmp_dictionary_file)
+  logger.info("Generated CampaignManager model in '" + str(result_dir) + "'")
+  return result_dir
 
 
 def generate_model_loop(config: Config):

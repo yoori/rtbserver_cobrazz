@@ -16,6 +16,7 @@
 #include <ProfilingCommons/FileWriter.hpp>
 #include <LogCommons/CsvUtils.hpp>
 #include <CampaignSvcs/CampaignManager/CTR/XGBoostPredictor.hpp>
+#include <CampaignSvcs/CampaignManager/CTR/FeatureHash.hpp>
 #include <CampaignSvcs/CampaignManager/CTRProviderImpl.hpp>
 
 #include "CTRGenerator.hpp"
@@ -351,7 +352,7 @@ Application_::generate_model_(
 
   // parse model config
   unsigned long dimension = config->Model().features_dimension();
-  unsigned long index_shifter = sizeof(uint32_t)*8 - dimension;
+  const unsigned long features_size = 1UL << dimension;
 
   CTRGenerator::FeatureList result_features;
   CTR::FeatureNameResolver feature_name_resolver;
@@ -449,7 +450,9 @@ Application_::generate_model_(
       for(auto hash_it = ctr_calculation.hashes.begin();
           hash_it != ctr_calculation.hashes.end(); ++hash_it)
       {
-        unsigned long index = hash_it->first >> index_shifter;
+        const uint32_t index = CTR::feature_hash_index(
+          hash_it->first,
+          features_size);
         weights[index] = result_weight_part;
 
         if(hash_it != ctr_calculation.hashes.begin())
@@ -579,7 +582,6 @@ Application_::generate_svm_(
 
   // parse model config
   unsigned long dimension = config->Model().features_dimension();
-  unsigned long index_shifter = sizeof(uint32_t)*8 - dimension;
   const unsigned long features_size = 1UL << dimension;
 
   CTRGenerator::FeatureList result_features;
@@ -780,17 +782,10 @@ Application_::generate_svm_(
     for(auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
     {
-      const unsigned long index = catboost_model ?
-        hash_it->first % features_size :
-        hash_it->first >> index_shifter;
-      if(catboost_model)
-      {
-        ordered_hashes[index + 1] = hash_it->second;
-      }
-      else
-      {
-        ordered_hashes.insert(std::make_pair(index + 1, hash_it->second));
-      }
+      const uint32_t index = CTR::feature_hash_index(
+        hash_it->first,
+        features_size);
+      ordered_hashes[index + 1] = hash_it->second;
     }
 
     for(auto hash_it = ordered_hashes.begin();
@@ -816,9 +811,9 @@ Application_::generate_svm_(
     std::ofstream dictionary_file(dictionary_file_path, std::ios_base::out);
     for(auto it = dict_table->begin(); it != dict_table->end(); ++it)
     {
-      const unsigned long index = catboost_model ?
-        it->first % features_size :
-        it->first >> index_shifter;
+      const uint32_t index = CTR::feature_hash_index(
+        it->first,
+        features_size);
       dictionary_file << (index + 1) << ",";
       if(!it->second.empty())
       {
@@ -907,7 +902,7 @@ Application_::generate_xgb_ctr_(
 
   // parse model config
   unsigned long dimension = config->Model().features_dimension();
-  unsigned long index_shifter = sizeof(uint32_t)*8 - dimension;
+  const unsigned long features_size = 1UL << dimension;
 
   CTRGenerator::FeatureList result_features;
   CTR::FeatureNameResolver feature_name_resolver;
@@ -1083,7 +1078,9 @@ Application_::generate_xgb_ctr_(
     for(auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
     {
-      unsigned long index = hash_it->first >> index_shifter;
+      const uint32_t index = CTR::feature_hash_index(
+        hash_it->first,
+        features_size);
       hashes.push_back(std::make_pair(index, hash_it->second));
     }
 
@@ -1353,6 +1350,10 @@ Application_::generate_ctr_(
 
     request_params.tag_visibility = calc_params.tag_visibility;
     request_params.tag_predicted_viewability = calc_params.tag_predicted_viewability;
+    request_params.ssp_tag_id = calc_params.ssp_tag_id;
+    request_params.ssp_ctr = calc_params.ssp_ctr;
+    request_params.ssp_viewability = calc_params.ssp_viewability;
+    request_params.ssp_vtr = calc_params.ssp_vtr;
 
     RevenueDecimal ctr = RevenueDecimal::ZERO;
 

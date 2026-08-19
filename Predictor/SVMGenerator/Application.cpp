@@ -200,7 +200,7 @@ Application_::generate_svm_(
 
   // parse model config
   unsigned long dimension = config->Model().features_dimension();
-  unsigned long index_shifter = sizeof(uint32_t)*8 - dimension;
+  const unsigned long features_size = 1UL << dimension;
 
   // parse columns (name => {index, soil})
   std::map<std::string, unsigned long> feature_columns;
@@ -284,7 +284,7 @@ Application_::generate_svm_(
       if(prev_hash_calculator)
       {
         hash_calculator_holder.hash_calculator = new HashCalculatorDelegateImpl(
-          index_shifter,
+          features_size,
           prev_hash_calculator,
           feature_col);
       }
@@ -293,14 +293,14 @@ Application_::generate_svm_(
         if(feature_it->is_float())
         {
           hash_calculator_holder.hash_calculator = new HashCalculatorFloatFinalImpl(
-            index_shifter,
+            features_size,
             hc_name.c_str(),
             feature_col);
         }
         else
         {
           hash_calculator_holder.hash_calculator = new HashCalculatorFinalImpl(
-            index_shifter,
+            features_size,
             hc_name.c_str(),
             feature_col);
         }
@@ -495,5 +495,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
-

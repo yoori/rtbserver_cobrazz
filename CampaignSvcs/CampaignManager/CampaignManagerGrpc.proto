@@ -414,7 +414,9 @@ message CreativeSelectDebugInfo {
   DecimalInfo click_revenue = 2;
   DecimalInfo action_revenue = 3;
   DecimalInfo ecpm_bid = 4;
+  DecimalInfo ctr = 5;
   bytes html_url = 6;
+  bytes ctr_algorithm_id = 7;
 }
 
 message AdSlotDebugInfo {

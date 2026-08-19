@@ -1111,6 +1111,11 @@ namespace AdServer::Bidding
         offset << "ecpm_bid = " <<
           (debug_creative ? GrpcAlgs::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->ecpm_bid).str() : "") << sep_ <<
+        offset << "ctr = " <<
+          (debug_creative ? GrpcAlgs::unpack_decimal<
+            CampaignSvcs::RevenueDecimal>(debug_creative->ctr).str() : "") << sep_ <<
+        offset << "ctr_algorithm_id = " <<
+          (debug_creative ? debug_creative->ctr_algorithm_id : "") << sep_ <<
         offset << "click_url = " << creative.click_url << sep_ <<
         offset << "destination_url = " << creative.destination_url << sep_ <<
         offset << "html_url = " <<

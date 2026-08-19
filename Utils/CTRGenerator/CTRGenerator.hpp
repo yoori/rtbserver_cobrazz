@@ -51,6 +51,10 @@ namespace CampaignSvcs
       IdSet visual_categories;
       int32_t tag_visibility;
       int32_t tag_predicted_viewability;
+      std::string ssp_tag_id;
+      float ssp_ctr;
+      float ssp_viewability;
+      float ssp_vtr;
     };
 
     struct Calculation

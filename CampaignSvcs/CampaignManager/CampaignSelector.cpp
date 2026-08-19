@@ -3569,7 +3569,7 @@ namespace AdServer
           select_result.walled_garden = false;
           auction_type = second_auction_type;
         }
-        else
+        else if(!request_params.need_debug_info)
         {
           select_result.ctr_calculation = CTR::CTRProvider::Calculation_var();
         }
@@ -3655,8 +3655,9 @@ namespace AdServer
 
         if(weighted_campaign.get())
         {
-          if(!weighted_campaign->campaign->use_ctr() &&
-            weighted_campaign->campaign->bid_strategy != BS_MIN_CTR_GOAL)
+          if(request_params.need_debug_info ||
+            (!weighted_campaign->campaign->use_ctr() &&
+              weighted_campaign->campaign->bid_strategy != BS_MIN_CTR_GOAL))
           {
             weighted_campaign->ctr = ctr_calculation_context->get_ctr(
               weighted_campaign->creative);
@@ -3667,8 +3668,9 @@ namespace AdServer
           for(auto it = result_weighted_campaign_keywords->begin();
             it != result_weighted_campaign_keywords->end(); ++it)
           {
-            if(!it->campaign->use_ctr() &&
-              it->campaign->bid_strategy != BS_MIN_CTR_GOAL)
+            if(request_params.need_debug_info ||
+              (!it->campaign->use_ctr() &&
+                it->campaign->bid_strategy != BS_MIN_CTR_GOAL))
             {
               it->ctr = ctr_calculation_context->get_ctr(it->creative);
             }

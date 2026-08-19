@@ -667,6 +667,16 @@ namespace AutoTest
       SimpleValue  ecpm_bid;
 
       /**
+       * @brief To keep ctr attribute's value.
+       */
+      SimpleValue  ctr;
+
+      /**
+       * @brief To keep ctr_algorithm_id attribute's value.
+       */
+      SimpleValue  ctr_algorithm_id;
+
+      /**
        * @brief To keep click_url attribute's value.
        */
       SimpleValue  click_url;
@@ -710,6 +720,11 @@ namespace AutoTest
        * @brief To keep ecpm_bid value.
        */
       Money        ecpm_bid_value;
+
+      /**
+       * @brief To keep ctr value.
+       */
+      Money        ctr_value;
 
       /**
        * @brief To keep ecpm value.

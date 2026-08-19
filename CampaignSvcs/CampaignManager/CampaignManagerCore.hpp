@@ -663,6 +663,8 @@ namespace AdServer::CampaignSvcs
       RevenueDecimal click_revenue = RevenueDecimal::ZERO;
       RevenueDecimal action_revenue = RevenueDecimal::ZERO;
       RevenueDecimal ecpm_bid = RevenueDecimal::ZERO;
+      RevenueDecimal ctr = RevenueDecimal::ZERO;
+      std::string ctr_algorithm_id;
       std::string html_url;
     };
 

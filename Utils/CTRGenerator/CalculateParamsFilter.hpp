@@ -92,6 +92,23 @@ namespace AdServer
         std::string CTRGenerator::CalculateParams::* field_;
       };
 
+      class CalcParamFillerFloatImpl: public CalcParamFiller
+      {
+      public:
+        explicit CalcParamFillerFloatImpl(
+          float CTRGenerator::CalculateParams::* field);
+
+        void
+        set_value(
+          CTRGenerator::CalculateParams& calc_params,
+          const String::SubString& str) override;
+
+      protected:
+        ~CalcParamFillerFloatImpl() noexcept override = default;
+
+        float CTRGenerator::CalculateParams::* field_;
+      };
+
       class CalcParamFillerIntListImpl: public CalcParamFiller
       {
       public:

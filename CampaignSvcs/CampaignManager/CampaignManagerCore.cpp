@@ -2599,6 +2599,12 @@ namespace AdServer::CampaignSvcs
           {
             CreativeSelectDebugResult& cs_debug = ad_slot_debug_info->selected_creatives[i];
             cs_debug.ecpm_bid = it->ecpm_bid;
+            cs_debug.ctr = it->ctr;
+            if(ad_selection_result.ctr_calculation)
+            {
+              cs_debug.ctr_algorithm_id =
+                ad_selection_result.ctr_calculation->algorithm_id(it->creative);
+            }
             cs_debug.imp_revenue = it->campaign->imp_revenue;
             cs_debug.click_revenue =
               it->campaign_keyword.in() ?
@@ -3319,6 +3325,7 @@ namespace AdServer::CampaignSvcs
         ad_slot.allowed_durations.end());
       campaign_select_params.user_create_time = request_params.client_create_time;
       campaign_select_params.only_display_ad = request_params.only_display_ad;
+      campaign_select_params.need_debug_info = request_params.need_debug_info;
       campaign_select_params.min_pub_ecpm = ad_slot_min_cpm.min_pub_ecpm;
       campaign_select_params.min_ecpm = ad_slot_min_cpm.min_pub_ecpm_system;
 

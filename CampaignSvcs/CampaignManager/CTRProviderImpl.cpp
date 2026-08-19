@@ -14,6 +14,7 @@
 #include "CTR/CatBoostCTREvaluator.hpp"
 #include "CTR/CTRFeatureCalculators.hpp"
 #include "CTR/FTRLCTREvaluator.hpp"
+#include "CTR/FeatureHash.hpp"
 #include "CTR/TrivialCTREvaluator.hpp"
 #include "CTR/VangaCTREvaluator.hpp"
 #include "CTR/XGBoostCTREvaluator.hpp"
@@ -102,6 +103,7 @@ namespace AdServer::CampaignSvcs::CTR
 
       std::string method;
       unsigned long features_size = 1;
+      unsigned long features_dimension = 0;
       RevenueDecimal weight;
       FeatureArray features;
       std::string file;
@@ -608,6 +610,11 @@ namespace AdServer::CampaignSvcs::CTR
       "algorithms.models.features_size",
       get_model_descriptor,
       &ModelDescriptor::features_size);
+    add_ctr_integer(
+      processors,
+      "algorithms.models.features_dimension",
+      get_model_descriptor,
+      &ModelDescriptor::features_dimension);
     add_ctr_decimal(
       processors,
       "algorithms.models.weight",
@@ -801,7 +808,9 @@ namespace AdServer::CampaignSvcs::CTR
     // normalize hashes for divider
     for (auto it = res_hashes->begin(); it != res_hashes->end(); ++it)
     {
-      *it = std::make_pair(it->first % model.features_size, it->second);
+      *it = std::make_pair(
+        feature_hash_index(it->first, model.features_size),
+        it->second);
     }
 
     return res_hashes;
@@ -1608,6 +1617,16 @@ namespace AdServer::CampaignSvcs::CTR
           model->method_name = model_it->method;
           model->weight = model_it->weight;
 
+          if (model_it->features_size > 1)
+          {
+            model->features_size = model_it->features_size;
+          }
+          else if (model_it->features_dimension > 0 &&
+            model_it->features_dimension < sizeof(unsigned long) * 8)
+          {
+            model->features_size = 1UL << model_it->features_dimension;
+          }
+
           if (model_it->method == "ftrl" || model_it->method.empty())
           {
             model->method_name = "ftrl";
@@ -1628,14 +1647,13 @@ namespace AdServer::CampaignSvcs::CTR
           else if (model_it->method == "catboost")
           {
             model->method = MM_CATBOOST;
-            if (model_it->features_size <= 1)
+            if (model->features_size <= 1)
             {
               Stream::Error ostr;
               ostr << "incorrect CatBoost features_size = " <<
-                model_it->features_size;
+                model->features_size;
               throw InvalidConfig(ostr);
             }
-            model->features_size = model_it->features_size;
           }
           else
           {

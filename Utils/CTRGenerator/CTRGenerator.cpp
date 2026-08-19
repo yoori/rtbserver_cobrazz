@@ -174,6 +174,26 @@ namespace CampaignSvcs
       hash.add(static_cast<int32_t>(calc_params.tag_predicted_viewability));
     }
 
+    DEFINE_FEATURE_HASH_FUN(add_hash_ssp_tag_id_)
+    {
+      hash.add(calc_params.ssp_tag_id);
+    }
+
+    DEFINE_FEATURE_HASH_FUN(add_hash_ssp_ctr_)
+    {
+      hash.add(calc_params.ssp_ctr);
+    }
+
+    DEFINE_FEATURE_HASH_FUN(add_hash_ssp_viewability_)
+    {
+      hash.add(calc_params.ssp_viewability);
+    }
+
+    DEFINE_FEATURE_HASH_FUN(add_hash_ssp_vtr_)
+    {
+      hash.add(calc_params.ssp_vtr);
+    }
+
     // value getters
 #   define DEFINE_FEATURE_VALUE_FUN(NAME) \
     std::string NAME(const CTRGenerator::CalculateParams& calc_params)
@@ -286,6 +306,26 @@ namespace CampaignSvcs
     DEFINE_FEATURE_VALUE_FUN(get_value_tag_predicted_viewability_)
     {
       return value_to_string(calc_params.tag_predicted_viewability);
+    }
+
+    DEFINE_FEATURE_VALUE_FUN(get_value_ssp_tag_id_)
+    {
+      return calc_params.ssp_tag_id;
+    }
+
+    DEFINE_FEATURE_VALUE_FUN(get_value_ssp_ctr_)
+    {
+      return value_to_string(calc_params.ssp_ctr);
+    }
+
+    DEFINE_FEATURE_VALUE_FUN(get_value_ssp_viewability_)
+    {
+      return value_to_string(calc_params.ssp_viewability);
+    }
+
+    DEFINE_FEATURE_VALUE_FUN(get_value_ssp_vtr_)
+    {
+      return value_to_string(calc_params.ssp_vtr);
     }
 
     //
@@ -781,7 +821,10 @@ namespace CampaignSvcs
       campaign_freq(0),
       campaign_freq_log(0),
       tag_visibility(-1),
-      tag_predicted_viewability(-1)
+      tag_predicted_viewability(-1),
+      ssp_ctr(-1.0F),
+      ssp_viewability(-1.0F),
+      ssp_vtr(-1.0F)
   {}
 
   // CTRGenerator
@@ -979,6 +1022,22 @@ namespace CampaignSvcs
       return new FeatureHashCalculatorFinalImpl<add_hash_tag_visibility_, get_value_tag_visibility_>("tagvisibility");
     case CTR::BF_PREDICTED_VIEWABILITY:
       return new FeatureHashCalculatorFinalImpl<add_hash_tag_predicted_viewability_, get_value_tag_predicted_viewability_>("tagviewability");
+    case CTR::BF_SSP_TAG_ID:
+      return new FeatureHashCalculatorFinalImpl<
+        add_hash_ssp_tag_id_,
+        get_value_ssp_tag_id_>("ssp_tag_id");
+    case CTR::BF_SSP_CTR:
+      return new FeatureHashCalculatorFinalImpl<
+        add_hash_ssp_ctr_,
+        get_value_ssp_ctr_>("ssp_ctr");
+    case CTR::BF_SSP_VIEWABILITY:
+      return new FeatureHashCalculatorFinalImpl<
+        add_hash_ssp_viewability_,
+        get_value_ssp_viewability_>("ssp_viewability");
+    case CTR::BF_SSP_VTR:
+      return new FeatureHashCalculatorFinalImpl<
+        add_hash_ssp_vtr_,
+        get_value_ssp_vtr_>("ssp_vtr");
     case CTR::BF_HISTORY_CHANNELS:
       return new FeatureHashCalculatorIdSetFinalImpl(
         &CalculateParams::channels, "channel");
@@ -1079,6 +1138,26 @@ namespace CampaignSvcs
     case CTR::BF_PREDICTED_VIEWABILITY:
       return new FeatureHashCalculatorDelegateImpl<add_hash_tag_predicted_viewability_, get_value_tag_predicted_viewability_>(
         next_calculator, "tagviewability");
+    case CTR::BF_SSP_TAG_ID:
+      return new FeatureHashCalculatorDelegateImpl<
+        add_hash_ssp_tag_id_,
+        get_value_ssp_tag_id_>(
+        next_calculator, "ssp_tag_id");
+    case CTR::BF_SSP_CTR:
+      return new FeatureHashCalculatorDelegateImpl<
+        add_hash_ssp_ctr_,
+        get_value_ssp_ctr_>(
+        next_calculator, "ssp_ctr");
+    case CTR::BF_SSP_VIEWABILITY:
+      return new FeatureHashCalculatorDelegateImpl<
+        add_hash_ssp_viewability_,
+        get_value_ssp_viewability_>(
+        next_calculator, "ssp_viewability");
+    case CTR::BF_SSP_VTR:
+      return new FeatureHashCalculatorDelegateImpl<
+        add_hash_ssp_vtr_,
+        get_value_ssp_vtr_>(
+        next_calculator, "ssp_vtr");
     case CTR::BF_HISTORY_CHANNELS:
       return new FeatureHashCalculatorIdSetDelegateImpl(
         next_calculator, &CalculateParams::channels, "channel");

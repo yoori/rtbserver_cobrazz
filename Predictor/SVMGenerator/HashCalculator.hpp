@@ -4,6 +4,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Hash.hpp>
+#include <CampaignSvcs/CampaignManager/CTR/FeatureHash.hpp>
 
 /*
   class HashCalculator
@@ -50,8 +51,8 @@ class HashCalculator: public ReferenceCounting::AtomicImpl
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  HashCalculator(unsigned long shifter, const char* name)
-    : shifter_(shifter),
+  HashCalculator(unsigned long features_size, const char* name)
+    : features_size_(features_size),
       name_(name)
   {}
 
@@ -77,8 +78,9 @@ protected:
   bool
   hash_index_(uint32_t& index, uint32_t hash) const
   {
-    // shifter > 0 => index > 1
-    index = (hash >> shifter_) + 1;
+    index = AdServer::CampaignSvcs::CTR::feature_hash_index(
+      hash,
+      features_size_) + 1;
     return true;
   }
 
@@ -118,7 +120,7 @@ protected:
   }
 
 protected:
-  const unsigned long shifter_;
+  const unsigned long features_size_;
   const std::string name_;
 };
 
@@ -130,11 +132,11 @@ class HashCalculatorFinalImpl: public HashCalculator
 {
 public:
   HashCalculatorFinalImpl(
-    unsigned long shifter,
+    unsigned long features_size,
     const char* name,
     unsigned long feature_index)
     noexcept
-    : HashCalculator(shifter, name),
+    : HashCalculator(features_size, name),
       feature_index_(feature_index)
   {}
 
@@ -243,11 +245,11 @@ class HashCalculatorFloatFinalImpl: public HashCalculator
 {
 public:
   HashCalculatorFloatFinalImpl(
-    unsigned long shifter,
+    unsigned long features_size,
     const char* name,
     unsigned long feature_index)
     noexcept
-    : HashCalculator(shifter, name),
+    : HashCalculator(features_size, name),
       feature_index_(feature_index)
   {}
 
@@ -363,11 +365,11 @@ class HashCalculatorDelegateImpl: public HashCalculator
 {
 public:
   HashCalculatorDelegateImpl(
-    unsigned long shifter,
+    unsigned long features_size,
     HashCalculator* next_calculator,
     unsigned long feature_index)
     noexcept
-    : HashCalculator(shifter, ""),
+    : HashCalculator(features_size, ""),
       next_calculator_(ReferenceCounting::add_ref(next_calculator)),
       feature_index_(feature_index)
   {}

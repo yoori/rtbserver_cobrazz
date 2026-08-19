@@ -61,6 +61,8 @@ namespace AdServer::Bidding::CampaignManager
     std::string click_revenue;
     std::string action_revenue;
     std::string ecpm_bid;
+    std::string ctr;
+    std::string ctr_algorithm_id;
     std::string html_url;
   };
 

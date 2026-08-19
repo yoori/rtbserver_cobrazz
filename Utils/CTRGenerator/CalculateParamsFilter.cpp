@@ -1,5 +1,8 @@
 #include "CalculateParamsFilter.hpp"
 
+#include <cerrno>
+#include <cstdlib>
+
 namespace
 {
   typedef const String::AsciiStringManip::Char2Category<',', '|'>
@@ -19,7 +22,7 @@ namespace AdServer
 
     CalculateParamsFiller::CalculateParamsFiller()
     {
-      processors_.resize(1000, CalcParamFiller_var());
+      processors_.resize(CTR::BF_SSP_VTR + 1, CalcParamFiller_var());
 
       processors_[CTR::BF_PUBLISHER_ID] = new CalcParamFillerIntImpl<uint32_t>(
         &CTRGenerator::CalculateParams::publisher_id);
@@ -69,6 +72,15 @@ namespace AdServer
       processors_[CTR::BF_VISUAL_CATEGORIES] = new CalcParamFillerIntListImpl(
         &CTRGenerator::CalculateParams::visual_categories);
 
+      processors_[CTR::BF_SSP_TAG_ID] = new CalcParamFillerStringImpl(
+        &CTRGenerator::CalculateParams::ssp_tag_id);
+      processors_[CTR::BF_SSP_CTR] = new CalcParamFillerFloatImpl(
+        &CTRGenerator::CalculateParams::ssp_ctr);
+      processors_[CTR::BF_SSP_VIEWABILITY] = new CalcParamFillerFloatImpl(
+        &CTRGenerator::CalculateParams::ssp_viewability);
+      processors_[CTR::BF_SSP_VTR] = new CalcParamFillerFloatImpl(
+        &CTRGenerator::CalculateParams::ssp_vtr);
+
       processors_[BF_TIMESTAMP] = new CalcParamFillerTimestampImpl();
       processors_[BF_LINK] = new LinkFillerImpl();
     }
@@ -116,6 +128,36 @@ namespace AdServer
       const String::SubString& str)
     {
       calc_params.*field_ = str.str();
+    }
+
+    // CalcParamFillerFloatImpl
+    CalculateParamsFiller::CalcParamFillerFloatImpl::CalcParamFillerFloatImpl(
+      float CTRGenerator::CalculateParams::* field)
+      : field_(field)
+    {}
+
+    void
+    CalculateParamsFiller::CalcParamFillerFloatImpl::set_value(
+      CTRGenerator::CalculateParams& calc_params,
+      const String::SubString& str)
+    {
+      if(str.empty())
+      {
+        return;
+      }
+
+      const std::string value = str.str();
+      char* end = nullptr;
+      errno = 0;
+      const float parsed = std::strtof(value.c_str(), &end);
+      if(errno == ERANGE || end == value.c_str() || *end != '\0')
+      {
+        Stream::Error ostr;
+        ostr << "invalid feature value '" << str << "'(expected float)";
+        throw CTRGenerator::InvalidConfig(ostr);
+      }
+
+      calc_params.*field_ = parsed;
     }
 
     // CalcParamFillerIntListImpl

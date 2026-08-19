@@ -449,6 +449,7 @@ namespace AutoTest
       actual_cpc = click_revenue.value();
       imp_revenue_value = imp_revenue.value();
       ecpm_bid_value = ecpm_bid.value();
+      ctr_value = ctr.value();
       ecpm_value = ecpm.value();
       return ret;
     }
@@ -460,6 +461,8 @@ namespace AutoTest
       map["cmp_id"]               = &cmp_id;
       map["ecpm"]                 = &ecpm;
       map["ecpm_bid"]             = &ecpm_bid;
+      map["ctr"]                  = &ctr;
+      map["ctr_algorithm_id"]     = &ctr_algorithm_id;
       map["click_url"]            = &click_url;
       map["html_url"]             = &html_url;
       map["revenue"]              = &revenue;

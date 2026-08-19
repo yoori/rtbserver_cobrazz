@@ -11,7 +11,7 @@
             "models" : [
                 {
                     "method" : "xgboost",
-                    "features_dimension" : 24,
+                    "features_size" : 16777216,
                     "weight" : 1.0,
                     "features" : [ 
                         ["publisher"],

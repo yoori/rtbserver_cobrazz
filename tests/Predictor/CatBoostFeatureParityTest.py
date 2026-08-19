@@ -130,9 +130,10 @@ def run_runtime_predict(args, header):
   ]
   with open(args.input) as input_file:
     next(input_file)
+    input_data = input_file.read()
     result = subprocess.run(
       command,
-      stdin=input_file,
+      input=input_data,
       check=True,
       capture_output=True,
       text=True)
