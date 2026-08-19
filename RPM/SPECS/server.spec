@@ -37,10 +37,11 @@
 %define __jemalloc_ver_req      5.3.0-ssv1.el8
 %define __boost_package         boost185
 %define __boost_ver_req         1.85.0-ssv1.el8
+%define __clickhouse_ver_req    25.3.14.14-1
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv617%{?dist}
+Release: ssv618%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -172,7 +173,7 @@ Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Ru
 Requires: python3.12
 Requires: python3.12-aiohttp python3.12-psycopg2
 Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect python3.12-scikit-learn
-Requires: clickhouse-client
+Requires: clickhouse-client = %{__clickhouse_ver_req}
 
 BuildRequires: xgboost-devel
 Requires: xgboost

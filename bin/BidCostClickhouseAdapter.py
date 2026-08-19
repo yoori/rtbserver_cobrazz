@@ -2,17 +2,13 @@
 
 import argparse
 import csv
-import datetime
 import sys
 
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description='Geo ClickHouse adapter.')
-  parser.add_argument('--date', required=True)
+  parser = argparse.ArgumentParser(description='BidCost ClickHouse adapter.')
   parser.add_argument('filename', nargs='+')
   args = parser.parse_args()
-
-  month = datetime.datetime.strptime(args.date, '%Y-%m-%d').date().replace(day=1)
 
   writer = csv.writer(sys.stdout)
 
@@ -21,4 +17,4 @@ if __name__ == "__main__":
       it = iter(csv.reader(infile))
       next(it)  # skip header
       for row in it:
-        writer.writerow([month.isoformat()] + row)
+        writer.writerow(row)

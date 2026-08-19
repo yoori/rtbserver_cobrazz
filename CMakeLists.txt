@@ -109,7 +109,6 @@ add_definitions(-DXSD_CXX11)
 # -D_USE_OCCI -DXSD_CXX11
 #link_directories( /usr/local/lib  )
 
-ADD_SUBDIRECTORY(PredictorSvcs)
 ADD_SUBDIRECTORY(Predictor)
 
 ADD_SUBDIRECTORY(RequestInfoSvcs)

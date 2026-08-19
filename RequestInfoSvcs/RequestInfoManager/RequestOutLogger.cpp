@@ -22,8 +22,8 @@
 #include <LogCommons/TagPositionStat.hpp>
 #include <LogCommons/CampaignReferrerStat.hpp>
 #include <LogCommons/BidCostStat.hpp>
+#include <LogCommons/BidCost.hpp>
 
-//#include <LogCommons/ResearchBidStat.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/Request.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
@@ -178,16 +178,15 @@ namespace RequestInfoSvcs
       const CounterAdapterType& counter_adapter)
       /*throw(eh::Exception)*/
     {
-      if(!appearances.empty())
+      if (!appearances.empty())
       {
-        for(IdAppearanceList::const_iterator it = appearances.begin();
-            it != appearances.end(); ++it)
+        for (IdAppearanceList::const_iterator it = appearances.begin();
+          it != appearances.end(); ++it)
         {
           typedef typename LogHolder::CollectorT::DataT DataT;
           typename DataT::KeyT inner_key(it->id, it->last_appearance_date);
           DataT data;
-          data.add(inner_key,
-            typename DataT::DataT(counter_adapter(it->counter)));
+          data.add(inner_key, typename DataT::DataT(counter_adapter(it->counter)));
           this->add_record(key_adapter(it->date, colo_id_), data);
         }
       }
@@ -227,8 +226,7 @@ namespace RequestInfoSvcs
       catch (const eh::Exception &ex)
       {
         Stream::Error ostr;
-        ostr << name() << "::process_request(): "
-          "eh::Exception caught: " << ex.what();
+        ostr << name() << "::process_request(): eh::Exception caught: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -247,9 +245,7 @@ namespace RequestInfoSvcs
       catch (const eh::Exception &ex)
       {
         Stream::Error ostr;
-        ostr << name() <<
-          "::process_impression(): eh::Exception caught: " <<
-          ex.what();
+        ostr << name() << "::process_impression(): eh::Exception caught: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -267,9 +263,7 @@ namespace RequestInfoSvcs
       catch (const eh::Exception &ex)
       {
         Stream::Error ostr;
-        ostr << name() <<
-          "::process_click(): eh::Exception caught: " <<
-          ex.what();
+        ostr << name() << "::process_click(): eh::Exception caught: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -285,9 +279,7 @@ namespace RequestInfoSvcs
       catch (const eh::Exception &ex)
       {
         Stream::Error ostr;
-        ostr << name() <<
-          "::process_action(): eh::Exception caught: " <<
-          ex.what();
+        ostr << name() << "::process_action(): eh::Exception caught: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -305,9 +297,7 @@ namespace RequestInfoSvcs
       catch (const eh::Exception &ex)
       {
         Stream::Error ostr;
-        ostr << name() <<
-          "::process_action(): eh::Exception caught: " <<
-          ex.what();
+        ostr << name() << "::process_action(): eh::Exception caught: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -325,9 +315,7 @@ namespace RequestInfoSvcs
       catch (const eh::Exception &ex)
       {
         Stream::Error ostr;
-        ostr << name() <<
-          "::process_action(): eh::Exception caught: " <<
-          ex.what();
+        ostr << name() << "::process_action(): eh::Exception caught: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -404,12 +392,12 @@ namespace RequestInfoSvcs
       /*throw(eh::Exception)*/
     {
       // process moved, resave sequence for correct user status
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
         log_record_(request_info, STAT_UNVERIFIED_IMP_ONE_);
       }
-      else if(processing_state.state == RequestInfo::RS_MOVED ||
+      else if (processing_state.state == RequestInfo::RS_MOVED ||
         processing_state.state == RequestInfo::RS_ROLLBACK)
       {
         log_record_(request_info, STAT_NEGATIVE_UNVERIFIED_IMP_ONE_);
@@ -423,7 +411,7 @@ namespace RequestInfoSvcs
       /*throw(eh::Exception)*/
     {
       // don't process resave for impression, it can't change user status
-      if(processing_state.state == RequestInfo::RS_NORMAL)
+      if (processing_state.state == RequestInfo::RS_NORMAL)
       {
         log_record_(request_info, STAT_VERIFIED_IMP_ONE_);
       }
@@ -435,7 +423,7 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(processing_state.state == RequestInfo::RS_NORMAL)
+      if (processing_state.state == RequestInfo::RS_NORMAL)
       {
         log_record_(request_info, STAT_CLICK_ONE_);
       }
@@ -448,11 +436,9 @@ namespace RequestInfoSvcs
       log_record_(request_info, STAT_ACTION_ONE_);
     }
 
-    void log_record_(
-      const RequestInfo& request_info,
-      const CollectorT::DataT& data)
+    void log_record_(const RequestInfo& request_info, const CollectorT::DataT& data)
     {
-      if(!request_info.test_request)
+      if (!request_info.test_request)
       {
         using namespace PropertyName;
 
@@ -537,25 +523,19 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_request_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
-        log_record_(
-          ri,
-          STAT_REQUEST_ONE_);
+        log_record_(ri, STAT_REQUEST_ONE_);
       }
-      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+      else if (processing_state.state == RequestInfo::RS_FRAUD ||
         processing_state.state == RequestInfo::RS_MOVED ||
         processing_state.state == RequestInfo::RS_ROLLBACK)
       {
-        log_record_(
-          ri,
-          STAT_REQUEST_NEGATIVE_ONE_);
+        log_record_(ri, STAT_REQUEST_NEGATIVE_ONE_);
       }
     }
 
@@ -565,7 +545,7 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
         log_record_(
@@ -581,7 +561,7 @@ namespace RequestInfoSvcs
             ri.pub_revenue.convert_impression(ri.adv_revenue.currency_rate),
             ri.isp_revenue.convert_impression(ri.adv_revenue.currency_rate)));
       }
-      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+      else if (processing_state.state == RequestInfo::RS_FRAUD ||
         processing_state.state == RequestInfo::RS_MOVED ||
         processing_state.state == RequestInfo::RS_ROLLBACK)
       {
@@ -606,7 +586,7 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
         log_record_(
@@ -622,7 +602,7 @@ namespace RequestInfoSvcs
             ri.pub_revenue.convert_click(ri.adv_revenue.currency_rate),
             ri.isp_revenue.convert_click(ri.adv_revenue.currency_rate)));
       }
-      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+      else if (processing_state.state == RequestInfo::RS_FRAUD ||
         processing_state.state == RequestInfo::RS_MOVED ||
         processing_state.state == RequestInfo::RS_ROLLBACK)
       {
@@ -659,9 +639,7 @@ namespace RequestInfoSvcs
           ri.isp_revenue.convert_action(ri.adv_revenue.currency_rate)));
     }
 
-    void log_record_(
-      const RequestInfo& ri,
-      const CollectorT::DataT::DataT& data)
+    void log_record_(const RequestInfo& ri, const CollectorT::DataT::DataT& data)
     {
       CollectorT::KeyT key(ri.time, ri.adv_time);
       CollectorT::DataT add_data;
@@ -712,8 +690,7 @@ namespace RequestInfoSvcs
    * ChannelPerformanceLogger
    */
   class ChannelPerformanceLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::ChannelPerformanceTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::ChannelPerformanceTraits>
   {
   public:
     ChannelPerformanceLogger(const LogProcessing::LogFlushTraits& flush_traits)
@@ -727,16 +704,12 @@ namespace RequestInfoSvcs
       return CHANNEL_PERFORMANCE_LOGGER;
     }
 
-    virtual void process_request_impl(
-      const RequestInfo& /*ri*/,
-      const ProcessingState&)
+    virtual void process_request_impl(const RequestInfo& /*ri*/, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       log_record_(
@@ -751,9 +724,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       log_record_(
@@ -787,16 +758,14 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state,
       const CollectorT::DataT::DataT& data)
     {
-      if(!ri.test_request &&
-         processing_state.state == RequestInfo::RS_NORMAL &&
-         !ri.channels.empty())
+      if (!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL &&
+       !ri.channels.empty())
       {
         CollectorT::KeyT key(ri.isp_time, ri.colo_id);
         CollectorT::DataT add_data;
 
-        for(RequestInfo::ChannelIdList::const_iterator ch_it =
-              ri.channels.begin();
-            ch_it != ri.channels.end(); ++ch_it)
+        for (RequestInfo::ChannelIdList::const_iterator ch_it = ri.channels.begin();
+          ch_it != ri.channels.end(); ++ch_it)
         {
           CollectorT::DataT::KeyT inner_key(*ch_it, ri.ccg_id,
             Commons::ImmutableString(ri.tag_size));
@@ -812,14 +781,12 @@ namespace RequestInfoSvcs
    * ChannelImpInventoryLogger
    */
   class ChannelImpInventoryLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::ChannelImpInventoryTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::ChannelImpInventoryTraits>
   {
   public:
     ChannelImpInventoryLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::ChannelImpInventoryTraits>(flush_traits),
+      : RequestLoggerAdapter<AdServer::LogProcessing::ChannelImpInventoryTraits>(flush_traits),
         ZERO_COUNTER_(
           RevenueDecimal::ZERO,
           RevenueDecimal::ZERO,
@@ -836,9 +803,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_request_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       // log imps by unconfirmed impressions (specific for ChannelImpInventory)
@@ -856,14 +821,12 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       RevenueDecimal sys_imp_revenue = ri.adv_revenue.sys_impression();
 
-      if(sys_imp_revenue != RevenueDecimal::ZERO)
+      if (sys_imp_revenue != RevenueDecimal::ZERO)
       {
         log_record_(
           ri,
@@ -880,9 +843,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       log_record_(
@@ -922,16 +883,15 @@ namespace RequestInfoSvcs
     {
       typedef CollectorT::DataT::KeyT::CCGType CCGType;
 
-      if(!ri.test_request &&
+      if (!ri.test_request &&
          processing_state.state == RequestInfo::RS_NORMAL &&
          !ri.channels.empty())
       {
         const CollectorT::KeyT key(ri.isp_time, ri.colo_id);
         CollectorT::DataT add_data;
 
-        for(RequestInfo::ChannelIdList::const_iterator ch_it =
-              ri.channels.begin();
-            ch_it != ri.channels.end(); ++ch_it)
+        for (RequestInfo::ChannelIdList::const_iterator ch_it = ri.channels.begin();
+          ch_it != ri.channels.end(); ++ch_it)
         {
           CollectorT::DataT::KeyT inner_key(
             *ch_it, ri.text_campaign ? CCGType::TEXT : CCGType::DISPLAY);
@@ -943,10 +903,8 @@ namespace RequestInfoSvcs
     }
 
   private:
-    const LogProcessing::ChannelImpInventoryCollector::
-      DataT::DataT::Counter ZERO_COUNTER_;
-    const LogProcessing::ChannelImpInventoryCollector::
-      DataT::DataT::Counter ONE_IMP_COUNTER_;
+    const LogProcessing::ChannelImpInventoryCollector::DataT::DataT::Counter ZERO_COUNTER_;
+    const LogProcessing::ChannelImpInventoryCollector::DataT::DataT::Counter ONE_IMP_COUNTER_;
   };
 
   /**
@@ -959,8 +917,7 @@ namespace RequestInfoSvcs
   public:
     TagPositionStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::TagPositionStatTraits>(flush_traits),
+      : RequestLoggerAdapter<AdServer::LogProcessing::TagPositionStatTraits>(flush_traits),
         ONE_IMPRESSION_(
           0, // requests
           1, // impressions
@@ -979,28 +936,22 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request_impl(
-      const RequestInfo&,
-      const ProcessingState&)
+    process_request_impl(const RequestInfo&, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(ri.position == 1)
+      if (ri.position == 1)
       {
         log_record_(ri, processing_state, ONE_IMPRESSION_);
       }
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       log_record_(ri, processing_state, ONE_CLICK_);
@@ -1019,7 +970,7 @@ namespace RequestInfoSvcs
     {
       typedef CollectorT::DataT::KeyT::OptionalUlong OptionalUlong;
 
-      if(processing_state.state == RequestInfo::RS_NORMAL)
+      if (processing_state.state == RequestInfo::RS_NORMAL)
       {
         CollectorT::KeyT key(ri.pub_time, ri.colo_id);
         CollectorT::DataT add_data;
@@ -1042,18 +993,15 @@ namespace RequestInfoSvcs
     }
 
   private:
-    const LogProcessing::TagPositionStatCollector::
-      DataT::DataT ONE_IMPRESSION_;
-    const LogProcessing::TagPositionStatCollector::
-      DataT::DataT ONE_CLICK_;
+    const LogProcessing::TagPositionStatCollector::DataT::DataT ONE_IMPRESSION_;
+    const LogProcessing::TagPositionStatCollector::DataT::DataT ONE_CLICK_;
   };
 
   /**
    * ExpressionPerformanceLogger
    */
   class ExpressionPerformanceLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::ExpressionPerformanceTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::ExpressionPerformanceTraits>
   {
   public:
     ExpressionPerformanceLogger(const LogProcessing::LogFlushTraits& flush_traits)
@@ -1070,33 +1018,26 @@ namespace RequestInfoSvcs
       return EXPRESSION_PERFORMANCE_LOGGER;
     }
 
-    virtual void process_request_impl(
-      const RequestInfo&,
-      const ProcessingState&)
+    virtual void process_request_impl(const RequestInfo&, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       log_record_(ri, processing_state, STAT_IMP_ONE_);
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
       log_record_(ri, processing_state, STAT_CLICK_ONE_);
     }
 
     virtual void
-    process_action_impl(
-      const RequestInfo& ri)
+    process_action_impl(const RequestInfo& ri)
       /*throw(eh::Exception)*/
     {
       log_record_(ri, ProcessingState(), STAT_ACTION_ONE_);
@@ -1107,7 +1048,7 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state,
       const CollectorT::DataT::DataT& data)
     {
-      if(!ri.expression.empty() &&
+      if (!ri.expression.empty() &&
          !ri.test_request &&
          processing_state.state == RequestInfo::RS_NORMAL)
       {
@@ -1129,14 +1070,12 @@ namespace RequestInfoSvcs
    * CCGKeywordStatLogger
    */
   class CCGKeywordStatLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::CcgKeywordStatTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::CcgKeywordStatTraits>
   {
   public:
     CCGKeywordStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::CcgKeywordStatTraits>(flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::CcgKeywordStatTraits>(flush_traits)
     {}
 
     virtual const char* name() noexcept
@@ -1144,18 +1083,15 @@ namespace RequestInfoSvcs
       return CCG_KEYWORD_STAT_LOGGER;
     }
 
-    virtual void process_request_impl(
-      const RequestInfo&,
-      const ProcessingState&)
+    virtual void process_request_impl(const RequestInfo&, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
-    virtual void process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    virtual void
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(ri.ccg_keyword_id)
+      if (ri.ccg_keyword_id)
       {
         log_record_(
           ri,
@@ -1170,12 +1106,10 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(ri.ccg_keyword_id)
+      if (ri.ccg_keyword_id)
       {
         log_record_(
           ri,
@@ -1199,13 +1133,11 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state,
       const CollectorT::DataT::DataT& data)
     {
-      if(!ri.test_request &&
-        processing_state.state == RequestInfo::RS_NORMAL)
+      if (!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
       {
         CollectorT::KeyT key(ri.time, ri.colo_id);
         CollectorT::DataT add_data;
-        CollectorT::DataT::KeyT inner_key(
-          ri.ccg_keyword_id, ri.currency_exchange_id, ri.cc_id);
+        CollectorT::DataT::KeyT inner_key(ri.ccg_keyword_id, ri.currency_exchange_id, ri.cc_id);
         add_data.add(inner_key, data);
         add_record(key, add_data);
       }
@@ -1216,14 +1148,12 @@ namespace RequestInfoSvcs
    * CmpStatLogger
    */
   class CmpStatLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::CmpStatTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::CmpStatTraits>
   {
   public:
     CmpStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::CmpStatTraits>(flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::CmpStatTraits>(flush_traits)
     {}
 
     virtual const char* name() noexcept
@@ -1232,25 +1162,19 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request_impl(
-      const RequestInfo&,
-      const ProcessingState&)
+    process_request_impl(const RequestInfo&, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
-        for(RequestInfo::ChannelRevenueList::const_iterator ch_it =
-              ri.cmp_channels.begin();
-            ch_it != ri.cmp_channels.end();
-            ++ch_it)
+        for (RequestInfo::ChannelRevenueList::const_iterator ch_it = ri.cmp_channels.begin();
+          ch_it != ri.cmp_channels.end(); ++ch_it)
         {
           log_record_(ri, processing_state, *ch_it,
             CollectorT::DataT::DataT(
@@ -1261,14 +1185,12 @@ namespace RequestInfoSvcs
               ch_it->sys_impression));
         }
       }
-      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+      else if (processing_state.state == RequestInfo::RS_FRAUD ||
         processing_state.state == RequestInfo::RS_MOVED ||
         processing_state.state == RequestInfo::RS_ROLLBACK)
       {
-        for(RequestInfo::ChannelRevenueList::const_iterator ch_it =
-              ri.cmp_channels.begin();
-            ch_it != ri.cmp_channels.end();
-            ++ch_it)
+        for (RequestInfo::ChannelRevenueList::const_iterator ch_it = ri.cmp_channels.begin();
+          ch_it != ri.cmp_channels.end(); ++ch_it)
         {
           log_record_(ri, processing_state, *ch_it,
             CollectorT::DataT::DataT(
@@ -1282,18 +1204,14 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(eh::Exception)*/
     {
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
-        for(RequestInfo::ChannelRevenueList::const_iterator ch_it =
-              ri.cmp_channels.begin();
-            ch_it != ri.cmp_channels.end();
-            ++ch_it)
+        for (RequestInfo::ChannelRevenueList::const_iterator ch_it = ri.cmp_channels.begin();
+          ch_it != ri.cmp_channels.end(); ++ch_it)
         {
           log_record_(ri, processing_state, *ch_it,
             CollectorT::DataT::DataT(
@@ -1304,14 +1222,12 @@ namespace RequestInfoSvcs
               ch_it->sys_click));
       }
       }
-      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+      else if (processing_state.state == RequestInfo::RS_FRAUD ||
         processing_state.state == RequestInfo::RS_MOVED ||
         processing_state.state == RequestInfo::RS_ROLLBACK)
       {
-        for(RequestInfo::ChannelRevenueList::const_iterator ch_it =
-              ri.cmp_channels.begin();
-            ch_it != ri.cmp_channels.end();
-            ++ch_it)
+        for (RequestInfo::ChannelRevenueList::const_iterator ch_it = ri.cmp_channels.begin();
+          ch_it != ri.cmp_channels.end(); ++ch_it)
         {
           log_record_(ri, processing_state, *ch_it,
             CollectorT::DataT::DataT(
@@ -1335,12 +1251,9 @@ namespace RequestInfoSvcs
       const RequestInfo::ChannelRevenue& ch_revenue,
       const CollectorT::DataT::DataT& data)
     {
-      if(!ri.test_request)
+      if (!ri.test_request)
       {
-        CollectorT::KeyT key(
-          ri.time,
-          ri.adv_time,
-          ri.colo_id);
+        CollectorT::KeyT key(ri.time, ri.adv_time, ri.colo_id);
         CollectorT::DataT::KeyT inner_key(
           ri.publisher_account_id,
           ri.tag_id,
@@ -1367,14 +1280,12 @@ namespace RequestInfoSvcs
    * ActionStatLogger
    */
   class ActionStatLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::ActionStatTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::ActionStatTraits>
   {
   public:
     ActionStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::ActionStatTraits>(flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::ActionStatTraits>(flush_traits)
     {}
 
     virtual const char* name() noexcept
@@ -1382,26 +1293,19 @@ namespace RequestInfoSvcs
       return ACTION_STAT_LOGGER;
     }
 
-    virtual void process_request_impl(
-      const RequestInfo& /*ri*/,
-      const ProcessingState&)
+    virtual void process_request_impl(const RequestInfo& /*ri*/, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
-    virtual void process_impression_impl(
-      const RequestInfo& /*ri*/,
-      const ProcessingState&)
+    virtual void process_impression_impl(const RequestInfo& /*ri*/, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
-    virtual void process_click_impl(
-      const RequestInfo&,
-      const ProcessingState&)
+    virtual void process_click_impl(const RequestInfo&, const ProcessingState&)
       /*throw(eh::Exception)*/
     {}
 
-    virtual void
-    process_action_impl(const RequestInfo&)
+    virtual void process_action_impl(const RequestInfo&)
       /*throw(eh::Exception)*/
     {}
 
@@ -1410,7 +1314,7 @@ namespace RequestInfoSvcs
       const AdvCustomActionInfo& adv_custom_action_info)
       /*throw(eh::Exception)*/
     {
-      if(!ri.test_request)
+      if (!ri.test_request)
       {
         CollectorT::KeyT key(adv_custom_action_info.time, ri.colo_id);
         CollectorT::DataT data;
@@ -1420,7 +1324,7 @@ namespace RequestInfoSvcs
           ri.request_id,
           ri.cc_id);
 
-        if(ri.click_time != Generics::Time::ZERO)
+        if (ri.click_time != Generics::Time::ZERO)
         {
           CollectorT::DataT::DataT inner_data(
             adv_custom_action_info.action_id,
@@ -1459,8 +1363,7 @@ namespace RequestInfoSvcs
    * CCGUserStatLogger
    */
   class CCGUserStatLogger:
-    public CampaignReachLoggerAdapter<
-      AdServer::LogProcessing::CcgUserStatTraits>
+    public CampaignReachLoggerAdapter<AdServer::LogProcessing::CcgUserStatTraits>
   {
   public:
     CCGUserStatLogger(
@@ -1497,8 +1400,7 @@ namespace RequestInfoSvcs
    * CCUserStatLogger
    */
   class CCUserStatLogger:
-    public virtual CampaignReachLoggerAdapter<
-      AdServer::LogProcessing::CcUserStatTraits>
+    public virtual CampaignReachLoggerAdapter<AdServer::LogProcessing::CcUserStatTraits>
   {
   public:
     CCUserStatLogger(
@@ -1573,8 +1475,7 @@ namespace RequestInfoSvcs
    * AdvertiserUserStatLogger
    */
   class AdvertiserUserStatLogger:
-    public CampaignReachLoggerAdapter<
-      AdServer::LogProcessing::AdvertiserUserStatTraits>
+    public CampaignReachLoggerAdapter<AdServer::LogProcessing::AdvertiserUserStatTraits>
   {
   public:
     AdvertiserUserStatLogger(
@@ -1717,9 +1618,8 @@ namespace RequestInfoSvcs
 
       try
       {
-        for(IdAppearanceList::const_iterator site_app_it =
-              ri.appearance_list.begin();
-            site_app_it != ri.appearance_list.end(); ++site_app_it)
+        for (IdAppearanceList::const_iterator site_app_it = ri.appearance_list.begin();
+          site_app_it != ri.appearance_list.end(); ++site_app_it)
         {
           CollectorT::KeyT key(
             site_app_it->date, // isp timezone
@@ -1727,8 +1627,7 @@ namespace RequestInfoSvcs
 
           CollectorT::DataT data;
 
-          CollectorT::DataT::KeyT inner_key(
-            site_app_it->id, site_app_it->last_appearance_date);
+          CollectorT::DataT::KeyT inner_key(site_app_it->id, site_app_it->last_appearance_date);
           data.add(inner_key, CollectorT::DataT::DataT(site_app_it->counter));
 
           add_record(key, data);
@@ -1756,10 +1655,6 @@ namespace RequestInfoSvcs
     public TagRequestProcessor,
     public RequestActionProcessor,
     public PassbackProcessor,
-    /*
-    public AdServer::LogProcessing::LogHolderPool<
-      AdServer::LogProcessing::SiteReferrerStatTraits>,
-    */
     public AdServer::LogProcessing::LogHolderPortioned<
       AdServer::LogProcessing::SiteReferrerStatTraits>,
     public virtual ReferenceCounting::AtomicImpl
@@ -1773,11 +1668,7 @@ namespace RequestInfoSvcs
       Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting,
       Generics::TaskRunner* task_runner)
       /*throw(eh::Exception)*/
-      : /*
-        AdServer::LogProcessing::LogHolderPool<
-          AdServer::LogProcessing::SiteReferrerStatTraits>(flush_traits),
-        */
-        AdServer::LogProcessing::LogHolderPortioned<
+      : AdServer::LogProcessing::LogHolderPortioned<
           AdServer::LogProcessing::SiteReferrerStatTraits>(
             flush_traits,
             AdServer::LogProcessing::DefaultSavePolicy<AdServer::LogProcessing::SiteReferrerStatTraits>(),
@@ -1800,8 +1691,7 @@ namespace RequestInfoSvcs
     {}
 
     virtual void
-    process_tag_request(
-      const TagRequestInfo& tag_request_info)
+    process_tag_request(const TagRequestInfo& tag_request_info)
       /*throw(TagRequestProcessor::Exception)*/
     {
       static const char* FUN = "SiteReferrerStatLogger::process_tag_request()";
@@ -1815,9 +1705,8 @@ namespace RequestInfoSvcs
             tag_request_info.tag_id,
             tag_request_info.ext_tag_id,
             normalize_referer_(tag_request_info.referer)),
-          tag_request_info.ad_shown ?
-            ONE_AD_SHOWN_REQUEST_ :
-          CollectorT::DataT::DataT(
+          tag_request_info.ad_shown ? ONE_AD_SHOWN_REQUEST_ :
+            CollectorT::DataT::DataT(
               1,
               0,
               0,
@@ -1845,12 +1734,10 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_request(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
-      if(ri.position == 1 || ri.pub_revenue.impression != RevenueDecimal::ZERO)
+      if (ri.position == 1 || ri.pub_revenue.impression != RevenueDecimal::ZERO)
       {
         // save impression only on first position creative confirmation
         // other positions we process for collect only full cost
@@ -1882,7 +1769,7 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
-      if(ri.position == 1 || ri.pub_revenue.impression != RevenueDecimal::ZERO)
+      if (ri.position == 1 || ri.pub_revenue.impression != RevenueDecimal::ZERO)
       {
         // save impression only on first creative confirmation
         add_request_info_record_(
@@ -1907,9 +1794,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       add_request_info_record_(ri, processing_state, ONE_CLICK_);
@@ -1937,9 +1822,7 @@ namespace RequestInfoSvcs
             normalize_referer_(pi.referer)),
           ONE_PASSBACK_);
 
-        add_record(
-          CollectorT::KeyT(pi.time, pi.colo_id),
-          data);
+        add_record(CollectorT::KeyT(pi.time, pi.colo_id), data);
       }
       catch (const eh::Exception &ex)
       {
@@ -1951,8 +1834,7 @@ namespace RequestInfoSvcs
 
   private:
     std::string
-    normalize_referer_(const String::SubString& referer)
-      const
+    normalize_referer_(const String::SubString& referer) const
     {
       return Commons::LogReferrer::normalize_referrer(
         referer,
@@ -1970,7 +1852,7 @@ namespace RequestInfoSvcs
     {
       static const char* FUN = "SiteReferrerStatLogger::add_request_info_record_()";
 
-      if(!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
+      if (!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
       {
         try
         {
@@ -2006,19 +1888,16 @@ namespace RequestInfoSvcs
    * CampaignReferrerStatLogger
    */
   class CampaignReferrerStatLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::CampaignReferrerStatTraits>,
+    public RequestLoggerAdapter<AdServer::LogProcessing::CampaignReferrerStatTraits>,
     public virtual ReferenceCounting::AtomicImpl
   {
     static const LogProcessing::FixedNumber&
     fzero_() { return LogProcessing::FixedNumber::ZERO; }
 
   public:
-    CampaignReferrerStatLogger(
-      const LogProcessing::LogFlushTraits& flush_traits)
+    CampaignReferrerStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::CampaignReferrerStatTraits>(flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::CampaignReferrerStatTraits>(flush_traits)
     {
       action_data_.insert(
         std::make_pair("vstart", CollectorT::DataT::DataT(
@@ -2107,16 +1986,12 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request_impl(
-      const RequestInfo& /*ri*/,
-      const ProcessingState& /*processing_state*/)
+    process_request_impl(const RequestInfo& /*ri*/, const ProcessingState& /*processing_state*/)
       /*throw(RequestActionProcessor::Exception)*/
     {}
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       add_request_info_record_(
@@ -2142,9 +2017,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       add_request_info_record_(
@@ -2181,7 +2054,7 @@ namespace RequestInfoSvcs
       /*throw(RequestActionProcessor::Exception)*/
     {
       auto it = action_data_.find(request_post_action_info.action_name);
-      if(it != action_data_.end())
+      if (it != action_data_.end())
       {
         add_request_info_record_(
           ri,
@@ -2207,7 +2080,7 @@ namespace RequestInfoSvcs
       try
       {
         HTTP::BrowserAddress addr(referer);
-        if(!addr.host().empty())
+        if (!addr.host().empty())
         {
           return addr.host().str();
         }
@@ -2227,7 +2100,7 @@ namespace RequestInfoSvcs
     {
       static const char* FUN = "CampaignReferrerStatLogger::add_request_info_record_()";
 
-      if(!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
+      if (!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
       {
         try
         {
@@ -2261,16 +2134,13 @@ namespace RequestInfoSvcs
    * BidCostStatLogger
    */
   class BidCostStatLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::BidCostStatTraits>,
+    public RequestLoggerAdapter<AdServer::LogProcessing::BidCostStatTraits>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    BidCostStatLogger(
-      const LogProcessing::LogFlushTraits& flush_traits)
+    BidCostStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::BidCostStatTraits>(flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::BidCostStatTraits>(flush_traits)
     {
     }
 
@@ -2281,9 +2151,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_request_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       add_request_info_record_(
@@ -2302,22 +2170,13 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_impression_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_impression_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
-      /*
-      RevenueDecimal req_bid_cost = RevenueDecimal::mul(
-        ri.pub_bid_cost, REVENUE_ONE + ri.pub_cost_coef, Generics::DMR_FLOOR);
-      RevenueDecimal imp_cost = RevenueDecimal::mul(
-        ri.pub_revenue.impression,
-        REVENUE_ONE + ri.pub_cost_coef, Generics::DMR_FLOOR);
-      */
       RevenueDecimal req_bid_cost = ri.pub_bid_cost;
       RevenueDecimal imp_cost = ri.pub_revenue.impression;
 
-      if(req_bid_cost != imp_cost)
+      if (req_bid_cost != imp_cost)
       {
         // rollback req_bid_cost & save bid with imp_cost
         add_request_info_record_(
@@ -2353,9 +2212,7 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_click_impl(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click_impl(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       add_request_info_record_(
@@ -2375,9 +2232,7 @@ namespace RequestInfoSvcs
     {}
 
     virtual void
-    process_request_post_action_impl(
-      const RequestInfo&,
-      const RequestPostActionInfo&)
+    process_request_post_action_impl(const RequestInfo&, const RequestPostActionInfo&)
       /*throw(RequestActionProcessor::Exception)*/
     {
     }
@@ -2394,7 +2249,7 @@ namespace RequestInfoSvcs
       try
       {
         HTTP::BrowserAddress addr(referer);
-        if(!addr.host().empty())
+        if (!addr.host().empty())
         {
           return addr.host().str();
         }
@@ -2415,7 +2270,7 @@ namespace RequestInfoSvcs
     {
       static const char* FUN = "BidCostStatLogger::add_request_info_record_()";
 
-      if(!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
+      if (!ri.test_request && processing_state.state == RequestInfo::RS_NORMAL)
       {
         try
         {
@@ -2442,6 +2297,115 @@ namespace RequestInfoSvcs
     }
   };
 
+  class BidCostCsvLogger:
+    public RequestLoggerBase,
+    public virtual AdServer::LogProcessing::LogHolderSharded<
+      AdServer::LogProcessing::BidCostTraits,
+      AdServer::LogProcessing::SimpleCsvSavePolicy<AdServer::LogProcessing::BidCostTraits> >,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    using LogHolder = AdServer::LogProcessing::LogHolderSharded<
+      AdServer::LogProcessing::BidCostTraits,
+      AdServer::LogProcessing::SimpleCsvSavePolicy<AdServer::LogProcessing::BidCostTraits> >;
+
+    BidCostCsvLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : LogHolder(flush_traits)
+    {}
+
+    void process_request(
+      const RequestInfo& request_info,
+      const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/
+    {
+      add_record_(request_info, processing_state, 1, 0, 0, request_info.pub_bid_cost);
+    }
+
+    void process_impression(
+      const RequestInfo& request_info,
+      const ImpressionInfo&,
+      const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/
+    {
+      const RevenueDecimal req_bid_cost = request_info.pub_bid_cost;
+      const RevenueDecimal imp_cost = request_info.pub_revenue.impression;
+
+      if (req_bid_cost != imp_cost)
+      {
+        add_record_(request_info, processing_state, -1, 0, 0, req_bid_cost);
+        add_record_(request_info, processing_state, 1, 0, 0, imp_cost);
+      }
+
+      add_record_(request_info, processing_state, 0, 1, 0, imp_cost);
+    }
+
+    void process_click(
+      const RequestInfo& request_info,
+      const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/
+    {
+      add_record_(request_info, processing_state, 0, 0, 1, REVENUE_ONE);
+    }
+
+    void process_action(const RequestInfo&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {}
+
+  private:
+    void add_record_(
+      const RequestInfo& request_info,
+      const ProcessingState& processing_state,
+      long unverified_imps,
+      long imps,
+      long clicks,
+      const RevenueDecimal& cost)
+      /*throw(RequestActionProcessor::Exception)*/
+    {
+      if (request_info.test_request ||
+        processing_state.state != RequestInfo::RS_NORMAL)
+      {
+        return;
+      }
+
+      try
+      {
+        AdServer::LogProcessing::BidCostData data;
+        data.time = request_info.adv_time;
+        data.tag_id = request_info.tag_id;
+        data.ext_tag_id = request_info.ext_tag_id;
+        data.url = normalize_referer_(request_info.referer);
+        data.cost = RevenueDecimal(cost).ceil(6);
+        data.unverified_imps = unverified_imps;
+        data.imps = imps;
+        data.clicks = clicks;
+        add_record(data);
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << "BidCostCsvLogger::add_record_(): eh::Exception caught: "
+          << ex.what();
+        throw RequestActionProcessor::Exception(ostr);
+      }
+    }
+
+    static std::string normalize_referer_(const String::SubString& referer)
+    {
+      try
+      {
+        HTTP::BrowserAddress addr(referer);
+        if (!addr.host().empty())
+        {
+          return addr.host().str();
+        }
+      }
+      catch(const eh::Exception&)
+      {}
+
+      return std::string();
+    }
+  };
+
   /**
    * PageLoadsDailyStatLogger
    */
@@ -2463,8 +2427,7 @@ namespace RequestInfoSvcs
     {}
 
     virtual void
-    process_tag_request_group(
-      const TagRequestGroupInfo& tag_request_group_info)
+    process_tag_request_group(const TagRequestGroupInfo& tag_request_group_info)
       /*throw(TagRequestGroupProcessor::Exception)*/
     {
       static const char* FUN = "PageLoadsDailyStatLogger::process_tag_request_group()";
@@ -2526,14 +2489,12 @@ namespace RequestInfoSvcs
     {}
 
     virtual void
-    process_adv_action(
-      const AdvActionInfo& /*adv_action_info*/)
+    process_adv_action(const AdvActionInfo& /*adv_action_info*/)
       /*throw(AdvActionProcessor::Exception)*/
     {}
 
     virtual void
-    process_custom_action(
-      const AdvExActionInfo& adv_custom_action_info)
+    process_custom_action(const AdvExActionInfo& adv_custom_action_info)
       /*throw(AdvActionProcessor::Exception)*/
     {
       static const char* FUN = "ResearchActionLogger::process_custom_action()";
@@ -2624,7 +2585,7 @@ namespace RequestInfoSvcs
     {
       static const char* FUN = "ResearchBidLogger::process_request()";
 
-      if(!request_info.test_request)
+      if (!request_info.test_request)
       {
         try
         {
@@ -2656,7 +2617,7 @@ namespace RequestInfoSvcs
           data.campaign_freq = info.campaign_freq;
           data.conv_rate_algorithm_id = info.conv_rate_algorithm_id;
           data.predicted_conv_rate = info.conv_rate;
-          if(info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
+          if (info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
           {
             data.bid_cost = RevenueDecimal::div(
               RevenueDecimal::mul(info.pub_bid_cost,
@@ -2791,8 +2752,7 @@ namespace RequestInfoSvcs
       static const char* FUN =
         "ResearchImpressionLogger::process_impression()";
 
-      if(!request_info.test_request &&
-        processing_state.state == RequestInfo::RS_NORMAL)
+      if (!request_info.test_request && processing_state.state == RequestInfo::RS_NORMAL)
       {
         try
         {
@@ -2813,10 +2773,8 @@ namespace RequestInfoSvcs
           data.ccg_id = info.ccg_id;
           data.cc_id = info.cc_id;
           data.channel_list = info.channels;
-          data.history_channel_list.assign(
-            info.user_channels.begin(), info.user_channels.end());
-          data.geo_channels.assign(
-            info.geo_channels.begin(), info.geo_channels.end());
+          data.history_channel_list.assign(info.user_channels.begin(), info.user_channels.end());
+          data.geo_channels.assign(info.geo_channels.begin(), info.geo_channels.end());
           data.device_channel_id = info.device_channel_id;
           data.referer = Commons::LogReferrer::normalize_referrer(
             info.referer, log_referrer_setting_, "");
@@ -2830,15 +2788,13 @@ namespace RequestInfoSvcs
           data.tag_predicted_viewability = info.viewability;
           data.additional_info = info.additional_info;
 
-          if(info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
+          if (info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
           {
             data.bid_cost = RevenueDecimal::div(
-              RevenueDecimal::mul(info.pub_bid_cost,
-                CPM_MULTILPIER, Generics::DMR_FLOOR),
+              RevenueDecimal::mul(info.pub_bid_cost, CPM_MULTILPIER, Generics::DMR_FLOOR),
               info.pub_revenue.currency_rate, Generics::DDR_FLOOR);
             data.floor_cost = RevenueDecimal::div(
-              RevenueDecimal::mul(info.pub_floor_cost,
-                CPM_MULTILPIER, Generics::DMR_FLOOR),
+              RevenueDecimal::mul(info.pub_floor_cost, CPM_MULTILPIER, Generics::DMR_FLOOR),
               info.pub_revenue.currency_rate, Generics::DDR_FLOOR);
           }
           else
@@ -2861,16 +2817,12 @@ namespace RequestInfoSvcs
     }
 
     virtual void
-    process_request(
-      const RequestInfo&,
-      const ProcessingState&)
+    process_request(const RequestInfo&, const ProcessingState&)
       /*throw(RequestActionProcessor::Exception)*/
     {}
 
     virtual void
-    process_click(
-      const RequestInfo&,
-      const ProcessingState&)
+    process_click(const RequestInfo&, const ProcessingState&)
       /*throw(RequestActionProcessor::Exception)*/
     {}
 
@@ -2890,8 +2842,7 @@ namespace RequestInfoSvcs
     public virtual UnmergedClickProcessor,
     public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ResearchClickTraits,
-      AdServer::LogProcessing::SimpleCsvSavePolicy<
-        AdServer::LogProcessing::ResearchClickTraits> >,
+      AdServer::LogProcessing::SimpleCsvSavePolicy<AdServer::LogProcessing::ResearchClickTraits> >,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
@@ -2997,10 +2948,12 @@ namespace RequestInfoSvcs
     add_request_logger_(RequestLoggerBase_var(
       new CampaignReferrerStatLogger(campaign_referrer_stat_stat_flush)).in());
 
-    if(bid_cost_stat_flush)
+    if (bid_cost_stat_flush)
     {
       add_request_logger_(RequestLoggerBase_var(
         new BidCostStatLogger(*bid_cost_stat_flush)).in());
+      add_request_logger_(RequestLoggerBase_var(
+        new BidCostCsvLogger(*bid_cost_stat_flush)).in());
     }
 
     // reach loggers
@@ -3123,8 +3076,6 @@ namespace RequestInfoSvcs
   Generics::Time
   RequestOutLogger::flush_if_required(const Generics::Time& now)
   {
-    std::cout << "[" << Generics::Time::get_time_of_day().gm_ft() << "] RequestOutLogger::flush_if_required()" <<
-      std::endl;
     return LogProcessing::CompositeLogHolder::flush_if_required(now);
   }
 
@@ -3134,8 +3085,8 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = request_loggers_.begin();
-        it != request_loggers_.end(); ++it)
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
+      it != request_loggers_.end(); ++it)
     {
       (*it)->process_request(request_info, processing_state);
     }
@@ -3148,8 +3099,8 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = request_loggers_.begin();
-        it != request_loggers_.end(); ++it)
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
+      it != request_loggers_.end(); ++it)
     {
       (*it)->process_impression(request_info, impression_info, processing_state);
     }
@@ -3161,19 +3112,18 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = request_loggers_.begin();
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
         it != request_loggers_.end(); ++it)
     {
       (*it)->process_click(request_info, processing_state);
     }
   }
 
-  void RequestOutLogger::process_action(
-    const RequestInfo& request_info)
+  void RequestOutLogger::process_action(const RequestInfo& request_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = request_loggers_.begin();
-        it != request_loggers_.end(); ++it)
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
+      it != request_loggers_.end(); ++it)
     {
       (*it)->process_action(request_info);
     }
@@ -3184,7 +3134,7 @@ namespace RequestInfoSvcs
     const AdvCustomActionInfo& adv_custom_action_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = request_loggers_.begin();
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
         it != request_loggers_.end(); ++it)
     {
       (*it)->process_custom_action(request_info, adv_custom_action_info);
@@ -3197,7 +3147,7 @@ namespace RequestInfoSvcs
     const RequestPostActionInfo& request_post_action_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = request_loggers_.begin();
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
         it != request_loggers_.end(); ++it)
     {
       (*it)->process_request_post_action(
@@ -3209,7 +3159,7 @@ namespace RequestInfoSvcs
   void RequestOutLogger::process_reach(const ReachInfo& ri)
     /*throw(CampaignReachProcessor::Exception)*/
   {
-    for(CampaignReachProcessorList::iterator it = reach_loggers_.begin();
+    for (CampaignReachProcessorList::iterator it = reach_loggers_.begin();
         it != reach_loggers_.end(); ++it)
     {
       (*it)->process_reach(ri);
@@ -3220,9 +3170,8 @@ namespace RequestInfoSvcs
     const SiteReachProcessor::SiteReachInfo& site_reach_info)
     /*throw(SiteReachProcessor::Exception)*/
   {
-    for(SiteReachProcessorList::iterator it =
-          site_reach_loggers_.begin();
-        it != site_reach_loggers_.end(); ++it)
+    for (SiteReachProcessorList::iterator it = site_reach_loggers_.begin();
+      it != site_reach_loggers_.end(); ++it)
     {
       (*it)->process_site_reach(site_reach_info);
     }
@@ -3231,16 +3180,14 @@ namespace RequestInfoSvcs
   void RequestOutLogger::process_passback(const PassbackInfo& pi)
     /*throw(PassbackProcessor::Exception)*/
   {
-    for(PassbackProcessorList::iterator it =
-          passback_loggers_.begin();
-        it != passback_loggers_.end(); ++it)
+    for (PassbackProcessorList::iterator it = passback_loggers_.begin();
+      it != passback_loggers_.end(); ++it)
     {
       (*it)->process_passback(pi);
     }
   }
 
-  void RequestOutLogger::process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  void RequestOutLogger::process_tag_request(const TagRequestInfo& tag_request_info)
     /*throw(TagRequestProcessor::Exception)*/
   {
     if (tag_request_info.tag_id)
@@ -3250,8 +3197,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  RequestOutLogger::process_tag_request_group(
-    const TagRequestGroupInfo& tag_request_group_info)
+  RequestOutLogger::process_tag_request_group(const TagRequestGroupInfo& tag_request_group_info)
     /*throw(TagRequestGroupProcessor::Exception)*/
   {
     page_loads_daily_logger_->process_tag_request_group(
@@ -3259,32 +3205,28 @@ namespace RequestInfoSvcs
   }
 
   void
-  RequestOutLogger::process_adv_action(
-    const AdvActionInfo& adv_action_info)
+  RequestOutLogger::process_adv_action(const AdvActionInfo& adv_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
     research_action_logger_->process_adv_action(adv_action_info);
   }
 
   void
-  RequestOutLogger::process_custom_action(
-    const AdvExActionInfo& adv_custom_action_info)
+  RequestOutLogger::process_custom_action(const AdvExActionInfo& adv_custom_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
     research_action_logger_->process_custom_action(adv_custom_action_info);
   }
 
   void
-  RequestOutLogger::process_request(
-    const RequestInfo& request_info)
+  RequestOutLogger::process_request(const RequestInfo& request_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     research_bid_logger_->process_request(request_info);
   }
 
   void
-  RequestOutLogger::process_impression(
-    const ImpressionInfo& impression_info)
+  RequestOutLogger::process_impression(const ImpressionInfo& impression_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     research_bid_logger_->process_impression(impression_info);
@@ -3306,8 +3248,7 @@ namespace RequestInfoSvcs
     const AdvCustomActionInfo& adv_custom_action_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
-    research_bid_logger_->process_custom_action(request_id,
-      adv_custom_action_info);
+    research_bid_logger_->process_custom_action(request_id, adv_custom_action_info);
   }
 
   void
@@ -3319,48 +3260,40 @@ namespace RequestInfoSvcs
 
   template<typename LoggerType>
   void
-  RequestOutLogger::add_request_logger_(
-    LoggerType* request_logger)
+  RequestOutLogger::add_request_logger_(LoggerType* request_logger)
     /*throw(eh::Exception)*/
   {
-    request_loggers_.push_back(
-      ReferenceCounting::add_ref(request_logger));
+    request_loggers_.push_back(ReferenceCounting::add_ref(request_logger));
 
     add_child_log_holder(request_logger);
   }
 
   template<typename LoggerType>
   void
-  RequestOutLogger::add_reach_logger_(
-    LoggerType* reach_logger)
+  RequestOutLogger::add_reach_logger_(LoggerType* reach_logger)
     /*throw(eh::Exception)*/
   {
-    reach_loggers_.push_back(
-      ReferenceCounting::add_ref(reach_logger));
+    reach_loggers_.push_back(ReferenceCounting::add_ref(reach_logger));
 
     add_child_log_holder(reach_logger);
   }
 
   template<typename LoggerType>
   void
-  RequestOutLogger::add_passback_logger_(
-    LoggerType* passback_logger)
+  RequestOutLogger::add_passback_logger_(LoggerType* passback_logger)
     /*throw(eh::Exception)*/
   {
-    passback_loggers_.push_back(
-      ReferenceCounting::add_ref(passback_logger));
+    passback_loggers_.push_back(ReferenceCounting::add_ref(passback_logger));
 
     add_child_log_holder(passback_logger);
   }
 
   template<typename LoggerType>
   void
-  RequestOutLogger::add_site_reach_logger_(
-    LoggerType* site_reach_logger)
+  RequestOutLogger::add_site_reach_logger_(LoggerType* site_reach_logger)
     /*throw(eh::Exception)*/
   {
-    site_reach_loggers_.push_back(
-      ReferenceCounting::add_ref(site_reach_logger));
+    site_reach_loggers_.push_back(ReferenceCounting::add_ref(site_reach_logger));
 
     add_child_log_holder(site_reach_logger);
   }

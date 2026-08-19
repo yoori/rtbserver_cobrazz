@@ -8,6 +8,8 @@ import time
 import json
 import argparse
 import typing
+import datetime
+import re
 import shutil
 import atexit
 import jinja2
@@ -70,6 +72,7 @@ R_ACTION_CREATE_TABLE_QUERY = (
 
 R_GEO_CREATE_TABLE_QUERY = (
   "CREATE TABLE IF NOT EXISTS RGeo ("
+  "date Date, "
   "ip String, "
   "source String, "
   "latitude Decimal(18, 8), "
@@ -78,8 +81,24 @@ R_GEO_CREATE_TABLE_QUERY = (
   "country String, "
   "region String, "
   "city String"
-  ") ENGINE = MergeTree "
-  "ORDER BY (ip, source, type, country, region, city)"
+  ") ENGINE = ReplacingMergeTree "
+  "ORDER BY (date, ip, source)"
+)
+
+
+BID_COST_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS BidCost ("
+  "timestamp Date, "
+  "tag_id UInt64, "
+  "ext_tag_id String, "
+  "url String, "
+  "cost Decimal(18, 6), "
+  "unverified_imps Int64, "
+  "imps Int64, "
+  "clicks Int64"
+  ") ENGINE = SummingMergeTree "
+  "PARTITION BY timestamp "
+  "ORDER BY (timestamp, tag_id, ext_tag_id, url, cost)"
 )
 
 
@@ -166,11 +185,15 @@ class ClickhouseCsvUploader(object) :
       logger = None,
       create_table_query = None,
       raise_on_upload_error = True,
+      adapter_accepts_date = False,
   ) :
     self.clickhouse_conn = config.clickhouse_conn
     self.create_table_query = create_table_query
+    self.adapter_accepts_date = adapter_accepts_date
     self.command_line_templ = jinja2.Template(
-      adapter_script + " {{ process_files|join(' ') }} | clickhouse-client {{clickhouse_conn}} " +
+      adapter_script +
+      "{% if adapter_date %} --date {{ adapter_date }}{% endif %} " +
+      "{{ process_files|join(' ') }} | clickhouse-client {{clickhouse_conn}} " +
       '--query="INSERT INTO ' + target_table + ' FORMAT CSV"')
     self.create_table_command_line_templ = jinja2.Template(
       'clickhouse-client {{clickhouse_conn}} --query="{{create_table_query}}"')
@@ -196,11 +219,12 @@ class ClickhouseCsvUploader(object) :
         str(e) + ", command_line = '" + command_line + "'")
       raise
 
-  def process(self, process_files) :
+  def process(self, process_files, log_date = None) :
     # init sql for upload
     command_line = self.command_line_templ.render({
       'clickhouse_conn' : self.clickhouse_conn,
-      'process_files' : process_files
+      'process_files' : process_files,
+      'adapter_date' : log_date if self.adapter_accepts_date else None,
     })
     try :
       self.logger.debug("To upload " + " ".join(process_files))
@@ -274,7 +298,18 @@ class GeoUploader(ClickhouseCsvUploader) :
       'GeoClickhouseAdapter.py',
       'RGeo',
       logger = logger,
-      create_table_query = R_GEO_CREATE_TABLE_QUERY)
+      create_table_query = R_GEO_CREATE_TABLE_QUERY,
+      adapter_accepts_date = True)
+
+
+class BidCostUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'BidCostClickhouseAdapter.py',
+      'BidCost',
+      logger = logger,
+      create_table_query = BID_COST_CREATE_TABLE_QUERY)
 
 
 def check_stat_files(
@@ -283,6 +318,16 @@ def check_stat_files(
     logger = None,
     processors = None,
 ) :
+  def file_date(full_file):
+    file_name = os.path.basename(full_file)
+    match = re.search(r'_(\d{8})\d{6}', file_name)
+    if not match:
+      return None
+    return datetime.datetime.strptime(match.group(1), '%Y%m%d').date().isoformat()
+
+  def upload_files(processor, files_to_process, log_date):
+    processor.process(files_to_process, log_date)
+
   for check_root in config.check_roots :
     logger.debug("Check root '" + check_root + "'")
     if not os.path.isdir(check_root):
@@ -291,7 +336,7 @@ def check_stat_files(
 
     check_files = [ x for x in os.listdir(check_root) ]
 
-    processing_groups: typing.Dict[str, typing.List] = {}
+    processing_groups: typing.Dict[str, typing.Dict[str, typing.List]] = {}
 
     for check_file in check_files :
       logger.debug("Check file '" + check_file + "'")
@@ -300,31 +345,37 @@ def check_stat_files(
         prefix = check_file_parts[0]
         if prefix in processors :
           full_file = os.path.join(check_root, check_file)
+          log_date = file_date(full_file)
           if prefix not in processing_groups:
-            processing_groups[prefix] = []
-          processing_groups[prefix].append(full_file)
+            processing_groups[prefix] = {}
+          if log_date not in processing_groups[prefix]:
+            processing_groups[prefix][log_date] = []
+          processing_groups[prefix][log_date].append(full_file)
 
-          if len(processing_groups[prefix]) >= config.batch:
-            process_files = processing_groups[prefix]
+          if len(processing_groups[prefix][log_date]) >= config.batch:
+            files_to_process = processing_groups[prefix][log_date]
             processor = processors[prefix]
             try :
-              processor.process(process_files)
+              upload_files(processor, files_to_process, log_date)
             except Exception as e :
-              logger.exception("error on upload " + " ".join(process_files) + ": " + str(e))
+              logger.exception("error on upload " + " ".join(files_to_process) + ": " + str(e))
               if config.error_root:
-                for full_file in process_files:
+                for full_file in files_to_process:
                   shutil.move(full_file, config.error_root)
-            processing_groups[prefix] = []
+            processing_groups[prefix][log_date] = []
 
-    for prefix, process_files in processing_groups.items():
+    for prefix, date_groups in processing_groups.items():
       processor = processors[prefix]
-      try :
-        processor.process(process_files)
-      except Exception as e :
-        logger.exception("error on upload " + " ".join(process_files) + ": " + str(e))
-        if config.error_root:
-          for full_file in process_files:
-            shutil.move(full_file, config.error_root)
+      for log_date, process_files_list in date_groups.items():
+        if not process_files_list:
+          continue
+        try :
+          upload_files(processor, process_files_list, log_date)
+        except Exception as e :
+          logger.exception("error on upload " + " ".join(process_files_list) + ": " + str(e))
+          if config.error_root:
+            for full_file in process_files_list:
+              shutil.move(full_file, config.error_root)
 
 
 def main() :
@@ -366,6 +417,7 @@ def main() :
   processors['RClick'] = RClickUploader(config, logger = logger)
   processors['RAction'] = RActionUploader(config, logger = logger)
   processors['Geo'] = GeoUploader(config, logger = logger)
+  processors['BidCost'] = BidCostUploader(config, logger = logger)
 
   for processor in processors.values():
     processor.init_storage()
