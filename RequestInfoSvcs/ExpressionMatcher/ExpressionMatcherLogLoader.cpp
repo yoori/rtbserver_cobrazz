@@ -172,11 +172,12 @@ namespace AdServer::RequestInfoSvcs
     co_process_click(
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       ConsiderInterface* processor,
+      AdServer::Commons::UserId user_id,
       AdServer::Commons::RequestId request_id,
       Generics::Time time)
     {
       co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
-      co_await processor->co_consider_click(request_id, time);
+      co_await processor->co_consider_click(user_id, request_id, time);
     }
 
     AdServer::Commons::StartableAwaitable<void>
@@ -561,6 +562,7 @@ namespace AdServer::RequestInfoSvcs
             co_process_click(
               processing_executor_pool_,
               consider_interface_,
+              AdServer::Commons::UserId(reader.user_id()),
               AdServer::Commons::RequestId(reader.request_id()),
               Generics::Time(reader.time())));
         }

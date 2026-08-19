@@ -84,8 +84,12 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/ConsiderRequest_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/BidCostStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/BidCostStat_ && " .
-    "mkdir -p \${cache_root}/Bid && " .
     "mkdir -p \${cache_root}/RequestInfoManager && " .
+    "if test -d \${cache_root}/Bid && " .
+      "! test -e \${cache_root}/RequestInfoManager/Bid; then " .
+      "mv \${cache_root}/Bid \${cache_root}/RequestInfoManager/Bid; " .
+    "fi && " .
+    "mkdir -p \${cache_root}/RequestInfoManager/Bid && " .
     # compatibility 2.3 block (SyncLogs try to move files from these folders)
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteStat_ && " .

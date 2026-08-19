@@ -317,7 +317,6 @@ public:
           chunk_folders.size(), // chunks_number
           chunk_folders,
           "TempUserTriggerMatch",
-          (std::string(root_path) + TEST_FOLDER).c_str(),
           0,
           POSITIVE_TRIGGERS_GROUP_SIZE,
           NEGATIVE_TRIGGERS_GROUP_SIZE,
@@ -351,7 +350,6 @@ public:
           chunk_folders.size(), // chunks_number
           chunk_folders,
           "UserTriggerMatch",
-          (std::string(root_path) + TEST_FOLDER).c_str(),
           "RequestTriggerMatch",
           POSITIVE_TRIGGERS_GROUP_SIZE,
           NEGATIVE_TRIGGERS_GROUP_SIZE,

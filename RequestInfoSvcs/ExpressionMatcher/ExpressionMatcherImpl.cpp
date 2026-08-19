@@ -514,7 +514,6 @@ namespace AdServer::RequestInfoSvcs
             expression_matcher_config_.ChunksConfig().chunks_number(),
             chunk_trigger_folders,
             expression_matcher_config_.TriggerImpsConfig()->TempUserChunksConfig().chunks_prefix().c_str(),
-            "",
             0,
             expression_matcher_config_.TriggerImpsConfig()->positive_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
@@ -589,7 +588,6 @@ namespace AdServer::RequestInfoSvcs
             expression_matcher_config_.ChunksConfig().chunks_number(),
             chunk_trigger_folders,
             expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig().chunks_prefix().c_str(),
-            expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig().chunks_root().c_str(),
             expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig().chunks_prefix().c_str(),
             expression_matcher_config_.TriggerImpsConfig()->positive_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
@@ -1251,6 +1249,7 @@ namespace AdServer::RequestInfoSvcs
 
   AdServer::Commons::StartableAwaitable<void>
   ExpressionMatcherImpl::co_consider_click(
+    const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::RequestId& request_id,
     const Generics::Time& time)
   {
@@ -1264,6 +1263,7 @@ namespace AdServer::RequestInfoSvcs
       if (user_trigger_match_container.in())
       {
         co_await user_trigger_match_container->co_process_click(
+          user_id,
           request_id,
           time + placement_colo_.get()->time_offset);
       }

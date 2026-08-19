@@ -37,7 +37,13 @@ sub merge_chunk;
 use constant PROFILE_FOLDERS_PREFIXES => {
   "Inventory" => ["Inventory"],
   "HouseholdColoReach" => ["HouseholdColoReach"],
+  "RequestTriggerMatch" => ["RequestTriggerMatch"],
   "UserTriggerMatch" => ["UserTriggerMatch", "TempUserTriggerMatch"],
+  };
+use constant LEGACY_PROFILE_FOLDERS => {
+  "Inventory" => 1,
+  "HouseholdColoReach" => 1,
+  "UserTriggerMatch" => 1,
   };
 use constant CHUNK_PREFIX => 'Chunk';
 
@@ -89,7 +95,7 @@ sub exists_chunks
   my $chunk_3_4_detected = 0;
   foreach my $chunk_folder(@chunk_folders)
   {
-    foreach my $folder(keys %{PROFILE_FOLDERS_PREFIXES()})
+    foreach my $folder(keys %{LEGACY_PROFILE_FOLDERS()})
     {
       if($chunk_folder =~ m|^$folder(/.*)?$|)
       {
@@ -560,7 +566,7 @@ sub migrate_3_5_
     my @chunk_items = $this->{exec_impl_}->list($dst_host, "../");
     foreach my $folder(@chunk_items)
     {
-      foreach my $prefix(keys %{PROFILE_FOLDERS_PREFIXES()})
+      foreach my $prefix(keys %{LEGACY_PROFILE_FOLDERS()})
       {
         if($folder =~ m|^$prefix(/)?$|)
         {

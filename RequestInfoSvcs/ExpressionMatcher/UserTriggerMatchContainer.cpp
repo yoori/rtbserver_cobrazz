@@ -13,9 +13,7 @@ namespace Aspect
   const char USER_TRIGGER_MATCH_CONTAINER[] = "UserTriggerMatchContainer";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   const Generics::Time
   UserTriggerMatchContainer::DEFAULT_USER_EXPIRE_TIME = Generics::Time::ONE_DAY * 30;
@@ -106,12 +104,12 @@ namespace RequestInfoSvcs
       unsigned long sampling_size)
     {
       sampling.reserve(sampling.size() + sampling_size);
-      for(unsigned long i = 0; i < sampling_size; ++i)
+      for (unsigned long i = 0; i < sampling_size; ++i)
       {
         unsigned long new_val = Generics::safe_rand(array_size - sampling.size());
         unsigned long add_ind = 0;
         std::vector<unsigned long>::iterator vit = sampling.begin();
-        for(; vit != sampling.end() && new_val + add_ind >= *vit; ++vit)
+        for (; vit != sampling.end() && new_val + add_ind >= *vit; ++vit)
         {
           ++add_ind;
         }
@@ -119,8 +117,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    typedef UserTriggerMatchContainer::Config::ChannelInfo::TriggerIdArray
-      TriggerIdArray;
+    using TriggerIdArray = UserTriggerMatchContainer::Config::ChannelInfo::TriggerIdArray;
 
     /* deactivated_triggers:
      *   triggers that matched, but not found in channel (deactivated),
@@ -142,8 +139,8 @@ namespace RequestInfoSvcs
 
       std::vector<unsigned long> trigger_indexes;
 
-      for(std::vector<unsigned long>::const_iterator tr_it = triggers.begin();
-          tr_it != triggers.end(); ++tr_it)
+      for (std::vector<unsigned long>::const_iterator tr_it = triggers.begin();
+        tr_it != triggers.end(); ++tr_it)
       {
         trigger_indexes.clear();
 
@@ -154,7 +151,7 @@ namespace RequestInfoSvcs
             channel_triggers.begin(),
             channel_triggers.end(),
             *tr_it);
-          if(tr_idx_it != channel_triggers.end() && *tr_idx_it == *tr_it)
+          if (tr_idx_it != channel_triggers.end() && *tr_idx_it == *tr_it)
           {
             trigger_indexes.push_back(tr_idx_it - channel_triggers.begin());
           }
@@ -165,7 +162,7 @@ namespace RequestInfoSvcs
           }
         }
 
-        if(use_noise_size > 0) // number of triggers in channel > 1
+        if (use_noise_size > 0) // number of triggers in channel > 1
         {
           fill_index_sampling(
             trigger_indexes,
@@ -175,15 +172,14 @@ namespace RequestInfoSvcs
 
         //
         // fill noised triggers
-        for(std::vector<unsigned long>::const_iterator tr_idx_it =
-              trigger_indexes.begin();
-            tr_idx_it != trigger_indexes.end(); ++tr_idx_it)
+        for (std::vector<unsigned long>::const_iterator tr_idx_it = trigger_indexes.begin();
+          tr_idx_it != trigger_indexes.end(); ++tr_idx_it)
         {
           noised_triggers.push_back(channel_triggers[*tr_idx_it]);
         }
 
         // insert deactivated trigger into ordered pos for hide it in noise (privacy)
-        if(insert_tr_into_noise)
+        if (insert_tr_into_noise)
         {
           noised_triggers.insert(
             std::lower_bound(noised_triggers.begin(), noised_triggers.end(), *tr_it),
@@ -201,10 +197,9 @@ namespace RequestInfoSvcs
     {
       std::vector<unsigned long> trigger_indexes;
 
-      compensate_triggers.reserve(
-        compensate_triggers.size() + matched_triggers * compensate_size);
+      compensate_triggers.reserve(compensate_triggers.size() + matched_triggers * compensate_size);
 
-      for(unsigned long i = 0; i < matched_triggers; ++i)
+      for (unsigned long i = 0; i < matched_triggers; ++i)
       {
         trigger_indexes.clear();
 
@@ -213,11 +208,10 @@ namespace RequestInfoSvcs
           channel_triggers.size() + deactivated_channel_triggers.size(),
           compensate_size);
 
-        for(std::vector<unsigned long>::const_iterator tr_idx_it =
-              trigger_indexes.begin();
-            tr_idx_it != trigger_indexes.end(); ++tr_idx_it)
+        for (std::vector<unsigned long>::const_iterator tr_idx_it = trigger_indexes.begin();
+          tr_idx_it != trigger_indexes.end(); ++tr_idx_it)
         {
-          if(*tr_idx_it < channel_triggers.size())
+          if (*tr_idx_it < channel_triggers.size())
           {
             compensate_triggers.push_back(
               channel_triggers[*tr_idx_it]);
@@ -243,11 +237,10 @@ namespace RequestInfoSvcs
       UserTriggerMatchWriter::page_matches_Container::iterator res_it =
         res_matches.begin();
 
-      for(UserTriggerMatchContainer::MatchMap::
-            const_iterator mit = new_matches.begin();
-          mit != new_matches.end(); ++mit)
+      for (UserTriggerMatchContainer::MatchMap::const_iterator mit = new_matches.begin();
+        mit != new_matches.end(); ++mit)
       {
-        while(res_it != res_matches.end() && (
+        while (res_it != res_matches.end() && (
           res_it->channel_id() < mit->first || (
             res_it->channel_id() == mit->first &&
             res_it->time() <= time.tv_sec)))
@@ -265,7 +258,7 @@ namespace RequestInfoSvcs
         UserTriggerMatchContainer::Config::ChannelInfoMap::const_iterator
           all_ch_it = all_channels.find(mit->first);
 
-        if(all_ch_it != all_channels.end())
+        if (all_ch_it != all_channels.end())
         {
           UserTriggerMatchContainer::MatchedTriggerIdArray deactivated_triggers;
 
@@ -281,7 +274,7 @@ namespace RequestInfoSvcs
                 ((*(all_ch_it->second)).*channel_triggers_field).size() - 1 : 0));
 
           // add negative triggers
-          if(((*(all_ch_it->second)).*channel_triggers_field).size() > 1)
+          if (((*(all_ch_it->second)).*channel_triggers_field).size() > 1)
           {
             // compensate by all triggers if number of triggers in channel < negative_group_size
             fill_compensate_triggers(
@@ -363,7 +356,7 @@ namespace RequestInfoSvcs
       UserTriggerMatchWriter::page_matches_Container& res_matches,
       const UserTriggerMatchReader::page_matches_Container& new_matches)
     {
-      if(!new_matches.empty())
+      if (!new_matches.empty())
       {
         UserTriggerMatchWriter::page_matches_Container merged_matches;
 
@@ -406,9 +399,9 @@ namespace RequestInfoSvcs
       Generics::Time& time,
       const UserTriggerMatchReader::page_matches_Container& matches)
     {
-      for(UserTriggerMatchReader::page_matches_Container::const_iterator it =
-            matches.begin();
-          it != matches.end(); ++it)
+      for (UserTriggerMatchReader::page_matches_Container::const_iterator it =
+          matches.begin();
+        it != matches.end(); ++it)
       {
         time = (time == Generics::Time::ZERO ?
           Generics::Time((*it).time()) :
@@ -416,8 +409,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    Generics::Time min_time_matches(
-      const UserTriggerMatchReader& merge_profile_reader)
+    Generics::Time min_time_matches(const UserTriggerMatchReader& merge_profile_reader)
     {
       Generics::Time res;
       min_time_matches(res, merge_profile_reader.page_matches());
@@ -442,7 +434,7 @@ namespace RequestInfoSvcs
       // clear excess matches by time_to
       UserTriggerMatchWriter::page_matches_Container::iterator mit = res_matches.begin();
 
-      while(mit != res_matches.end())
+      while (mit != res_matches.end())
       {
         UserTriggerMatchWriter::page_matches_Container::iterator first_mit = mit;
         unsigned long match_count = 0;
@@ -452,7 +444,7 @@ namespace RequestInfoSvcs
           ++mit;
           ++match_count;
         }
-        while(mit != res_matches.end() && mit->channel_id() == first_mit->channel_id());
+        while (mit != res_matches.end() && mit->channel_id() == first_mit->channel_id());
 
         UserTriggerMatchContainer::Config::ChannelInfoMap::const_iterator
           all_ch_it = all_channels.find(first_mit->channel_id());
@@ -460,10 +452,10 @@ namespace RequestInfoSvcs
         unsigned long time_to;
         unsigned long min_visits;
 
-        if(all_ch_it != all_channels.end())
+        if (all_ch_it != all_channels.end())
         {
           min_visits = (*(all_ch_it->second)).*min_visits_field;
-          if(max_trigger_visits > 0)
+          if (max_trigger_visits > 0)
           {
             min_visits = std::min(max_trigger_visits, min_visits);
           }
@@ -476,13 +468,10 @@ namespace RequestInfoSvcs
           time_to = (Generics::Time::ONE_DAY * 60).tv_sec;
         }
 
-        long erase_count = min_visits < match_count ?
-          match_count - min_visits : 0;
+        long erase_count = min_visits < match_count ? match_count - min_visits : 0;
 
         UserTriggerMatchWriter::page_matches_Container::iterator erase_mit = first_mit;
-        while(erase_mit != mit && (
-          erase_count > 0 ||
-          erase_mit->time() + time_to < time_int))
+        while (erase_mit != mit && (erase_count > 0 || erase_mit->time() + time_to < time_int))
         {
           --erase_count;
           ++erase_mit;
@@ -547,13 +536,13 @@ namespace RequestInfoSvcs
 
       auto cur_pit = pit;
 
-      while(cur_pit != pit_end && (*cur_pit).channel_id() == channel_id)
+      while (cur_pit != pit_end && (*cur_pit).channel_id() == channel_id)
       {
         ++cur_pit;
         ++count;
       }
 
-      if(count > min_visits)
+      if (count > min_visits)
       {
         // ignore excess matches at begin
         std::advance(pit, count - min_visits);
@@ -570,11 +559,10 @@ namespace RequestInfoSvcs
       unsigned long min_visits,
       const RevenueDecimal& weight)
     {
-      if(min_visits > 0)
+      if (min_visits > 0)
       {
-        for(UserTriggerMatchReader::page_matches_Container::
-              const_iterator pit = pit_begin;
-            pit != pit_end; ++pit)
+        for (UserTriggerMatchReader::page_matches_Container::const_iterator pit = pit_begin;
+          pit != pit_end; ++pit)
         {
           const unsigned positive_group_size = (*pit).positive_matches().size() /
             (*pit).matched_triggers();
@@ -583,7 +571,7 @@ namespace RequestInfoSvcs
 
           RevenueDecimal inc;
 
-          if((*pit).triggers_in_channel() > 1)
+          if ((*pit).triggers_in_channel() > 1)
           {
             inc = RevenueDecimal::div(
               RevenueDecimal((*pit).triggers_in_channel() - 1),
@@ -604,15 +592,15 @@ namespace RequestInfoSvcs
           TriggerActionProcessor::MatchCounterKey key;
           key.channel_id = (*pit).channel_id();
 
-          for(ChannelMatchReader::positive_matches_Container::const_iterator mit =
-                (*pit).positive_matches().begin();
-              mit != (*pit).positive_matches().end(); ++mit)
+          for (ChannelMatchReader::positive_matches_Container::const_iterator mit =
+              (*pit).positive_matches().begin();
+            mit != (*pit).positive_matches().end(); ++mit)
           {
             key.channel_trigger_id = *mit;
             res_matches[key] += inc;
           }
 
-          if(negative_group_size > 0)
+          if (negative_group_size > 0)
           {
             RevenueDecimal dec(RevenueDecimal::div(
               RevenueDecimal((*pit).triggers_in_channel() * (positive_group_size - 1)),
@@ -620,14 +608,13 @@ namespace RequestInfoSvcs
                 RevenueDecimal(
                   (*pit).matched_triggers() *
                   min_visits *
-                  negative_group_size * (
-                    (*pit).triggers_in_channel() - positive_group_size)),
+                  negative_group_size * ((*pit).triggers_in_channel() - positive_group_size)),
                 weight,
                 Generics::DMR_FLOOR)));
 
-            for(ChannelMatchReader::positive_matches_Container::const_iterator mit =
-                  (*pit).negative_matches().begin();
-                mit != (*pit).negative_matches().end(); ++mit)
+            for (ChannelMatchReader::positive_matches_Container::const_iterator mit =
+                (*pit).negative_matches().begin();
+              mit != (*pit).negative_matches().end(); ++mit)
             {
               key.channel_trigger_id = *mit;
               res_matches[key] -= dec;
@@ -650,8 +637,7 @@ namespace RequestInfoSvcs
       const UserTriggerMatchContainer::Config::ChannelInfoMap& all_channels,
       const UserTriggerMatchContainer::Config::ChannelInfo* default_channel_info)
     {
-      UserTriggerMatchReader::page_matches_Container::
-        const_iterator pit = page_matches.begin();
+      UserTriggerMatchReader::page_matches_Container::const_iterator pit = page_matches.begin();
       UserTriggerMatchReader::search_matches_Container::
         const_iterator sit = search_matches.begin();
       UserTriggerMatchReader::url_matches_Container::
@@ -659,8 +645,7 @@ namespace RequestInfoSvcs
       UserTriggerMatchReader::url_keyword_matches_Container::
         const_iterator ukit = url_keyword_matches.begin();
 
-      for(ChannelIdSet::const_iterator ch_it = channels.begin();
-          ch_it != channels.end(); ++ch_it)
+      for (ChannelIdSet::const_iterator ch_it = channels.begin(); ch_it != channels.end(); ++ch_it)
       {
         // TODO advance pit, sit, uit for matches actual by time_to
         pit = std::lower_bound(pit, page_matches.end(), *ch_it, ChannelIdLess());
@@ -764,9 +749,8 @@ namespace RequestInfoSvcs
       RequestTriggerMatchWriter::page_match_counters_Container& res,
       const TriggerActionProcessor::MatchCountMap& match_counters)
     {
-      for(TriggerActionProcessor::MatchCountMap::const_iterator mit =
-            match_counters.begin();
-          mit != match_counters.end(); ++mit)
+      for (TriggerActionProcessor::MatchCountMap::const_iterator mit = match_counters.begin();
+        mit != match_counters.end(); ++mit)
       {
         TriggerMatchCounterWriter match_counter_writer;
         match_counter_writer.channel_trigger_id() = mit->first.channel_trigger_id;
@@ -781,13 +765,12 @@ namespace RequestInfoSvcs
       TriggerActionProcessor::MatchCountMap& res_match_counters,
       const RequestTriggerMatchWriter::page_match_counters_Container& match_counters)
     {
-      for(RequestTriggerMatchWriter::page_match_counters_Container::
-            const_iterator mit = match_counters.begin();
-          mit != match_counters.end(); ++mit)
+      for (RequestTriggerMatchWriter::page_match_counters_Container::const_iterator mit =
+          match_counters.begin();
+        mit != match_counters.end(); ++mit)
       {
         res_match_counters[TriggerActionProcessor::MatchCounterKey(
-          mit->channel_trigger_id(), mit->channel_id())] +=
-            RevenueDecimal(mit->counter());
+          mit->channel_trigger_id(), mit->channel_id())] += RevenueDecimal(mit->counter());
       }
     }
 
@@ -818,7 +801,7 @@ namespace RequestInfoSvcs
       UserTriggerMatchWriter::impressions_Container::reverse_iterator erase_end_it =
         impressions.rbegin();
       unsigned long i = 0;
-      while(erase_end_it != impressions.rend() &&
+      while (erase_end_it != impressions.rend() &&
         IMPRESSION_EXPIRE_TIME + erase_end_it->time() > last_request_time &&
         i < MAX_IMPRESSIONS_KEEP)
       {
@@ -836,7 +819,6 @@ namespace RequestInfoSvcs
     unsigned long common_chunks_number,
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* user_file_prefix,
-    const char* request_file_base_path,
     const char* request_file_prefix,
     unsigned long positive_triggers_group_size,
     unsigned long negative_triggers_group_size,
@@ -851,10 +833,10 @@ namespace RequestInfoSvcs
       merge_profile_provider_(ReferenceCounting::add_ref(user_profile_provider)),
       positive_triggers_group_size_(positive_triggers_group_size),
       negative_triggers_group_size_(negative_triggers_group_size),
-      max_trigger_visits_(max_trigger_visits)
+      max_trigger_visits_(max_trigger_visits),
+      common_chunks_number_(common_chunks_number)
   {
-    static const char* FUN =
-      "UserTriggerMatchContainer::UserTriggerMatchContainer()";
+    static const char* FUN = "UserTriggerMatchContainer::UserTriggerMatchContainer()";
 
     default_channel_info_ = new Config::ChannelInfo();
     default_channel_info_->page_min_visits = 1;
@@ -890,31 +872,38 @@ namespace RequestInfoSvcs
       throw Exception(ostr);
     }
 
-    if(request_file_prefix != 0)
+    if (request_file_prefix != 0)
     {
       try
       {
-        typedef AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
+        using RocksDBRequestProfileMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
           AdServer::Commons::RequestId,
           AdServer::ProfilingCommons::KeyAccessorStringAdapter<
-            AdServer::ProfilingCommons::RequestIdAccessor>>
-          RocksDBRequestProfileMap;
+            AdServer::ProfilingCommons::RequestIdAccessor>>;
 
-        const std::string rocksdb_path =
-          std::string(request_file_base_path) + "/" +
-          request_file_prefix + ".rocksdb";
-        ReferenceCounting::SmartPtr<RocksDBRequestProfileMap> rocksdb_map =
-          rocksdb_processor ?
-            new RocksDBRequestProfileMap(
-              std::move(rocksdb_processor),
-              String::SubString(rocksdb_path.c_str()),
-              request_level_map_traits.expire_time) :
-            new RocksDBRequestProfileMap(
-              String::SubString(rocksdb_path.c_str()),
-              request_level_map_traits.expire_time);
+        if (!rocksdb_processor)
+        {
+          rocksdb_processor = std::make_shared<
+            AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(2);
+          add_child_object(rocksdb_processor);
+        }
 
-        request_map_ = new RequestProfileMap(rocksdb_map);
-        add_child_object(rocksdb_map.in());
+        for (const auto& [chunk_id, chunk_folder] : chunk_folders)
+        {
+          const std::string rocksdb_path =
+            chunk_folder + "/" + request_file_prefix;
+          ReferenceCounting::SmartPtr<RocksDBRequestProfileMap> rocksdb_map =
+            new RocksDBRequestProfileMap(
+              rocksdb_processor,
+              String::SubString(rocksdb_path.c_str()),
+              request_level_map_traits.expire_time,
+              128,
+              Generics::Time::ZERO,
+              false);
+
+          request_maps_.emplace(chunk_id, new RequestProfileMap(rocksdb_map));
+          add_child_object(rocksdb_map.in());
+        }
       }
       catch(const eh::Exception& ex)
       {
@@ -960,8 +949,7 @@ namespace RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserTriggerMatchContainer::co_get_user_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserTriggerMatchContainer::co_get_user_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserTriggerMatchContainer::co_get_user_profile()";
 
@@ -978,13 +966,12 @@ namespace RequestInfoSvcs
   }
 
   Generics::ConstSmartMemBuf_var
-  UserTriggerMatchContainer::get_request_profile(
-    const AdServer::Commons::RequestId& request_id)
+  UserTriggerMatchContainer::get_request_profile(const AdServer::Commons::RequestId& request_id)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserTriggerMatchContainer::get_request_profile()";
 
-    if(!request_map_.in())
+    if (request_maps_.empty())
     {
       Stream::Error ostr;
       ostr << FUN << ": No request profiles mode used";
@@ -993,7 +980,15 @@ namespace RequestInfoSvcs
 
     try
     {
-      return request_map_->get_profile(request_id);
+      for (const auto& request_map_entry : request_maps_)
+      {
+        Generics::ConstSmartMemBuf_var profile = request_map_entry.second->get_profile(request_id);
+        if (profile.in())
+        {
+          return profile;
+        }
+      }
+      return {};
     }
     catch(const eh::Exception& e)
     {
@@ -1008,24 +1003,23 @@ namespace RequestInfoSvcs
   {
     Generics::Time now = Generics::Time::get_time_of_day();
     user_map_->clear_expired(now - user_expire_time_);
-    if(request_map_.in())
+    for (const auto& request_map_entry : request_maps_)
     {
-      request_map_->clear_expired(now - request_expire_time_);
+      request_map_entry.second->clear_expired(now - request_expire_time_);
     }
   }
 
   AdServer::Commons::StartableAwaitable<void>
-  UserTriggerMatchContainer::co_process_request(
-    const RequestInfo& request_info)
+  UserTriggerMatchContainer::co_process_request(const RequestInfo& request_info)
   {
     /* save new matches, clear excess matches (by min visits) */
     static const char* FUN = "UserTriggerMatchContainer::co_process_request()";
 
-    if(request_info.page_matches.empty() &&
-       request_info.search_matches.empty() &&
-       request_info.url_matches.empty() &&
-       request_info.url_keyword_matches.empty() &&
-       request_info.merge_user_id.is_null())
+    if (request_info.page_matches.empty() &&
+      request_info.search_matches.empty() &&
+      request_info.url_matches.empty() &&
+      request_info.url_keyword_matches.empty() &&
+      request_info.merge_user_id.is_null())
     {
       co_return;
     }
@@ -1035,21 +1029,16 @@ namespace RequestInfoSvcs
       TriggersMatchInfoList delegate_imps;
       TriggersMatchInfoList delegate_clicks;
 
-      co_await co_process_request_trans_(
-        delegate_imps,
-        delegate_clicks,
-        request_info);
+      co_await co_process_request_trans_(delegate_imps, delegate_clicks, request_info);
 
-      for(TriggersMatchInfoList::const_iterator imp_it =
-            delegate_imps.begin();
-          imp_it != delegate_imps.end(); ++imp_it)
+      for (TriggersMatchInfoList::const_iterator imp_it = delegate_imps.begin();
+        imp_it != delegate_imps.end(); ++imp_it)
       {
         processor_->process_triggers_impression(*imp_it);
       }
 
-      for(TriggersMatchInfoList::const_iterator click_it =
-            delegate_clicks.begin();
-          click_it != delegate_clicks.end(); ++click_it)
+      for (TriggersMatchInfoList::const_iterator click_it = delegate_clicks.begin();
+        click_it != delegate_clicks.end(); ++click_it)
       {
         processor_->process_triggers_click(*click_it);
       }
@@ -1081,12 +1070,12 @@ namespace RequestInfoSvcs
         triggers_match_info,
         imp_info);
 
-      if(delegate_impression)
+      if (delegate_impression)
       {
         processor_->process_triggers_impression(triggers_match_info);
       }
 
-      if(delegate_click)
+      if (delegate_click)
       {
         processor_->process_triggers_click(triggers_match_info);
       }
@@ -1102,6 +1091,7 @@ namespace RequestInfoSvcs
 
   AdServer::Commons::StartableAwaitable<void>
   UserTriggerMatchContainer::co_process_click(
+    const Commons::UserId& user_id,
     const Commons::RequestId& request_id,
     const Generics::Time& time)
   {
@@ -1114,10 +1104,11 @@ namespace RequestInfoSvcs
       co_await co_process_click_trans_(
         delegate_click,
         triggers_match_info,
+        user_id,
         request_id,
         time);
 
-      if(delegate_click)
+      if (delegate_click)
       {
         processor_->process_triggers_click(triggers_match_info);
       }
@@ -1125,7 +1116,8 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": request_id = '" << request_id.to_string() <<
+      ostr << FUN << ": user_id = '" << user_id.to_string() <<
+        "', request_id = '" << request_id.to_string() <<
         "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
@@ -1136,12 +1128,34 @@ namespace RequestInfoSvcs
   {
     UserTriggerMatchContainer::Config_var res = config();
 
-    if(!res.in())
+    if (!res.in())
     {
       throw NotReady("channels config isn't defined");
     }
 
     return res;
+  }
+
+  UserTriggerMatchContainer::RequestProfileMap_var
+  UserTriggerMatchContainer::request_profile_map_(const Commons::UserId& user_id) const
+    /*throw(Exception)*/
+  {
+    if (request_maps_.empty())
+    {
+      throw Exception("No request profiles mode used");
+    }
+
+    const unsigned long chunk_id =
+      AdServer::Commons::uuid_distribution_hash(user_id) % common_chunks_number_;
+    const auto it = request_maps_.find(chunk_id);
+    if (it == request_maps_.end())
+    {
+      Stream::Error ostr;
+      ostr << "Request profile chunk " << chunk_id << " isn't available";
+      throw Exception(ostr);
+    }
+
+    return it->second;
   }
 
   template<typename TransactionType, typename ProfileWriterType>
@@ -1154,12 +1168,10 @@ namespace RequestInfoSvcs
   {
     const unsigned long profile_size = profile_writer.size();
 
-    Generics::SmartMemBuf_var new_mem_buf(
-      new Generics::SmartMemBuf(profile_size));
+    Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(profile_size));
 
     profile_writer.save(new_mem_buf->membuf().data(), profile_size);
-    co_await transaction->co_save_profile(
-      Generics::transfer_membuf(new_mem_buf), time);
+    co_await transaction->co_save_profile(Generics::transfer_membuf(new_mem_buf), time);
   }
 
   AdServer::Commons::Awaitable<void>
@@ -1176,7 +1188,7 @@ namespace RequestInfoSvcs
     {
       Generics::ConstSmartMemBuf_var temp_mem_buf;
 
-      if(!request_info.merge_user_id.is_null())
+      if (!request_info.merge_user_id.is_null())
       {
         // merge temporary profile
         try
@@ -1202,11 +1214,9 @@ namespace RequestInfoSvcs
 
       UserTriggerMatchWriter user_profile_writer;
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
       }
       else
       {
@@ -1215,15 +1225,13 @@ namespace RequestInfoSvcs
 
       Generics::Time merged_match_min_time;
 
-      if(temp_mem_buf.in())
+      if (temp_mem_buf.in())
       {
         UserTriggerMatchReader merge_user_profile_reader(
           temp_mem_buf->membuf().data(),
           temp_mem_buf->membuf().size());
 
-        merge_matches(
-          user_profile_writer,
-          merge_user_profile_reader);
+        merge_matches(user_profile_writer, merge_user_profile_reader);
 
         merged_match_min_time = min_time_matches(merge_user_profile_reader);
       }
@@ -1249,19 +1257,15 @@ namespace RequestInfoSvcs
           max_trigger_visits_);
       }
 
-      clear_expired_impressions(
-        user_profile_writer.impressions(),
-        request_info.time);
+      clear_expired_impressions(user_profile_writer.impressions(), request_info.time);
 
       unsigned long user_profile_size = user_profile_writer.size();
 
-      Generics::SmartMemBuf_var new_user_mem_buf(
-        new Generics::SmartMemBuf(user_profile_size));
+      Generics::SmartMemBuf_var new_user_mem_buf(new Generics::SmartMemBuf(user_profile_size));
 
-      user_profile_writer.save(
-        new_user_mem_buf->membuf().data(), user_profile_size);
+      user_profile_writer.save(new_user_mem_buf->membuf().data(), user_profile_size);
 
-      if(request_map_.in())
+      if (!request_maps_.empty())
       {
         Generics::Time min_time_for_recheck =
           merged_match_min_time == Generics::Time::ZERO ?
@@ -1275,23 +1279,22 @@ namespace RequestInfoSvcs
             min_time_for_recheck,
             TimeLess());
 
-        if(req_it != user_profile_writer.impressions().end())
+        if (req_it != user_profile_writer.impressions().end())
         {
+          RequestProfileMap_var request_map = request_profile_map_(request_info.user_id);
           UserTriggerMatchReader user_profile_reader(
             new_user_mem_buf->membuf().data(),
             new_user_mem_buf->membuf().size());
 
-          for(UserTriggerMatchWriter::impressions_Container::
-                const_iterator imp_it = req_it;
-              imp_it != user_profile_writer.impressions().end(); ++imp_it)
+          for (UserTriggerMatchWriter::impressions_Container::const_iterator imp_it = req_it;
+            imp_it != user_profile_writer.impressions().end(); ++imp_it)
           {
             RequestProfileMap::Transaction_var change_request_trans =
-              co_await request_map_->co_get_transaction(
-                Commons::RequestId((*imp_it).request_id()));
+              co_await request_map->co_get_transaction(Commons::RequestId((*imp_it).request_id()));
             Generics::ConstSmartMemBuf_var change_request_mem_buf =
               co_await change_request_trans->co_get_profile();
 
-            if(change_request_mem_buf.in())
+            if (change_request_mem_buf.in())
             {
               RequestTriggerMatchWriter change_request_profile_writer(
                 change_request_mem_buf->membuf().data(),
@@ -1299,23 +1302,20 @@ namespace RequestInfoSvcs
 
               Config_var current_config = current_config_();
 
-              if(change_request_profile_writer.impression_done())
+              if (change_request_profile_writer.impression_done())
               {
                 // do impression rollback
                 delegate_imps.push_back(TriggerActionProcessor::TriggersMatchInfo());
                 TriggerActionProcessor::TriggersMatchInfo& revert_match_info =
                   delegate_imps.back();
-                revert_match_info.time =
-                  Generics::Time(change_request_profile_writer.time());
-                convert_match_counters(
-                  revert_match_info,
-                  change_request_profile_writer);
+                revert_match_info.time = Generics::Time(change_request_profile_writer.time());
+                convert_match_counters(revert_match_info, change_request_profile_writer);
                 revert_match_info.page_matches.negate();
                 revert_match_info.search_matches.negate();
                 revert_match_info.url_matches.negate();
                 revert_match_info.url_keyword_matches.negate();
 
-                if(change_request_profile_writer.click_done())
+                if (change_request_profile_writer.click_done())
                 {
                   // do click rollback
                   delegate_clicks.push_back(revert_match_info);
@@ -1352,7 +1352,7 @@ namespace RequestInfoSvcs
                 default_channel_info_);
 
               delegate_imps.push_back(replace_match_info);
-              if(change_request_profile_writer.click_done())
+              if (change_request_profile_writer.click_done())
               {
                 delegate_clicks.push_back(replace_match_info);
               }
@@ -1402,7 +1402,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserTriggerMatchContainer::process_impression_trans_()";
 
-    if(!request_map_.in())
+    if (request_maps_.empty())
     {
       Stream::Error ostr;
       ostr << FUN << ": No request profiles mode used";
@@ -1416,33 +1416,30 @@ namespace RequestInfoSvcs
 
       UserProfileMap::Transaction_var user_trans =
         co_await user_map_->co_get_transaction(imp_info.user_id);
+      RequestProfileMap_var request_map = request_profile_map_(imp_info.user_id);
       RequestProfileMap::Transaction_var request_trans =
-        co_await request_map_->co_get_transaction(imp_info.request_id);
-      Generics::ConstSmartMemBuf_var request_mem_buf =
-        co_await request_trans->co_get_profile();
+        co_await request_map->co_get_transaction(imp_info.request_id);
+      Generics::ConstSmartMemBuf_var request_mem_buf = co_await request_trans->co_get_profile();
 
-      if(request_mem_buf.in())
+      if (request_mem_buf.in())
       {
         RequestTriggerMatchReader request_profile_reader(
           request_mem_buf->membuf().data(),
           request_mem_buf->membuf().size());
-        if(request_profile_reader.impression_done())
+        if (request_profile_reader.impression_done())
         {
           // double impression
           co_return;
         }
       }
 
-      Generics::ConstSmartMemBuf_var user_mem_buf =
-        co_await user_trans->co_get_profile();
+      Generics::ConstSmartMemBuf_var user_mem_buf = co_await user_trans->co_get_profile();
       UserTriggerMatchWriter user_profile_writer;
 
       // collect matches
-      if(user_mem_buf.in())
+      if (user_mem_buf.in())
       {
-        user_profile_writer.init(
-          user_mem_buf->membuf().data(),
-          user_mem_buf->membuf().size());
+        user_profile_writer.init(user_mem_buf->membuf().data(), user_mem_buf->membuf().size());
 
         Config_var current_config = current_config_();
 
@@ -1452,7 +1449,7 @@ namespace RequestInfoSvcs
           current_config->channels,
           max_trigger_visits_);
 
-        if(changed)
+        if (changed)
         {
           user_mem_buf = Algs::save_to_membuf(user_profile_writer);
         }
@@ -1485,14 +1482,13 @@ namespace RequestInfoSvcs
 
       // save request profile
       RequestTriggerMatchWriter request_profile_writer;
-      if(request_mem_buf.in())
+      if (request_mem_buf.in())
       {
         request_profile_writer.init(
           request_mem_buf->membuf().data(),
           request_mem_buf->membuf().size());
 
-        if(!request_profile_writer.impression_done() &&
-           request_profile_writer.click_done())
+        if (!request_profile_writer.impression_done() && request_profile_writer.click_done())
         {
           delegate_click = true;
         }
@@ -1525,8 +1521,7 @@ namespace RequestInfoSvcs
         imp_matches_info.url_keyword_matches);
 
       // save request profile
-      co_await co_save_profile_(
-        request_trans.in(), request_profile_writer, imp_info.time);
+      co_await co_save_profile_(request_trans.in(), request_profile_writer, imp_info.time);
 
       // save request marker for user
       clear_expired_impressions(
@@ -1536,12 +1531,11 @@ namespace RequestInfoSvcs
       ImpressionMarkerWriter new_impression;
       new_impression.time() = imp_info.time.tv_sec;
       new_impression.request_id() = imp_info.request_id.to_string();
-      UserTriggerMatchWriter::impressions_Container::iterator ins_it =
-        std::lower_bound(
-          user_profile_writer.impressions().begin(),
-          user_profile_writer.impressions().end(),
-          imp_info.time,
-          TimeLess());
+      UserTriggerMatchWriter::impressions_Container::iterator ins_it = std::lower_bound(
+        user_profile_writer.impressions().begin(),
+        user_profile_writer.impressions().end(),
+        imp_info.time,
+        TimeLess());
 
       user_profile_writer.impressions().insert(ins_it, new_impression);
 
@@ -1560,13 +1554,14 @@ namespace RequestInfoSvcs
   UserTriggerMatchContainer::co_process_click_trans_(
     bool& delegate_click,
     TriggerActionProcessor::TriggersMatchInfo& click_matches_info,
+    const Commons::UserId& user_id,
     const Commons::RequestId& request_id,
     const Generics::Time& time)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserTriggerMatchContainer::process_click_trans_()";
 
-    if(!request_map_.in())
+    if (request_maps_.empty())
     {
       Stream::Error ostr;
       ostr << FUN << ": No request profiles mode used";
@@ -1575,17 +1570,17 @@ namespace RequestInfoSvcs
 
     try
     {
+      RequestProfileMap_var request_map = request_profile_map_(user_id);
       RequestProfileMap::Transaction_var request_trans =
-        co_await request_map_->co_get_transaction(request_id);
-      Generics::ConstSmartMemBuf_var request_mem_buf =
-        co_await request_trans->co_get_profile();
+        co_await request_map->co_get_transaction(request_id);
+      Generics::ConstSmartMemBuf_var request_mem_buf = co_await request_trans->co_get_profile();
 
-      if(request_mem_buf.in())
+      if (request_mem_buf.in())
       {
         RequestTriggerMatchReader request_profile_reader(
           request_mem_buf->membuf().data(),
           request_mem_buf->membuf().size());
-        if(request_profile_reader.click_done())
+        if (request_profile_reader.click_done())
         {
           // double click
           delegate_click = false;
@@ -1598,7 +1593,7 @@ namespace RequestInfoSvcs
       // save request profile
       RequestTriggerMatchWriter request_profile_writer;
 
-      if(request_mem_buf.in())
+      if (request_mem_buf.in())
       {
         request_profile_writer.init(
           request_mem_buf->membuf().data(),
@@ -1638,5 +1633,4 @@ namespace RequestInfoSvcs
       throw Exception(ostr);
     }
   }
-}
 }

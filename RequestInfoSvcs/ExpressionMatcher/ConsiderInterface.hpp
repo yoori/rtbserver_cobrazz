@@ -17,6 +17,7 @@ namespace AdServer
 
       virtual AdServer::Commons::StartableAwaitable<void>
       co_consider_click(
+        const AdServer::Commons::UserId& user_id,
         const AdServer::Commons::RequestId& request_id,
         const Generics::Time& time) = 0;
 

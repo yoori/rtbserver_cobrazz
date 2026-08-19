@@ -19,12 +19,9 @@
 
 #include "TriggerActionProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::RequestInfoSvcs
 {
-namespace RequestInfoSvcs
-{
-  class UserTriggerMatchProfileProvider:
-    public virtual ReferenceCounting::Interface
+  class UserTriggerMatchProfileProvider: public virtual ReferenceCounting::Interface
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -40,8 +37,7 @@ namespace RequestInfoSvcs
   typedef ReferenceCounting::SmartPtr<UserTriggerMatchProfileProvider>
     UserTriggerMatchProfileProvider_var;
 
-  class UserTriggerMatchContainer:
-    public Generics::RefCountableCompositeActiveObject
+  class UserTriggerMatchContainer: public Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -136,7 +132,6 @@ namespace RequestInfoSvcs
       unsigned long common_chunks_number,
       const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
       const char* user_file_prefix,
-      const char* request_file_base_path,
       const char* request_file_prefix, // no request profiles mode, if == 0
       unsigned long positive_triggers_group_size,
       unsigned long negative_triggers_group_size,
@@ -159,6 +154,7 @@ namespace RequestInfoSvcs
 
     AdServer::Commons::StartableAwaitable<void>
     co_process_click(
+      const Commons::UserId& user_id,
       const Commons::RequestId& request_id,
       const Generics::Time& time);
 
@@ -184,7 +180,7 @@ namespace RequestInfoSvcs
       AdServer::Commons::UserId,
       AdServer::ProfilingCommons::TransactionProfileMap<AdServer::Commons::UserId>,
       unsigned long (*)(const Generics::Uuid& uuid) >
-    UserProfileMap;
+      UserProfileMap;
 
     typedef ReferenceCounting::SmartPtr<UserProfileMap>
       UserProfileMap_var;
@@ -196,13 +192,17 @@ namespace RequestInfoSvcs
     typedef ReferenceCounting::SmartPtr<RequestProfileMap>
       RequestProfileMap_var;
 
+    using RequestProfileMapByChunk = std::map<unsigned long, RequestProfileMap_var>;
+
     typedef Sync::Policy::PosixThread SyncPolicy;
 
-    typedef std::list<TriggerActionProcessor::TriggersMatchInfo>
-      TriggersMatchInfoList;
+    using TriggersMatchInfoList = std::list<TriggerActionProcessor::TriggersMatchInfo>;
 
   private:
     Config_var current_config_() const /*throw(NotReady)*/;
+
+    RequestProfileMap_var request_profile_map_(
+      const Commons::UserId& user_id) const /*throw(Exception)*/;
 
     AdServer::Commons::Awaitable<void> co_process_request_trans_(
       TriggersMatchInfoList& delegate_imps,
@@ -220,6 +220,7 @@ namespace RequestInfoSvcs
     AdServer::Commons::Awaitable<void> co_process_click_trans_(
       bool& delegate_click,
       TriggerActionProcessor::TriggersMatchInfo& click_matches_info,
+      const Commons::UserId& user_id,
       const Commons::RequestId& request_id,
       const Generics::Time& time)
       /*throw(Exception)*/;
@@ -244,17 +245,16 @@ namespace RequestInfoSvcs
     const unsigned long positive_triggers_group_size_;
     const unsigned long negative_triggers_group_size_;
     const unsigned long max_trigger_visits_;
+    const unsigned long common_chunks_number_;
     const Generics::Time user_expire_time_;
     const Generics::Time request_expire_time_;
     Config::ChannelInfo_var default_channel_info_;
 
     UserProfileMap_var user_map_;
-    RequestProfileMap_var request_map_;
+    RequestProfileMapByChunk request_maps_;
 
     ReferenceCounting::PtrHolder<Config_var> config_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserTriggerMatchContainer>
-    UserTriggerMatchContainer_var;
-}
+  using UserTriggerMatchContainer_var = ReferenceCounting::SmartPtr<UserTriggerMatchContainer>;
 }

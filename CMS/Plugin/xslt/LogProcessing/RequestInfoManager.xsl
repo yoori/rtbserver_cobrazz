@@ -118,7 +118,7 @@
   <xsl:variable name="request-chunks-root"
     select="concat($cache-root, '/', $request-dir-name, '/')"/>
   <xsl:variable name="bid-chunks-root"
-    select="concat($cache-root, '/Bid/')"/>
+    select="concat($cache-root, '/RequestInfoManager/Bid/')"/>
   <xsl:variable name="user-fraud-protection-chunks-root"
     select="concat($cache-root, '/RequestInfoManager/', $user-fraud-protection-dir-name)"/>
 

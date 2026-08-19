@@ -324,7 +324,8 @@
           rwlevel_max_size="{$rwlevel-max-size}"
           max_undumped_size="{$max-undumped-size}"
           max_levels0="20"
-          chunks_root="{concat($cache-root, '/RequestTriggerMatch/')}"
+          chunks_root="{$chunks-root}"
+          chunks_number="{$distrib-count}"
           expire_time="172800"/>
       </cfg:TriggerImpsConfig>
     </xsl:if>
