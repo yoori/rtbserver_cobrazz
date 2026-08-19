@@ -86,6 +86,8 @@ namespace
 
   Generics::TaskRunner_var pool_task_runner =
     new Generics::TaskRunner(callback, 1, 1);
+  MoveTaskScheduler_var move_task_scheduler =
+    new MoveTaskScheduler(pool_task_runner, 1, 1, Generics::Time());
 }
 
 void
@@ -156,7 +158,7 @@ make_threaded_route_processor(
       true,
       false,
       ST_ROUND_ROBIN,
-      pool_task_runner,
+      move_task_scheduler,
       "",
       fetch_type));
 }

@@ -9,7 +9,6 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-import xml.etree.ElementTree as ElementTree
 
 
 SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -27,15 +26,17 @@ def dictionary_options(args):
   return result
 
 
-def training_features_size(feature_config):
-  root = ElementTree.parse(feature_config).getroot()
-  model = next(
-    (element for element in root if element.tag.rsplit('}', 1)[-1] == 'Model'),
-    None)
-  if model is None:
-    raise RuntimeError("Model is missing in '" + feature_config + "'")
-  dimension = int(model.attrib['features_dimension'])
-  return 1 << dimension
+def training_feature_config(feature_config):
+  with open(feature_config) as input_file:
+    config = json.load(input_file)
+  dimension = config.get('features_dimension')
+  features = config.get('features')
+  if not isinstance(dimension, int) or dimension <= 0:
+    raise RuntimeError(
+      "Invalid features_dimension in '" + feature_config + "'")
+  if not isinstance(features, list) or not features:
+    raise RuntimeError("Features are missing in '" + feature_config + "'")
+  return dimension, features
 
 
 def runtime_catboost_model(runtime_config_dir):
@@ -63,7 +64,12 @@ def runtime_catboost_model(runtime_config_dir):
   model_file = pathlib.Path(runtime_config_dir) / model['file']
   if not model_file.is_file():
     raise RuntimeError("CatBoost model is missing: '" + str(model_file) + "'")
-  return model_file, int(model['features_size'])
+  features = model.get('features')
+  if not isinstance(features, list) or not features:
+    raise RuntimeError(
+      "Features are missing for the CatBoost model in '" +
+      str(config_file) + "'")
+  return model_file, int(model['features_size']), features
 
 
 def input_rows(input_file):
@@ -77,11 +83,11 @@ def input_rows(input_file):
     return header, rows
 
 
-def run_generate_svm(args, output_file):
+def run_generate_svm(args, feature_config, output_file):
   command = [
     args.ctr_generator,
     'generate-svm',
-    args.feature_config,
+    feature_config,
     '--model=catboost',
     *dictionary_options(args),
   ]
@@ -154,7 +160,7 @@ def main():
   parser.add_argument(
     '--feature-config',
     required=True,
-    help='CTRGenerator XML feature configuration.')
+    help='CTRGenerator JSON feature configuration.')
   parser.add_argument(
     '--runtime-config-dir',
     required=True,
@@ -174,17 +180,44 @@ def main():
   args = parser.parse_args()
 
   header, rows = input_rows(args.input)
-  model_file, runtime_features_size = runtime_catboost_model(
+  model_file, runtime_features_size, runtime_features = runtime_catboost_model(
     args.runtime_config_dir)
-  train_features_size = training_features_size(args.feature_config)
+  features_dimension, training_features = training_feature_config(
+    args.feature_config)
+  train_features_size = 1 << features_dimension
   if runtime_features_size != train_features_size:
     raise RuntimeError(
       'features_size mismatch: training=' + str(train_features_size) +
       ', runtime=' + str(runtime_features_size))
 
+  training_feature_signatures = {
+    frozenset(feature)
+    for feature in training_features
+  }
+  missing_runtime_features = [
+    feature
+    for feature in runtime_features
+    if frozenset(feature) not in training_feature_signatures
+  ]
+  if missing_runtime_features:
+    raise RuntimeError(
+      'Runtime features are absent in training configuration: ' +
+      repr(missing_runtime_features))
+
   with tempfile.TemporaryDirectory(prefix='catboost-feature-parity-') as temp_dir:
+    filtered_feature_config = pathlib.Path(temp_dir) / 'features.filtered.json'
+    with filtered_feature_config.open('w') as output:
+      json.dump(
+        {
+          'features_dimension': features_dimension,
+          'features': runtime_features,
+        },
+        output,
+        indent=2)
+      output.write('\n')
+
     svm_file = str(pathlib.Path(temp_dir) / 'RImpressionTrain.libsvm')
-    run_generate_svm(args, svm_file)
+    run_generate_svm(args, str(filtered_feature_config), svm_file)
     python_predictions = run_python_predict(
       args,
       svm_file,

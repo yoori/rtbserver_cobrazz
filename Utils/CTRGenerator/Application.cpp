@@ -8,7 +8,6 @@
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/BitAlgs.hpp>
-#include <xsd/Utils/CTRGeneratorConfig.hpp>
 #include <xsd/Utils/CTRGeneratorDataConfig.hpp>
 #include <Generics/MonoAllocator.hpp>
 #include <Commons/ErrorHandler.hpp>
@@ -22,6 +21,7 @@
 #include "CTRGenerator.hpp"
 #include "CalculateParamsFilter.hpp"
 #include "EntityUtils.hpp"
+#include "FeatureConfig.hpp"
 #include "Application.hpp"
 
 using namespace AdServer::CampaignSvcs;
@@ -30,11 +30,13 @@ namespace
 {
   const char USAGE[] =
     "\nUsage: \n"
-    "CTRGenerator generate-model <CONFIG FILE> <CONFIG DATA FILE> <RESULT WEIGHT FILE>\n"
-    "CTRGenerator generate-svm <CONFIG DATA FILE> <FEATURE COLUMNS> "
+    "CTRGenerator generate-model <FEATURE CONFIG JSON> <CONFIG DATA FILE> "
+      "<RESULT WEIGHT FILE>\n"
+    "CTRGenerator generate-svm <FEATURE CONFIG JSON> <FEATURE COLUMNS> "
       "[--model=xgboost|catboost]\n"
     "\n"
-    "CTRGenerator generate-xgb-ctr <XGB MODEL FILE> <CONFIG FILE> <FEATURE COLUMNS>\n"
+    "CTRGenerator generate-xgb-ctr <XGB MODEL FILE> <FEATURE CONFIG JSON> "
+      "<FEATURE COLUMNS>\n"
     "CTRGenerator generate-ctr <CONFIG DIR> <FEATURE COLUMNS> [LINE]\n";
 }
 
@@ -311,25 +313,9 @@ Application_::generate_model_(
 {
   using namespace xsd::AdServer;
 
+  const auto config = load_ctr_generator_feature_config(config_file);
+
   Config::ErrorHandler error_handler;
-  std::unique_ptr<Configuration::CTRGeneratorType> config;
-
-  try
-  {
-    config = Configuration::CTRGenerator(config_file, error_handler);
-  }
-  catch(const xml_schema::parsing& e)
-  {
-    Stream::Error ostr;
-    ostr << "Can't parse config file '" << config_file << "': ";
-    if(error_handler.has_errors())
-    {
-      std::string error_string;
-      ostr << error_handler.text(error_string);
-    }
-
-    throw Exception(ostr);
-  }
 
   std::unique_ptr<Configuration::CTRGeneratorDataType> config_data;
 
@@ -351,52 +337,15 @@ Application_::generate_model_(
   }
 
   // parse model config
-  unsigned long dimension = config->Model().features_dimension();
+  const unsigned long dimension = config.features_dimension;
   const unsigned long features_size = 1UL << dimension;
-
-  CTRGenerator::FeatureList result_features;
   CTR::FeatureNameResolver feature_name_resolver;
-
-  // configure model
-  for(Configuration::ModelType::Feature_sequence::const_iterator feature_it =
-        config->Model().Feature().begin();
-      feature_it != config->Model().Feature().end(); ++feature_it)
-  {
-    CTRGenerator::Feature result_feature;
-
-    for(Configuration::FeatureType::BasicFeature_sequence::
-          const_iterator basic_feature_it =
-            feature_it->BasicFeature().begin();
-        basic_feature_it != feature_it->BasicFeature().end();
-        ++basic_feature_it)
-    {
-      CTR::BasicFeature basic_feature;
-      if(!result_feature.name.empty())
-      {
-        result_feature.name += ",";
-      }
-
-      result_feature.name += basic_feature_it->name();
-
-      if(!feature_name_resolver.basic_feature_by_name(
-           basic_feature, basic_feature_it->name()))
-      {
-        Stream::Error ostr;
-        ostr << "Invalid basic feature name: '" << basic_feature_it->name() << "'";
-        throw Exception(ostr);
-      }
-
-      result_feature.basic_features.insert(basic_feature);
-    }
-
-    result_features.push_back(result_feature);
-  }
 
   // fetch values
   std::vector<float> weights;
-  weights.resize(1 << dimension, config_data->default_weight());
+  weights.resize(features_size, config_data->default_weight());
 
-  CTRGenerator ctr_generator(result_features, false);
+  CTRGenerator ctr_generator(config.features, false);
   CalculateParamsFiller calc_params_filler;
 
   unsigned long value_i = 0;
@@ -560,60 +509,12 @@ Application_::generate_svm_(
     load_dictionary_(names, name_dictionary_file_path);
   }
 
-  Config::ErrorHandler error_handler;
-  std::unique_ptr<Configuration::CTRGeneratorType> config;
-
-  try
-  {
-    config = Configuration::CTRGenerator(config_file, error_handler);
-  }
-  catch(const xml_schema::parsing& e)
-  {
-    Stream::Error ostr;
-    ostr << "Can't parse config file '" << config_file << "': ";
-    if(error_handler.has_errors())
-    {
-      std::string error_string;
-      ostr << error_handler.text(error_string);
-    }
-
-    throw Exception(ostr);
-  }
+  const auto config = load_ctr_generator_feature_config(config_file);
 
   // parse model config
-  unsigned long dimension = config->Model().features_dimension();
+  const unsigned long dimension = config.features_dimension;
   const unsigned long features_size = 1UL << dimension;
-
-  CTRGenerator::FeatureList result_features;
   CTR::FeatureNameResolver feature_name_resolver;
-
-  // configure model
-  for(Configuration::ModelType::Feature_sequence::const_iterator feature_it =
-        config->Model().Feature().begin();
-      feature_it != config->Model().Feature().end(); ++feature_it)
-  {
-    CTRGenerator::Feature result_feature;
-
-    for(Configuration::FeatureType::BasicFeature_sequence::
-          const_iterator basic_feature_it =
-            feature_it->BasicFeature().begin();
-        basic_feature_it != feature_it->BasicFeature().end();
-        ++basic_feature_it)
-    {
-      CTR::BasicFeature basic_feature;
-      if(!feature_name_resolver.basic_feature_by_name(
-           basic_feature, basic_feature_it->name()))
-      {
-        Stream::Error ostr;
-        ostr << "Invalid basic feature name: '" << basic_feature_it->name() << "'";
-        throw Exception(ostr);
-      }
-
-      result_feature.basic_features.insert(basic_feature);
-    }
-
-    result_features.push_back(result_feature);
-  }
 
   // parse columns
   std::map<unsigned long, unsigned long> feature_columns;
@@ -663,7 +564,7 @@ Application_::generate_svm_(
   }
 
   // fetch input (values)
-  CTRGenerator ctr_generator(result_features, !catboost_model);
+  CTRGenerator ctr_generator(config.features, !catboost_model);
   CalculateParamsFiller calc_params_filler;
 
   unsigned long line_i = 0;
@@ -880,60 +781,12 @@ Application_::generate_xgb_ctr_(
   CTR::XGBoostPredictorPool::Predictor_var xgb_predictor =
     xgb_pool->get_predictor();
 
-  Config::ErrorHandler error_handler;
-  std::unique_ptr<Configuration::CTRGeneratorType> config;
-
-  try
-  {
-    config = Configuration::CTRGenerator(config_file, error_handler);
-  }
-  catch(const xml_schema::parsing& e)
-  {
-    Stream::Error ostr;
-    ostr << "Can't parse config file '" << config_file << "': ";
-    if(error_handler.has_errors())
-    {
-      std::string error_string;
-      ostr << error_handler.text(error_string);
-    }
-
-    throw Exception(ostr);
-  }
+  const auto config = load_ctr_generator_feature_config(config_file);
 
   // parse model config
-  unsigned long dimension = config->Model().features_dimension();
+  const unsigned long dimension = config.features_dimension;
   const unsigned long features_size = 1UL << dimension;
-
-  CTRGenerator::FeatureList result_features;
   CTR::FeatureNameResolver feature_name_resolver;
-
-  // configure model
-  for(Configuration::ModelType::Feature_sequence::const_iterator feature_it =
-        config->Model().Feature().begin();
-      feature_it != config->Model().Feature().end(); ++feature_it)
-  {
-    CTRGenerator::Feature result_feature;
-
-    for(Configuration::FeatureType::BasicFeature_sequence::
-          const_iterator basic_feature_it =
-            feature_it->BasicFeature().begin();
-        basic_feature_it != feature_it->BasicFeature().end();
-        ++basic_feature_it)
-    {
-      CTR::BasicFeature basic_feature;
-      if(!feature_name_resolver.basic_feature_by_name(
-           basic_feature, basic_feature_it->name()))
-      {
-        Stream::Error ostr;
-        ostr << "Invalid basic feature name: '" << basic_feature_it->name() << "'";
-        throw Exception(ostr);
-      }
-
-      result_feature.basic_features.insert(basic_feature);
-    }
-
-    result_features.push_back(result_feature);
-  }
 
   // parse columns
   std::map<unsigned long, unsigned long> feature_columns;
@@ -955,6 +808,10 @@ Application_::generate_xgb_ctr_(
       {
         feature_columns[CalculateParamsFiller::BF_TIMESTAMP] = column_i;
       }
+      else if(*it == "link" || *it == "Link")
+      {
+        feature_columns[CalculateParamsFiller::BF_LINK] = column_i;
+      }
       else if(!it->empty() && (*it)[0] != '#')
       {
         String::AsciiStringManip::to_lower(*it);
@@ -973,7 +830,7 @@ Application_::generate_xgb_ctr_(
   }
 
   // fetch input (values)
-  CTRGenerator ctr_generator(result_features, true);
+  CTRGenerator ctr_generator(config.features, true);
   CalculateParamsFiller calc_params_filler;
 
   unsigned long line_i = 0;
@@ -1166,6 +1023,10 @@ Application_::generate_ctr_(
       else if(*it == "timestamp" || *it == "Timestamp")
       {
         feature_columns[CalculateParamsFiller::BF_TIMESTAMP] = column_i;
+      }
+      else if(*it == "link" || *it == "Link")
+      {
+        feature_columns[CalculateParamsFiller::BF_LINK] = column_i;
       }
       else if(!it->empty() && (*it)[0] != '#')
       {

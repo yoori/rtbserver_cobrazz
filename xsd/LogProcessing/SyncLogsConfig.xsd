@@ -131,6 +131,24 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+
+    <xsd:attribute name="soft_pool_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum number of concurrent move tasks while all pending files are
+          younger than soft_pool_max_file_age.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="soft_pool_max_file_age" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum file age in seconds for applying soft_pool_threads.
+          Older pending files are processed using pool_threads.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="FetchRouteGroupType">

@@ -3,11 +3,12 @@ include_directories(/opt/foros/vanga/include)
 add_library(CTRGeneratorLib SHARED
   CalculateParamsFilter.cpp
   CTRGenerator.cpp
+  FeatureConfig.cpp
 )
 
 target_link_libraries(CTRGeneratorLib
+  Commons
   Generics
-  CTRGeneratorConfigXSD
   CTRGeneratorDataConfigXSD
   SVMGeneratorConfigXSD
   CTRProvider

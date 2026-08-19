@@ -3,6 +3,8 @@
 #include <Generics/DirSelector.hpp>
 #include <Commons/PathManip.hpp>
 
+#include <sys/stat.h>
+
 #include "FileRouter.hpp"
 #include "RSyncFileRouter.hpp"
 
@@ -13,10 +15,119 @@ namespace Aspect
   const char SYNC_LOGS[] = "SyncLogs";
 }
 
-namespace AdServer
+namespace AdServer::LogProcessing
 {
-namespace LogProcessing
-{
+  MoveTaskScheduler::MoveTaskScheduler(
+    Generics::TaskRunner* task_runner,
+    unsigned hard_threads,
+    unsigned soft_threads,
+    const Generics::Time& soft_max_file_age)
+    : task_runner_(ReferenceCounting::add_ref(task_runner)),
+      hard_threads_(hard_threads),
+      soft_threads_(soft_threads),
+      soft_max_file_age_(soft_max_file_age),
+      soft_mode_enabled_(soft_threads < hard_threads && soft_max_file_age > Generics::Time::ZERO)
+  {}
+
+  MoveTaskScheduler::ScheduledTask::ScheduledTask(
+    const std::shared_ptr<MoveTaskScheduler>& scheduler,
+    Generics::Task* task)
+    : scheduler_(scheduler),
+      task_(ReferenceCounting::add_ref(task))
+  {}
+
+  void
+  MoveTaskScheduler::ScheduledTask::execute() noexcept
+  {
+    task_->execute();
+    scheduler_->task_finished_();
+  }
+
+  void
+  MoveTaskScheduler::enqueue_task(Generics::Task* task, const char* file_path)
+  {
+    if (!soft_mode_enabled_)
+    {
+      task_runner_->enqueue_task(task);
+      return;
+    }
+
+    struct stat file_stat;
+    if (::stat(file_path, &file_stat) != 0)
+    {
+      eh::throw_errno_exception<Exception>(
+        "MoveTaskScheduler::enqueue_task(): stat failed for '",
+        file_path,
+        "'");
+    }
+
+    enqueue_task(task, Generics::Time(file_stat.st_mtime));
+  }
+
+  void
+  MoveTaskScheduler::enqueue_task(Generics::Task* task, const Generics::Time& modification_time)
+  {
+    if (!soft_mode_enabled_)
+    {
+      task_runner_->enqueue_task(task);
+      return;
+    }
+
+    SyncPolicy::WriteGuard lock(lock_);
+    pending_tasks_.emplace(
+      PendingKey(modification_time, next_task_id_++),
+      ReferenceCounting::add_ref(task));
+    dispatch_();
+  }
+
+  void
+  MoveTaskScheduler::task_finished_() noexcept
+  {
+    try
+    {
+      SyncPolicy::WriteGuard lock(lock_);
+      assert(running_tasks_ > 0);
+      --running_tasks_;
+      dispatch_();
+    }
+    catch (...)
+    {}
+  }
+
+  void
+  MoveTaskScheduler::dispatch_()
+  {
+    while (!pending_tasks_.empty())
+    {
+      const auto now = Generics::Time::get_time_of_day();
+      const bool overdue = pending_tasks_.begin()->first.first < now - soft_max_file_age_;
+      const unsigned threads = overdue ? hard_threads_ : soft_threads_;
+
+      if (running_tasks_ >= threads)
+      {
+        return;
+      }
+
+      auto it = pending_tasks_.begin();
+      const PendingKey key = it->first;
+      Generics::Task_var task = std::move(it->second);
+      pending_tasks_.erase(it);
+      ++running_tasks_;
+
+      try
+      {
+        task_runner_->enqueue_task(Generics::Task_var(
+          new ScheduledTask(shared_from_this(), task)));
+      }
+      catch (...)
+      {
+        --running_tasks_;
+        pending_tasks_.emplace(key, std::move(task));
+        throw;
+      }
+    }
+  }
+
   namespace
   {
     const char INTERMEDIATE_DIR[] = "Intermediate";
@@ -32,9 +143,7 @@ namespace LogProcessing
       {}
 
       void
-      operator ()(
-        const char* full_path,
-        const struct stat&)
+      operator ()(const char* full_path, const struct stat&)
         /*throw(eh::Exception)*/
       {
         container_.push_back(new FileReceiver::FileGuard(full_path));
@@ -44,11 +153,10 @@ namespace LogProcessing
       Container& container_;
     };
 
-    class FileEntryLess :
-      std::binary_function<
-        BasicFeedRouteProcessor::FileEntry,
-        BasicFeedRouteProcessor::FileEntry,
-        bool>
+    class FileEntryLess : std::binary_function<
+      BasicFeedRouteProcessor::FileEntry,
+      BasicFeedRouteProcessor::FileEntry,
+      bool>
     {
     public:
       bool operator() (
@@ -87,7 +195,7 @@ namespace LogProcessing
 
     try
     {
-      if(!parse_source_ && feed_type != ST_ROUND_ROBIN)
+      if (!parse_source_ && feed_type != ST_ROUND_ROBIN)
       {
         Stream::Error err;
         err << "Have to parse source for type ";
@@ -111,39 +219,31 @@ namespace LogProcessing
 
       FileRouter_var local_file_router;
 
-      if(local_copy_command_type == CT_RSYNC)
+      if (local_copy_command_type == CT_RSYNC)
       {
-        local_file_router =
-          new RSyncFileRouter(local_copy_command_templ, post_command);
+        local_file_router = new RSyncFileRouter(local_copy_command_templ, post_command);
       }
-      else if(local_copy_command_type == CT_GENERIC)
+      else if (local_copy_command_type == CT_GENERIC)
       {
-        local_file_router =
-          new AppFileRouter(local_copy_command_templ, post_command);
+        local_file_router = new AppFileRouter(local_copy_command_templ, post_command);
       }
 
       FileRouter_var remote_file_router;
 
-      if(remote_copy_command_type == CT_RSYNC)
+      if (remote_copy_command_type == CT_RSYNC)
       {
-        remote_file_router =
-          new RSyncFileRouter(remote_copy_command_templ, post_command);
+        remote_file_router = new RSyncFileRouter(remote_copy_command_templ, post_command);
       }
-      else if(remote_copy_command_type == CT_GENERIC)
+      else if (remote_copy_command_type == CT_GENERIC)
       {
-        remote_file_router =
-          new AppFileRouter(remote_copy_command_templ, post_command);
+        remote_file_router = new AppFileRouter(remote_copy_command_templ, post_command);
       }
 
-      PathManip::split_path(
-        src_files_pattern,
-        &src_dir_,
-        &file_mask_,
-        !parse_source);
+      PathManip::split_path(src_files_pattern, &src_dir_, &file_mask_, !parse_source);
 
-      if(parse_source)
+      if (parse_source)
       {
-        if(file_mask_.empty())
+        if (file_mask_.empty())
         {
           Stream::Error ostr;
           ostr << FUN << ": '" << src_files_pattern << "' not a file name mask";
@@ -160,7 +260,7 @@ namespace LogProcessing
             TemplateParams::MARKER);
           file_mask_ = templ.instantiate(templ_args);
         }
-        catch(const eh::Exception& e)
+        catch (const eh::Exception& e)
         {
           Stream::Error ostr;
           ostr << FUN << ": eh::Exception on instancing HASH template. "
@@ -190,13 +290,13 @@ namespace LogProcessing
 
       add_child_object(mover_.in());
     }
-    catch(const FileRouter::Exception& e)
+    catch (const FileRouter::Exception& e)
     {
       Stream::Error ostr;
       ostr << FUN << ": caught FileRouter::Exception: " << e.what();
       throw Exception(ostr);
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
       ostr << FUN << ": eh::Exception. : " << e.what();
@@ -208,19 +308,18 @@ namespace LogProcessing
   {
     static const char* FUN = "BasicFeedRouteProcessor::process(): ";
 
-    for(StringList::iterator unlink_it = unlink_files_.begin();
-        unlink_it != unlink_files_.end(); )
+    for(StringList::iterator unlink_it = unlink_files_.begin(); unlink_it != unlink_files_.end(); )
     {
       try
       {
         Utils::unlink_file(unlink_it->c_str());
         unlink_files_.erase(unlink_it++);
       }
-      catch(const Utils::NotFound&)
+      catch (const Utils::NotFound&)
       {
         unlink_files_.erase(unlink_it++);
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         ++unlink_it;
 
@@ -234,7 +333,7 @@ namespace LogProcessing
       }
     }
 
-    if(unlink_files_.empty())
+    if (unlink_files_.empty())
     {
       try
       {
@@ -243,20 +342,18 @@ namespace LogProcessing
           Stream::Error ostr;
           ostr << FUN << ": searching for files matching the '" <<
             src_dir_ << "/" << file_mask_ << "' pattern.";
-          error_logger_->log(ostr.str(),
-            Logging::Logger::TRACE, Aspect::SYNC_LOGS);
+          error_logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::SYNC_LOGS);
         }
 
         FileEntries process_files;
 
         if (parse_source_)
         {
-          make_file_list_for_feed_(process_files);
+          process_files = make_file_list_for_feed_();
         }
         else
         {
-          process_files.push_back(
-            new FileReceiver::FileGuard(file_mask_.c_str()));
+          process_files.push_back(new FileReceiver::FileGuard(file_mask_.c_str()));
         }
 
         std::string src_dir = src_dir_;
@@ -269,10 +366,10 @@ namespace LogProcessing
 
         process_files_(unlink_files_, process_files, src_dir.c_str());
       }
-      catch(const Utils::UnlinkException& ex)
+      catch (const Utils::UnlinkException& ex)
       {
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN << ": can't do processing: " << ex.what();
@@ -301,8 +398,7 @@ namespace LogProcessing
       return FT_COMMITED;
     }
 
-    throw Exception(
-      str + " is invalid value for fetch type of feed route");
+    throw Exception(str + " is invalid value for fetch type of feed route");
   }
 
   void
@@ -317,17 +413,17 @@ namespace LogProcessing
       file_receiver_ = new FileReceiver(
         intermediate_path.c_str(),
         MAX_FILES_TO_STORE,
-        Generics::ActiveObject_var(),  //interrupter
+        Generics::ActiveObject_var(), // interrupter
         0); // logger
     }
   }
 
-  void
-  BasicFeedRouteProcessor::make_file_list_for_feed_(
-    FileEntries& files_in_dir) const
+  BasicFeedRouteProcessor::FileEntries
+  BasicFeedRouteProcessor::make_file_list_for_feed_() const
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "FeedRouteProcessor::make_file_list_for_feed_()";
+    FileEntries files_in_dir;
 
     if (file_receiver_)
     {
@@ -363,6 +459,8 @@ namespace LogProcessing
         Logging::Logger::TRACE,
         Aspect::SYNC_LOGS);
     }
+
+    return files_in_dir;
   }
 
   /* FeedRouteProcessor */
@@ -417,7 +515,7 @@ namespace LogProcessing
     {
       while (file_it != process_files.end() && active())
       {
-        if(!mover_->move(src_dir, (*file_it)->file_name().c_str()))
+        if (!mover_->move(src_dir, (*file_it)->file_name().c_str()))
         {
           break;
         }
@@ -425,11 +523,11 @@ namespace LogProcessing
         ++file_it;
       } // End of directory files listing
     }
-    catch(const Utils::UnlinkException& ex)
+    catch (const Utils::UnlinkException& ex)
     {
       unlink_files.push_back(ex.file_name);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": can't do processing: " << ex.what();
@@ -462,7 +560,7 @@ namespace LogProcessing
     bool unlink_source,
     bool interruptible,
     SchedType feed_type,
-    Generics::TaskRunner* task_runner,
+    const MoveTaskScheduler_var& task_scheduler,
     const char* post_command,
     FetchType fetch_type)
     /*throw(BasicFeedRouteProcessor::Exception)*/
@@ -483,7 +581,7 @@ namespace LogProcessing
         feed_type,
         post_command,
         fetch_type),
-      task_runner_(ReferenceCounting::add_ref(task_runner)),
+      task_scheduler_(task_scheduler),
       move_state_(new MoveState())
   {}
 
@@ -509,15 +607,15 @@ namespace LogProcessing
       unsigned long tasks_enqueued = 0;
 
       for (FileEntries::const_iterator file_it = process_files.begin();
-        file_it != process_files.end() && active();
-        ++file_it)
+        file_it != process_files.end() && active(); ++file_it)
       {
-        task_runner_->enqueue_task(Generics::Task_var(
-          new MoveTask(
+        task_scheduler_->enqueue_task(
+          Generics::Task_var(new MoveTask(
             mover_,
             move_state_,
             src_dir,
-            *file_it)));
+            *file_it)),
+          (*file_it)->full_path().c_str());
         ++tasks_enqueued;
       }
 
@@ -526,11 +624,11 @@ namespace LogProcessing
         move_state_->tasks_count.acquire();
       }
     }
-    catch(const Utils::UnlinkException& ex)
+    catch (const Utils::UnlinkException& ex)
     {
       unlink_files.push_back(ex.file_name);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": can't do processing: " << ex.what();
@@ -539,6 +637,6 @@ namespace LogProcessing
         Aspect::SYNC_LOGS,
         "ADS-IMPL-202");
     }
+
   }
-}
 }

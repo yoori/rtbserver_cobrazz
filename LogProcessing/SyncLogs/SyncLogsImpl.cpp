@@ -105,9 +105,46 @@ namespace LogProcessing
         const Routes& routes = feed_route_group_it->Route();
         unsigned long pool_threads = feed_route_group_it->pool_threads();
         Generics::TaskRunner_var pool_task_runner;
+        MoveTaskScheduler_var move_task_scheduler;
         if(pool_threads)
         {
           pool_task_runner = new Generics::TaskRunner(callback_, pool_threads, 1);
+
+          const bool soft_pool_threads_present =
+            feed_route_group_it->soft_pool_threads().present();
+          const bool soft_pool_max_file_age_present =
+            feed_route_group_it->soft_pool_max_file_age().present();
+
+          if(soft_pool_threads_present != soft_pool_max_file_age_present)
+          {
+            throw Exception(
+              "soft_pool_threads and soft_pool_max_file_age must be specified together");
+          }
+
+          unsigned long soft_pool_threads = pool_threads;
+          Generics::Time soft_pool_max_file_age;
+          if(soft_pool_threads_present)
+          {
+            soft_pool_threads = feed_route_group_it->soft_pool_threads().get();
+            if(soft_pool_threads > pool_threads)
+            {
+              throw Exception("soft_pool_threads must not exceed pool_threads");
+            }
+
+            soft_pool_max_file_age = Generics::Time(
+              feed_route_group_it->soft_pool_max_file_age().get());
+          }
+
+          move_task_scheduler = std::make_shared<MoveTaskScheduler>(
+            pool_task_runner,
+            pool_threads,
+            soft_pool_threads,
+            soft_pool_max_file_age);
+        }
+        else if(feed_route_group_it->soft_pool_threads().present() ||
+          feed_route_group_it->soft_pool_max_file_age().present())
+        {
+          throw Exception("soft pool settings require non-zero pool_threads");
         }
 
         unsigned long check_period = feed_route_group_it->check_logs_period().present() ?
@@ -252,7 +289,7 @@ namespace LogProcessing
                   feed_route_group_it->interruptible().present() ?
                     feed_route_group_it->interruptible().get() : false,
                   feed_type,
-                  pool_task_runner,
+                  move_task_scheduler,
                   post_command.c_str(),
                   fetch_type);
               }

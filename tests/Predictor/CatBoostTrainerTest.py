@@ -34,17 +34,11 @@ class CatBoostTrainerTest(unittest.TestCase):
   def test_save_campaign_manager_model(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
-      feature_config = temp_path / 'features.xml'
-      feature_config.write_text(
-        '<CTRGenerator>'
-        '<Model features_dimension="14">'
-        '<Feature><BasicFeature name="publisher"/></Feature>'
-        '<Feature>'
-        '<BasicFeature name="campaign"/>'
-        '<BasicFeature name="ccid"/>'
-        '</Feature>'
-        '</Model>'
-        '</CTRGenerator>')
+      feature_config = temp_path / 'features.json'
+      feature_config.write_text(json.dumps({
+        'features_dimension': 14,
+        'features': [['publisher'], ['campaign', 'ccid']],
+      }))
 
       output_dir = temp_path / 'CTRConfig'
       trainer = CatBoostTrainer(features_config_file=feature_config)
@@ -79,19 +73,16 @@ class CatBoostTrainerTest(unittest.TestCase):
   def test_dictionary_filters_features_and_generates_traits(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
-      feature_config = temp_path / 'features.xml'
-      feature_config.write_text(
-        '<CTRGenerator>'
-        '<Model features_dimension="14">'
-        '<Feature><BasicFeature name="publisher"/></Feature>'
-        '<Feature><BasicFeature name="tag"/></Feature>'
-        '<Feature>'
-        '<BasicFeature name="group"/>'
-        '<BasicFeature name="ccid"/>'
-        '</Feature>'
-        '<Feature><BasicFeature name="campaign_freq_log"/></Feature>'
-        '</Model>'
-        '</CTRGenerator>')
+      feature_config = temp_path / 'features.json'
+      feature_config.write_text(json.dumps({
+        'features_dimension': 14,
+        'features': [
+          ['publisher'],
+          ['tag'],
+          ['group', 'ccid'],
+          ['campaign_freq_log'],
+        ],
+      }))
       feature_dictionary = temp_path / 'features.csv'
       feature_dictionary.write_text(
         '2,publisher:123\n'
@@ -127,13 +118,11 @@ class CatBoostTrainerTest(unittest.TestCase):
   def test_failed_save_is_not_published(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
-      feature_config = temp_path / 'features.xml'
-      feature_config.write_text(
-        '<CTRGenerator>'
-        '<Model features_dimension="14">'
-        '<Feature><BasicFeature name="publisher"/></Feature>'
-        '</Model>'
-        '</CTRGenerator>')
+      feature_config = temp_path / 'features.json'
+      feature_config.write_text(json.dumps({
+        'features_dimension': 14,
+        'features': [['publisher']],
+      }))
 
       output_dir = temp_path / 'CTRConfig'
       trainer = CatBoostTrainer(features_config_file=feature_config)
@@ -149,13 +138,11 @@ class CatBoostTrainerTest(unittest.TestCase):
   def test_rejects_feature_size_mismatch(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
-      feature_config = temp_path / 'features.xml'
-      feature_config.write_text(
-        '<CTRGenerator>'
-        '<Model features_dimension="15">'
-        '<Feature><BasicFeature name="publisher"/></Feature>'
-        '</Model>'
-        '</CTRGenerator>')
+      feature_config = temp_path / 'features.json'
+      feature_config.write_text(json.dumps({
+        'features_dimension': 15,
+        'features': [['publisher']],
+      }))
 
       with self.assertRaisesRegex(ValueError, 'Feature dimension mismatch'):
         CatBoostTrainer(

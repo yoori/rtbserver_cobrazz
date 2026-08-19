@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <map>
 #include <memory>
 
 #include <Logger/Logger.hpp>
@@ -22,17 +24,83 @@
  *     that can be shared between route processors)
  *   it don't do file processing in call context for full load thread pool
  */
-namespace AdServer
+namespace AdServer::LogProcessing
 {
-namespace LogProcessing
-{
+  class MoveTaskScheduler final: public std::enable_shared_from_this<MoveTaskScheduler>
+  {
+  public:
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    MoveTaskScheduler(
+      Generics::TaskRunner* task_runner,
+      unsigned hard_threads,
+      unsigned soft_threads,
+      const Generics::Time& soft_max_file_age);
+
+    void
+    enqueue_task(
+      Generics::Task* task,
+      const char* file_path);
+
+    void
+    enqueue_task(
+      Generics::Task* task,
+      const Generics::Time& modification_time);
+
+  public:
+    ~MoveTaskScheduler() = default;
+
+  private:
+    class ScheduledTask final : public Generics::TaskImpl
+    {
+    public:
+      ScheduledTask(
+        const std::shared_ptr<MoveTaskScheduler>& scheduler,
+        Generics::Task* task);
+
+      void
+      execute() noexcept override;
+
+    protected:
+      ~ScheduledTask() override = default;
+
+    private:
+      std::shared_ptr<MoveTaskScheduler> scheduler_;
+      Generics::Task_var task_;
+    };
+
+    using PendingKey = std::pair<Generics::Time, std::uint64_t>;
+    using PendingTasks = std::map<PendingKey, Generics::Task_var>;
+    using SyncPolicy = Sync::Policy::PosixThread;
+
+    void
+    task_finished_() noexcept;
+
+    void
+    dispatch_();
+
+  private:
+    Generics::FixedTaskRunner_var task_runner_;
+    const unsigned hard_threads_;
+    const unsigned soft_threads_;
+    const Generics::Time soft_max_file_age_;
+    const bool soft_mode_enabled_;
+
+    SyncPolicy::Mutex lock_;
+    PendingTasks pending_tasks_;
+    std::uint64_t next_task_id_ = 0;
+    unsigned running_tasks_ = 0;
+  };
+
+  using MoveTaskScheduler_var = std::shared_ptr<MoveTaskScheduler>;
+
   /** BasicFeedRouteProcessor */
   class BasicFeedRouteProcessor:
     public RouteProcessor,
     public Generics::RefCountableCompositeActiveObject
   {
   public:
-    typedef FeedRouteMover::Exception Exception;
+    using Exception = FeedRouteMover::Exception;
 
     enum CommandType
     {
@@ -73,11 +141,9 @@ namespace LogProcessing
     virtual
     ~BasicFeedRouteProcessor() noexcept {}
 
-    virtual void
-    process() noexcept;
+    virtual void process() noexcept;
 
-    static FetchType
-    get_fetch_type(const std::string& str)
+    static FetchType get_fetch_type(const std::string& str)
       /*throw(Exception)*/;
 
   protected:
@@ -89,8 +155,7 @@ namespace LogProcessing
       noexcept = 0;
 
   private:
-    void
-    make_file_list_for_feed_(FileEntries& files_in_dir) const
+    FileEntries make_file_list_for_feed_() const
       /*throw(eh::Exception)*/;
 
     void
@@ -110,12 +175,10 @@ namespace LogProcessing
     FileReceiver_var file_receiver_;
   };
 
-  typedef ReferenceCounting::QualPtr<BasicFeedRouteProcessor>
-    BasicFeedRouteProcessor_var;
+  using BasicFeedRouteProcessor_var = ReferenceCounting::QualPtr<BasicFeedRouteProcessor>;
 
   /** FeedRouteProcessor */
-  class FeedRouteProcessor:
-    public BasicFeedRouteProcessor
+  class FeedRouteProcessor: public BasicFeedRouteProcessor
   {
   public:
     FeedRouteProcessor(
@@ -148,8 +211,7 @@ namespace LogProcessing
   };
 
   /** ThreadPoolFeedRouteProcessor */
-  class ThreadPoolFeedRouteProcessor:
-    public BasicFeedRouteProcessor
+  class ThreadPoolFeedRouteProcessor: public BasicFeedRouteProcessor
   {
   public:
     ThreadPoolFeedRouteProcessor(
@@ -167,7 +229,7 @@ namespace LogProcessing
       bool unlink_source,
       bool interruptible,
       SchedType feed_type,
-      Generics::TaskRunner* task_runner,
+      const MoveTaskScheduler_var& task_scheduler,
       const char* post_command,
       FetchType fetch_type)
       /*throw(BasicFeedRouteProcessor::Exception)*/;
@@ -178,8 +240,8 @@ namespace LogProcessing
   protected:
     struct MoveState: public virtual ReferenceCounting::AtomicImpl
     {
-      typedef std::set<std::string> FileNameSet;
-      typedef Sync::Policy::PosixThread SyncPolicy;
+      using FileNameSet = std::set<std::string>;
+      using SyncPolicy = Sync::Policy::PosixThread;
 
       MoveState(): tasks_count(0) {};
 
@@ -191,7 +253,7 @@ namespace LogProcessing
       virtual ~MoveState() noexcept {}
     };
 
-    typedef ReferenceCounting::FixedPtr<MoveState> FixedMoveState_var;
+    using FixedMoveState_var = ReferenceCounting::FixedPtr<MoveState>;
 
     class MoveTask:
       public virtual Generics::Task,
@@ -231,15 +293,12 @@ namespace LogProcessing
       noexcept;
 
   private:
-    Generics::FixedTaskRunner_var task_runner_;
+    MoveTaskScheduler_var task_scheduler_;
     FixedMoveState_var move_state_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   inline
   void
@@ -252,7 +311,7 @@ namespace LogProcessing
         src_file_->revert();
       }
     }
-    catch(const Utils::UnlinkException& ex)
+    catch (const Utils::UnlinkException& ex)
     {
       MoveState::SyncPolicy::WriteGuard lock(move_state_->lock);
       move_state_->unlink_files.insert(ex.file_name);
@@ -260,5 +319,4 @@ namespace LogProcessing
 
     move_state_->tasks_count.release();
   }
-}
 }

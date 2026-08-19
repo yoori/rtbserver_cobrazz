@@ -8,7 +8,6 @@ import re
 import shutil
 import sklearn.model_selection
 import tempfile
-import xml.etree.ElementTree as ElementTree
 from catboost import CatBoostClassifier, Pool
 
 from rtbserver_utils.CatBoostFeatures import load_catboost_svm
@@ -226,35 +225,32 @@ class CatBoostTrainer(object):
 
   @staticmethod
   def read_features_config_(features_config_file):
-    root = ElementTree.parse(features_config_file).getroot()
-    model_element = next(
-      (element for element in root
-       if element.tag.rsplit('}', 1)[-1] == 'Model'),
-      None)
-    if model_element is None:
+    with pathlib.Path(features_config_file).open() as input_file:
+      config = json.load(input_file)
+
+    dimension = config.get('features_dimension')
+    if (
+        not isinstance(dimension, int) or
+        isinstance(dimension, bool) or
+        dimension <= 0):
       raise ValueError(
-        "Model is missing in feature config '" +
+        "Invalid features_dimension in feature config '" +
         str(features_config_file) + "'")
 
-    features = []
-    for feature_element in model_element:
-      if feature_element.tag.rsplit('}', 1)[-1] != 'Feature':
-        continue
-
-      basic_features = [
-        element.attrib['name']
-        for element in feature_element
-        if element.tag.rsplit('}', 1)[-1] == 'BasicFeature'
-      ]
-      if basic_features:
-        features.append(basic_features)
-
-    if not features:
+    features = config.get('features')
+    if (
+        not isinstance(features, list) or
+        not features or
+        any(
+          not isinstance(feature, list) or
+          not feature or
+          any(not isinstance(name, str) or not name for name in feature)
+          for feature in features)):
       raise ValueError(
-        "Features are missing in feature config '" +
+        "Invalid features in feature config '" +
         str(features_config_file) + "'")
 
-    return int(model_element.attrib['features_dimension']), features
+    return dimension, features
 
   @staticmethod
   def write_campaign_manager_config_(

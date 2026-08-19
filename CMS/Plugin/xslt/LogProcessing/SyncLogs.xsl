@@ -57,7 +57,7 @@
   <xsl:param name="dir-suffix" select="''"/>
 
   <xsl:if test="string-length($source-hosts) > 0">
-    <cfg:Route post_command="touch ##SRC_DIR##/~##FILE_NAME##.commit.##DST_HOST##"
+    <cfg:Route post_command="touch -r ##SRC_PATH## ##SRC_DIR##/~##FILE_NAME##.commit.##DST_HOST##"
       type="{$type}">
 
       <xsl:for-each select="exsl:node-set($dirs)//dir">
@@ -464,7 +464,9 @@
         <xsl:value-of select="$workspace-root"/>/run/ExpressionMatcherDistribution.xml</xsl:variable>
 
       <cfg:FeedRouteGroup
-        pool_threads="10"
+        pool_threads="20"
+        soft_pool_threads="1"
+        soft_pool_max_file_age="120"
         local_copy_command_type="rsync"
         remote_copy_command_type="rsync"
         tries_per_file="2"
@@ -735,7 +737,9 @@
 
       <xsl:if test="$campaign-manager-ram-enabled">
         <cfg:FeedRouteGroup
-          pool_threads="10"
+          pool_threads="20"
+          soft_pool_threads="1"
+          soft_pool_max_file_age="120"
           check_logs_period="1"
           local_copy_command_type="rsync"
           remote_copy_command_type="rsync"
@@ -853,6 +857,8 @@
 
       <cfg:FeedRouteGroup
         pool_threads="20"
+        soft_pool_threads="1"
+        soft_pool_max_file_age="120"
         local_copy_command_type="rsync"
         remote_copy_command_type="rsync"
         tries_per_file="2"
@@ -880,6 +886,8 @@
       <xsl:if test="$campaign-manager-ram-enabled">
         <cfg:FeedRouteGroup
           pool_threads="20"
+          soft_pool_threads="1"
+          soft_pool_max_file_age="120"
           check_logs_period="1"
           local_copy_command_type="rsync"
           remote_copy_command_type="rsync"
