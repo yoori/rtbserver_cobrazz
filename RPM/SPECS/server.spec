@@ -40,7 +40,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv616%{?dist}
+Release: ssv617%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -172,6 +172,7 @@ Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Ru
 Requires: python3.12
 Requires: python3.12-aiohttp python3.12-psycopg2
 Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect python3.12-scikit-learn
+Requires: clickhouse-client
 
 BuildRequires: xgboost-devel
 Requires: xgboost
