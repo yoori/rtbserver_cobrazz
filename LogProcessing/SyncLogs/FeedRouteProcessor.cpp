@@ -1,5 +1,3 @@
-// @file SyncLogs/FeedRouteProcessor.cpp
-
 #include <Generics/DirSelector.hpp>
 #include <Commons/PathManip.hpp>
 

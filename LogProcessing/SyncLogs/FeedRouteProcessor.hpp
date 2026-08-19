@@ -1,5 +1,3 @@
-// @file SyncLogs/FeedRouteProcessor.hpp
-
 #pragma once
 
 #include <cstdint>
@@ -38,20 +36,16 @@ namespace AdServer::LogProcessing
       const Generics::Time& soft_max_file_age);
 
     void
-    enqueue_task(
-      Generics::Task* task,
-      const char* file_path);
+    enqueue_task(Generics::Task* task, const char* file_path);
 
     void
-    enqueue_task(
-      Generics::Task* task,
-      const Generics::Time& modification_time);
+    enqueue_task(Generics::Task* task, const Generics::Time& modification_time);
 
   public:
     ~MoveTaskScheduler() = default;
 
   private:
-    class ScheduledTask final : public Generics::TaskImpl
+    class ScheduledTask final: public Generics::TaskImpl
     {
     public:
       ScheduledTask(
@@ -73,11 +67,9 @@ namespace AdServer::LogProcessing
     using PendingTasks = std::map<PendingKey, Generics::Task_var>;
     using SyncPolicy = Sync::Policy::PosixThread;
 
-    void
-    task_finished_() noexcept;
+    void task_finished_() noexcept;
 
-    void
-    dispatch_();
+    void dispatch_();
 
   private:
     Generics::FixedTaskRunner_var task_runner_;
@@ -143,8 +135,7 @@ namespace AdServer::LogProcessing
 
     virtual void process() noexcept;
 
-    static FetchType get_fetch_type(const std::string& str)
-      /*throw(Exception)*/;
+    static FetchType get_fetch_type(const std::string& str) /*throw(Exception)*/;
 
   protected:
     virtual void
@@ -155,8 +146,7 @@ namespace AdServer::LogProcessing
       noexcept = 0;
 
   private:
-    FileEntries make_file_list_for_feed_() const
-      /*throw(eh::Exception)*/;
+    FileEntries make_file_list_for_feed_() const /*throw(eh::Exception)*/;
 
     void
     configure_fetch_mode_(FetchType fetch_type) /*throw(eh::Exception)*/;
