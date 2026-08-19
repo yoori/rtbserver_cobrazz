@@ -28,9 +28,9 @@ namespace AdServer::LogProcessing
   {}
 
   MoveTaskScheduler::ScheduledTask::ScheduledTask(
-    const std::shared_ptr<MoveTaskScheduler>& scheduler,
+    std::shared_ptr<MoveTaskScheduler> scheduler,
     Generics::Task* task)
-    : scheduler_(scheduler),
+    : scheduler_(std::move(scheduler)),
       task_(ReferenceCounting::add_ref(task))
   {}
 
@@ -430,8 +430,7 @@ namespace AdServer::LogProcessing
       while (!file_receiver_->empty())
       {
         std::string tmp;
-        const FileReceiver::FileGuard_var file =
-          file_receiver_->get_eldest(tmp);
+        const FileReceiver::FileGuard_var file = file_receiver_->get_eldest(tmp);
 
         if (file)
         {
@@ -452,10 +451,7 @@ namespace AdServer::LogProcessing
     {
       Stream::Error ostr;
       ostr << FUN << ": " << files_in_dir.size() << " files have been found.";
-      error_logger_->log(
-        ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::SYNC_LOGS);
+      error_logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::SYNC_LOGS);
     }
 
     return files_in_dir;
@@ -635,6 +631,5 @@ namespace AdServer::LogProcessing
         Aspect::SYNC_LOGS,
         "ADS-IMPL-202");
     }
-
   }
 }

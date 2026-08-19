@@ -49,7 +49,7 @@ namespace AdServer::LogProcessing
     {
     public:
       ScheduledTask(
-        const std::shared_ptr<MoveTaskScheduler>& scheduler,
+        std::shared_ptr<MoveTaskScheduler> scheduler,
         Generics::Task* task);
 
       void
