@@ -884,7 +884,6 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      Generics::MonoAllocatorArena arena;
       GetAdResult result;
       result.hostname = campaign_manager_config_.host();
 
@@ -1054,7 +1053,7 @@ namespace AdServer::CampaignSvcs
             rule_it->second,
             request_debug_info,
             matched_channels,
-            &arena);
+            request_params->resource());
 
           FreqCapIdSet additional_full_freq_caps(request_params->resource());
           additional_full_freq_caps.swap(ad_slot_context.result_full_freq_caps);
