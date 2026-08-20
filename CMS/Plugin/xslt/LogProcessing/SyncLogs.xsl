@@ -1182,6 +1182,10 @@
               <xsl:attribute name="source">RequestInfoManager/Out/BidCostStat/BidCostStat.2*</xsl:attribute>
               <xsl:attribute name="destination"><![CDATA[/]]>BidCostStat</xsl:attribute>
             </cfg:files>
+            <cfg:files>
+              <xsl:attribute name="source">RequestInfoManager/Out/BidCostStat/BidCost_*.csv</xsl:attribute>
+              <xsl:attribute name="destination"><![CDATA[/]]>BidCostStat</xsl:attribute>
+            </cfg:files>
             <cfg:hosts destination="-non-used-hostname">
               <xsl:attribute name="source"><xsl:value-of select="$request-info-manager-hosts"/></xsl:attribute>
             </cfg:hosts>

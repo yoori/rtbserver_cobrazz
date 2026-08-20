@@ -140,6 +140,7 @@
   <xsd:complexType name="CTRPredictModelGeneratorType">
     <xsd:attribute name="generate_period" type="xsd:positiveInteger" use="optional" default="86400"/>
     <xsd:attribute name="train_rows" type="xsd:positiveInteger" use="optional" default="1000000"/>
+    <xsd:attribute name="data_delay" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="algorithm_id" type="xsd:string" use="optional" default="catboost"/>
   </xsd:complexType>
 

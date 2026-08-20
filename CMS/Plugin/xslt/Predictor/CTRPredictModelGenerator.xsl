@@ -36,6 +36,7 @@
     test="count($generator-config/@generate_period) = 0">86400</xsl:if>,
   "train_rows": <xsl:value-of select="$generator-config/@train_rows"/><xsl:if
     test="count($generator-config/@train_rows) = 0">1000000</xsl:if>,
+  "data_delay": <xsl:value-of select="$generator-config/@data_delay"/>,
   "algorithm_id": "<xsl:value-of select="$generator-config/@algorithm_id"/><xsl:if
     test="count($generator-config/@algorithm_id) = 0">catboost</xsl:if>"
 }
