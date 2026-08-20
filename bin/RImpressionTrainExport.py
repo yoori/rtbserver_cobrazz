@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.12
 
 import argparse
 import json
@@ -26,9 +26,14 @@ def main():
   train_rows = args.rows
   if train_rows is None:
     train_rows = int(config.get('train_rows', 1000000))
+  try:
+    data_delay = int(config['data_delay'])
+  except (KeyError, TypeError, ValueError):
+    raise ValueError(
+      "Configuration value 'data_delay' must be a positive integer")
 
   exporter = RImpressionTrainExporter(config.get('clickhouse_conn', ''))
-  date_from = exporter.export(args.output, train_rows)
+  date_from = exporter.export(args.output, train_rows, data_delay)
   print(
     'output=' + args.output +
     ' rows=' + str(train_rows) +

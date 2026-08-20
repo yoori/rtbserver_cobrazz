@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3.12
 
 import argparse
 import errno
@@ -46,6 +46,7 @@ class Config:
     self.workspace_root = None
     self.generate_period = 3600.0
     self.train_rows = 1000000
+    self.data_delay = None
     self.algorithm_id = 'catboost'
 
   def init_json(self, config_json):
@@ -61,6 +62,11 @@ class Config:
     self.algorithm_id = config_json.get('algorithm_id', 'catboost')
     self.generate_period = float(config_json.get('generate_period', 3600.0))
     self.train_rows = int(config_json.get('train_rows', 1000000))
+    try:
+      self.data_delay = int(config_json['data_delay'])
+    except (KeyError, TypeError, ValueError):
+      raise ValueError(
+        "Configuration value 'data_delay' must be a positive integer")
 
     if not isinstance(self.clickhouse_conn, str):
       raise ValueError("Configuration value 'clickhouse_conn' must be a string")
@@ -70,6 +76,8 @@ class Config:
       raise ValueError('generate_period must be positive')
     if self.train_rows <= 0:
       raise ValueError('train_rows must be positive')
+    if self.data_delay <= 0:
+      raise ValueError('data_delay must be positive')
 
 
 class PidFile:
@@ -137,7 +145,7 @@ def generate_model(config):
 
   logger.debug('Loading data from ClickHouse')
   exporter = RImpressionTrainExporter(config.clickhouse_conn, logger)
-  exporter.export(csv_file, config.train_rows)
+  exporter.export(csv_file, config.train_rows, config.data_delay)
 
   logger.debug('Generating LibSVM file')
   with csv_file.open() as input_file, svm_file.open('w') as output_file:
@@ -158,7 +166,9 @@ def generate_model(config):
     raise RuntimeError('Generated LibSVM file is empty')
   logger.debug('Training on %d rows', process_rows)
 
-  trainer = CatBoostTrainer(features_config_file=features_config_file)
+  trainer = CatBoostTrainer(
+    features_config_file=features_config_file,
+    train_dir=work_dir / 'catboost_info')
   model = trainer.split_and_train(svm_file)
   result_dir = trainer.save_campaign_manager_model(
     model,

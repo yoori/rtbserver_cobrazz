@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import datetime
 import pathlib
 import subprocess
 import tempfile
@@ -27,11 +28,16 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     with tempfile.TemporaryDirectory() as temp_dir:
       output_file = pathlib.Path(temp_dir) / 'RImpressionTrain.csv'
       exporter = RImpressionTrainExporter('-h click00 --port 9000')
+      current_time = datetime.datetime(
+        2026, 8, 14, 12, 0, 0, tzinfo=datetime.timezone.utc)
       with mock.patch(
           'rtbserver_utils.RImpressionTrainExporter.subprocess.run',
           side_effect=run,
-      ):
-        date_from = exporter.export(output_file, 100)
+      ), mock.patch(
+          'rtbserver_utils.RImpressionTrainExporter.datetime.datetime',
+      ) as datetime_mock:
+        datetime_mock.now.return_value = current_time
+        date_from = exporter.export(output_file, 100, 86400)
 
       self.assertEqual(date_from, '2026-08-12')
       self.assertEqual(output_file.read_text(), 'label,Device\n1,Mobile\n')
@@ -43,7 +49,9 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       '--port',
       '9000',
     ])
+    self.assertIn("WHERE timestamp < '2026-08-13 12:00:00'", calls[0][-1])
     self.assertIn("WHERE timestamp >= '2026-08-12'", calls[1][-1])
+    self.assertIn("timestamp < '2026-08-13 12:00:00'", calls[1][-1])
     self.assertIn('LIMIT 100 FORMAT CSVWithNames', calls[1][-1])
 
   def test_empty_table(self):
@@ -54,7 +62,7 @@ class RImpressionTrainExporterTest(unittest.TestCase):
         return_value=result,
     ):
       with self.assertRaisesRegex(RuntimeError, 'contains no rows'):
-        exporter.export('/tmp/unused-RImpressionTrain.csv', 100)
+        exporter.export('/tmp/unused-RImpressionTrain.csv', 100, 86400)
 
   def test_failed_export_preserves_previous_sample(self):
     responses = [
@@ -71,7 +79,7 @@ class RImpressionTrainExporterTest(unittest.TestCase):
           side_effect=responses,
       ):
         with self.assertRaises(subprocess.CalledProcessError):
-          exporter.export(output_file, 100)
+          exporter.export(output_file, 100, 86400)
 
       self.assertEqual(output_file.read_text(), 'previous sample\n')
       self.assertEqual(

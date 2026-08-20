@@ -24,18 +24,29 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'algorithm_id': '20260819.120000',
       'generate_period': 3600,
       'train_rows': 100,
+      'data_delay': 86400,
     })
 
     self.assertEqual('/var/lib/ctr-generator', config.workspace_root)
     self.assertEqual('20260819.120000', config.algorithm_id)
     self.assertEqual(3600.0, config.generate_period)
     self.assertEqual(100, config.train_rows)
+    self.assertEqual(86400, config.data_delay)
 
   def test_required_workspace_root(self):
     config = MODULE.Config()
     with self.assertRaisesRegex(ValueError, 'workspace_root'):
       config.init_json({
         'pid_file': '/tmp/ctr-generator.pid',
+        'data_delay': 86400,
+      })
+
+  def test_required_data_delay(self):
+    config = MODULE.Config()
+    with self.assertRaisesRegex(ValueError, 'data_delay'):
+      config.init_json({
+        'pid_file': '/tmp/ctr-generator.pid',
+        'workspace_root': '/tmp/ctr-generator',
       })
 
   def test_features_config_is_embedded(self):
