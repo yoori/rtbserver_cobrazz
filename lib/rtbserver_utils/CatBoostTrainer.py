@@ -29,8 +29,14 @@ class CatBoostTrainer(object):
 
   features_size: int = None
 
-  def __init__(self, features_dimension=None, features_config_file=None):
+  def __init__(
+      self,
+      features_dimension=None,
+      features_config_file=None,
+      train_dir=None,
+  ):
     self.features_config_file = features_config_file
+    self.train_dir = train_dir
     self.features = None
     if features_config_file is not None:
       config_dimension, self.features = self.read_features_config_(
@@ -53,7 +59,8 @@ class CatBoostTrainer(object):
       learning_rate=0.1, # Step size shrinkage to prevent overfitting
       depth=6,          # Depth of the trees
       loss_function='Logloss', # Loss function for binary classification
-      verbose=0         # Suppress training output
+      verbose=0,        # Suppress training output
+      train_dir=self.train_dir,
     )
 
     print("To fit")

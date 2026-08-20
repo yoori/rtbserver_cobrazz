@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import pathlib
@@ -14,15 +15,22 @@ class RImpressionTrainExporter(object):
     ]
     self._logger = logger or logging.getLogger(__name__)
 
-  def export(self, output_file, train_rows):
+  def export(self, output_file, train_rows, data_delay):
     if train_rows <= 0:
       raise ValueError('train_rows must be positive')
+    if data_delay <= 0:
+      raise ValueError('data_delay must be positive')
 
-    date_from = self._find_date_from(train_rows)
+    date_to = (
+      datetime.datetime.now(datetime.timezone.utc) -
+      datetime.timedelta(seconds=data_delay)
+    ).strftime('%Y-%m-%d %H:%M:%S')
+    date_from = self._find_date_from(train_rows, date_to)
     self._logger.debug(
-      'Exporting up to %d RImpressionTrain rows starting from %s',
+      'Exporting up to %d RImpressionTrain rows from %s to %s',
       train_rows,
-      date_from)
+      date_from,
+      date_to)
 
     output_path = pathlib.Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -39,7 +47,7 @@ class RImpressionTrainExporter(object):
         subprocess.run(
           self._command + [
             '--query',
-            self._export_query(date_from, train_rows),
+            self._export_query(date_from, date_to, train_rows),
           ],
           check=True,
           stdout=temporary_file)
@@ -53,12 +61,13 @@ class RImpressionTrainExporter(object):
 
     return date_from
 
-  def _find_date_from(self, train_rows):
+  def _find_date_from(self, train_rows, date_to):
     result = subprocess.run(
       self._command + [
         '--query',
         (
           'SELECT toDate(timestamp), count(*) FROM RImpression '
+          "WHERE timestamp < '" + date_to + "' "
           'GROUP BY toDate(timestamp) ORDER BY toDate(timestamp) DESC'),
       ],
       check=True,
@@ -80,7 +89,7 @@ class RImpressionTrainExporter(object):
     return date_from
 
   @staticmethod
-  def _export_query(date_from, train_rows):
+  def _export_query(date_from, date_to, train_rows):
     return (
       "SELECT "
       "If(click_timestamp IS NOT NULL, 1, 0) AS label, "
@@ -100,4 +109,5 @@ class RImpressionTrainExporter(object):
       "campaign_freq AS Campaign_Freq "
       "FROM RImpression "
       "WHERE timestamp >= '" + date_from + "' "
+      "AND timestamp < '" + date_to + "' "
       "LIMIT " + str(train_rows) + " FORMAT CSVWithNames")
