@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <iterator>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -61,7 +62,7 @@ namespace AdServer::Bidding::CampaignManager
     std::string click_revenue;
     std::string action_revenue;
     std::string ecpm_bid;
-    std::string ctr;
+    std::optional<std::string> ctr;
     std::string ctr_algorithm_id;
     std::string html_url;
   };

@@ -445,7 +445,10 @@ namespace AdServer::Bidding
           dst_debug_creative.click_revenue = src_debug_creative.click_revenue().value();
           dst_debug_creative.action_revenue = src_debug_creative.action_revenue().value();
           dst_debug_creative.ecpm_bid = src_debug_creative.ecpm_bid().value();
-          dst_debug_creative.ctr = src_debug_creative.ctr().value();
+          if(src_debug_creative.has_ctr())
+          {
+            dst_debug_creative.ctr = src_debug_creative.ctr().value();
+          }
           dst_debug_creative.ctr_algorithm_id =
             src_debug_creative.ctr_algorithm_id();
           dst_debug_creative.html_url = src_debug_creative.html_url();
