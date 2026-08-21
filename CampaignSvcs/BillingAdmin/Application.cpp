@@ -139,6 +139,7 @@ namespace
     Generics::CompositeActiveObject active_objects;
     active_objects.add_child_object(grpc_executor);
     active_objects.add_child_object(coalesce_runner);
+    active_objects.add_child_object(billing_server);
     active_objects.activate_object();
 
     Proto::CheckBidRequest request;
