@@ -142,9 +142,9 @@ namespace CampaignSvcs
       ChannelIdSet& simple_channels,
       const ExpressionChannel::Expression& expr)
     {
-      if(expr.op == ExpressionChannel::NOP)
+      if (expr.op == ExpressionChannel::NOP)
       {
-        if(expr.channel.in())
+        if (expr.channel.in())
         {
           collect_simple_channels(simple_channels, expr.channel);
         }
@@ -154,12 +154,12 @@ namespace CampaignSvcs
         ExpressionChannel::Expression::ExpressionArray::const_iterator end_it =
           expr.sub_channels.end();
 
-        if(expr.op == ExpressionChannel::AND_NOT)
+        if (expr.op == ExpressionChannel::AND_NOT)
         {
           --end_it;
         }
 
-        for(ExpressionChannel::Expression::ExpressionArray::const_iterator it =
+        for (ExpressionChannel::Expression::ExpressionArray::const_iterator it =
               expr.sub_channels.begin();
             it != end_it; ++it)
         {
@@ -174,7 +174,7 @@ namespace CampaignSvcs
     {
       ConstSimpleChannel_var simple_channel =
         channel->simple_channel();
-      if(simple_channel.in())
+      if (simple_channel.in())
       {
         simple_channels.insert(simple_channel->params().channel_id);
       }
@@ -182,7 +182,7 @@ namespace CampaignSvcs
       {
         ConstExpressionChannel_var expr_channel =
           channel->expression_channel();
-        if(expr_channel.in())
+        if (expr_channel.in())
         {
           collect_expr_simple_channels(
             simple_channels,
@@ -197,26 +197,26 @@ namespace CampaignSvcs
       const ExpressionChannel::Expression& expr)
       noexcept
     {
-      if(expr.op == ExpressionChannel::TRUE)
+      if (expr.op == ExpressionChannel::TRUE)
       {
         return;
       }
-      else if(expr.op == ExpressionChannel::NOP)
+      else if (expr.op == ExpressionChannel::NOP)
       {
         collect_required_channels(simple_channels, expr.channel);
       }
-      else if(expr.op == ExpressionChannel::OR)
+      else if (expr.op == ExpressionChannel::OR)
       {
         return;
       }
-      else if(expr.op == ExpressionChannel::AND ||
+      else if (expr.op == ExpressionChannel::AND ||
         expr.op == ExpressionChannel::AND_NOT)
       {
         ExpressionChannel::Expression::ExpressionArray::const_iterator end_it =
           expr.op == ExpressionChannel::AND_NOT ?
           --expr.sub_channels.end() : expr.sub_channels.end();
 
-        for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+        for (ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expr.sub_channels.begin();
             eit != end_it; ++eit)
         {
@@ -232,7 +232,7 @@ namespace CampaignSvcs
       noexcept
     {
       ConstSimpleChannel_var simple_channel = channel->simple_channel();
-      if(simple_channel.in())
+      if (simple_channel.in())
       {
         unsigned long simple_channel_id = simple_channel->params().channel_id;
         simple_channels.insert(simple_channel_id);
@@ -240,7 +240,7 @@ namespace CampaignSvcs
       else
       {
         ConstExpressionChannel_var expression_channel = channel->expression_channel();
-        if(expression_channel.in())
+        if (expression_channel.in())
         {
           const ExpressionChannel::Expression& expr = expression_channel->expression();
           collect_expr_required_channels(simple_channels, expr);
@@ -256,7 +256,7 @@ namespace CampaignSvcs
       const ExpressionChannelIndex::ExpressionChannelBaseMap& expression_channels,
       const CollectOpType& collect_op)
     {
-      for(ExpressionChannelIndex::ExpressionChannelBaseMap::const_iterator ch_it =
+      for (ExpressionChannelIndex::ExpressionChannelBaseMap::const_iterator ch_it =
             expression_channels.begin();
           ch_it != expression_channels.end(); ++ch_it)
       {
@@ -264,17 +264,17 @@ namespace CampaignSvcs
 
         ExpressionIndexing_var expr_indexing(new ExpressionIndexing());
         collect_op(expr_indexing->used_simple_channels, ch_it->second);
-        if(!expr_indexing->used_simple_channels.empty())
+        if (!expr_indexing->used_simple_channels.empty())
         {
           expr_indexing->channel = ch_it->second;
 
-          for(ChannelIdSet::const_iterator sch_it =
+          for (ChannelIdSet::const_iterator sch_it =
                 expr_indexing->used_simple_channels.begin();
               sch_it != expr_indexing->used_simple_channels.end(); ++sch_it)
           {
             SimpleChannelIndexingMap::iterator sch_ind_it =
               simple_channel_indexing_map.find(*sch_it);
-            if(sch_ind_it == simple_channel_indexing_map.end())
+            if (sch_ind_it == simple_channel_indexing_map.end())
             {
               ExpressionIndexingMap_var ex_map(new ExpressionIndexingMap());
               ex_map->insert(std::make_pair(expr_channel_id, expr_indexing));
@@ -298,13 +298,13 @@ namespace CampaignSvcs
       ChannelPriorityMap& channel_priority_map,
       const SimpleChannelIndexingMap& simple_channel_indexing_map)
     {
-      for(SimpleChannelIndexingMap::const_iterator ch_it =
+      for (SimpleChannelIndexingMap::const_iterator ch_it =
             simple_channel_indexing_map.begin();
           ch_it != simple_channel_indexing_map.end(); ++ch_it)
       {
         ExpressionIndexingUseMap_var expr_indexing_use_map(
           new ExpressionIndexingUseMap());
-        for(ExpressionIndexingMap::const_iterator expr_it =
+        for (ExpressionIndexingMap::const_iterator expr_it =
               ch_it->second->begin();
             expr_it != ch_it->second->end(); ++expr_it)
         {
@@ -323,13 +323,13 @@ namespace CampaignSvcs
       std::ostream& out,
       ChannelPriorityMap& channel_priority_map)
     {
-      for(ChannelPriorityMap::const_iterator ch_it =
+      for (ChannelPriorityMap::const_iterator ch_it =
             channel_priority_map.begin();
           ch_it != channel_priority_map.end(); ++ch_it)
       {
         out << "(" << ch_it->first.use_count << ", " <<
           ch_it->first.channel_id << "):" << std::endl;
-        for(ExpressionIndexingUseMap::const_iterator ei_it =
+        for (ExpressionIndexingUseMap::const_iterator ei_it =
               ch_it->second->begin();
             ei_it != ch_it->second->end(); ++ei_it)
         {
@@ -371,7 +371,7 @@ namespace CampaignSvcs
       (void)erased;
       assert(erased);
 
-      if(new_used_channels_size)
+      if (new_used_channels_size)
       {
         ei_use_map_holder->insert(std::make_pair(
           ExpressionIndexingUsePriority(new_used_channels_size, expr_channel_id),
@@ -413,7 +413,7 @@ namespace CampaignSvcs
       (void)erased;
       assert(erased);
 
-      if(!sub_expr_indexing_map.empty())
+      if (!sub_expr_indexing_map.empty())
       {
         // new_ch_priority can't be present (simple channel id is unique)
         channel_priority_map.insert(std::make_pair(
@@ -438,7 +438,7 @@ namespace CampaignSvcs
       //   ExpressionIndexingUsePriority(with expr channel_id) => ExpressionIndexing
       //
       //
-      for(ChannelIdSet::const_iterator sch_it =
+      for (ChannelIdSet::const_iterator sch_it =
             disappeared_simple_channels.begin();
           sch_it != disappeared_simple_channels.end();
           ++sch_it)
@@ -452,7 +452,7 @@ namespace CampaignSvcs
       }
 
       // change channel_priority_map priorities
-      for(ChannelIdSet::const_iterator sch_it =
+      for (ChannelIdSet::const_iterator sch_it =
             remain_simple_channels.begin();
           sch_it != remain_simple_channels.end(); ++sch_it)
       {
@@ -471,7 +471,7 @@ namespace CampaignSvcs
       ChannelIdSet& channel_ids,
       const ExpressionChannelIndex::ExpressionChannelBaseList& expr_channels)
     {
-      for(auto ch_it = expr_channels.begin();
+      for (auto ch_it = expr_channels.begin();
           ch_it != expr_channels.end(); ++ch_it)
       {
         channel_ids.insert((*ch_it)->params().channel_id);
@@ -510,7 +510,7 @@ namespace CampaignSvcs
       {
         return find_required(indexed_channels, expr.channel, required);
       }
-      else if(expr.op == ExpressionChannel::OR)
+      else if (expr.op == ExpressionChannel::OR)
       {
         ChannelIdSet new_required;
 
@@ -630,7 +630,7 @@ namespace CampaignSvcs
     // and link expr channel to all channels from selected combination
     // required combinations: A&B|C&D => [[A,B],[C&D]]
     //
-    while(!channel_priority_map.empty())
+    while (!channel_priority_map.empty())
     {
       // index for channel that rarely used (correct for top level, for next levels - ?)
       ChannelPriorityMap::iterator ch_pr_it = channel_priority_map.begin();
@@ -657,7 +657,7 @@ namespace CampaignSvcs
           simple_channel_id);
       }
 
-      if(reduced_channel)
+      if (reduced_channel)
       {
         expr_channel_match.check_channels.emplace_back(reduced_channel);
       }
@@ -722,7 +722,7 @@ namespace CampaignSvcs
         used_simple_channels.end(),
         std::back_inserter(disappeared_simple_channels));
 
-      for(auto sch_it = disappeared_simple_channels.begin();
+      for (auto sch_it = disappeared_simple_channels.begin();
           sch_it != disappeared_simple_channels.end(); ++sch_it)
       {
         change_channel_priority(
@@ -733,7 +733,7 @@ namespace CampaignSvcs
           expr_indexing->used_simple_channels.size());
       }
 
-      for(ChannelIdSet::const_iterator sch_it = used_simple_channels.begin();
+      for (ChannelIdSet::const_iterator sch_it = used_simple_channels.begin();
           sch_it != used_simple_channels.end(); ++sch_it)
       {
         change_expression_channel_priority(
@@ -752,7 +752,7 @@ namespace CampaignSvcs
     // in case when we have much then SUBINDEXING_THRESHOLD of equal channels
     // channels will be fully reduced to preicate branch
     //
-    for(ExpressionChannelMatchMap::iterator eit =
+    for (ExpressionChannelMatchMap::iterator eit =
           channels_by_simple_channel_id.begin();
         eit != channels_by_simple_channel_id.end(); ++eit)
     {
@@ -797,7 +797,7 @@ namespace CampaignSvcs
     // construct_simple_channel_indexing_map
     ExpressionChannelBaseMap check_channels_map;
 
-    for(auto check_ch_it = index_node.check_channels.cbegin();
+    for (auto check_ch_it = index_node.check_channels.cbegin();
         check_ch_it != index_node.check_channels.cend(); ++check_ch_it)
     {
       check_channels_map[check_ch_it->channel_id] = check_ch_it->channel;
@@ -822,11 +822,11 @@ namespace CampaignSvcs
     // this allow to exclude repeatance channel checking on match
     // but require reverse lookup for all simple channels in
     // input channel set
-    while(!channel_priority_map.empty())
+    while (!channel_priority_map.empty())
     {
       ChannelPriorityMap::iterator ch_pr_it = --channel_priority_map.end();
 
-      if(ch_pr_it->first.use_count < SUBINDEXING_THRESHOLD)
+      if (ch_pr_it->first.use_count < SUBINDEXING_THRESHOLD)
       {
         break;
       }
@@ -853,7 +853,7 @@ namespace CampaignSvcs
           simple_channel_id);
       }
 
-      if(reduced_channel)
+      if (reduced_channel)
       {
         expr_channel_match.check_channels.emplace_back(reduced_channel);
       }
@@ -890,10 +890,10 @@ namespace CampaignSvcs
       new_check_channels_cells.emplace_back(*it);
     }
 
-    for(auto ch_it = index_node.check_channels.begin();
+    for (auto ch_it = index_node.check_channels.begin();
         ch_it != index_node.check_channels.end(); ++ch_it)
     {
-      if(reindexed_channel_ids.find(ch_it->channel_id) == reindexed_channel_ids.end())
+      if (reindexed_channel_ids.find(ch_it->channel_id) == reindexed_channel_ids.end())
       {
         new_check_channels_cells.push_back(*ch_it);
       }
@@ -902,7 +902,7 @@ namespace CampaignSvcs
     index_node.check_channels.swap(new_check_channels_cells);
 
     // do sub indexing for result nodes
-    for(ExpressionChannelMatchMap::iterator eit =
+    for (ExpressionChannelMatchMap::iterator eit =
           index_node.channels_by_simple_channel_id.begin();
         eit != index_node.channels_by_simple_channel_id.end(); ++eit)
     {
@@ -917,15 +917,15 @@ namespace CampaignSvcs
   {
     ExpressionChannelHolderMap optimized_all_channels = all_channels;
 
-    for(auto ch_it = optimized_all_channels.begin();
+    for (auto ch_it = optimized_all_channels.begin();
         ch_it != optimized_all_channels.end(); )
     {
-      if(ch_it->second->channel.in())
+      if (ch_it->second->channel.in())
       {
         ch_it->second->channel = ch_it->second->channel->optimize();
       }
 
-      if(!ch_it->second->channel.in())
+      if (!ch_it->second->channel.in())
       {
         optimized_all_channels.erase(ch_it++);
       }
@@ -953,17 +953,17 @@ namespace CampaignSvcs
     const ExpressionChannelHolderMap& all_channels)
     noexcept
   {
-    for(ExpressionChannelHolderMap::const_iterator ch_it = all_channels.begin();
+    for (ExpressionChannelHolderMap::const_iterator ch_it = all_channels.begin();
         ch_it != all_channels.end(); ++ch_it)
     {
       ConstSimpleChannel_var simple_channel = ch_it->second->simple_channel();
-      if(simple_channel.in())
+      if (simple_channel.in())
       {
         const unsigned long channel_id = simple_channel->params().channel_id;
         ExpressionChannelMatch& expr_channel_match = init_match_cell_(
           channels_, channel_id);
 
-        if(FILTER_CHANNELS.is_owned(simple_channel->params().type))
+        if (FILTER_CHANNELS.is_owned(simple_channel->params().type))
         {
           insert_if_not_exists(
             expr_channel_match.cpm_matched_channels, channel_id);
@@ -988,7 +988,7 @@ namespace CampaignSvcs
   ExpressionChannelIndex::avg_seq_size_() const noexcept
   {
     unsigned long sum = 0;
-    for(ExpressionChannelMatchMap::const_iterator mit =
+    for (ExpressionChannelMatchMap::const_iterator mit =
           channels_.begin();
         mit != channels_.end(); ++mit)
     {
@@ -1005,11 +1005,11 @@ namespace CampaignSvcs
     bool expand)
     const noexcept
   {
-    for(ExpressionChannelMatchMap::const_iterator ind_it =
+    for (ExpressionChannelMatchMap::const_iterator ind_it =
           channels_.begin();
         ind_it != channels_.end(); ++ind_it)
     {
-      if(!custom_channels || custom_channels->find(ind_it->first) != custom_channels->end())
+      if (!custom_channels || custom_channels->find(ind_it->first) != custom_channels->end())
       {
         out << ind_it->first << " => { matched_channels = [";
 
@@ -1023,15 +1023,15 @@ namespace CampaignSvcs
         const auto& expr_channels = ind_it->second->check_channels;
         out << "], check_channels(" << expr_channels.size() << ") = [";
 
-        if(expand)
+        if (expand)
         {
           out << std::endl;
         }
 
-        for(auto ech_it = expr_channels.cbegin();
+        for (auto ech_it = expr_channels.cbegin();
             ech_it != expr_channels.cend(); ++ech_it)
         {
-          if(expand)
+          if (expand)
           {
             out << "  " << ech_it->channel_id << ": ";
             std::string channel_expr;
@@ -1046,7 +1046,7 @@ namespace CampaignSvcs
         }
 
         out << "], channels_by_simple_channel_id = [";
-        for(ExpressionChannelMatchMap::const_iterator sit =
+        for (ExpressionChannelMatchMap::const_iterator sit =
               ind_it->second->channels_by_simple_channel_id.begin();
             sit != ind_it->second->channels_by_simple_channel_id.end(); ++sit)
         {
@@ -1068,7 +1068,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& channels)
     noexcept
   {
-    if(TRACE_MATCH_)
+    if (TRACE_MATCH_)
     {
       std::cout << "> match_()" << std::endl;
       std::cout << "match_(): matched_channels(" <<
@@ -1090,14 +1090,14 @@ namespace CampaignSvcs
         expr_channel_match.cpm_matched_channels.end());
     }
 
-    if(TRACE_MATCH_)
+    if (TRACE_MATCH_)
     {
       std::cout << "match_(): check_channels(" <<
         expr_channel_match.check_channels.size() << "): ";
-      for(auto ech_it = expr_channel_match.check_channels.cbegin();
+      for (auto ech_it = expr_channel_match.check_channels.cbegin();
           ech_it != expr_channel_match.check_channels.cend(); ++ech_it)
       {
-        if(ech_it != expr_channel_match.check_channels.begin())
+        if (ech_it != expr_channel_match.check_channels.begin())
         {
           std::cout << ",";
         }
@@ -1106,7 +1106,7 @@ namespace CampaignSvcs
       std::cout << std::endl;
     }
 
-    for(auto ech_it = expr_channel_match.check_channels.cbegin();
+    for (auto ech_it = expr_channel_match.check_channels.cbegin();
         ech_it != expr_channel_match.check_channels.cend(); ++ech_it)
     {
       check_channels.insert(std::make_pair(
@@ -1114,20 +1114,20 @@ namespace CampaignSvcs
         &*ech_it));
     }
 
-    for(ExpressionChannelMatchMap::const_iterator sit =
+    for (ExpressionChannelMatchMap::const_iterator sit =
           expr_channel_match.channels_by_simple_channel_id.begin();
         sit != expr_channel_match.channels_by_simple_channel_id.end();
         ++sit)
     {
-      if(TRACE_MATCH_)
+      if (TRACE_MATCH_)
       {
         std::cout << "match_(): reverse check for simple channel #" <<
           sit->first << std::endl;
       }
 
-      if(channels.find(sit->first) != channels.end())
+      if (channels.find(sit->first) != channels.end())
       {
-        if(TRACE_MATCH_)
+        if (TRACE_MATCH_)
         {
           std::cout << "match_(): recursive call for channel #" <<
             sit->first << std::endl;
@@ -1142,7 +1142,7 @@ namespace CampaignSvcs
       }
     }
 
-    if(TRACE_MATCH_)
+    if (TRACE_MATCH_)
     {
       std::cout << "< match_()" << std::endl;
     }
@@ -1157,13 +1157,13 @@ namespace CampaignSvcs
   {
     CheckChannelMap check_channels;
 
-    for(ChannelIdHashSet::const_iterator ch_it = channels.begin();
+    for (ChannelIdHashSet::const_iterator ch_it = channels.begin();
       ch_it != channels.end(); ++ch_it)
     {
       ExpressionChannelMatchMap::const_iterator ind_it = channels_.find(*ch_it);
-      if(ind_it != channels_.end())
+      if (ind_it != channels_.end())
       {
-        if(TRACE_MATCH_)
+        if (TRACE_MATCH_)
         {
           std::cout << "match_(): first level call for channel #" <<
             *ch_it << std::endl;
@@ -1178,14 +1178,14 @@ namespace CampaignSvcs
       }
     }
 
-    if(TRACE_MATCH_)
+    if (TRACE_MATCH_)
     {
       std::cout << "match(): result check_channels(" <<
         check_channels.size() << "): ";
-      for(CheckChannelMap::const_iterator ech_it = check_channels.begin();
+      for (CheckChannelMap::const_iterator ech_it = check_channels.begin();
           ech_it != check_channels.end(); ++ech_it)
       {
-        if(ech_it != check_channels.begin())
+        if (ech_it != check_channels.begin())
         {
           std::cout << ",";
         }
@@ -1196,7 +1196,7 @@ namespace CampaignSvcs
 
     //unsigned long result_channels_size = result_channels.size();
 
-    for(CheckChannelMap::const_iterator ech_it = check_channels.begin();
+    for (CheckChannelMap::const_iterator ech_it = check_channels.begin();
         ech_it != check_channels.end(); ++ech_it)
     {
       if (ech_it->second->channel->triggered(&channels, 0, 0))
@@ -1224,12 +1224,12 @@ namespace CampaignSvcs
     noexcept
   {
     ConstSimpleChannel_var simple_channel = holder->simple_channel();
-    if(simple_channel.in())
+    if (simple_channel.in())
     {
       unsigned long simple_channel_id = simple_channel->params().channel_id;
       ChannelIdSet::const_iterator ch_it =
         indexed_simple_channels.find(simple_channel_id);
-      if(ch_it != indexed_simple_channels.end())
+      if (ch_it != indexed_simple_channels.end())
       {
         return true;
       }
@@ -1239,7 +1239,7 @@ namespace CampaignSvcs
     }
 
     ConstExpressionChannel_var expression_channel = holder->expression_channel();
-    if(expression_channel.in())
+    if (expression_channel.in())
     {
       const ExpressionChannel::Expression& expr = expression_channel->expression();
       return reduce_channel_(used_simple_channels, expr, indexed_simple_channels);
@@ -1275,16 +1275,16 @@ namespace CampaignSvcs
      *       and return false
      */
 
-    if(expr.op == ExpressionChannel::NOP)
+    if (expr.op == ExpressionChannel::NOP)
     {
       return reduce_channel_(
         used_simple_channels, expr.channel, indexed_simple_channels);
     }
-    else if(expr.op == ExpressionChannel::OR)
+    else if (expr.op == ExpressionChannel::OR)
     {
       // fully reduced if all sub channels fully reduced (look above)
       bool ret = true;
-      for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+      for (ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
             expr.sub_channels.begin();
           eit != expr.sub_channels.end(); ++eit)
       {
@@ -1301,11 +1301,11 @@ namespace CampaignSvcs
       --expr.sub_channels.end() : expr.sub_channels.end();
 
     ChannelIdSet local_used_simple_channels;
-    for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+    for (ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
           expr.sub_channels.begin();
         eit != end_it; ++eit)
     {
-      if(reduce_channel_(local_used_simple_channels, *eit, indexed_simple_channels))
+      if (reduce_channel_(local_used_simple_channels, *eit, indexed_simple_channels))
       {
         return true;
       }
@@ -1325,7 +1325,7 @@ namespace CampaignSvcs
     noexcept
   {
     ConstSimpleChannel_var simple_channel = channel->simple_channel();
-    if(simple_channel.in())
+    if (simple_channel.in())
     {
       if (simple_channel->params().channel_id == indexed_simple_channel)
       {
@@ -1335,11 +1335,11 @@ namespace CampaignSvcs
     else
     {
       ConstExpressionChannel_var expression_channel = channel->expression_channel();
-      if(expression_channel.in())
+      if (expression_channel.in())
       {
         const ExpressionChannel::Expression& expr = expression_channel->expression();
         ExpressionChannel::Expression reduced_expr(expr);
-        if(create_reduced_expression_(reduced_expr, indexed_simple_channel))
+        if (create_reduced_expression_(reduced_expr, indexed_simple_channel))
         {
           return ExpressionChannelBase_var();
         }
@@ -1357,35 +1357,35 @@ namespace CampaignSvcs
     const ChannelId indexed_simple_channel)
     noexcept
   {
-    if(expr.op == ExpressionChannel::TRUE)
+    if (expr.op == ExpressionChannel::TRUE)
     {
       return true;
     }
-    else if(expr.op == ExpressionChannel::NOP)
+    else if (expr.op == ExpressionChannel::NOP)
     {
       expr.channel = create_reduced_channel_(
         expr.channel, indexed_simple_channel);
       return expr.channel.in() == 0;
     }
-    else if(expr.op == ExpressionChannel::OR)
+    else if (expr.op == ExpressionChannel::OR)
     {
-      for(ExpressionChannel::Expression::ExpressionArray::iterator eit =
+      for (ExpressionChannel::Expression::ExpressionArray::iterator eit =
             expr.sub_channels.begin();
           eit != expr.sub_channels.end(); ++eit)
       {
-        if(create_reduced_expression_(*eit, indexed_simple_channel))
+        if (create_reduced_expression_(*eit, indexed_simple_channel))
         {
           return true;
         }
       }
     }
-    else if(expr.op == ExpressionChannel::AND)
+    else if (expr.op == ExpressionChannel::AND)
     {
-      for(ExpressionChannel::Expression::ExpressionArray::iterator eit =
+      for (ExpressionChannel::Expression::ExpressionArray::iterator eit =
             expr.sub_channels.begin();
           eit != expr.sub_channels.end(); )
       {
-        if(create_reduced_expression_(*eit, indexed_simple_channel))
+        if (create_reduced_expression_(*eit, indexed_simple_channel))
         {
           eit = expr.sub_channels.erase(eit);
         }
@@ -1397,21 +1397,21 @@ namespace CampaignSvcs
 
       return expr.sub_channels.empty();
     }
-    else if(expr.op == ExpressionChannel::AND_NOT)
+    else if (expr.op == ExpressionChannel::AND_NOT)
     {
       ExpressionChannel::Expression::ExpressionArray::iterator eit =
         expr.sub_channels.begin();
 
       assert(!expr.sub_channels.empty());
 
-      while(true)
+      while (true)
       {
-        if(eit == --expr.sub_channels.end())
+        if (eit == --expr.sub_channels.end())
         {
           break;
         }
 
-        if(create_reduced_expression_(*eit, indexed_simple_channel))
+        if (create_reduced_expression_(*eit, indexed_simple_channel))
         {
           eit = expr.sub_channels.erase(eit);
         }
@@ -1421,7 +1421,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(expr.sub_channels.size() == 1)
+      if (expr.sub_channels.size() == 1)
       {
         // push true channel to begin
         ExpressionChannel::Expression true_expr;

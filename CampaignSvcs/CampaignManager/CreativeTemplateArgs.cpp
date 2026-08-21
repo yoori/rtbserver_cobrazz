@@ -39,7 +39,7 @@ namespace CampaignSvcs
     std::string& result,
     bool value) const
   {
-    if(!value)
+    if (!value)
     {
       result.assign(key.data(), key.size());
       return true;
@@ -47,7 +47,7 @@ namespace CampaignSvcs
 
     const std::string_view name(key.data(), key.size());
     const auto it = values_.find(name);
-    if(it == values_.end())
+    if (it == values_.end())
     {
       return false;
     }
@@ -77,7 +77,7 @@ namespace CampaignSvcs
   bool CreativeInstantiateRule::instantiate_relative_protocol_url(
     std::string& url) const noexcept
   {
-    if(RELATIVE_URL_PREFIX.start(url))
+    if (RELATIVE_URL_PREFIX.start(url))
     {
       url.insert(0, url_prefix.c_str(), url_prefix.size());
       return true;
@@ -109,7 +109,7 @@ namespace CampaignSvcs
       bool value = true) const override
       /*throw(BaseTokenProcessor::InvalidValue, eh::Exception)*/
     {
-      if(max_depth_ == 0)
+      if (max_depth_ == 0)
       {
         Stream::Error ostr;
         ostr << "Max depth exceeded.";
@@ -118,7 +118,7 @@ namespace CampaignSvcs
 
       const std::string_view key_view(key.data(), key.size());
       std::string key_str(key_view);
-      if(insert_restrictions_.find(key_str) == insert_restrictions_.end())
+      if (insert_restrictions_.find(key_str) == insert_restrictions_.end())
       {
         Stream::Error ostr;
         ostr << "Invalid use token (" << key.size() << ")'" << key << "'.";
@@ -134,18 +134,18 @@ namespace CampaignSvcs
 
       BaseTokenProcessor_var token_processor;
       TokenOptionValue token_value;
-      if(token_values_.get(key_view, token_value))
+      if (token_values_.get(key_view, token_value))
       {
         TokenProcessorMap::const_iterator it = token_processors_.find(
           token_value.option_id);
 
-        if(it != token_processors_.end())
+        if (it != token_processors_.end())
         {
           token_processor = it->second;
         }
       }
 
-      if(!token_processor.in())
+      if (!token_processor.in())
       {
         token_processor = BaseTokenProcessor::default_token_processor(
           key_str.c_str());
@@ -199,17 +199,17 @@ namespace CampaignSvcs
   {
     OptionTokenValueMap::const_iterator creative_it =
       creative_args_.find(token);
-    if(creative_it != creative_args_.end())
+    if (creative_it != creative_args_.end())
     {
       value.option_id = creative_it->second.option_id;
       value.value = creative_it->second.value;
       return true;
     }
 
-    if(request_args_)
+    if (request_args_)
     {
       std::string request_value;
-      if(request_args_->get_argument(
+      if (request_args_->get_argument(
           String::SubString(token.data(), token.size()),
           request_value))
       {
@@ -257,7 +257,7 @@ namespace CampaignSvcs
       String::TextTemplate::DefaultValue default_cont(&sub_args);
       String::TextTemplate::ArgsEncoder encoder(&default_cont);
 
-      if(!has_value && !rule.use_empty_values_)
+      if (!has_value && !rule.use_empty_values_)
       {
         return false;
       }
@@ -329,12 +329,12 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& /*creative_args*/,
     std::string& value) const
   {
-    if(!value.empty())
+    if (!value.empty())
     {
       rule.instantiate_relative_protocol_url(value);
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
       try
       {
@@ -362,7 +362,7 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& /*creative_args*/,
     std::string& value) const
   {
-    if(!value.empty() &&
+    if (!value.empty() &&
        !rule.instantiate_relative_protocol_url(value) &&
        !HTTP::HTTP_PREFIX.start(value) &&
        !HTTP::HTTPS_PREFIX.start(value))
@@ -370,7 +370,7 @@ namespace CampaignSvcs
       value = rule.image_url + value;
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
       try
       {
@@ -398,7 +398,7 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& /*creative_args*/,
     std::string& value) const
   {
-    if(!value.empty())
+    if (!value.empty())
     {
       value = rule.image_url + value;
 
@@ -428,7 +428,7 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& /*creative_args*/,
     std::string& value) const
   {
-    if(!value.empty() &&
+    if (!value.empty() &&
        ::strncmp(value.c_str(), "http://", 7) != 0 &&
        ::strncmp(value.c_str(), "https://", 8) != 0)
     {
@@ -452,7 +452,7 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& /*creative_args*/,
     std::string& value) const
   {
-    if(!value.empty())
+    if (!value.empty())
     {
       value = rule.publ_url + value;
     }
@@ -474,7 +474,7 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& creative_args,
     std::string& value) const
   {
-    if(!value.empty() &&
+    if (!value.empty() &&
        value[0] == '/' &&
        (value.size() < 2 || value[1] != '/'))
     {

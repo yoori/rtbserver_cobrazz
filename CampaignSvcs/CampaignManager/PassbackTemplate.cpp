@@ -39,7 +39,7 @@ namespace AdServer
         static const char* FUN = "TextTemplate::TextTemplate()";
 
         std::fstream fstr(file, std::ios::in);
-        if(!fstr.is_open())
+        if (!fstr.is_open())
         {
           Stream::Error ostr;
           ostr << FUN << ": Can't open file '" << file << "'";
@@ -114,18 +114,18 @@ namespace AdServer
       {
         SyncPolicy::WriteGuard lock(templates_lock_);
         KeyMap::iterator it = templates_.find(key);
-        if(it != templates_.end())
+        if (it != templates_.end())
         {
           holder = it->second;
         }
       }
 
-      if(holder)
+      if (holder)
       {
         Generics::Time now = Generics::Time::get_time_of_day();
         SyncPolicy::WriteGuard lock(holder->lock);
 
-        if(now - holder->last_update > UPDATE_PERIOD)
+        if (now - holder->last_update > UPDATE_PERIOD)
         {
           // reopen template
           holder->last_update = now;

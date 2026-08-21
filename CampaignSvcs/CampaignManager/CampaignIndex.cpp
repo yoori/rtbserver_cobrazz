@@ -100,7 +100,7 @@ namespace AdServer
       Generics::ActiveObject* interrupter)
       /*throw(eh::Exception)*/
     {
-      if(indexing_progress)
+      if (indexing_progress)
       {
         IndexingProgress::SyncPolicy::WriteGuard guard(indexing_progress->lock);
         indexing_progress->common_campaign_count = campaign_config_->campaigns.size();
@@ -116,13 +116,13 @@ namespace AdServer
       Generics::Timer timer;
       timer.start();
 
-      for(CampaignConfig::CampaignMap::const_iterator cmp_it =
+      for (CampaignConfig::CampaignMap::const_iterator cmp_it =
             campaign_config_->campaigns.begin();
           cmp_it != campaign_config_->campaigns.end(); ++cmp_it, ++i)
       {
-        if(indexing_progress && i % INDEXING_PROGRESS_PRECISSION == 0)
+        if (indexing_progress && i % INDEXING_PROGRESS_PRECISSION == 0)
         {
-          if(interrupter && !interrupter->active())
+          if (interrupter && !interrupter->active())
           {
             return false;
           }
@@ -133,24 +133,24 @@ namespace AdServer
 
         // check active outside of index_campaign for correct working of selection trace
         // for inactive campaigns
-        if(cmp_it->second->account->is_active() &&
+        if (cmp_it->second->account->is_active() &&
           cmp_it->second->is_active())
         {
           index_campaign(cmp_it->second);
         }
 
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           progress_campaigns.insert(cmp_it->first);
 
-          if(i % INDEXING_PROGRESS_PRECISSION == 0)
+          if (i % INDEXING_PROGRESS_PRECISSION == 0)
           {
             Stream::Dynamic ostr(4096);
 
             ostr << "Campaign index constructed for " << i << "/"
               << campaign_config_->campaigns.size() << " campaigns: ";
 
-            for(std::set<unsigned long>::const_iterator pit =
+            for (std::set<unsigned long>::const_iterator pit =
                   progress_campaigns.begin();
                 pit != progress_campaigns.end();
                 ++pit)
@@ -170,7 +170,7 @@ namespace AdServer
 
       timer.stop();
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << "Campaign index construct time : " << timer.elapsed_time();
@@ -194,9 +194,9 @@ namespace AdServer
       TraceParams* trace_params)
       /*throw(Exception, eh::Exception)*/
     {
-      if(trace_params)
+      if (trace_params)
       {
-        if(campaign->is_active() &&
+        if (campaign->is_active() &&
            ((!trace_params->key.test_request && !campaign->is_test()) ||
             trace_params->key.test_request))
         {
@@ -222,7 +222,7 @@ namespace AdServer
             "  </step>" << std::endl;
         }
       }
-      else if(campaign->is_active())
+      else if (campaign->is_active())
       {
         if (campaign->status == 'A')
         {
@@ -250,15 +250,15 @@ namespace AdServer
       const Colocation* colocation)
       noexcept
     {
-      if(colocation->ad_serving == CS_NONE)
+      if (colocation->ad_serving == CS_NONE)
       {
         return false;
       }
-      else if(colocation->ad_serving == CS_ONLY_OPTIN)
+      else if (colocation->ad_serving == CS_ONLY_OPTIN)
       {
         return user_status == US_OPTIN;
       }
-      else if(colocation->ad_serving == CS_NON_OPTOUT)
+      else if (colocation->ad_serving == CS_NON_OPTOUT)
       {
         return user_status != US_OPTOUT;
       }
@@ -274,7 +274,7 @@ namespace AdServer
       TraceParams* trace_params)
       /*throw(Exception, eh::Exception)*/
     {
-      if(trace_params)
+      if (trace_params)
       {
         trace_params->trace_stream <<
           "  <step name=\"include colocations check\" passed=\"yes\"/>" <<
@@ -297,13 +297,13 @@ namespace AdServer
       /*throw(Exception, eh::Exception)*/
     {
       /* index only for tags linked to included to campaign sites */
-      if(!trace_params)
+      if (!trace_params)
       {
         TagCampaignApproveMap::const_iterator tag_cmp_it =
           tag_campaign_approve_.lower_bound(
             TagCampaignApprove(campaign->campaign_id, 0));
 
-        for(; tag_cmp_it != tag_campaign_approve_.end() &&
+        for (; tag_cmp_it != tag_campaign_approve_.end() &&
               tag_cmp_it->first.campaign_id == campaign->campaign_id;
               ++tag_cmp_it)
         {
@@ -322,7 +322,7 @@ namespace AdServer
           tag_campaign_approve_.find(
             TagCampaignApprove(campaign->campaign_id, trace_params->tag));
 
-        if(tag_cmp_it != tag_campaign_approve_.end())
+        if (tag_cmp_it != tag_campaign_approve_.end())
         {
           index_for_tag_i_(
             user_status,
@@ -350,13 +350,13 @@ namespace AdServer
       const CreativeTemplateMap& creative_templates =
         campaign_config_->creative_templates;
 
-      for(Creative::SizeMap::const_iterator size_it =
+      for (Creative::SizeMap::const_iterator size_it =
             creative->sizes.begin();
           size_it != creative->sizes.end(); ++size_it)
       {
         try
         {
-          if(tag->sizes.find(size_it->first) != tag->sizes.end())
+          if (tag->sizes.find(size_it->first) != tag->sizes.end())
           {
             templ = creative_templates.get(
               CreativeTemplateKey(
@@ -365,7 +365,7 @@ namespace AdServer
                 app_format),
               c_template);
 
-            if(templ.in() && c_template.status == 'A')
+            if (templ.in() && c_template.status == 'A')
             {
               return true;
             }
@@ -409,35 +409,37 @@ namespace AdServer
       const Creative::CategorySet& creative_categories)
       noexcept
     {
-      for(Creative::CategorySet::const_iterator cat_it =
+      for (Creative::CategorySet::const_iterator cat_it =
             creative_categories.begin();
           cat_it != creative_categories.end(); ++cat_it)
       {
-        if(tag_exclusion)
+        if (tag_exclusion)
         {
-          if(tag->rejected_categories.find(*cat_it) !=
+          if (tag->rejected_categories.find(*cat_it) !=
              tag->rejected_categories.end())
           {
             return false;
           }
-          if(tag->accepted_categories.find(*cat_it) !=
+
+          if (tag->accepted_categories.find(*cat_it) !=
              tag->accepted_categories.end())
           {
             continue;
           }
         }
-        if(site_exclusion)
+
+        if (site_exclusion)
         {
-          if(tag->site->rejected_creative_categories.find(*cat_it) !=
+          if (tag->site->rejected_creative_categories.find(*cat_it) !=
              tag->site->rejected_creative_categories.end())
           {
             return false;
           }
 
-          if(!site_approve_creative)
+          if (!site_approve_creative)
           {
             //Really, this is not approved, but pending categories
-            if(tag->site->approved_creative_categories.find(*cat_it) !=
+            if (tag->site->approved_creative_categories.find(*cat_it) !=
                tag->site->approved_creative_categories.end())
             {
               return false;
@@ -455,16 +457,16 @@ namespace AdServer
       const MonoCreativeCategoryIdSet& exclude_categories)
       noexcept
     {
-      if(!exclude_categories.empty())
+      if (!exclude_categories.empty())
       {
         const Creative::CategorySet& creative_categories =
           creative->categories;
 
-        for(Creative::CategorySet::const_iterator cat_it =
+        for (Creative::CategorySet::const_iterator cat_it =
               creative_categories.begin();
             cat_it != creative_categories.end(); ++cat_it)
         {
-          if(exclude_categories.find(*cat_it) !=
+          if (exclude_categories.find(*cat_it) !=
              exclude_categories.end())
           {
             return false;
@@ -481,16 +483,16 @@ namespace AdServer
       const MonoCreativeCategoryIdSet& required_categories)
       noexcept
     {
-      if(!required_categories.empty())
+      if (!required_categories.empty())
       {
         const Creative::CategorySet& creative_categories =
           creative->categories;
 
-        for(Creative::CategorySet::const_iterator cat_it =
+        for (Creative::CategorySet::const_iterator cat_it =
               creative_categories.begin();
             cat_it != creative_categories.end(); ++cat_it)
         {
-          if(required_categories.find(*cat_it) != required_categories.end())
+          if (required_categories.find(*cat_it) != required_categories.end())
           {
             return true;
           }
@@ -508,16 +510,16 @@ namespace AdServer
       const Creative* creative)
       noexcept
     {
-      for(Tag::SizeMap::const_iterator tag_size_it =
+      for (Tag::SizeMap::const_iterator tag_size_it =
             tag->sizes.begin();
           tag_size_it != tag->sizes.end(); ++tag_size_it)
       {
         Creative::SizeMap::const_iterator crs_it =
           creative->sizes.find(tag_size_it->first);
 
-        if(crs_it != creative->sizes.end())
+        if (crs_it != creative->sizes.end())
         {
-          if(!crs_it->second.expandable || tag->allow_expandable)
+          if (!crs_it->second.expandable || tag->allow_expandable)
           {
             return true;
           }
@@ -541,9 +543,9 @@ namespace AdServer
       Creative::SizeMap::const_iterator crs_it =
         creative->sizes.find(tag_size->size->size_id);
 
-      if(crs_it != creative->sizes.end())
+      if (crs_it != creative->sizes.end())
       {
-        if(!crs_it->second.expandable ||
+        if (!crs_it->second.expandable ||
            (tag->allow_expandable &&
             up_expand_space >= crs_it->second.up_expand_space &&
             right_expand_space >= crs_it->second.right_expand_space &&
@@ -571,11 +573,11 @@ namespace AdServer
       const Tag::SizeMap* check_tag_sizes =
         tag_sizes ? tag_sizes : &tag->sizes;
 
-      for(Tag::SizeMap::const_iterator tag_size_it =
+      for (Tag::SizeMap::const_iterator tag_size_it =
             check_tag_sizes->begin();
           tag_size_it != check_tag_sizes->end(); ++tag_size_it)
       {
-        if(creative_available_by_size(
+        if (creative_available_by_size(
              tag,
              tag_size_it->second,
              creative,
@@ -616,12 +618,12 @@ namespace AdServer
       const bool tag_exclusion = tag->site->tag_exclusion();
       const bool site_exclusion = tag->site->site_exclusion();
 
-      if(!tag_exclusion && !site_exclusion)
+      if (!tag_exclusion && !site_exclusion)
       {
         return true;
       }
 
-      if(!creative->defined_content_category && site_exclusion)
+      if (!creative->defined_content_category && site_exclusion)
       {
         return false;
       }
@@ -651,9 +653,9 @@ namespace AdServer
       TraceParams* trace_params)
       /*throw(Exception, eh::Exception)*/
     {
-      if(tag->is_test() && status_type != ST_TEST_REAL)
+      if (tag->is_test() && status_type != ST_TEST_REAL)
       {
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "<step name=\"test tag check\" passed=\"no\">" << std::endl <<
@@ -683,9 +685,9 @@ namespace AdServer
       TraceParams* trace_params)
       /*throw(Exception, eh::Exception)*/
     {
-      if(trace_params)
+      if (trace_params)
       {
-        if(trace_params->key.country_code != campaign->country)
+        if (trace_params->key.country_code != campaign->country)
         {
           trace_params->trace_stream <<
             "  <step name=\"campaign country check\" passed=\"no\">" << std::endl <<
@@ -701,20 +703,20 @@ namespace AdServer
       }
 
       /* index only for campaign country */
-      if(!tag->tag_pricings.empty())
+      if (!tag->tag_pricings.empty())
       {
         const Tag::TagPricing* tag_pricing = tag->select_tag_pricing(
           campaign->country.c_str(),
           campaign->ccg_type,
           campaign->ccg_rate_type);
 
-        if(campaign->mode == CM_RANDOM && campaign->ccg_type == CT_DISPLAY)
+        if (campaign->mode == CM_RANDOM && campaign->ccg_type == CT_DISPLAY)
         {
           bool passed = (tag_pricing->cpm <= tag->max_random_cpm);
 
-          if(trace_params)
+          if (trace_params)
           {
-            if(passed)
+            if (passed)
             {
               trace_params->trace_stream <<
                 "  <step name=\"max random cpm check\" passed=\"yes\"/>" << std::endl;
@@ -756,13 +758,13 @@ namespace AdServer
       // do real precheck only for non ctr campaigns
       // for str campaigns need to do check in runtime,
       // because result ctr depends on request params
-      if(!campaign->use_ctr())
+      if (!campaign->use_ctr())
       {
         // use tag cpm = 0 if tag pricing isn't defined
         RevenueDecimal current_cpm = tag_pricing ?
           tag_pricing->cpm : RevenueDecimal::ZERO;
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"" <<
@@ -800,13 +802,13 @@ namespace AdServer
       bool margin_passed = false;
       RevenueDecimal adjusted_campaign_ecpm = RevenueDecimal::ZERO;
 
-      if(campaign->ccg_type == CT_DISPLAY)
+      if (campaign->ccg_type == CT_DISPLAY)
       {
-        if(campaign->mode == CM_NON_RANDOM)
+        if (campaign->mode == CM_NON_RANDOM)
         {
           // eval correct adjusted ecpm for CTR campaigns only
           // for correct order in max ecpm selection case
-          if(campaign->use_ctr())
+          if (campaign->use_ctr())
           {
             adjusted_campaign_ecpm = RevenueDecimal::mul(
               std::min(
@@ -825,12 +827,12 @@ namespace AdServer
           }
         }
 
-        if(campaign->marketplace != 'O' && tag->marketplace != 'O' &&
+        if (campaign->marketplace != 'O' && tag->marketplace != 'O' &&
            tag->site->account->walled_garden_accounts.find(
              campaign->account->account_id) !=
            tag->site->account->walled_garden_accounts.end())
         {
-          if(campaign->mode == CM_NON_RANDOM)
+          if (campaign->mode == CM_NON_RANDOM)
           {
             margin_passed = true;
 
@@ -841,7 +843,7 @@ namespace AdServer
               true, // WG
               trace_params);
 
-            if(margin_passed)
+            if (margin_passed)
             {
               walled_garden = true;
             }
@@ -860,11 +862,11 @@ namespace AdServer
 
         // push campaign into secondary (non WG) auction:
         // only if it isn't pushed into WG
-        if(!walled_garden &&
+        if (!walled_garden &&
            campaign->marketplace != 'W' &&
            tag->marketplace != 'W')
         {
-          if(campaign->mode == CM_NON_RANDOM)
+          if (campaign->mode == CM_NON_RANDOM)
           {
             margin_passed = margin_check_(
               adjusted_campaign_ecpm,
@@ -889,27 +891,27 @@ namespace AdServer
       StringSet creative_formats;
       ConstCreativePtrList trace_creatives; // only for request app format
 
-      for(ConstCreativePtrList::const_iterator cr_it = creatives.begin();
+      for (ConstCreativePtrList::const_iterator cr_it = creatives.begin();
           cr_it != creatives.end(); ++cr_it)
       {
-        for(Tag::SizeMap::const_iterator tag_size_it = tag->sizes.begin();
+        for (Tag::SizeMap::const_iterator tag_size_it = tag->sizes.begin();
             tag_size_it != tag->sizes.end(); ++tag_size_it)
         {
           Creative::SizeMap::const_iterator crs_it =
             (*cr_it)->sizes.find(tag_size_it->first);
 
-          if(crs_it != (*cr_it)->sizes.end())
+          if (crs_it != (*cr_it)->sizes.end())
           {
             const StringSet& check_app_formats = crs_it->second.available_appformats;
 
-            if(trace_params &&
+            if (trace_params &&
                check_app_formats.find(trace_params->key.format) !=
                  check_app_formats.end())
             {
               trace_creatives.push_back(*cr_it);
             }
 
-            for(StringSet::const_iterator appf_it = check_app_formats.begin();
+            for (StringSet::const_iterator appf_it = check_app_formats.begin();
                 appf_it != check_app_formats.end();
                 ++appf_it)
             {
@@ -919,20 +921,20 @@ namespace AdServer
         }
       }
 
-      if(trace_params)
+      if (trace_params)
       {
-        if(!trace_creatives.empty())
+        if (!trace_creatives.empty())
         {
           trace_params->trace_stream <<
             "  <step name=\"app format check\" passed=\"yes\">" << std::endl <<
             "    Next creatives available for requested format '" <<
             trace_params->key.format << "' (ccid): ";
 
-          for(ConstCreativePtrList::const_iterator cr_it =
+          for (ConstCreativePtrList::const_iterator cr_it =
                 trace_creatives.begin();
               cr_it != trace_creatives.end(); ++cr_it)
           {
-            if(cr_it != trace_creatives.begin())
+            if (cr_it != trace_creatives.begin())
             {
               trace_params->trace_stream << ", ";
             }
@@ -949,7 +951,7 @@ namespace AdServer
       }
 
       // index by available app formats
-      for(StringSet::const_iterator format_it = creative_formats.begin();
+      for (StringSet::const_iterator format_it = creative_formats.begin();
           format_it != creative_formats.end(); ++format_it)
       {
         KeyHashAdapter key_hash(
@@ -961,13 +963,13 @@ namespace AdServer
 
         IndexNode& index_node = ordered_campaigns_[key_hash];
 
-        if(text_candidate)
+        if (text_candidate)
         {
           CampaignCell_var cell(new CampaignCell(campaign));
 
-          if(campaign->targeting_type == 'K')
+          if (campaign->targeting_type == 'K')
           {
-            if(campaign->mode == CM_RANDOM)
+            if (campaign->mode == CM_RANDOM)
             {
               index_node.keyword_random_campaigns = campaign_cell_holder_->get(
                 index_node.keyword_random_campaigns,
@@ -982,7 +984,7 @@ namespace AdServer
           }
           else // channel targeted text ad
           {
-            if(campaign->mode == CM_RANDOM)
+            if (campaign->mode == CM_RANDOM)
             {
               index_node.text_random_campaigns = campaign_cell_holder_->get(
                 index_node.text_random_campaigns,
@@ -998,15 +1000,15 @@ namespace AdServer
         }
         else // display campaign
         {
-          if(campaign->mode == CM_RANDOM)
+          if (campaign->mode == CM_RANDOM)
           {
-            if(tag->max_random_cpm >= tag_pricing->cpm)
+            if (tag->max_random_cpm >= tag_pricing->cpm)
             {
               CampaignSelectionCell_var cell(
                 new CampaignSelectionCell(
                   campaign, adjusted_campaign_ecpm, tag_pricing));
 
-              if(walled_garden)
+              if (walled_garden)
               {
                 index_node.wg_display_random_campaigns = cell_holder_->get(
                   index_node.wg_display_random_campaigns,
@@ -1022,7 +1024,7 @@ namespace AdServer
           }
           else
           {
-            if(lost_walled_garden)
+            if (lost_walled_garden)
             {
               // push campaign into WG lost indendent on margin_passed value.
               // possible specific case, when campaign don't allowed to WG auction by margins,
@@ -1036,10 +1038,10 @@ namespace AdServer
                 CampaignCell_var(new CampaignCell(campaign)));
             }
 
-            if(!margin_passed)
+            if (!margin_passed)
             {
               // push to lost auctions (only display campaign can be pushed here)
-              if(!lost_walled_garden)
+              if (!lost_walled_garden)
               {
                 index_node.lost_campaigns = campaign_cell_holder_->get(
                   index_node.lost_campaigns,
@@ -1052,7 +1054,7 @@ namespace AdServer
                 new CampaignSelectionCell(
                   campaign, adjusted_campaign_ecpm, tag_pricing));
 
-              if(walled_garden)
+              if (walled_garden)
               {
                 // push campaign into WG auction
                 index_node.wg_display_campaigns =
@@ -1079,11 +1081,11 @@ namespace AdServer
     {
       const Site* site = tag->site;
 
-      if(campaign->include_specific_sites() &&
+      if (campaign->include_specific_sites() &&
          campaign->sites.find(site->site_id) ==
          campaign->sites.end())
       {
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"site targeting\" passed=\"no\"/>" <<
@@ -1092,7 +1094,7 @@ namespace AdServer
 
         return;
       }
-      else if(trace_params)
+      else if (trace_params)
       {
         trace_params->trace_stream <<
           "  <step name=\"site targeting\" passed=\"yes\"/>" << std::endl;
@@ -1100,9 +1102,9 @@ namespace AdServer
 
       TagDeliveryMap::const_iterator td_it = campaign->exclude_tags.find(tag->tag_id);
 
-      if(td_it != campaign->exclude_tags.end() && td_it->second == 0)
+      if (td_it != campaign->exclude_tags.end() && td_it->second == 0)
       {
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"tag delivery full exclusion\" passed=\"no\"/>" <<
@@ -1111,17 +1113,17 @@ namespace AdServer
 
         return;
       }
-      else if(trace_params)
+      else if (trace_params)
       {
         trace_params->trace_stream <<
           "  <step name=\"tag delivery full exclusion\" passed=\"yes\"/>" << std::endl;
       }
 
-      if(campaign->exclude_pub_accounts.find(
+      if (campaign->exclude_pub_accounts.find(
            site->account->account_id) !=
          campaign->exclude_pub_accounts.end())
       {
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"publisher accounts exclusion\" passed=\"no\"/>" <<
@@ -1130,14 +1132,14 @@ namespace AdServer
 
         return;
       }
-      else if(trace_params)
+      else if (trace_params)
       {
         trace_params->trace_stream <<
           "  <step name=\"publisher accounts exclusion\" passed=\"yes\"/>" <<
           std::endl;
       }
 
-      if((campaign->ccg_type != CT_DISPLAY && tag->marketplace != 'W') ||
+      if ((campaign->ccg_type != CT_DISPLAY && tag->marketplace != 'W') ||
            // non display campaign can't be selected for tag with 'W' auction only
          (tag->marketplace != 'W' && campaign->marketplace != 'W') ||
          (tag->marketplace != 'O' && campaign->marketplace != 'O' &&
@@ -1145,7 +1147,7 @@ namespace AdServer
              campaign->account->account_id) !=
            tag->site->account->walled_garden_accounts.end()))
       {
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"walled garden approval\" passed=\"yes\"/>" <<
@@ -1158,11 +1160,11 @@ namespace AdServer
         const CreativeList& campaign_creatives =
           campaign->get_creatives();
 
-        for(CreativeList::const_iterator cr_it = campaign_creatives.begin();
+        for (CreativeList::const_iterator cr_it = campaign_creatives.begin();
           cr_it != campaign_creatives.end();
           ++cr_it)
         {
-          if((*cr_it)->status == 'A' &&
+          if ((*cr_it)->status == 'A' &&
              creative_available_by_categories_(
                campaign,
                *cr_it,
@@ -1176,16 +1178,16 @@ namespace AdServer
           }
         }
 
-        if(trace_params)
+        if (trace_params)
         {
-          if(!creatives.empty())
+          if (!creatives.empty())
           {
             trace_params->trace_stream <<
               "  <step name=\"creative categories and tag size\""
               " passed=\"yes\">" << std::endl <<
               "     Next creatives available by categories and tag size (ccid):";
 
-            for(ConstCreativePtrList::const_iterator cr_it = creatives.begin();
+            for (ConstCreativePtrList::const_iterator cr_it = creatives.begin();
               cr_it != creatives.end();
               ++cr_it)
             {
@@ -1204,27 +1206,27 @@ namespace AdServer
           }
         }
 
-        if(!creatives.empty())
+        if (!creatives.empty())
         {
           // check creatives expand direction
           ConstCreativePtrList res_creatives;
-          for(ConstCreativePtrList::const_iterator cr_it = creatives.begin();
+          for (ConstCreativePtrList::const_iterator cr_it = creatives.begin();
             cr_it != creatives.end();
             ++cr_it)
           {
             const Creative* creative = *cr_it;
 
-            if(tag->allow_expandable)
+            if (tag->allow_expandable)
             {
               res_creatives.push_back(*cr_it);
             }
             else
             {
-              for(Creative::SizeMap::const_iterator crs_it =
+              for (Creative::SizeMap::const_iterator crs_it =
                     creative->sizes.begin();
                   crs_it != creative->sizes.end(); ++crs_it)
               {
-                if(crs_it->second.up_expand_space == 0 &&
+                if (crs_it->second.up_expand_space == 0 &&
                   crs_it->second.right_expand_space == 0 &&
                   crs_it->second.down_expand_space == 0 &&
                   crs_it->second.left_expand_space == 0)
@@ -1239,16 +1241,16 @@ namespace AdServer
           res_creatives.swap(creatives);
         }
 
-        if(trace_params)
+        if (trace_params)
         {
-          if(!creatives.empty())
+          if (!creatives.empty())
           {
             trace_params->trace_stream <<
               "  <step name=\"expandable creatives\""
               " passed=\"yes\">" << std::endl <<
               "     Next creatives available:";
 
-            for(ConstCreativePtrList::const_iterator cr_it = creatives.begin();
+            for (ConstCreativePtrList::const_iterator cr_it = creatives.begin();
                 cr_it != creatives.end();
                 ++cr_it)
             {
@@ -1267,7 +1269,7 @@ namespace AdServer
           }
         }
 
-        if(!creatives.empty())
+        if (!creatives.empty())
         {
           tag_campaign_approve_.insert(
             std::make_pair(
@@ -1275,7 +1277,7 @@ namespace AdServer
               creatives));
         }
       } // walled garden check
-      else if(trace_params)
+      else if (trace_params)
       {
         trace_params->trace_stream << "  <step name=\"walled garden approval\" "
           "passed=\"no\">" << std::endl <<
@@ -1297,10 +1299,10 @@ namespace AdServer
       TraceParams* trace_params)
       /*throw(Exception, eh::Exception)*/
     {
-      if(!trace_params)
+      if (!trace_params)
       {
         /* pre index campaign for all tags */
-        for(TagMap::const_iterator tag_it = campaign_config_->tags.begin();
+        for (TagMap::const_iterator tag_it = campaign_config_->tags.begin();
             tag_it != campaign_config_->tags.end();
             ++tag_it)
         {
@@ -1356,13 +1358,13 @@ namespace AdServer
           std::endl;
       }
 
-      if(only_for_opt_in)
+      if (only_for_opt_in)
       {
         // if campaign user status allow opt in - index it
         // here used ColocationAdServingType values specific property:
         // al values (excluding CS_NONE) contains optin targeting
         //
-        if((campaign->flags & CampaignFlags::US_NONE) ||
+        if ((campaign->flags & CampaignFlags::US_NONE) ||
            (campaign->flags & CampaignFlags::US_OPTIN))
         {
           index_for_status_(
@@ -1371,7 +1373,7 @@ namespace AdServer
             trace_params);
         }
       }
-      else if(campaign->flags & CampaignFlags::US_NONE)
+      else if (campaign->flags & CampaignFlags::US_NONE)
       {
         // will be used colocation user status targeting
         index_for_status_(
@@ -1383,7 +1385,7 @@ namespace AdServer
       else
       {
         // campaign user status targeting override colocation traits
-        if(campaign->flags & CampaignFlags::US_UNDEFINED)
+        if (campaign->flags & CampaignFlags::US_UNDEFINED)
         {
           index_for_status_(
             campaign,
@@ -1391,7 +1393,7 @@ namespace AdServer
             trace_match_type == US_UNDEFINED ? trace_params : 0);
         }
 
-        if(campaign->flags & CampaignFlags::US_OPTOUT)
+        if (campaign->flags & CampaignFlags::US_OPTOUT)
         {
           index_for_status_(
             campaign,
@@ -1399,7 +1401,7 @@ namespace AdServer
             trace_match_type == US_OPTOUT ? trace_params : 0);
         }
 
-        if(campaign->flags & CampaignFlags::US_OPTIN)
+        if (campaign->flags & CampaignFlags::US_OPTIN)
         {
           index_for_status_(
             campaign,
@@ -1415,7 +1417,7 @@ namespace AdServer
       const Generics::Time& current_time_val)
       const
     {
-      if(campaign->weekly_run_intervals.empty())
+      if (campaign->weekly_run_intervals.empty())
       {
         return true;
       }
@@ -1433,7 +1435,7 @@ namespace AdServer
       const String::SubString& referer_hostname)
       noexcept
     {
-      if(domain.size() > 0)
+      if (domain.size() > 0)
       {
         if (referer_hostname.size() >= domain.size() &&
             referer_hostname.compare(
@@ -1530,7 +1532,7 @@ namespace AdServer
           full_freq_caps.find(campaign->group_fc_id) != full_freq_caps.end() ||
           !profiling_available);
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"freq caps(campaign, ccg)\" passed=\"" <<
@@ -1538,7 +1540,7 @@ namespace AdServer
             std::endl;
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1548,14 +1550,14 @@ namespace AdServer
         /* campaign filtering: by weekly run intervals */
         bool res = !check_campaign_time_(campaign, current_time);
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"time of day\" passed=\"" << (res ? "no" : "yes") << "\"/>" <<
             std::endl;
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1564,7 +1566,7 @@ namespace AdServer
       {
         bool res = key.ccg_delivery_factor >= campaign->delivery_coef;
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"ccg delivery factor exclusion\" passed=\"" <<
@@ -1572,7 +1574,7 @@ namespace AdServer
             std::endl;
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1580,11 +1582,11 @@ namespace AdServer
 
       {
         TagDeliveryMap::const_iterator td_it = campaign->exclude_tags.find(key.tag->tag_id);
-        if(td_it != campaign->exclude_tags.end() && td_it->second)
+        if (td_it != campaign->exclude_tags.end() && td_it->second)
         {
           bool res = key.tag_delivery_factor >= td_it->second;
 
-          if(trace_params)
+          if (trace_params)
           {
             trace_params->trace_stream <<
               "  <step name=\"tag delivery partly exclusion\" passed=\"" <<
@@ -1592,7 +1594,7 @@ namespace AdServer
               std::endl;
           }
 
-          if(res)
+          if (res)
           {
             return false;
           }
@@ -1606,7 +1608,7 @@ namespace AdServer
           user_id.hash() % MAX_TARGET_USERS_GROUPS >=
             campaign->end_user_group_id);
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"user group targeting\" passed=\"" <<
@@ -1614,7 +1616,7 @@ namespace AdServer
             std::endl;
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1625,7 +1627,7 @@ namespace AdServer
         bool res = !campaign->colocations.empty() &&
           campaign->colocations.find(colo_id) == campaign->colocations.end();
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"colocation targeting\" passed=\"" <<
@@ -1633,7 +1635,7 @@ namespace AdServer
             std::endl;
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1644,7 +1646,7 @@ namespace AdServer
         bool res = campaign->min_uid_age != Generics::Time::ZERO &&
           current_time - user_create_time < campaign->min_uid_age;
 
-        if(trace_params)
+        if (trace_params)
         {
           trace_params->trace_stream <<
             "  <step name=\"uid age targeting\" passed=\"" <<
@@ -1652,7 +1654,7 @@ namespace AdServer
             std::endl;
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1664,9 +1666,9 @@ namespace AdServer
           !campaign->account->is_available() ||
           !campaign->advertiser->is_available();
 
-        if(trace_params)
+        if (trace_params)
         {
-          if(res)
+          if (res)
           {
             trace_params->trace_stream <<
               "  <step name=\"available\" passed=\"no\">" << std::endl <<
@@ -1687,7 +1689,7 @@ namespace AdServer
           }
         }
 
-        if(res)
+        if (res)
         {
           return false;
         }
@@ -1798,9 +1800,9 @@ namespace AdServer
           indexed_creative_available(creative);
       };
 
-      if(!trace_params)
+      if (!trace_params)
       {
-        if(check_tag_sizes->size() == 1)
+        if (check_tag_sizes->size() == 1)
         {
           const Campaign::CreativeBySizeKey creative_by_size_key{
             check_tag_sizes->begin()->first,
@@ -1808,18 +1810,18 @@ namespace AdServer
           const Campaign::CreativeBySizeMap::const_iterator size_creatives_it =
             campaign->opt_creatives_by_size.find(creative_by_size_key);
 
-          if(size_creatives_it != campaign->opt_creatives_by_size.end())
+          if (size_creatives_it != campaign->opt_creatives_by_size.end())
           {
             const Campaign::CreativeBySizeArray& size_creatives =
               size_creatives_it->second;
 
-            for(Campaign::CreativeBySizeArray::const_iterator cr_it =
+            for (Campaign::CreativeBySizeArray::const_iterator cr_it =
                   size_creatives.begin();
                 cr_it != size_creatives.end();
                 ++cr_it)
             {
               const Creative* creative = cr_it->creative;
-              if(indexed_creative_available(creative))
+              if (indexed_creative_available(creative))
               {
                 creatives.push_back(creative);
               }
@@ -1830,7 +1832,7 @@ namespace AdServer
         {
           Generics::MonoUnorderedSet<const Creative*> seen_creatives(arena);
 
-          for(Tag::SizeMap::const_iterator tag_size_it = check_tag_sizes->begin();
+          for (Tag::SizeMap::const_iterator tag_size_it = check_tag_sizes->begin();
             tag_size_it != check_tag_sizes->end();
             ++tag_size_it)
           {
@@ -1839,7 +1841,7 @@ namespace AdServer
                 campaign->opt_creatives_by_size.find(
                   Campaign::CreativeBySizeKey{tag_size_it->first, key.format});
 
-            if(size_creatives_it == campaign->opt_creatives_by_size.end())
+            if (size_creatives_it == campaign->opt_creatives_by_size.end())
             {
               continue;
             }
@@ -1847,13 +1849,13 @@ namespace AdServer
             const Campaign::CreativeBySizeArray& size_creatives =
               size_creatives_it->second;
 
-            for(Campaign::CreativeBySizeArray::const_iterator cr_it =
+            for (Campaign::CreativeBySizeArray::const_iterator cr_it =
                   size_creatives.begin();
                 cr_it != size_creatives.end();
                 ++cr_it)
             {
               const Creative* creative = cr_it->creative;
-              if(seen_creatives.insert(creative).second &&
+              if (seen_creatives.insert(creative).second &&
                  indexed_creative_available(creative))
               {
                 creatives.push_back(creative);
@@ -1865,20 +1867,20 @@ namespace AdServer
         return;
       }
 
-      if(trace_params)
+      if (trace_params)
       {
         trace_params->trace_stream << "  <step name=\"creatives\">" << std::endl;
       }
 
-      for(CreativeList::const_iterator cr_it = campaign_creatives.begin();
+      for (CreativeList::const_iterator cr_it = campaign_creatives.begin();
           cr_it != campaign_creatives.end();
           ++cr_it)
       {
         const Creative* creative = *cr_it;
 
-        if(creative_available(creative))
+        if (creative_available(creative))
         {
-          if(trace_params)
+          if (trace_params)
           {
             trace_params->trace_stream << "    <creative ccid=\"" << creative->ccid <<
               "\" passed=\"yes\"/>" << std::endl;
@@ -1886,18 +1888,18 @@ namespace AdServer
 
           creatives.push_back(creative);
         }
-        else if(trace_params)
+        else if (trace_params)
         {
           trace_params->trace_stream << "    <creative ccid=\"" << creative->ccid <<
             "\" passed=\"no\">" << std::endl <<
             "      Not available ";
 
-          if(!(creative->fc_id == 0 || key.user_status == US_OPTIN))
+          if (!(creative->fc_id == 0 || key.user_status == US_OPTIN))
           {
             trace_params->trace_stream << "by freq caps and opt out; ";
           }
 
-          if(!(creative->status == 'A'))
+          if (!(creative->status == 'A'))
           {
             trace_params->trace_stream << "by status; ";
           }
@@ -1907,12 +1909,12 @@ namespace AdServer
             trace_params->trace_stream << "by https flag; ";
           }
 
-          if(!(!filter_empty_destination || !creative->destination_url.url().empty()))
+          if (!(!filter_empty_destination || !creative->destination_url.url().empty()))
           {
             trace_params->trace_stream << "by empty destination; ";
           }
 
-          if(!creative_available_by_sizes_(
+          if (!creative_available_by_sizes_(
                tag,
                tag_sizes,
                creative,
@@ -1924,7 +1926,7 @@ namespace AdServer
             trace_params->trace_stream << "by size or expansion; ";
           }
 
-          if(!creative_available_by_categories_(
+          if (!creative_available_by_categories_(
                campaign,
                creative,
                tag,
@@ -1933,7 +1935,7 @@ namespace AdServer
             trace_params->trace_stream << "by categories; ";
           }
 
-          if(!creative_available_by_templates_(
+          if (!creative_available_by_templates_(
                campaign,
                creative,
                tag,
@@ -1943,40 +1945,40 @@ namespace AdServer
               key.format << "'; ";
           }
 
-          if(!(creative->video_duration >= video_min_duration &&
+          if (!(creative->video_duration >= video_min_duration &&
             (!video_max_duration.present() ||
              creative->video_duration <= *video_max_duration)))
           {
             trace_params->trace_stream << "by video duration; ";
           }
 
-          if(!allowed_durations.empty() &&
+          if (!allowed_durations.empty() &&
             (allowed_durations.find(creative->video_duration) == allowed_durations.end()))
           {
             trace_params->trace_stream << "by video allowed_durations; ";
           }
 
-          if(!((video_allow_skippable && creative->video_skip_offset.present()) ||
+          if (!((video_allow_skippable && creative->video_skip_offset.present()) ||
             (video_allow_unskippable && !creative->video_skip_offset.present())))
           {
             trace_params->trace_stream << "by video skippable; ";
           }
 
-          if(!(creative->fc_id == 0 ||
+          if (!(creative->fc_id == 0 ||
               (profiling_available &&
                full_freq_caps.find(creative->fc_id) == full_freq_caps.end())))
           {
             trace_params->trace_stream << "by freq caps; ";
           }
 
-          if(!creative_available_by_exclude_categories_(
+          if (!creative_available_by_exclude_categories_(
              creative,
              exclude_categories))
           {
             trace_params->trace_stream << "by external exclude categories; ";
           }
 
-          if(!creative_available_by_required_categories_(
+          if (!creative_available_by_required_categories_(
              creative,
              required_categories))
           {
@@ -1987,14 +1989,14 @@ namespace AdServer
         }
       }
 
-      if(trace_params)
+      if (trace_params)
       {
         trace_params->trace_stream << "  </step>" << std::endl;
       }
 
-      if(campaign->seq_set_rotate_imps != 0 && !creatives.empty())
+      if (campaign->seq_set_rotate_imps != 0 && !creatives.empty())
       {
-        if(campaign->opt_order_sets.empty())
+        if (campaign->opt_order_sets.empty())
         {
           creatives.clear();
         }
@@ -2006,14 +2008,14 @@ namespace AdServer
           unsigned long search_order_set_id =
             *(campaign->opt_order_sets.begin());
 
-          if(seq_it != seq_orders.end())
+          if (seq_it != seq_orders.end())
           {
             Campaign::OrderSetIdSet::const_iterator seq_order_it =
               campaign->opt_order_sets.lower_bound(
                 seq_it->second.imps >= campaign->seq_set_rotate_imps ?
                   seq_it->second.set_id + 1 :
                   seq_it->second.set_id);
-            if(seq_order_it == campaign->opt_order_sets.end())
+            if (seq_order_it == campaign->opt_order_sets.end())
             {
               seq_order_it = campaign->opt_order_sets.begin();
             }
@@ -2023,11 +2025,11 @@ namespace AdServer
           // filter creatives by search_order_set_id
           ConstCreativePtrList new_creatives;
 
-          for(ConstCreativePtrList::const_iterator cr_it =
+          for (ConstCreativePtrList::const_iterator cr_it =
                 creatives.begin();
               cr_it != creatives.end(); ++cr_it)
           {
-            if((*cr_it)->order_set_id == search_order_set_id)
+            if ((*cr_it)->order_set_id == search_order_set_id)
             {
               new_creatives.push_back(*cr_it);
             }
@@ -2053,10 +2055,10 @@ namespace AdServer
         typename ListFieldType::Type::const_iterator> > ranges;
       ranges.reserve(nodes.size());
 
-      for(IndexNodeList::const_iterator ll_it = nodes.begin();
+      for (IndexNodeList::const_iterator ll_it = nodes.begin();
           ll_it != nodes.end(); ++ll_it)
       {
-        if((*ll_it)->*list_field)
+        if ((*ll_it)->*list_field)
         {
           ranges.push_back(Algs::iterator_range(
             ((*ll_it)->*list_field)->begin(),
@@ -2082,7 +2084,7 @@ namespace AdServer
       const UserStatus* user_status_check_end = request_params.none_user_status ?
         user_status_check + 2 : user_status_check + 1;
 
-      for(const UserStatus* user_status_check_it = user_status_check_begin;
+      for (const UserStatus* user_status_check_it = user_status_check_begin;
           user_status_check_it != user_status_check_end;
           ++user_status_check_it)
       {
@@ -2099,7 +2101,7 @@ namespace AdServer
               request_params.country_code.c_str(),
               request_params.format.c_str()));
 
-        if(it != ordered_campaigns_.end())
+        if (it != ordered_campaigns_.end())
         {
           result_nodes.push_back(&it->second);
         }
@@ -2183,7 +2185,7 @@ namespace AdServer
         &IndexNode::keyword_campaigns,
         campaign_cell_less_pred);
 
-      if(result_lost_wg_campaign_cell_list)
+      if (result_lost_wg_campaign_cell_list)
       {
         merge_lists_(
           *result_lost_wg_campaign_cell_list,
@@ -2192,7 +2194,7 @@ namespace AdServer
           campaign_cell_less_pred);
       }
 
-      if(result_lost_campaign_cell_list)
+      if (result_lost_campaign_cell_list)
       {
         merge_lists_(
           *result_lost_campaign_cell_list,
@@ -2251,7 +2253,7 @@ namespace AdServer
         user_id,
         &trace_params);
 
-      if(check_campaign_channel(campaign, matched_channels))
+      if (check_campaign_channel(campaign, matched_channels))
       {
         trace_params.trace_stream <<
           "  <step name=\"channel targeting\" passed=\"yes\">" << std::endl <<
@@ -2268,7 +2270,7 @@ namespace AdServer
         Algs::print(trace_params.trace_stream, matched_channels.begin(), matched_channels.end());
         trace_params.trace_stream << std::endl <<
           "    fast expr = ";
-        if(campaign->fast_channel)
+        if (campaign->fast_channel)
         {
           std::string fast_channel_expr;
           campaign->fast_channel->print(fast_channel_expr);
@@ -2280,7 +2282,7 @@ namespace AdServer
         }
         trace_params.trace_stream << std::endl <<
           "    expr = ";
-        if(campaign->channel)
+        if (campaign->channel)
         {
           std::string channel_expr;
           print(channel_expr, campaign->channel, true);
@@ -2294,7 +2296,7 @@ namespace AdServer
           "  </step>" << std::endl;
       }
 
-      if(campaign->keyword_based())
+      if (campaign->keyword_based())
       {
         trace_params.trace_stream <<
           "  <step name=\"negative keywords checking\" passed=\"unknown\"/>" <<
@@ -2380,12 +2382,12 @@ namespace AdServer
       const CampaignCellList* campaign_cell_list) noexcept
     {
       ostr << "(" << campaign_cell_list << "): ";
-      if(campaign_cell_list)
+      if (campaign_cell_list)
       {
-        for(CampaignCellList::const_iterator it = campaign_cell_list->begin();
+        for (CampaignCellList::const_iterator it = campaign_cell_list->begin();
             it != campaign_cell_list->end(); ++it)
         {
-          if(it != campaign_cell_list->begin())
+          if (it != campaign_cell_list->begin())
           {
             ostr << ", ";
           }
@@ -2400,14 +2402,14 @@ namespace AdServer
       noexcept
     {
       ostr << "(" << campaign_selection_cell_list << "): ";
-      if(campaign_selection_cell_list)
+      if (campaign_selection_cell_list)
       {
-        for(CampaignSelectionCellList::const_iterator cmp_it =
+        for (CampaignSelectionCellList::const_iterator cmp_it =
               campaign_selection_cell_list->begin();
             cmp_it != campaign_selection_cell_list->end();
             ++cmp_it)
         {
-          if(cmp_it != campaign_selection_cell_list->begin())
+          if (cmp_it != campaign_selection_cell_list->begin())
           {
             ostr << ", ";
           }
@@ -2427,7 +2429,7 @@ namespace AdServer
 
       ostr << "=== Campaign Tree ===" << std::endl <<
         "(match-type, colo-id, tid, country, app-format)" << std::endl;
-      for(OrderedCampaignMap::const_iterator it = ordered_campaigns_.begin();
+      for (OrderedCampaignMap::const_iterator it = ordered_campaigns_.begin();
           it != ordered_campaigns_.end(); ++it)
       {
         ostr << "(" << decode_match_status_type_(it->first.match_status_type) <<

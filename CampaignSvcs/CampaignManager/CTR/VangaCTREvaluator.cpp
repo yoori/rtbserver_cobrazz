@@ -36,7 +36,7 @@ namespace AdServer::CampaignSvcs::CTR
 
         {
           SyncPolicy::WriteGuard lock(lock_);
-          if(!feature_sets_.empty())
+          if (!feature_sets_.empty())
           {
             feature_sets_.rbegin()->swap(res);
             feature_sets_.pop_back();
@@ -130,7 +130,7 @@ namespace AdServer::CampaignSvcs::CTR
       {
         if (HASH_SETS[i])
         {
-          for(auto it = HASH_SETS[i]->begin(); it != HASH_SETS[i]->end(); ++it)
+          for (auto it = HASH_SETS[i]->begin(); it != HASH_SETS[i]->end(); ++it)
           {
             std::cout << (it != HASH_SETS[i]->begin() ? ", " : "") << it->first;
           }
@@ -154,7 +154,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     feature_set_provider.release(vanga_feature_set);
 
-    if(ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
+    if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
     {
       return RevenueDecimal::ZERO;
     }

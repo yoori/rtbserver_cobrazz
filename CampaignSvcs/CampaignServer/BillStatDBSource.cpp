@@ -29,7 +29,7 @@ namespace CampaignSvcs
     {
       auto& obj = amounts[object_id];
       auto ins = obj.day_amounts.insert(std::make_pair(day, amount));
-      if(!ins.second)
+      if (!ins.second)
       {
         ins.first->second += amount;
       }
@@ -49,7 +49,7 @@ namespace CampaignSvcs
       auto& obj = amounts[object_id];
       auto ins = obj.day_amount_counts.insert(
         std::make_pair(day, BillStatSource::Stat::AmountCount(amount, imps, clicks)));
-      if(!ins.second)
+      if (!ins.second)
       {
         ins.first->second.amount += amount;
         ins.first->second.imps += imps;
@@ -65,7 +65,7 @@ namespace CampaignSvcs
       noexcept
     {
       auto ins = amounts.insert(std::make_pair(object_id, total_amount));
-      if(!ins.second)
+      if (!ins.second)
       {
         ins.first->second += total_amount;
       }
@@ -83,7 +83,7 @@ namespace CampaignSvcs
       auto ins = amounts.insert(std::make_pair(
         object_id,
         BillStatSource::Stat::AmountCount(total_amount, total_imps, total_clicks)));
-      if(!ins.second)
+      if (!ins.second)
       {
         ins.first->second.amount += total_amount;
         ins.first->second.imps += total_imps;
@@ -99,11 +99,11 @@ namespace CampaignSvcs
       const Generics::Time& before_date)
       noexcept
     {
-      for(auto it = total_amounts.begin(); it != total_amounts.end(); ++it)
+      for (auto it = total_amounts.begin(); it != total_amounts.end(); ++it)
       {
         BillStatSource::Stat::AmountDistribution& res = amounts[it->first];
         RevenueDecimal sum_day_amount = RevenueDecimal::ZERO;
-        for(auto day_it = res.day_amounts.begin();
+        for (auto day_it = res.day_amounts.begin();
           day_it != res.day_amounts.end(); ++day_it)
         {
           sum_day_amount += day_it->second;
@@ -121,13 +121,13 @@ namespace CampaignSvcs
       const Generics::Time& before_date)
       noexcept
     {
-      for(auto it = total_amounts.begin(); it != total_amounts.end(); ++it)
+      for (auto it = total_amounts.begin(); it != total_amounts.end(); ++it)
       {
         BillStatSource::Stat::AmountCountDistribution& res = amounts[it->first];
         RevenueDecimal sum_day_amount = RevenueDecimal::ZERO;
         ImpRevenueDecimal sum_day_imps = ImpRevenueDecimal::ZERO;
         ImpRevenueDecimal sum_day_clicks = ImpRevenueDecimal::ZERO;
-        for(auto day_it = res.day_amount_counts.begin();
+        for (auto day_it = res.day_amount_counts.begin();
           day_it != res.day_amount_counts.end(); ++day_it)
         {
           sum_day_amount += day_it->second.amount;
@@ -287,7 +287,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         const RevenueDecimal amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
         const RevenueDecimal comm_amount = rs->get_decimal<RevenueDecimal>(POS_ADV_COMM_AMOUNT);
@@ -300,14 +300,14 @@ namespace CampaignSvcs
         const RevenueDecimal ccg_amount =
           (account_flags & AccountTypeFlags::GROSS ? amount + comm_amount : amount);
 
-        if(amount != RevenueDecimal::ZERO ||
+        if (amount != RevenueDecimal::ZERO ||
            comm_amount != RevenueDecimal::ZERO)
         {
           Generics::Time day = !rs->is_null(POS_ADV_DATE) ?
             rs->get_date(POS_ADV_DATE) :
             Generics::Time::ZERO;
 
-          if(day > trunc_date)
+          if (day > trunc_date)
           {
             add_account_day_amount(
               result->accounts,

@@ -191,7 +191,7 @@ namespace AdServer::CampaignSvcs
     void
     for_each(Functor&& functor) const
     {
-      for(const auto& value : values_)
+      for (const auto& value : values_)
       {
         functor(value.first, value.second);
       }

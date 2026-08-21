@@ -1123,7 +1123,7 @@ namespace AdServer::CampaignSvcs
     ChannelIdList current_root_channels;
     current_root_channels.push_back(0);
     unsigned long current_priority = 0;
-    while(!current_root_channels.empty())
+    while (!current_root_channels.empty())
     {
       ChannelIdList new_root_channels;
 
@@ -1219,7 +1219,7 @@ namespace AdServer::CampaignSvcs
 
           const CategoryChannel* cur_cat_ch = parent_cat_ch_it->second;
 
-          while(cur_cat_ch &&
+          while (cur_cat_ch &&
             used_channels.find(cur_cat_ch->channel_id) == used_channels.end())
           {
             if (cur_cat_ch->parent_channel_id)

@@ -40,7 +40,7 @@ namespace CampaignSvcs
 
     try
     {
-      while(true)
+      while (true)
       {
         CampaignServerPool::ObjectHandlerType campaign_server =
           campaign_servers_->get_object<Exception>(
@@ -113,7 +113,7 @@ namespace CampaignSvcs
   {
     BillStatSource::Stat_var stat(new BillStatSource::Stat());
 
-    for(CORBA::ULong i = 0; i < update.accounts.length(); ++i)
+    for (CORBA::ULong i = 0; i < update.accounts.length(); ++i)
     {
       auto& account_info = update.accounts[i];
       BillStatSource::Stat::Account new_account;
@@ -123,7 +123,7 @@ namespace CampaignSvcs
         account_info.account_id, new_account));
     }
 
-    for(CORBA::ULong i = 0; i < update.campaigns.length(); ++i)
+    for (CORBA::ULong i = 0; i < update.campaigns.length(); ++i)
     {
       auto& campaign_info = update.campaigns[i];
       BillStatSource::Stat::Campaign new_campaign;
@@ -133,7 +133,7 @@ namespace CampaignSvcs
         campaign_info.campaign_id, new_campaign));
     }
 
-    for(CORBA::ULong i = 0; i < update.ccgs.length(); ++i)
+    for (CORBA::ULong i = 0; i < update.ccgs.length(); ++i)
     {
       auto& ccg_info = update.ccgs[i];
       BillStatSource::Stat::CCG new_ccg;
@@ -158,7 +158,7 @@ namespace CampaignSvcs
     amount_distribution.prev_day = CorbaAlgs::unpack_time(
       amount_distribution_info.prev_days_amount.day);
 
-    for(CORBA::ULong i = 0;
+    for (CORBA::ULong i = 0;
       i < amount_distribution_info.day_amounts.length(); ++i)
     {
       auto& day_info = amount_distribution_info.day_amounts[i];
@@ -186,7 +186,7 @@ namespace CampaignSvcs
     amount_count_distribution.prev_day = CorbaAlgs::unpack_time(
       amount_count_distribution_info.prev_days_amount_count.day);
 
-    for(CORBA::ULong i = 0;
+    for (CORBA::ULong i = 0;
       i < amount_count_distribution_info.day_amount_counts.length(); ++i)
     {
       auto& day_info = amount_count_distribution_info.day_amount_counts[i];

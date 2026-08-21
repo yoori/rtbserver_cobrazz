@@ -60,7 +60,7 @@ namespace AdServer
       {
         reserve(std::distance(begin, end));
         std::copy(begin, end, std::back_inserter(*this));
-        if(construct_type == UNSORTED)
+        if (construct_type == UNSORTED)
         {
           std::sort(this->begin(), this->end());
         }

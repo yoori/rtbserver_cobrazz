@@ -389,6 +389,7 @@ namespace AdServer::CampaignSvcs::CTR
           ostr << "Model descriptor without algorithm";
           throw CTRProviderImpl::InvalidConfig(ostr);
         }
+
         if (!state.algorithm_models_array_started)
         {
           Stream::Error ostr;
@@ -1451,7 +1452,7 @@ namespace AdServer::CampaignSvcs::CTR
       throw InvalidConfig(ostr);
     }
 
-    while(!campaigns_file.eof())
+    while (!campaigns_file.eof())
     {
       std::string str;
       std::getline(campaigns_file, str);
@@ -1479,7 +1480,7 @@ namespace AdServer::CampaignSvcs::CTR
       throw InvalidConfig(ostr);
     }
 
-    while(!hash_file.eof())
+    while (!hash_file.eof())
     {
       std::string line;
       std::getline(hash_file, line);

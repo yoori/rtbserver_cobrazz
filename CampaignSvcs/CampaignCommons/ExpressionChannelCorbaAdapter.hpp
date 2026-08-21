@@ -50,7 +50,7 @@ namespace AdServer
       channel_info.action_id = channel_params.action_id;
       channel_info.timestamp = CorbaAlgs::pack_time(channel_params.timestamp);
 
-      if(channel_params.common_params.in())
+      if (channel_params.common_params.in())
       {
         channel_info.account_id = channel_params.common_params->account_id;
         channel_info.flags = channel_params.common_params->flags;
@@ -66,7 +66,7 @@ namespace AdServer
         channel_info.freq_cap_id = 0;
       }
 
-      if(channel_params.descriptive_params.in())
+      if (channel_params.descriptive_params.in())
       {
         channel_info.name << channel_params.descriptive_params->name;
         channel_info.parent_channel_id = channel_params.descriptive_params->parent_channel_id;
@@ -76,13 +76,13 @@ namespace AdServer
         channel_info.parent_channel_id = 0;
       }
 
-      if(channel_params.discover_params.in())
+      if (channel_params.discover_params.in())
       {
         channel_info.discover_query << channel_params.discover_params->query;
         channel_info.discover_annotation << channel_params.discover_params->annotation;
       }
 
-      if(channel_params.cmp_params.in())
+      if (channel_params.cmp_params.in())
       {
         channel_info.channel_rate_id = channel_params.cmp_params->channel_rate_id;
         channel_info.imp_revenue = CorbaAlgs::pack_decimal(
@@ -117,7 +117,7 @@ namespace AdServer
       common_params->freq_cap_id = channel_info.freq_cap_id;
       channel_params.common_params = common_params;
 
-      if(channel_info.name[0] || channel_info.parent_channel_id)
+      if (channel_info.name[0] || channel_info.parent_channel_id)
       {
         ChannelParams::DescriptiveParams_var descriptive_params(
           new ChannelParams::DescriptiveParams());
@@ -126,7 +126,7 @@ namespace AdServer
         channel_params.descriptive_params = descriptive_params;
       }
 
-      if(channel_info.discover_query[0])
+      if (channel_info.discover_query[0])
       {
         ChannelParams::DiscoverParams_var discover_params(
           new ChannelParams::DiscoverParams(
@@ -135,7 +135,7 @@ namespace AdServer
         channel_params.discover_params = discover_params;
       }
 
-      if(channel_info.channel_rate_id)
+      if (channel_info.channel_rate_id)
       {
         ChannelParams::CMPParams_var cmp_params(
           new ChannelParams::CMPParams(
@@ -165,9 +165,9 @@ namespace AdServer
       noexcept
     {
       expression_info.operation = expression.op;
-      if(expression.op == ExpressionChannel::NOP)
+      if (expression.op == ExpressionChannel::NOP)
       {
-        if(expression.channel.in() &&
+        if (expression.channel.in() &&
            (expression.channel->expression_channel().in() ||
             expression.channel->simple_channel().in()))
         {
@@ -182,7 +182,7 @@ namespace AdServer
       {
         expression_info.sub_channels.length(expression.sub_channels.size());
         CORBA::ULong ei = 0;
-        for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+        for (ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expression.sub_channels.begin();
             eit != expression.sub_channels.end(); ++eit, ++ei)
         {
@@ -200,13 +200,13 @@ namespace AdServer
       expression.op = static_cast<ExpressionChannel::Operation>(
         expression_info.operation);
 
-      if(expression.op == ExpressionChannel::NOP)
+      if (expression.op == ExpressionChannel::NOP)
       {
-        if(expression_info.channel_id)
+        if (expression_info.channel_id)
         {
           typename ChannelContainerType::iterator ch_it =
             channels.find(expression_info.channel_id);
-          if(ch_it != channels.end())
+          if (ch_it != channels.end())
           {
             expression.channel = ch_it->second;
           }
@@ -222,7 +222,7 @@ namespace AdServer
       }
       else
       {
-        for(CORBA::ULong ei = 0; ei < expression_info.sub_channels.length(); ++ei)
+        for (CORBA::ULong ei = 0; ei < expression_info.sub_channels.length(); ++ei)
         {
           ExpressionChannel::Expression sub_expr;
           unpack_expression(sub_expr, expression_info.sub_channels[ei], channels);
@@ -250,7 +250,7 @@ namespace AdServer
       noexcept
     {
       ConstSimpleChannel_var simple_channel = channel->simple_channel();
-      if(simple_channel.in())
+      if (simple_channel.in())
       {
         pack_simple_channel(channel_info, simple_channel);
       }
@@ -271,7 +271,7 @@ namespace AdServer
       ChannelParams channel_params;
       unpack_channel_params(channel_params, channel_info);
 
-      if(channel_info.expression.operation == 'S')
+      if (channel_info.expression.operation == 'S')
       {
         return new SimpleChannel(channel_params);
       }

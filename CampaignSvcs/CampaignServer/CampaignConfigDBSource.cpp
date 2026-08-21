@@ -486,7 +486,7 @@ namespace CampaignSvcs
       CampaignConfig_var db_config = new CampaignConfig();
       UpdatingState_var db_updating_state = new UpdatingState();
 
-      if(update_ora_config_(db_config, db_updating_state))
+      if (update_ora_config_(db_config, db_updating_state))
       {
         new_config = db_config;
         new_updating_state = db_updating_state;
@@ -502,12 +502,12 @@ namespace CampaignSvcs
 
     try
     {
-      if(!new_config.in() && campaign_config_.get().in())
+      if (!new_config.in() && campaign_config_.get().in())
       {
         new_config = new CampaignConfig(*campaign_config_.get());
       }
 
-      if(new_config.in())
+      if (new_config.in())
       {
         campaign_config_modifier_->update(
           new_config, Generics::Time::get_time_of_day());
@@ -515,7 +515,7 @@ namespace CampaignSvcs
         updating_state_ = new_updating_state;
       }
 
-      if(need_logging)
+      if (need_logging)
       {
         *need_logging = true;
       }
@@ -582,7 +582,7 @@ namespace CampaignSvcs
     const CurrencyDef* currency)
     noexcept
   {
-    if(!currency)
+    if (!currency)
     {
       return val < config->global_params.cost_limit;
     }
@@ -606,7 +606,7 @@ namespace CampaignSvcs
   {
     static const char* FUN = "CampaignConfigDBSource::update_ora_config_()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       logger_->stream(Logging::Logger::TRACE,
         Aspect::CAMPAIGN_SERVER) <<
@@ -716,7 +716,7 @@ namespace CampaignSvcs
         new_config->master_stamp.get_gm_time().format(TIME_FORMAT) << ".";
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       logger_->stream(Logging::Logger::TRACE,
         Aspect::CAMPAIGN_SERVER) << FUN <<
@@ -738,7 +738,7 @@ namespace CampaignSvcs
         new Commons::Postgres::Statement("SELECT transaction_timestamp()::timestamp");
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      if(rs->next())
+      if (rs->next())
       {
         return rs->get_timestamp(1);
       }
@@ -778,10 +778,10 @@ namespace CampaignSvcs
       std::ostringstream sql_request;
       sql_request <<
         "SELECT param_name, param_value FROM AdsConfig where param_name in (";
-      for(GlobalParamMap::const_iterator param_it = global_params.begin();
+      for (GlobalParamMap::const_iterator param_it = global_params.begin();
           param_it != global_params.end(); ++param_it)
       {
-        if(param_it != global_params.begin())
+        if (param_it != global_params.begin())
         {
           sql_request << ", ";
         }
@@ -793,7 +793,7 @@ namespace CampaignSvcs
         new Commons::Postgres::Statement(sql_request.str().c_str());
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         global_params[rs->get_string(1)] = rs->get_string(2);
       }
@@ -802,10 +802,10 @@ namespace CampaignSvcs
         const std::string& fraud_user_deactivate_period_s =
           global_params[FRAUD_USER_DEACTIVATE_PERIOD];
 
-        if(!fraud_user_deactivate_period_s.empty())
+        if (!fraud_user_deactivate_period_s.empty())
         {
           unsigned long fraud_user_deactivate_period;
-          if(String::StringManip::str_to_int(
+          if (String::StringManip::str_to_int(
                fraud_user_deactivate_period_s,
                fraud_user_deactivate_period))
           {
@@ -827,7 +827,7 @@ namespace CampaignSvcs
         new_config->global_params.cost_limit = MAXIMUM_COST_LIMIT;
         const std::string& cost_limit_s = global_params[COST_LIMIT];
 
-        if(!cost_limit_s.empty())
+        if (!cost_limit_s.empty())
         {
           try
           {
@@ -849,10 +849,10 @@ namespace CampaignSvcs
         const std::string& google_publisher_account_id_s =
           global_params[GOOGLE_PUBLISHER_ACCOUNT_ID];
 
-        if(!google_publisher_account_id_s.empty())
+        if (!google_publisher_account_id_s.empty())
         {
           unsigned long google_publisher_account_id;
-          if(String::StringManip::str_to_int(
+          if (String::StringManip::str_to_int(
                google_publisher_account_id_s,
                google_publisher_account_id))
           {
@@ -929,7 +929,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         std::string app_format_name = rs->get_string(POS_APP_FORMAT_NAME);
         AppFormatDef_var app_format = new AppFormatDef();
@@ -937,7 +937,7 @@ namespace CampaignSvcs
         new_config->app_formats.activate(app_format_name, app_format, sysdate, old_app_formats);
       }
 
-      if(old_app_formats)
+      if (old_app_formats)
       {
         new_config->app_formats.deactivate_nonactive(*old_app_formats, sysdate);
       }
@@ -996,7 +996,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         unsigned long size_id = rs->get_number<unsigned long>(POS_SIZE_ID);
         SizeDef_var size = new SizeDef();
@@ -1010,7 +1010,7 @@ namespace CampaignSvcs
         new_config->sizes.activate(size_id, size, sysdate, old_sizes);
       }
 
-      if(old_sizes)
+      if (old_sizes)
       {
         new_config->sizes.deactivate_nonactive(*old_sizes, sysdate);
       }
@@ -1095,29 +1095,29 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         const unsigned long account_id =
           rs->get_number<unsigned long>(POS_ACCOUNT_ID);
         const char cross_status = rs->get_char(POS_STATUS);
 
-        if(campaign_statuses_.empty() ||
+        if (campaign_statuses_.empty() ||
           campaign_statuses_.find(cross_status) != std::string::npos)
         {
           AccountDef_var account;
 
-          if(old_accounts)
+          if (old_accounts)
           {
             AccountMap::ActiveMap::const_iterator acc_it =
               old_accounts->active().find(account_id);
 
-            if(acc_it != old_accounts->active().end())
+            if (acc_it != old_accounts->active().end())
             {
               account = new AccountDef(*(acc_it->second));
             }
           }
 
-          if(!account.in())
+          if (!account.in())
           {
             account = new AccountDef();
           }
@@ -1140,7 +1140,7 @@ namespace CampaignSvcs
               Generics::Time(rs->get_number<int>(POS_TIME_OFFSET) * 60);
             try
             {
-              if(rs->is_null(POS_BUDGET))
+              if (rs->is_null(POS_BUDGET))
               {
                 account->budget = RevenueDecimal::ZERO;
               }
@@ -1158,7 +1158,7 @@ namespace CampaignSvcs
             account->commision = rs->get_decimal<RevenueDecimal>(POS_COMMISION);
             account->media_handling_fee = rs->get_decimal<RevenueDecimal>(
               POS_MEDIA_HANDLING_FEE);
-            if(account->media_handling_fee < RevenueDecimal::ZERO ||
+            if (account->media_handling_fee < RevenueDecimal::ZERO ||
                account->media_handling_fee >= REVENUE_ONE)
             {
               Stream::Error ostr;
@@ -1171,7 +1171,7 @@ namespace CampaignSvcs
             account->use_pub_pixels = (rs->get_char(POS_USE_PUB_PIXEL) == 'Y');
             account->pub_pixel_optin = rs->get_string(POS_PUB_PIXEL_OPTIN);
             account->pub_pixel_optout = rs->get_string(POS_PUB_PIXEL_OPTOUT);
-            if(rs->is_null(POS_SELF_SERVICE_COMMISSION))
+            if (rs->is_null(POS_SELF_SERVICE_COMMISSION))
             {
               account->self_service_commission = RevenueDecimal::ZERO;
             }
@@ -1198,7 +1198,7 @@ namespace CampaignSvcs
         } // status check
       }
 
-      if(old_accounts)
+      if (old_accounts)
       {
         new_config->accounts.deactivate_nonactive(*old_accounts, sysdate);
       }
@@ -1232,13 +1232,13 @@ namespace CampaignSvcs
       unsigned long cur_account_id =
         rs_next ? rs->get_number<unsigned long>(POS_PUB_ACCOUNT_ID) : 0;
 
-      for(AccountMap::ActiveMap::iterator ait =
+      for (AccountMap::ActiveMap::iterator ait =
             new_config->accounts.active().begin();
           ait != new_config->accounts.active().end(); )
       {
-        if(!rs_next || ait->first < cur_account_id)
+        if (!rs_next || ait->first < cur_account_id)
         {
-          if(ait->second->media_handling_fee != RevenueDecimal::ZERO)
+          if (ait->second->media_handling_fee != RevenueDecimal::ZERO)
           {
             // push media handling fee as walled_garden_accounts
             // by compatibility reasons (3.5.5)
@@ -1249,7 +1249,7 @@ namespace CampaignSvcs
             cur_walled_garden_accounts.insert(media_handling_fee_mediator);
           }
 
-          if(ait->second->walled_garden_accounts.size() !=
+          if (ait->second->walled_garden_accounts.size() !=
                cur_walled_garden_accounts.size() ||
              !std::equal(cur_walled_garden_accounts.begin(),
                cur_walled_garden_accounts.end(),
@@ -1267,7 +1267,7 @@ namespace CampaignSvcs
         else
         {
           // rs_next is true
-          if(ait->first == cur_account_id)
+          if (ait->first == cur_account_id)
           {
             cur_walled_garden_accounts.insert(
               rs->get_number<unsigned long>(POS_ACCOUNT_ID));
@@ -1311,23 +1311,23 @@ namespace CampaignSvcs
         POS_TOKENS
       };
 
-      while(rs->next())
+      while (rs->next())
       {
         std::string name = rs->get_string(POS_NAME);
         StringSet* tokens;
-        if(name == "GENERIC")
+        if (name == "GENERIC")
         {
           tokens = &generic_tokens_;
         }
-        else if(name == "ADVERTISER")
+        else if (name == "ADVERTISER")
         {
           tokens = &advertiser_tokens_;
         }
-        else if(name == "PUBLISHER")
+        else if (name == "PUBLISHER")
         {
           tokens = &publisher_tokens_;
         }
-        else if(name == "INTERNAL")
+        else if (name == "INTERNAL")
         {
           tokens = &internal_tokens_;
         }
@@ -1343,7 +1343,7 @@ namespace CampaignSvcs
         std::string token_names = rs->get_string(POS_TOKENS);
         String::StringManip::SplitComma tokenizer(token_names);
         String::SubString value;
-        while(tokenizer.get_token(value))
+        while (tokenizer.get_token(value))
         {
           String::StringManip::trim(value);
           std::string tok = value.str();
@@ -1412,16 +1412,16 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         StringSet token_relations;
         std::string token = rs->get_string(POS_TOKEN);
         unsigned long token_relation_flags =
           rs->get_number<unsigned long>(POS_TOKEN_RELATION_FLAGS);
-        for(size_t i = 0; i < sizeof(TOKEN_RELATION_MASKS) /
+        for (size_t i = 0; i < sizeof(TOKEN_RELATION_MASKS) /
               sizeof(TOKEN_RELATION_MASKS[0]); ++i)
         {
-          if(token_relation_flags & TOKEN_RELATION_MASKS[i].mask)
+          if (token_relation_flags & TOKEN_RELATION_MASKS[i].mask)
           {
             std::copy(
               TOKEN_RELATION_MASKS[i].tokens->begin(),
@@ -1448,14 +1448,14 @@ namespace CampaignSvcs
           old_config ? &old_config->creative_options : 0);
       }
 
-      for(CreativeOptionMap::ActiveMap::const_iterator opt_it =
+      for (CreativeOptionMap::ActiveMap::const_iterator opt_it =
             predefined_options_.begin();
           opt_it != predefined_options_.end(); ++opt_it)
       {
         creative_options.activate(opt_it->first, opt_it->second);
       }
 
-      if(old_config)
+      if (old_config)
       {
         creative_options.deactivate_nonactive(
           old_config->creative_options, sysdate);
@@ -1507,22 +1507,22 @@ namespace CampaignSvcs
         POS_ACCOUNT_ID
       };
 
-      while(rs->next())
+      while (rs->next())
       {
         unsigned long site_id = rs->get_number<unsigned long>(POS_SITE_ID);
         SiteDef_var site;
 
-        if(old_sites)
+        if (old_sites)
         {
           SiteMap::ActiveMap::const_iterator old_sit =
             old_sites->active().find(site_id);
-          if(old_sit != old_sites->active().end())
+          if (old_sit != old_sites->active().end())
           {
             site = new SiteDef(*(old_sit->second));
           }
         }
 
-        if(!site.in())
+        if (!site.in())
         {
           site = new SiteDef();
         }
@@ -1535,7 +1535,7 @@ namespace CampaignSvcs
         sites.activate(site_id, site, sysdate, old_sites);
       }
 
-      if(old_sites)
+      if (old_sites)
       {
         sites.deactivate_nonactive(*old_sites, sysdate);
       }
@@ -1574,14 +1574,14 @@ namespace CampaignSvcs
       unsigned long cur_site_id =
         rs_next ? rs->get_number<unsigned long>(POS_SITE_ID) : 0;
 
-      for(SiteMap::ActiveMap::iterator sit =
+      for (SiteMap::ActiveMap::iterator sit =
             config->sites.active().begin();
           sit != config->sites.active().end(); )
       {
-        if(!rs_next || sit->first < cur_site_id)
+        if (!rs_next || sit->first < cur_site_id)
         {
           // check approved/rejected creative category sets equality
-          if(sit->second->approved_creative_categories.size() !=
+          if (sit->second->approved_creative_categories.size() !=
                cur_approved_creative_categories.size() ||
              sit->second->rejected_creative_categories.size() !=
                cur_rejected_creative_categories.size() ||
@@ -1606,23 +1606,23 @@ namespace CampaignSvcs
         else
         {
           // rs_next is true
-          if(sit->first == cur_site_id)
+          if (sit->first == cur_site_id)
           {
             unsigned long creative_category_id =
               rs->get_number<unsigned long>(POS_CREATIVE_CATEGORY_ID);
             char approval = rs->get_char(POS_APPROVAL);
 
-            if(approval == 'P')
+            if (approval == 'P')
             {
               cur_approved_creative_categories.push_back(
                 creative_category_id);
             }
-            else if(approval == 'R')
+            else if (approval == 'R')
             {
               cur_rejected_creative_categories.push_back(
                 creative_category_id);
             }
-            else if(approval != 'A')
+            else if (approval != 'A')
             {
               Stream::Error ostr;
               ostr << FUN <<
@@ -1671,14 +1671,14 @@ namespace CampaignSvcs
       unsigned long cur_site_id =
         rs_next ? rs->get_number<unsigned long>(POS_SITE_ID) : 0;
 
-      for(SiteMap::ActiveMap::iterator sit =
+      for (SiteMap::ActiveMap::iterator sit =
             config->sites.active().begin();
           sit != config->sites.active().end(); )
       {
-        if(!rs_next || sit->first < cur_site_id)
+        if (!rs_next || sit->first < cur_site_id)
         {
           // check approved campaign sets equality
-          if(sit->second->approved_creatives.size() !=
+          if (sit->second->approved_creatives.size() !=
                cur_approved_creatives.size() ||
              !std::equal(cur_approved_creatives.begin(),
                cur_approved_creatives.end(),
@@ -1690,7 +1690,7 @@ namespace CampaignSvcs
             sit->second = site;
           }
 
-          if(sit->second->rejected_creatives.size() !=
+          if (sit->second->rejected_creatives.size() !=
               cur_rejected_creatives.size() ||
              !std::equal(cur_rejected_creatives.begin(),
                cur_rejected_creatives.end(),
@@ -1709,7 +1709,7 @@ namespace CampaignSvcs
         else
         {
           // rs_next is true
-          if(sit->first == cur_site_id)
+          if (sit->first == cur_site_id)
           {
             const unsigned long creative_id =
               rs->get_number<unsigned long>(POS_CREATIVE_ID);
@@ -1801,7 +1801,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->currencies.deactivate_nonactive(
           old_config->currencies,
@@ -1881,17 +1881,17 @@ namespace CampaignSvcs
           {
             TagDef_var tag;
 
-            if(old_config)
+            if (old_config)
             {
               TagMap::ActiveMap::const_iterator old_tag_it =
                 old_config->tags.active().find(tag_id);
-              if(old_tag_it != old_config->tags.active().end())
+              if (old_tag_it != old_config->tags.active().end())
               {
                 tag = new TagDef(*(old_tag_it->second));
               }
             }
 
-            if(!tag.in())
+            if (!tag.in())
             {
               tag = new TagDef();
             }
@@ -1899,7 +1899,7 @@ namespace CampaignSvcs
             tag->tag_id = tag_id;
             tag->site_id = rs->get_number<unsigned long>(POS_SITE_ID);
 
-            if(!rs->is_null(POS_PASSBACK))
+            if (!rs->is_null(POS_PASSBACK))
             {
               std::string passback_url_str = rs->get_string(POS_PASSBACK);
               if (HTTP::HTTP_BEGIN.start(passback_url_str) ||
@@ -1938,11 +1938,11 @@ namespace CampaignSvcs
 
             std::string passback_type = rs->get_string(POS_PASSBACK_TYPE);
             String::AsciiStringManip::to_lower(passback_type);
-            if(passback_type.compare(0, 4, "html") == 0)
+            if (passback_type.compare(0, 4, "html") == 0)
             {
               tag->passback_type = "html";
             }
-            else if(passback_type.compare(0, 2, "js") == 0)
+            else if (passback_type.compare(0, 2, "js") == 0)
             {
               tag->passback_type = "js";
             }
@@ -1954,7 +1954,7 @@ namespace CampaignSvcs
               rs->get_number<unsigned long>(POS_FLAGS) : 0;
             tag->marketplace = rs->get_string(POS_MARKETPLACE)[0];
             tag->adjustment = REVENUE_ONE;
-            if(tag->adjustment < RevenueDecimal::ZERO)
+            if (tag->adjustment < RevenueDecimal::ZERO)
             {
               logger_->sstream(Logging::Logger::ERROR,
                 Aspect::CAMPAIGN_SERVER,
@@ -2014,13 +2014,13 @@ namespace CampaignSvcs
 
         TagDef::SizeMap cur_sizes;
 
-        for(TagMap::ActiveMap::iterator tag_it =
+        for (TagMap::ActiveMap::iterator tag_it =
               new_config->tags.active().begin();
             tag_it != new_config->tags.active().end(); )
         {
-          if(!rs_next || tag_it->first < cur_tag_id)
+          if (!rs_next || tag_it->first < cur_tag_id)
           {
-            if(cur_sizes.size() != tag_it->second->sizes.size() ||
+            if (cur_sizes.size() != tag_it->second->sizes.size() ||
                !std::equal(cur_sizes.begin(),
                  cur_sizes.end(),
                  tag_it->second->sizes.begin(),
@@ -2037,7 +2037,7 @@ namespace CampaignSvcs
           }
           else
           {
-            if(tag_it->first == cur_tag_id)
+            if (tag_it->first == cur_tag_id)
             {
               unsigned long size_id =
                 rs->get_number<unsigned long>(POS_SIZE_ID);
@@ -2047,9 +2047,9 @@ namespace CampaignSvcs
 
               TagDef::Size& res_size = cur_sizes[size_id];
 
-              if(!rs->is_null(POS_OPTION_ID))
+              if (!rs->is_null(POS_OPTION_ID))
               {
-                if(rs->get_number<unsigned long>(POS_IS_HIDDEN) > 0)
+                if (rs->get_number<unsigned long>(POS_IS_HIDDEN) > 0)
                 {
                   res_size.hidden_tokens.insert(std::make_pair(
                     rs->get_number<int>(POS_OPTION_ID), option_value));
@@ -2061,7 +2061,7 @@ namespace CampaignSvcs
                 }
               }
 
-              if(is_max_text_creatives)
+              if (is_max_text_creatives)
               {
                 String::StringManip::str_to_int(
                   option_value, res_size.max_text_creatives);
@@ -2097,13 +2097,13 @@ namespace CampaignSvcs
         CreativeCategorySet cur_accepted_categories;
         CreativeCategorySet cur_rejected_categories;
 
-        for(TagMap::ActiveMap::iterator tag_it =
+        for (TagMap::ActiveMap::iterator tag_it =
               new_config->tags.active().begin();
             tag_it != new_config->tags.active().end(); )
         {
-          if(!rs_next || tag_it->first < cur_tag_id)
+          if (!rs_next || tag_it->first < cur_tag_id)
           {
-            if(cur_accepted_categories.size() !=
+            if (cur_accepted_categories.size() !=
                  tag_it->second->accepted_categories.size() ||
                cur_rejected_categories.size() !=
                  tag_it->second->rejected_categories.size() ||
@@ -2127,12 +2127,12 @@ namespace CampaignSvcs
           }
           else
           {
-            if(tag_it->first == cur_tag_id)
+            if (tag_it->first == cur_tag_id)
             {
               char status = rs->get_char(POS_APPROVAL);
               unsigned long category_id =
                 rs->get_number<unsigned long>(POS_CREATIVE_CATEGORY_ID);
-              if(status == 'A')
+              if (status == 'A')
               {
                 cur_accepted_categories.insert(category_id);
               }
@@ -2185,13 +2185,13 @@ namespace CampaignSvcs
         TagPricings cur_tag_pricings;
         CurrencyDef_var cur_currency;
 
-        for(TagMap::ActiveMap::iterator tag_it =
+        for (TagMap::ActiveMap::iterator tag_it =
               new_config->tags.active().begin();
             tag_it != new_config->tags.active().end(); )
         {
-          if(!rs_next || tag_it->first < cur_tag_id)
+          if (!rs_next || tag_it->first < cur_tag_id)
           {
-            if(cur_tag_pricings.size() !=
+            if (cur_tag_pricings.size() !=
                  tag_it->second->tag_pricings.size() ||
                !std::equal(cur_tag_pricings.begin(),
                  cur_tag_pricings.end(),
@@ -2199,17 +2199,17 @@ namespace CampaignSvcs
             {
               bool default_tp_found = false;
 
-              for(TagPricings::const_iterator tp_it = cur_tag_pricings.begin();
+              for (TagPricings::const_iterator tp_it = cur_tag_pricings.begin();
                   tp_it != cur_tag_pricings.end(); ++tp_it)
               {
-                if(tp_it->country_code.empty())
+                if (tp_it->country_code.empty())
                 {
                   default_tp_found = true;
                   break;
                 }
               }
 
-              if(default_tp_found)
+              if (default_tp_found)
               {
                 TagDef_var tag(new TagDef(*(tag_it->second)));
                 tag->tag_pricings_timestamp = sysdate;
@@ -2229,20 +2229,20 @@ namespace CampaignSvcs
           }
           else
           {
-            if(tag_it->first == cur_tag_id)
+            if (tag_it->first == cur_tag_id)
             {
-              if(!cur_currency.in())
+              if (!cur_currency.in())
               {
                 CurrencyMap::ActiveMap::const_iterator currency_it =
                   new_config->currencies.active().find(
                     rs->get_number<unsigned long>(POS_CURRENCY_ID));
-                if(currency_it != new_config->currencies.active().end())
+                if (currency_it != new_config->currencies.active().end())
                 {
                   cur_currency = currency_it->second;
                 }
               }
 
-              if(cur_currency.in())
+              if (cur_currency.in())
               {
                 TagPricingDef tag_pricing;
 
@@ -2250,7 +2250,7 @@ namespace CampaignSvcs
                   rs->get_number<unsigned long>(POS_SITE_RATE_ID);
                 tag_pricing.country_code = rs->get_string(POS_COUNTRY_CODE);
 
-                if(!rs->is_null(POS_CCG_TYPE))
+                if (!rs->is_null(POS_CCG_TYPE))
                 {
                   tag_pricing.ccg_type = static_cast<CCGType>(rs->get_char(POS_CCG_TYPE));
                 }
@@ -2262,16 +2262,16 @@ namespace CampaignSvcs
                 tag_pricing.ccg_rate_type = CR_ALL;
 
 
-                if(!rs->is_null(POS_CCG_RATE_TYPE))
+                if (!rs->is_null(POS_CCG_RATE_TYPE))
                 {
                   std::string str = rs->get_string(POS_CCG_RATE_TYPE);
-                  if(str.size() == 3 && str[0] == 'C' && str[1] == 'P')
+                  if (str.size() == 3 && str[0] == 'C' && str[1] == 'P')
                   {
                     tag_pricing.ccg_rate_type = static_cast<CCGRateType>(str[2]);
                   }
                 }
 
-                if(rs->get_string(POS_TAG_RATE_TYPE) == "CPM")
+                if (rs->get_string(POS_TAG_RATE_TYPE) == "CPM")
                 {
                   tag_pricing.revenue_share = RevenueDecimal::ZERO;
                   try
@@ -2279,7 +2279,7 @@ namespace CampaignSvcs
                     tag_pricing.imp_revenue = rs->get_decimal<RevenueDecimal>(
                       POS_IMP_REVENUE);
 
-                    if(!check_cost_(tag_pricing.imp_revenue, new_config, cur_currency))
+                    if (!check_cost_(tag_pricing.imp_revenue, new_config, cur_currency))
                     {
                       std::ostringstream block_reason_ostr;
                       block_reason_ostr << "big imp revenue = " <<
@@ -2314,18 +2314,18 @@ namespace CampaignSvcs
         }
       }
 
-      if(!blocked_tags.empty())
+      if (!blocked_tags.empty())
       {
         Stream::Error ostr;
 
         ostr << "Next tags will be ignored: ";
-        for(BlockTagMap::const_iterator blocked_tag_it =
+        for (BlockTagMap::const_iterator blocked_tag_it =
               blocked_tags.begin();
             blocked_tag_it != blocked_tags.end(); ++blocked_tag_it)
         {
           TagMap::ActiveMap::const_iterator dtag_it =
             new_config->tags.active().find(blocked_tag_it->first);
-          if(dtag_it != new_config->tags.active().end())
+          if (dtag_it != new_config->tags.active().end())
           {
             TagDef_var cleared_tag = new TagDef(*(dtag_it->second));
             cleared_tag->tag_pricings.clear();
@@ -2392,9 +2392,9 @@ namespace CampaignSvcs
              config->tags.active().begin();
            tag_it != config->tags.active().end(); )
       {
-        if(!rs_next || tag_it->first < cur_tag_id)
+        if (!rs_next || tag_it->first < cur_tag_id)
         {
-          if(tag_it->second->tokens.size() != cur_tokens.size() ||
+          if (tag_it->second->tokens.size() != cur_tokens.size() ||
              !std::equal(cur_tokens.begin(),
                cur_tokens.end(),
                tag_it->second->tokens.begin(),
@@ -2411,7 +2411,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(tag_it->first == cur_tag_id)
+          if (tag_it->first == cur_tag_id)
           {
             cur_tokens.insert(std::make_pair(
               rs->get_number<int>(POS_OPTION_ID),
@@ -2456,9 +2456,9 @@ namespace CampaignSvcs
              config->tags.active().begin();
            tag_it != config->tags.active().end(); )
       {
-        if(!rs_next || tag_it->first < cur_tag_id)
+        if (!rs_next || tag_it->first < cur_tag_id)
         {
-          if(tag_it->second->tokens.size() != cur_tokens.size() ||
+          if (tag_it->second->tokens.size() != cur_tokens.size() ||
              !std::equal(cur_tokens.begin(),
                cur_tokens.end(),
                tag_it->second->passback_tokens.begin(),
@@ -2475,9 +2475,9 @@ namespace CampaignSvcs
         }
         else
         {
-          if(tag_it->first == cur_tag_id)
+          if (tag_it->first == cur_tag_id)
           {
-            if(!rs->is_null(POS_PASSBACK_CODE))
+            if (!rs->is_null(POS_PASSBACK_CODE))
             {
               cur_tokens.insert(std::make_pair(
                 TAG_PASSBACK_CODE_OPTION_ID,
@@ -2534,9 +2534,9 @@ namespace CampaignSvcs
              config->tags.active().begin();
            tag_it != config->tags.active().end(); )
       {
-        if(!rs_next || tag_it->first < cur_tag_id)
+        if (!rs_next || tag_it->first < cur_tag_id)
         {
-          if(tag_it->second->template_tokens.size() != cur_template_tokens.size() ||
+          if (tag_it->second->template_tokens.size() != cur_template_tokens.size() ||
              !std::equal(cur_template_tokens.begin(),
                cur_template_tokens.end(),
                tag_it->second->template_tokens.begin()))
@@ -2552,7 +2552,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(tag_it->first == cur_tag_id)
+          if (tag_it->first == cur_tag_id)
           {
             cur_template_tokens[rs->get_string(POS_TEMPLATE_NAME)].insert(
               std::make_pair(
@@ -2604,12 +2604,12 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         std::string country_code = rs->get_string(POS_COUNTRY_CODE);
         CountryDef_var country(new CountryDef());
 
-        if(!rs->is_null(POS_FOOTER_URL))
+        if (!rs->is_null(POS_FOOTER_URL))
         {
           country->tokens.insert(
             std::make_pair(
@@ -2624,7 +2624,7 @@ namespace CampaignSvcs
           old_countries);
       }
 
-      if(old_countries)
+      if (old_countries)
       {
         new_config->countries.deactivate_nonactive(
           *old_countries, sysdate);
@@ -2688,21 +2688,21 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         unsigned long id = rs->get_number<unsigned long>(POS_COLO_ID);
 
         ColocationAdServingType ad_serving = CS_ALL;
         std::string ad_serving_str = rs->get_string(POS_AD_SERVING);
-        if(ad_serving_str == CS_ONLY_OPTIN_STR)
+        if (ad_serving_str == CS_ONLY_OPTIN_STR)
         {
           ad_serving = CS_ONLY_OPTIN;
         }
-        else if(ad_serving_str == CS_NON_OPTOUT_STR)
+        else if (ad_serving_str == CS_NON_OPTOUT_STR)
         {
           ad_serving = CS_NON_OPTOUT;
         }
-        else if(ad_serving_str == CS_NONE_STR)
+        else if (ad_serving_str == CS_NONE_STR)
         {
           ad_serving = CS_NONE;
         }
@@ -2719,7 +2719,7 @@ namespace CampaignSvcs
         colocation->ad_serving = ad_serving;
         colocation->hid_profile = (rs->get_char(POS_HID_PROFILE) == 'Y');
 
-        if(!rs->is_null(POS_FOOTER_URL))
+        if (!rs->is_null(POS_FOOTER_URL))
         {
           colocation->tokens.insert(
             std::make_pair(
@@ -2734,7 +2734,7 @@ namespace CampaignSvcs
           old_colocations);
       }
 
-      if(old_colocations)
+      if (old_colocations)
       {
         new_config->colocations.deactivate_nonactive(
           *old_colocations, sysdate);
@@ -2940,7 +2940,7 @@ namespace CampaignSvcs
       {
         char cross_status = rs->get_char(QC_STATUS);
 
-        if(campaign_statuses_.empty() ||
+        if (campaign_statuses_.empty() ||
           campaign_statuses_.find(cross_status) != std::string::npos)
         {
           const unsigned long campaign_id =
@@ -2951,22 +2951,22 @@ namespace CampaignSvcs
             CurrencyMap::ActiveMap::const_iterator currency_it =
               new_config->currencies.active().find(
                 rs->get_number<unsigned long>(QC_CURRENCY_ID));
-            if(currency_it != new_config->currencies.active().end())
+            if (currency_it != new_config->currencies.active().end())
             {
               CurrencyDef_var cur_currency = currency_it->second;
               Campaign_var campaign;
 
-              if(old_config)
+              if (old_config)
               {
                 CampaignMap::ActiveMap::const_iterator cmp_it =
                   old_config->campaigns.active().find(campaign_id);
-                if(cmp_it != old_config->campaigns.active().end())
+                if (cmp_it != old_config->campaigns.active().end())
                 {
                   campaign = new CampaignDef(*(cmp_it->second));
                 }
               }
 
-              if(!campaign.in())
+              if (!campaign.in())
               {
                 campaign = new CampaignDef();
                 campaign->delivery_coef = TAG_DELIVERY_MAX;
@@ -2981,7 +2981,7 @@ namespace CampaignSvcs
                 rs->get_string(QC_FLIGHT_RATE_TYPE) :
                 std::string();
 
-              if(flight_rate_type == "MCPM")
+              if (flight_rate_type == "MCPM")
               {
                 campaign->ccg_rate_type = 'B'; // CR_MAXBID
               }
@@ -2989,7 +2989,7 @@ namespace CampaignSvcs
               {
                 campaign->ccg_rate_type = '-';
                 std::string rate_type = rs->get_string(QC_CCG_RATE_TYPE);
-                if(rate_type.size() == 3)
+                if (rate_type.size() == 3)
                 {
                   campaign->ccg_rate_type = rate_type[2];
                 }
@@ -3012,7 +3012,7 @@ namespace CampaignSvcs
                 campaign->imp_revenue = rs->get_decimal<RevenueDecimal>(QC_IMP_REVENUE);
                 campaign->click_revenue = rs->get_decimal<RevenueDecimal>(QC_CLICK_REVENUE);
                 campaign->action_revenue = rs->get_decimal<RevenueDecimal>(QC_ACTION_REVENUE);
-                if(campaign->imp_revenue == RevenueDecimal::ZERO && campaign->action_revenue != RevenueDecimal::ZERO)
+                if (campaign->imp_revenue == RevenueDecimal::ZERO && campaign->action_revenue != RevenueDecimal::ZERO)
                 {
                   campaign->imp_revenue = RevenueDecimal::div(campaign->action_revenue, RevenueDecimal(false, 1000, 0));
                   campaign->action_revenue = RevenueDecimal::ZERO;
@@ -3028,7 +3028,7 @@ namespace CampaignSvcs
                 throw InvalidObject(ostr);
               }
 
-              if(!check_cost_(campaign->imp_revenue, new_config, cur_currency) ||
+              if (!check_cost_(campaign->imp_revenue, new_config, cur_currency) ||
                  !check_cost_(campaign->click_revenue, new_config, cur_currency) ||
                  !check_cost_(campaign->action_revenue, new_config, cur_currency))
               {
@@ -3041,7 +3041,7 @@ namespace CampaignSvcs
               }
 
               /* adopt flags */
-              if(campaign->action_revenue > RevenueDecimal::ZERO)
+              if (campaign->action_revenue > RevenueDecimal::ZERO)
               {
                 campaign->flags |= AdServer::CampaignSvcs::CampaignFlags::TRACK_ACTIONS;
               }
@@ -3054,24 +3054,24 @@ namespace CampaignSvcs
               campaign->ccg_type = rs->get_char(QC_CAMPAIGN_TYPE);
               campaign->target_type = rs->get_char(QC_TARGET_TYPE);
               std::string user_status_targeting = rs->get_string(QC_USER_STATUS_TARGETING);
-              if(user_status_targeting.size() != 3)
+              if (user_status_targeting.size() != 3)
               {
                 campaign->flags |= AdServer::CampaignSvcs::CampaignFlags::US_NONE;
               }
               else
               {
                 // 0: opt-in, 1: opt-out, 2: undefined
-                if(user_status_targeting[0] == 'Y')
+                if (user_status_targeting[0] == 'Y')
                 {
                   campaign->flags |= AdServer::CampaignSvcs::CampaignFlags::US_OPTIN;
                 }
 
-                if(user_status_targeting[1] == 'Y')
+                if (user_status_targeting[1] == 'Y')
                 {
                   campaign->flags |= AdServer::CampaignSvcs::CampaignFlags::US_OPTOUT;
                 }
 
-                if(user_status_targeting[2] == 'Y')
+                if (user_status_targeting[2] == 'Y')
                 {
                   campaign->flags |= AdServer::CampaignSvcs::CampaignFlags::US_UNDEFINED;
                 }
@@ -3133,7 +3133,7 @@ namespace CampaignSvcs
                 Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_CLICK_DAILY_LIMIT)) :
                 Commons::Optional<unsigned long>();
 
-              if(!rs->is_null(QC_STAT_CHANNEL_ID))
+              if (!rs->is_null(QC_STAT_CHANNEL_ID))
               {
                 campaign->stat_expression.op = NonLinkedExpressionChannel::NOP;
                 campaign->stat_expression.channel_id =
@@ -3162,12 +3162,12 @@ namespace CampaignSvcs
               campaign->max_pub_share = rs->get_decimal<RevenueDecimal>(QC_MAX_PUB_SHARE);
 
               char bid_strategy_sym = rs->get_char(QC_BID_STRATEGY);
-              if(bid_strategy_sym == 'R')
+              if (bid_strategy_sym == 'R')
               {
                 campaign->bid_strategy = BS_MAX_REACH;
                 campaign->min_ctr_goal = RevenueDecimal::ZERO;
               }
-              else if(bid_strategy_sym == 'C')
+              else if (bid_strategy_sym == 'C')
               {
                 campaign->bid_strategy = BS_MIN_CTR_GOAL;
                 campaign->min_ctr_goal = rs->get_decimal<RevenueDecimal>(QC_MIN_CTR_GOAL);
@@ -3235,7 +3235,7 @@ namespace CampaignSvcs
         } // status check
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->campaigns.deactivate_nonactive(
           old_config->campaigns, sysdate);
@@ -3272,13 +3272,13 @@ namespace CampaignSvcs
         rs_next ? rs->get_number<unsigned long>(POS_CCG_ID) : 0;
       ColoIdSet cur_colocations;
 
-      for(CampaignMap::ActiveMap::iterator cmp_it =
+      for (CampaignMap::ActiveMap::iterator cmp_it =
             new_config->campaigns.active().begin();
           cmp_it != new_config->campaigns.active().end(); )
       {
-        if(!rs_next || cmp_it->first < cur_ccg_id)
+        if (!rs_next || cmp_it->first < cur_ccg_id)
         {
-          if(!(cur_colocations.size() ==
+          if (!(cur_colocations.size() ==
                  cmp_it->second->colocations.size() &&
                std::equal(cur_colocations.begin(),
                  cur_colocations.end(),
@@ -3295,7 +3295,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(cmp_it->first == cur_ccg_id)
+          if (cmp_it->first == cur_ccg_id)
           {
             cur_colocations.insert(rs->get_number<unsigned long>(POS_COLO_ID));
           }
@@ -3346,13 +3346,13 @@ namespace CampaignSvcs
       WeeklyRunIntervalSet cur_cmp_weekly_run_intervals;
       WeeklyRunIntervalSet cur_ccg_weekly_run_intervals;
 
-      for(CampaignMap::ActiveMap::iterator cmp_it =
+      for (CampaignMap::ActiveMap::iterator cmp_it =
             new_config->campaigns.active().begin();
           cmp_it != new_config->campaigns.active().end(); )
       {
-        if(!rs_next || cmp_it->first < cur_ccg_id)
+        if (!rs_next || cmp_it->first < cur_ccg_id)
         {
-          if(cur_ccg_weekly_run_intervals.empty())
+          if (cur_ccg_weekly_run_intervals.empty())
           {
             cur_ccg_weekly_run_intervals.insert(
               WeeklyRunIntervalDef(
@@ -3364,12 +3364,12 @@ namespace CampaignSvcs
           cur_cmp_weekly_run_intervals.normalize(
             0, Generics::Time::ONE_WEEK.tv_sec / 60);
 
-          if(!cur_cmp_weekly_run_intervals.empty())
+          if (!cur_cmp_weekly_run_intervals.empty())
           {
             cur_ccg_weekly_run_intervals.cross(cur_cmp_weekly_run_intervals);
           }
 
-          if(cur_ccg_weekly_run_intervals.size() == 1 &&
+          if (cur_ccg_weekly_run_intervals.size() == 1 &&
                cur_ccg_weekly_run_intervals.begin()->min == 0 &&
                cur_ccg_weekly_run_intervals.begin()->max ==
                static_cast<unsigned long>(
@@ -3379,7 +3379,7 @@ namespace CampaignSvcs
             cur_ccg_weekly_run_intervals.clear();
           }
 
-          if(!(cur_ccg_weekly_run_intervals.size() ==
+          if (!(cur_ccg_weekly_run_intervals.size() ==
                  cmp_it->second->weekly_run_intervals.size() &&
                std::equal(cur_ccg_weekly_run_intervals.begin(),
                  cur_ccg_weekly_run_intervals.end(),
@@ -3397,7 +3397,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(cmp_it->first == cur_ccg_id)
+          if (cmp_it->first == cur_ccg_id)
           {
             Generics::Time tz_offset;
 
@@ -3488,13 +3488,13 @@ namespace CampaignSvcs
       unsigned long cur_ccg_id = rs_next ? rs->get_number<unsigned long>(1) : 0;
       SiteIdSet cur_sites;
 
-      for(CampaignMap::ActiveMap::iterator cmp_it =
+      for (CampaignMap::ActiveMap::iterator cmp_it =
             new_config->campaigns.active().begin();
           cmp_it != new_config->campaigns.active().end(); )
       {
-        if(!rs_next || cmp_it->first < cur_ccg_id)
+        if (!rs_next || cmp_it->first < cur_ccg_id)
         {
-          if(!(cur_sites.size() == cmp_it->second->sites.size() &&
+          if (!(cur_sites.size() == cmp_it->second->sites.size() &&
                std::equal(cur_sites.begin(),
                  cur_sites.end(),
                  cmp_it->second->sites.begin())))
@@ -3510,7 +3510,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(cmp_it->first == cur_ccg_id)
+          if (cmp_it->first == cur_ccg_id)
           {
             cur_sites.insert(rs->get_number<unsigned long>(2));
           }
@@ -3588,11 +3588,11 @@ namespace CampaignSvcs
       ChannelIdSet cur_ccg_geo_channels;
       ChannelIdSet cur_ccg_platform_channels;
 
-      for(CampaignMap::ActiveMap::iterator cmp_it =
+      for (CampaignMap::ActiveMap::iterator cmp_it =
             new_config->campaigns.active().begin();
           cmp_it != new_config->campaigns.active().end(); )
       {
-        if(!rs_next || cmp_it->first < cur_ccg_id)
+        if (!rs_next || cmp_it->first < cur_ccg_id)
         {
           bool geo_sub_expression_defined = false;
           NonLinkedExpressionChannel::Expression geo_sub_expression;
@@ -3600,9 +3600,9 @@ namespace CampaignSvcs
           NonLinkedExpressionChannel::Expression platform_sub_expression;
 
           // fill geo sub expression
-          if(!cur_ccg_geo_channels.empty())
+          if (!cur_ccg_geo_channels.empty())
           {
-            if(cur_ccg_geo_channels.size() == 1)
+            if (cur_ccg_geo_channels.size() == 1)
             {
               geo_sub_expression.op = NonLinkedExpressionChannel::NOP;
               geo_sub_expression.channel_id = *cur_ccg_geo_channels.begin();
@@ -3613,7 +3613,7 @@ namespace CampaignSvcs
               geo_sub_expression.channel_id = 0;
               geo_sub_expression.sub_channels.reserve(
                 cur_ccg_geo_channels.size());
-              for(ChannelIdSet::const_iterator ch_it =
+              for (ChannelIdSet::const_iterator ch_it =
                   cur_ccg_geo_channels.begin();
                   ch_it != cur_ccg_geo_channels.end(); ++ch_it)
               {
@@ -3626,9 +3626,9 @@ namespace CampaignSvcs
           }
 
           // fill platform sub expression
-          if(!cur_ccg_platform_channels.empty())
+          if (!cur_ccg_platform_channels.empty())
           {
-            if(cur_ccg_platform_channels.size() == 1)
+            if (cur_ccg_platform_channels.size() == 1)
             {
               platform_sub_expression.op = NonLinkedExpressionChannel::NOP;
               platform_sub_expression.channel_id =
@@ -3640,7 +3640,7 @@ namespace CampaignSvcs
               platform_sub_expression.channel_id = 0;
               platform_sub_expression.sub_channels.reserve(
                 cur_ccg_platform_channels.size());
-              for(ChannelIdSet::const_iterator ch_it =
+              for (ChannelIdSet::const_iterator ch_it =
                   cur_ccg_platform_channels.begin();
                   ch_it != cur_ccg_platform_channels.end(); ++ch_it)
               {
@@ -3654,7 +3654,7 @@ namespace CampaignSvcs
 
           NonLinkedExpressionChannel::Expression expression;
 
-          if((cur_ccg_channel_id ? 1 : 0) +
+          if ((cur_ccg_channel_id ? 1 : 0) +
              (geo_sub_expression_defined ? 1 : 0) +
              (platform_sub_expression_defined ? 1 : 0) >= 2)
           {
@@ -3662,38 +3662,38 @@ namespace CampaignSvcs
             expression.op = NonLinkedExpressionChannel::AND;
             expression.channel_id = 0;
 
-            if(cur_ccg_channel_id)
+            if (cur_ccg_channel_id)
             {
               expression.sub_channels.push_back(
                 NonLinkedExpressionChannel::Expression(cur_ccg_channel_id));
             }
 
-            if(geo_sub_expression_defined)
+            if (geo_sub_expression_defined)
             {
               expression.sub_channels.push_back(geo_sub_expression);
             }
 
-            if(platform_sub_expression_defined)
+            if (platform_sub_expression_defined)
             {
               expression.sub_channels.push_back(platform_sub_expression);
             }
           }
           // cases when only one component defined
-          else if(cur_ccg_channel_id)
+          else if (cur_ccg_channel_id)
           {
             expression.op = NonLinkedExpressionChannel::NOP;
             expression.channel_id = cur_ccg_channel_id;
           }
-          else if(geo_sub_expression_defined)
+          else if (geo_sub_expression_defined)
           {
             expression = geo_sub_expression;
           }
-          else if(platform_sub_expression_defined)
+          else if (platform_sub_expression_defined)
           {
             expression = platform_sub_expression;
           }
 
-          if(!(expression == cmp_it->second->expression))
+          if (!(expression == cmp_it->second->expression))
           {
             Campaign_var new_campaign(new CampaignDef(*(cmp_it->second)));
 
@@ -3710,17 +3710,17 @@ namespace CampaignSvcs
         }
         else
         {
-          if(cmp_it->first == cur_ccg_id)
+          if (cmp_it->first == cur_ccg_id)
           {
             unsigned long channel_type =
               rs->get_number<unsigned long>(POS_CHANNEL_TYPE);
 
-            if(channel_type == CT_TARGETING_CHANNEL)
+            if (channel_type == CT_TARGETING_CHANNEL)
             {
               cur_ccg_channel_id =
                 rs->get_number<unsigned long>(POS_CHANNEL_ID);
             }
-            else if(channel_type == CT_GEO_CHANNEL)
+            else if (channel_type == CT_GEO_CHANNEL)
             {
               cur_ccg_geo_channels.insert(
                 rs->get_number<unsigned long>(POS_CHANNEL_ID));
@@ -3784,18 +3784,18 @@ namespace CampaignSvcs
         {
           AdvActionDef_var action;
 
-          if(old_config)
+          if (old_config)
           {
             AdvActionMap::ActiveMap::const_iterator ait =
               old_config->adv_actions.active().find(action_id);
 
-            if(ait != old_config->adv_actions.active().end())
+            if (ait != old_config->adv_actions.active().end())
             {
               action = new AdvActionDef(*ait->second);
             }
           }
 
-          if(!action.in())
+          if (!action.in())
           {
             action = new AdvActionDef();
           }
@@ -3820,7 +3820,7 @@ namespace CampaignSvcs
       throw Exception(ostr);
     }
 
-    if(old_config)
+    if (old_config)
     {
       new_config->adv_actions.deactivate_nonactive(
         old_config->adv_actions, sysdate);
@@ -3849,15 +3849,15 @@ namespace CampaignSvcs
         rs_next ? rs->get_number<unsigned long>(QCA_ACTION_ID) : 0;
       AdvActionDef::CCGIdSet cur_ccgs;
 
-      for(AdvActionMap::ActiveMap::iterator ait =
+      for (AdvActionMap::ActiveMap::iterator ait =
             new_config->adv_actions.active().begin();
           ait != new_config->adv_actions.active().end(); )
       {
-        if(!rs_next || ait->first < cur_action_id)
+        if (!rs_next || ait->first < cur_action_id)
         {
           AdvActionDef_var action = new AdvActionDef(*ait->second);
           action->ccg_ids.swap(cur_ccgs);
-          if(!(*action == *ait->second))
+          if (!(*action == *ait->second))
           {
             action->timestamp = sysdate;
             ait->second = action;
@@ -3867,7 +3867,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(ait->first == cur_action_id)
+          if (ait->first == cur_action_id)
           {
             cur_ccgs.insert(rs->get_number<unsigned long>(QCA_CCG_ID));
           }
@@ -3929,18 +3929,18 @@ namespace CampaignSvcs
         unsigned long channel_id = rs->get_number<unsigned long>(QCC_CHANNEL_ID);
         CategoryChannelDef_var category_channel;
 
-        if(old_config)
+        if (old_config)
         {
           CategoryChannelMap::ActiveMap::const_iterator old_cc_it =
             old_config->category_channels.active().find(channel_id);
 
-          if(old_cc_it != old_config->category_channels.active().end())
+          if (old_cc_it != old_config->category_channels.active().end())
           {
             category_channel = new CategoryChannelDef(*(old_cc_it->second));
           }
         }
 
-        if(!category_channel.in())
+        if (!category_channel.in())
         {
           category_channel = new CategoryChannelDef();
         }
@@ -3959,7 +3959,7 @@ namespace CampaignSvcs
           old_config ? &old_config->category_channels : 0);
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->category_channels.deactivate_nonactive(
           old_config->category_channels, sysdate);
@@ -3998,13 +3998,13 @@ namespace CampaignSvcs
       unsigned long cur_channel_id = rs_next ?
         lc_rs->get_number<unsigned long>(QCCL_CHANNEL_ID) : 0;
 
-      for(CategoryChannelMap::ActiveMap::iterator cc_it =
+      for (CategoryChannelMap::ActiveMap::iterator cc_it =
             new_config->category_channels.active().begin();
           cc_it != new_config->category_channels.active().end(); )
       {
-        if(!rs_next || cc_it->first < cur_channel_id)
+        if (!rs_next || cc_it->first < cur_channel_id)
         {
-          if(cur_localizations.size() != cc_it->second->localizations.size() ||
+          if (cur_localizations.size() != cc_it->second->localizations.size() ||
              !std::equal(cur_localizations.begin(),
                cur_localizations.end(),
                cc_it->second->localizations.begin(),
@@ -4022,7 +4022,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(cc_it->first == cur_channel_id)
+          if (cc_it->first == cur_channel_id)
           {
             std::string lang = lc_rs->get_string(QCCL_LANG);
             std::string name = lc_rs->get_string(QCCL_NAME);
@@ -4094,7 +4094,7 @@ namespace CampaignSvcs
           old_config ? &old_config->fraud_conditions : 0);
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->fraud_conditions.deactivate_nonactive(
           old_config->fraud_conditions,
@@ -4149,7 +4149,8 @@ namespace CampaignSvcs
         new_config->web_operations.activate(
           id, web_operation, sysdate, old_operations);
       }
-      if(old_config)
+
+      if (old_config)
       {
         new_config->web_operations.deactivate_nonactive(
           old_config->web_operations, sysdate);
@@ -4205,13 +4206,13 @@ namespace CampaignSvcs
       unsigned long search_engine_id, prev_search_engine_id = 0;
       SearchEngine_var value;
 
-      while(rs->next())
+      while (rs->next())
       {
         search_engine_id = rs->get_number<unsigned long>(POS_SEARCH_ENGINE_ID);
 
-        if(search_engine_id != prev_search_engine_id)
+        if (search_engine_id != prev_search_engine_id)
         {
-          if(value)
+          if (value)
           {
             new_config->search_engines.activate(
               prev_search_engine_id,
@@ -4225,7 +4226,7 @@ namespace CampaignSvcs
           prev_search_engine_id = search_engine_id;
         }
 
-        if(!value)
+        if (!value)
         {
           value = new SearchEngine;
         }
@@ -4239,7 +4240,7 @@ namespace CampaignSvcs
         value->regexps.push_back(reg_exp);
       }
 
-      if(value)
+      if (value)
       {
         new_config->search_engines.activate(
           prev_search_engine_id,
@@ -4248,7 +4249,7 @@ namespace CampaignSvcs
           old_map);
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->search_engines.deactivate_nonactive(
           old_config->search_engines, sysdate);
@@ -4302,13 +4303,13 @@ namespace CampaignSvcs
       std::string key, old_key;
       WebBrowser_var value;
 
-      while(rs->next())
+      while (rs->next())
       {
         key = rs->get_string(POS_NAME);
 
-        if(key != old_key)
+        if (key != old_key)
         {
-          if(value)
+          if (value)
           {
             new_config->web_browsers.activate(
               old_key,
@@ -4322,7 +4323,7 @@ namespace CampaignSvcs
           old_key = key;
         }
 
-        if(!value)
+        if (!value)
         {
           value = new WebBrowser;
         }
@@ -4335,7 +4336,7 @@ namespace CampaignSvcs
         value->detectors.push_back(detector);
       }
 
-      if(value)
+      if (value)
       {
         new_config->web_browsers.activate(
           old_key,
@@ -4344,7 +4345,7 @@ namespace CampaignSvcs
           old_map);
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->web_browsers.deactivate_nonactive(
           old_config->web_browsers, sysdate);
@@ -4407,13 +4408,13 @@ namespace CampaignSvcs
       unsigned long prev_platform_id = 0;
       Platform_var value;
 
-      while(rs->next())
+      while (rs->next())
       {
         platform_id = rs->get_number<unsigned long>(POS_PLATFORM_ID);
 
-        if(platform_id != prev_platform_id)
+        if (platform_id != prev_platform_id)
         {
-          if(value)
+          if (value)
           {
             new_config->platforms.activate(
               prev_platform_id,
@@ -4427,18 +4428,18 @@ namespace CampaignSvcs
           prev_platform_id = platform_id;
         }
 
-        if(!value)
+        if (!value)
         {
           value = new Platform;
           value->name = rs->get_string(POS_NAME);
           value->type = rs->get_string(POS_TYPE);
-          if(value->type == "OS")
+          if (value->type == "OS")
           {
             value->type.clear();
           }
         }
 
-        if(!rs->is_null(POS_PRIORITY))
+        if (!rs->is_null(POS_PRIORITY))
         {
           Platform::Detector detector;
           detector.marker = rs->get_string(POS_MARKER);
@@ -4453,7 +4454,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(value)
+      if (value)
       {
         new_config->platforms.activate(
           prev_platform_id,
@@ -4462,7 +4463,7 @@ namespace CampaignSvcs
           old_map);
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->platforms.deactivate_nonactive(
           old_config->platforms, sysdate);
@@ -4482,17 +4483,17 @@ namespace CampaignSvcs
     const std::list<BehavioralParameterDef>& bps)
     /*throw(eh::Exception)*/
   {
-    if(bps.empty())
+    if (bps.empty())
     {
       return def;
     }
     std::string res;
     res.reserve(128);
     res += def;
-    for(std::list<BehavioralParameterDef>::const_iterator kiter = bps.begin();
+    for (std::list<BehavioralParameterDef>::const_iterator kiter = bps.begin();
         kiter != bps.end(); ++kiter)
     {
-      if(kiter != bps.begin())
+      if (kiter != bps.begin())
       {
         res.push_back('/');
       }
@@ -4549,18 +4550,19 @@ namespace CampaignSvcs
       unsigned long lid = 0, old_lid = 0;
       struct BehavioralParameterDef bp_def;
       BehavioralParameterListDef_var elem, old_elem;
-      while(next || last)
+      while (next || last)
       {
-        if(next)
+        if (next)
         {
           lid = rs1->get_number<unsigned long>(BP_LIST_ID_LINK);
           new_lid = lid != old_lid;
         }
-        if(new_lid || last)
+
+        if (new_lid || last)
         {
-          if(elem)
+          if (elem)
           {
-            if(old_config)
+            if (old_config)
             {
               new_config->behav_param_lists.activate(
                 old_lid,
@@ -4578,13 +4580,13 @@ namespace CampaignSvcs
             }
           }
           last = false;
-          if(next)
+          if (next)
           {
-            if(old_config)
+            if (old_config)
             {
               BehavioralParameterMap::ActiveMap::const_iterator old_it =
                 old_config->behav_param_lists.active().find(lid);
-              if(old_it != old_config->behav_param_lists.active().end())
+              if (old_it != old_config->behav_param_lists.active().end())
               {
                 elem = new BehavioralParameterListDef(*old_it->second);
                 elem->behave_params.clear();
@@ -4604,7 +4606,8 @@ namespace CampaignSvcs
             new_lid = false;
           }
         }
-        if(next)
+
+        if (next)
         {
           bp_def.min_visits = rs1->get_number<unsigned long>(MIN_VISITS);
           bp_def.time_from = rs1->get_number<unsigned long>(TIME_FROM);
@@ -4649,7 +4652,7 @@ namespace CampaignSvcs
           "FROM adserver.query_channel_behavioral_parameters()");
 
       Commons::Postgres::ResultSet_var rs2 = conn->execute_statement(stmt2);
-      if(rs2->next())
+      if (rs2->next())
       {
         bool next = true;
         struct BehavioralParameterDef bp_def;
@@ -4659,16 +4662,17 @@ namespace CampaignSvcs
         old_ch_id = ch_id - 1;
         do
         {
-          if(next)
+          if (next)
           {
             ch_id = rs2->get_number<unsigned long>(CH_ID);
           }
-          if(!next || ch_id != old_ch_id)
+
+          if (!next || ch_id != old_ch_id)
           {
-            if(elem)
+            if (elem)
             {
               const std::string key = generate_key_(elem->behave_params);
-              if(old_config)
+              if (old_config)
               {
                 new_config->str_behav_param_lists.activate(
                   key,
@@ -4685,7 +4689,7 @@ namespace CampaignSvcs
               }
               SimpleChannelMap::ActiveMap::iterator sit =
                 new_config->simple_channels.active().find(old_ch_id);
-              if(sit != new_config->simple_channels.active().end())
+              if (sit != new_config->simple_channels.active().end())
               {
                 SimpleChannelDef_var simple_channel(
                   new SimpleChannelDef(*(sit->second)));
@@ -4698,7 +4702,8 @@ namespace CampaignSvcs
                   &new_config->simple_channels);
               }
             }
-            if(next)
+
+            if (next)
             {
               elem = new BehavioralParameterListDef;
               elem->threshold = 1;
@@ -4710,6 +4715,7 @@ namespace CampaignSvcs
               elem.reset();
             }
           }
+
           if (next)
           {
             if (rs2->is_null(TRIGGER_TYPE))
@@ -4737,7 +4743,7 @@ namespace CampaignSvcs
             }
           }
         }
-        while((next = rs2->next()) || elem);
+        while ((next = rs2->next()) || elem);
       }
 
       new_config->str_behav_param_lists.activate(
@@ -4746,7 +4752,7 @@ namespace CampaignSvcs
         sysdate,
         old_config ? &old_config->str_behav_param_lists : nullptr);
 
-      if(old_config)
+      if (old_config)
       {
         new_config->behav_param_lists.deactivate_nonactive(
           old_config->behav_param_lists,
@@ -4825,24 +4831,24 @@ namespace CampaignSvcs
         {
           const char status = rs->get_char(POS_STATUS);
 
-          if(channel_statuses_.empty() ||
+          if (channel_statuses_.empty() ||
             strchr(channel_statuses_.c_str(), status) != 0)
           {
             const unsigned long channel_id = rs->get_number<unsigned long>(POS_CHANNEL_ID);
             const char channel_type = rs->get_char(POS_CHANNEL_TYPE);
 
             SimpleChannelDef_var s_channel;
-            if(old_config)
+            if (old_config)
             {
               SimpleChannelMap::ActiveMap::const_iterator sit_old =
                 old_config->simple_channels.active().find(channel_id);
-              if(sit_old != old_config->simple_channels.active().end())
+              if (sit_old != old_config->simple_channels.active().end())
               {
                 s_channel = new SimpleChannelDef(*sit_old->second);
               }
             }
 
-            if(!s_channel.in())
+            if (!s_channel.in())
             {
               s_channel = new SimpleChannelDef();
             }
@@ -4852,7 +4858,7 @@ namespace CampaignSvcs
             s_channel->country = !rs->is_null(POS_COUNTRY) ?
               rs->get_string(POS_COUNTRY) : "";
 
-            if(!rs->is_null(POS_BP_LIST_ID))
+            if (!rs->is_null(POS_BP_LIST_ID))
             {
               s_channel->behav_param_list_id = rs->get_number<unsigned long>(POS_BP_LIST_ID);
               s_channel->str_behav_param_list_id.clear();
@@ -4876,7 +4882,7 @@ namespace CampaignSvcs
           }
         }
 
-        if(old_config)
+        if (old_config)
         {
           config->simple_channels.deactivate_nonactive(
             old_config->simple_channels, sysdate);
@@ -4907,11 +4913,11 @@ namespace CampaignSvcs
       unsigned long cur_channel_id = rs_next ?
         cat_rs->get_number<unsigned long>(CC_CHANNEL_ID) : 0;
 
-      for(SimpleChannelMap::ActiveMap::iterator sit =
+      for (SimpleChannelMap::ActiveMap::iterator sit =
             config->simple_channels.active().begin();
           sit != config->simple_channels.active().end(); )
       {
-        if(!rs_next || sit->first < cur_channel_id)
+        if (!rs_next || sit->first < cur_channel_id)
         {
           SimpleChannelDef_var simple_channel(
             new SimpleChannelDef(*(sit->second)));
@@ -4929,7 +4935,7 @@ namespace CampaignSvcs
         else
         {
           // rs_next is true
-          if(sit->first == cur_channel_id)
+          if (sit->first == cur_channel_id)
           {
             cur_categories.insert(
               cat_rs->get_number<unsigned long>(CC_CHANNEL_CATEGORY_ID));
@@ -4994,7 +5000,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(!old_updating_state ||
+      if (!old_updating_state ||
          updating_state->geo_channels_max_db_version !=
            old_updating_state->geo_channels_max_db_version ||
          updating_state->geo_channels_db_count !=
@@ -5038,13 +5044,13 @@ namespace CampaignSvcs
             String::StringManip::SplitNL ptokenizer(parent_geotargets);
 
             String::SubString tgt_region_cur;
-            while(ptokenizer.get_token(tgt_region_cur))
+            while (ptokenizer.get_token(tgt_region_cur))
             {
               tgt_regions.push_back(tgt_region_cur);
             }
           }
 
-          if(tgt_regions.empty())
+          if (tgt_regions.empty())
           {
             // cities without region
             tgt_regions.push_back(String::SubString());
@@ -5054,10 +5060,10 @@ namespace CampaignSvcs
             String::StringManip::SplitNL tokenizer(geotargets);
 
             String::SubString tgt_city_cur;
-            while(tokenizer.get_token(tgt_city_cur))
+            while (tokenizer.get_token(tgt_city_cur))
             {
               String::SubString::SizeType pos = tgt_city_cur.find('#');
-              if(pos != String::SubString::NPOS)
+              if (pos != String::SubString::NPOS)
               {
                 GeoChannelDef::GeoIPTarget geo_target;
                 geo_target.region.assign(tgt_city_cur.begin(), pos);
@@ -5072,11 +5078,11 @@ namespace CampaignSvcs
           }
 
           // multiple regions & cities
-          for(std::list<String::SubString>::const_iterator region_it =
+          for (std::list<String::SubString>::const_iterator region_it =
                 tgt_regions.begin();
               region_it != tgt_regions.end(); ++region_it)
           {
-            if(tgt_cities.empty())
+            if (tgt_cities.empty())
             {
               GeoChannelDef::GeoIPTarget geo_target;
               geo_target.region = region_it->str();
@@ -5084,7 +5090,7 @@ namespace CampaignSvcs
             }
             else
             {
-              for(std::list<String::SubString>::const_iterator city_it =
+              for (std::list<String::SubString>::const_iterator city_it =
                     tgt_cities.begin();
                   city_it != tgt_cities.end(); ++city_it)
               {
@@ -5103,7 +5109,7 @@ namespace CampaignSvcs
             old_config ? old_config->geo_channels : GeoChannelMap_var());
         }
 
-        if(old_config)
+        if (old_config)
         {
           config->geo_channels->deactivate_nonactive(
             *(old_config->geo_channels), sysdate);
@@ -5171,17 +5177,17 @@ namespace CampaignSvcs
         channel->latitude = rs->get_decimal<CoordDecimal>(POS_LATITUDE);
         AccuracyDecimal radius = rs->get_decimal<AccuracyDecimal>(POS_RADIUS);
         std::string radius_unit = rs->get_string(POS_RADIUS_UNIT);
-        if(radius_unit == "km")
+        if (radius_unit == "km")
         {
           radius = AccuracyDecimal::mul(
             radius, AccuracyDecimal(false, 1000, 0), Generics::DMR_CEIL);
         }
-        else if(radius_unit == "yd")
+        else if (radius_unit == "yd")
         {
           radius = AccuracyDecimal::mul(
             radius, YARD_IN_METERS, Generics::DMR_CEIL);
         }
-        else if(radius_unit == "mi")
+        else if (radius_unit == "mi")
         {
           radius = AccuracyDecimal::mul(
             radius, MILE_IN_METERS, Generics::DMR_CEIL);
@@ -5196,7 +5202,7 @@ namespace CampaignSvcs
           old_config ? &(old_config->geo_coord_channels) : 0);
       }
 
-      if(old_config)
+      if (old_config)
       {
         config->geo_channels->deactivate_nonactive(
           *(old_config->geo_channels), sysdate);
@@ -5230,7 +5236,7 @@ namespace CampaignSvcs
     try
     {
       ChannelIdSet targeted_channel_ids;
-      for(CampaignMap::ActiveMap::const_iterator cmp_it =
+      for (CampaignMap::ActiveMap::const_iterator cmp_it =
           config->campaigns.active().begin();
         cmp_it != config->campaigns.active().end();
         ++cmp_it)
@@ -5292,7 +5298,7 @@ namespace CampaignSvcs
       {
         char status = rs->get_char(POS_CH_STATUS);
 
-        if(channel_statuses_.empty() ||
+        if (channel_statuses_.empty() ||
           strchr(channel_statuses_.c_str(), status) != 0)
         {
           unsigned long channel_id = rs->get_number<unsigned long>(POS_CH_ID);
@@ -5317,7 +5323,7 @@ namespace CampaignSvcs
           ch_common_params->language = (!rs->is_null(POS_CH_LANGUAGE) ?
             rs->get_string(POS_CH_LANGUAGE) : std::string());
           ch_common_params->flags = rs->get_number<unsigned long>(POS_CH_FLAGS);
-          if(targeted_channel_ids.find(channel_id) != targeted_channel_ids.end())
+          if (targeted_channel_ids.find(channel_id) != targeted_channel_ids.end())
           {
             ch_common_params->flags = ch_common_params->flags | ChannelFlags::TARGETED;
           }
@@ -5332,7 +5338,7 @@ namespace CampaignSvcs
             rs->get_number<unsigned long>(POS_PARENT_CHANNEL_ID);
           channel_params.descriptive_params = ch_descriptive_params;
 
-          if(!rs->is_null(POS_CH_RATE_ID))
+          if (!rs->is_null(POS_CH_RATE_ID))
           {
             ChannelParams::CMPParams_var cmp_params(
               new ChannelParams::CMPParams(
@@ -5342,7 +5348,7 @@ namespace CampaignSvcs
             channel_params.cmp_params = cmp_params;
           }
 
-          if(!rs->is_null(POS_CH_DISCOVER_QUERY))
+          if (!rs->is_null(POS_CH_DISCOVER_QUERY))
           {
             ChannelParams::DiscoverParams_var discover_params(
               new ChannelParams::DiscoverParams(
@@ -5355,7 +5361,7 @@ namespace CampaignSvcs
           {
             NonLinkedExpressionChannel_var result_channel;
 
-            if(channel_type == 'E' || channel_type == 'V' || channel_type == 'T')
+            if (channel_type == 'E' || channel_type == 'V' || channel_type == 'T')
             {
               result_channel = ExpressionChannelParser::parse(expression);
               result_channel->params(channel_params);
@@ -5365,22 +5371,22 @@ namespace CampaignSvcs
               result_channel = new NonLinkedExpressionChannel(channel_params);
             }
 
-            if(old_config)
+            if (old_config)
             {
               ChannelMap::ActiveMap::const_iterator ch_it =
                 old_config->expression_channels.active().find(channel_id);
-              if(ch_it != old_config->expression_channels.active().end())
+              if (ch_it != old_config->expression_channels.active().end())
               {
                 // check equality : use new channel only
                 // if channel changed (excluding status value)
-                if(channel_equal(ch_it->second, result_channel, true))
+                if (channel_equal(ch_it->second, result_channel, true))
                 {
                   result_channel = ch_it->second;
                 }
               }
             }
 
-            if(channel_type == 'P')
+            if (channel_type == 'P')
             {
               BlockChannelDef_var block_channel(new BlockChannelDef());
               block_channel->size_id = rs->get_number<unsigned long>(POS_CH_BLOCK_SIZE_ID);
@@ -5421,7 +5427,7 @@ namespace CampaignSvcs
       throw Exception(ostr);
     }
 
-    if(old_config)
+    if (old_config)
     {
       config->block_channels.deactivate_nonactive(
         old_config->block_channels, sysdate);
@@ -5441,14 +5447,14 @@ namespace CampaignSvcs
     CreativeOptionMap::ActiveMap::const_iterator opt_it =
       creative_options.find(option_id);
 
-    if(opt_it != creative_options.end())
+    if (opt_it != creative_options.end())
     {
-      if(opt_it->second->token == SpecialTokens::ST_CLICK_URL)
+      if (opt_it->second->token == SpecialTokens::ST_CLICK_URL)
       {
         // click url always absolute (option have 'L' type),
         // but can contains other tokens usage - we can only check it
         std::string invalid_url_error;
-        if(!HTTP::BrowserChecker()(value, &invalid_url_error))
+        if (!HTTP::BrowserChecker()(value, &invalid_url_error))
         {
           Stream::Error ostr;
           ostr << ": invalid click url '" << value << "': " <<
@@ -5460,7 +5466,7 @@ namespace CampaignSvcs
         sys_options.click_url_option_id = option_id;
         return true;
       }
-      else if(opt_it->second->token == SpecialTokens::ST_HTML_URL)
+      else if (opt_it->second->token == SpecialTokens::ST_HTML_URL)
       {
         value.assign_to(sys_options.html_url);
         sys_options.html_url_option_id = option_id;
@@ -5558,11 +5564,11 @@ namespace CampaignSvcs
         bool changed = false;
         CreativeList new_creative_list;
 
-        for(CreativeList::const_iterator cc_it =
+        for (CreativeList::const_iterator cc_it =
               ccg_it->second->creatives.begin();
             cc_it != ccg_it->second->creatives.end(); )
         {
-          if(!rs_options_next ||
+          if (!rs_options_next ||
             ccg_it->first < cur_options_ccg_id ||
             (ccg_it->first == cur_options_ccg_id &&
              (*cc_it)->ccid < cur_options_cc_id))
@@ -5582,10 +5588,10 @@ namespace CampaignSvcs
             // if defined MP4_DURATION add MP4_DURATION_HFORMAT
             auto mp4_duration_token_it = cur_tokens.find("MP4_DURATION");
 
-            if(mp4_duration_token_it != cur_tokens.end())
+            if (mp4_duration_token_it != cur_tokens.end())
             {
               unsigned long mp4_duration_seconds;
-              if(String::StringManip::str_to_int(
+              if (String::StringManip::str_to_int(
                    mp4_duration_token_it->second.value, mp4_duration_seconds))
               {
                 cur_tokens.insert(std::make_pair(
@@ -5598,7 +5604,7 @@ namespace CampaignSvcs
 
             OptionValueMap cur_options;
 
-            for(TokenOptionValueMap::const_iterator opt_it =
+            for (TokenOptionValueMap::const_iterator opt_it =
                   cur_tokens.begin();
                 opt_it != cur_tokens.end(); ++opt_it)
             {
@@ -5608,7 +5614,7 @@ namespace CampaignSvcs
             }
 
             // load tokens for Pending creatives too for correct instantiate
-            if((*cc_it)->tokens.size() != cur_options.size() ||
+            if ((*cc_it)->tokens.size() != cur_options.size() ||
                !std::equal(cur_options.begin(),
                  cur_options.end(),
                  (*cc_it)->tokens.begin(),
@@ -5621,7 +5627,7 @@ namespace CampaignSvcs
               CreativeDef_var new_creative(new CreativeDef(**cc_it));
               new_creative->tokens.swap(cur_options);
               new_creative->sys_options = cur_sys_options;
-              if(cur_deactivate_cc_id)
+              if (cur_deactivate_cc_id)
               {
                 new_creative->status = 'D';
               }
@@ -5642,7 +5648,7 @@ namespace CampaignSvcs
           }
           else
           {
-            if(ccg_it->first == cur_options_ccg_id &&
+            if (ccg_it->first == cur_options_ccg_id &&
                (*cc_it)->ccid == cur_options_cc_id)
             {
               long option_id = rs->get_number<long>(POS_OPTIONS_OPTION_ID);
@@ -5692,7 +5698,7 @@ namespace CampaignSvcs
           }
         }
 
-        if(changed)
+        if (changed)
         {
           Campaign_var new_campaign(new CampaignDef(*(ccg_it->second)));
           new_campaign->creatives.swap(new_creative_list);
@@ -5770,16 +5776,16 @@ namespace CampaignSvcs
         bool changed = false;
         CreativeList new_creative_list;
 
-        for(CreativeList::const_iterator cc_it =
+        for (CreativeList::const_iterator cc_it =
               ccg_it->second->creatives.begin();
             cc_it != ccg_it->second->creatives.end(); )
         {
-          if(!rs_next ||
+          if (!rs_next ||
              ccg_it->first < cur_ccg_id ||
              (ccg_it->first == cur_ccg_id &&
                (*cc_it)->ccid < cur_cc_id))
           {
-            if((*cc_it)->categories.size() != cur_categories.size() ||
+            if ((*cc_it)->categories.size() != cur_categories.size() ||
                !std::equal(cur_categories.begin(),
                  cur_categories.end(),
                  (*cc_it)->categories.begin()))
@@ -5799,7 +5805,7 @@ namespace CampaignSvcs
           }
           else
           {
-            if(ccg_it->first == cur_ccg_id &&
+            if (ccg_it->first == cur_ccg_id &&
                (*cc_it)->ccid == cur_cc_id)
             {
               cur_categories.insert(rs->get_number<unsigned long>(POS_CATEGORY_ID));
@@ -5811,7 +5817,7 @@ namespace CampaignSvcs
           }
         }
 
-        if(changed)
+        if (changed)
         {
           Campaign_var new_campaign(new CampaignDef(*(ccg_it->second)));
           new_campaign->creatives.swap(new_creative_list);
@@ -5989,7 +5995,7 @@ namespace CampaignSvcs
              config->campaigns.active().begin();
            ccg_it != config->campaigns.active().end(); )
       {
-        if(!rs_next || ccg_it->first < cur_ccg_id)
+        if (!rs_next || ccg_it->first < cur_ccg_id)
         {
           const CreativeList& current_campaign_creatives =
             ccg_it->second->creatives;
@@ -6000,15 +6006,15 @@ namespace CampaignSvcs
           CreativeList::iterator right_cr_it = cur_creatives.begin();
           CreativeList result_creatives;
 
-          for(; left_cr_it != current_campaign_creatives.end() &&
+          for (; left_cr_it != current_campaign_creatives.end() &&
                 right_cr_it != cur_creatives.end(); )
           {
-            if((*left_cr_it)->ccid < (*right_cr_it)->ccid)
+            if ((*left_cr_it)->ccid < (*right_cr_it)->ccid)
             {
               list_changed = true;
               ++left_cr_it;
             }
-            else if((*left_cr_it)->ccid > (*right_cr_it)->ccid)
+            else if ((*left_cr_it)->ccid > (*right_cr_it)->ccid)
             {
               list_changed = true;
               result_creatives.push_back(*right_cr_it);
@@ -6016,7 +6022,7 @@ namespace CampaignSvcs
             }
             else
             {
-              if((*left_cr_it)->ccid == (*right_cr_it)->ccid &&
+              if ((*left_cr_it)->ccid == (*right_cr_it)->ccid &&
                 (*left_cr_it)->fc_id == (*right_cr_it)->fc_id &&
                 (*left_cr_it)->format == (*right_cr_it)->format &&
                 (*left_cr_it)->status == (*right_cr_it)->status &&
@@ -6045,7 +6051,7 @@ namespace CampaignSvcs
           std::copy(right_cr_it,
             cur_creatives.end(), std::back_inserter(result_creatives));
 
-          if(list_changed)
+          if (list_changed)
           {
             Campaign_var new_campaign(new CampaignDef(*(ccg_it->second)));
             new_campaign->creatives.swap(result_creatives);
@@ -6058,7 +6064,7 @@ namespace CampaignSvcs
         }
         else
         {
-          if(ccg_it->first == cur_ccg_id)
+          if (ccg_it->first == cur_ccg_id)
           {
             unsigned long ccid = rs->get_number<unsigned long>(POS_CCID);
 
@@ -6067,7 +6073,7 @@ namespace CampaignSvcs
               char creative_status = rs->get_char(POS_STATUS);
               std::string crformat = rs->get_string(POS_CRFORMAT);
 
-              if(ccg_it->second->ccg_type == CT_TEXT &&
+              if (ccg_it->second->ccg_type == CT_TEXT &&
                  crformat != TEXT_CREATIVE_FORMAT)
               {
                 Stream::Error ostr;
@@ -6085,7 +6091,7 @@ namespace CampaignSvcs
                 creative_status = 'D';
               }
 
-              if(creative_status == 'A' || creative_status == 'P')
+              if (creative_status == 'A' || creative_status == 'P')
               {
                 CreativeDef_var new_creative(
                   new CreativeDef(
@@ -6196,12 +6202,12 @@ namespace CampaignSvcs
       bool cur_expandable = false;
       std::string cur_expand_direction;
 
-      if(rs_sizes_next)
+      if (rs_sizes_next)
       {
         cur_sizes_ccg_id = rs_sizes->get_number<unsigned long>(POS_SIZES_CCG_ID);
         cur_sizes_cc_id = rs_sizes->get_number<unsigned long>(POS_SIZES_CC_ID);
         cur_expandable = (rs_sizes->get_char(POS_SIZES_EXPANDABLE) == 'Y');
-        if(cur_expandable)
+        if (cur_expandable)
         {
           cur_expand_direction = rs_sizes->get_string(POS_SIZES_EXPAND_DIRECTION);
         }
@@ -6223,7 +6229,7 @@ namespace CampaignSvcs
         bool changed = false;
         CreativeList new_creative_list;
 
-        for(CreativeList::const_iterator cc_it =
+        for (CreativeList::const_iterator cc_it =
               ccg_it->second->creatives.begin();
             cc_it != ccg_it->second->creatives.end(); )
         {
@@ -6237,16 +6243,16 @@ namespace CampaignSvcs
             (ccg_it->first == cur_sizes_ccg_id &&
               (*cc_it)->ccid < cur_sizes_cc_id);
 
-          if(opt_less && cs_less)
+          if (opt_less && cs_less)
           {
             // eval and setup WIDTH, HEIGHT
-            for(auto cr_size_it = cur_sizes.begin();
+            for (auto cr_size_it = cur_sizes.begin();
                 cr_size_it != cur_sizes.end(); )
             {
               SizeMap::ActiveMap::const_iterator size_it =
                 config->sizes.active().find(cr_size_it->first);
 
-              if(size_it != config->sizes.active().end())
+              if (size_it != config->sizes.active().end())
               {
                 CurrSize& curr_size = cr_size_it->second;
                 unsigned long result_width = 0;
@@ -6308,7 +6314,7 @@ namespace CampaignSvcs
                   }
                 }
 
-                if(cur_expandable)
+                if (cur_expandable)
                 {
                   const unsigned long result_max_width =
                     curr_size.cur_options_max_width != 0 ?
@@ -6331,30 +6337,30 @@ namespace CampaignSvcs
                     IntToStr(result_max_height).str().str()));
 
                   // calculate expand space values
-                  if(result_max_height > result_height)
+                  if (result_max_height > result_height)
                   {
-                    if(cur_expand_direction.find("UP") != std::string::npos)
+                    if (cur_expand_direction.find("UP") != std::string::npos)
                     {
                       curr_size.up_expand_space =
                         result_max_height - result_height;
                     }
 
-                    if(cur_expand_direction.find("DOWN") != std::string::npos)
+                    if (cur_expand_direction.find("DOWN") != std::string::npos)
                     {
                       curr_size.down_expand_space =
                         result_max_height - result_height;
                     }
                   }
 
-                  if(result_max_width > result_width)
+                  if (result_max_width > result_width)
                   {
-                    if(cur_expand_direction.find("RIGHT") != std::string::npos)
+                    if (cur_expand_direction.find("RIGHT") != std::string::npos)
                     {
                       curr_size.right_expand_space =
                         result_max_width - result_width;
                     }
 
-                    if(cur_expand_direction.find("LEFT") != std::string::npos)
+                    if (cur_expand_direction.find("LEFT") != std::string::npos)
                     {
                       curr_size.left_expand_space =
                         result_max_width - result_width;
@@ -6372,7 +6378,7 @@ namespace CampaignSvcs
               }
             }
 
-            if((*cc_it)->sizes.size() != cur_sizes.size() ||
+            if ((*cc_it)->sizes.size() != cur_sizes.size() ||
                !std::equal(cur_sizes.begin(),
                  cur_sizes.end(),
                  (*cc_it)->sizes.begin(),
@@ -6384,7 +6390,7 @@ namespace CampaignSvcs
               new_creative->sizes.clear();
               new_creative->sizes.insert(cur_sizes.begin(), cur_sizes.end());
 
-              if(cur_deactivate_cc_id)
+              if (cur_deactivate_cc_id)
               {
                 new_creative->status = 'D';
               }
@@ -6406,14 +6412,14 @@ namespace CampaignSvcs
           }
           else
           {
-            if(!opt_less)
+            if (!opt_less)
             {
-              if(ccg_it->first == cur_options_ccg_id &&
+              if (ccg_it->first == cur_options_ccg_id &&
                  (*cc_it)->ccid == cur_options_cc_id)
               {
                 CurrSize& size = cur_sizes[rs_options->get_number<unsigned long>(POS_OPTIONS_SIZE_ID)];
 
-                if(!rs_options->is_null(POS_OPTIONS_OPTION_ID))
+                if (!rs_options->is_null(POS_OPTIONS_OPTION_ID))
                 {
                   const long option_id = rs_options->get_number<long>(POS_OPTIONS_OPTION_ID);
                   std::string value = rs_options->get_string(POS_OPTIONS_VALUE);
@@ -6421,19 +6427,19 @@ namespace CampaignSvcs
 
                   try
                   {
-                    if(token == CREATIVE_MAX_WIDTH_TOKEN)
+                    if (token == CREATIVE_MAX_WIDTH_TOKEN)
                     {
                       String::StringManip::str_to_int(value, size.cur_options_max_width);
                     }
-                    else if(token == CREATIVE_MAX_HEIGHT_TOKEN)
+                    else if (token == CREATIVE_MAX_HEIGHT_TOKEN)
                     {
                       String::StringManip::str_to_int(value, size.cur_options_max_height);
                     }
-                    else if(token == DEFAULT_CREATIVE_WIDTH_TOKEN)
+                    else if (token == DEFAULT_CREATIVE_WIDTH_TOKEN)
                     {
                       String::StringManip::str_to_int(value, size.cur_options_width);
                     }
-                    else if(token == DEFAULT_CREATIVE_HEIGHT_TOKEN)
+                    else if (token == DEFAULT_CREATIVE_HEIGHT_TOKEN)
                     {
                       String::StringManip::str_to_int(value, size.cur_options_height);
                     }
@@ -6473,14 +6479,14 @@ namespace CampaignSvcs
                 rs_options->get_number<unsigned long>(POS_OPTIONS_CC_ID) : 0;
             }
 
-            if(!cs_less)
+            if (!cs_less)
             {
-              if(ccg_it->first == cur_sizes_ccg_id &&
+              if (ccg_it->first == cur_sizes_ccg_id &&
                  (*cc_it)->ccid == cur_sizes_cc_id)
               {
                 cur_expandable = (rs_sizes->get_char(POS_SIZES_EXPANDABLE) == 'Y');
 
-                if(cur_expandable)
+                if (cur_expandable)
                 {
                   cur_expand_direction = rs_sizes->get_string(POS_SIZES_EXPAND_DIRECTION);
                 }
@@ -6495,7 +6501,7 @@ namespace CampaignSvcs
           }
         }
 
-        if(changed)
+        if (changed)
         {
           Campaign_var new_campaign(new CampaignDef(*(ccg_it->second)));
           new_campaign->creatives.swap(new_creative_list);
@@ -6547,7 +6553,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         unsigned long ccg_keyword_id =
           rs->get_number<unsigned long>(POS_CCG_KEYWORD_ID);
@@ -6563,7 +6569,7 @@ namespace CampaignSvcs
             old_config ? &(old_config->campaign_keywords) : 0);
       }
 
-      if(old_config)
+      if (old_config)
       {
         config->campaign_keywords.deactivate_nonactive(
           old_config->campaign_keywords, sysdate);
@@ -6594,7 +6600,7 @@ namespace CampaignSvcs
 
       {
         /* collect used freq caps */
-        for(SiteMap::ActiveMap::const_iterator s_it =
+        for (SiteMap::ActiveMap::const_iterator s_it =
               new_config->sites.active().begin();
             s_it != new_config->sites.active().end(); ++s_it)
         {
@@ -6604,7 +6610,7 @@ namespace CampaignSvcs
           }
         }
 
-        for(CampaignMap::ActiveMap::const_iterator c_it =
+        for (CampaignMap::ActiveMap::const_iterator c_it =
               new_config->campaigns.active().begin();
             c_it != new_config->campaigns.active().end(); ++c_it)
         {
@@ -6613,28 +6619,28 @@ namespace CampaignSvcs
             used_fc.insert(c_it->second->fc_id);
           }
 
-          if(c_it->second->group_fc_id)
+          if (c_it->second->group_fc_id)
           {
             used_fc.insert(c_it->second->group_fc_id);
           }
 
-          for(CreativeList::const_iterator cr_it =
+          for (CreativeList::const_iterator cr_it =
                 c_it->second->creatives.begin();
               cr_it != c_it->second->creatives.end(); ++cr_it)
           {
-            if((*cr_it)->fc_id)
+            if ((*cr_it)->fc_id)
             {
               used_fc.insert((*cr_it)->fc_id);
             }
           }
         }
 
-        for(ChannelMap::ActiveMap::const_iterator ch_it =
+        for (ChannelMap::ActiveMap::const_iterator ch_it =
               new_config->expression_channels.active().begin();
             ch_it != new_config->expression_channels.active().end();
             ++ch_it)
         {
-          if(ch_it->second.in() &&
+          if (ch_it->second.in() &&
              ch_it->second->params().common_params.in() &&
              ch_it->second->params().common_params->freq_cap_id)
           {
@@ -6668,7 +6674,7 @@ namespace CampaignSvcs
       {
         unsigned long fc_id = rs->get_number<unsigned long>(POS_FC_ID);
 
-        if(used_fc.find(fc_id) != used_fc.end())
+        if (used_fc.find(fc_id) != used_fc.end())
         {
           FreqCapDef_var new_elem(new FreqCapDef());
           new_elem->fc_id = fc_id;
@@ -6685,7 +6691,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->freq_caps.deactivate_nonactive(old_config->freq_caps, sysdate);
       }
@@ -6765,7 +6771,7 @@ namespace CampaignSvcs
         // deactivate creative template if it isn't valid
         std::string ct_format = rs->get_string(POS_CRFORMAT);
 
-        if(cur_template_id && cur_template_id != templ_id)
+        if (cur_template_id && cur_template_id != templ_id)
         {
           new_config->creative_templates.activate(
             cur_template_id,
@@ -6775,18 +6781,18 @@ namespace CampaignSvcs
 
           cur_template.reset();
 
-          if(old_config)
+          if (old_config)
           {
             CreativeTemplateMap::ActiveMap::const_iterator old_templ_it =
               old_config->creative_templates.active().find(templ_id);
-            if(old_templ_it != old_config->creative_templates.active().end())
+            if (old_templ_it != old_config->creative_templates.active().end())
             {
               cur_template = new CreativeTemplateDef(*(old_templ_it->second));
               cur_template->files.clear();
             }
           }
 
-          if(!cur_template.in())
+          if (!cur_template.in())
           {
             cur_template = new CreativeTemplateDef();
           }
@@ -6796,11 +6802,11 @@ namespace CampaignSvcs
 
         AdServer::CampaignSvcs::CreativeTemplateType res_type;
 
-        if(ct_type == 'T')
+        if (ct_type == 'T')
         {
           res_type = AdServer::CampaignSvcs::CTT_TEXT;
         }
-        else if(ct_type == 'X')
+        else if (ct_type == 'X')
         {
           res_type = AdServer::CampaignSvcs::CTT_XSLT;
         }
@@ -6825,7 +6831,7 @@ namespace CampaignSvcs
             ct_file.c_str()));
       }
 
-      if(cur_template_id)
+      if (cur_template_id)
       {
         new_config->creative_templates.activate(
           cur_template_id,
@@ -6875,13 +6881,13 @@ namespace CampaignSvcs
       OptionValueMap cur_tokens;
       OptionValueMap cur_hidden_tokens;
 
-      for(CreativeTemplateMap::ActiveMap::iterator templ_it =
+      for (CreativeTemplateMap::ActiveMap::iterator templ_it =
             new_config->creative_templates.active().begin();
           templ_it != new_config->creative_templates.active().end(); )
       {
-        if(!rs_next || templ_it->first < cur_template_id)
+        if (!rs_next || templ_it->first < cur_template_id)
         {
-          if(templ_it->second->tokens.size() != cur_tokens.size() ||
+          if (templ_it->second->tokens.size() != cur_tokens.size() ||
              !std::equal(cur_tokens.begin(),
                cur_tokens.end(),
                templ_it->second->tokens.begin(),
@@ -6906,9 +6912,9 @@ namespace CampaignSvcs
         }
         else
         {
-          if(templ_it->first == cur_template_id)
+          if (templ_it->first == cur_template_id)
           {
-            if(rs->get_char(POS_OPTION_TYPE) == 'P')
+            if (rs->get_char(POS_OPTION_TYPE) == 'P')
             {
               cur_tokens.insert(std::make_pair(
                 rs->get_number<unsigned long>(POS_OPTION_ID),
@@ -6936,7 +6942,7 @@ namespace CampaignSvcs
     }
 
     // deactivate templates that isn't present in query
-    if(old_config)
+    if (old_config)
     {
       new_config->creative_templates.deactivate_nonactive(
         old_config->creative_templates,
@@ -6985,9 +6991,9 @@ namespace CampaignSvcs
       {
         unsigned long cur_id =
           next ? rs->get_number<unsigned long>(POS_CREATIVE_CATEGORY_ID) : 0;
-        if(cur_id != cat_id || !next)
+        if (cur_id != cat_id || !next)
         {
-          if(cr_cat.in())
+          if (cr_cat.in())
           {
             new_config->creative_categories.activate(
               cat_id,
@@ -6997,7 +7003,7 @@ namespace CampaignSvcs
             cr_cat = nullptr;
           }
 
-          if(next)
+          if (next)
           {
             cat_id = cur_id;
             cr_cat = new CreativeCategoryDef;
@@ -7010,24 +7016,24 @@ namespace CampaignSvcs
           }
         }
 
-        if(!rs->is_null(POS_RTB_NAME))
+        if (!rs->is_null(POS_RTB_NAME))
         {
           bool ignore = false;
           const std::string rtb_name = rs->get_string(POS_RTB_NAME);
           AdRequestType rt_type = AR_NORMAL;
-          if(rtb_name == RtbNames::IAB_NAME)
+          if (rtb_name == RtbNames::IAB_NAME)
           {
             rt_type = AR_OPENRTB;
           }
-          else if(rtb_name == RtbNames::OPENX_NAME)
+          else if (rtb_name == RtbNames::OPENX_NAME)
           {
             rt_type = AR_OPENX;
           }
-          else if(rtb_name == RtbNames::APPNEXUS_NAME)
+          else if (rtb_name == RtbNames::APPNEXUS_NAME)
           {
             rt_type = AR_APPNEXUS;
           }
-          else if(rtb_name == RtbNames::GOOGLE_NAME)
+          else if (rtb_name == RtbNames::GOOGLE_NAME)
           {
             rt_type = AR_GOOGLE;
           }
@@ -7036,7 +7042,7 @@ namespace CampaignSvcs
             ignore = true;
           }
 
-          if(!ignore)
+          if (!ignore)
           {
             cr_cat->external_categories[rt_type].insert(
               rs->get_string(POS_KEY));
@@ -7044,7 +7050,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(old_config)
+      if (old_config)
       {
         new_config->creative_categories.deactivate_nonactive(
           old_config->creative_categories,
@@ -7073,7 +7079,7 @@ namespace CampaignSvcs
     // collect channels that assigned to ccg's
     ChannelIdSet check_channels;
 
-    for(CampaignMap::ActiveMap::const_iterator cmp_it =
+    for (CampaignMap::ActiveMap::const_iterator cmp_it =
           config->campaigns.active().begin();
         cmp_it != config->campaigns.active().end(); ++cmp_it)
     {
@@ -7083,10 +7089,10 @@ namespace CampaignSvcs
     ChannelIdSet ad_linked_channels;
     ChannelIdSet checked_channels;
 
-    while(!check_channels.empty())
+    while (!check_channels.empty())
     {
       ChannelIdSet new_check_channels;
-      for(ChannelIdSet::const_iterator check_ch_it =
+      for (ChannelIdSet::const_iterator check_ch_it =
             check_channels.begin();
           check_ch_it != check_channels.end();
           ++check_ch_it)
@@ -7094,7 +7100,7 @@ namespace CampaignSvcs
         SimpleChannelMap::ActiveMap::const_iterator sch_it =
           config->simple_channels.active().find(*check_ch_it);
 
-        if(sch_it != config->simple_channels.active().end())
+        if (sch_it != config->simple_channels.active().end())
         {
           ad_linked_channels.insert(*check_ch_it);
         }
@@ -7103,7 +7109,7 @@ namespace CampaignSvcs
           ChannelMap::ActiveMap::const_iterator ch_it =
             config->expression_channels.active().find(*check_ch_it);
 
-          if(ch_it != config->expression_channels.active().end() &&
+          if (ch_it != config->expression_channels.active().end() &&
              ch_it->second.in() &&
              ch_it->second->expression())
           {
@@ -7115,10 +7121,10 @@ namespace CampaignSvcs
       }
 
       ChannelIdSet filtered_check_channels;
-      for(ChannelIdSet::iterator ch_it = new_check_channels.begin();
+      for (ChannelIdSet::iterator ch_it = new_check_channels.begin();
           ch_it != new_check_channels.end(); ++ch_it)
       {
-        if(checked_channels.find(*ch_it) == checked_channels.end() &&
+        if (checked_channels.find(*ch_it) == checked_channels.end() &&
            ad_linked_channels.find(*ch_it) == ad_linked_channels.end())
         {
           filtered_check_channels.insert(*ch_it);
@@ -7155,7 +7161,7 @@ namespace CampaignSvcs
       SimpleChannelMap::ActiveMap::iterator sch_it =
         config->simple_channels.active().end();
       unsigned long cur_channel_id = 0;
-      if(rs_next)
+      if (rs_next)
       {
         cur_channel_id = rs->get_number<long>(POS_CHANNEL_ID);
         sch_it = config->simple_channels.active().lower_bound(cur_channel_id);
@@ -7175,12 +7181,12 @@ namespace CampaignSvcs
              config->simple_channels.active().begin();
            sch_it != config->simple_channels.active().end(); )
       {
-        if(old_channel_id != cur_channel_id && old_channel_id)
+        if (old_channel_id != cur_channel_id && old_channel_id)
         {
           SimpleChannelDef::MatchParams_var prev_match_params =
             sch_it->second->match_params;
 
-          if((prev_match_params.in() &&
+          if ((prev_match_params.in() &&
                (prev_match_params->page_triggers.size() !=
                  cur_page_triggers.size() ||
                prev_match_params->search_triggers.size() !=
@@ -7209,7 +7215,7 @@ namespace CampaignSvcs
                 !cur_url_keyword_triggers.empty()))))
           {
             SimpleChannelDef::MatchParams_var new_match_params;
-            if(!cur_page_triggers.empty() ||
+            if (!cur_page_triggers.empty() ||
                !cur_search_triggers.empty() ||
                !cur_url_triggers.empty() ||
                !cur_url_keyword_triggers.empty())
@@ -7227,7 +7233,7 @@ namespace CampaignSvcs
             sch_it->second = new_channel;
           }
 
-          if(!cur_channel_id)
+          if (!cur_channel_id)
           { //no more records from db
             break;
           }
@@ -7239,29 +7245,29 @@ namespace CampaignSvcs
         }
         else
         {
-          if(sch_it->first < cur_channel_id || !cur_channel_id)
+          if (sch_it->first < cur_channel_id || !cur_channel_id)
           {
             ++sch_it;
           }
           else
           {
-            if(sch_it->first == cur_channel_id &&
+            if (sch_it->first == cur_channel_id &&
                ad_linked_channels.find(sch_it->first) != ad_linked_channels.end())
             {
-              if(!rs->is_null(POS_TRIGGER_TYPE) && !rs->is_null(POS_CHANNEL_TRIGGER_ID))
+              if (!rs->is_null(POS_TRIGGER_TYPE) && !rs->is_null(POS_CHANNEL_TRIGGER_ID))
               {
                 char trigger_type = rs->get_char(POS_TRIGGER_TYPE);
-                if(trigger_type == 'P')
+                if (trigger_type == 'P')
                 {
                   cur_page_triggers.push_back(
                     rs->get_number<long>(POS_CHANNEL_TRIGGER_ID));
                 }
-                else if(trigger_type == 'S')
+                else if (trigger_type == 'S')
                 {
                   cur_search_triggers.push_back(
                     rs->get_number<long>(POS_CHANNEL_TRIGGER_ID));
                 }
-                else if(trigger_type == 'U')
+                else if (trigger_type == 'U')
                 {
                   cur_url_triggers.push_back(
                     rs->get_number<long>(POS_CHANNEL_TRIGGER_ID));

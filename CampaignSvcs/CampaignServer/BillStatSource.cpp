@@ -14,7 +14,7 @@ namespace CampaignSvcs
       "before " << prev_day.get_gm_time().format("%F") <<
       ": " << prev_days_amount << std::endl;
 
-    for(auto day_it = day_amounts.begin();
+    for (auto day_it = day_amounts.begin();
       day_it != day_amounts.end(); ++day_it)
     {
       out << offset <<
@@ -36,7 +36,7 @@ namespace CampaignSvcs
       ", clicks = " << prev_days_clicks.str() <<
       std::endl;
 
-    for(auto day_it = day_amount_counts.begin();
+    for (auto day_it = day_amount_counts.begin();
       day_it != day_amount_counts.end(); ++day_it)
     {
       out << offset <<
@@ -56,7 +56,7 @@ namespace CampaignSvcs
 
     out << offset << "timestamp: " << timestamp.get_gm_time() << std::endl <<
       offset << "accounts:" << std::endl;
-    for(auto acc_it = accounts.begin();
+    for (auto acc_it = accounts.begin();
         acc_it != accounts.end(); ++acc_it)
     {
       out << offset << acc_it->first << ":" << std::endl;
@@ -64,7 +64,7 @@ namespace CampaignSvcs
     }
 
     out << offset << "campaigns: " << std::endl;
-    for(auto cmp_it = campaigns.begin();
+    for (auto cmp_it = campaigns.begin();
       cmp_it != campaigns.end(); ++cmp_it)
     {
       out << offset << cmp_it->first << ":" << std::endl;
@@ -72,7 +72,7 @@ namespace CampaignSvcs
     }
 
     out << offset << "ccgs: " << std::endl;
-    for(auto ccg_it = ccgs.begin();
+    for (auto ccg_it = ccgs.begin();
       ccg_it != ccgs.end(); ++ccg_it)
     {
       out << offset << ccg_it->first << ":" << std::endl;

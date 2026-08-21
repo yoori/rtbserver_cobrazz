@@ -42,13 +42,46 @@ namespace
   typedef AdServer::CampaignSvcs::RevenueDecimal RevenueDecimal;
   namespace Proto = adserver::campaign_svcs::billing_server;
 
+  const char*
+  unavailable_reason_name(Proto::BidUnavailableReason reason) noexcept
+  {
+    switch(reason)
+    {
+      case Proto::BID_UNAVAILABLE_REASON_ACCOUNT_NOT_FOUND:
+        return "account_not_found";
+      case Proto::BID_UNAVAILABLE_REASON_ACCOUNT_INACTIVE:
+        return "account_inactive";
+      case Proto::BID_UNAVAILABLE_REASON_ADVERTISER_NOT_FOUND:
+        return "advertiser_not_found";
+      case Proto::BID_UNAVAILABLE_REASON_ADVERTISER_INACTIVE:
+        return "advertiser_inactive";
+      case Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_NOT_FOUND:
+        return "campaign_not_found";
+      case Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_INACTIVE:
+        return "campaign_inactive";
+      case Proto::BID_UNAVAILABLE_REASON_CCG_NOT_FOUND:
+        return "ccg_not_found";
+      case Proto::BID_UNAVAILABLE_REASON_CCG_INACTIVE:
+        return "ccg_inactive";
+      case Proto::BID_UNAVAILABLE_REASON_ACCOUNT_BUDGET_BLOCKED:
+        return "account_budget_blocked";
+      case Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_BUDGET_BLOCKED:
+        return "campaign_budget_blocked";
+      case Proto::BID_UNAVAILABLE_REASON_CCG_BUDGET_BLOCKED:
+        return "ccg_budget_blocked";
+      case Proto::BID_UNAVAILABLE_REASON_UNSPECIFIED:
+      default:
+        return "unspecified";
+    }
+  }
+
   void
   require_option(
     bool installed,
     const char* option_name)
     /*throw(InvalidArgument)*/
   {
-    if(!installed)
+    if (!installed)
     {
       Stream::Error ostr;
       ostr << "Not defined required option '" << option_name << "'";
@@ -92,7 +125,7 @@ namespace
 
     Generics::AppUtils::Args::CommandList commands = args.commands();
 
-    if(commands.empty() || opt_help.enabled() || commands.front() == "help")
+    if (commands.empty() || opt_help.enabled() || commands.front() == "help")
     {
       std::cout << USAGE << std::endl;
       return 0;
@@ -101,7 +134,7 @@ namespace
     const std::string command = commands.front();
     commands.pop_front();
 
-    if(command != "check-available-bid")
+    if (command != "check-available-bid")
     {
       Stream::Error ostr;
       ostr << "Unknown command '" << command << "'";
@@ -172,7 +205,14 @@ namespace
 
     std::cout << "available: " << (result.available() ? "true" : "false") <<
       "\n"
-      "goal_ctr: " << goal_ctr.str() << std::endl;
+      "goal_ctr: " << goal_ctr.str();
+    if (!result.available())
+    {
+      std::cout << "\n"
+        "unavailable_reason: " << unavailable_reason_name(
+          result.unavailable_reason());
+    }
+    std::cout << std::endl;
 
     active_objects.deactivate_object();
     active_objects.wait_object();

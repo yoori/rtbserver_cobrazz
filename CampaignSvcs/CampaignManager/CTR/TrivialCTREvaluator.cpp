@@ -58,19 +58,19 @@ namespace AdServer::CampaignSvcs::CTR
 
     auto it = ctr_map_.find(KeyHashAdapter(tag_id, request_params->referer_hostname));
 
-    if(it != ctr_map_.end())
+    if (it != ctr_map_.end())
     {
       return it->second;
     }
 
     it = ctr_map_.find(KeyHashAdapter(tag_id, GENERIC_DOMAIN));
-    if(it != ctr_map_.end())
+    if (it != ctr_map_.end())
     {
       return it->second;
     }
 
     it = ctr_map_.find(DEFAULT_KEY_);
-    if(it != ctr_map_.end())
+    if (it != ctr_map_.end())
     {
       return it->second;
     }
@@ -85,12 +85,12 @@ namespace AdServer::CampaignSvcs::CTR
     CTRMap ctr_map;
 
     // load
-    while(!istr.eof())
+    while (!istr.eof())
     {
       std::string line;
       std::getline(istr, line);
 
-      if(!line.empty())
+      if (!line.empty())
       {
         String::StringManip::Splitter<
           String::AsciiStringManip::SepComma> tokenizer(line);
@@ -101,7 +101,7 @@ namespace AdServer::CampaignSvcs::CTR
         unsigned long tag_id;
         RevenueDecimal ctr;
 
-        if(!tokenizer.get_token(tag_id_str) ||
+        if (!tokenizer.get_token(tag_id_str) ||
           !tokenizer.get_token(domain) ||
           !tokenizer.get_token(ctr_str) ||
           !String::StringManip::str_to_int(tag_id_str, tag_id))

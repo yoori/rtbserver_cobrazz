@@ -15,25 +15,25 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     std::string& result,
     bool value) const
   {
-    if(!source_)
+    if (!source_)
     {
       return false;
     }
 
-    if(!value)
+    if (!value)
     {
       return source_->get_argument(key, result, false);
     }
 
     const std::string_view name(key.data(), key.size());
     const auto it = cached_values_.find(name);
-    if(it != cached_values_.end())
+    if (it != cached_values_.end())
     {
       result = it->second;
       return true;
     }
 
-    if(!source_->get_argument(key, result, true))
+    if (!source_->get_argument(key, result, true))
     {
       return false;
     }

@@ -407,10 +407,10 @@ namespace AdServer::CampaignSvcs
 
     if (it != campaign_config->pub_pixel_accounts.end())
     {
-      for(AccountSet::const_iterator acc_it = it->second.begin();
+      for (AccountSet::const_iterator acc_it = it->second.begin();
           acc_it != it->second.end(); ++acc_it)
       {
-        if(exclude_publisher_account_ids.find((*acc_it)->account_id) ==
+        if (exclude_publisher_account_ids.find((*acc_it)->account_id) ==
           exclude_publisher_account_ids.end())
         {
           result_account_ids.push_back(*acc_it);
@@ -1002,6 +1002,7 @@ namespace AdServer::CampaignSvcs
       AdServer::LogProcessing::undisplayable_mime_encode(etid, ext_tag_id);
       request_args.set_value(CreativeTokens::ETID, std::move(etid));
     }
+
     if (!request_params.source_id.empty())
     {
       request_args.set_value(CreativeTokens::SOURCE_ID, request_params.source_id);
@@ -2009,6 +2010,7 @@ namespace AdServer::CampaignSvcs
         append_click_param(AdProtocol::TAG_SIZE_ID, tag_size->size->size_id);
       }
     }
+
     if (inst_params.user_id_hash_mod.present())
     {
       append_click_param(

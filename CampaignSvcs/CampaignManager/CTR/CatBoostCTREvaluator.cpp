@@ -48,7 +48,7 @@ namespace AdServer::CampaignSvcs::CTR
 
       {
         std::unique_lock<std::mutex> lock(lock_);
-        if(!feature_bufs_.empty())
+        if (!feature_bufs_.empty())
         {
           feature_bufs_.rbegin()->swap(res);
           feature_bufs_.pop_back();

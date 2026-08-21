@@ -25,7 +25,7 @@ namespace
     const char* name,
     std::uint64_t value)
   {
-    if(first)
+    if (first)
     {
       first = false;
     }
@@ -46,7 +46,7 @@ namespace
     bool& first,
     const AdServer::CampaignSvcs::BillingServerGrpc* grpc_adapter)
   {
-    if(grpc_adapter == 0)
+    if (grpc_adapter == 0)
     {
       return;
     }
@@ -150,7 +150,7 @@ BillingServerApp_::main(int argc, char** argv)
       std::unique_ptr<AdConfigurationType> ad_configuration =
         AdConfiguration(file_name.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -165,7 +165,7 @@ BillingServerApp_::main(int argc, char** argv)
 
       ostr << "Can't parse config file '" << argv[1] << "': ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -205,7 +205,7 @@ BillingServerApp_::main(int argc, char** argv)
       std::string(config().pid_file()));
 
     AdServer::CampaignSvcs::BillingServerGrpc_var grpc_adapter;
-    if(config().GrpcConfig().present())
+    if (config().GrpcConfig().present())
     {
       grpc_adapter = new AdServer::CampaignSvcs::BillingServerGrpc(
         billing_server_core_,
@@ -221,7 +221,7 @@ BillingServerApp_::main(int argc, char** argv)
       add_child_object(grpc_adapter);
     }
 
-    if(config().HttpConfig().present())
+    if (config().HttpConfig().present())
     {
       AdServer::Commons::HttpServer::HttpServer_var http_server =
         new AdServer::Commons::HttpServer::HttpServer(

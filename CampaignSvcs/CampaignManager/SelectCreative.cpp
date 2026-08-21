@@ -59,7 +59,7 @@ namespace AdServer::CampaignSvcs
     assert(campaign_candidate);
     assert(creative_candidate);
 
-    if(ad_slot_debug_info)
+    if (ad_slot_debug_info)
     {
       ad_slot_debug_info->selected_creatives.resize(1);
     }
@@ -117,7 +117,7 @@ namespace AdServer::CampaignSvcs
       CreativeParams& upd_creative_params = *creative_params_list.begin();
       ad_selection_result.selected_campaigns.front().click_url = upd_creative_params.click_url;
 
-      if(ad_slot_debug_info)
+      if (ad_slot_debug_info)
       {
         ad_slot_debug_info->site_rate_id =
           ad_selection_result.tag_pricing ? ad_selection_result.tag_pricing->site_rate_id : 0;
@@ -171,12 +171,12 @@ namespace AdServer::CampaignSvcs
     (void)arena;
     static const char* FUN = "CampaignManagerCore::instantiate_text_creatives()";
 
-    if(ad_slot_debug_info)
+    if (ad_slot_debug_info)
     {
       ad_slot_debug_info->selected_creatives.resize(campaign_keywords.size());
     }
 
-    for(CampaignSelector::WeightedCampaignKeywordList::const_iterator kw_it =
+    for (CampaignSelector::WeightedCampaignKeywordList::const_iterator kw_it =
         campaign_keywords.begin();
       kw_it != campaign_keywords.end(); ++kw_it)
     {
@@ -233,7 +233,7 @@ namespace AdServer::CampaignSvcs
         String::SubString(ad_slot.ext_tag_id),
         ad_slot_debug_info != nullptr);
 
-      if(ad_slot_debug_info)
+      if (ad_slot_debug_info)
       {
         assert(ad_selection_result.selected_campaigns.size() == creative_params_list.size());
 
@@ -242,7 +242,7 @@ namespace AdServer::CampaignSvcs
 
         CORBA::ULong i = 0;
 
-        for(CreativeParamsList::iterator creative_params_it = creative_params_list.begin();
+        for (CreativeParamsList::iterator creative_params_it = creative_params_list.begin();
           creative_params_it != creative_params_list.end();
           ++creative_params_it, ++select_params_it, ++i)
         {

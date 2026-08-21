@@ -35,7 +35,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       url += base_url;
       url.append(suffix.data(), suffix.size());
 
-      if(!data.encode_click_urls || data.click_url_prefix.empty())
+      if (!data.encode_click_urls || data.click_url_prefix.empty())
       {
         return url;
       }
@@ -51,14 +51,14 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       const std::string CampaignManagerCore::ClickParams::* member,
       std::string_view suffix)
     {
-      if(!data || !data->click_params || !data->click_url_initializer)
+      if (!data || !data->click_params || !data->click_url_initializer)
       {
         return std::nullopt;
       }
 
       data->init_click_urls();
       const std::string& base_url = (*data->click_params).*member;
-      if(base_url.empty())
+      if (base_url.empty())
       {
         return std::nullopt;
       }
@@ -72,13 +72,13 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       const std::string CampaignManagerCore::ClickParams::* member,
       std::string_view suffix)
     {
-      if(!data || !data->click_params)
+      if (!data || !data->click_params)
       {
         return std::nullopt;
       }
 
       const std::string& base_url = (*data->click_params).*member;
-      if(base_url.empty())
+      if (base_url.empty())
       {
         return std::nullopt;
       }

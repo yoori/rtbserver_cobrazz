@@ -23,19 +23,19 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     std::string& result,
     bool value) const
   {
-    if(!token_values_)
+    if (!token_values_)
     {
       return false;
     }
 
     const std::string_view name(key.data(), key.size());
     const auto token_it = token_values_->find(name);
-    if(token_it == token_values_->end())
+    if (token_it == token_values_->end())
     {
       return false;
     }
 
-    if(!value)
+    if (!value)
     {
       result.assign(key.data(), key.size());
       return true;
@@ -43,7 +43,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
 
     BaseTokenProcessor_var token_processor;
     const auto processor_it = token_processors_.find(token_it->second.option_id);
-    if(processor_it != token_processors_.end())
+    if (processor_it != token_processors_.end())
     {
       token_processor = processor_it->second;
     }

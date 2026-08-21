@@ -31,7 +31,7 @@ namespace AdServer::CampaignSvcs::CTR
         auction_hashes,
         candidate_hashes);
 
-      if(ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
+      if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
       {
         return RevenueDecimal::ZERO;
       }

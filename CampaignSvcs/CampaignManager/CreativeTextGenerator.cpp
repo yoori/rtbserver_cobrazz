@@ -36,13 +36,13 @@ namespace CampaignSvcs
   {
     const TokenOptionValueProvider token_values(&request_args, creative_args);
 
-    for(OptionTokenValueMap::const_iterator it = creative_args.begin();
+    for (OptionTokenValueMap::const_iterator it = creative_args.begin();
       it != creative_args.end(); ++it)
     {
       BaseTokenProcessor_var token_processor;
       TokenProcessorMap::const_iterator proc_it = token_processors.find(
         it->second.option_id);
-      if(proc_it == token_processors.end())
+      if (proc_it == token_processors.end())
       {
         token_processor =
           BaseTokenProcessor::default_token_processor(it->first.c_str());

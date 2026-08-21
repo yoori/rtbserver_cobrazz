@@ -44,18 +44,18 @@ namespace CampaignSvcs
       bool value) const override
       /*throw(eh::Exception)*/
     {
-      if(!value)
+      if (!value)
       {
         result.assign(key.data(), key.size());
         return true;
       }
 
-      if(request_args_.get_argument(key, result))
+      if (request_args_.get_argument(key, result))
       {
         return true;
       }
 
-      if(creative_args_ && creative_args_->get_argument(key, result))
+      if (creative_args_ && creative_args_->get_argument(key, result))
       {
         return true;
       }
@@ -106,7 +106,7 @@ namespace CampaignSvcs
     static const char* FUN = "TextTemplate::TextTemplate()";
 
     std::fstream fstr(file, std::ios::in);
-    if(!fstr.is_open())
+    if (!fstr.is_open())
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't open file '" << file << "'";
@@ -148,11 +148,11 @@ namespace CampaignSvcs
   {
     const TokenValueMap* creative_args = nullptr;
     TemplateParamsList::const_iterator cr_it = params.begin();
-    if(cr_it != params.end())
+    if (cr_it != params.end())
     {
       TemplateParamsList::const_iterator next_it = cr_it;
       ++next_it;
-      if(next_it == params.end())
+      if (next_it == params.end())
       {
         creative_args = (*cr_it).in();
       }
@@ -234,7 +234,7 @@ namespace CampaignSvcs
   {
     state = Generics::Time::get_time_of_day();
 
-    if(creative_template_handler.type == CreativeTemplateFactory::Handler::CTT_TEXT)
+    if (creative_template_handler.type == CreativeTemplateFactory::Handler::CTT_TEXT)
     {
       try
       {

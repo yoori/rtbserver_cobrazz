@@ -23,7 +23,7 @@ namespace CampaignSvcs
     CORBACommons::CorbaClientAdapter_var corba_client_adapter(
       new CORBACommons::CorbaClientAdapter());
 
-    for(CORBACommons::CorbaObjectRefList::const_iterator ref_it =
+    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it =
           stat_provider_refs.begin();
         ref_it != stat_provider_refs.end(); ++ref_it)
     {
@@ -44,7 +44,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(LogGeneralizerRefList::iterator ref_it =
+      for (LogGeneralizerRefList::iterator ref_it =
             stat_providers_.begin();
           ref_it != stat_providers_.end(); ++ref_it)
       {
@@ -88,7 +88,7 @@ namespace CampaignSvcs
         ": can't receive stats from DB: " << ex.what();
     }
 
-    for(LogGeneralizerRefList::reverse_iterator ref_it =
+    for (LogGeneralizerRefList::reverse_iterator ref_it =
           stat_providers_.rbegin();
         ref_it != stat_providers_.rend(); ++ref_it)
     {
@@ -171,7 +171,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         Stat::Amount amount_stat;
         amount_stat.amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
@@ -216,7 +216,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         Stat::AmountStat amount_stat;
         amount_stat.amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
@@ -275,7 +275,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         Stat::CCGStat ccg_stat;
         ccg_stat.cur_hour_amount = RevenueDecimal::ZERO;
@@ -334,7 +334,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         Stat::CreativeStat creative_stat;
         creative_stat.impressions = rs->get_decimal<ImpRevenueDecimal>(POS_IMPRESSIONS);
@@ -385,7 +385,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         Stat::CCGStat::PublisherStat publisher_stat;
         publisher_stat.amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
@@ -450,7 +450,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         // fill potential hour amounts
         Stat::CCGStat::TagStat tag_stat;
@@ -515,7 +515,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = connection->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         Stat::CCGStat::CtrResetStat ctr_reset_stat;
         ctr_reset_stat.impressions = rs->get_decimal<ImpRevenueDecimal>(POS_IMPRESSIONS);

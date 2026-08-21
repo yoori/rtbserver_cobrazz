@@ -42,7 +42,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& triggered_channels) const
     /*throw(Exception)*/
   {
-    if(channel.in())
+    if (channel.in())
     {
       channel->triggered_named_channels(
         responded_channels,
@@ -67,7 +67,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& simple_channels)
     /*throw(Exception)*/
   {
-    if(channel.in())
+    if (channel.in())
     {
       channel->get_cmp_channels(cmp_channels, simple_channels);
     }
@@ -77,7 +77,7 @@ namespace CampaignSvcs
     ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
   {
-    if(channel.in())
+    if (channel.in())
     {
       channel->get_all_cmp_channels(cmp_channels);
     }
@@ -87,7 +87,7 @@ namespace CampaignSvcs
     ChannelIdSet& channels)
     noexcept
   {
-    if(channel.in())
+    if (channel.in())
     {
       channel->get_all_channels(channels);
     }
@@ -105,32 +105,32 @@ namespace CampaignSvcs
   {
     unsigned long result = 0;
 
-    if(!status_set || strchr(status_set, channel_params_.status) != 0)
+    if (!status_set || strchr(status_set, channel_params_.status) != 0)
     {
-      if(triggered_channels)
+      if (triggered_channels)
       {
         result = triggered_channels->find(channel_params_.channel_id) !=
           triggered_channels->end() ? 1 : 0;
       }
-      else if(weighted_triggered_channels)
+      else if (weighted_triggered_channels)
       {
         ChannelWeightMap::const_iterator wit =
           weighted_triggered_channels->find(channel_params_.channel_id);
-        if(wit != weighted_triggered_channels->end())
+        if (wit != weighted_triggered_channels->end())
         {
           result = wit->second;
         }
       }
 
-      if(result)
+      if (result)
       {
-        if(uc_tbl)
+        if (uc_tbl)
         {
           (*uc_tbl)[channel_params_.channel_id].channel_ids.insert(
             channel_params_.channel_id);
         }
 
-        if(matched_channels)
+        if (matched_channels)
         {
           matched_channels->insert(channel_params_.channel_id);
         }
@@ -148,7 +148,7 @@ namespace CampaignSvcs
     ChannelIdSet* matched_channels)
     /*throw(Exception)*/
   {
-    if(triggered_channels.find(channel_id) ==
+    if (triggered_channels.find(channel_id) ==
        triggered_channels.end())
     {
       return false;
@@ -160,7 +160,7 @@ namespace CampaignSvcs
       uc_tbl[channel_id].count = 1;
     }
 
-    if(matched_channels)
+    if (matched_channels)
     {
       matched_channels->insert(channel_id);
     }
@@ -188,7 +188,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& triggered_channels) const
     /*throw(Exception)*/
   {
-    if(triggered(&triggered_channels, 0, "AW"))
+    if (triggered(&triggered_channels, 0, "AW"))
     {
       triggered_named_channels.insert(channel_params_.channel_id);
     }
@@ -201,7 +201,7 @@ namespace CampaignSvcs
     const
     /*throw(Exception, eh::Exception)*/
   {
-    if(triggered(&triggered_channels, 0))
+    if (triggered(&triggered_channels, 0))
     {
       responded_expr += std::to_string(channel_params_.channel_id);
       return true;
@@ -215,7 +215,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& simple_channels)
     /*throw(Exception)*/
   {
-    if(channel_params_.cmp_params.in() && triggered(&simple_channels, 0))
+    if (channel_params_.cmp_params.in() && triggered(&simple_channels, 0))
     {
       cmp_channels.push_back(ReferenceCounting::add_ref(this));
     }
@@ -225,7 +225,7 @@ namespace CampaignSvcs
     ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
   {
-    if(channel_params_.cmp_params.in())
+    if (channel_params_.cmp_params.in())
     {
       cmp_channels.push_back(ReferenceCounting::add_ref(this));
     }
@@ -245,11 +245,11 @@ namespace CampaignSvcs
     const ChannelIdSet& local_matched_channels)
     /*throw(Exception)*/
   {
-    if(channel)
+    if (channel)
     {
       ChannelUseCountMap::iterator it = uc_tbl->find(
         channel->params().channel_id);
-      if(it != uc_tbl->end())
+      if (it != uc_tbl->end())
       {
         ++it->second.count;
       }
@@ -286,7 +286,7 @@ namespace CampaignSvcs
       break;
     case NOP:
       {
-        if(expr.channel.in())
+        if (expr.channel.in())
         {
           result = expr.channel->triggered(
             triggered_channels, weighted_triggered_channels,
@@ -297,7 +297,7 @@ namespace CampaignSvcs
     case AND:
       {
         result = true;
-        for(Expression::ExpressionArray::const_iterator ch_it =
+        for (Expression::ExpressionArray::const_iterator ch_it =
               expr.sub_channels.begin();
             ch_it != expr.sub_channels.end(); ++ch_it)
         {
@@ -313,7 +313,7 @@ namespace CampaignSvcs
       break;
     case OR:
       {
-        for(Expression::ExpressionArray::const_iterator ch_it =
+        for (Expression::ExpressionArray::const_iterator ch_it =
               expr.sub_channels.begin();
             ch_it != expr.sub_channels.end(); ++ch_it)
         {
@@ -334,12 +334,12 @@ namespace CampaignSvcs
           triggered_channels, weighted_triggered_channels,
           status_set, uc_tbl, matched_channels_ptr);
 
-        if(result)
+        if (result)
         {
           ++ch_it;
-          for( ; ch_it != expr.sub_channels.end(); ++ch_it)
+          for ( ; ch_it != expr.sub_channels.end(); ++ch_it)
           {
-            if(triggered_(*ch_it,
+            if (triggered_(*ch_it,
               triggered_channels, weighted_triggered_channels,
               status_set, uc_tbl, matched_channels_ptr))
             {
@@ -368,7 +368,7 @@ namespace CampaignSvcs
     ChannelIdSet* matched_channels)
     /*throw(Exception)*/
   {
-    if(matched_channels || uc_tbl)
+    if (matched_channels || uc_tbl)
     {
       ChannelIdSet local_matched_channels;
 
@@ -380,9 +380,9 @@ namespace CampaignSvcs
         uc_tbl,
         &local_matched_channels);
 
-      if(result)
+      if (result)
       {
-        if(matched_channels)
+        if (matched_channels)
         {
           std::copy(
             local_matched_channels.begin(),
@@ -390,7 +390,7 @@ namespace CampaignSvcs
             std::inserter(*matched_channels, matched_channels->begin()));
         }
 
-        if(uc_tbl)
+        if (uc_tbl)
         {
           store_use_count_(uc_tbl, expr.channel, local_matched_channels);
         }
@@ -419,7 +419,7 @@ namespace CampaignSvcs
     ChannelIdSet* matched_channels) const
     /*throw(Exception)*/
   {
-    if(status_set && strchr(status_set, channel_params_.status) == 0)
+    if (status_set && strchr(status_set, channel_params_.status) == 0)
     {
       return 0;
     }
@@ -443,9 +443,9 @@ namespace CampaignSvcs
   {
     bool result = false;
 
-    if(!expr.channel.in())
+    if (!expr.channel.in())
     {
-      for(Expression::ExpressionArray::const_iterator ch_it =
+      for (Expression::ExpressionArray::const_iterator ch_it =
             expr.sub_channels.begin();
         ch_it != expr.sub_channels.end(); ++ch_it)
       {
@@ -483,7 +483,7 @@ namespace CampaignSvcs
 
     if (it != uc_tbl.end())
     {
-      if(matched_channels)
+      if (matched_channels)
       {
         std::copy(
           it->second.channel_ids.begin(),
@@ -501,7 +501,7 @@ namespace CampaignSvcs
       result = use_(
         uc_tbl, expr_, triggered_channels, status_set, &local_matched_channels);
 
-      if(result)
+      if (result)
       {
         ChannelUseCount& use_count = uc_tbl[params().channel_id];
         use_count.count = 1;
@@ -511,7 +511,7 @@ namespace CampaignSvcs
           local_matched_channels.end(),
           std::inserter(use_count.channel_ids, use_count.channel_ids.begin()));
 
-        if(matched_channels)
+        if (matched_channels)
         {
           std::copy(
             local_matched_channels.begin(),
@@ -531,7 +531,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& triggered_channels)
     /*throw(Exception)*/
   {
-    if(expr.channel.in() &&
+    if (expr.channel.in() &&
        expr.channel->has_params())
     {
       expr.channel->triggered_named_channels(
@@ -556,7 +556,7 @@ namespace CampaignSvcs
     const ChannelIdHashSet& triggered_channels) const
     /*throw(Exception)*/
   {
-    if(triggered(&triggered_channels, 0, "AW") &&
+    if (triggered(&triggered_channels, 0, "AW") &&
        params().channel_id)
     {
       triggered_named_channels.insert(params().channel_id);
@@ -586,7 +586,7 @@ namespace CampaignSvcs
     const
     /*throw(Exception, eh::Exception)*/
   {
-    if(!triggered_(expr, &triggered_channels, 0, "A", 0, 0))
+    if (!triggered_(expr, &triggered_channels, 0, "A", 0, 0))
     {
       return false;
     }
@@ -598,7 +598,7 @@ namespace CampaignSvcs
     case NOP:
       if (expr.channel.in())
       {
-        if(params().channel_id || expr.channel->params().type == 'V')
+        if (params().channel_id || expr.channel->params().type == 'V')
         {
           responded_expr += std::to_string(expr.channel->params().channel_id);
           return true;
@@ -625,12 +625,12 @@ namespace CampaignSvcs
              ch_it != end_it;
              ++ch_it)
         {
-          if(ch_it != expr.sub_channels.begin())
+          if (ch_it != expr.sub_channels.begin())
           {
             sub_expr += " & ";
           }
 
-          if(!triggered_expression_(sub_expr, *ch_it, triggered_channels))
+          if (!triggered_expression_(sub_expr, *ch_it, triggered_channels))
           {
             return false;
           }
@@ -653,7 +653,7 @@ namespace CampaignSvcs
           std::string ss_expr;
           if (triggered_expression_(ss_expr, *ch_it, triggered_channels))
           {
-            if(count)
+            if (count)
             {
               sub_expr += " | ";
             }
@@ -667,12 +667,12 @@ namespace CampaignSvcs
           return false;
         }
 
-        if(count > 1)
+        if (count > 1)
         {
           responded_expr += '(';
         }
         responded_expr += sub_expr;
-        if(count > 1)
+        if (count > 1)
         {
           responded_expr += ')';
         }
@@ -691,31 +691,31 @@ namespace CampaignSvcs
   ExpressionChannel::optimize_expr_(
     Expression& expr)
   {
-    if(expr.op == NOP)
+    if (expr.op == NOP)
     {
-      if(expr.channel)
+      if (expr.channel)
       {
         expr.channel = expr.channel->optimize();
       }
 
       return expr.channel.in();
     }
-    else if(expr.op == AND_NOT)
+    else if (expr.op == AND_NOT)
     {
       assert(!expr.sub_channels.empty());
 
-      if(!optimize_expr_(*expr.sub_channels.begin()))
+      if (!optimize_expr_(*expr.sub_channels.begin()))
       {
         expr.op = NOP;
         expr.sub_channels.clear();
         return false;
       }
 
-      for(Expression::ExpressionArray::iterator sit =
+      for (Expression::ExpressionArray::iterator sit =
             ++expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
       {
-        if(!optimize_expr_(*sit))
+        if (!optimize_expr_(*sit))
         {
           sit = expr.sub_channels.erase(sit);
         }
@@ -725,7 +725,7 @@ namespace CampaignSvcs
         }
       }
 
-      if(expr.sub_channels.size() == 1)
+      if (expr.sub_channels.size() == 1)
       {
         // all AND NOT parts skipped
         expr.op = AND;
@@ -733,19 +733,19 @@ namespace CampaignSvcs
     }
     else
     {
-      for(Expression::ExpressionArray::iterator sit =
+      for (Expression::ExpressionArray::iterator sit =
             expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
       {
-        if(!optimize_expr_(*sit))
+        if (!optimize_expr_(*sit))
         {
-          if(expr.op == AND)
+          if (expr.op == AND)
           {
             expr.op = NOP;
             expr.sub_channels.clear();
             return false;
           }
-          else if(expr.op == OR)
+          else if (expr.op == OR)
           {
             sit = expr.sub_channels.erase(sit);
           }
@@ -760,26 +760,26 @@ namespace CampaignSvcs
         }
       }
 
-      if(expr.sub_channels.empty())
+      if (expr.sub_channels.empty())
       {
         expr.op = NOP;
         return false;
       }
     }
 
-    if(expr.op == AND || expr.op == OR)
+    if (expr.op == AND || expr.op == OR)
     {
       Expression::ExpressionArray new_sub_channels;
 
-      for(Expression::ExpressionArray::const_iterator sit =
+      for (Expression::ExpressionArray::const_iterator sit =
             expr.sub_channels.begin();
           sit != expr.sub_channels.end(); ++sit)
       {
-        if(sit->op == expr.op || (
+        if (sit->op == expr.op || (
              (sit->op == AND || sit->op == OR) &&
              (sit->sub_channels.size() == 1 || expr.sub_channels.size() == 1)))
         {
-          if(expr.sub_channels.size() == 1)
+          if (expr.sub_channels.size() == 1)
           {
             expr.op = sit->op;
           }
@@ -804,7 +804,7 @@ namespace CampaignSvcs
   ReferenceCounting::SmartPtr<ExpressionChannelBase, ReferenceCounting::PolicyAssert>
   ExpressionChannel::optimize()
   {
-    if(optimize_expr_(expr_))
+    if (optimize_expr_(expr_))
     {
       return ReferenceCounting::add_ref(this);
     }
@@ -815,7 +815,7 @@ namespace CampaignSvcs
   bool
   ExpressionChannel::equal(const ExpressionChannel* right) const noexcept
   {
-    if(!(params().equal(right->params())))
+    if (!(params().equal(right->params())))
     {
       return false;
     }
@@ -828,7 +828,7 @@ namespace CampaignSvcs
     const Expression& expr)
     /*throw(Exception)*/
   {
-    if(expr.channel.in())
+    if (expr.channel.in())
     {
       expr.channel->get_all_cmp_channels(cmp_channels);
     }
@@ -849,7 +849,7 @@ namespace CampaignSvcs
     const Expression& expr)
     /*throw(Exception)*/
   {
-    if(expr.channel.in())
+    if (expr.channel.in())
     {
       expr.channel->get_cmp_channels(cmp_channels, simple_channels);
     }
@@ -858,7 +858,7 @@ namespace CampaignSvcs
       Expression::ExpressionArray::const_iterator last_it =
         expr.sub_channels.end();
 
-      if(expr.op == AND_NOT)
+      if (expr.op == AND_NOT)
       {
         get_all_cmp_channels_(cmp_channels, *expr.sub_channels.rbegin());
         --last_it;
@@ -878,7 +878,7 @@ namespace CampaignSvcs
     const Expression& expr)
     noexcept
   {
-    if(expr.channel.in())
+    if (expr.channel.in())
     {
       expr.channel->get_all_channels(channels);
     }
@@ -898,12 +898,12 @@ namespace CampaignSvcs
     const ChannelIdHashSet& simple_channels)
     /*throw(Exception)*/
   {
-    if((channel_params_.channel_id == 0 ||
+    if ((channel_params_.channel_id == 0 ||
         (channel_params_.common_params.in() &&
           !channel_params_.common_params->is_public)) &&
        triggered(&simple_channels, 0))
     {
-      if(channel_params_.cmp_params.in())
+      if (channel_params_.cmp_params.in())
       {
         cmp_channels.push_back(ReferenceCounting::add_ref(this));
       }
@@ -918,11 +918,11 @@ namespace CampaignSvcs
     ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
   {
-    if(channel_params_.channel_id == 0 ||
+    if (channel_params_.channel_id == 0 ||
        (channel_params_.common_params.in() &&
          !channel_params_.common_params->is_public))
     {
-      if(channel_params_.cmp_params.in())
+      if (channel_params_.cmp_params.in())
       {
         cmp_channels.push_back(ReferenceCounting::add_ref(this));
       }
@@ -1012,7 +1012,7 @@ namespace CampaignSvcs
 
     if (it != uc_tbl.end())
     {
-      if(matched_channels)
+      if (matched_channels)
       {
         std::copy(
           it->second.channel_ids.begin(),
@@ -1030,7 +1030,7 @@ namespace CampaignSvcs
       result = use_(
         uc_tbl, expr_, triggered_channels, status_set, &local_matched_channels);
 
-      if(result)
+      if (result)
       {
         ChannelUseCount& use_count = uc_tbl[params().channel_id];
         use_count.count = 1;
@@ -1039,7 +1039,7 @@ namespace CampaignSvcs
           local_matched_channels.begin(),
           local_matched_channels.end());
 
-        if(matched_channels)
+        if (matched_channels)
         {
           matched_channels->insert(
             local_matched_channels.begin(),
@@ -1138,7 +1138,7 @@ namespace CampaignSvcs
           }
         }
 
-        for(auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
+        for (auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
         {
           if (!match_cell_(*it, channels))
           {
@@ -1152,15 +1152,15 @@ namespace CampaignSvcs
 
     case ExpressionChannel::OR:
       {
-        for(auto it = expr.simple.cbegin(); it != expr.simple.cend(); ++it)
+        for (auto it = expr.simple.cbegin(); it != expr.simple.cend(); ++it)
         {
-          if(channels.find(*it) != channels.end())
+          if (channels.find(*it) != channels.end())
           {
             return true;
           }
         }
 
-        for(auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
+        for (auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
         {
           if (match_cell_(*it, channels))
           {
@@ -1236,7 +1236,7 @@ namespace CampaignSvcs
   {
     bool result = false;
 
-    if(expr.op == ExpressionChannel::NOP)
+    if (expr.op == ExpressionChannel::NOP)
     {
       result |= SimpleChannel::use(
         expr.channel_id,
@@ -1284,7 +1284,7 @@ namespace CampaignSvcs
           const ConstExpressionChannel_var expression_channel =
             expr.channel->expression_channel();
 
-          if(expression_channel.in())
+          if (expression_channel.in())
           {
             cell = make_cell_(expression_channel->expression());
           }
@@ -1307,14 +1307,14 @@ namespace CampaignSvcs
         {
           ChannelIdSet simple;
 
-          for(auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
+          for (auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
           {
             const Expression sub_cell = make_cell_(*it);
 
             if (sub_cell.op == ExpressionChannel::NOP)
             {
               //assert(sub_cell.sub_channels.empty() && sub_cell.simple.empty() && sub_cell.channel_id);
-              if(sub_cell.channel_id)
+              if (sub_cell.channel_id)
               {
                 simple.insert(sub_cell.channel_id);
               }

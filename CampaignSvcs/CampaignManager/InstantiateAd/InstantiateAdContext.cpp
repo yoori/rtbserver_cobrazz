@@ -10,13 +10,13 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   void
   InstantiateAdContext::CreativeArgsData::init_click_urls()
   {
-    if(click_urls_initialized)
+    if (click_urls_initialized)
     {
       return;
     }
 
     click_urls_initialized = true;
-    if(click_url_initializer)
+    if (click_url_initializer)
     {
       click_url_initializer(*this);
     }
@@ -25,9 +25,9 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   AccountIdList&
   InstantiateAdContext::consider_pub_pixel_accounts()
   {
-    if(!consider_pub_pixel_accounts_cache)
+    if (!consider_pub_pixel_accounts_cache)
     {
-      if((inst_params && inst_params->generate_pubpixel_accounts) ||
+      if ((inst_params && inst_params->generate_pubpixel_accounts) ||
         force_generate_pubpixel_accounts)
       {
         assert(creative_instantiator);
@@ -56,9 +56,9 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   bool
   InstantiateAdContext::pub_pixels_optout()
   {
-    if(!pub_pixels_optout_cache)
+    if (!pub_pixels_optout_cache)
     {
-      if(creative_instantiator && campaign_config && request_params)
+      if (creative_instantiator && campaign_config && request_params)
       {
         const char* const country = !request_params->location.empty() ?
           request_params->location[0].country.c_str() : "";

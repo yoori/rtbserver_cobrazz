@@ -16,12 +16,12 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     const std::string_view passback_code(
       CreativeTokens::PASSBACK_CODE.data(),
       CreativeTokens::PASSBACK_CODE.size());
-    if(name != passback_code)
+    if (name != passback_code)
     {
       return false;
     }
 
-    if(value)
+    if (value)
     {
       result.clear();
     }

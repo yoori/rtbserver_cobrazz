@@ -33,25 +33,25 @@ namespace CTR
     {
       const auto& value = root.GetValue();
       xgboost::Value::ValueKind kind = value.Type();
-      if(kind == xgboost::Value::ValueKind::kObject)
+      if (kind == xgboost::Value::ValueKind::kObject)
       {
         const xgboost::JsonObject* json_object = dynamic_cast<const xgboost::JsonObject*>(&value);
-        if(json_object)
+        if (json_object)
         {
           const auto& attributes = json_object->GetObject();
-          for(auto it = attributes.begin(); it != attributes.end(); ++it)
+          for (auto it = attributes.begin(); it != attributes.end(); ++it)
           {
-            if(it->first == attr_name)
+            if (it->first == attr_name)
             {
               // found - return it
               return &(it->second);
             }
           }
 
-          for(auto it = attributes.begin(); it != attributes.end(); ++it)
+          for (auto it = attributes.begin(); it != attributes.end(); ++it)
           {
             const xgboost::Json* found_node = xgboost_json_find_attribute(it->second, attr_name);
-            if(found_node)
+            if (found_node)
             {
               return found_node;
             }
@@ -167,10 +167,10 @@ namespace CTR
     unsigned long feats_size = 1;
 
     auto num_feature_attr_it = attrs.find("num_feature");
-    if(num_feature_attr_it != attrs.end())
+    if (num_feature_attr_it != attrs.end())
     {
       unsigned long model_num_feature;
-      if(String::StringManip::str_to_int(num_feature_attr_it->second, model_num_feature))
+      if (String::StringManip::str_to_int(num_feature_attr_it->second, model_num_feature))
       {
         feats_size = model_num_feature;
       }
@@ -190,31 +190,31 @@ namespace CTR
     */
 
     const xgboost::Json* json_learner_model_param_node = xgboost_json_find_attribute(j_tree, "learner_model_param");
-    if(json_learner_model_param_node)
+    if (json_learner_model_param_node)
     {
       const xgboost::Json* json_base_score = xgboost_json_find_attribute(*json_learner_model_param_node, "base_score");
-      if(json_base_score)
+      if (json_base_score)
       {
-        if(json_base_score->GetValue().Type() == xgboost::Value::ValueKind::kNumber)
+        if (json_base_score->GetValue().Type() == xgboost::Value::ValueKind::kNumber)
         {
           const xgboost::JsonNumber* json_val = dynamic_cast<const xgboost::JsonNumber*>(&json_base_score->GetValue());
-          if(json_val)
+          if (json_val)
           {
             base_score_ = json_val->GetNumber();
           }
         }
-        else if(json_base_score->GetValue().Type() == xgboost::Value::ValueKind::kInteger)
+        else if (json_base_score->GetValue().Type() == xgboost::Value::ValueKind::kInteger)
         {
           const xgboost::JsonInteger* json_val = dynamic_cast<const xgboost::JsonInteger*>(&json_base_score->GetValue());
-          if(json_val)
+          if (json_val)
           {
             base_score_ = json_val->GetInteger();
           }
         }
-        else if(json_base_score->GetValue().Type() == xgboost::Value::ValueKind::kString)
+        else if (json_base_score->GetValue().Type() == xgboost::Value::ValueKind::kString)
         {
           const xgboost::JsonString* json_val = dynamic_cast<const xgboost::JsonString*>(&json_base_score->GetValue());
-          if(json_val)
+          if (json_val)
           {
             try
             {
@@ -279,18 +279,18 @@ namespace CTR
     const HashArray* add_features3)
   {
     // fill features
-    for(auto it = features.begin(); it != features.end(); ++it)
+    for (auto it = features.begin(); it != features.end(); ++it)
     {
       predict_features_.emplace_back(xgboost::Entry(it->first - 1, it->second));
     }
 
     const HashArray* add_f[] = { add_features, add_features2, add_features3 };
 
-    for(unsigned int i = 0; i < sizeof(add_f) / sizeof(add_f[0]); ++i)
+    for (unsigned int i = 0; i < sizeof(add_f) / sizeof(add_f[0]); ++i)
     {
-      if(add_f[i])
+      if (add_f[i])
       {
-        for(auto it = add_f[i]->begin(); it != add_f[i]->end(); ++it)
+        for (auto it = add_f[i]->begin(); it != add_f[i]->end(); ++it)
         {
           predict_features_.push_back(xgboost::Entry(it->first - 1, it->second));
         }
@@ -358,13 +358,13 @@ namespace CTR
 
     {
       SyncPolicy::WriteGuard lock(lock_);
-      if(!predictors_.empty())
+      if (!predictors_.empty())
       {
         predictors.splice(predictors.begin(), predictors_, predictors_.begin());
       }
     }
 
-    if(predictors.empty())
+    if (predictors.empty())
     {
       // create new learner
       predictors.push_back(

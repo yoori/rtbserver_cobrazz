@@ -20,28 +20,28 @@ namespace CampaignSvcs
     {
       TagPricings::const_iterator tp_it;
 
-      if((tp_it = tag_pricings.find(
+      if ((tp_it = tag_pricings.find(
         Tag::TagPricingKey(country_code, ccg_type, ccg_rate_type))) !=
         tag_pricings.end())
       {
         return &(tp_it->second);
       }
 
-      if((tp_it = tag_pricings.find(
+      if ((tp_it = tag_pricings.find(
         Tag::TagPricingKey(country_code, ccg_type, CR_ALL))) !=
         tag_pricings.end())
       {
         return &(tp_it->second);
       }
 
-      if((tp_it = tag_pricings.find(
+      if ((tp_it = tag_pricings.find(
         Tag::TagPricingKey(country_code, CT_ALL, ccg_rate_type))) !=
         tag_pricings.end())
       {
         return &(tp_it->second);
       }
 
-      if((tp_it = tag_pricings.find(
+      if ((tp_it = tag_pricings.find(
         Tag::TagPricingKey(country_code, CT_ALL, CR_ALL))) !=
         tag_pricings.end())
       {
@@ -58,19 +58,19 @@ namespace CampaignSvcs
       CCGRateType ccg_rate_type) const noexcept
     {
       // reduce ccg rate for tag pricing selection (MAXBID => CPM)
-      if(ccg_rate_type == CR_MAXBID)
+      if (ccg_rate_type == CR_MAXBID)
       {
         ccg_rate_type = CR_CPM;
       }
 
       const Tag::TagPricing* res = 0;
 
-      if((res = select_tag_pricing_(country_code, ccg_type, ccg_rate_type)) != 0)
+      if ((res = select_tag_pricing_(country_code, ccg_type, ccg_rate_type)) != 0)
       {
         return res;
       }
 
-      if((res = select_tag_pricing_("", ccg_type, ccg_rate_type)) != 0)
+      if ((res = select_tag_pricing_("", ccg_type, ccg_rate_type)) != 0)
       {
         return res;
       }
@@ -84,13 +84,13 @@ namespace CampaignSvcs
     {
       CountryTagPricingMap::const_iterator tp_it;
 
-      if((tp_it = country_tag_pricings.find(country_code)) !=
+      if ((tp_it = country_tag_pricings.find(country_code)) !=
         country_tag_pricings.end())
       {
         return &(tp_it->second);
       }
 
-      if((tp_it = country_tag_pricings.find("")) !=
+      if ((tp_it = country_tag_pricings.find("")) !=
         country_tag_pricings.end())
       {
         return &(tp_it->second);
@@ -103,19 +103,19 @@ namespace CampaignSvcs
     Tag::select_no_impression_tag_pricing(
       const char* country_code) const noexcept
     {
-      if(no_imp_tag_pricings.empty())
+      if (no_imp_tag_pricings.empty())
       {
         return 0;
       }
 
       CountryTagPricingPtrMap::const_iterator tp_it =
         no_imp_tag_pricings.find(country_code);
-      if(tp_it != no_imp_tag_pricings.end())
+      if (tp_it != no_imp_tag_pricings.end())
       {
         return tp_it->second;
       }
 
-      if(no_imp_tag_pricings.begin()->first.empty())
+      if (no_imp_tag_pricings.begin()->first.empty())
       {
         return no_imp_tag_pricings.begin()->second;
       }

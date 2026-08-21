@@ -497,7 +497,7 @@ namespace AdServer::CampaignSvcs
       throw BillingStateContainer::Exception(ostr);
     }
 
-    for(auto& endpoint : billing_server_refs)
+    for (auto& endpoint : billing_server_refs)
     {
       auto client = std::make_shared<BillingServerClient>(
         endpoint,
@@ -512,7 +512,7 @@ namespace AdServer::CampaignSvcs
     {
       owner_.add_child_object(grpc_executor_);
       owner_.add_child_object(coalesce_runner_);
-      for(const auto& billing_server : billing_servers_)
+      for (const auto& billing_server : billing_servers_)
       {
         owner_.add_child_object(billing_server.client);
       }
@@ -647,7 +647,7 @@ namespace AdServer::CampaignSvcs
     BillingStateContainer::Stats result;
     result.endpoints.reserve(billing_servers_.size());
 
-    for(const auto& billing_server : billing_servers_)
+    for (const auto& billing_server : billing_servers_)
     {
       const auto stats = billing_server.client->stats();
       merge_grpc_stats_(result.total, stats);
@@ -1089,7 +1089,7 @@ namespace AdServer::CampaignSvcs
       unsigned long count_servers = billing_servers_.size();
 
       // check all indexes while don't find good, but no more than count servers
-      for(size_t i = 0; i < count_servers; ++i)
+      for (size_t i = 0; i < count_servers; ++i)
       {
         ccg_state.active_index = next_index_(ccg_state.active_index);
         ccg_state.use_count = 1;
@@ -1144,7 +1144,7 @@ namespace AdServer::CampaignSvcs
     if (!ccg_state.server_use_times.empty())
     {
       Generics::Time sum_time;
-      for(auto time_it = ccg_state.server_use_times.begin();
+      for (auto time_it = ccg_state.server_use_times.begin();
         time_it != ccg_state.server_use_times.end(); ++time_it)
       {
         sum_time += *time_it;
@@ -1189,14 +1189,14 @@ namespace AdServer::CampaignSvcs
         add_recheck_ccgs_.swap(add_recheck_ccgs);
       }
 
-      for(auto ccg_it = add_recheck_ccgs.begin(); ccg_it != add_recheck_ccgs.end(); ++ccg_it)
+      for (auto ccg_it = add_recheck_ccgs.begin(); ccg_it != add_recheck_ccgs.end(); ++ccg_it)
       {
         Generics::Time& check_time = recheck_ccgs_[ccg_it->first];
         check_time = std::max(check_time, ccg_it->second);
       }
 
       // apply add_recheck_ccgs_ to recheck_ccgs_
-      for(auto it = add_recheck_ccgs.begin(); it != add_recheck_ccgs.end(); ++it)
+      for (auto it = add_recheck_ccgs.begin(); it != add_recheck_ccgs.end(); ++it)
       {
         auto prev_it = recheck_ccgs_.find(it->first);
         if (prev_it != recheck_ccgs_.end())
@@ -1222,7 +1222,7 @@ namespace AdServer::CampaignSvcs
       const Generics::Time now = Generics::Time::get_time_of_day();
       const Generics::Time reenable_time = now - REENABLE_INDEX_TIME;
 
-      for(auto it = recheck_ccgs_.begin(); it != recheck_ccgs_.end(); )
+      for (auto it = recheck_ccgs_.begin(); it != recheck_ccgs_.end(); )
       {
         if (DEBUG_BILLING_SERVER_CALL_)
         {
@@ -1241,7 +1241,7 @@ namespace AdServer::CampaignSvcs
             SyncPolicy::WriteGuard lock(lock_);
             CCGState& ccg_state = cache_[ccg_id];
             ccg_setter = ReferenceCounting::add_ref(ccg_state.ccg_setter);
-            for(auto disable_index_it = ccg_state.disabled_indexes.begin();
+            for (auto disable_index_it = ccg_state.disabled_indexes.begin();
               disable_index_it != ccg_state.disabled_indexes.end(); )
             {
               if (disable_index_it->second < reenable_time)

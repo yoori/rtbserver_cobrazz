@@ -62,7 +62,7 @@ namespace AdServer
     {
       target_seq.length(source.size());
       CORBA::ULong i = 0;
-      for(typename Commons::IntervalSet<ValueType>::const_iterator sit =
+      for (typename Commons::IntervalSet<ValueType>::const_iterator sit =
             source.begin(); sit != source.end(); ++sit, ++i)
       {
         target_seq[i].min = sit->min;
@@ -78,7 +78,7 @@ namespace AdServer
       const SequenceType& source_seq)
       noexcept
     {
-      for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+      for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
       {
         target.insert(Commons::Interval<ValueType>(
           source_seq[i].min, source_seq[i].max));
@@ -100,7 +100,7 @@ namespace AdServer
         delivery_limits.daily_budget);
       delivery_info.delivery_pacing = delivery_limits.delivery_pacing;
 
-      if(delivery_limits.imps.has_value())
+      if (delivery_limits.imps.has_value())
       {
         delivery_info.imps_defined = true;
         delivery_info.imps = *delivery_limits.imps;
@@ -111,7 +111,7 @@ namespace AdServer
       }
 
       /*
-      if(delivery_limits.daily_imps.has_value())
+      if (delivery_limits.daily_imps.has_value())
       {
         delivery_info.daily_imps_defined = true;
         delivery_info.daily_imps = *delivery_limits.daily_imps;
@@ -122,7 +122,7 @@ namespace AdServer
       }
       */
 
-      if(delivery_limits.clicks.has_value())
+      if (delivery_limits.clicks.has_value())
       {
         delivery_info.clicks_defined = true;
         delivery_info.clicks = *delivery_limits.clicks;
@@ -133,7 +133,7 @@ namespace AdServer
       }
 
       /*
-      if(delivery_limits.daily_clicks.has_value())
+      if (delivery_limits.daily_clicks.has_value())
       {
         delivery_info.daily_clicks_defined = true;
         delivery_info.daily_clicks = *delivery_limits.daily_clicks;
@@ -191,7 +191,7 @@ namespace AdServer
     {
       token_seq.length(tokens.size());
       CORBA::ULong i = 0;
-      for(OptionValueMap::const_iterator token_it = tokens.begin();
+      for (OptionValueMap::const_iterator token_it = tokens.begin();
           token_it != tokens.end(); ++token_it, ++i)
       {
         token_seq[i].option_id = token_it->first;
@@ -206,7 +206,7 @@ namespace AdServer
       const OptionValueSeq& token_seq)
       noexcept
     {
-      for(CORBA::ULong i = 0; i < token_seq.length(); ++i)
+      for (CORBA::ULong i = 0; i < token_seq.length(); ++i)
       {
         tokens[token_seq[i].option_id] = token_seq[i].value.in();
       }

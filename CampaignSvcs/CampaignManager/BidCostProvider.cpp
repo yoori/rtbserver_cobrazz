@@ -67,14 +67,14 @@ namespace CampaignSvcs
   void
   RemoveConfigTask::execute() noexcept
   {
-    for(FileList::const_iterator fit = config_files_.begin();
+    for (FileList::const_iterator fit = config_files_.begin();
       fit != config_files_.end();
       ++fit)
     {
       ::unlink(fit->c_str());
     }
 
-    for(FileList::const_iterator fit = config_directories_.begin();
+    for (FileList::const_iterator fit = config_directories_.begin();
       fit != config_directories_.end(); ++fit)
     {
       ::rmdir(fit->c_str());
@@ -92,17 +92,17 @@ namespace CampaignSvcs
     operator ()(const char* full_path, const struct stat& file_stat)
       noexcept
     {
-      if(S_ISDIR(file_stat.st_mode))
+      if (S_ISDIR(file_stat.st_mode))
       {
         String::RegEx::Result sub_strs;
 
         String::SubString file_name(
           Generics::DirSelect::file_name(full_path));
 
-        if(reg_exp_.search(sub_strs, file_name) &&
+        if (reg_exp_.search(sub_strs, file_name) &&
           (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
         {
-          if(result_folder < file_name)
+          if (result_folder < file_name)
           {
             file_name.assign_to(result_folder);
           }
@@ -166,7 +166,7 @@ namespace CampaignSvcs
       "*",
       Generics::DirSelect::DSF_NON_RECURSIVE | Generics::DirSelect::DSF_ALL_FILES);
 
-    if(!bid_cost_config_selector.result_folder.empty())
+    if (!bid_cost_config_selector.result_folder.empty())
     {
       config_root = check_root_s + "/" + bid_cost_config_selector.result_folder;
       try
@@ -194,14 +194,14 @@ namespace CampaignSvcs
     */
 
     assert(cost_mapping_);
-    if(request_params.tag_id == 0)
+    if (request_params.tag_id == 0)
     {
       return AdServer::Commons::Optional<RevenueDecimal>();
     }
 
     CostMapping::Key key(request_params.tag_id, request_params.domain);
     auto cost_map_it = cost_mapping_->cost_map.find(key);
-    if(cost_map_it == cost_mapping_->cost_map.end())
+    if (cost_map_it == cost_mapping_->cost_map.end())
     {
       //std::cerr << "BidCostProvider::get_bid_cost(): cost element not found" << std::endl;
       return AdServer::Commons::Optional<RevenueDecimal>();
@@ -210,13 +210,13 @@ namespace CampaignSvcs
     const auto& cells = cost_map_it->second->cells;
     auto cell_it = std::lower_bound(cells.begin(), cells.end(), CostMapping::Cell(
       allowable_lose_win_percentage, RevenueDecimal::ZERO, RevenueDecimal::ZERO));
-    if(cell_it == cells.end())
+    if (cell_it == cells.end())
     {
       /*
       std::cerr << "BidCostProvider::get_bid_cost(): cell not found #1 for "
         "allowable_lose_win_percentage = " << allowable_lose_win_percentage <<
         ", cells = [";
-      for(auto it = cells.begin(); it != cells.end(); ++it)
+      for (auto it = cells.begin(); it != cells.end(); ++it)
       {
         std::cerr << " " << it->win_rate_reduction;
       }
@@ -225,18 +225,18 @@ namespace CampaignSvcs
       return AdServer::Commons::Optional<RevenueDecimal>();
     }
 
-    if(cell_it->win_rate_reduction < allowable_lose_win_percentage)
+    if (cell_it->win_rate_reduction < allowable_lose_win_percentage)
     {
       ++cell_it;
     }
 
-    if(cell_it == cells.end())
+    if (cell_it == cells.end())
     {
       //std::cerr << "BidCostProvider::get_bid_cost(): cell not found #2" << std::endl;
       return AdServer::Commons::Optional<RevenueDecimal>();
     }
 
-    if(cell_it->max_sys_impression < orig_bid_cost)
+    if (cell_it->max_sys_impression < orig_bid_cost)
     {
       //std::cerr << "BidCostProvider::get_bid_cost(): max_sys_impression < orig_bid_cost" << std::endl;
       return AdServer::Commons::Optional<RevenueDecimal>();
@@ -252,19 +252,19 @@ namespace CampaignSvcs
     const String::SubString& cost_file_path)
   {
     std::ifstream cost_file(cost_file_path.str().c_str());
-    if(!cost_file.is_open())
+    if (!cost_file.is_open())
     {
       Stream::Error ostr;
       ostr << "Can't open '" << cost_file_path << "'";
       throw InvalidConfig(ostr);
     }
 
-    while(!cost_file.eof())
+    while (!cost_file.eof())
     {
       std::string line;
       std::getline(cost_file, line);
 
-      if(!line.empty())
+      if (!line.empty())
       {
         // tag_id,domain,win_rate,cost,max_cost,result_win_rate
         String::StringManip::Splitter<
@@ -281,7 +281,7 @@ namespace CampaignSvcs
         RevenueDecimal cost;
         RevenueDecimal max_cost;
 
-        if(!tokenizer.get_token(tag_id_str) ||
+        if (!tokenizer.get_token(tag_id_str) ||
           !tokenizer.get_token(domain) ||
           !tokenizer.get_token(win_rate_str) ||
           !tokenizer.get_token(cost_str) ||
@@ -299,7 +299,7 @@ namespace CampaignSvcs
         CostMapping::Key key(tag_id, domain);
         CostMapping::Cell cell(win_rate, cost, max_cost);
         CostMapping::Value_var& value = res[key];
-        if(!value.in())
+        if (!value.in())
         {
           value = CostMapping::Value_var(new CostMapping::Value());
         }
@@ -319,7 +319,7 @@ namespace CampaignSvcs
       remove_config_files_at_destroy = remove_config_files_at_destroy_;
     }
 
-    if(remove_config_files_at_destroy && task_runner_)
+    if (remove_config_files_at_destroy && task_runner_)
     {
       task_runner_->enqueue_task(Generics::Task_var(
         new RemoveConfigTask(

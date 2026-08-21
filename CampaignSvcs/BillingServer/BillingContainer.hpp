@@ -16,15 +16,29 @@
 
 #include "CTROptimizer.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   struct BillingContainerState;
 
   struct BillingProcessor: public virtual ReferenceCounting::Interface
   {
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    enum class BidUnavailableReason
+    {
+      UNSPECIFIED,
+      ACCOUNT_NOT_FOUND,
+      ACCOUNT_INACTIVE,
+      ADVERTISER_NOT_FOUND,
+      ADVERTISER_INACTIVE,
+      CAMPAIGN_NOT_FOUND,
+      CAMPAIGN_INACTIVE,
+      CCG_NOT_FOUND,
+      CCG_INACTIVE,
+      ACCOUNT_BUDGET_BLOCKED,
+      CAMPAIGN_BUDGET_BLOCKED,
+      CCG_BUDGET_BLOCKED
+    };
 
     struct Bid
     {
@@ -42,11 +56,16 @@ namespace CampaignSvcs
 
     struct BidResult
     {
-      BidResult(bool available_val, const RevenueDecimal& goal_ctr_val)
+      BidResult(
+        bool available_val,
+        const RevenueDecimal& goal_ctr_val,
+        BidUnavailableReason unavailable_reason_val =
+          BidUnavailableReason::UNSPECIFIED)
         noexcept;
 
       bool available;
       RevenueDecimal goal_ctr;
+      BidUnavailableReason unavailable_reason;
     };
 
     // check_available_bid
@@ -67,9 +86,7 @@ namespace CampaignSvcs
 
     // reserve_bid
     virtual bool
-    reserve_bid(
-      const Bid& bid,
-      const RevenueDecimal& bid_amount)
+    reserve_bid(const Bid& bid, const RevenueDecimal& bid_amount)
       /*throw(Exception)*/ = 0;
 
   protected:
@@ -95,8 +112,7 @@ namespace CampaignSvcs
         RevenueDecimal budget;
       };
 
-      typedef std::unordered_map<unsigned long, Account>
-        AccountMap;
+      using AccountMap = std::unordered_map<unsigned long, Account>;
 
       struct CommonDeliveryLimits: public CampaignDeliveryLimits
       {
@@ -112,8 +128,7 @@ namespace CampaignSvcs
       {
       };
 
-      typedef std::unordered_map<unsigned long, Campaign>
-        CampaignMap;
+      using CampaignMap = std::unordered_map<unsigned long, Campaign>;
 
       struct CCG: public CommonDeliveryLimits
       {
@@ -122,8 +137,7 @@ namespace CampaignSvcs
         RevenueDecimal click_amount;
       };
 
-      typedef std::unordered_map<unsigned long, CCG>
-        CCGMap;
+      using CCGMap = std::unordered_map<unsigned long, CCG>;
 
       AccountMap accounts;
       CampaignMap campaigns;
@@ -158,9 +172,7 @@ namespace CampaignSvcs
       /*throw(BillingProcessor::Exception)*/;
 
     virtual bool
-    reserve_bid(
-      const Bid& bid,
-      const RevenueDecimal& bid_amount)
+    reserve_bid(const Bid& bid, const RevenueDecimal& bid_amount)
       /*throw(BillingProcessor::Exception)*/;
 
     void
@@ -168,12 +180,10 @@ namespace CampaignSvcs
       /*throw(BillingProcessor::Exception)*/;
 
     void
-    config(Config* new_config)
-      noexcept;
+    config(Config* new_config) noexcept;
 
     void
-    stat(BillStatSource::Stat* bill_stat)
-      noexcept;
+    stat(BillStatSource::Stat* bill_stat) noexcept;
 
     // dump state to persistent storage
     void
@@ -188,11 +198,9 @@ namespace CampaignSvcs
 
     struct InternalConfig;
 
-    typedef ReferenceCounting::QualPtr<InternalConfig>
-      InternalConfig_var;
+    typedef ReferenceCounting::QualPtr<InternalConfig> InternalConfig_var;
 
-    typedef ReferenceCounting::ConstPtr<InternalConfig>
-      CInternalConfig_var;
+    typedef ReferenceCounting::ConstPtr<InternalConfig> CInternalConfig_var;
 
     struct ConfirmAmountHolder
     {
@@ -467,41 +475,30 @@ namespace CampaignSvcs
 
     template<typename AmountMapType>
     void
-    load_account_amounts_(
-      AmountMapType& amounts,
-      const String::SubString& file_path);
+    load_account_amounts_(AmountMapType& amounts, const String::SubString& file_path);
 
     template<typename AmountMapType>
     void
-    load_amounts_(
-      AmountMapType& amounts,
-      const String::SubString& file_path)
+    load_amounts_(AmountMapType& amounts, const String::SubString& file_path)
       /*throw(Exception)*/;
 
     template<typename RateMapType>
     void
-    load_rates_(
-      RateMapType& amounts,
-      const String::SubString& file_path)
+    load_rates_(RateMapType& amounts, const String::SubString& file_path)
       /*throw(Exception)*/;
 
     template<typename RateOptMapType>
     void
-    load_rate_opts_(
-      RateOptMapType& rate_opts,
-      const String::SubString& file_path)
+    load_rate_opts_(RateOptMapType& rate_opts, const String::SubString& file_path)
       /*throw(Exception)*/;
 
     // utils
     template<typename DeliveryLimitsType>
     void
-    adapt_delivery_limits_(
-      DeliveryLimitsType& delivery_limits)
-      const noexcept;
+    adapt_delivery_limits_(DeliveryLimitsType& delivery_limits) const noexcept;
 
     static RevenueDecimal
-    round_rate_(const RevenueDecimal& rate)
-      noexcept;
+    round_rate_(const RevenueDecimal& rate) noexcept;
 
   protected:
     Logging::Logger_var logger_;
@@ -530,14 +527,10 @@ namespace CampaignSvcs
     DumpSyncPolicy::Mutex dump_lock_;
   };
 
-  typedef ReferenceCounting::SmartPtr<BillingContainer>
-    BillingContainer_var;
-}
+  typedef ReferenceCounting::SmartPtr<BillingContainer> BillingContainer_var;
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   // BillingProcessor::Bid
   inline void
@@ -555,10 +548,11 @@ namespace CampaignSvcs
   inline
   BillingProcessor::BidResult::BidResult(
     bool available_val,
-    const RevenueDecimal& goal_ctr_val)
+    const RevenueDecimal& goal_ctr_val,
+    BidUnavailableReason unavailable_reason_val)
     noexcept
     : available(available_val),
-      goal_ctr(goal_ctr_val)
+      goal_ctr(goal_ctr_val),
+      unavailable_reason(unavailable_reason_val)
   {}
-}
 }

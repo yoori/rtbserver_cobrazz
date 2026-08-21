@@ -56,7 +56,7 @@ namespace AdServer
         ch_inf.behav_param_list_id = in.behav_param_list_id;
         ch_inf.str_behav_param_list_id << in.str_behav_param_list_id;
         ch_inf.threshold = in.threshold;
-        if(in.match_params.in())
+        if (in.match_params.in())
         {
           CorbaAlgs::fill_sequence(
             in.match_params->page_triggers.begin(),
@@ -106,7 +106,7 @@ namespace AdServer
              it != table.end();
              ++it)
         {
-          if(hash_adapter(it->first) % portions_number == portion &&
+          if (hash_adapter(it->first) % portions_number == portion &&
              it->second.timestamp > request_timestamp)
           {
             ++len;
@@ -121,7 +121,7 @@ namespace AdServer
              it != table.end();
              ++it)
         {
-          if(hash_adapter(it->first) % portions_number == portion &&
+          if (hash_adapter(it->first) % portions_number == portion &&
              it->second.timestamp > request_timestamp)
           {
             seq[i].id = CorbaAlgs::fill_type_adapter(it->first);
@@ -140,7 +140,7 @@ namespace AdServer
         const CampaignGetConfigSettings& settings)
         noexcept
       {
-        if(!settings.no_deleted)
+        if (!settings.no_deleted)
         {
           fill_deleted_sequence(
             seq,
@@ -229,7 +229,7 @@ namespace AdServer
 
           info.geoip_targets.length(value.second->geoip_targets.size());
           CORBA::ULong i = 0;
-          for(GeoChannelDef::GeoIPTargetArray::const_iterator gt_it =
+          for (GeoChannelDef::GeoIPTargetArray::const_iterator gt_it =
                 value.second->geoip_targets.begin();
               gt_it != value.second->geoip_targets.end(); ++gt_it, ++i)
           {
@@ -335,7 +335,7 @@ namespace AdServer
           info.name << value.first;
           info.detectors.length(value.second->detectors.size());
           CORBA::ULong i = 0;
-          for(WebBrowser::DetectorList::const_iterator it = value.second->detectors.begin();
+          for (WebBrowser::DetectorList::const_iterator it = value.second->detectors.begin();
               it != value.second->detectors.end(); ++it, ++i)
           {
             info.detectors[i].marker << it->marker;
@@ -375,7 +375,7 @@ namespace AdServer
           info.type << value.second->type;
           info.detectors.length(value.second->detectors.size());
           CORBA::ULong i = 0;
-          for(Platform::DetectorList::const_iterator it = value.second->detectors.begin();
+          for (Platform::DetectorList::const_iterator it = value.second->detectors.begin();
               it != value.second->detectors.end(); ++it, ++i)
           {
             info.detectors[i].use_name << it->use_name;
@@ -448,7 +448,7 @@ namespace AdServer
     {
       static const char* FUN = "CampaignServerBaseImpl::CampaignServerBaseImpl()";
 
-      if(callback == 0)
+      if (callback == 0)
       {
         throw InvalidArgument(std::string(FUN) + ": callback == 0");
       }
@@ -482,7 +482,7 @@ namespace AdServer
         task_runner_->enqueue_task(
           Generics::Task_var(new UpdateConfigTaskMessage(this, task_runner_)));
 
-        if(bill_stat_update_period_ != Generics::Time::ZERO)
+        if (bill_stat_update_period_ != Generics::Time::ZERO)
         {
           task_runner_->enqueue_task(
             Generics::Task_var(new UpdateBillStatTask(this, task_runner_)));
@@ -545,7 +545,7 @@ namespace AdServer
       {
         new_config = get_campaign_config_source()->update(&need_logging);
 
-        if(new_config.in())
+        if (new_config.in())
         {
           proc_stat_impl_->fill_values(new_config);
           campaign_config_ = new_config;
@@ -562,7 +562,7 @@ namespace AdServer
       try
       {
         /* log campaign update */
-        if(need_logging && new_config.in() && colo_id_ != 0)
+        if (need_logging && new_config.in() && colo_id_ != 0)
         {
           CampaignServerLogger::ConfigUpdateInfo config_update_info;
           config_update_info.colo_id = colo_id_;
@@ -612,7 +612,7 @@ namespace AdServer
             nullptr,
             Generics::Time::get_time_of_day());
 
-        if(new_bill_stat.in())
+        if (new_bill_stat.in())
         {
           bill_stat_ = new_bill_stat;
         }
@@ -627,7 +627,7 @@ namespace AdServer
         update_period = Generics::Time(60);
       }
 
-      if(bill_stat_update_period_ != Generics::Time::ZERO)
+      if (bill_stat_update_period_ != Generics::Time::ZERO)
       {
         try
         {
@@ -682,7 +682,7 @@ namespace AdServer
           ex.what();
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         logger_->sstream(
           Logging::Logger::TRACE,
@@ -724,7 +724,7 @@ namespace AdServer
         TimestampValue request_timestamp(CorbaAlgs::unpack_time(req_timestamp));
         CampaignConfig_var config = campaign_config();
 
-        if(config.in() != 0 && config->master_stamp != request_timestamp)
+        if (config.in() != 0 && config->master_stamp != request_timestamp)
         {
           return true;
         }
@@ -768,13 +768,13 @@ namespace AdServer
       {
         CORBA::ULong delete_count = object_container.inactive().size();
         CORBA::ULong active_count = 0;
-        for(typename ObjectContainerType::ActiveMap::const_iterator it =
+        for (typename ObjectContainerType::ActiveMap::const_iterator it =
               object_container.active().begin();
             it != object_container.active().end(); ++it)
         {
-          if(object_adapter.to_fill(*it))
+          if (object_adapter.to_fill(*it))
           {
-            if(object_adapter.to_deactivate(*it))
+            if (object_adapter.to_deactivate(*it))
             {
               ++delete_count;
             }
@@ -786,7 +786,7 @@ namespace AdServer
         }
 
         activate_object_seq.length(active_count);
-        if(delete_object_seq)
+        if (delete_object_seq)
         {
           delete_object_seq->length(delete_count);
         }
@@ -794,9 +794,9 @@ namespace AdServer
         CORBA::ULong delete_i = 0;
         CORBA::ULong active_i = 0;
 
-        if(delete_object_seq)
+        if (delete_object_seq)
         {
-          for(typename ObjectContainerType::InactiveMap::const_iterator it =
+          for (typename ObjectContainerType::InactiveMap::const_iterator it =
                 object_container.inactive().begin();
               it != object_container.inactive().end(); ++it, ++delete_i)
           {
@@ -806,17 +806,17 @@ namespace AdServer
           }
         }
 
-        for(typename ObjectContainerType::ActiveMap::const_iterator it =
+        for (typename ObjectContainerType::ActiveMap::const_iterator it =
               object_container.active().begin();
             it != object_container.active().end(); ++it)
         {
-          if(object_adapter.to_fill(*it))
+          if (object_adapter.to_fill(*it))
           {
-            if(!object_adapter.to_deactivate(*it))
+            if (!object_adapter.to_deactivate(*it))
             {
               object_adapter.activate(activate_object_seq[active_i++], *it);
             }
-            else if(delete_object_seq)
+            else if (delete_object_seq)
             {
               object_adapter.deactivate((*delete_object_seq)[delete_i++], *it);
             }
@@ -851,12 +851,12 @@ namespace AdServer
           creative_categories.active().size());
 
         CORBA::ULong i = 0;
-        for(CreativeCategoryMap::ActiveMap::const_iterator cat_it =
+        for (CreativeCategoryMap::ActiveMap::const_iterator cat_it =
               creative_categories.active().begin();
             cat_it != creative_categories.active().end();
             ++cat_it)
         {
-          if(cat_it->first % settings.portions_number == settings.portion &&
+          if (cat_it->first % settings.portions_number == settings.portion &&
              cat_it->second->timestamp > request_timestamp)
           {
             AdServer::CampaignSvcs::CreativeCategoryInfo& cat_info =
@@ -867,7 +867,7 @@ namespace AdServer
             cat_info.external_categories.length(
               cat_it->second->external_categories.size());
             CORBA::ULong ec_i = 0;
-            for(CreativeCategoryDef::ExternalCategoryMap::const_iterator ec_it =
+            for (CreativeCategoryDef::ExternalCategoryMap::const_iterator ec_it =
                   cat_it->second->external_categories.begin();
                 ec_it != cat_it->second->external_categories.end();
                 ++ec_it, ++ec_i)
@@ -916,10 +916,10 @@ namespace AdServer
         const AdvActionMap::ActiveMap& adv_actions =
           campaign_config->adv_actions.active();
 
-        for(AdvActionMap::ActiveMap::const_iterator it = adv_actions.begin();
+        for (AdvActionMap::ActiveMap::const_iterator it = adv_actions.begin();
             it != adv_actions.end(); ++it)
         {
-          if(request_timestamp < it->second->timestamp &&
+          if (request_timestamp < it->second->timestamp &&
              it->first % settings.portions_number == settings.portion)
           {
             ++len;
@@ -929,11 +929,11 @@ namespace AdServer
         update_info.adv_actions.length(len);
         CORBA::ULong i = 0;
 
-        for(AdvActionMap::ActiveMap::const_iterator it =
+        for (AdvActionMap::ActiveMap::const_iterator it =
               adv_actions.begin();
             it != adv_actions.end(); ++it)
         {
-          if(request_timestamp < it->second->timestamp &&
+          if (request_timestamp < it->second->timestamp &&
              it->first % settings.portions_number == settings.portion)
           {
             AdServer::CampaignSvcs::AdvActionInfo& result_adv_action_info =
@@ -994,11 +994,11 @@ namespace AdServer
         update_info.category_channels.length(len);
         CORBA::ULong i = 0;
 
-        for(CategoryChannelMap::ActiveMap::const_iterator it =
+        for (CategoryChannelMap::ActiveMap::const_iterator it =
               category_channels.begin();
             it != category_channels.end(); ++it)
         {
-          if(request_timestamp < it->second->timestamp &&
+          if (request_timestamp < it->second->timestamp &&
              it->first % settings.portions_number == settings.portion)
           {
             assert(i < len);
@@ -1014,7 +1014,7 @@ namespace AdServer
             result_channel_category_info.flags = it->second->flags;
             result_channel_category_info.localizations.length(it->second->localizations.size());
             CORBA::ULong li = 0;
-            for(CategoryChannelDef::LocalizationMap::const_iterator lit =
+            for (CategoryChannelDef::LocalizationMap::const_iterator lit =
                   it->second->localizations.begin();
                 lit != it->second->localizations.end(); ++lit, ++li)
             {
@@ -1064,7 +1064,7 @@ namespace AdServer
              campaign_config->campaigns.active().begin();
            it != campaign_config->campaigns.active().end(); ++it)
       {
-        if(request_timestamp < it->second->timestamp &&
+        if (request_timestamp < it->second->timestamp &&
            it->first % settings.portions_number == settings.portion)
         {
           if (filter_campaign_(campaign_config,
@@ -1090,13 +1090,13 @@ namespace AdServer
              campaign_config->campaigns.active().begin();
            it != campaign_config->campaigns.active().end(); ++it)
       {
-        if(!(request_timestamp < it->second->timestamp &&
+        if (!(request_timestamp < it->second->timestamp &&
              it->first % settings.portions_number == settings.portion))
         {
           continue;
         }
 
-        if(!filter_campaign_(campaign_config,
+        if (!filter_campaign_(campaign_config,
              *(it->second), settings.campaign_statuses, countries))
         {
           /* push campaign into deleted campaigns */
@@ -1198,7 +1198,7 @@ namespace AdServer
 
           creative_info.sizes.length(creative.sizes.size());
           CORBA::ULong size_i = 0;
-          for(CreativeDef::SizeMap::const_iterator size_it = creative.sizes.begin();
+          for (CreativeDef::SizeMap::const_iterator size_it = creative.sizes.begin();
               size_it != creative.sizes.end(); ++size_it, ++size_i)
           {
             CreativeSizeInfo& size_info = creative_info.sizes[size_i];
@@ -1230,7 +1230,7 @@ namespace AdServer
 
         CORBA::ULong res_i = 0;
         campaign.exclude_tags.length(campaign_def.exclude_tags.size());
-        for(TagDeliveryMap::const_iterator dtag_it =
+        for (TagDeliveryMap::const_iterator dtag_it =
               campaign_def.exclude_tags.begin();
             dtag_it != campaign_def.exclude_tags.end(); ++dtag_it, ++res_i)
         {
@@ -1304,7 +1304,7 @@ namespace AdServer
         settings);
 
       CORBA::ULong del_acc_i = update_info.deleted_accounts.length();
-      if(!settings.no_deleted)
+      if (!settings.no_deleted)
       {
         update_info.deleted_accounts.length(
           del_acc_i + campaign_config->accounts.active().size());
@@ -1319,7 +1319,7 @@ namespace AdServer
         if (request_timestamp < it->second->timestamp &&
            it->first % settings.portions_number == settings.portion)
         {
-          if(settings.campaign_statuses[0] == 0 ||
+          if (settings.campaign_statuses[0] == 0 ||
              ::strchr(settings.campaign_statuses, it->second->get_status()) != 0)
           {
             const AccountDef& acc = *(it->second);
@@ -1353,7 +1353,7 @@ namespace AdServer
 
             ++acc_i;
           }
-          else if(!settings.no_deleted)
+          else if (!settings.no_deleted)
           {
             update_info.deleted_accounts[del_acc_i].id = it->first;
             update_info.deleted_accounts[del_acc_i].timestamp =
@@ -1423,9 +1423,9 @@ namespace AdServer
 
       update_info.contracts.length(campaign_config->contracts.active().size());
       CORBA::ULong res_contract_i = 0;
-      for(auto it = campaign_config->contracts.active().begin(); it != campaign_config->contracts.active().end(); ++it)
+      for (auto it = campaign_config->contracts.active().begin(); it != campaign_config->contracts.active().end(); ++it)
       {
-        if(request_timestamp < it->second->timestamp &&
+        if (request_timestamp < it->second->timestamp &&
            it->first % settings.portions_number == settings.portion)
         {
           ContractInfo& res_contract = update_info.contracts[res_contract_i];
@@ -1470,7 +1470,7 @@ namespace AdServer
     {
       freq_cap_seq.length(freq_caps.size());
       CORBA::ULong freq_i = 0;
-      for(FreqCapMap::ActiveMap::const_iterator fit = freq_caps.begin();
+      for (FreqCapMap::ActiveMap::const_iterator fit = freq_caps.begin();
           fit != freq_caps.end(); ++fit)
       {
         if (request_timestamp < fit->second->timestamp &&
@@ -1560,7 +1560,7 @@ namespace AdServer
           ct_info.files.length(ct_it->second->files.size());
           CORBA::ULong tf_i = 0;
 
-          for(CreativeTemplateFileList::const_iterator tf_it =
+          for (CreativeTemplateFileList::const_iterator tf_it =
                 ct_it->second->files.begin();
               tf_it != ct_it->second->files.end();
               ++tf_it, ++tf_i)
@@ -1601,7 +1601,7 @@ namespace AdServer
       update_info.sites.length(campaign_config->sites.active().size());
       CORBA::ULong site_i = 0;
 
-      for(SiteMap::ActiveMap::const_iterator pt =
+      for (SiteMap::ActiveMap::const_iterator pt =
             campaign_config->sites.active().begin();
           pt != campaign_config->sites.active().end(); ++pt)
       {
@@ -1786,7 +1786,7 @@ namespace AdServer
           tag_info.site_id = tt->second->site_id;
           tag_info.sizes.length(tt->second->sizes.size());
           CORBA::ULong size_i = 0;
-          for(TagDef::SizeMap::const_iterator size_it = tt->second->sizes.begin();
+          for (TagDef::SizeMap::const_iterator size_it = tt->second->sizes.begin();
               size_it != tt->second->sizes.end(); ++size_it, ++size_i)
           {
             tag_info.sizes[size_i].size_id = size_it->first;
@@ -1849,7 +1849,7 @@ namespace AdServer
 
           tag_info.template_tokens.length(tt->second->template_tokens.size());
           CORBA::ULong template_i = 0;
-          for(TemplateOptionValueMap::const_iterator t_it =
+          for (TemplateOptionValueMap::const_iterator t_it =
                 tt->second->template_tokens.begin();
               t_it != tt->second->template_tokens.end();
               ++t_it, ++template_i)
@@ -1924,7 +1924,7 @@ namespace AdServer
 
       CORBA::ULong i = 0;
 
-      for(CampaignKeywordMap::ActiveMap::const_iterator kit =
+      for (CampaignKeywordMap::ActiveMap::const_iterator kit =
             campaign_config->campaign_keywords.active().begin();
           kit != campaign_config->campaign_keywords.active().end(); ++kit)
       {
@@ -1956,7 +1956,7 @@ namespace AdServer
       bp_ids.length(campaign_config->behav_param_lists.active().size());
 
       size_t i = 0;
-      for(BehavioralParameterMap::ActiveMap::const_iterator bit =
+      for (BehavioralParameterMap::ActiveMap::const_iterator bit =
             campaign_config->behav_param_lists.active().begin();
           bit != campaign_config->behav_param_lists.active().end(); bit++)
       {
@@ -1969,7 +1969,7 @@ namespace AdServer
           CorbaAlgs::pack_time(bp_info.timestamp, bit->second->timestamp);
           bp_info.bp_seq.length(bit->second->behave_params.size());
           CORBA::ULong bp_i = 0;
-          for(BehavioralParameterListDef::BehavioralParameterList::const_iterator
+          for (BehavioralParameterListDef::BehavioralParameterList::const_iterator
                 bp_it = bit->second->behave_params.begin();
               bp_it != bit->second->behave_params.end(); ++bp_it, ++bp_i)
           {
@@ -1986,7 +1986,7 @@ namespace AdServer
       bp_keys.length(campaign_config->str_behav_param_lists.active().size());
 
       i = 0;
-      for(BehavioralParameterKeyMap::ActiveMap::const_iterator bit =
+      for (BehavioralParameterKeyMap::ActiveMap::const_iterator bit =
             campaign_config->str_behav_param_lists.active().begin();
           bit != campaign_config->str_behav_param_lists.active().end(); ++bit)
       {
@@ -2002,7 +2002,7 @@ namespace AdServer
           CorbaAlgs::pack_time(bp_info.timestamp, bit->second->timestamp);
           bp_info.bp_seq.length(bit->second->behave_params.size());
           CORBA::ULong bp_i = 0;
-          for(BehavioralParameterListDef::BehavioralParameterList::const_iterator
+          for (BehavioralParameterListDef::BehavioralParameterList::const_iterator
                 bp_it = bit->second->behave_params.begin();
               bp_it != bit->second->behave_params.end(); ++bp_it, ++bp_i)
           {
@@ -2029,7 +2029,7 @@ namespace AdServer
       bp_ids.length(campaign_config->behav_param_lists.active().size());
 
       size_t i = 0;
-      for(BehavioralParameterMap::ActiveMap::const_iterator bit =
+      for (BehavioralParameterMap::ActiveMap::const_iterator bit =
             campaign_config->behav_param_lists.active().begin();
           bit != campaign_config->behav_param_lists.active().end(); ++bit)
       {
@@ -2042,7 +2042,7 @@ namespace AdServer
           bp_info.timestamp = CorbaAlgs::pack_time(bit->second->timestamp);
           bp_info.bp_seq.length(8);
           size_t j = 0;
-          for(std::list<BehavioralParameterDef>::const_iterator bp_it =
+          for (std::list<BehavioralParameterDef>::const_iterator bp_it =
               bit->second->behave_params.begin();
               bp_it != bit->second->behave_params.end(); ++bp_it, j++)
           {
@@ -2061,7 +2061,7 @@ namespace AdServer
       bp_keys.length(campaign_config->str_behav_param_lists.active().size());
 
       i = 0;
-      for(BehavioralParameterKeyMap::ActiveMap::const_iterator bit =
+      for (BehavioralParameterKeyMap::ActiveMap::const_iterator bit =
             campaign_config->str_behav_param_lists.active().begin();
           bit != campaign_config->str_behav_param_lists.active().end(); ++bit)
       {
@@ -2077,7 +2077,7 @@ namespace AdServer
           bp_info.timestamp = CorbaAlgs::pack_time(bit->second->timestamp);
           bp_info.bp_seq.length(8);
           size_t j = 0;
-          for(std::list<BehavioralParameterDef>::const_iterator bp_it =
+          for (std::list<BehavioralParameterDef>::const_iterator bp_it =
               bit->second->behave_params.begin();
               bp_it != bit->second->behave_params.end(); ++bp_it, j++)
           {
@@ -2145,7 +2145,7 @@ namespace AdServer
         campaign_config->fraud_conditions.active().size());
 
       CORBA::ULong i = 0;
-      for(FraudConditionMap::ActiveMap::const_iterator it =
+      for (FraudConditionMap::ActiveMap::const_iterator it =
             campaign_config->fraud_conditions.active().begin();
           it != campaign_config->fraud_conditions.active().end();
           ++it)
@@ -2165,7 +2165,7 @@ namespace AdServer
 
       fraud_condition_seq.length(i);
 
-      if(deleted_fraud_condition_seq)
+      if (deleted_fraud_condition_seq)
       {
         fill_deleted_sequence(
           *deleted_fraud_condition_seq,
@@ -2193,11 +2193,11 @@ namespace AdServer
           campaign_config->search_engines.active().size());
 
         CORBA::ULong i = 0;
-        for(SearchEngineMap::ActiveMap::const_iterator it =
+        for (SearchEngineMap::ActiveMap::const_iterator it =
               campaign_config->search_engines.active().begin();
             it != campaign_config->search_engines.active().end(); it++)
         {
-          if(it->second->timestamp > request_timestamp &&
+          if (it->second->timestamp > request_timestamp &&
              it->first % settings.portions_number == settings.portion)
           {
             SearchEngineInfo& res = search_engines[i];
@@ -2205,7 +2205,7 @@ namespace AdServer
             res.regexps.length(it->second->regexps.size());
 
             CORBA::ULong re_i = 0;
-            for(SearchEngine::SearchEngineRegExpList::const_iterator re_it =
+            for (SearchEngine::SearchEngineRegExpList::const_iterator re_it =
                   it->second->regexps.begin();
                 re_it != it->second->regexps.end();
                 ++re_it, ++re_i)
@@ -2224,7 +2224,7 @@ namespace AdServer
         }
         search_engines.length(i);
 
-        if(del_seq)
+        if (del_seq)
         {
           fill_deleted_sequence(
             *del_seq,
@@ -2249,13 +2249,13 @@ namespace AdServer
       const StringSet& countries)
       noexcept
     {
-      if(campaign_statuses[0] != 0 &&
+      if (campaign_statuses[0] != 0 &&
          ::strchr(campaign_statuses, campaign.get_status()) == 0)
       {
         return false;
       }
 
-      if(countries.empty())
+      if (countries.empty())
       {
         return true;
       }
@@ -2280,7 +2280,7 @@ namespace AdServer
       amount_distribution_info.day_amounts.length(
         amount_distribution.day_amounts.size());
       CORBA::ULong day_i = 0;
-      for(auto day_it = amount_distribution.day_amounts.begin();
+      for (auto day_it = amount_distribution.day_amounts.begin();
         day_it != amount_distribution.day_amounts.end();
         ++day_it, ++day_i)
       {
@@ -2309,7 +2309,7 @@ namespace AdServer
       amount_count_distribution_info.day_amount_counts.length(
         amount_count_distribution.day_amount_counts.size());
       CORBA::ULong day_i = 0;
-      for(auto day_it = amount_count_distribution.day_amount_counts.begin();
+      for (auto day_it = amount_count_distribution.day_amount_counts.begin();
         day_it != amount_count_distribution.day_amount_counts.end();
         ++day_it, ++day_i)
       {
@@ -2335,7 +2335,7 @@ namespace AdServer
 
         CampaignConfig_var config = campaign_config();
 
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           Stream::Error ostr;
           ostr << FUN <<
@@ -2346,7 +2346,7 @@ namespace AdServer
               ostr.str());
         }
 
-        if(request_timestamp < config->first_load_stamp ||
+        if (request_timestamp < config->first_load_stamp ||
            (settings.server_id != 0 &&
              settings.server_id != config->server_id))
         {
@@ -2380,7 +2380,7 @@ namespace AdServer
             ", version = '" << settings.version << "'";
         }
 
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->stream(Logging::Logger::TRACE,
             Aspect::CAMPAIGN_SERVER) << FUN <<
@@ -2397,7 +2397,7 @@ namespace AdServer
           String::StringManip::SplitSpace tokenizer(
             String::SubString(settings.country.in()));
           String::SubString token;
-          while(tokenizer.get_token(token))
+          while (tokenizer.get_token(token))
           {
             countries.insert(token.str());
           }
@@ -2429,7 +2429,7 @@ namespace AdServer
 
         fill_tags_(request_timestamp, config, settings, *result);
 
-        if(!settings.provide_only_tags)
+        if (!settings.provide_only_tags)
         {
           fill_adv_actions_(
             request_timestamp, config, settings, *result);
@@ -2448,7 +2448,7 @@ namespace AdServer
           result->geo_channels_timestamp = CorbaAlgs::pack_time(
             config->geo_channels->max_stamp());
 
-          if(CorbaAlgs::unpack_time(settings.geo_channels_timestamp) <
+          if (CorbaAlgs::unpack_time(settings.geo_channels_timestamp) <
              config->geo_channels->max_stamp())
           {
             fill_object_update_sequences_(
@@ -2573,7 +2573,7 @@ namespace AdServer
             "web operations");
         }
 
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->stream(Logging::Logger::TRACE,
             Aspect::CAMPAIGN_SERVER) << FUN << ": from get_config.";
@@ -2582,7 +2582,7 @@ namespace AdServer
         try
         {
           /* log campaign update */
-          if(settings.colo_id != 0)
+          if (settings.colo_id != 0)
           {
             CampaignServerLogger::ConfigUpdateInfo config_update_info;
             config_update_info.colo_id = settings.colo_id;
@@ -2652,7 +2652,7 @@ namespace AdServer
 
         EcpmSeq_var result = new EcpmSeq();
 
-        if(config.in() != 0)
+        if (config.in() != 0)
         {
           result->length(config->ecpms.active().size());
 
@@ -2725,16 +2725,16 @@ namespace AdServer
         deleted_result_seq.length(deleted_simple_channels_i + res_len);
 
         CORBA::ULong simple_channel_i = 0;
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               campaign_config->simple_channels.active().begin();
             it != campaign_config->simple_channels.active().end(); ++it)
         {
-          if(it->second->timestamp > request_timestamp &&
+          if (it->second->timestamp > request_timestamp &&
              it->first % settings.portions_number == settings.portion)
           {
             const SimpleChannelDef& s_channel = *it->second;
 
-            if((countries.empty() ||
+            if ((countries.empty() ||
                 countries.find(s_channel.country) != countries.end()) &&
                (channel_statuses[0] == 0 ||
                 strchr(channel_statuses, s_channel.status) != 0))
@@ -2800,11 +2800,11 @@ namespace AdServer
         result_seq.length(res_len);
 
         CORBA::ULong block_channel_i = 0;
-        for(BlockChannelMap::ActiveMap::const_iterator it =
+        for (BlockChannelMap::ActiveMap::const_iterator it =
               campaign_config->block_channels.active().begin();
             it != campaign_config->block_channels.active().end(); ++it)
         {
-          if(it->second->timestamp > request_timestamp &&
+          if (it->second->timestamp > request_timestamp &&
              it->first % settings.portions_number == settings.portion)
           {
             BlockChannelInfo& res_block_channel = result_seq[block_channel_i++];
@@ -2847,7 +2847,7 @@ namespace AdServer
         CORBA::ULong res_len = 0;
         CORBA::ULong del_res_len = 0;
 
-        for(ChannelMap::ActiveMap::const_iterator ch_it =
+        for (ChannelMap::ActiveMap::const_iterator ch_it =
               campaign_config->expression_channels.active().begin();
             ch_it != campaign_config->expression_channels.active().end();
             ++ch_it)
@@ -2857,7 +2857,7 @@ namespace AdServer
           if (ch_params.timestamp > request_timestamp &&
               ch_it->first % settings.portions_number == settings.portion)
           {
-            if((countries.empty() ||
+            if ((countries.empty() ||
                   ch_params.country.empty() ||
                   countries.find(ch_params.country) != countries.end()) &&
                (channel_statuses[0] == 0 ||
@@ -2865,7 +2865,7 @@ namespace AdServer
             {
               ++res_len;
             }
-            else if(!settings.no_deleted)
+            else if (!settings.no_deleted)
             {
               ++del_res_len;
             }
@@ -2878,7 +2878,7 @@ namespace AdServer
         update_info.expression_channels.length(expression_channels_i + res_len);
         update_info.deleted_expression_channels.length(deleted_channels_i + del_res_len);
 
-        for(ChannelMap::ActiveMap::const_iterator ch_it =
+        for (ChannelMap::ActiveMap::const_iterator ch_it =
               campaign_config->expression_channels.active().begin();
             ch_it != campaign_config->expression_channels.active().end();
             ++ch_it)
@@ -2888,7 +2888,7 @@ namespace AdServer
           if (ch_params.timestamp > request_timestamp &&
               ch_it->first % settings.portions_number == settings.portion)
           {
-            if((countries.empty() ||
+            if ((countries.empty() ||
                   ch_params.country.empty() ||
                   countries.find(ch_params.country) != countries.end()) &&
                (channel_statuses[0] == 0 ||
@@ -2900,7 +2900,7 @@ namespace AdServer
                 ch_it->second);
               ++expression_channels_i;
             }
-            else if(!settings.no_deleted)
+            else if (!settings.no_deleted)
             {
               assert(deleted_channels_i < update_info.deleted_expression_channels.length());
               // push to deleted channels
@@ -2935,7 +2935,7 @@ namespace AdServer
       try
       {
         CampaignConfig_var config = campaign_config();
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -2950,11 +2950,11 @@ namespace AdServer
         BehaveForChannel info;
 
         CORBA::ULong res_len = 0;
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               config->simple_channels.active().begin();
             it != config->simple_channels.active().end(); ++it)
         {
-          if(it->first % settings.portions_number == settings.portion &&
+          if (it->first % settings.portions_number == settings.portion &&
              (settings.channel_statuses[0] == 0 ||
               strchr(settings.channel_statuses, it->second->status) != 0))
           {
@@ -2964,7 +2964,7 @@ namespace AdServer
               BehavioralParameterMap::ActiveMap::const_iterator bp_it =
                 config->behav_param_lists.active().find(
                   it->second->behav_param_list_id);
-              if(bp_it != config->behav_param_lists.active().end())
+              if (bp_it != config->behav_param_lists.active().end())
               {
                 channel_bps = bp_it->second.in();
               }
@@ -2984,7 +2984,7 @@ namespace AdServer
             {
               BehaveInformation& ch_info = info[it->second->channel_id];
               ch_info.reserve(channel_bps->behave_params.size());
-              for(BehavioralParameterListDef::BehavioralParameterList::
+              for (BehavioralParameterListDef::BehavioralParameterList::
                     const_iterator bp_it = channel_bps->behave_params.begin();
                   bp_it != channel_bps->behave_params.end(); ++bp_it)
               {
@@ -3000,11 +3000,11 @@ namespace AdServer
         res->simple_channels.length(res_len);
 
         CORBA::ULong i = 0;
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               config->simple_channels.active().begin();
             it != config->simple_channels.active().end(); ++it)
         {
-          if(it->first % settings.portions_number == settings.portion &&
+          if (it->first % settings.portions_number == settings.portion &&
              (settings.channel_statuses[0] == 0 ||
               strchr(settings.channel_statuses, it->second->status) != 0))
           {
@@ -3017,7 +3017,7 @@ namespace AdServer
             ChannelMap::ActiveMap::const_iterator ch_it =
               config->expression_channels.active().find(it->first);
 
-            if(ch_it != config->expression_channels.active().end())
+            if (ch_it != config->expression_channels.active().end())
             {
               const ChannelParams& params = ch_it->second->params();
               ch_inf.language << params.common_params->language;
@@ -3064,7 +3064,7 @@ namespace AdServer
       try
       {
         CampaignConfig_var config = campaign_config();
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -3075,11 +3075,11 @@ namespace AdServer
 
         CORBA::ULong res_len = 0;
 
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               config->simple_channels.active().begin();
             it != config->simple_channels.active().end(); ++it)
         {
-          if(it->first % settings.portions_number == settings.portion &&
+          if (it->first % settings.portions_number == settings.portion &&
             (it->second->behav_param_list_id != 0 ||
              !it->second->str_behav_param_list_id.empty()) && //filter channels without BH
              (settings.channel_statuses[0] == 0 ||
@@ -3092,11 +3092,11 @@ namespace AdServer
         res->simple_channels.length(res_len);
         CORBA::ULong i = 0;
 
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               config->simple_channels.active().begin();
             it != config->simple_channels.active().end(); ++it)
         {
-          if(it->first % settings.portions_number == settings.portion &&
+          if (it->first % settings.portions_number == settings.portion &&
             (it->second->behav_param_list_id != 0 ||
              !it->second->str_behav_param_list_id.empty()) && //filter channels without BH
              (settings.channel_statuses[0] == 0 ||
@@ -3107,7 +3107,7 @@ namespace AdServer
             ChannelMap::ActiveMap::const_iterator ch_it =
               config->expression_channels.active().find(it->first);
 
-            if(ch_it != config->expression_channels.active().end())
+            if (ch_it != config->expression_channels.active().end())
             {
               const ChannelParams& params = ch_it->second->params();
               res->simple_channels[i].discover = params.discover_params.in();
@@ -3130,7 +3130,7 @@ namespace AdServer
           res->behav_params,
           res->key_behav_params);
 
-        if(colo_id_)
+        if (colo_id_)
         {
           bool colo_found = false;
           ColocationMap::ActiveMap::const_iterator c_it =
@@ -3184,7 +3184,7 @@ namespace AdServer
       try
       {
         CampaignConfig_var config = campaign_config();
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -3204,11 +3204,11 @@ namespace AdServer
 
         CORBA::ULong res_len = 0;
 
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               config->simple_channels.active().begin();
             it != config->simple_channels.active().end(); ++it)
         {
-          if(it->first % settings.portions_number == settings.portion &&
+          if (it->first % settings.portions_number == settings.portion &&
              (settings.channel_statuses[0] == 0 ||
               strchr(settings.channel_statuses, it->second->status) != 0))
           {
@@ -3219,11 +3219,11 @@ namespace AdServer
         res->simple_channels.length(res_len);
         CORBA::ULong i = 0;
 
-        for(SimpleChannelMap::ActiveMap::const_iterator it =
+        for (SimpleChannelMap::ActiveMap::const_iterator it =
               config->simple_channels.active().begin();
             it != config->simple_channels.active().end(); ++it)
         {
-          if(it->first % settings.portions_number == settings.portion &&
+          if (it->first % settings.portions_number == settings.portion &&
              (settings.channel_statuses[0] == 0 ||
               strchr(settings.channel_statuses, it->second->status) != 0))
           {
@@ -3232,7 +3232,7 @@ namespace AdServer
             ChannelMap::ActiveMap::const_iterator ch_it =
               config->expression_channels.active().find(it->first);
 
-            if(ch_it != config->expression_channels.active().end())
+            if (ch_it != config->expression_channels.active().end())
             {
               const ChannelParams& params = ch_it->second->params();
               res->simple_channels[i].discover = params.discover_params.in();
@@ -3256,7 +3256,7 @@ namespace AdServer
           res->behav_params,
           res->key_behav_params);
 
-        if(colo_id_)
+        if (colo_id_)
         {
           bool colo_found = false;
           ColocationMap::ActiveMap::const_iterator c_it =
@@ -3317,7 +3317,7 @@ namespace AdServer
       {
         CampaignConfig_var config = campaign_config();
 
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -3328,18 +3328,18 @@ namespace AdServer
           new AdServer::CampaignSvcs::ExpressionChannelsInfo();
         Generics::Time request_timestamp = CorbaAlgs::unpack_time(
           request_settings.timestamp);
-        if(request_timestamp < config->first_load_stamp)
+        if (request_timestamp < config->first_load_stamp)
         {
           request_timestamp = Generics::Time::ZERO;
         }
 
         CORBA::ULong res_size = 0;
-        for(ChannelMap::ActiveMap::const_iterator ch_it =
+        for (ChannelMap::ActiveMap::const_iterator ch_it =
               config->expression_channels.active().begin();
             ch_it != config->expression_channels.active().end();
             ++ch_it)
         {
-          if(ch_it->first % request_settings.portions_number ==
+          if (ch_it->first % request_settings.portions_number ==
                request_settings.portion &&
              (request_settings.channel_types[0] == 0 ||
                strchr(request_settings.channel_types, ch_it->second->params().type) != 0) &&
@@ -3349,15 +3349,15 @@ namespace AdServer
           }
         }
 
-        if((request_settings.channel_types[0] == 0 ||
+        if ((request_settings.channel_types[0] == 0 ||
             strchr(request_settings.channel_types, 'B') != 0) &&
            strchr(request_settings.channel_statuses, 'A') != 0)
         {
-          for(PlatformMap::ActiveMap::const_iterator pl_it =
+          for (PlatformMap::ActiveMap::const_iterator pl_it =
                 config->platforms.active().begin();
               pl_it != config->platforms.active().end(); ++pl_it)
           {
-            if(pl_it->first % request_settings.portions_number ==
+            if (pl_it->first % request_settings.portions_number ==
                  request_settings.portion)
             {
               ++res_size;
@@ -3369,7 +3369,7 @@ namespace AdServer
           result->expression_channels;
 
         result_channels.length(res_size);
-        if(request_settings.provide_overlap_channel_ids)
+        if (request_settings.provide_overlap_channel_ids)
         {
           result->overlap_channel_ids.length(res_size);
         }
@@ -3377,12 +3377,12 @@ namespace AdServer
         CORBA::ULong ch_i = 0;
         CORBA::ULong overlap_channel_i = 0;
 
-        for(ChannelMap::ActiveMap::const_iterator ch_it =
+        for (ChannelMap::ActiveMap::const_iterator ch_it =
               config->expression_channels.active().begin();
             ch_it != config->expression_channels.active().end();
             ++ch_it)
         {
-          if(ch_it->first % request_settings.portions_number ==
+          if (ch_it->first % request_settings.portions_number ==
                request_settings.portion &&
              (request_settings.channel_types[0] == 0 ||
               strchr(request_settings.channel_types, ch_it->second->params().type) != 0) &&
@@ -3393,14 +3393,14 @@ namespace AdServer
             pack_non_linked_expression_channel(result_channels[ch_i++], ch_it->second);
 
             // only public, linked to internal account will be overlapped
-            if(request_settings.provide_overlap_channel_ids &&
+            if (request_settings.provide_overlap_channel_ids &&
                ch_it->second->params().common_params.in() &&
                ch_it->second->params().common_params->is_public)
             {
               AccountMap::ActiveMap::const_iterator it =
                 config->accounts.active().find(
                   ch_it->second->params().common_params->account_id);
-              if(it != config->accounts.active().end() &&
+              if (it != config->accounts.active().end() &&
                  it->second->internal_account_id == 0)
               {
                 result->overlap_channel_ids[overlap_channel_i++] =
@@ -3412,15 +3412,15 @@ namespace AdServer
 
         result->overlap_channel_ids.length(overlap_channel_i);
 
-        if((request_settings.channel_types[0] == 0 ||
+        if ((request_settings.channel_types[0] == 0 ||
             strchr(request_settings.channel_types, 'B') != 0) &&
            strchr(request_settings.channel_statuses, 'A') != 0)
         {
-          for(PlatformMap::ActiveMap::const_iterator pl_it =
+          for (PlatformMap::ActiveMap::const_iterator pl_it =
                 config->platforms.active().begin();
               pl_it != config->platforms.active().end(); ++pl_it)
           {
-            if(pl_it->first % request_settings.portions_number ==
+            if (pl_it->first % request_settings.portions_number ==
                  request_settings.portion)
             {
               assert(ch_i < res_size);
@@ -3434,21 +3434,21 @@ namespace AdServer
 
         assert(ch_i == res_size);
 
-        if(request_settings.provide_ccg_links)
+        if (request_settings.provide_ccg_links)
         {
           ChannelCCGMap channel_ccgs;
 
           // fill expression channel usage in ccgs
-          for(CampaignMap::ActiveMap::const_iterator ccg_it =
+          for (CampaignMap::ActiveMap::const_iterator ccg_it =
                 config->campaigns.active().begin();
               ccg_it != config->campaigns.active().end(); ++ccg_it)
           {
             ChannelIdSet ccg_channels;
             ccg_it->second->stat_expression.all_channels(ccg_channels);
-            for(ChannelIdSet::const_iterator ch_it = ccg_channels.begin();
+            for (ChannelIdSet::const_iterator ch_it = ccg_channels.begin();
                 ch_it != ccg_channels.end(); ++ch_it)
             {
-              if(*ch_it % request_settings.portions_number == request_settings.portion)
+              if (*ch_it % request_settings.portions_number == request_settings.portion)
               {
                 channel_ccgs[*ch_it].insert(ccg_it->first);
               }
@@ -3457,7 +3457,7 @@ namespace AdServer
 
           result->expression_channel_ccgs.length(channel_ccgs.size());
           CORBA::ULong ch_i = 0;
-          for(ChannelCCGMap::const_iterator ch_ccg_it = channel_ccgs.begin();
+          for (ChannelCCGMap::const_iterator ch_ccg_it = channel_ccgs.begin();
               ch_ccg_it != channel_ccgs.end(); ++ch_ccg_it, ++ch_i)
           {
             result->expression_channel_ccgs[ch_i].channel_id =
@@ -3469,15 +3469,15 @@ namespace AdServer
           }
         }
 
-        if(request_settings.provide_channel_triggers)
+        if (request_settings.provide_channel_triggers)
         {
           CORBA::ULong res_size = 0;
-          for(SimpleChannelMap::ActiveMap::const_iterator ch_it =
+          for (SimpleChannelMap::ActiveMap::const_iterator ch_it =
                 config->simple_channels.active().begin();
               ch_it != config->simple_channels.active().end();
               ++ch_it)
           {
-            if(ch_it->first % request_settings.portions_number ==
+            if (ch_it->first % request_settings.portions_number ==
                  request_settings.portion &&
                ch_it->second->match_params.in() &&
                ch_it->second->timestamp > request_timestamp)
@@ -3489,23 +3489,23 @@ namespace AdServer
           result->activate_channel_triggers.length(res_size);
 
           CORBA::ULong res_i = 0;
-          for(SimpleChannelMap::ActiveMap::const_iterator ch_it =
+          for (SimpleChannelMap::ActiveMap::const_iterator ch_it =
                 config->simple_channels.active().begin();
               ch_it != config->simple_channels.active().end();
               ++ch_it)
           {
-            if(ch_it->first % request_settings.portions_number ==
+            if (ch_it->first % request_settings.portions_number ==
                  request_settings.portion &&
                ch_it->second->match_params.in() &&
                ch_it->second->timestamp > request_timestamp)
             {
               const BehavioralParameterListDef* channel_bps = 0;
-              if(!ch_it->second->str_behav_param_list_id.empty())
+              if (!ch_it->second->str_behav_param_list_id.empty())
               {
                 BehavioralParameterKeyMap::ActiveMap::const_iterator bp_it =
                   config->str_behav_param_lists.active().find(
                     ch_it->second->str_behav_param_list_id);
-                if(bp_it != config->str_behav_param_lists.active().end())
+                if (bp_it != config->str_behav_param_lists.active().end())
                 {
                   channel_bps = bp_it->second.in();
                 }
@@ -3515,13 +3515,13 @@ namespace AdServer
                 BehavioralParameterMap::ActiveMap::const_iterator bp_it =
                   config->behav_param_lists.active().find(
                     ch_it->second->behav_param_list_id);
-                if(bp_it != config->behav_param_lists.active().end())
+                if (bp_it != config->behav_param_lists.active().end())
                 {
                   channel_bps = bp_it->second.in();
                 }
               }
 
-              if(channel_bps)
+              if (channel_bps)
               {
                 CampaignSvcs::ChannelTriggersInfo& cht_info =
                   result->activate_channel_triggers[res_i];
@@ -3534,32 +3534,32 @@ namespace AdServer
                 cht_info.url_time_to = 0;
                 cht_info.url_keyword_time_to = 0;
 
-                for(BehavioralParameterListDef::BehavioralParameterList::
+                for (BehavioralParameterListDef::BehavioralParameterList::
                       const_iterator bp_it = channel_bps->behave_params.begin();
                     bp_it != channel_bps->behave_params.end(); ++bp_it)
                 {
-                  if(bp_it->trigger_type == 'P')
+                  if (bp_it->trigger_type == 'P')
                   {
                     cht_info.page_min_visits = std::max(
                       cht_info.page_min_visits, bp_it->min_visits);
                     cht_info.page_time_to = std::max(
                       cht_info.page_time_to, bp_it->time_to);
                   }
-                  else if(bp_it->trigger_type == 'S')
+                  else if (bp_it->trigger_type == 'S')
                   {
                     cht_info.search_min_visits = std::max(
                       cht_info.search_min_visits, bp_it->min_visits);
                     cht_info.search_time_to = std::max(
                       cht_info.search_time_to, bp_it->time_to);
                   }
-                  else if(bp_it->trigger_type == 'U')
+                  else if (bp_it->trigger_type == 'U')
                   {
                     cht_info.url_min_visits = std::max(
                       cht_info.url_min_visits, bp_it->min_visits);
                     cht_info.url_time_to = std::max(
                       cht_info.url_time_to, bp_it->time_to);
                   }
-                  else if(bp_it->trigger_type == 'R')
+                  else if (bp_it->trigger_type == 'R')
                   {
                     cht_info.url_keyword_min_visits = std::max(
                       cht_info.url_keyword_min_visits, bp_it->min_visits);
@@ -3601,11 +3601,11 @@ namespace AdServer
         // fill actions
         result->activate_actions.length(config->adv_actions.active().size());
         CORBA::ULong res_act_i = 0;
-        for(auto act_it = config->adv_actions.active().begin();
+        for (auto act_it = config->adv_actions.active().begin();
           act_it != config->adv_actions.active().end();
           ++act_it)
         {
-          if(act_it->first % request_settings.portions_number ==
+          if (act_it->first % request_settings.portions_number ==
                request_settings.portion &&
              act_it->second->timestamp > request_timestamp)
           {
@@ -3660,7 +3660,7 @@ namespace AdServer
       {
         CampaignConfig_var config = campaign_config();
 
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -3674,17 +3674,17 @@ namespace AdServer
 
         TagMap::ActiveMap::const_iterator it =
           config->tags.active().find(tag_id);
-        if(it != config->tags.active().end())
+        if (it != config->tags.active().end())
         {
           passback_info->active = true;
           passback_info->passback_type << it->second->passback_type;
           passback_info->passback_url << it->second->passback;
 
-          if(!it->second->sizes.empty())
+          if (!it->second->sizes.empty())
           {
             SizeMap::ActiveMap::const_iterator size_it =
               config->sizes.active().find(it->second->sizes.begin()->first);
-            if(size_it != config->sizes.active().end())
+            if (size_it != config->sizes.active().end())
             {
               passback_info->width = size_it->second->width;
               passback_info->height = size_it->second->height;
@@ -3692,13 +3692,13 @@ namespace AdServer
             }
           }
 
-          for(OptionValueMap::const_iterator opt_it =
+          for (OptionValueMap::const_iterator opt_it =
                 it->second->passback_tokens.begin();
               opt_it != it->second->passback_tokens.end(); ++opt_it)
           {
             CreativeOptionMap::ActiveMap::const_iterator copt_it =
               config->creative_options.active().find(opt_it->first);
-            if(copt_it != config->creative_options.active().end() &&
+            if (copt_it != config->creative_options.active().end() &&
                copt_it->second->token == "PASSBACK_CODE")
             {
               passback_info->passback_code << opt_it->second;
@@ -3709,7 +3709,7 @@ namespace AdServer
 
         AppFormatMap::ActiveMap::const_iterator app_format_it =
           config->app_formats.active().find(app_format);
-        if(app_format_it != config->app_formats.active().end())
+        if (app_format_it != config->app_formats.active().end())
         {
           passback_info->mime_format << app_format_it->second->mime_format;
         }
@@ -3745,7 +3745,7 @@ namespace AdServer
       try
       {
         CampaignConfig_var config = campaign_config();
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -3791,7 +3791,7 @@ namespace AdServer
       try
       {
         CampaignConfig_var config = campaign_config();
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -3941,7 +3941,7 @@ namespace AdServer
 
         result->accounts.length(config->accounts.active().size());
         CORBA::ULong res_acc_i = 0;
-        for(AccountMap::ActiveMap::const_iterator acc_it =
+        for (AccountMap::ActiveMap::const_iterator acc_it =
             config->accounts.active().begin();
           acc_it != config->accounts.active().end();
           ++acc_it, ++res_acc_i)
@@ -3960,7 +3960,7 @@ namespace AdServer
         CORBA::ULong res_ccg_i = 0;
         std::set<unsigned long> filled_campaign_ids;
 
-        for(CampaignMap::ActiveMap::const_iterator cmp_it =
+        for (CampaignMap::ActiveMap::const_iterator cmp_it =
             config->campaigns.active().begin();
           cmp_it != config->campaigns.active().end();
           ++cmp_it, ++res_ccg_i)
@@ -3984,7 +3984,7 @@ namespace AdServer
           res_ccg.imp_amount = CorbaAlgs::pack_decimal(cmp_it->second->imp_revenue);
           res_ccg.click_amount = CorbaAlgs::pack_decimal(cmp_it->second->click_revenue);
 
-          if(filled_campaign_ids.find(campaign_id) ==
+          if (filled_campaign_ids.find(campaign_id) ==
             filled_campaign_ids.end())
           {
             auto& res_campaign = result->campaigns[res_campaign_i++];
@@ -4018,7 +4018,7 @@ namespace AdServer
     {
       BillStatSource::CStat_var bill_stat = bill_stat_.get();
 
-      if(!bill_stat)
+      if (!bill_stat)
       {
         throw AdServer::CampaignSvcs::CampaignServer::NotReady();
       }
@@ -4029,7 +4029,7 @@ namespace AdServer
         result_bill_stat->accounts.length(bill_stat->accounts.size());
 
         CORBA::ULong acc_i = 0;
-        for(BillStatSource::Stat::AccountMap::const_iterator acc_it =
+        for (BillStatSource::Stat::AccountMap::const_iterator acc_it =
               bill_stat->accounts.begin();
             acc_it != bill_stat->accounts.end(); ++acc_it, ++acc_i)
         {
@@ -4043,7 +4043,7 @@ namespace AdServer
         result_bill_stat->campaigns.length(bill_stat->campaigns.size());
 
         CORBA::ULong cmp_i = 0;
-        for(BillStatSource::Stat::CampaignMap::const_iterator cmp_it =
+        for (BillStatSource::Stat::CampaignMap::const_iterator cmp_it =
               bill_stat->campaigns.begin();
             cmp_it != bill_stat->campaigns.end(); ++cmp_it, ++cmp_i)
         {
@@ -4057,7 +4057,7 @@ namespace AdServer
         result_bill_stat->ccgs.length(bill_stat->ccgs.size());
 
         CORBA::ULong ccg_i = 0;
-        for(BillStatSource::Stat::CCGMap::const_iterator ccg_it =
+        for (BillStatSource::Stat::CCGMap::const_iterator ccg_it =
               bill_stat->ccgs.begin();
             ccg_it != bill_stat->ccgs.end(); ++ccg_it, ++ccg_i)
         {
@@ -4081,7 +4081,7 @@ namespace AdServer
       try
       {
         CampaignConfig_var config = campaign_config();
-        if(config.in() == 0)
+        if (config.in() == 0)
         {
           AdServer::CampaignSvcs::CampaignServer::NotReady exc;
           exc.description = "Campaign configuration isn't loaded";
@@ -4091,7 +4091,7 @@ namespace AdServer
         AdServer::CampaignSvcs::DetectorsConfig_var ret =
           new AdServer::CampaignSvcs::DetectorsConfig;
 
-        if(config->detectors_timestamp >
+        if (config->detectors_timestamp >
              CorbaAlgs::unpack_time(request_timestamp))
         {
           CampaignGetConfigSettings settings;
@@ -4289,7 +4289,7 @@ namespace AdServer
         result->campaigns.length(stat->campaign_stats.size());
 
         CORBA::ULong cmp_stat_i = 0;
-        for(StatSource::Stat::CampaignStatMap::const_iterator cmp_stat_it =
+        for (StatSource::Stat::CampaignStatMap::const_iterator cmp_stat_it =
               stat->campaign_stats.begin();
             cmp_stat_it != stat->campaign_stats.end();
             ++cmp_stat_it, ++cmp_stat_i)
@@ -4309,7 +4309,7 @@ namespace AdServer
 
           campaign_stat.ccgs.length(cmp_stat_it->second.ccgs.size());
           CORBA::ULong ccg_stat_i = 0;
-          for(StatSource::Stat::CCGStatMap::const_iterator ccg_stat_it =
+          for (StatSource::Stat::CCGStatMap::const_iterator ccg_stat_it =
                 cmp_stat_it->second.ccgs.begin();
               ccg_stat_it != cmp_stat_it->second.ccgs.end();
               ++ccg_stat_it, ++ccg_stat_i)
@@ -4336,7 +4336,7 @@ namespace AdServer
 
             ccg_stat.creatives.length(ccg_stat_it->second.creatives.size());
             CORBA::ULong cc_i = 0;
-            for(StatSource::Stat::CCGStat::
+            for (StatSource::Stat::CCGStat::
                   CreativeStatMap::const_iterator cc_it =
                   ccg_stat_it->second.creatives.begin();
                 cc_it != ccg_stat_it->second.creatives.end(); ++cc_it, ++cc_i)
@@ -4351,7 +4351,7 @@ namespace AdServer
 
             ccg_stat.publishers.length(ccg_stat_it->second.publisher_amounts.size());
             CORBA::ULong pub_i = 0;
-            for(StatSource::Stat::CCGStat::
+            for (StatSource::Stat::CCGStat::
                   PublisherStatMap::const_iterator pub_it =
                     ccg_stat_it->second.publisher_amounts.begin();
                 pub_it != ccg_stat_it->second.publisher_amounts.end();
@@ -4365,7 +4365,7 @@ namespace AdServer
 
             ccg_stat.tags.length(ccg_stat_it->second.tag_stats.size());
             CORBA::ULong tag_i = 0;
-            for(StatSource::Stat::CCGStat::
+            for (StatSource::Stat::CCGStat::
                   TagStatMap::const_iterator tag_it =
                   ccg_stat_it->second.tag_stats.begin();
                 tag_it != ccg_stat_it->second.tag_stats.end();
@@ -4390,7 +4390,7 @@ namespace AdServer
 
             ccg_stat.ctr_resets.length(ccg_stat_it->second.ctr_reset_stats.size());
             CORBA::ULong ctr_reset_i = 0;
-            for(StatSource::Stat::CCGStat::
+            for (StatSource::Stat::CCGStat::
                   CtrResetStatMap::const_iterator ctr_reset_it =
                   ccg_stat_it->second.ctr_reset_stats.begin();
                 ctr_reset_it != ccg_stat_it->second.ctr_reset_stats.end();
@@ -4406,7 +4406,7 @@ namespace AdServer
 
         result->accounts.length(stat->account_amounts.size());
         CORBA::ULong acc_stat_i = 0;
-        for(StatSource::Stat::AccountAmountMap::const_iterator stat_it =
+        for (StatSource::Stat::AccountAmountMap::const_iterator stat_it =
               stat->account_amounts.begin();
             stat_it != stat->account_amounts.end();
             ++stat_it, ++acc_stat_i)
@@ -4425,7 +4425,7 @@ namespace AdServer
         /*
         result->avg_rates.length(state->ctr_ar.size());
         CORBA::ULong rate_i = 0;
-        for(CampaignConfigModifier::State::CtrArMap::const_iterator rate_it =
+        for (CampaignConfigModifier::State::CtrArMap::const_iterator rate_it =
               state->ctr_ar.begin();
             rate_it != state->ctr_ar.end();
             ++rate_it, ++rate_i)

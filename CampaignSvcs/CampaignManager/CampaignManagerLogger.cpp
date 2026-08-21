@@ -1594,7 +1594,7 @@ namespace AdServer::CampaignSvcs
 
           if (ad_selection_info->text_campaigns)
           {
-            for(CampaignManagerLogger::AdSelectionInfoList::const_iterator ad_it =
+            for (CampaignManagerLogger::AdSelectionInfoList::const_iterator ad_it =
                   ad_selection_info->ad_selection_info_list.begin();
                 ad_it != ad_selection_info->ad_selection_info_list.end();
                 ++ad_it)
@@ -1767,7 +1767,7 @@ namespace AdServer::CampaignSvcs
 
           if (!web_op.request_ids.empty())
           {
-            for(CampaignManagerLogger::WebOperationInfo::RequestIdList::
+            for (CampaignManagerLogger::WebOperationInfo::RequestIdList::
               const_iterator request_id_it = web_op.request_ids.begin();
               request_id_it != web_op.request_ids.end();
               ++request_id_it)
@@ -1808,18 +1808,22 @@ namespace AdServer::CampaignSvcs
     {
       time = Algs::round_to_day(time);
     }
+
     if (flags & LOG_CT)
     {
       ct = ct_in;
     }
+
     if (flags & LOG_CURT)
     {
       curct = curt_in;
     }
+
     if (flags & LOG_BROWSER)
     {
       browser = browser_in;
     }
+
     if (flags & LOG_OS)
     {
       os = os_in;
@@ -2039,7 +2043,7 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        for(CampaignManagerLogger::AdSelectionInfoList::const_iterator ad_it =
+        for (CampaignManagerLogger::AdSelectionInfoList::const_iterator ad_it =
               ad_ri.ad_selection_info_list.begin();
             ad_it != ad_ri.ad_selection_info_list.end();
             ++ad_it)
@@ -2576,7 +2580,7 @@ namespace AdServer::CampaignSvcs
       {
         AdvDateDataMap adv_date_to_data;
 
-        for(auto lost_auction_ccg_it = ad_request_selection_info.lost_auction_ccgs.begin();
+        for (auto lost_auction_ccg_it = ad_request_selection_info.lost_auction_ccgs.begin();
           lost_auction_ccg_it != ad_request_selection_info.lost_auction_ccgs.end();
           ++lost_auction_ccg_it)
         {
@@ -2585,7 +2589,7 @@ namespace AdServer::CampaignSvcs
               STAT_LOST_AUCTION_ONE_);
         }
 
-        for(auto& adv_tz : adv_date_to_data)
+        for (auto& adv_tz : adv_date_to_data)
         {
           add_record(
             CollectorT::KeyT(adv_tz.first, request_info.colo_id),
@@ -2608,7 +2612,7 @@ namespace AdServer::CampaignSvcs
       {
         AdvDateDataMap adv_date_to_data;
 
-        for(auto lost_auction_cc_it = ad_request_selection_info.lost_auction_creatives.begin();
+        for (auto lost_auction_cc_it = ad_request_selection_info.lost_auction_creatives.begin();
           lost_auction_cc_it != ad_request_selection_info.lost_auction_creatives.end();
           ++lost_auction_cc_it)
         {
@@ -2617,7 +2621,7 @@ namespace AdServer::CampaignSvcs
               STAT_LOST_AUCTION_ONE_);
         }
 
-        for(auto& adv_tz : adv_date_to_data)
+        for (auto& adv_tz : adv_date_to_data)
         {
           add_record(
             CollectorT::KeyT(adv_tz.first, request_info.colo_id),
@@ -2733,7 +2737,7 @@ namespace AdServer::CampaignSvcs
         queue_closed_(true)
     {
       queue_shards_.reserve(threads_);
-      for(unsigned long i = 0; i < threads_; ++i)
+      for (unsigned long i = 0; i < threads_; ++i)
       {
         queue_shards_.emplace_back(std::make_unique<QueueShard>());
       }
@@ -3153,7 +3157,7 @@ namespace AdServer::CampaignSvcs
     snapshot.request_info.reset_request_user = reset_request_user;
     snapshot.ad_slots.reserve(ad_slots.size());
 
-    for(auto& ad_slot : ad_slots)
+    for (auto& ad_slot : ad_slots)
     {
       AdSlotSelectionLogSnapshot slot_snapshot;
       slot_snapshot.ad_slot_ptr = std::move(ad_slot.ad_slot);
@@ -3165,7 +3169,7 @@ namespace AdServer::CampaignSvcs
       slot_snapshot.disable_impression_tracking =
         ad_slot.disable_impression_tracking;
 
-      for(const auto& selected_campaign :
+      for (const auto& selected_campaign :
         slot_snapshot.ad_selection_result.selected_campaigns)
       {
         slot_snapshot.campaigns.emplace_back(
@@ -3181,7 +3185,7 @@ namespace AdServer::CampaignSvcs
       [impl = impl_.get(), snapshot = std::move(snapshot)]()
       {
         const auto campaign_config = impl->get_campaign_config();
-        for(const auto& ad_slot : snapshot.ad_slots)
+        for (const auto& ad_slot : snapshot.ad_slots)
         {
           auto request_info = snapshot.make_request_info(
             campaign_config.get(),
@@ -3320,7 +3324,7 @@ namespace AdServer::CampaignSvcs
     threads_pool_.reserve(threads_);
     try
     {
-      for(unsigned long i = 0; i < threads_; ++i)
+      for (unsigned long i = 0; i < threads_; ++i)
       {
         threads_pool_.emplace_back(
           [this, i]()
@@ -3335,7 +3339,7 @@ namespace AdServer::CampaignSvcs
     {
       queue_closed_.store(true, std::memory_order_release);
       notify_workers_();
-      for(auto& thread : threads_pool_)
+      for (auto& thread : threads_pool_)
       {
         if (thread.joinable())
         {
@@ -3361,7 +3365,7 @@ namespace AdServer::CampaignSvcs
     queue_closed_.store(true, std::memory_order_release);
     notify_workers_();
 
-    for(auto& thread : threads_pool_)
+    for (auto& thread : threads_pool_)
     {
       if (thread.joinable())
       {
@@ -3374,7 +3378,7 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerLogger::Impl::notify_workers_() noexcept
   {
-    for(auto& queue_shard : queue_shards_)
+    for (auto& queue_shard : queue_shards_)
     {
       queue_shard->cond.notify_one();
     }
@@ -3456,7 +3460,7 @@ namespace AdServer::CampaignSvcs
   {
     Stats stats;
 
-    for(const auto& queue_shard : queue_shards_)
+    for (const auto& queue_shard : queue_shards_)
     {
       std::lock_guard<std::mutex> guard(queue_shard->mutex);
       stats.queue_size += queue_shard->tasks.size();

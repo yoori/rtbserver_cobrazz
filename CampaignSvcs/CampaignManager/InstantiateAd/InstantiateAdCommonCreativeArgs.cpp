@@ -67,7 +67,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCommonCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& data = provider.context();
-        if(!data.request_params->passback_type.empty())
+        if (!data.request_params->passback_type.empty())
         {
           return data.request_params->passback_type;
         }
@@ -81,7 +81,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCommonCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         auto& data = provider.context();
-        if(!data.tag)
+        if (!data.tag)
         {
           return std::nullopt;
         }
@@ -93,12 +93,12 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         passback_imp_url += "&random=";
         passback_imp_url += to_string(data.request_params->random);
 
-        if(data.ad_slot_context->test_request)
+        if (data.ad_slot_context->test_request)
         {
           passback_imp_url += "&testrequest=1";
         }
 
-        if(data.inst_params->user_id_hash_mod.present())
+        if (data.inst_params->user_id_hash_mod.present())
         {
           passback_imp_url += '&';
           passback_imp_url += AdProtocol::USER_ID_DISTRIBUTION_HASH;
@@ -109,15 +109,15 @@ namespace AdServer::CampaignSvcs::InstantiateAd
 
         const AccountIdList& consider_pub_pixel_accounts =
           data.consider_pub_pixel_accounts();
-        if(!consider_pub_pixel_accounts.empty())
+        if (!consider_pub_pixel_accounts.empty())
         {
           passback_imp_url += '&';
           passback_imp_url += AdProtocol::PUB_PIXEL_ACCOUNTS;
           passback_imp_url += '=';
-          for(auto it = consider_pub_pixel_accounts.begin();
+          for (auto it = consider_pub_pixel_accounts.begin();
               it != consider_pub_pixel_accounts.end(); ++it)
           {
-            if(it != consider_pub_pixel_accounts.begin())
+            if (it != consider_pub_pixel_accounts.begin())
             {
               passback_imp_url += ',';
             }

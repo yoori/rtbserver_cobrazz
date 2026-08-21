@@ -29,6 +29,21 @@ message CheckBidRequest {
   BidInfo bid = 1;
 }
 
+enum BidUnavailableReason {
+  BID_UNAVAILABLE_REASON_UNSPECIFIED = 0;
+  BID_UNAVAILABLE_REASON_ACCOUNT_NOT_FOUND = 1;
+  BID_UNAVAILABLE_REASON_ACCOUNT_INACTIVE = 2;
+  BID_UNAVAILABLE_REASON_ADVERTISER_NOT_FOUND = 3;
+  BID_UNAVAILABLE_REASON_ADVERTISER_INACTIVE = 4;
+  BID_UNAVAILABLE_REASON_CAMPAIGN_NOT_FOUND = 5;
+  BID_UNAVAILABLE_REASON_CAMPAIGN_INACTIVE = 6;
+  BID_UNAVAILABLE_REASON_CCG_NOT_FOUND = 7;
+  BID_UNAVAILABLE_REASON_CCG_INACTIVE = 8;
+  BID_UNAVAILABLE_REASON_ACCOUNT_BUDGET_BLOCKED = 9;
+  BID_UNAVAILABLE_REASON_CAMPAIGN_BUDGET_BLOCKED = 10;
+  BID_UNAVAILABLE_REASON_CCG_BUDGET_BLOCKED = 11;
+}
+
 message ReserveBidRequest {
   BidInfo bid = 1;
   bytes reserve_budget = 2;
@@ -52,6 +67,7 @@ message ConfirmBidRefInfo {
 message BidResultResponse {
   bool available = 1;
   bytes goal_ctr = 2;
+  BidUnavailableReason unavailable_reason = 3;
 }
 
 message ReserveBidResponse {

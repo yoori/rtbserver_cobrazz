@@ -86,7 +86,7 @@ namespace CampaignSvcs
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      while(rs->next())
+      while (rs->next())
       {
         std::string country_code = rs->get_string(POS_COUNTRY_CODE);
         ModifyConfig::CountryDef country;

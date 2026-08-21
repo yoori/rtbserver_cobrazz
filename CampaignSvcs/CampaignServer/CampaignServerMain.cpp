@@ -92,7 +92,7 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
       campaign_server_impl;
 
     // Creating campaign server servant
-    if(configuration_.server_mode == Configuration::SM_SERVER)
+    if (configuration_.server_mode == Configuration::SM_SERVER)
     {
       campaign_server_impl = to_shared<AdServer::CampaignSvcs::CampaignServerBaseImpl>(
         new AdServer::CampaignSvcs::CampaignServerImpl(
@@ -115,7 +115,7 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
           configuration_.pending_expire_time,
           configuration_.enable_delivery_thresholds));
     }
-    else if(configuration_.server_mode == Configuration::SM_PROXY)
+    else if (configuration_.server_mode == Configuration::SM_PROXY)
     {
       campaign_server_impl = to_shared<AdServer::CampaignSvcs::CampaignServerBaseImpl>(
         new AdServer::CampaignSvcs::CampaignServerProxyImpl(
@@ -144,7 +144,7 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
     auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
       [&]() noexcept
       {
-        if(active_objects->active())
+        if (active_objects->active())
         {
           active_objects->deactivate_object();
           active_objects->wait_object();
@@ -241,7 +241,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
       std::unique_ptr<AdConfigurationType>
         ad_configuration = AdConfiguration(filename, error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -257,7 +257,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
 
       ostr << FUN << ": Can't parse config file '" << filename << "': ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -283,9 +283,9 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
     configuration_.pid_file = configuration->pid_file();
     configuration_.colo_update_flush_traits.period = 60;
 
-    if(configuration->Logging().present())
+    if (configuration->Logging().present())
     {
-      if(configuration->Logging().get().ColoUpdateStat().present())
+      if (configuration->Logging().get().ColoUpdateStat().present())
       {
         const xsd::AdServer::Configuration::CampaignServerLoggerType&
           xsd_logger = configuration->Logging().get().ColoUpdateStat().get();
@@ -349,18 +349,18 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
       configuration->version().get() : "";
     configuration_.only_tags = false;
 
-    if(configuration->campaign_statuses().present())
+    if (configuration->campaign_statuses().present())
     {
       const std::string sval = configuration->campaign_statuses().get();
-      if(sval == "active")
+      if (sval == "active")
       {
         configuration_.campaign_statuses = "AP";
       }
-      else if(sval == "virtual")
+      else if (sval == "virtual")
       {
         configuration_.campaign_statuses = "APV";
       }
-      else if(sval == "all")
+      else if (sval == "all")
       {
         configuration_.campaign_statuses = "AIPV";
       }
@@ -370,14 +370,14 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
       configuration_.campaign_statuses = "AP"; /* default value */
     }
 
-    if(configuration->channel_statuses().present())
+    if (configuration->channel_statuses().present())
     {
       const std::string sval = configuration->channel_statuses().get();
-      if(sval == "active")
+      if (sval == "active")
       {
         configuration_.channel_statuses = "AW";
       }
-      else if(sval == "all")
+      else if (sval == "all")
       {
         configuration_.channel_statuses = "AIW";
       }
@@ -408,12 +408,12 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
         throw Exception(ostr);
       }
 
-      if(proxy_mode.only_tags().present() && *proxy_mode.only_tags())
+      if (proxy_mode.only_tags().present() && *proxy_mode.only_tags())
       {
         configuration_.only_tags = true;
       }
 
-      if(proxy_mode.load_country().present())
+      if (proxy_mode.load_country().present())
       {
         configuration_.country = *proxy_mode.load_country();
       }

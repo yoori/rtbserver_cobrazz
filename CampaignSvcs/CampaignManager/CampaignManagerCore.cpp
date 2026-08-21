@@ -524,7 +524,7 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerCore::ContextAdRequest& context_info)
       noexcept
     {
-      if(!campaign_config)
+      if (!campaign_config)
       {
         debug_info.last_platform_channel_id = 0;
         return;
@@ -544,13 +544,13 @@ namespace AdServer::CampaignSvcs
       unsigned long cur_priority = 0;
       debug_info.last_platform_channel_id = 0;
 
-      for(ChannelIdSet::const_iterator pch_it = matched_platform_channels.begin();
+      for (ChannelIdSet::const_iterator pch_it = matched_platform_channels.begin();
         pch_it != matched_platform_channels.end();
         ++pch_it)
       {
         CampaignConfig::PlatformChannelPriorityMap::const_iterator pr_it =
           campaign_config->platform_channel_priorities.find(*pch_it);
-        if(pr_it != campaign_config->platform_channel_priorities.end() &&
+        if (pr_it != campaign_config->platform_channel_priorities.end() &&
           (debug_info.last_platform_channel_id == 0 || cur_priority < pr_it->second.priority))
         {
           cur_priority = pr_it->second.priority;
@@ -952,7 +952,7 @@ namespace AdServer::CampaignSvcs
       const std::size_t channels_add_size =
         core_request_params.context_info->geo_channels.size() +
         core_request_params.context_info->platform_ids.size();
-      if(channels_add_size)
+      if (channels_add_size)
       {
         core_request_params.channels.reserve(
           core_request_params.channels.size() + channels_add_size);
@@ -1091,7 +1091,7 @@ namespace AdServer::CampaignSvcs
           result.ad_slots.emplace_back(std::move(ad_slot_result));
         }
 
-        if(!ad_request_logs.empty())
+        if (!ad_request_logs.empty())
         {
           try
           {
@@ -1112,7 +1112,7 @@ namespace AdServer::CampaignSvcs
       else
       {
         // profiling request
-        if(request_debug_info)
+        if (request_debug_info)
         {
           fill_request_platform_debug_info(
             *request_debug_info,
@@ -1940,7 +1940,7 @@ namespace AdServer::CampaignSvcs
     else
     {
       log_request_without_tag = true;
-      if(ad_request_debug_info)
+      if (ad_request_debug_info)
       {
         fill_request_platform_debug_info(
           *ad_request_debug_info,
@@ -2599,7 +2599,7 @@ namespace AdServer::CampaignSvcs
             CreativeSelectDebugResult& cs_debug = ad_slot_debug_info->selected_creatives[i];
             cs_debug.ecpm_bid = it->ecpm_bid;
             cs_debug.ctr = it->ctr;
-            if(ad_selection_result.ctr_calculation)
+            if (ad_selection_result.ctr_calculation)
             {
               cs_debug.ctr_algorithm_id =
                 ad_selection_result.ctr_calculation->algorithm_id(it->creative);
@@ -2628,7 +2628,7 @@ namespace AdServer::CampaignSvcs
     {
     }
 
-    if(ad_request_debug_info)
+    if (ad_request_debug_info)
     {
       fill_request_platform_debug_info(
         *ad_request_debug_info,
@@ -4887,10 +4887,10 @@ namespace AdServer::CampaignSvcs
 
     if (it != campaign_config->pub_pixel_accounts.end())
     {
-      for(AccountSet::const_iterator acc_it = it->second.begin();
+      for (AccountSet::const_iterator acc_it = it->second.begin();
           acc_it != it->second.end(); ++acc_it)
       {
-        if(exclude_publisher_account_ids.find((*acc_it)->account_id) ==
+        if (exclude_publisher_account_ids.find((*acc_it)->account_id) ==
           exclude_publisher_account_ids.end())
         {
           result_account_ids.push_back(*acc_it);

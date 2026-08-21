@@ -232,21 +232,21 @@ namespace AdServer
       const Creative* max_ctr_creative = 0;
       CampaignIndex::ConstCreativePtrList equal_creatives;
 
-      for(CampaignIndex::ConstCreativePtrList::const_iterator creative_it =
+      for (CampaignIndex::ConstCreativePtrList::const_iterator creative_it =
             available_creatives.begin();
           creative_it != available_creatives.end(); ++creative_it)
       {
         RevenueDecimal cur_ctr = ctr_calculation_context->get_ctr(*creative_it);
 
-        if(cur_ctr > max_ctr)
+        if (cur_ctr > max_ctr)
         {
           max_ctr = cur_ctr;
           max_ctr_creative = *creative_it;
           equal_creatives.clear();
         }
-        else if(cur_ctr == max_ctr)
+        else if (cur_ctr == max_ctr)
         {
-          if(max_ctr_creative)
+          if (max_ctr_creative)
           {
             equal_creatives.push_back(max_ctr_creative);
             equal_creatives.push_back(*creative_it);
@@ -259,7 +259,7 @@ namespace AdServer
         }
       }
 
-      if(!equal_creatives.empty())
+      if (!equal_creatives.empty())
       {
         // select creative randomly
         CampaignIndex::ConstCreativePtrList::iterator wc_it =
@@ -272,7 +272,7 @@ namespace AdServer
 
         result_creative = *wc_it;
       }
-      else if(max_ctr_creative == 0 && !available_creatives.empty())
+      else if (max_ctr_creative == 0 && !available_creatives.empty())
       {
         // all ctr's == 0
         result_creative = *available_creatives.begin();
@@ -291,7 +291,7 @@ namespace AdServer
       const Campaign* campaign)
       noexcept
     {
-      if(campaign->use_ctr())
+      if (campaign->use_ctr())
       {
         return RevenueDecimal::mul(
           std::min(
@@ -317,7 +317,7 @@ namespace AdServer
       const CampaignIndex::ConstCreativePtrList& available_creatives)
       noexcept
     {
-      if(campaign->use_ctr())
+      if (campaign->use_ctr())
       {
         ctr = campaign_ctr_(
           result_creative,
@@ -345,7 +345,7 @@ namespace AdServer
       const CampaignKeyword* campaign_keyword)
       noexcept
     {
-      if(campaign_keyword)
+      if (campaign_keyword)
       {
         return campaign_keyword->campaign->
           account->currency->to_system_currency(
@@ -371,7 +371,7 @@ namespace AdServer
       const CampaignIndex::ConstCreativePtrList& available_creatives)
       noexcept
     {
-      if(campaign_keyword)
+      if (campaign_keyword)
       {
         ctr = campaign_ctr_(
           result_creative,
@@ -454,7 +454,7 @@ namespace AdServer
       CampaignIndex::ConstCreativePtrList& available_creatives) const
       /*throw(eh::Exception)*/
     {
-      if(available_creatives.empty())
+      if (available_creatives.empty())
       {
         return 0;
       }
@@ -479,12 +479,12 @@ namespace AdServer
 
       TagSizePtrList available_sizes;
 
-      for(Tag::SizeMap::const_iterator ts_it = tag->sizes.begin();
+      for (Tag::SizeMap::const_iterator ts_it = tag->sizes.begin();
           ts_it != tag->sizes.end(); ++ts_it)
       {
         Creative::SizeMap::const_iterator cs_it =
           creative->sizes.find(ts_it->first);
-        if(cs_it != creative->sizes.end())
+        if (cs_it != creative->sizes.end())
         {
           available_sizes.push_back(ts_it->second);
         }
@@ -509,12 +509,12 @@ namespace AdServer
     {
       filtered_campaigns.reserve(filtered_campaigns.size() + campaign_list.size());
 
-      for(CampaignIndex::CampaignCellPtrArray::const_iterator
+      for (CampaignIndex::CampaignCellPtrArray::const_iterator
             cit = campaign_list.begin();
           cit != campaign_list.end(); ++cit)
       {
         // don't check ecpm for text campaigns, will be checked sum
-        if(campaign_selection_index_->check_campaign(
+        if (campaign_selection_index_->check_campaign(
              key,
              (*cit)->campaign,
              request_params.time,
@@ -549,7 +549,7 @@ namespace AdServer
       const
       noexcept
     {
-      if(ctr_calculation == 0)
+      if (ctr_calculation == 0)
       {
         get_all_display_campaign_candidates_(
           result_campaign_candidates,
@@ -571,11 +571,11 @@ namespace AdServer
       CampaignSelectorMonoBuffer mono_buffer;
 
       // step 1: filter all campaigns without ecpm checking
-      for(CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
+      for (CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
             campaign_list.begin();
           cmp_it != campaign_list.end(); ++cmp_it)
       {
-        if(campaign_selection_index_->check_campaign(
+        if (campaign_selection_index_->check_campaign(
              key,
              (*cmp_it)->campaign,
              request_params.time,
@@ -600,9 +600,9 @@ namespace AdServer
             tag,
             mono_buffer.reset_arena());
 
-          if(!available_creatives.empty()) // any creative can be selected
+          if (!available_creatives.empty()) // any creative can be selected
           {
-            if((*cmp_it)->campaign->use_ctr() ||
+            if ((*cmp_it)->campaign->use_ctr() ||
               (*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL)
             {
               unknown_ctr_campaign_candidates.emplace_back(
@@ -624,7 +624,7 @@ namespace AdServer
               RevenueDecimal current_ecpm =
                 default_campaign_ecpm_(tag, (*cmp_it)->campaign);
 
-              if(check_min_ecpm && !check_min_ecpm_(
+              if (check_min_ecpm && !check_min_ecpm_(
                    (*cmp_it)->tag_pricing,
                    request_params.min_ecpm,
                    current_ecpm))
@@ -660,7 +660,7 @@ namespace AdServer
       }
 
       // fetch sizes
-      for(Tag::SizeMap::const_iterator tag_size_it = request_params.tag_sizes.begin();
+      for (Tag::SizeMap::const_iterator tag_size_it = request_params.tag_sizes.begin();
         tag_size_it != request_params.tag_sizes.end();
         ++tag_size_it)
       {
@@ -669,7 +669,7 @@ namespace AdServer
             tag_size_it->second);
 
         CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
-        if(conv_rate_calculation)
+        if (conv_rate_calculation)
         {
           conv_rate_calculation_context = conv_rate_calculation->create_context(
             tag_size_it->second);
@@ -677,21 +677,21 @@ namespace AdServer
 
         // fetch unknown_ctr_campaign_candidates
         // filter creatives by ctr with known size
-        for(CTRWeightedCampaignHolderList::iterator wit =
+        for (CTRWeightedCampaignHolderList::iterator wit =
               unknown_ctr_campaign_candidates.begin();
             wit != unknown_ctr_campaign_candidates.end();
             ++wit)
         {
           bool rate_checked = false;
 
-          for(CampaignIndex::ConstCreativePtrList::const_iterator creative_it =
+          for (CampaignIndex::ConstCreativePtrList::const_iterator creative_it =
                 wit->weighted_campaign->available_creatives.begin();
               creative_it != wit->weighted_campaign->available_creatives.end();
               ++creative_it)
           {
             RevenueDecimal conv_rate = RevenueDecimal::ZERO;
 
-            if(CampaignIndex::creative_available_by_size(
+            if (CampaignIndex::creative_available_by_size(
                 tag,
                 tag_size_it->second,
                 *creative_it,
@@ -703,7 +703,7 @@ namespace AdServer
               bool rate_creative_dependent = false;
 
               // check_rate is hard operation - make it last
-              if(rate_checked ||
+              if (rate_checked ||
                  !conv_rate_calculation_context ||
                  conv_rate_calculation_context->check_rate(
                    *creative_it, &conv_rate, &rate_creative_dependent))
@@ -720,14 +720,14 @@ namespace AdServer
 
                 // select creative with max ecpm for all auction types
                 // fill ecpm and (tag_size, creative) candidates
-                if((!check_min_ecpm || check_min_ecpm_(
+                if ((!check_min_ecpm || check_min_ecpm_(
                      wit->weighted_campaign->tag_pricing,
                      request_params.min_ecpm,
                      ecpm)) &&
                    (wit->weighted_campaign->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
                     ctr >= wit->weighted_campaign->campaign->min_ctr_goal()))
                 {
-                  if(ecpm > wit->weighted_campaign->ecpm)
+                  if (ecpm > wit->weighted_campaign->ecpm)
                   {
                     wit->weighted_campaign->ecpm = ecpm;
                     wit->weighted_campaign->ctr = ctr;
@@ -736,7 +736,7 @@ namespace AdServer
                     wit->cur_creatives.push_back(
                       SizedCreativeHolder(tag_size_it->second, *creative_it, conv_rate));
                   }
-                  else if(ecpm == wit->weighted_campaign->ecpm)
+                  else if (ecpm == wit->weighted_campaign->ecpm)
                   {
                     wit->cur_creatives.push_back(
                       SizedCreativeHolder(tag_size_it->second, *creative_it, conv_rate));
@@ -751,21 +751,21 @@ namespace AdServer
 
         // fetch known_ctr_campaign_candidates
         // not eval
-        for(CTRWeightedCampaignHolderList::iterator wit =
+        for (CTRWeightedCampaignHolderList::iterator wit =
               known_ctr_campaign_candidates.begin();
             wit != known_ctr_campaign_candidates.end();
             ++wit)
         {
           bool rate_checked = false;
 
-          for(CampaignIndex::ConstCreativePtrList::const_iterator creative_it =
+          for (CampaignIndex::ConstCreativePtrList::const_iterator creative_it =
                 wit->weighted_campaign->available_creatives.begin();
               creative_it != wit->weighted_campaign->available_creatives.end();
               ++creative_it)
           {
             RevenueDecimal conv_rate = RevenueDecimal::ZERO;
 
-            if(CampaignIndex::creative_available_by_size(
+            if (CampaignIndex::creative_available_by_size(
                 tag,
                 tag_size_it->second,
                 *creative_it,
@@ -777,7 +777,7 @@ namespace AdServer
               bool rate_creative_dependent = false;
 
               // check_rate is hard operation - make it last
-              if(rate_checked ||
+              if (rate_checked ||
                  !conv_rate_calculation_context ||
                   conv_rate_calculation_context->check_rate(
                     *creative_it, &conv_rate, &rate_creative_dependent))
@@ -793,12 +793,12 @@ namespace AdServer
       }
 
       // select tag_size, creative
-      for(CTRWeightedCampaignHolderList::iterator wit =
+      for (CTRWeightedCampaignHolderList::iterator wit =
             unknown_ctr_campaign_candidates.begin();
           wit != unknown_ctr_campaign_candidates.end();
           ++wit)
       {
-        if(!wit->cur_creatives.empty()) // all creatives filtered by check_min_ecpm
+        if (!wit->cur_creatives.empty()) // all creatives filtered by check_min_ecpm
         {
           SizedCreativeHolderList::iterator cr_it =
             Generics::random_select<unsigned long>(
@@ -814,12 +814,12 @@ namespace AdServer
         }
       }
 
-      for(CTRWeightedCampaignHolderList::iterator wit =
+      for (CTRWeightedCampaignHolderList::iterator wit =
             known_ctr_campaign_candidates.begin();
           wit != known_ctr_campaign_candidates.end();
           ++wit)
       {
-        if(!wit->cur_creatives.empty()) // all creatives filtered by conv rate check
+        if (!wit->cur_creatives.empty()) // all creatives filtered by conv rate check
         {
           SizedCreativeHolderList::iterator cr_it =
             Generics::random_select<unsigned long>(
@@ -852,11 +852,11 @@ namespace AdServer
     {
       CampaignSelectorMonoBuffer mono_buffer;
 
-      for(CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
+      for (CampaignIndex::CampaignSelectionCellPtrList::const_iterator cmp_it =
             campaign_list.begin();
           cmp_it != campaign_list.end(); ++cmp_it)
       {
-        if(campaign_selection_index_->check_campaign(
+        if (campaign_selection_index_->check_campaign(
              key,
              (*cmp_it)->campaign,
              request_params.time,
@@ -872,7 +872,7 @@ namespace AdServer
         {
           RevenueDecimal current_ecpm = default_campaign_ecpm_(tag, (*cmp_it)->campaign);
 
-          if(check_min_ecpm && !check_min_ecpm_(
+          if (check_min_ecpm && !check_min_ecpm_(
                (*cmp_it)->tag_pricing,
                request_params.min_ecpm,
                current_ecpm))
@@ -884,7 +884,7 @@ namespace AdServer
             continue;
           }
 
-          if((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
+          if ((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
              (*cmp_it)->campaign->ctr < (*cmp_it)->campaign->min_ctr_goal())
           {
             continue;
@@ -901,7 +901,7 @@ namespace AdServer
             tag,
             mono_buffer.reset_arena());
 
-          if(!available_creatives.empty()) // any creative can be selected
+          if (!available_creatives.empty()) // any creative can be selected
           {
             const Creative* result_creative = select_display_creative_(
               available_creatives);
@@ -948,16 +948,16 @@ namespace AdServer
         cmp_it = campaign_list.begin();
       CampaignSelectorMonoBuffer mono_buffer;
 
-      for(; cmp_it != campaign_list.end(); ++cmp_it)
+      for (; cmp_it != campaign_list.end(); ++cmp_it)
       {
-        if(selected_non_adjusted_ecpm != RevenueDecimal::ZERO &&
+        if (selected_non_adjusted_ecpm != RevenueDecimal::ZERO &&
            (*cmp_it)->campaign->ecpm_ != selected_non_adjusted_ecpm)
         {
           break;
         }
 
         // min_ecpm (check separate way below)
-        if(campaign_selection_index_->check_campaign(
+        if (campaign_selection_index_->check_campaign(
              key,
              (*cmp_it)->campaign,
              request_params.time,
@@ -981,7 +981,7 @@ namespace AdServer
           // the next will not satisfy the min_ecpm filter
           // and will be checked below only for lost auction
           // break if check failed
-          if(!check_min_ecpm_(
+          if (!check_min_ecpm_(
               (*cmp_it)->tag_pricing,
               request_params.min_ecpm,
               current_ecpm))
@@ -989,7 +989,7 @@ namespace AdServer
             break;
           }
 
-          if((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
+          if ((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
              (*cmp_it)->campaign->ctr < (*cmp_it)->campaign->min_ctr_goal())
           {
             continue;
@@ -1008,7 +1008,7 @@ namespace AdServer
           const Creative* result_creative = select_display_creative_(
             available_creatives);
 
-          if(result_creative)
+          if (result_creative)
           {
             selected_non_adjusted_ecpm = (*cmp_it)->campaign->ecpm_;
 
@@ -1070,11 +1070,11 @@ namespace AdServer
       // filtered_campaign_keywords and filtered_text_campaigns contains
       // only campaigns, that can be shown
       // combine filtered_campaign_keywords, filtered_text_campaigns
-      for(CampaignKeywordMap::const_iterator kw_it =
+      for (CampaignKeywordMap::const_iterator kw_it =
             filtered_campaign_keywords.begin();
           kw_it != filtered_campaign_keywords.end(); ++kw_it)
       {
-        if(!ctr_calculation_context)
+        if (!ctr_calculation_context)
         {
           // for default CTR algorithm we can skip available creatives
           // checking for all candidates and get these candidates only after
@@ -1137,7 +1137,7 @@ namespace AdServer
         }
       }
 
-      for(ConstCampaignPtrArray::const_iterator ch_text_campaign_it =
+      for (ConstCampaignPtrArray::const_iterator ch_text_campaign_it =
             filtered_text_campaigns.begin();
           ch_text_campaign_it != filtered_text_campaigns.end();
           ++ch_text_campaign_it)
@@ -1148,7 +1148,7 @@ namespace AdServer
           RevenueDecimal current_ctr;
           const Creative* creative = 0;
 
-          if(ctr_calculation_context)
+          if (ctr_calculation_context)
           {
             CampaignIndex::ConstCreativePtrList available_creatives;
 
@@ -1160,7 +1160,7 @@ namespace AdServer
               tag,
               mono_buffer.reset_arena());
 
-            if(available_creatives.empty())
+            if (available_creatives.empty())
             {
               continue;
             }
@@ -1210,7 +1210,7 @@ namespace AdServer
       const
       noexcept
     {
-      if(ctr_calculation == 0 && auction_type == AT_MAX_ECPM)
+      if (ctr_calculation == 0 && auction_type == AT_MAX_ECPM)
       {
         WeightedCampaignList random_select_campaigns(arena_);
 
@@ -1224,7 +1224,7 @@ namespace AdServer
 
         /*
         std::cerr << "random_select_campaigns :" << std::endl;
-        for(WeightedCampaignList::const_iterator rit = random_select_campaigns.begin();
+        for (WeightedCampaignList::const_iterator rit = random_select_campaigns.begin();
             rit != random_select_campaigns.end(); ++rit)
         {
           std::cerr << "[ campaign_id = " << (*rit)->campaign->campaign_id <<
@@ -1233,7 +1233,7 @@ namespace AdServer
         }
         */
 
-        if(!random_select_campaigns.empty())
+        if (!random_select_campaigns.empty())
         {
           WeightedCampaignList::iterator res_it =
             Generics::random_select<unsigned int>(
@@ -1263,7 +1263,7 @@ namespace AdServer
 
         /*
         std::cerr << "random_select_campaigns :" << std::endl;
-        for(WeightedCampaignList::const_iterator rit = random_select_campaigns.begin();
+        for (WeightedCampaignList::const_iterator rit = random_select_campaigns.begin();
             rit != random_select_campaigns.end(); ++rit)
         {
           std::cerr << "[ campaign_id = " << (*rit)->campaign->campaign_id <<
@@ -1272,9 +1272,9 @@ namespace AdServer
         }
         */
 
-        if(!random_select_campaigns.empty())
+        if (!random_select_campaigns.empty())
         {
-          if(auction_type == AT_RANDOM)
+          if (auction_type == AT_RANDOM)
           {
             // select campaign randomly (with equal weight)
             unsigned long pos =
@@ -1292,12 +1292,12 @@ namespace AdServer
           {
             WeightedCampaignList::iterator cmp_it = random_select_campaigns.end();
 
-            if(auction_type == AT_PROPORTIONAL_PROBABILITY)
+            if (auction_type == AT_PROPORTIONAL_PROBABILITY)
             {
               // select campaign randomly with weight = ecpm
               RevenueDecimal sum_ecpm = RevenueDecimal::ZERO;
 
-              for(WeightedCampaignList::const_iterator it =
+              for (WeightedCampaignList::const_iterator it =
                     random_select_campaigns.begin();
                   it != random_select_campaigns.end(); ++it)
               {
@@ -1315,9 +1315,9 @@ namespace AdServer
 
               cmp_it = random_select_campaigns.begin();
 
-              for(; cmp_it != random_select_campaigns.end(); ++cmp_it)
+              for (; cmp_it != random_select_campaigns.end(); ++cmp_it)
               {
-                if(ecpm_offset < sum_ecpm)
+                if (ecpm_offset < sum_ecpm)
                 {
                   break;
                 }
@@ -1333,7 +1333,7 @@ namespace AdServer
               RevenueDecimal max_ecpm_margin = RevenueDecimal::ZERO;
               std::list<WeightedCampaignList::iterator> max_ecpm_campaigns;
 
-              for(WeightedCampaignList::iterator it =
+              for (WeightedCampaignList::iterator it =
                     random_select_campaigns.begin();
                   it != random_select_campaigns.end(); ++it)
               {
@@ -1344,13 +1344,13 @@ namespace AdServer
                     (*it)->tag_pricing->revenue_share,
                     Generics::DMR_FLOOR);
 
-                if(cur_ecpm_margin > max_ecpm_margin)
+                if (cur_ecpm_margin > max_ecpm_margin)
                 {
                   max_ecpm_campaigns.clear();
                   max_ecpm_campaigns.push_back(it);
                   max_ecpm_margin = cur_ecpm_margin;
                 }
-                else if(cur_ecpm_margin == max_ecpm_margin)
+                else if (cur_ecpm_margin == max_ecpm_margin)
                 {
                   max_ecpm_campaigns.push_back(it);
                 }
@@ -1384,7 +1384,7 @@ namespace AdServer
       const WeightedCampaignKeywordList& text_campaign_candidates)
       noexcept
     {
-      for(WeightedCampaignKeywordList::const_iterator kit =
+      for (WeightedCampaignKeywordList::const_iterator kit =
             text_campaign_candidates.begin();
           kit != text_campaign_candidates.end();
           ++kit)
@@ -1397,7 +1397,7 @@ namespace AdServer
             cpc_keyword_map,
             kit->actual_ecpm);
 
-          if(!lst.empty())
+          if (!lst.empty())
           {
             WeightedCampaignKeywordList::iterator it = lst.begin();
             std::advance(it, Generics::unsafe_rand(lst.size() + 1));
@@ -1418,17 +1418,17 @@ namespace AdServer
       WeightedCampaignKeywordList& weighted_campaign_keywords)
       noexcept
     {
-      for(WeightedCampaignKeywordList::iterator it =
+      for (WeightedCampaignKeywordList::iterator it =
             weighted_campaign_keywords.begin();
           it != weighted_campaign_keywords.end(); ++it)
       {
-        if(it->campaign_keyword)
+        if (it->campaign_keyword)
         {
           it->actual_cpc = it->campaign_keyword->campaign->advertiser->revert_cost(
             it->actual_cpc,
             it->campaign_keyword->campaign->commision);
 
-          if(it->actual_cpc == RevenueDecimal::ZERO &&
+          if (it->actual_cpc == RevenueDecimal::ZERO &&
              it->campaign_keyword->max_cpc != RevenueDecimal::ZERO)
           {
             // 1 / 10 ^ fraction ~ ceil of 0.00...1
@@ -1455,7 +1455,7 @@ namespace AdServer
       unsigned long grouped_text_campaign_candidates_size =
         grouped_text_campaign_candidates.size();
 
-      for(unsigned long select_i = 0;
+      for (unsigned long select_i = 0;
           select_i < max_text_creatives &&
             !grouped_text_campaign_candidates.empty();
           ++select_i)
@@ -1477,7 +1477,7 @@ namespace AdServer
 
         RevenueDecimal actual_cpc(RevenueDecimal::ZERO); // account currency
 
-        if((*wcmp_it)->campaign_keyword.in())
+        if ((*wcmp_it)->campaign_keyword.in())
         {
           actual_cpc = (*wcmp_it)->campaign_keyword->max_cpc;
         }
@@ -1517,7 +1517,7 @@ namespace AdServer
       IdWeightedCampaignKeywordMaps campaigns_maps(arena);
       fill_id_weighted_campaigns_keyword_maps(campaigns_maps, text_campaign_candidates);
 
-      for(unsigned long select_i = 0;
+      for (unsigned long select_i = 0;
           select_i < max_text_creatives;
           ++select_i)
       {
@@ -1528,20 +1528,20 @@ namespace AdServer
         WeightedCampaignKeywordPtrArray filtered_text_campaign_candidates(
           Generics::mono_allocator<WeightedCampaignKeyword*>(arena));
 
-        for(WeightedCampaignKeywordList::iterator it =
+        for (WeightedCampaignKeywordList::iterator it =
               text_campaign_candidates.begin();
             it != text_campaign_candidates.end(); ++it)
         {
-          if(it->campaign &&
+          if (it->campaign &&
              it->actual_ecpm >= min_ecpm)
           {
             filtered_text_campaign_candidates.push_back(&*it);
           }
         }
 
-        if(filtered_text_campaign_candidates.empty())
+        if (filtered_text_campaign_candidates.empty())
         {
-          if(selected_ecpm_sum < tag_min_ecpm)
+          if (selected_ecpm_sum < tag_min_ecpm)
           {
             result_text_campaigns.clear();
             return false;
@@ -1576,18 +1576,18 @@ namespace AdServer
 
           RevenueDecimal cur_offset = RevenueDecimal::ZERO;
 
-          for(; group_it != grouped_text_campaign_candidates.end();
+          for (; group_it != grouped_text_campaign_candidates.end();
               ++group_it)
           {
             cur_offset += group_it->first;
 
-            if(ecpm_offset < cur_offset)
+            if (ecpm_offset < cur_offset)
             {
               break;
             }
           }
 
-          if(group_it == grouped_text_campaign_candidates.end())
+          if (group_it == grouped_text_campaign_candidates.end())
           {
             // arithmetical mistake on RevenueDecimal can give this.
             --group_it;
@@ -1603,7 +1603,7 @@ namespace AdServer
         RevenueDecimal group_ecpm_sum = RevenueDecimal::ZERO;
         WeightedCampaignKeywordPtrArray& cmp_list = group_it->second;
 
-        for(WeightedCampaignKeywordPtrArray::iterator cmp_it =
+        for (WeightedCampaignKeywordPtrArray::iterator cmp_it =
               cmp_list.begin();
             cmp_it != cmp_list.end(); ++cmp_it)
         {
@@ -1625,12 +1625,12 @@ namespace AdServer
           RevenueDecimal cur_campaign_ecpm_offset = RevenueDecimal::ZERO;
           WeightedCampaignKeywordPtrArray::iterator cmp_last_it = --cmp_list.end();
 
-          for(; cmp_it != cmp_last_it; ++cmp_it)
+          for (; cmp_it != cmp_last_it; ++cmp_it)
           {
             assert((*cmp_it)->campaign);
 
             cur_campaign_ecpm_offset += (*cmp_it)->actual_ecpm;
-            if(cur_campaign_ecpm_offset > campaign_ecpm_offset)
+            if (cur_campaign_ecpm_offset > campaign_ecpm_offset)
             {
               break;
             }
@@ -1646,7 +1646,7 @@ namespace AdServer
 
         RevenueDecimal actual_cpc(RevenueDecimal::ZERO); // account currency
 
-        if((*cmp_it)->campaign_keyword.in())
+        if ((*cmp_it)->campaign_keyword.in())
         {
           actual_cpc = (*cmp_it)->campaign_keyword->max_cpc;
         }
@@ -1708,14 +1708,14 @@ namespace AdServer
       CCGIdSet ccg_filter_ids;
 
       /* filter keywords by creative availability and multi showing */
-      for(CPCKeywordMap::const_reverse_iterator cit = cpc_keyword_map.rbegin();
+      for (CPCKeywordMap::const_reverse_iterator cit = cpc_keyword_map.rbegin();
           cit != cpc_keyword_map.rend() && selected_keywords < max_keywords;
           ++cit)
       {
         const WeightedCampaignKeywordList& kws = cit->second;
 
         /* check keywords with equal actual cpc */
-        for(WeightedCampaignKeywordList::const_iterator sub_cit =
+        for (WeightedCampaignKeywordList::const_iterator sub_cit =
               kws.begin();
             sub_cit != kws.end() && selected_keywords < max_keywords;
             ++sub_cit)
@@ -1726,31 +1726,31 @@ namespace AdServer
             sub_cit->campaign->account->get_text_adserving();
 
           // check multi showing filters
-          if(ta_type == AccountDef::TA_ALL) // one per CCG
+          if (ta_type == AccountDef::TA_ALL) // one per CCG
           {
             filtered = ccg_filter_ids.find(sub_cit->campaign->campaign_id) !=
               ccg_filter_ids.end();
           }
-          else if(ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
+          else if (ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
           {
             filtered = advertiser_filter_ids.find(
               sub_cit->campaign->advertiser->account_id) !=
               advertiser_filter_ids.end();
           }
-          else if(ta_type == AccountDef::TA_ONE) // one per account
+          else if (ta_type == AccountDef::TA_ONE) // one per account
           {
             filtered = account_filter_ids.find(
               sub_cit->campaign->account->account_id) !=
               account_filter_ids.end();
           }
 
-          if(!filtered)
+          if (!filtered)
           {
             CampaignIndex::ConstCreativePtrList available_creatives;
             // creative can be already selected by max ecpm - use it
             const Creative* creative_candidate = sub_cit->creative;
 
-            if(!creative_candidate)
+            if (!creative_candidate)
             {
               /* need to select creatives available only for selected tag */
               campaign_selection_index_->filter_creatives(
@@ -1797,7 +1797,7 @@ namespace AdServer
               available_creatives.push_back(creative_candidate);
             }
 
-            if(creative_candidate)
+            if (creative_candidate)
             {
               get_or_create_mono_mapped_(
                 filtered_cpc_keyword_map,
@@ -1809,16 +1809,16 @@ namespace AdServer
               ++selected_keywords;
 
               // fill multi showing filters
-              if(ta_type == AccountDef::TA_ALL) // one per CCG
+              if (ta_type == AccountDef::TA_ALL) // one per CCG
               {
                 ccg_filter_ids.insert(sub_cit->campaign->campaign_id);
               }
-              else if(ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
+              else if (ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
               {
                 advertiser_filter_ids.insert(
                   sub_cit->campaign->advertiser->account_id);
               }
-              else if(ta_type == AccountDef::TA_ONE) // one per account
+              else if (ta_type == AccountDef::TA_ONE) // one per account
               {
                 account_filter_ids.insert(
                   sub_cit->campaign->account->account_id);
@@ -1828,7 +1828,7 @@ namespace AdServer
         }
       }
 
-      if(!filtered_cpc_keyword_map.empty())
+      if (!filtered_cpc_keyword_map.empty())
       {
         /* actual ecpm and actual cpc calculate loop:
          *   for 2..N bidders:
@@ -1852,7 +1852,7 @@ namespace AdServer
         CPCKeywordCreativeMap::reverse_iterator cit =
           filtered_cpc_keyword_map.rbegin();
 
-        for(; cit != filtered_cpc_keyword_map.rend() &&
+        for (; cit != filtered_cpc_keyword_map.rend() &&
               selected_keywords < max_keywords - 1;
             ++cit)
         {
@@ -1861,10 +1861,10 @@ namespace AdServer
 
           CampaignKeywordCreativeList::iterator sub_cit = kws.begin();
 
-          for(; sub_cit != kws.end() && selected_keywords < max_keywords - 1;
+          for (; sub_cit != kws.end() && selected_keywords < max_keywords - 1;
               ++sub_cit)
           {
-            if(bidder_number > 0)
+            if (bidder_number > 0)
             {
               ++selected_keywords;
 
@@ -1876,7 +1876,7 @@ namespace AdServer
               CampaignKeyword* campaign_keyword =
                 sub_cit->weighted_campaign_keyword.campaign_keyword.in();
 
-              if(ctr_calculation_context)
+              if (ctr_calculation_context)
               {
                 // TO CHANGE: we calculate ctr few times !!!
                 const Creative* creative;
@@ -1900,7 +1900,7 @@ namespace AdServer
                   sub_cit->weighted_campaign_keyword.campaign->ctr;
               }
 
-              if(campaign_keyword)
+              if (campaign_keyword)
               {
                 actual_cpc = campaign_keyword->max_cpc;
               }
@@ -1910,7 +1910,7 @@ namespace AdServer
                   click_revenue;
               }
 
-              if(bidder_number == 1)
+              if (bidder_number == 1)
               {
                 second_bidder_actual_ecpm = actual_ecpm;
               }
@@ -1952,12 +1952,12 @@ namespace AdServer
         RevenueDecimal max_ecpm_bid(RevenueDecimal::ZERO);
         RevenueDecimal ctr;
 
-        if(weighted_campaign.campaign_keyword && bidder_number > 1)
+        if (weighted_campaign.campaign_keyword && bidder_number > 1)
         {
           // REVIEW: this code eval ctr twice
           const Creative* creative = 0;
 
-          if(ctr_calculation_context && weighted_campaign.campaign->use_ctr())
+          if (ctr_calculation_context && weighted_campaign.campaign->use_ctr())
           {
             max_ecpm_bid = campaign_keyword_ecpm_(
               ctr,
@@ -1988,7 +1988,7 @@ namespace AdServer
 
           const Currency* currency = weighted_campaign.campaign->account->currency;
 
-          if(ctr != RevenueDecimal::ZERO)
+          if (ctr != RevenueDecimal::ZERO)
           {
             RevenueDecimal ctr_mul = RevenueDecimal::mul(
               ctr,
@@ -2005,7 +2005,7 @@ namespace AdServer
         else // top campaign isn't keyword or one bidder (bidder_number == 1)
           // use cost defined by advertiser
         {
-          if(weighted_campaign.campaign_keyword) // keyword targeted
+          if (weighted_campaign.campaign_keyword) // keyword targeted
           {
             actual_cpc = weighted_campaign.campaign_keyword->max_cpc;
           }
@@ -2014,7 +2014,7 @@ namespace AdServer
             actual_cpc = weighted_campaign.campaign->click_revenue;
           }
 
-          if(ctr_calculation_context)
+          if (ctr_calculation_context)
           {
             const Creative* unused_creative;
 
@@ -2084,16 +2084,16 @@ namespace AdServer
         cmp_it = campaigns.begin();
       CampaignKeywordMap::const_iterator kw_it = campaign_keywords.begin();
 
-      while(cmp_it != campaigns.end() && kw_it != campaign_keywords.end())
+      while (cmp_it != campaigns.end() && kw_it != campaign_keywords.end())
       {
-        if((*cmp_it)->campaign->campaign_id < kw_it->first)
+        if ((*cmp_it)->campaign->campaign_id < kw_it->first)
         {
           ++cmp_it;
         }
-        else if((*cmp_it)->campaign->campaign_id == kw_it->first)
+        else if ((*cmp_it)->campaign->campaign_id == kw_it->first)
         {
           // don't check ecpm for text campaigns, will be checked sum
-          if(campaign_selection_index_->check_campaign(
+          if (campaign_selection_index_->check_campaign(
                key,
                kw_it->second->campaign,
                request_params.time,
@@ -2130,7 +2130,7 @@ namespace AdServer
     {
       RevenueDecimal result = RevenueDecimal::ZERO;
 
-      for(WeightedCampaignList::const_iterator it =
+      for (WeightedCampaignList::const_iterator it =
             campaign_candidates.begin();
           it != campaign_candidates.end(); ++it)
       {
@@ -2147,7 +2147,7 @@ namespace AdServer
     {
       ExpectedEcpm expected_ecpm;
 
-      for(WeightedCampaignList::const_iterator cmp_it =
+      for (WeightedCampaignList::const_iterator cmp_it =
             campaign_candidates.begin();
           cmp_it != campaign_candidates.end(); ++cmp_it)
       {
@@ -2165,13 +2165,13 @@ namespace AdServer
       const IdWeightedCampaignKeywordMap& campaigns)
       noexcept
     {
-      for(IdWeightedCampaignKeywordMap::const_iterator group_it =
+      for (IdWeightedCampaignKeywordMap::const_iterator group_it =
             campaigns.begin();
           group_it != campaigns.end(); ++group_it)
       {
         RevenueDecimal exp_ecpm_val;
 
-        if(group_it->second.size() == 1)
+        if (group_it->second.size() == 1)
         {
           exp_ecpm_val = (*group_it->second.begin())->actual_ecpm;
         }
@@ -2179,7 +2179,7 @@ namespace AdServer
         {
           ExpectedEcpm exp_ecpm;
 
-          for(WeightedCampaignKeywordPtrArray::const_iterator
+          for (WeightedCampaignKeywordPtrArray::const_iterator
                 cmp_it = group_it->second.begin();
               cmp_it != group_it->second.end(); ++cmp_it)
           {
@@ -2201,7 +2201,7 @@ namespace AdServer
       IdWeightedCampaignKeywordMap& campaigns)
       noexcept
     {
-      for(IdWeightedCampaignKeywordMap::iterator group_it =
+      for (IdWeightedCampaignKeywordMap::iterator group_it =
             campaigns.begin();
           group_it != campaigns.end(); ++group_it)
       {
@@ -2217,29 +2217,29 @@ namespace AdServer
     {
       std::set<RevenueDecimal> cur_elements;
 
-      for(ExpRevWeightedCampaignKeywordMap::const_iterator group_it =
+      for (ExpRevWeightedCampaignKeywordMap::const_iterator group_it =
             grouped_text_campaign_candidates.begin();
           group_it != grouped_text_campaign_candidates.end();
           ++group_it)
       {
         RevenueDecimal group_max = RevenueDecimal::ZERO;
 
-        for(WeightedCampaignKeywordPtrArray::const_iterator
+        for (WeightedCampaignKeywordPtrArray::const_iterator
               cmp_it = group_it->second.begin();
             cmp_it != group_it->second.end(); ++cmp_it)
         {
-          if((*cmp_it)->actual_ecpm > group_max)
+          if ((*cmp_it)->actual_ecpm > group_max)
           {
             group_max = (*cmp_it)->actual_ecpm;
           }
         }
 
-        if(cur_elements.empty() ||
+        if (cur_elements.empty() ||
            group_max > *cur_elements.begin())
         {
           cur_elements.insert(group_max);
 
-          if(cur_elements.size() > max_text_creatives)
+          if (cur_elements.size() > max_text_creatives)
           {
             cur_elements.erase(cur_elements.begin());
           }
@@ -2248,7 +2248,7 @@ namespace AdServer
 
       RevenueDecimal res = RevenueDecimal::ZERO;
 
-      for(std::set<RevenueDecimal>::const_iterator it =
+      for (std::set<RevenueDecimal>::const_iterator it =
             cur_elements.begin();
           it != cur_elements.end(); ++it)
       {
@@ -2298,26 +2298,26 @@ namespace AdServer
       IdWeightedCampaignKeywordMaps& campaigns_maps,
       WeightedCampaignKeywordList& text_campaign_candidates)
     {
-      for(WeightedCampaignKeywordList::iterator cmp_it =
+      for (WeightedCampaignKeywordList::iterator cmp_it =
             text_campaign_candidates.begin();
           cmp_it != text_campaign_candidates.end(); ++cmp_it)
       {
         AccountDef::TextAdserving ta_type =
           cmp_it->campaign->account->get_text_adserving();
 
-        if(ta_type == AccountDef::TA_ALL) // one per CCG
+        if (ta_type == AccountDef::TA_ALL) // one per CCG
         {
           get_or_create_mono_mapped_(
             campaigns_maps.ccg_campaigns,
             cmp_it->campaign->campaign_id).push_back(&*cmp_it);
         }
-        else if(ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
+        else if (ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
         {
           get_or_create_mono_mapped_(
             campaigns_maps.advertiser_campaigns,
             cmp_it->campaign->advertiser->account_id).push_back(&*cmp_it);
         }
-        else if(ta_type == AccountDef::TA_ONE) // one per account
+        else if (ta_type == AccountDef::TA_ONE) // one per account
         {
           get_or_create_mono_mapped_(
             campaigns_maps.account_campaigns,
@@ -2362,26 +2362,26 @@ namespace AdServer
         Generics::mono_allocator<
           IdWeightedCampaignKeywordMap::value_type>(arena));
 
-      for(WeightedCampaignKeywordPtrArray::iterator cmp_it =
+      for (WeightedCampaignKeywordPtrArray::iterator cmp_it =
             text_campaign_candidates.begin();
           cmp_it != text_campaign_candidates.end(); ++cmp_it)
       {
         AccountDef::TextAdserving ta_type =
           (*cmp_it)->campaign->account->get_text_adserving();
 
-        if(ta_type == AccountDef::TA_ALL) // one per CCG
+        if (ta_type == AccountDef::TA_ALL) // one per CCG
         {
           get_or_create_mono_mapped_(
             ccg_campaigns,
             (*cmp_it)->campaign->campaign_id).push_back(*cmp_it);
         }
-        else if(ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
+        else if (ta_type == AccountDef::TA_ADVERTISER_ONE) // one per advertiser
         {
           get_or_create_mono_mapped_(
             advertiser_campaigns,
             (*cmp_it)->campaign->advertiser->account_id).push_back(*cmp_it);
         }
-        else if(ta_type == AccountDef::TA_ONE) // one per account
+        else if (ta_type == AccountDef::TA_ONE) // one per account
         {
           get_or_create_mono_mapped_(
             account_campaigns,
@@ -2415,7 +2415,7 @@ namespace AdServer
       const RevenueDecimal& ecpm_offset)
       noexcept
     {
-      if(campaign_candidates.empty())
+      if (campaign_candidates.empty())
       {
         return campaign_candidates.end();
       }
@@ -2425,10 +2425,10 @@ namespace AdServer
       WeightedCampaignList::iterator it =
         campaign_candidates.begin();
 
-      for(; it != campaign_candidates.end(); ++it)
+      for (; it != campaign_candidates.end(); ++it)
       {
         cur_ecpm_offset += (*it)->ecpm;
-        if(cur_ecpm_offset > ecpm_offset)
+        if (cur_ecpm_offset > ecpm_offset)
         {
           break;
         }
@@ -2443,7 +2443,7 @@ namespace AdServer
       WeightedCampaignList& campaign_candidates)
       noexcept
     {
-      if(campaign_candidates.empty())
+      if (campaign_candidates.empty())
       {
         return campaign_candidates.end();
       }
@@ -2476,16 +2476,16 @@ namespace AdServer
         tag_size->size->size_id, ReferenceCounting::add_ref(tag_size)));
       CampaignSelectorMonoBuffer mono_buffer;
 
-      for(WeightedCampaignKeywordList::const_iterator cmp_it =
+      for (WeightedCampaignKeywordList::const_iterator cmp_it =
             text_campaigns.begin();
           cmp_it != text_campaigns.end(); ++cmp_it)
       {
         // filter campaign with BS_MIN_CTR_GOAL if algo isn't default
-        if(cmp_it->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
+        if (cmp_it->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
            ctr_calculation_context ||
            cmp_it->campaign->ctr > cmp_it->campaign->min_ctr_goal())
         {
-          if(cmp_it->creative == 0)
+          if (cmp_it->creative == 0)
           {
             CampaignIndex::ConstCreativePtrList available_creatives;
             const Creative* creative_candidate = 0;
@@ -2520,14 +2520,14 @@ namespace AdServer
               mono_buffer.reset_arena(),
               0);
 
-            if(!available_creatives.empty())
+            if (!available_creatives.empty())
             {
               bool change_ecpm = false;
               RevenueDecimal max_ctr = RevenueDecimal::ZERO;
               RevenueDecimal max_conv_rate = RevenueDecimal::ZERO;
               RevenueDecimal new_ecpm;
 
-              if((ctr_calculation_context && (
+              if ((ctr_calculation_context && (
                    cmp_it->campaign->use_ctr() ||
                    cmp_it->campaign->bid_strategy == BS_MIN_CTR_GOAL)) ||
                  conv_rate_calculation_context)
@@ -2536,16 +2536,16 @@ namespace AdServer
 
                 change_ecpm = ctr_calculation_context && cmp_it->campaign->use_ctr();
 
-                for(CampaignIndex::ConstCreativePtrList::const_iterator cr_it =
+                for (CampaignIndex::ConstCreativePtrList::const_iterator cr_it =
                       available_creatives.begin();
                     cr_it != available_creatives.end(); ++cr_it)
                 {
                   RevenueDecimal conv_rate = RevenueDecimal::ZERO;
 
-                  if(!conv_rate_calculation_context ||
+                  if (!conv_rate_calculation_context ||
                      conv_rate_calculation_context->check_rate(*cr_it, &conv_rate))
                   {
-                    if(!ctr_calculation_context)
+                    if (!ctr_calculation_context)
                     {
                       max_ecpm_available_creatives.push_back(*cr_it);
                     }
@@ -2553,12 +2553,12 @@ namespace AdServer
                     {
                       RevenueDecimal ctr = ctr_calculation_context->get_ctr(*cr_it);
 
-                      if(ctr >= max_ctr && (
+                      if (ctr >= max_ctr && (
                            cmp_it->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
                            ctr >= cmp_it->campaign->min_ctr_goal()))
                       {
                         // for candidates with equal ctr select candidate with highest conv_rate
-                        if(ctr == max_ctr && conv_rate == max_conv_rate)
+                        if (ctr == max_ctr && conv_rate == max_conv_rate)
                         {
                           max_ecpm_available_creatives.push_back(*cr_it);
                         }
@@ -2571,9 +2571,9 @@ namespace AdServer
                         }
                       }
 
-                      if(cmp_it->campaign->use_ctr())
+                      if (cmp_it->campaign->use_ctr())
                       {
-                        if(cmp_it->campaign_keyword)
+                        if (cmp_it->campaign_keyword)
                         {
                           new_ecpm = cmp_it->campaign_keyword->campaign->
                             account->currency->to_system_currency(
@@ -2606,11 +2606,11 @@ namespace AdServer
 
               creative_candidate = (wc_it != available_creatives.end() ? *wc_it : 0);
 
-              if(creative_candidate)
+              if (creative_candidate)
               {
                 filtered_text_campaigns.push_back(*cmp_it);
                 filtered_text_campaigns.back().creative = creative_candidate;
-                if(change_ecpm)
+                if (change_ecpm)
                 {
                   filtered_text_campaigns.back().actual_ecpm = new_ecpm;
                   filtered_text_campaigns.back().ecpm = new_ecpm;
@@ -2643,7 +2643,7 @@ namespace AdServer
       const
       noexcept
     {
-      if(request_params.min_pub_ecpm > tag->pub_max_random_cpm)
+      if (request_params.min_pub_ecpm > tag->pub_max_random_cpm)
       {
         return;
       }
@@ -2676,7 +2676,7 @@ namespace AdServer
         false // check min ecpm
         );
 
-      if(!wg_display_campaign_candidates.empty())
+      if (!wg_display_campaign_candidates.empty())
       {
         // select WG display campaign
         unsigned long campaign_offset = Generics::unsafe_rand(
@@ -2692,7 +2692,7 @@ namespace AdServer
         select_result.walled_garden = true;
       }
 
-      if(!result_display_campaign.get() &&
+      if (!result_display_campaign.get() &&
          tag->marketplace != 'W' // tag allow only WG auction
          )
       {
@@ -2716,7 +2716,7 @@ namespace AdServer
         RandomTextSelectionBySizeList text_selections(arena_);
         unsigned long text_count = 0;
 
-        if(!request_params.only_display_ad)
+        if (!request_params.only_display_ad)
         {
           const Tag::TagPricing* text_tag_pricing = tag->select_tag_pricing(
             request_params.country_code.c_str(),
@@ -2743,9 +2743,9 @@ namespace AdServer
             keyword_check_campaigns,
             text_check_campaigns);
 
-          if(select_result.min_text_ecpm <= tag->max_random_cpm)
+          if (select_result.min_text_ecpm <= tag->max_random_cpm)
           {
-            for(Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
+            for (Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
                 tag_size_it != tag_sizes.end(); ++tag_size_it)
             {
               if (tag_size_it->second->max_text_creatives == 0)
@@ -2755,14 +2755,14 @@ namespace AdServer
 
               CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
 
-              if(ctr_calculation)
+              if (ctr_calculation)
               {
                 ctr_calculation_context = ctr_calculation->create_context(
                   tag_size_it->second);
               }
 
               CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
-              if(conv_rate_calculation)
+              if (conv_rate_calculation)
               {
                 conv_rate_calculation_context = conv_rate_calculation->create_context(
                   tag_size_it->second);
@@ -2780,7 +2780,7 @@ namespace AdServer
                 ctr_calculation_context,
                 conv_rate_calculation_context);
 
-              if(!filtered_text_campaign_candidates.empty())
+              if (!filtered_text_campaign_candidates.empty())
               {
                 text_selections.emplace_back(arena_);
                 RandomTextSelectionBySize& text_selection = text_selections.back();
@@ -2796,10 +2796,10 @@ namespace AdServer
 
           std::set<ConstCampaignPtrSet> uniq_text_campaign_groups;
 
-          for(auto ts_it = text_selections.begin();
+          for (auto ts_it = text_selections.begin();
               ts_it != text_selections.end(); ++ts_it)
           {
-            for(auto cmpg_it = ts_it->grouped_campaign_candidates.begin();
+            for (auto cmpg_it = ts_it->grouped_campaign_candidates.begin();
                 cmpg_it != ts_it->grouped_campaign_candidates.end(); ++cmpg_it)
             {
               ConstCampaignPtrSet uniq_text_campaign_candidates;
@@ -2826,7 +2826,7 @@ namespace AdServer
         // in integer values
         unsigned long sum_max_text_creatives = 0;
         unsigned long ts_size = 0;
-        for(RandomTextSelectionBySizeList::const_iterator ts_it =
+        for (RandomTextSelectionBySizeList::const_iterator ts_it =
               text_selections.begin();
             ts_it != text_selections.end(); ++ts_it)
         {
@@ -2839,7 +2839,7 @@ namespace AdServer
           (text_count > 0 ? sum_max_text_creatives * display_count +
           std::max(text_count * ts_size, sum_max_text_creatives) : display_count));
 
-        if(display_count > 0 && (
+        if (display_count > 0 && (
              campaign_offset < sum_max_text_creatives * display_count ||
              sum_max_text_creatives == 0))
         {
@@ -2856,7 +2856,7 @@ namespace AdServer
 
           result_display_campaign = std::move(*cmp_it);
         }
-        else if(text_count > 0)
+        else if (text_count > 0)
         {
           // select text cell
           unsigned long ts_offset = Generics::unsafe_rand(sum_max_text_creatives);
@@ -2865,12 +2865,12 @@ namespace AdServer
           RandomTextSelectionBySizeList::iterator ts_it =
             text_selections.begin();
 
-          for(; ts_it != text_selections.end(); ++ts_it)
+          for (; ts_it != text_selections.end(); ++ts_it)
           {
             assert(ts_it->tag_sizes.size() == 1);
             cur_sum_max_text_creatives += ts_it->tag_sizes.begin()->second->max_text_creatives;
 
-            if(ts_offset < cur_sum_max_text_creatives)
+            if (ts_offset < cur_sum_max_text_creatives)
             {
               break;
             }
@@ -2946,7 +2946,7 @@ namespace AdServer
         );
 
       // select WG display campaign
-      if(!wg_display_campaign_candidates.empty())
+      if (!wg_display_campaign_candidates.empty())
       {
         RevenueDecimal wg_display_ecpm_sum = sum_campaign_ecpm_(
           wg_display_campaign_candidates);
@@ -2963,7 +2963,7 @@ namespace AdServer
             ecpm_offset));
       }
 
-      if(!result_display_campaign.get() &&
+      if (!result_display_campaign.get() &&
          tag->marketplace != 'W' // tag allow only WG auction
          )
       {
@@ -2996,7 +2996,7 @@ namespace AdServer
         RevenueDecimal text_selections_ecpm_sum = RevenueDecimal::ZERO;
 
         // get text candidates
-        if(!request_params.only_display_ad)
+        if (!request_params.only_display_ad)
         {
           WeightedCampaignKeywordList text_campaign_candidates(arena_);
 
@@ -3011,7 +3011,7 @@ namespace AdServer
             keyword_check_campaigns,
             text_check_campaigns);
 
-          for(Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
+          for (Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
               tag_size_it != tag_sizes.end(); ++tag_size_it)
           {
             if (tag_size_it->second->max_text_creatives == 0)
@@ -3020,14 +3020,14 @@ namespace AdServer
             }
 
             CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
-            if(ctr_calculation)
+            if (ctr_calculation)
             {
               ctr_calculation_context = ctr_calculation->create_context(
                 tag_size_it->second);
             }
 
             CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
-            if(conv_rate_calculation)
+            if (conv_rate_calculation)
             {
               conv_rate_calculation_context = conv_rate_calculation->create_context(
                 tag_size_it->second);
@@ -3068,7 +3068,7 @@ namespace AdServer
               grouped_text_campaign_candidates,
               tag_size_it->second->max_text_creatives);
 
-            if(max_text_ecpm_sum >= text_tag_pricing->cpm)
+            if (max_text_ecpm_sum >= text_tag_pricing->cpm)
             {
               TextSelectionBySize text_selection(arena_);
               text_selection.tag_sizes.insert(
@@ -3107,12 +3107,12 @@ namespace AdServer
 
           RevenueDecimal cur_ecpm_offset = RevenueDecimal::ZERO;
 
-          for(TextSelectionBySizeList::iterator text_selection_it =
+          for (TextSelectionBySizeList::iterator text_selection_it =
                 text_selections.begin();
               text_selection_it != text_selections.end(); ++text_selection_it)
           {
             cur_ecpm_offset += text_selection_it->expected_ecpm;
-            if(cur_ecpm_offset > text_selection_ecpm_offset)
+            if (cur_ecpm_offset > text_selection_ecpm_offset)
             {
               result_text_selection = &*text_selection_it;
               break;
@@ -3131,7 +3131,7 @@ namespace AdServer
 
           RevenueDecimal cur_ecpm_offset = RevenueDecimal::ZERO;
 
-          for(auto text_selection_zero_ecpm_it = text_selections_zero_ecpm.begin();
+          for (auto text_selection_zero_ecpm_it = text_selections_zero_ecpm.begin();
               text_selection_zero_ecpm_it != text_selections.end();
               ++text_selection_zero_ecpm_it)
           {
@@ -3157,12 +3157,12 @@ namespace AdServer
         if (display_ecpm_expected_value == RevenueDecimal::ZERO &&
             text_ecpm_expected_value == RevenueDecimal::ZERO)
         {
-          if(!display_campaign_candidates.empty())
+          if (!display_campaign_candidates.empty())
           {
             display_ecpm_expected_value = REVENUE_ONE;
           }
 
-          if(!result_text_selection ||
+          if (!result_text_selection ||
              !result_text_selection->campaign_candidates.empty())
           {
             text_ecpm_expected_value = REVENUE_ONE;
@@ -3177,14 +3177,14 @@ namespace AdServer
               RevenueDecimal(RANDOM_PARAM_MAX, 0)),
             Generics::DMR_FLOOR);
 
-        if(ecpm_offset < display_ecpm_expected_value)
+        if (ecpm_offset < display_ecpm_expected_value)
         {
           const RevenueDecimal display_ecpm_sum = sum_campaign_ecpm_(
             display_campaign_candidates);
 
           WeightedCampaignList::iterator result_cmp_it;
 
-          if(display_ecpm_sum != RevenueDecimal::ZERO)
+          if (display_ecpm_sum != RevenueDecimal::ZERO)
           {
             RevenueDecimal display_ecpm_offset = RevenueDecimal::mul(
               RevenueDecimal::div(
@@ -3276,7 +3276,7 @@ namespace AdServer
         wg_display_check_campaigns);
 
       // select display campaign (OIX)
-      if(!weighted_campaign.get() &&
+      if (!weighted_campaign.get() &&
          tag->marketplace != 'W' // tag allow only WG auction
          )
       {
@@ -3299,7 +3299,7 @@ namespace AdServer
           // 'all' ccg rates targeting
           );
 
-        if(!request_params.only_display_ad)
+        if (!request_params.only_display_ad)
         {
           select_result.min_text_ecpm = std::max(
             tag_pricing->cpm, request_params.min_ecpm);
@@ -3326,21 +3326,21 @@ namespace AdServer
             keyword_check_campaigns,
             text_check_campaigns);
 
-          for(Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
+          for (Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
               tag_size_it != tag_sizes.end(); ++tag_size_it)
           {
-            if(tag_size_it->second->max_text_creatives != 0)
+            if (tag_size_it->second->max_text_creatives != 0)
             {
               CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
 
-              if(ctr_calculation)
+              if (ctr_calculation)
               {
                 ctr_calculation_context = ctr_calculation->create_context(
                   tag_size_it->second);
               }
 
               CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
-              if(conv_rate_calculation)
+              if (conv_rate_calculation)
               {
                 conv_rate_calculation_context = conv_rate_calculation->create_context(
                   tag_size_it->second);
@@ -3361,7 +3361,7 @@ namespace AdServer
               /*
               std::cerr << "filtered_text_campaign_candidates(" << tag_size_it->first <<
                 ") :" << std::endl;
-              for(WeightedCampaignKeywordList::const_iterator rit =
+              for (WeightedCampaignKeywordList::const_iterator rit =
                     filtered_text_campaign_candidates.begin();
                   rit != filtered_text_campaign_candidates.end(); ++rit)
               {
@@ -3381,13 +3381,13 @@ namespace AdServer
               /*
               std::cerr << "cpc_keyword_map(" << tag_size_it->first <<
                 ") :" << std::endl;
-              for(CPCKeywordMap::const_iterator rit =
+              for (CPCKeywordMap::const_iterator rit =
                     cpc_keyword_map.begin();
                   rit != cpc_keyword_map.end(); ++rit)
               {
                 std::cerr << "[ " << rit->first << ": (";
 
-                for(WeightedCampaignKeywordList::const_iterator cit =
+                for (WeightedCampaignKeywordList::const_iterator cit =
                       rit->second.begin();
                     cit != rit->second.end(); ++cit)
                 {
@@ -3401,7 +3401,7 @@ namespace AdServer
 
               WeightedCampaignKeywordList step_weighted_campaign_keywords(arena_);
 
-              if(select_campaign_keywords_n_(
+              if (select_campaign_keywords_n_(
                    key,
                    request_params,
                    tag,
@@ -3413,7 +3413,7 @@ namespace AdServer
                    step_weighted_campaign_keywords))
               {
                 RevenueDecimal sum_step_ecpm = RevenueDecimal::ZERO;
-                for(WeightedCampaignKeywordList::const_iterator wit =
+                for (WeightedCampaignKeywordList::const_iterator wit =
                       step_weighted_campaign_keywords.begin();
                     wit != step_weighted_campaign_keywords.end(); ++wit)
                 {
@@ -3424,9 +3424,9 @@ namespace AdServer
                 std::cerr << "text_selection step ecpm(" <<
                   tag_size_it->first << ") = " << sum_step_ecpm << std::endl;
                 */
-                if(sum_step_ecpm >= max_sum_ecpm)
+                if (sum_step_ecpm >= max_sum_ecpm)
                 {
-                  if(sum_step_ecpm > max_sum_ecpm)
+                  if (sum_step_ecpm > max_sum_ecpm)
                   {
                     text_selections.clear();
                   }
@@ -3442,13 +3442,13 @@ namespace AdServer
             }
           }
 
-          if(!text_selections.empty())
+          if (!text_selections.empty())
           {
             // select randomly text selection cell
             const unsigned long text_selections_size = text_selections.size();
             TextSelectionBySizeList::iterator ts_it = text_selections.begin();
 
-            if(text_selections_size > 1)
+            if (text_selections_size > 1)
             {
               const unsigned long pos =
                 Generics::unsafe_rand() % text_selections_size;
@@ -3488,7 +3488,7 @@ namespace AdServer
 
       const Tag* tag = request_params.tag;
 
-      if(tag->tag_pricings.empty() ||
+      if (tag->tag_pricings.empty() ||
          tag->sizes.empty() ||
          request_params.colocation == 0 || // non found colo equal to none
          request_params.colocation->ad_serving == CampaignSvcs::CS_NONE)
@@ -3500,13 +3500,13 @@ namespace AdServer
       CTR::CTRProvider::Calculation_var ctr_calculation;
       CTR::CTRProvider::Calculation_var conv_rate_calculation;
 
-      if(ctr_provider_.in())
+      if (ctr_provider_.in())
       {
         ctr_calculation = ctr_provider_->create_calculation(request_params_ptr);
         select_result.ctr_calculation = ctr_calculation;
       }
 
-      if(conv_rate_provider_.in())
+      if (conv_rate_provider_.in())
       {
         conv_rate_calculation = conv_rate_provider_->create_calculation(
           request_params_ptr);
@@ -3545,7 +3545,7 @@ namespace AdServer
       key.tag_delivery_factor = request_params.tag_delivery_factor;
       key.ccg_delivery_factor = request_params.ccg_delivery_factor;
 
-      if(auction_type == AT_RANDOM)
+      if (auction_type == AT_RANDOM)
       {
         select_campaigns_randomly_(
           result_weighted_campaign_keywords,
@@ -3560,7 +3560,7 @@ namespace AdServer
           channels,
           hit_keywords);
 
-        if((result_weighted_campaign_keywords.get() == 0 ||
+        if ((result_weighted_campaign_keywords.get() == 0 ||
             result_weighted_campaign_keywords->empty()) &&
            weighted_campaign.get() == 0)
         {
@@ -3569,13 +3569,13 @@ namespace AdServer
           select_result.walled_garden = false;
           auction_type = second_auction_type;
         }
-        else if(!request_params.need_debug_info)
+        else if (!request_params.need_debug_info)
         {
           select_result.ctr_calculation = CTR::CTRProvider::Calculation_var();
         }
       }
 
-      if(auction_type == AT_MAX_ECPM)
+      if (auction_type == AT_MAX_ECPM)
       {
         select_campaigns_max_ecpm_(
           result_weighted_campaign_keywords,
@@ -3591,7 +3591,7 @@ namespace AdServer
           hit_keywords,
           collect_lost);
       }
-      else if(auction_type == AT_PROPORTIONAL_PROBABILITY)
+      else if (auction_type == AT_PROPORTIONAL_PROBABILITY)
       {
         select_campaigns_prop_probability_(
           result_weighted_campaign_keywords,
@@ -3611,11 +3611,11 @@ namespace AdServer
       /* calculate cpm_threshold: first check display selection,
        * its cost can be only less then text campaigns sum
        */
-      if(result_weighted_campaign_keywords.get())
+      if (result_weighted_campaign_keywords.get())
       {
         RevenueDecimal sum_text_ecpm = RevenueDecimal::ZERO;
 
-        for(WeightedCampaignKeywordList::iterator kw_it =
+        for (WeightedCampaignKeywordList::iterator kw_it =
               result_weighted_campaign_keywords->begin();
             kw_it != result_weighted_campaign_keywords->end(); ++kw_it)
         {
@@ -3624,7 +3624,7 @@ namespace AdServer
 
         select_result.cpm_threshold = sum_text_ecpm;
       }
-      else if(weighted_campaign.get())
+      else if (weighted_campaign.get())
       {
         select_result.cpm_threshold = weighted_campaign->ecpm;
       }
@@ -3637,25 +3637,25 @@ namespace AdServer
       select_result.min_no_adv_ecpm = std::max(
         tag_pricing->cpm, request_params.min_ecpm);
 
-      if(result_weighted_campaign_keywords.get())
+      if (result_weighted_campaign_keywords.get())
       {
         weighted_campaign.reset(0);
         select_result.walled_garden = false;
       }
 
-      if(weighted_campaign.get())
+      if (weighted_campaign.get())
       {
         select_result.tag_size = weighted_campaign->tag_size;
       }
 
-      if(ctr_calculation && select_result.tag_size)
+      if (ctr_calculation && select_result.tag_size)
       {
         CTR::CTRProvider::CalculationContext_var ctr_calculation_context =
           ctr_calculation->create_context(select_result.tag_size);
 
-        if(weighted_campaign.get())
+        if (weighted_campaign.get())
         {
-          if(request_params.need_debug_info ||
+          if (request_params.need_debug_info ||
             (!weighted_campaign->campaign->use_ctr() &&
               weighted_campaign->campaign->bid_strategy != BS_MIN_CTR_GOAL))
           {
@@ -3663,12 +3663,12 @@ namespace AdServer
               weighted_campaign->creative);
           }
         }
-        else if(result_weighted_campaign_keywords.get())
+        else if (result_weighted_campaign_keywords.get())
         {
-          for(auto it = result_weighted_campaign_keywords->begin();
+          for (auto it = result_weighted_campaign_keywords->begin();
             it != result_weighted_campaign_keywords->end(); ++it)
           {
-            if(request_params.need_debug_info ||
+            if (request_params.need_debug_info ||
               (!it->campaign->use_ctr() &&
                 it->campaign->bid_strategy != BS_MIN_CTR_GOAL))
             {
@@ -3676,7 +3676,7 @@ namespace AdServer
             }
           }
         }
-      } // if(ctr_calculation)
+      } // if (ctr_calculation)
     }
   }
 }

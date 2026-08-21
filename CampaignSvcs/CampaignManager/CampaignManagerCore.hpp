@@ -1048,7 +1048,7 @@ namespace AdServer::CampaignSvcs
           publisher_account_id(0),
           init_source_macroses(true)
       {
-        if(!user_id.is_null())
+        if (!user_id.is_null())
         {
           user_id_hash_mod =
             AdServer::LogProcessing::user_id_distribution_hash(user_id);
@@ -1478,7 +1478,7 @@ namespace AdServer::CampaignSvcs
       res = configuration_;
     }
 
-    if(required && !res)
+    if (required && !res)
     {
       throw CampaignManagerCore::NotReady("Campaign configuration isn't loaded");
     }
@@ -1501,7 +1501,7 @@ namespace AdServer::CampaignSvcs
   {
     IndexingProgress::SyncPolicy::ReadGuard guard(indexing_progress_.lock);
     std::ostringstream ostr;
-    if(!indexing_progress_.common_campaign_count)
+    if (!indexing_progress_.common_campaign_count)
     {
       ostr << "waiting configuration, ";
     }
@@ -1517,7 +1517,7 @@ namespace AdServer::CampaignSvcs
     ChannelWeightMap& res, const std::vector<ChannelWeight>& triggered_channels)
     noexcept
   {
-    for(const auto& triggered_channel : triggered_channels)
+    for (const auto& triggered_channel : triggered_channels)
     {
       res.insert(std::make_pair(
         triggered_channel.channel_id, triggered_channel.weight));

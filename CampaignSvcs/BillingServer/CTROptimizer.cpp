@@ -34,7 +34,7 @@ namespace CampaignSvcs
   {
     RevenueDecimal res = RevenueDecimal::ZERO;
     unsigned long hour_i = 0;
-    for(auto hour_it = begin(); hour_it != end() && hour_i < hour; ++hour_it, ++hour_i)
+    for (auto hour_it = begin(); hour_it != end() && hour_i < hour; ++hour_it, ++hour_i)
     {
       res += *hour_it;
     }
@@ -50,11 +50,11 @@ namespace CampaignSvcs
     unsigned long hour_i = 0;
     bool first_rec = true;
     out << "[ ";
-    for(auto it = begin(); it != end(); ++it, ++hour_i)
+    for (auto it = begin(); it != end(); ++it, ++hour_i)
     {
-      if(*it != RevenueDecimal::ZERO)
+      if (*it != RevenueDecimal::ZERO)
       {
-        if(!first_rec)
+        if (!first_rec)
         {
           out << ", ";
         }
@@ -80,9 +80,9 @@ namespace CampaignSvcs
   {
     unsigned long hour_i = 0;
     out << "[ ";
-    for(auto it = begin(); it != end(); ++it, ++hour_i)
+    for (auto it = begin(); it != end(); ++it, ++hour_i)
     {
-      if(it != begin())
+      if (it != begin())
       {
         out << ", ";
       }
@@ -121,7 +121,7 @@ namespace CampaignSvcs
   {
     HourAmount& hour_amount = amounts[hour_i];
     hour_amount.amount += amount;
-    if(time_in_hour)
+    if (time_in_hour)
     {
       //assert(*time_in_hour <= Generics::Time::ONE_HOUR + Generics::Time::ONE_SECOND);
       hour_amount.use_time = std::max(hour_amount.use_time, *time_in_hour);
@@ -134,7 +134,7 @@ namespace CampaignSvcs
     noexcept
   {
     auto left_it = amounts.begin();
-    for(auto right_it = right.amounts.begin();
+    for (auto right_it = right.amounts.begin();
       right_it != right.amounts.end(); ++right_it, ++left_it)
     {
       left_it->amount += right_it->amount;
@@ -147,7 +147,7 @@ namespace CampaignSvcs
   CTROptimizer::HourAmountDistribution::sum_amount() const noexcept
   {
     RevenueDecimal res = RevenueDecimal::ZERO;
-    for(auto hour_it = amounts.begin(); hour_it != amounts.end(); ++hour_it)
+    for (auto hour_it = amounts.begin(); hour_it != amounts.end(); ++hour_it)
     {
       res += hour_it->amount;
     }
@@ -163,11 +163,11 @@ namespace CampaignSvcs
     unsigned long hour_i = 0;
     bool first_rec = true;
     out << "[ ";
-    for(auto it = amounts.begin(); it != amounts.end(); ++it, ++hour_i)
+    for (auto it = amounts.begin(); it != amounts.end(); ++it, ++hour_i)
     {
-      if(it->amount != RevenueDecimal::ZERO)
+      if (it->amount != RevenueDecimal::ZERO)
       {
-        if(!first_rec)
+        if (!first_rec)
         {
           out << ", ";
         }
@@ -209,7 +209,7 @@ namespace CampaignSvcs
     RevenueDecimal res = RevenueDecimal::ZERO;
 
     auto begin_rate_it = rate_distributions.lower_bound(min_rate);
-    for(auto rate_it = begin_rate_it; rate_it != rate_distributions.end(); ++rate_it)
+    for (auto rate_it = begin_rate_it; rate_it != rate_distributions.end(); ++rate_it)
     {
       res += rate_it->second.sum_amount();
     }
@@ -224,7 +224,7 @@ namespace CampaignSvcs
     const noexcept
   {
     out << prefix << "{" << std::endl;
-    for(auto rate_it = rate_distributions.begin(); rate_it != rate_distributions.end(); ++rate_it)
+    for (auto rate_it = rate_distributions.begin(); rate_it != rate_distributions.end(); ++rate_it)
     {
       out << prefix << "  " << rate_it->first << "(sum=" << rate_it->second.sum_amount() << "): ";
       rate_it->second.print(out);
@@ -281,7 +281,7 @@ namespace CampaignSvcs
 
     {
       RevenueDecimal basic_load_distribution_sum = RevenueDecimal::ZERO;
-      for(auto b_it = basic_load_distribution_.begin();
+      for (auto b_it = basic_load_distribution_.begin();
         b_it != basic_load_distribution_.end(); ++b_it)
       {
         basic_load_distribution_sum += *b_it;
@@ -290,7 +290,7 @@ namespace CampaignSvcs
 
     // redistribute last hours
     const size_t FIRST_CORRECT_HOUR = 21;
-    for(size_t correct_hour_i = FIRST_CORRECT_HOUR; correct_hour_i < 24; ++correct_hour_i)
+    for (size_t correct_hour_i = FIRST_CORRECT_HOUR; correct_hour_i < 24; ++correct_hour_i)
     {
       const RevenueDecimal post_hour_portion = RevenueDecimal::div(
         basic_load_distribution_[correct_hour_i],
@@ -309,7 +309,7 @@ namespace CampaignSvcs
 
     {
       RevenueDecimal basic_load_distribution_sum = RevenueDecimal::ZERO;
-      for(auto b_it = basic_load_distribution_.begin();
+      for (auto b_it = basic_load_distribution_.begin();
         b_it != basic_load_distribution_.end(); ++b_it)
       {
         basic_load_distribution_sum += *b_it;
@@ -457,11 +457,11 @@ namespace CampaignSvcs
     auto last_hour_it = --amount_distribution.amounts.end();
     auto res_hour_it = full_amount_distribution.amounts.begin();
 
-    for(auto hour_it = amount_distribution.amounts.begin();
+    for (auto hour_it = amount_distribution.amounts.begin();
       hour_it != last_hour_it;
       ++hour_it, ++res_hour_it)
     {
-      if(hour_it->use_time == Generics::Time::ZERO)
+      if (hour_it->use_time == Generics::Time::ZERO)
       {
         *res_hour_it = HourAmount();
       }
@@ -490,7 +490,7 @@ namespace CampaignSvcs
     const RateAmountDistribution& amount_distribution)
     noexcept
   {
-    for(auto rate_it = amount_distribution.rate_distributions.begin();
+    for (auto rate_it = amount_distribution.rate_distributions.begin();
       rate_it != amount_distribution.rate_distributions.end(); ++rate_it)
     {
       HourAmountDistribution approximated_hour_amount_distribution;
@@ -499,7 +499,7 @@ namespace CampaignSvcs
         rate_it->second);
 
       unsigned long hour_i = 0;
-      for(auto hour_it = approximated_hour_amount_distribution.amounts.begin();
+      for (auto hour_it = approximated_hour_amount_distribution.amounts.begin();
         hour_it != approximated_hour_amount_distribution.amounts.end();
           ++hour_it, ++hour_i)
       {
@@ -536,7 +536,7 @@ namespace CampaignSvcs
     auto res_hour_it = full_amount_distribution.begin();
 
     RevenueDecimal prev_amount_sum = RevenueDecimal::ZERO;
-    for(auto hour_it = prev_amount_distribution.amounts.begin();
+    for (auto hour_it = prev_amount_distribution.amounts.begin();
       hour_it != prev_amount_distribution.amounts.end();
       ++hour_it)
     {
@@ -545,11 +545,11 @@ namespace CampaignSvcs
 
     RevenueDecimal redistribute_budget;
 
-    if(prev_amount_sum != RevenueDecimal::ZERO)
+    if (prev_amount_sum != RevenueDecimal::ZERO)
     {
       redistribute_budget = RevenueDecimal::ZERO;
 
-      for(auto hour_it = prev_amount_distribution.amounts.begin();
+      for (auto hour_it = prev_amount_distribution.amounts.begin();
         hour_it != prev_amount_distribution.amounts.end();
         ++hour_it, ++res_hour_it)
       {
@@ -603,17 +603,17 @@ namespace CampaignSvcs
     const RateAmountDistribution& add_amount_distribution)
     noexcept
   {
-    for(auto rate_it = add_amount_distribution.rate_distributions.begin();
+    for (auto rate_it = add_amount_distribution.rate_distributions.begin();
       rate_it != add_amount_distribution.rate_distributions.end(); ++rate_it)
     {
       auto res_rate_it = combined_amount_distribution.rate_distributions.find(rate_it->first);
 
-      if(res_rate_it != combined_amount_distribution.rate_distributions.end())
+      if (res_rate_it != combined_amount_distribution.rate_distributions.end())
       {
         HourAmountDistribution& res_hour_amount_distribution = res_rate_it->second;
         auto res_hour_it = res_hour_amount_distribution.amounts.begin();
 
-        for(auto hour_it = rate_it->second.amounts.begin();
+        for (auto hour_it = rate_it->second.amounts.begin();
           hour_it != rate_it->second.amounts.end();
           ++hour_it, ++res_hour_it)
         {
@@ -640,9 +640,9 @@ namespace CampaignSvcs
     RevenueDecimal actual_delivered_free_amount = RevenueDecimal::ZERO;
     RevenueDecimal planned_free_amount = RevenueDecimal::ZERO;
 
-    for(unsigned long hour_i = 0; hour_i < 24; ++hour_i)
+    for (unsigned long hour_i = 0; hour_i < 24; ++hour_i)
     {
-      if(hour_i < now_hour)
+      if (hour_i < now_hour)
       {
         actual_delivered_free_amount +=
           actual_free_amount_distribution.amounts[hour_i].amount;
@@ -659,13 +659,13 @@ namespace CampaignSvcs
       "TT> planned_free_amount = " << planned_free_amount << std::endl;
 #   endif
 
-    if(actual_delivered_free_amount < planned_free_amount)
+    if (actual_delivered_free_amount < planned_free_amount)
     {
       // add underdelivered amount to current hour
       free_budget_distribution[now_hour] +=
         planned_free_amount - actual_delivered_free_amount;
     }
-    else if(planned_free_amount < actual_delivered_free_amount)
+    else if (planned_free_amount < actual_delivered_free_amount)
     {
       // decrease overdelivered
       distribute_decimal_sum_(
@@ -689,7 +689,7 @@ namespace CampaignSvcs
     unsigned long now_hour)
     noexcept
   {
-    if(goal_daily_budget == RevenueDecimal::ZERO)
+    if (goal_daily_budget == RevenueDecimal::ZERO)
     {
       goal_rate = RevenueDecimal::ZERO;
       return;
@@ -698,7 +698,7 @@ namespace CampaignSvcs
     // eval actual delivered goaled amount
     RevenueDecimal actual_delivered_goaled_amount = RevenueDecimal::ZERO;
 
-    for(unsigned long hour_i = 0; hour_i < now_hour; ++hour_i)
+    for (unsigned long hour_i = 0; hour_i < now_hour; ++hour_i)
     {
       actual_delivered_goaled_amount +=
         actual_goaled_amount_distribution.amounts[hour_i].amount;
@@ -707,18 +707,18 @@ namespace CampaignSvcs
     // eval planned amount
     RevenueDecimal planned_goaled_amount = RevenueDecimal::ZERO;
 
-    for(auto rate_it = past_amount_distribution.rate_distributions.rbegin();
+    for (auto rate_it = past_amount_distribution.rate_distributions.rbegin();
       rate_it != past_amount_distribution.rate_distributions.rend();
       ++rate_it)
     {
       unsigned long hour_i = 0;
 
-      for(auto hour_it = rate_it->second.amounts.begin();
+      for (auto hour_it = rate_it->second.amounts.begin();
           hour_it != rate_it->second.amounts.end() &&
             hour_i < now_hour;
           ++hour_it, ++hour_i)
       {
-        if(rate_it->first >= actual_rate_distribution[hour_i])
+        if (rate_it->first >= actual_rate_distribution[hour_i])
         {
           planned_goaled_amount += hour_it->amount;
         }
@@ -732,7 +732,7 @@ namespace CampaignSvcs
     RevenueDecimal free_budget_reminder = RevenueDecimal::ZERO;
     RevenueDecimal safe_goal_daily_budget_multiplier;
 
-    if(planned_goaled_amount != RevenueDecimal::ZERO &&
+    if (planned_goaled_amount != RevenueDecimal::ZERO &&
         actual_delivered_goaled_amount < planned_goaled_amount)
     {
       try
@@ -744,14 +744,14 @@ namespace CampaignSvcs
           MAX_UNDERDELIVERY_COEF_,
           Generics::DMR_FLOOR);
 
-        if(now_hour >= 20 || //
+        if (now_hour >= 20 || //
           planned_goaled_amount - actual_delivered_goaled_amount > max_underdelivery_budget)
         {
           // underdelivering coef = actual_delivered_goaled_amount / planned_goaled_amount
           // set safe_goal_daily_budget_multiplier = min(1 / (underdelivering coef), MAX_GOAL_CORRECT_COEF)
           // other underdelivered part push into free budget
 
-          if(actual_delivered_goaled_amount == RevenueDecimal::ZERO)
+          if (actual_delivered_goaled_amount == RevenueDecimal::ZERO)
           {
             safe_goal_daily_budget_multiplier = MAX_GOAL_CORRECT_COEF_;
           }
@@ -807,7 +807,7 @@ namespace CampaignSvcs
     HourAmountDistribution today_planned_goaled_budget_distribution;
     RevenueDecimal cur_goal_amount = RevenueDecimal::ZERO;
 
-    for(auto rate_it = past_amount_distribution.rate_distributions.rbegin();
+    for (auto rate_it = past_amount_distribution.rate_distributions.rbegin();
       rate_it != past_amount_distribution.rate_distributions.rend();
       ++rate_it)
     {
@@ -815,12 +815,12 @@ namespace CampaignSvcs
 
       auto hour_it = rate_it->second.amounts.begin();
       std::advance(hour_it, now_hour);
-      for(; hour_it != rate_it->second.amounts.end(); ++hour_it)
+      for (; hour_it != rate_it->second.amounts.end(); ++hour_it)
       {
         cur_goal_amount += hour_it->amount;
       }
 
-      if(cur_goal_amount >= safe_goal_daily_budget)
+      if (cur_goal_amount >= safe_goal_daily_budget)
       {
         cur_goal_rate = rate_it->first;
         break;
@@ -883,26 +883,26 @@ namespace CampaignSvcs
   {
     RevenueDecimal coef_sum = RevenueDecimal::ZERO;
 
-    for(auto it = begin_it; it != end_it; ++it)
+    for (auto it = begin_it; it != end_it; ++it)
     {
       coef_sum += *it;
     }
 
-    if(coef_sum != RevenueDecimal::ZERO)
+    if (coef_sum != RevenueDecimal::ZERO)
     {
       const RevenueDecimal normalizer = RevenueDecimal::div(
         RevenueDecimal(false, 1, 0),
         coef_sum,
         Generics::DDR_FLOOR);
 
-      for(; res_begin_it != res_end_it && begin_it != end_it; ++res_begin_it, ++begin_it)
+      for (; res_begin_it != res_end_it && begin_it != end_it; ++res_begin_it, ++begin_it)
       {
         *res_begin_it += RevenueDecimal::mul(
           RevenueDecimal::mul(sum, *begin_it, Generics::DMR_FLOOR),
           normalizer,
           Generics::DMR_FLOOR);
 
-        if(*res_begin_it <= RevenueDecimal::ZERO)
+        if (*res_begin_it <= RevenueDecimal::ZERO)
         {
           *res_begin_it = RevenueDecimal::ZERO;
         }

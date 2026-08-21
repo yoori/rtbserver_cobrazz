@@ -64,9 +64,9 @@ namespace
   {
     std::string result;
     result.reserve(endpoint.size());
-    for(const char ch : endpoint)
+    for (const char ch : endpoint)
     {
-      if((ch >= 'a' && ch <= 'z') ||
+      if ((ch >= 'a' && ch <= 'z') ||
         (ch >= 'A' && ch <= 'Z') ||
         (ch >= '0' && ch <= '9'))
       {
@@ -87,7 +87,7 @@ namespace
     static const char HEX[] = "0123456789abcdef";
 
     body += '"';
-    for(const unsigned char ch : value)
+    for (const unsigned char ch : value)
     {
       switch(ch)
       {
@@ -113,7 +113,7 @@ namespace
         body += "\\t";
         break;
       default:
-        if(ch < 0x20)
+        if (ch < 0x20)
         {
           body += "\\u00";
           body += HEX[(ch >> 4) & 0x0f];
@@ -132,7 +132,7 @@ namespace
   void
   append_json_field_name(std::string& body, bool& first, const std::string& name)
   {
-    if(!first)
+    if (!first)
     {
       body += ',';
     }
@@ -291,7 +291,7 @@ namespace
       prefix + "_deferred_streams",
       stats.deferred_streams);
 
-    if(stats.consumer_stream_write.has_value())
+    if (stats.consumer_stream_write.has_value())
     {
       append_json_stat(
         body,
@@ -310,7 +310,7 @@ namespace
         stats.consumer_stream_write->max_us);
     }
 
-    if(stats.last_error.has_value())
+    if (stats.last_error.has_value())
     {
       append_json_string_stat(
         body,
@@ -347,7 +347,7 @@ namespace
     const std::string& prefix,
     const AdServer::Grpc::Client::EndpointStats& endpoint_stats)
   {
-    for(const auto& [endpoint, stats] : endpoint_stats)
+    for (const auto& [endpoint, stats] : endpoint_stats)
     {
       const auto endpoint_prefix =
         prefix + "_endpoints_" + sanitize_endpoint_key(endpoint);
@@ -375,7 +375,7 @@ namespace
       append_json_stat(body, first, name, value);
     };
 
-    if(grpc_adapter != 0)
+    if (grpc_adapter != 0)
     {
       const auto stats = grpc_adapter->stats();
 
@@ -509,7 +509,7 @@ namespace
       "logging_processing_requests_total",
       logger_stats.processing_requests_total);
 
-    if(campaign_manager_core != 0)
+    if (campaign_manager_core != 0)
     {
       const auto billing_stats = campaign_manager_core->billing_server_stats();
       append_grpc_client_stats(
@@ -574,7 +574,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       campaign_manager_config_->Billing().present() && (
         campaign_manager_config_->Billing()->check_bids() ||
         campaign_manager_config_->Billing()->confirm_bids());
-    if(campaign_manager_config_->GrpcConfig().present() || billing_enabled)
+    if (campaign_manager_config_->GrpcConfig().present() || billing_enabled)
     {
       stage = "creating CampaignManager executor pool";
       const std::size_t process_threads =
@@ -615,7 +615,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
       [&]() noexcept
       {
-        if(active_objects->active())
+        if (active_objects->active())
         {
           active_objects->deactivate_object();
           active_objects->wait_object();
@@ -624,13 +624,13 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     );
 
     active_objects->add_child_object(campaign_manager_logger.in());
-    if(campaign_manager_executor_pool)
+    if (campaign_manager_executor_pool)
     {
       active_objects->add_child_object(campaign_manager_executor_pool);
     }
     active_objects->add_child_object(campaign_manager_core.in());
 
-    if(campaign_manager_config_->GrpcConfig().present())
+    if (campaign_manager_config_->GrpcConfig().present())
     {
       stage = "creating CampaignManagerGrpc";
       grpc_adapter = new AdServer::CampaignSvcs::CampaignManagerGrpc(
@@ -648,7 +648,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         grpc_adapter.in()));
     }
 
-    if(campaign_manager_config_->HttpConfig().present())
+    if (campaign_manager_config_->HttpConfig().present())
     {
       AdServer::Commons::HttpServer::HttpServer_var http_server;
       stage = "creating CampaignManager HttpServer";
@@ -755,7 +755,7 @@ CampaignManagerApp_::read_creative_config(
   using namespace xsd::AdServer::Configuration;
 
   long cur_option_id = -100000;
-  for(auto it = xsd_creative_description.CreativeRule().begin();
+  for (auto it = xsd_creative_description.CreativeRule().begin();
     it != xsd_creative_description.CreativeRule().end();
     ++it)
   {
@@ -765,39 +765,39 @@ CampaignManagerApp_::read_creative_config(
     creative_instantiate.creative_rules[rule_name] = rule;
   }
 
-  for(auto it = xsd_creative_description.SourceRule().begin();
+  for (auto it = xsd_creative_description.SourceRule().begin();
      it != xsd_creative_description.SourceRule().end();
      ++it)
   {
     AdServer::CampaignSvcs::CreativeInstantiator::
       CreativeInstantiate::SourceRule source_rule;
 
-    if(it->click_prefix().present())
+    if (it->click_prefix().present())
     {
       source_rule.click_prefix = *(it->click_prefix());
     }
 
-    if(it->mime_encoded_click_prefix().present())
+    if (it->mime_encoded_click_prefix().present())
     {
       source_rule.mime_encoded_click_prefix = *(it->mime_encoded_click_prefix());
     }
 
-    if(it->preclick().present())
+    if (it->preclick().present())
     {
       source_rule.preclick = *(it->preclick());
     }
 
-    if(it->mime_encoded_preclick().present())
+    if (it->mime_encoded_preclick().present())
     {
       source_rule.mime_encoded_preclick = *(it->mime_encoded_preclick());
     }
 
-    if(it->vast_preclick().present())
+    if (it->vast_preclick().present())
     {
       source_rule.vast_preclick = *(it->vast_preclick());
     }
 
-    if(it->mime_encoded_vast_preclick().present())
+    if (it->mime_encoded_vast_preclick().present())
     {
       source_rule.mime_encoded_vast_preclick = *(it->mime_encoded_vast_preclick());
     }
@@ -816,7 +816,7 @@ CampaignManagerApp_::read_creative_rule_config(
   /*throw(Exception, eh::Exception)*/
 {
   name = xsd_creative_rule.name();
-  if(xsd_creative_rule.secure())
+  if (xsd_creative_rule.secure())
   {
     rule.url_prefix = HTTP::HTTPS_PREFIX.str.str();
   }
@@ -837,7 +837,7 @@ CampaignManagerApp_::read_creative_rule_config(
   rule.passback_template_path_prefix =
     xsd_creative_rule.passback_template_path_prefix();
   rule.passback_pixel_url = xsd_creative_rule.passback_pixel_url();
-  if(xsd_creative_rule.user_bind_url().present())
+  if (xsd_creative_rule.user_bind_url().present())
   {
     rule.user_bind_url = *xsd_creative_rule.user_bind_url();
   }
@@ -850,7 +850,7 @@ CampaignManagerApp_::read_creative_rule_config(
   rule.video_instantiate_url = xsd_creative_rule.video_instantiate_url();
   rule.nonsecure_video_instantiate_url = xsd_creative_rule.nonsecure_video_instantiate_url();
 
-  for(xsd::AdServer::Configuration::CampaignManagerCreativeRuleType::
+  for (xsd::AdServer::Configuration::CampaignManagerCreativeRuleType::
         Token_sequence::const_iterator tok_it =
           xsd_creative_rule.Token().begin();
       tok_it != xsd_creative_rule.Token().end(); ++tok_it)
@@ -1082,7 +1082,7 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
     {
       ad_configuration = AdConfiguration(filename, error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -1098,7 +1098,7 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << filename << "': ";
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -1114,7 +1114,7 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
       domain_config_ = DomainConfiguration(
         domain_config_path.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -1124,7 +1124,7 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << domain_config_path << "': ";
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -1169,14 +1169,14 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
       configuration->uc_freq_caps_lifetime().get() :
       DefaultValues::UC_FREQ_CAPS_LIFETIME;
 
-    if(configuration->campaigns_type().present())
+    if (configuration->campaigns_type().present())
     {
       std::string sval = configuration->campaigns_type().get();
-      if(sval == "active")
+      if (sval == "active")
       {
         configuration_.campaigns_types = "A";
       }
-      else if(sval == "virtual")
+      else if (sval == "virtual")
       {
         configuration_.campaigns_types = "AV";
       }

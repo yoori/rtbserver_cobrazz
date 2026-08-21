@@ -84,6 +84,8 @@ namespace CampaignSvcs
     {
       bool available = false;
       RevenueDecimal goal_ctr = RevenueDecimal::ZERO;
+      BillingProcessor::BidUnavailableReason unavailable_reason =
+        BillingProcessor::BidUnavailableReason::UNSPECIFIED;
     };
 
     BillingServerCore(

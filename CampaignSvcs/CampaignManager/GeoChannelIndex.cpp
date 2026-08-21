@@ -113,7 +113,7 @@ namespace CampaignSvcs
       operator=(const ValuePair& value)
       {
         // final check of point
-        if(CoordIndexImpl::channel_check_(
+        if (CoordIndexImpl::channel_check_(
              value,
              point_,
              accuracy_))
@@ -255,22 +255,22 @@ namespace CampaignSvcs
       EARTH_RADIUS_M_DOUBLE;
     double distance_sqr = distance * distance;
 
-    if(distance < accuracy + value_pair.second.accuracy)
+    if (distance < accuracy + value_pair.second.accuracy)
     {
       double cross_s;
       double accuracy_sqr = accuracy * accuracy;
       double right_accuracy_sqr = value_pair.second.accuracy * value_pair.second.accuracy;
 
-      if(distance <= std::numeric_limits<double>::epsilon())
+      if (distance <= std::numeric_limits<double>::epsilon())
       {
         cross_s = std::min(accuracy_sqr, right_accuracy_sqr) *
           boost::math::constants::pi<double>();
       }
-      else if(distance + accuracy <= value_pair.second.accuracy)
+      else if (distance + accuracy <= value_pair.second.accuracy)
       {
         cross_s = accuracy_sqr * boost::math::constants::pi<double>();
       }
-      else if(distance + value_pair.second.accuracy <= accuracy)
+      else if (distance + value_pair.second.accuracy <= accuracy)
       {
         cross_s = right_accuracy_sqr * boost::math::constants::pi<double>();
       }
@@ -289,7 +289,7 @@ namespace CampaignSvcs
           (distance + accuracy + value_pair.second.accuracy)) / 2;
       }
 
-      if(cross_s / (accuracy_sqr * boost::math::constants::pi<double>()) >= TRUST_PROBABILITY)
+      if (cross_s / (accuracy_sqr * boost::math::constants::pi<double>()) >= TRUST_PROBABILITY)
       {
         return true;
       }
@@ -310,7 +310,7 @@ namespace CampaignSvcs
     all_names_.reserve(init.all_names_.size());
     channels_.reserve(init.channels_.size());
 
-    for(const auto& channel : init.channels_)
+    for (const auto& channel : init.channels_)
     {
       const std::string_view country = resolve_name_(
         String::SubString(
@@ -351,7 +351,7 @@ namespace CampaignSvcs
     channel_ids_.insert(channel_id);
 
     ChannelMap::iterator ch_it = channels_.find(key);
-    if(ch_it != channels_.end())
+    if (ch_it != channels_.end())
     {
       ch_it->second->channels.push_back(channel_id);
     }

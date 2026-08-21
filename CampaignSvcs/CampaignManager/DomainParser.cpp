@@ -8,7 +8,7 @@ namespace CampaignSvcs
 {
   DomainParser::DomainParser(const DomainConfig& config) noexcept
   {
-    for(DomainConfig::Domain_sequence::const_iterator d_it =
+    for (DomainConfig::Domain_sequence::const_iterator d_it =
           config.Domain().begin();
         d_it != config.Domain().end(); ++d_it)
     {

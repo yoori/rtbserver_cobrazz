@@ -17,9 +17,9 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     std::string& result,
     bool value) const
   {
-    for(const auto& provider : providers_)
+    for (const auto& provider : providers_)
     {
-      if(provider && provider->get_argument(key, result, value))
+      if (provider && provider->get_argument(key, result, value))
       {
         return true;
       }

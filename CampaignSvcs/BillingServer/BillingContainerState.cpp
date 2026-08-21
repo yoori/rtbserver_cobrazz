@@ -17,14 +17,14 @@ namespace CampaignSvcs
     auto start_it = days.lower_bound(date);
     RevenueDecimal sum_amount = RevenueDecimal::ZERO;
 
-    for(auto it = days.begin(); it != days.end(); ++it)
+    for (auto it = days.begin(); it != days.end(); ++it)
     {
       sum_amount += it->second.amount;
     }
 
     days.erase(days.begin(), start_it);
 
-    for(auto it = days.begin(); it != days.end(); ++it)
+    for (auto it = days.begin(); it != days.end(); ++it)
     {
       it->second.amount_before += sum_amount;
     }
@@ -35,7 +35,7 @@ namespace CampaignSvcs
     const RevenueDecimal& amount)
     noexcept
   {
-    for(auto it = days.begin(); it != days.end(); ++it)
+    for (auto it = days.begin(); it != days.end(); ++it)
     {
       it->second.amount_before += amount;
     }
@@ -56,7 +56,7 @@ namespace CampaignSvcs
     {
       ins.first->second.amount += amount;
 
-      if(ins.second && ins.first != days.begin())
+      if (ins.second && ins.first != days.begin())
       {
         auto before_it = ins.first;
         --before_it;
@@ -65,7 +65,7 @@ namespace CampaignSvcs
           before_it->second.amount_before + before_it->second.amount;
       }
 
-      for(++it; it != days.end(); ++it)
+      for (++it; it != days.end(); ++it)
       {
         it->second.amount_before += amount;
       }
@@ -75,12 +75,12 @@ namespace CampaignSvcs
       // revert all changes
       ins.first->second.amount -= amount;
 
-      for(; it != ins.first; --it)
+      for (; it != ins.first; --it)
       {
         it->second.amount_before -= amount;
       }
 
-      if(ins.second)
+      if (ins.second)
       {
         // erase new inserted element (overflow can be on amount_before init)
         days.erase(ins.first);
@@ -109,7 +109,7 @@ namespace CampaignSvcs
     noexcept
   {
     auto it = days.find(date);
-    if(it != days.end())
+    if (it != days.end())
     {
       return it->second.amount;
     }
@@ -123,7 +123,7 @@ namespace CampaignSvcs
     const char* offset)
     const noexcept
   {
-    for(auto day_it = days.begin(); day_it != days.end(); ++day_it)
+    for (auto day_it = days.begin(); day_it != days.end(); ++day_it)
     {
       out << offset << day_it->first.get_gm_time().format("%F") <<
         ": amount_before = " << day_it->second.amount_before <<
@@ -147,7 +147,7 @@ namespace CampaignSvcs
     ImpRevenueDecimal sum_imps = ImpRevenueDecimal::ZERO;
     ImpRevenueDecimal sum_clicks = ImpRevenueDecimal::ZERO;
 
-    for(auto it = days.begin(); it != days.end(); ++it)
+    for (auto it = days.begin(); it != days.end(); ++it)
     {
       sum_amount += it->second.amount;
       sum_imps += it->second.imps;
@@ -156,7 +156,7 @@ namespace CampaignSvcs
 
     days.erase(days.begin(), start_it);
 
-    for(auto it = days.begin(); it != days.end(); ++it)
+    for (auto it = days.begin(); it != days.end(); ++it)
     {
       it->second.amount_before += sum_amount;
       it->second.imps_before += sum_imps;
@@ -171,7 +171,7 @@ namespace CampaignSvcs
     const ImpRevenueDecimal& clicks)
     noexcept
   {
-    for(auto it = days.begin(); it != days.end(); ++it)
+    for (auto it = days.begin(); it != days.end(); ++it)
     {
       it->second.amount_before += amount;
       it->second.imps_before += imps;
@@ -198,7 +198,7 @@ namespace CampaignSvcs
       ins.first->second.imps += imps;
       ins.first->second.clicks += clicks;
 
-      if(ins.second && ins.first != days.begin())
+      if (ins.second && ins.first != days.begin())
       {
         auto before_it = ins.first;
         --before_it;
@@ -211,7 +211,7 @@ namespace CampaignSvcs
           before_it->second.clicks_before + before_it->second.clicks;
       }
 
-      for(++it; it != days.end(); ++it)
+      for (++it; it != days.end(); ++it)
       {
         it->second.amount_before += amount;
         it->second.imps_before += imps;
@@ -225,14 +225,14 @@ namespace CampaignSvcs
       ins.first->second.imps -= imps;
       ins.first->second.clicks -= clicks;
 
-      for(; it != ins.first; --it)
+      for (; it != ins.first; --it)
       {
         it->second.amount_before -= amount;
         it->second.imps_before -= imps;
         it->second.clicks_before -= clicks;
       }
 
-      if(ins.second)
+      if (ins.second)
       {
         // erase new inserted element (overflow can be on amount_before init)
         days.erase(ins.first);
@@ -279,7 +279,7 @@ namespace CampaignSvcs
     noexcept
   {
     auto it = days.find(date);
-    if(it != days.end())
+    if (it != days.end())
     {
       return it->second.amount;
     }
@@ -294,7 +294,7 @@ namespace CampaignSvcs
     noexcept
   {
     auto it = days.find(date);
-    if(it != days.end())
+    if (it != days.end())
     {
       return it->second.imps;
     }
@@ -309,7 +309,7 @@ namespace CampaignSvcs
     noexcept
   {
     auto it = days.find(date);
-    if(it != days.end())
+    if (it != days.end())
     {
       return it->second.clicks;
     }
@@ -323,7 +323,7 @@ namespace CampaignSvcs
     const char* offset)
     const noexcept
   {
-    for(auto day_it = days.begin(); day_it != days.end(); ++day_it)
+    for (auto day_it = days.begin(); day_it != days.end(); ++day_it)
     {
       out << offset << day_it->first.get_gm_time().format("%F") <<
         ": amount_before = " << day_it->second.amount_before <<
@@ -362,7 +362,7 @@ namespace CampaignSvcs
     bool first_rec = true;
     save_(out, first_rec, free_rates, 'F');
     save_(out, first_rec, rates, 'G');
-    if(first_rec)
+    if (first_rec)
     {
       out << '-';
     }
@@ -373,24 +373,24 @@ namespace CampaignSvcs
   RateDistributionHolder::empty()
     const noexcept
   {
-    for(auto rate_it = free_rates.begin(); rate_it != free_rates.end(); ++rate_it)
+    for (auto rate_it = free_rates.begin(); rate_it != free_rates.end(); ++rate_it)
     {
-      for(auto hour_it = rate_it->second.hours.begin();
+      for (auto hour_it = rate_it->second.hours.begin();
         hour_it != rate_it->second.hours.end(); ++hour_it)
       {
-        if(hour_it->imps != ImpRevenueDecimal::ZERO || hour_it->clicks != ImpRevenueDecimal::ZERO)
+        if (hour_it->imps != ImpRevenueDecimal::ZERO || hour_it->clicks != ImpRevenueDecimal::ZERO)
         {
           return false;
         }
       }
     }
 
-    for(auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
+    for (auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
     {
-      for(auto hour_it = rate_it->second.hours.begin();
+      for (auto hour_it = rate_it->second.hours.begin();
         hour_it != rate_it->second.hours.end(); ++hour_it)
       {
-        if(hour_it->imps != ImpRevenueDecimal::ZERO || hour_it->clicks != ImpRevenueDecimal::ZERO)
+        if (hour_it->imps != ImpRevenueDecimal::ZERO || hour_it->clicks != ImpRevenueDecimal::ZERO)
         {
           return false;
         }
@@ -410,14 +410,14 @@ namespace CampaignSvcs
     noexcept
   {
     // hour:rate:type:imps:clicks:use_time,...
-    for(auto rate_it = save_rates.begin(); rate_it != save_rates.end(); ++rate_it)
+    for (auto rate_it = save_rates.begin(); rate_it != save_rates.end(); ++rate_it)
     {
-      for(auto hour_it = rate_it->second.hours.begin();
+      for (auto hour_it = rate_it->second.hours.begin();
         hour_it != rate_it->second.hours.end(); ++hour_it)
       {
-        if(hour_it->imps != ImpRevenueDecimal::ZERO || hour_it->clicks != ImpRevenueDecimal::ZERO)
+        if (hour_it->imps != ImpRevenueDecimal::ZERO || hour_it->clicks != ImpRevenueDecimal::ZERO)
         {
-          if(!first_rec)
+          if (!first_rec)
           {
             out << ",";
           }
@@ -445,11 +445,11 @@ namespace CampaignSvcs
     typedef const String::AsciiStringManip::Char2Category<',', '|'>
       ListSepType;
 
-    if(str != "-")
+    if (str != "-")
     {
       String::StringManip::Splitter<ListSepType> tokenizer(str);
       String::SubString token;
-      while(tokenizer.get_token(token))
+      while (tokenizer.get_token(token))
       {
         String::StringManip::SplitColon sub_tokenizer(token);
 
@@ -460,7 +460,7 @@ namespace CampaignSvcs
         String::SubString clicks_str;
         String::SubString use_time_str;
 
-        if(!sub_tokenizer.get_token(hour_str) ||
+        if (!sub_tokenizer.get_token(hour_str) ||
           !sub_tokenizer.get_token(rate_str) ||
           !sub_tokenizer.get_token(type_str) ||
           !sub_tokenizer.get_token(imps_str) ||
@@ -473,7 +473,7 @@ namespace CampaignSvcs
         }
 
         unsigned long hour;
-        if(!String::StringManip::str_to_int(hour_str, hour) || hour >= 24)
+        if (!String::StringManip::str_to_int(hour_str, hour) || hour >= 24)
         {
           Stream::Error ostr;
           ostr << "invalid hour value '" << hour_str << "'";
@@ -492,7 +492,7 @@ namespace CampaignSvcs
           throw Exception(ostr);
         }
 
-        if(type_str.length() != 1 || (
+        if (type_str.length() != 1 || (
              type_str[0] != 'F' && type_str[0] != 'G'))
         {
           Stream::Error ostr;
@@ -525,7 +525,7 @@ namespace CampaignSvcs
         }
 
         unsigned long use_time_sec;
-        if(!String::StringManip::str_to_int(use_time_str, use_time_sec) ||
+        if (!String::StringManip::str_to_int(use_time_str, use_time_sec) ||
           use_time_sec > 3600)
         {
           Stream::Error ostr;
@@ -564,9 +564,9 @@ namespace CampaignSvcs
   BillingContainerState::
   RateOptimizationHolder::DateHolder::empty() const noexcept
   {
-    for(auto min_rate_it = min_rates.begin(); min_rate_it != min_rates.end(); ++min_rate_it)
+    for (auto min_rate_it = min_rates.begin(); min_rate_it != min_rates.end(); ++min_rate_it)
     {
-      if(*min_rate_it != RevenueDecimal::ZERO)
+      if (*min_rate_it != RevenueDecimal::ZERO)
       {
         return false;
       }
@@ -580,9 +580,9 @@ namespace CampaignSvcs
   RateOptimizationHolder::DateHolder::save(std::ostream& out) const
     noexcept
   {
-    for(auto min_rate_it = min_rates.begin(); min_rate_it != min_rates.end(); ++min_rate_it)
+    for (auto min_rate_it = min_rates.begin(); min_rate_it != min_rates.end(); ++min_rate_it)
     {
-      if(min_rate_it != min_rates.begin())
+      if (min_rate_it != min_rates.begin())
       {
         out << ',';
       }
@@ -601,7 +601,7 @@ namespace CampaignSvcs
     unsigned long hour_i = 0;
     String::StringManip::Splitter<ListSepType> tokenizer(str);
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       RevenueDecimal min_rate;
       try
@@ -673,14 +673,14 @@ namespace CampaignSvcs
   {
     RevenueDecimal max_noise_click_rate = RevenueDecimal(true, 1, 0); // -1
 
-    if(click_rate_coef > RevenueDecimal::ZERO)
+    if (click_rate_coef > RevenueDecimal::ZERO)
     {
       // eval rate after that we have prediction noise
       ImpRevenueDecimal all_imps = ImpRevenueDecimal::ZERO;
 
-      for(auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
+      for (auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
       {
-        for(auto hour_it = rate_it->second.hours.begin();
+        for (auto hour_it = rate_it->second.hours.begin();
           hour_it != rate_it->second.hours.end(); ++hour_it)
         {
           all_imps += hour_it->imps;
@@ -694,13 +694,13 @@ namespace CampaignSvcs
 
       all_imps = ImpRevenueDecimal::ZERO;
 
-      for(auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
+      for (auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
       {
-        for(auto hour_it = rate_it->second.hours.begin();
+        for (auto hour_it = rate_it->second.hours.begin();
           hour_it != rate_it->second.hours.end(); ++hour_it)
         {
           all_imps += hour_it->imps;
-          if(all_imps >= max_imps)
+          if (all_imps >= max_imps)
           {
             max_noise_click_rate = rate_it->first;
             break;
@@ -709,9 +709,9 @@ namespace CampaignSvcs
       }
     }
 
-    for(auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
+    for (auto rate_it = rates.begin(); rate_it != rates.end(); ++rate_it)
     {
-      for(auto hour_it = rate_it->second.hours.begin();
+      for (auto hour_it = rate_it->second.hours.begin();
           hour_it != rate_it->second.hours.end(); ++hour_it)
       {
         RevenueDecimal amount((
@@ -720,7 +720,7 @@ namespace CampaignSvcs
           ImpRevenueDecimal::mul(
             hour_it->clicks, ImpRevenueDecimal(click_amount), Generics::DMR_FLOOR)).str());
 
-        if(rate_it->first <= max_noise_click_rate)
+        if (rate_it->first <= max_noise_click_rate)
         {
           // mix
           amount = RevenueDecimal((

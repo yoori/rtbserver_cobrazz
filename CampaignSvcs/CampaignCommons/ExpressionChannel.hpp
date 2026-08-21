@@ -938,9 +938,9 @@ namespace AdServer
       bool expand)
       noexcept
     {
-      if(expr.op == ExpressionChannel::NOP)
+      if (expr.op == ExpressionChannel::NOP)
       {
-        if(expr.channel)
+        if (expr.channel)
         {
           print(out, expr.channel);
         }
@@ -949,18 +949,18 @@ namespace AdServer
           out += "NULL";
         }
       }
-      else if(expr.op == ExpressionChannel::TRUE)
+      else if (expr.op == ExpressionChannel::TRUE)
       {
         out += "TRUE";
       }
       else
       {
         out += '(';
-        for(ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+        for (ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expr.sub_channels.begin();
             eit != expr.sub_channels.end(); ++eit)
         {
-          if(eit != expr.sub_channels.begin())
+          if (eit != expr.sub_channels.begin())
           {
             out += ' ';
             out += static_cast<char>(expr.op);
@@ -978,7 +978,7 @@ namespace AdServer
       noexcept
     {
       ConstSimpleChannel_var simple_channel = channel->simple_channel();
-      if(simple_channel.in())
+      if (simple_channel.in())
       {
         out += '[';
         out += std::to_string(simple_channel->params().channel_id);
@@ -988,7 +988,7 @@ namespace AdServer
       {
         ConstExpressionChannel_var expression_channel =
           channel->expression_channel();
-        if(expression_channel.in())
+        if (expression_channel.in())
         {
           print_expression(out, expression_channel->expr_, expand);
         }
@@ -1006,19 +1006,19 @@ namespace AdServer
     {
       ConstSimpleChannel_var left_simple_channel = left->simple_channel();
       ConstSimpleChannel_var right_simple_channel = right->simple_channel();
-      if(left_simple_channel.in() && right_simple_channel.in())
+      if (left_simple_channel.in() && right_simple_channel.in())
       {
         return left_simple_channel->params().equal(
           right_simple_channel->params());
       }
-      else if(left_simple_channel.in() || right_simple_channel.in())
+      else if (left_simple_channel.in() || right_simple_channel.in())
       {
         return false;
       }
 
       ConstExpressionChannel_var left_expression_channel = left->expression_channel();
       ConstExpressionChannel_var right_expression_channel = right->expression_channel();
-      if(left_expression_channel.in() && right_expression_channel.in())
+      if (left_expression_channel.in() && right_expression_channel.in())
       {
         return left_expression_channel->equal(right_expression_channel);
       }

@@ -40,11 +40,11 @@ namespace AdServer::CampaignSvcs
       return;
     }
 
-    for(const UserStatus user_status : {US_OPTIN, US_OPTOUT})
+    for (const UserStatus user_status : {US_OPTIN, US_OPTOUT})
     {
       AccountSet accounts;
 
-      for(const auto& country : country_whitelist_)
+      for (const auto& country : country_whitelist_)
       {
         const auto country_it = campaign_config->pub_pixel_accounts.find(
           PubPixelAccountKey(country.c_str(), user_status));

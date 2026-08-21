@@ -336,11 +336,11 @@ namespace AdServer
 
       char get_status() const noexcept
       {
-        if(status == 'I')
+        if (status == 'I')
         {
           return 'I';
         }
-        else if(status == 'A' && eval_status == 'A')
+        else if (status == 'A' && eval_status == 'A')
         {
           return 'A';
         }
@@ -627,11 +627,11 @@ namespace AdServer
 
       char get_status() const noexcept
       {
-        if(status == 'I')
+        if (status == 'I')
         {
           return 'I';
         }
-        else if(status == 'A' && eval_status == 'A')
+        else if (status == 'A' && eval_status == 'A')
         {
           return 'A';
         }
@@ -1711,7 +1711,7 @@ namespace AdServer
         initial_contract_id(0),
         sys_options(sys_options_val)
     {
-      for(CORBA::ULong token_i = 0; token_i < tokens_val.length(); ++token_i)
+      for (CORBA::ULong token_i = 0; token_i < tokens_val.length(); ++token_i)
       {
         tokens.insert(std::make_pair(
           tokens_val[token_i].option_id,
@@ -1852,7 +1852,7 @@ namespace AdServer
         relative_margin(init.relative_margin),
         timestamp(init.timestamp)
     {
-      if(with_conditions)
+      if (with_conditions)
       {
         isp_accounts = init.isp_accounts;
         publisher_accounts = init.publisher_accounts;

@@ -109,7 +109,7 @@ namespace AdServer::CampaignSvcs::CTR
       CampaignSelectParams::CampaignImpsMap::const_iterator it =
         request_params.campaign_imps.find(
           creative->campaign->campaign_group_id);
-      if(it != request_params.campaign_imps.end())
+      if (it != request_params.campaign_imps.end())
       {
         imps = it->second;
       }
@@ -124,7 +124,7 @@ namespace AdServer::CampaignSvcs::CTR
       CampaignSelectParams::CampaignImpsMap::const_iterator it =
         request_params.campaign_imps.find(
           creative->campaign->campaign_group_id);
-      if(it != request_params.campaign_imps.end())
+      if (it != request_params.campaign_imps.end())
       {
         imps = it->second;
       }
@@ -224,13 +224,13 @@ namespace AdServer::CampaignSvcs::CTR
           const Creative*)
           noexcept
         {
-          for(uint32_t time_hour_i = 0; time_hour_i < request_params.time_hour; ++time_hour_i)
+          for (uint32_t time_hour_i = 0; time_hour_i < request_params.time_hour; ++time_hour_i)
           {
             // need local hasher
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(time_hour_i);
             uint32_t index;
-            if(hash_index_(index, hash_mapping, hash_adapter_copy.finalize()))
+            if (hash_index_(index, hash_mapping, hash_adapter_copy.finalize()))
             {
               result_hashes.push_back(std::make_pair(index, 1));
             }
@@ -258,7 +258,7 @@ namespace AdServer::CampaignSvcs::CTR
           const Creative* creative)
           noexcept
         {
-          for(uint32_t time_hour_i = 0; time_hour_i < request_params.time_hour; ++time_hour_i)
+          for (uint32_t time_hour_i = 0; time_hour_i < request_params.time_hour; ++time_hour_i)
           {
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(time_hour_i);
@@ -348,7 +348,7 @@ namespace AdServer::CampaignSvcs::CTR
 
 #   undef F2C
 
-    for(size_t i = 0;
+    for (size_t i = 0;
        i < sizeof(FEATURE_DESCRIPTORS) / sizeof(FEATURE_DESCRIPTORS[0]); ++i)
     {
       feature_descriptors_.insert(std::make_pair(
@@ -367,7 +367,7 @@ namespace AdServer::CampaignSvcs::CTR
     FeatureDescriptorMap::const_iterator fit =
       feature_descriptors_.find(basic_feature);
 
-    if(fit != feature_descriptors_.end())
+    if (fit != feature_descriptors_.end())
     {
       return &(fit->second);
     }
@@ -378,12 +378,12 @@ namespace AdServer::CampaignSvcs::CTR
   const FeatureDescriptor*
   FeatureDescriptorResolver_::resolve_by_name(const String::SubString& feature_name) const
   {
-    if(!feature_name.empty())
+    if (!feature_name.empty())
     {
       FeatureDescriptorByNameMap::const_iterator fit =
         feature_descriptors_by_name_.find(feature_name);
 
-      if(fit != feature_descriptors_by_name_.end())
+      if (fit != feature_descriptors_by_name_.end())
       {
         return &(fit->second);
       }

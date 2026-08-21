@@ -28,13 +28,13 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     const char*
     instantiate_user_status(UserStatus user_status) noexcept
     {
-      if(user_status == US_OPTIN ||
+      if (user_status == US_OPTIN ||
         user_status == US_TEMPORARY)
       {
         return "1";
       }
 
-      if(user_status == US_OPTOUT ||
+      if (user_status == US_OPTOUT ||
         user_status == US_EXTERNALPROBE ||
         user_status == US_NOEXTERNALID)
       {
@@ -50,7 +50,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       const auto& request_params = *data.request_params;
       const std::string& referer = request_params.full_referer.empty() ?
         request_params.referer : request_params.full_referer;
-      if(referer.empty())
+      if (referer.empty())
       {
         return std::nullopt;
       }
@@ -72,16 +72,16 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     {
       const AccountIdList& pubpixel_accounts =
         data.consider_pub_pixel_accounts();
-      if(pubpixel_accounts.empty())
+      if (pubpixel_accounts.empty())
       {
         return std::optional<std::string>(std::string());
       }
 
       std::string result = data.instantiate_info->pub_pixels_optin;
       result += "&aid=";
-      for(auto it = pubpixel_accounts.begin(); it != pubpixel_accounts.end(); ++it)
+      for (auto it = pubpixel_accounts.begin(); it != pubpixel_accounts.end(); ++it)
       {
-        if(it != pubpixel_accounts.begin())
+        if (it != pubpixel_accounts.begin())
         {
           result += ',';
         }
@@ -97,18 +97,18 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     {
       const auto& request_params = *data.request_params;
       AdServer::Commons::ExternalUserIdArray user_ids;
-      if(!request_params.external_user_id.empty())
+      if (!request_params.external_user_id.empty())
       {
         user_ids.push_back(request_params.external_user_id);
       }
 
-      if(!request_params.user_id.is_null())
+      if (!request_params.user_id.is_null())
       {
         user_ids.push_back(
           std::string("/") + request_params.user_id.to_string());
       }
 
-      if(user_ids.empty())
+      if (user_ids.empty())
       {
         return std::optional<std::string>(std::string());
       }
@@ -259,7 +259,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
         auto domain = get_referer_domain(provider.context());
-        if(!domain)
+        if (!domain)
         {
           return std::nullopt;
         }
@@ -305,7 +305,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& request_params = *provider.context().request_params;
-        if(request_params.track_user_id.is_null())
+        if (request_params.track_user_id.is_null())
         {
           return std::nullopt;
         }
@@ -447,7 +447,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       CreativeTokens::EXTDATA,
       [](const InstantiateAdRequestArgsProvider& provider) {
         auto& data = provider.context();
-        if(!data.creative_instantiator ||
+        if (!data.creative_instantiator ||
           !data.creative_params_list ||
           !data.campaign_config ||
           !data.ad_selection_result ||
@@ -529,7 +529,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         -> std::optional<std::string> {
         const auto& user_agent =
           provider.context().request_params->user_agent;
-        if(user_agent.empty())
+        if (user_agent.empty())
         {
           return std::nullopt;
         }
@@ -543,12 +543,12 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider) {
         const InstantiateAdContext& data = provider.context();
         const auto& request_params = *data.request_params;
-        if(!request_params.pub_impr_track_url.empty())
+        if (!request_params.pub_impr_track_url.empty())
         {
           return std::optional<std::string>(
             request_params.pub_impr_track_url);
         }
-        else if(request_params.log_as_test)
+        else if (request_params.log_as_test)
         {
           return std::optional<std::string>(
             data.instantiate_info->track_pixel_url);
@@ -562,7 +562,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& request_params = *provider.context().request_params;
-        if(request_params.hpos == UNDEFINED_PUB_POSITION_BOTTOM)
+        if (request_params.hpos == UNDEFINED_PUB_POSITION_BOTTOM)
         {
           return std::nullopt;
         }

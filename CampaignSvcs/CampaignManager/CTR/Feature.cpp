@@ -8,17 +8,17 @@ namespace AdServer::CampaignSvcs::CTR
   void
   Feature::print(std::ostream& out) const
   {
-    for(BasicFeatureSet::const_iterator fit = basic_features.begin();
+    for (BasicFeatureSet::const_iterator fit = basic_features.begin();
         fit != basic_features.end(); ++fit)
     {
-      if(fit != basic_features.begin())
+      if (fit != basic_features.begin())
       {
         out << ",";
       }
 
       const FeatureDescriptor* feature_descriptor =
         FeatureDescriptorResolver::instance().resolve(*fit);
-      if(feature_descriptor)
+      if (feature_descriptor)
       {
         out << "'" << feature_descriptor->name << "'";
       }

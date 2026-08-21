@@ -292,7 +292,7 @@ namespace AdServer::CampaignSvcs
     noexcept
   {
     std::unique_ptr<std::string> name_string;
-    if(name.empty())
+    if (name.empty())
     {
       name_string = std::make_unique<std::string>();
     }
@@ -342,23 +342,23 @@ namespace AdServer::CampaignSvcs
     const std::string_view empty;
     GeoChannelMap::const_iterator ind_it;
 
-    if(region_val[0] || city_val[0])
+    if (region_val[0] || city_val[0])
     {
-      if(city_val[0])
+      if (city_val[0])
       {
         ind_it = channels_.find(Key(country, region, city));
 
-        if(ind_it != channels_.end())
+        if (ind_it != channels_.end())
         {
           result_channels.push_back(ind_it->second);
         }
       }
 
-      if(region_val[0])
+      if (region_val[0])
       {
         ind_it = channels_.find(Key(country, region, empty));
 
-        if(ind_it != channels_.end())
+        if (ind_it != channels_.end())
         {
           result_channels.push_back(ind_it->second);
         }
@@ -366,7 +366,7 @@ namespace AdServer::CampaignSvcs
     }
 
     ind_it = channels_.find(Key(country, empty, empty));
-    if(ind_it != channels_.end())
+    if (ind_it != channels_.end())
     {
       result_channels.push_back(ind_it->second);
     }

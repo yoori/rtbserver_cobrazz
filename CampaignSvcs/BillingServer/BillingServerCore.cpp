@@ -93,7 +93,10 @@ namespace CampaignSvcs
       const BillingProcessor::BidResult res =
         billing_accessor->check_available_bid(request_info.bid);
 
-      return BidResultInfo{res.available, res.goal_ctr};
+      return BidResultInfo{
+        res.available,
+        res.goal_ctr,
+        res.unavailable_reason};
     }
     catch(const BillingProcessor::Exception& ex)
     {
@@ -161,7 +164,10 @@ namespace CampaignSvcs
       request_info.imps = imps;
       request_info.clicks = clicks;
 
-      return BidResultInfo{res.available, res.goal_ctr};
+      return BidResultInfo{
+        res.available,
+        res.goal_ctr,
+        res.unavailable_reason};
     }
     catch(const BillingProcessor::Exception& ex)
     {
@@ -186,7 +192,7 @@ namespace CampaignSvcs
     {
       ConfirmBidRefSeq remainder_request_seq;
 
-      for(std::size_t req_i = 0; req_i < request_seq.size(); ++req_i)
+      for (std::size_t req_i = 0; req_i < request_seq.size(); ++req_i)
       {
         const ConfirmBidInfo& request_info =
           request_seq[req_i];
@@ -197,7 +203,7 @@ namespace CampaignSvcs
         ImpRevenueDecimal clicks = request_info.clicks;
 
         // reserved_budget
-        if(!billing_accessor->confirm_bid(
+        if (!billing_accessor->confirm_bid(
           account_spent_budget,
           spent_budget,
           imps,
@@ -236,7 +242,7 @@ namespace CampaignSvcs
 
     // dump container only when its usage stopped (AccessActiveObject)
     BillingContainer_var billing_container = billing_container_.get();
-    if(billing_container)
+    if (billing_container)
     {
       billing_container->dump();
     }
@@ -248,7 +254,7 @@ namespace CampaignSvcs
     BillingProcessorHolder::Accessor billing_accessor =
       billing_processor_->get_accessor();
 
-    if(!billing_accessor.get())
+    if (!billing_accessor.get())
     {
       throw NotReady("BillingServer is not ready");
     }
@@ -287,7 +293,7 @@ namespace CampaignSvcs
         ex.what();
     }
 
-    if(loaded)
+    if (loaded)
     {
       // exception here can't be processed correctly - crash
       Commons::make_goal_task(
@@ -355,7 +361,7 @@ namespace CampaignSvcs
           billing_container->config(new_config);
 
           // initialize billing processor only after first config load
-          if(!billing_processor_->get_object().in())
+          if (!billing_processor_->get_object().in())
           {
             *billing_processor_ = billing_container;
           }
@@ -450,7 +456,7 @@ namespace CampaignSvcs
       DeliveryLimitConfigInfo& config)
     /*throw(Exception)*/
   {
-    for(CORBA::ULong acc_i = 0; acc_i < config.accounts.length();
+    for (CORBA::ULong acc_i = 0; acc_i < config.accounts.length();
         ++acc_i)
     {
       auto& acc_info = config.accounts[acc_i];
@@ -467,7 +473,7 @@ namespace CampaignSvcs
         res_account));
     }
 
-    for(CORBA::ULong campaign_i = 0; campaign_i < config.campaigns.length();
+    for (CORBA::ULong campaign_i = 0; campaign_i < config.campaigns.length();
         ++campaign_i)
     {
       auto& campaign_info = config.campaigns[campaign_i];
@@ -483,7 +489,7 @@ namespace CampaignSvcs
         res_campaign));
     }
 
-    for(CORBA::ULong ccg_i = 0; ccg_i < config.ccgs.length();
+    for (CORBA::ULong ccg_i = 0; ccg_i < config.ccgs.length();
         ++ccg_i)
     {
       auto& ccg_info = config.ccgs[ccg_i];

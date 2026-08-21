@@ -22,7 +22,7 @@ namespace CampaignSvcs
     CORBACommons::CorbaClientAdapter_var corba_client_adapter(
       new CORBACommons::CorbaClientAdapter());
 
-    for(CORBACommons::CorbaObjectRefList::const_iterator ref_it =
+    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it =
           stat_provider_refs.begin();
         ref_it != stat_provider_refs.end(); ++ref_it)
     {
@@ -46,7 +46,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(LogGeneralizerRefList::iterator ref_it =
+      for (LogGeneralizerRefList::iterator ref_it =
             stat_providers_.begin();
           ref_it != stat_providers_.end(); ++ref_it)
       {
@@ -85,7 +85,7 @@ namespace CampaignSvcs
         ": can't do LogGeneralizer::get_stat_info: " << ex;
     }
 
-    if(logger_->log_level() >= Logging::Logger::DEBUG)
+    if (logger_->log_level() >= Logging::Logger::DEBUG)
     {
       Stream::Dynamic ostr(4096);
       ostr << "Received from LogGeneralizer stats:" << std::endl;
@@ -96,7 +96,7 @@ namespace CampaignSvcs
         Aspect::STAT_LOGGENERALIZER_SOURCE);
     }
 
-    if(stat)
+    if (stat)
     {
       stat->add(*sum_stat);
 
@@ -115,7 +115,7 @@ namespace CampaignSvcs
     StatSource::Stat_var stat(new StatSource::Stat());
     stat->check_time = now;
 
-    for(CORBA::ULong i = 0; i < update.campaign_stats.length(); ++i)
+    for (CORBA::ULong i = 0; i < update.campaign_stats.length(); ++i)
     {
       const AdServer::LogProcessing::CampaignStatInfo& campaign_stat_info =
         update.campaign_stats[i];
@@ -140,7 +140,7 @@ namespace CampaignSvcs
       ccg_stat.cur_hour_amount = RevenueDecimal::ZERO;
       ccg_stat.cur_hour_comm_amount = RevenueDecimal::ZERO;
 
-      if(current_day)
+      if (current_day)
       {
         ccg_stat.daily_amount = amount;
         ccg_stat.daily_comm_amount = comm_amount;
@@ -148,7 +148,7 @@ namespace CampaignSvcs
       ccg_stat.amount = amount;
       ccg_stat.comm_amount = comm_amount;
 
-      for(CORBA::ULong cc_i = 0;
+      for (CORBA::ULong cc_i = 0;
           cc_i < campaign_stat_info.creative_stats.length(); ++cc_i)
       {
         const AdServer::LogProcessing::CreativeStatInfo& creative_stat_info =
@@ -165,7 +165,7 @@ namespace CampaignSvcs
         ccg_stat.creatives[creative_stat_info.cc_id] += creative_stat;
       }
 
-      for(CORBA::ULong pub_i = 0;
+      for (CORBA::ULong pub_i = 0;
           pub_i < campaign_stat_info.publisher_amounts.length(); ++pub_i)
       {
         RevenueDecimal pub_amount = CorbaAlgs::unpack_decimal<RevenueDecimal>(
@@ -173,7 +173,7 @@ namespace CampaignSvcs
 
         Stat::CCGStat::PublisherStat pub_stat;
 
-        if(current_day)
+        if (current_day)
         {
           pub_stat.daily_amount += pub_amount;
         }
@@ -184,7 +184,7 @@ namespace CampaignSvcs
           pub_stat;
       }
 
-      if(current_hour || prev_hour)
+      if (current_hour || prev_hour)
       {
         RevenueDecimal& sum_hour_amount =
           current_hour ? ccg_stat.cur_hour_amount :
@@ -200,7 +200,7 @@ namespace CampaignSvcs
         sum_hour_comm_amount += CorbaAlgs::unpack_decimal<RevenueDecimal>(
           campaign_stat_info.adv_comm_amount);
 
-        for(CORBA::ULong tag_i = 0;
+        for (CORBA::ULong tag_i = 0;
             tag_i < campaign_stat_info.tag_amounts.length(); ++tag_i)
         {
           const AdServer::LogProcessing::TagAmountInfo& tag_stat_info =
@@ -220,7 +220,7 @@ namespace CampaignSvcs
           ccg_stat.tag_stats[tag_stat_info.tag_id] += tag_stat;
         }
 
-        for(CORBA::ULong ctr_reset_i = 0;
+        for (CORBA::ULong ctr_reset_i = 0;
             ctr_reset_i < campaign_stat_info.ctr_reset_stats.length();
             ++ctr_reset_i)
         {
@@ -238,7 +238,7 @@ namespace CampaignSvcs
       campaign_stat.ccgs[campaign_stat_info.ccg_id] += ccg_stat;
       campaign_stat.amount += amount;
       campaign_stat.comm_amount += comm_amount;
-      if(current_day)
+      if (current_day)
       {
         campaign_stat.daily_amount += amount;
         campaign_stat.daily_comm_amount += comm_amount;
@@ -252,7 +252,7 @@ namespace CampaignSvcs
         campaign_stat_info.adv_payable_comm_amount);
       Stat::AccountAmountMap::iterator acc_it = stat->account_amounts.find(
         campaign_stat_info.adv_account_id);
-      if(acc_it == stat->account_amounts.end())
+      if (acc_it == stat->account_amounts.end())
       {
         stat->account_amounts.insert(std::make_pair(
           campaign_stat_info.adv_account_id, account_amount));

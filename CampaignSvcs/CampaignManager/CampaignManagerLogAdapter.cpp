@@ -18,12 +18,12 @@ namespace AdServer::CampaignSvcs
     noexcept
   {
     triggers.reserve(triggers.size() + channel_trigger_matches.size());
-    for(const auto& channel_trigger_match : channel_trigger_matches)
+    for (const auto& channel_trigger_match : channel_trigger_matches)
     {
       triggers.emplace_back(
         channel_trigger_match.channel_id,
         channel_trigger_match.channel_trigger_id);
-      if(&all_channels != &channels)
+      if (&all_channels != &channels)
       {
         all_channels.insert(channel_trigger_match.channel_id);
       }
@@ -40,19 +40,19 @@ namespace AdServer::CampaignSvcs
   {
     try
     {
-      if(!channels || !cs_data.selection_done)
+      if (!channels || !cs_data.selection_done)
       {
         return;
       }
 
-      if(cs_data.campaign_keyword.in())
+      if (cs_data.campaign_keyword.in())
       {
         ad_info.channels.push_back(cs_data.campaign_keyword->channel_id);
         ad_info.expression = std::to_string(cs_data.campaign_keyword->channel_id);
         return;
       }
 
-      if(!cs_data.campaign->targeted() || !cs_data.campaign->channel.in())
+      if (!cs_data.campaign->targeted() || !cs_data.campaign->channel.in())
       {
         return;
       }
@@ -67,10 +67,10 @@ namespace AdServer::CampaignSvcs
         responded_channels.begin(),
         responded_channels.end());
 
-      if(cs_data.campaign->stat_channel.in())
+      if (cs_data.campaign->stat_channel.in())
       {
         std::string responded_expression;
-        if(cs_data.campaign->stat_channel->triggered_expression(
+        if (cs_data.campaign->stat_channel->triggered_expression(
           responded_expression,
           *channels))
         {
@@ -149,11 +149,11 @@ namespace AdServer::CampaignSvcs
     request_info.fraud = log_request.fraud;
     request_info.search_engine_id = log_request.search_engine_id;
 
-    if(log_request.search_engine_id)
+    if (log_request.search_engine_id)
     {
       HTTP::BrowserAddress referer;
 
-      if(!common_info.referer.empty())
+      if (!common_info.referer.empty())
       {
         try
         {
@@ -181,7 +181,7 @@ namespace AdServer::CampaignSvcs
     request_info.referer = common_info.referer;
     request_info.urls.assign(common_info.urls.begin(), common_info.urls.end());
 
-    if(!common_info.location.empty())
+    if (!common_info.location.empty())
     {
       request_info.country_code = common_info.location[0].country;
     }
@@ -244,7 +244,7 @@ namespace AdServer::CampaignSvcs
   {
     //static const char* FUN = "CampaignManagerLogAdapter::fill_request_info()";
 
-    if(log_request && channels)
+    if (log_request && channels)
     {
       fill_request_info_by_profiling_(
         request_info,
@@ -273,7 +273,7 @@ namespace AdServer::CampaignSvcs
     request_info.time = request_time;
     request_info.isp_time = request_time;
 
-    if(colocation)
+    if (colocation)
     {
       request_info.colo_id = colocation->colo_id;
       request_info.isp_time_offset = colocation->account->time_offset;
@@ -285,7 +285,7 @@ namespace AdServer::CampaignSvcs
       request_info.isp_time = request_time;
     }
 
-    if(ad_slot_context.request_blacklisted) // override user status
+    if (ad_slot_context.request_blacklisted) // override user status
     {
       request_info.user_status = US_BLACKLISTED;
     }
@@ -294,7 +294,7 @@ namespace AdServer::CampaignSvcs
 
     request_info.log_as_test = common_info.log_as_test | ad_slot_context.test_request;
 
-    if(context_info.full_referer_hash)
+    if (context_info.full_referer_hash)
     {
       request_info.full_referer_hash = context_info.full_referer_hash;
     }
@@ -313,7 +313,7 @@ namespace AdServer::CampaignSvcs
       context_info.full_platform.begin(), context_info.full_platform.end());
     request_info.ip_hash.assign(context_info.ip_hash.begin(), context_info.ip_hash.end());
 
-    if(!common_info.user_agent.empty())
+    if (!common_info.user_agent.empty())
     {
       request_info.user_agent = new Commons::StringHolder(common_info.user_agent);
     }
@@ -322,7 +322,7 @@ namespace AdServer::CampaignSvcs
     request_info.platforms.insert(
       context_info.platform_ids.begin(), context_info.platform_ids.end());
 
-    if(campaign_config)
+    if (campaign_config)
     {
       campaign_config->platform_channels->match(
         request_info.platform_channels,
@@ -332,14 +332,14 @@ namespace AdServer::CampaignSvcs
       unsigned long cur_priority = 0;
       request_info.last_platform_channel_id = 0;
 
-      for(ChannelIdSet::const_iterator pch_it = request_info.platform_channels.begin();
+      for (ChannelIdSet::const_iterator pch_it = request_info.platform_channels.begin();
         pch_it != request_info.platform_channels.end();
         ++pch_it)
       {
         auto pr_it = campaign_config->platform_channel_priorities.find(*pch_it);
-        if(pr_it != campaign_config->platform_channel_priorities.end())
+        if (pr_it != campaign_config->platform_channel_priorities.end())
         {
-          if(request_info.last_platform_channel_id == 0 ||
+          if (request_info.last_platform_channel_id == 0 ||
             cur_priority < pr_it->second.priority)
           {
             cur_priority = pr_it->second.priority;
@@ -393,27 +393,27 @@ namespace AdServer::CampaignSvcs
       ad_slot_min_cpm.min_pub_ecpm,
       ECPM_FACTOR);
 
-    if(common_info.request_type == AR_NORMAL && context_info.page_load_id)
+    if (common_info.request_type == AR_NORMAL && context_info.page_load_id)
     {
       ad_request_selection_info.page_load_id = context_info.page_load_id;
     }
 
-    if(ad_slot.up_expand_space >= 0)
+    if (ad_slot.up_expand_space >= 0)
     {
       ad_request_selection_info.tag_top_offset = ad_slot.up_expand_space;
     }
 
-    if(ad_slot.left_expand_space >= 0)
+    if (ad_slot.left_expand_space >= 0)
     {
       ad_request_selection_info.tag_left_offset = ad_slot.left_expand_space;
     }
 
-    if(ad_slot.tag_visibility >= 0 && ad_slot.tag_visibility <= 100)
+    if (ad_slot.tag_visibility >= 0 && ad_slot.tag_visibility <= 100)
     {
       ad_request_selection_info.tag_visibility = ad_slot.tag_visibility;
     }
 
-    if(ad_slot.tag_predicted_viewability >= 0 && ad_slot.tag_predicted_viewability <= 100)
+    if (ad_slot.tag_predicted_viewability >= 0 && ad_slot.tag_predicted_viewability <= 100)
     {
       ad_request_selection_info.tag_predicted_viewability = ad_slot.tag_predicted_viewability;
     }
@@ -426,7 +426,7 @@ namespace AdServer::CampaignSvcs
       tag->select_no_impression_tag_pricing(tag ?
         (!common_info.location.empty() ? common_info.location[0].country.c_str() : "") : 0);
 
-    if(tag)
+    if (tag)
     {
       const Tag::TagPricing* tag_pricing = (!ad_selection_result.selected_campaigns.empty() ?
         tag->select_country_tag_pricing(
@@ -445,19 +445,19 @@ namespace AdServer::CampaignSvcs
       ad_request_selection_info.pub_account_id = tag->site->account->account_id;
       // ADSC-10025: don't log stats for sizes blocked by placement channel.
       //   use filtered in Impl and passed tag_sizes instead tag->sizes below.
-      for(Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
+      for (Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
         tag_size_it != tag_sizes.end(); ++tag_size_it)
       {
         ad_request_selection_info.tag_sizes.insert(tag_size_it->second->size->protocol_name);
       }
 
-      if(ad_selection_result.tag_size)
+      if (ad_selection_result.tag_size)
       {
         ad_request_selection_info.max_ads = ad_selection_result.tag_size->max_text_creatives;
         ad_request_selection_info.tag_size = ad_selection_result.tag_size->size->protocol_name;
         ad_request_selection_info.size_id = ad_selection_result.tag_size->size->size_id;
       }
-      else if(!tag_sizes.empty())
+      else if (!tag_sizes.empty())
       {
         // use max_ads by first size (ADSC-8728)
         ad_request_selection_info.max_ads = tag_sizes.begin()->second->max_text_creatives;
@@ -482,7 +482,7 @@ namespace AdServer::CampaignSvcs
 
     AdSelectionInfoList& ad_info_list = ad_request_selection_info.ad_selection_info_list;
 
-    if(ad_selection_result.selected_campaigns.empty())
+    if (ad_selection_result.selected_campaigns.empty())
     {
       // process no selected ad request
       AdSelectionInfo ad_info;
@@ -512,7 +512,7 @@ namespace AdServer::CampaignSvcs
 
       unsigned idx = 0;
 
-      for(CampaignSelectionDataList::const_iterator s_it =
+      for (CampaignSelectionDataList::const_iterator s_it =
           ad_selection_result.selected_campaigns.begin();
         s_it != ad_selection_result.selected_campaigns.end();
         ++s_it, ++idx)
@@ -522,7 +522,7 @@ namespace AdServer::CampaignSvcs
 
         if (tag)
         {
-          if(cs_data)
+          if (cs_data)
           {
             tag_pricing = tag->select_tag_pricing(
               !common_info.location.empty() ?
@@ -606,7 +606,7 @@ namespace AdServer::CampaignSvcs
 
       const Currency* campaign_currency = 0;
 
-      if(cs_data)
+      if (cs_data)
       {
         const Generics::Time curr_time = common_info.time;
         campaign_currency = cs_data->campaign->account->currency;
@@ -615,7 +615,7 @@ namespace AdServer::CampaignSvcs
         ad_info.ad_selected = true;
         ad_info.request_id = cs_data->request_id;
 
-        if(cs_data->campaign_keyword.in())
+        if (cs_data->campaign_keyword.in())
         {
           ad_info.ccg_keyword_id = cs_data->campaign_keyword->ccg_keyword_id;
           ad_info.keyword_channel_id = cs_data->campaign_keyword->channel_id;
@@ -626,7 +626,7 @@ namespace AdServer::CampaignSvcs
           ad_info.keyword_channel_id = 0;
         }
 
-        if(cs_data->campaign->advertiser->use_self_budget())
+        if (cs_data->campaign->advertiser->use_self_budget())
         {
           ad_info.adv_account_id = cs_data->campaign->advertiser->account_id;
         }
@@ -641,14 +641,14 @@ namespace AdServer::CampaignSvcs
         ad_info.ecpm = cs_data->ecpm; // max ecpm bid
 
         // external_ecpm_bid : will be used as bid_..._amount (SiteReferrerStats)
-        if(ad_slot_context.pub_imp_revenue.present())
+        if (ad_slot_context.pub_imp_revenue.present())
         {
           ad_info.external_ecpm_bid = RevenueDecimal::mul(
             *ad_slot_context.pub_imp_revenue,
             RevenueDecimal(false, 100, 0),
             Generics::DMR_FLOOR);
         }
-        else if(ad_selection_result.auction_type == AT_RANDOM)
+        else if (ad_selection_result.auction_type == AT_RANDOM)
         {
           ad_info.external_ecpm_bid = (
             position == 1 ? tag->pub_max_random_cpm : RevenueDecimal::ZERO);
@@ -679,7 +679,7 @@ namespace AdServer::CampaignSvcs
         const RevenueDecimal self_service_commission =
           orig_self_service_commission + colocation->revenue_share;
 
-        if(ad_selection_result.ctr_calculation)
+        if (ad_selection_result.ctr_calculation)
         {
           ad_info.ctr_algorithm_id =
             ad_selection_result.ctr_calculation->algorithm_id(
@@ -691,7 +691,7 @@ namespace AdServer::CampaignSvcs
               cs_data->creative);
         }
 
-        if(ad_selection_result.conv_rate_calculation)
+        if (ad_selection_result.conv_rate_calculation)
         {
           ad_info.conv_rate_algorithm_id =
             ad_selection_result.conv_rate_calculation->algorithm_id(
@@ -718,7 +718,7 @@ namespace AdServer::CampaignSvcs
         // pub fill revenue fields
         RevenueDecimal local_pub_revenue;
 
-        if(common_info.request_type != AR_NORMAL)
+        if (common_info.request_type != AR_NORMAL)
         {
           // RTB
           local_pub_revenue = RevenueDecimal::div(
@@ -747,13 +747,13 @@ namespace AdServer::CampaignSvcs
             RevenueDecimal(false, num_shown, 0),
             div_reminder);
 
-          if(position == 1)
+          if (position == 1)
           {
             local_pub_revenue += div_reminder;
           }
         }
 
-        if(tag->cost_coef != RevenueDecimal::ZERO)
+        if (tag->cost_coef != RevenueDecimal::ZERO)
         {
           local_pub_revenue = RevenueDecimal::mul(
             local_pub_revenue,
@@ -761,7 +761,7 @@ namespace AdServer::CampaignSvcs
             Generics::DMR_FLOOR);
         }
 
-        if(tag_pricing)
+        if (tag_pricing)
         {
           ad_info.pub_revenue.rate_id = tag_pricing->site_rate_id;
           ad_info.pub_commission = tag->site->account->commision;
@@ -779,19 +779,19 @@ namespace AdServer::CampaignSvcs
           ad_info.pub_currency_rate = RevenueDecimal::ZERO;
         }
 
-        if(cs_data->selection_done)
+        if (cs_data->selection_done)
         {
           // use full delivery coef if selection produced not here
           TagDeliveryMap::const_iterator tag_delivery_it =
             cs_data->campaign->exclude_tags.find(tag->tag_id);
-          if(tag_delivery_it != cs_data->campaign->exclude_tags.end())
+          if (tag_delivery_it != cs_data->campaign->exclude_tags.end())
           {
             ad_info.tag_delivery_threshold = tag_delivery_it->second;
             assert(ad_info.tag_delivery_threshold);
           }
         }
 
-        if(cs_data->campaign_keyword.in())
+        if (cs_data->campaign_keyword.in())
         {
           ad_info.adv_revenue.click = cs_data->actual_cpc;
         }
@@ -799,7 +799,7 @@ namespace AdServer::CampaignSvcs
         {
           ad_info.adv_revenue.click = cs_data->campaign->click_revenue;
 
-          if(cs_data->campaign->channel.in() && channels)
+          if (cs_data->campaign->channel.in() && channels)
           {
             // fill channel cpm
             ExpressionChannelList cmp_channels;
@@ -811,17 +811,17 @@ namespace AdServer::CampaignSvcs
 
             cs_data->campaign->channel->get_cmp_channels(cmp_channels, simple_channels);
 
-            for(ExpressionChannelList::const_iterator cmp_ch_it = cmp_channels.begin();
+            for (ExpressionChannelList::const_iterator cmp_ch_it = cmp_channels.begin();
                 cmp_ch_it != cmp_channels.end(); ++cmp_ch_it)
             {
               const ChannelParams& ch_params = (*cmp_ch_it)->params();
 
-              if(ch_params.common_params.in())
+              if (ch_params.common_params.in())
               {
                 AccountMap::const_iterator acc_it =
                   campaign_config->accounts.find(ch_params.common_params->account_id);
 
-                if(acc_it != campaign_config->accounts.end())
+                if (acc_it != campaign_config->accounts.end())
                 {
                   const AccountDef* channel_account = acc_it->second;
                   CampaignManagerLogger::CMPChannel cmp_channel;
@@ -855,7 +855,7 @@ namespace AdServer::CampaignSvcs
         const Currency* pub_currency = tag->site->account->currency;
         ad_info.isp_revenue_share = colocation->revenue_share;
 
-        if(!cs_data->campaign->account->agency_profit_by_pub_amount() &&
+        if (!cs_data->campaign->account->agency_profit_by_pub_amount() &&
            cs_data->campaign->ccg_rate_type != CR_MAXBID)
         {
           // schema #1
@@ -912,7 +912,7 @@ namespace AdServer::CampaignSvcs
         adv_revenue_sys.action = campaign_currency->to_system_currency(
           ad_info.adv_revenue.action);
 
-        if(cs_data->campaign->account->invoice_commision())
+        if (cs_data->campaign->account->invoice_commision())
         {
           ad_info.adv_payable_comm_revenue = ad_info.adv_comm_revenue;
         }

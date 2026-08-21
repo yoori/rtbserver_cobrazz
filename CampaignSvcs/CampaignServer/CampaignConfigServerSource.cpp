@@ -25,7 +25,7 @@ namespace CampaignSvcs
     {
       Generics::Time res;
 
-      for(CORBA::ULong i = 0; i < in.length(); ++i)
+      for (CORBA::ULong i = 0; i < in.length(); ++i)
       {
         Generics::Time ts = CorbaAlgs::unpack_time(in[i].timestamp);
         out.deactivate(CorbaAlgs::convert_type_adapter(in[i].id), ts);
@@ -47,7 +47,7 @@ namespace CampaignSvcs
       result->str_behav_param_list_id = ch_inf.str_behav_param_list_id;
       result->threshold = ch_inf.threshold;
 
-      if(ch_inf.page_triggers.length() ||
+      if (ch_inf.page_triggers.length() ||
          ch_inf.search_triggers.length() ||
          ch_inf.url_triggers.length() ||
          ch_inf.url_keyword_triggers.length())
@@ -185,7 +185,7 @@ namespace CampaignSvcs
 
       if (config_update.ptr())
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->stream(Logging::Logger::TRACE,
             Aspect::CAMPAIGN_CONFIG_SERVER_SOURCE) <<
@@ -196,7 +196,7 @@ namespace CampaignSvcs
             ", result stamp: " << CorbaAlgs::unpack_time(config_update->master_stamp);
         }
 
-        if(CorbaAlgs::unpack_time(config_update->master_stamp) >
+        if (CorbaAlgs::unpack_time(config_update->master_stamp) >
              config->master_stamp)
         {
           Generics::Time first_load_stamp =
@@ -215,7 +215,7 @@ namespace CampaignSvcs
           campaign_config_ = new_config;
         }
 
-        if(need_logging)
+        if (need_logging)
         {
           *need_logging = false;
         }
@@ -264,7 +264,7 @@ namespace CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for(CORBA::ULong i = 0; i < update_info.app_formats.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.app_formats.length(); ++i)
     {
       const AdServer::CampaignSvcs::AppFormatInfo& app_format_info =
         update_info.app_formats[i];
@@ -283,7 +283,7 @@ namespace CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for(CORBA::ULong i = 0; i < update_info.countries.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.countries.length(); ++i)
     {
       const AdServer::CampaignSvcs::CountryInfo& country_info =
         update_info.countries[i];
@@ -303,7 +303,7 @@ namespace CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for(CORBA::ULong i = 0; i < update_info.sizes.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.sizes.length(); ++i)
     {
       const AdServer::CampaignSvcs::SizeInfo& size_info =
         update_info.sizes[i];
@@ -326,7 +326,7 @@ namespace CampaignSvcs
   {
     CORBA::ULong adv_actions_count = update_info.adv_actions.length();
 
-    for(CORBA::ULong i = 0; i < adv_actions_count; ++i)
+    for (CORBA::ULong i = 0; i < adv_actions_count; ++i)
     {
       const AdServer::CampaignSvcs::AdvActionInfo& adv_action_info =
         update_info.adv_actions[i];
@@ -336,13 +336,13 @@ namespace CampaignSvcs
         CorbaAlgs::unpack_time(adv_action_info.timestamp));
 
       CORBA::ULong j = 0;
-      for(; j < adv_action_info.ccg_ids.length() &&
+      for (; j < adv_action_info.ccg_ids.length() &&
         adv_action_info.ccg_ids[j] != 0; ++j)
       {
         action->ccg_ids.insert(adv_action_info.ccg_ids[j]);
       }
 
-      if(j < adv_action_info.ccg_ids.length())
+      if (j < adv_action_info.ccg_ids.length())
       {
         CorbaAlgs::unpack_decimal_from_seq(
           action->cur_value, adv_action_info.ccg_ids, j + 1);
@@ -366,7 +366,7 @@ namespace CampaignSvcs
       CreativeCategoryDef_var cat_def(new CreativeCategoryDef());
       cat_def->cct_id = update_info.creative_categories[i].cct_id;
       cat_def->name = update_info.creative_categories[i].name;
-      for(CORBA::ULong ec_i = 0;
+      for (CORBA::ULong ec_i = 0;
         ec_i < update_info.creative_categories[i].external_categories.length();
         ++ec_i)
       {
@@ -376,7 +376,7 @@ namespace CampaignSvcs
         CreativeCategoryDef::ExternalCategoryNameSet& names =
           cat_def->external_categories[
             static_cast<AdRequestType>(ext_cat.ad_request_type)];
-        for(CORBA::ULong name_i = 0;
+        for (CORBA::ULong name_i = 0;
           name_i < ext_cat.names.length(); ++name_i)
         {
           names.insert(ext_cat.names[name_i].in());
@@ -402,13 +402,13 @@ namespace CampaignSvcs
   {
     CORBA::ULong category_channels_count = update_info.category_channels.length();
 
-    for(CORBA::ULong i = 0; i < category_channels_count; ++i)
+    for (CORBA::ULong i = 0; i < category_channels_count; ++i)
     {
       const AdServer::CampaignSvcs::CategoryChannelInfo& category_channel_info =
         update_info.category_channels[i];
 
       CategoryChannelDef::LocalizationMap localizations;
-      for(CORBA::ULong loc_i = 0; loc_i < category_channel_info.localizations.length();
+      for (CORBA::ULong loc_i = 0; loc_i < category_channel_info.localizations.length();
           ++loc_i)
       {
         localizations.insert(std::make_pair(
@@ -443,7 +443,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.behav_params.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.behav_params.length(); ++i)
       {
         const AdServer::CampaignSvcs::BehavParamInfo& bp_info =
           update_info.behav_params[i];
@@ -452,7 +452,7 @@ namespace CampaignSvcs
         new_bp->threshold = bp_info.threshold;
         new_bp->timestamp = CorbaAlgs::unpack_time(bp_info.timestamp);
 
-        for(CORBA::ULong j = 0; j < bp_info.bp_seq.length(); j++)
+        for (CORBA::ULong j = 0; j < bp_info.bp_seq.length(); j++)
         {
           BehavioralParameterDef bp_def;
           bp_def.min_visits = bp_info.bp_seq[j].min_visits;
@@ -466,7 +466,7 @@ namespace CampaignSvcs
         new_config.behav_param_lists.activate(bp_info.id, new_bp);
       }
 
-      for(CORBA::ULong i = 0; i < update_info.key_behav_params.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.key_behav_params.length(); ++i)
       {
         const AdServer::CampaignSvcs::KeyBehavParamInfo& bp_info =
           update_info.key_behav_params[i];
@@ -475,7 +475,7 @@ namespace CampaignSvcs
         new_bp->threshold = bp_info.threshold;
         new_bp->timestamp = CorbaAlgs::unpack_time(bp_info.timestamp);
 
-        for(CORBA::ULong j = 0; j < bp_info.bp_seq.length(); j++)
+        for (CORBA::ULong j = 0; j < bp_info.bp_seq.length(); j++)
         {
           BehavioralParameterDef bp_def;
           bp_def.min_visits = bp_info.bp_seq[j].min_visits;
@@ -491,7 +491,7 @@ namespace CampaignSvcs
       deactivate_sequence(new_config.behav_param_lists,
         update_info.deleted_behav_params);
 
-      for(CORBA::ULong i = 0;
+      for (CORBA::ULong i = 0;
           i < update_info.deleted_key_behav_params.length(); ++i)
       {
         new_config.str_behav_param_lists.deactivate(
@@ -542,7 +542,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.fraud_conditions.length(); i++)
+      for (CORBA::ULong i = 0; i < update_info.fraud_conditions.length(); i++)
       {
         const AdServer::CampaignSvcs::FraudConditionInfo& fraud_cond_info =
           update_info.fraud_conditions[i];
@@ -577,14 +577,14 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.search_engines.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.search_engines.length(); ++i)
       {
         const AdServer::CampaignSvcs::SearchEngineInfo& in =
           update_info.search_engines[i];
         SearchEngine_var value = new SearchEngine;
         value->timestamp = CorbaAlgs::unpack_time(in.timestamp);
 
-        for(CORBA::ULong j = 0; j < in.regexps.length(); ++j)
+        for (CORBA::ULong j = 0; j < in.regexps.length(); ++j)
         {
           SearchEngineRegExp reg_exp;
           reg_exp.host_postfix = in.regexps[j].host_postfix;
@@ -621,14 +621,14 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.web_browsers.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.web_browsers.length(); ++i)
       {
         const AdServer::CampaignSvcs::WebBrowserInfo& in =
           update_info.web_browsers[i];
         WebBrowser_var value = new WebBrowser;
         value->timestamp = CorbaAlgs::unpack_time(in.timestamp);
 
-        for(CORBA::ULong j = 0; j < in.detectors.length(); ++j)
+        for (CORBA::ULong j = 0; j < in.detectors.length(); ++j)
         {
           WebBrowser::Detector detector;
           detector.marker = in.detectors[j].marker;
@@ -665,7 +665,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.platforms.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.platforms.length(); ++i)
       {
         const AdServer::CampaignSvcs::PlatformInfo& in =
           update_info.platforms[i];
@@ -674,7 +674,7 @@ namespace CampaignSvcs
         value->type = in.type.in();
         value->timestamp = CorbaAlgs::unpack_time(in.timestamp);
 
-        for(CORBA::ULong j = 0; j < in.detectors.length(); ++j)
+        for (CORBA::ULong j = 0; j < in.detectors.length(); ++j)
         {
           Platform::Detector detector;
           detector.marker = in.detectors[j].marker;
@@ -713,7 +713,7 @@ namespace CampaignSvcs
     {
       CORBA::ULong creative_options_count = update_info.activate_creative_options.length();
 
-      for(CORBA::ULong i = 0; i < creative_options_count; ++i)
+      for (CORBA::ULong i = 0; i < creative_options_count; ++i)
       {
         const AdServer::CampaignSvcs::CreativeOptionInfo& creative_option_info =
           update_info.activate_creative_options[i];
@@ -755,7 +755,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.web_operations.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.web_operations.length(); ++i)
       {
         const AdServer::CampaignSvcs::WebOperationInfo& in =
           update_info.web_operations[i];
@@ -790,7 +790,7 @@ namespace CampaignSvcs
 
     try
     {
-      for(CORBA::ULong i = 0; i < update_info.activate_block_channels.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.activate_block_channels.length(); ++i)
       {
         const AdServer::CampaignSvcs::BlockChannelInfo& block_channel_info =
           update_info.activate_block_channels[i];
@@ -822,7 +822,7 @@ namespace CampaignSvcs
   {
     static const char* FUN = "CampaignConfigServerSource::apply_config_update_()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       logger_->stream(Logging::Logger::TRACE,
         Aspect::CAMPAIGN_CONFIG_SERVER_SOURCE) << FUN <<
@@ -924,7 +924,7 @@ namespace CampaignSvcs
 
     CORBA::ULong currency_count = update_info.currencies.length();
 
-    for(CORBA::ULong i = 0; i < currency_count; ++i)
+    for (CORBA::ULong i = 0; i < currency_count; ++i)
     {
       const AdServer::CampaignSvcs::CurrencyInfo& currency_info =
         update_info.currencies[i];
@@ -1056,7 +1056,7 @@ namespace CampaignSvcs
 
       CorbaAlgs::convert_sequence(campaign_info.sites, campaign->sites);
 
-      for(CORBA::ULong j = 0; j < campaign_info.creatives.length(); j++)
+      for (CORBA::ULong j = 0; j < campaign_info.creatives.length(); j++)
       {
         const CreativeInfo& creative_info = campaign_info.creatives[j];
 
@@ -1080,7 +1080,7 @@ namespace CampaignSvcs
         new_creative->order_set_id = creative_info.order_set_id;
         new_creative->initial_contract_id = creative_info.initial_contract_id;
 
-        for(CORBA::ULong k = 0; k < creative_info.sizes.length(); ++k)
+        for (CORBA::ULong k = 0; k < creative_info.sizes.length(); ++k)
         {
           const CreativeSizeInfo& size_info = creative_info.sizes[k];
           CreativeDef::Size& size = new_creative->sizes[size_info.size_id];
@@ -1102,7 +1102,7 @@ namespace CampaignSvcs
         campaign_info.exclude_pub_accounts,
         campaign->exclude_pub_accounts);
 
-      for(CORBA::ULong tag_i = 0; tag_i < campaign_info.exclude_tags.length();
+      for (CORBA::ULong tag_i = 0; tag_i < campaign_info.exclude_tags.length();
           ++tag_i)
       {
         campaign->exclude_tags.insert(std::make_pair(
@@ -1116,7 +1116,7 @@ namespace CampaignSvcs
       unpack_non_linked_expression(campaign->stat_expression, campaign_info.stat_expression);
 
       /*
-      for(CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
+      for (CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
       {
         const CampaignContractInfo& contract = campaign_info.contracts[contract_i];
         CampaignContractDef_var new_contract(new CampaignContractDef());
@@ -1154,7 +1154,7 @@ namespace CampaignSvcs
     const GeoChannelSeq& activate_geo_channels =
       update_info.activate_geo_channels;
 
-    if(activate_geo_channels.length() || update_info.delete_geo_channels.length())
+    if (activate_geo_channels.length() || update_info.delete_geo_channels.length())
     {
       new_config.geo_channels = new GeoChannelMap(*new_config.geo_channels);
 
@@ -1165,7 +1165,7 @@ namespace CampaignSvcs
         new_ch->country = geo_channel_info.country;
         new_ch->timestamp = CorbaAlgs::unpack_time(geo_channel_info.timestamp);
 
-        for(CORBA::ULong ti = 0; ti < geo_channel_info.geoip_targets.length(); ++ti)
+        for (CORBA::ULong ti = 0; ti < geo_channel_info.geoip_targets.length(); ++ti)
         {
           GeoChannelDef::GeoIPTarget tgt;
           tgt.region = geo_channel_info.geoip_targets[ti].region;
@@ -1303,7 +1303,7 @@ namespace CampaignSvcs
 
       p_tag->tag_id = tag_info.tag_id;
       p_tag->site_id = tag_info.site_id;
-      for(CORBA::ULong size_i = 0; size_i < tag_info.sizes.length(); ++size_i)
+      for (CORBA::ULong size_i = 0; size_i < tag_info.sizes.length(); ++size_i)
       {
         TagDef::Size& res_size = p_tag->sizes[tag_info.sizes[size_i].size_id];
         res_size.max_text_creatives = tag_info.sizes[size_i].max_text_creatives;
@@ -1362,7 +1362,7 @@ namespace CampaignSvcs
       unpack_option_value_map(p_tag->hidden_tokens, tag_info.hidden_tokens);
       unpack_option_value_map(p_tag->passback_tokens, tag_info.passback_tokens);
 
-      for(CORBA::ULong template_i = 0;
+      for (CORBA::ULong template_i = 0;
           template_i < tag_info.template_tokens.length();
           ++template_i)
       {
@@ -1383,7 +1383,7 @@ namespace CampaignSvcs
       deactivate_sequence(new_config.colocations,
         update_info.deleted_colocations);
 
-      for(CORBA::ULong i = 0; i < update_info.colocations.length(); ++i)
+      for (CORBA::ULong i = 0; i < update_info.colocations.length(); ++i)
       {
         const AdServer::CampaignSvcs::ColocationInfo& colo_info =
           update_info.colocations[i];
@@ -1409,7 +1409,7 @@ namespace CampaignSvcs
     deactivate_sequence(new_config.campaign_keywords,
       update_info.deleted_keywords);
 
-    for(CORBA::ULong i = 0; i < update_info.campaign_keywords.length(); ++i)
+    for (CORBA::ULong i = 0; i < update_info.campaign_keywords.length(); ++i)
     {
       const AdServer::CampaignSvcs::CampaignKeywordInfo& kw_info =
         update_info.campaign_keywords[i];

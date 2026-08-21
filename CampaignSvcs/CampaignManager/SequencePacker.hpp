@@ -40,14 +40,14 @@ namespace AdServer
 
       unsigned long hash(const ElementSeqType* el_seq) const
       {
-        if(el_seq->empty())
+        if (el_seq->empty())
         {
           return 0;
         }
 
         unsigned long res = hash(*(*el_seq->begin()));
 
-        for(typename ElementSeqType::const_iterator el_it = ++el_seq->begin();
+        for (typename ElementSeqType::const_iterator el_it = ++el_seq->begin();
             el_it != el_seq->end(); ++el_it)
         {
           res = hash_union(res, hash(*el_it));
@@ -81,7 +81,7 @@ namespace AdServer
 
       void unkeep_(ElementSeqBase* /*el*/)
       {
-        if(eraser_.in())
+        if (eraser_.in())
         {
           eraser_->erase(this);
         }
@@ -175,7 +175,7 @@ namespace AdServer
 
         virtual void erase(const ElementSeqBase* el)
         {
-          if(seq_packer_)
+          if (seq_packer_)
           {
             seq_packer_->unkeep(el);
           }
@@ -298,19 +298,19 @@ namespace AdServer
       typename ElementSeqType::const_iterator left_it = left->begin();
       typename ElementSeqType::const_iterator right_it = right->begin();
 
-      while(left_it != left->end() && right_it != right->end())
+      while (left_it != left->end() && right_it != right->end())
       {
-        if(*(*left_it) == *(*right_it))
+        if (*(*left_it) == *(*right_it))
         {
           ++left_it;
           ++right_it;
         }
-        else if(!left_cell_found && (*(*right_it) == *left_cell))
+        else if (!left_cell_found && (*(*right_it) == *left_cell))
         {
           left_cell_found = true;
           ++right_it;
         }
-        else if(!right_cell_found && (*right_cell == *(*left_it)))
+        else if (!right_cell_found && (*right_cell == *(*left_it)))
         {
           right_cell_found = true;
           ++left_it;
@@ -321,12 +321,12 @@ namespace AdServer
         }
       }
 
-      if(left_it != left->end())
+      if (left_it != left->end())
       {
         return !right_cell_found && *(*left_it) == *right_cell &&
           ++left_it == left->end();
       }
-      else if(right_it != right->end())
+      else if (right_it != right->end())
       {
         return !left_cell_found && *(*right_it) == *left_cell &&
           ++right_it == right->end();
@@ -342,7 +342,7 @@ namespace AdServer
     ElementSeqHashAdapter::operator==(
       const ElementSeqHashAdapter& right) const
     {
-      if(cell_list_ == right.cell_list_)
+      if (cell_list_ == right.cell_list_)
       {
         return (add_cell_ == 0 && right.add_cell_ == 0) ||
           (add_cell_ && right.add_cell_ && *add_cell_ == *right.add_cell_);
@@ -405,7 +405,7 @@ namespace AdServer
     {
       ElementSeqHashAdapter search_el_seq_adapter;
 
-      if(el_seq)
+      if (el_seq)
       {
         typename HashAdapterTable::const_iterator el_seq_it =
           adapter_table_.find(el_seq);
@@ -420,7 +420,7 @@ namespace AdServer
       typename HashAdapterSet::const_iterator el_seq_adapter_it =
         adapters_.find(search_el_seq_adapter);
 
-      if(el_seq_adapter_it == adapters_.end())
+      if (el_seq_adapter_it == adapters_.end())
       {
         /* insert extended hash adapter (cell list + cell) */
         ConstElementSeq_var ret_list = create_seq(el_seq, el);
@@ -444,7 +444,7 @@ namespace AdServer
     SequencePacker<ElementType, ElementSeqType, ElementSeqHashType>::unkeep(
       const ElementSeqBase* el_seq)
     {
-      if(el_seq)
+      if (el_seq)
       {
         typename HashAdapterTable::iterator el_seq_it =
           adapter_table_.find(el_seq);
@@ -452,7 +452,7 @@ namespace AdServer
         assert(el_seq_it != adapter_table_.end());
 
         /*
-        if(el_seq_it != adapter_table_.end())
+        if (el_seq_it != adapter_table_.end())
         {
         */
 
@@ -473,7 +473,7 @@ namespace AdServer
     hashes_count_() const noexcept
     {
       std::set<unsigned long> hashes;
-      for(typename HashAdapterSet::const_iterator it = adapters_.begin();
+      for (typename HashAdapterSet::const_iterator it = adapters_.begin();
           it != adapters_.end(); ++it)
       {
         hashes.insert(it->hash());

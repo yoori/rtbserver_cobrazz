@@ -192,12 +192,12 @@ namespace CampaignSvcs
     CollectionType& target_coll,
     const CollectionType& source_coll)
   {
-    for(typename CollectionType::const_iterator sit =
+    for (typename CollectionType::const_iterator sit =
           source_coll.begin();
         sit != source_coll.end(); ++sit)
     {
       typename CollectionType::iterator tit = target_coll.find(sit->first);
-      if(tit == target_coll.end())
+      if (tit == target_coll.end())
       {
         target_coll.insert(*sit);
       }
@@ -405,7 +405,7 @@ namespace CampaignSvcs
 
     out << offset << "ccgs: " << std::endl;
 
-    for(CCGStatMap::const_iterator cs_it = ccgs.begin();
+    for (CCGStatMap::const_iterator cs_it = ccgs.begin();
         cs_it != ccgs.end(); ++cs_it)
     {
       out << offset << cs_it->first <<
@@ -421,7 +421,7 @@ namespace CampaignSvcs
         ", ch_am = " << cs_it->second.cur_hour_amount <<
         ", chc_am = " << cs_it->second.cur_hour_comm_amount << std::endl <<
         offset << "    creatives:" << std::endl;
-      for(CCGStat::CreativeStatMap::const_iterator cr_it =
+      for (CCGStat::CreativeStatMap::const_iterator cr_it =
             cs_it->second.creatives.begin();
           cr_it != cs_it->second.creatives.end(); ++cr_it)
       {
@@ -431,7 +431,7 @@ namespace CampaignSvcs
           ", actions = " << cr_it->second.actions.str() << std::endl;
       }
       out << offset << "    publisher_amounts:" << std::endl;
-      for(CCGStat::PublisherStatMap::const_iterator p_it =
+      for (CCGStat::PublisherStatMap::const_iterator p_it =
             cs_it->second.publisher_amounts.begin();
           p_it != cs_it->second.publisher_amounts.end(); ++p_it)
       {
@@ -441,7 +441,7 @@ namespace CampaignSvcs
           std::endl;
       }
       out << offset << "    tag_stats:" << std::endl;
-      for(CCGStat::TagStatMap::const_iterator t_it =
+      for (CCGStat::TagStatMap::const_iterator t_it =
             cs_it->second.tag_stats.begin();
           t_it != cs_it->second.tag_stats.end(); ++t_it)
       {
@@ -507,7 +507,7 @@ namespace CampaignSvcs
         offset << "check_time: " << check_time.get_gm_time() << std::endl <<
         offset << "account_amounts: " << std::endl;
     }
-    for(AccountAmountMap::const_iterator acc_it = account_amounts.begin();
+    for (AccountAmountMap::const_iterator acc_it = account_amounts.begin();
         acc_it != account_amounts.end(); ++acc_it)
     {
       out << offset << "  " << acc_it->first <<
@@ -515,7 +515,7 @@ namespace CampaignSvcs
         ", comm_amount = " << acc_it->second.comm_amount << std::endl;
     }
     out << offset << "campaign_stats: " << std::endl;
-    for(CampaignStatMap::const_iterator cmp_it = campaign_stats.begin();
+    for (CampaignStatMap::const_iterator cmp_it = campaign_stats.begin();
         cmp_it != campaign_stats.end(); ++cmp_it)
     {
       out << offset << "  " << cmp_it->first << ": ";

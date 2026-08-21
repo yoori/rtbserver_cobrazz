@@ -720,7 +720,7 @@ namespace AdServer
         tag_pricing(tag_pricing_val)
     {
       // profit ecpm - specify selection order
-      if(tag_pricing)
+      if (tag_pricing)
       {
         ecpm = adjusted_campaign_ecpm -
           tag_pricing->cpm -
@@ -790,9 +790,9 @@ namespace AdServer
     {
       iterator ins_it = begin();
 
-      while(ins_it != end())
+      while (ins_it != end())
       {
-        if(campaign_selection_cell_less_pred(ins, *ins_it))
+        if (campaign_selection_cell_less_pred(ins, *ins_it))
         {
           break;
         }
@@ -870,9 +870,9 @@ namespace AdServer
     {
       iterator ins_it = begin();
 
-      while(ins_it != end())
+      while (ins_it != end())
       {
-        if(campaign_cell_less_pred(ins, *ins_it))
+        if (campaign_cell_less_pred(ins, *ins_it))
         {
           break;
         }

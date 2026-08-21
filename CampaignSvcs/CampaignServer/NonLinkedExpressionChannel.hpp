@@ -129,18 +129,18 @@ namespace AdServer
       const NonLinkedExpressionChannel::Expression& expr)
       noexcept
     {
-      if(expr.op == NonLinkedExpressionChannel::NOP)
+      if (expr.op == NonLinkedExpressionChannel::NOP)
       {
         out << expr.channel_id;
       }
       else
       {
         out << "(";
-        for(NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+        for (NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
               expr.sub_channels.begin();
             eit != expr.sub_channels.end(); ++eit)
         {
-          if(eit != expr.sub_channels.begin())
+          if (eit != expr.sub_channels.begin())
           {
             out << " " << static_cast<char>(expr.op) << " ";
           }
@@ -156,7 +156,7 @@ namespace AdServer
       const NonLinkedExpressionChannel* channel)
       noexcept
     {
-      if(!channel->expr_.get())
+      if (!channel->expr_.get())
       {
         out << "[" << channel->channel_params_.channel_id << "]";
       }
@@ -206,16 +206,16 @@ namespace AdServer
     NonLinkedExpressionChannel::Expression::all_channels(
       ChannelIdSet& channels) const noexcept
     {
-      if(op == NOP)
+      if (op == NOP)
       {
-        if(channel_id)
+        if (channel_id)
         {
           channels.insert(channel_id);
         }
       }
       else
       {
-        for(ExpressionArray::const_iterator eit = sub_channels.begin();
+        for (ExpressionArray::const_iterator eit = sub_channels.begin();
             eit != sub_channels.end(); ++eit)
         {
           eit->all_channels(channels);

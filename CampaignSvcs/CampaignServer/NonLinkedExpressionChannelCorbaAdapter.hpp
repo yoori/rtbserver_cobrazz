@@ -48,7 +48,7 @@ namespace AdServer
       expression_info.channel_id = expression.channel_id;
       expression_info.sub_channels.length(expression.sub_channels.size());
       CORBA::ULong ei = 0;
-      for(NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
+      for (NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
             expression.sub_channels.begin();
           eit != expression.sub_channels.end(); ++eit, ++ei)
       {
@@ -64,7 +64,7 @@ namespace AdServer
       expression.op = static_cast<NonLinkedExpressionChannel::Operation>(
         expression_info.operation);
       expression.channel_id = expression_info.channel_id;
-      for(CORBA::ULong ei = 0; ei < expression_info.sub_channels.length(); ++ei)
+      for (CORBA::ULong ei = 0; ei < expression_info.sub_channels.length(); ++ei)
       {
         NonLinkedExpressionChannel::Expression sub_expr;
         unpack_non_linked_expression(sub_expr,
@@ -94,7 +94,7 @@ namespace AdServer
 
       const NonLinkedExpressionChannel::Expression* expr =
         expression_channel->expression();
-      if(expr)
+      if (expr)
       {
         pack_non_linked_expression(channel_info.expression, *expr);
       }
@@ -113,7 +113,7 @@ namespace AdServer
       ChannelParams channel_params;
       unpack_channel_params(channel_params, channel_info);
 
-      if(channel_info.expression.operation != 'S')
+      if (channel_info.expression.operation != 'S')
       {
         NonLinkedExpressionChannel::Expression expr;
         unpack_non_linked_expression(expr, channel_info.expression);

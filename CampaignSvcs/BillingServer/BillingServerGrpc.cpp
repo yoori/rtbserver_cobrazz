@@ -189,6 +189,59 @@ namespace AdServer::CampaignSvcs
     {
       target.set_available(source.available);
       target.set_goal_ctr(GrpcAlgs::pack_decimal(source.goal_ctr));
+
+      using Reason = BillingProcessor::BidUnavailableReason;
+      switch(source.unavailable_reason)
+      {
+        case Reason::ACCOUNT_NOT_FOUND:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_ACCOUNT_NOT_FOUND);
+          break;
+        case Reason::ACCOUNT_INACTIVE:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_ACCOUNT_INACTIVE);
+          break;
+        case Reason::ADVERTISER_NOT_FOUND:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_ADVERTISER_NOT_FOUND);
+          break;
+        case Reason::ADVERTISER_INACTIVE:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_ADVERTISER_INACTIVE);
+          break;
+        case Reason::CAMPAIGN_NOT_FOUND:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_NOT_FOUND);
+          break;
+        case Reason::CAMPAIGN_INACTIVE:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_INACTIVE);
+          break;
+        case Reason::CCG_NOT_FOUND:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_CCG_NOT_FOUND);
+          break;
+        case Reason::CCG_INACTIVE:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_CCG_INACTIVE);
+          break;
+        case Reason::ACCOUNT_BUDGET_BLOCKED:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_ACCOUNT_BUDGET_BLOCKED);
+          break;
+        case Reason::CAMPAIGN_BUDGET_BLOCKED:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_BUDGET_BLOCKED);
+          break;
+        case Reason::CCG_BUDGET_BLOCKED:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_CCG_BUDGET_BLOCKED);
+          break;
+        case Reason::UNSPECIFIED:
+          target.set_unavailable_reason(
+            Proto::BID_UNAVAILABLE_REASON_UNSPECIFIED);
+          break;
+      }
     }
 
     ::grpc::Status
@@ -551,7 +604,7 @@ namespace AdServer::CampaignSvcs
       BillingServerCore::ConfirmBidSeq core_requests;
       core_requests.reserve(request.requests_size());
 
-      for(int i = 0; i < request.requests_size(); ++i)
+      for (int i = 0; i < request.requests_size(); ++i)
       {
         core_requests.emplace_back(adapt_confirm_bid(request.requests(i)));
       }
@@ -559,7 +612,7 @@ namespace AdServer::CampaignSvcs
       const BillingServerCore::ConfirmBidRefSeq core_remainders =
         core_->add_amount(core_requests);
 
-      for(const BillingServerCore::ConfirmBidRefInfo& source : core_remainders)
+      for (const BillingServerCore::ConfirmBidRefInfo& source : core_remainders)
       {
         Proto::ConfirmBidRefInfo* target = response.add_remainder_requests();
         target->set_index(source.index);

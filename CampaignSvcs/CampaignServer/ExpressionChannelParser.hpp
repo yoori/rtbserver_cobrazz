@@ -83,6 +83,7 @@ namespace CampaignSvcs
           {
             continue;
           }
+
           if (*rev_border_it == ')')
           {
             --rev_border_it;
@@ -92,9 +93,9 @@ namespace CampaignSvcs
           break;
         }
 
-        if(rev_border_it == border_it)
+        if (rev_border_it == border_it)
         {
-          if(!found)
+          if (!found)
           {
             Stream::Error ostr;
             ostr << "ExpressionChannelParser::parse_op_(): "
@@ -234,7 +235,7 @@ namespace CampaignSvcs
 
     NonLinkedExpressionChannel::Expression result_expression;
 
-    if(!parse_op_(result_expression,
+    if (!parse_op_(result_expression,
          expression, NonLinkedExpressionChannel::OR) &&
        !parse_op_(result_expression,
          expression, NonLinkedExpressionChannel::AND) &&

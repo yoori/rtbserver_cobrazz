@@ -59,16 +59,16 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     {
       const std::string_view name(key.data(), key.size());
       const auto it = processors_.find(name);
-      if(it != processors_.end())
+      if (it != processors_.end())
       {
-        if(!value)
+        if (!value)
         {
           result.assign(key.data(), key.size());
           return true;
         }
 
         std::optional<std::string> value_result = it->second(provider);
-        if(!value_result)
+        if (!value_result)
         {
           return false;
         }

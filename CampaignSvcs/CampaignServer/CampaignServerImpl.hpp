@@ -754,7 +754,7 @@ namespace AdServer
            it != src.end();
            ++it)
       {
-        if(it->first % portions_number == portion &&
+        if (it->first % portions_number == portion &&
            ts_op(it->second) > request_timestamp)
         {
           ++result;

@@ -356,11 +356,11 @@ namespace AdServer
       TemplateMap& source_map)
       /*throw(Exception)*/
     {
-      for(typename KeySet::const_iterator it = key_set.begin();
+      for (typename KeySet::const_iterator it = key_set.begin();
           it != key_set.end(); ++it)
       {
         typename KeyMap::iterator key_it = source_map.key_map_.find(*it);
-        if(key_it != source_map.key_map_.end())
+        if (key_it != source_map.key_map_.end())
         {
           typename ValueMap::iterator val_it =
             source_map.value_map_.find(key_it->second);
@@ -386,7 +386,7 @@ namespace AdServer
     {
       key_map_[key] = handler;
       typename ValueMap::const_iterator it = value_map_.find(handler);
-      if(it == value_map_.end())
+      if (it == value_map_.end())
       {
         value_map_.insert(std::make_pair(handler, templ_with_state));
       }
@@ -432,7 +432,7 @@ namespace AdServer
       noexcept
     {
       typename KeyMap::const_iterator it = key_map_.find(key);
-      if(it == key_map_.end())
+      if (it == key_map_.end())
       {
         return false;
       }
@@ -451,7 +451,7 @@ namespace AdServer
       typename ValueMap::iterator& value_map_it) const
       /*throw(Template::FileNotExists, Template::InvalidTemplate)*/
     {
-      if(value_map_it == value_map_.end())
+      if (value_map_it == value_map_.end())
       {
         return 0;
       }
@@ -462,9 +462,9 @@ namespace AdServer
       {
         typename SyncPolicy::ReadGuard lock(value_map_it->second.lock);
 
-        if(value_map_it->second.templ.in() != 0)
+        if (value_map_it->second.templ.in() != 0)
         {
-          if(!factory_.need_update(
+          if (!factory_.need_update(
               value_map_it->first,
               value_map_it->second.state) ||
             value_map_it->second.update_in_progress)
@@ -477,7 +477,7 @@ namespace AdServer
       {
         typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
 
-        if(value_map_it->second.templ.in() == 0)
+        if (value_map_it->second.templ.in() == 0)
         {
           value_map_it->second.templ = factory_.create(
             value_map_it->first,
@@ -485,14 +485,14 @@ namespace AdServer
           return ReferenceCounting::add_ref(value_map_it->second.templ);
         }
 
-        if(!factory_.need_update(
+        if (!factory_.need_update(
              value_map_it->first,
              value_map_it->second.state))
         {
           return ReferenceCounting::add_ref(value_map_it->second.templ);
         }
 
-        if(value_map_it->second.update_in_progress)
+        if (value_map_it->second.update_in_progress)
         {
           return ReferenceCounting::add_ref(value_map_it->second.templ);
         }
@@ -537,7 +537,7 @@ namespace AdServer
       /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/
     {
       typename KeyMap::const_iterator it = key_map_.find(key);
-      if(it == key_map_.end())
+      if (it == key_map_.end())
       {
         return 0;
       }
@@ -559,7 +559,7 @@ namespace AdServer
       /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/
     {
       typename KeyMap::const_iterator it = key_map_.find(key);
-      if(it == key_map_.end())
+      if (it == key_map_.end())
       {
         return 0;
       }

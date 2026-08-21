@@ -413,10 +413,10 @@ namespace
     std::vector<unsigned long> result;
     String::StringManip::SplitComma tokenizer(value);
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       unsigned long id = 0;
-      if(!String::StringManip::str_to_int(token, id))
+      if (!String::StringManip::str_to_int(token, id))
       {
         throw std::runtime_error("invalid id: " + token.str());
       }
@@ -442,7 +442,7 @@ namespace
     const std::vector<unsigned long>& ids,
     google::protobuf::RepeatedField<google::protobuf::uint64>* target)
   {
-    for(const auto id : ids)
+    for (const auto id : ids)
     {
       target->Add(id);
     }
@@ -453,7 +453,7 @@ namespace
     const Generics::AppUtils::StringOption& country,
     google::protobuf::RepeatedPtrField<cm::GeoInfo>* target)
   {
-    if(country.installed())
+    if (country.installed())
     {
       auto* location = target->Add();
       location->set_country(*country);
@@ -465,7 +465,7 @@ namespace
     const Generics::AppUtils::StringOption& channels,
     google::protobuf::RepeatedField<google::protobuf::uint64>* target)
   {
-    if(channels.installed())
+    if (channels.installed())
     {
       add_ids(parse_ids(*channels), target);
     }
@@ -505,7 +505,7 @@ namespace
   ClientHolder
   create_client(const std::string& reference)
   {
-    if(reference.empty())
+    if (reference.empty())
     {
       throw std::runtime_error("empty CampaignManager gRPC endpoint");
     }
@@ -536,17 +536,19 @@ namespace
   {
     try
     {
-      if(holder.client)
+      if (holder.client)
       {
         holder.client->deactivate_object();
         holder.client->wait_object();
       }
-      if(holder.grpc_executor)
+
+      if (holder.grpc_executor)
       {
         holder.grpc_executor->deactivate_object();
         holder.grpc_executor->wait_object();
       }
-      if(holder.coalesce_runner)
+
+      if (holder.coalesce_runner)
       {
         holder.coalesce_runner->deactivate_object();
         holder.coalesce_runner->wait_object();
@@ -574,7 +576,7 @@ namespace
   print_colocation_flags(const cm::GetColocationFlagsResponse& response)
   {
     std::cout << "colo_id\tflags\thid_profile\n";
-    for(const auto& item : response.colocations())
+    for (const auto& item : response.colocations())
     {
       std::cout << item.colo_id() << '\t' <<
         item.flags() << '\t' <<
@@ -587,7 +589,7 @@ namespace
     const google::protobuf::RepeatedPtrField<cm::CategoryChannelNode>& channels,
     const std::string& prefix = std::string())
   {
-    for(const auto& channel : channels)
+    for (const auto& channel : channels)
     {
       std::cout << prefix << channel.channel_id() << '\t' <<
         channel.flags() << '\t' <<
@@ -601,7 +603,7 @@ namespace
   std::string
   hex_value(const std::string& value)
   {
-    if(value.empty())
+    if (value.empty())
     {
       return std::string();
     }
@@ -609,7 +611,7 @@ namespace
     std::ostringstream out;
     out << "0x";
     static const char HEX[] = "0123456789ABCDEF";
-    for(unsigned char ch : value)
+    for (unsigned char ch : value)
     {
       out << HEX[(ch >> 4) & 0x0F] << HEX[ch & 0x0F];
     }
@@ -619,12 +621,12 @@ namespace
   std::string
   bytes_value(const std::string& value)
   {
-    if(value.empty())
+    if (value.empty())
     {
       return std::string();
     }
 
-    if(value.size() != Generics::Time::TIME_PACK_LEN)
+    if (value.size() != Generics::Time::TIME_PACK_LEN)
     {
       return hex_value(value);
     }
@@ -644,7 +646,7 @@ namespace
   decimal_value(const cm::DecimalInfo& value)
   {
     using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
-    if(value.value().size() != RevenueDecimal::PACK_SIZE)
+    if (value.value().size() != RevenueDecimal::PACK_SIZE)
     {
       return std::string();
     }
@@ -658,7 +660,7 @@ namespace
   decimal_integer_value(const cm::DecimalInfo& value)
   {
     using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
-    if(value.value().size() != RevenueDecimal::PACK_SIZE)
+    if (value.value().size() != RevenueDecimal::PACK_SIZE)
     {
       return std::string();
     }
@@ -671,7 +673,7 @@ namespace
   std::string
   time_value(const std::string& value)
   {
-    if(value.size() != Generics::Time::TIME_PACK_LEN)
+    if (value.size() != Generics::Time::TIME_PACK_LEN)
     {
       return std::string();
     }
@@ -691,9 +693,9 @@ namespace
   {
     std::ostringstream out;
     bool first = true;
-    for(const auto value : values)
+    for (const auto value : values)
     {
-      if(!first)
+      if (!first)
       {
         out << ',';
       }
@@ -709,7 +711,7 @@ namespace
     std::size_t columns_count)
   {
     Table table(columns_count);
-    for(std::size_t i = 0; i < columns_count; ++i)
+    for (std::size_t i = 0; i < columns_count; ++i)
     {
       table.column(i, columns[i]);
     }
@@ -722,7 +724,7 @@ namespace
     std::size_t columns_count)
   {
     std::size_t max_len = 0;
-    for(std::size_t i = 0; i < columns_count; ++i)
+    for (std::size_t i = 0; i < columns_count; ++i)
     {
       max_len = std::max(max_len, columns[i].name.length());
     }
@@ -735,12 +737,12 @@ namespace
     const std::map<unsigned long, std::string>& sizes)
   {
     std::ostringstream out;
-    for(int i = 0; i < creative.sizes_size(); ++i)
+    for (int i = 0; i < creative.sizes_size(); ++i)
     {
       const auto& size = creative.sizes(i);
       out << '[' << size.size_id() << ",'";
       const auto size_it = sizes.find(size.size_id());
-      if(size_it != sizes.end())
+      if (size_it != sizes.end())
       {
         out << size_it->second;
       }
@@ -757,9 +759,9 @@ namespace
     const google::protobuf::RepeatedPtrField<cm::ConfigOptionValue>& values)
   {
     std::ostringstream out;
-    for(int i = 0; i < values.size(); ++i)
+    for (int i = 0; i < values.size(); ++i)
     {
-      if(i > 0)
+      if (i > 0)
       {
         out << ", ";
       }
@@ -773,9 +775,9 @@ namespace
   join_numbers_spaced(const Repeated& values)
   {
     std::ostringstream out;
-    for(int i = 0; i < values.size(); ++i)
+    for (int i = 0; i < values.size(); ++i)
     {
-      if(i > 0)
+      if (i > 0)
       {
         out << ", ";
       }
@@ -808,7 +810,7 @@ namespace
     std::ostringstream out;
     out << flags << ' ';
     out << (flags & AccountTypeFlags::GROSS ? "(gross)" : "(net)");
-    if(flags & AccountTypeFlags::INVOICE_COMMISION)
+    if (flags & AccountTypeFlags::INVOICE_COMMISION)
     {
       out << "(invoice commision)";
     }
@@ -836,11 +838,12 @@ namespace
   std::string
   creative_template_type(unsigned long value)
   {
-    if(value == 1)
+    if (value == 1)
     {
       return "Text";
     }
-    if(value == 2)
+
+    if (value == 2)
     {
       return "Xslt";
     }
@@ -879,11 +882,12 @@ namespace
   campaign_mode_string(unsigned long value)
   {
     using namespace AdServer::CampaignSvcs;
-    if(value == CM_RANDOM)
+    if (value == CM_RANDOM)
     {
       return "random";
     }
-    if(value == CM_NON_RANDOM)
+
+    if (value == CM_NON_RANDOM)
     {
       return "normal";
     }
@@ -894,11 +898,12 @@ namespace
   bid_strategy_string(unsigned long value)
   {
     using namespace AdServer::CampaignSvcs;
-    if(value == BS_MAX_REACH)
+    if (value == BS_MAX_REACH)
     {
       return "max-reach";
     }
-    if(value == BS_MIN_CTR_GOAL)
+
+    if (value == BS_MIN_CTR_GOAL)
     {
       return "min-ctr-goal";
     }
@@ -911,27 +916,32 @@ namespace
     using namespace AdServer::CampaignSvcs;
     std::ostringstream out;
     out << flags << ' ';
-    if(flags & CampaignFlags::INCLUDE_SPECIFIC_SITES)
+    if (flags & CampaignFlags::INCLUDE_SPECIFIC_SITES)
     {
       out << "(specific sites)";
     }
-    if(flags & CampaignFlags::TRACK_ACTIONS)
+
+    if (flags & CampaignFlags::TRACK_ACTIONS)
     {
       out << "(track actions)";
     }
-    if(flags & CampaignFlags::US_NONE)
+
+    if (flags & CampaignFlags::US_NONE)
     {
       out << "(us: none)";
     }
-    if(flags & CampaignFlags::US_OPTIN)
+
+    if (flags & CampaignFlags::US_OPTIN)
     {
       out << "(us: optin)";
     }
-    if(flags & CampaignFlags::US_OPTOUT)
+
+    if (flags & CampaignFlags::US_OPTOUT)
     {
       out << "(us: optout)";
     }
-    if(flags & CampaignFlags::US_UNDEFINED)
+
+    if (flags & CampaignFlags::US_UNDEFINED)
     {
       out << "(us: undefined)";
     }
@@ -951,13 +961,13 @@ namespace
   std::string
   weekly_run_value(const cm::ConfigCampaign& campaign)
   {
-    if(campaign.weekly_run_intervals_size() == 0)
+    if (campaign.weekly_run_intervals_size() == 0)
     {
       return "none";
     }
 
     std::ostringstream out;
-    for(int i = 0; i < campaign.weekly_run_intervals_size(); ++i)
+    for (int i = 0; i < campaign.weekly_run_intervals_size(); ++i)
     {
       const auto& interval = campaign.weekly_run_intervals(i);
       out << (i != 0 ? ",(" : "(") <<
@@ -971,7 +981,7 @@ namespace
   creative_ids(const cm::ConfigCampaign& campaign)
   {
     std::ostringstream out;
-    for(int i = 0; i < campaign.creatives_size(); ++i)
+    for (int i = 0; i < campaign.creatives_size(); ++i)
     {
       out << (i > 0 ? ", " : "") << campaign.creatives(i).ccid();
     }
@@ -987,11 +997,11 @@ namespace
     const unsigned long count = RevenueDecimal::PACK_SIZE / 4 +
       (RevenueDecimal::PACK_SIZE % 4 ? 1 : 0);
     uint32_t buf[count];
-    if(values.size() - pos < static_cast<int>(count))
+    if (values.size() - pos < static_cast<int>(count))
     {
       return RevenueDecimal::ZERO.str();
     }
-    for(unsigned long i = 0; i < count; ++i)
+    for (unsigned long i = 0; i < count; ++i)
     {
       buf[i] = static_cast<uint32_t>(values.Get(pos + i));
     }
@@ -1011,13 +1021,13 @@ namespace
     std::set<unsigned long>& expanded_channels)
   {
     const auto op = static_cast<char>(expression.operation());
-    if(op == '-')
+    if (op == '-')
     {
       const unsigned long channel_id = expression.channel_id();
-      if(channel_id && expression_channels)
+      if (channel_id && expression_channels)
       {
         const auto channel_it = expression_channels->find(channel_id);
-        if(channel_it != expression_channels->end() &&
+        if (channel_it != expression_channels->end() &&
           (channel_it->second->expression().sub_channels_size() > 0 ||
             channel_it->second->expression().channel_id() != 0) &&
           expanded_channels.insert(channel_id).second)
@@ -1035,11 +1045,13 @@ namespace
         std::string("[") + std::to_string(channel_id) + "]") :
         std::string("NULL");
     }
-    if(op == 'T')
+
+    if (op == 'T')
     {
       return "TRUE";
     }
-    if(op == 0)
+
+    if (op == 0)
     {
       return expression.channel_id() ? (
         std::string("[") + std::to_string(expression.channel_id()) + "]") :
@@ -1048,9 +1060,9 @@ namespace
 
     std::ostringstream out;
     out << '(';
-    for(int i = 0; i < expression.sub_channels_size(); ++i)
+    for (int i = 0; i < expression.sub_channels_size(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         out << ' ' << op << ' ';
       }
@@ -1093,7 +1105,7 @@ namespace
     grpc::ClientContext context;
     cm::GetConfigResponse response;
     const auto status = stub->get_config(&context, request, &response);
-    if(!status.ok())
+    if (!status.ok())
     {
       std::ostringstream error;
       error << "gRPC get_config failed: code=" <<
@@ -1112,14 +1124,14 @@ namespace
       CAMPAIGN_TABLE_COLUMNS,
       sizeof(CAMPAIGN_TABLE_COLUMNS) / sizeof(CAMPAIGN_TABLE_COLUMNS[0]));
     ExpressionChannelMap expression_channels;
-    for(const auto& expression_channel : config.expression_channels())
+    for (const auto& expression_channel : config.expression_channels())
     {
       expression_channels.emplace(
         expression_channel.channel_id(),
         &expression_channel);
     }
 
-    for(const auto& adapted_campaign : config.campaigns())
+    for (const auto& adapted_campaign : config.campaigns())
     {
       const auto& campaign = adapted_campaign.info();
       const auto& ccg_limits = campaign.ccg_delivery_limits();
@@ -1205,17 +1217,17 @@ namespace
       sizeof(CREATIVE_TABLE_COLUMNS) / sizeof(CREATIVE_TABLE_COLUMNS[0]));
 
     std::map<unsigned long, std::string> sizes;
-    for(const auto& size : config.sizes())
+    for (const auto& size : config.sizes())
     {
       sizes.emplace(size.size_id(), size.protocol_name());
     }
 
-    for(const auto& adapted_campaign : config.campaigns())
+    for (const auto& adapted_campaign : config.campaigns())
     {
       const auto& campaign = adapted_campaign.info();
-      for(const auto& creative : campaign.creatives())
+      for (const auto& creative : campaign.creatives())
       {
-        if(filter_by_ccid && creative.ccid() != ccid)
+        if (filter_by_ccid && creative.ccid() != ccid)
         {
           continue;
         }
@@ -1236,7 +1248,7 @@ namespace
         row.add_field(creative.initial_contract_id());
         std::ostringstream options;
         options << option_values(creative.tokens());
-        for(const auto& size : creative.sizes())
+        for (const auto& size : creative.sizes())
         {
           options << '\n' << prefix << '<' << size.size_id() <<
             "(size)>" << option_values(size.tokens());
@@ -1260,12 +1272,12 @@ namespace
       sizeof(TAGS_TABLE_COLUMNS) / sizeof(TAGS_TABLE_COLUMNS[0]));
 
     std::map<unsigned long, std::string> sizes;
-    for(const auto& size : config.sizes())
+    for (const auto& size : config.sizes())
     {
       sizes.emplace(size.size_id(), size.protocol_name());
     }
 
-    for(const auto& adapted_tag : config.tags())
+    for (const auto& adapted_tag : config.tags())
     {
       const auto& tag = adapted_tag.info();
       Table::Row row(table.columns());
@@ -1274,11 +1286,11 @@ namespace
       row.add_field(time_value(tag.timestamp()));
 
       std::ostringstream tag_sizes;
-      for(const auto& size : tag.sizes())
+      for (const auto& size : tag.sizes())
       {
         tag_sizes << '[' << size.size_id() << ",'";
         const auto size_it = sizes.find(size.size_id());
-        if(size_it != sizes.end())
+        if (size_it != sizes.end())
         {
           tag_sizes << size_it->second;
         }
@@ -1304,7 +1316,7 @@ namespace
       std::ostringstream pricing;
       pricing << "[country ccg_type ccg_rate_type site_rate_id cpm revenue share]";
       const int field_len = 9;
-      for(int i = 0; i < tag.tag_pricings_size(); ++i)
+      for (int i = 0; i < tag.tag_pricings_size(); ++i)
       {
         const auto& tag_pricing = tag.tag_pricings(i);
         pricing << '\n';
@@ -1333,13 +1345,13 @@ namespace
 
       std::ostringstream options;
       options << option_values(tag.tokens());
-      for(const auto& template_tokens : tag.template_tokens())
+      for (const auto& template_tokens : tag.template_tokens())
       {
         options << '\n' << prefix << '<' <<
           template_tokens.template_name() << "(template)>" <<
           option_values(template_tokens.tokens());
       }
-      for(const auto& size : tag.sizes())
+      for (const auto& size : tag.sizes())
       {
         options << '\n' << prefix << '<' << size.size_id() <<
           "(size)>" << option_values(size.hidden_tokens());
@@ -1357,27 +1369,32 @@ namespace
   decode_ad_request_type(unsigned long type)
   {
     using namespace AdServer::CampaignSvcs;
-    if(type == AR_NORMAL)
+    if (type == AR_NORMAL)
     {
       return "normal";
     }
-    if(type == AR_OPENRTB)
+
+    if (type == AR_OPENRTB)
     {
       return "openrtb";
     }
-    if(type == AR_OPENRTB_WITH_CLICKURL)
+
+    if (type == AR_OPENRTB_WITH_CLICKURL)
     {
       return "openrtb-with-click";
     }
-    if(type == AR_OPENX)
+
+    if (type == AR_OPENX)
     {
       return "openx";
     }
-    if(type == AR_APPNEXUS)
+
+    if (type == AR_APPNEXUS)
     {
       return "appnexus";
     }
-    if(type == AR_GOOGLE)
+
+    if (type == AR_GOOGLE)
     {
       return "google";
     }
@@ -1388,9 +1405,9 @@ namespace
   join_strings(const google::protobuf::RepeatedPtrField<std::string>& values)
   {
     std::ostringstream out;
-    for(int i = 0; i < values.size(); ++i)
+    for (int i = 0; i < values.size(); ++i)
     {
-      if(i > 0)
+      if (i > 0)
       {
         out << ',';
       }
@@ -1424,12 +1441,12 @@ namespace
     const cm::CampaignConfig& config,
     const std::string& command)
   {
-    if(command == "freq_cap" || command == "freq_caps")
+    if (command == "freq_cap" || command == "freq_caps")
     {
       Table table = make_table(
         FREQ_CAPS_TABLE_COLUMNS,
         sizeof(FREQ_CAPS_TABLE_COLUMNS) / sizeof(FREQ_CAPS_TABLE_COLUMNS[0]));
-      for(const auto& item : config.frequency_caps())
+      for (const auto& item : config.frequency_caps())
       {
         Table::Row row(table.columns());
         row.add_field(item.fc_id());
@@ -1442,12 +1459,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "app_format")
+    else if (command == "app_format")
     {
       Table table = make_table(
         APP_FORMAT_COLUMNS,
         sizeof(APP_FORMAT_COLUMNS) / sizeof(APP_FORMAT_COLUMNS[0]));
-      for(const auto& item : config.app_formats())
+      for (const auto& item : config.app_formats())
       {
         Table::Row row(table.columns());
         row.add_field(item.app_format());
@@ -1457,12 +1474,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "size")
+    else if (command == "size")
     {
       Table table = make_table(
         SIZE_TABLE_COLUMNS,
         sizeof(SIZE_TABLE_COLUMNS) / sizeof(SIZE_TABLE_COLUMNS[0]));
-      for(const auto& item : config.sizes())
+      for (const auto& item : config.sizes())
       {
         Table::Row row(table.columns());
         row.add_field(item.size_id());
@@ -1475,12 +1492,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "currency" || command == "currencies")
+    else if (command == "currency" || command == "currencies")
     {
       Table table = make_table(
         CURRENCY_TABLE_COLUMNS,
         sizeof(CURRENCY_TABLE_COLUMNS) / sizeof(CURRENCY_TABLE_COLUMNS[0]));
-      for(const auto& item : config.currencies())
+      for (const auto& item : config.currencies())
       {
         Table::Row row(table.columns());
         row.add_field(item.currency_id());
@@ -1495,13 +1512,13 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "creative_option" || command == "creative_options")
+    else if (command == "creative_option" || command == "creative_options")
     {
       Table table = make_table(
         CREATIVE_OPTION_TABLE_COLUMNS,
         sizeof(CREATIVE_OPTION_TABLE_COLUMNS) /
           sizeof(CREATIVE_OPTION_TABLE_COLUMNS[0]));
-      for(const auto& item : config.creative_options())
+      for (const auto& item : config.creative_options())
       {
         Table::Row row(table.columns());
         row.add_field(item.option_id());
@@ -1513,13 +1530,13 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "keyword")
+    else if (command == "keyword")
     {
       Table table = make_table(
         CAMPAIGN_KEYWORD_TABLE_COLUMNS,
         sizeof(CAMPAIGN_KEYWORD_TABLE_COLUMNS) /
           sizeof(CAMPAIGN_KEYWORD_TABLE_COLUMNS[0]));
-      for(const auto& item : config.campaign_keywords())
+      for (const auto& item : config.campaign_keywords())
       {
         Table::Row row(table.columns());
         row.add_field(item.ccg_keyword_id());
@@ -1530,20 +1547,20 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "creative_categories")
+    else if (command == "creative_categories")
     {
       Table table = make_table(
         CREATIVE_CATEGORY_TABLE_COLUMNS,
         sizeof(CREATIVE_CATEGORY_TABLE_COLUMNS) /
           sizeof(CREATIVE_CATEGORY_TABLE_COLUMNS[0]));
-      for(const auto& item : config.creative_categories())
+      for (const auto& item : config.creative_categories())
       {
         Table::Row row(table.columns());
         row.add_field(item.creative_category_id());
         row.add_field(item.cct_id());
         row.add_field(item.name());
         std::ostringstream external_categories;
-        for(const auto& external_category : item.external_categories())
+        for (const auto& external_category : item.external_categories())
         {
           external_categories << "[ " <<
             decode_ad_request_type(external_category.ad_request_type()) <<
@@ -1555,13 +1572,13 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "category_channel")
+    else if (command == "category_channel")
     {
       Table table = make_table(
         CATEGORY_CHANNEL_TABLE_COLUMNS,
         sizeof(CATEGORY_CHANNEL_TABLE_COLUMNS) /
           sizeof(CATEGORY_CHANNEL_TABLE_COLUMNS[0]));
-      for(const auto& item : config.category_channels())
+      for (const auto& item : config.category_channels())
       {
         Table::Row row(table.columns());
         row.add_field(item.channel_id());
@@ -1571,7 +1588,7 @@ namespace
         row.add_field(item.flags());
         row.add_field(time_value(item.timestamp()));
         std::ostringstream localizations;
-        for(const auto& localization : item.localizations())
+        for (const auto& localization : item.localizations())
         {
           localizations << "(" << localization.language() << ", '" <<
             localization.name() << "') ";
@@ -1581,17 +1598,17 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "geo_channel")
+    else if (command == "geo_channel")
     {
       Table table = make_table(
         GEO_CHANNEL_TABLE_COLUMNS,
         sizeof(GEO_CHANNEL_TABLE_COLUMNS) / sizeof(GEO_CHANNEL_TABLE_COLUMNS[0]));
-      for(const auto& item : config.geo_channels())
+      for (const auto& item : config.geo_channels())
       {
         Table::Row row(table.columns());
         row.add_field(item.channel_id());
         row.add_field(item.country());
-        if(item.geoip_targets_size() > 0)
+        if (item.geoip_targets_size() > 0)
         {
           row.add_field(item.geoip_targets(0).region());
           row.add_field(item.geoip_targets(0).city());
@@ -1605,13 +1622,13 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "geo_coord_channel")
+    else if (command == "geo_coord_channel")
     {
       Table table = make_table(
         GEO_COORD_CHANNEL_TABLE_COLUMNS,
         sizeof(GEO_COORD_CHANNEL_TABLE_COLUMNS) /
           sizeof(GEO_COORD_CHANNEL_TABLE_COLUMNS[0]));
-      for(const auto& item : config.geo_coord_channels())
+      for (const auto& item : config.geo_coord_channels())
       {
         using CoordDecimal = AdServer::CampaignSvcs::CoordDecimal;
         using AccuracyDecimal = AdServer::CampaignSvcs::AccuracyDecimal;
@@ -1635,13 +1652,13 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "web_operations")
+    else if (command == "web_operations")
     {
       Table table = make_table(
         WEB_APPLICATIONS_TABLE_COLUMNS,
         sizeof(WEB_APPLICATIONS_TABLE_COLUMNS) /
           sizeof(WEB_APPLICATIONS_TABLE_COLUMNS[0]));
-      for(const auto& item : config.web_operations())
+      for (const auto& item : config.web_operations())
       {
         Table::Row row(table.columns());
         row.add_field(item.id());
@@ -1653,12 +1670,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "sites")
+    else if (command == "sites")
     {
       Table table = make_table(
         SITES_TABLE_COLUMNS,
         sizeof(SITES_TABLE_COLUMNS) / sizeof(SITES_TABLE_COLUMNS[0]));
-      for(const auto& item : config.sites())
+      for (const auto& item : config.sites())
       {
         Table::Row row(table.columns());
         row.add_field(item.site_id());
@@ -1676,12 +1693,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "countries")
+    else if (command == "countries")
     {
       Table table = make_table(
         COUNTRIES_TABLE_COLUMNS,
         sizeof(COUNTRIES_TABLE_COLUMNS) / sizeof(COUNTRIES_TABLE_COLUMNS[0]));
-      for(const auto& item : config.countries())
+      for (const auto& item : config.countries())
       {
         Table::Row row(table.columns());
         row.add_field(item.country_code());
@@ -1691,12 +1708,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "colocations")
+    else if (command == "colocations")
     {
       Table table = make_table(
         COLOCATIONS_TABLE_COLUMNS,
         sizeof(COLOCATIONS_TABLE_COLUMNS) / sizeof(COLOCATIONS_TABLE_COLUMNS[0]));
-      for(const auto& item : config.colocations())
+      for (const auto& item : config.colocations())
       {
         Table::Row row(table.columns());
         row.add_field(item.colo_name());
@@ -1712,13 +1729,13 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "creative_templates")
+    else if (command == "creative_templates")
     {
       Table table = make_table(
         CREATIVE_TEMPLATES_TABLE_COLUMNS,
         sizeof(CREATIVE_TEMPLATES_TABLE_COLUMNS) /
           sizeof(CREATIVE_TEMPLATES_TABLE_COLUMNS[0]));
-      for(const auto& item : config.creative_template_files())
+      for (const auto& item : config.creative_template_files())
       {
         Table::Row row(table.columns());
         row.add_field(item.creative_format());
@@ -1736,12 +1753,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "account")
+    else if (command == "account")
     {
       Table table = make_table(
         ACCOUNT_TABLE_COLUMNS,
         sizeof(ACCOUNT_TABLE_COLUMNS) / sizeof(ACCOUNT_TABLE_COLUMNS[0]));
-      for(const auto& item : config.accounts())
+      for (const auto& item : config.accounts())
       {
         Table::Row row(table.columns());
         row.add_field(item.account_id());
@@ -1770,19 +1787,19 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "adv_action")
+    else if (command == "adv_action")
     {
       Table table = make_table(
         ADV_ACTION_TABLE_COLUMNS,
         sizeof(ADV_ACTION_TABLE_COLUMNS) / sizeof(ADV_ACTION_TABLE_COLUMNS[0]));
-      for(const auto& item : config.adv_actions())
+      for (const auto& item : config.adv_actions())
       {
         Table::Row row(table.columns());
         row.add_field(item.action_id());
         row.add_field(time_value(item.timestamp()));
         std::set<unsigned long> ccg_ids;
         int i = 0;
-        for(; i < item.ccg_ids_size() && item.ccg_ids(i) != 0; ++i)
+        for (; i < item.ccg_ids_size() && item.ccg_ids(i) != 0; ++i)
         {
           ccg_ids.insert(item.ccg_ids(i));
         }
@@ -1790,9 +1807,9 @@ namespace
           decimal_from_ulong_tail(item.ccg_ids(), i + 1) :
           AdServer::CampaignSvcs::RevenueDecimal::ZERO.str());
         std::ostringstream ids;
-        for(auto it = ccg_ids.begin(); it != ccg_ids.end(); ++it)
+        for (auto it = ccg_ids.begin(); it != ccg_ids.end(); ++it)
         {
-          if(it != ccg_ids.begin())
+          if (it != ccg_ids.begin())
           {
             ids << ", ";
           }
@@ -1803,12 +1820,12 @@ namespace
       }
       table.dump(std::cout);
     }
-    else if(command == "contract" || command == "contracts")
+    else if (command == "contract" || command == "contracts")
     {
       Table table = make_table(
         CONTRACT_TABLE_COLUMNS,
         sizeof(CONTRACT_TABLE_COLUMNS) / sizeof(CONTRACT_TABLE_COLUMNS[0]));
-      for(const auto& item : config.contracts())
+      for (const auto& item : config.contracts())
       {
         Table::Row row(table.columns());
         row.add_field(item.number());
@@ -1898,7 +1915,7 @@ namespace
     const google::protobuf::FieldDescriptor& field)
   {
     const auto* reflection = message.GetReflection();
-    if(!field.is_repeated())
+    if (!field.is_repeated())
     {
       return reflection->HasField(message, &field) ?
         field_value(message, field, 0) :
@@ -1907,9 +1924,9 @@ namespace
 
     std::ostringstream out;
     const int size = reflection->FieldSize(message, &field);
-    for(int i = 0; i < size; ++i)
+    for (int i = 0; i < size; ++i)
     {
-      if(i > 0)
+      if (i > 0)
       {
         out << ',';
       }
@@ -1925,7 +1942,7 @@ namespace
   {
     const auto* owner_reflection = owner.GetReflection();
     const int rows_size = owner_reflection->FieldSize(owner, &repeated_field);
-    if(rows_size == 0)
+    if (rows_size == 0)
     {
       return;
     }
@@ -1935,9 +1952,9 @@ namespace
       &repeated_field,
       0);
     const auto* descriptor = first.GetDescriptor();
-    for(int field_i = 0; field_i < descriptor->field_count(); ++field_i)
+    for (int field_i = 0; field_i < descriptor->field_count(); ++field_i)
     {
-      if(field_i > 0)
+      if (field_i > 0)
       {
         std::cout << '\t';
       }
@@ -1945,15 +1962,15 @@ namespace
     }
     std::cout << '\n';
 
-    for(int row_i = 0; row_i < rows_size; ++row_i)
+    for (int row_i = 0; row_i < rows_size; ++row_i)
     {
       const auto& row = owner_reflection->GetRepeatedMessage(
         owner,
         &repeated_field,
         row_i);
-      for(int field_i = 0; field_i < descriptor->field_count(); ++field_i)
+      for (int field_i = 0; field_i < descriptor->field_count(); ++field_i)
       {
-        if(field_i > 0)
+        if (field_i > 0)
         {
           std::cout << '\t';
         }
@@ -2024,7 +2041,7 @@ namespace
       {"contracts", true}
     };
 
-    if(command != "globals" && command != "campaign" &&
+    if (command != "globals" && command != "campaign" &&
       command != "creative" && !FIELD_BY_COMMAND.count(command))
     {
       return false;
@@ -2034,23 +2051,23 @@ namespace
       reference,
       geo_channels || command == "geo_channel" ||
         command == "geo_coord_channel");
-    if(command == "globals")
+    if (command == "globals")
     {
       print_globals(config);
     }
-    else if(command == "campaign")
+    else if (command == "campaign")
     {
       print_campaigns(config);
     }
-    else if(command == "creative")
+    else if (command == "creative")
     {
       print_creatives(config, ccid, filter_by_ccid);
     }
-    else if(command == "tags")
+    else if (command == "tags")
     {
       print_tags(config);
     }
-    else if(SIMPLE_TABLE_COMMAND.count(command))
+    else if (SIMPLE_TABLE_COMMAND.count(command))
     {
       print_simple_config_table(config, command);
     }
@@ -2059,7 +2076,7 @@ namespace
       const auto* descriptor = config.GetDescriptor();
       const auto* field = descriptor->FindFieldByName(
         FIELD_BY_COMMAND.at(command));
-      if(!field)
+      if (!field)
       {
         throw std::runtime_error(
           "internal error: config field not found for command: " + command);
@@ -2140,19 +2157,20 @@ main(int argc, char** argv)
 
     args.parse(argc - 1, argv + 1);
     const auto& commands = args.commands();
-    if(commands.empty() || commands.front() == "help")
+    if (commands.empty() || commands.front() == "help")
     {
       std::cout << USAGE;
       return 0;
     }
-    if(!reference.installed())
+
+    if (!reference.installed())
     {
       throw std::runtime_error("'reference' option is required");
     }
 
     const std::string& command = commands.front();
 
-    if(print_config_command(
+    if (print_config_command(
       *reference,
       command,
       geo_channels.enabled(),
@@ -2171,7 +2189,7 @@ main(int argc, char** argv)
       });
     auto& client = *holder.client;
 
-    if(command == "ready")
+    if (command == "ready")
     {
       const auto response = call<cm::ReadyResponse>(
         client,
@@ -2179,7 +2197,7 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::ready);
       std::cout << (response.ready() ? "ready" : "not ready") << '\n';
     }
-    else if(command == "progress")
+    else if (command == "progress")
     {
       const auto response = call<cm::ProgressCommentResponse>(
         client,
@@ -2187,7 +2205,7 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::progress_comment);
       std::cout << response.comment() << '\n';
     }
-    else if(command == "select")
+    else if (command == "select")
     {
       const Generics::Time now = Generics::Time::get_time_of_day();
       cm::GetCampaignCreativeRequest request;
@@ -2219,14 +2237,14 @@ main(int argc, char** argv)
         request,
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_campaign_creative);
 
-      if(response.request_result().ad_slots().empty())
+      if (response.request_result().ad_slots().empty())
       {
         std::cout << "creative :\n";
         return 0;
       }
 
       const auto& result_slot = response.request_result().ad_slots(0);
-      for(int i = 0; i < result_slot.selected_creatives_size(); ++i)
+      for (int i = 0; i < result_slot.selected_creatives_size(); ++i)
       {
         const auto& creative = result_slot.selected_creatives(i);
         std::cout << "\nccid : " << creative.ccid() <<
@@ -2236,7 +2254,7 @@ main(int argc, char** argv)
       }
       std::cout << "\ncreative :\n" << result_slot.creative_body() << '\n';
     }
-    else if(command == "trace_index")
+    else if (command == "trace_index")
     {
       const auto response = call<cm::TraceCampaignSelectionIndexResponse>(
         client,
@@ -2244,7 +2262,7 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::trace_campaign_selection_index);
       std::cout << response.trace_xml() << '\n';
     }
-    else if(command == "preview")
+    else if (command == "preview")
     {
       cm::GetCampaignCreativeByCcidRequest request;
       request.set_ccid(*ccid);
@@ -2256,7 +2274,7 @@ main(int argc, char** argv)
         client,
         request,
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_campaign_creative_by_ccid);
-      if(response.found())
+      if (response.found())
       {
         std::cout << response.creative_body() << '\n';
       }
@@ -2266,7 +2284,7 @@ main(int argc, char** argv)
         return 1;
       }
     }
-    else if(command == "colocation_flags")
+    else if (command == "colocation_flags")
     {
       const auto response = call<cm::GetColocationFlagsResponse>(
         client,
@@ -2274,12 +2292,12 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_colocation_flags);
       print_colocation_flags(response);
     }
-    else if(command == "pub_pixels")
+    else if (command == "pub_pixels")
     {
       cm::GetPubPixelsRequest request;
       request.set_country(*country);
       request.set_user_status(*user_status);
-      if(publisher_account_ids.installed())
+      if (publisher_account_ids.installed())
       {
         add_ids(
           parse_ids(*publisher_account_ids),
@@ -2289,12 +2307,12 @@ main(int argc, char** argv)
         client,
         request,
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_pub_pixels);
-      for(const auto& pixel : response.pixels())
+      for (const auto& pixel : response.pixels())
       {
         std::cout << pixel << '\n';
       }
     }
-    else if(command == "category_channels")
+    else if (command == "category_channels")
     {
       cm::GetCategoryChannelsRequest request;
       request.set_language(*language);
@@ -2304,9 +2322,9 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_category_channels);
       print_category_channels(response.channels());
     }
-    else if(command == "channel_links")
+    else if (command == "channel_links")
     {
-      if(!channels.installed())
+      if (!channels.installed())
       {
         throw std::runtime_error("'channels' option is required");
       }
@@ -2318,7 +2336,7 @@ main(int argc, char** argv)
         request,
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_channel_links);
       std::cout << "channel_id\tuse_count\tlanguage\tdiscover_query\n";
-      for(const auto& channel : response.channels())
+      for (const auto& channel : response.channels())
       {
         std::cout << channel.channel_id() << '\t' <<
           channel.use_count() << '\t' <<
@@ -2326,9 +2344,9 @@ main(int argc, char** argv)
           channel.discover_query() << '\n';
       }
     }
-    else if(command == "get_file")
+    else if (command == "get_file")
     {
-      if(!file.installed())
+      if (!file.installed())
       {
         throw std::runtime_error("'file' option is required");
       }
@@ -2341,7 +2359,7 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_file);
       std::cout.write(response.file().data(), response.file().size());
     }
-    else if(command == "get_config")
+    else if (command == "get_config")
     {
       cm::GetConfigRequest request;
       request.set_geo_channels(geo_channels.enabled());

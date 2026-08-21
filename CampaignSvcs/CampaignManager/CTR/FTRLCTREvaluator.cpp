@@ -17,7 +17,7 @@ namespace AdServer::CampaignSvcs::CTR
         file.str().c_str(),
         1024 * 1024);
 
-      if(reader.file_size() % sizeof(float) != 0)
+      if (reader.file_size() % sizeof(float) != 0)
       {
         Stream::Error ostr;
         ostr << FUN << ": incorrect file size = " << reader.file_size();
@@ -25,7 +25,7 @@ namespace AdServer::CampaignSvcs::CTR
       }
 
       uint32_t loaded_segment;
-      while(reader.read(&loaded_segment, sizeof(loaded_segment)))
+      while (reader.read(&loaded_segment, sizeof(loaded_segment)))
       {
         loaded_segment = htonl(loaded_segment);
         float weight;
