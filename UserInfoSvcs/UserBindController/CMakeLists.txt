@@ -17,6 +17,7 @@ target_link_libraries(UserBindController
   UserBindControllerGrpc
   UserBindServerGrpc
   UserBindControllerConfigXSD
+  CORBAConfig
   Commons
   Generics
   gRPC::grpc++)

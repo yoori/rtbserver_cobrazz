@@ -20,15 +20,6 @@
 
 namespace AdServer::ProfilingCommons
 {
-  RocksDBBatchingProfileMapImpl::ProcessorQueue::ProcessorQueue(
-    RocksDBBatchingProfileMapImpl& map_impl_val,
-    unsigned long batch_size_val,
-    const Generics::Time& max_delay_val)
-    : map_impl(map_impl_val),
-      batch_size(std::max(1UL, batch_size_val)),
-      max_delay(max_delay_val)
-  {}
-
   struct RocksDBBatchingProfileMapImpl::BatchScratch final
   {
     using KeyIndexMap = boost::unordered_flat_map<
@@ -140,9 +131,10 @@ namespace AdServer::ProfilingCommons
     unsigned long workers_count,
     unsigned long batch_size,
     const Generics::Time& max_delay,
-    bool disable_wal)
+    bool disable_wal,
+    unsigned long enqueue_buckets_count)
     : RocksDBBatchingProfileMapImpl(
-        std::make_shared<RocksDBProfileMapProcessor>(workers_count),
+        std::make_shared<RocksDBProfileMapProcessor>(workers_count, enqueue_buckets_count),
         path,
         expire_time,
         batch_size,
@@ -165,7 +157,10 @@ namespace AdServer::ProfilingCommons
       max_delay_(max_delay),
       disable_wal_(disable_wal),
       processor_(std::move(processor)),
-      processor_queue_(*this, batch_size_, max_delay_),
+      processor_queue_(
+        batch_size_,
+        max_delay_,
+        processor_ ? processor_->enqueue_buckets_count_ : 1),
       owns_processor_(false)
   {
     static const char* FUN = "RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl()";
@@ -180,11 +175,7 @@ namespace AdServer::ProfilingCommons
     configure_rocksdb_profile_map_options(options);
 
     rocksdb::DBWithTTL* db = nullptr;
-    const auto status = rocksdb::DBWithTTL::Open(
-      options,
-      path_.c_str(),
-      &db,
-      expire_time.tv_sec);
+    const auto status = rocksdb::DBWithTTL::Open(options, path_.c_str(), &db, expire_time.tv_sec);
     if (!status.ok())
     {
       Stream::Error ostr;
@@ -303,9 +294,7 @@ namespace AdServer::ProfilingCommons
 
     get_profile_async(
       key,
-      [&promise](
-        Generics::ConstSmartMemBuf_var profile,
-        std::optional<std::string> error)
+      [&promise](Generics::ConstSmartMemBuf_var profile, std::optional<std::string> error)
       {
         promise.set_value(std::make_pair(std::move(profile), std::move(error)));
       },

@@ -58,6 +58,7 @@ add_executable(CampaignServer
 target_link_libraries(CampaignServer
   LogCommons
   Commons
+  CORBAConfig
   Postgres
   LogGeneralizerLib
   LogGeneralizerIDL

@@ -62,6 +62,7 @@ target_link_libraries(RequestInfoManager
   SNMPAgent
   RequestInfoManagerIDL
   Commons
+  CORBAConfig
 
   RequestInfoManagerConfigXSD
 

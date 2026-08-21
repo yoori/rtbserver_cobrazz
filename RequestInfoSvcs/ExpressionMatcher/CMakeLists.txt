@@ -91,6 +91,7 @@ target_link_libraries(ExpressionMatcher
 
   LogCommons
   Commons
+  CORBAConfig
   ProfilingCommons
   SNMPAgent
   ProfileMap

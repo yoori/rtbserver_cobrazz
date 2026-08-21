@@ -58,6 +58,7 @@ target_link_libraries(ChannelServer
   HTTP
   HttpServer
   XMLUtility
+  CORBAConfig
   CORBACommons
   AdServerCommonsXSD
   Postgres

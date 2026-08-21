@@ -19,6 +19,7 @@ target_link_libraries(CampaignManagerInstantiateCreativeTest
     HttpServer
     CORBACommons
     Commons
+    CORBAConfig
     XslTransformer
 
     AdServerCommonsXSD

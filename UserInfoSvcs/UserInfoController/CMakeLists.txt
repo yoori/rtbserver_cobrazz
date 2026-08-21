@@ -17,6 +17,7 @@ target_link_libraries(UserInfoController
   UserInfoControllerGrpc
   UserInfoManagerGrpc
   UserInfoControllerConfigXSD
+  CORBAConfig
   Commons
   Generics
   gRPC::grpc++)

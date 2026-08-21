@@ -10,6 +10,7 @@ target_link_libraries(CommonModule
   AdServerCommonsXSD
 
   Commons
+  CORBAConfig
   RequestMatchers
   DomainParser
   Polyglot

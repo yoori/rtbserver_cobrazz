@@ -28,6 +28,7 @@ target_link_libraries(DictionaryProvider
   AdServerCommonsXSD
   DictionaryProviderConfigXSD
   Commons
+  CORBAConfig
   DictionaryProviderIDL
   ChannelCommons
 )

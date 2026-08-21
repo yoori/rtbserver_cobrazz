@@ -211,6 +211,7 @@ target_link_libraries(CampaignManager
   HttpServer
   CORBACommons
   Commons
+  CORBAConfig
 
   AdServerCommonsXSD
   CampaignManagerConfigXSD

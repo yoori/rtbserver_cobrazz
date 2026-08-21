@@ -72,6 +72,7 @@ target_link_libraries(UserInfoManager
   LogCommons
   HttpServer
   Commons
+  CORBAConfig
   AdServerCommonsXSD
   PrivacyFilter
   ProfileMap

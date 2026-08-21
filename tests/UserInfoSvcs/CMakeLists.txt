@@ -3,6 +3,8 @@ add_subdirectory(UserBindArenaFillTest)
 add_subdirectory(UserBindServerCorePerfTest)
 add_subdirectory(UserInfoManagerCorePerfTest)
 add_subdirectory(RocksDBProfileMapTest)
+add_subdirectory(RocksDBBatchingProcessorQueueTest)
+add_subdirectory(RocksDBBatchingProcessorQueuePerfTest)
 add_subdirectory(RocksDBProfileMapProcessorTest)
 add_subdirectory(RocksDBBatchingProfileMapPerfTest)
 

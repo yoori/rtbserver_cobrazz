@@ -2,12 +2,11 @@
 
 #include <atomic>
 #include <boost/intrusive/set.hpp>
-#include <boost/unordered/unordered_flat_set.hpp>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <condition_variable>
 #include <cstdint>
+#include <memory>
 #include <mutex>
-#include <string>
-#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -33,7 +32,9 @@ namespace AdServer::ProfilingCommons
       std::uint64_t write_batch_total_time = 0;
     };
 
-    explicit RocksDBProfileMapProcessor(unsigned long workers_count = 2);
+    explicit RocksDBProfileMapProcessor(
+      unsigned long workers_count = 2,
+      unsigned long enqueue_buckets_count = 32);
 
     ~RocksDBProfileMapProcessor() noexcept override;
 
@@ -43,24 +44,47 @@ namespace AdServer::ProfilingCommons
     friend class RocksDBBatchingProfileMapImpl;
 
     using ProfileMapImpl = RocksDBBatchingProfileMapImpl;
-    using Operation = ProfileMapImpl::Operation;
-    using Operations = ProfileMapImpl::Operations;
-    using SelectedKeys = boost::unordered_flat_set<std::string_view>;
-    using MapQueue = ProfileMapImpl::ProcessorQueue;
+    using MapQueue = RocksDBBatchingProcessorQueue;
+    using Operation = MapQueue::Operation;
+    using Operations = MapQueue::Operations;
+    using SelectedKeys = MapQueue::SelectedKeys;
+    using ReadyState = MapQueue::ReadyState;
+
+    using ReadyHook = boost::intrusive::set_member_hook<
+      boost::intrusive::link_mode<boost::intrusive::safe_link>>;
+
+    struct Registration final
+    {
+      Registration(ProfileMapImpl& map_impl_val, MapQueue& queue_val)
+        : map_impl(map_impl_val),
+          queue(queue_val)
+      {}
+
+      ProfileMapImpl& map_impl;
+      MapQueue& queue;
+      std::uint64_t applied_generation = 0;
+      Generics::Time ready_time;
+      bool ready_write_operations = false;
+      ReadyHook ready_hook;
+    };
 
     struct ReadyCompare
     {
-      bool operator()(const MapQueue& left, const MapQueue& right) const noexcept;
+      bool operator()(const Registration& left, const Registration& right) const noexcept;
     };
 
     using ReadyIndex = boost::intrusive::multiset<
-      MapQueue,
+      Registration,
       boost::intrusive::member_hook<
-        MapQueue,
-        MapQueue::ReadyHook,
-        &MapQueue::ready_hook>,
+        Registration,
+        ReadyHook,
+        &Registration::ready_hook>,
       boost::intrusive::compare<ReadyCompare>,
       boost::intrusive::constant_time_size<false>>;
+
+    using Registrations = boost::unordered_flat_map<
+      MapQueue*,
+      std::unique_ptr<Registration>>;
 
   private:
     void activate_object_() override;
@@ -83,40 +107,28 @@ namespace AdServer::ProfilingCommons
 
     void worker_loop_() noexcept;
 
-    bool pop_batch_(MapQueue*& map_queue, Operations& batch, SelectedKeys& selected_keys)
-      noexcept;
-
-    void collect_batch_i_(MapQueue& map_queue, Operations& batch, SelectedKeys& selected_keys)
-      noexcept;
-
-    void collect_from_queue_(
-      MapQueue& map_queue,
-      Operations& source,
+    bool pop_batch_(
+      ProfileMapImpl*& map_impl,
+      MapQueue*& map_queue,
       Operations& batch,
       SelectedKeys& selected_keys) noexcept;
 
-    void complete_batch_(MapQueue& map_queue, Operations& batch) noexcept;
+    void complete_batch_(MapQueue& map_queue, const Operations& batch) noexcept;
 
-    bool update_ready_(MapQueue& map_queue, const Operation* operation) noexcept;
+    bool apply_ready_(MapQueue& map_queue, const ReadyState& state) noexcept;
 
-    bool promote_ready_(MapQueue& map_queue, bool write_operations) noexcept;
+    void remove_from_ready_i_(Registration& registration) noexcept;
 
-    void remove_from_ready_i_(MapQueue& map_queue) noexcept;
-
-    static const Operation* oldest_ready_operation_i_(const MapQueue& map_queue) noexcept;
-
-    static Generics::Time operation_ready_time_i_(
-      const MapQueue& map_queue, const Operation& operation) noexcept;
-
-    static bool empty_i_(const MapQueue& map_queue) noexcept;
+    void add_operation_counts_(const MapQueue::OperationCounts& counts) noexcept;
 
   private:
     const unsigned long workers_count_;
+    const unsigned long enqueue_buckets_count_;
 
-    // When both locks are needed, MapQueue::lock is acquired first.
     mutable std::mutex ready_lock_;
     mutable std::condition_variable ready_cond_;
     ReadyIndex ready_;
+    Registrations registrations_;
     std::atomic<bool> accepting_{false};
     std::atomic<bool> stopping_{true};
 

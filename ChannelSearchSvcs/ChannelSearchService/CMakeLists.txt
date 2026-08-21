@@ -20,6 +20,7 @@ target_link_libraries(ChannelSearchService
   ChannelGrpcClient
   DictionaryProviderIDL
   Commons
+  CORBAConfig
   ExpressionChannel
   ExpressionChannelIndex
   Polyglot

@@ -19,6 +19,7 @@ target_link_libraries(InstantiateAdArgsTest
     HttpServer
     CORBACommons
     Commons
+    CORBAConfig
     XslTransformer
 
     AdServerCommonsXSD

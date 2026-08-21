@@ -18,6 +18,7 @@ target_link_libraries(ChannelController
   ChannelServerGrpc
   ChannelControllerConfigXSD
   Commons
+  CORBAConfig
   CORBACommons
   Generics
   gRPC::grpc++)

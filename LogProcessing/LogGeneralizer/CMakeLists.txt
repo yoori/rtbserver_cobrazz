@@ -30,6 +30,7 @@ target_link_libraries(LogGeneralizer
   pthread
   Generics
   Commons
+  CORBAConfig
   CORBACommons
   ProcessControlIDL
   StatsIDL

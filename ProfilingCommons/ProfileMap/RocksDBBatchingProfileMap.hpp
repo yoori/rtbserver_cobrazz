@@ -1,13 +1,8 @@
 #pragma once
 
 #include <atomic>
-#include <boost/intrusive/set.hpp>
-#include <boost/unordered/unordered_flat_map.hpp>
-#include <condition_variable>
 #include <cstdint>
-#include <list>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
 
@@ -19,6 +14,7 @@
 #include <Generics/ActiveObject.hpp>
 
 #include "ProfileMap.hpp"
+#include "RocksDBBatchingProcessorQueue.hpp"
 
 namespace rocksdb
 {
@@ -59,17 +55,11 @@ namespace AdServer::ProfilingCommons
     public ReferenceCounting::AtomicImpl
   {
   public:
-    using CheckCallback = std::function<void(bool, std::optional<std::string>)>;
-    using GetCallback = std::function<void (
-      Generics::ConstSmartMemBuf_var,
-      std::optional<std::string> error)>;
-    using GetOwnCallback = std::function<void (
-      Generics::SmartMemBuf_var,
-      std::optional<std::string> error)>;
-    using SaveCallback = std::function<void(std::optional<std::string> error)>;
-    using RemoveCallback = std::function<void(
-      bool,
-      std::optional<std::string> error)>;
+    using CheckCallback = RocksDBBatchingProcessorQueue::CheckCallback;
+    using GetCallback = RocksDBBatchingProcessorQueue::GetCallback;
+    using GetOwnCallback = RocksDBBatchingProcessorQueue::GetOwnCallback;
+    using SaveCallback = RocksDBBatchingProcessorQueue::SaveCallback;
+    using RemoveCallback = RocksDBBatchingProcessorQueue::RemoveCallback;
     using CompleteCallback = std::function<void()>;
 
     RocksDBBatchingProfileMapImpl(
@@ -78,7 +68,8 @@ namespace AdServer::ProfilingCommons
       unsigned long workers_count = 2,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
-      bool disable_wal = false);
+      bool disable_wal = false,
+      unsigned long enqueue_buckets_count = 32);
 
     RocksDBBatchingProfileMapImpl(
       std::shared_ptr<RocksDBProfileMapProcessor> processor,
@@ -112,8 +103,7 @@ namespace AdServer::ProfilingCommons
     get_profile_async(
       const std::string& key,
       GetCallback callback,
-      std::optional<Generics::Time> last_access_time = std::nullopt
-      ) override;
+      std::optional<Generics::Time> last_access_time = std::nullopt) override;
 
     Generics::SmartMemBuf_var
     get_own_profile_async(
@@ -173,61 +163,16 @@ namespace AdServer::ProfilingCommons
 
   private:
     friend class RocksDBProfileMapProcessor;
-    enum OperationType
-    {
-      OT_CHECK,
-      OT_GET,
-      OT_TOUCH,
-      OT_SAVE,
-      OT_REMOVE
-    };
+    using ProcessorQueue = RocksDBBatchingProcessorQueue;
+    using OperationType = ProcessorQueue::OperationType;
+    using Operation = ProcessorQueue::Operation;
+    using Operations = ProcessorQueue::Operations;
 
-    struct Operation final
-    {
-      OperationType type;
-      Generics::Time enqueue_time;
-      std::string key;
-      Generics::ConstSmartMemBuf_var profile;
-      std::optional<CheckCallback> check_callback;
-      std::optional<GetCallback> get_callback;
-      std::optional<GetOwnCallback> get_own_callback;
-      std::optional<SaveCallback> save_callback;
-      std::optional<RemoveCallback> remove_callback;
-    };
-
-    using Operations = std::list<Operation>;
-
-    struct ProcessorQueue final
-    {
-      using InFlightKeys = boost::unordered_flat_map<std::string, unsigned long>;
-      using ReadyHook = boost::intrusive::set_member_hook<
-        boost::intrusive::link_mode<boost::intrusive::safe_link>>;
-
-      ProcessorQueue(
-        RocksDBBatchingProfileMapImpl& map_impl,
-        unsigned long batch_size,
-        const Generics::Time& max_delay);
-
-      RocksDBBatchingProfileMapImpl& map_impl;
-      const unsigned long batch_size;
-      const Generics::Time max_delay;
-
-      mutable std::mutex lock;
-      mutable std::condition_variable drain_condition;
-      Operations read_operations;
-      Operations write_operations;
-      InFlightKeys in_flight_read_keys;
-      InFlightKeys in_flight_write_keys;
-      std::atomic<unsigned long> active_workers{0};
-      bool registered = false;
-      bool accepting = false;
-
-      Generics::Time oldest_operation_time;
-      Generics::Time ready_time;
-      bool ready_write_operations = false;
-      std::atomic<bool> ready_indexed{false};
-      ReadyHook ready_hook;
-    };
+    static constexpr OperationType OT_CHECK = ProcessorQueue::OT_CHECK;
+    static constexpr OperationType OT_GET = ProcessorQueue::OT_GET;
+    static constexpr OperationType OT_TOUCH = ProcessorQueue::OT_TOUCH;
+    static constexpr OperationType OT_SAVE = ProcessorQueue::OT_SAVE;
+    static constexpr OperationType OT_REMOVE = ProcessorQueue::OT_REMOVE;
 
     struct BatchScratch;
 
@@ -237,15 +182,12 @@ namespace AdServer::ProfilingCommons
 
     void process_read_batch_(Operations& batch, BatchScratch& scratch);
 
-    void process_write_batch_(
-      Operations& batch,
-      BatchScratch& scratch);
+    void process_write_batch_(Operations& batch, BatchScratch& scratch);
 
-    void notify_failed_operations_(
-      Operations& operations,
-      const std::string& error) noexcept;
+    void notify_failed_operations_(Operations& operations, const std::string& error) noexcept;
 
     bool direct_check_profile_(const std::string& key) const;
+
     static bool is_write_operation_(OperationType type) noexcept;
 
     void check_background_error_() const;
@@ -278,10 +220,9 @@ namespace AdServer::ProfilingCommons
   };
 
   inline bool
-  RocksDBBatchingProfileMapImpl::is_write_operation_(
-    OperationType type) noexcept
+  RocksDBBatchingProfileMapImpl::is_write_operation_(OperationType type) noexcept
   {
-    return type == OT_TOUCH || type == OT_SAVE || type == OT_REMOVE;
+    return ProcessorQueue::is_write_operation(type);
   }
 
   template<typename KeyType, typename KeyAdapterType = DefaultRocksDBBatchingKeyAdapter>
@@ -298,7 +239,8 @@ namespace AdServer::ProfilingCommons
       unsigned long workers_count = 2,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
-      bool disable_wal = false);
+      bool disable_wal = false,
+      unsigned long enqueue_buckets_count = 32);
 
     RocksDBBatchingProfileMap(
       std::shared_ptr<RocksDBProfileMapProcessor> processor,
@@ -317,14 +259,10 @@ namespace AdServer::ProfilingCommons
       std::function<void(bool, std::optional<std::string>)> callback) const override;
 
     Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0) override;
+    get_profile(const KeyType& key, Generics::Time* last_access_time = 0) override;
 
     Generics::SmartMemBuf_var
-    get_own_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0) override;
+    get_own_profile(const KeyType& key, Generics::Time* last_access_time = 0) override;
 
     Generics::ConstSmartMemBuf_var
     get_profile_async(
@@ -408,14 +346,16 @@ namespace AdServer::ProfilingCommons
     unsigned long workers_count,
     unsigned long batch_size,
     const Generics::Time& max_delay,
-    bool disable_wal)
+    bool disable_wal,
+    unsigned long enqueue_buckets_count)
     : impl_(new RocksDBBatchingProfileMapImpl(
         path,
         expire_time,
         workers_count,
         batch_size,
         max_delay,
-        disable_wal))
+        disable_wal,
+        enqueue_buckets_count))
   {}
 
   template<typename KeyType, typename KeyAdapterType>

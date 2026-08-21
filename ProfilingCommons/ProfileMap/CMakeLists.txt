@@ -17,6 +17,7 @@ else()
 endif()
 
 add_library(ProfileMapRocksDB SHARED
+  RocksDBBatchingProcessorQueue.cpp
   RocksDBBatchingProfileMap.cpp
   RocksDBOptions.cpp
   RocksDBProfileMap.cpp

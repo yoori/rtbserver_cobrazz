@@ -21,6 +21,7 @@ target_link_libraries(SyncLogs
   Sync
   pcre
   Commons
+  CORBAConfig
   CORBACommons
   ProcessControlIDL
   StatsIDL
