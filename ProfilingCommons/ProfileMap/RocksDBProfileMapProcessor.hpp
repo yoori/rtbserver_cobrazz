@@ -62,9 +62,7 @@ namespace AdServer::ProfilingCommons
 
       ProfileMapImpl& map_impl;
       MapQueue& queue;
-      std::uint64_t applied_generation = 0;
       Generics::Time ready_time;
-      bool ready_write_operations = false;
       ReadyHook ready_hook;
     };
 
@@ -94,8 +92,6 @@ namespace AdServer::ProfilingCommons
     void wait_object_() override;
 
     void register_map_(ProfileMapImpl& map_impl);
-
-    void unregister_map_(ProfileMapImpl& map_impl) noexcept;
 
     void wait_unregister_map_(ProfileMapImpl& map_impl);
 

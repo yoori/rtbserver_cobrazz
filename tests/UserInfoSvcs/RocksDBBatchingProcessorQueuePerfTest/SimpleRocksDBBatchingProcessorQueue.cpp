@@ -12,36 +12,28 @@ namespace AdServer::ProfilingCommons::Test
       max_delay_(max_delay)
   {}
 
-  void
-  SimpleRocksDBBatchingProcessorQueue::activate() noexcept
-  {
-    accepting_.store(true, std::memory_order_release);
-  }
-
   SimpleRocksDBBatchingProcessorQueue::ReadyState
-  SimpleRocksDBBatchingProcessorQueue::deactivate() noexcept
+  SimpleRocksDBBatchingProcessorQueue::flush_pending() noexcept
   {
     std::lock_guard guard(lock_);
-    accepting_.store(false, std::memory_order_release);
-    return ready_state_i_();
+    ReadyState state = request_ready_i_(oldest_ready_operation_i_() != nullptr, true);
+    if (state.has_operation)
+    {
+      state.ready_time = state.enqueue_time;
+    }
+    return state;
   }
 
   SimpleRocksDBBatchingProcessorQueue::EnqueueResult
   SimpleRocksDBBatchingProcessorQueue::enqueue(Operations&& operations)
   {
     EnqueueResult result;
-    if(operations.empty())
+    if (operations.empty())
     {
-      result.accepted = true;
       return result;
     }
 
     std::lock_guard guard(lock_);
-    if(!accepting_.load(std::memory_order_acquire))
-    {
-      return result;
-    }
-
     const bool was_empty = empty_i_();
     const std::size_t previous_read_size = read_operations_.size();
     const std::size_t previous_write_size = write_operations_.size();
@@ -49,7 +41,7 @@ namespace AdServer::ProfilingCommons::Test
     unsigned long operation_count = 0;
 
     auto it = operations.begin();
-    while(it != operations.end())
+    while (it != operations.end())
     {
       auto current = it++;
       current->enqueue_time = now;
@@ -61,15 +53,18 @@ namespace AdServer::ProfilingCommons::Test
     }
 
     pending_operations_.fetch_add(operation_count, std::memory_order_relaxed);
-    result.accepted = true;
 
     const bool fills_read_batch = previous_read_size < batch_size_ &&
       read_operations_.size() >= batch_size_;
     const bool fills_write_batch = previous_write_size < batch_size_ &&
       write_operations_.size() >= batch_size_;
-    if(was_empty || fills_read_batch || fills_write_batch)
+    if (was_empty || fills_read_batch || fills_write_batch)
     {
-      result.ready_state = ready_state_i_();
+      ReadyState state = request_ready_i_(true, true);
+      if (state.has_operation)
+      {
+        result.ready_state = state;
+      }
     }
 
     return result;
@@ -87,8 +82,9 @@ namespace AdServer::ProfilingCommons::Test
     SelectedKeys& selected_keys) noexcept
   {
     std::lock_guard guard(lock_);
+    ready_published_.store(false, std::memory_order_release);
     const Operation* operation = oldest_ready_operation_i_();
-    if(operation)
+    if (operation)
     {
       const bool collect_reads = !is_write_operation(operation->type);
       Operations& source = collect_reads ? read_operations_ : write_operations_;
@@ -100,13 +96,13 @@ namespace AdServer::ProfilingCommons::Test
       pending_operations_.fetch_sub(collected, std::memory_order_relaxed);
 
       auto& in_flight_keys = collect_reads ? in_flight_read_keys_ : in_flight_write_keys_;
-      for(const auto& batch_operation : batch)
+      for (const auto& batch_operation : batch)
       {
-        ++in_flight_keys[batch_operation.key];
+        ++in_flight_keys[batch_operation.key.text()];
       }
     }
 
-    return ready_state_i_();
+    return request_ready_i_(oldest_ready_operation_i_() != nullptr);
   }
 
   SimpleRocksDBBatchingProcessorQueue::ReadyState
@@ -116,15 +112,15 @@ namespace AdServer::ProfilingCommons::Test
     auto& in_flight_keys =
       !batch.empty() && is_write_operation(batch.front().type) ?
       in_flight_write_keys_ : in_flight_read_keys_;
-    for(const auto& operation : batch)
+    for (const auto& operation : batch)
     {
-      const auto it = in_flight_keys.find(operation.key);
-      if(it != in_flight_keys.end() && --it->second == 0)
+      const auto it = in_flight_keys.find(operation.key.text());
+      if (it != in_flight_keys.end() && --it->second == 0)
       {
         in_flight_keys.erase(it);
       }
     }
-    return ready_state_i_();
+    return request_ready_i_(oldest_ready_operation_i_() != nullptr);
   }
 
   void
@@ -165,15 +161,32 @@ namespace AdServer::ProfilingCommons::Test
   }
 
   SimpleRocksDBBatchingProcessorQueue::ReadyState
-  SimpleRocksDBBatchingProcessorQueue::ready_state_i_() noexcept
+  SimpleRocksDBBatchingProcessorQueue::request_ready_i_(
+    bool has_ready_operations,
+    bool force_update) noexcept
+  {
+    if (!has_ready_operations)
+    {
+      return {};
+    }
+
+    const bool was_published = ready_published_.exchange(true, std::memory_order_acq_rel);
+    if (was_published && !force_update)
+    {
+      return {};
+    }
+
+    return make_ready_state_i_();
+  }
+
+  SimpleRocksDBBatchingProcessorQueue::ReadyState
+  SimpleRocksDBBatchingProcessorQueue::make_ready_state_i_() const noexcept
   {
     ReadyState result;
-    result.generation = ++ready_generation_;
     const Operation* operation = oldest_ready_operation_i_();
-    if(operation)
+    if (operation)
     {
       result.has_operation = true;
-      result.write_operations = is_write_operation(operation->type);
       result.enqueue_time = operation->enqueue_time;
       result.ready_time = operation_ready_time_i_(*operation);
     }
@@ -184,9 +197,9 @@ namespace AdServer::ProfilingCommons::Test
   SimpleRocksDBBatchingProcessorQueue::oldest_ready_operation_i_() const noexcept
   {
     const Operation* read_operation = nullptr;
-    for(const auto& operation : read_operations_)
+    for (const auto& operation : read_operations_)
     {
-      if(in_flight_write_keys_.find(operation.key) == in_flight_write_keys_.end())
+      if (in_flight_write_keys_.find(operation.key.text()) == in_flight_write_keys_.end())
       {
         read_operation = &operation;
         break;
@@ -194,22 +207,22 @@ namespace AdServer::ProfilingCommons::Test
     }
 
     const Operation* write_operation = nullptr;
-    for(const auto& operation : write_operations_)
+    for (const auto& operation : write_operations_)
     {
-      if(in_flight_read_keys_.find(operation.key) == in_flight_read_keys_.end() &&
-        in_flight_write_keys_.find(operation.key) == in_flight_write_keys_.end())
+      if (in_flight_read_keys_.find(operation.key.text()) == in_flight_read_keys_.end() &&
+        in_flight_write_keys_.find(operation.key.text()) == in_flight_write_keys_.end())
       {
         write_operation = &operation;
         break;
       }
     }
 
-    if(!read_operation)
+    if (!read_operation)
     {
       return write_operation;
     }
 
-    if(!write_operation)
+    if (!write_operation)
     {
       return read_operation;
     }
@@ -223,8 +236,7 @@ namespace AdServer::ProfilingCommons::Test
   {
     const Operations& operations = is_write_operation(operation.type) ?
       write_operations_ : read_operations_;
-    return !accepting_.load(std::memory_order_acquire) ||
-      max_delay_ == Generics::Time::ZERO || operations.size() >= batch_size_ ?
+    return max_delay_ == Generics::Time::ZERO || operations.size() >= batch_size_ ?
       operation.enqueue_time : operation.enqueue_time + max_delay_;
   }
 
@@ -237,27 +249,29 @@ namespace AdServer::ProfilingCommons::Test
   {
     const std::size_t initial_batch_size = batch.size();
     auto it = source.begin();
-    while(it != source.end())
+    while (it != source.end())
     {
-      const std::string_view key(it->key);
+      const std::string_view key = it->key.text();
       const bool key_selected = selected_keys.find(key) != selected_keys.end();
-      if(collect_reads && in_flight_write_keys_.find(it->key) != in_flight_write_keys_.end())
+      if (collect_reads &&
+        in_flight_write_keys_.find(it->key.text()) != in_flight_write_keys_.end())
       {
         ++it;
         continue;
       }
 
-      if(!collect_reads &&
-        (in_flight_read_keys_.find(it->key) != in_flight_read_keys_.end() ||
-        (!key_selected && in_flight_write_keys_.find(it->key) != in_flight_write_keys_.end())))
+      if (!collect_reads &&
+        (in_flight_read_keys_.find(it->key.text()) != in_flight_read_keys_.end() ||
+        (!key_selected &&
+          in_flight_write_keys_.find(it->key.text()) != in_flight_write_keys_.end())))
       {
         ++it;
         continue;
       }
 
-      if(!key_selected)
+      if (!key_selected)
       {
-        if(selected_keys.size() >= batch_size_)
+        if (selected_keys.size() >= batch_size_)
         {
           ++it;
           continue;

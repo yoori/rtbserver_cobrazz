@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <functional>
 
 #include "RocksDBBatchingProcessorQueue.hpp"
 
@@ -47,7 +46,7 @@ namespace AdServer::ProfilingCommons
   {
     enqueue_buckets_count = std::max(1UL, enqueue_buckets_count);
     enqueue_buckets_.reserve(enqueue_buckets_count);
-    for(unsigned long i = 0; i < enqueue_buckets_count; ++i)
+    for (unsigned long i = 0; i < enqueue_buckets_count; ++i)
     {
       enqueue_buckets_.emplace_back(std::make_unique<EnqueueBucket>(batch_size_));
     }
@@ -61,10 +60,8 @@ namespace AdServer::ProfilingCommons
     for (auto operation_it = source.begin(); operation_it != source.end();)
     {
       auto current_operation = operation_it++;
-      const std::string_view key(current_operation->key);
       OperationGroup* group = target.acquire_group();
-      group->key = key;
-      group->key_hash = current_operation->key_hash;
+      group->key = Generics::StringViewHashAdapter(current_operation->key);
       const auto insert_group = [&]()
       {
         try
@@ -138,26 +135,6 @@ namespace AdServer::ProfilingCommons
     target.operation_groups.insert(group_position, group);
   }
 
-  inline RocksDBBatchingProcessorQueue::ReadyQueueIndex
-  RocksDBBatchingProcessorQueue::make_ready_queue_index_(
-    std::size_t bucket_index,
-    bool write_operations) noexcept
-  {
-    return (bucket_index << 1 | write_operations) + 1;
-  }
-
-  inline std::size_t
-  RocksDBBatchingProcessorQueue::queue_bucket_index_(ReadyQueueIndex queue_index) noexcept
-  {
-    return (queue_index - 1) >> 1;
-  }
-
-  inline bool
-  RocksDBBatchingProcessorQueue::queue_write_operations_(ReadyQueueIndex queue_index) noexcept
-  {
-    return (queue_index - 1) & 1;
-  }
-
   inline Generics::Time
   RocksDBBatchingProcessorQueue::time_from_microseconds_(std::int64_t microseconds) noexcept
   {
@@ -166,19 +143,15 @@ namespace AdServer::ProfilingCommons
       microseconds % Generics::Time::USEC_MAX);
   }
 
-  void
-  RocksDBBatchingProcessorQueue::activate() noexcept
-  {
-    accepting_.store(true, std::memory_order_release);
-  }
-
   RocksDBBatchingProcessorQueue::ReadyState
-  RocksDBBatchingProcessorQueue::deactivate() noexcept
+  RocksDBBatchingProcessorQueue::flush_pending() noexcept
   {
     std::lock_guard guard(state_lock_);
-    accepting_.store(false, std::memory_order_release);
-    ReadyState state = ready_state_i_();
-    drain_condition_.notify_all();
+    ReadyState state = request_ready_i_(!empty_i_(), true);
+    if (state.has_operation)
+    {
+      state.ready_time = state.enqueue_time;
+    }
     return state;
   }
 
@@ -188,53 +161,34 @@ namespace AdServer::ProfilingCommons
     EnqueueResult result;
     if (operations.empty())
     {
-      result.accepted = true;
       return result;
     }
 
-    if (!accepting())
-    {
-      return result;
-    }
-
-    unsigned long read_count = 0;
-    unsigned long write_count = 0;
-    unsigned long previous_read_count = 0;
-    unsigned long previous_write_count = 0;
+    const unsigned long operation_count = operations.size();
     unsigned long previous_pending_count = 0;
-    ReadyQueueIndex enqueued_queue_index = 0;
-    Generics::Time enqueued_time;
     const Generics::Time now = Generics::Time::get_time_of_day();
+    const auto add_pending_operations = [&]()
+    {
+      previous_pending_count = pending_operations_.fetch_add(
+        operation_count,
+        std::memory_order_acq_rel);
+      if (max_delay_ != Generics::Time::ZERO && previous_pending_count == 0)
+      {
+        min_enqueue_time_.store(now.microseconds(), std::memory_order_release);
+      }
+    };
 
-    if (operations.size() == 1)
+    if (operation_count == 1)
     {
       auto operation_it = operations.begin();
       operation_it->enqueue_time = now;
-      operation_it->key_hash = std::hash<std::string_view>{}(operation_it->key);
       account_operation_(result.counts, operation_it->type);
       const bool write_operation = is_write_operation(operation_it->type);
       const std::size_t bucket_index =
-        operation_it->key_hash % enqueue_buckets_.size();
+        operation_it->key.hash() % enqueue_buckets_.size();
       auto& bucket = *enqueue_buckets_[bucket_index];
-      enqueued_time = now;
-      enqueued_queue_index = make_ready_queue_index_(bucket_index, write_operation);
 
-      if (write_operation)
-      {
-        write_count = 1;
-        previous_write_count = pending_write_operations_.fetch_add(
-          1,
-          std::memory_order_acq_rel);
-      }
-      else
-      {
-        read_count = 1;
-        previous_read_count = pending_read_operations_.fetch_add(
-          1,
-          std::memory_order_acq_rel);
-      }
-
-      previous_pending_count = pending_operations_.fetch_add(1, std::memory_order_acq_rel);
+      add_pending_operations();
 
       std::lock_guard bucket_guard(bucket.lock);
       OperationQueue& target = write_operation ? bucket.write_operations : bucket.read_operations;
@@ -249,36 +203,17 @@ namespace AdServer::ProfilingCommons
       {
         auto current_it = operation_it++;
         current_it->enqueue_time = now;
-        current_it->key_hash = std::hash<std::string_view>{}(current_it->key);
         account_operation_(result.counts, current_it->type);
         const bool write_operation = is_write_operation(current_it->type);
         const std::size_t bucket_index =
-          current_it->key_hash % staged_buckets.size();
+          current_it->key.hash() % staged_buckets.size();
         Operations& target = write_operation ?
           staged_buckets[bucket_index].write_operations :
           staged_buckets[bucket_index].read_operations;
         target.splice(target.end(), operations, current_it);
-        write_count += write_operation;
-        read_count += !write_operation;
       }
 
-      previous_pending_count = pending_operations_.fetch_add(
-        read_count + write_count,
-        std::memory_order_acq_rel);
-
-      if (read_count)
-      {
-        previous_read_count = pending_read_operations_.fetch_add(
-          read_count,
-          std::memory_order_acq_rel);
-      }
-
-      if (write_count)
-      {
-        previous_write_count = pending_write_operations_.fetch_add(
-          write_count,
-          std::memory_order_acq_rel);
-      }
+      add_pending_operations();
 
       for (std::size_t i = 0; i < staged_buckets.size(); ++i)
       {
@@ -295,23 +230,11 @@ namespace AdServer::ProfilingCommons
 
           if (!staged_bucket.write_operations.empty())
           {
-            if (!enqueued_queue_index)
-            {
-              enqueued_queue_index = make_ready_queue_index_(i, true);
-              enqueued_time = staged_bucket.write_operations.front().enqueue_time;
-            }
-
             enqueue_operations_i_(bucket.write_operations, staged_bucket.write_operations);
           }
 
           if (!staged_bucket.read_operations.empty())
           {
-            if (!enqueued_queue_index)
-            {
-              enqueued_queue_index = make_ready_queue_index_(i, false);
-              enqueued_time = staged_bucket.read_operations.front().enqueue_time;
-            }
-
             enqueue_operations_i_(bucket.read_operations, staged_bucket.read_operations);
           }
 
@@ -320,21 +243,16 @@ namespace AdServer::ProfilingCommons
       }
     }
 
-    result.accepted = true;
-    const bool fills_read_batch = read_count &&
-      previous_read_count < batch_size_ &&
-      previous_read_count + read_count >= batch_size_;
-    const bool fills_write_batch = write_count &&
-      previous_write_count < batch_size_ &&
-      previous_write_count + write_count >= batch_size_;
+    const bool fills_batch = max_delay_ != Generics::Time::ZERO &&
+      previous_pending_count < batch_size_ &&
+      previous_pending_count + operation_count >= batch_size_;
 
-    result.ready_state = publish_enqueued_queue_(enqueued_queue_index, enqueued_time);
-
-    if (!result.ready_state &&
-      (previous_pending_count == 0 || fills_read_batch || fills_write_batch))
+    ReadyState ready_state = request_ready_i_(
+      true,
+      previous_pending_count == 0 || fills_batch);
+    if (ready_state.has_operation)
     {
-      std::lock_guard guard(state_lock_);
-      result.ready_state = ready_state_i_();
+      result.ready_state = ready_state;
     }
 
     return result;
@@ -351,26 +269,8 @@ namespace AdServer::ProfilingCommons
     noexcept
   {
     std::lock_guard guard(state_lock_);
-    ReadyQueueIndex queue_index = reset_ready_queue_i_();
-    if (!batch.empty())
-    {
-      const bool write_operations = is_write_operation(batch.front().type);
-      const std::size_t bucket_index =
-        batch.front().key_hash % enqueue_buckets_.size();
-      queue_index = make_ready_queue_index_(bucket_index, write_operations);
-    }
-    else
-    {
-      if (!queue_index)
-      {
-        return ready_state_i_();
-      }
-    }
-
-    const bool collect_reads = !queue_write_operations_(queue_index);
-    const std::size_t start_bucket_index = queue_bucket_index_(queue_index);
-    next_bucket_index_ = (start_bucket_index + 1) % enqueue_buckets_.size();
-    collect_batch_i_(batch, selected_keys, collect_reads, start_bucket_index);
+    ready_published_.store(false, std::memory_order_release);
+    const CollectResult collect_result = collect_batch_i_(batch, selected_keys);
 
     if (!batch.empty())
     {
@@ -378,12 +278,18 @@ namespace AdServer::ProfilingCommons
       auto& in_flight_keys = write_batch ? in_flight_write_keys_ : in_flight_read_keys_;
       for (const auto& operation : batch)
       {
-        ++in_flight_keys[operation.key];
+        add_in_flight_key_(in_flight_keys, operation);
       }
     }
 
-    recalculate_ready_queue_i_();
-    return ready_state_i_();
+    if (collect_result.min_enqueue_time)
+    {
+      min_enqueue_time_.store(
+        collect_result.min_enqueue_time->microseconds(),
+        std::memory_order_release);
+    }
+
+    return collect_result.collected ? request_ready_i_(!empty_i_()) : ReadyState{};
   }
 
   RocksDBBatchingProcessorQueue::ReadyState
@@ -403,13 +309,7 @@ namespace AdServer::ProfilingCommons
       }
     }
 
-    if (recalculate_on_complete_)
-    {
-      reset_ready_queue_i_();
-      recalculate_ready_queue_i_();
-    }
-
-    return ready_state_i_();
+    return request_ready_i_(!empty_i_());
   }
 
   void
@@ -429,11 +329,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProcessorQueue::wait_pending()
   {
-    std::unique_lock guard(state_lock_);
-    while (accepting() && !drained())
-    {
-      drain_condition_.wait(guard);
-    }
+    wait_drained();
   }
 
   void
@@ -476,106 +372,121 @@ namespace AdServer::ProfilingCommons
     }
   }
 
+  void
+  RocksDBBatchingProcessorQueue::add_in_flight_key_(
+    InFlightKeys& keys,
+    const Operation& operation)
+  {
+    const auto it = keys.find(operation.key);
+    if (it == keys.end())
+    {
+      keys.emplace(operation.key, 1);
+    }
+    else
+    {
+      ++it->second;
+    }
+  }
+
   RocksDBBatchingProcessorQueue::ReadyState
-  RocksDBBatchingProcessorQueue::ready_state_i_() noexcept
+  RocksDBBatchingProcessorQueue::request_ready_i_(bool has_pending_operations, bool force_update)
+    noexcept
+  {
+    if (!has_pending_operations)
+    {
+      return {};
+    }
+
+    const bool was_published = ready_published_.exchange(true, std::memory_order_acq_rel);
+    if (was_published && !force_update)
+    {
+      return {};
+    }
+
+    return make_ready_state_i_();
+  }
+
+  RocksDBBatchingProcessorQueue::ReadyState
+  RocksDBBatchingProcessorQueue::make_ready_state_i_() const noexcept
   {
     ReadyState result;
-    result.generation = ready_generation_.fetch_add(1, std::memory_order_relaxed) + 1;
-
-    ReadyQueueIndex queue_index = 0;
-    std::int64_t enqueue_time_microseconds = NO_READY_ENQUEUE_TIME;
-    ReadyQueueIndex verified_queue_index = 0;
-    do
-    {
-      queue_index = ready_queue_index_.load(std::memory_order_acquire);
-      if (!queue_index)
-      {
-        return result;
-      }
-
-      if (queue_index == UPDATING_READY_QUEUE_INDEX)
-      {
-        continue;
-      }
-
-      enqueue_time_microseconds = min_ready_enqueue_time_.load(std::memory_order_acquire);
-      verified_queue_index = ready_queue_index_.load(std::memory_order_acquire);
-    }
-    while (queue_index != verified_queue_index ||
-      verified_queue_index == UPDATING_READY_QUEUE_INDEX ||
-      enqueue_time_microseconds == NO_READY_ENQUEUE_TIME);
-
     result.has_operation = true;
-    result.write_operations = queue_write_operations_(queue_index);
-    result.enqueue_time = time_from_microseconds_(enqueue_time_microseconds);
-    result.ready_time = operation_ready_time_i_(result.write_operations, result.enqueue_time);
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    const std::int64_t enqueue_time = min_enqueue_time_.load(std::memory_order_acquire);
+    result.enqueue_time = max_delay_ != Generics::Time::ZERO && enqueue_time != NO_ENQUEUE_TIME ?
+      time_from_microseconds_(enqueue_time) : now;
+    result.ready_time = operation_ready_time_i_(result.enqueue_time);
     return result;
   }
 
-  std::optional<RocksDBBatchingProcessorQueue::ReadyState>
-  RocksDBBatchingProcessorQueue::publish_enqueued_queue_(
-    ReadyQueueIndex queue_index,
-    const Generics::Time& enqueue_time) noexcept
+  const RocksDBBatchingProcessorQueue::OperationGroup*
+  RocksDBBatchingProcessorQueue::find_ready_group_i_(
+    const OperationQueue& operation_queue,
+    bool write_operations) const noexcept
   {
-    if (!queue_index || !try_publish_ready_queue_i_(queue_index, enqueue_time))
+    for (const auto& group : operation_queue.operation_groups)
     {
-      return std::nullopt;
-    }
-
-    return ready_state_i_();
-  }
-
-  bool
-  RocksDBBatchingProcessorQueue::try_publish_ready_queue_i_(
-    ReadyQueueIndex queue_index,
-    const Generics::Time& enqueue_time) noexcept
-  {
-    ReadyQueueIndex expected = 0;
-    if (!ready_queue_index_.compare_exchange_strong(
-      expected,
-      UPDATING_READY_QUEUE_INDEX,
-      std::memory_order_acq_rel,
-      std::memory_order_acquire))
-    {
-      return false;
-    }
-
-    min_ready_enqueue_time_.store(enqueue_time.microseconds(), std::memory_order_release);
-    ready_queue_index_.store(queue_index, std::memory_order_release);
-    return true;
-  }
-
-  RocksDBBatchingProcessorQueue::ReadyQueueIndex
-  RocksDBBatchingProcessorQueue::reset_ready_queue_i_() noexcept
-  {
-    ReadyQueueIndex queue_index = ready_queue_index_.load(std::memory_order_acquire);
-    while (queue_index == UPDATING_READY_QUEUE_INDEX ||
-      !ready_queue_index_.compare_exchange_weak(
-        queue_index,
-        UPDATING_READY_QUEUE_INDEX,
-        std::memory_order_acq_rel,
-        std::memory_order_acquire))
-    {
-      if (queue_index == UPDATING_READY_QUEUE_INDEX)
+      bool ready;
+      const auto& key = group.key;
+      if (write_operations)
       {
-        queue_index = ready_queue_index_.load(std::memory_order_acquire);
+        ready = in_flight_read_keys_.find(key) == in_flight_read_keys_.end() &&
+          in_flight_write_keys_.find(key) == in_flight_write_keys_.end();
+      }
+      else
+      {
+        ready = in_flight_write_keys_.find(key) == in_flight_write_keys_.end();
+      }
+
+      if (ready)
+      {
+        return &group;
       }
     }
 
-    min_ready_enqueue_time_.store(NO_READY_ENQUEUE_TIME, std::memory_order_release);
-    ready_queue_index_.store(0, std::memory_order_release);
-    return queue_index;
+    return nullptr;
   }
 
-  void
-  RocksDBBatchingProcessorQueue::recalculate_ready_queue_i_() noexcept
+  Generics::Time
+  RocksDBBatchingProcessorQueue::operation_ready_time_i_(const Generics::Time& enqueue_time)
+    const noexcept
   {
-    ReadyQueueIndex candidate = 0;
-    Generics::Time candidate_enqueue_time;
-    bool blocked_queue_seen = false;
+    return max_delay_ == Generics::Time::ZERO ||
+      pending_operations_.load(std::memory_order_acquire) >= batch_size_ ?
+      enqueue_time : enqueue_time + max_delay_;
+  }
+
+  RocksDBBatchingProcessorQueue::CollectResult
+  RocksDBBatchingProcessorQueue::collect_batch_i_(
+    Operations& batch,
+    SelectedKeys& selected_keys) noexcept
+  {
+    CollectResult result;
+    if (empty_i_())
+    {
+      return result;
+    }
+
+    const bool track_min_enqueue_time = max_delay_ != Generics::Time::ZERO;
+    const auto update_min_enqueue_time = [&result](const OperationQueue& operation_queue)
+    {
+      if (!operation_queue.empty() &&
+        (!result.min_enqueue_time ||
+          operation_queue.operation_groups.front().enqueue_time < *result.min_enqueue_time))
+      {
+        result.min_enqueue_time = operation_queue.operation_groups.front().enqueue_time;
+      }
+    };
+
+    const bool fixed_operation_type = !batch.empty();
+    const bool fixed_write_operations = fixed_operation_type &&
+      is_write_operation(batch.front().type);
+    const std::size_t start_bucket_index = next_bucket_index_;
+    std::size_t selected_offset = enqueue_buckets_.size();
+    bool selected_write_operations = false;
     for (std::size_t offset = 0; offset < enqueue_buckets_.size(); ++offset)
     {
-      const std::size_t bucket_index = (next_bucket_index_ + offset) % enqueue_buckets_.size();
+      const std::size_t bucket_index = (start_bucket_index + offset) % enqueue_buckets_.size();
       auto& bucket = *enqueue_buckets_[bucket_index];
       if (!bucket.has_pending_operations.load(std::memory_order_acquire))
       {
@@ -583,98 +494,45 @@ namespace AdServer::ProfilingCommons
       }
 
       std::lock_guard bucket_guard(bucket.lock);
-      bool blocked_operation_seen = false;
-      const OperationGroup* write_group = find_ready_group_i_(
-        bucket.write_operations,
-        true,
-        blocked_operation_seen);
-      blocked_queue_seen |= blocked_operation_seen;
-
-      const OperationGroup* read_group = find_ready_group_i_(
-        bucket.read_operations,
-        false,
-        blocked_operation_seen);
-      blocked_queue_seen |= blocked_operation_seen;
-
-      if (!write_group && !read_group)
+      if (fixed_operation_type)
       {
-        continue;
-      }
-
-      const bool write_operations = !read_group ||
-        (write_group && write_group->enqueue_time <= read_group->enqueue_time);
-      const OperationGroup* group = write_operations ? write_group : read_group;
-      candidate = make_ready_queue_index_(bucket_index, write_operations);
-      candidate_enqueue_time = group->enqueue_time;
-      break;
-    }
-
-    if (candidate)
-    {
-      try_publish_ready_queue_i_(candidate, candidate_enqueue_time);
-    }
-
-    recalculate_on_complete_ = blocked_queue_seen;
-  }
-
-  const RocksDBBatchingProcessorQueue::OperationGroup*
-  RocksDBBatchingProcessorQueue::find_ready_group_i_(
-    const OperationQueue& operation_queue,
-    bool write_operations,
-    bool& blocked_operation_seen) const noexcept
-  {
-    blocked_operation_seen = false;
-    for (const auto& group : operation_queue.operation_groups)
-    {
-      bool ready;
-      if (write_operations)
-      {
-        ready = in_flight_read_keys_.find(group.key) == in_flight_read_keys_.end() &&
-          in_flight_write_keys_.find(group.key) == in_flight_write_keys_.end();
+        const OperationQueue& operation_queue = fixed_write_operations ?
+          bucket.write_operations : bucket.read_operations;
+        if (find_ready_group_i_(operation_queue, fixed_write_operations))
+        {
+          selected_write_operations = fixed_write_operations;
+          selected_offset = offset;
+          break;
+        }
       }
       else
       {
-        ready = in_flight_write_keys_.find(group.key) == in_flight_write_keys_.end();
+        const OperationGroup* write_group = find_ready_group_i_(bucket.write_operations, true);
+        const OperationGroup* read_group = find_ready_group_i_(bucket.read_operations, false);
+        if (write_group || read_group)
+        {
+          selected_write_operations = !read_group ||
+            (write_group && write_group->enqueue_time <= read_group->enqueue_time);
+          selected_offset = offset;
+          break;
+        }
       }
 
-      if (ready)
+      if (track_min_enqueue_time)
       {
-        return &group;
+        update_min_enqueue_time(bucket.write_operations);
+        update_min_enqueue_time(bucket.read_operations);
       }
-
-      blocked_operation_seen = true;
     }
 
-    return nullptr;
-  }
-
-  Generics::Time
-  RocksDBBatchingProcessorQueue::operation_ready_time_i_(
-    bool write_operations,
-    const Generics::Time& enqueue_time) const noexcept
-  {
-    const unsigned long pending_operations = write_operations ?
-      pending_write_operations_.load(std::memory_order_acquire) :
-      pending_read_operations_.load(std::memory_order_acquire);
-    return !accepting() || max_delay_ == Generics::Time::ZERO ||
-      pending_operations >= batch_size_ ?
-      enqueue_time : enqueue_time + max_delay_;
-  }
-
-  void
-  RocksDBBatchingProcessorQueue::collect_batch_i_(
-    Operations& batch,
-    SelectedKeys& selected_keys,
-    bool collect_reads,
-    std::size_t start_bucket_index) noexcept
-  {
-    if (empty_i_())
+    if (selected_offset == enqueue_buckets_.size())
     {
-      return;
+      return result;
     }
 
+    const bool collect_reads = !selected_write_operations;
     unsigned long collected = 0;
-    for (std::size_t offset = 0; offset < enqueue_buckets_.size(); ++offset)
+    for (std::size_t offset = selected_offset; offset < enqueue_buckets_.size(); ++offset)
     {
       const std::size_t bucket_index =
         (start_bucket_index + offset) % enqueue_buckets_.size();
@@ -685,20 +543,34 @@ namespace AdServer::ProfilingCommons
       }
 
       std::lock_guard bucket_guard(bucket.lock);
-      OperationQueue& source = collect_reads ?
-        bucket.read_operations : bucket.write_operations;
-      collected += collect_from_queue_i_(
-        source,
-        collect_reads,
-        batch,
-        selected_keys);
+      if (selected_keys.size() < batch_size_)
+      {
+        OperationQueue& source = collect_reads ? bucket.read_operations : bucket.write_operations;
+        const std::size_t initial_batch_size = batch.size();
+        collected += collect_from_queue_i_(
+          source,
+          collect_reads,
+          batch,
+          selected_keys);
+
+        if (batch.size() != initial_batch_size)
+        {
+          next_bucket_index_ = (bucket_index + 1) % enqueue_buckets_.size();
+        }
+      }
 
       if (bucket.read_operations.empty() && bucket.write_operations.empty())
       {
         bucket.has_pending_operations.store(false, std::memory_order_release);
       }
 
-      if (selected_keys.size() >= batch_size_)
+      if (track_min_enqueue_time)
+      {
+        update_min_enqueue_time(bucket.write_operations);
+        update_min_enqueue_time(bucket.read_operations);
+      }
+
+      if (!track_min_enqueue_time && selected_keys.size() >= batch_size_)
       {
         break;
       }
@@ -706,11 +578,11 @@ namespace AdServer::ProfilingCommons
 
     if (collected)
     {
-      auto& pending_operations = collect_reads ?
-        pending_read_operations_ : pending_write_operations_;
-      pending_operations.fetch_sub(collected, std::memory_order_acq_rel);
       pending_operations_.fetch_sub(collected, std::memory_order_acq_rel);
     }
+
+    result.collected = collected != 0;
+    return result;
   }
 
   unsigned long
@@ -726,20 +598,21 @@ namespace AdServer::ProfilingCommons
     {
       auto current_group = group_it++;
       OperationGroup& group = *current_group;
+      const auto& key = group.key;
       if (collect_reads &&
-        in_flight_write_keys_.find(group.key) != in_flight_write_keys_.end())
+        in_flight_write_keys_.find(key) != in_flight_write_keys_.end())
       {
         continue;
       }
 
       if (!collect_reads &&
-        (in_flight_read_keys_.find(group.key) != in_flight_read_keys_.end() ||
-        in_flight_write_keys_.find(group.key) != in_flight_write_keys_.end()))
+        (in_flight_read_keys_.find(key) != in_flight_read_keys_.end() ||
+        in_flight_write_keys_.find(key) != in_flight_write_keys_.end()))
       {
         continue;
       }
 
-      selected_keys.emplace_back(group.key);
+      selected_keys.emplace_back(group.key.text());
       source.operation_groups.erase(current_group);
       batch.splice(batch.end(), group.operations);
       source.groups.erase(&group);

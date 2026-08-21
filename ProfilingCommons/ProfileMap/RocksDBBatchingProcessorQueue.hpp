@@ -17,6 +17,7 @@
 #include <string_view>
 #include <vector>
 
+#include <Generics/HashTableAdapters.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
@@ -49,8 +50,7 @@ namespace AdServer::ProfilingCommons
     {
       OperationType type;
       Generics::Time enqueue_time;
-      std::string key;
-      std::size_t key_hash = 0;
+      Generics::StringHashAdapter key;
       Generics::ConstSmartMemBuf_var profile;
       std::optional<CheckCallback> check_callback;
       std::optional<GetCallback> get_callback;
@@ -73,16 +73,13 @@ namespace AdServer::ProfilingCommons
 
     struct ReadyState final
     {
-      std::uint64_t generation = 0;
       bool has_operation = false;
-      bool write_operations = false;
       Generics::Time enqueue_time;
       Generics::Time ready_time;
     };
 
     struct EnqueueResult final
     {
-      bool accepted = false;
       OperationCounts counts;
       std::optional<ReadyState> ready_state;
     };
@@ -97,9 +94,7 @@ namespace AdServer::ProfilingCommons
     RocksDBBatchingProcessorQueue(const RocksDBBatchingProcessorQueue&) = delete;
     RocksDBBatchingProcessorQueue& operator=(const RocksDBBatchingProcessorQueue&) = delete;
 
-    void activate() noexcept;
-
-    ReadyState deactivate() noexcept;
+    ReadyState flush_pending() noexcept;
 
     EnqueueResult enqueue(Operations&& operations);
 
@@ -117,28 +112,55 @@ namespace AdServer::ProfilingCommons
 
     bool drained() const noexcept;
 
-    bool accepting() const noexcept;
-
     static bool is_write_operation(OperationType type) noexcept;
 
   private:
-    using ReadyQueueIndex = std::uint64_t;
-
-    struct StringHash final
+    struct KeyHash final
     {
       using is_transparent = void;
 
-      std::size_t operator()(std::string_view value) const noexcept
+      std::size_t operator()(const Generics::StringHashAdapter& value) const noexcept
       {
-        return boost::hash<std::string_view>{}(value);
+        return value.hash();
+      }
+
+      std::size_t operator()(const Generics::StringViewHashAdapter& value) const noexcept
+      {
+        return value.hash();
+      }
+    };
+
+    struct KeyEqual final
+    {
+      using is_transparent = void;
+
+      bool operator()(
+        const Generics::StringHashAdapter& left,
+        const Generics::StringHashAdapter& right) const noexcept
+      {
+        return left.text() == right.text();
+      }
+
+      bool operator()(
+        const Generics::StringHashAdapter& left,
+        const Generics::StringViewHashAdapter& right) const noexcept
+      {
+        return left.text() == right.text();
+      }
+
+      bool operator()(
+        const Generics::StringViewHashAdapter& left,
+        const Generics::StringHashAdapter& right) const noexcept
+      {
+        return left.text() == right.text();
       }
     };
 
     using InFlightKeys = boost::unordered_flat_map<
-      std::string,
+      Generics::StringHashAdapter,
       unsigned long,
-      StringHash,
-      std::equal_to<>>;
+      KeyHash,
+      KeyEqual>;
 
     using OperationGroupHook = boost::intrusive::list_member_hook<
       boost::intrusive::link_mode<boost::intrusive::safe_link>>;
@@ -148,8 +170,7 @@ namespace AdServer::ProfilingCommons
       OperationGroup() = default;
       OperationGroup(const OperationGroup&) = delete;
 
-      std::string_view key;
-      std::size_t key_hash = 0;
+      Generics::StringViewHashAdapter key;
       Generics::Time enqueue_time;
       Operations operations;
       OperationGroupHook queue_hook;
@@ -161,12 +182,12 @@ namespace AdServer::ProfilingCommons
 
       std::size_t operator()(const OperationGroup* group) const noexcept
       {
-        return group->key_hash;
+        return group->key.hash();
       }
 
-      std::size_t operator()(std::string_view key) const noexcept
+      std::size_t operator()(const Generics::StringViewHashAdapter& key) const noexcept
       {
-        return std::hash<std::string_view>{}(key);
+        return key.hash();
       }
     };
 
@@ -176,17 +197,21 @@ namespace AdServer::ProfilingCommons
 
       bool operator()(const OperationGroup* left, const OperationGroup* right) const noexcept
       {
-        return left->key == right->key;
+        return left->key.text() == right->key.text();
       }
 
-      bool operator()(const OperationGroup* left, std::string_view right) const noexcept
+      bool operator()(
+        const OperationGroup* left,
+        const Generics::StringViewHashAdapter& right) const noexcept
       {
-        return left->key == right;
+        return left->key.text() == right.text();
       }
 
-      bool operator()(std::string_view left, const OperationGroup* right) const noexcept
+      bool operator()(
+        const Generics::StringViewHashAdapter& left,
+        const OperationGroup* right) const noexcept
       {
-        return left == right->key;
+        return left.text() == right->key.text();
       }
     };
 
@@ -236,7 +261,15 @@ namespace AdServer::ProfilingCommons
       Operations write_operations;
     };
 
+    struct CollectResult final
+    {
+      bool collected = false;
+      std::optional<Generics::Time> min_enqueue_time;
+    };
+
     void account_operation_(OperationCounts& counts, OperationType type) const noexcept;
+
+    static void add_in_flight_key_(InFlightKeys& keys, const Operation& operation);
 
     void enqueue_operations_i_(OperationQueue& target, Operations& source);
 
@@ -244,44 +277,23 @@ namespace AdServer::ProfilingCommons
       OperationQueue& target,
       OperationGroup& group) noexcept;
 
-    ReadyState ready_state_i_() noexcept;
+    ReadyState request_ready_i_(
+      bool has_pending_operations,
+      bool force_update = false) noexcept;
 
-    std::optional<ReadyState> publish_enqueued_queue_(
-      ReadyQueueIndex queue_index,
-      const Generics::Time& enqueue_time) noexcept;
-
-    bool try_publish_ready_queue_i_(
-      ReadyQueueIndex queue_index,
-      const Generics::Time& enqueue_time) noexcept;
-
-    ReadyQueueIndex reset_ready_queue_i_() noexcept;
-
-    void recalculate_ready_queue_i_() noexcept;
+    ReadyState make_ready_state_i_() const noexcept;
 
     const OperationGroup* find_ready_group_i_(
       const OperationQueue& operation_queue,
-      bool write_operations,
-      bool& blocked_operation_seen) const noexcept;
+      bool write_operations) const noexcept;
 
-    Generics::Time operation_ready_time_i_(
-      bool write_operations,
-      const Generics::Time& enqueue_time) const noexcept;
-
-    static ReadyQueueIndex make_ready_queue_index_(
-      std::size_t bucket_index,
-      bool write_operations) noexcept;
-
-    static std::size_t queue_bucket_index_(ReadyQueueIndex queue_index) noexcept;
-
-    static bool queue_write_operations_(ReadyQueueIndex queue_index) noexcept;
+    Generics::Time operation_ready_time_i_(const Generics::Time& enqueue_time) const noexcept;
 
     static Generics::Time time_from_microseconds_(std::int64_t microseconds) noexcept;
 
-    void collect_batch_i_(
+    CollectResult collect_batch_i_(
       Operations& batch,
-      SelectedKeys& selected_keys,
-      bool collect_reads,
-      std::size_t start_bucket_index) noexcept;
+      SelectedKeys& selected_keys) noexcept;
 
     unsigned long collect_from_queue_i_(
       OperationQueue& source,
@@ -292,9 +304,7 @@ namespace AdServer::ProfilingCommons
     bool empty_i_() const noexcept;
 
   private:
-    static constexpr std::int64_t NO_READY_ENQUEUE_TIME = std::numeric_limits<std::int64_t>::max();
-    static constexpr ReadyQueueIndex UPDATING_READY_QUEUE_INDEX =
-      std::numeric_limits<ReadyQueueIndex>::max();
+    static constexpr std::int64_t NO_ENQUEUE_TIME = std::numeric_limits<std::int64_t>::max();
 
     const unsigned long batch_size_;
     const Generics::Time max_delay_;
@@ -305,15 +315,10 @@ namespace AdServer::ProfilingCommons
     InFlightKeys in_flight_read_keys_;
     InFlightKeys in_flight_write_keys_;
     std::atomic<unsigned long> pending_operations_{0};
-    std::atomic<unsigned long> pending_read_operations_{0};
-    std::atomic<unsigned long> pending_write_operations_{0};
     std::atomic<unsigned long> active_workers_{0};
-    std::atomic<bool> accepting_{false};
-    std::atomic<ReadyQueueIndex> ready_queue_index_{0};
-    std::atomic<std::int64_t> min_ready_enqueue_time_{NO_READY_ENQUEUE_TIME};
-    std::atomic<std::uint64_t> ready_generation_{0};
+    std::atomic<bool> ready_published_{false};
+    std::atomic<std::int64_t> min_enqueue_time_{NO_ENQUEUE_TIME};
     std::size_t next_bucket_index_ = 0;
-    bool recalculate_on_complete_ = false;
   };
 
   inline bool
@@ -322,9 +327,4 @@ namespace AdServer::ProfilingCommons
     return type == OT_TOUCH || type == OT_SAVE || type == OT_REMOVE;
   }
 
-  inline bool
-  RocksDBBatchingProcessorQueue::accepting() const noexcept
-  {
-    return accepting_.load(std::memory_order_acquire);
-  }
 }

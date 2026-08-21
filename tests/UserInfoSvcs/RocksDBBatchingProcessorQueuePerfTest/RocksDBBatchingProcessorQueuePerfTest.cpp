@@ -62,7 +62,7 @@ namespace
     arrive_and_wait()
     {
       std::unique_lock guard(lock_);
-      if(++arrived_ == participants_)
+      if (++arrived_ == participants_)
       {
         released_ = true;
         condition_.notify_all();
@@ -139,7 +139,7 @@ namespace
     args.add(equal_name("help") || short_name("h"), opt_help);
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -155,36 +155,36 @@ namespace
     options.key_count = *opt_key_count;
     options.max_delay_us = *opt_max_delay_us;
 
-    if(options.implementation != "simple" && options.implementation != "bucket")
+    if (options.implementation != "simple" && options.implementation != "bucket")
     {
       throw std::runtime_error("--implementation must be simple or bucket");
     }
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.threads == 0 || options.batching_threads == 0 ||
+    if (options.threads == 0 || options.batching_threads == 0 ||
       options.batch_size == 0 || options.enqueue_buckets == 0)
     {
       throw std::runtime_error("thread, batch, and bucket counts must be > 0");
     }
 
-    if(options.key_count == 0)
+    if (options.key_count == 0)
     {
       options.key_count = options.count;
     }
 
-    if(*opt_mode == "read")
+    if (*opt_mode == "read")
     {
       options.mode = Mode::READ;
     }
-    else if(*opt_mode == "write")
+    else if (*opt_mode == "write")
     {
       options.mode = Mode::WRITE;
     }
-    else if(*opt_mode == "read-write")
+    else if (*opt_mode == "read-write")
     {
       options.mode = Mode::READ_WRITE;
     }
@@ -200,7 +200,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -229,14 +229,19 @@ namespace
     void
     publish(const typename Queue::ReadyState& state)
     {
+      if (!state.has_operation)
+      {
+        return;
+      }
+
       {
         std::lock_guard guard(lock_);
-        if(state.generation < generation_)
+        if (ready_ && ready_time_ <= state.ready_time)
         {
           return;
         }
-        generation_ = state.generation;
-        ready_ = state.has_operation;
+
+        ready_ = true;
         ready_time_ = state.ready_time;
       }
       condition_.notify_one();
@@ -246,12 +251,12 @@ namespace
     acquire_batch()
     {
       std::unique_lock guard(lock_);
-      while(true)
+      while (true)
       {
-        if(ready_)
+        if (ready_)
         {
           const Generics::Time now = Generics::Time::get_time_of_day();
-          if(now < ready_time_)
+          if (now < ready_time_)
           {
             const auto deadline = std::chrono::system_clock::time_point(
               std::chrono::duration_cast<std::chrono::system_clock::duration>(
@@ -265,7 +270,7 @@ namespace
           return true;
         }
 
-        if(producers_done_ && queue_.drained())
+        if (producers_done_ && queue_.drained())
         {
           return false;
         }
@@ -283,7 +288,7 @@ namespace
         drained = producers_done_ && queue_.drained();
       }
 
-      if(drained)
+      if (drained)
       {
         condition_.notify_all();
       }
@@ -292,7 +297,7 @@ namespace
     void
     finish_producers()
     {
-      publish(queue_.deactivate());
+      publish(queue_.flush_pending());
       {
         std::lock_guard guard(lock_);
         producers_done_ = true;
@@ -304,7 +309,6 @@ namespace
     Queue& queue_;
     std::mutex lock_;
     std::condition_variable condition_;
-    std::uint64_t generation_ = 0;
     bool ready_ = false;
     bool producers_done_ = false;
     Generics::Time ready_time_;
@@ -319,11 +323,10 @@ namespace
       Generics::Time(0, options.max_delay_us),
       options.enqueue_buckets);
     QueueScheduler<Queue> scheduler(queue);
-    queue.activate();
 
     std::vector<std::string> keys;
     keys.reserve(options.key_count);
-    for(std::size_t i = 0; i < options.key_count; ++i)
+    for (std::size_t i = 0; i < options.key_count; ++i)
     {
       keys.emplace_back("profile/" + std::to_string(i));
     }
@@ -344,7 +347,7 @@ namespace
 
     std::vector<std::thread> consumers;
     consumers.reserve(options.batching_threads);
-    for(std::size_t i = 0; i < options.batching_threads; ++i)
+    for (std::size_t i = 0; i < options.batching_threads; ++i)
     {
       consumers.emplace_back(
         [&]()
@@ -353,27 +356,27 @@ namespace
           typename Queue::SelectedKeys selected_keys;
           start_barrier.arrive_and_wait();
 
-          while(scheduler.acquire_batch())
+          while (scheduler.acquire_batch())
           {
             scheduler.publish(queue.collect_batch(batch, selected_keys));
-            if(batch.empty())
+            if (batch.empty())
             {
               scheduler.finish_batch();
               continue;
             }
 
             std::uint64_t local_checksum = 0;
-            for(auto& operation : batch)
+            for (auto& operation : batch)
             {
-              local_checksum += operation.key.size() + operation.type;
-              if(operation.get_callback)
+              local_checksum += operation.key.text().size() + operation.type;
+              if (operation.get_callback)
               {
                 (*operation.get_callback)(
                   Generics::ConstSmartMemBuf_var(),
                   std::nullopt);
               }
 
-              if(operation.save_callback)
+              if (operation.save_callback)
               {
                 (*operation.save_callback)(std::nullopt);
               }
@@ -393,7 +396,7 @@ namespace
 
     std::vector<std::thread> producers;
     producers.reserve(options.threads);
-    for(std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
+    for (std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
     {
       producers.emplace_back(
         [&]()
@@ -402,11 +405,11 @@ namespace
           std::uint64_t local_enqueue_call_total_ns = 0;
           start_barrier.arrive_and_wait();
 
-          while(true)
+          while (true)
           {
             const std::uint64_t operation_index =
               next_operation.fetch_add(1, std::memory_order_relaxed);
-            if(operation_index >= options.count)
+            if (operation_index >= options.count)
             {
               break;
             }
@@ -416,7 +419,7 @@ namespace
             typename Queue::Operation operation;
             operation.type = write_operation ? BucketQueue::OT_SAVE : BucketQueue::OT_GET;
             operation.key = keys[operation_index % keys.size()];
-            if(write_operation)
+            if (write_operation)
             {
               operation.save_callback =
                 [&done_count](std::optional<std::string>)
@@ -446,13 +449,10 @@ namespace
               std::chrono::duration_cast<std::chrono::nanoseconds>(
                 enqueue_finished_at - enqueue_started_at).count());
             ++local_enqueue_call_count;
-            if(!result.accepted)
-            {
-              errors.fetch_add(1, std::memory_order_relaxed);
-              break;
-            }
+
             enqueued.fetch_add(1, std::memory_order_relaxed);
-            if(result.ready_state)
+
+            if (result.ready_state)
             {
               scheduler.publish(*result.ready_state);
             }
@@ -467,12 +467,12 @@ namespace
     const auto started_at = std::chrono::steady_clock::now();
     start_barrier.arrive_and_wait();
 
-    for(auto& producer : producers)
+    for (auto& producer : producers)
     {
       producer.join();
     }
     scheduler.finish_producers();
-    for(auto& consumer : consumers)
+    for (auto& consumer : consumers)
     {
       consumer.join();
     }

@@ -24,7 +24,7 @@ namespace AdServer::ProfilingCommons
 
   RocksDBProfileMapProcessor::~RocksDBProfileMapProcessor() noexcept
   {
-    while(!ready_.empty())
+    while (!ready_.empty())
     {
       remove_from_ready_i_(*ready_.begin());
     }
@@ -58,7 +58,7 @@ namespace AdServer::ProfilingCommons
     workers_.reserve(workers_count_);
     try
     {
-      for(unsigned long i = 0; i < workers_count_; ++i)
+      for (unsigned long i = 0; i < workers_count_; ++i)
       {
         workers_.emplace_back(&RocksDBProfileMapProcessor::worker_loop_, this);
       }
@@ -72,7 +72,7 @@ namespace AdServer::ProfilingCommons
       }
       ready_cond_.notify_all();
 
-      for(auto& worker : workers_)
+      for (auto& worker : workers_)
       {
         worker.join();
       }
@@ -84,21 +84,25 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapProcessor::deactivate_object_()
   {
-    {
-      std::lock_guard guard(ready_lock_);
-      accepting_.store(false, std::memory_order_release);
-      stopping_.store(true, std::memory_order_release);
-    }
-    ready_cond_.notify_all();
+    std::lock_guard guard(ready_lock_);
+    accepting_.store(false, std::memory_order_release);
   }
 
   void
   RocksDBProfileMapProcessor::wait_object_()
   {
-    for(auto& worker : workers_)
+    {
+      std::lock_guard guard(ready_lock_);
+      stopping_.store(true, std::memory_order_release);
+    }
+
+    ready_cond_.notify_all();
+
+    for (auto& worker : workers_)
     {
       worker.join();
     }
+
     workers_.clear();
   }
 
@@ -106,15 +110,16 @@ namespace AdServer::ProfilingCommons
   RocksDBProfileMapProcessor::register_map_(ProfileMapImpl& map_impl)
   {
     MapQueue& map_queue = map_impl.processor_queue_;
+
     {
       std::lock_guard guard(ready_lock_);
-      if(!accepting_.load(std::memory_order_acquire))
+      if (!accepting_.load(std::memory_order_acquire))
       {
         throw ProfileMap<std::string>::Exception(
           "RocksDBProfileMapProcessor::register_map_(): processor isn't active");
       }
 
-      if(registrations_.find(&map_queue) != registrations_.end())
+      if (registrations_.find(&map_queue) != registrations_.end())
       {
         throw ProfileMap<std::string>::Exception(
           "RocksDBProfileMapProcessor::register_map_(): map is already registered");
@@ -124,27 +129,14 @@ namespace AdServer::ProfilingCommons
         &map_queue,
         std::make_unique<Registration>(map_impl, map_queue));
     }
-
-    map_queue.activate();
-  }
-
-  void
-  RocksDBProfileMapProcessor::unregister_map_(ProfileMapImpl& map_impl) noexcept
-  {
-    MapQueue& map_queue = map_impl.processor_queue_;
-    const ReadyState state = map_queue.deactivate();
-    if(apply_ready_(map_queue, state))
-    {
-      ready_cond_.notify_all();
-    }
   }
 
   void
   RocksDBProfileMapProcessor::wait_unregister_map_(ProfileMapImpl& map_impl)
   {
     MapQueue& map_queue = map_impl.processor_queue_;
-    const ReadyState state = map_queue.deactivate();
-    if(apply_ready_(map_queue, state))
+    const ReadyState state = map_queue.flush_pending();
+    if (apply_ready_(map_queue, state))
     {
       ready_cond_.notify_all();
     }
@@ -153,7 +145,7 @@ namespace AdServer::ProfilingCommons
 
     std::lock_guard guard(ready_lock_);
     const auto it = registrations_.find(&map_queue);
-    if(it == registrations_.end())
+    if (it == registrations_.end())
     {
       return;
     }
@@ -177,25 +169,21 @@ namespace AdServer::ProfilingCommons
     const ProfileMapImpl& map_impl,
     Operations&& operations)
   {
-    if(operations.empty())
+    if (operations.empty())
     {
       return true;
     }
 
-    if(!accepting_.load(std::memory_order_acquire))
+    auto submission_guard = map_impl.submission_gate_.enter();
+    if (!submission_guard)
     {
       return false;
     }
 
     MapQueue& map_queue = map_impl.processor_queue_;
     auto result = map_queue.enqueue(std::move(operations));
-    if(!result.accepted)
-    {
-      return false;
-    }
-
     add_operation_counts_(result.counts);
-    if(result.ready_state && apply_ready_(map_queue, *result.ready_state))
+    if (result.ready_state && apply_ready_(map_queue, *result.ready_state))
     {
       ready_cond_.notify_one();
     }
@@ -220,10 +208,10 @@ namespace AdServer::ProfilingCommons
     SelectedKeys selected_keys;
     const auto scratch = ProfileMapImpl::create_batch_scratch_();
 
-    while(pop_batch_(map_impl, map_queue, batch, selected_keys))
+    while (pop_batch_(map_impl, map_queue, batch, selected_keys))
     {
       const bool write_batch = MapQueue::is_write_operation(batch.front().type);
-      if(write_batch)
+      if (write_batch)
       {
         write_batch_total_.fetch_add(1, std::memory_order_relaxed);
       }
@@ -251,7 +239,7 @@ namespace AdServer::ProfilingCommons
       batch_timer.stop();
 
       const std::uint64_t elapsed_us = batch_timer.elapsed_time().microseconds();
-      if(write_batch)
+      if (write_batch)
       {
         write_batch_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
       }
@@ -277,15 +265,15 @@ namespace AdServer::ProfilingCommons
     Operations& batch,
     SelectedKeys& selected_keys) noexcept
   {
-    while(true)
+    while (true)
     {
       {
         std::unique_lock guard(ready_lock_);
-        while(true)
+        while (true)
         {
-          while(ready_.empty())
+          while (ready_.empty())
           {
-            if(stopping_.load(std::memory_order_acquire))
+            if (stopping_.load(std::memory_order_acquire))
             {
               return false;
             }
@@ -293,10 +281,10 @@ namespace AdServer::ProfilingCommons
           }
 
           Registration& registration = *ready_.begin();
-          if(!stopping_.load(std::memory_order_acquire))
+          if (!stopping_.load(std::memory_order_acquire))
           {
             const Generics::Time now = Generics::Time::get_time_of_day();
-            if(now < registration.ready_time)
+            if (now < registration.ready_time)
             {
               const auto deadline = std::chrono::system_clock::time_point(
                 std::chrono::duration_cast<std::chrono::system_clock::duration>(
@@ -315,12 +303,12 @@ namespace AdServer::ProfilingCommons
       }
 
       const ReadyState state = map_queue->collect_batch(batch, selected_keys);
-      if(apply_ready_(*map_queue, state))
+      if (apply_ready_(*map_queue, state))
       {
         ready_cond_.notify_one();
       }
 
-      if(!batch.empty())
+      if (!batch.empty())
       {
         return true;
       }
@@ -333,12 +321,11 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  RocksDBProfileMapProcessor::complete_batch_(
-    MapQueue& map_queue,
-    const Operations& batch) noexcept
+  RocksDBProfileMapProcessor::complete_batch_(MapQueue& map_queue, const Operations& batch)
+    noexcept
   {
     const ReadyState state = map_queue.complete_batch(batch);
-    if(apply_ready_(map_queue, state))
+    if (apply_ready_(map_queue, state))
     {
       ready_cond_.notify_one();
     }
@@ -350,42 +337,40 @@ namespace AdServer::ProfilingCommons
     MapQueue& map_queue,
     const ReadyState& state) noexcept
   {
+    if (!state.has_operation)
+    {
+      return false;
+    }
+
     const Generics::Time now = Generics::Time::get_time_of_day();
     std::lock_guard guard(ready_lock_);
 
     const auto it = registrations_.find(&map_queue);
-    if(it == registrations_.end())
+    if (it == registrations_.end())
     {
       return false;
     }
 
     Registration& registration = *it->second;
-    if(state.generation < registration.applied_generation)
-    {
-      return false;
-    }
-
     const bool had_ready = !ready_.empty();
     const bool was_indexed = registration.ready_hook.is_linked();
     const bool was_immediately_ready = was_indexed && registration.ready_time <= now;
     const Generics::Time previous_first_time = had_ready ?
       ready_.begin()->ready_time : Generics::Time::ZERO;
 
-    registration.applied_generation = state.generation;
-    if(!state.has_operation)
+    if (!was_indexed)
     {
-      remove_from_ready_i_(registration);
+      registration.ready_time = state.ready_time;
+      ready_.insert(registration);
     }
-    else if(!was_indexed || registration.ready_time != state.ready_time ||
-      registration.ready_write_operations != state.write_operations)
+    else if (state.ready_time < registration.ready_time)
     {
       remove_from_ready_i_(registration);
       registration.ready_time = state.ready_time;
-      registration.ready_write_operations = state.write_operations;
       ready_.insert(registration);
     }
 
-    const bool immediately_ready = state.has_operation && state.ready_time <= now;
+    const bool immediately_ready = registration.ready_time <= now;
     return (immediately_ready && !was_immediately_ready) ||
       (!ready_.empty() && (!had_ready || ready_.begin()->ready_time < previous_first_time));
   }
@@ -393,7 +378,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapProcessor::remove_from_ready_i_(Registration& registration) noexcept
   {
-    if(registration.ready_hook.is_linked())
+    if (registration.ready_hook.is_linked())
     {
       ready_.erase(ready_.iterator_to(registration));
     }
@@ -403,23 +388,27 @@ namespace AdServer::ProfilingCommons
   RocksDBProfileMapProcessor::add_operation_counts_(
     const MapQueue::OperationCounts& counts) noexcept
   {
-    if(counts.check)
+    if (counts.check)
     {
       check_total_.fetch_add(counts.check, std::memory_order_relaxed);
     }
-    if(counts.get)
+
+    if (counts.get)
     {
       get_total_.fetch_add(counts.get, std::memory_order_relaxed);
     }
-    if(counts.touch)
+
+    if (counts.touch)
     {
       touch_total_.fetch_add(counts.touch, std::memory_order_relaxed);
     }
-    if(counts.save)
+
+    if (counts.save)
     {
       save_total_.fetch_add(counts.save, std::memory_order_relaxed);
     }
-    if(counts.remove)
+
+    if (counts.remove)
     {
       remove_total_.fetch_add(counts.remove, std::memory_order_relaxed);
     }

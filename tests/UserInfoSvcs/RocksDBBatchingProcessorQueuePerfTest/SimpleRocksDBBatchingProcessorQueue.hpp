@@ -28,9 +28,7 @@ namespace AdServer::ProfilingCommons::Test
       const Generics::Time& max_delay,
       unsigned long enqueue_buckets_count);
 
-    void activate() noexcept;
-
-    ReadyState deactivate() noexcept;
+    ReadyState flush_pending() noexcept;
 
     EnqueueResult enqueue(Operations&& operations);
 
@@ -51,7 +49,11 @@ namespace AdServer::ProfilingCommons::Test
 
     void account_operation_(OperationCounts& counts, OperationType type) const noexcept;
 
-    ReadyState ready_state_i_() noexcept;
+    ReadyState request_ready_i_(
+      bool has_ready_operations,
+      bool force_update = false) noexcept;
+
+    ReadyState make_ready_state_i_() const noexcept;
 
     const Operation* oldest_ready_operation_i_() const noexcept;
 
@@ -76,8 +78,7 @@ namespace AdServer::ProfilingCommons::Test
     InFlightKeys in_flight_write_keys_;
     std::atomic<unsigned long> pending_operations_{0};
     std::atomic<unsigned long> active_workers_{0};
-    std::atomic<bool> accepting_{false};
-    std::uint64_t ready_generation_ = 0;
+    std::atomic<bool> ready_published_{false};
   };
 
   inline bool

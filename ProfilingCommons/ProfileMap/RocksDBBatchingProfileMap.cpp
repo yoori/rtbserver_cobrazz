@@ -12,6 +12,7 @@
 #include <string_view>
 #include <vector>
 
+#include <Generics/GnuHashTable.hpp>
 #include <Stream/MemoryStream.hpp>
 
 #include "RocksDBBatchingProfileMap.hpp"
@@ -23,10 +24,9 @@ namespace AdServer::ProfilingCommons
   struct RocksDBBatchingProfileMapImpl::BatchScratch final
   {
     using KeyIndexMap = boost::unordered_flat_map<
-      std::string_view,
+      Generics::StringViewHashAdapter,
       std::size_t,
-      std::hash<std::string_view>,
-      std::equal_to<std::string_view>>;
+      Generics::HashFunForHashAdapter<Generics::StringViewHashAdapter>>;
 
     KeyIndexMap key_indexes;
     std::vector<std::size_t> operation_key_indexes;
@@ -205,6 +205,7 @@ namespace AdServer::ProfilingCommons
     try
     {
       processor_->register_map_(*this);
+      submission_gate_.activate_object();
     }
     catch(...)
     {
@@ -220,7 +221,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::deactivate_object_()
   {
-    processor_->unregister_map_(*this);
+    submission_gate_.deactivate_object();
     if (owns_processor_)
     {
       processor_->deactivate_object();
@@ -230,6 +231,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::wait_object_()
   {
+    submission_gate_.wait_object();
     processor_->wait_unregister_map_(*this);
     if (owns_processor_)
     {
@@ -585,13 +587,13 @@ namespace AdServer::ProfilingCommons
 
     for (auto& operation : batch)
     {
-      const std::string_view key(operation.key);
+      const Generics::StringViewHashAdapter key(operation.key);
       const std::size_t next_key_index = keys.size();
       const auto [it, inserted] = key_indexes.emplace(key, next_key_index);
       if (inserted)
       {
         operation_key_indexes.emplace_back(next_key_index);
-        keys.emplace_back(key.data(), key.size());
+        keys.emplace_back(key.text().data(), key.text().size());
       }
       else
       {
@@ -652,7 +654,8 @@ namespace AdServer::ProfilingCommons
           const std::string_view value = ttl_user_value(values[key_index]);
           Operation touch_operation;
           touch_operation.type = OT_TOUCH;
-          touch_operation.key.assign(keys[key_index].data(), keys[key_index].size());
+          touch_operation.key.assign(
+            std::string_view(keys[key_index].data(), keys[key_index].size()));
           touch_operation.profile = Generics::ConstSmartMemBuf_var(
             new Generics::ConstSmartMemBuf(value.data(), value.size()));
           touch_operations.emplace_back(std::move(touch_operation));
@@ -753,7 +756,7 @@ namespace AdServer::ProfilingCommons
 
     for (auto& operation : batch)
     {
-      const std::string_view key(operation.key);
+      const Generics::StringViewHashAdapter key(operation.key);
       const auto [it, inserted] = key_indexes.emplace(key, latest_operations.size());
       if (inserted)
       {
@@ -774,14 +777,14 @@ namespace AdServer::ProfilingCommons
       if (operation->type == OT_SAVE || operation->type == OT_TOUCH)
       {
         write_batch.Put(
-          operation->key,
+          operation->key.text(),
           rocksdb::Slice(
             static_cast<const char*>(operation->profile->membuf().data()),
             operation->profile->membuf().size()));
       }
       else if (operation->type == OT_REMOVE)
       {
-        write_batch.Delete(operation->key);
+        write_batch.Delete(operation->key.text());
       }
     }
 

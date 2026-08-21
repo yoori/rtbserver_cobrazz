@@ -53,12 +53,12 @@ namespace
   rdb_batch_thread_count()
   {
     unsigned long result = 0;
-    for(const auto& entry : std::filesystem::directory_iterator("/proc/self/task"))
+    for (const auto& entry : std::filesystem::directory_iterator("/proc/self/task"))
     {
       std::ifstream name_file(entry.path() / "comm");
       std::string name;
       std::getline(name_file, name);
-      if(name.rfind("rdb-batch", 0) == 0)
+      if (name.rfind("rdb-batch", 0) == 0)
       {
         ++result;
       }
@@ -72,7 +72,7 @@ main()
 {
   std::string root_template = "/tmp/RocksDBProfileMapProcessorTest.XXXXXX";
   const char* const root_name = ::mkdtemp(root_template.data());
-  if(!root_name)
+  if (!root_name)
   {
     std::cerr << "RocksDBProfileMapProcessorTest: FAIL: mkdtemp failed" << std::endl;
     return 1;
@@ -103,11 +103,12 @@ main()
     first->activate_object();
     second->activate_object();
 
-    for(unsigned int i = 0; i < 100 && rdb_batch_thread_count() != 1; ++i)
+    for (unsigned int i = 0; i < 100 && rdb_batch_thread_count() != 1; ++i)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    if(rdb_batch_thread_count() != 1)
+
+    if (rdb_batch_thread_count() != 1)
     {
       throw std::runtime_error("shared processor worker count mismatch");
     }
@@ -134,7 +135,7 @@ main()
       Generics::Time::get_time_of_day(),
       [&](std::optional<std::string> error)
       {
-        if(error)
+        if (error)
         {
           errors.fetch_add(1, std::memory_order_relaxed);
         }
@@ -142,11 +143,12 @@ main()
         completion_condition.notify_all();
       });
     const auto enqueue_elapsed = std::chrono::steady_clock::now() - enqueue_started;
-    if(enqueue_elapsed >= std::chrono::milliseconds(500))
+    if (enqueue_elapsed >= std::chrono::milliseconds(500))
     {
       throw std::runtime_error("one map max_delay blocked another map enqueue");
     }
-    if(!wait_count(
+
+    if (!wait_count(
       completion_condition,
       completion_lock,
       isolation_done,
@@ -156,7 +158,7 @@ main()
       throw std::runtime_error("one map max_delay blocked another ready map");
     }
 
-    for(unsigned long i = 0; i < operations_per_map; ++i)
+    for (unsigned long i = 0; i < operations_per_map; ++i)
     {
       auto first_profile = make_profile("first-value-" + std::to_string(i));
       first->save_profile_async(
@@ -165,7 +167,7 @@ main()
         Generics::Time::get_time_of_day(),
         [&](std::optional<std::string> error)
         {
-          if(error)
+          if (error)
           {
             errors.fetch_add(1, std::memory_order_relaxed);
           }
@@ -180,7 +182,7 @@ main()
         Generics::Time::get_time_of_day(),
         [&](std::optional<std::string> error)
         {
-          if(error)
+          if (error)
           {
             errors.fetch_add(1, std::memory_order_relaxed);
           }
@@ -191,7 +193,7 @@ main()
 
     first->deactivate_object();
     first->wait_object();
-    if(first_done.load(std::memory_order_relaxed) != operations_per_map)
+    if (first_done.load(std::memory_order_relaxed) != operations_per_map)
     {
       throw std::runtime_error("wait_unregister returned before callbacks completed");
     }
@@ -209,13 +211,14 @@ main()
     {
       rejected = true;
     }
-    if(!rejected)
+
+    if (!rejected)
     {
       throw std::runtime_error("operation was accepted after unregister");
     }
     first.reset();
 
-    if(!wait_count(
+    if (!wait_count(
       completion_condition,
       completion_lock,
       second_done,
@@ -230,7 +233,7 @@ main()
       profile.in(),
       Generics::Time::get_time_of_day());
     const auto loaded = second->get_profile("still-active");
-    if(!loaded.in() || loaded->membuf().size() != std::string("still-active").size())
+    if (!loaded.in() || loaded->membuf().size() != std::string("still-active").size())
     {
       throw std::runtime_error("second map stopped with the first map");
     }
@@ -252,11 +255,12 @@ main()
       "third",
       profile.in(),
       Generics::Time::get_time_of_day());
-    if(!third->check_profile("third"))
+    if (!third->check_profile("third"))
     {
       throw std::runtime_error("saved profile wasn't found");
     }
-    if(!third->remove_profile("third"))
+
+    if (!third->remove_profile("third"))
     {
       throw std::runtime_error("saved profile wasn't removed");
     }
@@ -268,7 +272,7 @@ main()
     processor->wait_object();
 
     const auto first_processor_stats = processor->stats();
-    if(first_processor_stats.check_total != 1 ||
+    if (first_processor_stats.check_total != 1 ||
       first_processor_stats.get_total != 1 ||
       first_processor_stats.touch_total != 0 ||
       first_processor_stats.save_total != 2 * operations_per_map + 4 ||
@@ -303,7 +307,7 @@ main()
     {
       const unsigned long index =
         same_key_sent.fetch_add(1, std::memory_order_relaxed);
-      if(index >= same_key_operations)
+      if (index >= same_key_operations)
       {
         return;
       }
@@ -314,7 +318,7 @@ main()
           Generics::ConstSmartMemBuf_var,
           std::optional<std::string> error)
         {
-          if(error)
+          if (error)
           {
             errors.fetch_add(1, std::memory_order_relaxed);
           }
@@ -326,7 +330,7 @@ main()
             Generics::Time::get_time_of_day(),
             [&, write_profile](std::optional<std::string> error)
             {
-              if(error)
+              if (error)
               {
                 errors.fetch_add(1, std::memory_order_relaxed);
               }
@@ -337,12 +341,12 @@ main()
         });
     };
 
-    for(unsigned long i = 0; i < same_key_inflight; ++i)
+    for (unsigned long i = 0; i < same_key_inflight; ++i)
     {
       enqueue_same_key();
     }
 
-    if(!wait_count(
+    if (!wait_count(
       completion_condition,
       completion_lock,
       same_key_done,
@@ -357,7 +361,8 @@ main()
 
     constexpr unsigned long lifecycle_maps = 20;
     constexpr unsigned long lifecycle_operations = 200;
-    for(unsigned long map_index = 0; map_index < lifecycle_maps; ++map_index)
+    bool processor_deactivated = false;
+    for (unsigned long map_index = 0; map_index < lifecycle_maps; ++map_index)
     {
       auto map = std::make_unique<ProfileMap>(
         processor,
@@ -370,7 +375,7 @@ main()
       map->activate_object();
 
       auto lifecycle_done = std::make_shared<std::atomic<unsigned long>>(0);
-      for(unsigned long i = 0; i < lifecycle_operations; ++i)
+      for (unsigned long i = 0; i < lifecycle_operations; ++i)
       {
         auto lifecycle_profile = make_profile("lifecycle-value");
         map->save_profile_async(
@@ -379,7 +384,7 @@ main()
           Generics::Time::get_time_of_day(),
           [&, lifecycle_done](std::optional<std::string> error)
           {
-            if(error)
+            if (error)
             {
               errors.fetch_add(1, std::memory_order_relaxed);
             }
@@ -388,19 +393,28 @@ main()
       }
 
       map->deactivate_object();
+      if (map_index + 1 == lifecycle_maps)
+      {
+        processor->deactivate_object();
+        processor_deactivated = true;
+      }
+
       map->wait_object();
-      if(lifecycle_done->load(std::memory_order_relaxed) != lifecycle_operations)
+      if (lifecycle_done->load(std::memory_order_relaxed) != lifecycle_operations)
       {
         throw std::runtime_error(
           "map destroyed while selected workers were still active");
       }
     }
 
-    processor->deactivate_object();
+    if (!processor_deactivated)
+    {
+      processor->deactivate_object();
+    }
     processor->wait_object();
 
     const auto second_processor_stats = processor->stats();
-    if(second_processor_stats.check_total != 0 ||
+    if (second_processor_stats.check_total != 0 ||
       second_processor_stats.get_total != same_key_operations ||
       second_processor_stats.touch_total != 0 ||
       second_processor_stats.save_total !=
@@ -416,7 +430,7 @@ main()
       throw std::runtime_error("second processor stats mismatch");
     }
 
-    if(errors.load(std::memory_order_relaxed) != 0)
+    if (errors.load(std::memory_order_relaxed) != 0)
     {
       throw std::runtime_error("background operations failed");
     }
@@ -427,17 +441,19 @@ main()
   }
   catch(const std::exception& ex)
   {
-    if(first && first->active())
+    if (first && first->active())
     {
       first->deactivate_object();
       first->wait_object();
     }
-    if(second && second->active())
+
+    if (second && second->active())
     {
       second->deactivate_object();
       second->wait_object();
     }
-    if(processor->active())
+
+    if (processor->active())
     {
       processor->deactivate_object();
       processor->wait_object();

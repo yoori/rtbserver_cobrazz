@@ -13,6 +13,8 @@
 #include <Sync/PosixLock.hpp>
 #include <Generics/ActiveObject.hpp>
 
+#include <Commons/ActivityGate.hpp>
+
 #include "ProfileMap.hpp"
 #include "RocksDBBatchingProcessorQueue.hpp"
 
@@ -202,6 +204,7 @@ namespace AdServer::ProfilingCommons
     const bool disable_wal_;
 
     const std::shared_ptr<RocksDBProfileMapProcessor> processor_;
+    mutable AdServer::Commons::ActivityGate submission_gate_;
     mutable ProcessorQueue processor_queue_;
     bool owns_processor_;
 
