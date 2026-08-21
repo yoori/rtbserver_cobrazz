@@ -42,6 +42,7 @@ namespace
     std::size_t enqueue_buckets = 32;
     std::size_t key_count = 0;
     unsigned long max_delay_us = 0;
+    unsigned long process_delay_us = 20;
     Mode mode = Mode::READ_WRITE;
   };
 
@@ -107,6 +108,7 @@ namespace
       << "  --enqueue-buckets <N>   producer buckets for bucket queue (default: 32)\n"
       << "  --key-count <N>         distinct keys count (default: --count)\n"
       << "  --max-delay-us <N>      batch delay in microseconds (default: 0)\n"
+      << "  --process-delay-us <N>  batch processing delay in microseconds (default: 20)\n"
       << "  --mode <MODE>           read, write, or read-write (default: read-write)\n";
   }
 
@@ -123,6 +125,7 @@ namespace
     Option<unsigned long> opt_enqueue_buckets(32);
     Option<unsigned long> opt_key_count(0);
     Option<unsigned long> opt_max_delay_us(0);
+    Option<unsigned long> opt_process_delay_us(20);
     StringOption opt_mode("read-write");
     CheckOption opt_help;
 
@@ -135,6 +138,7 @@ namespace
     args.add(equal_name("enqueue-buckets"), opt_enqueue_buckets);
     args.add(equal_name("key-count"), opt_key_count);
     args.add(equal_name("max-delay-us"), opt_max_delay_us);
+    args.add(equal_name("process-delay-us"), opt_process_delay_us);
     args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("help") || short_name("h"), opt_help);
     args.parse(argc - 1, argv + 1);
@@ -154,6 +158,7 @@ namespace
     options.enqueue_buckets = *opt_enqueue_buckets;
     options.key_count = *opt_key_count;
     options.max_delay_us = *opt_max_delay_us;
+    options.process_delay_us = *opt_process_delay_us;
 
     if (options.implementation != "simple" && options.implementation != "bucket")
     {
@@ -208,6 +213,22 @@ namespace
       usage.ru_utime.tv_sec + usage.ru_utime.tv_usec / 1000000.0,
       usage.ru_stime.tv_sec + usage.ru_stime.tv_usec / 1000000.0
     };
+  }
+
+  std::uint64_t
+  current_thread_cpu_ns()
+  {
+    rusage usage{};
+    if (getrusage(RUSAGE_THREAD, &usage) != 0)
+    {
+      throw std::runtime_error("getrusage for thread failed");
+    }
+
+    return
+      (static_cast<std::uint64_t>(usage.ru_utime.tv_sec) +
+        static_cast<std::uint64_t>(usage.ru_stime.tv_sec)) * 1000000000ULL +
+      (static_cast<std::uint64_t>(usage.ru_utime.tv_usec) +
+        static_cast<std::uint64_t>(usage.ru_stime.tv_usec)) * 1000ULL;
   }
 
   std::string
@@ -342,6 +363,8 @@ namespace
     std::atomic<std::uint64_t> batches{0};
     std::atomic<std::uint64_t> checksum{0};
     std::atomic<std::uint64_t> errors{0};
+    std::atomic<std::uint64_t> enqueue_threads_cpu_ns{0};
+    std::atomic<std::uint64_t> collect_threads_cpu_ns{0};
 
     StartBarrier start_barrier(options.threads + options.batching_threads + 1);
 
@@ -355,6 +378,7 @@ namespace
           typename Queue::Operations batch;
           typename Queue::SelectedKeys selected_keys;
           start_barrier.arrive_and_wait();
+          const std::uint64_t cpu_started_at = current_thread_cpu_ns();
 
           while (scheduler.acquire_batch())
           {
@@ -382,6 +406,12 @@ namespace
               }
             }
 
+            if (options.process_delay_us != 0)
+            {
+              std::this_thread::sleep_for(
+                std::chrono::microseconds(options.process_delay_us));
+            }
+
             processed.fetch_add(batch.size(), std::memory_order_relaxed);
             batches.fetch_add(1, std::memory_order_relaxed);
             checksum.fetch_add(local_checksum, std::memory_order_relaxed);
@@ -391,6 +421,10 @@ namespace
             selected_keys.reserve(batch.size());
             batch.clear();
           }
+
+          collect_threads_cpu_ns.fetch_add(
+            current_thread_cpu_ns() - cpu_started_at,
+            std::memory_order_relaxed);
         });
     }
 
@@ -404,6 +438,7 @@ namespace
           std::uint64_t local_enqueue_call_count = 0;
           std::uint64_t local_enqueue_call_total_ns = 0;
           start_barrier.arrive_and_wait();
+          const std::uint64_t cpu_started_at = current_thread_cpu_ns();
 
           while (true)
           {
@@ -460,6 +495,9 @@ namespace
 
           enqueue_call_count.fetch_add(local_enqueue_call_count, std::memory_order_relaxed);
           enqueue_call_total_ns.fetch_add(local_enqueue_call_total_ns, std::memory_order_relaxed);
+          enqueue_threads_cpu_ns.fetch_add(
+            current_thread_cpu_ns() - cpu_started_at,
+            std::memory_order_relaxed);
         });
     }
 
@@ -491,6 +529,10 @@ namespace
     const std::uint64_t done = done_count.load(std::memory_order_relaxed);
     const std::uint64_t processed_count = processed.load(std::memory_order_relaxed);
     const std::uint64_t batch_count = batches.load(std::memory_order_relaxed);
+    const double enqueue_threads_cpu =
+      enqueue_threads_cpu_ns.load(std::memory_order_relaxed) / 1000000000.0;
+    const double collect_threads_cpu =
+      collect_threads_cpu_ns.load(std::memory_order_relaxed) / 1000000000.0;
 
     std::cout
       << "implementation=" << options.implementation << '\n'
@@ -500,6 +542,7 @@ namespace
       << "enqueue_buckets=" << options.enqueue_buckets << '\n'
       << "key_count=" << options.key_count << '\n'
       << "max_delay_us=" << options.max_delay_us << '\n'
+      << "process_delay_us=" << options.process_delay_us << '\n'
       << "mode=" << mode_name(options.mode) << '\n'
       << "operations=" << options.count << '\n'
       << "enqueued=" << enqueued_count << '\n'
@@ -521,6 +564,10 @@ namespace
       << "checksum=" << checksum.load(std::memory_order_relaxed) << '\n'
       << "elapsed_sec=" << format_float(elapsed) << '\n'
       << "operations_per_sec=" << format_float(options.count / elapsed) << '\n'
+      << "enqueue_threads_cpu_sec=" << format_float(enqueue_threads_cpu) << '\n'
+      << "collect_threads_cpu_sec=" << format_float(collect_threads_cpu) << '\n'
+      << "worker_threads_cpu_sec=" << format_float(
+        enqueue_threads_cpu + collect_threads_cpu) << '\n'
       << "cpu_sec=" << format_float(user_cpu + sys_cpu) << '\n'
       << "user_cpu_sec=" << format_float(user_cpu) << '\n'
       << "sys_cpu_sec=" << format_float(sys_cpu) << std::endl;
