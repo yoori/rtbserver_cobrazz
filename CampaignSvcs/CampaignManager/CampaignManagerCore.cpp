@@ -5064,6 +5064,21 @@ namespace AdServer::CampaignSvcs
 
               amount -= comm_amount;
             }
+            else if (!campaign->account->agency_profit_by_pub_amount() &&
+              campaign->ccg_rate_type != CR_MAXBID)
+            {
+              // In the fix-price schema the CCG commission is a margin share.
+              // adapt_cost() applies it as (1 - commission), while the exact
+              // payable commission is evaluated from publisher revenue in
+              // CampaignManagerLogAdapter. Publisher revenue is unavailable
+              // here, so confirm the corresponding configured-margin estimate.
+              // Treating the share as a net commission via c / (1 - c) makes
+              // the confirmed amount unrelated to either calculation.
+              comm_amount = RevenueDecimal::mul(
+                amount,
+                campaign->commision,
+                Generics::DMR_FLOOR);
+            }
             else
             {
               comm_amount = RevenueDecimal::div(

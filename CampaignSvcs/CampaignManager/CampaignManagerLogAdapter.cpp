@@ -856,7 +856,7 @@ namespace AdServer::CampaignSvcs
         ad_info.isp_revenue_share = colocation->revenue_share;
 
         if (!cs_data->campaign->account->agency_profit_by_pub_amount() &&
-           cs_data->campaign->ccg_rate_type != CR_MAXBID)
+          cs_data->campaign->ccg_rate_type != CR_MAXBID)
         {
           // schema #1
           // adv_revenue pass as is
@@ -868,8 +868,7 @@ namespace AdServer::CampaignSvcs
             *pub_currency, *(cs_data->campaign->account->currency));
 
           // isp_revenue (subscription fee)
-          ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(
-            *pub_currency, *isp_currency);
+          ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(*pub_currency, *isp_currency);
           ad_info.isp_revenue *= self_service_commission;
           ad_info.isp_revenue.rate_id = colocation->colo_rate_id;
         }
@@ -879,27 +878,19 @@ namespace AdServer::CampaignSvcs
           // adv_revenue (advertiser budget spending)
           // pass here as is (will be corrected at pub cost change)
           // othewise required specific runtime budget recalculations on imp,click
-          /*
-          ad_info.adv_revenue = ad_info.pub_revenue.convert_currency(
-            *pub_currency, *(cs_data->campaign->account->currency));
-          ad_info.adv_revenue *= REVENUE_ONE + self_service_commission;
-          ad_info.adv_revenue *= REVENUE_ONE + adv_commission;
-          */
 
           // adv_comm_revenue (agency profit)
           ad_info.adv_comm_revenue = ad_info.pub_revenue.convert_currency(
             *pub_currency, *(cs_data->campaign->account->currency));
           ad_info.adv_comm_revenue *= adv_commission;
-          ad_info.adv_comm_revenue *= (
-            REVENUE_ONE + self_service_commission);
+          ad_info.adv_comm_revenue *= (REVENUE_ONE + self_service_commission);
 
           // revert rate id after override
           ad_info.adv_revenue.rate_id = cs_data->campaign->ccg_rate_id;
           ad_info.adv_comm_revenue.rate_id = cs_data->campaign->ccg_rate_id;
 
           // isp_revenue (subscription fee)
-          ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(
-            *pub_currency, *isp_currency);
+          ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(*pub_currency, *isp_currency);
           ad_info.isp_revenue *= self_service_commission;
           ad_info.isp_revenue.rate_id = colocation->colo_rate_id;
         }
