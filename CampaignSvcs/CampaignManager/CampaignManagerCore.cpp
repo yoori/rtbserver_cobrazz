@@ -23,6 +23,7 @@
 #include "CampaignManagerDeclarations.hpp"
 
 #include "CreativeInstantiator.hpp"
+#include "CampaignBillingAccount.hpp"
 #include "CampaignManagerLogger.hpp"
 
 #include "DomainParser.hpp"
@@ -5067,17 +5068,25 @@ namespace AdServer::CampaignSvcs
             else if (!campaign->account->agency_profit_by_pub_amount() &&
               campaign->ccg_rate_type != CR_MAXBID)
             {
-              // In the fix-price schema the CCG commission is a margin share.
-              // adapt_cost() applies it as (1 - commission), while the exact
-              // payable commission is evaluated from publisher revenue in
-              // CampaignManagerLogAdapter. Publisher revenue is unavailable
-              // here, so confirm the corresponding configured-margin estimate.
-              // Treating the share as a net commission via c / (1 - c) makes
-              // the confirmed amount unrelated to either calculation.
-              comm_amount = RevenueDecimal::mul(
+              const RevenueDecimal estimated_comm_amount = RevenueDecimal::mul(
                 amount,
                 campaign->commision,
                 Generics::DMR_FLOOR);
+
+              // The exact publisher amount is unavailable during confirmation.
+              // Use the configured CCG margin to estimate it, then apply the
+              // same advertiser billing formula as logging and RIM.
+              const AdvBillingAmounts billing_amounts =
+                calculate_adv_billing_amounts(
+                  *campaign->account,
+                  campaign->ccg_rate_type,
+                  amount,
+                  amount - estimated_comm_amount,
+                  campaign->advertiser ?
+                    campaign->advertiser->adv_commission() :
+                    RevenueDecimal::ZERO);
+
+              comm_amount = billing_amounts.adv_comm_amount;
             }
             else
             {

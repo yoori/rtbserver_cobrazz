@@ -411,4 +411,7 @@
 <xsl:variable name="def-svm-generator-port" select="$def-range-start + 69"/>
 <xsl:variable name="predictor-svm-generator-log-path" select="'/log/Predictor/SVMGenerator'"/>
 
+<!-- CTR model generator defaults -->
+<xsl:variable name="def-ctr-predict-model-generator-port" select="$def-range-start + 70"/>
+
 </xsl:stylesheet>

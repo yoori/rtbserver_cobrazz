@@ -7,6 +7,8 @@
 #include <Commons/Constants.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
+#include "CampaignBillingAccount.hpp"
+
 namespace AdServer::CampaignSvcs
 {
   void
@@ -855,45 +857,53 @@ namespace AdServer::CampaignSvcs
         const Currency* pub_currency = tag->site->account->currency;
         ad_info.isp_revenue_share = colocation->revenue_share;
 
-        if (!cs_data->campaign->account->agency_profit_by_pub_amount() &&
-          cs_data->campaign->ccg_rate_type != CR_MAXBID)
-        {
-          // schema #1
-          // adv_revenue pass as is
-          // adv_comm_revenue (agency profit)
-          Revenue ssc_pub_amount = ad_info.pub_revenue;
-          ssc_pub_amount *= (REVENUE_ONE + self_service_commission);
+        Revenue publisher_amount = ad_info.pub_revenue;
+        publisher_amount *= REVENUE_ONE + self_service_commission;
+        publisher_amount = publisher_amount.convert_currency(
+          *pub_currency,
+          *cs_data->campaign->account->currency);
 
-          ad_info.adv_comm_revenue -= ssc_pub_amount.convert_currency(
-            *pub_currency, *(cs_data->campaign->account->currency));
+        const auto billing_flags = make_adv_billing_calculation_flags(
+          *cs_data->campaign->account,
+          cs_data->campaign->ccg_rate_type);
 
-          // isp_revenue (subscription fee)
-          ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(*pub_currency, *isp_currency);
-          ad_info.isp_revenue *= self_service_commission;
-          ad_info.isp_revenue.rate_id = colocation->colo_rate_id;
-        }
-        else // agency_profit_by_pub_amount || CR_MAXBID
-        {
-          // schema #2
-          // adv_revenue (advertiser budget spending)
-          // pass here as is (will be corrected at pub cost change)
-          // othewise required specific runtime budget recalculations on imp,click
+        const auto request_billing = calculate_adv_billing_amounts(
+          billing_flags,
+          ad_info.adv_revenue.request,
+          publisher_amount.request,
+          adv_commission);
+        const auto impression_billing = calculate_adv_billing_amounts(
+          billing_flags,
+          ad_info.adv_revenue.impression,
+          publisher_amount.impression,
+          adv_commission);
+        const auto click_billing = calculate_adv_billing_amounts(
+          billing_flags,
+          ad_info.adv_revenue.click,
+          publisher_amount.click,
+          adv_commission);
+        const auto action_billing = calculate_adv_billing_amounts(
+          billing_flags,
+          ad_info.adv_revenue.action,
+          publisher_amount.action,
+          adv_commission);
 
-          // adv_comm_revenue (agency profit)
-          ad_info.adv_comm_revenue = ad_info.pub_revenue.convert_currency(
-            *pub_currency, *(cs_data->campaign->account->currency));
-          ad_info.adv_comm_revenue *= adv_commission;
-          ad_info.adv_comm_revenue *= (REVENUE_ONE + self_service_commission);
+        ad_info.adv_comm_revenue.request = request_billing.adv_comm_amount;
+        ad_info.adv_comm_revenue.impression = impression_billing.adv_comm_amount;
+        ad_info.adv_comm_revenue.click = click_billing.adv_comm_amount;
+        ad_info.adv_comm_revenue.action = action_billing.adv_comm_amount;
 
-          // revert rate id after override
-          ad_info.adv_revenue.rate_id = cs_data->campaign->ccg_rate_id;
-          ad_info.adv_comm_revenue.rate_id = cs_data->campaign->ccg_rate_id;
+        // For schema #2 adv_revenue is intentionally kept at its original
+        // value here and recalculated from the final publisher amount in RIM.
+        ad_info.adv_revenue.rate_id = cs_data->campaign->ccg_rate_id;
+        ad_info.adv_comm_revenue.rate_id = cs_data->campaign->ccg_rate_id;
 
-          // isp_revenue (subscription fee)
-          ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(*pub_currency, *isp_currency);
-          ad_info.isp_revenue *= self_service_commission;
-          ad_info.isp_revenue.rate_id = colocation->colo_rate_id;
-        }
+        // isp_revenue (subscription fee)
+        ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(
+          *pub_currency,
+          *isp_currency);
+        ad_info.isp_revenue *= self_service_commission;
+        ad_info.isp_revenue.rate_id = colocation->colo_rate_id;
 
         Revenue& adv_revenue_sys = data_pricing.adv_revenue_sys;
         adv_revenue_sys.impression = campaign_currency->to_system_currency(

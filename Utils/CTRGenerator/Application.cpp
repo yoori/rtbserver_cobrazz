@@ -33,7 +33,7 @@ namespace
     "CTRGenerator generate-model <FEATURE CONFIG JSON> <CONFIG DATA FILE> "
       "<RESULT WEIGHT FILE>\n"
     "CTRGenerator generate-svm <FEATURE CONFIG JSON> <FEATURE COLUMNS> "
-      "[--model=xgboost|catboost]\n"
+      "[--model=xgboost|catboost] [--feature-indexes-file=<FILE>]\n"
     "\n"
     "CTRGenerator generate-xgb-ctr <XGB MODEL FILE> <FEATURE CONFIG JSON> "
       "<FEATURE COLUMNS>\n"
@@ -59,6 +59,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::StringOption opt_cc_to_campaign_dictionary;
   Generics::AppUtils::StringOption opt_tag_to_publisher_dictionary;
   Generics::AppUtils::StringOption opt_model("xgboost");
+  Generics::AppUtils::StringOption opt_feature_indexes_file;
   Generics::AppUtils::CheckOption opt_out_hashes;
   Generics::AppUtils::Args args(-1);
 
@@ -98,6 +99,10 @@ Application_::main(int& argc, char** argv)
   args.add(
     Generics::AppUtils::equal_name("model"),
     opt_model);
+
+  args.add(
+    Generics::AppUtils::equal_name("feature-indexes-file"),
+    opt_feature_indexes_file);
 
   args.parse(argc - 1, argv + 1);
 
@@ -200,6 +205,7 @@ Application_::main(int& argc, char** argv)
       opt_tag_to_publisher_dictionary->c_str(),
       opt_dictionary->c_str(),
       opt_name_dictionary->c_str(),
+      opt_feature_indexes_file->c_str(),
       catboost_model);
   }
   else if(command == "generate-xgb-ctr")
@@ -479,6 +485,7 @@ Application_::generate_svm_(
   const char* tag_to_publisher_dictionary_file_path,
   const char* dictionary_file_path,
   const char* name_dictionary_file_path,
+  const char* feature_indexes_file_path,
   bool catboost_model)
 {
   using namespace xsd::AdServer;
@@ -515,6 +522,52 @@ Application_::generate_svm_(
   const unsigned long dimension = config.features_dimension;
   const unsigned long features_size = 1UL << dimension;
   CTR::FeatureNameResolver feature_name_resolver;
+
+  std::vector<unsigned char> allowed_feature_indexes;
+  if(feature_indexes_file_path[0])
+  {
+    allowed_feature_indexes.resize(features_size + 1, 0);
+    std::ifstream feature_indexes_file(feature_indexes_file_path);
+    if(!feature_indexes_file)
+    {
+      Stream::Error ostr;
+      ostr << "Can't open feature indexes file '" <<
+        feature_indexes_file_path << "'";
+      throw Exception(ostr);
+    }
+
+    unsigned long feature_index;
+    unsigned long feature_indexes_count = 0;
+    while(feature_indexes_file >> feature_index)
+    {
+      if(feature_index == 0 || feature_index > features_size)
+      {
+        Stream::Error ostr;
+        ostr << "Invalid feature index " << feature_index << " in '" <<
+          feature_indexes_file_path << "', expected range is [1, " <<
+          features_size << "]";
+        throw Exception(ostr);
+      }
+      allowed_feature_indexes[feature_index] = 1;
+      ++feature_indexes_count;
+    }
+
+    if(!feature_indexes_file.eof())
+    {
+      Stream::Error ostr;
+      ostr << "Invalid feature index in '" <<
+        feature_indexes_file_path << "'";
+      throw Exception(ostr);
+    }
+
+    if(feature_indexes_count == 0)
+    {
+      Stream::Error ostr;
+      ostr << "Feature indexes file '" << feature_indexes_file_path <<
+        "' is empty";
+      throw Exception(ostr);
+    }
+  }
 
   // parse columns
   std::map<unsigned long, unsigned long> feature_columns;
@@ -686,7 +739,19 @@ Application_::generate_svm_(
       const uint32_t index = CTR::feature_hash_index(
         hash_it->first,
         features_size);
-      ordered_hashes[index + 1] = hash_it->second;
+      const uint32_t svm_index = index + 1;
+      if(allowed_feature_indexes.empty() || allowed_feature_indexes[svm_index])
+      {
+        ordered_hashes[svm_index] = hash_it->second;
+      }
+    }
+
+    if(
+      catboost_model &&
+      line_i == 0 &&
+      ordered_hashes.find(features_size) == ordered_hashes.end())
+    {
+      ordered_hashes[features_size] = 0;
     }
 
     for(auto hash_it = ordered_hashes.begin();
@@ -715,6 +780,12 @@ Application_::generate_svm_(
       const uint32_t index = CTR::feature_hash_index(
         it->first,
         features_size);
+      if(
+        !allowed_feature_indexes.empty() &&
+        !allowed_feature_indexes[index + 1])
+      {
+        continue;
+      }
       dictionary_file << (index + 1) << ",";
       if(!it->second.empty())
       {

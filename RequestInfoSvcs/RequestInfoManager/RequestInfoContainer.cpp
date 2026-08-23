@@ -3,6 +3,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
+#include <CampaignSvcs/CampaignManager/CampaignBilling.hpp>
 
 #include "Compatibility/RequestProfileAdapter.hpp"
 
@@ -691,7 +692,6 @@ namespace RequestInfoSvcs {
       std::cout << std::endl;
       */
 
-      res_adv_comm_revenue = adv_comm_revenue;
       res_pub_revenue = orig_pub_revenue;
       res_isp_revenue = isp_revenue;
 
@@ -729,63 +729,55 @@ namespace RequestInfoSvcs {
       // apply cost_coef to res_pub_revenue
       res_pub_revenue /= AdServer::CampaignSvcs::REVENUE_ONE + pub_cost_coef;
 
+      RequestInfo::Revenue publisher_amount = res_pub_revenue * (
+        self_service_commission + AdServer::CampaignSvcs::REVENUE_ONE);
+      publisher_amount = publisher_amount.convert_currency(
+        pub_currency_rate,
+        adv_currency_rate);
+
+      const AdServer::CampaignSvcs::AdvBillingCalculationFlags billing_flags = {
+        (request_writer.at_flags() &
+          AdServer::CampaignSvcs::AccountTypeFlags::AGENCY_PROFIT_BY_PUB_AMOUNT) != 0};
+      const RevenueDecimal adv_commission(request_writer.adv_commission());
+
+      const auto impression_billing =
+        AdServer::CampaignSvcs::calculate_adv_billing_amounts(
+          billing_flags,
+          adv_revenue.impression,
+          publisher_amount.impression,
+          adv_commission);
+      const auto click_billing =
+        AdServer::CampaignSvcs::calculate_adv_billing_amounts(
+          billing_flags,
+          adv_revenue.click,
+          publisher_amount.click,
+          adv_commission);
+      const auto action_billing =
+        AdServer::CampaignSvcs::calculate_adv_billing_amounts(
+          billing_flags,
+          adv_revenue.action,
+          publisher_amount.action,
+          adv_commission);
+
+      res_adv_revenue.rate_id = adv_revenue.rate_id;
+      res_adv_revenue.impression = impression_billing.adv_amount;
+      res_adv_revenue.click = click_billing.adv_amount;
+      res_adv_revenue.action = action_billing.adv_amount;
+
+      res_adv_comm_revenue.rate_id = adv_comm_revenue.rate_id;
+      res_adv_comm_revenue.impression = impression_billing.adv_comm_amount;
+      res_adv_comm_revenue.click = click_billing.adv_comm_amount;
+      res_adv_comm_revenue.action = action_billing.adv_comm_amount;
+
       RequestInfo::Revenue delta_adv_revenue;
-      RequestInfo::Revenue delta_adv_comm_revenue;
       //RequestInfo::Revenue delta_pub_revenue;
-      RequestInfo::Revenue delta_isp_revenue;
+      delta_adv_revenue = res_adv_revenue - adv_revenue;
 
-      if((request_writer.at_flags() &
-          AdServer::CampaignSvcs::AccountTypeFlags::AGENCY_PROFIT_BY_PUB_AMOUNT) == 0)
-      {
-        //std::cout << "eval_revenues_on_impression(step 1.5): schema #1, at_flags = " << request_writer.at_flags() << std::endl;
-        // schema #1
-        // delta_adv_revenue = ZERO
-        delta_adv_comm_revenue =
-          ((orig_pub_revenue - res_pub_revenue) * (
-            self_service_commission + AdServer::CampaignSvcs::REVENUE_ONE)).convert_currency(
-              pub_currency_rate,
-              adv_currency_rate);
+      RequestInfo::Revenue delta_isp_revenue =
+        ((res_pub_revenue - orig_pub_revenue) * self_service_commission).convert_currency(
+          pub_currency_rate,
+          isp_currency_rate);
 
-        //delta_pub_revenue = res_pub_revenue - orig_pub_revenue;
-
-        delta_isp_revenue =
-          ((res_pub_revenue - orig_pub_revenue) * self_service_commission).convert_currency(
-            pub_currency_rate,
-            isp_currency_rate);
-      }
-      else
-      {
-        //std::cout << "eval_revenues_on_impression(step 1.5): schema #2, at_flags = " << request_writer.at_flags() << std::endl;
-        // schema #2
-        const RevenueDecimal adv_commission = RevenueDecimal(request_writer.adv_commission());
-
-        // calculate delta adv_revenue
-        delta_adv_revenue = (
-          res_pub_revenue *
-          (self_service_commission + AdServer::CampaignSvcs::REVENUE_ONE) *
-          (adv_commission + AdServer::CampaignSvcs::REVENUE_ONE)).convert_currency(
-            pub_currency_rate,
-            adv_currency_rate) - adv_revenue;
-
-        // calculate delta adv_comm_revenue
-        delta_adv_comm_revenue =
-          ((res_pub_revenue - orig_pub_revenue) * (
-            self_service_commission + AdServer::CampaignSvcs::REVENUE_ONE) *
-           adv_commission).convert_currency(
-             pub_currency_rate,
-             adv_currency_rate);
-
-        // calculate delta _revenue
-        //delta_pub_revenue = res_pub_revenue - orig_pub_revenue;
-
-        // calculate delta isp_revenue
-        delta_isp_revenue =
-          ((res_pub_revenue - orig_pub_revenue) * self_service_commission).convert_currency(
-            pub_currency_rate,
-            isp_currency_rate);
-      }
-
-      res_adv_revenue = adv_revenue + delta_adv_revenue;
       /*
       std::cout << "eval_revenues_on_impression(step 2): delta_adv_revenue.impression = " << delta_adv_revenue.impression <<
         ", delta_adv_revenue.click = " << delta_adv_revenue.click << std::endl;
@@ -803,7 +795,6 @@ namespace RequestInfoSvcs {
         add_adv_revenue,
         request_writer.delta_adv_revenue());
 
-      res_adv_comm_revenue = adv_comm_revenue + delta_adv_comm_revenue;
       convert_revenue_to_revenue_writer(
         res_adv_comm_revenue,
         request_writer.adv_comm_revenue());

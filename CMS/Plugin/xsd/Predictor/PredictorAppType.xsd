@@ -138,8 +138,21 @@
   </xsd:complexType>
 
   <xsd:complexType name="CTRPredictModelGeneratorType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="1" maxOccurs="1"/>
+    </xsd:sequence>
     <xsd:attribute name="generate_period" type="xsd:positiveInteger" use="optional" default="86400"/>
-    <xsd:attribute name="train_rows" type="xsd:positiveInteger" use="optional" default="1000000"/>
+    <xsd:attribute name="selection_chunk_rows" type="xsd:positiveInteger" use="optional" default="7000000"/>
+    <xsd:attribute name="main_chunk_rows" type="xsd:positiveInteger" use="optional" default="10000000"/>
+    <xsd:attribute name="validation_set_rows" type="xsd:positiveInteger" use="optional" default="200000"/>
+    <xsd:attribute name="selection_validation_sets" type="xsd:positiveInteger" use="optional" default="3"/>
+    <xsd:attribute name="training_validation_sets" type="xsd:positiveInteger" use="optional" default="3"/>
+    <xsd:attribute name="final_test_sets" type="xsd:positiveInteger" use="optional" default="3"/>
+    <xsd:attribute name="selection_fit_steps" type="xsd:positiveInteger" use="optional" default="10"/>
+    <xsd:attribute name="training_fit_steps" type="xsd:positiveInteger" use="optional" default="30"/>
+    <xsd:attribute name="fit_iterations" type="xsd:positiveInteger" use="optional" default="10"/>
+    <xsd:attribute name="selection_patience" type="xsd:positiveInteger" use="optional" default="3"/>
+    <xsd:attribute name="training_patience" type="xsd:positiveInteger" use="optional" default="5"/>
     <xsd:attribute name="data_delay" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="algorithm_id" type="xsd:string" use="optional" default="catboost"/>
   </xsd:complexType>

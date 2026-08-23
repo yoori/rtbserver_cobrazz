@@ -24,7 +24,7 @@
 %define __geoip_ver_req         1.6.12-7
 %define __net_snmp_ver_req      5.8-25
 %define __libevent_ver_req      2.1.8-5.el8
-%define __postgresql_ver_req    9.4.26
+%define __libpq_ver_req         13.20
 #define __protobuf_ver_req      3.6.1-4
 %define __protobuf_ver_req      25.9-ssv4.el8
 %define __zeromq_ver_req        4.3.4
@@ -117,13 +117,11 @@ BuildRequires: vanga-devel = %__vanga_ver_req
 BuildRequires: %{__boost_package}-devel = %__boost_ver_req
 BuildRequires: folly-devel = %__folly_ver_req
 BuildRequires: rocksdb-devel = %__rocksdb_ver_req
-Requires: postgresql94-libs >= %{__postgresql_ver_req}
+Requires: libpq >= %{__libpq_ver_req}
 Requires: openssl >= %{__open_ssl_ver_req}
-BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
+BuildRequires: libpq-devel >= %{__libpq_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
-# userver-devel dependencies workaround:
-BuildRequires: libpq-devel
 #BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
 BuildRequires: protobuf-devel = 25.9
@@ -173,6 +171,7 @@ Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Ru
 Requires: python3.12
 Requires: python3.12-aiohttp python3.12-psycopg2
 Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect python3.12-scikit-learn python3.12-jinja2
+Requires: python3.12-fastapi-uvicorn
 Requires: clickhouse-client = %{__clickhouse_ver_req}
 
 BuildRequires: xgboost-devel
@@ -206,7 +205,7 @@ this package is for %{__type} colocations
 %package  tests
 Summary:  Test programs
 Group:    System Environment/Daemons
-Requires: postgresql94-libs >= %{__postgresql_ver_req}
+Requires: libpq >= %{__libpq_ver_req}
 Requires(pre): %{name} 
 Provides: perl(ChannelConfig)
 

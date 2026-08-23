@@ -32,6 +32,7 @@ target_link_libraries(RequestInfoContainer
   Generics
   PrivacyFilter
   Commons
+  CampaignBilling
   ProfileMap
   ProfileMapRocksDB
   RequestProfilePST

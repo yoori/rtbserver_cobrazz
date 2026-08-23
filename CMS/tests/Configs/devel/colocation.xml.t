@@ -392,7 +392,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
           <ctrPredictModelGenerator
             xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
             generate_period="86400"
-            train_rows="1000000"/>
+            selection_chunk_rows="7000000"
+            main_chunk_rows="10000000"
+            validation_set_rows="200000"
+            data_delay="86400">
+            <networkParams/>
+          </ctrPredictModelGenerator>
         </configuration>
       </service>
 

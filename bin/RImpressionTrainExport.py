@@ -17,15 +17,27 @@ def main():
   parser.add_argument(
     '--rows',
     type=int,
-    help='Override train_rows from the configuration.')
+    help='Override the row count calculated from the configuration.')
   args = parser.parse_args()
 
   with open(args.config) as config_file:
     config = json.load(config_file)
 
-  train_rows = args.rows
-  if train_rows is None:
-    train_rows = int(config.get('train_rows', 1000000))
+  export_rows = args.rows
+  if export_rows is None:
+    selection_rows = (
+      int(config.get('selection_chunk_rows', 7000000)) *
+      int(config.get('selection_fit_steps', 10)))
+    training_rows = (
+      int(config.get('main_chunk_rows', 10000000)) *
+      int(config.get('training_fit_steps', 30)))
+    validation_sets = (
+      int(config.get('selection_validation_sets', 3)) +
+      int(config.get('training_validation_sets', 3)) +
+      int(config.get('final_test_sets', 3)))
+    export_rows = (
+      max(selection_rows, training_rows) +
+      int(config.get('validation_set_rows', 200000)) * validation_sets)
   try:
     data_delay = int(config['data_delay'])
   except (KeyError, TypeError, ValueError):
@@ -33,10 +45,10 @@ def main():
       "Configuration value 'data_delay' must be a positive integer")
 
   exporter = RImpressionTrainExporter(config.get('clickhouse_conn', ''))
-  date_from = exporter.export(args.output, train_rows, data_delay)
+  date_from = exporter.export(args.output, export_rows, data_delay)
   print(
     'output=' + args.output +
-    ' rows=' + str(train_rows) +
+    ' rows=' + str(export_rows) +
     ' date_from=' + date_from)
 
 

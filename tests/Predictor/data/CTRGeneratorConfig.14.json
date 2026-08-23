@@ -1,0 +1,18 @@
+{
+  "features_dimension": 14,
+  "features": [
+    ["publisher"],
+    ["tag"],
+    ["sizeid"],
+    ["wd"],
+    ["hour"],
+    ["device"],
+    ["campaign"],
+    ["group"],
+    ["ccid"],
+    ["campaign_freq"],
+    ["campaign_freq_log"],
+    ["geoch"],
+    ["userch"]
+  ]
+}

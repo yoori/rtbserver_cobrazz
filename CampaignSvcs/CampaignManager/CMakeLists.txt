@@ -169,6 +169,23 @@ add_library(DomainParser
 
 add_dependencies(DomainParser DomainConfigXSD)
 
+add_library(CampaignBilling SHARED
+  CampaignBilling.cpp
+)
+
+target_link_libraries(CampaignBilling
+  CampaignTypes
+)
+
+add_library(CampaignBillingAccount SHARED
+  CampaignBillingAccount.cpp
+)
+
+target_link_libraries(CampaignBillingAccount
+  CampaignBilling
+  CampaignConfig
+)
+
 add_library(CampaignManagerLogger SHARED
   CampaignManagerLogger.cpp
   CampaignManagerLogAdapter.cpp
@@ -179,6 +196,7 @@ target_link_libraries(CampaignManagerLogger
   LogCommons
   CreativeTemplateArgs
   CampaignConfig
+  CampaignBillingAccount
   CTRProviderCore
   ExpressionChannelIndex
   Boost::headers
@@ -225,6 +243,7 @@ target_link_libraries(CampaignManager
   CreativeTemplateArgs
   InstantiateAdArgs
   CampaignConfig
+  CampaignBillingAccount
   CampaignIndex
   DomainParser
   CampaignManagerLogger

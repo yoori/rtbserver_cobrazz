@@ -41,6 +41,7 @@ protected:
     const char* tag_to_publisher_dictionary_file_path,
     const char* dictionary_file,
     const char* name_dictionary_file,
+    const char* feature_indexes_file,
     bool catboost_model);
 
   void

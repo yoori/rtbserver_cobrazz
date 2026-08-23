@@ -8,15 +8,32 @@ usage()
 {
   cat <<'EOF'
 Usage:
-  GetPerfStats.sh '<url>' '<request body>' [timeout]
+  GetPerfStats.sh [--random] '<url>' '<request body>' [timeout]
 
 Example:
   GetPerfStats.sh 'http://host/openrtb?...' $'{"id":"...","imp":[...]}' 0.060
+  GetPerfStats.sh --random 'http://host/openrtb?...' \
+    $'{"id":"...","imp":[...],"user":{"id":"test5"}}' 0.060
 
 The script sends the request in a loop until interrupted with Ctrl-C.
 Set CHECK_PERF_LIMIT=<count> to stop after a fixed number of requests.
+
+--random replaces user.id with a new user0000..user9999 value for each request.
 EOF
 }
+
+RANDOMIZE_USER_ID=0
+POSITIONAL_ARGS=()
+
+for ARG in "$@"; do
+  if [ "$ARG" = "--random" ]; then
+    RANDOMIZE_USER_ID=1
+  else
+    POSITIONAL_ARGS+=("$ARG")
+  fi
+done
+
+set -- "${POSITIONAL_ARGS[@]}"
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
   usage >&2
@@ -27,6 +44,11 @@ URL=$1
 REQUEST_BODY=$2
 TIMEOUT=${3:-0.060}
 LIMIT=${CHECK_PERF_LIMIT:-0}
+
+if [ "$RANDOMIZE_USER_ID" -eq 1 ] && ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required for --random" >&2
+  exit 1
+fi
 
 case "$TIMEOUT" in
   ''|*[!0-9.]*)
@@ -303,9 +325,20 @@ echo "Running request loop. Press Ctrl-C to print stats." >&2
 
 REQUESTS_DONE=0
 while [ "$STOP" -eq 0 ]; do
+  CURRENT_REQUEST_BODY=$REQUEST_BODY
+  if [ "$RANDOMIZE_USER_ID" -eq 1 ]; then
+    printf -v RANDOMIZED_USER_ID 'user%04d' "$((RANDOM % 10000))"
+    if ! CURRENT_REQUEST_BODY=$(jq -c --arg user_id "$RANDOMIZED_USER_ID" \
+      '.user.id = $user_id' <<< "$REQUEST_BODY")
+    then
+      echo "Invalid JSON request body" >&2
+      exit 1
+    fi
+  fi
+
   curl "$URL" \
     -H 'Content-Type: application/json' \
-    --data "$REQUEST_BODY" \
+    --data "$CURRENT_REQUEST_BODY" \
     -v > "$TMP_RESPONSE" 2>&1
   parse_response
 

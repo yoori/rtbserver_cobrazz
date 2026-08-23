@@ -1,5 +1,6 @@
 import datetime
 import logging
+import math
 import os
 import pathlib
 import shlex
@@ -8,6 +9,9 @@ import tempfile
 
 
 class RImpressionTrainExporter(object):
+  SOURCE_PARTITIONS = 100
+  VALIDATION_PARTITIONS = (0, 1)
+
   def __init__(self, clickhouse_conn, logger=None):
     self._command = [
       'clickhouse-client',
@@ -21,11 +25,7 @@ class RImpressionTrainExporter(object):
     if data_delay <= 0:
       raise ValueError('data_delay must be positive')
 
-    date_to = (
-      datetime.datetime.now(datetime.timezone.utc) -
-      datetime.timedelta(seconds=data_delay)
-    ).strftime('%Y-%m-%d %H:%M:%S')
-    date_from = self._find_date_from(train_rows, date_to)
+    date_from, date_to = self.find_date_range(train_rows, data_delay)
     self._logger.debug(
       'Exporting up to %d RImpressionTrain rows from %s to %s',
       train_rows,
@@ -61,6 +61,224 @@ class RImpressionTrainExporter(object):
 
     return date_from
 
+  def find_date_range(self, source_rows, data_delay):
+    if source_rows <= 0:
+      raise ValueError('source_rows must be positive')
+    if data_delay <= 0:
+      raise ValueError('data_delay must be positive')
+
+    date_to = (
+      datetime.datetime.now(datetime.timezone.utc) -
+      datetime.timedelta(seconds=data_delay)
+    ).strftime('%Y-%m-%d %H:%M:%S')
+    return self._find_date_from(source_rows, date_to), date_to
+
+  def count_rows(self, date_from, date_to, condition=None):
+    result = subprocess.run(
+      self._command + [
+        '--query',
+        self._count_query(date_from, date_to, condition),
+      ],
+      check=True,
+      capture_output=True,
+      text=True)
+    return int(result.stdout.strip())
+
+  def export_chunks(
+      self,
+      output_dir,
+      file_prefix,
+      max_rows,
+      chunk_rows,
+      date_from,
+      date_to,
+      condition=None,
+  ):
+    if max_rows <= 0:
+      raise ValueError('max_rows must be positive')
+    if chunk_rows <= 0:
+      raise ValueError('chunk_rows must be positive')
+
+    output_dir = pathlib.Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    process = subprocess.Popen(
+      self._command + [
+        '--query',
+        self._export_query(
+          date_from,
+          date_to,
+          max_rows,
+          condition),
+      ],
+      stdout=subprocess.PIPE)
+    current_path = None
+    completed = False
+    try:
+      header = process.stdout.readline()
+      if not header:
+        return_code = process.wait()
+        completed = True
+        if return_code != 0:
+          raise subprocess.CalledProcessError(return_code, process.args)
+        raise RuntimeError('RImpression export returned no CSV header')
+
+      exported_rows = 0
+      chunk_index = 0
+      while exported_rows < max_rows:
+        output_path = output_dir / (
+          file_prefix + '-' + str(chunk_index).zfill(3) + '.csv')
+        temporary_file = tempfile.NamedTemporaryFile(
+          mode='wb',
+          dir=str(output_dir),
+          prefix=output_path.name + '.',
+          suffix='.tmp',
+          delete=False)
+        temporary_path = temporary_file.name
+        row_count = 0
+        try:
+          with temporary_file:
+            temporary_file.write(header)
+            rows_to_read = min(chunk_rows, max_rows - exported_rows)
+            while row_count < rows_to_read:
+              line = process.stdout.readline()
+              if not line:
+                break
+              temporary_file.write(line)
+              row_count += 1
+
+          if row_count == 0:
+            os.unlink(temporary_path)
+            break
+          os.replace(temporary_path, output_path)
+        except Exception:
+          try:
+            os.unlink(temporary_path)
+          except FileNotFoundError:
+            pass
+          raise
+
+        exported_rows += row_count
+        is_final_chunk = (
+          exported_rows >= max_rows or row_count < rows_to_read)
+        if is_final_chunk:
+          return_code = process.wait()
+          completed = True
+          if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, process.args)
+
+        current_path = output_path
+        try:
+          yield output_path, row_count
+        finally:
+          try:
+            output_path.unlink()
+          except FileNotFoundError:
+            pass
+          current_path = None
+
+        chunk_index += 1
+        if is_final_chunk:
+          break
+
+      if not completed:
+        return_code = process.wait()
+        completed = True
+        if return_code != 0:
+          raise subprocess.CalledProcessError(return_code, process.args)
+    finally:
+      if current_path is not None:
+        try:
+          current_path.unlink()
+        except FileNotFoundError:
+          pass
+      if process.stdout is not None:
+        process.stdout.close()
+      if not completed and process.poll() is None:
+        process.terminate()
+        try:
+          process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+          process.kill()
+          process.wait()
+
+  @classmethod
+  def validation_condition(cls):
+    return cls._source_partition_expression() + ' IN (' + ','.join(
+      str(partition) for partition in cls.VALIDATION_PARTITIONS) + ')'
+
+  @classmethod
+  def training_condition(cls):
+    return cls._source_partition_expression() + ' NOT IN (' + ','.join(
+      str(partition) for partition in cls.VALIDATION_PARTITIONS) + ')'
+
+  @classmethod
+  def training_partition_condition(cls, partition_index, partition_count):
+    if partition_count <= 0:
+      raise ValueError('partition_count must be positive')
+    if partition_index < 0 or partition_index >= partition_count:
+      raise ValueError('partition_index is out of range')
+    source_partitions = [
+      partition
+      for partition in range(cls.SOURCE_PARTITIONS)
+      if (
+        partition not in cls.VALIDATION_PARTITIONS and
+        partition % partition_count == partition_index)
+    ]
+    if not source_partitions:
+      return '0'
+    return cls._source_partition_expression() + ' IN (' + ','.join(
+      str(partition) for partition in source_partitions) + ')'
+
+  def export_partitioned_chunks(
+      self,
+      output_dir,
+      file_prefix,
+      max_rows,
+      chunk_rows,
+      partition_count,
+      date_from,
+      date_to,
+  ):
+    remaining_rows = max_rows
+    for partition_index in range(partition_count):
+      if remaining_rows == 0:
+        break
+      rows_to_export = min(chunk_rows, remaining_rows)
+      condition = self.training_partition_condition(
+        partition_index,
+        partition_count)
+      chunks = self.export_chunks(
+        output_dir,
+        file_prefix + '-' + str(partition_index).zfill(3),
+        rows_to_export,
+        rows_to_export,
+        date_from,
+        date_to,
+        condition)
+      try:
+        for output_path, row_count in chunks:
+          remaining_rows -= row_count
+          yield output_path, row_count
+      finally:
+        chunks.close()
+
+  @classmethod
+  def required_source_rows(cls, training_rows, validation_rows):
+    if training_rows <= 0:
+      raise ValueError('training_rows must be positive')
+    if validation_rows <= 0:
+      raise ValueError('validation_rows must be positive')
+    validation_partitions = len(cls.VALIDATION_PARTITIONS)
+    training_partitions = cls.SOURCE_PARTITIONS - validation_partitions
+    return max(
+      math.ceil(training_rows * cls.SOURCE_PARTITIONS / training_partitions),
+      math.ceil(
+        validation_rows * cls.SOURCE_PARTITIONS / validation_partitions))
+
+  @classmethod
+  def _source_partition_expression(cls):
+    return 'sipHash64(request_id) % ' + str(cls.SOURCE_PARTITIONS)
+
   def _find_date_from(self, train_rows, date_to):
     result = subprocess.run(
       self._command + [
@@ -88,9 +306,15 @@ class RImpressionTrainExporter(object):
       raise RuntimeError('RImpression contains no rows')
     return date_from
 
-  @staticmethod
-  def _export_query(date_from, date_to, train_rows):
-    return (
+  @classmethod
+  def _export_query(
+      cls,
+      date_from,
+      date_to,
+      train_rows,
+      condition=None,
+  ):
+    query = (
       "SELECT "
       "If(click_timestamp IS NOT NULL, 1, 0) AS label, "
       "timestamp, "
@@ -109,5 +333,17 @@ class RImpressionTrainExporter(object):
       "campaign_freq AS Campaign_Freq "
       "FROM RImpression "
       "WHERE timestamp >= '" + date_from + "' "
-      "AND timestamp < '" + date_to + "' "
-      "LIMIT " + str(train_rows) + " FORMAT CSVWithNames")
+      "AND timestamp < '" + date_to + "' ")
+    if condition is not None:
+      query += 'AND (' + condition + ') '
+    return query + 'LIMIT ' + str(train_rows) + ' FORMAT CSVWithNames'
+
+  @staticmethod
+  def _count_query(date_from, date_to, condition=None):
+    query = (
+      "SELECT count(*) FROM RImpression "
+      "WHERE timestamp >= '" + date_from + "' "
+      "AND timestamp < '" + date_to + "' ")
+    if condition is not None:
+      query += 'AND (' + condition + ')'
+    return query
