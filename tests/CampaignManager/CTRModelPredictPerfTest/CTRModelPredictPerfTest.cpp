@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -22,6 +23,7 @@ namespace
   {
     std::string model;
     unsigned long count = 0;
+    std::optional<RevenueDecimal> expected_ctr;
   };
 
   struct CpuTimes
@@ -54,7 +56,8 @@ namespace
       << "Usage: CTRModelPredictPerfTest --model <path> --count <N>\n"
       << "Options:\n"
       << "  --model <path>  CampaignManager CTR model directory\n"
-      << "  --count <N>     sequential CTR calculations count\n";
+      << "  --count <N>     sequential CTR calculations count\n"
+      << "  --expected-ctr <value>  fail if the resulting CTR differs\n";
   }
 
   Options
@@ -63,12 +66,14 @@ namespace
     using namespace Generics::AppUtils;
 
     StringOption opt_model;
+    StringOption opt_expected_ctr;
     Option<unsigned long> opt_count(0);
     CheckOption opt_help;
 
     Args args(-1);
     args.add(equal_name("model"), opt_model);
     args.add(equal_name("count"), opt_count);
+    args.add(equal_name("expected-ctr"), opt_expected_ctr);
     args.add(equal_name("help") || short_name("h"), opt_help);
     args.parse(argc - 1, argv + 1);
 
@@ -81,6 +86,10 @@ namespace
     Options options;
     options.model = *opt_model;
     options.count = *opt_count;
+    if(!opt_expected_ctr->empty())
+    {
+      options.expected_ctr.emplace(String::SubString(*opt_expected_ctr));
+    }
 
     if(options.model.empty())
     {
@@ -234,6 +243,15 @@ main(int argc, char** argv)
     for(unsigned long i = 0; i < options.count; ++i)
     {
       ctr = context->get_ctr(data.creative);
+    }
+
+    if(options.expected_ctr && ctr != *options.expected_ctr)
+    {
+      std::ostringstream error;
+      error
+        << "CTR mismatch: expected=" << *options.expected_ctr
+        << ", actual=" << ctr;
+      throw std::runtime_error(error.str());
     }
 
     const auto finished = std::chrono::steady_clock::now();
