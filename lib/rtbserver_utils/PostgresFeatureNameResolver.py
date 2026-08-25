@@ -20,12 +20,15 @@ class PostgresFeatureNameResolver:
     'creative': 'creative',
     'creative_id': 'creative',
     'device': 'channel',
-    'geochannel': 'channel',
+    'geochannel': 'geochannel',
     'isp': 'account',
     'publisher': 'account',
     'publisher_id': 'account',
     'site': 'site',
     'site_id': 'site',
+    'size': 'size',
+    'size_id': 'size',
+    'sizeid': 'size',
     'tag': 'tag',
     'tag_id': 'tag',
   }
@@ -59,8 +62,34 @@ class PostgresFeatureNameResolver:
     'channel': '''
       SELECT channel.channel_id, account.name, channel.name
       FROM channel
-      JOIN account USING (account_id)
+      LEFT JOIN account USING (account_id)
       WHERE channel.channel_id = ANY(%s)
+    ''',
+    'geochannel': '''
+      WITH RECURSIVE geochannel_paths AS (
+        SELECT
+          channel.channel_id AS entity_id,
+          channel.parent_channel_id,
+          ARRAY[channel.name::text] AS names
+        FROM channel
+        WHERE channel.channel_id = ANY(%s)
+
+        UNION ALL
+
+        SELECT
+          geochannel_paths.entity_id,
+          parent.parent_channel_id,
+          ARRAY[parent.name::text] || geochannel_paths.names
+        FROM geochannel_paths
+        JOIN channel AS parent
+          ON parent.channel_id = geochannel_paths.parent_channel_id
+      )
+      SELECT
+        entity_id,
+        NULL::text,
+        array_to_string(names, '/')
+      FROM geochannel_paths
+      WHERE parent_channel_id IS NULL
     ''',
     'colo': '''
       SELECT colocation.colo_id, account.name, colocation.name
@@ -79,6 +108,11 @@ class PostgresFeatureNameResolver:
       FROM site
       JOIN account USING (account_id)
       WHERE site.site_id = ANY(%s)
+    ''',
+    'size': '''
+      SELECT size_id, NULL::text, name
+      FROM creativesize
+      WHERE size_id = ANY(%s)
     ''',
     'tag': '''
       SELECT tags.tag_id, account.name, tags.name
@@ -113,10 +147,13 @@ class PostgresFeatureNameResolver:
           for entity, ids in entity_ids.items():
             cursor.execute(self.ENTITY_QUERIES[entity], (sorted(ids),))
             for entity_id, account_name, entity_name in cursor.fetchall():
-              if account_name is None or entity_name is None:
+              if entity_name is None:
                 continue
-              entity_names[(entity, entity_id)] = (
-                str(account_name) + '/' + str(entity_name))
+              if account_name is None:
+                name = str(entity_name)
+              else:
+                name = str(account_name) + '/' + str(entity_name)
+              entity_names[(entity, entity_id)] = name
 
     result = {}
     for feature, parts in feature_parts.items():
