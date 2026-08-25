@@ -527,6 +527,139 @@ class CatBoostTrainer(object):
       },
     }
 
+  def train_residual_from_chunks(
+      self,
+      chunks,
+      validation_inputs,
+      final_test_inputs,
+      fit_iterations=10,
+      patience=5,
+      work_dir=None,
+      fit_steps=None,
+  ):
+    temp_parent = None if work_dir is None else str(pathlib.Path(work_dir))
+    with tempfile.TemporaryDirectory(
+        dir=temp_parent,
+        prefix='catboost-residual-training.') as temp_dir:
+      return self.train_residual_from_chunks_(
+        chunks,
+        validation_inputs,
+        final_test_inputs,
+        fit_iterations,
+        patience,
+        pathlib.Path(temp_dir),
+        fit_steps)
+
+  def train_residual_from_chunks_(
+      self,
+      chunks,
+      validation_inputs,
+      final_test_inputs,
+      fit_iterations,
+      patience,
+      work_dir,
+      fit_steps,
+  ):
+    if not validation_inputs:
+      raise ValueError('At least one residual validation set is required')
+    if fit_iterations <= 0:
+      raise ValueError('fit_iterations must be positive')
+    if patience <= 0:
+      raise ValueError('patience must be positive')
+    if fit_steps is not None and fit_steps <= 0:
+      raise ValueError('fit_steps must be positive')
+
+    model_path = work_dir / 'model.cbm'
+    next_model_path = work_dir / 'next-model.cbm'
+    best_model_path = work_dir / 'best-model.cbm'
+    best_logloss = None
+    non_improving_steps = 0
+    trained_steps = 0
+    history = []
+
+    chunk_iterator = iter(chunks)
+    try:
+      chunks_to_fit = chunk_iterator
+      if fit_steps is not None:
+        chunks_to_fit = itertools.islice(chunk_iterator, fit_steps)
+      for step, (svm_file, external_baseline) in enumerate(chunks_to_fit, 1):
+        training_baseline = external_baseline
+        if model_path.exists():
+          training_baseline = work_dir / (
+            'combined-' + str(step).zfill(3) + '.baseline')
+          self.predict_raw_(
+            model_path,
+            svm_file,
+            training_baseline,
+            external_baseline)
+        try:
+          train_metrics = self.train_chunk_(
+            svm_file,
+            next_model_path,
+            fit_iterations,
+            baseline_file=training_baseline,
+            merge_model=model_path if model_path.exists() else None)
+          os.replace(next_model_path, model_path)
+        finally:
+          if training_baseline != external_baseline:
+            try:
+              training_baseline.unlink()
+            except FileNotFoundError:
+              pass
+
+        metrics = self.evaluate_model_sets_(model_path, validation_inputs)
+        logloss = metrics['Logloss']
+        history.append({
+          'step': step,
+          'train': train_metrics['Logloss'],
+          'test': logloss,
+        })
+        trained_steps = step
+        print(
+          'Campaign residual: validation=' +
+          json.dumps(metrics, sort_keys=True),
+          flush=True)
+        if best_logloss is None or logloss < best_logloss:
+          best_logloss = logloss
+          non_improving_steps = 0
+          shutil.copyfile(model_path, best_model_path)
+        else:
+          non_improving_steps += 1
+          if non_improving_steps >= patience:
+            print(
+              'Campaign residual: early stop after ' + str(step) + ' fits',
+              flush=True)
+            break
+    finally:
+      close = getattr(chunk_iterator, 'close', None)
+      if close is not None:
+        close()
+
+    if trained_steps == 0:
+      raise ValueError('At least one residual training chunk is required')
+    weight_metrics = self.optimize_prediction_weight_(
+      best_model_path,
+      validation_inputs)
+    prediction_weight = weight_metrics['weight']
+    final_evaluations = [
+      self.evaluate_model_with_ctr_thresholds_(
+        best_model_path,
+        svm_file,
+        baseline_file,
+        prediction_weight)
+      for svm_file, baseline_file in final_test_inputs
+    ]
+    model = CatBoostClassifier()
+    model.load_model(str(best_model_path))
+    return {
+      'model': model,
+      'logloss_history': history,
+      'ctr_thresholds': self.aggregate_ctr_thresholds_(final_evaluations),
+      'weight': prediction_weight,
+      'base_logloss': weight_metrics['base_logloss'],
+      'combined_logloss': weight_metrics['combined_logloss'],
+    }
+
   def split_svm_(
       self,
       svm_file,
@@ -766,7 +899,12 @@ class CatBoostTrainer(object):
         pass
 
   @staticmethod
-  def evaluate_model_(model_file, svm_file, baseline_file=None):
+  def evaluate_model_(
+      model_file,
+      svm_file,
+      baseline_file=None,
+      prediction_weight=1.0,
+  ):
     command = [
       sys.executable,
       '-m',
@@ -778,6 +916,8 @@ class CatBoostTrainer(object):
     ]
     if baseline_file is not None:
       command.extend(['--baseline-file', str(baseline_file)])
+    if prediction_weight != 1.0:
+      command.extend(['--prediction-weight', str(prediction_weight)])
     result = subprocess.run(
       command,
       check=True,
@@ -790,6 +930,7 @@ class CatBoostTrainer(object):
       model_file,
       svm_file,
       baseline_file=None,
+      prediction_weight=1.0,
   ):
     command = [
       sys.executable,
@@ -803,12 +944,51 @@ class CatBoostTrainer(object):
     ]
     if baseline_file is not None:
       command.extend(['--baseline-file', str(baseline_file)])
+    if prediction_weight != 1.0:
+      command.extend(['--prediction-weight', str(prediction_weight)])
     result = subprocess.run(
       command,
       check=True,
       capture_output=True,
       text=True)
     return json.loads(result.stdout)
+
+  @staticmethod
+  def optimize_prediction_weight_(model_file, validation_inputs):
+    weights = [index / 20 for index in range(21)]
+    totals = [0.0] * len(weights)
+    for svm_file, baseline_file in validation_inputs:
+      result = subprocess.run(
+        [
+          sys.executable,
+          '-m',
+          'rtbserver_utils.CatBoostModelEvaluator',
+          '--model-file',
+          str(model_file),
+          '--svm-file',
+          str(svm_file),
+          '--baseline-file',
+          str(baseline_file),
+          '--prediction-weights',
+          ','.join(str(weight) for weight in weights),
+        ],
+        check=True,
+        capture_output=True,
+        text=True)
+      evaluations = json.loads(result.stdout)['weighted_logloss']
+      if len(evaluations) != len(weights):
+        raise ValueError('Prediction weight evaluation count mismatch')
+      for index, evaluation in enumerate(evaluations):
+        if evaluation['weight'] != weights[index]:
+          raise ValueError('Prediction weight evaluation mismatch')
+        totals[index] += evaluation['Logloss']
+    averages = [value / len(validation_inputs) for value in totals]
+    best_index = min(range(len(weights)), key=lambda index: averages[index])
+    return {
+      'weight': weights[best_index],
+      'base_logloss': averages[0],
+      'combined_logloss': averages[best_index],
+    }
 
   @staticmethod
   def predict_raw_(
@@ -995,7 +1175,7 @@ class CatBoostTrainer(object):
   def save_campaign_manager_model_bundle(
       self,
       output_dir,
-      components,
+      models,
       timestamp=None,
       staging_dir=None,
       algorithm_id='catboost',
@@ -1003,15 +1183,16 @@ class CatBoostTrainer(object):
       train_start=None,
       train_end=None,
   ):
-    required_components = (
+    required_models = (
       'common',
-      'campaign_correction',
-      'stable_common',
+      'common_denoise',
+      'common_stable',
     )
-    if set(components) != set(required_components):
+    if [model.get('name') for model in models[:3]] != list(required_models):
       raise ValueError(
-        'Model components must be: ' +
-        ', '.join(required_components))
+        'First model entries must be: ' + ', '.join(required_models))
+    if len({model.get('name') for model in models}) != len(models):
+      raise ValueError('Model names must be unique')
     if timestamp is None:
       timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
         '%Y%m%d.%H%M%S')
@@ -1035,57 +1216,58 @@ class CatBoostTrainer(object):
         raise ValueError(
           "Invalid model staging directory: '" + str(staging_dir) + "'")
 
-    component_files = {
+    model_files = {
       'common': 'common.cbm',
-      'campaign_correction': 'campaign-correction.cbm',
-      'stable_common': 'model.cbm',
-    }
-    component_descriptions = {
-      'common': {
-        'role': 'initial_common',
-        'metrics_prediction': 'sigmoid(common)',
-      },
-      'campaign_correction': {
-        'role': 'campaign_correction',
-        'baseline_component': 'common',
-        'training_baseline': 'common',
-        'metrics_prediction': 'sigmoid(common + campaign_correction)',
-        'oof_strategy': 'expanding_window_hash_partitions',
-      },
-      'stable_common': {
-        'role': 'stable_common',
-        'subtracted_component': 'campaign_correction',
-        'training_baseline': 'campaign_correction_oof',
-        'metrics_prediction': 'sigmoid(stable_common)',
-        'published': True,
-      },
+      'common_denoise': 'common_denoise.cbm',
+      'common_stable': 'model.cbm',
     }
     try:
-      traits_components = {}
+      traits_models = []
       feature_items = []
-      stable_features = None
-      for component_name in required_components:
-        component = components[component_name]
-        component_trainer = component['trainer']
-        model = component['model']
-        model.save_model(str(staging_dir / component_files[component_name]))
-        features, features_importance = component_trainer.model_traits_(
+      runtime_models = []
+      for entry in models:
+        name = entry['name']
+        if not re.fullmatch(r'[a-z0-9_]+', name):
+          raise ValueError("Invalid model name: '" + name + "'")
+        file_name = model_files.get(name, name + '.cbm')
+        entry_trainer = entry['trainer']
+        model = entry['model']
+        model.save_model(str(staging_dir / file_name))
+        features, features_importance = entry_trainer.model_traits_(
           model,
-          component.get('feature_dictionary_file'),
-          component.get('feature_statistics'))
+          entry.get('feature_dictionary_file'),
+          entry.get('feature_statistics'))
         feature_items.extend(features_importance)
-        component_traits = {
-          'file': component_files[component_name],
-          **component_descriptions[component_name],
+        model_traits = {
+          'name': name,
+          **entry.get('traits', {}),
+          'file': file_name,
           'feature_groups': features,
           'features_importance': features_importance,
-          'logloss_history': component.get('logloss_history', []),
-          'dataset_sizes': component.get('dataset_sizes', {}),
-          'ctr_thresholds': component.get('ctr_thresholds', []),
+          'logloss_history': entry.get('logloss_history', []),
+          'dataset_sizes': entry.get('dataset_sizes', {}),
+          'ctr_thresholds': entry.get('ctr_thresholds', []),
         }
-        traits_components[component_name] = component_traits
-        if component_name == 'stable_common':
-          stable_features = features
+        traits_models.append(model_traits)
+
+        campaign_id = model_traits.get('db_campaign_id')
+        whitelist_file = None
+        if campaign_id is not None:
+          whitelist_file = name + '.campaigns'
+          with (staging_dir / whitelist_file).open('w') as output:
+            output.write(str(int(campaign_id)) + '\n')
+        if model_traits.get('runtime'):
+          runtime_model = {
+            'method': 'catboost',
+            'features_size': entry_trainer.features_size,
+            'weight': float(model_traits.get('weight', 1.0)),
+            'predict_postprocess': 'as_is',
+            'features': features,
+            'file': file_name,
+          }
+          if whitelist_file is not None:
+            runtime_model['campaigns_whitelist_file'] = whitelist_file
+          runtime_models.append(runtime_model)
 
       if feature_name_resolver is not None:
         feature_names = feature_name_resolver.resolve(
@@ -1097,20 +1279,19 @@ class CatBoostTrainer(object):
           if name is not None:
             item['name'] = name
 
-      self.write_campaign_manager_logit_config_(
+      self.write_campaign_manager_models_config_(
         staging_dir / 'config.json',
         algorithm_id,
-        self.features_size,
-        stable_features)
+        runtime_models)
       traits = {
         'status': 'published',
         'train_start': train_start,
         'train_end': train_end,
         'training_pipeline': {
-          'published_component': 'stable_common',
+          'published_model': 'common_stable',
           'correction_oof_strategy': 'expanding_window_hash_partitions',
         },
-        'components': traits_components,
+        'models': traits_models,
       }
       traits_temp_file = staging_dir / '.traits.json.tmp'
       self.write_json_(traits_temp_file, traits)
@@ -1313,6 +1494,31 @@ class CatBoostTrainer(object):
               'file': 'model.cbm',
             },
           ],
+        },
+      ],
+    }
+    with config_file.open('w') as output:
+      json.dump(config, output, indent=2)
+      output.write('\n')
+
+  @staticmethod
+  def write_campaign_manager_models_config_(
+      config_file,
+      algorithm_id,
+      models,
+  ):
+    if not models:
+      raise ValueError('At least one runtime model is required')
+    config = {
+      'version': 4,
+      'default_weight': 0,
+      'algorithms': [
+        {
+          'id': algorithm_id,
+          'weight': 1,
+          'threshold': 0,
+          'aggregation': 'logit_sum',
+          'models': models,
         },
       ],
     }

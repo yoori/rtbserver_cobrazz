@@ -112,10 +112,14 @@ def render_model_list(models, selected_model_id):
     class_name = 'model-link selected' if selected else 'model-link'
     current = ' aria-current="page"' if selected else ''
     url = '/?model=' + urllib.parse.quote(model_id, safe='')
-    if model.get('status') == 'in_progress':
+    if model.get('status') in ('in_progress', 'interrupted'):
+      status = model['status']
+      status_label = 'In progress' if status == 'in_progress' else 'Interrupted'
       details = (
-        '<span class="model-status in-progress">In progress</span>'
-        '<span>Started ' + html_text(model.get('train_start') or '-') + '</span>')
+        '<span class="model-status ' + status + '">' + status_label + '</span>'
+        '<span>Started ' + html_text(model.get('train_start') or '-') + '</span>'
+        '<span>' + str(model.get('campaign_models_count', 0)) +
+        ' campaign models</span>')
     else:
       components_count = model.get('components_count', 0)
       details = (
@@ -350,40 +354,77 @@ def render_feature_importance(traits, component_name='model'):
     '<tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 
-def render_model_component(component_name, traits):
+def render_model_component(component_name, traits, selected=False):
   labels = {
     'common': 'Common',
+    'common_denoise': 'Common denoise',
+    'common_stable': 'Common stable',
     'campaign_correction': 'Campaign correction',
     'stable_common': 'Stable common',
   }
   descriptions = {
     'common': 'Initial model trained on the full campaign sample.',
+    'common_denoise': (
+      'Campaign-conditioned residual used to denoise common.'),
+    'common_stable': 'Stable common model used by CampaignManager.',
     'campaign_correction': (
       'Residual trained over common; metrics use common + correction.'),
     'stable_common': (
       'Published model trained with out-of-fold campaign correction as baseline.'),
   }
   feature_groups = traits.get('feature_groups', [])
-  published = (
-    '<span class="component-published">Published</span>'
-    if traits.get('published') else '')
-  return (
+  campaign_name = traits.get('campaign_name')
+  label = labels.get(component_name, component_name)
+  if traits.get('kind') == 'campaign':
+    label = (
+      'Campaign ' + str(traits.get('db_campaign_id', component_name)) +
+      ((' — ' + str(campaign_name)) if campaign_name else ''))
+  description = descriptions.get(component_name, '')
+  if traits.get('kind') == 'campaign':
+    description = 'Campaign residual trained over common stable.'
+  badges = []
+  if traits.get('runtime') or traits.get('published'):
+    badges.append('<span class="component-published">Runtime</span>')
+  training_status = traits.get('status')
+  if training_status:
+    badges.append(
+      '<span class="component-status component-status-' +
+      html_text(str(training_status)) + '">' +
+      html_text(str(training_status).replace('_', ' ').title()) + '</span>')
+  article_state = '' if selected else ' hidden'
+  header_and_meta = (
     '<article class="model-component" id="component-' +
-    html_text(component_name.replace('_', '-')) + '">'
+    html_text(component_name.replace('_', '-')) + '"' + article_state + '>'
     '<header class="component-header"><div><span class="eyebrow">Model component</span>'
-    '<h2>' + html_text(labels.get(component_name, component_name)) + '</h2>'
-    '<p>' + html_text(descriptions.get(component_name, '')) + '</p></div>' +
-    published + '</header>'
+    '<h2>' + html_text(label) + '</h2>'
+    '<p>' + html_text(description) + '</p></div>' +
+    '<div class="component-badges">' + ''.join(badges) + '</div></header>'
     '<dl class="component-meta">'
+    '<div><dt>Status</dt><dd>' +
+    html_text(training_status or '-') + '</dd></div>'
+    '<div><dt>Train start</dt><dd>' +
+    html_text(traits.get('train_start') or '-') + '</dd></div>'
+    '<div><dt>Train end</dt><dd>' +
+    html_text(traits.get('train_end') or '-') + '</dd></div>'
+    '<div><dt>Training impressions</dt><dd>' +
+    html_text(traits.get('eligible_training_impressions', '-')) + '</dd></div>'
     '<div><dt>Artifact</dt><dd><code>' +
     html_text(traits.get('file', '-')) + '</code></dd></div>'
     '<div><dt>Metrics prediction</dt><dd><code>' +
     html_text(traits.get('metrics_prediction', '-')) + '</code></dd></div>'
     '<div><dt>Training baseline</dt><dd><code>' +
-    html_text(traits.get('training_baseline', '-')) + '</code></dd></div>'
+    html_text(traits.get(
+      'training_baseline',
+      traits.get('baseline_model', '-'))) + '</code></dd></div>'
+    '<div><dt>Runtime weight</dt><dd><code>' +
+    html_text(traits.get('weight', '-')) + '</code></dd></div>'
     '<div><dt>Feature groups</dt><dd>' + str(len(feature_groups)) + '</dd></div>'
     '<div><dt>Ranked features</dt><dd>' +
-    str(len(traits.get('features_importance', []))) + '</dd></div></dl>'
+    str(len(traits.get('features_importance', []))) + '</dd></div></dl>')
+  if not traits.get('file'):
+    return header_and_meta + '</article>'
+  return (
+    header_and_meta +
     '<section class="component-section"><h3>Feature groups</h3><p>' +
     render_feature_groups(feature_groups) + '</p></section>' +
     render_dataset_sizes(traits) +
@@ -395,23 +436,148 @@ def render_model_component(component_name, traits):
     render_feature_importance(traits, component_name) + '</section></article>')
 
 
+def render_model_collection(components):
+  component_items = [
+    (name, traits)
+    for name, traits in components.items()
+    if isinstance(traits, dict)
+  ]
+  if not component_items:
+    return ''
+
+  selected_name = None
+  for status in ('training', 'interrupted'):
+    selected_name = next((
+      name
+      for name, traits in component_items
+      if traits.get('status') == status
+    ), None)
+    if selected_name is not None:
+      break
+  if selected_name is None:
+    for preferred_name in ('common_stable', 'stable_common'):
+      if preferred_name in components:
+        selected_name = preferred_name
+        break
+  if selected_name is None:
+    selected_name = next((
+      name
+      for name, traits in component_items
+      if traits.get('runtime')
+    ), component_items[0][0])
+
+  def render_component_link(name, traits):
+    selected = name == selected_name
+    current = ' aria-current="page"' if selected else ''
+    return (
+      '<a class="component-link" data-model="' + html_text((
+        name + ' ' + str(traits.get('db_campaign_id', '')) +
+        ' ' + str(traits.get('campaign_name') or '')).lower()) +
+      '" data-status="' + html_text(traits.get('status', '')) +
+      '" data-runtime="' + ('true' if traits.get('runtime') else 'false') +
+      '" href="#component-' + html_text(name.replace('_', '-')) + '"' +
+      current + '>' +
+      '<span>' + html_text(
+        name.replace('_', ' ') + (
+          ' — ' + str(traits.get('campaign_name'))
+          if traits.get('campaign_name') else '')) + '</span>' +
+      '<small>' + html_text(traits.get('status') or '') + '</small></a>')
+
+  common_items = [
+    item
+    for item in component_items
+    if item[1].get('kind') != 'campaign'
+  ]
+  campaign_items = [
+    item
+    for item in component_items
+    if item[1].get('kind') == 'campaign'
+  ]
+
+  def render_group(title, items, group_name):
+    if not items:
+      return ''
+    return (
+      '<section class="component-group" data-component-group="' +
+      group_name + '"><h3>' + title + '<span>' + str(len(items)) +
+      '</span></h3><nav class="component-nav" aria-label="' + title + '">' +
+      ''.join(render_component_link(name, traits) for name, traits in items) +
+      '</nav></section>')
+
+  return (
+    '<div class="component-workspace">'
+    '<aside class="component-sidebar" aria-label="Models within bundle">'
+    '<div class="component-tools"><label for="component-filter">Models within bundle</label>'
+    '<input id="component-filter" type="search" autocomplete="off" '
+    'placeholder="Campaign ID or name">'
+    '<select id="component-status-filter" aria-label="Model status">'
+    '<option value="all">All statuses</option>'
+    '<option value="planned">Planned</option>'
+    '<option value="training">Training</option>'
+    '<option value="completed">Completed</option>'
+    '<option value="interrupted">Interrupted</option>'
+    '<option value="runtime">Runtime</option></select>'
+    '<output id="component-count">' + str(len(component_items)) + ' of ' +
+    str(len(component_items)) + '</output></div>' +
+    render_group('Core models', common_items, 'core') +
+    render_group('Campaign models', campaign_items, 'campaign') +
+    '</aside><section class="component-detail">' +
+    ''.join(
+      render_model_component(name, traits, name == selected_name)
+      for name, traits in component_items) +
+    '</section></div>')
+
+
 def render_model_details(properties):
   summary = properties['summary']
-  if summary.get('status') == 'in_progress':
-    return (
+  traits = properties.get('traits', {})
+  if summary.get('status') in ('in_progress', 'interrupted'):
+    interrupted = summary['status'] == 'interrupted'
+    trait_models = traits.get('models')
+    components = {
+      item['name']: item
+      for item in trait_models
+      if isinstance(item, dict) and isinstance(item.get('name'), str)
+    } if isinstance(trait_models, list) else {}
+    train_end = ''
+    if summary.get('train_end'):
+      train_end = (
+        '<div><dt>Train end</dt><dd>' +
+        html_text(summary['train_end']) + '</dd></div>')
+    details = (
       '<header class="model-header">'
-      '<div><span class="eyebrow">Training in progress</span>'
+      '<div><span class="eyebrow">' +
+      ('Training interrupted' if interrupted else 'Training in progress') +
+      '</span>'
       '<h1>' + html_text(summary['id']) + '</h1></div></header>'
       '<dl class="model-meta training-meta">'
       '<div><dt>Train start</dt><dd>' +
-      html_text(summary.get('train_start') or '-') + '</dd></div></dl>')
+      html_text(summary.get('train_start') or '-') + '</dd></div>' +
+      train_end +
+      '<div><dt>Planned models</dt><dd>' +
+      str(summary.get('models_count', 0)) + '</dd></div>'
+      '<div><dt>Campaign models</dt><dd>' +
+      str(summary.get('campaign_models_count', 0)) + '</dd></div>'
+      '<div><dt>Completed models</dt><dd>' +
+      str(summary.get('completed_models_count', 0)) + '</dd></div>'
+      '<div><dt>Interrupted models</dt><dd>' +
+      str(summary.get('interrupted_models_count', 0)) + '</dd></div></dl>')
+    if components:
+      details += render_model_collection(components)
+    return details
 
-  traits = properties['traits']
   model_id = summary['id']
   feature_groups = summary.get('feature_groups', [])
   components = traits.get('components')
   if not isinstance(components, dict):
     components = {}
+  trait_models = traits.get('models')
+  if isinstance(trait_models, list):
+    components = {
+      item['name']: item
+      for item in trait_models
+      if isinstance(item, dict) and isinstance(item.get('name'), str)
+    }
   extra_traits = {
     key: value
     for key, value in traits.items()
@@ -423,7 +589,8 @@ def render_model_details(properties):
       'status',
       'train_start',
       'train_end',
-      'components')
+      'components',
+      'models')
   }
   extra_traits_html = ''
   if extra_traits:
@@ -458,15 +625,7 @@ def render_model_details(properties):
   if components:
     return (
       details_prefix +
-      '<nav class="component-nav" aria-label="Model components">' +
-      ''.join(
-        '<a href="#component-' + html_text(name.replace('_', '-')) + '">' +
-        html_text(name.replace('_', ' ')) + '</a>'
-        for name in components) + '</nav>' +
-      ''.join(
-        render_model_component(name, component_traits)
-        for name, component_traits in components.items()
-        if isinstance(component_traits, dict)) +
+      render_model_collection(components) +
       extra_traits_html)
 
   return (
@@ -525,6 +684,7 @@ def render_index_page(models, selected_properties=None):
     .model-link strong { font-size: 14px; }
     .model-link span { color: var(--muted); font-size: 12px; }
     .model-link .in-progress { color: var(--score); font-weight: 700; }
+    .model-link .interrupted { color: #b42318; font-weight: 700; }
     .empty-list { padding: 0 24px; color: var(--muted); }
     main { min-width: 0; padding: 32px 40px 64px; }
     .model-header { display: flex; align-items: end; justify-content: space-between;
@@ -542,18 +702,47 @@ def render_index_page(models, selected_properties=None):
     .model-meta dd { margin: 4px 0 0; font-size: 18px; font-weight: 650; }
     .model-section { padding: 28px 0; border-bottom: 1px solid var(--line); }
     .model-section p { color: var(--muted); }
-    .component-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px 0;
-      border-bottom: 1px solid var(--line); }
-    .component-nav a { padding: 7px 11px; border: 1px solid var(--line);
-      text-decoration: none; text-transform: capitalize; }
-    .model-component { margin-top: 34px; padding: 28px; border: 1px solid var(--line);
+    .component-workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr);
+      gap: 28px; align-items: start; margin-top: 28px; }
+    .component-sidebar { position: sticky; top: 20px; max-height: calc(100vh - 40px);
+      overflow: auto; border: 1px solid var(--line); background: var(--panel); }
+    .component-tools { display: grid; grid-template-columns: 1fr; gap: 9px;
+      padding: 16px; border-bottom: 1px solid var(--line); }
+    .component-tools label { font-size: 13px; font-weight: 700; }
+    .component-tools input, .component-tools select { width: 100%; height: 36px;
+      border: 1px solid #aeb8c1; background: #fff; padding: 0 10px; font: inherit; }
+    .component-tools output { color: var(--muted); font-size: 12px; }
+    .component-group { padding: 14px 10px; border-bottom: 1px solid var(--line); }
+    .component-group:last-child { border-bottom: 0; }
+    .component-group h3 { display: flex; justify-content: space-between; margin: 0 7px 8px;
+      color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    .component-group h3 span { font-variant-numeric: tabular-nums; }
+    .component-nav { display: grid; gap: 3px; }
+    .component-nav a { display: grid; grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px; padding: 9px 8px; border-left: 3px solid transparent;
+      color: inherit; text-decoration: none; text-transform: capitalize; }
+    .component-nav a:hover { background: #e9edef; }
+    .component-nav a[aria-current="page"] { border-left-color: var(--accent);
+      background: var(--selected); }
+    .component-nav a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .component-nav a small { color: var(--muted); font-size: 10px; }
+    .component-detail { min-width: 0; }
+    .model-component { margin: 0; padding: 28px; border: 1px solid var(--line);
       scroll-margin-top: 20px; }
+    [hidden] { display: none !important; }
     .component-header { display: flex; justify-content: space-between; gap: 20px;
       padding-bottom: 18px; border-bottom: 1px solid var(--line); }
     .component-header h2 { margin-top: 4px; font-size: 23px; }
     .component-header p { margin: 7px 0 0; color: var(--muted); }
-    .component-published { align-self: start; padding: 5px 9px; color: var(--accent);
+    .component-badges { display: flex; align-self: start; flex-wrap: wrap;
+      justify-content: end; gap: 7px; }
+    .component-published { padding: 5px 9px; color: var(--accent);
       background: var(--selected); font-size: 12px; font-weight: 700; }
+    .component-status { padding: 5px 9px; color: var(--muted); background: var(--panel);
+      font-size: 12px; font-weight: 700; }
+    .component-status-training { color: #925500; background: #fff1d6; }
+    .component-status-completed { color: var(--accent); background: var(--selected); }
+    .component-status-interrupted { color: #b42318; background: #fee4e2; }
     .component-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       margin: 0; border-bottom: 1px solid var(--line); }
     .component-meta div { padding: 16px 16px 16px 0; }
@@ -603,6 +792,11 @@ def render_index_page(models, selected_properties=None):
     .welcome { max-width: 620px; padding-top: 15vh; }
     .welcome h1 { color: var(--ink); }
     pre { overflow: auto; padding: 16px; background: var(--panel); font-size: 12px; }
+    @media (max-width: 1180px) {
+      .component-workspace { grid-template-columns: 1fr; }
+      .component-sidebar { position: static; max-height: none; }
+      .component-group { max-height: 250px; overflow: auto; }
+    }
     @media (max-width: 820px) {
       .shell { grid-template-columns: 1fr; }
       .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -640,6 +834,79 @@ def render_index_page(models, selected_properties=None):
         count.value = `${visible} of ${rows.length}`;
         count.textContent = count.value;
       });
+    }
+    const componentFilter = document.getElementById('component-filter');
+    if (componentFilter) {
+      const links = Array.from(document.querySelectorAll('.component-link'));
+      const articles = Array.from(document.querySelectorAll('.model-component'));
+      const statusFilter = document.getElementById('component-status-filter');
+      const count = document.getElementById('component-count');
+      const groups = Array.from(document.querySelectorAll('.component-group'));
+
+      const selectComponent = (link, updateHash = true) => {
+        for (const item of links) {
+          if (item === link) {
+            item.setAttribute('aria-current', 'page');
+          } else {
+            item.removeAttribute('aria-current');
+          }
+        }
+        for (const article of articles) {
+          article.hidden = '#' + article.id !== link.hash;
+        }
+        if (updateHash) {
+          history.replaceState(null, '', link.hash);
+        }
+      };
+
+      const applyComponentFilter = () => {
+        const query = componentFilter.value.trim().toLowerCase();
+        const status = statusFilter.value;
+        let visible = 0;
+        for (const link of links) {
+          const matchesQuery = !query || link.dataset.model.includes(query);
+          const matchesStatus = (
+            status === 'all' ||
+            link.dataset.status === status ||
+            (status === 'runtime' && link.dataset.runtime === 'true'));
+          const show = matchesQuery && matchesStatus;
+          link.hidden = !show;
+          visible += show ? 1 : 0;
+        }
+        for (const group of groups) {
+          group.hidden = !Array.from(
+            group.querySelectorAll('.component-link')).some(link => !link.hidden);
+        }
+        count.value = `${visible} of ${links.length}`;
+        count.textContent = count.value;
+
+        const selected = links.find(
+          link => link.getAttribute('aria-current') === 'page');
+        if (!selected || selected.hidden) {
+          const firstVisible = links.find(link => !link.hidden);
+          if (firstVisible) {
+            selectComponent(firstVisible, false);
+          } else {
+            for (const article of articles) {
+              article.hidden = true;
+            }
+          }
+        }
+      };
+
+      for (const link of links) {
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          selectComponent(link);
+        });
+      }
+      componentFilter.addEventListener('input', applyComponentFilter);
+      statusFilter.addEventListener('change', applyComponentFilter);
+
+      const hashLink = links.find(link => link.hash === window.location.hash);
+      if (hashLink) {
+        selectComponent(hashLink, false);
+      }
     }
   </script>
 </body>

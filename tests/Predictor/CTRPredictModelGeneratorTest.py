@@ -63,6 +63,8 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'fit_iterations': 8,
       'selection_patience': 2,
       'training_patience': 6,
+      'campaign_model_activity_period': 604800,
+      'min_campaign_model_imps': 250000,
       'data_delay': 86400,
     })
 
@@ -83,6 +85,8 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual(8, config.fit_iterations)
     self.assertEqual(2, config.selection_patience)
     self.assertEqual(6, config.training_patience)
+    self.assertEqual(604800, config.campaign_model_activity_period)
+    self.assertEqual(250000, config.min_campaign_model_imps)
     self.assertEqual(86400, config.data_delay)
 
   def test_required_workspace_root(self):
@@ -131,6 +135,12 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         pathlib.Path(temp_dir))
       self.assertEqual(TRAINER_MODULE.FEATURE_CONFIG, TRAINER_MODULE.json.loads(
         features_config_file.read_text()))
+
+  def test_campaign_model_defaults(self):
+    config = MODULE.Config()
+
+    self.assertEqual(14 * 24 * 60 * 60, config.campaign_model_activity_period)
+    self.assertEqual(100000, config.min_campaign_model_imps)
 
   def test_campaign_correction_config_is_separate_and_campaign_conditioned(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -248,7 +258,80 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         self.assertEqual('2026-08-24T15:55:15Z', traits['train_start'])
         self.assertGreater(traits['pid'], 0)
 
+        in_progress.publish_model_plan([
+          {
+            'name': 'common',
+            'kind': 'common',
+            'status': 'planned',
+          },
+          {
+            'name': 'campaign_123',
+            'kind': 'campaign',
+            'status': 'planned',
+            'db_campaign_id': 123,
+            'campaign_name': 'Campaign name',
+          },
+        ], eligible_campaigns=1)
+        with unittest.mock.patch.object(
+            TRAINER_MODULE,
+            'utc_now_text',
+            side_effect=[
+              '2026-08-24T16:00:00Z',
+              '2026-08-24T16:05:00Z',
+            ]):
+          in_progress.start_models('campaign_123')
+          in_progress.complete_models('campaign_123')
+
+        traits = TRAINER_MODULE.json.loads(traits_file.read_text())
+        self.assertEqual(2, traits['model_plan']['models'])
+        self.assertEqual(1, traits['model_plan']['campaign_models'])
+        self.assertEqual(1, traits['model_plan']['eligible_campaigns'])
+        campaign = traits['models'][1]
+        self.assertEqual('completed', campaign['status'])
+        self.assertEqual('2026-08-24T16:00:00Z', campaign['train_start'])
+        self.assertEqual('2026-08-24T16:05:00Z', campaign['train_end'])
+        self.assertFalse((in_progress.path / '.traits.json.tmp').exists())
+
       self.assertFalse(in_progress.path.exists())
+
+  def test_interrupted_model_is_preserved_with_current_phase(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      model_root = pathlib.Path(temp_dir)
+      train_start = TRAINER_MODULE.datetime.datetime(
+        2026,
+        8,
+        24,
+        15,
+        55,
+        15,
+        tzinfo=TRAINER_MODULE.datetime.timezone.utc)
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'utc_now_text',
+          side_effect=[
+            '2026-08-24T16:00:00Z',
+            '2026-08-24T16:05:00Z',
+          ]):
+        with self.assertRaisesRegex(RuntimeError, 'training failed'):
+          with TRAINER_MODULE.InProgressModel(
+              model_root, train_start) as in_progress:
+            in_progress.publish_model_plan([{
+              'name': 'common',
+              'kind': 'common',
+              'status': 'planned',
+            }])
+            in_progress.start_models('common')
+            raise RuntimeError('training failed')
+
+      self.assertTrue(in_progress.path.is_dir())
+      traits = TRAINER_MODULE.json.loads(
+        (in_progress.path / 'traits.json').read_text())
+      self.assertEqual('interrupted', traits['status'])
+      self.assertEqual('2026-08-24T16:05:00Z', traits['train_end'])
+      self.assertEqual('RuntimeError', traits['interruption_reason'])
+      self.assertEqual('interrupted', traits['models'][0]['status'])
+      self.assertEqual('2026-08-24T16:05:00Z', traits['models'][0]['train_end'])
 
   def test_filter_validation_sets_collects_dataset_sizes(self):
     with tempfile.TemporaryDirectory() as temp_dir:

@@ -182,6 +182,59 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('sigmoid(common + campaign_correction)', page)
     self.assertIn('component-published', page)
     self.assertEqual(3, page.count('class="model-component"'))
+    self.assertIn('class="component-sidebar"', page)
+    self.assertIn('href="#component-stable-common" aria-current="page"', page)
+    self.assertIn(
+      '<article class="model-component" id="component-common" hidden>',
+      page)
+
+  def test_renders_flat_models_and_campaign_name(self):
+    properties = self.model_properties([])
+    properties['summary']['components_count'] = 4
+    properties['traits'] = {
+      'models': [
+        {'name': 'common', 'kind': 'common', 'features_importance': []},
+        {
+          'name': 'common_denoise',
+          'kind': 'denoise_residual',
+          'features_importance': [],
+        },
+        {
+          'name': 'common_stable',
+          'kind': 'common_stable',
+          'runtime': True,
+          'features_importance': [],
+        },
+        {
+          'name': 'campaign_123',
+          'kind': 'campaign',
+          'runtime': True,
+          'db_campaign_id': 123,
+          'campaign_name': 'Campaign <name>',
+          'weight': '0.7',
+          'status': 'completed',
+          'train_start': '2026-08-23T11:00:00Z',
+          'train_end': '2026-08-23T11:30:00Z',
+          'features_importance': [],
+        },
+      ],
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('Common denoise', page)
+    self.assertIn('Common stable', page)
+    self.assertIn('Campaign 123 — Campaign &lt;name&gt;', page)
+    self.assertIn('Models within bundle', page)
+    self.assertIn('Core models<span>3</span>', page)
+    self.assertIn('Campaign models<span>1</span>', page)
+    self.assertIn('id="component-status-filter"', page)
+    self.assertIn(
+      'href="#component-common-stable" aria-current="page"',
+      page)
+    self.assertIn('campaign_123 123 campaign &lt;name&gt;', page)
+    self.assertIn('2026-08-23T11:00:00Z', page)
+    self.assertIn('2026-08-23T11:30:00Z', page)
 
   def test_renders_in_progress_model_with_only_train_start(self):
     properties = {
@@ -200,6 +253,107 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('2026-08-24T15:55:15Z', page)
     self.assertNotIn('Train end', page)
     self.assertNotIn('Feature importance', page)
+    self.assertNotIn('>Config<', page)
+
+  def test_renders_in_progress_model_plan_and_model_timestamps(self):
+    properties = {
+      'summary': {
+        'id': '~20260824.155515',
+        'status': 'in_progress',
+        'train_start': '2026-08-24T15:55:15Z',
+        'models_count': 4,
+        'campaign_models_count': 1,
+        'completed_models_count': 1,
+      },
+      'config': {},
+      'traits': {
+        'models': [
+          {
+            'name': 'common',
+            'kind': 'common',
+            'status': 'completed',
+            'train_start': '2026-08-24T16:00:00Z',
+            'train_end': '2026-08-24T16:30:00Z',
+          },
+          {
+            'name': 'common_denoise',
+            'kind': 'denoise_residual',
+            'status': 'planned',
+          },
+          {
+            'name': 'common_stable',
+            'kind': 'common_stable',
+            'status': 'planned',
+          },
+          {
+            'name': 'campaign_123',
+            'kind': 'campaign',
+            'status': 'training',
+            'db_campaign_id': 123,
+            'campaign_name': 'Campaign <name>',
+            'eligible_training_impressions': 150000,
+            'train_start': '2026-08-24T16:31:00Z',
+          },
+        ],
+      },
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('<dt>Planned models</dt><dd>4</dd>', page)
+    self.assertIn('<dt>Campaign models</dt><dd>1</dd>', page)
+    self.assertIn('<dt>Completed models</dt><dd>1</dd>', page)
+    self.assertIn('Campaign 123 — Campaign &lt;name&gt;', page)
+    self.assertIn('150000', page)
+    self.assertIn('2026-08-24T16:31:00Z', page)
+    self.assertIn('component-status-training', page)
+    self.assertIn('Models within bundle', page)
+    self.assertIn(
+      'href="#component-campaign-123" aria-current="page"',
+      page)
+    self.assertNotIn('Feature importance', page)
+
+  def test_renders_interrupted_training_and_model_phase(self):
+    properties = {
+      'summary': {
+        'id': '~20260824.155515',
+        'status': 'interrupted',
+        'train_start': '2026-08-24T15:55:15Z',
+        'train_end': '2026-08-24T16:05:00Z',
+        'models_count': 2,
+        'campaign_models_count': 1,
+        'completed_models_count': 1,
+        'interrupted_models_count': 1,
+      },
+      'config': {},
+      'traits': {
+        'status': 'interrupted',
+        'models': [
+          {
+            'name': 'common_stable',
+            'kind': 'common_stable',
+            'status': 'completed',
+          },
+          {
+            'name': 'campaign_123',
+            'kind': 'campaign',
+            'status': 'interrupted',
+            'db_campaign_id': 123,
+            'campaign_name': 'Interrupted campaign',
+            'train_start': '2026-08-24T16:00:00Z',
+            'train_end': '2026-08-24T16:05:00Z',
+          },
+        ],
+      },
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('Training interrupted', page)
+    self.assertIn('<dt>Interrupted models</dt><dd>1</dd>', page)
+    self.assertIn('component-status-interrupted', page)
+    self.assertIn('Interrupted campaign', page)
+    self.assertIn('2026-08-24T16:05:00Z', page)
     self.assertNotIn('>Config<', page)
 
   def test_invalid_scores_do_not_break_bar_scale(self):

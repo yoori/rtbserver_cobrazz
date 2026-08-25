@@ -84,6 +84,53 @@ class RImpressionTrainExporter(object):
       text=True)
     return int(result.stdout.strip())
 
+  def eligible_campaigns(
+      self,
+      date_from,
+      date_to,
+      activity_period,
+      min_impressions,
+  ):
+    if activity_period <= 0:
+      raise ValueError('activity_period must be positive')
+    if min_impressions <= 0:
+      raise ValueError('min_impressions must be positive')
+    training_condition = self.training_condition()
+    validation_condition = self.validation_condition()
+    query = (
+      'SELECT campaign_id, '
+      'countIf(' + training_condition + ') AS training_impressions, '
+      'countIf(' + validation_condition + ') AS validation_impressions '
+      'FROM RImpression '
+      "WHERE timestamp >= '" + date_from + "' "
+      "AND timestamp < '" + date_to + "' "
+      'AND campaign_id > 0 '
+      'AND campaign_id IN ('
+      'SELECT campaign_id FROM RImpression '
+      'WHERE timestamp >= subtractSeconds('
+      "toDateTime('" + date_to + "'), " + str(activity_period) + ') '
+      "AND timestamp < '" + date_to + "' "
+      'AND campaign_id > 0 '
+      'GROUP BY campaign_id) '
+      'GROUP BY campaign_id '
+      'HAVING training_impressions > ' + str(min_impressions) + ' '
+      'ORDER BY campaign_id')
+    result = subprocess.run(
+      self._command + ['--query', query],
+      check=True,
+      capture_output=True,
+      text=True)
+    campaigns = []
+    for line in result.stdout.splitlines():
+      campaign_id, training_impressions, validation_impressions = (
+        line.split('\t'))
+      campaigns.append((
+        int(campaign_id),
+        int(training_impressions),
+        int(validation_impressions),
+      ))
+    return campaigns
+
   def export_chunks(
       self,
       output_dir,
@@ -211,6 +258,13 @@ class RImpressionTrainExporter(object):
     return cls._source_partition_expression() + ' NOT IN (' + ','.join(
       str(partition) for partition in cls.VALIDATION_PARTITIONS) + ')'
 
+  @staticmethod
+  def campaign_condition(campaign_id):
+    campaign_id = int(campaign_id)
+    if campaign_id <= 0:
+      raise ValueError('campaign_id must be positive')
+    return 'campaign_id = ' + str(campaign_id)
+
   @classmethod
   def training_partition_condition(cls, partition_index, partition_count):
     if partition_count <= 0:
@@ -238,15 +292,19 @@ class RImpressionTrainExporter(object):
       partition_count,
       date_from,
       date_to,
+      condition=None,
   ):
     remaining_rows = max_rows
     for partition_index in range(partition_count):
       if remaining_rows == 0:
         break
       rows_to_export = min(chunk_rows, remaining_rows)
-      condition = self.training_partition_condition(
+      partition_condition = self.training_partition_condition(
         partition_index,
         partition_count)
+      if condition is not None:
+        partition_condition = (
+          '(' + partition_condition + ') AND (' + condition + ')')
       chunks = self.export_chunks(
         output_dir,
         file_prefix + '-' + str(partition_index).zfill(3),
@@ -254,7 +312,7 @@ class RImpressionTrainExporter(object):
         rows_to_export,
         date_from,
         date_to,
-        condition)
+        partition_condition)
       try:
         for output_path, row_count in chunks:
           remaining_rows -= row_count
@@ -336,7 +394,10 @@ class RImpressionTrainExporter(object):
       "AND timestamp < '" + date_to + "' ")
     if condition is not None:
       query += 'AND (' + condition + ') '
-    return query + 'LIMIT ' + str(train_rows) + ' FORMAT CSVWithNames'
+    return (
+      query +
+      'ORDER BY timestamp DESC '
+      'LIMIT ' + str(train_rows) + ' FORMAT CSVWithNames')
 
   @staticmethod
   def _count_query(date_from, date_to, condition=None):

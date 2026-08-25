@@ -10,7 +10,11 @@ class ModelNotFound(Exception):
 
 class CTRModelRepository:
   REQUIRED_FILES = ('model.cbm', 'config.json', 'traits.json')
-  COMPONENT_MODEL_FILES = ('common.cbm', 'campaign-correction.cbm')
+  COMPONENT_MODEL_FILES = (
+    'common.cbm',
+    'common_denoise.cbm',
+    'campaign-correction.cbm',
+  )
 
   def __init__(self, model_root):
     self.model_root = pathlib.Path(model_root)
@@ -29,14 +33,14 @@ class CTRModelRepository:
   def all_model_ids(self):
     if not self.model_root.is_dir():
       return []
-    in_progress_ids = sorted(
+    training_ids = sorted(
       (
         path.name
         for path in self.model_root.iterdir()
-        if self.in_progress_status_(path.name) is not None
+        if self.training_status_(path.name) is not None
       ),
       reverse=True)
-    return in_progress_ids + self.model_ids()
+    return training_ids + self.model_ids()
 
   def latest_model_id(self):
     model_ids = self.model_ids()
@@ -45,12 +49,31 @@ class CTRModelRepository:
     return model_ids[0]
 
   def model_summary(self, model_id):
-    in_progress = self.in_progress_status_(model_id)
-    if in_progress is not None:
+    training_status = self.training_status_(model_id)
+    if training_status is not None:
+      models = training_status.get('models')
+      if not isinstance(models, list):
+        models = []
+      campaign_models = [
+        model
+        for model in models
+        if isinstance(model, dict) and model.get('kind') == 'campaign'
+      ]
       return {
         'id': model_id,
-        'status': 'in_progress',
-        'train_start': in_progress['train_start'],
+        'status': training_status['status'],
+        'train_start': training_status['train_start'],
+        'train_end': training_status.get('train_end'),
+        'models_count': len(models),
+        'campaign_models_count': len(campaign_models),
+        'completed_models_count': sum(
+          1
+          for model in models
+          if isinstance(model, dict) and model.get('status') == 'completed'),
+        'interrupted_models_count': sum(
+          1
+          for model in models
+          if isinstance(model, dict) and model.get('status') == 'interrupted'),
       }
 
     model_path = self.model_path(model_id)
@@ -59,6 +82,14 @@ class CTRModelRepository:
     algorithm = self.first_(config.get('algorithms'))
     model = self.first_(algorithm.get('models')) if algorithm else None
     feature_groups = model.get('features', []) if model else []
+    trait_models = traits.get('models')
+    if not isinstance(trait_models, list):
+      trait_models = []
+    trait_models_by_name = {
+      item.get('name'): item
+      for item in trait_models
+      if isinstance(item, dict) and isinstance(item.get('name'), str)
+    }
     components = traits.get('components')
     if not isinstance(components, dict):
       components = {}
@@ -66,8 +97,11 @@ class CTRModelRepository:
     if not isinstance(training_pipeline, dict):
       training_pipeline = {}
     published_component = training_pipeline.get(
-      'published_component', 'stable_common')
-    published_traits = components.get(published_component, traits)
+      'published_model',
+      training_pipeline.get('published_component', 'stable_common'))
+    published_traits = trait_models_by_name.get(
+      published_component,
+      components.get(published_component, traits))
     if not isinstance(published_traits, dict):
       published_traits = traits
     feature_importance = published_traits.get('features_importance', [])
@@ -82,18 +116,20 @@ class CTRModelRepository:
       'feature_groups_count': len(feature_groups),
       'features_importance_count': len(feature_importance),
       'component_names': list(components),
-      'components_count': len(components),
+      'components_count': len(trait_models) or len(components),
+      'model_names': list(trait_models_by_name),
+      'models_count': len(trait_models),
       'published_component': (
-        published_component if components else None),
+        published_component if trait_models or components else None),
     }
 
   def model_properties(self, model_id):
-    in_progress = self.in_progress_status_(model_id)
-    if in_progress is not None:
+    training_status = self.training_status_(model_id)
+    if training_status is not None:
       return {
         'summary': self.model_summary(model_id),
         'config': {},
-        'traits': {},
+        'traits': training_status,
       }
 
     model_path = self.model_path(model_id)
@@ -107,12 +143,27 @@ class CTRModelRepository:
     model_path = self.model_path(model_id)
     traits = self.read_json_(model_path / 'traits.json')
     source_traits = traits
+    trait_models = traits.get('models')
+    if isinstance(trait_models, list):
+      models_by_name = {
+        item.get('name'): item
+        for item in trait_models
+        if isinstance(item, dict) and isinstance(item.get('name'), str)
+      }
+      if component is None:
+        training_pipeline = traits.get('training_pipeline')
+        if not isinstance(training_pipeline, dict):
+          training_pipeline = {}
+        component = training_pipeline.get('published_model', 'common_stable')
+      if component not in models_by_name:
+        raise ModelNotFound("Unknown model component '" + component + "'")
+      source_traits = models_by_name[component]
     components = traits.get('components')
-    if component is not None:
+    if not isinstance(trait_models, list) and component is not None:
       if not isinstance(components, dict) or component not in components:
         raise ModelNotFound("Unknown model component '" + component + "'")
       source_traits = components[component]
-    elif isinstance(components, dict):
+    elif not isinstance(trait_models, list) and isinstance(components, dict):
       training_pipeline = traits.get('training_pipeline')
       if not isinstance(training_pipeline, dict):
         training_pipeline = {}
@@ -132,9 +183,22 @@ class CTRModelRepository:
     }
 
   def model_file(self, model_id, file_name):
-    if file_name not in self.REQUIRED_FILES + self.COMPONENT_MODEL_FILES:
+    model_path = self.model_path(model_id)
+    allowed_files = set(self.REQUIRED_FILES + self.COMPONENT_MODEL_FILES)
+    traits = self.read_json_(model_path / 'traits.json')
+    trait_models = traits.get('models')
+    if isinstance(trait_models, list):
+      allowed_files.update(
+        item['file']
+        for item in trait_models
+        if (
+          isinstance(item, dict) and
+          isinstance(item.get('file'), str) and
+          '/' not in item['file'] and
+          item['file'] not in ('.', '..')))
+    if file_name not in allowed_files:
       raise ModelNotFound('Unknown model file')
-    path = self.model_path(model_id) / file_name
+    path = model_path / file_name
     if not path.is_file():
       raise ModelNotFound("Model file '" + file_name + "' not found")
     return path
@@ -159,7 +223,7 @@ class CTRModelRepository:
       not path.name.startswith('~') and
       all((path / name).is_file() for name in self.REQUIRED_FILES))
 
-  def in_progress_status_(self, model_id):
+  def training_status_(self, model_id):
     if (
         not isinstance(model_id, str) or
         not model_id.startswith('~') or
@@ -177,18 +241,22 @@ class CTRModelRepository:
     if not traits_file.is_file():
       return None
     try:
-      status = self.read_json_(traits_file)
-      pid = int(status.get('pid', 0))
-      train_start = status['train_start']
+      traits = self.read_json_(traits_file)
+      pid = int(traits.get('pid', 0))
+      train_start = traits['train_start']
     except (KeyError, TypeError, ValueError, RuntimeError):
       return None
-    if status.get('status') != 'in_progress' or not self.process_alive_(pid):
+    if traits.get('status') not in ('in_progress', 'interrupted'):
       return None
-    return {
-      'status': 'in_progress',
-      'train_start': train_start,
-      'pid': pid,
-    }
+    if traits.get('status') == 'in_progress' and not self.process_alive_(pid):
+      traits['status'] = 'interrupted'
+      traits['interruption_reason'] = 'process_not_running'
+      models = traits.get('models')
+      if isinstance(models, list):
+        for model in models:
+          if isinstance(model, dict) and model.get('status') == 'training':
+            model['status'] = 'interrupted'
+    return traits
 
   @staticmethod
   def process_alive_(pid):

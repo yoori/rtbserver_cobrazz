@@ -35,6 +35,7 @@ def train_chunk(
     learning_rate=0.1,
     depth=6,
     loss_function='Logloss',
+    allow_const_label=True,
     verbose=0,
     train_dir=train_dir,
     use_best_model=False)

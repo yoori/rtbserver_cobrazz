@@ -83,6 +83,31 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
     self.assertEqual({}, result)
     connect.assert_not_called()
 
+  def test_resolves_campaign_names_in_one_query(self):
+    cursor = unittest.mock.MagicMock()
+    cursor.__enter__.return_value = cursor
+    cursor.fetchall.return_value = [
+      (123, 'First campaign'),
+      (456, 'Second campaign'),
+      (789, None),
+    ]
+    connection = unittest.mock.MagicMock()
+    connection.__enter__.return_value = connection
+    connection.cursor.return_value = cursor
+
+    with unittest.mock.patch(
+        'rtbserver_utils.PostgresFeatureNameResolver.psycopg2.connect',
+        return_value=connection):
+      result = PostgresFeatureNameResolver(
+        'postgres connection').resolve_campaign_names([456, 123, 456, 789])
+
+    cursor.execute.assert_called_once()
+    self.assertEqual(([123, 456, 789],), cursor.execute.call_args.args[1])
+    self.assertEqual({
+      123: 'First campaign',
+      456: 'Second campaign',
+    }, result)
+
 
 if __name__ == '__main__':
   unittest.main()

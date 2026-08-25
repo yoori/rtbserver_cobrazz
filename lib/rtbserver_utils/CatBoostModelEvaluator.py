@@ -59,12 +59,14 @@ def evaluate_model(
     baseline_file=None,
     raw_predictions_file=None,
     model_raw_predictions_file=None,
+    prediction_weight=1.0,
+    prediction_weights=None,
 ):
   model = CatBoostClassifier()
   model.load_model(str(pathlib.Path(model_file).resolve()))
   validation_pool = Pool(
     'libsvm://' + str(pathlib.Path(svm_file).resolve()))
-  raw_predictions = numpy.asarray(
+  model_raw_predictions = numpy.asarray(
     model.predict(
       validation_pool,
       prediction_type='RawFormulaVal'),
@@ -72,12 +74,15 @@ def evaluate_model(
   if model_raw_predictions_file is not None:
     numpy.savetxt(
       pathlib.Path(model_raw_predictions_file).resolve(),
-      raw_predictions,
+      model_raw_predictions,
       fmt='%.17g')
+  raw_predictions = model_raw_predictions * prediction_weight
+  baseline = None
   if baseline_file is not None:
-    raw_predictions += load_baseline(
+    baseline = load_baseline(
       baseline_file,
       validation_pool.num_row())
+    raw_predictions += baseline
   if raw_predictions_file is not None:
     numpy.savetxt(
       pathlib.Path(raw_predictions_file).resolve(),
@@ -91,6 +96,20 @@ def evaluate_model(
   result = {
     'Logloss': float(logloss),
   }
+  if prediction_weights is not None:
+    if baseline is None:
+      baseline = numpy.zeros_like(model_raw_predictions)
+    result['weighted_logloss'] = [
+      {
+        'weight': float(weight),
+        'Logloss': float(numpy.mean(
+          numpy.logaddexp(
+            0,
+            baseline + model_raw_predictions * weight) -
+          labels * (baseline + model_raw_predictions * weight))),
+      }
+      for weight in prediction_weights
+    ]
   if include_ctr_thresholds:
     predictions = numpy.exp(-numpy.logaddexp(0, -raw_predictions))
     result['ctr_thresholds'] = ctr_threshold_statistics(predictions, labels)
@@ -105,14 +124,21 @@ def main():
   parser.add_argument('--baseline-file')
   parser.add_argument('--raw-predictions-file')
   parser.add_argument('--model-raw-predictions-file')
+  parser.add_argument('--prediction-weight', type=float, default=1.0)
+  parser.add_argument('--prediction-weights')
   args = parser.parse_args()
+  prediction_weights = (
+    [float(value) for value in args.prediction_weights.split(',')]
+    if args.prediction_weights is not None else None)
   print(json.dumps(evaluate_model(
     args.model_file,
     args.svm_file,
     args.ctr_thresholds,
     args.baseline_file,
     args.raw_predictions_file,
-    args.model_raw_predictions_file)))
+    args.model_raw_predictions_file,
+    args.prediction_weight,
+    prediction_weights)))
 
 
 if __name__ == '__main__':

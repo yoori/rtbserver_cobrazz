@@ -22,6 +22,8 @@ class Config:
     self.fit_iterations = 10
     self.selection_patience = 3
     self.training_patience = 5
+    self.campaign_model_activity_period = 14 * 24 * 60 * 60
+    self.min_campaign_model_imps = 100000
     self.data_delay = None
     self.algorithm_id = 'catboost'
 
@@ -57,6 +59,12 @@ class Config:
     self.selection_patience = int(
       config_json.get('selection_patience', 3))
     self.training_patience = int(config_json.get('training_patience', 5))
+    self.campaign_model_activity_period = int(config_json.get(
+      'campaign_model_activity_period',
+      14 * 24 * 60 * 60))
+    self.min_campaign_model_imps = int(config_json.get(
+      'min_campaign_model_imps',
+      100000))
     web_server = config_json.get('web_server')
     if not isinstance(web_server, dict):
       raise ValueError("Configuration value 'web_server' is required")
@@ -96,7 +104,9 @@ class Config:
         'training_fit_steps',
         'fit_iterations',
         'selection_patience',
-        'training_patience'):
+        'training_patience',
+        'campaign_model_activity_period',
+        'min_campaign_model_imps'):
       if getattr(self, name) <= 0:
         raise ValueError(name + ' must be positive')
     if self.data_delay <= 0:

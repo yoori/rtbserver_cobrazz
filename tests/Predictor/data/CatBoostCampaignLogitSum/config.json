@@ -1,0 +1,59 @@
+{
+  "version": 4,
+  "default_weight": 0,
+  "algorithms": [
+    {
+      "id": "catboost_campaign_logit_sum_test",
+      "weight": 1,
+      "threshold": 0,
+      "aggregation": "logit_sum",
+      "models": [
+        {
+          "method": "catboost",
+          "features_size": 16384,
+          "weight": 1.0,
+          "predict_postprocess": "as_is",
+          "features": [
+            ["publisher"],
+            ["tag"],
+            ["sizeid"],
+            ["wd"],
+            ["hour"],
+            ["device"],
+            ["campaign"],
+            ["group"],
+            ["ccid"],
+            ["campaign_freq"],
+            ["campaign_freq_log"],
+            ["geoch"],
+            ["userch"]
+          ],
+          "file": "../CatBoostRuntime/model.cbm"
+        },
+        {
+          "method": "catboost",
+          "features_size": 16384,
+          "predict_postprocess": "as_is",
+          "campaigns_whitelist_file": "campaigns.txt",
+          "weight": 0.5,
+          "features": [
+            ["publisher"],
+            ["tag"],
+            ["sizeid"],
+            ["wd"],
+            ["hour"],
+            ["device"],
+            ["campaign"],
+            ["group"],
+            ["ccid"],
+            ["campaign_freq"],
+            ["campaign_freq_log"],
+            ["geoch"],
+            ["userch"]
+          ],
+          "file": "../CatBoostRuntime/model.cbm"
+        }
+      ]
+    }
+  ]
+}

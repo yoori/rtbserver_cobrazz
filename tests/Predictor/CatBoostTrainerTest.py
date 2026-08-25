@@ -91,10 +91,18 @@ class CatBoostTrainerTest(unittest.TestCase):
         baseline_file=baseline_file,
         raw_predictions_file=raw_predictions_file,
         model_raw_predictions_file=model_raw_predictions_file)
+      weighted_evaluation = evaluate_model(
+        second_model,
+        svm_file,
+        baseline_file=baseline_file,
+        prediction_weights=[0, 0.5, 1])
 
       self.assertGreater(first_metrics['Logloss'], 0)
       self.assertGreater(second_metrics['Logloss'], 0)
       self.assertGreater(evaluation['Logloss'], 0)
+      self.assertEqual(
+        [0, 0.5, 1],
+        [item['weight'] for item in weighted_evaluation['weighted_logloss']])
       self.assertEqual(
         20,
         len(raw_predictions_file.read_text().splitlines()))
@@ -104,6 +112,20 @@ class CatBoostTrainerTest(unittest.TestCase):
         numpy.loadtxt(baseline_file),
         rtol=1e-14,
         atol=1e-14)
+
+  def test_real_catboost_accepts_chunk_without_clicks(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      svm_file = temp_path / 'all-negative.libsvm'
+      svm_file.write_text('\n'.join(
+        '0 1:' + str(index % 3)
+        for index in range(20)) + '\n')
+      model_file = temp_path / 'model.cbm'
+
+      metrics = train_chunk(svm_file, model_file, iterations=2)
+
+      self.assertGreater(metrics['Logloss'], 0)
+      self.assertTrue(model_file.is_file())
 
   def test_save_campaign_manager_model_bundle(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -125,49 +147,85 @@ class CatBoostTrainerTest(unittest.TestCase):
 
       result_dir = common_trainer.save_campaign_manager_model_bundle(
         output_dir,
-        {
-          'common': {
+        [
+          {
+            'name': 'common',
             'trainer': common_trainer,
             'model': ModelStub(),
             'dataset_sizes': {'train': {'rows': 10, 'clicks': 1}},
+            'traits': {'kind': 'common', 'runtime': False},
           },
-          'campaign_correction': {
+          {
+            'name': 'common_denoise',
             'trainer': correction_trainer,
             'model': ModelStub(),
+            'traits': {'kind': 'denoise_residual', 'runtime': False},
           },
-          'stable_common': {
+          {
+            'name': 'common_stable',
             'trainer': common_trainer,
             'model': ModelStub(),
+            'traits': {
+              'kind': 'common_stable',
+              'runtime': True,
+              'status': 'completed',
+              'train_start': '2026-08-24T12:15:00Z',
+              'train_end': '2026-08-24T12:45:00Z',
+            },
           },
-        },
+          {
+            'name': 'campaign_123',
+            'trainer': correction_trainer,
+            'model': ModelStub(),
+            'traits': {
+              'kind': 'campaign',
+              'runtime': True,
+              'db_campaign_id': 123,
+              'runtime_campaign_group_id': 123,
+              'campaign_name': 'Campaign name',
+              'weight': 0.7,
+            },
+          },
+        ],
         timestamp='20260824.120000',
         algorithm_id='aligned_catboost',
         train_start='2026-08-24T12:00:00Z',
         train_end='2026-08-24T13:00:00Z')
 
       self.assertTrue((result_dir / 'common.cbm').is_file())
-      self.assertTrue((result_dir / 'campaign-correction.cbm').is_file())
+      self.assertTrue((result_dir / 'common_denoise.cbm').is_file())
       self.assertTrue((result_dir / 'model.cbm').is_file())
+      self.assertTrue((result_dir / 'campaign_123.cbm').is_file())
+      self.assertEqual(
+        '123\n',
+        (result_dir / 'campaign_123.campaigns').read_text())
       config = json.loads((result_dir / 'config.json').read_text())
-      self.assertEqual(3, config['version'])
+      self.assertEqual(4, config['version'])
       algorithm = config['algorithms'][0]
       self.assertEqual('logit_sum', algorithm['aggregation'])
-      self.assertEqual(1, len(algorithm['models']))
+      self.assertEqual(2, len(algorithm['models']))
       self.assertEqual('as_is', algorithm['models'][0]['predict_postprocess'])
       self.assertEqual('model.cbm', algorithm['models'][0]['file'])
+      self.assertEqual(0.7, algorithm['models'][1]['weight'])
+      self.assertEqual(
+        'campaign_123.campaigns',
+        algorithm['models'][1]['campaigns_whitelist_file'])
       traits = json.loads((result_dir / 'traits.json').read_text())
       self.assertEqual([
         'common',
-        'campaign_correction',
-        'stable_common',
-      ], list(traits['components']))
+        'common_denoise',
+        'common_stable',
+        'campaign_123',
+      ], [model['name'] for model in traits['models']])
       self.assertEqual(
-        'common',
-        traits['components']['campaign_correction']['baseline_component'])
+        'Campaign name',
+        traits['models'][3]['campaign_name'])
       self.assertEqual(
-        'campaign_correction',
-        traits['components']['stable_common']['subtracted_component'])
-      self.assertTrue(traits['components']['stable_common']['published'])
+        '2026-08-24T12:15:00Z',
+        traits['models'][2]['train_start'])
+      self.assertEqual(
+        '2026-08-24T12:45:00Z',
+        traits['models'][2]['train_end'])
 
   def test_save_campaign_manager_model(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -721,6 +779,79 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertIsNotNone(stable_baselines[1])
       self.assertIn('campaign_correction', result)
       self.assertIn('stable_common', result)
+
+  def test_residual_training_merges_chunks_and_optimizes_weight(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      work_dir = temp_path / 'work'
+      work_dir.mkdir()
+      trainer = CatBoostTrainer(features_dimension=4)
+      baselines = []
+      merge_models = []
+
+      def train_chunk(
+          svm_file,
+          output_model,
+          iterations,
+          initial_model=None,
+          baseline_file=None,
+          merge_model=None,
+      ):
+        del svm_file, iterations, initial_model
+        baselines.append(pathlib.Path(baseline_file).name)
+        merge_models.append(merge_model)
+        pathlib.Path(output_model).write_text('model')
+        return {'Logloss': 0.2}
+
+      def predict_raw(model_file, svm_file, output_file, baseline_file=None):
+        del model_file, svm_file, baseline_file
+        pathlib.Path(output_file).write_text('0.3\n')
+
+      trainer.train_chunk_ = train_chunk
+      trainer.predict_raw_ = predict_raw
+      trainer.evaluate_model_sets_ = lambda model, inputs: {
+        'Logloss': 0.1,
+        'sets': [],
+      }
+      trainer.optimize_prediction_weight_ = lambda model, inputs: {
+        'weight': 0.65,
+        'base_logloss': 0.12,
+        'combined_logloss': 0.1,
+      }
+      trainer.evaluate_model_with_ctr_thresholds_ = (
+        lambda model, svm, baseline, weight: {
+          'Logloss': 0.1,
+          'ctr_thresholds': [],
+        })
+      chunks = []
+      for index in range(2):
+        baseline = temp_path / ('stable-' + str(index) + '.baseline')
+        baseline.write_text('0.2\n')
+        chunks.append((temp_path / ('chunk-' + str(index)), baseline))
+
+      class CatBoostClassifierStub:
+        def load_model(self, model_file):
+          self.model_file = model_file
+
+      with unittest.mock.patch(
+          'rtbserver_utils.CatBoostTrainer.CatBoostClassifier',
+          CatBoostClassifierStub):
+        result = trainer.train_residual_from_chunks_(
+          chunks,
+          [(temp_path / 'validation', temp_path / 'validation-baseline')],
+          [(temp_path / 'final', temp_path / 'final-baseline')],
+          fit_iterations=1,
+          patience=2,
+          work_dir=work_dir,
+          fit_steps=2)
+
+      self.assertEqual('stable-0.baseline', baselines[0])
+      self.assertEqual('combined-002.baseline', baselines[1])
+      self.assertIsNone(merge_models[0])
+      self.assertIsNotNone(merge_models[1])
+      self.assertEqual(0.65, result['weight'])
+      self.assertEqual(0.12, result['base_logloss'])
+      self.assertEqual(0.1, result['combined_logloss'])
 
   def test_feature_selection_changes_chunk_on_every_fit(self):
     with tempfile.TemporaryDirectory() as temp_dir:

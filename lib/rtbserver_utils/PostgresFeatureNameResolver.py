@@ -166,6 +166,25 @@ class PostgresFeatureNameResolver:
         result[feature] = ', '.join(names)
     return result
 
+  def resolve_campaign_names(self, campaign_ids):
+    campaign_ids = sorted(set(int(value) for value in campaign_ids))
+    if not campaign_ids:
+      return {}
+    with psycopg2.connect(self.connection_string) as connection:
+      with connection.cursor() as cursor:
+        cursor.execute(
+          '''
+            SELECT campaign_id, name
+            FROM campaign
+            WHERE campaign_id = ANY(%s)
+          ''',
+          (campaign_ids,))
+        return {
+          int(campaign_id): str(name)
+          for campaign_id, name in cursor.fetchall()
+          if name is not None
+        }
+
   @classmethod
   def feature_entity_parts_(cls, feature):
     result = []
