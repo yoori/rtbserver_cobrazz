@@ -322,11 +322,13 @@ Application::run(int& argc, char** argv)
           grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
           grpc_executor_->activate_object();
 
+          AdServer::Grpc::BatchingOptions batching_options;
+          batching_options.max_batch_delay = Generics::Time::ZERO;
           channel_client_ =
             std::make_shared<AdServer::ChannelSvcs::ChannelDistributedGrpcClient>(
               AdServer::ChannelSvcs::ChannelDistributedGrpcClient::
                 ChannelControllerRefs{split_refs(service_ref)},
-              AdServer::Grpc::BatchingOptions(),
+              batching_options,
               grpc_executor_);
           channel_client_->activate_object();
 

@@ -137,13 +137,15 @@ namespace
 
     result.controller_session_description =
       get_controller_session_description_(reference);
+    AdServer::Grpc::BatchingOptions batching_options;
+    batching_options.max_batch_delay = Generics::Time::ZERO;
     if (result.controller_session_description)
     {
       auto client =
         std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
           AdServer::UserInfoSvcs::UserBindDistributedGrpcClient::
             UserBindControllerRefs{{reference}},
-          AdServer::Grpc::BatchingOptions(),
+          batching_options,
           result.grpc_executor,
           logger,
           result.coalesce_runner);
@@ -157,7 +159,7 @@ namespace
           reference,
           result.grpc_executor,
           result.coalesce_runner,
-          AdServer::Grpc::BatchingOptions());
+          batching_options);
       result.client = client;
       result.active_object = client;
     }

@@ -17,7 +17,6 @@
 #include <String/StringManip.hpp>
 
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
@@ -97,11 +96,13 @@ namespace
         1);
     result.coalesce_runner->activate_object();
 
+    AdServer::Grpc::BatchingOptions batching_options;
+    batching_options.max_batch_delay = Generics::Time::ZERO;
     if (references.size() > 1 || is_channel_controller(references.front()))
     {
       auto client = std::make_shared<ChannelDistributedGrpcClient>(
         ChannelDistributedGrpcClient::ChannelControllerRefs{references},
-        AdServer::Grpc::BatchingOptions(),
+        batching_options,
         result.grpc_executor,
         result.coalesce_runner);
       result.client = client;
@@ -113,7 +114,7 @@ namespace
         references.front(),
         result.grpc_executor,
         result.coalesce_runner,
-        AdServer::Grpc::BatchingOptions());
+        batching_options);
       result.client = client;
       result.active_object = client;
     }
