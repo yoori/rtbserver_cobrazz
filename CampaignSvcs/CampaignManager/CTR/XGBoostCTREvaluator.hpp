@@ -9,8 +9,8 @@ namespace AdServer::CampaignSvcs::CTR
   {
     XGBoostCTREvaluator(const String::SubString& model_file);
 
-    RevenueDecimal
-    get_ctr(
+    double
+    predict(
       const ModelTraits& model,
       const CampaignSelectParams* request_params,
       const Creative* creative,

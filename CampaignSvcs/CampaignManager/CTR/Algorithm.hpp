@@ -9,6 +9,12 @@
 
 namespace AdServer::CampaignSvcs::CTR
 {
+  enum class PredictionAggregation
+  {
+    Sum,
+    LogitSum
+  };
+
   // Algorithm
   struct Algorithm: public ReferenceCounting::AtomicImpl
   {
@@ -20,6 +26,7 @@ namespace AdServer::CampaignSvcs::CTR
     unsigned long weight;
     ModelList models;
     RevenueDecimal threshold;
+    PredictionAggregation aggregation = PredictionAggregation::Sum;
 
   protected:
     virtual ~Algorithm() noexcept

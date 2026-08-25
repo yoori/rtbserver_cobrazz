@@ -88,8 +88,8 @@ namespace AdServer::CampaignSvcs::CTR
   CatBoostCTREvaluator::~CatBoostCTREvaluator()
   {}
 
-  RevenueDecimal
-  CatBoostCTREvaluator::get_ctr(
+  double
+  CatBoostCTREvaluator::predict(
     const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
@@ -111,6 +111,6 @@ namespace AdServer::CampaignSvcs::CTR
     feature_buf->rollback(candidate_hashes);
     feature_buf->rollback(opt_hashes);
 
-    return Generics::convert_float<RevenueDecimal>(1 / (1 + std::exp(-result_x)));
+    return result_x;
   }
 }

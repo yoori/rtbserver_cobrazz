@@ -44,8 +44,8 @@ namespace AdServer::CampaignSvcs::CTR
   TrivialCTREvaluator::~TrivialCTREvaluator() noexcept
   {}
 
-  RevenueDecimal
-  TrivialCTREvaluator::get_ctr(
+  double
+  TrivialCTREvaluator::predict(
     const ModelTraits& /*model*/,
     const CampaignSelectParams* request_params,
     const Creative* /*creative*/,
@@ -60,22 +60,22 @@ namespace AdServer::CampaignSvcs::CTR
 
     if (it != ctr_map_.end())
     {
-      return it->second;
+      return it->second.floating<double>();
     }
 
     it = ctr_map_.find(KeyHashAdapter(tag_id, GENERIC_DOMAIN));
     if (it != ctr_map_.end())
     {
-      return it->second;
+      return it->second.floating<double>();
     }
 
     it = ctr_map_.find(DEFAULT_KEY_);
     if (it != ctr_map_.end())
     {
-      return it->second;
+      return it->second.floating<double>();
     }
 
-    return RevenueDecimal::ZERO;
+    return 0.0;
   }
 
   void

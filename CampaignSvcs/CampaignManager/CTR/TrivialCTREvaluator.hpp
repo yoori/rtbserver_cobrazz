@@ -15,8 +15,8 @@ namespace AdServer::CampaignSvcs::CTR
 
     virtual ~TrivialCTREvaluator() noexcept;
 
-    RevenueDecimal
-    get_ctr(
+    double
+    predict(
       const ModelTraits& model,
       const CampaignSelectParams* request_params,
       const Creative* creative,

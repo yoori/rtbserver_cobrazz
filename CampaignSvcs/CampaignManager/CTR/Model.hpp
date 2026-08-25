@@ -29,6 +29,12 @@ namespace AdServer::CampaignSvcs::CTR
     MM_CATBOOST
   };
 
+  enum class PredictPostprocess
+  {
+    AsIs,
+    Sigmoid
+  };
+
   // Model
   struct Model:
     public ReferenceCounting::AtomicImpl,
@@ -46,7 +52,8 @@ namespace AdServer::CampaignSvcs::CTR
     const unsigned long model_id;
     ModelMethodType method;
     std::string method_name;
-    RevenueDecimal weight;
+    double weight;
+    PredictPostprocess predict_postprocess = PredictPostprocess::AsIs;
 
     // FT_REQUEST: features can be calculated once for request (
     //   at CTRProvider::create_calculation)

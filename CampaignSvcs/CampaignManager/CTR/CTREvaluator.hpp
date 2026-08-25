@@ -12,8 +12,8 @@ namespace AdServer::CampaignSvcs::CTR
   {
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    virtual RevenueDecimal
-    get_ctr(
+    virtual double
+    predict(
       const ModelTraits& model,
       const CampaignSelectParams* request_params,
       const Creative* creative,

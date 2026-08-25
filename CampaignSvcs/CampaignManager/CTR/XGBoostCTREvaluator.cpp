@@ -9,8 +9,8 @@ namespace AdServer::CampaignSvcs::CTR
     : xgboost_predictor_pool_(new XGBoostPredictorPool(model_file))
   {}
 
-  RevenueDecimal
-  XGBoostCTREvaluator::get_ctr(
+  double
+  XGBoostCTREvaluator::predict(
     const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
@@ -33,7 +33,7 @@ namespace AdServer::CampaignSvcs::CTR
 
       if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
       {
-        return RevenueDecimal::ZERO;
+        return 0.0;
       }
     }
     else
@@ -41,6 +41,6 @@ namespace AdServer::CampaignSvcs::CTR
       ctr = 0.5;
     }
 
-    return Generics::convert_float<RevenueDecimal>(ctr);
+    return ctr;
   }
 }

@@ -41,8 +41,8 @@ namespace AdServer::CampaignSvcs::CTR
     }
   }
 
-  RevenueDecimal
-  FTRLCTREvaluator::get_ctr(
+  double
+  FTRLCTREvaluator::predict(
     const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
@@ -68,7 +68,7 @@ namespace AdServer::CampaignSvcs::CTR
       }
     }
 
-    return Generics::convert_float<RevenueDecimal>(1. / (1. + ::expf(-weight)));
+    return 1. / (1. + ::expf(-weight));
   }
 
   float

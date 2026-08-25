@@ -94,8 +94,8 @@ namespace AdServer::CampaignSvcs::CTR
     }
   }
 
-  RevenueDecimal
-  VangaCTREvaluator::get_ctr(
+  double
+  VangaCTREvaluator::predict(
     const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
@@ -156,9 +156,9 @@ namespace AdServer::CampaignSvcs::CTR
 
     if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
     {
-      return RevenueDecimal::ZERO;
+      return 0.0;
     }
 
-    return Generics::convert_float<RevenueDecimal>(ctr);
+    return ctr;
   }
 }
