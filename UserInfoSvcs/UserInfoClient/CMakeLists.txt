@@ -4,6 +4,7 @@ add_library(UserInfoClient SHARED
 )
 
 target_link_libraries(UserInfoClient
+  PRIVATE
   Generics
   Commons
   Logger

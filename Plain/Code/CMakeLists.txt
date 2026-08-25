@@ -4,6 +4,7 @@ add_library(PlainCode SHARED
 
 )
 target_link_libraries( PlainCode
+  PRIVATE
   PlainDeclaration
 )
 

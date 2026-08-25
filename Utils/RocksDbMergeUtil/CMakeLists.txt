@@ -11,8 +11,9 @@ add_executable(RocksDbMergeUtil
 )
 
 target_link_libraries(RocksDbMergeUtil
-  Boost::headers
-  ${ROCKSDB_TARGET}
+  PRIVATE
+    Boost::headers
+    ${ROCKSDB_TARGET}
 )
 
 #install(TARGETS RocksDbMergeUtil DESTINATION ${INSTALL_DIR})

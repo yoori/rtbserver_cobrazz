@@ -12,4 +12,6 @@ target_link_libraries(BillingServerGrpcClient
   Commons
   GrpcBatch
   BillingServerGrpc
-  gRPC::grpc++)
+  gRPC::grpc++
+  PRIVATE
+  Sync)

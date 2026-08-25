@@ -2,7 +2,8 @@
 add_idl(LogGeneralizerIDL LogGeneralizer.idl ${IDL_DIRECTORY}/LogProcessing/LogGeneralizer)
 
 target_link_libraries(LogGeneralizerIDL
-  CorbaTypesIDL
+  PRIVATE
+    CorbaTypesIDL
 )
 
 add_library(LogGeneralizerLib STATIC
@@ -18,6 +19,18 @@ target_link_libraries(LogGeneralizerLib
   PUBLIC
     LogGeneralizerIDL
     LogCommons
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    Postgres
+    Commons
+    CORBACommons
+    CorbaTypesIDL
+    Generics
+    HTTP
+    Logger
+    ProcessControlIDL
+    Sync
 )
 
 add_executable(LogGeneralizer
@@ -25,20 +38,21 @@ add_executable(LogGeneralizer
 )
 
 target_link_libraries(LogGeneralizer
-  LogGeneralizerLib
-  LogGeneralizerIDL
-  pthread
-  Generics
-  Commons
-  CORBAConfig
-  CORBACommons
-  ProcessControlIDL
-  StatsIDL
-  Postgres
-  LogCommons
-  LogGeneralizerConfigXSD
-  SNMPAgent
-  ProcessControlVars
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    LogGeneralizerLib
+    pthread
+    Generics
+    Commons
+    CORBAConfig
+    CORBACommons
+    Logger
+    ProcessControlIDL
+    StatsIDL
+    LogGeneralizerConfigXSD
+    SNMPAgent
+    ProcessControlVars
 )
 
 #install(TARGETS LogGeneralizerIDL LogGeneralizer DESTINATION ${INSTALL_DIR})

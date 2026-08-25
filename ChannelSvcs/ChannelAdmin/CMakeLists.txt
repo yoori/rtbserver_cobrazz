@@ -3,14 +3,17 @@ add_executable(ChannelAdmin
 )
 
 target_link_libraries(ChannelAdmin
-  Logger
-  Generics
-  HTTP
-  BLogic
-  Commons
-  ChannelGrpcClient
-  ChannelControllerGrpc
-  ChannelServerGrpcClient
+  PRIVATE
+    TAO::Valuetype
+    Logger
+    Generics
+    HTTP
+    BLogic
+    Commons
+    CorbaTypesIDL
+    ChannelGrpcClient
+    ChannelControllerGrpc
+    ChannelServerGrpcClient
 )
 
 target_include_directories(ChannelAdmin PRIVATE

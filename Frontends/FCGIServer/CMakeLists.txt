@@ -3,12 +3,17 @@ add_library(FrontendServerCommons
   FCGIAcceptorStats.cpp
   Http2Acceptor.cpp
   WorkerStatsObject.cpp
-  Http2Acceptor.cpp
 )
 
 target_link_libraries(FrontendServerCommons
-  FCGI
-  Boost::headers
+  PRIVATE
+    FCGI
+    Commons
+    Generics
+    Logger
+    Sync
+    Boost::headers
+    nghttp2
 )
 
 add_executable(FCGIServer
@@ -17,41 +22,48 @@ add_executable(FCGIServer
 )
 
 target_link_libraries(FCGIServer
-  jemalloc
+  PRIVATE
+    jemalloc
 
-  RequestMatchers
-  CreativeTemplateArgs
+    FCGIServerConfigXSD
 
-  CampaignServerIDL
+    BiddingFrontend
+    DirectoryModule
+    PubPixelFrontend
+    ContentFrontend
+    WebStatFrontend
+    ActionFrontend
+    UserBindFrontend
+    PassFrontend
+    PassPixelFrontend
+    OptoutFrontend
+    AdInstFrontend
+    ClickFrontend
+    ImprTrackFrontend
+    AdFrontend
 
-  AdServerCommonsXSD
-  FCGIServerConfigXSD
+    XMLUtility
+    FrontendServerCommons
+    CommonModule
+    CampaignServerIDL
+    ProcessControlIDL
+    Commons
+    CORBACommons
+    TAO::PortableServer
+    TAO::Valuetype
+    HTTP
+    HttpServer
 
-  BiddingFrontend
-  DirectoryModule
-  PubPixelFrontend
-  ContentFrontend
-  WebStatFrontend
-  ActionFrontend
-  UserBindFrontend
-  PassFrontend
-  PassPixelFrontend
-  OptoutFrontend
-  AdInstFrontend
-  ClickFrontend
-  ImprTrackFrontend
-  AdFrontend
+    Generics
+)
 
-  FCGI
-  XMLUtility
-  UtilCommons
-  FrontendServerCommons
-  Commons
-  HttpServer
-
-  Generics
-  SecToken
-
-  Boost::system
-  nghttp2
+target_include_directories(FCGIServer PRIVATE
+  ${CMAKE_BINARY_DIR}/CampaignSvcs/CampaignManager
+  ${CMAKE_BINARY_DIR}/ChannelSvcs/ChannelServer
+  ${CMAKE_BINARY_DIR}/UserInfoSvcs/UserBindServer
+  ${CMAKE_BINARY_DIR}/UserInfoSvcs/UserInfoManager
+  ${PB_DIRECTORY}/CampaignSvcs/CampaignManager
+  ${PB_DIRECTORY}/ChannelSvcs/ChannelServer
+  ${PB_DIRECTORY}/UserInfoSvcs/UserBindServer
+  ${PB_DIRECTORY}/UserInfoSvcs/UserInfoManager
 )

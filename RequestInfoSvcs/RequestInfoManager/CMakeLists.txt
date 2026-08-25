@@ -141,7 +141,6 @@ add_library(RequestLogLoader SHARED
 target_link_libraries(RequestLogLoader
   PRIVATE
   Generics
-  Logger
   LogCommons
   ProfilingCommons
   RequestOperationProfilePST
@@ -156,8 +155,6 @@ add_library(RequestOperationSaver SHARED
 target_link_libraries(RequestOperationSaver
   PRIVATE
   Generics
-  Commons
-  LogCommons
 
   MessageSaver
 

@@ -4,8 +4,8 @@ add_library(Allocator SHARED
 
 
 target_link_libraries(Allocator
+  PRIVATE
   Generics
-  Commons
 )
 
 add_pst(UserChannelBaseProfilePST  UserChannelBaseProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
@@ -15,6 +15,7 @@ add_library(ChannelMatcher SHARED
   ChannelMatcher.cpp
 )
 target_link_libraries(ChannelMatcher
+  PRIVATE
   Generics
 
   UtilCommons
@@ -28,9 +29,9 @@ add_library(UserFreqCapProfile SHARED
   UserFreqCapProfile.cpp
 )
 target_link_libraries(UserFreqCapProfile
+  PRIVATE
   UserFreqCapProfileDescriptionPST
   Generics
-  Commons
   Allocator
   UtilCommons
 

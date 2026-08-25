@@ -8,11 +8,8 @@ target_link_libraries(SyncLogsMoveTaskSchedulerTest
     pthread
     Generics
     Sync
-    pcre
     Commons
     CORBACommons
-    Postgres
     LogCommons
     UtilCommons
-    String
 )

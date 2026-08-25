@@ -4,10 +4,9 @@ add_executable(UserIdUtil
   Application.cpp
 )
 target_link_libraries(UserIdUtil
-  Generics
-  Commons
-
-  UtilCommons
+  PRIVATE
+    Generics
+    Commons
 
 
 )

@@ -9,9 +9,8 @@ add_library(DTree SHARED
   TreeLearner.cpp
 )
 target_link_libraries(DTree
-
+  PRIVATE
   Generics
-  Commons
 
 )
 

@@ -1,9 +1,4 @@
-add_idl(ChannelSearchServiceIDL  ChannelSearchService.idl ${IDL_DIRECTORY}/ChannelSearchSvcs/ChannelSearchService)
-
-target_link_libraries(ChannelSearchServiceIDL
-  Generics
-  CORBACommons
-)
+add_idl(ChannelSearchServiceIDL ChannelSearchService.idl ${IDL_DIRECTORY}/ChannelSearchSvcs/ChannelSearchService)
 
 add_executable(ChannelSearchService
   ChannelMatcher.cpp
@@ -11,19 +6,28 @@ add_executable(ChannelSearchService
   ChannelSearchServiceImpl.cpp
 )
 target_link_libraries(ChannelSearchService
-  AdServerCommonsXSD
-  CORBACommons
-  CampaignServerIDL
-  ChannelSearchServiceConfigXSD
-  ChannelSearchServiceIDL
-  ChannelCommonsIDL
-  ChannelGrpcClient
-  DictionaryProviderIDL
-  Commons
-  CORBAConfig
-  ExpressionChannel
-  ExpressionChannelIndex
-  Polyglot
-  ProcessControlVars
-
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    AdServerCommonsXSD
+    CORBACommons
+    CampaignCommonsIDL
+    CampaignServerIDL
+    ChannelSearchServiceConfigXSD
+    ChannelSearchServiceIDL
+    ChannelServerGrpc
+    ChannelServerIDL
+    ChannelGrpcClient
+    Commons
+    CorbaTypesIDL
+    CORBAConfig
+    ExpressionChannel
+    ExpressionChannelIndex
+    Generics
+    GrpcBatch
+    HTTP
+    Logger
+    ProcessControlIDL
+    ProcessControlVars
+    Sync
 )

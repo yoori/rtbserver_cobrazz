@@ -3,6 +3,7 @@ add_library(ThreadAffinityPreload SHARED
 )
 
 target_link_libraries(ThreadAffinityPreload
-  dl
-  pthread
+  PRIVATE
+    dl
+    pthread
 )

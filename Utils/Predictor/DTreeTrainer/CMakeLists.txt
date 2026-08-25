@@ -2,8 +2,11 @@ add_executable(DTreeTrainer
   Application.cpp
 )
 target_link_libraries(DTreeTrainer
-  Generics
-  DTree
+  PRIVATE
+    Commons
+    Generics
+    Sync
+    DTree
 )
 
 

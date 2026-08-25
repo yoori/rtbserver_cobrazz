@@ -9,7 +9,11 @@ add_grpc_sources(
   ${EXPRESSION_MATCHER_GRPC_PROTO_DIR}
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
-target_link_libraries(ExpressionMatcherGrpcProto protobuf::libprotobuf GrpcBatch)
+target_link_libraries(ExpressionMatcherGrpcProto
+  PUBLIC
+    protobuf::libprotobuf
+    GrpcBatch
+)
 
 add_library(ExpressionMatcherGrpcClient STATIC)
 
@@ -25,10 +29,20 @@ target_link_libraries(ExpressionMatcherGrpcClient
   Commons
   ExpressionMatcherGrpcProto
   GrpcBatch
-  gRPC::grpc++)
+  gRPC::grpc++
+  PRIVATE
+  Sync)
 
 add_library(ExpressionChannelMatcher STATIC
   ChannelMatcher.cpp
+)
+
+target_link_libraries(ExpressionChannelMatcher
+  PRIVATE
+    ExpressionChannelIndex
+    Generics
+    Logger
+    Sync
 )
 
 add_library(UserTriggerMatchContainer STATIC
@@ -36,21 +50,47 @@ add_library(UserTriggerMatchContainer STATIC
 )
 
 target_link_libraries(UserTriggerMatchContainer
-  UserTriggerMatchProfilePST
-  RequestTriggerMatchProfilePST
+  PRIVATE
+    UserTriggerMatchProfilePST
+    RequestTriggerMatchProfilePST
+    Commons
+    Generics
+    Logger
+    ProfileMap
+    ProfileMapRocksDB
+    ProfilingCommons
 )
 
 add_library(UserInventoryContainer STATIC
   UserInventoryContainer.cpp
 )
 
-add_dependencies(UserInventoryContainer UserChannelInventoryProfilePST)
+target_link_libraries(UserInventoryContainer
+  PRIVATE
+    UserChannelInventoryProfilePST
+    CampaignTypes
+    Commons
+    Generics
+    Logger
+    ProfileMap
+    ProfileMapRocksDB
+    ProfilingCommons
+)
 
 add_library(UserColoReachContainer STATIC
   UserColoReachContainer.cpp
 )
 
-add_dependencies(UserColoReachContainer UserChannelInventoryProfilePST)
+target_link_libraries(UserColoReachContainer
+  PRIVATE
+    UserChannelInventoryProfilePST
+    Commons
+    Generics
+    Logger
+    ProfileMap
+    ProfileMapRocksDB
+    ProfilingCommons
+)
 
 add_executable(ExpressionMatcher
   ExpressionMatcherGrpc.cpp
@@ -64,45 +104,45 @@ add_executable(ExpressionMatcher
 )
 
 target_link_libraries(ExpressionMatcher
-  jemalloc
+  PRIVATE
+    jemalloc
 
-  UserColoReachContainer
-  UserInventoryContainer
-  UserTriggerMatchContainer
-  ExpressionChannelMatcher
-  ExpressionChannelIndex
+    TAO::PortableServer
+    TAO::Valuetype
 
-  ExpressionMatcherGrpcClient
-  ExpressionMatcherGrpcProto
+    UserColoReachContainer
+    UserInventoryContainer
+    UserTriggerMatchContainer
+    ExpressionChannelMatcher
+    ExpressionChannel
 
-  CampaignServerIDL
-  CORBACommons
+    ExpressionMatcherGrpcClient
+    ExpressionMatcherGrpcProto
 
-  ConsiderMessagesPST
-  RequestOperationProfilePST
-  UserChannelInventoryProfilePST
-  RequestTriggerMatchProfilePST
+    CampaignCommonsIDL
+    CampaignServerIDL
+    CorbaTypesIDL
+    CORBACommons
+    ProcessControlIDL
 
-  ExpressionMatcherCompatibility
-  UserInfoClient
+    ConsiderMessagesPST
+    RequestOperationProfilePST
 
-  AdServerCommonsXSD
-  ExpressionMatcherConfigXSD
+    UserInfoClient
 
-  LogCommons
-  Commons
-  CORBAConfig
-  ProfilingCommons
-  SNMPAgent
-  ProfileMap
-  ProfileMapRocksDB
-  XMLUtility
-  CampaignTypes
-  CampaignConfigSource
+    AdServerCommonsXSD
+    ExpressionMatcherConfigXSD
 
-  Logger
-  String
-  Generics
-  Sync
-  pthread
+    LogCommons
+    Commons
+    CORBAConfig
+    HTTP
+    ProfilingCommons
+    SNMPAgent
+    ProfileMap
+    ProfileMapRocksDB
+    XMLUtility
+    Logger
+    Generics
+    Sync
 )

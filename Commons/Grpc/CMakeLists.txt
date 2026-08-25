@@ -8,8 +8,6 @@ add_grpc_sources(
   ProcessControl.proto
   ${PB_DIRECTORY}/Commons/Grpc)
 
-target_link_libraries(GrpcBatch protobuf::libprotobuf)
-
 target_sources(GrpcBatch PRIVATE
   AsyncBatchingClientBase.cpp
   AsyncBatchingClientBase.hpp
@@ -28,7 +26,9 @@ target_sources(GrpcBatch PRIVATE
 )
 
 target_link_libraries(GrpcBatch
-  Commons
-  Generics
-  gRPC::grpc++
+  PUBLIC
+    Commons
+    Generics
+    protobuf::libprotobuf
+    gRPC::grpc++
 )

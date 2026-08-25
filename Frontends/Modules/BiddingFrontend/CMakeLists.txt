@@ -21,11 +21,14 @@ add_library(BiddingFrontend SHARED
 )
 
 target_link_libraries(BiddingFrontend
+  PRIVATE
   Stream
   Geoip
   Commons
+  LogCommons
   Boost::headers
   ChannelGrpcClient
+  UserInfoClient
   UserInfoManagerGrpcClient
   UserBindClient
   RequestMatchers

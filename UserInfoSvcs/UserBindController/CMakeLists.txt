@@ -6,7 +6,10 @@ add_grpc_sources(
   ${USER_BIND_CONTROLLER_GRPC_PROTO}
   ${USER_BIND_CONTROLLER_GRPC_PROTO_DIR})
 
-target_link_libraries(UserBindControllerGrpc protobuf::libprotobuf)
+target_link_libraries(UserBindControllerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+)
 
 add_executable(UserBindController
   UserBindControllerMain.cpp
@@ -14,13 +17,19 @@ add_executable(UserBindController
   UserBindControllerGrpc.cpp)
 
 target_link_libraries(UserBindController
-  UserBindControllerGrpc
-  UserBindServerGrpc
-  UserBindControllerConfigXSD
-  CORBAConfig
-  Commons
-  Generics
-  gRPC::grpc++)
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    UserBindControllerGrpc
+    UserBindServerGrpc
+    UserBindControllerConfigXSD
+    CORBACommons
+    Commons
+    Generics
+    Logger
+    ProcessControlIDL
+    Sync
+    gRPC::grpc++)
 
 target_include_directories(UserBindController PRIVATE
   ${USER_BIND_CONTROLLER_GRPC_PROTO_DIR}

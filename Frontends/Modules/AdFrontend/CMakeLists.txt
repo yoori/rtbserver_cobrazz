@@ -6,20 +6,18 @@ add_library(AdFrontend SHARED
 )
 
 target_link_libraries(AdFrontend
-  Stream
+  PRIVATE
   HTTP
   Geoip
   Commons
   ChannelGrpcClient
+  UserInfoClient
   UserInfoManagerGrpcClient
-  CookieManager
   RequestMatchers
   FeConfigXSD
   CommonModule
   CampaignManagerGrpcDistributedClient
-  ExpressionChannelIndex
   UserBindClient
   FCGI
-  ProcessingTemplates
   UserIdController
 )

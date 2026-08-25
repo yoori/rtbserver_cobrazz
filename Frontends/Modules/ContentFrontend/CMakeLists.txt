@@ -3,7 +3,7 @@ add_library(ContentFrontend SHARED
 )
 
 target_link_libraries(ContentFrontend
-  Stream
+  PRIVATE
   Commons
   CampaignManagerGrpcDistributedClient
   FeConfigXSD

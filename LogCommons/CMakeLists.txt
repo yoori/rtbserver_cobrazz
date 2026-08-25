@@ -64,17 +64,14 @@ add_library(LogCommons SHARED
 )
 
 target_link_libraries(LogCommons
-  PUBLIC
+  PRIVATE
     Generics
     Commons
-    CorbaTypesIDL
     absl::flat_hash_map
     Boost::headers
 )
 
 #install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
-
-
 
 
 

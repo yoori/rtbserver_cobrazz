@@ -4,10 +4,8 @@ add_executable(DNSDecodeUtil
   Application.cpp
 )
 target_link_libraries(DNSDecodeUtil
-  Generics
-  String
-  Stream
-  Commons
+  PRIVATE
+    Commons
 
 )
 

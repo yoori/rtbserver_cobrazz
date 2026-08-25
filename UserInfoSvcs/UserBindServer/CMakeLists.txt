@@ -17,7 +17,11 @@ add_grpc_sources(
   ${USER_BIND_GRPC_PROTO_DIR}
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
-target_link_libraries(UserBindServerGrpc protobuf::libprotobuf GrpcBatch)
+target_link_libraries(UserBindServerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+    GrpcBatch
+)
 
 add_library(UserBindServerGrpcClient STATIC)
 
@@ -33,10 +37,13 @@ target_link_libraries(UserBindServerGrpcClient
   Commons
   GrpcBatch
   UserBindServerGrpc
-  gRPC::grpc++)
+  gRPC::grpc++
+  PRIVATE
+  Sync)
 
 # UserBindContainer
 target_link_libraries(UserBindContainer
+  PRIVATE
   Generics
   PrivacyFilter
   Commons
@@ -59,7 +66,7 @@ add_pst(
   ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer
 )
 
-target_link_libraries(UserBindContainer UserBindRocksDBProfilePST)
+target_link_libraries(UserBindContainer PRIVATE UserBindRocksDBProfilePST)
 
 # UserBindServer
 add_executable(UserBindServer
@@ -69,21 +76,22 @@ add_executable(UserBindServer
   UserBindOperationLoader.cpp
 )
 
-target_link_options(UserBindServer PRIVATE -Wl,--as-needed)
-
 target_link_libraries(UserBindServer
-  jemalloc
+  PRIVATE
+    jemalloc
 
-  PrivacyFilter
-  Commons
-  ProfileMap
-  ProfileMapRocksDB
-  MessageSaver
-  LogCommons
-  UserBindContainer
-  UserBindServerConfigXSD
-  UserBindServerGrpc
-  HttpServer
+    Commons
+    Generics
+    GrpcBatch
+    Logger
+    MessageSaver
+    LogCommons
+    ProfileMap
+    Sync
+    UserBindContainer
+    UserBindServerConfigXSD
+    UserBindServerGrpc
+    HttpServer
 )
 
 target_sources(UserBindServer PRIVATE
@@ -95,14 +103,14 @@ target_include_directories(UserBindServer PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(UserBindServer Protobuf::libprotobuf)
+  target_link_libraries(UserBindServer PRIVATE Protobuf::libprotobuf)
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(UserBindServer protobuf::libprotobuf)
+  target_link_libraries(UserBindServer PRIVATE protobuf::libprotobuf)
 else()
-  target_link_libraries(UserBindServer ${Protobuf_LIBRARIES})
+  target_link_libraries(UserBindServer PRIVATE ${Protobuf_LIBRARIES})
 endif()
 
-target_link_libraries(UserBindServer gRPC::grpc++)
+target_link_libraries(UserBindServer PRIVATE gRPC::grpc++)
 
 # Temporary test binary for gRPC batching lifecycle checks. It keeps the same
 # process/bootstrap code as UserBindServer, but short-circuits get_user_id.
@@ -112,10 +120,14 @@ add_executable(MockUserBindServer
 )
 
 target_link_libraries(MockUserBindServer
-  jemalloc
-
-  Commons
-  UserBindServerGrpc
+  PRIVATE
+    jemalloc
+    Commons
+    Generics
+    GrpcBatch
+    Logger
+    Sync
+    UserBindServerGrpc
 )
 
 target_include_directories(MockUserBindServer PRIVATE
@@ -127,11 +139,11 @@ target_compile_definitions(MockUserBindServer PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(MockUserBindServer Protobuf::libprotobuf)
+  target_link_libraries(MockUserBindServer PRIVATE Protobuf::libprotobuf)
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(MockUserBindServer protobuf::libprotobuf)
+  target_link_libraries(MockUserBindServer PRIVATE protobuf::libprotobuf)
 else()
-  target_link_libraries(MockUserBindServer ${Protobuf_LIBRARIES})
+  target_link_libraries(MockUserBindServer PRIVATE ${Protobuf_LIBRARIES})
 endif()
 
-target_link_libraries(MockUserBindServer gRPC::grpc++)
+target_link_libraries(MockUserBindServer PRIVATE gRPC::grpc++)

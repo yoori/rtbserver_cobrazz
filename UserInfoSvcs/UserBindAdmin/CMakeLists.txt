@@ -2,17 +2,16 @@ add_executable(UserBindAdmin
   Application.cpp
 )
 
-target_link_options(UserBindAdmin PRIVATE -Wl,--as-needed)
-
 target_link_libraries(UserBindAdmin
-  gRPC::grpc++
+  PRIVATE
+    gRPC::grpc++
 
-  Generics
-  Commons
-  Logger
-  UserBindClient
-  UserBindServerGrpcClient
-  UserBindControllerGrpc
+    Generics
+    Commons
+    Logger
+    UserBindClient
+    UserBindServerGrpcClient
+    UserBindControllerGrpc
 )
 
 target_include_directories(UserBindAdmin PRIVATE

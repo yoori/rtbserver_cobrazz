@@ -3,16 +3,14 @@ add_library(CommonModule SHARED
 )
 
 target_link_libraries(CommonModule
-  StatInfoIDL
-  BillStatInfoIDL
+  PRIVATE
   CampaignServerIDL
-
-  AdServerCommonsXSD
 
   Commons
   CORBAConfig
   RequestMatchers
   DomainParser
+  Geoip
   Polyglot
   UserIdController
   GenericSegmentor

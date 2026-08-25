@@ -3,9 +3,13 @@ add_executable(BillingAdmin
 )
 
 target_link_libraries(BillingAdmin
-  BillingServerGrpcClient
-  CampaignCommonsIDL
-
-  Commons
-  Generics
+  PRIVATE
+    BillingServerGrpc
+    BillingServerGrpcClient
+    Commons
+    Generics
+    GrpcBatch
+    Logger
+    Sync
+    gRPC::grpc++
 )

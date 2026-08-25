@@ -3,7 +3,7 @@ add_library(DirectoryModule SHARED
 )
 
 target_link_libraries(DirectoryModule
-  Stream
+  PRIVATE
   Commons
   FeConfigXSD
   FCGI

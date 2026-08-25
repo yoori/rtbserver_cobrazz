@@ -5,7 +5,12 @@ add_executable(XslTransformAdmin
   XslTransformAdmin.cpp
 )
 target_link_libraries(XslTransformAdmin
-  XslTransformer Generics pthread
+  PRIVATE
+    XslTransformer
+    Generics
+    pthread
+    xml2
+    xslt
 )
 
 add_library(XslTransformer STATIC
@@ -15,17 +20,22 @@ add_library(XslTransformer STATIC
 )
 
 target_link_libraries(XslTransformer
-  xml2
-  xslt
-  HTTP
-
+  PRIVATE
+    Generics
+    pthread
+    xml2
+    xslt
 )
 
 add_library(XsltFileCache STATIC
   XsltFileCache.cpp
 )
 
-target_link_libraries(XsltFileCache String Generics AdServerCommonsXSD Sync XslTransformer
+target_link_libraries(XsltFileCache
+  PRIVATE
+    Generics
+    Sync
+    XslTransformer
 )
 
 #install(TARGETS XslTransformAdmin  DESTINATION ${INSTALL_DIR})

@@ -7,5 +7,6 @@ target_include_directories(FastJsonParserTest
 )
 
 target_link_libraries(FastJsonParserTest
-  Commons
+  PRIVATE
+    Commons
 )

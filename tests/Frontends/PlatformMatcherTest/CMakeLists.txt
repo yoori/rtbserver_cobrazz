@@ -9,5 +9,5 @@ target_include_directories(PlatformMatcherTest
 target_link_libraries(PlatformMatcherTest
   PRIVATE
     RequestMatchers
-    Generics
+    HTTP
 )

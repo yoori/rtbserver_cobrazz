@@ -3,7 +3,11 @@ add_executable(PlainCppCompiler
 )
 
 target_link_libraries(PlainCppCompiler
-  PlainParser
-  PlainCpp
+  PRIVATE
+    PlainParser
+    PlainCpp
+    PlainCode
+    PlainDeclaration
+    Generics
 )
 #install(TARGETS PlainCppCompiler  DESTINATION ${INSTALL_DIR})

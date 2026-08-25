@@ -9,7 +9,8 @@ add_library(ChannelContainer SHARED
 )
 
 target_link_libraries(ChannelContainer
-  Commons
+  PRIVATE
+  CORBACommons
   ChannelCommons
   DictionaryProviderIDL
 )
@@ -24,7 +25,11 @@ add_grpc_sources(
   ${CHANNEL_SERVER_GRPC_PROTO_DIR}
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
-target_link_libraries(ChannelServerGrpc protobuf::libprotobuf GrpcBatch)
+target_link_libraries(ChannelServerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+    GrpcBatch
+)
 
 add_library(ChannelServerGrpcClient STATIC)
 
@@ -40,7 +45,9 @@ target_link_libraries(ChannelServerGrpcClient
   Commons
   GrpcBatch
   ChannelServerGrpc
-  gRPC::grpc++)
+  gRPC::grpc++
+  PRIVATE
+  Sync)
 
 add_executable(ChannelServer
   ChannelServerVariant.cpp
@@ -53,29 +60,33 @@ add_executable(ChannelServer
 )
 
 target_link_libraries(ChannelServer
-  jemalloc
+  PRIVATE
+    jemalloc
 
-  HTTP
-  HttpServer
-  XMLUtility
-  CORBAConfig
-  CORBACommons
-  AdServerCommonsXSD
-  Postgres
-  ChannelServerConfigXSD
-  ChannelCommons
-  ChannelServerIDL
-  ChannelUpdateBaseIDL
-  ChannelCommonsIDL
-  ChannelContainer
-  ChannelServerGrpc
-  ChannelSessionFactory
-  CampaignServerStubs_v350
-  CampaignServer_v350IDL
-  BLogic
-  LogCommons
-  Polyglot
-  GenericSegmentor
+    HTTP
+    HttpServer
+    CORBAConfig
+    CORBACommons
+    TAO::PortableServer
+    TAO::Valuetype
+    Generics
+    Logger
+    ProcessControlIDL
+    AdServerCommonsXSD
+    Postgres
+    ChannelServerConfigXSD
+    ChannelCommons
+    ChannelCommonsIDL
+    ChannelServerIDL
+    ChannelUpdateBaseIDL
+    CampaignServerIDL
+    CorbaTypesIDL
+    BLogic
+    ChannelContainer
+    ChannelServerGrpc
+    ChannelSessionFactory
+    Polyglot
+    GenericSegmentor
 )
 
 target_include_directories(ChannelServer PRIVATE
@@ -83,13 +94,13 @@ target_include_directories(ChannelServer PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(ChannelServer Protobuf::libprotobuf)
+  target_link_libraries(ChannelServer PRIVATE Protobuf::libprotobuf)
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(ChannelServer protobuf::libprotobuf)
+  target_link_libraries(ChannelServer PRIVATE protobuf::libprotobuf)
 else()
-  target_link_libraries(ChannelServer ${Protobuf_LIBRARIES})
+  target_link_libraries(ChannelServer PRIVATE ${Protobuf_LIBRARIES})
 endif()
 
-target_link_libraries(ChannelServer gRPC::grpc++)
+target_link_libraries(ChannelServer PRIVATE gRPC::grpc++)
 
 #install(TARGETS ChannelServer ChannelContainer  DESTINATION ${INSTALL_DIR})

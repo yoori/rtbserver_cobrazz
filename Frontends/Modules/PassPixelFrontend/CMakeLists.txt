@@ -4,10 +4,9 @@ add_library(PassPixelFrontend SHARED
 )
 
 target_link_libraries(PassPixelFrontend
-  Stream
+  PRIVATE
   Geoip
   Commons
-  RequestMatchers
   CommonModule
   CampaignManagerGrpcDistributedClient
   FeConfigXSD

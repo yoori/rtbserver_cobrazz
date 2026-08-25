@@ -18,8 +18,10 @@ target_link_libraries(UserBindContainerTest
     TestCommons
     Generics
     Commons
+    Logger
     ProfileMap
     ProfileMapRocksDB
+    Sync
 )
 
 target_include_directories(UserBindContainerTest

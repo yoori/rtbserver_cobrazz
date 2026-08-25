@@ -4,5 +4,6 @@ add_executable(PrimaryDumpTest
 
 target_link_libraries(PrimaryDumpTest
   PRIVATE
+    Generics
     LogCommons
 )

@@ -3,7 +3,8 @@ add_executable(GrpcProbeObj
 )
 
 target_link_libraries(GrpcProbeObj
-  GrpcBatch
-  gRPC::grpc++
-  protobuf::libprotobuf
+  PRIVATE
+    GrpcBatch
+    gRPC::grpc++
+    protobuf::libprotobuf
 )

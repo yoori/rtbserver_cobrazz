@@ -5,8 +5,22 @@ function(add_bidding_request_info_filler_perf_test target)
   target_link_libraries(${target}
     PRIVATE
       jemalloc
+      TAO::PortableServer
+      TAO::Valuetype
       BiddingFrontend
+      CampaignServerIDL
+      CommonModule
+      Commons
+      CORBACommons
+      DomainConfigXSD
+      DomainParser
+      FeConfigXSD
       Generics
+      HTTP
+      Logger
+      ProcessControlIDL
+      Sync
+      UserIdController
   )
 
   target_include_directories(${target}

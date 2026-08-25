@@ -9,6 +9,7 @@ target_include_directories(PmrTests
 )
 
 target_link_libraries(PmrTests
-  Commons
-  ${TCMALLOC_LIBRARY}
+  PRIVATE
+    Generics
+    ${TCMALLOC_LIBRARY}
 )

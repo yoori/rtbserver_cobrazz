@@ -6,7 +6,10 @@ add_grpc_sources(
   ${USER_INFO_CONTROLLER_GRPC_PROTO}
   ${USER_INFO_CONTROLLER_GRPC_PROTO_DIR})
 
-target_link_libraries(UserInfoControllerGrpc protobuf::libprotobuf)
+target_link_libraries(UserInfoControllerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+)
 
 add_executable(UserInfoController
   UserInfoControllerMain.cpp
@@ -14,13 +17,20 @@ add_executable(UserInfoController
   UserInfoControllerGrpc.cpp)
 
 target_link_libraries(UserInfoController
-  UserInfoControllerGrpc
-  UserInfoManagerGrpc
-  UserInfoControllerConfigXSD
-  CORBAConfig
-  Commons
-  Generics
-  gRPC::grpc++)
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+
+    UserInfoControllerGrpc
+    UserInfoManagerGrpc
+    UserInfoControllerConfigXSD
+    CORBACommons
+    Commons
+    Generics
+    Logger
+    ProcessControlIDL
+    Sync
+    gRPC::grpc++)
 
 target_include_directories(UserInfoController PRIVATE
   ${USER_INFO_CONTROLLER_GRPC_PROTO_DIR}

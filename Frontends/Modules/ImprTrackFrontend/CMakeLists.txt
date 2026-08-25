@@ -6,10 +6,11 @@ add_library(ImprTrackFrontend SHARED
 )
 
 target_link_libraries(ImprTrackFrontend
-  Stream
+  PRIVATE
   Geoip
   Commons
   ChannelGrpcClient
+  UserInfoClient
   UserInfoManagerGrpcClient
   UserBindClient
   RequestMatchers

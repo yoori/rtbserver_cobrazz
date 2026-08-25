@@ -49,7 +49,6 @@ add_library(RequestInfoManagerCompatibility SHARED
 
 target_link_libraries(RequestInfoManagerCompatibility
   PRIVATE
-  Commons
   Generics
 
   UserCampaignReachProfile_v24PST

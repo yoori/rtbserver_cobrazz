@@ -15,8 +15,8 @@ add_library(UserBaseProfileAdapter SHARED
 )
 
 target_link_libraries(UserBaseProfileAdapter
-  Commons
-  ChannelMatcher
+  PRIVATE
+  Generics
   UserChannelBaseProfile_v1PST
   UserChannelBaseProfile_v2PST
   UserChannelBaseProfile_v3PST
@@ -39,7 +39,8 @@ add_library(UserFreqCapProfileAdapter SHARED
 )
 
 target_link_libraries(UserFreqCapProfileAdapter
-  Commons
+  PRIVATE
+  Generics
   UserFreqCapProfile_v290PST
   UserFreqCapProfile_v330PST
   UserFreqCapProfile_v340PST
@@ -55,8 +56,8 @@ add_library(UserHistoryProfileAdapter SHARED
 )
 
 target_link_libraries(UserHistoryProfileAdapter
-  Commons
-  ChannelMatcher
+  PRIVATE
+  Generics
   UserChannelHistoryProfile_v1PST
   UserChannelHistoryProfile_v320PST
 )
@@ -77,8 +78,8 @@ add_library(UserOperationProfilesAdapter SHARED
 )
 
 target_link_libraries(UserOperationProfilesAdapter
-  Commons
-  ChannelMatcher
+  PRIVATE
+  Generics
   UserOperationProfiles_v24PST
   UserOperationProfiles_v25PST
   UserOperationProfiles_v26PST

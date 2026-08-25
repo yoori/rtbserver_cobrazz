@@ -2,17 +2,14 @@ add_idl(BillStatInfoIDL BillStatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignS
 add_idl(StatInfoIDL StatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer)
 add_idl(CampaignServerIDL CampaignServer.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer)
 
-target_link_libraries(StatInfoIDL CorbaTypesIDL)
-target_link_libraries(BillStatInfoIDL CorbaTypesIDL)
+add_dependencies(StatInfoIDL CampaignCommonsIDL)
+target_link_libraries(BillStatInfoIDL PRIVATE CorbaTypesIDL)
 
 target_link_libraries(CampaignServerIDL
-  CampaignCommonsIDL
-  CorbaTypesIDL
-  CampaignServer_v350IDL
-  CampaignCommons_v350IDL
-  BillStatInfo_v350IDL
-  BillStatInfoIDL
-  StatInfoIDL
+  PRIVATE
+    CampaignCommonsIDL
+    BillStatInfoIDL
+    StatInfoIDL
 )
 
 add_library(BillStatServerSource STATIC
@@ -21,14 +18,12 @@ add_library(BillStatServerSource STATIC
 )
 
 target_link_libraries(BillStatServerSource
-  Generics
-  Commons
-  CORBACommons
-  CampaignServerIDL
-  CampaignServerStubs_v350
-  CampaignServer_v350IDL
-  StatInfoIDL
-  BillStatInfoIDL
+  PRIVATE
+    Generics
+    Commons
+    CORBACommons
+    BillStatInfoIDL
+    CampaignServerIDL
 )
 
 add_library(CampaignConfigModifier STATIC
@@ -38,10 +33,12 @@ add_library(CampaignConfigModifier STATIC
 )
 
 target_link_libraries(CampaignConfigModifier
-  Generics
-  Commons
-  Postgres
-  LogGeneralizerIDL
+  PRIVATE
+    Generics
+    Commons
+    CORBACommons
+    Postgres
+    LogGeneralizerIDL
 )
 
 add_executable(CampaignServer
@@ -56,43 +53,30 @@ add_executable(CampaignServer
 )
 
 target_link_libraries(CampaignServer
-  LogCommons
-  Commons
-  CORBAConfig
-  Postgres
-  LogGeneralizerLib
-  LogGeneralizerIDL
-  BillStatServerSource
-
-  ExpressionChannel
-  CampaignConfigModifier
-  CORBACommons
-  CampaignServer_v350IDL
-  CampaignServerStubs_v350
-  CampaignCommons_v350IDL
-  BillStatInfo_v350IDL
-  CORBAConfigParser
-  CampaignServerIDL
-  StatInfoIDL
-  BillStatInfoIDL
-  AdServerCommonsXSD
-  SNMPAgent
-  Logger
-  CorbaTypesIDL
-  Generics ACE Sync
-  String
-  xerces-c
-  CTROptimizer
-
-  CampaignCommonsIDL
-  CampaignServerConfigXSD
-  DomainConfigXSD
-  HostDistributionFileXSD
-
-  pcre ssl crypto z event  pthread
-  TAO TAO_AnyTypeCode TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny TAO_EndpointPolicy TAO_FaultTolerance
-  TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable
-  TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    LogCommons
+    Commons
+    CORBAConfig
+    Postgres
+    BillStatServerSource
+    CampaignCommonsIDL
+    CampaignConfigModifier
+    CORBACommons
+    CorbaTypesIDL
+    CampaignServerStubs_v350
+    CampaignServerIDL
+    StatInfoIDL
+    AdServerCommonsXSD
+    Generics
+    HTTP
+    Logger
+    Sync
+    CampaignServerConfigXSD
+    DomainConfigXSD
+    HostDistributionFileXSD
+    ProcessControlIDL
 )
 
 ADD_SUBDIRECTORY(Compatibility)

@@ -6,6 +6,7 @@ add_library(PlainCpp SHARED
 )
 
 target_link_libraries(PlainCpp
+  PRIVATE
   Generics
   PlainDeclaration
   PlainCode

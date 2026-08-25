@@ -2,13 +2,21 @@ add_library(CTROptimizer STATIC
   CTROptimizer.cpp
 )
 
+target_link_libraries(CTROptimizer
+  PRIVATE
+    Generics
+)
+
 add_library(BillingContainer STATIC
   BillingContainer.cpp
   BillingContainerState.cpp
 )
 
 target_link_libraries(BillingContainer
-  CTROptimizer)
+  PRIVATE
+    CTROptimizer
+    Generics
+)
 
 # BillingServerGrpc
 set(BILLING_SERVER_GRPC_PROTO_DIR ${PB_DIRECTORY}/CampaignSvcs/BillingServer)
@@ -20,7 +28,11 @@ add_grpc_sources(
   ${BILLING_SERVER_GRPC_PROTO_DIR}
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
-target_link_libraries(BillingServerGrpc protobuf::libprotobuf GrpcBatch)
+target_link_libraries(BillingServerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+    GrpcBatch
+)
 
 add_executable(BillingServer
   BillingServerMain.cpp
@@ -29,42 +41,29 @@ add_executable(BillingServer
 )
 
 target_link_libraries(BillingServer
-  BillStatServerSource
-  BillingContainer
-  BillingServerGrpc
-  HttpServer
-  Commons
-  CORBAConfig
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
 
-  ProcessControlIDL
-  BillStatInfoIDL
-  CorbaTypesIDL
-  CampaignServerIDL
-  CampaignCommonsIDL
-  StatInfoIDL
+    BillStatServerSource
+    BillingContainer
+    BillingServerGrpc
+    HttpServer
+    Commons
+    CORBAConfig
 
-  AdServerCommonsXSD
-  BillingServerConfigXSD
-  CampaignManagerConfigXSD
-  CampaignServerConfigXSD
-  DomainConfigXSD
-  HostDistributionFileXSD
+    CampaignServerIDL
 
-  Generics
-  Logger
-  Sync
-  String
-  CORBACommons
+    AdServerCommonsXSD
+    BillingServerConfigXSD
 
-  ACE
-  xerces-c
-  pcre ssl crypto z event pthread
-  TAO TAO_AnyTypeCode  TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny
-  TAO_EndpointPolicy TAO_FaultTolerance
-  TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable
-  TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP
-  TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
-  jemalloc
+    Generics
+    Logger
+    ProcessControlIDL
+    Sync
+    CORBACommons
+
+    jemalloc
 )
 
 target_include_directories(BillingServer PRIVATE
@@ -72,11 +71,11 @@ target_include_directories(BillingServer PRIVATE
 )
 
 if (TARGET Protobuf::libprotobuf)
-  target_link_libraries(BillingServer Protobuf::libprotobuf)
+  target_link_libraries(BillingServer PRIVATE Protobuf::libprotobuf)
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(BillingServer protobuf::libprotobuf)
+  target_link_libraries(BillingServer PRIVATE protobuf::libprotobuf)
 else()
-  target_link_libraries(BillingServer ${Protobuf_LIBRARIES})
+  target_link_libraries(BillingServer PRIVATE ${Protobuf_LIBRARIES})
 endif()
 
-target_link_libraries(BillingServer gRPC::grpc++)
+target_link_libraries(BillingServer PRIVATE gRPC::grpc++)

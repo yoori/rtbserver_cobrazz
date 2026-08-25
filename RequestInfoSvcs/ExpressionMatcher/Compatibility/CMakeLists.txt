@@ -10,6 +10,7 @@ add_library(ExpressionMatcherCompatibility SHARED
   RequestTriggerMatchProfileAdapter.cpp
 )
 target_link_libraries(ExpressionMatcherCompatibility
+  PRIVATE
   RequestTriggerMatchProfile_v330PST
   UserTriggerMatchProfile_v0PST
   UserChannelInventoryProfile_v281PST
@@ -17,9 +18,7 @@ target_link_libraries(ExpressionMatcherCompatibility
   UserTriggerMatchProfilePST
   RequestTriggerMatchProfilePST
 
-  Sync
   Generics
-  String
   pthread
 )
 

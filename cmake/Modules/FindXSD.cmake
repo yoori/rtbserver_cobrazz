@@ -29,6 +29,7 @@ function(add_xsd _target _xsdfile target_dir)
   add_library(${_target} STATIC
     ${OUTPUTCPP}
   )
+  target_link_libraries(${_target} xerces-c)
   add_dependencies(${_target} ${FINDIDL_TARGET})
   #    add_dependencies(${_target} ${OUTPUTCPP})
   #    add_dependencies(${_target} ${OUTPUTHPP})

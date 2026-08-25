@@ -3,10 +3,10 @@ add_executable(GeoUtil
   Application.cpp
 )
 target_link_libraries(GeoUtil
-  Generics
+  PRIVATE
+    Generics
 
-  Commons
-  Geoip
+    Geoip
 
 )
 

@@ -3,8 +3,8 @@ add_library(CookieManager SHARED
 )
 
 target_link_libraries(CookieManager
+  PRIVATE
   HTTP
-  Commons
   FeConfigXSD
 )
 
@@ -17,8 +17,8 @@ add_library(FCGI SHARED
 )
 
 target_link_libraries(FCGI
+  PRIVATE
   Commons
-  Stream
   FeConfigXSD
   Boost::headers
 )
@@ -28,9 +28,9 @@ add_library(ProcessingTemplates SHARED
 )
 
 target_link_libraries(ProcessingTemplates
+  PRIVATE
   Generics
   FCGI
-  Commons
 )
 
 add_library(RequestMatchers SHARED
@@ -39,22 +39,10 @@ add_library(RequestMatchers SHARED
 )
 
 target_link_libraries(RequestMatchers
-  HTTP
-  BLogic
-  Commons
-
-  UserInfoClient
-  UserBindControllerGrpc
-  UserBindServerGrpc
-  UserBindServerGrpcClient
-  UserBindClient
-  GrpcBatch
-  gRPC::grpc++
-  ChannelGrpcClient
-
-  FeConfigXSD
-
-  pcre
+  PRIVATE
+    BLogic
+    Generics
+    HTTP
 )
 
 add_library(UserIdController SHARED
@@ -62,6 +50,7 @@ add_library(UserIdController SHARED
 )
 
 target_link_libraries(UserIdController
+  PRIVATE
   Generics
   Commons
 )

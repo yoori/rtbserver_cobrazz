@@ -3,10 +3,13 @@ add_executable(CampaignAdmin
 )
 
 target_link_libraries(CampaignAdmin
-  CampaignManagerGrpcClient
-  GrpcBatch
-  UtilCommons
-  String
-  Generics
-  gRPC::grpc++
+  PRIVATE
+    CampaignManagerGrpc
+    CampaignManagerGrpcClient
+    Commons
+    Generics
+    GrpcBatch
+    Logger
+    UtilCommons
+    gRPC::grpc++
 )

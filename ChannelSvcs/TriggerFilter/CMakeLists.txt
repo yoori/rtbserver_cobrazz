@@ -2,10 +2,16 @@ add_executable(TriggerFilter
   Application.cpp
 )
 target_link_libraries(TriggerFilter
-  Generics
-  Commons
-  ChannelCommons
-  ChannelContainer
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+
+    Generics
+    BLogic
+    CORBACommons
+    ChannelCommons
+    ChannelContainer
+    ProcessControlIDL
 )
 
 #install(TARGETS TriggerFilter  DESTINATION ${INSTALL_DIR})

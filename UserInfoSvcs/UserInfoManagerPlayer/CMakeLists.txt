@@ -3,13 +3,11 @@ add_executable(UserInfoManagerPlayer
 )
 
 target_link_libraries(UserInfoManagerPlayer
-  UserInfoManagerDump
-  UserInfoManagerGrpc
-  GrpcBatch
-  Commons
-  Generics
-  gRPC::grpc++
-  protobuf::libprotobuf
+  PRIVATE
+    UserInfoManagerDump
+    UserInfoManagerGrpc
+    Generics
+    gRPC::grpc++
 )
 
 #install(TARGETS UserInfoManagerPlayer DESTINATION ${INSTALL_DIR})

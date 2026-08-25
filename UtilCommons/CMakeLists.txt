@@ -2,6 +2,7 @@ add_library(UtilCommons SHARED
   Table.cpp
 )
 target_link_libraries(UtilCommons
+  PRIVATE
   #String
   Generics
 
@@ -9,6 +10,5 @@ target_link_libraries(UtilCommons
 )
 
 #install(TARGETS UtilCommons DESTINATION ${INSTALL_DIR})
-
 
 

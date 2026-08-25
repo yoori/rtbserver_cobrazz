@@ -4,9 +4,9 @@ add_library(PassFrontend SHARED
 )
 
 target_link_libraries(PassFrontend
-  Stream
+  PRIVATE
   Commons
-  RequestMatchers
+  UserInfoClient
   CommonModule
   CampaignManagerGrpcDistributedClient
   FeConfigXSD

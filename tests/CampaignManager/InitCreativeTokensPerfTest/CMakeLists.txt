@@ -9,6 +9,7 @@ target_link_libraries(InitCreativeTokensPerfTest
     CreativeTemplateArgs
     Commons
     Generics
+    HTTP
 )
 
 target_include_directories(InitCreativeTokensPerfTest

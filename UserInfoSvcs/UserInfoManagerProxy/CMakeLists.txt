@@ -12,13 +12,11 @@ add_executable(UserInfoManagerProxy
 )
 
 target_link_libraries(UserInfoManagerProxy
-  UserInfoManagerDump
-  UserInfoManagerGrpc
-  GrpcBatch
-  Commons
-  Generics
-  gRPC::grpc++
-  protobuf::libprotobuf
+  PRIVATE
+    UserInfoManagerDump
+    UserInfoManagerGrpc
+    Generics
+    gRPC::grpc++
 )
 
 #install(TARGETS UserInfoManagerProxy DESTINATION ${INSTALL_DIR})

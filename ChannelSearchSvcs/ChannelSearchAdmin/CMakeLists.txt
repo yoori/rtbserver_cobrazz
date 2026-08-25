@@ -3,10 +3,15 @@ add_executable(ChannelSearchAdmin
   Application.cpp
 )
 target_link_libraries(ChannelSearchAdmin
-  Generics
-  Logger
-  Commons
-  UtilCommons
-  ChannelSearchServiceIDL
-  ChannelGrpcClient
+  PRIVATE
+    TAO::Valuetype
+    Generics
+    GrpcBatch
+    HTTP
+    CorbaTypesIDL
+    UtilCommons
+    ChannelSearchServiceIDL
+    ChannelServerIDL
+    ChannelServerGrpc
+    ChannelGrpcClient
 )

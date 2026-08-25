@@ -21,6 +21,7 @@ target_link_libraries(DistributedPartitionPoolTest
   Commons
   Generics
   Logger
+  Sync
 )
 
 target_link_libraries(BatchPartialResponseTest

@@ -9,30 +9,36 @@ add_library(SyncLogsLib STATIC
   FetchRouteProcessor.cpp
 )
 
+target_link_libraries(SyncLogsLib
+  PUBLIC
+    Generics
+    Sync
+    Commons
+    LogCommons
+)
+
 add_executable(SyncLogs
   SyncLogsImpl.cpp
   SyncLogsMain.cpp
 )
 
 target_link_libraries(SyncLogs
-  SyncLogsLib
-  pthread
-  Generics
-  Sync
-  pcre
-  Commons
-  CORBAConfig
-  CORBACommons
-  ProcessControlIDL
-  StatsIDL
-  Postgres
-  LogCommons
-  SNMPAgent
-  ProcessControlVars
-  UtilCommons
-  String
-  SyncLogsConfigXSD
-  XMLUtility
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    SyncLogsLib
+    pthread
+    Generics
+    Commons
+    CORBAConfig
+    CORBACommons
+    LogCommons
+    Logger
+    ProcessControlIDL
+    ProcessControlVars
+    Sync
+    SyncLogsConfigXSD
+    XMLUtility
 )
 
 #install(TARGETS SyncLogs DESTINATION ${INSTALL_DIR})

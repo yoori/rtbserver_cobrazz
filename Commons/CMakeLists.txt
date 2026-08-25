@@ -6,9 +6,7 @@ add_idl(CookieInfoPackIDL CookieInfoPack.idl ${IDL_DIRECTORY}/Commons)
 add_idl(CorbaTypesIDL CorbaTypes.idl ${IDL_DIRECTORY}/Commons)
 add_idl(FreqCapInfoIDL FreqCapInfo.idl ${IDL_DIRECTORY}/Commons)
 
-target_link_libraries(CampaignFreqIDL CorbaTypesIDL)
-target_link_libraries(CookieInfoPackIDL CorbaTypesIDL)
-target_link_libraries(FreqCapInfoIDL CorbaTypesIDL)
+target_link_libraries(FreqCapInfoIDL PRIVATE CorbaTypesIDL)
 
 add_library(Commons SHARED
   SignalActiveObject.cpp
@@ -36,8 +34,9 @@ add_library(Commons SHARED
 )
 
 target_link_libraries(Commons
-  HostDistributionFileXSD xerces-c Generics AdServerCommonsXSD HTTP crypto
-  zmq pthread Logger Sync
+  PRIVATE
+  HostDistributionFileXSD Generics AdServerCommonsXSD HTTP crypto
+  zmq pthread Sync
   Boost::headers
 )
 
@@ -46,6 +45,7 @@ add_library(CORBAConfig SHARED
 )
 
 target_link_libraries(CORBAConfig
+  PRIVATE
   Commons
   CORBACommons
   AdServerCommonsXSD
@@ -113,13 +113,9 @@ add_library(ProcessControlVars SHARED
 )
 
 target_link_libraries(ProcessControlVars
-  Stream
-  CORBACommons
-  AdServerCommonsXSD
-  Generics
-  CorbaTypesIDL
-  Commons
-  zmq  pthread ACE Logger Sync
+  PRIVATE
+    CORBACommons
+    Logger
 )
 
 

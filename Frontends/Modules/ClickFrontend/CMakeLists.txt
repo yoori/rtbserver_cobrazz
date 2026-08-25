@@ -5,10 +5,11 @@ add_library(ClickFrontend SHARED
 )
 
 target_link_libraries(ClickFrontend
-  Stream
+  PRIVATE
   Geoip
   Commons
   ChannelGrpcClient
+  UserInfoClient
   UserInfoManagerGrpcClient
   UserBindClient
   UserIdController

@@ -3,21 +3,16 @@ add_executable(LogGeneralizerAdmin
 )
 
 target_link_libraries(LogGeneralizerAdmin
-  LogGeneralizerLib
-  LogGeneralizerIDL
-  pthread
-  Generics
-  Commons
-  CORBACommons
-  ProcessControlIDL
-  StatsIDL
-  Postgres
-  LogCommons
-  LogGeneralizerConfigXSD
-  SNMPAgent
-  ProcessControlVars
-  UtilCommons
-  String
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+
+    LogGeneralizerIDL
+    ProcessControlIDL
+    pthread
+    Generics
+    CORBACommons
+    UtilCommons
 )
 
 #install(TARGETS LogGeneralizerAdmin DESTINATION ${INSTALL_DIR})

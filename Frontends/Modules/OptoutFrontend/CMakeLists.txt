@@ -5,7 +5,7 @@ add_library(OptoutFrontend SHARED
 )
 
 target_link_libraries(OptoutFrontend
-  Stream
+  PRIVATE
   Commons
   PrivacyFilter
   RequestMatchers

@@ -9,6 +9,7 @@ add_library(Oracle SHARED
   ConnectionPool.cpp
 )
 target_link_libraries(Oracle
+  PRIVATE
   Generics
   Commons
 )

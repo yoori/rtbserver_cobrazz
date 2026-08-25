@@ -6,9 +6,11 @@ add_library(UserBindFrontend SHARED
 )
 
 target_link_libraries(UserBindFrontend
-  Stream
+  PRIVATE
   Geoip
   Commons
+  ChannelGrpcClient
+  UserInfoClient
   UserIdController
   CommonModule
   CampaignManagerGrpcDistributedClient

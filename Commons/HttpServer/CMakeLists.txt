@@ -4,8 +4,9 @@ add_library(HttpServer STATIC
 )
 
 target_link_libraries(HttpServer
-  Generics
-  Sync
-  pthread
-  Boost::headers
+  PUBLIC
+    Generics
+  PRIVATE
+    pthread
+    Boost::headers
 )

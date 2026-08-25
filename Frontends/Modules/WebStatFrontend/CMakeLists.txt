@@ -4,7 +4,7 @@ add_library(WebStatFrontend SHARED
 )
 
 target_link_libraries(WebStatFrontend
-  Stream
+  PRIVATE
   Commons
   RequestMatchers
   CommonModule

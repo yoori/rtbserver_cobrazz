@@ -6,7 +6,10 @@ add_grpc_sources(
   ${CHANNEL_CONTROLLER_GRPC_PROTO}
   ${CHANNEL_CONTROLLER_GRPC_PROTO_DIR})
 
-target_link_libraries(ChannelControllerGrpc protobuf::libprotobuf)
+target_link_libraries(ChannelControllerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+)
 
 add_executable(ChannelController
   ChannelControllerMain.cpp
@@ -14,14 +17,21 @@ add_executable(ChannelController
   ChannelControllerGrpc.cpp)
 
 target_link_libraries(ChannelController
-  ChannelControllerGrpc
-  ChannelServerGrpc
-  ChannelControllerConfigXSD
-  Commons
-  CORBAConfig
-  CORBACommons
-  Generics
-  gRPC::grpc++)
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+
+    ChannelControllerGrpc
+    ChannelServerGrpc
+    ChannelControllerConfigXSD
+    Commons
+    CORBAConfig
+    CORBACommons
+    Generics
+    Logger
+    ProcessControlIDL
+    Sync
+    gRPC::grpc++)
 
 target_include_directories(ChannelController PRIVATE
   ${CHANNEL_CONTROLLER_GRPC_PROTO_DIR})

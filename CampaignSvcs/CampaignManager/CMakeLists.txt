@@ -10,7 +10,11 @@ add_grpc_sources(
   ${CAMPAIGN_MANAGER_GRPC_PROTO_DIR}
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
-target_link_libraries(CampaignManagerGrpc protobuf::libprotobuf GrpcBatch)
+target_link_libraries(CampaignManagerGrpc
+  PUBLIC
+    protobuf::libprotobuf
+    GrpcBatch
+)
 
 add_library(CampaignManagerGrpcClient STATIC)
 
@@ -26,19 +30,17 @@ target_link_libraries(CampaignManagerGrpcClient
   Commons
   GrpcBatch
   CampaignManagerGrpc
-  gRPC::grpc++)
+  gRPC::grpc++
+  PRIVATE
+  Sync)
 
 add_library(BidRateProvider SHARED
   BidCostProvider.cpp
 )
 
 target_link_libraries(BidRateProvider
+  PRIVATE
   Generics
-  CORBACommons
-  CorbaTypesIDL
-  pthread
-  pcre
-  HTTP
 )
 
 add_definitions(-D_REENTRANT -D_USE_OCCI -DXSD_CXX11)
@@ -53,9 +55,9 @@ add_library(CTRProviderCore SHARED
 link_directories(/opt/foros/vanga/lib)
 
 target_link_libraries(CTRProviderCore
+  PRIVATE
   Generics
   CampaignConfig
-  pcre
 )
 
 set_target_properties(CTRProviderCore PROPERTIES OUTPUT_NAME CTRProvider)
@@ -73,6 +75,7 @@ add_library(CTRProviderImplLib SHARED
 )
 
 target_link_libraries(CTRProviderImplLib
+  PRIVATE
   CTRProviderCore
   ProfilingCommons
   xgboost
@@ -86,9 +89,9 @@ add_library(CampaignConfig SHARED
 )
 
 target_link_libraries(CampaignConfig
+  PRIVATE
   Generics
   HTTP
-  ExpressionChannel
   Boost::headers
 )
 
@@ -97,11 +100,19 @@ add_library(CampaignConfigSource
 )
 
 target_link_libraries(CampaignConfigSource
-  Generics
-  HTTP
-  CampaignConfig
-  CampaignIndex
-  DomainParser
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    Generics
+    HTTP
+    CORBACommons
+    CampaignCommonsIDL
+    CorbaTypesIDL
+    CampaignServerIDL
+    CampaignConfig
+    CampaignIndex
+    CreativeTemplateArgs
+    DomainParser
 )
 
 add_library(CampaignIndex
@@ -110,6 +121,7 @@ add_library(CampaignIndex
 )
 
 target_link_libraries(CampaignIndex
+  PRIVATE
   Generics
   CampaignConfig
   CreativeTemplateArgs
@@ -121,8 +133,8 @@ add_library( CreativeTemplateArgs SHARED
 )
 
 target_link_libraries(CreativeTemplateArgs
+  PRIVATE
   Generics
-  Commons
   Boost::headers
 )
 
@@ -140,6 +152,7 @@ add_library(InstantiateAdArgs STATIC
 )
 
 target_link_libraries(InstantiateAdArgs
+  PRIVATE
   Generics
   AdServerCommonsXSD
   CampaignManagerConfigXSD
@@ -155,26 +168,35 @@ add_library(SecToken
   SecToken.cpp
 )
 
+target_link_libraries(SecToken
+  PRIVATE
+  Commons
+  Generics
+  Logger
+)
+
 add_library(PassbackTemplate
   PassbackTemplate.cpp
 )
 
 target_link_libraries(PassbackTemplate
+  PRIVATE
   CreativeTemplateArgs
+  Commons
+  Generics
 )
 
 add_library(DomainParser
   DomainParser.cpp
 )
 
-add_dependencies(DomainParser DomainConfigXSD)
+target_link_libraries(DomainParser
+  PRIVATE
+  DomainConfigXSD
+)
 
 add_library(CampaignBilling SHARED
   CampaignBilling.cpp
-)
-
-target_link_libraries(CampaignBilling
-  CampaignTypes
 )
 
 add_library(CampaignBillingAccount SHARED
@@ -182,8 +204,8 @@ add_library(CampaignBillingAccount SHARED
 )
 
 target_link_libraries(CampaignBillingAccount
+  PRIVATE
   CampaignBilling
-  CampaignConfig
 )
 
 add_library(CampaignManagerLogger SHARED
@@ -192,12 +214,12 @@ add_library(CampaignManagerLogger SHARED
 )
 
 target_link_libraries(CampaignManagerLogger
+  PRIVATE
   Generics
   LogCommons
   CreativeTemplateArgs
   CampaignConfig
   CampaignBillingAccount
-  CTRProviderCore
   ExpressionChannelIndex
   Boost::headers
 )
@@ -221,43 +243,49 @@ add_executable(CampaignManager
 )
 
 target_link_libraries(CampaignManager
-  jemalloc
+  PRIVATE
+    jemalloc
 
-  CampaignConfigSource
-  Stream
-  HTTP
-  HttpServer
-  CORBACommons
-  Commons
-  CORBAConfig
+    CampaignConfigSource
+    HTTP
+    HttpServer
+    CORBACommons
+    TAO::PortableServer
+    TAO::Valuetype
+    Commons
+    CORBAConfig
 
-  AdServerCommonsXSD
-  CampaignManagerConfigXSD
+    AdServerCommonsXSD
+    CampaignManagerConfigXSD
 
-  CampaignCommonsIDL
-  CampaignServerIDL
-  CampaignTypes
+    CampaignCommonsIDL
+    CampaignServerIDL
+    CorbaTypesIDL
+    ProcessControlIDL
+    CampaignTypes
 
-  ExpressionChannelIndex
-  ExpressionChannel
-  CreativeTemplateArgs
-  InstantiateAdArgs
-  CampaignConfig
-  CampaignBillingAccount
-  CampaignIndex
-  DomainParser
-  CampaignManagerLogger
-  PassbackTemplate
-  SecToken
+    ExpressionChannelIndex
+    ExpressionChannel
+    CreativeTemplateArgs
+    InstantiateAdArgs
+    CampaignConfig
+    CampaignBillingAccount
+    CampaignIndex
+    DomainParser
+    CampaignManagerLogger
+    LogCommons
+    PassbackTemplate
+    SecToken
 
-  CTRProviderCore
-  CTRProviderImplLib
-  BidRateProvider
-  DomainConfigXSD
-  StatInfoIDL
-  CampaignManagerGrpc
-  BillingServerGrpcClient
-  Boost::headers
+    CTRProviderImplLib
+    BidRateProvider
+    DomainConfigXSD
+    CampaignManagerGrpc
+    BillingServerGrpcClient
+    Generics
+    Logger
+    Sync
+    Boost::headers
 )
 
 target_include_directories(CampaignManager PRIVATE

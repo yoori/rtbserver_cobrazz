@@ -52,6 +52,7 @@ unset(BOOST_HEADERS_COMPILE_OPTIONS)
 link_libraries(Boost::headers)
 
 find_package(ACE REQUIRED)
+find_package(TAO REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(XercesC REQUIRED)
 find_package(Threads REQUIRED)

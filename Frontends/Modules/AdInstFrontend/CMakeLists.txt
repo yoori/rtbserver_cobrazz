@@ -4,17 +4,16 @@ add_library(AdInstFrontend SHARED
 )
 
 target_link_libraries(AdInstFrontend
-  Stream
+  PRIVATE
   HTTP
   Geoip
   Commons
+  UserInfoClient
   UserInfoManagerGrpcClient
-  CookieManager
   RequestMatchers
   FeConfigXSD
   CommonModule
   CampaignManagerGrpcDistributedClient
   FCGI
-  ProcessingTemplates
   UserIdController
 )

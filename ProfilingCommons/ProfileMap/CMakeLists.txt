@@ -3,7 +3,7 @@ add_library(ProfileMap SHARED
 )
 
 target_link_libraries(ProfileMap
-
+  PRIVATE
   Generics
   Commons
 )
@@ -25,7 +25,7 @@ add_library(ProfileMapRocksDB SHARED
 )
 
 target_link_libraries(ProfileMapRocksDB
-  ProfileMap
+  PRIVATE
   Generics
   Commons
   ${ROCKSDB_TARGET}

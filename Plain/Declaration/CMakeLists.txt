@@ -12,6 +12,7 @@ add_library(PlainDeclaration SHARED
 
 
 target_link_libraries(PlainDeclaration
+  PRIVATE
   Generics
 )
 

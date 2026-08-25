@@ -7,6 +7,7 @@ add_library(CTRGeneratorLib SHARED
 )
 
 target_link_libraries(CTRGeneratorLib
+  PRIVATE
   Commons
   Generics
   CTRGeneratorDataConfigXSD
@@ -19,6 +20,14 @@ add_executable(CTRGenerator
 )
 
 target_link_libraries(CTRGenerator
-  CTRGeneratorLib
-  CTRProviderImplLib
+  PRIVATE
+    CTRGeneratorLib
+    CTRGeneratorDataConfigXSD
+    CTRProvider
+    CTRProviderImplLib
+    CampaignConfig
+    Commons
+    Generics
+    HTTP
+    ProfilingCommons
 )

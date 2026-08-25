@@ -14,7 +14,10 @@ target_link_libraries(UserBindServerCorePerfTest
     MessageSaver
     LogCommons
     UserBindContainer
+    UserBindOperationProfilePST
     Generics
+    Logger
+    Sync
 )
 
 target_include_directories(UserBindServerCorePerfTest

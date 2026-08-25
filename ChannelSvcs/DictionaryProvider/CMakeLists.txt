@@ -2,15 +2,9 @@ add_idl(DictionaryProviderIDL DictionaryProvider.idl ${IDL_DIRECTORY}/ChannelSvc
 
 
 target_link_libraries(DictionaryProviderIDL
-  Generics
-  HTTP
-  Commons
-  BLogic
-  LogCommons
-  CORBACommons
-  CorbaTypesIDL
-  ChannelUpdateBaseIDL
-  ChannelServerIDL
+  PRIVATE
+    CorbaTypesIDL
+    ChannelCommonsIDL
 )
 
 
@@ -21,16 +15,22 @@ add_executable(DictionaryProvider
   DictionaryProviderMain.cpp DictionaryProviderImpl.cpp DictionaryContainer.cpp
 )
 target_link_libraries(DictionaryProvider
-  Generics
-  xerces-c
-  XMLUtility
-  CORBACommons
-  AdServerCommonsXSD
-  DictionaryProviderConfigXSD
-  Commons
-  CORBAConfig
-  DictionaryProviderIDL
-  ChannelCommons
+  PRIVATE
+    TAO::PortableServer
+    TAO::Valuetype
+    Generics
+    CORBACommons
+    AdServerCommonsXSD
+    DictionaryProviderConfigXSD
+    Commons
+    CORBAConfig
+    CorbaTypesIDL
+    DictionaryProviderIDL
+    ChannelCommons
+    ChannelCommonsIDL
+    Logger
+    ProcessControlIDL
+    Sync
 )
 
 #install(TARGETS DictionaryProvider DictionaryProviderIDL  DESTINATION ${INSTALL_DIR})

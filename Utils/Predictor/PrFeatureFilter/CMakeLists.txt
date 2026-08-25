@@ -1,17 +1,10 @@
 add_executable(PrFeatureFilter
   Application.cpp
-
 )
+
 target_link_libraries(PrFeatureFilter
-
-  Generics
-
-  DTree
-  CTRGeneratorConfigXSD
-  CTRGeneratorDataConfigXSD
-  CTRProvider
-
+  PRIVATE
+    Generics
 )
 #install(TARGETS PrFeatureFilter  DESTINATION ${INSTALL_DIR})
-
 

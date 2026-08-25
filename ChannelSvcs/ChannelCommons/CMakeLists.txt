@@ -3,45 +3,35 @@ add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelC
 add_idl(ChannelUpdateBaseIDL ChannelUpdateBase.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons)
 
 target_link_libraries(ChannelCommonsIDL
-  Commons
-  BLogic
-  LogCommons
-  CORBACommons
-  CorbaTypesIDL
+  PRIVATE
+    CorbaTypesIDL
 )
 
 target_link_libraries(ChannelUpdateBaseIDL
-  Commons
-  BLogic
-  LogCommons
-  CORBACommons
-  CorbaTypesIDL
-  ChannelCommonsIDL
+  PRIVATE
+    ChannelCommonsIDL
 )
 
 target_link_libraries(ChannelServerIDL
-  Commons
-  LogCommons
-  CORBACommons
-  CorbaTypesIDL
-  ChannelCommonsIDL
-  ChannelUpdateBaseIDL
-  CampaignServerIDL
-  CorbaObjectRefIDL
-  ProcessControlIDL
+  PRIVATE
+    CorbaTypesIDL
+    ChannelCommonsIDL
+    ChannelUpdateBaseIDL
+    CorbaObjectRefIDL
 )
+add_dependencies(ChannelServerIDL CampaignServerIDL)
 
 add_library(ChannelCommons SHARED
   ChannelUtils.cpp ChannelUpdateStatLogger.cpp TriggerParser.cpp
 )
 
 target_link_libraries(ChannelCommons
+  PRIVATE
   Generics
   HTTP
-  Commons
   BLogic
   LogCommons
-  ChannelCommonsIDL
 )
+add_dependencies(ChannelCommons ChannelCommonsIDL)
 
 #install(TARGETS ChannelCommons ChannelServerIDL ChannelUpdateBaseIDL ChannelCommonsIDL  DESTINATION ${INSTALL_DIR})

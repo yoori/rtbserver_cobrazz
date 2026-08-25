@@ -3,11 +3,10 @@ add_executable(Http2EchoServer
 )
 
 target_link_libraries(Http2EchoServer
-  Generics
-  Stream
-  Commons
-  FCGI
-  FrontendServerCommons
-  Boost::system
-  nghttp2
+  PRIVATE
+    Generics
+    Logger
+    Sync
+    FCGI
+    FrontendServerCommons
 )

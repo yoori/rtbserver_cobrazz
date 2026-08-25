@@ -12,21 +12,23 @@ add_executable(InstantiateAdArgsTest
 target_link_libraries(InstantiateAdArgsTest
   PRIVATE
     jemalloc
+    TAO::PortableServer
+    TAO::Valuetype
 
     CampaignConfigSource
-    Stream
     HTTP
     HttpServer
     CORBACommons
     Commons
     CORBAConfig
-    XslTransformer
 
     AdServerCommonsXSD
     CampaignManagerConfigXSD
 
     CampaignCommonsIDL
     CampaignServerIDL
+    CorbaTypesIDL
+    ProcessControlIDL
     CampaignTypes
 
     ExpressionChannelIndex
@@ -34,6 +36,7 @@ target_link_libraries(InstantiateAdArgsTest
     InstantiateAdArgs
     CreativeTemplateArgs
     CampaignConfig
+    CampaignBillingAccount
     CampaignIndex
     DomainParser
     CampaignManagerLogger
@@ -44,10 +47,11 @@ target_link_libraries(InstantiateAdArgsTest
     CTRProviderImplLib
     BidRateProvider
     DomainConfigXSD
-    StatInfoIDL
     CampaignManagerGrpc
     BillingServerGrpcClient
     Generics
+    Logger
+    Sync
 )
 
 target_include_directories(InstantiateAdArgsTest
