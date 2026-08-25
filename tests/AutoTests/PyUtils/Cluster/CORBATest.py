@@ -773,12 +773,9 @@ class RequestInfoManager(CORBAProcess):
    distrib_count="1"
    action_ignore_time="30"
    use_referrer_site_referrer_stats="empty">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(REQUESTINFOMGR_PORT)i">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="RequestInfoManager" name="RequestInfoManager"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
+  <cfg:GrpcConfig cq_threads="%(THREADING_POOL)i">
+   <cfg:Endpoint host="*" port="%(REQUESTINFOMGR_PORT)i"/>
+  </cfg:GrpcConfig>
   <cfg:Logger filename="%(LOGROOT)s/RequestInfoManager.log" log_level="%(LOGLEVEL)i">
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
