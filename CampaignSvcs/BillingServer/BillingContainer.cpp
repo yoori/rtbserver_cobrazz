@@ -2,6 +2,8 @@
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
 
+#include <fstream>
+
 #include "BillingContainer.hpp"
 #include "BillingContainerState.hpp"
 

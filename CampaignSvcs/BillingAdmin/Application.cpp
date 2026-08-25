@@ -163,11 +163,14 @@ namespace
         1,
         128 * 1024,
         "bsa-coal");
+    AdServer::Grpc::BatchingOptions batching_options;
+    batching_options.max_batch_delay = Generics::Time::ZERO;
     auto billing_server =
       std::make_shared<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient>(
         *opt_reference,
         grpc_executor,
-        coalesce_runner);
+        coalesce_runner,
+        batching_options);
 
     Generics::CompositeActiveObject active_objects;
     active_objects.add_child_object(grpc_executor);
