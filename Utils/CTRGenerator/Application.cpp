@@ -3,6 +3,7 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
+#include <cstdint>
 
 #include <arpa/inet.h>
 
@@ -33,7 +34,8 @@ namespace
     "CTRGenerator generate-model <FEATURE CONFIG JSON> <CONFIG DATA FILE> "
       "<RESULT WEIGHT FILE>\n"
     "CTRGenerator generate-svm <FEATURE CONFIG JSON> <FEATURE COLUMNS> "
-      "[--model=xgboost|catboost] [--feature-indexes-file=<FILE>]\n"
+      "[--model=xgboost|catboost] [--feature-indexes-file=<FILE>] "
+      "[--feature-stats=<FILE>]\n"
     "\n"
     "CTRGenerator generate-xgb-ctr <XGB MODEL FILE> <FEATURE CONFIG JSON> "
       "<FEATURE COLUMNS>\n"
@@ -60,6 +62,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::StringOption opt_tag_to_publisher_dictionary;
   Generics::AppUtils::StringOption opt_model("xgboost");
   Generics::AppUtils::StringOption opt_feature_indexes_file;
+  Generics::AppUtils::StringOption opt_feature_stats_file;
   Generics::AppUtils::CheckOption opt_out_hashes;
   Generics::AppUtils::Args args(-1);
 
@@ -103,6 +106,10 @@ Application_::main(int& argc, char** argv)
   args.add(
     Generics::AppUtils::equal_name("feature-indexes-file"),
     opt_feature_indexes_file);
+
+  args.add(
+    Generics::AppUtils::equal_name("feature-stats"),
+    opt_feature_stats_file);
 
   args.parse(argc - 1, argv + 1);
 
@@ -206,6 +213,7 @@ Application_::main(int& argc, char** argv)
       opt_dictionary->c_str(),
       opt_name_dictionary->c_str(),
       opt_feature_indexes_file->c_str(),
+      opt_feature_stats_file->c_str(),
       catboost_model);
   }
   else if(command == "generate-xgb-ctr")
@@ -486,6 +494,7 @@ Application_::generate_svm_(
   const char* dictionary_file_path,
   const char* name_dictionary_file_path,
   const char* feature_indexes_file_path,
+  const char* feature_stats_file_path,
   bool catboost_model)
 {
   using namespace xsd::AdServer;
@@ -522,6 +531,20 @@ Application_::generate_svm_(
   const unsigned long dimension = config.features_dimension;
   const unsigned long features_size = 1UL << dimension;
   CTR::FeatureNameResolver feature_name_resolver;
+
+  struct FeatureStat
+  {
+    std::uint64_t impressions = 0;
+    std::uint64_t clicks = 0;
+  };
+
+  std::vector<FeatureStat> feature_stats;
+  std::uint64_t total_impressions = 0;
+  std::uint64_t total_clicks = 0;
+  if(feature_stats_file_path[0])
+  {
+    feature_stats.resize(features_size + 1);
+  }
 
   std::vector<unsigned char> allowed_feature_indexes;
   if(feature_indexes_file_path[0])
@@ -746,6 +769,19 @@ Application_::generate_svm_(
       }
     }
 
+    if(!feature_stats.empty())
+    {
+      const bool clicked = label == "1";
+      ++total_impressions;
+      total_clicks += clicked;
+      for(const auto& hash : ordered_hashes)
+      {
+        FeatureStat& stat = feature_stats[hash.first];
+        ++stat.impressions;
+        stat.clicks += clicked;
+      }
+    }
+
     if(
       catboost_model &&
       line_i == 0 &&
@@ -806,6 +842,30 @@ Application_::generate_svm_(
       dictionary_file << std::endl;
     }
     dictionary_file.close();
+  }
+
+  if(!feature_stats.empty())
+  {
+    std::ofstream feature_stats_file(feature_stats_file_path);
+    if(!feature_stats_file)
+    {
+      Stream::Error ostr;
+      ostr << "Can't open feature stats file '" <<
+        feature_stats_file_path << "'";
+      throw Exception(ostr);
+    }
+
+    feature_stats_file << "0," << total_impressions << ',' <<
+      total_clicks << '\n';
+    for(std::size_t index = 1; index < feature_stats.size(); ++index)
+    {
+      const FeatureStat& stat = feature_stats[index];
+      if(stat.impressions != 0)
+      {
+        feature_stats_file << index << ',' << stat.impressions << ',' <<
+          stat.clicks << '\n';
+      }
+    }
   }
 }
 
