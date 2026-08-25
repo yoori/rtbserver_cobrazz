@@ -4,7 +4,6 @@ add_executable(RocksDBBatchingProcessorQueueTest
 target_link_libraries(RocksDBBatchingProcessorQueueTest
   PRIVATE
     Generics
-    Commons
     ProfileMapRocksDB
 )
 

@@ -20,7 +20,6 @@ target_link_libraries(ChannelController
   PRIVATE
     TAO::PortableServer
     TAO::Valuetype
-
     ChannelControllerGrpc
     ChannelServerGrpc
     ChannelControllerConfigXSD
@@ -31,7 +30,8 @@ target_link_libraries(ChannelController
     Logger
     ProcessControlIDL
     Sync
-    gRPC::grpc++)
+    gRPC::grpc++
+)
 
 target_include_directories(ChannelController PRIVATE
   ${CHANNEL_CONTROLLER_GRPC_PROTO_DIR})

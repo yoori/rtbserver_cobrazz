@@ -18,7 +18,6 @@ target_link_libraries(ChannelSearchService
     ChannelServerGrpc
     ChannelServerIDL
     ChannelGrpcClient
-    Commons
     CorbaTypesIDL
     CORBAConfig
     ExpressionChannel

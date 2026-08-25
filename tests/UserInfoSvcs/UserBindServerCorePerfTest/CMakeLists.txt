@@ -7,7 +7,6 @@ add_executable(UserBindServerCorePerfTest
 
 target_link_libraries(UserBindServerCorePerfTest
   PRIVATE
-    PrivacyFilter
     Commons
     ProfileMap
     ProfileMapRocksDB

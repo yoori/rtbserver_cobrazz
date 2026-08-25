@@ -44,25 +44,20 @@ target_link_libraries(BillingServer
   PRIVATE
     TAO::PortableServer
     TAO::Valuetype
-
     BillStatServerSource
     BillingContainer
     BillingServerGrpc
     HttpServer
     Commons
     CORBAConfig
-
     CampaignServerIDL
-
     AdServerCommonsXSD
     BillingServerConfigXSD
-
     Generics
     Logger
     ProcessControlIDL
     Sync
     CORBACommons
-
     jemalloc
 )
 
@@ -71,11 +66,23 @@ target_include_directories(BillingServer PRIVATE
 )
 
 if (TARGET Protobuf::libprotobuf)
-  target_link_libraries(BillingServer PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(BillingServer
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(BillingServer PRIVATE protobuf::libprotobuf)
+  target_link_libraries(BillingServer
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(BillingServer PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(BillingServer
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
 
-target_link_libraries(BillingServer PRIVATE gRPC::grpc++)
+target_link_libraries(BillingServer
+  PRIVATE
+    gRPC::grpc++
+)

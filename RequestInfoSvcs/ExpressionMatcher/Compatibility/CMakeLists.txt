@@ -11,15 +11,12 @@ add_library(ExpressionMatcherCompatibility SHARED
 )
 target_link_libraries(ExpressionMatcherCompatibility
   PRIVATE
-  RequestTriggerMatchProfile_v330PST
-  UserTriggerMatchProfile_v0PST
-  UserChannelInventoryProfile_v281PST
-  UserChannelInventoryProfilePST
-  UserTriggerMatchProfilePST
-  RequestTriggerMatchProfilePST
-
-  Generics
-  pthread
+    RequestTriggerMatchProfile_v330PST
+    UserTriggerMatchProfile_v0PST
+    UserChannelInventoryProfile_v281PST
+    UserChannelInventoryProfilePST
+    UserTriggerMatchProfilePST
+    RequestTriggerMatchProfilePST
+    Generics
+    pthread
 )
-
-#install(TARGETS ExpressionMatcherCompatibility  DESTINATION ${INSTALL_DIR})

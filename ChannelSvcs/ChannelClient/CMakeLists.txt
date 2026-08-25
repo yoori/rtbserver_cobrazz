@@ -6,11 +6,11 @@ add_library(ChannelGrpcClient SHARED
 
 target_link_libraries(ChannelGrpcClient
   PRIVATE
-  Commons
-  Logger
-  ChannelControllerGrpc
-  ChannelServerGrpcClient
-  ChannelServerIDL
+    Commons
+    Logger
+    ChannelControllerGrpc
+    ChannelServerGrpcClient
+    ChannelServerIDL
 )
 
 target_include_directories(ChannelGrpcClient PUBLIC

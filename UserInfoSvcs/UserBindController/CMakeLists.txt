@@ -29,7 +29,8 @@ target_link_libraries(UserBindController
     Logger
     ProcessControlIDL
     Sync
-    gRPC::grpc++)
+    gRPC::grpc++
+)
 
 target_include_directories(UserBindController PRIVATE
   ${USER_BIND_CONTROLLER_GRPC_PROTO_DIR}

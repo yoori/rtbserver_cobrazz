@@ -37,5 +37,3 @@ target_link_libraries(XsltFileCache
     Sync
     XslTransformer
 )
-
-#install(TARGETS XslTransformAdmin  DESTINATION ${INSTALL_DIR})

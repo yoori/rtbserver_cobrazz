@@ -6,7 +6,6 @@ target_link_libraries(RocksDBBatchingProcessorQueuePerfTest
   PRIVATE
     jemalloc
     Generics
-    Commons
     ProfileMapRocksDB
 )
 

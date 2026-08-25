@@ -5,10 +5,10 @@ add_library(WebStatFrontend SHARED
 
 target_link_libraries(WebStatFrontend
   PRIVATE
-  Commons
-  RequestMatchers
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  FCGI
+    Commons
+    RequestMatchers
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    FCGI
 )

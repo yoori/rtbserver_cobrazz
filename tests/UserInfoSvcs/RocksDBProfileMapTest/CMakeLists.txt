@@ -4,8 +4,6 @@ add_executable(RocksDBProfileMapTest
 target_link_libraries(RocksDBProfileMapTest
   PRIVATE
     Generics
-    Commons
-    ProfileMap
     ProfileMapRocksDB
 )
 

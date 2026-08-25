@@ -1,10 +1,10 @@
-add_idl(ChannelClusterControlIDL ChannelClusterControl.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController)
+add_idl(ChannelClusterControlIDL ChannelClusterControl.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController VALUETYPE)
 target_link_libraries(ChannelClusterControlIDL
   PRIVATE
     ProcessControlIDL
 )
 
-add_idl(ChannelManagerControllerIDL ChannelManagerController.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController)
+add_idl(ChannelManagerControllerIDL ChannelManagerController.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController VALUETYPE)
 target_link_libraries(ChannelManagerControllerIDL
   PRIVATE
     ChannelCommonsIDL
@@ -20,11 +20,10 @@ add_library(ChannelSessionFactory SHARED
 )
 target_link_libraries(ChannelSessionFactory
   PRIVATE
-  Generics
-  Logger
-  CORBACommons
-  ChannelManagerControllerIDL
-
+    Generics
+    Logger
+    CORBACommons
+    ChannelManagerControllerIDL
 )
 add_dependencies(ChannelSessionFactory
   ChannelCommons
@@ -35,9 +34,7 @@ add_library(ChannelClusterControl SHARED
 )
 target_link_libraries(ChannelClusterControl
   PRIVATE
-  Generics
-  CORBACommons
-  ChannelClusterControlIDL
+    Generics
+    CORBACommons
+    ChannelClusterControlIDL
 )
-
-#install(TARGETS ChannelClusterControl ChannelSessionFactory ChannelController ChannelClusterControlIDL ChannelManagerControllerIDL   DESTINATION ${INSTALL_DIR})

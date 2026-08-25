@@ -32,5 +32,3 @@ target_link_libraries(DictionaryProvider
     ProcessControlIDL
     Sync
 )
-
-#install(TARGETS DictionaryProvider DictionaryProviderIDL  DESTINATION ${INSTALL_DIR})

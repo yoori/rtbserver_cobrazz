@@ -6,7 +6,4 @@ add_executable(TrivialCTRConfigGenerator
 target_link_libraries(TrivialCTRConfigGenerator
   PRIVATE
     Generics
-
 )
-
-#install(TARGETS TrivialCTRConfigGenerator  DESTINATION ${INSTALL_DIR})

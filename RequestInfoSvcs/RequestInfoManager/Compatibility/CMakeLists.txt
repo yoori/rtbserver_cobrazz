@@ -49,27 +49,21 @@ add_library(RequestInfoManagerCompatibility SHARED
 
 target_link_libraries(RequestInfoManagerCompatibility
   PRIVATE
-  Generics
-
-  UserCampaignReachProfile_v24PST
-
-  RequestProfile_v351PST
-  RequestProfile_v356PST
-  RequestProfile_v360PST
-  RequestProfile_v361PST
-  RequestProfile_v362PST
-  PassbackProfile_v32PST
-
-  UserActionProfile_v321PST
-
-  UserSiteReachProfile_v24PST
-
-  RequestOperationImpressionProfile_v0PST
-
-  RequestProfilePST
-  RequestOperationProfilePST
-  UserCampaignReachProfilePST
-  UserActionProfilePST
-  UserSiteReachProfilePST
-  PassbackProfilePST
+    Generics
+    UserCampaignReachProfile_v24PST
+    RequestProfile_v351PST
+    RequestProfile_v356PST
+    RequestProfile_v360PST
+    RequestProfile_v361PST
+    RequestProfile_v362PST
+    PassbackProfile_v32PST
+    UserActionProfile_v321PST
+    UserSiteReachProfile_v24PST
+    RequestOperationImpressionProfile_v0PST
+    RequestProfilePST
+    RequestOperationProfilePST
+    UserCampaignReachProfilePST
+    UserActionProfilePST
+    UserSiteReachProfilePST
+    PassbackProfilePST
 )

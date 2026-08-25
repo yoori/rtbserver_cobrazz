@@ -34,22 +34,23 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(UserBindServerGrpcClient
   PUBLIC
-  Commons
-  GrpcBatch
-  UserBindServerGrpc
-  gRPC::grpc++
+    Commons
+    GrpcBatch
+    UserBindServerGrpc
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)
 
 # UserBindContainer
 target_link_libraries(UserBindContainer
   PRIVATE
-  Generics
-  PrivacyFilter
-  Commons
-  LogCommons
-  ProfileMap
-  ProfileMapRocksDB
+    Generics
+    PrivacyFilter
+    Commons
+    LogCommons
+    ProfileMap
+    ProfileMapRocksDB
 )
 
 # UserBindOperationProfilePST
@@ -66,7 +67,10 @@ add_pst(
   ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer
 )
 
-target_link_libraries(UserBindContainer PRIVATE UserBindRocksDBProfilePST)
+target_link_libraries(UserBindContainer
+  PRIVATE
+    UserBindRocksDBProfilePST
+)
 
 # UserBindServer
 add_executable(UserBindServer
@@ -79,7 +83,6 @@ add_executable(UserBindServer
 target_link_libraries(UserBindServer
   PRIVATE
     jemalloc
-
     Commons
     Generics
     GrpcBatch
@@ -103,14 +106,26 @@ target_include_directories(UserBindServer PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(UserBindServer PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(UserBindServer
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(UserBindServer PRIVATE protobuf::libprotobuf)
+  target_link_libraries(UserBindServer
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(UserBindServer PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(UserBindServer
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
 
-target_link_libraries(UserBindServer PRIVATE gRPC::grpc++)
+target_link_libraries(UserBindServer
+  PRIVATE
+    gRPC::grpc++
+)
 
 # Temporary test binary for gRPC batching lifecycle checks. It keeps the same
 # process/bootstrap code as UserBindServer, but short-circuits get_user_id.
@@ -139,11 +154,23 @@ target_compile_definitions(MockUserBindServer PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(MockUserBindServer PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(MockUserBindServer
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(MockUserBindServer PRIVATE protobuf::libprotobuf)
+  target_link_libraries(MockUserBindServer
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(MockUserBindServer PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(MockUserBindServer
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
 
-target_link_libraries(MockUserBindServer PRIVATE gRPC::grpc++)
+target_link_libraries(MockUserBindServer
+  PRIVATE
+    gRPC::grpc++
+)

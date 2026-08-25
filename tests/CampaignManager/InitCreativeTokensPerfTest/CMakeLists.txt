@@ -7,7 +7,6 @@ target_link_libraries(InitCreativeTokensPerfTest
   PRIVATE
     jemalloc
     CreativeTemplateArgs
-    Commons
     Generics
     HTTP
 )

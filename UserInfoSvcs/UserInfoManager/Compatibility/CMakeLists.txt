@@ -16,17 +16,17 @@ add_library(UserBaseProfileAdapter SHARED
 
 target_link_libraries(UserBaseProfileAdapter
   PRIVATE
-  Generics
-  UserChannelBaseProfile_v1PST
-  UserChannelBaseProfile_v2PST
-  UserChannelBaseProfile_v3PST
-  UserChannelBaseProfile_v4PST
-  UserChannelBaseProfile_v5PST
-  UserChannelBaseProfile_v26PST
-  UserChannelBaseProfile_v290PST
-  UserChannelBaseProfile_v300PST
-  UserChannelBaseProfile_v301PST
-  UserChannelBaseProfile_v320PST
+    Generics
+    UserChannelBaseProfile_v1PST
+    UserChannelBaseProfile_v2PST
+    UserChannelBaseProfile_v3PST
+    UserChannelBaseProfile_v4PST
+    UserChannelBaseProfile_v5PST
+    UserChannelBaseProfile_v26PST
+    UserChannelBaseProfile_v290PST
+    UserChannelBaseProfile_v300PST
+    UserChannelBaseProfile_v301PST
+    UserChannelBaseProfile_v320PST
 )
 
 # UserFreqCapProfileAdapter
@@ -40,11 +40,11 @@ add_library(UserFreqCapProfileAdapter SHARED
 
 target_link_libraries(UserFreqCapProfileAdapter
   PRIVATE
-  Generics
-  UserFreqCapProfile_v290PST
-  UserFreqCapProfile_v330PST
-  UserFreqCapProfile_v340PST
-  UserFreqCapProfileDescriptionPST
+    Generics
+    UserFreqCapProfile_v290PST
+    UserFreqCapProfile_v330PST
+    UserFreqCapProfile_v340PST
+    UserFreqCapProfileDescriptionPST
 )
 
 # UserHistoryProfileAdapter
@@ -57,9 +57,9 @@ add_library(UserHistoryProfileAdapter SHARED
 
 target_link_libraries(UserHistoryProfileAdapter
   PRIVATE
-  Generics
-  UserChannelHistoryProfile_v1PST
-  UserChannelHistoryProfile_v320PST
+    Generics
+    UserChannelHistoryProfile_v1PST
+    UserChannelHistoryProfile_v320PST
 )
 
 # UserOperationProfilesAdapter
@@ -79,15 +79,15 @@ add_library(UserOperationProfilesAdapter SHARED
 
 target_link_libraries(UserOperationProfilesAdapter
   PRIVATE
-  Generics
-  UserOperationProfiles_v24PST
-  UserOperationProfiles_v25PST
-  UserOperationProfiles_v26PST
-  UserOperationProfiles_v290PST
-  UserOperationProfiles_v300PST
-  UserOperationProfiles_v301PST
-  UserOperationProfiles_v310PST
-  UserOperationProfiles_v320PST
-  UserOperationProfiles_v340PST
-  UserOperationProfilesPST
+    Generics
+    UserOperationProfiles_v24PST
+    UserOperationProfiles_v25PST
+    UserOperationProfiles_v26PST
+    UserOperationProfiles_v290PST
+    UserOperationProfiles_v300PST
+    UserOperationProfiles_v301PST
+    UserOperationProfiles_v310PST
+    UserOperationProfiles_v320PST
+    UserOperationProfiles_v340PST
+    UserOperationProfilesPST
 )

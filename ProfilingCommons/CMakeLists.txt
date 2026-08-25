@@ -6,7 +6,7 @@ add_library(ProfilingCommons SHARED
 
 target_link_libraries(ProfilingCommons
   PRIVATE
-  Generics
+    Generics
 )
 
 ADD_SUBDIRECTORY(ProfileMap)
@@ -17,7 +17,7 @@ add_library(MessageSaver SHARED
 
 target_link_libraries(MessageSaver
   PRIVATE
-  Generics
-  ProfilingCommons
-  LogCommons
+    Generics
+    ProfilingCommons
+    LogCommons
 )

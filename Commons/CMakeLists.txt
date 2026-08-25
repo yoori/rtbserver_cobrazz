@@ -1,12 +1,15 @@
 
 include(CheckCXXCompilerFlag)
 
-add_idl(CampaignFreqIDL CampaignFreq.idl ${IDL_DIRECTORY}/Commons)
-add_idl(CookieInfoPackIDL CookieInfoPack.idl ${IDL_DIRECTORY}/Commons)
-add_idl(CorbaTypesIDL CorbaTypes.idl ${IDL_DIRECTORY}/Commons)
-add_idl(FreqCapInfoIDL FreqCapInfo.idl ${IDL_DIRECTORY}/Commons)
+add_idl(CampaignFreqIDL CampaignFreq.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
+add_idl(CookieInfoPackIDL CookieInfoPack.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
+add_idl(CorbaTypesIDL CorbaTypes.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
+add_idl(FreqCapInfoIDL FreqCapInfo.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
 
-target_link_libraries(FreqCapInfoIDL PRIVATE CorbaTypesIDL)
+target_link_libraries(FreqCapInfoIDL
+  PRIVATE
+    CorbaTypesIDL
+)
 
 add_library(Commons SHARED
   SignalActiveObject.cpp
@@ -35,9 +38,15 @@ add_library(Commons SHARED
 
 target_link_libraries(Commons
   PRIVATE
-  HostDistributionFileXSD Generics AdServerCommonsXSD HTTP crypto
-  zmq pthread Sync
-  Boost::headers
+    HostDistributionFileXSD
+    Generics
+    AdServerCommonsXSD
+    HTTP
+    crypto
+    zmq
+    pthread
+    Sync
+    Boost::headers
 )
 
 add_library(CORBAConfig SHARED
@@ -46,9 +55,9 @@ add_library(CORBAConfig SHARED
 
 target_link_libraries(CORBAConfig
   PRIVATE
-  Commons
-  CORBACommons
-  AdServerCommonsXSD
+    Commons
+    CORBACommons
+    AdServerCommonsXSD
 )
 
 set(fast_json_parser_x86 OFF)
@@ -127,6 +136,3 @@ ADD_SUBDIRECTORY(HttpServer)
 #ADD_SUBDIRECTORY(Oracle)
 ADD_SUBDIRECTORY(Postgres)
 ADD_SUBDIRECTORY(Xslt)
-
-
-#install(TARGETS CampaignFreqIDL CookieInfoPackIDL CorbaTypesIDL FreqCapInfoIDL Commons ProcessControlVars   DESTINATION ${INSTALL_DIR})

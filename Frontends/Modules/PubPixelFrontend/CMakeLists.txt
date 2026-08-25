@@ -5,8 +5,8 @@ add_library(PubPixelFrontend SHARED
 
 target_link_libraries(PubPixelFrontend
   PRIVATE
-  Commons
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  FCGI
+    Commons
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    FCGI
 )

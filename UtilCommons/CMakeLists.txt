@@ -3,12 +3,6 @@ add_library(UtilCommons SHARED
 )
 target_link_libraries(UtilCommons
   PRIVATE
-  #String
-  Generics
-
-
+    #String
+    Generics
 )
-
-#install(TARGETS UtilCommons DESTINATION ${INSTALL_DIR})
-
-

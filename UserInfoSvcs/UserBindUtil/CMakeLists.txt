@@ -9,5 +9,3 @@ target_link_libraries(UserBindUtil
     Commons
     ProfilingCommons
 )
-
-#install(TARGETS UserBindUtil  DESTINATION ${INSTALL_DIR})

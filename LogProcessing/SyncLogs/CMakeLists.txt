@@ -40,5 +40,3 @@ target_link_libraries(SyncLogs
     SyncLogsConfigXSD
     XMLUtility
 )
-
-#install(TARGETS SyncLogs DESTINATION ${INSTALL_DIR})

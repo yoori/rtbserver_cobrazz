@@ -1,6 +1,9 @@
-add_idl(CampaignCommonsIDL CampaignCommons.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignCommons)
+add_idl(CampaignCommonsIDL CampaignCommons.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignCommons NO_SERVANT)
 
-target_link_libraries(CampaignCommonsIDL PRIVATE CorbaTypesIDL)
+target_link_libraries(CampaignCommonsIDL
+  PRIVATE
+    CorbaTypesIDL
+)
 
 add_library(CampaignTypes SHARED
   CampaignTypes.cpp
@@ -16,8 +19,6 @@ add_library(ExpressionChannelIndex SHARED
 
 target_link_libraries(ExpressionChannelIndex
   PRIVATE
-  Generics
-  ExpressionChannel
+    Generics
+    ExpressionChannel
 )
-
-#install(TARGETS CampaignCommonsIDL CampaignTypes ExpressionChannel ExpressionChannelIndex  DESTINATION ${INSTALL_DIR})

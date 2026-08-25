@@ -7,7 +7,6 @@ add_library(RequestCompatibility SHARED
 
 target_link_libraries(RequestCompatibility
   PRIVATE
-  Generics
-  LogCommons
+    Generics
+    LogCommons
 )
-#install(TARGETS RequestCompatibility  DESTINATION ${INSTALL_DIR})

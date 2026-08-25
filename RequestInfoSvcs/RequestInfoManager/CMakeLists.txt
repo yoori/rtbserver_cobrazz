@@ -26,12 +26,13 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(RequestInfoManagerGrpcClient
   PUBLIC
-  Commons
-  RequestInfoManagerGrpcProto
-  GrpcBatch
-  gRPC::grpc++
+    Commons
+    RequestInfoManagerGrpcProto
+    GrpcBatch
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)
 
 add_library(BillingProcessor SHARED
   BillingProcessor.cpp
@@ -39,9 +40,9 @@ add_library(BillingProcessor SHARED
 
 target_link_libraries(BillingProcessor
   PRIVATE
-  Generics
-  Commons
-  BillingServerGrpcClient
+    Generics
+    Commons
+    BillingServerGrpcClient
 )
 
 add_library(PassbackContainer SHARED
@@ -50,10 +51,10 @@ add_library(PassbackContainer SHARED
 
 target_link_libraries(PassbackContainer
   PRIVATE
-  Generics
-  Commons
-  PassbackProfilePST
-  ProfileMapRocksDB
+    Generics
+    Commons
+    PassbackProfilePST
+    ProfileMapRocksDB
 )
 
 add_library(RequestInfoContainer SHARED
@@ -62,12 +63,12 @@ add_library(RequestInfoContainer SHARED
 
 target_link_libraries(RequestInfoContainer
   PRIVATE
-  Generics
-  Commons
-  CampaignBilling
-  ProfileMapRocksDB
-  RequestProfilePST
-  RequestInfoManagerCompatibility
+    Generics
+    Commons
+    CampaignBilling
+    ProfileMapRocksDB
+    RequestProfilePST
+    RequestInfoManagerCompatibility
 )
 
 add_executable(RequestInfoManager
@@ -82,10 +83,8 @@ add_executable(RequestInfoManager
 target_link_libraries(RequestInfoManager
   PRIVATE
     jemalloc
-
     TAO::PortableServer
     TAO::Valuetype
-
     CampaignCommonsIDL
     CorbaTypesIDL
     CORBACommons
@@ -99,9 +98,7 @@ target_link_libraries(RequestInfoManager
     HTTP
     Logger
     CORBAConfig
-
     RequestInfoManagerConfigXSD
-
     BillingProcessor
     PassbackContainer
     RequestInfoContainer
@@ -109,7 +106,6 @@ target_link_libraries(RequestInfoManager
     CampaignServerIDL
     LogCommons
     RequestCompatibility
-
     MessageSaver
     ProfileMapRocksDB
     RequestLogLoader
@@ -125,11 +121,20 @@ target_link_libraries(RequestInfoManager
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(RequestInfoManager PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(RequestInfoManager
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(RequestInfoManager PRIVATE protobuf::libprotobuf)
+  target_link_libraries(RequestInfoManager
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(RequestInfoManager PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(RequestInfoManager
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
 
 add_library(RequestLogLoader SHARED
@@ -140,12 +145,12 @@ add_library(RequestLogLoader SHARED
 
 target_link_libraries(RequestLogLoader
   PRIVATE
-  Generics
-  LogCommons
-  ProfilingCommons
-  RequestOperationProfilePST
-  RequestInfoManagerCompatibility
-  RequestCompatibility
+    Generics
+    LogCommons
+    ProfilingCommons
+    RequestOperationProfilePST
+    RequestInfoManagerCompatibility
+    RequestCompatibility
 )
 
 add_library(RequestOperationSaver SHARED
@@ -154,11 +159,9 @@ add_library(RequestOperationSaver SHARED
 
 target_link_libraries(RequestOperationSaver
   PRIVATE
-  Generics
-
-  MessageSaver
-
-  RequestOperationProfilePST
+    Generics
+    MessageSaver
+    RequestOperationProfilePST
 )
 
 add_library(RequestOutLogger STATIC

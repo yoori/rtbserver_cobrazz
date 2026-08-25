@@ -6,16 +6,16 @@ add_library(ActionFrontend SHARED
 
 target_link_libraries(ActionFrontend
   PRIVATE
-  Generics
-  Geoip
-  Commons
-  CommonModule
-  ChannelGrpcClient
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  UserInfoClient
-  UserBindClient
-  UserIdController
-  FCGI
-  RequestMatchers
+    Generics
+    Geoip
+    Commons
+    CommonModule
+    ChannelGrpcClient
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    UserInfoClient
+    UserBindClient
+    UserIdController
+    FCGI
+    RequestMatchers
 )

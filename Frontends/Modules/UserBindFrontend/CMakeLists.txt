@@ -7,14 +7,14 @@ add_library(UserBindFrontend SHARED
 
 target_link_libraries(UserBindFrontend
   PRIVATE
-  Geoip
-  Commons
-  ChannelGrpcClient
-  UserInfoClient
-  UserIdController
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  UserBindClient
-  FCGI
+    Geoip
+    Commons
+    ChannelGrpcClient
+    UserInfoClient
+    UserIdController
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    UserBindClient
+    FCGI
 )

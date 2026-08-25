@@ -9,5 +9,3 @@ target_link_libraries(UserInfoManagerPlayer
     Generics
     gRPC::grpc++
 )
-
-#install(TARGETS UserInfoManagerPlayer DESTINATION ${INSTALL_DIR})

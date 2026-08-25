@@ -7,5 +7,3 @@ add_xsd(DomainConfigXSD DomainConfig.xsd ${XSD_DIRECTORY}/xsd/CampaignSvcs)
 
 
 add_dependencies(CampaignManagerConfigXSD AdServerCommonsXSD)
-
-

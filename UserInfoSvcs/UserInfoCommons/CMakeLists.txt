@@ -5,7 +5,7 @@ add_library(Allocator SHARED
 
 target_link_libraries(Allocator
   PRIVATE
-  Generics
+    Generics
 )
 
 add_pst(UserChannelBaseProfilePST  UserChannelBaseProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
@@ -16,11 +16,10 @@ add_library(ChannelMatcher SHARED
 )
 target_link_libraries(ChannelMatcher
   PRIVATE
-  Generics
-
-  UtilCommons
-  UserChannelBaseProfilePST
-  UserChannelHistoryProfilePST
+    Generics
+    UtilCommons
+    UserChannelBaseProfilePST
+    UserChannelHistoryProfilePST
 )
 
 add_pst(UserFreqCapProfileDescriptionPST  UserFreqCapProfileDescription.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
@@ -30,14 +29,10 @@ add_library(UserFreqCapProfile SHARED
 )
 target_link_libraries(UserFreqCapProfile
   PRIVATE
-  UserFreqCapProfileDescriptionPST
-  Generics
-  Allocator
-  UtilCommons
-
+    UserFreqCapProfileDescriptionPST
+    Generics
+    Allocator
+    UtilCommons
 )
 
 add_pst(UserOperationProfilesPST  UserOperationProfiles.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
-
-
-#install(TARGETS Allocator ChannelMatcher UserFreqCapProfile  DESTINATION ${INSTALL_DIR})

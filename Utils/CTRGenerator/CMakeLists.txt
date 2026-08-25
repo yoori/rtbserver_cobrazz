@@ -1,5 +1,3 @@
-include_directories(/opt/foros/vanga/include)
-
 add_library(CTRGeneratorLib SHARED
   CalculateParamsFilter.cpp
   CTRGenerator.cpp
@@ -8,11 +6,11 @@ add_library(CTRGeneratorLib SHARED
 
 target_link_libraries(CTRGeneratorLib
   PRIVATE
-  Commons
-  Generics
-  CTRGeneratorDataConfigXSD
-  SVMGeneratorConfigXSD
-  CTRProvider
+    Commons
+    Generics
+    CTRGeneratorDataConfigXSD
+    SVMGeneratorConfigXSD
+    CTRProvider
 )
 
 add_executable(CTRGenerator

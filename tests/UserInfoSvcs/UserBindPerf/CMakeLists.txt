@@ -3,13 +3,13 @@ add_executable(UserBindGrpcPerf
 
 target_link_libraries(UserBindGrpcPerf
   PRIVATE
-  Generics
-  Commons
-  GrpcBatch
-  UserBindServerGrpc
-  UserBindServerGrpcClient
-  UserBindClient
-  gRPC::grpc++
+    Generics
+    Commons
+    GrpcBatch
+    UserBindServerGrpc
+    UserBindServerGrpcClient
+    UserBindClient
+    gRPC::grpc++
 )
 
 target_include_directories(UserBindGrpcPerf

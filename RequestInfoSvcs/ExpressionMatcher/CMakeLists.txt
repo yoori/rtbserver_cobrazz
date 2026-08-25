@@ -26,12 +26,13 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(ExpressionMatcherGrpcClient
   PUBLIC
-  Commons
-  ExpressionMatcherGrpcProto
-  GrpcBatch
-  gRPC::grpc++
+    Commons
+    ExpressionMatcherGrpcProto
+    GrpcBatch
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)
 
 add_library(ExpressionChannelMatcher STATIC
   ChannelMatcher.cpp
@@ -106,33 +107,25 @@ add_executable(ExpressionMatcher
 target_link_libraries(ExpressionMatcher
   PRIVATE
     jemalloc
-
     TAO::PortableServer
     TAO::Valuetype
-
     UserColoReachContainer
     UserInventoryContainer
     UserTriggerMatchContainer
     ExpressionChannelMatcher
     ExpressionChannel
-
     ExpressionMatcherGrpcClient
     ExpressionMatcherGrpcProto
-
     CampaignCommonsIDL
     CampaignServerIDL
     CorbaTypesIDL
     CORBACommons
     ProcessControlIDL
-
     ConsiderMessagesPST
     RequestOperationProfilePST
-
     UserInfoClient
-
     AdServerCommonsXSD
     ExpressionMatcherConfigXSD
-
     LogCommons
     Commons
     CORBAConfig

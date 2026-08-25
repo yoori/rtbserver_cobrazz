@@ -4,8 +4,8 @@ add_library(ProfileMap SHARED
 
 target_link_libraries(ProfileMap
   PRIVATE
-  Generics
-  Commons
+    Generics
+    Commons
 )
 
 find_package(RocksDB CONFIG REQUIRED)
@@ -26,9 +26,7 @@ add_library(ProfileMapRocksDB SHARED
 
 target_link_libraries(ProfileMapRocksDB
   PRIVATE
-  Generics
-  Commons
-  ${ROCKSDB_TARGET}
+    Generics
+    Commons
+    ${ROCKSDB_TARGET}
 )
-
-#install(TARGETS ProfileMap  DESTINATION ${INSTALL_DIR})

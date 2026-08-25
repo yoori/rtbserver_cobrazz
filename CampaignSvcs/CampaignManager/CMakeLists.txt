@@ -1,4 +1,4 @@
-include_directories(/opt/foros/vanga/include . ${LIBXML2_INCLUDE_DIR})
+include_directories(. ${LIBXML2_INCLUDE_DIR})
 
 # CampaignManagerGrpc
 set(CAMPAIGN_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/CampaignSvcs/CampaignManager)
@@ -27,12 +27,13 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(CampaignManagerGrpcClient
   PUBLIC
-  Commons
-  GrpcBatch
-  CampaignManagerGrpc
-  gRPC::grpc++
+    Commons
+    GrpcBatch
+    CampaignManagerGrpc
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)
 
 add_library(BidRateProvider SHARED
   BidCostProvider.cpp
@@ -40,7 +41,7 @@ add_library(BidRateProvider SHARED
 
 target_link_libraries(BidRateProvider
   PRIVATE
-  Generics
+    Generics
 )
 
 add_definitions(-D_REENTRANT -D_USE_OCCI -DXSD_CXX11)
@@ -52,12 +53,10 @@ add_library(CTRProviderCore SHARED
   CTR/FeatureDescriptorResolver.cpp
 )
 
-link_directories(/opt/foros/vanga/lib)
-
 target_link_libraries(CTRProviderCore
   PRIVATE
-  Generics
-  CampaignConfig
+    Generics
+    CampaignConfig
 )
 
 set_target_properties(CTRProviderCore PROPERTIES OUTPUT_NAME CTRProvider)
@@ -76,11 +75,12 @@ add_library(CTRProviderImplLib SHARED
 
 target_link_libraries(CTRProviderImplLib
   PRIVATE
-  CTRProviderCore
-  ProfilingCommons
-  xgboost
-  /opt/foros/vanga/lib/libVangaDTree.so
-  catboost::model
+    CTRProviderCore
+    Commons
+    ProfilingCommons
+    xgboost
+    Vanga::DTree
+    catboost::model
 )
 
 add_library(CampaignConfig SHARED
@@ -90,9 +90,9 @@ add_library(CampaignConfig SHARED
 
 target_link_libraries(CampaignConfig
   PRIVATE
-  Generics
-  HTTP
-  Boost::headers
+    Generics
+    HTTP
+    Boost::headers
 )
 
 add_library(CampaignConfigSource
@@ -122,10 +122,10 @@ add_library(CampaignIndex
 
 target_link_libraries(CampaignIndex
   PRIVATE
-  Generics
-  CampaignConfig
-  CreativeTemplateArgs
-  Boost::headers
+    Generics
+    CampaignConfig
+    CreativeTemplateArgs
+    Boost::headers
 )
 
 add_library( CreativeTemplateArgs SHARED
@@ -134,8 +134,8 @@ add_library( CreativeTemplateArgs SHARED
 
 target_link_libraries(CreativeTemplateArgs
   PRIVATE
-  Generics
-  Boost::headers
+    Generics
+    Boost::headers
 )
 
 add_library(InstantiateAdArgs STATIC
@@ -153,15 +153,10 @@ add_library(InstantiateAdArgs STATIC
 
 target_link_libraries(InstantiateAdArgs
   PRIVATE
-  Generics
-  AdServerCommonsXSD
-  CampaignManagerConfigXSD
-  CreativeTemplateArgs
-)
-
-target_include_directories(InstantiateAdArgs
-  PUBLIC
-    /opt/foros/vanga/include
+    Generics
+    AdServerCommonsXSD
+    CampaignManagerConfigXSD
+    CreativeTemplateArgs
 )
 
 add_library(SecToken
@@ -170,9 +165,9 @@ add_library(SecToken
 
 target_link_libraries(SecToken
   PRIVATE
-  Commons
-  Generics
-  Logger
+    Commons
+    Generics
+    Logger
 )
 
 add_library(PassbackTemplate
@@ -181,9 +176,9 @@ add_library(PassbackTemplate
 
 target_link_libraries(PassbackTemplate
   PRIVATE
-  CreativeTemplateArgs
-  Commons
-  Generics
+    CreativeTemplateArgs
+    Commons
+    Generics
 )
 
 add_library(DomainParser
@@ -192,7 +187,7 @@ add_library(DomainParser
 
 target_link_libraries(DomainParser
   PRIVATE
-  DomainConfigXSD
+    DomainConfigXSD
 )
 
 add_library(CampaignBilling SHARED
@@ -205,7 +200,7 @@ add_library(CampaignBillingAccount SHARED
 
 target_link_libraries(CampaignBillingAccount
   PRIVATE
-  CampaignBilling
+    CampaignBilling
 )
 
 add_library(CampaignManagerLogger SHARED
@@ -215,18 +210,17 @@ add_library(CampaignManagerLogger SHARED
 
 target_link_libraries(CampaignManagerLogger
   PRIVATE
-  Generics
-  LogCommons
-  CreativeTemplateArgs
-  CampaignConfig
-  CampaignBillingAccount
-  ExpressionChannelIndex
-  Boost::headers
+    Generics
+    LogCommons
+    CreativeTemplateArgs
+    CampaignConfig
+    CampaignBillingAccount
+    ExpressionChannelIndex
+    Boost::headers
 )
 
 target_include_directories(CampaignManagerLogger
   PUBLIC
-    /opt/foros/vanga/include
     ${CMAKE_SOURCE_DIR}/Utils/Predictor
 )
 
@@ -245,7 +239,6 @@ add_executable(CampaignManager
 target_link_libraries(CampaignManager
   PRIVATE
     jemalloc
-
     CampaignConfigSource
     HTTP
     HttpServer
@@ -254,16 +247,13 @@ target_link_libraries(CampaignManager
     TAO::Valuetype
     Commons
     CORBAConfig
-
     AdServerCommonsXSD
     CampaignManagerConfigXSD
-
     CampaignCommonsIDL
     CampaignServerIDL
     CorbaTypesIDL
     ProcessControlIDL
     CampaignTypes
-
     ExpressionChannelIndex
     ExpressionChannel
     CreativeTemplateArgs
@@ -276,7 +266,6 @@ target_link_libraries(CampaignManager
     LogCommons
     PassbackTemplate
     SecToken
-
     CTRProviderImplLib
     BidRateProvider
     DomainConfigXSD

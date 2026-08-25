@@ -10,4 +10,3 @@ target_link_libraries(PlainCppCompiler
     PlainDeclaration
     Generics
 )
-#install(TARGETS PlainCppCompiler  DESTINATION ${INSTALL_DIR})

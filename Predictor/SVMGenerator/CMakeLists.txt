@@ -8,4 +8,3 @@ target_link_libraries(SVMGenerator
     Commons
     SVMGeneratorConfigXSD
 )
-#install(TARGETS SVMGenerator  DESTINATION ${INSTALL_DIR})

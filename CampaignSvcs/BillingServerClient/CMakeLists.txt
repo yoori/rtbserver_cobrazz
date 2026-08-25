@@ -9,9 +9,10 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(BillingServerGrpcClient
   PUBLIC
-  Commons
-  GrpcBatch
-  BillingServerGrpc
-  gRPC::grpc++
+    Commons
+    GrpcBatch
+    BillingServerGrpc
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)

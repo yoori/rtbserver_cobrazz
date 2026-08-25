@@ -5,11 +5,5 @@ add_executable(GeoUtil
 target_link_libraries(GeoUtil
   PRIVATE
     Generics
-
     Geoip
-
 )
-
-
-
-#install(TARGETS GeoUtil DESTINATION ${INSTALL_DIR})

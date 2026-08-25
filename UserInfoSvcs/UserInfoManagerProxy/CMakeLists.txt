@@ -18,5 +18,3 @@ target_link_libraries(UserInfoManagerProxy
     Generics
     gRPC::grpc++
 )
-
-#install(TARGETS UserInfoManagerProxy DESTINATION ${INSTALL_DIR})

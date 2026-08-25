@@ -8,6 +8,3 @@ target_link_libraries(DTreeTrainer
     Sync
     DTree
 )
-
-
-#install(TARGETS DTreeTrainer  DESTINATION ${INSTALL_DIR})

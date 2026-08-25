@@ -20,7 +20,6 @@ target_link_libraries(UserInfoController
   PRIVATE
     TAO::PortableServer
     TAO::Valuetype
-
     UserInfoControllerGrpc
     UserInfoManagerGrpc
     UserInfoControllerConfigXSD
@@ -30,7 +29,8 @@ target_link_libraries(UserInfoController
     Logger
     ProcessControlIDL
     Sync
-    gRPC::grpc++)
+    gRPC::grpc++
+)
 
 target_include_directories(UserInfoController PRIVATE
   ${USER_INFO_CONTROLLER_GRPC_PROTO_DIR}

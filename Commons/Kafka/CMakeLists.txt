@@ -3,9 +3,6 @@ add_library(KafkaProducer SHARED
 )
 target_link_libraries(KafkaProducer
   PRIVATE
-  AdServerCommonsXSD
-  rdkafka
-  rdkafka++
+    AdServerCommonsXSD
+    rdkafka++
 )
-
-#install(TARGETS KafkaProducer DESTINATION ${INSTALL_DIR})

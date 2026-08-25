@@ -10,9 +10,5 @@ add_library(DTree SHARED
 )
 target_link_libraries(DTree
   PRIVATE
-  Generics
-
+    Generics
 )
-
-
-#install(TARGETS DTree DESTINATION ${INSTALL_DIR})

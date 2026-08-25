@@ -15,7 +15,6 @@ add_executable(UserBindContainerTest
 target_link_libraries(UserBindContainerTest
   PRIVATE
     UserBindContainer
-    TestCommons
     Generics
     Commons
     Logger

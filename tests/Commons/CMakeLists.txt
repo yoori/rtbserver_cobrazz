@@ -11,13 +11,13 @@ add_executable(FastSchedulerPerfTest
 
 target_link_libraries(AsyncMutexTest
   PRIVATE
-  Commons
+    Commons
 )
 
 target_link_libraries(FastSchedulerPerfTest
   PRIVATE
-  Commons
-  Generics
+    Commons
+    Generics
 )
 
 target_include_directories(AsyncMutexTest

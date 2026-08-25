@@ -22,22 +22,21 @@ add_library(BiddingFrontend SHARED
 
 target_link_libraries(BiddingFrontend
   PRIVATE
-  Stream
-  Geoip
-  Commons
-  LogCommons
-  Boost::headers
-  ChannelGrpcClient
-  UserInfoClient
-  UserInfoManagerGrpcClient
-  UserBindClient
-  RequestMatchers
-  UserIdController
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  google-biddingPB
-  ${PROTOBUF_LDFLAGS}
-  protoc
-  FCGI
+    Stream
+    Geoip
+    Commons
+    LogCommons
+    Boost::headers
+    ChannelGrpcClient
+    UserInfoClient
+    UserInfoManagerGrpcClient
+    UserBindClient
+    RequestMatchers
+    UserIdController
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    google-biddingPB
+    ${PROTOBUF_LDFLAGS}
+    FCGI
 )

@@ -8,12 +8,6 @@ target_link_libraries(ExpressionMatcherAdmin
     Commons
     Logger
     UtilCommons
-
     ExpressionMatcherGrpcClient
     pthread
-
 )
-
-
-
-#install(TARGETS ExpressionMatcherAdmin  DESTINATION ${INSTALL_DIR})

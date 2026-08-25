@@ -3,11 +3,11 @@ add_library(UserBindClient SHARED
 
 target_link_libraries(UserBindClient
   PRIVATE
-  Generics
-  Commons
-  Logger
-  UserBindControllerGrpc
-  UserBindServerGrpcClient
+    Generics
+    Commons
+    Logger
+    UserBindControllerGrpc
+    UserBindServerGrpcClient
 )
 
 target_include_directories(UserBindClient PUBLIC

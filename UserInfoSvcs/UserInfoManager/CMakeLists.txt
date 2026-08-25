@@ -26,12 +26,13 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(UserInfoManagerGrpcClient
   PUBLIC
-  Commons
-  GrpcBatch
-  UserInfoManagerGrpc
-  gRPC::grpc++
+    Commons
+    GrpcBatch
+    UserInfoManagerGrpc
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)
 
 add_library(UserInfoContainer SHARED
   UserInfoContainer.cpp
@@ -41,22 +42,20 @@ add_library(UserInfoContainer SHARED
 )
 target_link_libraries(UserInfoContainer
   PRIVATE
-  Generics
-  PrivacyFilter
-  Commons
-  Allocator
-  ProfilingCommons
-  ProfileMapRocksDB
-
-  ChannelMatcher
-  LogCommons
-  UserFreqCapProfile
-  UserOperationProfilesPST
-  UserBaseProfileAdapter
-  UserHistoryProfileAdapter
-  UserOperationProfilesAdapter
-  UserFreqCapProfileAdapter
-
+    Generics
+    PrivacyFilter
+    Commons
+    Allocator
+    ProfilingCommons
+    ProfileMapRocksDB
+    ChannelMatcher
+    LogCommons
+    UserFreqCapProfile
+    UserOperationProfilesPST
+    UserBaseProfileAdapter
+    UserHistoryProfileAdapter
+    UserOperationProfilesAdapter
+    UserFreqCapProfileAdapter
 )
 
 
@@ -72,10 +71,8 @@ add_executable(UserInfoManager
 target_link_libraries(UserInfoManager
   PRIVATE
     jemalloc
-
     TAO::PortableServer
     TAO::Valuetype
-
     AdServerCommonsXSD
     Allocator
     CampaignCommonsIDL
@@ -93,15 +90,11 @@ target_link_libraries(UserInfoManager
     ProcessControlIDL
     ProfilingCommons
     ProfileMap
-    ProfileMapRocksDB
     Sync
-
     UserInfoManagerConfigXSD
     UserInfoManagerGrpc
-
     UserInfoContainer
     gRPC::grpc++
-
 )
 
 target_include_directories(UserInfoManager PRIVATE
@@ -109,11 +102,18 @@ target_include_directories(UserInfoManager PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(UserInfoManager PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(UserInfoManager
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(UserInfoManager PRIVATE protobuf::libprotobuf)
+  target_link_libraries(UserInfoManager
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(UserInfoManager PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(UserInfoManager
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
-
-#install(TARGETS UserInfoManager UserInfoContainer DESTINATION ${INSTALL_DIR})

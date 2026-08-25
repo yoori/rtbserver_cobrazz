@@ -5,10 +5,10 @@ add_library(PassPixelFrontend SHARED
 
 target_link_libraries(PassPixelFrontend
   PRIVATE
-  Geoip
-  Commons
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  FCGI
+    Geoip
+    Commons
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    FCGI
 )

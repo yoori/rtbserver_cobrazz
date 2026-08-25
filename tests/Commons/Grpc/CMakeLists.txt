@@ -12,23 +12,23 @@ add_executable(BatchPartialResponseTest
 
 target_link_libraries(RefPoolTest
   PRIVATE
-  Commons
-  Generics
+    Commons
+    Generics
 )
 
 target_link_libraries(DistributedPartitionPoolTest
   PRIVATE
-  Commons
-  Generics
-  Logger
-  Sync
+    Commons
+    Generics
+    Logger
+    Sync
 )
 
 target_link_libraries(BatchPartialResponseTest
   PRIVATE
-  Commons
-  Generics
-  GrpcBatch
+    Commons
+    Generics
+    GrpcBatch
 )
 
 target_include_directories(RefPoolTest

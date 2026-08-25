@@ -6,8 +6,6 @@ target_link_libraries(BiddingFrontendLoggerPerfTest
   PRIVATE
     jemalloc
     BiddingFrontend
-    Commons
-    LogCommons
     Generics
     Logger
 )

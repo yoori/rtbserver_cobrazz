@@ -4,6 +4,6 @@ add_executable(logProcessingLogIoTest
 
 target_link_libraries(logProcessingLogIoTest
   PRIVATE
-  Generics
-  LogCommons)
-
+    Generics
+    LogCommons
+)

@@ -5,11 +5,11 @@ add_library(UserInfoClient SHARED
 
 target_link_libraries(UserInfoClient
   PRIVATE
-  Generics
-  Commons
-  Logger
-  UserInfoControllerGrpc
-  UserInfoManagerGrpcClient
+    Generics
+    Commons
+    Logger
+    UserInfoControllerGrpc
+    UserInfoManagerGrpcClient
 )
 
 target_include_directories(UserInfoClient PUBLIC

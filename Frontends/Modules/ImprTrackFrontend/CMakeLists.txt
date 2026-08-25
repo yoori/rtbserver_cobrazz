@@ -7,16 +7,16 @@ add_library(ImprTrackFrontend SHARED
 
 target_link_libraries(ImprTrackFrontend
   PRIVATE
-  Geoip
-  Commons
-  ChannelGrpcClient
-  UserInfoClient
-  UserInfoManagerGrpcClient
-  UserBindClient
-  RequestMatchers
-  UserIdController
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  FCGI
+    Geoip
+    Commons
+    ChannelGrpcClient
+    UserInfoClient
+    UserInfoManagerGrpcClient
+    UserBindClient
+    RequestMatchers
+    UserIdController
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    FCGI
 )

@@ -54,5 +54,3 @@ target_link_libraries(LogGeneralizer
     SNMPAgent
     ProcessControlVars
 )
-
-#install(TARGETS LogGeneralizerIDL LogGeneralizer DESTINATION ${INSTALL_DIR})

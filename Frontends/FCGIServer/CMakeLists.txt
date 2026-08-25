@@ -24,9 +24,7 @@ add_executable(FCGIServer
 target_link_libraries(FCGIServer
   PRIVATE
     jemalloc
-
     FCGIServerConfigXSD
-
     BiddingFrontend
     DirectoryModule
     PubPixelFrontend
@@ -41,7 +39,6 @@ target_link_libraries(FCGIServer
     ClickFrontend
     ImprTrackFrontend
     AdFrontend
-
     XMLUtility
     FrontendServerCommons
     CommonModule
@@ -53,7 +50,6 @@ target_link_libraries(FCGIServer
     TAO::Valuetype
     HTTP
     HttpServer
-
     Generics
 )
 

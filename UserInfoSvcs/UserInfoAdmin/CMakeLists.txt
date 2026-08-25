@@ -22,11 +22,20 @@ target_link_libraries(UserInfoAdmin
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(UserInfoAdmin PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(UserInfoAdmin
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(UserInfoAdmin PRIVATE protobuf::libprotobuf)
+  target_link_libraries(UserInfoAdmin
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(UserInfoAdmin PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(UserInfoAdmin
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
 
 target_include_directories(UserInfoAdmin PRIVATE

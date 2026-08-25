@@ -6,11 +6,11 @@ add_library(OptoutFrontend SHARED
 
 target_link_libraries(OptoutFrontend
   PRIVATE
-  Commons
-  PrivacyFilter
-  RequestMatchers
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  FCGI
+    Commons
+    PrivacyFilter
+    RequestMatchers
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    FCGI
 )

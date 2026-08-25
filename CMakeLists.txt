@@ -68,6 +68,7 @@ find_package(Protobuf REQUIRED)
 find_package(gRPC REQUIRED)
 find_package(absl REQUIRED)
 find_package(catboost REQUIRED)
+find_package(Vanga REQUIRED)
 
 #find_package(OpenDDS REQUIRED)
 

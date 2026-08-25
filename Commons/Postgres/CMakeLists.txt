@@ -9,11 +9,8 @@ add_library(Postgres SHARED
 )
 target_link_libraries(Postgres
   PUBLIC
-  pq
-
+    pq
   PRIVATE
-  Generics
-  Commons
+    Generics
+    Commons
 )
-
-#install(TARGETS Postgres DESTINATION ${INSTALL_DIR})

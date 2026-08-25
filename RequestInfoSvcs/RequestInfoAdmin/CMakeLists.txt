@@ -8,13 +8,9 @@ target_link_libraries(RequestInfoAdmin
     Commons
     Logger
     UtilCommons
-
     pthread
     UserActionProfilePST
     UserActionProfile_v321PST
     RequestInfoManagerGrpcClient
     UserActionInfoContainer
-
-
 )
-#install(TARGETS RequestInfoAdmin  DESTINATION ${INSTALL_DIR})

@@ -5,7 +5,6 @@ add_executable(UserBindAdmin
 target_link_libraries(UserBindAdmin
   PRIVATE
     gRPC::grpc++
-
     Generics
     Commons
     Logger

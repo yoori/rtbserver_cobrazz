@@ -18,5 +18,3 @@ target_link_libraries(PlainParser
     PlainCode
     Generics
 )
-
-#install(TARGETS PlainParser  DESTINATION ${INSTALL_DIR})

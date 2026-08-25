@@ -5,7 +5,6 @@ target_link_libraries(TriggerFilter
   PRIVATE
     TAO::PortableServer
     TAO::Valuetype
-
     Generics
     BLogic
     CORBACommons
@@ -13,5 +12,3 @@ target_link_libraries(TriggerFilter
     ChannelContainer
     ProcessControlIDL
 )
-
-#install(TARGETS TriggerFilter  DESTINATION ${INSTALL_DIR})

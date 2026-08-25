@@ -4,8 +4,8 @@ add_library(ContentFrontend SHARED
 
 target_link_libraries(ContentFrontend
   PRIVATE
-  Commons
-  CampaignManagerGrpcDistributedClient
-  FeConfigXSD
-  FCGI
+    Commons
+    CampaignManagerGrpcDistributedClient
+    FeConfigXSD
+    FCGI
 )

@@ -8,12 +8,9 @@ target_link_libraries(CampaignManagerLoggerPerfTest
     TAO::Valuetype
     jemalloc
     CampaignManagerLogger
-    Commons
     CORBACommons
     HTTP
-    LogCommons
     Generics
-    Logger
     ProcessControlIDL
 )
 

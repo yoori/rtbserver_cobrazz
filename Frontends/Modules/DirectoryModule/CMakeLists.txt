@@ -4,7 +4,7 @@ add_library(DirectoryModule SHARED
 
 target_link_libraries(DirectoryModule
   PRIVATE
-  Commons
-  FeConfigXSD
-  FCGI
+    Commons
+    FeConfigXSD
+    FCGI
 )

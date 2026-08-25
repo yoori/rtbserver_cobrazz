@@ -4,8 +4,8 @@ add_library(CookieManager SHARED
 
 target_link_libraries(CookieManager
   PRIVATE
-  HTTP
-  FeConfigXSD
+    HTTP
+    FeConfigXSD
 )
 
 add_library(FCGI SHARED
@@ -18,9 +18,9 @@ add_library(FCGI SHARED
 
 target_link_libraries(FCGI
   PRIVATE
-  Commons
-  FeConfigXSD
-  Boost::headers
+    Commons
+    FeConfigXSD
+    Boost::headers
 )
 
 add_library(ProcessingTemplates SHARED
@@ -29,8 +29,8 @@ add_library(ProcessingTemplates SHARED
 
 target_link_libraries(ProcessingTemplates
   PRIVATE
-  Generics
-  FCGI
+    Generics
+    FCGI
 )
 
 add_library(RequestMatchers SHARED
@@ -51,6 +51,6 @@ add_library(UserIdController SHARED
 
 target_link_libraries(UserIdController
   PRIVATE
-  Generics
-  Commons
+    Generics
+    Commons
 )

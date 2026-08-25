@@ -1,6 +1,6 @@
-add_idl(ChannelCommonsIDL ChannelCommons.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons)
-add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons)
-add_idl(ChannelUpdateBaseIDL ChannelUpdateBase.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons)
+add_idl(ChannelCommonsIDL ChannelCommons.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons NO_SERVANT)
+add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons VALUETYPE)
+add_idl(ChannelUpdateBaseIDL ChannelUpdateBase.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons VALUETYPE)
 
 target_link_libraries(ChannelCommonsIDL
   PRIVATE
@@ -27,11 +27,9 @@ add_library(ChannelCommons SHARED
 
 target_link_libraries(ChannelCommons
   PRIVATE
-  Generics
-  HTTP
-  BLogic
-  LogCommons
+    Generics
+    HTTP
+    BLogic
+    LogCommons
 )
 add_dependencies(ChannelCommons ChannelCommonsIDL)
-
-#install(TARGETS ChannelCommons ChannelServerIDL ChannelUpdateBaseIDL ChannelCommonsIDL  DESTINATION ${INSTALL_DIR})

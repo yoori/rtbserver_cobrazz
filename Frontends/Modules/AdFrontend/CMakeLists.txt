@@ -7,17 +7,17 @@ add_library(AdFrontend SHARED
 
 target_link_libraries(AdFrontend
   PRIVATE
-  HTTP
-  Geoip
-  Commons
-  ChannelGrpcClient
-  UserInfoClient
-  UserInfoManagerGrpcClient
-  RequestMatchers
-  FeConfigXSD
-  CommonModule
-  CampaignManagerGrpcDistributedClient
-  UserBindClient
-  FCGI
-  UserIdController
+    HTTP
+    Geoip
+    Commons
+    ChannelGrpcClient
+    UserInfoClient
+    UserInfoManagerGrpcClient
+    RequestMatchers
+    FeConfigXSD
+    CommonModule
+    CampaignManagerGrpcDistributedClient
+    UserBindClient
+    FCGI
+    UserIdController
 )

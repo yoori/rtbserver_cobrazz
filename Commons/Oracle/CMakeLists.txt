@@ -10,9 +10,6 @@ add_library(Oracle SHARED
 )
 target_link_libraries(Oracle
   PRIVATE
-  Generics
-  Commons
+    Generics
+    Commons
 )
-
-
-#install(TARGETS Oracle DESTINATION ${INSTALL_DIR})

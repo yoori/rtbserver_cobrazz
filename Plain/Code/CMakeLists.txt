@@ -3,9 +3,7 @@ add_library(PlainCode SHARED
   Declarator.cpp
 
 )
-target_link_libraries( PlainCode
+target_link_libraries(PlainCode
   PRIVATE
-  PlainDeclaration
+    PlainDeclaration
 )
-
-#install(TARGETS PlainCode  DESTINATION ${INSTALL_DIR})

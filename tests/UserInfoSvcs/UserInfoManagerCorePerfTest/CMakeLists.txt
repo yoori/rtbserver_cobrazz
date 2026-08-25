@@ -8,8 +8,6 @@ add_executable(UserInfoManagerCorePerfTest
 target_link_libraries(UserInfoManagerCorePerfTest
   PRIVATE
     Allocator
-    CampaignCommonsIDL
-    CampaignServerIDL
     LogCommons
     Commons
     CORBACommons

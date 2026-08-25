@@ -5,7 +5,4 @@ add_executable(DTreeUtilsTest
 target_link_libraries(DTreeUtilsTest
   PRIVATE
     Generics
-    DTree
 )
-
-#install(TARGETS DTreeUtilsTest DESTINATION ${INSTALL_DIR})

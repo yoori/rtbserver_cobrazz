@@ -1,9 +1,12 @@
-add_idl(BillStatInfoIDL BillStatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer)
-add_idl(StatInfoIDL StatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer)
+add_idl(BillStatInfoIDL BillStatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer NO_SERVANT)
+add_idl(StatInfoIDL StatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer NO_SERVANT)
 add_idl(CampaignServerIDL CampaignServer.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer)
 
 add_dependencies(StatInfoIDL CampaignCommonsIDL)
-target_link_libraries(BillStatInfoIDL PRIVATE CorbaTypesIDL)
+target_link_libraries(BillStatInfoIDL
+  PRIVATE
+    CorbaTypesIDL
+)
 
 target_link_libraries(CampaignServerIDL
   PRIVATE

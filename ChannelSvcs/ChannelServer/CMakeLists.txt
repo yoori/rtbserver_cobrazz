@@ -10,9 +10,9 @@ add_library(ChannelContainer SHARED
 
 target_link_libraries(ChannelContainer
   PRIVATE
-  CORBACommons
-  ChannelCommons
-  DictionaryProviderIDL
+    CORBACommons
+    ChannelCommons
+    DictionaryProviderIDL
 )
 
 # ChannelServerGrpc
@@ -42,12 +42,13 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(ChannelServerGrpcClient
   PUBLIC
-  Commons
-  GrpcBatch
-  ChannelServerGrpc
-  gRPC::grpc++
+    Commons
+    GrpcBatch
+    ChannelServerGrpc
+    gRPC::grpc++
   PRIVATE
-  Sync)
+    Sync
+)
 
 add_executable(ChannelServer
   ChannelServerVariant.cpp
@@ -62,7 +63,6 @@ add_executable(ChannelServer
 target_link_libraries(ChannelServer
   PRIVATE
     jemalloc
-
     HTTP
     HttpServer
     CORBAConfig
@@ -94,13 +94,23 @@ target_include_directories(ChannelServer PRIVATE
 )
 
 if(TARGET Protobuf::libprotobuf)
-  target_link_libraries(ChannelServer PRIVATE Protobuf::libprotobuf)
+  target_link_libraries(ChannelServer
+    PRIVATE
+      Protobuf::libprotobuf
+  )
 elseif(TARGET protobuf::libprotobuf)
-  target_link_libraries(ChannelServer PRIVATE protobuf::libprotobuf)
+  target_link_libraries(ChannelServer
+    PRIVATE
+      protobuf::libprotobuf
+  )
 else()
-  target_link_libraries(ChannelServer PRIVATE ${Protobuf_LIBRARIES})
+  target_link_libraries(ChannelServer
+    PRIVATE
+      ${Protobuf_LIBRARIES}
+  )
 endif()
 
-target_link_libraries(ChannelServer PRIVATE gRPC::grpc++)
-
-#install(TARGETS ChannelServer ChannelContainer  DESTINATION ${INSTALL_DIR})
+target_link_libraries(ChannelServer
+  PRIVATE
+    gRPC::grpc++
+)

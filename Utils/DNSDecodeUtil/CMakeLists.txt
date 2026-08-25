@@ -6,7 +6,4 @@ add_executable(DNSDecodeUtil
 target_link_libraries(DNSDecodeUtil
   PRIVATE
     Commons
-
 )
-
-#install(TARGETS DNSDecodeUtil DESTINATION ${INSTALL_DIR})
