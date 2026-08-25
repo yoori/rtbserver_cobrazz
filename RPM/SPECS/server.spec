@@ -118,6 +118,7 @@ BuildRequires: %{__boost_package}-devel = %__boost_ver_req
 BuildRequires: folly-devel = %__folly_ver_req
 BuildRequires: rocksdb-devel = %__rocksdb_ver_req
 Requires: libpq >= %{__libpq_ver_req}
+Obsoletes: postgresql94-libs
 Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: libpq-devel >= %{__libpq_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
