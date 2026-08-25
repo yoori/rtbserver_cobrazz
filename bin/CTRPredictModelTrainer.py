@@ -6,6 +6,7 @@ import csv
 import datetime
 import json
 import logging
+import math
 import os
 import pathlib
 import shutil
@@ -198,9 +199,58 @@ def aligned_train_steps(config, title):
   ]
 
 
-def campaign_train_steps(config):
+def campaign_fit_steps(available_rows, chunk_rows, max_steps):
+  if available_rows <= 0:
+    raise ValueError('available_rows must be positive')
+  if chunk_rows <= 0:
+    raise ValueError('chunk_rows must be positive')
+  if max_steps <= 0:
+    raise ValueError('max_steps must be positive')
+  return min(max_steps, max(1, math.ceil(available_rows / chunk_rows)))
+
+
+def scaled_fit_iterations(fit_iterations, configured_steps, actual_steps):
+  if fit_iterations <= 0:
+    raise ValueError('fit_iterations must be positive')
+  if configured_steps <= 0:
+    raise ValueError('configured_steps must be positive')
+  if actual_steps <= 0:
+    raise ValueError('actual_steps must be positive')
+  return math.ceil(fit_iterations * configured_steps / actual_steps)
+
+
+def campaign_train_steps(
+    config,
+    selection_fit_steps=None,
+    training_fit_steps=None,
+):
+  if selection_fit_steps is None:
+    selection_fit_steps = config.selection_fit_steps
+  if training_fit_steps is None:
+    training_fit_steps = config.training_fit_steps
   validation_sets = config.training_validation_sets + config.final_test_sets
   return [
+    *indexed_train_steps(
+      'campaign_selection_validation',
+      'Campaign feature selection validation dataset',
+      config.selection_validation_sets,
+      (
+        ('export', 'export'),
+        ('inputs', 'build LibSVM and stable baseline'),
+      )),
+    *indexed_train_steps(
+      'campaign_feature_selection',
+      'Campaign feature selection',
+      selection_fit_steps,
+      (
+        ('export', 'export dataset'),
+        ('inputs', 'build LibSVM and stable baseline'),
+        ('fit', 'fit independent model'),
+      )),
+    train_step('save_feature_indexes', 'Save selected feature indexes'),
+    train_step(
+      'release_selection_validation',
+      'Release campaign feature selection validation files'),
     *indexed_train_steps(
       'campaign_validation',
       'Campaign validation dataset',
@@ -212,7 +262,7 @@ def campaign_train_steps(config):
     *indexed_train_steps(
       'campaign_training',
       'Campaign residual training',
-      config.training_fit_steps,
+      training_fit_steps,
       (
         ('export', 'export dataset'),
         ('inputs', 'build LibSVM and stable baseline'),
@@ -328,12 +378,10 @@ class InProgressModel:
       train_start=train_start)
     return train_start
 
-  def complete_models(self, *model_names):
+  def complete_model(self, model_name, **traits):
     train_end = utc_now_text()
-    self.update_models_(
-      model_names,
-      status='completed',
-      train_end=train_end)
+    traits.update(status='completed', train_end=train_end)
+    self.update_models_((model_name,), **traits)
     return train_end
 
   def skip_model(self, model_name, reason):
@@ -929,21 +977,27 @@ def prepare_campaign_validation_sets(
     validation_rows,
     validation_sets,
     progress=None,
+    campaign_feature_indexes_file=None,
+    validation_offset_rows=0,
+    progress_prefix='campaign_validation',
 ):
   svm_files = []
   baseline_files = []
   statistics = []
+  owned_files = []
+  completed = False
   condition = (
     '(' + exporter.validation_condition() + ') AND (' +
     exporter.campaign_condition(campaign_id) + ')')
   csv_chunks = exporter.export_chunks(
     work_dir,
-    'campaign-' + str(campaign_id) + '-validation-source',
+    'campaign-' + str(campaign_id) + '-' + progress_prefix + '-source',
     validation_rows * validation_sets,
     validation_rows,
     date_from,
     date_to,
-    condition)
+    condition,
+    offset_rows=validation_offset_rows)
   try:
     csv_iterator = iter(csv_chunks)
     for index in range(validation_sets):
@@ -952,7 +1006,7 @@ def prepare_campaign_validation_sets(
         context = (
           progress.train_step(
             'campaign_' + str(campaign_id),
-            'campaign_validation_export_' + step_number)
+            progress_prefix + '_export_' + step_number)
           if progress is not None else contextlib.nullcontext())
         with context:
           csv_file, row_count = next(csv_iterator)
@@ -963,16 +1017,22 @@ def prepare_campaign_validation_sets(
           'Campaign validation chunk contains ' + str(row_count) +
           ' rows, expected ' + str(validation_rows))
       prefix = (
-        'campaign-' + str(campaign_id) + '-validation-' +
+        'campaign-' + str(campaign_id) + '-' + progress_prefix + '-' +
         str(index).zfill(3))
       stable_svm = work_dir / (prefix + '-stable.libsvm')
       campaign_svm = work_dir / (prefix + '.libsvm')
       baseline_file = work_dir / (prefix + '.baseline')
       stats_file = work_dir / (prefix + '.stats')
+      owned_files.extend((
+        stable_svm,
+        campaign_svm,
+        baseline_file,
+        stats_file,
+      ))
       context = (
         progress.train_step(
           'campaign_' + str(campaign_id),
-          'campaign_validation_inputs_' + step_number)
+          progress_prefix + '_inputs_' + step_number)
         if progress is not None else contextlib.nullcontext())
       with context:
         generate_libsvm(
@@ -984,6 +1044,7 @@ def prepare_campaign_validation_sets(
           csv_file,
           campaign_svm,
           campaign_features_config_file,
+          feature_indexes_file=campaign_feature_indexes_file,
           feature_stats_file=stats_file)
         current_statistics = FeatureStatistics()
         current_statistics.add_file(stats_file)
@@ -996,13 +1057,16 @@ def prepare_campaign_validation_sets(
       svm_files.append(campaign_svm)
       baseline_files.append(baseline_file)
       statistics.append(current_statistics)
+    if len(svm_files) != validation_sets:
+      raise RuntimeError(
+        'Created ' + str(len(svm_files)) +
+        ' campaign validation sets, expected ' + str(validation_sets))
+    completed = True
+    return list(zip(svm_files, baseline_files)), statistics
   finally:
     csv_chunks.close()
-  if len(svm_files) != validation_sets:
-    raise RuntimeError(
-      'Created ' + str(len(svm_files)) +
-      ' campaign validation sets, expected ' + str(validation_sets))
-  return list(zip(svm_files, baseline_files)), statistics
+    if not completed:
+      remove_files(owned_files)
 
 
 def stream_campaign_chunks(
@@ -1017,6 +1081,8 @@ def stream_campaign_chunks(
     dictionary_lines,
     feature_statistics,
     progress=None,
+    campaign_feature_indexes_file=None,
+    progress_prefix='campaign_training',
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
@@ -1028,7 +1094,7 @@ def stream_campaign_chunks(
         context = (
           progress.train_step(
             'campaign_' + str(campaign_id),
-            'campaign_training_export_' + step_number)
+            progress_prefix + '_export_' + step_number)
           if progress is not None else contextlib.nullcontext())
         with context:
           csv_file, row_count = next(csv_iterator)
@@ -1036,30 +1102,38 @@ def stream_campaign_chunks(
         if progress is not None:
           progress.cancel_train_step(
             'campaign_' + str(campaign_id),
-            'campaign_training_export_' + step_number)
+            progress_prefix + '_export_' + step_number)
         break
       logger.debug(
         'Generating campaign %d LibSVM chunk %d with %d rows',
         campaign_id,
         index + 1,
         row_count)
-      prefix = 'campaign-' + str(campaign_id) + '-' + str(index).zfill(3)
+      prefix = (
+        'campaign-' + str(campaign_id) + '-' + progress_prefix + '-' +
+        str(index).zfill(3))
       stable_svm = work_dir / (prefix + '-stable.libsvm')
       campaign_svm = work_dir / (prefix + '.libsvm')
       baseline_file = work_dir / (prefix + '.baseline')
-      dictionary_file = work_dir / (prefix + '.features')
-      stats_file = work_dir / (prefix + '.stats')
+      dictionary_file = (
+        work_dir / (prefix + '.features')
+        if dictionary_lines is not None else None)
+      stats_file = (
+        work_dir / (prefix + '.stats')
+        if feature_statistics is not None else None)
       current_files = [
         stable_svm,
         campaign_svm,
         baseline_file,
-        dictionary_file,
-        stats_file,
       ]
+      if dictionary_file is not None:
+        current_files.append(dictionary_file)
+      if stats_file is not None:
+        current_files.append(stats_file)
       context = (
         progress.train_step(
           'campaign_' + str(campaign_id),
-          'campaign_training_inputs_' + step_number)
+          progress_prefix + '_inputs_' + step_number)
         if progress is not None else contextlib.nullcontext())
       with context:
         generate_libsvm(
@@ -1072,10 +1146,13 @@ def stream_campaign_chunks(
           campaign_svm,
           campaign_features_config_file,
           dictionary_file=dictionary_file,
+          feature_indexes_file=campaign_feature_indexes_file,
           feature_stats_file=stats_file)
-        with dictionary_file.open('rb') as input_file:
-          dictionary_lines.update(input_file)
-        feature_statistics.add_file(stats_file)
+        if dictionary_file is not None:
+          with dictionary_file.open('rb') as input_file:
+            dictionary_lines.update(input_file)
+        if stats_file is not None:
+          feature_statistics.add_file(stats_file)
         stable_trainer.predict_raw_(
           stable_model_file,
           stable_svm,
@@ -1168,7 +1245,9 @@ def generate_model_(config, in_progress_model):
       config.campaign_model_activity_period,
       config.min_campaign_model_imps)
   campaign_validation_sets = (
-    config.training_validation_sets + config.final_test_sets)
+    config.selection_validation_sets +
+    config.training_validation_sets +
+    config.final_test_sets)
   eligible_campaigns = [
     campaign
     for campaign in eligible_campaign_candidates
@@ -1218,7 +1297,16 @@ def generate_model_(config, in_progress_model):
           'db_campaign_id': campaign_id,
           'runtime_campaign_group_id': campaign_id,
           'campaign_name': campaign_names.get(campaign_id),
-          'train_steps': campaign_train_steps(config),
+          'train_steps': campaign_train_steps(
+            config,
+            campaign_fit_steps(
+              training_impressions,
+              config.selection_chunk_rows,
+              config.selection_fit_steps),
+            campaign_fit_steps(
+              training_impressions,
+              config.main_chunk_rows,
+              config.training_fit_steps)),
           'eligible_training_impressions': training_impressions,
           'validation_impressions': validation_impressions,
         }
@@ -1306,7 +1394,6 @@ def generate_model_(config, in_progress_model):
       selection_svm_chunks,
       selection_validation_files,
       fit_iterations=config.fit_iterations,
-      patience=config.selection_patience,
       work_dir=cycle_dir,
       fit_steps=config.selection_fit_steps,
       on_fit_start=selection_fit_start,
@@ -1397,7 +1484,18 @@ def generate_model_(config, in_progress_model):
       common_model.save_model(str(common_model_file))
     with in_progress_model.train_step('common', 'finalize_metrics'):
       common_dataset_sizes = dict(common_dataset_sizes)
-    common_train_end = in_progress_model.complete_models('common')
+      common_model_description = trainer.describe_model(
+        common_model,
+        common_dictionary_file,
+        feature_statistics,
+        feature_name_resolver)
+    common_train_end = in_progress_model.complete_model(
+      'common',
+      file='common.cbm',
+      **common_model_description,
+      logloss_history=common_logloss_history,
+      dataset_sizes=common_dataset_sizes,
+      ctr_thresholds=common_ctr_thresholds)
 
     stable_dictionary_lines = set()
     correction_dictionary_lines = set()
@@ -1499,6 +1597,16 @@ def generate_model_(config, in_progress_model):
         'finalize_metrics'):
       stable_dataset_sizes = dict(stable_dataset_sizes)
       correction_dataset_sizes = dict(correction_dataset_sizes)
+      correction_model_description = correction_trainer.describe_model(
+        aligned_models['campaign_correction']['model'],
+        correction_dictionary_file,
+        correction_statistics,
+        feature_name_resolver)
+      stable_model_description = trainer.describe_model(
+        aligned_models['stable_common']['model'],
+        stable_dictionary_file,
+        stable_statistics,
+        feature_name_resolver)
     with in_progress_model.train_step(
         ('common_denoise', 'common_stable'),
         'release_validation'):
@@ -1506,9 +1614,22 @@ def generate_model_(config, in_progress_model):
       correction_validation_inputs = []
       remove_files(common_validation_files)
       common_validation_files = []
-    aligned_train_end = in_progress_model.complete_models(
+    correction_train_end = in_progress_model.complete_model(
       'common_denoise',
-      'common_stable')
+      file='common_denoise.cbm',
+      **correction_model_description,
+      logloss_history=aligned_models[
+        'campaign_correction']['logloss_history'],
+      dataset_sizes=correction_dataset_sizes,
+      ctr_thresholds=aligned_models[
+        'campaign_correction']['ctr_thresholds'])
+    stable_train_end = in_progress_model.complete_model(
+      'common_stable',
+      file='model.cbm',
+      **stable_model_description,
+      logloss_history=aligned_models['stable_common']['logloss_history'],
+      dataset_sizes=stable_dataset_sizes,
+      ctr_thresholds=aligned_models['stable_common']['ctr_thresholds'])
     campaign_model_entries = []
     for (
         campaign_id,
@@ -1516,22 +1637,124 @@ def generate_model_(config, in_progress_model):
         available_campaign_validation_rows,
     ) in eligible_campaigns:
       campaign_condition = exporter.campaign_condition(campaign_id)
+      campaign_selection_fit_steps = campaign_fit_steps(
+        eligible_impressions,
+        config.selection_chunk_rows,
+        config.selection_fit_steps)
+      campaign_training_fit_steps = campaign_fit_steps(
+        eligible_impressions,
+        config.main_chunk_rows,
+        config.training_fit_steps)
+      campaign_selection_fit_iterations = scaled_fit_iterations(
+        config.fit_iterations,
+        config.selection_fit_steps,
+        campaign_selection_fit_steps)
+      campaign_training_fit_iterations = scaled_fit_iterations(
+        config.fit_iterations,
+        config.training_fit_steps,
+        campaign_training_fit_steps)
+      campaign_selection_rows = min(
+        eligible_impressions,
+        config.selection_chunk_rows * campaign_selection_fit_steps)
+      campaign_training_rows = min(
+        eligible_impressions,
+        config.main_chunk_rows * campaign_training_fit_steps)
       campaign_validation_rows = min(
         config.validation_set_rows,
         available_campaign_validation_rows // campaign_validation_sets)
 
       logger.info(
-        'Training campaign model %d (%s): train=%d, validation=%d x %d',
+        'Training campaign model %d (%s): selection=%d rows / %d models '
+        'x %d iterations, train=%d rows / %d chunks x %d iterations, '
+        'validation=%d x %d',
         campaign_id,
         campaign_names.get(campaign_id),
-        eligible_impressions,
+        campaign_selection_rows,
+        campaign_selection_fit_steps,
+        campaign_selection_fit_iterations,
+        campaign_training_rows,
+        campaign_training_fit_steps,
+        campaign_training_fit_iterations,
         campaign_validation_rows,
         campaign_validation_sets)
       campaign_model_name = 'campaign_' + str(campaign_id)
       campaign_train_start = in_progress_model.start_models(
         campaign_model_name)
+      campaign_selection_validation_inputs = []
       campaign_validation_inputs = []
       try:
+        campaign_selection_validation_inputs, _ = (
+          prepare_campaign_validation_sets(
+            exporter,
+            cycle_dir,
+            campaign_id,
+            features_config_file,
+            campaign_features_config_file,
+            feature_indexes_file,
+            stable_model_file,
+            trainer,
+            date_from,
+            date_to,
+            campaign_validation_rows,
+            config.selection_validation_sets,
+            in_progress_model,
+            progress_prefix='campaign_selection_validation'))
+        campaign_selection_csv_chunks = exporter.export_partitioned_chunks(
+          cycle_dir,
+          'campaign-' + str(campaign_id) + '-feature-selection',
+          campaign_selection_rows,
+          config.selection_chunk_rows,
+          campaign_selection_fit_steps,
+          date_from,
+          date_to,
+          campaign_condition)
+        campaign_selection_chunks = stream_campaign_chunks(
+          campaign_selection_csv_chunks,
+          cycle_dir,
+          campaign_id,
+          features_config_file,
+          campaign_features_config_file,
+          feature_indexes_file,
+          stable_model_file,
+          trainer,
+          None,
+          None,
+          in_progress_model,
+          progress_prefix='campaign_feature_selection')
+        selection_fit_start, selection_fit_end = fit_step_callbacks(
+          in_progress_model,
+          campaign_model_name,
+          'campaign_feature_selection')
+        campaign_feature_indexes = (
+          campaign_model_trainer.select_feature_indexes_from_chunks(
+            campaign_selection_chunks,
+            campaign_selection_validation_inputs,
+            fit_iterations=campaign_selection_fit_iterations,
+            work_dir=cycle_dir,
+            fit_steps=campaign_selection_fit_steps,
+            on_fit_start=selection_fit_start,
+            on_fit_end=selection_fit_end))
+        campaign_feature_indexes_file = cycle_dir / (
+          'campaign-' + str(campaign_id) + '.feature-indexes')
+        with in_progress_model.train_step(
+            campaign_model_name,
+            'save_feature_indexes'):
+          with campaign_feature_indexes_file.open('w') as output_file:
+            for feature_index in sorted(campaign_feature_indexes):
+              output_file.write(str(feature_index) + '\n')
+        logger.info(
+          'Campaign %d selected %d LibSVM feature indexes from %d models',
+          campaign_id,
+          len(campaign_feature_indexes),
+          campaign_selection_fit_steps)
+        with in_progress_model.train_step(
+            campaign_model_name,
+            'release_selection_validation'):
+          remove_training_inputs(campaign_selection_validation_inputs)
+          campaign_selection_validation_inputs = []
+
+        final_campaign_validation_sets = (
+          config.training_validation_sets + config.final_test_sets)
         campaign_validation_inputs, campaign_validation_statistics = (
           prepare_campaign_validation_sets(
             exporter,
@@ -1545,16 +1768,19 @@ def generate_model_(config, in_progress_model):
             date_from,
             date_to,
             campaign_validation_rows,
-            campaign_validation_sets,
-            in_progress_model))
+            final_campaign_validation_sets,
+            in_progress_model,
+            campaign_feature_indexes_file=campaign_feature_indexes_file,
+            validation_offset_rows=(
+              config.selection_validation_sets * campaign_validation_rows)))
         campaign_dictionary_lines = set()
         campaign_statistics = FeatureStatistics()
         campaign_csv_chunks = exporter.export_partitioned_chunks(
           cycle_dir,
           'campaign-' + str(campaign_id) + '-training',
-          eligible_impressions,
+          campaign_training_rows,
           config.main_chunk_rows,
-          config.training_fit_steps,
+          campaign_training_fit_steps,
           date_from,
           date_to,
           campaign_condition)
@@ -1569,7 +1795,8 @@ def generate_model_(config, in_progress_model):
           trainer,
           campaign_dictionary_lines,
           campaign_statistics,
-          in_progress_model)
+          in_progress_model,
+          campaign_feature_indexes_file=campaign_feature_indexes_file)
         campaign_training_validation_end = config.training_validation_sets
         campaign_fit_start, campaign_fit_end = fit_step_callbacks(
           in_progress_model,
@@ -1581,10 +1808,10 @@ def generate_model_(config, in_progress_model):
             :campaign_training_validation_end],
           campaign_validation_inputs[
             campaign_training_validation_end:],
-          fit_iterations=config.fit_iterations,
+          fit_iterations=campaign_training_fit_iterations,
           patience=config.training_patience,
           work_dir=cycle_dir,
-          fit_steps=config.training_fit_steps,
+          fit_steps=campaign_training_fit_steps,
           on_fit_start=campaign_fit_start,
           on_fit_end=campaign_fit_end)
 
@@ -1609,14 +1836,37 @@ def generate_model_(config, in_progress_model):
             campaign_model_name,
             'finalize_metrics'):
           campaign_weight = campaign_result['weight']
-        campaign_train_end = in_progress_model.complete_models(
-          campaign_model_name)
+          campaign_model_description = campaign_model_trainer.describe_model(
+            campaign_result['model'],
+            campaign_dictionary_file,
+            campaign_statistics,
+            feature_name_resolver)
+        campaign_train_end = in_progress_model.complete_model(
+          campaign_model_name,
+          file=campaign_model_name + '.cbm',
+          **campaign_model_description,
+          logloss_history=campaign_result['logloss_history'],
+          dataset_sizes=campaign_dataset_sizes,
+          ctr_thresholds=campaign_result['ctr_thresholds'],
+          runtime=campaign_weight > 0,
+          baseline_model='common_stable',
+          selection_rows=campaign_selection_rows,
+          selection_models=campaign_selection_fit_steps,
+          selection_model_iterations=campaign_selection_fit_iterations,
+          selected_feature_indexes=len(campaign_feature_indexes),
+          training_rows_limit=campaign_training_rows,
+          training_fit_steps=campaign_training_fit_steps,
+          training_fit_iterations=campaign_training_fit_iterations,
+          weight=campaign_weight,
+          base_logloss=campaign_result['base_logloss'],
+          combined_logloss=campaign_result['combined_logloss'])
         campaign_model_entries.append({
           'name': campaign_model_name,
           'trainer': campaign_model_trainer,
           'model': campaign_result['model'],
           'feature_dictionary_file': campaign_dictionary_file,
           'feature_statistics': campaign_statistics,
+          'model_description': campaign_model_description,
           'logloss_history': campaign_result['logloss_history'],
           'dataset_sizes': campaign_dataset_sizes,
           'ctr_thresholds': campaign_result['ctr_thresholds'],
@@ -1628,6 +1878,13 @@ def generate_model_(config, in_progress_model):
             'runtime_campaign_group_id': campaign_id,
             'campaign_name': campaign_names.get(campaign_id),
             'eligible_training_impressions': eligible_impressions,
+            'selection_rows': campaign_selection_rows,
+            'selection_models': campaign_selection_fit_steps,
+            'selection_model_iterations': campaign_selection_fit_iterations,
+            'selected_feature_indexes': len(campaign_feature_indexes),
+            'training_rows_limit': campaign_training_rows,
+            'training_fit_steps': campaign_training_fit_steps,
+            'training_fit_iterations': campaign_training_fit_iterations,
             'weight': campaign_weight,
             'base_logloss': campaign_result['base_logloss'],
             'combined_logloss': campaign_result['combined_logloss'],
@@ -1639,6 +1896,7 @@ def generate_model_(config, in_progress_model):
           },
         })
       finally:
+        remove_training_inputs(campaign_selection_validation_inputs)
         remove_training_inputs(campaign_validation_inputs)
 
     model_entries = [
@@ -1648,6 +1906,7 @@ def generate_model_(config, in_progress_model):
         'model': common_model,
         'feature_dictionary_file': common_dictionary_file,
         'feature_statistics': feature_statistics,
+        'model_description': common_model_description,
         'logloss_history': common_logloss_history,
         'dataset_sizes': common_dataset_sizes,
         'ctr_thresholds': common_ctr_thresholds,
@@ -1668,6 +1927,7 @@ def generate_model_(config, in_progress_model):
         'model': aligned_models['campaign_correction']['model'],
         'feature_dictionary_file': correction_dictionary_file,
         'feature_statistics': correction_statistics,
+        'model_description': correction_model_description,
         'logloss_history': aligned_models[
           'campaign_correction']['logloss_history'],
         'dataset_sizes': correction_dataset_sizes,
@@ -1681,7 +1941,7 @@ def generate_model_(config, in_progress_model):
           'oof_strategy': 'expanding_window_hash_partitions',
           'status': 'completed',
           'train_start': aligned_train_start,
-          'train_end': aligned_train_end,
+          'train_end': correction_train_end,
           'train_steps': in_progress_model.model_traits('common_denoise')[
             'train_steps'],
         },
@@ -1692,6 +1952,7 @@ def generate_model_(config, in_progress_model):
         'model': aligned_models['stable_common']['model'],
         'feature_dictionary_file': stable_dictionary_file,
         'feature_statistics': stable_statistics,
+        'model_description': stable_model_description,
         'logloss_history': aligned_models[
           'stable_common']['logloss_history'],
         'dataset_sizes': stable_dataset_sizes,
@@ -1704,7 +1965,7 @@ def generate_model_(config, in_progress_model):
           'metrics_prediction': 'sigmoid(common_stable)',
           'status': 'completed',
           'train_start': aligned_train_start,
-          'train_end': aligned_train_end,
+          'train_end': stable_train_end,
           'train_steps': in_progress_model.model_traits('common_stable')[
             'train_steps'],
         },
@@ -1717,7 +1978,7 @@ def generate_model_(config, in_progress_model):
       model_entries,
       timestamp=in_progress_model.model_id,
       staging_dir=in_progress_model.path,
-      algorithm_id=config.algorithm_id,
+      algorithm_id=in_progress_model.model_id,
       feature_name_resolver=feature_name_resolver,
       prepare=in_progress_model.traits['prepare'],
       train_start=in_progress_model.train_start_text,

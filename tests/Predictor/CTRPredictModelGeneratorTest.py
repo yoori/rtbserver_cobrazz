@@ -63,6 +63,20 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertIn(
       'aligned_validation_denoise_libsvm_001',
       aligned_step_ids)
+    campaign_step_ids = {
+      step['id']
+      for step in TRAINER_MODULE.campaign_train_steps(
+        config,
+        selection_fit_steps=2,
+        training_fit_steps=3)
+    }
+    self.assertIn(
+      'campaign_selection_validation_inputs_001',
+      campaign_step_ids)
+    self.assertIn('campaign_feature_selection_fit_002', campaign_step_ids)
+    self.assertNotIn('campaign_feature_selection_fit_003', campaign_step_ids)
+    self.assertIn('campaign_training_fit_003', campaign_step_ids)
+    self.assertNotIn('campaign_training_fit_004', campaign_step_ids)
     self.assertTrue(all(step['started'] is None for step in prepare_steps))
     self.assertTrue(all(step['ended'] is None for step in prepare_steps))
 
@@ -73,7 +87,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'workspace_root': '/var/lib/ctr-generator',
       'clickhouse_conn': '--host click00',
       'postgres_conn': 'host=postdb00 dbname=stat',
-      'algorithm_id': '20260819.120000',
       'generate_period': 3600,
       'selection_chunk_rows': 70,
       'main_chunk_rows': 90,
@@ -93,7 +106,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
 
     self.assertEqual('/var/lib/ctr-generator', config.workspace_root)
     self.assertEqual('host=postdb00 dbname=stat', config.postgres_conn)
-    self.assertEqual('20260819.120000', config.algorithm_id)
     self.assertEqual(3600.0, config.generate_period)
     self.assertEqual(70, config.selection_chunk_rows)
     self.assertEqual(90, config.main_chunk_rows)
@@ -104,7 +116,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual(7, config.selection_fit_steps)
     self.assertEqual(12, config.training_fit_steps)
     self.assertEqual(8, config.fit_iterations)
-    self.assertEqual(2, config.selection_patience)
+    self.assertFalse(hasattr(config, 'selection_patience'))
     self.assertEqual(6, config.training_patience)
     self.assertEqual(604800, config.campaign_model_activity_period)
     self.assertEqual(250000, config.min_campaign_model_imps)
@@ -162,6 +174,26 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
 
     self.assertEqual(14 * 24 * 60 * 60, config.campaign_model_activity_period)
     self.assertEqual(100000, config.min_campaign_model_imps)
+
+  def test_campaign_fit_steps_keep_chunks_near_the_row_limit(self):
+    self.assertEqual(
+      1,
+      TRAINER_MODULE.campaign_fit_steps(100000, 5000000, 30))
+    self.assertEqual(
+      2,
+      TRAINER_MODULE.campaign_fit_steps(6000000, 5000000, 30))
+    self.assertEqual(
+      30,
+      TRAINER_MODULE.campaign_fit_steps(200000000, 5000000, 30))
+    self.assertEqual(
+      300,
+      TRAINER_MODULE.scaled_fit_iterations(10, 30, 1))
+    self.assertEqual(
+      150,
+      TRAINER_MODULE.scaled_fit_iterations(10, 30, 2))
+    self.assertEqual(
+      10,
+      TRAINER_MODULE.scaled_fit_iterations(10, 30, 30))
 
   def test_campaign_correction_config_is_separate_and_campaign_conditioned(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -301,7 +333,19 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
               '2026-08-24T16:05:00Z',
             ]):
           in_progress.start_models('campaign_123')
-          in_progress.complete_models('campaign_123')
+          in_progress.complete_model(
+            'campaign_123',
+            file='campaign_123.cbm',
+            feature_groups=[['campaign']],
+            features_importance=[{
+              'score': 1.5,
+              'feature': 'campaign:123',
+            }],
+            logloss_history=[{
+              'step': 1,
+              'train': 0.1,
+              'test': 0.2,
+            }])
 
         traits = TRAINER_MODULE.json.loads(traits_file.read_text())
         self.assertEqual(2, traits['model_plan']['models'])
@@ -311,6 +355,11 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         self.assertEqual('completed', campaign['status'])
         self.assertEqual('2026-08-24T16:00:00Z', campaign['train_start'])
         self.assertEqual('2026-08-24T16:05:00Z', campaign['train_end'])
+        self.assertEqual('campaign_123.cbm', campaign['file'])
+        self.assertEqual(
+          'campaign:123',
+          campaign['features_importance'][0]['feature'])
+        self.assertEqual(0.2, campaign['logloss_history'][0]['test'])
         self.assertFalse((in_progress.path / '.traits.json.tmp').exists())
 
       self.assertFalse(in_progress.path.exists())
@@ -564,6 +613,103 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         file_path.exists()
         for pair in inputs
         for file_path in pair))
+
+  def test_campaign_validation_uses_campaign_filter_and_offset(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      csv_files = [
+        work_dir / 'campaign-source-000.csv',
+        work_dir / 'campaign-source-001.csv',
+      ]
+      for file_path in csv_files:
+        file_path.write_text('source\n')
+      stable_config = work_dir / 'stable.json'
+      campaign_config = work_dir / 'campaign.json'
+      stable_indexes = work_dir / 'stable.indexes'
+      campaign_indexes = work_dir / 'campaign.indexes'
+      stable_model = work_dir / 'stable.cbm'
+      for file_path in (
+          stable_config,
+          campaign_config,
+          stable_indexes,
+          campaign_indexes,
+          stable_model,
+      ):
+        file_path.write_text('data\n')
+      export_calls = []
+
+      class Exporter:
+        @staticmethod
+        def validation_condition():
+          return 'validation-condition'
+
+        @staticmethod
+        def campaign_condition(campaign_id):
+          self.assertEqual(17, campaign_id)
+          return 'campaign-condition'
+
+        def export_chunks(self, *args, **kwargs):
+          export_calls.append((args, kwargs))
+
+          def chunks():
+            for file_path in csv_files:
+              try:
+                yield file_path, 10
+              finally:
+                file_path.unlink(missing_ok=True)
+
+          return chunks()
+
+      class StableTrainer:
+        @staticmethod
+        def predict_raw_(model_file, svm_file, baseline_file):
+          self.assertEqual(stable_model, model_file)
+          self.assertTrue(svm_file.exists())
+          baseline_file.write_text('0.1\n')
+
+      def generate_libsvm(
+          input_file,
+          output_file,
+          config_file,
+          dictionary_file=None,
+          feature_indexes_file=None,
+          feature_stats_file=None,
+      ):
+        del input_file, dictionary_file
+        output_file.write_text('1 1:1\n')
+        if config_file == stable_config:
+          self.assertEqual(stable_indexes, feature_indexes_file)
+          self.assertIsNone(feature_stats_file)
+        else:
+          self.assertEqual(campaign_config, config_file)
+          self.assertEqual(campaign_indexes, feature_indexes_file)
+          feature_stats_file.write_text('0,10,2\n')
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'generate_libsvm',
+          side_effect=generate_libsvm):
+        inputs, statistics = TRAINER_MODULE.prepare_campaign_validation_sets(
+          Exporter(),
+          work_dir,
+          17,
+          stable_config,
+          campaign_config,
+          stable_indexes,
+          stable_model,
+          StableTrainer(),
+          '2026-08-01',
+          '2026-08-02',
+          10,
+          2,
+          campaign_feature_indexes_file=campaign_indexes,
+          validation_offset_rows=30)
+
+      self.assertEqual(30, export_calls[0][1]['offset_rows'])
+      self.assertEqual(2, len(inputs))
+      self.assertEqual({'rows': 20, 'clicks': 4},
+                       TRAINER_MODULE.dataset_size(statistics))
+      TRAINER_MODULE.remove_training_inputs(inputs)
 
   def test_pid_file_is_exclusive_and_removed(self):
     with tempfile.TemporaryDirectory() as temp_dir:

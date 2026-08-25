@@ -314,6 +314,22 @@ class CTRModelWebApplicationTest(unittest.TestCase):
             'status': 'completed',
             'train_start': '2026-08-24T16:00:00Z',
             'train_end': '2026-08-24T16:30:00Z',
+            'file': 'common.cbm',
+            'feature_groups': [['publisher']],
+            'features_importance': [{
+              'score': 1.5,
+              'feature': 'publisher:10',
+              'name': 'Account name',
+            }],
+            'logloss_history': [{
+              'step': 1,
+              'train': 0.1,
+              'test': 0.2,
+            }],
+            'dataset_sizes': {
+              'train': {'rows': 1000, 'clicks': 10},
+              'test': {'rows': 100, 'clicks': 1},
+            },
             'train_steps': [
               {
                 'id': 'training_fit_001',
@@ -381,7 +397,11 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn(
       'href="#component-campaign-123" aria-current="page"',
       page)
-    self.assertNotIn('Feature importance', page)
+    self.assertIn('Feature importance', page)
+    self.assertIn('publisher:10', page)
+    self.assertIn('Account name', page)
+    self.assertIn('Logloss history', page)
+    self.assertIn('Dataset sizes', page)
 
   def test_renders_interrupted_training_and_model_phase(self):
     properties = {

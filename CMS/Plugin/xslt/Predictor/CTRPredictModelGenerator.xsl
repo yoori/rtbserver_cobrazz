@@ -54,17 +54,13 @@
     test="count($generator-config/@training_fit_steps) = 0">30</xsl:if>,
   "fit_iterations": <xsl:value-of select="$generator-config/@fit_iterations"/><xsl:if
     test="count($generator-config/@fit_iterations) = 0">10</xsl:if>,
-  "selection_patience": <xsl:value-of select="$generator-config/@selection_patience"/><xsl:if
-    test="count($generator-config/@selection_patience) = 0">3</xsl:if>,
   "training_patience": <xsl:value-of select="$generator-config/@training_patience"/><xsl:if
     test="count($generator-config/@training_patience) = 0">5</xsl:if>,
   "campaign_model_activity_period": <xsl:value-of select="$generator-config/@campaign_model_activity_period"/><xsl:if
     test="count($generator-config/@campaign_model_activity_period) = 0">1209600</xsl:if>,
   "min_campaign_model_imps": <xsl:value-of select="$generator-config/@min_campaign_model_imps"/><xsl:if
     test="count($generator-config/@min_campaign_model_imps) = 0">100000</xsl:if>,
-  "data_delay": <xsl:value-of select="$generator-config/@data_delay"/>,
-  "algorithm_id": "<xsl:value-of select="$generator-config/@algorithm_id"/><xsl:if
-    test="count($generator-config/@algorithm_id) = 0">catboost</xsl:if>"
+  "data_delay": <xsl:value-of select="$generator-config/@data_delay"/>
 }
 </xsl:template>
 

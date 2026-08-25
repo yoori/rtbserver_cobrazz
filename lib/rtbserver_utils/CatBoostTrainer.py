@@ -91,7 +91,6 @@ class CatBoostTrainer(object):
       final_test_sets=3,
       fit_steps=10,
       fit_iterations=10,
-      patience=3,
   ):
     validation_sets = (
       selection_validation_sets +
@@ -112,7 +111,6 @@ class CatBoostTrainer(object):
         chunks,
         validations[:selection_validation_sets],
         fit_iterations,
-        patience,
         pathlib.Path(temp_dir),
         fit_steps)
 
@@ -121,7 +119,6 @@ class CatBoostTrainer(object):
       chunks,
       validation_paths,
       fit_iterations=10,
-      patience=3,
       work_dir=None,
       fit_steps=None,
       on_fit_start=None,
@@ -135,7 +132,6 @@ class CatBoostTrainer(object):
         chunks,
         validation_paths,
         fit_iterations,
-        patience,
         pathlib.Path(temp_dir),
         fit_steps,
         on_fit_start,
@@ -146,34 +142,69 @@ class CatBoostTrainer(object):
       chunks,
       validation_paths,
       fit_iterations,
-      patience,
       work_dir,
       fit_steps,
       on_fit_start=None,
       on_fit_end=None,
   ):
+    if not validation_paths:
+      raise ValueError('At least one feature selection validation set is required')
+    if fit_iterations <= 0:
+      raise ValueError('fit_iterations must be positive')
+    if fit_steps is not None and fit_steps <= 0:
+      raise ValueError('fit_steps must be positive')
+
+    # Selection models are intentionally independent.  A growing boosting
+    # model tends to keep using the feature representation found on its first
+    # chunks.  Starting from an empty model on every sample exposes
+    # alternative useful feature indexes; their union is a conservative
+    # whitelist for the final, larger training Pool.
     model_dir = work_dir / 'selection-model'
     model_dir.mkdir()
-    callback_args = {}
-    if on_fit_start is not None:
-      callback_args['on_fit_start'] = on_fit_start
-    if on_fit_end is not None:
-      callback_args['on_fit_end'] = on_fit_end
-    _, best_logloss, trained_steps, _ = self.fit_sequence_(
-      chunks,
-      validation_paths,
-      fit_iterations,
-      patience,
-      model_dir,
-      'Feature selection',
-      fit_steps,
-      **callback_args)
-    selected_indexes = self.model_feature_indexes_(model_dir / 'model.cbm')
-    print(
-      'Feature selection: chunks=' + str(trained_steps) +
-      ', Logloss=' + str(best_logloss) +
-      ', selected_indexes=' + str(len(selected_indexes)),
-      flush=True)
+    selected_indexes = set()
+    trained_steps = 0
+    chunk_iterator = iter(chunks)
+    try:
+      chunks_to_fit = chunk_iterator
+      if fit_steps is not None:
+        chunks_to_fit = itertools.islice(chunk_iterator, fit_steps)
+      for step, chunk in enumerate(chunks_to_fit, 1):
+        if on_fit_start is not None:
+          on_fit_start(step)
+        if isinstance(chunk, (tuple, list)):
+          svm_file, baseline_file = chunk
+        else:
+          svm_file = chunk
+          baseline_file = None
+        model_path = model_dir / (
+          'model-' + str(step).zfill(3) + '.cbm')
+        train_metrics = self.train_chunk_(
+          svm_file,
+          model_path,
+          fit_iterations,
+          baseline_file=baseline_file)
+        validation_metrics = self.evaluate_model_sets_(
+          model_path,
+          validation_paths)
+        model_indexes = self.model_feature_indexes_(model_path)
+        selected_indexes.update(model_indexes)
+        trained_steps = step
+        print(
+          'Feature selection: model=' + str(step) +
+          ', train=' + str(train_metrics['Logloss']) +
+          ', validation=' + str(validation_metrics['Logloss']) +
+          ', model_indexes=' + str(len(model_indexes)) +
+          ', selected_indexes=' + str(len(selected_indexes)),
+          flush=True)
+        if on_fit_end is not None:
+          on_fit_end(step)
+    finally:
+      close = getattr(chunk_iterator, 'close', None)
+      if close is not None:
+        close()
+
+    if trained_steps == 0:
+      raise ValueError('At least one feature selection chunk is required')
 
     if not selected_indexes:
       raise RuntimeError('Feature selection produced no feature indexes')
@@ -1197,17 +1228,13 @@ class CatBoostTrainer(object):
                          str(staging_dir) + "'")
     try:
       model.save_model(str(staging_dir / 'model.cbm'))
-      features, features_importance = self.model_traits_(
+      model_description = self.describe_model(
         model,
         feature_dictionary_file,
-        feature_statistics)
-      if feature_name_resolver is not None:
-        feature_names = feature_name_resolver.resolve(
-          [item['feature'] for item in features_importance])
-        for item in features_importance:
-          name = feature_names.get(item['feature'])
-          if name is not None:
-            item['name'] = name
+        feature_statistics,
+        feature_name_resolver)
+      features = model_description['feature_groups']
+      features_importance = model_description['features_importance']
       self.write_campaign_manager_config_(
         staging_dir / 'config.json',
         algorithm_id,
@@ -1283,7 +1310,7 @@ class CatBoostTrainer(object):
     }
     try:
       traits_models = []
-      feature_items = []
+      unresolved_feature_items = []
       runtime_models = []
       for entry in models:
         name = entry['name']
@@ -1293,11 +1320,16 @@ class CatBoostTrainer(object):
         entry_trainer = entry['trainer']
         model = entry['model']
         model.save_model(str(staging_dir / file_name))
-        features, features_importance = entry_trainer.model_traits_(
-          model,
-          entry.get('feature_dictionary_file'),
-          entry.get('feature_statistics'))
-        feature_items.extend(features_importance)
+        model_description = entry.get('model_description')
+        if model_description is None:
+          model_description = entry_trainer.describe_model(
+            model,
+            entry.get('feature_dictionary_file'),
+            entry.get('feature_statistics'))
+          unresolved_feature_items.extend(
+            model_description['features_importance'])
+        features = model_description['feature_groups']
+        features_importance = model_description['features_importance']
         model_traits = {
           'name': name,
           **entry.get('traits', {}),
@@ -1329,12 +1361,12 @@ class CatBoostTrainer(object):
             runtime_model['campaigns_whitelist_file'] = whitelist_file
           runtime_models.append(runtime_model)
 
-      if feature_name_resolver is not None:
+      if feature_name_resolver is not None and unresolved_feature_items:
         feature_names = feature_name_resolver.resolve(
           list(dict.fromkeys(
             item['feature']
-            for item in feature_items)))
-        for item in feature_items:
+            for item in unresolved_feature_items)))
+        for item in unresolved_feature_items:
           name = feature_names.get(item['feature'])
           if name is not None:
             item['name'] = name
@@ -1363,6 +1395,29 @@ class CatBoostTrainer(object):
       shutil.rmtree(staging_dir, ignore_errors=True)
       raise
     return result_dir
+
+  def describe_model(
+      self,
+      model,
+      feature_dictionary_file,
+      feature_statistics=None,
+      feature_name_resolver=None,
+  ):
+    features, features_importance = self.model_traits_(
+      model,
+      feature_dictionary_file,
+      feature_statistics)
+    if feature_name_resolver is not None and features_importance:
+      feature_names = feature_name_resolver.resolve(
+        [item['feature'] for item in features_importance])
+      for item in features_importance:
+        name = feature_names.get(item['feature'])
+        if name is not None:
+          item['name'] = name
+    return {
+      'feature_groups': features,
+      'features_importance': features_importance,
+    }
 
   def model_traits_(
       self,

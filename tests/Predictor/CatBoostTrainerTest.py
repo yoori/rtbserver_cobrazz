@@ -865,7 +865,7 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual(0.12, result['base_logloss'])
       self.assertEqual(0.1, result['combined_logloss'])
 
-  def test_feature_selection_changes_chunk_on_every_fit(self):
+  def test_feature_selection_unions_independent_chunk_models(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
       source = temp_path / 'source.libsvm'
@@ -880,33 +880,35 @@ class CatBoostTrainerTest(unittest.TestCase):
       ]
       trainer = CatBoostTrainer(features_dimension=4)
       trained_chunks = []
-      model_sequences = []
+      initial_models = []
 
       def split_svm(*args):
         self.assertEqual(30, args[-1])
         return chunks[:3], validations
 
-      def fit_sequence(
-          model_chunks,
-          validation_paths,
-          fit_iterations,
-          patience,
-          model_dir,
-          description,
-          fit_steps,
+      def train_chunk(
+          svm_file,
+          output_model,
+          iterations,
+          initial_model=None,
+          baseline_file=None,
+          merge_model=None,
       ):
-        del validation_paths, fit_iterations, patience, description
-        self.assertEqual(3, fit_steps)
-        steps = 2
-        model_sequences.append(list(model_chunks))
-        trained_chunks.extend(model_chunks[:steps])
-        model_file = model_dir / 'model.cbm'
-        model_file.write_text('model')
-        return model_file, 0.1, steps, []
+        del iterations, baseline_file, merge_model
+        trained_chunks.append(svm_file)
+        initial_models.append(initial_model)
+        pathlib.Path(output_model).write_text(str(svm_file))
+        return {'Logloss': 0.2}
 
       trainer.split_svm_ = split_svm
-      trainer.fit_sequence_ = fit_sequence
-      trainer.model_feature_indexes_ = lambda model_file: {1}
+      trainer.train_chunk_ = train_chunk
+      trainer.evaluate_model_sets_ = lambda model_file, validation_paths: {
+        'Logloss': 0.1,
+        'sets': validation_paths,
+      }
+      trainer.model_feature_indexes_ = lambda model_file: {
+        int(pathlib.Path(model_file).stem.rsplit('-', 1)[1])
+      }
 
       indexes = trainer.select_feature_indexes(
         source,
@@ -918,9 +920,53 @@ class CatBoostTrainerTest(unittest.TestCase):
         final_test_sets=1,
         fit_steps=3)
 
-      self.assertEqual(chunks[:2], trained_chunks)
-      self.assertEqual([chunks[:3]], model_sequences)
-      self.assertEqual({1}, indexes)
+      self.assertEqual(chunks[:3], trained_chunks)
+      self.assertEqual([None, None, None], initial_models)
+      self.assertEqual({1, 2, 3}, indexes)
+
+  def test_residual_feature_selection_uses_independent_baselines(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      trainer = CatBoostTrainer(features_dimension=4)
+      baselines = []
+
+      def train_chunk(
+          svm_file,
+          output_model,
+          iterations,
+          initial_model=None,
+          baseline_file=None,
+          merge_model=None,
+      ):
+        del svm_file, iterations, merge_model
+        self.assertIsNone(initial_model)
+        baselines.append(baseline_file)
+        pathlib.Path(output_model).write_text('model')
+        return {'Logloss': 0.2}
+
+      trainer.train_chunk_ = train_chunk
+      trainer.evaluate_model_sets_ = lambda model_file, validation_paths: {
+        'Logloss': 0.1,
+        'sets': validation_paths,
+      }
+      trainer.model_feature_indexes_ = lambda model_file: {
+        int(pathlib.Path(model_file).stem.rsplit('-', 1)[1])
+      }
+      chunks = [
+        (temp_path / 'chunk-1', temp_path / 'baseline-1'),
+        (temp_path / 'chunk-2', temp_path / 'baseline-2'),
+      ]
+      validation = [(temp_path / 'validation', temp_path / 'baseline')]
+
+      indexes = trainer.select_feature_indexes_from_chunks_(
+        chunks,
+        validation,
+        fit_iterations=1,
+        work_dir=temp_path,
+        fit_steps=2)
+
+      self.assertEqual([chunk[1] for chunk in chunks], baselines)
+      self.assertEqual({1, 2}, indexes)
 
   def test_main_training_does_not_repeat_chunks(self):
     with tempfile.TemporaryDirectory() as temp_dir:
