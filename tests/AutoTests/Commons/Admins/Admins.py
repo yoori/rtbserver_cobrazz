@@ -533,7 +533,7 @@ string('click_done')
 # @brief RequestInfoAdmin with aspect 'print-request'.
 # RequestInfoAdmin call string:
 # RequestInfoAdmin print-request '<REQUESTID>' \
-#     -r corbaloc::$request_info_manager_host:$request_info_manager_port/RequestInfoManager
+#     -r $request_info_manager_host:$request_info_manager_port
 
 Admin('RequestProfileAdmin',
       Cmd(('RequestInfoManager', 'RequestInfoSrv'), 'print-request',
@@ -558,7 +558,7 @@ Admin('PassbackProfileAdmin',
 # @brief RequestInfoAdmin with aspect 'print-fraud'.
 # RequestInfoAdmin call string:
 # RequestInfoAdmin print-fraud '<UUID>' \
-#     -r corbaloc::$request_info_manager_host:$request_info_manager_port/RequestInfoManager
+#     -r $request_info_manager_host:$request_info_manager_port
 
 Admin('FraudProfileAdmin',
       Cmd(('RequestInfoManager', 'RequestInfoSrv'), 'print-fraud',
