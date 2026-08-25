@@ -1326,21 +1326,22 @@ def generate_model_(config, in_progress_model):
     core_validation_offset_rows = (
       config.selection_validation_sets * validation_rows)
     common_train_start = in_progress_model.start_models('common')
-    validation_files, validation_statistics = prepare_validation_libsvm_sets(
-      exporter,
-      cycle_dir,
-      'common-validation',
-      features_config_file,
-      date_from,
-      date_to,
-      validation_rows,
-      core_validation_sets,
-      validation_offset_rows=core_validation_offset_rows,
-      feature_indexes_file=feature_indexes_file,
-      collect_statistics=True,
-      progress=in_progress_model,
-      progress_section='common',
-      progress_prefix='common_validation')
+    common_validation_files, common_validation_statistics = (
+      prepare_validation_libsvm_sets(
+        exporter,
+        cycle_dir,
+        'common-validation',
+        features_config_file,
+        date_from,
+        date_to,
+        validation_rows,
+        core_validation_sets,
+        validation_offset_rows=core_validation_offset_rows,
+        feature_indexes_file=feature_indexes_file,
+        collect_statistics=True,
+        progress=in_progress_model,
+        progress_section='common',
+        progress_prefix='common_validation'))
     training_validation_end = config.training_validation_sets
     dictionary_lines = set()
     feature_statistics = FeatureStatistics()
@@ -1370,8 +1371,8 @@ def generate_model_(config, in_progress_model):
     common_model, common_logloss_history, common_ctr_thresholds = (
       trainer.train_from_chunks(
         training_svm_chunks,
-        validation_files[:training_validation_end],
-        validation_files[training_validation_end:],
+        common_validation_files[:training_validation_end],
+        common_validation_files[training_validation_end:],
         fit_iterations=config.fit_iterations,
         patience=config.training_patience,
         work_dir=cycle_dir,
@@ -1381,9 +1382,9 @@ def generate_model_(config, in_progress_model):
     common_dataset_sizes = {
       'train': dataset_size([feature_statistics]),
       'test': dataset_size(
-        validation_statistics[:training_validation_end]),
+        common_validation_statistics[:training_validation_end]),
       'final_test': dataset_size(
-        validation_statistics[training_validation_end:]),
+        common_validation_statistics[training_validation_end:]),
     }
 
     with in_progress_model.train_step('common', 'save_feature_dictionary'):
@@ -1412,7 +1413,7 @@ def generate_model_(config, in_progress_model):
         correction_features_config_file,
         common_model_file,
         trainer,
-        validation_files,
+        common_validation_files,
         date_from,
         date_to,
         validation_rows,
@@ -1452,9 +1453,9 @@ def generate_model_(config, in_progress_model):
       aligned_chunks,
       correction_trainer,
       correction_training_inputs,
-      validation_files[:training_validation_end],
+      common_validation_files[:training_validation_end],
       correction_final_inputs,
-      validation_files[training_validation_end:],
+      common_validation_files[training_validation_end:],
       fit_iterations=config.fit_iterations,
       patience=config.training_patience,
       work_dir=cycle_dir,
@@ -1475,9 +1476,9 @@ def generate_model_(config, in_progress_model):
     stable_dataset_sizes = {
       'train': dataset_size([stable_statistics]),
       'test': dataset_size(
-        validation_statistics[:training_validation_end]),
+        common_validation_statistics[:training_validation_end]),
       'final_test': dataset_size(
-        validation_statistics[training_validation_end:]),
+        common_validation_statistics[training_validation_end:]),
     }
     correction_dataset_sizes = {
       'train': dataset_size([correction_statistics]),
@@ -1503,8 +1504,8 @@ def generate_model_(config, in_progress_model):
         'release_validation'):
       remove_training_inputs(correction_validation_inputs)
       correction_validation_inputs = []
-      remove_files(validation_files)
-      validation_files = []
+      remove_files(common_validation_files)
+      common_validation_files = []
     aligned_train_end = in_progress_model.complete_models(
       'common_denoise',
       'common_stable')

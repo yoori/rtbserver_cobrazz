@@ -474,6 +474,97 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         TRAINER_MODULE.dataset_size(statistics))
       self.assertEqual([], list(work_dir.glob('*.stats')))
 
+  def test_denoise_validation_reexports_common_rows_inside_aligned_phase(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      csv_files = [
+        work_dir / 'aligned-source-000.csv',
+        work_dir / 'aligned-source-001.csv',
+      ]
+      common_files = [
+        work_dir / 'common-validation-000.libsvm',
+        work_dir / 'common-validation-001.libsvm',
+      ]
+      for file_path in csv_files + common_files:
+        file_path.write_text('source\n')
+      correction_config = work_dir / 'correction.json'
+      correction_config.write_text('{}')
+      common_model = work_dir / 'common.cbm'
+      common_model.write_text('model\n')
+      export_calls = []
+      prediction_calls = []
+
+      class Exporter:
+        @staticmethod
+        def validation_condition():
+          return 'validation-condition'
+
+        def export_chunks(self, *args, **kwargs):
+          export_calls.append((args, kwargs))
+
+          def chunks():
+            for file_path in csv_files:
+              try:
+                yield file_path, 10
+              finally:
+                file_path.unlink(missing_ok=True)
+
+          return chunks()
+
+      class CommonTrainer:
+        @staticmethod
+        def predict_raw_(model_file, svm_file, baseline_file):
+          prediction_calls.append((model_file, svm_file, baseline_file))
+          baseline_file.write_text('0.1\n')
+
+      def generate_libsvm(
+          input_file,
+          output_file,
+          config_file,
+          dictionary_file=None,
+          feature_indexes_file=None,
+          feature_stats_file=None,
+      ):
+        del dictionary_file, feature_indexes_file
+        self.assertIn(input_file, csv_files)
+        self.assertEqual(correction_config, config_file)
+        output_file.write_text('1 1:1\n')
+        feature_stats_file.write_text('0,10,2\n')
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'generate_libsvm',
+          side_effect=generate_libsvm):
+        inputs, statistics = TRAINER_MODULE.prepare_denoise_validation_sets(
+          Exporter(),
+          work_dir,
+          correction_config,
+          common_model,
+          CommonTrainer(),
+          common_files,
+          '2026-08-01',
+          '2026-08-02',
+          10,
+          2,
+          30)
+
+      self.assertEqual(30, export_calls[0][1]['offset_rows'])
+      self.assertEqual(common_files, [call[1] for call in prediction_calls])
+      self.assertEqual(2, len(inputs))
+      self.assertTrue(all(
+        file_path.exists()
+        for pair in inputs
+        for file_path in pair))
+      self.assertFalse(any(file_path.exists() for file_path in csv_files))
+      self.assertEqual(
+        {'rows': 20, 'clicks': 4},
+        TRAINER_MODULE.dataset_size(statistics))
+      TRAINER_MODULE.remove_training_inputs(inputs)
+      self.assertFalse(any(
+        file_path.exists()
+        for pair in inputs
+        for file_path in pair))
+
   def test_pid_file_is_exclusive_and_removed(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       pid_file = pathlib.Path(temp_dir) / 'nested' / 'generator.pid'
