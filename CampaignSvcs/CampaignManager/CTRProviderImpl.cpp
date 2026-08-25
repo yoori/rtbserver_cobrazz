@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cfloat>
+#include <cmath>
 #include <fstream>
 #include <Generics/MMap.hpp>
 #include <Generics/Singleton.hpp>
@@ -43,6 +44,7 @@ namespace AdServer::CampaignSvcs::CTR
       const String::SubString FEATURE_MAPPING_FILE("feature_mapping_file");
 
       const String::SubString ALGORITHM_ID("id");
+      const String::SubString ALGORITHM_AGGREGATION("aggregation");
       const String::SubString ALGORITHM_WEIGHT("weight");
       const String::SubString ALGORITHM_THRESHOLD("threshold");
       const String::SubString ALGORITHM_MODELS("models");
@@ -51,6 +53,7 @@ namespace AdServer::CampaignSvcs::CTR
       const String::SubString ALGORITHM_PARAMS_CAMPAIGNS_BLACKLIST_FILE("campaigns_blacklist_file");
 
       const String::SubString ALGORITHM_MODEL_METHOD("method");
+      const String::SubString ALGORITHM_MODEL_PREDICT_POSTPROCESS("predict_postprocess");
       const String::SubString ALGORITHM_MODEL_WEIGHT("weight");
       const String::SubString ALGORITHM_MODEL_FEATURES("features");
       const String::SubString ALGORITHM_MODEL_FEATURES_SIZE("features_size");
@@ -60,6 +63,18 @@ namespace AdServer::CampaignSvcs::CTR
     const String::SubString JSON_CONFIG_FILE_NAME("config.json");
 
     const String::SubString CTR_CONFIG_FOLDER_NAME_REGEXP("\\d{8}\\.\\d{6}");
+
+    double
+    sigmoid(const double value) noexcept
+    {
+      if (value >= 0.0)
+      {
+        return 1.0 / (1.0 + std::exp(-value));
+      }
+
+      const double exp_value = std::exp(value);
+      return exp_value / (1.0 + exp_value);
+    }
 
     std::shared_ptr<CTREvaluator>
     create_ctr_evaluator_(
@@ -107,6 +122,7 @@ namespace AdServer::CampaignSvcs::CTR
       RevenueDecimal weight;
       FeatureArray features;
       std::string file;
+      std::string predict_postprocess;
     };
 
     typedef std::list<ModelDescriptor> ModelDescriptorList;
@@ -118,6 +134,7 @@ namespace AdServer::CampaignSvcs::CTR
       {}
 
       std::string id;
+      std::string aggregation;
       unsigned long weight;
       std::string campaigns_whitelist_file;
       std::string campaigns_blacklist_file;
@@ -579,6 +596,11 @@ namespace AdServer::CampaignSvcs::CTR
       "algorithms.id",
       get_algorithm_descriptor,
       &AlgorithmDescriptor::id);
+    add_ctr_string(
+      processors,
+      "algorithms.aggregation",
+      get_algorithm_descriptor,
+      &AlgorithmDescriptor::aggregation);
     add_ctr_integer(
       processors,
       "algorithms.weight",
@@ -628,6 +650,11 @@ namespace AdServer::CampaignSvcs::CTR
       &ModelDescriptor::method);
     add_ctr_string(
       processors,
+      "algorithms.models.predict_postprocess",
+      get_model_descriptor,
+      &ModelDescriptor::predict_postprocess);
+    add_ctr_string(
+      processors,
       "algorithms.models.file",
       get_model_descriptor,
       &ModelDescriptor::file);
@@ -657,7 +684,7 @@ namespace AdServer::CampaignSvcs::CTR
           mmap_file.length()),
         &state);
 
-      if (result->version != 2)
+      if (result->version != 2 && result->version != 3)
       {
         Stream::Error ostr;
         ostr << FUN << ": unsupported version = " << result->version;
@@ -961,30 +988,30 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   inline
-  RevenueDecimal
-  CTRProviderImpl::CalculationContext::get_model_ctr_(
+  double
+  CTRProviderImpl::CalculationContext::get_model_prediction_(
     const Algorithm& algorithm,
     const Model& model,
     const Creative* creative)
     const /*throw(Overflow)*/
   {
-    // check cached ctr
-    auto model_ctr_it = calculation_->model_ctrs_.find(model.model_id);
+    // check cached prediction
+    auto model_prediction_it = calculation_->model_predictions_.find(model.model_id);
 
-    if (model_ctr_it != calculation_->model_ctrs_.end())
+    if (model_prediction_it != calculation_->model_predictions_.end())
     {
-      return model_ctr_it->second;
+      return model_prediction_it->second;
     }
 
-    model_ctr_it = model_ctrs_.find(model.model_id);
+    model_prediction_it = model_predictions_.find(model.model_id);
 
-    if (model_ctr_it != model_ctrs_.end())
+    if (model_prediction_it != model_predictions_.end())
     {
-      return model_ctr_it->second;
+      return model_prediction_it->second;
     }
 
-    // eval ctr
-    RevenueDecimal model_ctr;
+    // eval native model prediction
+    double model_prediction;
 
     // by hash eval methods
     HashArrayHolder_var request_hashes;
@@ -1056,7 +1083,7 @@ namespace AdServer::CampaignSvcs::CTR
       }
     }
 
-    model_ctr = model.ctr_evaluator->get_ctr(
+    model_prediction = model.ctr_evaluator->predict(
       model,
       calculation_->request_params_,
       creative,
@@ -1065,21 +1092,25 @@ namespace AdServer::CampaignSvcs::CTR
       candidate_hashes,
       &opt_hashes);
 
-    assert((model_ctr.is_zero(), true));
+    if (model.predict_postprocess == PredictPostprocess::Sigmoid)
+    {
+      model_prediction = sigmoid(model_prediction);
+    }
 
     if (model.max_feature_type.has_value() && *model.max_feature_type < FT_CANDIDATE)
     {
       if (*model.max_feature_type == FT_AUCTION)
       {
-        model_ctrs_.insert(std::make_pair(model.model_id, model_ctr));
+        model_predictions_.insert(std::make_pair(model.model_id, model_prediction));
       }
       else if (*model.max_feature_type == FT_REQUEST)
       {
-        calculation_->model_ctrs_.insert(std::make_pair(model.model_id, model_ctr));
+        calculation_->model_predictions_.insert(
+          std::make_pair(model.model_id, model_prediction));
       }
     }
 
-    return model_ctr;
+    return model_prediction;
   }
 
   std::pair<RevenueDecimal, const Algorithm*>
@@ -1100,9 +1131,8 @@ namespace AdServer::CampaignSvcs::CTR
     const Algorithm* algorithm =
       calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-    // eval weight for each model of selected algorithm
-    // ModelValue can't be changed here because can be reused
-    RevenueDecimal ctr_sum = RevenueDecimal::ZERO;
+    // Combine predictions of all models in the selected algorithm.
+    double prediction_sum = 0.0;
     unsigned long model_count = 0;
 
     bool res_creative_dependent = false;
@@ -1113,27 +1143,30 @@ namespace AdServer::CampaignSvcs::CTR
     {
       res_creative_dependent |= (*model_it)->creative_dependent;
 
-      const RevenueDecimal model_ctr = get_model_ctr_(
+      const double model_prediction = get_model_prediction_(
         *algorithm,
         **model_it,
         creative);
 
-      const RevenueDecimal ctr_fee = RevenueDecimal::mul(
-        model_ctr,
-        (*model_it)->weight,
-        Generics::DMR_FLOOR);
+      const double weighted_prediction =
+        model_prediction * (*model_it)->weight;
 
       if (DEBUG_CTR_CALCULATION_)
       {
         std::cout << "CTR DEBUG(" << (*model_it)->method_name << "): "
-          "ctr = " << model_ctr <<
-          ", ctr fee = " << ctr_fee << "(by model #" << model_count <<
+          "prediction = " << model_prediction <<
+          ", weighted prediction = " << weighted_prediction <<
+          "(by model #" << model_count <<
           " with weight = " << (*model_it)->weight << ")" <<
           std::endl;
       }
 
-      ctr_sum += ctr_fee;
+      prediction_sum += weighted_prediction;
     }
+
+    const double ctr = algorithm->aggregation == PredictionAggregation::LogitSum ?
+      sigmoid(prediction_sum) : prediction_sum;
+    const RevenueDecimal result_ctr = Calculation::adapt_ctr_(ctr);
 
     if (creative_dependent)
     {
@@ -1145,10 +1178,10 @@ namespace AdServer::CampaignSvcs::CTR
       std::cout << "CTR DEBUG: result ctr for ccg_id = " <<
         creative->campaign->campaign_id <<
         ", cc_id = " << creative->ccid <<
-        ": " << ctr_sum << std::endl;
+        ": " << result_ctr << std::endl;
     }
 
-    return std::make_pair(ctr_sum, algorithm);
+    return std::make_pair(result_ctr, algorithm);
   }
 
   RevenueDecimal
@@ -1176,12 +1209,12 @@ namespace AdServer::CampaignSvcs::CTR
         model_it != algorithm->models.end();
         ++model_it)
       {
-        RevenueDecimal model_ctr = get_model_ctr_(
+        const double model_prediction = get_model_prediction_(
           *algorithm,
           **model_it,
           creative);
 
-        ctrs.push_back(model_ctr);
+        ctrs.push_back(Generics::convert_float<RevenueDecimal>(model_prediction));
       }
     }
   }
@@ -1611,12 +1644,38 @@ namespace AdServer::CampaignSvcs::CTR
         alg->id = alg_it->id;
         alg->threshold = alg_it->threshold;
 
+        if (config_descriptor->version == 2)
+        {
+          if (!alg_it->aggregation.empty())
+          {
+            Stream::Error ostr;
+            ostr << "aggregation requires CTR config version 3";
+            throw InvalidConfig(ostr);
+          }
+
+          alg->aggregation = PredictionAggregation::Sum;
+        }
+        else if (alg_it->aggregation == "sum")
+        {
+          alg->aggregation = PredictionAggregation::Sum;
+        }
+        else if (alg_it->aggregation == "logit_sum")
+        {
+          alg->aggregation = PredictionAggregation::LogitSum;
+        }
+        else
+        {
+          Stream::Error ostr;
+          ostr << "incorrect aggregation = '" << alg_it->aggregation << "'";
+          throw InvalidConfig(ostr);
+        }
+
         for (ConfigParser::ModelDescriptorList::const_iterator model_it = alg_it->models.begin();
           model_it != alg_it->models.end(); ++model_it)
         {
           Model_var model(new Model(++global_model_id));
           model->method_name = model_it->method;
-          model->weight = model_it->weight;
+          model->weight = model_it->weight.floating<double>();
 
           if (model_it->features_size > 1)
           {
@@ -1660,6 +1719,35 @@ namespace AdServer::CampaignSvcs::CTR
           {
             Stream::Error ostr;
             ostr << "incorrect model method = '" << model_it->method << "'";
+            throw InvalidConfig(ostr);
+          }
+
+          if (config_descriptor->version == 2)
+          {
+            if (!model_it->predict_postprocess.empty())
+            {
+              Stream::Error ostr;
+              ostr << "predict_postprocess requires CTR config version 3";
+              throw InvalidConfig(ostr);
+            }
+
+            // Version 2 CatBoost configs expect evaluator output to be a CTR.
+            model->predict_postprocess = model->method == MM_CATBOOST ?
+              PredictPostprocess::Sigmoid : PredictPostprocess::AsIs;
+          }
+          else if (model_it->predict_postprocess == "as_is")
+          {
+            model->predict_postprocess = PredictPostprocess::AsIs;
+          }
+          else if (model_it->predict_postprocess == "sigmoid")
+          {
+            model->predict_postprocess = PredictPostprocess::Sigmoid;
+          }
+          else
+          {
+            Stream::Error ostr;
+            ostr << "incorrect predict_postprocess = '" <<
+              model_it->predict_postprocess << "'";
             throw InvalidConfig(ostr);
           }
 

@@ -65,8 +65,8 @@ namespace AdServer::CampaignSvcs::CTR
     using FeatureSetLevelEvalWeightMap = Generics::GnuHashTable<
       Generics::NumericHashAdapter<unsigned long>, float>;
 
-    using ModelCTRMap = Generics::GnuHashTable<
-      Generics::NumericHashAdapter<unsigned long>, RevenueDecimal>;
+    using ModelPredictionMap = Generics::GnuHashTable<
+      Generics::NumericHashAdapter<unsigned long>, double>;
 
     using Priority = float;
 
@@ -108,8 +108,8 @@ namespace AdServer::CampaignSvcs::CTR
         const Creative* creative,
         bool* creative_dependent) const;
 
-      RevenueDecimal
-      get_model_ctr_(
+      double
+      get_model_prediction_(
         const Algorithm& algorithm,
         const Model& model,
         const Creative* creative) const;
@@ -165,7 +165,7 @@ namespace AdServer::CampaignSvcs::CTR
       mutable HashArray opt_hashes_;
       mutable FeatureSetLevelEvalHashMap feature_set_level_eval_hashes_;
       mutable FeatureSetLevelEvalWeightMap feature_set_level_eval_weights_;
-      mutable ModelCTRMap model_ctrs_;
+      mutable ModelPredictionMap model_predictions_;
     };
 
     using CalculationContextImpl_var =
@@ -258,7 +258,7 @@ namespace AdServer::CampaignSvcs::CTR
       CCampaignSelectParams_var request_params_;
       mutable FeatureSetLevelEvalHashMap feature_set_level_eval_hashes_;
       mutable FeatureSetLevelEvalWeightMap feature_set_level_eval_weights_;
-      mutable ModelCTRMap model_ctrs_;
+      mutable ModelPredictionMap model_predictions_;
     };
 
     using CalculationImpl_var = ReferenceCounting::SmartPtr<Calculation>;
