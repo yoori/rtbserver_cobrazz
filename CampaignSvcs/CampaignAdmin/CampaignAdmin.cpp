@@ -521,12 +521,14 @@ namespace
         std::make_shared<boost::asio::io_service>(),
         1);
     result.coalesce_runner->activate_object();
+    AdServer::Grpc::BatchingOptions batching_options;
+    batching_options.max_batch_delay = Generics::Time::ZERO;
     result.client = std::make_shared<
       AdServer::CampaignSvcs::CampaignManagerGrpcAsyncBatchingClient>(
         reference,
         result.grpc_executor,
         result.coalesce_runner,
-        AdServer::Grpc::BatchingOptions());
+        batching_options);
     result.client->activate_object();
     return result;
   }
