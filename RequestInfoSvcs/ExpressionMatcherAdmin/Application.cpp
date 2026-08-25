@@ -2,12 +2,20 @@
 
 #include <iostream>
 #include <locale.h>
+#include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 
-#include <grpcpp/grpcpp.h>
-
+#include <Generics/ActiveObject.hpp>
 #include <Generics/AppUtils.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Logger/StreamLogger.hpp>
 
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestTriggerMatchProfile.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestTriggerMatchProfileUtils.hpp>
@@ -63,17 +71,102 @@ namespace
     return endpoint;
   }
 
-  bool
-  check_status(const grpc::Status& status)
+  template<typename Response, typename Start>
+  std::optional<Response>
+  sync_call(Start&& start) noexcept
   {
-    if(status.ok())
+    try
     {
-      return true;
+      grpc::Status error;
+      auto response = AdServer::Grpc::sync_call<Response>(
+        std::forward<Start>(start),
+        [&error](const grpc::Status& status)
+        {
+          error = status;
+        });
+
+      if(error.ok())
+      {
+        return response;
+      }
+
+      std::cerr << "ExpressionMatcher gRPC call failed: code=" <<
+        error.error_code() << ", message=" << error.error_message() << '\n';
+    }
+    catch(const std::exception& ex)
+    {
+      std::cerr << "ExpressionMatcher gRPC call failed: " <<
+        ex.what() << '\n';
     }
 
-    std::cerr << "ExpressionMatcher gRPC call failed: code=" <<
-      status.error_code() << ", message=" << status.error_message() << '\n';
-    return false;
+    return std::nullopt;
+  }
+
+  struct ClientHolder
+  {
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner;
+    std::shared_ptr<AdServer::RequestInfoSvcs::
+      ExpressionMatcherGrpcAsyncBatchingClient> client;
+  };
+
+  ClientHolder
+  create_client(const std::string& endpoint)
+  {
+    ClientHolder result;
+    result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    result.grpc_executor->activate_object();
+
+    Logging::Logger_var logger =
+      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    result.coalesce_runner =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        new Logging::ActiveObjectCallbackImpl(
+          logger,
+          "ExpressionMatcherAdmin",
+          "gRPC"),
+        std::make_shared<boost::asio::io_service>(),
+        1);
+    result.coalesce_runner->activate_object();
+
+    AdServer::Grpc::BatchingOptions batching_options;
+    batching_options.max_batch_delay = Generics::Time::ZERO;
+    result.client = std::make_shared<AdServer::RequestInfoSvcs::
+      ExpressionMatcherGrpcAsyncBatchingClient>(
+        endpoint,
+        result.grpc_executor,
+        result.coalesce_runner,
+        std::move(batching_options));
+    result.client->activate_object();
+    return result;
+  }
+
+  void
+  shutdown_client(ClientHolder& holder) noexcept
+  {
+    try
+    {
+      if(holder.client)
+      {
+        holder.client->deactivate_object();
+        holder.client->wait_object();
+      }
+
+      if(holder.grpc_executor)
+      {
+        holder.grpc_executor->deactivate_object();
+        holder.grpc_executor->wait_object();
+      }
+
+      if(holder.coalesce_runner)
+      {
+        holder.coalesce_runner->deactivate_object();
+        holder.coalesce_runner->wait_object();
+      }
+    }
+    catch(...)
+    {}
   }
 
   const char*
@@ -89,28 +182,32 @@ Application_::Application_() noexcept = default;
 Application_::~Application_() noexcept = default;
 
 void
-Application_::print(Stub& expression_matcher, const char* user_id_str) noexcept
+Application_::print(Client& expression_matcher, const char* user_id_str) noexcept
 {
   try
   {
     AdServer::Commons::UserId user_id(user_id_str);
     Proto::ProfileRequest request;
     request.set_id(user_id_str);
-    Proto::ProfileResponse response;
-    grpc::ClientContext context;
-    if(!check_status(expression_matcher.get_inventory_profile(
-         &context, request, &response)))
+    const auto response = sync_call<Proto::ProfileResponse>(
+      [&expression_matcher, &request](auto callback)
+      {
+        expression_matcher.get_inventory_profile(
+          request,
+          std::move(callback));
+      });
+    if(!response)
     {
       return;
     }
 
-    if(!response.found())
+    if(!response->found())
     {
       std::cout << "Profile not found." << std::endl;
       return;
     }
 
-    const std::string& profile = response.profile();
+    const std::string& profile = response->profile();
     AdServer::RequestInfoSvcs::UserChannelInventoryProfileReader reader(
       profile.data(), profile.size());
     AdServer::RequestInfoSvcs::print_user_channel_inventory_profile(
@@ -124,7 +221,7 @@ Application_::print(Stub& expression_matcher, const char* user_id_str) noexcept
 
 void
 Application_::print_user_trigger_match(
-  Stub& expression_matcher,
+  Client& expression_matcher,
   const char* user_id_str,
   bool temporary) noexcept
 {
@@ -134,21 +231,25 @@ Application_::print_user_trigger_match(
     Proto::UserTriggerMatchProfileRequest request;
     request.set_user_id(user_id_str);
     request.set_temporary_user(temporary);
-    Proto::ProfileResponse response;
-    grpc::ClientContext context;
-    if(!check_status(expression_matcher.get_user_trigger_match_profile(
-         &context, request, &response)))
+    const auto response = sync_call<Proto::ProfileResponse>(
+      [&expression_matcher, &request](auto callback)
+      {
+        expression_matcher.get_user_trigger_match_profile(
+          request,
+          std::move(callback));
+      });
+    if(!response)
     {
       return;
     }
 
-    if(!response.found())
+    if(!response->found())
     {
       std::cout << "Profile not found." << std::endl;
       return;
     }
 
-    const std::string& profile = response.profile();
+    const std::string& profile = response->profile();
     AdServer::RequestInfoSvcs::UserTriggerMatchReader reader(
       profile.data(), profile.size());
     AdServer::RequestInfoSvcs::print_user_trigger_match_profile(
@@ -162,7 +263,7 @@ Application_::print_user_trigger_match(
 
 void
 Application_::print_request_trigger_match(
-  Stub& expression_matcher,
+  Client& expression_matcher,
   const char* request_id_str) noexcept
 {
   try
@@ -170,21 +271,25 @@ Application_::print_request_trigger_match(
     AdServer::Commons::RequestId request_id(request_id_str);
     Proto::ProfileRequest request;
     request.set_id(request_id_str);
-    Proto::ProfileResponse response;
-    grpc::ClientContext context;
-    if(!check_status(expression_matcher.get_request_trigger_match_profile(
-         &context, request, &response)))
+    const auto response = sync_call<Proto::ProfileResponse>(
+      [&expression_matcher, &request](auto callback)
+      {
+        expression_matcher.get_request_trigger_match_profile(
+          request,
+          std::move(callback));
+      });
+    if(!response)
     {
       return;
     }
 
-    if(!response.found())
+    if(!response->found())
     {
       std::cout << "Profile not found." << std::endl;
       return;
     }
 
-    const std::string& profile = response.profile();
+    const std::string& profile = response->profile();
     AdServer::RequestInfoSvcs::RequestTriggerMatchReader reader(
       profile.data(), profile.size());
     AdServer::RequestInfoSvcs::print_request_trigger_match_profile(
@@ -198,7 +303,7 @@ Application_::print_request_trigger_match(
 
 void
 Application_::print_household_colo_reach(
-  Stub& expression_matcher,
+  Client& expression_matcher,
   const char* user_id_str) noexcept
 {
   try
@@ -206,21 +311,25 @@ Application_::print_household_colo_reach(
     AdServer::Commons::UserId user_id(user_id_str);
     Proto::ProfileRequest request;
     request.set_id(user_id_str);
-    Proto::ProfileResponse response;
-    grpc::ClientContext context;
-    if(!check_status(expression_matcher.get_household_colo_reach_profile(
-         &context, request, &response)))
+    const auto response = sync_call<Proto::ProfileResponse>(
+      [&expression_matcher, &request](auto callback)
+      {
+        expression_matcher.get_household_colo_reach_profile(
+          request,
+          std::move(callback));
+      });
+    if(!response)
     {
       return;
     }
 
-    if(!response.found())
+    if(!response->found())
     {
       std::cout << "Profile not found." << std::endl;
       return;
     }
 
-    const std::string& profile = response.profile();
+    const std::string& profile = response->profile();
     AdServer::RequestInfoSvcs::UserColoReachProfileReader reader(
       profile.data(), profile.size());
     AdServer::RequestInfoSvcs::print_user_colo_reach_profile(
@@ -301,20 +410,26 @@ Application_::main(int& argc, char** argv) noexcept
     }
 
     const std::string endpoint = normalize_endpoint(*opt_expression_matcher);
-    auto channel = grpc::CreateChannel(
-      endpoint,
-      grpc::InsecureChannelCredentials());
-    std::unique_ptr<Stub> expression_matcher =
-      Proto::ExpressionMatcherGrpc::NewStub(channel);
+    ClientHolder client_holder = create_client(endpoint);
+    auto client_guard = std::unique_ptr<ClientHolder, void(*)(ClientHolder*)>(
+      &client_holder,
+      [](ClientHolder* holder)
+      {
+        shutdown_client(*holder);
+      });
+    auto& expression_matcher = *client_holder.client;
 
     if(command == "daily-process")
     {
       Proto::RunDailyProcessingRequest request;
       request.set_synchronous(opt_sync.enabled());
-      Proto::RunDailyProcessingResponse response;
-      grpc::ClientContext context;
-      check_status(expression_matcher->run_daily_processing(
-        &context, request, &response));
+      sync_call<Proto::RunDailyProcessingResponse>(
+        [&expression_matcher, &request](auto callback)
+        {
+          expression_matcher.run_daily_processing(
+            request,
+            std::move(callback));
+        });
       return;
     }
 
@@ -334,22 +449,22 @@ Application_::main(int& argc, char** argv) noexcept
     const std::string id = remove_uuid_escape(command_id(commands, opt_user_id));
     if(command == "print")
     {
-      print(*expression_matcher, id.c_str());
+      print(expression_matcher, id.c_str());
     }
     else if(command == "print-user-trigger-match")
     {
       print_user_trigger_match(
-        *expression_matcher,
+        expression_matcher,
         id.c_str(),
         opt_temporary.enabled());
     }
     else if(command == "print-request-trigger-match")
     {
-      print_request_trigger_match(*expression_matcher, id.c_str());
+      print_request_trigger_match(expression_matcher, id.c_str());
     }
     else
     {
-      print_household_colo_reach(*expression_matcher, id.c_str());
+      print_household_colo_reach(expression_matcher, id.c_str());
     }
   }
   catch(const std::exception& ex)

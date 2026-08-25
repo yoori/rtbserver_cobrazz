@@ -3,13 +3,14 @@ add_executable(ExpressionMatcherAdmin
   Application.cpp
 )
 target_link_libraries(ExpressionMatcherAdmin
-  String
-  Generics
-  UtilCommons
+  PRIVATE
+    Generics
+    Commons
+    Logger
+    UtilCommons
 
-  ExpressionMatcherGrpcProto
-  gRPC::grpc++
-  pthread
+    ExpressionMatcherGrpcClient
+    pthread
 
 )
 
