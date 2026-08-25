@@ -68,7 +68,7 @@ BuildRequires: ace-tao-devel >= %__ace_ver_req
 Requires: ace-tao = %__ace_ver_req
 BuildRequires: apr-devel >= 1.6.3-12
 BuildRequires: autoconf >= 2.63
-BuildRequires: gcc-c++
+BuildRequires: gcc-toolset-10-gcc-c++
 BuildRequires: GeoIP-devel >= %__geoip_ver_req
 Requires: GeoIP >= %__geoip_ver_req
 Requires: foros-geoip >= 1.0.0.0
@@ -246,6 +246,9 @@ mkdir -p %{__product}/%{__osbe_build_dir}
 
 %build
 %ifnarch noarch
+export CC=/opt/rh/gcc-toolset-10/root/usr/bin/gcc
+export CXX=/opt/rh/gcc-toolset-10/root/usr/bin/g++
+
 pushd unixcommons
 #osbe
 product_root=`pwd`
