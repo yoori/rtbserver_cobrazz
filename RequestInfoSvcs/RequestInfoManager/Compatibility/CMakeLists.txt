@@ -48,7 +48,9 @@ add_library(RequestInfoManagerCompatibility SHARED
 )
 
 target_link_libraries(RequestInfoManagerCompatibility
+  PRIVATE
   Commons
+  Generics
 
   UserCampaignReachProfile_v24PST
 
@@ -67,14 +69,8 @@ target_link_libraries(RequestInfoManagerCompatibility
 
   RequestProfilePST
   RequestOperationProfilePST
-  UserChannelInventoryProfilePST
   UserCampaignReachProfilePST
   UserActionProfilePST
   UserSiteReachProfilePST
-  UserFraudProtectionProfilePST
   PassbackProfilePST
-  UserTagRequestMergeProfilePST
-  UserTriggerMatchProfilePST
-  RequestTriggerMatchProfilePST
-  ConsiderMessagesPST
 )

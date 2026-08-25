@@ -161,18 +161,15 @@
     rocksdb_batching_threads="{$rocksdb-batching-threads}"
     use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}">
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$request-info-manager-config/cfg:threadParams/@min"/>
+    <cfg:GrpcConfig>
+      <xsl:attribute name="cq_threads"><xsl:value-of select="$request-info-manager-config/cfg:threadParams/@min"/>
         <xsl:if test="count($request-info-manager-config/cfg:threadParams/@min) = 0">
           <xsl:value-of select="$def-request-info-manager-threads"/>
         </xsl:if>
       </xsl:attribute>
 
-      <cfg:Endpoint host="*" port="{$request-info-manager-port}">
-        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-        <cfg:Object servant="RequestInfoManager" name="RequestInfoManager"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
+      <cfg:Endpoint host="*" port="{$request-info-manager-port}"/>
+    </cfg:GrpcConfig>
 
     <xsl:variable name="snmp-stats-enabled">
       <xsl:if test="count($colo-config/cfg:snmpStats) > 0">

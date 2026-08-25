@@ -1,10 +1,44 @@
 ADD_SUBDIRECTORY(Compatibility)
 
+set(REQUEST_INFO_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/RequestInfoSvcs/RequestInfoManager)
+set(REQUEST_INFO_MANAGER_GRPC_PROTO RequestInfoManagerGrpc.proto)
+
+add_grpc_sources(
+  RequestInfoManagerGrpcProto
+  ${REQUEST_INFO_MANAGER_GRPC_PROTO}
+  ${REQUEST_INFO_MANAGER_GRPC_PROTO_DIR}
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(RequestInfoManagerGrpcProto
+  PUBLIC
+    protobuf::libprotobuf
+    GrpcBatch
+)
+
+add_library(RequestInfoManagerGrpcClient STATIC)
+
+add_adserver_grpc_client_sources(
+  RequestInfoManagerGrpcClient
+  ${CMAKE_SOURCE_DIR}/RequestInfoSvcs/RequestInfoManager/RequestInfoManagerGrpc.proto
+  ${CMAKE_CURRENT_BINARY_DIR}
+  AdServer::RequestInfoSvcs
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(RequestInfoManagerGrpcClient
+  PUBLIC
+  Commons
+  RequestInfoManagerGrpcProto
+  GrpcBatch
+  gRPC::grpc++
+  PRIVATE
+  Sync)
+
 add_library(BillingProcessor SHARED
   BillingProcessor.cpp
 )
 
 target_link_libraries(BillingProcessor
+  PRIVATE
   Generics
   Commons
   BillingServerGrpcClient
@@ -15,9 +49,8 @@ add_library(PassbackContainer SHARED
 )
 
 target_link_libraries(PassbackContainer
-  pcre
+  PRIVATE
   Generics
-  PrivacyFilter
   Commons
   PassbackProfilePST
   ProfileMapRocksDB
@@ -28,25 +61,17 @@ add_library(RequestInfoContainer SHARED
 )
 
 target_link_libraries(RequestInfoContainer
-  pcre
+  PRIVATE
   Generics
-  PrivacyFilter
   Commons
   CampaignBilling
-  ProfileMap
   ProfileMapRocksDB
   RequestProfilePST
   RequestInfoManagerCompatibility
 )
 
-add_idl(RequestInfoManagerIDL RequestInfoManager.idl ${IDL_DIRECTORY}/RequestInfoSvcs/RequestInfoManager)
-
-target_link_libraries(RequestInfoManagerIDL
-  CORBACommons
-  CorbaTypesIDL
-)
-
 add_executable(RequestInfoManager
+  RequestInfoManagerGrpc.cpp
   RequestInfoManagerMain.cpp
   RequestInfoManagerImpl.cpp
   RequestLogLoader.cpp
@@ -55,36 +80,57 @@ add_executable(RequestInfoManager
 )
 
 target_link_libraries(RequestInfoManager
-  jemalloc
+  PRIVATE
+    jemalloc
 
-  pcre
-  CORBACommons
-  PrivacyFilter
-  SNMPAgent
-  RequestInfoManagerIDL
-  Commons
-  CORBAConfig
+    TAO::PortableServer
+    TAO::Valuetype
 
-  RequestInfoManagerConfigXSD
+    CampaignCommonsIDL
+    CorbaTypesIDL
+    CORBACommons
+    Generics
+    GrpcBatch
+    ProcessControlIDL
+    SNMPAgent
+    Sync
+    RequestInfoManagerGrpcProto
+    Commons
+    HTTP
+    Logger
+    CORBAConfig
 
-  BillingProcessor
-  PassbackContainer
-  RequestInfoContainer
-  UserInfoClient
-  CampaignServerIDL
-  LogCommons
+    RequestInfoManagerConfigXSD
 
-  MessageSaver
-  RequestLogLoader
-  RequestOperationSaver
-  RequestOutLogger
-  TagRequestProfiler
-  UserActionInfoContainer
-  UserCampaignReachContainer
-  UserFraudProtectionContainer
-  UserSiteReachContainer
-  UserTagRequestMergeContainer
+    BillingProcessor
+    PassbackContainer
+    RequestInfoContainer
+    UserInfoClient
+    CampaignServerIDL
+    LogCommons
+    RequestCompatibility
+
+    MessageSaver
+    ProfileMapRocksDB
+    RequestLogLoader
+    RequestOperationSaver
+    RequestOutLogger
+    TagRequestProfiler
+    UserActionInfoContainer
+    UserCampaignReachContainer
+    UserFraudProtectionContainer
+    UserSiteReachContainer
+    UserTagRequestMergeContainer
+    gRPC::grpc++
 )
+
+if(TARGET Protobuf::libprotobuf)
+  target_link_libraries(RequestInfoManager PRIVATE Protobuf::libprotobuf)
+elseif(TARGET protobuf::libprotobuf)
+  target_link_libraries(RequestInfoManager PRIVATE protobuf::libprotobuf)
+else()
+  target_link_libraries(RequestInfoManager PRIVATE ${Protobuf_LIBRARIES})
+endif()
 
 add_library(RequestLogLoader SHARED
   RequestLogLoader.cpp
@@ -93,18 +139,14 @@ add_library(RequestLogLoader SHARED
 )
 
 target_link_libraries(RequestLogLoader
+  PRIVATE
   Generics
   Logger
-  String
   LogCommons
   ProfilingCommons
   RequestOperationProfilePST
   RequestInfoManagerCompatibility
-  LogGeneralizerIDL
-  LogGeneralizerLib
   RequestCompatibility
-  LogGeneralizerConfigXSD
-  Postgres
 )
 
 add_library(RequestOperationSaver SHARED
@@ -112,12 +154,11 @@ add_library(RequestOperationSaver SHARED
 )
 
 target_link_libraries(RequestOperationSaver
+  PRIVATE
   Generics
-  PrivacyFilter
   Commons
   LogCommons
 
-  RequestLogLoader
   MessageSaver
 
   RequestOperationProfilePST
@@ -128,7 +169,8 @@ add_library(RequestOutLogger STATIC
 )
 
 target_link_libraries(RequestOutLogger
-  LogCommons
+  PRIVATE
+    LogCommons
 )
 
 add_library(TagRequestProfiler STATIC
@@ -136,7 +178,9 @@ add_library(TagRequestProfiler STATIC
 )
 
 target_link_libraries(TagRequestProfiler
-  LogCommons
+  PRIVATE
+    LogCommons
+    zmq
 )
 
 add_library(UserActionInfoContainer STATIC
@@ -144,9 +188,10 @@ add_library(UserActionInfoContainer STATIC
 )
 
 target_link_libraries(UserActionInfoContainer
-  UserActionProfilePST
-  LogCommons
-  ProfileMapRocksDB
+  PRIVATE
+    UserActionProfilePST
+    LogCommons
+    ProfileMapRocksDB
 )
 
 add_library(UserCampaignReachContainer STATIC
@@ -154,10 +199,10 @@ add_library(UserCampaignReachContainer STATIC
 )
 
 target_link_libraries(UserCampaignReachContainer
-  UserCampaignReachProfilePST
-  LogCommons
-  ProfileMapRocksDB
-  pcre
+  PRIVATE
+    UserCampaignReachProfilePST
+    LogCommons
+    ProfileMapRocksDB
 )
 
 add_library(UserFraudProtectionContainer STATIC
@@ -165,9 +210,10 @@ add_library(UserFraudProtectionContainer STATIC
 )
 
 target_link_libraries(UserFraudProtectionContainer
-  UserFraudProtectionProfilePST
-  LogCommons
-  ProfileMapRocksDB
+  PRIVATE
+    UserFraudProtectionProfilePST
+    LogCommons
+    ProfileMapRocksDB
 )
 
 add_library(UserSiteReachContainer STATIC
@@ -175,9 +221,10 @@ add_library(UserSiteReachContainer STATIC
 )
 
 target_link_libraries(UserSiteReachContainer
-  UserSiteReachProfilePST
-  LogCommons
-  ProfileMapRocksDB
+  PRIVATE
+    UserSiteReachProfilePST
+    LogCommons
+    ProfileMapRocksDB
 )
 
 add_library(UserTagRequestMergeContainer STATIC
@@ -185,7 +232,8 @@ add_library(UserTagRequestMergeContainer STATIC
 )
 
 target_link_libraries(UserTagRequestMergeContainer
-  UserTagRequestMergeProfilePST
-  LogCommons
-  ProfileMapRocksDB
+  PRIVATE
+    UserTagRequestMergeProfilePST
+    LogCommons
+    ProfileMapRocksDB
 )

@@ -10,11 +10,9 @@
 #include <Logger/StreamLogger.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
-#include "RequestInfoManager.hpp"
+#include "RequestInfoManagerGrpc.hpp"
 #include "RequestInfoManagerImpl.hpp"
 
 class RequestInfoManagerApp_
@@ -44,8 +42,6 @@ private:
     ConfigPtr;
 
 private:
-  CORBACommons::CorbaConfig corba_config_;
-
   ConfigPtr configuration_;
 };
 

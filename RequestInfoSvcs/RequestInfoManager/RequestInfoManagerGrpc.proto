@@ -1,0 +1,35 @@
+edition = "2023";
+
+option features.field_presence = IMPLICIT;
+option features.enum_type = OPEN;
+option features.repeated_field_encoding = PACKED;
+option features.utf8_validation = NONE;
+option features.json_format = ALLOW;
+
+package adserver.request_info_svcs.request_info_manager;
+
+service RequestInfoManagerGrpc {
+  rpc get_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_campaign_reach_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_action_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_passback_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_fraud_protection_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_site_reach_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_tag_request_group_profile(ProfileRequest) returns (ProfileResponse);
+  rpc clear_expired(ClearExpiredRequest) returns (ClearExpiredResponse);
+}
+
+message ProfileRequest {
+  string id = 1;
+}
+
+message ProfileResponse {
+  bool found = 1;
+  bytes profile = 2;
+}
+
+message ClearExpiredRequest {
+  bool synchronous = 1;
+}
+
+message ClearExpiredResponse {}

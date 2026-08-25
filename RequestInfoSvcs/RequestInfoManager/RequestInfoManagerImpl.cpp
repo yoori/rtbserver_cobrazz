@@ -508,14 +508,11 @@ namespace RequestInfoSvcs{
   }
 
   template<typename ContainerPtrHolderType, typename KeyType>
-  bool
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_profile_(
-    CORBACommons::OctSeq_out result_profile,
     const char* FUN,
     const ContainerPtrHolderType& container_ptr_holder,
     const KeyType& id)
-    /*throw(AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
   {
     try
     {
@@ -523,169 +520,112 @@ namespace RequestInfoSvcs{
 
       if(!container.in())
       {
-        AdServer::RequestInfoSvcs::RequestInfoManager::NotReady exc;
-        exc.description = "Container is not ready";
-        throw exc;
+        throw NotReady("Container is not ready");
       }
 
-      result_profile = new CORBACommons::OctSeq();
-
-      Generics::ConstSmartMemBuf_var mb_profile = container->get_profile(id);
-
-      if(mb_profile.in())
-      {
-        CorbaAlgs::convert_mem_buf(*result_profile, mb_profile->membuf());
-        return true;
-      }
-
-      return false;
+      return container->get_profile(id);
+    }
+    catch(const NotReady&)
+    {
+      throw;
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN <<
         ": Can't get profile. Caught eh::Exception: " << ex.what();
-
-      CORBACommons::throw_desc<
-        RequestInfoSvcs::RequestInfoManager::ImplementationException>(
-          ostr.str());
+      throw Exception(ostr);
     }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't get profile. Caught CORBA::SystemException: " << e;
-
-      CORBACommons::throw_desc<
-        RequestInfoSvcs::RequestInfoManager::ImplementationException>(
-          ostr.str());
-    }
-    return 0; // never reach
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_profile(
-    const char* request_id,
-    AdServer::RequestInfoSvcs::RequestProfile_out request_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::RequestId& request_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_profile()";
 
     return get_profile_(
-      request_profile,
       FUN,
       request_info_container_,
-      AdServer::Commons::RequestId(request_id));
+      request_id);
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_user_campaign_reach_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_user_campaign_reach_profile()";
 
     return get_profile_(
-      user_profile,
       FUN,
       user_campaign_reach_container_,
-      AdServer::Commons::UserId(user_id));
+      user_id);
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_user_action_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_user_action_profile()";
 
     return get_profile_(
-      user_profile,
       FUN,
       user_action_info_container_,
-      AdServer::Commons::UserId(user_id));
+      user_id);
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_user_fraud_protection_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_user_fraud_protection_profile()";
 
     return get_profile_(
-      user_profile,
       FUN,
       user_fraud_protection_container_,
-      AdServer::Commons::UserId(user_id));
+      user_id);
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_user_site_reach_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_user_site_reach_profile()";
 
     return get_profile_(
-      user_profile,
       FUN,
       user_site_reach_container_,
-      AdServer::Commons::UserId(user_id));
+      user_id);
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_user_tag_request_group_profile(
-    const char* user_id,
-    AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_user_tag_request_group_profile()";
 
     return get_profile_(
-      user_profile,
       FUN,
       user_tag_request_merge_container_,
-      AdServer::Commons::UserId(user_id));
+      user_id);
   }
 
-  CORBA::Boolean
+  Generics::ConstSmartMemBuf_var
   RequestInfoManagerImpl::get_passback_profile(
-    const char* request_id,
-    AdServer::RequestInfoSvcs::PassbackProfile_out passback_profile)
-    /*throw(
-      AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-      AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/
+    const AdServer::Commons::RequestId& request_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::get_passback_profile()";
 
     return get_profile_(
-      passback_profile,
       FUN,
       passback_container_,
-      AdServer::Commons::RequestId(request_id));
+      request_id);
   }
 
   void
-  RequestInfoManagerImpl::clear_expired(CORBA::Boolean synch) noexcept
+  RequestInfoManagerImpl::clear_expired(bool synchronous) noexcept
   {
-    if(synch)
+    if(synchronous)
     {
       clear_expired_data_(false);
     }

@@ -1,9 +1,7 @@
 #include <eh/Exception.hpp>
 
-#include <CORBACommons/StatsImpl.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -18,8 +16,6 @@
 namespace
 {
   const char ASPECT[] = "RequestInfoManager";
-  const char REQUEST_INFO_MANAGER_OBJ_KEY[] = "RequestInfoManager";
-  const char PROCESS_STATS_CONTROL_OBJ_KEY[] = "ProcessStatsControl";
 }
 
 RequestInfoManagerApp_::RequestInfoManagerApp_() /*throw(eh::Exception)*/
@@ -115,24 +111,6 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
       throw Exception(ostr, "ADS-IMPL-3001");
     }
 
-    // fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(
-        config().CorbaConfig(),
-        corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << "Can't read Corba Config. : "
-        << e.what();
-      throw Exception(ostr, "ADS-IMPL-3002");
-    }
-
-    CORBACommons::CorbaServerAdapter_var corba_server_adapter =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
-
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(configuration_->pid_file()));
 
@@ -173,18 +151,16 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
         config(),
         rim_stats_impl);
 
-    typedef CORBACommons::ProcessStatsGen<
-      AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl>
-        ProcessStatsImpl;
-
-    CORBACommons::POA_ProcessStatsControl_var proc_stat_ctrl =
-      new ProcessStatsImpl(rim_stats_impl);
-
-    corba_server_adapter->add_binding(
-      REQUEST_INFO_MANAGER_OBJ_KEY, request_info_manager_impl.in());
-
-    corba_server_adapter->add_binding(
-      PROCESS_STATS_CONTROL_OBJ_KEY, proc_stat_ctrl.in());
+    AdServer::RequestInfoSvcs::RequestInfoManagerGrpc_var grpc_adapter =
+      new AdServer::RequestInfoSvcs::RequestInfoManagerGrpc(
+        request_info_manager_impl,
+        logger(),
+        config().GrpcConfig().Endpoint().host().present() &&
+          *config().GrpcConfig().Endpoint().host() != "*" ?
+          *config().GrpcConfig().Endpoint().host() :
+          "0.0.0.0",
+        config().GrpcConfig().Endpoint().port(),
+        config().GrpcConfig().cq_threads());
 
     auto active_objects =
       std::make_shared<Generics::CompositeActiveObject>(false, false);
@@ -199,7 +175,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
       });
 
     active_objects->add_child_object(request_info_manager_impl.in());
-    active_objects->add_child_object(corba_server_adapter.in());
+    active_objects->add_child_object(grpc_adapter.in());
 
     AdServer::Commons::SignalActiveObject signal_active_object;
     active_objects->activate_object();

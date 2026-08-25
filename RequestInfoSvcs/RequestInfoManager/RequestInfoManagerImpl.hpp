@@ -27,7 +27,6 @@
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
-#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager_s.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
 #include "CompositeRequestActionProcessor.hpp"
@@ -75,12 +74,9 @@ namespace AdServer
      *       RequestOutLogger::process_passback
      *   PassbackContainer::process_passback_request ->
      *     RequestOutLogger::process_passback
-     */
+    */
     class RequestInfoManagerImpl:
-      public virtual CORBACommons::ReferenceCounting::
-        ServantImpl<POA_AdServer::RequestInfoSvcs::RequestInfoManager>,
-      public virtual Generics::RefCountableActiveObject,
-      public virtual Generics::CompositeActiveObject
+      public Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -100,56 +96,31 @@ namespace AdServer
         const RequestInfoManagerStatsImpl_var& rim_stats_impl)
         /*throw(Exception)*/;
 
-      virtual CORBA::Boolean get_profile(
-        const char* request_id,
-        AdServer::RequestInfoSvcs::RequestProfile_out request_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_profile(const AdServer::Commons::RequestId& request_id);
 
-      virtual CORBA::Boolean get_user_campaign_reach_profile(
-        const char* user_id,
-        AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_user_campaign_reach_profile(
+        const AdServer::Commons::UserId& user_id);
 
-      virtual CORBA::Boolean get_user_action_profile(
-        const char* user_id,
-        AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_user_action_profile(const AdServer::Commons::UserId& user_id);
 
-      virtual CORBA::Boolean get_passback_profile(
-        const char* request_id,
-        AdServer::RequestInfoSvcs::PassbackProfile_out passback_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_passback_profile(const AdServer::Commons::RequestId& request_id);
 
-      virtual CORBA::Boolean get_user_fraud_protection_profile(
-        const char* user_id,
-        AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_user_fraud_protection_profile(
+        const AdServer::Commons::UserId& user_id);
 
-      virtual CORBA::Boolean get_user_site_reach_profile(
-        const char* user_id,
-        AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_user_site_reach_profile(const AdServer::Commons::UserId& user_id);
 
-      virtual CORBA::Boolean get_user_tag_request_group_profile(
-        const char* user_id,
-        AdServer::RequestInfoSvcs::UserProfile_out user_profile)
-        /*throw(
-          AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+      Generics::ConstSmartMemBuf_var
+      get_user_tag_request_group_profile(
+        const AdServer::Commons::UserId& user_id);
 
-      virtual void clear_expired(CORBA::Boolean synch) noexcept;
+      void clear_expired(bool synchronous) noexcept;
 
       void get_controllable_chunks(
         ChunkIdList& chunk_ids,
@@ -275,13 +246,10 @@ namespace AdServer
       resolve_campaign_servers_() /*throw(Exception, eh::Exception)*/;
 
       template<typename ContainerPtrHolderType, typename KeyType>
-      bool get_profile_(
-        CORBACommons::OctSeq_out result_profile,
+      Generics::ConstSmartMemBuf_var get_profile_(
         const char* FUN,
         const ContainerPtrHolderType& container_ptr,
-        const KeyType& id)
-        /*throw(AdServer::RequestInfoSvcs::RequestInfoManager::NotReady,
-          AdServer::RequestInfoSvcs::RequestInfoManager::ImplementationException)*/;
+        const KeyType& id);
 
       // initialization after start methods
       void

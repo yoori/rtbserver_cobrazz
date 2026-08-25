@@ -29,7 +29,7 @@
   <xsd:complexType name="RequestInfoManagerThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>gRPC completion queue threads.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -73,7 +73,7 @@
       <xsd:element name="threadParams" type="RequestInfoManagerThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            gRPC completion queue threads.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
