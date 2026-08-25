@@ -28,10 +28,15 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
         rows = [(55, 'Advertiser', 'Creative')]
       elif 'FROM campaigncreativegroup AS ccg' in query:
         rows = [(44, 'Advertiser', 'Group')]
+      elif 'WITH RECURSIVE geochannel_paths' in query:
+        rows = [(428449, None, 'Russia/Dagestan/khamamatyurt')]
+      elif 'FROM creativesize' in query:
+        rows = [(761, None, '320 x 480')]
       elif 'FROM channel' in query:
         rows = [
           (614065, 'Channel account', 'Channel'),
-          (614066, 'Channel account', 'Device'),
+          (614066, None, 'Device'),
+          (427124, None, 'Khakass'),
         ]
       else:
         rows = []
@@ -45,6 +50,9 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
       'ccg:44,ccid:55',
       'channel:614065',
       'device:614066',
+      'geochannel:428449',
+      'channel:427124',
+      'size:761',
       'campaignfreqlog:3',
     ]
 
@@ -55,12 +63,15 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
         features)
 
     connect.assert_called_once_with('postgres connection')
-    self.assertEqual(4, cursor.execute.call_count)
+    self.assertEqual(6, cursor.execute.call_count)
     self.assertEqual({
       'publisher:123': 'Publisher/Publisher',
       'ccg:44,ccid:55': 'Advertiser/Group, Advertiser/Creative',
       'channel:614065': 'Channel account/Channel',
-      'device:614066': 'Channel account/Device',
+      'device:614066': 'Device',
+      'geochannel:428449': 'Russia/Dagestan/khamamatyurt',
+      'channel:427124': 'Khakass',
+      'size:761': '320 x 480',
     }, result)
 
   def test_ignores_non_entity_and_non_numeric_values(self):

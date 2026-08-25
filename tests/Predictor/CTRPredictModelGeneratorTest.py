@@ -132,6 +132,24 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual(TRAINER_MODULE.FEATURE_CONFIG, TRAINER_MODULE.json.loads(
         features_config_file.read_text()))
 
+  def test_campaign_correction_config_is_separate_and_campaign_conditioned(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      common_file = TRAINER_MODULE.prepare_features_config(work_dir)
+      correction_file = TRAINER_MODULE.prepare_features_config(
+        work_dir,
+        TRAINER_MODULE.CAMPAIGN_CORRECTION_FEATURE_CONFIG,
+        'CTRGeneratorCampaignCorrectionConfig.json')
+
+      self.assertNotEqual(common_file, correction_file)
+      correction_config = TRAINER_MODULE.json.loads(
+        correction_file.read_text())
+      self.assertIn(['campaign'], correction_config['features'])
+      self.assertIn(
+        ['campaign', 'userch'],
+        correction_config['features'])
+      self.assertNotIn(['userch'], correction_config['features'])
+
   def test_stream_libsvm_chunks_removes_processed_files(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       work_dir = pathlib.Path(temp_dir)
@@ -142,6 +160,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       feature_indexes_file = work_dir / 'indexes'
       feature_indexes_file.write_text('1\n')
       dictionary_lines = set()
+      feature_statistics = TRAINER_MODULE.FeatureStatistics()
 
       def csv_chunks():
         try:
@@ -155,12 +174,14 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           config_file,
           dictionary_file=None,
           indexes_file=None,
+          stats_file=None,
       ):
         self.assertEqual(csv_file, input_file)
         self.assertEqual(features_config_file, config_file)
         self.assertEqual(feature_indexes_file, indexes_file)
         output_file.write_text('1 1:1\n')
         dictionary_file.write_bytes(b'1,"device:Mobile"\n')
+        stats_file.write_text('0,1,1\n1,1,1\n')
 
       with unittest.mock.patch.object(
           TRAINER_MODULE,
@@ -172,7 +193,8 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           'training',
           features_config_file,
           feature_indexes_file,
-          dictionary_lines)
+          dictionary_lines,
+          feature_statistics)
         svm_file = next(chunks)
         self.assertTrue(csv_file.exists())
         self.assertTrue(svm_file.exists())
@@ -182,6 +204,110 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertFalse(csv_file.exists())
       self.assertFalse(svm_file.exists())
       self.assertEqual({b'1,"device:Mobile"\n'}, dictionary_lines)
+      self.assertEqual(1, feature_statistics.total_impressions)
+      self.assertEqual(1, feature_statistics.total_clicks)
+      self.assertEqual((1, 1), feature_statistics.get(1))
+
+  def test_feature_statistics_merges_chunks(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      first = temp_path / 'first.stats'
+      second = temp_path / 'second.stats'
+      first.write_text('0,10,2\n1,4,1\n2,7,2\n')
+      second.write_text('0,5,1\n1,3,1\n')
+
+      statistics = TRAINER_MODULE.FeatureStatistics()
+      statistics.add_file(first)
+      statistics.add_file(second)
+
+      self.assertEqual(15, statistics.total_impressions)
+      self.assertEqual(3, statistics.total_clicks)
+      self.assertEqual((7, 2), statistics.get(1))
+      self.assertEqual((7, 2), statistics.get(2))
+      self.assertEqual((0, 0), statistics.get(3))
+
+  def test_in_progress_model_uses_traits_and_is_removed(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      model_root = pathlib.Path(temp_dir)
+      train_start = TRAINER_MODULE.datetime.datetime(
+        2026,
+        8,
+        24,
+        15,
+        55,
+        15,
+        tzinfo=TRAINER_MODULE.datetime.timezone.utc)
+
+      with TRAINER_MODULE.InProgressModel(
+          model_root, train_start) as in_progress:
+        self.assertEqual('20260824.155515', in_progress.model_id)
+        traits_file = in_progress.path / 'traits.json'
+        self.assertTrue(traits_file.is_file())
+        traits = TRAINER_MODULE.json.loads(traits_file.read_text())
+        self.assertEqual('in_progress', traits['status'])
+        self.assertEqual('2026-08-24T15:55:15Z', traits['train_start'])
+        self.assertGreater(traits['pid'], 0)
+
+      self.assertFalse(in_progress.path.exists())
+
+  def test_filter_validation_sets_collects_dataset_sizes(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      csv_files = [
+        work_dir / 'validation-000.csv',
+        work_dir / 'validation-001.csv',
+      ]
+      selection_files = [
+        work_dir / 'selection-validation-000.libsvm',
+        work_dir / 'selection-validation-001.libsvm',
+      ]
+      for file_path in csv_files + selection_files:
+        file_path.write_text('source\n')
+      features_config_file = work_dir / 'features.json'
+      features_config_file.write_text('{}')
+      feature_indexes_path = work_dir / 'feature-indexes'
+      feature_indexes_path.write_text('1\n')
+
+      def generate_libsvm(
+          input_file,
+          output_file,
+          config_file,
+          dictionary_file=None,
+          feature_indexes_file=None,
+          feature_stats_file=None,
+      ):
+        self.assertIn(input_file, csv_files)
+        self.assertEqual(features_config_file, config_file)
+        self.assertIsNone(dictionary_file)
+        self.assertEqual(feature_indexes_path, feature_indexes_file)
+        output_file.write_text('1 1:1\n')
+        chunk_index = csv_files.index(input_file)
+        feature_stats_file.write_text(
+          '0,' + str(10 + chunk_index) + ',' + str(2 + chunk_index) + '\n')
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'generate_libsvm',
+          side_effect=generate_libsvm):
+        validation_files, statistics = TRAINER_MODULE.filter_validation_sets(
+          csv_files,
+          selection_files,
+          work_dir,
+          features_config_file,
+          feature_indexes_path)
+
+      self.assertEqual(2, len(validation_files))
+      self.assertTrue(all(file_path.exists() for file_path in validation_files))
+      self.assertFalse(any(file_path.exists() for file_path in csv_files))
+      self.assertFalse(any(file_path.exists() for file_path in selection_files))
+      self.assertEqual(10, statistics[0].total_impressions)
+      self.assertEqual(2, statistics[0].total_clicks)
+      self.assertEqual(11, statistics[1].total_impressions)
+      self.assertEqual(3, statistics[1].total_clicks)
+      self.assertEqual(
+        {'rows': 21, 'clicks': 5},
+        TRAINER_MODULE.dataset_size(statistics))
+      self.assertEqual([], list(work_dir.glob('*.stats')))
 
   def test_pid_file_is_exclusive_and_removed(self):
     with tempfile.TemporaryDirectory() as temp_dir:

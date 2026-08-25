@@ -39,6 +39,9 @@ class CTRModelWebApplicationTest(unittest.TestCase):
   def model_properties(self, features_importance):
     summary = {
       'id': '20260823.120000',
+      'status': 'published',
+      'train_start': '2026-08-23T10:00:00Z',
+      'train_end': '2026-08-23T12:00:00Z',
       'algorithm_id': 'catboost',
       'method': 'catboost',
       'feature_groups': [['tag'], ['geoch', 'userch']],
@@ -50,6 +53,31 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       'config': {},
       'traits': {
         'features_importance': features_importance,
+        'logloss_history': [
+          {'step': 1, 'train': '0.0123', 'test': '0.0203'},
+          {'step': 2, 'train': '0.0119', 'test': '0.0056'},
+        ],
+        'dataset_sizes': {
+          'train': {'rows': 1000000, 'clicks': 2001},
+          'test': {'rows': 300000, 'clicks': 570},
+          'final_test': {'rows': 200000, 'clicks': 390},
+        },
+        'ctr_thresholds': [
+          {
+            'ctr_goal': '0',
+            'impressions': 200000,
+            'clicks': 390,
+            'actual_ctr': '0.00195',
+            'average_predicted_ctr': '0.002104321',
+          },
+          {
+            'ctr_goal': '0.001',
+            'impressions': 150000,
+            'clicks': 350,
+            'actual_ctr': '0.002333333333',
+            'average_predicted_ctr': '0.002671234',
+          },
+        ],
         'validation': {'logloss': decimal.Decimal('0.125')},
       },
     }
@@ -59,14 +87,44 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       'score': decimal.Decimal('0.00008901938322533171'),
       'feature': 'channel:614065',
       'name': 'Account <one>/Channel & one',
+      'yes_share': decimal.Decimal('12.5123456789'),
+      'yes_ctr': decimal.Decimal('0.004123987'),
+      'no_ctr': decimal.Decimal('0.001987654'),
     }])
 
     page = render_index_page([properties['summary']], properties)
 
     self.assertIn('20260823.120000', page)
+    self.assertIn('Train start', page)
+    self.assertIn('2026-08-23T10:00:00Z', page)
+    self.assertIn('Train end', page)
+    self.assertIn('2026-08-23T12:00:00Z', page)
     self.assertIn('0.00008901938322533171', page)
     self.assertIn('channel:614065', page)
     self.assertIn('Account &lt;one&gt;/Channel &amp; one', page)
+    self.assertIn('Yes share, %', page)
+    self.assertIn('12.512345', page)
+    self.assertIn('0.004123', page)
+    self.assertIn('0.001987', page)
+    self.assertNotIn('12.512346', page)
+    self.assertIn('Logloss history', page)
+    self.assertIn('Train Logloss', page)
+    self.assertIn('Test Logloss', page)
+    self.assertIn('0.012300000', page)
+    self.assertIn('class="chart-line train"', page)
+    self.assertIn('class="chart-line test"', page)
+    self.assertIn('Dataset sizes', page)
+    self.assertIn('<td>Train</td>', page)
+    self.assertIn('1000000', page)
+    self.assertIn('2001', page)
+    self.assertIn('0.002001', page)
+    self.assertIn('<td>Final test</td>', page)
+    self.assertIn('CTR threshold calibration', page)
+    self.assertIn('Actual CTR', page)
+    self.assertIn('Average predicted CTR', page)
+    self.assertIn('0.001950', page)
+    self.assertIn('0.002104', page)
+    self.assertNotIn('0.002105', page)
     self.assertIn('tag, geoch + userch', page)
     self.assertIn('&quot;logloss&quot;:0.125', page)
     self.assertIn('aria-current="page"', page)
@@ -80,6 +138,69 @@ class CTRModelWebApplicationTest(unittest.TestCase):
 
     self.assertIn('17.64012480599441', page)
     self.assertIn('channel:3604081', page)
+
+  def test_renders_three_model_components(self):
+    properties = self.model_properties([])
+    properties['summary'].update({
+      'components_count': 3,
+      'published_component': 'stable_common',
+    })
+    component_base = {
+      'feature_groups': [['campaign']],
+      'features_importance': [],
+      'logloss_history': [],
+      'dataset_sizes': {},
+      'ctr_thresholds': [],
+    }
+    properties['traits'] = {
+      'components': {
+        'common': {
+          **component_base,
+          'file': 'common.cbm',
+          'metrics_prediction': 'sigmoid(common)',
+        },
+        'campaign_correction': {
+          **component_base,
+          'file': 'campaign-correction.cbm',
+          'metrics_prediction': 'sigmoid(common + campaign_correction)',
+        },
+        'stable_common': {
+          **component_base,
+          'file': 'model.cbm',
+          'metrics_prediction': 'sigmoid(stable_common)',
+          'published': True,
+        },
+      },
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('>Common</h2>', page)
+    self.assertIn('>Campaign correction</h2>', page)
+    self.assertIn('>Stable common</h2>', page)
+    self.assertIn('campaign-correction.cbm', page)
+    self.assertIn('sigmoid(common + campaign_correction)', page)
+    self.assertIn('component-published', page)
+    self.assertEqual(3, page.count('class="model-component"'))
+
+  def test_renders_in_progress_model_with_only_train_start(self):
+    properties = {
+      'summary': {
+        'id': '~20260824.155515',
+        'status': 'in_progress',
+        'train_start': '2026-08-24T15:55:15Z',
+      },
+      'config': {},
+      'traits': {},
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('Training in progress', page)
+    self.assertIn('2026-08-24T15:55:15Z', page)
+    self.assertNotIn('Train end', page)
+    self.assertNotIn('Feature importance', page)
+    self.assertNotIn('>Config<', page)
 
   def test_invalid_scores_do_not_break_bar_scale(self):
     for score in ('invalid', 'NaN', 'Infinity'):
@@ -101,6 +222,9 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     }])
 
     class Repository:
+      def all_model_ids(self):
+        return [properties['summary']['id']]
+
       def model_ids(self):
         return [properties['summary']['id']]
 
