@@ -23,6 +23,7 @@ namespace
   {
     std::string model;
     unsigned long count = 0;
+    unsigned long campaign_id = 236995;
     std::optional<RevenueDecimal> expected_ctr;
   };
 
@@ -57,6 +58,7 @@ namespace
       << "Options:\n"
       << "  --model <path>  CampaignManager CTR model directory\n"
       << "  --count <N>     sequential CTR calculations count\n"
+      << "  --campaign-id <value>  DB campaign_id used by the candidate\n"
       << "  --expected-ctr <value>  fail if the resulting CTR differs\n";
   }
 
@@ -68,11 +70,13 @@ namespace
     StringOption opt_model;
     StringOption opt_expected_ctr;
     Option<unsigned long> opt_count(0);
+    Option<unsigned long> opt_campaign_id(236995);
     CheckOption opt_help;
 
     Args args(-1);
     args.add(equal_name("model"), opt_model);
     args.add(equal_name("count"), opt_count);
+    args.add(equal_name("campaign-id"), opt_campaign_id);
     args.add(equal_name("expected-ctr"), opt_expected_ctr);
     args.add(equal_name("help") || short_name("h"), opt_help);
     args.parse(argc - 1, argv + 1);
@@ -86,6 +90,7 @@ namespace
     Options options;
     options.model = *opt_model;
     options.count = *opt_count;
+    options.campaign_id = *opt_campaign_id;
     if(!opt_expected_ctr->empty())
     {
       options.expected_ctr.emplace(String::SubString(*opt_expected_ctr));
@@ -127,7 +132,7 @@ namespace
   }
 
   void
-  init_test_data(TestData& data)
+  init_test_data(TestData& data, unsigned long campaign_id)
   {
     data.publisher = new AccountDef();
     data.publisher->account_id = 9803;
@@ -193,7 +198,8 @@ namespace
 
     data.campaign = new Campaign();
     data.campaign->campaign_id = 21251;
-    data.campaign->campaign_group_id = 236995;
+    // CampaignManager campaign_group_id is DB campaign_id.
+    data.campaign->campaign_group_id = campaign_id;
     data.campaign->account = data.account;
     data.campaign->advertiser = data.advertiser;
     data.campaign->ctr = RevenueDecimal(0.001);
@@ -221,7 +227,7 @@ main(int argc, char** argv)
   {
     const Options options = parse_options(argc, argv);
     TestData data;
-    init_test_data(data);
+    init_test_data(data, options.campaign_id);
 
     CTRProvider_var provider(
       new CTRProviderImpl(options.model, Generics::Time::ZERO, nullptr));

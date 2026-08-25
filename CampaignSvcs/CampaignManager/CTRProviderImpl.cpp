@@ -58,6 +58,7 @@ namespace AdServer::CampaignSvcs::CTR
       const String::SubString ALGORITHM_MODEL_FEATURES("features");
       const String::SubString ALGORITHM_MODEL_FEATURES_SIZE("features_size");
       const String::SubString ALGORITHM_MODEL_FILE("file");
+      const String::SubString ALGORITHM_MODEL_CAMPAIGNS_WHITELIST_FILE("campaigns_whitelist_file");
     };
 
     const String::SubString JSON_CONFIG_FILE_NAME("config.json");
@@ -123,6 +124,7 @@ namespace AdServer::CampaignSvcs::CTR
       FeatureArray features;
       std::string file;
       std::string predict_postprocess;
+      std::string campaigns_whitelist_file;
     };
 
     typedef std::list<ModelDescriptor> ModelDescriptorList;
@@ -511,9 +513,7 @@ namespace AdServer::CampaignSvcs::CTR
       add_ctr_processor(
         parser,
         path,
-        std::make_shared<CtrIntegerProcessor<Context, NumberType>>(
-          get_context,
-          field));
+        std::make_shared<CtrIntegerProcessor<Context, NumberType>>(get_context, field));
     }
 
     template<typename Context>
@@ -527,9 +527,7 @@ namespace AdServer::CampaignSvcs::CTR
       add_ctr_processor(
         parser,
         path,
-        std::make_shared<CtrStringProcessor<Context>>(
-          get_context,
-          field),
+        std::make_shared<CtrStringProcessor<Context>>(get_context, field),
         true);
     }
 
@@ -544,9 +542,7 @@ namespace AdServer::CampaignSvcs::CTR
       add_ctr_processor(
         parser,
         path,
-        std::make_shared<CtrDecimalProcessor<Context, DecimalType>>(
-          get_context,
-          field),
+        std::make_shared<CtrDecimalProcessor<Context, DecimalType>>(get_context, field),
         true);
     }
   }
@@ -560,10 +556,12 @@ namespace AdServer::CampaignSvcs::CTR
       [](CtrConfigParseState& state) {
       return static_cast<ConfigDescriptor*>(state.config);
     };
+
     AlgorithmDescriptor* (*get_algorithm_descriptor)(CtrConfigParseState&) =
       [](CtrConfigParseState& state) {
       return static_cast<AlgorithmDescriptor*>(state.algorithm);
     };
+
     ModelDescriptor* (*get_model_descriptor)(CtrConfigParseState&) =
       [](CtrConfigParseState& state) {
       return static_cast<ModelDescriptor*>(state.model);
@@ -658,12 +656,16 @@ namespace AdServer::CampaignSvcs::CTR
       "algorithms.models.file",
       get_model_descriptor,
       &ModelDescriptor::file);
+    add_ctr_string(
+      processors,
+      "algorithms.models.campaigns_whitelist_file",
+      get_model_descriptor,
+      &ModelDescriptor::campaigns_whitelist_file);
     add_ctr_processor(
       processors,
       "algorithms.models.features",
       std::make_shared<CtrFeaturesProcessor<ModelDescriptor>>());
-    parser_ = std::make_unique<Commons::FastJsonParser<>>(
-      std::move(processors));
+    parser_ = std::make_unique<Commons::FastJsonParser<>>(std::move(processors));
   }
 
   CTRProviderImpl::ConfigParser::ConfigDescriptor_var
@@ -679,12 +681,10 @@ namespace AdServer::CampaignSvcs::CTR
       CtrConfigParseState state;
       state.config = result.in();
       parser_->parse(
-        std::string_view(
-          static_cast<const char*>(mmap_file.memory()),
-          mmap_file.length()),
+        std::string_view(static_cast<const char*>(mmap_file.memory()), mmap_file.length()),
         &state);
 
-      if (result->version != 2 && result->version != 3)
+      if (result->version != 2 && result->version != 3 && result->version != 4)
       {
         Stream::Error ostr;
         ostr << FUN << ": unsupported version = " << result->version;
@@ -725,15 +725,13 @@ namespace AdServer::CampaignSvcs::CTR
     {}
 
     bool
-    operator ()(const char* full_path, const struct stat& file_stat)
-      noexcept
+    operator ()(const char* full_path, const struct stat& file_stat) noexcept
     {
       if (S_ISDIR(file_stat.st_mode))
       {
         String::RegEx::Result sub_strs;
 
-        String::SubString file_name(
-          Generics::DirSelect::file_name(full_path));
+        String::SubString file_name(Generics::DirSelect::file_name(full_path));
 
         if (reg_exp_.search(sub_strs, file_name) &&
           (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
@@ -794,11 +792,8 @@ namespace AdServer::CampaignSvcs::CTR
       return HashArrayHolder_var();
     }
 
-    HashArrayHolder_var res_hashes =
-      feature_type != FT_CANDIDATE ?
-      check_feature_set_level_eval_hashes_(
-        feature_type,
-        model.feature_set_indexes[feature_type]) :
+    HashArrayHolder_var res_hashes = feature_type != FT_CANDIDATE ?
+      check_feature_set_level_eval_hashes_(feature_type, model.feature_set_indexes[feature_type]) :
       HashArrayHolder_var();
 
     if (res_hashes)
@@ -894,8 +889,7 @@ namespace AdServer::CampaignSvcs::CTR
   {
     if (feature_type == FT_AUCTION)
     {
-      feature_set_level_eval_hashes_[feature_set_index] =
-        ReferenceCounting::add_ref(hashes);
+      feature_set_level_eval_hashes_[feature_set_index] = ReferenceCounting::add_ref(hashes);
     }
     else if (feature_type == FT_REQUEST)
     {
@@ -953,10 +947,8 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   void
-  CTRProviderImpl::CalculationContext::get_xgb_hashes_i(
-    HashArray& res,
-    const Creative* creative) const
-    noexcept
+  CTRProviderImpl::CalculationContext::get_xgb_hashes_i(HashArray& res, const Creative* creative)
+    const noexcept
   {
     res = opt_hashes_;
 
@@ -964,25 +956,32 @@ namespace AdServer::CampaignSvcs::CTR
 
     if (alg_index >= 0)
     {
-      const Algorithm* algorithm =
-        calculation_->ctr_provider_->ctr_algorithms_[alg_index];
+      const Algorithm* algorithm = calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-      for (ModelList::const_iterator model_it = algorithm->models.begin();
-        model_it != algorithm->models.end();
-        ++model_it)
-      {
-        HashArrayHolder_var local_hashes = get_features_hashes_(
-          *algorithm,
-          **model_it,
-          FT_CANDIDATE,
-          *(calculation_->request_params_),
-          tag_size_.in(),
-          creative);
-
-        if (local_hashes)
+      const auto add_hashes = [&](const ModelList& models) {
+        for (const auto& model : models)
         {
-          res.insert(res.end(), local_hashes->begin(), local_hashes->end());
+          HashArrayHolder_var local_hashes = get_features_hashes_(
+            *algorithm,
+            *model,
+            FT_CANDIDATE,
+            *(calculation_->request_params_),
+            tag_size_.in(),
+            creative);
+
+          if (local_hashes)
+          {
+            res.insert(res.end(), local_hashes->begin(), local_hashes->end());
+          }
         }
+      };
+
+      add_hashes(algorithm->models);
+      const auto campaign_models_it = algorithm->campaign_models.find(
+        creative->campaign->campaign_group_id);
+      if (campaign_models_it != algorithm->campaign_models.end())
+      {
+        add_hashes(campaign_models_it->second);
       }
     }
   }
@@ -1101,12 +1100,11 @@ namespace AdServer::CampaignSvcs::CTR
     {
       if (*model.max_feature_type == FT_AUCTION)
       {
-        model_predictions_.insert(std::make_pair(model.model_id, model_prediction));
+        model_predictions_.emplace(model.model_id, model_prediction);
       }
       else if (*model.max_feature_type == FT_REQUEST)
       {
-        calculation_->model_predictions_.insert(
-          std::make_pair(model.model_id, model_prediction));
+        calculation_->model_predictions_.emplace(model.model_id, model_prediction);
       }
     }
 
@@ -1114,9 +1112,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   std::pair<RevenueDecimal, const Algorithm*>
-  CTRProviderImpl::CalculationContext::get_ctr_(
-    const Creative* creative,
-    bool* creative_dependent)
+  CTRProviderImpl::CalculationContext::get_ctr_(const Creative* creative, bool* creative_dependent)
     const /*throw(Overflow)*/
   {
     // find algorithms(indexes) that can be applied for this campaign
@@ -1128,8 +1124,7 @@ namespace AdServer::CampaignSvcs::CTR
       return std::make_pair(creative->campaign->ctr, nullptr);
     }
 
-    const Algorithm* algorithm =
-      calculation_->ctr_provider_->ctr_algorithms_[alg_index];
+    const Algorithm* algorithm = calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
     // Combine predictions of all models in the selected algorithm.
     double prediction_sum = 0.0;
@@ -1137,31 +1132,35 @@ namespace AdServer::CampaignSvcs::CTR
 
     bool res_creative_dependent = false;
 
-    for (ModelList::const_iterator model_it = algorithm->models.begin();
-      model_it != algorithm->models.end();
-      ++model_it, ++model_count)
-    {
-      res_creative_dependent |= (*model_it)->creative_dependent;
-
-      const double model_prediction = get_model_prediction_(
-        *algorithm,
-        **model_it,
-        creative);
-
-      const double weighted_prediction =
-        model_prediction * (*model_it)->weight;
-
-      if (DEBUG_CTR_CALCULATION_)
+    const auto add_predictions = [&](const ModelList& models) {
+      for (const auto& model : models)
       {
-        std::cout << "CTR DEBUG(" << (*model_it)->method_name << "): "
-          "prediction = " << model_prediction <<
-          ", weighted prediction = " << weighted_prediction <<
-          "(by model #" << model_count <<
-          " with weight = " << (*model_it)->weight << ")" <<
-          std::endl;
-      }
+        res_creative_dependent |= model->creative_dependent;
 
-      prediction_sum += weighted_prediction;
+        const double model_prediction = get_model_prediction_(*algorithm, *model, creative);
+        const double weighted_prediction = model_prediction * model->weight;
+
+        if (DEBUG_CTR_CALCULATION_)
+        {
+          std::cout << "CTR DEBUG(" << model->method_name << "): "
+            "prediction = " << model_prediction <<
+            ", weighted prediction = " << weighted_prediction <<
+            "(by model #" << model_count <<
+            " with weight = " << model->weight << ")" <<
+            std::endl;
+        }
+
+        prediction_sum += weighted_prediction;
+        ++model_count;
+      }
+    };
+
+    add_predictions(algorithm->models);
+    const auto campaign_models_it = algorithm->campaign_models.find(
+      creative->campaign->campaign_group_id);
+    if (campaign_models_it != algorithm->campaign_models.end())
+    {
+      add_predictions(campaign_models_it->second);
     }
 
     const double ctr = algorithm->aggregation == PredictionAggregation::LogitSum ?
@@ -1185,8 +1184,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   RevenueDecimal
-  CTRProviderImpl::CalculationContext::get_ctr(
-    const Creative* creative) const
+  CTRProviderImpl::CalculationContext::get_ctr(const Creative* creative) const
     /*throw(Overflow)*/
   {
     return get_ctr_(creative, 0).first;
@@ -1202,19 +1200,26 @@ namespace AdServer::CampaignSvcs::CTR
 
     if (alg_index >= 0) // empty list for default algo
     {
-      const Algorithm* algorithm =
-        calculation_->ctr_provider_->ctr_algorithms_[alg_index];
+      const Algorithm* algorithm = calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-      for (ModelList::const_iterator model_it = algorithm->models.begin();
-        model_it != algorithm->models.end();
-        ++model_it)
+      const auto add_details = [&](const ModelList& models) {
+        for (const auto& model : models)
+        {
+          const double model_prediction = get_model_prediction_(
+            *algorithm,
+            *model,
+            creative);
+
+          ctrs.push_back(Generics::convert_float<RevenueDecimal>(model_prediction));
+        }
+      };
+
+      add_details(algorithm->models);
+      const auto campaign_models_it = algorithm->campaign_models.find(
+        creative->campaign->campaign_group_id);
+      if (campaign_models_it != algorithm->campaign_models.end())
       {
-        const double model_prediction = get_model_prediction_(
-          *algorithm,
-          **model_it,
-          creative);
-
-        ctrs.push_back(Generics::convert_float<RevenueDecimal>(model_prediction));
+        add_details(campaign_models_it->second);
       }
     }
   }
@@ -1226,8 +1231,8 @@ namespace AdServer::CampaignSvcs::CTR
     bool* creative_dependent) const
     /*throw(Overflow)*/
   {
-    std::pair<RevenueDecimal, const Algorithm*> ctr_alg = get_ctr_(
-      creative, creative_dependent);
+    std::pair<RevenueDecimal, const Algorithm*> ctr_alg = get_ctr_(creative, creative_dependent);
+
     if (!ctr_alg.second || ctr_alg.first >= ctr_alg.second->threshold)
     {
       if (rate)
@@ -1254,19 +1259,15 @@ namespace AdServer::CampaignSvcs::CTR
   {}
 
   CTRProvider::CalculationContext_var
-  CTRProviderImpl::Calculation::create_context(
-    const Tag::Size* tag_size) const
+  CTRProviderImpl::Calculation::create_context(const Tag::Size* tag_size) const
     noexcept
   {
     // eval context features
-    return new CTRProviderImpl::CalculationContext(
-      this,
-      tag_size);
+    return new CTRProviderImpl::CalculationContext(this, tag_size);
   }
 
   std::string
-  CTRProviderImpl::Calculation::algorithm_id(
-    const Creative* creative) const
+  CTRProviderImpl::Calculation::algorithm_id(const Creative* creative) const
     noexcept
   {
     const long alg_index = select_alg_index_(creative);
@@ -1274,19 +1275,17 @@ namespace AdServer::CampaignSvcs::CTR
     {
       return std::string();
     }
+
     return ctr_provider_->ctr_algorithms_[alg_index]->id;
   }
 
   long
-  CTRProviderImpl::Calculation::select_alg_(
-    const AlgsRef& alg_ref,
-    unsigned long rand)
+  CTRProviderImpl::Calculation::select_alg_(const AlgsRef& alg_ref, unsigned long rand)
     noexcept
   {
     if (!alg_ref.algs.empty())
     {
-      AlgIdMap::const_iterator alg_id_it =
-        alg_ref.algs.upper_bound(rand);
+      AlgIdMap::const_iterator alg_id_it = alg_ref.algs.upper_bound(rand);
 
       assert(alg_id_it != alg_ref.algs.end());
 
@@ -1297,8 +1296,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   long
-  CTRProviderImpl::Calculation::select_alg_index_(
-    const Creative* creative) const
+  CTRProviderImpl::Calculation::select_alg_index_(const Creative* creative) const
     noexcept
   {
     // find algorithms(indexes) that can be applied for this campaign
@@ -1315,9 +1313,7 @@ namespace AdServer::CampaignSvcs::CTR
     }
     else
     {
-      alg_index = select_alg_(
-        ctr_provider_->non_campaign_algs_,
-        rand_);
+      alg_index = select_alg_(ctr_provider_->non_campaign_algs_, rand_);
     }
 
     if (DEBUG_CTR_CALCULATION_)
@@ -1326,7 +1322,7 @@ namespace AdServer::CampaignSvcs::CTR
         campaign_id << ": result alg index = " << alg_index <<
         ", candidate algs (";
       for (AlgIdMap::const_iterator alg_it = algs_ref_it->second.algs.begin();
-          alg_it != algs_ref_it->second.algs.end(); ++alg_it)
+        alg_it != algs_ref_it->second.algs.end(); ++alg_it)
       {
         std::cout << (alg_it != algs_ref_it->second.algs.begin() ? "," : "") <<
           alg_it->first << ":" << alg_it->second;
@@ -1349,10 +1345,8 @@ namespace AdServer::CampaignSvcs::CTR
     const
     noexcept
   {
-    for (FeatureArray::const_iterator feature_it =
-          model.features[feature_type].begin();
-        feature_it != model.features[feature_type].end();
-        ++feature_it)
+    for (FeatureArray::const_iterator feature_it = model.features[feature_type].begin();
+      feature_it != model.features[feature_type].end(); ++feature_it)
     {
       if (DEBUG_CTR_CALCULATION_)
       {
@@ -1422,17 +1416,14 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   CTRProvider::Calculation_var
-  CTRProviderImpl::create_calculation(
-    const CampaignSelectParams* request_params)
-    const
+  CTRProviderImpl::create_calculation(const CampaignSelectParams* request_params) const
     noexcept
   {
     return new CTRProviderImpl::Calculation(this, request_params);
   }
 
   void
-  CTRProviderImpl::remove_config_files_at_destroy(bool val)
-    const noexcept
+  CTRProviderImpl::remove_config_files_at_destroy(bool val) const noexcept
   {
     RemoveFilesSyncPolicy::WriteGuard lock(remove_config_files_lock_);
     remove_config_files_at_destroy_ = val;
@@ -1520,8 +1511,7 @@ namespace AdServer::CampaignSvcs::CTR
 
       if (!line.empty())
       {
-        String::StringManip::Splitter<
-          String::AsciiStringManip::SepComma> tokenizer(line);
+        String::StringManip::Splitter<String::AsciiStringManip::SepComma> tokenizer(line);
 
         String::SubString orig_hash_str;
         String::SubString result_hash_str;
@@ -1595,8 +1585,7 @@ namespace AdServer::CampaignSvcs::CTR
     if (remove_config_files_at_destroy && task_runner_)
     {
       task_runner_->enqueue_task(Generics::Task_var(
-        new RemoveConfigTask(
-          config_files_, config_directories_)));
+        new RemoveConfigTask(config_files_, config_directories_)));
     }
   }
 
@@ -1622,8 +1611,7 @@ namespace AdServer::CampaignSvcs::CTR
     // load data files
     if (config_descriptor->default_weight > 0)
     {
-      non_campaign_algs_.algs.insert(
-        std::make_pair(config_descriptor->default_weight, -1));
+      non_campaign_algs_.algs.insert(std::make_pair(config_descriptor->default_weight, -1));
     }
 
     if (!config_descriptor->feature_mapping_file.empty())
@@ -1710,8 +1698,7 @@ namespace AdServer::CampaignSvcs::CTR
             if (model->features_size <= 1)
             {
               Stream::Error ostr;
-              ostr << "incorrect CatBoost features_size = " <<
-                model->features_size;
+              ostr << "incorrect CatBoost features_size = " << model->features_size;
               throw InvalidConfig(ostr);
             }
           }
@@ -1746,8 +1733,7 @@ namespace AdServer::CampaignSvcs::CTR
           else
           {
             Stream::Error ostr;
-            ostr << "incorrect predict_postprocess = '" <<
-              model_it->predict_postprocess << "'";
+            ostr << "incorrect predict_postprocess = '" << model_it->predict_postprocess << "'";
             throw InvalidConfig(ostr);
           }
 
@@ -1808,8 +1794,7 @@ namespace AdServer::CampaignSvcs::CTR
                   FeatureDescriptorResolver::instance().resolve(
                     *feature_it->basic_features.rbegin());
                 assert(feature_descriptor); // feature must be validated before
-                feature_calculator =
-                  feature_descriptor->calculator_creator->create_final();
+                feature_calculator = feature_descriptor->calculator_creator->create_final();
               }
 
               for (BasicFeatureSet::const_reverse_iterator fit =
@@ -1837,6 +1822,30 @@ namespace AdServer::CampaignSvcs::CTR
 
           model->creative_dependent = creative_dependent;
 
+          CampaignIdSet enabled_model_campaigns;
+          if (!model_it->campaigns_whitelist_file.empty())
+          {
+            if (config_descriptor->version < 4)
+            {
+              Stream::Error ostr;
+              ostr << "model campaigns_whitelist_file requires "
+                "CTR config version 4";
+              throw InvalidConfig(ostr);
+            }
+
+            load_campaign_list_(
+              enabled_model_campaigns,
+              directory_str + "/" + model_it->campaigns_whitelist_file);
+            if (enabled_model_campaigns.empty())
+            {
+              Stream::Error ostr;
+              ostr << "model campaigns_whitelist_file is empty: '" <<
+                model_it->campaigns_whitelist_file << "'";
+              throw InvalidConfig(ostr);
+            }
+            model->creative_dependent = true;
+          }
+
           // normalize feature sets
           for (int i = 0; i < FT_MAX; ++i)
           {
@@ -1859,7 +1868,17 @@ namespace AdServer::CampaignSvcs::CTR
             model->feature_set_indexes[i] = eval_feature_set_index_(model->features[i]);
           }
 
-          alg->models.push_back(model);
+          if (enabled_model_campaigns.empty())
+          {
+            alg->models.push_back(model);
+          }
+          else
+          {
+            for (const unsigned long campaign_id : enabled_model_campaigns)
+            {
+              alg->campaign_models[campaign_id].push_back(model);
+            }
+          }
         }
 
         ctr_algorithms_.push_back(alg);
@@ -1939,7 +1958,7 @@ namespace AdServer::CampaignSvcs::CTR
           directory_str + "/" + alg_it->campaigns_blacklist_file);
 
         for (CampaignIdSet::const_iterator dcmp_it = disabled_campaigns.begin();
-            dcmp_it != disabled_campaigns.end(); ++dcmp_it)
+          dcmp_it != disabled_campaigns.end(); ++dcmp_it)
         {
           unsigned long campaign_id = *dcmp_it;
           AlgsRefByCampaignIdMap::iterator alg_ref_it = campaign_algs_.find(campaign_id);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -25,6 +27,7 @@ namespace AdServer::CampaignSvcs::CTR
     std::string id;
     unsigned long weight;
     ModelList models;
+    std::map<unsigned long, ModelList> campaign_models;
     RevenueDecimal threshold;
     PredictionAggregation aggregation = PredictionAggregation::Sum;
 
