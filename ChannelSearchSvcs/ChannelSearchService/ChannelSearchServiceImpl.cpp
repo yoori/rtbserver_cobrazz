@@ -6,9 +6,6 @@
 
 #include <HTTP/UrlAddress.hpp>
 
-#include <Language/GenericSegmentor/Polyglot.hpp>
-#include <Language/SegmentorManager/SegmentorManager.hpp>
-
 #include <Commons/Algs.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
