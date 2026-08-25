@@ -296,6 +296,22 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerCore* manager_;
     };
 
+    class LogSlowTransactionsTask : public TaskBase
+    {
+    public:
+      LogSlowTransactionsTask(
+        UserInfoManagerCore* manager,
+        Generics::TaskRunner* task_runner) noexcept;
+
+      void execute() noexcept override;
+
+    protected:
+      ~LogSlowTransactionsTask() noexcept override = default;
+
+    private:
+      UserInfoManagerCore* manager_;
+    };
+
     class UpdateChannelsConfigTask : public TaskBase
     {
     public:
@@ -420,6 +436,8 @@ namespace AdServer::UserInfoSvcs
 
     void flush_logs_() noexcept;
 
+    void log_slow_transactions_() noexcept;
+
     AdServer::ProfilingCommons::LevelMapTraits
     fill_level_map_traits_(
       const xsd::AdServer::Configuration::ChunksConfigType& chunks_config)
@@ -491,6 +509,21 @@ namespace AdServer::UserInfoSvcs
     noexcept
   {
     manager_->flush_logs_();
+  }
+
+  inline
+  UserInfoManagerCore::LogSlowTransactionsTask::LogSlowTransactionsTask(
+    UserInfoManagerCore* manager,
+    Generics::TaskRunner* task_runner) noexcept
+    : TaskBase(task_runner),
+      manager_(manager)
+  {}
+
+  inline
+  void
+  UserInfoManagerCore::LogSlowTransactionsTask::execute() noexcept
+  {
+    manager_->log_slow_transactions_();
   }
 
   inline

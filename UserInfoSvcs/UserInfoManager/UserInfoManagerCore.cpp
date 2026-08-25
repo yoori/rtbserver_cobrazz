@@ -24,6 +24,7 @@ namespace Aspect
 namespace
 {
   const unsigned long CHUNKS_RELOAD_PERIOD = 30; // 30 sec
+  const Generics::Time SLOW_TRANSACTION_LOG_PERIOD(10);
 
   class CompositeActiveObjectImpl
     : public Generics::RefCountableCompositeActiveObject
@@ -364,6 +365,10 @@ namespace AdServer::UserInfoSvcs
 
       Task_var msg = new FlushLogsTask(this, 0);
       task_runner_->enqueue_task(msg);
+
+      Task_var slow_transactions_msg =
+        new LogSlowTransactionsTask(this, 0);
+      task_runner_->enqueue_task(slow_transactions_msg);
     }
     catch (const eh::Exception& ex)
     {
@@ -1455,6 +1460,47 @@ namespace AdServer::UserInfoSvcs
         logger_->sstream(Logging::Logger::TRACE, Aspect::USER_INFO_MANAGER) <<
           FUN << ": flush USER_INFO_MANAGER logger for " << next_flush.get_gm_time();
       }
+    }
+  }
+
+  void
+  UserInfoManagerCore::log_slow_transactions_() noexcept
+  {
+    static const char* FUN =
+      "UserInfoManagerCore::log_slow_transactions_()";
+
+    try
+    {
+      UserInfoContainerAccessor user_info_container =
+        get_user_info_container_(false);
+      if (user_info_container.get().in())
+      {
+        user_info_container->flush_slow_transactions();
+      }
+    }
+    catch (const eh::Exception& ex)
+    {
+      logger_->sstream(
+        Logging::Logger::ERROR,
+        Aspect::USER_INFO_MANAGER,
+        "ADS-IMPL-78") <<
+        FUN << ": Can't log slow transactions: " << ex.what();
+    }
+
+    try
+    {
+      Task_var msg = new LogSlowTransactionsTask(this, task_runner_);
+      scheduler_->schedule(
+        msg,
+        Generics::Time::get_time_of_day() + SLOW_TRANSACTION_LOG_PERIOD);
+    }
+    catch (const eh::Exception& ex)
+    {
+      logger_->sstream(
+        Logging::Logger::ERROR,
+        Aspect::USER_INFO_MANAGER,
+        "ADS-IMPL-78") <<
+        FUN << ": Can't schedule next task: " << ex.what();
     }
   }
 

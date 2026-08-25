@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <list>
+#include <map>
+#include <mutex>
 #include <string>
 
 #include <eh/Exception.hpp>
@@ -187,6 +190,8 @@ namespace AdServer::UserInfoSvcs
     AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
     rocksdb_stats() const noexcept;
 
+    void flush_slow_transactions() noexcept;
+
     void delete_old_profiles(
       const Generics::Time& persistent_lifetime)
       /*throw(NotReady, Exception)*/;
@@ -215,6 +220,58 @@ namespace AdServer::UserInfoSvcs
     virtual ~UserInfoContainer() noexcept {};
 
   private:
+    enum class ProfileType : unsigned char
+    {
+      BASE,
+      TEMP,
+      ADD,
+      HISTORY,
+      TEMP_HISTORY,
+      FREQ_CAP,
+      UNKNOWN
+    };
+
+    struct SlowTransactionKey
+    {
+      bool operator<(const SlowTransactionKey& rhs) const noexcept;
+
+      ProfileType profile_type;
+      UserId user_id;
+    };
+
+    struct SlowTransactionState
+    {
+      std::uint64_t count = 0;
+      std::uint64_t total_wait_us = 0;
+      std::uint64_t max_wait_us = 0;
+    };
+
+    class OperationStateCollector
+    {
+    public:
+      using StateMap = std::map<SlowTransactionKey, SlowTransactionState>;
+
+      void add(ProfileType profile_type, const UserId& user_id,  std::uint64_t wait_us) noexcept;
+
+      StateMap collect() noexcept;
+
+    private:
+      std::mutex lock_;
+      StateMap states_;
+    };
+
+    AdServer::Commons::StartableAwaitable<UserProfileMap::Transaction_var>
+    co_get_transaction_(
+      UserProfileMap* profile_map,
+      const UserId& user_id,
+      bool check_max_waiters = true,
+      AdServer::ProfilingCommons::OperationPriority op_priority =
+        AdServer::ProfilingCommons::OP_RUNTIME);
+
+    ProfileType profile_type_(const UserProfileMap* profile_map) const noexcept;
+
+    static const char* profile_type_name_(ProfileType profile_type) noexcept;
+
     FreqCapConfig_var get_freq_cap_config_() const;
 
     void filter_channel_thresholds_(ChannelMatchMap& channels)
@@ -277,6 +334,8 @@ namespace AdServer::UserInfoSvcs
     UserProfileMap_var history_profiles_;
     UserProfileMap_var temp_history_profiles_;
     UserProfileMap_var freq_cap_profiles_;
+
+    OperationStateCollector operation_state_collector_;
 
     mutable SyncPolicy::Mutex config_lock_;
     Generics::Time time_offset_;

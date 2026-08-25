@@ -1,4 +1,7 @@
+#include <algorithm>
+#include <chrono>
 #include <cstring>
+#include <vector>
 
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
@@ -33,6 +36,8 @@ namespace
   const char HISTORY_CHUNK_PREFIX[] = "History";
   const char TEMP_HISTORY_CHUNK_PREFIX[] = "TempHistory";
   const char FREQCAP_CHUNK_PREFIX[] = "FreqCap";
+  constexpr std::uint64_t SLOW_TRANSACTION_THRESHOLD_US = 20'000;
+  constexpr std::size_t MAX_SLOW_TRANSACTION_KEYS_TO_LOG = 50;
 
   struct UserIdRocksDBAccessor
   {
@@ -73,6 +78,208 @@ namespace
 
 namespace AdServer::UserInfoSvcs
 {
+  bool
+  UserInfoContainer::SlowTransactionKey::operator<(const SlowTransactionKey& rhs) const noexcept
+  {
+    if (profile_type != rhs.profile_type)
+    {
+      return profile_type < rhs.profile_type;
+    }
+
+    return user_id < rhs.user_id;
+  }
+
+  void
+  UserInfoContainer::OperationStateCollector::add(
+    ProfileType profile_type,
+    const UserId& user_id,
+    std::uint64_t wait_us) noexcept
+  {
+    try
+    {
+      std::lock_guard lock(lock_);
+      auto& state = states_[SlowTransactionKey{profile_type, user_id}];
+      ++state.count;
+      state.total_wait_us += wait_us;
+      state.max_wait_us = std::max(state.max_wait_us, wait_us);
+    }
+    catch (...)
+    {}
+  }
+
+  UserInfoContainer::OperationStateCollector::StateMap
+  UserInfoContainer::OperationStateCollector::collect() noexcept
+  {
+    StateMap result;
+    try
+    {
+      std::lock_guard lock(lock_);
+      result.swap(states_);
+    }
+    catch (...)
+    {}
+
+    return result;
+  }
+
+  AdServer::Commons::StartableAwaitable<UserInfoContainer::UserProfileMap::Transaction_var>
+  UserInfoContainer::co_get_transaction_(
+    UserProfileMap* profile_map,
+    const UserId& user_id,
+    bool check_max_waiters,
+    AdServer::ProfilingCommons::OperationPriority op_priority)
+  {
+    const auto start = std::chrono::steady_clock::now();
+    const auto collect_slow_transaction = [&]() noexcept {
+      const std::uint64_t wait_us = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - start).count();
+      if (wait_us >= SLOW_TRANSACTION_THRESHOLD_US)
+      {
+        operation_state_collector_.add(profile_type_(profile_map), user_id, wait_us);
+      }
+    };
+
+    try
+    {
+      auto transaction = co_await profile_map->co_get_transaction(
+        user_id, check_max_waiters, op_priority);
+      collect_slow_transaction();
+
+      co_return transaction;
+    }
+    catch (...)
+    {
+      collect_slow_transaction();
+      throw;
+    }
+  }
+
+  UserInfoContainer::ProfileType
+  UserInfoContainer::profile_type_(const UserProfileMap* profile_map) const noexcept
+  {
+    if (profile_map == base_profiles_.in())
+    {
+      return ProfileType::BASE;
+    }
+
+    if (profile_map == temp_profiles_.in())
+    {
+      return ProfileType::TEMP;
+    }
+
+    if (profile_map == add_profiles_.in())
+    {
+      return ProfileType::ADD;
+    }
+
+    if (profile_map == history_profiles_.in())
+    {
+      return ProfileType::HISTORY;
+    }
+
+    if (profile_map == temp_history_profiles_.in())
+    {
+      return ProfileType::TEMP_HISTORY;
+    }
+
+    if (profile_map == freq_cap_profiles_.in())
+    {
+      return ProfileType::FREQ_CAP;
+    }
+
+    return ProfileType::UNKNOWN;
+  }
+
+  const char*
+  UserInfoContainer::profile_type_name_(ProfileType profile_type) noexcept
+  {
+    switch (profile_type)
+    {
+      case ProfileType::BASE:
+        return BASE_CHUNK_PREFIX;
+      case ProfileType::TEMP:
+        return TEMP_CHUNK_PREFIX;
+      case ProfileType::ADD:
+        return ADD_CHUNK_PREFIX;
+      case ProfileType::HISTORY:
+        return HISTORY_CHUNK_PREFIX;
+      case ProfileType::TEMP_HISTORY:
+        return TEMP_HISTORY_CHUNK_PREFIX;
+      case ProfileType::FREQ_CAP:
+        return FREQCAP_CHUNK_PREFIX;
+      case ProfileType::UNKNOWN:
+        return "Unknown";
+    }
+
+    return "Unknown";
+  }
+
+  void
+  UserInfoContainer::flush_slow_transactions() noexcept
+  {
+    try
+    {
+      auto states = operation_state_collector_.collect();
+      if (states.empty())
+      {
+        return;
+      }
+
+      using StateMap = OperationStateCollector::StateMap;
+      std::vector<const StateMap::value_type*> ordered_states;
+      ordered_states.reserve(states.size());
+
+      std::uint64_t total_count = 0;
+      for (const auto& state : states)
+      {
+        ordered_states.push_back(&state);
+        total_count += state.second.count;
+      }
+
+      std::sort(
+        ordered_states.begin(),
+        ordered_states.end(),
+        [](const auto* lhs, const auto* rhs)
+        {
+          if (lhs->second.max_wait_us != rhs->second.max_wait_us)
+          {
+            return lhs->second.max_wait_us > rhs->second.max_wait_us;
+          }
+
+          return lhs->second.total_wait_us > rhs->second.total_wait_us;
+        });
+
+      const auto keys_to_log = std::min(
+        ordered_states.size(),
+        MAX_SLOW_TRANSACTION_KEYS_TO_LOG);
+
+      Stream::Error ostr;
+      ostr << "Slow co_get_transaction waits: threshold_us=" <<
+        SLOW_TRANSACTION_THRESHOLD_US <<
+        ", events=" << total_count <<
+        ", keys=" << ordered_states.size() <<
+        ", shown_keys=" << keys_to_log;
+
+      for (std::size_t i = 0; i < keys_to_log; ++i)
+      {
+        const auto& [key, state] = *ordered_states[i];
+        ostr << "\n  profile=" << profile_type_name_(key.profile_type) <<
+          ", uid=" << key.user_id <<
+          ", count=" << state.count <<
+          ", total_wait_us=" << state.total_wait_us <<
+          ", avg_wait_us=" << state.total_wait_us / state.count <<
+          ", max_wait_us=" << state.max_wait_us;
+      }
+
+      logger_->log(
+        ostr.str(),
+        Logging::Logger::NOTICE,
+        Aspect::USER_INFO_CONTAINER);
+    }
+    catch (...)
+    {}
+  }
+
   /* UserInfoContainer */
   UserInfoContainer::UserInfoContainer(
     Logging::Logger* logger,
@@ -191,7 +398,7 @@ namespace AdServer::UserInfoSvcs
       }
 
       UserProfileMap::Transaction_var fc_profile_trans =
-        co_await freq_cap_profiles_->co_get_transaction(
+        co_await co_get_transaction_(freq_cap_profiles_.in(),
           user_id,
           true, // check max waiters
           ProfilingCommons::OP_RUNTIME);
@@ -274,7 +481,7 @@ namespace AdServer::UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        co_await freq_cap_profiles_->co_get_transaction(user_id, true, op_priority);
+        co_await co_get_transaction_(freq_cap_profiles_.in(), user_id, true, op_priority);
 
       SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
       UserFreqCapProfile profile(fc_mem_buf, true);
@@ -329,7 +536,7 @@ namespace AdServer::UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        co_await freq_cap_profiles_->co_get_transaction(user_id, false);
+        co_await co_get_transaction_(freq_cap_profiles_.in(), user_id, false);
 
       SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
       UserFreqCapProfile profile(fc_mem_buf, true);
@@ -486,17 +693,17 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserProfileMap::Transaction_var base_profile_trans =
-        co_await base_profiles_->co_get_transaction(
-          user_id,
-          true, // check max waiters
-          AdServer::ProfilingCommons::OP_BACKGROUND);
+      UserProfileMap::Transaction_var base_profile_trans = co_await co_get_transaction_(
+        base_profiles_.in(),
+        user_id,
+        true, // check max waiters
+        AdServer::ProfilingCommons::OP_BACKGROUND);
 
-      UserProfileMap::Transaction_var add_profile_trans =
-        co_await add_profiles_->co_get_transaction(
-          user_id,
-          true, // check max waiters
-          AdServer::ProfilingCommons::OP_BACKGROUND);
+      UserProfileMap::Transaction_var add_profile_trans = co_await co_get_transaction_(
+        add_profiles_.in(),
+        user_id,
+        true, // check max waiters
+        AdServer::ProfilingCommons::OP_BACKGROUND);
 
       SmartMemBuf_var add_buf = co_await add_profile_trans->co_get_own_profile();
 
@@ -524,9 +731,7 @@ namespace AdServer::UserInfoSvcs
           }
 
           const Generics::Time now(
-            std::max(
-              get_last_request_(base_profile.in()),
-              get_last_request_(add_buf.in())));
+            std::max(get_last_request_(base_profile.in()), get_last_request_(add_buf.in())));
 
           update_history_(
             base_profile.in(),
@@ -651,17 +856,17 @@ namespace AdServer::UserInfoSvcs
       {
         if(temporary)
         {
-          target_profile_trans = co_await temp_profiles_->co_get_transaction(
+          target_profile_trans = co_await co_get_transaction_(temp_profiles_.in(),
             user_id, true, op_priority);
         }
         else
         {
-          target_profile_trans = co_await base_profiles_->co_get_transaction(
+          target_profile_trans = co_await co_get_transaction_(base_profiles_.in(),
             user_id, true, op_priority);
         }
 
         UserProfileMap::Transaction_var add_profile_trans =
-          co_await add_profiles_->co_get_transaction(user_id, true, op_priority);
+          co_await co_get_transaction_(add_profiles_.in(), user_id, true, op_priority);
 
         target_profile = co_await add_profile_trans->co_get_own_profile();
 
@@ -707,8 +912,7 @@ namespace AdServer::UserInfoSvcs
       {
         Generics::SmartMemBuf_var v(new SmartMemBuf(merge_freq_cap_profile_buf));
         UserFreqCapProfileAdapter freq_cap_adapter;
-        Generics::SmartMemBuf_var adapted_freq_cap_profile =
-          freq_cap_adapter(v.in());
+        Generics::SmartMemBuf_var adapted_freq_cap_profile = freq_cap_adapter(v.in());
         merge_freq_cap_profile = Generics::transfer_membuf(adapted_freq_cap_profile);
       }
 
@@ -727,13 +931,13 @@ namespace AdServer::UserInfoSvcs
       if(temporary)
       {
         target_history_profile_trans =
-          co_await temp_history_profiles_->co_get_transaction(
+          co_await co_get_transaction_(temp_history_profiles_.in(),
             user_id, true, op_priority);
       }
       else
       {
         target_history_profile_trans =
-          co_await history_profiles_->co_get_transaction(
+          co_await co_get_transaction_(history_profiles_.in(),
             user_id, true, op_priority);
       }
 
@@ -769,8 +973,7 @@ namespace AdServer::UserInfoSvcs
           tracing_ostr << "Profile is not exist";
         }
 
-        tracing_ostr << std::endl <<
-          "History profile before merging: " << std::endl;
+        tracing_ostr << std::endl << "History profile before merging: " << std::endl;
 
         if (target_history_profile.in())
         {
@@ -785,8 +988,7 @@ namespace AdServer::UserInfoSvcs
           tracing_ostr << "Profile is not exist";
         }
 
-        tracing_ostr << std::endl <<
-          "Base profile for merge user: " << std::endl;
+        tracing_ostr << std::endl << "Base profile for merge user: " << std::endl;
 
         ChannelsMatcher::print(
           merge_base_profile_buf.get<unsigned char>(),
@@ -795,8 +997,7 @@ namespace AdServer::UserInfoSvcs
           true,
           true);
 
-        tracing_ostr << std::endl <<
-          "Additional profile for merge user: " << std::endl;
+        tracing_ostr << std::endl << "Additional profile for merge user: " << std::endl;
 
         ChannelsMatcher::print(
           merge_add_profile_buf.get<unsigned char>(),
@@ -805,8 +1006,7 @@ namespace AdServer::UserInfoSvcs
           true,
           true);
 
-        tracing_ostr << std::endl <<
-          "History profile for merge user: " << std::endl;
+        tracing_ostr << std::endl << "History profile for merge user: " << std::endl;
 
         ChannelsMatcher::history_print(
           merge_history_profile_buf.get<unsigned char>(),
@@ -898,7 +1098,7 @@ namespace AdServer::UserInfoSvcs
       }
 
       UserProfileMap::Transaction_var target_freq_cap_profile_trans =
-        co_await freq_cap_profiles_->co_get_transaction(
+        co_await co_get_transaction_(freq_cap_profiles_.in(),
           user_id, true, op_priority);
 
       SmartMemBuf_var target_freq_cap_profile =
@@ -1025,19 +1225,17 @@ namespace AdServer::UserInfoSvcs
   }
 
   AdServer::Commons::StartableAwaitable<bool>
-  UserInfoContainer::co_fraud_user(
-    const UserId& user_id,
-    const Generics::Time& now)
+  UserInfoContainer::co_fraud_user(const UserId& user_id, const Generics::Time& now)
   {
     static const char* FUN = "UserInfoContainer::co_fraud_user()";
 
     try
     {
-      UserProfileMap::Transaction_var base_profile_trans =
-        co_await base_profiles_->co_get_transaction(
-          user_id,
-          true,
-          AdServer::ProfilingCommons::OP_RUNTIME);
+      UserProfileMap::Transaction_var base_profile_trans = co_await co_get_transaction_(
+        base_profiles_.in(),
+        user_id,
+        true,
+        AdServer::ProfilingCommons::OP_RUNTIME);
       SmartMemBuf_var base_mem_buf = co_await base_profile_trans->co_get_own_profile();
 
       if(base_mem_buf.in() == 0)
@@ -1121,8 +1319,8 @@ namespace AdServer::UserInfoSvcs
       {
         auto [loaded_base_profile_trans, loaded_add_profile_trans] =
           co_await AdServer::Commons::TupleAwaitable(
-            base_profiles->co_get_transaction(user_id, true, op_priority),
-            add_profiles_->co_get_transaction(user_id, true, op_priority));
+            co_get_transaction_(base_profiles, user_id, true, op_priority),
+            co_get_transaction_(add_profiles_.in(), user_id, true, op_priority));
 
         base_profile_trans = std::move(loaded_base_profile_trans);
         add_profile_trans = std::move(loaded_add_profile_trans);
@@ -1138,7 +1336,7 @@ namespace AdServer::UserInfoSvcs
       else
       {
         base_profile_trans =
-          co_await base_profiles->co_get_transaction(user_id, true, op_priority);
+          co_await co_get_transaction_(base_profiles, user_id, true, op_priority);
         base_mem_buf = co_await base_profile_trans->co_get_own_profile();
       }
 
@@ -1245,12 +1443,12 @@ namespace AdServer::UserInfoSvcs
           UserProfileMap::Transaction_var history_profile_trans;
           if(temporary)
           {
-            history_profile_trans = co_await temp_history_profiles_->co_get_transaction(
+            history_profile_trans = co_await co_get_transaction_(temp_history_profiles_.in(),
               user_id, true, op_priority);
           }
           else
           {
-            history_profile_trans = co_await history_profiles_->co_get_transaction(
+            history_profile_trans = co_await co_get_transaction_(history_profiles_.in(),
               user_id, true, op_priority);
           }
 
@@ -1338,7 +1536,7 @@ namespace AdServer::UserInfoSvcs
       if (request_params.provide_channel_count && unique_channels_result != 0)
       {
         UserProfileMap::Transaction_var history_profile_trans =
-          co_await history_profiles_->co_get_transaction(
+          co_await co_get_transaction_(history_profiles_.in(),
             user_id, true, op_priority);
 
         SmartMemBuf_var hist_mem_buf = co_await history_profile_trans->co_get_own_profile();
@@ -1358,7 +1556,7 @@ namespace AdServer::UserInfoSvcs
         if (new_user && !temporary && ho_info != 0)
         {
           UserProfileMap::Transaction_var history_profile_trans =
-            co_await history_profiles_->co_get_transaction(
+            co_await co_get_transaction_(history_profiles_.in(),
               user_id, true, op_priority);
 
           SmartMemBuf_var hist_mem_buf = co_await history_profile_trans->co_get_own_profile();
@@ -1708,7 +1906,7 @@ namespace AdServer::UserInfoSvcs
     try
     {
       UserProfileMap::Transaction_var fc_profile_trans =
-        co_await freq_cap_profiles_->co_get_transaction(user_id, true, op_priority);
+        co_await co_get_transaction_(freq_cap_profiles_.in(), user_id, true, op_priority);
 
       SmartMemBuf_var fc_mem_buf = co_await fc_profile_trans->co_get_own_profile();
       UserFreqCapProfile profile(fc_mem_buf, true);
