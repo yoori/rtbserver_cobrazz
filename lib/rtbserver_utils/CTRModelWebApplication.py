@@ -56,6 +56,17 @@ def metric_decimal_text(value):
     return str(value)
 
 
+def timestamp_text(value):
+  if value is None:
+    return '-'
+  result = str(value)
+  if len(result) > 10 and result[10] == 'T':
+    result = result[:10] + ' ' + result[11:]
+  if result.endswith('Z'):
+    result = result[:-1]
+  return result
+
+
 def duration_text(started, ended):
   if not started or not ended:
     return ''
@@ -149,7 +160,8 @@ def render_model_list(models, selected_model_id):
       status_label = 'In progress' if status == 'in_progress' else 'Interrupted'
       details = (
         '<span class="model-status ' + status + '">' + status_label + '</span>'
-        '<span>Started ' + html_text(model.get('train_start') or '-') + '</span>'
+        '<span>Started ' + html_text(timestamp_text(
+          model.get('train_start'))) + '</span>'
         '<span>' + str(model.get('campaign_models_count', 0)) +
         ' campaign models</span>')
     else:
@@ -410,8 +422,9 @@ def render_train_steps(traits):
     timestamps = ''
     if started or ended:
       timestamps = (
-        '<small>' + html_text(started or '-') +
-        (' → ' + html_text(ended) if ended else '') + '</small>')
+        '<small>' + html_text(timestamp_text(started)) +
+        (' → ' + html_text(timestamp_text(ended)) if ended else '') +
+        '</small>')
     items.append(
       '<li class="train-step train-step-' + step_status + '">'
       '<span class="train-step-marker" aria-hidden="true"></span>'
@@ -479,9 +492,9 @@ def render_model_component(component_name, traits, selected=False):
     '<div><dt>Status</dt><dd>' +
     html_text(training_status or '-') + '</dd></div>'
     '<div><dt>Train start</dt><dd>' +
-    html_text(traits.get('train_start') or '-') + '</dd></div>'
+    html_text(timestamp_text(traits.get('train_start'))) + '</dd></div>'
     '<div><dt>Train end</dt><dd>' +
-    html_text(traits.get('train_end') or '-') + '</dd></div>'
+    html_text(timestamp_text(traits.get('train_end'))) + '</dd></div>'
     '<div><dt>Training impressions</dt><dd>' +
     html_text(traits.get('eligible_training_impressions', '-')) + '</dd></div>'
     '<div><dt>Artifact</dt><dd><code>' +
@@ -639,7 +652,7 @@ def render_model_details(properties):
     if summary.get('train_end'):
       train_end = (
         '<div><dt>Train end</dt><dd>' +
-        html_text(summary['train_end']) + '</dd></div>')
+        html_text(timestamp_text(summary['train_end'])) + '</dd></div>')
     live_status = '' if interrupted else (
       '<div class="training-live" role="status" aria-live="polite">'
       '<span class="training-live-marker" aria-hidden="true"></span>'
@@ -652,7 +665,7 @@ def render_model_details(properties):
       live_status + '</header>'
       '<dl class="model-meta training-meta">'
       '<div><dt>Train start</dt><dd>' +
-      html_text(summary.get('train_start') or '-') + '</dd></div>' +
+      html_text(timestamp_text(summary.get('train_start'))) + '</dd></div>' +
       train_end +
       '<div><dt>Planned models</dt><dd>' +
       str(summary.get('models_count', 0)) + '</dd></div>'
@@ -717,9 +730,9 @@ def render_model_details(properties):
     '<div><dt>Components</dt><dd>' +
     str(summary.get('components_count', 0) or 1) + '</dd></div>'
     '<div><dt>Train start</dt><dd>' +
-    html_text(summary.get('train_start') or '-') + '</dd></div>'
+    html_text(timestamp_text(summary.get('train_start'))) + '</dd></div>'
     '<div><dt>Train end</dt><dd>' +
-    html_text(summary.get('train_end') or '-') + '</dd></div>'
+    html_text(timestamp_text(summary.get('train_end'))) + '</dd></div>'
     '</dl>'
     '<section class="model-section"><h2>Runtime feature groups</h2><p>' +
     render_feature_groups(feature_groups) + '</p></section>')

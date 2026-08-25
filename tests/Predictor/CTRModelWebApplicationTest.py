@@ -97,9 +97,10 @@ class CTRModelWebApplicationTest(unittest.TestCase):
 
     self.assertIn('20260823.120000', page)
     self.assertIn('Train start', page)
-    self.assertIn('2026-08-23T10:00:00Z', page)
+    self.assertIn('2026-08-23 10:00:00', page)
+    self.assertNotIn('2026-08-23T10:00:00Z', page)
     self.assertIn('Train end', page)
-    self.assertIn('2026-08-23T12:00:00Z', page)
+    self.assertIn('2026-08-23 12:00:00', page)
     self.assertIn('0.00008901938322533171', page)
     self.assertIn('channel:614065', page)
     self.assertIn('Account &lt;one&gt;/Channel &amp; one', page)
@@ -243,8 +244,8 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       '.component-link-campaign span { font-size: 12px; }',
       page)
     self.assertIn('campaign_123 123 campaign &lt;name&gt;', page)
-    self.assertIn('2026-08-23T11:00:00Z', page)
-    self.assertIn('2026-08-23T11:30:00Z', page)
+    self.assertIn('2026-08-23 11:00:00', page)
+    self.assertIn('2026-08-23 11:30:00', page)
     self.assertIn('.shell { height: 100vh;', page)
     self.assertIn('.sidebar { height: 100%; overflow-y: auto;', page)
     self.assertIn('main { min-width: 0; height: 100%; overflow-y: auto;', page)
@@ -264,7 +265,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     page = render_index_page([properties['summary']], properties)
 
     self.assertIn('Training in progress', page)
-    self.assertIn('2026-08-24T15:55:15Z', page)
+    self.assertIn('2026-08-24 15:55:15', page)
     self.assertIn(
       'data-model-id="~20260824.155515" data-model-status="in_progress"',
       page)
@@ -360,7 +361,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('<dt>Completed models</dt><dd>1</dd>', page)
     self.assertIn('Campaign 123 — Campaign &lt;name&gt;', page)
     self.assertIn('150000', page)
-    self.assertIn('2026-08-24T16:31:00Z', page)
+    self.assertIn('2026-08-24 16:31:00', page)
     self.assertIn('component-status-training', page)
     self.assertIn('Models within bundle', page)
     self.assertIn('data-component-group="prepare"', page)
@@ -370,7 +371,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       'Feature selection: export dataset 1/10 : 1m 00s',
       page)
     self.assertIn(
-      '2026-08-24T15:56:00Z → 2026-08-24T15:57:00Z',
+      '2026-08-24 15:56:00 → 2026-08-24 15:57:00',
       page)
     self.assertIn('train-step-completed', page)
     self.assertIn('train-step-active', page)
@@ -430,7 +431,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('component-status-interrupted', page)
     self.assertIn('train-step-interrupted', page)
     self.assertIn('Interrupted campaign', page)
-    self.assertIn('2026-08-24T16:05:00Z', page)
+    self.assertIn('2026-08-24 16:05:00', page)
     self.assertNotIn('>Config<', page)
 
   def test_formats_completed_step_duration(self):
