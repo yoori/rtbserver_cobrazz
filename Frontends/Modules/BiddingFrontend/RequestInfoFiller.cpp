@@ -3573,9 +3573,23 @@ namespace AdServer::Bidding
   RequestInfoFiller::normalize_ext_tag_id_(std::string_view src)
     noexcept
   {
+    std::string single_line_src;
+    if (src.find_first_of("\r\n") != std::string_view::npos)
+    {
+      single_line_src.assign(src);
+      for (char& ch : single_line_src)
+      {
+        if (ch == '\r' || ch == '\n')
+        {
+          ch = ' ';
+        }
+      }
+      src = single_line_src;
+    }
+
     String::SubString res;
     const String::SubString src_sub_string(src.data(), src.size());
-    if(String::StringManip::utf8_substr(src_sub_string, EXT_TAG_ID_MAX_LENGTH, res))
+    if (String::StringManip::utf8_substr(src_sub_string, EXT_TAG_ID_MAX_LENGTH, res))
     {
       return res.str();
     }

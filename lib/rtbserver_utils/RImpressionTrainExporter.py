@@ -99,19 +99,19 @@ class RImpressionTrainExporter(object):
     validation_condition = self.validation_condition()
     query = (
       'SELECT campaign_id, '
-      'countIf(' + training_condition + ') AS training_impressions, '
-      'countIf(' + validation_condition + ') AS validation_impressions '
+        'countIf(' + training_condition + ') AS training_impressions, '
+        'countIf(' + validation_condition + ') AS validation_impressions '
       'FROM RImpression '
       "WHERE timestamp >= '" + date_from + "' "
-      "AND timestamp < '" + date_to + "' "
-      'AND campaign_id > 0 '
-      'AND campaign_id IN ('
-      'SELECT campaign_id FROM RImpression '
-      'WHERE timestamp >= subtractSeconds('
-      "toDateTime('" + date_to + "'), " + str(activity_period) + ') '
-      "AND timestamp < '" + date_to + "' "
-      'AND campaign_id > 0 '
-      'GROUP BY campaign_id) '
+        "AND timestamp < '" + date_to + "' "
+        'AND campaign_id > 0 '
+        'AND campaign_id IN ('
+          'SELECT campaign_id FROM RImpression '
+          'WHERE timestamp >= subtractSeconds('
+          "toDateTime('" + date_to + "'), " + str(activity_period) + ') '
+          "AND timestamp < '" + date_to + "' "
+          'AND campaign_id > 0 '
+          'GROUP BY campaign_id) '
       'GROUP BY campaign_id '
       'HAVING training_impressions > ' + str(min_impressions) + ' '
       'ORDER BY campaign_id')
@@ -211,13 +211,24 @@ class RImpressionTrainExporter(object):
         exported_rows += row_count
         is_final_chunk = (
           exported_rows >= max_rows or row_count < rows_to_read)
+        current_path = output_path
         if is_final_chunk:
+          trailing_size = 0
+          while True:
+            trailing_data = process.stdout.read(1024 * 1024)
+            if not trailing_data:
+              break
+            trailing_size += len(trailing_data)
           return_code = process.wait()
           completed = True
           if return_code != 0:
             raise subprocess.CalledProcessError(return_code, process.args)
+          if trailing_size:
+            raise RuntimeError(
+              'RImpression export returned ' + str(trailing_size) +
+              ' bytes after the expected ' + str(exported_rows) +
+              ' CSV rows; a field probably contains a line break')
 
-        current_path = output_path
         try:
           yield output_path, row_count
         finally:
@@ -391,12 +402,12 @@ class RImpressionTrainExporter(object):
       "ccid AS CCID, "
       "geo_ch AS GeoCh, "
       "user_ch AS UserCh, "
-      "size_id AS SizeID, "
-      "colo_id AS Colo, "
-      "campaign_freq AS Campaign_Freq "
+        "size_id AS SizeID, "
+        "colo_id AS Colo, "
+        "campaign_freq AS Campaign_Freq "
       "FROM RImpression "
       "WHERE timestamp >= '" + date_from + "' "
-      "AND timestamp < '" + date_to + "' ")
+        "AND timestamp < '" + date_to + "' ")
     if condition is not None:
       query += 'AND (' + condition + ') '
     return (
@@ -411,7 +422,7 @@ class RImpressionTrainExporter(object):
     query = (
       "SELECT count(*) FROM RImpression "
       "WHERE timestamp >= '" + date_from + "' "
-      "AND timestamp < '" + date_to + "' ")
+        "AND timestamp < '" + date_to + "' ")
     if condition is not None:
       query += 'AND (' + condition + ')'
     return query

@@ -455,6 +455,36 @@ namespace
 
     return seed;
   }
+
+  void
+  verify_ext_tag_id_is_single_line(
+    const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    constexpr const char REQUEST[] = R"JSON(
+{"id":"1","imp":[{"id":"1","banner":{"w":300,"h":250}}],"site":{"id":"site\nid","name":"site\rname","publisher":{"id":"pub\nid","name":"pub\rname"}}}
+)JSON";
+
+    Generics::MonoAllocatorArena arena;
+    AdServer::Bidding::RequestInfo request_info;
+    AdServer::Bidding::JsonProcessingContext context(arena);
+    request_info.current_time = Generics::Time::get_time_of_day();
+
+    filler.fill_by_openrtb_request(request_info, context, REQUEST);
+    if(request_info.ad_slots.empty())
+    {
+      throw std::runtime_error(
+        "ext_tag_id normalization test produced no ad slots");
+    }
+
+    constexpr std::string_view EXPECTED =
+      "pub id-site id-pub name-site name";
+    if(request_info.ad_slots.front().ext_tag_id != EXPECTED)
+    {
+      throw std::runtime_error(
+        "ext_tag_id normalization failed: '" +
+        request_info.ad_slots.front().ext_tag_id + "'");
+    }
+  }
 }
 
 extern "C"
@@ -539,6 +569,8 @@ main(int argc, char** argv)
       sources,
       true,
       account_traits);
+
+    verify_ext_tag_id_is_single_line(filler);
 
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();

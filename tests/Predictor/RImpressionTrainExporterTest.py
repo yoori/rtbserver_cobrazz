@@ -13,17 +13,28 @@ from rtbserver_utils.RImpressionTrainExporter import RImpressionTrainExporter
 
 class RImpressionTrainExporterTest(unittest.TestCase):
   class ProcessStub:
-    def __init__(self, rows):
+    def __init__(self, rows, require_drained=False):
       self.args = ['clickhouse-client']
       self.stdout = io.BytesIO(
         b'label,Device\n' + b''.join(rows))
       self.return_code = None
       self.terminated = False
+      self.require_drained = require_drained
 
     def wait(self, timeout=None):
       del timeout
+      if self.require_drained:
+        self.assert_stdout_drained()
       self.return_code = 0
       return self.return_code
+
+    def assert_stdout_drained(self):
+      current_position = self.stdout.tell()
+      self.stdout.seek(0, io.SEEK_END)
+      end_position = self.stdout.tell()
+      self.stdout.seek(current_position)
+      if current_position != end_position:
+        raise AssertionError('wait called before stdout was drained')
 
     def poll(self):
       return self.return_code
@@ -147,6 +158,32 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       self.assertLess(
         query.index('ORDER BY timestamp DESC'),
         query.index('LIMIT 3 OFFSET 7 FORMAT CSVWithNames'))
+
+  def test_export_chunks_drains_unexpected_csv_tail_before_wait(self):
+    process = self.ProcessStub([
+      b'0,"first line\n',
+      b'second line"\n',
+    ], require_drained=True)
+    exporter = RImpressionTrainExporter('')
+
+    with tempfile.TemporaryDirectory() as temp_dir, mock.patch(
+        'rtbserver_utils.RImpressionTrainExporter.subprocess.Popen',
+        return_value=process,
+    ):
+      chunks = exporter.export_chunks(
+        temp_dir,
+        'train',
+        1,
+        1,
+        '2026-08-01',
+        '2026-08-02')
+      with self.assertRaisesRegex(
+          RuntimeError,
+          'bytes after the expected 1 CSV rows'):
+        next(chunks)
+
+      self.assertEqual(0, process.return_code)
+      self.assertEqual([], list(pathlib.Path(temp_dir).iterdir()))
 
   def test_training_partitions_are_disjoint(self):
     exporter = RImpressionTrainExporter('')
