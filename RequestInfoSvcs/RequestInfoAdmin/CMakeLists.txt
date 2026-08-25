@@ -3,19 +3,17 @@ add_executable(RequestInfoAdmin
   Application.cpp
 )
 target_link_libraries(RequestInfoAdmin
-  String
-  Generics
-  CORBACommons
-  UtilCommons
+  PRIVATE
+    Generics
+    Commons
+    Logger
+    UtilCommons
 
-  pthread
-  ProcessControlIDL
-  UserActionProfilePST
-  UserActionProfile_v321PST
-  RequestInfoManagerIDL
-  UserActionInfoContainer
-  pcre
-  RequestInfoManagerCompatibility
+    pthread
+    UserActionProfilePST
+    UserActionProfile_v321PST
+    RequestInfoManagerGrpcClient
+    UserActionInfoContainer
 
 
 )

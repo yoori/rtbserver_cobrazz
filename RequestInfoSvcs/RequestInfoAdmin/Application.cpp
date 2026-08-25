@@ -2,15 +2,24 @@
 #include <list>
 #include <iterator>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <sstream>
+#include <string_view>
+#include <utility>
 
 #include <String/StringManip.hpp>
+#include <Generics/ActiveObject.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/ArrayAutoPtr.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Logger/StreamLogger.hpp>
 
+#include <Commons/BoostAsioContextRunActiveObject.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <UtilCommons/Table.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/PassbackProfile.hpp>
@@ -33,6 +42,8 @@
 
 namespace
 {
+  namespace Proto = adserver::request_info_svcs::request_info_manager;
+
   const char USAGE[] =
     "[OPTIONS] [COMMAND] [COMMAND ARGUMENTS]\n"
     "COMMANDS:\n"
@@ -46,8 +57,8 @@ namespace
     "  print-tag-request-groups [<user-id>]\n"
     "  clear-expired\n"
     "OPTIONS:\n"
-    "  -r, --ref : RequestInfoManager CORBA reference.\n"
-    "  -P, --host_and_port : host:port.\n"
+    "  -r, --ref : RequestInfoManager gRPC endpoint.\n"
+    "  -P, --host_and_port : RequestInfoManager gRPC endpoint.\n"
     "  -i, --rid, --request-id : request id.\n"
     "  -u, --uid, --user-id : user id.\n"
     "  --plain : print plain representation.\n"
@@ -57,7 +68,150 @@ namespace
     "\n"
     "Sample:\n"
     "  RequestInfoAdmin print-request '\\-lgNQrDiQtOF50DRxzfdtA..'"
-    " -r corbaloc::xen.ocslab.com:12116/RequestInfoManager\n";
+    " -r xen.ocslab.com:12116\n";
+
+  std::string
+  normalize_endpoint(std::string endpoint)
+  {
+    constexpr std::string_view corbaloc_prefix = "corbaloc::";
+    constexpr std::string_view iiop_prefix = "corbaloc:iiop:";
+    if(endpoint.compare(0, corbaloc_prefix.size(), corbaloc_prefix) == 0)
+    {
+      endpoint.erase(0, corbaloc_prefix.size());
+    }
+    else if(endpoint.compare(0, iiop_prefix.size(), iiop_prefix) == 0)
+    {
+      endpoint.erase(0, iiop_prefix.size());
+    }
+
+    const std::size_t object_key_pos = endpoint.find('/');
+    if(object_key_pos != std::string::npos)
+    {
+      endpoint.resize(object_key_pos);
+    }
+    return endpoint;
+  }
+
+  template<typename Response, typename Start>
+  std::optional<Response>
+  sync_call(Start&& start) noexcept
+  {
+    try
+    {
+      grpc::Status error;
+      auto response = AdServer::Grpc::sync_call<Response>(
+        std::forward<Start>(start),
+        [&error](const grpc::Status& status)
+        {
+          error = status;
+        });
+
+      if(error.ok())
+      {
+        return response;
+      }
+
+      std::cerr << "RequestInfoManager gRPC call failed: code=" <<
+        error.error_code() << ", message=" << error.error_message() << '\n';
+    }
+    catch(const std::exception& ex)
+    {
+      std::cerr << "RequestInfoManager gRPC call failed: " <<
+        ex.what() << '\n';
+    }
+
+    return std::nullopt;
+  }
+
+  template<typename Call>
+  bool
+  get_profile(
+    Call&& call,
+    const char* id,
+    Proto::ProfileResponse& response)
+  {
+    Proto::ProfileRequest request;
+    request.set_id(id);
+    auto result = sync_call<Proto::ProfileResponse>(
+      [&call, &request](auto callback)
+      {
+        call(request, std::move(callback));
+      });
+    if(!result)
+    {
+      return false;
+    }
+
+    response = std::move(*result);
+    return true;
+  }
+
+  struct ClientHolder
+  {
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
+      coalesce_runner;
+    std::shared_ptr<AdServer::RequestInfoSvcs::
+      RequestInfoManagerGrpcAsyncBatchingClient> client;
+  };
+
+  ClientHolder
+  create_client(const std::string& endpoint)
+  {
+    ClientHolder result;
+    result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    result.grpc_executor->activate_object();
+
+    Logging::Logger_var logger =
+      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    result.coalesce_runner =
+      std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
+        new Logging::ActiveObjectCallbackImpl(
+          logger,
+          "RequestInfoAdmin",
+          "gRPC"),
+        std::make_shared<boost::asio::io_service>(),
+        1);
+    result.coalesce_runner->activate_object();
+
+    AdServer::Grpc::BatchingOptions batching_options;
+    batching_options.max_batch_delay = Generics::Time::ZERO;
+    result.client = std::make_shared<AdServer::RequestInfoSvcs::
+      RequestInfoManagerGrpcAsyncBatchingClient>(
+        endpoint,
+        result.grpc_executor,
+        result.coalesce_runner,
+        batching_options);
+    result.client->activate_object();
+    return result;
+  }
+
+  void
+  shutdown_client(ClientHolder& holder) noexcept
+  {
+    try
+    {
+      if(holder.client)
+      {
+        holder.client->deactivate_object();
+        holder.client->wait_object();
+      }
+
+      if(holder.grpc_executor)
+      {
+        holder.grpc_executor->deactivate_object();
+        holder.grpc_executor->wait_object();
+      }
+
+      if(holder.coalesce_runner)
+      {
+        holder.coalesce_runner->deactivate_object();
+        holder.coalesce_runner->wait_object();
+      }
+    }
+    catch(...)
+    {}
+  }
 }
 
 namespace
@@ -195,7 +349,7 @@ Application_::print_plain_(
 
 int
 Application_::print(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* request_id_str,
   bool print_plain)
   noexcept
@@ -206,19 +360,31 @@ Application_::print(
   {
     AdServer::Commons::RequestId request_id(request_id_str);
 
-    AdServer::RequestInfoSvcs::RequestProfile_var request_profile;
-
-    if(request_info_manager->get_profile(
-          request_id_str,
-          request_profile.out()))
+    Proto::ProfileResponse request_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_profile(request, std::move(callback));
+         },
+         request_id_str,
+         request_profile))
     {
+      return 1;
+    }
+
+    if(request_profile.found())
+    {
+      const std::string& profile = request_profile.profile();
+
       // print plain
       if(print_plain)
       {
         print_plain_(
           std::cout,
-          request_profile->get_buffer(),
-          request_profile->length(),
+          profile.data(),
+          profile.size(),
           "  ");
 
         std::cout << std::endl;
@@ -226,8 +392,8 @@ Application_::print(
 
       // print content
       RequestInfoProfileReader request_reader(
-        request_profile->get_buffer(),
-        request_profile->length());
+        profile.data(),
+        profile.size());
 
       AdServer::RequestInfoSvcs::print_request_info_profile(
         std::cout, request_reader);
@@ -238,22 +404,6 @@ Application_::print(
     }
     return 0;
   }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr
-      << "Caught RequestInfoManager::ImplementationException: "
-      << e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
   catch(const eh::Exception& ex)
   {
     std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
@@ -263,7 +413,7 @@ Application_::print(
 
 int
 Application_::print_user_campaign_reach(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* user_id_str,
   bool print_plain)
   noexcept
@@ -272,20 +422,32 @@ Application_::print_user_campaign_reach(
   {
     AdServer::Commons::UserId user_id(user_id_str);
 
-    AdServer::RequestInfoSvcs::UserProfile_var
-      user_campaign_reach_profile;
-
-    if(request_info_manager->get_user_campaign_reach_profile(
+    Proto::ProfileResponse user_campaign_reach_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_user_campaign_reach_profile(
+             request, std::move(callback));
+         },
          user_id_str,
-         user_campaign_reach_profile.out()))
+         user_campaign_reach_profile))
     {
+      return 1;
+    }
+
+    if(user_campaign_reach_profile.found())
+    {
+      const std::string& profile = user_campaign_reach_profile.profile();
+
       // print plain
       if(print_plain)
       {
         print_plain_(
           std::cout,
-          user_campaign_reach_profile->get_buffer(),
-          user_campaign_reach_profile->length(),
+          profile.data(),
+          profile.size(),
           "  ");
 
         std::cout << std::endl;
@@ -293,8 +455,8 @@ Application_::print_user_campaign_reach(
 
       AdServer::RequestInfoSvcs::UserCampaignReachProfileReader
         user_campaign_reach_reader(
-          user_campaign_reach_profile->get_buffer(),
-          user_campaign_reach_profile->length());
+          profile.data(),
+          profile.size());
 
       AdServer::RequestInfoSvcs::print_user_campaign_reach_profile(
         std::cout, user_campaign_reach_reader);
@@ -304,22 +466,6 @@ Application_::print_user_campaign_reach(
       std::cout << "Profile not found." << std::endl;
     }
     return 0;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr
-      << "Caught RequestInfoManager::ImplementationException: "
-      << e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
   }
   catch(const eh::Exception& ex)
   {
@@ -353,7 +499,7 @@ Application_::print_user_action_buf_(
 
 int
 Application_::print_user_action(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* user_id_str,
   bool print_plain,
   bool align)
@@ -363,16 +509,27 @@ Application_::print_user_action(
   {
     AdServer::Commons::UserId user_id(user_id_str);
 
-    AdServer::RequestInfoSvcs::UserProfile_var
-      user_action_profile;
-
-    if(request_info_manager->get_user_action_profile(
+    Proto::ProfileResponse user_action_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_user_action_profile(
+             request, std::move(callback));
+         },
          user_id_str,
-         user_action_profile.out()))
+         user_action_profile))
     {
+      return 1;
+    }
+
+    if(user_action_profile.found())
+    {
+      const std::string& profile = user_action_profile.profile();
       print_user_action_buf_(
-        user_action_profile->get_buffer(),
-        user_action_profile->length(),
+        profile.data(),
+        profile.size(),
         print_plain,
         align);
     }
@@ -381,22 +538,6 @@ Application_::print_user_action(
       std::cout << "Profile not found." << std::endl;
     }
     return 0;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr
-      << "Caught RequestInfoManager::ImplementationException: "
-      << e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
   }
   catch(const eh::Exception& ex)
   {
@@ -407,7 +548,7 @@ Application_::print_user_action(
 
 int
 Application_::print_user_fraud_protection(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* user_id_str,
   bool print_plain)
   noexcept
@@ -416,20 +557,32 @@ Application_::print_user_fraud_protection(
   {
     AdServer::Commons::UserId user_id(user_id_str);
 
-    AdServer::RequestInfoSvcs::UserProfile_var
-      user_fraud_profile;
-
-    if(request_info_manager->get_user_fraud_protection_profile(
+    Proto::ProfileResponse user_fraud_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_user_fraud_protection_profile(
+             request, std::move(callback));
+         },
          user_id_str,
-         user_fraud_profile.out()))
+         user_fraud_profile))
     {
+      return 1;
+    }
+
+    if(user_fraud_profile.found())
+    {
+      const std::string& profile = user_fraud_profile.profile();
+
       // print plain
       if(print_plain)
       {
         print_plain_(
           std::cout,
-          user_fraud_profile->get_buffer(),
-          user_fraud_profile->length(),
+          profile.data(),
+          profile.size(),
           "  ");
 
         std::cout << std::endl;
@@ -437,8 +590,8 @@ Application_::print_user_fraud_protection(
 
       AdServer::RequestInfoSvcs::UserFraudProtectionProfileReader
         user_fraud_reader(
-          user_fraud_profile->get_buffer(),
-          user_fraud_profile->length());
+          profile.data(),
+          profile.size());
 
       unsigned long columns =
         sizeof(USER_FRAUD_TABLE_COLUMNS) /
@@ -474,21 +627,6 @@ Application_::print_user_fraud_protection(
     }
     return 0;
   }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr << "Caught RequestInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
   catch(const eh::Exception& ex)
   {
     std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
@@ -498,7 +636,7 @@ Application_::print_user_fraud_protection(
 
 int
 Application_::print_user_site_reach(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* user_id_str,
   bool print_plain)
   noexcept
@@ -507,20 +645,32 @@ Application_::print_user_site_reach(
   {
     AdServer::Commons::UserId user_id(user_id_str);
 
-    AdServer::RequestInfoSvcs::UserProfile_var
-      user_site_reach_profile;
-
-    if(request_info_manager->get_user_site_reach_profile(
+    Proto::ProfileResponse user_site_reach_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_user_site_reach_profile(
+             request, std::move(callback));
+         },
          user_id_str,
-         user_site_reach_profile.out()))
+         user_site_reach_profile))
     {
+      return 1;
+    }
+
+    if(user_site_reach_profile.found())
+    {
+      const std::string& profile = user_site_reach_profile.profile();
+
       // print plain
       if(print_plain)
       {
         print_plain_(
           std::cout,
-          user_site_reach_profile->get_buffer(),
-          user_site_reach_profile->length(),
+          profile.data(),
+          profile.size(),
           "  ");
 
         std::cout << std::endl;
@@ -528,8 +678,8 @@ Application_::print_user_site_reach(
 
       AdServer::RequestInfoSvcs::UserSiteReachProfileReader
         user_site_reach_reader(
-          user_site_reach_profile->get_buffer(),
-          user_site_reach_profile->length());
+          profile.data(),
+          profile.size());
 
       unsigned long columns =
         sizeof(USER_SITE_REACH_TABLE_COLUMNS) /
@@ -562,21 +712,6 @@ Application_::print_user_site_reach(
     }
     return 0;
   }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr << "Caught RequestInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
   catch(const eh::Exception& ex)
   {
     std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
@@ -586,7 +721,7 @@ Application_::print_user_site_reach(
 
 int
 Application_::print_user_tag_request_group(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* user_id_str,
   bool print_plain)
   noexcept
@@ -595,20 +730,32 @@ Application_::print_user_tag_request_group(
   {
     AdServer::Commons::UserId user_id(user_id_str);
 
-    AdServer::RequestInfoSvcs::UserProfile_var
-      user_tag_request_group_profile;
-
-    if(request_info_manager->get_user_tag_request_group_profile(
+    Proto::ProfileResponse user_tag_request_group_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_user_tag_request_group_profile(
+             request, std::move(callback));
+         },
          user_id_str,
-         user_tag_request_group_profile.out()))
+         user_tag_request_group_profile))
     {
+      return 1;
+    }
+
+    if(user_tag_request_group_profile.found())
+    {
+      const std::string& profile = user_tag_request_group_profile.profile();
+
       // print plain
       if(print_plain)
       {
         print_plain_(
           std::cout,
-          user_tag_request_group_profile->get_buffer(),
-          user_tag_request_group_profile->length(),
+          profile.data(),
+          profile.size(),
           "  ");
 
         std::cout << std::endl;
@@ -627,8 +774,8 @@ Application_::print_user_tag_request_group(
 
       AdServer::RequestInfoSvcs::UserTagRequestMergeProfileReader
         user_tag_request_group_reader(
-          user_tag_request_group_profile->get_buffer(),
-          user_tag_request_group_profile->length());
+          profile.data(),
+          profile.size());
 
       for(UserTagRequestMergeProfileReader::tag_groups_Container::const_iterator tg_it =
             user_tag_request_group_reader.tag_groups().begin();
@@ -658,21 +805,6 @@ Application_::print_user_tag_request_group(
       std::cout << "Profile not found." << std::endl;
     }
     return 0;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr << "Caught RequestInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
   }
   catch(const eh::Exception& ex)
   {
@@ -735,22 +867,6 @@ Application_::print_user_action_from_file(
     }
     return 0;
   }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr
-      << "Caught RequestInfoManager::ImplementationException: "
-      << e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-  }
   catch(const eh::Exception& ex)
   {
     std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
@@ -760,7 +876,7 @@ Application_::print_user_action_from_file(
 
 int
 Application_::print_passback(
-  AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+  Client& request_info_manager,
   const char* request_id_str,
   bool print_plain)
   noexcept
@@ -769,19 +885,32 @@ Application_::print_passback(
   {
     AdServer::Commons::RequestId request_id(request_id_str);
 
-    AdServer::RequestInfoSvcs::PassbackProfile_var passback_profile;
-
-    if(request_info_manager->get_passback_profile(
+    Proto::ProfileResponse passback_profile;
+    if(!get_profile(
+         [&request_info_manager](
+           const Proto::ProfileRequest& request,
+           auto callback)
+         {
+           request_info_manager.get_passback_profile(
+             request, std::move(callback));
+         },
          request_id_str,
-         passback_profile.out()))
+         passback_profile))
     {
+      return 1;
+    }
+
+    if(passback_profile.found())
+    {
+      const std::string& profile = passback_profile.profile();
+
       // print plain
       if(print_plain)
       {
         print_plain_(
           std::cout,
-          passback_profile->get_buffer(),
-          passback_profile->length(),
+          profile.data(),
+          profile.size(),
           "  ");
 
         std::cout << std::endl;
@@ -790,8 +919,8 @@ Application_::print_passback(
       // print content
       AdServer::RequestInfoSvcs::PassbackInfoReader
         passback_reader(
-          passback_profile->get_buffer(),
-          passback_profile->length());
+          profile.data(),
+          profile.size());
 
       print_passback_profile(std::cout, passback_reader);
     }
@@ -800,22 +929,6 @@ Application_::print_passback(
       std::cout << "Profile for '" << request_id_str << "' not found." << std::endl;
     }
     return 0;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::ImplementationException& e)
-  {
-    std::cerr <<
-      "Caught RequestInfoManager::ImplementationException: " <<
-      e.description << std::endl;
-  }
-  catch(const AdServer::RequestInfoSvcs::
-        RequestInfoManager::NotReady& e)
-  {
-    std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
   }
   catch(const eh::Exception& ex)
   {
@@ -961,29 +1074,26 @@ Application_::main(int& argc, char** argv) noexcept
     {
       if(!opt_ref.installed())
       {
-        check_option_("ref", opt_endpoint);
-        std::string ref = "corbaloc::";
-        ref += *opt_endpoint;
-        ref += "/RequestInfoManager";
-        opt_ref.set_value(ref);
+        check_option_("host_and_port", opt_endpoint);
+        opt_ref.set_value(*opt_endpoint);
       }
 
-      CORBACommons::CorbaClientAdapter_var corba_client_adapter(
-        new CORBACommons::CorbaClientAdapter());
-
-      AdServer::RequestInfoSvcs::RequestInfoManager_var request_info_manager;
-
-      CORBACommons::CorbaObjectRef corba_object_ref(opt_ref->c_str());
-
-      request_info_manager = corba_client_adapter->resolve_object<
-        AdServer::RequestInfoSvcs::RequestInfoManager>(corba_object_ref);
+      const std::string endpoint = normalize_endpoint(*opt_ref);
+      ClientHolder client_holder = create_client(endpoint);
+      auto client_guard = std::unique_ptr<ClientHolder, void(*)(ClientHolder*)>(
+        &client_holder,
+        [](ClientHolder* holder)
+        {
+          shutdown_client(*holder);
+        });
+      auto* request_info_manager = client_holder.client.get();
 
       if(command == "print-request")
       {
         check_option_("request-id", opt_request_id, first_option);
 
         return print(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_request_id->c_str()).c_str(),
           opt_print_plain.enabled());
@@ -993,7 +1103,7 @@ Application_::main(int& argc, char** argv) noexcept
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_campaign_reach(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
@@ -1003,7 +1113,7 @@ Application_::main(int& argc, char** argv) noexcept
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_action(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled(),
@@ -1014,7 +1124,7 @@ Application_::main(int& argc, char** argv) noexcept
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_fraud_protection(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
@@ -1024,7 +1134,7 @@ Application_::main(int& argc, char** argv) noexcept
         check_option_("request-id", opt_request_id, first_option);
 
         return print_passback(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_request_id->c_str()).c_str(),
           opt_print_plain.enabled());
@@ -1034,7 +1144,7 @@ Application_::main(int& argc, char** argv) noexcept
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_site_reach(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
@@ -1044,44 +1154,29 @@ Application_::main(int& argc, char** argv) noexcept
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_tag_request_group(
-          request_info_manager,
+          *request_info_manager,
           remove_uuid_escape(
               opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
       else if(command == "clear-expired")
       {
-        try
-        {
-          request_info_manager->clear_expired(opt_sync.enabled());
-          return 0;
-        }
-        catch(const CORBA::SystemException& e)
-        {
-          std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
-        }
+        Proto::ClearExpiredRequest request;
+        request.set_synchronous(opt_sync.enabled());
+        const auto response = sync_call<Proto::ClearExpiredResponse>(
+          [request_info_manager, &request](auto callback)
+          {
+            request_info_manager->clear_expired(
+              request,
+              std::move(callback));
+          });
+        return response ? 0 : 1;
       }
       return 1;
     }
     catch(const InvalidParam& e)
     {
       std::cerr << e.what() << std::endl;
-    }
-    catch(const AdServer::RequestInfoSvcs::
-          RequestInfoManager::ImplementationException& e)
-    {
-      std::cerr <<
-        "Caught RequestInfoManager::ImplementationException: " <<
-        e.description << std::endl;
-    }
-    catch(const AdServer::RequestInfoSvcs::
-          RequestInfoManager::NotReady& e)
-    {
-      std::cerr << "Caught RequestInfoManager::NotReady." << std::endl;
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      std::cerr << "Caught CORBA::SystemException: " << e << std::endl;
     }
     catch(const eh::Exception& ex)
     {

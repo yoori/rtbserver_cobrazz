@@ -8,8 +8,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager.hpp>
+#include <RequestInfoManagerGrpc.grpc-client.hpp>
 
 class Application_
 {
@@ -24,6 +23,9 @@ public:
   int main(int& argc, char** argv) noexcept;
 
 protected:
+  using Client = AdServer::RequestInfoSvcs::
+    RequestInfoManagerGrpcAsyncClient;
+
   void check_option_(
     const char *opt_name,
     Generics::AppUtils::Option<std::string>& option,
@@ -31,13 +33,13 @@ protected:
     /*throw(InvalidParam)*/;
 
   int print(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* request_id_str,
     bool print_plain)
     noexcept;
 
   int print_user_campaign_reach(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* user_id_str,
     bool print_plain)
     noexcept;
@@ -52,7 +54,7 @@ protected:
 
   int
   print_user_action(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* user_id_str,
     bool print_plain,
     bool align)
@@ -60,7 +62,7 @@ protected:
 
   int
   print_user_fraud_protection(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* user_id_str,
     bool print_plain)
     noexcept;
@@ -75,20 +77,20 @@ protected:
     noexcept;
 
   int print_passback(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* request_id_str,
     bool print_plain)
     noexcept;
 
   int
   print_user_site_reach(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* user_id_str,
     bool print_plain)
     noexcept;
 
   int print_user_tag_request_group(
-    AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,
+    Client& request_info_manager,
     const char* user_id_str,
     bool print_plain)
     noexcept;
