@@ -29,10 +29,10 @@
     </xsd:annotation>
 
     <xsd:sequence>
-      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+      <xsd:element name="GrpcConfig" type="GrpcConfigType">
         <xsd:annotation>
           <xsd:documentation>
-            CorbaConfig for service
+            gRPC interface configuration.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
