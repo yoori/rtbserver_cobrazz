@@ -1,2 +1,2 @@
-ADD_SUBDIRECTORY(ChannelSearchAdmin)
-ADD_SUBDIRECTORY(ChannelSearchService)
+add_subdirectory(ChannelSearchAdmin)
+add_subdirectory(ChannelSearchService)

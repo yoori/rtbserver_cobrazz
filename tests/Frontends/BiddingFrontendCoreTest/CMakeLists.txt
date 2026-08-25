@@ -3,9 +3,7 @@ add_executable(BiddingFrontendCoreTest
 
 target_link_libraries(BiddingFrontendCoreTest
   PRIVATE
-    jemalloc
-    TAO::PortableServer
-    TAO::Valuetype
+    PkgConfig::Jemalloc
     BiddingFrontend
     CampaignServerIDL
     Commons

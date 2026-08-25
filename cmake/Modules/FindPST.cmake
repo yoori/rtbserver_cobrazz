@@ -10,7 +10,7 @@ function(add_pst _target _pstfile target_dir)
 
   file(MAKE_DIRECTORY ${target_dir})
   execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${target_dir})
-  set (SRC ${CMAKE_CURRENT_LIST_DIR}/${_pstfile})
+  set(SRC ${CMAKE_CURRENT_LIST_DIR}/${_pstfile})
   set(PST_TARGET ${_target}_pst)
   add_custom_target(${PST_TARGET} DEPENDS ${OUTPUTCPP} ${OUTPUTHPP})
   add_custom_command(

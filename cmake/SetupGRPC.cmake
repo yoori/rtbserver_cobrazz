@@ -1,3 +1,8 @@
+find_program(ADSERVER_GRPC_PYTHON_EXECUTABLE
+  NAMES python3.8
+  REQUIRED
+)
+
 function(add_grpc_sources target proto_file output_dir)
   get_filename_component(proto_name_we ${proto_file} NAME_WE)
   get_filename_component(proto_abs ${proto_file} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -23,7 +28,7 @@ function(add_grpc_sources target proto_file output_dir)
     DEPENDS ${proto_abs}
   )
 
-  if (TARGET ${target})
+  if(TARGET ${target})
     target_sources(${target} PRIVATE ${pb_cc} ${grpc_cc})
   else()
     add_library(${target} STATIC ${pb_cc} ${grpc_cc})
@@ -34,7 +39,8 @@ endfunction()
 
 function(add_adserver_grpc_client_sources target proto_file output_dir namespace)
   execute_process(
-    COMMAND /usr/bin/env python3.8 -c "import google.protobuf.compiler.plugin_pb2"
+    COMMAND ${ADSERVER_GRPC_PYTHON_EXECUTABLE}
+      -c "import google.protobuf.compiler.plugin_pb2"
     RESULT_VARIABLE adserver_grpc_client_protobuf_result
     OUTPUT_QUIET
     ERROR_QUIET

@@ -13,7 +13,7 @@ target_link_libraries(FrontendServerCommons
     Logger
     Sync
     Boost::headers
-    nghttp2
+    Nghttp2::Nghttp2
 )
 
 add_executable(FCGIServer
@@ -23,7 +23,7 @@ add_executable(FCGIServer
 
 target_link_libraries(FCGIServer
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     FCGIServerConfigXSD
     BiddingFrontend
     DirectoryModule
@@ -46,8 +46,6 @@ target_link_libraries(FCGIServer
     ProcessControlIDL
     Commons
     CORBACommons
-    TAO::PortableServer
-    TAO::Valuetype
     HTTP
     HttpServer
     Generics

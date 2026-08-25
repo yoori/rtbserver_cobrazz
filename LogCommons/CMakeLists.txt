@@ -1,5 +1,4 @@
-ADD_SUBDIRECTORY(Compatibility)
-
+add_subdirectory(Compatibility)
 
 add_library(LogCommons SHARED
   ActionRequest.cpp
@@ -64,9 +63,10 @@ add_library(LogCommons SHARED
 )
 
 target_link_libraries(LogCommons
-  PRIVATE
+  PUBLIC
     Generics
     Commons
-    absl::flat_hash_map
+    CampaignTypes
     Boost::headers
+    Logger
 )

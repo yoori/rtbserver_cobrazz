@@ -1,5 +1,3 @@
-
-
 add_executable(TrivialCTRConfigGenerator
   Application.cpp
 )

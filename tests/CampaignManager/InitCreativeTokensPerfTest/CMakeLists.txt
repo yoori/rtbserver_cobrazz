@@ -5,7 +5,7 @@ add_executable(InitCreativeTokensPerfTest
 
 target_link_libraries(InitCreativeTokensPerfTest
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     CreativeTemplateArgs
     Generics
     HTTP

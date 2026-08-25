@@ -1,29 +1,18 @@
-# - Find Net-SNMP
-#
-# -*- cmake -*-
-#
-# Find the Net-SNMP module
-#
-#  NETSNMP_INCLUDE_DIR - where to find Net-SNMP.h, etc.
-#  NETSNMP_LIBRARIES   - List of libraries when using Net-SNMP.
-#  NETSNMP_FOUND       - True if Net-SNMP found.
+include(FindPackageHandleStandardArgs)
 
-#IF (NETSNMP_INCLUDE_DIR)
-# Already in cache, be silent
-#  SET(NETSNMP_FIND_QUIETLY TRUE)
-#ENDIF (NETSNMP_INCLUDE_DIR)
-
-#FIND_PATH(NETSNMP_INCLUDE_DIR snmp.h
-#  /usr/include/net-snmp/library
-#)
-
-#SET(NETSNMP_NAMES netsnmp)
-FIND_LIBRARY(USERVER_CORE
+find_library(USERVER_CORE_LIBRARY
   NAMES userver-core
-  PATHS /usr/lib /usr/local/lib /usr/lib64
 )
 
-
-MARK_AS_ADVANCED(
-  USERVER_CORE
+find_package_handle_standard_args(USERVER
+  REQUIRED_VARS USERVER_CORE_LIBRARY
 )
+
+if(USERVER_FOUND AND NOT TARGET USERVER::Core)
+  add_library(USERVER::Core UNKNOWN IMPORTED)
+  set_target_properties(USERVER::Core PROPERTIES
+    IMPORTED_LOCATION "${USERVER_CORE_LIBRARY}"
+  )
+endif()
+
+mark_as_advanced(USERVER_CORE_LIBRARY)

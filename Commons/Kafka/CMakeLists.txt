@@ -4,5 +4,5 @@ add_library(KafkaProducer SHARED
 target_link_libraries(KafkaProducer
   PRIVATE
     AdServerCommonsXSD
-    rdkafka++
+    PkgConfig::RdKafka
 )

@@ -1,4 +1,3 @@
-
 add_executable(ExpressionMatcherAdmin
   Application.cpp
 )
@@ -9,5 +8,5 @@ target_link_libraries(ExpressionMatcherAdmin
     Logger
     UtilCommons
     ExpressionMatcherGrpcClient
-    pthread
+    Threads::Threads
 )

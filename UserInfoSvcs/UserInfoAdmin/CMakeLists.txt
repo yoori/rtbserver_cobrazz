@@ -4,8 +4,6 @@ add_executable(UserInfoAdmin
 
 target_link_libraries(UserInfoAdmin
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     ChannelMatcher
     Commons
     CORBACommons

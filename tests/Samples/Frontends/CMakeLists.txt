@@ -1,2 +1,1 @@
-
-ADD_SUBDIRECTORY(FrontendCommons)
+add_subdirectory(FrontendCommons)

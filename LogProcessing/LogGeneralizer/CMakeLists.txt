@@ -1,8 +1,7 @@
-
 add_idl(LogGeneralizerIDL LogGeneralizer.idl ${IDL_DIRECTORY}/LogProcessing/LogGeneralizer)
 
 target_link_libraries(LogGeneralizerIDL
-  PRIVATE
+  PUBLIC
     CorbaTypesIDL
 )
 
@@ -20,8 +19,6 @@ target_link_libraries(LogGeneralizerLib
     LogGeneralizerIDL
     LogCommons
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     Postgres
     Commons
     CORBACommons
@@ -39,10 +36,8 @@ add_executable(LogGeneralizer
 
 target_link_libraries(LogGeneralizer
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     LogGeneralizerLib
-    pthread
+    Threads::Threads
     Generics
     Commons
     CORBAConfig

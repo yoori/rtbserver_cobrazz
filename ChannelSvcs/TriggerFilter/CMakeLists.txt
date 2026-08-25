@@ -3,8 +3,6 @@ add_executable(TriggerFilter
 )
 target_link_libraries(TriggerFilter
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     Generics
     BLogic
     CORBACommons

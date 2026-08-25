@@ -2,7 +2,6 @@ add_library(Allocator SHARED
   Allocator.cpp
 )
 
-
 target_link_libraries(Allocator
   PRIVATE
     Generics

@@ -1,4 +1,3 @@
-
 add_pst(UserChannelInventoryProfile_v281PST  UserChannelInventoryProfile_v281.pst ${PST_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher/Compatibility)
 add_pst(UserTriggerMatchProfile_v0PST  UserTriggerMatchProfile_v0.pst ${PST_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher/Compatibility)
 add_pst(RequestTriggerMatchProfile_v330PST  RequestTriggerMatchProfile_v330.pst ${PST_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher/Compatibility)
@@ -18,5 +17,5 @@ target_link_libraries(ExpressionMatcherCompatibility
     UserTriggerMatchProfilePST
     RequestTriggerMatchProfilePST
     Generics
-    pthread
+    Threads::Threads
 )

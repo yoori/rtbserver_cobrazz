@@ -1,4 +1,3 @@
-
 set(IDL_FOUND TRUE)
 
 function(add_pb _target _pbfile target_dir)
@@ -10,7 +9,7 @@ function(add_pb _target _pbfile target_dir)
 
   file(MAKE_DIRECTORY ${target_dir})
   execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${target_dir})
-  set (SRC ${CMAKE_CURRENT_LIST_DIR}/${_pbfile})
+  set(SRC ${CMAKE_CURRENT_LIST_DIR}/${_pbfile})
   set(PROTOBUF_TARGET ${_target}_pb)
   add_custom_target(${PROTOBUF_TARGET} DEPENDS "${OUTPUTCPP}")
   add_custom_command(
@@ -27,9 +26,10 @@ function(add_pb _target _pbfile target_dir)
   add_dependencies(${_target} ${PROTOBUF_TARGET})
   target_include_directories(${_target} INTERFACE ${MIDL_OUTPUT_PATH})
   target_link_libraries(${_target}
-    protobuf::libprotobuf
-    # Workaround for abseil invalid export for shared libraries
-    absl_log_internal_check_op
-    absl_log_internal_message
+    PRIVATE
+      protobuf::libprotobuf
+      # Workaround for abseil invalid export for shared libraries
+      absl_log_internal_check_op
+      absl_log_internal_message
   )
 endfunction()

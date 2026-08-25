@@ -7,8 +7,6 @@ add_executable(ChannelSearchService
 )
 target_link_libraries(ChannelSearchService
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     AdServerCommonsXSD
     CORBACommons
     CampaignCommonsIDL

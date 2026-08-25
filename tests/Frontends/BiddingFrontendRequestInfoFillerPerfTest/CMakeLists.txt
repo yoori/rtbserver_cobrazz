@@ -4,9 +4,7 @@ function(add_bidding_request_info_filler_perf_test target)
 
   target_link_libraries(${target}
     PRIVATE
-      jemalloc
-      TAO::PortableServer
-      TAO::Valuetype
+      PkgConfig::Jemalloc
       BiddingFrontend
       CampaignServerIDL
       CommonModule

@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(DTree)
-ADD_SUBDIRECTORY(DTreeTests)
-ADD_SUBDIRECTORY(DTreeTrainer)
-ADD_SUBDIRECTORY(PrFeatureFilter)
+add_subdirectory(DTree)
+add_subdirectory(DTreeTests)
+add_subdirectory(DTreeTrainer)
+add_subdirectory(PrFeatureFilter)

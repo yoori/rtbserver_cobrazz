@@ -1,4 +1,3 @@
-
 add_library(ChannelContainer SHARED
   ContainerMatchers.cpp
   DictionaryMatcher.cpp
@@ -9,6 +8,8 @@ add_library(ChannelContainer SHARED
 )
 
 target_link_libraries(ChannelContainer
+  PUBLIC
+    Boost::headers
   PRIVATE
     CORBACommons
     ChannelCommons
@@ -62,13 +63,11 @@ add_executable(ChannelServer
 
 target_link_libraries(ChannelServer
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     HTTP
     HttpServer
     CORBAConfig
     CORBACommons
-    TAO::PortableServer
-    TAO::Valuetype
     Generics
     Logger
     ProcessControlIDL

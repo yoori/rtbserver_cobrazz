@@ -1,4 +1,3 @@
-
-ADD_SUBDIRECTORY(LogIoTest)
-ADD_SUBDIRECTORY(PrimaryDumpTest)
-ADD_SUBDIRECTORY(SyncLogsMoveTaskSchedulerTest)
+add_subdirectory(LogIoTest)
+add_subdirectory(PrimaryDumpTest)
+add_subdirectory(SyncLogsMoveTaskSchedulerTest)

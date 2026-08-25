@@ -11,9 +11,7 @@ add_executable(InstantiateAdArgsTest
 
 target_link_libraries(InstantiateAdArgsTest
   PRIVATE
-    jemalloc
-    TAO::PortableServer
-    TAO::Valuetype
+    PkgConfig::Jemalloc
     CampaignConfigSource
     HTTP
     HttpServer

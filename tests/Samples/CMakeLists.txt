@@ -1,2 +1,1 @@
-
-ADD_SUBDIRECTORY(Frontends)
+add_subdirectory(Frontends)

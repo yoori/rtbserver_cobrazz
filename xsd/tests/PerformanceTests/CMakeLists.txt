@@ -1,3 +1,3 @@
-ADD_SUBDIRECTORY(AdServerBenchmark)
-ADD_SUBDIRECTORY(AdServerTest)
-ADD_SUBDIRECTORY(Commons)
+add_subdirectory(AdServerBenchmark)
+add_subdirectory(AdServerTest)
+add_subdirectory(Commons)

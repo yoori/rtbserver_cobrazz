@@ -4,11 +4,9 @@ add_executable(LogGeneralizerAdmin
 
 target_link_libraries(LogGeneralizerAdmin
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     LogGeneralizerIDL
     ProcessControlIDL
-    pthread
+    Threads::Threads
     Generics
     CORBACommons
     UtilCommons

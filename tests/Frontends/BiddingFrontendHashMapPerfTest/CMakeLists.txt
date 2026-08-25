@@ -4,7 +4,7 @@ add_executable(BiddingFrontendHashMapPerfTest
 
 target_link_libraries(BiddingFrontendHashMapPerfTest
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     Generics
     Boost::headers
 )

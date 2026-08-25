@@ -4,7 +4,7 @@ add_executable(BiddingFrontendLoggerPerfTest
 
 target_link_libraries(BiddingFrontendLoggerPerfTest
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     BiddingFrontend
     Generics
     Logger

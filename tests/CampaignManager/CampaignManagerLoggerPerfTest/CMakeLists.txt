@@ -4,9 +4,7 @@ add_executable(CampaignManagerLoggerPerfTest
 
 target_link_libraries(CampaignManagerLoggerPerfTest
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
-    jemalloc
+    PkgConfig::Jemalloc
     CampaignManagerLogger
     CORBACommons
     HTTP

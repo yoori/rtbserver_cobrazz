@@ -1,12 +1,12 @@
 add_idl(ChannelClusterControlIDL ChannelClusterControl.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController VALUETYPE)
 target_link_libraries(ChannelClusterControlIDL
-  PRIVATE
+  PUBLIC
     ProcessControlIDL
 )
 
 add_idl(ChannelManagerControllerIDL ChannelManagerController.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController VALUETYPE)
 target_link_libraries(ChannelManagerControllerIDL
-  PRIVATE
+  PUBLIC
     ChannelCommonsIDL
     ChannelUpdateBaseIDL
     ChannelServerIDL

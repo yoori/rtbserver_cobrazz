@@ -1,4 +1,3 @@
-
 include(CheckCXXCompilerFlag)
 
 add_idl(CampaignFreqIDL CampaignFreq.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
@@ -7,7 +6,7 @@ add_idl(CorbaTypesIDL CorbaTypes.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
 add_idl(FreqCapInfoIDL FreqCapInfo.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
 
 target_link_libraries(FreqCapInfoIDL
-  PRIVATE
+  PUBLIC
     CorbaTypesIDL
 )
 
@@ -37,16 +36,17 @@ add_library(Commons SHARED
 )
 
 target_link_libraries(Commons
-  PRIVATE
-    HostDistributionFileXSD
+  PUBLIC
     Generics
     AdServerCommonsXSD
     HTTP
-    crypto
-    zmq
-    pthread
+    OpenSSL::Crypto
+    PkgConfig::ZeroMQ
     Sync
     Boost::headers
+  PRIVATE
+    HostDistributionFileXSD
+    Threads::Threads
 )
 
 add_library(CORBAConfig SHARED
@@ -127,12 +127,8 @@ target_link_libraries(ProcessControlVars
     Logger
 )
 
-
-
-
-
-ADD_SUBDIRECTORY(Kafka)
-ADD_SUBDIRECTORY(HttpServer)
-#ADD_SUBDIRECTORY(Oracle)
-ADD_SUBDIRECTORY(Postgres)
-ADD_SUBDIRECTORY(Xslt)
+add_subdirectory(Kafka)
+add_subdirectory(HttpServer)
+#add_subdirectory(Oracle)
+add_subdirectory(Postgres)
+add_subdirectory(Xslt)

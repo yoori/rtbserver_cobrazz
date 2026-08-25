@@ -1,4 +1,3 @@
-
 add_executable(GeoUtil
   Application.cpp
 )

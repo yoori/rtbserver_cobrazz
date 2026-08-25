@@ -82,7 +82,7 @@ add_executable(UserBindServer
 
 target_link_libraries(UserBindServer
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     Commons
     Generics
     GrpcBatch
@@ -136,7 +136,7 @@ add_executable(MockUserBindServer
 
 target_link_libraries(MockUserBindServer
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     Commons
     Generics
     GrpcBatch

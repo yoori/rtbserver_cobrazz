@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(Compatibility)
+add_subdirectory(Compatibility)
 
 set(USER_INFO_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/UserInfoSvcs/UserInfoManager)
 set(USER_INFO_MANAGER_GRPC_PROTO UserInfoManagerGrpc.proto)
@@ -58,7 +58,6 @@ target_link_libraries(UserInfoContainer
     UserFreqCapProfileAdapter
 )
 
-
 add_executable(UserInfoManager
   UserInfoManagerMain.cpp
   FileRWStats.cpp
@@ -70,9 +69,7 @@ add_executable(UserInfoManager
 )
 target_link_libraries(UserInfoManager
   PRIVATE
-    jemalloc
-    TAO::PortableServer
-    TAO::Valuetype
+    PkgConfig::Jemalloc
     AdServerCommonsXSD
     Allocator
     CampaignCommonsIDL

@@ -18,8 +18,6 @@ add_executable(UserBindController
 
 target_link_libraries(UserBindController
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     UserBindControllerGrpc
     UserBindServerGrpc
     UserBindControllerConfigXSD

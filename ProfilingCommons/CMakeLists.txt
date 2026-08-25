@@ -9,7 +9,7 @@ target_link_libraries(ProfilingCommons
     Generics
 )
 
-ADD_SUBDIRECTORY(ProfileMap)
+add_subdirectory(ProfileMap)
 
 add_library(MessageSaver SHARED
   MessageSaver.cpp

@@ -18,8 +18,6 @@ add_executable(UserInfoController
 
 target_link_libraries(UserInfoController
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     UserInfoControllerGrpc
     UserInfoManagerGrpc
     UserInfoControllerConfigXSD

@@ -18,8 +18,6 @@ add_executable(ChannelController
 
 target_link_libraries(ChannelController
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     ChannelControllerGrpc
     ChannelServerGrpc
     ChannelControllerConfigXSD

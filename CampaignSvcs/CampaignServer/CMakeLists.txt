@@ -4,12 +4,12 @@ add_idl(CampaignServerIDL CampaignServer.idl ${IDL_DIRECTORY}/CampaignSvcs/Campa
 
 add_dependencies(StatInfoIDL CampaignCommonsIDL)
 target_link_libraries(BillStatInfoIDL
-  PRIVATE
+  PUBLIC
     CorbaTypesIDL
 )
 
 target_link_libraries(CampaignServerIDL
-  PRIVATE
+  PUBLIC
     CampaignCommonsIDL
     BillStatInfoIDL
     StatInfoIDL
@@ -57,8 +57,6 @@ add_executable(CampaignServer
 
 target_link_libraries(CampaignServer
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     LogCommons
     Commons
     CORBAConfig
@@ -82,4 +80,4 @@ target_link_libraries(CampaignServer
     ProcessControlIDL
 )
 
-ADD_SUBDIRECTORY(Compatibility)
+add_subdirectory(Compatibility)

@@ -24,10 +24,8 @@ add_executable(SyncLogs
 
 target_link_libraries(SyncLogs
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     SyncLogsLib
-    pthread
+    Threads::Threads
     Generics
     Commons
     CORBAConfig

@@ -4,7 +4,7 @@ add_executable(CTRModelPredictPerfTest
 
 target_link_libraries(CTRModelPredictPerfTest
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     CTRProviderImplLib
     HTTP
     CampaignConfig

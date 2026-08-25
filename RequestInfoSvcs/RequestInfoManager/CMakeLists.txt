@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(Compatibility)
+add_subdirectory(Compatibility)
 
 set(REQUEST_INFO_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/RequestInfoSvcs/RequestInfoManager)
 set(REQUEST_INFO_MANAGER_GRPC_PROTO RequestInfoManagerGrpc.proto)
@@ -82,9 +82,7 @@ add_executable(RequestInfoManager
 
 target_link_libraries(RequestInfoManager
   PRIVATE
-    jemalloc
-    TAO::PortableServer
-    TAO::Valuetype
+    PkgConfig::Jemalloc
     CampaignCommonsIDL
     CorbaTypesIDL
     CORBACommons
@@ -180,7 +178,7 @@ add_library(TagRequestProfiler STATIC
 target_link_libraries(TagRequestProfiler
   PRIVATE
     LogCommons
-    zmq
+    PkgConfig::ZeroMQ
 )
 
 add_library(UserActionInfoContainer STATIC

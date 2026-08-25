@@ -1,5 +1,3 @@
-
-
 add_executable(UserIdUtil
   Application.cpp
 )

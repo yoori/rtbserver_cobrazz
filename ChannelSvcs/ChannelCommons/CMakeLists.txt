@@ -3,17 +3,17 @@ add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelC
 add_idl(ChannelUpdateBaseIDL ChannelUpdateBase.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons VALUETYPE)
 
 target_link_libraries(ChannelCommonsIDL
-  PRIVATE
+  PUBLIC
     CorbaTypesIDL
 )
 
 target_link_libraries(ChannelUpdateBaseIDL
-  PRIVATE
+  PUBLIC
     ChannelCommonsIDL
 )
 
 target_link_libraries(ChannelServerIDL
-  PRIVATE
+  PUBLIC
     CorbaTypesIDL
     ChannelCommonsIDL
     ChannelUpdateBaseIDL

@@ -5,7 +5,7 @@ add_executable(SyncLogsMoveTaskSchedulerTest
 target_link_libraries(SyncLogsMoveTaskSchedulerTest
   PRIVATE
     SyncLogsLib
-    pthread
+    Threads::Threads
     Generics
     Sync
     Commons

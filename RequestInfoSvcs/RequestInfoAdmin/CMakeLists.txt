@@ -1,4 +1,3 @@
-
 add_executable(RequestInfoAdmin
   Application.cpp
 )
@@ -8,7 +7,7 @@ target_link_libraries(RequestInfoAdmin
     Commons
     Logger
     UtilCommons
-    pthread
+    Threads::Threads
     UserActionProfilePST
     UserActionProfile_v321PST
     RequestInfoManagerGrpcClient

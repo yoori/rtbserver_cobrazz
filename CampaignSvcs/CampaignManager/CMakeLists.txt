@@ -1,5 +1,3 @@
-include_directories(. ${LIBXML2_INCLUDE_DIR})
-
 # CampaignManagerGrpc
 set(CAMPAIGN_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/CampaignSvcs/CampaignManager)
 set(CAMPAIGN_MANAGER_GRPC_PROTO CampaignManagerGrpc.proto)
@@ -44,8 +42,6 @@ target_link_libraries(BidRateProvider
     Generics
 )
 
-add_definitions(-D_REENTRANT -D_USE_OCCI -DXSD_CXX11)
-
 add_library(CTRProviderCore SHARED
   CTRProvider.cpp
   CTR/Algorithm.cpp
@@ -78,7 +74,7 @@ target_link_libraries(CTRProviderImplLib
     CTRProviderCore
     Commons
     ProfilingCommons
-    xgboost
+    xgboost::xgboost
     Vanga::DTree
     catboost::model
 )
@@ -101,8 +97,6 @@ add_library(CampaignConfigSource
 
 target_link_libraries(CampaignConfigSource
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     Generics
     HTTP
     CORBACommons
@@ -128,7 +122,7 @@ target_link_libraries(CampaignIndex
     Boost::headers
 )
 
-add_library( CreativeTemplateArgs SHARED
+add_library(CreativeTemplateArgs SHARED
   CreativeTemplateArgs.cpp
 )
 
@@ -194,13 +188,19 @@ add_library(CampaignBilling SHARED
   CampaignBilling.cpp
 )
 
+target_link_libraries(CampaignBilling
+  PUBLIC
+    CampaignTypes
+)
+
 add_library(CampaignBillingAccount SHARED
   CampaignBillingAccount.cpp
 )
 
 target_link_libraries(CampaignBillingAccount
-  PRIVATE
+  PUBLIC
     CampaignBilling
+    CampaignConfig
 )
 
 add_library(CampaignManagerLogger SHARED
@@ -238,13 +238,11 @@ add_executable(CampaignManager
 
 target_link_libraries(CampaignManager
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     CampaignConfigSource
     HTTP
     HttpServer
     CORBACommons
-    TAO::PortableServer
-    TAO::Valuetype
     Commons
     CORBAConfig
     AdServerCommonsXSD

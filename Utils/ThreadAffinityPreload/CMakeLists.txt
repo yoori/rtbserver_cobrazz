@@ -4,6 +4,6 @@ add_library(ThreadAffinityPreload SHARED
 
 target_link_libraries(ThreadAffinityPreload
   PRIVATE
-    dl
-    pthread
+    ${CMAKE_DL_LIBS}
+    Threads::Threads
 )

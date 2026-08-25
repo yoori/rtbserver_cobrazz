@@ -1,14 +1,10 @@
 add_idl(DictionaryProviderIDL DictionaryProvider.idl ${IDL_DIRECTORY}/ChannelSvcs/DictionaryProvider)
 
-
 target_link_libraries(DictionaryProviderIDL
-  PRIVATE
+  PUBLIC
     CorbaTypesIDL
     ChannelCommonsIDL
 )
-
-
-
 
 add_executable(DictionaryProvider
 
@@ -16,8 +12,6 @@ add_executable(DictionaryProvider
 )
 target_link_libraries(DictionaryProvider
   PRIVATE
-    TAO::PortableServer
-    TAO::Valuetype
     Generics
     CORBACommons
     AdServerCommonsXSD

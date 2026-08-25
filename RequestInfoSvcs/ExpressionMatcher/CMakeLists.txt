@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(Compatibility)
+add_subdirectory(Compatibility)
 
 set(EXPRESSION_MATCHER_GRPC_PROTO_DIR ${PB_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher)
 set(EXPRESSION_MATCHER_GRPC_PROTO ExpressionMatcherGrpc.proto)
@@ -106,9 +106,7 @@ add_executable(ExpressionMatcher
 
 target_link_libraries(ExpressionMatcher
   PRIVATE
-    jemalloc
-    TAO::PortableServer
-    TAO::Valuetype
+    PkgConfig::Jemalloc
     UserColoReachContainer
     UserInventoryContainer
     UserTriggerMatchContainer

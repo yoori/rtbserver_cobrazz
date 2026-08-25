@@ -1,37 +1,35 @@
-# Find Libevent
-# http://monkey.org/~provos/libevent/
-#
-# Once done, this will define:
-#
-#  Event_FOUND - system has Event
-#  Event_INCLUDE_DIRS - the Event include directories
-#  Event_LIBRARIES - link these to use Event
-#
+include(FindPackageHandleStandardArgs)
 
-if (EVENT_INCLUDE_DIR AND EVENT_LIBRARY)
-  # Already in cache, be silent
-  set(EVENT_FIND_QUIETLY TRUE)
-endif (EVENT_INCLUDE_DIR AND EVENT_LIBRARY)
-
-find_path(EVENT_INCLUDE_DIR event.h
-  PATHS /usr/include
-  PATH_SUFFIXES event
+find_path(EVENT_INCLUDE_DIR
+  NAMES event.h
 )
 
 find_library(EVENT_LIBRARY
   NAMES event
-  PATHS /usr/lib /usr/local/lib
 )
 
-set(EVENT_LIBRARIES ${EVENT_LIBRARY} )
+find_package_handle_standard_args(Event
+  REQUIRED_VARS
+    EVENT_INCLUDE_DIR
+    EVENT_LIBRARY
+)
 
-add_definitions(-DLIBNET_LIL_ENDIAN)
+set(EVENT_FOUND ${Event_FOUND})
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(EVENT
-  DEFAULT_MSG
+if(Event_FOUND)
+  set(EVENT_INCLUDE_DIRS ${EVENT_INCLUDE_DIR})
+  set(EVENT_LIBRARIES ${EVENT_LIBRARY})
+
+  if(NOT TARGET Event::Event)
+    add_library(Event::Event UNKNOWN IMPORTED)
+    set_target_properties(Event::Event PROPERTIES
+      IMPORTED_LOCATION "${EVENT_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${EVENT_INCLUDE_DIR}"
+    )
+  endif()
+endif()
+
+mark_as_advanced(
   EVENT_INCLUDE_DIR
-  EVENT_LIBRARIES
+  EVENT_LIBRARY
 )
-
-mark_as_advanced(EVENT_INCLUDE_DIR EVENT_LIBRARY)

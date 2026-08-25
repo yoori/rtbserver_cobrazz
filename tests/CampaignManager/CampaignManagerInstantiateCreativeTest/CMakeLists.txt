@@ -11,9 +11,7 @@ add_executable(CampaignManagerInstantiateCreativeTest
 
 target_link_libraries(CampaignManagerInstantiateCreativeTest
   PRIVATE
-    jemalloc
-    TAO::PortableServer
-    TAO::Valuetype
+    PkgConfig::Jemalloc
     CampaignConfigSource
     HTTP
     HttpServer

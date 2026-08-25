@@ -7,6 +7,6 @@ target_link_libraries(HttpServer
   PUBLIC
     Generics
   PRIVATE
-    pthread
+    Threads::Threads
     Boost::headers
 )

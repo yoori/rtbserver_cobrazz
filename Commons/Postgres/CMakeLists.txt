@@ -9,7 +9,7 @@ add_library(Postgres SHARED
 )
 target_link_libraries(Postgres
   PUBLIC
-    pq
+    PostgreSQL::PostgreSQL
   PRIVATE
     Generics
     Commons

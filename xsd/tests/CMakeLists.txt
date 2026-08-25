@@ -1,2 +1,2 @@
-ADD_SUBDIRECTORY(AutoTests)
-ADD_SUBDIRECTORY(PerformanceTests)
+add_subdirectory(AutoTests)
+add_subdirectory(PerformanceTests)

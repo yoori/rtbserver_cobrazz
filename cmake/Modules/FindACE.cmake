@@ -45,7 +45,6 @@ if(ACE_LIBRARY_RELEASE)
   list(APPEND ACE_LIBRARY optimized ${ACE_LIBRARY_RELEASE})
 endif()
 
-
 # Set ACE_FOUND honoring the QUIET and REQUIRED arguments
 find_package_handle_standard_args(ACE DEFAULT_MSG ACE_LIBRARY_RELEASE ACE_INCLUDE_DIR)
 

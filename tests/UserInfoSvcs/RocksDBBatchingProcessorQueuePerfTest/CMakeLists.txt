@@ -4,7 +4,7 @@ add_executable(RocksDBBatchingProcessorQueuePerfTest
 
 target_link_libraries(RocksDBBatchingProcessorQueuePerfTest
   PRIVATE
-    jemalloc
+    PkgConfig::Jemalloc
     Generics
     ProfileMapRocksDB
 )

@@ -1,5 +1,5 @@
-ADD_SUBDIRECTORY(Grpc)
-ADD_SUBDIRECTORY(PmrTests)
+add_subdirectory(Grpc)
+add_subdirectory(PmrTests)
 
 add_executable(AsyncMutexTest
   AsyncMutexTest.cpp
