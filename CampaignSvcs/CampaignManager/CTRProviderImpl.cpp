@@ -958,7 +958,7 @@ namespace AdServer::CampaignSvcs::CTR
     {
       const Algorithm* algorithm = calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-      const auto add_hashes = [&](const ModelList& models) {
+      const auto add_hashes = [&](const ModelArray& models) {
         for (const auto& model : models)
         {
           HashArrayHolder_var local_hashes = get_features_hashes_(
@@ -1132,7 +1132,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     bool res_creative_dependent = false;
 
-    const auto add_predictions = [&](const ModelList& models) {
+    const auto add_predictions = [&](const ModelArray& models) {
       for (const auto& model : models)
       {
         res_creative_dependent |= model->creative_dependent;
@@ -1202,7 +1202,7 @@ namespace AdServer::CampaignSvcs::CTR
     {
       const Algorithm* algorithm = calculation_->ctr_provider_->ctr_algorithms_[alg_index];
 
-      const auto add_details = [&](const ModelList& models) {
+      const auto add_details = [&](const ModelArray& models) {
         for (const auto& model : models)
         {
           const double model_prediction = get_model_prediction_(

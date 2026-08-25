@@ -124,6 +124,8 @@ class CatBoostTrainer(object):
       patience=3,
       work_dir=None,
       fit_steps=None,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     temp_parent = None if work_dir is None else str(pathlib.Path(work_dir))
     with tempfile.TemporaryDirectory(
@@ -135,7 +137,9 @@ class CatBoostTrainer(object):
         fit_iterations,
         patience,
         pathlib.Path(temp_dir),
-        fit_steps)
+        fit_steps,
+        on_fit_start,
+        on_fit_end)
 
   def select_feature_indexes_from_chunks_(
       self,
@@ -145,9 +149,16 @@ class CatBoostTrainer(object):
       patience,
       work_dir,
       fit_steps,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     model_dir = work_dir / 'selection-model'
     model_dir.mkdir()
+    callback_args = {}
+    if on_fit_start is not None:
+      callback_args['on_fit_start'] = on_fit_start
+    if on_fit_end is not None:
+      callback_args['on_fit_end'] = on_fit_end
     _, best_logloss, trained_steps, _ = self.fit_sequence_(
       chunks,
       validation_paths,
@@ -155,7 +166,8 @@ class CatBoostTrainer(object):
       patience,
       model_dir,
       'Feature selection',
-      fit_steps)
+      fit_steps,
+      **callback_args)
     selected_indexes = self.model_feature_indexes_(model_dir / 'model.cbm')
     print(
       'Feature selection: chunks=' + str(trained_steps) +
@@ -216,6 +228,8 @@ class CatBoostTrainer(object):
       patience=5,
       work_dir=None,
       fit_steps=None,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     temp_parent = None if work_dir is None else str(pathlib.Path(work_dir))
     with tempfile.TemporaryDirectory(
@@ -228,7 +242,9 @@ class CatBoostTrainer(object):
         fit_iterations,
         patience,
         pathlib.Path(temp_dir),
-        fit_steps)
+        fit_steps,
+        on_fit_start,
+        on_fit_end)
 
   def train_from_chunks_(
       self,
@@ -239,9 +255,16 @@ class CatBoostTrainer(object):
       patience,
       work_dir,
       fit_steps,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     model_dir = work_dir / 'main-model'
     model_dir.mkdir()
+    callback_args = {}
+    if on_fit_start is not None:
+      callback_args['on_fit_start'] = on_fit_start
+    if on_fit_end is not None:
+      callback_args['on_fit_end'] = on_fit_end
     best_model, best_logloss, trained_steps, logloss_history = self.fit_sequence_(
       chunks,
       validation_paths,
@@ -249,7 +272,8 @@ class CatBoostTrainer(object):
       patience,
       model_dir,
       'Main training',
-      fit_steps)
+      fit_steps,
+      **callback_args)
     final_evaluations = [
       self.evaluate_model_with_ctr_thresholds_(best_model, final_test)
       for final_test in final_test_paths
@@ -284,6 +308,8 @@ class CatBoostTrainer(object):
       patience=5,
       work_dir=None,
       fit_steps=None,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     """Train campaign correction and stable common in one OOF pass.
 
@@ -309,7 +335,9 @@ class CatBoostTrainer(object):
         fit_iterations,
         patience,
         pathlib.Path(temp_dir),
-        fit_steps)
+        fit_steps,
+        on_fit_start,
+        on_fit_end)
 
   def train_aligned_from_chunks_(
       self,
@@ -323,6 +351,8 @@ class CatBoostTrainer(object):
       patience,
       work_dir,
       fit_steps,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     if not correction_validation_inputs or not stable_validation_paths:
       raise ValueError('At least one validation set is required per component')
@@ -359,6 +389,8 @@ class CatBoostTrainer(object):
       if fit_steps is not None:
         chunks_to_fit = itertools.islice(chunk_iterator, fit_steps)
       for step, chunk in enumerate(chunks_to_fit, 1):
+        if on_fit_start is not None:
+          on_fit_start(step)
         stable_svm, correction_svm, common_baseline = chunk
         total = '' if fit_steps is None else '/' + str(fit_steps)
         print(
@@ -389,6 +421,7 @@ class CatBoostTrainer(object):
               correction_training_baseline,
               common_baseline)
 
+        early_stop = False
         try:
           if not correction_frozen:
             correction_train_metrics = correction_trainer.train_chunk_(
@@ -475,13 +508,17 @@ class CatBoostTrainer(object):
               print(
                 'Stable common: early stop after ' + str(step) + ' fits',
                 flush=True)
-              break
+              early_stop = True
         finally:
           for baseline_file in temporary_baselines:
             try:
               baseline_file.unlink()
             except FileNotFoundError:
               pass
+        if on_fit_end is not None:
+          on_fit_end(step)
+        if early_stop:
+          break
     finally:
       close = getattr(chunk_iterator, 'close', None)
       if close is not None:
@@ -536,6 +573,8 @@ class CatBoostTrainer(object):
       patience=5,
       work_dir=None,
       fit_steps=None,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     temp_parent = None if work_dir is None else str(pathlib.Path(work_dir))
     with tempfile.TemporaryDirectory(
@@ -548,7 +587,9 @@ class CatBoostTrainer(object):
         fit_iterations,
         patience,
         pathlib.Path(temp_dir),
-        fit_steps)
+        fit_steps,
+        on_fit_start,
+        on_fit_end)
 
   def train_residual_from_chunks_(
       self,
@@ -559,6 +600,8 @@ class CatBoostTrainer(object):
       patience,
       work_dir,
       fit_steps,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     if not validation_inputs:
       raise ValueError('At least one residual validation set is required')
@@ -583,6 +626,8 @@ class CatBoostTrainer(object):
       if fit_steps is not None:
         chunks_to_fit = itertools.islice(chunk_iterator, fit_steps)
       for step, (svm_file, external_baseline) in enumerate(chunks_to_fit, 1):
+        if on_fit_start is not None:
+          on_fit_start(step)
         training_baseline = external_baseline
         if model_path.exists():
           training_baseline = work_dir / (
@@ -619,6 +664,7 @@ class CatBoostTrainer(object):
           'Campaign residual: validation=' +
           json.dumps(metrics, sort_keys=True),
           flush=True)
+        early_stop = False
         if best_logloss is None or logloss < best_logloss:
           best_logloss = logloss
           non_improving_steps = 0
@@ -629,7 +675,11 @@ class CatBoostTrainer(object):
             print(
               'Campaign residual: early stop after ' + str(step) + ' fits',
               flush=True)
-            break
+            early_stop = True
+        if on_fit_end is not None:
+          on_fit_end(step)
+        if early_stop:
+          break
     finally:
       close = getattr(chunk_iterator, 'close', None)
       if close is not None:
@@ -750,6 +800,8 @@ class CatBoostTrainer(object):
       model_dir,
       description,
       fit_steps=None,
+      on_fit_start=None,
+      on_fit_end=None,
   ):
     if not validation_paths:
       raise ValueError('At least one validation set is required')
@@ -774,6 +826,8 @@ class CatBoostTrainer(object):
       if fit_steps is not None:
         chunks_to_fit = itertools.islice(chunk_iterator, fit_steps)
       for step, chunk_path in enumerate(chunks_to_fit, 1):
+        if on_fit_start is not None:
+          on_fit_start(step)
         total = '' if fit_steps is None else '/' + str(fit_steps)
         print(
           description + ': fit ' + str(step) + total,
@@ -797,6 +851,7 @@ class CatBoostTrainer(object):
           json.dumps(metrics, sort_keys=True),
           flush=True)
 
+        early_stop = False
         if best_logloss is None or logloss < best_logloss:
           best_logloss = logloss
           non_improving_steps = 0
@@ -807,7 +862,11 @@ class CatBoostTrainer(object):
             print(
               description + ': early stop after ' + str(step) + ' fits',
               flush=True)
-            break
+            early_stop = True
+        if on_fit_end is not None:
+          on_fit_end(step)
+        if early_stop:
+          break
     finally:
       close = getattr(chunk_iterator, 'close', None)
       if close is not None:
@@ -1182,6 +1241,7 @@ class CatBoostTrainer(object):
       feature_name_resolver=None,
       train_start=None,
       train_end=None,
+      prepare=None,
   ):
     required_models = (
       'common',
@@ -1293,6 +1353,8 @@ class CatBoostTrainer(object):
         },
         'models': traits_models,
       }
+      if prepare is not None:
+        traits['prepare'] = prepare
       traits_temp_file = staging_dir / '.traits.json.tmp'
       self.write_json_(traits_temp_file, traits)
       os.replace(traits_temp_file, staging_dir / 'traits.json')

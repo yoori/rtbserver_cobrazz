@@ -26,8 +26,8 @@ namespace AdServer::CampaignSvcs::CTR
 
     std::string id;
     unsigned long weight;
-    ModelList models;
-    std::map<unsigned long, ModelList> campaign_models;
+    ModelArray models;
+    std::map<unsigned long, ModelArray> campaign_models;
     RevenueDecimal threshold;
     PredictionAggregation aggregation = PredictionAggregation::Sum;
 

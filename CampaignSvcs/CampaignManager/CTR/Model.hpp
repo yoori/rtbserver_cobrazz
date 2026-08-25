@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -76,5 +77,5 @@ namespace AdServer::CampaignSvcs::CTR
   };
 
   using Model_var = ReferenceCounting::SmartPtr<Model>;
-  using ModelList = std::list<Model_var>;
+  using ModelArray = std::vector<Model_var>;
 }

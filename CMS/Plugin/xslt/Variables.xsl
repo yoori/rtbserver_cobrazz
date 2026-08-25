@@ -85,6 +85,8 @@
 <xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
 <xsl:variable name="ctr-predict-model-generator-descriptor"
   select="'AdCluster/BackendSubCluster/CTRPredictModelGenerator'"/>
+<xsl:variable name="ctr-predict-model-viewer-descriptor"
+  select="'AdCluster/BackendSubCluster/CTRPredictModelViewer'"/>
 <xsl:variable name="bidcost-predictor-merger-descriptor"
   select="'AdCluster/BackendSubCluster/BidCostPredictModelGenerator'"/>
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
@@ -411,7 +413,7 @@
 <xsl:variable name="def-svm-generator-port" select="$def-range-start + 69"/>
 <xsl:variable name="predictor-svm-generator-log-path" select="'/log/Predictor/SVMGenerator'"/>
 
-<!-- CTR model generator defaults -->
-<xsl:variable name="def-ctr-predict-model-generator-port" select="$def-range-start + 70"/>
+<!-- CTR model viewer defaults -->
+<xsl:variable name="def-ctr-predict-model-viewer-port" select="$def-range-start + 70"/>
 
 </xsl:stylesheet>

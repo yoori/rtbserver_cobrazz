@@ -1,4 +1,6 @@
 import decimal
+import datetime
+import hashlib
 import html
 import json
 import urllib.parse
@@ -52,6 +54,36 @@ def metric_decimal_text(value):
       'f')
   except decimal.InvalidOperation:
     return str(value)
+
+
+def duration_text(started, ended):
+  if not started or not ended:
+    return ''
+  try:
+    start_time = datetime.datetime.fromisoformat(
+      str(started).replace('Z', '+00:00'))
+    end_time = datetime.datetime.fromisoformat(
+      str(ended).replace('Z', '+00:00'))
+    total_seconds = int((end_time - start_time).total_seconds())
+  except (TypeError, ValueError):
+    return ''
+  if total_seconds < 0:
+    return ''
+
+  days, remaining = divmod(total_seconds, 24 * 60 * 60)
+  hours, remaining = divmod(remaining, 60 * 60)
+  minutes, seconds = divmod(remaining, 60)
+  if days:
+    return (
+      str(days) + 'd ' + str(hours).zfill(2) + 'h ' +
+      str(minutes).zfill(2) + 'm ' + str(seconds).zfill(2) + 's')
+  if hours:
+    return (
+      str(hours) + 'h ' + str(minutes).zfill(2) + 'm ' +
+      str(seconds).zfill(2) + 's')
+  if minutes:
+    return str(minutes) + 'm ' + str(seconds).zfill(2) + 's'
+  return str(seconds) + 's'
 
 
 def feature_importance_item(item):
@@ -354,6 +386,46 @@ def render_feature_importance(traits, component_name='model'):
     '<tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 
+def render_train_steps(traits):
+  steps = traits.get('train_steps')
+  if not isinstance(steps, list) or not steps:
+    return ''
+  status = traits.get('status')
+  items = []
+  for step in steps:
+    if not isinstance(step, dict):
+      continue
+    started = step.get('started')
+    ended = step.get('ended')
+    if ended:
+      step_status = 'completed'
+    elif started:
+      step_status = 'interrupted' if status == 'interrupted' else 'active'
+    else:
+      step_status = 'pending'
+    title = str(step.get('title') or step.get('id') or '-')
+    duration = duration_text(started, ended)
+    if step_status == 'completed' and duration:
+      title += ' : ' + duration
+    timestamps = ''
+    if started or ended:
+      timestamps = (
+        '<small>' + html_text(started or '-') +
+        (' → ' + html_text(ended) if ended else '') + '</small>')
+    items.append(
+      '<li class="train-step train-step-' + step_status + '">'
+      '<span class="train-step-marker" aria-hidden="true"></span>'
+      '<span class="train-step-content"><span class="train-step-title">' +
+      html_text(title) + '</span>' +
+      timestamps + '</span></li>')
+  if not items:
+    return ''
+  return (
+    '<section class="component-section train-steps-section">'
+    '<h3>Training steps</h3><ol class="train-steps">' +
+    ''.join(items) + '</ol></section>')
+
+
 def render_model_component(component_name, traits, selected=False):
   labels = {
     'common': 'Common',
@@ -373,8 +445,9 @@ def render_model_component(component_name, traits, selected=False):
       'Published model trained with out-of-fold campaign correction as baseline.'),
   }
   feature_groups = traits.get('feature_groups', [])
+  prepare = traits.get('kind') == 'prepare'
   campaign_name = traits.get('campaign_name')
-  label = labels.get(component_name, component_name)
+  label = 'Prepare' if prepare else labels.get(component_name, component_name)
   if traits.get('kind') == 'campaign':
     label = (
       'Campaign ' + str(traits.get('db_campaign_id', component_name)) +
@@ -382,6 +455,8 @@ def render_model_component(component_name, traits, selected=False):
   description = descriptions.get(component_name, '')
   if traits.get('kind') == 'campaign':
     description = 'Campaign residual trained over common stable.'
+  if prepare:
+    description = 'Dataset preparation and feature selection.'
   badges = []
   if traits.get('runtime') or traits.get('published'):
     badges.append('<span class="component-published">Runtime</span>')
@@ -395,7 +470,8 @@ def render_model_component(component_name, traits, selected=False):
   header_and_meta = (
     '<article class="model-component" id="component-' +
     html_text(component_name.replace('_', '-')) + '"' + article_state + '>'
-    '<header class="component-header"><div><span class="eyebrow">Model component</span>'
+    '<header class="component-header"><div><span class="eyebrow">' +
+    ('Training phase' if prepare else 'Model component') + '</span>'
     '<h2>' + html_text(label) + '</h2>'
     '<p>' + html_text(description) + '</p></div>' +
     '<div class="component-badges">' + ''.join(badges) + '</div></header>'
@@ -421,10 +497,13 @@ def render_model_component(component_name, traits, selected=False):
     '<div><dt>Feature groups</dt><dd>' + str(len(feature_groups)) + '</dd></div>'
     '<div><dt>Ranked features</dt><dd>' +
     str(len(traits.get('features_importance', []))) + '</dd></div></dl>')
+  train_steps = render_train_steps(traits)
+  if prepare:
+    return header_and_meta + train_steps + '</article>'
   if not traits.get('file'):
-    return header_and_meta + '</article>'
+    return header_and_meta + train_steps + '</article>'
   return (
-    header_and_meta +
+    header_and_meta + train_steps +
     '<section class="component-section"><h3>Feature groups</h3><p>' +
     render_feature_groups(feature_groups) + '</p></section>' +
     render_dataset_sizes(traits) +
@@ -436,20 +515,26 @@ def render_model_component(component_name, traits, selected=False):
     render_feature_importance(traits, component_name) + '</section></article>')
 
 
-def render_model_collection(components):
+def render_model_collection(components, prepare=None):
   component_items = [
     (name, traits)
     for name, traits in components.items()
     if isinstance(traits, dict)
   ]
-  if not component_items:
+  prepare_items = []
+  if isinstance(prepare, dict):
+    prepare_traits = dict(prepare)
+    prepare_traits['kind'] = 'prepare'
+    prepare_items.append(('prepare', prepare_traits))
+  all_items = prepare_items + component_items
+  if not all_items:
     return ''
 
   selected_name = None
   for status in ('training', 'interrupted'):
     selected_name = next((
       name
-      for name, traits in component_items
+      for name, traits in all_items
       if traits.get('status') == status
     ), None)
     if selected_name is not None:
@@ -462,31 +547,41 @@ def render_model_collection(components):
   if selected_name is None:
     selected_name = next((
       name
-      for name, traits in component_items
+      for name, traits in all_items
       if traits.get('runtime')
-    ), component_items[0][0])
+    ), all_items[0][0])
 
   def render_component_link(name, traits):
     selected = name == selected_name
     current = ' aria-current="page"' if selected else ''
+    campaign = traits.get('kind') == 'campaign'
+    prepare_link = traits.get('kind') == 'prepare'
+    campaign_name = traits.get('campaign_name')
+    if campaign:
+      label = 'Campaign ' + str(traits.get('db_campaign_id', name))
+      if campaign_name:
+        label += ' — ' + str(campaign_name)
+    elif prepare_link:
+      label = 'Prepare'
+    else:
+      label = name.replace('_', ' ')
+    link_class = 'component-link component-link-campaign' if campaign else 'component-link'
+    title = (' title="' + html_text(label) + '"') if campaign else ''
     return (
-      '<a class="component-link" data-model="' + html_text((
+      '<a class="' + link_class + '" data-model="' + html_text((
         name + ' ' + str(traits.get('db_campaign_id', '')) +
-        ' ' + str(traits.get('campaign_name') or '')).lower()) +
+        ' ' + str(campaign_name or '')).lower()) +
       '" data-status="' + html_text(traits.get('status', '')) +
       '" data-runtime="' + ('true' if traits.get('runtime') else 'false') +
       '" href="#component-' + html_text(name.replace('_', '-')) + '"' +
-      current + '>' +
-      '<span>' + html_text(
-        name.replace('_', ' ') + (
-          ' — ' + str(traits.get('campaign_name'))
-          if traits.get('campaign_name') else '')) + '</span>' +
+      current + title + '>' +
+      '<span>' + html_text(label) + '</span>' +
       '<small>' + html_text(traits.get('status') or '') + '</small></a>')
 
   common_items = [
     item
     for item in component_items
-    if item[1].get('kind') != 'campaign'
+    if item[1].get('kind') not in ('campaign', 'prepare')
   ]
   campaign_items = [
     item
@@ -517,14 +612,15 @@ def render_model_collection(components):
     '<option value="completed">Completed</option>'
     '<option value="interrupted">Interrupted</option>'
     '<option value="runtime">Runtime</option></select>'
-    '<output id="component-count">' + str(len(component_items)) + ' of ' +
-    str(len(component_items)) + '</output></div>' +
+    '<output id="component-count">' + str(len(all_items)) + ' of ' +
+    str(len(all_items)) + '</output></div>' +
+    render_group('Prepare', prepare_items, 'prepare') +
     render_group('Core models', common_items, 'core') +
     render_group('Campaign models', campaign_items, 'campaign') +
     '</aside><section class="component-detail">' +
     ''.join(
       render_model_component(name, traits, name == selected_name)
-      for name, traits in component_items) +
+      for name, traits in all_items) +
     '</section></div>')
 
 
@@ -544,12 +640,16 @@ def render_model_details(properties):
       train_end = (
         '<div><dt>Train end</dt><dd>' +
         html_text(summary['train_end']) + '</dd></div>')
+    live_status = '' if interrupted else (
+      '<div class="training-live" role="status" aria-live="polite">'
+      '<span class="training-live-marker" aria-hidden="true"></span>'
+      '<span data-refresh-message>Live updates every 5 s</span></div>')
     details = (
       '<header class="model-header">'
       '<div><span class="eyebrow">' +
       ('Training interrupted' if interrupted else 'Training in progress') +
-      '</span>'
-      '<h1>' + html_text(summary['id']) + '</h1></div></header>'
+      '</span><h1>' + html_text(summary['id']) + '</h1></div>' +
+      live_status + '</header>'
       '<dl class="model-meta training-meta">'
       '<div><dt>Train start</dt><dd>' +
       html_text(summary.get('train_start') or '-') + '</dd></div>' +
@@ -562,8 +662,9 @@ def render_model_details(properties):
       str(summary.get('completed_models_count', 0)) + '</dd></div>'
       '<div><dt>Interrupted models</dt><dd>' +
       str(summary.get('interrupted_models_count', 0)) + '</dd></div></dl>')
-    if components:
-      details += render_model_collection(components)
+    prepare = traits.get('prepare')
+    if components or isinstance(prepare, dict):
+      details += render_model_collection(components, prepare)
     return details
 
   model_id = summary['id']
@@ -590,7 +691,8 @@ def render_model_details(properties):
       'train_start',
       'train_end',
       'components',
-      'models')
+      'models',
+      'prepare')
   }
   extra_traits_html = ''
   if extra_traits:
@@ -622,10 +724,10 @@ def render_model_details(properties):
     '<section class="model-section"><h2>Runtime feature groups</h2><p>' +
     render_feature_groups(feature_groups) + '</p></section>')
 
-  if components:
+  if components or isinstance(traits.get('prepare'), dict):
     return (
       details_prefix +
-      render_model_collection(components) +
+      render_model_collection(components, traits.get('prepare')) +
       extra_traits_html)
 
   return (
@@ -643,6 +745,18 @@ def render_index_page(models, selected_properties=None):
   selected_model_id = (
     selected_properties['summary']['id']
     if selected_properties else None)
+  selected_model_status = (
+    selected_properties['summary'].get('status')
+    if selected_properties else None)
+  state_signature = (
+    hashlib.sha256(
+      json_dumps(selected_properties).encode('utf-8')).hexdigest()
+    if selected_properties else '')
+  main_attributes = (
+    ' id="model-details" data-model-id="' +
+    html_text(selected_model_id or '') + '" data-model-status="' +
+    html_text(selected_model_status or '') + '" data-state-signature="' +
+    state_signature + '"')
   content = (
     render_model_details(selected_properties)
     if selected_properties else
@@ -670,8 +784,11 @@ def render_index_page(models, selected_properties=None):
     * { box-sizing: border-box; }
     body { margin: 0; color: var(--ink); background: #fff; letter-spacing: 0; }
     a { color: var(--accent); }
-    .shell { min-height: 100vh; display: grid; grid-template-columns: 300px minmax(0, 1fr); }
-    .sidebar { background: var(--panel); border-right: 1px solid var(--line); }
+    .shell { height: 100vh; display: grid;
+      grid-template-columns: 300px minmax(0, 1fr); overflow: hidden; }
+    .sidebar { height: 100%; overflow-y: auto; overscroll-behavior: contain;
+      scrollbar-gutter: stable; background: var(--panel);
+      border-right: 1px solid var(--line); }
     .brand { padding: 24px; border-bottom: 1px solid var(--line); }
     .brand strong { display: block; font-size: 18px; }
     .brand span { color: var(--muted); font-size: 13px; }
@@ -685,8 +802,17 @@ def render_index_page(models, selected_properties=None):
     .model-link span { color: var(--muted); font-size: 12px; }
     .model-link .in-progress { color: var(--score); font-weight: 700; }
     .model-link .interrupted { color: #b42318; font-weight: 700; }
+    .training-live { display: inline-flex; align-items: center; gap: 8px;
+      color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .training-live-marker { width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 0 3px var(--selected); }
+    .training-live.refresh-delayed { color: #925500; }
+    .training-live.refresh-delayed .training-live-marker {
+      background: var(--score); box-shadow: 0 0 0 3px #fff1d6; }
     .empty-list { padding: 0 24px; color: var(--muted); }
-    main { min-width: 0; padding: 32px 40px 64px; }
+    main { min-width: 0; height: 100%; overflow-y: auto;
+      overscroll-behavior: contain; scrollbar-gutter: stable;
+      padding: 32px 40px 64px; }
     .model-header { display: flex; align-items: end; justify-content: space-between;
       gap: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
     .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700;
@@ -725,6 +851,7 @@ def render_index_page(models, selected_properties=None):
     .component-nav a[aria-current="page"] { border-left-color: var(--accent);
       background: var(--selected); }
     .component-nav a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .component-link-campaign span { font-size: 12px; }
     .component-nav a small { color: var(--muted); font-size: 10px; }
     .component-detail { min-width: 0; }
     .model-component { margin: 0; padding: 28px; border: 1px solid var(--line);
@@ -750,6 +877,24 @@ def render_index_page(models, selected_properties=None):
     .component-meta dd { margin: 4px 0 0; }
     .component-section { padding: 22px 0; border-bottom: 1px solid var(--line); }
     .component-section h3, .model-component h3 { margin: 0; font-size: 16px; }
+    .train-steps { display: grid; gap: 0; margin: 18px 0 0; padding: 0;
+      list-style: none; }
+    .train-step { display: grid; grid-template-columns: 18px minmax(0, 1fr);
+      gap: 9px; padding: 7px 0; color: var(--muted); }
+    .train-step-marker { width: 9px; height: 9px; margin-top: 5px;
+      border: 1px solid #9aa6af; border-radius: 50%; background: #fff; }
+    .train-step-content { display: grid; gap: 2px; min-width: 0; }
+    .train-step-content small { color: var(--muted); font-size: 10px;
+      font-variant-numeric: tabular-nums; }
+    .train-step-completed .train-step-marker { border-color: var(--accent);
+      background: var(--accent); }
+    .train-step-completed .train-step-title { text-decoration: line-through; }
+    .train-step-active { color: var(--ink); font-weight: 700; }
+    .train-step-active .train-step-marker { border-color: var(--score);
+      background: var(--score); box-shadow: 0 0 0 3px #fff1d6; }
+    .train-step-interrupted { color: #b42318; font-weight: 700; }
+    .train-step-interrupted .train-step-marker { border-color: #b42318;
+      background: #b42318; box-shadow: 0 0 0 3px #fee4e2; }
     .feature-groups { color: var(--ink); font-family: ui-monospace, monospace; }
     .section-title p { margin: 5px 0 0; }
     .section-title { display: flex; align-items: start; justify-content: space-between;
@@ -798,11 +943,13 @@ def render_index_page(models, selected_properties=None):
       .component-group { max-height: 250px; overflow: auto; }
     }
     @media (max-width: 820px) {
-      .shell { grid-template-columns: 1fr; }
-      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+      .shell { height: auto; min-height: 100vh; grid-template-columns: 1fr;
+        overflow: visible; }
+      .sidebar { height: auto; overflow: visible; border-right: 0;
+        border-bottom: 1px solid var(--line); }
       .model-list { display: flex; gap: 8px; overflow-x: auto; }
       .model-list li { min-width: 210px; }
-      main { padding: 24px 18px 48px; }
+      main { height: auto; overflow: visible; padding: 24px 18px 48px; }
       .model-header { align-items: start; flex-direction: column; }
       .model-meta { grid-template-columns: repeat(2, 1fr); }
       .feature-tools { grid-template-columns: 1fr; }
@@ -814,16 +961,22 @@ def render_index_page(models, selected_properties=None):
     <aside class="sidebar">
       <div class="brand"><strong>CTR Models</strong><span>Predict model registry</span></div>
       <h2>Models</h2>
-      ''' + render_model_list(models, selected_model_id) + r'''
+      <div id="model-list-container">''' + render_model_list(
+        models, selected_model_id) + r'''</div>
     </aside>
-    <main>''' + content + r'''</main>
+    <main''' + main_attributes + '>' + content + r'''</main>
   </div>
   <script>
-    for (const filter of document.querySelectorAll('.feature-filter')) {
-      const table = document.getElementById(filter.dataset.table);
-      const rows = Array.from(table.querySelectorAll('tbody tr'));
-      const count = document.getElementById(filter.dataset.count);
-      filter.addEventListener('input', () => {
+    const initializeFeatureFilters = (root = document) => {
+      for (const filter of root.querySelectorAll('.feature-filter')) {
+        if (filter.dataset.bound === 'true') {
+          continue;
+        }
+        filter.dataset.bound = 'true';
+        const table = document.getElementById(filter.dataset.table);
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const count = document.getElementById(filter.dataset.count);
+        const applyFilter = () => {
         const query = filter.value.trim().toLowerCase();
         let visible = 0;
         for (const row of rows) {
@@ -833,15 +986,25 @@ def render_index_page(models, selected_properties=None):
         }
         count.value = `${visible} of ${rows.length}`;
         count.textContent = count.value;
-      });
-    }
-    const componentFilter = document.getElementById('component-filter');
-    if (componentFilter) {
-      const links = Array.from(document.querySelectorAll('.component-link'));
-      const articles = Array.from(document.querySelectorAll('.model-component'));
+        };
+        filter.addEventListener('input', applyFilter);
+        applyFilter();
+      }
+    };
+
+    const initializeComponentWorkspace = (
+        root = document,
+        preferredHash = window.location.hash) => {
+      const componentFilter = root.querySelector('#component-filter');
+      if (!componentFilter || componentFilter.dataset.bound === 'true') {
+        return;
+      }
+      componentFilter.dataset.bound = 'true';
+      const links = Array.from(root.querySelectorAll('.component-link'));
+      const articles = Array.from(root.querySelectorAll('.model-component'));
       const statusFilter = document.getElementById('component-status-filter');
       const count = document.getElementById('component-count');
-      const groups = Array.from(document.querySelectorAll('.component-group'));
+      const groups = Array.from(root.querySelectorAll('.component-group'));
 
       const selectComponent = (link, updateHash = true) => {
         for (const item of links) {
@@ -903,11 +1066,177 @@ def render_index_page(models, selected_properties=None):
       componentFilter.addEventListener('input', applyComponentFilter);
       statusFilter.addEventListener('change', applyComponentFilter);
 
-      const hashLink = links.find(link => link.hash === window.location.hash);
+      const hashLink = links.find(link => link.hash === preferredHash);
       if (hashLink) {
         selectComponent(hashLink, false);
       }
+      applyComponentFilter();
+    };
+
+    initializeFeatureFilters();
+    initializeComponentWorkspace();
+
+    const refreshInterval = 5000;
+    const retryInterval = 15000;
+    let refreshTimer = null;
+    let refreshInProgress = false;
+
+    const currentModelMain = () => document.getElementById('model-details');
+
+    const updateRefreshMessage = (message, delayed = false) => {
+      const liveStatus = document.querySelector('.training-live');
+      const target = document.querySelector('[data-refresh-message]');
+      if (!liveStatus || !target) {
+        return;
+      }
+      target.textContent = message;
+      liveStatus.classList.toggle('refresh-delayed', delayed);
+    };
+
+    const scheduleRefresh = delay => {
+      if (refreshTimer !== null) {
+        clearTimeout(refreshTimer);
+      }
+      refreshTimer = null;
+      const main = currentModelMain();
+      if (
+          document.hidden ||
+          !main ||
+          main.dataset.modelStatus !== 'in_progress') {
+        return;
+      }
+      refreshTimer = setTimeout(refreshTrainingState, delay);
+    };
+
+    const uiState = main => {
+      const selectedComponent = main.querySelector(
+        '.component-link[aria-current="page"]');
+      const componentSidebar = main.querySelector('.component-sidebar');
+      return {
+        componentHash: selectedComponent ? selectedComponent.hash : '',
+        componentFilter: main.querySelector('#component-filter')?.value || '',
+        componentStatus: (
+          main.querySelector('#component-status-filter')?.value || 'all'),
+        componentScroll: componentSidebar?.scrollTop || 0,
+        featureFilters: new Map(Array.from(
+          main.querySelectorAll('.feature-filter'),
+          filter => [filter.id, filter.value])),
+        mainScroll: main.scrollTop,
+        windowX: window.scrollX,
+        windowY: window.scrollY,
+      };
+    };
+
+    const restoreUiState = (main, state) => {
+      const componentFilter = main.querySelector('#component-filter');
+      const statusFilter = main.querySelector('#component-status-filter');
+      if (componentFilter) {
+        componentFilter.value = state.componentFilter;
+      }
+      if (statusFilter) {
+        statusFilter.value = state.componentStatus;
+      }
+      for (const filter of main.querySelectorAll('.feature-filter')) {
+        if (state.featureFilters.has(filter.id)) {
+          filter.value = state.featureFilters.get(filter.id);
+        }
+      }
+      initializeFeatureFilters(main);
+      initializeComponentWorkspace(main, state.componentHash);
+      const componentSidebar = main.querySelector('.component-sidebar');
+      if (componentSidebar) {
+        componentSidebar.scrollTop = state.componentScroll;
+      }
+      main.scrollTop = state.mainScroll;
+      window.scrollTo(state.windowX, state.windowY);
+    };
+
+    const fetchModelPage = modelId => fetch(
+      '/?model=' + encodeURIComponent(modelId),
+      {
+        cache: 'no-store',
+        headers: {'Accept': 'text/html'},
+      });
+
+    async function refreshTrainingState() {
+      const currentMain = currentModelMain();
+      if (
+          refreshInProgress ||
+          document.hidden ||
+          !currentMain ||
+          currentMain.dataset.modelStatus !== 'in_progress') {
+        scheduleRefresh(refreshInterval);
+        return;
+      }
+
+      refreshInProgress = true;
+      updateRefreshMessage('Updating…');
+      try {
+        let modelId = currentMain.dataset.modelId;
+        let response = await fetchModelPage(modelId);
+        if (response.status === 404 && modelId.startsWith('~')) {
+          const publishedModelId = modelId.slice(1);
+          const publishedResponse = await fetchModelPage(publishedModelId);
+          if (publishedResponse.ok) {
+            modelId = publishedModelId;
+            response = publishedResponse;
+          }
+        }
+        if (!response.ok) {
+          throw new Error('Refresh failed with HTTP ' + response.status);
+        }
+
+        const nextDocument = new DOMParser().parseFromString(
+          await response.text(),
+          'text/html');
+        const nextMain = nextDocument.getElementById('model-details');
+        if (!nextMain) {
+          throw new Error('Refresh response has no model details');
+        }
+
+        if (
+            currentMain.dataset.stateSignature !==
+            nextMain.dataset.stateSignature) {
+          const state = uiState(currentMain);
+          const importedMain = document.importNode(nextMain, true);
+          currentMain.replaceWith(importedMain);
+
+          const currentList = document.getElementById('model-list-container');
+          const nextList = nextDocument.getElementById('model-list-container');
+          if (currentList && nextList) {
+            currentList.innerHTML = nextList.innerHTML;
+          }
+          if (modelId !== currentMain.dataset.modelId) {
+            history.replaceState(
+              null,
+              '',
+              '/?model=' + encodeURIComponent(modelId) +
+                window.location.hash);
+          }
+          restoreUiState(importedMain, state);
+        }
+        updateRefreshMessage('Up to date · next refresh in 5 s');
+        scheduleRefresh(refreshInterval);
+      } catch (error) {
+        updateRefreshMessage('Refresh delayed · retrying', true);
+        scheduleRefresh(retryInterval);
+      } finally {
+        refreshInProgress = false;
+      }
     }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (refreshTimer !== null) {
+          clearTimeout(refreshTimer);
+          refreshTimer = null;
+        }
+      } else {
+        refreshTrainingState();
+      }
+    });
+    window.addEventListener('online', refreshTrainingState);
+    scheduleRefresh(refreshInterval);
   </script>
 </body>
 </html>

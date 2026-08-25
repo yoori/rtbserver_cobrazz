@@ -191,6 +191,7 @@ let "EXIT_CODE|=$?"
 ## configure predictor services
 CLICKHOUSE_UPLOADER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CLICKHOUSE_UPLOADER_DESCR']"
 CTR_MODEL_GENERATOR_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/CTRPredictModelGenerator']"
+CTR_MODEL_VIEWER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/CTRPredictModelViewer']"
 BIDCOST_PREDICTOR_MERGER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/BidCostPredictModelGenerator']"
 
 CLICKHOUSE_UPLOADER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
@@ -217,6 +218,20 @@ then
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Predictor/CTRPredictModelGenerator.xsl \
     --out-file CTRPredictModelGeneratorConfig.json \
+    --out-dir $OUT_DIR \
+    --plugin-root $PLUGIN_ROOT
+  let "EXIT_CODE|=$?"
+fi
+
+CTR_MODEL_VIEWER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
+  "count($CTR_MODEL_VIEWER_XPATH)" --plugin-root $PLUGIN_ROOT`
+if [ $CTR_MODEL_VIEWER_COUNT -ne 0 ]
+then
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$CTR_MODEL_VIEWER_XPATH" \
+    --app-xml $APP_XML \
+    --xsl $XSLT_ROOT/Predictor/CTRPredictModelViewer.xsl \
+    --out-file CTRPredictModelViewerConfig.json \
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"

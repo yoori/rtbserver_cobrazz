@@ -129,7 +129,8 @@ class RImpressionTrainExporterTest(unittest.TestCase):
         3,
         2,
         '2026-08-01',
-        '2026-08-02')
+        '2026-08-02',
+        offset_rows=7)
       first_path, first_rows = next(chunks)
       self.assertEqual(2, first_rows)
       self.assertTrue(first_path.exists())
@@ -142,10 +143,10 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       self.assertFalse(second_path.exists())
       self.assertEqual(0, process.return_code)
       query = popen.call_args.args[0][-1]
-      self.assertIn('ORDER BY timestamp DESC', query)
+      self.assertIn('ORDER BY timestamp DESC, request_id DESC', query)
       self.assertLess(
         query.index('ORDER BY timestamp DESC'),
-        query.index('LIMIT 3 FORMAT CSVWithNames'))
+        query.index('LIMIT 3 OFFSET 7 FORMAT CSVWithNames'))
 
   def test_training_partitions_are_disjoint(self):
     exporter = RImpressionTrainExporter('')

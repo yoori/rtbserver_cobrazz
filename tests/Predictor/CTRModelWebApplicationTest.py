@@ -30,6 +30,7 @@ except ModuleNotFoundError:
 
 from rtbserver_utils.CTRModelWebApplication import (
   create_application,
+  duration_text,
   feature_importance_item,
   render_index_page,
 )
@@ -232,9 +233,22 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn(
       'href="#component-common-stable" aria-current="page"',
       page)
+    self.assertIn(
+      'class="component-link component-link-campaign"',
+      page)
+    self.assertIn(
+      'title="Campaign 123 — Campaign &lt;name&gt;"',
+      page)
+    self.assertIn(
+      '.component-link-campaign span { font-size: 12px; }',
+      page)
     self.assertIn('campaign_123 123 campaign &lt;name&gt;', page)
     self.assertIn('2026-08-23T11:00:00Z', page)
     self.assertIn('2026-08-23T11:30:00Z', page)
+    self.assertIn('.shell { height: 100vh;', page)
+    self.assertIn('.sidebar { height: 100%; overflow-y: auto;', page)
+    self.assertIn('main { min-width: 0; height: 100%; overflow-y: auto;', page)
+    self.assertIn('.shell { height: auto; min-height: 100vh;', page)
 
   def test_renders_in_progress_model_with_only_train_start(self):
     properties = {
@@ -251,6 +265,18 @@ class CTRModelWebApplicationTest(unittest.TestCase):
 
     self.assertIn('Training in progress', page)
     self.assertIn('2026-08-24T15:55:15Z', page)
+    self.assertIn(
+      'data-model-id="~20260824.155515" data-model-status="in_progress"',
+      page)
+    self.assertIn('data-state-signature="', page)
+    self.assertIn('data-refresh-message>Live updates every 5 s', page)
+    self.assertIn('const refreshInterval = 5000;', page)
+    self.assertIn("cache: 'no-store'", page)
+    self.assertIn("document.addEventListener('visibilitychange'", page)
+    self.assertIn("modelId.startsWith('~')", page)
+    self.assertIn('restoreUiState(importedMain, state);', page)
+    self.assertIn('mainScroll: main.scrollTop', page)
+    self.assertIn('main.scrollTop = state.mainScroll;', page)
     self.assertNotIn('Train end', page)
     self.assertNotIn('Feature importance', page)
     self.assertNotIn('>Config<', page)
@@ -267,6 +293,19 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       },
       'config': {},
       'traits': {
+        'prepare': {
+          'status': 'completed',
+          'train_start': '2026-08-24T15:55:15Z',
+          'train_end': '2026-08-24T15:59:00Z',
+          'train_steps': [
+            {
+              'id': 'feature_selection_export_001',
+              'title': 'Feature selection: export dataset 1/10',
+              'started': '2026-08-24T15:56:00Z',
+              'ended': '2026-08-24T15:57:00Z',
+            },
+          ],
+        },
         'models': [
           {
             'name': 'common',
@@ -274,6 +313,14 @@ class CTRModelWebApplicationTest(unittest.TestCase):
             'status': 'completed',
             'train_start': '2026-08-24T16:00:00Z',
             'train_end': '2026-08-24T16:30:00Z',
+            'train_steps': [
+              {
+                'id': 'training_fit_001',
+                'title': 'Common training: fit and validate 1/30',
+                'started': '2026-08-24T16:01:00Z',
+                'ended': '2026-08-24T16:02:00Z',
+              },
+            ],
           },
           {
             'name': 'common_denoise',
@@ -293,6 +340,14 @@ class CTRModelWebApplicationTest(unittest.TestCase):
             'campaign_name': 'Campaign <name>',
             'eligible_training_impressions': 150000,
             'train_start': '2026-08-24T16:31:00Z',
+            'train_steps': [
+              {
+                'id': 'campaign_training_fit_001',
+                'title': 'Campaign residual training: fit 1/30',
+                'started': '2026-08-24T16:32:00Z',
+                'ended': None,
+              },
+            ],
           },
         ],
       },
@@ -308,6 +363,20 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('2026-08-24T16:31:00Z', page)
     self.assertIn('component-status-training', page)
     self.assertIn('Models within bundle', page)
+    self.assertIn('data-component-group="prepare"', page)
+    self.assertIn('<h3>Prepare<span>1</span></h3>', page)
+    self.assertIn('Feature selection: export dataset 1/10', page)
+    self.assertIn(
+      'Feature selection: export dataset 1/10 : 1m 00s',
+      page)
+    self.assertIn(
+      '2026-08-24T15:56:00Z → 2026-08-24T15:57:00Z',
+      page)
+    self.assertIn('train-step-completed', page)
+    self.assertIn('train-step-active', page)
+    self.assertIn(
+      '.train-step-completed .train-step-title { text-decoration: line-through; }',
+      page)
     self.assertIn(
       'href="#component-campaign-123" aria-current="page"',
       page)
@@ -342,6 +411,12 @@ class CTRModelWebApplicationTest(unittest.TestCase):
             'campaign_name': 'Interrupted campaign',
             'train_start': '2026-08-24T16:00:00Z',
             'train_end': '2026-08-24T16:05:00Z',
+            'train_steps': [{
+              'id': 'campaign_training_fit_001',
+              'title': 'Campaign residual training: fit 1/30',
+              'started': '2026-08-24T16:03:00Z',
+              'ended': None,
+            }],
           },
         ],
       },
@@ -350,11 +425,26 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     page = render_index_page([properties['summary']], properties)
 
     self.assertIn('Training interrupted', page)
+    self.assertNotIn('data-refresh-message>Live updates every 5 s', page)
     self.assertIn('<dt>Interrupted models</dt><dd>1</dd>', page)
     self.assertIn('component-status-interrupted', page)
+    self.assertIn('train-step-interrupted', page)
     self.assertIn('Interrupted campaign', page)
     self.assertIn('2026-08-24T16:05:00Z', page)
     self.assertNotIn('>Config<', page)
+
+  def test_formats_completed_step_duration(self):
+    self.assertEqual(
+      '7s',
+      duration_text(
+        '2026-08-24T15:56:00Z',
+        '2026-08-24T15:56:07Z'))
+    self.assertEqual(
+      '1h 02m 03s',
+      duration_text(
+        '2026-08-24T15:56:00Z',
+        '2026-08-24T16:58:03Z'))
+    self.assertEqual('', duration_text('invalid', 'invalid'))
 
   def test_invalid_scores_do_not_break_bar_scale(self):
     for score in ('invalid', 'NaN', 'Infinity'):

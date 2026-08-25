@@ -127,6 +127,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="CTRPredictModelViewer"
+        configSchema="xsd/Predictor/CTRPredictModelViewerApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
         type="BidCostPredictModelGenerator"
         configSchema="xsd/Predictor/BidCostPredictModelGeneratorApp.xsd"
         minOccurs="0"

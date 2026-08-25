@@ -189,6 +189,15 @@ class CatBoostTrainerTest(unittest.TestCase):
         ],
         timestamp='20260824.120000',
         algorithm_id='aligned_catboost',
+        prepare={
+          'status': 'completed',
+          'train_steps': [{
+            'id': 'export_001',
+            'title': 'Export 1/1',
+            'started': '2026-08-24T12:00:00Z',
+            'ended': '2026-08-24T12:05:00Z',
+          }],
+        },
         train_start='2026-08-24T12:00:00Z',
         train_end='2026-08-24T13:00:00Z')
 
@@ -226,6 +235,9 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual(
         '2026-08-24T12:45:00Z',
         traits['models'][2]['train_end'])
+      self.assertEqual(
+        '2026-08-24T12:05:00Z',
+        traits['prepare']['train_steps'][0]['ended'])
 
   def test_save_campaign_manager_model(self):
     with tempfile.TemporaryDirectory() as temp_dir:

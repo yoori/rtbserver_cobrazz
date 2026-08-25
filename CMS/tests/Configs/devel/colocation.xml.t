@@ -395,9 +395,19 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
             selection_chunk_rows="7000000"
             main_chunk_rows="10000000"
             validation_set_rows="200000"
-            data_delay="86400">
-            <networkParams/>
-          </ctrPredictModelGenerator>
+            data_delay="86400"/>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdCluster/BackendSubCluster/CTRPredictModelViewer"
+        name="CTRPredictModelViewer$NAME_POSTFIX"
+        host="$HOST">
+        <configuration>
+          <ctrPredictModelViewer
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="[% PORT_BASE + 70 %]"/>
+          </ctrPredictModelViewer>
         </configuration>
       </service>
 

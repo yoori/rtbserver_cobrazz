@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.12
 
 import argparse
+import contextlib
 import csv
 import datetime
 import json
@@ -89,6 +90,153 @@ CAMPAIGN_MODEL_FEATURE_CONFIG = {
 }
 
 
+def train_step(step_id, title):
+  return {
+    'id': step_id,
+    'title': title,
+    'started': None,
+    'ended': None,
+  }
+
+
+def indexed_train_steps(prefix, title, count, actions):
+  result = []
+  for index in range(1, count + 1):
+    suffix = str(index).zfill(3)
+    progress = str(index) + '/' + str(count)
+    for action_id, action_title in actions:
+      result.append(train_step(
+        prefix + '_' + action_id + '_' + suffix,
+        title + ': ' + action_title + ' ' + progress))
+  return result
+
+
+def prepare_train_steps(config):
+  return [
+    train_step('prepare_feature_configs', 'Prepare feature configurations'),
+    train_step('find_date_range', 'Determine source date range'),
+    train_step('select_campaigns', 'Select eligible campaigns'),
+    train_step('resolve_campaign_names', 'Resolve campaign names'),
+    train_step('count_available_rows', 'Count available rows'),
+    *indexed_train_steps(
+      'selection_validation',
+      'Feature selection validation dataset',
+      config.selection_validation_sets,
+      (
+        ('export', 'export'),
+        ('libsvm', 'build LibSVM'),
+      )),
+    *indexed_train_steps(
+      'feature_selection',
+      'Feature selection',
+      config.selection_fit_steps,
+      (
+        ('export', 'export dataset'),
+        ('libsvm', 'build LibSVM'),
+        ('fit', 'fit'),
+      )),
+    train_step('save_feature_indexes', 'Save selected feature indexes'),
+    train_step(
+      'release_selection_validation',
+      'Release feature selection validation files'),
+  ]
+
+
+def common_train_steps(config):
+  validation_sets = (
+    config.training_validation_sets +
+    config.final_test_sets)
+  return [
+    *indexed_train_steps(
+      'common_validation',
+      'Common validation dataset',
+      validation_sets,
+      (
+        ('export', 'export'),
+        ('libsvm', 'build LibSVM'),
+      )),
+    *indexed_train_steps(
+      'training',
+      'Common training',
+      config.training_fit_steps,
+      (
+        ('export', 'export dataset'),
+        ('libsvm', 'build LibSVM'),
+        ('fit', 'fit and validate'),
+      )),
+    train_step('save_feature_dictionary', 'Save feature dictionary'),
+    train_step('save_model', 'Save common model'),
+    train_step('finalize_metrics', 'Finalize common metrics'),
+  ]
+
+
+def aligned_train_steps(config, title):
+  validation_sets = config.training_validation_sets + config.final_test_sets
+  return [
+    *indexed_train_steps(
+      'aligned_validation',
+      'Aligned validation dataset',
+      validation_sets,
+      (
+        ('export', 'export shared rows'),
+        ('denoise_libsvm', 'build denoise LibSVM'),
+        ('common_baseline', 'calculate common baseline'),
+      )),
+    *indexed_train_steps(
+      'aligned_training',
+      title,
+      config.training_fit_steps,
+      (
+        ('export', 'export dataset'),
+        ('inputs', 'build aligned inputs'),
+        ('fit', 'fit and validate'),
+      )),
+    train_step('save_feature_dictionary', 'Save feature dictionary'),
+    train_step('save_model', 'Save model'),
+    train_step('finalize_metrics', 'Finalize metrics'),
+    train_step('release_validation', 'Release aligned validation files'),
+  ]
+
+
+def campaign_train_steps(config):
+  validation_sets = config.training_validation_sets + config.final_test_sets
+  return [
+    *indexed_train_steps(
+      'campaign_validation',
+      'Campaign validation dataset',
+      validation_sets,
+      (
+        ('export', 'export'),
+        ('inputs', 'build LibSVM and stable baseline'),
+      )),
+    *indexed_train_steps(
+      'campaign_training',
+      'Campaign residual training',
+      config.training_fit_steps,
+      (
+        ('export', 'export dataset'),
+        ('inputs', 'build LibSVM and stable baseline'),
+        ('fit', 'fit and validate'),
+      )),
+    train_step('save_feature_dictionary', 'Save feature dictionary'),
+    train_step('finalize_metrics', 'Finalize residual metrics and weight'),
+  ]
+
+
+def fit_step_callbacks(progress, section, prefix):
+  def start(step):
+    progress.start_train_step(
+      section,
+      prefix + '_fit_' + str(step).zfill(3))
+
+  def end(step):
+    progress.end_train_step(
+      section,
+      prefix + '_fit_' + str(step).zfill(3))
+
+  return start, end
+
+
 class FeatureStatistics:
   def __init__(self):
     self.total_impressions = 0
@@ -123,7 +271,7 @@ class FeatureStatistics:
 
 
 class InProgressModel:
-  def __init__(self, model_root, train_start=None):
+  def __init__(self, model_root, train_start=None, prepare_steps=None):
     if train_start is None:
       train_start = datetime.datetime.now(datetime.timezone.utc)
     self.train_start = train_start.replace(microsecond=0)
@@ -133,6 +281,7 @@ class InProgressModel:
     self.model_root = pathlib.Path(model_root)
     self.path = self.model_root / ('~' + self.model_id)
     self.traits = None
+    self.prepare_steps = [dict(step) for step in (prepare_steps or [])]
 
   def __enter__(self):
     self.model_root.mkdir(parents=True, exist_ok=True)
@@ -146,6 +295,10 @@ class InProgressModel:
         'status': 'in_progress',
         'train_start': self.train_start_text,
         'pid': os.getpid(),
+        'prepare': {
+          'status': 'planned',
+          'train_steps': self.prepare_steps,
+        },
       }
       self.write_traits_()
     except Exception:
@@ -190,6 +343,71 @@ class InProgressModel:
       train_end=utc_now_text(),
       skip_reason=reason)
 
+  def model_traits(self, model_name):
+    for model in self.traits.get('models', []):
+      if model.get('name') == model_name:
+        return model
+    raise KeyError('Unknown in-progress model: ' + model_name)
+
+  def complete_prepare(self):
+    prepare = self.traits['prepare']
+    prepare['status'] = 'completed'
+    prepare['train_end'] = utc_now_text()
+    self.write_traits_()
+
+  @contextlib.contextmanager
+  def train_step(self, section, step_id):
+    self.start_train_step(section, step_id)
+    try:
+      yield
+    except BaseException:
+      raise
+    else:
+      self.end_train_step(section, step_id)
+
+  def start_train_step(self, section, step_id):
+    timestamp = utc_now_text()
+    for target in self.step_targets_(section):
+      step = self.find_step_(target, step_id)
+      if step.get('started') is None:
+        step['started'] = timestamp
+      step['ended'] = None
+      if target.get('status') == 'planned':
+        target['status'] = 'training'
+        target['train_start'] = timestamp
+    self.write_traits_()
+    return timestamp
+
+  def end_train_step(self, section, step_id):
+    timestamp = utc_now_text()
+    for target in self.step_targets_(section):
+      step = self.find_step_(target, step_id)
+      if step.get('started') is None:
+        raise RuntimeError("Training step '" + step_id + "' was not started")
+      step['ended'] = timestamp
+    self.write_traits_()
+    return timestamp
+
+  def cancel_train_step(self, section, step_id):
+    for target in self.step_targets_(section):
+      step = self.find_step_(target, step_id)
+      step['started'] = None
+      step['ended'] = None
+    self.write_traits_()
+
+  def step_targets_(self, section):
+    if section == 'prepare':
+      return [self.traits['prepare']]
+    model_names = (section,) if isinstance(section, str) else section
+    return [self.model_traits(name) for name in model_names]
+
+  @staticmethod
+  def find_step_(target, step_id):
+    for step in target.get('train_steps', []):
+      if step.get('id') == step_id:
+        return step
+    raise KeyError("Unknown training step: '" + step_id + "'")
+
   def update_models_(self, model_names, **values):
     model_names = set(model_names)
     found_names = set()
@@ -221,6 +439,10 @@ class InProgressModel:
     self.traits['status'] = 'interrupted'
     self.traits['train_end'] = train_end
     self.traits['interruption_reason'] = exception_type.__name__
+    prepare = self.traits.get('prepare')
+    if isinstance(prepare, dict) and prepare.get('status') == 'training':
+      prepare['status'] = 'interrupted'
+      prepare['train_end'] = train_end
     for model in self.traits.get('models', []):
       if model.get('status') == 'training':
         model['status'] = 'interrupted'
@@ -286,13 +508,31 @@ def stream_libsvm_chunks(
     feature_indexes_file=None,
     dictionary_lines=None,
     feature_statistics=None,
+    progress=None,
+    progress_section=None,
+    progress_prefix=None,
 ):
   csv_iterator = iter(csv_chunks)
   svm_file = None
   dictionary_file = None
   feature_stats_file = None
   try:
-    for chunk_index, (csv_file, row_count) in enumerate(csv_iterator):
+    chunk_index = 0
+    while True:
+      step_number = str(chunk_index + 1).zfill(3)
+      export_step = (
+        progress_prefix + '_export_' + step_number
+        if progress_prefix else None)
+      try:
+        if progress is not None:
+          with progress.train_step(progress_section, export_step):
+            csv_file, row_count = next(csv_iterator)
+        else:
+          csv_file, row_count = next(csv_iterator)
+      except StopIteration:
+        if progress is not None:
+          progress.cancel_train_step(progress_section, export_step)
+        break
       logger.debug(
         'Generating %s LibSVM chunk %d with %d rows',
         file_prefix,
@@ -306,13 +546,20 @@ def stream_libsvm_chunks(
       if feature_statistics is not None:
         feature_stats_file = work_dir / (
           file_prefix + '-' + str(chunk_index).zfill(3) + '.stats')
-      generate_libsvm(
-        csv_file,
-        svm_file,
-        features_config_file,
-        dictionary_file,
-        feature_indexes_file,
-        feature_stats_file)
+      libsvm_step = (
+        progress_prefix + '_libsvm_' + step_number
+        if progress_prefix else None)
+      context = (
+        progress.train_step(progress_section, libsvm_step)
+        if progress is not None else contextlib.nullcontext())
+      with context:
+        generate_libsvm(
+          csv_file,
+          svm_file,
+          features_config_file,
+          dictionary_file,
+          feature_indexes_file,
+          feature_stats_file)
       if dictionary_file is not None:
         with dictionary_file.open('rb') as input_file:
           dictionary_lines.update(input_file)
@@ -331,6 +578,7 @@ def stream_libsvm_chunks(
         except FileNotFoundError:
           pass
         svm_file = None
+      chunk_index += 1
   finally:
     close = getattr(csv_iterator, 'close', None)
     if close is not None:
@@ -352,128 +600,209 @@ def stream_libsvm_chunks(
         pass
 
 
-def prepare_validation_sets(
+def remove_files(file_paths):
+  for file_path in file_paths:
+    try:
+      pathlib.Path(file_path).unlink()
+    except FileNotFoundError:
+      pass
+
+
+def prepare_validation_libsvm_sets(
     exporter,
     work_dir,
+    file_prefix,
     features_config_file,
     date_from,
     date_to,
     validation_rows,
     validation_sets,
+    validation_offset_rows=0,
+    feature_indexes_file=None,
+    collect_statistics=False,
+    progress=None,
+    progress_section=None,
+    progress_prefix=None,
 ):
-  validation_csv_files = []
-  selection_validation_files = []
+  validation_files = []
+  validation_statistics = []
+  feature_stats_file = None
+  completed = False
   csv_chunks = exporter.export_chunks(
     work_dir,
-    'validation-source',
+    file_prefix + '-source',
     validation_rows * validation_sets,
     validation_rows,
     date_from,
     date_to,
-    exporter.validation_condition())
-  for chunk_index, (csv_file, row_count) in enumerate(csv_chunks):
-    if row_count != validation_rows:
-      raise RuntimeError(
-        'Validation chunk contains ' + str(row_count) +
-        ' rows, expected ' + str(validation_rows))
-    saved_csv_file = work_dir / (
-      'validation-' + str(chunk_index).zfill(3) + '.csv')
-    shutil.copyfile(csv_file, saved_csv_file)
-    validation_csv_files.append(saved_csv_file)
-    svm_file = work_dir / (
-      'selection-validation-' + str(chunk_index).zfill(3) + '.libsvm')
-    generate_libsvm(saved_csv_file, svm_file, features_config_file)
-    selection_validation_files.append(svm_file)
-
-  if len(validation_csv_files) != validation_sets:
-    raise RuntimeError(
-      'Created ' + str(len(validation_csv_files)) +
-      ' validation sets, expected ' + str(validation_sets))
-  return validation_csv_files, selection_validation_files
-
-
-def filter_validation_sets(
-    validation_csv_files,
-    selection_validation_files,
-    work_dir,
-    features_config_file,
-    feature_indexes_file,
-):
-  result = prepare_component_validation_sets(
-    validation_csv_files,
-    selection_validation_files,
-    work_dir,
-    {
-      'common': (features_config_file, feature_indexes_file),
-    })
-  return result['common']
-
-
-def prepare_component_validation_sets(
-    validation_csv_files,
-    selection_validation_files,
-    work_dir,
-    component_configs,
-):
-  result = {
-    name: ([], [])
-    for name in component_configs
-  }
-  feature_stats_file = None
+    exporter.validation_condition(),
+    offset_rows=validation_offset_rows)
+  csv_iterator = iter(csv_chunks)
   try:
-    for component_name, config in component_configs.items():
-      features_config_file, feature_indexes_file = config
-      component_files, component_statistics = result[component_name]
-      for chunk_index, csv_file in enumerate(validation_csv_files):
-        prefix = (
-          'validation' if component_name == 'common' else
-          'validation-' + component_name.replace('_', '-'))
-        svm_file = work_dir / (
-          prefix + '-' + str(chunk_index).zfill(3) + '.libsvm')
+    for chunk_index in range(validation_sets):
+      step_number = str(chunk_index + 1).zfill(3)
+      try:
+        context = (
+          progress.train_step(
+            progress_section,
+            progress_prefix + '_export_' + step_number)
+          if progress is not None else contextlib.nullcontext())
+        with context:
+          csv_file, row_count = next(csv_iterator)
+      except StopIteration:
+        break
+      if row_count != validation_rows:
+        raise RuntimeError(
+          'Validation chunk contains ' + str(row_count) +
+          ' rows, expected ' + str(validation_rows))
+
+      svm_file = work_dir / (
+        file_prefix + '-' + str(chunk_index).zfill(3) + '.libsvm')
+      if collect_statistics:
         feature_stats_file = work_dir / (
-          prefix + '-' + str(chunk_index).zfill(3) + '.stats')
+          file_prefix + '-' + str(chunk_index).zfill(3) + '.stats')
+      context = (
+        progress.train_step(
+          progress_section,
+          progress_prefix + '_libsvm_' + step_number)
+        if progress is not None else contextlib.nullcontext())
+      with context:
         generate_libsvm(
           csv_file,
           svm_file,
           features_config_file,
           feature_indexes_file=feature_indexes_file,
           feature_stats_file=feature_stats_file)
+      validation_files.append(svm_file)
+      if feature_stats_file is not None:
         statistics = FeatureStatistics()
         statistics.add_file(feature_stats_file)
         feature_stats_file.unlink()
         feature_stats_file = None
-        component_files.append(svm_file)
-        component_statistics.append(statistics)
+        validation_statistics.append(statistics)
+
+    if len(validation_files) != validation_sets:
+      raise RuntimeError(
+        'Created ' + str(len(validation_files)) +
+        ' validation sets, expected ' + str(validation_sets))
+    completed = True
+    return validation_files, validation_statistics
   finally:
+    close = getattr(csv_iterator, 'close', None)
+    if close is not None:
+      close()
     if feature_stats_file is not None:
-      try:
-        feature_stats_file.unlink()
-      except FileNotFoundError:
-        pass
-    for file_path in validation_csv_files + selection_validation_files:
-      try:
-        file_path.unlink()
-      except FileNotFoundError:
-        pass
-  return result
+      remove_files([feature_stats_file])
+    if not completed:
+      remove_files(validation_files)
 
 
-def generate_common_baselines(
-    trainer,
-    common_model_file,
-    validation_files,
+def prepare_denoise_validation_sets(
+    exporter,
     work_dir,
+    correction_features_config_file,
+    common_model_file,
+    common_trainer,
+    common_validation_files,
+    date_from,
+    date_to,
+    validation_rows,
+    validation_sets,
+    validation_offset_rows,
+    progress=None,
 ):
-  baselines = []
-  for index, validation_file in enumerate(validation_files):
-    baseline_file = work_dir / (
-      'validation-common-' + str(index).zfill(3) + '.baseline')
-    trainer.predict_raw_(
-      common_model_file,
-      validation_file,
-      baseline_file)
-    baselines.append(baseline_file)
-  return baselines
+  if len(common_validation_files) != validation_sets:
+    raise ValueError(
+      'Common and denoise validation set counts must match')
+
+  correction_files = []
+  baseline_files = []
+  correction_statistics = []
+  owned_files = []
+  feature_stats_file = None
+  completed = False
+  csv_chunks = exporter.export_chunks(
+    work_dir,
+    'aligned-validation-source',
+    validation_rows * validation_sets,
+    validation_rows,
+    date_from,
+    date_to,
+    exporter.validation_condition(),
+    offset_rows=validation_offset_rows)
+  csv_iterator = iter(csv_chunks)
+  progress_section = ('common_denoise', 'common_stable')
+  try:
+    for index in range(validation_sets):
+      step_number = str(index + 1).zfill(3)
+      try:
+        context = (
+          progress.train_step(
+            progress_section,
+            'aligned_validation_export_' + step_number)
+          if progress is not None else contextlib.nullcontext())
+        with context:
+          csv_file, row_count = next(csv_iterator)
+      except StopIteration:
+        break
+      if row_count != validation_rows:
+        raise RuntimeError(
+          'Aligned validation chunk contains ' + str(row_count) +
+          ' rows, expected ' + str(validation_rows))
+
+      prefix = 'aligned-validation-' + str(index).zfill(3)
+      correction_file = work_dir / (prefix + '-denoise.libsvm')
+      baseline_file = work_dir / (prefix + '-common.baseline')
+      feature_stats_file = work_dir / (prefix + '-denoise.stats')
+      owned_files.extend((
+        correction_file,
+        baseline_file,
+        feature_stats_file,
+      ))
+      context = (
+        progress.train_step(
+          progress_section,
+          'aligned_validation_denoise_libsvm_' + step_number)
+        if progress is not None else contextlib.nullcontext())
+      with context:
+        generate_libsvm(
+          csv_file,
+          correction_file,
+          correction_features_config_file,
+          feature_stats_file=feature_stats_file)
+      statistics = FeatureStatistics()
+      statistics.add_file(feature_stats_file)
+      feature_stats_file.unlink()
+      feature_stats_file = None
+
+      context = (
+        progress.train_step(
+          progress_section,
+          'aligned_validation_common_baseline_' + step_number)
+        if progress is not None else contextlib.nullcontext())
+      with context:
+        common_trainer.predict_raw_(
+          common_model_file,
+          common_validation_files[index],
+          baseline_file)
+      correction_files.append(correction_file)
+      baseline_files.append(baseline_file)
+      correction_statistics.append(statistics)
+
+    if len(correction_files) != validation_sets:
+      raise RuntimeError(
+        'Created ' + str(len(correction_files)) +
+        ' aligned validation sets, expected ' + str(validation_sets))
+    completed = True
+    return list(zip(correction_files, baseline_files)), correction_statistics
+  finally:
+    close = getattr(csv_iterator, 'close', None)
+    if close is not None:
+      close()
+    if feature_stats_file is not None:
+      remove_files([feature_stats_file])
+    if not completed:
+      remove_files(owned_files)
 
 
 def stream_aligned_chunks(
@@ -488,11 +817,28 @@ def stream_aligned_chunks(
     correction_dictionary_lines,
     stable_statistics,
     correction_statistics,
+    progress=None,
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
   try:
-    for chunk_index, (csv_file, row_count) in enumerate(csv_iterator):
+    chunk_index = 0
+    while True:
+      step_number = str(chunk_index + 1).zfill(3)
+      try:
+        context = (
+          progress.train_step(
+            ('common_denoise', 'common_stable'),
+            'aligned_training_export_' + step_number)
+          if progress is not None else contextlib.nullcontext())
+        with context:
+          csv_file, row_count = next(csv_iterator)
+      except StopIteration:
+        if progress is not None:
+          progress.cancel_train_step(
+            ('common_denoise', 'common_stable'),
+            'aligned_training_export_' + step_number)
+        break
       logger.debug(
         'Generating aligned LibSVM chunk %d with %d rows',
         chunk_index + 1,
@@ -518,29 +864,35 @@ def stream_aligned_chunks(
         correction_stats,
       ]
 
-      generate_libsvm(
-        csv_file,
-        stable_svm,
-        common_features_config_file,
-        stable_dictionary,
-        common_feature_indexes_file,
-        stable_stats)
-      generate_libsvm(
-        csv_file,
-        correction_svm,
-        correction_features_config_file,
-        correction_dictionary,
-        feature_stats_file=correction_stats)
-      with stable_dictionary.open('rb') as input_file:
-        stable_dictionary_lines.update(input_file)
-      with correction_dictionary.open('rb') as input_file:
-        correction_dictionary_lines.update(input_file)
-      stable_statistics.add_file(stable_stats)
-      correction_statistics.add_file(correction_stats)
-      common_trainer.predict_raw_(
-        common_model_file,
-        stable_svm,
-        common_baseline)
+      context = (
+        progress.train_step(
+          ('common_denoise', 'common_stable'),
+          'aligned_training_inputs_' + step_number)
+        if progress is not None else contextlib.nullcontext())
+      with context:
+        generate_libsvm(
+          csv_file,
+          stable_svm,
+          common_features_config_file,
+          stable_dictionary,
+          common_feature_indexes_file,
+          stable_stats)
+        generate_libsvm(
+          csv_file,
+          correction_svm,
+          correction_features_config_file,
+          correction_dictionary,
+          feature_stats_file=correction_stats)
+        with stable_dictionary.open('rb') as input_file:
+          stable_dictionary_lines.update(input_file)
+        with correction_dictionary.open('rb') as input_file:
+          correction_dictionary_lines.update(input_file)
+        stable_statistics.add_file(stable_stats)
+        correction_statistics.add_file(correction_stats)
+        common_trainer.predict_raw_(
+          common_model_file,
+          stable_svm,
+          common_baseline)
 
       try:
         yield stable_svm, correction_svm, common_baseline
@@ -551,6 +903,7 @@ def stream_aligned_chunks(
           except FileNotFoundError:
             pass
         current_files = []
+      chunk_index += 1
   finally:
     close = getattr(csv_iterator, 'close', None)
     if close is not None:
@@ -575,6 +928,7 @@ def prepare_campaign_validation_sets(
     date_to,
     validation_rows,
     validation_sets,
+    progress=None,
 ):
   svm_files = []
   baseline_files = []
@@ -591,7 +945,19 @@ def prepare_campaign_validation_sets(
     date_to,
     condition)
   try:
-    for index, (csv_file, row_count) in enumerate(csv_chunks):
+    csv_iterator = iter(csv_chunks)
+    for index in range(validation_sets):
+      step_number = str(index + 1).zfill(3)
+      try:
+        context = (
+          progress.train_step(
+            'campaign_' + str(campaign_id),
+            'campaign_validation_export_' + step_number)
+          if progress is not None else contextlib.nullcontext())
+        with context:
+          csv_file, row_count = next(csv_iterator)
+      except StopIteration:
+        break
       if row_count != validation_rows:
         raise RuntimeError(
           'Campaign validation chunk contains ' + str(row_count) +
@@ -603,22 +969,28 @@ def prepare_campaign_validation_sets(
       campaign_svm = work_dir / (prefix + '.libsvm')
       baseline_file = work_dir / (prefix + '.baseline')
       stats_file = work_dir / (prefix + '.stats')
-      generate_libsvm(
-        csv_file,
-        stable_svm,
-        stable_features_config_file,
-        feature_indexes_file=stable_feature_indexes_file)
-      generate_libsvm(
-        csv_file,
-        campaign_svm,
-        campaign_features_config_file,
-        feature_stats_file=stats_file)
-      current_statistics = FeatureStatistics()
-      current_statistics.add_file(stats_file)
-      stable_trainer.predict_raw_(
-        stable_model_file,
-        stable_svm,
-        baseline_file)
+      context = (
+        progress.train_step(
+          'campaign_' + str(campaign_id),
+          'campaign_validation_inputs_' + step_number)
+        if progress is not None else contextlib.nullcontext())
+      with context:
+        generate_libsvm(
+          csv_file,
+          stable_svm,
+          stable_features_config_file,
+          feature_indexes_file=stable_feature_indexes_file)
+        generate_libsvm(
+          csv_file,
+          campaign_svm,
+          campaign_features_config_file,
+          feature_stats_file=stats_file)
+        current_statistics = FeatureStatistics()
+        current_statistics.add_file(stats_file)
+        stable_trainer.predict_raw_(
+          stable_model_file,
+          stable_svm,
+          baseline_file)
       stable_svm.unlink()
       stats_file.unlink()
       svm_files.append(campaign_svm)
@@ -644,11 +1016,28 @@ def stream_campaign_chunks(
     stable_trainer,
     dictionary_lines,
     feature_statistics,
+    progress=None,
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
   try:
-    for index, (csv_file, row_count) in enumerate(csv_iterator):
+    index = 0
+    while True:
+      step_number = str(index + 1).zfill(3)
+      try:
+        context = (
+          progress.train_step(
+            'campaign_' + str(campaign_id),
+            'campaign_training_export_' + step_number)
+          if progress is not None else contextlib.nullcontext())
+        with context:
+          csv_file, row_count = next(csv_iterator)
+      except StopIteration:
+        if progress is not None:
+          progress.cancel_train_step(
+            'campaign_' + str(campaign_id),
+            'campaign_training_export_' + step_number)
+        break
       logger.debug(
         'Generating campaign %d LibSVM chunk %d with %d rows',
         campaign_id,
@@ -667,24 +1056,30 @@ def stream_campaign_chunks(
         dictionary_file,
         stats_file,
       ]
-      generate_libsvm(
-        csv_file,
-        stable_svm,
-        stable_features_config_file,
-        feature_indexes_file=stable_feature_indexes_file)
-      generate_libsvm(
-        csv_file,
-        campaign_svm,
-        campaign_features_config_file,
-        dictionary_file=dictionary_file,
-        feature_stats_file=stats_file)
-      with dictionary_file.open('rb') as input_file:
-        dictionary_lines.update(input_file)
-      feature_statistics.add_file(stats_file)
-      stable_trainer.predict_raw_(
-        stable_model_file,
-        stable_svm,
-        baseline_file)
+      context = (
+        progress.train_step(
+          'campaign_' + str(campaign_id),
+          'campaign_training_inputs_' + step_number)
+        if progress is not None else contextlib.nullcontext())
+      with context:
+        generate_libsvm(
+          csv_file,
+          stable_svm,
+          stable_features_config_file,
+          feature_indexes_file=stable_feature_indexes_file)
+        generate_libsvm(
+          csv_file,
+          campaign_svm,
+          campaign_features_config_file,
+          dictionary_file=dictionary_file,
+          feature_stats_file=stats_file)
+        with dictionary_file.open('rb') as input_file:
+          dictionary_lines.update(input_file)
+        feature_statistics.add_file(stats_file)
+        stable_trainer.predict_raw_(
+          stable_model_file,
+          stable_svm,
+          baseline_file)
       try:
         yield campaign_svm, baseline_file
       finally:
@@ -694,6 +1089,7 @@ def stream_campaign_chunks(
           except FileNotFoundError:
             pass
         current_files = []
+      index += 1
   finally:
     close = getattr(csv_iterator, 'close', None)
     if close is not None:
@@ -722,7 +1118,9 @@ def dataset_size(statistics):
 
 
 def generate_model(config):
-  with InProgressModel(config.model_root()) as in_progress_model:
+  with InProgressModel(
+      config.model_root(),
+      prepare_steps=prepare_train_steps(config)) as in_progress_model:
     return generate_model_(config, in_progress_model)
 
 
@@ -731,15 +1129,16 @@ def generate_model_(config, in_progress_model):
   work_dir = workspace_root / 'CTRPredictModelGenerator'
   output_dir = config.model_root()
   work_dir.mkdir(parents=True, exist_ok=True)
-  features_config_file = prepare_features_config(work_dir)
-  correction_features_config_file = prepare_features_config(
-    work_dir,
-    CAMPAIGN_CORRECTION_FEATURE_CONFIG,
-    'CTRGeneratorCampaignCorrectionConfig.json')
-  campaign_features_config_file = prepare_features_config(
-    work_dir,
-    CAMPAIGN_MODEL_FEATURE_CONFIG,
-    'CTRGeneratorCampaignModelConfig.json')
+  with in_progress_model.train_step('prepare', 'prepare_feature_configs'):
+    features_config_file = prepare_features_config(work_dir)
+    correction_features_config_file = prepare_features_config(
+      work_dir,
+      CAMPAIGN_CORRECTION_FEATURE_CONFIG,
+      'CTRGeneratorCampaignCorrectionConfig.json')
+    campaign_features_config_file = prepare_features_config(
+      work_dir,
+      CAMPAIGN_MODEL_FEATURE_CONFIG,
+      'CTRGeneratorCampaignModelConfig.json')
   common_dictionary_file = work_dir / 'RImpressionTrain.common.features'
   correction_dictionary_file = (
     work_dir / 'RImpressionTrain.campaign-correction.features')
@@ -758,14 +1157,16 @@ def generate_model_(config, in_progress_model):
   source_rows = exporter.required_source_rows(
     max(selection_rows, training_rows),
     validation_rows_total)
-  date_from, date_to = exporter.find_date_range(
-    source_rows,
-    config.data_delay)
-  eligible_campaign_candidates = exporter.eligible_campaigns(
-    date_from,
-    date_to,
-    config.campaign_model_activity_period,
-    config.min_campaign_model_imps)
+  with in_progress_model.train_step('prepare', 'find_date_range'):
+    date_from, date_to = exporter.find_date_range(
+      source_rows,
+      config.data_delay)
+  with in_progress_model.train_step('prepare', 'select_campaigns'):
+    eligible_campaign_candidates = exporter.eligible_campaigns(
+      date_from,
+      date_to,
+      config.campaign_model_activity_period,
+      config.min_campaign_model_imps)
   campaign_validation_sets = (
     config.training_validation_sets + config.final_test_sets)
   eligible_campaigns = [
@@ -779,9 +1180,10 @@ def generate_model_(config, in_progress_model):
     len(eligible_campaigns),
     len(eligible_campaign_candidates),
     config.min_campaign_model_imps)
-  feature_name_resolver = PostgresFeatureNameResolver(config.postgres_conn)
-  campaign_names = feature_name_resolver.resolve_campaign_names(
-    campaign_id for campaign_id, _, _ in eligible_campaigns)
+  with in_progress_model.train_step('prepare', 'resolve_campaign_names'):
+    feature_name_resolver = PostgresFeatureNameResolver(config.postgres_conn)
+    campaign_names = feature_name_resolver.resolve_campaign_names(
+      campaign_id for campaign_id, _, _ in eligible_campaigns)
   in_progress_model.publish_model_plan(
     [
       {
@@ -789,18 +1191,23 @@ def generate_model_(config, in_progress_model):
         'kind': 'common',
         'runtime': False,
         'status': 'planned',
+        'train_steps': common_train_steps(config),
       },
       {
         'name': 'common_denoise',
         'kind': 'denoise_residual',
         'runtime': False,
         'status': 'planned',
+        'train_steps': aligned_train_steps(
+          config, 'Common denoise training'),
       },
       {
         'name': 'common_stable',
         'kind': 'common_stable',
         'runtime': True,
         'status': 'planned',
+        'train_steps': aligned_train_steps(
+          config, 'Stable common training'),
       },
       *[
         {
@@ -811,6 +1218,7 @@ def generate_model_(config, in_progress_model):
           'db_campaign_id': campaign_id,
           'runtime_campaign_group_id': campaign_id,
           'campaign_name': campaign_names.get(campaign_id),
+          'train_steps': campaign_train_steps(config),
           'eligible_training_impressions': training_impressions,
           'validation_impressions': validation_impressions,
         }
@@ -823,14 +1231,15 @@ def generate_model_(config, in_progress_model):
     date_to=date_to,
     campaign_model_activity_period=config.campaign_model_activity_period,
     min_campaign_model_imps=config.min_campaign_model_imps)
-  available_training_rows = exporter.count_rows(
-    date_from,
-    date_to,
-    exporter.training_condition())
-  available_validation_rows = exporter.count_rows(
-    date_from,
-    date_to,
-    exporter.validation_condition())
+  with in_progress_model.train_step('prepare', 'count_available_rows'):
+    available_training_rows = exporter.count_rows(
+      date_from,
+      date_to,
+      exporter.training_condition())
+    available_validation_rows = exporter.count_rows(
+      date_from,
+      date_to,
+      exporter.validation_condition())
   validation_rows = min(
     config.validation_set_rows,
     available_validation_rows // validation_sets)
@@ -860,14 +1269,18 @@ def generate_model_(config, in_progress_model):
       dir=str(work_dir),
       prefix='ctr-model-cycle.') as cycle_dir_name:
     cycle_dir = pathlib.Path(cycle_dir_name)
-    validation_csv_files, selection_validation_files = prepare_validation_sets(
+    selection_validation_files, _ = prepare_validation_libsvm_sets(
       exporter,
       cycle_dir,
+      'selection-validation',
       features_config_file,
       date_from,
       date_to,
       validation_rows,
-      validation_sets)
+      config.selection_validation_sets,
+      progress=in_progress_model,
+      progress_section='prepare',
+      progress_prefix='selection_validation')
 
     selection_csv_chunks = exporter.export_partitioned_chunks(
       cycle_dir,
@@ -881,33 +1294,54 @@ def generate_model_(config, in_progress_model):
       selection_csv_chunks,
       cycle_dir,
       'selection',
-      features_config_file)
+      features_config_file,
+      progress=in_progress_model,
+      progress_section='prepare',
+      progress_prefix='feature_selection')
+    selection_fit_start, selection_fit_end = fit_step_callbacks(
+      in_progress_model,
+      'prepare',
+      'feature_selection')
     feature_indexes = trainer.select_feature_indexes_from_chunks(
       selection_svm_chunks,
-      selection_validation_files[:config.selection_validation_sets],
+      selection_validation_files,
       fit_iterations=config.fit_iterations,
       patience=config.selection_patience,
       work_dir=cycle_dir,
-      fit_steps=config.selection_fit_steps)
-    with feature_indexes_file.open('w') as output_file:
-      for feature_index in sorted(feature_indexes):
-        output_file.write(str(feature_index) + '\n')
+      fit_steps=config.selection_fit_steps,
+      on_fit_start=selection_fit_start,
+      on_fit_end=selection_fit_end)
+    with in_progress_model.train_step('prepare', 'save_feature_indexes'):
+      with feature_indexes_file.open('w') as output_file:
+        for feature_index in sorted(feature_indexes):
+          output_file.write(str(feature_index) + '\n')
     logger.info('Selected %d LibSVM feature indexes', len(feature_indexes))
+    with in_progress_model.train_step(
+        'prepare', 'release_selection_validation'):
+      remove_files(selection_validation_files)
+    in_progress_model.complete_prepare()
 
-    validation_components = prepare_component_validation_sets(
-      validation_csv_files,
-      selection_validation_files,
+    core_validation_sets = (
+      config.training_validation_sets + config.final_test_sets)
+    core_validation_offset_rows = (
+      config.selection_validation_sets * validation_rows)
+    common_train_start = in_progress_model.start_models('common')
+    validation_files, validation_statistics = prepare_validation_libsvm_sets(
+      exporter,
       cycle_dir,
-      {
-        'common': (features_config_file, feature_indexes_file),
-        'campaign_correction': (correction_features_config_file, None),
-      })
-    validation_files, validation_statistics = validation_components['common']
-    correction_validation_files, correction_validation_statistics = (
-      validation_components['campaign_correction'])
-    training_validation_begin = config.selection_validation_sets
-    training_validation_end = (
-      training_validation_begin + config.training_validation_sets)
+      'common-validation',
+      features_config_file,
+      date_from,
+      date_to,
+      validation_rows,
+      core_validation_sets,
+      validation_offset_rows=core_validation_offset_rows,
+      feature_indexes_file=feature_indexes_file,
+      collect_statistics=True,
+      progress=in_progress_model,
+      progress_section='common',
+      progress_prefix='common_validation')
+    training_validation_end = config.training_validation_sets
     dictionary_lines = set()
     feature_statistics = FeatureStatistics()
     training_csv_chunks = exporter.export_partitioned_chunks(
@@ -925,50 +1359,70 @@ def generate_model_(config, in_progress_model):
       features_config_file,
       feature_indexes_file,
       dictionary_lines,
-      feature_statistics)
-    common_train_start = in_progress_model.start_models('common')
+      feature_statistics,
+      progress=in_progress_model,
+      progress_section='common',
+      progress_prefix='training')
+    common_fit_start, common_fit_end = fit_step_callbacks(
+      in_progress_model,
+      'common',
+      'training')
     common_model, common_logloss_history, common_ctr_thresholds = (
       trainer.train_from_chunks(
         training_svm_chunks,
-        validation_files[training_validation_begin:training_validation_end],
+        validation_files[:training_validation_end],
         validation_files[training_validation_end:],
         fit_iterations=config.fit_iterations,
         patience=config.training_patience,
         work_dir=cycle_dir,
-        fit_steps=config.training_fit_steps))
-    common_train_end = in_progress_model.complete_models('common')
+        fit_steps=config.training_fit_steps,
+        on_fit_start=common_fit_start,
+        on_fit_end=common_fit_end))
     common_dataset_sizes = {
       'train': dataset_size([feature_statistics]),
       'test': dataset_size(
-        validation_statistics[
-          training_validation_begin:training_validation_end]),
+        validation_statistics[:training_validation_end]),
       'final_test': dataset_size(
         validation_statistics[training_validation_end:]),
     }
 
-    with common_dictionary_file.open('wb') as output_file:
-      for line in sorted(dictionary_lines):
-        output_file.write(line)
+    with in_progress_model.train_step('common', 'save_feature_dictionary'):
+      with common_dictionary_file.open('wb') as output_file:
+        for line in sorted(dictionary_lines):
+          output_file.write(line)
 
     common_model_file = cycle_dir / 'common.cbm'
-    common_model.save_model(str(common_model_file))
-    common_baselines = generate_common_baselines(
-      trainer,
-      common_model_file,
-      validation_files,
-      cycle_dir)
-    correction_validation_inputs = list(zip(
-      correction_validation_files[
-        training_validation_begin:training_validation_end],
-      common_baselines[training_validation_begin:training_validation_end]))
-    correction_final_inputs = list(zip(
-      correction_validation_files[training_validation_end:],
-      common_baselines[training_validation_end:]))
+    with in_progress_model.train_step('common', 'save_model'):
+      common_model.save_model(str(common_model_file))
+    with in_progress_model.train_step('common', 'finalize_metrics'):
+      common_dataset_sizes = dict(common_dataset_sizes)
+    common_train_end = in_progress_model.complete_models('common')
 
     stable_dictionary_lines = set()
     correction_dictionary_lines = set()
     stable_statistics = FeatureStatistics()
     correction_statistics = FeatureStatistics()
+    aligned_train_start = in_progress_model.start_models(
+      'common_denoise',
+      'common_stable')
+    correction_validation_inputs, correction_validation_statistics = (
+      prepare_denoise_validation_sets(
+        exporter,
+        cycle_dir,
+        correction_features_config_file,
+        common_model_file,
+        trainer,
+        validation_files,
+        date_from,
+        date_to,
+        validation_rows,
+        core_validation_sets,
+        core_validation_offset_rows,
+        in_progress_model))
+    correction_training_inputs = correction_validation_inputs[
+      :training_validation_end]
+    correction_final_inputs = correction_validation_inputs[
+      training_validation_end:]
     aligned_csv_chunks = exporter.export_partitioned_chunks(
       cycle_dir,
       'aligned-training',
@@ -988,53 +1442,72 @@ def generate_model_(config, in_progress_model):
       stable_dictionary_lines,
       correction_dictionary_lines,
       stable_statistics,
-      correction_statistics)
-    aligned_train_start = in_progress_model.start_models(
-      'common_denoise',
-      'common_stable')
+      correction_statistics,
+      in_progress_model)
+    aligned_fit_start, aligned_fit_end = fit_step_callbacks(
+      in_progress_model,
+      ('common_denoise', 'common_stable'),
+      'aligned_training')
     aligned_models = trainer.train_aligned_from_chunks(
       aligned_chunks,
       correction_trainer,
-      correction_validation_inputs,
-      validation_files[
-        training_validation_begin:training_validation_end],
+      correction_training_inputs,
+      validation_files[:training_validation_end],
       correction_final_inputs,
       validation_files[training_validation_end:],
       fit_iterations=config.fit_iterations,
       patience=config.training_patience,
       work_dir=cycle_dir,
-      fit_steps=config.training_fit_steps)
-    aligned_train_end = in_progress_model.complete_models(
-      'common_denoise',
-      'common_stable')
+      fit_steps=config.training_fit_steps,
+      on_fit_start=aligned_fit_start,
+      on_fit_end=aligned_fit_end)
 
-    with stable_dictionary_file.open('wb') as output_file:
-      for line in sorted(stable_dictionary_lines):
-        output_file.write(line)
-    with correction_dictionary_file.open('wb') as output_file:
-      for line in sorted(correction_dictionary_lines):
-        output_file.write(line)
+    with in_progress_model.train_step(
+        ('common_denoise', 'common_stable'),
+        'save_feature_dictionary'):
+      with stable_dictionary_file.open('wb') as output_file:
+        for line in sorted(stable_dictionary_lines):
+          output_file.write(line)
+      with correction_dictionary_file.open('wb') as output_file:
+        for line in sorted(correction_dictionary_lines):
+          output_file.write(line)
 
     stable_dataset_sizes = {
       'train': dataset_size([stable_statistics]),
       'test': dataset_size(
-        validation_statistics[
-          training_validation_begin:training_validation_end]),
+        validation_statistics[:training_validation_end]),
       'final_test': dataset_size(
         validation_statistics[training_validation_end:]),
     }
     correction_dataset_sizes = {
       'train': dataset_size([correction_statistics]),
       'test': dataset_size(
-        correction_validation_statistics[
-          training_validation_begin:training_validation_end]),
+        correction_validation_statistics[:training_validation_end]),
       'final_test': dataset_size(
         correction_validation_statistics[training_validation_end:]),
     }
 
     stable_model_file = cycle_dir / 'common-stable.cbm'
-    aligned_models['stable_common']['model'].save_model(
-      str(stable_model_file))
+    with in_progress_model.train_step(
+        ('common_denoise', 'common_stable'),
+        'save_model'):
+      aligned_models['stable_common']['model'].save_model(
+        str(stable_model_file))
+    with in_progress_model.train_step(
+        ('common_denoise', 'common_stable'),
+        'finalize_metrics'):
+      stable_dataset_sizes = dict(stable_dataset_sizes)
+      correction_dataset_sizes = dict(correction_dataset_sizes)
+    with in_progress_model.train_step(
+        ('common_denoise', 'common_stable'),
+        'release_validation'):
+      remove_training_inputs(correction_validation_inputs)
+      correction_validation_inputs = []
+      remove_files(validation_files)
+      validation_files = []
+    aligned_train_end = in_progress_model.complete_models(
+      'common_denoise',
+      'common_stable')
     campaign_model_entries = []
     for (
         campaign_id,
@@ -1071,7 +1544,8 @@ def generate_model_(config, in_progress_model):
             date_from,
             date_to,
             campaign_validation_rows,
-            campaign_validation_sets))
+            campaign_validation_sets,
+            in_progress_model))
         campaign_dictionary_lines = set()
         campaign_statistics = FeatureStatistics()
         campaign_csv_chunks = exporter.export_partitioned_chunks(
@@ -1093,8 +1567,13 @@ def generate_model_(config, in_progress_model):
           stable_model_file,
           trainer,
           campaign_dictionary_lines,
-          campaign_statistics)
+          campaign_statistics,
+          in_progress_model)
         campaign_training_validation_end = config.training_validation_sets
+        campaign_fit_start, campaign_fit_end = fit_step_callbacks(
+          in_progress_model,
+          campaign_model_name,
+          'campaign_training')
         campaign_result = campaign_model_trainer.train_residual_from_chunks(
           campaign_chunks,
           campaign_validation_inputs[
@@ -1104,13 +1583,18 @@ def generate_model_(config, in_progress_model):
           fit_iterations=config.fit_iterations,
           patience=config.training_patience,
           work_dir=cycle_dir,
-          fit_steps=config.training_fit_steps)
+          fit_steps=config.training_fit_steps,
+          on_fit_start=campaign_fit_start,
+          on_fit_end=campaign_fit_end)
 
         campaign_dictionary_file = cycle_dir / (
           'campaign-' + str(campaign_id) + '.features')
-        with campaign_dictionary_file.open('wb') as output_file:
-          for line in sorted(campaign_dictionary_lines):
-            output_file.write(line)
+        with in_progress_model.train_step(
+            campaign_model_name,
+            'save_feature_dictionary'):
+          with campaign_dictionary_file.open('wb') as output_file:
+            for line in sorted(campaign_dictionary_lines):
+              output_file.write(line)
         campaign_dataset_sizes = {
           'train': dataset_size([campaign_statistics]),
           'test': dataset_size(
@@ -1120,7 +1604,10 @@ def generate_model_(config, in_progress_model):
             campaign_validation_statistics[
               campaign_training_validation_end:]),
         }
-        campaign_weight = campaign_result['weight']
+        with in_progress_model.train_step(
+            campaign_model_name,
+            'finalize_metrics'):
+          campaign_weight = campaign_result['weight']
         campaign_train_end = in_progress_model.complete_models(
           campaign_model_name)
         campaign_model_entries.append({
@@ -1146,6 +1633,8 @@ def generate_model_(config, in_progress_model):
             'status': 'completed',
             'train_start': campaign_train_start,
             'train_end': campaign_train_end,
+            'train_steps': in_progress_model.model_traits(
+              campaign_model_name)['train_steps'],
           },
         })
       finally:
@@ -1168,6 +1657,8 @@ def generate_model_(config, in_progress_model):
           'status': 'completed',
           'train_start': common_train_start,
           'train_end': common_train_end,
+          'train_steps': in_progress_model.model_traits('common')[
+            'train_steps'],
         },
       },
       {
@@ -1190,6 +1681,8 @@ def generate_model_(config, in_progress_model):
           'status': 'completed',
           'train_start': aligned_train_start,
           'train_end': aligned_train_end,
+          'train_steps': in_progress_model.model_traits('common_denoise')[
+            'train_steps'],
         },
       },
       {
@@ -1211,6 +1704,8 @@ def generate_model_(config, in_progress_model):
           'status': 'completed',
           'train_start': aligned_train_start,
           'train_end': aligned_train_end,
+          'train_steps': in_progress_model.model_traits('common_stable')[
+            'train_steps'],
         },
       },
       *campaign_model_entries,
@@ -1223,6 +1718,7 @@ def generate_model_(config, in_progress_model):
       staging_dir=in_progress_model.path,
       algorithm_id=config.algorithm_id,
       feature_name_resolver=feature_name_resolver,
+      prepare=in_progress_model.traits['prepare'],
       train_start=in_progress_model.train_start_text,
       train_end=train_end)
     logger.info('Generated CampaignManager model in %s', result_dir)

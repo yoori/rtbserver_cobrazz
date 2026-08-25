@@ -29,20 +29,11 @@
     select="$env-config/@workspace_root"/><xsl:if
     test="count($env-config/@workspace_root) = 0"><xsl:value-of
     select="$def-workspace-root"/></xsl:if></xsl:variable>
-  <xsl:variable name="web-port"><xsl:value-of
-    select="$generator-config/cfg:networkParams/@port"/><xsl:if
-    test="count($generator-config/cfg:networkParams/@port) = 0"><xsl:value-of
-    select="$def-ctr-predict-model-generator-port"/></xsl:if></xsl:variable>
-
 {
   "pid_file": "<xsl:value-of select="concat($workspace-root, '/run/CTRPredictModelGenerator.pid')"/>",
   "workspace_root": "<xsl:value-of select="$workspace-root"/>",
   "clickhouse_conn": "<xsl:value-of select="$clickhouse-config/@clickhouse_conn"/>",
   "postgres_conn": "<xsl:value-of select="$central-config/cfg:pgConnection/@connection_string"/>",
-  "web_server": {
-    "host": "0.0.0.0",
-    "port": <xsl:value-of select="$web-port"/>
-  },
   "generate_period": <xsl:value-of select="$generator-config/@generate_period"/><xsl:if
     test="count($generator-config/@generate_period) = 0">86400</xsl:if>,
   "selection_chunk_rows": <xsl:value-of select="$generator-config/@selection_chunk_rows"/><xsl:if

@@ -140,11 +140,14 @@ class RImpressionTrainExporter(object):
       date_from,
       date_to,
       condition=None,
+      offset_rows=0,
   ):
     if max_rows <= 0:
       raise ValueError('max_rows must be positive')
     if chunk_rows <= 0:
       raise ValueError('chunk_rows must be positive')
+    if offset_rows < 0:
+      raise ValueError('offset_rows must not be negative')
 
     output_dir = pathlib.Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -155,7 +158,8 @@ class RImpressionTrainExporter(object):
           date_from,
           date_to,
           max_rows,
-          condition),
+          condition,
+          offset_rows),
       ],
       stdout=subprocess.PIPE)
     current_path = None
@@ -371,6 +375,7 @@ class RImpressionTrainExporter(object):
       date_to,
       train_rows,
       condition=None,
+      offset_rows=0,
   ):
     query = (
       "SELECT "
@@ -396,8 +401,10 @@ class RImpressionTrainExporter(object):
       query += 'AND (' + condition + ') '
     return (
       query +
-      'ORDER BY timestamp DESC '
-      'LIMIT ' + str(train_rows) + ' FORMAT CSVWithNames')
+      'ORDER BY timestamp DESC, request_id DESC '
+      'LIMIT ' + str(train_rows) +
+      ((' OFFSET ' + str(offset_rows)) if offset_rows else '') +
+      ' FORMAT CSVWithNames')
 
   @staticmethod
   def _count_query(date_from, date_to, condition=None):

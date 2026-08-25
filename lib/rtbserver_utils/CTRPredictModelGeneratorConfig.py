@@ -8,8 +8,6 @@ class Config:
     self.postgres_conn = None
     self.pid_file = None
     self.workspace_root = None
-    self.web_host = '0.0.0.0'
-    self.web_port = None
     self.generate_period = 3600.0
     self.selection_chunk_rows = 7000000
     self.main_chunk_rows = 10000000
@@ -65,15 +63,6 @@ class Config:
     self.min_campaign_model_imps = int(config_json.get(
       'min_campaign_model_imps',
       100000))
-    web_server = config_json.get('web_server')
-    if not isinstance(web_server, dict):
-      raise ValueError("Configuration value 'web_server' is required")
-    self.web_host = web_server.get('host', '0.0.0.0')
-    try:
-      self.web_port = int(web_server['port'])
-    except (KeyError, TypeError, ValueError):
-      raise ValueError(
-        "Configuration value 'web_server.port' must be an integer")
     try:
       self.data_delay = int(config_json['data_delay'])
     except (KeyError, TypeError, ValueError):
@@ -84,10 +73,6 @@ class Config:
       raise ValueError("Configuration value 'clickhouse_conn' must be a string")
     if not isinstance(self.algorithm_id, str) or not self.algorithm_id:
       raise ValueError("Configuration value 'algorithm_id' must be non-empty")
-    if not isinstance(self.web_host, str) or not self.web_host:
-      raise ValueError("Configuration value 'web_server.host' must be non-empty")
-    if self.web_port <= 0 or self.web_port > 65535:
-      raise ValueError('web_server.port must be in range 1..65535')
     if self.generate_period <= 0:
       raise ValueError('generate_period must be positive')
     if self.selection_chunk_rows <= 0:

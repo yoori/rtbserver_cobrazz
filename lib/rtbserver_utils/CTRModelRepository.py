@@ -251,6 +251,9 @@ class CTRModelRepository:
     if traits.get('status') == 'in_progress' and not self.process_alive_(pid):
       traits['status'] = 'interrupted'
       traits['interruption_reason'] = 'process_not_running'
+      prepare = traits.get('prepare')
+      if isinstance(prepare, dict) and prepare.get('status') == 'training':
+        prepare['status'] = 'interrupted'
       models = traits.get('models')
       if isinstance(models, list):
         for model in models:

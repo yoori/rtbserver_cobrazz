@@ -39,6 +39,33 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       300000000,
       config.main_chunk_rows * config.training_fit_steps)
 
+  def test_training_plan_has_granular_steps_and_completion_timestamp(self):
+    config = MODULE.Config()
+
+    prepare_steps = TRAINER_MODULE.prepare_train_steps(config)
+    step_ids = {step['id'] for step in prepare_steps}
+
+    self.assertIn('feature_selection_export_001', step_ids)
+    self.assertIn('feature_selection_libsvm_001', step_ids)
+    self.assertIn('feature_selection_fit_001', step_ids)
+    self.assertIn('selection_validation_libsvm_001', step_ids)
+    self.assertNotIn('common_validation_libsvm_001', step_ids)
+    self.assertNotIn('aligned_validation_denoise_libsvm_001', step_ids)
+    common_step_ids = {
+      step['id']
+      for step in TRAINER_MODULE.common_train_steps(config)
+    }
+    aligned_step_ids = {
+      step['id']
+      for step in TRAINER_MODULE.aligned_train_steps(config, 'Aligned')
+    }
+    self.assertIn('common_validation_libsvm_001', common_step_ids)
+    self.assertIn(
+      'aligned_validation_denoise_libsvm_001',
+      aligned_step_ids)
+    self.assertTrue(all(step['started'] is None for step in prepare_steps))
+    self.assertTrue(all(step['ended'] is None for step in prepare_steps))
+
   def test_json_config(self):
     config = MODULE.Config()
     config.init_json({
@@ -46,10 +73,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'workspace_root': '/var/lib/ctr-generator',
       'clickhouse_conn': '--host click00',
       'postgres_conn': 'host=postdb00 dbname=stat',
-      'web_server': {
-        'host': '127.0.0.1',
-        'port': 18080,
-      },
       'algorithm_id': '20260819.120000',
       'generate_period': 3600,
       'selection_chunk_rows': 70,
@@ -70,8 +93,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
 
     self.assertEqual('/var/lib/ctr-generator', config.workspace_root)
     self.assertEqual('host=postdb00 dbname=stat', config.postgres_conn)
-    self.assertEqual('127.0.0.1', config.web_host)
-    self.assertEqual(18080, config.web_port)
     self.assertEqual('20260819.120000', config.algorithm_id)
     self.assertEqual(3600.0, config.generate_period)
     self.assertEqual(70, config.selection_chunk_rows)
@@ -95,7 +116,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       config.init_json({
         'pid_file': '/tmp/ctr-generator.pid',
         'postgres_conn': 'host=postdb00 dbname=stat',
-        'web_server': {'port': 18080},
         'data_delay': 86400,
       })
 
@@ -106,7 +126,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         'pid_file': '/tmp/ctr-generator.pid',
         'workspace_root': '/tmp/ctr-generator',
         'postgres_conn': 'host=postdb00 dbname=stat',
-        'web_server': {'port': 18080},
       })
 
   def test_required_postgres_connection(self):
@@ -115,19 +134,21 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       config.init_json({
         'pid_file': '/tmp/ctr-generator.pid',
         'workspace_root': '/tmp/ctr-generator',
-        'web_server': {'port': 18080},
         'data_delay': 86400,
       })
 
-  def test_required_web_server(self):
+  def test_legacy_web_server_is_ignored(self):
     config = MODULE.Config()
-    with self.assertRaisesRegex(ValueError, 'web_server'):
-      config.init_json({
-        'pid_file': '/tmp/ctr-generator.pid',
-        'workspace_root': '/tmp/ctr-generator',
-        'postgres_conn': 'host=postdb00 dbname=stat',
-        'data_delay': 86400,
-      })
+    config.init_json({
+      'pid_file': '/tmp/ctr-generator.pid',
+      'workspace_root': '/tmp/ctr-generator',
+      'postgres_conn': 'host=postdb00 dbname=stat',
+      'web_server': {'host': '127.0.0.1', 'port': 18080},
+      'data_delay': 86400,
+    })
+
+    self.assertFalse(hasattr(config, 'web_host'))
+    self.assertFalse(hasattr(config, 'web_port'))
 
   def test_features_config_is_embedded(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -320,9 +341,12 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
               'name': 'common',
               'kind': 'common',
               'status': 'planned',
+              'train_steps': [
+                TRAINER_MODULE.train_step('fit_001', 'Fit 1/1'),
+              ],
             }])
-            in_progress.start_models('common')
-            raise RuntimeError('training failed')
+            with in_progress.train_step('common', 'fit_001'):
+              raise RuntimeError('training failed')
 
       self.assertTrue(in_progress.path.is_dir())
       traits = TRAINER_MODULE.json.loads(
@@ -332,24 +356,75 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual('RuntimeError', traits['interruption_reason'])
       self.assertEqual('interrupted', traits['models'][0]['status'])
       self.assertEqual('2026-08-24T16:05:00Z', traits['models'][0]['train_end'])
+      step = traits['models'][0]['train_steps'][0]
+      self.assertEqual('2026-08-24T16:00:00Z', step['started'])
+      self.assertIsNone(step['ended'])
 
-  def test_filter_validation_sets_collects_dataset_sizes(self):
+  def test_completed_training_step_records_started_and_ended(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      model_root = pathlib.Path(temp_dir)
+      train_start = TRAINER_MODULE.datetime.datetime(
+        2026,
+        8,
+        24,
+        15,
+        55,
+        15,
+        tzinfo=TRAINER_MODULE.datetime.timezone.utc)
+
+      with TRAINER_MODULE.InProgressModel(
+          model_root,
+          train_start,
+          prepare_steps=[
+            TRAINER_MODULE.train_step('export_001', 'Export 1/1'),
+          ]) as in_progress:
+        with unittest.mock.patch.object(
+            TRAINER_MODULE,
+            'utc_now_text',
+            side_effect=[
+              '2026-08-24T16:00:00Z',
+              '2026-08-24T16:05:00Z',
+            ]):
+          with in_progress.train_step('prepare', 'export_001'):
+            pass
+
+        traits = TRAINER_MODULE.json.loads(
+          (in_progress.path / 'traits.json').read_text())
+        step = traits['prepare']['train_steps'][0]
+        self.assertEqual('2026-08-24T16:00:00Z', step['started'])
+        self.assertEqual('2026-08-24T16:05:00Z', step['ended'])
+
+  def test_prepare_validation_sets_streams_csv_and_collects_dataset_sizes(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       work_dir = pathlib.Path(temp_dir)
       csv_files = [
         work_dir / 'validation-000.csv',
         work_dir / 'validation-001.csv',
       ]
-      selection_files = [
-        work_dir / 'selection-validation-000.libsvm',
-        work_dir / 'selection-validation-001.libsvm',
-      ]
-      for file_path in csv_files + selection_files:
+      for file_path in csv_files:
         file_path.write_text('source\n')
       features_config_file = work_dir / 'features.json'
       features_config_file.write_text('{}')
       feature_indexes_path = work_dir / 'feature-indexes'
       feature_indexes_path.write_text('1\n')
+      export_calls = []
+
+      class Exporter:
+        @staticmethod
+        def validation_condition():
+          return 'validation-condition'
+
+        def export_chunks(self, *args, **kwargs):
+          export_calls.append((args, kwargs))
+
+          def chunks():
+            for file_path in csv_files:
+              try:
+                yield file_path, 10
+              finally:
+                file_path.unlink(missing_ok=True)
+
+          return chunks()
 
       def generate_libsvm(
           input_file,
@@ -372,17 +447,24 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           TRAINER_MODULE,
           'generate_libsvm',
           side_effect=generate_libsvm):
-        validation_files, statistics = TRAINER_MODULE.filter_validation_sets(
-          csv_files,
-          selection_files,
+        validation_files, statistics = (
+          TRAINER_MODULE.prepare_validation_libsvm_sets(
+          Exporter(),
           work_dir,
+          'common-validation',
           features_config_file,
-          feature_indexes_path)
+          '2026-08-01',
+          '2026-08-02',
+          10,
+          2,
+          validation_offset_rows=30,
+          feature_indexes_file=feature_indexes_path,
+          collect_statistics=True))
 
       self.assertEqual(2, len(validation_files))
       self.assertTrue(all(file_path.exists() for file_path in validation_files))
       self.assertFalse(any(file_path.exists() for file_path in csv_files))
-      self.assertFalse(any(file_path.exists() for file_path in selection_files))
+      self.assertEqual(30, export_calls[0][1]['offset_rows'])
       self.assertEqual(10, statistics[0].total_impressions)
       self.assertEqual(2, statistics[0].total_clicks)
       self.assertEqual(11, statistics[1].total_impressions)
@@ -423,17 +505,23 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual('--config=/tmp/config.json', command[2])
     self.assertEqual('--run-once', command[3])
 
-  def test_supervisor_stops_first_child_if_second_start_fails(self):
+  def test_supervisor_starts_only_trainer(self):
     process = unittest.mock.MagicMock()
+    process.poll.return_value = 1
     with (
         unittest.mock.patch.object(
           MODULE,
           'start_child',
-          side_effect=[process, RuntimeError('start failed')]),
+          return_value=process) as start_child,
         unittest.mock.patch.object(MODULE, 'stop_children') as stop_children):
-      with self.assertRaisesRegex(RuntimeError, 'start failed'):
+      with self.assertRaisesRegex(RuntimeError, 'trainer exited'):
         MODULE.supervise('/tmp/config.json')
 
+    start_child.assert_called_once()
+    self.assertEqual('trainer', start_child.call_args.args[0])
+    self.assertTrue(
+      start_child.call_args.args[1][1].endswith(
+        '/bin/CTRPredictModelTrainer.py'))
     stop_children.assert_called_once_with([('trainer', process)])
 
 
