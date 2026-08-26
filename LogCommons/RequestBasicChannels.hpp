@@ -121,7 +121,7 @@ namespace AdServer::LogProcessing
         }
 
         FixedNum revenue;
-        NumberList impression_channels;
+        NumberArray impression_channels;
 
       protected:
         virtual
@@ -154,7 +154,7 @@ namespace AdServer::LogProcessing
         return data_->revenue;
       }
 
-      const NumberList& impression_channels() const
+      const NumberArray& impression_channels() const
       {
         return data_->impression_channels;
       }
@@ -195,7 +195,7 @@ namespace AdServer::LogProcessing
 
         FixedNum revenue;
         FixedNum revenue_bid;
-        NumberList impression_channels;
+        NumberArray impression_channels;
 
       protected:
         virtual
@@ -235,7 +235,7 @@ namespace AdServer::LogProcessing
         return data_->revenue_bid;
       }
 
-      const NumberList& impression_channels() const
+      const NumberArray& impression_channels() const
       {
         return data_->impression_channels;
       }
@@ -250,7 +250,7 @@ namespace AdServer::LogProcessing
       DataPtr data_;
     };
 
-    typedef std::list<AdBidSlotImpression> AdBidSlotImpressionList;
+    typedef std::vector<AdBidSlotImpression> AdBidSlotImpressionList;
 
     class AdSelectProps
     {
@@ -291,7 +291,7 @@ namespace AdServer::LogProcessing
         SpacesMarksString format;
         bool test_request;
         bool profiling_available;
-        NumberList full_freq_caps;
+        NumberArray full_freq_caps;
 
       protected:
         virtual
@@ -360,7 +360,7 @@ namespace AdServer::LogProcessing
         return data_->profiling_available;
       }
 
-      const NumberList&
+      const NumberArray&
       full_freq_caps() const
       {
         return data_->full_freq_caps;
@@ -379,7 +379,7 @@ namespace AdServer::LogProcessing
 
       typedef Aux_::StringIoWrapper SizeT;
 
-      typedef std::list<SizeT> SizeListT;
+      typedef std::vector<SizeT> SizeListT;
 
       class Data: public ReferenceCounting::AtomicImpl
       {

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <string_view>
 #include "RequestBasicChannels.hpp"
 #include "BufferWriter.hpp"
 
@@ -28,10 +29,7 @@ namespace AdServer::LogProcessing
     const char AD_SELECT_FIELD_SEPARATOR = ':';
 
     bool
-    parse_unsigned_(
-      const char*& current,
-      const char* end,
-      std::uint32_t& value) noexcept
+    parse_unsigned_(const char*& current, const char* end, std::uint32_t& value) noexcept
     {
       if (current == end)
       {
@@ -46,22 +44,30 @@ namespace AdServer::LogProcessing
         }
       }
 
-      constexpr std::uint32_t MAX_VALUE =
-        std::numeric_limits<std::uint32_t>::max();
+      constexpr std::uint32_t MAX_VALUE = std::numeric_limits<std::uint32_t>::max();
       constexpr std::uint32_t MAX_VALUE_DIV_10 = MAX_VALUE / 10;
       constexpr unsigned int MAX_VALUE_MOD_10 = MAX_VALUE % 10;
 
       const char* const begin = current;
-      constexpr std::ptrdiff_t SAFE_DIGITS =
-        std::numeric_limits<std::uint32_t>::digits10;
-      const char* const safe_end = end - current < SAFE_DIGITS ?
-        end : current + SAFE_DIGITS;
-
       std::uint32_t result = 0;
+      if constexpr (String::StringManip::StrToIntHelper::UINT32_SWAR_SUPPORTED)
+      {
+        if (end - current >= 8 &&
+          String::StringManip::StrToIntHelper::parse_uint32_eight_digits(current, result))
+        {
+          current += 8;
+        }
+      }
+
+      constexpr std::ptrdiff_t SAFE_DIGITS = std::numeric_limits<std::uint32_t>::digits10;
+      const std::ptrdiff_t parsed_digits = current - begin;
+      const std::ptrdiff_t safe_digits_left = SAFE_DIGITS - parsed_digits;
+      const char* const safe_end = end - current < safe_digits_left ?
+        end : current + safe_digits_left;
+
       while (current != safe_end)
       {
-        const unsigned int digit =
-          static_cast<unsigned char>(*current) -
+        const unsigned int digit = static_cast<unsigned char>(*current) -
           static_cast<unsigned char>('0');
         if (digit > 9)
         {
@@ -74,8 +80,7 @@ namespace AdServer::LogProcessing
 
       if (current == safe_end && current != end)
       {
-        unsigned int digit =
-          static_cast<unsigned char>(*current) -
+        unsigned int digit = static_cast<unsigned char>(*current) -
           static_cast<unsigned char>('0');
         while (digit <= 9)
         {
@@ -92,8 +97,7 @@ namespace AdServer::LogProcessing
             break;
           }
 
-          digit =
-            static_cast<unsigned char>(*current) -
+          digit = static_cast<unsigned char>(*current) -
             static_cast<unsigned char>('0');
         }
       }
@@ -108,8 +112,291 @@ namespace AdServer::LogProcessing
     }
 
     bool
+    read_component_(
+      const char*& current,
+      const char* end,
+      char separator,
+      std::string_view& component) noexcept
+    {
+      if (current == end)
+      {
+        return false;
+      }
+
+      const char* const begin = current;
+      current = std::find(current, end, separator);
+      if (current == begin)
+      {
+        return false;
+      }
+
+      component = std::string_view(begin, current - begin);
+      if (current != end)
+      {
+        if (++current == end)
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    bool
+    parse_uint32_list_(std::string_view token, NumberArray& values)
+    {
+      if (token == "-")
+      {
+        values.clear();
+        return true;
+      }
+
+      constexpr std::size_t EXPECTED_VALUE_SIZE = 9;
+      NumberArray result;
+      result.reserve(token.size() / EXPECTED_VALUE_SIZE + 1);
+
+      const char* current = token.begin();
+      const char* const end = token.end();
+      while (current != end)
+      {
+        std::uint32_t value = 0;
+        if (!parse_unsigned_(current, end, value))
+        {
+          return false;
+        }
+        result.push_back(value);
+
+        if (current == end)
+        {
+          break;
+        }
+
+        if (*current != ',' || ++current == end)
+        {
+          return false;
+        }
+      }
+
+      values.swap(result);
+      return true;
+    }
+
+    bool
+    parse_fixed_number_(
+      std::string_view token,
+      RequestBasicChannelsInnerData::FixedNum& value)
+    {
+      if (token.empty())
+      {
+        return false;
+      }
+
+      try
+      {
+        value = RequestBasicChannelsInnerData::FixedNum(token);
+        return true;
+      }
+      catch (const eh::Exception&)
+      {
+        return false;
+      }
+    }
+
+    bool
+    parse_bool_(std::string_view token, bool& value) noexcept
+    {
+      if (token == "0")
+      {
+        value = false;
+        return true;
+      }
+
+      if (token == "1")
+      {
+        value = true;
+        return true;
+      }
+
+      return false;
+    }
+
+    template <typename StringType>
+    bool
+    parse_escaped_string_(std::string_view token, StringType& value)
+    {
+      if (token.empty())
+      {
+        return false;
+      }
+
+      StringType result;
+      result.reserve(token.size());
+      const char* const end = token.end();
+      for (const char* current = token.begin(); current != end; ++current)
+      {
+        char ch = *current;
+        if (ch == Aux_::EscapeChar::ESC_CHAR)
+        {
+          unsigned int decoded = 0;
+          for (std::size_t index = 0; index < 2; ++index)
+          {
+            if (++current == end)
+            {
+              return false;
+            }
+
+            unsigned int digit = *current - '0';
+            if (digit > 9)
+            {
+              digit -= 7;
+              if (digit < 10 || digit > 15)
+              {
+                return false;
+              }
+            }
+            decoded = decoded * 16 + digit;
+          }
+          ch = static_cast<char>(decoded);
+        }
+        result.push_back(ch);
+      }
+
+      value.swap(result);
+      return true;
+    }
+
+    bool
+    parse_uint32_(std::string_view token, std::uint32_t& value) noexcept
+    {
+      const char* current = token.begin();
+      const char* const end = token.end();
+      return parse_unsigned_(current, end, value) && current == end;
+    }
+
+    bool
+    parse_ad_slot_impression_(
+      std::string_view token,
+      RequestBasicChannelsInnerData::AdSlotImpression& value)
+    {
+      const char* current = token.begin();
+      const char* const end = token.end();
+      std::string_view revenue_token;
+      std::string_view channels_token;
+      if (!read_component_(current, end, ASI_SEP1, revenue_token) ||
+        !read_component_(current, end, ASI_SEP1, channels_token) ||
+        current != end)
+      {
+        return false;
+      }
+
+      RequestBasicChannelsInnerData::FixedNum revenue;
+      NumberArray impression_channels;
+      if (!parse_fixed_number_(revenue_token, revenue) ||
+        !parse_uint32_list_(channels_token, impression_channels))
+      {
+        return false;
+      }
+
+      value = RequestBasicChannelsInnerData::AdSlotImpression(
+        revenue,
+        impression_channels);
+      return true;
+    }
+
+    bool
+    parse_ad_bid_slot_impression_(
+      std::string_view token,
+      RequestBasicChannelsInnerData::AdBidSlotImpression& value)
+    {
+      const char* current = token.begin();
+      const char* const end = token.end();
+      std::string_view revenue_token;
+      std::string_view revenue_bid_token;
+      std::string_view channels_token;
+      if (!read_component_(current, end, ABSI_SEP1, revenue_token) ||
+        !read_component_(current, end, ABSI_SEP1, revenue_bid_token) ||
+        !read_component_(current, end, ABSI_SEP1, channels_token) ||
+        current != end)
+      {
+        return false;
+      }
+
+      RequestBasicChannelsInnerData::FixedNum revenue;
+      RequestBasicChannelsInnerData::FixedNum revenue_bid;
+      NumberArray impression_channels;
+      if (!parse_fixed_number_(revenue_token, revenue) ||
+        !parse_fixed_number_(revenue_bid_token, revenue_bid) ||
+        !parse_uint32_list_(channels_token, impression_channels))
+      {
+        return false;
+      }
+
+      value = RequestBasicChannelsInnerData::AdBidSlotImpression(
+        revenue,
+        revenue_bid,
+        impression_channels);
+      return true;
+    }
+
+    bool
+    parse_ad_select_props_(
+      std::string_view token,
+      RequestBasicChannelsInnerData::AdSelectProps& value)
+    {
+      const char* current = token.begin();
+      const char* const end = token.end();
+      std::string_view tag_id_token;
+      std::string_view size_token;
+      std::string_view format_token;
+      std::string_view test_request_token;
+      std::string_view profiling_available_token;
+      std::string_view full_freq_caps_token;
+      if (!read_component_(
+          current, end, AD_SELECT_FIELD_SEPARATOR, tag_id_token) ||
+        !read_component_(
+          current, end, AD_SELECT_FIELD_SEPARATOR, size_token) ||
+        !read_component_(
+          current, end, AD_SELECT_FIELD_SEPARATOR, format_token) ||
+        !read_component_(
+          current, end, AD_SELECT_FIELD_SEPARATOR, test_request_token) ||
+        !read_component_(
+          current, end, AD_SELECT_FIELD_SEPARATOR, profiling_available_token) ||
+        !read_component_(
+          current, end, AD_SELECT_FIELD_SEPARATOR, full_freq_caps_token) ||
+        current != end)
+      {
+        return false;
+      }
+
+      std::uint32_t tag_id = 0;
+      std::string size;
+      std::string format;
+      bool test_request = false;
+      bool profiling_available = false;
+      NumberArray full_freq_caps;
+      if (!parse_uint32_(tag_id_token, tag_id) ||
+        !parse_escaped_string_(size_token, size) ||
+        !parse_escaped_string_(format_token, format) ||
+        !parse_bool_(test_request_token, test_request) ||
+        !parse_bool_(profiling_available_token, profiling_available) ||
+        !parse_uint32_list_(full_freq_caps_token, full_freq_caps))
+      {
+        return false;
+      }
+
+      value = RequestBasicChannelsInnerData::AdSelectProps(
+        tag_id,
+        size,
+        format,
+        test_request,
+        profiling_available,
+        full_freq_caps);
+      return true;
+    }
+
+    bool
     parse_trigger_matches_(
-      const String::SubString& token,
+      std::string_view token,
       RequestBasicChannelsInnerData::TriggerMatchArray& values)
     {
       constexpr std::size_t EXPECTED_TRIGGER_MATCH_SIZE = 17;
@@ -123,8 +410,7 @@ namespace AdServer::LogProcessing
       {
         std::uint32_t channel_id = 0;
         std::uint32_t channel_trigger_id = 0;
-        if (!parse_unsigned_(current, end, channel_id) ||
-          current == end || *current != ':')
+        if (!parse_unsigned_(current, end, channel_id) || current == end || *current != ':')
         {
           return false;
         }
@@ -176,15 +462,11 @@ namespace AdServer::LogProcessing
     FixedBufStream<SlashCategory>& is,
     RequestBasicChannelsInnerData::AdBidSlotImpression& value)
   {
-    const String::SubString token = is.read_token();
-    if (is.good())
+    const auto raw_token = is.read_token();
+    const std::string_view token(raw_token.data(), raw_token.size());
+    if (is.good() && !parse_ad_bid_slot_impression_(token, value))
     {
-      FixedBufStream<SemiCategory> stream(token);
-      value.data_ = new RequestBasicChannelsInnerData::AdBidSlotImpression::Data();
-      stream >> value.data_->revenue;
-      stream >> value.data_->revenue_bid;
-      stream >> value.data_->impression_channels;
-      is.take_fails(stream);
+      is.setstate(std::ios_base::failbit);
     }
     return is;
   }
@@ -194,7 +476,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>& is,
     RequestBasicChannelsInnerData::AdBidSlotImpressionList& values)
   {
-    const String::SubString token = is.read_token();
+    const auto raw_token = is.read_token();
+    const std::string_view token(raw_token.data(), raw_token.size());
     if (is.good())
     {
       if (token == "-")
@@ -202,26 +485,29 @@ namespace AdServer::LogProcessing
         values.clear();
         return is;
       }
-      typedef RequestBasicChannelsInnerData::AdBidSlotImpressionList List;
-      List container;
-      FixedBufStream<SlashCategory> list_stream(token);
-      while (true)
+
+      constexpr std::size_t EXPECTED_IMPRESSION_SIZE = 32;
+      RequestBasicChannelsInnerData::AdBidSlotImpressionList result;
+      result.reserve(token.size() / EXPECTED_IMPRESSION_SIZE + 1);
+
+      const char* current = token.begin();
+      const char* const end = token.end();
+      while (current != end)
       {
-        List::value_type elem;
-        list_stream >> elem;
-        if (!list_stream.good())
+        std::string_view impression_token;
+        RequestBasicChannelsInnerData::AdBidSlotImpression impression;
+        if (!read_component_(current, end, ABSI_SEP2, impression_token) ||
+          !parse_ad_bid_slot_impression_(impression_token, impression))
         {
-          break;
+          is.setstate(std::ios_base::failbit);
+          return is;
         }
-        container.push_back(elem);
+        result.push_back(std::move(impression));
       }
 
-      is.take_fails(list_stream);
-      if (is.good())
-      {
-        values.swap(container);
-      }
+      values.swap(result);
     }
+
     return is;
   }
 
@@ -230,7 +516,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>& is,
     RequestBasicChannelsInnerData::TriggerMatchArray& values)
   {
-    const String::SubString token = is.read_token();
+    const auto raw_token = is.read_token();
+    const std::string_view token(raw_token.data(), raw_token.size());
     if (is.good())
     {
       if (token == "-")
@@ -244,6 +531,7 @@ namespace AdServer::LogProcessing
         is.setstate(std::ios_base::failbit);
       }
     }
+
     return is;
   }
 
@@ -257,19 +545,40 @@ namespace AdServer::LogProcessing
     // inplace loading from stream
     value.data_ = new RequestBasicChannelsInnerData::AdRequestProps::Data;
     is >> value.data_->sizes;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     is >> value.data_->country_code;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     is >> value.data_->max_text_ads;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     is >> value.data_->text_ad_cost_threshold;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     is >> value.data_->display_ad_shown;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     is >> value.data_->text_ad_shown;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     is >> value.data_->ad_select;
-    assert(!is.fail());
+    if (is.fail())
+    {
+      return is;
+    }
     value.data_->auction_type = get_auction_type(is);
     value.normalize();
     return is;
@@ -281,20 +590,13 @@ namespace AdServer::LogProcessing
     RequestBasicChannelsInnerData::AdSelectProps& value)
     /*throw(eh::Exception)*/
   {
-    const String::SubString token = is.read_token();
-    if (is.good())
+    const auto raw_token = is.read_token();
+    const std::string_view token(raw_token.data(), raw_token.size());
+    if (is.good() && !parse_ad_select_props_(token, value))
     {
-      FixedBufStream<SemiCategory> stream(token);
-      value.data_ =
-        new RequestBasicChannelsInnerData::AdSelectProps::Data();
-      stream >> value.data_->tag_id;
-      stream >> value.data_->size;
-      stream >> value.data_->format;
-      stream >> value.data_->test_request;
-      stream >> value.data_->profiling_available;
-      stream >> value.data_->full_freq_caps;
-      is.take_fails(stream);
+      is.setstate(std::ios_base::failbit);
     }
+
     return is;
   }
 
@@ -303,19 +605,20 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>& is,
     RequestBasicChannelsInnerData::AdSlotImpression& value)
   {
-    const String::SubString token = is.pop_token();
+    const auto raw_token = is.pop_token();
+    const std::string_view token(raw_token.data(), raw_token.size());
     if (token.empty())
     {
       is.setstate(std::ios_base::eofbit);
     }
     else
     {
-      FixedBufStream<SemiCategory> stream(token);
-      value.data_ = new RequestBasicChannelsInnerData::AdSlotImpression::Data;
-      stream >> value.data_->revenue;
-      stream >> value.data_->impression_channels;
-      is.take_fails(stream);
+      if (!parse_ad_slot_impression_(token, value))
+      {
+        is.setstate(std::ios_base::failbit);
+      }
     }
+
     return is;
   }
 
@@ -326,7 +629,16 @@ namespace AdServer::LogProcessing
   {
     // inplace loading from stream
     match_request.data_ = new RequestBasicChannelsInnerData::Match::Data;
-    is >> match_request.data_->history_channels;
+    const auto raw_history_channels_token = is.read_token();
+    const std::string_view history_channels_token(
+      raw_history_channels_token.data(),
+      raw_history_channels_token.size());
+    if (is.good() && !parse_uint32_list_(
+      history_channels_token, match_request.data_->history_channels))
+    {
+      is.setstate(std::ios_base::failbit);
+      return is;
+    }
     is >> match_request.data_->page_trigger_channels;
     is >> match_request.data_->search_trigger_channels;
     is >> match_request.data_->url_trigger_channels;
@@ -389,6 +701,7 @@ namespace AdServer::LogProcessing
     {
       os << '-';
     }
+
     return os;
   }
 
@@ -415,8 +728,7 @@ namespace AdServer::LogProcessing
     BufferWriter& out,
     const RequestBasicChannelsInnerData::AdSlotImpression& ad_imp)
   {
-    out << ad_imp.revenue() << ASI_SEP1
-      << ad_imp.impression_channels();
+    out << ad_imp.revenue() << ASI_SEP1 << ad_imp.impression_channels();
     return out;
   }
 
