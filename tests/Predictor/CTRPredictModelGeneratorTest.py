@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.12
 
+import decimal
 import importlib.util
 import pathlib
 import signal
@@ -377,8 +378,11 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
             file='campaign_123.cbm',
             feature_groups=[['campaign']],
             features_importance=[{
-              'score': 1.5,
+              'score': decimal.Decimal('0.00008901938322533171'),
               'feature': 'campaign:123',
+              'yes_share': decimal.Decimal('1.250000'),
+              'yes_ctr': decimal.Decimal('0.002000'),
+              'no_ctr': decimal.Decimal('0.001000'),
             }],
             logloss_history=[{
               'step': 1,
@@ -398,6 +402,15 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         self.assertEqual(
           'campaign:123',
           campaign['features_importance'][0]['feature'])
+        self.assertEqual(
+          decimal.Decimal('0.00008901938322533171'),
+          TRAINER_MODULE.json.loads(
+            traits_file.read_text(),
+            parse_float=decimal.Decimal)['models'][1][
+              'features_importance'][0]['score'])
+        self.assertIn(
+          '"yes_share": 1.250000',
+          traits_file.read_text())
         self.assertEqual(0.2, campaign['logloss_history'][0]['test'])
         self.assertFalse((in_progress.path / '.traits.json.tmp').exists())
 
@@ -433,6 +446,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
                 TRAINER_MODULE.train_step('fit_001', 'Fit 1/1'),
               ],
             }])
+            in_progress.traits['models'][0]['features_importance'] = [{
+              'score': decimal.Decimal('0.00008901938322533171'),
+            }]
             with in_progress.train_step('common', 'fit_001'):
               raise RuntimeError('training failed')
 
@@ -443,6 +459,12 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual('2026-08-24T16:05:00Z', traits['train_end'])
       self.assertEqual('RuntimeError', traits['interruption_reason'])
       self.assertEqual('interrupted', traits['models'][0]['status'])
+      self.assertEqual(
+        decimal.Decimal('0.00008901938322533171'),
+        TRAINER_MODULE.json.loads(
+          (in_progress.path / 'traits.json').read_text(),
+          parse_float=decimal.Decimal)['models'][0][
+            'features_importance'][0]['score'])
       self.assertEqual('2026-08-24T16:05:00Z', traits['models'][0]['train_end'])
       step = traits['models'][0]['train_steps'][0]
       self.assertEqual('2026-08-24T16:00:00Z', step['started'])

@@ -417,7 +417,7 @@ int check_custom_tree_construct(
   index->index(channels);
   */
 
-  std::list<ChannelIdSet> match_groups;
+  std::list<ChannelIdArray> match_groups;
 
   std::cout << "indexing finished" << std::endl;
   std::cout << "start testing" << std::endl;
@@ -433,7 +433,7 @@ int check_custom_tree_construct(
 
       if(!str.empty())
       {
-        ChannelIdSet channels;
+        ChannelIdArray channels;
         String::StringManip::Splitter<String::AsciiStringManip::SepComma> split(str);
         String::SubString channel_id_str;
         while(split.get_token(channel_id_str))
@@ -441,14 +441,14 @@ int check_custom_tree_construct(
           unsigned long channel_id;
           if(String::StringManip::str_to_int(channel_id_str, channel_id))
           {
-            channels.insert(channel_id);
+            channels.push_back(channel_id);
           }
         }
 
         /*
         {
-          ChannelIdSet result_channels;
-          ChannelIdSet result_estimate_channels;
+          ChannelIdArray result_channels;
+          ChannelIdArray result_estimate_channels;
 
           for(unsigned long i = 0; i < REPEAT_COUNT; ++i)
           {
@@ -466,13 +466,13 @@ int check_custom_tree_construct(
   }
   else
   {
-    ChannelIdSet match_channels;
-    match_channels.insert(427559);
-    match_channels.insert(616269);
-    match_channels.insert(1156235);
-    match_channels.insert(1891019);
-    match_channels.insert(3581706);
-    match_channels.insert(3612040);
+    ChannelIdArray match_channels;
+    match_channels.push_back(427559);
+    match_channels.push_back(616269);
+    match_channels.push_back(1156235);
+    match_channels.push_back(1891019);
+    match_channels.push_back(3581706);
+    match_channels.push_back(3612040);
     match_groups.push_back(match_channels);
   }
 
@@ -486,8 +486,8 @@ int check_custom_tree_construct(
 
   while(mit != match_groups.end())
   {
-    ChannelIdSet result_channels;
-    ChannelIdSet result_estimate_channels;
+    ChannelIdArray result_channels;
+    ChannelIdArray result_estimate_channels;
 
     for(unsigned long i = 0; i < REPEAT_COUNT; ++i)
     {

@@ -127,6 +127,57 @@ namespace
       LP::RequestBasicChannelsInnerData::AdRequestPropsOptional());
   }
 
+  LP::RequestBasicChannelsInnerData
+  make_ad_request_record()
+  {
+    using Record = LP::RequestBasicChannelsInnerData;
+
+    LP::NumberArray impression_channels = {300, 301, 302};
+    Record::AdSlotImpression display_ad(
+      Record::FixedNum("100.25"),
+      impression_channels);
+    Record::AdSlotImpressionOptional display_ad_optional(display_ad);
+
+    Record::AdBidSlotImpressionList text_ads;
+    text_ads.emplace_back(
+      Record::FixedNum("200.25"),
+      Record::FixedNum("300.25"),
+      impression_channels);
+    text_ads.emplace_back(
+      Record::FixedNum("400.25"),
+      Record::FixedNum("500.25"),
+      impression_channels);
+
+    LP::NumberArray full_freq_caps = {1, 2, 3};
+    Record::AdSelectProps ad_select(
+      12'345'678,
+      "SIZE 0",
+      "format !@#$%,^$&*:.",
+      true,
+      true,
+      full_freq_caps);
+    Record::AdSelectPropsOptional ad_select_optional(ad_select);
+
+    LP::StringList sizes = {"SIZE 1", "SIZE 2", "SIZE 3"};
+    Record::AdRequestProps ad_request(
+      sizes,
+      "RU",
+      20,
+      Record::FixedNum("30.125"),
+      display_ad_optional,
+      text_ads,
+      ad_select_optional,
+      AdServer::CampaignSvcs::AT_MAX_ECPM);
+    Record::AdRequestPropsOptional ad_request_optional(ad_request);
+
+    return Record(
+      'P',
+      LP::UserId("hSUsEk05T-m8PafRng8v6w.."),
+      LP::UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
+      Record::MatchOptional(),
+      Record::AdRequestPropsOptional(ad_request_optional));
+  }
+
   std::size_t
   trigger_count(const LP::RequestBasicChannelsInnerData& data)
   {
@@ -281,6 +332,43 @@ namespace
     }
   }
 
+  bool
+  parse_record(const std::string& record)
+  {
+    std::istringstream input(record);
+    LP::RequestBasicChannelsInnerData data;
+    return static_cast<bool>(input >> data);
+  }
+
+  void
+  verify_ad_request_parser()
+  {
+    const auto expected = make_ad_request_record();
+    std::ostringstream output;
+    output << expected << '\n';
+    const std::string serialized = output.str();
+
+    LP::RequestBasicChannelsInnerData restored;
+    std::istringstream input(serialized);
+    if (!(input >> restored) || !(restored == expected))
+    {
+      throw std::runtime_error("RBC ad-request round-trip failed");
+    }
+
+    constexpr std::size_t DISPLAY_AD_FIELD = 8;
+    constexpr std::size_t TEXT_ADS_FIELD = 9;
+    constexpr std::size_t AD_SELECT_FIELD = 10;
+    if (parse_record(replace_field(
+        serialized, DISPLAY_AD_FIELD, "@100:")) ||
+      parse_record(replace_field(
+        serialized, TEXT_ADS_FIELD, "100:200:300/")) ||
+      parse_record(replace_field(
+        serialized, AD_SELECT_FIELD, "@1:size:format:1:1:")))
+    {
+      throw std::runtime_error("invalid RBC compound field was accepted");
+    }
+  }
+
   void
   run_synthetic(const Options& options)
   {
@@ -291,6 +379,7 @@ namespace
 
     verify_history_channel_parser(serialized);
     verify_trigger_match_parser(serialized);
+    verify_ad_request_parser();
 
     {
       LP::RequestBasicChannelsInnerData restored;
