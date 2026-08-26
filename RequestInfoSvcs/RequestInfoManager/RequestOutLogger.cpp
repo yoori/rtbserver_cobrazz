@@ -647,7 +647,7 @@ namespace RequestInfoSvcs
         ri.colo_id,
         ri.publisher_account_id,
         ri.tag_id,
-        ri.size_id ? LogProcessing::OptionalUlong(ri.size_id) : LogProcessing::OptionalUlong(),
+        ri.size_id ? LogProcessing::OptionalUInt32(ri.size_id) : LogProcessing::OptionalUInt32(),
         ri.country,
         ri.adv_account_id,
         ri.campaign_id,
@@ -968,7 +968,7 @@ namespace RequestInfoSvcs
       const ProcessingState& processing_state,
       const CollectorT::DataT::DataT& data)
     {
-      typedef CollectorT::DataT::KeyT::OptionalUlong OptionalUlong;
+      typedef CollectorT::DataT::KeyT::OptionalUInt32 OptionalUInt32;
 
       if (processing_state.state == RequestInfo::RS_NORMAL)
       {
@@ -978,14 +978,14 @@ namespace RequestInfoSvcs
           CollectorT::DataT::KeyT(
             ri.tag_id,
             ri.tag_top_offset.present() ?
-              OptionalUlong(*ri.tag_top_offset) :
-              OptionalUlong(),
+              OptionalUInt32(*ri.tag_top_offset) :
+              OptionalUInt32(),
             ri.tag_left_offset.present() ?
-              OptionalUlong(*ri.tag_left_offset) :
-              OptionalUlong(),
+              OptionalUInt32(*ri.tag_left_offset) :
+              OptionalUInt32(),
             ri.tag_visibility.present() ?
-              OptionalUlong(*ri.tag_visibility) :
-              OptionalUlong(),
+              OptionalUInt32(*ri.tag_visibility) :
+              OptionalUInt32(),
             ri.test_request),
           data);
         add_record(key, add_data);
@@ -1571,8 +1571,8 @@ namespace RequestInfoSvcs
         data.add(
           CollectorT::DataT::KeyT(pi.user_status, pi.country,
             pi.tag_id,
-            pi.size_id ? LogProcessing::OptionalUlong(pi.size_id) :
-              LogProcessing::OptionalUlong()),
+            pi.size_id ? LogProcessing::OptionalUInt32(pi.size_id) :
+              LogProcessing::OptionalUInt32()),
           CollectorT::DataT::DataT(1));
         add_record(key, data);
       }
@@ -2602,7 +2602,7 @@ namespace RequestInfoSvcs
           data.ext_tag_id = info.ext_tag_id;
           data.ip_address = info.ip_address;
           data.cc_id = info.cc_id;
-          data.channel_list = info.channels;
+          data.channel_list.assign(info.channels.begin(), info.channels.end());
           data.history_channel_list.assign(
             info.user_channels.begin(), info.user_channels.end());
           data.geo_channels.assign(
@@ -2772,7 +2772,7 @@ namespace RequestInfoSvcs
           data.campaign_id = info.campaign_id;
           data.ccg_id = info.ccg_id;
           data.cc_id = info.cc_id;
-          data.channel_list = info.channels;
+          data.channel_list.assign(info.channels.begin(), info.channels.end());
           data.history_channel_list.assign(info.user_channels.begin(), info.user_channels.end());
           data.geo_channels.assign(info.geo_channels.begin(), info.geo_channels.end());
           data.device_channel_id = info.device_channel_id;

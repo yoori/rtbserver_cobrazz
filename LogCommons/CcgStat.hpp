@@ -14,7 +14,7 @@ class ReachStatInnerKey
 {
 public:
   explicit
-  ReachStatInnerKey(unsigned long id = 0)
+  ReachStatInnerKey(std::uint32_t id = 0)
   :
     id_(id)
   {
@@ -25,30 +25,30 @@ public:
     return id_ == rhs.id_;
   }
 
-  unsigned long id() const noexcept
+  std::uint32_t id() const noexcept
   {
     return id_;
   }
 
-  unsigned long
+  std::uint32_t
   ccg_id() const noexcept
   {
     return id();
   }
 
-  unsigned long
+  std::uint32_t
   cc_id() const noexcept
   {
     return id();
   }
 
-  unsigned long
+  std::uint32_t
   cmp_id() const noexcept
   {
     return id();
   }
 
-  unsigned long
+  std::uint32_t
   adv_account_id() const noexcept
   {
     return id();
@@ -71,7 +71,7 @@ public:
   operator<<(BufferWriter& out, const ReachStatInnerKey& key);
 
 private:
-  unsigned long id_;
+  std::uint32_t id_;
 };
 
 class ReachStatInnerData
@@ -156,7 +156,7 @@ struct ReachStatKey_V_1_0: DayTimestamp
     return *this;
   }
 
-  unsigned long
+  std::uint32_t
   colo_id() const noexcept
   {
     return 0;
@@ -169,7 +169,7 @@ struct ReachStatKey
 
   ReachStatKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -204,7 +204,7 @@ struct ReachStatKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -234,7 +234,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 
@@ -829,7 +829,7 @@ public:
   }
 
   AdvertiserUserStatInnerKey(
-    unsigned long adv_account_id,
+    std::uint32_t adv_account_id,
     const OptionalDayTimestamp& last_appearance_date
   )
   :
@@ -849,7 +849,7 @@ public:
       last_appearance_date_ == rhs.last_appearance_date_;
   }
 
-  unsigned long adv_account_id() const
+  std::uint32_t adv_account_id() const
   {
     return adv_account_id_;
   }
@@ -883,7 +883,7 @@ private:
     }
   }
 
-  unsigned long adv_account_id_;
+  std::uint32_t adv_account_id_;
   OptionalDayTimestamp last_appearance_date_;
   size_t hash_;
 };

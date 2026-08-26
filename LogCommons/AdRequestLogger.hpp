@@ -84,8 +84,8 @@ class AdvertiserActionData_V_3_3_1
 {
   SecondsTimestamp time_;
   UserId user_id_;
-  OptionalUlong action_id_;
-  OptionalUlong device_channel_id_;
+  OptionalUInt32 action_id_;
+  OptionalUInt32 device_channel_id_;
   OptionalValue<RequestId> action_request_id_;
   NumberArray ccg_ids_;
   StringIoWrapperOptional referrer_;
@@ -106,13 +106,13 @@ public:
     return user_id_;
   }
 
-  const OptionalUlong&
+  const OptionalUInt32&
   action_id() const noexcept
   {
     return action_id_;
   }
 
-  const OptionalUlong&
+  const OptionalUInt32&
   device_channel_id() const noexcept
   {
     return device_channel_id_;
@@ -159,8 +159,8 @@ public:
   AdvertiserActionData_V_3_3_1(
     const SecondsTimestamp& time_val,
     const UserId& user_id_val,
-    const OptionalUlong& action_id_val,
-    const OptionalUlong& device_channel_id_val,
+    const OptionalUInt32& action_id_val,
+    const OptionalUInt32& device_channel_id_val,
     const OptionalValue<RequestId>& action_request_id_val,
     NumberArray ccg_ids_val,
     const StringIoWrapperOptional& referrer_val,
@@ -215,8 +215,8 @@ class AdvertiserActionData
   SecondsTimestamp time_;
   UserIdIoWrapper user_id_;
   RequestIdIoWrapper request_id_;
-  OptionalUlong action_id_;
-  OptionalUlong device_channel_id_;
+  OptionalUInt32 action_id_;
+  OptionalUInt32 device_channel_id_;
   OptionalValue<RequestId> action_request_id_;
   NumberArray ccg_ids_;
   StringIoWrapperOptional referrer_;
@@ -243,13 +243,13 @@ public:
     return request_id_;
   }
 
-  const OptionalUlong&
+  const OptionalUInt32&
   action_id() const noexcept
   {
     return action_id_;
   }
 
-  const OptionalUlong&
+  const OptionalUInt32&
   device_channel_id() const noexcept
   {
     return device_channel_id_;
@@ -297,8 +297,8 @@ public:
     const SecondsTimestamp& time_val,
     const UserId& user_id_val,
     const RequestId& request_id_val,
-    const OptionalUlong& action_id_val,
-    const OptionalUlong& device_channel_id_val,
+    const OptionalUInt32& action_id_val,
+    const OptionalUInt32& device_channel_id_val,
     const OptionalValue<RequestId>& action_request_id_val,
     NumberArray ccg_ids_val,
     const StringIoWrapperOptional& referrer_val,
@@ -393,7 +393,7 @@ struct ActionOpportunityData
 {
   SecondsTimestamp time;
   UserId user_id;
-  unsigned long cid;
+  std::uint32_t cid;
   RequestId request_id;
 
   bool operator==(const ActionOpportunityData& data) const
@@ -430,8 +430,8 @@ class PassbackOpportunityData
 public:
   PassbackOpportunityData(
     const Generics::Time& time,
-    unsigned long colo_id,
-    unsigned long tag_id,
+    std::uint32_t colo_id,
+    std::uint32_t tag_id,
     const AdServer::Commons::RequestId& request_id,
     char user_status,
     const AdServer::Commons::UserId& user_id
@@ -472,13 +472,13 @@ public:
     return time_;
   }
 
-  unsigned long
+  std::uint32_t
   colo_id() const
   {
     return colo_id_;
   }
 
-  unsigned long
+  std::uint32_t
   tag_id() const
   {
     return tag_id_;
@@ -520,8 +520,8 @@ public:
 
 private:
   SecondsTimestamp time_;
-  unsigned long colo_id_;
-  unsigned long tag_id_;
+  std::uint32_t colo_id_;
+  std::uint32_t tag_id_;
   RequestId request_id_;
   char user_status_;
   unsigned long distribution_hash_;

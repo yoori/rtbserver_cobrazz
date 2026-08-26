@@ -23,7 +23,7 @@ public:
   }
 
   CcUserStatInnerKey(
-    unsigned long cc_id,
+    std::uint32_t cc_id,
     const OptionalDayTimestamp& last_appearance_date
   )
   :
@@ -43,7 +43,7 @@ public:
       last_appearance_date_ == rhs.last_appearance_date_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
@@ -88,7 +88,7 @@ private:
     }
   }
 
-  unsigned long cc_id_;
+  std::uint32_t cc_id_;
   OptionalDayTimestamp last_appearance_date_;
   size_t hash_;
 };
@@ -156,7 +156,7 @@ struct CcUserStatKey
 
   CcUserStatKey(
     const DayTimestamp& adv_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     adv_sdate_(adv_sdate),
@@ -182,7 +182,7 @@ public:
     return adv_sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -213,7 +213,7 @@ private:
   }
 
   DayTimestamp adv_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

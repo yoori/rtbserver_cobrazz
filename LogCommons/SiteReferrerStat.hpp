@@ -19,7 +19,7 @@ namespace AdServer::LogProcessing
 
     SiteReferrerStatInnerKey_V_3_1(
       char user_status,
-      unsigned long tag_id,
+      std::uint32_t tag_id,
       const String::SubString& host
     )
       /*throw(eh::Exception)*/
@@ -48,7 +48,7 @@ namespace AdServer::LogProcessing
       return user_status_;
     }
 
-    unsigned long tag_id() const
+    std::uint32_t tag_id() const
     {
       return tag_id_;
     }
@@ -95,7 +95,7 @@ namespace AdServer::LogProcessing
     }
 
     char user_status_;
-    unsigned long tag_id_;
+    std::uint32_t tag_id_;
     EmptyHolder<Aux_::StringIoWrapper> host_;
     size_t hash_;
   };
@@ -188,7 +188,7 @@ namespace AdServer::LogProcessing
 
     SiteReferrerStatInnerKey(
       char user_status,
-      unsigned long tag_id,
+      std::uint32_t tag_id,
       const String::SubString& ext_tag_id,
       const String::SubString& host
     )
@@ -234,7 +234,7 @@ namespace AdServer::LogProcessing
       return user_status_;
     }
 
-    unsigned long tag_id() const
+    std::uint32_t tag_id() const
     {
       return tag_id_;
     }
@@ -286,7 +286,7 @@ namespace AdServer::LogProcessing
     }
 
     char user_status_;
-    unsigned long tag_id_;
+    std::uint32_t tag_id_;
     EmptyHolder<Aux_::StringIoWrapper> ext_tag_id_;
     EmptyHolder<Aux_::StringIoWrapper> host_;
     size_t hash_;
@@ -606,7 +606,7 @@ namespace AdServer::LogProcessing
 
     SiteReferrerStatKey(
       const DayTimestamp& sdate,
-      unsigned long colo_id
+      std::uint32_t colo_id
     )
     :
       sdate_(sdate),
@@ -631,7 +631,7 @@ namespace AdServer::LogProcessing
       return sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -660,7 +660,7 @@ namespace AdServer::LogProcessing
     }
 
     DayTimestamp sdate_;
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     size_t hash_;
   };
 

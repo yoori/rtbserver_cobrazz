@@ -17,7 +17,7 @@ struct PageLoadsDailyStatKey_V_1_0
 
   PageLoadsDailyStatKey_V_1_0(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -43,7 +43,7 @@ public:
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -75,7 +75,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 
@@ -86,7 +86,7 @@ public:
 
   template <class ITERATOR_TYPE_>
   PageLoadsDailyStatInnerKey(
-    unsigned long site_id,
+    std::uint32_t site_id,
     const std::string& country,
     const ITERATOR_TYPE_& tags_begin,
     const ITERATOR_TYPE_& tags_end
@@ -106,7 +106,7 @@ public:
     return *holder_ == *rhs.holder_;
   }
 
-  unsigned long site_id() const
+  std::uint32_t site_id() const
   {
     return holder_->site_id;
   }
@@ -148,7 +148,7 @@ private:
 
     template <class ITERATOR_TYPE_>
     DataHolder(
-      unsigned long site_id_val,
+      std::uint32_t site_id_val,
       const std::string& country_val,
       const ITERATOR_TYPE_& tags_begin,
       const ITERATOR_TYPE_& tags_end
@@ -196,7 +196,7 @@ private:
       }
     }
 
-    unsigned long site_id;
+    std::uint32_t site_id;
     OptionalStringT country;
     NumberArray tags;
     size_t hash;
@@ -296,7 +296,7 @@ struct PageLoadsDailyStatKey
 
   PageLoadsDailyStatKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -332,7 +332,7 @@ public:
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -369,7 +369,7 @@ private:
   }
 
   DayHourTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

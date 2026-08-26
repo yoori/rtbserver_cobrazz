@@ -14,7 +14,7 @@ class DiscoverChannelStateKey
 public:
 
   DiscoverChannelStateKey(
-    unsigned long channel_id = 0
+    std::uint32_t channel_id = 0
   )
   :
     channel_id_(channel_id)
@@ -26,7 +26,7 @@ public:
     return channel_id_ == rhs.channel_id_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -42,7 +42,7 @@ public:
     const DiscoverChannelStateKey &key) /*throw(eh::Exception)*/;
 
 private:
-  unsigned long channel_id_;
+  std::uint32_t channel_id_;
 };
 
 class DiscoverChannelStateData

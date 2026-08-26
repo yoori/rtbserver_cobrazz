@@ -26,7 +26,7 @@ public:
   {}
 
   ChannelImpInventoryInnerKey(
-    unsigned long channel_id,
+    std::uint32_t channel_id,
     CCGType ccg_type
   )
   :
@@ -43,7 +43,7 @@ public:
       ccg_type_ == rhs.ccg_type_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -95,7 +95,7 @@ private:
   }
 
 private:
-  unsigned long channel_id_;
+  std::uint32_t channel_id_;
   CCGType ccg_type_;
   size_t hash_;
 };
@@ -529,7 +529,7 @@ struct ChannelImpInventoryKey
 
   ChannelImpInventoryKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -553,7 +553,7 @@ struct ChannelImpInventoryKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -581,7 +581,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

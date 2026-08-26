@@ -47,10 +47,10 @@ namespace AdServer::LogProcessing
              profile_referer == rhs.profile_referer);
         }
 
-        unsigned long site_id;
+        std::uint32_t site_id;
         SecondsTimestamp isp_time;
         UserId user_id;
-        OptionalUlong page_load_id;
+        OptionalUInt64 page_load_id;
         bool ad_shown;
         bool profile_referer;
 
@@ -65,10 +65,10 @@ namespace AdServer::LogProcessing
       OptInSection(): data_(new Data) {}
 
       OptInSection(
-        unsigned long site_id,
+        std::uint32_t site_id,
         const SecondsTimestamp& isp_time,
         const UserId& user_id,
-        const OptionalUlong& page_load_id,
+        const OptionalUInt64& page_load_id,
         bool ad_shown,
         bool profile_referer
       )
@@ -88,7 +88,7 @@ namespace AdServer::LogProcessing
         return &rhs == this || data_ == rhs.data_ || *data_ == *rhs.data_;
       }
 
-      unsigned long site_id() const
+      std::uint32_t site_id() const
       {
         return data_->site_id;
       }
@@ -103,7 +103,7 @@ namespace AdServer::LogProcessing
         return data_->user_id;
       }
 
-      const OptionalUlong& page_load_id() const
+      const OptionalUInt64& page_load_id() const
       {
         return data_->page_load_id;
       }
@@ -167,12 +167,12 @@ namespace AdServer::LogProcessing
 
     TagRequestData_V_3_3(
       const SecondsTimestamp& time,
-      unsigned long colo_id,
-      unsigned long tag_id,
-      const OptionalUlong& size_id,
+      std::uint32_t colo_id,
+      std::uint32_t tag_id,
+      const OptionalUInt32& size_id,
       const StringT& ext_tag_id,
       const StringT& referer,
-      const OptionalUlong& full_referer_hash,
+      const OptionalUInt64& full_referer_hash,
       char user_status,
       const std::string& country,
       const RequestId& passback_request_id,
@@ -223,17 +223,17 @@ namespace AdServer::LogProcessing
       return time_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
 
-    unsigned long tag_id() const
+    std::uint32_t tag_id() const
     {
       return tag_id_;
     }
 
-    const OptionalUlong& size_id() const
+    const OptionalUInt32& size_id() const
     {
       return size_id_;
     }
@@ -248,7 +248,7 @@ namespace AdServer::LogProcessing
       return referer_;
     }
 
-    const OptionalUlong& full_referer_hash() const noexcept
+    const OptionalUInt64& full_referer_hash() const noexcept
     {
       return full_referer_hash_;
     }
@@ -325,12 +325,12 @@ namespace AdServer::LogProcessing
     }
 
     SecondsTimestamp time_;
-    unsigned long colo_id_;
-    unsigned long tag_id_;
-    OptionalUlong size_id_;
+    std::uint32_t colo_id_;
+    std::uint32_t tag_id_;
+    OptionalUInt32 size_id_;
     StringIoWrapperOptional ext_tag_id_;
     StringT referer_;
-    OptionalUlong full_referer_hash_;
+    OptionalUInt64 full_referer_hash_;
     char user_status_;
     StringIoWrapperOptional country_;
     RequestId passback_request_id_;
@@ -376,10 +376,10 @@ namespace AdServer::LogProcessing
              user_agent->str() == rhs.user_agent->str());
         }
 
-        unsigned long site_id;
+        std::uint32_t site_id;
         SecondsTimestamp isp_time;
         UserId user_id;
-        OptionalUlong page_load_id;
+        OptionalUInt64 page_load_id;
         bool ad_shown;
         bool profile_referer;
         Commons::StringHolder_var user_agent;
@@ -397,10 +397,10 @@ namespace AdServer::LogProcessing
       OptInSection(): data_(new Data) {}
 
       OptInSection(
-        unsigned long site_id,
+        std::uint32_t site_id,
         const SecondsTimestamp& isp_time,
         const UserId& user_id,
-        const OptionalUlong& page_load_id,
+        const OptionalUInt64& page_load_id,
         bool ad_shown,
         bool profile_referer,
         const Commons::StringHolder_var& user_agent
@@ -435,7 +435,7 @@ namespace AdServer::LogProcessing
         return &rhs == this || data_ == rhs.data_ || *data_ == *rhs.data_;
       }
 
-      unsigned long site_id() const
+      std::uint32_t site_id() const
       {
         return data_->site_id;
       }
@@ -450,7 +450,7 @@ namespace AdServer::LogProcessing
         return data_->user_id;
       }
 
-      const OptionalUlong& page_load_id() const
+      const OptionalUInt64& page_load_id() const
       {
         return data_->page_load_id;
       }
@@ -514,12 +514,12 @@ namespace AdServer::LogProcessing
 
     TagRequestData_V_3_5(
       const SecondsTimestamp& time,
-      unsigned long colo_id,
-      unsigned long tag_id,
-      const OptionalUlong& size_id,
+      std::uint32_t colo_id,
+      std::uint32_t tag_id,
+      const OptionalUInt32& size_id,
       const StringT& ext_tag_id,
       const StringT& referer,
-      const OptionalUlong& full_referer_hash,
+      const OptionalUInt64& full_referer_hash,
       char user_status,
       const std::string& country,
       const RequestId& passback_request_id,
@@ -573,17 +573,17 @@ namespace AdServer::LogProcessing
       return time_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
 
-    unsigned long tag_id() const
+    std::uint32_t tag_id() const
     {
       return tag_id_;
     }
 
-    const OptionalUlong& size_id() const
+    const OptionalUInt32& size_id() const
     {
       return size_id_;
     }
@@ -598,7 +598,7 @@ namespace AdServer::LogProcessing
       return referer_;
     }
 
-    const OptionalUlong& full_referer_hash() const noexcept
+    const OptionalUInt64& full_referer_hash() const noexcept
     {
       return full_referer_hash_;
     }
@@ -685,12 +685,12 @@ namespace AdServer::LogProcessing
     }
 
     SecondsTimestamp time_;
-    unsigned long colo_id_;
-    unsigned long tag_id_;
-    OptionalUlong size_id_;
+    std::uint32_t colo_id_;
+    std::uint32_t tag_id_;
+    OptionalUInt32 size_id_;
     StringIoWrapperOptional ext_tag_id_;
     StringT referer_;
-    OptionalUlong full_referer_hash_;
+    OptionalUInt64 full_referer_hash_;
     char user_status_;
     StringIoWrapperOptional country_;
     RequestId passback_request_id_;
@@ -738,9 +738,9 @@ namespace AdServer::LogProcessing
              );
         }
 
-        unsigned long site_id;
+        std::uint32_t site_id;
         UserId user_id;
-        OptionalUlong page_load_id;
+        OptionalUInt64 page_load_id;
         bool ad_shown;
         bool profile_referer;
         Commons::StringHolder_var user_agent;
@@ -759,9 +759,9 @@ namespace AdServer::LogProcessing
       OptInSection(): data_(new Data) {}
 
       OptInSection(
-        unsigned long site_id,
+        std::uint32_t site_id,
         const UserId& user_id,
-        const OptionalUlong& page_load_id,
+        const OptionalUInt64& page_load_id,
         bool ad_shown,
         bool profile_referer,
         const Commons::StringHolder_var& user_agent
@@ -821,7 +821,7 @@ namespace AdServer::LogProcessing
         return &rhs == this || data_ == rhs.data_ || *data_ == *rhs.data_;
       }
 
-      unsigned long site_id() const
+      std::uint32_t site_id() const
       {
         return data_->site_id;
       }
@@ -831,7 +831,7 @@ namespace AdServer::LogProcessing
         return data_->user_id;
       }
 
-      const OptionalUlong& page_load_id() const
+      const OptionalUInt64& page_load_id() const
       {
         return data_->page_load_id;
       }
@@ -906,12 +906,12 @@ namespace AdServer::LogProcessing
       const SecondsTimestamp& time,
       const SecondsTimestamp& isp_time,
       bool test_request,
-      unsigned long colo_id,
-      unsigned long tag_id,
-      const OptionalUlong& size_id,
+      std::uint32_t colo_id,
+      std::uint32_t tag_id,
+      const OptionalUInt32& size_id,
       const StringT& ext_tag_id,
       const StringT& referer,
-      const OptionalUlong& full_referer_hash,
+      const OptionalUInt64& full_referer_hash,
       char user_status,
       const std::string& country,
       const RequestId& passback_request_id,
@@ -1027,17 +1027,17 @@ namespace AdServer::LogProcessing
       return test_request_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
 
-    unsigned long tag_id() const
+    std::uint32_t tag_id() const
     {
       return tag_id_;
     }
 
-    const OptionalUlong& size_id() const
+    const OptionalUInt32& size_id() const
     {
       return size_id_;
     }
@@ -1052,7 +1052,7 @@ namespace AdServer::LogProcessing
       return referer_;
     }
 
-    const OptionalUlong& full_referer_hash() const noexcept
+    const OptionalUInt64& full_referer_hash() const noexcept
     {
       return full_referer_hash_;
     }
@@ -1145,12 +1145,12 @@ namespace AdServer::LogProcessing
     SecondsTimestamp time_;
     SecondsTimestamp isp_time_;
     bool test_request_;
-    unsigned long colo_id_;
-    unsigned long tag_id_;
-    OptionalUlong size_id_;
+    std::uint32_t colo_id_;
+    std::uint32_t tag_id_;
+    OptionalUInt32 size_id_;
     StringIoWrapperOptional ext_tag_id_;
     StringT referer_;
-    OptionalUlong full_referer_hash_;
+    OptionalUInt64 full_referer_hash_;
     char user_status_;
     StringIoWrapperOptional country_;
     RequestId passback_request_id_;

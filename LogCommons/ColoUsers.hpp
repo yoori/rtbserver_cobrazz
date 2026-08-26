@@ -17,7 +17,7 @@ namespace AdServer::LogProcessing
     ColoUsersKey(
       const OptionalDayTimestamp& sdate,
       const OptionalDayTimestamp& isp_sdate,
-      unsigned long colo_id,
+      std::uint32_t colo_id,
       unsigned long created)
       : sdate_(sdate),
         isp_sdate_(isp_sdate),
@@ -50,7 +50,7 @@ namespace AdServer::LogProcessing
       return isp_sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -95,7 +95,7 @@ namespace AdServer::LogProcessing
     OptionalDayTimestamp sdate_;
     OptionalDayTimestamp isp_sdate_;
 
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     unsigned long created_;
     size_t hash_;
   };

@@ -43,17 +43,17 @@ public:
   }
 
   CmpStatInnerKey_V_2_3(
-    unsigned long publisher_account_id,
-    unsigned long tag_id,
+    std::uint32_t publisher_account_id,
+    std::uint32_t tag_id,
     const std::string& country_code,
-    unsigned long currency_exchange_id,
+    std::uint32_t currency_exchange_id,
     const DeliveryThresholdT& delivery_threshold,
-    unsigned long adv_account_id,
-    unsigned long campaign_id,
-    unsigned long ccg_id,
-    unsigned long cc_id,
-    unsigned long channel_id,
-    unsigned long channel_rate_id,
+    std::uint32_t adv_account_id,
+    std::uint32_t campaign_id,
+    std::uint32_t ccg_id,
+    std::uint32_t cc_id,
+    std::uint32_t channel_id,
+    std::uint32_t channel_rate_id,
     bool fraud,
     bool walled_garden
   )
@@ -96,12 +96,12 @@ public:
       walled_garden_ == rhs.walled_garden_;
   }
 
-  unsigned long publisher_account_id() const
+  std::uint32_t publisher_account_id() const
   {
     return publisher_account_id_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
@@ -111,7 +111,7 @@ public:
     return country_code_;
   }
 
-  unsigned long currency_exchange_id() const
+  std::uint32_t currency_exchange_id() const
   {
     return currency_exchange_id_;
   }
@@ -121,32 +121,32 @@ public:
     return delivery_threshold_;
   }
 
-  unsigned long adv_account_id() const
+  std::uint32_t adv_account_id() const
   {
     return adv_account_id_;
   }
 
-  unsigned long campaign_id() const
+  std::uint32_t campaign_id() const
   {
     return campaign_id_;
   }
 
-  unsigned long ccg_id() const
+  std::uint32_t ccg_id() const
   {
     return ccg_id_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
 
-  unsigned long channel_rate_id() const
+  std::uint32_t channel_rate_id() const
   {
     return channel_rate_id_;
   }
@@ -212,17 +212,17 @@ private:
 
   static const DeliveryThresholdT max_delivery_threshold_value_;
 
-  unsigned long publisher_account_id_;
-  unsigned long tag_id_;
+  std::uint32_t publisher_account_id_;
+  std::uint32_t tag_id_;
   OptionalStringT country_code_;
-  unsigned long currency_exchange_id_;
+  std::uint32_t currency_exchange_id_;
   DeliveryThresholdT delivery_threshold_;
-  unsigned long adv_account_id_;
-  unsigned long campaign_id_;
-  unsigned long ccg_id_;
-  unsigned long cc_id_;
-  unsigned long channel_id_;
-  unsigned long channel_rate_id_;
+  std::uint32_t adv_account_id_;
+  std::uint32_t campaign_id_;
+  std::uint32_t ccg_id_;
+  std::uint32_t cc_id_;
+  std::uint32_t channel_id_;
+  std::uint32_t channel_rate_id_;
   bool fraud_;
   bool walled_garden_;
   size_t hash_;
@@ -256,18 +256,18 @@ public:
   }
 
   CmpStatInnerKey(
-    unsigned long publisher_account_id,
-    unsigned long tag_id,
-    const OptionalUlong& size_id,
+    std::uint32_t publisher_account_id,
+    std::uint32_t tag_id,
+    const OptionalUInt32& size_id,
     const std::string& country_code,
-    unsigned long currency_exchange_id,
+    std::uint32_t currency_exchange_id,
     const DeliveryThresholdT& delivery_threshold,
-    unsigned long adv_account_id,
-    unsigned long campaign_id,
-    unsigned long ccg_id,
-    unsigned long cc_id,
-    unsigned long channel_id,
-    unsigned long channel_rate_id,
+    std::uint32_t adv_account_id,
+    std::uint32_t campaign_id,
+    std::uint32_t ccg_id,
+    std::uint32_t cc_id,
+    std::uint32_t channel_id,
+    std::uint32_t channel_rate_id,
     bool fraud,
     bool walled_garden
   )
@@ -334,17 +334,17 @@ public:
       walled_garden_ == rhs.walled_garden_;
   }
 
-  unsigned long publisher_account_id() const
+  std::uint32_t publisher_account_id() const
   {
     return publisher_account_id_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
 
-  const OptionalUlong& size_id() const
+  const OptionalUInt32& size_id() const
   {
     return size_id_;
   }
@@ -354,7 +354,7 @@ public:
     return country_code_;
   }
 
-  unsigned long currency_exchange_id() const
+  std::uint32_t currency_exchange_id() const
   {
     return currency_exchange_id_;
   }
@@ -364,32 +364,32 @@ public:
     return delivery_threshold_;
   }
 
-  unsigned long adv_account_id() const
+  std::uint32_t adv_account_id() const
   {
     return adv_account_id_;
   }
 
-  unsigned long campaign_id() const
+  std::uint32_t campaign_id() const
   {
     return campaign_id_;
   }
 
-  unsigned long ccg_id() const
+  std::uint32_t ccg_id() const
   {
     return ccg_id_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
 
-  unsigned long channel_rate_id() const
+  std::uint32_t channel_rate_id() const
   {
     return channel_rate_id_;
   }
@@ -456,18 +456,18 @@ private:
 
   static const DeliveryThresholdT max_delivery_threshold_value_;
 
-  unsigned long publisher_account_id_;
-  unsigned long tag_id_;
-  OptionalUlong size_id_;
+  std::uint32_t publisher_account_id_;
+  std::uint32_t tag_id_;
+  OptionalUInt32 size_id_;
   OptionalStringT country_code_;
-  unsigned long currency_exchange_id_;
+  std::uint32_t currency_exchange_id_;
   DeliveryThresholdT delivery_threshold_;
-  unsigned long adv_account_id_;
-  unsigned long campaign_id_;
-  unsigned long ccg_id_;
-  unsigned long cc_id_;
-  unsigned long channel_id_;
-  unsigned long channel_rate_id_;
+  std::uint32_t adv_account_id_;
+  std::uint32_t campaign_id_;
+  std::uint32_t ccg_id_;
+  std::uint32_t cc_id_;
+  std::uint32_t channel_id_;
+  std::uint32_t channel_rate_id_;
   bool fraud_;
   bool walled_garden_;
   size_t hash_;
@@ -579,7 +579,7 @@ struct CmpStatKey
   CmpStatKey(
     const DayHourTimestamp& sdate,
     const DayHourTimestamp& adv_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -612,7 +612,7 @@ public:
     return adv_sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -639,7 +639,7 @@ private:
 
   DayHourTimestamp sdate_;
   DayHourTimestamp adv_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

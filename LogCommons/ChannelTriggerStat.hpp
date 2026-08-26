@@ -19,7 +19,7 @@ namespace AdServer::LogProcessing
 
     ChannelTriggerStatInnerKey_V_2_4(
       char type,
-      unsigned long channel_trigger_id
+      std::uint32_t channel_trigger_id
     )
     :
       type_(type),
@@ -44,7 +44,7 @@ namespace AdServer::LogProcessing
       return type_;
     }
 
-    unsigned long channel_trigger_id() const
+    std::uint32_t channel_trigger_id() const
     {
       return channel_trigger_id_;
     }
@@ -84,7 +84,7 @@ namespace AdServer::LogProcessing
     }
 
     char type_;
-    unsigned long channel_trigger_id_;
+    std::uint32_t channel_trigger_id_;
     size_t hash_;
   };
 
@@ -101,8 +101,8 @@ namespace AdServer::LogProcessing
     }
 
     ChannelTriggerStatInnerKey(
-      unsigned long channel_trigger_id,
-      unsigned long channel_id,
+      std::uint32_t channel_trigger_id,
+      std::uint32_t channel_id,
       char type
     )
     :
@@ -144,12 +144,12 @@ namespace AdServer::LogProcessing
         type_ == rhs.type_;
     }
 
-    unsigned long channel_trigger_id() const
+    std::uint32_t channel_trigger_id() const
     {
       return channel_trigger_id_;
     }
 
-    unsigned long channel_id() const
+    std::uint32_t channel_id() const
     {
       return channel_id_;
     }
@@ -197,8 +197,8 @@ namespace AdServer::LogProcessing
       }
     }
 
-    unsigned long channel_trigger_id_;
-    unsigned long channel_id_;
+    std::uint32_t channel_trigger_id_;
+    std::uint32_t channel_id_;
     char type_;
     size_t hash_;
   };
@@ -264,7 +264,7 @@ namespace AdServer::LogProcessing
 
     ChannelTriggerStatKey(
       const DayTimestamp& sdate,
-      unsigned long colo_id
+      std::uint32_t colo_id
     )
     :
       sdate_(sdate),
@@ -288,7 +288,7 @@ namespace AdServer::LogProcessing
       return sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -314,7 +314,7 @@ namespace AdServer::LogProcessing
     }
 
     DayTimestamp sdate_;
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     size_t hash_;
   };
 

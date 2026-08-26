@@ -20,9 +20,9 @@ namespace LogProcessing
     {}
 
     CampaignReferrerStatInnerKey_V_3_5(
-      unsigned long ccg_id,
-      unsigned long cc_id,
-      unsigned long site_id,
+      std::uint32_t ccg_id,
+      std::uint32_t cc_id,
+      std::uint32_t site_id,
       const String::SubString& ext_tag_id,
       const String::SubString& referer
       )
@@ -51,17 +51,17 @@ namespace LogProcessing
         referer_.get() == rhs.referer_.get();
     }
 
-    unsigned long ccg_id() const
+    std::uint32_t ccg_id() const
     {
       return ccg_id_;
     }
 
-    unsigned long cc_id() const
+    std::uint32_t cc_id() const
     {
       return cc_id_;
     }
 
-    unsigned long site_id() const
+    std::uint32_t site_id() const
     {
       return site_id_;
     }
@@ -105,9 +105,9 @@ namespace LogProcessing
     void invariant() const /*throw(eh::Exception)*/
     {}
 
-    unsigned long ccg_id_;
-    unsigned long cc_id_;
-    unsigned long site_id_;
+    std::uint32_t ccg_id_;
+    std::uint32_t cc_id_;
+    std::uint32_t site_id_;
     EmptyHolder<Aux_::StringIoWrapper> ext_tag_id_;
     EmptyHolder<Aux_::StringIoWrapper> referer_;
     size_t hash_;

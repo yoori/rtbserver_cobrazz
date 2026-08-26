@@ -24,7 +24,7 @@ public:
   PassbackStatInnerKey_V_2_4(
     char user_status,
     const std::string& country_code,
-    unsigned long tag_id
+    std::uint32_t tag_id
   )
   :
     user_status_(user_status),
@@ -57,7 +57,7 @@ public:
     return country_code_.get();
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
@@ -99,7 +99,7 @@ private:
 
   char user_status_;
   OptionalStringT country_code_;
-  unsigned long tag_id_;
+  std::uint32_t tag_id_;
   size_t hash_;
 };
 
@@ -121,8 +121,8 @@ public:
   PassbackStatInnerKey(
     char user_status,
     const std::string& country_code,
-    unsigned long tag_id,
-    const OptionalUlong& size_id
+    std::uint32_t tag_id,
+    const OptionalUInt32& size_id
   )
   :
     user_status_(user_status),
@@ -170,12 +170,12 @@ public:
     return country_code_.get();
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
 
-  const OptionalUlong& size_id() const
+  const OptionalUInt32& size_id() const
   {
     return size_id_;
   }
@@ -222,8 +222,8 @@ private:
 
   char user_status_;
   OptionalStringT country_code_;
-  unsigned long tag_id_;
-  OptionalUlong size_id_;
+  std::uint32_t tag_id_;
+  OptionalUInt32 size_id_;
   size_t hash_;
 };
 
@@ -286,7 +286,7 @@ struct PassbackStatKey
 
   PassbackStatKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -311,7 +311,7 @@ public:
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -343,7 +343,7 @@ private:
   }
 
   DayHourTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

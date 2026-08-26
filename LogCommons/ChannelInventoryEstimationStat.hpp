@@ -30,7 +30,7 @@ public:
   }
 
   ChannelInventoryEstimationStatInnerKey(
-    unsigned long channel_id,
+    std::uint32_t channel_id,
     const LevelT& level
   )
   :
@@ -50,7 +50,7 @@ public:
     return channel_id_ == rhs.channel_id_ && level_ == rhs.level_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -97,7 +97,7 @@ private:
 
   static const LevelT max_level_value_;
 
-  unsigned long channel_id_;
+  std::uint32_t channel_id_;
   LevelT level_;
   size_t hash_;
 };
@@ -173,7 +173,7 @@ struct ChannelInventoryEstimationStatKey
 
   ChannelInventoryEstimationStatKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -197,7 +197,7 @@ struct ChannelInventoryEstimationStatKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -225,7 +225,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

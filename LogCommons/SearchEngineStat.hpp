@@ -22,7 +22,7 @@ public:
   }
 
   SearchEngineStatInnerKey(
-    unsigned long search_engine_id,
+    std::uint32_t search_engine_id,
     const std::string& host_name
   )
   :
@@ -43,7 +43,7 @@ public:
       host_name_ == rhs.host_name_;
   }
 
-  unsigned long search_engine_id() const
+  std::uint32_t search_engine_id() const
   {
     return search_engine_id_;
   }
@@ -89,7 +89,7 @@ private:
     }
   }
 
-  unsigned long search_engine_id_;
+  std::uint32_t search_engine_id_;
   String_ host_name_;
   size_t hash_;
 };
@@ -166,7 +166,7 @@ struct SearchEngineStatKey
 
   SearchEngineStatKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -190,7 +190,7 @@ struct SearchEngineStatKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -223,7 +223,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

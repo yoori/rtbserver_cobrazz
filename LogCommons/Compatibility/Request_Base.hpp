@@ -19,7 +19,7 @@ namespace LogProcessing {
   namespace RequestData_V_3_4
   {
     typedef Generics::SimpleDecimal<uint32_t, 6, 5> DeliveryThresholdT;
-    typedef OptionalValue<unsigned long> DeviceChannelIdOptional;
+    typedef OptionalValue<std::uint32_t> DeviceChannelIdOptional;
 
     struct CmpChannel
     {
@@ -66,8 +66,8 @@ namespace LogProcessing {
         ar ^ adv_click_revenue;
       }
 
-      unsigned long channel_id;
-      unsigned long channel_rate_id;
+      std::uint32_t channel_id;
+      std::uint32_t channel_rate_id;
       FixedNum imp_revenue;
       FixedNum imp_sys_revenue;
       FixedNum adv_imp_revenue;
@@ -115,7 +115,7 @@ namespace LogProcessing {
         ar ^ action_revenue;
       }
 
-      unsigned long rate_id;
+      std::uint32_t rate_id;
       FixedNum request_revenue;
       FixedNum imp_revenue;
       FixedNum click_revenue;

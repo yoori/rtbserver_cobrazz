@@ -13,7 +13,7 @@ class ChannelInventoryInnerKey
 public:
   explicit
   ChannelInventoryInnerKey(
-    unsigned long channel_id = 0
+    std::uint32_t channel_id = 0
   )
   :
     channel_id_(channel_id)
@@ -25,7 +25,7 @@ public:
     return channel_id_ == rhs.channel_id_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -46,7 +46,7 @@ public:
     /*throw(eh::Exception)*/;
 
 private:
-  unsigned long channel_id_;
+  std::uint32_t channel_id_;
 };
 
 class ChannelInventoryInnerData
@@ -137,7 +137,7 @@ struct ChannelInventoryKey
 
   ChannelInventoryKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -161,7 +161,7 @@ struct ChannelInventoryKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -189,7 +189,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

@@ -48,19 +48,19 @@ CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3()
 {}
 
 CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3(
-  unsigned long colo_id,
-  unsigned long publisher_account_id,
-  unsigned long tag_id,
-  const OptionalUlong& size_id,
+  std::uint32_t colo_id,
+  std::uint32_t publisher_account_id,
+  std::uint32_t tag_id,
+  const OptionalUInt32& size_id,
   const std::string& country_code,
-  unsigned long adv_account_id,
-  unsigned long campaign_id,
-  unsigned long ccg_id,
-  unsigned long cc_id,
-  unsigned long ccg_rate_id,
-  unsigned long colo_rate_id,
-  unsigned long site_rate_id,
-  unsigned long currency_exchange_id,
+  std::uint32_t adv_account_id,
+  std::uint32_t campaign_id,
+  std::uint32_t ccg_id,
+  std::uint32_t cc_id,
+  std::uint32_t ccg_rate_id,
+  std::uint32_t colo_rate_id,
+  std::uint32_t site_rate_id,
+  std::uint32_t currency_exchange_id,
   const DeliveryThresholdT& delivery_threshold,
   unsigned short num_shown,
   unsigned short position,
@@ -70,7 +70,7 @@ CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3(
   char user_status,
   const GeoChannelIdOptional& geo_channel_id,
   const DeviceChannelIdOptional& device_channel_id,
-  unsigned long ctr_reset_id,
+  std::uint32_t ctr_reset_id,
   bool hid_profile)
   /*throw(eh::Exception)*/
   : colo_id_(colo_id),
@@ -133,25 +133,25 @@ CreativeStatInnerKey_V_3_3::operator==(
       hid_profile_ == rhs.hid_profile_);
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::colo_id() const
 {
   return colo_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::publisher_account_id() const
 {
   return publisher_account_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::tag_id() const
 {
   return tag_id_;
 }
 
-const OptionalUlong&
+const OptionalUInt32&
 CreativeStatInnerKey_V_3_3::size_id() const
 {
   return size_id_;
@@ -163,49 +163,49 @@ CreativeStatInnerKey_V_3_3::country_code() const
   return country_code_.get();
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::adv_account_id() const
 {
   return adv_account_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::campaign_id() const
 {
   return campaign_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::ccg_id() const
 {
   return ccg_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::cc_id() const
 {
   return cc_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::ccg_rate_id() const
 {
   return ccg_rate_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::colo_rate_id() const
 {
   return colo_rate_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::site_rate_id() const
 {
   return site_rate_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::currency_exchange_id() const
 {
   return currency_exchange_id_;
@@ -265,7 +265,7 @@ CreativeStatInnerKey_V_3_3::device_channel_id() const
   return device_channel_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey_V_3_3::ctr_reset_id() const
 {
   return ctr_reset_id_;
@@ -382,19 +382,19 @@ CreativeStatInnerKey::CreativeStatInnerKey()
 {}
 
 CreativeStatInnerKey::CreativeStatInnerKey(
-  unsigned long colo_id,
-  unsigned long publisher_account_id,
-  unsigned long tag_id,
-  const OptionalUlong& size_id,
+  std::uint32_t colo_id,
+  std::uint32_t publisher_account_id,
+  std::uint32_t tag_id,
+  const OptionalUInt32& size_id,
   const std::string& country_code,
-  unsigned long adv_account_id,
-  unsigned long campaign_id,
-  unsigned long ccg_id,
-  unsigned long cc_id,
-  unsigned long ccg_rate_id,
-  unsigned long colo_rate_id,
-  unsigned long site_rate_id,
-  unsigned long currency_exchange_id,
+  std::uint32_t adv_account_id,
+  std::uint32_t campaign_id,
+  std::uint32_t ccg_id,
+  std::uint32_t cc_id,
+  std::uint32_t ccg_rate_id,
+  std::uint32_t colo_rate_id,
+  std::uint32_t site_rate_id,
+  std::uint32_t currency_exchange_id,
   const DeliveryThresholdT& delivery_threshold,
   unsigned short num_shown,
   unsigned short position,
@@ -404,7 +404,7 @@ CreativeStatInnerKey::CreativeStatInnerKey(
   char user_status,
   const GeoChannelIdOptional& geo_channel_id,
   const DeviceChannelIdOptional& device_channel_id,
-  unsigned long ctr_reset_id,
+  std::uint32_t ctr_reset_id,
   bool hid_profile,
   long viewability)
   /*throw(eh::Exception)*/
@@ -501,25 +501,25 @@ CreativeStatInnerKey::operator==(const CreativeStatInnerKey& rhs) const
       viewability_ == rhs.viewability_);
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::colo_id() const
 {
   return colo_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::publisher_account_id() const
 {
   return publisher_account_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::tag_id() const
 {
   return tag_id_;
 }
 
-const OptionalUlong&
+const OptionalUInt32&
 CreativeStatInnerKey::size_id() const
 {
   return size_id_;
@@ -531,49 +531,49 @@ CreativeStatInnerKey::country_code() const
   return country_code_.get();
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::adv_account_id() const
 {
   return adv_account_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::campaign_id() const
 {
   return campaign_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::ccg_id() const
 {
   return ccg_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::cc_id() const
 {
   return cc_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::ccg_rate_id() const
 {
   return ccg_rate_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::colo_rate_id() const
 {
   return colo_rate_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::site_rate_id() const
 {
   return site_rate_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::currency_exchange_id() const
 {
   return currency_exchange_id_;
@@ -633,7 +633,7 @@ CreativeStatInnerKey::device_channel_id() const
   return device_channel_id_;
 }
 
-unsigned long
+std::uint32_t
 CreativeStatInnerKey::ctr_reset_id() const
 {
   return ctr_reset_id_;

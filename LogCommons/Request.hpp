@@ -33,7 +33,7 @@ public:
 
   typedef RequestData_V_3_7_1::Revenue Revenue;
 
-  typedef OptionalValue<unsigned long> OptionalUlong;
+  typedef OptionalValue<std::uint32_t> OptionalUInt32;
 
   typedef Revenue::FixedNum FixedNum;
 
@@ -59,21 +59,21 @@ public:
     const UserId& user_id,
     const UserId& household_id,
     bool test_request,
-    unsigned long colo_id,
-    unsigned long site_id,
-    unsigned long tag_id,
+    std::uint32_t colo_id,
+    std::uint32_t site_id,
+    std::uint32_t tag_id,
     const std::string& ext_tag_id,
-    unsigned long publisher_account_id,
+    std::uint32_t publisher_account_id,
     const std::string& country_code,
     const std::string& ip_address,
-    unsigned long adv_account_id,
-    unsigned long advertiser_id,
-    unsigned long cc_id,
-    unsigned long cmp_id,
-    unsigned long ccg_id,
+    std::uint32_t adv_account_id,
+    std::uint32_t advertiser_id,
+    std::uint32_t cc_id,
+    std::uint32_t cmp_id,
+    std::uint32_t ccg_id,
     const DeliveryThresholdT& delivery_threshold,
     bool has_custom_actions,
-    unsigned long currency_exchange_id,
+    std::uint32_t currency_exchange_id,
     UserPropertyList user_props,
     const Revenue& adv_revenue,
     const Revenue& pub_revenue,
@@ -85,8 +85,8 @@ public:
     NumberArray history_channel_list,
     const std::string& channel_expression,
     CmpChannelList cmp_channel_list,
-    unsigned long ccg_keyword_id,
-    unsigned long keyword_id,
+    std::uint32_t ccg_keyword_id,
+    std::uint32_t keyword_id,
     bool keyword_page_match,
     bool keyword_search_match,
     unsigned long num_shown,
@@ -102,12 +102,12 @@ public:
     NumberArray geo_channels,
     const DeviceChannelIdOptional& device_channel_id,
     const std::string& tag_size,
-    const OptionalUlong& size_id,
+    const OptionalUInt32& size_id,
     bool hid_profile,
-    const OptionalUlong& tag_visibility,
-    const OptionalUlong& tag_top_offset,
-    const OptionalUlong& tag_left_offset,
-    unsigned long ctr_reset_id,
+    const OptionalUInt32& tag_visibility,
+    const OptionalUInt32& tag_top_offset,
+    const OptionalUInt32& tag_left_offset,
+    std::uint32_t ctr_reset_id,
     unsigned long campaign_freq,
     const std::string& referer,
     const FixedNum& adv_currency_rate,
@@ -353,17 +353,17 @@ public:
     return holder_->test_request;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return holder_->colo_id;
   }
 
-  unsigned long site_id() const
+  std::uint32_t site_id() const
   {
     return holder_->site_id;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return holder_->tag_id;
   }
@@ -373,7 +373,7 @@ public:
     return holder_->ext_tag_id.get();
   }
 
-  unsigned long publisher_account_id() const
+  std::uint32_t publisher_account_id() const
   {
     return holder_->publisher_account_id;
   }
@@ -388,27 +388,27 @@ public:
     return holder_->ip_address.get();
   }
 
-  unsigned long adv_account_id() const
+  std::uint32_t adv_account_id() const
   {
     return holder_->adv_account_id;
   }
 
-  unsigned long advertiser_id() const
+  std::uint32_t advertiser_id() const
   {
     return holder_->advertiser_id;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return holder_->cc_id;
   }
 
-  unsigned long cmp_id() const
+  std::uint32_t cmp_id() const
   {
     return holder_->cmp_id;
   }
 
-  unsigned long ccg_id() const
+  std::uint32_t ccg_id() const
   {
     return holder_->ccg_id;
   }
@@ -423,7 +423,7 @@ public:
     return holder_->has_custom_actions;
   }
 
-  unsigned long currency_exchange_id() const
+  std::uint32_t currency_exchange_id() const
   {
     return holder_->currency_exchange_id;
   }
@@ -485,12 +485,12 @@ public:
     return holder_->cmp_channel_list;
   }
 
-  unsigned long ccg_keyword_id() const
+  std::uint32_t ccg_keyword_id() const
   {
     return holder_->ccg_keyword_id;
   }
 
-  unsigned long keyword_id() const
+  std::uint32_t keyword_id() const
   {
     return holder_->keyword_id;
   }
@@ -572,7 +572,7 @@ public:
     return holder_->tag_size;
   }
 
-  const OptionalUlong& size_id() const noexcept
+  const OptionalUInt32& size_id() const noexcept
   {
     return holder_->size_id;
   }
@@ -582,22 +582,22 @@ public:
     return holder_->hid_profile;
   }
 
-  const OptionalUlong& tag_visibility() const
+  const OptionalUInt32& tag_visibility() const
   {
     return holder_->tag_visibility;
   }
 
-  const OptionalUlong& tag_top_offset() const
+  const OptionalUInt32& tag_top_offset() const
   {
     return holder_->tag_top_offset;
   }
 
-  const OptionalUlong& tag_left_offset() const
+  const OptionalUInt32& tag_left_offset() const
   {
     return holder_->tag_left_offset;
   }
 
-  unsigned long ctr_reset_id() const
+  std::uint32_t ctr_reset_id() const
   {
     return holder_->ctr_reset_id;
   }
@@ -742,21 +742,21 @@ private:
       const UserId& user_id_val,
       const UserId& household_id_val,
       bool test_request_val,
-      unsigned long colo_id_val,
-      unsigned long site_id_val,
-      unsigned long tag_id_val,
+      std::uint32_t colo_id_val,
+      std::uint32_t site_id_val,
+      std::uint32_t tag_id_val,
       const StringIoWrapperOptional& ext_tag_id_val,
-      unsigned long publisher_account_id_val,
+      std::uint32_t publisher_account_id_val,
       const std::string& country_code_val,
       const StringIoWrapperOptional& ip_address_val,
-      unsigned long adv_account_id_val,
-      unsigned long advertiser_id_val,
-      unsigned long cc_id_val,
-      unsigned long cmp_id_val,
-      unsigned long ccg_id_val,
+      std::uint32_t adv_account_id_val,
+      std::uint32_t advertiser_id_val,
+      std::uint32_t cc_id_val,
+      std::uint32_t cmp_id_val,
+      std::uint32_t ccg_id_val,
       const DeliveryThresholdT& delivery_threshold_val,
       bool has_custom_actions_val,
-      unsigned long currency_exchange_id_val,
+      std::uint32_t currency_exchange_id_val,
       UserPropertyList user_props_val,
       const Revenue& adv_revenue_val,
       const Revenue& pub_revenue_val,
@@ -768,8 +768,8 @@ private:
       NumberArray history_channel_list_val,
       const std::string& channel_expression_val,
       CmpChannelList cmp_channel_list_val,
-      unsigned long ccg_keyword_id_val,
-      unsigned long keyword_id_val,
+      std::uint32_t ccg_keyword_id_val,
+      std::uint32_t keyword_id_val,
       bool keyword_page_match_val,
       bool keyword_search_match_val,
       unsigned long num_shown_val,
@@ -785,12 +785,12 @@ private:
       NumberArray geo_channels_val,
       const DeviceChannelIdOptional& device_channel_id_val,
       const std::string& tag_size_val,
-      const OptionalUlong& size_id_val,
+      const OptionalUInt32& size_id_val,
       bool hid_profile_val,
-      const OptionalUlong& tag_visibility_val,
-      const OptionalUlong& tag_top_offset_val,
-      const OptionalUlong& tag_left_offset_val,
-      unsigned long ctr_reset_id_val,
+      const OptionalUInt32& tag_visibility_val,
+      const OptionalUInt32& tag_top_offset_val,
+      const OptionalUInt32& tag_left_offset_val,
+      std::uint32_t ctr_reset_id_val,
       unsigned long campaign_freq_val,
       const StringIoWrapperOptional& referer_val,
       const FixedNum& adv_currency_rate_val,
@@ -1099,23 +1099,23 @@ private:
     UserIdIoWrapper user_id;
     UserIdIoWrapper household_id;
     bool test_request;
-    unsigned long colo_id;
-    unsigned long site_id;
-    unsigned long tag_id;
+    std::uint32_t colo_id;
+    std::uint32_t site_id;
+    std::uint32_t tag_id;
 
     StringIoWrapperOptional ext_tag_id;
 
-    unsigned long publisher_account_id;
+    std::uint32_t publisher_account_id;
     EmptyHolder<std::string> country_code;
     StringIoWrapperOptional ip_address;
-    unsigned long adv_account_id;
-    unsigned long advertiser_id;
-    unsigned long cc_id;
-    unsigned long cmp_id;
-    unsigned long ccg_id;
+    std::uint32_t adv_account_id;
+    std::uint32_t advertiser_id;
+    std::uint32_t cc_id;
+    std::uint32_t cmp_id;
+    std::uint32_t ccg_id;
     DeliveryThresholdT delivery_threshold;
     bool has_custom_actions;
-    unsigned long currency_exchange_id;
+    std::uint32_t currency_exchange_id;
     UserPropertyList user_props;
     Revenue adv_revenue;
     Revenue pub_revenue;
@@ -1129,8 +1129,8 @@ private:
     EmptyHolder<Aux_::StringIoWrapper> channel_expression;
     CmpChannelList cmp_channel_list;
 
-    unsigned long ccg_keyword_id;
-    unsigned long keyword_id;
+    std::uint32_t ccg_keyword_id;
+    std::uint32_t keyword_id;
     bool keyword_page_match;
     bool keyword_search_match;
     unsigned long num_shown;
@@ -1147,14 +1147,14 @@ private:
     NumberArray geo_channels;
     DeviceChannelIdOptional device_channel_id;
     Aux_::StringIoWrapper tag_size;
-    OptionalUlong size_id;
+    OptionalUInt32 size_id;
     bool hid_profile;
 
-    OptionalUlong tag_visibility;
-    OptionalUlong tag_top_offset;
-    OptionalUlong tag_left_offset;
+    OptionalUInt32 tag_visibility;
+    OptionalUInt32 tag_top_offset;
+    OptionalUInt32 tag_left_offset;
 
-    unsigned long ctr_reset_id;
+    std::uint32_t ctr_reset_id;
     unsigned long campaign_freq;
 
     StringIoWrapperOptional referer;

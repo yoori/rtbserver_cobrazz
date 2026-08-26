@@ -31,9 +31,9 @@ public:
   }
 
   CcgKeywordStatInnerKey(
-    unsigned long ccg_keyword_id,
-    unsigned long currency_exchange_id,
-    unsigned long cc_id
+    std::uint32_t ccg_keyword_id,
+    std::uint32_t currency_exchange_id,
+    std::uint32_t cc_id
   )
   :
     ccg_keyword_id_(ccg_keyword_id),
@@ -55,17 +55,17 @@ public:
       cc_id_ == rhs.cc_id_;
   }
 
-  unsigned long ccg_keyword_id() const
+  std::uint32_t ccg_keyword_id() const
   {
     return ccg_keyword_id_;
   }
 
-  unsigned long currency_exchange_id() const
+  std::uint32_t currency_exchange_id() const
   {
     return currency_exchange_id_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
@@ -94,9 +94,9 @@ private:
     hash_add(hasher, cc_id_);
   }
 
-  unsigned long ccg_keyword_id_;
-  unsigned long currency_exchange_id_;
-  unsigned long cc_id_;
+  std::uint32_t ccg_keyword_id_;
+  std::uint32_t currency_exchange_id_;
+  std::uint32_t cc_id_;
   size_t hash_;
 };
 
@@ -307,7 +307,7 @@ struct CcgKeywordStatKey
 
   CcgKeywordStatKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -327,7 +327,7 @@ struct CcgKeywordStatKey
   }
 
 private:
-  typedef OptionalValue<unsigned long> ColoIdT;
+  typedef OptionalValue<std::uint32_t> ColoIdT;
 
 public:
   const DayHourTimestamp& sdate() const

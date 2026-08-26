@@ -23,8 +23,8 @@ public:
   }
 
   ChannelOverlapUserStatInnerKey(
-    unsigned long channel1_id,
-    unsigned long channel2_id
+    std::uint32_t channel1_id,
+    std::uint32_t channel2_id
   )
   :
     channel1_id_(channel1_id),
@@ -44,12 +44,12 @@ public:
       channel2_id_ == rhs.channel2_id_;
   }
 
-  unsigned long channel1_id() const
+  std::uint32_t channel1_id() const
   {
     return channel1_id_;
   }
 
-  unsigned long channel2_id() const
+  std::uint32_t channel2_id() const
   {
     return channel2_id_;
   }
@@ -78,8 +78,8 @@ private:
     hash_add(hasher, channel2_id_);
   }
 
-  unsigned long channel1_id_;
-  unsigned long channel2_id_;
+  std::uint32_t channel1_id_;
+  std::uint32_t channel2_id_;
   size_t hash_;
 };
 

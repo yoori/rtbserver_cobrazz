@@ -2,6 +2,7 @@
 
 
 #include <algorithm>
+#include <cstdint>
 #include <deque>
 #include <iosfwd>
 #include <memory>
@@ -269,9 +270,9 @@ typedef AdServer::Commons::UserId UserId;
 typedef AdServer::Commons::RequestId RequestId;
 typedef Generics::SimpleDecimal<uint64_t, 18, 8> FixedNumber;
 
-typedef std::vector<unsigned long> NumberArray;
+typedef std::vector<std::uint32_t> NumberArray;
 
-typedef std::list<unsigned long> NumberList;
+typedef std::list<std::uint32_t> NumberList;
 
 typedef std::list<std::string> StringList;
 
@@ -622,7 +623,8 @@ public:
     /*throw(eh::Exception)*/;
 };
 
-typedef OptionalValue<unsigned long> OptionalUlong;
+typedef OptionalValue<std::uint32_t> OptionalUInt32;
+typedef OptionalValue<std::uint64_t> OptionalUInt64;
 typedef OptionalValue<FixedNumber> OptionalFixedNumber;
 typedef OptionalValue<DayTimestamp> OptionalDayTimestamp;
 typedef OptionalValue<DayHourTimestamp> OptionalDayHourTimestamp;

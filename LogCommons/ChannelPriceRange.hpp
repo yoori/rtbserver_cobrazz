@@ -34,9 +34,9 @@ public:
   ChannelPriceRangeInnerKey(
     const Commons::ImmutableString& creative_size,
     const Commons::ImmutableString& country_code,
-    unsigned long channel_id,
+    std::uint32_t channel_id,
     const EcpmT& ecpm,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     creative_size_(creative_size),
@@ -72,7 +72,7 @@ public:
     return country_code_.str();
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -82,7 +82,7 @@ public:
     return ecpm_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -115,9 +115,9 @@ private:
 
   Commons::ImmutableString creative_size_;
   Commons::ImmutableString country_code_;
-  unsigned long channel_id_;
+  std::uint32_t channel_id_;
   EcpmT ecpm_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

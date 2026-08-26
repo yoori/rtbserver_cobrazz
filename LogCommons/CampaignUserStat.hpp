@@ -24,7 +24,7 @@ public:
   }
 
   CampaignUserStatInnerKey(
-    unsigned long cmp_id,
+    std::uint32_t cmp_id,
     const OptionalDayTimestamp& last_appearance_date
   )
   :
@@ -44,7 +44,7 @@ public:
       last_appearance_date_ == rhs.last_appearance_date_;
   }
 
-  unsigned long cmp_id() const
+  std::uint32_t cmp_id() const
   {
     return cmp_id_;
   }
@@ -87,7 +87,7 @@ private:
     }
   }
 
-  unsigned long cmp_id_;
+  std::uint32_t cmp_id_;
   OptionalDayTimestamp last_appearance_date_;
   size_t hash_;
 };
@@ -153,7 +153,7 @@ struct CampaignUserStatKey
 
   CampaignUserStatKey(
     const DayTimestamp& adv_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     adv_sdate_(adv_sdate),
@@ -179,7 +179,7 @@ public:
     return adv_sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -210,7 +210,7 @@ private:
   }
 
   DayTimestamp adv_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

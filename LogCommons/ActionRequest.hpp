@@ -15,7 +15,7 @@ public:
   ActionRequestInnerKey() {}
 
   ActionRequestInnerKey(
-    unsigned long action_id,
+    std::uint32_t action_id,
     const std::string& country_code,
     const std::string& action_referrer_url,
     const char user_status
@@ -41,7 +41,7 @@ public:
     return *holder_ == *key.holder_;
   }
 
-  unsigned long action_id() const
+  std::uint32_t action_id() const
   {
     return holder_->action_id;
   }
@@ -93,7 +93,7 @@ private:
     {}
 
     DataHolder(
-      unsigned long action_id_val,
+      std::uint32_t action_id_val,
       const std::string& country_code_val,
       const std::string& action_referrer_url_val,
       const char user_status_val
@@ -155,7 +155,7 @@ private:
       convert_opt_in_status_to_user_status();
     }
 
-    unsigned long action_id;
+    std::uint32_t action_id;
     OptionalStringT country_code;
     OptionalStringT action_referrer_url;
     char user_status;
@@ -243,7 +243,7 @@ struct ActionRequestKey
 
   ActionRequestKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -267,7 +267,7 @@ struct ActionRequestKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -299,7 +299,7 @@ private:
   }
 
   DayHourTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

@@ -15,7 +15,7 @@ class ColoUpdateStatKey
 {
 public:
   explicit
-  ColoUpdateStatKey(unsigned long colo_id = 0) noexcept
+  ColoUpdateStatKey(std::uint32_t colo_id = 0) noexcept
   :
     colo_id_(colo_id)
   {
@@ -26,7 +26,7 @@ public:
     return colo_id_ == rhs.colo_id_;
   }
 
-  unsigned long colo_id() const noexcept
+  std::uint32_t colo_id() const noexcept
   {
     return colo_id_;
   }
@@ -46,7 +46,7 @@ public:
     /*throw(eh::Exception)*/;
 
 private:
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
 };
 
 class ColoUpdateStatData

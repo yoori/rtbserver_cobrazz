@@ -18,25 +18,25 @@ namespace AdServer::LogProcessing
   {
   public:
     typedef Generics::SimpleDecimal<uint32_t, 6, 5> DeliveryThresholdT;
-    typedef OptionalValue<unsigned long> GeoChannelIdOptional;
-    typedef OptionalValue<unsigned long> DeviceChannelIdOptional;
+    typedef OptionalValue<std::uint32_t> GeoChannelIdOptional;
+    typedef OptionalValue<std::uint32_t> DeviceChannelIdOptional;
 
     CreativeStatInnerKey_V_3_3();
 
     CreativeStatInnerKey_V_3_3(
-      unsigned long colo_id,
-      unsigned long publisher_account_id,
-      unsigned long tag_id,
-      const OptionalUlong& size_id,
+      std::uint32_t colo_id,
+      std::uint32_t publisher_account_id,
+      std::uint32_t tag_id,
+      const OptionalUInt32& size_id,
       const std::string& country_code,
-      unsigned long adv_account_id,
-      unsigned long campaign_id,
-      unsigned long ccg_id,
-      unsigned long cc_id,
-      unsigned long ccg_rate_id,
-      unsigned long colo_rate_id,
-      unsigned long site_rate_id,
-      unsigned long currency_exchange_id,
+      std::uint32_t adv_account_id,
+      std::uint32_t campaign_id,
+      std::uint32_t ccg_id,
+      std::uint32_t cc_id,
+      std::uint32_t ccg_rate_id,
+      std::uint32_t colo_rate_id,
+      std::uint32_t site_rate_id,
+      std::uint32_t currency_exchange_id,
       const DeliveryThresholdT& delivery_threshold,
       unsigned short num_shown,
       unsigned short position,
@@ -46,50 +46,50 @@ namespace AdServer::LogProcessing
       char user_status,
       const GeoChannelIdOptional& geo_channel_id,
       const DeviceChannelIdOptional& device_channel_id,
-      unsigned long ctr_reset_id,
+      std::uint32_t ctr_reset_id,
       bool hid_profile)
       /*throw(eh::Exception)*/;
 
     bool
     operator==(const CreativeStatInnerKey_V_3_3& rhs) const;
 
-    unsigned long
+    std::uint32_t
     colo_id() const;
 
-    unsigned long
+    std::uint32_t
     publisher_account_id() const;
 
-    unsigned long
+    std::uint32_t
     tag_id() const;
 
-    const OptionalUlong&
+    const OptionalUInt32&
     size_id() const;
 
     const std::string&
     country_code() const;
 
-    unsigned long
+    std::uint32_t
     adv_account_id() const;
 
-    unsigned long
+    std::uint32_t
     campaign_id() const;
 
-    unsigned long
+    std::uint32_t
     ccg_id() const;
 
-    unsigned long
+    std::uint32_t
     cc_id() const;
 
-    unsigned long
+    std::uint32_t
     ccg_rate_id() const;
 
-    unsigned long
+    std::uint32_t
     colo_rate_id() const;
 
-    unsigned long
+    std::uint32_t
     site_rate_id() const;
 
-    unsigned long
+    std::uint32_t
     currency_exchange_id() const;
 
     const DeliveryThresholdT&
@@ -119,7 +119,7 @@ namespace AdServer::LogProcessing
     const DeviceChannelIdOptional&
     device_channel_id() const;
 
-    unsigned long
+    std::uint32_t
     ctr_reset_id() const;
 
     bool
@@ -153,19 +153,19 @@ namespace AdServer::LogProcessing
 
     static const DeliveryThresholdT max_delivery_threshold_value_;
 
-    unsigned long colo_id_;
-    unsigned long publisher_account_id_;
-    unsigned long tag_id_;
-    OptionalUlong size_id_;
+    std::uint32_t colo_id_;
+    std::uint32_t publisher_account_id_;
+    std::uint32_t tag_id_;
+    OptionalUInt32 size_id_;
     EmptyHolder<SpacesString> country_code_;
-    unsigned long adv_account_id_;
-    unsigned long campaign_id_;
-    unsigned long ccg_id_;
-    unsigned long cc_id_;
-    unsigned long ccg_rate_id_;
-    unsigned long colo_rate_id_;
-    unsigned long site_rate_id_;
-    unsigned long currency_exchange_id_;
+    std::uint32_t adv_account_id_;
+    std::uint32_t campaign_id_;
+    std::uint32_t ccg_id_;
+    std::uint32_t cc_id_;
+    std::uint32_t ccg_rate_id_;
+    std::uint32_t colo_rate_id_;
+    std::uint32_t site_rate_id_;
+    std::uint32_t currency_exchange_id_;
     DeliveryThresholdT delivery_threshold_;
     unsigned short num_shown_;
     unsigned short position_;
@@ -175,7 +175,7 @@ namespace AdServer::LogProcessing
     char user_status_;
     GeoChannelIdOptional geo_channel_id_;
     DeviceChannelIdOptional device_channel_id_;
-    unsigned long ctr_reset_id_;
+    std::uint32_t ctr_reset_id_;
     bool hid_profile_;
     size_t hash_;
   };
@@ -184,25 +184,25 @@ namespace AdServer::LogProcessing
   {
   public:
     typedef Generics::SimpleDecimal<uint32_t, 6, 5> DeliveryThresholdT;
-    typedef OptionalValue<unsigned long> GeoChannelIdOptional;
-    typedef OptionalValue<unsigned long> DeviceChannelIdOptional;
+    typedef OptionalValue<std::uint32_t> GeoChannelIdOptional;
+    typedef OptionalValue<std::uint32_t> DeviceChannelIdOptional;
 
     CreativeStatInnerKey();
 
     CreativeStatInnerKey(
-      unsigned long colo_id,
-      unsigned long publisher_account_id,
-      unsigned long tag_id,
-      const OptionalUlong& size_id,
+      std::uint32_t colo_id,
+      std::uint32_t publisher_account_id,
+      std::uint32_t tag_id,
+      const OptionalUInt32& size_id,
       const std::string& country_code,
-      unsigned long adv_account_id,
-      unsigned long campaign_id,
-      unsigned long ccg_id,
-      unsigned long cc_id,
-      unsigned long ccg_rate_id,
-      unsigned long colo_rate_id,
-      unsigned long site_rate_id,
-      unsigned long currency_exchange_id,
+      std::uint32_t adv_account_id,
+      std::uint32_t campaign_id,
+      std::uint32_t ccg_id,
+      std::uint32_t cc_id,
+      std::uint32_t ccg_rate_id,
+      std::uint32_t colo_rate_id,
+      std::uint32_t site_rate_id,
+      std::uint32_t currency_exchange_id,
       const DeliveryThresholdT& delivery_threshold,
       unsigned short num_shown,
       unsigned short position,
@@ -212,7 +212,7 @@ namespace AdServer::LogProcessing
       char user_status,
       const GeoChannelIdOptional& geo_channel_id,
       const DeviceChannelIdOptional& device_channel_id,
-      unsigned long ctr_reset_id,
+      std::uint32_t ctr_reset_id,
       bool hid_profile,
       long viewability)
       /*throw(eh::Exception)*/;
@@ -222,43 +222,43 @@ namespace AdServer::LogProcessing
     bool
     operator==(const CreativeStatInnerKey& rhs) const;
 
-    unsigned long
+    std::uint32_t
     colo_id() const;
 
-    unsigned long
+    std::uint32_t
     publisher_account_id() const;
 
-    unsigned long
+    std::uint32_t
     tag_id() const;
 
-    const OptionalUlong&
+    const OptionalUInt32&
     size_id() const;
 
     const std::string&
     country_code() const;
 
-    unsigned long
+    std::uint32_t
     adv_account_id() const;
 
-    unsigned long
+    std::uint32_t
     campaign_id() const;
 
-    unsigned long
+    std::uint32_t
     ccg_id() const;
 
-    unsigned long
+    std::uint32_t
     cc_id() const;
 
-    unsigned long
+    std::uint32_t
     ccg_rate_id() const;
 
-    unsigned long
+    std::uint32_t
     colo_rate_id() const;
 
-    unsigned long
+    std::uint32_t
     site_rate_id() const;
 
-    unsigned long
+    std::uint32_t
     currency_exchange_id() const;
 
     const DeliveryThresholdT&
@@ -288,7 +288,7 @@ namespace AdServer::LogProcessing
     const DeviceChannelIdOptional&
     device_channel_id() const;
 
-    unsigned long
+    std::uint32_t
     ctr_reset_id() const;
 
     bool
@@ -323,19 +323,19 @@ namespace AdServer::LogProcessing
 
     static const DeliveryThresholdT max_delivery_threshold_value_;
 
-    unsigned long colo_id_;
-    unsigned long publisher_account_id_;
-    unsigned long tag_id_;
-    OptionalUlong size_id_;
+    std::uint32_t colo_id_;
+    std::uint32_t publisher_account_id_;
+    std::uint32_t tag_id_;
+    OptionalUInt32 size_id_;
     EmptyHolder<SpacesString> country_code_;
-    unsigned long adv_account_id_;
-    unsigned long campaign_id_;
-    unsigned long ccg_id_;
-    unsigned long cc_id_;
-    unsigned long ccg_rate_id_;
-    unsigned long colo_rate_id_;
-    unsigned long site_rate_id_;
-    unsigned long currency_exchange_id_;
+    std::uint32_t adv_account_id_;
+    std::uint32_t campaign_id_;
+    std::uint32_t ccg_id_;
+    std::uint32_t cc_id_;
+    std::uint32_t ccg_rate_id_;
+    std::uint32_t colo_rate_id_;
+    std::uint32_t site_rate_id_;
+    std::uint32_t currency_exchange_id_;
     DeliveryThresholdT delivery_threshold_;
     unsigned short num_shown_;
     unsigned short position_;
@@ -345,7 +345,7 @@ namespace AdServer::LogProcessing
     char user_status_;
     GeoChannelIdOptional geo_channel_id_;
     DeviceChannelIdOptional device_channel_id_;
-    unsigned long ctr_reset_id_;
+    std::uint32_t ctr_reset_id_;
     bool hid_profile_;
     long viewability_;
     size_t hash_;

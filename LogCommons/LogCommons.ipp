@@ -437,10 +437,8 @@ template <typename Category>
 class FixedBufStream
 {
 public:
-
   FixedBufStream(const String::SubString& str) /*throw(eh::Exception)*/
-    :
-      splitter_(str),
+    : splitter_(str),
       iostate_(std::ios_base::goodbit)
   {}
 

@@ -14,7 +14,7 @@ class SiteStatInnerKey
 public:
   explicit
   SiteStatInnerKey(
-    unsigned long site_id = 0
+    std::uint32_t site_id = 0
   )
   :
     site_id_(site_id)
@@ -26,7 +26,7 @@ public:
     return site_id_ == rhs.site_id_;
   }
 
-  unsigned long site_id() const
+  std::uint32_t site_id() const
   {
     return site_id_;
   }
@@ -56,7 +56,7 @@ private:
     }
   }
 
-  unsigned long site_id_;
+  std::uint32_t site_id_;
 };
 
 class SiteStatInnerData
@@ -127,7 +127,7 @@ struct SiteStatKey
 
   SiteStatKey(
     const DayTimestamp& isp_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     isp_sdate_(isp_sdate),
@@ -153,7 +153,7 @@ public:
     return isp_sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -190,7 +190,7 @@ private:
   }
 
   DayTimestamp isp_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

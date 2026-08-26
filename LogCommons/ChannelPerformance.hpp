@@ -29,8 +29,8 @@ public:
   }
 
   ChannelPerformanceInnerKey(
-    unsigned long channel_id,
-    unsigned long ccg_id,
+    std::uint32_t channel_id,
+    std::uint32_t ccg_id,
     const Commons::ImmutableString& tag_size
   )
   :
@@ -53,12 +53,12 @@ public:
       tag_size_ == rhs.tag_size_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
 
-  unsigned long ccg_id() const
+  std::uint32_t ccg_id() const
   {
     return ccg_id_;
   }
@@ -91,8 +91,8 @@ private:
     hash_add(hasher, tag_size_.str());
   }
 
-  unsigned long channel_id_;
-  unsigned long ccg_id_;
+  std::uint32_t channel_id_;
+  std::uint32_t ccg_id_;
   Commons::ImmutableString tag_size_;
   size_t hash_;
 };
@@ -246,7 +246,7 @@ struct ChannelPerformanceKey
 
   ChannelPerformanceKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -270,7 +270,7 @@ struct ChannelPerformanceKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -299,7 +299,7 @@ private:
   }
 
   DayHourTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

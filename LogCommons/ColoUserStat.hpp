@@ -439,7 +439,7 @@ struct ColoUserStatKey
 
   ColoUserStatKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -464,7 +464,7 @@ public:
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -496,7 +496,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 
@@ -662,7 +662,7 @@ private:
   void
   add_colo_user_stat_data_(
     const DayTimestamp& sdate,
-    unsigned long colo_id,
+    std::uint32_t colo_id,
     unsigned long created,
     const OldCollectorT::DataT& colo_users_data,
     COLLECTOR_TYPE_& collector
@@ -677,7 +677,7 @@ inline
 void
 ColoUsers_To_Colo_Or_GlobalColo_UserStatLoader::add_colo_user_stat_data_(
   const DayTimestamp& sdate,
-  unsigned long colo_id,
+  std::uint32_t colo_id,
   unsigned long created,
   const OldCollectorT::DataT& colo_users_data,
   COLLECTOR_TYPE_& collector

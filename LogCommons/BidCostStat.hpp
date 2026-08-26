@@ -26,7 +26,7 @@ public:
   }
 
   BidCostStatInnerKey(
-    unsigned long tag_id,
+    std::uint32_t tag_id,
     const String::SubString& ext_tag_id,
     const String::SubString& url,
     const FixedNum& cost
@@ -52,7 +52,7 @@ public:
       cost_ == rhs.cost_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
@@ -112,7 +112,7 @@ private:
     hash_add(hasher, cost_);
   }
 
-  unsigned long tag_id_;
+  std::uint32_t tag_id_;
   EmptyHolder<Aux_::StringIoWrapper> ext_tag_id_;
   EmptyHolder<Aux_::StringIoWrapper> url_;
   FixedNum cost_;

@@ -25,8 +25,8 @@ public:
   }
 
   SiteChannelStatInnerKey(
-    unsigned long tag_id,
-    unsigned long channel_id
+    std::uint32_t tag_id,
+    std::uint32_t channel_id
   )
   :
     tag_id_(tag_id),
@@ -45,12 +45,12 @@ public:
     return tag_id_ == rhs.tag_id_ && channel_id_ == rhs.channel_id_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -73,8 +73,8 @@ private:
     hash_add(hasher, channel_id_);
   }
 
-  unsigned long tag_id_;
-  unsigned long channel_id_;
+  std::uint32_t tag_id_;
+  std::uint32_t channel_id_;
   size_t hash_;
 };
 
@@ -170,7 +170,7 @@ struct SiteChannelStatKey
 
   SiteChannelStatKey(
     const DayTimestamp &sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -190,7 +190,7 @@ struct SiteChannelStatKey
   }
 
 private:
-  typedef OptionalValue<unsigned long> ColoIdT;
+  typedef OptionalValue<std::uint32_t> ColoIdT;
 
 public:
   const DayTimestamp& sdate() const

@@ -20,7 +20,7 @@ public:
   }
 
   TagAuctionStatInnerKey(
-    unsigned long tag_id,
+    std::uint32_t tag_id,
     unsigned long auction_ccg_count
   )
   :
@@ -39,7 +39,7 @@ public:
       auction_ccg_count_ == right.auction_ccg_count_);
   }
 
-  unsigned long
+  std::uint32_t
   tag_id() const
   {
     return tag_id_;
@@ -80,7 +80,7 @@ private:
     hash_add(hasher, auction_ccg_count_);
   }
 
-  unsigned long tag_id_;
+  std::uint32_t tag_id_;
   unsigned long auction_ccg_count_;
   size_t hash_;
 };
@@ -136,7 +136,7 @@ struct TagAuctionStatKey
 
   TagAuctionStatKey(
     const DayTimestamp& pub_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     pub_sdate_(pub_sdate),
@@ -160,7 +160,7 @@ public:
     return pub_sdate_;
   }
 
-  unsigned long
+  std::uint32_t
   colo_id() const
   {
     return colo_id_;
@@ -195,7 +195,7 @@ private:
   }
 
   DayTimestamp pub_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

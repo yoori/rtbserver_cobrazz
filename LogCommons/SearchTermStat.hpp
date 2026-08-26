@@ -145,7 +145,7 @@ namespace AdServer::LogProcessing
 
     SearchTermStatKey(
       const DayTimestamp& sdate,
-      unsigned long colo_id
+      std::uint32_t colo_id
     )
     :
       sdate_(sdate),
@@ -170,7 +170,7 @@ namespace AdServer::LogProcessing
       return sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -203,7 +203,7 @@ namespace AdServer::LogProcessing
     }
 
     DayTimestamp sdate_;
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     size_t hash_;
   };
 

@@ -19,7 +19,7 @@ namespace AdServer::LogProcessing
     {}
 
     SiteUserStatInnerKey(
-      unsigned long site_id,
+      std::uint32_t site_id,
       const DayTimestamp& last_appearance_date)
       : site_id_(site_id),
         last_appearance_date_(last_appearance_date)
@@ -36,7 +36,7 @@ namespace AdServer::LogProcessing
       return site_id_ == rhs.site_id_ && last_appearance_date_ == rhs.last_appearance_date_;
     }
 
-    unsigned long site_id() const
+    std::uint32_t site_id() const
     {
       return site_id_;
     }
@@ -75,7 +75,7 @@ namespace AdServer::LogProcessing
       }
     }
 
-    unsigned long site_id_;
+    std::uint32_t site_id_;
     // FIXME: Change type of last_appearance_date_ to OptionalDayTimestamp
     DayTimestamp last_appearance_date_;
     size_t hash_;
@@ -135,7 +135,7 @@ namespace AdServer::LogProcessing
   {
     SiteUserStatKey(): isp_sdate_(), colo_id_(), hash_() {}
 
-    SiteUserStatKey(const DayTimestamp& isp_sdate, unsigned long colo_id)
+    SiteUserStatKey(const DayTimestamp& isp_sdate, std::uint32_t colo_id)
       : isp_sdate_(isp_sdate),
         colo_id_(colo_id),
         hash_()
@@ -159,7 +159,7 @@ namespace AdServer::LogProcessing
       return isp_sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -195,7 +195,7 @@ namespace AdServer::LogProcessing
     }
 
     DayTimestamp isp_sdate_;
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     size_t hash_;
   };
 

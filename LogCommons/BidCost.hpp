@@ -11,7 +11,7 @@ namespace LogProcessing
   struct BidCostData
   {
     DayTimestamp time;
-    unsigned long tag_id = 0;
+    std::uint32_t tag_id = 0;
     std::string ext_tag_id;
     std::string url;
     FixedNumber cost;

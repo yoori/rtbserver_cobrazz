@@ -29,7 +29,7 @@ namespace v3_2_0_28
     ActionStatInnerKey(
       const RequestId& action_request_id,
       const RequestId& request_id,
-      unsigned long cc_id
+      std::uint32_t cc_id
     )
     :
       action_request_id_(action_request_id),
@@ -58,7 +58,7 @@ namespace v3_2_0_28
       return request_id_;
     }
 
-    unsigned long cc_id() const
+    std::uint32_t cc_id() const
     {
       return cc_id_;
     }
@@ -85,7 +85,7 @@ namespace v3_2_0_28
 
     RequestIdIoWrapper action_request_id_;
     RequestIdIoWrapper request_id_;
-    unsigned long cc_id_;
+    std::uint32_t cc_id_;
     size_t hash_;
   };
 
@@ -100,8 +100,8 @@ namespace v3_2_0_28
     {}
 
     ActionStatInnerData(
-      unsigned long action_id,
-      unsigned long tag_id,
+      std::uint32_t action_id,
+      std::uint32_t tag_id,
       const std::string& order_id,
       const std::string& country_code,
       const std::string& referrer,
@@ -124,8 +124,8 @@ namespace v3_2_0_28
     {}
 
     ActionStatInnerData(
-      unsigned long action_id,
-      unsigned long tag_id,
+      std::uint32_t action_id,
+      std::uint32_t tag_id,
       const std::string& order_id,
       const std::string& country_code,
       const std::string& referrer,
@@ -170,12 +170,12 @@ namespace v3_2_0_28
       return *this;
     }
 
-    unsigned long action_id() const
+    std::uint32_t action_id() const
     {
       return holder_->action_id;
     }
 
-    unsigned long tag_id() const
+    std::uint32_t tag_id() const
     {
       return holder_->tag_id;
     }
@@ -226,8 +226,8 @@ namespace v3_2_0_28
       {}
 
       DataHolder(
-        unsigned long action_id_val,
-        unsigned long tag_id_val,
+        std::uint32_t action_id_val,
+        std::uint32_t tag_id_val,
         const std::string& order_id_val,
         const std::string& country_code_val,
         const std::string& referrer_val,
@@ -248,8 +248,8 @@ namespace v3_2_0_28
         trim(referrer.get(), referrer_val, 2048);
       }
 
-      unsigned long action_id;
-      unsigned long tag_id;
+      std::uint32_t action_id;
+      std::uint32_t tag_id;
       OptionalStringT order_id;
       OptionalStringT country_code;
       OptionalStringT referrer;
@@ -273,7 +273,7 @@ namespace v3_2_0_28
 
     ActionStatKey(
       const DayHourTimestamp& sdate,
-      unsigned long colo_id
+      std::uint32_t colo_id
     )
     :
       sdate_(sdate),
@@ -297,7 +297,7 @@ namespace v3_2_0_28
       return sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -322,7 +322,7 @@ namespace v3_2_0_28
     }
 
     DayHourTimestamp sdate_;
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     size_t hash_;
   };
 
@@ -348,7 +348,7 @@ public:
   ActionStatInnerKey(
     const RequestId& action_request_id,
     const RequestId& request_id,
-    unsigned long cc_id
+    std::uint32_t cc_id
   )
   :
     action_request_id_(action_request_id),
@@ -387,7 +387,7 @@ public:
     return request_id_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
@@ -414,7 +414,7 @@ private:
 
   RequestIdIoWrapper action_request_id_;
   RequestIdIoWrapper request_id_;
-  unsigned long cc_id_;
+  std::uint32_t cc_id_;
   size_t hash_;
 };
 
@@ -430,14 +430,14 @@ public:
   {}
 
   ActionStatInnerData(
-    unsigned long action_id,
-    unsigned long tag_id,
+    std::uint32_t action_id,
+    std::uint32_t tag_id,
     const std::string& order_id,
     const std::string& country_code,
     const std::string& referrer,
     const DayHourTimestamp& imp_date,
     const FixedNum& cur_value,
-    unsigned long device_channel_id
+    std::uint32_t device_channel_id
   )
   :
     holder_(
@@ -456,15 +456,15 @@ public:
   {}
 
   ActionStatInnerData(
-    unsigned long action_id,
-    unsigned long tag_id,
+    std::uint32_t action_id,
+    std::uint32_t tag_id,
     const std::string& order_id,
     const std::string& country_code,
     const std::string& referrer,
     const DayHourTimestamp& imp_date,
     const DayHourTimestamp& click_date,
     const FixedNum& cur_value,
-    unsigned long device_channel_id
+    std::uint32_t device_channel_id
   )
   :
     holder_(
@@ -522,12 +522,12 @@ public:
     return *this;
   }
 
-  unsigned long action_id() const
+  std::uint32_t action_id() const
   {
     return holder_->action_id;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return holder_->tag_id;
   }
@@ -562,7 +562,7 @@ public:
     return holder_->cur_value;
   }
 
-  unsigned long device_channel_id() const
+  std::uint32_t device_channel_id() const
   {
     return holder_->device_channel_id;
   }
@@ -585,15 +585,15 @@ private:
     {}
 
     DataHolder(
-      unsigned long action_id_val,
-      unsigned long tag_id_val,
+      std::uint32_t action_id_val,
+      std::uint32_t tag_id_val,
       const std::string& order_id_val,
       const std::string& country_code_val,
       const std::string& referrer_val,
       const DayHourTimestamp& imp_date_val,
       const OptionalDayHourTimestamp& click_date_val,
       const FixedNum& cur_value_val,
-      unsigned long device_channel_id_val
+      std::uint32_t device_channel_id_val
     )
     :
       action_id(action_id_val),
@@ -609,15 +609,15 @@ private:
       trim(referrer.get(), referrer_val, 2048);
     }
 
-    unsigned long action_id;
-    unsigned long tag_id;
+    std::uint32_t action_id;
+    std::uint32_t tag_id;
     OptionalStringT order_id;
     OptionalStringT country_code;
     OptionalStringT referrer;
     DayHourTimestamp imp_date;
     OptionalDayHourTimestamp click_date;
     FixedNum cur_value;
-    unsigned long device_channel_id;
+    std::uint32_t device_channel_id;
 
   private:
     virtual ~DataHolder() noexcept {}
@@ -635,7 +635,7 @@ struct ActionStatKey
 
   ActionStatKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -668,7 +668,7 @@ struct ActionStatKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -693,7 +693,7 @@ private:
   }
 
   DayHourTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

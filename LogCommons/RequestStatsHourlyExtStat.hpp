@@ -20,8 +20,8 @@ class RequestStatsHourlyExtInnerKey
 public:
   typedef Generics::SimpleDecimal<uint32_t, 6, 5> DeliveryThresholdT;
 
-  typedef OptionalValue<unsigned long> GeoChannelIdOptional;
-  typedef OptionalValue<unsigned long> DeviceChannelIdOptional;
+  typedef OptionalValue<std::uint32_t> GeoChannelIdOptional;
+  typedef OptionalValue<std::uint32_t> DeviceChannelIdOptional;
 
   RequestStatsHourlyExtInnerKey()
   :
@@ -55,19 +55,19 @@ public:
   }
 
   RequestStatsHourlyExtInnerKey(
-    unsigned long colo_id,
-    unsigned long publisher_account_id,
-    unsigned long tag_id,
-    const OptionalUlong& size_id,
+    std::uint32_t colo_id,
+    std::uint32_t publisher_account_id,
+    std::uint32_t tag_id,
+    const OptionalUInt32& size_id,
     const std::string& country_code,
-    unsigned long adv_account_id,
-    unsigned long campaign_id,
-    unsigned long ccg_id,
-    unsigned long cc_id,
-    unsigned long ccg_rate_id,
-    unsigned long colo_rate_id,
-    unsigned long site_rate_id,
-    unsigned long currency_exchange_id,
+    std::uint32_t adv_account_id,
+    std::uint32_t campaign_id,
+    std::uint32_t ccg_id,
+    std::uint32_t cc_id,
+    std::uint32_t ccg_rate_id,
+    std::uint32_t colo_rate_id,
+    std::uint32_t site_rate_id,
+    std::uint32_t currency_exchange_id,
     const DeliveryThresholdT& delivery_threshold,
     unsigned short num_shown,
     unsigned short position,
@@ -77,7 +77,7 @@ public:
     char user_status,
     const GeoChannelIdOptional& geo_channel_id,
     const DeviceChannelIdOptional& device_channel_id,
-    unsigned long ctr_reset_id,
+    std::uint32_t ctr_reset_id,
     bool hid_profile,
     long viewability
   )
@@ -146,22 +146,22 @@ public:
       viewability_ == rhs.viewability_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
 
-  unsigned long publisher_account_id() const
+  std::uint32_t publisher_account_id() const
   {
     return publisher_account_id_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
 
-  const OptionalUlong& size_id() const
+  const OptionalUInt32& size_id() const
   {
     return size_id_;
   }
@@ -171,42 +171,42 @@ public:
     return country_code_.get();
   }
 
-  unsigned long adv_account_id() const
+  std::uint32_t adv_account_id() const
   {
     return adv_account_id_;
   }
 
-  unsigned long campaign_id() const
+  std::uint32_t campaign_id() const
   {
     return campaign_id_;
   }
 
-  unsigned long ccg_id() const
+  std::uint32_t ccg_id() const
   {
     return ccg_id_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
 
-  unsigned long ccg_rate_id() const
+  std::uint32_t ccg_rate_id() const
   {
     return ccg_rate_id_;
   }
 
-  unsigned long colo_rate_id() const
+  std::uint32_t colo_rate_id() const
   {
     return colo_rate_id_;
   }
 
-  unsigned long site_rate_id() const
+  std::uint32_t site_rate_id() const
   {
     return site_rate_id_;
   }
 
-  unsigned long currency_exchange_id() const
+  std::uint32_t currency_exchange_id() const
   {
     return currency_exchange_id_;
   }
@@ -256,7 +256,7 @@ public:
     return device_channel_id_;
   }
 
-  unsigned long ctr_reset_id() const
+  std::uint32_t ctr_reset_id() const
   {
     return ctr_reset_id_;
   }
@@ -386,19 +386,19 @@ private:
 
   static const DeliveryThresholdT max_delivery_threshold_value_;
 
-  unsigned long colo_id_;
-  unsigned long publisher_account_id_;
-  unsigned long tag_id_;
-  OptionalUlong size_id_;
+  std::uint32_t colo_id_;
+  std::uint32_t publisher_account_id_;
+  std::uint32_t tag_id_;
+  OptionalUInt32 size_id_;
   EmptyHolder<SpacesString> country_code_;
-  unsigned long adv_account_id_;
-  unsigned long campaign_id_;
-  unsigned long ccg_id_;
-  unsigned long cc_id_;
-  unsigned long ccg_rate_id_;
-  unsigned long colo_rate_id_;
-  unsigned long site_rate_id_;
-  unsigned long currency_exchange_id_;
+  std::uint32_t adv_account_id_;
+  std::uint32_t campaign_id_;
+  std::uint32_t ccg_id_;
+  std::uint32_t cc_id_;
+  std::uint32_t ccg_rate_id_;
+  std::uint32_t colo_rate_id_;
+  std::uint32_t site_rate_id_;
+  std::uint32_t currency_exchange_id_;
   DeliveryThresholdT delivery_threshold_;
   unsigned short num_shown_;
   unsigned short position_;
@@ -408,7 +408,7 @@ private:
   char user_status_;
   GeoChannelIdOptional geo_channel_id_;
   DeviceChannelIdOptional device_channel_id_;
-  unsigned long ctr_reset_id_;
+  std::uint32_t ctr_reset_id_;
   bool hid_profile_;
   long viewability_;
   size_t hash_;

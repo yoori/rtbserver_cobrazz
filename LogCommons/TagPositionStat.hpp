@@ -13,7 +13,7 @@ namespace LogProcessing {
 class TagPositionStatInnerKey_V_2_7
 {
 public:
-  typedef OptionalValue<unsigned long> OptionalUlong;
+  typedef OptionalValue<std::uint32_t> OptionalUInt32;
 
   TagPositionStatInnerKey_V_2_7()
   :
@@ -26,10 +26,10 @@ public:
   }
 
   TagPositionStatInnerKey_V_2_7(
-    unsigned long tag_id,
-    const OptionalUlong& top_offset,
-    const OptionalUlong& left_offset,
-    const OptionalUlong& visibility
+    std::uint32_t tag_id,
+    const OptionalUInt32& top_offset,
+    const OptionalUInt32& left_offset,
+    const OptionalUInt32& visibility
   )
   :
     tag_id_(tag_id),
@@ -49,22 +49,22 @@ public:
       visibility_ == rhs.visibility_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
 
-  const OptionalUlong& top_offset() const
+  const OptionalUInt32& top_offset() const
   {
     return top_offset_;
   }
 
-  const OptionalUlong& left_offset() const
+  const OptionalUInt32& left_offset() const
   {
     return left_offset_;
   }
 
-  const OptionalUlong& visibility() const
+  const OptionalUInt32& visibility() const
   {
     return visibility_;
   }
@@ -95,17 +95,17 @@ private:
     visibility_.hash_add(hasher);
   }
 
-  unsigned long tag_id_;
-  OptionalUlong top_offset_;
-  OptionalUlong left_offset_;
-  OptionalUlong visibility_;
+  std::uint32_t tag_id_;
+  OptionalUInt32 top_offset_;
+  OptionalUInt32 left_offset_;
+  OptionalUInt32 visibility_;
   size_t hash_;
 };
 
 class TagPositionStatInnerKey
 {
 public:
-  typedef OptionalValue<unsigned long> OptionalUlong;
+  typedef OptionalValue<std::uint32_t> OptionalUInt32;
 
   TagPositionStatInnerKey()
   :
@@ -119,10 +119,10 @@ public:
   }
 
   TagPositionStatInnerKey(
-    unsigned long tag_id,
-    const OptionalUlong& top_offset,
-    const OptionalUlong& left_offset,
-    const OptionalUlong& visibility,
+    std::uint32_t tag_id,
+    const OptionalUInt32& top_offset,
+    const OptionalUInt32& left_offset,
+    const OptionalUInt32& visibility,
     bool test
   )
   :
@@ -159,22 +159,22 @@ public:
       test_ == rhs.test_;
   }
 
-  unsigned long tag_id() const
+  std::uint32_t tag_id() const
   {
     return tag_id_;
   }
 
-  const OptionalUlong& top_offset() const
+  const OptionalUInt32& top_offset() const
   {
     return top_offset_;
   }
 
-  const OptionalUlong& left_offset() const
+  const OptionalUInt32& left_offset() const
   {
     return left_offset_;
   }
 
-  const OptionalUlong& visibility() const
+  const OptionalUInt32& visibility() const
   {
     return visibility_;
   }
@@ -214,10 +214,10 @@ private:
     hash_add(hasher, test_);
   }
 
-  unsigned long tag_id_;
-  OptionalUlong top_offset_;
-  OptionalUlong left_offset_;
-  OptionalUlong visibility_;
+  std::uint32_t tag_id_;
+  OptionalUInt32 top_offset_;
+  OptionalUInt32 left_offset_;
+  OptionalUInt32 visibility_;
   bool test_;
   size_t hash_;
 };
@@ -306,7 +306,7 @@ struct TagPositionStatKey
 
   TagPositionStatKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -330,7 +330,7 @@ struct TagPositionStatKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -363,7 +363,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

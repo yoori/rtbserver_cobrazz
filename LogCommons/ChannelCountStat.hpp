@@ -143,7 +143,7 @@ struct ChannelCountStatKey
 
   ChannelCountStatKey(
     const DayTimestamp& isp_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     isp_sdate_(isp_sdate),
@@ -168,7 +168,7 @@ public:
     return isp_sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -196,7 +196,7 @@ private:
   }
 
   DayTimestamp isp_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

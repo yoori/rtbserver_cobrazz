@@ -12,12 +12,12 @@ struct ResearchProfData
 {
   SecondsTimestamp time;
   std::string app;
-  unsigned long colo_id;
+  std::uint32_t colo_id;
   std::string uid_hash;
   std::string tuid_hash;
   std::string ip_addr_hash;
   std::string hid_hash;
-  unsigned long device_channel_id;
+  std::uint32_t device_channel_id;
   std::string referer;
   Commons::StringHolder_var page_keywords;
   Commons::StringHolder_var search_keywords;

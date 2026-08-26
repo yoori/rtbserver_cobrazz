@@ -29,12 +29,12 @@ namespace LogProcessing
     RequestId global_request_id;
     UserId user_id;
     UserId household_id;
-    unsigned long tag_id;
+    std::uint32_t tag_id;
 
     std::string ext_tag_id;
 
     std::string ip_address;
-    unsigned long cc_id;
+    std::uint32_t cc_id;
 
     NumberList channel_list;
     NumberList history_channel_list;
@@ -49,8 +49,8 @@ namespace LogProcessing
     RequestData::FixedNum floor_cost;
 
     std::string algorithm_id;
-    unsigned long size_id;
-    unsigned long colo_id;
+    std::uint32_t size_id;
+    std::uint32_t colo_id;
     unsigned long campaign_freq;
 
     RequestData::FixedNum predicted_ctr;
@@ -122,15 +122,15 @@ namespace LogProcessing
     RequestId global_request_id;
     UserId user_id;
     UserId household_id;
-    unsigned long publisher_account_id;
-    unsigned long tag_id;
+    std::uint32_t publisher_account_id;
+    std::uint32_t tag_id;
 
     std::string ext_tag_id;
 
     std::string ip_address;
-    unsigned long campaign_id;
-    unsigned long ccg_id;
-    unsigned long cc_id;
+    std::uint32_t campaign_id;
+    std::uint32_t ccg_id;
+    std::uint32_t cc_id;
 
     NumberList channel_list;
     NumberList history_channel_list;
@@ -145,8 +145,8 @@ namespace LogProcessing
     RequestData::FixedNum floor_cost;
 
     std::string algorithm_id;
-    unsigned long size_id;
-    unsigned long colo_id;
+    std::uint32_t size_id;
+    std::uint32_t colo_id;
     unsigned long campaign_freq;
 
     RequestData::FixedNum predicted_ctr;

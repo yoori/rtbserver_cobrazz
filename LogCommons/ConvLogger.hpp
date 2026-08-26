@@ -23,7 +23,7 @@ namespace LogProcessing
   {
     SecondsTimestamp time_;
     UserIdIoWrapper user_id_;
-    unsigned long action_id_;
+    std::uint32_t action_id_;
 
   public:
     const SecondsTimestamp&
@@ -38,7 +38,7 @@ namespace LogProcessing
       return user_id_;
     }
 
-    unsigned long
+    std::uint32_t
     action_id() const noexcept
     {
       return action_id_;
@@ -50,7 +50,7 @@ namespace LogProcessing
     ConvData(
       const SecondsTimestamp& time_val,
       const UserId& user_id_val,
-      unsigned long action_id_val)
+      std::uint32_t action_id_val)
       : time_(time_val),
         user_id_(user_id_val),
         action_id_(action_id_val)

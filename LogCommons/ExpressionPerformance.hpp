@@ -24,7 +24,7 @@ public:
   }
 
   ExpressionPerformanceInnerKey(
-    unsigned long cc_id,
+    std::uint32_t cc_id,
     const std::string& expression
   )
   :
@@ -44,7 +44,7 @@ public:
     return cc_id_ == rhs.cc_id_ && expression_ == rhs.expression_;
   }
 
-  unsigned long cc_id() const
+  std::uint32_t cc_id() const
   {
     return cc_id_;
   }
@@ -86,7 +86,7 @@ private:
     }
   }
 
-  unsigned long cc_id_;
+  std::uint32_t cc_id_;
   std::string expression_;
   size_t hash_;
 };
@@ -170,7 +170,7 @@ struct ExpressionPerformanceKey
 
   ExpressionPerformanceKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -194,7 +194,7 @@ struct ExpressionPerformanceKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -222,7 +222,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

@@ -22,7 +22,7 @@ public:
   }
 
   ChannelTriggerImpStatInnerKey_V_2_3(
-    unsigned long channel_trigger_id,
+    std::uint32_t channel_trigger_id,
     char type
   )
   :
@@ -43,7 +43,7 @@ public:
       type_ == rhs.type_;
   }
 
-  unsigned long channel_trigger_id() const
+  std::uint32_t channel_trigger_id() const
   {
     return channel_trigger_id_;
   }
@@ -92,7 +92,7 @@ private:
     }
   }
 
-  unsigned long channel_trigger_id_;
+  std::uint32_t channel_trigger_id_;
   char type_;
   size_t hash_;
 };
@@ -110,8 +110,8 @@ public:
   }
 
   ChannelTriggerImpStatInnerKey(
-    unsigned long channel_trigger_id,
-    unsigned long channel_id,
+    std::uint32_t channel_trigger_id,
+    std::uint32_t channel_id,
     char type
   )
   :
@@ -146,12 +146,12 @@ public:
       type_ == rhs.type_;
   }
 
-  unsigned long channel_trigger_id() const
+  std::uint32_t channel_trigger_id() const
   {
     return channel_trigger_id_;
   }
 
-  unsigned long channel_id() const
+  std::uint32_t channel_id() const
   {
     return channel_id_;
   }
@@ -206,8 +206,8 @@ private:
     }
   }
 
-  unsigned long channel_trigger_id_;
-  unsigned long channel_id_;
+  std::uint32_t channel_trigger_id_;
+  std::uint32_t channel_id_;
   char type_;
   size_t hash_;
 };
@@ -288,7 +288,7 @@ struct ChannelTriggerImpStatKey
 
   ChannelTriggerImpStatKey(
     const DayTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -312,7 +312,7 @@ struct ChannelTriggerImpStatKey
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -340,7 +340,7 @@ private:
   }
 
   DayTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

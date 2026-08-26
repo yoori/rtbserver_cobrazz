@@ -13,7 +13,7 @@ class WebStatInnerKey_V_3_1
   typedef StringIoWrapperOptional OptionalStringT;
 
 public:
-  typedef OptionalValue<unsigned long> OptionalUlong;
+  typedef OptionalValue<std::uint32_t> OptionalUInt32;
 
   WebStatInnerKey_V_3_1() noexcept
   :
@@ -36,12 +36,12 @@ public:
     const std::string& curct,
     const std::string& browser,
     const std::string& os,
-    unsigned long web_operation_id,
+    std::uint32_t web_operation_id,
     char result,
     char user_status,
     bool test,
-    const OptionalUlong& tag_id,
-    const OptionalUlong& cc_id
+    const OptionalUInt32& tag_id,
+    const OptionalUInt32& cc_id
   )
     /*throw(eh::Exception)*/
   :
@@ -98,7 +98,7 @@ public:
     return os_.get();
   }
 
-  unsigned long
+  std::uint32_t
   web_operation_id() const noexcept
   {
     return web_operation_id_;
@@ -119,12 +119,12 @@ public:
     return test_;
   }
 
-  const OptionalUlong& tag_id() const noexcept
+  const OptionalUInt32& tag_id() const noexcept
   {
     return tag_id_;
   }
 
-  const OptionalUlong& cc_id() const noexcept
+  const OptionalUInt32& cc_id() const noexcept
   {
     return cc_id_;
   }
@@ -177,12 +177,12 @@ private:
   OptionalStringT curct_;
   OptionalStringT browser_;
   OptionalStringT os_;
-  unsigned long web_operation_id_;
+  std::uint32_t web_operation_id_;
   char result_;
   char user_status_;
   bool test_;
-  OptionalUlong tag_id_;
-  OptionalUlong cc_id_;
+  OptionalUInt32 tag_id_;
+  OptionalUInt32 cc_id_;
   size_t hash_;
 };
 
@@ -191,7 +191,7 @@ class WebStatInnerKey
   typedef StringIoWrapperOptional OptionalStringT;
 
 public:
-  typedef OptionalValue<unsigned long> OptionalUlong;
+  typedef OptionalValue<std::uint32_t> OptionalUInt32;
 
   WebStatInnerKey() noexcept
   :
@@ -215,12 +215,12 @@ public:
     const std::string& browser,
     const std::string& os,
     const std::string& source,
-    unsigned long web_operation_id,
+    std::uint32_t web_operation_id,
     char result,
     char user_status,
     bool test,
-    const OptionalUlong& tag_id,
-    const OptionalUlong& cc_id
+    const OptionalUInt32& tag_id,
+    const OptionalUInt32& cc_id
   )
     /*throw(eh::Exception)*/
   :
@@ -305,7 +305,7 @@ public:
     return source_.get();
   }
 
-  unsigned long
+  std::uint32_t
   web_operation_id() const noexcept
   {
     return web_operation_id_;
@@ -326,12 +326,12 @@ public:
     return test_;
   }
 
-  const OptionalUlong& tag_id() const noexcept
+  const OptionalUInt32& tag_id() const noexcept
   {
     return tag_id_;
   }
 
-  const OptionalUlong& cc_id() const noexcept
+  const OptionalUInt32& cc_id() const noexcept
   {
     return cc_id_;
   }
@@ -395,12 +395,12 @@ private:
   OptionalStringT browser_;
   OptionalStringT os_;
   OptionalStringT source_;
-  unsigned long web_operation_id_;
+  std::uint32_t web_operation_id_;
   char result_;
   char user_status_;
   bool test_;
-  OptionalUlong tag_id_;
-  OptionalUlong cc_id_;
+  OptionalUInt32 tag_id_;
+  OptionalUInt32 cc_id_;
   size_t hash_;
 };
 
@@ -456,7 +456,7 @@ struct WebStatKey
 
   WebStatKey(
     const DayHourTimestamp& sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     sdate_(sdate),
@@ -481,7 +481,7 @@ public:
     return sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -522,7 +522,7 @@ private:
   }
 
   DayHourTimestamp sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

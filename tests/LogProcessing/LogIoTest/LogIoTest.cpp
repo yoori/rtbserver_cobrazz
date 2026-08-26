@@ -1436,7 +1436,7 @@ int main(int argc, char **argv)
         NumberArray(), // geo_channels
         3131,
         "32x32",
-        OptionalUlong(), // size_id
+        OptionalUInt32(), // size_id
         true,
         3,
         OptionalValue<unsigned long>(),
@@ -1587,7 +1587,7 @@ int main(int argc, char **argv)
         true, // test_request
         1,
         2,
-        OptionalUlong(),
+        OptionalUInt32(),
         "EXT TAG ID #1",
         "www.referer2.com",
         987,
@@ -1966,7 +1966,7 @@ int main(int argc, char **argv)
     CmpStatCollector::DataT::KeyT inner_key1(111, 999, 99, "", 127,
       DeliveryThresholdT("0.19999"), 888, 777, 666,
         721, 172, 712, false, true);
-    CmpStatCollector::DataT::KeyT inner_key2(111, 999, OptionalUlong(), "Ru",
+    CmpStatCollector::DataT::KeyT inner_key2(111, 999, OptionalUInt32(), "Ru",
       127, DeliveryThresholdT("0.19999"), 888, 777, 666,
         721, 172, 712, true, false);
     data.add(inner_key1, inner_data);
@@ -2340,7 +2340,7 @@ int main(int argc, char **argv)
     typedef RequestStatsHourlyExtStatCollector::DataT::KeyT KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      KeyType inner_key(i, 2, 3, OptionalUlong(4), "ru", 5, 6, 7, 8, 9, 10, 11, 12,
+      KeyType inner_key(i, 2, 3, OptionalUInt32(4), "ru", 5, 6, 7, 8, 9, 10, 11, 12,
         RequestStatsHourlyExtInnerKey::DeliveryThresholdT("0.13"), 14, 15,
           true, false, true, 'B',
             RequestStatsHourlyExtInnerKey::GeoChannelIdOptional(16),
@@ -2350,7 +2350,7 @@ int main(int argc, char **argv)
     }
 #else
     RequestStatsHourlyExtStatCollector::DataT::KeyT
-      inner_key(1, 2, 3, OptionalUlong(), "ru", 5, 6, 7, 8, 9, 10, 11, 12,
+      inner_key(1, 2, 3, OptionalUInt32(), "ru", 5, 6, 7, 8, 9, 10, 11, 12,
         RequestStatsHourlyExtInnerKey::DeliveryThresholdT("0.13"), 14, 15,
           true, false, true, 'B',
             RequestStatsHourlyExtInnerKey::GeoChannelIdOptional(16),

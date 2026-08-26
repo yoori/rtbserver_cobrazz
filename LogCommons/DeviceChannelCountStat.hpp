@@ -25,7 +25,7 @@ public:
   }
 
   DeviceChannelCountStatInnerKey(
-    unsigned long device_channel_id,
+    std::uint32_t device_channel_id,
     char channel_type,
     unsigned long channel_count
   )
@@ -49,7 +49,7 @@ public:
       channel_count_ == rhs.channel_count_;
   }
 
-  unsigned long device_channel_id() const
+  std::uint32_t device_channel_id() const
   {
     return device_channel_id_;
   }
@@ -109,7 +109,7 @@ private:
     }
   }
 
-  unsigned long device_channel_id_;
+  std::uint32_t device_channel_id_;
   char channel_type_;
   unsigned long channel_count_;
   size_t hash_;
@@ -176,7 +176,7 @@ public:
 
   DeviceChannelCountStatKey(
     const DayTimestamp& isp_sdate,
-    unsigned long colo_id
+    std::uint32_t colo_id
   )
   :
     isp_sdate_(isp_sdate),
@@ -200,7 +200,7 @@ public:
     return isp_sdate_;
   }
 
-  unsigned long colo_id() const
+  std::uint32_t colo_id() const
   {
     return colo_id_;
   }
@@ -228,7 +228,7 @@ private:
   }
 
   DayTimestamp isp_sdate_;
-  unsigned long colo_id_;
+  std::uint32_t colo_id_;
   size_t hash_;
 };
 

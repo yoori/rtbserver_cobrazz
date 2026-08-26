@@ -46,7 +46,7 @@ namespace AdServer::LogProcessing
     UserPropertiesKey(
       const DayHourTimestamp& sdate,
       const DayHourTimestamp& isp_sdate,
-      unsigned long colo_id,
+      std::uint32_t colo_id,
       char user_status,
       const Generics::StringHashAdapter& property_name,
       const std::string& property_value)
@@ -85,7 +85,7 @@ namespace AdServer::LogProcessing
       return isp_sdate_;
     }
 
-    unsigned long colo_id() const
+    std::uint32_t colo_id() const
     {
       return colo_id_;
     }
@@ -149,7 +149,7 @@ namespace AdServer::LogProcessing
 
     DayHourTimestamp sdate_;
     DayHourTimestamp isp_sdate_;
-    unsigned long colo_id_;
+    std::uint32_t colo_id_;
     char user_status_;
     Generics::StringHashAdapter property_name_;
     std::string property_value_;
