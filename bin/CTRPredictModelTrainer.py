@@ -582,9 +582,7 @@ class InProgressModel:
 
   def write_traits_(self):
     temporary_file = self.path / '.traits.json.tmp'
-    with temporary_file.open('w') as output:
-      json.dump(self.traits, output, indent=2)
-      output.write('\n')
+    CatBoostTrainer.write_json_(temporary_file, self.traits)
     os.replace(temporary_file, self.path / 'traits.json')
 
   def __exit__(self, exception_type, exception_value, traceback):
