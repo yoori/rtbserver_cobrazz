@@ -1237,12 +1237,13 @@ class CatBoostTrainer(object):
         raise ValueError("Invalid model staging directory: '" +
                          str(staging_dir) + "'")
     try:
-      model.save_model(str(staging_dir / 'model.cbm'))
       model_description = self.describe_model(
         model,
         feature_dictionary_file,
         feature_statistics,
         feature_name_resolver)
+      model.drop_unused_features()
+      model.save_model(str(staging_dir / 'model.cbm'))
       features = model_description['feature_groups']
       features_importance = model_description['features_importance']
       self.write_campaign_manager_config_(
@@ -1329,7 +1330,6 @@ class CatBoostTrainer(object):
         file_name = model_files.get(name, name + '.cbm')
         entry_trainer = entry['trainer']
         model = entry['model']
-        model.save_model(str(staging_dir / file_name))
         model_description = entry.get('model_description')
         if model_description is None:
           model_description = entry_trainer.describe_model(
@@ -1338,6 +1338,8 @@ class CatBoostTrainer(object):
             entry.get('feature_statistics'))
           unresolved_feature_items.extend(
             model_description['features_importance'])
+        model.drop_unused_features()
+        model.save_model(str(staging_dir / file_name))
         features = model_description['feature_groups']
         features_importance = model_description['features_importance']
         model_traits = {

@@ -1,7 +1,9 @@
+#include <array>
 #include <chrono>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -19,9 +21,16 @@ namespace
   using namespace AdServer::CampaignSvcs;
   using namespace AdServer::CampaignSvcs::CTR;
 
+  enum class Mode
+  {
+    FULL,
+    SWITCH_CAMPAIGNS
+  };
+
   struct Options
   {
     std::string model;
+    Mode mode = Mode::FULL;
     unsigned long count = 0;
     unsigned long campaign_id = 236995;
     std::optional<RevenueDecimal> expected_ctr;
@@ -44,8 +53,8 @@ namespace
     Colocation_var colocation;
     Account_var account;
     Account_var advertiser;
-    Campaign_var campaign;
-    Creative_var creative;
+    std::array<Campaign_var, 2> campaigns;
+    std::array<Creative_var, 2> creatives;
     Generics::MonoAllocatorArena arena;
     CampaignSelectParams_var request_params;
   };
@@ -54,9 +63,10 @@ namespace
   print_usage()
   {
     std::cerr
-      << "Usage: CTRModelPredictPerfTest --model <path> --count <N>\n"
+      << "Usage: CTRModelPredictPerfTest --model <path> --mode <mode> --count <N>\n"
       << "Options:\n"
       << "  --model <path>  CampaignManager CTR model directory\n"
+      << "  --mode <mode>   full or switch-campaigns\n"
       << "  --count <N>     sequential CTR calculations count\n"
       << "  --campaign-id <value>  DB campaign_id used by the candidate\n"
       << "  --expected-ctr <value>  fail if the resulting CTR differs\n";
@@ -68,6 +78,7 @@ namespace
     using namespace Generics::AppUtils;
 
     StringOption opt_model;
+    StringOption opt_mode;
     StringOption opt_expected_ctr;
     Option<unsigned long> opt_count(0);
     Option<unsigned long> opt_campaign_id(236995);
@@ -75,6 +86,7 @@ namespace
 
     Args args(-1);
     args.add(equal_name("model"), opt_model);
+    args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("count"), opt_count);
     args.add(equal_name("campaign-id"), opt_campaign_id);
     args.add(equal_name("expected-ctr"), opt_expected_ctr);
@@ -89,6 +101,19 @@ namespace
 
     Options options;
     options.model = *opt_model;
+    if(*opt_mode == "full")
+    {
+      options.mode = Mode::FULL;
+    }
+    else if(*opt_mode == "switch-campaigns")
+    {
+      options.mode = Mode::SWITCH_CAMPAIGNS;
+    }
+    else
+    {
+      throw std::runtime_error(
+        "--mode must be full or switch-campaigns");
+    }
     options.count = *opt_count;
     options.campaign_id = *opt_campaign_id;
     if(!opt_expected_ctr->empty())
@@ -103,6 +128,12 @@ namespace
     if(options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
+    }
+    if(options.mode == Mode::SWITCH_CAMPAIGNS &&
+      options.campaign_id == std::numeric_limits<unsigned long>::max())
+    {
+      throw std::runtime_error(
+        "--campaign-id is too large for switch-campaigns mode");
     }
 
     return options;
@@ -196,26 +227,29 @@ namespace
     data.advertiser = new AccountDef();
     data.advertiser->account_id = 12210;
 
-    data.campaign = new Campaign();
-    data.campaign->campaign_id = 21251;
-    // CampaignManager campaign_group_id is DB campaign_id.
-    data.campaign->campaign_group_id = campaign_id;
-    data.campaign->account = data.account;
-    data.campaign->advertiser = data.advertiser;
-    data.campaign->ctr = RevenueDecimal(0.001);
+    for(std::size_t index = 0; index < data.campaigns.size(); ++index)
+    {
+      data.campaigns[index] = new Campaign();
+      data.campaigns[index]->campaign_id = 21251 + index;
+      // CampaignManager campaign_group_id is DB campaign_id.
+      data.campaigns[index]->campaign_group_id = campaign_id + index;
+      data.campaigns[index]->account = data.account;
+      data.campaigns[index]->advertiser = data.advertiser;
+      data.campaigns[index]->ctr = RevenueDecimal(0.001);
 
-    data.creative = new Creative(
-      data.campaign,
-      2527297,
-      857450,
-      0,
-      0,
-      "",
-      "",
-      OptionValue(),
-      "",
-      "",
-      Creative::CategorySet());
+      data.creatives[index] = new Creative(
+        data.campaigns[index],
+        2527297 + index,
+        857450 + index,
+        0,
+        0,
+        "",
+        "",
+        OptionValue(),
+        "",
+        "",
+        Creative::CategorySet());
+    }
 
   }
 }
@@ -236,19 +270,39 @@ main(int argc, char** argv)
     CTRProvider::CalculationContext_var context =
       calculation->create_context(data.tag_size);
 
-    const std::string algorithm_id = calculation->algorithm_id(data.creative);
+    const std::string algorithm_id = calculation->algorithm_id(data.creatives[0]);
     if(algorithm_id.empty())
     {
       throw std::runtime_error("the model selected the default CTR algorithm");
+    }
+    if(options.mode == Mode::SWITCH_CAMPAIGNS &&
+      calculation->algorithm_id(data.creatives[1]).empty())
+    {
+      throw std::runtime_error(
+        "the model selected the default CTR algorithm for the second campaign");
     }
 
     const CpuTimes cpu_started = current_cpu_times();
     const auto started = std::chrono::steady_clock::now();
 
     RevenueDecimal ctr;
-    for(unsigned long i = 0; i < options.count; ++i)
+    std::array<std::optional<RevenueDecimal>, 2> campaign_ctrs;
+    if(options.mode == Mode::FULL)
     {
-      ctr = context->get_ctr(data.creative);
+      for(unsigned long i = 0; i < options.count; ++i)
+      {
+        ctr = context->get_ctr(data.creatives[0]);
+      }
+      campaign_ctrs[0] = ctr;
+    }
+    else
+    {
+      for(unsigned long i = 0; i < options.count; ++i)
+      {
+        const std::size_t campaign_index = i % data.creatives.size();
+        ctr = context->get_ctr(data.creatives[campaign_index]);
+        campaign_ctrs[campaign_index] = ctr;
+      }
     }
 
     if(options.expected_ctr && ctr != *options.expected_ctr)
@@ -269,9 +323,20 @@ main(int argc, char** argv)
 
     std::cout
       << "model=" << options.model << '\n'
+      << "mode=" << (
+        options.mode == Mode::FULL ? "full" : "switch-campaigns") << '\n'
       << "algorithm_id=" << algorithm_id << '\n'
       << "count=" << options.count << '\n'
-      << "ctr=" << ctr << '\n'
+      << "ctr=" << ctr << '\n';
+    for(std::size_t index = 0; index < campaign_ctrs.size(); ++index)
+    {
+      if(campaign_ctrs[index])
+      {
+        std::cout
+          << "campaign_" << index << "_ctr=" << *campaign_ctrs[index] << '\n';
+      }
+    }
+    std::cout
       << "elapsed_sec=" << format_float(elapsed) << '\n'
       << "rps=" << format_float(options.count / elapsed) << '\n'
       << "cpu_sec=" << format_float(user_cpu + sys_cpu) << '\n'

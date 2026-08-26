@@ -68,6 +68,14 @@ namespace AdServer::CampaignSvcs::CTR
     using ModelPredictionMap = Generics::GnuHashTable<
       Generics::NumericHashAdapter<unsigned long>, double>;
 
+    struct PredictionContextHolder
+    {
+      bool initialized = false;
+      std::unique_ptr<CTREvaluator::PredictionContext> context;
+    };
+
+    using PredictionContextArray = std::vector<PredictionContextHolder>;
+
     using Priority = float;
 
     class CalculationContext final: public CTRProvider::CalculationContext
@@ -166,6 +174,7 @@ namespace AdServer::CampaignSvcs::CTR
       mutable FeatureSetLevelEvalHashMap feature_set_level_eval_hashes_;
       mutable FeatureSetLevelEvalWeightMap feature_set_level_eval_weights_;
       mutable ModelPredictionMap model_predictions_;
+      mutable PredictionContextArray prediction_contexts_;
     };
 
     using CalculationContextImpl_var =

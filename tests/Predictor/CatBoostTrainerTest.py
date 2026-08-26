@@ -8,6 +8,7 @@ import unittest
 import unittest.mock
 
 import numpy
+from catboost import CatBoostClassifier, Pool
 
 
 SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -24,16 +25,24 @@ from rtbserver_utils.CatBoostTrainChunk import train_chunk
 class ModelStub:
   def __init__(self, feature_importance=None):
     self.feature_importance = feature_importance or []
+    self.unused_features_dropped = False
 
   def save_model(self, file_name):
+    if not self.unused_features_dropped:
+      raise RuntimeError('unused features were not dropped')
     pathlib.Path(file_name).write_bytes(b'catboost-model')
 
   def get_feature_importance(self):
     return self.feature_importance
 
+  def drop_unused_features(self):
+    self.unused_features_dropped = True
 
-class FailingModelStub:
+
+class FailingModelStub(ModelStub):
   def save_model(self, file_name):
+    if not self.unused_features_dropped:
+      raise RuntimeError('unused features were not dropped')
     pathlib.Path(file_name).write_bytes(b'incomplete-model')
     raise RuntimeError('save failed')
 
@@ -336,6 +345,38 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertFalse(staging_dir.exists())
       self.assertEqual([], list(temp_path.glob('.CTRConfig.*')))
       self.assertEqual([], list(output_dir.glob('~*')))
+
+  def test_saved_campaign_manager_model_drops_unused_features(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      feature_config = temp_path / 'features.json'
+      feature_config.write_text(json.dumps({
+        'features_dimension': 4,
+        'features': [['publisher']],
+      }))
+      svm_file = temp_path / 'train.libsvm'
+      svm_file.write_text('\n'.join(
+        str(index % 2) + ' 1:' + str(index % 2) + ' 16:0'
+        for index in range(20)) + '\n')
+
+      model = CatBoostClassifier(iterations=2, depth=2, verbose=False)
+      model.fit(Pool('libsvm://' + str(svm_file)))
+      features = numpy.zeros((1, 16), dtype=numpy.float32)
+      features[0, 0] = 1
+      expected_prediction = model.predict_proba(features)
+
+      trainer = CatBoostTrainer(features_config_file=feature_config)
+      result_dir = trainer.save_campaign_manager_model(
+        model,
+        temp_path / 'CTRConfig',
+        timestamp='20260826.120000')
+
+      saved_model = CatBoostClassifier()
+      saved_model.load_model(str(result_dir / 'model.cbm'))
+      self.assertLess(len(saved_model._get_float_feature_indices()), 16)
+      numpy.testing.assert_array_equal(
+        expected_prediction,
+        saved_model.predict_proba(features))
 
   def test_dictionary_filters_features_and_generates_traits(self):
     with tempfile.TemporaryDirectory() as temp_dir:

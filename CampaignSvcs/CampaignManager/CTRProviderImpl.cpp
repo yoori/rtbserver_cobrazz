@@ -470,8 +470,7 @@ namespace AdServer::CampaignSvcs::CTR
         }
 
         BasicFeature basic_feature;
-        const String::SubString feature_name(value.data(), value.size());
-        if (basic_feature_by_name(basic_feature, feature_name))
+        if (basic_feature_by_name(basic_feature, value))
         {
           model->features.back().basic_features.insert(basic_feature);
         }
@@ -1016,28 +1015,71 @@ namespace AdServer::CampaignSvcs::CTR
     HashArrayHolder_var request_hashes;
     HashArrayHolder_var auction_hashes;
     HashArrayHolder_var candidate_hashes;
+    CTREvaluator::PredictionContext* prediction_context = nullptr;
 
     if (model.max_feature_type.has_value())
     {
-      request_hashes = get_features_hashes_(
-        algorithm,
-        model,
-        FT_REQUEST,
-        *(calculation_->request_params_),
-        0, // tag size
-        0 // creative
-        );
-
-      if (*model.max_feature_type >= FT_AUCTION)
+      if (*model.max_feature_type >= FT_CANDIDATE)
       {
-        auction_hashes = get_features_hashes_(
+        if (prediction_contexts_.size() <= model.model_id)
+        {
+          prediction_contexts_.resize(model.model_id + 1);
+        }
+
+        PredictionContextHolder& prediction_context_holder =
+          prediction_contexts_[model.model_id];
+        if (!prediction_context_holder.initialized)
+        {
+          request_hashes = get_features_hashes_(
+            algorithm,
+            model,
+            FT_REQUEST,
+            *(calculation_->request_params_),
+            0, // tag size
+            0 // creative
+            );
+
+          auction_hashes = get_features_hashes_(
+            algorithm,
+            model,
+            FT_AUCTION,
+            *(calculation_->request_params_),
+            tag_size_,
+            0 // creative
+            );
+
+          prediction_context_holder.context =
+            model.ctr_evaluator->create_prediction_context(
+              request_hashes,
+              auction_hashes);
+          prediction_context_holder.initialized = true;
+        }
+
+        prediction_context = prediction_context_holder.context.get();
+      }
+
+      if (!prediction_context && !request_hashes)
+      {
+        request_hashes = get_features_hashes_(
           algorithm,
           model,
-          FT_AUCTION,
+          FT_REQUEST,
           *(calculation_->request_params_),
-          tag_size_,
+          0, // tag size
           0 // creative
           );
+
+        if (*model.max_feature_type >= FT_AUCTION)
+        {
+          auction_hashes = get_features_hashes_(
+            algorithm,
+            model,
+            FT_AUCTION,
+            *(calculation_->request_params_),
+            tag_size_,
+            0 // creative
+            );
+        }
       }
 
       if (*model.max_feature_type >= FT_CANDIDATE)
@@ -1105,14 +1147,21 @@ namespace AdServer::CampaignSvcs::CTR
         request_params.ssp_vtr.value_or(SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
-    model_prediction = model.ctr_evaluator->predict(
-      model,
-      calculation_->request_params_,
-      creative,
-      request_hashes,
-      auction_hashes,
-      candidate_hashes,
-      &opt_hashes);
+    if (prediction_context)
+    {
+      model_prediction = prediction_context->predict(candidate_hashes, &opt_hashes);
+    }
+    else
+    {
+      model_prediction = model.ctr_evaluator->predict(
+        model,
+        calculation_->request_params_,
+        creative,
+        request_hashes,
+        auction_hashes,
+        candidate_hashes,
+        &opt_hashes);
+    }
 
     if (model.predict_postprocess == PredictPostprocess::Sigmoid)
     {

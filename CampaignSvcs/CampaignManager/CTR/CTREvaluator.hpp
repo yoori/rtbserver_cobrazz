@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include "CTRFeatureCalculators.hpp"
 #include "ModelTraits.hpp"
@@ -11,6 +13,25 @@ namespace AdServer::CampaignSvcs::CTR
   struct CTREvaluator
   {
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    class PredictionContext
+    {
+    public:
+      virtual double
+      predict(
+        const HashArray* candidate_hashes,
+        const HashArray* opt_hashes) = 0;
+
+      virtual ~PredictionContext() noexcept = default;
+    };
+
+    virtual std::unique_ptr<PredictionContext>
+    create_prediction_context(
+      const HashArray*,
+      const HashArray*) const
+    {
+      return nullptr;
+    }
 
     virtual double
     predict(

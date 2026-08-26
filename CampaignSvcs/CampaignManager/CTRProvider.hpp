@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Hash.hpp>
@@ -7,7 +9,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Sync/SyncPolicy.hpp>
 
-//#include <PredictorSvcs/BidCostPredictor/CtrPredictor.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignManager/CTR/Algorithm.hpp>
 
@@ -50,16 +51,11 @@ namespace AdServer::CampaignSvcs::CTR
     FeatureNameResolver() noexcept;
 
     bool
-    basic_feature_by_name(
-      BasicFeature& basic_feature,
-      const String::SubString& name)
-      const
+    basic_feature_by_name(BasicFeature& basic_feature, std::string_view name) const
       noexcept;
 
   protected:
-    typedef Generics::GnuHashTable<
-      Generics::SubStringHashAdapter, BasicFeature>
-      FeatureNameMap;
+    using FeatureNameMap = Generics::GnuHashTable<Generics::SubStringHashAdapter, BasicFeature>;
 
   protected:
     FeatureNameMap feature_names_;
@@ -95,9 +91,7 @@ namespace AdServer::CampaignSvcs::CTR
         bool* creative_dependent = 0) const = 0;
 
       virtual void
-      get_ctr_details(
-        CTRList& ctrs,
-        const Creative* creative) const = 0;
+      get_ctr_details(CTRList& ctrs, const Creative* creative) const = 0;
 
     protected:
       virtual ~CalculationContext() noexcept;
@@ -118,8 +112,7 @@ namespace AdServer::CampaignSvcs::CTR
 
   public:
     virtual Calculation_var
-    create_calculation(
-      const CampaignSelectParams* request_params) const noexcept = 0;
+    create_calculation(const CampaignSelectParams* request_params) const noexcept = 0;
 
   protected:
     virtual ~CTRProvider() noexcept;

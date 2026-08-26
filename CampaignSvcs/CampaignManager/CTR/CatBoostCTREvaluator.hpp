@@ -17,6 +17,11 @@ namespace AdServer::CampaignSvcs::CTR
 
     virtual ~CatBoostCTREvaluator();
 
+    std::unique_ptr<PredictionContext>
+    create_prediction_context(
+      const HashArray* request_hashes,
+      const HashArray* auction_hashes) const override;
+
     double
     predict(
       const ModelTraits& model,
@@ -29,9 +34,9 @@ namespace AdServer::CampaignSvcs::CTR
 
   private:
     class FeatureBufProvider;
+    class PredictionContextImpl;
 
   private:
-    const std::vector<std::string> empty_cat_features_;
     std::unique_ptr<ModelCalcerWrapper> catboost_model_;
     std::unique_ptr<FeatureBufProvider> feature_buf_provider_;
   };

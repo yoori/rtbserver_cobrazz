@@ -14,11 +14,10 @@ namespace AdServer::CampaignSvcs::CTR
   bool
   FeatureNameResolver::basic_feature_by_name(
     BasicFeature& basic_feature,
-    const String::SubString& feature_name) const noexcept
+    std::string_view feature_name) const noexcept
   {
     const FeatureDescriptor* feature_descriptor =
-      FeatureDescriptorResolver::instance().resolve_by_name(
-        std::string_view(feature_name.data(), feature_name.size()));
+      FeatureDescriptorResolver::instance().resolve_by_name(feature_name);
 
     if (feature_descriptor)
     {

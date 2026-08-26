@@ -75,7 +75,7 @@ namespace AdServer::CampaignSvcs
         }
 
         CTR::BasicFeature basic_feature;
-        if (!basic_feature_by_name(basic_feature, std::string(value)))
+        if (!basic_feature_by_name(basic_feature, value))
         {
           Stream::Error error;
           error << "Invalid basic feature name: '" << value << "'";
