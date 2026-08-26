@@ -4,6 +4,8 @@
 #include <map>
 #include <set>
 #include <string>
+#include <type_traits>
+#include <vector>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -94,16 +96,30 @@ namespace AdServer
       {
         struct AdSlot
         {
+          AdSlot() = default;
+          AdSlot(const AdSlot&) = default;
+          AdSlot(AdSlot&&) noexcept = default;
+          AdSlot& operator=(const AdSlot&) = default;
+          AdSlot& operator=(AdSlot&&) noexcept = default;
+
           RevenueDecimal avg_revenue; // ecpm normalized to one action cost
           ChannelIdSet imp_channels;
         };
 
         struct AdBidSlot: public AdSlot
         {
+          AdBidSlot() = default;
+          AdBidSlot(const AdBidSlot&) = default;
+          AdBidSlot(AdBidSlot&&) noexcept = default;
+          AdBidSlot& operator=(const AdBidSlot&) = default;
+          AdBidSlot& operator=(AdBidSlot&&) noexcept = default;
+
           RevenueDecimal max_avg_revenue;
         };
 
-        typedef std::list<AdBidSlot> AdBidSlotList;
+        static_assert(std::is_nothrow_move_constructible_v<AdBidSlot>);
+
+        typedef std::vector<AdBidSlot> AdBidSlotList;
 
         MatchInfo() noexcept
           : colo_id(0),

@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 
 #include <Commons/Algs.hpp>
@@ -728,44 +729,31 @@ namespace AdServer::RequestInfoSvcs
       }
 
       Generics::MonoAllocatorArena arena;
-      CampaignSvcs::ChannelIdHashSet channels(&arena);
-      CampaignSvcs::ChannelIdHashSet url_channels(&arena);
-      CampaignSvcs::ChannelIdHashSet page_channels(&arena);
-      CampaignSvcs::ChannelIdHashSet search_channels(&arena);
-      CampaignSvcs::ChannelIdHashSet url_keyword_channels(&arena);
+      ChannelMaskMap channel_masks(&arena);
+      channel_masks.reserve(triggers_count);
 
-      channels.reserve(triggers_count);
-      url_channels.reserve(url_triggers.size());
-      page_channels.reserve(page_triggers.size());
-      search_channels.reserve(search_triggers.size());
-      url_keyword_channels.reserve(url_keyword_triggers.size());
-
-      add_channels_(url_channels, url_triggers);
-      add_channels_(page_channels, page_triggers);
-      add_channels_(search_channels, search_triggers);
-      add_channels_(url_keyword_channels, url_keyword_triggers);
-
-      add_channels_(channels, url_channels);
-      add_channels_(channels, page_channels);
-      add_channels_(channels, search_channels);
-      add_channels_(channels, url_keyword_channels);
+      add_channel_masks_(channel_masks, url_triggers, URL_MASK);
+      add_channel_masks_(channel_masks, page_triggers, PAGE_MASK);
+      add_channel_masks_(channel_masks, search_triggers, SEARCH_MASK);
+      add_channel_masks_(
+        channel_masks,
+        url_keyword_triggers,
+        URL_KEYWORD_MASK);
 
       CollectorT::DataT data;
-      data.prepare_adding(
-        channels.size() +
-        url_channels.size() +
-        page_channels.size() +
-        search_channels.size() +
-        url_keyword_channels.size());
+      data.prepare_adding(channel_masks.size());
 
-      add_hits_(data, channels, CollectorT::DataT::DataT(1, 0, 0, 0, 0));
-      add_hits_(data, url_channels, CollectorT::DataT::DataT(0, 1, 0, 0, 0));
-      add_hits_(data, page_channels, CollectorT::DataT::DataT(0, 0, 1, 0, 0));
-      add_hits_(data, search_channels, CollectorT::DataT::DataT(0, 0, 0, 1, 0));
-      add_hits_(
-        data,
-        url_keyword_channels,
-        CollectorT::DataT::DataT(0, 0, 0, 0, 1));
+      for (const auto& [channel_id, mask] : channel_masks)
+      {
+        data.add(
+          CollectorT::DataT::KeyT(channel_id),
+          CollectorT::DataT::DataT(
+            1,
+            mask & URL_MASK ? 1 : 0,
+            mask & PAGE_MASK ? 1 : 0,
+            mask & SEARCH_MASK ? 1 : 0,
+            mask & URL_KEYWORD_MASK ? 1 : 0));
+      }
 
       add_record(CollectorT::KeyT(isp_time, colo_id), std::move(data));
     }
@@ -774,34 +762,28 @@ namespace AdServer::RequestInfoSvcs
     ~ChannelHitStatLogger() noexcept override = default;
 
   private:
+    enum ChannelMask : std::uint8_t
+    {
+      URL_MASK = 1,
+      PAGE_MASK = 2,
+      SEARCH_MASK = 4,
+      URL_KEYWORD_MASK = 8
+    };
+
+    using ChannelMaskMap =
+      Generics::MonoUnorderedMap<std::uint32_t, std::uint8_t>;
+
     static void
-    add_channels_(
-      CampaignSvcs::ChannelIdHashSet& channels,
-      const AdServer::LogProcessing::RequestBasicChannelsInnerData::TriggerMatchArray& triggers)
+    add_channel_masks_(
+      ChannelMaskMap& channel_masks,
+      const AdServer::LogProcessing::RequestBasicChannelsInnerData::TriggerMatchArray& triggers,
+      std::uint8_t mask)
     {
       for (const auto& trigger : triggers)
       {
-        channels.emplace(trigger.channel_id);
-      }
-    }
-
-    static void
-    add_channels_(
-      CampaignSvcs::ChannelIdHashSet& target,
-      const CampaignSvcs::ChannelIdHashSet& source)
-    {
-      target.insert(source.begin(), source.end());
-    }
-
-    static void
-    add_hits_(
-      CollectorT::DataT& data,
-      const CampaignSvcs::ChannelIdHashSet& channels,
-      const CollectorT::DataT::DataT& hit_data)
-    {
-      for (const auto channel_id : channels)
-      {
-        data.add(CollectorT::DataT::KeyT(channel_id), hit_data);
+        auto [it, inserted] = channel_masks.try_emplace(trigger.channel_id, 0);
+        static_cast<void>(inserted);
+        it->second |= mask;
       }
     }
   };

@@ -22,6 +22,7 @@ namespace AdServer
 
       typedef CampaignSvcs::ExpressionChannelHolderMap ChannelMap;
       typedef AdServer::CampaignSvcs::ChannelIdSet ChannelIdSet;
+      typedef AdServer::CampaignSvcs::ChannelIdArray ChannelIdArray;
       typedef std::map<unsigned long, unsigned long> ChannelActionMap;
 
       struct Config: public ReferenceCounting::AtomicImpl
@@ -41,9 +42,7 @@ namespace AdServer
       struct MatchKey
       {
       public:
-        //MatchKey(CampaignSvcs::ChannelIdSet&& history_channels);
-
-        MatchKey(const CampaignSvcs::ChannelIdSet& history_channels);
+        MatchKey(const ChannelIdArray& history_channels);
 
         virtual ~MatchKey() noexcept;
 
@@ -53,8 +52,6 @@ namespace AdServer
 
       struct MatchResult: public ReferenceCounting::AtomicImpl
       {
-        typedef std::vector<unsigned long> ChannelIdArray;
-
         MatchResult(
           const ChannelIdSet& result_channels_val,
           const ChannelIdSet& result_estimate_channels_val,
@@ -85,9 +82,9 @@ namespace AdServer
       void config(Config* config) /*throw(Exception)*/;
 
       void process_request(
-        const ChannelIdSet& history_channels,
-        ChannelIdSet& result_channels,
-        ChannelIdSet* result_cpm_channels = 0,
+        ChannelIdArray history_channels,
+        ChannelIdArray& result_channels,
+        ChannelIdArray* result_cpm_channels = 0,
         ChannelActionMap* channel_actions = 0)
         /*throw(Exception)*/;
 

@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <utility>
+
 #include <Generics/BoundedMap.hpp>
 #include <Generics/MonoAllocator.hpp>
 #include "ChannelMatcher.hpp"
@@ -7,16 +10,14 @@ namespace Aspect
   const char CHANNEL_MATCHER[] = "ChannelMatcher";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
-    template<typename ArrayType>
+    template <typename ArrayType>
     struct ArrayHelper
     {
-      template<typename SourceContainerType>
+      template <typename SourceContainerType>
       static
       ArrayType
       init_array(const SourceContainerType& source)
@@ -30,12 +31,9 @@ namespace RequestInfoSvcs
 
   struct ChannelMatcher::MatchKeyHolder: public ReferenceCounting::AtomicImpl
   {
-    typedef std::vector<unsigned long> ChannelIdArray;
-
-    MatchKeyHolder(const CampaignSvcs::ChannelIdSet& history_channels_val)
-      noexcept
-      : history_channels(
-          ArrayHelper<ChannelIdArray>::init_array(history_channels_val))
+    explicit
+    MatchKeyHolder(ChannelIdArray history_channels_val) noexcept
+      : history_channels(std::move(history_channels_val))
     {}
 
     const ChannelIdArray history_channels;
@@ -51,8 +49,7 @@ namespace RequestInfoSvcs
     class MatchSizePolicy;
 
   public:
-    typedef ReferenceCounting::SmartPtr<MatchKeyHolder>
-      MatchKeyHolder_var;
+    using MatchKeyHolder_var = ReferenceCounting::SmartPtr<MatchKeyHolder>;
 
     struct MatchKeyHashAdapter
     {
@@ -67,9 +64,8 @@ namespace RequestInfoSvcs
       {
         Generics::Murmur32v3Hasher hasher(0);
 
-        for(MatchKeyHolder::ChannelIdArray::const_iterator ch_it =
-              holder_->history_channels.begin();
-            ch_it != holder_->history_channels.end(); ++ch_it)
+        for (auto ch_it = holder_->history_channels.begin();
+          ch_it != holder_->history_channels.end(); ++ch_it)
         {
           hasher.add(&*ch_it, sizeof(*ch_it));
         }
@@ -88,8 +84,7 @@ namespace RequestInfoSvcs
         const noexcept
       {
         return hash_ == right.hash_ &&
-          holder_->history_channels.size() ==
-            right.holder_->history_channels.size() &&
+          holder_->history_channels.size() == right.holder_->history_channels.size() &&
           std::equal(holder_->history_channels.begin(),
             holder_->history_channels.end(),
             right.holder_->history_channels.begin());
@@ -101,20 +96,15 @@ namespace RequestInfoSvcs
     };
 
   public:
-    MatchCache(
-      unsigned long size_limit)
-      noexcept
+    MatchCache(unsigned long size_limit) noexcept
       : cache_map_(size_limit, Generics::Time::ZERO, MatchSizePolicy())
     {}
 
     MatchResult_var
-    get(
-      const MatchKeyHashAdapter& key,
-      const Generics::Time& /*now*/
-      ) noexcept
+    get(const MatchKeyHashAdapter& key, const Generics::Time& /*now*/) noexcept
     {
       CacheMap::const_iterator it = cache_map_.find(key);
-      if(it != cache_map_.end())
+      if (it != cache_map_.end())
       {
         return it->second->match_result;
       }
@@ -129,9 +119,7 @@ namespace RequestInfoSvcs
       const Generics::Time& now)
       noexcept
     {
-      CacheMap::value_type ins(
-        key,
-        new MatchResultHolder(now, match_result));
+      CacheMap::value_type ins(key, new MatchResultHolder(now, match_result));
       cache_map_.insert(std::move(ins));
     }
 
@@ -189,7 +177,7 @@ namespace RequestInfoSvcs
     CacheMap cache_map_;
   };
 
-  ChannelMatcher::MatchKey::MatchKey(const CampaignSvcs::ChannelIdSet& history_channels)
+  ChannelMatcher::MatchKey::MatchKey(const ChannelIdArray& history_channels)
     : match_key_holder_(new MatchKeyHolder(history_channels))
   {}
 
@@ -201,8 +189,7 @@ namespace RequestInfoSvcs
     const ChannelIdSet& result_estimate_channels_val,
     const ChannelActionMap& result_channel_actions_val)
     noexcept
-    : result_channels(
-        ArrayHelper<ChannelIdArray>::init_array(result_channels_val)),
+    : result_channels(ArrayHelper<ChannelIdArray>::init_array(result_channels_val)),
       result_estimate_channels(
         ArrayHelper<ChannelIdArray>::init_array(result_estimate_channels_val)),
       result_channel_actions(result_channel_actions_val)
@@ -260,8 +247,7 @@ namespace RequestInfoSvcs
   {
     try
     {
-      ExpressionChannelIndex_var ch_index =
-        new AdServer::CampaignSvcs::ExpressionChannelIndex();
+      ExpressionChannelIndex_var ch_index = new AdServer::CampaignSvcs::ExpressionChannelIndex();
       ch_index->index(new_config->expression_channels);
       Config_var config = ReferenceCounting::add_ref(new_config);
       MatchCache_var match_cache;
@@ -270,20 +256,15 @@ namespace RequestInfoSvcs
         match_cache = new MatchCache(cache_limit_);
       }
 
-      ChannelActionConfig_var channel_action_config =
-        new ChannelActionConfig();
+      ChannelActionConfig_var channel_action_config = new ChannelActionConfig();
 
+      for (auto ch_it = new_config->expression_channels.begin();
+        ch_it != new_config->expression_channels.end(); ++ch_it)
       {
-        for(auto ch_it = new_config->expression_channels.begin();
-          ch_it != new_config->expression_channels.end(); ++ch_it)
+        if (ch_it->second->has_params())
         {
-          if(ch_it->second->has_params())
-          {
-            channel_action_config->channel_actions.insert(
-              std::make_pair(
-                ch_it->first,
-                ch_it->second->params().action_id));
-          }
+          channel_action_config->channel_actions.emplace(
+            ch_it->first, ch_it->second->params().action_id);
         }
       }
 
@@ -312,17 +293,14 @@ namespace RequestInfoSvcs
     ChannelActionMap* channel_actions,
     const AdServer::CampaignSvcs::ChannelIdHashSet& history_channels)
   {
-    channel_index->match(
-      result_channels,
-      history_channels,
-      result_estimate_channels);
+    channel_index->match(result_channels, history_channels, result_estimate_channels);
 
-    if(channel_actions)
+    if (channel_actions)
     {
-      for(auto ch_it = result_channels.begin(); ch_it != result_channels.end(); ++ch_it)
+      for (auto ch_it = result_channels.begin(); ch_it != result_channels.end(); ++ch_it)
       {
         auto conv_it = channel_action_config->channel_actions.find(*ch_it);
-        if(conv_it != channel_action_config->channel_actions.end())
+        if (conv_it != channel_action_config->channel_actions.end())
         {
           channel_actions->insert(*conv_it);
         }
@@ -331,12 +309,17 @@ namespace RequestInfoSvcs
   }
 
   void ChannelMatcher::process_request(
-    const ChannelIdSet& history_channels,
-    ChannelIdSet& result_channels,
-    ChannelIdSet* result_estimate_channels,
+    ChannelIdArray history_channels,
+    ChannelIdArray& result_channels,
+    ChannelIdArray* result_estimate_channels,
     ChannelActionMap* result_channel_actions)
     /*throw(Exception)*/
   {
+    std::sort(history_channels.begin(), history_channels.end());
+    history_channels.erase(
+      std::unique(history_channels.begin(), history_channels.end()),
+      history_channels.end());
+
     ExpressionChannelIndex_var channel_index;
     MatchCache_var match_cache;
     ChannelActionConfig_var channel_action_config;
@@ -348,28 +331,27 @@ namespace RequestInfoSvcs
       channel_action_config = ReferenceCounting::add_ref(channel_action_config_);
     }
 
-    if(match_cache.in())
+    if (match_cache.in())
     {
       Generics::Time now = Generics::Time::ZERO; //Generics::Time::get_time_of_day();
 
-      MatchCache::MatchKeyHashAdapter match_key_hash_adapter(
-        MatchCache::MatchKeyHolder_var(
-          new MatchKeyHolder(history_channels)));
+      MatchCache::MatchKeyHolder_var match_key_holder(
+        new MatchKeyHolder(std::move(history_channels)));
+      MatchCache::MatchKeyHashAdapter match_key_hash_adapter(match_key_holder);
 
       MatchResult_var match_result = match_cache->get(match_key_hash_adapter, now);
 
-      if(!match_result)
+      if (!match_result)
       {
         ChannelIdSet local_result_channels;
         ChannelIdSet local_result_estimate_channels;
         ChannelActionMap local_result_channel_actions;
         Generics::MonoAllocatorArena history_channels_arena;
-        AdServer::CampaignSvcs::ChannelIdHashSet history_channels_hash(
-          &history_channels_arena);
-        history_channels_hash.reserve(history_channels.size());
+        AdServer::CampaignSvcs::ChannelIdHashSet history_channels_hash(&history_channels_arena);
+        history_channels_hash.reserve(match_key_holder->history_channels.size());
         std::copy(
-          history_channels.begin(),
-          history_channels.end(),
+          match_key_holder->history_channels.begin(),
+          match_key_holder->history_channels.end(),
           std::inserter(history_channels_hash, history_channels_hash.begin()));
 
         process_request_(
@@ -380,51 +362,36 @@ namespace RequestInfoSvcs
           &local_result_channel_actions,
           history_channels_hash);
 
+        local_result_channels.insert(
+          match_key_holder->history_channels.begin(),
+          match_key_holder->history_channels.end());
+
         match_result = new MatchResult(
           local_result_channels,
           local_result_estimate_channels,
           local_result_channel_actions);
 
         match_cache->insert(match_key_hash_adapter, match_result, now);
-
-        result_channels.swap(local_result_channels);
-
-        if(result_estimate_channels)
-        {
-          result_estimate_channels->swap(local_result_estimate_channels);
-        }
-
-        if(result_channel_actions)
-        {
-          result_channel_actions->swap(local_result_channel_actions);
-        }
       }
-      else
+
+      result_channels = match_result->result_channels;
+
+      if (result_estimate_channels)
       {
-        std::copy(match_result->result_channels.begin(),
-          match_result->result_channels.end(),
-          std::inserter(result_channels, result_channels.begin()));
+        *result_estimate_channels = match_result->result_estimate_channels;
+      }
 
-        if(result_estimate_channels)
-        {
-          std::copy(match_result->result_estimate_channels.begin(),
-            match_result->result_estimate_channels.end(),
-            std::inserter(*result_estimate_channels, result_estimate_channels->begin()));
-        }
-
-        if(result_channel_actions)
-        {
-          std::copy(match_result->result_channel_actions.begin(),
-            match_result->result_channel_actions.end(),
-            std::inserter(*result_channel_actions, result_channel_actions->begin()));
-        }
+      if (result_channel_actions)
+      {
+        *result_channel_actions = match_result->result_channel_actions;
       }
     }
     else
     {
+      ChannelIdSet local_result_channels;
+      ChannelIdSet local_result_estimate_channels;
       Generics::MonoAllocatorArena history_channels_arena;
-      AdServer::CampaignSvcs::ChannelIdHashSet history_channels_hash(
-        &history_channels_arena);
+      AdServer::CampaignSvcs::ChannelIdHashSet history_channels_hash(&history_channels_arena);
       history_channels_hash.reserve(history_channels.size());
       std::copy(
         history_channels.begin(),
@@ -433,18 +400,21 @@ namespace RequestInfoSvcs
       process_request_(
         channel_index,
         channel_action_config,
-        result_channels,
-        result_estimate_channels,
+        local_result_channels,
+        result_estimate_channels ? &local_result_estimate_channels : nullptr,
         result_channel_actions,
         history_channels_hash);
-    }
 
-    // push history channels into result even if it isn't indexed
-    //   geo channels and already deactivated simple channels
-    std::copy(
-      history_channels.begin(),
-      history_channels.end(),
-      std::inserter(result_channels, result_channels.begin()));
+      // Push history channels into result even if it isn't indexed:
+      // geo channels and already deactivated simple channels.
+      local_result_channels.insert(history_channels.begin(), history_channels.end());
+
+      result_channels.assign(local_result_channels.begin(), local_result_channels.end());
+      if (result_estimate_channels)
+      {
+        result_estimate_channels->assign(
+          local_result_estimate_channels.begin(), local_result_estimate_channels.end());
+      }
+    }
   }
-}
 }

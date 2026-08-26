@@ -1425,14 +1425,14 @@ namespace AdServer::RequestInfoSvcs
 
         if (record.match_request().present() && sampling_flag)
         {
-          const CampaignSvcs::ChannelIdSet history_channels(
+          CampaignSvcs::ChannelIdArray history_channels(
             record.match_request().get().history_channels().begin(),
             record.match_request().get().history_channels().end());
-          CampaignSvcs::ChannelIdSet result_channels;
-          CampaignSvcs::ChannelIdSet cpm_expression_channels;
+          CampaignSvcs::ChannelIdArray result_channels;
+          CampaignSvcs::ChannelIdArray cpm_expression_channels;
 
           channel_matcher_->process_request(
-            history_channels,
+            std::move(history_channels),
             result_channels,
             &cpm_expression_channels,
             &match_info.channel_actions);
@@ -1501,7 +1501,7 @@ namespace AdServer::RequestInfoSvcs
                 text_imp_it->impression_channels().begin(),
                 text_imp_it->impression_channels().end(),
                 std::inserter(text_ad.imp_channels, text_ad.imp_channels.begin()));
-              match_info.text_ads.push_back(text_ad);
+              match_info.text_ads.push_back(std::move(text_ad));
             }
           }
         }
@@ -2030,13 +2030,14 @@ namespace AdServer::RequestInfoSvcs
       history_match_request,
       history_match_response);
 
-    CampaignSvcs::ChannelIdSet history_channels;
+    CampaignSvcs::ChannelIdArray history_channels;
+    history_channels.reserve(history_match_response.match_result().channels_size());
 
     UserInventoryInfoContainer::InventoryDailyMatchInfo daily_match_info;
 
     for (const auto& channel : history_match_response.match_result().channels())
     {
-      history_channels.insert(channel.channel_id());
+      history_channels.push_back(channel.channel_id());
     }
 
     if (logger()->log_level() >= Logging::Logger::TRACE)
@@ -2052,8 +2053,8 @@ namespace AdServer::RequestInfoSvcs
     daily_match_info.time = placement_colo_now_date;
     daily_match_info.colo_id = expression_matcher_config_.colo_id();
 
-    CampaignSvcs::ChannelIdSet tr_channels;
-    channel_matcher_->process_request(history_channels, tr_channels);
+    CampaignSvcs::ChannelIdArray tr_channels;
+    channel_matcher_->process_request(std::move(history_channels), tr_channels);
 
     std::copy(tr_channels.begin(),
       tr_channels.end(),
