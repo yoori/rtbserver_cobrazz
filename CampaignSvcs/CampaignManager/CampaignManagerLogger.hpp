@@ -207,8 +207,8 @@ namespace AdServer::CampaignSvcs
       UserStatus user_status;
       AdServer::Commons::UserId user_id;
       CCGIdList ccg_ids;
-      AdServer::Commons::Optional<unsigned long> action_id;
-      AdServer::Commons::Optional<unsigned long> device_channel_id;
+      AdServer::Commons::Optional<std::uint32_t> action_id;
+      AdServer::Commons::Optional<std::uint32_t> device_channel_id;
       std::string order_id;
       RevenueDecimal action_value;
       std::string country;

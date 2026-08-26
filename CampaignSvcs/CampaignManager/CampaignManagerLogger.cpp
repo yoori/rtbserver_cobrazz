@@ -1722,11 +1722,11 @@ namespace AdServer::CampaignSvcs
             adapt_user_status(web_op.user_status),
             web_op.test_request,
             web_op.tag_id ?
-              CollectorT::DataT::KeyT::OptionalUlong(web_op.tag_id) :
-              CollectorT::DataT::KeyT::OptionalUlong(),
+              CollectorT::DataT::KeyT::OptionalUInt32(web_op.tag_id) :
+              CollectorT::DataT::KeyT::OptionalUInt32(),
             web_op.cc_id ?
-              CollectorT::DataT::KeyT::OptionalUlong(web_op.cc_id) :
-              CollectorT::DataT::KeyT::OptionalUlong()),
+              CollectorT::DataT::KeyT::OptionalUInt32(web_op.cc_id) :
+              CollectorT::DataT::KeyT::OptionalUInt32()),
           CollectorT::DataT::DataT(1));
         add_record(
           CollectorT::KeyT(web_op.time, web_op.colo_id),
@@ -2037,7 +2037,7 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
       /*throw(Exception)*/
     {
-      using OptionalUlong = CollectorT::DataT::OptionalUlong;
+      using OptionalUInt32 = CollectorT::DataT::OptionalUInt32;
 
       static const char* FUN = "RequestLogger::process_ad_request()";
 
@@ -2169,14 +2169,14 @@ namespace AdServer::CampaignSvcs
               ad_ri.size_id,
               ad_ri.household_based,
               ad_ri.tag_visibility.present() ?
-                OptionalUlong(*ad_ri.tag_visibility) :
-                OptionalUlong(),
+                OptionalUInt32(*ad_ri.tag_visibility) :
+                OptionalUInt32(),
               ad_ri.tag_top_offset.present() ?
-                OptionalUlong(*ad_ri.tag_top_offset) :
-                OptionalUlong(),
+                OptionalUInt32(*ad_ri.tag_top_offset) :
+                OptionalUInt32(),
               ad_ri.tag_left_offset.present() ?
-                OptionalUlong(*ad_ri.tag_left_offset) :
-                OptionalUlong(),
+                OptionalUInt32(*ad_ri.tag_left_offset) :
+                OptionalUInt32(),
               ad_info.ctr_reset_id,
               ad_info.campaign_imps,
               request_info.referer,
@@ -2394,7 +2394,7 @@ namespace AdServer::CampaignSvcs
               adapt_user_status(passback_track_info.user_status),
               passback_track_info.country,
               passback_track_info.tag_id,
-              LogProcessing::OptionalUlong()/*FIXME: size_id*/),
+              LogProcessing::OptionalUInt32()/*FIXME: size_id*/),
             CollectorT::DataT::DataT(1));
 
           add_record(std::move(key), std::move(data));
@@ -2429,7 +2429,7 @@ namespace AdServer::CampaignSvcs
             opt_in = CollectorT::DataT::OptInSection(
               0, // site_id,
               request_info.user_id,
-              AdServer::LogProcessing::OptionalUlong(),
+              AdServer::LogProcessing::OptionalUInt32(),
               false, // ad_shown
               request_info.profile_referer,
               request_info.user_agent);
@@ -2440,13 +2440,13 @@ namespace AdServer::CampaignSvcs
             false, // FIXME: test_request
             request_info.colo_id,
             0, // tag_id
-            AdServer::LogProcessing::OptionalUlong(), // FIXME: size_id
+            AdServer::LogProcessing::OptionalUInt32(), // FIXME: size_id
             "", // ext_tag_id
             request_info.referer.empty() ?
               EMPTY_REFERER_ : request_info.referer,
             request_info.full_referer_hash.present() ?
-              AdServer::LogProcessing::OptionalUlong(*request_info.full_referer_hash) :
-              AdServer::LogProcessing::OptionalUlong(),
+              AdServer::LogProcessing::OptionalUInt64(*request_info.full_referer_hash) :
+              AdServer::LogProcessing::OptionalUInt64(),
             adapt_user_status(request_info.user_status),
             request_info.country_code,
             AdServer::Commons::RequestId(), // passback_request_id
@@ -2490,8 +2490,8 @@ namespace AdServer::CampaignSvcs
               ad_ri.site_id,
               request_info.user_id,
               ad_ri.page_load_id.present() ?
-                AdServer::LogProcessing::OptionalUlong(*ad_ri.page_load_id) :
-                AdServer::LogProcessing::OptionalUlong(),
+                AdServer::LogProcessing::OptionalUInt64(*ad_ri.page_load_id) :
+                AdServer::LogProcessing::OptionalUInt64(),
               ad_shown,
               request_info.profile_referer,
               request_info.user_agent);
@@ -2508,8 +2508,8 @@ namespace AdServer::CampaignSvcs
             request_info.referer.empty() ?
               EMPTY_REFERER_ : request_info.referer,
             request_info.full_referer_hash.present() ?
-              AdServer::LogProcessing::OptionalUlong(*request_info.full_referer_hash) :
-              AdServer::LogProcessing::OptionalUlong(),
+              AdServer::LogProcessing::OptionalUInt64(*request_info.full_referer_hash) :
+              AdServer::LogProcessing::OptionalUInt64(),
             adapt_user_status(request_info.user_status),
             request_info.country_code,
             ad_shown ? AdServer::Commons::RequestId() : (
@@ -2547,14 +2547,14 @@ namespace AdServer::CampaignSvcs
           CollectorT::DataT::KeyT(
             ad_ri.request_tag_id,
             ad_ri.tag_top_offset.present() ?
-              CollectorT::DataT::KeyT::OptionalUlong(*ad_ri.tag_top_offset) :
-              CollectorT::DataT::KeyT::OptionalUlong(),
+              CollectorT::DataT::KeyT::OptionalUInt32(*ad_ri.tag_top_offset) :
+              CollectorT::DataT::KeyT::OptionalUInt32(),
             ad_ri.tag_left_offset.present() ?
-              CollectorT::DataT::KeyT::OptionalUlong(*ad_ri.tag_left_offset) :
-              CollectorT::DataT::KeyT::OptionalUlong(),
+              CollectorT::DataT::KeyT::OptionalUInt32(*ad_ri.tag_left_offset) :
+              CollectorT::DataT::KeyT::OptionalUInt32(),
             ad_ri.tag_visibility.present() ?
-              CollectorT::DataT::KeyT::OptionalUlong(*ad_ri.tag_visibility) :
-              CollectorT::DataT::KeyT::OptionalUlong(),
+              CollectorT::DataT::KeyT::OptionalUInt32(*ad_ri.tag_visibility) :
+              CollectorT::DataT::KeyT::OptionalUInt32(),
             ri.log_as_test),
           ONE_REQUEST_);
         add_record(std::move(key), std::move(add_data));

@@ -61,6 +61,11 @@ namespace CampaignSvcs
 
     struct Calculation
     {
+      Calculation()
+        : hashes(CTR::HashArray::allocator_type(arena))
+      {}
+
+      Generics::MonoAllocatorArena arena;
       CTR::HashArray hashes;
     };
 

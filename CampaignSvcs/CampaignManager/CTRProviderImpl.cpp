@@ -65,6 +65,45 @@ namespace AdServer::CampaignSvcs::CTR
 
     const String::SubString CTR_CONFIG_FOLDER_NAME_REGEXP("\\d{8}\\.\\d{6}");
 
+    constexpr std::size_t CTR_CALCULATION_ARENA_INITIAL_SIZE = 4096;
+
+    std::size_t
+    feature_hash_count(
+      const Feature& feature,
+      const CampaignSelectParams& request_params,
+      const Creative* creative) noexcept
+    {
+      std::size_t count = 1;
+      for (const BasicFeature basic_feature : feature.basic_features)
+      {
+        switch (basic_feature)
+        {
+          case BF_HISTORY_CHANNELS:
+            count *= std::max<std::size_t>(request_params.channels.size(), 1);
+            break;
+
+          case BF_GEO_CHANNELS:
+            count *= std::max<std::size_t>(request_params.geo_channels.size(), 1);
+            break;
+
+          case BF_CONTENT_CATEGORIES:
+            count *= creative ?
+              std::max<std::size_t>(creative->content_categories.size(), 1) : 1;
+            break;
+
+          case BF_VISUAL_CATEGORIES:
+            count *= creative ?
+              std::max<std::size_t>(creative->visual_categories.size(), 1) : 1;
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      return count;
+    }
+
     double
     sigmoid(const double value) noexcept
     {
@@ -767,7 +806,15 @@ namespace AdServer::CampaignSvcs::CTR
     const Tag::Size* tag_size)
     noexcept
     : calculation_(ReferenceCounting::add_ref(calculation)),
-      tag_size_(ReferenceCounting::add_ref(tag_size))
+      tag_size_(ReferenceCounting::add_ref(tag_size)),
+      opt_hashes_(HashArray::allocator_type(calculation->arena_)),
+      feature_set_level_eval_hashes_(
+        FeatureSetLevelEvalHashMap::allocator_type(calculation->arena_)),
+      feature_set_level_eval_weights_(
+        FeatureSetLevelEvalWeightMap::allocator_type(calculation->arena_)),
+      model_predictions_(ModelPredictionMap::allocator_type(calculation->arena_)),
+      prediction_contexts_(
+        PredictionContextArray::allocator_type(calculation->arena_))
   {}
 
   CTRProviderImpl::CalculationContext::~CalculationContext()
@@ -800,7 +847,18 @@ namespace AdServer::CampaignSvcs::CTR
       return res_hashes;
     }
 
-    res_hashes = new HashArrayHolder();
+    res_hashes = new HashArrayHolder(calculation_->arena_);
+
+    std::size_t hash_count = 0;
+    for (const Feature& feature : model.features[feature_type])
+    {
+      hash_count += feature_hash_count(feature, request_params, creative);
+    }
+    if (feature_type == FT_REQUEST)
+    {
+      hash_count += model.push_hour + model.push_week_day;
+    }
+    res_hashes->reserve(hash_count);
 
     calculation_->eval_features_hashes_(
       *res_hashes,
@@ -949,7 +1007,7 @@ namespace AdServer::CampaignSvcs::CTR
   CTRProviderImpl::CalculationContext::get_xgb_hashes_i(HashArray& res, const Creative* creative)
     const noexcept
   {
-    res = opt_hashes_;
+    res.assign(opt_hashes_.begin(), opt_hashes_.end());
 
     const long alg_index = calculation_->select_alg_index_(creative);
 
@@ -1051,7 +1109,8 @@ namespace AdServer::CampaignSvcs::CTR
           prediction_context_holder.context =
             model.ctr_evaluator->create_prediction_context(
               request_hashes,
-              auction_hashes);
+              auction_hashes,
+              &calculation_->arena_);
           prediction_context_holder.initialized = true;
         }
 
@@ -1095,7 +1154,7 @@ namespace AdServer::CampaignSvcs::CTR
       }
     }
 
-    HashArray opt_hashes;
+    HashArray opt_hashes{HashArray::allocator_type(calculation_->arena_)};
 
     // push candidate level direct features
     if (model.push_campaign_freq || model.push_campaign_freq_log)
@@ -1324,7 +1383,13 @@ namespace AdServer::CampaignSvcs::CTR
     noexcept
     : rand_(Generics::unsafe_rand(WEIGHT_NORM_SUM)),
       ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
-      request_params_(ReferenceCounting::add_ref(request_params))
+      request_params_(ReferenceCounting::add_ref(request_params)),
+      arena_(CTR_CALCULATION_ARENA_INITIAL_SIZE),
+      feature_set_level_eval_hashes_(
+        FeatureSetLevelEvalHashMap::allocator_type(arena_)),
+      feature_set_level_eval_weights_(
+        FeatureSetLevelEvalWeightMap::allocator_type(arena_)),
+      model_predictions_(ModelPredictionMap::allocator_type(arena_))
   {}
 
   CTRProviderImpl::Calculation::~Calculation() noexcept
@@ -1467,8 +1532,7 @@ namespace AdServer::CampaignSvcs::CTR
     const Generics::Time& config_timestamp,
     Generics::TaskRunner* task_runner)
     /*throw(Exception)*/
-    : empty_hash_array_(),
-      config_timestamp_(config_timestamp),
+    : config_timestamp_(config_timestamp),
       task_runner_(ReferenceCounting::add_ref(task_runner)),
       remove_config_files_at_destroy_(false)
   {

@@ -265,18 +265,17 @@ main(int argc, char** argv)
 
     CTRProvider_var provider(
       new CTRProviderImpl(options.model, Generics::Time::ZERO, nullptr));
-    CTRProvider::Calculation_var calculation =
+    CTRProvider::Calculation_var validation_calculation =
       provider->create_calculation(data.request_params);
-    CTRProvider::CalculationContext_var context =
-      calculation->create_context(data.tag_size);
 
-    const std::string algorithm_id = calculation->algorithm_id(data.creatives[0]);
+    const std::string algorithm_id =
+      validation_calculation->algorithm_id(data.creatives[0]);
     if(algorithm_id.empty())
     {
       throw std::runtime_error("the model selected the default CTR algorithm");
     }
     if(options.mode == Mode::SWITCH_CAMPAIGNS &&
-      calculation->algorithm_id(data.creatives[1]).empty())
+      validation_calculation->algorithm_id(data.creatives[1]).empty())
     {
       throw std::runtime_error(
         "the model selected the default CTR algorithm for the second campaign");
@@ -291,12 +290,20 @@ main(int argc, char** argv)
     {
       for(unsigned long i = 0; i < options.count; ++i)
       {
+        CTRProvider::Calculation_var calculation =
+          provider->create_calculation(data.request_params);
+        CTRProvider::CalculationContext_var context =
+          calculation->create_context(data.tag_size);
         ctr = context->get_ctr(data.creatives[0]);
       }
       campaign_ctrs[0] = ctr;
     }
     else
     {
+      CTRProvider::Calculation_var calculation =
+        provider->create_calculation(data.request_params);
+      CTRProvider::CalculationContext_var context =
+        calculation->create_context(data.tag_size);
       for(unsigned long i = 0; i < options.count; ++i)
       {
         const std::size_t campaign_index = i % data.creatives.size();

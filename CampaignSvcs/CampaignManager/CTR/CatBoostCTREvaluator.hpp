@@ -20,7 +20,8 @@ namespace AdServer::CampaignSvcs::CTR
     std::unique_ptr<PredictionContext>
     create_prediction_context(
       const HashArray* request_hashes,
-      const HashArray* auction_hashes) const override;
+      const HashArray* auction_hashes,
+      Generics::MonoAllocatorArena* arena) const override;
 
     double
     predict(

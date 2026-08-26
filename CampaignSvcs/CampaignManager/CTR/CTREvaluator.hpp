@@ -28,7 +28,8 @@ namespace AdServer::CampaignSvcs::CTR
     virtual std::unique_ptr<PredictionContext>
     create_prediction_context(
       const HashArray*,
-      const HashArray*) const
+      const HashArray*,
+      Generics::MonoAllocatorArena*) const
     {
       return nullptr;
     }

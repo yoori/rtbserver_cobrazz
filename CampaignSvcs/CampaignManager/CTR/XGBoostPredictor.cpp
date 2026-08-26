@@ -267,7 +267,9 @@ namespace CTR
   PredictorWrapper::init() noexcept
   {
     // do mock predict for initalize big buffers inside predictor
-    predict(HashArray(), 0);
+    Generics::MonoAllocatorArena arena;
+    const HashArray empty_hashes{HashArray::allocator_type(arena)};
+    predict(empty_hashes, 0);
   }
 
   float
@@ -388,4 +390,3 @@ namespace CTR
 }
 }
 }
-

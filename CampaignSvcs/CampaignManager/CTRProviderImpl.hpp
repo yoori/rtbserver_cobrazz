@@ -1,5 +1,8 @@
 #pragma once
 
+#include <boost/unordered/unordered_flat_map.hpp>
+#include <Generics/MonoAllocator.hpp>
+
 #include "CTRProvider.hpp"
 
 namespace AdServer::CampaignSvcs::CTR
@@ -53,20 +56,22 @@ namespace AdServer::CampaignSvcs::CTR
       public HashArray,
       public ReferenceCounting::DefaultImpl<>
     {
+      explicit HashArrayHolder(Generics::MonoAllocatorArena& arena)
+        : HashArray(HashArray::allocator_type(arena))
+      {}
+
     protected:
       ~HashArrayHolder() noexcept override = default;
     };
 
     using HashArrayHolder_var = ReferenceCounting::SmartPtr<HashArrayHolder>;
 
-    using FeatureSetLevelEvalHashMap = Generics::GnuHashTable<
-      Generics::NumericHashAdapter<unsigned long>, HashArrayHolder_var>;
+    using FeatureSetLevelEvalHashMap =
+      Generics::MonoUnorderedMap<unsigned long, HashArrayHolder_var>;
 
-    using FeatureSetLevelEvalWeightMap = Generics::GnuHashTable<
-      Generics::NumericHashAdapter<unsigned long>, float>;
+    using FeatureSetLevelEvalWeightMap = Generics::MonoUnorderedMap<unsigned long, float>;
 
-    using ModelPredictionMap = Generics::GnuHashTable<
-      Generics::NumericHashAdapter<unsigned long>, double>;
+    using ModelPredictionMap = Generics::MonoUnorderedMap<unsigned long, double>;
 
     struct PredictionContextHolder
     {
@@ -74,7 +79,7 @@ namespace AdServer::CampaignSvcs::CTR
       std::unique_ptr<CTREvaluator::PredictionContext> context;
     };
 
-    using PredictionContextArray = std::vector<PredictionContextHolder>;
+    using PredictionContextArray = Generics::MonoVector<PredictionContextHolder>;
 
     using Priority = float;
 
@@ -265,6 +270,7 @@ namespace AdServer::CampaignSvcs::CTR
       const unsigned long rand_;
       ReferenceCounting::ConstPtr<CTRProviderImpl> ctr_provider_;
       CCampaignSelectParams_var request_params_;
+      mutable Generics::MonoAllocatorArena arena_;
       mutable FeatureSetLevelEvalHashMap feature_set_level_eval_hashes_;
       mutable FeatureSetLevelEvalWeightMap feature_set_level_eval_weights_;
       mutable ModelPredictionMap model_predictions_;
@@ -353,7 +359,6 @@ namespace AdServer::CampaignSvcs::CTR
     eval_feature_set_index_(const FeatureArray& features) noexcept;
 
   protected:
-    const HashArray empty_hash_array_;
     const Generics::Time config_timestamp_;
     Generics::TaskRunner_var task_runner_;
     std::unique_ptr<HashMap> hash_mapping_;

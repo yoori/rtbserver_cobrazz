@@ -4,6 +4,8 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Hash.hpp>
+#include <Generics/MonoAllocator.hpp>
+#include <boost/unordered/unordered_flat_map.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignManager/CampaignSelectParams.hpp>
@@ -14,9 +16,10 @@ namespace AdServer::CampaignSvcs
 
   namespace CTR
   {
-    using HashArray = std::vector<std::pair<uint32_t, float> >;
+    using HashValue = std::pair<uint32_t, float>;
+    using HashArray = Generics::MonoVector<HashValue>;
 
-    using HashMap = Generics::GnuHashTable<Generics::NumericHashAdapter<uint32_t>, uint32_t>;
+    using HashMap = boost::unordered_flat_map<uint32_t, uint32_t>;
 
     struct Murmur32v3Adapter: public Generics::Murmur32v3Hasher
     {

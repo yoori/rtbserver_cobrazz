@@ -1086,7 +1086,8 @@ Application_::generate_xgb_ctr_(
     std::ostringstream res_line_ostr;
     res_line_ostr << label;
 
-    CTR::HashArray hashes;
+    Generics::MonoAllocatorArena hashes_arena;
+    CTR::HashArray hashes{CTR::HashArray::allocator_type(hashes_arena)};
     for(auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
     {
@@ -1387,7 +1388,8 @@ Application_::generate_ctr_(
 
         if(out_hashes)
         {
-          CTR::HashArray hashes;
+          Generics::MonoAllocatorArena hashes_arena;
+          CTR::HashArray hashes{CTR::HashArray::allocator_type(hashes_arena)};
           const auto* impl_calculation_context =
             dynamic_cast<const CTR::CTRProviderImpl::CalculationContext*>(
               calculation_context.in());

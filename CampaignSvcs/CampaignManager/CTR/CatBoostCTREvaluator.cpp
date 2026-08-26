@@ -92,9 +92,12 @@ namespace AdServer::CampaignSvcs::CTR
     PredictionContextImpl(
       const CatBoostCTREvaluator& evaluator,
       const HashArray* request_hashes,
-      const HashArray* auction_hashes)
+      const HashArray* auction_hashes,
+      Generics::MonoAllocatorArena* arena)
       : evaluator_(evaluator),
-        feature_buf_(evaluator.feature_buf_provider_->get())
+        feature_buf_(evaluator.feature_buf_provider_->get()),
+        saved_values_(decltype(saved_values_)::allocator_type(*arena)),
+        base_feature_indexes_(decltype(base_feature_indexes_)::allocator_type(*arena))
     {
       set_base_(request_hashes);
       set_base_(auction_hashes);
@@ -164,8 +167,8 @@ namespace AdServer::CampaignSvcs::CTR
   private:
     const CatBoostCTREvaluator& evaluator_;
     std::shared_ptr<FeatureBufProvider::Buf> feature_buf_;
-    std::vector<std::pair<std::size_t, float>> saved_values_;
-    std::vector<std::size_t> base_feature_indexes_;
+    Generics::MonoVector<std::pair<std::size_t, float>> saved_values_;
+    Generics::MonoVector<std::size_t> base_feature_indexes_;
   };
 
   CatBoostCTREvaluator::CatBoostCTREvaluator(
@@ -181,12 +184,14 @@ namespace AdServer::CampaignSvcs::CTR
   std::unique_ptr<CTREvaluator::PredictionContext>
   CatBoostCTREvaluator::create_prediction_context(
     const HashArray* request_hashes,
-    const HashArray* auction_hashes) const
+    const HashArray* auction_hashes,
+    Generics::MonoAllocatorArena* arena) const
   {
     return std::make_unique<PredictionContextImpl>(
       *this,
       request_hashes,
-      auction_hashes);
+      auction_hashes,
+      arena);
   }
 
   double

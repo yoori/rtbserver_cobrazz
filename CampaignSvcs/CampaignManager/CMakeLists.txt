@@ -71,6 +71,7 @@ add_library(CTRProviderImplLib SHARED
 
 target_link_libraries(CTRProviderImplLib
   PRIVATE
+    Boost::headers
     CTRProviderCore
     Commons
     ProfilingCommons
