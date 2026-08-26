@@ -51,6 +51,12 @@ path = <xsl:value-of select="$workspace-root"/>/log
 use chroot = false
 read only = false
 
+[ad-log-generalizer]
+comment = server for moving logs to LogGeneralizer
+path = <xsl:value-of select="$workspace-root"/>/log/LogGeneralizer
+use chroot = false
+read only = false
+
 [ad-content]
 comment = server for provide creatives content
 path = <xsl:value-of select="$data-root"/>

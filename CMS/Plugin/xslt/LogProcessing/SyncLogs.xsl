@@ -247,6 +247,20 @@
         $remote-dest-port, '/ad-logs##DST_PATH##', $backup-command-postfix)"/>
     </xsl:variable>
 
+    <xsl:variable name="log-generalizer-local-copy-command"><xsl:value-of
+        select="concat($backup-command-prefix,
+        '/usr/bin/rsync -t', $rsync-compression-option, $rsync-no-checksum-option,
+        ' --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
+        $log-files-root-dir, '/LogGeneralizer##DST_PATH##', $backup-command-postfix)"/>
+    </xsl:variable>
+
+    <xsl:variable name="log-generalizer-remote-copy-command">
+      <xsl:value-of select="concat($backup-command-prefix,
+        '/usr/bin/rsync -t', $rsync-compression-option, $rsync-no-checksum-option,
+        ' --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
+        $remote-dest-port, '/ad-log-generalizer##DST_PATH##', $backup-command-postfix)"/>
+    </xsl:variable>
+
     <xsl:variable name="ram-local-copy-command"><xsl:value-of
         select="concat($backup-command-prefix,
         '/usr/bin/rsync -t', $rsync-no-checksum-option,
@@ -259,6 +273,20 @@
         '/usr/bin/rsync -t', $rsync-no-checksum-option,
         ' --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
         $remote-dest-port, '/ad-logs##DST_PATH##', $backup-command-postfix)"/>
+    </xsl:variable>
+
+    <xsl:variable name="log-generalizer-ram-local-copy-command"><xsl:value-of
+        select="concat($backup-command-prefix,
+        '/usr/bin/rsync -t', $rsync-no-checksum-option,
+        ' --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ',
+        $log-files-root-dir, '/LogGeneralizer##DST_PATH##', $backup-command-postfix)"/>
+    </xsl:variable>
+
+    <xsl:variable name="log-generalizer-ram-remote-copy-command">
+      <xsl:value-of select="concat($backup-command-prefix,
+        '/usr/bin/rsync -t', $rsync-no-checksum-option,
+        ' --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
+        $remote-dest-port, '/ad-log-generalizer##DST_PATH##', $backup-command-postfix)"/>
     </xsl:variable>
 
     <!-- check that defined all needed parameters -->
@@ -470,9 +498,8 @@
         local_copy_command_type="rsync"
         remote_copy_command_type="rsync"
         tries_per_file="2"
-        local_copy_command="{$local-copy-command}"
-        remote_copy_command="{$remote-copy-command}"
-        >
+        local_copy_command="{$log-generalizer-local-copy-command}"
+        remote_copy_command="{$log-generalizer-remote-copy-command}">
 
         <xsl:variable name="campaign-manager-route1">
           <dirs>
@@ -495,7 +522,7 @@
         <xsl:call-template name="Route">
           <xsl:with-param name="type" select="'RoundRobin'"/>
           <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
           <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
           <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
           <xsl:with-param name="dirs" select="$campaign-manager-route1"/>
@@ -510,7 +537,7 @@
         <xsl:call-template name="Route">
           <xsl:with-param name="type" select="'Hash'"/>
           <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
           <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
           <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
           <xsl:with-param name="dirs" select="$search-term-stat-route"/>
@@ -526,32 +553,10 @@
         <xsl:call-template name="Route">
           <xsl:with-param name="type" select="'RoundRobin'"/>
           <xsl:with-param name="source-path-base" select="'CampaignServer/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
           <xsl:with-param name="source-hosts" select="$campaign-server-hosts"/>
           <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
           <xsl:with-param name="dirs" select="$colo-update-stat-route"/>
-        </xsl:call-template>
-
-        <xsl:variable name="request-info-manager-route1">
-          <dirs>
-            <dir>Request</dir>
-            <dir>Impression</dir>
-            <dir>Click</dir>
-            <dir>AdvertiserAction</dir>
-            <dir>PassbackOpportunity</dir>
-            <dir>PassbackImpression</dir>
-            <dir>TagRequest</dir>
-          </dirs>
-        </xsl:variable>
-
-        <xsl:call-template name="Route">
-          <xsl:with-param name="type" select="'Hash'"/>
-          <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
-          <xsl:with-param name="destination-path-base" select="'/RequestInfoManager/In/'"/>
-          <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
-          <xsl:with-param name="destination-hosts" select="$request-info-manager-hosts"/>
-          <xsl:with-param name="dirs" select="$request-info-manager-route1"/>
-          <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
         </xsl:call-template>
 
         <xsl:variable name="request-info-manager-route2">
@@ -581,10 +586,100 @@
         <xsl:call-template name="Route">
           <xsl:with-param name="type" select="'RoundRobin'"/>
           <xsl:with-param name="source-path-base" select="'RequestInfoManager/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
           <xsl:with-param name="source-hosts" select="$request-info-manager-hosts"/>
           <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
           <xsl:with-param name="dirs" select="$request-info-manager-route2"/>
+        </xsl:call-template>
+
+        <xsl:variable name="channel-server-route">
+          <dirs>
+            <dir>ColoUpdateStat</dir>
+          </dirs>
+        </xsl:variable>
+
+        <xsl:call-template name="Route">
+          <xsl:with-param name="type" select="'RoundRobin'"/>
+          <xsl:with-param name="source-path-base" select="'ChannelServer/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
+          <xsl:with-param name="source-hosts" select="$channel-server-hosts"/>
+          <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
+          <xsl:with-param name="dirs" select="$channel-server-route"/>
+        </xsl:call-template>
+
+        <xsl:variable name="expression-matcher-route">
+          <dirs>
+            <dir>ChannelImpInventory</dir>
+            <dir>ChannelInventory</dir>
+            <dir>ChannelPriceRange</dir>
+            <dir>ChannelInventoryEstimationStat</dir>
+            <dir>ChannelPerformance</dir>
+            <dir>ChannelHitStat</dir>
+            <dir>ChannelTriggerStat</dir>
+            <dir>ChannelTriggerImpStat</dir>
+            <dir>GlobalColoUserStat</dir>
+            <dir>ColoUserStat</dir>
+            <dir>ChannelOverlapUserStat</dir>
+            <dir>CCGSelectionFailureStat</dir>
+          </dirs>
+        </xsl:variable>
+
+        <xsl:call-template name="Route">
+          <xsl:with-param name="type" select="'RoundRobin'"/>
+          <xsl:with-param name="source-path-base" select="'ExpressionMatcher/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
+          <xsl:with-param name="source-hosts" select="$expression-matcher-hosts"/>
+          <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
+          <xsl:with-param name="dirs" select="$expression-matcher-route"/>
+        </xsl:call-template>
+
+        <xsl:variable name="user-info-manager-route">
+          <dirs>
+            <dir>ChannelCountStat</dir>
+          </dirs>
+        </xsl:variable>
+
+        <xsl:call-template name="Route">
+          <xsl:with-param name="type" select="'RoundRobin'"/>
+          <xsl:with-param name="source-path-base" select="'UserInfoManager/'"/>
+          <xsl:with-param name="destination-path-base" select="'/In/'"/>
+          <xsl:with-param name="source-hosts" select="$user-info-manager-hosts"/>
+          <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
+          <xsl:with-param name="dirs" select="$user-info-manager-route"/>
+        </xsl:call-template>
+      </cfg:FeedRouteGroup>
+
+      <cfg:FeedRouteGroup
+        pool_threads="20"
+        soft_pool_threads="1"
+        soft_pool_max_file_age="120"
+        local_copy_command_type="rsync"
+        remote_copy_command_type="rsync"
+        tries_per_file="2"
+        local_copy_command="{$local-copy-command}"
+        remote_copy_command="{$remote-copy-command}"
+        >
+
+        <xsl:variable name="request-info-manager-route1">
+          <dirs>
+            <dir>Request</dir>
+            <dir>Impression</dir>
+            <dir>Click</dir>
+            <dir>AdvertiserAction</dir>
+            <dir>PassbackOpportunity</dir>
+            <dir>PassbackImpression</dir>
+            <dir>TagRequest</dir>
+          </dirs>
+        </xsl:variable>
+
+        <xsl:call-template name="Route">
+          <xsl:with-param name="type" select="'Hash'"/>
+          <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
+          <xsl:with-param name="destination-path-base" select="'/RequestInfoManager/In/'"/>
+          <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
+          <xsl:with-param name="destination-hosts" select="$request-info-manager-hosts"/>
+          <xsl:with-param name="dirs" select="$request-info-manager-route1"/>
+          <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
         </xsl:call-template>
 
         <xsl:variable name="request-info-manager-exchange-logs">
@@ -620,62 +715,6 @@
           <xsl:with-param name="destination-hosts" select="$expression-matcher-distribution"/>
           <xsl:with-param name="dirs" select="$consider-logs"/>
           <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
-        </xsl:call-template>
-
-        <xsl:variable name="channel-server-route">
-          <dirs>
-            <dir>ColoUpdateStat</dir>
-          </dirs>
-        </xsl:variable>
-
-        <xsl:call-template name="Route">
-          <xsl:with-param name="type" select="'RoundRobin'"/>
-          <xsl:with-param name="source-path-base" select="'ChannelServer/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
-          <xsl:with-param name="source-hosts" select="$channel-server-hosts"/>
-          <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
-          <xsl:with-param name="dirs" select="$channel-server-route"/>
-        </xsl:call-template>
-
-        <xsl:variable name="expression-matcher-route">
-          <dirs>
-            <dir>ChannelImpInventory</dir>
-            <dir>ChannelInventory</dir>
-            <dir>ChannelPriceRange</dir>
-            <dir>ChannelInventoryEstimationStat</dir>
-            <dir>ChannelPerformance</dir>
-            <dir>ChannelHitStat</dir>
-            <dir>ChannelTriggerStat</dir>
-            <dir>ChannelTriggerImpStat</dir>
-            <dir>GlobalColoUserStat</dir>
-            <dir>ColoUserStat</dir>
-            <dir>ChannelOverlapUserStat</dir>
-            <dir>CCGSelectionFailureStat</dir>
-          </dirs>
-        </xsl:variable>
-
-        <xsl:call-template name="Route">
-          <xsl:with-param name="type" select="'RoundRobin'"/>
-          <xsl:with-param name="source-path-base" select="'ExpressionMatcher/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
-          <xsl:with-param name="source-hosts" select="$expression-matcher-hosts"/>
-          <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
-          <xsl:with-param name="dirs" select="$expression-matcher-route"/>
-        </xsl:call-template>
-
-        <xsl:variable name="user-info-manager-route">
-          <dirs>
-            <dir>ChannelCountStat</dir>
-          </dirs>
-        </xsl:variable>
-
-        <xsl:call-template name="Route">
-          <xsl:with-param name="type" select="'RoundRobin'"/>
-          <xsl:with-param name="source-path-base" select="'UserInfoManager/'"/>
-          <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
-          <xsl:with-param name="source-hosts" select="$user-info-manager-hosts"/>
-          <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
-          <xsl:with-param name="dirs" select="$user-info-manager-route"/>
         </xsl:call-template>
 
         <cfg:Route type="DefiniteHash">
@@ -744,8 +783,8 @@
           local_copy_command_type="rsync"
           remote_copy_command_type="rsync"
           tries_per_file="2"
-          local_copy_command="{$ram-local-copy-command}"
-          remote_copy_command="{$ram-remote-copy-command}">
+          local_copy_command="{$log-generalizer-ram-local-copy-command}"
+          remote_copy_command="{$log-generalizer-ram-remote-copy-command}">
 
           <xsl:variable name="campaign-manager-ram-route1">
             <dirs>
@@ -766,7 +805,7 @@
           <xsl:call-template name="Route">
             <xsl:with-param name="type" select="'RoundRobin'"/>
             <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
-            <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+            <xsl:with-param name="destination-path-base" select="'/In/'"/>
             <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
             <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
             <xsl:with-param name="dirs" select="$campaign-manager-ram-route1"/>
@@ -782,13 +821,25 @@
           <xsl:call-template name="Route">
             <xsl:with-param name="type" select="'Hash'"/>
             <xsl:with-param name="source-path-base" select="'CampaignManager/'"/>
-            <xsl:with-param name="destination-path-base" select="'/LogGeneralizer/In/'"/>
+            <xsl:with-param name="destination-path-base" select="'/In/'"/>
             <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
             <xsl:with-param name="destination-hosts" select="$log-generalizer-hosts"/>
             <xsl:with-param name="dirs" select="$campaign-manager-ram-search-term-route"/>
             <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
             <xsl:with-param name="dir-suffix" select="'.ram'"/>
           </xsl:call-template>
+        </cfg:FeedRouteGroup>
+
+        <cfg:FeedRouteGroup
+          pool_threads="20"
+          soft_pool_threads="1"
+          soft_pool_max_file_age="120"
+          check_logs_period="1"
+          local_copy_command_type="rsync"
+          remote_copy_command_type="rsync"
+          tries_per_file="2"
+          local_copy_command="{$ram-local-copy-command}"
+          remote_copy_command="{$ram-remote-copy-command}">
 
           <xsl:variable name="campaign-manager-ram-request-route">
             <dirs>

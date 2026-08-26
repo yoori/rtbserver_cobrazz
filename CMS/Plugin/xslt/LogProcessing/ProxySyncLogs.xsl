@@ -35,7 +35,7 @@
       <xsl:variable name="source"
         select="concat('LogProxy/', $dir, '/', $dir)"/>
       <xsl:variable name="destination"
-        select="concat('/LogGeneralizer/In/', $dir)"/>
+        select="concat('/In/', $dir)"/>
 
       <cfg:files>
         <xsl:attribute name="source">
@@ -65,7 +65,7 @@
       <xsl:variable name="source"
         select="concat('LogProxy/', $dir, '/Intermediate/~', $dir, '.2*')"/>
       <xsl:variable name="destination"
-        select="concat('/LogGeneralizer/In/', $dir)"/>
+        select="concat('/In/', $dir)"/>
 
       <cfg:files>
         <xsl:attribute name="source">
@@ -168,7 +168,7 @@
     <xsl:variable name="remote-copy-command">
       <xsl:value-of select="concat($backup-command-prefix,
         '/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:',
-        $remote-dest-port, '/ad-logs##DST_PATH##', $backup-command-postfix)"/>
+        $remote-dest-port, '/ad-log-generalizer##DST_PATH##', $backup-command-postfix)"/>
     </xsl:variable>
 
     <!-- check that defined all needed parameters -->
@@ -289,14 +289,14 @@
         </xsl:call-template>
 
         <cfg:Route post_command="touch ##SRC_DIR##/~##FILE_NAME##.commit.##DST_HOST##" type="RoundRobin">
-          <cfg:files source="CampaignServer/Out/ColoUpdateStat/ColoUpdateStat.2*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
+          <cfg:files source="CampaignServer/Out/ColoUpdateStat/ColoUpdateStat.2*" destination="/In/ColoUpdateStat"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>
           </cfg:hosts>
         </cfg:Route>
         <cfg:Route type="HostName" pattern="\.commit\.(.*)$">
-          <cfg:files source="CampaignServer/Out/ColoUpdateStat/~ColoUpdateStat.2*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
+          <cfg:files source="CampaignServer/Out/ColoUpdateStat/~ColoUpdateStat.2*" destination="/In/ColoUpdateStat"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>
@@ -306,7 +306,7 @@
         <cfg:Route type="RoundRobin">
           <!-- use LogGeneralizer hosts as intermediate for ExtStat's -->
           <cfg:files source="LogProxy/ExtStat/*"
-            destination="/LogGeneralizer/Out/ExtStat"/>
+            destination="/Out/ExtStat"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>
@@ -314,14 +314,14 @@
         </cfg:Route>
 
         <cfg:Route post_command="touch ##SRC_DIR##/~##FILE_NAME##.commit.##DST_HOST##" type="Hash" fetch_type="commited">
-          <cfg:files source="LogProxy/SearchTermStat/SearchTermStat" destination="/LogGeneralizer/In/SearchTermStat" pattern=".*\.##HASH##"/>
+          <cfg:files source="LogProxy/SearchTermStat/SearchTermStat" destination="/In/SearchTermStat" pattern=".*\.##HASH##"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>
           </cfg:hosts>
         </cfg:Route>
         <cfg:Route type="HostName" pattern="\.commit\.(.*)$">
-          <cfg:files source="LogProxy/SearchTermStat/Intermediate/~SearchTermStat.*" destination="/LogGeneralizer/In/SearchTermStat"/>
+          <cfg:files source="LogProxy/SearchTermStat/Intermediate/~SearchTermStat.*" destination="/In/SearchTermStat"/>
           <cfg:hosts>
             <xsl:attribute name="source"><xsl:value-of select="$sync-logs-host"/></xsl:attribute>
             <xsl:attribute name="destination"><xsl:value-of select="$log-generalizer-hosts"/></xsl:attribute>
