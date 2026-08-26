@@ -1419,6 +1419,7 @@ namespace AdServer::RequestInfoSvcs
       if (record.user_type() != 'H')
       {
         /* process one request */
+        Generics::MonoAllocatorArena processing_arena;
         MatchRequestProcessor::MatchInfo match_info;
         const bool sampling_flag = check_sampling_(record.user_id());
 
@@ -1527,7 +1528,7 @@ namespace AdServer::RequestInfoSvcs
         if ((!record.user_id().is_null() && user_trigger_match_container) ||
            (!record.temporary_user_id().is_null() && temp_user_trigger_match_container))
         {
-          UserTriggerMatchContainer::RequestInfo request_info;
+          UserTriggerMatchContainer::RequestInfo request_info(processing_arena);
           request_info.time = match_info.placement_colo_time;
 
           if (match_request)
@@ -1535,26 +1536,32 @@ namespace AdServer::RequestInfoSvcs
             for (auto cht_it = match_request->page_trigger_channels().begin();
               cht_it != match_request->page_trigger_channels().end(); ++cht_it)
             {
-              request_info.page_matches[cht_it->channel_id].push_back(cht_it->channel_trigger_id);
+              request_info.add_page_match(
+                cht_it->channel_id,
+                cht_it->channel_trigger_id);
             }
 
             for (auto cht_it = match_request->search_trigger_channels().begin();
               cht_it != match_request->search_trigger_channels().end(); ++cht_it)
             {
-              request_info.search_matches[cht_it->channel_id].push_back(
+              request_info.add_search_match(
+                cht_it->channel_id,
                 cht_it->channel_trigger_id);
             }
 
             for (auto cht_it = match_request->url_trigger_channels().begin();
               cht_it != match_request->url_trigger_channels().end(); ++cht_it)
             {
-              request_info.url_matches[cht_it->channel_id].push_back(cht_it->channel_trigger_id);
+              request_info.add_url_match(
+                cht_it->channel_id,
+                cht_it->channel_trigger_id);
             }
 
             for (auto cht_it = match_request->url_keyword_trigger_channels().begin();
               cht_it != match_request->url_keyword_trigger_channels().end(); ++cht_it)
             {
-              request_info.url_keyword_matches[cht_it->channel_id].push_back(
+              request_info.add_url_keyword_match(
+                cht_it->channel_id,
                 cht_it->channel_trigger_id);
             }
           }

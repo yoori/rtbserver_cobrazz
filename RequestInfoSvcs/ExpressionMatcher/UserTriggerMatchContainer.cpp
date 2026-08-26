@@ -98,8 +98,9 @@ namespace AdServer::RequestInfoSvcs
       }
     };
 
+    template <typename ArrayType>
     void fill_index_sampling(
-      std::vector<unsigned long>& sampling,
+      ArrayType& sampling,
       unsigned long array_size,
       unsigned long sampling_size)
     {
@@ -108,7 +109,7 @@ namespace AdServer::RequestInfoSvcs
       {
         unsigned long new_val = Generics::safe_rand(array_size - sampling.size());
         unsigned long add_ind = 0;
-        std::vector<unsigned long>::iterator vit = sampling.begin();
+        auto vit = sampling.begin();
         for (; vit != sampling.end() && new_val + add_ind >= *vit; ++vit)
         {
           ++add_ind;
@@ -137,10 +138,10 @@ namespace AdServer::RequestInfoSvcs
           use_noise_size > 0 ? triggers.size() * (use_noise_size + 1) :
           triggers.size()));
 
-      std::vector<unsigned long> trigger_indexes;
+      UserTriggerMatchContainer::MatchedTriggerIdArray trigger_indexes(
+        triggers.get_allocator());
 
-      for (std::vector<unsigned long>::const_iterator tr_it = triggers.begin();
-        tr_it != triggers.end(); ++tr_it)
+      for (auto tr_it = triggers.begin(); tr_it != triggers.end(); ++tr_it)
       {
         trigger_indexes.clear();
 
@@ -172,7 +173,7 @@ namespace AdServer::RequestInfoSvcs
 
         //
         // fill noised triggers
-        for (std::vector<unsigned long>::const_iterator tr_idx_it = trigger_indexes.begin();
+        for (auto tr_idx_it = trigger_indexes.begin();
           tr_idx_it != trigger_indexes.end(); ++tr_idx_it)
         {
           noised_triggers.push_back(channel_triggers[*tr_idx_it]);
@@ -191,11 +192,12 @@ namespace AdServer::RequestInfoSvcs
     void fill_compensate_triggers(
       ChannelMatchWriter::negative_matches_Container& compensate_triggers,
       const TriggerIdArray& channel_triggers,
-      const TriggerIdArray& deactivated_channel_triggers,
+      const UserTriggerMatchContainer::MatchedTriggerIdArray& deactivated_channel_triggers,
       unsigned long matched_triggers,
       unsigned long compensate_size)
     {
-      std::vector<unsigned long> trigger_indexes;
+      UserTriggerMatchContainer::MatchedTriggerIdArray trigger_indexes(
+        deactivated_channel_triggers.get_allocator());
 
       compensate_triggers.reserve(compensate_triggers.size() + matched_triggers * compensate_size);
 
@@ -208,7 +210,7 @@ namespace AdServer::RequestInfoSvcs
           channel_triggers.size() + deactivated_channel_triggers.size(),
           compensate_size);
 
-        for (std::vector<unsigned long>::const_iterator tr_idx_it = trigger_indexes.begin();
+        for (auto tr_idx_it = trigger_indexes.begin();
           tr_idx_it != trigger_indexes.end(); ++tr_idx_it)
         {
           if (*tr_idx_it < channel_triggers.size())
@@ -260,7 +262,8 @@ namespace AdServer::RequestInfoSvcs
 
         if (all_ch_it != all_channels.end())
         {
-          UserTriggerMatchContainer::MatchedTriggerIdArray deactivated_triggers;
+          UserTriggerMatchContainer::MatchedTriggerIdArray deactivated_triggers(
+            new_matches.get_allocator());
 
           // add noise triggers
           fill_noised_triggers(

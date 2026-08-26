@@ -5,8 +5,7 @@
 
 #include <LogCommons/LogCommons.ipp>
 
-namespace AdServer {
-namespace LogProcessing {
+namespace AdServer::LogProcessing {
 
 template <> const char* RequestBasicChannelsTraits::B::base_name_ =
   "RequestBasicChannels";
@@ -139,6 +138,7 @@ operator>>(
     }
 
     RequestBasicChannelsInnerData::TriggerMatchArray container;
+    container.reserve(Aux_::sequence_size_hint(token, ','));
     FixedBufStream<CommaCategory> list_stream(token);
     while (true)
     {
@@ -369,8 +369,12 @@ operator>>(std::istream& is, RequestBasicChannelsInnerData& data)
   /*throw(eh::Exception)*/
 {
   data.holder_ = new RequestBasicChannelsInnerData::DataHolder();
-  std::string record;
-  record.reserve(1024);
+  thread_local std::string record;
+  record.clear();
+  if (record.capacity() < 1024)
+  {
+    record.reserve(1024);
+  }
   read_until_eol(is, record);
   if (is.good())
   {
@@ -656,5 +660,4 @@ operator<<(BufferWriter& out, const RequestBasicChannelsInnerData& data)
   return out;
 }
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

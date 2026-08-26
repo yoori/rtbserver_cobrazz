@@ -25,14 +25,11 @@ namespace AdServer::LogProcessing
     RequestBasicChannelsKey(
       const SecondsTimestamp& time,
       const SecondsTimestamp& isp_time,
-      unsigned long colo_id
-    )
-    :
-      time_(time),
-      isp_time_(isp_time),
-      colo_id_(colo_id)
-    {
-    }
+      unsigned long colo_id)
+      : time_(time),
+        isp_time_(isp_time),
+        colo_id_(colo_id)
+    {}
 
     bool operator==(const RequestBasicChannelsKey& rhs) const
     {
@@ -139,10 +136,8 @@ namespace AdServer::LogProcessing
       template <class IMPRESSION_CHANNELS_CONTAINER_TYPE_>
       AdSlotImpression(
         const FixedNum& revenue,
-        const IMPRESSION_CHANNELS_CONTAINER_TYPE_& impression_channels
-      )
-      :
-        data_(new Data)
+        const IMPRESSION_CHANNELS_CONTAINER_TYPE_& impression_channels)
+        : data_(new Data)
       {
         data_->revenue = revenue;
         data_->impression_channels.assign(impression_channels.begin(),
@@ -216,10 +211,8 @@ namespace AdServer::LogProcessing
       AdBidSlotImpression(
         const FixedNum& revenue,
         const FixedNum& revenue_bid,
-        const IMPRESSION_CHANNELS_CONTAINER_TYPE_& impression_channels
-      )
-      :
-        data_(new Data)
+        const IMPRESSION_CHANNELS_CONTAINER_TYPE_& impression_channels)
+        : data_(new Data)
       {
         data_->revenue = revenue;
         data_->revenue_bid = revenue_bid;
@@ -270,16 +263,13 @@ namespace AdServer::LogProcessing
           unsigned long tag_id_val,
           const std::string& format_val,
           bool test_request_val,
-          bool profiling_available_val
-        )
+          bool profiling_available_val)
           noexcept
-        :
-          tag_id(tag_id_val),
-          format(format_val),
-          test_request(test_request_val),
-          profiling_available(profiling_available_val)
-        {
-        }
+          : tag_id(tag_id_val),
+            format(format_val),
+            test_request(test_request_val),
+            profiling_available(profiling_available_val)
+        {}
 
         bool
         operator==(const Data& rhs) const
@@ -318,13 +308,10 @@ namespace AdServer::LogProcessing
         const std::string& format,
         bool test_request,
         bool profiling_available,
-        const FullFreqCapsContainerType& full_freq_caps
-      )
-      :
-        data_(new Data(tag_id, format, test_request, profiling_available))
+        const FullFreqCapsContainerType& full_freq_caps)
+        : data_(new Data(tag_id, format, test_request, profiling_available))
       {
-        data_->full_freq_caps.assign(full_freq_caps.begin(),
-          full_freq_caps.end());
+        data_->full_freq_caps.assign(full_freq_caps.begin(), full_freq_caps.end());
       }
 
       bool
@@ -378,16 +365,14 @@ namespace AdServer::LogProcessing
       {
       public:
         Data() noexcept
-        :
-          size(),
-          country_code(),
-          max_text_ads(),
-          text_ad_cost_threshold(FixedNum::ZERO),
-          display_ad_shown(),
-          text_ad_shown(),
-          ad_select()
-        {
-        }
+          : size(),
+            country_code(),
+            max_text_ads(),
+            text_ad_cost_threshold(FixedNum::ZERO),
+            display_ad_shown(),
+            text_ad_shown(),
+            ad_select()
+        {}
 
         bool operator==(const Data& rhs) const
         {
@@ -437,10 +422,8 @@ namespace AdServer::LogProcessing
         const FixedNum& text_ad_cost_threshold,
         const AdSlotImpressionOptional& display_ad_shown,
         const AdBidSlotImpressionList& text_ad_shown,
-        const AdSelectPropsOptional& ad_select
-      )
-      :
-        data_(new Data)
+        const AdSelectPropsOptional& ad_select)
+        : data_(new Data)
       {
         data_->size = size;
         data_->country_code = country_code;
@@ -525,24 +508,21 @@ namespace AdServer::LogProcessing
       const TriggerMatchArray& page_trigger_channels,
       const TriggerMatchArray& search_trigger_channels,
       const TriggerMatchArray& url_trigger_channels,
-      const AdRequestPropsOptional& ad_request
-    )
-    :
-      holder_(
-        new DataHolder(
-          user_type,
-          user_id,
-          temporary_user_id,
-          history_channels,
-          page_trigger_channels,
-          search_trigger_channels,
-          url_trigger_channels,
-          ad_request,
-          Generics::safe_rand()
+      const AdRequestPropsOptional& ad_request)
+      : holder_(
+          new DataHolder(
+            user_type,
+            user_id,
+            temporary_user_id,
+            history_channels,
+            page_trigger_channels,
+            search_trigger_channels,
+            url_trigger_channels,
+            ad_request,
+            Generics::safe_rand()
+          )
         )
-      )
-    {
-    }
+    {}
 
     bool operator==(const RequestBasicChannelsInnerData_V_3_1& data) const
     {
@@ -621,18 +601,16 @@ namespace AdServer::LogProcessing
     {
     public:
       DataHolder()
-      :
-        user_type(),
-        user_id(),
-        temporary_user_id(),
-        history_channels(),
-        page_trigger_channels(),
-        search_trigger_channels(),
-        url_trigger_channels(),
-        ad_request(),
-        random()
-      {
-      }
+        : user_type(),
+          user_id(),
+          temporary_user_id(),
+          history_channels(),
+          page_trigger_channels(),
+          search_trigger_channels(),
+          url_trigger_channels(),
+          ad_request(),
+          random()
+      {}
 
       DataHolder(
         char user_type_val,
@@ -643,18 +621,16 @@ namespace AdServer::LogProcessing
         const TriggerMatchArray& search_trigger_channels_val,
         const TriggerMatchArray& url_trigger_channels_val,
         const AdRequestPropsOptional& ad_request_val,
-        unsigned long random_val
-      )
-      :
-        user_type(user_type_val),
-        user_id(user_id_val),
-        temporary_user_id(temporary_user_id_val),
-        history_channels(history_channels_val),
-        page_trigger_channels(page_trigger_channels_val),
-        search_trigger_channels(search_trigger_channels_val),
-        url_trigger_channels(url_trigger_channels_val),
-        ad_request(ad_request_val),
-        random(random_val)
+        unsigned long random_val)
+        : user_type(user_type_val),
+          user_id(user_id_val),
+          temporary_user_id(temporary_user_id_val),
+          history_channels(history_channels_val),
+          page_trigger_channels(page_trigger_channels_val),
+          search_trigger_channels(search_trigger_channels_val),
+          url_trigger_channels(url_trigger_channels_val),
+          ad_request(ad_request_val),
+          random(random_val)
       {
         if (ad_request.present())
         {
@@ -745,15 +721,13 @@ namespace AdServer::LogProcessing
           const std::string& size_val,
           const std::string& format_val,
           bool test_request_val,
-          bool profiling_available_val
-        )
+          bool profiling_available_val)
           noexcept
-        :
-          tag_id(tag_id_val),
-          size(size_val),
-          format(format_val),
-          test_request(test_request_val),
-          profiling_available(profiling_available_val)
+          : tag_id(tag_id_val),
+            size(size_val),
+            format(format_val),
+            test_request(test_request_val),
+            profiling_available(profiling_available_val)
         {
         }
 
@@ -801,10 +775,8 @@ namespace AdServer::LogProcessing
         const std::string& format,
         bool test_request,
         bool profiling_available,
-        const FullFreqCapsContainerType& full_freq_caps
-      )
-      :
-        data_(new Data(tag_id, size, format, test_request, profiling_available))
+        const FullFreqCapsContainerType& full_freq_caps)
+        : data_(new Data(tag_id, size, format, test_request, profiling_available))
       {
         data_->full_freq_caps.assign(full_freq_caps.begin(),
           full_freq_caps.end());
@@ -871,14 +843,13 @@ namespace AdServer::LogProcessing
       {
       public:
         Data() noexcept
-        :
-          sizes(),
-          country_code(),
-          max_text_ads(),
-          text_ad_cost_threshold(FixedNum::ZERO),
-          display_ad_shown(),
-          text_ad_shown(),
-          ad_select()
+          : sizes(),
+            country_code(),
+            max_text_ads(),
+            text_ad_cost_threshold(FixedNum::ZERO),
+            display_ad_shown(),
+            text_ad_shown(),
+            ad_select()
         {
         }
 
@@ -930,10 +901,8 @@ namespace AdServer::LogProcessing
         const FixedNum& text_ad_cost_threshold,
         const AdSlotImpressionOptional& display_ad_shown,
         const AdBidSlotImpressionList& text_ad_shown,
-        const AdSelectPropsOptional& ad_select
-      )
-      :
-        data_(new Data)
+        const AdSelectPropsOptional& ad_select)
+        : data_(new Data)
       {
         data_->sizes.assign(sizes.begin(), sizes.end());
         data_->country_code = country_code;
@@ -944,11 +913,8 @@ namespace AdServer::LogProcessing
         data_->ad_select = ad_select;
       }
 
-      AdRequestProps(
-        const RequestBasicChannelsInnerData_V_3_1::AdRequestProps& data
-      )
-      :
-        data_(new Data)
+      AdRequestProps(const RequestBasicChannelsInnerData_V_3_1::AdRequestProps& data)
+        : data_(new Data)
       {
         data_->sizes.push_back(data.size());
         data_->country_code = data.country_code();
@@ -1043,12 +1009,11 @@ namespace AdServer::LogProcessing
       {
       public:
         Data()
-        :
-          history_channels(),
-          page_trigger_channels(),
-          search_trigger_channels(),
-          url_trigger_channels(),
-          url_keyword_trigger_channels()
+          : history_channels(),
+            page_trigger_channels(),
+            search_trigger_channels(),
+            url_trigger_channels(),
+            url_keyword_trigger_channels()
         {
         }
 
@@ -1057,8 +1022,7 @@ namespace AdServer::LogProcessing
           TriggerMatchArray page_trigger_channels_val,
           TriggerMatchArray search_trigger_channels_val,
           TriggerMatchArray url_trigger_channels_val,
-          TriggerMatchArray url_keyword_trigger_channels_val
-          )
+          TriggerMatchArray url_keyword_trigger_channels_val)
           : history_channels(std::move(history_channels_val)),
             page_trigger_channels(std::move(page_trigger_channels_val)),
             search_trigger_channels(std::move(search_trigger_channels_val)),
@@ -1176,40 +1140,35 @@ namespace AdServer::LogProcessing
       const UserId& user_id,
       const UserId& temporary_user_id,
       MatchOptional&& match_request,
-      const AdRequestPropsOptional& ad_request
-    )
-    :
-      holder_(
-        new DataHolder(
-          user_type,
-          user_id,
-          temporary_user_id,
-          std::move(match_request),
-          ad_request,
-          Generics::safe_rand()
+      const AdRequestPropsOptional& ad_request)
+      : holder_(
+          new DataHolder(
+            user_type,
+            user_id,
+            temporary_user_id,
+            std::move(match_request),
+            ad_request,
+            Generics::safe_rand()
+          )
         )
-      )
     {
     }
 
-    RequestBasicChannelsInnerData_V_3_3(
-      const RequestBasicChannelsInnerData_V_3_1& data
-    )
-    :
-      holder_(
-        new DataHolder(
-          data.user_type(),
-          data.user_id(),
-          data.temporary_user_id(),
-          NumberList(data.history_channels().begin(), data.history_channels().end()),
-          data.page_trigger_channels(),
-          data.search_trigger_channels(),
-          data.url_trigger_channels(),
-          TriggerMatchArray(), // url_keyword_trigger_channels
-          data.ad_request(),
-          Generics::safe_rand()
+    RequestBasicChannelsInnerData_V_3_3(const RequestBasicChannelsInnerData_V_3_1& data)
+      : holder_(
+          new DataHolder(
+            data.user_type(),
+            data.user_id(),
+            data.temporary_user_id(),
+            NumberList(data.history_channels().begin(), data.history_channels().end()),
+            data.page_trigger_channels(),
+            data.search_trigger_channels(),
+            data.url_trigger_channels(),
+            TriggerMatchArray(), // url_keyword_trigger_channels
+            data.ad_request(),
+            Generics::safe_rand()
+          )
         )
-      )
     {
     }
 
@@ -1275,15 +1234,13 @@ namespace AdServer::LogProcessing
     {
     public:
       DataHolder()
-      :
-        user_type(),
-        user_id(),
-        temporary_user_id(),
-        match_request(),
-        ad_request(),
-        random()
-      {
-      }
+        : user_type(),
+          user_id(),
+          temporary_user_id(),
+          match_request(),
+          ad_request(),
+          random()
+      {}
 
       DataHolder(
         char user_type_val,
@@ -1291,15 +1248,13 @@ namespace AdServer::LogProcessing
         const UserId& temporary_user_id_val,
         MatchOptional&& match_request_val,
         const AdRequestPropsOptional& ad_request_val,
-        unsigned long random_val
-      )
-      :
-        user_type(user_type_val),
-        user_id(user_id_val),
-        temporary_user_id(temporary_user_id_val),
-        match_request(std::move(match_request_val)),
-        ad_request(ad_request_val),
-        random(random_val)
+        unsigned long random_val)
+        : user_type(user_type_val),
+          user_id(user_id_val),
+          temporary_user_id(temporary_user_id_val),
+          match_request(std::move(match_request_val)),
+          ad_request(ad_request_val),
+          random(random_val)
       {
         if (ad_request.present())
         {
@@ -1317,20 +1272,18 @@ namespace AdServer::LogProcessing
         TriggerMatchArray url_trigger_channels_val,
         TriggerMatchArray url_keyword_trigger_channels_val,
         const AdRequestPropsOptional& ad_request_val,
-        unsigned long random_val
-      )
-      :
-        user_type(user_type_val),
-        user_id(user_id_val),
-        temporary_user_id(temporary_user_id_val),
-        match_request(Match(
-          std::move(history_channels_val),
-          std::move(page_trigger_channels_val),
-          std::move(search_trigger_channels_val),
-          std::move(url_trigger_channels_val),
-          std::move(url_keyword_trigger_channels_val))),
-        ad_request(ad_request_val),
-        random(random_val)
+        unsigned long random_val)
+        : user_type(user_type_val),
+          user_id(user_id_val),
+          temporary_user_id(temporary_user_id_val),
+          match_request(Match(
+            std::move(history_channels_val),
+            std::move(page_trigger_channels_val),
+            std::move(search_trigger_channels_val),
+            std::move(url_trigger_channels_val),
+            std::move(url_keyword_trigger_channels_val))),
+          ad_request(ad_request_val),
+          random(random_val)
       {
         if (ad_request.present())
         {
@@ -1347,22 +1300,19 @@ namespace AdServer::LogProcessing
         TriggerMatchArray search_trigger_channels_val,
         TriggerMatchArray url_trigger_channels_val,
         TriggerMatchArray url_keyword_trigger_channels_val,
-        const RequestBasicChannelsInnerData_V_3_1::AdRequestPropsOptional&
-          ad_request_val,
-        unsigned long random_val
-      )
-      :
-        user_type(user_type_val),
-        user_id(user_id_val),
-        temporary_user_id(temporary_user_id_val),
-        match_request(Match(
-          std::move(history_channels_val),
-          std::move(page_trigger_channels_val),
-          std::move(search_trigger_channels_val),
-          std::move(url_trigger_channels_val),
-          std::move(url_keyword_trigger_channels_val))),
-        ad_request(ad_request_val),
-        random(random_val)
+        const RequestBasicChannelsInnerData_V_3_1::AdRequestPropsOptional& ad_request_val,
+        unsigned long random_val)
+        : user_type(user_type_val),
+          user_id(user_id_val),
+          temporary_user_id(temporary_user_id_val),
+          match_request(Match(
+            std::move(history_channels_val),
+            std::move(page_trigger_channels_val),
+            std::move(search_trigger_channels_val),
+            std::move(url_trigger_channels_val),
+            std::move(url_keyword_trigger_channels_val))),
+          ad_request(ad_request_val),
+          random(random_val)
       {
         if (ad_request.present())
         {
@@ -1448,15 +1398,13 @@ namespace AdServer::LogProcessing
           const std::string& size_val,
           const std::string& format_val,
           bool test_request_val,
-          bool profiling_available_val
-        )
+          bool profiling_available_val)
           noexcept
-        :
-          tag_id(tag_id_val),
-          size(size_val),
-          format(format_val),
-          test_request(test_request_val),
-          profiling_available(profiling_available_val)
+          : tag_id(tag_id_val),
+            size(size_val),
+            format(format_val),
+            test_request(test_request_val),
+            profiling_available(profiling_available_val)
         {
         }
 
@@ -1504,13 +1452,10 @@ namespace AdServer::LogProcessing
         const std::string& format,
         bool test_request,
         bool profiling_available,
-        const FullFreqCapsContainerType& full_freq_caps
-      )
-      :
-        data_(new Data(tag_id, size, format, test_request, profiling_available))
+        const FullFreqCapsContainerType& full_freq_caps)
+        : data_(new Data(tag_id, size, format, test_request, profiling_available))
       {
-        data_->full_freq_caps.assign(full_freq_caps.begin(),
-          full_freq_caps.end());
+        data_->full_freq_caps.assign(full_freq_caps.begin(), full_freq_caps.end());
       }
 
       bool
@@ -1574,15 +1519,14 @@ namespace AdServer::LogProcessing
       {
       public:
         Data() noexcept
-        :
-          sizes(),
-          country_code(),
-          max_text_ads(),
-          text_ad_cost_threshold(FixedNum::ZERO),
-          display_ad_shown(),
-          text_ad_shown(),
-          ad_select(),
-          auction_type(CampaignSvcs::AT_MAX_ECPM)
+          : sizes(),
+            country_code(),
+            max_text_ads(),
+            text_ad_cost_threshold(FixedNum::ZERO),
+            display_ad_shown(),
+            text_ad_shown(),
+            ad_select(),
+            auction_type(CampaignSvcs::AT_MAX_ECPM)
         {
         }
 
@@ -1784,12 +1728,11 @@ namespace AdServer::LogProcessing
       {
       public:
         Data()
-        :
-          history_channels(),
-          page_trigger_channels(),
-          search_trigger_channels(),
-          url_trigger_channels(),
-          url_keyword_trigger_channels()
+          : history_channels(),
+            page_trigger_channels(),
+            search_trigger_channels(),
+            url_trigger_channels(),
+            url_keyword_trigger_channels()
         {
         }
 
@@ -1798,8 +1741,7 @@ namespace AdServer::LogProcessing
           TriggerMatchArray page_trigger_channels_val,
           TriggerMatchArray search_trigger_channels_val,
           TriggerMatchArray url_trigger_channels_val,
-          TriggerMatchArray url_keyword_trigger_channels_val
-          )
+          TriggerMatchArray url_keyword_trigger_channels_val)
           : history_channels(std::move(history_channels_val)),
             page_trigger_channels(std::move(page_trigger_channels_val)),
             search_trigger_channels(std::move(search_trigger_channels_val)),
@@ -1852,8 +1794,7 @@ namespace AdServer::LogProcessing
         TriggerMatchArray page_trigger_channels,
         TriggerMatchArray search_trigger_channels,
         TriggerMatchArray url_trigger_channels,
-        TriggerMatchArray url_keyword_trigger_channels
-        )
+        TriggerMatchArray url_keyword_trigger_channels)
         : data_(
             new Data(
               std::move(history_channels),
@@ -1864,14 +1805,15 @@ namespace AdServer::LogProcessing
       {}
 
       Match(const RequestBasicChannelsInnerData_V_3_3::Match& match)
-      :
-        data_(
-          new Data(
-            NumberArray(match.data_->history_channels.begin(), match.data_->history_channels.end()),
-            match.data_->page_trigger_channels,
-            match.data_->search_trigger_channels,
-            match.data_->url_trigger_channels,
-            match.data_->url_keyword_trigger_channels))
+        : data_(
+            new Data(
+              NumberArray(
+                match.data_->history_channels.begin(),
+                match.data_->history_channels.end()),
+              match.data_->page_trigger_channels,
+              match.data_->search_trigger_channels,
+              match.data_->url_trigger_channels,
+              match.data_->url_keyword_trigger_channels))
       {
       }
 
@@ -1929,58 +1871,50 @@ namespace AdServer::LogProcessing
       const UserId& user_id,
       const UserId& temporary_user_id,
       MatchOptional&& match_request,
-      AdRequestPropsOptional&& ad_request
-      )
-    :
-      holder_(
-        new DataHolder(
-          user_type,
-          user_id,
-          temporary_user_id,
-          std::move(match_request),
-          std::move(ad_request),
-          Generics::safe_rand()
+      AdRequestPropsOptional&& ad_request)
+      : holder_(
+          new DataHolder(
+            user_type,
+            user_id,
+            temporary_user_id,
+            std::move(match_request),
+            std::move(ad_request),
+            Generics::safe_rand()
+          )
         )
-      )
     {
     }
 
-    RequestBasicChannelsInnerData(
-      const RequestBasicChannelsInnerData_V_3_3& data
-    )
-    :
-      holder_(
-        new DataHolder(
-          data.user_type(),
-          data.user_id(),
-          data.temporary_user_id(),
-          data.match_request(),
-          data.ad_request(),
-          Generics::safe_rand()
+    RequestBasicChannelsInnerData(const RequestBasicChannelsInnerData_V_3_3& data)
+      : holder_(
+          new DataHolder(
+            data.user_type(),
+            data.user_id(),
+            data.temporary_user_id(),
+            data.match_request(),
+            data.ad_request(),
+            Generics::safe_rand()
+          )
         )
-      )
     {
     }
 
     template <class RequestBasicChannelsInnerData_ANY>
-    RequestBasicChannelsInnerData(
-      const RequestBasicChannelsInnerData_ANY& data
-    )
-    :
-      holder_(
-        new DataHolder(
-          data.user_type(),
-          data.user_id(),
-          data.temporary_user_id(),
-          NumberArray(data.history_channels().begin(), data.history_channels().end()),
-          data.page_trigger_channels(),
-          data.search_trigger_channels(),
-          data.url_trigger_channels(),
-          TriggerMatchArray(), // url_keyword_trigger_channels
-          data.ad_request(),
-          Generics::safe_rand()
+    RequestBasicChannelsInnerData(const RequestBasicChannelsInnerData_ANY& data)
+      : holder_(
+          new DataHolder(
+            data.user_type(),
+            data.user_id(),
+            data.temporary_user_id(),
+            NumberArray(data.history_channels().begin(), data.history_channels().end()),
+            data.page_trigger_channels(),
+            data.search_trigger_channels(),
+            data.url_trigger_channels(),
+            TriggerMatchArray(), // url_keyword_trigger_channels
+            data.ad_request(),
+            Generics::safe_rand()
+          )
         )
-      )
     {
     }
 
@@ -2033,8 +1967,6 @@ namespace AdServer::LogProcessing
       return uuid_distribution_hash(holder_->user_id);
     }
 
-    // FixedBufStream, getline already used inside.No need optimize it here.
-    // TODO: possible rewrite to use SeqCollector<TypeName, USE_BUF_STREAM_ = true>
     friend std::istream&
     operator>>(std::istream& is, RequestBasicChannelsInnerData& data)
       /*throw(eh::Exception)*/;
@@ -2052,15 +1984,13 @@ namespace AdServer::LogProcessing
     {
     public:
       DataHolder()
-      :
-        user_type(),
-        user_id(),
-        temporary_user_id(),
-        match_request(),
-        ad_request(),
-        random()
-      {
-      }
+        : user_type(),
+          user_id(),
+          temporary_user_id(),
+          match_request(),
+          ad_request(),
+          random()
+      {}
 
       DataHolder(
         char user_type_val,
@@ -2068,15 +1998,13 @@ namespace AdServer::LogProcessing
         const UserId& temporary_user_id_val,
         MatchOptional&& match_request_val,
         const AdRequestPropsOptional& ad_request_val,
-        unsigned long random_val
-      )
-      :
-        user_type(user_type_val),
-        user_id(user_id_val),
-        temporary_user_id(temporary_user_id_val),
-        match_request(std::move(match_request_val)),
-        ad_request(ad_request_val),
-        random(random_val)
+        unsigned long random_val)
+        : user_type(user_type_val),
+          user_id(user_id_val),
+          temporary_user_id(temporary_user_id_val),
+          match_request(std::move(match_request_val)),
+          ad_request(ad_request_val),
+          random(random_val)
       {
         if (ad_request.present())
         {
@@ -2095,20 +2023,18 @@ namespace AdServer::LogProcessing
         TriggerMatchArray url_trigger_channels_val,
         TriggerMatchArray url_keyword_trigger_channels_val,
         const AdRequestPropsOptional_ANY& ad_request_val,
-        unsigned long random_val
-      )
-      :
-        user_type(user_type_val),
-        user_id(user_id_val),
-        temporary_user_id(temporary_user_id_val),
-        match_request(Match(
-          std::move(history_channels_val),
-          std::move(page_trigger_channels_val),
-          std::move(search_trigger_channels_val),
-          std::move(url_trigger_channels_val),
-          std::move(url_keyword_trigger_channels_val))),
-        ad_request(ad_request_val),
-        random(random_val)
+        unsigned long random_val)
+        : user_type(user_type_val),
+          user_id(user_id_val),
+          temporary_user_id(temporary_user_id_val),
+          match_request(Match(
+            std::move(history_channels_val),
+            std::move(page_trigger_channels_val),
+            std::move(search_trigger_channels_val),
+            std::move(url_trigger_channels_val),
+            std::move(url_keyword_trigger_channels_val))),
+          ad_request(ad_request_val),
+          random(random_val)
       {
         if (ad_request.present())
         {

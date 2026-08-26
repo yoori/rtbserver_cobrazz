@@ -2,6 +2,7 @@
 
 #include <PrivacyFilter/Filter.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfile.hpp>
 
@@ -102,7 +103,9 @@ namespace AdServer::RequestInfoSvcs
     //   for do this profile_writer.channel_price_ranges must be ordered
     //   and inventory profile compatibility stub required
     //
-    typedef std::map<Commons::ImmutableString, ChannelIdSet> SizeChannelSet;
+    using MonoChannelIdSet = Generics::MonoSet<unsigned long>;
+    using SizeChannelSet =
+      Generics::MonoMap<Commons::ImmutableString, MonoChannelIdSet>;
 
     inv_info.impop_channels.insert(
       inv_info.impop_channels.end(),
@@ -143,12 +146,19 @@ namespace AdServer::RequestInfoSvcs
 
     inv_info.impop_ecpm = check_ecpm;
 
-    SizeChannelSet size_channels;
+    Generics::MonoAllocatorArena arena;
+    SizeChannelSet size_channels(&arena);
 
     for (StringSet::const_iterator size_it = inv_request_info.sizes.begin();
         size_it != inv_request_info.sizes.end(); ++size_it)
     {
-      size_channels[*size_it] = inv_request_info.triggered_cpm_expression_channels;
+      auto [channel_it, inserted] = size_channels.try_emplace(
+        *size_it,
+        Generics::MonoAllocator<unsigned long>(&arena));
+      static_cast<void>(inserted);
+      channel_it->second.insert(
+        inv_request_info.triggered_cpm_expression_channels.begin(),
+        inv_request_info.triggered_cpm_expression_channels.end());
     }
 
     // fill disappear channels and erase channels
@@ -174,7 +184,7 @@ namespace AdServer::RequestInfoSvcs
                 ch_it = channels.begin();
               ch_it != channels.end(); ++ch_it)
           {
-            ChannelIdSet::iterator fit = size_it->second.find(*ch_it);
+            auto fit = size_it->second.find(*ch_it);
 
             if (fit != size_it->second.end())
             {
@@ -226,8 +236,8 @@ namespace AdServer::RequestInfoSvcs
           size_it != size_channels.end();
           ++size_it)
       {
-        for (ChannelIdSet::const_iterator ch_it = size_it->second.begin();
-            ch_it != size_it->second.end(); ++ch_it)
+        for (auto ch_it = size_it->second.begin();
+          ch_it != size_it->second.end(); ++ch_it)
         {
           inv_info.appear_channel_ecpms.push_back(
             SizeChannel(size_it->first, *ch_it));
@@ -1725,7 +1735,13 @@ namespace AdServer::RequestInfoSvcs
               1, sum_request_revenue));
         }
 
-        InventoryActionProcessor::InventoryInfo::ChannelImpCounterMap text_imp_channels;
+        using ChannelImpCounter =
+          InventoryActionProcessor::InventoryInfo::ChannelImpCounter;
+        using ChannelImpCounterMap =
+          Generics::MonoMap<unsigned long, ChannelImpCounter>;
+
+        Generics::MonoAllocatorArena arena;
+        ChannelImpCounterMap text_imp_channels(&arena);
 
         for (auto text_ad_it = request_info.text_ads.begin();
           text_ad_it != request_info.text_ads.end(); ++text_ad_it)

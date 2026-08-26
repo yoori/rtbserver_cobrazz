@@ -8,6 +8,7 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
 #include <Logger/Logger.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
 
@@ -96,12 +97,43 @@ namespace AdServer::RequestInfoSvcs
 
     typedef ReferenceCounting::SmartPtr<Config> Config_var;
 
-    typedef std::vector<unsigned long> MatchedTriggerIdArray;
+    using MatchedTriggerIdArray = Generics::MonoVector<unsigned long>;
 
-    typedef std::map<unsigned long, MatchedTriggerIdArray> MatchMap;
+    using MatchMap = Generics::MonoMap<unsigned long, MatchedTriggerIdArray>;
 
     struct RequestInfo
     {
+      explicit RequestInfo(Generics::MonoAllocatorArena& arena)
+        : page_matches(&arena),
+          search_matches(&arena),
+          url_matches(&arena),
+          url_keyword_matches(&arena)
+      {}
+
+      void
+      add_page_match(unsigned long channel_id, unsigned long trigger_id)
+      {
+        add_match_(page_matches, channel_id, trigger_id);
+      }
+
+      void
+      add_search_match(unsigned long channel_id, unsigned long trigger_id)
+      {
+        add_match_(search_matches, channel_id, trigger_id);
+      }
+
+      void
+      add_url_match(unsigned long channel_id, unsigned long trigger_id)
+      {
+        add_match_(url_matches, channel_id, trigger_id);
+      }
+
+      void
+      add_url_keyword_match(unsigned long channel_id, unsigned long trigger_id)
+      {
+        add_match_(url_keyword_matches, channel_id, trigger_id);
+      }
+
       AdServer::Commons::UserId user_id;
       AdServer::Commons::UserId merge_user_id;
       Generics::Time time;
@@ -110,6 +142,20 @@ namespace AdServer::RequestInfoSvcs
       MatchMap search_matches;
       MatchMap url_matches;
       MatchMap url_keyword_matches;
+
+    private:
+      static void
+      add_match_(
+        MatchMap& matches,
+        unsigned long channel_id,
+        unsigned long trigger_id)
+      {
+        auto [it, inserted] = matches.try_emplace(
+          channel_id,
+          Generics::MonoAllocator<unsigned long>(matches.get_allocator()));
+        static_cast<void>(inserted);
+        it->second.push_back(trigger_id);
+      }
     };
 
     struct ImpressionInfo
