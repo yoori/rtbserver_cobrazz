@@ -282,6 +282,26 @@ namespace AdServer::Bidding
       target.set_page_load_id(source.page_load_id);
       target.set_full_referer_hash(source.full_referer_hash);
       target.set_short_referer_hash(source.short_referer_hash);
+      if (!source.additional_info.tagid.empty())
+      {
+        target.set_ssp_tag_id(source.additional_info.tagid);
+      }
+      if (source.additional_info.ctr.has_value())
+      {
+        target.set_ssp_ctr(*source.additional_info.ctr);
+      }
+      if (source.additional_info.viewability.has_value())
+      {
+        target.set_ssp_viewability(*source.additional_info.viewability);
+      }
+      if (source.additional_info.vtr.has_value())
+      {
+        target.set_ssp_vtr(*source.additional_info.vtr);
+      }
+
+      // Keep the legacy payload during a rolling update. New CampaignManager
+      // versions use the typed fields above and only parse additional_info as
+      // a fallback for old BiddingFrontend instances.
       if (source.campaign_additional_info.empty())
       {
         target.set_additional_info("{}");

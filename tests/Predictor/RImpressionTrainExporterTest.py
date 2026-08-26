@@ -88,6 +88,12 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertIn("WHERE timestamp >= '2026-08-12'", calls[1][-1])
     self.assertIn("timestamp < '2026-08-13 12:00:00'", calls[1][-1])
     self.assertIn('ORDER BY timestamp DESC', calls[1][-1])
+    self.assertIn("ifNull(ssp_tag_id, '') AS SSP_Tag_ID", calls[1][-1])
+    self.assertIn("ifNull(toString(ssp_ctr), '') AS SSP_CTR", calls[1][-1])
+    self.assertIn(
+      "ifNull(toString(ssp_viewability), '') AS SSP_Viewability",
+      calls[1][-1])
+    self.assertIn("ifNull(toString(ssp_vtr), '') AS SSP_VTR", calls[1][-1])
     self.assertIn('LIMIT 100 FORMAT CSVWithNames', calls[1][-1])
 
   def test_empty_table(self):
@@ -228,6 +234,44 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertEqual(
       'campaign_id = 236995',
       RImpressionTrainExporter.campaign_condition(236995))
+
+  def test_ssp_ctr_export_uses_soft_label_and_only_requested_rows(self):
+    query = RImpressionTrainExporter._export_query(
+      '2026-08-01',
+      '2026-08-02',
+      100,
+      RImpressionTrainExporter.ssp_ctr_condition(),
+      7,
+      'ssp_ctr')
+
+    self.assertIn('assumeNotNull(ssp_ctr) AS label', query)
+    self.assertIn('AND (ssp_ctr IS NOT NULL)', query)
+    self.assertIn('ORDER BY timestamp DESC, request_id DESC', query)
+    self.assertIn('LIMIT 100 OFFSET 7 FORMAT CSVWithNames', query)
+
+  def test_ssp_ctr_logloss_uses_actual_clicks_on_ordered_slice(self):
+    result = subprocess.CompletedProcess([], 0, stdout='0.012345\n')
+    exporter = RImpressionTrainExporter('')
+    with mock.patch(
+        'rtbserver_utils.RImpressionTrainExporter.subprocess.run',
+        return_value=result,
+    ) as run:
+      value = exporter.ssp_ctr_logloss(
+        '2026-08-01',
+        '2026-08-02',
+        300,
+        'sipHash64(request_id) % 100 IN (0,1)',
+        600)
+
+    self.assertEqual(0.012345, value)
+    query = run.call_args.args[0][-1]
+    self.assertIn('click_timestamp IS NOT NULL AS clicked', query)
+    self.assertIn('assumeNotNull(ssp_ctr) AS score', query)
+    self.assertIn('ssp_ctr IS NOT NULL', query)
+    self.assertIn('sipHash64(request_id) % 100 IN (0,1)', query)
+    self.assertIn('greatest(least(score, 1 - 1e-15), 1e-15)', query)
+    self.assertIn('ORDER BY timestamp DESC, request_id DESC', query)
+    self.assertIn('LIMIT 300 OFFSET 600', query)
 
   def test_required_source_rows_accounts_for_validation_partitions(self):
     self.assertEqual(

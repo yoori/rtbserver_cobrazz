@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <CampaignSvcs/CampaignManager/CTRProvider.hpp>
 
 namespace AdServer
@@ -52,9 +54,9 @@ namespace CampaignSvcs
       int32_t tag_visibility;
       int32_t tag_predicted_viewability;
       std::string ssp_tag_id;
-      float ssp_ctr;
-      float ssp_viewability;
-      float ssp_vtr;
+      std::optional<float> ssp_ctr;
+      std::optional<float> ssp_viewability;
+      std::optional<float> ssp_vtr;
     };
 
     struct Calculation
@@ -134,6 +136,9 @@ namespace CampaignSvcs
     bool push_week_day_;
     bool push_campaign_freq_;
     bool push_campaign_freq_log_;
+    bool push_ssp_ctr_;
+    bool push_ssp_viewability_;
+    bool push_ssp_vtr_;
   };
 }
 }

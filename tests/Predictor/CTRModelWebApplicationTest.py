@@ -63,6 +63,10 @@ class CTRModelWebApplicationTest(unittest.TestCase):
           'test': {'rows': 300000, 'clicks': 570},
           'final_test': {'rows': 200000, 'clicks': 390},
         },
+        'properties': [
+          {'train_logloss': '0.0119'},
+          {'val_logloss': '0.0056'},
+        ],
         'ctr_thresholds': [
           {
             'ctr_goal': '0',
@@ -121,6 +125,11 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('2001', page)
     self.assertIn('0.002001', page)
     self.assertIn('<td>Final test</td>', page)
+    self.assertIn('<h3>Properties</h3>', page)
+    self.assertIn('<code>train_logloss</code>', page)
+    self.assertIn('<code>val_logloss</code>', page)
+    self.assertIn('0.011900', page)
+    self.assertIn('0.005600', page)
     self.assertIn('CTR threshold calibration', page)
     self.assertIn('Actual CTR', page)
     self.assertIn('Average predicted CTR', page)
@@ -192,7 +201,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
 
   def test_renders_flat_models_and_campaign_name(self):
     properties = self.model_properties([])
-    properties['summary']['components_count'] = 4
+    properties['summary']['components_count'] = 5
     properties['traits'] = {
       'models': [
         {'name': 'common', 'kind': 'common', 'features_importance': []},
@@ -205,6 +214,18 @@ class CTRModelWebApplicationTest(unittest.TestCase):
           'name': 'common_stable',
           'kind': 'common_stable',
           'runtime': True,
+          'features_importance': [],
+        },
+        {
+          'name': 'common_ssp_ctr',
+          'kind': 'common_ssp_ctr',
+          'runtime': False,
+          'file': 'common_ssp_ctr.cbm',
+          'properties': [
+            {'train_logloss': '0.01'},
+            {'val_logloss': '0.02'},
+            {'ssp_ctr_logloss': '0.03'},
+          ],
           'features_importance': [],
         },
         {
@@ -226,9 +247,12 @@ class CTRModelWebApplicationTest(unittest.TestCase):
 
     self.assertIn('Common denoise', page)
     self.assertIn('Common stable', page)
+    self.assertIn('Common SSP CTR', page)
+    self.assertIn('<code>ssp_ctr_logloss</code>', page)
+    self.assertIn('0.030000', page)
     self.assertIn('Campaign 123 — Campaign &lt;name&gt;', page)
     self.assertIn('Models within bundle', page)
-    self.assertIn('Core models<span>3</span>', page)
+    self.assertIn('Core models<span>4</span>', page)
     self.assertIn('Campaign models<span>1</span>', page)
     self.assertIn('id="component-status-filter"', page)
     self.assertIn(

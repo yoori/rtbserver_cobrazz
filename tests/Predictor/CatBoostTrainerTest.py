@@ -127,6 +127,24 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertGreater(metrics['Logloss'], 0)
       self.assertTrue(model_file.is_file())
 
+  def test_real_catboost_accepts_ssp_ctr_soft_labels(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      svm_file = temp_path / 'ssp-ctr.libsvm'
+      svm_file.write_text('\n'.join(
+        str(0.001 * (index + 1)) + ' 1:' + str(index % 3)
+        for index in range(20)) + '\n')
+      model_file = temp_path / 'model.cbm'
+
+      metrics = train_chunk(
+        svm_file,
+        model_file,
+        iterations=2,
+        loss_function='CrossEntropy')
+
+      self.assertGreater(metrics['Logloss'], 0)
+      self.assertTrue(model_file.is_file())
+
   def test_save_campaign_manager_model_bundle(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
@@ -153,7 +171,14 @@ class CatBoostTrainerTest(unittest.TestCase):
             'trainer': common_trainer,
             'model': ModelStub(),
             'dataset_sizes': {'train': {'rows': 10, 'clicks': 1}},
-            'traits': {'kind': 'common', 'runtime': False},
+            'traits': {
+              'kind': 'common',
+              'runtime': False,
+              'properties': [
+                {'train_logloss': 0.1},
+                {'val_logloss': 0.2},
+              ],
+            },
           },
           {
             'name': 'common_denoise',
@@ -171,6 +196,16 @@ class CatBoostTrainerTest(unittest.TestCase):
               'status': 'completed',
               'train_start': '2026-08-24T12:15:00Z',
               'train_end': '2026-08-24T12:45:00Z',
+            },
+          },
+          {
+            'name': 'common_ssp_ctr',
+            'trainer': common_trainer,
+            'model': ModelStub(),
+            'traits': {
+              'kind': 'common_ssp_ctr',
+              'runtime': False,
+              'properties': [{'ssp_ctr_logloss': 0.0125}],
             },
           },
           {
@@ -204,6 +239,7 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertTrue((result_dir / 'common.cbm').is_file())
       self.assertTrue((result_dir / 'common_denoise.cbm').is_file())
       self.assertTrue((result_dir / 'model.cbm').is_file())
+      self.assertTrue((result_dir / 'common_ssp_ctr.cbm').is_file())
       self.assertTrue((result_dir / 'campaign_123.cbm').is_file())
       self.assertEqual(
         '123\n',
@@ -224,11 +260,12 @@ class CatBoostTrainerTest(unittest.TestCase):
         'common',
         'common_denoise',
         'common_stable',
+        'common_ssp_ctr',
         'campaign_123',
       ], [model['name'] for model in traits['models']])
       self.assertEqual(
         'Campaign name',
-        traits['models'][3]['campaign_name'])
+        traits['models'][4]['campaign_name'])
       self.assertEqual(
         '2026-08-24T12:15:00Z',
         traits['models'][2]['train_start'])
@@ -238,6 +275,12 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual(
         '2026-08-24T12:05:00Z',
         traits['prepare']['train_steps'][0]['ended'])
+      self.assertEqual(
+        [{'train_logloss': 0.1}, {'val_logloss': 0.2}],
+        traits['models'][0]['properties'])
+      self.assertEqual(
+        [{'ssp_ctr_logloss': 0.0125}],
+        traits['models'][3]['properties'])
 
   def test_save_campaign_manager_model(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -598,6 +641,9 @@ class CatBoostTrainerTest(unittest.TestCase):
 
       def run(command, check):
         self.assertTrue(check)
+        self.assertEqual(
+          'Logloss',
+          command[command.index('--loss-function') + 1])
         metrics_file = pathlib.Path(
           command[command.index('--metrics-file') + 1])
         metrics_file.write_text('{"Logloss": 0.125}\n')

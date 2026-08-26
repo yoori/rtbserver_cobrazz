@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <string_view>
 #include <vector>
 #include <ostream>
 
@@ -55,12 +56,23 @@ namespace AdServer::CampaignSvcs::CTR
     BF_CONTENT_CATEGORIES = 152,
     BF_VISUAL_CATEGORIES = 153,
 
-    // request level SSP-specific features
+    // request level SSP-specific features; numeric IDs are direct float slots
     BF_SSP_TAG_ID = 9999,
     BF_SSP_CTR = 10000,
     BF_SSP_VIEWABILITY = 10001,
     BF_SSP_VTR = 10002,
   };
+
+  constexpr bool
+  is_direct_ssp_float_feature(BasicFeature feature) noexcept
+  {
+    return
+      feature == BF_SSP_CTR ||
+      feature == BF_SSP_VIEWABILITY ||
+      feature == BF_SSP_VTR;
+  }
+
+  constexpr float SSP_FLOAT_UNSPECIFIED_VALUE = -1.0F;
 
   // FeatureDescriptor
   struct FeatureDescriptor
@@ -70,7 +82,7 @@ namespace AdServer::CampaignSvcs::CTR
     // and hash calculator
     FeatureDescriptor(
       BasicFeature feature_val,
-      const char* name_val, // only literal can be passed here
+      std::string_view name_val,
       FeatureCalculatorCreator* calculator_creator_val)
       : feature(feature_val),
         name(name_val),
@@ -78,7 +90,7 @@ namespace AdServer::CampaignSvcs::CTR
     {}
 
     BasicFeature feature;
-    String::SubString name;
+    std::string_view name;
     FeatureCalculatorCreator_var calculator_creator;
   };
 
@@ -89,23 +101,19 @@ namespace AdServer::CampaignSvcs::CTR
     FeatureDescriptorResolver_();
 
     // return null if feature unknown (return value life before exit call)
-    const FeatureDescriptor*
-    resolve(BasicFeature basic_feature) const;
+    const FeatureDescriptor* resolve(BasicFeature basic_feature) const;
 
     const FeatureDescriptor*
-    resolve_by_name(const String::SubString& feature_name) const;
+    resolve_by_name(std::string_view feature_name) const;
 
   private:
-    typedef std::map<BasicFeature, FeatureDescriptor>
-      FeatureDescriptorMap;
-    typedef std::map<String::SubString, FeatureDescriptor>
-      FeatureDescriptorByNameMap;
+    using FeatureDescriptorMap = std::map<BasicFeature, FeatureDescriptor>;
+    using FeatureDescriptorByNameMap = std::map<std::string_view, FeatureDescriptor>;
 
   private:
     FeatureDescriptorMap feature_descriptors_;
     FeatureDescriptorByNameMap feature_descriptors_by_name_;
   };
 
-  typedef Generics::Singleton<FeatureDescriptorResolver_>
-    FeatureDescriptorResolver;
+  using FeatureDescriptorResolver = Generics::Singleton<FeatureDescriptorResolver_>;
 }

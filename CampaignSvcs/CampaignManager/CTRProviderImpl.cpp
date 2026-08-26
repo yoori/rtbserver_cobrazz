@@ -1082,6 +1082,29 @@ namespace AdServer::CampaignSvcs::CTR
       }
     }
 
+    const CampaignSelectParams& request_params = *calculation_->request_params_;
+    if (model.push_ssp_ctr)
+    {
+      opt_hashes.emplace_back(
+        BF_SSP_CTR,
+        request_params.ssp_ctr.value_or(SSP_FLOAT_UNSPECIFIED_VALUE));
+    }
+
+    if (model.push_ssp_viewability)
+    {
+      opt_hashes.emplace_back(
+        BF_SSP_VIEWABILITY,
+        request_params.ssp_viewability.value_or(
+          SSP_FLOAT_UNSPECIFIED_VALUE));
+    }
+
+    if (model.push_ssp_vtr)
+    {
+      opt_hashes.emplace_back(
+        BF_SSP_VTR,
+        request_params.ssp_vtr.value_or(SSP_FLOAT_UNSPECIFIED_VALUE));
+    }
+
     model_prediction = model.ctr_evaluator->predict(
       model,
       calculation_->request_params_,
@@ -1758,6 +1781,37 @@ namespace AdServer::CampaignSvcs::CTR
               {
                 creative_dependent |= (
                   *basic_feature_it == BF_CREATIVE_ID || *basic_feature_it == BF_CC_ID);
+              }
+
+              if (
+                model->method == MM_CATBOOST &&
+                feature_it->basic_features.size() == 1)
+              {
+                const auto feature_id = *feature_it->basic_features.begin();
+                if (is_direct_ssp_float_feature(feature_id))
+                {
+                  if (model->features_size <= static_cast<unsigned long>(feature_id))
+                  {
+                    Stream::Error ostr;
+                    ostr << "direct SSP feature index " << feature_id <<
+                      " does not fit features_size = " << model->features_size;
+                    throw InvalidConfig(ostr);
+                  }
+
+                  if (feature_id == BF_SSP_CTR)
+                  {
+                    model->push_ssp_ctr = true;
+                  }
+                  else if (feature_id == BF_SSP_VIEWABILITY)
+                  {
+                    model->push_ssp_viewability = true;
+                  }
+                  else
+                  {
+                    model->push_ssp_vtr = true;
+                  }
+                  continue;
+                }
               }
 
               // optimize basic feature order for calculation

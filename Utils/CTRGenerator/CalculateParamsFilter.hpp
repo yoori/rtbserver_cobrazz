@@ -96,7 +96,7 @@ namespace AdServer
       {
       public:
         explicit CalcParamFillerFloatImpl(
-          float CTRGenerator::CalculateParams::* field);
+          std::optional<float> CTRGenerator::CalculateParams::* field);
 
         void
         set_value(
@@ -106,7 +106,7 @@ namespace AdServer
       protected:
         ~CalcParamFillerFloatImpl() noexcept override = default;
 
-        float CTRGenerator::CalculateParams::* field_;
+        std::optional<float> CTRGenerator::CalculateParams::* field_;
       };
 
       class CalcParamFillerIntListImpl: public CalcParamFiller

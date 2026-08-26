@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <unordered_set>
 #include <Commons/Containers.hpp>
@@ -137,9 +138,9 @@ namespace CampaignSvcs
     int tag_predicted_viewability;
 
     std::string ssp_tag_id;
-    float ssp_ctr = -1.0F;
-    float ssp_viewability = -1.0F;
-    float ssp_vtr = -1.0F;
+    std::optional<float> ssp_ctr;
+    std::optional<float> ssp_viewability;
+    std::optional<float> ssp_vtr;
 
   private:
     ~CampaignSelectParams() noexcept

@@ -287,17 +287,22 @@ def render_dataset_sizes(traits):
       continue
     try:
       row_count = int(size['rows'])
-      click_count = int(size['clicks'])
     except (KeyError, TypeError, ValueError):
       continue
+    try:
+      click_count = int(size['clicks'])
+    except (KeyError, TypeError, ValueError):
+      click_count = None
     ctr = (
       decimal.Decimal(click_count) / decimal.Decimal(row_count)
-      if row_count else decimal.Decimal(0))
+      if click_count is not None and row_count else None)
     rows.append(
       '<tr><td>' + label + '</td>'
       '<td class="metric">' + str(row_count) + '</td>'
-      '<td class="metric">' + str(click_count) + '</td>'
-      '<td class="metric">' + metric_decimal_text(ctr) + '</td></tr>')
+      '<td class="metric">' + (
+        str(click_count) if click_count is not None else '-') + '</td>'
+      '<td class="metric">' + (
+        metric_decimal_text(ctr) if ctr is not None else '-') + '</td></tr>')
 
   if not rows:
     return ''
@@ -308,6 +313,29 @@ def render_dataset_sizes(traits):
     '<div class="table-scroll"><table class="dataset-table">'
     '<thead><tr><th>Dataset</th><th>Rows</th><th>Clicks</th><th>CTR</th></tr></thead>'
     '<tbody>' + ''.join(rows) + '</tbody></table></div></section>')
+
+
+def render_properties(traits):
+  properties = traits.get('properties')
+  if not isinstance(properties, list):
+    return ''
+  rows = []
+  for item in properties:
+    if not isinstance(item, dict):
+      continue
+    for name, value in item.items():
+      rows.append(
+        '<tr><td><code>' + html_text(name) + '</code></td>'
+        '<td class="metric">' + html_text(metric_decimal_text(value)) +
+        '</td></tr>')
+  if not rows:
+    return ''
+  return (
+    '<section class="model-section properties-section">'
+    '<h3>Properties</h3><div class="table-scroll">'
+    '<table class="properties-table"><thead><tr><th>Property</th>'
+    '<th>Value</th></tr></thead><tbody>' + ''.join(rows) +
+    '</tbody></table></div></section>')
 
 
 def render_ctr_thresholds(traits):
@@ -444,6 +472,7 @@ def render_model_component(component_name, traits, selected=False):
     'common': 'Common',
     'common_denoise': 'Common denoise',
     'common_stable': 'Common stable',
+    'common_ssp_ctr': 'Common SSP CTR',
     'campaign_correction': 'Campaign correction',
     'stable_common': 'Stable common',
   }
@@ -452,6 +481,8 @@ def render_model_component(component_name, traits, selected=False):
     'common_denoise': (
       'Campaign-conditioned residual used to denoise common.'),
     'common_stable': 'Stable common model used by CampaignManager.',
+    'common_ssp_ctr': (
+      'Research model trained to reproduce the SSP-provided CTR signal.'),
     'campaign_correction': (
       'Residual trained over common; metrics use common + correction.'),
     'stable_common': (
@@ -517,6 +548,7 @@ def render_model_component(component_name, traits, selected=False):
     return header_and_meta + train_steps + '</article>'
   return (
     header_and_meta + train_steps +
+    render_properties(traits) +
     '<section class="component-section"><h3>Feature groups</h3><p>' +
     render_feature_groups(feature_groups) + '</p></section>' +
     render_dataset_sizes(traits) +
@@ -700,6 +732,7 @@ def render_model_details(properties):
       'logloss_history',
       'dataset_sizes',
       'ctr_thresholds',
+      'properties',
       'status',
       'train_start',
       'train_end',
@@ -745,6 +778,7 @@ def render_model_details(properties):
 
   return (
     details_prefix
+    + render_properties(traits)
     + render_dataset_sizes(traits)
     + render_ctr_thresholds(traits)
     + render_logloss_history(traits) +
@@ -925,6 +959,7 @@ def render_index_page(models, selected_properties=None):
     .chart-line.test { stroke: var(--score); }
     .logloss-table { max-width: 620px; }
     .dataset-table { margin-top: 18px; max-width: 620px; }
+    .properties-table { margin-top: 18px; max-width: 620px; }
     .threshold-table { margin-top: 18px; max-width: 900px; }
     .feature-tools { display: grid; grid-template-columns: auto minmax(220px, 440px) 1fr;
       gap: 12px; align-items: center; margin: 20px 0 12px; }

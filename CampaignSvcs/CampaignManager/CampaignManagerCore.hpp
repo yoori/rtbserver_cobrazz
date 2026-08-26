@@ -415,6 +415,7 @@ namespace AdServer::CampaignSvcs
           full_platform(Generics::mono_allocator<char>(arena_.get())),
           web_browser(Generics::mono_allocator<char>(arena_.get())),
           ip_hash(Generics::mono_allocator<char>(arena_.get())),
+          ssp_tag_id(Generics::mono_allocator<char>(arena_.get())),
           additional_info(Generics::mono_allocator<char>(arena_.get()))
       {}
 
@@ -440,6 +441,10 @@ namespace AdServer::CampaignSvcs
       unsigned long page_load_id = 0;
       unsigned long full_referer_hash = 0;
       unsigned long short_referer_hash = 0;
+      Generics::MonoString ssp_tag_id;
+      std::optional<float> ssp_ctr;
+      std::optional<float> ssp_viewability;
+      std::optional<float> ssp_vtr;
       Generics::MonoString additional_info;
     };
 

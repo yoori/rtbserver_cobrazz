@@ -305,6 +305,10 @@ message ContextAdRequestInfo {
   uint64 full_referer_hash = 12;
   uint64 short_referer_hash = 13;
   bytes additional_info = 14;
+  bytes ssp_tag_id = 15 [features.field_presence = EXPLICIT];
+  float ssp_ctr = 16 [features.field_presence = EXPLICIT];
+  float ssp_viewability = 17 [features.field_presence = EXPLICIT];
+  float ssp_vtr = 18 [features.field_presence = EXPLICIT];
 }
 
 message RequestParams {

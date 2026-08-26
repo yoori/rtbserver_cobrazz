@@ -511,6 +511,22 @@ namespace AdServer::CampaignSvcs
       target.page_load_id = source.page_load_id();
       target.full_referer_hash = source.full_referer_hash();
       target.short_referer_hash = source.short_referer_hash();
+      if (source.has_ssp_tag_id())
+      {
+        assign_string(target.ssp_tag_id, source.ssp_tag_id());
+      }
+      if (source.has_ssp_ctr())
+      {
+        target.ssp_ctr = source.ssp_ctr();
+      }
+      if (source.has_ssp_viewability())
+      {
+        target.ssp_viewability = source.ssp_viewability();
+      }
+      if (source.has_ssp_vtr())
+      {
+        target.ssp_vtr = source.ssp_vtr();
+      }
       assign_string(target.additional_info, source.additional_info());
       return target;
     }

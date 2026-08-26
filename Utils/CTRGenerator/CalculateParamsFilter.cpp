@@ -132,7 +132,7 @@ namespace AdServer
 
     // CalcParamFillerFloatImpl
     CalculateParamsFiller::CalcParamFillerFloatImpl::CalcParamFillerFloatImpl(
-      float CTRGenerator::CalculateParams::* field)
+      std::optional<float> CTRGenerator::CalculateParams::* field)
       : field_(field)
     {}
 

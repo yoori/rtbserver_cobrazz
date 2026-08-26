@@ -174,17 +174,17 @@ namespace AdServer::CampaignSvcs::CTR
 
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_ctr_)
     {
-      hash.add(request_params.ssp_ctr);
+      hash.add(request_params.ssp_ctr.value_or(SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_viewability_)
     {
-      hash.add(request_params.ssp_viewability);
+      hash.add(request_params.ssp_viewability.value_or(SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_vtr_)
     {
-      hash.add(request_params.ssp_vtr);
+      hash.add(request_params.ssp_vtr.value_or(SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     struct AfterHourFeatureCalculatorCreator: public FeatureCalculatorCreator
@@ -209,8 +209,7 @@ namespace AdServer::CampaignSvcs::CTR
         public FeatureCalculatorFinalImplHelper
       {
       public:
-        AfterHourFeatureCalculatorFinalImpl()
-          noexcept
+        AfterHourFeatureCalculatorFinalImpl() noexcept
           : FeatureCalculatorFinalImplHelper()
         {}
 
@@ -242,8 +241,7 @@ namespace AdServer::CampaignSvcs::CTR
         public FeatureCalculator
       {
       public:
-        AfterHourFeatureCalculatorDelegateImpl(
-          FeatureCalculator* next_calculator)
+        AfterHourFeatureCalculatorDelegateImpl(FeatureCalculator* next_calculator)
           noexcept
           : next_calculator_(ReferenceCounting::add_ref(next_calculator))
         {}
@@ -295,11 +293,7 @@ namespace AdServer::CampaignSvcs::CTR
       { BF_ISP_ID, "isp", F2C(add_hash_isp_id_) },
       { BF_COLO_ID, "colo", F2C(add_hash_colo_id_) },
       { BF_DEVICE_CHANNEL_ID, "device", F2C(add_hash_device_channel_id_) },
-      {
-        BF_AFTER_HOUR,
-        "afterhour",
-        new AfterHourFeatureCalculatorCreator()
-      },
+      { BF_AFTER_HOUR, "afterhour", new AfterHourFeatureCalculatorCreator() },
       { BF_VISIBILITY, "visibility", F2C(add_tag_visibility_) },
       { BF_PREDICTED_VIEWABILITY, "viewability", F2C(add_tag_predicted_viewability_) },
       { BF_SSP_TAG_ID, "ssp_tag_id", F2C(add_hash_ssp_tag_id_) },
@@ -321,42 +315,33 @@ namespace AdServer::CampaignSvcs::CTR
       {
         BF_HISTORY_CHANNELS,
         "userch",
-        new ArrayParamFeatureCalculatorCreator<ChannelIdHashSet>(
-          &CampaignSelectParams::channels)
+        new ArrayParamFeatureCalculatorCreator<ChannelIdHashSet>(&CampaignSelectParams::channels)
       },
       {
         BF_GEO_CHANNELS,
         "geoch",
-        new ArrayParamFeatureCalculatorCreator<ChannelIdSet>(
-          &CampaignSelectParams::geo_channels)
+        new ArrayParamFeatureCalculatorCreator<ChannelIdSet>(&CampaignSelectParams::geo_channels)
       },
       {
         BF_CONTENT_CATEGORIES,
         "crcatcont",
-        new ArrayCreativeFeatureCalculatorCreator<
-          Creative::CategoryIdArray>(
-            &Creative::content_categories)
+        new ArrayCreativeFeatureCalculatorCreator<Creative::CategoryIdArray>(
+          &Creative::content_categories)
       },
       {
         BF_VISUAL_CATEGORIES,
         "crcatvis",
-        new ArrayCreativeFeatureCalculatorCreator<
-          Creative::CategoryIdArray>(
-            &Creative::visual_categories)
+        new ArrayCreativeFeatureCalculatorCreator<Creative::CategoryIdArray>(
+          &Creative::visual_categories)
       },
     };
 
 #   undef F2C
 
-    for (size_t i = 0;
-       i < sizeof(FEATURE_DESCRIPTORS) / sizeof(FEATURE_DESCRIPTORS[0]); ++i)
+    for (size_t i = 0; i < sizeof(FEATURE_DESCRIPTORS) / sizeof(FEATURE_DESCRIPTORS[0]); ++i)
     {
-      feature_descriptors_.insert(std::make_pair(
-        FEATURE_DESCRIPTORS[i].feature,
-        FEATURE_DESCRIPTORS[i]));
-      feature_descriptors_by_name_.insert(std::make_pair(
-        FEATURE_DESCRIPTORS[i].name,
-        FEATURE_DESCRIPTORS[i]));
+      feature_descriptors_.emplace(FEATURE_DESCRIPTORS[i].feature, FEATURE_DESCRIPTORS[i]);
+      feature_descriptors_by_name_.emplace(FEATURE_DESCRIPTORS[i].name, FEATURE_DESCRIPTORS[i]);
     }
   }
 
@@ -364,8 +349,7 @@ namespace AdServer::CampaignSvcs::CTR
   const FeatureDescriptor*
   FeatureDescriptorResolver_::resolve(BasicFeature basic_feature) const
   {
-    FeatureDescriptorMap::const_iterator fit =
-      feature_descriptors_.find(basic_feature);
+    FeatureDescriptorMap::const_iterator fit = feature_descriptors_.find(basic_feature);
 
     if (fit != feature_descriptors_.end())
     {
@@ -376,7 +360,8 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   const FeatureDescriptor*
-  FeatureDescriptorResolver_::resolve_by_name(const String::SubString& feature_name) const
+  FeatureDescriptorResolver_::resolve_by_name(
+    std::string_view feature_name) const
   {
     if (!feature_name.empty())
     {
@@ -391,7 +376,4 @@ namespace AdServer::CampaignSvcs::CTR
 
     return 0;
   }
-
-  typedef Generics::Singleton<FeatureDescriptorResolver_>
-    FeatureDescriptorResolver;
 }

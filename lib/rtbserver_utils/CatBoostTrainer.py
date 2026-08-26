@@ -36,9 +36,13 @@ class CatBoostTrainer(object):
       features_dimension=None,
       features_config_file=None,
       train_dir=None,
+      loss_function='Logloss',
+      include_ctr_thresholds=True,
   ):
     self.features_config_file = features_config_file
     self.train_dir = train_dir
+    self.loss_function = loss_function
+    self.include_ctr_thresholds = include_ctr_thresholds
     self.features = None
     if features_config_file is not None:
       config_dimension, self.features = self.read_features_config_(
@@ -66,7 +70,7 @@ class CatBoostTrainer(object):
       iterations=iterations,
       learning_rate=0.1, # Step size shrinkage to prevent overfitting
       depth=6,          # Depth of the trees
-      loss_function='Logloss', # Loss function for binary classification
+      loss_function=self.loss_function,
       verbose=0,        # Suppress training output
       train_dir=self.train_dir,
       use_best_model=False,
@@ -305,15 +309,20 @@ class CatBoostTrainer(object):
       'Main training',
       fit_steps,
       **callback_args)
+    evaluate_final = (
+      self.evaluate_model_with_ctr_thresholds_
+      if self.include_ctr_thresholds else self.evaluate_model_)
     final_evaluations = [
-      self.evaluate_model_with_ctr_thresholds_(best_model, final_test)
+      evaluate_final(best_model, final_test)
       for final_test in final_test_paths
     ]
     final_metrics = [
       {'Logloss': evaluation['Logloss']}
       for evaluation in final_evaluations
     ]
-    ctr_thresholds = self.aggregate_ctr_thresholds_(final_evaluations)
+    ctr_thresholds = (
+      self.aggregate_ctr_thresholds_(final_evaluations)
+      if self.include_ctr_thresholds else [])
     print(
       'Best main validation Logloss: ' + str(best_logloss) +
       ', trained chunks: ' + str(trained_steps),
@@ -976,6 +985,7 @@ class CatBoostTrainer(object):
       command.extend(['--baseline-file', str(baseline_file)])
     if merge_model is not None:
       command.extend(['--merge-model', str(merge_model)])
+    command.extend(['--loss-function', self.loss_function])
     if self.train_dir is not None:
       command.extend(['--train-dir', str(self.train_dir)])
     try:

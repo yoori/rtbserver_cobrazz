@@ -77,6 +77,18 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertNotIn('campaign_feature_selection_fit_003', campaign_step_ids)
     self.assertIn('campaign_training_fit_003', campaign_step_ids)
     self.assertNotIn('campaign_training_fit_004', campaign_step_ids)
+    ssp_ctr_step_ids = {
+      step['id']
+      for step in TRAINER_MODULE.ssp_ctr_train_steps(
+        config,
+        selection_fit_steps=2,
+        training_fit_steps=3)
+    }
+    self.assertIn('ssp_selection_validation_libsvm_001', ssp_ctr_step_ids)
+    self.assertIn('ssp_feature_selection_fit_002', ssp_ctr_step_ids)
+    self.assertNotIn('ssp_feature_selection_fit_003', ssp_ctr_step_ids)
+    self.assertIn('ssp_training_fit_003', ssp_ctr_step_ids)
+    self.assertIn('finalize_metrics', ssp_ctr_step_ids)
     self.assertTrue(all(step['started'] is None for step in prepare_steps))
     self.assertTrue(all(step['ended'] is None for step in prepare_steps))
 
@@ -212,6 +224,33 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         ['campaign', 'userch'],
         correction_config['features'])
       self.assertNotIn(['userch'], correction_config['features'])
+
+  def test_common_ssp_ctr_config_uses_request_features_without_target(self):
+    features = TRAINER_MODULE.SSP_CTR_FEATURE_CONFIG['features']
+
+    self.assertIn(['publisher'], features)
+    self.assertIn(['ssp_tag_id'], features)
+    self.assertIn(['ssp_viewability'], features)
+    self.assertIn(['ssp_vtr'], features)
+    self.assertNotIn(['ssp_ctr'], features)
+    self.assertNotIn(['campaign'], features)
+    self.assertNotIn(['group'], features)
+    self.assertNotIn(['ccid'], features)
+
+  def test_final_model_properties_use_best_validation_checkpoint(self):
+    properties = TRAINER_MODULE.final_model_properties(
+      [
+        {'step': 1, 'train': 0.5, 'test': 0.4},
+        {'step': 2, 'train': 0.3, 'test': 0.2},
+        {'step': 3, 'train': 0.1, 'test': 0.25},
+      ],
+      ssp_ctr_logloss=0.125)
+
+    self.assertEqual([
+      {'train_logloss': 0.3},
+      {'val_logloss': 0.2},
+      {'ssp_ctr_logloss': 0.125},
+    ], properties)
 
   def test_stream_libsvm_chunks_removes_processed_files(self):
     with tempfile.TemporaryDirectory() as temp_dir:

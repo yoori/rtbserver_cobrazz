@@ -15,6 +15,7 @@ def train_chunk(
     metrics_file=None,
     baseline_file=None,
     merge_model=None,
+    loss_function='Logloss',
 ):
   if baseline_file is not None and initial_model is not None:
     raise ValueError(
@@ -34,7 +35,7 @@ def train_chunk(
     iterations=iterations,
     learning_rate=0.1,
     depth=6,
-    loss_function='Logloss',
+    loss_function=loss_function,
     allow_const_label=True,
     verbose=0,
     train_dir=train_dir,
@@ -44,7 +45,7 @@ def train_chunk(
     init_model=initial_model,
     verbose=True)
   learn_metrics = model.get_evals_result().get('learn', {})
-  logloss = learn_metrics.get('Logloss', [])
+  logloss = learn_metrics.get(loss_function, [])
   if not logloss:
     raise RuntimeError('CatBoost did not return train Logloss')
   metrics = {'Logloss': float(logloss[-1])}
@@ -70,6 +71,7 @@ def main():
   parser.add_argument('--metrics-file', required=True)
   parser.add_argument('--baseline-file')
   parser.add_argument('--merge-model')
+  parser.add_argument('--loss-function', default='Logloss')
   args = parser.parse_args()
   train_chunk(
     args.svm_file,
@@ -79,7 +81,8 @@ def main():
     args.train_dir,
     args.metrics_file,
     args.baseline_file,
-    args.merge_model)
+    args.merge_model,
+    args.loss_function)
 
 
 if __name__ == '__main__':

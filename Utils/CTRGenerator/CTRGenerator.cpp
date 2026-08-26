@@ -181,17 +181,19 @@ namespace CampaignSvcs
 
     DEFINE_FEATURE_HASH_FUN(add_hash_ssp_ctr_)
     {
-      hash.add(calc_params.ssp_ctr);
+      hash.add(calc_params.ssp_ctr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_HASH_FUN(add_hash_ssp_viewability_)
     {
-      hash.add(calc_params.ssp_viewability);
+      hash.add(
+        calc_params.ssp_viewability.value_or(
+          CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_HASH_FUN(add_hash_ssp_vtr_)
     {
-      hash.add(calc_params.ssp_vtr);
+      hash.add(calc_params.ssp_vtr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     // value getters
@@ -315,17 +317,21 @@ namespace CampaignSvcs
 
     DEFINE_FEATURE_VALUE_FUN(get_value_ssp_ctr_)
     {
-      return value_to_string(calc_params.ssp_ctr);
+      return value_to_string(
+        calc_params.ssp_ctr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_VALUE_FUN(get_value_ssp_viewability_)
     {
-      return value_to_string(calc_params.ssp_viewability);
+      return value_to_string(
+        calc_params.ssp_viewability.value_or(
+          CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_VALUE_FUN(get_value_ssp_vtr_)
     {
-      return value_to_string(calc_params.ssp_vtr);
+      return value_to_string(
+        calc_params.ssp_vtr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     //
@@ -821,10 +827,7 @@ namespace CampaignSvcs
       campaign_freq(0),
       campaign_freq_log(0),
       tag_visibility(-1),
-      tag_predicted_viewability(-1),
-      ssp_ctr(-1.0F),
-      ssp_viewability(-1.0F),
-      ssp_vtr(-1.0F)
+      tag_predicted_viewability(-1)
   {}
 
   // CTRGenerator
@@ -832,7 +835,10 @@ namespace CampaignSvcs
     : push_hour_(false),
       push_week_day_(false),
       push_campaign_freq_(false),
-      push_campaign_freq_log_(false)
+      push_campaign_freq_log_(false),
+      push_ssp_ctr_(false),
+      push_ssp_viewability_(false),
+      push_ssp_vtr_(false)
   {
     // create calculator
     for(FeatureList::const_iterator fit = features.begin();
@@ -840,6 +846,27 @@ namespace CampaignSvcs
     {
       if(!fit->basic_features.empty())
       {
+        if(!xgb_model && fit->basic_features.size() == 1)
+        {
+          const auto feature_id = *fit->basic_features.begin();
+          if(CTR::is_direct_ssp_float_feature(feature_id))
+          {
+            if(feature_id == CTR::BF_SSP_CTR)
+            {
+              push_ssp_ctr_ = true;
+            }
+            else if(feature_id == CTR::BF_SSP_VIEWABILITY)
+            {
+              push_ssp_viewability_ = true;
+            }
+            else
+            {
+              push_ssp_vtr_ = true;
+            }
+            continue;
+          }
+        }
+
         if(xgb_model && fit->basic_features.size() == 1)
         {
           auto feature_id = *fit->basic_features.begin();
@@ -947,6 +974,28 @@ namespace CampaignSvcs
         CTR::BF_CAMPAIGN_FREQ_LOG_ID,
         calc_params.campaign_freq_log);
     }
+
+    if(push_ssp_ctr_)
+    {
+      calculation.hashes.emplace_back(
+        CTR::BF_SSP_CTR,
+        calc_params.ssp_ctr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+    }
+
+    if(push_ssp_viewability_)
+    {
+      calculation.hashes.emplace_back(
+        CTR::BF_SSP_VIEWABILITY,
+        calc_params.ssp_viewability.value_or(
+          CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+    }
+
+    if(push_ssp_vtr_)
+    {
+      calculation.hashes.emplace_back(
+        CTR::BF_SSP_VTR,
+        calc_params.ssp_vtr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+    }
   }
 
   void
@@ -966,6 +1015,21 @@ namespace CampaignSvcs
         global_dictionary,
         global_dictionary,
         calc_params);
+    }
+
+    if(push_ssp_ctr_)
+    {
+      global_dictionary[CTR::BF_SSP_CTR] = "ssp_ctr:";
+    }
+
+    if(push_ssp_viewability_)
+    {
+      global_dictionary[CTR::BF_SSP_VIEWABILITY] = "ssp_viewability:";
+    }
+
+    if(push_ssp_vtr_)
+    {
+      global_dictionary[CTR::BF_SSP_VTR] = "ssp_vtr:";
     }
   }
 

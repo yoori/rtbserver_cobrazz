@@ -3,6 +3,8 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
+#include <limits>
 #include <cstdint>
 
 #include <arpa/inet.h>
@@ -532,6 +534,26 @@ Application_::generate_svm_(
   const unsigned long features_size = 1UL << dimension;
   CTR::FeatureNameResolver feature_name_resolver;
 
+  if(catboost_model)
+  {
+    for(const auto& feature : config.features)
+    {
+      if(feature.basic_features.size() == 1)
+      {
+        const auto feature_id = *feature.basic_features.begin();
+        if(
+          CTR::is_direct_ssp_float_feature(feature_id) &&
+          features_size <= static_cast<unsigned long>(feature_id))
+        {
+          Stream::Error ostr;
+          ostr << "direct SSP feature index " << feature_id <<
+            " does not fit features_size = " << features_size;
+          throw Exception(ostr);
+        }
+      }
+    }
+  }
+
   struct FeatureStat
   {
     std::uint64_t impressions = 0;
@@ -752,9 +774,11 @@ Application_::generate_svm_(
 
     // output hashes
     std::ostringstream res_line_ostr;
-    res_line_ostr << label;
+    res_line_ostr <<
+      std::setprecision(std::numeric_limits<float>::max_digits10) <<
+      label;
 
-    std::map<unsigned long, unsigned long> ordered_hashes;
+    std::map<unsigned long, float> ordered_hashes;
 
     for(auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)

@@ -84,6 +84,36 @@ class RImpressionTrainExporter(object):
       text=True)
     return int(result.stdout.strip())
 
+  def ssp_ctr_logloss(
+      self,
+      date_from,
+      date_to,
+      rows,
+      condition=None,
+      offset_rows=0,
+  ):
+    if rows <= 0:
+      raise ValueError('rows must be positive')
+    if offset_rows < 0:
+      raise ValueError('offset_rows must not be negative')
+    result = subprocess.run(
+      self._command + [
+        '--query',
+        self._ssp_ctr_logloss_query(
+          date_from,
+          date_to,
+          rows,
+          condition,
+          offset_rows),
+      ],
+      check=True,
+      capture_output=True,
+      text=True)
+    value = float(result.stdout.strip())
+    if not math.isfinite(value):
+      raise RuntimeError('SSP CTR logloss is not finite')
+    return value
+
   def eligible_campaigns(
       self,
       date_from,
@@ -141,6 +171,7 @@ class RImpressionTrainExporter(object):
       date_to,
       condition=None,
       offset_rows=0,
+      label='click',
   ):
     if max_rows <= 0:
       raise ValueError('max_rows must be positive')
@@ -159,7 +190,8 @@ class RImpressionTrainExporter(object):
           date_to,
           max_rows,
           condition,
-          offset_rows),
+          offset_rows,
+          label),
       ],
       stdout=subprocess.PIPE)
     current_path = None
@@ -280,6 +312,10 @@ class RImpressionTrainExporter(object):
       raise ValueError('campaign_id must be positive')
     return 'campaign_id = ' + str(campaign_id)
 
+  @staticmethod
+  def ssp_ctr_condition():
+    return 'ssp_ctr IS NOT NULL'
+
   @classmethod
   def training_partition_condition(cls, partition_index, partition_count):
     if partition_count <= 0:
@@ -308,6 +344,7 @@ class RImpressionTrainExporter(object):
       date_from,
       date_to,
       condition=None,
+      label='click',
   ):
     remaining_rows = max_rows
     for partition_index in range(partition_count):
@@ -327,7 +364,8 @@ class RImpressionTrainExporter(object):
         rows_to_export,
         date_from,
         date_to,
-        partition_condition)
+        partition_condition,
+        label=label)
       try:
         for output_path, row_count in chunks:
           remaining_rows -= row_count
@@ -387,10 +425,17 @@ class RImpressionTrainExporter(object):
       train_rows,
       condition=None,
       offset_rows=0,
+      label='click',
   ):
+    if label == 'click':
+      label_expression = 'If(click_timestamp IS NOT NULL, 1, 0)'
+    elif label == 'ssp_ctr':
+      label_expression = 'assumeNotNull(ssp_ctr)'
+    else:
+      raise ValueError("Unsupported export label: '" + str(label) + "'")
     query = (
       "SELECT "
-      "If(click_timestamp IS NOT NULL, 1, 0) AS label, "
+      + label_expression + " AS label, "
       "timestamp, "
       "device AS Device, "
       "url AS Link, "
@@ -404,7 +449,11 @@ class RImpressionTrainExporter(object):
       "user_ch AS UserCh, "
         "size_id AS SizeID, "
         "colo_id AS Colo, "
-        "campaign_freq AS Campaign_Freq "
+        "campaign_freq AS Campaign_Freq, "
+        "ifNull(ssp_tag_id, '') AS SSP_Tag_ID, "
+        "ifNull(toString(ssp_ctr), '') AS SSP_CTR, "
+        "ifNull(toString(ssp_viewability), '') AS SSP_Viewability, "
+        "ifNull(toString(ssp_vtr), '') AS SSP_VTR "
       "FROM RImpression "
       "WHERE timestamp >= '" + date_from + "' "
         "AND timestamp < '" + date_to + "' ")
@@ -416,6 +465,33 @@ class RImpressionTrainExporter(object):
       'LIMIT ' + str(train_rows) +
       ((' OFFSET ' + str(offset_rows)) if offset_rows else '') +
       ' FORMAT CSVWithNames')
+
+  @classmethod
+  def _ssp_ctr_logloss_query(
+      cls,
+      date_from,
+      date_to,
+      rows,
+      condition=None,
+      offset_rows=0,
+  ):
+    score = 'greatest(least(score, 1 - 1e-15), 1e-15)'
+    where_condition = cls.ssp_ctr_condition()
+    if condition is not None:
+      where_condition = (
+        '(' + where_condition + ') AND (' + condition + ')')
+    return (
+      'SELECT avg(if(clicked, -log(' + score + '), '
+        '-log1p(-' + score + '))) FROM ('
+        'SELECT click_timestamp IS NOT NULL AS clicked, '
+          'assumeNotNull(ssp_ctr) AS score '
+        'FROM RImpression '
+        "WHERE timestamp >= '" + date_from + "' "
+          "AND timestamp < '" + date_to + "' "
+          'AND (' + where_condition + ') '
+        'ORDER BY timestamp DESC, request_id DESC '
+        'LIMIT ' + str(rows) +
+        ((' OFFSET ' + str(offset_rows)) if offset_rows else '') + ')')
 
   @staticmethod
   def _count_query(date_from, date_to, condition=None):

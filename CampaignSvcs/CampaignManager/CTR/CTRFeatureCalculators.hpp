@@ -14,11 +14,9 @@ namespace AdServer::CampaignSvcs
 
   namespace CTR
   {
-    typedef std::vector<std::pair<uint32_t, uint32_t> > HashArray;
+    using HashArray = std::vector<std::pair<uint32_t, float> >;
 
-    typedef Generics::GnuHashTable<
-      Generics::NumericHashAdapter<uint32_t>, uint32_t>
-      HashMap;
+    using HashMap = Generics::GnuHashTable<Generics::NumericHashAdapter<uint32_t>, uint32_t>;
 
     struct Murmur32v3Adapter: public Generics::Murmur32v3Hasher
     {
@@ -54,8 +52,7 @@ namespace AdServer::CampaignSvcs
         noexcept = 0;
     };
 
-    typedef ReferenceCounting::SmartPtr<FeatureCalculator>
-      FeatureCalculator_var;
+    using FeatureCalculator_var = ReferenceCounting::SmartPtr<FeatureCalculator>;
 
     // FeatureCalculator implementations
 
@@ -64,16 +61,11 @@ namespace AdServer::CampaignSvcs
     class FeatureCalculatorFinalImplHelper
     {
     public:
-      FeatureCalculatorFinalImplHelper()
-        noexcept
+      FeatureCalculatorFinalImplHelper() noexcept
       {}
 
       bool
-      hash_index_(
-        uint32_t& index,
-        const HashMap* hash_mapping,
-        uint32_t hash)
-        const
+      hash_index_(uint32_t& index, const HashMap* hash_mapping, uint32_t hash) const
       {
         if (hash_mapping)
         {
@@ -108,8 +100,7 @@ namespace AdServer::CampaignSvcs
       public FeatureCalculatorFinalImplHelper
     {
     public:
-      FeatureCalculatorFinalImpl()
-        noexcept
+      FeatureCalculatorFinalImpl() noexcept
         : FeatureCalculatorFinalImplHelper()
       {}
 
@@ -141,9 +132,7 @@ namespace AdServer::CampaignSvcs
     class FeatureCalculatorDelegateImpl: public FeatureCalculator
     {
     public:
-      FeatureCalculatorDelegateImpl(
-        FeatureCalculator* next_calculator)
-        noexcept
+      FeatureCalculatorDelegateImpl(FeatureCalculator* next_calculator) noexcept
         : next_calculator_(ReferenceCounting::add_ref(next_calculator))
       {}
 
@@ -180,8 +169,7 @@ namespace AdServer::CampaignSvcs
       public FeatureCalculatorFinalImplHelper
     {
     public:
-      FeatureCalculatorIntArrayFinalHelper()
-        noexcept
+      FeatureCalculatorIntArrayFinalHelper() noexcept
         : FeatureCalculatorFinalImplHelper()
       {}
 
@@ -225,13 +213,10 @@ namespace AdServer::CampaignSvcs
     // basis for array based feature delegate calculators
     //   keep next calculator ref
     template<typename ContainerType>
-    class FeatureCalculatorIntArrayDelegateHelper:
-      public FeatureCalculator
+    class FeatureCalculatorIntArrayDelegateHelper: public FeatureCalculator
     {
     public:
-      FeatureCalculatorIntArrayDelegateHelper(
-        FeatureCalculator* next_calculator)
-        noexcept
+      FeatureCalculatorIntArrayDelegateHelper(FeatureCalculator* next_calculator) noexcept
         : next_calculator_(ReferenceCounting::add_ref(next_calculator))
       {}
 
@@ -249,8 +234,7 @@ namespace AdServer::CampaignSvcs
       {
         if (!elements.empty())
         {
-          for (auto ch_it = elements.begin();
-              ch_it != elements.end(); ++ch_it)
+          for (auto ch_it = elements.begin(); ch_it != elements.end(); ++ch_it)
           {
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(static_cast<uint32_t>(*ch_it));
@@ -288,9 +272,7 @@ namespace AdServer::CampaignSvcs
       public FeatureCalculatorIntArrayFinalHelper<ContainerType>
     {
     public:
-      FeatureCalculatorIntArrayParamFinalImpl(
-        ContainerType CampaignSelectParams::* field)
-        noexcept
+      FeatureCalculatorIntArrayParamFinalImpl(ContainerType CampaignSelectParams::* field) noexcept
         : FeatureCalculatorIntArrayFinalHelper<ContainerType>(),
           field_(field)
       {}
@@ -328,8 +310,7 @@ namespace AdServer::CampaignSvcs
         FeatureCalculator* next_calculator,
         ContainerType CampaignSelectParams::* field)
         noexcept
-        : FeatureCalculatorIntArrayDelegateHelper<ContainerType>(
-            next_calculator),
+        : FeatureCalculatorIntArrayDelegateHelper<ContainerType>(next_calculator),
           field_(field)
       {}
 
@@ -365,9 +346,7 @@ namespace AdServer::CampaignSvcs
       public FeatureCalculatorIntArrayFinalHelper<ContainerType>
     {
     public:
-      FeatureCalculatorIntArrayCreativeFinalImpl(
-        ContainerType Creative::* field)
-        noexcept
+      FeatureCalculatorIntArrayCreativeFinalImpl(ContainerType Creative::* field) noexcept
         : FeatureCalculatorIntArrayFinalHelper<ContainerType>(),
           field_(field)
       {}
@@ -401,8 +380,7 @@ namespace AdServer::CampaignSvcs
         FeatureCalculator* next_calculator,
         ContainerType Creative::* field)
         noexcept
-        : FeatureCalculatorIntArrayDelegateHelper<ContainerType>(
-            next_calculator),
+        : FeatureCalculatorIntArrayDelegateHelper<ContainerType>(next_calculator),
           field_(field)
       {}
 
@@ -442,8 +420,7 @@ namespace AdServer::CampaignSvcs
       create_delegate(FeatureCalculator* next_calculator) = 0;
     };
 
-    typedef ReferenceCounting::SmartPtr<FeatureCalculatorCreator>
-      FeatureCalculatorCreator_var;
+    using FeatureCalculatorCreator_var = ReferenceCounting::SmartPtr<FeatureCalculatorCreator>;
 
     // add_hash_fun passed in all places only as template argument for "garantee"
     // its inlining into FeatureCalculator::eval (not used as runtime function pointer arguments)
@@ -461,8 +438,7 @@ namespace AdServer::CampaignSvcs
       }
 
       FeatureCalculator_var
-      create_delegate(
-        FeatureCalculator* next_calculator)
+      create_delegate(FeatureCalculator* next_calculator)
       {
         return new FeatureCalculatorDelegateImpl<add_hash_fun>(
           next_calculator);
@@ -470,12 +446,9 @@ namespace AdServer::CampaignSvcs
     };
 
     template<typename ContainerType>
-    struct ArrayParamFeatureCalculatorCreator:
-      public FeatureCalculatorCreator
+    struct ArrayParamFeatureCalculatorCreator: public FeatureCalculatorCreator
     {
-      ArrayParamFeatureCalculatorCreator(
-        ContainerType CampaignSelectParams::* field)
-        noexcept
+      ArrayParamFeatureCalculatorCreator(ContainerType CampaignSelectParams::* field) noexcept
         : field_(field)
       {}
 
@@ -486,8 +459,7 @@ namespace AdServer::CampaignSvcs
       }
 
       FeatureCalculator_var
-      create_delegate(
-        FeatureCalculator* next_calculator)
+      create_delegate(FeatureCalculator* next_calculator)
       {
         return new FeatureCalculatorIntArrayParamDelegateImpl<ContainerType>(
           next_calculator, field_);
@@ -498,12 +470,9 @@ namespace AdServer::CampaignSvcs
     };
 
     template<typename ContainerType>
-    struct ArrayCreativeFeatureCalculatorCreator:
-      public FeatureCalculatorCreator
+    struct ArrayCreativeFeatureCalculatorCreator: public FeatureCalculatorCreator
     {
-      ArrayCreativeFeatureCalculatorCreator(
-        ContainerType Creative::* field)
-        noexcept
+      ArrayCreativeFeatureCalculatorCreator(ContainerType Creative::* field) noexcept
         : field_(field)
       {}
 
@@ -514,8 +483,7 @@ namespace AdServer::CampaignSvcs
       }
 
       FeatureCalculator_var
-      create_delegate(
-        FeatureCalculator* next_calculator)
+      create_delegate(FeatureCalculator* next_calculator)
       {
         return new FeatureCalculatorIntArrayCreativeDelegateImpl<ContainerType>(
           next_calculator, field_);

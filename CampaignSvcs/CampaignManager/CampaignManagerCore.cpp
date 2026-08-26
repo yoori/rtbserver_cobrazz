@@ -445,7 +445,7 @@ namespace AdServer::CampaignSvcs
     {
     public:
       explicit
-      SspFloatProcessor(float CampaignSelectParams::* field)
+      SspFloatProcessor(std::optional<float> CampaignSelectParams::* field)
         : field_(field)
       {}
 
@@ -469,7 +469,7 @@ namespace AdServer::CampaignSvcs
       void process_null(std::string_view, void*) const override {}
 
     private:
-      float CampaignSelectParams::* field_;
+      std::optional<float> CampaignSelectParams::* field_;
     };
 
     const FastJsonParser&
@@ -498,7 +498,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    fill_ssp_features_from_additional_info(
+    fill_ssp_features_from_legacy_additional_info(
       CampaignSelectParams& campaign_select_params,
       std::string_view additional_info)
     {
@@ -516,6 +516,34 @@ namespace AdServer::CampaignSvcs
         // additional_info is an optional optimization payload; invalid values
         // should not reject campaign selection.
       }
+    }
+
+    void
+    fill_ssp_features(
+      CampaignSelectParams& campaign_select_params,
+      const CampaignManagerCore::ContextAdRequest& context_info)
+    {
+      const bool has_typed_features =
+        !context_info.ssp_tag_id.empty() ||
+        context_info.ssp_ctr.has_value() ||
+        context_info.ssp_viewability.has_value() ||
+        context_info.ssp_vtr.has_value();
+      if (has_typed_features)
+      {
+        campaign_select_params.ssp_tag_id.assign(
+          context_info.ssp_tag_id.begin(),
+          context_info.ssp_tag_id.end());
+        campaign_select_params.ssp_ctr = context_info.ssp_ctr;
+        campaign_select_params.ssp_viewability = context_info.ssp_viewability;
+        campaign_select_params.ssp_vtr = context_info.ssp_vtr;
+        return;
+      }
+
+      // Compatibility with BiddingFrontend instances that still send the
+      // pre-typed JSON payload during a rolling update.
+      fill_ssp_features_from_legacy_additional_info(
+        campaign_select_params,
+        context_info.additional_info);
     }
 
     void
@@ -3350,9 +3378,7 @@ namespace AdServer::CampaignSvcs
 
       // fill campaign_select_params fields required for CTR calculate
       campaign_select_params.ext_tag_id = ad_slot.ext_tag_id;
-      fill_ssp_features_from_additional_info(
-        campaign_select_params,
-        request_params.context_info->additional_info);
+      fill_ssp_features(campaign_select_params, *request_params.context_info);
       campaign_select_params.short_referer_hash = request_params.context_info->short_referer_hash;
 
       campaign_select_params.last_platform_channel_id = 0;
