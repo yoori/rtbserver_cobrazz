@@ -67,21 +67,20 @@ namespace AdServer::CampaignSvcs
       FeatureCalculatorFinalImplHelper() noexcept
       {}
 
-      bool
-      hash_index_(uint32_t& index, const HashMap* hash_mapping, uint32_t hash) const
+      static inline uint32_t
+      hash_index_(const HashMap* hash_mapping, uint32_t hash) noexcept
+        __attribute__((always_inline))
       {
         if (hash_mapping)
         {
           auto it = hash_mapping->find(hash);
           if (it != hash_mapping->end())
           {
-            index = it->second;
-            return true;
+            return it->second;
           }
         }
 
-        index = hash;
-        return true;
+        return hash;
       }
     };
 
@@ -118,11 +117,9 @@ namespace AdServer::CampaignSvcs
         noexcept
       {
         add_hash_fun(hash_adapter, request_params, tag_size, creative);
-        uint32_t index;
-        if (hash_index_(index, hash_mapping, hash_adapter.finalize()))
-        {
-          result_hashes.push_back(std::make_pair(index, 1));
-        }
+        result_hashes.emplace_back(
+          hash_index_(hash_mapping, hash_adapter.finalize()),
+          1);
       }
     };
 
@@ -193,21 +190,17 @@ namespace AdServer::CampaignSvcs
             // need local hasher
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(static_cast<uint32_t>(*it));
-            uint32_t index;
-            if (hash_index_(index, hash_mapping, hash_adapter_copy.finalize()))
-            {
-              result_hashes.push_back(std::make_pair(index, 1));
-            }
+            result_hashes.emplace_back(
+              hash_index_(hash_mapping, hash_adapter_copy.finalize()),
+              1);
           }
         }
         else
         {
           hash_adapter.add(static_cast<uint32_t>(0));
-          uint32_t index;
-          if (hash_index_(index, hash_mapping, hash_adapter.finalize()))
-          {
-            result_hashes.push_back(std::make_pair(index, 1));
-          }
+          result_hashes.emplace_back(
+            hash_index_(hash_mapping, hash_adapter.finalize()),
+            1);
         }
       }
     };

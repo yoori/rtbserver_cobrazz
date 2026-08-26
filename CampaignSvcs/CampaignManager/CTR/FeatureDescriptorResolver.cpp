@@ -228,11 +228,9 @@ namespace AdServer::CampaignSvcs::CTR
             // need local hasher
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(time_hour_i);
-            uint32_t index;
-            if (hash_index_(index, hash_mapping, hash_adapter_copy.finalize()))
-            {
-              result_hashes.push_back(std::make_pair(index, 1));
-            }
+            result_hashes.emplace_back(
+              hash_index_(hash_mapping, hash_adapter_copy.finalize()),
+              1);
           }
         }
       };
